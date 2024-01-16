@@ -124,7 +124,7 @@ import {
 	ProtocolHandlerBuilder,
 	protocolHandlerShouldProcessSignal,
 } from "./protocol";
-import { AttachProcessProps, AttachmentData, runRetirableAttachProcess } from "./attachment";
+import { AttachProcessProps, AttachmentData, runRetriableAttachProcess } from "./attachment";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -1323,7 +1323,7 @@ export class Container
 							return this.storageAdapter;
 						};
 
-					await runRetirableAttachProcess({
+					await runRetriableAttachProcess({
 						initialAttachmentData: this.attachmentData,
 						offlineLoadEnabled: this.offlineLoadEnabled,
 						detachedBlobStorage: this.detachedBlobStorage,

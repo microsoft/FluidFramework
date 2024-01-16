@@ -13,7 +13,7 @@ import {
 	AttachProcessProps,
 	AttachingDataWithBlobs,
 	DetachedDataWithOutstandingBlobs,
-	runRetirableAttachProcess,
+	runRetriableAttachProcess,
 	DetachedDefaultData,
 	AttachmentData,
 	AttachingDataWithoutBlobs,
@@ -89,14 +89,14 @@ const createProxyWithFailDefault = <T extends Record<string, any> | undefined>(
 	}) as T;
 };
 
-describe("runRetirableAttachProcess", () => {
+describe("runRetriableAttachProcess", () => {
 	describe("end to end process", () => {
 		it("From DetachedDefaultData without blobs or offline", async () => {
 			const initial: DetachedDefaultData = {
 				state: AttachState.Detached,
 			};
 			let attachmentData: AttachmentData | undefined;
-			await runRetirableAttachProcess({
+			await runRetriableAttachProcess({
 				initialAttachmentData: initial,
 				offlineLoadEnabled: false,
 				setAttachmentData: (data) => (attachmentData = data),
@@ -121,7 +121,7 @@ describe("runRetirableAttachProcess", () => {
 				state: AttachState.Detached,
 			};
 			let attachmentData: AttachmentData | undefined;
-			await runRetirableAttachProcess({
+			await runRetriableAttachProcess({
 				initialAttachmentData: initial,
 				offlineLoadEnabled: true,
 				setAttachmentData: (data) => (attachmentData = data),
@@ -155,7 +155,7 @@ describe("runRetirableAttachProcess", () => {
 				createBlob: async () => Promise.resolve({ id: uuid() }),
 				uploadSummaryWithContext: async () => Promise.resolve(uuid()),
 			});
-			await runRetirableAttachProcess({
+			await runRetriableAttachProcess({
 				initialAttachmentData: initial,
 				offlineLoadEnabled: false,
 				setAttachmentData: (data) => (attachmentData = data),
@@ -199,7 +199,7 @@ describe("runRetirableAttachProcess", () => {
 				state: AttachState.Detached,
 			};
 			let attachmentData: AttachmentData | undefined;
-			await runRetirableAttachProcess({
+			await runRetriableAttachProcess({
 				initialAttachmentData: initial,
 				offlineLoadEnabled: false,
 				setAttachmentData: (data) => (attachmentData = data),
@@ -232,7 +232,7 @@ describe("runRetirableAttachProcess", () => {
 			let attachmentData: AttachmentData | undefined;
 			const error = new Error("createAttachmentSummary failure");
 			try {
-				await runRetirableAttachProcess(
+				await runRetriableAttachProcess(
 					createProxyWithFailDefault<AttachProcessProps>({
 						initialAttachmentData: initial,
 						detachedBlobStorage: undefined,
@@ -260,7 +260,7 @@ describe("runRetirableAttachProcess", () => {
 			let attachmentData: AttachmentData | undefined;
 			const error = new Error("getStorageService failure");
 			try {
-				await runRetirableAttachProcess(
+				await runRetriableAttachProcess(
 					createProxyWithFailDefault<AttachProcessProps>({
 						initialAttachmentData: initial,
 						setAttachmentData: (data) => (attachmentData = data),
@@ -296,7 +296,7 @@ describe("runRetirableAttachProcess", () => {
 			const detachedBlobStorage = createDetachStorage(blobCount);
 			const error = new Error("createBlob failure");
 			try {
-				await runRetirableAttachProcess({
+				await runRetriableAttachProcess({
 					initialAttachmentData: initial,
 					offlineLoadEnabled: false,
 					setAttachmentData: (data) => (attachmentData = data),
@@ -334,7 +334,7 @@ describe("runRetirableAttachProcess", () => {
 			const detachedBlobStorage = createDetachStorage(blobCount);
 			const error = new Error("createAttachmentSummary failure");
 			try {
-				await runRetirableAttachProcess({
+				await runRetriableAttachProcess({
 					initialAttachmentData: initial,
 					offlineLoadEnabled: false,
 					setAttachmentData: (data) => (attachmentData = data),
@@ -377,7 +377,7 @@ describe("runRetirableAttachProcess", () => {
 			const detachedBlobStorage = createDetachStorage(blobCount);
 			const error = new Error("uploadSummaryWithContext failure");
 			try {
-				await runRetirableAttachProcess({
+				await runRetriableAttachProcess({
 					initialAttachmentData: initial,
 					offlineLoadEnabled: false,
 					setAttachmentData: (data) => (attachmentData = data),
@@ -424,7 +424,7 @@ describe("runRetirableAttachProcess", () => {
 				createBlob: async () => Promise.resolve({ id: uuid() }),
 				uploadSummaryWithContext: async () => Promise.resolve(uuid()),
 			});
-			await runRetirableAttachProcess({
+			await runRetriableAttachProcess({
 				initialAttachmentData: initial,
 				offlineLoadEnabled: false,
 				setAttachmentData: (data) => (attachmentData = data),
@@ -472,7 +472,7 @@ describe("runRetirableAttachProcess", () => {
 				summary: emptySummary,
 			};
 			let attachmentData: AttachmentData | undefined;
-			await runRetirableAttachProcess(
+			await runRetriableAttachProcess(
 				createProxyWithFailDefault<AttachProcessProps>({
 					initialAttachmentData: initial,
 					offlineLoadEnabled: true,
@@ -500,7 +500,7 @@ describe("runRetirableAttachProcess", () => {
 				summary: emptySummary,
 			};
 			let attachmentData: AttachmentData | undefined;
-			await runRetirableAttachProcess(
+			await runRetriableAttachProcess(
 				createProxyWithFailDefault<AttachProcessProps>({
 					initialAttachmentData: initial,
 					offlineLoadEnabled: true,

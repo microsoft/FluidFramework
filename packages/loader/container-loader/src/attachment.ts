@@ -81,7 +81,7 @@ export type AttachmentData =
 	| AttachedData;
 
 /**
- * The data and services necessary for runRetirableAttachProcess.
+ * The data and services necessary for runRetriableAttachProcess.
  */
 export interface AttachProcessProps {
 	/**
@@ -124,12 +124,12 @@ export interface AttachProcessProps {
 
 /**
  * Executes the attach process state machine based on the provided data and services.
- * This method is retirable on failure. Based on the provided initialAttachmentData
+ * This method is retriable on failure. Based on the provided initialAttachmentData
  * this method will resume the attachment process and attempt to complete it.
  *
  * @param props - The data and services necessary to run the attachment process
  */
-export const runRetirableAttachProcess = async (props: AttachProcessProps): Promise<void> => {
+export const runRetriableAttachProcess = async (props: AttachProcessProps): Promise<void> => {
 	let currentData: AttachmentData = props.initialAttachmentData;
 
 	if (currentData.blobs === undefined) {
