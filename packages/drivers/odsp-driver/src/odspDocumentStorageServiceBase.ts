@@ -193,6 +193,10 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 		}
 
 		const snapshotTree = await this.readTree(id, scenarioName);
+		// Remove it once it is read.
+		if (instanceOfIPartialSnapshotWithContents(snapshotTree)) {
+			this.commitCache.delete(id);
+		}
 		if (!snapshotTree) {
 			return null;
 		}
@@ -304,6 +308,8 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 			if (instanceOfISnapshotContents(odspSnapshotCacheValue)) {
 				this.setRootTree(id, snapshotTree);
 			} else {
+				// Since it is first snapshot we need to store it even if it is a partial snapshot.
+				// We will clear it once it is read from the cache.
 				this.setRootTree(id, odspSnapshotCacheValue);
 			}
 		}

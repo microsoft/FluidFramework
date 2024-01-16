@@ -761,19 +761,21 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					0x222 /* "Root tree should contain the id!!" */,
 				);
 				treeId = snapshot.snapshotTree.id;
+				// Only store if it is not a partial tree.
 				if (instanceOfISnapshotContents(snapshot)) {
 					this.setRootTree(treeId, snapshot.snapshotTree);
-				} else {
-					this.setRootTree(treeId, snapshot);
 				}
 			}
-			// Cache blobs only in case it is not a partial snapshot.
-			if (instanceOfISnapshotContents(snapshot) && snapshot.blobs) {
-				this.initBlobsCache(snapshot.blobs);
+			if (instanceOfISnapshotContents(snapshot)) {
+				// Cache blobs only in case it is not a partial snapshot.
+				if (snapshot.blobs) {
+					this.initBlobsCache(snapshot.blobs);
+				}
+				// If the version id doesn't match with the id of the tree, then use the id of first tree which in that case
+				// will be the actual id of tree to be fetched.
+				return this.commitCache.get(id) ?? this.commitCache.get(treeId);
 			}
-			// If the version id doesn't match with the id of the tree, then use the id of first tree which in that case
-			// will be the actual id of tree to be fetched.
-			return this.commitCache.get(id) ?? this.commitCache.get(treeId);
+			return snapshot;
 		});
 	}
 }
