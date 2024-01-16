@@ -69,7 +69,7 @@ export class Redis implements IRedis {
 
 	public async setMany<T>(
 		keyValuePairs: { key: string; value: T }[],
-		expireAfterSeconds?: number,
+		expireAfterSeconds: number = this.expireAfterSeconds,
 	): Promise<void> {
 		const setPs = keyValuePairs.map(async ({ key, value }) =>
 			this.set(key, value, expireAfterSeconds),
@@ -157,7 +157,7 @@ export class HashMapRedis implements IRedis {
 
 	public async setMany<T>(
 		keyValuePairs: { key: string; value: T }[],
-		expireAfterSeconds?: number,
+		expireAfterSeconds: number = this.expireAfterSeconds,
 	): Promise<void> {
 		// Set values in the hash map and returns the count of set key/value pairs.
 		// However, if it's a duplicate key, it will return 0, so we can't rely on the return value to determine success.
