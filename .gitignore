@@ -14,7 +14,7 @@ nyc
 /coverage/tmp/
 
 # Temporary api-extractor build artifacts
-**/_api-extractor-temp**/**
+**/_api-extractor-temp/**
 
 # Bundle analysis artifacts
 bundleAnalysis

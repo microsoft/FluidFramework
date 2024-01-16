@@ -102,6 +102,9 @@
 			},
 			"InterfaceDeclaration_IContainerContext": {
 				"backCompat": false
+			},
+			"InterfaceDeclaration_IContainer": {
+				"forwardCompat": false
 			}
 		}
 	}

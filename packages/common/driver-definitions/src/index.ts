@@ -23,6 +23,7 @@ export {
 	IDocumentDeltaConnectionEvents,
 	IDocumentDeltaStorageService,
 	IDocumentService,
+	IDocumentServiceEvents,
 	IDocumentServiceFactory,
 	IDocumentServicePolicies,
 	IDocumentStorageService,

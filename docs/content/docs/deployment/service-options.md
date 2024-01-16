@@ -23,6 +23,16 @@ Microsoft [Azure Fluid Relay](https://aka.ms/azurefluidrelay) is a hosted Fluid 
 
 Learn more in the [Azure Fluid Relay documentation](https://aka.ms/azurefluidrelaydocs).
 
+## SharePoint Embedded
+
+Microsoft [SharePoint Embedded](https://learn.microsoft.com/en-us/sharepoint/dev/embedded/overview) is a cloud-based file and document management system suitable for use in any application. It is a new API-only solution which enables app developers to harness the power of the Microsoft 365 file and document storage platform for any app, and is suitable for enterprises building line of business applications and ISVs building multi-tenant applications.
+
+{{% callout note %}}
+
+SharePoint Embedded is currently in public preview and Fluid Framework integration is not enabled for all M365 tenants. This functionality will be broadly available in February, 2024.
+
+{{% /callout %}}
+
 ## Self-hosted Routerlicious
 
 Fluid Framework's original service implementation, called [Routerlicious][r11s], is part of the Fluid Framework open source project. Routerlicious is not formally supported as a production-quality service, but you can run it using Docker. See the [Routerlicious readme][r11s] for more information about running it.

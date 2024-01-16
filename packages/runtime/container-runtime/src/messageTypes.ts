@@ -133,7 +133,7 @@ export type ContainerRuntimeGCMessage = TypedContainerRuntimeMessage<
 >;
 
 /**
- * Represents an unrecognized {@link TypedContainerRuntimeMessage}, e.g. a message from a future version of the container runtime.
+ * Represents an unrecognized TypedContainerRuntimeMessage, e.g. a message from a future version of the container runtime.
  * @internal
  */
 export interface UnknownContainerRuntimeMessage

@@ -132,7 +132,7 @@ describeCompat(
 			};
 		}
 
-		beforeEach(async () => {
+		beforeEach("setup", async () => {
 			provider = getTestObjectProvider({ syncSummarizer: true });
 			mainContainer = await createContainer();
 

@@ -17,7 +17,7 @@ import {
 	WithType,
 } from "./schemaTypes.js";
 import { SchemaFactory } from "./schemaFactory.js";
-import { TreeArrayNode } from "./treeListNode.js";
+import { TreeArrayNode } from "./treeArrayNode.js";
 
 /**
  * Extends SchemaFactory with utilities for recursive types.

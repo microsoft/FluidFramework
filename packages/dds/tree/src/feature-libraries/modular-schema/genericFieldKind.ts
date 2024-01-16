@@ -24,7 +24,7 @@ import {
 	RelevantRemovedRootsFromChild,
 	NodeChangePruner,
 } from "./fieldChangeHandler.js";
-import { FieldKindWithEditor } from "./fieldKind.js";
+import { FieldKindWithEditor } from "./fieldKindWithEditor.js";
 import { makeGenericChangeCodec } from "./genericFieldKindCodecs.js";
 import { GenericChange, GenericChangeset } from "./genericFieldKindTypes.js";
 import { NodeChangeset } from "./modularChangeTypes.js";

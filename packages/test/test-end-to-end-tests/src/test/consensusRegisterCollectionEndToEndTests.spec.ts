@@ -41,7 +41,7 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
 		};
 
 		let provider: ITestObjectProvider;
-		beforeEach(() => {
+		beforeEach("getTestObjectProvider", () => {
 			provider = getTestObjectProvider();
 		});
 		let dataStore1: ITestFluidObject;
@@ -49,7 +49,7 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
 		let sharedMap2: ISharedMap;
 		let sharedMap3: ISharedMap;
 
-		beforeEach(async () => {
+		beforeEach("createSharedMaps", async () => {
 			// Create a Container for the first client.
 			const container1 = await provider.makeTestContainer(testContainerConfig);
 			dataStore1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
@@ -307,7 +307,7 @@ describeCompat(
 		};
 
 		let provider: ITestObjectProvider;
-		beforeEach(() => {
+		beforeEach("getTestObjectProvider", () => {
 			provider = getTestObjectProvider();
 		});
 
