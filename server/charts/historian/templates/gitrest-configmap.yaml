@@ -34,14 +34,14 @@ data:
             ]
         },
         "requestSizeLimit": "1gb",
-	    "enableResponseCloseLatencyMetric": {{ .Values.gitrest.enableResponseCloseLatencyMetric }},
+        "enableResponseCloseLatencyMetric": {{ .Values.gitrest.enableResponseCloseLatencyMetric }},
         "storageDir": {
             "baseDir": "/home/node/documents",
             "useRepoOwner": true
         },
         "externalStorage": {
-          "enabled": false,
-          "endpoint": "http://externalStorage:3005"
+            "enabled": false,
+            "endpoint": "http://externalStorage:3005"
         },
         "git": {
             "lib": {
