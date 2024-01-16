@@ -27,7 +27,7 @@ import { ConsensusRegisterCollection } from "@fluidframework/register-collection
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { SharedString } from "@fluidframework/sequence";
 import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger, isFluidError } from "@fluidframework/telemetry-utils";
 import {
 	ITestContainerConfig,
 	DataObjectFactoryType,
@@ -1136,20 +1136,17 @@ describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) =
 	itExpects("Attach can't be called multiple times with different parameters", [], async () => {
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
-		const firstAttachP = container.attach(request);
+		const attachP = container.attach(request);
 		// the second should fail, as the arguments don't match
-		const failedAttachP = container.attach({ ...request });
-		assert.notStrictEqual(
-			failedAttachP,
-			firstAttachP,
-			"promises should not match for parallel calls with different arguments",
-		);
+		try {
+			await container.attach({ ...request });
+			assert.fail("should fail");
+		} catch (e) {
+			assert(isFluidError(e), "should be a fluid error");
+			assert.equal(e.message, "Subsequent calls cannot use different arguments.");
+		}
 
-		await firstAttachP;
-		await assert.rejects(
-			failedAttachP,
-			(err: IErrorBase) => err.message === "Subsequent calls cannot use different arguments.",
-		);
+		await attachP;
 
 		assert.strictEqual(container.closed, false, "Container should not be closed");
 	});
