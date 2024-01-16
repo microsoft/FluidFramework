@@ -23,7 +23,7 @@ npm i @fluidframework/data-object-base
 
 ## API Documentation
 
-API documentation for **@fluidframework/data-object-base** is available at <https://fluidframework.com/docs/api/v1/data-object-base>.
+API documentation for **@fluidframework/data-object-base** is available at <https://fluidframework.com/docs/apis/data-object-base>.
 
 ## Contribution Guidelines
 

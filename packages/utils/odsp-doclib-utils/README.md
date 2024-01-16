@@ -23,7 +23,7 @@ npm i @fluidframework/odsp-doclib-utils
 
 ## API Documentation
 
-API documentation for **@fluidframework/odsp-doclib-utils** is available at <https://fluidframework.com/docs/api/v1/odsp-doclib-utils>.
+API documentation for **@fluidframework/odsp-doclib-utils** is available at <https://fluidframework.com/docs/apis/odsp-doclib-utils>.
 
 ## Contribution Guidelines
 
