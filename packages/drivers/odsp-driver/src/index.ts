@@ -54,6 +54,7 @@ export {
 	IPersistedFileCache,
 	INonPersistentCache,
 	IPrefetchSnapshotContents,
+	IPrefetchPartialSnapshotWithContents,
 } from "./odspCache";
 export { ICacheAndTracker, type EpochTracker, FetchType, FetchTypeInternal } from "./epochTracker";
 export { IOdspResponse, isOdspResolvedUrl } from "./odspUtils";

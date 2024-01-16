@@ -99,6 +99,9 @@
 			"RemovedInterfaceDeclaration_IPendingLocalState": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"InterfaceDeclaration_IContainerContext": {
+				"backCompat": false
 			}
 		}
 	}

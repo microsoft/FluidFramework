@@ -13,6 +13,7 @@ import {
 	IDocumentService,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
+	IPartialSnapshotWithContents,
 	ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import { UsageError } from "@fluidframework/driver-utils";
@@ -123,7 +124,7 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 	public async getSnapshotTree(
 		version?: IVersion,
 		scenarioName?: string,
-	): Promise<ISnapshotTree | null> {
+	): Promise<ISnapshotTree | IPartialSnapshotWithContents | null> {
 		return this._storageService.getSnapshotTree(version, scenarioName);
 	}
 

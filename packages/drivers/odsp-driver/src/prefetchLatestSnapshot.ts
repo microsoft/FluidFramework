@@ -29,7 +29,7 @@ import {
 	SnapshotFormatSupportType,
 } from "./fetchSnapshot";
 import { IVersionedValueWithEpoch } from "./contracts";
-import { IPrefetchSnapshotContents } from "./odspCache";
+import { IPrefetchPartialSnapshotWithContents, IPrefetchSnapshotContents } from "./odspCache";
 import { OdspDocumentServiceFactory } from "./odspDocumentServiceFactory";
 
 /**
@@ -113,7 +113,9 @@ export async function prefetchLatestSnapshot(
 		async () => {
 			const prefetchStartTime = performance.now();
 			// Add the deferred promise to the cache, so that it can be leveraged while loading the container.
-			const snapshotContentsWithEpochP = new Deferred<IPrefetchSnapshotContents>();
+			const snapshotContentsWithEpochP = new Deferred<
+				IPrefetchSnapshotContents | IPrefetchPartialSnapshotWithContents
+			>();
 			const nonPersistentCacheKey = getKeyForCacheEntry(snapshotKey);
 			const snapshotNonPersistentCache =
 				odspDocumentServiceFactory?.snapshotPrefetchResultCache;

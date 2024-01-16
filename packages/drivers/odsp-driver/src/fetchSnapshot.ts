@@ -10,6 +10,7 @@ import {
 	PerformanceEvent,
 	wrapError,
 } from "@fluidframework/telemetry-utils";
+import { IPartialSnapshotWithContents } from "@fluidframework/driver-definitions";
 import { fromUtf8ToBase64 } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import { getW3CData } from "@fluidframework/driver-base";
@@ -39,6 +40,7 @@ import {
 	fetchHelper,
 	getWithRetryForTokenRefresh,
 	getWithRetryForTokenRefreshRepeat,
+	instanceOfISnapshotContents,
 	IOdspResponse,
 	measure,
 	measureP,
@@ -85,7 +87,7 @@ export async function fetchSnapshot(
 		url: string,
 		fetchOptions: { [index: string]: any },
 	) => Promise<IOdspResponse<unknown>>,
-): Promise<ISnapshotContents> {
+): Promise<ISnapshotContents | IPartialSnapshotWithContents> {
 	const path = `/trees/${versionId}`;
 	let queryParams: ISnapshotOptions = {};
 
@@ -125,7 +127,7 @@ export async function fetchSnapshotWithRedeem(
 	putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
 	removeEntries: () => Promise<void>,
 	enableRedeemFallback?: boolean,
-): Promise<ISnapshotContents> {
+): Promise<ISnapshotContents | IPartialSnapshotWithContents> {
 	// back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
 	const sharingLinkToRedeem = (odspResolvedUrl as any).sharingLinkToRedeem;
 	if (sharingLinkToRedeem) {
@@ -535,11 +537,15 @@ function getFormBodyAndHeaders(
 	return { body: postBody, headers: header };
 }
 
-export function evalBlobsAndTrees(snapshot: ISnapshotContents) {
+export function evalBlobsAndTrees(snapshot: ISnapshotContents | IPartialSnapshotWithContents) {
 	const trees = countTreesInSnapshotTree(snapshot.snapshotTree);
-	const numBlobs = snapshot.blobs.size;
+	const numBlobs = instanceOfISnapshotContents(snapshot)
+		? snapshot.blobs.size
+		: snapshot.blobsContents.size;
 	let encodedBlobsSize = 0;
-	for (const [_, blobContent] of snapshot.blobs) {
+	for (const [_, blobContent] of instanceOfISnapshotContents(snapshot)
+		? snapshot.blobs
+		: snapshot.blobsContents) {
 		encodedBlobsSize += blobContent.byteLength;
 	}
 	return { trees, numBlobs, encodedBlobsSize };

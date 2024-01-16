@@ -34,6 +34,7 @@ import {
 import { v4 as uuid } from "uuid";
 import {
 	INonPersistentCache,
+	IPrefetchPartialSnapshotWithContents,
 	IPrefetchSnapshotContents,
 	LocalPersistentCache,
 	NonPersistentCache,
@@ -64,7 +65,10 @@ export class OdspDocumentServiceFactoryCore
 	private readonly nonPersistentCache: INonPersistentCache = new NonPersistentCache();
 	private readonly socketReferenceKeyPrefix?: string;
 
-	public get snapshotPrefetchResultCache(): PromiseCache<string, IPrefetchSnapshotContents> {
+	public get snapshotPrefetchResultCache(): PromiseCache<
+		string,
+		IPrefetchSnapshotContents | IPrefetchPartialSnapshotWithContents
+	> {
 		return this.nonPersistentCache.snapshotPrefetchResultCache;
 	}
 

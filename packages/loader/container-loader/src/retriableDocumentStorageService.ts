@@ -8,6 +8,7 @@ import {
 	FetchSource,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
+	IPartialSnapshotWithContents,
 	ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import {
@@ -54,7 +55,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 	public async getSnapshotTree(
 		version?: IVersion,
 		scenarioName?: string,
-	): Promise<ISnapshotTree | null> {
+	): Promise<ISnapshotTree | IPartialSnapshotWithContents | null> {
 		return this.runWithRetry(
 			async () =>
 				this.internalStorageServiceP.then(async (s) =>

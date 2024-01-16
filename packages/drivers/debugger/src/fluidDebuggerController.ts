@@ -4,10 +4,12 @@
  */
 
 import { assert, Deferred } from "@fluidframework/core-utils";
+import { instanceOfIPartialSnapshotWithContents } from "@fluid-internal/client-utils";
 import {
 	IDocumentService,
 	IDocumentStorageService,
 	IDocumentDeltaStorageService,
+	IPartialSnapshotWithContents,
 } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
@@ -101,7 +103,10 @@ export class DebugReplayController extends ReplayController implements IDebugger
 		}
 
 		const tree = await this.documentStorageService.getSnapshotTree(version);
-		const seq = await DebugReplayController.seqFromTree(this.documentStorageService, tree);
+		const seq = await DebugReplayController.seqFromTree(
+			this.documentStorageService,
+			instanceOfIPartialSnapshotWithContents(tree) ? tree.snapshotTree : tree,
+		);
 		this.resolveStorage(seq, new SnapshotStorage(this.documentStorageService, tree), version);
 	}
 
@@ -205,7 +210,10 @@ export class DebugReplayController extends ReplayController implements IDebugger
 		await prevRequest;
 
 		const treeV = await documentStorageService.getSnapshotTree(version);
-		const seqV = await DebugReplayController.seqFromTree(documentStorageService, treeV);
+		const seqV = await DebugReplayController.seqFromTree(
+			documentStorageService,
+			instanceOfIPartialSnapshotWithContents(treeV) ? treeV.snapshotTree : treeV,
+		);
 
 		if (!this.isSelectionMade()) {
 			this.versionCount--;
@@ -286,7 +294,9 @@ export class DebugReplayController extends ReplayController implements IDebugger
 	}
 
 	// eslint-disable-next-line @rushstack/no-new-null
-	public async getSnapshotTree(versionRequested?: IVersion): Promise<ISnapshotTree | null> {
+	public async getSnapshotTree(
+		versionRequested?: IVersion,
+	): Promise<ISnapshotTree | IPartialSnapshotWithContents | null> {
 		if (this.storage !== undefined) {
 			return this.storage.getSnapshotTree(versionRequested);
 		}

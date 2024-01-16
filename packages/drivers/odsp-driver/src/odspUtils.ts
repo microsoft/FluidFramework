@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryProperties, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
+import { IPartialSnapshotWithContents, IResolvedUrl } from "@fluidframework/driver-definitions";
 import {
 	isOnline,
 	OnlineStatus,
@@ -44,6 +44,7 @@ import {
 import { fetch } from "./fetch";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { IOdspSnapshot } from "./contracts";
+import { ISnapshotContents } from "./odspPublicUtils";
 
 export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRepeat";
 
@@ -482,4 +483,16 @@ export async function measureP<T>(callback: () => Promise<T>): Promise<[T, numbe
 
 export function getJoinSessionCacheKey(odspResolvedUrl: IOdspResolvedUrl) {
 	return `${odspResolvedUrl.hashedDocumentId}/joinsession`;
+}
+
+/**
+ * Utility API to check if the type of snapshot is `ISnapshotContents`.
+ * @alpha
+ * @param obj - obj whose type needs to be identified.
+ */
+export function instanceOfISnapshotContents(
+	// eslint-disable-next-line @rushstack/no-new-null
+	obj: ISnapshotContents | IPartialSnapshotWithContents | null | undefined,
+): obj is ISnapshotContents {
+	return obj !== undefined && obj !== null && !("couldBePartialSnapshot" in obj);
 }

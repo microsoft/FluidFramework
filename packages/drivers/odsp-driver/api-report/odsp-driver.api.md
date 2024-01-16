@@ -14,6 +14,7 @@ import { IEntry } from '@fluidframework/odsp-driver-definitions';
 import { IFileEntry } from '@fluidframework/odsp-driver-definitions';
 import { IOdspResolvedUrl } from '@fluidframework/odsp-driver-definitions';
 import { IOdspUrlParts } from '@fluidframework/odsp-driver-definitions';
+import { IPartialSnapshotWithContents } from '@fluidframework/driver-definitions';
 import { IPersistedCache } from '@fluidframework/odsp-driver-definitions';
 import { IRelaySessionAwareDriverFactory } from '@fluidframework/odsp-driver-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
@@ -129,7 +130,7 @@ export interface INonPersistentCache {
         entryTime: number;
         joinSessionResponse: ISocketStorageDiscovery;
     }>;
-    readonly snapshotPrefetchResultCache: PromiseCache<string, IPrefetchSnapshotContents>;
+    readonly snapshotPrefetchResultCache: PromiseCache<string, IPrefetchSnapshotContents | IPrefetchPartialSnapshotWithContents>;
 }
 
 // @alpha
@@ -157,6 +158,14 @@ export interface IPersistedFileCache {
     put(entry: IEntry, value: any): Promise<void>;
     // (undocumented)
     removeEntries(): Promise<void>;
+}
+
+// @alpha (undocumented)
+export interface IPrefetchPartialSnapshotWithContents extends IPartialSnapshotWithContents {
+    // (undocumented)
+    fluidEpoch: string;
+    // (undocumented)
+    prefetchStartTime: number;
 }
 
 // @alpha (undocumented)
@@ -232,7 +241,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory, 
     // (undocumented)
     protected persistedCache: IPersistedCache;
     // (undocumented)
-    get snapshotPrefetchResultCache(): PromiseCache<string, IPrefetchSnapshotContents>;
+    get snapshotPrefetchResultCache(): PromiseCache<string, IPrefetchSnapshotContents | IPrefetchPartialSnapshotWithContents>;
 }
 
 // @internal @deprecated (undocumented)

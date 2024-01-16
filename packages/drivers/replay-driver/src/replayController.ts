@@ -6,6 +6,7 @@
 import {
 	IDocumentService,
 	IDocumentStorageService,
+	IPartialSnapshotWithContents,
 	ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";
@@ -16,7 +17,9 @@ import * as api from "@fluidframework/protocol-definitions";
  */
 export abstract class ReadDocumentStorageServiceBase implements IDocumentStorageService {
 	public abstract getVersions(versionId: string | null, count: number): Promise<api.IVersion[]>;
-	public abstract getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null>;
+	public abstract getSnapshotTree(
+		version?: api.IVersion,
+	): Promise<api.ISnapshotTree | IPartialSnapshotWithContents | null>;
 	public abstract readBlob(blobId: string): Promise<ArrayBufferLike>;
 
 	public async uploadSummaryWithContext(

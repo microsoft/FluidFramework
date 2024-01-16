@@ -11,6 +11,8 @@ import { IDisposable } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IEventTransformer } from '@fluidframework/core-interfaces';
+import { IPartialSnapshotWithContents } from '@fluidframework/driver-definitions';
+import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { TransformedEvent } from '@fluidframework/core-interfaces';
 
 // @internal
@@ -57,6 +59,12 @@ export function gitHashFile(file: IsoBuffer): Promise<string>;
 
 // @internal
 export function hashFile(file: IsoBuffer, algorithm?: "SHA-1" | "SHA-256", hashEncoding?: "hex" | "base64"): Promise<string>;
+
+// @alpha
+export function instanceOfIPartialSnapshotWithContents(obj: ISnapshotTree | IPartialSnapshotWithContents | null | undefined): obj is IPartialSnapshotWithContents;
+
+// @alpha
+export function instanceOfISnapshotTree(obj: ISnapshotTree | IPartialSnapshotWithContents | null | undefined): obj is ISnapshotTree;
 
 // @internal (undocumented)
 export const IsoBuffer: typeof Buffer_2;

@@ -5,7 +5,10 @@
 
 import { ITelemetryBaseLogger, IDisposable, FluidObject } from "@fluidframework/core-interfaces";
 
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import {
+	IDocumentStorageService,
+	IPartialSnapshotWithContents,
+} from "@fluidframework/driver-definitions";
 import {
 	IClientDetails,
 	ISequencedDocumentMessage,
@@ -128,7 +131,7 @@ export interface IContainerContext {
 	readonly clientDetails: IClientDetails;
 	readonly storage: IDocumentStorageService;
 	readonly connected: boolean;
-	readonly baseSnapshot: ISnapshotTree | undefined;
+	readonly baseSnapshot: ISnapshotTree | IPartialSnapshotWithContents | undefined;
 	/**
 	 * @deprecated Please use submitBatchFn & submitSummaryFn
 	 */

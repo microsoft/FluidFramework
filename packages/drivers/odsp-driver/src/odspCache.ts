@@ -12,6 +12,7 @@ import {
 	ISocketStorageDiscovery,
 	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
+import { IPartialSnapshotWithContents } from "@fluidframework/driver-definitions";
 import { ISnapshotContents } from "./odspPublicUtils";
 
 /**
@@ -111,7 +112,10 @@ export interface INonPersistentCache {
 	 * Used to store the snapshot fetch promise if the prefetch has been made using the prefetchLatestSnapshot api.
 	 * This is then used later to look for the promise during the container load.
 	 */
-	readonly snapshotPrefetchResultCache: PromiseCache<string, IPrefetchSnapshotContents>;
+	readonly snapshotPrefetchResultCache: PromiseCache<
+		string,
+		IPrefetchSnapshotContents | IPrefetchPartialSnapshotWithContents
+	>;
 }
 
 /**
@@ -135,7 +139,7 @@ export class NonPersistentCache implements INonPersistentCache {
 
 	public readonly snapshotPrefetchResultCache = new PromiseCache<
 		string,
-		IPrefetchSnapshotContents
+		IPrefetchSnapshotContents | IPrefetchPartialSnapshotWithContents
 	>();
 }
 
@@ -143,6 +147,14 @@ export class NonPersistentCache implements INonPersistentCache {
  * @alpha
  */
 export interface IPrefetchSnapshotContents extends ISnapshotContents {
+	fluidEpoch: string;
+	prefetchStartTime: number;
+}
+
+/**
+ * @alpha
+ */
+export interface IPrefetchPartialSnapshotWithContents extends IPartialSnapshotWithContents {
 	fluidEpoch: string;
 	prefetchStartTime: number;
 }

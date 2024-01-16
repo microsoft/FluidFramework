@@ -19,7 +19,11 @@ import {
 	IVersionedValueWithEpoch,
 	persistedCacheValueVersion,
 } from "../contracts";
-import { IPrefetchSnapshotContents, LocalPersistentCache } from "../odspCache";
+import {
+	IPrefetchPartialSnapshotWithContents,
+	IPrefetchSnapshotContents,
+	LocalPersistentCache,
+} from "../odspCache";
 import { createCacheSnapshotKey, INewFileInfo } from "../odspUtils";
 import { createOdspUrl } from "../createOdspUrl";
 import { getHashedDocumentId, ISnapshotContents } from "../odspPublicUtils";
@@ -64,7 +68,10 @@ describe("Tests for prefetching snapshot", () => {
 		};
 	}
 	const resolver = new OdspDriverUrlResolver();
-	let snapshotPrefetchResultCache: PromiseCache<string, IPrefetchSnapshotContents>;
+	let snapshotPrefetchResultCache: PromiseCache<
+		string,
+		IPrefetchSnapshotContents | IPrefetchPartialSnapshotWithContents
+	>;
 	const odspUrl = createOdspUrl({ ...newFileParams, itemId, dataStorePath: "/" });
 
 	const odspSnapshot: IOdspSnapshot = {

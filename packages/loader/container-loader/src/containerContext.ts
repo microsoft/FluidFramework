@@ -16,7 +16,10 @@ import {
 	IBatchMessage,
 } from "@fluidframework/container-definitions";
 import { FluidObject } from "@fluidframework/core-interfaces";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import {
+	IDocumentStorageService,
+	IPartialSnapshotWithContents,
+} from "@fluidframework/driver-definitions";
 import {
 	IClientDetails,
 	IDocumentMessage,
@@ -63,7 +66,7 @@ export class ContainerContext implements IContainerContext {
 	constructor(
 		public readonly options: ILoaderOptions,
 		public readonly scope: FluidObject,
-		public readonly baseSnapshot: ISnapshotTree | undefined,
+		public readonly baseSnapshot: ISnapshotTree | IPartialSnapshotWithContents | undefined,
 		private readonly _version: IVersion | undefined,
 		public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		public readonly storage: IDocumentStorageService,

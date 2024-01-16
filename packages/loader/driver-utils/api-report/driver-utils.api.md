@@ -19,6 +19,7 @@ import { IDocumentStorageServicePolicies } from '@fluidframework/driver-definiti
 import { IDriverErrorBase } from '@fluidframework/driver-definitions';
 import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
 import { ILocationRedirectionError } from '@fluidframework/driver-definitions';
+import { IPartialSnapshotWithContents } from '@fluidframework/driver-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -140,7 +141,7 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
     // (undocumented)
     downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
     // (undocumented)
-    getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
+    getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | IPartialSnapshotWithContents | null>;
     // (undocumented)
     getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion[]>;
     // (undocumented)
@@ -294,7 +295,7 @@ export class ParallelRequests<T> {
 // @internal (undocumented)
 export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy {
     // (undocumented)
-    getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;
+    getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | IPartialSnapshotWithContents | null>;
     // (undocumented)
     get policies(): {
         caching: LoaderCachingPolicy;

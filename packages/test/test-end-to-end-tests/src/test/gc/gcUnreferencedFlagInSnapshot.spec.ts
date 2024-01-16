@@ -20,6 +20,7 @@ import {
 	ITestDataObject,
 	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
+import { instanceOfIPartialSnapshotWithContents } from "@fluid-internal/client-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { defaultGCConfig } from "./gcTestConfigs.js";
 
@@ -81,9 +82,12 @@ describeCompat(
 			// Download the snapshot corresponding to the above summary from the server.
 			const versions = await documentStorage.getVersions(summaryResult.summaryVersion, 1);
 			const snapshot = await documentStorage.getSnapshotTree(versions[0]);
-			assert(snapshot !== null, "Snapshot could not be downloaded from server");
+			const snapshotTree = instanceOfIPartialSnapshotWithContents(snapshot)
+				? snapshot.snapshotTree
+				: snapshot;
+			assert(snapshotTree !== null, "Snapshot could not be downloaded from server");
 			const dataStoreTreesDownloaded =
-				snapshot.trees[channelsTreeName]?.trees ?? snapshot.trees;
+				snapshotTree.trees[channelsTreeName]?.trees ?? snapshotTree.trees;
 			for (const [key, value] of Object.entries(dataStoreTreesDownloaded)) {
 				if (unreferencedDataStoreIds.includes(key)) {
 					assert(

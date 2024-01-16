@@ -18,6 +18,7 @@ import { IErrorEvent } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IGenericError } from '@fluidframework/core-interfaces';
+import { IPartialSnapshotWithContents } from '@fluidframework/driver-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
@@ -146,7 +147,7 @@ export interface IContainerContext {
     // (undocumented)
     readonly audience: IAudience | undefined;
     // (undocumented)
-    readonly baseSnapshot: ISnapshotTree | undefined;
+    readonly baseSnapshot: ISnapshotTree | IPartialSnapshotWithContents | undefined;
     // (undocumented)
     readonly clientDetails: IClientDetails;
     // (undocumented)

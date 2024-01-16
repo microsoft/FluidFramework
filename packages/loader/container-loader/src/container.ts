@@ -5,7 +5,11 @@
 
 import { v4 as uuid } from "uuid";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
+import {
+	TypedEventEmitter,
+	instanceOfIPartialSnapshotWithContents,
+	performance,
+} from "@fluid-internal/client-utils";
 import {
 	IEvent,
 	ITelemetryProperties,
@@ -40,6 +44,7 @@ import {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IDocumentStorageService,
+	IPartialSnapshotWithContents,
 	IResolvedUrl,
 	IThrottlingWarning,
 	IUrlResolver,
@@ -1600,10 +1605,14 @@ export class Container
 		} else {
 			assert(snapshot !== undefined, 0x237 /* "Snapshot should exist" */);
 			if (this.offlineLoadEnabled) {
-				this.baseSnapshot = snapshot;
+				this.baseSnapshot = instanceOfIPartialSnapshotWithContents(snapshot)
+					? snapshot.snapshotTree
+					: snapshot;
 				// Save contents of snapshot now, otherwise closeAndGetPendingLocalState() must be async
 				this.baseSnapshotBlobs = await getBlobContentsFromTree(
-					snapshot,
+					instanceOfIPartialSnapshotWithContents(snapshot)
+						? snapshot.snapshotTree
+						: snapshot,
 					this.storageAdapter,
 				);
 			}
@@ -1611,7 +1620,7 @@ export class Container
 
 		const attributes: IDocumentAttributes = await this.getDocumentAttributes(
 			this.storageAdapter,
-			snapshot,
+			instanceOfIPartialSnapshotWithContents(snapshot) ? snapshot.snapshotTree : snapshot,
 		);
 
 		// If we saved ops, we will replay them and don't need DeltaManager to fetch them
@@ -1698,7 +1707,11 @@ export class Container
 
 		// ...load in the existing quorum
 		// Initialize the protocol handler
-		await this.initializeProtocolStateFromSnapshot(attributes, this.storageAdapter, snapshot);
+		await this.initializeProtocolStateFromSnapshot(
+			attributes,
+			this.storageAdapter,
+			instanceOfIPartialSnapshotWithContents(snapshot) ? snapshot.snapshotTree : snapshot,
+		);
 
 		timings.phase3 = performance.now();
 		const codeDetails = this.getCodeDetailsFromQuorum();
@@ -2382,7 +2395,7 @@ export class Container
 	 */
 	private async fetchSnapshotTree(
 		specifiedVersion: string | undefined,
-	): Promise<{ snapshot?: ISnapshotTree; versionId?: string }> {
+	): Promise<{ snapshot?: ISnapshotTree | IPartialSnapshotWithContents; versionId?: string }> {
 		const version = await this.getVersion(specifiedVersion ?? null);
 
 		if (version === undefined && specifiedVersion !== undefined) {
@@ -2398,12 +2411,15 @@ export class Container
 		if (snapshot === undefined && version !== undefined) {
 			this.mc.logger.sendErrorEvent({ eventName: "getSnapshotTreeFailed", id: version.id });
 		}
-		return { snapshot, versionId: version?.id };
+		return {
+			snapshot,
+			versionId: version?.id,
+		};
 	}
 
 	private async instantiateRuntime(
 		codeDetails: IFluidCodeDetails,
-		snapshot: ISnapshotTree | undefined,
+		snapshot: ISnapshotTree | IPartialSnapshotWithContents | undefined,
 		pendingLocalState?: unknown,
 	) {
 		assert(this._runtime?.disposed !== false, 0x0dd /* "Existing runtime not disposed" */);

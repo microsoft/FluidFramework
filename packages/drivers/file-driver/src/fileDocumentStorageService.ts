@@ -6,7 +6,11 @@
 import fs from "fs";
 import { bufferToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
-import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
+import {
+	IDocumentStorageService,
+	IPartialSnapshotWithContents,
+	ISummaryContext,
+} from "@fluidframework/driver-definitions";
 import { buildSnapshotTree, convertSummaryTreeToSnapshotITree } from "@fluidframework/driver-utils";
 import * as api from "@fluidframework/protocol-definitions";
 import { IFileSnapshot, ReadDocumentStorageServiceBase } from "@fluidframework/replay-driver";
@@ -173,7 +177,9 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
 		}
 
 		// eslint-disable-next-line @rushstack/no-new-null
-		public async getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null> {
+		public async getSnapshotTree(
+			version?: api.IVersion,
+		): Promise<api.ISnapshotTree | IPartialSnapshotWithContents | null> {
 			if (this.latestWriterTree && (!version || version.id === "latest")) {
 				return this.latestWriterTree;
 			}

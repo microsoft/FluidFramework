@@ -5837,8 +5837,10 @@ importers:
       '@fluidframework/build-tools': ^0.29.0
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
+      '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.3.0
       '@fluidframework/mocha-test-setup': workspace:~
+      '@fluidframework/protocol-definitions': ^3.1.0
       '@microsoft/api-extractor': ^7.38.3
       '@types/base64-js': ^1.3.0
       '@types/events': ^3.0.0
@@ -5880,6 +5882,8 @@ importers:
     dependencies:
       '@fluidframework/core-interfaces': link:../core-interfaces
       '@fluidframework/core-utils': link:../core-utils
+      '@fluidframework/driver-definitions': link:../driver-definitions
+      '@fluidframework/protocol-definitions': 3.1.0
       '@types/events': 3.0.3
       base64-js: 1.5.1
       buffer: 6.0.3
@@ -7269,6 +7273,7 @@ importers:
   packages/drivers/debugger:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.29.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.29.0
@@ -7289,6 +7294,7 @@ importers:
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
+      '@fluid-internal/client-utils': link:../../common/client-utils
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils

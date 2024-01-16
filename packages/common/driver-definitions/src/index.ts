@@ -27,6 +27,8 @@ export {
 	IDocumentServicePolicies,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
+	IPartialSnapshotWithContents,
+	ISnapshotTree2,
 	IStream,
 	IStreamResult,
 	ISummaryContext,

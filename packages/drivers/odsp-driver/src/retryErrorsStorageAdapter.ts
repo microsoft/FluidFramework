@@ -8,6 +8,7 @@ import {
 	FetchSource,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
+	IPartialSnapshotWithContents,
 	ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import {
@@ -41,8 +42,10 @@ export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisp
 		return this.internalStorageService.repositoryUrl;
 	}
 
-	// eslint-disable-next-line @rushstack/no-new-null
-	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
+	public async getSnapshotTree(
+		version?: IVersion,
+		// eslint-disable-next-line @rushstack/no-new-null
+	): Promise<ISnapshotTree | IPartialSnapshotWithContents | null> {
 		return this.runWithRetry(
 			async () => this.internalStorageService.getSnapshotTree(version),
 			"storage_getSnapshotTree",
