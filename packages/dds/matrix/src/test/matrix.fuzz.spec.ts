@@ -27,7 +27,7 @@ import { FlushMode } from "@fluidframework/runtime-definitions";
 import { MatrixItem, SharedMatrix } from "../matrix";
 import { SharedMatrixFactory } from "../runtime";
 /**
- * Suported cell values used within the fuzz model.
+ * Supported cell values used within the fuzz model.
  */
 type Value = string | number | undefined;
 
