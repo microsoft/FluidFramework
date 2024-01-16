@@ -21,7 +21,8 @@
 				"dbaeumer.vscode-eslint",
 				"esbenp.prettier-vscode",
 				"ms-azuretools.vscode-docker",
-				"mutantdino.resourcemonitor"
+				"mutantdino.resourcemonitor",
+				"ms-azure-devops.azure-pipelines"
 			]
 		}
 	},
