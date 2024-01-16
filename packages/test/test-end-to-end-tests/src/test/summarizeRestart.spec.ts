@@ -10,62 +10,65 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
+	createTestConfigProvider,
 	createSummarizer,
-	mockConfigProvider,
 	summarizeNow,
 } from "@fluidframework/test-utils";
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
 import { SharedCounter } from "@fluidframework/counter";
 
-describeCompat(
-	"Summarizer closes instead of refreshing",
-	"2.0.0-rc.1.0.0",
-	(getTestObjectProvider) => {
-		const settings = {};
-		const testContainerConfig: ITestContainerConfig = {
-			runtimeOptions: {
-				summaryOptions: {
-					summaryConfigOverrides: { state: "disabled" },
-				},
+describeCompat("Summarizer closes instead of refreshing", "NoCompat", (getTestObjectProvider) => {
+	const configProvider = createTestConfigProvider();
+	const testContainerConfig: ITestContainerConfig = {
+		runtimeOptions: {
+			summaryOptions: {
+				summaryConfigOverrides: { state: "disabled" },
 			},
-			loaderProps: { configProvider: mockConfigProvider(settings) },
-			registry: [[SharedCounter.getFactory().type, SharedCounter.getFactory()]],
-		};
+		},
+		loaderProps: { configProvider },
+		registry: [[SharedCounter.getFactory().type, SharedCounter.getFactory()]],
+	};
+	const summarizerContainerConfig: ITestContainerConfig = { loaderProps: { configProvider } };
 
-		let provider: ITestObjectProvider;
-		const createContainer = async (): Promise<IContainer> => {
-			return provider.makeTestContainer(testContainerConfig);
-		};
+	let provider: ITestObjectProvider;
 
-		beforeEach("setup", async () => {
-			provider = getTestObjectProvider({ syncSummarizer: true });
-			settings["Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs"] = 100;
-		});
+	const createContainer = async (): Promise<IContainer> => {
+		return provider.makeTestContainer(testContainerConfig);
+	};
 
-		itExpects(
-			"Closes the summarizing client instead of refreshing",
-			[
-				{
-					eventName:
-						"fluid:telemetry:Summarizer:Running:RefreshLatestSummaryFromServerFetch_end",
-				},
-				{
-					eventName: "fluid:telemetry:Container:ContainerDispose",
-					category: "generic",
-				},
-				{
-					eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
-					category: "generic",
-					error: "summary state stale - Unsupported option 'refreshLatestAck'",
-				},
-			],
-			async () => {
-				const container = await createContainer();
-				const { container: summarizingContainer, summarizer } = await createSummarizer(
-					provider,
-					container,
-					{ loaderProps: { configProvider: mockConfigProvider(settings) } },
-				);
+	beforeEach("setup", async () => {
+		provider = getTestObjectProvider({ syncSummarizer: true });
+		configProvider.set("Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs", 100);
+	});
+
+	afterEach(() => {
+		configProvider.clear();
+	});
+
+	itExpects(
+		"Closes the summarizing client instead of refreshing",
+		[
+			{
+				eventName:
+					"fluid:telemetry:Summarizer:Running:RefreshLatestSummaryFromServerFetch_end",
+			},
+			{
+				eventName: "fluid:telemetry:Container:ContainerDispose",
+				category: "generic",
+			},
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
+				category: "generic",
+				error: "summary state stale - Unsupported option 'refreshLatestAck'",
+			},
+		],
+		async () => {
+			const container = await createContainer();
+			const { container: summarizingContainer, summarizer } = await createSummarizer(
+				provider,
+				container,
+				summarizerContainerConfig,
+			);
 
 				const summarizeResults = summarizer.summarizeOnDemand({
 					reason: "end-to-end test",
@@ -78,29 +81,27 @@ describeCompat(
 			},
 		);
 
-		itExpects(
-			"Closes the summarizing client instead of refreshing with two clients",
-			[
-				{
-					eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_end",
-				},
-				{
-					eventName: "fluid:telemetry:Container:ContainerDispose",
-					category: "generic",
-				},
-			],
-			async () => {
-				const container = await createContainer();
-				const { container: summarizingContainer, summarizer } = await createSummarizer(
-					provider,
-					container,
-					{ loaderProps: { configProvider: mockConfigProvider(settings) } },
-				);
+	itExpects(
+		"Closes the summarizing client instead of refreshing with two clients",
+		[
+			{
+				eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_end",
+			},
+			{
+				eventName: "fluid:telemetry:Container:ContainerDispose",
+				category: "generic",
+			},
+		],
+		async () => {
+			const container = await createContainer();
+			const { container: summarizingContainer, summarizer } = await createSummarizer(
+				provider,
+				container,
+				summarizerContainerConfig,
+			);
 
-				const { container: summarizingContainer2, summarizer: summarizer2 } =
-					await createSummarizer(provider, container, {
-						loaderProps: { configProvider: mockConfigProvider(settings) },
-					});
+			const { container: summarizingContainer2, summarizer: summarizer2 } =
+				await createSummarizer(provider, container, summarizerContainerConfig);
 
 				await summarizeNow(summarizer);
 				await provider.ensureSynchronized();
@@ -116,21 +117,21 @@ describeCompat(
 			},
 		);
 
-		itExpects(
-			"Closes the summarizing client instead of refreshing when loading from an older summary",
-			[
-				{
-					eventName: "fluid:telemetry:Container:ContainerDispose",
-					category: "generic",
-				},
-			],
-			async () => {
-				const container = await createContainer();
-				const { container: summarizingContainer, summarizer } = await createSummarizer(
-					provider,
-					container,
-					{ loaderProps: { configProvider: mockConfigProvider(settings) } },
-				);
+	itExpects(
+		"Closes the summarizing client instead of refreshing when loading from an older summary",
+		[
+			{
+				eventName: "fluid:telemetry:Container:ContainerDispose",
+				category: "generic",
+			},
+		],
+		async () => {
+			const container = await createContainer();
+			const { container: summarizingContainer, summarizer } = await createSummarizer(
+				provider,
+				container,
+				summarizerContainerConfig,
+			);
 
 				// summary1
 				const { summaryVersion: summaryVersion1 } = await summarizeNow(summarizer);
@@ -141,13 +142,13 @@ describeCompat(
 				summarizer.close();
 				summarizingContainer.close();
 
-				const { container: summarizingContainer2, summarizer: summarizer2 } =
-					await createSummarizer(
-						provider,
-						container,
-						{ loaderProps: { configProvider: mockConfigProvider(settings) } },
-						summaryVersion1,
-					);
+			const { container: summarizingContainer2, summarizer: summarizer2 } =
+				await createSummarizer(
+					provider,
+					container,
+					summarizerContainerConfig,
+					summaryVersion1,
+				);
 
 				await provider.ensureSynchronized();
 

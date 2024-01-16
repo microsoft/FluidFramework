@@ -5,10 +5,10 @@
 
 import { strict as assert } from "assert";
 import {
+	createTestConfigProvider,
 	createSummarizer,
 	ITestContainerConfig,
 	ITestObjectProvider,
-	mockConfigProvider,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
@@ -37,7 +37,7 @@ describeCompat("GC unreference phases", "2.0.0-rc.1.0.0", (getTestObjectProvider
 	const tombstoneTimeoutMs = 200; // Tombstone at 200ms
 	const sweepGracePeriodMs = 100; // Sweep at 300ms
 
-	const settings = {};
+	const configProvider = createTestConfigProvider();
 	const gcOptions: IGCRuntimeOptions = {
 		inactiveTimeoutMs: tombstoneTimeoutMs / 2, // Required to avoid an error
 		enableGCSweep: true,
@@ -52,7 +52,7 @@ describeCompat("GC unreference phases", "2.0.0-rc.1.0.0", (getTestObjectProvider
 			},
 			gcOptions,
 		},
-		loaderProps: { configProvider: mockConfigProvider(settings) },
+		loaderProps: { configProvider },
 	};
 
 	let provider: ITestObjectProvider;
@@ -63,7 +63,7 @@ describeCompat("GC unreference phases", "2.0.0-rc.1.0.0", (getTestObjectProvider
 			container,
 			{
 				runtimeOptions: { gcOptions },
-				loaderProps: { configProvider: mockConfigProvider(settings) },
+				loaderProps: { configProvider },
 			},
 			summaryVersion,
 		);
@@ -85,9 +85,16 @@ describeCompat("GC unreference phases", "2.0.0-rc.1.0.0", (getTestObjectProvider
 			this.skip();
 		}
 
-		settings["Fluid.GarbageCollection.DisableAttachmentBlobSweep"] = true; // Only sweep DataStores
-		settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = true;
-		settings["Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs"] = tombstoneTimeoutMs;
+		configProvider.set("Fluid.GarbageCollection.DisableAttachmentBlobSweep", true); // Only sweep DataStores
+		configProvider.set("Fluid.GarbageCollection.ThrowOnTombstoneUsage", true);
+		configProvider.set(
+			"Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs",
+			tombstoneTimeoutMs,
+		);
+	});
+
+	afterEach(() => {
+		configProvider.clear();
 	});
 
 	it("Unreferenced objects follow the sequence [unreferenced, tombstoned, deleted]", async () => {
