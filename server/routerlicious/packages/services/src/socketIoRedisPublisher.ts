@@ -32,9 +32,8 @@ export class SocketIoRedisPublisher implements core.IPublisher {
 		this.redisClient = enableClustering
 			? new Redis.Cluster([{ port: options.port, host: options.host }], {
 					redisOptions: options,
-					slotsRefreshTimeout: 5000,
+					slotsRefreshTimeout: 10000,
 					dnsLookup: (adr, callback) => callback(null, adr),
-					scaleReads: "slave",
 					showFriendlyErrorStack: true,
 			  })
 			: new Redis.default(options);

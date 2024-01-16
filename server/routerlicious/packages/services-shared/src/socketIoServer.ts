@@ -147,6 +147,10 @@ export function create(
 		enableReadyCheck: true,
 		maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
 		enableOfflineQueue: redisConfig.enableOfflineQueue,
+		retryStrategy(times) {
+			const delay = Math.min(times * 50, 2000);
+			return delay;
+		},
 	};
 	if (redisConfig.enableAutoPipelining) {
 		/**
@@ -166,18 +170,16 @@ export function create(
 	const pub: Redis.default | Redis.Cluster = redisConfig.enableClustering
 		? new Redis.Cluster([{ port: redisConfig.port, host: redisConfig.host }], {
 				redisOptions: clone(options),
-				slotsRefreshTimeout: 5000,
+				slotsRefreshTimeout: 10000,
 				dnsLookup: (adr, callback) => callback(null, adr),
-				scaleReads: "slave",
 				showFriendlyErrorStack: true,
 		  })
 		: new Redis.default(clone(options));
 	const sub: Redis.default | Redis.Cluster = redisConfig.enableClustering
 		? new Redis.Cluster([{ port: redisConfig.port, host: redisConfig.host }], {
 				redisOptions: clone(options),
-				slotsRefreshTimeout: 5000,
+				slotsRefreshTimeout: 10000,
 				dnsLookup: (adr, callback) => callback(null, adr),
-				scaleReads: "slave",
 				showFriendlyErrorStack: true,
 		  })
 		: new Redis.default(clone(options));

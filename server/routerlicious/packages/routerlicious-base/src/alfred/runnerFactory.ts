@@ -215,6 +215,10 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			enableReadyCheck: true,
 			maxRetriesPerRequest: redisConfig2.maxRetriesPerRequest,
 			enableOfflineQueue: redisConfig2.enableOfflineQueue,
+			retryStrategy(times) {
+				const delay = Math.min(times * 50, 2000);
+				return delay;
+			},
 		};
 		if (redisConfig2.enableAutoPipelining) {
 			/**
@@ -237,22 +241,31 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 
 		let redisOptionsCopy = { ...redisOptions2 };
 		redisOptionsCopy.password = "REDACTED";
-		Lumberjack.info("test123 Redis Client Params, redisOptions2, CE: "+redisConfig2.enableClustering, {
+		Lumberjack.info(
+			`test123 Redis Client Params, redisOptions2, CE: ${redisConfig2.enableClustering}`,
+			{
+				redisOptionsCopy,
+				slotsRefreshTimeout: 10000,
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+				dnsLookup: (adr, callback) => callback(undefined, adr),
+				showFriendlyErrorStack: true,
+				clusterRetryStrategy(times) {
+					const delay = Math.min(times * 50, 2000);
+					return delay;
+				},
+			},
+		);
+		Lumberjack.info(
+			`test123 Redis Client Options, redisOptions2, CE: ${redisConfig2.enableClustering}`,
 			redisOptionsCopy,
-			slotsRefreshTimeout: 5000,
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-			dnsLookup: (adr, callback) => callback(undefined, adr),
-			scaleReads: "slave",
-			showFriendlyErrorStack: true,
-		});
-		Lumberjack.info("test123 Redis Client Options, redisOptions2, CE: "+redisConfig2.enableClustering, redisOptionsCopy);
+		);
 
+		console.log("test123456");
 		const redisClient: Redis.default | Redis.Cluster = redisConfig2.enableClustering
 			? new Redis.Cluster([{ port: redisConfig2.port, host: redisConfig2.host }], {
 					redisOptions: redisOptions2,
-					slotsRefreshTimeout: 5000,
+					slotsRefreshTimeout: 10000,
 					dnsLookup: (adr, callback) => callback(null, adr),
-					scaleReads: "slave",
 					showFriendlyErrorStack: true,
 			  })
 			: new Redis.default(redisOptions2);
@@ -261,9 +274,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const redisClientForJwtCache: Redis.default | Redis.Cluster = redisConfig2.enableClustering
 			? new Redis.Cluster([{ port: redisConfig2.port, host: redisConfig2.host }], {
 					redisOptions: redisOptions2,
-					slotsRefreshTimeout: 5000,
+					slotsRefreshTimeout: 10000,
 					dnsLookup: (adr, callback) => callback(null, adr),
-					scaleReads: "slave",
 					showFriendlyErrorStack: true,
 			  })
 			: new Redis.default(redisOptions2);
@@ -341,6 +353,10 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			enableReadyCheck: true,
 			maxRetriesPerRequest: redisConfigForThrottling.maxRetriesPerRequest,
 			enableOfflineQueue: redisConfigForThrottling.enableOfflineQueue,
+			retryStrategy(times) {
+				const delay = Math.min(times * 50, 2000);
+				return delay;
+			},
 		};
 		if (redisConfigForThrottling.enableAutoPipelining) {
 			/**
@@ -364,16 +380,22 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 
 		redisOptionsCopy = { ...redisOptionsForThrottling };
 		redisOptionsCopy.password = "REDACTED";
-		Lumberjack.info("test123 Redis Client Params, redisOptionsForThrottling, CE: "+redisConfigForThrottling.enableClustering, {
-			redisOptionsCopy,
-			slotsRefreshTimeout: 5000,
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-			dnsLookup: (adr, callback) => callback(undefined, adr),
-			scaleReads: "slave",
-			showFriendlyErrorStack: true,
-		});
 		Lumberjack.info(
-			"test123 Redis Client Options, redisOptionsForThrottling, CE: "+redisConfigForThrottling.enableClustering,
+			`test123 Redis Client Params, redisOptionsForThrottling, CE: ${redisConfigForThrottling.enableClustering}`,
+			{
+				redisOptionsCopy,
+				slotsRefreshTimeout: 10000,
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+				dnsLookup: (adr, callback) => callback(undefined, adr),
+				showFriendlyErrorStack: true,
+				clusterRetryStrategy(times) {
+					const delay = Math.min(times * 50, 2000);
+					return delay;
+				},
+			},
+		);
+		Lumberjack.info(
+			`test123 Redis Client Options, redisOptionsForThrottling, CE: ${redisConfigForThrottling.enableClustering}`,
 			redisOptionsCopy,
 		);
 
@@ -388,9 +410,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 						],
 						{
 							redisOptions: redisOptionsForThrottling,
-							slotsRefreshTimeout: 5000,
+							slotsRefreshTimeout: 10000,
 							dnsLookup: (adr, callback) => callback(null, adr),
-							scaleReads: "slave",
 							showFriendlyErrorStack: true,
 						},
 				  )
@@ -568,6 +589,10 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 				enableReadyCheck: true,
 				maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
 				enableOfflineQueue: redisConfig.enableOfflineQueue,
+				retryStrategy(times) {
+					const delay = Math.min(times * 50, 2000);
+					return delay;
+				},
 			};
 			if (redisConfig.enableAutoPipelining) {
 				/**
@@ -587,10 +612,9 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			const redisClientForLogging: Redis.default | Redis.Cluster =
 				redisConfig.enableClustering
 					? new Redis.Cluster([{ port: redisConfig.port, host: redisConfig.host }], {
-							redisOptions: redisOptions2,
-							slotsRefreshTimeout: 5000,
+							redisOptions,
+							slotsRefreshTimeout: 10000,
 							dnsLookup: (adr, callback) => callback(null, adr),
-							scaleReads: "slave",
 							showFriendlyErrorStack: true,
 					  })
 					: new Redis.default(redisOptions);
