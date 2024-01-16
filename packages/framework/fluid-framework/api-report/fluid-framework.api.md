@@ -63,10 +63,7 @@ export namespace ConnectionStateType {
 export type ConnectionStateType = ConnectionStateType.Disconnected | ConnectionStateType.EstablishingConnection | ConnectionStateType.CatchingUp | ConnectionStateType.Connected;
 
 // @public (undocumented)
-export interface ContainerAttachProps {
-    // (undocumented)
-    [key: string]: string | undefined;
-}
+export type ContainerAttachProps<T = unknown> = T;
 
 // @alpha
 export const ContainerErrorTypes: {
@@ -167,8 +164,8 @@ export interface IDisposable {
 }
 
 // @public @sealed
-export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema, IAttachProps extends ContainerAttachProps = ContainerAttachProps> extends IEventProvider<IFluidContainerEvents> {
-    attach(props?: IAttachProps): Promise<string>;
+export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> extends IEventProvider<IFluidContainerEvents> {
+    attach(props?: ContainerAttachProps): Promise<string>;
     readonly attachState: AttachState;
     connect(): void;
     readonly connectionState: ConnectionStateType;
