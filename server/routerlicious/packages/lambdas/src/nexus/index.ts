@@ -1131,7 +1131,7 @@ function addNexusMessageTrace(
 		}
 		message.traces.push({
 			action: "start",
-			service: "alfred",
+			service: "nexus",
 			timestamp: Date.now(),
 		});
 
@@ -1143,7 +1143,7 @@ function addNexusMessageTrace(
 			traces: message.traces,
 			opType: message.type,
 		};
-		Lumberjack.info(`Message received by Alfred.`, lumberjackProperties);
+		Lumberjack.info(`Message received by Nexus.`, lumberjackProperties);
 	}
 
 	return message;
