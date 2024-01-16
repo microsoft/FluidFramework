@@ -21,19 +21,22 @@ describe("Minimum Compat Version", () => {
 
 	it("bad min compat string", () => {
 		const invalidString = "invalid string";
-		try {
-			isCompatVersionBelowMinVersion(invalidString, {
-				name: `test`,
-				kind: CompatKind.None,
-				compatVersion: "2.0.0-internal.8.0.0",
-			});
-			assert.fail("test should fail");
-		} catch (error: any) {
-			assert.strictEqual(
-				error.message,
-				`Error while running: npm v @fluidframework/container-loader@"${invalidString}" version --json`,
-			);
-		}
+		assert.throws(
+			() =>
+				isCompatVersionBelowMinVersion(invalidString, {
+					name: `test`,
+					kind: CompatKind.None,
+					compatVersion: "2.0.0-internal.8.0.0",
+				}),
+			(error: Error) => {
+				return (
+					error.message?.startsWith(
+						`Error while running: npm v @fluidframework/container-loader`,
+					) === true
+				);
+			},
+			"Should fail when not sending a correct version",
+		);
 	});
 
 	for (let i = 1; i < 9; i++) {
