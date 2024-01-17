@@ -73,7 +73,7 @@ interface IDirectoryMessageHandler {
  * Operation indicating a value should be set for a key.
  * @alpha
  */
-export interface IDirectorySetOperation {
+interface IDirectorySetOperation {
 	/**
 	 * String identifier of the operation type.
 	 */
@@ -100,7 +100,7 @@ export interface IDirectorySetOperation {
  * Operation indicating a key should be deleted from the directory.
  * @alpha
  */
-export interface IDirectoryDeleteOperation {
+interface IDirectoryDeleteOperation {
 	/**
 	 * String identifier of the operation type.
 	 */
@@ -121,13 +121,13 @@ export interface IDirectoryDeleteOperation {
  * An operation on a specific key within a directory.
  * @alpha
  */
-export type IDirectoryKeyOperation = IDirectorySetOperation | IDirectoryDeleteOperation;
+type IDirectoryKeyOperation = IDirectorySetOperation | IDirectoryDeleteOperation;
 
 /**
  * Operation indicating the directory should be cleared.
  * @alpha
  */
-export interface IDirectoryClearOperation {
+interface IDirectoryClearOperation {
 	/**
 	 * String identifier of the operation type.
 	 */
@@ -143,13 +143,13 @@ export interface IDirectoryClearOperation {
  * An operation on one or more of the keys within a directory.
  * @alpha
  */
-export type IDirectoryStorageOperation = IDirectoryKeyOperation | IDirectoryClearOperation;
+type IDirectoryStorageOperation = IDirectoryKeyOperation | IDirectoryClearOperation;
 
 /**
  * Operation indicating a subdirectory should be created.
  * @alpha
  */
-export interface IDirectoryCreateSubDirectoryOperation {
+interface IDirectoryCreateSubDirectoryOperation {
 	/**
 	 * String identifier of the operation type.
 	 */
@@ -170,7 +170,7 @@ export interface IDirectoryCreateSubDirectoryOperation {
  * Operation indicating a subdirectory should be deleted.
  * @alpha
  */
-export interface IDirectoryDeleteSubDirectoryOperation {
+interface IDirectoryDeleteSubDirectoryOperation {
 	/**
 	 * String identifier of the operation type.
 	 */
@@ -191,7 +191,7 @@ export interface IDirectoryDeleteSubDirectoryOperation {
  * An operation on the subdirectories within a directory.
  * @alpha
  */
-export type IDirectorySubDirectoryOperation =
+type IDirectorySubDirectoryOperation =
 	| IDirectoryCreateSubDirectoryOperation
 	| IDirectoryDeleteSubDirectoryOperation;
 
@@ -205,7 +205,7 @@ export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDire
  * Create info for the subdirectory.
  * @alpha
  */
-export interface ICreateInfo {
+interface ICreateInfo {
 	/**
 	 * Sequence number at which this subdirectory was created.
 	 */
@@ -309,7 +309,7 @@ export class DirectoryFactory implements IChannelFactory {
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<ISharedDirectory> {
-		const directory = new SharedDirectory(id, runtime, attributes);
+		const directory = new SharedDirectoryInternal(id, runtime, attributes);
 		await directory.load(services);
 
 		return directory;
@@ -319,7 +319,7 @@ export class DirectoryFactory implements IChannelFactory {
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
 	 */
 	public create(runtime: IFluidDataStoreRuntime, id: string): ISharedDirectory {
-		const directory = new SharedDirectory(id, runtime, DirectoryFactory.Attributes);
+		const directory = new SharedDirectoryInternal(id, runtime, DirectoryFactory.Attributes);
 		directory.initializeLocal();
 
 		return directory;
@@ -435,21 +435,7 @@ class DirectoryCreationTracker {
 	}
 }
 
-/**
- * {@inheritDoc ISharedDirectory}
- *
- * @example
- *
- * ```typescript
- * mySharedDirectory.createSubDirectory("a").createSubDirectory("b").createSubDirectory("c").set("foo", val1);
- * const mySubDir = mySharedDirectory.getWorkingDirectory("/a/b/c");
- * mySubDir.get("foo"); // returns val1
- * ```
- *
- * @sealed
- * @alpha
- */
-export class SharedDirectory
+class SharedDirectoryInternal
 	extends SharedObject<ISharedDirectoryEvents>
 	implements ISharedDirectory
 {
@@ -460,8 +446,8 @@ export class SharedDirectory
 	 * @param id - Optional name of the shared directory
 	 * @returns Newly create shared directory (but not attached yet)
 	 */
-	public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedDirectory {
-		return runtime.createChannel(id, DirectoryFactory.Type) as SharedDirectory;
+	public static create(runtime: IFluidDataStoreRuntime, id?: string): ISharedDirectory {
+		return runtime.createChannel(id, DirectoryFactory.Type) as ISharedDirectory;
 	}
 
 	/**
@@ -1301,7 +1287,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	public constructor(
 		private readonly seqData: SequenceData,
 		private readonly clientIds: Set<string>,
-		private readonly directory: SharedDirectory,
+		private readonly directory: SharedDirectoryInternal,
 		private readonly runtime: IFluidDataStoreRuntime,
 		private readonly serializer: IFluidSerializer,
 		public readonly absolutePath: string,
@@ -2670,5 +2656,29 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		for (const [_, subDirectory] of directory.subdirectories()) {
 			this.undeleteSubDirectoryTree(subDirectory as SubDirectory);
 		}
+	}
+}
+
+/**
+ * {@inheritDoc ISharedDirectory}
+ *
+ * @example
+ *
+ * ```typescript
+ * mySharedDirectory.createSubDirectory("a").createSubDirectory("b").createSubDirectory("c").set("foo", val1);
+ * const mySubDir = mySharedDirectory.getWorkingDirectory("/a/b/c");
+ * mySubDir.get("foo"); // returns val1
+ * ```
+ *
+ * @sealed
+ * @public
+ */
+export class SharedDirectory extends SharedDirectoryInternal {
+	getFactory(): IChannelFactory {
+		return SharedDirectoryInternal.getFactory();
+	}
+
+	create(runtime: IFluidDataStoreRuntime, id?: string) {
+		return SharedDirectoryInternal.create(runtime, id);
 	}
 }

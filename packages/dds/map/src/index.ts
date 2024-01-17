@@ -15,22 +15,7 @@
  * @packageDocumentation
  */
 
-export {
-	DirectoryFactory,
-	ICreateInfo,
-	IDirectoryClearOperation,
-	IDirectoryCreateSubDirectoryOperation,
-	IDirectoryDataObject,
-	IDirectoryDeleteOperation,
-	IDirectoryDeleteSubDirectoryOperation,
-	IDirectoryKeyOperation,
-	IDirectoryNewStorageFormat,
-	IDirectoryOperation,
-	IDirectorySetOperation,
-	IDirectoryStorageOperation,
-	IDirectorySubDirectoryOperation,
-	SharedDirectory,
-} from "./directory";
+export { DirectoryFactory, SharedDirectory } from "./directory";
 export {
 	IDirectory,
 	IDirectoryEvents,

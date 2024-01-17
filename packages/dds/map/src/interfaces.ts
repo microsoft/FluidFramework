@@ -34,7 +34,7 @@ export interface IValueChanged {
  * Interface describing actions on a directory.
  *
  * @remarks When used as a Map, operates on its keys.
- * @alpha
+ * @public
  */
 // TODO: Use `unknown` instead (breaking change).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -118,7 +118,7 @@ export interface IDirectory
  *
  * @remarks
  * These events only emit on the {@link ISharedDirectory} itself, and not on subdirectories.
- * @alpha
+ * @public
  */
 export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 	/**
@@ -191,7 +191,7 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 
 /**
  * Events emitted in response to changes to the directory data.
- * @alpha
+ * @public
  */
 export interface IDirectoryEvents extends IEvent {
 	/**
@@ -272,7 +272,7 @@ export interface IDirectoryEvents extends IEvent {
  * Provides a hierarchical organization of map-like data structures as SubDirectories.
  * The values stored within can be accessed like a map, and the hierarchy can be navigated using path syntax.
  * SubDirectories can be retrieved for use as working directories.
- * @alpha
+ * @public
  */
 export interface ISharedDirectory
 	extends ISharedObject<ISharedDirectoryEvents & IDirectoryEvents>,
@@ -287,7 +287,7 @@ export interface ISharedDirectory
 
 /**
  * Type of "valueChanged" event parameter for {@link ISharedDirectory}.
- * @alpha
+ * @public
  */
 export interface IDirectoryValueChanged extends IValueChanged {
 	/**

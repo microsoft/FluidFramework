@@ -70,7 +70,7 @@ export class MapFactory implements IChannelFactory {
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<ISharedMap> {
-		const map = new SharedMap(id, runtime, attributes);
+		const map = new SharedMapInternal(id, runtime, attributes);
 		await map.load(services);
 
 		return map;
@@ -80,19 +80,14 @@ export class MapFactory implements IChannelFactory {
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
 	 */
 	public create(runtime: IFluidDataStoreRuntime, id: string): ISharedMap {
-		const map = new SharedMap(id, runtime, MapFactory.Attributes);
+		const map = new SharedMapInternal(id, runtime, MapFactory.Attributes);
 		map.initializeLocal();
 
 		return map;
 	}
 }
 
-/**
- * {@inheritDoc ISharedMap}
- * @public
- * @deprecated Please use SharedTree for new containers.  SharedMap is supported for loading preexisting Fluid Framework 1.0 containers only.
- */
-export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
+class SharedMapInternal extends SharedObject<ISharedMapEvents> implements ISharedMap {
 	/**
 	 * Create a new shared map.
 	 * @param runtime - The data store runtime that the new shared map belongs to.
@@ -106,8 +101,8 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	 * const myMap = SharedMap.create(this.runtime, id);
 	 * ```
 	 */
-	public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedMap {
-		return runtime.createChannel(id, MapFactory.Type) as SharedMap;
+	public static create(runtime: IFluidDataStoreRuntime, id?: string): ISharedMap {
+		return runtime.createChannel(id, MapFactory.Type) as ISharedMap;
 	}
 
 	/**
@@ -387,5 +382,20 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	 */
 	protected rollback(content: unknown, localOpMetadata: unknown): void {
 		this.kernel.rollback(content, localOpMetadata);
+	}
+}
+
+/**
+ * {@inheritDoc ISharedMap}
+ * @public
+ * @deprecated Please use SharedTree for new containers.  SharedMap is supported for loading preexisting Fluid Framework 1.0 containers only.
+ */
+export class SharedMap extends SharedMapInternal {
+	getFactory(): IChannelFactory {
+		return SharedMapInternal.getFactory();
+	}
+
+	create(runtime: IFluidDataStoreRuntime, id?: string) {
+		return SharedMapInternal.create(runtime, id);
 	}
 }
