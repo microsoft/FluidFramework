@@ -7,29 +7,29 @@ import {
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
 	type FluidObject,
-	IFluidLoadable,
-	IRequest,
+	type IFluidLoadable,
+	type IRequest,
 	type IResponse,
 } from "@fluidframework/core-interfaces";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { IRuntimeFactory } from "@fluidframework/container-definitions";
+import { type IRuntimeFactory } from "@fluidframework/container-definitions";
 import { RequestParser } from "@fluidframework/runtime-utils";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { type ContainerRuntime } from "@fluidframework/container-runtime";
 import { type IDirectory } from "@fluidframework/map";
 
 import {
-	ContainerSchema,
-	IRootDataObject,
-	LoadableObjectClass,
-	LoadableObjectClassRecord,
-	LoadableObjectRecord,
-	SharedObjectClass,
+	type ContainerSchema,
+	type IRootDataObject,
+	type LoadableObjectClass,
+	type LoadableObjectClassRecord,
+	type LoadableObjectRecord,
+	type SharedObjectClass,
 } from "./types";
 import {
-	InternalDataObjectClass,
+	type InternalDataObjectClass,
 	isDataObjectClass,
 	isSharedObjectClass,
 	parseDataObjectsFromSharedObjects,

@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
-import { IChannelFactory } from "@fluidframework/datastore-definitions";
+import {
+	type IEvent,
+	type IEventProvider,
+	type IFluidLoadable,
+} from "@fluidframework/core-interfaces";
+import { type IChannelFactory } from "@fluidframework/datastore-definitions";
 
 /**
  * A mapping of string identifiers to instantiated `DataObject`s or `SharedObject`s.

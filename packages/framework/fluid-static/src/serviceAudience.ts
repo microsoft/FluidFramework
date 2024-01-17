@@ -4,9 +4,14 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IAudience, IContainer } from "@fluidframework/container-definitions";
-import { IClient } from "@fluidframework/protocol-definitions";
-import { IServiceAudience, IServiceAudienceEvents, IMember, Myself } from "./types";
+import { type IAudience, type IContainer } from "@fluidframework/container-definitions";
+import { type IClient } from "@fluidframework/protocol-definitions";
+import {
+	type IServiceAudience,
+	type IServiceAudienceEvents,
+	type IMember,
+	type Myself,
+} from "./types";
 
 /**
  * Creates a service audience for the provided container.

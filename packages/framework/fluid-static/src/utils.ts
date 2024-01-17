@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IChannelFactory } from "@fluidframework/datastore-definitions";
+import { type IChannelFactory } from "@fluidframework/datastore-definitions";
 import {
-	IFluidDataStoreFactory,
-	NamedFluidDataStoreRegistryEntry,
+	type IFluidDataStoreFactory,
+	type NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
-import { IFluidLoadable } from "@fluidframework/core-interfaces";
-import { ContainerSchema, DataObjectClass, SharedObjectClass } from "./types";
+import { type IFluidLoadable } from "@fluidframework/core-interfaces";
+import { type ContainerSchema, type DataObjectClass, type SharedObjectClass } from "./types";
 
 /**
  * An internal type used by the internal type guard isDataObjectClass to cast a

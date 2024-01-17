@@ -3,12 +3,16 @@
  * Licensed under the MIT License.
  */
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
+import {
+	type IEvent,
+	type IEventProvider,
+	type IFluidLoadable,
+} from "@fluidframework/core-interfaces";
 import {
 	AttachState,
-	IContainer,
-	ICriticalContainerError,
-	ConnectionState,
+	type IContainer,
+	type ICriticalContainerError,
+	type ConnectionState,
 } from "@fluidframework/container-definitions";
 import type { ContainerSchema, IRootDataObject, LoadableObjectClass } from "./types";
 
