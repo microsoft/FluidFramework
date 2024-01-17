@@ -100,8 +100,6 @@ export class GarbageCollector implements IGarbageCollector {
 
 	// Keeps track of the GC state from the last run.
 	private gcDataFromLastRun: IGarbageCollectionData | undefined;
-	/** Nodes whose state in unreferencedNodesState changed between runs */
-	private readonly updatedNodesSinceLastRun: Set<string> = new Set();
 	// Keeps a list of references (edges in the GC graph) between GC runs. Each entry has a node id and a list of
 	// outbound routes from that node.
 	private readonly newReferencesSinceLastRun: Map<string, string[]> = new Map();
@@ -116,9 +114,13 @@ export class GarbageCollector implements IGarbageCollector {
 	private readonly initializeGCStateFromBaseSnapshotP: Promise<void>;
 	// The GC details generated from the base snapshot.
 	private readonly baseGCDetailsP: Promise<IGarbageCollectionDetailsBase>;
+
 	// Map of node ids to their unreferenced state tracker.
 	private readonly unreferencedNodesState: UnreferencedStateTrackerMap =
 		new UnreferencedStateTrackerMap();
+	/** Nodes who were unreferenced at the last GC run. Needed to generate GC stats (nodes updated) */
+	private unreferencedNodesAtLastRun: Set<string> = new Set();
+
 	// The Timer responsible for closing the container when the session has expired
 	private sessionExpiryTimer: Timer | undefined;
 
@@ -301,6 +303,7 @@ export class GarbageCollector implements IGarbageCollector {
 							this.configs.sweepGracePeriodMs,
 						),
 					);
+					this.unreferencedNodesAtLastRun.add(nodeId);
 				}
 				gcNodes[nodeId] = Array.from(nodeData.outboundRoutes);
 			}
@@ -514,6 +517,7 @@ export class GarbageCollector implements IGarbageCollector {
 				// Update the state of summary state tracker from this run's stats.
 				this.summaryStateTracker.updateStateFromGCRunStats(gcStats);
 				this.newReferencesSinceLastRun.clear();
+				this.unreferencedNodesAtLastRun = new Set(this.unreferencedNodesState.keys());
 				this.completedRuns++;
 
 				return gcStats;
@@ -1079,11 +1083,7 @@ export class GarbageCollector implements IGarbageCollector {
 		});
 
 		// This node is referenced - Clear its unreferenced state
-		if (this.unreferencedNodesState.delete(toNodePath)) {
-			// If it was deleted, then it moved from unreferenced to referenced.
-			// Add it to the updated nodes list, since otherwise we assume unreferencedNodesState matches the last GC run's state.
-			this.updatedNodesSinceLastRun.add(toNodePath);
-		}
+		this.unreferencedNodesState.delete(toNodePath);
 	}
 
 	/**
@@ -1117,18 +1117,17 @@ export class GarbageCollector implements IGarbageCollector {
 			updatedAttachmentBlobCount: 0,
 		};
 
-		const updateNodeStats = (nodeId: string, referenced: boolean) => {
+		const updateNodeStats = (nodeId: string, isReferenced: boolean) => {
 			markPhaseStats.nodeCount++;
 			// If there is no previous GC data, every node's state is generated and is considered as updated.
 			// Otherwise, find out if any node went from referenced to unreferenced or vice-versa.
+			const wasNotReferenced = this.unreferencedNodesAtLastRun.has(nodeId);
 			const stateUpdated =
-				this.gcDataFromLastRun === undefined ||
-				this.updatedNodesSinceLastRun.has(nodeId) ||
-				this.unreferencedNodesState.has(nodeId) === referenced;
+				this.gcDataFromLastRun === undefined || wasNotReferenced === isReferenced;
 			if (stateUpdated) {
 				markPhaseStats.updatedNodeCount++;
 			}
-			if (!referenced) {
+			if (!isReferenced) {
 				markPhaseStats.unrefNodeCount++;
 			}
 
@@ -1137,7 +1136,7 @@ export class GarbageCollector implements IGarbageCollector {
 				if (stateUpdated) {
 					markPhaseStats.updatedDataStoreCount++;
 				}
-				if (!referenced) {
+				if (!isReferenced) {
 					markPhaseStats.unrefDataStoreCount++;
 				}
 			}
@@ -1146,7 +1145,7 @@ export class GarbageCollector implements IGarbageCollector {
 				if (stateUpdated) {
 					markPhaseStats.updatedAttachmentBlobCount++;
 				}
-				if (!referenced) {
+				if (!isReferenced) {
 					markPhaseStats.unrefAttachmentBlobCount++;
 				}
 			}
