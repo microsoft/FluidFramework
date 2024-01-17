@@ -4,18 +4,13 @@
 
 ```ts
 
-import { EventEmitter } from 'events';
 import { IDisposable } from '@fluidframework/common-definitions';
-import { IEvent } from '@fluidframework/common-definitions';
-import { IEventProvider } from '@fluidframework/common-definitions';
-import { IEventTransformer } from '@fluidframework/common-definitions';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITelemetryErrorEvent } from '@fluidframework/common-definitions';
 import { ITelemetryGenericEvent } from '@fluidframework/common-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITelemetryPerformanceEvent } from '@fluidframework/common-definitions';
-import { TransformedEvent } from '@fluidframework/common-definitions';
 
 // @internal @deprecated
 export function assert(condition: boolean, message: string | number): asserts condition;
@@ -24,19 +19,6 @@ export function assert(condition: boolean, message: string | number): asserts co
 export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
     send(event: ITelemetryBaseEvent): void;
 }
-
-// @internal @deprecated
-export class Buffer extends Uint8Array {
-    // (undocumented)
-    static from(value: any, encodingOrOffset?: any, length?: any): IsoBuffer;
-    // (undocumented)
-    static isBuffer(obj: any): obj is Buffer;
-    // (undocumented)
-    toString(encoding?: string): string;
-}
-
-// @internal @deprecated
-export const bufferToString: (blob: ArrayBufferLike, encoding: string) => string;
 
 // @internal @deprecated
 export class Deferred<T> {
@@ -52,38 +34,6 @@ export const delay: (timeMs: number) => Promise<void>;
 
 // @internal @deprecated
 export function doIfNotDisposed<T>(disposable: IDisposable, f: (...args: any[]) => T): (...args: any[]) => T;
-
-// @internal @deprecated
-export type EventEmitterEventType = EventEmitter extends {
-    on(event: infer E, listener: any): any;
-} ? E : never;
-
-// @internal @deprecated
-export class EventForwarder<TEvent = IEvent> extends TypedEventEmitter<TEvent> implements IDisposable {
-    constructor(source?: EventEmitter | IEventProvider<TEvent & IEvent>);
-    // (undocumented)
-    dispose(): void;
-    // (undocumented)
-    get disposed(): boolean;
-    // (undocumented)
-    protected forwardEvent(source: EventEmitter | IEventProvider<TEvent & IEvent>, ...events: string[]): void;
-    // (undocumented)
-    protected static isEmitterEvent(event: string): boolean;
-    // (undocumented)
-    protected unforwardEvent(source: EventEmitter | IEventProvider<TEvent & IEvent>, ...events: string[]): void;
-}
-
-// @internal @deprecated
-export const fromBase64ToUtf8: (input: string) => string;
-
-// @internal @deprecated
-export const fromUtf8ToBase64: (input: string) => string;
-
-// @internal @deprecated
-export function gitHashFile(file: IsoBuffer): Promise<string>;
-
-// @internal @deprecated
-export function hashFile(file: IsoBuffer, algorithm?: "SHA-1" | "SHA-256", hashEncoding?: "hex" | "base64"): Promise<string>;
 
 // @internal @deprecated
 export class Heap<T> {
@@ -144,26 +94,10 @@ export interface IRangeTrackerSnapshot {
 }
 
 // @internal @deprecated (undocumented)
-export const IsoBuffer: typeof Buffer;
-
-// @internal @deprecated (undocumented)
-export type IsoBuffer = Buffer;
-
-// @internal @deprecated
-export type IsomorphicPerformance = Partial<Performance> & Pick<Performance, "clearMarks" | "mark" | "measure" | "now">;
-
-// @internal @deprecated (undocumented)
 export interface ITimer {
     clear(): void;
     readonly hasTimer: boolean;
     start(): void;
-}
-
-// @internal @deprecated
-export interface ITraceEvent {
-    readonly duration: number;
-    readonly tick: number;
-    readonly totalTimeElapsed: number;
 }
 
 // @internal @deprecated
@@ -188,10 +122,6 @@ export class LazyPromise<T> implements Promise<T> {
 
 // @internal @deprecated
 export const NumberComparer: IComparer<number>;
-
-// @internal @deprecated (undocumented)
-const performance_2: IsomorphicPerformance;
-export { performance_2 as performance }
 
 // @internal @deprecated
 export class PromiseCache<TKey, TResult> {
@@ -257,9 +187,6 @@ export function safelyParseJSON(json: string): any | undefined;
 export function setLongTimeout(timeoutFn: () => void, timeoutMs: number, setTimeoutIdFn?: (timeoutId: ReturnType<typeof setTimeout>) => void): ReturnType<typeof setTimeout>;
 
 // @internal @deprecated
-export function stringToBuffer(input: string, encoding: string): ArrayBufferLike;
-
-// @internal @deprecated
 export class TelemetryNullLogger implements ITelemetryLogger {
     // (undocumented)
     send(event: ITelemetryBaseEvent): void;
@@ -279,50 +206,6 @@ export class Timer implements ITimer {
     restart(ms?: number, handler?: () => void): void;
     start(ms?: number, handler?: () => void): void;
 }
-
-// @internal @deprecated
-export const toUtf8: (input: string, encoding: string) => string;
-
-// @internal @deprecated
-export class Trace {
-    protected constructor(startTick: number);
-    // (undocumented)
-    protected lastTick: number;
-    // (undocumented)
-    static start(): Trace;
-    // (undocumented)
-    readonly startTick: number;
-    // (undocumented)
-    trace(): ITraceEvent;
-}
-
-// @internal @deprecated
-export class TypedEventEmitter<TEvent> extends EventEmitter implements IEventProvider<TEvent & IEvent> {
-    constructor();
-    // (undocumented)
-    readonly addListener: TypedEventTransform<this, TEvent>;
-    // (undocumented)
-    readonly off: TypedEventTransform<this, TEvent>;
-    // (undocumented)
-    readonly on: TypedEventTransform<this, TEvent>;
-    // (undocumented)
-    readonly once: TypedEventTransform<this, TEvent>;
-    // (undocumented)
-    readonly prependListener: TypedEventTransform<this, TEvent>;
-    // (undocumented)
-    readonly prependOnceListener: TypedEventTransform<this, TEvent>;
-    // (undocumented)
-    readonly removeListener: TypedEventTransform<this, TEvent>;
-}
-
-// @internal @deprecated (undocumented)
-export type TypedEventTransform<TThis, TEvent> = TransformedEvent<TThis, "newListener" | "removeListener", Parameters<(event: string, listener: (...args: any[]) => void) => void>> & IEventTransformer<TThis, TEvent & IEvent> & TransformedEvent<TThis, EventEmitterEventType, any[]>;
-
-// @internal @deprecated
-export function Uint8ArrayToArrayBuffer(array: Uint8Array): ArrayBuffer;
-
-// @internal @deprecated
-export function Uint8ArrayToString(arr: Uint8Array, encoding?: string): string;
 
 // @internal @deprecated
 export function unreachableCase(_: never, message?: string): never;

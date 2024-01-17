@@ -13,10 +13,6 @@
 	"sideEffects": false,
 	"main": "dist/index.js",
 	"module": "lib/index.js",
-	"browser": {
-		"./dist/indexNode.js": "./dist/indexBrowser.js",
-		"./lib/indexNode.js": "./lib/indexBrowser.js"
-	},
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"bench": "ts-node bench/src/index.ts",
@@ -25,8 +21,7 @@
 		"build:compile": "concurrently npm:build:commonjs npm:build:esnext",
 		"build:docs": "api-extractor run --local --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 \"./_api-extractor-temp/doc-models/*\" ../../../_api-extractor-temp/",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
-		"build:test": "concurrently npm:build:test:mocha npm:build:test:jest npm:build:test:types",
-		"build:test:jest": "tsc --project ./src/test/jest/tsconfig.json",
+		"build:test": "concurrently npm:build:test:mocha npm:build:test:types",
 		"build:test:mocha": "tsc --project ./src/test/mocha/tsconfig.json",
 		"build:test:types": "tsc --project ./src/test/types/tsconfig.json",
 		"bump-version": "npm version minor --no-push --no-git-tag-version && npm run build:gen:bump",
@@ -43,14 +38,12 @@
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
-		"test": "npm run test:mocha && npm run test:jest",
+		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm run test:report",
-		"test:jest": "jest",
-		"test:jest:report": "npm run test:jest -- --ci --coverage",
 		"test:mocha": "mocha --unhandled-rejections=strict  --recursive \"dist/test/mocha/**/*.spec.*js\" --exit --project test/tsconfig.json",
 		"test:mocha:multireport": "cross-env FLUID_TEST_MULTIREPORT=1 npm run test:mocha",
 		"test:mocha:report": "npm run test:mocha -- -- --reporter xunit --reporter-option output=nyc/mocha-junit-report.xml",
-		"test:report": "npm run test:mocha:report && npm run test:jest:report",
+		"test:report": "npm run test:mocha:report",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
@@ -77,12 +70,7 @@
 	},
 	"dependencies": {
 		"@fluidframework/common-definitions": "^1.1.0",
-		"@types/events": "^3.0.0",
-		"base64-js": "^1.5.1",
-		"buffer": "^6.0.3",
-		"events": "^3.1.0",
-		"lodash": "^4.17.21",
-		"sha.js": "^2.4.11"
+		"lodash": "^4.17.21"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.26.1",
@@ -91,13 +79,9 @@
 		"@fluidframework/common-utils-previous": "npm:@fluidframework/common-utils@1.0.0",
 		"@fluidframework/eslint-config-fluid": "^2.1.0",
 		"@microsoft/api-extractor": "^7.38.3",
-		"@types/base64-js": "^1.3.0",
 		"@types/benchmark": "^2.1.0",
-		"@types/jest": "22.2.3",
-		"@types/jest-environment-puppeteer": "2.2.0",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^16.18.38",
-		"@types/puppeteer": "1.3.0",
 		"@types/sinon": "^7.0.13",
 		"benchmark": "^2.1.4",
 		"c8": "^8.0.1",
@@ -106,19 +90,13 @@
 		"cross-env": "^7.0.3",
 		"eslint": "~8.6.0",
 		"eslint-config-prettier": "~9.0.0",
-		"jest": "^26.6.3",
-		"jest-junit": "^10.0.0",
-		"jest-puppeteer": "^4.4.0",
 		"mocha": "^10.0.0",
 		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
-		"puppeteer": "^2.1.0",
-		"rewire": "^5.0.0",
 		"rimraf": "^2.6.2",
 		"sinon": "^7.4.2",
-		"ts-jest": "^26.4.4",
 		"ts-node": "^10.9.1",
 		"typescript": "~4.5.5"
 	},
@@ -132,11 +110,7 @@
 			"eslint": [
 				"tsc",
 				"build:test:mocha",
-				"build:test:jest",
 				"build:test:types"
-			],
-			"build:test:jest": [
-				"tsc"
 			],
 			"build:test:mocha": [
 				"tsc"
@@ -152,6 +126,87 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedClassDeclaration_Buffer": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_EventEmitterEventType": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedClassDeclaration_EventForwarder": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_ITraceEvent": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedVariableDeclaration_IsoBuffer": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_IsoBuffer": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_IsomorphicPerformance": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedClassDeclaration_Trace": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedClassDeclaration_TypedEventEmitter": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_TypedEventTransform": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_Uint8ArrayToArrayBuffer": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_Uint8ArrayToString": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedVariableDeclaration_bufferToString": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedVariableDeclaration_fromBase64ToUtf8": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedVariableDeclaration_fromUtf8ToBase64": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_gitHashFile": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_hashFile": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedVariableDeclaration_performance": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_stringToBuffer": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedVariableDeclaration_toUtf8": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

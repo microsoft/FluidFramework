@@ -48,26 +48,14 @@ use_old_ClassDeclaration_BaseTelemetryNullLogger(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_Buffer": {"forwardCompat": false}
+* "RemovedClassDeclaration_Buffer": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_Buffer():
-    TypeOnly<old.Buffer>;
-declare function use_current_ClassDeclaration_Buffer(
-    use: TypeOnly<current.Buffer>);
-use_current_ClassDeclaration_Buffer(
-    get_old_ClassDeclaration_Buffer());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_Buffer": {"backCompat": false}
+* "RemovedClassDeclaration_Buffer": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_Buffer():
-    TypeOnly<current.Buffer>;
-declare function use_old_ClassDeclaration_Buffer(
-    use: TypeOnly<old.Buffer>);
-use_old_ClassDeclaration_Buffer(
-    get_current_ClassDeclaration_Buffer());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -96,50 +84,26 @@ use_old_ClassDeclaration_Deferred(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_EventEmitterEventType": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_EventEmitterEventType": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_EventEmitterEventType():
-    TypeOnly<old.EventEmitterEventType>;
-declare function use_current_TypeAliasDeclaration_EventEmitterEventType(
-    use: TypeOnly<current.EventEmitterEventType>);
-use_current_TypeAliasDeclaration_EventEmitterEventType(
-    get_old_TypeAliasDeclaration_EventEmitterEventType());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_EventEmitterEventType": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_EventEmitterEventType": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_EventEmitterEventType():
-    TypeOnly<current.EventEmitterEventType>;
-declare function use_old_TypeAliasDeclaration_EventEmitterEventType(
-    use: TypeOnly<old.EventEmitterEventType>);
-use_old_TypeAliasDeclaration_EventEmitterEventType(
-    get_current_TypeAliasDeclaration_EventEmitterEventType());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_EventForwarder": {"forwardCompat": false}
+* "RemovedClassDeclaration_EventForwarder": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_EventForwarder():
-    TypeOnly<old.EventForwarder>;
-declare function use_current_ClassDeclaration_EventForwarder(
-    use: TypeOnly<current.EventForwarder>);
-use_current_ClassDeclaration_EventForwarder(
-    get_old_ClassDeclaration_EventForwarder());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_EventForwarder": {"backCompat": false}
+* "RemovedClassDeclaration_EventForwarder": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_EventForwarder():
-    TypeOnly<current.EventForwarder>;
-declare function use_old_ClassDeclaration_EventForwarder(
-    use: TypeOnly<old.EventForwarder>);
-use_old_ClassDeclaration_EventForwarder(
-    get_current_ClassDeclaration_EventForwarder());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -336,98 +300,50 @@ use_old_InterfaceDeclaration_ITimer(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ITraceEvent": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_ITraceEvent": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_ITraceEvent():
-    TypeOnly<old.ITraceEvent>;
-declare function use_current_InterfaceDeclaration_ITraceEvent(
-    use: TypeOnly<current.ITraceEvent>);
-use_current_InterfaceDeclaration_ITraceEvent(
-    get_old_InterfaceDeclaration_ITraceEvent());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ITraceEvent": {"backCompat": false}
+* "RemovedInterfaceDeclaration_ITraceEvent": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_ITraceEvent():
-    TypeOnly<current.ITraceEvent>;
-declare function use_old_InterfaceDeclaration_ITraceEvent(
-    use: TypeOnly<old.ITraceEvent>);
-use_old_InterfaceDeclaration_ITraceEvent(
-    get_current_InterfaceDeclaration_ITraceEvent());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_IsoBuffer": {"forwardCompat": false}
+* "RemovedVariableDeclaration_IsoBuffer": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_IsoBuffer():
-    TypeOnly<typeof old.IsoBuffer>;
-declare function use_current_VariableDeclaration_IsoBuffer(
-    use: TypeOnly<typeof current.IsoBuffer>);
-use_current_VariableDeclaration_IsoBuffer(
-    get_old_VariableDeclaration_IsoBuffer());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_IsoBuffer": {"backCompat": false}
+* "RemovedVariableDeclaration_IsoBuffer": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_IsoBuffer():
-    TypeOnly<typeof current.IsoBuffer>;
-declare function use_old_VariableDeclaration_IsoBuffer(
-    use: TypeOnly<typeof old.IsoBuffer>);
-use_old_VariableDeclaration_IsoBuffer(
-    get_current_VariableDeclaration_IsoBuffer());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_IsoBuffer": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_IsoBuffer": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_IsoBuffer():
-    TypeOnly<old.IsoBuffer>;
-declare function use_current_TypeAliasDeclaration_IsoBuffer(
-    use: TypeOnly<current.IsoBuffer>);
-use_current_TypeAliasDeclaration_IsoBuffer(
-    get_old_TypeAliasDeclaration_IsoBuffer());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_IsoBuffer": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_IsoBuffer": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_IsoBuffer():
-    TypeOnly<current.IsoBuffer>;
-declare function use_old_TypeAliasDeclaration_IsoBuffer(
-    use: TypeOnly<old.IsoBuffer>);
-use_old_TypeAliasDeclaration_IsoBuffer(
-    get_current_TypeAliasDeclaration_IsoBuffer());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_IsomorphicPerformance": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_IsomorphicPerformance": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_IsomorphicPerformance():
-    TypeOnly<old.IsomorphicPerformance>;
-declare function use_current_TypeAliasDeclaration_IsomorphicPerformance(
-    use: TypeOnly<current.IsomorphicPerformance>);
-use_current_TypeAliasDeclaration_IsomorphicPerformance(
-    get_old_TypeAliasDeclaration_IsomorphicPerformance());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_IsomorphicPerformance": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_IsomorphicPerformance": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_IsomorphicPerformance():
-    TypeOnly<current.IsomorphicPerformance>;
-declare function use_old_TypeAliasDeclaration_IsomorphicPerformance(
-    use: TypeOnly<old.IsomorphicPerformance>);
-use_old_TypeAliasDeclaration_IsomorphicPerformance(
-    get_current_TypeAliasDeclaration_IsomorphicPerformance());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -696,122 +612,62 @@ use_old_ClassDeclaration_Timer(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_Trace": {"forwardCompat": false}
+* "RemovedClassDeclaration_Trace": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_Trace():
-    TypeOnly<old.Trace>;
-declare function use_current_ClassDeclaration_Trace(
-    use: TypeOnly<current.Trace>);
-use_current_ClassDeclaration_Trace(
-    get_old_ClassDeclaration_Trace());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_Trace": {"backCompat": false}
+* "RemovedClassDeclaration_Trace": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_Trace():
-    TypeOnly<current.Trace>;
-declare function use_old_ClassDeclaration_Trace(
-    use: TypeOnly<old.Trace>);
-use_old_ClassDeclaration_Trace(
-    get_current_ClassDeclaration_Trace());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_TypedEventEmitter": {"forwardCompat": false}
+* "RemovedClassDeclaration_TypedEventEmitter": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_TypedEventEmitter():
-    TypeOnly<old.TypedEventEmitter<any>>;
-declare function use_current_ClassDeclaration_TypedEventEmitter(
-    use: TypeOnly<current.TypedEventEmitter<any>>);
-use_current_ClassDeclaration_TypedEventEmitter(
-    get_old_ClassDeclaration_TypedEventEmitter());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_TypedEventEmitter": {"backCompat": false}
+* "RemovedClassDeclaration_TypedEventEmitter": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_TypedEventEmitter():
-    TypeOnly<current.TypedEventEmitter<any>>;
-declare function use_old_ClassDeclaration_TypedEventEmitter(
-    use: TypeOnly<old.TypedEventEmitter<any>>);
-use_old_ClassDeclaration_TypedEventEmitter(
-    get_current_ClassDeclaration_TypedEventEmitter());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_TypedEventTransform": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_TypedEventTransform": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_TypedEventTransform():
-    TypeOnly<old.TypedEventTransform<any,any>>;
-declare function use_current_TypeAliasDeclaration_TypedEventTransform(
-    use: TypeOnly<current.TypedEventTransform<any,any>>);
-use_current_TypeAliasDeclaration_TypedEventTransform(
-    get_old_TypeAliasDeclaration_TypedEventTransform());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_TypedEventTransform": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_TypedEventTransform": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_TypedEventTransform():
-    TypeOnly<current.TypedEventTransform<any,any>>;
-declare function use_old_TypeAliasDeclaration_TypedEventTransform(
-    use: TypeOnly<old.TypedEventTransform<any,any>>);
-use_old_TypeAliasDeclaration_TypedEventTransform(
-    get_current_TypeAliasDeclaration_TypedEventTransform());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_Uint8ArrayToArrayBuffer": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_Uint8ArrayToArrayBuffer": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_Uint8ArrayToArrayBuffer():
-    TypeOnly<typeof old.Uint8ArrayToArrayBuffer>;
-declare function use_current_FunctionDeclaration_Uint8ArrayToArrayBuffer(
-    use: TypeOnly<typeof current.Uint8ArrayToArrayBuffer>);
-use_current_FunctionDeclaration_Uint8ArrayToArrayBuffer(
-    get_old_FunctionDeclaration_Uint8ArrayToArrayBuffer());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_Uint8ArrayToArrayBuffer": {"backCompat": false}
+* "RemovedFunctionDeclaration_Uint8ArrayToArrayBuffer": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_Uint8ArrayToArrayBuffer():
-    TypeOnly<typeof current.Uint8ArrayToArrayBuffer>;
-declare function use_old_FunctionDeclaration_Uint8ArrayToArrayBuffer(
-    use: TypeOnly<typeof old.Uint8ArrayToArrayBuffer>);
-use_old_FunctionDeclaration_Uint8ArrayToArrayBuffer(
-    get_current_FunctionDeclaration_Uint8ArrayToArrayBuffer());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_Uint8ArrayToString": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_Uint8ArrayToString": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_Uint8ArrayToString():
-    TypeOnly<typeof old.Uint8ArrayToString>;
-declare function use_current_FunctionDeclaration_Uint8ArrayToString(
-    use: TypeOnly<typeof current.Uint8ArrayToString>);
-use_current_FunctionDeclaration_Uint8ArrayToString(
-    get_old_FunctionDeclaration_Uint8ArrayToString());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_Uint8ArrayToString": {"backCompat": false}
+* "RemovedFunctionDeclaration_Uint8ArrayToString": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_Uint8ArrayToString():
-    TypeOnly<typeof current.Uint8ArrayToString>;
-declare function use_old_FunctionDeclaration_Uint8ArrayToString(
-    use: TypeOnly<typeof old.Uint8ArrayToString>);
-use_old_FunctionDeclaration_Uint8ArrayToString(
-    get_current_FunctionDeclaration_Uint8ArrayToString());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -840,26 +696,14 @@ use_old_FunctionDeclaration_assert(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_bufferToString": {"forwardCompat": false}
+* "RemovedVariableDeclaration_bufferToString": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_bufferToString():
-    TypeOnly<typeof old.bufferToString>;
-declare function use_current_VariableDeclaration_bufferToString(
-    use: TypeOnly<typeof current.bufferToString>);
-use_current_VariableDeclaration_bufferToString(
-    get_old_VariableDeclaration_bufferToString());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_bufferToString": {"backCompat": false}
+* "RemovedVariableDeclaration_bufferToString": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_bufferToString():
-    TypeOnly<typeof current.bufferToString>;
-declare function use_old_VariableDeclaration_bufferToString(
-    use: TypeOnly<typeof old.bufferToString>);
-use_old_VariableDeclaration_bufferToString(
-    get_current_VariableDeclaration_bufferToString());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -912,122 +756,62 @@ use_old_FunctionDeclaration_doIfNotDisposed(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_fromBase64ToUtf8": {"forwardCompat": false}
+* "RemovedVariableDeclaration_fromBase64ToUtf8": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_fromBase64ToUtf8():
-    TypeOnly<typeof old.fromBase64ToUtf8>;
-declare function use_current_VariableDeclaration_fromBase64ToUtf8(
-    use: TypeOnly<typeof current.fromBase64ToUtf8>);
-use_current_VariableDeclaration_fromBase64ToUtf8(
-    get_old_VariableDeclaration_fromBase64ToUtf8());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_fromBase64ToUtf8": {"backCompat": false}
+* "RemovedVariableDeclaration_fromBase64ToUtf8": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_fromBase64ToUtf8():
-    TypeOnly<typeof current.fromBase64ToUtf8>;
-declare function use_old_VariableDeclaration_fromBase64ToUtf8(
-    use: TypeOnly<typeof old.fromBase64ToUtf8>);
-use_old_VariableDeclaration_fromBase64ToUtf8(
-    get_current_VariableDeclaration_fromBase64ToUtf8());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_fromUtf8ToBase64": {"forwardCompat": false}
+* "RemovedVariableDeclaration_fromUtf8ToBase64": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_fromUtf8ToBase64():
-    TypeOnly<typeof old.fromUtf8ToBase64>;
-declare function use_current_VariableDeclaration_fromUtf8ToBase64(
-    use: TypeOnly<typeof current.fromUtf8ToBase64>);
-use_current_VariableDeclaration_fromUtf8ToBase64(
-    get_old_VariableDeclaration_fromUtf8ToBase64());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_fromUtf8ToBase64": {"backCompat": false}
+* "RemovedVariableDeclaration_fromUtf8ToBase64": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_fromUtf8ToBase64():
-    TypeOnly<typeof current.fromUtf8ToBase64>;
-declare function use_old_VariableDeclaration_fromUtf8ToBase64(
-    use: TypeOnly<typeof old.fromUtf8ToBase64>);
-use_old_VariableDeclaration_fromUtf8ToBase64(
-    get_current_VariableDeclaration_fromUtf8ToBase64());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_gitHashFile": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_gitHashFile": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_gitHashFile():
-    TypeOnly<typeof old.gitHashFile>;
-declare function use_current_FunctionDeclaration_gitHashFile(
-    use: TypeOnly<typeof current.gitHashFile>);
-use_current_FunctionDeclaration_gitHashFile(
-    get_old_FunctionDeclaration_gitHashFile());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_gitHashFile": {"backCompat": false}
+* "RemovedFunctionDeclaration_gitHashFile": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_gitHashFile():
-    TypeOnly<typeof current.gitHashFile>;
-declare function use_old_FunctionDeclaration_gitHashFile(
-    use: TypeOnly<typeof old.gitHashFile>);
-use_old_FunctionDeclaration_gitHashFile(
-    get_current_FunctionDeclaration_gitHashFile());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_hashFile": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_hashFile": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_hashFile():
-    TypeOnly<typeof old.hashFile>;
-declare function use_current_FunctionDeclaration_hashFile(
-    use: TypeOnly<typeof current.hashFile>);
-use_current_FunctionDeclaration_hashFile(
-    get_old_FunctionDeclaration_hashFile());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_hashFile": {"backCompat": false}
+* "RemovedFunctionDeclaration_hashFile": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_hashFile():
-    TypeOnly<typeof current.hashFile>;
-declare function use_old_FunctionDeclaration_hashFile(
-    use: TypeOnly<typeof old.hashFile>);
-use_old_FunctionDeclaration_hashFile(
-    get_current_FunctionDeclaration_hashFile());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_performance": {"forwardCompat": false}
+* "RemovedVariableDeclaration_performance": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_performance():
-    TypeOnly<typeof old.performance>;
-declare function use_current_VariableDeclaration_performance(
-    use: TypeOnly<typeof current.performance>);
-use_current_VariableDeclaration_performance(
-    get_old_VariableDeclaration_performance());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_performance": {"backCompat": false}
+* "RemovedVariableDeclaration_performance": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_performance():
-    TypeOnly<typeof current.performance>;
-declare function use_old_VariableDeclaration_performance(
-    use: TypeOnly<typeof old.performance>);
-use_old_VariableDeclaration_performance(
-    get_current_VariableDeclaration_performance());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1080,50 +864,26 @@ use_old_FunctionDeclaration_setLongTimeout(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_stringToBuffer": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_stringToBuffer": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_stringToBuffer():
-    TypeOnly<typeof old.stringToBuffer>;
-declare function use_current_FunctionDeclaration_stringToBuffer(
-    use: TypeOnly<typeof current.stringToBuffer>);
-use_current_FunctionDeclaration_stringToBuffer(
-    get_old_FunctionDeclaration_stringToBuffer());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_stringToBuffer": {"backCompat": false}
+* "RemovedFunctionDeclaration_stringToBuffer": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_stringToBuffer():
-    TypeOnly<typeof current.stringToBuffer>;
-declare function use_old_FunctionDeclaration_stringToBuffer(
-    use: TypeOnly<typeof old.stringToBuffer>);
-use_old_FunctionDeclaration_stringToBuffer(
-    get_current_FunctionDeclaration_stringToBuffer());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_toUtf8": {"forwardCompat": false}
+* "RemovedVariableDeclaration_toUtf8": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_toUtf8():
-    TypeOnly<typeof old.toUtf8>;
-declare function use_current_VariableDeclaration_toUtf8(
-    use: TypeOnly<typeof current.toUtf8>);
-use_current_VariableDeclaration_toUtf8(
-    get_old_VariableDeclaration_toUtf8());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_toUtf8": {"backCompat": false}
+* "RemovedVariableDeclaration_toUtf8": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_toUtf8():
-    TypeOnly<typeof current.toUtf8>;
-declare function use_old_VariableDeclaration_toUtf8(
-    use: TypeOnly<typeof old.toUtf8>);
-use_old_VariableDeclaration_toUtf8(
-    get_current_VariableDeclaration_toUtf8());
 
 /*
 * Validate forward compat by using old type in place of current type
