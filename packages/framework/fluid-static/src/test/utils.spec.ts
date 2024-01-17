@@ -10,23 +10,12 @@ import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
 import { parseDataObjectsFromSharedObjects } from "../utils";
 import { type ContainerSchema } from "../types";
 
-export class TestDataObject extends DataObject {
+class TestDataObject extends DataObject {
 	public static readonly Name = "@fluid-example/test-data-object";
 
 	public static readonly factory = new DataObjectFactory(
 		TestDataObject.Name,
 		TestDataObject,
-		[],
-		{},
-	);
-}
-
-export class AnotherTestDataObject extends DataObject {
-	public static readonly Name = "@fluid-example/another-test-data-object";
-
-	public static readonly factory = new DataObjectFactory(
-		AnotherTestDataObject.Name,
-		AnotherTestDataObject,
 		[],
 		{},
 	);
