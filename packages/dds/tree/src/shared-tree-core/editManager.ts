@@ -594,14 +594,14 @@ export class EditManager<
 				  };
 
 		if (newCommit.sessionId === this.localSessionId) {
-			const localCommit = this.localCommits.shift();
+			const firstLocalCommit = this.localCommits.shift();
 			assert(
-				localCommit !== undefined,
+				firstLocalCommit !== undefined,
 				0x6b5 /* Received a sequenced change from the local session despite having no local changes */,
 			);
 
 			// The first local branch commit is already rebased over the trunk, so we can push it directly to the trunk.
-			this.pushGraphCommitToTrunk(sequenceId, localCommit, this.localSessionId);
+			this.pushGraphCommitToTrunk(sequenceId, firstLocalCommit, this.localSessionId);
 			this.fastForwardBranches(this.trunk.getHead(), sequenceId);
 			return;
 		}
