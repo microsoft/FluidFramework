@@ -141,7 +141,7 @@ describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, api
 	});
 
 	it("should add clients in audience as expected in write mode", async function () {
-		// TODO: Re-enable after cross version compat bugs are fixed - ADO:6975
+		// TODO: Re-enable after cross version compat bugs are fixed - ADO:6978
 		if (provider.type === "TestObjectProviderWithVersionedLoad") {
 			this.skip();
 		}
