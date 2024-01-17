@@ -112,7 +112,7 @@ class TestDataObject1 extends DataObject {
 
 describeCompat("Summaries", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 
@@ -406,7 +406,7 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider) => {
 
 describeCompat("Summaries", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 
@@ -466,7 +466,7 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider) => {
 describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let configForSingleCommitSummary: ITestContainerConfig;
-	beforeEach(() => {
+	beforeEach("setup", () => {
 		provider = getTestObjectProvider();
 		configForSingleCommitSummary = {
 			...testContainerConfig,

@@ -20,6 +20,7 @@
 			"extensions": [
 				"dbaeumer.vscode-eslint",
 				"esbenp.prettier-vscode",
+				"ms-azure-devops.azure-pipelines",
 				"ms-azuretools.vscode-docker",
 				"mutantdino.resourcemonitor"
 			]

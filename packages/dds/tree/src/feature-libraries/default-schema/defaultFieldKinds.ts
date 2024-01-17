@@ -12,7 +12,7 @@ import {
 } from "../../core/index.js";
 import { fail } from "../../util/index.js";
 import {
-	FieldKind,
+	FlexFieldKind,
 	allowsTreeSchemaIdentifierSuperset,
 	ToDelta,
 	FieldChangeHandler,
@@ -185,24 +185,24 @@ export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> =
 /**
  * @internal
  */
-export interface Required extends FieldKind<"Value", Multiplicity.Single> {}
+export interface Required extends FlexFieldKind<"Value", Multiplicity.Single> {}
 /**
  * @internal
  */
-export interface Optional extends FieldKind<"Optional", Multiplicity.Optional> {}
+export interface Optional extends FlexFieldKind<"Optional", Multiplicity.Optional> {}
 /**
  * @internal
  */
-export interface Sequence extends FieldKind<"Sequence", Multiplicity.Sequence> {}
+export interface Sequence extends FlexFieldKind<"Sequence", Multiplicity.Sequence> {}
 /**
  * @internal
  */
-export interface NodeKeyFieldKind extends FieldKind<"NodeKey", Multiplicity.Single> {}
+export interface NodeKeyFieldKind extends FlexFieldKind<"NodeKey", Multiplicity.Single> {}
 /**
  * @internal
  */
 export interface Forbidden
-	extends FieldKind<typeof forbiddenFieldKindIdentifier, Multiplicity.Forbidden> {}
+	extends FlexFieldKind<typeof forbiddenFieldKindIdentifier, Multiplicity.Forbidden> {}
 
 /**
  * Default FieldKinds with their editor types erased.
