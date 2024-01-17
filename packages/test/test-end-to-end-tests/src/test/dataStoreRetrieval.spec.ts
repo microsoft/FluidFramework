@@ -89,13 +89,13 @@ describeCompat(
 
 		beforeEach("getTestObjectProvider", function () {
 			provider = getTestObjectProvider();
-			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6975
+		});
+
+		it("Requesting data store before outer data store completes initialization", async function () {
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6978
 			if (provider.type === "TestObjectProviderWithVersionedLoad") {
 				this.skip();
 			}
-		});
-
-		it("Requesting data store before outer data store completes initialization", async () => {
 			const containerRuntimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 				ContainerRuntimeFactoryWithDefaultDataStore,
 				{
@@ -120,7 +120,11 @@ describeCompat(
 			await assert.doesNotReject(container.attach(request), "Container did not attach");
 		});
 
-		it("Requesting data store before outer data store (non-root) completes initialization", async () => {
+		it("Requesting data store before outer data store (non-root) completes initialization", async function () {
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6978
+			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				this.skip();
+			}
 			const containerRuntimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 				ContainerRuntimeFactoryWithDefaultDataStore,
 				{

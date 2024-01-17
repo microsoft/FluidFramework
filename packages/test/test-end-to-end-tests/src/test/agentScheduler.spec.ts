@@ -58,7 +58,7 @@ describeCompat("AgentScheduler", "FullCompat", (getTestObjectProvider, apis) => 
 		let scheduler: IAgentScheduler;
 
 		beforeEach("createScheduler", async function () {
-			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6975
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6979
 			if (provider.type === "TestObjectProviderWithVersionedLoad") {
 				this.skip();
 			}
@@ -122,7 +122,7 @@ describeCompat("AgentScheduler", "FullCompat", (getTestObjectProvider, apis) => 
 		let scheduler2: IAgentScheduler;
 
 		beforeEach("createContainersAndSchedulers", async function () {
-			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6975
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6979
 			if (provider.type === "TestObjectProviderWithVersionedLoad") {
 				this.skip();
 			}
@@ -260,7 +260,7 @@ describeCompat("AgentScheduler", "FullCompat", (getTestObjectProvider, apis) => 
 		let scheduler2: IAgentScheduler;
 
 		beforeEach("createContainersAndSchedulers", async function () {
-			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6975
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6979
 			if (provider.type === "TestObjectProviderWithVersionedLoad") {
 				this.skip();
 			}

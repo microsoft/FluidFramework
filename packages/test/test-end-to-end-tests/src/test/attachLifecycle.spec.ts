@@ -43,7 +43,7 @@ describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider
 	const { SharedString } = apis.dds;
 	before(function () {
 		const provider = getTestObjectProvider();
-		// TODO: Re-enable after cross version compat bugs are fixed - ADO:6975
+		// TODO: Re-enable after cross version compat bugs are fixed - ADO:6978
 		if (provider.type === "TestObjectProviderWithVersionedLoad") {
 			this.skip();
 		}
