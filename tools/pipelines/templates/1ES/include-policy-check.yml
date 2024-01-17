@@ -33,9 +33,9 @@ stages:
   - job:
     displayName: Run checks
     steps:
-    - template: : /tools/pipelines/templates/include-use-node-version.yml@self
+    - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
-    - template: : /tools/pipelines/templates/include-install-pnpm.yml@self
+    - template: /tools/pipelines/templates/include-install-pnpm.yml@self
       parameters:
         buildDirectory: $(Build.SourcesDirectory)
 
