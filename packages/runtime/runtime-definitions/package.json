@@ -136,6 +136,9 @@
 			"RemovedTypeAliasDeclaration_StableId": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"InterfaceDeclaration_ITelemetryContext": {
+				"forwardCompat": false
 			}
 		}
 	}

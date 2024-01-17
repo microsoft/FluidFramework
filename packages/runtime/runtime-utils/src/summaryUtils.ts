@@ -29,6 +29,7 @@ import {
 	IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
 import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
+import { UsageError } from "@fluidframework/telemetry-utils";
 
 /**
  * Combines summary stats by adding their totals together.
@@ -386,6 +387,28 @@ export class TelemetryContext implements ITelemetryContext {
 	 */
 	set(prefix: string, property: string, value: TelemetryEventPropertyType): void {
 		this.telemetry.set(`${prefix}${property}`, value);
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.append}
+	 */
+	push(prefix: string, property: string, value: TelemetryEventPropertyType[]): void {
+		const prevValue = this.telemetry.get(`${prefix}${property}`);
+		if (typeof prevValue === "string") {
+			try {
+				const values = JSON.parse(prevValue) as TelemetryEventPropertyType[];
+				values.push(...value);
+				this.telemetry.set(`${prefix}${property}`, JSON.stringify(values));
+				return;
+			} catch (err) {}
+		} else if (prevValue === undefined) {
+			this.telemetry.set(`${prefix}${property}`, JSON.stringify(value));
+			return;
+		}
+		throw new UsageError(
+			"push should only be used to add elements to previously pushed items",
+			{ prefix, property },
+		);
 	}
 
 	/**

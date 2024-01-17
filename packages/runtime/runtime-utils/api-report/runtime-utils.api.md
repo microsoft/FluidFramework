@@ -194,6 +194,8 @@ export class TelemetryContext implements ITelemetryContext {
     // (undocumented)
     get(prefix: string, property: string): TelemetryEventPropertyType;
     // (undocumented)
+    push(prefix: string, property: string, value: TelemetryEventPropertyType[]): void;
+    // (undocumented)
     serialize(): string;
     // (undocumented)
     set(prefix: string, property: string, value: TelemetryEventPropertyType): void;
