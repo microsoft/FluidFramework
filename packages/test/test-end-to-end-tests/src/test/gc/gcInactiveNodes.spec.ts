@@ -29,6 +29,7 @@ import {
 	itExpects,
 	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
+import { delay } from "@fluidframework/core-utils";
 import {
 	manufactureHandle,
 	waitForContainerWriteModeConnectionWrite,
@@ -80,6 +81,22 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 				{ eventName: loadedEvent },
 			]),
 			"inactive object events should not have been logged",
+		);
+	}
+
+	async function loadContainer(
+		configNoLoaderProps: ITestContainerConfig, // loaderProps gets overwritten
+		summaryVersion: string,
+		logger?: MockLogger,
+	) {
+		return provider.loadTestContainer(
+			{
+				...configNoLoaderProps,
+				loaderProps: { logger },
+			},
+			{
+				[LoaderHeader.version]: summaryVersion,
+			},
 		);
 	}
 
@@ -414,12 +431,10 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 
 					// Load a non-summarizer container from the above summary that uses the mock logger. This container has to
 					// be in "write" mode for GC to initialize unreferenced nodes from summary.
-					const container2 = await provider.loadTestContainer(
-						{
-							...testContainerConfigWithThrowOption,
-							loaderProps: { logger: mockLogger },
-						},
-						{ [LoaderHeader.version]: summaryVersion1 },
+					const container2 = await loadContainer(
+						testContainerConfigWithThrowOption,
+						summaryVersion1,
+						mockLogger,
 					);
 					const defaultDataStoreContainer2 =
 						(await container2.getEntryPoint()) as ITestDataObject;
@@ -502,12 +517,10 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 
 					// Load a non-summarizer container from the above summary that uses the mock logger. This container has to
 					// be in "write" mode for GC to initialize unreferenced nodes from summary.
-					const container2 = await provider.loadTestContainer(
-						{
-							...testContainerConfigWithThrowOption,
-							loaderProps: { logger: mockLogger },
-						},
-						{ [LoaderHeader.version]: summaryVersion1 },
+					const container2 = await loadContainer(
+						testContainerConfigWithThrowOption,
+						summaryVersion1,
+						mockLogger,
 					);
 					const defaultDataStoreContainer2 =
 						(await container2.getEntryPoint()) as ITestDataObject;
@@ -579,12 +592,10 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 
 					// Load a non-summarizer container from the above summary that uses the mock logger. This container has to
 					// be in "write" mode for GC to initialize unreferenced nodes from summary.
-					const container2 = await provider.loadTestContainer(
-						{
-							...testContainerConfigWithThrowOption,
-							loaderProps: { logger: mockLogger },
-						},
-						{ [LoaderHeader.version]: summaryVersion1 },
+					const container2 = await loadContainer(
+						testContainerConfigWithThrowOption,
+						summaryVersion1,
+						mockLogger,
 					);
 					const defaultDataStoreContainer2 =
 						(await container2.getEntryPoint()) as ITestDataObject;
@@ -649,12 +660,10 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 
 					// Load a non-summarizer container from the above summary that uses the mock logger. This container has to
 					// be in "write" mode for GC to initialize unreferenced nodes from summary.
-					const container2 = await provider.loadTestContainer(
-						{
-							...testContainerConfig, // NOT including the throwOnInactiveLoad flag
-							loaderProps: { logger: mockLogger },
-						},
-						{ [LoaderHeader.version]: summaryVersion1 },
+					const container2 = await loadContainer(
+						testContainerConfig, // NOT including the throwOnInactiveLoad flag
+						summaryVersion1,
+						mockLogger,
 					);
 					const defaultDataStoreContainer2 =
 						(await container2.getEntryPoint()) as ITestDataObject;
@@ -749,5 +758,89 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 				);
 			},
 		);
+
+		it("Reviving an InactiveObject clears Inactive state immediately in interactive client (but not for its subtree)", async () => {
+			const container1 = mainContainer;
+			const { summarizer: summarizer1 } = await createSummarizer(
+				provider,
+				container1,
+				testContainerConfig,
+			);
+			const defaultDataObject1 = (await container1.getEntryPoint()) as ITestDataObject;
+			await waitForContainerConnection(container1);
+
+			const dataObjectA_1 = await createNewDataObject();
+			const dataObjectB_1 = await createNewDataObject();
+			const idA = dataObjectA_1._context.id;
+			const idB = dataObjectB_1._context.id;
+
+			// Reference A from the container entrypoint, and B from A
+			defaultDataObject1._root.set("A", dataObjectA_1.handle);
+			dataObjectA_1._root.set("B", dataObjectB_1.handle);
+
+			// Then unreference the A-B chain (but leave it intact), and Summarize to start unreferenced tracking
+			defaultDataObject1._root.delete("A");
+			await provider.ensureSynchronized();
+			const { summaryVersion: summaryVersion1 } = await summarizeNow(summarizer1);
+
+			// A and B are unreferenced in container2/container3. Timers will be set
+			// We need two containers because each event type is only logged once per container
+			const mockLogger2 = new MockLogger();
+			const container2 = await loadContainer(
+				testContainerConfig,
+				summaryVersion1,
+				mockLogger2,
+			);
+			const defaultDataObject2 = (await container2.getEntryPoint()) as ITestDataObject;
+			const mockLogger3 = new MockLogger();
+			const container3 = await loadContainer(
+				testContainerConfig,
+				summaryVersion1,
+				mockLogger3,
+			);
+			const defaultDataObject3 = (await container3.getEntryPoint()) as ITestDataObject;
+
+			// Wait the Inactive Timeout. Timers will fire
+			await delay(inactiveTimeoutMs);
+
+			// Load A in container2 and ensure InactiveObject_Loaded is logged
+			const handleA_2 = manufactureHandle<ITestDataObject>(
+				defaultDataObject2._context.IFluidHandleContext, // yields the ContaineRuntime's handleContext
+				idA,
+			);
+			await handleA_2?.get();
+			mockLogger2.assertMatch([
+				{
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
+					id: { value: `/${idA}`, tag: "CodeArtifact" },
+				},
+			]);
+
+			// Reference A again in container1. Should be revived on container3
+			defaultDataObject1._root.set("A", dataObjectA_1.handle);
+			await provider.ensureSynchronized();
+
+			// Since A was directly revived, its unreferenced state was cleared immediately so we shouldn't see InactiveObject logs for it
+			const handleA_3 = defaultDataObject3._root.get<IFluidHandle<ITestDataObject>>("A");
+			const dataObjectA_3 = await handleA_3?.get();
+			mockLogger3.assertMatchNone([
+				{
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
+				},
+			]);
+
+			// Since B wasn't directly revived, it wrongly still thinks it's Inactive. Next GC will clear it up.
+			const handleB_3 = dataObjectA_3?._root.get<IFluidHandle<ITestDataObject>>("B");
+			await handleB_3?.get();
+			mockLogger3.assertMatch([
+				{
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
+					id: { value: `/${idB}`, tag: "CodeArtifact" },
+				},
+			]);
+		});
 	});
 });
