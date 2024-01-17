@@ -70,12 +70,15 @@ export class OdspTestTokenProvider implements IOdspTokenProvider {
 		const parsedResponse = (await response.json()) as Record<string, unknown>;
 
 		const accessToken = parsedResponse.access_token;
-		assert(accessToken !== undefined, "Response did not include access_token.");
-		assert(typeof accessToken === "string", "");
+		assert(accessToken !== undefined, 'Response did not include "access_token".');
+		assert(typeof accessToken === "string", '"access_token" was malformed. Expected a string.');
 
 		const refreshToken = parsedResponse.refresh_token;
 		if (refreshToken !== undefined) {
-			assert(typeof refreshToken === "string", "");
+			assert(
+				typeof refreshToken === "string",
+				'"refreshToken" was malformed. Expected a string.',
+			);
 		}
 
 		return { accessToken, refreshToken };
