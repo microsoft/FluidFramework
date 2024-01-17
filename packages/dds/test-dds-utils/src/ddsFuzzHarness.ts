@@ -19,7 +19,6 @@ import {
 	defaultOptions,
 	done,
 	ExitBehavior,
-	// remap all of these to not use async
 	AsyncGenerator as Generator,
 	asyncGeneratorFromArray as generatorFromArray,
 	interleaveAsync as interleave,
@@ -616,55 +615,15 @@ export function mixinAttach<
 		return model as DDSFuzzModel<TChannelFactory, TOperation | Attach, TState>;
 	}
 
-	// const attachOp = async (state): Promise<TOperation | Attach> => {
-	// 	return {
-	// 		type: "attach",
-	// 	};
-	// };
-
 	const attachOp = async (): Promise<TOperation | Attach | typeof done> => {
 		return { type: "attach" };
 	};
 	const generatorFactory: () => Generator<TOperation | Attach, TState> = () => {
-		// original code:
-		// const baseGenerator = model.generatorFactory();
-		// return async (state): Promise<TOperation | Attach | typeof done> => {
-		// 	if (state.isDetached && state.random.bool(attachProbability)) {
-		// 		return {
-		// 			type: "attach",
-		// 		};
-		// 	}
-
-		// 	return baseGenerator(state);
-		// };
-
-		// attempts at new code:
 		const baseGenerator = model.generatorFactory();
 
 		const opsBeforeAttach = takeAsync(10, baseGenerator);
 
 		return chainAsync(opsBeforeAttach, attachOp);
-		// return async (state): Promise<TOperation | Attach | typeof done> => {
-		// 	if (state.isDetached) {
-		// 		return {
-		// 			type: "attach",
-		// 		};
-		// 	}
-		// };
-
-		// const opsBeforeAttach = take(10, baseGenerator);
-
-		// const attachOp: Generator<TOperation | Attach, TState> = async (
-		// 	state,
-		// ): Promise<TOperation | Attach | typeof done> => {
-		// 	if (state.isDetached && state.random.bool(attachProbability)) {
-		// 		return {
-		// 			type: "attach",
-		// 		};
-		// 	}
-		// 	return baseGenerator(state);
-		// };
-		// return chain(opsBeforeAttach, attachOp);
 	};
 
 	const minimizationTransforms = model.minimizationTransforms as
