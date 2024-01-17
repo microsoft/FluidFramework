@@ -546,7 +546,9 @@ export class SharedMatrix<T = any>
 			SnapshotPath.cells,
 			serializer.stringify(artifactsToSummarize, this.handle),
 		);
-		telemetryContext?.push("fluid:SharedMatrix", "details", [JSON.stringify(props)]);
+		if (telemetryContext?.push !== undefined) {
+			telemetryContext.push("fluid:SharedMatrix", "details", [JSON.stringify(props)]);
+		}
 		return builder.getSummaryTree();
 	}
 
