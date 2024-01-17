@@ -545,14 +545,24 @@ export class ModularChangeFamily
 				field.change = fieldKind.changeHandler.rebaser.rebase(
 					fieldChangeset,
 					tagChange(baseChangeset, context.baseRevision),
-					(curr, base) => {
-						if (curr === undefined) {
-							return base === undefined
-								? undefined
-								: crossFieldTable.rebasedNodeCache.get(base);
-						} else {
-							return crossFieldTable.rebasedNodeCache.get(curr) ?? curr;
+					(curr, base, stateChange) => {
+						const key = curr ?? base;
+						if (key !== undefined) {
+							const prior = crossFieldTable.rebasedNodeCache.get(key);
+							if (prior !== undefined) {
+								return prior;
+							}
 						}
+						return this.rebaseNodeChange(
+							curr,
+							tagChange(base, context.baseRevision),
+							genId,
+							crossFieldTable,
+							() => true,
+							rebaseMetadata,
+							constraintState,
+							stateChange,
+						);
 					},
 					genId,
 					newCrossFieldManager(crossFieldTable),
@@ -1086,10 +1096,16 @@ interface InvertContext {
 interface RebaseTable extends CrossFieldTable<FieldChange> {
 	rebasedFieldToContext: Map<FieldChange, FieldChangeContext>;
 	/**
-	 * The key can be one of:
-	 * - The node changeset that is in the input changeset being rebased
-	 * - The node changeset that is in the base changeset (used when there is no corresponding node changeset in the input changeset)
-	 * The value is the output node changeset that was computed in a previous rebase call.
+	 * This map caches the output of a prior rebasing computation for a node, keyed on that computation's input.
+	 * The input for such a computation is characterized by a pair of node changesets:
+	 * - The node changeset from the input changeset being rebased
+	 * - The corresponding node changeset from the changeset being rebased over.
+	 *
+	 * Either of these may be undefined so we adopt the following convention:
+	 * - If the node changeset from the changeset being rebased is defined, then we use that as the key
+	 * - Otherwise, if the node changeset from the changeset being rebased over is defined, then we use that as the key
+	 * - Otherwise, we don't cache the output (which will be undefined anyway).
+	 *
 	 * This map is needed once we switch from the initial pass (which generates a new changeset) to the second pass which
 	 * performs surgery on the changeset generated in the first pass: we don't want to re-run the rebasing of nested
 	 * changes. Instead we want to keep using the objects generated in the first pass and mutate them where needed.
