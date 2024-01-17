@@ -77,7 +77,23 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
 		};
 
-		const redisClient = new Redis.default(redisOptions);
+		const redisClient: Redis.default | Redis.Cluster = redisConfig.enableClustering
+			? new Redis.Cluster(
+					[
+						{
+							port: redisOptions.port,
+							host: redisOptions.host,
+						},
+					],
+					{
+						redisOptions,
+						slotsRefreshTimeout: 10000,
+						dnsLookup: (adr, callback) => callback(null, adr),
+						showFriendlyErrorStack: true,
+					},
+			  )
+			: new Redis.default(redisOptions);
+
 		const disableGitCache = config.get("restGitService:disableGitCache") as boolean | undefined;
 		const gitCache = disableGitCache
 			? undefined
@@ -122,7 +138,23 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 				servername: redisConfigForThrottling.host,
 			};
 		}
-		const redisClientForThrottling = new Redis.default(redisOptionsForThrottling);
+		const redisClientForThrottling: Redis.default | Redis.Cluster =
+			redisConfigForThrottling.enableClustering
+				? new Redis.Cluster(
+						[
+							{
+								port: redisOptionsForThrottling.port,
+								host: redisOptionsForThrottling.host,
+							},
+						],
+						{
+							redisOptionsForThrottling,
+							slotsRefreshTimeout: 10000,
+							dnsLookup: (adr, callback) => callback(null, adr),
+							showFriendlyErrorStack: true,
+						},
+				  )
+				: new Redis.default(redisOptionsForThrottling);
 		const redisParamsForThrottling = {
 			expireAfterSeconds: redisConfigForThrottling.keyExpireAfterSeconds as
 				| number

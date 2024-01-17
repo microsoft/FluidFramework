@@ -260,7 +260,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			redisOptionsCopy,
 		);
 
-		console.log("test123456");
+		console.log("test1234567");
 		const redisClient: Redis.default | Redis.Cluster = redisConfig2.enableClustering
 			? new Redis.Cluster([{ port: redisConfig2.port, host: redisConfig2.host }], {
 					redisOptions: redisOptions2,

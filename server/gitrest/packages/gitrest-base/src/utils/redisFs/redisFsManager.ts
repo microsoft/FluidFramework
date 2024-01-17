@@ -44,8 +44,14 @@ export class RedisFsManager implements IFileSystemManager {
 		redisParam: RedisParams,
 		redisOptions: IoRedis.RedisOptions,
 		redisFsConfig: RedisFsConfig,
+		enableClustering: boolean = false,
 	) {
-		this.promises = RedisFs.getInstance(redisParam, redisOptions, redisFsConfig);
+		this.promises = RedisFs.getInstance(
+			redisParam,
+			redisOptions,
+			redisFsConfig,
+			enableClustering,
+		);
 	}
 }
 
@@ -57,8 +63,25 @@ export class RedisFs implements IFileSystemPromises {
 		redisParams: RedisParams,
 		redisOptions: IoRedis.RedisOptions,
 		private readonly redisFsConfig: RedisFsConfig,
+		enableClustering: boolean = false,
 	) {
-		const redisClient = new IoRedis.default(redisOptions);
+		const redisClient: IoRedis.default | IoRedis.Cluster = enableClustering
+			? new IoRedis.Cluster(
+					[
+						{
+							port: redisOptions.port,
+							host: redisOptions.host,
+						},
+					],
+					{
+						redisOptions,
+						slotsRefreshTimeout: 10000,
+						dnsLookup: (adr, callback) => callback(null, adr),
+						showFriendlyErrorStack: true,
+					},
+			  )
+			: new IoRedis.default(redisOptions);
+
 		this.redisFsClient = new Redis(redisClient, redisParams);
 	}
 
@@ -66,9 +89,15 @@ export class RedisFs implements IFileSystemPromises {
 		redisParams: RedisParams,
 		redisOptions: IoRedis.RedisOptions,
 		redisFsConfig: RedisFsConfig,
+		enableClustering: boolean = false,
 	): RedisFs {
 		if (!RedisFs.instance) {
-			RedisFs.instance = new RedisFs(redisParams, redisOptions, redisFsConfig);
+			RedisFs.instance = new RedisFs(
+				redisParams,
+				redisOptions,
+				redisFsConfig,
+				enableClustering,
+			);
 		}
 		return RedisFs.instance;
 	}

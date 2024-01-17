@@ -16,7 +16,7 @@ export class Redis {
 	private readonly prefix: string = "fs";
 
 	constructor(
-		private readonly client: IoRedis.default,
+		private readonly client: IoRedis.default | IoRedis.Cluster,
 		parameters?: IRedisParameters,
 	) {
 		if (parameters?.expireAfterSeconds) {

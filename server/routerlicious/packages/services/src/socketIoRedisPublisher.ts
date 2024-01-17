@@ -38,7 +38,6 @@ export class SocketIoRedisPublisher implements core.IPublisher {
 			  })
 			: new Redis.default(options);
 
-		this.redisClient = new Redis.default(options);
 		this.io = new SocketIoEmitter(this.redisClient);
 
 		this.redisClient.on("error", (error) => {

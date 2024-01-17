@@ -128,11 +128,11 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 
 			const redisClient: Redis.default | Redis.Cluster = redisConfig.enableClustering
 				? new Redis.Cluster([{ port: redisConfig.port, host: redisConfig.host }], {
-				  		redisOptions,
-				  		slotsRefreshTimeout: 10000,
-				  		dnsLookup: (adr, callback) => callback(null, adr),
-				  		showFriendlyErrorStack: true,
-				    })
+						redisOptions,
+						slotsRefreshTimeout: 10000,
+						dnsLookup: (adr, callback) => callback(null, adr),
+						showFriendlyErrorStack: true,
+				  })
 				: new Redis.default(redisOptions);
 
 			cache = new RedisCache(redisClient, redisParams);

@@ -31,6 +31,7 @@ export class RedisFsManagerFactory implements IFileSystemManagerFactory {
 	private readonly redisParams: RedisParams;
 	private readonly redisOptions: Redis.RedisOptions;
 	private readonly redisFsConfig: RedisFsConfig;
+	private readonly enableClustering: boolean;
 	constructor(config: Provider) {
 		this.redisFsConfig = {
 			enableRedisFsMetrics: (config.get("git:enableRedisFsMetrics") as boolean) ?? true,
@@ -69,9 +70,16 @@ export class RedisFsManagerFactory implements IFileSystemManagerFactory {
 		this.redisParams = {
 			expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
 		};
+
+		this.enableClustering = redisConfig.enableClustering;
 	}
 
 	public create(params?: IFileSystemManagerParams): IFileSystemManager {
-		return new RedisFsManager(this.redisParams, this.redisOptions, this.redisFsConfig);
+		return new RedisFsManager(
+			this.redisParams,
+			this.redisOptions,
+			this.redisFsConfig,
+			this.enableClustering,
+		);
 	}
 }
