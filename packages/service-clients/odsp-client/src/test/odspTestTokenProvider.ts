@@ -41,7 +41,13 @@ export class OdspTestTokenProvider implements IOdspTokenProvider {
 		};
 	}
 
-	private async fetchTokens(siteUrl: string, scope: string) {
+	private async fetchTokens(
+		siteUrl: string,
+		scope: string,
+	): Promise<{
+		accessToken: string;
+		refreshToken: string;
+	}> {
 		const server = new URL(siteUrl).host;
 		const clientConfig: IClientConfig = {
 			clientId: this.creds.clientId,
@@ -60,9 +66,9 @@ export class OdspTestTokenProvider implements IOdspTokenProvider {
 		};
 		const response = await unauthPostAsync(getFetchTokenUrl(server), new URLSearchParams(body));
 
-		const parsedResponse = await response.json();
-		const accessToken = parsedResponse.access_token;
-		const refreshToken = parsedResponse.refresh_token;
+		const parsedResponse = (await response.json()) as Record<string, unknown>;
+		const accessToken = parsedResponse.access_token as string;
+		const refreshToken = parsedResponse.refresh_token as string;
 
 		return { accessToken, refreshToken };
 	}

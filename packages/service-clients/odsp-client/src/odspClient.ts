@@ -34,6 +34,29 @@ import type {
 import { IClient } from "@fluidframework/protocol-definitions";
 import { OdspClientProps, OdspContainerServices, OdspConnectionConfig } from "./interfaces";
 import { createOdspAudienceMember } from "./odspAudience";
+import { type IOdspTokenProvider } from "./token";
+
+async function getStorageToken(
+	options: OdspResourceTokenFetchOptions,
+	tokenProvider: IOdspTokenProvider,
+): Promise<TokenResponse> {
+	const tokenResponse: TokenResponse = await tokenProvider.fetchStorageToken(
+		options.siteUrl,
+		options.refresh,
+	);
+	return tokenResponse;
+}
+
+async function getWebsocketToken(
+	options: OdspResourceTokenFetchOptions,
+	tokenProvider: IOdspTokenProvider,
+): Promise<TokenResponse> {
+	const tokenResponse: TokenResponse = await tokenProvider.fetchWebsocketToken(
+		options.siteUrl,
+		options.refresh,
+	);
+	return tokenResponse;
+}
 
 /**
  * OdspClient provides the ability to have a Fluid object backed by the ODSP service within the context of Microsoft 365 (M365) tenants.
@@ -45,26 +68,9 @@ export class OdspClient {
 	private readonly urlResolver: OdspDriverUrlResolver;
 
 	public constructor(private readonly properties: OdspClientProps) {
-		const getStorageToken = async (options: OdspResourceTokenFetchOptions) => {
-			const tokenResponse: TokenResponse =
-				await this.properties.connection.tokenProvider.fetchStorageToken(
-					options.siteUrl,
-					options.refresh,
-				);
-			return tokenResponse;
-		};
-
-		const getWebsocketToken = async (options: OdspResourceTokenFetchOptions) => {
-			const tokenResponse: TokenResponse =
-				await this.properties.connection.tokenProvider.fetchWebsocketToken(
-					options.siteUrl,
-					options.refresh,
-				);
-			return tokenResponse;
-		};
 		this.documentServiceFactory = new OdspDocumentServiceFactory(
-			getStorageToken,
-			getWebsocketToken,
+			async (options) => getStorageToken(options, this.properties.connection.tokenProvider),
+			async (options) => getWebsocketToken(options, this.properties.connection.tokenProvider),
 		);
 
 		this.urlResolver = new OdspDriverUrlResolver();
