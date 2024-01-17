@@ -3,12 +3,16 @@
  * Licensed under the MIT License.
  */
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
+import {
+	type IEvent,
+	type IEventProvider,
+	type IFluidLoadable,
+} from "@fluidframework/core-interfaces";
 import {
 	AttachState,
-	IContainer,
-	ICriticalContainerError,
-	ConnectionState,
+	type IContainer,
+	type ICriticalContainerError,
+	type ConnectionState,
 } from "@fluidframework/container-definitions";
 import type { ContainerSchema, IRootDataObject, LoadableObjectClass } from "./types";
 
@@ -99,6 +103,7 @@ export interface IFluidContainerEvents extends IEvent {
  * @typeparam TContainerSchema - Used to determine the type of 'initialObjects'.
  *
  * @remarks Note: external implementations of this interface are not supported.
+ *
  * @sealed
  * @public
  */
@@ -216,6 +221,8 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 }
 
 /**
+ * Creates an {@link IFluidContainer} from the provided `container` and `rootDataObject`.
+ *
  * @internal
  */
 export function createFluidContainer<
@@ -242,12 +249,12 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	extends TypedEventEmitter<IFluidContainerEvents>
 	implements IFluidContainer<TContainerSchema>
 {
-	private readonly connectedHandler = () => this.emit("connected");
-	private readonly disconnectedHandler = () => this.emit("disconnected");
-	private readonly disposedHandler = (error?: ICriticalContainerError) =>
+	private readonly connectedHandler = (): boolean => this.emit("connected");
+	private readonly disconnectedHandler = (): boolean => this.emit("disconnected");
+	private readonly disposedHandler = (error?: ICriticalContainerError): boolean =>
 		this.emit("disposed", error);
-	private readonly savedHandler = () => this.emit("saved");
-	private readonly dirtyHandler = () => this.emit("dirty");
+	private readonly savedHandler = (): boolean => this.emit("saved");
+	private readonly dirtyHandler = (): boolean => this.emit("dirty");
 
 	public constructor(
 		private readonly container: IContainer,
@@ -278,7 +285,7 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	/**
 	 * {@inheritDoc IFluidContainer.disposed}
 	 */
-	public get disposed() {
+	public get disposed(): boolean {
 		return this.container.closed;
 	}
 
@@ -339,7 +346,7 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	/**
 	 * {@inheritDoc IFluidContainer.dispose}
 	 */
-	public dispose() {
+	public dispose(): void {
 		this.container.close();
 		this.container.off("connected", this.connectedHandler);
 		this.container.off("closed", this.disposedHandler);
