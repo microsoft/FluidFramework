@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
-import { strict as assert } from "assert";
+import * as path from "node:path";
+import { strict as assert } from "node:assert";
 import { DDSFuzzModel, DDSFuzzTestState, createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import {

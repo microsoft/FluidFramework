@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { IDirectory } from "../../interfaces";
 
 export function assertEquivalentDirectories(first: IDirectory, second: IDirectory): void {
@@ -58,7 +58,7 @@ function assertEventualConsistencyCore(
 	}
 
 	// Check for consistency of subdirectories ordering of both directories
-	const firstSubdirNames = Array.from(first.subdirectories()).map(([dirName, _]) => dirName);
-	const secondSubdirNames = Array.from(second.subdirectories()).map(([dirName, _]) => dirName);
+	const firstSubdirNames = [...first.subdirectories()].map(([dirName, _]) => dirName);
+	const secondSubdirNames = [...second.subdirectories()].map(([dirName, _]) => dirName);
 	assert.deepStrictEqual(firstSubdirNames, secondSubdirNames);
 }

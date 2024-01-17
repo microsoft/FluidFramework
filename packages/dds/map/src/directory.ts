@@ -350,16 +350,16 @@ const seqDataComparator = (a: SequenceData, b: SequenceData) => {
 	if (isAcknowledgedOrDetached(a)) {
 		if (isAcknowledgedOrDetached(b)) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			return a.seq !== b.seq ? a.seq - b.seq : a.clientSeq! - b.clientSeq!;
+			return a.seq === b.seq ? a.clientSeq! - b.clientSeq! : a.seq - b.seq;
 		} else {
 			return -1;
 		}
 	} else {
-		if (!isAcknowledgedOrDetached(b)) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			return a.seq !== b.seq ? a.seq - b.seq : a.clientSeq! - b.clientSeq!;
-		} else {
+		if (isAcknowledgedOrDetached(b)) {
 			return 1;
+		} else {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			return a.seq === b.seq ? a.clientSeq! - b.clientSeq! : a.seq - b.seq;
 		}
 	}
 };
@@ -799,9 +799,9 @@ export class SharedDirectory
 						}
 						newSubDir = new SubDirectory(
 							seqData,
-							createInfo !== undefined
-								? new Set<string>(createInfo.ccIds)
-								: new Set(),
+							createInfo === undefined
+								? new Set()
+								: new Set<string>(createInfo.ccIds),
 							this,
 							this.runtime,
 							this.serializer,
@@ -1976,10 +1976,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		// We don't reuse the metadata pendingMessageId but send a new one on each submit.
 		const pendingMessageId = ++this.pendingMessageId;
 		const pendingMessageIds = this.pendingKeys.get(op.key);
-		if (pendingMessageIds !== undefined) {
-			pendingMessageIds.push(pendingMessageId);
-		} else {
+		if (pendingMessageIds === undefined) {
 			this.pendingKeys.set(op.key, [pendingMessageId]);
+		} else {
+			pendingMessageIds.push(pendingMessageId);
 		}
 		return pendingMessageId;
 	}
@@ -2013,9 +2013,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		// Only submit the op, if we have record for it, otherwise it is possible that the older instance
 		// is already deleted, in which case we don't need to submit the op.
 		if (pendingMessageIds !== undefined) {
-			const index = pendingMessageIds.findIndex(
-				(id) => id === localOpMetadata.pendingMessageId,
-			);
+			const index = pendingMessageIds.indexOf(localOpMetadata.pendingMessageId);
 			if (index === -1) {
 				return;
 			}
@@ -2156,7 +2154,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		this.throwIfDisposed();
 		const createInfo: ICreateInfo = {
 			csn: this.seqData.seq,
-			ccIds: Array.from(this.clientIds),
+			ccIds: [...this.clientIds],
 		};
 		return createInfo;
 	}
@@ -2597,10 +2595,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			 * Store the sequnce numbers of newly created subdirectory to the proper creation tracker, based
 			 * on whether the creation behavior has been ack'd or not
 			 */
-			if (!isAcknowledgedOrDetached(seqData)) {
-				this.localCreationSeqTracker.set(subdirName, { ...seqData });
-			} else {
+			if (isAcknowledgedOrDetached(seqData)) {
 				this.ackedCreationSeqTracker.set(subdirName, { ...seqData });
+			} else {
+				this.localCreationSeqTracker.set(subdirName, { ...seqData });
 			}
 
 			this.registerEventsOnSubDirectory(subDir, subdirName);
