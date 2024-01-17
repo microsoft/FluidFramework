@@ -570,11 +570,14 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 				// ensure we wait till the end of the process
 				const result = await summarizeResult.receivedSummaryAckOrNack;
 				if (!result.success) {
-					this.mc.logger.sendErrorEvent({
-						eventName: "SummarizeFailed",
-						maxAttempts: 1,
-						summaryAttempts: 1,
-					});
+					this.mc.logger.sendErrorEvent(
+						{
+							eventName: "SummarizeFailed",
+							maxAttempts: 1,
+							summaryAttempts: 1,
+						},
+						result.error,
+					);
 				}
 			},
 			() => {
@@ -628,6 +631,7 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 		let summaryAttempts = 0;
 		let summaryAttemptsPerPhase = 0;
 		let summaryAttemptPhase = 0;
+		let error: any;
 		while (summaryAttemptPhase < attemptOptions.length) {
 			if (this.cancellationToken.cancelled) {
 				return;
@@ -666,6 +670,8 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 				return;
 			}
 
+			error = ackNackResult.error;
+
 			// Check for retryDelay that can come from summaryNack, upload summary or submit summary flows.
 			// Retry the same step only once per retryAfter response.
 			const submitResult = await resultSummarize.summarySubmitted;
@@ -687,11 +693,14 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 				await delay(delaySeconds * 1000);
 			}
 		}
-		this.mc.logger.sendErrorEvent({
-			eventName: "SummarizeFailed",
-			maxAttempts: attemptOptions.length,
-			summaryAttempts: summaryAttemptPhase,
-		});
+		this.mc.logger.sendErrorEvent(
+			{
+				eventName: "SummarizeFailed",
+				maxAttempts: attemptOptions.length,
+				summaryAttempts: summaryAttemptPhase,
+			},
+			error,
+		);
 		this.stopSummarizerCallback("failToSummarize");
 	}
 
@@ -742,6 +751,7 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 		let done = false;
 		let status: "success" | "failure" | "canceled" = "success";
 		let results: ISummarizeResults | undefined;
+		let error: any;
 		do {
 			currentAttempt++;
 			if (this.cancellationToken.cancelled) {
@@ -776,11 +786,12 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 
 			// Emit "summarize" event for this failed attempt.
 			status = "failure";
+			error = ackNackResult.error;
 			const eventProps: ISummarizeEventProps = {
 				result: status,
 				currentAttempt,
 				maxAttempts,
-				error: ackNackResult.error,
+				error,
 			};
 			this.emit("summarize", eventProps);
 
@@ -817,6 +828,9 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 			// Ack / nack is the final step, so if it succeeds we're done.
 			const ackNackResult = await summarizeResult.receivedSummaryAckOrNack;
 			status = ackNackResult.success ? "success" : "failure";
+			if (!ackNackResult.success) {
+				error = ackNackResult.error;
+			}
 			const eventProps: ISummarizeEventProps = {
 				result: status,
 				currentAttempt,
@@ -829,11 +843,14 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 
 		// If summarization is still unsuccessful, stop the summarizer.
 		if (status === "failure") {
-			this.mc.logger.sendErrorEvent({
-				eventName: "SummarizeFailed",
-				maxAttempts,
-				summaryAttempts: currentAttempt,
-			});
+			this.mc.logger.sendErrorEvent(
+				{
+					eventName: "SummarizeFailed",
+					maxAttempts,
+					summaryAttempts: currentAttempt,
+				},
+				error,
+			);
 			this.stopSummarizerCallback("failToSummarize");
 		}
 		return results;

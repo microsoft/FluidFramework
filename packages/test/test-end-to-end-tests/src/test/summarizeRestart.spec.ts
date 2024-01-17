@@ -55,6 +55,10 @@ describeCompat("Summarizer closes instead of refreshing", "NoCompat", (getTestOb
 				category: "generic",
 				error: "summary state stale - Unsupported option 'refreshLatestAck'",
 			},
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed",
+				error: "summary state stale - Unsupported option 'refreshLatestAck'",
+			},
 		],
 		async () => {
 			const container = await createContainer();
@@ -175,6 +179,10 @@ describeCompat("Summarizer closes instead of refreshing", "NoCompat", (getTestOb
 			{
 				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
 				category: "generic",
+				error: "summary state stale - Unsupported option 'refreshLatestAck'",
+			},
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed",
 				error: "summary state stale - Unsupported option 'refreshLatestAck'",
 			},
 		],
