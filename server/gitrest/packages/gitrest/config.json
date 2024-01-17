@@ -51,6 +51,7 @@
 		"enableOptimizedInitialSummary": false,
 		"enableSlimGitInit": false,
 		"enableRedisFsMetrics": true,
+		"enableHashmapRedisFs": false,
 		"redisApiMetricsSamplingPeriod": 0,
 		"enforceStrictPersistedFullSummaryReads": false
 	},

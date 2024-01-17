@@ -5,6 +5,7 @@
 ```ts
 
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 
 // @internal
 export function assertIsStableId(stableId: string): StableId;
@@ -19,10 +20,10 @@ export function createIdCompressor(sessionId: SessionId, logger?: ITelemetryBase
 export function createSessionId(): SessionId;
 
 // @alpha
-export function deserializeIdCompressor(serialized: SerializedIdCompressorWithOngoingSession): IIdCompressor & IIdCompressorCore;
+export function deserializeIdCompressor(serialized: SerializedIdCompressorWithOngoingSession, logger?: ITelemetryLoggerExt): IIdCompressor & IIdCompressorCore;
 
 // @alpha
-export function deserializeIdCompressor(serialized: SerializedIdCompressorWithNoSession, newSessionId: SessionId): IIdCompressor & IIdCompressorCore;
+export function deserializeIdCompressor(serialized: SerializedIdCompressorWithNoSession, newSessionId: SessionId, logger?: ITelemetryLoggerExt): IIdCompressor & IIdCompressorCore;
 
 // @internal
 export function generateStableId(): StableId;
