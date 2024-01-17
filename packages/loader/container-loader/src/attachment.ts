@@ -89,7 +89,7 @@ export interface AttachProcessProps {
 	readonly initialAttachmentData: Exclude<AttachmentData, AttachedData>;
 
 	/**
-	 * The caller should us this callback to keep track of the current
+	 * The caller should use this callback to keep track of the current
 	 * attachment data, and perform any other operations necessary
 	 * for dealing with attachment state changes, like emitting events
 	 *
