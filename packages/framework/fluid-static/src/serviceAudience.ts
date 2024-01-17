@@ -70,7 +70,7 @@ class ServiceAudience<TMember extends IMember = IMember>
 	 */
 	private lastMembers = new Map<string, TMember>();
 
-	constructor(
+	public constructor(
 		/**
 		 * Fluid Container to read the audience from.
 		 */
