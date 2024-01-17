@@ -94,7 +94,7 @@
 				"createDoc": "disabled",
 				"getDeltas": "disabled",
 				"getSession": "disabled"
-			},
+			}
 		},
 		"topic": "rawdeltas",
 		"bucket": "snapshots",
