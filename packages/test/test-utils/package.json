@@ -125,6 +125,11 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedVariableDeclaration_mockConfigProvider": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

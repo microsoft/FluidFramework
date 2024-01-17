@@ -39,7 +39,7 @@ describe("Rebasing", () => {
 			let map1: SharedMap;
 			let map2: SharedMap;
 
-			beforeEach(async () => {
+			beforeEach("createMaps", async () => {
 				containerRuntimeFactory = new MockContainerRuntimeFactory(testConfig.options);
 				const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 				containerRuntime1 =
@@ -101,7 +101,7 @@ describe("Rebasing", () => {
 			let dir1: SharedDirectory;
 			let dir2: SharedDirectory;
 
-			beforeEach(async () => {
+			beforeEach("createDirectories", async () => {
 				containerRuntimeFactory = new MockContainerRuntimeFactory(testConfig.options);
 				const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 				containerRuntime1 =

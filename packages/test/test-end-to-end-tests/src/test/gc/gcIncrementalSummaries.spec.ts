@@ -59,7 +59,7 @@ describeCompat("GC incremental summaries", "NoCompat", (getTestObjectProvider) =
 		return summaryResult.summaryVersion;
 	}
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		mainContainer = await provider.makeTestContainer(defaultGCConfig);
 		dataStoreA = (await mainContainer.getEntryPoint()) as ITestDataObject;

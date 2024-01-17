@@ -10,33 +10,39 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
+	createTestConfigProvider,
 	createSummarizer,
-	mockConfigProvider,
 	summarizeNow,
 } from "@fluidframework/test-utils";
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
 import { SharedCounter } from "@fluidframework/counter";
 
 describeCompat("Summarizer closes instead of refreshing", "NoCompat", (getTestObjectProvider) => {
-	const settings = {};
+	const configProvider = createTestConfigProvider();
 	const testContainerConfig: ITestContainerConfig = {
 		runtimeOptions: {
 			summaryOptions: {
 				summaryConfigOverrides: { state: "disabled" },
 			},
 		},
-		loaderProps: { configProvider: mockConfigProvider(settings) },
+		loaderProps: { configProvider },
 		registry: [[SharedCounter.getFactory().type, SharedCounter.getFactory()]],
 	};
+	const summarizerContainerConfig: ITestContainerConfig = { loaderProps: { configProvider } };
 
 	let provider: ITestObjectProvider;
+
 	const createContainer = async (): Promise<IContainer> => {
 		return provider.makeTestContainer(testContainerConfig);
 	};
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
-		settings["Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs"] = 100;
+		configProvider.set("Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs", 100);
+	});
+
+	afterEach(() => {
+		configProvider.clear();
 	});
 
 	itExpects(
@@ -61,7 +67,7 @@ describeCompat("Summarizer closes instead of refreshing", "NoCompat", (getTestOb
 			const { container: summarizingContainer, summarizer } = await createSummarizer(
 				provider,
 				container,
-				{ loaderProps: { configProvider: mockConfigProvider(settings) } },
+				summarizerContainerConfig,
 			);
 
 			const summarizeResults = summarizer.summarizeOnDemand({
@@ -91,13 +97,11 @@ describeCompat("Summarizer closes instead of refreshing", "NoCompat", (getTestOb
 			const { container: summarizingContainer, summarizer } = await createSummarizer(
 				provider,
 				container,
-				{ loaderProps: { configProvider: mockConfigProvider(settings) } },
+				summarizerContainerConfig,
 			);
 
 			const { container: summarizingContainer2, summarizer: summarizer2 } =
-				await createSummarizer(provider, container, {
-					loaderProps: { configProvider: mockConfigProvider(settings) },
-				});
+				await createSummarizer(provider, container, summarizerContainerConfig);
 
 			await summarizeNow(summarizer);
 			await provider.ensureSynchronized();
@@ -126,7 +130,7 @@ describeCompat("Summarizer closes instead of refreshing", "NoCompat", (getTestOb
 			const { container: summarizingContainer, summarizer } = await createSummarizer(
 				provider,
 				container,
-				{ loaderProps: { configProvider: mockConfigProvider(settings) } },
+				summarizerContainerConfig,
 			);
 
 			// summary1
@@ -142,7 +146,7 @@ describeCompat("Summarizer closes instead of refreshing", "NoCompat", (getTestOb
 				await createSummarizer(
 					provider,
 					container,
-					{ loaderProps: { configProvider: mockConfigProvider(settings) } },
+					summarizerContainerConfig,
 					summaryVersion1,
 				);
 
