@@ -12,7 +12,7 @@ import {
 	getVersionedTestObjectProviderFromApis,
 	getCompatVersionedTestObjectProviderFromApis,
 } from "./compatUtils.js";
-import { baseVersion, testBaseVersion } from "./baseVersion.js";
+import { testBaseVersion } from "./baseVersion.js";
 import {
 	getContainerRuntimeApi,
 	getDataRuntimeApi,
@@ -126,24 +126,24 @@ function getVersionedApis(config: CompatConfig): CompatApis {
 		);
 		assert(config.loadWith !== undefined, "loadWith must be defined for cross version tests");
 		const dataRuntime = getDataRuntimeApi(
-			baseVersion,
 			config.createWith.base,
+			config.createWith.delta,
 			/** adjustMajorPublic */ true,
 		);
 		const dataRuntimeForLoading = getDataRuntimeApi(
-			baseVersion,
 			config.loadWith.base,
+			config.loadWith.delta,
 			/** adjustMajorPublic */ true,
 		);
 		return {
 			containerRuntime: getContainerRuntimeApi(
-				baseVersion,
 				config.createWith.base,
+				config.createWith.delta,
 				/** adjustMajorPublic */ true,
 			),
 			containerRuntimeForLoading: getContainerRuntimeApi(
-				baseVersion,
 				config.loadWith.base,
+				config.loadWith.delta,
 				/** adjustMajorPublic */ true,
 			),
 			dataRuntime,
@@ -151,23 +151,23 @@ function getVersionedApis(config: CompatConfig): CompatApis {
 			dds: dataRuntime.dds,
 			ddsForLoading: dataRuntimeForLoading.dds,
 			driver: getDriverApi(
-				baseVersion,
 				config.createWith.base,
+				config.createWith.delta,
 				/** adjustMajorPublic */ true,
 			),
 			driverForLoading: getDriverApi(
-				baseVersion,
 				config.loadWith.base,
+				config.loadWith.delta,
 				/** adjustMajorPublic */ true,
 			),
 			loader: getLoaderApi(
-				baseVersion,
 				config.createWith.base,
+				config.createWith.delta,
 				/** adjustMajorPublic */ true,
 			),
 			loaderForLoading: getLoaderApi(
-				baseVersion,
 				config.loadWith.base,
+				config.loadWith.delta,
 				/** adjustMajorPublic */ true,
 			),
 		};
