@@ -869,6 +869,8 @@ export function mixinSynchronization<
 	};
 }
 
+const isClientSpec = (op: unknown): op is ClientSpec => (op as ClientSpec).clientId !== undefined;
+
 /**
  * Mixes in the ability to select a client to perform an operation on.
  * Makes this available to existing generators and reducers in the passed-in model via {@link DDSFuzzTestState.client}
