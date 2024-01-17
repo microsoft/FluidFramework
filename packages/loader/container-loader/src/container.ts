@@ -1328,7 +1328,7 @@ export class Container
 							return this.storageAdapter;
 						};
 
-					await runRetriableAttachProcess({
+					let attachP = runRetriableAttachProcess({
 						initialAttachmentData: this.attachmentData,
 						offlineLoadEnabled: this.offlineLoadEnabled,
 						detachedBlobStorage: this.detachedBlobStorage,
@@ -1336,6 +1336,17 @@ export class Container
 						createAttachmentSummary,
 						createOrGetStorageService,
 					});
+
+					// only enable the new behavior if the config is set
+					if (
+						this.mc.config.getBoolean("Fluid.Container.RetryOnAttachFailure") !== true
+					) {
+						attachP = attachP.catch((error) => {
+							throw normalizeErrorAndClose(error);
+						});
+					}
+
+					await attachP;
 
 					if (!this.closed) {
 						this.handleDeltaConnectionArg(

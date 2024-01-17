@@ -24,7 +24,12 @@ import {
 	getContainerEntryPointBackCompat,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeCompat, ITestDataObject, itExpects } from "@fluid-private/test-version-utils";
+import {
+	describeCompat,
+	ExpectedEvents,
+	ITestDataObject,
+	itExpects,
+} from "@fluid-private/test-version-utils";
 import { v4 as uuid } from "uuid";
 import {
 	driverSupportsBlobs,
@@ -56,6 +61,14 @@ const testContainerConfig: ITestContainerConfig = {
 };
 
 const usageErrorMessage = "Empty file summary creation isn't supported in this driver.";
+
+const containerCloseAndDisposeUsageErrors = [
+	{ eventName: "fluid:telemetry:Container:ContainerClose", error: usageErrorMessage },
+];
+const ContainerCloseUsageError: ExpectedEvents = {
+	routerlicious: containerCloseAndDisposeUsageErrors,
+	tinylicious: containerCloseAndDisposeUsageErrors,
+};
 
 describeCompat("blobs", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
@@ -196,7 +209,7 @@ describeCompat("blobs", "FullCompat", (getTestObjectProvider) => {
 		it(`attach sends ops with compression enabled and ${
 			enableGroupedBatching ? "grouped" : "regular"
 		} batching`, async function () {
-			// Tracked by AB#4130, the test run on the tinylicious driver is disabled temporarily to ensure normal operation of the build-client package pipeline
+			// Tracked by AB#4130, the test run on the tinylicous driver is disabled temporarily to ensure normal operation of the build-client package pipeline
 			if (provider.driver.type === "tinylicious" || provider.driver.type === "t9s") {
 				this.skip();
 			}
@@ -319,7 +332,7 @@ describeCompat("blobs", "NoCompat", (getTestObjectProvider) => {
 	for (const summarizeProtocolTree of [undefined, true, false]) {
 		itExpects(
 			`works in detached container. summarizeProtocolTree: ${summarizeProtocolTree}`,
-			[],
+			ContainerCloseUsageError,
 			async function () {
 				const detachedBlobStorage = new MockDetachedBlobStorage();
 				const loader = provider.makeTestLoader({
@@ -400,7 +413,7 @@ describeCompat("blobs", "NoCompat", (getTestObjectProvider) => {
 		);
 	});
 
-	itExpects("redirect table saved in snapshot", [], async function () {
+	itExpects("redirect table saved in snapshot", ContainerCloseUsageError, async function () {
 		// test with and without offline load enabled
 		const offlineCfg = configProvider({ "Fluid.Container.enableOfflineLoad": true });
 		for (const cfg of [undefined, offlineCfg]) {
@@ -455,7 +468,7 @@ describeCompat("blobs", "NoCompat", (getTestObjectProvider) => {
 		}
 	});
 
-	itExpects("serialize/rehydrate then attach", [], async function () {
+	itExpects("serialize/rehydrate then attach", ContainerCloseUsageError, async function () {
 		const detachedBlobStorage = new MockDetachedBlobStorage();
 		const loader = provider.makeTestLoader({
 			...testContainerConfig,
@@ -496,47 +509,54 @@ describeCompat("blobs", "NoCompat", (getTestObjectProvider) => {
 		);
 	});
 
-	itExpects("serialize/rehydrate multiple times then attach", [], async function () {
-		const detachedBlobStorage = new MockDetachedBlobStorage();
-		const loader = provider.makeTestLoader({
-			...testContainerConfig,
-			loaderProps: { detachedBlobStorage },
-		});
-		let container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+	itExpects(
+		"serialize/rehydrate multiple times then attach",
+		ContainerCloseUsageError,
+		async function () {
+			const detachedBlobStorage = new MockDetachedBlobStorage();
+			const loader = provider.makeTestLoader({
+				...testContainerConfig,
+				loaderProps: { detachedBlobStorage },
+			});
+			let container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
-		const text = "this is some example text";
-		const dataStore = (await container.getEntryPoint()) as ITestDataObject;
-		dataStore._root.set(
-			"my blob",
-			await dataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8")),
-		);
+			const text = "this is some example text";
+			const dataStore = (await container.getEntryPoint()) as ITestDataObject;
+			dataStore._root.set(
+				"my blob",
+				await dataStore._runtime.uploadBlob(stringToBuffer(text, "utf-8")),
+			);
 
-		let snapshot;
-		for (const _ of Array(5)) {
-			snapshot = container.serialize();
-			container.close();
-			container = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
-		}
+			let snapshot;
+			for (const _ of Array(5)) {
+				snapshot = container.serialize();
+				container.close();
+				container = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
+			}
 
-		const attachP = container.attach(
-			provider.driver.createCreateNewRequest(provider.documentId),
-		);
-		if (!driverSupportsBlobs(provider.driver)) {
-			return assert.rejects(attachP, (err: IErrorBase) => err.message === usageErrorMessage);
-		}
-		await attachP;
+			const attachP = container.attach(
+				provider.driver.createCreateNewRequest(provider.documentId),
+			);
+			if (!driverSupportsBlobs(provider.driver)) {
+				return assert.rejects(
+					attachP,
+					(err: IErrorBase) => err.message === usageErrorMessage,
+				);
+			}
+			await attachP;
 
-		const url = await getUrlFromDetachedBlobStorage(container, provider);
-		const attachedContainer = await provider
-			.makeTestLoader(testContainerConfig)
-			.resolve({ url });
-		const attachedDataStore = (await attachedContainer.getEntryPoint()) as ITestDataObject;
-		await provider.ensureSynchronized();
-		assert.strictEqual(
-			bufferToString(await attachedDataStore._root.get("my blob").get(), "utf-8"),
-			text,
-		);
-	});
+			const url = await getUrlFromDetachedBlobStorage(container, provider);
+			const attachedContainer = await provider
+				.makeTestLoader(testContainerConfig)
+				.resolve({ url });
+			const attachedDataStore = (await attachedContainer.getEntryPoint()) as ITestDataObject;
+			await provider.ensureSynchronized();
+			assert.strictEqual(
+				bufferToString(await attachedDataStore._root.get("my blob").get(), "utf-8"),
+				text,
+			);
+		},
+	);
 
 	it("rehydrating without detached blob storage results in error", async function () {
 		const detachedBlobStorage = new MockDetachedBlobStorage();

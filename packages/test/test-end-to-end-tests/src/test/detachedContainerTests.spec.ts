@@ -1010,6 +1010,27 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 			assert.strictEqual(container.closed, true, "Container should be closed");
 		},
 	);
+	itExpects(
+		"Container should be closed on failed attach with non retryable error",
+		[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "Test Error" }],
+		async () => {
+			const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+
+			const oldFunc = provider.documentServiceFactory.createContainer;
+			provider.documentServiceFactory.createContainer = (a, b, c) => {
+				throw new Error("Test Error");
+			};
+			let failedOnce = false;
+			try {
+				await container.attach(request);
+			} catch (e) {
+				failedOnce = true;
+				provider.documentServiceFactory.createContainer = oldFunc;
+			}
+			assert.strictEqual(failedOnce, true, "Attach call should fail");
+			assert.strictEqual(container.closed, true, "Container should be closed");
+		},
+	);
 });
 
 // Review: Run with Full Compat?
@@ -1098,7 +1119,19 @@ describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) =
 		"Container should not be closed on network failure during attach and succeed on retry",
 		[],
 		async () => {
-			const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+			const loaderWithConfig = provider.createLoader(
+				[[provider.defaultCodeDetails, provider.createFluidEntryPoint()]],
+				{
+					configProvider: {
+						getRawConfig: (name) =>
+							name === "Fluid.Container.RetryOnAttachFailure" ? true : undefined,
+					},
+				},
+			);
+
+			const container = await loaderWithConfig.createDetachedContainer(
+				provider.defaultCodeDetails,
+			);
 
 			const oldFunc = provider.documentServiceFactory.createContainer;
 			provider.documentServiceFactory.createContainer = (a, b, c) => {
