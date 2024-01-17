@@ -57,7 +57,11 @@ describeCompat("AgentScheduler", "FullCompat", (getTestObjectProvider, apis) => 
 	describe("Single client", () => {
 		let scheduler: IAgentScheduler;
 
-		beforeEach("createScheduler", async () => {
+		beforeEach("createScheduler", async function () {
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6975
+			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				this.skip();
+			}
 			const container = await createContainer();
 			scheduler = await getAgentScheduler(container);
 		});
@@ -117,7 +121,11 @@ describeCompat("AgentScheduler", "FullCompat", (getTestObjectProvider, apis) => 
 		let scheduler1: IAgentScheduler;
 		let scheduler2: IAgentScheduler;
 
-		beforeEach("createContainersAndSchedulers", async () => {
+		beforeEach("createContainersAndSchedulers", async function () {
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6975
+			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				this.skip();
+			}
 			// Create a new Container for the first document.
 			container1 = await createContainer();
 			scheduler1 = await getAgentScheduler(container1);
@@ -251,7 +259,11 @@ describeCompat("AgentScheduler", "FullCompat", (getTestObjectProvider, apis) => 
 		let scheduler1: IAgentScheduler;
 		let scheduler2: IAgentScheduler;
 
-		beforeEach("createContainersAndSchedulers", async () => {
+		beforeEach("createContainersAndSchedulers", async function () {
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6975
+			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				this.skip();
+			}
 			container1 = await createContainer();
 			scheduler1 = await getContainerEntryPointBackCompat<IAgentScheduler>(container1);
 

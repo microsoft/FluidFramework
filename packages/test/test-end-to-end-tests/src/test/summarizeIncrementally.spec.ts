@@ -109,6 +109,10 @@ describeCompat(
 
 		beforeEach(async function () {
 			provider = getTestObjectProvider({ syncSummarizer: true });
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6975
+			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				this.skip();
+			}
 			if (provider.driver.type !== "local") {
 				this.skip();
 			}

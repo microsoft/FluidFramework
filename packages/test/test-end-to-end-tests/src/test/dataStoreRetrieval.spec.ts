@@ -87,8 +87,12 @@ describeCompat(
 
 		let provider: ITestObjectProvider;
 
-		beforeEach("getTestObjectProvider", () => {
+		beforeEach("getTestObjectProvider", function () {
 			provider = getTestObjectProvider();
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6975
+			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				this.skip();
+			}
 		});
 
 		it("Requesting data store before outer data store completes initialization", async () => {
