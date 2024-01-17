@@ -141,6 +141,7 @@ describe("Map", () => {
 					map.set(undefined as unknown as string, "one");
 				}, "Should throw for key of undefined");
 				assert.throws(() => {
+					// eslint-disable-next-line unicorn/no-null
 					map.set(null as unknown as string, "two");
 				}, "Should throw for key of null");
 			});
@@ -545,7 +546,7 @@ describe("Map", () => {
 
 					containerRuntimeFactory.processAllMessages();
 
-					const retrieved = map1.get("object");
+					const retrieved = map1.get("object") as typeof containingObject;
 					const retrievedSubMap: unknown = await retrieved.subMapHandle.get();
 					assert.equal(retrievedSubMap, subMap, "could not get nested map 1");
 					const retrievedSubMap2: unknown = await retrieved.nestedObj.subMap2Handle.get();

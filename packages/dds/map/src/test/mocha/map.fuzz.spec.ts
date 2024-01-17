@@ -38,11 +38,11 @@ type Operation = SetKey | DeleteKey | Clear;
 // This type gets used a lot as the state object of the suite; shorthand it here.
 type State = DDSFuzzTestState<MapFactory>;
 
-function assertMapsAreEquivalent(a: ISharedMap, b: ISharedMap) {
+function assertMapsAreEquivalent(a: ISharedMap, b: ISharedMap): void {
 	assert.equal(a.size, b.size, `${a.id} and ${b.id} have different number of keys.`);
 	for (const key of a.keys()) {
-		const aVal = a.get(key);
-		const bVal = b.get(key);
+		const aVal: unknown = a.get(key);
+		const bVal: unknown = b.get(key);
 		assert.equal(aVal, bVal, `${a.id} and ${b.id} differ at ${key}: ${aVal} vs ${bVal}`);
 	}
 }

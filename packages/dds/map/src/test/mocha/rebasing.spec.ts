@@ -133,7 +133,10 @@ describe("Rebasing", () => {
 				dir2.connect(services2);
 			});
 
-			const areDirectoriesEqual = (a: IDirectory | undefined, b: IDirectory | undefined) => {
+			const areDirectoriesEqual = (
+				a: IDirectory | undefined,
+				b: IDirectory | undefined,
+			): void => {
 				if (a === undefined || b === undefined) {
 					assert.strictEqual(a, b, "Both directories should be undefined");
 					return;

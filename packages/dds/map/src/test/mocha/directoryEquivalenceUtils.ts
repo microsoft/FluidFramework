@@ -13,7 +13,7 @@ export function assertEquivalentDirectories(first: IDirectory, second: IDirector
 function assertEventualConsistencyCore(
 	first: IDirectory | undefined,
 	second: IDirectory | undefined,
-) {
+): void {
 	assert(first !== undefined, "first root dir should be present");
 	assert(second !== undefined, "second root dir should be present");
 
