@@ -15,4 +15,13 @@ module.exports = {
 		// TODO: consider re-enabling once we have addressed how this rule conflicts with our error codes.
 		"unicorn/numeric-separators-style": "off",
 	},
+	overrides: [
+		{
+			files: ["src/test/**"],
+			rules: {
+				// Allow tests (which only run in Node.js) use `__dirname`
+				"unicorn/prefer-module": "off",
+			},
+		},
+	],
 };
