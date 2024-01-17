@@ -21,7 +21,7 @@ export interface ContainerSchema {
     initialObjects: LoadableObjectClassRecord;
 }
 
-// @internal (undocumented)
+// @internal
 export function createDOProviderContainerRuntimeFactory(props: {
     schema: ContainerSchema;
 }): IRuntimeFactory;
