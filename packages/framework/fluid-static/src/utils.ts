@@ -24,7 +24,7 @@ export type InternalDataObjectClass<T extends IFluidLoadable> = DataObjectClass<
  * Runtime check to determine if a class is a DataObject type
  */
 export const isDataObjectClass = (obj: unknown): obj is InternalDataObjectClass<IFluidLoadable> => {
-	const maybe = obj as Partial<InternalDataObjectClass<IFluidLoadable>>;
+	const maybe = obj as Partial<InternalDataObjectClass<IFluidLoadable>> | undefined;
 	return (
 		maybe?.factory?.IFluidDataStoreFactory !== undefined &&
 		maybe?.factory?.IFluidDataStoreFactory === maybe?.factory
@@ -35,7 +35,7 @@ export const isDataObjectClass = (obj: unknown): obj is InternalDataObjectClass<
  * Runtime check to determine if a class is a SharedObject type
  */
 export const isSharedObjectClass = (obj: unknown): obj is SharedObjectClass<IFluidLoadable> => {
-	const maybe = obj as Partial<SharedObjectClass<IFluidLoadable>>;
+	const maybe = obj as Partial<SharedObjectClass<IFluidLoadable>> | undefined;
 	return maybe?.getFactory !== undefined;
 };
 
