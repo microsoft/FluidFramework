@@ -22,7 +22,7 @@ describe("Lumberjack", () => {
 		const engine = new TestEngine1();
 		TestLumberjack.setup([engine]);
 		TestLumberjack.newLumberMetric(LumberEventName.UnitTestEvent);
-		assert.strictEqual(handleErrorStub.notCalled, true);
+		assert.strictEqual(handleErrorStub.notCalled, true, "Handle error should not be called.");
 	});
 
 	it("Sets up a custom Lumberjack instance and creates a Lumber metric.", () => {
@@ -30,7 +30,7 @@ describe("Lumberjack", () => {
 		const engine = new TestEngine1();
 		const customInstance = TestLumberjack.createInstance([engine]);
 		customInstance.newLumberMetric(LumberEventName.UnitTestEvent);
-		assert.strictEqual(handleErrorStub.notCalled, true);
+		assert.strictEqual(handleErrorStub.notCalled, true, "Handle error should not be called.");
 	});
 
 	it("Setting up custom instance of Lumberjack should not interfere with the global instance.", () => {
@@ -39,7 +39,7 @@ describe("Lumberjack", () => {
 		const engine2 = new TestEngine2();
 		TestLumberjack.setup([engine1]);
 		TestLumberjack.createInstance([engine2]);
-		assert.strictEqual(handleErrorStub.notCalled, true);
+		assert.strictEqual(handleErrorStub.notCalled, true, "Handle error should not be called.");
 	});
 
 	it("An error should be logged when trying to setup Lumberjack more than once.", () => {
@@ -47,21 +47,21 @@ describe("Lumberjack", () => {
 		const engine1 = new TestEngine1();
 		const engine2 = new TestEngine2();
 		TestLumberjack.setup([engine1]);
-		assert.strictEqual(handleErrorStub.notCalled, true);
+		assert.strictEqual(handleErrorStub.notCalled, true, "Handle error should not be called.");
 		TestLumberjack.setup([engine2]);
-		assert.strictEqual(handleErrorStub.calledOnce, true);
+		assert.strictEqual(handleErrorStub.calledOnce, true, "Handle error should be called once.");
 	});
 
 	it("Lumberjack should fail when trying to use it with an empty engine list.", () => {
 		const handleErrorStub = Sinon.stub(resources, "handleError");
 		TestLumberjack.setup([]);
-		assert.strictEqual(handleErrorStub.calledOnce, true);
+		assert.strictEqual(handleErrorStub.calledOnce, true, "Handle error should be called once.");
 	});
 
 	it("Lumberjack should fail when trying to create a metric before being properly set up.", () => {
 		const handleErrorStub = Sinon.stub(resources, "handleError");
 		TestLumberjack.newLumberMetric(LumberEventName.UnitTestEvent);
-		assert.strictEqual(handleErrorStub.calledOnce, true);
+		assert.strictEqual(handleErrorStub.calledOnce, true, "Handle error should be called once.");
 	});
 });
 

@@ -38,7 +38,7 @@ const defaultLumberjackConfig: ILumberjackConfig = {
  * IMPORTANT: call this after `configureLogging` has been called, if calling both, so that Lumberjack is not
  * setup twice, which will throw an error. `configureLogging` does not do a safety check when setting up Lumberjack.
  */
-export function configureLogging(configOrPath: Provider | string) {
+export function configureGitRestLogging(configOrPath: Provider | string) {
 	// If package versions are not mismatched, this check will ensure this function does nothing.
 	if (Lumberjack.isSetupCompleted()) {
 		return;
