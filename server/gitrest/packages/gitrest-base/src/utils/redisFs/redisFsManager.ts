@@ -25,13 +25,7 @@ import sizeof from "object-sizeof";
 import { getRandomInt } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { IFileSystemManager, IFileSystemManagerParams, IFileSystemPromises } from "../definitions";
-import {
-	getStats,
-	ISystemError,
-	packedRefsFileName,
-	SystemErrors,
-	getDataSizeBytes,
-} from "../fileSystemHelper";
+import { getStats, ISystemError, packedRefsFileName, SystemErrors } from "../fileSystemHelper";
 import { HashMapRedis, IRedis, Redis, RedisParams } from "./redis";
 
 export interface RedisFsConfig {
@@ -177,7 +171,7 @@ export class RedisFs implements IFileSystemPromises {
 
 		if (
 			this.redisFsConfig.maxFileSizeBytes > 0 &&
-			getDataSizeBytes(data) > this.redisFsConfig.maxFileSizeBytes
+			sizeof(data) > this.redisFsConfig.maxFileSizeBytes
 		) {
 			throw new RedisFsError(SystemErrors.EFBIG, filepathString);
 		}
