@@ -6,7 +6,7 @@
 module.exports = {
 	extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"],
 	parserOptions: {
-		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
+		project: ["./tsconfig.json"],
 	},
 	rules: {
 		"@typescript-eslint/no-namespace": "off",
@@ -26,6 +26,9 @@ module.exports = {
 	overrides: [
 		{
 			files: ["src/test/**/*"],
+			parserOptions: {
+				project: ["./src/test/tsconfig.json"],
+			},
 			rules: {
 				"@typescript-eslint/no-unused-vars": ["off"],
 			},

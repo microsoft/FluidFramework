@@ -4,6 +4,7 @@
  */
 import { assert, Lazy } from "@fluidframework/core-utils";
 import { fromInternalScheme } from "@fluid-tools/version-tools";
+import * as semver from "semver";
 import {
 	CompatKind,
 	compatKind,
@@ -52,6 +53,11 @@ export interface CompatConfig {
 	 * (Same version will be used across all layers).
 	 */
 	loadWith?: CompatVersion;
+	/**
+	 * Cross Version Compat Only
+	 * Resolved version from loadWith used to calculate min compat version to test against.
+	 */
+	loadVersion?: string;
 }
 
 const defaultCompatVersions = {
@@ -211,6 +217,7 @@ const getNumberOfVersionsToGoBack = (numOfVersionsAboveV2Int1: number = 0): numb
 };
 
 const genFullBackCompatConfig = (driverVersionsAboveV2Int1: number = 0): CompatConfig[] => {
+	// not working with new rc version
 	const _configList: CompatConfig[] = [];
 
 	const loaderVersionBackCompatCount = getNumberOfVersionsToGoBack(0);
@@ -230,6 +237,25 @@ const genFullBackCompatConfig = (driverVersionsAboveV2Int1: number = 0): CompatC
 	}
 	return _configList;
 };
+
+/**
+ * Returns true if compat test version is below the one provided as minimum version.
+ * It helps to filter out lower verions configs that the ones intended to be tested on a
+ * particular suite.
+ */
+export function isCompatVersionBelowMinVersion(minVersion: string, config: CompatConfig) {
+	let lowerVersion: string | number = config.compatVersion;
+	// For CrossVersion there are 2 versions being tested. Get the lower one.
+	if (config.kind === CompatKind.CrossVersion) {
+		lowerVersion =
+			semver.compare(config.compatVersion as string, config.loadVersion as string) > 0
+				? (config.loadVersion as string)
+				: config.compatVersion;
+	}
+	const compatVersion = getRequestedVersion(testBaseVersion(lowerVersion), lowerVersion);
+	const minReqVersion = getRequestedVersion(testBaseVersion(minVersion), minVersion);
+	return semver.compare(compatVersion, minReqVersion) < 0;
+}
 
 /**
  * Generates the cross version compat config permutations.
@@ -271,6 +297,7 @@ export const genCrossVersionCompatConfig = (): CompatConfig[] => {
 						compatVersion: resolvedCreateVersion,
 						createWith: createVersion,
 						loadWith: loadVersion,
+						loadVersion: resolvedLoadVersion,
 					};
 				}),
 			)

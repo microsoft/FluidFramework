@@ -27,7 +27,7 @@ import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { pkgVersion } from "../packageVersion.js";
 
 // REVIEW: enable compat testing?
-describeCompat("SharedString", "NoCompat", (getTestObjectProvider) => {
+describeCompat("SharedString", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 	itExpects(
 		"Failure to Load in Shared String",
 		[

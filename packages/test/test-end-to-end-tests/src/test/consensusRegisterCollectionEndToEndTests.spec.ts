@@ -293,7 +293,7 @@ generate("ConsensusRegisterCollection", ConsensusRegisterCollection);
 
 describeCompat(
 	"ConsensusRegisterCollection grouped batching",
-	"NoCompat",
+	"2.0.0-rc.1.0.0",
 	(getTestObjectProvider, apis) => {
 		const { SharedMap } = apis.dds;
 		const registry: ChannelFactoryRegistry = [
