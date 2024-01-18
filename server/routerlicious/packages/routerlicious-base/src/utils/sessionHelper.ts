@@ -108,13 +108,14 @@ async function updateExistingSession(
 		!!existingSession.ordererUrl &&
 		!!existingSession.historianUrl &&
 		!!existingSession.deltaStreamUrl;
-	Lumberjack.info("Calculated isSessionSticky and sessionHasLocation", {
+	Lumberjack.info("Calculated isSessionSticky, sessionHasLocation and skipSessionStickiness", {
 		...lumberjackProperties,
 		isSessionSticky,
 		sessionHasLocation,
 		documentLastAccessTime: document.lastAccessTime,
 		sessionStickyCalculationTimestamp,
 		sessionStickinessDurationMs,
+		skipSessionStickiness,
 	});
 	if (!isSessionSticky || skipSessionStickiness || !sessionHasLocation) {
 		// Allow session location to be moved.
@@ -129,6 +130,7 @@ async function updateExistingSession(
 			Lumberjack.info("Moving session", {
 				...lumberjackProperties,
 				isSessionSticky,
+				skipSessionStickiness,
 				sessionHasLocation,
 				oldSessionLocation: {
 					ordererUrl: existingSession.ordererUrl,
