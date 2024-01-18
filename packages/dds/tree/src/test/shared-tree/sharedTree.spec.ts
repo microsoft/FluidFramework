@@ -1251,18 +1251,20 @@ describe("SharedTree", () => {
 				const resubmitTreeOuterList = resubmitTree.flexTree.content.content;
 				const otherTreeOuterList = otherTree.flexTree.content.content;
 
-				// fork and delete the tree on the original
+				// fork the tree
 				const branch = resubmitTree.fork();
-
-				// edit the deleted tree on the branch
-				const outerList = branch.flexTree.content.content;
-				const innerList = (outerList.at(0) ?? assert.fail()).content;
-				innerList.insertAtEnd("b");
 
 				// disconnect the resubmit tree
 				provider.trees[0].setConnected(false);
 
+				// remove the tree on the original tree
 				resubmitTree.flexTree.content.content.removeAt(0);
+
+				// edit the removed tree on the fork
+				const outerList = branch.flexTree.content.content;
+				const innerList = (outerList.at(0) ?? assert.fail()).content;
+				innerList.insertAtEnd("b");
+
 				resubmitTree.checkout.merge(branch.checkout);
 
 				undoStack[0].revert();
