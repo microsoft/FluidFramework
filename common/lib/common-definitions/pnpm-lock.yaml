@@ -2,7 +2,7 @@ lockfileVersion: 5.4
 
 patchedDependencies:
   '@microsoft/api-extractor@7.38.3':
-    hash: veevzrg6trzjzkr6gaha4thdmm
+    hash: t5dutvxrlkz26qgmievy2jdkpi
     path: ../../../patches/@microsoft__api-extractor@7.38.3.patch
   tsc-multi@1.1.0:
     hash: bwju7gmfuwum2ryv7w6vqpkpiy
@@ -36,7 +36,7 @@ importers:
       '@fluidframework/build-tools': 0.26.1_@types+node@16.18.38
       '@fluidframework/common-definitions-previous': /@fluidframework/common-definitions/0.20.1
       '@fluidframework/eslint-config-fluid': 3.2.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@16.18.38
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@16.18.38
       '@types/node': 16.18.38
       concurrently: 6.5.1
       copyfiles: 2.4.1
@@ -188,7 +188,7 @@ packages:
       '@fluid-tools/version-tools': 0.26.1_undwa5qxrriq4xnbtioa2ez7wy
       '@fluidframework/build-tools': 0.26.1_@types+node@16.18.38
       '@fluidframework/bundle-size-tools': 0.26.1
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@16.18.38
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@16.18.38
       '@oclif/core': 3.5.0
       '@oclif/plugin-autocomplete': 2.3.10_undwa5qxrriq4xnbtioa2ez7wy
       '@oclif/plugin-commands': 3.0.3
@@ -508,7 +508,7 @@ packages:
       - '@types/node'
     dev: true
 
-  /@microsoft/api-extractor/7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@16.18.38:
+  /@microsoft/api-extractor/7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@16.18.38:
     resolution: {integrity: sha512-xt9iYyC5f39281j77JTA9C3ISJpW1XWkCcnw+2vM78CPnro6KhPfwQdPDfwS5JCPNuq0grm8cMdPUOPvrchDWw==}
     hasBin: true
     dependencies:

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-export { TableDocument } from "./document";
-export { TableSlice } from "./slice";
-export { ITable } from "./table";
-export { TableDocumentType, TableSliceType } from "./componentTypes";
-export { parseRange, colIndexToName } from "./cellrange";
-export { createTableWithInterception } from "./interception";
+export { TableDocument } from "./document.js";
+export { TableSlice } from "./slice.js";
+export { ITable } from "./table.js";
+export { TableDocumentType, TableSliceType } from "./componentTypes.js";
+export { parseRange, colIndexToName } from "./cellrange.js";
+export { createTableWithInterception } from "./interception/index.js";

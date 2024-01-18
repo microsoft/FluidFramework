@@ -30,7 +30,7 @@ import { defaultGCConfig } from "./gcTestConfigs.js";
  */
 describeCompat(
 	"GC unreferenced flag in downloaded snapshot",
-	"NoCompat",
+	"2.0.0-rc.1.0.0",
 	(getTestObjectProvider) => {
 		let provider: ITestObjectProvider;
 		let mainContainer: IContainer;
@@ -99,7 +99,7 @@ describeCompat(
 			}
 		}
 
-		beforeEach(async function () {
+		beforeEach("setup", async function () {
 			provider = getTestObjectProvider({ syncSummarizer: true });
 			// Currently, only ODSP returns back the "unreferenced" flag in the snapshot. Once we add this to other
 			// servers, we should enable these tests for them too.

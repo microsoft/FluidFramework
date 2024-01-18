@@ -35,7 +35,7 @@ describeCompat("SharedMap", "FullCompat", (getTestObjectProvider, apis) => {
 	};
 
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 
@@ -44,7 +44,7 @@ describeCompat("SharedMap", "FullCompat", (getTestObjectProvider, apis) => {
 	let sharedMap2: ISharedMap;
 	let sharedMap3: ISharedMap;
 
-	beforeEach(async () => {
+	beforeEach("createContainers", async () => {
 		const container1 = await provider.makeTestContainer(testContainerConfig);
 		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 		sharedMap1 = await dataObject1.getSharedObject<SharedMap>(mapId);
@@ -382,7 +382,7 @@ describeCompat("SharedMap", "FullCompat", (getTestObjectProvider, apis) => {
 	});
 });
 
-describeCompat("SharedMap orderSequentially", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("SharedMap orderSequentially", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
 	const mapId = "mapKey";
 	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
@@ -392,7 +392,7 @@ describeCompat("SharedMap orderSequentially", "NoCompat", (getTestObjectProvider
 	};
 
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 
@@ -409,7 +409,7 @@ describeCompat("SharedMap orderSequentially", "NoCompat", (getTestObjectProvider
 	});
 	const errorMessage = "callback failure";
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		const configWithFeatureGates = {
 			...testContainerConfig,
 			loaderProps: {
@@ -554,7 +554,7 @@ describeCompat("SharedMap orderSequentially", "NoCompat", (getTestObjectProvider
 
 describeCompat(
 	"addChannel() tests for the SharedMap",
-	"NoCompat",
+	"2.0.0-rc.1.0.0",
 	(getTestObjectProvider, apis) => {
 		const { SharedMap } = apis.dds;
 		const mapId = "mapKey";
@@ -565,7 +565,7 @@ describeCompat(
 		};
 
 		let provider: ITestObjectProvider;
-		beforeEach(() => {
+		beforeEach("getTestObjectProvider", () => {
 			provider = getTestObjectProvider();
 		});
 
@@ -576,7 +576,7 @@ describeCompat(
 		let sharedMap2: SharedMap;
 		let containerRuntime: ContainerRuntime;
 
-		beforeEach(async () => {
+		beforeEach("setup", async () => {
 			container1 = await provider.makeTestContainer(testContainerConfig);
 			dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 			sharedMap1 = await dataObject1.getSharedObject<SharedMap>(mapId);

@@ -30,6 +30,7 @@ export {
 	IContainerRuntimeMessageCompatDetails,
 	CompatModeBehavior,
 	RecentlyAddedContainerRuntimeMessageDetails,
+	UnknownContainerRuntimeMessage,
 } from "./messageTypes";
 export { IBlobManagerLoadInfo } from "./blobManager";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry";

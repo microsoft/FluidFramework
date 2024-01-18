@@ -48,8 +48,8 @@ describe("entryPoint compat", () => {
 		return provider.createContainer(runtimeFactory);
 	}
 
-	describeCompat("no compat", "NoCompat", (getTestObjectProvider) => {
-		beforeEach(async () => {
+	describeCompat("no compat", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+		beforeEach("getTestObjectProvider", async () => {
 			provider = getTestObjectProvider();
 		});
 
@@ -64,7 +64,7 @@ describe("entryPoint compat", () => {
 	describeInstallVersions({
 		requestAbsoluteVersions: [loaderWithRequest],
 	})("loader compat", (_) => {
-		beforeEach(async () => {
+		beforeEach("getVersionedTestObjectProvider", async () => {
 			provider = await getVersionedTestObjectProvider(
 				pkgVersion, // base version
 				loaderWithRequest,

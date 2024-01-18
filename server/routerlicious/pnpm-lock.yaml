@@ -1380,7 +1380,6 @@ importers:
       body-parser: ^1.17.1
       charwise: ^3.0.1
       compression: ^1.7.2
-      concurrently: ^8.2.1
       cookie-parser: ^1.4.3
       copyfiles: ^2.4.1
       cors: ^2.8.4
@@ -1462,7 +1461,6 @@ importers:
       '@types/rimraf': 3.0.2
       '@types/split': 0.3.28
       '@types/uuid': 9.0.2
-      concurrently: 8.2.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0

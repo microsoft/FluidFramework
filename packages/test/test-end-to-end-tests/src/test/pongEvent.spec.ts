@@ -20,11 +20,11 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 const codeDetails: IFluidCodeDetails = { package: "test" };
 
 describe("Pong", () => {
-	describeCompat("Pong", "NoCompat", (getTestObjectProvider) => {
+	describeCompat("Pong", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 		let provider: ITestObjectProvider;
 		const loaderContainerTracker = new LoaderContainerTracker();
 
-		beforeEach(async function () {
+		beforeEach("setup", async function () {
 			provider = getTestObjectProvider();
 			// only skip local driver
 			if (provider.driver.type === "local") {

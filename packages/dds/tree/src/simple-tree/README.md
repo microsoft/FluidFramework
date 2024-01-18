@@ -61,7 +61,7 @@ The lower-level APIs have solutions, but there currently aren't any for the simp
 ### Recursive types are still very sketchy
 
 Recursive objects can work ok, see notes on `SchemaFactory.fixRecursiveReference`.
-This does not seem to fix directly recursive lists or maps (but some cases of co-recursive through object does seem to work).
+This does not seem to fix directly recursive array nodes or map nodes (but some cases of co-recursive through object does seem to work).
 Experiments are ongoing for how to fix them.
 
 ## Ideas to consider in the future
