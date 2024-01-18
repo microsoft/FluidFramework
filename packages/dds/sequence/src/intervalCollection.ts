@@ -742,7 +742,7 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 	 * This object can be used directly in a call to `changeProperties` to revert the property change if desired.
 	 * 'previousInterval' contains transient `ReferencePosition`s at the same location as the interval's original
 	 * endpoints. These references should be used for position information only. In the case of a property change
-	 * only, this argument should be equal to `interval`.
+	 * only, this argument should be undefined.
 	 * `local` reflects whether the change originated locally.
 	 * `slide` is true if the change is due to sliding on removal of position.
 	 */
