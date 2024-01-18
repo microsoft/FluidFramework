@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import Deque from "double-ended-queue";
 import { assert, Deferred } from "@fluidframework/core-utils";
 import { bufferToString } from "@fluid-internal/client-utils";
 import { LoggingError, createChildLogger } from "@fluidframework/telemetry-utils";
@@ -61,7 +62,6 @@ import {
 } from "./intervalCollection";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
 import { ISharedIntervalCollection } from "./sharedIntervalCollection";
-import Deque from "double-ended-queue";
 
 const snapshotFileName = "header";
 const contentPath = "content";
