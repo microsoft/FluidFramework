@@ -135,17 +135,15 @@ export class PermutationVector extends Client {
 			numInserted: number,
 		) => void,
 		private readonly handlesRecycledCallback: (handles: Handle[]) => void,
-		getMinInFlightRefSeq: () => number | undefined,
 	) {
 		super(
 			PermutationSegment.fromJSONObject,
 			createChildLogger({ logger, namespace: `Matrix.${path}.MergeTreeClient` }),
 			{
 				...runtime.options,
-				newMergeTreeSnapshotFormat: true, // Force new snapshot format as it's generally more efficient for matrices.
+				newMergeTreeSnapshotFormat: true, // Temporarily force new snapshot format until it is the default.
 			},
-			getMinInFlightRefSeq,
-		);
+		); // (See https://github.com/microsoft/FluidFramework/issues/84)
 
 		this.on("delta", this.onDelta);
 		this.on("maintenance", this.onMaintenance);
