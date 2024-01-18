@@ -292,6 +292,27 @@ const tcs: TestCase[] = [
 		})(),
 		initialTree: ["A", "B"],
 	},
+	{
+		schema: (() => {
+			const _ = new SchemaFactory("test");
+			return _.object("special keys", {
+				value: _.number,
+				[""]: _.number,
+				set: _.number,
+				__proto__: _.number,
+				constructor: _.number,
+				setting: _.number,
+			});
+		})(),
+		initialTree: {
+			value: 1,
+			[""]: 2,
+			set: 3,
+			__proto__: 4,
+			constructor: 5,
+			setting: 6,
+		},
+	},
 ];
 
 testObjectLike(tcs);

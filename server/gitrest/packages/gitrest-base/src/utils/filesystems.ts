@@ -4,7 +4,7 @@
  */
 
 import fs from "node:fs";
-import * as Redis from "ioredis";
+import { Redis as IoRedis, RedisOptions as IoRedisOptions } from "ioredis";
 import { Volume } from "memfs";
 import { Provider } from "nconf";
 import {
@@ -14,6 +14,7 @@ import {
 } from "./definitions";
 import { RedisParams } from "./redisFs";
 import { RedisFsManager, RedisFsConfig } from ".";
+
 export class NodeFsManagerFactory implements IFileSystemManagerFactory {
 	public create(params?: IFileSystemManagerParams): IFileSystemManager {
 		return fs;
@@ -29,9 +30,12 @@ export class MemFsManagerFactory implements IFileSystemManagerFactory {
 
 export class RedisFsManagerFactory implements IFileSystemManagerFactory {
 	private readonly redisParams: RedisParams;
-	private readonly redisOptions: Redis.RedisOptions;
+	private readonly redisOptions: IoRedisOptions;
 	private readonly redisFsConfig: RedisFsConfig;
-	constructor(config: Provider) {
+	constructor(
+		config: Provider,
+		private readonly createRedisClient?: (options: IoRedisOptions) => IoRedis,
+	) {
 		this.redisFsConfig = {
 			enableRedisFsMetrics: (config.get("git:enableRedisFsMetrics") as boolean) ?? true,
 			redisApiMetricsSamplingPeriod:
@@ -62,12 +66,20 @@ export class RedisFsManagerFactory implements IFileSystemManagerFactory {
 			};
 		}
 
+		const enableHashmapRedisFs = (config.get("git:enableHashmapRedisFs") as boolean) ?? false;
 		this.redisParams = {
 			expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
+			enableHashmapRedisFs,
 		};
 	}
 
-	public create(params?: IFileSystemManagerParams): IFileSystemManager {
-		return new RedisFsManager(this.redisParams, this.redisOptions, this.redisFsConfig);
+	public create(fsManagerParams?: IFileSystemManagerParams): IFileSystemManager {
+		return new RedisFsManager(
+			this.redisParams,
+			this.redisOptions,
+			this.redisFsConfig,
+			fsManagerParams,
+			this.createRedisClient,
+		);
 	}
 }

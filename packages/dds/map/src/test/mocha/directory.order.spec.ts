@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
@@ -48,7 +48,10 @@ async function populate(directory: SharedDirectory, content: unknown): Promise<v
 	return directory.load(storage);
 }
 
-function assertDirectoryIterationOrder(directory: ISharedDirectory, expectedDirNames: string[]) {
+function assertDirectoryIterationOrder(
+	directory: ISharedDirectory,
+	expectedDirNames: string[],
+): void {
 	const actualDirNames: string[] = [];
 	for (const [subdirName, subdirObject] of directory.subdirectories()) {
 		actualDirNames.push(subdirName);
@@ -61,7 +64,7 @@ describe("Directory Iteration Order", () => {
 		let directory: SharedDirectory;
 		let dataStoreRuntime: MockFluidDataStoreRuntime;
 
-		beforeEach(async () => {
+		beforeEach("createDirectory", async () => {
 			dataStoreRuntime = new MockFluidDataStoreRuntime();
 			dataStoreRuntime.local = true;
 			directory = new SharedDirectory(
@@ -139,7 +142,7 @@ describe("Directory Iteration Order", () => {
 		let directory1: SharedDirectory;
 		let directory2: SharedDirectory;
 
-		beforeEach(async () => {
+		beforeEach("createDirectories", async () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
 			// Create the first directory.
 			directory1 = createConnectedDirectory("directory1", containerRuntimeFactory);
@@ -401,7 +404,7 @@ describe("Directory Iteration Order", () => {
 		let directory1: SharedDirectory;
 		let directory2: SharedDirectory;
 
-		beforeEach(async () => {
+		beforeEach("createDirectories", async () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
 			// Create the first SharedDirectory
@@ -476,7 +479,7 @@ describe("Directory Iteration Order", () => {
 	describe("Op Processing", () => {
 		let directory: TestSharedDirectory;
 
-		beforeEach(async () => {
+		beforeEach("createDirectory", async () => {
 			const dataStoreRuntime = new MockFluidDataStoreRuntime();
 			directory = new TestSharedDirectory(
 				"dir1",
