@@ -744,7 +744,6 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 	 * endpoints. These references should be used for position information only. In the case of a property change
 	 * only, this argument should be equal to `interval`.
 	 * `local` reflects whether the change originated locally.
-	 * `op` is defined if and only if the server has acked this change.
 	 * `slide` is true if the change is due to sliding on removal of position.
 	 */
 	(
