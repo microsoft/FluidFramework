@@ -359,6 +359,7 @@ export interface ISnapshotTree {
     blobs: {
         [path: string]: string;
     };
+    groupIdOrName?: string;
     // (undocumented)
     id?: string;
     // (undocumented)
@@ -445,6 +446,7 @@ export interface ISummaryTokenClaims {
 
 // @public
 export interface ISummaryTree {
+    groupIdOrName?: string;
     // (undocumented)
     tree: {
         [path: string]: SummaryObject;
@@ -488,6 +490,7 @@ export interface ITrace {
 export interface ITree {
     // (undocumented)
     entries: ITreeEntry[];
+    groupIdOrName?: string;
     id?: string;
     unreferenced?: true;
 }
