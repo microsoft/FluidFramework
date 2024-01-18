@@ -19,7 +19,6 @@ import {
 import {
 	describeCompat,
 	ITestDataObject,
-	itExpects,
 	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
 import { defaultGCConfig } from "./gcTestConfigs.js";
@@ -32,12 +31,6 @@ import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
  * Run in FullCompat to get coverage of DataStoreRuntime/ContainerRuntime n/n-1 compatibility
  * (skip all other compat types)
  */
-//* REVERT BACK TO FULLCOMPAT
-//* REVERT BACK TO FULLCOMPAT
-//* REVERT BACK TO FULLCOMPAT
-//* REVERT BACK TO FULLCOMPAT
-//* REVERT BACK TO FULLCOMPAT
-//* REVERT BACK TO FULLCOMPAT
 describeCompat("GC unreferenced timestamp", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
 
@@ -74,9 +67,9 @@ describeCompat("GC unreferenced timestamp", "NoCompat", (getTestObjectProvider, 
 		}
 
 		// We only want to do compat testing for Container Runtime and Data Runtime compat
-		//* if (!this.test?.parent?.title.includes("runtime")) {
-		//* 	this.skip();
-		//* }
+		if (!this.test?.parent?.title.includes("runtime")) {
+			this.skip();
+		}
 
 		const testContainerConfig = {
 			...defaultGCConfig,
@@ -549,15 +542,7 @@ describeCompat("GC unreferenced timestamp", "NoCompat", (getTestObjectProvider, 
 			 * The difference from previous test case is that the reference from B to C is added before B is referenced and
 			 * observed by summarizer. So, the summarizer does not see this reference directly but only when B is realized.
 			 */
-			//* ONLY
-			//* ONLY
-			//* ONLY
-			//* ONLY
-			//* ONLY
-			//* ONLY
-			//* ONLY
-			//* ONLY
-			it.only(`Scenario 6 - Reference added via new unreferenced nodes and removed`, async () => {
+			it(`Scenario 6 - Reference added via new unreferenced nodes and removed`, async () => {
 				const { summarizer } = await createSummarizer(provider, mainContainer, {
 					loaderProps: { configProvider },
 				});
@@ -615,13 +600,7 @@ describeCompat("GC unreferenced timestamp", "NoCompat", (getTestObjectProvider, 
 			 * This difference from the previous test case is that there is another level of indirection here that
 			 * references the node which was unreferenced in previous summary.
 			 */
-			//* ONLY
-			//* ONLY
-			//* ONLY
-			//* ONLY
-			//* ONLY
-			//* ONLY
-			it.only(`Scenario 7 - Reference added transitively via new nodes and removed`, async () => {
+			it(`Scenario 7 - Reference added transitively via new nodes and removed`, async () => {
 				const { summarizer } = await createSummarizer(provider, mainContainer, {
 					loaderProps: { configProvider },
 				});
