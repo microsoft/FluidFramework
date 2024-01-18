@@ -713,10 +713,7 @@ export class ModularChangeFamily
 		existenceState: NodeExistenceState = NodeExistenceState.Alive,
 	): NodeChangeset | undefined {
 		const key = change ?? over.change;
-		if (
-			key === undefined ||
-			(change === undefined && over.change?.fieldChanges === undefined)
-		) {
+		if (key === undefined) {
 			return undefined;
 		}
 
