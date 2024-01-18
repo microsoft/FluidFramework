@@ -12,6 +12,7 @@ import {
 import { ITestFluidObject, waitForContainerConnection } from "@fluidframework/test-utils";
 import { IContainerExperimental } from "@fluidframework/container-loader";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+// import { unreachableCase } from "@fluidframework/core-utils";
 import {
 	cursorForJsonableTreeNode,
 	Any,
@@ -54,6 +55,7 @@ import {
 	InitializeAndSchematizeConfiguration,
 	SharedTree,
 	SharedTreeFactory,
+	CheckoutFlexTreeView,
 } from "../../shared-tree/index.js";
 import {
 	compareUpPaths,
@@ -63,6 +65,8 @@ import {
 	moveToDetachedField,
 	AllowedUpdateType,
 	storedEmptyFieldSchema,
+	Revertible,
+	RevertibleKind,
 } from "../../core/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import { EditManager } from "../../shared-tree-core/index.js";
@@ -1049,7 +1053,7 @@ describe("SharedTree", () => {
 
 					provider.processMessages();
 
-					// Validate insertion
+					// validate insertion
 					validateTreeContent(tree2.checkout, content);
 
 					// edit subtree
@@ -1091,8 +1095,208 @@ describe("SharedTree", () => {
 			}
 		});
 
-		describe("resubmit", () => {
-			// todoj
+		describe("can resubmit", () => {
+			const sb = new SchemaBuilder({ scope: "shared tree undo tests" });
+			const schema = sb.intoSchema(sb.list(sb.list(sb.string)));
+
+			/**
+			 * Each test will involve two peers, one of which has removed a tree (and is therefore able to restore it) -
+			 * let's call that one peer 1.
+			 *
+			 * Peer 1 can do one of three things:
+			 * (A) Commit 1: make an edit to the removed tree, Commit 2: make another edit to removed tree
+			 * (B) Commit 1: make an edit to the removed tree, Commit 2: restore the removed tree
+			 * (C) Commit 1: restore the removed tree, Commit 2: make an edit to the restored tree
+			 * Peer 2 can only do option (A) above.
+			 */
+			const scenarios = [
+				["A", "A"],
+				["A", "B"],
+				["A", "C"],
+				["B", "A"],
+				["C", "A"],
+			];
+
+			function makeTestTitle(peer: string): string {
+				switch (peer) {
+					case "A": {
+						return "an edit to the removed tree after another edit";
+					}
+					case "B": {
+						return "the restoration of a tree after an edit to the tree";
+					}
+					case "C": {
+						return "the edit to a removed tree after its restoration";
+					}
+					default:
+						fail("invalid test case");
+					// unreachableCase(peer);
+				}
+			}
+
+			function makeEdits(
+				peer: CheckoutFlexTreeView<typeof schema.rootFieldSchema>,
+				edits: string,
+			): Revertible[] {
+				const undos: Revertible[] = [];
+				const unsubscribe = peer.checkout.events.on(
+					"revertible",
+					(revertible: Revertible) => {
+						if (revertible.kind !== RevertibleKind.Undo) {
+							undos.push(revertible);
+						}
+					},
+				);
+
+				if (edits === "A") {
+					makeAEdits(peer);
+				} else if (edits === "B" || edits === "C") {
+					makeBOrCEdits(peer);
+				} else {
+					fail("invalid test scenario");
+				}
+
+				unsubscribe();
+				return undos;
+			}
+
+			function makeAEdits(peer: CheckoutFlexTreeView<typeof schema.rootFieldSchema>): void {
+				const outerList = peer.flexTree.content.content;
+				const innerList = (outerList.at(0) ?? assert.fail()).content;
+				innerList.insertAtEnd("b");
+				innerList.insertAtEnd("c");
+			}
+
+			function makeBOrCEdits(
+				peer: CheckoutFlexTreeView<typeof schema.rootFieldSchema>,
+			): void {
+				const outerList = peer.flexTree.content.content;
+				const innerList = (outerList.at(0) ?? assert.fail()).content;
+				innerList.insertAtEnd("d");
+				peer.flexTree.content.content.removeAt(0);
+			}
+
+			scenarios.forEach(([otherPeer, resubmitPeer]) => {
+				it(`${makeTestTitle(resubmitPeer)} after ${makeTestTitle(
+					otherPeer,
+				)} on another peer`, () => {
+					const provider = new TestTreeProviderLite(2);
+					const content = {
+						schema,
+						allowedSchemaModifications: AllowedUpdateType.None,
+						initialTree: [["a"]],
+					};
+					const resubmitTree = provider.trees[0].schematizeInternal(content);
+					const otherTree = provider.trees[1].schematizeInternal(content);
+					provider.processMessages();
+
+					// validate insertion
+					validateTreeContent(otherTree.checkout, content);
+
+					const otherUndos = makeEdits(otherTree, otherPeer);
+					const resubmitUndos = makeEdits(resubmitTree, resubmitPeer);
+
+					provider.processMessages();
+
+					if (otherPeer === "A" && resubmitPeer === "A") {
+						assert.deepEqual(
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+							[...otherTree.flexTree.content.content.at(0)!.content],
+							["a", "b", "c", "b", "c"],
+						);
+						assert.deepEqual(
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+							[...resubmitTree.flexTree.content.content.at(0)!.content],
+							["a", "b", "c", "b", "c"],
+						);
+					} else {
+						assert.deepEqual([...resubmitTree.flexTree.content.content], []);
+						assert.deepEqual([...otherTree.flexTree.content.content], []);
+					}
+
+					otherUndos[1].revert();
+					otherUndos[0].revert();
+					resubmitUndos[resubmitPeer === "B" ? 1 : 0].revert();
+					provider.processMessages();
+
+					// disconnect the resubmit tree
+					provider.trees[0].setConnected(false);
+
+					resubmitUndos[resubmitPeer === "B" ? 0 : 1].revert();
+					const otherTreeRoot = otherTree.flexTree.content.content.at(0);
+					if (otherTreeRoot !== undefined) {
+						assert.notDeepEqual([...otherTreeRoot.content], ["a"]);
+					}
+
+					provider.trees[0].setConnected(true);
+					provider.processMessages();
+
+					assert.deepEqual(
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						[...resubmitTree.flexTree.content.content.at(0)!.content],
+						["a"],
+					);
+					assert.deepEqual(
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						[...otherTree.flexTree.content.content.at(0)!.content],
+						["a"],
+					);
+				});
+			});
+
+			it("the restore of a tree edited on a branch", () => {
+				const provider = new TestTreeProviderLite(2);
+				const content = {
+					schema,
+					allowedSchemaModifications: AllowedUpdateType.None,
+					initialTree: [["a"]],
+				};
+				const resubmitTree = provider.trees[0].schematizeInternal(content);
+				const { undoStack, unsubscribe } = createTestUndoRedoStacks(
+					resubmitTree.checkout.events,
+				);
+				const otherTree = provider.trees[1].schematizeInternal(content);
+				provider.processMessages();
+
+				// validate insertion
+				validateTreeContent(otherTree.checkout, content);
+
+				// fork and delete the tree on the original
+				const branch = resubmitTree.fork();
+
+				// edit the deleted tree on the branch
+				const outerList = branch.flexTree.content.content;
+				const innerList = (outerList.at(0) ?? assert.fail()).content;
+				innerList.insertAtEnd("b");
+
+				// disconnect the resubmit tree
+				provider.trees[0].setConnected(false);
+
+				resubmitTree.flexTree.content.content.removeAt(0);
+				resubmitTree.checkout.merge(branch.checkout);
+
+				undoStack[0].revert();
+				const otherTreeRoot = otherTree.flexTree.content.content.at(0);
+				if (otherTreeRoot !== undefined) {
+					assert.notDeepEqual([...otherTreeRoot.content], ["a", "b"]);
+				}
+
+				provider.trees[0].setConnected(true);
+				provider.processMessages();
+
+				assert.deepEqual(
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					[...resubmitTree.flexTree.content.content.at(0)!.content],
+					["a", "b"],
+				);
+				assert.deepEqual(
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					[...otherTree.flexTree.content.content.at(0)!.content],
+					["a", "b"],
+				);
+
+				unsubscribe();
+			});
 		});
 	});
 
