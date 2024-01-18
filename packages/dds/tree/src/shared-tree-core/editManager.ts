@@ -122,6 +122,12 @@ export class EditManager<
 	private trunkBase: GraphCommit<TChangeset>;
 
 	/**
+	 * The list of commits (from oldest to most recent) that are on the local branch but not on the trunk.
+	 * When a local commit is sequenced, the first commit in this list shifted onto the tip of the trunk.
+	 */
+	private readonly localCommits: GraphCommit<TChangeset>[] = [];
+
+	/**
 	 * @param changeFamily - the change family of changes on the trunk and local branch
 	 * @param localSessionId - the id of the local session that will be used for local commits
 	 */
@@ -142,6 +148,19 @@ export class EditManager<
 			mintRevisionTag,
 		);
 
+		this.localBranch.on("afterChange", (event) => {
+			if (event.type === "append") {
+				for (const commit of event.newCommits) {
+					this.localCommits.push(commit);
+				}
+			} else {
+				this.localCommits.length = 0;
+				findCommonAncestor(
+					[this.localBranch.getHead(), this.localCommits],
+					this.trunk.getHead(),
+				);
+			}
+		});
 		this.localBranch.on("revertibleDisposed", this.onRevertibleDisposed.bind(this));
 
 		// Track all forks of the local branch for purposes of trunk eviction. Unlike the local branch, they have
@@ -531,7 +550,7 @@ export class EditManager<
 	}
 
 	public getLocalCommits(): readonly RecursiveReadonly<GraphCommit<TChangeset>>[] {
-		return getPathFromBase(this.localBranch.getHead(), this.trunk.getHead());
+		return this.localCommits;
 	}
 
 	/**
@@ -576,7 +595,7 @@ export class EditManager<
 
 		if (newCommit.sessionId === this.localSessionId) {
 			const headTrunkCommit = this.trunk.getHead();
-			const [firstLocalCommit] = getPathFromBase(this.localBranch.getHead(), headTrunkCommit);
+			const firstLocalCommit = this.localCommits.shift();
 			assert(
 				firstLocalCommit !== undefined,
 				0x6b5 /* Received a sequenced change from the local session despite having no local changes */,
