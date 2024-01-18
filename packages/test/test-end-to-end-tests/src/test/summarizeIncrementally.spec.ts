@@ -120,7 +120,11 @@ describeCompat(
 			summarizer = (await createSummarizer(provider, container)).summarizer;
 		});
 
-		it("can do incremental data store summary", async () => {
+		it("can do incremental data store summary", async function () {
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6978
+			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				this.skip();
+			}
 			const dataStore2 = await containerRuntime.createDataStore(TestDataObjectType);
 			const dataObject2 = (await dataStore2.entryPoint.get()) as ITestDataObject;
 			dataObject1._root.set("dataObject2", dataStore2.entryPoint);

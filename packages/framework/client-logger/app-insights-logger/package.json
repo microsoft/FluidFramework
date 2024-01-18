@@ -96,17 +96,19 @@
 	"dependencies": {
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"@microsoft/applicationinsights-web": "^2.8.11"
+		"@microsoft/applicationinsights-web": "^2.8.11",
+		"@ungap/structured-clone": "^1.2.0"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.29.0-227016",
+		"@fluidframework/build-tools": "^0.29.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@microsoft/api-extractor": "^7.38.3",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
 		"@types/sinon": "^7.0.13",
+		"@types/ungap__structured-clone": "^1.2.0",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.50.0",

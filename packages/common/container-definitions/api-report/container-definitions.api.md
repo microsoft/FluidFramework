@@ -52,16 +52,6 @@ export namespace ConnectionState {
 // @public
 export type ConnectionState = ConnectionState.Disconnected | ConnectionState.EstablishingConnection | ConnectionState.CatchingUp | ConnectionState.Connected;
 
-// @internal @deprecated
-export enum ContainerErrorType {
-    clientSessionExpiredError = "clientSessionExpiredError",
-    dataCorruptionError = "dataCorruptionError",
-    dataProcessingError = "dataProcessingError",
-    genericError = "genericError",
-    throttlingError = "throttlingError",
-    usageError = "usageError"
-}
-
 // @alpha
 export const ContainerErrorTypes: {
     readonly clientSessionExpiredError: "clientSessionExpiredError";
@@ -133,6 +123,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
     readonly closed: boolean;
     connect(): void;
     readonly connectionState: ConnectionState;
+    containerMetadata: Record<string, string>;
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     disconnect(): void;
     dispose(error?: ICriticalContainerError): void;
@@ -217,6 +208,7 @@ export interface IContainerEvents extends IEvent {
     (event: "op", listener: (message: ISequencedDocumentMessage) => void): any;
     (event: "dirty", listener: (dirty: boolean) => void): any;
     (event: "saved", listener: (dirty: boolean) => void): any;
+    (event: "metadataUpdate", listener: (metadata: Record<string, string>) => void): any;
 }
 
 // @internal (undocumented)

@@ -19,6 +19,7 @@ import {
 	createFluidContainer,
 	IRootDataObject,
 	createServiceAudience,
+	ContainerAttachProps,
 } from "@fluidframework/fluid-static";
 import {
 	OdspDocumentServiceFactory,
@@ -32,7 +33,12 @@ import type {
 	TokenResponse,
 } from "@fluidframework/odsp-driver-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { OdspClientProps, OdspContainerServices, OdspConnectionConfig } from "./interfaces";
+import {
+	OdspClientProps,
+	OdspContainerServices,
+	OdspConnectionConfig,
+	OdspContainerAttachProps,
+} from "./interfaces";
 import { createOdspAudienceMember } from "./odspAudience";
 
 /**
@@ -153,12 +159,14 @@ export class OdspClient {
 		/**
 		 * See {@link FluidContainer.attach}
 		 */
-		const attach = async (): Promise<string> => {
+		const attach = async (
+			odspProps?: ContainerAttachProps<OdspContainerAttachProps>,
+		): Promise<string> => {
 			const createNewRequest: IRequest = createOdspCreateContainerRequest(
 				connection.siteUrl,
 				connection.driveId,
-				"",
-				uuid(),
+				odspProps?.filePath ?? "",
+				odspProps?.fileName ?? uuid(),
 			);
 			if (container.attachState !== AttachState.Detached) {
 				throw new Error("Cannot attach container. Container is not in detached state");

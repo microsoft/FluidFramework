@@ -60,11 +60,8 @@ import {
 import {
 	buildForest,
 	createMockNodeKeyManager,
-	TreeFieldSchema,
+	FlexFieldSchema,
 	jsonableTreeFromFieldCursor,
-	mapFieldChanges,
-	mapFieldsChanges,
-	mapMarkList,
 	mapTreeFromCursor,
 	nodeKeyFieldKey as nodeKeyFieldKeyDefault,
 	NodeKeyManager,
@@ -111,8 +108,11 @@ import {
 	DeltaMark,
 	DeltaFieldMap,
 	DeltaRoot,
+	RevisionTagCodec,
+	DeltaDetachedNodeBuild,
+	DeltaDetachedNodeDestruction,
 } from "../core/index.js";
-import { JsonCompatible, brand, nestedMapFromFlatList } from "../util/index.js";
+import { JsonCompatible, Mutable, brand, nestedMapFromFlatList } from "../util/index.js";
 import { ICodecFamily, IJsonCodec, withSchemaValidation } from "../codec/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
@@ -485,27 +485,21 @@ export function isDeltaVisible(delta: DeltaFieldChanges): boolean {
  * Assert two MarkList are equal, handling cursors.
  */
 export function assertFieldChangesEqual(a: DeltaFieldChanges, b: DeltaFieldChanges): void {
-	const aTree = mapFieldChanges(a, mapTreeFromCursor);
-	const bTree = mapFieldChanges(b, mapTreeFromCursor);
-	assert.deepStrictEqual(aTree, bTree);
+	assert.deepStrictEqual(a, b);
 }
 
 /**
  * Assert two MarkList are equal, handling cursors.
  */
 export function assertMarkListEqual(a: readonly DeltaMark[], b: readonly DeltaMark[]): void {
-	const aTree = mapMarkList(a, mapTreeFromCursor);
-	const bTree = mapMarkList(b, mapTreeFromCursor);
-	assert.deepStrictEqual(aTree, bTree);
+	assert.deepStrictEqual(a, b);
 }
 
 /**
  * Assert two Delta are equal, handling cursors.
  */
 export function assertDeltaFieldMapEqual(a: DeltaFieldMap, b: DeltaFieldMap): void {
-	const aTree = mapFieldsChanges(a, mapTreeFromCursor);
-	const bTree = mapFieldsChanges(b, mapTreeFromCursor);
-	assert.deepStrictEqual(aTree, bTree);
+	assert.deepStrictEqual(a, b);
 }
 
 /**
@@ -658,7 +652,7 @@ export function checkoutWithContent(
 	return flexTreeViewWithContent(content, args).checkout;
 }
 
-export function flexTreeViewWithContent<TRoot extends TreeFieldSchema>(
+export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
 	content: TreeContent<TRoot>,
 	args?: {
 		events?: ISubscribable<CheckoutEvents> &
@@ -669,7 +663,7 @@ export function flexTreeViewWithContent<TRoot extends TreeFieldSchema>(
 	},
 ): CheckoutFlexTreeView<TRoot> {
 	const forest = forestWithContent(content);
-	const view = createTreeCheckout(testIdCompressor, {
+	const view = createTreeCheckout(testIdCompressor, testRevisionTagCodec, {
 		...args,
 		forest,
 		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
@@ -693,11 +687,11 @@ export function forestWithContent(content: TreeContent): IEditableForest {
 	const nodeCursors = mapCursorField(fieldCursor, (c) =>
 		cursorForMapTreeNode(mapTreeFromCursor(c)),
 	);
-	initializeForest(forest, nodeCursors, testIdCompressor);
+	initializeForest(forest, nodeCursors, testRevisionTagCodec);
 	return forest;
 }
 
-export function flexTreeWithContent<TRoot extends TreeFieldSchema>(
+export function flexTreeWithContent<TRoot extends FlexFieldSchema>(
 	content: TreeContent<TRoot>,
 	args?: {
 		nodeKeyManager?: NodeKeyManager;
@@ -708,7 +702,7 @@ export function flexTreeWithContent<TRoot extends TreeFieldSchema>(
 	},
 ): FlexTreeTypedField<TRoot> {
 	const forest = forestWithContent(content);
-	const branch = createTreeCheckout(testIdCompressor, {
+	const branch = createTreeCheckout(testIdCompressor, testRevisionTagCodec, {
 		...args,
 		forest,
 		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
@@ -720,7 +714,7 @@ export function flexTreeWithContent<TRoot extends TreeFieldSchema>(
 		manager,
 		args?.nodeKeyFieldKey ?? brand(nodeKeyFieldKeyDefault),
 	);
-	return view.editableTree;
+	return view.flexTree;
 }
 
 export const requiredBooleanRootSchema = new SchemaBuilder({
@@ -1003,12 +997,14 @@ export function applyTestDelta(
 	delta: DeltaFieldMap,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor },
 	detachedFieldIndex?: DetachedFieldIndex,
+	build?: readonly DeltaDetachedNodeBuild[],
+	destroy?: readonly DeltaDetachedNodeDestruction[],
 ): void {
-	const rootDelta: DeltaRoot = { fields: delta };
+	const rootDelta = rootFromDeltaFieldMap(delta, build, destroy);
 	applyDelta(
 		rootDelta,
 		deltaProcessor,
-		detachedFieldIndex ?? makeDetachedFieldIndex(undefined, testIdCompressor),
+		detachedFieldIndex ?? makeDetachedFieldIndex(undefined, testRevisionTagCodec),
 	);
 }
 
@@ -1016,17 +1012,37 @@ export function announceTestDelta(
 	delta: DeltaFieldMap,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor & AnnouncedVisitor },
 	detachedFieldIndex?: DetachedFieldIndex,
+	build?: readonly DeltaDetachedNodeBuild[],
+	destroy?: readonly DeltaDetachedNodeDestruction[],
 ): void {
-	const rootDelta: DeltaRoot = { fields: delta };
+	const rootDelta = rootFromDeltaFieldMap(delta, build, destroy);
 	announceDelta(
 		rootDelta,
 		deltaProcessor,
-		detachedFieldIndex ?? makeDetachedFieldIndex(undefined, testIdCompressor),
+		detachedFieldIndex ?? makeDetachedFieldIndex(undefined, testRevisionTagCodec),
 	);
 }
 
+export function rootFromDeltaFieldMap(
+	delta: DeltaFieldMap,
+	build?: readonly DeltaDetachedNodeBuild[],
+	destroy?: readonly DeltaDetachedNodeDestruction[],
+): Mutable<DeltaRoot> {
+	const rootDelta: Mutable<DeltaRoot> = { fields: delta };
+	if (build !== undefined) {
+		rootDelta.build = build;
+	}
+	if (destroy !== undefined) {
+		rootDelta.destroy = destroy;
+	}
+	return rootDelta;
+}
+
 export function createTestUndoRedoStacks(
-	events: ISubscribable<{ revertible(type: Revertible): void }>,
+	events: ISubscribable<{
+		newRevertible(type: Revertible): void;
+		revertibleDisposed(revertible: Revertible): void;
+	}>,
 ): {
 	undoStack: Revertible[];
 	redoStack: Revertible[];
@@ -1035,7 +1051,8 @@ export function createTestUndoRedoStacks(
 	const undoStack: Revertible[] = [];
 	const redoStack: Revertible[] = [];
 
-	const unsubscribe = events.on("revertible", (revertible) => {
+	const unsubscribeFromNew = events.on("newRevertible", (revertible) => {
+		revertible.retain();
 		if (revertible.kind === RevertibleKind.Undo) {
 			redoStack.push(revertible);
 		} else {
@@ -1043,6 +1060,30 @@ export function createTestUndoRedoStacks(
 		}
 	});
 
+	const unsubscribeFromDisposed = events.on("revertibleDisposed", (revertible) => {
+		if (revertible.kind === RevertibleKind.Undo) {
+			const index = redoStack.indexOf(revertible);
+			if (index !== -1) {
+				redoStack.splice(index, 1);
+			}
+		} else {
+			const index = undoStack.indexOf(revertible);
+			if (index !== -1) {
+				undoStack.splice(index, 1);
+			}
+		}
+	});
+
+	const unsubscribe = () => {
+		unsubscribeFromNew();
+		unsubscribeFromDisposed();
+		for (const revertible of undoStack) {
+			revertible.discard();
+		}
+		for (const revertible of redoStack) {
+			revertible.discard();
+		}
+	};
 	return { undoStack, redoStack, unsubscribe };
 }
 
@@ -1098,3 +1139,5 @@ export const testIdCompressor = createIdCompressor();
 export function mintRevisionTag(): RevisionTag {
 	return testIdCompressor.generateCompressedId();
 }
+
+export const testRevisionTagCodec = new RevisionTagCodec(testIdCompressor);

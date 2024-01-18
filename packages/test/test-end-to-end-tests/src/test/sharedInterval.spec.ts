@@ -247,10 +247,10 @@ function testIntervalOperations(intervalCollection: IIntervalCollection<Sequence
 		intervalCollection.removeIntervalById(id);
 	}
 }
-describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("SharedInterval", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 	describe("one client", () => {
@@ -265,7 +265,7 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 			assertSequenceIntervals(sharedString, intervals, overlappingIntervalsIndex, expected);
 		};
 
-		beforeEach(async () => {
+		beforeEach("setup", async () => {
 			const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
 			const testContainerConfig: ITestContainerConfig = {
 				fluidDataObjectType: DataObjectFactoryType.Test,
@@ -923,7 +923,7 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 		let sharedMap2: ISharedMap;
 		let sharedMap3: ISharedMap;
 
-		beforeEach(async () => {
+		beforeEach("setupSharedMaps", async () => {
 			// Create a Container for the first client.
 			const container1 = await provider.makeTestContainer(testContainerConfig);
 			dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;

@@ -128,7 +128,7 @@
                                   [
                                     1,
                                     [
-                                      "Node",
+                                      "move-across-fields.Node",
                                       false,
                                       [
                                         "foo",
@@ -331,7 +331,7 @@
                       [
                         1,
                         [
-                          "Node",
+                          "move-across-fields.Node",
                           false,
                           [
                             "foo",

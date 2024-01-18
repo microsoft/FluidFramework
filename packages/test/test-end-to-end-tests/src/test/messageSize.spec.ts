@@ -32,7 +32,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { GenericError } from "@fluidframework/telemetry-utils";
 
-describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("Message size", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
 	const mapId = "mapId";
 	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
@@ -42,7 +42,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 	};
 
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 	afterEach(async () => provider.reset());

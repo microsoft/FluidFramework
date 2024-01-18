@@ -984,18 +984,6 @@ use_old_InterfaceDeclaration_ITelemetryContext(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_IdCompressor": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_IdCompressor": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedInterfaceDeclaration_IdCreationRange": {"forwardCompat": false}
 */
 

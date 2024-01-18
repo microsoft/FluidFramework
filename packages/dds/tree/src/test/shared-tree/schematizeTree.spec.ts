@@ -6,7 +6,7 @@ import { strict as assert, fail } from "assert";
 import {
 	Any,
 	FlexTreeSchema,
-	TreeFieldSchema,
+	FlexFieldSchema,
 	FieldKinds,
 	allowsRepoSuperset,
 	defaultSchemaPolicy,
@@ -46,7 +46,7 @@ const emptySchema = new SchemaBuilder({
 		rejectEmpty: false,
 		rejectForbidden: false,
 	},
-}).intoSchema(TreeFieldSchema.empty);
+}).intoSchema(FlexFieldSchema.empty);
 
 function expectSchema(actual: TreeStoredSchema, expected: TreeStoredSchema): void {
 	// Check schema match
@@ -69,7 +69,7 @@ function makeSchemaRepository(repository: TreeStoredSchemaRepository): {
 
 describe("schematizeTree", () => {
 	describe("initializeContent", () => {
-		function testInitialize<TRoot extends TreeFieldSchema>(
+		function testInitialize<TRoot extends FlexFieldSchema>(
 			name: string,
 			content: TreeContent<TRoot>,
 		): void {

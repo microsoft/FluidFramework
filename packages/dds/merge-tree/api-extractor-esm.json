@@ -1,17 +1,4 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-	"extends": "../../../common/build/build-common/api-extractor-base-esm.json",
-	"messages": {
-		"extractorMessageReporting": {
-			// The ESM types complain about missing exports; I don't understand why CJS doesn't. The errors are:
-			//
-			// Error: src/localReference.ts:241:2 - (ae-forgotten-export) The symbol "IRefsAtOffset" needs to be exported by the entry point index.d.mts
-			// Error: src/mergeTreeNodes.ts:402:2 - (ae-forgotten-export) The symbol "ISegmentLeaf" needs to be exported by
-			// the entry point index.d.mts
-			// TODO: AB#6647
-			"ae-forgotten-export": {
-				"logLevel": "none"
-			}
-		}
-	}
+	"extends": "../../../common/build/build-common/api-extractor-base-esm.json"
 }

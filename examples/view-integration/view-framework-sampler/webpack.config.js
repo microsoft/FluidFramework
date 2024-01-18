@@ -18,6 +18,9 @@ module.exports = (env) => {
 				app: "./src/app.ts",
 			},
 			resolve: {
+				extensionAlias: {
+					".js": [".ts", ".tsx", ".js"],
+				},
 				extensions: [".ts", ".tsx", ".js"],
 			},
 			module: {
@@ -47,6 +50,9 @@ module.exports = (env) => {
 				// new CleanWebpackPlugin(),
 			],
 			resolve: {
+				extensionAlias: {
+					".js": [".ts", ".tsx", ".js"],
+				},
 				extensions: [".ts", ".tsx", ".js"],
 				alias: {
 					vue$: "vue/dist/vue.esm.js",

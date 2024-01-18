@@ -111,7 +111,7 @@ function getNewTreeView(tree: ITree): TreeView<InventorySchema> {
 	);
 }
 
-describeCompat("HotSwap", "NoCompat", (getTestObjectProvider) => {
+describeCompat("HotSwap", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {
@@ -184,7 +184,7 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider) => {
 
 	const originalValue = 3;
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		provider = getTestObjectProvider();
 		// Creates the document as v1 of the code with a SharedCell
 		const container = await provider.createContainer(runtimeFactory1);

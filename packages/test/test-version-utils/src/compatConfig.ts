@@ -4,6 +4,7 @@
  */
 import { assert, Lazy } from "@fluidframework/core-utils";
 import { fromInternalScheme } from "@fluid-tools/version-tools";
+import * as semver from "semver";
 import {
 	CompatKind,
 	compatKind,
@@ -52,6 +53,11 @@ export interface CompatConfig {
 	 * (Same version will be used across all layers).
 	 */
 	loadWith?: CompatVersion;
+	/**
+	 * Cross Version Compat Only
+	 * Resolved version from loadWith used to calculate min compat version to test against.
+	 */
+	loadVersion?: string;
 }
 
 const defaultCompatVersions = {
@@ -182,12 +188,21 @@ const genBackCompatConfig = (compatVersion: number): CompatConfig[] => {
 };
 
 const genFullBackCompatConfig = (): CompatConfig[] => {
+	// not working with new rc version
 	const _configList: CompatConfig[] = [];
 
-	const [, semverInternal] = fromInternalScheme(codeVersion, true, true);
-
+	const [, semverInternal, prereleaseIndentifier] = fromInternalScheme(codeVersion, true, true);
 	assert(semverInternal !== undefined, "Unexpected pkg version");
-	const greatestMajor = semverInternal.major;
+
+	// Here we check if the release is an RC release. If so, we also need to account for internal releases when
+	// generating back compat configs. For back compat purposes, we consider RC major release 1 to be treated as internal
+	// major release 9. This will ensure we generate back compat configs for all RC and internal major releases.
+	const greatestInternalMajor = 8;
+	const greatestMajor =
+		prereleaseIndentifier === "rc" || prereleaseIndentifier === "dev-rc"
+			? semverInternal.major + greatestInternalMajor
+			: semverInternal.major;
+
 	// This makes the assumption N and N-1 scenarios are already fully tested thus skipping 0 and -1.
 	// This loop goes as far back as 2.0.0.internal.1.y.z.
 	// The idea is to generate all the versions from -2 -> - (major - 1) the current major version (i.e 2.0.0-internal.9.y.z would be -8)
@@ -197,6 +212,25 @@ const genFullBackCompatConfig = (): CompatConfig[] => {
 	}
 	return _configList;
 };
+
+/**
+ * Returns true if compat test version is below the one provided as minimum version.
+ * It helps to filter out lower verions configs that the ones intended to be tested on a
+ * particular suite.
+ */
+export function isCompatVersionBelowMinVersion(minVersion: string, config: CompatConfig) {
+	let lowerVersion: string | number = config.compatVersion;
+	// For CrossVersion there are 2 versions being tested. Get the lower one.
+	if (config.kind === CompatKind.CrossVersion) {
+		lowerVersion =
+			semver.compare(config.compatVersion as string, config.loadVersion as string) > 0
+				? (config.loadVersion as string)
+				: config.compatVersion;
+	}
+	const compatVersion = getRequestedVersion(testBaseVersion(lowerVersion), lowerVersion);
+	const minReqVersion = getRequestedVersion(testBaseVersion(minVersion), minVersion);
+	return semver.compare(compatVersion, minReqVersion) < 0;
+}
 
 /**
  * Generates the cross version compat config permutations.
@@ -238,6 +272,7 @@ export const genCrossVersionCompatConfig = (): CompatConfig[] => {
 						compatVersion: resolvedCreateVersion,
 						createWith: createVersion,
 						loadWith: loadVersion,
+						loadVersion: resolvedLoadVersion,
 					};
 				}),
 			)
