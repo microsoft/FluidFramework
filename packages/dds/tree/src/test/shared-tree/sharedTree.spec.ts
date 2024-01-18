@@ -1198,15 +1198,15 @@ describe("SharedTree", () => {
 
 					assert.equal(otherUndos[1].revert(), RevertibleResult.Success);
 					assert.equal(otherUndos[0].revert(), RevertibleResult.Success);
-					assert.equal(
-						resubmitUndos[resubmitEdits === Edits.B ? 1 : 0].revert(),
-						RevertibleResult.Success,
-					);
 					provider.processMessages();
 
 					// disconnect the resubmit tree
 					provider.trees[0].setConnected(false);
 
+					assert.equal(
+						resubmitUndos[resubmitEdits === Edits.B ? 1 : 0].revert(),
+						RevertibleResult.Success,
+					);
 					assert.equal(
 						resubmitUndos[resubmitEdits === Edits.B ? 0 : 1].revert(),
 						RevertibleResult.Success,
