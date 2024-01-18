@@ -594,6 +594,7 @@ export class EditManager<
 				  };
 
 		if (newCommit.sessionId === this.localSessionId) {
+			const headTrunkCommit = this.trunk.getHead();
 			const firstLocalCommit = this.localCommits.shift();
 			assert(
 				firstLocalCommit !== undefined,
@@ -602,7 +603,7 @@ export class EditManager<
 
 			// The first local branch commit is already rebased over the trunk, so we can push it directly to the trunk.
 			this.pushGraphCommitToTrunk(sequenceId, firstLocalCommit, this.localSessionId);
-			this.fastForwardBranches(this.trunk.getHead(), sequenceId);
+			this.fastForwardBranches(headTrunkCommit, sequenceId);
 			return;
 		}
 
