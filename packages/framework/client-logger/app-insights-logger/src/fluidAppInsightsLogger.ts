@@ -137,7 +137,7 @@ class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 		this.baseLoggingClient = client;
 		// Deep copy config to prevent issues if user mutates the object they passed in
 		this.config = config
-			? structuredClone(config)
+			? structuredClone(config) as FluidAppInsightsLoggerConfig
 			: {
 					filtering: {
 						mode: "exclusive",
