@@ -11,8 +11,8 @@ import type {
 	IMigrator,
 	IMigratorEvents,
 	MigrationState,
-} from "../migrationInterfaces";
-import type { IModelLoader, IDetachedModel } from "../modelLoader";
+} from "../migrationInterfaces/index.js";
+import type { IModelLoader, IDetachedModel } from "../modelLoader/index.js";
 
 /**
  * @internal

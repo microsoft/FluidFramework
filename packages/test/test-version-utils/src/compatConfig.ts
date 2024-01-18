@@ -325,7 +325,7 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 					_configList.push(...genFullBackCompatConfig());
 					break;
 				}
-				case "V2_INT_3_PLUS": {
+				case "V2_INT_1_Loader_V2_INT_3_Driver": {
 					_configList.push(
 						...genFullBackCompatConfig(defaultNumOfDriverVersionsAboveV2Int1),
 					);

@@ -12,7 +12,7 @@ overrides:
 
 patchedDependencies:
   '@microsoft/api-extractor@7.38.3':
-    hash: veevzrg6trzjzkr6gaha4thdmm
+    hash: t5dutvxrlkz26qgmievy2jdkpi
     path: patches/@microsoft__api-extractor@7.38.3.patch
   socket.io-client@4.7.2:
     hash: p7f5djbjd3zgfisasebtom74n4
@@ -61,7 +61,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@microsoft/api-documenter': 7.23.12
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi
       '@octokit/core': 4.2.4
       auto-changelog: 2.4.0
       c8: 8.0.1
@@ -150,7 +150,7 @@ importers:
       '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
       '@fluidframework/test-utils': link:../../../packages/test/test-utils
       '@fluidframework/tree': link:../../../packages/dds/tree
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
@@ -188,7 +188,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi
       eslint: 8.50.0
       eslint-config-prettier: 9.0.0_eslint@8.50.0
       forever: 4.0.3
@@ -228,7 +228,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi
       '@types/jsrsasign': 8.0.13
       copyfiles: 2.4.1
       eslint: 8.50.0
@@ -237,105 +237,6 @@ importers:
       rimraf: 4.4.1
       tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
-
-  azure/packages/external-controller:
-    specifiers:
-      '@fluidframework/azure-client': workspace:~
-      '@fluidframework/build-common': ^2.0.3
-      '@fluidframework/build-tools': ^0.29.0
-      '@fluidframework/container-definitions': workspace:~
-      '@fluidframework/container-loader': workspace:~
-      '@fluidframework/devtools': workspace:~
-      '@fluidframework/eslint-config-fluid': ^3.3.0
-      '@fluidframework/fluid-static': workspace:~
-      '@fluidframework/local-driver': workspace:~
-      '@fluidframework/routerlicious-driver': workspace:~
-      '@fluidframework/server-local-server': ^3.0.0
-      '@fluidframework/telemetry-utils': workspace:~
-      '@fluidframework/test-runtime-utils': workspace:~
-      '@fluidframework/test-tools': ^1.0.195075
-      '@types/expect-puppeteer': 2.2.1
-      '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 2.2.0
-      '@types/node': ^18.19.0
-      '@types/puppeteer': 1.3.0
-      '@types/uuid': ^9.0.2
-      assert: ^2.0.0
-      axios: ^1.6.2
-      clean-webpack-plugin: ^4.0.0
-      cross-env: ^7.0.3
-      eslint: ~8.50.0
-      events: ^3.1.0
-      fluid-framework: workspace:~
-      html-webpack-plugin: ^5.5.0
-      jest: ^29.6.2
-      jest-environment-puppeteer: ^4.3.0
-      jest-junit: ^10.0.0
-      jest-puppeteer: ^6.2.0
-      prettier: ~3.0.3
-      process: ^0.11.10
-      puppeteer: ^17.1.3
-      rimraf: ^4.4.0
-      start-server-and-test: ^1.11.7
-      tinylicious: ^3.0.0
-      ts-jest: ^29.1.1
-      ts-loader: ^9.3.0
-      tsc-multi: ^1.1.0
-      typescript: ~5.1.6
-      uuid: ^9.0.0
-      webpack: ^5.82.0
-      webpack-cli: ^4.9.2
-      webpack-dev-server: ~4.6.0
-      webpack-merge: ^5.8.0
-    dependencies:
-      '@fluidframework/azure-client': link:../azure-client
-      '@fluidframework/routerlicious-driver': link:../../../packages/drivers/routerlicious-driver
-      '@fluidframework/telemetry-utils': link:../../../packages/utils/telemetry-utils
-      assert: 2.1.0
-      axios: 1.6.2
-      events: 3.3.0
-      fluid-framework: link:../../../packages/framework/fluid-framework
-      uuid: 9.0.1
-    devDependencies:
-      '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
-      '@fluidframework/container-definitions': link:../../../packages/common/container-definitions
-      '@fluidframework/container-loader': link:../../../packages/loader/container-loader
-      '@fluidframework/devtools': link:../../../packages/tools/devtools/devtools
-      '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
-      '@fluidframework/fluid-static': link:../../../packages/framework/fluid-static
-      '@fluidframework/local-driver': link:../../../packages/drivers/local-driver
-      '@fluidframework/server-local-server': 3.0.0
-      '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
-      '@fluidframework/test-tools': 1.0.195075
-      '@types/expect-puppeteer': 2.2.1
-      '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 2.2.0
-      '@types/node': 18.19.1
-      '@types/puppeteer': 1.3.0
-      '@types/uuid': 9.0.7
-      clean-webpack-plugin: 4.0.0_webpack@5.89.0
-      cross-env: 7.0.3
-      eslint: 8.50.0
-      html-webpack-plugin: 5.5.3_webpack@5.89.0
-      jest: 29.7.0_@types+node@18.19.1
-      jest-environment-puppeteer: 4.4.0
-      jest-junit: 10.0.0
-      jest-puppeteer: 6.2.0_puppeteer@17.1.3
-      prettier: 3.0.3
-      process: 0.11.10
-      puppeteer: 17.1.3
-      rimraf: 4.4.1
-      start-server-and-test: 1.15.5
-      tinylicious: 3.0.0
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
-      ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
-      typescript: 5.1.6
-      webpack: 5.89.0_webpack-cli@4.10.0
-      webpack-cli: 4.10.0_o3vqr5s7sd4b3hfy35jxofofzu
-      webpack-dev-server: 4.6.0_xufw7vsm4hgw2efzchq5tzqpge
-      webpack-merge: 5.10.0
 
   azure/packages/test/end-to-end-tests:
     specifiers:
@@ -1604,6 +1505,77 @@ importers:
       webpack-cli: 4.10.0_o3vqr5s7sd4b3hfy35jxofofzu
       webpack-dev-middleware: 5.3.3_webpack@5.89.0
       webpack-hot-middleware: 2.25.4
+      webpack-merge: 5.10.0
+
+  examples/benchmarks/tablebench:
+    specifiers:
+      '@fluid-internal/client-utils': workspace:~
+      '@fluid-private/stochastic-test-utils': workspace:~
+      '@fluid-tools/benchmark': ^0.48.0
+      '@fluidframework/azure-client': workspace:~
+      '@fluidframework/build-common': ^2.0.3
+      '@fluidframework/build-tools': ^0.29.0
+      '@fluidframework/core-interfaces': workspace:~
+      '@fluidframework/datastore-definitions': workspace:~
+      '@fluidframework/eslint-config-fluid': ^3.3.0
+      '@fluidframework/id-compressor': workspace:~
+      '@fluidframework/matrix': workspace:~
+      '@fluidframework/mocha-test-setup': workspace:~
+      '@fluidframework/test-runtime-utils': workspace:~
+      '@fluidframework/test-tools': ^1.0.195075
+      '@fluidframework/tree': workspace:~
+      '@types/mocha': ^9.1.1
+      '@types/node': ^18.19.0
+      cross-env: ^7.0.3
+      eslint: ~8.50.0
+      mocha: ^10.2.0
+      mocha-json-output-reporter: ^2.0.1
+      mocha-multi-reporters: ^1.5.1
+      moment: ^2.21.0
+      prettier: ~3.0.3
+      rimraf: ^4.4.0
+      start-server-and-test: ^1.11.7
+      tinylicious: ^3.0.0
+      ts-loader: ^9.3.0
+      typescript: ~5.1.6
+      webpack: ^5.82.0
+      webpack-cli: ^4.9.2
+      webpack-dev-server: ~4.6.0
+      webpack-merge: ^5.8.0
+    dependencies:
+      '@fluid-internal/client-utils': link:../../../packages/common/client-utils
+      '@fluid-private/stochastic-test-utils': link:../../../packages/test/stochastic-test-utils
+      '@fluidframework/azure-client': link:../../../azure/packages/azure-client
+      '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
+      '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
+      '@fluidframework/matrix': link:../../../packages/dds/matrix
+      '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
+      '@fluidframework/tree': link:../../../packages/dds/tree
+    devDependencies:
+      '@fluid-tools/benchmark': 0.48.0
+      '@fluidframework/build-common': 2.0.3
+      '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
+      '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
+      '@fluidframework/id-compressor': link:../../../packages/runtime/id-compressor
+      '@fluidframework/mocha-test-setup': link:../../../packages/test/mocha-test-setup
+      '@fluidframework/test-tools': 1.0.195075
+      '@types/mocha': 9.1.1
+      '@types/node': 18.19.1
+      cross-env: 7.0.3
+      eslint: 8.50.0
+      mocha: 10.2.0
+      mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
+      mocha-multi-reporters: 1.5.1_mocha@10.2.0
+      moment: 2.29.4
+      prettier: 3.0.3
+      rimraf: 4.4.1
+      start-server-and-test: 1.15.5
+      tinylicious: 3.0.0
+      ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
+      typescript: 5.1.6
+      webpack: 5.89.0_webpack-cli@4.10.0
+      webpack-cli: 4.10.0_o3vqr5s7sd4b3hfy35jxofofzu
+      webpack-dev-server: 4.6.0_xufw7vsm4hgw2efzchq5tzqpge
       webpack-merge: 5.10.0
 
   examples/client-logger/app-insights-logger:
@@ -2888,6 +2860,7 @@ importers:
       '@fluidframework/sequence': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
       '@fluidframework/test-utils': workspace:~
+      '@microsoft/api-extractor': ^7.38.3
       '@types/debug': ^4.1.5
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
@@ -2923,6 +2896,7 @@ importers:
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
       '@fluidframework/test-utils': link:../../../packages/test/test-utils
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/debug': 4.1.12
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
@@ -3361,6 +3335,105 @@ importers:
       webpack-dev-server: 4.6.0_wvskkfkvbt5crqa4uyjlq44kiy
       webpack-merge: 5.10.0
 
+  examples/service-clients/azure-client/external-controller:
+    specifiers:
+      '@fluidframework/azure-client': workspace:~
+      '@fluidframework/build-common': ^2.0.3
+      '@fluidframework/build-tools': ^0.29.0
+      '@fluidframework/container-definitions': workspace:~
+      '@fluidframework/container-loader': workspace:~
+      '@fluidframework/devtools': workspace:~
+      '@fluidframework/eslint-config-fluid': ^3.3.0
+      '@fluidframework/fluid-static': workspace:~
+      '@fluidframework/local-driver': workspace:~
+      '@fluidframework/routerlicious-driver': workspace:~
+      '@fluidframework/server-local-server': ^3.0.0
+      '@fluidframework/telemetry-utils': workspace:~
+      '@fluidframework/test-runtime-utils': workspace:~
+      '@fluidframework/test-tools': ^1.0.195075
+      '@types/expect-puppeteer': 2.2.1
+      '@types/jest': 29.5.3
+      '@types/jest-environment-puppeteer': 2.2.0
+      '@types/node': ^18.19.0
+      '@types/puppeteer': 1.3.0
+      '@types/uuid': ^9.0.2
+      assert: ^2.0.0
+      axios: ^1.6.2
+      clean-webpack-plugin: ^4.0.0
+      cross-env: ^7.0.3
+      eslint: ~8.50.0
+      events: ^3.1.0
+      fluid-framework: workspace:~
+      html-webpack-plugin: ^5.5.0
+      jest: ^29.6.2
+      jest-environment-puppeteer: ^4.3.0
+      jest-junit: ^10.0.0
+      jest-puppeteer: ^6.2.0
+      prettier: ~3.0.3
+      process: ^0.11.10
+      puppeteer: ^17.1.3
+      rimraf: ^4.4.0
+      start-server-and-test: ^1.11.7
+      tinylicious: ^3.0.0
+      ts-jest: ^29.1.1
+      ts-loader: ^9.3.0
+      tsc-multi: ^1.1.0
+      typescript: ~5.1.6
+      uuid: ^9.0.0
+      webpack: ^5.82.0
+      webpack-cli: ^4.9.2
+      webpack-dev-server: ~4.6.0
+      webpack-merge: ^5.8.0
+    dependencies:
+      '@fluidframework/azure-client': link:../../../../azure/packages/azure-client
+      '@fluidframework/routerlicious-driver': link:../../../../packages/drivers/routerlicious-driver
+      '@fluidframework/telemetry-utils': link:../../../../packages/utils/telemetry-utils
+      assert: 2.1.0
+      axios: 1.6.2
+      events: 3.3.0
+      fluid-framework: link:../../../../packages/framework/fluid-framework
+      uuid: 9.0.1
+    devDependencies:
+      '@fluidframework/build-common': 2.0.3
+      '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
+      '@fluidframework/container-definitions': link:../../../../packages/common/container-definitions
+      '@fluidframework/container-loader': link:../../../../packages/loader/container-loader
+      '@fluidframework/devtools': link:../../../../packages/tools/devtools/devtools
+      '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
+      '@fluidframework/fluid-static': link:../../../../packages/framework/fluid-static
+      '@fluidframework/local-driver': link:../../../../packages/drivers/local-driver
+      '@fluidframework/server-local-server': 3.0.0
+      '@fluidframework/test-runtime-utils': link:../../../../packages/runtime/test-runtime-utils
+      '@fluidframework/test-tools': 1.0.195075
+      '@types/expect-puppeteer': 2.2.1
+      '@types/jest': 29.5.3
+      '@types/jest-environment-puppeteer': 2.2.0
+      '@types/node': 18.19.1
+      '@types/puppeteer': 1.3.0
+      '@types/uuid': 9.0.7
+      clean-webpack-plugin: 4.0.0_webpack@5.89.0
+      cross-env: 7.0.3
+      eslint: 8.50.0
+      html-webpack-plugin: 5.5.3_webpack@5.89.0
+      jest: 29.7.0_@types+node@18.19.1
+      jest-environment-puppeteer: 4.4.0
+      jest-junit: 10.0.0
+      jest-puppeteer: 6.2.0_puppeteer@17.1.3
+      prettier: 3.0.3
+      process: 0.11.10
+      puppeteer: 17.1.3
+      rimraf: 4.4.1
+      start-server-and-test: 1.15.5
+      tinylicious: 3.0.0
+      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      typescript: 5.1.6
+      webpack: 5.89.0_webpack-cli@4.10.0
+      webpack-cli: 4.10.0_o3vqr5s7sd4b3hfy35jxofofzu
+      webpack-dev-server: 4.6.0_xufw7vsm4hgw2efzchq5tzqpge
+      webpack-merge: 5.10.0
+
   examples/service-clients/odsp-client/shared-tree-demo:
     specifiers:
       '@azure/msal-browser': ^2.34.0
@@ -3566,7 +3639,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
       eslint: 8.50.0
@@ -4753,7 +4826,7 @@ importers:
       '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../../../packages/test/mocha-test-setup
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/chai': 4.3.11
       '@types/debug': 4.1.12
       '@types/lodash': 4.14.202
@@ -4861,7 +4934,7 @@ importers:
       '@fluidframework/server-local-server': 3.0.0
       '@fluidframework/test-runtime-utils': link:../../../../packages/runtime/test-runtime-utils
       '@fluidframework/test-utils': link:../../../../packages/test/test-utils
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/lodash': 4.14.202
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
@@ -5406,7 +5479,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../../packages/test/mocha-test-setup
       '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/path-browserify': 1.0.2
@@ -5466,7 +5539,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../../../packages/test/mocha-test-setup
       '@fluidframework/test-runtime-utils': link:../../../../packages/runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       best-random: 1.0.3
@@ -5525,7 +5598,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../../../../packages/test/mocha-test-setup
       '@fluidframework/test-runtime-utils': link:../../../../../packages/runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       best-random: 1.0.3
@@ -5586,7 +5659,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../../packages/test/mocha-test-setup
       '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/diff': 3.5.8
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
@@ -5685,7 +5758,7 @@ importers:
       '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
       '@fluidframework/test-utils': link:../../../packages/test/test-utils
       '@fluidframework/undo-redo': link:../../../packages/framework/undo-redo
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi
       '@types/chai': 4.3.11
       '@types/lru-cache': 5.1.1
       '@types/mocha': 9.1.1
@@ -5740,7 +5813,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/node': 18.19.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -5782,7 +5855,7 @@ importers:
       '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../../packages/test/mocha-test-setup
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/node': 18.19.1
       eslint: 8.50.0
       prettier: 3.0.3
@@ -5820,7 +5893,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       eslint: 8.50.0
@@ -5894,7 +5967,7 @@ importers:
       '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/base64-js': 1.3.2
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -5960,7 +6033,7 @@ importers:
       '@fluidframework/build-tools': 0.29.0
       '@fluidframework/container-definitions-previous': /@fluidframework/container-definitions/2.0.0-internal.8.0.0
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi
       '@types/events': 3.0.3
       copyfiles: 2.4.1
       eslint: 8.50.0
@@ -5993,7 +6066,7 @@ importers:
       '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
       '@fluidframework/core-interfaces-previous': /@fluidframework/core-interfaces/2.0.0-internal.8.0.0
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/node': 18.19.1
       copyfiles: 2.4.1
       eslint: 8.50.0
@@ -6037,7 +6110,7 @@ importers:
       '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/sinon': 7.5.2
@@ -6083,7 +6156,7 @@ importers:
       '@fluidframework/build-tools': 0.29.0
       '@fluidframework/driver-definitions-previous': /@fluidframework/driver-definitions/2.0.0-internal.8.0.0
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi
       copyfiles: 2.4.1
       eslint: 8.50.0
       prettier: 3.0.3
@@ -6143,7 +6216,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
@@ -6210,7 +6283,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
@@ -6276,7 +6349,7 @@ importers:
       '@fluidframework/ink-previous': /@fluidframework/ink/2.0.0-internal.8.0.0
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi
       '@types/mocha': 9.1.1
       c8: 8.0.1
       copyfiles: 2.4.1
@@ -6359,7 +6432,7 @@ importers:
       '@fluidframework/map-previous': /@fluidframework/map/2.0.0-internal.8.0.0
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/path-browserify': 1.0.2
@@ -6381,6 +6454,7 @@ importers:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
+      '@fluid-private/stochastic-test-utils': workspace:~
       '@fluid-private/test-dds-utils': workspace:~
       '@fluid-tools/benchmark': ^0.48.0
       '@fluid-tools/build-cli': ^0.29.0
@@ -6403,12 +6477,14 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@tiny-calc/micro': 0.0.0-alpha.5
       '@tiny-calc/nano': 0.0.0-alpha.5
+      '@types/double-ended-queue': ^2.1.0
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       best-random: ^1.0.0
       c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
+      double-ended-queue: ^2.1.0-0
       eslint: ~8.50.0
       events: ^3.1.0
       hotloop: ^1.2.0
@@ -6437,10 +6513,12 @@ importers:
       '@fluidframework/shared-object-base': link:../shared-object-base
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       '@tiny-calc/nano': 0.0.0-alpha.5
+      double-ended-queue: 2.1.0-0
       events: 3.3.0
       tslib: 1.14.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@fluid-private/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-private/test-dds-utils': link:../test-dds-utils
       '@fluid-tools/benchmark': 0.48.0
       '@fluid-tools/build-cli': 0.29.0_mhw3tufvtaceew37hrkkevjcli
@@ -6450,8 +6528,9 @@ importers:
       '@fluidframework/matrix-previous': /@fluidframework/matrix/2.0.0-internal.8.0.0
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@tiny-calc/micro': 0.0.0-alpha.5
+      '@types/double-ended-queue': 2.1.7
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       best-random: 1.0.3
@@ -6536,7 +6615,7 @@ importers:
       '@fluidframework/merge-tree-previous': /@fluidframework/merge-tree/2.0.0-internal.8.0.0
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/diff': 3.5.8
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
@@ -6611,7 +6690,7 @@ importers:
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/ordered-collection-previous': /@fluidframework/ordered-collection/2.0.0-internal.8.0.0
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
@@ -6680,7 +6759,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/events': 3.0.3
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
@@ -6753,7 +6832,7 @@ importers:
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/register-collection-previous': /@fluidframework/register-collection/2.0.0-internal.8.0.0
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
@@ -6838,7 +6917,7 @@ importers:
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/sequence-previous': /@fluidframework/sequence/2.0.0-internal.8.0.0
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/diff': 3.5.8
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
@@ -6922,7 +7001,7 @@ importers:
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/shared-object-base-previous': /@fluidframework/shared-object-base/2.0.0-internal.8.0.0
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/benchmark': 2.1.5
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
@@ -6992,7 +7071,7 @@ importers:
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/shared-summary-block-previous': /@fluidframework/shared-summary-block/2.0.0-internal.8.0.0
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/benchmark': 2.1.5
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
@@ -7072,7 +7151,7 @@ importers:
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/task-manager-previous': /@fluidframework/task-manager/2.0.0-internal.8.0.0
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
@@ -7139,7 +7218,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
@@ -7241,7 +7320,7 @@ importers:
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@fluidframework/test-utils': link:../../test/test-utils
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/diff': 3.5.8
       '@types/easy-table': 0.0.32
       '@types/mocha': 9.1.1
@@ -7302,7 +7381,7 @@ importers:
       '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
       '@fluidframework/debugger-previous': /@fluidframework/debugger/2.0.0-internal.8.0.0
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/node': 18.19.1
       copyfiles: 2.4.1
       eslint: 8.50.0
@@ -7359,7 +7438,7 @@ importers:
       '@fluidframework/driver-base-previous': /@fluidframework/driver-base/2.0.0-internal.8.0.0
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
@@ -7413,7 +7492,7 @@ importers:
       '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
       '@fluidframework/driver-web-cache-previous': /@fluidframework/driver-web-cache/2.0.0-internal.8.0.0
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/jest': 29.5.3
       '@types/node': 18.19.1
       copyfiles: 2.4.1
@@ -7462,7 +7541,7 @@ importers:
       '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/file-driver-previous': /@fluidframework/file-driver/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/node': 18.19.1
       copyfiles: 2.4.1
       eslint: 8.50.0
@@ -7514,7 +7593,7 @@ importers:
       '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       copyfiles: 2.4.1
@@ -7601,7 +7680,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/local-driver-previous': /@fluidframework/local-driver/2.0.0-internal.8.0.0
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/jsrsasign': 8.0.13
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
@@ -7684,7 +7763,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/odsp-driver-previous': /@fluidframework/odsp-driver/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/node-fetch': 2.6.9
@@ -7731,7 +7810,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/odsp-driver-definitions-previous': /@fluidframework/odsp-driver-definitions/2.0.0-internal.8.0.0
       '@fluidframework/protocol-definitions': 3.1.0
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -7780,7 +7859,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/odsp-urlresolver-previous': /@fluidframework/odsp-urlresolver/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       copyfiles: 2.4.1
@@ -7835,7 +7914,7 @@ importers:
       '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/replay-driver-previous': /@fluidframework/replay-driver/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/nock': 9.3.1
       '@types/node': 18.19.1
       copyfiles: 2.4.1
@@ -7918,7 +7997,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/routerlicious-driver-previous': /@fluidframework/routerlicious-driver/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/nock': 9.3.1
       '@types/node': 18.19.1
@@ -7987,7 +8066,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/routerlicious-urlresolver-previous': /@fluidframework/routerlicious-urlresolver/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/nconf': 0.10.6
       '@types/node': 18.19.1
@@ -8051,7 +8130,7 @@ importers:
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/test-tools': 1.0.195075
       '@fluidframework/tinylicious-driver-previous': /@fluidframework/tinylicious-driver/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/jsrsasign': 8.0.13
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
@@ -8113,7 +8192,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/node': 18.19.1
       copyfiles: 2.4.1
       eslint: 8.50.0
@@ -8186,7 +8265,7 @@ importers:
       '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/events': 3.0.3
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
@@ -8268,7 +8347,7 @@ importers:
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/sequence': link:../../dds/sequence
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
@@ -8320,7 +8399,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
       '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/sinon': 7.5.2
@@ -8387,7 +8466,7 @@ importers:
       '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
       '@fluidframework/data-object-base-previous': /@fluidframework/data-object-base/2.0.0-internal.8.0.0
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/node': 18.19.1
       copyfiles: 2.4.1
       eslint: 8.50.0
@@ -8443,7 +8522,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/diff': 3.5.8
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
@@ -8497,7 +8576,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/node': 18.19.1
       copyfiles: 2.4.1
       eslint: 8.50.0
@@ -8567,7 +8646,7 @@ importers:
       '@fluidframework/map': link:../../dds/map
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/sequence': link:../../dds/sequence
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
@@ -8620,7 +8699,7 @@ importers:
       '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/node': 18.19.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -8677,7 +8756,7 @@ importers:
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/request-handler-previous': /@fluidframework/request-handler/2.0.0-internal.8.0.0
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/diff': 3.5.8
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
@@ -8734,7 +8813,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/synthesize-previous': /@fluidframework/synthesize/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
@@ -8812,7 +8891,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-utils': link:../../test/test-utils
       '@fluidframework/tinylicious-client-previous': /@fluidframework/tinylicious-client/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       copyfiles: 2.4.1
@@ -8873,7 +8952,7 @@ importers:
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@fluidframework/undo-redo-previous': /@fluidframework/undo-redo/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/diff': 3.5.8
       '@types/events': 3.0.3
       '@types/mocha': 9.1.1
@@ -8925,7 +9004,7 @@ importers:
       '@fluidframework/build-tools': 0.29.0
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/view-adapters-previous': /@fluidframework/view-adapters/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       copyfiles: 2.4.1
@@ -8962,7 +9041,7 @@ importers:
       '@fluidframework/build-tools': 0.29.0
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/view-interfaces-previous': /@fluidframework/view-interfaces/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       copyfiles: 2.4.1
@@ -9040,7 +9119,7 @@ importers:
       '@fluidframework/container-loader-previous': /@fluidframework/container-loader/2.0.0-internal.8.0.0
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/debug': 4.1.12
       '@types/double-ended-queue': 2.1.7
       '@types/events': 3.0.3
@@ -9120,7 +9199,7 @@ importers:
       '@fluidframework/driver-utils-previous': /@fluidframework/driver-utils/2.0.0-internal.8.0.0
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/sinon': 7.5.2
@@ -9168,7 +9247,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi
       copyfiles: 2.4.1
       eslint: 8.50.0
       prettier: 3.0.3
@@ -9254,7 +9333,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/test-runtime-utils': link:../test-runtime-utils
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi
       '@types/double-ended-queue': 2.1.7
       '@types/events': 3.0.3
       '@types/mocha': 9.1.1
@@ -9306,7 +9385,7 @@ importers:
       '@fluidframework/build-tools': 0.29.0
       '@fluidframework/container-runtime-definitions-previous': /@fluidframework/container-runtime-definitions/2.0.0-internal.8.0.0
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi
       copyfiles: 2.4.1
       eslint: 8.50.0
       prettier: 3.0.3
@@ -9378,7 +9457,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/test-runtime-utils': link:../test-runtime-utils
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/lodash': 4.14.202
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
@@ -9428,7 +9507,7 @@ importers:
       '@fluidframework/build-tools': 0.29.0
       '@fluidframework/datastore-definitions-previous': /@fluidframework/datastore-definitions/2.0.0-internal.8.0.0
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi
       copyfiles: 2.4.1
       eslint: 8.50.0
       prettier: 3.0.3
@@ -9484,7 +9563,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/id-compressor-previous': /@fluidframework/id-compressor/2.0.0-internal.8.0.0
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi
       '@types/mocha': 9.1.1
       '@types/uuid': 9.0.7
       c8: 8.0.1
@@ -9533,7 +9612,7 @@ importers:
       '@fluidframework/build-tools': 0.29.0
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/runtime-definitions-previous': /@fluidframework/runtime-definitions/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi
       copyfiles: 2.4.1
       eslint: 8.50.0
       eslint-plugin-deprecation: 2.0.0_loebgezstcsvd2poh2d55fifke
@@ -9596,7 +9675,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/runtime-utils-previous': /@fluidframework/runtime-utils/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
@@ -9678,7 +9757,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/test-runtime-utils-previous': /@fluidframework/test-runtime-utils/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/jsrsasign': 8.0.13
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
@@ -9828,7 +9907,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/test-utils': link:../../test/test-utils
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
@@ -10072,7 +10151,7 @@ importers:
       '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup-previous': /@fluidframework/mocha-test-setup/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       copyfiles: 2.4.1
@@ -10199,7 +10278,7 @@ importers:
       '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../mocha-test-setup
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
@@ -10276,7 +10355,7 @@ importers:
       '@fluidframework/build-tools': 0.29.0
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-driver-definitions-previous': /@fluidframework/test-driver-definitions/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi
       copyfiles: 2.4.1
       eslint: 8.50.0
       prettier: 3.0.3
@@ -10347,7 +10426,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/node': 18.19.1
       c8: 8.0.1
       copyfiles: 2.4.1
@@ -10528,7 +10607,7 @@ importers:
       '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../mocha-test-setup
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
@@ -10711,7 +10790,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../mocha-test-setup
       '@fluidframework/test-utils-previous': /@fluidframework/test-utils/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/debug': 4.1.12
       '@types/diff': 3.5.8
       '@types/mocha': 9.1.1
@@ -10826,7 +10905,7 @@ importers:
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../mocha-test-setup
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/nock': 9.3.1
       '@types/node': 18.19.1
@@ -10892,7 +10971,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
       '@fluidframework/test-runtime-utils': link:../../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi
       '@types/chai': 4.3.11
       '@types/mocha': 9.1.1
       c8: 8.0.1
@@ -11009,7 +11088,7 @@ importers:
       '@fluidframework/runtime-utils': link:../../../runtime/runtime-utils
       '@fluidframework/sequence': link:../../../dds/sequence
       '@fluidframework/test-utils': link:../../../test/test-utils
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/chai': 4.3.11
       '@types/chrome': 0.0.232
       '@types/expect-puppeteer': 2.2.1
@@ -11126,7 +11205,7 @@ importers:
       '@fluidframework/id-compressor': link:../../../runtime/id-compressor
       '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
       '@fluidframework/test-runtime-utils': link:../../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi
       '@types/chai': 4.3.11
       '@types/events': 3.0.3
       '@types/mocha': 9.1.1
@@ -11248,7 +11327,7 @@ importers:
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-utils': link:../../../test/test-utils
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@testing-library/dom': 8.20.1
       '@testing-library/jest-dom': 5.17.0
       '@testing-library/react': 12.1.5_sfoxds7t5ydpegc3knd667wn6m
@@ -11375,7 +11454,7 @@ importers:
       '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
       '@fluidframework/shared-object-base': link:../../../dds/shared-object-base
       '@fluidframework/test-runtime-utils': link:../../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@previewjs/api': 13.0.0
       '@previewjs/chromeless': 7.0.3_@types+node@18.19.1
       '@previewjs/core': 23.0.1_@types+node@18.19.1
@@ -11519,7 +11598,7 @@ importers:
       '@fluidframework/odsp-driver': link:../../drivers/odsp-driver
       '@fluidframework/odsp-driver-definitions': link:../../drivers/odsp-driver-definitions
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       json2csv: 5.0.7
       yargs: 13.2.2
     devDependencies:
@@ -11620,7 +11699,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/json-stable-stringify': 1.0.36
       '@types/node': 18.19.1
       copyfiles: 2.4.1
@@ -11792,7 +11871,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/odsp-doclib-utils-previous': /@fluidframework/odsp-doclib-utils/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/node-fetch': 2.6.9
@@ -11859,7 +11938,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/telemetry-utils-previous': /@fluidframework/telemetry-utils/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/debug': 4.1.12
       '@types/events': 3.0.3
       '@types/mocha': 9.1.1
@@ -11928,7 +12007,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/tool-utils-previous': /@fluidframework/tool-utils/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/debug': 4.1.12
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
@@ -15722,7 +15801,7 @@ packages:
       '@fluid-tools/version-tools': 0.29.0
       '@fluidframework/build-tools': 0.29.0
       '@fluidframework/bundle-size-tools': 0.29.0
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi
       '@oclif/core': 2.4.0
       '@oclif/plugin-autocomplete': 2.3.10
       '@oclif/plugin-commands': 3.0.7
@@ -15787,7 +15866,7 @@ packages:
       '@fluid-tools/version-tools': 0.29.0
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/bundle-size-tools': 0.29.0_webpack-cli@4.10.0
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@oclif/core': 2.4.0
       '@oclif/plugin-autocomplete': 2.3.10
       '@oclif/plugin-commands': 3.0.7
@@ -15852,7 +15931,7 @@ packages:
       '@fluid-tools/version-tools': 0.29.0
       '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
       '@fluidframework/bundle-size-tools': 0.29.0
-      '@microsoft/api-extractor': 7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@oclif/core': 2.4.0
       '@oclif/plugin-autocomplete': 2.3.10
       '@oclif/plugin-commands': 3.0.7
@@ -18343,7 +18422,7 @@ packages:
     dependencies:
       '@jest/fake-timers': 29.7.0
       '@jest/types': 29.6.3
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
       jest-mock: 29.7.0
     dev: true
 
@@ -18382,7 +18461,7 @@ packages:
     dependencies:
       '@jest/types': 29.6.3
       '@sinonjs/fake-timers': 10.3.0
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
       jest-message-util: 29.7.0
       jest-mock: 29.7.0
       jest-util: 29.7.0
@@ -18997,7 +19076,7 @@ packages:
     transitivePeerDependencies:
       - '@types/node'
 
-  /@microsoft/api-extractor/7.38.3_veevzrg6trzjzkr6gaha4thdmm:
+  /@microsoft/api-extractor/7.38.3_t5dutvxrlkz26qgmievy2jdkpi:
     resolution: {integrity: sha512-xt9iYyC5f39281j77JTA9C3ISJpW1XWkCcnw+2vM78CPnro6KhPfwQdPDfwS5JCPNuq0grm8cMdPUOPvrchDWw==}
     hasBin: true
     dependencies:
@@ -19018,7 +19097,7 @@ packages:
     dev: true
     patched: true
 
-  /@microsoft/api-extractor/7.38.3_veevzrg6trzjzkr6gaha4thdmm_@types+node@18.19.1:
+  /@microsoft/api-extractor/7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1:
     resolution: {integrity: sha512-xt9iYyC5f39281j77JTA9C3ISJpW1XWkCcnw+2vM78CPnro6KhPfwQdPDfwS5JCPNuq0grm8cMdPUOPvrchDWw==}
     hasBin: true
     dependencies:
@@ -22054,7 +22133,7 @@ packages:
   /@types/expect-puppeteer/2.2.1:
     resolution: {integrity: sha512-xfDxxVkt9R8hqjrN++7KCAg105mUzdETT04E2tlMKDn/+Q9gdvTiSGIEDs1BUS2mcbHUlfuAWqSDEwyVd7RKsg==}
     dependencies:
-      '@types/jest': 27.5.2
+      '@types/jest': 29.5.3
       '@types/puppeteer': 1.3.0
     dev: true
 
@@ -22204,13 +22283,6 @@ packages:
     resolution: {integrity: sha512-4XWMEDqFIocwxMerq5/0fghlUhvHTb3BtK9LUAmEX194R2ui34mX09EEpJavLRAzcjvfMklWfp3lm4CJYlBF1g==}
     dependencies:
       '@types/puppeteer': 1.3.0
-    dev: true
-
-  /@types/jest/27.5.2:
-    resolution: {integrity: sha512-mpT8LJJ4CMeeahobofYWIjFo0xonRS/HfxnVEPMPFSQdGUt1uHCnoPT7Zhb+sjDU2wz0oKV0OLUR0WzrHNgfeA==}
-    dependencies:
-      jest-matcher-utils: 27.5.1
-      pretty-format: 27.5.1
     dev: true
 
   /@types/jest/29.5.3:
@@ -27542,11 +27614,6 @@ packages:
     resolution: {integrity: sha512-gxtyfqMg7GKyhQmb056K7M3xszy/myH8w+B4RT+QXBQsvAOdc3XymqDDPHx1BgPgsdAA5SIifona89YtRATDzw==}
     dev: true
 
-  /diff-sequences/27.5.1:
-    resolution: {integrity: sha512-k1gCAXAsNgLwEL+Y8Wvl+M6oEFj5bgazfZULpS5CneoPPXRaCCW7dm+q21Ky2VEE5X+VeRDBVg1Pcvvsr4TtNQ==}
-    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
-    dev: true
-
   /diff-sequences/29.6.3:
     resolution: {integrity: sha512-EjePK1srD3P08o2j4f0ExnylqRs5B9tJjcp9t1krH2qRi8CCdsYfwe9JgSLurFBWwq4uOlipzfk5fHNvwFKr8Q==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
@@ -32849,16 +32916,6 @@ packages:
       - supports-color
     dev: true
 
-  /jest-diff/27.5.1:
-    resolution: {integrity: sha512-m0NvkX55LDt9T4mctTEgnZk3fmEg3NRYutvMPWM/0iPnkFj2wIeF45O1718cMSOFO1vINkqmxqD8vE37uTEbqw==}
-    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
-    dependencies:
-      chalk: 4.1.2
-      diff-sequences: 27.5.1
-      jest-get-type: 27.5.1
-      pretty-format: 27.5.1
-    dev: true
-
   /jest-diff/29.7.0:
     resolution: {integrity: sha512-LMIgiIrhigmPrs03JHpxUh2yISK3vLFPkAodPeo0+BuF7wA2FoQbkEg1u8gBYBThncu7e1oEDUfIXVuTqLRUjw==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
@@ -32963,11 +33020,6 @@ packages:
     engines: {node: '>= 6'}
     dev: true
 
-  /jest-get-type/27.5.1:
-    resolution: {integrity: sha512-2KY95ksYSaK7DMBWQn6dQz3kqAf3BB64y2udeG+hv4KfSOb9qwcYQstTJc1KCbsix+wLZWZYN8t7nwX3GOBLRw==}
-    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
-    dev: true
-
   /jest-get-type/29.6.3:
     resolution: {integrity: sha512-zrteXnqYxfQh7l5FHyL38jL39di8H8rHoecLH3JNxH3BwOrBsNeabdap5e0I23lD4HHI8W5VFBZqG4Eaq5LNcw==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
@@ -33034,16 +33086,6 @@ packages:
       pretty-format: 29.7.0
     dev: true
 
-  /jest-matcher-utils/27.5.1:
-    resolution: {integrity: sha512-z2uTx/T6LBaCoNWNFWwChLBKYxTMcGBRjAt+2SbP929/Fflb9aa5LGma654Rz8z9HLxsrUaYzxE9T/EFIL/PAw==}
-    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
-    dependencies:
-      chalk: 4.1.2
-      jest-diff: 27.5.1
-      jest-get-type: 27.5.1
-      pretty-format: 27.5.1
-    dev: true
-
   /jest-matcher-utils/29.7.0:
     resolution: {integrity: sha512-sBkD+Xi9DtcChsI3L3u0+N0opgPYnCRPtGcQYrgXmR+hmt/fYfWAL0xRXYU8eWOdfuLgBe0YCW3AFtnRLagq/g==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
@@ -33097,7 +33139,7 @@ packages:
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
     dependencies:
       '@jest/types': 29.6.3
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
       jest-util: 29.7.0
     dev: true
 
@@ -33289,7 +33331,7 @@ packages:
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
     dependencies:
       '@jest/types': 29.6.3
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
       chalk: 4.1.2
       ci-info: 3.9.0
       graceful-fs: 4.2.11
@@ -38576,7 +38618,7 @@ packages:
   /puppeteer/17.1.3:
     resolution: {integrity: sha512-tVtvNSOOqlq75rUgwLeDAEQoLIiBqmRg0/zedpI6fuqIocIkuxG23A7FIl1oVSkuSMMLgcOP5kVhNETmsmjvPw==}
     engines: {node: '>=14.1.0'}
-    deprecated: < 19.4.0 is no longer supported
+    deprecated: < 21.3.7 is no longer supported
     requiresBuild: true
     dependencies:
       cross-fetch: 3.1.5

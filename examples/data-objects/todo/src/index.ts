@@ -12,8 +12,8 @@ import {
 } from "@fluid-example/example-utils";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import React from "react";
-import { Todo, TodoFactory, TodoView } from "./Todo";
-import { TodoItem, TodoItemView } from "./TodoItem";
+import { Todo, TodoFactory, TodoView } from "./Todo/index.js";
+import { TodoItem, TodoItemView } from "./TodoItem/index.js";
 
 const todoId = "todo";
 
