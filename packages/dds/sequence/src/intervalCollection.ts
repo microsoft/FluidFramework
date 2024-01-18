@@ -1280,7 +1280,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 				endSide,
 			};
 			const localSeq = this.getNextLocalSeq();
-			this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
+			if (this.isCollaborating) {
+				this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
+			}
 			// Local ops get submitted to the server. Remote ops have the deserializer run.
 			this.emitter.emit("add", undefined, serializedInterval, { localSeq });
 		}
@@ -1393,7 +1395,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 				...props,
 			};
 			const localSeq = this.getNextLocalSeq();
-			this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
+			if (this.isCollaborating) {
+				this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
+			}
+
 			this.emitter.emit("change", undefined, serializedInterval, { localSeq });
 			if (deltaProps !== undefined) {
 				this.emit("propertyChanged", interval, deltaProps, true, undefined);

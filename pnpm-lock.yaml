@@ -6874,6 +6874,7 @@ importers:
       '@fluidframework/test-runtime-utils': workspace:~
       '@microsoft/api-extractor': ^7.38.3
       '@types/diff': ^3.5.1
+      '@types/double-ended-queue': ^2.1.0
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/uuid': ^9.0.2
@@ -6881,6 +6882,7 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       diff: ^3.5.0
+      double-ended-queue: ^2.1.0-0
       eslint: ~8.50.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
@@ -6904,6 +6906,7 @@ importers:
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/shared-object-base': link:../shared-object-base
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
+      double-ended-queue: 2.1.0-0
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -6919,6 +6922,7 @@ importers:
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/diff': 3.5.8
+      '@types/double-ended-queue': 2.1.7
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7

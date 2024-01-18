@@ -61,6 +61,7 @@ import {
 } from "./intervalCollection";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
 import { ISharedIntervalCollection } from "./sharedIntervalCollection";
+import Deque from "double-ended-queue";
 
 const snapshotFileName = "header";
 const contentPath = "content";
@@ -212,6 +213,8 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		return ops;
 	}
 
+	private readonly inFlightRefSeqs = new Deque<number>();
+
 	// eslint-disable-next-line import/no-deprecated
 	protected client: Client;
 	/** `Deferred` that triggers once the object is loaded */
@@ -233,6 +236,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	) {
 		super(id, dataStoreRuntime, attributes, "fluid_sequence_");
 
+		const getMinInFlightRefSeq = () => this.inFlightRefSeqs.get(0);
 		this.guardReentrancy =
 			dataStoreRuntime.options.sharedStringPreventReentrancy ?? true
 				? ensureNoReentrancy
@@ -258,6 +262,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				namespace: "SharedSegmentSequence.MergeTreeClient",
 			}),
 			dataStoreRuntime.options,
+			getMinInFlightRefSeq,
 		);
 
 		this.client.prependListener("delta", (opArgs, deltaArgs) => {
@@ -275,7 +280,14 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		this.intervalCollections = new DefaultMap(
 			this.serializer,
 			this.handle,
-			(op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
+			(op, localOpMetadata) => {
+				if (!this.isAttached()) {
+					return;
+				}
+
+				this.inFlightRefSeqs.push(this.runtime.deltaManager.lastSequenceNumber);
+				this.submitLocalMessage(op, localOpMetadata);
+			},
 			new SequenceIntervalCollectionValueType(),
 			dataStoreRuntime.options,
 		);
@@ -427,6 +439,8 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		if (!this.isAttached()) {
 			return;
 		}
+
+		this.inFlightRefSeqs.push(this.runtime.deltaManager.lastSequenceNumber);
 		const translated = makeHandlesSerializable(message, this.serializer, this.handle);
 		const metadata = this.client.peekPendingSegmentGroups(
 			message.type === MergeTreeDeltaType.GROUP ? message.ops.length : 1,
@@ -596,6 +610,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
 	 */
 	protected reSubmitCore(content: any, localOpMetadata: unknown) {
+		this.inFlightRefSeqs.shift();
 		if (
 			!this.intervalCollections.tryResubmitMessage(
 				content,
@@ -683,6 +698,11 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
+		if (local) {
+			const refSeq = this.inFlightRefSeqs.shift();
+			assert(refSeq === message.referenceSequenceNumber, "RefSeq mismatch");
+		}
+
 		// if loading isn't complete, we need to cache all
 		// incoming ops to be applied after loading is complete
 		if (this.deferIncomingOps) {
