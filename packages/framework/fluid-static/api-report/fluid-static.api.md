@@ -15,7 +15,7 @@ import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IRuntimeFactory } from '@fluidframework/container-definitions';
 
-// @public (undocumented)
+// @public
 export type ContainerAttachProps<T = unknown> = T;
 
 // @public
