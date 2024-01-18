@@ -371,7 +371,7 @@ export class TestTreeProvider {
 }
 
 type SharedTreeWithConnectionStateSetter = SharedTree & {
-	setConnected: (connectionState: boolean) => void;
+	readonly setConnected: (connectionState: boolean) => void;
 };
 
 /**
@@ -420,7 +420,9 @@ export class TestTreeProviderLite {
 				deltaConnection: runtime.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			});
-			tree.setConnected = (connectionState: boolean) => {
+			(tree as Mutable<SharedTreeWithConnectionStateSetter>).setConnected = (
+				connectionState: boolean,
+			) => {
 				containerRuntime.connected = connectionState;
 			};
 			t.push(tree);
