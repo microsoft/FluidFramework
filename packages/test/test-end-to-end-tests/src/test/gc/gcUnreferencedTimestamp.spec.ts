@@ -31,7 +31,7 @@ import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
  * Run in FullCompat to get coverage of DataStoreRuntime/ContainerRuntime n/n-1 compatibility
  * (skip all other compat types)
  */
-describeCompat("GC unreferenced timestamp", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("GC unreferenced timestamp", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
 
 	const configProvider = createTestConfigProvider();
