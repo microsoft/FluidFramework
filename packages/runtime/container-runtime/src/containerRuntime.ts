@@ -732,7 +732,6 @@ export class ContainerRuntime
 		ISummarizerInternalsProvider,
 		IProvideFluidHandleContext
 {
-	sessionExpiryTimeMs: number | undefined = undefined;
 	/**
 	 * Load the stores from a snapshot and returns the runtime.
 	 * @param params - An object housing the runtime properties:
@@ -1096,6 +1095,7 @@ export class ContainerRuntime
 	 */
 	private readonly validateSummaryBeforeUpload: boolean;
 
+	private readonly sessionExpiryTimeMs: number | undefined;
 	private readonly defaultTelemetrySignalSampleCount = 100;
 	private readonly _perfSignalData: IPerfSignalReport = {
 		signalsLost: 0,
@@ -1316,10 +1316,15 @@ export class ContainerRuntime
 		// Later updates come through calls to setConnectionState.
 		this._connected = connected;
 
-		if(metadata) {
+		if (metadata) {
 			this.sessionExpiryTimeMs = metadata.sessionExpiryTimeoutMs;
-		} else if(this.runtimeOptions.gcOptions.gcAllowed!== false && this.mc.config.getBoolean(runSessionExpiryKey) !== false) {
-			this.sessionExpiryTimeMs = this.runtimeOptions.gcOptions.sessionExpiryTimeoutMs ?? defaultSessionExpiryDurationMs;
+		} else if (
+			this.runtimeOptions.gcOptions.gcAllowed !== false &&
+			this.mc.config.getBoolean(runSessionExpiryKey) !== false
+		) {
+			this.sessionExpiryTimeMs =
+				this.runtimeOptions.gcOptions.sessionExpiryTimeoutMs ??
+				defaultSessionExpiryDurationMs;
 		}
 
 		this.mc.logger.sendTelemetryEvent({
@@ -3957,12 +3962,14 @@ export class ContainerRuntime
 				}
 
 				const pendingIdCompressorState = this.idCompressor?.serialize(true);
-				const timeSinceSessionExpiryTimeStarted = this.garbageCollector.sessionExpiryTimerStarted ?
-				Date.now() - this.garbageCollector.sessionExpiryTimerStarted:
-				undefined;
+				const timeSinceSessionExpiryTimeStarted = this.garbageCollector
+					.sessionExpiryTimerStarted
+					? Date.now() - this.garbageCollector.sessionExpiryTimerStarted
+					: undefined;
 				let remainingSessionExpiryTimeoutMs: number | undefined;
 				if (this.sessionExpiryTimeMs && timeSinceSessionExpiryTimeStarted) {
-					remainingSessionExpiryTimeoutMs = this.sessionExpiryTimeMs - timeSinceSessionExpiryTimeStarted;
+					remainingSessionExpiryTimeoutMs =
+						this.sessionExpiryTimeMs - timeSinceSessionExpiryTimeStarted;
 				}
 
 				const pendingState: IPendingRuntimeState = {
