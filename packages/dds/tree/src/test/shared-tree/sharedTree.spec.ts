@@ -1131,7 +1131,9 @@ describe("SharedTree", () => {
 				return undos;
 			}
 
-			function makeAPrerequisiteEdits(peer: CheckoutFlexTreeView<typeof schema.rootFieldSchema>): void {
+			function makeAPrerequisiteEdits(
+				peer: CheckoutFlexTreeView<typeof schema.rootFieldSchema>,
+			): void {
 				const outerList = peer.flexTree.content.content;
 				const innerList = (outerList.at(0) ?? assert.fail()).content;
 				innerList.insertAtEnd("b");
@@ -1177,20 +1179,23 @@ describe("SharedTree", () => {
 
 					provider.processMessages();
 
+					const resubmitTreeOuterList = resubmitTree.flexTree.content.content;
+					const otherTreeOuterList = otherTree.flexTree.content.content;
+
 					if (otherEdits === Edits.A && resubmitEdits === Edits.A) {
 						assert.deepEqual(
 							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-							[...otherTree.flexTree.content.content.at(0)!.content],
+							[...resubmitTreeOuterList.at(0)!.content],
 							["a", "b", "c", "b", "c"],
 						);
 						assert.deepEqual(
 							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-							[...resubmitTree.flexTree.content.content.at(0)!.content],
+							[...otherTreeOuterList.at(0)!.content],
 							["a", "b", "c", "b", "c"],
 						);
 					} else {
-						assert.deepEqual([...resubmitTree.flexTree.content.content], []);
-						assert.deepEqual([...otherTree.flexTree.content.content], []);
+						assert.deepEqual([...resubmitTreeOuterList], []);
+						assert.deepEqual([...otherTreeOuterList], []);
 					}
 
 					assert.equal(otherUndos[1].revert(), RevertibleResult.Success);
@@ -1208,7 +1213,7 @@ describe("SharedTree", () => {
 						resubmitUndos[resubmitEdits === Edits.B ? 0 : 1].revert(),
 						RevertibleResult.Success,
 					);
-					const otherTreeRoot = otherTree.flexTree.content.content.at(0);
+					const otherTreeRoot = otherTreeOuterList.at(0);
 					if (otherTreeRoot !== undefined) {
 						assert.notDeepEqual([...otherTreeRoot.content], ["a"]);
 					}
@@ -1218,12 +1223,12 @@ describe("SharedTree", () => {
 
 					assert.deepEqual(
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						[...resubmitTree.flexTree.content.content.at(0)!.content],
+						[...resubmitTreeOuterList.at(0)!.content],
 						["a"],
 					);
 					assert.deepEqual(
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						[...otherTree.flexTree.content.content.at(0)!.content],
+						[...otherTreeOuterList.at(0)!.content],
 						["a"],
 					);
 				});
@@ -1243,6 +1248,9 @@ describe("SharedTree", () => {
 				const otherTree = provider.trees[1].schematizeInternal(content);
 				provider.processMessages();
 
+				const resubmitTreeOuterList = resubmitTree.flexTree.content.content;
+				const otherTreeOuterList = otherTree.flexTree.content.content;
+
 				// fork and delete the tree on the original
 				const branch = resubmitTree.fork();
 
@@ -1258,7 +1266,7 @@ describe("SharedTree", () => {
 				resubmitTree.checkout.merge(branch.checkout);
 
 				undoStack[0].revert();
-				const otherTreeRoot = otherTree.flexTree.content.content.at(0);
+				const otherTreeRoot = otherTreeOuterList.at(0);
 				if (otherTreeRoot !== undefined) {
 					assert.notDeepEqual([...otherTreeRoot.content], ["a", "b"]);
 				}
@@ -1268,12 +1276,12 @@ describe("SharedTree", () => {
 
 				assert.deepEqual(
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					[...resubmitTree.flexTree.content.content.at(0)!.content],
+					[...resubmitTreeOuterList.at(0)!.content],
 					["a", "b"],
 				);
 				assert.deepEqual(
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					[...otherTree.flexTree.content.content.at(0)!.content],
+					[...otherTreeOuterList.at(0)!.content],
 					["a", "b"],
 				);
 
