@@ -71,6 +71,8 @@ gitrest:
     enableRedisFsMetrics: false
     enableHashmapRedisFs: false
     redisApiMetricsSamplingPeriod: 0
+    enforceStrictPersistedFullSummaryReads: false
+    maxRedisFsFileSizeBytes: 0
   redis:
     host: redis
     port: 6379

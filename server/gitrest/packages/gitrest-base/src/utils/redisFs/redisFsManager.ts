@@ -25,12 +25,19 @@ import sizeof from "object-sizeof";
 import { getRandomInt } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { IFileSystemManager, IFileSystemManagerParams, IFileSystemPromises } from "../definitions";
-import { getStats, ISystemError, packedRefsFileName, SystemErrors } from "../fileSystemHelper";
+import {
+	getStats,
+	ISystemError,
+	packedRefsFileName,
+	SystemErrors,
+	getDataSizeBytes,
+} from "../fileSystemHelper";
 import { HashMapRedis, IRedis, Redis, RedisParams } from "./redis";
 
 export interface RedisFsConfig {
 	enableRedisFsMetrics: boolean;
 	redisApiMetricsSamplingPeriod: number;
+	maxFileSizeBytes: number;
 }
 
 export class RedisFsManager implements IFileSystemManager {
@@ -166,6 +173,13 @@ export class RedisFs implements IFileSystemPromises {
 		// Do not write packed-ref files which are not supported in r11s scenarios
 		if (filepathString.includes(packedRefsFileName)) {
 			return;
+		}
+
+		if (
+			this.redisFsConfig.maxFileSizeBytes > 0 &&
+			getDataSizeBytes(data) > this.redisFsConfig.maxFileSizeBytes
+		) {
+			throw new RedisFsError(SystemErrors.EFBIG, filepathString);
 		}
 
 		const result = await executeRedisFsApi(

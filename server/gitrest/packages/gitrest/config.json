@@ -53,7 +53,8 @@
 		"enableRedisFsMetrics": true,
 		"enableHashmapRedisFs": false,
 		"redisApiMetricsSamplingPeriod": 0,
-		"enforceStrictPersistedFullSummaryReads": false
+		"enforceStrictPersistedFullSummaryReads": false,
+		"maxRedisFsFileSizeBytes": 0
 	},
 	"redis": {
 		"host": "redis",

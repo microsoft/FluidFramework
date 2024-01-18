@@ -12,8 +12,7 @@ import {
 	IFileSystemManagerFactory,
 	IFileSystemManagerParams,
 } from "./definitions";
-import { RedisParams } from "./redisFs";
-import { RedisFsManager, RedisFsConfig } from ".";
+import { RedisParams, RedisFsManager, RedisFsConfig } from "./redisFs";
 
 export class NodeFsManagerFactory implements IFileSystemManagerFactory {
 	public create(params?: IFileSystemManagerParams): IFileSystemManager {
@@ -40,6 +39,7 @@ export class RedisFsManagerFactory implements IFileSystemManagerFactory {
 			enableRedisFsMetrics: (config.get("git:enableRedisFsMetrics") as boolean) ?? true,
 			redisApiMetricsSamplingPeriod:
 				(config.get("git:redisApiMetricsSamplingPeriod") as number) ?? 0,
+			maxFileSizeBytes: (config.get("git:maxRedisFsFileSizeBytes") as number) ?? 0,
 		};
 		const redisConfig = config.get("redis");
 		this.redisOptions = {

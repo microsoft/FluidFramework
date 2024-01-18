@@ -4,6 +4,7 @@
  */
 
 import fs from "fs";
+import { Stream } from "stream";
 
 export const packedRefsFileName = "packed-refs";
 
@@ -105,4 +106,34 @@ export function getStats(type?: FsEntityType, lastModified?: Date, size?: number
 	defaultStats.ctimeMs = lastModifiedInMs ?? computedLastModifiedInMs;
 
 	return defaultStats;
+}
+
+/**
+ * Returns the size of the data in bytes if possible.
+ */
+export function getDataSizeBytes(
+	data:
+		| string
+		| NodeJS.ArrayBufferView
+		| Iterable<string | NodeJS.ArrayBufferView>
+		| AsyncIterable<string | NodeJS.ArrayBufferView>
+		| Stream,
+): number | undefined {
+	if (typeof data === "string") {
+		return data.length;
+	}
+	if (Buffer.isBuffer(data) || ArrayBuffer.isView(data)) {
+		return data.byteLength;
+	}
+	if (Array.isArray(data)) {
+		let sum = 0;
+		for (const value of data as Iterable<string | NodeJS.ArrayBufferView>) {
+			sum += getDataSizeBytes(value) ?? 0;
+		}
+		return sum;
+	}
+	// Without awaiting the AsyncIterable or reading the full Stream, we cannot determine the size. So, we return undefined.
+	// It is worth noting that this is not a problem for isomorphic-git, because it uses `Buffer|Uint8Array|string` as
+	// the type for the [writeFile data parameter](https://github.com/isomorphic-git/isomorphic-git/blob/main/src/models/FileSystem.js#L121).
+	return undefined;
 }
