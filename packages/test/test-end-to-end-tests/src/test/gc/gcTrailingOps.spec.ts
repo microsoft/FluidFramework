@@ -10,7 +10,7 @@ import {
 	createSummarizer,
 	summarizeNow,
 	ITestContainerConfig,
-	mockConfigProvider,
+	createTestConfigProvider,
 } from "@fluidframework/test-utils";
 import {
 	describeCompat,
@@ -33,7 +33,7 @@ import { getGCDeletedStateFromSummary, getGCStateFromSummary } from "./gcTestSum
  * after the last summary was submitted. These should not be missed by GC before is runs the next time as they
  * can result in incorrect GC state or worse - incorrect deletion of objects.
  */
-describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
+describeCompat("GC trailing ops tests", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 	/**
 	 * @param transition - The referenced state transition that the trailing op would do.
 	 * @param when - Whether the trailing op should be sent before or after sweep timeout.
@@ -44,17 +44,29 @@ describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 	) => {
 		// Skip Tombstone stage, these tests focus on Sweep
 		const sweepGracePeriodMs = 0;
-
-		let provider: ITestObjectProvider;
-		let settings = {};
-		let testContainerConfig: ITestContainerConfig;
-		let summarizerContainerConfig: ITestContainerConfig;
-
 		const sweepTimeoutMs = 100;
 		const gcOptions: IGCRuntimeOptions = {
 			inactiveTimeoutMs: 0,
 			enableGCSweep: true,
 			sweepGracePeriodMs,
+		};
+		const configProvider = createTestConfigProvider();
+		const testContainerConfig: ITestContainerConfig = {
+			runtimeOptions: {
+				summaryOptions: {
+					summaryConfigOverrides: {
+						state: "disabled",
+					},
+				},
+				gcOptions,
+			},
+			loaderProps: { configProvider },
+		};
+
+		let provider: ITestObjectProvider;
+		const summarizerContainerConfig: ITestContainerConfig = {
+			runtimeOptions: { gcOptions },
+			loaderProps: { configProvider },
 		};
 
 		function updateDataStoreReferenceState(
@@ -127,30 +139,14 @@ describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 			if (provider.driver.type !== "local") {
 				this.skip();
 			}
-			settings["Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs"] =
-				sweepTimeoutMs - sweepGracePeriodMs; // sweepGracePeriodMs is 0. In any case, this subtraction represents the correct relationship between these values
-
-			const configProvider = mockConfigProvider(settings);
-			testContainerConfig = {
-				runtimeOptions: {
-					summaryOptions: {
-						summaryConfigOverrides: {
-							state: "disabled",
-						},
-					},
-					gcOptions,
-				},
-				loaderProps: { configProvider },
-			};
-
-			summarizerContainerConfig = {
-				runtimeOptions: { gcOptions },
-				loaderProps: { configProvider },
-			};
+			configProvider.set(
+				"Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs",
+				sweepTimeoutMs - sweepGracePeriodMs,
+			); // sweepGracePeriodMs is 0. In any case, this subtraction represents the correct relationship between these values
 		});
 
 		afterEach(() => {
-			settings = {};
+			configProvider.clear();
 		});
 
 		it(`Trailing op [${when}] transitions data store from [${transition}] without deleting it`, async () => {
