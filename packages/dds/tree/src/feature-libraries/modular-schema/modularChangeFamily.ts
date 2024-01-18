@@ -545,14 +545,19 @@ export class ModularChangeFamily
 				field.change = fieldKind.changeHandler.rebaser.rebase(
 					fieldChangeset,
 					tagChange(baseChangeset, context.baseRevision),
-					(curr, base, stateChange) => {
+					(curr, base, existenceState) => {
 						const key = curr ?? base;
-						if (key !== undefined) {
-							const prior = crossFieldTable.rebasedNodeCache.get(key);
-							if (prior !== undefined) {
-								return prior;
-							}
+						if (key === undefined) {
+							return undefined;
 						}
+
+						const prior = crossFieldTable.rebasedNodeCache.get(key);
+						if (prior !== undefined) {
+							return prior;
+						}
+
+						// This is needed when the first rebase pass results in node changes from the rebased
+						// changeset being moved to a different location.
 						return this.rebaseNodeChange(
 							curr,
 							tagChange(base, context.baseRevision),
@@ -561,7 +566,7 @@ export class ModularChangeFamily
 							() => true,
 							rebaseMetadata,
 							constraintState,
-							stateChange,
+							existenceState,
 						);
 					},
 					genId,
