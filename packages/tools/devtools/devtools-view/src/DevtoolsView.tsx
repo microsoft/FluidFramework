@@ -246,7 +246,7 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 	}, [messageRelay, setSupportedFeatures, telemetryOptInLogger]);
 
 	React.useEffect(() => {
-		const handleRequest = (event) => {
+		const handleRequest = (): void => {
 			const responseEvent = new CustomEvent("responseFromPage", {
 				detail: supportedFeatures,
 			});
