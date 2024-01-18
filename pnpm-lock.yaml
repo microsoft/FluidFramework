@@ -7409,7 +7409,118 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_44oayjl3iesbankmh6w6z32iii_typescript@5.1.6
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      typescript: 5.1.6
+
+  packages/dds/tree:
+    specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
+      '@fluid-internal/client-utils': workspace:~
+      '@fluid-private/stochastic-test-utils': workspace:~
+      '@fluid-private/test-dds-utils': workspace:~
+      '@fluid-private/test-drivers': workspace:~
+      '@fluid-tools/benchmark': ^0.48.0
+      '@fluid-tools/build-cli': ^0.29.0
+      '@fluidframework/build-common': ^2.0.3
+      '@fluidframework/build-tools': ^0.29.0
+      '@fluidframework/container-definitions': workspace:~
+      '@fluidframework/container-loader': workspace:~
+      '@fluidframework/container-runtime': workspace:~
+      '@fluidframework/core-interfaces': workspace:~
+      '@fluidframework/core-utils': workspace:~
+      '@fluidframework/datastore-definitions': workspace:~
+      '@fluidframework/eslint-config-fluid': ^3.3.0
+      '@fluidframework/id-compressor': workspace:~
+      '@fluidframework/mocha-test-setup': workspace:~
+      '@fluidframework/protocol-definitions': ^3.1.0
+      '@fluidframework/runtime-definitions': workspace:~
+      '@fluidframework/runtime-utils': workspace:~
+      '@fluidframework/shared-object-base': workspace:~
+      '@fluidframework/telemetry-utils': workspace:~
+      '@fluidframework/test-runtime-utils': workspace:~
+      '@fluidframework/test-utils': workspace:~
+      '@microsoft/api-extractor': ^7.38.3
+      '@sinclair/typebox': ^0.29.4
+      '@tylerbu/sorted-btree-es6': ^1.8.0
+      '@types/diff': ^3.5.1
+      '@types/easy-table': ^0.0.32
+      '@types/mocha': ^9.1.1
+      '@types/node': ^18.19.0
+      '@types/ungap__structured-clone': ^1.2.0
+      '@types/uuid': ^9.0.2
+      '@ungap/structured-clone': ^1.2.0
+      ajv: ^8.12.0
+      ajv-formats: ^2.1.1
+      c8: ^8.0.1
+      cross-env: ^7.0.3
+      dependency-cruiser: ^14.1.0
+      diff: ^3.5.0
+      easy-table: ^1.1.1
+      eslint: ~8.50.0
+      eslint-config-prettier: ~9.0.0
+      mocha: ^10.2.0
+      mocha-json-output-reporter: ^2.0.1
+      mocha-multi-reporters: ^1.5.1
+      moment: ^2.21.0
+      prettier: ~3.0.3
+      rimraf: ^4.4.0
+      ts2esm: ^1.1.0
+      typescript: ~5.1.6
+      uuid: ^9.0.0
+    dependencies:
+      '@fluid-internal/client-utils': link:../../common/client-utils
+      '@fluidframework/container-runtime': link:../../runtime/container-runtime
+      '@fluidframework/core-interfaces': link:../../common/core-interfaces
+      '@fluidframework/core-utils': link:../../common/core-utils
+      '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
+      '@fluidframework/id-compressor': link:../../runtime/id-compressor
+      '@fluidframework/protocol-definitions': 3.1.0
+      '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
+      '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
+      '@fluidframework/shared-object-base': link:../shared-object-base
+      '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
+      '@sinclair/typebox': 0.29.6
+      '@tylerbu/sorted-btree-es6': 1.8.0
+      '@ungap/structured-clone': 1.2.0
+      uuid: 9.0.1
+    devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
+      '@fluid-private/stochastic-test-utils': link:../../test/stochastic-test-utils
+      '@fluid-private/test-dds-utils': link:../test-dds-utils
+      '@fluid-private/test-drivers': link:../../test/test-drivers
+      '@fluid-tools/benchmark': 0.48.0
+      '@fluid-tools/build-cli': 0.29.0_mhw3tufvtaceew37hrkkevjcli
+      '@fluidframework/build-common': 2.0.3
+      '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
+      '@fluidframework/container-definitions': link:../../common/container-definitions
+      '@fluidframework/container-loader': link:../../loader/container-loader
+      '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
+      '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
+      '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
+      '@fluidframework/test-utils': link:../../test/test-utils
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
+      '@types/diff': 3.5.8
+      '@types/easy-table': 0.0.32
+      '@types/mocha': 9.1.1
+      '@types/node': 18.19.1
+      '@types/ungap__structured-clone': 1.2.0
+      '@types/uuid': 9.0.7
+      ajv: 8.12.0
+      ajv-formats: 2.1.1_ajv@8.12.0
+      c8: 8.0.1
+      cross-env: 7.0.3
+      dependency-cruiser: 14.1.2
+      diff: 3.5.0
+      easy-table: 1.2.0
+      eslint: 8.50.0
+      eslint-config-prettier: 9.0.0_eslint@8.50.0
+      mocha: 10.2.0
+      mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
+      mocha-multi-reporters: 1.5.1_mocha@10.2.0
+      moment: 2.29.4
+      prettier: 3.0.3
+      rimraf: 4.4.1
+      ts2esm: 1.1.0
       typescript: 5.1.6
 
   packages/drivers/debugger:
@@ -8440,6 +8551,8 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/sinon': ^7.0.13
+      '@types/ungap__structured-clone': ^1.2.0
+      '@ungap/structured-clone': ^1.2.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -8457,6 +8570,7 @@ importers:
       '@fluidframework/core-interfaces': link:../../../common/core-interfaces
       '@fluidframework/telemetry-utils': link:../../../utils/telemetry-utils
       '@microsoft/applicationinsights-web': 2.8.16_tslib@1.14.1
+      '@ungap/structured-clone': 1.2.0
     devDependencies:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.19.1
@@ -8465,6 +8579,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/sinon': 7.5.2
+      '@types/ungap__structured-clone': 1.2.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -9132,6 +9247,8 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/sinon': ^7.0.13
+      '@types/ungap__structured-clone': ^1.2.0
+      '@ungap/structured-clone': ^1.2.0
       c8: ^7.7.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
@@ -9160,6 +9277,7 @@ importers:
       '@fluidframework/protocol-base': 2.0.2
       '@fluidframework/protocol-definitions': 3.0.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
+      '@ungap/structured-clone': 1.2.0
       debug: 4.3.4
       double-ended-queue: 2.1.0-0
       events: 3.3.0
@@ -9181,6 +9299,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/sinon': 7.5.2
+      '@types/ungap__structured-clone': 1.2.0
       c8: 7.14.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -23018,8 +23137,8 @@ packages:
     resolution: {integrity: sha512-HP38xE+GuWGlbSRq9WrZkousaQ7dragtZCruBVMi0oX1migFZavZ3OROKHSkNp/9ouq82zrWtZpg18jFnVN96g==}
     dev: true
 
-  /@types/ungap__structured-clone/0.3.3:
-    resolution: {integrity: sha512-RNmhIPwoip6K/zZOv3ypksTAqaqLEXvlNSXKyrC93xMSOAHZCR7PifW6xKZCwkbbnbM9dwB9X56PPoNTlNwEqw==}
+  /@types/ungap__structured-clone/1.2.0:
+    resolution: {integrity: sha512-ZoaihZNLeZSxESbk9PUAPZOlSpcKx81I1+4emtULDVmBLkYutTcMlCj2K9VNlf9EWODxdO6gkAqEaLorXwZQVA==}
     dev: true
 
   /@types/unist/2.0.10:
