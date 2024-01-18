@@ -387,6 +387,6 @@
 		"enable": false
 	},
 	"clusterDraining": {
-		"enable": true
+		"enable": false
 	}
 }

@@ -14,10 +14,3 @@ export interface IClusterDrainingChecker {
 	 */
 	isClusterDraining(cluster?: string): Promise<boolean>;
 }
-
-export class DummyClusterDrainingChecker implements IClusterDrainingChecker {
-	public async isClusterDraining(): Promise<boolean> {
-		console.log("yunho: isClusterDraining called");
-		return false;
-	}
-}

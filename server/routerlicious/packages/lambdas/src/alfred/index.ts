@@ -317,7 +317,7 @@ export function configureWebSocketServices(
 				}
 				if (clusterInDraining) {
 					// TODO: add a new error class
-					throw new Error("Cluster is not available");
+					throw new NetworkError(503, "Cluster is not available. Please retry later.");
 				}
 			}
 

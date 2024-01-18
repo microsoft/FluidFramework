@@ -276,6 +276,8 @@ export class DeliLambdaFactory
 						"session.isSessionActive": keepSessionActive,
 						"lastAccessTime": Date.now(),
 					};
+
+					// Set skip session stickiness to be true if cluster is in draining
 					if (this.clusterDrainingChecker) {
 						const isClusterDraining =
 							await this.clusterDrainingChecker.isClusterDraining();
@@ -287,6 +289,7 @@ export class DeliLambdaFactory
 							data["session.skipSessionStickiness"] = true;
 						}
 					}
+
 					await this.documentRepository.updateOne(filter, data, undefined);
 					const message = `Marked session alive as false and active as ${keepSessionActive} for closeType:
                         ${JSON.stringify(closeType)}`;

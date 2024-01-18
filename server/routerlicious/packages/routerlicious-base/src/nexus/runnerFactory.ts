@@ -511,15 +511,6 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 
 		const webSocketLibrary = config.get("nexus:webSocketLib");
 
-		// Set up cluster draining if enabled
-		const clusterDrainingEnabled = utils.getBooleanFromConfig("clusterDraining:enable", config);
-
-		let clusterDrainingChecker: core.IClusterDrainingChecker | undefined;
-		if (clusterDrainingEnabled) {
-			clusterDrainingChecker =
-				customizations?.clusterDrainingChecker ?? new core.DummyClusterDrainingChecker();
-		}
-
 		return new NexusResources(
 			config,
 			redisConfig,
@@ -545,7 +536,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			revokedTokenChecker,
 			collaborationSessionEvents,
 			serviceMessageResourceManager,
-			clusterDrainingChecker,
+			customizations?.clusterDrainingChecker,
 		);
 	}
 }

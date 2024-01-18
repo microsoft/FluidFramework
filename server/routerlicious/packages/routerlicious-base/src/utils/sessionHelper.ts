@@ -285,8 +285,6 @@ export async function getSession(
 	// Reject get session request if cluster is in draining process.
 	if (clusterDrainingChecker) {
 		const isClusterDraining = await clusterDrainingChecker.isClusterDraining();
-		// TODO: delete the log
-		console.log(`yunho: session discovery flow, isCluster draining: ${isClusterDraining}`);
 		if (isClusterDraining) {
 			Lumberjack.info("Cluster is in draining process. Reject get session request.");
 			throw new NetworkError(
