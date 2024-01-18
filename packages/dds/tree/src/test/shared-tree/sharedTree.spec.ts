@@ -1095,47 +1095,20 @@ describe("SharedTree", () => {
 			}
 		});
 
-		describe("can resubmit", () => {
+		describe("can rebase during resubmit", () => {
 			const sb = new SchemaBuilder({ scope: "shared tree undo tests" });
 			const schema = sb.intoSchema(sb.list(sb.list(sb.string)));
 
-			/**
-			 * Each test will involve two peers, one of which has removed a tree (and is therefore able to restore it) -
-			 * let's call that one peer 1.
-			 *
-			 * Peer 1 can do one of three things:
-			 * (A) Commit 1: make an edit to the removed tree, Commit 2: make another edit to removed tree
-			 * (B) Commit 1: make an edit to the removed tree, Commit 2: restore the removed tree
-			 * (C) Commit 1: restore the removed tree, Commit 2: make an edit to the restored tree
-			 * Peer 2 can only do option (A) above.
-			 */
-			const scenarios = [
-				["A", "A"],
-				["A", "B"],
-				["A", "C"],
-				["B", "A"],
-				["C", "A"],
-			];
-
-			function makeTestTitle(peer: string): string {
-				switch (peer) {
-					case "A": {
-						return "an edit to the removed tree after another edit";
-					}
-					case "B": {
-						return "the restoration of a tree after an edit to the tree";
-					}
-					case "C": {
-						return "the edit to a removed tree after its restoration";
-					}
-					default:
-						fail("invalid test case");
-				}
+			/** sets of two edits performed on a tree for these tests */
+			enum Edits {
+				A = "two edits to the removed tree",
+				B = "the restoration and editing of the removed tree",
+				C = "the editing and restoration of the removed tree",
 			}
 
 			function makeEdits(
 				peer: CheckoutFlexTreeView<typeof schema.rootFieldSchema>,
-				edits: string,
+				edits: Edits,
 			): Revertible[] {
 				const undos: Revertible[] = [];
 				const unsubscribe = peer.checkout.events.on(
@@ -1148,12 +1121,10 @@ describe("SharedTree", () => {
 					},
 				);
 
-				if (edits === "A") {
+				if (edits === Edits.A) {
 					makeAEdits(peer);
-				} else if (edits === "B" || edits === "C") {
+				} else if (edits === Edits.B || edits === Edits.C) {
 					makeBOrCEdits(peer);
-				} else {
-					fail("invalid test scenario");
 				}
 
 				unsubscribe();
@@ -1176,10 +1147,21 @@ describe("SharedTree", () => {
 				peer.flexTree.content.content.removeAt(0);
 			}
 
-			scenarios.forEach(([otherPeer, resubmitPeer]) => {
-				it(`${makeTestTitle(resubmitPeer)} after ${makeTestTitle(
-					otherPeer,
-				)} on another peer`, () => {
+			/**
+			 * Each scenario [Edits.X, Edits.Y] (where X and Y represent the possible values of Edits) describes two peers,
+			 * the first performs the edits described by Edits.X and the second performs the edits described by Edits.Y.
+			 * The edits performed by the second peer are sent through the resubmit code path.
+			 */
+			const scenarios = [
+				[Edits.A, Edits.A],
+				[Edits.A, Edits.B],
+				[Edits.A, Edits.C],
+				[Edits.B, Edits.A],
+				[Edits.C, Edits.A],
+			];
+
+			scenarios.forEach(([otherEdits, resubmitEdits]) => {
+				it(`${resubmitEdits} over ${otherEdits}`, () => {
 					const provider = new TestTreeProviderLite(2);
 					const content = {
 						schema,
@@ -1193,12 +1175,12 @@ describe("SharedTree", () => {
 					// validate insertion
 					validateTreeContent(otherTree.checkout, content);
 
-					const otherUndos = makeEdits(otherTree, otherPeer);
-					const resubmitUndos = makeEdits(resubmitTree, resubmitPeer);
+					const otherUndos = makeEdits(otherTree, otherEdits);
+					const resubmitUndos = makeEdits(resubmitTree, resubmitEdits);
 
 					provider.processMessages();
 
-					if (otherPeer === "A" && resubmitPeer === "A") {
+					if (otherEdits === Edits.A && resubmitEdits === Edits.A) {
 						assert.deepEqual(
 							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 							[...otherTree.flexTree.content.content.at(0)!.content],
@@ -1217,7 +1199,7 @@ describe("SharedTree", () => {
 					assert.equal(otherUndos[1].revert(), RevertibleResult.Success);
 					assert.equal(otherUndos[0].revert(), RevertibleResult.Success);
 					assert.equal(
-						resubmitUndos[resubmitPeer === "B" ? 1 : 0].revert(),
+						resubmitUndos[resubmitEdits === Edits.B ? 1 : 0].revert(),
 						RevertibleResult.Success,
 					);
 					provider.processMessages();
@@ -1226,7 +1208,7 @@ describe("SharedTree", () => {
 					provider.trees[0].setConnected(false);
 
 					assert.equal(
-						resubmitUndos[resubmitPeer === "B" ? 0 : 1].revert(),
+						resubmitUndos[resubmitEdits === Edits.B ? 0 : 1].revert(),
 						RevertibleResult.Success,
 					);
 					const otherTreeRoot = otherTree.flexTree.content.content.at(0);
