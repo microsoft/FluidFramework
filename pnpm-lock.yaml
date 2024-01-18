@@ -7187,7 +7187,7 @@ importers:
       '@types/easy-table': ^0.0.32
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      '@types/ungap__structured-clone': ^0.3.0
+      '@types/ungap__structured-clone': ^1.2.0
       '@types/uuid': ^9.0.2
       '@ungap/structured-clone': ^1.2.0
       ajv: ^8.12.0
@@ -7243,7 +7243,7 @@ importers:
       '@types/easy-table': 0.0.32
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      '@types/ungap__structured-clone': 0.3.3
+      '@types/ungap__structured-clone': 1.2.0
       '@types/uuid': 9.0.7
       ajv: 8.12.0
       ajv-formats: 2.1.1_ajv@8.12.0
@@ -8293,6 +8293,8 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/sinon': ^7.0.13
+      '@types/ungap__structured-clone': ^1.2.0
+      '@ungap/structured-clone': ^1.2.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -8311,6 +8313,7 @@ importers:
       '@fluidframework/core-interfaces': link:../../../common/core-interfaces
       '@fluidframework/telemetry-utils': link:../../../utils/telemetry-utils
       '@microsoft/applicationinsights-web': 2.8.16_tslib@1.14.1
+      '@ungap/structured-clone': 1.2.0
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
       '@fluidframework/build-common': 2.0.3
@@ -8320,6 +8323,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/sinon': 7.5.2
+      '@types/ungap__structured-clone': 1.2.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -8996,6 +9000,8 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/sinon': ^7.0.13
+      '@types/ungap__structured-clone': ^1.2.0
+      '@ungap/structured-clone': ^1.2.0
       c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
@@ -9024,6 +9030,7 @@ importers:
       '@fluidframework/protocol-base': 3.0.0
       '@fluidframework/protocol-definitions': 3.1.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
+      '@ungap/structured-clone': 1.2.0
       debug: 4.3.4
       double-ended-queue: 2.1.0-0
       events: 3.3.0
@@ -9045,6 +9052,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/sinon': 7.5.2
+      '@types/ungap__structured-clone': 1.2.0
       c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -22421,8 +22429,8 @@ packages:
     resolution: {integrity: sha512-HP38xE+GuWGlbSRq9WrZkousaQ7dragtZCruBVMi0oX1migFZavZ3OROKHSkNp/9ouq82zrWtZpg18jFnVN96g==}
     dev: true
 
-  /@types/ungap__structured-clone/0.3.3:
-    resolution: {integrity: sha512-RNmhIPwoip6K/zZOv3ypksTAqaqLEXvlNSXKyrC93xMSOAHZCR7PifW6xKZCwkbbnbM9dwB9X56PPoNTlNwEqw==}
+  /@types/ungap__structured-clone/1.2.0:
+    resolution: {integrity: sha512-ZoaihZNLeZSxESbk9PUAPZOlSpcKx81I1+4emtULDVmBLkYutTcMlCj2K9VNlf9EWODxdO6gkAqEaLorXwZQVA==}
     dev: true
 
   /@types/unist/2.0.10:
