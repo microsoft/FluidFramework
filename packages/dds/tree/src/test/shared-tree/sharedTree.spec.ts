@@ -12,7 +12,6 @@ import {
 import { ITestFluidObject, waitForContainerConnection } from "@fluidframework/test-utils";
 import { IContainerExperimental } from "@fluidframework/container-loader";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-// import { unreachableCase } from "@fluidframework/core-utils";
 import {
 	cursorForJsonableTreeNode,
 	Any,
@@ -67,6 +66,7 @@ import {
 	storedEmptyFieldSchema,
 	Revertible,
 	RevertibleKind,
+	RevertibleResult,
 } from "../../core/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import { EditManager } from "../../shared-tree-core/index.js";
@@ -1130,7 +1130,6 @@ describe("SharedTree", () => {
 					}
 					default:
 						fail("invalid test case");
-					// unreachableCase(peer);
 				}
 			}
 
@@ -1140,9 +1139,10 @@ describe("SharedTree", () => {
 			): Revertible[] {
 				const undos: Revertible[] = [];
 				const unsubscribe = peer.checkout.events.on(
-					"revertible",
+					"newRevertible",
 					(revertible: Revertible) => {
 						if (revertible.kind !== RevertibleKind.Undo) {
+							revertible.retain();
 							undos.push(revertible);
 						}
 					},
@@ -1214,15 +1214,21 @@ describe("SharedTree", () => {
 						assert.deepEqual([...otherTree.flexTree.content.content], []);
 					}
 
-					otherUndos[1].revert();
-					otherUndos[0].revert();
-					resubmitUndos[resubmitPeer === "B" ? 1 : 0].revert();
+					assert.equal(otherUndos[1].revert(), RevertibleResult.Success);
+					assert.equal(otherUndos[0].revert(), RevertibleResult.Success);
+					assert.equal(
+						resubmitUndos[resubmitPeer === "B" ? 1 : 0].revert(),
+						RevertibleResult.Success,
+					);
 					provider.processMessages();
 
 					// disconnect the resubmit tree
 					provider.trees[0].setConnected(false);
 
-					resubmitUndos[resubmitPeer === "B" ? 0 : 1].revert();
+					assert.equal(
+						resubmitUndos[resubmitPeer === "B" ? 0 : 1].revert(),
+						RevertibleResult.Success,
+					);
 					const otherTreeRoot = otherTree.flexTree.content.content.at(0);
 					if (otherTreeRoot !== undefined) {
 						assert.notDeepEqual([...otherTreeRoot.content], ["a"]);
