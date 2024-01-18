@@ -382,8 +382,10 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	/**
 	 * Attaches the Container to the Container specified by the given Request.
 	 *
-	 * Attachment can be retried if the container is not closed, and there is an error
-	 * during attach.
+	 * @privateRemarks
+	 *
+	 * TODO - in the case of failure options should give a retry policy.
+	 * Or some continuation function that allows attachment to a secondary document.
 	 */
 	attach(
 		request: IRequest,
