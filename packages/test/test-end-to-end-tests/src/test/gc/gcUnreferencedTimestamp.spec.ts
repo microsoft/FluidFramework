@@ -19,10 +19,9 @@ import {
 import {
 	describeCompat,
 	ITestDataObject,
+	itExpects,
 	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
-// eslint-disable-next-line import/no-internal-modules
-import { detectOutboundRoutesViaDDSKey } from "@fluidframework/container-runtime/test/gc";
 import { defaultGCConfig } from "./gcTestConfigs.js";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
@@ -33,7 +32,13 @@ import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
  * Run in FullCompat to get coverage of DataStoreRuntime/ContainerRuntime n/n-1 compatibility
  * (skip all other compat types)
  */
-describeCompat("GC unreferenced timestamp", "FullCompat", (getTestObjectProvider, apis) => {
+//* REVERT BACK TO FULLCOMPAT
+//* REVERT BACK TO FULLCOMPAT
+//* REVERT BACK TO FULLCOMPAT
+//* REVERT BACK TO FULLCOMPAT
+//* REVERT BACK TO FULLCOMPAT
+//* REVERT BACK TO FULLCOMPAT
+describeCompat("GC unreferenced timestamp", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
 
 	const configProvider = createTestConfigProvider();
@@ -69,9 +74,9 @@ describeCompat("GC unreferenced timestamp", "FullCompat", (getTestObjectProvider
 		}
 
 		// We only want to do compat testing for Container Runtime and Data Runtime compat
-		if (!this.test?.parent?.title.includes("runtime")) {
-			this.skip();
-		}
+		//* if (!this.test?.parent?.title.includes("runtime")) {
+		//* 	this.skip();
+		//* }
 
 		const testContainerConfig = {
 			...defaultGCConfig,
@@ -544,11 +549,15 @@ describeCompat("GC unreferenced timestamp", "FullCompat", (getTestObjectProvider
 			 * The difference from previous test case is that the reference from B to C is added before B is referenced and
 			 * observed by summarizer. So, the summarizer does not see this reference directly but only when B is realized.
 			 */
-			it(`Scenario 6 - Reference added via new unreferenced nodes and removed`, async () => {
-				// Disable new Reference Detection behavior for now
-				// The re-referencing happens via attach op which we don't detect yet.
-				configProvider.set(detectOutboundRoutesViaDDSKey, true);
-
+			//* ONLY
+			//* ONLY
+			//* ONLY
+			//* ONLY
+			//* ONLY
+			//* ONLY
+			//* ONLY
+			//* ONLY
+			it.only(`Scenario 6 - Reference added via new unreferenced nodes and removed`, async () => {
 				const { summarizer } = await createSummarizer(provider, mainContainer, {
 					loaderProps: { configProvider },
 				});
@@ -581,9 +590,6 @@ describeCompat("GC unreferenced timestamp", "FullCompat", (getTestObjectProvider
 				dataStoreB._root.delete("dataStoreC");
 
 				// 6. Get summary 2 and validate that C's unreferenced timestamps updated. E = [A -> B].
-				// NOTE: The attach op for B has the reference from B->C, but we don't detect it here.
-				// Instead, we happen to detect it during Summarize, since the DDS is parsed when loaded.
-				// This relies on the old behavior (see detectOutboundRoutesViaDDSKey setting above)
 				await provider.ensureSynchronized();
 				const summaryResult2 = await summarizeNow(summarizer);
 				const timestamps2 = await getUnreferencedTimestamps(summaryResult2.summaryTree);
@@ -609,11 +615,13 @@ describeCompat("GC unreferenced timestamp", "FullCompat", (getTestObjectProvider
 			 * This difference from the previous test case is that there is another level of indirection here that
 			 * references the node which was unreferenced in previous summary.
 			 */
-			it(`Scenario 7 - Reference added transitively via new nodes and removed`, async () => {
-				// Disable new Reference Detection behavior for now
-				// Same reason as Scenario 6 - The re-referencing happens via attach op which we don't detect yet.
-				configProvider.set(detectOutboundRoutesViaDDSKey, true);
-
+			//* ONLY
+			//* ONLY
+			//* ONLY
+			//* ONLY
+			//* ONLY
+			//* ONLY
+			it.only(`Scenario 7 - Reference added transitively via new nodes and removed`, async () => {
 				const { summarizer } = await createSummarizer(provider, mainContainer, {
 					loaderProps: { configProvider },
 				});
@@ -637,12 +645,15 @@ describeCompat("GC unreferenced timestamp", "FullCompat", (getTestObjectProvider
 				const dataStoreC = await createNewDataStore();
 
 				// 3. Add reference from B to C. E = [].
+				// No op sent since B is not attached
 				dataStoreB._root.set("dataStoreC", dataStoreC.handle);
 
 				// 4. Add reference from C to D. E = [].
+				// No op sent since C is not attached
 				dataStoreC._root.set("dataStoreD", dataStoreD.handle);
 
 				// 5. Add reference from A to B. E = [A -> B, B -> C, C -> D].
+				// Attach op for B is sent here
 				dataStoreA._root.set("dataStoreB", dataStoreB.handle);
 
 				// 6. Remove reference from C to D. E = [A -> B, B -> C].

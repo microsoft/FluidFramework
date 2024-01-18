@@ -114,6 +114,7 @@ export interface IFluidDataStoreContextProps {
 	readonly scope: FluidObject;
 	readonly createSummarizerNodeFn: CreateChildSummarizerNodeFn;
 	readonly pkg?: Readonly<string[]>;
+	readonly loadedFromAttachOp?: boolean;
 }
 
 /** Properties necessary for creating a local FluidDataStoreContext */
@@ -126,6 +127,7 @@ export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContext
 	 * @deprecated 0.16 Issue #1635, #3631
 	 */
 	readonly createProps?: any;
+	readonly loadedFromAttachOp?: undefined; // N/A
 }
 
 /** Properties necessary for creating a remote FluidDataStoreContext */
@@ -272,6 +274,7 @@ export abstract class FluidDataStoreContext
 	public readonly storage: IDocumentStorageService;
 	public readonly scope: FluidObject;
 	protected pkg?: readonly string[];
+	protected loadedFromAttachOp: boolean; // True for when loaded from an attach op's snapshot; false when loaded from a regular summary's snapshot
 
 	constructor(
 		props: IFluidDataStoreContextProps,
@@ -286,6 +289,7 @@ export abstract class FluidDataStoreContext
 		this.storage = props.storage;
 		this.scope = props.scope;
 		this.pkg = props.pkg;
+		this.loadedFromAttachOp = props.loadedFromAttachOp ?? false;
 
 		// URIs use slashes as delimiters. Handles use URIs.
 		// Thus having slashes in types almost guarantees trouble down the road!
@@ -452,6 +456,29 @@ export abstract class FluidDataStoreContext
 
 		const channel = await factory.instantiateDataStore(this, existing);
 		assert(channel !== undefined, 0x140 /* "undefined channel on datastore context" */);
+
+		// The attach op could have added a reference to another object.
+		// Inform GC of all outbound references in the newly-created channel.
+		// Do this before bindRuntime since that will process all enqueued ops.
+		if (this.loadedFromAttachOp) {
+			const gcData = await channel.getGCData();
+			for (const [nodeId, outboundRoutes] of Object.entries(gcData.gcNodes)) {
+				//* Todo: update addedGCOutboundReference to take strings not handles to avoid these fake handles
+				const fromHandle = {
+					absolutePath: `/${this.id}${nodeId === "/" ? "" : nodeId}`,
+				} as unknown as IFluidHandle;
+				outboundRoutes.forEach((route) => {
+					const toHandle = {
+						absolutePath: `${route}`,
+					} as unknown as IFluidHandle;
+
+					//* Test case: Reference to a DDS within the same DataStore or in another DataStore
+					//* Test case: Reference to an attachment blob
+					this._containerRuntime.addedGCOutboundReference(fromHandle, toHandle);
+				});
+			}
+		}
+
 		this.bindRuntime(channel);
 		// This data store may have been disposed before the channel is created during realization. If so,
 		// dispose the channel now.

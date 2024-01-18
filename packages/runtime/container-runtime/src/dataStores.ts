@@ -153,6 +153,7 @@ export class DataStores implements IDisposable {
 					createSummarizerNodeFn: this.getCreateChildSummarizerNodeFn(key, {
 						type: CreateSummarizerNodeSource.FromSummary,
 					}),
+					loadedFromAttachOp: false,
 				});
 			} else {
 				if (typeof value !== "object") {
@@ -247,6 +248,7 @@ export class DataStores implements IDisposable {
 				},
 			}),
 			pkg,
+			loadedFromAttachOp: true,
 		});
 
 		this.contexts.addBoundOrRemoted(remoteFluidDataStoreContext);
