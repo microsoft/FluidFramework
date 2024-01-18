@@ -16,27 +16,30 @@ import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IRuntimeFactory } from '@fluidframework/container-definitions';
 
 // @public
+export type ContainerAttachProps<T = unknown> = T;
+
+// @public
 export interface ContainerSchema {
     dynamicObjectTypes?: LoadableObjectClass<any>[];
     initialObjects: LoadableObjectClassRecord;
 }
 
-// @internal (undocumented)
+// @internal
 export function createDOProviderContainerRuntimeFactory(props: {
     schema: ContainerSchema;
 }): IRuntimeFactory;
 
-// @internal (undocumented)
+// @internal
 export function createFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>(props: {
     container: IContainer;
     rootDataObject: IRootDataObject;
 }): IFluidContainer<TContainerSchema>;
 
-// @internal (undocumented)
-export function createServiceAudience<M extends IMember = IMember>(props: {
+// @internal
+export function createServiceAudience<TMember extends IMember = IMember>(props: {
     container: IContainer;
-    createServiceMember: (audienceMember: IClient) => M;
-}): IServiceAudience<M>;
+    createServiceMember: (audienceMember: IClient) => TMember;
+}): IServiceAudience<TMember>;
 
 // @public
 export type DataObjectClass<T extends IFluidLoadable> = {
@@ -53,7 +56,7 @@ export interface IConnection {
 
 // @public @sealed
 export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> extends IEventProvider<IFluidContainerEvents> {
-    attach(): Promise<string>;
+    attach(props?: ContainerAttachProps): Promise<string>;
     readonly attachState: AttachState;
     connect(): void;
     readonly connectionState: ConnectionState;
