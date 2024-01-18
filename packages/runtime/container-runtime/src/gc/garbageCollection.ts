@@ -95,6 +95,7 @@ export class GarbageCollector implements IGarbageCollector {
 		return this.configs.shouldRunGC;
 	}
 
+	public readonly sessionExpiryTimerStarted: number | undefined;
 	// Keeps track of the GC state from the last run.
 	private gcDataFromLastRun: IGarbageCollectionData | undefined;
 	// Keeps a list of references (edges in the GC graph) between GC runs. Each entry has a node id and a list of
@@ -190,6 +191,7 @@ export class GarbageCollector implements IGarbageCollector {
 				);
 			});
 			this.sessionExpiryTimer.start();
+			this.sessionExpiryTimerStarted = Date.now();
 		}
 
 		this.summaryStateTracker = new GCSummaryStateTracker(

@@ -170,6 +170,8 @@ import {
 	IGCRuntimeOptions,
 	IGCStats,
 	trimLeadingAndTrailingSlashes,
+	runSessionExpiryKey,
+	defaultSessionExpiryDurationMs,
 } from "./gc";
 import { channelToDataStore, IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
 import { BindBatchTracker } from "./batchTracker";
@@ -554,6 +556,10 @@ export interface IPendingRuntimeState {
 	 * Pending idCompressor state
 	 */
 	pendingIdCompressorState?: SerializedIdCompressorWithOngoingSession;
+	/**
+	 * Last timestamp recorded before getting pending local state
+	 */
+	remainingSessionExpiryTimeoutMs?: number | undefined;
 }
 
 const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconnects";
@@ -726,6 +732,7 @@ export class ContainerRuntime
 		ISummarizerInternalsProvider,
 		IProvideFluidHandleContext
 {
+	sessionExpiryTimeMs: number | undefined = undefined;
 	/**
 	 * Load the stores from a snapshot and returns the runtime.
 	 * @param params - An object housing the runtime properties:
@@ -1308,6 +1315,12 @@ export class ContainerRuntime
 		// Note that we only need to pull the *initial* connected state from the context.
 		// Later updates come through calls to setConnectionState.
 		this._connected = connected;
+
+		if(metadata) {
+			this.sessionExpiryTimeMs = metadata.sessionExpiryTimeoutMs;
+		} else if(this.runtimeOptions.gcOptions.gcAllowed!== false && this.mc.config.getBoolean(runSessionExpiryKey) !== false) {
+			this.sessionExpiryTimeMs = this.runtimeOptions.gcOptions.sessionExpiryTimeoutMs ?? defaultSessionExpiryDurationMs;
+		}
 
 		this.mc.logger.sendTelemetryEvent({
 			eventName: "GCFeatureMatrix",
@@ -3944,11 +3957,19 @@ export class ContainerRuntime
 				}
 
 				const pendingIdCompressorState = this.idCompressor?.serialize(true);
+				const timeSinceSessionExpiryTimeStarted = this.garbageCollector.sessionExpiryTimerStarted ?
+				Date.now() - this.garbageCollector.sessionExpiryTimerStarted:
+				undefined;
+				let remainingSessionExpiryTimeoutMs: number | undefined;
+				if (this.sessionExpiryTimeMs && timeSinceSessionExpiryTimeStarted) {
+					remainingSessionExpiryTimeoutMs = this.sessionExpiryTimeMs - timeSinceSessionExpiryTimeStarted;
+				}
 
 				const pendingState: IPendingRuntimeState = {
 					pending,
 					pendingAttachmentBlobs,
 					pendingIdCompressorState,
+					remainingSessionExpiryTimeoutMs,
 				};
 				event.end({
 					attachmentBlobsSize: Object.keys(pendingAttachmentBlobs ?? {}).length,
