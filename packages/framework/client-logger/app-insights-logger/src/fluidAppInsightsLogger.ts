@@ -133,12 +133,11 @@ class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 	 */
 	private readonly baseLoggingClient: ApplicationInsights;
 	private readonly config: FluidAppInsightsLoggerConfig;
-
 	public constructor(client: ApplicationInsights, config?: FluidAppInsightsLoggerConfig) {
 		this.baseLoggingClient = client;
 		// Deep copy config to prevent issues if user mutates the object they passed in
 		this.config = config
-			? (structuredClone(config) as FluidAppInsightsLoggerConfig)
+			? structuredClone(config)
 			: {
 					filtering: {
 						mode: "exclusive",

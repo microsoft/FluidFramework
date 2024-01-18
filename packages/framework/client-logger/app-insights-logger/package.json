@@ -97,6 +97,7 @@
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@microsoft/applicationinsights-web": "^2.8.11",
+		"@types/ungap__structured-clone": "^1.2.0",
 		"@ungap/structured-clone": "^1.2.0"
 	},
 	"devDependencies": {
