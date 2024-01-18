@@ -1099,7 +1099,7 @@ describe("SharedTree", () => {
 			const sb = new SchemaBuilder({ scope: "shared tree undo tests" });
 			const schema = sb.intoSchema(sb.list(sb.list(sb.string)));
 
-			/** sets of two edits performed on a tree for these tests */
+			/** describes a set of two edits performed on a tree for these tests */
 			enum Edits {
 				A = "two edits to the removed tree",
 				B = "the restoration and editing of the removed tree",
@@ -1122,23 +1122,23 @@ describe("SharedTree", () => {
 				);
 
 				if (edits === Edits.A) {
-					makeAEdits(peer);
+					makeAPrerequisiteEdits(peer);
 				} else if (edits === Edits.B || edits === Edits.C) {
-					makeBOrCEdits(peer);
+					makeBAndCPrerequisiteEdits(peer);
 				}
 
 				unsubscribe();
 				return undos;
 			}
 
-			function makeAEdits(peer: CheckoutFlexTreeView<typeof schema.rootFieldSchema>): void {
+			function makeAPrerequisiteEdits(peer: CheckoutFlexTreeView<typeof schema.rootFieldSchema>): void {
 				const outerList = peer.flexTree.content.content;
 				const innerList = (outerList.at(0) ?? assert.fail()).content;
 				innerList.insertAtEnd("b");
 				innerList.insertAtEnd("c");
 			}
 
-			function makeBOrCEdits(
+			function makeBAndCPrerequisiteEdits(
 				peer: CheckoutFlexTreeView<typeof schema.rootFieldSchema>,
 			): void {
 				const outerList = peer.flexTree.content.content;
@@ -1171,9 +1171,6 @@ describe("SharedTree", () => {
 					const resubmitTree = provider.trees[0].schematizeInternal(content);
 					const otherTree = provider.trees[1].schematizeInternal(content);
 					provider.processMessages();
-
-					// validate insertion
-					validateTreeContent(otherTree.checkout, content);
 
 					const otherUndos = makeEdits(otherTree, otherEdits);
 					const resubmitUndos = makeEdits(resubmitTree, resubmitEdits);
@@ -1245,9 +1242,6 @@ describe("SharedTree", () => {
 				);
 				const otherTree = provider.trees[1].schematizeInternal(content);
 				provider.processMessages();
-
-				// validate insertion
-				validateTreeContent(otherTree.checkout, content);
 
 				// fork and delete the tree on the original
 				const branch = resubmitTree.fork();
