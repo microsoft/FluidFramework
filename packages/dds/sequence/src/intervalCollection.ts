@@ -752,7 +752,7 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 		listener: (
 			interval: TInterval,
 			propertyDeltas: PropertySet,
-			previousInterval: TInterval,
+			previousInterval: TInterval | undefined,
 			local: boolean,
 			slide: boolean,
 		) => void,
@@ -1222,12 +1222,12 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			previousInterval.start.refType = ReferenceType.Transient;
 			previousInterval.end.refType = ReferenceType.Transient;
 			this.emit("changeInterval", interval, previousInterval, local, op, slide);
-			this.emit("changed", interval, undefined, previousInterval ?? interval, local, slide);
+			this.emit("changed", interval, undefined, previousInterval ?? undefined, local, slide);
 			previousInterval.start.refType = startRefType;
 			previousInterval.end.refType = endRefType;
 		} else {
 			this.emit("changeInterval", interval, previousInterval, local, op, slide);
-			this.emit("changed", interval, undefined, previousInterval ?? interval, local, slide);
+			this.emit("changed", interval, undefined, previousInterval ?? undefined, local, slide);
 		}
 	}
 
@@ -1422,7 +1422,14 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			this.emitter.emit("change", undefined, serializedInterval, { localSeq });
 			if (deltaProps !== undefined) {
 				this.emit("propertyChanged", interval, deltaProps, true, undefined);
-				this.emit("changed", newInterval ?? interval, deltaProps, interval, true, false);
+				this.emit(
+					"changed",
+					newInterval ?? interval,
+					deltaProps,
+					newInterval ? interval : undefined,
+					true,
+					false,
+				);
 			}
 			if (newInterval) {
 				this.addPendingChange(id, serializedInterval);
@@ -1581,7 +1588,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			const changedProperties = Object.keys(newProps).length > 0;
 			if (changedProperties) {
 				this.emit("propertyChanged", interval, deltaProps, local, op);
-				this.emit("changed", newInterval ?? interval, deltaProps, interval, local, false);
+				this.emit("changed", interval, deltaProps, undefined, local, false);
 			}
 		}
 	}

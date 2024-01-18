@@ -393,8 +393,8 @@ describe("SharedString interval collection event spec", () => {
 		const eventLog: (Omit<IntervalEventInfo, "op"> & {
 			id: string;
 			deltas: PropertySet;
-			previousEndpoints: { start: number; end: number };
-			previousInterval: SequenceInterval;
+			previousEndpoints: { start: number; end: number } | undefined;
+			previousInterval: SequenceInterval | undefined;
 			slide: boolean;
 		})[] = [];
 		let intervalId: string;
@@ -403,15 +403,17 @@ describe("SharedString interval collection event spec", () => {
 				eventLog.push({
 					id: interval.getIntervalId() ?? assert.fail("Expected interval to have id"),
 					deltas,
-					previousEndpoints: {
-						start: sharedString.localReferencePositionToPosition(
-							previousInterval.start ?? interval.start,
-						),
-						end: sharedString.localReferencePositionToPosition(
-							previousInterval.end ?? interval.end,
-						),
-					},
-					previousInterval: previousInterval ?? interval,
+					previousEndpoints: previousInterval
+						? {
+								start: sharedString.localReferencePositionToPosition(
+									previousInterval.start,
+								),
+								end: sharedString.localReferencePositionToPosition(
+									previousInterval.end,
+								),
+						  }
+						: undefined,
+					previousInterval: previousInterval ?? undefined,
 					interval: {
 						start: sharedString.localReferencePositionToPosition(interval.start),
 						end: sharedString.localReferencePositionToPosition(interval.end),
@@ -432,7 +434,8 @@ describe("SharedString interval collection event spec", () => {
 			collection.change(intervalId, { start: 2, end: 3 });
 			assert.equal(eventLog.length, 1);
 			{
-				const [{ interval, previousEndpoints, local, slide }] = eventLog;
+				const [{ interval, previousEndpoints, previousInterval, local, slide }] = eventLog;
+				assert.notEqual(previousInterval, undefined);
 				assert.deepEqual(interval, { start: 2, end: 3 });
 				assert.deepEqual(previousEndpoints, { start: 0, end: 1 });
 				assert.equal(local, true);
@@ -482,6 +485,7 @@ describe("SharedString interval collection event spec", () => {
 					const [{ interval, previousInterval, previousEndpoints, local, slide }] =
 						eventLog;
 					assert.deepEqual(interval, { start: 0, end: 1 });
+					assert(previousInterval !== undefined);
 					assert(toRemovalInfo(previousInterval.end.getSegment()) !== undefined);
 					assert.deepEqual(previousEndpoints, { start: 0, end: 1 });
 					assert.equal(local, true);
@@ -499,6 +503,7 @@ describe("SharedString interval collection event spec", () => {
 					const [{ interval, previousInterval, previousEndpoints, local, slide }] =
 						eventLog;
 					assert.deepEqual(interval, { start: 2, end: 2 });
+					assert(previousInterval !== undefined);
 					assert(toRemovalInfo(previousInterval.start.getSegment()) !== undefined);
 					// Note: this isn't 4 because we're interpreting the segment+offset from the current view.
 					assert.deepEqual(previousEndpoints, { start: 3, end: 3 });
@@ -517,6 +522,7 @@ describe("SharedString interval collection event spec", () => {
 					const { interval, previousInterval, previousEndpoints, local, slide } =
 						eventLog[1];
 					assert.deepEqual(interval, { start: 2, end: 2 });
+					assert(previousInterval !== undefined);
 					assert(toRemovalInfo(previousInterval.start.getSegment()) !== undefined);
 					// Note: this isn't 4 because we're interpreting the segment+offset from the current view.
 					assert.deepEqual(previousEndpoints, { start: 3, end: 3 });
@@ -530,7 +536,8 @@ describe("SharedString interval collection event spec", () => {
 			collection.change(intervalId, { props: { foo: "bar" } });
 			assert.equal(eventLog.length, 1);
 			{
-				const [{ id, deltas, local }] = eventLog;
+				const [{ previousInterval, id, deltas, local }] = eventLog;
+				assert.equal(previousInterval, undefined);
 				assert.equal(id, intervalId);
 				assert.equal(local, true);
 				assert.deepEqual(deltas, { foo: null });
@@ -546,7 +553,8 @@ describe("SharedString interval collection event spec", () => {
 			containerRuntimeFactory.processAllMessages();
 			assert.equal(eventLog.length, 1);
 			{
-				const [{ id, deltas, local }] = eventLog;
+				const [{ id, deltas, previousInterval, local }] = eventLog;
+				assert.equal(previousInterval, undefined);
 				assert.equal(id, intervalId);
 				assert.equal(local, false);
 				assert.deepEqual(deltas, { foo: null });
@@ -562,7 +570,8 @@ describe("SharedString interval collection event spec", () => {
 			containerRuntimeFactory.processAllMessages();
 			assert.equal(eventLog.length, 2);
 			{
-				const { id, deltas, local } = eventLog[1];
+				const { id, deltas, previousInterval, local } = eventLog[1];
+				assert.equal(previousInterval, undefined);
 				assert.equal(id, intervalId);
 				assert.equal(local, false);
 				assert.deepEqual(deltas, { applies: null });
