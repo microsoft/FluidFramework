@@ -114,7 +114,7 @@ async function createSummarizer(
  */
 describeCompat(
 	"Summarizer fetches expected number of times",
-	"NoCompat",
+	"2.0.0-rc.1.0.0",
 	(getTestObjectProvider) => {
 		let provider: ITestObjectProvider;
 		let mainContainer: IContainer;
