@@ -41,6 +41,23 @@ if (window === undefined) {
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
+const contentScriptPort = browser.runtime.connect({ name: "content-background-channel" });
+
+// Dispatches event to webpage after receiving message from BackgroundScript
+contentScriptPort.onMessage.addListener((message) => {
+	/* eslint-disable-next-line @typescript-eslint/no-unsafe-assignment */
+	const event = new CustomEvent("requestingSupportedFeatures", { detail: message });
+	window?.dispatchEvent(event);
+});
+
+window.addEventListener("responseFromPage", (event): void => {
+	// Relays response from webpage to backgroundScript
+	contentScriptPort.postMessage(event);
+	browser.runtime.sendMessage({ type: "webpageResponse", data: event }).catch((error) => {
+		console.error(error);
+	});
+});
+
 // Only establish messaging when activated by the Background Worker.
 browser.runtime.onConnect.addListener((backgroundPort: Port) => {
 	console.log(formatContentScriptMessageForLogging("Connection added from Background Worker."));

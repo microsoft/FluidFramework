@@ -138,7 +138,6 @@ export class FluidDevtools implements IFluidDevtools {
 	 */
 	private readonly inboundMessageHandlers: InboundHandlers = {
 		[GetDevtoolsFeatures.MessageType]: async () => {
-			console.log("my message reached!!");
 			this.postSupportedFeatures();
 			return true;
 		},

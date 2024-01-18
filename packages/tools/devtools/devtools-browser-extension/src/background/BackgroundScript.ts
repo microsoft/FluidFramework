@@ -43,6 +43,26 @@ type Port = chrome.runtime.Port;
 
 console.log(formatBackgroundScriptMessageForLogging("Initializing Background Worker."));
 
+// Establish communication channels with the PopupScript and ContentScript.
+let contentScriptPort: Port;
+let popupPort: Port;
+
+browser.runtime.onConnect.addListener((port: Port) => {
+	if (port.name === "popup-background-channel") {
+		popupPort = port;
+		// Relay message from Popup to ContentScript
+		port.onMessage.addListener((message) => {
+			contentScriptPort?.postMessage(message);
+		});
+	} else if (port.name === "content-background-channel") {
+		contentScriptPort = port;
+		// Relay respones from ContentScript back to Popup
+		port.onMessage.addListener((message) => {
+			popupPort.postMessage(message);
+		});
+	}
+});
+
 // Only establish messaging when activated by the Devtools Script.
 browser.runtime.onConnect.addListener((devtoolsPort: Port): void => {
 	// Note: this is captured by the devtoolsMessageListener lambda below.
