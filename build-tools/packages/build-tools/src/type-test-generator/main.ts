@@ -12,38 +12,12 @@ import { PackageJson } from "../common/npmPackage";
 import { buildTestCase, TestCaseTypeData } from "../typeValidator/testGeneration";
 import { getFullTypeName, getNodeTypeData, TypeData } from "../typeValidator/typeData";
 import { typeOnly } from "./compatibility";
-import { ExtractorConfig } from "@microsoft/api-extractor";
 
 // Do not check that file exists before opening:
 // Doing so is a time of use vs time of check issue so opening the file could fail anyway.
 // Do not catch error from opening file since the default behavior is fine (exits process with error showing useful message)
 const packageObject: PackageJson = readJsonSync("package.json");
-const previousPackageName = `${packageObject.name}-previous`;
 
-const previousBasePath = `./node_modules/${previousPackageName}`;
-
-const previousPackageJsonPath = `${previousBasePath}/package.json`;
-
-if (!existsSync(previousPackageJsonPath)) {
-	throw new Error(
-		`${previousPackageJsonPath} not found. You may need to install the package via pnpm install.`,
-	);
-}
-const typeRollupFilePath = ExtractorConfig.tryLoadForFolder({
-	startingFolder: previousBasePath,
-});
-let typeDefinitionFilePath;
-
-if (typeRollupFilePath) {
-	// Check if a specified typeRollupFile exists
-	if (typeRollupFilePath === undefined) {
-		throw new Error(`Type rollup file '${typeRollupFilePath}' not found.`);
-	}
-	typeDefinitionFilePath = typeRollupFilePath;
-} else {
-	// Default to using index.d.ts and other .d.ts files under dist
-	typeDefinitionFilePath = "dist/index.d.ts";
-}
 const testPath = `./src/test/types`;
 // remove scope if it exists
 const unscopedName = path.basename(packageObject.name);
@@ -61,6 +35,8 @@ if (packageObject.typeValidation?.disabled) {
 	process.exit(0);
 }
 
+const previousPackageName = `${packageObject.name}-previous`;
+
 {
 	// Information about the previous package from the package.json is not needed,
 	// but error if its missing since it's nice to separate errors for the dep missing here vs not installed.
@@ -72,6 +48,7 @@ if (packageObject.typeValidation?.disabled) {
 
 const broken: BrokenCompatTypes = packageObject.typeValidation?.broken ?? {};
 
+const previousBasePath = `./node_modules/${previousPackageName}`;
 if (!existsSync(`${previousBasePath}/package.json`)) {
 	throw new Error(
 		`${previousBasePath} not found. You may need to install the package via pnpm install.`,
@@ -85,29 +62,23 @@ const currentFile = new Project({
 
 const previousTsConfigPath = `${previousBasePath}/tsconfig.json`;
 let previousFile: SourceFile;
-const project = new Project({
-	skipFileDependencyResolution: true,
-	tsConfigFilePath: existsSync(previousTsConfigPath) ? previousTsConfigPath : undefined,
-});
-// Check for existence of alpha and add appropriate file
-if (existsSync(typeDefinitionFilePath)) {
-	project.addSourceFilesAtPaths(typeDefinitionFilePath);
-	previousFile = project.getSourceFileOrThrow("<package-name>-alpha.d.ts");
-	// Fall back to using .d.ts
+if (existsSync(previousTsConfigPath)) {
+	const project = new Project({
+		skipFileDependencyResolution: true,
+		tsConfigFilePath: previousTsConfigPath,
+	});
+	previousFile = project.getSourceFileOrThrow("index.ts");
 } else {
+	const project = new Project({
+		skipFileDependencyResolution: true,
+	});
 	project.addSourceFilesAtPaths(`${previousBasePath}/dist/**/*.d.ts`);
 	previousFile = project.getSourceFileOrThrow("index.d.ts");
 }
 
-/**
- * Extracts type data from a TS source file and creates a map where each key is a type name and the value is its type data.
- * @param file
- * @returns Map<string, TypeData> mapping between item and its type
- */
 function typeDataFromFile(file: SourceFile): Map<string, TypeData> {
 	const typeData = new Map<string, TypeData>();
 	const exportedDeclarations = file.getExportedDeclarations();
-
 	for (const declarations of exportedDeclarations.values()) {
 		for (const dec of declarations) {
 			getNodeTypeData(dec).forEach((td) => {
@@ -148,8 +119,6 @@ import type * as current from "../../index";
 ];
 
 for (const oldTypeData of previousData) {
-	// Check if the type is from an alpha file
-
 	const oldType: TestCaseTypeData = {
 		prefix: "old",
 		...oldTypeData,

@@ -29,7 +29,7 @@ export function buildTestCase(
 	testString.push(`declare function ${useSig}(`);
 	testString.push(`    use: ${toTypeString(useType.prefix, useType)}): void;`);
 	testString.push(`${useSig}(`);
-	if (!isCompatible || (getAsType && useType)) {
+	if (!isCompatible) {
 		testString.push(expectErrorString);
 	}
 	testString.push(`    ${getSig}());`);
