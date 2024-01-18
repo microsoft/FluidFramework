@@ -8,7 +8,7 @@ import Sinon from "sinon";
 import { TestEngine1, TestEngine2, TestLumberjack } from "../lumberjackCommonTestUtils";
 import { LumberEventName } from "../lumberEventNames";
 import * as resources from "../resources";
-import { setGlobalLumberjackInstance } from "../lumberjack";
+import { getGlobalLumberjackInstance, setGlobalLumberjackInstance } from "../lumberjack";
 
 describe("Lumberjack", () => {
 	afterEach(() => {
@@ -62,5 +62,32 @@ describe("Lumberjack", () => {
 		const handleErrorStub = Sinon.stub(resources, "handleError");
 		TestLumberjack.newLumberMetric(LumberEventName.UnitTestEvent);
 		assert.strictEqual(handleErrorStub.calledOnce, true);
+	});
+});
+
+describe("Global Lumberjack", () => {
+	afterEach(() => {
+		TestLumberjack.reset();
+		Sinon.restore();
+		setGlobalLumberjackInstance(undefined);
+	});
+
+	it("Sets up Lumberjack's global instance.", () => {
+		const engine = new TestEngine1();
+		const engine2 = new TestEngine2();
+		const handleErrorStub = Sinon.stub(resources, "handleError");
+		assert.strictEqual(
+			undefined,
+			getGlobalLumberjackInstance(),
+			"Global instance should be undefined",
+		);
+		TestLumberjack.setup([engine], undefined, { enableGlobalTelemetryContext: true });
+		assert(getGlobalLumberjackInstance(), "Global instance should be set");
+		assert(TestLumberjack.isSetupCompleted(), "Setup should be completed");
+		assert.strictEqual(handleErrorStub.notCalled, true, "Setup should not have caused errors");
+		getGlobalLumberjackInstance().setup([engine2], undefined, {
+			enableGlobalTelemetryContext: true,
+		});
+		assert.strictEqual(handleErrorStub.calledOnce, true, "setup should have caused an error");
 	});
 });
