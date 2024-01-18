@@ -62,7 +62,7 @@ export namespace ConnectionStateType {
 // @public
 export type ConnectionStateType = ConnectionStateType.Disconnected | ConnectionStateType.EstablishingConnection | ConnectionStateType.CatchingUp | ConnectionStateType.Connected;
 
-// @public (undocumented)
+// @public
 export type ContainerAttachProps<T = unknown> = T;
 
 // @alpha
