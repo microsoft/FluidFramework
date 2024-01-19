@@ -214,7 +214,7 @@ const genFullBackCompatConfig = (driverVersionsAboveV2Int1: number = 0): CompatC
 	// not working with new rc version
 	const _configList: CompatConfig[] = [];
 
-	const loaderVersionBackCompatCount = getNumberOfVersionsToGoBack(0);
+	const loaderVersionBackCompatCount = getNumberOfVersionsToGoBack(driverVersionsAboveV2Int1);
 
 	// This makes the assumption N and N-1 scenarios are already fully tested thus skipping 0 and -1.
 	// This loop goes as far back as 2.0.0.internal.1.y.z.
@@ -310,7 +310,7 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 		if (process.env.fluid__test__backCompat === "FULL") {
 			_configList.push(...genFullBackCompatConfig());
 		}
-		if (process.env.fluid__test__backCompat === "V2_INT_1_Loader_V2_INT_3_Driver") {
+		if (process.env.fluid__test__backCompat === "V2_INT_3") {
 			_configList.push(...genFullBackCompatConfig(defaultNumOfDriverVersionsAboveV2Int1));
 		}
 	} else {
@@ -326,7 +326,7 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 					_configList.push(...genFullBackCompatConfig());
 					break;
 				}
-				case "V2_INT_1_Loader_V2_INT_3_Driver": {
+				case "V2_INT_3": {
 					_configList.push(
 						...genFullBackCompatConfig(defaultNumOfDriverVersionsAboveV2Int1),
 					);
