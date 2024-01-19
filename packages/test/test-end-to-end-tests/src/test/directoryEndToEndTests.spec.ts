@@ -1296,23 +1296,27 @@ describeCompat(
 		beforeEach("getTestObjectProvider", () => {
 			provider = getTestObjectProvider();
 		});
+		let container1: IContainer;
+		let container2: IContainer;
+		let container3: IContainer;
+
 		let sharedDirectory1: ISharedDirectory;
 		let sharedDirectory2: ISharedDirectory;
 		let sharedDirectory3: ISharedDirectory;
 
 		beforeEach("createSharedDirectories", async () => {
 			// Create a Container for the first client.
-			const container1 = await provider.makeTestContainer(testContainerConfig);
+			container1 = await provider.makeTestContainer(testContainerConfig);
 			const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
 			sharedDirectory1 = await dataObject1.getSharedObject<SharedDirectory>(directoryId);
 
 			// Load the Container that was created by the first client.
-			const container2 = await provider.loadTestContainer(testContainerConfig);
+			container2 = await provider.loadTestContainer(testContainerConfig);
 			const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
 			sharedDirectory2 = await dataObject2.getSharedObject<SharedDirectory>(directoryId);
 
 			// Load the Container that was created by the first client.
-			const container3 = await provider.loadTestContainer(testContainerConfig);
+			container3 = await provider.loadTestContainer(testContainerConfig);
 			const dataObject3 = (await container3.getEntryPoint()) as ITestFluidObject;
 			sharedDirectory3 = await dataObject3.getSharedObject<SharedDirectory>(directoryId);
 
@@ -1343,21 +1347,35 @@ describeCompat(
 			expectSubdirsOrder(sharedDirectory3, dirsInOrder, path);
 		}
 
-		// This test falsely assumes ops will be acked in the order they're submtited.
-		// AB#6515 tracks re-enabling.
-		it.skip("Eventual consistency in ordering with subdirectories creation/deletion", async () => {
+		async function pauseAllContainersInbound() {
+			await container1.deltaManager.inbound.pause();
+			await container2.deltaManager.inbound.pause();
+			await container3.deltaManager.inbound.pause();
+		}
+
+		function resumeAllContainersInbound() {
+			container1.deltaManager.inbound.resume();
+			container2.deltaManager.inbound.resume();
+			container3.deltaManager.inbound.resume();
+		}
+
+		it("Eventual consistency in ordering with subdirectories creation/deletion", async () => {
+			// Pause to not allow ops to be processed while we maintained them in order.
+			await pauseAllContainersInbound();
+
 			sharedDirectory1.createSubDirectory("dir2");
 			sharedDirectory2.createSubDirectory("dir1");
 			sharedDirectory2.createSubDirectory("dir2");
 			sharedDirectory3.createSubDirectory("dir3");
 			sharedDirectory3.createSubDirectory("dir2");
 
-			await provider.opProcessingController.processIncoming();
 			expectSubdirsOrder(sharedDirectory1, ["dir2"]);
 			expectSubdirsOrder(sharedDirectory2, ["dir1", "dir2"]);
 			expectSubdirsOrder(sharedDirectory3, ["dir3", "dir2"]);
 
-			await provider.opProcessingController.processOutgoing();
+			resumeAllContainersInbound();
+			await provider.opProcessingController.processIncoming();
+
 			await provider.ensureSynchronized();
 
 			expectAllSubdirsOrder(["dir2", "dir1", "dir3"]);
