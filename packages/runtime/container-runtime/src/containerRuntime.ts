@@ -3864,11 +3864,7 @@ export class ContainerRuntime
 		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		readAndParseBlob: ReadAndParseBlob,
-	): Promise<{
-		snapshotTree: ISnapshotTree;
-		versionId: string;
-		latestSnapshotRefSeq: number;
-	}> {
+	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
 		return PerformanceEvent.timedExecAsync(
 			logger,
 			event,

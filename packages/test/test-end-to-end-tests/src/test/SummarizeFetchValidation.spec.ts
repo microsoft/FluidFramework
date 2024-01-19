@@ -189,11 +189,11 @@ describeCompat(
 				scenarioName?: string,
 			): Promise<ISnapshotTree | null> => {
 				getSnapshotTreeFunc = getSnapshotTreeFunc.bind(containerRuntime.storage);
-				const snapshot = await getSnapshotTreeFunc(version, scenarioName);
-				assert(snapshot !== null, "getSnapshotTree should did not return a tree");
-				fetchSnapshotRefSeq = await seqFromTree(snapshot, readAndParseBlob);
+				const snapshotTree = await getSnapshotTreeFunc(version, scenarioName);
+				assert(snapshotTree !== null, "getSnapshotTree should did not return a tree");
+				fetchSnapshotRefSeq = await seqFromTree(snapshotTree, readAndParseBlob);
 				fetchCount++;
-				return snapshot;
+				return snapshotTree;
 			};
 			containerRuntime.storage.getSnapshotTree = getSnapshotTreeOverride;
 

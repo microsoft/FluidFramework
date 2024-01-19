@@ -8,7 +8,6 @@ import { Deferred } from '@fluidframework/core-utils';
 import { IDocumentService } from '@fluidframework/driver-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
-import { IPartialSnapshotWithContents } from '@fluidframework/driver-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
@@ -74,7 +73,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
     // (undocumented)
     fetchTo(currentOp: number): number | undefined;
     // (undocumented)
-    getSnapshotTree(versionRequested?: IVersion): Promise<ISnapshotTree | IPartialSnapshotWithContents | null>;
+    getSnapshotTree(versionRequested?: IVersion): Promise<ISnapshotTree | null>;
     // (undocumented)
     getStartingOpSequence(): Promise<number>;
     // (undocumented)

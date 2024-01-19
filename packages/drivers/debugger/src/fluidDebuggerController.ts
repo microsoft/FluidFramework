@@ -8,7 +8,6 @@ import {
 	IDocumentService,
 	IDocumentStorageService,
 	IDocumentDeltaStorageService,
-	IPartialSnapshotWithContents,
 } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
@@ -287,9 +286,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
 	}
 
 	// eslint-disable-next-line @rushstack/no-new-null
-	public async getSnapshotTree(
-		versionRequested?: IVersion,
-	): Promise<ISnapshotTree | IPartialSnapshotWithContents | null> {
+	public async getSnapshotTree(versionRequested?: IVersion): Promise<ISnapshotTree | null> {
 		if (this.storage !== undefined) {
 			return this.storage.getSnapshotTree(versionRequested);
 		}
