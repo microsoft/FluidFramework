@@ -634,7 +634,8 @@ export class SharedMatrix<T = any>
 	}
 
 	protected reSubmitCore(content: any, localOpMetadata: unknown) {
-		this.inFlightRefSeqs.shift();
+		const originalRefSeq = this.inFlightRefSeqs.shift();
+		assert(originalRefSeq !== undefined, "Expected a recorded refSeq when resubmitting an op");
 		switch (content.target) {
 			case SnapshotPath.cols:
 				this.submitColMessage(
@@ -763,10 +764,9 @@ export class SharedMatrix<T = any>
 		localOpMetadata: unknown,
 	) {
 		if (local) {
-			assert(
-				this.inFlightRefSeqs.shift() === rawMessage.referenceSequenceNumber,
-				"RefSeq mismatch",
-			);
+			const recordedRefSeq = this.inFlightRefSeqs.shift();
+			assert(recordedRefSeq !== undefined, "No pending recorded refSeq found");
+			assert(recordedRefSeq <= rawMessage.referenceSequenceNumber, "RefSeq mismatch");
 		}
 		const msg = parseHandles(rawMessage, this.serializer);
 
@@ -982,6 +982,7 @@ export class SharedMatrix<T = any>
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 */
 	protected applyStashedOp(content: any): unknown {
+		this.inFlightRefSeqs.push(this.runtime.deltaManager.lastSequenceNumber);
 		const parsedContent = parseHandles(content, this.serializer);
 		if (
 			parsedContent.target === SnapshotPath.cols ||
