@@ -22,6 +22,7 @@ import {
 	typeNameSymbol,
 	FlexTreeSchema,
 	intoStoredSchema,
+	SchemaBuilderBase,
 } from "../../feature-libraries/index.js";
 import {
 	ChunkedForest,
@@ -1096,8 +1097,17 @@ describe("SharedTree", () => {
 		});
 
 		describe("can rebase during resubmit", () => {
-			const sb = new SchemaBuilder({ scope: "shared tree undo tests" });
-			const schema = sb.intoSchema(sb.list(sb.list(sb.string)));
+			const sb = new SchemaBuilderBase(FieldKinds.required, {
+				scope: "shared tree undo tests",
+				libraries: [leaf.library],
+			});
+			const stringSequenceSchema = sb.fieldNode(
+				"stringList",
+				FlexFieldSchema.create(FieldKinds.sequence, [leaf.string]),
+			);
+			const schema = sb.intoSchema(
+				FlexFieldSchema.create(FieldKinds.sequence, [stringSequenceSchema]),
+			);
 
 			/** describes a set of two edits performed on a tree for these tests */
 			enum Edits {
@@ -1134,7 +1144,7 @@ describe("SharedTree", () => {
 			function makeAPrerequisiteEdits(
 				peer: CheckoutFlexTreeView<typeof schema.rootFieldSchema>,
 			): void {
-				const outerList = peer.flexTree.content.content;
+				const outerList = peer.flexTree;
 				const innerList = (outerList.at(0) ?? assert.fail()).content;
 				innerList.insertAtEnd("b");
 				innerList.insertAtEnd("c");
@@ -1143,10 +1153,10 @@ describe("SharedTree", () => {
 			function makeBAndCPrerequisiteEdits(
 				peer: CheckoutFlexTreeView<typeof schema.rootFieldSchema>,
 			): void {
-				const outerList = peer.flexTree.content.content;
+				const outerList = peer.flexTree;
 				const innerList = (outerList.at(0) ?? assert.fail()).content;
 				innerList.insertAtEnd("d");
-				peer.flexTree.content.content.removeAt(0);
+				peer.flexTree.removeAt(0);
 			}
 
 			/**
@@ -1179,8 +1189,8 @@ describe("SharedTree", () => {
 
 					provider.processMessages();
 
-					const resubmitTreeOuterList = resubmitTree.flexTree.content.content;
-					const otherTreeOuterList = otherTree.flexTree.content.content;
+					const resubmitTreeOuterList = resubmitTree.flexTree;
+					const otherTreeOuterList = otherTree.flexTree;
 
 					if (otherEdits === Edits.A && resubmitEdits === Edits.A) {
 						assert.deepEqual(
@@ -1248,8 +1258,8 @@ describe("SharedTree", () => {
 				const otherTree = provider.trees[1].schematizeInternal(content);
 				provider.processMessages();
 
-				const resubmitTreeOuterList = resubmitTree.flexTree.content.content;
-				const otherTreeOuterList = otherTree.flexTree.content.content;
+				const resubmitTreeOuterList = resubmitTree.flexTree;
+				const otherTreeOuterList = otherTree.flexTree;
 
 				// fork the tree
 				const branch = resubmitTree.fork();
@@ -1258,10 +1268,10 @@ describe("SharedTree", () => {
 				provider.trees[0].setConnected(false);
 
 				// remove the tree on the original tree
-				resubmitTree.flexTree.content.content.removeAt(0);
+				resubmitTree.flexTree.removeAt(0);
 
 				// edit the removed tree on the fork
-				const outerList = branch.flexTree.content.content;
+				const outerList = branch.flexTree;
 				const innerList = (outerList.at(0) ?? assert.fail()).content;
 				innerList.insertAtEnd("b");
 
