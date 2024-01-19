@@ -23,6 +23,7 @@ import {
 	FlexTreeSchema,
 	intoStoredSchema,
 	SchemaBuilderBase,
+	FlexTreeTypedField,
 } from "../../feature-libraries/index.js";
 import {
 	ChunkedForest,
@@ -47,6 +48,8 @@ import {
 	validateTreeContent,
 	validateViewConsistency,
 	numberSequenceRootSchema,
+	ConnectionSetter,
+	SharedTreeWithConnectionStateSetter,
 } from "../utils.js";
 import {
 	ForestType,
@@ -1054,7 +1057,7 @@ describe("SharedTree", () => {
 
 					provider.processMessages();
 
-					// validate insertion
+					// Validate insertion
 					validateTreeContent(tree2.checkout, content);
 
 					// edit subtree
@@ -1101,19 +1104,31 @@ describe("SharedTree", () => {
 				scope: "shared tree undo tests",
 				libraries: [leaf.library],
 			});
-			const stringSequenceSchema = sb.fieldNode(
-				"stringList",
-				FlexFieldSchema.create(FieldKinds.sequence, [leaf.string]),
-			);
-			const schema = sb.intoSchema(
-				FlexFieldSchema.create(FieldKinds.sequence, [stringSequenceSchema]),
-			);
+			const innerListSchema = FlexFieldSchema.create(FieldKinds.sequence, [leaf.string]);
+			const innerListNodeSchema = sb.fieldNode("stringList", innerListSchema);
+			const outerListSchema = FlexFieldSchema.create(FieldKinds.sequence, [
+				innerListNodeSchema,
+			]);
+			const schema = sb.intoSchema(outerListSchema);
+			const config = {
+				schema,
+				allowedSchemaModifications: AllowedUpdateType.None,
+				initialTree: [["a"]],
+			};
 
-			function makeTwoEdits(
-				peer: CheckoutFlexTreeView<typeof schema.rootFieldSchema>,
-			): Revertible[] {
+			type TreeView = CheckoutFlexTreeView<typeof outerListSchema>;
+
+			interface Peer extends ConnectionSetter {
+				readonly view: TreeView;
+				readonly outerList: FlexTreeTypedField<typeof outerListSchema>;
+				readonly innerList: FlexTreeTypedField<typeof innerListSchema>;
+				assertOuterListEquals(expected: readonly (readonly string[])[]): void;
+				assertInnerListEquals(expected: readonly string[]): void;
+			}
+
+			function makeUndoableEdit(peer: Peer, edit: () => void): Revertible {
 				const undos: Revertible[] = [];
-				const unsubscribe = peer.checkout.events.on(
+				const unsubscribe = peer.view.checkout.events.on(
 					"newRevertible",
 					(revertible: Revertible) => {
 						if (revertible.kind !== RevertibleKind.Undo) {
@@ -1123,270 +1138,211 @@ describe("SharedTree", () => {
 					},
 				);
 
-				const outerList = peer.flexTree;
-				const innerList = (outerList.at(0) ?? assert.fail()).content;
-				innerList.insertAtEnd("b");
-				innerList.insertAtEnd("c");
+				edit();
 
 				unsubscribe();
-				return undos;
+				assert.equal(undos.length, 1);
+				return undos[0];
 			}
 
-			function editTreeAndRemove(
-				peer: CheckoutFlexTreeView<typeof schema.rootFieldSchema>,
-			): Revertible[] {
-				const undos: Revertible[] = [];
-				const unsubscribe = peer.checkout.events.on(
-					"newRevertible",
-					(revertible: Revertible) => {
-						if (revertible.kind !== RevertibleKind.Undo) {
-							revertible.retain();
-							undos.push(revertible);
-						}
+			function undoableInsertInInnerList(peer: Peer, value: string): Revertible {
+				return makeUndoableEdit(peer, () => {
+					peer.innerList.insertAtEnd([value]);
+				});
+			}
+
+			function undoableRemoveOfOuterList(peer: Peer): Revertible {
+				return makeUndoableEdit(peer, () => {
+					peer.outerList.removeAt(0);
+				});
+			}
+
+			function peerFromSharedTree(tree: SharedTreeWithConnectionStateSetter): Peer {
+				const view = tree.schematizeInternal(config);
+				const peer: Peer = {
+					view,
+					outerList: view.flexTree,
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					innerList: view.flexTree.at(0)!.content,
+					setConnected: tree.setConnected,
+					assertOuterListEquals(expected: readonly (readonly string[])[]) {
+						const actual = [...this.outerList].map((inner) => [...inner.content]);
+						assert.deepEqual(actual, expected);
 					},
-				);
-
-				const outerList = peer.flexTree;
-				const innerList = (outerList.at(0) ?? assert.fail()).content;
-				innerList.insertAtEnd("d");
-				peer.flexTree.removeAt(0);
-
-				unsubscribe();
-				return undos;
+					assertInnerListEquals(expected: readonly string[]) {
+						const actual = [...this.innerList];
+						assert.deepEqual(actual, expected);
+					},
+				};
+				return peer;
 			}
 
-			/**
-			 * todoj make the resubmit tree obvious
-			 */
-			function performResubmitTest(
-				provider: TestTreeProviderLite,
-				otherTree: CheckoutFlexTreeView<typeof schema.rootFieldSchema>,
-				resubmitTree: CheckoutFlexTreeView<typeof schema.rootFieldSchema>,
-				otherUndos: Revertible[],
-				resubmitUndos: Revertible[],
-				swapUndoOrder = false,
-			) {
-				const resubmitTreeOuterList = resubmitTree.flexTree;
-				const otherTreeOuterList = otherTree.flexTree;
-
-				// disconnect the resubmit tree
-				provider.trees[0].setConnected(false);
-
-				const firstUndoIndex = swapUndoOrder ? 1 : 0;
-				const secondUndoIndex = swapUndoOrder ? 0 : 1;
-
-				assert.equal(otherUndos[firstUndoIndex].revert(), RevertibleResult.Success);
-				assert.equal(otherUndos[secondUndoIndex].revert(), RevertibleResult.Success);
-				assert.equal(resubmitUndos[firstUndoIndex].revert(), RevertibleResult.Success);
-				assert.equal(resubmitUndos[secondUndoIndex].revert(), RevertibleResult.Success);
-
+			function setupResubmitTest(): {
+				provider: TestTreeProviderLite;
+				submitter: Peer;
+				resubmitter: Peer;
+			} {
+				const provider = new TestTreeProviderLite(2);
+				const submitter = peerFromSharedTree(provider.trees[0]);
 				provider.processMessages();
-				const otherTreeRoot = otherTreeOuterList.at(0);
-				if (otherTreeRoot !== undefined) {
-					assert.notDeepEqual([...otherTreeRoot.content], ["a"]);
-				}
-
-				provider.trees[0].setConnected(true);
+				const resubmitter = peerFromSharedTree(provider.trees[1]);
 				provider.processMessages();
-
-				assert.deepEqual(
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					[...resubmitTreeOuterList.at(0)!.content],
-					["a"],
-				);
-				assert.deepEqual(
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					[...otherTreeOuterList.at(0)!.content],
-					["a"],
-				);
+				return { provider, submitter, resubmitter };
 			}
 
 			it("two edits to the removed tree over another two edits to the removed tree", () => {
-				const provider = new TestTreeProviderLite(2);
-				const content = {
-					schema,
-					allowedSchemaModifications: AllowedUpdateType.None,
-					initialTree: [["a"]],
-				};
-				const resubmitTree = provider.trees[0].schematizeInternal(content);
-				const otherTree = provider.trees[1].schematizeInternal(content);
-				provider.processMessages();
+				const { provider, submitter, resubmitter } = setupResubmitTest();
 
-				const otherUndos = makeTwoEdits(otherTree);
-				const resubmitUndos = makeTwoEdits(resubmitTree);
+				const r1 = undoableInsertInInnerList(resubmitter, "r1");
+				const r2 = undoableInsertInInnerList(resubmitter, "r2");
+				const s1 = undoableInsertInInnerList(submitter, "s1");
+				const s2 = undoableInsertInInnerList(submitter, "s2");
 
 				provider.processMessages();
 
-				assert.deepEqual(
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					[...otherTree.flexTree.at(0)!.content],
-					["a", "b", "c", "b", "c"],
-				);
-				assert.deepEqual(
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					[...resubmitTree.flexTree.at(0)!.content],
-					["a", "b", "c", "b", "c"],
-				);
+				const initialState = [["a", "s1", "s2", "r1", "r2"]];
+				submitter.assertOuterListEquals(initialState);
+				resubmitter.assertOuterListEquals(initialState);
 
-				performResubmitTest(provider, otherTree, resubmitTree, otherUndos, resubmitUndos);
+				resubmitter.setConnected(false);
+
+				assert.equal(s2.revert(), RevertibleResult.Success);
+				assert.equal(s1.revert(), RevertibleResult.Success);
+				submitter.assertOuterListEquals([["a", "r1", "r2"]]);
+
+				provider.processMessages();
+
+				assert.equal(r2.revert(), RevertibleResult.Success);
+				assert.equal(r1.revert(), RevertibleResult.Success);
+				resubmitter.assertOuterListEquals([["a", "s1", "s2"]]);
+
+				resubmitter.setConnected(true);
+				provider.processMessages();
+
+				const finalState = [["a"]];
+				submitter.assertOuterListEquals(finalState);
+				resubmitter.assertOuterListEquals(finalState);
 			});
 
-			it("restore and edit of a removed tree over two edits to the removed tree", () => {
-				const provider = new TestTreeProviderLite(2);
-				const content = {
-					schema,
-					allowedSchemaModifications: AllowedUpdateType.None,
-					initialTree: [["a"]],
-				};
-				const resubmitTree = provider.trees[0].schematizeInternal(content);
-				const otherTree = provider.trees[1].schematizeInternal(content);
-				provider.processMessages();
+			for (const scenario of ["restore and edit", "edit and restore"] as const) {
+				it(`${scenario} to the removed tree over two edits to the removed tree`, () => {
+					const { provider, submitter, resubmitter } = setupResubmitTest();
 
-				const otherUndos = makeTwoEdits(otherTree);
-				const resubmitUndos = editTreeAndRemove(resubmitTree);
+					const rEdit = undoableInsertInInnerList(resubmitter, "r");
+					const rRemove = undoableRemoveOfOuterList(resubmitter);
+					const s1 = undoableInsertInInnerList(submitter, "s1");
+					const s2 = undoableInsertInInnerList(submitter, "s2");
 
-				provider.processMessages();
+					provider.processMessages();
 
-				assert.deepEqual([...resubmitTree.flexTree], []);
-				assert.deepEqual([...otherTree.flexTree], []);
+					submitter.assertOuterListEquals([]);
+					resubmitter.assertOuterListEquals([]);
+					const initialState = ["a", "s1", "s2", "r"];
+					submitter.assertInnerListEquals(initialState);
+					resubmitter.assertInnerListEquals(initialState);
 
-				performResubmitTest(
-					provider,
-					otherTree,
-					resubmitTree,
-					otherUndos,
-					resubmitUndos,
-					true,
-				);
-			});
+					resubmitter.setConnected(false);
 
-			it("edit and restore of a removed tree over another two edits to the removed tree", () => {
-				const provider = new TestTreeProviderLite(2);
-				const content = {
-					schema,
-					allowedSchemaModifications: AllowedUpdateType.None,
-					initialTree: [["a"]],
-				};
-				const resubmitTree = provider.trees[0].schematizeInternal(content);
-				const otherTree = provider.trees[1].schematizeInternal(content);
-				provider.processMessages();
+					assert.equal(s2.revert(), RevertibleResult.Success);
+					assert.equal(s1.revert(), RevertibleResult.Success);
+					submitter.assertOuterListEquals([]);
+					submitter.assertInnerListEquals(["a", "r"]);
 
-				const otherUndos = makeTwoEdits(otherTree);
-				const resubmitUndos = editTreeAndRemove(resubmitTree);
+					provider.processMessages();
 
-				provider.processMessages();
+					if (scenario === "restore and edit") {
+						assert.equal(rRemove.revert(), RevertibleResult.Success);
+						assert.equal(rEdit.revert(), RevertibleResult.Success);
+					} else {
+						assert.equal(rEdit.revert(), RevertibleResult.Success);
+						assert.equal(rRemove.revert(), RevertibleResult.Success);
+					}
+					resubmitter.assertOuterListEquals([["a", "s1", "s2"]]);
 
-				assert.deepEqual([...resubmitTree.flexTree], []);
-				assert.deepEqual([...otherTree.flexTree], []);
+					resubmitter.setConnected(true);
+					provider.processMessages();
 
-				performResubmitTest(provider, otherTree, resubmitTree, otherUndos, resubmitUndos);
-			});
+					const finalState = [["a"]];
+					submitter.assertOuterListEquals(finalState);
+					resubmitter.assertOuterListEquals(finalState);
+				});
+			}
 
-			it("two edits to a removed tree over the restore and edit of the removed tree", () => {
-				const provider = new TestTreeProviderLite(2);
-				const content = {
-					schema,
-					allowedSchemaModifications: AllowedUpdateType.None,
-					initialTree: [["a"]],
-				};
-				const resubmitTree = provider.trees[0].schematizeInternal(content);
-				const otherTree = provider.trees[1].schematizeInternal(content);
-				provider.processMessages();
+			for (const scenario of ["restore and edit", "edit and restore"] as const) {
+				it(`two edits to the removed tree over ${scenario} to the removed tree`, () => {
+					const { provider, submitter, resubmitter } = setupResubmitTest();
 
-				const otherUndos = editTreeAndRemove(otherTree);
-				const resubmitUndos = makeTwoEdits(resubmitTree);
+					const r1 = undoableInsertInInnerList(resubmitter, "r1");
+					const r2 = undoableInsertInInnerList(resubmitter, "r2");
+					const sEdit = undoableInsertInInnerList(submitter, "s");
+					const sRemove = undoableRemoveOfOuterList(submitter);
 
-				provider.processMessages();
+					provider.processMessages();
 
-				assert.deepEqual([...resubmitTree.flexTree], []);
-				assert.deepEqual([...otherTree.flexTree], []);
+					submitter.assertOuterListEquals([]);
+					resubmitter.assertOuterListEquals([]);
+					const initialState = ["a", "s", "r1", "r2"];
+					submitter.assertInnerListEquals(initialState);
+					resubmitter.assertInnerListEquals(initialState);
 
-				performResubmitTest(
-					provider,
-					otherTree,
-					resubmitTree,
-					otherUndos,
-					resubmitUndos,
-					true,
-				);
-			});
+					resubmitter.setConnected(false);
 
-			it("two edits to a removed tree over the edit and restore of the removed tree", () => {
-				const provider = new TestTreeProviderLite(2);
-				const content = {
-					schema,
-					allowedSchemaModifications: AllowedUpdateType.None,
-					initialTree: [["a"]],
-				};
-				const resubmitTree = provider.trees[0].schematizeInternal(content);
-				const otherTree = provider.trees[1].schematizeInternal(content);
-				provider.processMessages();
+					if (scenario === "restore and edit") {
+						assert.equal(sRemove.revert(), RevertibleResult.Success);
+						assert.equal(sEdit.revert(), RevertibleResult.Success);
+					} else {
+						assert.equal(sEdit.revert(), RevertibleResult.Success);
+						assert.equal(sRemove.revert(), RevertibleResult.Success);
+					}
+					submitter.assertOuterListEquals([["a", "r1", "r2"]]);
 
-				const otherUndos = editTreeAndRemove(otherTree);
-				const resubmitUndos = makeTwoEdits(resubmitTree);
+					provider.processMessages();
 
-				provider.processMessages();
+					assert.equal(r2.revert(), RevertibleResult.Success);
+					assert.equal(r1.revert(), RevertibleResult.Success);
+					resubmitter.assertOuterListEquals([]);
+					resubmitter.assertInnerListEquals(["a", "s"]);
 
-				assert.deepEqual([...resubmitTree.flexTree], []);
-				assert.deepEqual([...otherTree.flexTree], []);
+					resubmitter.setConnected(true);
+					provider.processMessages();
 
-				performResubmitTest(provider, otherTree, resubmitTree, otherUndos, resubmitUndos);
-			});
+					const finalState = [["a"]];
+					submitter.assertOuterListEquals(finalState);
+					resubmitter.assertOuterListEquals(finalState);
+				});
+			}
 
 			it("the restore of a tree edited on a branch", () => {
-				const provider = new TestTreeProviderLite(2);
-				const content = {
-					schema,
-					allowedSchemaModifications: AllowedUpdateType.None,
-					initialTree: [["a"]],
-				};
-				const resubmitTree = provider.trees[0].schematizeInternal(content);
-				const { undoStack, unsubscribe } = createTestUndoRedoStacks(
-					resubmitTree.checkout.events,
-				);
-				const otherTree = provider.trees[1].schematizeInternal(content);
+				const { provider, submitter, resubmitter } = setupResubmitTest();
+
+				resubmitter.setConnected(false);
+
+				// This is the edit that will be rebased over during the re-submit phase
+				undoableInsertInInnerList(submitter, "s");
 				provider.processMessages();
 
-				const resubmitTreeOuterList = resubmitTree.flexTree;
-				const otherTreeOuterList = otherTree.flexTree;
-
 				// fork the tree
-				const branch = resubmitTree.fork();
-
-				// disconnect the resubmit tree
-				provider.trees[0].setConnected(false);
-
-				// remove the tree on the original tree
-				resubmitTree.flexTree.removeAt(0);
+				const branch = resubmitter.view.fork();
 
 				// edit the removed tree on the fork
 				const outerList = branch.flexTree;
 				const innerList = (outerList.at(0) ?? assert.fail()).content;
-				innerList.insertAtEnd("b");
+				innerList.insertAtEnd("f");
 
-				resubmitTree.checkout.merge(branch.checkout);
+				const rRemove = undoableRemoveOfOuterList(resubmitter);
+				resubmitter.view.checkout.merge(branch.checkout);
+				resubmitter.assertOuterListEquals([]);
+				resubmitter.assertInnerListEquals(["a", "f"]);
 
-				undoStack[0].revert();
-				const otherTreeRoot = otherTreeOuterList.at(0);
-				if (otherTreeRoot !== undefined) {
-					assert.notDeepEqual([...otherTreeRoot.content], ["a", "b"]);
-				}
+				assert.equal(rRemove.revert(), RevertibleResult.Success);
+				resubmitter.assertOuterListEquals([["a", "f"]]);
 
-				provider.trees[0].setConnected(true);
+				resubmitter.setConnected(true);
 				provider.processMessages();
 
-				assert.deepEqual(
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					[...resubmitTreeOuterList.at(0)!.content],
-					["a", "b"],
-				);
-				assert.deepEqual(
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					[...otherTreeOuterList.at(0)!.content],
-					["a", "b"],
-				);
-
-				unsubscribe();
+				const finalState = [["a", "f", "s"]];
+				resubmitter.assertOuterListEquals(finalState);
+				submitter.assertOuterListEquals(finalState);
 			});
 		});
 	});

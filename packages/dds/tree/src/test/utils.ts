@@ -370,9 +370,11 @@ export class TestTreeProvider {
 	}
 }
 
-type SharedTreeWithConnectionStateSetter = SharedTree & {
+export interface ConnectionSetter {
 	readonly setConnected: (connectionState: boolean) => void;
-};
+}
+
+export type SharedTreeWithConnectionStateSetter = SharedTree & ConnectionSetter;
 
 /**
  * A test helper class that creates one or more SharedTrees connected to mock services.
