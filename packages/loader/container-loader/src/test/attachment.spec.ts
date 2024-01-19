@@ -109,11 +109,7 @@ describe("runRetriableAttachProcess", () => {
 			});
 
 			assert.strictEqual(attachmentData?.state, AttachState.Attached, "should be attached");
-			assert.strictEqual(
-				attachmentData.baseSnapshotAndBlobs,
-				undefined,
-				"should not have baseSnapshotAndBlobs",
-			);
+			assert.strictEqual(attachmentData.snapshot, undefined, "should not have snapshot");
 		});
 
 		it("From DetachedDefaultData with offline and without blobs", async () => {
@@ -137,11 +133,7 @@ describe("runRetriableAttachProcess", () => {
 			});
 
 			assert.strictEqual(attachmentData?.state, AttachState.Attached, "should be attached");
-			assert.notStrictEqual(
-				attachmentData.baseSnapshotAndBlobs,
-				undefined,
-				"should  have baseSnapshotAndBlobs",
-			);
+			assert.notStrictEqual(attachmentData.snapshot, undefined, "should  have snapshot");
 		});
 
 		it("From DetachedDefaultData with blobs and without offline", async () => {
@@ -187,11 +179,7 @@ describe("runRetriableAttachProcess", () => {
 			);
 
 			assert.strictEqual(attachmentData?.state, AttachState.Attached, "should be attached");
-			assert.strictEqual(
-				attachmentData.baseSnapshotAndBlobs,
-				undefined,
-				"should not have baseSnapshotAndBlobs",
-			);
+			assert.strictEqual(attachmentData.snapshot, undefined, "should not have snapshot");
 		});
 
 		it("From DetachedDefaultData with zero blobs and without offline", async () => {
@@ -216,11 +204,7 @@ describe("runRetriableAttachProcess", () => {
 			});
 
 			assert.strictEqual(attachmentData?.state, AttachState.Attached, "should be attached");
-			assert.strictEqual(
-				attachmentData.baseSnapshotAndBlobs,
-				undefined,
-				"should not have baseSnapshotAndBlobs",
-			);
+			assert.strictEqual(attachmentData.snapshot, undefined, "should not have snapshot");
 		});
 	});
 
@@ -458,11 +442,7 @@ describe("runRetriableAttachProcess", () => {
 			);
 
 			assert.strictEqual(attachmentData?.state, AttachState.Attached, "should be attached");
-			assert.strictEqual(
-				attachmentData.baseSnapshotAndBlobs,
-				undefined,
-				"should not have baseSnapshotAndBlobs",
-			);
+			assert.strictEqual(attachmentData.snapshot, undefined, "should not have snapshot");
 		});
 
 		it("From AttachingDataWithBlobs", async () => {
@@ -486,11 +466,7 @@ describe("runRetriableAttachProcess", () => {
 			);
 
 			assert.strictEqual(attachmentData?.state, AttachState.Attached, "should be attached");
-			assert.notStrictEqual(
-				attachmentData.baseSnapshotAndBlobs,
-				undefined,
-				"should  have baseSnapshotAndBlobs",
-			);
+			assert.notStrictEqual(attachmentData.snapshot, undefined, "should  have snapshot");
 		});
 
 		it("From AttachingDataWithoutBlobs", async () => {
@@ -513,11 +489,7 @@ describe("runRetriableAttachProcess", () => {
 			);
 
 			assert.strictEqual(attachmentData?.state, AttachState.Attached, "should be attached");
-			assert.notStrictEqual(
-				attachmentData.baseSnapshotAndBlobs,
-				undefined,
-				"should  have baseSnapshotAndBlobs",
-			);
+			assert.notStrictEqual(attachmentData.snapshot, undefined, "should  have snapshot");
 		});
 	});
 });
