@@ -1276,7 +1276,8 @@ export class Container
 						attachmentData,
 					) => {
 						const previousState = this.attachmentData.state;
-						const { state } = (this.attachmentData = attachmentData);
+						this.attachmentData = attachmentData;
+						const state = this.attachmentData.state;
 						if (state !== previousState && state !== AttachState.Detached) {
 							try {
 								this.runtime.setAttachState(state);
