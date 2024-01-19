@@ -200,6 +200,7 @@ export class DataStores implements IDisposable {
 
 		this.dataStoresSinceLastGC.push(attachMessage.id);
 
+		//* TODO: Be sure to notify GC in this case
 		// The local object has already been attached
 		if (local) {
 			assert(

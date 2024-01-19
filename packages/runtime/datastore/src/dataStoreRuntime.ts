@@ -617,6 +617,7 @@ export class FluidDataStoreRuntime
 					// If a non-local operation then go and create the object
 					// Otherwise mark it as officially attached.
 					if (local) {
+						//* TODO: Be sure to notify GC in this case
 						assert(
 							this.pendingAttach.delete(id),
 							0x17c /* "Unexpected attach (local) channel OP" */,
@@ -875,9 +876,10 @@ export class FluidDataStoreRuntime
 		}
 
 		const attachSummary = summaryBuilder.getSummaryTree();
-		const gcData = gcDataBuilder.getGCData();
 
 		// We need to include the GC Data so remote clients can learn of this DataStore's outbound routes
+		this.updateGCNodes(gcDataBuilder);
+		const gcData = gcDataBuilder.getGCData();
 		addBlobToSummary(attachSummary, gcDataBlobKey, JSON.stringify(gcData));
 
 		return attachSummary;

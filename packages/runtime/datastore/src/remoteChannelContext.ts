@@ -94,6 +94,8 @@ export class RemoteChannelContext implements IChannelContext {
 				this.id,
 			);
 
+			//* TODO: Read from snapshot instead (like in DataStoreRuntime)
+
 			//* TODO: Properly plumb this bit from ContainerRuntime
 			const gcEnabled = true;
 

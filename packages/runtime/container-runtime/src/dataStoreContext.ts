@@ -438,6 +438,32 @@ export abstract class FluidDataStoreContext
 		return { factory, registry };
 	}
 
+	private async getGCData_prototype(
+		strategy: "fromSnapshot" | "fromChannel",
+		channel: IFluidDataStoreChannel,
+		snapshot: ISnapshotTree | undefined,
+	): Promise<IGarbageCollectionData> {
+		if (strategy === "fromChannel") {
+			return channel.getGCData();
+		}
+
+		if (snapshot === undefined) {
+			return { gcNodes: {} };
+		}
+
+		//* Define this in some single place
+		const gcDataBlobKey = ".gcdata";
+
+		const gcDataBlobId = snapshot.blobs[gcDataBlobKey];
+		if (gcDataBlobId === undefined) {
+			return { gcNodes: {} };
+		}
+		const gcData = await readAndParse<IGarbageCollectionData>(this.storage, gcDataBlobId);
+		assert(gcData !== undefined, "GC Data blob missing from snapshot");
+
+		return gcData;
+	}
+
 	private async realizeCore(existing: boolean): Promise<void> {
 		const details = await this.getInitialSnapshotDetails();
 		// Base snapshot is the baseline where pending ops are applied to.
@@ -464,7 +490,26 @@ export abstract class FluidDataStoreContext
 		// Inform GC of all outbound references in the newly-created channel.
 		// Do this before bindRuntime since that will process all enqueued ops.
 		if (this.loadedFromAttachOp && gcEnabled) {
-			const gcData = await channel.getGCData();
+			const bothGCData = {
+				fromSnapshot: await this.getGCData_prototype(
+					"fromSnapshot",
+					channel,
+					details.snapshot,
+				),
+				fromChannel: await this.getGCData_prototype(
+					"fromChannel",
+					channel,
+					details.snapshot,
+				),
+			};
+			assert(
+				JSON.stringify(bothGCData.fromSnapshot) === JSON.stringify(bothGCData.fromChannel),
+				"GC data mismatch",
+			);
+
+			//* Switch the strategy to demo the different ways of getting GC data
+			const strategy: "fromSnapshot" | "fromChannel" = "fromSnapshot";
+			const gcData = bothGCData[strategy];
 			for (const [nodeId, outboundRoutes] of Object.entries(gcData.gcNodes)) {
 				//* Todo: update addedGCOutboundReference to take strings not handles to avoid these fake handles
 				const fromHandle = {
