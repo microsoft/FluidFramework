@@ -3,13 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IsoBuffer, instanceOfIPartialSnapshotWithContents } from "@fluid-internal/client-utils";
+import { IsoBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
-import {
-	IDocumentStorageService,
-	IPartialSnapshotWithContents,
-	ISummaryContext,
-} from "@fluidframework/driver-definitions";
+import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import {
 	ISnapshotTree,
 	ISummaryBlob,
@@ -409,16 +405,12 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		version?: IVersion | undefined,
 		scenarioName?: string | undefined,
 		// eslint-disable-next-line @rushstack/no-new-null
-	): Promise<ISnapshotTree | IPartialSnapshotWithContents | null> {
+	): Promise<ISnapshotTree | null> {
 		const snapshotTree = await super.getSnapshotTree(version, scenarioName);
 		this._isCompressionEnabled =
 			snapshotTree !== undefined &&
 			snapshotTree !== null &&
-			DocumentStorageServiceCompressionAdapter.hasCompressionMarkup(
-				instanceOfIPartialSnapshotWithContents(snapshotTree)
-					? snapshotTree.snapshotTree
-					: snapshotTree,
-			);
+			DocumentStorageServiceCompressionAdapter.hasCompressionMarkup(snapshotTree);
 		return snapshotTree;
 	}
 

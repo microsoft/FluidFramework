@@ -2,12 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import {
-	IPartialSnapshotWithContents,
-	LoaderCachingPolicy,
-} from "@fluidframework/driver-definitions";
+import { LoaderCachingPolicy } from "@fluidframework/driver-definitions";
 import { ISnapshotTree, IVersion } from "@fluidframework/protocol-definitions";
-import { instanceOfIPartialSnapshotWithContents } from "@fluid-internal/client-utils";
 import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
 import { canRetryOnError } from "./network";
 
@@ -26,19 +22,15 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 		}
 	}
 
-	public async getSnapshotTree(
-		version?: IVersion,
-	): Promise<ISnapshotTree | IPartialSnapshotWithContents | null> {
+	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
 		const p = this.internalStorageService.getSnapshotTree(version);
 		if (this.prefetchEnabled) {
 			// We don't care if the prefetch succeeds
-			void p.then((tree: ISnapshotTree | IPartialSnapshotWithContents | null | undefined) => {
+			void p.then((tree: ISnapshotTree | null | undefined) => {
 				if (tree === null || tree === undefined) {
 					return;
 				}
-				this.prefetchTree(
-					instanceOfIPartialSnapshotWithContents(tree) ? tree.snapshotTree : tree,
-				);
+				this.prefetchTree(tree);
 			});
 		}
 		return p;

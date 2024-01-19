@@ -162,7 +162,7 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
 		version?: IVersion,
 		scenarioName?: string,
 		// eslint-disable-next-line @rushstack/no-new-null
-	): Promise<ISnapshotTree | IPartialSnapshotWithContents | null>;
+	): Promise<ISnapshotTree | null>;
 
 	/**
 	 * Retrieves all versions of the document starting at the specified versionId - or null if from the head
@@ -455,40 +455,19 @@ export enum FetchSource {
 }
 
 /**
- * This represents the snapshot tree structure with group IDs. It could be a partial snapshot tree
- * where the missing tree structure inside another tree could be represented with a groupId and the
- * actual tree structure could be missing. This group Ids could be then be used to fetch the actual
- * tree structure from the storage service.
- * @alpha
- */
-export interface ISnapshotTree2 extends ISnapshotTree {
-	/**
-	 * Represents the group to which the children belongs to.
-	 */
-	groupID?: string;
-
-	trees: { [path: string]: ISnapshotTree2 };
-}
-
-/**
  * This represents the complete snapshot along with contents. The snapshotTree in this structure
- * could be a partial snapshot tree consisting of group Ids for the missing children of the snapshotTree.
+ * could be a partial snapshot tree consisting of group Ids for the individual snapshotTrees.
  * @alpha
  */
-export interface IPartialSnapshotWithContents {
-	snapshotTree: ISnapshotTree2;
+export interface IPartialSnapshotWithContents extends ISnapshotTree {
 	blobsContents: Map<string, ArrayBuffer>;
+
 	ops: ISequencedDocumentMessage[];
+
+	isPartialSnapshot: true;
 
 	/**
 	 * Sequence number of the snapshot
 	 */
 	sequenceNumber: number | undefined;
-
-	/**
-	 * Sequence number for the latest op/snapshot for the file.
-	 */
-	latestSequenceNumber: number | undefined;
-
-	couldBePartialSnapshot: true;
 }

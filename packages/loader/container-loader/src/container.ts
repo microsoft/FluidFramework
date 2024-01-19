@@ -5,11 +5,7 @@
 
 import { v4 as uuid } from "uuid";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import {
-	TypedEventEmitter,
-	instanceOfIPartialSnapshotWithContents,
-	performance,
-} from "@fluid-internal/client-utils";
+import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
 import {
 	IEvent,
 	ITelemetryProperties,
@@ -44,7 +40,6 @@ import {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IDocumentStorageService,
-	IPartialSnapshotWithContents,
 	IResolvedUrl,
 	IThrottlingWarning,
 	IUrlResolver,
@@ -56,6 +51,7 @@ import {
 	runWithRetry,
 	isCombinedAppAndProtocolSummary,
 	MessageType2,
+	extractISnapshotTreeFromPartialSnapshot,
 } from "@fluidframework/driver-utils";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
@@ -1183,7 +1179,7 @@ export class Container
 				const pendingRuntimeState = await this.runtime.getPendingLocalState(props);
 				const pendingState: IPendingContainerState = {
 					pendingRuntimeState,
-					baseSnapshot: this.baseSnapshot,
+					baseSnapshot: extractISnapshotTreeFromPartialSnapshot(this.baseSnapshot),
 					snapshotBlobs: this.baseSnapshotBlobs,
 					savedOps: this.savedOps,
 					url: this.resolvedUrl.url,
@@ -1635,14 +1631,10 @@ export class Container
 		} else {
 			assert(snapshot !== undefined, 0x237 /* "Snapshot should exist" */);
 			if (this.offlineLoadEnabled) {
-				this.baseSnapshot = instanceOfIPartialSnapshotWithContents(snapshot)
-					? snapshot.snapshotTree
-					: snapshot;
+				this.baseSnapshot = snapshot;
 				// Save contents of snapshot now, otherwise closeAndGetPendingLocalState() must be async
 				this.baseSnapshotBlobs = await getBlobContentsFromTree(
-					instanceOfIPartialSnapshotWithContents(snapshot)
-						? snapshot.snapshotTree
-						: snapshot,
+					snapshot,
 					this.storageAdapter,
 				);
 			}
@@ -1650,7 +1642,7 @@ export class Container
 
 		const attributes: IDocumentAttributes = await this.getDocumentAttributes(
 			this.storageAdapter,
-			instanceOfIPartialSnapshotWithContents(snapshot) ? snapshot.snapshotTree : snapshot,
+			snapshot,
 		);
 
 		// If we saved ops, we will replay them and don't need DeltaManager to fetch them
@@ -1737,11 +1729,7 @@ export class Container
 
 		// ...load in the existing quorum
 		// Initialize the protocol handler
-		await this.initializeProtocolStateFromSnapshot(
-			attributes,
-			this.storageAdapter,
-			instanceOfIPartialSnapshotWithContents(snapshot) ? snapshot.snapshotTree : snapshot,
-		);
+		await this.initializeProtocolStateFromSnapshot(attributes, this.storageAdapter, snapshot);
 
 		timings.phase3 = performance.now();
 		const codeDetails = this.getCodeDetailsFromQuorum();
@@ -2425,7 +2413,7 @@ export class Container
 	 */
 	private async fetchSnapshotTree(
 		specifiedVersion: string | undefined,
-	): Promise<{ snapshot?: ISnapshotTree | IPartialSnapshotWithContents; versionId?: string }> {
+	): Promise<{ snapshot?: ISnapshotTree; versionId?: string }> {
 		const version = await this.getVersion(specifiedVersion ?? null);
 
 		if (version === undefined && specifiedVersion !== undefined) {
@@ -2449,7 +2437,7 @@ export class Container
 
 	private async instantiateRuntime(
 		codeDetails: IFluidCodeDetails,
-		snapshot: ISnapshotTree | IPartialSnapshotWithContents | undefined,
+		snapshot: ISnapshotTree | undefined,
 		pendingLocalState?: unknown,
 	) {
 		assert(this._runtime?.disposed !== false, 0x0dd /* "Existing runtime not disposed" */);

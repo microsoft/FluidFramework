@@ -7352,7 +7352,6 @@ importers:
   packages/drivers/debugger:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
-      '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.29.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.29.0
@@ -7373,7 +7372,6 @@ importers:
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
-      '@fluid-internal/client-utils': link:../../common/client-utils
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils

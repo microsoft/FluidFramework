@@ -20,10 +20,7 @@ import {
 import { addSummarizeResultToSummary, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
-import {
-	bufferToString,
-	instanceOfIPartialSnapshotWithContents,
-} from "@fluid-internal/client-utils";
+import { bufferToString } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	createChildLogger,
@@ -138,10 +135,7 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 				baseSnapshot?: ISnapshotTree;
 			};
 			const baseSnapshot: ISnapshotTree | undefined =
-				pendingRuntimeState?.baseSnapshot ??
-				(instanceOfIPartialSnapshotWithContents(context.baseSnapshot)
-					? context.baseSnapshot.snapshotTree
-					: context.baseSnapshot);
+				pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
 
 			const { audience, deltaManager } = context;
 			assert(

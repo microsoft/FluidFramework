@@ -4,7 +4,6 @@
  */
 
 import { assert, Deferred } from "@fluidframework/core-utils";
-import { instanceOfIPartialSnapshotWithContents } from "@fluid-internal/client-utils";
 import {
 	IDocumentService,
 	IDocumentStorageService,
@@ -103,10 +102,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
 		}
 
 		const tree = await this.documentStorageService.getSnapshotTree(version);
-		const seq = await DebugReplayController.seqFromTree(
-			this.documentStorageService,
-			instanceOfIPartialSnapshotWithContents(tree) ? tree.snapshotTree : tree,
-		);
+		const seq = await DebugReplayController.seqFromTree(this.documentStorageService, tree);
 		this.resolveStorage(seq, new SnapshotStorage(this.documentStorageService, tree), version);
 	}
 
@@ -210,10 +206,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
 		await prevRequest;
 
 		const treeV = await documentStorageService.getSnapshotTree(version);
-		const seqV = await DebugReplayController.seqFromTree(
-			documentStorageService,
-			instanceOfIPartialSnapshotWithContents(treeV) ? treeV.snapshotTree : treeV,
-		);
+		const seqV = await DebugReplayController.seqFromTree(documentStorageService, treeV);
 
 		if (!this.isSelectionMade()) {
 			this.versionCount--;

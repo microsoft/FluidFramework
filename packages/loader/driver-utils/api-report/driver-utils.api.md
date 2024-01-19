@@ -141,7 +141,7 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
     // (undocumented)
     downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
     // (undocumented)
-    getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | IPartialSnapshotWithContents | null>;
+    getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
     // (undocumented)
     getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion[]>;
     // (undocumented)
@@ -164,6 +164,9 @@ export type DriverErrorTelemetryProps = ITelemetryProperties & {
 
 // @internal (undocumented)
 export const emptyMessageStream: IStream<ISequencedDocumentMessage[]>;
+
+// @internal
+export function extractISnapshotTreeFromPartialSnapshot(snapshot: ISnapshotTree): ISnapshotTree;
 
 // @internal
 export class FluidInvalidSchemaError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
@@ -222,6 +225,9 @@ export interface IProgress {
 
 // @internal
 export function isCombinedAppAndProtocolSummary(summary: ISummaryTree | undefined, ...optionalRootTrees: string[]): summary is CombinedAppAndProtocolSummary;
+
+// @internal
+export function isInstanceOfIPartialSnapshotWithContents(obj: ISnapshotTree): obj is IPartialSnapshotWithContents;
 
 // @internal
 export function isOnline(): OnlineStatus;
@@ -295,7 +301,7 @@ export class ParallelRequests<T> {
 // @internal (undocumented)
 export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy {
     // (undocumented)
-    getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | IPartialSnapshotWithContents | null>;
+    getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;
     // (undocumented)
     get policies(): {
         caching: LoaderCachingPolicy;

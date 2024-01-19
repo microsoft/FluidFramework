@@ -100,9 +100,6 @@
 				"forwardCompat": false,
 				"backCompat": false
 			},
-			"InterfaceDeclaration_IContainerContext": {
-				"backCompat": false
-			},
 			"InterfaceDeclaration_IContainer": {
 				"forwardCompat": false
 			}

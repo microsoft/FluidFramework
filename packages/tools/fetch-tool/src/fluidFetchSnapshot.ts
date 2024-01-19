@@ -6,11 +6,7 @@
 import fs from "fs";
 import util from "util";
 
-import {
-	bufferToString,
-	instanceOfIPartialSnapshotWithContents,
-	stringToBuffer,
-} from "@fluid-internal/client-utils";
+import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { IDocumentService, IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ISnapshotTree, IVersion } from "@fluidframework/protocol-definitions";
 
@@ -260,10 +256,7 @@ async function fetchBlobsFromVersion(storage: IDocumentStorageService, version: 
 	if (!tree) {
 		throw new Error("Failed to load snapshot tree");
 	}
-	return fetchBlobsFromSnapshotTree(
-		storage,
-		instanceOfIPartialSnapshotWithContents(tree) ? tree.snapshotTree : tree,
-	);
+	return fetchBlobsFromSnapshotTree(storage, tree);
 }
 
 async function reportErrors<T>(message: string, res: Promise<T>) {

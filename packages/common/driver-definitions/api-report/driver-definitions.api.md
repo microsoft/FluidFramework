@@ -182,7 +182,7 @@ export interface IDocumentServicePolicies {
 export interface IDocumentStorageService extends Partial<IDisposable> {
     createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
     downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
-    getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | IPartialSnapshotWithContents | null>;
+    getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
     getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion[]>;
     readonly policies?: IDocumentStorageServicePolicies;
     readBlob(id: string): Promise<ArrayBufferLike>;
@@ -239,17 +239,14 @@ export interface ILocationRedirectionError extends IDriverErrorBase {
 }
 
 // @alpha
-export interface IPartialSnapshotWithContents {
+export interface IPartialSnapshotWithContents extends ISnapshotTree {
     // (undocumented)
     blobsContents: Map<string, ArrayBuffer>;
     // (undocumented)
-    couldBePartialSnapshot: true;
-    latestSequenceNumber: number | undefined;
+    isPartialSnapshot: true;
     // (undocumented)
     ops: ISequencedDocumentMessage[];
     sequenceNumber: number | undefined;
-    // (undocumented)
-    snapshotTree: ISnapshotTree2;
 }
 
 // @alpha (undocumented)
@@ -267,15 +264,6 @@ export interface IResolvedUrl {
     type: "fluid";
     // (undocumented)
     url: string;
-}
-
-// @alpha
-export interface ISnapshotTree2 extends ISnapshotTree {
-    groupID?: string;
-    // (undocumented)
-    trees: {
-        [path: string]: ISnapshotTree2;
-    };
 }
 
 // @alpha

@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
-import { instanceOfIPartialSnapshotWithContents } from "@fluid-internal/client-utils";
 import {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
@@ -191,13 +190,10 @@ describeCompat(
 			): Promise<ISnapshotTree | null> => {
 				getSnapshotTreeFunc = getSnapshotTreeFunc.bind(containerRuntime.storage);
 				const snapshot = await getSnapshotTreeFunc(version, scenarioName);
-				const snapshotTree = instanceOfIPartialSnapshotWithContents(snapshot)
-					? snapshot.snapshotTree
-					: snapshot;
-				assert(snapshotTree !== null, "getSnapshotTree should did not return a tree");
-				fetchSnapshotRefSeq = await seqFromTree(snapshotTree, readAndParseBlob);
+				assert(snapshot !== null, "getSnapshotTree should did not return a tree");
+				fetchSnapshotRefSeq = await seqFromTree(snapshot, readAndParseBlob);
 				fetchCount++;
-				return snapshotTree;
+				return snapshot;
 			};
 			containerRuntime.storage.getSnapshotTree = getSnapshotTreeOverride;
 

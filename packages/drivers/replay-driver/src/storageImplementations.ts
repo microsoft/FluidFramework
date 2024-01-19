@@ -12,7 +12,6 @@ import {
 	IDocumentServiceEvents,
 	IDocumentServiceFactory,
 	IDocumentStorageService,
-	IPartialSnapshotWithContents,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
@@ -115,7 +114,7 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
 
 	constructor(
 		protected readonly storage: IDocumentStorageService,
-		protected readonly docTree: ISnapshotTree | IPartialSnapshotWithContents | null,
+		protected readonly docTree: ISnapshotTree | null,
 	) {
 		super();
 		assert(!!this.docTree, 0x0b0 /* "Missing document snapshot tree!" */);
@@ -131,9 +130,7 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
 		return this.storage.getVersions(versionId, count);
 	}
 
-	public async getSnapshotTree(
-		versionRequested?: IVersion,
-	): Promise<ISnapshotTree | IPartialSnapshotWithContents | null> {
+	public async getSnapshotTree(versionRequested?: IVersion): Promise<ISnapshotTree | null> {
 		if (versionRequested && versionRequested.id !== "latest") {
 			return this.storage.getSnapshotTree(versionRequested);
 		}

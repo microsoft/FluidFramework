@@ -10,7 +10,6 @@ import { IClient } from '@fluidframework/protocol-definitions';
 import { IDocumentService } from '@fluidframework/driver-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
-import { IPartialSnapshotWithContents } from '@fluidframework/driver-definitions';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryContext } from '@fluidframework/driver-definitions';
@@ -75,7 +74,7 @@ export abstract class ReadDocumentStorageServiceBase implements IDocumentStorage
     // (undocumented)
     downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree>;
     // (undocumented)
-    abstract getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | IPartialSnapshotWithContents | null>;
+    abstract getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null>;
     // (undocumented)
     abstract getVersions(versionId: string | null, count: number): Promise<api.IVersion[]>;
     // (undocumented)
@@ -121,13 +120,13 @@ export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
 
 // @internal (undocumented)
 export class SnapshotStorage extends ReadDocumentStorageServiceBase {
-    constructor(storage: IDocumentStorageService, docTree: ISnapshotTree | IPartialSnapshotWithContents | null);
+    constructor(storage: IDocumentStorageService, docTree: ISnapshotTree | null);
     // (undocumented)
     protected docId?: string;
     // (undocumented)
-    protected readonly docTree: ISnapshotTree | IPartialSnapshotWithContents | null;
+    protected readonly docTree: ISnapshotTree | null;
     // (undocumented)
-    getSnapshotTree(versionRequested?: IVersion): Promise<ISnapshotTree | IPartialSnapshotWithContents | null>;
+    getSnapshotTree(versionRequested?: IVersion): Promise<ISnapshotTree | null>;
     // (undocumented)
     getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
     // (undocumented)

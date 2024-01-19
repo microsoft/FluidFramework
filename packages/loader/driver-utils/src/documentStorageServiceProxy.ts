@@ -7,7 +7,6 @@ import {
 	FetchSource,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
-	IPartialSnapshotWithContents,
 	ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import {
@@ -41,7 +40,7 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
 	public async getSnapshotTree(
 		version?: IVersion,
 		scenarioName?: string,
-	): Promise<ISnapshotTree | IPartialSnapshotWithContents | null> {
+	): Promise<ISnapshotTree | null> {
 		return this.internalStorageService.getSnapshotTree(version, scenarioName);
 	}
 

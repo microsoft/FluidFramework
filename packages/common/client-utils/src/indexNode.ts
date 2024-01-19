@@ -14,4 +14,3 @@ export { EventForwarder } from "./eventForwarder";
 export { IsomorphicPerformance } from "./performanceIsomorphic";
 export { ITraceEvent, Trace } from "./trace";
 export { EventEmitterEventType, TypedEventEmitter, TypedEventTransform } from "./typedEventEmitter";
-export { instanceOfIPartialSnapshotWithContents, instanceOfISnapshotTree } from "./storageUtils";

@@ -40,8 +40,8 @@ import {
 	fetchHelper,
 	getWithRetryForTokenRefresh,
 	getWithRetryForTokenRefreshRepeat,
-	instanceOfISnapshotContents,
 	IOdspResponse,
+	isFullSnapshot,
 	measure,
 	measureP,
 } from "./odspUtils";
@@ -538,17 +538,20 @@ function getFormBodyAndHeaders(
 }
 
 export function evalBlobsAndTrees(snapshot: ISnapshotContents | IPartialSnapshotWithContents) {
-	const trees = countTreesInSnapshotTree(snapshot.snapshotTree);
-	const numBlobs = instanceOfISnapshotContents(snapshot)
-		? snapshot.blobs.size
-		: snapshot.blobsContents.size;
+	let trees: number;
+	let blobs: Map<string, ArrayBuffer>;
+	if (isFullSnapshot(snapshot)) {
+		trees = countTreesInSnapshotTree(snapshot.snapshotTree);
+		blobs = snapshot.blobs;
+	} else {
+		trees = countTreesInSnapshotTree(snapshot);
+		blobs = snapshot.blobsContents;
+	}
 	let encodedBlobsSize = 0;
-	for (const [_, blobContent] of instanceOfISnapshotContents(snapshot)
-		? snapshot.blobs
-		: snapshot.blobsContents) {
+	for (const [_, blobContent] of blobs) {
 		encodedBlobsSize += blobContent.byteLength;
 	}
-	return { trees, numBlobs, encodedBlobsSize };
+	return { trees, numBlobs: blobs.size, encodedBlobsSize };
 }
 
 export function validateBlobsAndTrees(snapshot: IOdspSnapshot) {

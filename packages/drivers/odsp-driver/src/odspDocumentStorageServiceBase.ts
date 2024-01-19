@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { instanceOfIPartialSnapshotWithContents } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import {
 	IDocumentStorageService,
@@ -14,10 +13,11 @@ import {
 	FetchSource,
 	IPartialSnapshotWithContents,
 } from "@fluidframework/driver-definitions";
+import { isInstanceOfIPartialSnapshotWithContents } from "@fluidframework/driver-utils";
 import * as api from "@fluidframework/protocol-definitions";
 import { IConfigProvider } from "@fluidframework/telemetry-utils";
 import { ISnapshotContents } from "./odspPublicUtils";
-import { instanceOfISnapshotContents } from "./odspUtils";
+import { isFullSnapshot } from "./odspUtils";
 
 const maximumCacheDurationMs: FiveDaysMs = 432000000; // 5 * 24 * 60 * 60 * 1000 = 5 days in ms
 
@@ -137,8 +137,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 			maximumCacheDurationMs: maximumCacheDurationMsInEffect,
 		};
 	}
-	protected readonly commitCache: Map<string, api.ISnapshotTree | IPartialSnapshotWithContents> =
-		new Map();
+	protected readonly commitCache: Map<string, api.ISnapshotTree> = new Map();
 
 	private readonly attributesBlobHandles: Set<string> = new Set();
 
@@ -180,7 +179,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 		version?: api.IVersion,
 		scenarioName?: string,
 		// eslint-disable-next-line @rushstack/no-new-null
-	): Promise<api.ISnapshotTree | IPartialSnapshotWithContents | null> {
+	): Promise<api.ISnapshotTree | null> {
 		let id: string;
 		if (!version?.id) {
 			const versions = await this.getVersions(null, 1, scenarioName);
@@ -194,42 +193,32 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 
 		const snapshotTree = await this.readTree(id, scenarioName);
 		// Remove it once it is read.
-		if (instanceOfIPartialSnapshotWithContents(snapshotTree)) {
+		if (isInstanceOfIPartialSnapshotWithContents(snapshotTree)) {
 			this.commitCache.delete(id);
 		}
 		if (!snapshotTree) {
 			return null;
 		}
 
-		if (instanceOfIPartialSnapshotWithContents(snapshotTree)) {
-			if (snapshotTree.snapshotTree.blobs) {
-				const attributesBlob = snapshotTree.snapshotTree.blobs.attributes;
-				if (attributesBlob) {
-					this.attributesBlobHandles.add(attributesBlob);
-				}
+		if (snapshotTree.blobs) {
+			const attributesBlob = snapshotTree.blobs.attributes;
+			if (attributesBlob) {
+				this.attributesBlobHandles.add(attributesBlob);
 			}
+		}
 
-			const appTree = snapshotTree.snapshotTree.trees[".app"];
-			const protocolTree = snapshotTree.snapshotTree.trees[".protocol"];
+		// When we upload the container snapshot, we upload appTree in ".app" and protocol tree in ".protocol"
+		// So when we request the snapshot we get ".app" as tree and not as commit node as in the case just above.
+		const appTree = snapshotTree.trees[".app"];
+		const protocolTree = snapshotTree.trees[".protocol"];
+
+		if (isInstanceOfIPartialSnapshotWithContents(snapshotTree)) {
 			return {
 				...snapshotTree,
-				snapshotTree: this.combineProtocolAndAppSnapshotTree(appTree, protocolTree),
+				...this.combineProtocolAndAppSnapshotTree(appTree, protocolTree),
 			};
-		} else {
-			if (snapshotTree.blobs) {
-				const attributesBlob = snapshotTree.blobs.attributes;
-				if (attributesBlob) {
-					this.attributesBlobHandles.add(attributesBlob);
-				}
-			}
-
-			// When we upload the container snapshot, we upload appTree in ".app" and protocol tree in ".protocol"
-			// So when we request the snapshot we get ".app" as tree and not as commit node as in the case just above.
-			const appTree = snapshotTree.trees[".app"];
-			const protocolTree = snapshotTree.trees[".protocol"];
-
-			return this.combineProtocolAndAppSnapshotTree(appTree, protocolTree);
 		}
+		return this.combineProtocolAndAppSnapshotTree(appTree, protocolTree);
 	}
 
 	public abstract getVersions(
@@ -260,19 +249,19 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 	private async readTree(
 		id: string,
 		scenarioName?: string,
-	): Promise<api.ISnapshotTree | IPartialSnapshotWithContents | null> {
+	): Promise<api.ISnapshotTree | IPartialSnapshotWithContents> {
 		let tree = this.commitCache.get(id);
 		if (!tree) {
 			tree = await this.fetchTreeFromSnapshot(id, scenarioName);
 		}
 
-		return tree ?? null;
+		return tree;
 	}
 
 	protected abstract fetchTreeFromSnapshot(
 		id: string,
 		scenarioName?: string,
-	): Promise<api.ISnapshotTree | IPartialSnapshotWithContents | undefined>;
+	): Promise<api.ISnapshotTree | IPartialSnapshotWithContents>;
 
 	private combineProtocolAndAppSnapshotTree(
 		hierarchicalAppTree: api.ISnapshotTree,
@@ -298,29 +287,31 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 		cacheOps: boolean = true,
 	): string | undefined {
 		this._snapshotSequenceNumber = odspSnapshotCacheValue.sequenceNumber;
-		const { snapshotTree, ops } = odspSnapshotCacheValue;
-
 		// id should be undefined in case of just ops in snapshot.
 		let id: string | undefined;
-		if (snapshotTree) {
-			id = snapshotTree.id;
-			assert(id !== undefined, 0x221 /* "Root tree should contain the id" */);
-			if (instanceOfISnapshotContents(odspSnapshotCacheValue)) {
-				this.setRootTree(id, snapshotTree);
-			} else {
-				// Since it is first snapshot we need to store it even if it is a partial snapshot.
-				// We will clear it once it is read from the cache.
-				this.setRootTree(id, odspSnapshotCacheValue);
-			}
-		}
+		if (isFullSnapshot(odspSnapshotCacheValue)) {
+			const { snapshotTree, blobs } = odspSnapshotCacheValue;
 
-		// Only cache blobs in case it is full snapshot.
-		if (instanceOfISnapshotContents(odspSnapshotCacheValue) && odspSnapshotCacheValue.blobs) {
-			this.initBlobsCache(odspSnapshotCacheValue.blobs);
+			if (snapshotTree) {
+				id = snapshotTree.id;
+				assert(id !== undefined, 0x221 /* "Root tree should contain the id" */);
+				this.setRootTree(id, snapshotTree);
+			}
+
+			// Only cache blobs in case it is full snapshot.
+			if (blobs) {
+				this.initBlobsCache(blobs);
+			}
+		} else {
+			id = odspSnapshotCacheValue.id;
+			assert(id !== undefined, "Root tree should contain the id for partial snapshot");
+			// Since it is first snapshot we need to store it even if it is a partial snapshot.
+			// We will clear it once it is read from the cache.
+			this.setRootTree(id, odspSnapshotCacheValue);
 		}
 
 		if (cacheOps) {
-			this.ops = ops;
+			this.ops = odspSnapshotCacheValue.ops;
 		}
 		return id;
 	}

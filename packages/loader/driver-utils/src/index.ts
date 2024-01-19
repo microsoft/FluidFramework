@@ -54,3 +54,7 @@ export {
 	SummaryCompressionAlgorithm,
 	blobHeadersBlobName,
 } from "./adapters";
+export {
+	extractISnapshotTreeFromPartialSnapshot,
+	isInstanceOfIPartialSnapshotWithContents,
+} from "./storageUtils";

@@ -48,11 +48,7 @@ import {
 	IPrefetchPartialSnapshotWithContents,
 	IPrefetchSnapshotContents,
 } from "./odspCache";
-import {
-	createCacheSnapshotKey,
-	getWithRetryForTokenRefresh,
-	instanceOfISnapshotContents,
-} from "./odspUtils";
+import { createCacheSnapshotKey, getWithRetryForTokenRefresh, isFullSnapshot } from "./odspUtils";
 import { ISnapshotContents } from "./odspPublicUtils";
 import { EpochTracker } from "./epochTracker";
 import type { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
@@ -730,7 +726,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	protected async fetchTreeFromSnapshot(
 		id: string,
 		scenarioName?: string,
-	): Promise<api.ISnapshotTree | IPartialSnapshotWithContents | undefined> {
+	): Promise<api.ISnapshotTree | IPartialSnapshotWithContents> {
 		return getWithRetryForTokenRefresh(async (options) => {
 			const storageToken = await this.getStorageToken(options, "ReadCommit");
 			const snapshotDownloader = async (
@@ -755,26 +751,28 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				snapshotDownloader,
 			);
 			let treeId = "";
-			if (snapshot.snapshotTree) {
-				assert(
-					snapshot.snapshotTree.id !== undefined,
-					0x222 /* "Root tree should contain the id!!" */,
-				);
-				treeId = snapshot.snapshotTree.id;
-				// Only store if it is not a partial tree.
-				if (instanceOfISnapshotContents(snapshot)) {
+			if (isFullSnapshot(snapshot)) {
+				if (snapshot.snapshotTree) {
+					assert(
+						snapshot.snapshotTree.id !== undefined,
+						0x222 /* "Root tree should contain the id!!" */,
+					);
+					treeId = snapshot.snapshotTree.id;
+					// Only store if it is not a partial tree.
 					this.setRootTree(treeId, snapshot.snapshotTree);
 				}
-			}
-			if (instanceOfISnapshotContents(snapshot)) {
+
 				// Cache blobs only in case it is not a partial snapshot.
 				if (snapshot.blobs) {
 					this.initBlobsCache(snapshot.blobs);
 				}
 				// If the version id doesn't match with the id of the tree, then use the id of first tree which in that case
 				// will be the actual id of tree to be fetched.
-				return this.commitCache.get(id) ?? this.commitCache.get(treeId);
+				const value = this.commitCache.get(id) ?? this.commitCache.get(treeId);
+				assert(value !== undefined, "tree should be present");
+				return value;
 			}
+			// If its a partial snapshot, then we don't need to cache and return it completely.
 			return snapshot;
 		});
 	}

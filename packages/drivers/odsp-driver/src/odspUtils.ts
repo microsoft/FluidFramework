@@ -480,9 +480,8 @@ export function getJoinSessionCacheKey(odspResolvedUrl: IOdspResolvedUrl) {
  * @alpha
  * @param obj - obj whose type needs to be identified.
  */
-export function instanceOfISnapshotContents(
-	// eslint-disable-next-line @rushstack/no-new-null
-	obj: ISnapshotContents | IPartialSnapshotWithContents | null | undefined,
+export function isFullSnapshot(
+	obj: ISnapshotContents | IPartialSnapshotWithContents,
 ): obj is ISnapshotContents {
-	return obj !== undefined && obj !== null && !("couldBePartialSnapshot" in obj);
+	return typeof obj === "object" && !("isPartialSnapshot" in obj);
 }
