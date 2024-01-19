@@ -94,8 +94,11 @@ export class RemoteChannelContext implements IChannelContext {
 				this.id,
 			);
 
+			//* TODO: Properly plumb this bit from ContainerRuntime
+			const gcEnabled = true;
+
 			//* Test case: Node revived via DDS attach op (like Scenarios 6 and 7 in existing tests)
-			if (attachMessageType !== undefined) {
+			if (attachMessageType !== undefined && gcEnabled) {
 				const gcData = channel.getGCData();
 				for (const [nodeId, outboundRoutes] of Object.entries(gcData.gcNodes)) {
 					//* Todo: update addedGCOutboundReferenceFn to take strings not handles to avoid these fake handles

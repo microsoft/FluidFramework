@@ -457,10 +457,13 @@ export abstract class FluidDataStoreContext
 		const channel = await factory.instantiateDataStore(this, existing);
 		assert(channel !== undefined, 0x140 /* "undefined channel on datastore context" */);
 
+		//* TODO: Properly plumb this bit from ContainerRuntime
+		const gcEnabled = (this._containerRuntime as any).garbageCollector.shouldRunGC;
+
 		// The attach op could have added a reference to another object.
 		// Inform GC of all outbound references in the newly-created channel.
 		// Do this before bindRuntime since that will process all enqueued ops.
-		if (this.loadedFromAttachOp) {
+		if (this.loadedFromAttachOp && gcEnabled) {
 			const gcData = await channel.getGCData();
 			for (const [nodeId, outboundRoutes] of Object.entries(gcData.gcNodes)) {
 				//* Todo: update addedGCOutboundReference to take strings not handles to avoid these fake handles
