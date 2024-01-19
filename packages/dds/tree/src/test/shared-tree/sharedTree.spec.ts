@@ -1190,40 +1190,16 @@ describe("SharedTree", () => {
 				return { provider, submitter, resubmitter };
 			}
 
-			it("two edits to the removed tree over another two edits to the removed tree", () => {
-				const { provider, submitter, resubmitter } = setupResubmitTest();
-
-				const r1 = undoableInsertInInnerList(resubmitter, "r1");
-				const r2 = undoableInsertInInnerList(resubmitter, "r2");
-				const s1 = undoableInsertInInnerList(submitter, "s1");
-				const s2 = undoableInsertInInnerList(submitter, "s2");
-
-				provider.processMessages();
-
-				const initialState = [["a", "s1", "s2", "r1", "r2"]];
-				submitter.assertOuterListEquals(initialState);
-				resubmitter.assertOuterListEquals(initialState);
-
-				resubmitter.setConnected(false);
-
-				assert.equal(s2.revert(), RevertibleResult.Success);
-				assert.equal(s1.revert(), RevertibleResult.Success);
-				submitter.assertOuterListEquals([["a", "r1", "r2"]]);
-
-				provider.processMessages();
-
-				assert.equal(r2.revert(), RevertibleResult.Success);
-				assert.equal(r1.revert(), RevertibleResult.Success);
-				resubmitter.assertOuterListEquals([["a", "s1", "s2"]]);
-
-				resubmitter.setConnected(true);
-				provider.processMessages();
-
-				const finalState = [["a"]];
-				submitter.assertOuterListEquals(finalState);
-				resubmitter.assertOuterListEquals(finalState);
-			});
-
+			/**
+			 * These tests follow a pattern:
+			 * 1. Two peers are setup with a two-level tree of nested lists.
+			 * 2. Edits are made to the inner list by both peers.
+			 * One of the peers removes the inner list.
+			 * 4. The "resubmitter" peer is disconnected and reverts its stage-2 edits.
+			 * Concurrently, the "submitter" peer also reverts its stage-2 edits (while connected).
+			 * 5. The "resubmitter" peer is reconnected, forcing its edits to go through a resubmit where they are rebased
+			 * over the edits made by the "submitter" peer.
+			 */
 			for (const scenario of ["restore and edit", "edit and restore"] as const) {
 				it(`${scenario} to the removed tree over two edits to the removed tree`, () => {
 					const { provider, submitter, resubmitter } = setupResubmitTest();
@@ -1266,9 +1242,7 @@ describe("SharedTree", () => {
 					submitter.assertOuterListEquals(finalState);
 					resubmitter.assertOuterListEquals(finalState);
 				});
-			}
 
-			for (const scenario of ["restore and edit", "edit and restore"] as const) {
 				it(`two edits to the removed tree over ${scenario} to the removed tree`, () => {
 					const { provider, submitter, resubmitter } = setupResubmitTest();
 
