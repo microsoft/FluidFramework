@@ -458,7 +458,7 @@ export abstract class FluidDataStoreContext
 		assert(channel !== undefined, 0x140 /* "undefined channel on datastore context" */);
 
 		//* TODO: Properly plumb this bit from ContainerRuntime
-		const gcEnabled = (this._containerRuntime as any).garbageCollector.shouldRunGC;
+		const gcEnabled = (this._containerRuntime as any).garbageCollector?.shouldRunGC ?? true; //* Some tests mock CR and this isn't there.
 
 		// The attach op could have added a reference to another object.
 		// Inform GC of all outbound references in the newly-created channel.
