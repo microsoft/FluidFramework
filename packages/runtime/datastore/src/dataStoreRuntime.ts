@@ -63,6 +63,7 @@ import {
 	exceptionToResponse,
 	GCDataBuilder,
 	unpackChildNodesUsedRoutes,
+	addBlobToSummary,
 } from "@fluidframework/runtime-utils";
 import {
 	IChannel,
@@ -89,6 +90,9 @@ export enum DataStoreMessageType {
 	Attach = "attach",
 	ChannelOp = "op",
 }
+
+//* Suggestions on key name?
+const gcDataBlobKey = ".gcdata";
 
 /**
  * @alpha
@@ -833,6 +837,7 @@ export class FluidDataStoreRuntime
 		// );
 
 		const summaryBuilder = new SummaryTreeBuilder();
+		const gcDataBuilder = new GCDataBuilder();
 
 		// Craft the .attributes file for each shared object
 		for (const [contextId, context] of this.contexts) {
@@ -843,11 +848,16 @@ export class FluidDataStoreRuntime
 			if (!this.notBoundedChannelContextSet.has(contextId)) {
 				let summaryTree: ISummaryTreeWithStats;
 				if (context.isLoaded) {
-					const contextSummary = context.getAttachSummary(telemetryContext);
+					const [contextSummary, contextGCData] =
+						context.getAttachSummaryAndGCData(telemetryContext);
 					assert(
 						contextSummary.summary.type === SummaryType.Tree,
 						0x180 /* "getAttachSummary should always return a tree" */,
 					);
+
+					// Incorporate the GC Data for this context
+					gcDataBuilder.prefixAndAddNodes(contextId, contextGCData.gcNodes);
+
 					summaryTree = { stats: contextSummary.stats, summary: contextSummary.summary };
 				} else {
 					// If this channel is not yet loaded, then there should be no changes in the snapshot from which
@@ -864,7 +874,13 @@ export class FluidDataStoreRuntime
 			}
 		}
 
-		return summaryBuilder.getSummaryTree();
+		const attachSummary = summaryBuilder.getSummaryTree();
+		const gcData = gcDataBuilder.getGCData();
+
+		// We need to include the GC Data so remote clients can learn of this DataStore's outbound routes
+		addBlobToSummary(attachSummary, gcDataBlobKey, JSON.stringify(gcData));
+
+		return attachSummary;
 	}
 
 	public submitMessage(type: DataStoreMessageType, content: any, localOpMetadata: unknown) {
@@ -912,6 +928,11 @@ export class FluidDataStoreRuntime
 			true /* fullTree */,
 			false /* trackState */,
 		);
+
+		// We need to include the channel's GC Data so remote clients can learn of this channel's outbound routes
+		const gcData = channel.getGCData(); //* fullGC?
+		addBlobToSummary(summarizeResult, gcDataBlobKey, JSON.stringify(gcData));
+
 		// Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
 		const snapshot = convertSummaryTreeToITree(summarizeResult.summary);
 

@@ -125,17 +125,27 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 		return summarizeChannelAsync(channel, fullTree, trackState, telemetryContext);
 	}
 
-	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummarizeResult {
+	public getAttachSummaryAndGCData(
+		telemetryContext?: ITelemetryContext,
+	): [ISummarizeResult, IGarbageCollectionData] {
+		//* What about Rehydrated case?
 		assert(
 			this._channel !== undefined,
 			0x18d /* "Channel should be loaded to take snapshot" */,
 		);
-		return summarizeChannel(
+
+		const summary = summarizeChannel(
 			this._channel,
 			true /* fullTree */,
 			false /* trackState */,
 			telemetryContext,
 		);
+
+		// We need the GC Data to detect references added in this attach op
+		//* fullGC isn't necessary, right? Since there won't be any prior GC Data.
+		const gcData = this._channel.getGCData();
+
+		return [summary, gcData];
 	}
 
 	public makeVisible(): void {
