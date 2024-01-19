@@ -107,9 +107,10 @@ export function combineAppAndProtocolSummary(
  * to align detached container format with IPendingContainerState
  * @param summary - ISummaryTree
  */
-function convertSummaryToSnapshotAndBlobs(
-	summary: ISummaryTree,
-): [ISnapshotTree, ISerializableBlobContents] {
+function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): {
+	tree: ISnapshotTree;
+	blobs: ISerializableBlobContents;
+} {
 	let blobContents: ISerializableBlobContents = {};
 	const treeNode: ISnapshotTree = {
 		blobs: {},
@@ -123,8 +124,8 @@ function convertSummaryToSnapshotAndBlobs(
 
 		switch (summaryObject.type) {
 			case SummaryType.Tree: {
-				let blobs: ISerializableBlobContents | undefined;
-				[treeNode.trees[key], blobs] = convertSummaryToSnapshotAndBlobs(summaryObject);
+				const { tree, blobs } = convertSummaryToSnapshotAndBlobs(summaryObject);
+				tree.trees[key] = tree;
 				blobContents = { ...blobContents, ...blobs };
 				break;
 			}
@@ -151,7 +152,7 @@ function convertSummaryToSnapshotAndBlobs(
 			}
 		}
 	}
-	return [treeNode, blobContents];
+	return { tree: treeNode, blobs: blobContents };
 }
 
 /**
@@ -162,7 +163,7 @@ function convertSummaryToSnapshotAndBlobs(
 function convertProtocolAndAppSummaryToSnapshotAndBlobs(
 	protocolSummaryTree: ISummaryTree,
 	appSummaryTree: ISummaryTree,
-): [ISnapshotTree, ISerializableBlobContents] {
+): { tree: ISnapshotTree; blobs: ISerializableBlobContents } {
 	const combinedSummary: ISummaryTree = {
 		type: SummaryType.Tree,
 		tree: { ...appSummaryTree.tree },
@@ -175,7 +176,7 @@ function convertProtocolAndAppSummaryToSnapshotAndBlobs(
 
 export const getSnapshotTreeAndBlobsFromSerializedContainer = (
 	detachedContainerSnapshot: ISummaryTree,
-): [ISnapshotTree, ISerializableBlobContents] => {
+): { tree: ISnapshotTree; blobs: ISerializableBlobContents } => {
 	assert(
 		isCombinedAppAndProtocolSummary(detachedContainerSnapshot),
 		"Protocol and App summary trees should be present",
@@ -258,12 +259,12 @@ export function getDetachedContainerStateFromSerializedContainer(
 	if (isPendingDetachedContainerState(parsedContainerState)) {
 		return parsedContainerState;
 	} else if (isCombinedAppAndProtocolSummary(parsedContainerState)) {
-		const [baseSnapshot, snapshotBlobs] =
+		const { tree: snapshot, blobs } =
 			getSnapshotTreeAndBlobsFromSerializedContainer(parsedContainerState);
 		const detachedContainerState: IPendingDetachedContainerState = {
 			attached: false,
-			baseSnapshot,
-			snapshotBlobs,
+			baseSnapshot: snapshot,
+			snapshotBlobs: blobs,
 			hasAttachmentBlobs: parsedContainerState.tree[hasBlobsSummaryTree] !== undefined,
 		};
 		return detachedContainerState;

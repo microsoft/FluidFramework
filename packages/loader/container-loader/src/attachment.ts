@@ -65,9 +65,9 @@ export interface AttachingDataWithoutBlobs {
  */
 export interface AttachedData {
 	readonly state: AttachState.Attached;
-	readonly baseSnapshotAndBlobs?: {
-		snapshot: ISnapshotTree,
-		blobs: ISerializableBlobContents,
+	readonly snapshot?: {
+		tree: ISnapshotTree;
+		blobs: ISerializableBlobContents;
 	};
 }
 
@@ -206,7 +206,7 @@ export const runRetriableAttachProcess = async (props: AttachProcessProps): Prom
 	props.setAttachmentData(
 		(currentData = {
 			state: AttachState.Attached,
-			baseSnapshotAndBlobs: props.offlineLoadEnabled
+			snapshot: props.offlineLoadEnabled
 				? getSnapshotTreeAndBlobsFromSerializedContainer(currentData.summary)
 				: undefined,
 		}),

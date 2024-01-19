@@ -380,24 +380,26 @@ export interface IPendingDetachedContainerState {
  * If there are multiple calls they will all get the same promise to wait on.
  */
 const runSingle = <A extends any[], R>(func: (...args: A) => Promise<R>) => {
-	let running: {
-		args: A,
-		result: Promise<R>,
-	} | undefined;
+	let running:
+		| {
+				args: A;
+				result: Promise<R>;
+		  }
+		| undefined;
 	// don't mark this function async, so we return the same promise,
 	// rather than one that is wrapped due to async
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
 	return (...args: A) => {
 		if (running !== undefined) {
-			if (!compareArrays(running[0], args)) {
+			if (!compareArrays(running.args, args)) {
 				return Promise.reject(
 					new UsageError("Subsequent calls cannot use different arguments."),
 				);
 			}
-			return running[1];
+			return running.result;
 		}
-		running = [args, func(...args).finally(() => (running = undefined))];
-		return running[1];
+		running = { args, result: func(...args).finally(() => (running = undefined)) };
+		return running.result;
 	};
 };
 
@@ -1198,12 +1200,12 @@ export class Container
 					this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
 					0x0d2 /* "resolved url should be valid Fluid url" */,
 				);
-				assert(this.attachmentData.baseSnapshotAndBlobs !== undefined, 0x5d5 /* no base data */);
+				assert(this.attachmentData.snapshot !== undefined, 0x5d5 /* no base data */);
 				const pendingRuntimeState = await this.runtime.getPendingLocalState(props);
 				const pendingState: IPendingContainerState = {
 					pendingRuntimeState,
-					baseSnapshot: this.attachmentData.baseSnapshotAndBlobs[0],
-					snapshotBlobs: this.attachmentData.baseSnapshotAndBlobs[1],
+					baseSnapshot: this.attachmentData.snapshot.tree,
+					snapshotBlobs: this.attachmentData.snapshot.blobs,
 					savedOps: this.savedOps,
 					url: this.resolvedUrl.url,
 					// no need to save this if there is no pending runtime state
@@ -1229,13 +1231,13 @@ export class Container
 		const protocolSummary = this.captureProtocolSummary();
 		const combinedSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
-		const [baseSnapshot, snapshotBlobs] =
+		const { tree: snapshot, blobs } =
 			getSnapshotTreeAndBlobsFromSerializedContainer(combinedSummary);
 
 		const detachedContainerState: IPendingDetachedContainerState = {
 			attached: false,
-			baseSnapshot,
-			snapshotBlobs,
+			baseSnapshot: snapshot,
+			snapshotBlobs: blobs,
 			hasAttachmentBlobs: !!this.detachedBlobStorage && this.detachedBlobStorage.size > 0,
 		};
 		return JSON.stringify(detachedContainerState);
@@ -1628,10 +1630,10 @@ export class Container
 		if (pendingLocalState) {
 			this.attachmentData = {
 				state: AttachState.Attached,
-				baseSnapshotAndBlobs: [
-					pendingLocalState.baseSnapshot,
-					pendingLocalState.snapshotBlobs,
-				],
+				snapshot: {
+					tree: pendingLocalState.baseSnapshot,
+					blobs: pendingLocalState.snapshotBlobs,
+				},
 			};
 		} else {
 			assert(snapshot !== undefined, 0x237 /* "Snapshot should exist" */);
@@ -1639,7 +1641,7 @@ export class Container
 				const blobs = await getBlobContentsFromTree(snapshot, this.storageAdapter);
 				this.attachmentData = {
 					state: AttachState.Attached,
-					baseSnapshotAndBlobs: [snapshot, blobs],
+					snapshot: { tree: snapshot, blobs },
 				};
 			}
 		}
