@@ -236,8 +236,8 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): React.Re
 					dy={16}
 					textAnchor="end"
 					fill={graphColorPalette.axisTick}
-					transform="rotate(-35)"
-					fontSize={16}
+					transform="rotate(-25)"
+					fontSize={14}
 				>
 					{payload.value}
 				</text>
@@ -254,7 +254,7 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): React.Re
 
 		return (
 			<g>
-				<text x={x} y={y} textAnchor="end" fill={graphColorPalette.axisTick} fontSize={16}>
+				<text x={x} y={y} textAnchor="end" fill={graphColorPalette.axisTick} fontSize={14}>
 					{`${payload.value}${props.yAxisUnitDisplayName ?? ""}`}
 				</text>
 			</g>
