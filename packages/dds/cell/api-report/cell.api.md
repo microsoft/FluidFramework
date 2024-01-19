@@ -7,6 +7,7 @@
 import { AttributionKey } from '@fluidframework/runtime-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
+import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
@@ -16,6 +17,22 @@ import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
+
+// @internal @sealed
+export class CellFactory implements IChannelFactory {
+    // (undocumented)
+    static readonly Attributes: IChannelAttributes;
+    // (undocumented)
+    get attributes(): IChannelAttributes;
+    // (undocumented)
+    create(document: IFluidDataStoreRuntime, id: string): ISharedCell;
+    // (undocumented)
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedCell>;
+    // (undocumented)
+    static readonly Type = "https://graph.microsoft.com/types/cell";
+    // (undocumented)
+    get type(): string;
+}
 
 // @internal
 export interface ICellAttributionOptions {

@@ -10,10 +10,16 @@ import {
 	MockDeltaConnection,
 	MockHandle,
 } from "@fluidframework/test-runtime-utils";
+import { CellFactory } from "@fluidframework/cell";
 import { DirectoryFactory, IDirectory, MapFactory } from "@fluidframework/map";
+import { SharedMatrixFactory, SharedMatrix } from "@fluidframework/matrix";
+import { TreeFactory, SchemaFactory, ITree, TreeConfiguration } from "@fluidframework/tree";
+import { ConsensusQueueFactory } from "@fluidframework/ordered-collection";
+import { ReferenceType, SharedStringFactory } from "@fluidframework/sequence";
 import { IChannel, IChannelFactory } from "@fluidframework/datastore-definitions";
 import { ConsensusRegisterCollectionFactory } from "@fluidframework/register-collection";
 import { detectOutboundReferences } from "@fluidframework/container-runtime";
+import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
 
 /**
  * The purpose of these tests is to demonstrate that DDSes do not do opaque encoding of handles
@@ -65,7 +71,9 @@ describe("DDS Handle Encoding", () => {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const name = factory.type.split("/").pop()!;
 
-		const dataStoreRuntime = new MockFluidDataStoreRuntime();
+		const dataStoreRuntime = new MockFluidDataStoreRuntime({
+			idCompressor: createIdCompressor("173cb232-53a2-4327-b690-afa954397989" as SessionId),
+		});
 		const deltaConnection = new MockDeltaConnection(
 			/* submitFn: */ (message) => {
 				messages.push(message);
@@ -90,7 +98,7 @@ describe("DDS Handle Encoding", () => {
 	const testCases: ITestCase[] = [
 		createTestCase(
 			new MapFactory(),
-			(dds: Map<string, any>) => {
+			(dds) => {
 				dds.set("whatever", handle);
 			},
 			[handle.absolutePath] /* expectedHandles */,
@@ -103,14 +111,62 @@ describe("DDS Handle Encoding", () => {
 			[handle.absolutePath] /* expectedHandles */,
 		),
 		createTestCase(
+			new SharedStringFactory(),
+			(dds) => {
+				dds.insertMarker(0, ReferenceType.Simple, { marker: handle });
+			},
+			[handle.absolutePath] /* expectedHandles */,
+		),
+		createTestCase(
+			new SharedMatrixFactory(),
+			(dds: SharedMatrix) => {
+				dds.insertRows(0, 1);
+				dds.insertCols(0, 1);
+
+				dds.setCell(0, 0, handle);
+			},
+			[handle.absolutePath] /* expectedHandles */,
+		),
+		createTestCase(
+			new TreeFactory({}),
+			(dds: ITree) => {
+				const builder = new SchemaFactory("test");
+				class Bar extends builder.object("bar", {
+					h: builder.optional(builder.handle),
+				}) {}
+
+				const config = new TreeConfiguration(Bar, () => ({
+					h: undefined,
+				}));
+
+				const treeView = dds.schematize(config);
+
+				treeView.root.h = handle;
+			},
+			[handle.absolutePath] /* expectedHandles */,
+		),
+		createTestCase(
 			new ConsensusRegisterCollectionFactory(),
 			(dds) => {
-				dds.write("whatever", handle).catch(() => {
-					// We only care about errors before message submission, which will fail the message.length assert below.
-				});
+				dds.write("whatever", handle).catch(() => {});
 			},
-			[] /* expectedHandles */,
+			[handle.absolutePath] /* expectedHandles */,
 		),
+		createTestCase(
+			new ConsensusQueueFactory(),
+			(dds) => {
+				dds.add(handle).catch(() => {});
+			},
+			[handle.absolutePath] /* expectedHandles */,
+		),
+		createTestCase(
+			new CellFactory(),
+			(dds) => {
+				dds.set(handle);
+			},
+			[handle.absolutePath] /* expectedHandles */,
+		),
+		// can't have handles: counter, task manager,
 	];
 
 	testCases.forEach((testCase) => {
@@ -118,9 +174,8 @@ describe("DDS Handle Encoding", () => {
 		it(`${shouldOrShouldNot} obscure handles in ${testCase.name} message contents`, async () => {
 			testCase.addHandleToDDS();
 
-			assert.equal(messages.length, 1, "Expected a single message to be submitted");
 			assert.deepEqual(
-				findAllHandles(messages[0]),
+				messages.flatMap((m) => findAllHandles(m)),
 				testCase.expectedHandles,
 				`The handle ${shouldOrShouldNot} be detected`,
 			);

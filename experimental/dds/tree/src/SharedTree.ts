@@ -12,7 +12,6 @@ import {
 	IChannelFactory,
 	IChannelAttributes,
 	IChannelServices,
-	IChannel,
 } from '@fluidframework/datastore-definitions';
 import { AttachState } from '@fluidframework/container-definitions';
 import {
@@ -246,7 +245,7 @@ export class SharedTreeFactory implements IChannelFactory {
 		id: string,
 		services: IChannelServices,
 		_channelAttributes: Readonly<IChannelAttributes>
-	): Promise<IChannel> {
+	): Promise<SharedTree> {
 		const sharedTree = this.createSharedTree(runtime, id);
 		await sharedTree.load(services);
 		return sharedTree;
@@ -1395,7 +1394,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	}
 
 	private serializeEdit<TChange>(preparedEdit: Edit<TChange>): Edit<TChange> {
-		return this.serializer.encode(preparedEdit, this.handle) as Edit<TChange>;
+		return preparedEdit;
 	}
 
 	/** A type-safe `submitLocalMessage` wrapper to enforce op format */

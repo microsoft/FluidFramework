@@ -14,6 +14,8 @@ import { pkgVersion } from "./packageVersion";
 
 /**
  * The factory that defines the consensus queue
+ *
+ * @internal
  */
 export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory {
 	public static Type = "https://graph.microsoft.com/types/consensus-queue";

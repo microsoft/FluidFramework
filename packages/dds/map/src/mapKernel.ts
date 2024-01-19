@@ -184,7 +184,7 @@ export class MapKernel {
 		private readonly isAttached: () => boolean,
 		private readonly eventEmitter: TypedEventEmitter<ISharedMapEvents>,
 	) {
-		this.localValueMaker = new LocalValueMaker(serializer);
+		this.localValueMaker = new LocalValueMaker();
 		this.messageHandlers = this.getMessageHandlers();
 	}
 
@@ -581,7 +581,11 @@ export class MapKernel {
 			serializable.type === ValueType[ValueType.Plain] ||
 			serializable.type === ValueType[ValueType.Shared]
 		) {
-			return this.localValueMaker.fromSerializable(serializable);
+			return this.localValueMaker.fromSerializable(
+				serializable,
+				this.serializer,
+				this.handle,
+			);
 		} else {
 			throw new Error("Unknown local value type");
 		}

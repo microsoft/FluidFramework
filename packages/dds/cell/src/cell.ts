@@ -21,6 +21,7 @@ import {
 	createSingleBlobSummary,
 	type IFluidSerializer,
 	SharedObject,
+	parseHandles,
 } from "@fluidframework/shared-object-base";
 import { CellFactory } from "./cellFactory";
 import {
@@ -137,11 +138,6 @@ export class SharedCell<T = any>
 	 * {@inheritDoc ISharedCell.set}
 	 */
 	public set(value: Serializable<T>): void {
-		// Serialize the value if required.
-		const operationValue: ICellValue = {
-			value: this.serializer.encode(value, this.handle),
-		};
-
 		// Set the value locally.
 		const previousValue = this.setCore(value);
 		this.setAttribution();
@@ -150,6 +146,10 @@ export class SharedCell<T = any>
 		if (!this.isAttached()) {
 			return;
 		}
+
+		const operationValue: ICellValue = {
+			value,
+		};
 
 		const op: ISetCellOperation = {
 			type: "setCell",
@@ -227,7 +227,8 @@ export class SharedCell<T = any>
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const content = await readAndParse<ICellValue>(storage, snapshotFileName);
 
-		this.data = this.decode(content);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		this.data = parseHandles(content.value, this.serializer);
 		this.attribution = content.attribution;
 	}
 
@@ -324,8 +325,7 @@ export class SharedCell<T = any>
 	}
 
 	private decode(cellValue: ICellValue): Serializable<T> {
-		const value = cellValue.value;
-		return this.serializer.decode(value) as Serializable<T>;
+		return cellValue.value as Serializable<T>;
 	}
 
 	private createLocalOpMetadata(

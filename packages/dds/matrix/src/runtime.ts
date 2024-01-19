@@ -48,7 +48,7 @@ export class SharedMatrixFactory implements IChannelFactory {
 		return matrix;
 	}
 
-	public create(document: IFluidDataStoreRuntime, id: string): IChannel {
+	public create(document: IFluidDataStoreRuntime, id: string): SharedMatrix {
 		const matrix = new SharedMatrix(document, id, this.attributes);
 		matrix.initializeLocal();
 		return matrix;

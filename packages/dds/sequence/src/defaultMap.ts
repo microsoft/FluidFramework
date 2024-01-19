@@ -5,12 +5,7 @@
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import {
-	IFluidSerializer,
-	makeHandlesSerializable,
-	parseHandles,
-	ValueType,
-} from "@fluidframework/shared-object-base";
+import { IFluidSerializer, ValueType } from "@fluidframework/shared-object-base";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import { makeSerializable, ValueTypeLocalValue } from "./localValues";
@@ -286,7 +281,7 @@ export class DefaultMap<T> {
 	}
 
 	public populate(json: string): void {
-		this.populateFromSerializable(JSON.parse(json) as IMapDataObjectSerializable);
+		this.populateFromSerializable(this.serializer.parse(json) as IMapDataObjectSerializable);
 	}
 
 	/**
@@ -375,7 +370,6 @@ export class DefaultMap<T> {
 			0x2e1 /* "Support for plain value types removed." */,
 		);
 
-		serializable.value = parseHandles(serializable.value, this.serializer);
 		const localValue = this.type.factory.load(
 			this.makeMapValueOpEmitter(key),
 			serializable.value,
@@ -399,7 +393,7 @@ export class DefaultMap<T> {
 				const localValue = this.data.get(op.key) ?? this.createCore(op.key, local);
 				const handler = localValue.getOpHandler(op.value.opName);
 				const previousValue = localValue.value;
-				const translatedValue = parseHandles(op.value.value, this.serializer);
+				const translatedValue = op.value.value as any;
 				handler.process(previousValue, translatedValue, local, message, localOpMetadata);
 				const event: IValueChanged = { key: op.key, previousValue };
 				this.eventEmitter.emit("valueChanged", event, local, message, this.eventEmitter);
@@ -448,14 +442,12 @@ export class DefaultMap<T> {
 			params: SerializedIntervalDelta,
 			localOpMetadata: IMapMessageLocalMetadata,
 		): void => {
-			const translatedParams = makeHandlesSerializable(params, this.serializer, this.handle);
-
 			const op: IMapValueTypeOperation = {
 				key,
 				type: "act",
 				value: {
 					opName,
-					value: translatedParams,
+					value: params,
 				},
 			};
 

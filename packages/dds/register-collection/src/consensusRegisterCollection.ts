@@ -5,23 +5,23 @@
 
 import { bufferToString } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
 	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import {
-	createSingleBlobSummary,
 	IFluidSerializer,
 	SharedObject,
+	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base";
 import { ConsensusRegisterCollectionFactory } from "./consensusRegisterCollectionFactory";
 import {
 	IConsensusRegisterCollection,
-	ReadPolicy,
 	IConsensusRegisterCollectionEvents,
+	ReadPolicy,
 } from "./interfaces";
 
 interface ILocalData<T> {
@@ -67,7 +67,7 @@ interface IRegisterOperation {
 }
 
 /**
- * IRegisterOperation format in versions \< 0.17
+ * IRegisterOperation format in versions \< 0.17 and \>8.0.0
  */
 interface IRegisterOperationOld<T> {
 	key: string;
@@ -142,18 +142,19 @@ export class ConsensusRegisterCollection<T>
 	 * @returns Promise<true> if write was non-concurrent
 	 */
 	public async write(key: string, value: T): Promise<boolean> {
-		const serializedValue = this.stringify(value, this.serializer);
-
 		if (!this.isAttached()) {
 			// JSON-roundtrip value for local writes to match the behavior of going through the wire
-			this.processInboundWrite(key, this.parse(serializedValue, this.serializer), 0, 0, true);
+			this.processInboundWrite(key, value, 0, 0, true);
 			return true;
 		}
 
-		const message: IRegisterOperation = {
+		const message: IRegisterOperationOld<T> = {
 			key,
 			type: "write",
-			serializedValue,
+			value: {
+				type: "Plain",
+				value,
+			},
 			refSeq: this.runtime.deltaManager.lastSequenceNumber,
 		};
 

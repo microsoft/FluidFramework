@@ -16,7 +16,12 @@ import {
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
-import { IFluidSerializer, SharedObject, ValueType } from "@fluidframework/shared-object-base";
+import {
+	IFluidSerializer,
+	SharedObject,
+	ValueType,
+	parseHandles,
+} from "@fluidframework/shared-object-base";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import path from "path-browserify";
 import { RedBlackTree } from "@fluidframework/merge-tree";
@@ -518,7 +523,7 @@ export class SharedDirectory
 		attributes: IChannelAttributes,
 	) {
 		super(id, runtime, attributes, "fluid_directory_");
-		this.localValueMaker = new LocalValueMaker(this.serializer);
+		this.localValueMaker = new LocalValueMaker();
 		this.setMessageHandlers();
 		// Mirror the containedValueChanged op on the SharedDirectory
 		this.root.on("containedValueChanged", (changed: IValueChanged, local: boolean) => {
@@ -822,7 +827,7 @@ export class SharedDirectory
 					const localValue = this.makeLocal(
 						key,
 						currentSubDir.absolutePath,
-						serializable,
+						parseHandles(serializable, this.serializer),
 					);
 					currentSubDir.populateStorage(key, localValue);
 				}
@@ -886,7 +891,7 @@ export class SharedDirectory
 				serializable.type === ValueType[ValueType.Shared],
 			0x1e4 /* "Unexpected serializable type" */,
 		);
-		return this.localValueMaker.fromSerializable(serializable);
+		return this.localValueMaker.fromSerializable(serializable, this.serializer, this.handle);
 	}
 
 	/**

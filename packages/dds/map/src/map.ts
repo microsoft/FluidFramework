@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
+import { IFluidSerializer, SharedObject, parseHandles } from "@fluidframework/shared-object-base";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { ISharedMap, ISharedMapEvents } from "./interfaces";
 import { IMapDataObjectSerializable, IMapOperation, MapKernel } from "./mapKernel";
@@ -334,7 +334,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 		const json = await readAndParse<object>(storage, snapshotFileName);
 		const newFormat = json as IMapSerializationFormat;
 		if (Array.isArray(newFormat.blobs)) {
-			this.kernel.populateFromSerializable(newFormat.content);
+			this.kernel.populateFromSerializable(parseHandles(newFormat.content, this.serializer));
 			await Promise.all(
 				newFormat.blobs.map(async (value) => {
 					const content = await readAndParse<IMapDataObjectSerializable>(storage, value);

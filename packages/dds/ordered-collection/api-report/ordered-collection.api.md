@@ -57,6 +57,22 @@ export class ConsensusQueue<T = any> extends ConsensusOrderedCollection<T> {
     static getFactory(): IChannelFactory;
 }
 
+// @internal
+export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory {
+    // (undocumented)
+    static readonly Attributes: IChannelAttributes;
+    // (undocumented)
+    get attributes(): IChannelAttributes;
+    // (undocumented)
+    create(document: IFluidDataStoreRuntime, id: string): IConsensusOrderedCollection;
+    // (undocumented)
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<IConsensusOrderedCollection>;
+    // (undocumented)
+    static Type: string;
+    // (undocumented)
+    get type(): string;
+}
+
 // @alpha (undocumented)
 export enum ConsensusResult {
     // (undocumented)

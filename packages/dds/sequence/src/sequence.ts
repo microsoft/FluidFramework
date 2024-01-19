@@ -44,10 +44,9 @@ import {
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
 	IFluidSerializer,
-	makeHandlesSerializable,
-	parseHandles,
 	SharedObject,
 	ISharedObjectEvents,
+	parseHandles,
 } from "@fluidframework/shared-object-base";
 import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
@@ -427,7 +426,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		if (!this.isAttached()) {
 			return;
 		}
-		const translated = makeHandlesSerializable(message, this.serializer, this.handle);
 		const metadata = this.client.peekPendingSegmentGroups(
 			message.type === MergeTreeDeltaType.GROUP ? message.ops.length : 1,
 		);
@@ -436,9 +434,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		// local ops until loading is complete, and then
 		// they will be present
 		if (!this.loadedDeferred.isCompleted) {
-			this.loadedDeferredOutgoingOps.push(metadata ? [translated, metadata] : translated);
+			this.loadedDeferredOutgoingOps.push(metadata ? [message, metadata] : (message as any));
 		} else {
-			this.submitLocalMessage(translated, metadata);
+			this.submitLocalMessage(message, metadata);
 		}
 	}
 
@@ -658,7 +656,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 								})}`,
 							);
 						}
-						this.processMergeTreeMsg(m);
+						this.processMergeTreeMsg(parseHandles(m, this.serializer));
 					});
 					this.loadFinished();
 				})
@@ -730,10 +728,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 */
 	protected applyStashedOp(content: any): unknown {
-		const parsedContent = parseHandles(content, this.serializer);
 		const metadata =
-			this.intervalCollections.tryGetStashedOpLocalMetadata(parsedContent) ??
-			this.client.applyStashedOp(parsedContent);
+			this.intervalCollections.tryGetStashedOpLocalMetadata(content) ??
+			this.client.applyStashedOp(content);
 		assert(!!metadata, 0x87d /* Metadata is undefined */);
 		return metadata;
 	}
@@ -760,9 +757,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		);
 	}
 
-	private processMergeTreeMsg(rawMessage: ISequencedDocumentMessage, local?: boolean) {
-		const message = parseHandles(rawMessage, this.serializer);
-
+	private processMergeTreeMsg(message: ISequencedDocumentMessage, local?: boolean) {
 		const ops: IMergeTreeDeltaOp[] = [];
 		function transformOps(event: SequenceDeltaEvent) {
 			ops.push(...SharedSegmentSequence.createOpsFromDelta(event));

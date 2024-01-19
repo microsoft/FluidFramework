@@ -12,6 +12,7 @@ export {
 	IOrderedCollection,
 	ISnapshotable,
 } from "./interfaces";
+export { ConsensusQueueFactory } from "./consensusOrderedCollectionFactory";
 export { ConsensusOrderedCollection } from "./consensusOrderedCollection";
 export { ConsensusQueue } from "./consensusQueue";
 export { acquireAndComplete, waitAcquireAndComplete } from "./testUtils";

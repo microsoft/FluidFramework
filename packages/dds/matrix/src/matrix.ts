@@ -15,8 +15,6 @@ import {
 import {
 	IFluidSerializer,
 	ISharedObjectEvents,
-	makeHandlesSerializable,
-	parseHandles,
 	SharedObject,
 } from "@fluidframework/shared-object-base";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
@@ -574,10 +572,7 @@ export class SharedMatrix<T = any>
 			0x01d /* "Trying to submit message to runtime while detached!" */,
 		);
 
-		super.submitLocalMessage(
-			makeHandlesSerializable(message, this.serializer, this.handle),
-			localOpMetadata,
-		);
+		super.submitLocalMessage(message, localOpMetadata);
 
 		// Ensure that row/col 'localSeq' are synchronized (see 'nextLocalSeq()').
 		assert(
@@ -759,13 +754,11 @@ export class SharedMatrix<T = any>
 	}
 
 	protected processCore(
-		rawMessage: ISequencedDocumentMessage,
+		msg: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
-		const msg = parseHandles(rawMessage, this.serializer);
-
-		const contents = msg.contents;
+		const contents = msg.contents as any;
 
 		switch (contents.target) {
 			case SnapshotPath.cols:
@@ -785,10 +778,10 @@ export class SharedMatrix<T = any>
 					this.setCellLwwToFwwPolicySwitchOpSeqNumber > -1;
 				// If this is the first op notifying us of the policy change, then set the policy change seq number.
 				if (this.setCellLwwToFwwPolicySwitchOpSeqNumber === -1 && fwwMode === true) {
-					this.setCellLwwToFwwPolicySwitchOpSeqNumber = rawMessage.sequenceNumber;
+					this.setCellLwwToFwwPolicySwitchOpSeqNumber = msg.sequenceNumber;
 				}
 
-				assert(rawMessage.clientId !== null, 0x861 /* clientId should not be null!! */);
+				assert(msg.clientId !== null, 0x861 /* clientId should not be null!! */);
 				if (local) {
 					// We are receiving the ACK for a local pending set operation.
 					const { rowHandle, colHandle, localSeq } = localOpMetadata as ISetOpMetadata;
@@ -801,12 +794,12 @@ export class SharedMatrix<T = any>
 					// If policy is not switched, then also update the tracker in case it is the latest.
 					if (
 						(this.setCellLwwToFwwPolicySwitchOpSeqNumber > -1 &&
-							this.shouldSetCellBasedOnFWW(rowHandle, colHandle, rawMessage)) ||
+							this.shouldSetCellBasedOnFWW(rowHandle, colHandle, msg)) ||
 						(this.setCellLwwToFwwPolicySwitchOpSeqNumber === -1 && isLatestPendingOp)
 					) {
 						this.cellLastWriteTracker.setCell(rowHandle, colHandle, {
-							seqNum: rawMessage.sequenceNumber,
-							clientId: rawMessage.clientId,
+							seqNum: msg.sequenceNumber,
+							clientId: msg.clientId,
 						});
 					}
 
@@ -814,9 +807,9 @@ export class SharedMatrix<T = any>
 						this.pending.setCell(rowHandle, colHandle, undefined);
 					}
 				} else {
-					const adjustedRow = this.rows.adjustPosition(row, rawMessage);
+					const adjustedRow = this.rows.adjustPosition(row, msg);
 					if (adjustedRow !== undefined) {
-						const adjustedCol = this.cols.adjustPosition(col, rawMessage);
+						const adjustedCol = this.cols.adjustPosition(col, msg);
 
 						if (adjustedCol !== undefined) {
 							const rowHandle = this.rows.getAllocatedHandle(adjustedRow);
@@ -832,13 +825,13 @@ export class SharedMatrix<T = any>
 								// overwrite the cell and raise conflict if we have pending changes as our change is going to be lost.
 								if (
 									!isPreviousSetCellPolicyModeFWW ||
-									this.shouldSetCellBasedOnFWW(rowHandle, colHandle, rawMessage)
+									this.shouldSetCellBasedOnFWW(rowHandle, colHandle, msg)
 								) {
 									const previousValue = this.cells.getCell(rowHandle, colHandle);
 									this.cells.setCell(rowHandle, colHandle, value);
 									this.cellLastWriteTracker.setCell(rowHandle, colHandle, {
-										seqNum: rawMessage.sequenceNumber,
-										clientId: rawMessage.clientId,
+										seqNum: msg.sequenceNumber,
+										clientId: msg.clientId,
 									});
 									for (const consumer of this.consumers.values()) {
 										consumer.cellsChanged(adjustedRow, adjustedCol, 1, 1, this);
@@ -862,8 +855,8 @@ export class SharedMatrix<T = any>
 								// since it "happened before" the pending write.
 								this.cells.setCell(rowHandle, colHandle, value);
 								this.cellLastWriteTracker.setCell(rowHandle, colHandle, {
-									seqNum: rawMessage.sequenceNumber,
-									clientId: rawMessage.clientId,
+									seqNum: msg.sequenceNumber,
+									clientId: msg.clientId,
 								});
 								for (const consumer of this.consumers.values()) {
 									consumer.cellsChanged(adjustedRow, adjustedCol, 1, 1, this);
@@ -977,16 +970,10 @@ export class SharedMatrix<T = any>
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 */
 	protected applyStashedOp(content: any): unknown {
-		const parsedContent = parseHandles(content, this.serializer);
-		if (
-			parsedContent.target === SnapshotPath.cols ||
-			parsedContent.target === SnapshotPath.rows
-		) {
-			const op = parsedContent as IMergeTreeOp;
-			const currentVector =
-				parsedContent.target === SnapshotPath.cols ? this.cols : this.rows;
-			const oppositeVector =
-				parsedContent.target === SnapshotPath.cols ? this.rows : this.cols;
+		if (content.target === SnapshotPath.cols || content.target === SnapshotPath.rows) {
+			const op = content as IMergeTreeOp;
+			const currentVector = content.target === SnapshotPath.cols ? this.cols : this.rows;
+			const oppositeVector = content.target === SnapshotPath.cols ? this.rows : this.cols;
 			const metadata = currentVector.applyStashedOp(op);
 			const localSeq = currentVector.getCollabWindow().localSeq;
 			const oppositeWindow = oppositeVector.getCollabWindow();
@@ -1001,12 +988,9 @@ export class SharedMatrix<T = any>
 
 			return metadata;
 		} else {
-			assert(
-				parsedContent.type === MatrixOp.set,
-				0x2da /* "Unknown SharedMatrix 'op' type." */,
-			);
+			assert(content.type === MatrixOp.set, 0x2da /* "Unknown SharedMatrix 'op' type." */);
 
-			const setOp = parsedContent as ISetOp<T>;
+			const setOp = content as ISetOp<T>;
 			const rowHandle = this.rows.getAllocatedHandle(setOp.row);
 			const colHandle = this.cols.getAllocatedHandle(setOp.col);
 			const rowsRefSeq = this.rows.getCollabWindow().currentSeq;
