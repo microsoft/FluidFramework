@@ -1111,9 +1111,9 @@ describe("SharedTree", () => {
 
 			/** describes a set of two edits performed on a tree for these tests */
 			enum Edits {
-				A = "two edits to the removed tree",
-				B = "the restoration and editing of the removed tree",
-				C = "the editing and restoration of the removed tree",
+				EditTwice = "two edits to the removed tree",
+				RestoreAndEdit = "the restoration and editing of the removed tree",
+				EditAndRestore = "the editing and restoration of the removed tree",
 			}
 
 			function makeEdits(
@@ -1131,9 +1131,9 @@ describe("SharedTree", () => {
 					},
 				);
 
-				if (edits === Edits.A) {
+				if (edits === Edits.EditTwice) {
 					makeAPrerequisiteEdits(peer);
-				} else if (edits === Edits.B || edits === Edits.C) {
+				} else if (edits === Edits.RestoreAndEdit || edits === Edits.EditAndRestore) {
 					makeBAndCPrerequisiteEdits(peer);
 				}
 
@@ -1165,11 +1165,11 @@ describe("SharedTree", () => {
 			 * The edits performed by the second peer are sent through the resubmit code path.
 			 */
 			const scenarios = [
-				[Edits.A, Edits.A],
-				[Edits.A, Edits.B],
-				[Edits.A, Edits.C],
-				[Edits.B, Edits.A],
-				[Edits.C, Edits.A],
+				[Edits.EditTwice, Edits.EditTwice],
+				[Edits.EditTwice, Edits.RestoreAndEdit],
+				[Edits.EditTwice, Edits.EditAndRestore],
+				[Edits.RestoreAndEdit, Edits.EditTwice],
+				[Edits.EditAndRestore, Edits.EditTwice],
 			];
 
 			scenarios.forEach(([otherEdits, resubmitEdits]) => {
@@ -1192,7 +1192,7 @@ describe("SharedTree", () => {
 					const resubmitTreeOuterList = resubmitTree.flexTree;
 					const otherTreeOuterList = otherTree.flexTree;
 
-					if (otherEdits === Edits.A && resubmitEdits === Edits.A) {
+					if (otherEdits === Edits.EditTwice && resubmitEdits === Edits.EditTwice) {
 						assert.deepEqual(
 							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 							[...resubmitTreeOuterList.at(0)!.content],
@@ -1216,11 +1216,11 @@ describe("SharedTree", () => {
 					provider.trees[0].setConnected(false);
 
 					assert.equal(
-						resubmitUndos[resubmitEdits === Edits.B ? 1 : 0].revert(),
+						resubmitUndos[resubmitEdits === Edits.RestoreAndEdit ? 1 : 0].revert(),
 						RevertibleResult.Success,
 					);
 					assert.equal(
-						resubmitUndos[resubmitEdits === Edits.B ? 0 : 1].revert(),
+						resubmitUndos[resubmitEdits === Edits.RestoreAndEdit ? 0 : 1].revert(),
 						RevertibleResult.Success,
 					);
 					const otherTreeRoot = otherTreeOuterList.at(0);
