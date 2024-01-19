@@ -182,31 +182,11 @@ export class DocumentStorage implements IDocumentStorage {
 				true /* initial */,
 			);
 
-			let initialSummaryUploadSuccessMessage = `Tree reference: ${JSON.stringify(handle)}`;
+			const initialSummaryUploadSuccessMessage = `Tree reference: ${JSON.stringify(handle)}`;
 
-			if (!this.enableWholeSummaryUpload) {
-				const commitParams: ICreateCommitParams = {
-					author: {
-						date: new Date().toISOString(),
-						email: "dummy@microsoft.com",
-						name: "Routerlicious Service",
-					},
-					message: "New document",
-					parents: [],
-					tree: handle,
-				};
+			// In the case of WholeSummary Upload, summary tree handle is actually commit sha or version id.
+			initialSummaryVersionId = handle;
 
-				const commit = await gitManager.createCommit(commitParams);
-				await gitManager.createRef(documentId, commit.sha);
-				initialSummaryUploadSuccessMessage += ` - Commit sha: ${JSON.stringify(
-					commit.sha,
-				)}`;
-				// In the case of ShreddedSummary Upload, summary version is always the commit sha.
-				initialSummaryVersionId = commit.sha;
-			} else {
-				// In the case of WholeSummary Upload, summary tree handle is actually commit sha or version id.
-				initialSummaryVersionId = handle;
-			}
 			initialSummaryUploadMetric.success(initialSummaryUploadSuccessMessage);
 		} catch (error: any) {
 			initialSummaryUploadMetric.error("Error during initial summary upload", error);
