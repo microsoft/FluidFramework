@@ -1194,7 +1194,7 @@ export class Container
 					this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
 					0x0d2 /* "resolved url should be valid Fluid url" */,
 				);
-				assert(!!this.attachmentData.baseSnapshotAndBlobs, 0x5d5 /* no base data */);
+				assert(this.attachmentData.baseSnapshotAndBlobs !== undefined, 0x5d5 /* no base data */);
 				const pendingRuntimeState = await this.runtime.getPendingLocalState(props);
 				const pendingState: IPendingContainerState = {
 					pendingRuntimeState,
