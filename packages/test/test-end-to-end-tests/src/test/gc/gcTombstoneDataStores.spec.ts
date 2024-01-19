@@ -46,7 +46,7 @@ import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestS
  * These tests validate that TombstoneReady data stores are correctly marked as tombstones. Tombstones should be added
  * to the summary and changing them (sending / receiving ops, loading, etc.) is not allowed.
  */
-describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("GC data store tombstone tests", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
 	const remainingTimeUntilSweepMs = 100;
 	const tombstoneTimeoutMs = 200;
