@@ -16,6 +16,7 @@ import {
 	Bar,
 	CartesianGrid,
 	ComposedChart,
+	Label,
 	Legend,
 	Line,
 	ResponsiveContainer,
@@ -236,7 +237,7 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): React.Re
 					dy={16}
 					textAnchor="end"
 					fill={graphColorPalette.axisTick}
-					transform="rotate(-25)"
+					transform="rotate(-20)"
 					fontSize={14}
 				>
 					{payload.value}
@@ -395,7 +396,9 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): React.Re
 				data-testId="test-dynamic-composed-chart"
 			>
 				<CartesianGrid strokeDasharray="2 2" stroke={graphColorPalette.cartesianGrid} />
-				<XAxis dataKey={"x"} tick={<CustomizedXAxisTick />} />
+				<XAxis dataKey={"x"} tick={<CustomizedXAxisTick />}>
+					<Label value="Timestamp" offset={12} position="bottom" />
+				</XAxis>
 				<YAxis tick={<CustomizedYAxisTick />} />
 				<Tooltip
 					contentStyle={{
