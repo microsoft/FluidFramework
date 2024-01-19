@@ -43,6 +43,9 @@ class NodeWebSocketServer implements core.IWebSocketServer {
 	}
 }
 
+/**
+ * @internal
+ */
 export class OrdererManager implements core.IOrdererManager {
 	constructor(
 		private readonly globalDbEnabled: boolean,

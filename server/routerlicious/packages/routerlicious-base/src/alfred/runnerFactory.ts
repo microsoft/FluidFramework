@@ -2,11 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { KafkaOrdererFactory } from "@fluidframework/server-kafka-orderer";
-import { LocalOrderManager } from "@fluidframework/server-memory-orderer";
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
-import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 import * as Redis from "ioredis";
@@ -21,42 +18,6 @@ import {
 	DocumentDeleteService,
 } from "./services";
 import { IAlfredResourcesCustomizations } from ".";
-
-/**
- * @internal
- */
-export class OrdererManager implements core.IOrdererManager {
-	constructor(
-		private readonly globalDbEnabled: boolean,
-		private readonly ordererUrl: string,
-		private readonly tenantManager: core.ITenantManager,
-		private readonly localOrderManager: LocalOrderManager,
-		private readonly kafkaFactory: KafkaOrdererFactory,
-	) {}
-
-	public async getOrderer(tenantId: string, documentId: string): Promise<core.IOrderer> {
-		const tenant = await this.tenantManager.getTenant(tenantId, documentId);
-
-		const messageMetaData = { documentId, tenantId };
-		winston.info(`tenant orderer: ${JSON.stringify(tenant.orderer)}`, { messageMetaData });
-		Lumberjack.info(
-			`tenant orderer: ${JSON.stringify(tenant.orderer)}`,
-			getLumberBaseProperties(documentId, tenantId),
-		);
-
-		if (tenant.orderer.url !== this.ordererUrl && !this.globalDbEnabled) {
-			Lumberjack.error(`Invalid ordering service endpoint`, { messageMetaData });
-			throw new Error("Invalid ordering service endpoint");
-		}
-
-		switch (tenant.orderer.type) {
-			case "kafka":
-				return this.kafkaFactory.create(tenantId, documentId);
-			default:
-				return this.localOrderManager.get(tenantId, documentId);
-		}
-	}
-}
 
 /**
  * @internal

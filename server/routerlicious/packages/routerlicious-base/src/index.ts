@@ -12,13 +12,13 @@ export {
 	DocumentDeleteService,
 	IAlfredResourcesCustomizations,
 	IDocumentDeleteService,
-	OrdererManager,
 } from "./alfred";
 export {
 	NexusResources,
 	NexusResourcesFactory,
 	NexusRunnerFactory,
 	INexusResourcesCustomizations,
+	OrdererManager,
 } from "./nexus";
 export { OrderingResourcesFactory } from "./ordering";
 export {

@@ -53,7 +53,7 @@ import {
 	TestThrottleAndUsageStorageManager,
 	TestNotImplementedDocumentRepository,
 } from "@fluidframework/server-test-utils";
-import { OrdererManager } from "../../alfred";
+import { OrdererManager } from "../../nexus";
 import { Throttler, ThrottlerHelper } from "@fluidframework/server-services";
 import Sinon from "sinon";
 
@@ -63,7 +63,7 @@ if (!Lumberjack.isSetupCompleted()) {
 }
 
 describe("Routerlicious", () => {
-	describe("Alfred", () => {
+	describe("Nexus", () => {
 		describe("WebSockets", () => {
 			describe("Messages", () => {
 				const testTenantId = "test";
