@@ -23,11 +23,6 @@ export interface IRouterliciousDriverPolicies {
 	 */
 	maxConcurrentOrdererRequests: number;
 	/**
-	 * Enable uploading entire summary tree as a IWholeSummaryPayload to storage.
-	 * Default: false
-	 */
-	enableWholeSummaryUpload: boolean;
-	/**
 	 * Enable service endpoint discovery when creating or joining a session.
 	 * Default: false
 	 */

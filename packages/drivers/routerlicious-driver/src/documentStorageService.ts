@@ -17,9 +17,7 @@ import {
 import { IRouterliciousDriverPolicies } from "./policies";
 import { ICache } from "./cache";
 import { WholeSummaryDocumentStorageService } from "./wholeSummaryDocumentStorageService";
-import { ShreddedSummaryDocumentStorageService } from "./shreddedSummaryDocumentStorageService";
 import { GitManager } from "./gitManager";
-import { ISnapshotTreeVersion } from "./definitions";
 import { INormalizedWholeSnapshot } from "./contracts";
 
 export class DocumentStorageService extends DocumentStorageServiceProxy {
@@ -37,37 +35,23 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
 		driverPolicies?: IRouterliciousDriverPolicies,
 		blobCache?: ICache<ArrayBufferLike>,
 		snapshotTreeCache?: ICache<INormalizedWholeSnapshot>,
-		shreddedSummaryTreeCache?: ICache<ISnapshotTreeVersion>,
 		noCacheGitManager?: GitManager,
 		getStorageManager?: (disableCache?: boolean) => Promise<GitManager>,
 	): IDocumentStorageService {
-		const storageService = driverPolicies?.enableWholeSummaryUpload
-			? new WholeSummaryDocumentStorageService(
-					id,
-					manager,
-					logger,
-					policies,
-					driverPolicies,
-					blobCache,
-					snapshotTreeCache,
-					noCacheGitManager,
-					getStorageManager,
-			  )
-			: new ShreddedSummaryDocumentStorageService(
-					id,
-					manager,
-					logger,
-					policies,
-					driverPolicies,
-					blobCache,
-					shreddedSummaryTreeCache,
-					getStorageManager,
-			  );
+		const storageService = new WholeSummaryDocumentStorageService(
+			id,
+			manager,
+			logger,
+			policies,
+			driverPolicies,
+			blobCache,
+			snapshotTreeCache,
+			noCacheGitManager,
+			getStorageManager,
+		);
+
 		// TODO: worth prefetching latest summary making version + snapshot call with WholeSummary storage?
-		if (
-			!driverPolicies?.enableWholeSummaryUpload &&
-			policies.caching === LoaderCachingPolicy.Prefetch
-		) {
+		if (policies.caching === LoaderCachingPolicy.Prefetch) {
 			return new PrefetchDocumentStorageService(storageService);
 		}
 		return storageService;
@@ -81,7 +65,6 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
 		driverPolicies?: IRouterliciousDriverPolicies,
 		blobCache?: ICache<ArrayBufferLike>,
 		snapshotTreeCache?: ICache<INormalizedWholeSnapshot>,
-		shreddedSummaryTreeCache?: ICache<ISnapshotTreeVersion>,
 		public noCacheGitManager?: GitManager,
 		getStorageManager?: (disableCache?: boolean) => Promise<GitManager>,
 	) {
@@ -94,7 +77,6 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
 				driverPolicies,
 				blobCache,
 				snapshotTreeCache,
-				shreddedSummaryTreeCache,
 				noCacheGitManager,
 				getStorageManager,
 			),

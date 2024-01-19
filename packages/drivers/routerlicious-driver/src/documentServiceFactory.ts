@@ -38,7 +38,6 @@ import {
 import { parseFluidUrl, replaceDocumentIdInPath, getDiscoveredFluidResolvedUrl } from "./urlUtils";
 import { ICache, InMemoryCache, NullCache } from "./cache";
 import { pkgVersion as driverVersion } from "./packageVersion";
-import { ISnapshotTreeVersion } from "./definitions";
 import { INormalizedWholeSnapshot } from "./contracts";
 
 const maximumSnapshotCacheDurationMs: FiveDaysMs = 432_000_000; // 5 days in ms
@@ -48,7 +47,6 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
 	maxConcurrentStorageRequests: 100,
 	maxConcurrentOrdererRequests: 100,
 	enableDiscovery: false,
-	enableWholeSummaryUpload: false,
 	enableRestLess: true,
 	enableInternalSummaryCaching: true,
 	enableLongPollingDowngrade: true,
@@ -64,7 +62,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 	private readonly driverPolicies: IRouterliciousDriverPolicies;
 	private readonly blobCache: ICache<ArrayBufferLike>;
 	private readonly wholeSnapshotTreeCache: ICache<INormalizedWholeSnapshot> = new NullCache();
-	private readonly shreddedSummaryTreeCache: ICache<ISnapshotTreeVersion> = new NullCache();
 
 	constructor(
 		private readonly tokenProvider: ITokenProvider,
@@ -79,15 +76,9 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 		};
 		this.blobCache = new InMemoryCache<ArrayBufferLike>();
 		if (this.driverPolicies.enableInternalSummaryCaching) {
-			if (this.driverPolicies.enableWholeSummaryUpload) {
-				this.wholeSnapshotTreeCache = new InMemoryCache<INormalizedWholeSnapshot>(
-					snapshotCacheExpiryMs,
-				);
-			} else {
-				this.shreddedSummaryTreeCache = new InMemoryCache<ISnapshotTreeVersion>(
-					snapshotCacheExpiryMs,
-				);
-			}
+			this.wholeSnapshotTreeCache = new InMemoryCache<INormalizedWholeSnapshot>(
+				snapshotCacheExpiryMs,
+			);
 		}
 	}
 
@@ -358,7 +349,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			this.driverPolicies,
 			this.blobCache,
 			this.wholeSnapshotTreeCache,
-			this.shreddedSummaryTreeCache,
 			discoverFluidResolvedUrl,
 			storageRestWrapper,
 			storageTokenFetcher,

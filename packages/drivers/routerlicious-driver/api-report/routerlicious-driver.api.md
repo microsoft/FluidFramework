@@ -38,7 +38,6 @@ export interface IRouterliciousDriverPolicies {
     enableLongPollingDowngrade: boolean;
     enablePrefetch: boolean;
     enableRestLess: boolean;
-    enableWholeSummaryUpload: boolean;
     isEphemeralContainer: boolean;
     maxConcurrentOrdererRequests: number;
     maxConcurrentStorageRequests: number;

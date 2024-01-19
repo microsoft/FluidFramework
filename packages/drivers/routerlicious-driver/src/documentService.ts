@@ -23,7 +23,6 @@ import {
 } from "./restWrapper";
 import { IRouterliciousDriverPolicies } from "./policies";
 import { ICache } from "./cache";
-import { ISnapshotTreeVersion } from "./definitions";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { GitManager } from "./gitManager";
 import { Historian } from "./historian";
@@ -42,7 +41,6 @@ const RediscoverAfterTimeSinceDiscoveryMs = 5 * 60000; // 5 minute
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
  * clients.
  */
-// eslint-disable-next-line import/namespace
 export class DocumentService
 	extends TypedEventEmitter<api.IDocumentServiceEvents>
 	implements api.IDocumentService
@@ -72,7 +70,6 @@ export class DocumentService
 		private readonly driverPolicies: IRouterliciousDriverPolicies,
 		private readonly blobCache: ICache<ArrayBufferLike>,
 		private readonly wholeSnapshotTreeCache: ICache<INormalizedWholeSnapshot>,
-		private readonly shreddedSummaryTreeCache: ICache<ISnapshotTreeVersion>,
 		private readonly discoverFluidResolvedUrl: () => Promise<api.IResolvedUrl>,
 		private storageRestWrapper: RouterliciousStorageRestWrapper,
 		private readonly storageTokenFetcher: TokenFetcher,
@@ -141,7 +138,6 @@ export class DocumentService
 			this.driverPolicies,
 			this.blobCache,
 			this.wholeSnapshotTreeCache,
-			this.shreddedSummaryTreeCache,
 			noCacheStorageManager,
 			getStorageManager,
 		);
