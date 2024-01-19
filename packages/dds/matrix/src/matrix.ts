@@ -142,6 +142,15 @@ export class SharedMatrix<T = any>
 		return new SharedMatrixFactory();
 	}
 
+	/**
+	 * Note: this field only provides a lower-bound on the reference sequence numbers for in-flight ops.
+	 * The exact reason isn't understood, but some e2e tests suggest that the runtime may sometimes process
+	 * incoming leave/join ops before putting an op that this DDS submits over the wire.
+	 *
+	 * E.g. SharedMatrix submits an op while deltaManager has lastSequenceNumber = 10, but before the runtime
+	 * puts this op over the wire, it processes a client join/leave op with sequence number 11, so the referenceSequenceNumber
+	 * on the SharedMatrix op is 11.
+	 */
 	private readonly inFlightRefSeqs = new Deque<number>();
 
 	private readonly rows: PermutationVector; // Map logical row to storage handle (if any)
