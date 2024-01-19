@@ -73,6 +73,8 @@ import {
 	mapRootChanges,
 	intoStoredSchema,
 	cursorForMapTreeNode,
+	SchemaBuilderBase,
+	FieldKinds,
 } from "../feature-libraries/index.js";
 import {
 	moveToDetachedField,
@@ -120,7 +122,6 @@ import {
 	jsonRoot,
 	jsonSchema,
 	singleJsonCursor,
-	SchemaBuilder,
 	leaf,
 } from "../domains/index.js";
 import { HasListeners, IEmitter, ISubscribable } from "../events/index.js";
@@ -717,22 +718,20 @@ export function flexTreeWithContent<TRoot extends FlexFieldSchema>(
 	return view.flexTree;
 }
 
-export const requiredBooleanRootSchema = new SchemaBuilder({
-	scope: "RequiredBool",
-}).intoSchema(SchemaBuilder.required(leaf.boolean));
-
-export const jsonSequenceRootSchema = new SchemaBuilder({
+export const jsonSequenceRootSchema = new SchemaBuilderBase(FieldKinds.sequence, {
 	scope: "JsonSequenceRoot",
 	libraries: [jsonSchema],
-}).intoSchema(SchemaBuilder.sequence(jsonRoot));
+}).intoSchema(jsonRoot);
 
-export const stringSequenceRootSchema = new SchemaBuilder({
+export const stringSequenceRootSchema = new SchemaBuilderBase(FieldKinds.sequence, {
+	libraries: [leaf.library],
 	scope: "StringSequenceRoot",
-}).intoSchema(SchemaBuilder.sequence(leaf.string));
+}).intoSchema(leaf.string);
 
-export const numberSequenceRootSchema = new SchemaBuilder({
+export const numberSequenceRootSchema = new SchemaBuilderBase(FieldKinds.sequence, {
+	libraries: [leaf.library],
 	scope: "NumberSequenceRoot",
-}).intoSchema(SchemaBuilder.sequence(leaf.number));
+}).intoSchema(leaf.number);
 
 export const emptyJsonSequenceConfig = {
 	schema: jsonSequenceRootSchema,

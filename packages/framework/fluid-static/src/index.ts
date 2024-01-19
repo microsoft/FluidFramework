@@ -19,6 +19,7 @@ export { createDOProviderContainerRuntimeFactory } from "./rootDataObject";
 export { createServiceAudience } from "./serviceAudience";
 export {
 	type ContainerSchema,
+	type ContainerAttachProps,
 	type DataObjectClass,
 	type IConnection,
 	type IMember,
