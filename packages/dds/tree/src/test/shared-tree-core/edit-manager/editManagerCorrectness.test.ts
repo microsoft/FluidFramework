@@ -321,7 +321,7 @@ export function testCorrectness() {
 					//         └─ <- fork1
 
 					manager.advanceMinimumSequenceNumber(brand(2));
-					// Advancing the minimum sequence number does not evict any commits because fork1 branches off of the trunk before commit 1.
+					// Advancing the minimum sequence number does not evict any commits because fork1 branches off of the trunk at commit 1.
 					checkChangeList(manager, [1, 2]);
 
 					fork1.rebaseOnto(fork2);

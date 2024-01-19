@@ -88,6 +88,7 @@ import {
 	UsageError,
 	IFluidErrorBase,
 } from "@fluidframework/telemetry-utils";
+import structuredClone from "@ungap/structured-clone";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
 import {

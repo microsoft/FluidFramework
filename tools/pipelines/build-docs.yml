@@ -202,13 +202,6 @@ stages:
           submodules: false
           clean: true
 
-        - task: DownloadPipelineArtifact@2
-          displayName: 'Copy api-extractor JSON to staging folder'
-          inputs:
-            source: current
-            artifact: api-extractor-combined
-            path: '$(Build.SourcesDirectory)/_api-extractor-temp/doc-models'
-
         - template: templates/include-use-node-version.yml
 
         - template: templates/include-install-pnpm.yml

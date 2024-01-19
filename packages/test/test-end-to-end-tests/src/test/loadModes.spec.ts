@@ -96,7 +96,7 @@ const testDataObjectFactory = new DataObjectFactory(
 );
 
 // REVIEW: enable compat testing?
-describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("LoadModes", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) => {
 	let provider: ITestObjectProvider;
 	before(() => {
 		provider = getTestObjectProvider();

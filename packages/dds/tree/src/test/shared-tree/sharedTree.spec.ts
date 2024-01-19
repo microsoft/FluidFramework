@@ -22,6 +22,7 @@ import {
 	typeNameSymbol,
 	FlexTreeSchema,
 	intoStoredSchema,
+	SchemaBuilderBase,
 } from "../../feature-libraries/index.js";
 import {
 	ChunkedForest,
@@ -78,19 +79,21 @@ describe("SharedTree", () => {
 			forest: ForestType.Reference,
 		});
 
-		const builder = new SchemaBuilder({
+		const builder = new SchemaBuilderBase(FieldKinds.optional, {
+			libraries: [leaf.library],
 			scope: "test",
 			name: "Schematize Tree Tests",
 		});
-		const schema = builder.intoSchema(SchemaBuilder.optional(leaf.number));
+		const schema = builder.intoSchema(leaf.number);
 		const storedSchema = intoStoredSchema(schema);
 
-		const builderGeneralized = new SchemaBuilder({
+		const builderGeneralized = new SchemaBuilderBase(FieldKinds.optional, {
+			libraries: [leaf.library],
 			scope: "test",
 			name: "Schematize Tree Tests Generalized",
 		});
 
-		const schemaGeneralized = builderGeneralized.intoSchema(SchemaBuilder.optional(Any));
+		const schemaGeneralized = builderGeneralized.intoSchema(Any);
 		const storedSchemaGeneralized = intoStoredSchema(schemaGeneralized);
 
 		it("concurrent Schematize", () => {
@@ -211,8 +214,11 @@ describe("SharedTree", () => {
 				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 				"the tree",
 			) as SharedTree;
-			const builder = new SchemaBuilder({ scope: "test" });
-			const schemaGeneralized = builder.intoSchema(builder.optional(Any));
+			const builder = new SchemaBuilderBase(FieldKinds.optional, {
+				scope: "test",
+				libraries: [leaf.library],
+			});
+			const schemaGeneralized = builder.intoSchema(Any);
 			{
 				const view = tree.requireSchema(schemaGeneralized, () => assert.fail());
 				assert.equal(view, undefined);
@@ -257,7 +263,10 @@ describe("SharedTree", () => {
 	});
 
 	it("flex-tree-end-to-end", () => {
-		const builder = new SchemaBuilder({ scope: "e2e" });
+		const builder = new SchemaBuilderBase(FieldKinds.required, {
+			scope: "e2e",
+			libraries: [leaf.library],
+		});
 		const schema = builder.intoSchema(leaf.number);
 		const factory = new SharedTreeFactory({
 			jsonValidator: typeboxValidator,
@@ -399,14 +408,17 @@ describe("SharedTree", () => {
 					objectStorage: new MockStorage(),
 				});
 
-				const b = new SchemaBuilder({ scope: "0x4a6 repro" });
+				const b = new SchemaBuilderBase(FieldKinds.optional, {
+					scope: "test",
+					libraries: [leaf.library],
+				});
 				const node = b.objectRecursive("test node", {
 					child: FlexFieldSchema.createUnsafe(FieldKinds.optional, [
 						() => node,
 						leaf.number,
 					]),
 				});
-				const schema = b.intoSchema(b.optional(node));
+				const schema = b.intoSchema(node);
 
 				const config = {
 					schema,

@@ -99,7 +99,7 @@ function validateBlobStateInSummary(
  * These tests validate that SweepReady attachment blobs are correctly swept. Swept attachment blobs should be
  * removed from the summary, added to the GC deleted blob, and retrieving them should be prevented.
  */
-describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvider) => {
+describeCompat("GC attachment blob sweep tests", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 	const sweepGracePeriodMs = 50;
 	const tombstoneTimeoutMs = 150;
 	const sweepTimeoutMs = tombstoneTimeoutMs + sweepGracePeriodMs;
