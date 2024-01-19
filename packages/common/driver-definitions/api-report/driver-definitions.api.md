@@ -243,9 +243,9 @@ export interface IPartialSnapshotWithContents extends ISnapshotTree {
     // (undocumented)
     blobsContents: Map<string, ArrayBuffer>;
     // (undocumented)
-    isPartialSnapshot: true;
-    // (undocumented)
     ops: ISequencedDocumentMessage[];
+    // (undocumented)
+    partialSnapshot: true;
     sequenceNumber: number | undefined;
 }
 

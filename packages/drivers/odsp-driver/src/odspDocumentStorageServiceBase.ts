@@ -13,7 +13,7 @@ import {
 	FetchSource,
 	IPartialSnapshotWithContents,
 } from "@fluidframework/driver-definitions";
-import { isInstanceOfIPartialSnapshotWithContents } from "@fluidframework/driver-utils";
+import { isPartialSnapshot } from "@fluidframework/driver-utils";
 import * as api from "@fluidframework/protocol-definitions";
 import { IConfigProvider } from "@fluidframework/telemetry-utils";
 import { ISnapshotContents } from "./odspPublicUtils";
@@ -193,7 +193,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 
 		const snapshotTree = await this.readTree(id, scenarioName);
 		// Remove it once it is read.
-		if (isInstanceOfIPartialSnapshotWithContents(snapshotTree)) {
+		if (isPartialSnapshot(snapshotTree)) {
 			this.commitCache.delete(id);
 		}
 		if (!snapshotTree) {
@@ -212,7 +212,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 		const appTree = snapshotTree.trees[".app"];
 		const protocolTree = snapshotTree.trees[".protocol"];
 
-		if (isInstanceOfIPartialSnapshotWithContents(snapshotTree)) {
+		if (isPartialSnapshot(snapshotTree)) {
 			return {
 				...snapshotTree,
 				...this.combineProtocolAndAppSnapshotTree(appTree, protocolTree),

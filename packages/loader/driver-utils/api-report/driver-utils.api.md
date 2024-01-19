@@ -227,10 +227,10 @@ export interface IProgress {
 export function isCombinedAppAndProtocolSummary(summary: ISummaryTree | undefined, ...optionalRootTrees: string[]): summary is CombinedAppAndProtocolSummary;
 
 // @internal
-export function isInstanceOfIPartialSnapshotWithContents(obj: ISnapshotTree): obj is IPartialSnapshotWithContents;
+export function isOnline(): OnlineStatus;
 
 // @internal
-export function isOnline(): OnlineStatus;
+export function isPartialSnapshot(obj: ISnapshotTree): obj is IPartialSnapshotWithContents;
 
 // @internal
 export function isRuntimeMessage(message: {

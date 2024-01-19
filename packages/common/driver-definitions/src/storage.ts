@@ -464,7 +464,7 @@ export interface IPartialSnapshotWithContents extends ISnapshotTree {
 
 	ops: ISequencedDocumentMessage[];
 
-	isPartialSnapshot: true;
+	partialSnapshot: true;
 
 	/**
 	 * Sequence number of the snapshot

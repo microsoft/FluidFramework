@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	IDocumentStorageService,
@@ -14,7 +13,6 @@ import { ISnapshotTree, IVersion } from "@fluidframework/protocol-definitions";
 import {
 	DocumentStorageServiceProxy,
 	PrefetchDocumentStorageService,
-	isInstanceOfIPartialSnapshotWithContents,
 } from "@fluidframework/driver-utils";
 import { IRouterliciousDriverPolicies } from "./policies";
 import { ICache } from "./cache";
@@ -106,10 +104,6 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
 	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
 		const tree = await this.internalStorageService.getSnapshotTree(version);
 		if (tree !== null) {
-			assert(
-				!isInstanceOfIPartialSnapshotWithContents(tree),
-				"No Partial snapshot in R11S driver",
-			);
 			this._logTailSha =
 				".logTail" in tree.trees ? tree.trees[".logTail"].blobs.logTail : undefined;
 		}

@@ -483,5 +483,5 @@ export function getJoinSessionCacheKey(odspResolvedUrl: IOdspResolvedUrl) {
 export function isFullSnapshot(
 	obj: ISnapshotContents | IPartialSnapshotWithContents,
 ): obj is ISnapshotContents {
-	return typeof obj === "object" && !("isPartialSnapshot" in obj);
+	return typeof obj === "object" && obj !== null && !("partialSnapshot" in obj);
 }

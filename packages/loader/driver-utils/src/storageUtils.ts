@@ -11,10 +11,13 @@ import { ISnapshotTree } from "@fluidframework/protocol-definitions";
  * @internal
  * @param obj - obj whose type needs to be identified.
  */
-export function isInstanceOfIPartialSnapshotWithContents(
-	obj: ISnapshotTree,
-): obj is IPartialSnapshotWithContents {
-	return typeof obj === "object" && "isPartialSnapshot" in obj && obj.isPartialSnapshot === true;
+export function isPartialSnapshot(obj: ISnapshotTree): obj is IPartialSnapshotWithContents {
+	return (
+		typeof obj === "object" &&
+		obj !== null &&
+		"partialSnapshot" in obj &&
+		obj.partialSnapshot === true
+	);
 }
 
 /**
@@ -24,7 +27,7 @@ export function isInstanceOfIPartialSnapshotWithContents(
  * @returns - instance of ISnapshotTree
  */
 export function extractISnapshotTreeFromPartialSnapshot(snapshot: ISnapshotTree): ISnapshotTree {
-	if (isInstanceOfIPartialSnapshotWithContents(snapshot)) {
+	if (isPartialSnapshot(snapshot)) {
 		return {
 			id: snapshot.id,
 			blobs: snapshot.blobs,
