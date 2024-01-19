@@ -125,7 +125,7 @@ function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): {
 		switch (summaryObject.type) {
 			case SummaryType.Tree: {
 				const { tree, blobs } = convertSummaryToSnapshotAndBlobs(summaryObject);
-				tree.trees[key] = tree;
+				treeNode.trees[key] = tree;
 				blobContents = { ...blobContents, ...blobs };
 				break;
 			}
@@ -259,11 +259,11 @@ export function getDetachedContainerStateFromSerializedContainer(
 	if (isPendingDetachedContainerState(parsedContainerState)) {
 		return parsedContainerState;
 	} else if (isCombinedAppAndProtocolSummary(parsedContainerState)) {
-		const { tree: snapshot, blobs } =
+		const { tree, blobs } =
 			getSnapshotTreeAndBlobsFromSerializedContainer(parsedContainerState);
 		const detachedContainerState: IPendingDetachedContainerState = {
 			attached: false,
-			baseSnapshot: snapshot,
+			baseSnapshot: tree,
 			snapshotBlobs: blobs,
 			hasAttachmentBlobs: parsedContainerState.tree[hasBlobsSummaryTree] !== undefined,
 		};
