@@ -2429,10 +2429,7 @@ export class Container
 		if (snapshot === undefined && version !== undefined) {
 			this.mc.logger.sendErrorEvent({ eventName: "getSnapshotTreeFailed", id: version.id });
 		}
-		return {
-			snapshot,
-			versionId: version?.id,
-		};
+		return { snapshot, versionId: version?.id };
 	}
 
 	private async instantiateRuntime(
