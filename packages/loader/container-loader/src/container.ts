@@ -676,7 +676,9 @@ export class Container
 	}
 
 	private get offlineLoadEnabled(): boolean {
-		const enabled = this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") === true;
+		const enabled =
+			this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ??
+			this.options?.enableOfflineLoad === true;
 		// summarizer will not have any pending state we want to save
 		return enabled && this.deltaManager.clientDetails.capabilities.interactive;
 	}
@@ -822,7 +824,7 @@ export class Container
 
 		this.client = Container.setupClient(
 			this._containerId,
-			this.options.client as IClient | undefined,
+			this.options.client,
 			this.clientDetailsOverride,
 		);
 

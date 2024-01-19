@@ -78,7 +78,9 @@ describe("findOverlappingIntervalsBySegoff", () => {
 
 	beforeEach(() => {
 		dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: "1" });
-		dataStoreRuntime.options = { intervalStickinessEnabled: true };
+		// TODO this option shouldn't live here - this options object is global to the container
+		// and not specific to the individual dataStoreRuntime.
+		dataStoreRuntime.options = { intervalStickinessEnabled: true } as any;
 		testSharedString = new SharedString(
 			dataStoreRuntime,
 			"test-shared-string",

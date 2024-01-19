@@ -96,9 +96,11 @@ describe("SharedString interval collections", () => {
 
 			// Connect the first SharedString.
 			dataStoreRuntime1.local = false;
+			// TODO this option shouldn't live here - this options object is global to the container
+			// and not specific to the individual dataStoreRuntime.
 			dataStoreRuntime1.options = {
 				intervalStickinessEnabled: true,
-			};
+			} as any;
 			const containerRuntime1 =
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1 = {
@@ -112,9 +114,11 @@ describe("SharedString interval collections", () => {
 			const dataStoreRuntime2 = new MockFluidDataStoreRuntime({ clientId: "2" });
 			const containerRuntime2 =
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+			// TODO this option shouldn't live here - this options object is global to the container
+			// and not specific to the individual dataStoreRuntime.
 			dataStoreRuntime2.options = {
 				intervalStickinessEnabled: true,
-			};
+			} as any;
 			const services2 = {
 				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
@@ -1560,10 +1564,12 @@ describe("SharedString interval collections", () => {
 
 		beforeEach(() => {
 			dataStoreRuntime1 = new MockFluidDataStoreRuntime({ clientId: "1" });
+			// TODO this option shouldn't live here - this options object is global to the container
+			// and not specific to the individual dataStoreRuntime.
 			dataStoreRuntime1.options = {
 				intervalStickinessEnabled: true,
 				mergeTreeReferencesCanSlideToEndpoint: true,
-			};
+			} as any;
 			sharedString = new SharedString(
 				dataStoreRuntime1,
 				"shared-string-1",

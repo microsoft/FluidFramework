@@ -44,7 +44,9 @@ describe("SharedString op-reentrancy", () => {
 				const factory = SharedString.getFactory();
 				const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 				dataStoreRuntime1.local = true;
-				dataStoreRuntime1.options = { sharedStringPreventReentrancy };
+				// TODO this option shouldn't live here - this options object is global to the container
+				// and not specific to the individual dataStoreRuntime.
+				dataStoreRuntime1.options = { sharedStringPreventReentrancy } as any;
 
 				const sharedString = factory.create(dataStoreRuntime1, "A");
 				sharedString.insertText(0, "abcX");
@@ -75,7 +77,9 @@ describe("SharedString op-reentrancy", () => {
 				logger: logger.toTelemetryLogger(),
 			});
 			dataStoreRuntime1.local = false;
-			dataStoreRuntime1.options = { sharedStringPreventReentrancy: false };
+			// TODO this option shouldn't live here - this options object is global to the container
+			// and not specific to the individual dataStoreRuntime.
+			dataStoreRuntime1.options = { sharedStringPreventReentrancy: false } as any;
 			sharedString = factory.create(dataStoreRuntime1, "A");
 
 			const containerRuntime1 =
@@ -87,7 +91,9 @@ describe("SharedString op-reentrancy", () => {
 			sharedString.connect(services1);
 
 			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-			dataStoreRuntime2.options = { sharedStringPreventReentrancy: false };
+			// TODO this option shouldn't live here - this options object is global to the container
+			// and not specific to the individual dataStoreRuntime.
+			dataStoreRuntime2.options = { sharedStringPreventReentrancy: false } as any;
 			dataStoreRuntime2.local = false;
 			const containerRuntime2 =
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);

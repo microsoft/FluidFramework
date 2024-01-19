@@ -22,10 +22,12 @@ function constructClients(
 ): [Client, Client, Client] {
 	return Array.from({ length: numClients }, (_, index) => {
 		const dataStoreRuntime = new MockFluidDataStoreRuntime();
+		// TODO this option shouldn't live here - this options object is global to the container
+		// and not specific to the individual dataStoreRuntime.
 		dataStoreRuntime.options = {
 			intervalStickinessEnabled: true,
 			mergeTreeEnableObliterate: true,
-		};
+		} as any;
 		const sharedString = new SharedString(
 			dataStoreRuntime,
 			String.fromCharCode(index + 65),

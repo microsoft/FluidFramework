@@ -332,14 +332,18 @@ export class SharedStringFuzzFactory extends SharedStringFactory {
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<SharedString> {
-		runtime.options.intervalStickinessEnabled = true;
-		runtime.options.mergeTreeEnableObliterate = true;
+		// TODO this option shouldn't live here - this options object is global to the container
+		// and not specific to the individual dataStoreRuntime.
+		(runtime.options as any).intervalStickinessEnabled = true;
+		(runtime.options as any).mergeTreeEnableObliterate = true;
 		return super.load(runtime, id, services, attributes);
 	}
 
 	public create(document: IFluidDataStoreRuntime, id: string): SharedString {
-		document.options.intervalStickinessEnabled = true;
-		document.options.mergeTreeEnableObliterate = true;
+		// TODO this option shouldn't live here - this options object is global to the container
+		// and not specific to the individual dataStoreRuntime.
+		(document.options as any).intervalStickinessEnabled = true;
+		(document.options as any).mergeTreeEnableObliterate = true;
 		return super.create(document, id);
 	}
 }

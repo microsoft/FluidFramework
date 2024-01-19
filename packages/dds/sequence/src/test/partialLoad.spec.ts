@@ -92,7 +92,9 @@ function generateSummaryTree(
 describe("SharedString Partial Load", () => {
 	it("Validate Full Load", async () => {
 		const containerRuntimeFactory = new MockContainerRuntimeFactory();
-		const options = { mergeTreeSnapshotChunkSize };
+		// TODO this option shouldn't live here - this options object is global to the container
+		// and not specific to the individual dataStoreRuntime.
+		const options: any = { mergeTreeSnapshotChunkSize };
 		const [remoteSharedString, summaryTree] = generateSummaryTree(
 			containerRuntimeFactory,
 			options,
@@ -118,7 +120,9 @@ describe("SharedString Partial Load", () => {
 
 	it("Validate New Format Load", async () => {
 		const containerRuntimeFactory = new MockContainerRuntimeFactory();
-		const options = { newMergeTreeSnapshotFormat: true, mergeTreeSnapshotChunkSize };
+		// TODO this option shouldn't live here - this options object is global to the container
+		// and not specific to the individual dataStoreRuntime.
+		const options: any = { newMergeTreeSnapshotFormat: true, mergeTreeSnapshotChunkSize };
 		const [remoteSharedString, summaryTree] = generateSummaryTree(
 			containerRuntimeFactory,
 			options,
@@ -144,7 +148,9 @@ describe("SharedString Partial Load", () => {
 
 	it("Validate Partial load", async () => {
 		const containerRuntimeFactory = new MockContainerRuntimeFactory();
-		const options = {
+		// TODO this option shouldn't live here - this options object is global to the container
+		// and not specific to the individual dataStoreRuntime.
+		const options: any = {
 			newMergeTreeSnapshotFormat: true,
 			sequenceInitializeFromHeaderOnly: true,
 			mergeTreeSnapshotChunkSize,
@@ -179,7 +185,9 @@ describe("SharedString Partial Load", () => {
 
 	it("Validate Partial load with local ops", async () => {
 		const containerRuntimeFactory = new MockContainerRuntimeFactory();
-		const options = {
+		// TODO this option shouldn't live here - this options object is global to the container
+		// and not specific to the individual dataStoreRuntime.
+		const options: any = {
 			sequenceInitializeFromHeaderOnly: true,
 			mergeTreeSnapshotChunkSize,
 		};
@@ -228,7 +236,9 @@ describe("SharedString Partial Load", () => {
 
 	it("Validate Partial load with remote ops", async () => {
 		const containerRuntimeFactory = new MockContainerRuntimeFactory();
-		const options = {
+		// TODO this option shouldn't live here - this options object is global to the container
+		// and not specific to the individual dataStoreRuntime.
+		const options: any = {
 			sequenceInitializeFromHeaderOnly: true,
 			mergeTreeSnapshotChunkSize,
 		};
@@ -274,7 +284,9 @@ describe("SharedString Partial Load", () => {
 
 	it("Validate Partial load with local and remote ops", async () => {
 		const containerRuntimeFactory = new MockContainerRuntimeFactory();
-		const options = {
+		// TODO this option shouldn't live here - this options object is global to the container
+		// and not specific to the individual dataStoreRuntime.
+		const options: any = {
 			sequenceInitializeFromHeaderOnly: true,
 			mergeTreeSnapshotChunkSize,
 		};
