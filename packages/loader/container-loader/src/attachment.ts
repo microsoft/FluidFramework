@@ -65,7 +65,10 @@ export interface AttachingDataWithoutBlobs {
  */
 export interface AttachedData {
 	readonly state: AttachState.Attached;
-	readonly baseSnapshotAndBlobs?: [ISnapshotTree, ISerializableBlobContents];
+	readonly baseSnapshotAndBlobs?: {
+		snapshot: ISnapshotTree,
+		blobs: ISerializableBlobContents,
+	};
 }
 
 /**
