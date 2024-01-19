@@ -1208,18 +1208,18 @@ describe("SharedTree", () => {
 						assert.deepEqual([...otherTreeOuterList], []);
 					}
 
+					// disconnect the resubmit tree
+					provider.trees[0].setConnected(false);
+
 					const firstUndoIndex = resubmitEdits === Edits.RestoreAndEdit ? 1 : 0;
 					const secondUndoIndex = resubmitEdits === Edits.RestoreAndEdit ? 0 : 1;
 
 					assert.equal(otherUndos[firstUndoIndex].revert(), RevertibleResult.Success);
 					assert.equal(otherUndos[secondUndoIndex].revert(), RevertibleResult.Success);
-					provider.processMessages();
-
-					// disconnect the resubmit tree
-					provider.trees[0].setConnected(false);
-
 					assert.equal(resubmitUndos[firstUndoIndex].revert(), RevertibleResult.Success);
 					assert.equal(resubmitUndos[secondUndoIndex].revert(), RevertibleResult.Success);
+
+					provider.processMessages();
 					const otherTreeRoot = otherTreeOuterList.at(0);
 					if (otherTreeRoot !== undefined) {
 						assert.notDeepEqual([...otherTreeRoot.content], ["a"]);
