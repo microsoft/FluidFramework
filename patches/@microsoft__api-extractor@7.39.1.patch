@@ -1,14 +1,5 @@
-diff --git a/.vscode/settings.json b/.vscode/settings.json
-new file mode 100644
-index 0000000000000000000000000000000000000000..7c2feb7ef4731d430facfcafcbac59e3ea861849
---- /dev/null
-+++ b/.vscode/settings.json
-@@ -0,0 +1,3 @@
-+{
-+  "editor.formatOnSave": false
-+}
 diff --git a/lib/api/ExtractorConfig.js b/lib/api/ExtractorConfig.js
-index 76604a00e7e6a1028db6803ab38bdb45d2b5d395..4999a627a954d859eafb3b1586c86d8658b1cf00 100644
+index 6e410f37c0a6ff56fe834d468f055da2ee7549b0..a863165d6212209db6e94bb429df61429dca5278 100644
 --- a/lib/api/ExtractorConfig.js
 +++ b/lib/api/ExtractorConfig.js
 @@ -448,11 +448,8 @@ class ExtractorConfig {
@@ -25,6 +16,20 @@ index 76604a00e7e6a1028db6803ab38bdb45d2b5d395..4999a627a954d859eafb3b1586c86d86
              const tsconfigFilePath = ExtractorConfig._resolvePathWithTokens('tsconfigFilePath', configObject.compiler.tsconfigFilePath, tokenContext);
              if (configObject.compiler.overrideTsconfig === undefined) {
                  if (!tsconfigFilePath) {
+@@ -657,6 +654,7 @@ class ExtractorConfig {
+         throw new Error(`The "${fieldName}" value contains extra token characters ("<" or ">"): ${value}`);
+     }
+ }
++exports.ExtractorConfig = ExtractorConfig;
+ /**
+  * The JSON Schema for API Extractor config file (api-extractor.schema.json).
+  */
+@@ -674,5 +672,4 @@ ExtractorConfig._tsdocBaseFilePath = path.resolve(__dirname, '../../extends/tsdo
+ ExtractorConfig._defaultConfig = node_core_library_1.JsonFile.load(path.join(__dirname, '../schemas/api-extractor-defaults.json'));
+ /** Match all three flavors for type declaration files (.d.ts, .d.mts, .d.cts) */
+ ExtractorConfig._declarationFileExtensionRegExp = /\.d\.(c|m)?ts$/i;
+-exports.ExtractorConfig = ExtractorConfig;
+ //# sourceMappingURL=ExtractorConfig.js.map
 diff --git a/lib/collector/Collector.js b/lib/collector/Collector.js
 index 34702cd3969e8357dd97815185af571c7d85b49e..e777cae87784182a747ddce8a97436e35937fb73 100644
 --- a/lib/collector/Collector.js
@@ -87,7 +92,7 @@ index 34702cd3969e8357dd97815185af571c7d85b49e..e777cae87784182a747ddce8a97436e3
       * Returns a list of names (e.g. "example-library") that should appear in a reference like this:
       *
 diff --git a/lib/enhancers/ValidationEnhancer.js b/lib/enhancers/ValidationEnhancer.js
-index 3511bb2fd2269cce8c45197ef8dc61c28158f743..61101cea95d362b94be8b9e9ccc3e833fca8fccc 100644
+index 3511bb2fd2269cce8c45197ef8dc61c28158f743..bdf910976c28b427eea3264f4f2de0d94bf4fdba 100644
 --- a/lib/enhancers/ValidationEnhancer.js
 +++ b/lib/enhancers/ValidationEnhancer.js
 @@ -186,15 +186,13 @@ class ValidationEnhancer {
@@ -113,9 +118,18 @@ index 3511bb2fd2269cce8c45197ef8dc61c28158f743..61101cea95d362b94be8b9e9ccc3e833
                  if (!alreadyWarnedEntities.has(referencedEntity)) {
                      alreadyWarnedEntities.add(referencedEntity);
 diff --git a/lib/generators/DtsRollupGenerator.js b/lib/generators/DtsRollupGenerator.js
-index 5a6490760417c2cbefc8ff277f9183a7c870e797..4b93942c049e1fe3940f9cc71c781c591d2bb97a 100644
+index 2b5918977056c43a3a28fa9591bfa590084cf3f3..808c427d96587abd817395aab5c9fc6e65676694 100644
 --- a/lib/generators/DtsRollupGenerator.js
 +++ b/lib/generators/DtsRollupGenerator.js
+@@ -67,7 +67,7 @@ var DtsRollupKind;
+      * except definitions marked as \@beta, \@alpha, or \@internal.
+      */
+     DtsRollupKind[DtsRollupKind["PublicRelease"] = 3] = "PublicRelease";
+-})(DtsRollupKind = exports.DtsRollupKind || (exports.DtsRollupKind = {}));
++})(DtsRollupKind || (exports.DtsRollupKind = DtsRollupKind = {}));
+ class DtsRollupGenerator {
+     /**
+      * Generates the typings file and writes it to disk.
 @@ -103,16 +103,9 @@ class DtsRollupGenerator {
          // Emit the imports
          for (const entity of collector.entities) {
