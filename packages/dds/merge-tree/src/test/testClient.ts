@@ -139,17 +139,8 @@ export class TestClient extends Client {
 		new DoublyLinkedList<ISequencedDocumentMessage>();
 
 	private readonly textHelper: MergeTreeTextHelper;
-	constructor(
-		options?: IMergeTreeOptions & PropertySet,
-		specToSeg = specToSegment,
-		getMinInFlightRefSeq: () => number | undefined = () => undefined,
-	) {
-		super(
-			specToSeg,
-			createChildLogger({ namespace: "fluid:testClient" }),
-			options,
-			getMinInFlightRefSeq,
-		);
+	constructor(options?: IMergeTreeOptions & PropertySet, specToSeg = specToSegment) {
+		super(specToSeg, createChildLogger({ namespace: "fluid:testClient" }), options);
 		this.mergeTree = (this as Record<"_mergeTree", MergeTree>)._mergeTree;
 		this.textHelper = new MergeTreeTextHelper(this.mergeTree);
 
