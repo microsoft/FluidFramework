@@ -1521,7 +1521,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				if (this.index < subdirNames.length) {
 					const subdirName = subdirNames[this.index++];
 					const subdir = this.dirs.get(subdirName);
-					assert(subdir !== undefined, "Could not find expected sub-directory.");
+					assert(subdir !== undefined, 0x8aa /* Could not find expected sub-directory. */);
 					return { value: [subdirName, subdir], done: false };
 				}
 				return { value: undefined, done: true };
@@ -2244,10 +2244,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			}
 		} else if ((op.type === "delete" || op.type === "set") && localOpMetadata.type === "edit") {
 			const key: unknown = op.key;
-			assert(key !== undefined, '"key" property is missing from edit operation.');
+			assert(key !== undefined, 0x8ab /* "key" property is missing from edit operation. */);
 			assert(
 				typeof key === "string",
-				'"key" property in edit operation is misconfigured. Expected a string.',
+				0x8ac /* "key" property in edit operation is misconfigured. Expected a string. */,
 			);
 
 			if (localOpMetadata.previousValue === undefined) {
@@ -2261,11 +2261,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			const subdirName: unknown = op.subdirName;
 			assert(
 				subdirName !== undefined,
-				'"subdirName" property is missing from "createSubDirectory" operation.',
+				0x8ad /* "subdirName" property is missing from "createSubDirectory" operation. */,
 			);
 			assert(
 				typeof subdirName === "string",
-				'"subdirName" property in "createSubDirectory" operation is misconfigured. Expected a string.',
+				0x8ae /* "subdirName" property in "createSubDirectory" operation is misconfigured. Expected a string. */,
 			);
 
 			this.deleteSubDirectoryCore(subdirName, true);
@@ -2274,11 +2274,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			const subdirName: unknown = op.subdirName;
 			assert(
 				subdirName !== undefined,
-				'"subdirName" property is missing from "deleteSubDirectory" operation.',
+				0x8af /* "subdirName" property is missing from "deleteSubDirectory" operation. */,
 			);
 			assert(
 				typeof subdirName === "string",
-				'"subdirName" property in "deleteSubDirectory" operation is misconfigured. Expected a string.',
+				0x8b0 /* "subdirName" property in "deleteSubDirectory" operation is misconfigured. Expected a string. */,
 			);
 
 			if (localOpMetadata.subDirectory !== undefined) {

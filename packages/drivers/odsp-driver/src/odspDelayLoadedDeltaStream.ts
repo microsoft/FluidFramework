@@ -454,7 +454,7 @@ export class OdspDelayLoadedDeltaStream {
 			timestamp: number;
 		};
 		const time = label.timestamp;
-		assert(time > 0, "time should be positive");
+		assert(time > 0, 0x8b5 /* time should be positive */);
 		if (time > this.labelUpdateTimestamp) {
 			this.labelUpdateTimestamp = time;
 			this.metadataUpdateHandler({
