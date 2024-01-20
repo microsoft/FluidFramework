@@ -1165,6 +1165,12 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		);
 
 		const summarizeResult = this.channel.getAttachSummary();
+		//* const gcData = this.channel.getAttachGCData(); // (synchronous)
+		//* This is the closest to symmetry I could get to the DDS attach case.
+		//* It's called from makeDataStoreLocallyVisible, which is somewhat parallel (ish)
+		//* to makeChannelLocallyVisible, which is where the DDS gets its GC data.
+		//* There is already plenty of divergence between the two attach op flows,
+		//* not sure it's worth it to push on.
 
 		// Wrap dds summaries in .channels subtree.
 		wrapSummaryInChannelsTree(summarizeResult);

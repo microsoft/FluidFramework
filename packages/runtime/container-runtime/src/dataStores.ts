@@ -232,6 +232,8 @@ export class DataStores implements IDisposable {
 			snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatAttachBlobs);
 		}
 
+		//* The blobs are all here and available to be read synchronously, just do it here!
+
 		// Include the type of attach message which is the pkg of the store to be
 		// used by RemoteFluidDataStoreContext in case it is not in the snapshot.
 		const pkg = [attachMessage.type];

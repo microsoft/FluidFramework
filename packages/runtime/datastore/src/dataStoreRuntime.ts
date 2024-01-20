@@ -486,7 +486,7 @@ export class FluidDataStoreRuntime
 		this.notBoundedChannelContextSet.delete(channel.id);
 		// If our data store is attached, then attach the channel.
 		if (this.isAttached) {
-			this.attachChannel(channel);
+			this.makeChannelLocallyVisible(channel);
 			return;
 		}
 
@@ -582,6 +582,8 @@ export class FluidDataStoreRuntime
 	) {
 		const flatBlobs = new Map<string, ArrayBufferLike>();
 		const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
+
+		//* GC Data is available here to be read synchronously
 
 		return new RemoteChannelContext(
 			this,
@@ -910,7 +912,7 @@ export class FluidDataStoreRuntime
 	/**
 	 * Attach channel should only be called after the data store has been attached
 	 */
-	private attachChannel(channel: IChannel): void {
+	private makeChannelLocallyVisible(channel: IChannel): void {
 		this.verifyNotClosed();
 		// If this handle is already attached no need to attach again.
 		if (channel.handle.isAttached) {
@@ -930,6 +932,11 @@ export class FluidDataStoreRuntime
 			true /* fullTree */,
 			false /* trackState */,
 		);
+
+		//* Move to SharedObject for symmetry with DataStore case above?
+		//* That's problematic because the same IChannel.getAttachSummary is used for both
+		//* DDS and DataStore attach op, but we don't want the GC Data in the DDS summary trees
+		//* for the DataStore case.
 
 		// We need to include the channel's GC Data so remote clients can learn of this channel's outbound routes
 		const gcData = channel.getGCData(); //* fullGC?
