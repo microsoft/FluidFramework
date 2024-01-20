@@ -65,6 +65,7 @@ trigger:
     - azure
     - examples
     - experimental
+    - common/build/build-common
     - lerna.json
     - package.json
     - pnpm-lock.yaml
@@ -97,6 +98,7 @@ pr:
     - azure
     - examples
     - experimental
+    - common/build/build-common
     - lerna.json
     - package.json
     - pnpm-lock.yaml
@@ -152,7 +154,6 @@ extends:
     - ci:test:stress:tinylicious
     - test:copyresults
     testResultDirs:
-    - nyc/azure
     - nyc/examples
     - nyc/experimental
     - nyc/packages

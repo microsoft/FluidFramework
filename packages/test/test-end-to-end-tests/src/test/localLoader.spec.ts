@@ -95,7 +95,7 @@ const testDataObjectFactory = new DataObjectFactory(
 );
 
 // REVIEW: enable compat testing?
-describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider) => {
+describeCompat("LocalLoader", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	before(() => {
 		provider = getTestObjectProvider();
@@ -158,7 +158,7 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider) => {
 	describe("1 dataObject", () => {
 		let dataObject: TestDataObject;
 
-		beforeEach(async () => {
+		beforeEach("setup", async () => {
 			const documentId = createDocumentId();
 			const container = await createContainer(documentId, testDataObjectFactory);
 			dataObject = (await container.getEntryPoint()) as TestDataObject;
@@ -272,7 +272,7 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider) => {
 		describe("1 data type", () => {
 			let text: SharedString;
 
-			beforeEach(async () => {
+			beforeEach("setup", async () => {
 				const documentId = createDocumentId();
 				const factory = new TestFluidObjectFactory([["text", SharedString.getFactory()]]);
 				const container = await createContainer(documentId, factory);
@@ -294,7 +294,7 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider) => {
 			let text1: SharedString;
 			let text2: SharedString;
 
-			beforeEach(async () => {
+			beforeEach("setup", async () => {
 				const documentId = createDocumentId();
 				const factory = new TestFluidObjectFactory([["text", SharedString.getFactory()]]);
 
@@ -342,7 +342,7 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider) => {
 			let dataObject1: TestDataObject;
 			let dataObject2: TestDataObject;
 
-			beforeEach(async () => {
+			beforeEach("setup", async () => {
 				const documentId = createDocumentId();
 
 				container1 = await createContainer(documentId, testDataObjectFactory);

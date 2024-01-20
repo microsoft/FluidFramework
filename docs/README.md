@@ -309,13 +309,13 @@ This shortcode can be found in `layouts/shortcodes/apiref.html`.
 `Markdown` like the following:
 
 ```markdown
-The {{< apiref "FluidContainer" "class" >}} class can be used to...
+The {{< apiref "fluid-static" "FluidContainer" "class" >}} class can be used to...
 ```
 
 will generate something like:
 
 ```markdown
-The <a href="{{ relref /docs/api/v1/fluid-static/ifluidcontainer-interface.md }}"><code>FluidContainer</code></a> class can be used to...
+The <a href="{{ relref /docs/apis/fluid-static/ifluidcontainer-interface.md }}"><code>FluidContainer</code></a> class can be used to...
 ```
 
 ## Working on the template
