@@ -63,5 +63,6 @@ export {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	SummarizeInternalFn,
+	summarizerClientType,
 	totalBlobSizePropertyName,
 } from "./summary";

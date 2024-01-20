@@ -425,6 +425,9 @@ export interface OpAttributionKey {
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext) => Promise<ISummarizeInternalResult>;
 
 // @internal (undocumented)
+export const summarizerClientType = "summarizer";
+
+// @internal (undocumented)
 export const totalBlobSizePropertyName = "TotalBlobSize";
 
 // @alpha

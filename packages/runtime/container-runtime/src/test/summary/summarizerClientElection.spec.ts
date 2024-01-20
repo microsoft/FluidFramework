@@ -8,13 +8,13 @@ import { Deferred } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { ISequencedClient, MessageType } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
+import { summarizerClientType } from "@fluidframework/runtime-definitions";
 import {
 	ISerializedElection,
 	OrderedClientCollection,
 	OrderedClientElection,
 	ISummaryCollectionOpEvents,
 	SummarizerClientElection,
-	summarizerClientType,
 	IConnectedEvents,
 	IConnectedState,
 	SummaryManager,

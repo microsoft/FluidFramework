@@ -7,14 +7,13 @@ import { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IClientDetails, MessageType } from "@fluidframework/protocol-definitions";
+import { summarizerClientType } from "@fluidframework/runtime-definitions";
 import {
 	IOrderedClientElection,
 	ISerializedElection,
 	ITrackedClient,
 } from "./orderedClientElection";
 import { ISummaryCollectionOpEvents } from "./summaryCollection";
-
-export const summarizerClientType = "summarizer";
 
 export interface ISummarizerClientElectionEvents extends IEvent {
 	(event: "electedSummarizerChanged", handler: () => void): void;

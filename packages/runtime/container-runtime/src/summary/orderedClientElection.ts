@@ -13,7 +13,7 @@ import { assert } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { IClient, IQuorumClients, ISequencedClient } from "@fluidframework/protocol-definitions";
-import { summarizerClientType } from "./summarizerClientElection";
+import { summarizerClientType } from "@fluidframework/runtime-definitions";
 
 // helper types for recursive readonly.
 // eslint-disable-next-line @typescript-eslint/ban-types

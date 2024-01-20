@@ -14,6 +14,11 @@ import {
 import { IGarbageCollectionData, IGarbageCollectionDetailsBase } from "./garbageCollection";
 
 /**
+ * @internal
+ */
+export const summarizerClientType = "summarizer";
+
+/**
  * Contains the aggregation data from a Tree/Subtree.
  * @public
  */
