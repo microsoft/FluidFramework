@@ -35,7 +35,7 @@ import {
 	type AzureContainerVersion,
 	type AzureGetVersionsOptions,
 } from "./interfaces";
-import { isAzureRemoteConnectionConfig } from "./utils";
+import { isAzureRemoteConnectionConfig, wrappedConfigProvider } from "./utils";
 
 /**
  * Strongly typed id for connecting to a local Azure Fluid Relay.
@@ -48,6 +48,15 @@ const getTenantId = (connectionProperties: AzureConnectionConfig): string => {
 };
 
 const MAX_VERSION_COUNT = 5;
+
+/**
+ * Default feature gates.
+ * These values will only be used if the feature gate is not already set by the supplied config provider.
+ */
+const azureClientFeatureGates = {
+	// Azure client requires a write connection by default
+	"Fluid.Container.ForceWriteConnection": true,
+};
 
 /**
  * AzureClient provides the ability to have a Fluid object backed by the Azure Fluid Relay or,
@@ -80,7 +89,10 @@ export class AzureClient {
 			origDocumentServiceFactory,
 			properties.summaryCompression,
 		);
-		this.configProvider = properties.configProvider;
+		this.configProvider = wrappedConfigProvider(
+			azureClientFeatureGates,
+			properties.configProvider,
+		);
 	}
 
 	/**
