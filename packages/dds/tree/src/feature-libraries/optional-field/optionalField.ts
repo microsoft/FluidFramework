@@ -155,119 +155,63 @@ function tryInferInputContext(change: OptionalChangeset): "empty" | "filled" | u
 
 export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	compose: (
-		changes: TaggedChange<OptionalChangeset>[],
+		{ change: change1, revision: revision1 }: TaggedChange<OptionalChangeset>,
+		{ change: change2, revision: revision2 }: TaggedChange<OptionalChangeset>,
 		composeChild: NodeChangeComposer,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
 		revisionMetadata: RevisionMetadataSource,
 	): OptionalChangeset => {
-		const getBidirectionalMaps = (
-			moves: OptionalChangeset["moves"],
-		): {
-			srcToDst: RegisterMap<[dst: RegisterId, target: "nodeTargeting" | "cellTargeting"]>;
-			dstToSrc: RegisterMap<RegisterId>;
-		} => {
-			const srcToDst = new RegisterMap<
-				[dst: RegisterId, target: "nodeTargeting" | "cellTargeting"]
-			>();
-			const dstToSrc = new RegisterMap<RegisterId>();
-			for (const [src, dst, target] of moves) {
-				srcToDst.set(src, [dst, target]);
-				dstToSrc.set(dst, src);
-			}
-			return { srcToDst, dstToSrc };
-		};
+		const earliestReservedDetachId: RegisterId | undefined =
+			tryWithIntention(change1.reservedDetachId, revision1, revisionMetadata) ??
+			tryWithIntention(change2.reservedDetachId, revision2, revisionMetadata);
 
-		let earliestReservedDetachId: RegisterId | undefined;
-		let inputContext: "empty" | "filled" | undefined;
+		const inputContext = tryInferInputContext(change1) ?? tryInferInputContext(change2);
 
-		const childChangesByOriginalId = new RegisterMap<TaggedChange<NodeChangeset>[]>();
-		// TODO: It might be possible to compose moves in place rather than repeatedly copy.
-		// Additionally, working out a 'register allocation' strategy which enables frequent cancellation of noop moves
-		// for sandwich rebases would help with cloning if in-place proves too difficult
-		const current = getBidirectionalMaps([]);
-		for (const { change, revision } of changes) {
-			inputContext ??= tryInferInputContext(change);
-			const withIntention = (id: RegisterId): RegisterId => {
-				if (id === "self") {
-					return id;
-				}
-				const intention = getIntention(id.revision ?? revision, revisionMetadata);
-				return { revision: intention, localId: id.localId };
-			};
+		/**
+		 * Map1 from input register to output register
+		 * Set map based on change1
+		 * Get map2 from change1 output to change1 input register
+		 * For move(src, dst) in change2
+		 * - Map1[map2[src] ?? src] = dst
+		 *
+		 * Remap change2's changes using map2
+		 * For each field in union of change1's changes, change2's remapped changes, compose
+		 */
 
-			const nextSrcToDst = new RegisterMap<
-				[dst: RegisterId, target: "nodeTargeting" | "cellTargeting"]
-			>();
-			const nextDstToSrc = new RegisterMap<RegisterId>();
-
-			if (change.reservedDetachId !== undefined && earliestReservedDetachId === undefined) {
-				earliestReservedDetachId = withIntention(change.reservedDetachId);
-			}
-
-			// Compose all the things that `change` moved.
-			for (const [unintentionedSrc, unintentionedDst, target] of change.moves) {
-				const src = withIntention(unintentionedSrc);
-				const dst = withIntention(unintentionedDst);
-				let originalSrc = current.dstToSrc.get(src);
-				let currentTarget: "cellTargeting" | "nodeTargeting" | undefined;
-				if (originalSrc !== undefined) {
-					const [dst2, existingTarget] =
-						current.srcToDst.get(originalSrc) ?? fail("expected backward mapping");
-					assert(
-						areEqualRegisterIds(dst2, src),
-						0x855 /* expected consistent backward mapping */,
-					);
-					currentTarget = existingTarget;
-				} else {
-					originalSrc = src;
-				}
-				nextSrcToDst.set(originalSrc, [
-					dst,
-					target === "cellTargeting" &&
-					(currentTarget === undefined || currentTarget === "cellTargeting")
-						? "cellTargeting"
-						: "nodeTargeting",
-				]);
-				nextDstToSrc.set(dst, originalSrc);
-			}
-
-			// Include any existing moves that `change` didn't affect.
-			for (const [src, [dst, target]] of current.srcToDst.entries()) {
-				if (!nextSrcToDst.has(src)) {
-					const intentionedDst = withIntention(dst);
-					nextSrcToDst.set(src, [intentionedDst, target]);
-					nextDstToSrc.set(intentionedDst, src);
-				}
-			}
-
-			for (const [id, childChange] of change.childChanges) {
-				const intentionedId = withIntention(id);
-				const originalId = current.dstToSrc.get(intentionedId) ?? intentionedId;
-				const existingChanges = childChangesByOriginalId.get(originalId);
-				const taggedChange = tagChange(childChange, revision);
-				if (existingChanges === undefined) {
-					childChangesByOriginalId.set(originalId, [taggedChange]);
-				} else {
-					existingChanges.push(taggedChange);
-				}
-			}
-
-			current.srcToDst = nextSrcToDst;
-			current.dstToSrc = nextDstToSrc;
+		// TODO: Should inline intentions
+		const { srcToDst, dstToSrc } = getBidirectionalMaps(change1.moves);
+		for (const [src, dst, _target] of change2.moves) {
+			const originalSrc = dstToSrc.get(src);
+			srcToDst.set(originalSrc ?? src, dst);
 		}
 
 		const composedMoves: OptionalChangeset["moves"] = [];
-		for (const [src, [dst, target]] of current.srcToDst.entries()) {
-			composedMoves.push([src, dst, target]);
+		for (const [src, dst] of srcToDst.entries()) {
+			// TODO: Targeting
+			composedMoves.push([src, dst, "nodeTargeting"]);
+		}
+
+		const childChanges2ByOriginalId = new RegisterMap<NodeChangeset>();
+		for (const [id, change] of change2.childChanges) {
+			const originalId = dstToSrc.get(id);
+			childChanges2ByOriginalId.set(originalId ?? id, change);
+		}
+
+		const composedChildChanges: OptionalChangeset["childChanges"] = [];
+		for (const [id, childChange1] of change1.childChanges) {
+			const childChange2 = childChanges2ByOriginalId.get(id);
+			composedChildChanges.push([id, composeChild(childChange1, childChange2)]);
+			childChanges2ByOriginalId.delete(id);
+		}
+
+		for (const [id, childChange2] of childChanges2ByOriginalId.entries()) {
+			composedChildChanges.push([id, composeChild(undefined, childChange2)]);
 		}
 
 		const composed: OptionalChangeset = {
 			moves: composedMoves,
-			childChanges: Array.from(childChangesByOriginalId.entries(), ([id, childChanges]) => [
-				id,
-				composeChild(childChanges),
-			]),
+			childChanges: composedChildChanges,
 		};
 
 		if (inputContext === "empty") {
@@ -474,6 +418,56 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	},
 };
 
+function getBidirectionalMaps(moves: OptionalChangeset["moves"]): {
+	srcToDst: RegisterMap<RegisterId>;
+	dstToSrc: RegisterMap<RegisterId>;
+} {
+	const srcToDst = new RegisterMap<RegisterId>();
+	const dstToSrc = new RegisterMap<RegisterId>();
+	for (const [src, dst, _target] of moves) {
+		srcToDst.set(src, dst);
+		dstToSrc.set(dst, src);
+	}
+	return { srcToDst, dstToSrc };
+}
+
+function getMovedIds(change1: OptionalChangeset, change2: OptionalChangeset): Set<RegisterId> {
+	const sourceIds = new Set<RegisterId>();
+	const destinationIds = new Set<RegisterId>();
+	for (const [src, dst, _kind] of change1.moves) {
+		sourceIds.add(src);
+		destinationIds.add(dst);
+	}
+
+	for (const [src, _dst, _kind] of change2.moves) {
+		if (!destinationIds.has(src)) {
+			sourceIds.add(src);
+		}
+	}
+
+	return sourceIds;
+}
+
+function tryWithIntention(
+	id: RegisterId | undefined,
+	revision: RevisionTag | undefined,
+	revisionMetadata: RevisionMetadataSource,
+): RegisterId | undefined {
+	return id !== undefined ? withIntention(id, revision, revisionMetadata) : undefined;
+}
+
+function withIntention(
+	id: RegisterId,
+	revision: RevisionTag | undefined,
+	revisionMetadata: RevisionMetadataSource,
+): RegisterId {
+	if (id === "self") {
+		return id;
+	}
+	const intention = getIntention(id.revision ?? revision, revisionMetadata);
+	return { revision: intention, localId: id.localId };
+}
+
 export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 	/**
 	 * Creates a change which replaces the field with `newContent`
@@ -608,6 +602,8 @@ export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, Option
 		change.childChanges.length === 0 &&
 		change.moves.length === 0 &&
 		change.reservedDetachId === undefined,
+
+	createEmpty: () => ({ moves: [], childChanges: [] }),
 };
 
 function areEqualRegisterIds(a: RegisterId, b: RegisterId): boolean {

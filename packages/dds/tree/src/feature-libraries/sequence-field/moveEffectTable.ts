@@ -17,6 +17,7 @@ export type MoveEffectTable<T> = CrossFieldManager<MoveEffect<T>>;
  * Changes to be applied to a move mark.
  */
 export interface MoveEffect<T> {
+	// TODO: Does this need to be tagged?
 	/**
 	 * Node changes which should be applied to this mark.
 	 * If this mark already has node changes, `modifyAfter` should be composed as later changes.

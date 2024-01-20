@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { CrossFieldManager, NodeChangeset } from "../../../feature-libraries/index.js";
+import { CrossFieldManager, NodeChangeset, Optional } from "../../../feature-libraries/index.js";
 import {
 	ChangesetLocalId,
 	DeltaFieldChanges,
@@ -49,6 +49,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import { assertEqual } from "./optionalFieldUtils.js";
+import { Tagged } from "@fluidframework/core-interfaces";
 
 type RevisionTagMinter = () => RevisionTag;
 
@@ -181,7 +182,7 @@ function rebaseComposed(
 	baseChanges.forEach((base) => deepFreeze(base));
 	deepFreeze(change);
 
-	const composed = compose(baseChanges, metadata);
+	const composed = composeList(baseChanges, metadata);
 	const moveEffects = failCrossFieldManager;
 	const idAllocator = idAllocatorFromMaxId(getMaxId(composed));
 	return optionalChangeRebaser.rebase(
@@ -195,19 +196,46 @@ function rebaseComposed(
 	);
 }
 
-function compose(
+function composeList(
 	changes: TaggedChange<OptionalChangeset>[],
 	metadata?: RevisionMetadataSource,
 ): OptionalChangeset {
 	const moveEffects = failCrossFieldManager;
 	const idAllocator = idAllocatorFromMaxId(getMaxId(...changes.map((c) => c.change)));
+	let composed: OptionalChangeset = { moves: [], childChanges: [] };
+
+	for (const change of changes) {
+		composed = optionalChangeRebaser.compose(
+			makeAnonChange(composed),
+			change,
+			TestChange.compose as any,
+			idAllocator,
+			moveEffects,
+			metadata ?? defaultRevisionMetadataFromChanges(changes),
+		);
+	}
+	return composed;
+}
+
+function compose(
+	change1: TaggedChange<OptionalChangeset>,
+	change2: TaggedChange<OptionalChangeset>,
+	metadata?: RevisionMetadataSource,
+): OptionalChangeset {
+	const moveEffects = failCrossFieldManager;
+	const idAllocator = idAllocatorFromMaxId(getMaxId(change1.change, change2.change));
 	return optionalChangeRebaser.compose(
-		changes,
+		change1,
+		change2,
 		TestChange.compose as any,
 		idAllocator,
 		moveEffects,
-		metadata ?? defaultRevisionMetadataFromChanges(changes),
+		metadata ?? defaultRevisionMetadataFromChanges([change1, change2]),
 	);
+}
+
+function createEmpty(): OptionalChangeset {
+	return { moves: [], childChanges: [] };
 }
 
 type OptionalFieldTestState = FieldStateTree<string | undefined, OptionalChangeset>;
@@ -434,7 +462,7 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 		for (const [{ description: name, changeset: change }] of singleTestChanges("A")) {
 			it(`${name} ○ ${name}⁻¹ === ε`, () => {
 				const inv = invert(change);
-				const actual = compose([change, tagRollbackInverse(inv, tag1, change.revision)]);
+				const actual = compose(change, tagRollbackInverse(inv, tag1, change.revision));
 				const delta = toDelta(actual);
 				assert.equal(isDeltaVisible(delta), false);
 			});
@@ -445,7 +473,7 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 		for (const [{ description: name, changeset: change }] of singleTestChanges("A")) {
 			it(`${name}⁻¹ ○ ${name} === ε`, () => {
 				const inv = tagRollbackInverse(invert(change), tag1, change.revision);
-				const actual = compose([inv, change]);
+				const actual = compose(inv, change);
 				const delta = toDelta(actual);
 				assert.equal(isDeltaVisible(delta), false);
 			});
@@ -467,7 +495,7 @@ export function testRebaserAxioms() {
 			runExhaustiveComposeRebaseSuite(
 				[{ content: undefined }, { content: "A" }],
 				generateChildStates,
-				{ rebase, rebaseComposed, compose, invert, assertEqual },
+				{ rebase, rebaseComposed, compose, invert, assertEqual, createEmpty },
 				{
 					numberOfEditsToRebase: 3,
 					numberOfEditsToRebaseOver: 3,

@@ -55,6 +55,10 @@ export function isEmpty<T>(change: Changeset<T>): boolean {
 	return change.length === 0;
 }
 
+export function createEmpty<T>(): Changeset<T> {
+	return [];
+}
+
 export function isNewAttach(mark: Mark<unknown>, revision?: RevisionTag): boolean {
 	return isNewAttachEffect(mark, mark.cellId, revision);
 }
