@@ -28,7 +28,7 @@ import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { SummaryObject } from '@fluidframework/protocol-definitions';
 import { SummaryType } from '@fluidframework/protocol-definitions';
-import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
+import { TelemetryEventPropertyTypeExt } from '@fluidframework/telemetry-utils';
 
 // @internal (undocumented)
 export function addBlobToSummary(summary: ISummaryTreeWithStats, key: string, content: string | Uint8Array): void;
@@ -192,15 +192,18 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 // @internal (undocumented)
 export class TelemetryContext implements ITelemetryContext {
     // (undocumented)
-    get(prefix: string, property: string): TelemetryEventPropertyType;
+    get(prefix: string, property: string): TelemetryEventPropertyTypeExt;
     // (undocumented)
-    push(prefix: string, property: string, value: TelemetryEventPropertyType[]): void;
+    push(prefix: string, property: string, value: string | number | boolean | undefined | {
+        [key: string]: // Flat objects can have the same properties as the event itself
+        string | number | boolean | undefined | (string | number | boolean)[];
+    }): void;
     // (undocumented)
     serialize(): string;
     // (undocumented)
-    set(prefix: string, property: string, value: TelemetryEventPropertyType): void;
+    set(prefix: string, property: string, value: TelemetryEventPropertyTypeExt): void;
     // (undocumented)
-    setMultiple(prefix: string, property: string, values: Record<string, TelemetryEventPropertyType>): void;
+    setMultiple(prefix: string, property: string, values: Record<string, TelemetryEventPropertyTypeExt>): void;
 }
 
 // @internal

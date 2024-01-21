@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { TelemetryEventPropertyType } from "@fluidframework/core-interfaces";
 import {
 	bufferToString,
 	fromBase64ToUtf8,
@@ -29,7 +28,7 @@ import {
 	IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
 import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
-import { UsageError } from "@fluidframework/telemetry-utils";
+import { TelemetryEventPropertyTypeExt } from "@fluidframework/telemetry-utils";
 
 /**
  * Combines summary stats by adding their totals together.
@@ -380,35 +379,39 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
  * @internal
  */
 export class TelemetryContext implements ITelemetryContext {
-	private readonly telemetry = new Map<string, TelemetryEventPropertyType>();
+	private readonly telemetry = new Map<string, TelemetryEventPropertyTypeExt>();
 
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.set}
 	 */
-	set(prefix: string, property: string, value: TelemetryEventPropertyType): void {
+	set(prefix: string, property: string, value: TelemetryEventPropertyTypeExt): void {
 		this.telemetry.set(`${prefix}${property}`, value);
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.append}
+	 * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.push}
 	 */
-	push(prefix: string, property: string, value: TelemetryEventPropertyType[]): void {
+	push(
+		prefix: string,
+		property: string,
+		value:
+			| string
+			| number
+			| boolean
+			| undefined
+			| {
+					[key: string]: // Flat objects can have the same properties as the event itself
+					string | number | boolean | undefined | (string | number | boolean)[];
+			  },
+	): void {
 		const prevValue = this.telemetry.get(`${prefix}${property}`);
-		if (typeof prevValue === "string") {
-			try {
-				const values = JSON.parse(prevValue) as TelemetryEventPropertyType[];
-				values.push(...value);
-				this.telemetry.set(`${prefix}${property}`, JSON.stringify(values));
-				return;
-			} catch (err) {}
-		} else if (prevValue === undefined) {
-			this.telemetry.set(`${prefix}${property}`, JSON.stringify(value));
-			return;
+		if (prevValue === undefined) {
+			this.telemetry.set(`${prefix}${property}`, [value]);
+		} else if (Array.isArray(prevValue)) {
+			prevValue.push(value);
+		} else {
+			this.telemetry.set(`${prefix}${property}`, [prevValue, value]);
 		}
-		throw new UsageError(
-			"push should only be used to add elements to previously pushed items",
-			{ prefix, property },
-		);
 	}
 
 	/**
@@ -417,7 +420,7 @@ export class TelemetryContext implements ITelemetryContext {
 	setMultiple(
 		prefix: string,
 		property: string,
-		values: Record<string, TelemetryEventPropertyType>,
+		values: Record<string, TelemetryEventPropertyTypeExt>,
 	): void {
 		// Set the values individually so that they are logged as a flat list along with other properties.
 		for (const key of Object.keys(values)) {
@@ -428,7 +431,7 @@ export class TelemetryContext implements ITelemetryContext {
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.get}
 	 */
-	get(prefix: string, property: string): TelemetryEventPropertyType {
+	get(prefix: string, property: string): TelemetryEventPropertyTypeExt {
 		return this.telemetry.get(`${prefix}${property}`);
 	}
 
