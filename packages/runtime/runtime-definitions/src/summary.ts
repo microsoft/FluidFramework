@@ -329,10 +329,8 @@ export interface ITelemetryContext {
 	set(prefix: string, property: string, value: TelemetryEventPropertyTypeExt): void;
 
 	/**
-	 * Push/append value for telemetry data being tracked to previously added items. If the usage is such that
-	 * user does not want to overwrite previous values but just want to append to previous values, then this
-	 * api should be used. If a property already exists which was not added using this api, then it will not
-	 * append anything and throw an error.
+	 * Push/append value for telemetry data being tracked to previously added items. If another value
+	 * exists for the key, then old value and new value both will be pushed into an array.
 	 * @param prefix - unique prefix to tag this data with (ex: "fluid:map:")
 	 * @param property - property name of the telemetry data being tracked (ex: "DirectoryCount")
 	 * @param value - value to attribute to this summary telemetry data. It should be array which
