@@ -267,7 +267,7 @@ You can now add child items to the `stickyNotesTree` object using the methods de
 
 ### API
 
-The `SharedTree` object provides methods that enable your code to add nodes to the tree, remove nodes, and move nodes within the tree. You can also set and read the values of leaf nodes. The APIs have been designed to match as much as possible the syntax of TypeScript primitives, objects, maps, and arrays; although some editing APIs are different to account for.
+The `SharedTree` object provides methods that enable your code to add nodes to the tree, remove nodes, and move nodes within the tree. You can also set and read the values of leaf nodes. The APIs have been designed to match as much as possible the syntax of TypeScript primitives, objects, maps, and arrays; although some editing APIs are different for the sake of making the merge semantics clearer.
 
 #### Leaf node APIs
 
@@ -315,7 +315,11 @@ We show how to add this note to an array of notes in the tree in [Array node API
 
 ##### Editing Object Properties
 
-To update the property on an object node, you assign a new node to it with the assignment operator (`=`).
+To update the property on an object node, you assign a new node or value to it with the assignment operator (`=`).
+
+```typescript
+rectangle.topLeft = new Point({ x: 0, y: 0 });
+```
 
 ```typescript
 babyShowerNote.author = "The Joneses";
@@ -433,8 +437,8 @@ Inserts the provided value(s) at the end of the array. This is syntactic sugar f
 Array nodes have two methods that remove items from the node. Note the following about these methods:
 
 -   Removed items are saved internally for a time in case they need to be restored as a result of an undo operation.
--   A removed item may be restored as a result of a simultaneous move operation from another client. For example, if one client removes items 3-5, and another client simultaneously moves items 4 and 5, then, if the move operation is ordered last, only item 3 is removed (items 4 and 5 are restored and moved to their destination by the move operation). If the remove operation is ordered last, then all three items will be removed.
--   Removal of items never overrides inserting (or moving in) items. For example, if one client removes items 10-15, and another client simultaneously inserts an item at index 12, the original items 10-15 are removed, but new item is inserted between item 9 and the item that used to be at index 16. This happens regardless of the order of the remove and insert operations.
+-   A removed item may be restored as a result of a simultaneous move operation from another client. For example, if one client removes items 3-5, and another client simultaneously moves items 4 and 5, then, if the move operation is ordered last, only item 3 is removed (items 4 and 5 are restored and moved to their destination by the move operation). If the remove operation is ordered last, then all three items will be removed, no matter where they reside.
+-   Removal of items never overrides inserting (or moving in) items. For example, if one client removes items 10-15, and another client simultaneously inserts an item at index 12, the original items 10-15 are removed, but new item is inserted between item 9 and the item that used to be at index 16. This is true regardless of the order of the remove and insert operations.
 
 For the meaning of "simultaneously", see [Types of distributed data structures]({{< relref "overview.md" >}}).
 
@@ -474,8 +478,8 @@ Moves the items to the specified `index` in the destination array. The item that
 
 Note the following about these methods:
 
--   If multiple clients simultaneously move an item, then that item will be moved to the destination indicated by move of the client whose edit is ordered last.
--   A removed item may be restored as a result of a simultaneous move operation from another client. For example, if one client removes items 3-5, and another client simultaneously moves items 4 and 5, then, if the move operation is ordered last, only item 3 is removed (items 4 and 5 are restored and moved to their destination by the move operation). If the remove operation is ordered last, then all three items will be removed.
+-   If multiple clients simultaneously move an item, then that item will be moved to the destination indicated by the move of the client whose edit is ordered last.
+-   A moved item may be removed as a result of a simultaneous remove operation from another client. For example, if one client moves items 3-5, and another client simultaneously removes items 4 and 5, then, if the remove operation is ordered last, items 4 and 5 are removed from their destination by the remove operation. If the move operation is ordered last, then all three items will be moved to the destination.
 
 For the meaning of "simultaneously", see [Types of distributed data structures]({{< relref "overview.md" >}}).
 
