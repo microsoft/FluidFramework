@@ -21,7 +21,7 @@ import {
 	createSummarizerFromFactory,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
@@ -362,55 +362,61 @@ describeCompat(
 			newSummarizerClient.close();
 		});
 
-		it("Summarizer succeeds after Summarizer fails", async () => {
-			// Create new summarizer
-			const summarizer = await createSummarizer(provider, mainContainer);
+		itExpects(
+			"Summarizer succeeds after Summarizer fails",
+			[{ eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed" }],
+			async () => {
+				// Create new summarizer
+				const summarizer = await createSummarizer(provider, mainContainer);
 
-			// Second summary should be discarded
-			const containerRuntime = (summarizer as any).runtime as ContainerRuntime;
-			let uploadSummaryUploaderFunc = containerRuntime.storage.uploadSummaryWithContext;
-			let lastSummaryVersion: string | undefined;
-			const func = async (summary: ISummaryTree, context: ISummaryContext) => {
-				uploadSummaryUploaderFunc = uploadSummaryUploaderFunc.bind(
-					containerRuntime.storage,
+				// Second summary should be discarded
+				const containerRuntime = (summarizer as any).runtime as ContainerRuntime;
+				let uploadSummaryUploaderFunc = containerRuntime.storage.uploadSummaryWithContext;
+				let lastSummaryVersion: string | undefined;
+				const func = async (summary: ISummaryTree, context: ISummaryContext) => {
+					uploadSummaryUploaderFunc = uploadSummaryUploaderFunc.bind(
+						containerRuntime.storage,
+					);
+					const response = await uploadSummaryUploaderFunc(summary, context);
+					// Close summarizer so that it does not submit SummaryOp
+					summarizer.close();
+					// ODSP has single commit summary enabled by default and
+					// will update the summary version even without the summary op.
+					if (provider.driver.type === "odsp") {
+						lastSummaryVersion = response;
+					}
+					return response;
+				};
+				containerRuntime.storage.uploadSummaryWithContext = func;
+
+				const result2: ISummarizeResults = summarizer.summarizeOnDemand({
+					reason: "test2",
+				});
+				assert((await result2.summarySubmitted).success === false, "Summary should fail");
+				await provider.ensureSynchronized();
+
+				const value = getAndIncrementCellValue(mainDataStore.matrix, 0, 0, "1");
+				assert(value === 1, "Value matches expected");
+
+				const secondSummarizer = await createSummarizer(
+					provider,
+					mainContainer,
+					lastSummaryVersion,
 				);
-				const response = await uploadSummaryUploaderFunc(summary, context);
-				// Close summarizer so that it does not submit SummaryOp
-				summarizer.close();
-				// ODSP has single commit summary enabled by default and
-				// will update the summary version even without the summary op.
-				if (provider.driver.type === "odsp") {
-					lastSummaryVersion = response;
-				}
-				return response;
-			};
-			containerRuntime.storage.uploadSummaryWithContext = func;
+				let versionWrap = await incrementCellValueAndRunSummary(
+					secondSummarizer,
+					2 /* expectedMatrixCellValue */,
+				);
+				assert(versionWrap.fetchCount === 0, "No fetch should have happened");
 
-			const result2: ISummarizeResults = summarizer.summarizeOnDemand({ reason: "test2" });
-			assert((await result2.summarySubmitted).success === false, "Summary should fail");
-			await provider.ensureSynchronized();
-
-			const value = getAndIncrementCellValue(mainDataStore.matrix, 0, 0, "1");
-			assert(value === 1, "Value matches expected");
-
-			const secondSummarizer = await createSummarizer(
-				provider,
-				mainContainer,
-				lastSummaryVersion,
-			);
-			let versionWrap = await incrementCellValueAndRunSummary(
-				secondSummarizer,
-				2 /* expectedMatrixCellValue */,
-			);
-			assert(versionWrap.fetchCount === 0, "No fetch should have happened");
-
-			versionWrap = await incrementCellValueAndRunSummary(
-				secondSummarizer,
-				3 /* expectedMatrixCellValue */,
-			);
-			assert(versionWrap.fetchCount === 0, "No fetch should have happened");
-			await provider.ensureSynchronized();
-			secondSummarizer.close();
-		});
+				versionWrap = await incrementCellValueAndRunSummary(
+					secondSummarizer,
+					3 /* expectedMatrixCellValue */,
+				);
+				assert(versionWrap.fetchCount === 0, "No fetch should have happened");
+				await provider.ensureSynchronized();
+				secondSummarizer.close();
+			},
+		);
 	},
 );
