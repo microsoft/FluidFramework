@@ -617,16 +617,13 @@ export function mixinAttach<
 		// not wrapping the reducer/generator in this case makes stepping through the harness slightly less painful.
 		return model as DDSFuzzModel<TChannelFactory, TOperation | Attach, TState>;
 	}
-
-	const attachOp = async (): Promise<TOperation | Attach | typeof done> => {
+	const attachOp = async (): Promise<TOperation | Attach> => {
 		return { type: "attach" };
 	};
 	const generatorFactory: () => AsyncGenerator<TOperation | Attach, TState> = () => {
 		const baseGenerator = model.generatorFactory();
-
-		const opsBeforeAttach = takeAsync(10, baseGenerator);
-
-		return chainAsync(opsBeforeAttach, attachOp);
+		const opsBeforeAttach = takeAsync(5, baseGenerator);
+		return chainAsync(opsBeforeAttach, takeAsync(1, attachOp), baseGenerator);
 	};
 
 	const minimizationTransforms = model.minimizationTransforms as

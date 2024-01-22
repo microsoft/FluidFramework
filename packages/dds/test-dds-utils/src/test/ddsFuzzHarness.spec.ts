@@ -472,7 +472,6 @@ describe("DDS Fuzz Harness", () => {
 
 	describe("mixinAttach", () => {
 		describe("with detached start enabled", () => {
-			// eslint-disable-next-line unicorn/consistent-function-scoping
 			const makeOptions = (): DDSFuzzSuiteOptions => ({
 				...defaultDDSFuzzSuiteOptions,
 				numberOfClients: 3,
@@ -525,13 +524,12 @@ describe("DDS Fuzz Harness", () => {
 					["A", "B", "C"],
 				);
 				assert.equal(finalState.summarizerClient.channel.id, "summarizer");
-				assert.deepEqual(generatedOperations[0], { type: "attach" });
+				assert.deepEqual(generatedOperations[0], { type: "noop" });
 				verifyClientsSendOpsToEachOther(finalState);
 			});
 		});
 
 		describe("with detached start disabled", () => {
-			// eslint-disable-next-line unicorn/consistent-function-scoping
 			const makeOptions = (): DDSFuzzSuiteOptions => ({
 				...defaultDDSFuzzSuiteOptions,
 				numberOfClients: 3,
@@ -881,13 +879,9 @@ describe("DDS Fuzz Harness", () => {
 					assert(file1Exists);
 
 					const contents: unknown = JSON.parse(
-						// eslint-disable-next-line unicorn/prefer-json-parse-buffer
 						fs.readFileSync(path.join(jsonDir, "0.json"), { encoding: "utf8" }),
 					);
-					assert.deepEqual(contents, [
-						{ type: "attach" },
-						{ clientId: "B", type: "noop" },
-					]);
+					assert.deepEqual(contents, [{ clientId: "A", type: "noop" }]);
 				});
 			}
 		});
