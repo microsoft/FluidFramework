@@ -328,6 +328,7 @@ export interface DDSFuzzSuiteOptions {
 	detachedStartOptions: {
 		attachProbability: number;
 		enabled: boolean;
+		numOpsBeforeAttach: number;
 	};
 
 	/**
@@ -467,6 +468,7 @@ export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
 	detachedStartOptions: {
 		attachProbability: 0.2,
 		enabled: true,
+		numOpsBeforeAttach: 0,
 	},
 	emitter: new TypedEventEmitter(),
 	numberOfClients: 3,
@@ -612,7 +614,7 @@ export function mixinAttach<
 	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
 	options: DDSFuzzSuiteOptions,
 ): DDSFuzzModel<TChannelFactory, TOperation | Attach, TState> {
-	const { enabled } = options.detachedStartOptions;
+	const { enabled, numOpsBeforeAttach } = options.detachedStartOptions;
 	if (!enabled) {
 		// not wrapping the reducer/generator in this case makes stepping through the harness slightly less painful.
 		return model as DDSFuzzModel<TChannelFactory, TOperation | Attach, TState>;
@@ -622,7 +624,7 @@ export function mixinAttach<
 	};
 	const generatorFactory: () => AsyncGenerator<TOperation | Attach, TState> = () => {
 		const baseGenerator = model.generatorFactory();
-		const opsBeforeAttach = takeAsync(5, baseGenerator);
+		const opsBeforeAttach = takeAsync(numOpsBeforeAttach, baseGenerator);
 		return chainAsync(opsBeforeAttach, takeAsync(1, attachOp), baseGenerator);
 	};
 

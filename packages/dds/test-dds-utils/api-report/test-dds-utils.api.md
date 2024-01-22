@@ -94,6 +94,7 @@ export interface DDSFuzzSuiteOptions {
     detachedStartOptions: {
         attachProbability: number;
         enabled: boolean;
+        numOpsBeforeAttach: number;
     };
     emitter: TypedEventEmitter<DDSFuzzHarnessEvents>;
     idCompressorFactory?: (summary?: SerializedIdCompressorWithNoSession) => IIdCompressor & IIdCompressorCore;
