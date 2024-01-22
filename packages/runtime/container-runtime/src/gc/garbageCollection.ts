@@ -166,6 +166,7 @@ export class GarbageCollector implements IGarbageCollector {
 
 		const baseSnapshot = createParams.baseSnapshot;
 		const readAndParseBlob = createParams.readAndParseBlob;
+		const pendingSessionExpiryTimerStarted = createParams.sessionExpiryTimerStarted;
 
 		this.mc = createChildMonitoringContext({
 			logger: createParams.baseLogger,
@@ -183,7 +184,21 @@ export class GarbageCollector implements IGarbageCollector {
 			const overrideSessionExpiryTimeoutMs = this.mc.config.getNumber(
 				"Fluid.GarbageCollection.TestOverride.SessionExpiryMs",
 			);
-			const timeoutMs = overrideSessionExpiryTimeoutMs ?? this.configs.sessionExpiryTimeoutMs;
+			let timeoutMs;
+			timeoutMs = overrideSessionExpiryTimeoutMs ?? this.configs.sessionExpiryTimeoutMs;
+
+			if (pendingSessionExpiryTimerStarted) {
+				const datenow = Date.now();
+				console.log(datenow);
+				const timeLapsedSincePendingTimer = Date.now() - pendingSessionExpiryTimerStarted;
+				timeoutMs -= timeLapsedSincePendingTimer;
+			}
+
+			if (timeoutMs <= 0) {
+				this.runtime.closeFn(
+					new ClientSessionExpiredError(`Client session expired.`, timeoutMs),
+				);
+			}
 
 			this.sessionExpiryTimer = new Timer(timeoutMs, () => {
 				this.runtime.closeFn(

@@ -395,6 +395,7 @@ export interface IGarbageCollectorCreateParams {
 	readonly getLastSummaryTimestampMs: () => number | undefined;
 	readonly readAndParseBlob: ReadAndParseBlob;
 	readonly submitMessage: (message: ContainerRuntimeGCMessage) => void;
+	readonly sessionExpiryTimerStarted?: number | undefined;
 }
 
 /**

@@ -170,8 +170,6 @@ import {
 	IGCRuntimeOptions,
 	IGCStats,
 	trimLeadingAndTrailingSlashes,
-	runSessionExpiryKey,
-	defaultSessionExpiryDurationMs,
 } from "./gc";
 import { channelToDataStore, IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
 import { BindBatchTracker } from "./batchTracker";
@@ -557,9 +555,9 @@ export interface IPendingRuntimeState {
 	 */
 	pendingIdCompressorState?: SerializedIdCompressorWithOngoingSession;
 	/**
-	 * Last timestamp recorded before getting pending local state
+	 * Time at which session expiry timer started.
 	 */
-	remainingSessionExpiryTimeoutMs?: number | undefined;
+	sessionExpiryTimerStarted?: number | undefined;
 }
 
 const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconnects";
@@ -1095,7 +1093,6 @@ export class ContainerRuntime
 	 */
 	private readonly validateSummaryBeforeUpload: boolean;
 
-	private readonly sessionExpiryTimeMs: number | undefined;
 	private readonly defaultTelemetrySignalSampleCount = 100;
 	private readonly _perfSignalData: IPerfSignalReport = {
 		signalsLost: 0,
@@ -1316,17 +1313,6 @@ export class ContainerRuntime
 		// Later updates come through calls to setConnectionState.
 		this._connected = connected;
 
-		if (metadata) {
-			this.sessionExpiryTimeMs = metadata.sessionExpiryTimeoutMs;
-		} else if (
-			this.runtimeOptions.gcOptions.gcAllowed !== false &&
-			this.mc.config.getBoolean(runSessionExpiryKey) !== false
-		) {
-			this.sessionExpiryTimeMs =
-				this.runtimeOptions.gcOptions.sessionExpiryTimeoutMs ??
-				defaultSessionExpiryDurationMs;
-		}
-
 		this.mc.logger.sendTelemetryEvent({
 			eventName: "GCFeatureMatrix",
 			metadataValue: JSON.stringify(metadata?.gcFeatureMatrix),
@@ -1436,6 +1422,7 @@ export class ContainerRuntime
 			getLastSummaryTimestampMs: () => this.messageAtLastSummary?.timestamp,
 			readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),
 			submitMessage: (message: ContainerRuntimeGCMessage) => this.submit(message),
+			sessionExpiryTimerStarted: pendingRuntimeState?.sessionExpiryTimerStarted,
 		});
 
 		const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
@@ -3962,21 +3949,12 @@ export class ContainerRuntime
 				}
 
 				const pendingIdCompressorState = this.idCompressor?.serialize(true);
-				const timeSinceSessionExpiryTimeStarted = this.garbageCollector
-					.sessionExpiryTimerStarted
-					? Date.now() - this.garbageCollector.sessionExpiryTimerStarted
-					: undefined;
-				let remainingSessionExpiryTimeoutMs: number | undefined;
-				if (this.sessionExpiryTimeMs && timeSinceSessionExpiryTimeStarted) {
-					remainingSessionExpiryTimeoutMs =
-						this.sessionExpiryTimeMs - timeSinceSessionExpiryTimeStarted;
-				}
 
 				const pendingState: IPendingRuntimeState = {
 					pending,
 					pendingAttachmentBlobs,
 					pendingIdCompressorState,
-					remainingSessionExpiryTimeoutMs,
+					sessionExpiryTimerStarted: this.garbageCollector.sessionExpiryTimerStarted,
 				};
 				event.end({
 					attachmentBlobsSize: Object.keys(pendingAttachmentBlobs ?? {}).length,

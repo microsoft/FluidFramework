@@ -181,6 +181,7 @@ describe("Garbage Collection Tests", () => {
 			getNodePackagePath: async (nodeId: string) => testPkgPath,
 			getLastSummaryTimestampMs: () => Date.now(),
 			submitMessage: (message: ContainerRuntimeGCMessage) => {},
+			sessionExpiryTimerStarted: createParams.sessionExpiryTimerStarted,
 		}) as GcWithPrivates;
 	}
 	let gc: GcWithPrivates | undefined;
@@ -229,6 +230,43 @@ describe("Garbage Collection Tests", () => {
 		assert(
 			closeCalledAfterExactTicks(defaultSessionExpiryDurationMs),
 			"Close should have been called at exactly defaultSessionExpiryDurationMs",
+		);
+	});
+
+	it("Pending session expiry does not close container", () => {
+		let closeCalled = false;
+		const timenow = 5000; // arbitrary number
+		clock.tick(timenow);
+		gc = createGarbageCollector(
+			{sessionExpiryTimerStarted: 0},
+			undefined /* gcBlobsMap */,
+			undefined /* gcMetadata */,
+			() => {
+				closeCalled = true;
+			},
+		);
+		assert(
+			closeCalled === false,
+			"Close should have been called",
+		);
+	});
+
+	it("Pending session expiry closes container", () => {
+		let closeCalled = false;
+		const timethen = 12345;
+		const timenow = defaultSessionExpiryDurationMs;
+		clock.tick(timenow + timethen);
+		gc = createGarbageCollector(
+			{sessionExpiryTimerStarted: timethen},
+			undefined /* gcBlobsMap */,
+			undefined /* gcMetadata */,
+			() => {
+				closeCalled = true;
+			},
+		);
+		assert(
+			closeCalled,
+			"Close should have been called",
 		);
 	});
 
