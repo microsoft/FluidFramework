@@ -326,7 +326,6 @@ export interface DDSFuzzSuiteOptions {
 	 * an attach op.
 	 */
 	detachedStartOptions: {
-		enabled: boolean;
 		numOpsBeforeAttach: number;
 	};
 
@@ -465,7 +464,6 @@ export interface DDSFuzzSuiteOptions {
 export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
 	defaultTestCount: defaultOptions.defaultTestCount,
 	detachedStartOptions: {
-		enabled: true,
 		numOpsBeforeAttach: 5,
 	},
 	emitter: new TypedEventEmitter(),
@@ -612,8 +610,8 @@ export function mixinAttach<
 	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
 	options: DDSFuzzSuiteOptions,
 ): DDSFuzzModel<TChannelFactory, TOperation | Attach, TState> {
-	const { enabled, numOpsBeforeAttach } = options.detachedStartOptions;
-	if (!enabled) {
+	const { numOpsBeforeAttach } = options.detachedStartOptions;
+	if (numOpsBeforeAttach === 0) {
 		// not wrapping the reducer/generator in this case makes stepping through the harness slightly less painful.
 		return model as DDSFuzzModel<TChannelFactory, TOperation | Attach, TState>;
 	}
@@ -1057,7 +1055,7 @@ export async function runTestForSeed<
 		options.containerRuntimeOptions,
 	);
 
-	const startDetached = options.detachedStartOptions.enabled;
+	const startDetached = options.detachedStartOptions.numOpsBeforeAttach === 0;
 	const initialClient = createDetachedClient(
 		containerRuntimeFactory,
 		model.factory,

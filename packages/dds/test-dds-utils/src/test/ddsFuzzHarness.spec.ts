@@ -102,7 +102,7 @@ function verifyClientsSendOpsToEachOther(state: DDSFuzzTestState<SharedNothingFa
 
 const defaultOptions: DDSFuzzSuiteOptions = {
 	...defaultDDSFuzzSuiteOptions,
-	detachedStartOptions: { enabled: false, numOpsBeforeAttach: 5 },
+	detachedStartOptions: { numOpsBeforeAttach: 0 },
 };
 
 describe("DDS Fuzz Harness", () => {
@@ -162,8 +162,7 @@ describe("DDS Fuzz Harness", () => {
 				validationStrategy: { type: "fixedInterval", interval: 2 },
 				reconnectProbability: 0,
 				detachedStartOptions: {
-					enabled: false,
-					numOpsBeforeAttach: 5,
+					numOpsBeforeAttach: 0,
 				},
 			};
 
@@ -297,8 +296,7 @@ describe("DDS Fuzz Harness", () => {
 				...defaultDDSFuzzSuiteOptions,
 				validationStrategy: { type: "random", probability: 0.25 },
 				detachedStartOptions: {
-					enabled: false,
-					numOpsBeforeAttach: 5,
+					numOpsBeforeAttach: 0,
 				},
 			};
 			it("generates synchronize ops", async () => {
@@ -476,7 +474,6 @@ describe("DDS Fuzz Harness", () => {
 				...defaultDDSFuzzSuiteOptions,
 				numberOfClients: 3,
 				detachedStartOptions: {
-					enabled: true,
 					numOpsBeforeAttach: 5,
 				},
 				emitter: new TypedEventEmitter(),
@@ -534,8 +531,7 @@ describe("DDS Fuzz Harness", () => {
 				...defaultDDSFuzzSuiteOptions,
 				numberOfClients: 3,
 				detachedStartOptions: {
-					enabled: false,
-					numOpsBeforeAttach: 5,
+					numOpsBeforeAttach: 0,
 				},
 				emitter: new TypedEventEmitter(),
 			});

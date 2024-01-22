@@ -92,7 +92,6 @@ export interface DDSFuzzSuiteOptions {
     containerRuntimeOptions?: IMockContainerRuntimeOptions;
     defaultTestCount: number;
     detachedStartOptions: {
-        enabled: boolean;
         numOpsBeforeAttach: number;
     };
     emitter: TypedEventEmitter<DDSFuzzHarnessEvents>;
