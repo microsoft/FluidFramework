@@ -8,6 +8,8 @@ import {
 	FetchSource,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
+	ISnapshot,
+	ISnapshotFetchOptions,
 	ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import {
@@ -61,6 +63,23 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 					s.getSnapshotTree(version, scenarioName),
 				),
 			"storage_getSnapshotTree",
+		);
+	}
+
+	public async getSnapshot(
+		version?: IVersion,
+		snapshotFetchOptions?: ISnapshotFetchOptions,
+	): Promise<ISnapshot | undefined> {
+		return this.runWithRetry(
+			async () =>
+				this.internalStorageServiceP.then(async (s) => {
+					assert(
+						s.getSnapshot !== undefined,
+						"getSnapshot api should exist in RetriableDocStorageService",
+					);
+					return s.getSnapshot(version, snapshotFetchOptions);
+				}),
+			"storage_getSnapshot",
 		);
 	}
 

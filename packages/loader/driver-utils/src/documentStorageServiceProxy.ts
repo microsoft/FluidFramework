@@ -3,10 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils";
 import {
 	FetchSource,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
+	ISnapshot,
+	ISnapshotFetchOptions,
 	ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import {
@@ -42,6 +45,17 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
 		scenarioName?: string,
 	): Promise<ISnapshotTree | null> {
 		return this.internalStorageService.getSnapshotTree(version, scenarioName);
+	}
+
+	public async getSnapshot(
+		version?: IVersion,
+		snapshotFetchOptions?: ISnapshotFetchOptions,
+	): Promise<ISnapshot | undefined> {
+		assert(
+			this.internalStorageService.getSnapshot !== undefined,
+			"getSnapshot api should exist on documentStorageServiceProxy class",
+		);
+		return this.internalStorageService.getSnapshot(version, snapshotFetchOptions);
 	}
 
 	public async getVersions(

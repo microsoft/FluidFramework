@@ -161,6 +161,11 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
 	// eslint-disable-next-line @rushstack/no-new-null
 	getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
 
+	getSnapshot?(
+		version?: IVersion,
+		snapshotFetchOptions?: ISnapshotFetchOptions,
+	): Promise<ISnapshot | undefined>;
+
 	/**
 	 * Retrieves all versions of the document starting at the specified versionId - or null if from the head
 	 * @param versionId - Version id of the requested version.
@@ -341,6 +346,12 @@ export interface IDocumentServicePolicies {
 	 * Summarizer uploads the protocol tree too when summarizing.
 	 */
 	readonly summarizeProtocolTree?: boolean;
+
+	/**
+	 * Whether the driver supports fetching of snapshot in new format which container all
+	 * contents along with the snapshot tree.
+	 */
+	readonly supportNewSnapshotFormat?: boolean;
 }
 
 /**
@@ -449,4 +460,44 @@ export interface ISummaryContext {
 export enum FetchSource {
 	default = "default",
 	noCache = "noCache",
+}
+
+/**
+ * @alpha
+ */
+export interface ISnapshot {
+	snapshotTree: ISnapshotTree;
+	blobContents: Map<string, ArrayBuffer>;
+	ops: ISequencedDocumentMessage[];
+
+	/**
+	 * Sequence number of the snapshot
+	 */
+	sequenceNumber: number | undefined;
+
+	/**
+	 * Sequence number for the latest op/snapshot for the file in ODSP
+	 */
+	latestSequenceNumber: number | undefined;
+
+	snapshotInNewFormat: true;
+}
+
+/**
+ * Additional key in the loader request header
+ * @alpha
+ */
+export enum GetSnapshotOptions {
+	// Indicate scenario in which the snapshot is fetched
+	scenarioName = "scenarioName",
+	// Tell driver to cache the fetched snapshot.
+	cacheSnapshot = "cacheSnapshot",
+}
+
+/**
+ * @alpha
+ */
+export interface ISnapshotFetchOptions {
+	[GetSnapshotOptions.scenarioName]: string;
+	[GetSnapshotOptions.cacheSnapshot]: boolean;
 }

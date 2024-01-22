@@ -15,6 +15,7 @@ export {
 	IThrottlingWarning,
 } from "./driverError";
 export {
+	GetSnapshotOptions,
 	FetchSource,
 	FiveDaysMs,
 	IDeltasFetchResult,
@@ -28,6 +29,8 @@ export {
 	IDocumentServicePolicies,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
+	ISnapshot,
+	ISnapshotFetchOptions,
 	IStream,
 	IStreamResult,
 	ISummaryContext,

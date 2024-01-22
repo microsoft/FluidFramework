@@ -11,9 +11,11 @@ import {
 	LoaderCachingPolicy,
 	FiveDaysMs,
 	FetchSource,
+	ISnapshot,
+	ISnapshotFetchOptions,
 } from "@fluidframework/driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";
-import { IConfigProvider } from "@fluidframework/telemetry-utils";
+import { IConfigProvider, UsageError } from "@fluidframework/telemetry-utils";
 import { ISnapshotContents } from "./odspPublicUtils";
 
 const maximumCacheDurationMs: FiveDaysMs = 432000000; // 5 * 24 * 60 * 60 * 1000 = 5 days in ms
@@ -206,6 +208,13 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 		const protocolTree = snapshotTree.trees[".protocol"];
 
 		return this.combineProtocolAndAppSnapshotTree(appTree, protocolTree);
+	}
+
+	public async getSnapshot(
+		version?: api.IVersion,
+		snapshotFetchOptions?: ISnapshotFetchOptions,
+	): Promise<ISnapshot | undefined> {
+		throw new UsageError("Not implemented yet!");
 	}
 
 	public abstract getVersions(

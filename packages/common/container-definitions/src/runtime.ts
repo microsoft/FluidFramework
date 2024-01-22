@@ -5,7 +5,7 @@
 
 import { ITelemetryBaseLogger, IDisposable, FluidObject } from "@fluidframework/core-interfaces";
 
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { IDocumentStorageService, ISnapshot } from "@fluidframework/driver-definitions";
 import {
 	IClientDetails,
 	ISequencedDocumentMessage,
@@ -198,6 +198,11 @@ export interface IContainerContext {
 	 * @privateremarks Tracking in AB#5714
 	 */
 	readonly id: string;
+
+	/**
+	 * This snapshot contains other artifacts too like blobContents, ops etc.
+	 */
+	readonly snapshot?: ISnapshot;
 }
 
 /**

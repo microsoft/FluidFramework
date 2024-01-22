@@ -16,6 +16,7 @@ import {
 	IDocumentServiceFactory,
 	IDocumentStorageService,
 	IResolvedUrl,
+	ISnapshotFetchOptions,
 } from "@fluidframework/driver-definitions";
 import {
 	IClient,
@@ -350,6 +351,15 @@ export class FaultInjectionDocumentStorageService implements IDocumentStorageSer
 	public async getSnapshotTree(version, scenarioName?: string) {
 		this.throwIfOffline();
 		return this.internal.getSnapshotTree(version, scenarioName);
+	}
+
+	public async getSnapshot(version, snapshotFetchOptions?: ISnapshotFetchOptions) {
+		this.throwIfOffline();
+		assert(
+			this.internal.getSnapshot !== undefined,
+			"getSnapshot api should exist in faultInjectionStorageService",
+		);
+		return this.internal.getSnapshot(version, snapshotFetchOptions);
 	}
 
 	public async getVersions(versionId, count, scenarioName, fetchSource) {

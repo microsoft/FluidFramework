@@ -117,6 +117,13 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_DocumentStorageServiceProxy": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_PrefetchDocumentStorageService": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

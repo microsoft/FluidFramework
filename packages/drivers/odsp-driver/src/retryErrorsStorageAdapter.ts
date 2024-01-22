@@ -3,11 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils";
 import { LoggingError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	FetchSource,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
+	ISnapshot,
+	ISnapshotFetchOptions,
 	ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import {
@@ -47,6 +50,19 @@ export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisp
 			async () => this.internalStorageService.getSnapshotTree(version),
 			"storage_getSnapshotTree",
 		);
+	}
+
+	public async getSnapshot(
+		version?: IVersion,
+		snapshotFetchOptions?: ISnapshotFetchOptions,
+	): Promise<ISnapshot | undefined> {
+		return this.runWithRetry(async () => {
+			assert(
+				this.internalStorageService.getSnapshot !== undefined,
+				"getSnapshot should exist in storage adapter in ODSP driver",
+			);
+			return this.internalStorageService.getSnapshot(version, snapshotFetchOptions);
+		}, "storage_getSnapshot");
 	}
 
 	public async readBlob(id: string): Promise<ArrayBufferLike> {

@@ -78,6 +78,14 @@ export enum FetchSource {
 // @alpha (undocumented)
 export type FiveDaysMs = 432000000;
 
+// @alpha
+export enum GetSnapshotOptions {
+    // (undocumented)
+    cacheSnapshot = "cacheSnapshot",
+    // (undocumented)
+    scenarioName = "scenarioName"
+}
+
 // @public
 export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
     // (undocumented)
@@ -176,12 +184,15 @@ export interface IDocumentServiceFactory {
 export interface IDocumentServicePolicies {
     readonly storageOnly?: boolean;
     readonly summarizeProtocolTree?: boolean;
+    readonly supportNewSnapshotFormat?: boolean;
 }
 
 // @alpha
 export interface IDocumentStorageService extends Partial<IDisposable> {
     createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
     downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
+    // (undocumented)
+    getSnapshot?(version?: IVersion, snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot | undefined>;
     getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
     getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion[]>;
     readonly policies?: IDocumentStorageServicePolicies;
@@ -253,6 +264,28 @@ export interface IResolvedUrl {
     type: "fluid";
     // (undocumented)
     url: string;
+}
+
+// @alpha (undocumented)
+export interface ISnapshot {
+    // (undocumented)
+    blobContents: Map<string, ArrayBuffer>;
+    latestSequenceNumber: number | undefined;
+    // (undocumented)
+    ops: ISequencedDocumentMessage[];
+    sequenceNumber: number | undefined;
+    // (undocumented)
+    snapshotInNewFormat: true;
+    // (undocumented)
+    snapshotTree: ISnapshotTree;
+}
+
+// @alpha (undocumented)
+export interface ISnapshotFetchOptions {
+    // (undocumented)
+    [GetSnapshotOptions.cacheSnapshot]: boolean;
+    // (undocumented)
+    [GetSnapshotOptions.scenarioName]: string;
 }
 
 // @alpha

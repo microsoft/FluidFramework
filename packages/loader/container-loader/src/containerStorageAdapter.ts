@@ -13,6 +13,8 @@ import {
 	IDocumentService,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
+	ISnapshot,
+	ISnapshotFetchOptions,
 	ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import { UsageError } from "@fluidframework/driver-utils";
@@ -127,6 +129,17 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 		return this._storageService.getSnapshotTree(version, scenarioName);
 	}
 
+	public async getSnapshot(
+		version?: IVersion,
+		snapshotFetchOptions?: ISnapshotFetchOptions,
+	): Promise<ISnapshot | undefined> {
+		assert(
+			this._storageService.getSnapshot !== undefined,
+			"getSnapshot api should exist in ContainerStorageAdapter",
+		);
+		return this._storageService.getSnapshot(version, snapshotFetchOptions);
+	}
+
 	public async readBlob(id: string): Promise<ArrayBufferLike> {
 		const maybeBlob = this.blobContents[id];
 		if (maybeBlob !== undefined) {
@@ -199,6 +212,7 @@ class BlobOnlyStorage implements IDocumentStorageService {
 
 	/* eslint-disable @typescript-eslint/unbound-method */
 	public getSnapshotTree: () => Promise<ISnapshotTree | null> = this.notCalled;
+	public getSnapshot: () => Promise<ISnapshot | undefined> = this.notCalled;
 	public getVersions: () => Promise<IVersion[]> = this.notCalled;
 	public write: () => Promise<IVersion> = this.notCalled;
 	public uploadSummaryWithContext: () => Promise<string> = this.notCalled;

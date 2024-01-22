@@ -16,7 +16,12 @@ import { assert, delay } from "@fluidframework/core-utils";
 import { LogLevel } from "@fluidframework/core-interfaces";
 import * as api from "@fluidframework/protocol-definitions";
 import { promiseRaceWithWinner } from "@fluidframework/driver-base";
-import { ISummaryContext, FetchSource } from "@fluidframework/driver-definitions";
+import {
+	ISummaryContext,
+	FetchSource,
+	ISnapshot,
+	ISnapshotFetchOptions,
+} from "@fluidframework/driver-definitions";
 import { RateLimiter, NonRetryableError } from "@fluidframework/driver-utils";
 import {
 	IOdspResolvedUrl,
@@ -202,6 +207,16 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			return null;
 		}
 		return super.getSnapshotTree(version, scenarioName);
+	}
+
+	public async getSnapshot(
+		version?: api.IVersion,
+		snapshotFetchOptions?: ISnapshotFetchOptions,
+	): Promise<ISnapshot | undefined> {
+		if (!this.snapshotUrl) {
+			return undefined;
+		}
+		return super.getSnapshot(version, snapshotFetchOptions);
 	}
 
 	public async getVersions(
