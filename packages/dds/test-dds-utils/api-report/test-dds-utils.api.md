@@ -92,7 +92,6 @@ export interface DDSFuzzSuiteOptions {
     containerRuntimeOptions?: IMockContainerRuntimeOptions;
     defaultTestCount: number;
     detachedStartOptions: {
-        attachProbability: number;
         enabled: boolean;
         numOpsBeforeAttach: number;
     };

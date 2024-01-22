@@ -102,7 +102,7 @@ function verifyClientsSendOpsToEachOther(state: DDSFuzzTestState<SharedNothingFa
 
 const defaultOptions: DDSFuzzSuiteOptions = {
 	...defaultDDSFuzzSuiteOptions,
-	detachedStartOptions: { enabled: false, attachProbability: 0, numOpsBeforeAttach: 0 },
+	detachedStartOptions: { enabled: false, numOpsBeforeAttach: 5 },
 };
 
 describe("DDS Fuzz Harness", () => {
@@ -163,8 +163,7 @@ describe("DDS Fuzz Harness", () => {
 				reconnectProbability: 0,
 				detachedStartOptions: {
 					enabled: false,
-					attachProbability: 1,
-					numOpsBeforeAttach: 0,
+					numOpsBeforeAttach: 5,
 				},
 			};
 
@@ -299,8 +298,7 @@ describe("DDS Fuzz Harness", () => {
 				validationStrategy: { type: "random", probability: 0.25 },
 				detachedStartOptions: {
 					enabled: false,
-					attachProbability: 1,
-					numOpsBeforeAttach: 0,
+					numOpsBeforeAttach: 5,
 				},
 			};
 			it("generates synchronize ops", async () => {
@@ -479,7 +477,6 @@ describe("DDS Fuzz Harness", () => {
 				numberOfClients: 3,
 				detachedStartOptions: {
 					enabled: true,
-					attachProbability: 1,
 					numOpsBeforeAttach: 5,
 				},
 				emitter: new TypedEventEmitter(),
@@ -538,7 +535,6 @@ describe("DDS Fuzz Harness", () => {
 				numberOfClients: 3,
 				detachedStartOptions: {
 					enabled: false,
-					attachProbability: 0,
 					numOpsBeforeAttach: 5,
 				},
 				emitter: new TypedEventEmitter(),
@@ -885,10 +881,7 @@ describe("DDS Fuzz Harness", () => {
 					const contents: unknown = JSON.parse(
 						fs.readFileSync(path.join(jsonDir, "0.json"), { encoding: "utf8" }),
 					);
-					assert.deepEqual(contents, [
-						{ type: "attach" },
-						{ clientId: "B", type: "noop" },
-					]);
+					assert.deepEqual(contents, [{ clientId: "A", type: "noop" }]);
 				});
 			}
 		});

@@ -218,7 +218,7 @@ describe("Fuzz - undo/redo", () => {
 			emitter,
 			detachedStartOptions: {
 				enabled: false,
-				attachProbability: 0,
+				numOpsBeforeAttach: 5,
 			},
 			saveFailures: {
 				directory: failureDirectory,
@@ -284,7 +284,7 @@ describe("Fuzz - undo/redo", () => {
 			// is not particularly interesting
 			detachedStartOptions: {
 				enabled: false,
-				attachProbability: 1,
+				numOpsBeforeAttach: 5,
 			},
 			saveFailures: {
 				directory: failureDirectory,

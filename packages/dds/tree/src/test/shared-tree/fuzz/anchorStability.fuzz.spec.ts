@@ -131,7 +131,7 @@ describe("Fuzz - anchor stability", () => {
 			},
 			// AB#5745: Starting a transaction while detached, submitting edits, then attaching hits 0x428.
 			// Once this is fixed, this fuzz test could also include working from a detached state if desired.
-			detachedStartOptions: { enabled: false, attachProbability: 1 },
+			detachedStartOptions: { enabled: false, numOpsBeforeAttach: 5 },
 			clientJoinOptions: { maxNumberOfClients: 1, clientAddProbability: 0 },
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 		});
@@ -201,7 +201,7 @@ describe("Fuzz - anchor stability", () => {
 
 		createDDSFuzzSuite(model, {
 			defaultTestCount: runsPerBatch,
-			detachedStartOptions: { enabled: false, attachProbability: 1 },
+			detachedStartOptions: { enabled: false, numOpsBeforeAttach: 5 },
 			numberOfClients: 2,
 			emitter,
 			saveFailures: {

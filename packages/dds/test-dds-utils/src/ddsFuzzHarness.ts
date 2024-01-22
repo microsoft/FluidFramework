@@ -326,7 +326,6 @@ export interface DDSFuzzSuiteOptions {
 	 * an attach op.
 	 */
 	detachedStartOptions: {
-		attachProbability: number;
 		enabled: boolean;
 		numOpsBeforeAttach: number;
 	};
@@ -466,9 +465,8 @@ export interface DDSFuzzSuiteOptions {
 export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
 	defaultTestCount: defaultOptions.defaultTestCount,
 	detachedStartOptions: {
-		attachProbability: 0.2,
 		enabled: true,
-		numOpsBeforeAttach: 0,
+		numOpsBeforeAttach: 5,
 	},
 	emitter: new TypedEventEmitter(),
 	numberOfClients: 3,
