@@ -24,7 +24,7 @@ import {
 	createServiceAudience,
 } from "@fluidframework/fluid-static";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { FluidObject } from "@fluidframework/core-interfaces";
+import { ConfigTypes, FluidObject, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import { TinyliciousClientProps, TinyliciousContainerServices } from "./interfaces";
 import { createTinyliciousAudienceMember } from "./TinyliciousAudience";
@@ -158,12 +158,20 @@ export class TinyliciousClient {
 			mode: "write",
 		};
 
+		const featureGates: Record<string, ConfigTypes> = {
+			// T9s client requires a write connection by default
+			"Fluid.Container.ForceWriteConnection": true,
+		};
+		const configProvider: IConfigProviderBase = {
+			getRawConfig: (name: string): ConfigTypes => featureGates[name],
+		};
 		const loader = new Loader({
 			urlResolver: this.urlResolver,
 			documentServiceFactory: this.documentServiceFactory,
 			codeLoader,
 			logger: this.props?.logger,
 			options: { client },
+			configProvider,
 		});
 
 		return loader;

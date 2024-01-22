@@ -35,7 +35,7 @@ import {
 	type AzureContainerVersion,
 	type AzureGetVersionsOptions,
 } from "./interfaces";
-import { isAzureRemoteConnectionConfig, wrappedConfigProvider } from "./utils";
+import { isAzureRemoteConnectionConfig, wrappedConfigProviderWithDefaults } from "./utils";
 
 /**
  * Strongly typed id for connecting to a local Azure Fluid Relay.
@@ -89,7 +89,7 @@ export class AzureClient {
 			origDocumentServiceFactory,
 			properties.summaryCompression,
 		);
-		this.configProvider = wrappedConfigProvider(
+		this.configProvider = wrappedConfigProviderWithDefaults(
 			azureClientFeatureGates,
 			properties.configProvider,
 		);
@@ -213,7 +213,7 @@ export class AzureClient {
 	 * Get the list of versions for specific container.
 	 * @param id - Unique ID of the source container in Azure Fluid Relay.
 	 * @param options - "Get" options. If options are not provided, API
-	 * will assume maxCount of versions to retreive to be 5.
+	 * will assume maxCount of versions to retrieve to be 5.
 	 * @returns Array of available container versions.
 	 */
 	public async getContainerVersions(

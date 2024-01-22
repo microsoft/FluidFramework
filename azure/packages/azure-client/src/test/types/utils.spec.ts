@@ -5,7 +5,7 @@
 import { strict as assert } from "node:assert";
 
 import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { wrappedConfigProvider } from "../../utils";
+import { wrappedConfigProviderWithDefaults } from "../../utils";
 
 describe("wrappedConfigProvider", () => {
 	const configProvider = (featureGates: Record<string, ConfigTypes>): IConfigProviderBase => ({
@@ -13,17 +13,20 @@ describe("wrappedConfigProvider", () => {
 	});
 
 	it("When there is no original config provider", () => {
-		const config = wrappedConfigProvider({ "Fluid.Feature.Gate": true }, undefined);
+		const config = wrappedConfigProviderWithDefaults({ "Fluid.Feature.Gate": true }, undefined);
 		assert.strictEqual(config.getRawConfig("Fluid.Feature.Gate"), true);
 	});
 
 	it("When the original config provider does not specify the required key", () => {
-		const config = wrappedConfigProvider({ "Fluid.Feature.Gate": true }, configProvider({}));
+		const config = wrappedConfigProviderWithDefaults(
+			{ "Fluid.Feature.Gate": true },
+			configProvider({}),
+		);
 		assert.strictEqual(config.getRawConfig("Fluid.Feature.Gate"), true);
 	});
 
 	it("When the original config provider specifies the required key", () => {
-		const config = wrappedConfigProvider(
+		const config = wrappedConfigProviderWithDefaults(
 			{ "Fluid.Feature.Gate": true },
 			configProvider({ "Fluid.Feature.Gate": false }),
 		);

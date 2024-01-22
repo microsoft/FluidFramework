@@ -29,16 +29,16 @@ export function isAzureLocalConnectionConfig(
 
 /**
  * Wrapper {@link IConfigProviderBase} which allows for specifying feature gates if not present in the wrapped
- * provider
+ * provider.
  *
  * @param featureGates - the feature gates
  * @param wrapped - the original config provider
  * @returns The value for the requested feature gate from the original provider and if not present,
  * from the specified feature gates
  */
-export const wrappedConfigProvider = (
-	featureGates: Record<string, ConfigTypes>,
+export const wrappedConfigProviderWithDefaults = (
+	defaults: Record<string, ConfigTypes>,
 	wrapped: IConfigProviderBase | undefined,
 ): IConfigProviderBase => ({
-	getRawConfig: (name: string): ConfigTypes => wrapped?.getRawConfig(name) ?? featureGates[name],
+	getRawConfig: (name: string): ConfigTypes => wrapped?.getRawConfig(name) ?? defaults[name],
 });
