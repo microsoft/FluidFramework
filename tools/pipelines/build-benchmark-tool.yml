@@ -70,7 +70,7 @@ pr:
     - scripts/*
 
 variables:
-  - template: /tools/pipelines/templates/1ES/include-vars.yml@self
+  - template: /tools/pipelines/templates/include-vars.yml@self
     parameters:
       publishOverride: '${{ parameters.publishOverride }}'
       releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
