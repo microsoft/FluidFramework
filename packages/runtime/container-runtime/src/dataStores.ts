@@ -19,6 +19,7 @@ import {
 	CreateSummarizerNodeSource,
 	IAttachMessage,
 	IEnvelope,
+	IFluidDataStoreChannel,
 	IFluidDataStoreContextDetached,
 	IGarbageCollectionData,
 	IInboundSignalMessage,
@@ -61,7 +62,7 @@ import {
 	LocalDetachedFluidDataStoreContext,
 } from "./dataStoreContext";
 import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs";
-import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
+import { IDataStoreAliasMessage, channelToDataStore, isDataStoreAliasMessage } from "./dataStore";
 import { GCNodeType, detectOutboundRoutesViaDDSKey, disableDatastoreSweepKey } from "./gc";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summary";
 
@@ -359,6 +360,8 @@ export class DataStores implements IDisposable {
 			makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
 			snapshotTree: undefined,
 			isRootDataStore: isRoot,
+			channelToDataStoreFn: (channel: IFluidDataStoreChannel, channelId: string) =>
+				channelToDataStore(channel, channelId, this.runtime, this, this.runtime.logger),
 		});
 		this.contexts.addUnbound(context);
 		return context;

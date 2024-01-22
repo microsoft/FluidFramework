@@ -14,6 +14,7 @@ import { IContainerContext } from '@fluidframework/container-definitions';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
 import { IContainerRuntimeOptions } from '@fluidframework/container-runtime';
+import { IDataStore } from '@fluidframework/runtime-definitions';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions';
@@ -136,6 +137,8 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
     constructor(type: string, ctor: new (props: IDataObjectProps<I>) => TObj, sharedObjects: readonly IChannelFactory[], optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>, registryEntries?: NamedFluidDataStoreRegistryEntries, runtimeClass?: typeof FluidDataStoreRuntime);
     createChildInstance(parentContext: IFluidDataStoreContext, initialState?: I["InitialState"]): Promise<TObj>;
     createInstance(runtime: IContainerRuntimeBase, initialState?: I["InitialState"]): Promise<TObj>;
+    // (undocumented)
+    createInstance2(containerRuntime: IContainerRuntimeBase, initialState?: I["InitialState"]): Promise<[TObj, IDataStore]>;
     // (undocumented)
     protected createInstanceCore(context: IFluidDataStoreContextDetached, initialState?: I["InitialState"]): Promise<TObj>;
     // (undocumented)

@@ -19,6 +19,7 @@ import {
 	NamedFluidDataStoreRegistryEntries,
 	NamedFluidDataStoreRegistryEntry,
 	IFluidDataStoreContextDetached,
+	IDataStore,
 } from "@fluidframework/runtime-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
@@ -242,6 +243,25 @@ export class PureDataObjectFactory<
 		initialState?: I["InitialState"],
 	): Promise<TObj> {
 		return this.createNonRootInstanceCore(runtime, [this.type], initialState);
+	}
+
+	public async createInstance2(
+		containerRuntime: IContainerRuntimeBase,
+		initialState?: I["InitialState"],
+	): Promise<[TObj, IDataStore]> {
+		const context = containerRuntime.createDetachedDataStore([this.type]);
+		const { instance, runtime } = await createDataObject(
+			this.ctor,
+			context,
+			this.sharedObjectRegistry,
+			this.optionalProviders,
+			this.runtimeClass,
+			false, // existing
+			initialState,
+		);
+		const dataStore = await context.attachRuntime(this, runtime);
+
+		return [instance, dataStore];
 	}
 
 	/**
