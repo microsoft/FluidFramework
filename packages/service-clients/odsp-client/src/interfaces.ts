@@ -55,6 +55,21 @@ export interface OdspClientProps {
 }
 
 /**
+ * @alpha
+ */
+export interface OdspContainerAttachProps {
+	/**
+	 * The file path where Fluid containers are created. If undefined, the file is created at the root.
+	 */
+	filePath: string | undefined;
+
+	/**
+	 * The file name of the Fluid file. If undefined, the file is named with a GUID.
+	 */
+	fileName: string | undefined;
+}
+
+/**
  * OdspContainerServices is returned by the OdspClient alongside a FluidContainer. It holds the
  * functionality specifically tied to the ODSP service, and how the data stored in the
  * FluidContainer is persisted in the backend and consumed by users. Any functionality regarding

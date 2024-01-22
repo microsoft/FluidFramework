@@ -103,7 +103,7 @@ function validateDataStoreStateInSummary(
  *
  * NOTE: These tests speak of "Sweep" but simply use "tombstoneTimeoutMs" throughout, since sweepGracePeriod is set to 0.
  */
-describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) => {
+describeCompat("GC data store sweep tests", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 	const tombstoneTimeoutMs = 200;
 	const sweepGracePeriodMs = 0; // Skip Tombstone, these tests focus on Sweep
 	const sweepTimeoutMs = tombstoneTimeoutMs + sweepGracePeriodMs;
