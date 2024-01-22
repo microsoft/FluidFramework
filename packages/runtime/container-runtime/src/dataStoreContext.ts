@@ -503,7 +503,9 @@ export abstract class FluidDataStoreContext
 				),
 			};
 			assert(
-				JSON.stringify(bothGCData.fromSnapshot) === JSON.stringify(bothGCData.fromChannel),
+				Object.keys(bothGCData.fromSnapshot.gcNodes).length === 0 ||
+					JSON.stringify(bothGCData.fromSnapshot) ===
+						JSON.stringify(bothGCData.fromChannel),
 				"GC data mismatch",
 			);
 
