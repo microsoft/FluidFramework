@@ -84,7 +84,7 @@ async function updateExistingSession(
 	sessionStickinessDurationMs: number,
 	lumberjackProperties: Record<string, any>,
 	messageBrokerId?: string,
-	skipSessionStickiness: boolean = false,
+	ignoreSessionStickiness: boolean = false,
 ): Promise<ISession> {
 	let updatedDeli: string | undefined;
 	let updatedScribe: string | undefined;
@@ -108,16 +108,16 @@ async function updateExistingSession(
 		!!existingSession.ordererUrl &&
 		!!existingSession.historianUrl &&
 		!!existingSession.deltaStreamUrl;
-	Lumberjack.info("Calculated isSessionSticky, sessionHasLocation and skipSessionStickiness", {
+	Lumberjack.info("Calculated isSessionSticky, sessionHasLocation and ignoreSessionStickiness", {
 		...lumberjackProperties,
 		isSessionSticky,
 		sessionHasLocation,
 		documentLastAccessTime: document.lastAccessTime,
 		sessionStickyCalculationTimestamp,
 		sessionStickinessDurationMs,
-		skipSessionStickiness,
+		ignoreSessionStickiness,
 	});
-	if (!isSessionSticky || skipSessionStickiness || !sessionHasLocation) {
+	if (!isSessionSticky || ignoreSessionStickiness || !sessionHasLocation) {
 		// Allow session location to be moved.
 		if (
 			existingSession.ordererUrl !== ordererUrl ||
@@ -130,7 +130,7 @@ async function updateExistingSession(
 			Lumberjack.info("Moving session", {
 				...lumberjackProperties,
 				isSessionSticky,
-				skipSessionStickiness,
+				ignoreSessionStickiness,
 				sessionHasLocation,
 				oldSessionLocation: {
 					ordererUrl: existingSession.ordererUrl,
@@ -169,7 +169,7 @@ async function updateExistingSession(
 		isSessionActive: false,
 		// Always reset skip session stickiness to false when updating session
 		// since the session should be moved to a different cluster in a clean state.
-		skipSessionStickiness: false,
+		ignoreSessionStickiness: false,
 	};
 	// if undefined and added directly to the session object - will be serialized as null in mongo which is undesirable
 	if (updatedMessageBrokerId) {
@@ -284,13 +284,17 @@ export async function getSession(
 
 	// Reject get session request if cluster is in draining process.
 	if (clusterDrainingChecker) {
-		const isClusterDraining = await clusterDrainingChecker.isClusterDraining();
-		if (isClusterDraining) {
-			Lumberjack.info("Cluster is in draining process. Reject get session request.");
-			throw new NetworkError(
-				503,
-				"Server is unavailable. Please retry session discovery later.",
-			);
+		try {
+			const isClusterDraining = await clusterDrainingChecker.isClusterDraining();
+			if (isClusterDraining) {
+				Lumberjack.info("Cluster is in draining process. Reject get session request.");
+				throw new NetworkError(
+					503,
+					"Server is unavailable. Please retry session discovery later.",
+				);
+			}
+		} catch (error) {
+			Lumberjack.error("Failed to get cluster draining status", lumberjackProperties, error);
 		}
 	}
 
@@ -326,7 +330,7 @@ export async function getSession(
 	}
 
 	// Session is not alive/discovered, so update and persist changes to DB.
-	const skipSessionStickiness = existingSession.skipSessionStickiness ?? false;
+	const ignoreSessionStickiness = existingSession.ignoreSessionStickiness ?? false;
 	const updatedSession: ISession = await updateExistingSession(
 		ordererUrl,
 		historianUrl,
@@ -339,7 +343,7 @@ export async function getSession(
 		sessionStickinessDurationMs,
 		lumberjackProperties,
 		messageBrokerId,
-		skipSessionStickiness,
+		ignoreSessionStickiness,
 	);
 	return convertSessionToFreshSession(updatedSession, lumberjackProperties);
 }

@@ -279,14 +279,22 @@ export class DeliLambdaFactory
 
 					// Set skip session stickiness to be true if cluster is in draining
 					if (this.clusterDrainingChecker) {
-						const isClusterDraining =
-							await this.clusterDrainingChecker.isClusterDraining();
-						if (isClusterDraining) {
-							Lumberjack.info(
-								"Cluster is in draining, set skip session stickiness to be true",
+						try {
+							const isClusterDraining =
+								await this.clusterDrainingChecker.isClusterDraining();
+							if (isClusterDraining) {
+								Lumberjack.info(
+									"Cluster is in draining, set skip session stickiness to be true",
+								);
+								// Skip session stickiness if cluster is in draining
+								data["session.ignoreSessionStickiness"] = true;
+							}
+						} catch (error) {
+							Lumberjack.error(
+								"Failed to get cluster draining status",
+								getLumberBaseProperties(documentId, tenantId),
+								error,
 							);
-							// Skip session stickiness if cluster is in draining
-							data["session.skipSessionStickiness"] = true;
 						}
 					}
 

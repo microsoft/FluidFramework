@@ -52,9 +52,9 @@ export interface ISession {
 	isSessionActive: boolean;
 
 	/**
-	 * Whether the session stickiness should be skipped during session discovery.
-	 * Session stickiness is skipped if the landed cluster is in draining process.
-	 * Session should be landed on a new cluster immediately if the session stickiness is skipped.
+	 * Whether the session stickiness should be ignored during session discovery.
+	 * Session stickiness is ignored if the landed cluster is in draining process.
+	 * Session should be landed on a new cluster immediately if the session stickiness is ignored.
 	 */
-	skipSessionStickiness?: boolean;
+	ignoreSessionStickiness?: boolean;
 }

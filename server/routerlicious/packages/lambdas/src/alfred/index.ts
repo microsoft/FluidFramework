@@ -317,6 +317,12 @@ export function configureWebSocketServices(
 				}
 				if (clusterInDraining) {
 					// TODO: add a new error class
+					Lumberjack.info(
+						"Reject connect document request because cluster is draining.",
+						{
+							tenantId: message.tenantId,
+						},
+					);
 					throw new NetworkError(503, "Cluster is not available. Please retry later.");
 				}
 			}
