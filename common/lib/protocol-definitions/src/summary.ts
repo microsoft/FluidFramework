@@ -171,5 +171,5 @@ export interface ISummaryTree {
 	 * snapshot to the client, and this tree is missing in that snapshot, then this could be used to request the contents
 	 * from the service.
 	 */
-	groupIdOrName?: string;
+	groupId?: string;
 }

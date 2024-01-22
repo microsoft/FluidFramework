@@ -123,7 +123,7 @@ export interface ITree {
 	 * the client, and this tree is missing in that snapshot, then this could be used to request the contents
 	 * from the service.
 	 */
-	groupIdOrName?: string;
+	groupId?: string;
 }
 
 /**
@@ -144,7 +144,7 @@ export interface ISnapshotTree {
 	 * the client, and this tree is missing in that snapshot, then this could be used to request the contents
 	 * from the service.
 	 */
-	groupIdOrName?: string;
+	groupId?: string;
 }
 
 /**
