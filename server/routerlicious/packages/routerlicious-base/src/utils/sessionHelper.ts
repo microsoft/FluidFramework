@@ -282,22 +282,6 @@ export async function getSession(
 ): Promise<ISession> {
 	const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 
-	// Reject get session request if cluster is in draining process.
-	if (clusterDrainingChecker) {
-		try {
-			const isClusterDraining = await clusterDrainingChecker.isClusterDraining();
-			if (isClusterDraining) {
-				Lumberjack.info("Cluster is in draining process. Reject get session request.");
-				throw new NetworkError(
-					503,
-					"Server is unavailable. Please retry session discovery later.",
-				);
-			}
-		} catch (error) {
-			Lumberjack.error("Failed to get cluster draining status", lumberjackProperties, error);
-		}
-	}
-
 	const document: IDocument = await documentRepository.readOne({ tenantId, documentId });
 	if (!document || document.scheduledDeletionTime !== undefined) {
 		throw new NetworkError(404, "Document is deleted and cannot be accessed.");
@@ -327,6 +311,22 @@ export async function getSession(
 	if (existingSession.isSessionAlive || existingSession.isSessionActive) {
 		// Existing session is considered alive/discovered or active, so return to consumer as-is.
 		return existingSession;
+	}
+
+	// Reject get session request on existing, inactive sessions if cluster is in draining process.
+	if (clusterDrainingChecker) {
+		try {
+			const isClusterDraining = await clusterDrainingChecker.isClusterDraining();
+			if (isClusterDraining) {
+				Lumberjack.info("Cluster is in draining process. Reject get session request.");
+				throw new NetworkError(
+					503,
+					"Server is unavailable. Please retry session discovery later.",
+				);
+			}
+		} catch (error) {
+			Lumberjack.error("Failed to get cluster draining status", lumberjackProperties, error);
+		}
 	}
 
 	// Session is not alive/discovered, so update and persist changes to DB.
