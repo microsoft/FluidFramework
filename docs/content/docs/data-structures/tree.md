@@ -9,11 +9,11 @@ The `SharedTree` distributed data structure (DDS), available in Fluid Framework 
 
 A `SharedTree` object has the following characteristics:
 
--   It has a root and can have several types of interior nodes and several types of leaf nodes.
+-   It has a root and can have several types of internal (i.e., non-leaf) nodes and several types of leaf nodes.
 -   Although there are some exceptions, for the most part, each type of node closely mirrors a familiar JavaScript datatype, such as object, map, array, boolean, number, string, and null.
 -   Again, with exceptions, your code accesses nodes with the syntax of JavaScript and TypeScript, such as dot notation, property assignment, and array indexes.
 -   Besides being of the type `SharedTree`, the object will also conform to a schema that your code creates so it has an application-specific strong typing too.
--   The various types of interior nodes can be nested in one another (subject to the constraints of the schema).
+-   The various types of internal nodes can be nested in one another (subject to the constraints of the schema).
 
 ### Node types
 
@@ -25,11 +25,11 @@ The following leaf node types are available:
 -   **null**: Works identically to a JavaScript null.
 -   **FluidHandle**: A handle to a Fluid DDS or Data Object in the current container. For more information about handles see [Handles]({{< relref "handles.md" >}}).
 
-The following subsections describe the available interior node types.
+The following subsections describe the available internal node types.
 
 #### Object nodes
 
-An object node is a TypeScript-like object with one or more named child properties. The object node's properties can in principle be any of the node types including interior node types; but typically the schema for the `SharedTree` that your code defines will specify for any object node a specific set of properties and node types of each. A `SharedTree` can have many object nodes at various places in the tree and they do not all have to conform to the same schema. Your schema can specify different properties for different object nodes. The schema also specifies whether a child property is required or optional, and it can assign a union datatype to any property. For example, a property could be either number or string.
+An object node is a TypeScript-like object with one or more named child properties. The object node's properties can in principle be any of the node types including internal node types; but typically the schema for the `SharedTree` that your code defines will specify for any object node a specific set of properties and node types of each. A `SharedTree` can have many object nodes at various places in the tree and they do not all have to conform to the same schema. Your schema can specify different properties for different object nodes. The schema also specifies whether a child property is required or optional, and it can assign a union datatype to any property. For example, a property could be either number or string.
 
 For information about creating the schema for an object node, see [Object schema](#object-schema). For information about adding an object node to the the `SharedTree` and about reading and writing to an object node, see [Object node APIs](#object-node-apis).
 
@@ -75,7 +75,7 @@ import { ... SchemaFactory, ... } from '@fluid-experimental/tree2';
 const sf = new SchemaFactory('ec1db2e8-0a00-11ee-be56-0242ac120002');
 ```
 
-The `SchemaFactory` class defines five primitive data types; `boolean`, `string`, `number`, `null`, and `handle` for specifying leaf nodes. It also has three methods for specifying interior nodes; `object()`, `array()`, and `map()`. Use the members of the class to build a schema.
+The `SchemaFactory` class defines five primitive data types; `boolean`, `string`, `number`, `null`, and `handle` for specifying leaf nodes. It also has three methods for specifying internal nodes; `object()`, `array()`, and `map()`. Use the members of the class to build a schema.
 
 As an example, consider an app that provides a digital board with groups of sticky notes as shown in the following screenshot:
 
