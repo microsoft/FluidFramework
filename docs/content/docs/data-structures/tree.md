@@ -309,8 +309,8 @@ const babyShowerNote = new Note({
     lastChanged: 19697 // Days since January 1, 1970, the Unix epoch.
     votes: ["0"]
 });
-
 ```
+
 We show how to add this note to an array of notes in the tree in [Array node APIs](#array-node-apis).
 
 ##### Editing Object Properties
