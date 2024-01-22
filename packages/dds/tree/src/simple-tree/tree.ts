@@ -24,7 +24,7 @@ import {
 export interface ITree extends IChannel {
 	/**
 	 * Returns a {@link TreeView} using the provided schema.
-	 * If the tree's stored schema is compatible, this will provide a schema aware API for accessing the tree's content.
+	 * If the tree's stored schema is compatible, this will provide a schema-aware API for accessing the tree's content.
 	 * If the provided schema is incompatible with the stored data, the view will instead expose an error indicating the incompatibility.
 	 *
 	 * @remarks
@@ -33,11 +33,11 @@ export interface ITree extends IChannel {
 	 *
 	 * The tree (now known to have been initialized) has its stored schema checked against the provided view schema.
 	 *
-	 * If the schemas are compatible the returned {@link TreeView} with expose the root with a schema-aware API based on the provided view schema.
+	 * If the schemas are compatible, the returned {@link TreeView} will expose the root with a schema-aware API based on the provided view schema.
 	 *
 	 * If the schemas are not compatible, the view will indicate the error.
 	 *
-	 * Note that other clients can modify the document at any time, causing the view to enter or leave this error state: see {@link TreeView} for how to handle invalidation in these cases.
+	 * Note that other clients can modify the document at any time, causing the view to enter or leave this error state: see {@link TreeView.events} for how to handle invalidation in these cases.
 	 *
 	 * Only one schematized view may exist for a given ITree at a time.
 	 * If creating a second, the first must be disposed before calling `schematize` again.
@@ -84,16 +84,16 @@ export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFie
 /**
  * An editable view of a (version control style) branch of a shared tree.
  *
- * This view is always in one of three states:
+ * This view is always in one of two states:
  * 1. In schema: the stored schema is compatible with the provided view schema. There is no error, and root can be used.
- * 2. Our of schema: the stored schema is incompatible with the provided view schema. There is an error, and root cannot be used.
+ * 2. Out of schema: the stored schema is incompatible with the provided view schema. There is an error, and root cannot be used.
  *
  * @privateRemarks
  * From an API design perspective, `upgradeSchema` could be merged into `schematize` anb/or `schematize` could return errors explicitly.
  * Such approaches would make it discoverable that out of schema handling may need to be done.
  * Doing that would however complicate trivial "hello world" style example slightly, as well as be a breaking API change.
  * It also seems more complex to handle invalidation with that pattern.
- * Thus this design was chosen at the risk of apps blindly accessing `root` then breaking unexpected when the document in incompatible.
+ * Thus this design was chosen at the risk of apps blindly accessing `root` then breaking unexpectedly when the document is incompatible.
  * If this does become a problem,
  * it could be mitigated by adding a `rootOrError` member and deprecating `root` to give users a warning if they might be missing the error checking.
  * @public
@@ -143,7 +143,7 @@ export interface SchemaIncompatible {
 	 * True iff the view schema supports all possible documents permitted by the stored schema.
 	 *
 	 * @remarks
-	 * When true, this is still an error because the view schema support more documents than the stored schema.
+	 * When true, this is still an error because the view schema supports more documents than the stored schema.
 	 * This means that writes to the document using the view schema could make the document violate its stored schema.
 	 * In this case, the stored schema could be updated to match the provided view schema, allowing read write access to the tree.
 	 *
@@ -166,7 +166,7 @@ export interface TreeViewEvents {
 	/**
 	 * {@link TreeView.root} has changed.
 	 * This includes going into or out of an `error` state where the root is unavailable due to stored schema changes.
-	 * It also included changes the field which contains the root, meaning setting or clearing an optional root, or changing which node is the root.
+	 * It also includes changes to the field containing the root such as setting or clearing an optional root or changing which node is the root.
 	 * This does NOT include changes to the content (fields/children) of the root node: for that case subscribe to events on the root node.
 	 */
 	rootChanged(): void;
