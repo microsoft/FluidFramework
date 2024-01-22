@@ -309,6 +309,7 @@ const babyShowerNote = new Note({
     lastChanged: 19697 // Days since January 1, 1970, the Unix epoch.
     votes: ["0"]
 });
+
 ```
 We show how to add this note to an array of notes in the tree in [Array node APIs](#array-node-apis).
 
@@ -472,6 +473,7 @@ moveToIndex(index: number, sourceStartIndex: number, sourceEndIndex: number, sou
 Moves the items to the specified `index` in the destination array. The item that is at `index` before the method is called will be at the first index position that follows the moved items after the move. Specify a `source` array if it is different from the destination array. If the items are being moved within the same array, the `index` position is calculated including the items being moved (as if a new copy of the moved items were being inserted, without removing the originals).
 
 Note the following about these methods:
+
 -   If multiple clients simultaneously move an item, then that item will be moved to the destination indicated by move of the client whose edit is ordered last.
 -   A removed item may be restored as a result of a simultaneous move operation from another client. For example, if one client removes items 3-5, and another client simultaneously moves items 4 and 5, then, if the move operation is ordered last, only item 3 is removed (items 4 and 5 are restored and moved to their destination by the move operation). If the remove operation is ordered last, then all three items will be removed.
 
