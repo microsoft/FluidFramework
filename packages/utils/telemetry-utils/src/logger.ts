@@ -28,7 +28,6 @@ import {
 	ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
 	ITelemetryPerformanceEventExt,
-	ITelemetryPropertiesExt,
 	TelemetryEventPropertyTypeExt,
 	TelemetryEventCategory,
 	ITelemetryPropertiesExt,
@@ -70,37 +69,6 @@ export type TelemetryEventPropertyTypes = ITelemetryBaseProperties[string];
  */
 export interface ITelemetryLoggerPropertyBag {
 	[index: string]: TelemetryEventPropertyTypes | (() => TelemetryEventPropertyTypes);
-}
-
-/**
- * @alpha
- */
-export interface ITelemetryLoggerPropertyBags {
-	all?: ITelemetryLoggerPropertyBag;
-	error?: ITelemetryLoggerPropertyBag;
-}
-
-/**
- * Decides the log level based on the category of the event
- * @param category - category of the event
- * @param currentLogLevel - log level as specified by the caller
- * @returns - final log level
- */
-function decideLogLevel(category: TelemetryEventCategory, currentLogLevel?: LogLevel): LogLevel {
-	switch (category) {
-		case "error":
-			return LogLevel.error;
-		case "generic":
-			// If it is a generic event, then max log level should be warning.
-			return currentLogLevel === LogLevel.error
-				? LogLevel.warning
-				: currentLogLevel ?? LogLevel.default;
-		case "performance":
-			// For perf category, log level could either be verbose or default.
-			return currentLogLevel === LogLevel.verbose ? LogLevel.verbose : LogLevel.default;
-		default:
-			return LogLevel.default;
-	}
 }
 
 /**
@@ -471,7 +439,7 @@ export class ChildLogger extends TelemetryLogger {
 	}
 
 	private constructor(
-		protected readonly baseLogger: FilteredLogger,
+		protected readonly baseLogger: ITelemetryBaseLogger,
 		namespace: string | undefined,
 		properties: ITelemetryLoggerPropertyBags | undefined,
 	) {

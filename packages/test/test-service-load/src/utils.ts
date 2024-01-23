@@ -186,9 +186,6 @@ export async function initialize(
 	const configurations = random.pick(
 		generateConfigurations(seed, optionsOverride?.configurations),
 	);
-	const loggerConfigOptions: ILoggerEventsFilterConfig = random.pick(
-		generateLoggerConfig(seed, undefined),
-	);
 
 	const minLogLevel = random.pick([LogLevel.verbose, LogLevel.default]);
 	const logger = await createLogger(
@@ -210,7 +207,6 @@ export async function initialize(
 			logLevel: minLogLevel,
 		}),
 	});
-	logger.eventsConfig = loggerConfigOptions;
 
 	// Construct the loader
 	const loader = new Loader({

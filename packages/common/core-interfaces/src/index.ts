@@ -55,7 +55,6 @@ export {
 } from "./handles";
 
 export type {
-	ILoggerEventsFilterConfig,
 	ILoggingError,
 	ITaggedTelemetryPropertyType, // deprecated
 	ITelemetryBaseEvent,

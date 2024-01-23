@@ -127,20 +127,6 @@ export function generateConfigurations(
 	return generatePairwiseOptions<Record<string, ConfigTypes>>(overrides, seed);
 }
 
-export function generateLoggerConfig(
-	seed: number,
-	overrides: Partial<OptionsMatrix<ILoggerEventsFilterConfig>> | undefined,
-): ILoggerEventsFilterConfig[] {
-	const loggerEventsFilterConfig: OptionsMatrix<ILoggerEventsFilterConfig> = {
-		logLevel: [LogLevel.verbose, LogLevel.default],
-	};
-
-	return generatePairwiseOptions<ILoggerEventsFilterConfig>(
-		applyOverrides<ILoggerEventsFilterConfig>(loggerEventsFilterConfig, overrides),
-		seed,
-	);
-}
-
 /**
  *
  * @param testConfig - the ILoadTestConfig to extract the Option Override from
