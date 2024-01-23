@@ -16,7 +16,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ~0.26.2
       '@microsoft/api-documenter': ^7.22.24
-      '@microsoft/api-extractor': ^7.38.3
+      '@microsoft/api-extractor': ^7.39.1
       c8: ^7.14.0
       commitizen: ^4.3.0
       concurrently: ^8.2.1
@@ -40,7 +40,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.26.2
       '@microsoft/api-documenter': 7.22.24
-      '@microsoft/api-extractor': 7.38.3
+      '@microsoft/api-extractor': 7.39.1
       c8: 7.14.0
       commitizen: 4.3.0_typescript@5.1.6
       concurrently: 8.2.1
@@ -65,7 +65,7 @@ importers:
       '@fluidframework/build-tools': workspace:~
       '@fluidframework/bundle-size-tools': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.2.0
-      '@microsoft/api-extractor': ^7.38.3
+      '@microsoft/api-extractor': ^7.39.1
       '@oclif/core': ^3.9.0
       '@oclif/plugin-autocomplete': ^2.3.10
       '@oclif/plugin-commands': ^3.0.4
@@ -138,7 +138,7 @@ importers:
       '@fluid-tools/version-tools': link:../version-tools
       '@fluidframework/build-tools': link:../build-tools
       '@fluidframework/bundle-size-tools': link:../bundle-size-tools
-      '@microsoft/api-extractor': 7.38.3_@types+node@18.18.6
+      '@microsoft/api-extractor': 7.39.1_@types+node@18.18.6
       '@oclif/core': 3.9.0
       '@oclif/plugin-autocomplete': 2.3.10_6aghfyf5eabo7u6nxooxqsbtpq
       '@oclif/plugin-commands': 3.0.4
@@ -311,7 +311,7 @@ importers:
     specifiers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/eslint-config-fluid': ^3.2.0
-      '@microsoft/api-extractor': ^7.38.3
+      '@microsoft/api-extractor': ^7.39.1
       '@types/msgpack-lite': ^0.1.8
       '@types/node': ^18.18.6
       '@types/pako': ^2.0.0
@@ -336,7 +336,7 @@ importers:
     devDependencies:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/eslint-config-fluid': 3.2.0_zo5p53osjv3ha4sgr6kpvl7c7y
-      '@microsoft/api-extractor': 7.38.3_@types+node@18.18.6
+      '@microsoft/api-extractor': 7.39.1_@types+node@18.18.6
       '@types/msgpack-lite': 0.1.8
       '@types/node': 18.18.6
       '@types/pako': 2.0.0
@@ -404,7 +404,7 @@ importers:
       '@fluid-private/readme-command': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/eslint-config-fluid': ^3.2.0
-      '@microsoft/api-extractor': ^7.38.3
+      '@microsoft/api-extractor': ^7.39.1
       '@oclif/core': ^3.9.0
       '@oclif/plugin-autocomplete': ^2.3.10
       '@oclif/plugin-commands': ^3.0.4
@@ -450,7 +450,7 @@ importers:
       '@fluid-private/readme-command': link:../readme-command
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/eslint-config-fluid': 3.2.0_zo5p53osjv3ha4sgr6kpvl7c7y
-      '@microsoft/api-extractor': 7.38.3_@types+node@18.18.6
+      '@microsoft/api-extractor': 7.39.1_@types+node@18.18.6
       '@oclif/test': 2.3.33_6aghfyf5eabo7u6nxooxqsbtpq
       '@types/chai': 4.3.5
       '@types/mocha': 9.1.1
@@ -824,7 +824,7 @@ packages:
       '@fluid-tools/version-tools': 0.26.2_typescript@5.1.6
       '@fluidframework/build-tools': 0.26.2
       '@fluidframework/bundle-size-tools': 0.26.2
-      '@microsoft/api-extractor': 7.38.3
+      '@microsoft/api-extractor': 7.39.1
       '@oclif/core': 3.9.0
       '@oclif/plugin-autocomplete': 2.3.10_typescript@5.1.6
       '@oclif/plugin-commands': 3.0.4
@@ -1172,33 +1172,33 @@ packages:
       - '@types/node'
     dev: true
 
-  /@microsoft/api-extractor-model/7.28.2:
-    resolution: {integrity: sha512-vkojrM2fo3q4n4oPh4uUZdjJ2DxQ2+RnDQL/xhTWSRUNPF6P4QyrvY357HBxbnltKcYu+nNNolVqc6TIGQ73Ig==}
+  /@microsoft/api-extractor-model/7.28.4:
+    resolution: {integrity: sha512-vucgyPmgHrJ/D4/xQywAmjTmSfxAx2/aDmD6TkIoLu51FdsAfuWRbijWA48AePy60OO+l+mmy9p2P/CEeBZqig==}
     dependencies:
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.61.0
+      '@rushstack/node-core-library': 3.63.0
     transitivePeerDependencies:
       - '@types/node'
     dev: true
 
-  /@microsoft/api-extractor-model/7.28.2_@types+node@18.18.6:
-    resolution: {integrity: sha512-vkojrM2fo3q4n4oPh4uUZdjJ2DxQ2+RnDQL/xhTWSRUNPF6P4QyrvY357HBxbnltKcYu+nNNolVqc6TIGQ73Ig==}
+  /@microsoft/api-extractor-model/7.28.4_@types+node@18.18.6:
+    resolution: {integrity: sha512-vucgyPmgHrJ/D4/xQywAmjTmSfxAx2/aDmD6TkIoLu51FdsAfuWRbijWA48AePy60OO+l+mmy9p2P/CEeBZqig==}
     dependencies:
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.61.0_@types+node@18.18.6
+      '@rushstack/node-core-library': 3.63.0_@types+node@18.18.6
     transitivePeerDependencies:
       - '@types/node'
 
-  /@microsoft/api-extractor/7.38.3:
-    resolution: {integrity: sha512-xt9iYyC5f39281j77JTA9C3ISJpW1XWkCcnw+2vM78CPnro6KhPfwQdPDfwS5JCPNuq0grm8cMdPUOPvrchDWw==}
+  /@microsoft/api-extractor/7.39.1:
+    resolution: {integrity: sha512-V0HtCufWa8hZZvSmlEzQZfINcJkHAU/bmpyJQj6w+zpI87EkR8DuBOW6RWrO9c7mUYFZoDaNgUTyKo83ytv+QQ==}
     hasBin: true
     dependencies:
-      '@microsoft/api-extractor-model': 7.28.2
+      '@microsoft/api-extractor-model': 7.28.4
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.61.0
+      '@rushstack/node-core-library': 3.63.0
       '@rushstack/rig-package': 0.5.1
       '@rushstack/ts-command-line': 4.17.1
       colors: 1.2.5
@@ -1206,19 +1206,19 @@ packages:
       resolve: 1.22.8
       semver: 7.5.4
       source-map: 0.6.1
-      typescript: 5.0.4
+      typescript: 5.3.3
     transitivePeerDependencies:
       - '@types/node'
     dev: true
 
-  /@microsoft/api-extractor/7.38.3_@types+node@18.18.6:
-    resolution: {integrity: sha512-xt9iYyC5f39281j77JTA9C3ISJpW1XWkCcnw+2vM78CPnro6KhPfwQdPDfwS5JCPNuq0grm8cMdPUOPvrchDWw==}
+  /@microsoft/api-extractor/7.39.1_@types+node@18.18.6:
+    resolution: {integrity: sha512-V0HtCufWa8hZZvSmlEzQZfINcJkHAU/bmpyJQj6w+zpI87EkR8DuBOW6RWrO9c7mUYFZoDaNgUTyKo83ytv+QQ==}
     hasBin: true
     dependencies:
-      '@microsoft/api-extractor-model': 7.28.2_@types+node@18.18.6
+      '@microsoft/api-extractor-model': 7.28.4_@types+node@18.18.6
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.61.0_@types+node@18.18.6
+      '@rushstack/node-core-library': 3.63.0_@types+node@18.18.6
       '@rushstack/rig-package': 0.5.1
       '@rushstack/ts-command-line': 4.17.1
       colors: 1.2.5
@@ -1226,7 +1226,7 @@ packages:
       resolve: 1.22.8
       semver: 7.5.4
       source-map: 0.6.1
-      typescript: 5.0.4
+      typescript: 5.3.3
     transitivePeerDependencies:
       - '@types/node'
 
@@ -2059,8 +2059,8 @@ packages:
       z-schema: 5.0.5
     dev: false
 
-  /@rushstack/node-core-library/3.61.0:
-    resolution: {integrity: sha512-tdOjdErme+/YOu4gPed3sFS72GhtWCgNV9oDsHDnoLY5oDfwjKUc9Z+JOZZ37uAxcm/OCahDHfuu2ugqrfWAVQ==}
+  /@rushstack/node-core-library/3.63.0:
+    resolution: {integrity: sha512-Q7B3dVpBQF1v+mUfxNcNZh5uHVR8ntcnkN5GYjbBLrxUYHBGKbnCM+OdcN+hzCpFlLBH6Ob0dEHhZ0spQwf24A==}
     peerDependencies:
       '@types/node': '*'
     peerDependenciesMeta:
@@ -2076,8 +2076,8 @@ packages:
       z-schema: 5.0.5
     dev: true
 
-  /@rushstack/node-core-library/3.61.0_@types+node@18.18.6:
-    resolution: {integrity: sha512-tdOjdErme+/YOu4gPed3sFS72GhtWCgNV9oDsHDnoLY5oDfwjKUc9Z+JOZZ37uAxcm/OCahDHfuu2ugqrfWAVQ==}
+  /@rushstack/node-core-library/3.63.0_@types+node@18.18.6:
+    resolution: {integrity: sha512-Q7B3dVpBQF1v+mUfxNcNZh5uHVR8ntcnkN5GYjbBLrxUYHBGKbnCM+OdcN+hzCpFlLBH6Ob0dEHhZ0spQwf24A==}
     peerDependencies:
       '@types/node': '*'
     peerDependenciesMeta:
@@ -10677,13 +10677,13 @@ packages:
     dependencies:
       is-typedarray: 1.0.0
 
-  /typescript/5.0.4:
-    resolution: {integrity: sha512-cW9T5W9xY37cc+jfEnaUvX91foxtHkza3Nw3wkoF4sSlKn0MONdkdEndig/qPBWXNkmplh3NzayQzCiHM4/hqw==}
-    engines: {node: '>=12.20'}
-    hasBin: true
-
   /typescript/5.1.6:
     resolution: {integrity: sha512-zaWCozRZ6DLEWAWFrVDz1H6FVXzUSfTy5FUMWsQlU8Ym5JP9eO4xkTIROFCQvhQf61z6O/G6ugw3SgAnvvm+HA==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
+  /typescript/5.3.3:
+    resolution: {integrity: sha512-pXWcraxM0uxAS+tN0AG/BF2TyqmHO014Z070UsJ+pFvYuRSq8KH8DmWpnbXe0pEPDHXZV3FcAbJkijJ5oNEnWw==}
     engines: {node: '>=14.17'}
     hasBin: true
 
