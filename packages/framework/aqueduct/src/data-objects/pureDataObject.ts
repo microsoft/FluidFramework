@@ -61,14 +61,14 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#IProvideFluidLoadable.IFluidLoadable}
 	 */
-	public get IFluidLoadable(): IFluidLoadable {
+	public get IFluidLoadable(): this {
 		return this;
 	}
 
 	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#IProvideFluidHandle.IFluidHandle}
 	 */
-	public get IFluidHandle(): IFluidHandle {
+	public get IFluidHandle(): IFluidHandle<this> {
 		return this.handle;
 	}
 

@@ -157,7 +157,7 @@ export class PureDataObjectFactory<
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#IProvideFluidDataStoreFactory.IFluidDataStoreFactory}
 	 */
-	public get IFluidDataStoreFactory(): IFluidDataStoreFactory {
+	public get IFluidDataStoreFactory(): this {
 		return this;
 	}
 
