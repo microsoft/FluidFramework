@@ -167,6 +167,24 @@ const safeSessionStorage = (): Storage | undefined => {
 };
 
 /**
+ * Creates a wrapper on top of an existing config provider which allows for
+ * specifying feature gates if not present in the original provider.
+ *
+ * @param defaults - default feature gate configs to be used if not specified by the original provider
+ * @param original - the original config provider
+ * @returns The value for the requested feature gate from the original provider and if not present,
+ * from the specified feature gates
+ *
+ * @alpha
+ */
+export const wrapConfigProviderWithDefaults = (
+	original: IConfigProviderBase | undefined,
+	defaults: Record<string, ConfigTypes>,
+): IConfigProviderBase => ({
+	getRawConfig: (name: string): ConfigTypes => original?.getRawConfig(name) ?? defaults[name],
+});
+
+/**
  * Implementation of {@link IConfigProvider} which contains nested {@link IConfigProviderBase} instances
  */
 export class CachedConfigProvider implements IConfigProvider {

@@ -28,6 +28,7 @@ import { ConfigTypes, FluidObject, IConfigProviderBase } from "@fluidframework/c
 import { assert } from "@fluidframework/core-utils";
 import { TinyliciousClientProps, TinyliciousContainerServices } from "./interfaces";
 import { createTinyliciousAudienceMember } from "./TinyliciousAudience";
+import { wrapConfigProviderWithDefaults } from "../../../utils/telemetry-utils/dist";
 
 /**
  * Provides the ability to have a Fluid object backed by a Tinylicious service.
@@ -162,16 +163,13 @@ export class TinyliciousClient {
 			// T9s client requires a write connection by default
 			"Fluid.Container.ForceWriteConnection": true,
 		};
-		const configProvider: IConfigProviderBase = {
-			getRawConfig: (name: string): ConfigTypes => featureGates[name],
-		};
 		const loader = new Loader({
 			urlResolver: this.urlResolver,
 			documentServiceFactory: this.documentServiceFactory,
 			codeLoader,
 			logger: this.props?.logger,
 			options: { client },
-			configProvider,
+			configProvider: wrapConfigProviderWithDefaults(/* original */ undefined, featureGates),
 		});
 
 		return loader;

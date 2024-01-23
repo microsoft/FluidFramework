@@ -24,8 +24,12 @@ import {
 import { type IClient, SummaryType } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 
-import { type IConfigProviderBase, type FluidObject } from "@fluidframework/core-interfaces";
+import { type FluidObject } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
+import type {
+	IConfigProviderBase,
+	wrapConfigProviderWithDefaults,
+} from "@fluidframework/telemetry-utils";
 import { createAzureAudienceMember } from "./AzureAudience";
 import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver";
 import {
@@ -35,7 +39,7 @@ import {
 	type AzureContainerVersion,
 	type AzureGetVersionsOptions,
 } from "./interfaces";
-import { isAzureRemoteConnectionConfig, wrappedConfigProviderWithDefaults } from "./utils";
+import { isAzureRemoteConnectionConfig } from "./utils";
 
 /**
  * Strongly typed id for connecting to a local Azure Fluid Relay.
@@ -89,7 +93,7 @@ export class AzureClient {
 			origDocumentServiceFactory,
 			properties.summaryCompression,
 		);
-		this.configProvider = wrappedConfigProviderWithDefaults(
+		this.configProvider = wrapConfigProviderWithDefaults(
 			azureClientFeatureGates,
 			properties.configProvider,
 		);
