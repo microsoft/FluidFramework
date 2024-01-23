@@ -1369,7 +1369,7 @@ describeCompat(
 			if (!c.isDirty) {
 				return;
 			}
-			await new Promise<void>((resolve) => c.on("saved", () => resolve()));
+			await new Promise<void>((resolve) => c.once("saved", () => resolve()));
 		}
 
 		it("Eventual consistency in ordering with subdirectories creation/deletion", async () => {
