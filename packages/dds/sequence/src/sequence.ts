@@ -213,6 +213,15 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		return ops;
 	}
 
+	/**
+	 * Note: this field only provides a lower-bound on the reference sequence numbers for in-flight ops.
+	 * The exact reason isn't understood, but some e2e tests suggest that the runtime may sometimes process
+	 * incoming leave/join ops before putting an op that this DDS submits over the wire.
+	 *
+	 * E.g. SharedString submits an op while deltaManager has lastSequenceNumber = 10, but before the runtime
+	 * puts this op over the wire, it processes a client join/leave op with sequence number 11, so the referenceSequenceNumber
+	 * on the SharedString op is 11.
+	 */
 	private readonly inFlightRefSeqs = new Deque<number>();
 
 	// eslint-disable-next-line import/no-deprecated
@@ -610,7 +619,8 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
 	 */
 	protected reSubmitCore(content: any, localOpMetadata: unknown) {
-		this.inFlightRefSeqs.shift();
+		const originalRefSeq = this.inFlightRefSeqs.shift();
+		assert(originalRefSeq !== undefined, "Expected a recorded refSeq when resubmitting an op");
 		if (
 			!this.intervalCollections.tryResubmitMessage(
 				content,
@@ -699,8 +709,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		localOpMetadata: unknown,
 	) {
 		if (local) {
-			const refSeq = this.inFlightRefSeqs.shift();
-			assert(refSeq === message.referenceSequenceNumber, "RefSeq mismatch");
+			const recordedRefSeq = this.inFlightRefSeqs.shift();
+			assert(recordedRefSeq !== undefined, "No pending recorded refSeq found");
+			assert(recordedRefSeq <= message.referenceSequenceNumber, "RefSeq mismatch");
 		}
 
 		// if loading isn't complete, we need to cache all
@@ -750,6 +761,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 */
 	protected applyStashedOp(content: any): unknown {
+		this.inFlightRefSeqs.push(this.runtime.deltaManager.lastSequenceNumber);
 		const parsedContent = parseHandles(content, this.serializer);
 		const metadata =
 			this.intervalCollections.tryGetStashedOpLocalMetadata(parsedContent) ??
