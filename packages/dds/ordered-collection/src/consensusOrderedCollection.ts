@@ -38,10 +38,10 @@ interface IConsensusOrderedCollectionValue<T> {
 /**
  * An operation for consensus ordered collection
  */
-interface IConsensusOrderedCollectionAddOperation<T> {
+interface IConsensusOrderedCollectionAddOperation {
 	opName: "add";
 	// serialized value
-	value: string | { version: "2"; value: T };
+	value: string;
 }
 
 interface IConsensusOrderedCollectionAcquireOperation {
@@ -65,14 +65,19 @@ interface IConsensusOrderedCollectionReleaseOperation {
 	acquireId: string;
 }
 
-type IConsensusOrderedCollectionOperation<T> =
-	| IConsensusOrderedCollectionAddOperation<T>
+type IConsensusOrderedCollectionOperation =
+	| IConsensusOrderedCollectionAddOperation
 	| IConsensusOrderedCollectionAcquireOperation
 	| IConsensusOrderedCollectionCompleteOperation
 	| IConsensusOrderedCollectionReleaseOperation;
 
 /** The type of the resolve function to call after the local operation is ack'd */
 type PendingResolve<T> = (value: IConsensusOrderedCollectionValue<T> | undefined) => void;
+
+interface IConsensusOrderedCollectionLocalOpMetadata<T> {
+	resolve: PendingResolve<T>;
+	handles?: T;
+}
 
 /**
  * For job tracking, we need to keep track of which client "owns" a given value.
@@ -127,16 +132,19 @@ export class ConsensusOrderedCollection<T = any>
 	 * Add a value to the consensus collection.
 	 */
 	public async add(value: T): Promise<void> {
+		const valueSer = this.serializeValue(value, this.serializer);
+
 		if (!this.isAttached()) {
 			// For the case where this is not attached yet, explicitly JSON
 			// clone the value to match the behavior of going thru the wire.
-			this.addCore(value);
+			const addValue = this.deserializeValue(valueSer, this.serializer) as T;
+			this.addCore(addValue);
 			return;
 		}
 
-		await this.submit<IConsensusOrderedCollectionAddOperation<T>>({
+		await this.submit<IConsensusOrderedCollectionAddOperation>({
 			opName: "add",
-			value: { version: "2", value },
+			value: valueSer,
 		});
 	}
 
@@ -286,14 +294,16 @@ export class ConsensusOrderedCollection<T = any>
 		localOpMetadata: unknown,
 	) {
 		if (message.type === MessageType.Operation) {
-			const op = message.contents as IConsensusOrderedCollectionOperation<T>;
+			const op = message.contents as IConsensusOrderedCollectionOperation;
 			let value: IConsensusOrderedCollectionValue<T> | undefined;
 			switch (op.opName) {
 				case "add":
-					if (typeof op.value === "string") {
-						this.addCore(this.deserializeValue(op.value, this.serializer) as T);
+					if (local) {
+						const { handles } =
+							localOpMetadata as IConsensusOrderedCollectionLocalOpMetadata<T>;
+						this.addCore(handles);
 					} else {
-						this.addCore(op.value.value);
+						this.addCore(this.deserializeValue(op.value, this.serializer) as T);
 					}
 					break;
 
@@ -313,15 +323,18 @@ export class ConsensusOrderedCollection<T = any>
 					unreachableCase(op);
 			}
 			if (local) {
+				const { resolve, handles } =
+					localOpMetadata as IConsensusOrderedCollectionLocalOpMetadata<T>;
 				// Resolve the pending promise for this operation now that we have received an ack for it.
-				const resolve = localOpMetadata as PendingResolve<T>;
-				resolve(value);
+				// const resolve = localOpMetadata as PendingResolve<T>;
+				resolve(handles);
 			}
 		}
 	}
 
-	private async submit<TMessage extends IConsensusOrderedCollectionOperation<T>>(
+	private async submit<TMessage extends IConsensusOrderedCollectionOperation>(
 		message: TMessage,
+		handles?: T,
 	): Promise<IConsensusOrderedCollectionValue<T> | undefined> {
 		assert(this.isAttached(), 0x06a /* "Trying to submit message while detached!" */);
 
@@ -329,7 +342,7 @@ export class ConsensusOrderedCollection<T = any>
 			(resolve) => {
 				// Send the resolve function as the localOpMetadata. This will be provided back to us when the
 				// op is ack'd.
-				this.submitLocalMessage(message, resolve);
+				this.submitLocalMessage(message, { resolve, handles });
 				// If we fail due to runtime being disposed, it's better to return undefined then unhandled exception.
 			},
 		).catch((error) => undefined);
