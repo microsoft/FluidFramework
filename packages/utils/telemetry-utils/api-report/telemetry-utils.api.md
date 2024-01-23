@@ -434,7 +434,7 @@ export class UsageError extends LoggingError implements IUsageError, IFluidError
 // @internal
 export function validatePrecondition(condition: boolean, message: string, props?: ITelemetryBaseProperties): asserts condition;
 
-// @alpha
+// @internal
 export const wrapConfigProviderWithDefaults: (original: IConfigProviderBase | undefined, defaults: Record<string, ConfigTypes>) => IConfigProviderBase;
 
 // @internal

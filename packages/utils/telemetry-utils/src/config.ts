@@ -170,12 +170,12 @@ const safeSessionStorage = (): Storage | undefined => {
  * Creates a wrapper on top of an existing config provider which allows for
  * specifying feature gates if not present in the original provider.
  *
- * @param defaults - default feature gate configs to be used if not specified by the original provider
  * @param original - the original config provider
- * @returns The value for the requested feature gate from the original provider and if not present,
- * from the specified feature gates
+ * @param defaults - default feature gate configs to be used if not specified by the original provider
+ * @returns A config provider that looks for any requested feature gates in the original provider and falls
+ * back to the values specified in the `defaults` feature gates if they're not present in the original.
  *
- * @alpha
+ * @internal
  */
 export const wrapConfigProviderWithDefaults = (
 	original: IConfigProviderBase | undefined,
