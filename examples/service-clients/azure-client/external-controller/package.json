@@ -82,7 +82,7 @@
 		"puppeteer": "^17.1.3",
 		"rimraf": "^4.4.0",
 		"start-server-and-test": "^1.11.7",
-		"tinylicious": "^3.0.0",
+		"tinylicious": "^3.0.0-231483",
 		"ts-jest": "^29.1.1",
 		"ts-loader": "^9.3.0",
 		"tsc-multi": "^1.1.0",
