@@ -26,7 +26,7 @@ import {
 } from "@fluidframework/test-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 
-describeCompat("EphemeralIndependentDirectory", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("EphemeralIndependentDirectory", "LoaderCompat", (getTestObjectProvider, apis) => {
 	const TestContainerRuntimeFactory = createTestContainerRuntimeFactory(
 		apis.containerRuntime.ContainerRuntime,
 	);
