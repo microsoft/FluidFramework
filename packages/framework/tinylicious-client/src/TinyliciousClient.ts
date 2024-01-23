@@ -24,11 +24,11 @@ import {
 	createServiceAudience,
 } from "@fluidframework/fluid-static";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { ConfigTypes, FluidObject, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { ConfigTypes, FluidObject } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
+import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils";
 import { TinyliciousClientProps, TinyliciousContainerServices } from "./interfaces";
 import { createTinyliciousAudienceMember } from "./TinyliciousAudience";
-import { wrapConfigProviderWithDefaults } from "../../../utils/telemetry-utils/dist";
 
 /**
  * Provides the ability to have a Fluid object backed by a Tinylicious service.

@@ -24,12 +24,9 @@ import {
 import { type IClient, SummaryType } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 
-import { type FluidObject } from "@fluidframework/core-interfaces";
+import { type FluidObject, type IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
-import type {
-	IConfigProviderBase,
-	wrapConfigProviderWithDefaults,
-} from "@fluidframework/telemetry-utils";
+import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils";
 import { createAzureAudienceMember } from "./AzureAudience";
 import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver";
 import {
