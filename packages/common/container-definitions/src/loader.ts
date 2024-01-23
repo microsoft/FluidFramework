@@ -304,7 +304,6 @@ export type ConnectionState =
  * The Host's view of a Container and its connection to storage
  * @alpha
  */
-// eslint-disable-next-line import/no-deprecated
 export interface IContainer extends IEventProvider<IContainerEvents> {
 	/**
 	 * The Delta Manager supporting the op stream for this Container

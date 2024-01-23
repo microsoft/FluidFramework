@@ -14,12 +14,7 @@ import {
 	IResponse,
 	FluidObject,
 } from "@fluidframework/core-interfaces";
-import {
-	IAudience,
-	IDeltaManager,
-	AttachState,
-	ILoaderOptions,
-} from "@fluidframework/container-definitions";
+import { IAudience, IDeltaManager, AttachState } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
 	IClientDetails,
@@ -375,7 +370,9 @@ export interface IFluidDataStoreContext
 	 * The package path of the data store as per the package factory.
 	 */
 	readonly packagePath: readonly string[];
-	readonly options: ILoaderOptions;
+	// Used to be ILoaderOptions, this is staging for eventual removal.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	readonly options: Record<string | number, any>;
 	readonly clientId: string | undefined;
 	readonly connected: boolean;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;

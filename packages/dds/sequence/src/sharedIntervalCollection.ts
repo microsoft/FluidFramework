@@ -127,9 +127,7 @@ export class SharedIntervalCollection
 			this.handle,
 			(op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
 			new IntervalCollectionValueType(),
-			// TODO this option shouldn't live here - this options object is global to the container
-			// and not specific to the individual dataStoreRuntime.
-			runtime.options as any,
+			runtime.options,
 		);
 	}
 

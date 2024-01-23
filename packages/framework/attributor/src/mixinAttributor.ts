@@ -147,9 +147,7 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 
 			const shouldTrackAttribution = mc.config.getBoolean(enableOnNewFileKey) ?? false;
 			if (shouldTrackAttribution) {
-				// TODO this option shouldn't live here - this options object is global to the container
-				// and not specific to the individual dataStoreRuntime.
-				((context.options as any).attribution ??= {}).track = true;
+				(context.options.attribution ??= {}).track = true;
 			}
 
 			const runtime = (await Base.loadRuntime({

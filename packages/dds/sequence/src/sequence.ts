@@ -234,9 +234,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		super(id, dataStoreRuntime, attributes, "fluid_sequence_");
 
 		this.guardReentrancy =
-			// TODO this option shouldn't live here - this options object is global to the container
-			// and not specific to the individual dataStoreRuntime.
-			(dataStoreRuntime.options as any).sharedStringPreventReentrancy ?? true
+			dataStoreRuntime.options.sharedStringPreventReentrancy ?? true
 				? ensureNoReentrancy
 				: createReentrancyDetector((depth) => {
 						if (totalReentrancyLogs > 0) {
@@ -279,9 +277,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			this.handle,
 			(op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
 			new SequenceIntervalCollectionValueType(),
-			// TODO this option shouldn't live here - this options object is global to the container
-			// and not specific to the individual dataStoreRuntime.
-			dataStoreRuntime.options as any,
+			dataStoreRuntime.options,
 		);
 	}
 
@@ -669,9 +665,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				.catch((error) => {
 					this.loadFinished(error);
 				});
-			// TODO this option shouldn't live here - this options object is global to the container
-			// and not specific to the individual dataStoreRuntime.
-			if ((this.dataStoreRuntime.options as any)?.sequenceInitializeFromHeaderOnly !== true) {
+			if (this.dataStoreRuntime.options.sequenceInitializeFromHeaderOnly !== true) {
 				// if we not doing partial load, await the catch up ops,
 				// and the finalization of the load
 				await loadCatchUpOps;
@@ -775,9 +769,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		}
 		const needsTransformation = message.referenceSequenceNumber !== message.sequenceNumber - 1;
 		let stashMessage: Readonly<ISequencedDocumentMessage> = message;
-		// TODO this option shouldn't live here - this options object is global to the container
-		// and not specific to the individual dataStoreRuntime.
-		if ((this.runtime.options as any)?.newMergeTreeSnapshotFormat !== true) {
+		if (this.runtime.options.newMergeTreeSnapshotFormat !== true) {
 			if (needsTransformation) {
 				this.on("sequenceDelta", transformOps);
 			}
@@ -785,9 +777,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 		this.client.applyMsg(message, local);
 
-		// TODO this option shouldn't live here - this options object is global to the container
-		// and not specific to the individual dataStoreRuntime.
-		if ((this.runtime.options as any)?.newMergeTreeSnapshotFormat !== true) {
+		if (this.runtime.options.newMergeTreeSnapshotFormat !== true) {
 			if (needsTransformation) {
 				this.removeListener("sequenceDelta", transformOps);
 				// shallow clone the message as we only overwrite top level properties,

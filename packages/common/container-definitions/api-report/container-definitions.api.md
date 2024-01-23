@@ -170,7 +170,7 @@ export interface IContainerContext {
     // (undocumented)
     readonly loader: ILoader;
     // (undocumented)
-    readonly options: ILoaderOptions;
+    readonly options: Record<string | number, any>;
     // (undocumented)
     pendingLocalState?: unknown;
     // (undocumented)

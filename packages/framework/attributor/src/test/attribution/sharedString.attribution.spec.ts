@@ -243,14 +243,12 @@ function createSharedString(
 	const initialState: FuzzTestState = {
 		clients: clientIds.map((clientId, index) => {
 			const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
-			// TODO this option shouldn't live here - this options object is global to the container
-			// and not specific to the individual dataStoreRuntime.
 			dataStoreRuntime.options = {
 				attribution: {
 					track: makeSerializer !== undefined,
 					policyFactory: createInsertOnlyAttributionPolicy,
 				},
-			} as any;
+			};
 			const { deltaManager } = dataStoreRuntime;
 			const sharedString = new SharedString(
 				dataStoreRuntime,

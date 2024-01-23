@@ -1148,12 +1148,10 @@ describe("Sequence.Revertibles with stickiness", () => {
 
 		dataStoreRuntime1 = new MockFluidDataStoreRuntime({ clientId: "1" });
 		dataStoreRuntime1.local = false;
-		// TODO this option shouldn't live here - this options object is global to the container
-		// and not specific to the individual dataStoreRuntime.
 		dataStoreRuntime1.options = {
 			intervalStickinessEnabled: true,
 			mergeTreeReferencesCanSlideToEndpoint: true,
-		} as any;
+		};
 		sharedString = stringFactory.create(dataStoreRuntime1, "shared-string-1");
 
 		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);

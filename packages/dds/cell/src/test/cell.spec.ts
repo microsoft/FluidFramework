@@ -24,10 +24,7 @@ function createConnectedCell(
 ): ISharedCell {
 	// Create and connect a second SharedCell.
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	// TODO this option shouldn't live here - this options object is global to the container
-	// and not specific to the individual dataStoreRuntime.
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-	dataStoreRuntime.options = (options ?? dataStoreRuntime.options) as any;
+	dataStoreRuntime.options = options ?? dataStoreRuntime.options;
 
 	runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
@@ -42,10 +39,7 @@ function createConnectedCell(
 
 function createDetachedCell(id: string, options?: ICellOptions): ISharedCell {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	// TODO this option shouldn't live here - this options object is global to the container
-	// and not specific to the individual dataStoreRuntime.
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-	dataStoreRuntime.options = (options ?? dataStoreRuntime.options) as any;
+	dataStoreRuntime.options = options ?? dataStoreRuntime.options;
 	const subCell = new SharedCell(id, dataStoreRuntime, CellFactory.Attributes);
 	return subCell;
 }

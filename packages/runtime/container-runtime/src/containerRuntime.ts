@@ -21,7 +21,6 @@ import {
 	IRuntime,
 	ICriticalContainerError,
 	AttachState,
-	ILoaderOptions,
 	ILoader,
 	LoaderHeader,
 	IGetPendingLocalStateProps,
@@ -934,7 +933,8 @@ export class ContainerRuntime
 		return runtime;
 	}
 
-	public readonly options: ILoaderOptions;
+	// Used to be ILoaderOptions, this is staging for eventual removal.
+	public readonly options: Record<string | number, any>;
 	private imminentClosure: boolean = false;
 
 	private readonly _getClientId: () => string | undefined;

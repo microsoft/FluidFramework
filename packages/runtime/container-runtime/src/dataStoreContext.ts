@@ -11,12 +11,7 @@ import {
 	IFluidHandle,
 	ITelemetryProperties,
 } from "@fluidframework/core-interfaces";
-import {
-	IAudience,
-	IDeltaManager,
-	AttachState,
-	ILoaderOptions,
-} from "@fluidframework/container-definitions";
+import { IAudience, IDeltaManager, AttachState } from "@fluidframework/container-definitions";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert, Deferred, LazyPromise } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
@@ -145,7 +140,9 @@ export abstract class FluidDataStoreContext
 		return this.pkg;
 	}
 
-	public get options(): ILoaderOptions {
+	// Used to be ILoaderOptions, this is staging for eventual removal.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	public get options(): Record<string | number, any> {
 		return this._containerRuntime.options;
 	}
 
