@@ -6,18 +6,18 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import {
-	IEvent,
-	IFluidHandle,
-	IFluidLoadable,
-	IProvideFluidHandle,
-	IRequest,
-	IResponse,
+	type IEvent,
+	type IFluidHandle,
+	type IFluidLoadable,
+	type IProvideFluidHandle,
+	type IRequest,
+	type IResponse,
 } from "@fluidframework/core-interfaces";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
-import { AsyncFluidObjectProvider } from "@fluidframework/synthesize";
+import { type IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { type IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+import { type AsyncFluidObjectProvider } from "@fluidframework/synthesize";
 import { create404Response } from "@fluidframework/runtime-utils";
-import { DataObjectTypes, IDataObjectProps } from "./types";
+import { type DataObjectTypes, type IDataObjectProps } from "./types";
 
 /**
  * This is a bare-bones base class that does basic setup and enables for factory on an initialize call.

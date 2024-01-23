@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedDirectory, MapFactory, SharedDirectory } from "@fluidframework/map";
+import { type ISharedDirectory, MapFactory, SharedDirectory } from "@fluidframework/map";
 import { PureDataObject } from "./pureDataObject";
-import { DataObjectTypes } from "./types";
+import { type DataObjectTypes } from "./types";
 
 /**
  * DataObject is a base data store that is primed with a root directory. It

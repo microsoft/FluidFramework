@@ -3,27 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import { IContainerContext } from "@fluidframework/container-definitions";
+import { type IContainerContext } from "@fluidframework/container-definitions";
 import {
-	IContainerRuntimeOptions,
+	type IContainerRuntimeOptions,
 	FluidDataStoreRegistry,
 	ContainerRuntime,
 } from "@fluidframework/container-runtime";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 // eslint-disable-next-line import/no-deprecated
-import { RuntimeRequestHandler, buildRuntimeRequestHandler } from "@fluidframework/request-handler";
 import {
-	IFluidDataStoreRegistry,
-	IProvideFluidDataStoreRegistry,
-	NamedFluidDataStoreRegistryEntries,
+	type RuntimeRequestHandler,
+	buildRuntimeRequestHandler,
+} from "@fluidframework/request-handler";
+import {
+	type IFluidDataStoreRegistry,
+	type IProvideFluidDataStoreRegistry,
+	type NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import {
 	DependencyContainer,
-	IFluidDependencySynthesizer,
-	IProvideFluidDependencySynthesizer,
+	type IFluidDependencySynthesizer,
+	type IProvideFluidDependencySynthesizer,
 } from "@fluidframework/synthesize";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
-import { FluidObject } from "@fluidframework/core-interfaces";
+import { type FluidObject } from "@fluidframework/core-interfaces";
 
 /**
  * BaseContainerRuntimeFactory produces container runtimes with the specified data store and service registries,

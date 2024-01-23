@@ -3,15 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import {
-	IFluidDataStoreFactory,
-	NamedFluidDataStoreRegistryEntries,
+	type ContainerRuntime,
+	type IContainerRuntimeOptions,
+} from "@fluidframework/container-runtime";
+import {
+	type IFluidDataStoreFactory,
+	type NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IFluidDependencySynthesizer } from "@fluidframework/synthesize";
-import { RuntimeRequestHandler } from "@fluidframework/request-handler";
-import { FluidObject, type IRequest, type IResponse } from "@fluidframework/core-interfaces";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { type IFluidDependencySynthesizer } from "@fluidframework/synthesize";
+import { type RuntimeRequestHandler } from "@fluidframework/request-handler";
+import { type FluidObject, type IRequest, type IResponse } from "@fluidframework/core-interfaces";
 import { RequestParser } from "@fluidframework/runtime-utils";
 import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory";
 

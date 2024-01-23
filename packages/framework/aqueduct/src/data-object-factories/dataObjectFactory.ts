@@ -4,12 +4,12 @@
  */
 
 import { DirectoryFactory, MapFactory, SharedDirectory, SharedMap } from "@fluidframework/map";
-import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
-import { IChannelFactory } from "@fluidframework/datastore-definitions";
-import { FluidObjectSymbolProvider } from "@fluidframework/synthesize";
+import { type NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
+import { type IChannelFactory } from "@fluidframework/datastore-definitions";
+import { type FluidObjectSymbolProvider } from "@fluidframework/synthesize";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 
-import { DataObject, DataObjectTypes, IDataObjectProps } from "../data-objects";
+import { type DataObject, type DataObjectTypes, type IDataObjectProps } from "../data-objects";
 import { PureDataObjectFactory } from "./pureDataObjectFactory";
 
 /**

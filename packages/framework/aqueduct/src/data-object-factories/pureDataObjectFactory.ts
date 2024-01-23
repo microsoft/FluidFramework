@@ -3,33 +3,36 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, FluidObject } from "@fluidframework/core-interfaces";
+import { type IRequest, type FluidObject } from "@fluidframework/core-interfaces";
 import {
 	FluidDataStoreRuntime,
-	ISharedObjectRegistry,
+	type ISharedObjectRegistry,
 	mixinRequestHandler,
 } from "@fluidframework/datastore";
 import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
 import {
-	IFluidDataStoreContext,
-	IContainerRuntimeBase,
-	IFluidDataStoreFactory,
-	IFluidDataStoreRegistry,
-	IProvideFluidDataStoreRegistry,
-	NamedFluidDataStoreRegistryEntries,
-	NamedFluidDataStoreRegistryEntry,
-	IFluidDataStoreContextDetached,
+	type IFluidDataStoreContext,
+	type IContainerRuntimeBase,
+	type IFluidDataStoreFactory,
+	type IFluidDataStoreRegistry,
+	type IProvideFluidDataStoreRegistry,
+	type NamedFluidDataStoreRegistryEntries,
+	type NamedFluidDataStoreRegistryEntry,
+	type IFluidDataStoreContextDetached,
 } from "@fluidframework/runtime-definitions";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
-	AsyncFluidObjectProvider,
-	FluidObjectSymbolProvider,
-	IFluidDependencySynthesizer,
+	type IChannelFactory,
+	type IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions";
+import {
+	type AsyncFluidObjectProvider,
+	type FluidObjectSymbolProvider,
+	type IFluidDependencySynthesizer,
 } from "@fluidframework/synthesize";
 
 import { assert } from "@fluidframework/core-utils";
-import { IDataObjectProps, PureDataObject, DataObjectTypes } from "../data-objects";
+import { type IDataObjectProps, type PureDataObject, type DataObjectTypes } from "../data-objects";
 
 /**
  * Proxy over PureDataObject
