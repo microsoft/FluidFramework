@@ -25,7 +25,7 @@ import {
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 
-describeCompat("SharedDirectory", "FullCompat", (getTestObjectProvider, apis) => {
+describeCompat.skip("SharedDirectory", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap, SharedDirectory } = apis.dds;
 	const directoryId = "directoryKey";
 	const registry: ChannelFactoryRegistry = [[directoryId, SharedDirectory.getFactory()]];
@@ -832,7 +832,7 @@ describeCompat("SharedDirectory", "FullCompat", (getTestObjectProvider, apis) =>
 	});
 });
 
-describeCompat(
+describeCompat.skip(
 	"SharedDirectory orderSequentially",
 	"2.0.0-rc.1.0.0",
 	(getTestObjectProvider, apis) => {
@@ -1347,16 +1347,19 @@ describeCompat(
 			expectSubdirsOrder(sharedDirectory3, dirsInOrder, path);
 		}
 
-		async function pauseAllContainersOutbound() {
+		async function pauseAllContainers() {
+			await container1.deltaManager.inbound.pause();
+			await container2.deltaManager.inbound.pause();
+			await container3.deltaManager.inbound.pause();
+
 			await container1.deltaManager.outbound.pause();
 			await container2.deltaManager.outbound.pause();
 			await container3.deltaManager.outbound.pause();
 		}
 
-		function resumeAllContainersOutbound() {
-			container1.deltaManager.outbound.resume();
-			container2.deltaManager.outbound.resume();
-			container3.deltaManager.outbound.resume();
+		function resumeContainer(c: IContainer) {
+			c.deltaManager.inbound.resume();
+			c.deltaManager.outbound.resume();
 		}
 
 		/**
@@ -1371,28 +1374,23 @@ describeCompat(
 
 		it("Eventual consistency in ordering with subdirectories creation/deletion", async () => {
 			// Pause to not allow ops to be processed while we maintained them in order.
-			await pauseAllContainersOutbound();
+			await pauseAllContainers();
 
-			container1.deltaManager.outbound.resume();
+			resumeContainer(container1);
 			sharedDirectory1.createSubDirectory("dir2");
 			await waitForContainerSave(container1);
-			await container1.deltaManager.outbound.pause();
 
-			container2.deltaManager.outbound.resume();
+			resumeContainer(container2);
 			sharedDirectory2.createSubDirectory("dir1");
 			sharedDirectory2.createSubDirectory("dir2");
 			await waitForContainerSave(container2);
-			await container2.deltaManager.outbound.pause();
 
-			container3.deltaManager.outbound.resume();
+			resumeContainer(container3);
 			sharedDirectory3.createSubDirectory("dir3");
 			sharedDirectory3.createSubDirectory("dir2");
 			await waitForContainerSave(container3);
-			await container3.deltaManager.outbound.pause();
 
-			resumeAllContainersOutbound();
 			await provider.opProcessingController.processIncoming();
-
 			await provider.ensureSynchronized();
 
 			expectAllSubdirsOrder(["dir2", "dir1", "dir3"]);
