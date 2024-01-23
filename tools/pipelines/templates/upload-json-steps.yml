@@ -19,24 +19,87 @@ steps:
   clean: true
 
 # Download the api-extractor outputs
-- download: common_definitions
-  artifact: _api-extractor-temp
-- download: common_utils
-  artifact: _api-extractor-temp
-- download: container_definitions
-  artifact: _api-extractor-temp
-- download: core_interfaces
-  artifact: _api-extractor-temp
-- download: driver_definitions
-  artifact: _api-extractor-temp
-- download: protocol_definitions
-  artifact: _api-extractor-temp
-- download: azure
-  artifact: _api-extractor-temp
-- download: client
-  artifact: _api-extractor-temp
-- download: server
-  artifact: _api-extractor-temp
+- task: DownloadPipelineArtifact@2
+  inputs:
+    buildType: specific
+    project: internal
+    pipeline: Build - common-definitions
+    buildVersionToDownload: latestFromBranch
+    branchName: ${{ variables['Build.SourceBranch'] }}
+    artifact: _api-extractor-temp
+    allowPartiallySucceededBuilds: true
+- task: DownloadPipelineArtifact@2
+  inputs:
+    buildType: specific
+    project: internal
+    pipeline: Build - common-utils
+    buildVersionToDownload: latestFromBranch
+    branchName: ${{ variables['Build.SourceBranch'] }}
+    artifact: _api-extractor-temp
+    allowPartiallySucceededBuilds: true
+- task: DownloadPipelineArtifact@2
+  inputs:
+    buildType: specific
+    project: internal
+    pipeline: Build - container-definitions
+    buildVersionToDownload: latestFromBranch
+    branchName: ${{ variables['Build.SourceBranch'] }}
+    artifact: _api-extractor-temp
+    allowPartiallySucceededBuilds: true
+- task: DownloadPipelineArtifact@2
+  inputs:
+    buildType: specific
+    project: internal
+    pipeline: Build - core-interfaces
+    buildVersionToDownload: latestFromBranch
+    branchName: ${{ variables['Build.SourceBranch'] }}
+    artifact: _api-extractor-temp
+    allowPartiallySucceededBuilds: true
+- task: DownloadPipelineArtifact@2
+  inputs:
+    buildType: specific
+    project: internal
+    pipeline: Build - driver-definitions
+    buildVersionToDownload: latestFromBranch
+    branchName: ${{ variables['Build.SourceBranch'] }}
+    artifact: _api-extractor-temp
+    allowPartiallySucceededBuilds: true
+- task: DownloadPipelineArtifact@2
+  inputs:
+    buildType: specific
+    project: internal
+    pipeline: Build - protocol-definitions
+    buildVersionToDownload: latestFromBranch
+    branchName: ${{ variables['Build.SourceBranch'] }}
+    artifact: _api-extractor-temp
+    allowPartiallySucceededBuilds: true
+- task: DownloadPipelineArtifact@2
+  inputs:
+    buildType: specific
+    project: internal
+    pipeline: Build - azure
+    buildVersionToDownload: latestFromBranch
+    branchName: ${{ variables['Build.SourceBranch'] }}
+    artifact: _api-extractor-temp
+    allowPartiallySucceededBuilds: true
+- task: DownloadPipelineArtifact@2
+  inputs:
+    buildType: specific
+    project: internal
+    pipeline: Build - client packages
+    buildVersionToDownload: latestFromBranch
+    branchName: ${{ variables['Build.SourceBranch'] }}
+    artifact: _api-extractor-temp
+    allowPartiallySucceededBuilds: true   
+- task: DownloadPipelineArtifact@2
+  inputs:
+    buildType: specific
+    project: internal
+    pipeline: server-routerlicious
+    buildVersionToDownload: latestFromBranch
+    branchName: ${{ variables['Build.SourceBranch'] }}
+    artifact: _api-extractor-temp
+    allowPartiallySucceededBuilds: true
 
 # Copy and merge the api-extractor outputs to a central location
 - task: CopyFiles@2
