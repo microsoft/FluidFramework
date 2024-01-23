@@ -221,8 +221,26 @@ export type DescribeCompatSuite = (
 /**
  * @internal
  */
-export type DescribeCompat = DescribeCompatSuite &
-	Record<"skip" | "only" | "noCompat", DescribeCompatSuite>;
+export type DescribeCompat = DescribeCompatSuite & {
+	/**
+	 * Like Mocha's `describe.skip`, but for compat tests.
+	 */
+	skip: DescribeCompatSuite;
+
+	/**
+	 * Like Mocha's `describe.only`, but for compat tests.
+	 */
+	only: DescribeCompatSuite;
+
+	/**
+	 * Run the test suite ignoring the compatibility matrix. In other words, all Fluid layers will
+	 * reference the current code version.
+	 *
+	 * This is meant as a debug utility for e2e tests: do not check in tests that use it as they won't have any
+	 * compat coverage (attempting to do so will fail the PR gate anyway).
+	 */
+	noCompat: DescribeCompatSuite;
+};
 
 function createCompatDescribe(): DescribeCompat {
 	const createCompatSuiteWithDefault = (
@@ -259,7 +277,6 @@ function createCompatDescribe(): DescribeCompat {
  * `LoaderCompat`: generate test variants with compat combinations that only varies the loader version.
  * Specific version (String) : specify a minimum compat version (e.g. "2.0.0-rc.1.0.0") which will be the minimum version a
  * test suite will test against. This should be equal to the value of pkgVersion at the time you're writing the new test suite.
- *
  *
  * @internal
  */
