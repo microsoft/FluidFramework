@@ -1,10 +1,14 @@
 ---
-"@fluid-experimental/attributor": major
-"@fluidframework/cell": major
 "@fluidframework/container-definitions": major
 "@fluidframework/container-loader": major
+"@fluidframework/container-runtime": major
+"@fluidframework/container-runtime-definitions": major
+"@fluidframework/datastore": major
+"@fluidframework/datastore-definitions": major
+"@fluidframework/runtime-definitions": major
 "@fluidframework/sequence": major
 "@fluid-private/test-end-to-end-tests": major
+"@fluidframework/test-runtime-utils": major
 ---
 
 ILoaderOptions no longer accepts arbitrary key/value pairs
