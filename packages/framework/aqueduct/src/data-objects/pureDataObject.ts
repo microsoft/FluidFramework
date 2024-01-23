@@ -54,13 +54,21 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 
 	protected initializeP: Promise<void> | undefined;
 
-	public get id() {
+	public get id(): string {
 		return this.runtime.id;
 	}
-	public get IFluidLoadable() {
+
+	/**
+	 * {@inheritDoc @fluidframework/core-interfaces#IProvideFluidLoadable.IFluidLoadable}
+	 */
+	public get IFluidLoadable(): IFluidLoadable {
 		return this;
 	}
-	public get IFluidHandle() {
+
+	/**
+	 * {@inheritDoc @fluidframework/core-interfaces#IProvideFluidHandle.IFluidHandle}
+	 */
+	public get IFluidHandle(): IFluidHandle {
 		return this.handle;
 	}
 
@@ -75,7 +83,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 		return this.runtime.entryPoint as IFluidHandle<this>;
 	}
 
-	public static async getDataObject(runtime: IFluidDataStoreRuntime) {
+	public static async getDataObject(runtime: IFluidDataStoreRuntime): Promise<PureDataObject> {
 		const obj = await runtime.entryPoint.get();
 		return obj as PureDataObject;
 	}
@@ -87,11 +95,15 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 		this.providers = props.providers;
 		this.initProps = props.initProps;
 
+		/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+		/* eslint-disable @typescript-eslint/no-explicit-any */
 		assert(
 			(this.runtime as any)._dataObject === undefined,
 			0x0bd /* "Object runtime already has DataObject!" */,
 		);
 		(this.runtime as any)._dataObject = this;
+		/* eslint-enable @typescript-eslint/no-explicit-any */
+		/* eslint-enable @typescript-eslint/no-unsafe-member-access */
 	}
 
 	/**
