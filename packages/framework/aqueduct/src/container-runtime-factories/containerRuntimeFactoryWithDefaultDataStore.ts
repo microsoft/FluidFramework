@@ -40,7 +40,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 
 	protected readonly defaultFactory: IFluidDataStoreFactory;
 
-	constructor(props: {
+	public constructor(props: {
 		defaultFactory: IFluidDataStoreFactory;
 		registryEntries: NamedFluidDataStoreRegistryEntries;
 		dependencyContainer?: IFluidDependencySynthesizer;

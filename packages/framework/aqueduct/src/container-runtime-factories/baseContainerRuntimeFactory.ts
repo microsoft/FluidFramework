@@ -60,7 +60,7 @@ export class BaseContainerRuntimeFactory
 	 * @param provideEntryPoint - Function that will initialize the entryPoint of the ContainerRuntime instances
 	 * created with this factory
 	 */
-	constructor(props: {
+	public constructor(props: {
 		registryEntries: NamedFluidDataStoreRegistryEntries;
 		dependencyContainer?: IFluidDependencySynthesizer;
 		/**
