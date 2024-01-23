@@ -521,7 +521,7 @@ describe("DDS Fuzz Harness", () => {
 					["A", "B", "C"],
 				);
 				assert.equal(finalState.summarizerClient.channel.id, "summarizer");
-				assert.deepEqual(generatedOperations[0], { type: "noop" });
+				assert.deepEqual(generatedOperations[5], { type: "attach" });
 				verifyClientsSendOpsToEachOther(finalState);
 			});
 		});
