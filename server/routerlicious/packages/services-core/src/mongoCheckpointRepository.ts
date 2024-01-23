@@ -62,7 +62,7 @@ export class MongoCheckpointRepository implements ICheckpointRepository {
 		documentId: string,
 		tenantId: string,
 	): { _id: string; documentId: string } & any {
-		const isError = !documentId || !tenantId ? true : false;
+		const isError = !documentId || !tenantId;
 
 		if (isError) {
 			const error = new Error(`Cannot create filter due to missing parameter`);
