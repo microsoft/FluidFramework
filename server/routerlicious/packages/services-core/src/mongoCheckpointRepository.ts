@@ -70,8 +70,6 @@ export class MongoCheckpointRepository implements ICheckpointRepository {
 				"Missing parameter when writing checkpoint.",
 				{
 					...getLumberBaseProperties(documentId, tenantId),
-					documentIdInput: documentId,
-					tenantIdInput: tenantId,
 				},
 				error,
 			);
