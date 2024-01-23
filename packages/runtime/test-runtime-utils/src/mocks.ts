@@ -671,7 +671,6 @@ export class MockFluidDataStoreRuntime
 	public readonly documentId: string = undefined as any;
 	public readonly id: string;
 	public readonly existing: boolean = undefined as any;
-	// Used to be ILoaderOptions, this is staging for eventual removal.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public options: Record<string | number, any> = {};
 	public clientId: string;

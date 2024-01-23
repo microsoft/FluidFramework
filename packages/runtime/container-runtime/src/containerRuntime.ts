@@ -933,7 +933,6 @@ export class ContainerRuntime
 		return runtime;
 	}
 
-	// Used to be ILoaderOptions, this is staging for eventual removal.
 	public readonly options: Record<string | number, any>;
 	private imminentClosure: boolean = false;
 
@@ -1245,6 +1244,9 @@ export class ContainerRuntime
 		this.submitSummaryFn = submitSummaryFn;
 		this.submitSignalFn = submitSignalFn;
 
+		// TODO: Once IContainerContext.options is removed, just create a new blank object {} here or
+		// take as a param (to be passed from the runtime factory). Values are generally expected to be
+		// set from the runtime side.
 		this.options = options;
 		this.clientDetails = clientDetails;
 		this.isSummarizerClient = this.clientDetails.type === summarizerClientType;

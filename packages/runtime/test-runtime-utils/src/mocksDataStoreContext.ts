@@ -32,7 +32,6 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public isLocalDataStore: boolean = true;
 	public packagePath: readonly string[] = undefined as any;
-	// Used to be ILoaderOptions, this is staging for eventual removal.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public options: Record<string | number, any> = {};
 	public clientId: string | undefined = uuid();

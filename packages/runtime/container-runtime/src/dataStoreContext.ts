@@ -140,7 +140,6 @@ export abstract class FluidDataStoreContext
 		return this.pkg;
 	}
 
-	// Used to be ILoaderOptions, this is staging for eventual removal.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public get options(): Record<string | number, any> {
 		return this._containerRuntime.options;

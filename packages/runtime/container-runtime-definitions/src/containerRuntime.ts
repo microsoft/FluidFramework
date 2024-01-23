@@ -57,7 +57,6 @@ export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase &
 export interface IContainerRuntime
 	extends IProvideFluidDataStoreRegistry,
 		IContainerRuntimeBaseWithCombinedEvents {
-	// Used to be ILoaderOptions, this is staging for eventual removal.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	readonly options: Record<string | number, any>;
 	readonly clientId: string | undefined;
