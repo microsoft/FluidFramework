@@ -13,12 +13,6 @@ resources:
   - pipeline: client   # Name of the pipeline resource
     source: Build - client packages
     branch: main # Default branch for manual/scheduled triggers if none is selected
-    trigger:
-      branches:
-      - release/*
-      - main
-      - next
-      - lts
 
 variables:
 - template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
@@ -37,45 +31,6 @@ variables:
 
 lockBehavior: sequential
 stages:
-
-  - template: templates/include-test-real-service.yml
-    parameters:
-      stageId: e2e_local_server
-      stageDisplayName: e2e - local server
-      poolBuild: Large-eastus2 # Need Large pool for full-compat matrix
-      testPackage: ${{ variables.testPackage }}
-      testWorkspace: ${{ variables.testWorkspace }}
-      artifactBuildId: $(resources.pipeline.client.runID)
-      testCommand: test:realsvc:local:report:full
-      cacheCompatVersionsInstalls: true
-      uploadTestPassRateTelemetry: true
-      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
-      env:
-        FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
-
-  # end-to-end tests tinylicious
-  - template: templates/include-test-real-service.yml
-    parameters:
-      stageId: e2e_tinylicious
-      stageDisplayName: e2e - tinylicious
-      poolBuild: Large-eastus2 # Need Large pool for full-compat matrix
-      testPackage: ${{ variables.testPackage }}
-      testWorkspace: ${{ variables.testWorkspace }}
-      artifactBuildId: $(resources.pipeline.client.runID)
-      testCommand: test:realsvc:tinylicious:report:full
-      cacheCompatVersionsInstalls: true
-      # TODO: AB#8968 tracks figuring out the root cause of the extended delay, and restoring this timeout to 90m or less
-      timeoutInMinutes: 120
-      uploadTestPassRateTelemetry: true
-      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
-      env:
-        FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
-        # Disable colorization for tinylicious logs (not useful when printing to a file)
-        logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
-        logger__morganFormat: tiny
-
   # end-to-end tests routerlicious
   - template: templates/include-test-real-service.yml
     parameters:
@@ -87,7 +42,7 @@ stages:
       artifactBuildId: $(resources.pipeline.client.runID)
       testCommand: test:realsvc:routerlicious:report
       continueOnError: true
-      r11sSelfSignedCertSecureFile: wu2-tls-certificate.pem
+      r11sSelfSignedCertSecureFile: wu2-ppe-tls-certificate.pem
       stageVariables:
         - group: e2e-r11s-lock
       splitTestVariants:
@@ -103,7 +58,7 @@ stages:
       uploadTestPassRateTelemetry: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
-        fluid__test__driver__r11s: $(automation-fluid-test-driver-r11s)
+        fluid__test__driver__r11s: $(automation-fluid-test-driver-r11s-ppe)
         FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 
