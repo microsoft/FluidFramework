@@ -25,6 +25,7 @@ import {
 	CompatApis,
 	getDriverApi,
 } from "./testApi.js";
+import { pkgVersion } from "./packageVersion.js";
 
 // See doc comment on mochaGlobalSetup.
 await mochaGlobalSetup();
@@ -245,8 +246,8 @@ function createCompatDescribe(): DescribeCompat {
 	d.only = (name, compatVersion, tests) =>
 		describe.only(name, createCompatSuiteWithDefault(tests, compatVersion));
 
-	d.noCompat = (name, compatVersion, tests) =>
-		describe(name, createCompatSuiteWithDefault(tests, "NoCompat"));
+	d.noCompat = (name, _, tests) =>
+		describe(name, createCompatSuiteWithDefault(tests, pkgVersion));
 
 	return d;
 }
