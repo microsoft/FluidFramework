@@ -21,12 +21,12 @@ import {
 	type FlexTreeNodeSchema,
 	FlexTreeSchema,
 	type AllowedTypeSet,
-	TreeFieldSchema,
+	FlexFieldSchema,
 	Any,
-	FieldNodeSchema,
+	FlexFieldNodeSchema,
 	isTreeValue,
 	LeafNodeSchema,
-	MapNodeSchema,
+	FlexMapNodeSchema,
 	getAllowedTypes,
 	typeNameSymbol,
 } from "../feature-libraries/index.js";
@@ -74,7 +74,7 @@ type InsertableTreeField = InsertableContent | undefined | InsertableContent[];
 export function cursorFromFieldData(
 	data: InsertableTreeField,
 	globalSchema: FlexTreeSchema,
-	fieldSchema: TreeFieldSchema,
+	fieldSchema: FlexFieldSchema,
 ): CursorWithNode<MapTree> {
 	const mappedContent = fieldDataToMapTrees(data, globalSchema, fieldSchema);
 	return cursorForMapTreeField(mappedContent);
@@ -141,7 +141,7 @@ export function nodeDataToMapTree(
 export function fieldDataToMapTrees(
 	data: InsertableTreeField,
 	globalSchema: FlexTreeSchema,
-	fieldSchema: TreeFieldSchema,
+	fieldSchema: FlexFieldSchema,
 ): MapTree[] {
 	const multiplicity = fieldSchema.kind.multiplicity;
 	if (data === undefined) {
@@ -242,7 +242,7 @@ function arrayToMapTree(
 ): MapTree {
 	const schema = getType(data, globalSchema, typeSet);
 	assert(
-		schema instanceof FieldNodeSchema,
+		schema instanceof FlexFieldNodeSchema,
 		0x84b /* Array data reported comparable with the schema without a primary field. */,
 	);
 
@@ -397,7 +397,7 @@ function shallowCompatibilityTest(
 		return data[typeNameSymbol] === schema.name;
 	}
 	if (isReadonlyArray(data)) {
-		if (schema instanceof FieldNodeSchema) {
+		if (schema instanceof FlexFieldNodeSchema) {
 			const field = schema.getFieldSchema();
 			return field.kind.multiplicity === Multiplicity.Sequence;
 		} else {
@@ -405,7 +405,7 @@ function shallowCompatibilityTest(
 		}
 	}
 	if (data instanceof Map) {
-		return schema instanceof MapNodeSchema;
+		return schema instanceof FlexMapNodeSchema;
 	}
 
 	// For now, consider all not explicitly typed objects shallow compatible.

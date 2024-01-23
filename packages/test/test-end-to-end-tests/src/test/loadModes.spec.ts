@@ -96,7 +96,7 @@ const testDataObjectFactory = new DataObjectFactory(
 );
 
 // REVIEW: enable compat testing?
-describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("LoadModes", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) => {
 	let provider: ITestObjectProvider;
 	before(() => {
 		provider = getTestObjectProvider();
@@ -108,7 +108,7 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis) => {
 	let container1: IContainer;
 	let dataObject1: TestDataObject;
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		documentId = createDocumentId();
 		container1 = await createContainer();
 		dataObject1 = (await container1.getEntryPoint()) as TestDataObject;

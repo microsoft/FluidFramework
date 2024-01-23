@@ -40,13 +40,13 @@ import { EmptyKey, FieldKey } from "../../../core/index.js";
 import {
 	FieldKinds,
 	Any,
-	FieldNodeSchema,
+	FlexFieldNodeSchema,
 	LeafNodeSchema,
-	MapNodeSchema,
-	ObjectNodeSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
 	FlexTreeNodeSchema,
-	TreeFieldSchema,
-	AllowedTypes,
+	FlexFieldSchema,
+	FlexAllowedTypes,
 	ArrayToUnion,
 } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -127,7 +127,7 @@ describe("editableTreeTypes", () => {
 		/**
 		 * Test Recursive Field.
 		 */
-		foo: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveStruct]),
+		foo: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveStruct]),
 		/**
 		 * Data field.
 		 */
@@ -184,7 +184,7 @@ describe("editableTreeTypes", () => {
 		];
 
 		const optionalNumberField = SchemaBuilder.optional(leaf.number);
-		const mapSchema = undefined as unknown as MapNodeSchema<
+		const mapSchema = undefined as unknown as FlexMapNodeSchema<
 			"MapIteration",
 			typeof optionalNumberField
 		>;
@@ -197,40 +197,40 @@ describe("editableTreeTypes", () => {
 
 	{
 		type _1 = requireAssignableTo<typeof leaf.boolean, LeafNodeSchema>;
-		type _2a = requireAssignableTo<typeof basicFieldNode, FieldNodeSchema>;
-		type _2 = requireAssignableTo<typeof jsonArray, FieldNodeSchema>;
-		type _3 = requireAssignableTo<typeof jsonObject, MapNodeSchema>;
-		type _4 = requireAssignableTo<typeof emptyStruct, ObjectNodeSchema>;
-		type _5 = requireAssignableTo<typeof basicStruct, ObjectNodeSchema>;
+		type _2a = requireAssignableTo<typeof basicFieldNode, FlexFieldNodeSchema>;
+		type _2 = requireAssignableTo<typeof jsonArray, FlexFieldNodeSchema>;
+		type _3 = requireAssignableTo<typeof jsonObject, FlexMapNodeSchema>;
+		type _4 = requireAssignableTo<typeof emptyStruct, FlexObjectNodeSchema>;
+		type _5 = requireAssignableTo<typeof basicStruct, FlexObjectNodeSchema>;
 	}
 
 	{
 		type _1 = requireTrue<isAssignableTo<typeof leaf.boolean, LeafNodeSchema>>;
-		type _2 = requireFalse<isAssignableTo<typeof leaf.boolean, FieldNodeSchema>>;
-		type _3 = requireFalse<isAssignableTo<typeof leaf.boolean, MapNodeSchema>>;
-		type _4 = requireFalse<isAssignableTo<typeof leaf.boolean, ObjectNodeSchema>>;
+		type _2 = requireFalse<isAssignableTo<typeof leaf.boolean, FlexFieldNodeSchema>>;
+		type _3 = requireFalse<isAssignableTo<typeof leaf.boolean, FlexMapNodeSchema>>;
+		type _4 = requireFalse<isAssignableTo<typeof leaf.boolean, FlexObjectNodeSchema>>;
 	}
 
 	{
 		type _1 = requireFalse<isAssignableTo<typeof jsonArray, LeafNodeSchema>>;
-		type _2 = requireTrue<isAssignableTo<typeof jsonArray, FieldNodeSchema>>;
-		type _3 = requireFalse<isAssignableTo<typeof jsonArray, MapNodeSchema>>;
+		type _2 = requireTrue<isAssignableTo<typeof jsonArray, FlexFieldNodeSchema>>;
+		type _3 = requireFalse<isAssignableTo<typeof jsonArray, FlexMapNodeSchema>>;
 		// TODO: Fix
 		// type _4 = requireFalse<isAssignableTo<typeof jsonArray, ObjectNodeSchema>>
 	}
 
 	{
 		type _1 = requireFalse<isAssignableTo<typeof jsonObject, LeafNodeSchema>>;
-		type _2 = requireFalse<isAssignableTo<typeof jsonObject, FieldNodeSchema>>;
-		type _3 = requireTrue<isAssignableTo<typeof jsonObject, MapNodeSchema>>;
-		type _4 = requireFalse<isAssignableTo<typeof jsonObject, ObjectNodeSchema>>;
+		type _2 = requireFalse<isAssignableTo<typeof jsonObject, FlexFieldNodeSchema>>;
+		type _3 = requireTrue<isAssignableTo<typeof jsonObject, FlexMapNodeSchema>>;
+		type _4 = requireFalse<isAssignableTo<typeof jsonObject, FlexObjectNodeSchema>>;
 	}
 
 	{
 		type _1 = requireFalse<isAssignableTo<typeof basicStruct, LeafNodeSchema>>;
-		type _2 = requireFalse<isAssignableTo<typeof basicStruct, FieldNodeSchema>>;
-		type _3 = requireFalse<isAssignableTo<typeof basicStruct, MapNodeSchema>>;
-		type _4 = requireTrue<isAssignableTo<typeof basicStruct, ObjectNodeSchema>>;
+		type _2 = requireFalse<isAssignableTo<typeof basicStruct, FlexFieldNodeSchema>>;
+		type _3 = requireFalse<isAssignableTo<typeof basicStruct, FlexMapNodeSchema>>;
+		type _4 = requireTrue<isAssignableTo<typeof basicStruct, FlexObjectNodeSchema>>;
 	}
 
 	function nominalTyping(): void {
@@ -322,7 +322,10 @@ describe("editableTreeTypes", () => {
 				areSafelyAssignable<FlexTreeTypedNodeUnion<[FlexTreeNodeSchema]>, FlexTreeNode>
 			>;
 			type _2 = requireTrue<
-				areSafelyAssignable<FlexTreeTypedNodeUnion<[ObjectNodeSchema]>, FlexTreeObjectNode>
+				areSafelyAssignable<
+					FlexTreeTypedNodeUnion<[FlexObjectNodeSchema]>,
+					FlexTreeObjectNode
+				>
 			>;
 			type _3 = requireTrue<
 				areSafelyAssignable<
@@ -337,7 +340,7 @@ describe("editableTreeTypes", () => {
 				areSafelyAssignable<FlexTreeTypedNodeUnion<FlexTreeNodeSchema[]>, FlexTreeNode>
 			>;
 			type _6 = requireTrue<
-				areSafelyAssignable<FlexTreeTypedNodeUnion<AllowedTypes>, FlexTreeNode>
+				areSafelyAssignable<FlexTreeTypedNodeUnion<FlexAllowedTypes>, FlexTreeNode>
 			>;
 
 			type z = ArrayToUnion<[FlexTreeNode]>;
@@ -403,7 +406,10 @@ describe("editableTreeTypes", () => {
 				>
 			>;
 			type _2 = requireTrue<
-				areSafelyAssignable<FlexTreeUnboxNodeUnion<[ObjectNodeSchema]>, FlexTreeObjectNode>
+				areSafelyAssignable<
+					FlexTreeUnboxNodeUnion<[FlexObjectNodeSchema]>,
+					FlexTreeObjectNode
+				>
 			>;
 			type _3 = requireTrue<
 				areSafelyAssignable<
@@ -419,13 +425,16 @@ describe("editableTreeTypes", () => {
 				>
 			>;
 			type _6 = requireTrue<
-				areSafelyAssignable<FlexTreeUnboxNodeUnion<AllowedTypes>, FlexTreeUnknownUnboxed>
+				areSafelyAssignable<
+					FlexTreeUnboxNodeUnion<FlexAllowedTypes>,
+					FlexTreeUnknownUnboxed
+				>
 			>;
 		}
 
 		// Generic
 		// eslint-disable-next-line no-inner-declarations
-		function genericTest<T extends AllowedTypes>(t: T) {
+		function genericTest<T extends FlexAllowedTypes>(t: T) {
 			type Unboxed = FlexTreeUnboxNodeUnion<T>;
 			// @ts-expect-error union can unbox to undefined or a sequence
 			type _1 = requireAssignableTo<Unboxed, FlexTreeNode>;
@@ -436,7 +445,7 @@ describe("editableTreeTypes", () => {
 	{
 		type _1 = requireFalse<IsArrayOfOne<[FlexTreeNodeSchema, FlexTreeNodeSchema]>>;
 		type _2 = requireFalse<IsArrayOfOne<[]>>;
-		type _3 = requireTrue<areSafelyAssignable<IsArrayOfOne<AllowedTypes>, boolean>>;
+		type _3 = requireTrue<areSafelyAssignable<IsArrayOfOne<FlexAllowedTypes>, boolean>>;
 		type _4 = requireTrue<IsArrayOfOne<[Any]>>;
 	}
 });

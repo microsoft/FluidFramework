@@ -33,7 +33,7 @@ module.exports = (env) => {
 					loader: "ts-loader",
 				},
 				{
-					test: /\.js$/,
+					test: /\.m?js$/,
 					use: ["source-map-loader"],
 				},
 			],

@@ -54,7 +54,7 @@
 		"@fluidframework/build-tools": "^0.26.1",
 		"@fluidframework/common-definitions-previous": "npm:@fluidframework/common-definitions@0.20.1",
 		"@fluidframework/eslint-config-fluid": "^3.2.0",
-		"@microsoft/api-extractor": "^7.38.3",
+		"@microsoft/api-extractor": "^7.39.1",
 		"@types/node": "^16.18.38",
 		"concurrently": "^6.2.0",
 		"copyfiles": "^2.4.1",
@@ -81,7 +81,7 @@
 	},
 	"pnpm": {
 		"patchedDependencies": {
-			"@microsoft/api-extractor@7.38.3": "../../../patches/@microsoft__api-extractor@7.38.3.patch",
+			"@microsoft/api-extractor@7.39.1": "../../../patches/@microsoft__api-extractor@7.39.1.patch",
 			"tsc-multi@1.1.0": "../../../patches/tsc-multi@1.1.0.patch"
 		}
 	},

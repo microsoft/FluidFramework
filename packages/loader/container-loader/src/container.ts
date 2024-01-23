@@ -87,6 +87,7 @@ import {
 	GenericError,
 	UsageError,
 } from "@fluidframework/telemetry-utils";
+import structuredClone from "@ungap/structured-clone";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
 import {
@@ -598,6 +599,7 @@ export class Container
 	private readonly visibilityEventHandler: (() => void) | undefined;
 	private readonly connectionStateHandler: IConnectionStateHandler;
 	private readonly clientsWhoShouldHaveLeft = new Set<string>();
+	private _containerMetadata: Readonly<Record<string, string>> = {};
 
 	private setAutoReconnectTime = performance.now();
 
@@ -624,6 +626,10 @@ export class Container
 
 	public get readOnlyInfo(): ReadOnlyInfo {
 		return this._deltaManager.readOnlyInfo;
+	}
+
+	public get containerMetadata(): Record<string, string> {
+		return this._containerMetadata;
 	}
 
 	/**
@@ -1039,6 +1045,11 @@ export class Container
 
 				this._lifecycleState = "closing";
 
+				// Back-compat for Old driver
+				if (this.service?.off !== undefined) {
+					this.service?.off("metadataUpdate", this.metadataUpdateHandler);
+				}
+
 				this._protocolHandler?.close();
 
 				this.connectionStateHandler.dispose();
@@ -1270,19 +1281,21 @@ export class Container
 								createNewResolvedUrl !== undefined,
 							0x2c4 /* "client should not be summarizer before container is created" */,
 						);
-						this.service = await runWithRetry(
-							async () =>
-								this.serviceFactory.createContainer(
-									summary,
-									createNewResolvedUrl,
-									this.subLogger,
-									false, // clientIsSummarizer
-								),
-							"containerAttach",
-							this.mc.logger,
-							{
-								cancel: this._deltaManager.closeAbortController.signal,
-							}, // progress
+						this.service = await this.createDocumentService(async () =>
+							runWithRetry(
+								async () =>
+									this.serviceFactory.createContainer(
+										summary,
+										createNewResolvedUrl,
+										this.subLogger,
+										false, // clientIsSummarizer
+									),
+								"containerAttach",
+								this.mc.logger,
+								{
+									cancel: this._deltaManager.closeAbortController.signal,
+								}, // progress
+							),
 						);
 					}
 					this.storageAdapter.connectToService(this.service);
@@ -1546,6 +1559,22 @@ export class Container
 		this._deltaManager.connect(args);
 	}
 
+	private readonly metadataUpdateHandler = (metadata: Record<string, string>) => {
+		this._containerMetadata = { ...this._containerMetadata, ...metadata };
+		this.emit("metadataUpdate", metadata);
+	};
+
+	private async createDocumentService(
+		serviceProvider: () => Promise<IDocumentService>,
+	): Promise<IDocumentService> {
+		const service = await serviceProvider();
+		// Back-compat for Old driver
+		if (service.on !== undefined) {
+			service.on("metadataUpdate", this.metadataUpdateHandler);
+		}
+		return service;
+	}
+
 	/**
 	 * Load container.
 	 *
@@ -1559,10 +1588,12 @@ export class Container
 		loadToSequenceNumber: number | undefined,
 	) {
 		const timings: Record<string, number> = { phase1: performance.now() };
-		this.service = await this.serviceFactory.createDocumentService(
-			resolvedUrl,
-			this.subLogger,
-			this.client.details.type === summarizerClientType,
+		this.service = await this.createDocumentService(async () =>
+			this.serviceFactory.createDocumentService(
+				resolvedUrl,
+				this.subLogger,
+				this.client.details.type === summarizerClientType,
+			),
 		);
 
 		// Except in cases where it has stashed ops or requested by feature gate, the container will connect in "read" mode

@@ -24,7 +24,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider";
-import { mockConfigProvider } from "./TestConfigs";
+import { createTestConfigProvider } from "./TestConfigs";
 import { waitForContainerConnection } from "./containerUtils";
 import { timeoutAwait } from "./timeoutUtils";
 import { createContainerRuntimeFactoryWithDefaultDataStore } from "./testContainerRuntimeFactoryWithDefaultDataStore";
@@ -114,7 +114,7 @@ export async function createSummarizerFromFactory(
 	containerRuntimeFactoryType = ContainerRuntimeFactoryWithDefaultDataStore,
 	registryEntries?: NamedFluidDataStoreRegistryEntries,
 	logger?: ITelemetryBaseLogger,
-	configProvider: IConfigProviderBase = mockConfigProvider(),
+	configProvider: IConfigProviderBase = createTestConfigProvider(),
 ): Promise<{ container: IContainer; summarizer: ISummarizer }> {
 	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 		containerRuntimeFactoryType,
@@ -156,7 +156,7 @@ export async function createSummarizer(
 		},
 		loaderProps: {
 			...config?.loaderProps,
-			configProvider: config?.loaderProps?.configProvider ?? mockConfigProvider(),
+			configProvider: config?.loaderProps?.configProvider ?? createTestConfigProvider(),
 			logger,
 		},
 	};

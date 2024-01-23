@@ -34,13 +34,14 @@ data:
             ]
         },
         "requestSizeLimit": "1gb",
+        "enableResponseCloseLatencyMetric": {{ .Values.gitrest.enableResponseCloseLatencyMetric }},
         "storageDir": {
             "baseDir": "/home/node/documents",
             "useRepoOwner": true
         },
         "externalStorage": {
-          "enabled": false,
-          "endpoint": "http://externalStorage:3005"
+            "enabled": false,
+            "endpoint": "http://externalStorage:3005"
         },
         "git": {
             "lib": {
@@ -64,6 +65,7 @@ data:
             "enableOptimizedInitialSummary": {{ .Values.gitrest.git.enableOptimizedInitialSummary }},
             "enableSlimGitInit": {{ .Values.gitrest.git.enableSlimGitInit }},
             "enableRedisFsMetrics": {{ .Values.gitrest.git.enableRedisFsMetrics }},
+            "enableHashmapRedisFs": {{ .Values.gitrest.git.enableHashmapRedisFs }},
             "redisApiMetricsSamplingPeriod": {{ .Values.gitrest.git.redisApiMetricsSamplingPeriod }}
         },
         "redis": {
