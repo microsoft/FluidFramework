@@ -8359,6 +8359,8 @@ importers:
   packages/framework/client-logger/app-insights-logger:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@fluid-tools/build-cli': ^0.29.0
+      '@fluidframework/app-insights-logger-previous': npm:@fluidframework/app-insights-logger@2.0.0-rc.1.0.1
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.29.0
       '@fluidframework/core-interfaces': workspace:~
@@ -8392,6 +8394,8 @@ importers:
       '@ungap/structured-clone': 1.2.0
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@fluid-tools/build-cli': 0.29.0_mhw3tufvtaceew37hrkkevjcli
+      '@fluidframework/app-insights-logger-previous': /@fluidframework/app-insights-logger/2.0.0-rc.1.0.1_tslib@1.14.1
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
       '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
@@ -15769,6 +15773,19 @@ packages:
       sha.js: 2.4.11
     dev: true
 
+  /@fluid-internal/client-utils/2.0.0-rc.1.0.1:
+    resolution: {integrity: sha512-O4nqXfHQKEOiz2qzt/ipyGzQ7AVx8S58fnIN7ah1l+ziz3VJL10uFECAqw9y8zJx3QNIr2NIsBByW0L8DxKl+A==}
+    dependencies:
+      '@fluidframework/core-interfaces': 2.0.0-rc.1.0.1
+      '@fluidframework/core-utils': 2.0.0-rc.1.0.1
+      '@types/events': 3.0.3
+      base64-js: 1.5.1
+      buffer: 6.0.3
+      events: 3.3.0
+      lodash: 4.17.21
+      sha.js: 2.4.11
+    dev: true
+
   /@fluid-tools/benchmark/0.47.0:
     resolution: {integrity: sha512-lQ2ijhUJ68aOHqH1UxOBmAsSWfx2dIuI4vAlQ4e/ueh0a8KUZ8D8AUpJPu1k1pwuTlOuvb629BY9Q4HC6H/KBQ==}
     dependencies:
@@ -16111,6 +16128,17 @@ packages:
     transitivePeerDependencies:
       - debug
       - supports-color
+    dev: true
+
+  /@fluidframework/app-insights-logger/2.0.0-rc.1.0.1_tslib@1.14.1:
+    resolution: {integrity: sha512-mauEYkEiDfG1fjjmTPsBXEHXy8laPXSQ54vqSFvPPyqr6ryjbCO6Hx8bhmKEuXYnAqbHlrhkpa36RF/pE60eIA==}
+    dependencies:
+      '@fluidframework/core-interfaces': 2.0.0-rc.1.0.1
+      '@fluidframework/telemetry-utils': 2.0.0-rc.1.0.1
+      '@microsoft/applicationinsights-web': 2.8.16_tslib@1.14.1
+    transitivePeerDependencies:
+      - supports-color
+      - tslib
     dev: true
 
   /@fluidframework/aqueduct/2.0.0-internal.8.0.0:
@@ -16528,8 +16556,16 @@ packages:
     resolution: {integrity: sha512-4GkmxbeekjHf2R442GZ+ohJ6l/JB6l10/GfhzzrVqBduH2dff8M4ipqm+BFbVkF8ODglIvuSc/8/VBrUWzcE2Q==}
     dev: true
 
+  /@fluidframework/core-interfaces/2.0.0-rc.1.0.1:
+    resolution: {integrity: sha512-Xazv2hOxnQ/TBBlEC4zYUq4DGG+i8zdzhfoPr3xkj+fiOle1R6r2qG5SO6tzEVqXDNzefO/76YUNSYwgNJHWww==}
+    dev: true
+
   /@fluidframework/core-utils/2.0.0-internal.8.0.0:
     resolution: {integrity: sha512-J459z21XEE7ahhAac61xl+NUYcTq9PYTOWdvX9gpcs9FSLzYn1Osen4SZoPDlIy693+HFbbZFDCTiqvw/uYRcQ==}
+    dev: true
+
+  /@fluidframework/core-utils/2.0.0-rc.1.0.1:
+    resolution: {integrity: sha512-FCNN2cH5IYzODuSyk6F3creB2ssZAhpII4KSOxcPsUElZu7BAAMME04uvHleOkMOh/LfQW8NNnP1XvHt7+Z3GA==}
     dev: true
 
   /@fluidframework/counter/2.0.0-internal.8.0.0:
@@ -17817,6 +17853,20 @@ packages:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
       '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
       '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/protocol-definitions': 3.1.0
+      debug: 4.3.4
+      events: 3.3.0
+      uuid: 9.0.1
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+
+  /@fluidframework/telemetry-utils/2.0.0-rc.1.0.1:
+    resolution: {integrity: sha512-AHGK8pPUUGfE9L3lDpQN6JRS2s3oKEQGktH2lNu85f5zjMPUhLV6ZIIwt5G2ILbNpZuLuyEjQkaSEXlpxGFt6g==}
+    dependencies:
+      '@fluid-internal/client-utils': 2.0.0-rc.1.0.1
+      '@fluidframework/core-interfaces': 2.0.0-rc.1.0.1
+      '@fluidframework/core-utils': 2.0.0-rc.1.0.1
       '@fluidframework/protocol-definitions': 3.1.0
       debug: 4.3.4
       events: 3.3.0
@@ -19142,7 +19192,6 @@ packages:
       '@microsoft/applicationinsights-shims': 2.0.2
       '@microsoft/dynamicproto-js': 1.1.9
       tslib: 1.14.1
-    dev: false
 
   /@microsoft/applicationinsights-channel-js/2.8.16_tslib@1.14.1:
     resolution: {integrity: sha512-k0W4UKmkVfKgdCyKjcadiysCfndK4PrO6FhU4Jt3B4PaUmTs2w2ematfq2EqKOTsfkSAfo036jx6Rf/OOT3Rfg==}
@@ -19154,7 +19203,6 @@ packages:
       '@microsoft/applicationinsights-shims': 2.0.2
       '@microsoft/dynamicproto-js': 1.1.9
       tslib: 1.14.1
-    dev: false
 
   /@microsoft/applicationinsights-common/2.8.16_tslib@1.14.1:
     resolution: {integrity: sha512-rZutcK7gzixhdtfUVkjy10Kn+/i66ti6YqBN2pFopOkgpqyGydtVhWio2TGrtAK3Pjz8cj7yUkrO+Z0y6/McFA==}
@@ -19165,7 +19213,6 @@ packages:
       '@microsoft/applicationinsights-shims': 2.0.2
       '@microsoft/dynamicproto-js': 1.1.9
       tslib: 1.14.1
-    dev: false
 
   /@microsoft/applicationinsights-core-js/2.8.16_tslib@1.14.1:
     resolution: {integrity: sha512-pO5rR6UuiPymiHFj8XxNXhQgBSTvyHWygf+gdEVDh0xpUXYFO99bZe0Ux0D0HqYqVkJrRfXzL1Ocru6+S0x53Q==}
@@ -19175,7 +19222,6 @@ packages:
       '@microsoft/applicationinsights-shims': 2.0.2
       '@microsoft/dynamicproto-js': 1.1.9
       tslib: 1.14.1
-    dev: false
 
   /@microsoft/applicationinsights-dependencies-js/2.8.16_tslib@1.14.1:
     resolution: {integrity: sha512-AsfNQKEXChQNnwVo+kI4GSLxcyfUeR6T4I0nfHOYNoBYGTsAl2D8gwgEiz7nldBe4dsW9a3Kkb5qmpX8tT/IUg==}
@@ -19187,7 +19233,6 @@ packages:
       '@microsoft/applicationinsights-shims': 2.0.2
       '@microsoft/dynamicproto-js': 1.1.9
       tslib: 1.14.1
-    dev: false
 
   /@microsoft/applicationinsights-properties-js/2.8.16_tslib@1.14.1:
     resolution: {integrity: sha512-Ug/rk6lGYKoyX2/tyBwsgA2h+zwtFTs0ZUXiwLUlPlqFKIfEKzMvSYUsTPR3oRFvO0PcNxeQ8V7uNyo8VONwxA==}
@@ -19199,11 +19244,9 @@ packages:
       '@microsoft/applicationinsights-shims': 2.0.2
       '@microsoft/dynamicproto-js': 1.1.9
       tslib: 1.14.1
-    dev: false
 
   /@microsoft/applicationinsights-shims/2.0.2:
     resolution: {integrity: sha512-PoHEgsnmcqruLNHZ/amACqdJ6YYQpED0KSRe6J7gIJTtpZC1FfFU9b1fmDKDKtFoUSrPzEh1qzO3kmRZP0betg==}
-    dev: false
 
   /@microsoft/applicationinsights-web-snippet/1.0.1:
     resolution: {integrity: sha512-2IHAOaLauc8qaAitvWS+U931T+ze+7MNWrDHY47IENP5y2UA0vqJDu67kWZDdpCN1fFC77sfgfB+HV7SrKshnQ==}
@@ -19223,11 +19266,9 @@ packages:
       '@microsoft/applicationinsights-shims': 2.0.2
       '@microsoft/dynamicproto-js': 1.1.9
       tslib: 1.14.1
-    dev: false
 
   /@microsoft/dynamicproto-js/1.1.9:
     resolution: {integrity: sha512-n1VPsljTSkthsAFYdiWfC+DKzK2WwcRp83Y1YAqdX552BstvsDjft9YXppjUzp11BPsapDoO1LDgrDB0XVsfNQ==}
-    dev: false
 
   /@microsoft/load-themed-styles/1.10.295:
     resolution: {integrity: sha512-W+IzEBw8a6LOOfRJM02dTT7BDZijxm+Z7lhtOAz1+y9vQm1Kdz9jlAO+qCEKsfxtUOmKilW8DIRqFw2aUgKeGg==}
@@ -20152,7 +20193,7 @@ packages:
       assert-never: 1.2.1
       globby: 13.2.2
       prettier: 3.0.3
-      typescript: 5.3.2
+      typescript: 5.3.3
     dev: true
 
   /@previewjs/vfs/2.1.0:
@@ -45327,7 +45368,7 @@ packages:
     version: 0.1.0
     hasBin: true
     dependencies:
-      '@rushstack/node-core-library': 3.61.0
+      '@rushstack/node-core-library': 3.63.0
       '@tylerbu/markdown-magic': 2.4.0-tylerbu-1
       chalk: 4.1.2
       markdown-magic-package-scripts: 1.2.2
