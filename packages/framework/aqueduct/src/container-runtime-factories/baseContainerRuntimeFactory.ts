@@ -35,7 +35,10 @@ export class BaseContainerRuntimeFactory
 	extends RuntimeFactoryHelper
 	implements IProvideFluidDataStoreRegistry
 {
-	public get IFluidDataStoreRegistry() {
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IProvideFluidDataStoreRegistry.IFluidDataStoreRegistry}
+	 */
+	public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry {
 		return this.registry;
 	}
 	private readonly registry: IFluidDataStoreRegistry;
@@ -113,12 +116,12 @@ export class BaseContainerRuntimeFactory
 	 * is created. This likely includes creating any initial data stores that are expected to be there at the outset.
 	 * @param runtime - The container runtime for the container being initialized
 	 */
-	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {}
+	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {}
 
 	/**
 	 * Subclasses may override containerHasInitialized to perform any steps after the container has initialized.
 	 * This likely includes loading any data stores that are expected to be there at the outset.
 	 * @param runtime - The container runtime for the container being initialized
 	 */
-	protected async containerHasInitialized(runtime: IContainerRuntime) {}
+	protected async containerHasInitialized(runtime: IContainerRuntime): Promise<void> {}
 }

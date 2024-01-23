@@ -11,19 +11,19 @@ import {
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidDependencySynthesizer } from "@fluidframework/synthesize";
 import { RuntimeRequestHandler } from "@fluidframework/request-handler";
-import { FluidObject, IRequest } from "@fluidframework/core-interfaces";
+import { FluidObject, type IRequest, type IResponse } from "@fluidframework/core-interfaces";
 import { RequestParser } from "@fluidframework/runtime-utils";
 import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory";
 
 const defaultDataStoreId = "default";
 
-const getDefaultFluidObject = async (runtime: IContainerRuntime) => {
+async function getDefaultFluidObject(runtime: IContainerRuntime): Promise<FluidObject> {
 	const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
 	if (entryPoint === undefined) {
 		throw new Error("default dataStore must exist");
 	}
 	return entryPoint.get();
-};
+}
 
 /**
  * A ContainerRuntimeFactory that initializes Containers with a single default data store, which can be requested from
@@ -37,15 +37,6 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 
 	protected readonly defaultFactory: IFluidDataStoreFactory;
 
-	/**
-	 * Constructor
-	 * @param defaultFactory -
-	 * @param registryEntries -
-	 * @param dependencyContainer - deprecated, will be removed in a future release
-	 * @param requestHandlers -
-	 * @param runtimeOptions -
-	 * @param provideEntryPoint -
-	 */
 	constructor(props: {
 		defaultFactory: IFluidDataStoreFactory;
 		registryEntries: NamedFluidDataStoreRegistryEntries;
@@ -60,7 +51,11 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 		const requestHandlers = props.requestHandlers ?? [];
 		const provideEntryPoint = props.provideEntryPoint ?? getDefaultFluidObject;
 
-		const getDefaultObject = async (request: IRequest, runtime: IContainerRuntime) => {
+		const getDefaultObject = async (
+			request: IRequest,
+			runtime: IContainerRuntime,
+			// eslint-disable-next-line unicorn/consistent-function-scoping
+		): Promise<IResponse | undefined> => {
 			const parser = RequestParser.create(request);
 			if (parser.pathParts.length === 0) {
 				// This cast is safe as ContainerRuntime.loadRuntime is called in the base class
@@ -84,7 +79,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 	/**
 	 * {@inheritDoc BaseContainerRuntimeFactory.containerInitializingFirstTime}
 	 */
-	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
 		const dataStore = await runtime.createDataStore(this.defaultFactory.type);
 		await dataStore.trySetAlias(defaultDataStoreId);
 	}

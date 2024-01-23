@@ -35,13 +35,13 @@ export class DataObjectFactory<
 	) {
 		const mergedObjects = [...sharedObjects];
 
-		if (!sharedObjects.find((factory) => factory.type === DirectoryFactory.Type)) {
+		if (!sharedObjects.some((factory) => factory.type === DirectoryFactory.Type)) {
 			// User did not register for directory
 			mergedObjects.push(SharedDirectory.getFactory());
 		}
 
 		// TODO: Remove SharedMap factory when compatibility with SharedMap DataObject is no longer needed in 0.10
-		if (!sharedObjects.find((factory) => factory.type === MapFactory.Type)) {
+		if (!sharedObjects.some((factory) => factory.type === MapFactory.Type)) {
 			// User did not register for map
 			mergedObjects.push(SharedMap.getFactory());
 		}

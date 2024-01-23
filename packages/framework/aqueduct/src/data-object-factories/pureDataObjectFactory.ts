@@ -46,7 +46,10 @@ async function createDataObject<
 	runtimeClassArg: typeof FluidDataStoreRuntime,
 	existing: boolean,
 	initProps?: I["InitialState"],
-) {
+): Promise<{
+	instance: TObj;
+	runtime: FluidDataStoreRuntime;
+}> {
 	// base
 	let runtimeClass = runtimeClassArg;
 
@@ -148,11 +151,17 @@ export class PureDataObjectFactory<
 		this.sharedObjectRegistry = new Map(sharedObjects.map((ext) => [ext.type, ext]));
 	}
 
-	public get IFluidDataStoreFactory() {
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IProvideFluidDataStoreFactory.IFluidDataStoreFactory}
+	 */
+	public get IFluidDataStoreFactory(): IFluidDataStoreFactory {
 		return this;
 	}
 
-	public get IFluidDataStoreRegistry() {
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IProvideFluidDataStoreRegistry.IFluidDataStoreRegistry}
+	 */
+	public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry | undefined {
 		return this.registry;
 	}
 
@@ -171,7 +180,10 @@ export class PureDataObjectFactory<
 	 *
 	 * @param context - data store context used to load a data store runtime
 	 */
-	public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
+	public async instantiateDataStore(
+		context: IFluidDataStoreContext,
+		existing: boolean,
+	): Promise<FluidDataStoreRuntime> {
 		const { runtime } = await createDataObject(
 			this.ctor,
 			context,
