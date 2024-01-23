@@ -224,6 +224,10 @@ describeCompat("GC incremental summaries", "2.0.0-rc.1.0.0", (getTestObjectProvi
 				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
 				error: "Upload summary failed in test",
 			},
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed",
+				error: "Upload summary failed in test",
+			},
 		],
 		async () => {
 			const mockLogger = new MockLogger();
