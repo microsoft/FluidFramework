@@ -1055,7 +1055,7 @@ export async function runTestForSeed<
 		options.containerRuntimeOptions,
 	);
 
-	const startDetached = options.detachedStartOptions.numOpsBeforeAttach === 0;
+	const startDetached = options.detachedStartOptions.numOpsBeforeAttach !== 0;
 	const initialClient = createDetachedClient(
 		containerRuntimeFactory,
 		model.factory,
