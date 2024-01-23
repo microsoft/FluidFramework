@@ -746,10 +746,10 @@ export class MapKernel {
 	private getMapKeyMessageId(op: IMapKeyOperation): number {
 		const pendingMessageId = ++this.pendingMessageId;
 		const pendingMessageIds = this.pendingKeys.get(op.key);
-		if (pendingMessageIds !== undefined) {
-			pendingMessageIds.push(pendingMessageId);
-		} else {
+		if (pendingMessageIds === undefined) {
 			this.pendingKeys.set(op.key, [pendingMessageId]);
+		} else {
+			pendingMessageIds.push(pendingMessageId);
 		}
 		return pendingMessageId;
 	}
@@ -785,7 +785,7 @@ export class MapKernel {
 			return;
 		}
 
-		const index = pendingMessageIds.findIndex((id) => id === localOpMetadata.pendingMessageId);
+		const index = pendingMessageIds.indexOf(localOpMetadata.pendingMessageId);
 		if (index === -1) {
 			return;
 		}

@@ -162,7 +162,7 @@
 		"@fluidframework/eslint-config-fluid": "^3.3.0",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@microsoft/api-documenter": "^7.21.6",
-		"@microsoft/api-extractor": "^7.38.3",
+		"@microsoft/api-extractor": "^7.39.1",
 		"@octokit/core": "^4.0.5",
 		"auto-changelog": "^2.4.0",
 		"c8": "^8.0.1",
@@ -344,13 +344,11 @@
 	},
 	"pnpm": {
 		"comments": [
-			"@microsoft/api-extractor's dependency on typescript is force-upgraded to v5.1 to be compatible with tree2's use of new getter/setter functionality added in that version. This override may be removed once api-extractor has moved to at least typescript v5.1.",
 			"nodegit is replaced with an empty package here because it's currently only used by good-fences for features we do not need, and has issues building when changing node versions. See https://github.com/smikula/good-fences/issues/105 for details.",
 			"codemirror and marked overrides are because simplemde use * versions, and the fully up to date versions of its deps do not work. packageExtensions was tried to fix this, but did not work.",
 			"Fixing the @oclif/core version avoids a large number of peer dep errors since 2.6 adds a prod dep on ts-node and thus a peer dep on @types/node"
 		],
 		"overrides": {
-			"@microsoft/api-extractor>typescript": "$typescript",
 			"@types/node@<18": "^18.19.0",
 			"node-fetch": "^2.6.9",
 			"good-fences>nodegit": "npm:empty-npm-package@1.0.0",
@@ -377,8 +375,8 @@
 			]
 		},
 		"patchedDependencies": {
+			"@microsoft/api-extractor@7.39.1": "patches/@microsoft__api-extractor@7.39.1.patch",
 			"socket.io-client@4.7.2": "patches/socket.io-client@4.7.2.patch",
-			"@microsoft/api-extractor@7.38.3": "patches/@microsoft__api-extractor@7.38.3.patch",
 			"tsc-multi@1.1.0": "patches/tsc-multi@1.1.0.patch"
 		}
 	}

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
@@ -48,7 +48,10 @@ async function populate(directory: SharedDirectory, content: unknown): Promise<v
 	return directory.load(storage);
 }
 
-function assertDirectoryIterationOrder(directory: ISharedDirectory, expectedDirNames: string[]) {
+function assertDirectoryIterationOrder(
+	directory: ISharedDirectory,
+	expectedDirNames: string[],
+): void {
 	const actualDirNames: string[] = [];
 	for (const [subdirName, subdirObject] of directory.subdirectories()) {
 		actualDirNames.push(subdirName);

@@ -734,6 +734,28 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 			op: ISequencedDocumentMessage | undefined,
 		) => void,
 	): void;
+	/**
+	 * This event is invoked whenever an interval's endpoints or properties (or both) have changed.
+	 * `interval` reflects the state of the updated endpoints or properties.
+	 * `propertyDeltas` is a map-like whose keys contain all values that were changed, and whose
+	 * values contain all previous values of the property set.
+	 * This object can be used directly in a call to `changeProperties` to revert the property change if desired.
+	 * 'previousInterval' contains transient `ReferencePosition`s at the same location as the interval's original
+	 * endpoints. These references should be used for position information only. In the case of a property change
+	 * only, this argument should be undefined.
+	 * `local` reflects whether the change originated locally.
+	 * `slide` is true if the change is due to sliding on removal of position.
+	 */
+	(
+		event: "changed",
+		listener: (
+			interval: TInterval,
+			propertyDeltas: PropertySet,
+			previousInterval: TInterval | undefined,
+			local: boolean,
+			slide: boolean,
+		) => void,
+	): void;
 }
 
 /**
@@ -1199,10 +1221,12 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			previousInterval.start.refType = ReferenceType.Transient;
 			previousInterval.end.refType = ReferenceType.Transient;
 			this.emit("changeInterval", interval, previousInterval, local, op, slide);
+			this.emit("changed", interval, undefined, previousInterval ?? undefined, local, slide);
 			previousInterval.start.refType = startRefType;
 			previousInterval.end.refType = endRefType;
 		} else {
 			this.emit("changeInterval", interval, previousInterval, local, op, slide);
+			this.emit("changed", interval, undefined, previousInterval ?? undefined, local, slide);
 		}
 	}
 
@@ -1402,6 +1426,14 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			this.emitter.emit("change", undefined, serializedInterval, { localSeq });
 			if (deltaProps !== undefined) {
 				this.emit("propertyChanged", interval, deltaProps, true, undefined);
+				this.emit(
+					"changed",
+					newInterval ?? interval,
+					deltaProps,
+					newInterval ? interval : undefined,
+					true,
+					false,
+				);
 			}
 			if (newInterval) {
 				this.addPendingChange(id, serializedInterval);
@@ -1560,6 +1592,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			const changedProperties = Object.keys(newProps).length > 0;
 			if (changedProperties) {
 				this.emit("propertyChanged", interval, deltaProps, local, op);
+				this.emit("changed", interval, deltaProps, undefined, local, false);
 			}
 		}
 	}

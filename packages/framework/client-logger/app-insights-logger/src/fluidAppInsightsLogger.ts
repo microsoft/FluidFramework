@@ -9,6 +9,7 @@ import {
 	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { type TelemetryEventCategory } from "@fluidframework/telemetry-utils";
+import structuredClone from "@ungap/structured-clone";
 
 /**
  * The configuration object for creating the logger via {@link createLogger}.
