@@ -240,9 +240,13 @@ export class GCTelemetryTracker {
 					gcConfigs,
 				};
 
-				// These are logged as generic events and not errors because there can be false positives. The Tombstone
-				// and Delete errors are separately logged and are reliable.
-				this.mc.logger.sendTelemetryEvent(event);
+				// Do not log the inactive object x events as error events as they are not the best signal for
+				// detecting something wrong with GC either from the partner or from the runtime itself.
+				if (state === UnreferencedState.Inactive) {
+					this.mc.logger.sendTelemetryEvent(event);
+				} else {
+					this.mc.logger.sendErrorEvent(event);
+				}
 			}
 		}
 	}
@@ -389,7 +393,12 @@ export class GCTelemetryTracker {
 						fromPkg: fromPkg?.join("/"),
 					}),
 				};
-				logger.sendTelemetryEvent(event);
+
+				if (state === UnreferencedState.Inactive) {
+					logger.sendTelemetryEvent(event);
+				} else {
+					logger.sendErrorEvent(event);
+				}
 			}
 		}
 		this.pendingEventsQueue = [];

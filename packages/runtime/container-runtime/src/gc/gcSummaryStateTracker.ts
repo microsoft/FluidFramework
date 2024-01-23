@@ -111,11 +111,7 @@ export class GCSummaryStateTracker {
 	/**
 	 * Called during GC initialization. Initialize the latest summary data from the base snapshot data.
 	 */
-	public initializeBaseState(baseSnapshotData: IGarbageCollectionSnapshotData | undefined) {
-		if (baseSnapshotData === undefined) {
-			return;
-		}
-
+	public initializeBaseState(baseSnapshotData: IGarbageCollectionSnapshotData) {
 		// If tracking state across summaries, update latest summary data from the snapshot's GC data.
 		this.latestSummaryData = {
 			serializedGCState: baseSnapshotData.gcState
