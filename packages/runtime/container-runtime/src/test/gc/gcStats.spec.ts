@@ -120,6 +120,7 @@ describe("Garbage Collection Stats", () => {
 			readAndParseBlob: async <T>(id: string) => gcBlobsMap.get(id) as T,
 			getNodePackagePath: async (nodeId: string) => testPkgPath,
 			getLastSummaryTimestampMs: () => Date.now(),
+			activeConnection: () => true,
 			submitMessage: (message: ContainerRuntimeGCMessage) => {
 				gcMessagesCount++;
 				lastGCMessage = message;

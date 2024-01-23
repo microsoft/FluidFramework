@@ -353,6 +353,7 @@ export interface IGarbageCollectorCreateParams {
 	readonly getNodePackagePath: (nodePath: string) => Promise<readonly string[] | undefined>;
 	readonly getLastSummaryTimestampMs: () => number | undefined;
 	readonly readAndParseBlob: ReadAndParseBlob;
+	readonly activeConnection: () => boolean;
 	readonly submitMessage: (message: ContainerRuntimeGCMessage) => void;
 }
 
