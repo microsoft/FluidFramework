@@ -25,7 +25,7 @@ import {
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 
-describeCompat.skip("SharedDirectory", "FullCompat", (getTestObjectProvider, apis) => {
+describeCompat("SharedDirectory", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap, SharedDirectory } = apis.dds;
 	const directoryId = "directoryKey";
 	const registry: ChannelFactoryRegistry = [[directoryId, SharedDirectory.getFactory()]];
@@ -832,7 +832,7 @@ describeCompat.skip("SharedDirectory", "FullCompat", (getTestObjectProvider, api
 	});
 });
 
-describeCompat.skip(
+describeCompat(
 	"SharedDirectory orderSequentially",
 	"2.0.0-rc.1.0.0",
 	(getTestObjectProvider, apis) => {
