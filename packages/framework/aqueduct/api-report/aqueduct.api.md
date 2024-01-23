@@ -36,13 +36,7 @@ import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @alpha
 export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements IProvideFluidDataStoreRegistry {
-    constructor(props: {
-        registryEntries: NamedFluidDataStoreRegistryEntries;
-        dependencyContainer?: IFluidDependencySynthesizer;
-        requestHandlers?: RuntimeRequestHandler[];
-        runtimeOptions?: IContainerRuntimeOptions;
-        provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
-    });
+    constructor(props: BaseContainerRuntimeFactoryProps);
     protected containerHasInitialized(runtime: IContainerRuntime): Promise<void>;
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
     // (undocumented)
@@ -53,6 +47,17 @@ export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements
     instantiateFromExisting(runtime: ContainerRuntime): Promise<void>;
     // (undocumented)
     preInitialize(context: IContainerContext, existing: boolean): Promise<ContainerRuntime>;
+}
+
+// @alpha
+export interface BaseContainerRuntimeFactoryProps {
+    // @deprecated (undocumented)
+    dependencyContainer?: IFluidDependencySynthesizer;
+    provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+    registryEntries: NamedFluidDataStoreRegistryEntries;
+    // @deprecated
+    requestHandlers?: RuntimeRequestHandler[];
+    runtimeOptions?: IContainerRuntimeOptions;
 }
 
 // @alpha
@@ -109,7 +114,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     protected readonly context: IFluidDataStoreContext;
     finishInitialization(existing: boolean): Promise<void>;
     // (undocumented)
-    static getDataObject(runtime: IFluidDataStoreRuntime): Promise<PureDataObject<DataObjectTypes>>;
+    static getDataObject(runtime: IFluidDataStoreRuntime): Promise<PureDataObject>;
     get handle(): IFluidHandle<this>;
     protected hasInitialized(): Promise<void>;
     // (undocumented)
