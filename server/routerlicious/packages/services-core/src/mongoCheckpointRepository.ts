@@ -75,7 +75,6 @@ export class MongoCheckpointRepository implements ICheckpointRepository {
 				},
 				error,
 			);
-			throw error;
 		}
 
 		return { _id: documentId + tenantId, documentId };
