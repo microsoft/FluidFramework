@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { LazyPromise, Timer } from "@fluidframework/core-utils";
+import { assert, LazyPromise, Timer } from "@fluidframework/core-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
 	gcTreeKey,
@@ -21,6 +21,7 @@ import {
 	MonitoringContext,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
+import { BlobManager } from "../blobManager";
 import {
 	InactiveResponseHeaderKey,
 	RuntimeHeaderData,
@@ -141,8 +142,6 @@ export class GarbageCollector implements IGarbageCollector {
 	) => Promise<readonly string[] | undefined>;
 	/** Returns the timestamp of the last summary generated for this container. */
 	private readonly getLastSummaryTimestampMs: () => number | undefined;
-	/** Returns true if connection is active, i.e. it's "write" connection and the runtime is connected. */
-	private readonly activeConnection: () => boolean;
 
 	private readonly submitMessage: (message: ContainerRuntimeGCMessage) => void;
 
@@ -160,7 +159,6 @@ export class GarbageCollector implements IGarbageCollector {
 		this.isSummarizerClient = createParams.isSummarizerClient;
 		this.getNodePackagePath = createParams.getNodePackagePath;
 		this.getLastSummaryTimestampMs = createParams.getLastSummaryTimestampMs;
-		this.activeConnection = createParams.activeConnection;
 		this.submitMessage = createParams.submitMessage;
 
 		const baseSnapshot = createParams.baseSnapshot;
@@ -255,28 +253,18 @@ export class GarbageCollector implements IGarbageCollector {
 		);
 
 		/**
-		 * Set up the initializer which initializes the GC state from the data in base snapshot. This is done when
-		 * connected in write mode or when GC runs the first time. It sets up all unreferenced nodes from the base
-		 * GC state and updates their inactive or sweep-ready state.
+		 * Set up the initializer which initializes the GC state from the data in base snapshot. It sets up GC data
+		 * from the base GC state and starts tracking the state of unreferenced nodes.
+		 *
+		 * Must only be called if there is a current reference timestamp.
 		 */
 		this.initializeGCStateFromBaseSnapshotP = new LazyPromise<void>(async () => {
-			/**
-			 * If there is no current reference timestamp, skip initialization. We need the current timestamp to track
-			 * how long objects have been unreferenced and if they can be deleted.
-			 *
-			 * Note that the only scenario where there is no reference timestamp is when no ops have ever been processed
-			 * for this container and it is in read mode. In this scenario, there is no point in running GC anyway
-			 * because references in the container do not change without any ops, i.e., there is nothing to collect.
-			 */
 			const currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs();
-			if (currentReferenceTimestampMs === undefined) {
-				// Log an event so we can evaluate how often we run into this scenario.
-				this.mc.logger.sendErrorEvent({
-					eventName: "GarbageCollectorInitializedWithoutTimestamp",
-					gcConfigs: JSON.stringify(this.configs),
-				});
-				return;
-			}
+			assert(
+				currentReferenceTimestampMs !== undefined,
+				"Trying to initialize GC state without current timestamp",
+			);
+
 			/**
 			 * The base snapshot data will not be present if the container is loaded from:
 			 * 1. The first summary created by the detached container.
@@ -284,11 +272,31 @@ export class GarbageCollector implements IGarbageCollector {
 			 * 3. A summary that was generated before GC even existed.
 			 */
 			const baseSnapshotData = await this.baseSnapshotDataP;
-			if (baseSnapshotData === undefined) {
+			this.summaryStateTracker.initializeBaseState(baseSnapshotData);
+
+			if (baseSnapshotData?.gcState === undefined) {
 				return;
 			}
-			this.updateStateFromSnapshotData(baseSnapshotData, currentReferenceTimestampMs);
-			this.summaryStateTracker.initializeBaseState(baseSnapshotData);
+
+			// Update unreferenced state tracking as per the GC state in the snapshot data and update gcDataFromLastRun
+			// to the GC data from the snapshot data.
+			const gcNodes: { [id: string]: string[] } = {};
+			for (const [nodeId, nodeData] of Object.entries(baseSnapshotData.gcState.gcNodes)) {
+				if (nodeData.unreferencedTimestampMs !== undefined) {
+					this.unreferencedNodesState.set(
+						nodeId,
+						new UnreferencedStateTracker(
+							nodeData.unreferencedTimestampMs,
+							this.configs.inactiveTimeoutMs,
+							currentReferenceTimestampMs,
+							this.configs.sweepTimeoutMs,
+							this.configs.sweepGracePeriodMs,
+						),
+					);
+				}
+				gcNodes[nodeId] = Array.from(nodeData.outboundRoutes);
+			}
+			this.gcDataFromLastRun = { gcNodes };
 		});
 
 		// Get the GC details from the GC state in the base summary. This is returned in getBaseGCDetails which is
@@ -322,8 +330,10 @@ export class GarbageCollector implements IGarbageCollector {
 	}
 
 	/**
-	 * Called during container initialization. Initialize from the tombstone state in the base snapshot. This is done
-	 * during initialization so that deleted or tombstoned objects are marked as such before they are loaded or used.
+	 * Called during container initialization. Initializes the tombstone and deleted nodes state from the base snapshot.
+	 * Also, initializes the GC state including unreferenced nodes tracking if a current reference timestamp exists.
+	 * Note that if there is any GC state in the base snapshot, then there will definitely be a reference timestamp
+	 * to work with - The GC state would have been generated using a timestamp which is part of the snapshot.
 	 */
 	public async initializeBaseState(): Promise<void> {
 		const baseSnapshotData = await this.baseSnapshotDataP;
@@ -350,115 +360,59 @@ export class GarbageCollector implements IGarbageCollector {
 			this.tombstones = Array.from(baseSnapshotData.tombstones);
 			this.runtime.updateTombstonedRoutes(this.tombstones);
 		}
+
+		await this.initializeOrUpdateGCState();
 	}
 
 	/**
-	 * Update state from the given snapshot data. This is done during load and during refreshing state from a snapshot.
-	 * All current tracking is reset and updated from the data in the snapshot.
-	 * @param snapshotData - The snapshot data to update state from. If this is undefined, all GC state and tracking
-	 * is reset.
-	 * @param currentReferenceTimestampMs - The current reference timestamp for marking unreferenced nodes' unreferenced
-	 * timestamp.
+	 * Initialize the GC state if not already initialized. If GC state is already initialized, update the unreferenced
+	 * state tracking as per the current reference timestamp.
 	 */
-	private updateStateFromSnapshotData(
-		snapshotData: IGarbageCollectionSnapshotData | undefined,
-		currentReferenceTimestampMs: number,
-	) {
-		/**
-		 * Note: "newReferencesSinceLastRun" is not reset here. This is done because there may be references since the
-		 * snapshot that we are updating state from. For example, this client may have processed ops till seq#1000 and
-		 * its refreshing state from a summary that happened at seq#900. In this case, there may be references between
-		 * seq#901 and seq#1000 that we don't want to reset.
-		 * Unfortunately, there is no way to track the seq# of ops that add references, so we choose to not reset any
-		 * references here. This should be fine because, in the worst case, we may end up updating the unreferenced
-		 * timestamp of a node which will delay its deletion. Although not ideal, this will only happen in rare
-		 * scenarios, so it should be okay.
-		 */
-
-		// Clear all existing unreferenced state tracking.
-		for (const [, nodeStateTracker] of this.unreferencedNodesState) {
-			nodeStateTracker.stopTracking();
-		}
-		this.unreferencedNodesState.clear();
-
-		// If running sweep, the tombstone state represents the list of nodes that have been deleted during sweep.
-		// If running in tombstone mode, the tombstone state represents the list of nodes that have been marked as
-		// tombstones.
-		// If this call is because we are refreshing from a snapshot due to an ack, it is likely that the GC state
-		// in the snapshot is newer than this client's. And so, the deleted / tombstone nodes need to be updated.
-		if (this.configs.shouldRunSweep) {
-			const snapshotDeletedNodes = snapshotData?.deletedNodes
-				? new Set(snapshotData.deletedNodes)
-				: undefined;
-			// If the snapshot contains deleted nodes that are not yet deleted by this client, ask the runtime to
-			// delete them.
-			if (snapshotDeletedNodes !== undefined) {
-				const newDeletedNodes: string[] = [];
-				for (const nodeId of snapshotDeletedNodes) {
-					if (!this.deletedNodes.has(nodeId)) {
-						newDeletedNodes.push(nodeId);
-					}
-				}
-				if (newDeletedNodes.length > 0) {
-					// Call container runtime to delete these nodes and add deleted nodes to this.deletedNodes.
-				}
-			}
-		} else if (this.configs.tombstoneMode) {
-			// The snapshot may contain more or fewer tombstone nodes than this client. Update tombstone state and
-			// notify the runtime to update its state as well.
-			this.tombstones = snapshotData?.tombstones ? Array.from(snapshotData.tombstones) : [];
-			this.runtime.updateTombstonedRoutes(this.tombstones);
-		}
-
-		// If there is no snapshot data, it means this snapshot was generated with GC disabled. Unset all GC state.
-		if (snapshotData?.gcState === undefined) {
-			this.gcDataFromLastRun = undefined;
+	private async initializeOrUpdateGCState() {
+		const currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs();
+		if (currentReferenceTimestampMs === undefined) {
 			return;
 		}
 
-		// Update unreferenced state tracking as per the GC state in the snapshot data and update gcDataFromLastRun
-		// to the GC data from the snapshot data.
-		const gcNodes: { [id: string]: string[] } = {};
-		for (const [nodeId, nodeData] of Object.entries(snapshotData.gcState.gcNodes)) {
-			if (nodeData.unreferencedTimestampMs !== undefined) {
-				this.unreferencedNodesState.set(
-					nodeId,
-					new UnreferencedStateTracker(
-						nodeData.unreferencedTimestampMs,
-						this.configs.inactiveTimeoutMs,
-						currentReferenceTimestampMs,
-						this.configs.sweepTimeoutMs,
-						this.configs.sweepGracePeriodMs,
-					),
-				);
-			}
-			gcNodes[nodeId] = Array.from(nodeData.outboundRoutes);
+		// If the GC state hasn't been initialized yet, initialize it and return.
+		if (this.gcDataFromLastRun === undefined) {
+			await this.initializeGCStateFromBaseSnapshotP;
+			return;
 		}
-		this.gcDataFromLastRun = { gcNodes };
+
+		// If the GC state has been initialized, update the tracking of unreferenced nodes as per the current
+		// reference timestamp.
+		for (const [, nodeStateTracker] of this.unreferencedNodesState) {
+			nodeStateTracker.updateTracking(currentReferenceTimestampMs);
+		}
 	}
 
 	/**
 	 * Called when the connection state of the runtime changes, i.e., it connects or disconnects. GC subscribes to this
-	 * to initialize the base state for non-summarizer clients so that they can track inactive / sweep-ready nodes.
+	 * to initialize or update the unreference state tracking.
 	 * @param connected - Whether the runtime connected / disconnected.
 	 * @param clientId - The clientId of this runtime.
 	 */
 	public setConnectionState(connected: boolean, clientId?: string | undefined): void {
 		/**
-		 * For all clients, initialize the base state when the container becomes active, i.e., it transitions
-		 * to "write" mode. This will ensure that the container's own join op is processed and there is a recent
-		 * reference timestamp that will be used to update the state of unreferenced nodes. Also, all trailing ops which
-		 * could affect the GC state will have been processed.
+		 * When the client connects (or reconnects), attempt to initialize or update the GC state. This will keep
+		 * the unreferenced state tracking updated as per the reference timestamp at the time of connection.
 		 *
-		 * If GC is up-to-date for the client and the summarizing client, there will be an doubling of both
-		 * InactiveObject_Loaded and SweepReady_Loaded errors, as there will be one from the sending client and one from
-		 * the receiving summarizer client.
-		 *
-		 * Ideally, this initialization should only be done for summarizer client. However, we are currently rolling out
-		 * sweep in phases and we want to track when inactive and sweep-ready objects are used in any client.
+		 * During GC initialization and during connections in read mode, it is possible that either no ops are
+		 * processed or only trailing ops are processed. This means that the GC state is not initialized or initialized
+		 * with an older reference timestamp. So, doing this on every connection will keep the unreferenced state
+		 * tracking up-to-date.
 		 */
-		if (this.activeConnection() && this.configs.shouldRunGC) {
-			this.initializeGCStateFromBaseSnapshotP.catch((error) => {});
+		if (connected && this.configs.shouldRunGC) {
+			this.initializeOrUpdateGCState().catch((error) => {
+				this.mc.logger.sendErrorEvent(
+					{
+						eventName: "GCInitializationOrUpdateFailed",
+						gcConfigs: JSON.stringify(this.configs),
+					},
+					error,
+				);
+			});
 		}
 	}
 
@@ -536,8 +490,11 @@ export class GarbageCollector implements IGarbageCollector {
 				const gcStats = await this.runGC(fullGC, currentReferenceTimestampMs, logger);
 				event.end({
 					...gcStats,
-					timestamp: currentReferenceTimestampMs,
-					sweep: this.configs.shouldRunSweep,
+					details: {
+						timestamp: currentReferenceTimestampMs,
+						sweep: this.configs.shouldRunSweep,
+						tombstone: this.configs.throwOnTombstoneLoad,
+					},
 				});
 
 				/** Post-GC steps */
@@ -1163,9 +1120,25 @@ export class GarbageCollector implements IGarbageCollector {
 			deletedAttachmentBlobCount: 0,
 		};
 
+		// The runtime can't reliably identify the type of deleted nodes. So, get the type here. This should
+		// be good enough because the only types that participate in GC today are data stores, DDSes and blobs.
+		const getDeletedNodeType = (nodeId: string): GCNodeType => {
+			const pathParts = nodeId.split("/");
+			if (pathParts[1] === BlobManager.basePath) {
+				return GCNodeType.Blob;
+			}
+			if (pathParts.length === 2) {
+				return GCNodeType.DataStore;
+			}
+			if (pathParts.length === 3) {
+				return GCNodeType.SubDataStore;
+			}
+			return GCNodeType.Other;
+		};
+
 		for (const nodeId of deletedNodes) {
 			sweepPhaseStats.deletedNodeCount++;
-			const nodeType = this.runtime.getNodeType(nodeId);
+			const nodeType = getDeletedNodeType(nodeId);
 			if (nodeType === GCNodeType.DataStore) {
 				sweepPhaseStats.deletedDataStoreCount++;
 			} else if (nodeType === GCNodeType.Blob) {

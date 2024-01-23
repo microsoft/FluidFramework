@@ -15,7 +15,6 @@ import {
 import {
 	describeCompat,
 	ITestDataObject,
-	itExpects,
 	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
 import { stringToBuffer } from "@fluid-internal/client-utils";
@@ -139,100 +138,77 @@ describeCompat("GC trailing ops tests", "NoCompat", (getTestObjectProvider) => {
 			assert(blobTimestamp2 !== undefined, `Should have unreferenced blob`);
 		});
 
-		itExpects(
-			`A summary has a datastore and blob unreferenced, but trailing ops referenced them ${
-				tombstoneEnabled ? "after sweep timeout" : "before sweep timeout"
-			}`,
-			tombstoneEnabled
-				? [
-						{
-							eventName:
-								"fluid:telemetry:Summarizer:Running:TombstoneReadyObject_Revived",
-						},
-						{
-							eventName:
-								"fluid:telemetry:Summarizer:Running:TombstoneReadyObject_Revived",
-						},
-				  ]
-				: [],
-			async () => {
-				const mainContainer = await provider.makeTestContainer(testContainerConfig);
-				const mainDefaultDataStore =
-					(await mainContainer.getEntryPoint()) as ITestDataObject;
-				await waitForContainerConnection(mainContainer);
+		it(`A summary has a datastore and blob unreferenced, but trailing ops referenced them ${
+			tombstoneEnabled ? "after sweep timeout" : "before sweep timeout"
+		}`, async () => {
+			const mainContainer = await provider.makeTestContainer(testContainerConfig);
+			const mainDefaultDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
+			await waitForContainerConnection(mainContainer);
 
-				// Create a data store and blob.
-				const newDataStore =
-					await mainDefaultDataStore._context.containerRuntime.createDataStore(
-						TestDataObjectType,
-					);
-				assert(newDataStore.entryPoint !== undefined, `Should have a handle`);
-				const blobContents = "Blob contents";
-				const blobHandle = await mainDefaultDataStore._runtime.uploadBlob(
-					stringToBuffer(blobContents, "utf-8"),
+			// Create a data store and blob.
+			const newDataStore =
+				await mainDefaultDataStore._context.containerRuntime.createDataStore(
+					TestDataObjectType,
 				);
+			assert(newDataStore.entryPoint !== undefined, `Should have a handle`);
+			const blobContents = "Blob contents";
+			const blobHandle = await mainDefaultDataStore._runtime.uploadBlob(
+				stringToBuffer(blobContents, "utf-8"),
+			);
 
-				// Create a summarizer
-				const { summarizer: mainSummarizer } = await createSummarizer(
-					provider,
-					mainContainer,
-					{ runtimeOptions: { gcOptions }, loaderProps: { configProvider } },
-				);
+			// Create a summarizer
+			const { summarizer: mainSummarizer } = await createSummarizer(provider, mainContainer, {
+				runtimeOptions: { gcOptions },
+				loaderProps: { configProvider },
+			});
 
-				// Make the datastore and blob live and unreferenced
-				// Note: Technically the blob is live once the blob is uploaded and the attach op is sequenced, view the BlobManager for more details.
-				mainDefaultDataStore._root.set("datastore", newDataStore.entryPoint);
-				mainDefaultDataStore._root.set("blob", blobHandle);
-				mainDefaultDataStore._root.delete("datastore");
-				mainDefaultDataStore._root.delete("blob");
+			// Make the datastore and blob live and unreferenced
+			// Note: Technically the blob is live once the blob is uploaded and the attach op is sequenced, view the BlobManager for more details.
+			mainDefaultDataStore._root.set("datastore", newDataStore.entryPoint);
+			mainDefaultDataStore._root.set("blob", blobHandle);
+			mainDefaultDataStore._root.delete("datastore");
+			mainDefaultDataStore._root.delete("blob");
 
-				// Summarize and verify that the datastore and blob are unreferenced
-				await provider.ensureSynchronized();
-				const summary1 = await summarizeNow(mainSummarizer);
-				const unreferencedTimestamps1 = await getUnreferencedTimestamps(
-					summary1.summaryTree,
-				);
-				const dataStoreTimestamp1 = unreferencedTimestamps1.get(
-					newDataStore.entryPoint.absolutePath.slice(1),
-				);
-				const blobTimestamp1 = unreferencedTimestamps1.get(
-					blobHandle.absolutePath.slice(1),
-				);
-				assert(dataStoreTimestamp1 !== undefined, `Should have unreferenced datastore`);
-				assert(blobTimestamp1 !== undefined, `Should have unreferenced blob`);
+			// Summarize and verify that the datastore and blob are unreferenced
+			await provider.ensureSynchronized();
+			const summary1 = await summarizeNow(mainSummarizer);
+			const unreferencedTimestamps1 = await getUnreferencedTimestamps(summary1.summaryTree);
+			const dataStoreTimestamp1 = unreferencedTimestamps1.get(
+				newDataStore.entryPoint.absolutePath.slice(1),
+			);
+			const blobTimestamp1 = unreferencedTimestamps1.get(blobHandle.absolutePath.slice(1));
+			assert(dataStoreTimestamp1 !== undefined, `Should have unreferenced datastore`);
+			assert(blobTimestamp1 !== undefined, `Should have unreferenced blob`);
 
-				// Create trailing ops where the datastore and blob are referenced
-				mainDefaultDataStore._root.set("datastore", newDataStore.entryPoint);
-				mainDefaultDataStore._root.set("blob", blobHandle);
-				await provider.ensureSynchronized();
+			// Create trailing ops where the datastore and blob are referenced
+			mainDefaultDataStore._root.set("datastore", newDataStore.entryPoint);
+			mainDefaultDataStore._root.set("blob", blobHandle);
+			await provider.ensureSynchronized();
 
-				mainContainer.close();
-				mainSummarizer.close();
+			mainContainer.close();
+			mainSummarizer.close();
 
-				// Load a new container/summarizer from the summary and trailing ops
-				const { summarizer } = await createSummarizer(
-					provider,
-					mainContainer,
-					{ runtimeOptions: { gcOptions }, loaderProps: { configProvider } },
-					summary1.summaryVersion,
-				);
+			// Load a new container/summarizer from the summary and trailing ops
+			const { summarizer } = await createSummarizer(
+				provider,
+				mainContainer,
+				{ runtimeOptions: { gcOptions }, loaderProps: { configProvider } },
+				summary1.summaryVersion,
+			);
 
-				// Ensure trailing ops are processed, summarize, and verify that the datastore and blob are referenced
-				await provider.ensureSynchronized();
-				const summary2 = await summarizeNow(summarizer);
-				const unreferencedTimestamps2 = await getUnreferencedTimestamps(
-					summary2.summaryTree,
-				);
-				const dataStoreId = newDataStore.entryPoint.absolutePath.slice(1);
-				const blobId = blobHandle.absolutePath.slice(1);
-				assert(unreferencedTimestamps2.has(dataStoreId), `GC should detect the datastore`);
-				assert(unreferencedTimestamps2.has(blobId), `GC should detect the blob`);
-				const dataStoreTimestamp2 = unreferencedTimestamps2.get(dataStoreId);
-				const blobTimestamp2 = unreferencedTimestamps2.get(blobId);
-				assert(dataStoreTimestamp2 === undefined, `Should have a referenced datastore`);
-				assert(blobTimestamp2 === undefined, `Should have a referenced blob`);
-			},
-		);
+			// Ensure trailing ops are processed, summarize, and verify that the datastore and blob are referenced
+			await provider.ensureSynchronized();
+			const summary2 = await summarizeNow(summarizer);
+			const unreferencedTimestamps2 = await getUnreferencedTimestamps(summary2.summaryTree);
+			const dataStoreId = newDataStore.entryPoint.absolutePath.slice(1);
+			const blobId = blobHandle.absolutePath.slice(1);
+			assert(unreferencedTimestamps2.has(dataStoreId), `GC should detect the datastore`);
+			assert(unreferencedTimestamps2.has(blobId), `GC should detect the blob`);
+			const dataStoreTimestamp2 = unreferencedTimestamps2.get(dataStoreId);
+			const blobTimestamp2 = unreferencedTimestamps2.get(blobId);
+			assert(dataStoreTimestamp2 === undefined, `Should have a referenced datastore`);
+			assert(blobTimestamp2 === undefined, `Should have a referenced blob`);
+		});
 	};
 
 	tests();

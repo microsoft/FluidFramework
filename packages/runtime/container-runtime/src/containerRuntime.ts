@@ -1449,9 +1449,6 @@ export class ContainerRuntime
 			getNodePackagePath: async (nodePath: string) => this.getGCNodePackagePath(nodePath),
 			getLastSummaryTimestampMs: () => this.messageAtLastSummary?.timestamp,
 			readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),
-			// GC runs in summarizer client and needs access to the real (non-proxy) active information. The proxy
-			// delta manager would always return false for summarizer client.
-			activeConnection: () => this.innerDeltaManager.active,
 			submitMessage: (message: ContainerRuntimeGCMessage) => this.submit(message),
 		});
 
