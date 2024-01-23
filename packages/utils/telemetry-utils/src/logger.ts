@@ -72,6 +72,14 @@ export interface ITelemetryLoggerPropertyBag {
 }
 
 /**
+ * @alpha
+ */
+export interface ITelemetryLoggerPropertyBags {
+	all?: ITelemetryLoggerPropertyBag;
+	error?: ITelemetryLoggerPropertyBag;
+}
+
+/**
  * Attempts to parse number from string.
  * If it fails, it will return the original string.
  *

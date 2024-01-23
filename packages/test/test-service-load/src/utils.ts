@@ -34,7 +34,6 @@ import { createFluidExport, ILoadTest } from "./loadTestDataStore";
 import {
 	generateConfigurations,
 	generateLoaderOptions,
-	generateLoggerConfig,
 	generateRuntimeOptions,
 	getOptionOverride,
 } from "./optionsMatrix";
