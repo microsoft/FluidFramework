@@ -3,5 +3,8 @@
  * Licensed under the MIT License.
  */
 
-export { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory";
+export {
+	BaseContainerRuntimeFactory,
+	type BaseContainerRuntimeFactoryProps,
+} from "./baseContainerRuntimeFactory";
 export { ContainerRuntimeFactoryWithDefaultDataStore } from "./containerRuntimeFactoryWithDefaultDataStore";

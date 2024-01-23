@@ -29,6 +29,35 @@ import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import { type FluidObject } from "@fluidframework/core-interfaces";
 
 /**
+ * {@link BaseContainerRuntimeFactory} construction properties.
+ * @alpha
+ */
+export interface BaseContainerRuntimeFactoryProps {
+	/**
+	 * The data store registry for containers produced.
+	 */
+	registryEntries: NamedFluidDataStoreRegistryEntries;
+	/**
+	 * @deprecated Will be removed in a future release.
+	 */
+	dependencyContainer?: IFluidDependencySynthesizer;
+	/**
+	 * Request handlers for containers produced.
+	 * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
+	requestHandlers?: RuntimeRequestHandler[];
+	/**
+	 * The runtime options passed to the ContainerRuntime when instantiating it
+	 */
+	runtimeOptions?: IContainerRuntimeOptions;
+	/**
+	 * Function that will initialize the entryPoint of the ContainerRuntime instances
+	 * created with this factory
+	 */
+	provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+}
+
+/**
  * BaseContainerRuntimeFactory produces container runtimes with the specified data store and service registries,
  * request handlers, runtimeOptions, and entryPoint initialization function.
  * It can be subclassed to implement a first-time initialization procedure for the containers it creates.
@@ -52,24 +81,7 @@ export class BaseContainerRuntimeFactory
 	private readonly requestHandlers: RuntimeRequestHandler[];
 	private readonly provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
 
-	/**
-	 * @param registryEntries - The data store registry for containers produced
-	 * @param dependencyContainer - deprecated, will be removed in a future release
-	 * @param requestHandlers - Request handlers for containers produced
-	 * @param runtimeOptions - The runtime options passed to the ContainerRuntime when instantiating it
-	 * @param provideEntryPoint - Function that will initialize the entryPoint of the ContainerRuntime instances
-	 * created with this factory
-	 */
-	public constructor(props: {
-		registryEntries: NamedFluidDataStoreRegistryEntries;
-		dependencyContainer?: IFluidDependencySynthesizer;
-		/**
-		 * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-		 */
-		requestHandlers?: RuntimeRequestHandler[];
-		runtimeOptions?: IContainerRuntimeOptions;
-		provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
-	}) {
+	public constructor(props: BaseContainerRuntimeFactoryProps) {
 		super();
 
 		this.registryEntries = props.registryEntries;

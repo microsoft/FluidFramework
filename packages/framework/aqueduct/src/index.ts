@@ -19,9 +19,14 @@
  */
 
 export { DataObjectFactory, PureDataObjectFactory } from "./data-object-factories";
-export type { DataObjectTypes, IDataObjectProps } from "./data-objects";
-export { DataObject, PureDataObject } from "./data-objects";
+export {
+	DataObject,
+	type DataObjectTypes,
+	type IDataObjectProps,
+	PureDataObject,
+} from "./data-objects";
 export {
 	BaseContainerRuntimeFactory,
+	type BaseContainerRuntimeFactoryProps,
 	ContainerRuntimeFactoryWithDefaultDataStore,
 } from "./container-runtime-factories";
