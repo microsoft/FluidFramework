@@ -8847,6 +8847,7 @@ importers:
       '@fluidframework/protocol-definitions': ^3.1.0
       '@fluidframework/routerlicious-driver': workspace:~
       '@fluidframework/runtime-utils': workspace:~
+      '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-utils': workspace:~
       '@fluidframework/tinylicious-client-previous': npm:@fluidframework/tinylicious-client@2.0.0-internal.8.0.0
       '@fluidframework/tinylicious-driver': workspace:~
@@ -8875,6 +8876,7 @@ importers:
       '@fluidframework/protocol-definitions': 3.1.0
       '@fluidframework/routerlicious-driver': link:../../drivers/routerlicious-driver
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
+      '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       '@fluidframework/tinylicious-driver': link:../../drivers/tinylicious-driver
       uuid: 9.0.1
     devDependencies:
@@ -20152,7 +20154,7 @@ packages:
       assert-never: 1.2.1
       globby: 13.2.2
       prettier: 3.0.3
-      typescript: 5.3.2
+      typescript: 5.3.3
     dev: true
 
   /@previewjs/vfs/2.1.0:
@@ -45327,7 +45329,7 @@ packages:
     version: 0.1.0
     hasBin: true
     dependencies:
-      '@rushstack/node-core-library': 3.61.0
+      '@rushstack/node-core-library': 3.63.0
       '@tylerbu/markdown-magic': 2.4.0-tylerbu-1
       chalk: 4.1.2
       markdown-magic-package-scripts: 1.2.2

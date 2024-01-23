@@ -91,8 +91,8 @@ export class AzureClient {
 			properties.summaryCompression,
 		);
 		this.configProvider = wrapConfigProviderWithDefaults(
-			azureClientFeatureGates,
 			properties.configProvider,
+			azureClientFeatureGates,
 		);
 	}
 
