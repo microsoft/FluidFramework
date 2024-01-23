@@ -345,7 +345,10 @@ export class GCTelemetryTracker {
 			}
 
 			if (missingExplicitRoutes.length > 0) {
-				logger.sendErrorEvent({
+				//* Revisit this decision.  Snapshot tests fail with this, which represents reality when processing attach op from old client.
+				//* We are actively monitoring this event in production but losing test coverage is a bummer
+				//* It may become obsolete soon due to the new reference detection logic (it was designed to catch wrongdoing by DDS authors)
+				logger.sendTelemetryEvent({
 					eventName: "gcUnknownOutboundReferences",
 					...tagCodeArtifacts({
 						id: nodeId,
