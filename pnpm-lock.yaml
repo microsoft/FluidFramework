@@ -10410,6 +10410,7 @@ importers:
   packages/test/test-end-to-end-tests:
     specifiers:
       '@fluid-experimental/attributor': workspace:~
+      '@fluid-experimental/ephemeral-independent': workspace:~
       '@fluid-experimental/sequence-deprecated': workspace:~
       '@fluid-experimental/tree': workspace:~
       '@fluid-internal/client-utils': workspace:~
@@ -10480,6 +10481,7 @@ importers:
       uuid: ^9.0.0
     dependencies:
       '@fluid-experimental/attributor': link:../../framework/attributor
+      '@fluid-experimental/ephemeral-independent': link:../../../experimental/dds/ephemeral-independent
       '@fluid-experimental/sequence-deprecated': link:../../../experimental/dds/sequence-deprecated
       '@fluid-experimental/tree': link:../../../experimental/dds/tree
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -18394,7 +18396,7 @@ packages:
     dependencies:
       '@jest/fake-timers': 29.7.0
       '@jest/types': 29.6.3
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
       jest-mock: 29.7.0
     dev: true
 
@@ -18433,7 +18435,7 @@ packages:
     dependencies:
       '@jest/types': 29.6.3
       '@sinonjs/fake-timers': 10.3.0
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
       jest-message-util: 29.7.0
       jest-mock: 29.7.0
       jest-util: 29.7.0
@@ -33111,7 +33113,7 @@ packages:
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
     dependencies:
       '@jest/types': 29.6.3
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
       jest-util: 29.7.0
     dev: true
 
@@ -33303,7 +33305,7 @@ packages:
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
     dependencies:
       '@jest/types': 29.6.3
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
       chalk: 4.1.2
       ci-info: 3.9.0
       graceful-fs: 4.2.11

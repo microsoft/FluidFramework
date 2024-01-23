@@ -95,11 +95,13 @@ class IndependentDirectoryImpl<TSchema extends IndependentDirectoryNodeSchema>
 		});
 		runtime.on("disconnected", () => {
 			const { clientId } = this.runtime;
-			assert(clientId !== undefined, "Disconnected without local clientId");
-			Object.entries(this.datastore).forEach(([_path, allKnownState]) => {
-				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-				delete allKnownState[clientId];
-			});
+			// assert(clientId !== undefined, "Disconnected without local clientId");
+			if (clientId !== undefined) {
+				Object.entries(this.datastore).forEach(([_path, allKnownState]) => {
+					// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+					delete allKnownState[clientId];
+				});
+			}
 			// TODO: Consider caching prior (current) clientId to broadcast when reconnecting so others may remap state.
 		});
 		runtime.on("connected", () => {

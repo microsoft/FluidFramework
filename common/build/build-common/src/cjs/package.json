@@ -1,3 +1,11 @@
 {
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "common/build/build-common/src/cjs"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
 	"type": "commonjs"
 }
