@@ -118,13 +118,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     get connected(): boolean;
     // (undocumented)
-    createDataStore(pkg: string | string[]): Promise<IDataStore>;
+    createDataStore(pkg: string | string[], groupId?: string): Promise<IDataStore>;
     // @deprecated (undocumented)
     _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string): Promise<IDataStore>;
     // (undocumented)
-    createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached;
+    createDetachedDataStore(pkg: Readonly<string[]>, groupId?: string): IFluidDataStoreContextDetached;
     // (undocumented)
-    createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;
+    createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string, groupId?: string): IFluidDataStoreContextDetached;
     createSummary(blobRedirectTable?: Map<string, string>, telemetryContext?: ITelemetryContext): ISummaryTree;
     deleteSweepReadyNodes(sweepReadyRoutes: readonly string[]): readonly string[];
     // @deprecated (undocumented)

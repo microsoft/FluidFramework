@@ -32,7 +32,7 @@ export interface IContainerRuntime extends IProvideFluidDataStoreRegistry, ICont
     readonly clientId: string | undefined;
     // (undocumented)
     readonly connected: boolean;
-    createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;
+    createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string, groupId?: string): IFluidDataStoreContextDetached;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)

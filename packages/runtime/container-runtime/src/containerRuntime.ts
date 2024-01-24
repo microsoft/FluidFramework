@@ -2526,22 +2526,31 @@ export class ContainerRuntime
 	public createDetachedRootDataStore(
 		pkg: Readonly<string[]>,
 		rootDataStoreId: string,
+		groupId?: string,
 	): IFluidDataStoreContextDetached {
 		if (rootDataStoreId.includes("/")) {
 			throw new UsageError(`Id cannot contain slashes: '${rootDataStoreId}'`);
 		}
-		return this.dataStores.createDetachedDataStoreCore(pkg, true, rootDataStoreId);
+		return this.dataStores.createDetachedDataStoreCore(pkg, true, rootDataStoreId, groupId);
 	}
 
-	public createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached {
-		return this.dataStores.createDetachedDataStoreCore(pkg, false);
+	public createDetachedDataStore(
+		pkg: Readonly<string[]>,
+		groupId?: string,
+	): IFluidDataStoreContextDetached {
+		return this.dataStores.createDetachedDataStoreCore(pkg, false, undefined, groupId);
 	}
 
-	public async createDataStore(pkg: string | string[]): Promise<IDataStore> {
+	public async createDataStore(pkg: string | string[], groupId?: string): Promise<IDataStore> {
 		const id = uuid();
 		return channelToDataStore(
 			await this.dataStores
-				._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id)
+				._createFluidDataStoreContext(
+					Array.isArray(pkg) ? pkg : [pkg],
+					id,
+					undefined,
+					groupId,
+				)
 				.realize(),
 			id,
 			this,
