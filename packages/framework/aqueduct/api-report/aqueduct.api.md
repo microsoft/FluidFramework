@@ -71,9 +71,16 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 }
 
 // @alpha
-export interface ContainerRuntimeFactoryWithDefaultDataStoreProps extends BaseContainerRuntimeFactoryProps {
+export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
     // (undocumented)
     defaultFactory: IFluidDataStoreFactory;
+    // @deprecated (undocumented)
+    dependencyContainer?: IFluidDependencySynthesizer;
+    provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+    registryEntries: NamedFluidDataStoreRegistryEntries;
+    // @deprecated
+    requestHandlers?: RuntimeRequestHandler[];
+    runtimeOptions?: IContainerRuntimeOptions;
 }
 
 // @alpha

@@ -3,15 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { type ContainerRuntime } from "@fluidframework/container-runtime";
-import { type IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import {
+	type IContainerRuntimeOptions,
+	type ContainerRuntime,
+} from "@fluidframework/container-runtime";
+import {
+	type NamedFluidDataStoreRegistryEntries,
+	type IFluidDataStoreFactory,
+} from "@fluidframework/runtime-definitions";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { type FluidObject, type IRequest, type IResponse } from "@fluidframework/core-interfaces";
 import { RequestParser } from "@fluidframework/runtime-utils";
-import {
-	BaseContainerRuntimeFactory,
-	type BaseContainerRuntimeFactoryProps,
-} from "./baseContainerRuntimeFactory";
+import { type IFluidDependencySynthesizer } from "@fluidframework/synthesize";
+import { type RuntimeRequestHandler } from "@fluidframework/request-handler";
+import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory";
 
 const defaultDataStoreId = "default";
 
@@ -27,9 +32,30 @@ async function getDefaultFluidObject(runtime: IContainerRuntime): Promise<FluidO
  * {@link ContainerRuntimeFactoryWithDefaultDataStore} construction properties.
  * @alpha
  */
-export interface ContainerRuntimeFactoryWithDefaultDataStoreProps
-	extends BaseContainerRuntimeFactoryProps {
+export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
 	defaultFactory: IFluidDataStoreFactory;
+	/**
+	 * The data store registry for containers produced.
+	 */
+	registryEntries: NamedFluidDataStoreRegistryEntries;
+	/**
+	 * @deprecated Will be removed in a future release.
+	 */
+	dependencyContainer?: IFluidDependencySynthesizer;
+	/**
+	 * Request handlers for containers produced.
+	 * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
+	requestHandlers?: RuntimeRequestHandler[];
+	/**
+	 * The runtime options passed to the ContainerRuntime when instantiating it
+	 */
+	runtimeOptions?: IContainerRuntimeOptions;
+	/**
+	 * Function that will initialize the entryPoint of the ContainerRuntime instances
+	 * created with this factory
+	 */
+	provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
 }
 
 /**
