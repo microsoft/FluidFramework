@@ -6,8 +6,7 @@
 import { IRedisParameters } from "@fluidframework/server-services-utils";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as IoRedis from "ioredis";
-import { getRandomInt } from "@fluidframework/server-services-client";
-import sizeof from "object-sizeof";
+import { RedisFsApis, executeRedisFsApiWithMetric } from "./helpers";
 
 export interface RedisParams extends IRedisParameters {
 	enableHashmapRedisFs: boolean;
@@ -87,7 +86,7 @@ export class Redis implements IRedis {
 		// and no additional prefix needs to be added.
 		const keyToDelete = appendPrefixToKey ? this.getKey(key) : key;
 		const result = await this.client.unlink(keyToDelete);
-		// The DEL API in Redis returns the number of keys that were removed.
+		// The UNLINK API in Redis returns the number of keys that were removed.
 		// We always call Redis DEL with one key only, so we expect a result equal to 1
 		// to indicate that the key was removed. 0 would indicate that the key does not exist.
 		return result === 1;
@@ -98,17 +97,19 @@ export class Redis implements IRedis {
 		if (keys.length === 0) {
 			return false;
 		}
-		const result = await this.client.del(...keys);
+		const result = await this.client.unlink(...keys);
 		return result === keys.length;
 	}
 
 	public async keysByPrefix(keyPrefix: string): Promise<string[]> {
-		const result = await executeRedisApi(
+		const result = await executeRedisFsApiWithMetric(
 			async () => this.client.keys(`${this.getKey(keyPrefix)}*`),
-			RedisApis.keysByPrefix,
-			RedisConstants.RedisApi,
+			RedisFsApis.KeysByPrefix,
 			this.parameters?.enableRedisMetrics,
 			this.parameters?.redisApiMetricsSamplingPeriod,
+			{
+				keyPrefix,
+			},
 		);
 		return result;
 	}
@@ -197,7 +198,7 @@ export class HashMapRedis implements IRedis {
 		if (this.hashMapKey.startsWith(keyPrefix)) {
 			// The key prefix matches a root directory, so we need to delete the whole HashMap.
 			const unlinkResult = await this.client.unlink(this.getMapKey());
-			// The DEL API in Redis returns the number of keys that were removed.
+			// The UNLINK API in Redis returns the number of keys that were removed.
 			// We always call Redis DEL with one key only, so we expect a result equal to 1
 			// to indicate that the key was removed. 0 would indicate that the key does not exist.
 			return unlinkResult === 1;
@@ -211,12 +212,14 @@ export class HashMapRedis implements IRedis {
 	}
 
 	public async keysByPrefix(keyPrefix: string): Promise<string[]> {
-		const result = await executeRedisApi(
+		const result = await executeRedisFsApiWithMetric(
 			async () => this.client.hkeys(this.getMapKey()),
-			RedisApis.hkeys,
-			RedisConstants.RedisApi,
+			RedisFsApis.HKeysByPrefix,
 			this.parameters?.enableRedisMetrics,
 			this.parameters?.redisApiMetricsSamplingPeriod,
+			{
+				keyPrefix,
+			},
 		);
 		return result.filter((field) => `${this.getMapKey()}/${field}`.startsWith(keyPrefix));
 	}
@@ -250,43 +253,5 @@ export class HashMapRedis implements IRedis {
 				Lumberjack.error("Failed to set initial map key with expiration", undefined, error);
 			});
 		}
-	}
-}
-
-enum RedisApis {
-	keysByPrefix = "keysByPrefix",
-	hkeys = "hkeys",
-}
-
-enum RedisConstants {
-	RedisApi = "RedisApi",
-}
-
-export async function executeRedisApi<T>(
-	api: () => Promise<T>,
-	apiName: string,
-	metricName: string,
-	metricEnabled: boolean = false,
-	samplingPeriod: number = 0,
-	telemetryProperties?: Record<string, any>,
-	logResponseSize: boolean = false,
-): Promise<T> {
-	if (!metricEnabled || (samplingPeriod && getRandomInt(samplingPeriod) !== 0)) {
-		return api();
-	}
-
-	const metric = Lumberjack.newLumberMetric(metricName, telemetryProperties);
-	try {
-		let responseSize;
-		const result = await api();
-		if (logResponseSize) {
-			responseSize = sizeof(result);
-		}
-		metric.setProperty("responseSize", responseSize);
-		metric.success(`${metricName}: ${apiName} success`);
-		return result;
-	} catch (error: any) {
-		metric.error(`${metricName}: ${apiName} error`, error);
-		throw error;
 	}
 }
