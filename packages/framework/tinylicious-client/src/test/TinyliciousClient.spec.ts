@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { AttachState, ContainerErrorTypes } from "@fluidframework/container-definitions";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
@@ -127,7 +127,7 @@ describe("TinyliciousClient", () => {
 	});
 
 	it("creates a container with detached state", async () => {
-		const container = (await tinyliciousClient.createContainer(schema)).container;
+		const {container} = await tinyliciousClient.createContainer(schema);
 		assert.strictEqual(
 			container.attachState,
 			AttachState.Detached,
@@ -136,7 +136,7 @@ describe("TinyliciousClient", () => {
 	});
 
 	it("creates a container that can only be attached once", async () => {
-		const container = (await tinyliciousClient.createContainer(schema)).container;
+		const {container} = await tinyliciousClient.createContainer(schema);
 		const containerId = await container.attach();
 
 		assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
@@ -227,7 +227,7 @@ describe("TinyliciousClient", () => {
 			dynamicObjectTypes: [SharedDirectory],
 		};
 
-		const container = (await tinyliciousClient.createContainer(dynamicSchema)).container;
+		const {container} = await tinyliciousClient.createContainer(dynamicSchema);
 		await container.attach();
 		await new Promise<void>((resolve, reject) => {
 			container.on("connected", () => {
