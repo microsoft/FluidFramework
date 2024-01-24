@@ -518,7 +518,7 @@ enum RedisFSConstants {
 	RedisFsApi = "RedisFsApi",
 }
 
-async function executeRedisFsApi<T>(
+export async function executeRedisFsApi<T>(
 	api: () => Promise<T>,
 	apiName: string,
 	metricName: string,
