@@ -76,7 +76,7 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
     defaultFactory: IFluidDataStoreFactory;
     // @deprecated (undocumented)
     dependencyContainer?: IFluidDependencySynthesizer;
-    provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+    provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
     registryEntries: NamedFluidDataStoreRegistryEntries;
     // @deprecated
     requestHandlers?: RuntimeRequestHandler[];
