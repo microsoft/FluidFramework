@@ -51,6 +51,32 @@ alfred:
     perMessageDeflate: true
   getDeltasRequestMaxOpsRange: 2000
 
+nexus:
+  name: nexus
+  replicas: 4
+  externalUrl: nexus_external_url
+  host: nexus_host
+  cert: cert
+  tenants: []
+  key: jwt_key
+  maxNumberOfClientsPerDocument: 1000000
+  numberOfMessagesPerTrace: 100
+  sessionStickinessDurationMs: 3600000
+  enableConnectionCountLogging: false
+  ignoreEphemeralFlag: true
+  throttling:
+    socketConnectionsPerTenant: disabled
+    socketConnectionsPerCluster: disabled
+    submitOps: disabled
+    submitSignal: disabled
+  socketIoAdapter:
+    enableCustomSocketIoAdapter: true
+    shouldDisableDefaultNamespace: false
+  enforceServerGeneratedDocumentId: false
+  socketIo:
+    perMessageDeflate: true
+  getDeltasRequestMaxOpsRange: 2000
+
 storage:
   enableWholeSummaryUpload: false
   storageUrl: storage_url
