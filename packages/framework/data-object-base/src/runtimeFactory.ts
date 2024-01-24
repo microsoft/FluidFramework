@@ -18,6 +18,20 @@ import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 const defaultStoreId = "" as const;
 
 /**
+ * {@link RuntimeFactory} construction properties.
+ * @internal
+ */
+export interface RuntimeFactoryProps {
+	defaultStoreFactory: IFluidDataStoreFactory;
+	storeFactories: IFluidDataStoreFactory[];
+	/**
+	 * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
+	requestHandlers?: RuntimeRequestHandler[];
+	provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+}
+
+/**
  * @internal
  */
 export class RuntimeFactory extends RuntimeFactoryHelper {
@@ -27,15 +41,7 @@ export class RuntimeFactory extends RuntimeFactoryHelper {
 	private readonly requestHandlers: RuntimeRequestHandler[];
 	private readonly provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
 
-	constructor(props: {
-		defaultStoreFactory: IFluidDataStoreFactory;
-		storeFactories: IFluidDataStoreFactory[];
-		/**
-		 * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-		 */
-		requestHandlers?: RuntimeRequestHandler[];
-		provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
-	}) {
+	constructor(props: RuntimeFactoryProps) {
 		super();
 
 		this.defaultStoreFactory = props.defaultStoreFactory;
