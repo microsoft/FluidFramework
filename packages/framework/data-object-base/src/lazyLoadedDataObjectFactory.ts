@@ -3,23 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { FluidObject, IRequest } from "@fluidframework/core-interfaces";
+import { type FluidObject, type IRequest } from "@fluidframework/core-interfaces";
 import {
-	FluidDataStoreRuntime,
-	ISharedObjectRegistry,
+	type FluidDataStoreRuntime,
+	type ISharedObjectRegistry,
 	mixinRequestHandler,
 } from "@fluidframework/datastore";
 import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
 import { assert, LazyPromise } from "@fluidframework/core-utils";
 import {
-	IFluidDataStoreContext,
-	IFluidDataStoreFactory,
-	IFluidDataStoreRegistry,
-	NamedFluidDataStoreRegistryEntries,
+	type IFluidDataStoreContext,
+	type IFluidDataStoreFactory,
+	type IFluidDataStoreRegistry,
+	type NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
-import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
-import { ISharedObject } from "@fluidframework/shared-object-base";
-import { LazyLoadedDataObject } from "./lazyLoadedDataObject";
+import {
+	type IFluidDataStoreRuntime,
+	type IChannelFactory,
+} from "@fluidframework/datastore-definitions";
+import { type ISharedObject } from "@fluidframework/shared-object-base";
+import { type LazyLoadedDataObject } from "./lazyLoadedDataObject";
 
 /**
  * @internal
