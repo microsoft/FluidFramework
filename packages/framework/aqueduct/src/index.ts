@@ -29,4 +29,5 @@ export {
 	BaseContainerRuntimeFactory,
 	type BaseContainerRuntimeFactoryProps,
 	ContainerRuntimeFactoryWithDefaultDataStore,
+	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
 } from "./container-runtime-factories";

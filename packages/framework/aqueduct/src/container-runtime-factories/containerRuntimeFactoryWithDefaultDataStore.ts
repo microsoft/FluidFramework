@@ -3,20 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type ContainerRuntime,
-	type IContainerRuntimeOptions,
-} from "@fluidframework/container-runtime";
-import {
-	type IFluidDataStoreFactory,
-	type NamedFluidDataStoreRegistryEntries,
-} from "@fluidframework/runtime-definitions";
+import { type ContainerRuntime } from "@fluidframework/container-runtime";
+import { type IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { type IFluidDependencySynthesizer } from "@fluidframework/synthesize";
-import { type RuntimeRequestHandler } from "@fluidframework/request-handler";
 import { type FluidObject, type IRequest, type IResponse } from "@fluidframework/core-interfaces";
 import { RequestParser } from "@fluidframework/runtime-utils";
-import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory";
+import {
+	BaseContainerRuntimeFactory,
+	type BaseContainerRuntimeFactoryProps,
+} from "./baseContainerRuntimeFactory";
 
 const defaultDataStoreId = "default";
 
@@ -26,6 +21,15 @@ async function getDefaultFluidObject(runtime: IContainerRuntime): Promise<FluidO
 		throw new Error("default dataStore must exist");
 	}
 	return entryPoint.get();
+}
+
+/**
+ * {@link ContainerRuntimeFactoryWithDefaultDataStore} construction properties.
+ * @alpha
+ */
+export interface ContainerRuntimeFactoryWithDefaultDataStoreProps
+	extends BaseContainerRuntimeFactoryProps {
+	defaultFactory: IFluidDataStoreFactory;
 }
 
 /**
@@ -40,17 +44,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 
 	protected readonly defaultFactory: IFluidDataStoreFactory;
 
-	public constructor(props: {
-		defaultFactory: IFluidDataStoreFactory;
-		registryEntries: NamedFluidDataStoreRegistryEntries;
-		dependencyContainer?: IFluidDependencySynthesizer;
-		/**
-		 * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-		 */
-		requestHandlers?: RuntimeRequestHandler[];
-		runtimeOptions?: IContainerRuntimeOptions;
-		provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
-	}) {
+	public constructor(props: ContainerRuntimeFactoryWithDefaultDataStoreProps) {
 		const requestHandlers = props.requestHandlers ?? [];
 		const provideEntryPoint = props.provideEntryPoint ?? getDefaultFluidObject;
 

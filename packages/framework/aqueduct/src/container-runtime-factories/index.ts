@@ -7,4 +7,7 @@ export {
 	BaseContainerRuntimeFactory,
 	type BaseContainerRuntimeFactoryProps,
 } from "./baseContainerRuntimeFactory";
-export { ContainerRuntimeFactoryWithDefaultDataStore } from "./containerRuntimeFactoryWithDefaultDataStore";
+export {
+	ContainerRuntimeFactoryWithDefaultDataStore,
+	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
+} from "./containerRuntimeFactoryWithDefaultDataStore";

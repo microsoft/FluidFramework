@@ -62,19 +62,18 @@ export interface BaseContainerRuntimeFactoryProps {
 
 // @alpha
 export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRuntimeFactory {
-    constructor(props: {
-        defaultFactory: IFluidDataStoreFactory;
-        registryEntries: NamedFluidDataStoreRegistryEntries;
-        dependencyContainer?: IFluidDependencySynthesizer;
-        requestHandlers?: RuntimeRequestHandler[];
-        runtimeOptions?: IContainerRuntimeOptions;
-        provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
-    });
+    constructor(props: ContainerRuntimeFactoryWithDefaultDataStoreProps);
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
     // (undocumented)
     static readonly defaultDataStoreId = "default";
     // (undocumented)
     protected readonly defaultFactory: IFluidDataStoreFactory;
+}
+
+// @alpha
+export interface ContainerRuntimeFactoryWithDefaultDataStoreProps extends BaseContainerRuntimeFactoryProps {
+    // (undocumented)
+    defaultFactory: IFluidDataStoreFactory;
 }
 
 // @alpha
