@@ -12,11 +12,11 @@
 import { strict as assert } from "node:assert";
 import { AttachState, ContainerErrorTypes } from "@fluidframework/container-definitions";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
-import { ConnectionMode, ScopeType } from "@fluidframework/protocol-definitions";
+import { type ConnectionMode, ScopeType } from "@fluidframework/protocol-definitions";
 import { InsecureTinyliciousTokenProvider } from "@fluidframework/tinylicious-driver";
 import { TinyliciousClient } from "../index";
 import { TestDataObject } from "./TestDataObject";

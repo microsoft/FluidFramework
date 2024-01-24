@@ -4,8 +4,8 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { IClient } from "@fluidframework/protocol-definitions";
-import { TinyliciousMember, TinyliciousUser } from "./interfaces";
+import { type IClient } from "@fluidframework/protocol-definitions";
+import { type TinyliciousMember, type TinyliciousUser } from "./interfaces";
 
 export function createTinyliciousAudienceMember(audienceMember: IClient): TinyliciousMember {
 	const tinyliciousUser = audienceMember.user as TinyliciousUser;

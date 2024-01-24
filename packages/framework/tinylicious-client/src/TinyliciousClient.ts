@@ -3,11 +3,14 @@
  * Licensed under the MIT License.
  */
 import { Loader } from "@fluidframework/container-loader";
-import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
+import {
+	type IDocumentServiceFactory,
+	type IUrlResolver,
+} from "@fluidframework/driver-definitions";
 import {
 	AttachState,
-	IContainer,
-	IFluidModuleWithDetails,
+	type IContainer,
+	type IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import {
@@ -16,17 +19,17 @@ import {
 	InsecureTinyliciousUrlResolver,
 } from "@fluidframework/tinylicious-driver";
 import {
-	ContainerSchema,
+	type ContainerSchema,
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
-	IFluidContainer,
-	IRootDataObject,
+	type IFluidContainer,
+	type IRootDataObject,
 	createServiceAudience,
 } from "@fluidframework/fluid-static";
-import { IClient } from "@fluidframework/protocol-definitions";
-import { FluidObject } from "@fluidframework/core-interfaces";
+import { type IClient } from "@fluidframework/protocol-definitions";
+import { type FluidObject } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
-import { TinyliciousClientProps, TinyliciousContainerServices } from "./interfaces";
+import { type TinyliciousClientProps, type TinyliciousContainerServices } from "./interfaces";
 import { createTinyliciousAudienceMember } from "./TinyliciousAudience";
 
 /**

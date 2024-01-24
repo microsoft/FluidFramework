@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory, IDataObjectProps } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory, type IDataObjectProps } from "@fluidframework/aqueduct";
 
 export class TestDataObject extends DataObject {
 	public static readonly Name = "@fluid-example/test-data-object";
