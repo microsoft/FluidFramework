@@ -21,9 +21,7 @@ import {
 	InsertableFlexField,
 	intoStoredSchema,
 } from "../feature-libraries/index.js";
-import { fail } from "../util/index.js";
-import { ISubscribable } from "../events/index.js";
-import { CheckoutEvents, ITreeCheckout } from "./treeCheckout.js";
+import { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
 
 /**
  * Modify `storedSchema` and invoke `setInitialTree` when it's time to set the tree content.
@@ -94,117 +92,70 @@ export function initializeContent(
 	}
 }
 
-/**
- * See {@link ISharedTree.schematize} for more details.
- *
- * TODO:
- * - Support adapters for handling out of schema data.
- * - Handle initialization via an adapter.
- * - Support per adapter update policy.
- * - Support lazy schema updates.
- * - Better error for change to invalid schema approach than throwing on later event.
- */
-export function schematize(
-	events: ISubscribable<CheckoutEvents>,
-	schemaRepository: {
-		storedSchema: ITreeCheckout["storedSchema"];
-		updateSchema: ITreeCheckout["updateSchema"];
-	},
-	config: SchematizeConfiguration,
-): void {
-	// TODO: support adapters and include them here.
-	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, config.schema);
-	{
-		const compatibility = viewSchema.checkCompatibility(schemaRepository.storedSchema);
-		switch (config.allowedSchemaModifications) {
-			case AllowedUpdateType.None: {
-				if (compatibility.read !== Compatibility.Compatible) {
-					fail(
-						"Existing stored schema permits trees which are incompatible with the view schema",
-					);
-				}
-
-				if (compatibility.write !== Compatibility.Compatible) {
-					// TODO: support readonly mode in this case.
-					fail("View schema permits trees which are incompatible with the stored schema");
-				}
-
-				break;
+export function evaluateUpdate(
+	viewSchema: ViewSchema,
+	allowedSchemaModifications: AllowedUpdateType,
+	storedSchema: TreeStoredSchema,
+): Compatibility {
+	const compatibility = viewSchema.checkCompatibility(storedSchema);
+	switch (allowedSchemaModifications) {
+		case AllowedUpdateType.None: {
+			if (compatibility.read !== Compatibility.Compatible) {
+				// Existing stored schema permits trees which are incompatible with the view schema
+				return Compatibility.Compatible;
 			}
-			case AllowedUpdateType.SchemaCompatible: {
-				if (compatibility.read !== Compatibility.Compatible) {
-					fail(
-						"Existing stored schema permits trees which are incompatible with the view schema, so schema can not be updated",
-					);
-				}
-				if (compatibility.write !== Compatibility.Compatible) {
-					schemaRepository.updateSchema(intoStoredSchema(config.schema));
-				}
 
-				break;
+			if (compatibility.write !== Compatibility.Compatible) {
+				// TODO: support readonly mode in this case.
+				// View schema permits trees which are incompatible with the stored schema
+				return Compatibility.Compatible;
 			}
-			default: {
-				unreachableCase(config.allowedSchemaModifications);
+
+			return Compatibility.Compatible;
+		}
+		case AllowedUpdateType.SchemaCompatible: {
+			if (compatibility.read !== Compatibility.Compatible) {
+				// Existing stored schema permits trees which are incompatible with the view schema, so schema can not be updated
+				return Compatibility.Compatible;
 			}
+			if (compatibility.write !== Compatibility.Compatible) {
+				return Compatibility.RequiresAdapters;
+			}
+
+			return Compatibility.Compatible;
+		}
+		default: {
+			unreachableCase(allowedSchemaModifications);
 		}
 	}
-	afterSchemaChanges(events, schemaRepository, () => {
-		const compatibility = viewSchema.checkCompatibility(schemaRepository.storedSchema);
-		if (compatibility.read !== Compatibility.Compatible) {
-			fail(
-				"Stored schema changed to one that permits data incompatible with the view schema",
-			);
-		}
-
-		if (compatibility.write !== Compatibility.Compatible) {
-			// TODO: support readonly mode in this case.
-			fail(
-				"Stored schema changed to one that does not support all data allowed by view schema",
-			);
-		}
-		return true;
-	});
 }
 
-/**
- * @param callback - run after a schema change. If returns true, will run after next change as well.
- */
-export function afterSchemaChanges(
-	events: ISubscribable<CheckoutEvents>,
-	schemaRepository: {
-		storedSchema: ITreeCheckout["storedSchema"];
-		updateSchema: ITreeCheckout["updateSchema"];
-	},
-	callback: () => boolean,
-): void {
-	// Callback to cleanup afterBatch schema checking.
-	// Set only when such a callback is pending.
-	let afterBatchCheck: undefined | (() => void);
-
-	// TODO: errors thrown by this will usually be in response to remote edits, and thus may not surface to the app.
-	// Two fixes should be done related to this:
-	// 1. Ensure errors in response to edits like this crash app and report telemetry.
-	// 2. Replace these (and the above) exception based errors with
-	// out of schema handlers which update the schematized view of the tree instead of throwing.
-	const unregister = schemaRepository.storedSchema.on("afterSchemaChange", () => {
-		// On schema change, setup a callback (deduplicated so its only run once) after a batch of changes.
-		// This avoids erroring about invalid schema in the middle of a batch of changes.
-		// TODO:
-		// Ideally this would run at the end of the batch containing the schema change, but currently schema changes don't trigger afterBatch.
-		// Fortunately this works out ok, since the tree can't actually become out of schema until its actually edited, which should trigger after batch.
-		// When batching properly handles schema edits, this documentation and related tests should be updated.
-		// TODO:
-		// With the the updated incremental batch application policy, this behavior is not valid.
-		afterBatchCheck ??= events.on("afterBatch", () => {
-			assert(afterBatchCheck !== undefined, 0x728 /* unregistered event ran */);
-			afterBatchCheck();
-			afterBatchCheck = undefined;
-
-			if (!callback()) {
-				unregister();
-			}
-		});
-	});
+// TODO: move this off tree
+export function ensureSchema(
+	viewSchema: ViewSchema,
+	allowedSchemaModifications: AllowedUpdateType,
+	checkout: TreeCheckout,
+): boolean {
+	const compatibility = evaluateUpdate(
+		viewSchema,
+		allowedSchemaModifications,
+		checkout.storedSchema,
+	);
+	switch (compatibility) {
+		case Compatibility.Compatible: {
+			return true;
+		}
+		case Compatibility.Incompatible: {
+			return false;
+		}
+		case Compatibility.RequiresAdapters: {
+			checkout.updateSchema(intoStoredSchema(viewSchema.schema));
+			return true;
+		}
+		default: {
+			unreachableCase(compatibility);
+		}
+	}
 }
 
 /**

@@ -337,6 +337,11 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
     readonly string: TreeNodeSchema<"com.fluidframework.leaf.string", NodeKind.Leaf, string, string>;
 }
 
+// @public
+export interface SchemaIncompatible {
+    readonly canUpgrade: boolean;
+}
+
 // @public @deprecated
 export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
     [Symbol.iterator](): IterableIterator<[string, any]>;
@@ -513,13 +518,16 @@ export enum TreeStatus {
 
 // @public
 export interface TreeView<in out TRoot> extends IDisposable {
+    readonly error?: SchemaIncompatible;
     readonly events: ISubscribable<TreeViewEvents>;
     readonly root: TRoot;
+    upgradeSchema(): void;
 }
 
 // @public
 export interface TreeViewEvents {
     afterBatch(): void;
+    rootChanged(): void;
 }
 
 // @public

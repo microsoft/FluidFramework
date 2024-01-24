@@ -151,6 +151,7 @@ describe("Node Key Index", () => {
 				schema: nodeSchemaData,
 				allowedSchemaModifications: AllowedUpdateType.None,
 			},
+			() => undefined,
 			createMockNodeKeyManager(),
 		);
 
@@ -168,6 +169,7 @@ describe("Node Key Index", () => {
 				schema: nodeSchemaData,
 				allowedSchemaModifications: AllowedUpdateType.None,
 			},
+			() => undefined,
 			// Since the key was produced with a MockNodeKeyManager, we must use one to process it.
 			createMockNodeKeyManager(),
 		);

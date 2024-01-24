@@ -31,7 +31,7 @@ import {
 	ObjectForest,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/object-forest/objectForest.js";
-import { brand, disposeSymbol, fail } from "../../util/index.js";
+import { disposeSymbol, fail } from "../../util/index.js";
 import {
 	SharedTreeTestFactory,
 	SummarizeType,
@@ -57,7 +57,6 @@ import {
 } from "../../shared-tree/index.js";
 import {
 	compareUpPaths,
-	FieldKey,
 	rootFieldKey,
 	UpPath,
 	moveToDetachedField,
@@ -68,8 +67,6 @@ import { typeboxValidator } from "../../external-utilities/index.js";
 import { EditManager } from "../../shared-tree-core/index.js";
 import { leaf, SchemaBuilder } from "../../domains/index.js";
 import { SchemaFactory, TreeConfiguration } from "../../simple-tree/index.js";
-
-const fooKey: FieldKey = brand("foo");
 
 describe("SharedTree", () => {
 	describe("schematize", () => {
@@ -214,13 +211,17 @@ describe("SharedTree", () => {
 			const builder = new SchemaBuilder({ scope: "test" });
 			const schemaGeneralized = builder.intoSchema(builder.optional(Any));
 			{
-				const view = tree.requireSchema(schemaGeneralized, () => assert.fail());
+				const view = tree.requireSchema(schemaGeneralized, AllowedUpdateType.None, () =>
+					assert.fail(),
+				);
 				assert.equal(view, undefined);
 			}
 
 			const log: string[] = [];
 			{
-				const view = tree.requireSchema(schemaEmpty, () => log.push("empty"));
+				const view = tree.requireSchema(schemaEmpty, AllowedUpdateType.None, () =>
+					log.push("empty"),
+				);
 				assert(view !== undefined);
 			}
 			assert.deepEqual(log, []);
@@ -229,7 +230,7 @@ describe("SharedTree", () => {
 			assert.deepEqual(log, ["empty"]);
 
 			{
-				const view = tree.requireSchema(schemaGeneralized, () =>
+				const view = tree.requireSchema(schemaGeneralized, AllowedUpdateType.None, () =>
 					// TypeScript's type narrowing turned "log" into never[] here since it assumes methods never modify anything, so we have to cast it back to a string[]:
 					(log as string[]).push("general"),
 				);
@@ -913,8 +914,9 @@ describe("SharedTree", () => {
 
 			provider.processMessages();
 			const tree2 =
-				provider.trees[1].requireSchema(content.schema, () => fail("schema changed")) ??
-				fail("schematize failed");
+				provider.trees[1].requireSchema(content.schema, AllowedUpdateType.None, () =>
+					fail("schema changed"),
+				) ?? fail("schematize failed");
 			const {
 				undoStack: undoStack2,
 				redoStack: redoStack2,
@@ -1161,8 +1163,10 @@ describe("SharedTree", () => {
 			});
 			provider.processMessages();
 			const tree2 =
-				provider.trees[1].requireSchema(stringSequenceRootSchema, () =>
-					fail("schema changed"),
+				provider.trees[1].requireSchema(
+					stringSequenceRootSchema,
+					AllowedUpdateType.None,
+					() => fail("schema changed"),
 				) ?? fail("invalid schema");
 
 			// Validate initialization
@@ -1494,5 +1498,5 @@ function assertSchema<TRoot extends FlexFieldSchema>(
 	tree: ISharedTree,
 	schema: FlexTreeSchema<TRoot>,
 ): FlexTreeView<TRoot> {
-	return tree.requireSchema(schema, () => assert.fail()) ?? assert.fail();
+	return tree.requireSchema(schema, AllowedUpdateType.None, () => assert.fail()) ?? assert.fail();
 }

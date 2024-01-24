@@ -73,7 +73,7 @@ export class SharedTree implements ITree {
 	// implements the union of IChannel and the interface to be returned to the user.
 	//
 	// Temporarily, we provide one until the following work items is addressed:
-	// https://dev.azure.com/fluidframework/internal/_workitems/edit/6458
+	// TODO: https://dev.azure.com/fluidframework/internal/_workitems/edit/6458
 
 	public static getFactory(): IChannelFactory {
 		return new TreeFactory({});

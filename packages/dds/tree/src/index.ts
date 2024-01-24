@@ -293,6 +293,7 @@ export {
 	TreeNodeSchemaClass,
 	TreeNodeSchemaCore,
 	TreeNodeSchemaNonClass,
+	SchemaIncompatible,
 
 	// experimental @internal APIs:
 	adaptEnum,

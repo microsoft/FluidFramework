@@ -5,10 +5,7 @@
 
 import { IChannel } from "@fluidframework/datastore-definitions";
 import { ISubscribable } from "../events/index.js";
-import { IDisposable, disposeSymbol } from "../util/index.js";
-import { FlexTreeView } from "../shared-tree/index.js";
-import { FlexFieldSchema } from "../feature-libraries/index.js";
-import { getProxyForField } from "./proxies.js";
+import { IDisposable } from "../util/index.js";
 import {
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
@@ -138,6 +135,10 @@ export interface TreeView<in out TRoot> extends IDisposable {
 	readonly events: ISubscribable<TreeViewEvents>;
 }
 
+/**
+ * Information about how a view schema was incompatible.
+ * @public
+ */
 export interface SchemaIncompatible {
 	/**
 	 * True iff the view schema supports all possible documents permitted by the stored schema.
@@ -170,27 +171,4 @@ export interface TreeViewEvents {
 	 * This does NOT include changes to the content (fields/children) of the root node: for that case subscribe to events on the root node.
 	 */
 	rootChanged(): void;
-}
-
-/**
- * Implementation of TreeView wrapping a FlexTreeView.
- */
-export class WrapperTreeView<
-	in out TSchema extends ImplicitFieldSchema,
-	TView extends FlexTreeView<FlexFieldSchema>,
-> implements TreeView<TreeFieldFromImplicitField<TSchema>>
-{
-	public constructor(public readonly view: TView) {}
-
-	public [disposeSymbol](): void {
-		this.view[disposeSymbol]();
-	}
-
-	public get events(): ISubscribable<TreeViewEvents> {
-		return this.view.checkout.events;
-	}
-
-	public get root(): TreeFieldFromImplicitField<TSchema> {
-		return getProxyForField(this.view.flexTree) as TreeFieldFromImplicitField<TSchema>;
-	}
 }

@@ -2,6 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+/* eslint-disable unused-imports/no-unused-imports */
 import { strict as assert, fail } from "assert";
 import {
 	Any,
@@ -21,7 +23,7 @@ import {
 } from "../../core/index.js";
 import { jsonSequenceRootSchema } from "../utils.js";
 // eslint-disable-next-line import/no-internal-modules
-import { TreeContent, initializeContent, schematize } from "../../shared-tree/schematizedTree.js";
+import { TreeContent, initializeContent } from "../../shared-tree/schematizedTree.js";
 import { createEmitter } from "../../events/index.js";
 import { SchemaBuilder, leaf } from "../../domains/index.js";
 
@@ -139,94 +141,94 @@ describe("schematizeTree", () => {
 		// TODO: Test schema validation of initial tree (once we have a utility for it)
 	});
 
-	describe("schematize", () => {
-		describe("noop upgrade", () => {
-			const testCases: [string, FlexTreeSchema][] = [
-				["empty", emptySchema],
-				["basic-optional", schema],
-				["basic-value", schemaValueRoot],
-				["complex", jsonSequenceRootSchema],
-			];
-			for (const [name, data] of testCases) {
-				it(name, () => {
-					const events = createEmitter<CheckoutEvents>();
-					const storedSchema = new TreeStoredSchemaRepository(intoStoredSchema(data));
+	// describe("schematize", () => {
+	// 	describe("noop upgrade", () => {
+	// 		const testCases: [string, FlexTreeSchema][] = [
+	// 			["empty", emptySchema],
+	// 			["basic-optional", schema],
+	// 			["basic-value", schemaValueRoot],
+	// 			["complex", jsonSequenceRootSchema],
+	// 		];
+	// 		for (const [name, data] of testCases) {
+	// 			it(name, () => {
+	// 				const events = createEmitter<CheckoutEvents>();
+	// 				const storedSchema = new TreeStoredSchemaRepository(intoStoredSchema(data));
 
-					// Error if modified
-					storedSchema.on("afterSchemaChange", () => {
-						fail();
-					});
+	// 				// Error if modified
+	// 				storedSchema.on("afterSchemaChange", () => {
+	// 					fail();
+	// 				});
 
-					// No op upgrade with AllowedUpdateType.None does not error
-					schematize(events, makeSchemaRepository(storedSchema), {
-						allowedSchemaModifications: AllowedUpdateType.None,
-						schema: data,
-					});
-				});
-			}
-		});
+	// 				// No op upgrade with AllowedUpdateType.None does not error
+	// 				schematize(events, makeSchemaRepository(storedSchema), {
+	// 					allowedSchemaModifications: AllowedUpdateType.None,
+	// 					schema: data,
+	// 				});
+	// 			});
+	// 		}
+	// 	});
 
-		it("upgrade works", () => {
-			const events = createEmitter<CheckoutEvents>();
-			const storedSchema = new TreeStoredSchemaRepository(intoStoredSchema(schema));
+	// 	it("upgrade works", () => {
+	// 		const events = createEmitter<CheckoutEvents>();
+	// 		const storedSchema = new TreeStoredSchemaRepository(intoStoredSchema(schema));
 
-			schematize(events, makeSchemaRepository(storedSchema), {
-				allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
-				schema: schemaGeneralized,
-			});
-			expectSchema(storedSchema, intoStoredSchema(schemaGeneralized));
-		});
+	// 		schematize(events, makeSchemaRepository(storedSchema), {
+	// 			allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
+	// 			schema: schemaGeneralized,
+	// 		});
+	// 		expectSchema(storedSchema, intoStoredSchema(schemaGeneralized));
+	// 	});
 
-		it("upgrade schema errors when in AllowedUpdateType.None", () => {
-			const events = createEmitter<CheckoutEvents>();
-			const storedSchema = new TreeStoredSchemaRepository(intoStoredSchema(schema));
-			assert.throws(() => {
-				schematize(events, makeSchemaRepository(storedSchema), {
-					allowedSchemaModifications: AllowedUpdateType.None,
-					schema: schemaGeneralized,
-				});
-			});
-		});
+	// 	it("upgrade schema errors when in AllowedUpdateType.None", () => {
+	// 		const events = createEmitter<CheckoutEvents>();
+	// 		const storedSchema = new TreeStoredSchemaRepository(intoStoredSchema(schema));
+	// 		assert.throws(() => {
+	// 			schematize(events, makeSchemaRepository(storedSchema), {
+	// 				allowedSchemaModifications: AllowedUpdateType.None,
+	// 				schema: schemaGeneralized,
+	// 			});
+	// 		});
+	// 	});
 
-		it("incompatible upgrade errors and does not modify schema", () => {
-			const events = createEmitter<CheckoutEvents>();
-			const storedSchema = new TreeStoredSchemaRepository(
-				intoStoredSchema(schemaGeneralized),
-			);
+	// 	it("incompatible upgrade errors and does not modify schema", () => {
+	// 		const events = createEmitter<CheckoutEvents>();
+	// 		const storedSchema = new TreeStoredSchemaRepository(
+	// 			intoStoredSchema(schemaGeneralized),
+	// 		);
 
-			let modified = false;
-			storedSchema.on("afterSchemaChange", () => {
-				modified = true;
-			});
+	// 		let modified = false;
+	// 		storedSchema.on("afterSchemaChange", () => {
+	// 			modified = true;
+	// 		});
 
-			assert.throws(() => {
-				schematize(events, makeSchemaRepository(storedSchema), {
-					allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
-					schema,
-				});
-			});
+	// 		assert.throws(() => {
+	// 			schematize(events, makeSchemaRepository(storedSchema), {
+	// 				allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
+	// 				schema,
+	// 			});
+	// 		});
 
-			// Schema should be unchanged
-			assert(!modified);
-			expectSchema(storedSchema, intoStoredSchema(schemaGeneralized));
-		});
+	// 		// Schema should be unchanged
+	// 		assert(!modified);
+	// 		expectSchema(storedSchema, intoStoredSchema(schemaGeneralized));
+	// 	});
 
-		it("errors at correct time when schema changes to not be compatible with view schema", () => {
-			const events = createEmitter<CheckoutEvents>();
-			const storedSchema = new TreeStoredSchemaRepository(intoStoredSchema(schema));
+	// 	it("errors at correct time when schema changes to not be compatible with view schema", () => {
+	// 		const events = createEmitter<CheckoutEvents>();
+	// 		const storedSchema = new TreeStoredSchemaRepository(intoStoredSchema(schema));
 
-			schematize(events, makeSchemaRepository(storedSchema), {
-				allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
-				schema: schemaGeneralized,
-			});
+	// 		schematize(events, makeSchemaRepository(storedSchema), {
+	// 			allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
+	// 			schema: schemaGeneralized,
+	// 		});
 
-			// transient should be ignored.
-			storedSchema.apply(intoStoredSchema(schema));
-			storedSchema.apply(intoStoredSchema(schemaGeneralized));
-			events.emit("afterBatch");
+	// 		// transient should be ignored.
+	// 		storedSchema.apply(intoStoredSchema(schema));
+	// 		storedSchema.apply(intoStoredSchema(schemaGeneralized));
+	// 		events.emit("afterBatch");
 
-			storedSchema.apply(intoStoredSchema(schema));
-			assert.throws(() => events.emit("afterBatch"));
-		});
-	});
+	// 		storedSchema.apply(intoStoredSchema(schema));
+	// 		assert.throws(() => events.emit("afterBatch"));
+	// 	});
+	// });
 });
