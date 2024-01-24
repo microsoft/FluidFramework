@@ -18,7 +18,7 @@ class RuntimeRequestHandlerBuilder {
 	private readonly handlers: RuntimeRequestHandler[] = [];
 
 	// eslint-disable-next-line import/no-deprecated
-	public pushHandler(...handlers: RuntimeRequestHandler[]) {
+	public pushHandler(...handlers: RuntimeRequestHandler[]): void {
 		if (handlers !== undefined) {
 			this.handlers.push(...handlers);
 		}
@@ -37,12 +37,16 @@ class RuntimeRequestHandlerBuilder {
 }
 
 /**
+ * Deprecated.
+ *
  * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
  *
  * @internal
  */
-// eslint-disable-next-line import/no-deprecated
-export function buildRuntimeRequestHandler(...handlers: RuntimeRequestHandler[]) {
+export function buildRuntimeRequestHandler(
+	// eslint-disable-next-line import/no-deprecated
+	...handlers: RuntimeRequestHandler[]
+): (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse> {
 	const builder = new RuntimeRequestHandlerBuilder();
 	builder.pushHandler(...handlers);
 	return async (request: IRequest, runtime: IContainerRuntime) =>
