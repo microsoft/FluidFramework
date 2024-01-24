@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
 	IDocumentService,
+	IDocumentServiceEvents,
 	IDocumentServicePolicies,
 	IDocumentStorageService,
 	IResolvedUrl,
@@ -25,7 +27,10 @@ import { LocalDeltaStorageService } from "./localDeltaStorageService";
  * Basic implementation of a document service for local use.
  * @internal
  */
-export class LocalDocumentService implements IDocumentService {
+export class LocalDocumentService
+	extends TypedEventEmitter<IDocumentServiceEvents>
+	implements IDocumentService
+{
 	/**
 	 * @param localDeltaConnectionServer - delta connection server for ops
 	 * @param tokenProvider - token provider
@@ -42,7 +47,9 @@ export class LocalDocumentService implements IDocumentService {
 		public readonly policies: IDocumentServicePolicies = {},
 		private readonly innerDocumentService?: IDocumentService,
 		private readonly logger?: ITelemetryBaseLogger,
-	) {}
+	) {
+		super();
+	}
 
 	public dispose() {}
 

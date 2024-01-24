@@ -41,7 +41,7 @@ describeCompat("GC Data Store Aliased Full Compat", "FullCompat", (getTestObject
 	}
 
 	it("An unreferenced datastore when aliased becomes referenced.", async function () {
-		// TODO: Re-enable after cross version compat bugs are fixed - ADO:6288
+		// TODO: Re-enable after cross version compat bugs are fixed - ADO:6978
 		if (provider.type === "TestObjectProviderWithVersionedLoad") {
 			this.skip();
 		}
@@ -95,7 +95,7 @@ describeCompat("GC Data Store Aliased Full Compat", "FullCompat", (getTestObject
 	});
 });
 
-describeCompat("GC Data Store Aliased No Compat", "NoCompat", (getTestObjectProvider) => {
+describeCompat("GC Data Store Aliased No Compat", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 
 	beforeEach("getTestObjectProvider", async () => {

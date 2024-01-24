@@ -403,6 +403,7 @@ declare function get_old_InterfaceDeclaration_IDocumentService():
 declare function use_current_InterfaceDeclaration_IDocumentService(
     use: TypeOnly<current.IDocumentService>): void;
 use_current_InterfaceDeclaration_IDocumentService(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IDocumentService());
 
 /*

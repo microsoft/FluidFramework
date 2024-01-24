@@ -7,6 +7,9 @@ const tscDependsOn = ["^tsc", "^api", "build:genver", "ts2esm"];
 /**
  * The settings in this file configure the Fluid build tools, such as fluid-build and flub. Some settings apply to the
  * whole repo, while others apply only to the client release group.
+ *
+ * See https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-tools/src/common/fluidTaskDefinitions.ts
+ * for details on the task and dependency definition format.
  */
 module.exports = {
 	tasks: {

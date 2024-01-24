@@ -38,7 +38,7 @@ module.exports = (env) => {
 						],
 					},
 					{
-						test: /\.js$/,
+						test: /\.m?js$/,
 						use: [require.resolve("source-map-loader")],
 						enforce: "pre",
 					},
