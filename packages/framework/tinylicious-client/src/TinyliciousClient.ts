@@ -136,7 +136,7 @@ export class TinyliciousClient {
 		};
 	}
 
-	private createLoader(schema: ContainerSchema) {
+	private createLoader(schema: ContainerSchema): Loader {
 		const containerRuntimeFactory = createDOProviderContainerRuntimeFactory({
 			schema,
 		});
