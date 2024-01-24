@@ -172,6 +172,7 @@ export async function deliCreate(
 		undefined,
 		reverseProducer,
 		serviceConfiguration,
+		customizations?.clusterDrainingChecker,
 	);
 }
 
