@@ -44,7 +44,7 @@ export class RuntimeFactory extends RuntimeFactoryHelper {
 	private readonly requestHandlers: RuntimeRequestHandler[];
 	private readonly provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
 
-	constructor(props: RuntimeFactoryProps) {
+	public constructor(props: RuntimeFactoryProps) {
 		super();
 
 		this.defaultStoreFactory = props.defaultStoreFactory;

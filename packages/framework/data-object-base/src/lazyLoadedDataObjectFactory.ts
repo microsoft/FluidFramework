@@ -33,7 +33,7 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject>
 	public readonly ISharedObjectRegistry: ISharedObjectRegistry;
 	public readonly IFluidDataStoreRegistry: IFluidDataStoreRegistry | undefined;
 
-	constructor(
+	public constructor(
 		public readonly type: string,
 		private readonly ctor: new (
 			context: IFluidDataStoreContext,
