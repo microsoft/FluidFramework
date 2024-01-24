@@ -302,31 +302,6 @@ export function configureWebSocketServices(
 				throw new NetworkError(403, "Must provide an authorization token");
 			}
 
-			// Check if current cluster is in draining
-			if (clusterDrainingChecker) {
-				let clusterInDraining = false;
-				try {
-					clusterInDraining = await clusterDrainingChecker.isClusterDraining();
-				} catch (error) {
-					Lumberjack.error(
-						"Failed to get cluster draining status. Will allow requests to proceed.",
-						undefined,
-						error,
-					);
-					clusterInDraining = false;
-				}
-				if (clusterInDraining) {
-					// TODO: add a new error class
-					Lumberjack.info(
-						"Reject connect document request because cluster is draining.",
-						{
-							tenantId: message.tenantId,
-						},
-					);
-					throw new NetworkError(503, "Cluster is not available. Please retry later.");
-				}
-			}
-
 			// Validate token signature and claims, and check if it's revoked
 			const token = message.token;
 			const claims = validateTokenClaims(token, message.id, message.tenantId);
@@ -358,6 +333,31 @@ export function configureWebSocketServices(
 					2,
 				)}`;
 				return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
+			}
+
+			// Check if current cluster is in draining
+			if (clusterDrainingChecker) {
+				let clusterInDraining = false;
+				try {
+					clusterInDraining = await clusterDrainingChecker.isClusterDraining();
+				} catch (error) {
+					Lumberjack.error(
+						"Failed to get cluster draining status. Will allow requests to proceed.",
+						undefined,
+						error,
+					);
+					clusterInDraining = false;
+				}
+				if (clusterInDraining) {
+					// TODO: add a new error class
+					Lumberjack.info(
+						"Reject connect document request because cluster is draining.",
+						{
+							tenantId: message.tenantId,
+						},
+					);
+					throw new NetworkError(503, "Cluster is not available. Please retry later.");
+				}
 			}
 
 			const clientId = generateClientId();
