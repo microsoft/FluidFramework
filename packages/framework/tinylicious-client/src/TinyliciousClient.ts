@@ -35,7 +35,7 @@ import { createTinyliciousAudienceMember } from "./TinyliciousAudience";
 /**
  * Provides the ability to have a Fluid object backed by a Tinylicious service.
  *
- * See {@link https://fluidframework.com/docs/testing/tinylicious/}
+ * @see {@link https://fluidframework.com/docs/testing/tinylicious/}
  * @internal
  */
 export class TinyliciousClient {
@@ -46,7 +46,7 @@ export class TinyliciousClient {
 	 * Creates a new client instance using configuration parameters.
 	 * @param props - Optional. Properties for initializing a new TinyliciousClient instance
 	 */
-	constructor(private readonly props?: TinyliciousClientProps) {
+	public constructor(private readonly props?: TinyliciousClientProps) {
 		const tokenProvider = new InsecureTinyliciousTokenProvider();
 		this.urlResolver = new InsecureTinyliciousUrlResolver(
 			this.props?.connection?.port,

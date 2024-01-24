@@ -5,6 +5,9 @@
 
 import { DataObject, DataObjectFactory, type IDataObjectProps } from "@fluidframework/aqueduct";
 
+/**
+ * Mock {@link @fluidframework/aqueduct#DataObject} for use in tests.
+ */
 export class TestDataObject extends DataObject {
 	public static readonly Name = "@fluid-example/test-data-object";
 
