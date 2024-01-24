@@ -30,13 +30,21 @@ export abstract class LazyLoadedDataObject<
 {
 	private _handle?: IFluidHandle<this>;
 
-	public get IFluidLoadable() {
+	/**
+	 * {@inheritDoc @fluidframework/core-interfaces#IProvideFluidLoadable.IFluidLoadable}
+	 */
+	public get IFluidLoadable(): this {
 		return this;
 	}
-	public get IFluidHandle() {
+
+	/**
+	 * {@inheritDoc @fluidframework/core-interfaces#IProvideFluidHandle.IFluidHandle}
+	 */
+	public get IFluidHandle(): IFluidHandle<this> {
 		return this.handle;
 	}
-	public get IProvideFluidHandle() {
+
+	public get IProvideFluidHandle(): this {
 		return this;
 	}
 
@@ -70,6 +78,8 @@ export abstract class LazyLoadedDataObject<
 
 	// #endregion IFluidLoadable
 
+	// TODO: Use unknown (or a stronger type) instead of any. Breaking change.
+	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
 	public abstract create(props?: any);
 	public abstract load(
 		context: IFluidDataStoreContext,

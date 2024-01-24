@@ -52,11 +52,11 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject>
 		}
 
 		this.ISharedObjectRegistry = new Map(
-			sharedObjects.concat(this.root).map((ext) => [ext.type, ext]),
+			[...sharedObjects, this.root].map((ext) => [ext.type, ext]),
 		);
 	}
 
-	public get IFluidDataStoreFactory() {
+	public get IFluidDataStoreFactory(): this {
 		return this;
 	}
 
@@ -84,10 +84,12 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject>
 		);
 	}
 
+	// TODO: Use unknown (or a stronger type) instead of any. Breaking change.
+	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
 	public async create(parentContext: IFluidDataStoreContext, props?: any): Promise<FluidObject> {
 		const { containerRuntime, packagePath } = parentContext;
 
-		const dataStore = await containerRuntime.createDataStore(packagePath.concat(this.type));
+		const dataStore = await containerRuntime.createDataStore([...packagePath, this.type]);
 		return dataStore.entryPoint.get();
 	}
 
@@ -95,7 +97,7 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject>
 		context: IFluidDataStoreContext,
 		runtime: IFluidDataStoreRuntime,
 		existing: boolean,
-	) {
+	): T | LazyPromise<T> {
 		// New data store instances are synchronously created.  Loading a previously created
 		// store is deferred (via a LazyPromise) until requested by invoking `.then()`.
 		return existing
@@ -106,8 +108,8 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject>
 	private createCore(
 		context: IFluidDataStoreContext,
 		runtime: IFluidDataStoreRuntime,
-		props?: any,
-	) {
+		props?: unknown,
+	): T {
 		const root = runtime.createChannel("root", this.root.type) as ISharedObject;
 		const instance = new this.ctor(context, runtime, root);
 		instance.create(props);
@@ -119,7 +121,7 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject>
 		context: IFluidDataStoreContext,
 		runtime: IFluidDataStoreRuntime,
 		existing: boolean,
-	) {
+	): Promise<T> {
 		const instance = new this.ctor(
 			context,
 			runtime,

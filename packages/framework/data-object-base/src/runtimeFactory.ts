@@ -52,7 +52,7 @@ export class RuntimeFactory extends RuntimeFactoryHelper {
 		this.registry = (
 			storeFactories.includes(this.defaultStoreFactory)
 				? storeFactories
-				: storeFactories.concat(this.defaultStoreFactory)
+				: [...storeFactories, this.defaultStoreFactory]
 		).map((factory) => [factory.type, factory]) as NamedFluidDataStoreRegistryEntries;
 	}
 
