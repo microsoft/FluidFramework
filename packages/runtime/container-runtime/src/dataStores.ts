@@ -201,7 +201,12 @@ export class DataStores implements IDisposable {
 		return pendingAliasPromise ?? "Success";
 	}
 
-	private extractAndProcessAttachGCData(id: string, entries: ITreeEntry[]): void {
+	private extractAndProcessAttachGCData(id: string, entries?: ITreeEntry[]): void {
+		// Very old attach messages may not have a snapshot (which is where entries comes from)
+		if (entries === undefined) {
+			return;
+		}
+
 		const gcDataEntry = entries.find((e) => e.path === ".gcdata");
 
 		// Old attach messages won't have GC Data
@@ -216,14 +221,13 @@ export class DataStores implements IDisposable {
 
 		const gcData = JSON.parse(gcDataEntry.value.contents) as IGarbageCollectionData;
 		for (const [nodeId, outboundRoutes] of Object.entries(gcData.gcNodes)) {
-			//* Todo: update addedGCOutboundReference to take strings not handles to avoid these fake handles
 			const fromHandle = {
 				absolutePath: `/${id}${nodeId === "/" ? "" : nodeId}`,
-			} as unknown as IFluidHandle;
+			};
 			outboundRoutes.forEach((route) => {
 				const toHandle = {
 					absolutePath: `${route}`,
-				} as unknown as IFluidHandle;
+				};
 
 				//* Test case: Reference to a DDS within the same DataStore or in another DataStore
 				//* Test case: Reference to an attachment blob
@@ -237,7 +241,10 @@ export class DataStores implements IDisposable {
 
 		this.dataStoresSinceLastGC.push(attachMessage.id);
 
-		//* TODO: Be sure to notify GC in this case
+		//* Test case: ensure local client gets GC update
+		// We need to process the GC Data for both local and remote attach messages
+		this.extractAndProcessAttachGCData(attachMessage.id, attachMessage.snapshot?.entries);
+
 		// The local object has already been attached
 		if (local) {
 			assert(
@@ -267,7 +274,6 @@ export class DataStores implements IDisposable {
 		let snapshotTree: ISnapshotTree | undefined;
 		if (attachMessage.snapshot) {
 			snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatAttachBlobs);
-			this.extractAndProcessAttachGCData(attachMessage.id, attachMessage.snapshot.entries);
 		}
 
 		// Include the type of attach message which is the pkg of the store to be

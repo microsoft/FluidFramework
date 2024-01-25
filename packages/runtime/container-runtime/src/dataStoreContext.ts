@@ -665,6 +665,13 @@ export abstract class FluidDataStoreContext
 		}
 	}
 
+	public addedGCOutboundRoute(fromPath: string, toPath: string) {
+		this._containerRuntime.addedGCOutboundReference(
+			{ absolutePath: fromPath },
+			{ absolutePath: toPath },
+		);
+	}
+
 	/**
 	 * Updates the used routes of the channel and its child contexts. The channel must be loaded before calling this.
 	 * It is called in these two scenarios:

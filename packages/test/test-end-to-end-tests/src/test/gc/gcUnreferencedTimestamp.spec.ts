@@ -37,7 +37,8 @@ import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 //* NOCOMPAT
 //* NOCOMPAT
 //* NOCOMPAT
-describeCompat("GC unreferenced timestamp", "NoCompat", (getTestObjectProvider, apis) => {
+const skipCompat = describeCompat.noCompat;
+skipCompat("GC unreferenced timestamp", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
 
 	const configProvider = createTestConfigProvider();

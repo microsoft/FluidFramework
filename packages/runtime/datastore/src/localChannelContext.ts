@@ -134,8 +134,6 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 	public getAttachSummaryAndGCData(
 		telemetryContext?: ITelemetryContext,
 	): [ISummarizeResult, IGarbageCollectionData] {
-		//* Curious: How does the code ensure this assert is satisfied in the Rehydrated case?
-		//* Meaning, what stops someone from calling this function before the channel is realized?
 		assert(
 			this._channel !== undefined,
 			0x18d /* "Channel should be loaded to take snapshot" */,

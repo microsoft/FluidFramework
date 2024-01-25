@@ -591,19 +591,12 @@ export class FluidDataStoreRuntime
 
 		const gcData = JSON.parse(gcDataEntry.value.contents) as IGarbageCollectionData;
 		for (const [nodeId, outboundRoutes] of Object.entries(gcData.gcNodes)) {
-			//* Todo: update addedGCOutboundReference to take strings not handles to avoid these fake handles
-			const fromHandle = {
-				// Expecting /DataStoreId/DDSId  (since nodeId will be "/" unless and until we support sub-DDS GC Nodes)
-				absolutePath: `/${this.id}/${id}${nodeId === "/" ? "" : nodeId}`,
-			} as unknown as IFluidHandle;
-			outboundRoutes.forEach((route) => {
-				const toHandle = {
-					absolutePath: `${route}`,
-				} as unknown as IFluidHandle;
-
+			// Expecting "/DataStoreId/DDSId"  (since nodeId will be "/" unless and until we support sub-DDS GC Nodes)
+			const fromPath = `/${this.id}/${id}${nodeId === "/" ? "" : nodeId}`;
+			outboundRoutes.forEach((toPath) => {
 				//* Test case: Reference to a DDS within the same DataStore or in another DataStore
 				//* Test case: Reference to an attachment blob
-				this.addedGCOutboundReference(fromHandle, toHandle);
+				this.addedGCOutboundRoute(fromPath, toPath);
 			});
 		}
 	}
@@ -614,7 +607,6 @@ export class FluidDataStoreRuntime
 	) {
 		const flatBlobs = new Map<string, ArrayBufferLike>();
 		const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
-		this.extractAndProcessAttachGCData(attachMessage.id, attachMessage.snapshot.entries);
 
 		return new RemoteChannelContext(
 			this,
@@ -647,10 +639,13 @@ export class FluidDataStoreRuntime
 					const attachMessage = message.contents as IAttachMessage;
 					const id = attachMessage.id;
 
+					//* Test case: ensure local client gets GC update
+					// We need to process the GC Data for both local and remote attach messages
+					this.extractAndProcessAttachGCData(id, attachMessage.snapshot.entries);
+
 					// If a non-local operation then go and create the object
 					// Otherwise mark it as officially attached.
 					if (local) {
-						//* TODO: Be sure to notify GC in this case
 						assert(
 							this.pendingAttach.delete(id),
 							0x17c /* "Unexpected attach (local) channel OP" */,
@@ -811,6 +806,11 @@ export class FluidDataStoreRuntime
 		// will be the one to call addedGCOutboundReference directly.
 		// But on the flip side, if the ContainerRuntime is older, then it's important we still call this.
 		this.dataStoreContext.addedGCOutboundReference?.(srcHandle, outboundHandle);
+	}
+
+	/** @see addedGCOutboundReference, but with string inputs instead of handles */
+	private addedGCOutboundRoute(fromPath: string, toPath: string) {
+		this.dataStoreContext.addedGCOutboundRoute?.(fromPath, toPath);
 	}
 
 	/**
