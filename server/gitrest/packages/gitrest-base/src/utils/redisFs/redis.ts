@@ -156,6 +156,7 @@ export class Redis implements IRedis {
 export class HashMapRedis implements IRedis {
 	private readonly expireAfterSeconds: number = 60 * 60 * 24;
 	private readonly prefix: string = "fs";
+	private initialized: boolean = false;
 
 	constructor(
 		/**
@@ -176,8 +177,6 @@ export class HashMapRedis implements IRedis {
 		client.on("error", (error) => {
 			Lumberjack.error("Redis Cache Error", undefined, error);
 		});
-
-		this.init();
 	}
 
 	public async get<T>(field: string): Promise<T> {
@@ -194,6 +193,7 @@ export class HashMapRedis implements IRedis {
 		value: T,
 		expireAfterSeconds: number = this.expireAfterSeconds,
 	): Promise<void> {
+		await this.initHashmap();
 		if (this.isFieldRootDirectory(field)) {
 			// Field is part of the root hashmap key, so do nothing.
 			return;
@@ -207,6 +207,7 @@ export class HashMapRedis implements IRedis {
 		fieldValuePairs: { key: string; value: T }[],
 		expireAfterSeconds: number = this.expireAfterSeconds,
 	): Promise<void> {
+		await this.initHashmap();
 		// Filter out root directory fields, since they are not necessary fields in the HashMap.
 		// Then, map each field/value pair to array of arguments for the HSET command (f1, v1, f2, v2...).
 		const fieldValueArgs = fieldValuePairs
@@ -290,8 +291,13 @@ export class HashMapRedis implements IRedis {
 
 	/**
 	 * Initializes the hashmap if it doesn't exist, and sets the expiration on the hashmap key.
+	 * This is a no-op if it has already been called once in this HashMapRedis instance.
 	 */
-	private init(): void {
+	private async initHashmap(): Promise<void> {
+		if (this.initialized) {
+			// only initialize once
+			return;
+		}
 		const initializeHashMapIfNotExists = async (): Promise<void> => {
 			const exists = await this.client.exists(this.getMapKey());
 			if (!exists) {
@@ -306,6 +312,7 @@ export class HashMapRedis implements IRedis {
 					this.parameters?.redisApiMetricsSamplingPeriod,
 				);
 			}
+			this.initialized = true;
 		};
 		// Setting expiration on the hashmap key is vital, so we should retry it on failure
 		runWithRetry(
