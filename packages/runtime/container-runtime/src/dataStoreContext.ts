@@ -114,7 +114,6 @@ export interface IFluidDataStoreContextProps {
 	readonly scope: FluidObject;
 	readonly createSummarizerNodeFn: CreateChildSummarizerNodeFn;
 	readonly pkg?: Readonly<string[]>;
-	readonly loadedFromAttachOp?: boolean;
 }
 
 /** Properties necessary for creating a local FluidDataStoreContext */
@@ -127,7 +126,6 @@ export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContext
 	 * @deprecated 0.16 Issue #1635, #3631
 	 */
 	readonly createProps?: any;
-	readonly loadedFromAttachOp?: undefined; // N/A
 }
 
 /** Properties necessary for creating a remote FluidDataStoreContext */
@@ -274,7 +272,6 @@ export abstract class FluidDataStoreContext
 	public readonly storage: IDocumentStorageService;
 	public readonly scope: FluidObject;
 	protected pkg?: readonly string[];
-	protected loadedFromAttachOp: boolean; // True for when loaded from an attach op's snapshot; false when loaded from a regular summary's snapshot
 
 	constructor(
 		props: IFluidDataStoreContextProps,
@@ -289,7 +286,6 @@ export abstract class FluidDataStoreContext
 		this.storage = props.storage;
 		this.scope = props.scope;
 		this.pkg = props.pkg;
-		this.loadedFromAttachOp = props.loadedFromAttachOp ?? false;
 
 		// URIs use slashes as delimiters. Handles use URIs.
 		// Thus having slashes in types almost guarantees trouble down the road!
@@ -438,32 +434,6 @@ export abstract class FluidDataStoreContext
 		return { factory, registry };
 	}
 
-	private async getGCData_prototype(
-		strategy: "fromSnapshot" | "fromChannel",
-		channel: IFluidDataStoreChannel,
-		snapshot: ISnapshotTree | undefined,
-	): Promise<IGarbageCollectionData> {
-		if (strategy === "fromChannel") {
-			return channel.getGCData();
-		}
-
-		if (snapshot === undefined) {
-			return { gcNodes: {} };
-		}
-
-		//* Define this in some single place
-		const gcDataBlobKey = ".gcdata";
-
-		const gcDataBlobId = snapshot.blobs[gcDataBlobKey];
-		if (gcDataBlobId === undefined) {
-			return { gcNodes: {} };
-		}
-		const gcData = await readAndParse<IGarbageCollectionData>(this.storage, gcDataBlobId);
-		assert(gcData !== undefined, "GC Data blob missing from snapshot");
-
-		return gcData;
-	}
-
 	private async realizeCore(existing: boolean): Promise<void> {
 		const details = await this.getInitialSnapshotDetails();
 		// Base snapshot is the baseline where pending ops are applied to.
@@ -482,53 +452,6 @@ export abstract class FluidDataStoreContext
 
 		const channel = await factory.instantiateDataStore(this, existing);
 		assert(channel !== undefined, 0x140 /* "undefined channel on datastore context" */);
-
-		//* TODO: Properly plumb this bit from ContainerRuntime
-		const gcEnabled = (this._containerRuntime as any).garbageCollector?.shouldRunGC ?? true; //* Some tests mock CR and this isn't there.
-
-		// The attach op could have added a reference to another object.
-		// Inform GC of all outbound references in the newly-created channel.
-		// Do this before bindRuntime since that will process all enqueued ops.
-		if (this.loadedFromAttachOp && gcEnabled) {
-			const bothGCData = {
-				fromSnapshot: await this.getGCData_prototype(
-					"fromSnapshot",
-					channel,
-					details.snapshot,
-				),
-				fromChannel: await this.getGCData_prototype(
-					"fromChannel",
-					channel,
-					details.snapshot,
-				),
-			};
-			assert(
-				Object.keys(bothGCData.fromSnapshot.gcNodes).length === 0 ||
-					JSON.stringify(bothGCData.fromSnapshot) ===
-						JSON.stringify(bothGCData.fromChannel),
-				"GC data mismatch",
-			);
-
-			//* Switch the strategy to demo the different ways of getting GC data
-			const strategy: "fromSnapshot" | "fromChannel" = "fromSnapshot";
-			const gcData = bothGCData[strategy];
-			for (const [nodeId, outboundRoutes] of Object.entries(gcData.gcNodes)) {
-				//* Todo: update addedGCOutboundReference to take strings not handles to avoid these fake handles
-				const fromHandle = {
-					absolutePath: `/${this.id}${nodeId === "/" ? "" : nodeId}`,
-				} as unknown as IFluidHandle;
-				outboundRoutes.forEach((route) => {
-					const toHandle = {
-						absolutePath: `${route}`,
-					} as unknown as IFluidHandle;
-
-					//* Test case: Reference to a DDS within the same DataStore or in another DataStore
-					//* Test case: Reference to an attachment blob
-					this._containerRuntime.addedGCOutboundReference(fromHandle, toHandle);
-				});
-			}
-		}
-
 		this.bindRuntime(channel);
 		// This data store may have been disposed before the channel is created during realization. If so,
 		// dispose the channel now.

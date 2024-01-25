@@ -10,7 +10,12 @@ import {
 	IRequest,
 } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle } from "@fluidframework/datastore";
-import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import {
+	ISequencedDocumentMessage,
+	ISnapshotTree,
+	ITreeEntry,
+	TreeEntry,
+} from "@fluidframework/protocol-definitions";
 import {
 	AliasResult,
 	channelsTreeName,
@@ -154,7 +159,6 @@ export class DataStores implements IDisposable {
 					createSummarizerNodeFn: this.getCreateChildSummarizerNodeFn(key, {
 						type: CreateSummarizerNodeSource.FromSummary,
 					}),
-					loadedFromAttachOp: false,
 				});
 			} else {
 				if (typeof value !== "object") {
@@ -196,6 +200,37 @@ export class DataStores implements IDisposable {
 		return pendingAliasPromise ?? "Success";
 	}
 
+	private extractAndProcessAttachGCData(id: string, entries: ITreeEntry[]): void {
+		const gcDataEntry = entries.find((e) => e.path === ".gcdata");
+
+		// Old attach messages won't have GC Data
+		if (gcDataEntry === undefined) {
+			return;
+		}
+
+		assert(
+			gcDataEntry.type === TreeEntry.Blob && gcDataEntry.value.encoding === "utf-8",
+			"GC data should be a utf-8-encoded blob",
+		);
+
+		const gcData = JSON.parse(gcDataEntry.value.contents) as IGarbageCollectionData;
+		for (const [nodeId, outboundRoutes] of Object.entries(gcData.gcNodes)) {
+			//* Todo: update addedGCOutboundReference to take strings not handles to avoid these fake handles
+			const fromHandle = {
+				absolutePath: `/${id}${nodeId === "/" ? "" : nodeId}`,
+			} as unknown as IFluidHandle;
+			outboundRoutes.forEach((route) => {
+				const toHandle = {
+					absolutePath: `${route}`,
+				} as unknown as IFluidHandle;
+
+				//* Test case: Reference to a DDS within the same DataStore or in another DataStore
+				//* Test case: Reference to an attachment blob
+				this.runtime.addedGCOutboundReference(fromHandle, toHandle);
+			});
+		}
+	}
+
 	public processAttachMessage(message: ISequencedDocumentMessage, local: boolean) {
 		const attachMessage = message.contents as InboundAttachMessage;
 
@@ -231,9 +266,8 @@ export class DataStores implements IDisposable {
 		let snapshotTree: ISnapshotTree | undefined;
 		if (attachMessage.snapshot) {
 			snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatAttachBlobs);
+			this.extractAndProcessAttachGCData(attachMessage.id, attachMessage.snapshot.entries);
 		}
-
-		//* The blobs are all here and available to be read synchronously, just do it here!
 
 		// Include the type of attach message which is the pkg of the store to be
 		// used by RemoteFluidDataStoreContext in case it is not in the snapshot.
@@ -252,7 +286,6 @@ export class DataStores implements IDisposable {
 				},
 			}),
 			pkg,
-			loadedFromAttachOp: true,
 		});
 
 		this.contexts.addBoundOrRemoted(remoteFluidDataStoreContext);
@@ -715,8 +748,7 @@ export class DataStores implements IDisposable {
 				.map(([key, value]) => {
 					let dataStoreSummary: ISummarizeResult;
 					if (value.isLoaded) {
-						const { attachSummary } = value.getAttachData(telemetryContext);
-						dataStoreSummary = attachSummary;
+						dataStoreSummary = value.getAttachData(telemetryContext).attachSummary;
 					} else {
 						// If this data store is not yet loaded, then there should be no changes in the snapshot from
 						// which it was created as it is detached container. So just use the previous snapshot.
