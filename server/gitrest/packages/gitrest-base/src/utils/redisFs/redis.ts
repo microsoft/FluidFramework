@@ -295,9 +295,16 @@ export class HashMapRedis implements IRedis {
 		const initializeHashMapIfNotExists = async (): Promise<void> => {
 			const exists = await this.client.exists(this.getMapKey());
 			if (!exists) {
-				// Set a blank field/value pair to initialize the hashmap.
-				await this.client.hset(this.getMapKey(), "", "");
-				await this.client.expire(this.getMapKey(), this.expireAfterSeconds);
+				await executeRedisFsApiWithMetric(
+					async () => {
+						// Set a blank field/value pair to initialize the hashmap.
+						await this.client.hset(this.getMapKey(), "", "");
+						await this.client.expire(this.getMapKey(), this.expireAfterSeconds);
+					},
+					RedisFsApis.InitHashmapFs,
+					this.parameters?.enableRedisMetrics,
+					this.parameters?.redisApiMetricsSamplingPeriod,
+				);
 			}
 		};
 		// Setting expiration on the hashmap key is vital, so we should retry it on failure
