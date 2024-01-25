@@ -71,6 +71,7 @@ gitrest:
     enableSlimGitInit: false
     enableRedisFsMetrics: false
     enableHashmapRedisFs: false
+    enableRedisFsOptimizedStat: false
     redisApiMetricsSamplingPeriod: 0
   redis:
     host: redis

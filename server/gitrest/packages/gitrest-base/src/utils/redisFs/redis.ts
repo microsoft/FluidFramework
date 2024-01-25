@@ -104,11 +104,10 @@ export class Redis implements IRedis {
 	}
 
 	public async peek(key: string): Promise<number> {
-		const [exists, strlen] = await Promise.all([
-			this.client.exists(this.getKey(key)),
-			this.client.strlen(this.getKey(key)),
-		]);
-		return exists ? strlen : -1;
+		const strlen = await this.client.strlen(this.getKey(key));
+		// If the key does not exist, strlen will return 0.
+		// Otherwise, we are stringifying everything we store in Redis, so strlen will always be at least 2 from the stringified quotes.
+		return strlen === 0 ? -1 : strlen - 2;
 	}
 
 	public async del(key: string, appendPrefixToKey = true): Promise<boolean> {
@@ -227,11 +226,10 @@ export class HashMapRedis implements IRedis {
 			// Field is part of the root hashmap key, so it exists but is empty.
 			return 0;
 		}
-		const [exists, strlen] = await Promise.all([
-			this.client.hexists(this.getMapKey(), this.getMapField(field)),
-			this.client.hstrlen(this.getMapKey(), this.getMapField(field)),
-		]);
-		return exists ? strlen : -1;
+		const strlen = await this.client.hstrlen(this.getMapKey(), this.getMapField(field));
+		// If the key does not exist, strlen will return 0.
+		// Otherwise, we are stringifying everything we store in Redis, so strlen will always be at least 2 from the stringified quotes.
+		return strlen === 0 ? -1 : strlen - 2;
 	}
 
 	public async del(field: string): Promise<boolean> {

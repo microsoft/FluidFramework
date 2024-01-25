@@ -67,6 +67,7 @@ data:
             "enableSlimGitInit": {{ .Values.gitrest.git.enableSlimGitInit }},
             "enableRedisFsMetrics": {{ .Values.gitrest.git.enableRedisFsMetrics }},
             "enableHashmapRedisFs": {{ .Values.gitrest.git.enableHashmapRedisFs }},
+            "enableRedisFsOptimizedStat": {{ .Values.gitrest.git.enableRedisFsOptimizedStat }},
             "redisApiMetricsSamplingPeriod": {{ .Values.gitrest.git.redisApiMetricsSamplingPeriod }}
         },
         "redis": {
