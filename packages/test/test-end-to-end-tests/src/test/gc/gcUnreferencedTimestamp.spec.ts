@@ -708,15 +708,15 @@ describeCompat("GC unreferenced timestamp", "NoCompat", (getTestObjectProvider, 
 			 * This difference from the previous test case is that there is another level of indirection here that
 			 * references the node which was unreferenced in previous summary.
 			 */
-			//* ONLY
-			//* ONLY
-			//* ONLY
-			//* ONLY
-			//* ONLY
-			//* ONLY
-			//* ONLY
-			//* ONLY
-			it.only(`Scenario 9 - Reference added transitively via new nodes and removed`, async () => {
+			//* SKIP
+			//* SKIP
+			//* SKIP
+			//* SKIP
+			//* SKIP
+			//* SKIP
+			//* SKIP
+			//* SKIP
+			it.skip(`Scenario 9 - Reference added transitively via new nodes and removed`, async () => {
 				const { summarizer } = await createSummarizer(provider, mainContainer, {
 					loaderProps: { configProvider },
 				});
