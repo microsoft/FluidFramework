@@ -38,6 +38,8 @@ import {
 	ISummaryBlob,
 	ISummaryTree,
 	IQuorumClients,
+	ITreeEntry,
+	TreeEntry,
 } from "@fluidframework/protocol-definitions";
 import {
 	CreateChildSummarizerNodeParam,
@@ -576,14 +578,45 @@ export class FluidDataStoreRuntime
 		return this.dataStoreContext.uploadBlob(blob, signal);
 	}
 
+	private extractAndProcessAttachGCData(id: string, entries: ITreeEntry[]): void {
+		const gcDataEntry = entries.find((e) => e.path === ".gcdata");
+
+		// Old attach messages won't have GC Data
+		if (gcDataEntry === undefined) {
+			return;
+		}
+
+		assert(
+			gcDataEntry.type === TreeEntry.Blob && gcDataEntry.value.encoding === "utf-8",
+			"GC data should be a utf-8-encoded blob",
+		);
+
+		const gcData = JSON.parse(gcDataEntry.value.contents) as IGarbageCollectionData;
+		for (const [nodeId, outboundRoutes] of Object.entries(gcData.gcNodes)) {
+			//* Todo: update addedGCOutboundReference to take strings not handles to avoid these fake handles
+			const fromHandle = {
+				// Expecting /DataStoreId/DDSId  (since nodeId will be "/" unless and until we support sub-DDS GC Nodes)
+				absolutePath: `/${this.id}/${id}${nodeId === "/" ? "" : nodeId}`,
+			} as unknown as IFluidHandle;
+			outboundRoutes.forEach((route) => {
+				const toHandle = {
+					absolutePath: `${route}`,
+				} as unknown as IFluidHandle;
+
+				//* Test case: Reference to a DDS within the same DataStore or in another DataStore
+				//* Test case: Reference to an attachment blob
+				this.addedGCOutboundReference(fromHandle, toHandle);
+			});
+		}
+	}
+
 	private createRemoteChannelContext(
 		attachMessage: IAttachMessage,
 		summarizerNodeParams: CreateChildSummarizerNodeParam,
 	) {
 		const flatBlobs = new Map<string, ArrayBufferLike>();
 		const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
-
-		//* GC Data is available here to be read synchronously
+		this.extractAndProcessAttachGCData(attachMessage.id, attachMessage.snapshot.entries);
 
 		return new RemoteChannelContext(
 			this,

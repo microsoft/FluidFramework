@@ -94,26 +94,6 @@ export class RemoteChannelContext implements IChannelContext {
 				this.id,
 			);
 
-			//* TODO: Read from snapshot instead (like in DataStoreRuntime)
-
-			//* TODO: Properly plumb this bit from ContainerRuntime
-			const gcEnabled = true;
-
-			//* Test case: Node revived via DDS attach op (like Scenarios 6 and 7 in existing tests)
-			if (attachMessageType !== undefined && gcEnabled) {
-				const gcData = channel.getGCData();
-				for (const [nodeId, outboundRoutes] of Object.entries(gcData.gcNodes)) {
-					//* Todo: update addedGCOutboundReferenceFn to take strings not handles to avoid these fake handles
-					const fromHandle = { absolutePath: nodeId } as unknown as IFluidHandle;
-					outboundRoutes.forEach((route) => {
-						const toHandle = { absolutePath: route } as unknown as IFluidHandle;
-						addedGCOutboundReferenceFn(fromHandle, toHandle);
-					});
-				}
-			}
-
-			//* Test Case: Trailing ops with additional references.
-			//* When DataStore attach op triggers getGCData, all channel context pending should be empty (no DataStore ops processed yet)
 			// Send all pending messages to the channel
 			assert(this.pending !== undefined, 0x23f /* "pending undefined" */);
 			for (const message of this.pending) {
