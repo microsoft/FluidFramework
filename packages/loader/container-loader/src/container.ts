@@ -590,6 +590,7 @@ export class Container
 	private _loadedFromVersion: IVersion | undefined;
 	private attachStarted = false;
 	private _dirtyContainer = false;
+	private readonly offlineLoadEnabled: boolean;
 	private readonly savedOps: ISequencedDocumentMessage[] = [];
 	private baseSnapshot?: ISnapshotTree;
 	private baseSnapshotBlobs?: ISerializableBlobContents;
@@ -675,12 +676,8 @@ export class Container
 		return this._clientId;
 	}
 
-	private get offlineLoadEnabled(): boolean {
-		const enabled =
-			this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ??
-			this.options?.enableOfflineLoad === true;
-		// summarizer will not have any pending state we want to save
-		return enabled && this.deltaManager.clientDetails.capabilities.interactive;
+	private get isInteractiveClient(): boolean {
+		return this.deltaManager.clientDetails.capabilities.interactive;
 	}
 
 	/**
@@ -824,7 +821,7 @@ export class Container
 
 		this.client = Container.setupClient(
 			this._containerId,
-			this.options.client,
+			options.client,
 			this.clientDetailsOverride,
 		);
 
@@ -876,6 +873,10 @@ export class Container
 
 		// Prefix all events in this file with container-loader
 		this.mc = createChildMonitoringContext({ logger: this.subLogger, namespace: "Container" });
+
+		this.offlineLoadEnabled =
+			this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ??
+			options.enableOfflineLoad === true;
 
 		this._deltaManager = this.createDeltaManager();
 
@@ -1630,7 +1631,8 @@ export class Container
 			this.baseSnapshotBlobs = pendingLocalState.snapshotBlobs;
 		} else {
 			assert(snapshot !== undefined, 0x237 /* "Snapshot should exist" */);
-			if (this.offlineLoadEnabled) {
+			// non-interactive clients will not have any pending state we want to save
+			if (this.offlineLoadEnabled && this.isInteractiveClient) {
 				this.baseSnapshot = snapshot;
 				// Save contents of snapshot now, otherwise closeAndGetPendingLocalState() must be async
 				this.baseSnapshotBlobs = await getBlobContentsFromTree(
@@ -2342,7 +2344,8 @@ export class Container
 	}
 
 	private processRemoteMessage(message: ISequencedDocumentMessage) {
-		if (this.offlineLoadEnabled) {
+		// non-interactive clients will not have any pending state we want to save
+		if (this.offlineLoadEnabled && this.isInteractiveClient) {
 			this.savedOps.push(message);
 		}
 		const local = this.clientId === message.clientId;
