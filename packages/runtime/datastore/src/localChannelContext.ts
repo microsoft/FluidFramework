@@ -134,7 +134,8 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 	public getAttachSummaryAndGCData(
 		telemetryContext?: ITelemetryContext,
 	): [ISummarizeResult, IGarbageCollectionData] {
-		//* What about Rehydrated case?
+		//* Curious: How does the code ensure this assert is satisfied in the Rehydrated case?
+		//* Meaning, what stops someone from calling this function before the channel is realized?
 		assert(
 			this._channel !== undefined,
 			0x18d /* "Channel should be loaded to take snapshot" */,
@@ -148,8 +149,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 		);
 
 		// We need the GC Data to detect references added in this attach op
-		//* fullGC isn't necessary, right? Since there won't be any prior GC Data.
-		const gcData = this._channel.getGCData();
+		const gcData = this._channel.getGCData(/* fullGC: */ true);
 
 		return [summary, gcData];
 	}

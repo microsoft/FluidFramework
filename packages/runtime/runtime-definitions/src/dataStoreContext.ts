@@ -270,8 +270,9 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * Synchronously retrieves the Summary and GC Data (representing the outbound routes present) for the initial state of the DataStore
 	 */
 	getAttachSummaryAndGCData?(
+		includeGCData: boolean,
 		telemetryContext?: ITelemetryContext,
-	): [ISummaryTreeWithStats, IGarbageCollectionData];
+	): [ISummaryTreeWithStats, IGarbageCollectionData | undefined];
 
 	/**
 	 * Processes the op.

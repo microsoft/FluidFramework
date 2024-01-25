@@ -22,6 +22,7 @@ import {
 	CreateChildSummarizerNodeFn,
 	CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
+	gcDataBlobKey,
 	IAttachMessage,
 	IEnvelope,
 	IFluidDataStoreContextDetached,
@@ -355,10 +356,11 @@ export class DataStores implements IDisposable {
 
 	/** Package up the context's attach summary etc into an IAttachMessage */
 	private generateAttachMessage(localContext: LocalFluidDataStoreContext): IAttachMessage {
-		const { attachSummary, type, gcData } = localContext.getAttachData();
+		const { attachSummary, type, gcData } = localContext.getAttachData(
+			/* includeGCData: */ true,
+		);
 
-		//* const gcDataKey or whatever
-		addBlobToSummary(attachSummary, ".gcdata", JSON.stringify(gcData));
+		addBlobToSummary(attachSummary, gcDataBlobKey, JSON.stringify(gcData));
 
 		// Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
 		const snapshot = convertSummaryTreeToITree(attachSummary.summary);
@@ -748,7 +750,10 @@ export class DataStores implements IDisposable {
 				.map(([key, value]) => {
 					let dataStoreSummary: ISummarizeResult;
 					if (value.isLoaded) {
-						dataStoreSummary = value.getAttachData(telemetryContext).attachSummary;
+						dataStoreSummary = value.getAttachData(
+							/* includeGCCData: */ false,
+							telemetryContext,
+						).attachSummary;
 					} else {
 						// If this data store is not yet loaded, then there should be no changes in the snapshot from
 						// which it was created as it is detached container. So just use the previous snapshot.

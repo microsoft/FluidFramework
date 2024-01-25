@@ -829,7 +829,10 @@ export abstract class FluidDataStoreContext
 	 *
 	 * @returns the summary, type, and GC Data for this context's DataStore.
 	 */
-	public abstract getAttachData(telemetryContext?: ITelemetryContext): {
+	public abstract getAttachData(
+		includeGCData: boolean,
+		telemetryContext?: ITelemetryContext,
+	): {
 		attachSummary: ISummaryTreeWithStats;
 		type: string;
 		gcData?: IGarbageCollectionData;
@@ -1041,7 +1044,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	/**
 	 * @see FluidDataStoreContext.getAttachData
 	 */
-	public getAttachData(): {
+	public getAttachData(includeGCData: boolean): {
 		attachSummary: ISummaryTreeWithStats;
 		type: string;
 		gcData?: IGarbageCollectionData;
@@ -1096,11 +1099,13 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		});
 	}
 
-	//* Take bool to skip GC Data if not needed
 	/**
 	 * @see FluidDataStoreContext.getAttachData
 	 */
-	public getAttachData(telemetryContext?: ITelemetryContext): {
+	public getAttachData(
+		includeGCData: boolean,
+		telemetryContext?: ITelemetryContext,
+	): {
 		attachSummary: ISummaryTreeWithStats;
 		type: string;
 		gcData?: IGarbageCollectionData;
@@ -1115,6 +1120,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		);
 
 		const [attachSummary, gcData] = this.channel.getAttachSummaryAndGCData?.(
+			includeGCData,
 			telemetryContext,
 		) ?? [this.channel.getAttachSummary(telemetryContext)];
 

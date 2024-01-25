@@ -53,6 +53,7 @@ import {
 	ISummaryTreeWithStats,
 	VisibilityState,
 	ITelemetryContext,
+	gcDataBlobKey,
 } from "@fluidframework/runtime-definitions";
 import {
 	convertSnapshotTreeToSummaryTree,
@@ -92,9 +93,6 @@ export enum DataStoreMessageType {
 	Attach = "attach",
 	ChannelOp = "op",
 }
-
-//* Suggestions on key name?
-const gcDataBlobKey = ".gcdata";
 
 /**
  * @alpha
@@ -728,7 +726,11 @@ export class FluidDataStoreRuntime
 	 * - Adds a node for this channel.
 	 * @param builder - The builder that contains the GC nodes for this channel's children.
 	 */
-	private updateGCNodes(builder: GCDataBuilder) {
+	private updateGCNodes(builder?: GCDataBuilder) {
+		if (builder === undefined) {
+			return;
+		}
+
 		// Add a back route to self in each child's GC nodes. If any child is referenced, then its parent should
 		// be considered referenced as well.
 		builder.addRouteToAllNodes(this.absolutePath);
@@ -852,12 +854,13 @@ export class FluidDataStoreRuntime
 	}
 
 	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
-		return this.getAttachSummaryAndGCData()[0];
+		return this.getAttachSummaryAndGCData(/* includeGCData: */ false)[0];
 	}
 
 	public getAttachSummaryAndGCData(
+		includeGCData: boolean,
 		telemetryContext?: ITelemetryContext,
-	): [ISummaryTreeWithStats, IGarbageCollectionData] {
+	): [ISummaryTreeWithStats, IGarbageCollectionData | undefined] {
 		/**
 		 * back-compat 0.59.1000 - getAttachSummary() is called when making a data store globally visible (previously
 		 * attaching state). Ideally, attachGraph() should have already be called making it locally visible. However,
@@ -879,7 +882,7 @@ export class FluidDataStoreRuntime
 		// );
 
 		const summaryBuilder = new SummaryTreeBuilder();
-		const gcDataBuilder = new GCDataBuilder();
+		const gcDataBuilder = includeGCData ? new GCDataBuilder() : undefined;
 
 		// Craft the .attributes file for each shared object
 		for (const [contextId, context] of this.contexts) {
@@ -898,7 +901,7 @@ export class FluidDataStoreRuntime
 					);
 
 					// Incorporate the GC Data for this context
-					gcDataBuilder.prefixAndAddNodes(contextId, contextGCData.gcNodes);
+					gcDataBuilder?.prefixAndAddNodes(contextId, contextGCData.gcNodes);
 
 					summaryTree = { stats: contextSummary.stats, summary: contextSummary.summary };
 				} else {
@@ -920,7 +923,7 @@ export class FluidDataStoreRuntime
 
 		// We need to include the GC Data so remote clients can learn of this DataStore's outbound routes
 		this.updateGCNodes(gcDataBuilder);
-		const gcData = gcDataBuilder.getGCData();
+		const gcData = gcDataBuilder?.getGCData();
 
 		return [attachSummary, gcData];
 	}

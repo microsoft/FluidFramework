@@ -104,7 +104,6 @@ export function summarizeChannel(
 	trackState: boolean = false,
 	telemetryContext?: ITelemetryContext,
 ): ISummaryTreeWithStats {
-	//* What's the top of this structure like?
 	const summarizeResult = channel.getAttachSummary(fullTree, trackState, telemetryContext);
 
 	// Add the channel attributes to the returned result.

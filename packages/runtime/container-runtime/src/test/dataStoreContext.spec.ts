@@ -207,7 +207,7 @@ describe("Data Store Context Tests", () => {
 				const {
 					attachSummary: { summary },
 					type,
-				} = localDataStoreContext.getAttachData();
+				} = localDataStoreContext.getAttachData(/* includeGCData: */ false);
 				const snapshot = convertSummaryTreeToITree(summary);
 
 				const attributesEntry = snapshot.entries.find(
@@ -298,7 +298,7 @@ describe("Data Store Context Tests", () => {
 				const {
 					attachSummary: { summary },
 					type,
-				} = localDataStoreContext.getAttachData();
+				} = localDataStoreContext.getAttachData(/* includeGCData: */ false);
 				const snapshot = convertSummaryTreeToITree(summary);
 				const attributesEntry = snapshot.entries.find(
 					(e) => e.path === dataStoreAttributesBlobName,
