@@ -183,7 +183,7 @@ export class HashMapRedis implements IRedis {
 	public async get<T>(field: string): Promise<T> {
 		if (this.isFieldRootDirectory(field)) {
 			// Field is part of the root hashmap key, so return empty string.
-			return "" as T;
+			return "" as unknown as T;
 		}
 		const stringValue = await this.client.hget(this.getMapKey(), this.getMapField(field));
 		return JSON.parse(stringValue) as T;
