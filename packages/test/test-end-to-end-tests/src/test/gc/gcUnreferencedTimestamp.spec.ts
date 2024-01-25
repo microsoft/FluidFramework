@@ -690,6 +690,86 @@ describeCompat("GC unreferenced timestamp", "NoCompat", (getTestObjectProvider, 
 					`B should not have unreferenced timestamp since we do not have GC at DDS level yet`,
 				);
 			});
+
+			/*
+			 * Similar to 7 but using a DDS attach op instead of a DataStore attach op
+			 *
+			 * Validates that we can detect references that were added transitively via new data stores before they are
+			 * references themselves, and then the reference from the new data store is removed.
+			 * 1. Summary 1 at t1. V = [A*, D]. E = []. D has unreferenced time t1.
+			 * 2. Data stores B and C are created. E = [].
+			 * 3. Add reference from B to C. E = [].
+			 * 4. Add reference from C to D. E = [].
+			 * 5. Op adds reference from A to B. E = [A -> B, B -> C, C -> D].
+			 * 6. Op removes reference from C to D. E = [A -> B, B -> C].
+			 * 7. Summary 2 at t2. V = [A*, B, C]. E = [A -> B, B -> C]. D has unreferenced time t2.
+			 * Validates that the unreferenced time for D is t2 which is > t1.
+			 *
+			 * This difference from the previous test case is that there is another level of indirection here that
+			 * references the node which was unreferenced in previous summary.
+			 */
+			//* SKIP
+			//* SKIP
+			//* SKIP
+			//* SKIP
+			//* SKIP
+			//* SKIP
+			//* SKIP
+			//* SKIP
+			it.skip(`Scenario 9 - Reference added transitively via new nodes and removed`, async () => {
+				const { summarizer } = await createSummarizer(provider, mainContainer, {
+					loaderProps: { configProvider },
+				});
+
+				// Create data store D and mark it referenced by storing its handle in data store A.
+				const dataStoreD = await createNewDataStore();
+				dataStoreA._root.set("dataStoreD", dataStoreD.handle);
+
+				// Remove the reference to D which marks it as unreferenced.
+				dataStoreA._root.delete("dataStoreD");
+
+				// 1. Get summary 1 and validate that D is has unreferenced timestamp. E = [].
+				await provider.ensureSynchronized();
+				const summaryResult1 = await summarizeNow(summarizer);
+				const timestamps1 = await getUnreferencedTimestamps(summaryResult1.summaryTree);
+				const dsDTime1 = timestamps1.get(dataStoreD._context.id);
+				assert(dsDTime1 !== undefined, `D should have unreferenced timestamp`);
+
+				// 2. Create data stores B and C. E = [].
+				const dataStoreB = await createNewDataStore();
+				const dataStoreC = await createNewDataStore();
+
+				// 3. Add reference from A to B. E = [A -> B].
+				// Ensure Synchronized to let B fully attach
+				dataStoreA._root.set("dataStoreB", dataStoreB.handle);
+				await provider.ensureSynchronized();
+
+				// 4. Add reference from new DDS B1 to C. E = [A -> B].
+				// No op sent since DDS B1 is not attached
+				const ddsB1 = SharedMap.create(dataStoreB._runtime);
+				ddsB1.set("dataStoreC", dataStoreC.handle);
+
+				// 5. Add reference from C to D. E = [A -> B].
+				// No op sent since C is not attached
+				dataStoreC._root.set("dataStoreD", dataStoreD.handle);
+
+				// 6. Add reference from B's root to B1. E = [A -> B, B_root -> B1, B1 -> C, C -> D].
+				// Attach op for DDS B1 is sent here
+				dataStoreB._root.set("ddsB1", ddsB1.handle);
+
+				// 7. Remove reference from C to D. E = [A -> B, B_root -> B1, B1 -> C].
+				dataStoreC._root.delete("dataStoreD");
+
+				// 8. Get summary 2 and validate that D's unreferenced timestamps updated. E = [A -> B, B_root -> B1, B1 -> C].
+				await provider.ensureSynchronized();
+				const summaryResult2 = await summarizeNow(summarizer);
+				const timestamps2 = await getUnreferencedTimestamps(summaryResult2.summaryTree);
+				const dsDTime2 = timestamps2.get(dataStoreD._context.id);
+				assert(
+					dsDTime2 !== undefined && dsDTime2 > dsDTime1,
+					`D's timestamp should have updated`,
+				);
+			});
 		});
 
 		describe("References to unreferenced nodes from another unreferenced node", () => {

@@ -35,7 +35,6 @@ import {
 	CreateChildSummarizerNodeFn,
 	CreateChildSummarizerNodeParam,
 	FluidDataStoreRegistryEntry,
-	IAttachMessage,
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
 	IFluidDataStoreContextDetached,
@@ -51,8 +50,9 @@ import {
 	SummarizeInternalFn,
 	ITelemetryContext,
 	VisibilityState,
+	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
-import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
+import { addBlobToSummary } from "@fluidframework/runtime-utils";
 import {
 	createChildMonitoringContext,
 	DataCorruptionError,
@@ -900,7 +900,17 @@ export abstract class FluidDataStoreContext
 		return this._containerRuntime.getAbsoluteUrl(relativeUrl);
 	}
 
-	public abstract generateAttachMessage(): IAttachMessage;
+	/**
+	 * Get the data required when attaching this context's DataStore.
+	 * Used for both Container Attach and DataStore Attach.
+	 *
+	 * @returns the summary, type, and GC Data for this context's DataStore.
+	 */
+	public abstract getAttachData(telemetryContext?: ITelemetryContext): {
+		attachSummary: ISummaryTreeWithStats;
+		type: string;
+		gcData?: IGarbageCollectionData;
+	};
 
 	public abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
@@ -1105,7 +1115,14 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 		return this.initialSnapshotDetailsP;
 	}
 
-	public generateAttachMessage(): IAttachMessage {
+	/**
+	 * @see FluidDataStoreContext.getAttachData
+	 */
+	public getAttachData(): {
+		attachSummary: ISummaryTreeWithStats;
+		type: string;
+		gcData?: IGarbageCollectionData;
+	} {
 		throw new Error("Cannot attach remote store");
 	}
 }
@@ -1156,7 +1173,15 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		});
 	}
 
-	public generateAttachMessage(): IAttachMessage {
+	//* Take bool to skip GC Data if not needed
+	/**
+	 * @see FluidDataStoreContext.getAttachData
+	 */
+	public getAttachData(telemetryContext?: ITelemetryContext): {
+		attachSummary: ISummaryTreeWithStats;
+		type: string;
+		gcData?: IGarbageCollectionData;
+	} {
 		assert(
 			this.channel !== undefined,
 			0x14f /* "There should be a channel when generating attach message" */,
@@ -1166,31 +1191,20 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 			0x150 /* "pkg should be available in local data store context" */,
 		);
 
-		const summarizeResult = this.channel.getAttachSummary();
-		//* const gcData = this.channel.getAttachGCData(); // (synchronous)
-		//* This is the closest to symmetry I could get to the DDS attach case.
-		//* It's called from makeDataStoreLocallyVisible, which is somewhat parallel (ish)
-		//* to makeChannelLocallyVisible, which is where the DDS gets its GC data.
-		//* There is already plenty of divergence between the two attach op flows,
-		//* not sure it's worth it to push on.
+		const [attachSummary, gcData] = this.channel.getAttachSummaryAndGCData?.(
+			telemetryContext,
+		) ?? [this.channel.getAttachSummary(telemetryContext)];
 
 		// Wrap dds summaries in .channels subtree.
-		wrapSummaryInChannelsTree(summarizeResult);
+		wrapSummaryInChannelsTree(attachSummary);
 
 		// Add data store's attributes to the summary.
 		const attributes = createAttributes(this.pkg, this.isInMemoryRoot());
-		addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
+		addBlobToSummary(attachSummary, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
-		// Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
-		const snapshot = convertSummaryTreeToITree(summarizeResult.summary);
+		const type = this.pkg[this.pkg.length - 1];
 
-		const message: IAttachMessage = {
-			id: this.id,
-			snapshot,
-			type: this.pkg[this.pkg.length - 1],
-		};
-
-		return message;
+		return { attachSummary, type, gcData };
 	}
 
 	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {

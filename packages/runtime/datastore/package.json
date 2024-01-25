@@ -172,6 +172,10 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_FluidDataStoreRuntime": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

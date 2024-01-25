@@ -76,6 +76,8 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     // (undocumented)
+    getAttachSummaryAndGCData(telemetryContext?: ITelemetryContext): [ISummaryTreeWithStats, IGarbageCollectionData];
+    // (undocumented)
     getAudience(): IAudience;
     // (undocumented)
     getChannel(id: string): Promise<IChannel>;

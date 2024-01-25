@@ -28,8 +28,9 @@ import {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import {
+	addBlobToSummary,
 	convertSnapshotTreeToSummaryTree,
-	convertToSummaryTree,
+	convertSummaryTreeToITree,
 	create404Response,
 	createResponseError,
 	GCDataBuilder,
@@ -319,9 +320,26 @@ export class DataStores implements IDisposable {
 		return this.aliasMap.get(id) !== undefined || this.contexts.get(id) !== undefined;
 	}
 
+	/** Package up the context's attach summary etc into an IAttachMessage */
+	private generateAttachMessage(localContext: LocalFluidDataStoreContext): IAttachMessage {
+		const { attachSummary, type, gcData } = localContext.getAttachData();
+
+		//* const gcDataKey or whatever
+		addBlobToSummary(attachSummary, ".gcdata", JSON.stringify(gcData));
+
+		// Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
+		const snapshot = convertSummaryTreeToITree(attachSummary.summary);
+
+		return {
+			id: localContext.id,
+			snapshot,
+			type,
+		} satisfies IAttachMessage;
+	}
+
 	/**
-	 * Make the data stores locally visible in the container graph by moving the data store context from unbound to
-	 * bound list. This data store can now be reached from the root.
+	 * Make the data store locally visible in the container graph by moving the data store context from unbound to
+	 * bound list and submitting the attach message. This data store can now be reached from the root.
 	 * @param id - The id of the data store context to make visible.
 	 */
 	private makeDataStoreLocallyVisible(id: string): void {
@@ -335,7 +353,7 @@ export class DataStores implements IDisposable {
 		 */
 		if (this.runtime.attachState !== AttachState.Detached) {
 			localContext.emit("attaching");
-			const message = localContext.generateAttachMessage();
+			const message = this.generateAttachMessage(localContext);
 
 			this.pendingAttach.set(id, message);
 			this.submitAttachFn(message);
@@ -670,6 +688,9 @@ export class DataStores implements IDisposable {
 		return summaryBuilder.getSummaryTree();
 	}
 
+	/**
+	 * Create a summary. Used when attaching or serializing a detached container.
+	 */
 	public createSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
 		const builder = new SummaryTreeBuilder();
 		// Attaching graph of some stores can cause other stores to get bound too.
@@ -694,8 +715,8 @@ export class DataStores implements IDisposable {
 				.map(([key, value]) => {
 					let dataStoreSummary: ISummarizeResult;
 					if (value.isLoaded) {
-						const snapshot = value.generateAttachMessage().snapshot;
-						dataStoreSummary = convertToSummaryTree(snapshot, true);
+						const { attachSummary } = value.getAttachData(telemetryContext);
+						dataStoreSummary = attachSummary;
 					} else {
 						// If this data store is not yet loaded, then there should be no changes in the snapshot from
 						// which it was created as it is detached container. So just use the previous snapshot.

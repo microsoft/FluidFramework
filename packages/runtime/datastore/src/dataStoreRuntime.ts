@@ -819,6 +819,12 @@ export class FluidDataStoreRuntime
 	}
 
 	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
+		return this.getAttachSummaryAndGCData()[0];
+	}
+
+	public getAttachSummaryAndGCData(
+		telemetryContext?: ITelemetryContext,
+	): [ISummaryTreeWithStats, IGarbageCollectionData] {
 		/**
 		 * back-compat 0.59.1000 - getAttachSummary() is called when making a data store globally visible (previously
 		 * attaching state). Ideally, attachGraph() should have already be called making it locally visible. However,
@@ -882,9 +888,8 @@ export class FluidDataStoreRuntime
 		// We need to include the GC Data so remote clients can learn of this DataStore's outbound routes
 		this.updateGCNodes(gcDataBuilder);
 		const gcData = gcDataBuilder.getGCData();
-		addBlobToSummary(attachSummary, gcDataBlobKey, JSON.stringify(gcData));
 
-		return attachSummary;
+		return [attachSummary, gcData];
 	}
 
 	public submitMessage(type: DataStoreMessageType, content: any, localOpMetadata: unknown) {
@@ -910,7 +915,8 @@ export class FluidDataStoreRuntime
 	}
 
 	/**
-	 * Attach channel should only be called after the data store has been attached
+	 * Assuming this DataStore is already attached, this will make the given channel locally visible
+	 * by submitting its attach op.
 	 */
 	private makeChannelLocallyVisible(channel: IChannel): void {
 		this.verifyNotClosed();
@@ -933,13 +939,8 @@ export class FluidDataStoreRuntime
 			false /* trackState */,
 		);
 
-		//* Move to SharedObject for symmetry with DataStore case above?
-		//* That's problematic because the same IChannel.getAttachSummary is used for both
-		//* DDS and DataStore attach op, but we don't want the GC Data in the DDS summary trees
-		//* for the DataStore case.
-
 		// We need to include the channel's GC Data so remote clients can learn of this channel's outbound routes
-		const gcData = channel.getGCData(); //* fullGC?
+		const gcData = channel.getGCData(/* fullGC: */ true);
 		addBlobToSummary(summarizeResult, gcDataBlobKey, JSON.stringify(gcData));
 
 		// Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
