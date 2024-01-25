@@ -206,11 +206,11 @@ importers:
       '@fluidframework/eslint-config-fluid': ^3.3.0
       '@fluidframework/protocol-definitions': ^3.2.0-231454
       '@microsoft/api-extractor': ^7.39.1
-      '@types/jsrsasign': ^8.0.8
+      '@types/jsrsasign': ^10.5.12
       copyfiles: ^2.4.1
       eslint: ~8.50.0
       eslint-config-prettier: ~9.0.0
-      jsrsasign: ^10.5.25
+      jsrsasign: ^11.0.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
@@ -218,7 +218,7 @@ importers:
       uuid: ^9.0.0
     dependencies:
       '@fluidframework/protocol-definitions': 3.2.0-231454
-      jsrsasign: 10.9.0
+      jsrsasign: 11.0.0
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -228,7 +228,7 @@ importers:
       '@fluidframework/build-tools': 0.29.0
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i
-      '@types/jsrsasign': 8.0.13
+      '@types/jsrsasign': 10.5.12
       copyfiles: 2.4.1
       eslint: 8.50.0
       eslint-config-prettier: 9.0.0_eslint@8.50.0
@@ -7631,7 +7631,7 @@ importers:
       '@fluidframework/server-test-utils': ^3.1.0-231702
       '@fluidframework/telemetry-utils': workspace:~
       '@microsoft/api-extractor': ^7.39.1
-      '@types/jsrsasign': ^8.0.8
+      '@types/jsrsasign': ^10.5.12
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/uuid': ^9.0.2
@@ -7640,7 +7640,7 @@ importers:
       cross-env: ^7.0.3
       eslint: ~8.50.0
       events: ^3.1.0
-      jsrsasign: ^10.5.25
+      jsrsasign: ^11.0.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
@@ -7668,7 +7668,7 @@ importers:
       '@fluidframework/server-test-utils': 3.1.0-231702
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       events: 3.3.0
-      jsrsasign: 10.9.0
+      jsrsasign: 11.0.0
       url: 0.11.3
       uuid: 9.0.1
     devDependencies:
@@ -7680,7 +7680,7 @@ importers:
       '@fluidframework/local-driver-previous': /@fluidframework/local-driver/2.0.0-internal.8.0.0
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
-      '@types/jsrsasign': 8.0.13
+      '@types/jsrsasign': 10.5.12
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
@@ -8098,14 +8098,14 @@ importers:
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/tinylicious-driver-previous': npm:@fluidframework/tinylicious-driver@2.0.0-internal.8.0.0
       '@microsoft/api-extractor': ^7.39.1
-      '@types/jsrsasign': ^8.0.8
+      '@types/jsrsasign': ^10.5.12
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/uuid': ^9.0.2
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
-      jsrsasign: ^10.5.25
+      jsrsasign: ^11.0.0
       mocha: ^10.2.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
@@ -8118,7 +8118,7 @@ importers:
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/protocol-definitions': 3.2.0-231454
       '@fluidframework/routerlicious-driver': link:../routerlicious-driver
-      jsrsasign: 10.9.0
+      jsrsasign: 11.0.0
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -8130,7 +8130,7 @@ importers:
       '@fluidframework/test-tools': 1.0.195075
       '@fluidframework/tinylicious-driver-previous': /@fluidframework/tinylicious-driver/2.0.0-internal.8.0.0
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
-      '@types/jsrsasign': 8.0.13
+      '@types/jsrsasign': 10.5.12
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
@@ -9722,7 +9722,7 @@ importers:
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-runtime-utils-previous': npm:@fluidframework/test-runtime-utils@2.0.0-internal.8.0.0
       '@microsoft/api-extractor': ^7.39.1
-      '@types/jsrsasign': ^8.0.8
+      '@types/jsrsasign': ^10.5.12
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/uuid': ^9.0.2
@@ -9731,7 +9731,7 @@ importers:
       cross-env: ^7.0.3
       eslint: ~8.50.0
       events: ^3.1.0
-      jsrsasign: ^10.5.25
+      jsrsasign: ^11.0.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
@@ -9754,7 +9754,7 @@ importers:
       '@fluidframework/runtime-utils': link:../runtime-utils
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       events: 3.3.0
-      jsrsasign: 10.9.0
+      jsrsasign: 11.0.0
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -9765,7 +9765,7 @@ importers:
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/test-runtime-utils-previous': /@fluidframework/test-runtime-utils/2.0.0-internal.8.0.0
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
-      '@types/jsrsasign': 8.0.13
+      '@types/jsrsasign': 10.5.12
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
@@ -22395,8 +22395,8 @@ packages:
     resolution: {integrity: sha512-dRLjCWHYg4oaA77cxO64oO+7JwCwnIzkZPdrrC71jQmQtlhM556pwKo5bUzqvZndkVbeFLIIi+9TC40JNF5hNQ==}
     dev: true
 
-  /@types/jsrsasign/8.0.13:
-    resolution: {integrity: sha512-+0Ij59D6NXP48KkeLhPXeQKOyLjvA9CD7zacc0Svy2IWHdl62BmDeTvGSIwKaGZSoamLJOo+on1AG/wPRLsd7A==}
+  /@types/jsrsasign/10.5.12:
+    resolution: {integrity: sha512-sOA+eVnHU+FziThpMhuqs/tjFKe5gHVJKIS7g1BzhXP+e2FS8OvtzM0K3IzFxVksDOr98Gz5FJiZVxZ9uFoHhw==}
     dev: true
 
   /@types/keyv/3.1.4:
@@ -33980,6 +33980,10 @@ packages:
 
   /jsrsasign/10.9.0:
     resolution: {integrity: sha512-QWLUikj1SBJGuyGK8tjKSx3K7Y69KYJnrs/pQ1KZ6wvZIkHkWjZ1PJDpuvc1/28c1uP0KW9qn1eI1LzHQqDOwQ==}
+
+  /jsrsasign/11.0.0:
+    resolution: {integrity: sha512-BtRwVKS+5dsgPpAtzJcpo5OoWjSs1/zllSBG0+8o8/aV0Ki76m6iZwHnwnsqoTdhfFZDN1XIdcaZr5ZkP+H2gg==}
+    dev: false
 
   /jss-plugin-camel-case/10.10.0:
     resolution: {integrity: sha512-z+HETfj5IYgFxh1wJnUAU8jByI48ED+v0fuTuhKrPR+pRBYS2EDwbusU8aFOpCdYhtRc9zhN+PJ7iNE8pAWyPw==}
