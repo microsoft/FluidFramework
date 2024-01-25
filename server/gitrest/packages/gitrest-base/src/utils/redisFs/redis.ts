@@ -6,10 +6,12 @@
 import { IRedisParameters } from "@fluidframework/server-services-utils";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as IoRedis from "ioredis";
+import { RedisFsApis, executeRedisFsApiWithMetric } from "./helpers";
 
-export interface RedisParams {
+export interface RedisParams extends IRedisParameters {
 	enableHashmapRedisFs: boolean;
-	expireAfterSeconds: number;
+	enableRedisMetrics: boolean;
+	redisApiMetricsSamplingPeriod: number;
 }
 
 export interface IRedis {
@@ -30,7 +32,7 @@ export class Redis implements IRedis {
 
 	constructor(
 		private readonly client: IoRedis.default,
-		parameters?: IRedisParameters,
+		private readonly parameters?: RedisParams,
 	) {
 		if (parameters?.expireAfterSeconds) {
 			this.expireAfterSeconds = parameters.expireAfterSeconds;
@@ -83,8 +85,8 @@ export class Redis implements IRedis {
 		// If 'appendPrefixToKey' is false, we assume that the 'key' parameter with prefix is already passed in by the caller,
 		// and no additional prefix needs to be added.
 		const keyToDelete = appendPrefixToKey ? this.getKey(key) : key;
-		const result = await this.client.del(keyToDelete);
-		// The DEL API in Redis returns the number of keys that were removed.
+		const result = await this.client.unlink(keyToDelete);
+		// The UNLINK API in Redis returns the number of keys that were removed.
 		// We always call Redis DEL with one key only, so we expect a result equal to 1
 		// to indicate that the key was removed. 0 would indicate that the key does not exist.
 		return result === 1;
@@ -95,12 +97,20 @@ export class Redis implements IRedis {
 		if (keys.length === 0) {
 			return false;
 		}
-		const result = await this.client.del(...keys);
+		const result = await this.client.unlink(...keys);
 		return result === keys.length;
 	}
 
 	public async keysByPrefix(keyPrefix: string): Promise<string[]> {
-		const result = await this.client.keys(`${this.getKey(keyPrefix)}*`);
+		const result = await executeRedisFsApiWithMetric(
+			async () => this.client.keys(`${this.getKey(keyPrefix)}*`),
+			RedisFsApis.KeysByPrefix,
+			this.parameters?.enableRedisMetrics,
+			this.parameters?.redisApiMetricsSamplingPeriod,
+			{
+				keyPrefix,
+			},
+		);
 		return result;
 	}
 
@@ -122,7 +132,7 @@ export class HashMapRedis implements IRedis {
 		 */
 		private readonly hashMapKey: string,
 		private readonly client: IoRedis.default,
-		parameters?: IRedisParameters,
+		private readonly parameters?: RedisParams,
 	) {
 		if (parameters?.expireAfterSeconds) {
 			this.expireAfterSeconds = parameters.expireAfterSeconds;
@@ -174,7 +184,8 @@ export class HashMapRedis implements IRedis {
 
 	public async del(field: string): Promise<boolean> {
 		if (this.hashMapKey.startsWith(field)) {
-			return this.delAll();
+			// The deleted field is a root directory, so we need to delete the whole HashMap.
+			return this.delAll(field);
 		}
 		const result = await this.client.hdel(this.getMapKey(), this.getMapField(field));
 		// The HDEL API in Redis returns the number of keys that were removed.
@@ -183,16 +194,33 @@ export class HashMapRedis implements IRedis {
 		return result === 1;
 	}
 
-	public async delAll(): Promise<boolean> {
-		const result = await this.client.del(this.getMapKey());
-		// The DEL API in Redis returns the number of keys that were removed.
-		// We always call Redis DEL with one key only, so we expect a result equal to 1
-		// to indicate that the key was removed. 0 would indicate that the key does not exist.
-		return result === 1;
+	public async delAll(keyPrefix: string): Promise<boolean> {
+		if (this.hashMapKey.startsWith(keyPrefix)) {
+			// The key prefix matches a root directory, so we need to delete the whole HashMap.
+			const unlinkResult = await this.client.unlink(this.getMapKey());
+			// The UNLINK API in Redis returns the number of keys that were removed.
+			// We always call Redis DEL with one key only, so we expect a result equal to 1
+			// to indicate that the key was removed. 0 would indicate that the key does not exist.
+			return unlinkResult === 1;
+		}
+		const keys = await this.keysByPrefix(keyPrefix);
+		if (keys.length === 0) {
+			return false;
+		}
+		const hDelResult = await this.client.hdel(this.getMapKey(), ...keys);
+		return hDelResult === keys.length;
 	}
 
 	public async keysByPrefix(keyPrefix: string): Promise<string[]> {
-		const result = await this.client.hkeys(this.getMapKey());
+		const result = await executeRedisFsApiWithMetric(
+			async () => this.client.hkeys(this.getMapKey()),
+			RedisFsApis.HKeysByPrefix,
+			this.parameters?.enableRedisMetrics,
+			this.parameters?.redisApiMetricsSamplingPeriod,
+			{
+				keyPrefix,
+			},
+		);
 		return result.filter((field) => `${this.getMapKey()}/${field}`.startsWith(keyPrefix));
 	}
 

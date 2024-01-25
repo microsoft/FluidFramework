@@ -29,7 +29,6 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/schemaBuilderBase.js";
 import { TreeNodeSchemaIdentifier, ValueSchema } from "../../core/index.js";
-import { SchemaBuilder } from "../../domains/index.js";
 
 describe("SchemaBuilderBase", () => {
 	describe("typedTreeSchema", () => {
@@ -99,7 +98,9 @@ describe("SchemaBuilderBase", () => {
 		it("Simple", () => {
 			const schemaBuilder = new SchemaBuilderBase(FieldKinds.required, { scope: "test" });
 			const empty = schemaBuilder.object("empty", {});
-			const schema = schemaBuilder.intoSchema(SchemaBuilder.optional(empty));
+			const schema = schemaBuilder.intoSchema(
+				FlexFieldSchema.create(FieldKinds.optional, [empty]),
+			);
 
 			assert.equal(schema.nodeSchema.size, 1); // "empty"
 			assert.equal(schema.nodeSchema.get(brand("test.empty")), empty);

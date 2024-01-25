@@ -88,6 +88,9 @@ export function OpLatencyView(): React.ReactElement {
 	// Render the text conditionally
 	const renderInstructions = unsampledTelemetry !== "true";
 
+	function formatTimestamp(timestamp: number): string {
+		return new Date(timestamp).toTimeString().slice(0, 8);
+	}
 	React.useEffect(() => {
 		/**
 		 * Handlers for inbound messages.
@@ -103,7 +106,7 @@ export function OpLatencyView(): React.ReactElement {
 
 				setDurationOutboundBatchingData((currentData) => {
 					const newDataPoint = {
-						timestamp: message.data.event.timestamp,
+						timestamp: formatTimestamp(message.data.event.timestamp),
 						duration: Number(eventContents.durationOutboundBatching),
 					};
 					return {
@@ -113,7 +116,7 @@ export function OpLatencyView(): React.ReactElement {
 				});
 				setDurationNetworkData((currentData) => {
 					const newDataPoint = {
-						timestamp: message.data.event.timestamp,
+						timestamp: formatTimestamp(message.data.event.timestamp),
 						duration: Number(eventContents.durationNetwork),
 					};
 					return {
@@ -123,7 +126,7 @@ export function OpLatencyView(): React.ReactElement {
 				});
 				setDurationInboundToProcessingData((currentData) => {
 					const newDataPoint = {
-						timestamp: message.data.event.timestamp,
+						timestamp: formatTimestamp(message.data.event.timestamp),
 						duration: Number(eventContents.durationInboundToProcessing),
 					};
 					return {
@@ -165,7 +168,7 @@ export function OpLatencyView(): React.ReactElement {
 						margin={{
 							top: 15,
 							right: 30,
-							left: -15,
+							left: 5,
 							bottom: 40,
 						}}
 						legendStyle={{

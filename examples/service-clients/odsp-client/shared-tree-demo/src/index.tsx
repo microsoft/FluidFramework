@@ -88,7 +88,7 @@ async function start(): Promise<void> {
 
 		// If the app is in a `createNew` state - no itemId, and the container is detached, we attach the container.
 		// This uploads the container to the service and connects to the collaboration session.
-		itemId = await container.attach();
+		itemId = await container.attach({ filePath: "foo/bar", fileName: "shared-tree-demo" });
 
 		// The newly attached container is given a unique ID that can be used to access the container in another session
 		// eslint-disable-next-line require-atomic-updates

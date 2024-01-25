@@ -57,7 +57,7 @@
 		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.1.0",
+		"@fluidframework/protocol-definitions": "^3.2.0-231454",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/shared-summary-block": "workspace:~"
 	},
@@ -67,7 +67,7 @@
 		"@fluidframework/build-tools": "^0.29.0",
 		"@fluidframework/eslint-config-fluid": "^3.3.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@microsoft/api-extractor": "^7.38.3",
+		"@microsoft/api-extractor": "^7.39.1",
 		"@types/node": "^18.19.0",
 		"eslint": "~8.50.0",
 		"prettier": "~3.0.3",
