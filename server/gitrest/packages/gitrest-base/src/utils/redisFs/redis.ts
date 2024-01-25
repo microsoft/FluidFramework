@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { runWithRetry } from "@fluidframework/server-services-core";
 import { IRedisParameters } from "@fluidframework/server-services-utils";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as IoRedis from "ioredis";
@@ -15,14 +16,37 @@ export interface RedisParams extends IRedisParameters {
 }
 
 export interface IRedis {
+	/**
+	 * Get the value stored at the given key.
+	 */
 	get<T>(key: string): Promise<T>;
+	/**
+	 * Store the given value the given key.
+	 */
 	set<T>(key: string, value: T, expireAfterSeconds?: number): Promise<void>;
+	/**
+	 * Store the given key/value pairs.
+	 */
 	setMany<T>(
 		keyValuePairs: { key: string; value: T }[],
 		expireAfterSeconds?: number,
 	): Promise<void>;
+	/**
+	 * Check the existence of the given key.
+	 * @returns the size of the value stored at the given key. -1 if the key does not exist, 0 if the key is empty.
+	 */
+	peek(key: string): Promise<number>;
+	/**
+	 * Delete the given key. Optionally, append a prefix to the key before deleting.
+	 */
 	del(key: string, appendPrefixToKey?: boolean): Promise<boolean>;
+	/**
+	 * Delete all keys with the given prefix.
+	 */
 	delAll(keyPrefix: string): Promise<boolean>;
+	/**
+	 * Retrieve all keys with the given prefix.
+	 */
 	keysByPrefix(keyPrefix: string): Promise<string[]>;
 }
 
@@ -77,6 +101,14 @@ export class Redis implements IRedis {
 			this.set(key, value, expireAfterSeconds),
 		);
 		await Promise.all(setPs);
+	}
+
+	public async peek(key: string): Promise<number> {
+		const [exists, strlen] = await Promise.all([
+			this.client.exists(this.getKey(key)),
+			this.client.strlen(this.getKey(key)),
+		]);
+		return exists ? strlen : -1;
 	}
 
 	public async del(key: string, appendPrefixToKey = true): Promise<boolean> {
@@ -145,9 +177,15 @@ export class HashMapRedis implements IRedis {
 		client.on("error", (error) => {
 			Lumberjack.error("Redis Cache Error", undefined, error);
 		});
+
+		this.init();
 	}
 
 	public async get<T>(field: string): Promise<T> {
+		if (this.isFieldRootDirectory(field)) {
+			// Field is part of the root hashmap key, so return empty string.
+			return "" as T;
+		}
 		const stringValue = await this.client.hget(this.getMapKey(), this.getMapField(field));
 		return JSON.parse(stringValue) as T;
 	}
@@ -157,33 +195,47 @@ export class HashMapRedis implements IRedis {
 		value: T,
 		expireAfterSeconds: number = this.expireAfterSeconds,
 	): Promise<void> {
+		if (this.isFieldRootDirectory(field)) {
+			// Field is part of the root hashmap key, so do nothing.
+			return;
+		}
 		// Set values in the hash map and returns the count of set field/value pairs.
 		// However, if it's a duplicate field, it will return 0, so we can't rely on the return value to determine success.
 		await this.client.hset(this.getMapKey(), this.getMapField(field), JSON.stringify(value));
-		this.updateHashMapExpiration([field], expireAfterSeconds);
 	}
 
 	public async setMany<T>(
 		fieldValuePairs: { key: string; value: T }[],
 		expireAfterSeconds: number = this.expireAfterSeconds,
 	): Promise<void> {
+		// Filter out root directory fields, since they are not necessary fields in the HashMap.
+		// Then, map each field/value pair to array of arguments for the HSET command (f1, v1, f2, v2...).
+		const fieldValueArgs = fieldValuePairs
+			.filter(({ key: field, value }) => this.isFieldRootDirectory(field))
+			.flatMap(({ key: field, value }) => [this.getMapField(field), JSON.stringify(value)]);
+		if (fieldValueArgs.length === 0) {
+			// Don't do anything if there are no fields to set.
+			return;
+		}
 		// Set values in the hash map and returns the count of set field/value pairs.
 		// However, if it's a duplicate field, it will return 0, so we can't rely on the return value to determine success.
-		await this.client.hset(
-			this.getMapKey(),
-			...fieldValuePairs.flatMap(({ key: field, value }) => [
-				this.getMapField(field),
-				JSON.stringify(value),
-			]),
-		);
-		this.updateHashMapExpiration(
-			fieldValuePairs.map(({ key: field }) => field),
-			expireAfterSeconds,
-		);
+		await this.client.hset(this.getMapKey(), fieldValueArgs);
+	}
+
+	public async peek(field: string): Promise<number> {
+		if (this.isFieldRootDirectory(field)) {
+			// Field is part of the root hashmap key, so it exists but is empty.
+			return 0;
+		}
+		const [exists, strlen] = await Promise.all([
+			this.client.hexists(this.getMapKey(), this.getMapField(field)),
+			this.client.hstrlen(this.getMapKey(), this.getMapField(field)),
+		]);
+		return exists ? strlen : -1;
 	}
 
 	public async del(field: string): Promise<boolean> {
-		if (this.hashMapKey.startsWith(field)) {
+		if (this.isFieldRootDirectory(field)) {
 			// The deleted field is a root directory, so we need to delete the whole HashMap.
 			return this.delAll(field);
 		}
@@ -195,7 +247,7 @@ export class HashMapRedis implements IRedis {
 	}
 
 	public async delAll(keyPrefix: string): Promise<boolean> {
-		if (this.hashMapKey.startsWith(keyPrefix)) {
+		if (this.isFieldRootDirectory(keyPrefix)) {
 			// The key prefix matches a root directory, so we need to delete the whole HashMap.
 			const unlinkResult = await this.client.unlink(this.getMapKey());
 			// The UNLINK API in Redis returns the number of keys that were removed.
@@ -239,19 +291,32 @@ export class HashMapRedis implements IRedis {
 	}
 
 	/**
-	 * Asynchronously updates the HashMap key's expiration time when the field matching mapKey is set.
+	 * Initializes the hashmap if it doesn't exist, and sets the expiration on the hashmap key.
 	 */
-	private updateHashMapExpiration(
-		fields: string[],
-		expireAfterSeconds: number = this.expireAfterSeconds,
-	) {
-		if (new Set(fields).has(this.hashMapKey)) {
-			// We need to set the expiration of the HashMap key such that it is deleted after the correct expiration time.
-			// However, we only want to do this _once_, so we set the expiration when the field matching the hashmap key is set.
-			// This means that the expiration will be set when the repository directory is created, then never again.
-			this.client.expire(this.getMapKey(), expireAfterSeconds).catch((error) => {
-				Lumberjack.error("Failed to set initial map key with expiration", undefined, error);
-			});
-		}
+	private init(): void {
+		const initializeHashMapIfNotExists = async (): Promise<void> => {
+			const exists = await this.client.exists(this.getMapKey());
+			if (!exists) {
+				// Set a blank field/value pair to initialize the hashmap.
+				await this.client.hset(this.getMapKey(), "", "");
+				await this.client.expire(this.getMapKey(), this.expireAfterSeconds);
+			}
+		};
+		// Setting expiration on the hashmap key is vital, so we should retry it on failure
+		runWithRetry(
+			async () => initializeHashMapIfNotExists(),
+			"InitializeRedisFsHashMap",
+			3,
+			1000,
+		).catch((error) => {
+			Lumberjack.error("Failed to initialize hashmap with expiration", undefined, error);
+		});
+	}
+
+	/**
+	 * Checks if the provided field is a root directory field contained in the hashmap key.
+	 */
+	private isFieldRootDirectory(field: string): boolean {
+		return this.hashMapKey.startsWith(field);
 	}
 }

@@ -362,8 +362,8 @@ export class RedisFs implements IFileSystemPromises {
 	public async stat(filepath: PathLike, options?: StatOptions): Promise<Stats | BigIntStats>;
 	public async stat(filepath: PathLike, options?: any): Promise<Stats | BigIntStats> {
 		const filepathString = filepath.toString();
-		const data = await executeRedisFsApiWithMetric(
-			async () => this.redisFsClient.get<string | Buffer>(filepathString),
+		const dataLength = await executeRedisFsApiWithMetric(
+			async () => this.redisFsClient.peek(filepathString),
 			RedisFsApis.Stat,
 			this.redisFsConfig.enableRedisFsMetrics,
 			this.redisFsConfig.redisApiMetricsSamplingPeriod,
@@ -373,11 +373,11 @@ export class RedisFs implements IFileSystemPromises {
 			true,
 		);
 
-		if (data === null) {
+		if (dataLength === null) {
 			throw new RedisFsError(SystemErrors.ENOENT, filepath.toString());
 		}
 
-		const fsEntityType = data === "" ? RedisFSConstants.directory : RedisFSConstants.file;
+		const fsEntityType = dataLength === 0 ? RedisFSConstants.directory : RedisFSConstants.file;
 
 		return getStats(fsEntityType);
 	}
