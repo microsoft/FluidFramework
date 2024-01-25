@@ -62,6 +62,7 @@ gitrest:
     ephemeralfilesystem:
       name: redisFs
     persistLatestFullSummary: false
+    persistLatestFullEphemeralSummary: false
     repoPerDocEnabled: false
     enableRepositoryManagerMetrics: false
     apiMetricsSamplingPeriod: 100
