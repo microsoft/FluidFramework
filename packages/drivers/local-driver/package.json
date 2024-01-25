@@ -133,7 +133,7 @@
 		"@fluidframework/server-test-utils": "^3.1.0-231702",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"events": "^3.1.0",
-		"jsrsasign": "^10.5.25",
+		"jsrsasign": "^11.0.0",
 		"url": "^0.11.0",
 		"uuid": "^9.0.0"
 	},
@@ -146,7 +146,7 @@
 		"@fluidframework/local-driver-previous": "npm:@fluidframework/local-driver@2.0.0-internal.8.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@microsoft/api-extractor": "^7.39.1",
-		"@types/jsrsasign": "^8.0.8",
+		"@types/jsrsasign": "^10.5.12",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
 		"@types/uuid": "^9.0.2",
