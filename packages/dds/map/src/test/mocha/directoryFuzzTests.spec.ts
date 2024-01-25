@@ -55,11 +55,16 @@ interface DeleteSubDirectory {
 	name: string;
 }
 
+interface IterateSubdirectories {
+	type: "iterateSubDirectories";
+	path: string;
+}
+
 type KeyOperation = SetKey | DeleteKey | ClearKeys;
 
 type SubDirectoryOperation = CreateSubDirectory | DeleteSubDirectory;
 
-type Operation = KeyOperation | SubDirectoryOperation;
+type Operation = KeyOperation | SubDirectoryOperation | IterateSubdirectories;
 
 interface OperationGenerationConfig {
 	validateInterval: number;
@@ -71,6 +76,7 @@ interface OperationGenerationConfig {
 	clearKeysWeight?: number;
 	createSubDirWeight?: number;
 	deleteSubDirWeight?: number;
+	iterateSubDirsWeight?: number;
 }
 
 const defaultOptions: Required<OperationGenerationConfig> = {
@@ -83,6 +89,7 @@ const defaultOptions: Required<OperationGenerationConfig> = {
 	clearKeysWeight: 1,
 	createSubDirWeight: 2,
 	deleteSubDirWeight: 1,
+	iterateSubDirsWeight: 3,
 };
 
 function makeOperationGenerator(
@@ -107,6 +114,25 @@ function makeOperationGenerator(
 			) {
 				dir = random.pick<IDirectory>(subDirectories);
 				continue;
+			}
+			const subDir = random.pick<IDirectory | undefined>([undefined, ...subDirectories]);
+			if (subDir === undefined) {
+				break;
+			} else {
+				dir = subDir;
+			}
+		}
+		return dir.absolutePath;
+	}
+
+	function pickAbsolutePathForIterationOp(state: FuzzTestState): string {
+		const { random, client } = state;
+		let dir: IDirectory = client.channel;
+		for (;;) {
+			assert(dir !== undefined, "Directory should be defined");
+			const subDirectories: IDirectory[] = [];
+			for (const [_, b] of dir.subdirectories()) {
+				subDirectories.push(b);
 			}
 			const subDir = random.pick<IDirectory | undefined>([undefined, ...subDirectories]);
 			if (subDir === undefined) {
@@ -190,6 +216,17 @@ function makeOperationGenerator(
 		};
 	}
 
+	async function iterateSubDirectories(state: FuzzTestState): Promise<IterateSubdirectories> {
+		const { client } = state;
+		const path = pickAbsolutePathForIterationOp(state);
+		const parentDir = client.channel.getWorkingDirectory(path);
+		assert(parentDir !== undefined, "parent dir should be defined");
+		return {
+			type: "iterateSubDirectories",
+			path,
+		};
+	}
+
 	async function setKey(state: FuzzTestState): Promise<SetKey> {
 		const { random } = state;
 		return {
@@ -238,6 +275,7 @@ function makeOperationGenerator(
 			options.clearKeysWeight,
 			(state: FuzzTestState): boolean => state.client.channel.size > 0,
 		],
+		[iterateSubDirectories, options.iterateSubDirsWeight],
 	]);
 }
 
@@ -308,6 +346,11 @@ function makeReducer(loggingInfo?: LoggingInfo): AsyncReducer<Operation, FuzzTes
 			assert(dir);
 			dir.delete(key);
 		},
+		iterateSubDirectories: async ({ client }, { path }) => {
+			const dir = client.channel.getWorkingDirectory(path);
+			assert(dir);
+			dir.subdirectories();
+		},
 	});
 
 	return withLogging(reducer);
@@ -321,6 +364,7 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 		createSubDirWeight: 2,
 		deleteSubDirWeight: 2,
 		maxSubDirectoryChild: 2,
+		iterateSubDirsWeight: 3,
 		subDirectoryNamePool: ["dir1", "dir2"],
 		validateInterval: defaultOptions.validateInterval,
 	};
@@ -366,10 +410,11 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 			},
 			defaultTestCount: 200,
 			// The seeds below fail only when rebaseProbability is non-zero ADO:6044
+			/*
 			skip: [
 				4, 6, 8, 19, 29, 48, 82, 83, 87, 94, 95, 110, 118, 123, 138, 143, 154, 159, 180,
 				181, 188, 190, 195,
-			],
+			], */
 			// Uncomment this line to replay a specific seed from its failure file:
 			// replay: 21,
 			saveFailures: {
@@ -426,7 +471,7 @@ describe("SharedDirectory fuzz", () => {
 			},
 			defaultTestCount: 200,
 			// The seeds below fail only when rebaseProbability is non-zero ADO:6044
-			skip: [30, 50, 133, 137, 144, 177, 195, 196],
+			// skip: [30, 50, 133, 137, 144, 177, 195, 196],
 			// Uncomment this line to replay a specific seed from its failure file:
 			// replay: 0,
 			saveFailures: {
