@@ -376,25 +376,33 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		);
 	}
 
-	private getBlobHandle(id: string): BlobHandle {
+	private getBlobHandle(localId: string, storageId: string | undefined): BlobHandle {
 		assert(
-			this.redirectTable.has(id) || this.pendingBlobs.has(id),
+			this.redirectTable.has(localId) || this.pendingBlobs.has(localId),
 			0x384 /* requesting handle for unknown blob */,
 		);
-		const pending = this.pendingBlobs.get(id);
+		const pending = this.pendingBlobs.get(localId);
 		const callback = pending
 			? () => {
 					pending.attached = true;
 					this.emit("blobAttached", pending);
-					this.deletePendingBlobMaybe(id);
+					this.deletePendingBlobMaybe(localId);
 			  }
 			: undefined;
-		return new BlobHandle(
-			`${BlobManager.basePath}/${id}`,
-			this.routeContext,
-			async () => this.getBlob(id),
-			callback,
-		);
+
+		return storageId
+			? new BlobHandle(
+					`${BlobManager.basePath}/${storageId}`,
+					this.routeContext,
+					async () => this.getBlob(storageId),
+					callback,
+			  )
+			: new BlobHandle(
+					`${BlobManager.basePath}/${localId}`,
+					this.routeContext,
+					async () => this.getBlob(localId),
+					callback,
+			  );
 	}
 
 	private async createBlobDetached(
@@ -404,7 +412,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		// The 'IDocumentStorageService.createBlob()' call below will respond with a localId.
 		const response = await this.getStorage().createBlob(blob);
 		this.setRedirection(response.id, undefined);
-		return this.getBlobHandle(response.id);
+		return this.getBlobHandle(response.id, undefined);
 	}
 
 	public async createBlob(
@@ -545,7 +553,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			// an existing blob, we don't have to wait for the op to be ack'd since this step has already
 			// happened before and so, the server won't delete it.
 			this.setRedirection(localId, response.id);
-			entry.handleP.resolve(this.getBlobHandle(localId));
+			entry.handleP.resolve(this.getBlobHandle(localId, response.id));
 			this.deletePendingBlobMaybe(localId);
 		} else {
 			// If there is already an op for this storage ID, append the local ID to the list. Once any op for
@@ -622,7 +630,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					);
 					this.setRedirection(pendingLocalId, blobId);
 					entry.acked = true;
-					entry.handleP.resolve(this.getBlobHandle(blobId));
+					entry.handleP.resolve(this.getBlobHandle(pendingLocalId, blobId));
 					this.deletePendingBlobMaybe(pendingLocalId);
 				});
 				this.opsInFlight.delete(blobId);
@@ -630,7 +638,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			const localEntry = this.pendingBlobs.get(localId);
 			if (localEntry) {
 				localEntry.acked = true;
-				localEntry.handleP.resolve(this.getBlobHandle(localId));
+				localEntry.handleP.resolve(this.getBlobHandle(localId, undefined));
 				this.deletePendingBlobMaybe(localId);
 			}
 		}
@@ -900,7 +908,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					for (const [id, entry] of this.pendingBlobs) {
 						if (!localBlobs.has(entry)) {
 							localBlobs.add(entry);
-							entry.handleP.resolve(this.getBlobHandle(id));
+							entry.handleP.resolve(this.getBlobHandle(id, undefined));
 							attachBlobsP.push(
 								new Promise<void>((resolve, reject) => {
 									stopBlobAttachingSignal?.addEventListener(
