@@ -48,6 +48,7 @@ import { makeLZ4Encoder } from "../../lz4Encoder";
 function makeMockAudience(clientIds: string[]): IAudience {
 	const clients = new Map<string, IClient>();
 	for (const [index, clientId] of clientIds.entries()) {
+		// eslint-disable-next-line unicorn/prefer-code-point
 		const stringId = String.fromCharCode(index + 65);
 		const name = stringId.repeat(10);
 		const userId = `${name}@microsoft.com`;
@@ -74,7 +75,7 @@ function makeMockAudience(clientIds: string[]): IAudience {
 }
 
 interface PropertySet {
-	[name: string]: any;
+	[name: string]: unknown;
 }
 
 interface Client {
@@ -216,7 +217,7 @@ function makeOperationGenerator(
 		[annotateRange, 1, hasNonzeroLength],
 	]);
 
-	const clientOperationGenerator = (state: FuzzTestState) =>
+	const clientOperationGenerator = (state: FuzzTestState): Operation | typeof done =>
 		clientBaseOperationGenerator({
 			...state,
 			sharedString: state.random.pick(state.clients).sharedString,
@@ -252,6 +253,7 @@ function createSharedString(
 			const { deltaManager } = dataStoreRuntime;
 			const sharedString = new SharedString(
 				dataStoreRuntime,
+				// eslint-disable-next-line unicorn/prefer-code-point
 				String.fromCharCode(index + 65),
 				SharedStringFactory.Attributes,
 			);
@@ -267,7 +269,7 @@ function createSharedString(
 					message.timestamp = getTimestamp(opIndex);
 					deltaManager.emit("op", message);
 				});
-				dataStoreRuntime.getAudience = () => audience;
+				dataStoreRuntime.getAudience = (): IAudience => audience;
 			}
 
 			const containerRuntime =
@@ -352,7 +354,7 @@ function spyOnOperations(baseGenerator: Generator<Operation, FuzzTestState>): {
 	operations: Operation[];
 } {
 	const operations: Operation[] = [];
-	const generator = (state: FuzzTestState) => {
+	const generator = (state: FuzzTestState): Operation | typeof done => {
 		const operation = baseGenerator(state);
 		if (operation !== done) {
 			operations.push(operation);
@@ -367,6 +369,7 @@ function spyOnOperations(baseGenerator: Generator<Operation, FuzzTestState>): {
  * alternate type.
  */
 type JsonDeserializedTypeWith<T> =
+	// eslint-disable-next-line @rushstack/no-new-null
 	| null
 	| boolean
 	| number
@@ -408,7 +411,8 @@ type JsonDeserialized<T, TReplaced = never> = /* test for 'any' */ boolean exten
 	? /* 'any' => */ JsonDeserializedTypeWith<TReplaced>
 	: /* test for 'unknown' */ unknown extends T
 	? /* 'unknown' => */ JsonDeserializedTypeWith<TReplaced>
-	: /* test for Jsonable primitive types */ T extends null | boolean | number | string | TReplaced
+	: // eslint-disable-next-line @rushstack/no-new-null
+	/* test for Jsonable primitive types */ T extends null | boolean | number | string | TReplaced
 	? /* primitive types => */ T
 	: // eslint-disable-next-line @typescript-eslint/ban-types
 	/* test for not a function */ Extract<T, Function> extends never
@@ -434,11 +438,11 @@ type JsonDeserialized<T, TReplaced = never> = /* test for 'any' */ boolean exten
 	: /* function => */ never;
 
 function readJson<T>(filepath: string): JsonDeserialized<T> {
-	return JSON.parse(readFileSync(filepath, { encoding: "utf-8" })) as JsonDeserialized<T>;
+	return JSON.parse(readFileSync(filepath, { encoding: "utf8" })) as JsonDeserialized<T>;
 }
 
-function writeJson<T>(filepath: string, content: Jsonable<T>) {
-	writeFileSync(filepath, JSON.stringify(content, undefined, 4), { encoding: "utf-8" });
+function writeJson<T>(filepath: string, content: Jsonable<T>): void {
+	writeFileSync(filepath, JSON.stringify(content, undefined, 4), { encoding: "utf8" });
 }
 
 const validateInterval = 10;
@@ -514,6 +518,7 @@ const summaryFromState = async (state: FuzzTestState): Promise<SerializableISumm
 	// KLUDGE: For now, since attribution info isn't embedded at a proper location in the summary tree, just
 	// add a property to the root so that its size is reported
 	if (state.attributor && state.serializer) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 		(summary as any).attribution = state.serializer.encode(state.attributor);
 	}
 	assertSerializableSummary(summary);
@@ -521,7 +526,9 @@ const summaryFromState = async (state: FuzzTestState): Promise<SerializableISumm
 };
 
 const noopEncoder = {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	encode: (x: any): any => x,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	decode: (x: any): any => x,
 };
 
@@ -533,13 +540,13 @@ class DataTable<T> {
 		this.rows.set(name, data);
 	}
 
-	public log(dataToString: (t: T) => string = (t) => `${t}`): void {
+	public log(dataToString: (t: T) => string = (t): string => `${t}`): void {
 		const namePaddingLength =
 			1 + Math.max(...Array.from(this.rows.keys(), (docName) => docName.length));
 		const rowStrings = new Map<string, string[]>();
 		const paddingByColumn = this.columnNames.map((name) => name.length);
 		for (const [name, data] of this.rows.entries()) {
-			const dataStrings = data.map(dataToString);
+			const dataStrings = data.map((entry: T) => dataToString(entry));
 			rowStrings.set(name, dataStrings);
 			for (const [i, s] of dataStrings.entries()) {
 				paddingByColumn[i] = Math.max(paddingByColumn[i], s.length);
@@ -566,7 +573,8 @@ class DataTable<T> {
 	}
 }
 
-const getSummaryLength = (summary: ISummaryTree) => formatNumber(JSON.stringify(summary).length);
+const getSummaryLength = (summary: ISummaryTree): string =>
+	formatNumber(JSON.stringify(summary).length);
 
 describe("SharedString Attribution", () => {
 	/**
@@ -666,7 +674,8 @@ describe("SharedString Attribution", () => {
 
 			const { generator, operations } = spyOnOperations(attributionlessGenerator);
 			createSharedString(makeRandom(0), generator);
-			writeJson(paths.operations, operations);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
+			writeJson(paths.operations, operations as any);
 
 			await Promise.all(
 				dataGenerators.map(async ({ filename, factory }) => {
