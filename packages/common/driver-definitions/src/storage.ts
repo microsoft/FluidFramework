@@ -310,7 +310,7 @@ export interface IDocumentDeltaConnection
 	 */
 	// TODO: Use something other than `any`.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	submitSignal(content: any, targetClientId?: string): void;
+	submitSignal(content: unknown, targetClientId?: string): void;
 }
 
 /**

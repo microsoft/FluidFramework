@@ -248,7 +248,7 @@ export class DocumentDeltaConnection
 		return this.details.serviceConfiguration;
 	}
 
-	private checkNotDisposed() {
+	protected checkNotDisposed() {
 		assert(!this.disposed, 0x20c /* "connection disposed" */);
 	}
 
@@ -308,7 +308,7 @@ export class DocumentDeltaConnection
 		return this.details.initialClients;
 	}
 
-	protected emitMessages(type: string, messages: IDocumentMessage[][]) {
+	protected emitMessages(type: string, messages: unknown) {
 		// Although the implementation here disconnects the socket and does not reuse it, other subclasses
 		// (e.g. OdspDocumentDeltaConnection) may reuse the socket.  In these cases, we need to avoid emitting
 		// on the still-live socket.
@@ -333,7 +333,7 @@ export class DocumentDeltaConnection
 	 * @param content - Content of the signal.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	public submitSignal(content: IDocumentMessage, targetClientId?: string): void {
+	public submitSignal(content: unknown, targetClientId?: string): void {
 		this.checkNotDisposed();
 
 		if (targetClientId && this.details.supportedFeatures?.submit_signals_v2 !== true) {

@@ -1027,7 +1027,7 @@ export function configureWebSocketServices(
 		// Message sent when a new signal is submitted to the router
 		socket.on(
 			"submitSignal",
-			(clientId: string, contentBatches: (IDocumentMessage | IDocumentMessage[])[]) => {
+			(clientId: string, contentBatches: unknown[], targetClientId?: string) => {
 				// Verify the user has subscription to the room.
 				const room = roomMap.get(clientId);
 				if (!room) {
@@ -1077,6 +1077,7 @@ export function configureWebSocketServices(
 							const signalMessage: ISignalMessage = {
 								clientId,
 								content,
+                                targetClientId,
 							};
 
 							socket.emitToRoom(getRoomId(room), "signal", signalMessage);

@@ -60,7 +60,7 @@ export class MockDocumentDeltaConnection
 	constructor(
 		public readonly clientId: string,
 		private readonly submitHandler?: (messages: IDocumentMessage[]) => void,
-		private readonly submitSignalHandler?: (message: any) => void,
+		private readonly submitSignalHandler?: (message: unknown) => void,
 	) {
 		super();
 	}
@@ -71,7 +71,7 @@ export class MockDocumentDeltaConnection
 		}
 	}
 
-	public submitSignal(message: any): void {
+	public submitSignal(message: unknown): void {
 		if (this.submitSignalHandler !== undefined) {
 			this.submitSignalHandler(message);
 		}

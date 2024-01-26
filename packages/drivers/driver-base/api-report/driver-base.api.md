@@ -26,6 +26,8 @@ export class DocumentDeltaConnection extends EventEmitterWithErrorHandling<IDocu
     protected constructor(socket: Socket, documentId: string, logger: ITelemetryLoggerExt, enableLongPollingDowngrades?: boolean, connectionId?: string | undefined);
     // (undocumented)
     protected addTrackedListener(event: string, listener: (...args: any[]) => void): void;
+    // (undocumented)
+    protected checkNotDisposed(): void;
     checkpointSequenceNumber: number | undefined;
     get claims(): ITokenClaims;
     get clientId(): string;

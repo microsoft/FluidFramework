@@ -10,6 +10,7 @@ import {
 	IDocumentMessage,
 	NackErrorType,
 } from "@fluidframework/protocol-definitions";
+import { UsageError } from "@fluidframework/driver-utils";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { LocalWebSocketServer } from "@fluidframework/server-local-server";
 import { IWebSocketServer } from "@fluidframework/server-services-core";
@@ -79,9 +80,18 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 
 	/**
 	 * Submits a new signal to the server
+	 *
+	 * @param content - Content of the signal.
+	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	public submitSignal(message: any): void {
-		this.emitMessages("submitSignal", [[message]]);
+	public submitSignal(content: unknown, targetClientId?: string): void {
+		this.checkNotDisposed();
+
+		if (targetClientId && this.details.supportedFeatures?.submit_signals_v2 !== true) {
+			throw new UsageError("Sending signals to specific client ids is not supported.");
+		}
+
+		this.emitMessages("submitSignal", [[content]]);
 	}
 
 	/**

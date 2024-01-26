@@ -744,7 +744,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	 * @param content - Content of the signal.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	public submitSignal(content: IDocumentMessage, targetClientId?: string): void {
+	public submitSignal(content: unknown, targetClientId?: string): void {
 		const signal: ISentSignalMessage = {
 			content,
 			targetClientId,
