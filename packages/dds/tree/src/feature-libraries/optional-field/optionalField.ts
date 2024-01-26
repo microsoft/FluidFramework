@@ -162,26 +162,32 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		crossFieldManager: CrossFieldManager,
 		revisionMetadata: RevisionMetadataSource,
 	): OptionalChangeset => {
-		const earliestReservedDetachId: RegisterId | undefined =
-			tryWithIntention(change1.reservedDetachId, revision1, revisionMetadata) ??
-			tryWithIntention(change2.reservedDetachId, revision2, revisionMetadata);
-
 		const inputContext = tryInferInputContext(change1) ?? tryInferInputContext(change2);
-
 		const intention1 = getIntention(revision1, revisionMetadata);
 		const intention2 = getIntention(revision2, revisionMetadata);
+
+		const earliestReservedDetachId: RegisterId | undefined =
+			withRevisionOrUndefined(change1.reservedDetachId, intention1) ??
+			withRevisionOrUndefined(change2.reservedDetachId, intention2);
+
 		const { srcToDst, dstToSrc } = getBidirectionalMaps(change1.moves, intention1);
-		for (const [src, dst, _target] of change2.moves) {
+		for (const [src, dst, target] of change2.moves) {
 			const srcWithRevision = withRevision(src, intention2);
 			const dstWithRevision = withRevision(dst, intention2);
 			const originalSrc = dstToSrc.get(srcWithRevision);
-			srcToDst.set(originalSrc ?? srcWithRevision, dstWithRevision);
+			if (originalSrc !== undefined) {
+				const entry = srcToDst.get(originalSrc);
+				assert(entry !== undefined, "There should be a corresponding entry");
+				entry[0] = dstWithRevision;
+			} else {
+				srcToDst.set(srcWithRevision, [dstWithRevision, target]);
+			}
 		}
 
 		const composedMoves: OptionalChangeset["moves"] = [];
-		for (const [src, dst] of srcToDst.entries()) {
+		for (const [src, [dst, target]] of srcToDst.entries()) {
 			// TODO: Targeting
-			composedMoves.push([src, dst, "nodeTargeting"]);
+			composedMoves.push([src, dst, target]);
 		}
 
 		const childChanges2ByOriginalId = new RegisterMap<NodeChangeset>();
@@ -416,55 +422,27 @@ function getBidirectionalMaps(
 	moves: OptionalChangeset["moves"],
 	revision: RevisionTag | undefined,
 ): {
-	srcToDst: RegisterMap<RegisterId>;
+	srcToDst: RegisterMap<[dst: RegisterId, target: "nodeTargeting" | "cellTargeting"]>;
 	dstToSrc: RegisterMap<RegisterId>;
 } {
-	const srcToDst = new RegisterMap<RegisterId>();
+	const srcToDst = new RegisterMap<
+		[dst: RegisterId, target: "nodeTargeting" | "cellTargeting"]
+	>();
 	const dstToSrc = new RegisterMap<RegisterId>();
-	for (const [src, dst, _target] of moves) {
+	for (const [src, dst, target] of moves) {
 		const srcWithRevision = withRevision(src, revision);
 		const dstWithRevision = withRevision(dst, revision);
-		srcToDst.set(srcWithRevision, dstWithRevision);
+		srcToDst.set(srcWithRevision, [dstWithRevision, target]);
 		dstToSrc.set(dstWithRevision, srcWithRevision);
 	}
 	return { srcToDst, dstToSrc };
 }
 
-function getMovedIds(change1: OptionalChangeset, change2: OptionalChangeset): Set<RegisterId> {
-	const sourceIds = new Set<RegisterId>();
-	const destinationIds = new Set<RegisterId>();
-	for (const [src, dst, _kind] of change1.moves) {
-		sourceIds.add(src);
-		destinationIds.add(dst);
-	}
-
-	for (const [src, _dst, _kind] of change2.moves) {
-		if (!destinationIds.has(src)) {
-			sourceIds.add(src);
-		}
-	}
-
-	return sourceIds;
-}
-
-function tryWithIntention(
+function withRevisionOrUndefined(
 	id: RegisterId | undefined,
 	revision: RevisionTag | undefined,
-	revisionMetadata: RevisionMetadataSource,
 ): RegisterId | undefined {
-	return id !== undefined ? withIntention(id, revision, revisionMetadata) : undefined;
-}
-
-function withIntention(
-	id: RegisterId,
-	revision: RevisionTag | undefined,
-	revisionMetadata: RevisionMetadataSource,
-): RegisterId {
-	if (id === "self") {
-		return id;
-	}
-	const intention = getIntention(id.revision ?? revision, revisionMetadata);
-	return { revision: intention, localId: id.localId };
+	return id !== undefined ? withRevision(id, revision) : undefined;
 }
 
 function withRevision(id: RegisterId, revision: RevisionTag | undefined): RegisterId {
