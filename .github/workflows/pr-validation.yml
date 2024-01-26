@@ -6,6 +6,9 @@ on:
       - main
       - release/*
 
+permissions:
+  pull-requests: write
+
 jobs:
   validate-codeowners:
     name: Validate CODEOWNERS
