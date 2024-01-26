@@ -168,19 +168,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		const inputContext = tryInferInputContext(change1) ?? tryInferInputContext(change2);
 
-		/**
-		 * Map1 from input register to output register
-		 * Set map based on change1
-		 * Get map2 from change1 output to change1 input register
-		 * For move(src, dst) in change2
-		 * - Map1[map2[src] ?? src] = dst
-		 *
-		 * Remap change2's changes using map2
-		 * For each field in union of change1's changes, change2's remapped changes, compose
-		 */
-
-		// TODO: Should inline intentions
-
 		const intention1 = getIntention(revision1, revisionMetadata);
 		const intention2 = getIntention(revision2, revisionMetadata);
 		const { srcToDst, dstToSrc } = getBidirectionalMaps(change1.moves, intention1);
