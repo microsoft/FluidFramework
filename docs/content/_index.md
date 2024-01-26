@@ -282,7 +282,7 @@ summary: "An open-source client technology stack that enables real-time collabor
                                         <h2>SharePoint Embedded</h2>
                                     </div>
                                     <div>
-                                        <p>Microsoft SharePoint Embedded is a cloud-based file and document management system suitable for use in any application. It is a new API-only solution which enables app developers to harness the power of the Microsoft 365 file and document storage platform for any app, and is suitable for enterprises building line of business applications and ISVs building multi-tenant applications.</p>
+                                        <p>Mock change. Microsoft SharePoint Embedded is a cloud-based file and document management system suitable for use in any application. It is a new API-only solution which enables app developers to harness the power of the Microsoft 365 file and document storage platform for any app, and is suitable for enterprises building line of business applications and ISVs building multi-tenant applications.</p>
                                     </div>
                                     <div>
                                         <a class="cta link-button btn-info get-started" style="background-color: #17a2b8 !important; text-decoration: none;" href="https://learn.microsoft.com/en-us/sharepoint/dev/embedded/overview"><small>Learn more about SharePoint Embedded</small></a>
