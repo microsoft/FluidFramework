@@ -398,10 +398,7 @@ export interface ISummaryTreeWithStats {
 // @public
 export interface ITelemetryContext {
     get(prefix: string, property: string): TelemetryEventPropertyTypeExt;
-    push(prefix: string, property: string, value: string | number | boolean | undefined | {
-        [key: string]: // Flat objects can have the same properties as the event itself
-        string | number | boolean | undefined | (string | number | boolean)[];
-    }): void;
+    push(prefix: string, property: string, value: TelemetryEventPropertyTypeExt): void;
     serialize(): string;
     set(prefix: string, property: string, value: TelemetryEventPropertyTypeExt): void;
     setMultiple(prefix: string, property: string, values: Record<string, TelemetryEventPropertyTypeExt>): void;

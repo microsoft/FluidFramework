@@ -396,10 +396,7 @@ export enum TelemetryDataTag {
 export type TelemetryEventCategory = "generic" | "error" | "performance";
 
 // @public
-export type TelemetryEventPropertyTypeExt = string | number | boolean | undefined | (string | number | boolean | undefined | {
-    [key: string]: // Flat objects can have the same properties as the event itself
-    string | number | boolean | undefined | (string | number | boolean)[];
-})[] | {
+export type TelemetryEventPropertyTypeExt = string | number | boolean | undefined | (string | number | boolean)[] | {
     [key: string]: // Flat objects can have the same properties as the event itself
     string | number | boolean | undefined | (string | number | boolean)[];
 };

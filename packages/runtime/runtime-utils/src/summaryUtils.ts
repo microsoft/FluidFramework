@@ -391,26 +391,14 @@ export class TelemetryContext implements ITelemetryContext {
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.push}
 	 */
-	push(
-		prefix: string,
-		property: string,
-		value:
-			| string
-			| number
-			| boolean
-			| undefined
-			| {
-					[key: string]: // Flat objects can have the same properties as the event itself
-					string | number | boolean | undefined | (string | number | boolean)[];
-			  },
-	): void {
+	push(prefix: string, property: string, value: TelemetryEventPropertyTypeExt): void {
 		const prevValue = this.telemetry.get(`${prefix}${property}`);
 		if (prevValue === undefined) {
-			this.telemetry.set(`${prefix}${property}`, [value]);
+			this.telemetry.set(`${prefix}${property}`, [value] as any);
 		} else if (Array.isArray(prevValue)) {
-			prevValue.push(value);
+			prevValue.push(value as any);
 		} else {
-			this.telemetry.set(`${prefix}${property}`, [prevValue, value]);
+			this.telemetry.set(`${prefix}${property}`, [prevValue as any, value as any]);
 		}
 	}
 

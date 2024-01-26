@@ -336,19 +336,7 @@ export interface ITelemetryContext {
 	 * @param value - value to attribute to this summary telemetry data. It should be array which
 	 * would be added to previously added items.
 	 */
-	push(
-		prefix: string,
-		property: string,
-		value:
-			| string
-			| number
-			| boolean
-			| undefined
-			| {
-					[key: string]: // Flat objects can have the same properties as the event itself
-					string | number | boolean | undefined | (string | number | boolean)[];
-			  },
-	): void;
+	push(prefix: string, property: string, value: TelemetryEventPropertyTypeExt): void;
 
 	/**
 	 * Sets multiple values for telemetry data being tracked.
