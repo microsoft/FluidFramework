@@ -1,8 +1,9 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
 import { stringToBuffer } from "@fluid-internal/client-utils";
@@ -858,7 +859,7 @@ describeCompat("GC inactive nodes tests", "2.0.0-rc.1.0.0", (getTestObjectProvid
 			return [dataObject2._root, dataObject2.handle];
 		};
 		[[newDDSFn, "DDS"] as const, [newDataStoreFn, "DataStore"] as const].forEach(
-			([fn, type]) => {
+			([newDirectoryFn, type]) => {
 				it(`Reviving an InactiveObject via [${type}] Attach Op clears Inactive state immediately in interactive client (but not for its subtree)`, async () => {
 					const container1 = mainContainer;
 					const { summarizer: summarizer1 } = await createSummarizer(
@@ -925,7 +926,8 @@ describeCompat("GC inactive nodes tests", "2.0.0-rc.1.0.0", (getTestObjectProvid
 						defaultDataObject3._context.IFluidHandleContext, // yields the ContaineRuntime's handleContext
 						idA,
 					);
-					const [newDirectory_3, handleToAttach_3] = await fn(defaultDataObject3);
+					const [newDirectory_3, handleToAttach_3] =
+						await newDirectoryFn(defaultDataObject3);
 					newDirectory_3.set("A", manufacturedHandleA_3);
 					defaultDataObject3._root.set("NewDirectory", handleToAttach_3);
 					await provider.ensureSynchronized();

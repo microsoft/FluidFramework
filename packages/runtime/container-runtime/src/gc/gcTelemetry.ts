@@ -343,6 +343,8 @@ export class GCTelemetryTracker {
 			}
 
 			if (missingExplicitRoutes.length > 0) {
+				// Send as Generic not Error since there are known corner cases where this will fire.
+				// E.g. If an old client re-references a node via an attach op (that doesn't include GC Data)
 				logger.sendTelemetryEvent({
 					eventName: "gcUnknownOutboundReferences",
 					...tagCodeArtifacts({
