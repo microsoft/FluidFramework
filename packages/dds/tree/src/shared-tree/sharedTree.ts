@@ -501,8 +501,18 @@ export class TrySchematizeTreeView<in out TRootSchema extends ImplicitFieldSchem
 	 */
 	private view: CheckoutFlexTreeView<FlexFieldSchema> | SchematizeError | undefined;
 	private readonly flexConfig: InitializeAndSchematizeConfiguration;
+	public readonly events: ISubscribable<TreeViewEvents> &
+		IEmitter<TreeViewEvents> &
+		HasListeners<TreeViewEvents> = createEmitter();
 
 	private readonly viewSchema: ViewSchema;
+
+	private updating = false;
+
+	private readonly eventCleanup: (() => void)[] = [];
+
+	// TODO: fix typing so this can be `TreeNode | undefined`
+	private lastRoot: unknown;
 
 	public constructor(
 		public readonly tree: SharedTree,
@@ -552,6 +562,10 @@ export class TrySchematizeTreeView<in out TRootSchema extends ImplicitFieldSchem
 	}
 
 	public update(): void {
+		if (this.updating) {
+			return;
+		}
+		this.updating = true;
 		const compatibility = evaluateUpdate(
 			this.viewSchema,
 			AllowedUpdateType.SchemaCompatible,
@@ -560,24 +574,44 @@ export class TrySchematizeTreeView<in out TRootSchema extends ImplicitFieldSchem
 		this.disposeView();
 		switch (compatibility) {
 			case Compatibility.Compatible: {
+				// Remove event from checkout when view is disposed
 				this.view = this.tree.schematizeInternal(this.flexConfig, () => {
+					assert(cleanupCheckOutEvents !== undefined, "missing cleanup");
+					cleanupCheckOutEvents();
 					this.view = undefined;
 					this.update();
+				});
+				this.lastRoot = this.root;
+				// TODO: trigger "rootChanged" if the root changes in the future.
+				// Currently there is no good way to do this as FlexTreeField has no events for changes.
+				// this.view.flexTree.on(????)
+				// As a workaround for the above, trigger "rootChanged" in "afterBatch"
+				// which isn't the correct time since we normally do events during the batch when the forest is modified, but its better than nothing.
+				const cleanupCheckOutEvents = this.view.checkout.events.on("afterBatch", () => {
+					if (this.lastRoot !== this.root) {
+						this.lastRoot = this.root;
+						this.events.emit("rootChanged");
+					}
 				});
 				break;
 			}
 			case Compatibility.Incompatible: {
 				this.view = new SchematizeError(false);
+				this.lastRoot = undefined;
 				break;
 			}
 			case Compatibility.RequiresAdapters: {
 				this.view = new SchematizeError(true);
+				this.lastRoot = undefined;
 				break;
 			}
 			default: {
 				unreachableCase(compatibility);
 			}
 		}
+
+		this.updating = false;
+		this.events.emit("rootChanged");
 	}
 
 	private disposeView(): void {
@@ -595,12 +629,6 @@ export class TrySchematizeTreeView<in out TRootSchema extends ImplicitFieldSchem
 	public [disposeSymbol](): void {
 		this.getViewOrError();
 		this.disposeView();
-	}
-
-	// TODO: on root change (handles different root, cleared/set optional and to and from out of schema)
-	public get events(): ISubscribable<TreeViewEvents> {
-		this.getViewOrError();
-		return this.tree.checkout.events;
 	}
 
 	public get root(): TreeFieldFromImplicitField<TRootSchema> {
