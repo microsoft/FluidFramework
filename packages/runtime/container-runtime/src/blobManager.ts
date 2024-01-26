@@ -622,7 +622,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					);
 					this.setRedirection(pendingLocalId, blobId);
 					entry.acked = true;
-					entry.handleP.resolve(this.getBlobHandle(pendingLocalId));
+					entry.handleP.resolve(this.getBlobHandle(blobId));
 					this.deletePendingBlobMaybe(pendingLocalId);
 				});
 				this.opsInFlight.delete(blobId);

@@ -107,10 +107,6 @@ describeCompat("blobs", "FullCompat", (getTestObjectProvider) => {
 	});
 
 	it("can get remote attached blob", async function () {
-		// TODO: Re-enable after cross version compat bugs are fixed - ADO:6286
-		if (provider.type === "TestObjectProviderWithVersionedLoad") {
-			this.skip();
-		}
 		const testString = "this is a test string";
 		const testKey = "a blob";
 		const container1 = await provider.makeTestContainer(testContainerConfig);
@@ -131,10 +127,6 @@ describeCompat("blobs", "FullCompat", (getTestObjectProvider) => {
 	});
 
 	it("round trip blob handle on shared string property", async function () {
-		// TODO: Re-enable after cross version compat bugs are fixed - ADO:6286
-		if (provider.type === "TestObjectProviderWithVersionedLoad") {
-			this.skip();
-		}
 		const container1 = await provider.makeTestContainer(testContainerConfig);
 		const container2 = await provider.loadTestContainer(testContainerConfig);
 		const testString = "this is a test string";
