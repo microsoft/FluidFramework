@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export { RuntimeRequestHandler } from "./requestHandlers";
+export { type RuntimeRequestHandler } from "./requestHandlers";
 export { buildRuntimeRequestHandler } from "./runtimeRequestHandlerBuilder";
