@@ -199,15 +199,17 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		const childChanges2ByOriginalId = new RegisterMap<NodeChangeset>();
 		for (const [id, change] of change2.childChanges) {
-			const originalId = dstToSrc.get(id);
-			childChanges2ByOriginalId.set(originalId ?? id, change);
+			const idWithRevision = withRevision(id, intention2);
+			const originalId = dstToSrc.get(idWithRevision);
+			childChanges2ByOriginalId.set(originalId ?? idWithRevision, change);
 		}
 
 		const composedChildChanges: OptionalChangeset["childChanges"] = [];
 		for (const [id, childChange1] of change1.childChanges) {
-			const childChange2 = childChanges2ByOriginalId.get(id);
-			composedChildChanges.push([id, composeChild(childChange1, childChange2)]);
-			childChanges2ByOriginalId.delete(id);
+			const idWithRevision = withRevision(id, intention1);
+			const childChange2 = childChanges2ByOriginalId.get(idWithRevision);
+			composedChildChanges.push([idWithRevision, composeChild(childChange1, childChange2)]);
+			childChanges2ByOriginalId.delete(idWithRevision);
 		}
 
 		for (const [id, childChange2] of childChanges2ByOriginalId.entries()) {
