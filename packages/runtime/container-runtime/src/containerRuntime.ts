@@ -2526,12 +2526,11 @@ export class ContainerRuntime
 	public createDetachedRootDataStore(
 		pkg: Readonly<string[]>,
 		rootDataStoreId: string,
-		groupId?: string,
 	): IFluidDataStoreContextDetached {
 		if (rootDataStoreId.includes("/")) {
 			throw new UsageError(`Id cannot contain slashes: '${rootDataStoreId}'`);
 		}
-		return this.dataStores.createDetachedDataStoreCore(pkg, true, rootDataStoreId, groupId);
+		return this.dataStores.createDetachedDataStoreCore(pkg, true, rootDataStoreId);
 	}
 
 	public createDetachedDataStore(

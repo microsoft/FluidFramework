@@ -83,13 +83,10 @@ export interface IContainerRuntime
 	 * only after context.attachRuntime() is called.
 	 * @param pkg - package path
 	 * @param rootDataStoreId - data store ID (unique name). Must not contain slashes.
-	 * @param groupId - group to which this data stores belongs to. This is also known at service side and can be used to
-	 * fetch snapshot contents like snapshot tree, blobs using this id from the storage.
 	 */
 	createDetachedRootDataStore(
 		pkg: Readonly<string[]>,
 		rootDataStoreId: string,
-		groupId?: string,
 	): IFluidDataStoreContextDetached;
 
 	/**
