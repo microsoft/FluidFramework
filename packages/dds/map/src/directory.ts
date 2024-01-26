@@ -781,7 +781,7 @@ export class SharedDirectory
 						// guaranteed during the serialization process. As a result, it is only essential to utilize the
 						// "fake" client sequence number to signify the loading order, and there is no need to retain
 						// the actual client sequence number at this point.
-						if (createInfo !== undefined && createInfo.csn > -1) {
+						if (createInfo !== undefined && createInfo.csn > 0) {
 							// If csn is -1, then initialize it with 0, otherwise we will never process ops for this
 							// sub directory. This could be done at serialization time too, but we need to maintain
 							// back compat too and also we will actually know the state when it was serialized.
@@ -792,6 +792,13 @@ export class SharedDirectory
 							seqData = { seq: createInfo.csn, clientSeq: fakeClientSeq };
 							tempSeqNums.set(createInfo.csn, ++fakeClientSeq);
 						} else {
+							/**
+							 * 1. If csn is -1, then initialize it with 0, otherwise we will never process ops for this
+							 * sub directory. This could be done at serialization time too, but we need to maintain
+							 * back compat too and also we will actually know the state when it was serialized.
+							 * 2. We need to make the csn = -1 and csn = 0 share the same counter, there are cases
+							 * where both -1 and 0 coexist within a single document.
+							 */
 							seqData = {
 								seq: 0,
 								clientSeq: ++currentSubDir.localCreationSeq,
