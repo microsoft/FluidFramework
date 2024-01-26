@@ -9,6 +9,7 @@ import {
 } from "@fluidframework/driver-definitions";
 import {
 	AttachState,
+	type IHostLoader,
 	type IContainer,
 	type IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
@@ -139,7 +140,7 @@ export class TinyliciousClient {
 		};
 	}
 
-	private createLoader(schema: ContainerSchema): Loader {
+	private createLoader(schema: ContainerSchema): IHostLoader {
 		const containerRuntimeFactory = createDOProviderContainerRuntimeFactory({
 			schema,
 		});
