@@ -206,6 +206,7 @@ export class DataStores implements IDisposable {
 
 		// Old attach messages won't have GC Data (And REALLY old ones won't even have a snapshot ITree!)
 		if (gcDataEntry === undefined) {
+			//* Log here to watch it drop towards 0 over time?
 			return;
 		}
 
@@ -360,7 +361,9 @@ export class DataStores implements IDisposable {
 			/* includeGCData: */ true,
 		);
 
-		addBlobToSummary(attachSummary, gcDataBlobKey, JSON.stringify(gcData));
+		if (gcData !== undefined) {
+			addBlobToSummary(attachSummary, gcDataBlobKey, JSON.stringify(gcData));
+		}
 
 		// Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
 		const snapshot = convertSummaryTreeToITree(attachSummary.summary);
