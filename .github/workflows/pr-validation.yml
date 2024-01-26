@@ -10,6 +10,9 @@ on:
       - main
       - release/*
 
+permissions:
+  pull-requests: write
+
 jobs:
   # This job determines what paths have changed in the PR and outputs a boolean. Using the paths filter in the
   # pull_request event doesn't work. Per the GitHub docs, "If a workflow is skipped due to path filtering, branch
