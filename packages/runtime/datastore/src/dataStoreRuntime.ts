@@ -595,7 +595,6 @@ export class FluidDataStoreRuntime
 			const fromPath = `/${this.id}/${id}${nodeId === "/" ? "" : nodeId}`;
 			outboundRoutes.forEach((toPath) => {
 				//* Test case: Reference to a DDS within the same DataStore or in another DataStore
-				//* Test case: Reference to an attachment blob
 				this.addedGCOutboundRoute(fromPath, toPath);
 			});
 		}

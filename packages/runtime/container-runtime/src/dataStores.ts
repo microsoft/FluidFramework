@@ -225,7 +225,6 @@ export class DataStores implements IDisposable {
 				};
 
 				//* Test case: Reference to a DDS within the same DataStore or in another DataStore
-				//* Test case: Reference to an attachment blob
 				this.runtime.addedGCOutboundReference(fromHandle, toHandle);
 			});
 		}
