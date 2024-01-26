@@ -2541,7 +2541,7 @@ export class ContainerRuntime
 	private _nextId: string = "B";
 
 	public async createDataStore(pkg: string | string[]): Promise<IDataStore> {
-		const id = this._nextId;
+		const id = uuid(); //* this._nextId;
 		this._nextId = String.fromCharCode(this._nextId.charCodeAt(0) + 1);
 		return channelToDataStore(
 			await this.dataStores
