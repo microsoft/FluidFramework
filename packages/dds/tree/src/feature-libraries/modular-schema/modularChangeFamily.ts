@@ -204,9 +204,13 @@ export class ModularChangeFamily
 			(change) => (change.change.constraintViolationCount ?? 0) === 0,
 		);
 
+		const { revInfos, maxId } = getRevInfoFromTaggedChanges(changes);
+		const idState: IdAllocationState = { maxId };
+
 		// TODO: Handle case where `activeChanges` is empty.
 		return activeChanges.reduce(
-			(change1, change2) => makeAnonChange(this.composePair(change1, change2)),
+			(change1, change2) =>
+				makeAnonChange(this.composePair(change1, change2, revInfos, idState)),
 			makeAnonChange({ fieldChanges: new Map() }),
 		).change;
 	}
@@ -214,12 +218,12 @@ export class ModularChangeFamily
 	private composePair(
 		change1: TaggedChange<ModularChangeset>,
 		change2: TaggedChange<ModularChangeset>,
+		revInfos: RevisionInfo[],
+		idState: IdAllocationState,
 	) {
-		const { revInfos, maxId } = getRevInfoFromTaggedChanges([change1, change2]);
-
-		const revisionMetadata: RevisionMetadataSource = revisionMetadataSourceFromInfo(revInfos);
-		const idState: IdAllocationState = { maxId };
 		const genId: IdAllocator = idAllocatorFromState(idState);
+		const revisionMetadata: RevisionMetadataSource = revisionMetadataSourceFromInfo(revInfos);
+
 		const crossFieldTable = newCrossFieldTable<ComposeData>();
 
 		const composedFields = this.composeFieldMaps(
