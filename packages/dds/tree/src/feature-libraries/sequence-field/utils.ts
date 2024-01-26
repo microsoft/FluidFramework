@@ -1084,7 +1084,11 @@ export function withRevision<TMark extends Mark<unknown>>(
 ): TMark {
 	const cloned = cloneMark(mark);
 	addRevision(cloned, revision);
-	if (cloned.cellId !== undefined && cloned.cellId.revision === undefined) {
+	if (
+		cloned.cellId !== undefined &&
+		cloned.cellId.revision === undefined &&
+		revision !== undefined
+	) {
 		(cloned.cellId as Mutable<CellId>).revision = revision;
 	}
 	return cloned;

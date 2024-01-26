@@ -68,8 +68,9 @@ import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modul
 import { TestChangeset } from "./testEdits.js";
 
 export function assertChangesetsEqual<T>(actual: SF.Changeset<T>, expected: SF.Changeset<T>): void {
+	const updatedActual = purgeUnusedCellOrderingInfo(actual);
 	const updatedExpected = purgeUnusedCellOrderingInfo(expected);
-	strict.deepEqual(actual, updatedExpected);
+	strict.deepEqual(updatedActual, updatedExpected);
 }
 
 export function purgeUnusedCellOrderingInfo<T>(change: SF.Changeset<T>): SF.Changeset<T> {
@@ -203,7 +204,7 @@ function composeI<T>(
 		revision,
 		rollbackOf,
 	}));
-	const idAllocator = continuingAllocator(changes);
+	const idAllocator = continuingAllocator(updatedChanges);
 	const metadata =
 		revInfos !== undefined
 			? Array.isArray(revInfos)
@@ -212,7 +213,7 @@ function composeI<T>(
 			: defaultRevisionMetadataFromChanges(updatedChanges);
 
 	let composed: SF.Changeset<T> = [];
-	for (const change of changes) {
+	for (const change of updatedChanges) {
 		composed = composePair(makeAnonChange(composed), change, composer, metadata, idAllocator);
 	}
 

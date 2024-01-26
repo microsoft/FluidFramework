@@ -129,8 +129,8 @@ export class ModularChangeFamily
 		revisionMetadata: RevisionMetadataSource,
 	): {
 		fieldKind: FieldKindWithEditor;
-		change1: FieldChange | undefined;
-		change2: FieldChange | undefined;
+		change1: FieldChangeset | undefined;
+		change2: FieldChangeset | undefined;
 	} {
 		// TODO: Handle the case where changes have conflicting field kinds
 		const kind =
@@ -140,7 +140,11 @@ export class ModularChangeFamily
 
 		if (kind === genericFieldKind.identifier) {
 			// All the changes are generic
-			return { fieldKind: genericFieldKind, change1, change2 };
+			return {
+				fieldKind: genericFieldKind,
+				change1: change1?.change,
+				change2: change2?.change,
+			};
 		}
 		const fieldKind = getFieldKind(this.fieldKinds, kind);
 		const handler = fieldKind.changeHandler;
@@ -164,13 +168,13 @@ export class ModularChangeFamily
 		handler: FieldChangeHandler<T>,
 		genId: IdAllocator,
 		revisionMetadata: RevisionMetadataSource,
-	): FieldChange | undefined {
+	): FieldChangeset | undefined {
 		if (fieldChange === undefined) {
-			return fieldChange;
+			return undefined;
 		}
 
 		if (fieldChange.fieldKind !== genericFieldKind.identifier) {
-			return fieldChange;
+			return fieldChange.change;
 		}
 
 		// The cast is based on the `fieldKind` check above
@@ -192,7 +196,7 @@ export class ModularChangeFamily
 			revisionMetadata,
 		) as FieldChangeset;
 
-		return { ...fieldChange, change: convertedChange };
+		return convertedChange;
 	}
 
 	public compose(changes: TaggedChange<ModularChangeset>[]): ModularChangeset {
@@ -201,8 +205,9 @@ export class ModularChangeFamily
 		);
 
 		// TODO: Handle case where `activeChanges` is empty.
-		return activeChanges.reduce((change1, change2) =>
-			makeAnonChange(this.composePair(change1, change2)),
+		return activeChanges.reduce(
+			(change1, change2) => makeAnonChange(this.composePair(change1, change2)),
+			makeAnonChange({ fieldChanges: new Map() }),
 		).change;
 	}
 
@@ -302,12 +307,12 @@ export class ModularChangeFamily
 
 			const manager = newCrossFieldManager(crossFieldTable);
 			const taggedChange1 = tagChange(
-				normalizedFieldChange1?.change ?? fieldKind.changeHandler.createEmpty(),
-				fieldChange1?.revision,
+				normalizedFieldChange1 ?? fieldKind.changeHandler.createEmpty(),
+				fieldChange1?.revision ?? revision1,
 			);
 			const taggedChange2 = tagChange(
-				normalizedFieldChange2?.change ?? fieldKind.changeHandler.createEmpty(),
-				fieldChange2?.revision,
+				normalizedFieldChange2 ?? fieldKind.changeHandler.createEmpty(),
+				fieldChange2?.revision ?? revision2,
 			);
 			const composedChange = fieldKind.changeHandler.rebaser.compose(
 				taggedChange1,

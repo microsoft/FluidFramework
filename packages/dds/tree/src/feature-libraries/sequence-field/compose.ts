@@ -127,7 +127,7 @@ function composeMarkLists<TNodeChange>(
 		genId,
 		moveEffects,
 		revisionMetadata,
-		(a, b) => composeChild(a, b.change),
+		(a, b) => composeChildChanges(a, b.change, composeChild),
 	);
 	while (!queue.isEmpty()) {
 		const { baseMark, newMark } = queue.pop();
@@ -138,7 +138,7 @@ function composeMarkLists<TNodeChange>(
 			);
 			factory.push(
 				composeMark(baseMark, baseRev, (node: TNodeChange) =>
-					composeChild(node, undefined),
+					composeChildChanges(node, undefined, composeChild),
 				),
 			);
 		} else {
@@ -148,7 +148,7 @@ function composeMarkLists<TNodeChange>(
 			if (baseMark === undefined) {
 				factory.push(
 					composeMark(settledNewMark, newRev, (node: TNodeChange) =>
-						composeChild(undefined, node),
+						composeChildChanges(undefined, node, composeChild),
 					),
 				);
 			} else {
@@ -191,7 +191,11 @@ function composeMarks<TNodeChange>(
 	moveEffects: MoveEffectTable<TNodeChange>,
 	revisionMetadata: RevisionMetadataSource,
 ): Mark<TNodeChange> {
-	let nodeChange: TNodeChange | undefined = composeChild(baseMark.changes, newMark.changes);
+	let nodeChange: TNodeChange | undefined = composeChildChanges(
+		baseMark.changes,
+		newMark.changes,
+		composeChild,
+	);
 	if (nodeChange !== undefined) {
 		const baseSource = getMoveIn(baseMark);
 		if (baseSource !== undefined) {
@@ -352,7 +356,7 @@ function composeMarks<TNodeChange>(
 	} else if (!markHasCellEffect(baseMark)) {
 		return withRevision(withNodeChange(newMark, nodeChange), newRev);
 	} else if (!markHasCellEffect(newMark)) {
-		return withNodeChange(baseMark, nodeChange);
+		return withRevision(withNodeChange(baseMark, nodeChange), baseRev);
 	} else if (areInputCellsEmpty(baseMark)) {
 		assert(isDetach(newMark), 0x71c /* Unexpected mark type */);
 		assert(isAttach(baseMark), 0x71d /* Expected generative mark */);
@@ -419,7 +423,7 @@ function composeMarks<TNodeChange>(
 					revision: baseMark.revision,
 					localId: baseMark.id,
 				},
-				changes: composeChild(nodeChange, nodeChanges?.change),
+				changes: composeChildChanges(nodeChange, nodeChanges?.change, composeChild),
 			};
 			return vestige;
 		}
@@ -444,10 +448,22 @@ function createNoopMark<TNodeChange>(
 	return mark;
 }
 
+function composeChildChanges<TNodeChange>(
+	baseChange: TNodeChange | undefined,
+	newChange: TNodeChange | undefined,
+	composeChild: NodeChangeComposer<TNodeChange>,
+): TNodeChange | undefined {
+	if (baseChange === undefined && newChange === undefined) {
+		return undefined;
+	}
+
+	return composeChild(baseChange, newChange);
+}
+
 function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
 	mark: TMark,
 	revision: RevisionTag | undefined,
-	composeChild: (node: TNodeChange) => TNodeChange,
+	composeChild: (node: TNodeChange) => TNodeChange | undefined,
 ): TMark {
 	const cloned = cloneMark(mark);
 	if (
@@ -483,7 +499,7 @@ function amendComposeI<TNodeChange>(
 ): MarkList<TNodeChange> {
 	const factory = new MarkListFactory<TNodeChange>();
 	const queue = new MarkQueue(marks, undefined, moveEffects, true, fakeIdAllocator, (a, b) =>
-		composeChild(a, b.change),
+		composeChildChanges(a, b.change, composeChild),
 	);
 
 	while (!queue.isEmpty()) {

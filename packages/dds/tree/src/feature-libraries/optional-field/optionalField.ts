@@ -180,10 +180,15 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		 */
 
 		// TODO: Should inline intentions
-		const { srcToDst, dstToSrc } = getBidirectionalMaps(change1.moves);
+
+		const intention1 = getIntention(revision1, revisionMetadata);
+		const intention2 = getIntention(revision2, revisionMetadata);
+		const { srcToDst, dstToSrc } = getBidirectionalMaps(change1.moves, intention1);
 		for (const [src, dst, _target] of change2.moves) {
-			const originalSrc = dstToSrc.get(src);
-			srcToDst.set(originalSrc ?? src, dst);
+			const srcWithRevision = withRevision(src, intention2);
+			const dstWithRevision = withRevision(dst, intention2);
+			const originalSrc = dstToSrc.get(srcWithRevision);
+			srcToDst.set(originalSrc ?? srcWithRevision, dstWithRevision);
 		}
 
 		const composedMoves: OptionalChangeset["moves"] = [];
@@ -418,15 +423,20 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	},
 };
 
-function getBidirectionalMaps(moves: OptionalChangeset["moves"]): {
+function getBidirectionalMaps(
+	moves: OptionalChangeset["moves"],
+	revision: RevisionTag | undefined,
+): {
 	srcToDst: RegisterMap<RegisterId>;
 	dstToSrc: RegisterMap<RegisterId>;
 } {
 	const srcToDst = new RegisterMap<RegisterId>();
 	const dstToSrc = new RegisterMap<RegisterId>();
 	for (const [src, dst, _target] of moves) {
-		srcToDst.set(src, dst);
-		dstToSrc.set(dst, src);
+		const srcWithRevision = withRevision(src, revision);
+		const dstWithRevision = withRevision(dst, revision);
+		srcToDst.set(srcWithRevision, dstWithRevision);
+		dstToSrc.set(dstWithRevision, srcWithRevision);
 	}
 	return { srcToDst, dstToSrc };
 }
@@ -466,6 +476,14 @@ function withIntention(
 	}
 	const intention = getIntention(id.revision ?? revision, revisionMetadata);
 	return { revision: intention, localId: id.localId };
+}
+
+function withRevision(id: RegisterId, revision: RevisionTag | undefined): RegisterId {
+	if (id === "self") {
+		return id;
+	}
+
+	return { revision: id.revision ?? revision, localId: id.localId };
 }
 
 export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
