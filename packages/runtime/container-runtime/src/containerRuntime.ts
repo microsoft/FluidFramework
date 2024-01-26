@@ -2537,8 +2537,12 @@ export class ContainerRuntime
 		return this.dataStores.createDetachedDataStoreCore(pkg, false);
 	}
 
+	//* REVERT - for testing only
+	private _nextId: string = "B";
+
 	public async createDataStore(pkg: string | string[]): Promise<IDataStore> {
-		const id = uuid();
+		const id = this._nextId;
+		this._nextId = String.fromCharCode(this._nextId.charCodeAt(0) + 1);
 		return channelToDataStore(
 			await this.dataStores
 				._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id)

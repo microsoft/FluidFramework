@@ -202,14 +202,9 @@ export class DataStores implements IDisposable {
 	}
 
 	private extractAndProcessAttachGCData(id: string, entries?: ITreeEntry[]): void {
-		// Very old attach messages may not have a snapshot (which is where entries comes from)
-		if (entries === undefined) {
-			return;
-		}
+		const gcDataEntry = entries?.find((e) => e.path === ".gcdata");
 
-		const gcDataEntry = entries.find((e) => e.path === ".gcdata");
-
-		// Old attach messages won't have GC Data
+		// Old attach messages won't have GC Data (And REALLY old ones won't even have a snapshot ITree!)
 		if (gcDataEntry === undefined) {
 			return;
 		}
