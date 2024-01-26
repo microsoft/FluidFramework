@@ -19,6 +19,7 @@ import {
 	type NamedFluidDataStoreRegistryEntries,
 	type NamedFluidDataStoreRegistryEntry,
 	type IFluidDataStoreContextDetached,
+	type IFluidDataStoreChannel,
 } from "@fluidframework/runtime-definitions";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
@@ -138,6 +139,9 @@ export class PureDataObjectFactory<
 	private readonly registry: IFluidDataStoreRegistry | undefined;
 
 	public constructor(
+		/**
+		 * {@inheritDoc @fluidframework/runtime-definitions#IFluidDataStoreFactory."type"}
+		 */
 		public readonly type: string,
 		private readonly ctor: new (props: IDataObjectProps<I>) => TObj,
 		sharedObjects: readonly IChannelFactory[],
@@ -179,14 +183,12 @@ export class PureDataObjectFactory<
 	}
 
 	/**
-	 * This is where we do data store setup.
-	 *
-	 * @param context - data store context used to load a data store runtime
+	 * {@inheritDoc @fluidframework/runtime-definitions#IFluidDataStoreFactory.instantiateDataStore}
 	 */
 	public async instantiateDataStore(
 		context: IFluidDataStoreContext,
 		existing: boolean,
-	): Promise<FluidDataStoreRuntime> {
+	): Promise<IFluidDataStoreChannel> {
 		const { runtime } = await createDataObject(
 			this.ctor,
 			context,
