@@ -14,7 +14,6 @@ import {
 	createChildMonitoringContext,
 	tagCodeArtifacts,
 	UsageError,
-	extractSafePropertiesFromMessage,
 } from "@fluidframework/telemetry-utils";
 import {
 	FluidObject,
