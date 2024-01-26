@@ -257,8 +257,6 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 */
 	makeVisibleAndAttachGraph(): void;
 
-	//* Changeset
-
 	/**
 	 * Synchronously retrieves the summary used as part of the initial summary message
 	 *

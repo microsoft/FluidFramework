@@ -201,13 +201,16 @@ export class DataStores implements IDisposable {
 		return pendingAliasPromise ?? "Success";
 	}
 
-	private extractAndProcessAttachGCData(id: string, entries?: ITreeEntry[]): void {
+	/** For sampling. Only log once per container */
+	private shouldSendAttachLog = true;
+
+	/** @returns true if it found/processed GC Data, false otherwise */
+	private extractAndProcessAttachGCData(id: string, entries?: ITreeEntry[]): boolean {
 		const gcDataEntry = entries?.find((e) => e.path === ".gcdata");
 
 		// Old attach messages won't have GC Data (And REALLY old ones won't even have a snapshot ITree!)
 		if (gcDataEntry === undefined) {
-			//* Log here to watch it drop towards 0 over time?
-			return;
+			return false;
 		}
 
 		assert(
@@ -225,10 +228,10 @@ export class DataStores implements IDisposable {
 					absolutePath: `${route}`,
 				};
 
-				//* Test case: Reference to a DDS within the same DataStore or in another DataStore
 				this.runtime.addedGCOutboundReference(fromHandle, toHandle);
 			});
 		}
+		return true;
 	}
 
 	public processAttachMessage(message: ISequencedDocumentMessage, local: boolean) {
@@ -237,7 +240,26 @@ export class DataStores implements IDisposable {
 		this.dataStoresSinceLastGC.push(attachMessage.id);
 
 		// We need to process the GC Data for both local and remote attach messages
-		this.extractAndProcessAttachGCData(attachMessage.id, attachMessage.snapshot?.entries);
+		const foundGCData = this.extractAndProcessAttachGCData(
+			attachMessage.id,
+			attachMessage.snapshot?.entries,
+		);
+
+		// Only log once per container to avoid noise/cost.
+		// Allows longitudinal tracking of various state (e.g. foundGCData), and some sampled details
+		if (this.shouldSendAttachLog) {
+			this.shouldSendAttachLog = false;
+			this.mc.logger.sendTelemetryEvent({
+				eventName: "dataStoreAttachMessage_sampled",
+				...tagCodeArtifacts({ id: attachMessage.id, pkg: attachMessage.type }),
+				details: {
+					local,
+					snapshot: !!attachMessage.snapshot,
+					foundGCData,
+				},
+				...extractSafePropertiesFromMessage(message),
+			});
+		}
 
 		// The local object has already been attached
 		if (local) {

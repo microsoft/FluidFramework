@@ -14,6 +14,7 @@ import {
 	createChildMonitoringContext,
 	tagCodeArtifacts,
 	UsageError,
+	extractSafePropertiesFromMessage,
 } from "@fluidframework/telemetry-utils";
 import {
 	FluidObject,
@@ -576,12 +577,17 @@ export class FluidDataStoreRuntime
 		return this.dataStoreContext.uploadBlob(blob, signal);
 	}
 
-	private extractAndProcessAttachGCData(id: string, entries: ITreeEntry[]): void {
+	//* I wanted to just do once per container...
+	/** For sampling. Only log once per DataStore */
+	private shouldSendAttachLog = true;
+
+	/** @returns true if it found/processed GC Data, false otherwise */
+	private extractAndProcessAttachGCData(id: string, entries: ITreeEntry[]): boolean {
 		const gcDataEntry = entries.find((e) => e.path === ".gcdata");
 
 		// Old attach messages won't have GC Data
 		if (gcDataEntry === undefined) {
-			return;
+			return false;
 		}
 
 		assert(
@@ -594,10 +600,10 @@ export class FluidDataStoreRuntime
 			// Expecting "/DataStoreId/DDSId"  (since nodeId will be "/" unless and until we support sub-DDS GC Nodes)
 			const fromPath = `/${this.id}/${id}${nodeId === "/" ? "" : nodeId}`;
 			outboundRoutes.forEach((toPath) => {
-				//* Test case: Reference to a DDS within the same DataStore or in another DataStore
 				this.addedGCOutboundRoute(fromPath, toPath);
 			});
 		}
+		return true;
 	}
 
 	private createRemoteChannelContext(
@@ -639,7 +645,25 @@ export class FluidDataStoreRuntime
 					const id = attachMessage.id;
 
 					// We need to process the GC Data for both local and remote attach messages
-					this.extractAndProcessAttachGCData(id, attachMessage.snapshot.entries);
+					const foundGCData = this.extractAndProcessAttachGCData(
+						id,
+						attachMessage.snapshot.entries,
+					);
+
+					// Only log once per container to avoid noise/cost.
+					// Allows longitudinal tracking of various state (e.g. foundGCData), and some sampled details
+					if (this.shouldSendAttachLog) {
+						this.shouldSendAttachLog = false;
+						this.mc.logger.sendTelemetryEvent({
+							eventName: "ddsAttachMessage_sampled",
+							...tagCodeArtifacts({ id: attachMessage.id, pkg: attachMessage.type }),
+							details: {
+								local,
+								foundGCData,
+							},
+							...extractSafePropertiesFromMessage(message),
+						});
+					}
 
 					// If a non-local operation then go and create the object
 					// Otherwise mark it as officially attached.
