@@ -36,7 +36,7 @@ export class MutableStringInterner implements StringInterner {
 	 * @param inputStrings - A list of strings to intern in the order given. Can be used to rehydrate from a previous
 	 * `StringInterner`'s {@link StringInterner.getSerializable} return value.
 	 */
-	constructor(inputStrings: readonly string[] = []) {
+	public constructor(inputStrings: readonly string[] = []) {
 		for (const value of inputStrings) {
 			this.getOrCreateInternedId(value);
 		}
