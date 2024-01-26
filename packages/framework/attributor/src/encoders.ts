@@ -8,8 +8,6 @@ import { type AttributionInfo } from "@fluidframework/runtime-definitions";
 import { type IAttributor } from "./attributor";
 import { type InternedStringId, MutableStringInterner } from "./stringInterner";
 
-// TODO: document this.
-// eslint-disable-next-line jsdoc/require-jsdoc
 export interface Encoder<TDecoded, TEncoded> {
 	encode(decoded: TDecoded): TEncoded;
 	decode(encoded: TEncoded): TDecoded;
@@ -17,12 +15,8 @@ export interface Encoder<TDecoded, TEncoded> {
 
 // Note: the encoded format doesn't matter as long as it's serializable;
 // these types could be weakened.
-// TODO: document this.
-// eslint-disable-next-line jsdoc/require-jsdoc
 export type TimestampEncoder = Encoder<number[], number[]>;
 
-// TODO: document this.
-// eslint-disable-next-line jsdoc/require-jsdoc
 export const deltaEncoder: TimestampEncoder = {
 	encode: (timestamps: number[]) => {
 		const deltaTimestamps: number[] = Array.from({ length: timestamps.length });
@@ -48,12 +42,8 @@ export const deltaEncoder: TimestampEncoder = {
 	},
 };
 
-// TODO: document this.
-// eslint-disable-next-line jsdoc/require-jsdoc
 export type IAttributorSerializer = Encoder<IAttributor, SerializedAttributor>;
 
-// TODO: document this.
-// eslint-disable-next-line jsdoc/require-jsdoc
 export interface SerializedAttributor {
 	interner: readonly string[] /* result of calling getSerializable() on a StringInterner */;
 	seqs: number[];
@@ -61,8 +51,6 @@ export interface SerializedAttributor {
 	attributionRefs: InternedStringId[];
 }
 
-// TODO: document this.
-// eslint-disable-next-line jsdoc/require-jsdoc
 export class AttributorSerializer implements IAttributorSerializer {
 	public constructor(
 		private readonly makeAttributor: (
