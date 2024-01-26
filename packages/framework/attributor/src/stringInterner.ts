@@ -43,8 +43,8 @@ export class MutableStringInterner implements StringInterner {
 	}
 
 	/**
-	 * @param input - The string to get the associated intern ID for
-	 * @returns an intern ID that is uniquely associated with the input string
+	 * Creates an intern ID that is uniquely associated with the input string.
+	 * @param input - The string to get the associated intern ID for.
 	 */
 	public getOrCreateInternedId(input: string): InternedStringId {
 		return this.getInternedId(input) ?? this.createNewId(input);
@@ -55,10 +55,9 @@ export class MutableStringInterner implements StringInterner {
 	}
 
 	/**
-	 *
+	 * Creates a string that is uniquely associated with the given intern ID.
 	 * @param internId - The intern ID to get the associated string for. Can only retrieve strings that have been
 	 * used as inputs to calls of `getInternId`.
-	 * @returns a string that is uniquely associated with the given intern ID
 	 */
 	public getString(internId: number): string {
 		const result = this.internedStrings[internId];
@@ -69,7 +68,7 @@ export class MutableStringInterner implements StringInterner {
 	}
 
 	/**
-	 * @returns The list of strings interned where the indices map to the associated {@link InternedStringId} of
+	 * Gets the list of strings interned where the indices map to the associated {@link InternedStringId} of
 	 * each string.
 	 */
 	public getSerializable(): readonly string[] {
