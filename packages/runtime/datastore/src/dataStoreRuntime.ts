@@ -577,10 +577,6 @@ export class FluidDataStoreRuntime
 		return this.dataStoreContext.uploadBlob(blob, signal);
 	}
 
-	//* I wanted to just do once per container...
-	/** For sampling. Only log once per DataStore */
-	private shouldSendAttachLog = true;
-
 	/** @returns true if it found/processed GC Data, false otherwise */
 	private extractAndProcessAttachGCData(id: string, entries: ITreeEntry[]): boolean {
 		const gcDataEntry = entries.find((e) => e.path === ".gcdata");
@@ -645,25 +641,7 @@ export class FluidDataStoreRuntime
 					const id = attachMessage.id;
 
 					// We need to process the GC Data for both local and remote attach messages
-					const foundGCData = this.extractAndProcessAttachGCData(
-						id,
-						attachMessage.snapshot.entries,
-					);
-
-					// Only log once per container to avoid noise/cost.
-					// Allows longitudinal tracking of various state (e.g. foundGCData), and some sampled details
-					if (this.shouldSendAttachLog) {
-						this.shouldSendAttachLog = false;
-						this.mc.logger.sendTelemetryEvent({
-							eventName: "ddsAttachMessage_sampled",
-							...tagCodeArtifacts({ id: attachMessage.id, pkg: attachMessage.type }),
-							details: {
-								local,
-								foundGCData,
-							},
-							...extractSafePropertiesFromMessage(message),
-						});
-					}
+					this.extractAndProcessAttachGCData(id, attachMessage.snapshot.entries);
 
 					// If a non-local operation then go and create the object
 					// Otherwise mark it as officially attached.
