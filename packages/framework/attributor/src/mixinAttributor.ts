@@ -3,23 +3,27 @@
  * Licensed under the MIT License.
  */
 import {
-	IDocumentMessage,
-	ISequencedDocumentMessage,
-	ISnapshotTree,
+	type IDocumentMessage,
+	type ISequencedDocumentMessage,
+	type ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
-import { IAudience, IContainerContext, IDeltaManager } from "@fluidframework/container-definitions";
+import {
+	type IAudience,
+	type IContainerContext,
+	type IDeltaManager,
+} from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import {
-	AttributionInfo,
-	AttributionKey,
-	ISummaryTreeWithStats,
-	ITelemetryContext,
-	NamedFluidDataStoreRegistryEntries,
+	type AttributionInfo,
+	type AttributionKey,
+	type ISummaryTreeWithStats,
+	type ITelemetryContext,
+	type NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import { addSummarizeResultToSummary, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { type IRequest, type IResponse, type FluidObject } from "@fluidframework/core-interfaces";
 import { bufferToString } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
@@ -28,8 +32,8 @@ import {
 	PerformanceEvent,
 	UsageError,
 } from "@fluidframework/telemetry-utils";
-import { Attributor, IAttributor, OpStreamAttributor } from "./attributor";
-import { AttributorSerializer, chain, deltaEncoder, Encoder } from "./encoders";
+import { Attributor, type IAttributor, OpStreamAttributor } from "./attributor";
+import { AttributorSerializer, chain, deltaEncoder, type Encoder } from "./encoders";
 import { makeLZ4Encoder } from "./lz4Encoder";
 
 // Summary tree keys

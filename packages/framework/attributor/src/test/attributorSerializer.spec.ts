@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "node:assert";
-import { AttributionInfo } from "@fluidframework/runtime-definitions";
+import { type AttributionInfo } from "@fluidframework/runtime-definitions";
 
-import { Attributor, IAttributor } from "../attributor";
-import { AttributorSerializer, chain, Encoder, SerializedAttributor } from "../encoders";
-import { InternedStringId } from "../stringInterner";
+import { Attributor, type IAttributor } from "../attributor";
+import { AttributorSerializer, chain, type Encoder, type SerializedAttributor } from "../encoders";
+import { type InternedStringId } from "../stringInterner";
 
 function makeNoopEncoder<T>(): Encoder<T, T> {
 	return {

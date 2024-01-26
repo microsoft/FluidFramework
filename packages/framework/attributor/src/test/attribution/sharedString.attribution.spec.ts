@@ -7,41 +7,41 @@ import * as path from "node:path";
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { strict as assert } from "node:assert";
 import {
-	AcceptanceCondition,
-	BaseFuzzTestState,
+	type AcceptanceCondition,
+	type BaseFuzzTestState,
 	chain,
 	createWeightedGenerator,
 	done,
-	Generator,
+	type Generator,
 	generatorFromArray,
 	interleave,
-	IRandom,
+	type IRandom,
 	makeRandom,
 	performFuzzActions,
-	Reducer,
+	type Reducer,
 	take,
 } from "@fluid-private/stochastic-test-utils";
 import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 	MockContainerRuntimeFactoryForReconnection,
-	MockContainerRuntimeForReconnection,
+	type MockContainerRuntimeForReconnection,
 } from "@fluidframework/test-runtime-utils";
 import {
-	IChannelServices,
-	IFluidDataStoreRuntime,
-	Jsonable,
+	type IChannelServices,
+	type IFluidDataStoreRuntime,
+	type Jsonable,
 } from "@fluidframework/datastore-definitions";
-import { IClient, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { IAudience } from "@fluidframework/container-definitions";
+import { type IClient, type ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { type IAudience } from "@fluidframework/container-definitions";
 import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
 import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree";
-import { IAttributor, OpStreamAttributor } from "../../attributor";
+import { type IAttributor, OpStreamAttributor } from "../../attributor";
 import {
 	AttributorSerializer,
 	chain as chainEncoders,
 	deltaEncoder,
-	Encoder,
+	type Encoder,
 } from "../../encoders";
 import { makeLZ4Encoder } from "../../lz4Encoder";
 
@@ -74,9 +74,7 @@ function makeMockAudience(clientIds: string[]): IAudience {
 	} as IAudience;
 }
 
-interface PropertySet {
-	[name: string]: unknown;
-}
+type PropertySet = Record<string, unknown>;
 
 interface Client {
 	sharedString: SharedString;
@@ -533,8 +531,8 @@ const noopEncoder = {
 };
 
 class DataTable<T> {
-	private readonly rows: Map<string, T[]> = new Map();
-	constructor(private readonly columnNames: string[]) {}
+	private readonly rows = new Map<string, T[]>();
+	public constructor(private readonly columnNames: string[]) {}
 
 	public addRow(name: string, data: T[]): void {
 		this.rows.set(name, data);

@@ -2,9 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IClient } from "@fluidframework/protocol-definitions";
-import { IAudience } from "@fluidframework/container-definitions";
+import { type IClient } from "@fluidframework/protocol-definitions";
+import { type IAudience } from "@fluidframework/container-definitions";
 
+/**
+ * Creates a mock {@link @fluidframework/container-definitions#IAudience} for testing.
+ */
 export function makeMockAudience(clientIds: string[]): IAudience {
 	const clients = new Map<string, IClient>();
 	for (const [index, clientId] of clientIds.entries()) {

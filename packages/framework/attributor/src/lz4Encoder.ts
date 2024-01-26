@@ -4,8 +4,8 @@
  */
 import { compress, decompress } from "lz4js";
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { Jsonable } from "@fluidframework/datastore-definitions";
-import { Encoder } from "./encoders";
+import { type Jsonable } from "@fluidframework/datastore-definitions";
+import { type Encoder } from "./encoders";
 
 // TODO: document this
 // eslint-disable-next-line jsdoc/require-description
