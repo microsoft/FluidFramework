@@ -75,7 +75,7 @@
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.1.0",
+		"@fluidframework/protocol-definitions": "^3.2.0-231454",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",

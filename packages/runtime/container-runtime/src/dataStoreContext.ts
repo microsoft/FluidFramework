@@ -115,6 +115,7 @@ export interface IFluidDataStoreContextProps {
 	readonly scope: FluidObject;
 	readonly createSummarizerNodeFn: CreateChildSummarizerNodeFn;
 	readonly pkg?: Readonly<string[]>;
+	readonly groupId?: string;
 }
 
 /** Properties necessary for creating a local FluidDataStoreContext */
@@ -277,6 +278,8 @@ export abstract class FluidDataStoreContext
 	private readonly _containerRuntime: ContainerRuntime;
 	public readonly storage: IDocumentStorageService;
 	public readonly scope: FluidObject;
+	// Represents the group to which the data store belongs too.
+	public readonly groupId: string | undefined;
 	protected pkg?: readonly string[];
 
 	constructor(
@@ -292,6 +295,7 @@ export abstract class FluidDataStoreContext
 		this.storage = props.storage;
 		this.scope = props.scope;
 		this.pkg = props.pkg;
+		this.groupId = props.groupId;
 
 		// URIs use slashes as delimiters. Handles use URIs.
 		// Thus having slashes in types almost guarantees trouble down the road!

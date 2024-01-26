@@ -3,34 +3,37 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, FluidObject } from "@fluidframework/core-interfaces";
+import { type IRequest, type FluidObject } from "@fluidframework/core-interfaces";
 import {
 	FluidDataStoreRuntime,
-	ISharedObjectRegistry,
+	type ISharedObjectRegistry,
 	mixinRequestHandler,
 } from "@fluidframework/datastore";
 import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
 import {
-	IFluidDataStoreContext,
-	IContainerRuntimeBase,
-	IFluidDataStoreFactory,
-	IFluidDataStoreRegistry,
-	IProvideFluidDataStoreRegistry,
-	NamedFluidDataStoreRegistryEntries,
-	NamedFluidDataStoreRegistryEntry,
-	IFluidDataStoreContextDetached,
-	IDataStore,
+	type IFluidDataStoreContext,
+	type IContainerRuntimeBase,
+	type IFluidDataStoreFactory,
+	type IFluidDataStoreRegistry,
+	type IProvideFluidDataStoreRegistry,
+	type NamedFluidDataStoreRegistryEntries,
+	type NamedFluidDataStoreRegistryEntry,
+	type IFluidDataStoreContextDetached,
+	type IDataStore,
 } from "@fluidframework/runtime-definitions";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
-	AsyncFluidObjectProvider,
-	FluidObjectSymbolProvider,
-	IFluidDependencySynthesizer,
+	type IChannelFactory,
+	type IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions";
+import {
+	type AsyncFluidObjectProvider,
+	type FluidObjectSymbolProvider,
+	type IFluidDependencySynthesizer,
 } from "@fluidframework/synthesize";
 
 import { assert } from "@fluidframework/core-utils";
-import { IDataObjectProps, PureDataObject, DataObjectTypes } from "../data-objects";
+import { type IDataObjectProps, type PureDataObject, type DataObjectTypes } from "../data-objects";
 
 /**
  * Proxy over PureDataObject
@@ -47,7 +50,10 @@ async function createDataObject<
 	runtimeClassArg: typeof FluidDataStoreRuntime,
 	existing: boolean,
 	initProps?: I["InitialState"],
-) {
+): Promise<{
+	instance: TObj;
+	runtime: FluidDataStoreRuntime;
+}> {
 	// base
 	let runtimeClass = runtimeClassArg;
 
@@ -132,7 +138,7 @@ export class PureDataObjectFactory<
 	private readonly sharedObjectRegistry: ISharedObjectRegistry;
 	private readonly registry: IFluidDataStoreRegistry | undefined;
 
-	constructor(
+	public constructor(
 		public readonly type: string,
 		private readonly ctor: new (props: IDataObjectProps<I>) => TObj,
 		sharedObjects: readonly IChannelFactory[],
@@ -149,11 +155,17 @@ export class PureDataObjectFactory<
 		this.sharedObjectRegistry = new Map(sharedObjects.map((ext) => [ext.type, ext]));
 	}
 
-	public get IFluidDataStoreFactory() {
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IProvideFluidDataStoreFactory.IFluidDataStoreFactory}
+	 */
+	public get IFluidDataStoreFactory(): this {
 		return this;
 	}
 
-	public get IFluidDataStoreRegistry() {
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IProvideFluidDataStoreRegistry.IFluidDataStoreRegistry}
+	 */
+	public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry | undefined {
 		return this.registry;
 	}
 
@@ -172,7 +184,10 @@ export class PureDataObjectFactory<
 	 *
 	 * @param context - data store context used to load a data store runtime
 	 */
-	public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
+	public async instantiateDataStore(
+		context: IFluidDataStoreContext,
+		existing: boolean,
+	): Promise<FluidDataStoreRuntime> {
 		const { runtime } = await createDataObject(
 			this.ctor,
 			context,
