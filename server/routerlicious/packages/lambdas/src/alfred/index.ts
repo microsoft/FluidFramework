@@ -1077,7 +1077,7 @@ export function configureWebSocketServices(
 							const signalMessage: ISignalMessage = {
 								clientId,
 								content,
-                                targetClientId,
+								targetClientId,
 							};
 
 							socket.emitToRoom(getRoomId(room), "signal", signalMessage);
