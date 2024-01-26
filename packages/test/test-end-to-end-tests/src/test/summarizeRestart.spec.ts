@@ -64,6 +64,10 @@ describeCompat(
 					category: "generic",
 					error: "summary state stale - Unsupported option 'refreshLatestAck'",
 				},
+				{
+					eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed",
+					error: "summary state stale - Unsupported option 'refreshLatestAck'",
+				},
 			],
 			async () => {
 				const container = await createContainer();
@@ -182,6 +186,10 @@ describeCompat(
 				{
 					eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
 					category: "generic",
+					error: "summary state stale - Unsupported option 'refreshLatestAck'",
+				},
+				{
+					eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed",
 					error: "summary state stale - Unsupported option 'refreshLatestAck'",
 				},
 			],

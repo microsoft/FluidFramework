@@ -1308,11 +1308,36 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		change: FieldChangeset,
 		maxId: ChangesetLocalId = brand(-1),
 	): void {
+		const modularChange = this.buildChange(field, fieldKind, change, maxId);
+		this.applyChange(modularChange);
+	}
+
+	/**
+	 * Adds a change to the edit builder
+	 * @param field - the field which is being edited
+	 * @param fieldKind - the kind of the field
+	 * @param change - the change to the field
+	 * @param maxId - the highest `ChangesetLocalId` used in this change
+	 */
+	public buildChange(
+		field: FieldUpPath,
+		fieldKind: FieldKindIdentifier,
+		change: FieldChangeset,
+		maxId: ChangesetLocalId = brand(-1),
+	): ModularChangeset {
 		const changeMap = this.buildChangeMap(field, fieldKind, change);
-		this.applyChange(makeModularChangeset(changeMap, maxId));
+		return makeModularChangeset(changeMap, maxId);
 	}
 
 	public submitChanges(changes: EditDescription[], maxId: ChangesetLocalId = brand(-1)) {
+		const modularChange = this.buildChanges(changes, maxId);
+		this.applyChange(modularChange);
+	}
+
+	public buildChanges(
+		changes: EditDescription[],
+		maxId: ChangesetLocalId = brand(-1),
+	): ModularChangeset {
 		const changeMaps = changes.map((change) =>
 			makeAnonChange(
 				change.type === "global"
@@ -1332,7 +1357,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		if (maxId >= 0) {
 			composedChange.maxId = maxId;
 		}
-		this.applyChange(composedChange);
+		return composedChange;
 	}
 
 	public generateId(count?: number): ChangesetLocalId {
