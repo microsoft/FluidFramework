@@ -7,7 +7,10 @@ import { type IMember, type IServiceAudience } from "@fluidframework/fluid-stati
 import { type IUser } from "@fluidframework/protocol-definitions";
 import { type ITokenProvider } from "@fluidframework/routerlicious-driver";
 // Re-export so developers can build loggers without pulling in core-interfaces
-export { type ITelemetryBaseEvent, type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+export {
+	type ITelemetryBaseEvent,
+	type ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 
 /**
  * Props for initializing a {@link TinyliciousClient}
