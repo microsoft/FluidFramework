@@ -638,7 +638,6 @@ export class FluidDataStoreRuntime
 					const attachMessage = message.contents as IAttachMessage;
 					const id = attachMessage.id;
 
-					//* Test case: ensure local client gets GC update
 					// We need to process the GC Data for both local and remote attach messages
 					this.extractAndProcessAttachGCData(id, attachMessage.snapshot.entries);
 

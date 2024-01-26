@@ -236,7 +236,6 @@ export class DataStores implements IDisposable {
 
 		this.dataStoresSinceLastGC.push(attachMessage.id);
 
-		//* Test case: ensure local client gets GC update
 		// We need to process the GC Data for both local and remote attach messages
 		this.extractAndProcessAttachGCData(attachMessage.id, attachMessage.snapshot?.entries);
 
