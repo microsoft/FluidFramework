@@ -2,4 +2,4 @@
 "@fluidframework/aqueduct": major
 ---
 
-Return `IFluidDataStoreChannel` interface from `PureDataObjectFactory.instantiateDataStore` instead of `FluidDataStoreRuntime` implementation class.
+The return type of `PureDataObjectFactory.instantiateDataStore` is changing from `FluidDataStoreRuntime` to `IFluidDataStoreChannel`.
