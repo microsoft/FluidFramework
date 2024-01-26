@@ -4,13 +4,12 @@
  */
 
 import Deque from "double-ended-queue";
-import { assert } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
-	Serializable,
 	IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
 import {
@@ -21,7 +20,7 @@ import {
 	SharedObject,
 } from "@fluidframework/shared-object-base";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { ObjectStoragePartition, SummaryTreeBuilder, addBlobToSummary } from "@fluidframework/runtime-utils";
 import { IMatrixProducer, IMatrixConsumer, IMatrixReader, IMatrixWriter } from "@tiny-calc/nano";
 import {
 	MergeTreeDeltaType,
@@ -31,7 +30,7 @@ import {
 	Client,
 	IJSONSegment,
 } from "@fluidframework/merge-tree";
-import { MatrixOp } from "./ops";
+import { MatrixOp, SnapshotPath, IMatrixMsg, IMatrixMsgEx, MatrixItem, ISetOp } from "./ops";
 import { PermutationVector, reinsertSegmentIntoVector } from "./permutationvector";
 import { SparseArray2D } from "./sparsearray2d";
 import { SharedMatrixFactory } from "./runtime";
@@ -40,20 +39,6 @@ import { deserializeBlob } from "./serialization";
 import { ensureRange } from "./range";
 import { IUndoConsumer } from "./types";
 import { MatrixUndoProvider } from "./undoprovider";
-
-const enum SnapshotPath {
-	rows = "rows",
-	cols = "cols",
-	cells = "cells",
-}
-
-interface ISetOp<T> {
-	type: MatrixOp.set;
-	row: number;
-	col: number;
-	value: MatrixItem<T>;
-	fwwMode?: boolean;
-}
 
 interface ISetOpMetadata {
 	rowHandle: Handle;
@@ -109,14 +94,6 @@ interface CellLastWriteTrackerItem {
 }
 
 /**
- * A matrix cell value may be undefined (indicating an empty cell) or any serializable type,
- * excluding null.  (However, nulls may be embedded inside objects and arrays.)
- * @alpha
- */
-// eslint-disable-next-line @rushstack/no-new-null -- Using 'null' to disallow 'null'.
-export type MatrixItem<T> = Serializable<Exclude<T, null>> | undefined;
-
-/**
  * A SharedMatrix holds a rectangular 2D array of values.  Supported operations
  * include setting values and inserting/removing rows and columns.
  *
@@ -136,7 +113,7 @@ export class SharedMatrix<T = any>
 		IMatrixReader<MatrixItem<T>>,
 		IMatrixWriter<MatrixItem<T>>
 {
-	private readonly consumers = new Set<IMatrixConsumer<MatrixItem<T>>>();
+	protected readonly consumers = new Set<IMatrixConsumer<MatrixItem<T>>>();
 
 	public static getFactory() {
 		return new SharedMatrixFactory();
@@ -153,10 +130,13 @@ export class SharedMatrix<T = any>
 	 */
 	private readonly inFlightRefSeqs = new Deque<number>();
 
-	private readonly rows: PermutationVector; // Map logical row to storage handle (if any)
-	private readonly cols: PermutationVector; // Map logical col to storage handle (if any)
+	/** @internal */
+	protected readonly rows: PermutationVector; // Map logical row to storage handle (if any)
+	/** @internal */
+	protected readonly cols: PermutationVector; // Map logical col to storage handle (if any)
 
-	private cells = new SparseArray2D<MatrixItem<T>>(); // Stores cell values.
+	/** @internal */
+	protected cells = new SparseArray2D<MatrixItem<T>>(); // Stores cell values.
 	private readonly pending = new SparseArray2D<number>(); // Tracks pending writes.
 	private cellLastWriteTracker = new SparseArray2D<CellLastWriteTrackerItem>(); // Tracks last writes sequence number and clientId in a cell.
 	// Tracks the seq number of Op at which policy switch happens from Last Write Win to First Write Win.
@@ -204,7 +184,7 @@ export class SharedMatrix<T = any>
 		);
 	}
 
-	private undo?: MatrixUndoProvider<T>;
+	protected undo?: MatrixUndoProvider<T>;
 
 	/**
 	 * Subscribes the given IUndoConsumer to the matrix.
@@ -220,10 +200,10 @@ export class SharedMatrix<T = any>
 
 	// TODO: closeUndo()?
 
-	private get rowHandles() {
+	protected get rowHandles() {
 		return this.rows.handleCache;
 	}
-	private get colHandles() {
+	protected get colHandles() {
 		return this.cols.handleCache;
 	}
 
@@ -270,7 +250,7 @@ export class SharedMatrix<T = any>
 		if (isHandleValid(rowHandle)) {
 			const colHandle = this.colHandles.getHandle(col);
 			if (isHandleValid(colHandle)) {
-				return this.cells.getCell(rowHandle, colHandle);
+				return this.getCellCore(rowHandle, colHandle);
 			}
 		} else {
 			// If we early exit because the given rowHandle is unallocated, we still need to
@@ -279,6 +259,11 @@ export class SharedMatrix<T = any>
 		}
 
 		return undefined;
+	}
+
+	/** @internal */
+	protected getCellCore(row: Handle, col: Handle): MatrixItem<T> {
+		return this.cells.getCell(row, col);
 	}
 
 	public get matrixProducer(): IMatrixProducer<MatrixItem<T>> {
@@ -329,7 +314,7 @@ export class SharedMatrix<T = any>
 		}
 	}
 
-	private setCellCore(
+	protected setCellCore(
 		row: number,
 		col: number,
 		value: MatrixItem<T>,
@@ -379,6 +364,7 @@ export class SharedMatrix<T = any>
 			row,
 			col,
 			value,
+			target: undefined,
 			fwwMode:
 				this.userSwitchedSetCellPolicy || this.setCellLwwToFwwPolicySwitchOpSeqNumber > -1,
 		};
@@ -404,7 +390,7 @@ export class SharedMatrix<T = any>
 	 * a deleted row/col.
 	 * @param callback - code that needs to protected against reentrancy.
 	 */
-	private protectAgainstReentrancy(callback: () => void) {
+	protected protectAgainstReentrancy(callback: () => void) {
 		assert(this.reentrantCount === 0, 0x85d /* reentrant code */);
 		this.reentrantCount++;
 		callback();
@@ -416,8 +402,13 @@ export class SharedMatrix<T = any>
 		currentVector: PermutationVector,
 		oppositeVector: PermutationVector,
 		dimension: SnapshotPath.rows | SnapshotPath.cols,
-		message: any,
+		message: IMergeTreeOp | undefined,
 	) {
+		assert(
+			message !== undefined,
+			"Logical error - we should never get undefined as result on operating on col/row vectors",
+		);
+
 		// Ideally, we would have a single 'localSeq' counter that is shared between both PermutationVectors
 		// and the SharedMatrix's cell data.  Instead, we externally advance each MergeTree's 'localSeq' counter
 		// for each submitted op it not aware of to keep them synchronized.
@@ -436,11 +427,9 @@ export class SharedMatrix<T = any>
 		// If the SharedMatrix is local, it's state will be submitted via a Snapshot when initially connected.
 		// Do not queue a message or track the pending op, as there will never be an ACK, etc.
 		if (this.isAttached()) {
-			// Record whether this `op` targets rows or cols.  (See dispatch in `processCore()`)
-			message.target = dimension;
-
 			this.submitLocalMessage(
-				message,
+				// Record whether this `op` targets rows or cols.  (See dispatch in `processCore()`)
+				{ ...message, target: dimension },
 				currentVector.peekPendingSegmentGroups(
 					message.type === MergeTreeDeltaType.GROUP ? message.ops.length : 1,
 				),
@@ -448,7 +437,7 @@ export class SharedMatrix<T = any>
 		}
 	}
 
-	private submitColMessage(message: any) {
+	private submitColMessage(message: IMergeTreeOp | undefined) {
 		this.submitVectorMessage(this.cols, this.rows, SnapshotPath.cols, message);
 	}
 
@@ -464,7 +453,7 @@ export class SharedMatrix<T = any>
 		);
 	}
 
-	private submitRowMessage(message: any) {
+	private submitRowMessage(message: IMergeTreeOp | undefined) {
 		this.submitVectorMessage(this.rows, this.cols, SnapshotPath.rows, message);
 	}
 
@@ -642,14 +631,16 @@ export class SharedMatrix<T = any>
 		return client.findReconnectionPosition(segment, localSeq) + offset;
 	}
 
-	protected reSubmitCore(content: any, localOpMetadata: unknown) {
+	protected reSubmitCore(contentArg: any, localOpMetadata: unknown) {
 		const originalRefSeq = this.inFlightRefSeqs.shift();
 		assert(originalRefSeq !== undefined, "Expected a recorded refSeq when resubmitting an op");
-		switch (content.target) {
+		const content = contentArg as IMatrixMsg<T>;
+		const target = content.target;
+		switch (target) {
 			case SnapshotPath.cols:
 				this.submitColMessage(
 					this.cols.regeneratePendingOp(
-						content as IMergeTreeOp,
+						content,
 						localOpMetadata as SegmentGroup | SegmentGroup[],
 					),
 				);
@@ -657,18 +648,17 @@ export class SharedMatrix<T = any>
 			case SnapshotPath.rows:
 				this.submitRowMessage(
 					this.rows.regeneratePendingOp(
-						content as IMergeTreeOp,
+						content,
 						localOpMetadata as SegmentGroup | SegmentGroup[],
 					),
 				);
 				break;
-			default: {
+			case undefined: {
 				assert(
 					content.type === MatrixOp.set,
 					0x020 /* "Unknown SharedMatrix 'op' type." */,
 				);
 
-				const setOp = content as ISetOp<T>;
 				const {
 					rowHandle,
 					colHandle,
@@ -680,8 +670,8 @@ export class SharedMatrix<T = any>
 
 				// If after rebasing the op, we get a valid row/col number, that means the row/col
 				// handles have not been recycled and we can safely use them.
-				const row = this.rebasePosition(this.rows, setOp.row, rowsRefSeq, localSeq);
-				const col = this.rebasePosition(this.cols, setOp.col, colsRefSeq, localSeq);
+				const row = this.rebasePosition(this.rows, content.row, rowsRefSeq, localSeq);
+				const col = this.rebasePosition(this.cols, content.col, colsRefSeq, localSeq);
 				if (row !== undefined && col !== undefined && row >= 0 && col >= 0) {
 					const lastCellModificationDetails = this.cellLastWriteTracker.getCell(
 						rowHandle,
@@ -697,7 +687,7 @@ export class SharedMatrix<T = any>
 						lastCellModificationDetails === undefined ||
 						referenceSeqNumber >= lastCellModificationDetails.seqNum
 					) {
-						this.sendSetCellOp(row, col, setOp.value, rowHandle, colHandle, localSeq);
+						this.sendSetCellOp(row, col, content.value, rowHandle, colHandle, localSeq);
 					} else if (this.pending.getCell(rowHandle, colHandle) !== undefined) {
 						// Clear the pending changes if any as we are not sending the op.
 						this.pending.setCell(rowHandle, colHandle, undefined);
@@ -705,6 +695,8 @@ export class SharedMatrix<T = any>
 				}
 				break;
 			}
+			default:
+				unreachableCase(target, "unknown target");
 		}
 	}
 
@@ -779,16 +771,17 @@ export class SharedMatrix<T = any>
 		}
 		const msg = parseHandles(rawMessage, this.serializer);
 
-		const contents = msg.contents;
+		const contents = msg.contents as IMatrixMsg<T>;
+		const target = contents.target;
 
-		switch (contents.target) {
+		switch (target) {
 			case SnapshotPath.cols:
 				this.cols.applyMsg(msg, local);
 				break;
 			case SnapshotPath.rows:
 				this.rows.applyMsg(msg, local);
 				break;
-			default: {
+			case undefined: {
 				assert(
 					contents.type === MatrixOp.set,
 					0x021 /* "SharedMatrix message contents have unexpected type!" */,
@@ -886,7 +879,10 @@ export class SharedMatrix<T = any>
 						}
 					}
 				}
+				break;
 			}
+			default:
+				unreachableCase(target, "unknown target");
 		}
 	}
 
@@ -992,62 +988,276 @@ export class SharedMatrix<T = any>
 	 */
 	protected applyStashedOp(content: any): unknown {
 		this.inFlightRefSeqs.push(this.runtime.deltaManager.lastSequenceNumber);
-		const parsedContent = parseHandles(content, this.serializer);
-		if (
-			parsedContent.target === SnapshotPath.cols ||
-			parsedContent.target === SnapshotPath.rows
-		) {
-			const op = parsedContent as IMergeTreeOp;
-			const currentVector =
-				parsedContent.target === SnapshotPath.cols ? this.cols : this.rows;
-			const oppositeVector =
-				parsedContent.target === SnapshotPath.cols ? this.rows : this.cols;
-			const metadata = currentVector.applyStashedOp(op);
-			const localSeq = currentVector.getCollabWindow().localSeq;
-			const oppositeWindow = oppositeVector.getCollabWindow();
+		const parsedContent = parseHandles(content, this.serializer) as IMatrixMsg<T>;
+		const target = parsedContent.target;
+		switch (target) {
+			case SnapshotPath.cols:
+			case SnapshotPath.rows: {
+				const currentVector = target === SnapshotPath.cols ? this.cols : this.rows;
+				const oppositeVector = target === SnapshotPath.cols ? this.rows : this.cols;
+				const metadata = currentVector.applyStashedOp(parsedContent);
+				const localSeq = currentVector.getCollabWindow().localSeq;
+				const oppositeWindow = oppositeVector.getCollabWindow();
 
-			assert(
-				localSeq > oppositeWindow.localSeq,
-				0x2d9,
-				/* "The 'localSeq' of the vector applying stashed op must > the 'localSeq' of the other vector." */
-			);
+				assert(
+					localSeq > oppositeWindow.localSeq,
+					0x2d9,
+					/* "The 'localSeq' of the vector applying stashed op must > the 'localSeq' of the other vector." */
+				);
 
-			oppositeWindow.localSeq = localSeq;
+				oppositeWindow.localSeq = localSeq;
 
-			return metadata;
-		} else {
-			assert(
-				parsedContent.type === MatrixOp.set,
-				0x2da /* "Unknown SharedMatrix 'op' type." */,
-			);
-
-			const setOp = parsedContent as ISetOp<T>;
-			const rowHandle = this.rows.getAllocatedHandle(setOp.row);
-			const colHandle = this.cols.getAllocatedHandle(setOp.col);
-			const rowsRefSeq = this.rows.getCollabWindow().currentSeq;
-			const colsRefSeq = this.cols.getCollabWindow().currentSeq;
-			if (this.undo !== undefined) {
-				let oldValue = this.cells.getCell(rowHandle, colHandle);
-				if (oldValue === null) {
-					oldValue = undefined;
-				}
-
-				this.undo.cellSet(rowHandle, colHandle, oldValue);
+				return metadata;
 			}
 
-			this.cells.setCell(rowHandle, colHandle, setOp.value);
-			const localSeq = this.nextLocalSeq();
-			const metadata: ISetOpMetadata = {
-				rowHandle,
-				colHandle,
-				localSeq,
-				rowsRefSeq,
-				colsRefSeq,
-				referenceSeqNumber: this.runtime.deltaManager.lastSequenceNumber,
-			};
+			case undefined: {
+				assert(
+					parsedContent.type === MatrixOp.set,
+					0x2da /* "Unknown SharedMatrix 'op' type." */,
+				);
 
-			this.pending.setCell(rowHandle, colHandle, localSeq);
-			return metadata;
+				const rowHandle = this.rows.getAllocatedHandle(parsedContent.row);
+				const colHandle = this.cols.getAllocatedHandle(parsedContent.col);
+				const rowsRefSeq = this.rows.getCollabWindow().currentSeq;
+				const colsRefSeq = this.cols.getCollabWindow().currentSeq;
+				if (this.undo !== undefined) {
+					let oldValue = this.cells.getCell(rowHandle, colHandle);
+					if (oldValue === null) {
+						oldValue = undefined;
+					}
+
+					this.undo.cellSet(rowHandle, colHandle, oldValue);
+				}
+
+				this.cells.setCell(rowHandle, colHandle, parsedContent.value);
+				const localSeq = this.nextLocalSeq();
+				const metadata: ISetOpMetadata = {
+					rowHandle,
+					colHandle,
+					localSeq,
+					rowsRefSeq,
+					colsRefSeq,
+					referenceSeqNumber: this.runtime.deltaManager.lastSequenceNumber,
+				};
+
+				this.pending.setCell(rowHandle, colHandle, localSeq);
+				return metadata;
+			}
+
+			default:
+				unreachableCase(target, "Wrong op type in matrix");
 		}
 	}
+}
+
+/*
+
+export interface IMatrixShapeReader {
+    readonly rowCount: number;
+    readonly colCount: number;
+    readonly matrixProducer?: IMatrixShapeProducer;
+}
+
+export interface IMatrixReader<T> extends IMatrixShapeReader {
+    getCell(row: number, col: number): T;
+   readonly matrixProducer?: IMatrixProducer<T>;
+}
+
+export interface IMatrixShapeConsumer {
+    rowsChanged(rowStart: number, removedCount: number, insertedCount: number, producer: IMatrixShapeProducer): void;
+    colsChanged(colStart: number, removedCount: number, insertedCount: number, producer: IMatrixShapeProducer): void;
+}
+
+interface IMatrixConsumer<T> extends IMatrixShapeConsumer {
+    cellsChanged(rowStart: number, colStart: number, rowCount: number, colCount: number, producer: IMatrixProducer<T>): void;
+}
+
+export interface IMatrixShapeProducer {
+	openMatrix(consumer: IMatrixShapeConsumer): IMatrixShapeReader;
+	closeMatrix(consumer: IMatrixShapeConsumer): void;
+}
+
+export interface IMatrixProducer<T> extends IMatrixShapeProducer {
+    openMatrix(consumer: IMatrixConsumer<T>): IMatrixReader<T>;
+	closeMatrix(consumer: IMatrixConsumer<T>): void;
+}
+
+export interface IMatrixWriter<T> {
+    setCell(row: number, col: number, value: T): void;
+}
+*/
+
+interface IChange<ChangeType> {
+	change: ChangeType;
+	row: Handle;
+	col: Handle;
+	// undefined if local change
+	// Each local change will eventually have appropriate record for acked op in the list.
+	seq?: number;
+	// undefined if made in offline, will go through rebase and proper clientId would be put here
+	clientId?: string;
+	// true if change was made by this client.
+	local: boolean;
+}
+
+// External mechanism that is used to apply changes to base value and return current value.
+interface IInterpreter<T, ChangeType> {
+	getValue(base: T, changes: IChange<ChangeType>[]): T;
+}
+
+export class ExtendedSharedMatrix<T = any, ChangeType = any> extends SharedMatrix<T> {
+	protected changes: IChange<ChangeType>[] = [];
+
+	constructor(
+		protected interpretter: IInterpreter<MatrixItem<T>, ChangeType>,
+		runtime: IFluidDataStoreRuntime,
+		public id: string,
+		attributes: IChannelAttributes,
+		_isSetCellConflictResolutionPolicyFWW?: boolean,
+	) {
+		super(runtime, id, attributes, _isSetCellConflictResolutionPolicyFWW);
+	}
+
+	private getChangeList(row: Handle, col: Handle) {
+		const changes: IChange<ChangeType>[] = [];
+		for (const ch of this.changes) {
+			if (ch.row === row && ch.col === col) {
+				changes.push(ch);
+			}
+		}
+		return changes;
+	}
+
+	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
+		const result = super.summarizeCore(serializer);
+		addBlobToSummary(result, SnapshotPath.log, JSON.stringify(this.changes));
+		return result;
+	}
+
+	protected async loadCore(storage: IChannelStorageService) {
+		this.changes = await deserializeBlob(storage, SnapshotPath.log, this.serializer);
+		return super.loadCore(storage);
+	}
+
+	// TBD
+	protected reSubmitCore(contentArg: any, localOpMetadata: unknown) {
+		const content = contentArg as IMatrixMsgEx<T, ChangeType>;
+		if (content.target === SnapshotPath.log) {
+
+			return;
+		}
+		return super.reSubmitCore(content, localOpMetadata);
+	}
+
+	// TBD
+	protected processCore(
+		rawMessage: ISequencedDocumentMessage,
+		local: boolean,
+		localOpMetadata: unknown,
+	) {
+		const content = contentArg as IMatrixMsgEx<T, ChangeType>;
+		if (content.target === SnapshotPath.log) {
+			
+			return;
+		}
+		return super.processCore(rawMessage, local, localOpMetadata);
+	}
+
+	// TBD
+	protected applyStashedOp(contentArg: any): unknown {
+		const content = contentArg as IMatrixMsgEx<T, ChangeType>;
+		if (content.target === SnapshotPath.log) {
+			
+			return;
+		}
+		return super.applyStashedOp(content);
+	}
+
+	// TBD
+	public appendCellChange(row: number, col: number, change: ChangeType) {
+		assert(
+			0 <= row && row < this.rowCount && 0 <= col && col < this.colCount,
+			"Matrix Bounds check",
+		);
+
+		const rowHandle = this.rows.getAllocatedHandle(row);
+		const colHandle = this.cols.getAllocatedHandle(col);
+
+		const changeRec: IChange<ChangeType> = {
+			row: rowHandle,
+			col: colHandle,
+			change,
+			local: true,
+			clientId: this.runtime.clientId,
+		};
+
+		this.protectAgainstReentrancy(() => {
+			if (this.undo !== undefined) {
+				// Q: What do we do about undo? I'd guess undo is handled on the side, outside of matrix
+				assert(false, "NYI");
+			}
+
+			if (!this.isAttached()) {
+				const changeList = this.getChangeList(row, col);
+				assert(changeList.length === 0, "no changes in detached mode");
+				const value = this.interpretter.getValue(super.getCell(row, col), [changeRec]);
+				this.cells.setCell(rowHandle, colHandle, value);
+			} else {
+				this.changes.push(changeRec);
+				// this.sendSetCellOp(row, col, value, rowHandle, colHandle);
+			}
+
+			// Avoid reentrancy by raising change notifications after the op is queued.
+			for (const consumer of this.consumers.values()) {
+				consumer.cellsChanged(row, col, 1, 1, this);
+			}
+		});
+	}
+
+	getCellCore(row: Handle, col: Handle): MatrixItem<T> {
+		const base = super.getCell(row, col);
+		return this.interpretter.getValue(base, this.getChangeList(row, col));
+	}
+
+	// Need to think what overwrite actually means and how it fits into overall picture.
+	// Including different merge policies (FWW & LWW)
+	protected setCellCore(row: number, col: number, value: MatrixItem<T>) {
+		throw new Error("NYI");
+	}
+
+	// TBD
+	public static create<T>(runtime: IFluidDataStoreRuntime, id?: string) {
+		return runtime.createChannel(id, SharedMatrixFactory.Type) as SharedMatrix<T>;
+	}
+
+	/**
+	 *
+	 * Things to consider:
+	 *
+	 */
+
+	// Evertything around undo:
+	// public openUndo(consumer: IUndoConsumer) {
+	// public _undoRemoveRows(rowStart: number, spec: IJSONSegment) {
+	// public _undoRemoveCols(colStart: number, spec: IJSONSegment) {
+}
+
+/**
+ * 
+ * An example, using numbers and atomic += N operations.
+ */
+
+interface Op {
+	increment: number;
+}
+
+class Interpreter implements IInterpreter<number, Op> {
+	public getValue(base: number, changes: IChange<Op>[]): number {
+		return 0;
+	}
+
+}
+
+export function createMatrixSample(runtime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes) {
+	return new ExtendedSharedMatrix<number, Op>(new Interpreter(), runtime, id, attributes);
 }

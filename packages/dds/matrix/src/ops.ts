@@ -4,31 +4,51 @@
  */
 
 import { Serializable } from "@fluidframework/datastore-definitions";
+import { IMergeTreeOp } from "@fluidframework/merge-tree";
 
 export enum MatrixOp {
 	spliceCols,
 	spliceRows,
 	set,
-	changeSetCellPolicy,
 }
 
-export interface IMatrixMsg {
-	type: MatrixOp;
+export enum SnapshotPath {
+	rows = "rows",
+	cols = "cols",
+	cells = "cells",
+	log = "log",
 }
 
-export interface IMatrixSpliceMsg extends IMatrixMsg {
-	type: MatrixOp.spliceCols | MatrixOp.spliceRows;
-	start: number;
-	count: number;
-}
+/**
+ * A matrix cell value may be undefined (indicating an empty cell) or any serializable type,
+ * excluding null.  (However, nulls may be embedded inside objects and arrays.)
+ * @alpha
+ */
+// eslint-disable-next-line @rushstack/no-new-null -- Using 'null' to disallow 'null'.
+export type MatrixItem<T> = Serializable<Exclude<T, null>> | undefined;
 
-export interface IMatrixCellMsg extends IMatrixMsg {
+export type IMatrixVectorMst = IMergeTreeOp & {
+	target: SnapshotPath.cols | SnapshotPath.rows;
+};
+
+export interface ISetOp<T> {
+	// Historically, IMatrixVectorMst format did not use type at all, so all swtich logic is done by target.
+	// That said, old code asserts that if target === undefined, type should be set to "set", do we have to keep it here.
 	type: MatrixOp.set;
+	target: undefined;
 	row: number;
 	col: number;
-	value: Serializable<unknown>;
+	value: MatrixItem<T>;
+	fwwMode?: boolean;
 }
 
-export interface IMatrixSwitchSetCellPolicy extends IMatrixMsg {
-	type: MatrixOp.changeSetCellPolicy;
+export type IMatrixMsg<T> = IMatrixVectorMst | ISetOp<T>;
+
+export interface IOTOp<ChangeType> {
+	target: SnapshotPath.log;
+	row: number;
+	col: number;
+	value: ChangeType;
 }
+
+export type IMatrixMsgEx<T, ChangeType> = IMatrixMsg<T> | IOTOp<ChangeType>;

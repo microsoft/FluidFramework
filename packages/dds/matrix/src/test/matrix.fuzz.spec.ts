@@ -24,7 +24,7 @@ import {
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { MatrixItem, SharedMatrix } from "../matrix";
+import { MatrixItem, SharedMatrix } from "../index";
 import { SharedMatrixFactory } from "../runtime";
 /**
  * Supported cell values used within the fuzz model.

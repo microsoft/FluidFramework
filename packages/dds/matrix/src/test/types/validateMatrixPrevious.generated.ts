@@ -96,26 +96,26 @@ use_old_InterfaceDeclaration_IUndoConsumer(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_MatrixItem": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_MatrixItem": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_MatrixItem():
     TypeOnly<old.MatrixItem<any>>;
-declare function use_current_TypeAliasDeclaration_MatrixItem(
+declare function use_current_RemovedTypeAliasDeclaration_MatrixItem(
     use: TypeOnly<current.MatrixItem<any>>): void;
-use_current_TypeAliasDeclaration_MatrixItem(
+use_current_RemovedTypeAliasDeclaration_MatrixItem(
     get_old_TypeAliasDeclaration_MatrixItem());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_MatrixItem": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_MatrixItem": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_MatrixItem():
+declare function get_current_RemovedTypeAliasDeclaration_MatrixItem():
     TypeOnly<current.MatrixItem<any>>;
 declare function use_old_TypeAliasDeclaration_MatrixItem(
     use: TypeOnly<old.MatrixItem<any>>): void;
 use_old_TypeAliasDeclaration_MatrixItem(
-    get_current_TypeAliasDeclaration_MatrixItem());
+    get_current_RemovedTypeAliasDeclaration_MatrixItem());
 
 /*
 * Validate forward compat by using old type in place of current type

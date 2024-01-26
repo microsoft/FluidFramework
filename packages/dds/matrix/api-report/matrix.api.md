@@ -4,6 +4,8 @@
 
 ```ts
 
+import { Client } from '@fluidframework/merge-tree';
+import { HandleCache as HandleCache_2 } from './handlecache';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
@@ -11,15 +13,22 @@ import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
+import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { IJSONSegment } from '@fluidframework/merge-tree';
 import { IMatrixConsumer } from '@tiny-calc/nano';
 import { IMatrixProducer } from '@tiny-calc/nano';
 import { IMatrixReader } from '@tiny-calc/nano';
 import { IMatrixWriter } from '@tiny-calc/nano';
+import { IMergeTreeDeltaCallbackArgs } from '@fluidframework/merge-tree';
+import { IMergeTreeInsertMsg } from '@fluidframework/merge-tree';
+import { IMergeTreeRemoveMsg } from '@fluidframework/merge-tree';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { IVectorConsumer } from '@tiny-calc/nano';
+import { MergeTreeRevertibleDriver } from '@fluidframework/merge-tree';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
@@ -50,16 +59,26 @@ export class SharedMatrix<T = any> extends SharedObject<ISharedMatrixEvents<T>> 
     constructor(runtime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, _isSetCellConflictResolutionPolicyFWW?: boolean);
     // (undocumented)
     protected applyStashedOp(content: any): unknown;
+    // @internal (undocumented)
+    protected cells: SparseArray2D<MatrixItem<T>>;
     // (undocumented)
     closeMatrix(consumer: IMatrixConsumer<MatrixItem<T>>): void;
     // (undocumented)
     get colCount(): number;
+    // (undocumented)
+    protected get colHandles(): HandleCache_2;
+    // @internal (undocumented)
+    protected readonly cols: PermutationVector;
+    // (undocumented)
+    protected readonly consumers: Set<IMatrixConsumer<MatrixItem<T>>>;
     // (undocumented)
     static create<T>(runtime: IFluidDataStoreRuntime, id?: string): SharedMatrix<T>;
     // (undocumented)
     protected didAttach(): void;
     // (undocumented)
     getCell(row: number, col: number): MatrixItem<T>;
+    // @internal (undocumented)
+    protected getCellCore(row: Handle, col: Handle): MatrixItem<T>;
     // (undocumented)
     static getFactory(): SharedMatrixFactory;
     // (undocumented)
@@ -84,6 +103,7 @@ export class SharedMatrix<T = any> extends SharedObject<ISharedMatrixEvents<T>> 
     // (undocumented)
     protected processCore(rawMessage: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     protected processGCDataCore(serializer: IFluidSerializer): void;
+    protected protectAgainstReentrancy(callback: () => void): void;
     // (undocumented)
     removeCols(colStart: number, count: number): void;
     // (undocumented)
@@ -93,7 +113,13 @@ export class SharedMatrix<T = any> extends SharedObject<ISharedMatrixEvents<T>> 
     // (undocumented)
     get rowCount(): number;
     // (undocumented)
+    protected get rowHandles(): HandleCache_2;
+    // @internal (undocumented)
+    protected readonly rows: PermutationVector;
+    // (undocumented)
     setCell(row: number, col: number, value: MatrixItem<T>): void;
+    // (undocumented)
+    protected setCellCore(row: number, col: number, value: MatrixItem<T>, rowHandle?: Handle, colHandle?: Handle): void;
     // (undocumented)
     setCells(rowStart: number, colStart: number, colCount: number, values: readonly MatrixItem<T>[]): void;
     // (undocumented)
@@ -103,6 +129,8 @@ export class SharedMatrix<T = any> extends SharedObject<ISharedMatrixEvents<T>> 
     switchSetCellPolicy(): void;
     // (undocumented)
     toString(): string;
+    // (undocumented)
+    protected undo?: MatrixUndoProvider<T>;
     // (undocumented)
     _undoRemoveCols(colStart: number, spec: IJSONSegment): void;
     // (undocumented)

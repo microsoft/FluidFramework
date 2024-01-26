@@ -15,7 +15,8 @@ import {
 	TrackingGroup,
 	ITrackingGroup,
 } from "@fluidframework/merge-tree";
-import { MatrixItem, SharedMatrix } from "./matrix";
+import { SharedMatrix } from "./matrix";
+import { MatrixItem } from "./ops";
 import { Handle, isHandleValid } from "./handletable";
 import { PermutationSegment, PermutationVector } from "./permutationvector";
 import { IUndoConsumer } from "./types";
