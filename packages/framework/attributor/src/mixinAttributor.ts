@@ -56,7 +56,8 @@ export interface IProvideRuntimeAttributor {
 /**
  * Provides access to attribution information stored on the container runtime.
  *
- * Attributors are only populated after the container runtime they are injected into has initialized.
+ * @remarks Attributors are only populated after the container runtime into which they are being injected has initialized.
+ *
  * @sealed
  * @internal
  */
@@ -79,8 +80,10 @@ export interface IRuntimeAttributor extends IProvideRuntimeAttributor {
 }
 
 /**
- * @returns an IRuntimeAttributor for usage with `mixinAttributor`. The attributor will only be populated with data
- * once it's passed via scope to a container runtime load flow. See {@link mixinAttributor}.
+ * Creates an `IRuntimeAttributor` for usage with {@link mixinAttributor}.
+ *
+ * @remarks The attributor will only be populated with data once it's passed via scope to a container runtime load flow.
+ *
  * @internal
  */
 export function createRuntimeAttributor(): IRuntimeAttributor {
@@ -98,7 +101,9 @@ export function createRuntimeAttributor(): IRuntimeAttributor {
  * @param Base - base class, inherits from FluidAttributorRuntime
  * @internal
  */
-export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime) =>
+export const mixinAttributor = (
+	Base: typeof ContainerRuntime = ContainerRuntime,
+): typeof ContainerRuntime =>
 	class ContainerRuntimeWithAttributor extends Base {
 		public static async loadRuntime(params: {
 			context: IContainerContext;
@@ -139,19 +144,22 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 			const baseSnapshot: ISnapshotTree | undefined =
 				pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
 
-			const { audience, deltaManager } = context;
+			const { audience, deltaManager, taggedLogger } = context;
 			assert(
 				audience !== undefined,
 				0x508 /* Audience must exist when instantiating attribution-providing runtime */,
 			);
 
-			const mc = loggerToMonitoringContext(context.taggedLogger);
+			const mc = loggerToMonitoringContext(taggedLogger);
 
 			const shouldTrackAttribution = mc.config.getBoolean(enableOnNewFileKey) ?? false;
 			if (shouldTrackAttribution) {
-				(context.options.attribution ??= {}).track = true;
+				const { options } = context;
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				(options.attribution ??= {}).track = true;
 			}
 
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			const runtime = (await Base.loadRuntime({
 				context,
 				registryEntries,
@@ -163,6 +171,7 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 				containerScope,
 				existing,
 				containerRuntimeCtor,
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			} as any)) as ContainerRuntimeWithAttributor;
 			runtime.runtimeAttributor = runtimeAttributor as RuntimeAttributor;
 
@@ -204,7 +213,7 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 			fullTree: boolean,
 			trackState: boolean,
 			telemetryContext?: ITelemetryContext,
-		) {
+		): void {
 			super.addContainerStateToSummary(summaryTree, fullTree, trackState, telemetryContext);
 			const attributorSummary = this.runtimeAttributor?.summarize();
 			if (attributorSummary) {
