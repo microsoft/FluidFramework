@@ -253,7 +253,7 @@ export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents> imp
     // (undocumented)
     submit(type: MessageType, contents: any, batch: boolean | undefined, localOpMetadata: any): number;
     // (undocumented)
-    submitSignal(content: any): void;
+    submitSignal(content: unknown): void;
     // (undocumented)
     get version(): string;
 }
@@ -375,7 +375,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     submitMessage(type: string, content: any, localOpMetadata: unknown): void;
     // (undocumented)
-    submitSignal(type: string, content: any): void;
+    submitSignal(type: string, content: unknown): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 }
@@ -495,7 +495,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     submitMessage(type: MessageType, content: any): null;
     // (undocumented)
-    submitSignal(type: string, content: any): null;
+    submitSignal(type: string, content: unknown): null;
     // (undocumented)
     summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
     // (undocumented)

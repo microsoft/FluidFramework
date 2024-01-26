@@ -198,8 +198,6 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 		);
 	});
 
-
-
 	it("Validate data store runtime targetted signals", async () => {
 		let user1SignalReceivedCount = 0;
 		let user2SignalReceivedCount = 0;

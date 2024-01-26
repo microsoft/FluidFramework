@@ -27,7 +27,7 @@ import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @internal
 export class MockDocumentDeltaConnection extends TypedEventEmitter<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection, IDisposable {
-    constructor(clientId: string, submitHandler?: ((messages: IDocumentMessage[]) => void) | undefined, submitSignalHandler?: ((message: any) => void) | undefined);
+    constructor(clientId: string, submitHandler?: ((messages: IDocumentMessage[]) => void) | undefined, submitSignalHandler?: ((message: unknown) => void) | undefined);
     // (undocumented)
     claims: ITokenClaims;
     // (undocumented)
@@ -65,7 +65,7 @@ export class MockDocumentDeltaConnection extends TypedEventEmitter<IDocumentDelt
     // (undocumented)
     submit(messages: IDocumentMessage[]): void;
     // (undocumented)
-    submitSignal(message: any): void;
+    submitSignal(message: unknown): void;
     // (undocumented)
     readonly version: string;
 }
