@@ -842,5 +842,95 @@ describeCompat("GC inactive nodes tests", "2.0.0-rc.1.0.0", (getTestObjectProvid
 				},
 			]);
 		});
+
+		it("Reviving an InactiveObject clears Inactive state immediately in interactive client (but not for its subtree)", async () => {
+			const container1 = mainContainer;
+			const { summarizer: summarizer1 } = await createSummarizer(
+				provider,
+				container1,
+				testContainerConfig,
+			);
+			const defaultDataObject1 = (await container1.getEntryPoint()) as ITestDataObject;
+			await waitForContainerConnection(container1);
+
+			const dataObjectA_1 = await createNewDataObject();
+			const dataObjectB_1 = await createNewDataObject();
+			const idA = dataObjectA_1._context.id;
+			const idB = dataObjectB_1._context.id;
+
+			// Reference A from the container entrypoint, and B from A
+			defaultDataObject1._root.set("A", dataObjectA_1.handle);
+			dataObjectA_1._root.set("B", dataObjectB_1.handle);
+
+			// Then unreference the A-B chain (but leave it intact), and Summarize to start unreferenced tracking
+			defaultDataObject1._root.delete("A");
+			await provider.ensureSynchronized();
+			const { summaryVersion: summaryVersion1 } = await summarizeNow(summarizer1);
+
+			// A and B are unreferenced in container2/container3. Timers will be set
+			// We need two containers because each event type is only logged once per container
+			const mockLogger2 = new MockLogger();
+			const container2 = await loadContainer(
+				testContainerConfig,
+				summaryVersion1,
+				mockLogger2,
+			);
+			const defaultDataObject2 = (await container2.getEntryPoint()) as ITestDataObject;
+			const mockLogger3 = new MockLogger();
+			const container3 = await loadContainer(
+				testContainerConfig,
+				summaryVersion1,
+				mockLogger3,
+			);
+			const defaultDataObject3 = (await container3.getEntryPoint()) as ITestDataObject;
+
+			// Wait the Inactive Timeout. Timers will fire
+			await delay(inactiveTimeoutMs);
+
+			// Load A in container2 and ensure InactiveObject_Loaded is logged
+			const handleA_2 = manufactureHandle<ITestDataObject>(
+				defaultDataObject2._context.IFluidHandleContext, // yields the ContaineRuntime's handleContext
+				idA,
+			);
+			await handleA_2?.get();
+			mockLogger2.assertMatch([
+				{
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
+					id: { value: `/${idA}`, tag: "CodeArtifact" },
+				},
+			]);
+
+			// Reference A again in container3 via DDS attach op. Should be properly revived in container3 itself
+			const manufacturedHandleA_3 = manufactureHandle<ITestDataObject>(
+				defaultDataObject3._context.IFluidHandleContext, // yields the ContaineRuntime's handleContext
+				idA,
+			);
+			const dds_3 = SharedMap.create(defaultDataObject3._runtime, "dds");
+			dds_3.set("A", manufacturedHandleA_3);
+			defaultDataObject3._root.set("Sibling DDS", dds_3.handle);
+			await provider.ensureSynchronized();
+
+			// Since A was directly revived, its unreferenced state was cleared immediately so we shouldn't see InactiveObject logs for it
+			const handleA_3 = dds_3.get<IFluidHandle<ITestDataObject>>("A");
+			const dataObjectA_3 = await handleA_3?.get();
+			mockLogger3.assertMatchNone([
+				{
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
+				},
+			]);
+
+			// Since B wasn't directly revived, it wrongly still thinks it's Inactive. Next GC will clear it up.
+			const handleB_3 = dataObjectA_3?._root.get<IFluidHandle<ITestDataObject>>("B");
+			await handleB_3?.get();
+			mockLogger3.assertMatch([
+				{
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
+					id: { value: `/${idB}`, tag: "CodeArtifact" },
+				},
+			]);
+		});
 	});
 });
