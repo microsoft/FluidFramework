@@ -9,7 +9,6 @@ import { bufferToString } from "@fluid-internal/client-utils";
 import {
 	IFileEntry,
 	IOdspResolvedUrl,
-	ShareLinkTypes,
 	ISharingLinkKind,
 	SharingLinkRole,
 	SharingLinkScope,
@@ -193,86 +192,6 @@ describe("Create New Utils Tests", () => {
 		await epochTracker.removeEntries().catch(() => {});
 	});
 
-	it("Should save CSL specific share link information received during createNewFluidFile", async () => {
-		const createLinkType = ShareLinkTypes.csl;
-		newFileParams.createLinkType = createLinkType;
-
-		// Test that sharing link is set appropriately when it is received in the response from ODSP
-		const mockSharingLink = "mockSharingLink";
-		const mockSharingId = "mockSharingId";
-		let odspResolvedUrl = await mockFetchOk(
-			async () =>
-				createNewFluidFile(
-					async (_options) => "token",
-					newFileParams,
-					createChildLogger(),
-					createSummary(),
-					epochTracker,
-					fileEntry,
-					false /* createNewCaching */,
-					false /* forceAccessTokenViaAuthorizationHeader */,
-					undefined /* isClpCompliantApp */,
-					false /* enableSingleRequestForShareLinkWithCreate */,
-					true /* enableShareLinkWithCreate */,
-				),
-			{
-				itemId: "mockItemId",
-				id: "mockId",
-				sharingLink: mockSharingLink,
-				sharingLinkErrorReason: undefined,
-				sharing: {
-					shareId: mockSharingId,
-					shareLink: {
-						scope: "organization",
-						type: "edit",
-						webUrl: "webUrl",
-					},
-				},
-			},
-			{ "x-fluid-epoch": "epoch1" },
-		);
-		assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink, {
-			type: createLinkType,
-			link: mockSharingLink,
-			shareId: mockSharingId,
-			error: undefined,
-		});
-
-		// Test that error message is set appropriately when it is received in the response from ODSP
-		const mockError = "mockError";
-		odspResolvedUrl = await mockFetchOk(
-			async () =>
-				createNewFluidFile(
-					async (_options) => "token",
-					newFileParams,
-					createChildLogger(),
-					createSummary(),
-					epochTracker,
-					fileEntry,
-					false /* createNewCaching */,
-					false /* forceAccessTokenViaAuthorizationHeader */,
-					undefined /* isClpCompliantApp */,
-					false /* enableSingleRequestForShareLinkWithCreate */,
-					true /* enableShareLinkWithCreate */,
-				),
-			{
-				itemId: "mockItemId",
-				id: "mockId",
-				sharingLink: undefined,
-				sharingLinkErrorReason: mockError,
-				sharing: { error: {} },
-			},
-			{ "x-fluid-epoch": "epoch1" },
-		);
-		assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink, {
-			type: createLinkType,
-			link: undefined,
-			shareId: undefined,
-			error: mockError,
-		});
-		await epochTracker.removeEntries().catch(() => {});
-	});
-
 	it("Should save 'sharing' information received during createNewFluidFile", async () => {
 		const createLinkType: ISharingLinkKind = {
 			scope: SharingLinkScope.users,
@@ -309,7 +228,6 @@ describe("Create New Utils Tests", () => {
 					false /* forceAccessTokenViaAuthorizationHeader */,
 					undefined /* isClpCompliantApp */,
 					true /* enableSingleRequestForShareLinkWithCreate */,
-					false /* enableShareLinkWithCreate */,
 				),
 			{
 				itemId: "mockItemId",
@@ -320,7 +238,6 @@ describe("Create New Utils Tests", () => {
 			{ "x-fluid-epoch": "epoch1" },
 		);
 		assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink, {
-			type: createLinkType,
 			shareId: mockSharingData.shareId,
 			link: {
 				role: mockSharingData.sharingLink.type,
@@ -356,7 +273,6 @@ describe("Create New Utils Tests", () => {
 					false /* forceAccessTokenViaAuthorizationHeader */,
 					undefined /* isClpCompliantApp */,
 					true /* enableSingleRequestForShareLinkWithCreate */,
-					false /* enableShareLinkWithCreate */,
 				),
 			{
 				itemId: "mockItemId",
@@ -367,7 +283,6 @@ describe("Create New Utils Tests", () => {
 			{ "x-fluid-epoch": "epoch1" },
 		);
 		assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink, {
-			type: createLinkType,
 			shareId: undefined,
 			link: undefined,
 			error: mockSharingError.error,

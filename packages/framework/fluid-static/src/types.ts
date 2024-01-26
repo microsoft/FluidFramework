@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
-import { IChannelFactory } from "@fluidframework/datastore-definitions";
+import {
+	type IEvent,
+	type IEventProvider,
+	type IFluidLoadable,
+} from "@fluidframework/core-interfaces";
+import { type IChannelFactory } from "@fluidframework/datastore-definitions";
 
 /**
  * A mapping of string identifiers to instantiated `DataObject`s or `SharedObject`s.
@@ -17,6 +21,7 @@ export type LoadableObjectRecord = Record<string, IFluidLoadable>;
  * or `SharedObject`.
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>;
 
 /**
@@ -57,7 +62,14 @@ export type SharedObjectClass<T extends IFluidLoadable> = {
  * @typeParam T - The class of the loadable object.
  * @public
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) => T;
+
+/**
+ * Represents properties that can be attached to a container.
+ * @public
+ */
+export type ContainerAttachProps<T = unknown> = T;
 
 /**
  * Declares the Fluid objects that will be available in the {@link IFluidContainer | Container}.
@@ -99,6 +111,7 @@ export interface ContainerSchema {
 	 * For best practice it's recommended to define all the dynamic types you create even if they are
 	 * included via initialObjects.
 	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	dynamicObjectTypes?: LoadableObjectClass<any>[];
 }
 

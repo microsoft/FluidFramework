@@ -6,26 +6,15 @@
 import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
-import {
-	ITestContainerConfig,
-	mockConfigProvider,
-	ITestObjectProvider,
-	createSummarizer,
-	summarizeNow,
-} from "@fluidframework/test-utils";
+import { ITestObjectProvider, createSummarizer, summarizeNow } from "@fluidframework/test-utils";
 
 describeCompat(
 	"Summarizer can refresh a snapshot from the server",
-	"NoCompat",
+	"2.0.0-rc.1.0.0",
 	(getTestObjectProvider) => {
-		const settings = {};
-		const testContainerConfig: ITestContainerConfig = {
-			loaderProps: { configProvider: mockConfigProvider(settings) },
-		};
-
 		let provider: ITestObjectProvider;
 		const createContainer = async (): Promise<IContainer> => {
-			return provider.makeTestContainer(testContainerConfig);
+			return provider.makeTestContainer();
 		};
 
 		beforeEach("getTestObjectProvider", async () => {
@@ -37,9 +26,6 @@ describeCompat(
 			const { container: summarizingContainer, summarizer } = await createSummarizer(
 				provider,
 				container,
-				testContainerConfig,
-				undefined,
-				undefined,
 			);
 
 			await provider.ensureSynchronized();
