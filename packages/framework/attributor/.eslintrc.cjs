@@ -13,7 +13,11 @@ module.exports = {
 			// Rules only for test files
 			files: ["*.spec.ts", "src/test/**"],
 			rules: {
-				"import/no-nodejs-modules": ["error", { allow: ["node:assert", "fs", "path"] }],
+				"import/no-nodejs-modules": [
+					"error",
+					{ allow: ["node:assert", "node:fs", "node:path"] },
+				],
+				"unicorn/prefer-module": "off",
 			},
 		},
 	],
