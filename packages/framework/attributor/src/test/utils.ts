@@ -8,6 +8,7 @@ import { IAudience } from "@fluidframework/container-definitions";
 export function makeMockAudience(clientIds: string[]): IAudience {
 	const clients = new Map<string, IClient>();
 	for (const [index, clientId] of clientIds.entries()) {
+		// eslint-disable-next-line unicorn/prefer-code-point
 		const stringId = String.fromCharCode(index + 65);
 		const name = stringId.repeat(10);
 		const userId = `${name}@microsoft.com`;
