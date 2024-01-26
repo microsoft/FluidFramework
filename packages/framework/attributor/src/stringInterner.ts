@@ -76,7 +76,11 @@ export class MutableStringInterner implements StringInterner {
 		return this.internedStrings;
 	}
 
-	/** Create a new interned id. Assumes without validation that the input doesn't already have an interned id. */
+	/**
+	 * Create a new interned id.
+	 *
+	 * @remarks Assumes (without validation) that the input doesn't already have an interned id.
+	 */
 	private createNewId(input: string): InternedStringId {
 		const internedId = this.stringToInternedIdMap.size as InternedStringId;
 		this.stringToInternedIdMap.set(input, internedId);

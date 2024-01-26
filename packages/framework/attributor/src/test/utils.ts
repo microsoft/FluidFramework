@@ -7,7 +7,7 @@ import { IAudience } from "@fluidframework/container-definitions";
 
 export function makeMockAudience(clientIds: string[]): IAudience {
 	const clients = new Map<string, IClient>();
-	clientIds.forEach((clientId, index) => {
+	for (const [index, clientId] of clientIds.entries()) {
 		const stringId = String.fromCharCode(index + 65);
 		const name = stringId.repeat(10);
 		const userId = `${name}@microsoft.com`;
@@ -24,7 +24,7 @@ export function makeMockAudience(clientIds: string[]): IAudience {
 			user,
 			scopes: [],
 		});
-	});
+	}
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 	return {
 		getMember: (clientId: string): IClient | undefined => {

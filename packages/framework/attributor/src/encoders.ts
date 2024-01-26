@@ -20,7 +20,7 @@ export type TimestampEncoder = Encoder<number[], number[]>;
 
 export const deltaEncoder: TimestampEncoder = {
 	encode: (timestamps: number[]) => {
-		const deltaTimestamps: number[] = new Array(timestamps.length);
+		const deltaTimestamps: number[] = Array.from({ length: timestamps.length });
 		let prev = 0;
 		for (let i = 0; i < timestamps.length; i++) {
 			deltaTimestamps[i] = timestamps[i] - prev;
@@ -33,7 +33,7 @@ export const deltaEncoder: TimestampEncoder = {
 			Array.isArray(encoded),
 			0x4b0 /* Encoded timestamps should be an array of numbers */,
 		);
-		const timestamps: number[] = new Array(encoded.length);
+		const timestamps: number[] = Array.from({ length: encoded.length });
 		let cumulativeSum = 0;
 		for (let i = 0; i < encoded.length; i++) {
 			cumulativeSum += encoded[i];
@@ -90,12 +90,12 @@ export class AttributorSerializer implements IAttributorSerializer {
 			seqs.length === timestamps.length && timestamps.length === attributionRefs.length,
 			0x4b1 /* serialized attribution columns should have the same length */,
 		);
-		const entries = new Array(seqs.length);
+		const entries = Array.from<[number, AttributionInfo]>({ length: seqs.length });
 		for (let i = 0; i < seqs.length; i++) {
 			const key = seqs[i];
 			const timestamp = timestamps[i];
 			const ref = attributionRefs[i];
-			const user: IUser = JSON.parse(interner.getString(ref));
+			const user = JSON.parse(interner.getString(ref)) as IUser;
 			entries[i] = [key, { user, timestamp }];
 		}
 		return this.makeAttributor(entries);
@@ -103,7 +103,7 @@ export class AttributorSerializer implements IAttributorSerializer {
 }
 
 /**
- * @returns an encoder which composes `a` and `b`.
+ * Creates an encoder which composes `a` and `b`.
  */
 export const chain = <T1, T2, T3>(a: Encoder<T1, T2>, b: Encoder<T2, T3>): Encoder<T1, T3> => ({
 	encode: (content) => b.encode(a.encode(content)),

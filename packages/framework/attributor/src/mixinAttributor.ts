@@ -107,7 +107,9 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 			runtimeOptions?: IContainerRuntimeOptions;
 			containerScope?: FluidObject;
 			containerRuntimeCtor?: typeof ContainerRuntime;
-			/** @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md */
+			/**
+			 * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+			 */
 			requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
 			provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
 		}): Promise<ContainerRuntime> {
@@ -286,7 +288,9 @@ class RuntimeAttributor implements IRuntimeAttributor {
 			makeLZ4Encoder(),
 		);
 
-		if (attributorTree !== undefined) {
+		if (attributorTree === undefined) {
+			this.opAttributor = new OpStreamAttributor(deltaManager, audience);
+		} else {
 			const id = attributorTree.blobs[opBlobName];
 			assert(
 				id !== undefined,
@@ -295,8 +299,6 @@ class RuntimeAttributor implements IRuntimeAttributor {
 			const blobContents = await readBlob(id);
 			const attributorSnapshot = bufferToString(blobContents, "utf8");
 			this.opAttributor = this.encoder.decode(attributorSnapshot);
-		} else {
-			this.opAttributor = new OpStreamAttributor(deltaManager, audience);
 		}
 	}
 

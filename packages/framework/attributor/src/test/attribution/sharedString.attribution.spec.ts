@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
-import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "fs";
-import { strict as assert } from "assert";
+import * as path from "node:path";
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { strict as assert } from "node:assert";
 import {
 	AcceptanceCondition,
 	BaseFuzzTestState,
@@ -47,7 +47,7 @@ import { makeLZ4Encoder } from "../../lz4Encoder";
 
 function makeMockAudience(clientIds: string[]): IAudience {
 	const clients = new Map<string, IClient>();
-	clientIds.forEach((clientId, index) => {
+	for (const [index, clientId] of clientIds.entries()) {
 		const stringId = String.fromCharCode(index + 65);
 		const name = stringId.repeat(10);
 		const userId = `${name}@microsoft.com`;
@@ -64,7 +64,7 @@ function makeMockAudience(clientIds: string[]): IAudience {
 			user,
 			scopes: [],
 		});
-	});
+	}
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 	return {
 		getMember: (clientId: string): IClient | undefined => {
@@ -151,7 +151,7 @@ const defaultOptions: Required<OperationGenerationConfig> = {
 function makeOperationGenerator(
 	optionsParam?: OperationGenerationConfig,
 ): Generator<Operation, FuzzTestState> {
-	const options = { ...defaultOptions, ...(optionsParam ?? {}) };
+	const options = { ...defaultOptions, ...optionsParam };
 	type ClientOpState = FuzzTestState & { sharedString: SharedString };
 
 	// All subsequent helper functions are generators; note that they don't actually apply any operations.
@@ -452,9 +452,7 @@ function getTimestamp(opIndex: number): number {
 
 function embedAttributionInProps(operations: Operation[]): Operation[] {
 	return operations.map((operation, index) => {
-		if (operation.type !== "addText") {
-			return operation;
-		} else {
+		if (operation.type === "addText") {
 			const name = operation.stringId.repeat(10);
 			const id = `${name}@contoso.com`;
 			const email = id;
@@ -470,6 +468,8 @@ function embedAttributionInProps(operations: Operation[]): Operation[] {
 				...operation,
 				props,
 			};
+		} else {
+			return operation;
 		}
 	});
 }
@@ -490,18 +490,21 @@ type ExcludeDeeply<T, Exclusion, TBase = Exclude<T, Exclusion>> = TBase extends 
 function assertSerializableSummary(
 	summary: ISummaryTree,
 ): asserts summary is SerializableISummaryTree {
-	Object.values(summary.tree).forEach((value) => {
+	for (const value of Object.values(summary.tree)) {
 		switch (value.type) {
-			case SummaryType.Tree:
+			case SummaryType.Tree: {
 				assertSerializableSummary(value);
 				break;
-			case SummaryType.Blob:
+			}
+			case SummaryType.Blob: {
 				assert(typeof value.content === "string");
 				break;
-			default:
+			}
+			default: {
 				break;
+			}
 		}
-	});
+	}
 }
 
 const summaryFromState = async (state: FuzzTestState): Promise<SerializableISummaryTree> => {
@@ -538,13 +541,13 @@ class DataTable<T> {
 		for (const [name, data] of this.rows.entries()) {
 			const dataStrings = data.map(dataToString);
 			rowStrings.set(name, dataStrings);
-			dataStrings.forEach((s, i) => {
+			for (const [i, s] of dataStrings.entries()) {
 				paddingByColumn[i] = Math.max(paddingByColumn[i], s.length);
-			});
+			}
 		}
-		paddingByColumn.forEach((_, i) => {
+		for (const [i, _] of paddingByColumn.entries()) {
 			paddingByColumn[i]++;
-		});
+		}
 
 		console.log(
 			[
