@@ -874,10 +874,6 @@ export class Container
 		// Prefix all events in this file with container-loader
 		this.mc = createChildMonitoringContext({ logger: this.subLogger, namespace: "Container" });
 
-		this.offlineLoadEnabled =
-			this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ??
-			options.enableOfflineLoad === true;
-
 		this._deltaManager = this.createDeltaManager();
 
 		this.connectionStateHandler = createConnectionStateHandler(
@@ -941,6 +937,10 @@ export class Container
 			this.deltaManager,
 			pendingLocalState?.clientId,
 		);
+
+		this.offlineLoadEnabled =
+			this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ??
+			options.enableOfflineLoad === true;
 
 		this.on(savedContainerEvent, () => {
 			this.connectionStateHandler.containerSaved();
