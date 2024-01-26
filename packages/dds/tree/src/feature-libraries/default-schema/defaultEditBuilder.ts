@@ -102,6 +102,18 @@ export function relevantRemovedRoots(
 
 /**
  * Default editor for transactional tree data changes.
+ * @privateRemarks
+ * When taking into account not just the content of the tree,
+ * but also how the merge identities (and thus anchors, flex-tree and simple-tree nodes) of nodes before and after the edits correspond,
+ * some edits are currently impossible to express.
+ * Examples of these non-expressible edits include:
+ * - Changing the type of a node while keeping its merge identity.
+ * - Changing the value of a leaf while keeping its merge identity.
+ * - Swapping subtrees between two value fields.
+ * - Replacing a node in the middle of a tree while reusing some of the old nodes decedents that were under value fields.
+ * At some point it will likely be worth supporting at least some of these, possibly using a mechanism could support all of them if desired.
+ * If/when such a mechanism becomes available, it should be evaluated if any existing editing operations should be changed to leverage it (Possibly by adding opt ins at the view schema layer).
+ *
  * @internal
  */
 export interface IDefaultEditBuilder {
