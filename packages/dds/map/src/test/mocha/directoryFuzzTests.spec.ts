@@ -367,8 +367,8 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 			defaultTestCount: 200,
 			// The seeds below fail only when rebaseProbability is non-zero ADO:6044
 			skip: [
-				4, 6, 8, 19, 29, 48, 82, 83, 87, 94, 95, 110, 118, 123, 138, 143, 154, 159, 180,
-				181, 188, 190, 195,
+				1, 5, 6, 12, 21, 42, 43, 56, 62, 66, 74, 77, 89, 92, 140, 150, 156, 173, 176, 181,
+				191, 195, 196, 198,
 			],
 			// Uncomment this line to replay a specific seed from its failure file:
 			// replay: 21,
@@ -426,7 +426,7 @@ describe("SharedDirectory fuzz", () => {
 			},
 			defaultTestCount: 200,
 			// The seeds below fail only when rebaseProbability is non-zero ADO:6044
-			skip: [30, 50, 133, 137, 144, 177, 195, 196],
+			skip: [63, 173, 190],
 			// Uncomment this line to replay a specific seed from its failure file:
 			// replay: 0,
 			saveFailures: {
