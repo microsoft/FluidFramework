@@ -95,7 +95,7 @@ export class AttributorSerializer implements IAttributorSerializer {
 			seqs.length === timestamps.length && timestamps.length === attributionRefs.length,
 			0x4b1 /* serialized attribution columns should have the same length */,
 		);
-		const entries = Array.from<[number, AttributionInfo]>({ length: seqs.length });
+		const entries: [number, AttributionInfo][] = Array.from({ length: seqs.length });
 		for (let i = 0; i < seqs.length; i++) {
 			const key = seqs[i];
 			const timestamp = timestamps[i];
