@@ -22,8 +22,6 @@ import {
 	TreeStoredSchema,
 	makeDetachedFieldIndex,
 	moveToDetachedField,
-	rootFieldKey,
-	schemaDataIsEmpty,
 	RevisionTagCodec,
 	AllowedUpdateType,
 } from "../core/index.js";
@@ -44,8 +42,6 @@ import {
 	FlexTreeSchema,
 	ViewSchema,
 	NodeKeyManager,
-	FieldKinds,
-	normalizeNewFieldContent,
 	makeMitigatedChangeFamily,
 	makeFieldBatchCodec,
 } from "../feature-libraries/index.js";
@@ -64,9 +60,9 @@ import {
 } from "../simple-tree/index.js";
 import {
 	InitializeAndSchematizeConfiguration,
+	UpdateType,
 	ensureSchema,
 	evaluateUpdate,
-	initializeContent,
 } from "./schematizedTree.js";
 import { TreeCheckout, CheckoutEvents, createTreeCheckout } from "./treeCheckout.js";
 import { FlexTreeView, CheckoutFlexTreeView } from "./treeView.js";
@@ -281,20 +277,31 @@ export class SharedTree
 			return undefined;
 		}
 
+		return this.requireSchema2(viewSchema, onDispose, nodeKeyManager, nodeKeyFieldKey);
+	}
+
+	public requireSchema2<TRoot extends FlexFieldSchema>(
+		viewSchema: ViewSchema<TRoot>,
+		onDispose: () => void,
+		nodeKeyManager?: NodeKeyManager,
+		nodeKeyFieldKey?: FieldKey,
+	): CheckoutFlexTreeView<TRoot> {
+		assert(this.hasView === false, 0x7f1 /* Cannot create second view from tree. */);
+
 		{
 			const compatibility = viewSchema.checkCompatibility(this.storedSchema);
 			if (
 				compatibility.write !== Compatibility.Compatible ||
 				compatibility.read !== Compatibility.Compatible
 			) {
-				return undefined;
+				fail("ensureSchema didn't result in valid schema");
 			}
 		}
 
 		this.hasView = true;
 		const view = new CheckoutFlexTreeView(
 			this.checkout,
-			schema,
+			viewSchema.schema,
 			nodeKeyManager ?? createNodeKeyManager(this.runtime.idCompressor),
 			nodeKeyFieldKey ?? brand(defailtNodeKeyFieldKey),
 			() => {
@@ -358,43 +365,6 @@ export class SharedTree
 			throw new UsageError(
 				"Only one view can be constructed from a given tree at a time. Dispose of the first before creating a second.",
 			);
-		}
-		// TODO:
-		// When this becomes a more proper out of schema adapter, editing should be made lazy.
-		// This will improve support for readonly documents, cross version collaboration and attribution.
-
-		// Check for empty.
-		if (this.checkout.forest.isEmpty && schemaDataIsEmpty(this.storedSchema)) {
-			this.checkout.transaction.start();
-			initializeContent(this.checkout, config.schema, () => {
-				const field = { field: rootFieldKey, parent: undefined };
-				const content = normalizeNewFieldContent(
-					{ schema: config.schema },
-					config.schema.rootFieldSchema,
-					config.initialTree,
-				);
-				switch (this.storedSchema.rootFieldSchema.kind.identifier) {
-					case FieldKinds.optional.identifier: {
-						const fieldEditor = this.editor.optionalField(field);
-						assert(
-							content.getFieldLength() <= 1,
-							0x7f4 /* optional field content should normalize at most one item */,
-						);
-						fieldEditor.set(content.getFieldLength() === 0 ? undefined : content, true);
-						break;
-					}
-					case FieldKinds.sequence.identifier: {
-						const fieldEditor = this.editor.sequenceField(field);
-						// TODO: should do an idempotent edit here.
-						fieldEditor.insert(0, content);
-						break;
-					}
-					default: {
-						fail("unexpected root field kind during initialize");
-					}
-				}
-			});
-			this.checkout.transaction.commit();
 		}
 
 		// TODO: support adapters and include them here.
@@ -547,6 +517,7 @@ export class TrySchematizeTreeView<in out TRootSchema extends ImplicitFieldSchem
 			this.viewSchema,
 			AllowedUpdateType.SchemaCompatible,
 			this.tree.checkout,
+			this.flexConfig,
 		);
 		assert(result, "Schema upgrade should always work if canUpgrade is set.");
 	}
@@ -569,13 +540,14 @@ export class TrySchematizeTreeView<in out TRootSchema extends ImplicitFieldSchem
 		const compatibility = evaluateUpdate(
 			this.viewSchema,
 			AllowedUpdateType.SchemaCompatible,
-			this.tree.checkout.storedSchema,
+			true,
+			this.tree.checkout,
 		);
 		this.disposeView();
 		switch (compatibility) {
-			case Compatibility.Compatible: {
+			case UpdateType.None: {
 				// Remove event from checkout when view is disposed
-				this.view = this.tree.schematizeInternal(this.flexConfig, () => {
+				this.view = this.tree.requireSchema2(this.viewSchema, () => {
 					assert(cleanupCheckOutEvents !== undefined, "missing cleanup");
 					cleanupCheckOutEvents();
 					this.view = undefined;
@@ -595,14 +567,15 @@ export class TrySchematizeTreeView<in out TRootSchema extends ImplicitFieldSchem
 				});
 				break;
 			}
-			case Compatibility.Incompatible: {
-				this.view = new SchematizeError(false);
+			case UpdateType.Incompatible:
+			case UpdateType.Initialize:
+			case UpdateType.SchemaCompatible: {
+				this.view = new SchematizeError(compatibility);
 				this.lastRoot = undefined;
-				break;
-			}
-			case Compatibility.RequiresAdapters: {
-				this.view = new SchematizeError(true);
-				this.lastRoot = undefined;
+				const unregister = this.tree.checkout.storedSchema.on("afterSchemaChange", () => {
+					unregister();
+					this.update();
+				});
 				break;
 			}
 			default: {
@@ -621,7 +594,7 @@ export class TrySchematizeTreeView<in out TRootSchema extends ImplicitFieldSchem
 		}
 	}
 
-	public get error(): SchemaIncompatible | undefined {
+	public get error(): SchematizeError | undefined {
 		const view = this.getViewOrError();
 		return view instanceof SchematizeError ? view : undefined;
 	}
@@ -643,5 +616,16 @@ export class TrySchematizeTreeView<in out TRootSchema extends ImplicitFieldSchem
 }
 
 class SchematizeError implements SchemaIncompatible {
-	public constructor(public readonly canUpgrade: boolean) {}
+	public constructor(public readonly updateType: UpdateType) {}
+
+	public get canUpgrade(): boolean {
+		return (
+			this.updateType === UpdateType.Initialize ||
+			this.updateType === UpdateType.SchemaCompatible
+		);
+	}
+
+	public get canInitialize(): boolean {
+		return this.updateType === UpdateType.Initialize;
+	}
 }

@@ -14,12 +14,12 @@ import {
 	Compatibility,
 } from "../../core/index.js";
 import { FullSchemaPolicy, allowsRepoSuperset, isNeverTree } from "../modular-schema/index.js";
-import { FlexTreeSchema, intoStoredSchema } from "./typedTreeSchema.js";
+import { FlexFieldSchema, FlexTreeSchema, intoStoredSchema } from "./typedTreeSchema.js";
 
 /**
  * A collection of View information for schema, including policy.
  */
-export class ViewSchema {
+export class ViewSchema<out TSchema extends FlexFieldSchema = FlexFieldSchema> {
 	/**
 	 * Cached conversion of `schema` into a stored schema.
 	 */
@@ -27,7 +27,7 @@ export class ViewSchema {
 	public constructor(
 		public readonly policy: FullSchemaPolicy,
 		public readonly adapters: Adapters,
-		public readonly schema: FlexTreeSchema,
+		public readonly schema: FlexTreeSchema<TSchema>,
 	) {
 		this.storedSchema = intoStoredSchema(schema);
 	}

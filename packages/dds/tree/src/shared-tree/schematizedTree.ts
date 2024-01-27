@@ -10,6 +10,7 @@ import {
 	TreeStoredSchema,
 	ITreeCursorSynchronous,
 	schemaDataIsEmpty,
+	rootFieldKey,
 } from "../core/index.js";
 import {
 	defaultSchemaPolicy,
@@ -20,7 +21,9 @@ import {
 	ViewSchema,
 	InsertableFlexField,
 	intoStoredSchema,
+	normalizeNewFieldContent,
 } from "../feature-libraries/index.js";
+import { fail } from "../util/index.js";
 import { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
 
 /**
@@ -92,37 +95,49 @@ export function initializeContent(
 	}
 }
 
+export enum UpdateType {
+	None,
+	Initialize,
+	SchemaCompatible,
+	Incompatible,
+}
+
 export function evaluateUpdate(
 	viewSchema: ViewSchema,
 	allowedSchemaModifications: AllowedUpdateType,
-	storedSchema: TreeStoredSchema,
-): Compatibility {
-	const compatibility = viewSchema.checkCompatibility(storedSchema);
+	allowInitialize: boolean,
+	checkout: TreeCheckout,
+): UpdateType {
+	// Check for empty.
+	const canInitialize =
+		allowInitialize && checkout.forest.isEmpty && schemaDataIsEmpty(checkout.storedSchema);
+
+	const compatibility = viewSchema.checkCompatibility(checkout.storedSchema);
 	switch (allowedSchemaModifications) {
 		case AllowedUpdateType.None: {
 			if (compatibility.read !== Compatibility.Compatible) {
 				// Existing stored schema permits trees which are incompatible with the view schema
-				return Compatibility.Compatible;
+				return canInitialize ? UpdateType.Initialize : UpdateType.Incompatible;
 			}
 
 			if (compatibility.write !== Compatibility.Compatible) {
 				// TODO: support readonly mode in this case.
 				// View schema permits trees which are incompatible with the stored schema
-				return Compatibility.Compatible;
+				return canInitialize ? UpdateType.Initialize : UpdateType.Incompatible;
 			}
 
-			return Compatibility.Compatible;
+			return UpdateType.None;
 		}
 		case AllowedUpdateType.SchemaCompatible: {
 			if (compatibility.read !== Compatibility.Compatible) {
 				// Existing stored schema permits trees which are incompatible with the view schema, so schema can not be updated
-				return Compatibility.Compatible;
+				return canInitialize ? UpdateType.Initialize : UpdateType.Incompatible;
 			}
 			if (compatibility.write !== Compatibility.Compatible) {
-				return Compatibility.RequiresAdapters;
+				return canInitialize ? UpdateType.Initialize : UpdateType.SchemaCompatible;
 			}
 
-			return Compatibility.Compatible;
+			return UpdateType.None;
 		}
 		default: {
 			unreachableCase(allowedSchemaModifications);
@@ -135,25 +150,63 @@ export function ensureSchema(
 	viewSchema: ViewSchema,
 	allowedSchemaModifications: AllowedUpdateType,
 	checkout: TreeCheckout,
+	treeContent?: TreeContent,
 ): boolean {
-	const compatibility = evaluateUpdate(
-		viewSchema,
-		allowedSchemaModifications,
-		checkout.storedSchema,
-	);
-	switch (compatibility) {
-		case Compatibility.Compatible: {
+	const updatedNeeded = evaluateUpdate(viewSchema, allowedSchemaModifications, true, checkout);
+	switch (updatedNeeded) {
+		case UpdateType.None: {
 			return true;
 		}
-		case Compatibility.Incompatible: {
+		case UpdateType.Incompatible: {
 			return false;
 		}
-		case Compatibility.RequiresAdapters: {
+		case UpdateType.SchemaCompatible: {
 			checkout.updateSchema(intoStoredSchema(viewSchema.schema));
 			return true;
 		}
+		case UpdateType.Initialize: {
+			if (treeContent === undefined) {
+				return false;
+			}
+			// TODO:
+			// When this becomes a more proper out of schema adapter, editing should be made lazy.
+			// This will improve support for readonly documents, cross version collaboration and attribution.
+
+			checkout.transaction.start();
+			initializeContent(checkout, treeContent.schema, () => {
+				const field = { field: rootFieldKey, parent: undefined };
+				const content = normalizeNewFieldContent(
+					{ schema: treeContent.schema },
+					treeContent.schema.rootFieldSchema,
+					treeContent.initialTree,
+				);
+				switch (checkout.storedSchema.rootFieldSchema.kind.identifier) {
+					case FieldKinds.optional.identifier: {
+						const fieldEditor = checkout.editor.optionalField(field);
+						assert(
+							content.getFieldLength() <= 1,
+							0x7f4 /* optional field content should normalize at most one item */,
+						);
+						fieldEditor.set(content.getFieldLength() === 0 ? undefined : content, true);
+						break;
+					}
+					case FieldKinds.sequence.identifier: {
+						const fieldEditor = checkout.editor.sequenceField(field);
+						// TODO: should do an idempotent edit here.
+						fieldEditor.insert(0, content);
+						break;
+					}
+					default: {
+						fail("unexpected root field kind during initialize");
+					}
+				}
+			});
+			checkout.transaction.commit();
+
+			return true;
+		}
 		default: {
-			unreachableCase(compatibility);
+			unreachableCase(updatedNeeded);
 		}
 	}
 }

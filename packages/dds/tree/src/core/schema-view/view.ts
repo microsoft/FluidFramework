@@ -39,6 +39,8 @@ export enum AllowedUpdateType {
 	// DataCompatible,
 	/**
 	 * Update the stored schema to match view schema if all possible documents based on the current stored schema would be compatible with the view schema.
+	 *
+	 * Includes "Initialize".
 	 */
 	SchemaCompatible,
 }
