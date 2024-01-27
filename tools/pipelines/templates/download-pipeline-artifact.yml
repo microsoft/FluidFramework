@@ -11,9 +11,6 @@ parameters:
   type: string
   
 steps:
-- checkout: none
-  clean: true
-  
 # Download the api-extractor outputs
 # Setting allowPartiallySucceededBuilds to true so that builds which complete with 
 # warnings will be included as well. This is especially needed for archived builds
