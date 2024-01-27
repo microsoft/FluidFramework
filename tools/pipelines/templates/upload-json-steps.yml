@@ -19,39 +19,39 @@ steps:
   clean: true
 
 # Download the api-extractor outputs
-- template: templates/download-pipeline-artifact.yml
+- template: download-pipeline-artifact.yml
   parameters:
     pipelineDefinition: Build - common-definitions
     branchName: ${{ variables['Build.SourceBranch'] }}
-- template: templates/download-pipeline-artifact.yml
+- template: download-pipeline-artifact.yml
   parameters:
     pipelineDefinition: Build - common-utils
     branchName: ${{ variables['Build.SourceBranch'] }}
-- template: templates/download-pipeline-artifact.yml
+- template: download-pipeline-artifact.yml
   parameters:
     pipelineDefinition: Build - container-definitions
     branchName: ${{ variables['Build.SourceBranch'] }}
-- template: templates/download-pipeline-artifact.yml
+- template: download-pipeline-artifact.yml
   parameters:
     pipelineDefinition: Build - core-interfaces
     branchName: ${{ variables['Build.SourceBranch'] }}
-- template: templates/download-pipeline-artifact.yml
+- template: download-pipeline-artifact.yml
   parameters:
     pipelineDefinition: Build - driver-definitions
     branchName: ${{ variables['Build.SourceBranch'] }}
-- template: templates/download-pipeline-artifact.yml
+- template: download-pipeline-artifact.yml
   parameters:
     pipelineDefinition: Build - protocol-definitions
     branchName: ${{ variables['Build.SourceBranch'] }}
-- template: templates/download-pipeline-artifact.yml
+- template: download-pipeline-artifact.yml
   parameters:
     pipelineDefinition: Build - azure
     branchName: ${{ variables['Build.SourceBranch'] }}
-- template: templates/download-pipeline-artifact.yml
+- template: download-pipeline-artifact.yml
   parameters:
     pipelineDefinition: Build - client packages
     branchName: ${{ variables['Build.SourceBranch'] }}
-- template: templates/download-pipeline-artifact.yml
+- template: download-pipeline-artifact.yml
   parameters:
     pipelineDefinition: server-routerlicious
     branchName: ${{ variables['Build.SourceBranch'] }}
