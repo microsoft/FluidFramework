@@ -1,0 +1,29 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# download-pipeline-artifact pipeline
+
+parameters:
+- name: pipelineDefinition
+  type: string
+
+- name: branchName
+  type: string
+  
+steps:
+- checkout: none
+  clean: true
+  
+# Download the api-extractor outputs
+# Setting allowPartiallySucceededBuilds to true so that builds which complete with 
+# warnings will be included as well. This is especially needed for archived builds
+# with warnings such as driver-definitions and core-interfaces
+- task: DownloadPipelineArtifact@2
+  inputs:
+    buildType: specific
+    project: internal
+    pipeline: ${{ parameters.pipelineDefinition }}
+    buildVersionToDownload: latestFromBranch
+    branchName: ${{ parameters.branchName }}
+    artifact: _api-extractor-temp
+    allowPartiallySucceededBuilds: true
