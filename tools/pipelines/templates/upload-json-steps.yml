@@ -15,9 +15,6 @@ parameters:
   default: false
 
 steps:
-- checkout: none
-  clean: true
-
 # Download the api-extractor outputs
 - template: download-pipeline-artifact.yml
   parameters:
