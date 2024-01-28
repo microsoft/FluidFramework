@@ -16,7 +16,7 @@ import { pkgVersion } from "./packageVersion";
 /**
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link SharedCounter}.
  *
- * @sealed
+ * @sealed @internal
  */
 export class CounterFactory implements IChannelFactory {
 	/**

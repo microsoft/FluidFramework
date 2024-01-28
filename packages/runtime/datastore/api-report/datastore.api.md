@@ -26,6 +26,7 @@ import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ISummarizeResult } from '@fluidframework/runtime-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
@@ -62,8 +63,12 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     get clientId(): string | undefined;
     // (undocumented)
     get connected(): boolean;
+    // @internal (undocumented)
+    protected readonly contexts: Map<string, IChannelContext>;
     // (undocumented)
     createChannel(id: string | undefined, type: string): IChannel;
+    // (undocumented)
+    protected createChannelCore(channel: IChannel): void;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
@@ -79,6 +84,8 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     getAudience(): IAudience;
     // (undocumented)
     getChannel(id: string): Promise<IChannel>;
+    // @internal (undocumented)
+    protected getChannelContext(id: string): IChannelContext;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)
     getQuorum(): IQuorumClients;
@@ -111,6 +118,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     get rootRoutingContext(): this;
     // (undocumented)
     get routeContext(): IFluidHandleContext;
+    protected sendAttachChannelOp(channel: IChannel): void;
     // (undocumented)
     setConnectionState(connected: boolean, clientId?: string): void;
     // (undocumented)
@@ -120,6 +128,8 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     updateUsedRoutes(usedRoutes: string[]): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
+    // (undocumented)
+    protected verifyNotClosed(): void;
     // (undocumented)
     visibilityState: VisibilityState;
     waitAttached(): Promise<void>;
@@ -146,6 +156,26 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject> implements I
     readonly routeContext: IFluidHandleContext;
     // (undocumented)
     protected readonly value: T | Promise<T>;
+}
+
+// @internal (undocumented)
+export interface IChannelContext {
+    // (undocumented)
+    applyStashedOp(content: any): unknown;
+    // (undocumented)
+    getChannel(): Promise<IChannel>;
+    getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
+    // (undocumented)
+    processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown): void;
+    // (undocumented)
+    reSubmit(content: any, localOpMetadata: unknown): void;
+    // (undocumented)
+    rollback(message: any, localOpMetadata: unknown): void;
+    // (undocumented)
+    setConnectionState(connected: boolean, clientId?: string): any;
+    // (undocumented)
+    summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummarizeResult>;
+    updateUsedRoutes(usedRoutes: string[]): void;
 }
 
 // @alpha (undocumented)

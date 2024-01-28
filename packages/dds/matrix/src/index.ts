@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { ISharedMatrixEvents, SharedMatrix } from "./matrix";
+export { ISharedMatrixEvents, SharedMatrix, ISharedMatrix } from "./matrix";
 export { MatrixItem } from "./ops";
 export { SharedMatrixFactory } from "./runtime";
 

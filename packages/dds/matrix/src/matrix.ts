@@ -5,7 +5,7 @@
 
 import Deque from "double-ended-queue";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
+import { IEventThisPlaceHolder, IEventProvider } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	IFluidDataStoreRuntime,
@@ -20,7 +20,7 @@ import {
 	SharedObject,
 } from "@fluidframework/shared-object-base";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { ObjectStoragePartition, SummaryTreeBuilder, addBlobToSummary } from "@fluidframework/runtime-utils";
+import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { IMatrixProducer, IMatrixConsumer, IMatrixReader, IMatrixWriter } from "@tiny-calc/nano";
 import {
 	MergeTreeDeltaType,
@@ -30,7 +30,8 @@ import {
 	Client,
 	IJSONSegment,
 } from "@fluidframework/merge-tree";
-import { MatrixOp, SnapshotPath, IMatrixMsg, IMatrixMsgEx, MatrixItem, ISetOp } from "./ops";
+
+import { MatrixOp, SnapshotPath, IMatrixMsg, MatrixItem, ISetOp } from "./ops";
 import { PermutationVector, reinsertSegmentIntoVector } from "./permutationvector";
 import { SparseArray2D } from "./sparsearray2d";
 import { SharedMatrixFactory } from "./runtime";
@@ -93,6 +94,18 @@ interface CellLastWriteTrackerItem {
 	clientId: string; // clientId of the client which last modified this cell
 }
 
+/** @alpha */
+export interface ISharedMatrix<T = any>
+	extends IEventProvider<ISharedMatrixEvents<T>>,
+		IMatrixProducer<MatrixItem<T>>,
+		IMatrixReader<MatrixItem<T>>,
+		IMatrixWriter<MatrixItem<T>> {
+	insertCols(colStart: number, count: number): void;
+	removeCols(colStart: number, count: number): void;
+	insertRows(rowStart: number, count: number): void;
+	removeRows(rowStart: number, count: number): void;
+}
+
 /**
  * A SharedMatrix holds a rectangular 2D array of values.  Supported operations
  * include setting values and inserting/removing rows and columns.
@@ -108,10 +121,7 @@ interface CellLastWriteTrackerItem {
  */
 export class SharedMatrix<T = any>
 	extends SharedObject<ISharedMatrixEvents<T>>
-	implements
-		IMatrixProducer<MatrixItem<T>>,
-		IMatrixReader<MatrixItem<T>>,
-		IMatrixWriter<MatrixItem<T>>
+	implements ISharedMatrix<T>
 {
 	protected readonly consumers = new Set<IMatrixConsumer<MatrixItem<T>>>();
 
@@ -130,13 +140,10 @@ export class SharedMatrix<T = any>
 	 */
 	private readonly inFlightRefSeqs = new Deque<number>();
 
-	/** @internal */
-	protected readonly rows: PermutationVector; // Map logical row to storage handle (if any)
-	/** @internal */
-	protected readonly cols: PermutationVector; // Map logical col to storage handle (if any)
+	private readonly rows: PermutationVector; // Map logical row to storage handle (if any)
+	private readonly cols: PermutationVector; // Map logical col to storage handle (if any)
 
-	/** @internal */
-	protected cells = new SparseArray2D<MatrixItem<T>>(); // Stores cell values.
+	private cells = new SparseArray2D<MatrixItem<T>>(); // Stores cell values.
 	private readonly pending = new SparseArray2D<number>(); // Tracks pending writes.
 	private cellLastWriteTracker = new SparseArray2D<CellLastWriteTrackerItem>(); // Tracks last writes sequence number and clientId in a cell.
 	// Tracks the seq number of Op at which policy switch happens from Last Write Win to First Write Win.
@@ -184,7 +191,7 @@ export class SharedMatrix<T = any>
 		);
 	}
 
-	protected undo?: MatrixUndoProvider<T>;
+	private undo?: MatrixUndoProvider<T>;
 
 	/**
 	 * Subscribes the given IUndoConsumer to the matrix.
@@ -200,10 +207,10 @@ export class SharedMatrix<T = any>
 
 	// TODO: closeUndo()?
 
-	protected get rowHandles() {
+	private get rowHandles() {
 		return this.rows.handleCache;
 	}
-	protected get colHandles() {
+	private get colHandles() {
 		return this.cols.handleCache;
 	}
 
@@ -261,8 +268,7 @@ export class SharedMatrix<T = any>
 		return undefined;
 	}
 
-	/** @internal */
-	protected getCellCore(row: Handle, col: Handle): MatrixItem<T> {
+	private getCellCore(row: Handle, col: Handle): MatrixItem<T> {
 		return this.cells.getCell(row, col);
 	}
 
@@ -314,7 +320,7 @@ export class SharedMatrix<T = any>
 		}
 	}
 
-	protected setCellCore(
+	private setCellCore(
 		row: number,
 		col: number,
 		value: MatrixItem<T>,
@@ -1048,216 +1054,4 @@ export class SharedMatrix<T = any>
 				unreachableCase(target, "Wrong op type in matrix");
 		}
 	}
-}
-
-/*
-
-export interface IMatrixShapeReader {
-    readonly rowCount: number;
-    readonly colCount: number;
-    readonly matrixProducer?: IMatrixShapeProducer;
-}
-
-export interface IMatrixReader<T> extends IMatrixShapeReader {
-    getCell(row: number, col: number): T;
-   readonly matrixProducer?: IMatrixProducer<T>;
-}
-
-export interface IMatrixShapeConsumer {
-    rowsChanged(rowStart: number, removedCount: number, insertedCount: number, producer: IMatrixShapeProducer): void;
-    colsChanged(colStart: number, removedCount: number, insertedCount: number, producer: IMatrixShapeProducer): void;
-}
-
-interface IMatrixConsumer<T> extends IMatrixShapeConsumer {
-    cellsChanged(rowStart: number, colStart: number, rowCount: number, colCount: number, producer: IMatrixProducer<T>): void;
-}
-
-export interface IMatrixShapeProducer {
-	openMatrix(consumer: IMatrixShapeConsumer): IMatrixShapeReader;
-	closeMatrix(consumer: IMatrixShapeConsumer): void;
-}
-
-export interface IMatrixProducer<T> extends IMatrixShapeProducer {
-    openMatrix(consumer: IMatrixConsumer<T>): IMatrixReader<T>;
-	closeMatrix(consumer: IMatrixConsumer<T>): void;
-}
-
-export interface IMatrixWriter<T> {
-    setCell(row: number, col: number, value: T): void;
-}
-*/
-
-interface IChange<ChangeType> {
-	change: ChangeType;
-	row: Handle;
-	col: Handle;
-	// undefined if local change
-	// Each local change will eventually have appropriate record for acked op in the list.
-	seq?: number;
-	// undefined if made in offline, will go through rebase and proper clientId would be put here
-	clientId?: string;
-	// true if change was made by this client.
-	local: boolean;
-}
-
-// External mechanism that is used to apply changes to base value and return current value.
-interface IInterpreter<T, ChangeType> {
-	getValue(base: T, changes: IChange<ChangeType>[]): T;
-}
-
-export class ExtendedSharedMatrix<T = any, ChangeType = any> extends SharedMatrix<T> {
-	protected changes: IChange<ChangeType>[] = [];
-
-	constructor(
-		protected interpretter: IInterpreter<MatrixItem<T>, ChangeType>,
-		runtime: IFluidDataStoreRuntime,
-		public id: string,
-		attributes: IChannelAttributes,
-		_isSetCellConflictResolutionPolicyFWW?: boolean,
-	) {
-		super(runtime, id, attributes, _isSetCellConflictResolutionPolicyFWW);
-	}
-
-	private getChangeList(row: Handle, col: Handle) {
-		const changes: IChange<ChangeType>[] = [];
-		for (const ch of this.changes) {
-			if (ch.row === row && ch.col === col) {
-				changes.push(ch);
-			}
-		}
-		return changes;
-	}
-
-	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
-		const result = super.summarizeCore(serializer);
-		addBlobToSummary(result, SnapshotPath.log, JSON.stringify(this.changes));
-		return result;
-	}
-
-	protected async loadCore(storage: IChannelStorageService) {
-		this.changes = await deserializeBlob(storage, SnapshotPath.log, this.serializer);
-		return super.loadCore(storage);
-	}
-
-	// TBD
-	protected reSubmitCore(contentArg: any, localOpMetadata: unknown) {
-		const content = contentArg as IMatrixMsgEx<T, ChangeType>;
-		if (content.target === SnapshotPath.log) {
-
-			return;
-		}
-		return super.reSubmitCore(content, localOpMetadata);
-	}
-
-	// TBD
-	protected processCore(
-		rawMessage: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	) {
-		const content = contentArg as IMatrixMsgEx<T, ChangeType>;
-		if (content.target === SnapshotPath.log) {
-			
-			return;
-		}
-		return super.processCore(rawMessage, local, localOpMetadata);
-	}
-
-	// TBD
-	protected applyStashedOp(contentArg: any): unknown {
-		const content = contentArg as IMatrixMsgEx<T, ChangeType>;
-		if (content.target === SnapshotPath.log) {
-			
-			return;
-		}
-		return super.applyStashedOp(content);
-	}
-
-	// TBD
-	public appendCellChange(row: number, col: number, change: ChangeType) {
-		assert(
-			0 <= row && row < this.rowCount && 0 <= col && col < this.colCount,
-			"Matrix Bounds check",
-		);
-
-		const rowHandle = this.rows.getAllocatedHandle(row);
-		const colHandle = this.cols.getAllocatedHandle(col);
-
-		const changeRec: IChange<ChangeType> = {
-			row: rowHandle,
-			col: colHandle,
-			change,
-			local: true,
-			clientId: this.runtime.clientId,
-		};
-
-		this.protectAgainstReentrancy(() => {
-			if (this.undo !== undefined) {
-				// Q: What do we do about undo? I'd guess undo is handled on the side, outside of matrix
-				assert(false, "NYI");
-			}
-
-			if (!this.isAttached()) {
-				const changeList = this.getChangeList(row, col);
-				assert(changeList.length === 0, "no changes in detached mode");
-				const value = this.interpretter.getValue(super.getCell(row, col), [changeRec]);
-				this.cells.setCell(rowHandle, colHandle, value);
-			} else {
-				this.changes.push(changeRec);
-				// this.sendSetCellOp(row, col, value, rowHandle, colHandle);
-			}
-
-			// Avoid reentrancy by raising change notifications after the op is queued.
-			for (const consumer of this.consumers.values()) {
-				consumer.cellsChanged(row, col, 1, 1, this);
-			}
-		});
-	}
-
-	getCellCore(row: Handle, col: Handle): MatrixItem<T> {
-		const base = super.getCell(row, col);
-		return this.interpretter.getValue(base, this.getChangeList(row, col));
-	}
-
-	// Need to think what overwrite actually means and how it fits into overall picture.
-	// Including different merge policies (FWW & LWW)
-	protected setCellCore(row: number, col: number, value: MatrixItem<T>) {
-		throw new Error("NYI");
-	}
-
-	// TBD
-	public static create<T>(runtime: IFluidDataStoreRuntime, id?: string) {
-		return runtime.createChannel(id, SharedMatrixFactory.Type) as SharedMatrix<T>;
-	}
-
-	/**
-	 *
-	 * Things to consider:
-	 *
-	 */
-
-	// Evertything around undo:
-	// public openUndo(consumer: IUndoConsumer) {
-	// public _undoRemoveRows(rowStart: number, spec: IJSONSegment) {
-	// public _undoRemoveCols(colStart: number, spec: IJSONSegment) {
-}
-
-/**
- * 
- * An example, using numbers and atomic += N operations.
- */
-
-interface Op {
-	increment: number;
-}
-
-class Interpreter implements IInterpreter<number, Op> {
-	public getValue(base: number, changes: IChange<Op>[]): number {
-		return 0;
-	}
-
-}
-
-export function createMatrixSample(runtime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes) {
-	return new ExtendedSharedMatrix<number, Op>(new Interpreter(), runtime, id, attributes);
 }

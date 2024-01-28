@@ -16,7 +16,6 @@ export enum SnapshotPath {
 	rows = "rows",
 	cols = "cols",
 	cells = "cells",
-	log = "log",
 }
 
 /**
@@ -43,12 +42,3 @@ export interface ISetOp<T> {
 }
 
 export type IMatrixMsg<T> = IMatrixVectorMst | ISetOp<T>;
-
-export interface IOTOp<ChangeType> {
-	target: SnapshotPath.log;
-	row: number;
-	col: number;
-	value: ChangeType;
-}
-
-export type IMatrixMsgEx<T, ChangeType> = IMatrixMsg<T> | IOTOp<ChangeType>;

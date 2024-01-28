@@ -11,3 +11,4 @@ export {
 	mixinRequestHandler,
 	mixinSummaryHandler,
 } from "./dataStoreRuntime";
+export { IChannelContext } from "./channelContext";
