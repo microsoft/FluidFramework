@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/protocol-base",
-	"version": "3.0.0",
+	"version": "3.1.0",
 	"description": "Fluid protocol base",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -61,7 +61,7 @@
 	"dependencies": {
 		"@fluidframework/common-utils": "^3.1.0",
 		"@fluidframework/gitresources": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.1.0",
+		"@fluidframework/protocol-definitions": "^3.2.0-231454",
 		"events": "^3.1.0"
 	},
 	"devDependencies": {

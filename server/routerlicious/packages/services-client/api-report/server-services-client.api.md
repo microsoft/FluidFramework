@@ -379,6 +379,7 @@ export interface IPatchRefParamsExternal extends resources.IPatchRefParams {
 export interface ISession {
     deltaStreamUrl: string;
     historianUrl: string;
+    ignoreSessionStickiness?: boolean;
     isSessionActive: boolean;
     isSessionAlive: boolean;
     messageBrokerId?: string;
