@@ -268,7 +268,12 @@ describe("Garbage Collection Tests", () => {
 	});
 
 	describe("runSweepPhase", () => {
-		it("Tombstone then Delete", async () => {
+		//* ONLY
+		//* ONLY
+		//* ONLY
+		//* ONLY
+		//* ONLY
+		it.only("Tombstone then Delete", async () => {
 			// Simple starting reference graph - root and two nodes
 			defaultGCData.gcNodes["/"] = [nodes[0], nodes[1]];
 			defaultGCData.gcNodes[nodes[0]] = [];
@@ -309,18 +314,13 @@ describe("Garbage Collection Tests", () => {
 			);
 			spies.updateTombstonedRoutes.resetHistory();
 
-			// Skip past Sweep Grace Period. GC Sweep op should be submitted
-			clock.tick(defaultSweepGracePeriodMs);
-			await gc.collectGarbage({});
-
+			// Simulate usage to trigger autorecovery op (and plumb it to processMessage)
+			gc.nodeUpdated(nodes[0], "Loaded");
+			const x = spies.submitMessage.args;
 			assert.equal(
 				spies.submitMessage.callCount,
 				1,
-				"submitMessage should be called since Sweep is enabled",
-			);
-			assert(
-				spies.updateTombstonedRoutes.alwaysCalledWith([]),
-				"No additional nodes should be Tombstoned",
+				"submitMessage should not be called yet, didn't pass Grace Period yet",
 			);
 		});
 

@@ -1035,7 +1035,7 @@ export class GarbageCollector implements IGarbageCollector {
 		const containerGCMessage: ContainerRuntimeGCMessage = {
 			type: ContainerMessageType.GC,
 			contents: {
-				type: "TombstoneLoaded",
+				type: GarbageCollectionMessageType.TombstoneLoaded,
 				nodePath,
 			},
 			compatDetails: { behavior: "Ignore" },
