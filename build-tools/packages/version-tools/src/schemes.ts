@@ -60,7 +60,10 @@ export function detectVersionScheme(rangeOrVersion: string | semver.SemVer): Ver
 		}
 
 		return "semver";
-	} else if (typeof rangeOrVersion === "string" && semver.validRange(rangeOrVersion) !== null) {
+	} else if (
+		typeof rangeOrVersion === "string" &&
+		semver.validRange(rangeOrVersion) !== null
+	) {
 		// Must be a range string
 		if (isInternalVersionRange(rangeOrVersion)) {
 			return "internal";

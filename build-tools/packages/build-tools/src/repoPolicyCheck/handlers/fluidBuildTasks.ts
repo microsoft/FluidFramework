@@ -26,7 +26,8 @@ const getFluidBuildTasksTscIgnore = (root: string) => {
 	const rootDir = path.resolve(root);
 	let ignore = fluidBuildTasksTscIgnoreTasksCache.get(rootDir);
 	if (ignore === undefined) {
-		const ignoreArray = getFluidBuildConfig(rootDir)?.policy?.fluidBuildTasks?.tsc?.ignoreTasks;
+		const ignoreArray =
+			getFluidBuildConfig(rootDir)?.policy?.fluidBuildTasks?.tsc?.ignoreTasks;
 		ignore = ignoreArray ? new Set(ignoreArray) : new Set();
 		fluidBuildTasksTscIgnoreTasksCache.set(rootDir, ignore);
 	}
@@ -250,7 +251,12 @@ function isFluidBuildEnabled(root: string, json: PackageJson) {
  * @param searchDep - the dependent to find.
  * @returns true if searchDep is found for task, false otherwise
  */
-function hasTaskDependency(root: string, json: PackageJson, taskName: string, searchDep: string) {
+function hasTaskDependency(
+	root: string,
+	json: PackageJson,
+	taskName: string,
+	searchDep: string,
+) {
 	const rootConfig = getFluidBuildConfig(root);
 	const globalTaskDefinitions = normalizeGlobalTaskDefinitions(rootConfig?.tasks);
 	const taskDefinitions = getTaskDefinitions(json, globalTaskDefinitions, false);
@@ -391,9 +397,7 @@ function getTscCommandDependencies(
 
 			const referencedScript = findTscScript(json, refConfigPath);
 			if (referencedScript === undefined) {
-				throw new Error(
-					`Unable to find tsc script for referenced project ${refConfigPath}`,
-				);
+				throw new Error(`Unable to find tsc script for referenced project ${refConfigPath}`);
 			}
 			deps.push(referencedScript);
 		}

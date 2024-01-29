@@ -2,7 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { getEsLintConfigFilePath, getInstalledPackageVersion } from "../../../common/taskUtils";
+import {
+	getEsLintConfigFilePath,
+	getInstalledPackageVersion,
+} from "../../../common/taskUtils";
 import { TscDependentTask } from "./tscTask";
 
 export class TsLintTask extends TscDependentTask {

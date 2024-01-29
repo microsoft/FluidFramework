@@ -22,7 +22,9 @@ async function replaceInFile(search: string, replace: string, path: string): Pro
 	await writeFile(path, newContent, "utf8");
 }
 
-export default class GenerateChangeLogCommand extends BaseCommand<typeof GenerateChangeLogCommand> {
+export default class GenerateChangeLogCommand extends BaseCommand<
+	typeof GenerateChangeLogCommand
+> {
 	static readonly description = "Generate a changelog for packages based on changesets.";
 
 	static readonly flags = {

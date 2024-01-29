@@ -49,9 +49,7 @@ export class PrettierTask extends LeafWithDoneFileTask {
 
 	protected async getDoneFileContent() {
 		if (!this.parsed) {
-			this.traceError(
-				`error generating done file content, unable to understand command line`,
-			);
+			this.traceError(`error generating done file content, unable to understand command line`);
 			return undefined;
 		}
 
@@ -62,19 +60,13 @@ export class PrettierTask extends LeafWithDoneFileTask {
 			if (existsSync(ignoreFile)) {
 				const ignoreFileContent = await readFileAsync(ignoreFile, "utf8");
 				ignoreEntries = ignoreFileContent.split(/\r?\n/);
-				ignoreEntries = ignoreEntries.filter(
-					(value) => value && !value.startsWith("#"),
-				);
+				ignoreEntries = ignoreEntries.filter((value) => value && !value.startsWith("#"));
 			} else if (this.ignorePath) {
-				this.traceError(
-					`error generating done file content, unable to find ${ignoreFile}`,
-				);
+				this.traceError(`error generating done file content, unable to find ${ignoreFile}`);
 				return undefined;
 			}
 		} catch (e) {
-			this.traceError(
-				`error generating done file content, unable to read ${ignoreFile} file`,
-			);
+			this.traceError(`error generating done file content, unable to read ${ignoreFile} file`);
 			return undefined;
 		}
 
@@ -92,9 +84,7 @@ export class PrettierTask extends LeafWithDoneFileTask {
 						// TODO: This includes files that prettier might not check
 						const recursiveFiles = await getRecursiveFiles(fullPath);
 						files.push(
-							...recursiveFiles.map((file) =>
-								path.relative(this.node.pkg.directory, file),
-							),
+							...recursiveFiles.map((file) => path.relative(this.node.pkg.directory, file)),
 						);
 					} else {
 						files.push(entry);

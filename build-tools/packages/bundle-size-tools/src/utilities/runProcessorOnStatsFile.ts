@@ -4,7 +4,11 @@
  */
 import * as Webpack from "webpack";
 
-import { BundleBuddyConfig, BundleMetricSet, WebpackStatsProcessor } from "../BundleBuddyTypes";
+import {
+	BundleBuddyConfig,
+	BundleMetricSet,
+	WebpackStatsProcessor,
+} from "../BundleBuddyTypes";
 
 /**
  * Runs a set of stats file processors in order on a given webpack stats file to produce metrics.

@@ -45,8 +45,7 @@ export class BannedModulesPlugin {
 				for (const bannedModule of this.options.bannedModules) {
 					if (modulePath?.startsWith(bannedModule.moduleName)) {
 						// We store the issuers as a set to remove duplicates
-						const bannedModuleIssuers =
-							foundBannedModules.get(bannedModule) || new Set();
+						const bannedModuleIssuers = foundBannedModules.get(bannedModule) || new Set();
 						bannedModuleIssuers.add(JSON.stringify(mod.issuerPath));
 						foundBannedModules.set(bannedModule, bannedModuleIssuers);
 						break;
@@ -62,9 +61,7 @@ export class BannedModulesPlugin {
 					issuerPaths.forEach((issuerPathJson) => {
 						errorMessage += `\t\tIssuer: \n`;
 						const pathSegments: { name: string }[] = JSON.parse(issuerPathJson);
-						pathSegments.forEach(
-							(segment) => (errorMessage += `\t\t\t${segment.name}\n`),
-						);
+						pathSegments.forEach((segment) => (errorMessage += `\t\t\t${segment.name}\n`));
 					});
 				});
 				throw new Error(errorMessage);

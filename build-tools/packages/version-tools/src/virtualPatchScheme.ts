@@ -15,7 +15,10 @@ const VIRTUAL_PATCH_FORMAT_MULTIPLIER = 1000;
  */
 export function isVirtualPatch(version: semver.SemVer | string): boolean {
 	// If the major is 0 and the patch is >= 1000 assume it's a virtualPatch version
-	if (semver.major(version) === 0 && semver.patch(version) >= VIRTUAL_PATCH_FORMAT_MULTIPLIER) {
+	if (
+		semver.major(version) === 0 &&
+		semver.patch(version) >= VIRTUAL_PATCH_FORMAT_MULTIPLIER
+	) {
 		return true;
 	}
 	return false;
@@ -72,7 +75,9 @@ export function bumpVirtualPatchVersion(
  * @param virtualPatchVersion - A Fluid virtualPatch version.
  * @returns The translated version.
  */
-export function fromVirtualPatchScheme(virtualPatchVersion: semver.SemVer | string): semver.SemVer {
+export function fromVirtualPatchScheme(
+	virtualPatchVersion: semver.SemVer | string,
+): semver.SemVer {
 	const parsedVersion = semver.parse(virtualPatchVersion);
 	assert(parsedVersion !== null, `Parsed as null: ${virtualPatchVersion}`);
 

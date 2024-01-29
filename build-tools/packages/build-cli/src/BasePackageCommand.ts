@@ -156,6 +156,6 @@ function listNames(strings: string[] | undefined): string {
 	return strings === undefined
 		? ""
 		: strings.length > 10
-		? `${strings.length}`
-		: `${strings.length} (${strings.join(", ")})`;
+		  ? `${strings.length}`
+		  : `${strings.length} (${strings.join(", ")})`;
 }

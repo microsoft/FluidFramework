@@ -67,7 +67,9 @@ export interface PackageFilterOptions {
  *
  * @param flags - The parsed command flags.
  */
-export const parsePackageSelectionFlags = (flags: selectionFlags): PackageSelectionCriteria => {
+export const parsePackageSelectionFlags = (
+	flags: selectionFlags,
+): PackageSelectionCriteria => {
 	const options: PackageSelectionCriteria =
 		flags.all === true
 			? AllPackagesSelectionCriteria

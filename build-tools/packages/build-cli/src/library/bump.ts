@@ -70,5 +70,11 @@ export async function bumpReleaseGroup(
 		? bumpVersionScheme(releaseGroupOrPackage.version, bumpType, scheme)
 		: bumpType;
 
-	await setVersion(context, releaseGroupOrPackage, translatedVersion, interdependencyRange, log);
+	await setVersion(
+		context,
+		releaseGroupOrPackage,
+		translatedVersion,
+		interdependencyRange,
+		log,
+	);
 }

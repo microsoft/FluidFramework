@@ -15,7 +15,8 @@ interface jsonOutput {
 }
 
 describe("flub test-only-filter", () => {
-	test.stdout()
+	test
+		.stdout()
 		.command(["test-only-filter", "--quiet", "--json", "--all"])
 		.it(`--all selector`, (ctx) => {
 			const output: jsonOutput = JSON.parse(ctx.stdout);
@@ -23,7 +24,8 @@ describe("flub test-only-filter", () => {
 			expect(selected.length).to.equal(filtered.length);
 		});
 
-	test.stdout()
+	test
+		.stdout()
 		.command(["test-only-filter", "--quiet", "--json", "--dir", "."])
 		.it(`--dir selector`, (ctx) => {
 			const output: jsonOutput = JSON.parse(ctx.stdout);
@@ -37,7 +39,8 @@ describe("flub test-only-filter", () => {
 			expect(pkg.directory).to.equal("build-tools/packages/build-cli");
 		});
 
-	test.stdout()
+	test
+		.stdout()
 		.command(["test-only-filter", "--quiet", "--json", "--releaseGroup", "build-tools"])
 		.it(`--releaseGroup selector`, (ctx) => {
 			const output: jsonOutput = JSON.parse(ctx.stdout);
@@ -46,7 +49,8 @@ describe("flub test-only-filter", () => {
 			expect(filtered).to.be.ofSize(5);
 		});
 
-	test.stdout()
+	test
+		.stdout()
 		.command(["test-only-filter", "--quiet", "--json", "--all", "--private"])
 		.it(`--private filter`, (ctx) => {
 			const output: jsonOutput = JSON.parse(ctx.stdout);
@@ -59,7 +63,8 @@ describe("flub test-only-filter", () => {
 			]);
 		});
 
-	test.stdout()
+	test
+		.stdout()
 		.command(["test-only-filter", "--quiet", "--json", "--all", "--no-private"])
 		.it(`--no-private filter`, (ctx) => {
 			const output: jsonOutput = JSON.parse(ctx.stdout);
@@ -69,7 +74,8 @@ describe("flub test-only-filter", () => {
 			expect(names).to.not.be.containingAnyOf(["@fluid-private/readme-command"]);
 		});
 
-	test.stdout()
+	test
+		.stdout()
 		.command([
 			"test-only-filter",
 			"--quiet",
