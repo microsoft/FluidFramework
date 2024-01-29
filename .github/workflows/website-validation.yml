@@ -9,6 +9,9 @@ defaults:
   run:
     working-directory: ./docs
 
+permissions:
+  pull-requests: read
+
 jobs:
 
   build_site:

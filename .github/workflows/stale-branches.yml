@@ -4,6 +4,9 @@
 name: Delete Stale Branches
 on: workflow_dispatch
 
+permissions:
+  contents: write
+
 jobs:
   stale_branches:
     name: Cleanup old branches
