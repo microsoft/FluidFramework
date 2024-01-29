@@ -25,7 +25,7 @@ import {
 	SummaryInfo,
 } from "@fluidframework/test-utils";
 import {
-	MockContainerRuntimeFactory,
+	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
@@ -371,13 +371,19 @@ export class TestTreeProvider {
 	}
 }
 
+export interface ConnectionSetter {
+	readonly setConnected: (connectionState: boolean) => void;
+}
+
+export type SharedTreeWithConnectionStateSetter = SharedTree & ConnectionSetter;
+
 /**
  * A test helper class that creates one or more SharedTrees connected to mock services.
  */
 export class TestTreeProviderLite {
 	private static readonly treeId = "TestSharedTree";
-	private readonly runtimeFactory = new MockContainerRuntimeFactory();
-	public readonly trees: readonly SharedTree[];
+	private readonly runtimeFactory = new MockContainerRuntimeFactoryForReconnection();
+	public readonly trees: readonly SharedTreeWithConnectionStateSetter[];
 
 	/**
 	 * Create a new {@link TestTreeProviderLite} with a number of trees pre-initialized.
@@ -399,7 +405,7 @@ export class TestTreeProviderLite {
 		useDeterministicSessionIds = true,
 	) {
 		assert(trees >= 1, "Must initialize provider with at least one tree");
-		const t: SharedTree[] = [];
+		const t: SharedTreeWithConnectionStateSetter[] = [];
 		const random = useDeterministicSessionIds ? makeRandom(0xdeadbeef) : makeRandom();
 		for (let i = 0; i < trees; i++) {
 			const sessionId = random.uuid4() as SessionId;
@@ -408,12 +414,20 @@ export class TestTreeProviderLite {
 				id: "test",
 				idCompressor: createIdCompressor(sessionId),
 			});
-			const tree = this.factory.create(runtime, TestTreeProviderLite.treeId) as SharedTree;
-			this.runtimeFactory.createContainerRuntime(runtime);
+			const tree = this.factory.create(
+				runtime,
+				TestTreeProviderLite.treeId,
+			) as SharedTreeWithConnectionStateSetter;
+			const containerRuntime = this.runtimeFactory.createContainerRuntime(runtime);
 			tree.connect({
 				deltaConnection: runtime.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			});
+			(tree as Mutable<SharedTreeWithConnectionStateSetter>).setConnected = (
+				connectionState: boolean,
+			) => {
+				containerRuntime.connected = connectionState;
+			};
 			t.push(tree);
 		}
 		this.trees = t;

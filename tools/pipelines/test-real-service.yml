@@ -160,7 +160,7 @@ stages:
           # Tests N-2 to LTS+1 back compat for loader
           # Tests N-2 to LTS+3 back compat for loader + driver
           - name: N-2ToLTS+1-back-compat
-            flags: --compatVersion=V2_INT_1_Loader_V2_INT_3_Driver --tenantIndex=3
+            flags: --compatVersion=V2_INT_3 --tenantIndex=3
         env:
           login__microsoft__clientId: $(login-microsoft-clientId)
           login__microsoft__secret: $(login-microsoft-secret)

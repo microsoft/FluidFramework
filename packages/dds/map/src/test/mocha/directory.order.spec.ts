@@ -12,6 +12,7 @@ import {
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	DirectoryFactory,
 	DirectoryLocalOpMetadata,
@@ -394,6 +395,39 @@ describe("Directory Iteration Order", () => {
 			await directory2.load(services);
 
 			assertDirectoryIterationOrder(directory2, ["c", "b", "a"]);
+		});
+
+		it("can be compatible with the detached scenario", async () => {
+			// It is to reproduce the regression bug causing the corruption of the summarization, indicated by 0x85c
+			// https://dev.azure.com/fluidframework/internal/_workitems/edit/7013
+			const runtimeFactory = new MockContainerRuntimeFactory();
+			const dataStoreRuntime = new MockFluidDataStoreRuntime();
+			runtimeFactory.createContainerRuntime(dataStoreRuntime);
+			const factory = SharedDirectory.getFactory();
+
+			const summaryContent =
+				'{"blobs":[],"content":{"ci":{"csn":0,"ccIds":[]},"subdirectories":{"detached1":{"ci":{"csn":0,"ccIds":["97cd0b77-34b1-46a8-bbe2-5fbefb3e014b"]}},"detached2":{"ci":{"csn":0,"ccIds":["97cd0b77-34b1-46a8-bbe2-5fbefb3e014b"]}},"detached3":{"ci":{"csn":-1,"ccIds":["97cd0b77-34b1-46a8-bbe2-5fbefb3e014b"]}}}}}';
+			const summary: ISummaryTree = {
+				type: 1,
+				tree: {
+					header: {
+						type: 2,
+						content: summaryContent,
+					},
+				},
+			};
+
+			const directory = await factory.load(
+				dataStoreRuntime,
+				"A",
+				{
+					deltaConnection: dataStoreRuntime.createDeltaConnection(),
+					objectStorage: MockStorage.createFromSummary(summary),
+				},
+				factory.attributes,
+			);
+
+			await directory.summarize();
 		});
 	});
 
