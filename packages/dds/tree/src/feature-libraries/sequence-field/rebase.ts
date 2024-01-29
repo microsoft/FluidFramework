@@ -639,8 +639,6 @@ function rebaseNodeChange<TNodeChange>(
 			currMark,
 			nodeRebaser(currChange, baseChange, NodeExistenceState.Alive),
 		);
-	} else if (baseChange === undefined || currChange === undefined) {
-		return currMark;
 	}
 
 	return withNodeChange(currMark, nodeRebaser(currChange, baseChange));
