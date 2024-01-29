@@ -91,7 +91,11 @@ export const DataRuntimeApi: {
 };
 
 // @internal (undocumented)
-export type DescribeCompat = DescribeCompatSuite & Record<"skip" | "only" | "noCompat", DescribeCompatSuite>;
+export type DescribeCompat = DescribeCompatSuite & {
+    skip: DescribeCompatSuite;
+    only: DescribeCompatSuite;
+    noCompat: DescribeCompatSuite;
+};
 
 // @internal
 export const describeCompat: DescribeCompat;

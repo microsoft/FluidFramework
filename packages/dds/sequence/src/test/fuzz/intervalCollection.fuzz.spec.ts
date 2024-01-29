@@ -198,11 +198,10 @@ describe("IntervalCollection fuzz testing", () => {
 
 	createDDSFuzzSuite(model, {
 		...defaultFuzzOptions,
-		// AB#6552: Seeds 9 and 70 exposed a bug where the interval endpoints do not slide properly on shared string removeRange.
-		// Search tests for AB#6552 for a skipped version of seed 70.
-		skip: [9, 70],
+		// Note: there are some known eventual consistency issues which the tests don't currently reproduce.
+		// Search this package for AB#6552 (or look at that work item) for a skipped test and further details.
 		// Uncomment this line to replay a specific seed from its failure file:
-		// replay: 0,
+		// replay: 0
 	});
 });
 
