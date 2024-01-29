@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
 import {
 	IClient,
@@ -16,7 +15,6 @@ import { LocalWebSocketServer } from "@fluidframework/server-local-server";
 import { IWebSocketServer } from "@fluidframework/server-services-core";
 import type { Socket } from "socket.io-client";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { UsageError } from "@fluidframework/driver-utils";
 
 const testProtocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 
@@ -86,12 +84,7 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
 	public submitSignal(content: any, targetClientId?: string): void {
-		assert(!this.disposed, "connection disposed");
-
-		if (targetClientId && this.details.supportedFeatures?.submit_signals_v2 !== true) {
-			throw new UsageError("Sending signals to specific client ids is not supported.");
-		}
-
+		// TODO: Add targetClientId support
 		this.emitMessages("submitSignal", [[content]]);
 	}
 

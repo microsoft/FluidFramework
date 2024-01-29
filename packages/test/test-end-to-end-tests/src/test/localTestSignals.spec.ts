@@ -34,6 +34,7 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let dataObject1: ITestFluidObject;
 	let dataObject2: ITestFluidObject;
+	let dataObject3: ITestFluidObject;
 
 	beforeEach("setup", async () => {
 		provider = getTestObjectProvider();
@@ -43,12 +44,18 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 		const container2 = await provider.loadTestContainer(testContainerConfig);
 		dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 
+		const container3 = await provider.loadTestContainer(testContainerConfig);
+		dataObject3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
+
 		// need to be connected to send signals
 		if (container1.connectionState !== ConnectionState.Connected) {
 			await new Promise((resolve) => container1.once("connected", resolve));
 		}
 		if (container2.connectionState !== ConnectionState.Connected) {
 			await new Promise((resolve) => container2.once("connected", resolve));
+		}
+		if (container3.connectionState !== ConnectionState.Connected) {
+			await new Promise((resolve) => container3.once("connected", resolve));
 		}
 	});
 	describe("Attach signal Handlers on Both Clients", () => {
@@ -188,5 +195,47 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 			1,
 			"client 2 did not receive signal on data store runtime",
 		);
+	});
+
+	it.skip("Validate data store runtime targeted signals", async () => {
+		let user1SignalReceivedCount = 0;
+		let user2SignalReceivedCount = 0;
+		let user3SignalReceivedCount = 0;
+
+		dataObject1.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+			if (message.type === "TestSignal") {
+				user1SignalReceivedCount += 1;
+			}
+		});
+
+		dataObject2.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+			if (message.type === "TestSignal") {
+				user2SignalReceivedCount += 1;
+			}
+		});
+
+		dataObject3.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+			if (message.type === "TestSignal") {
+				user3SignalReceivedCount += 1;
+			}
+		});
+
+		dataObject1.runtime.submitSignal("TestSignal", true, dataObject2.runtime.clientId);
+		await waitForSignal(dataObject2.runtime);
+		assert.equal(user1SignalReceivedCount, 0, "client 1 should not receive signal");
+		assert.equal(user2SignalReceivedCount, 1, "client 2 did not receive signal");
+		assert.equal(user3SignalReceivedCount, 0, "client 3 should not receive signal");
+
+		dataObject1.runtime.submitSignal("TestSignal", true, dataObject3.runtime.clientId);
+		await waitForSignal(dataObject3.runtime);
+		assert.equal(user1SignalReceivedCount, 0, "client 1 should not receive signal");
+		assert.equal(user2SignalReceivedCount, 1, "client 2 should not receive signal");
+		assert.equal(user3SignalReceivedCount, 1, "client 3 did not receive signal");
+
+		dataObject2.runtime.submitSignal("TestSignal", true, dataObject1.runtime.clientId);
+		await waitForSignal(dataObject1.runtime);
+		assert.equal(user1SignalReceivedCount, 1, "client 1 did not receive signal");
+		assert.equal(user2SignalReceivedCount, 1, "client 2 should not receive signal");
+		assert.equal(user3SignalReceivedCount, 1, "client 3 should not receive signal");
 	});
 });
