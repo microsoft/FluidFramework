@@ -95,7 +95,7 @@ function compose(changes: TaggedChange<TestChange>[], verify: boolean = true): T
 			intentions = composeIntentions(intentions, change.intentions);
 		}
 	}
-	if (inputContext !== undefined) {
+	if (intentions.length !== 0 && inputContext !== undefined) {
 		return {
 			inputContext,
 			intentions,
