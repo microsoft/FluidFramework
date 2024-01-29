@@ -1438,7 +1438,6 @@ importers:
   examples/benchmarks/odspsnapshotfetch-perftestapp:
     specifiers:
       '@fluid-tools/build-cli': ^0.29.0
-      '@fluid-tools/fluidapp-odsp-urlresolver': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.29.0
       '@fluidframework/core-utils': workspace:~
@@ -1446,6 +1445,7 @@ importers:
       '@fluidframework/odsp-doclib-utils': workspace:~
       '@fluidframework/odsp-driver': workspace:~
       '@fluidframework/odsp-driver-definitions': workspace:~
+      '@fluidframework/odsp-urlresolver': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/tool-utils': workspace:~
       '@types/express': ^4.11.0
@@ -1471,11 +1471,11 @@ importers:
       webpack-hot-middleware: ^2.25.3
       webpack-merge: ^5.8.0
     dependencies:
-      '@fluid-tools/fluidapp-odsp-urlresolver': link:../../../packages/drivers/fluidapp-odsp-urlResolver
       '@fluidframework/core-utils': link:../../../packages/common/core-utils
       '@fluidframework/odsp-doclib-utils': link:../../../packages/utils/odsp-doclib-utils
       '@fluidframework/odsp-driver': link:../../../packages/drivers/odsp-driver
       '@fluidframework/odsp-driver-definitions': link:../../../packages/drivers/odsp-driver-definitions
+      '@fluidframework/odsp-urlresolver': link:../../../packages/drivers/odsp-urlResolver
       '@fluidframework/telemetry-utils': link:../../../packages/utils/telemetry-utils
       '@fluidframework/tool-utils': link:../../../packages/utils/tool-utils
       express: 4.18.2
@@ -7552,65 +7552,6 @@ importers:
       rimraf: 4.4.1
       typescript: 5.1.6
 
-  packages/drivers/fluidapp-odsp-urlResolver:
-    specifiers:
-      '@arethetypeswrong/cli': ^0.13.3
-      '@fluid-internal/client-utils': workspace:~
-      '@fluid-tools/build-cli': ^0.29.0
-      '@fluid-tools/fluidapp-odsp-urlresolver-previous': npm:@fluid-tools/fluidapp-odsp-urlresolver@2.0.0-internal.8.0.0
-      '@fluidframework/build-common': ^2.0.3
-      '@fluidframework/build-tools': ^0.29.0
-      '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/core-utils': workspace:~
-      '@fluidframework/driver-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ^3.3.0
-      '@fluidframework/mocha-test-setup': workspace:~
-      '@fluidframework/odsp-driver': workspace:~
-      '@fluidframework/odsp-driver-definitions': workspace:~
-      '@microsoft/api-extractor': ^7.39.1
-      '@types/mocha': ^9.1.1
-      '@types/node': ^18.19.0
-      copyfiles: ^2.4.1
-      cross-env: ^7.0.3
-      eslint: ~8.50.0
-      mocha: ^10.2.0
-      mocha-json-output-reporter: ^2.0.1
-      mocha-multi-reporters: ^1.5.1
-      moment: ^2.21.0
-      prettier: ~3.0.3
-      rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
-      typescript: ~5.1.6
-    dependencies:
-      '@fluid-internal/client-utils': link:../../common/client-utils
-      '@fluidframework/core-interfaces': link:../../common/core-interfaces
-      '@fluidframework/core-utils': link:../../common/core-utils
-      '@fluidframework/driver-definitions': link:../../common/driver-definitions
-      '@fluidframework/odsp-driver': link:../odsp-driver
-      '@fluidframework/odsp-driver-definitions': link:../odsp-driver-definitions
-    devDependencies:
-      '@arethetypeswrong/cli': 0.13.3
-      '@fluid-tools/build-cli': 0.29.0_mhw3tufvtaceew37hrkkevjcli
-      '@fluid-tools/fluidapp-odsp-urlresolver-previous': /@fluid-tools/fluidapp-odsp-urlresolver/2.0.0-internal.8.0.0
-      '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
-      '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
-      '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
-      '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
-      '@types/mocha': 9.1.1
-      '@types/node': 18.19.1
-      copyfiles: 2.4.1
-      cross-env: 7.0.3
-      eslint: 8.50.0
-      mocha: 10.2.0
-      mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
-      mocha-multi-reporters: 1.5.1_mocha@10.2.0
-      moment: 2.29.4
-      prettier: 3.0.3
-      rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
-      typescript: 5.1.6
-
   packages/drivers/local-driver:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
@@ -7825,10 +7766,12 @@ importers:
   packages/drivers/odsp-urlResolver:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.29.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.29.0
       '@fluidframework/core-interfaces': workspace:~
+      '@fluidframework/core-utils': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.3.0
       '@fluidframework/mocha-test-setup': workspace:~
@@ -7850,7 +7793,9 @@ importers:
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
+      '@fluid-internal/client-utils': link:../../common/client-utils
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
+      '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/odsp-driver': link:../odsp-driver
       '@fluidframework/odsp-driver-definitions': link:../odsp-driver-definitions
@@ -11522,7 +11467,6 @@ importers:
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.29.0
       '@fluid-tools/fetch-tool-previous': npm:@fluid-tools/fetch-tool@2.0.0-internal.8.0.0
-      '@fluid-tools/fluidapp-odsp-urlresolver': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.29.0
       '@fluidframework/container-runtime': workspace:~
@@ -11547,7 +11491,6 @@ importers:
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
-      '@fluid-tools/fluidapp-odsp-urlresolver': link:../../drivers/fluidapp-odsp-urlResolver
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
