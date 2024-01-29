@@ -106,11 +106,7 @@ data:
                     "createDoc": {{ toJson .Values.alfred.throttling.restCallsPerCluster.createDoc }},
                     "getDeltas": {{ toJson .Values.alfred.throttling.restCallsPerCluster.getDeltas }},
                     "getSession": {{ toJson .Values.alfred.throttling.restCallsPerCluster.getSession }}
-                },
-                "socketConnectionsPerTenant": {{ toJson .Values.alfred.throttling.socketConnectionsPerTenant }},
-                "socketConnectionsPerCluster": {{ toJson .Values.alfred.throttling.socketConnectionsPerCluster }},
-                "submitOps": {{ toJson .Values.alfred.throttling.submitOps }},
-                "submitSignal": {{ toJson .Values.alfred.throttling.submitSignal }}
+                }
             },
             "topic": "{{ .Values.kafka.topics.rawdeltas }}",
             "bucket": "snapshots",
@@ -122,15 +118,41 @@ data:
                 {{ toJson . }}{{- if ne $i $lastIndex -}}, {{ end }}
                 {{- end }}
             ],
-            "socketIoAdapter" : {
-                "enableCustomSocketIoAdapter": {{ .Values.alfred.socketIoAdapter.enableCustomSocketIoAdapter }},
-                "shouldDisableDefaultNamespace": {{ .Values.alfred.socketIoAdapter.shouldDisableDefaultNamespace }}
-            },
             "enforceServerGeneratedDocumentId": {{ .Values.alfred.enforceServerGeneratedDocumentId }},
-            "socketIo" : {
-                "perMessageDeflate": {{ .Values.alfred.socketIo.perMessageDeflate}}
-            },
             "getDeltasRequestMaxOpsRange": {{ .Values.alfred.getDeltasRequestMaxOpsRange }}
+        },
+        "nexus": {
+            "kafkaClientId": "{{ template "nexus.fullname" . }}",
+            "maxMessageSize": "16KB",
+            "maxNumberOfClientsPerDocument": {{ .Values.nexus.maxNumberOfClientsPerDocument }},
+            "numberOfMessagesPerTrace": {{ .Values.nexus.numberOfMessagesPerTrace }},
+            "sessionStickinessDurationMs": {{ .Values.nexus.sessionStickinessDurationMs }},
+            "enableConnectionCountLogging": {{ .Values.nexus.enableConnectionCountLogging }},
+            "ignoreEphemeralFlag": {{ .Values.nexus.ignoreEphemeralFlag }},
+            "throttling": {
+                "socketConnectionsPerTenant": {{ toJson .Values.nexus.throttling.socketConnectionsPerTenant }},
+                "socketConnectionsPerCluster": {{ toJson .Values.nexus.throttling.socketConnectionsPerCluster }},
+                "submitOps": {{ toJson .Values.nexus.throttling.submitOps }},
+                "submitSignal": {{ toJson .Values.nexus.throttling.submitSignal }}
+            },
+            "topic": "{{ .Values.kafka.topics.rawdeltas }}",
+            "bucket": "snapshots",
+            "key": "{{ .Values.nexus.key }}",
+            "tenants": [
+                {{- $lastIndex := sub (len .Values.nexus.tenants) 1}}
+                {{- range $i, $tenant := .Values.nexus.tenants }}
+                {{ toJson . }}{{- if ne $i $lastIndex -}}, {{ end }}
+                {{- end }}
+            ],
+            "socketIoAdapter" : {
+                "enableCustomSocketIoAdapter": {{ .Values.nexus.socketIoAdapter.enableCustomSocketIoAdapter }},
+                "shouldDisableDefaultNamespace": {{ .Values.nexus.socketIoAdapter.shouldDisableDefaultNamespace }}
+            },
+            "enforceServerGeneratedDocumentId": {{ .Values.nexus.enforceServerGeneratedDocumentId }},
+            "socketIo" : {
+                "perMessageDeflate": {{ .Values.nexus.socketIo.perMessageDeflate}}
+            },
+            "getDeltasRequestMaxOpsRange": {{ .Values.nexus.getDeltasRequestMaxOpsRange }}
         },
         "client": {
             "type": "browser",
