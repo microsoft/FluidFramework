@@ -43,27 +43,14 @@ export class AlfredResources implements core.IResources {
 		public documentDeleteService: IDocumentDeleteService,
 		public serviceMessageResourceManager?: core.IServiceMessageResourceManager,
 	) {
-		const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
-		const socketIoConfig = config.get("alfred:socketIo");
 		const nodeClusterConfig: Partial<services.INodeClusterConfig> | undefined = config.get(
 			"alfred:nodeClusterConfig",
 		);
 		const useNodeCluster = config.get("alfred:useNodeCluster");
 		this.webServerFactory = useNodeCluster
-			? new services.SocketIoNodeClusterWebServerFactory(
-					redisConfig,
-					socketIoAdapterConfig,
-					httpServerConfig,
-					socketIoConfig,
-					nodeClusterConfig,
-			  )
-			: new services.SocketIoWebServerFactory(
-					this.redisConfig,
-					socketIoAdapterConfig,
-					httpServerConfig,
-					socketIoConfig,
-			  );
+			? new services.NodeClusterWebServerFactory(httpServerConfig, nodeClusterConfig)
+			: new services.BasicWebServerFactory(httpServerConfig);
 	}
 
 	public async dispose(): Promise<void> {
