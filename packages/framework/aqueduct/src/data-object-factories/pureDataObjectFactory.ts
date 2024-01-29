@@ -295,6 +295,11 @@ export class PureDataObjectFactory<
 	 * Creates a new root instance of the object. Uses container's registry to find this factory.
 	 * It's expected that only container owners would use this functionality, as only such developers
 	 * have knowledge of entries in container registry.
+	 *
+	 * This immediately makes the root instance live. If the container is attached before this is called, changes will
+	 * be sent over the network. If the container is detached, when the container is attached, the instance will show
+	 * up on remote clients.
+	 *
 	 * The name in this registry for such record should match type of this factory.
 	 * @param runtime - container runtime. It's registry is used to create an object.
 	 * @param initialState - The initial state to provide to the created component.
@@ -306,8 +311,24 @@ export class PureDataObjectFactory<
 		runtime: IContainerRuntime,
 		initialState?: I["InitialState"],
 	): Promise<TObj> {
-		const context = runtime.createDetachedRootDataStore([this.type], rootDataStoreId);
-		return this.createInstanceCore(context, initialState);
+		const context = runtime.createDetachedDataStore([this.type]);
+		const { instance, runtime: dataStoreRuntime } = await createDataObject(
+			this.ctor,
+			context,
+			this.sharedObjectRegistry,
+			this.optionalProviders,
+			this.runtimeClass,
+			false, // existing
+			initialState,
+		);
+		const dataStore = await context.attachRuntime(this, dataStoreRuntime);
+		const result = await dataStore.trySetAlias(rootDataStoreId);
+		if (result !== "Success") {
+			const handle = await runtime.getAliasedDataStoreEntryPoint(rootDataStoreId);
+			assert(handle !== undefined, "Should have retrieved aliased handle");
+			return (await handle.get()) as TObj;
+		}
+		return instance;
 	}
 
 	protected async createNonRootInstanceCore(

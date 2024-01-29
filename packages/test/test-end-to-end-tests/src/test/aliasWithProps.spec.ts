@@ -118,7 +118,7 @@ describeCompat("HotSwap", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 		return object;
 	};
 
-	it("Aliasing should still work", async () => {
+	it("Can make modifications before aliasing", async () => {
 		const container = await provider.createContainer(runtimeFactory);
 		const dataObject = (await container.getEntryPoint()) as TestDataObject;
 		const runtime = dataObject._context.containerRuntime as IContainerRuntime;
@@ -135,6 +135,28 @@ describeCompat("HotSwap", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 		const newObject1 = await newObjectPromise1;
 		const newObject2 = await newObjectPromise2;
 		assert(newObject1.getValue() === newObject2.getValue(), "Aliasing should have worked");
+	});
+
+	it("CreateRootInstance uses aliasing", async () => {
+		const container = await provider.createContainer(runtimeFactory);
+		const dataObject = (await container.getEntryPoint()) as TestDataObject;
+		const runtime = dataObject._context.containerRuntime as IContainerRuntime;
+		const container2 = await provider.loadContainer(runtimeFactory);
+		const dataObject2 = (await container2.getEntryPoint()) as TestDataObject;
+		const runtime2 = dataObject2._context.containerRuntime as IContainerRuntime;
+
+		const props1 = { a: "1 is different from 2" };
+		const newObjectPromise1 = dataObjectFactory.createRootInstance("new", runtime, props1);
+		const props2 = { a: "Totally not same string" };
+		const newObjectPromise2 = dataObjectFactory.createRootInstance("new", runtime2, props2);
+		await provider.ensureSynchronized();
+		await Promise.all([newObjectPromise1, newObjectPromise2]);
+		const newObject1 = await newObjectPromise1;
+		const newObject2 = await newObjectPromise2;
+		assert(
+			newObject1.getValue() === newObject2.getValue(),
+			"Root creation should be using aliasing!",
+		);
 	});
 
 	it("Can create with deep package path", async () => {
