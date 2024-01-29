@@ -13,6 +13,7 @@ import {
 	ITokenRevocationManager,
 	IRevokeTokenOptions,
 	IRevokedTokenChecker,
+	IClusterDrainingChecker,
 } from "@fluidframework/server-services-core";
 import {
 	verifyStorageToken,
@@ -57,6 +58,7 @@ export function create(
 	documentDeleteService: IDocumentDeleteService,
 	tokenRevocationManager?: ITokenRevocationManager,
 	revokedTokenChecker?: IRevokedTokenChecker,
+	clusterDrainingChecker?: IClusterDrainingChecker,
 ): Router {
 	const router: Router = Router();
 	const externalOrdererUrl: string = config.get("worker:serverUrl");
@@ -288,6 +290,7 @@ export function create(
 				documentRepository,
 				sessionStickinessDurationMs,
 				messageBrokerId,
+				clusterDrainingChecker,
 			);
 			handleResponse(session, response, false);
 		},

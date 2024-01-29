@@ -15,8 +15,8 @@ import {
 	createSummarizer,
 	summarizeNow,
 	waitForContainerConnection,
-	mockConfigProvider,
 	ITestContainerConfig,
+	createTestConfigProvider,
 } from "@fluidframework/test-utils";
 import { describeCompat, ITestDataObject, itExpects } from "@fluid-private/test-version-utils";
 import { stringToBuffer } from "@fluid-internal/client-utils";
@@ -99,7 +99,7 @@ function validateBlobStateInSummary(
  * These tests validate that SweepReady attachment blobs are correctly swept. Swept attachment blobs should be
  * removed from the summary, added to the GC deleted blob, and retrieving them should be prevented.
  */
-describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvider) => {
+describeCompat("GC attachment blob sweep tests", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 	const sweepGracePeriodMs = 50;
 	const tombstoneTimeoutMs = 150;
 	const sweepTimeoutMs = tombstoneTimeoutMs + sweepGracePeriodMs;
@@ -110,8 +110,23 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 	};
 
 	let provider: ITestObjectProvider;
-	let settings = {};
-	let testContainerConfig: ITestContainerConfig;
+	const configProvider = createTestConfigProvider();
+	const testContainerConfig: ITestContainerConfig = {
+		runtimeOptions: {
+			summaryOptions: {
+				summaryConfigOverrides: {
+					state: "disabled",
+				},
+			},
+			gcOptions,
+		},
+		loaderProps: { configProvider },
+	};
+
+	const summarizerContainerConfig: ITestContainerConfig = {
+		runtimeOptions: { gcOptions },
+		loaderProps: { configProvider },
+	};
 
 	async function loadContainer(summaryVersion: string) {
 		return provider.loadTestContainer(testContainerConfig, {
@@ -155,7 +170,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 			container,
 			{
 				runtimeOptions: { gcOptions },
-				loaderProps: { configProvider: mockConfigProvider(settings) },
+				loaderProps: { configProvider },
 			},
 		);
 
@@ -164,22 +179,15 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 
 	beforeEach("setup", async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
-		settings["Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs"] = tombstoneTimeoutMs;
-		testContainerConfig = {
-			runtimeOptions: {
-				summaryOptions: {
-					summaryConfigOverrides: {
-						state: "disabled",
-					},
-				},
-				gcOptions,
-			},
-			loaderProps: { configProvider: mockConfigProvider(settings) },
-		};
+
+		configProvider.set(
+			"Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs",
+			tombstoneTimeoutMs,
+		);
 	});
 
 	afterEach(() => {
-		settings = {};
+		configProvider.clear();
 	});
 
 	describe("Attachment blobs in attached container", () => {
@@ -478,10 +486,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 				const { summarizer, container: summarizerContainer } = await createSummarizer(
 					provider,
 					mainContainer,
-					{
-						runtimeOptions: { gcOptions },
-						loaderProps: { configProvider: mockConfigProvider(settings) },
-					},
+					summarizerContainerConfig,
 				);
 
 				// Remove the blob's handle to unreference it.
@@ -586,10 +591,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 				const { summarizer, container: summarizerContainer } = await createSummarizer(
 					provider,
 					mainContainer,
-					{
-						runtimeOptions: { gcOptions },
-						loaderProps: { configProvider: mockConfigProvider(settings) },
-					},
+					summarizerContainerConfig,
 				);
 
 				// Summarize so that the above attachment blob is marked unreferenced.
@@ -688,10 +690,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 				const { summarizer, container: summarizerContainer } = await createSummarizer(
 					provider,
 					mainContainer,
-					{
-						runtimeOptions: { gcOptions },
-						loaderProps: { configProvider: mockConfigProvider(settings) },
-					},
+					summarizerContainerConfig,
 				);
 
 				// Add the blob handles to reference them.
@@ -785,10 +784,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 			const { summarizer, container: summarizerContainer } = await createSummarizer(
 				provider,
 				container,
-				{
-					runtimeOptions: { gcOptions },
-					loaderProps: { configProvider: mockConfigProvider(settings) },
-				},
+				summarizerContainerConfig,
 			);
 			await provider.ensureSynchronized();
 			await summarizeNow(summarizer);

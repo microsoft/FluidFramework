@@ -10,7 +10,6 @@ import {
 	ChangesetLocalId,
 	RevisionTag,
 	areEqualChangeAtomIds,
-	RevisionMetadataSource,
 	DeltaFieldChanges,
 	DeltaDetachedNodeRename,
 	DeltaMark,
@@ -26,8 +25,6 @@ import {
 	NodeChangeRebaser,
 	NodeChangeset,
 	FieldEditor,
-	CrossFieldManager,
-	getIntention,
 	NodeExistenceState,
 	FieldChangeHandler,
 	RelevantRemovedRootsFromChild,
@@ -158,22 +155,17 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		{ change: change1, revision: revision1 }: TaggedChange<OptionalChangeset>,
 		{ change: change2, revision: revision2 }: TaggedChange<OptionalChangeset>,
 		composeChild: NodeChangeComposer,
-		genId: IdAllocator,
-		crossFieldManager: CrossFieldManager,
-		revisionMetadata: RevisionMetadataSource,
 	): OptionalChangeset => {
 		const inputContext = tryInferInputContext(change1) ?? tryInferInputContext(change2);
-		const intention1 = getIntention(revision1, revisionMetadata);
-		const intention2 = getIntention(revision2, revisionMetadata);
 
 		const earliestReservedDetachId: RegisterId | undefined =
-			withRevisionOrUndefined(change1.reservedDetachId, intention1) ??
-			withRevisionOrUndefined(change2.reservedDetachId, intention2);
+			withRevisionOrUndefined(change1.reservedDetachId, revision1) ??
+			withRevisionOrUndefined(change2.reservedDetachId, revision2);
 
-		const { srcToDst, dstToSrc } = getBidirectionalMaps(change1.moves, intention1);
+		const { srcToDst, dstToSrc } = getBidirectionalMaps(change1.moves, revision1);
 		for (const [src, dst, target] of change2.moves) {
-			const srcWithRevision = withRevision(src, intention2);
-			const dstWithRevision = withRevision(dst, intention2);
+			const srcWithRevision = withRevision(src, revision2);
+			const dstWithRevision = withRevision(dst, revision2);
 			const originalSrc = dstToSrc.get(srcWithRevision);
 			if (originalSrc !== undefined) {
 				const entry = srcToDst.get(originalSrc);
@@ -192,14 +184,14 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		const childChanges2ByOriginalId = new RegisterMap<NodeChangeset>();
 		for (const [id, change] of change2.childChanges) {
-			const idWithRevision = withRevision(id, intention2);
+			const idWithRevision = withRevision(id, revision2);
 			const originalId = dstToSrc.get(idWithRevision);
 			childChanges2ByOriginalId.set(originalId ?? idWithRevision, change);
 		}
 
 		const composedChildChanges: OptionalChangeset["childChanges"] = [];
 		for (const [id, childChange1] of change1.childChanges) {
-			const idWithRevision = withRevision(id, intention1);
+			const idWithRevision = withRevision(id, revision1);
 			const childChange2 = childChanges2ByOriginalId.get(idWithRevision);
 			composedChildChanges.push([idWithRevision, composeChild(childChange1, childChange2)]);
 			childChanges2ByOriginalId.delete(idWithRevision);
@@ -298,16 +290,12 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		change: OptionalChangeset,
 		overTagged: TaggedChange<OptionalChangeset>,
 		rebaseChild: NodeChangeRebaser,
-		genId: IdAllocator,
-		crossFieldManager: CrossFieldManager,
-		revisionMetadata: RevisionMetadataSource,
-		existenceState?: NodeExistenceState,
 	): OptionalChangeset => {
 		const withIntention = (id: RegisterId): RegisterId => {
 			if (id === "self") {
 				return id;
 			}
-			const intention = getIntention(id.revision ?? overTagged.revision, revisionMetadata);
+			const intention = id.revision ?? overTagged.revision;
 			return { revision: intention, localId: id.localId };
 		};
 

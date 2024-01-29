@@ -13,7 +13,6 @@ import {
 	MonitoringContext,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils";
-import { ConfigTypes } from "@fluidframework/core-interfaces";
 import {
 	GarbageCollector,
 	GCNodeType,
@@ -29,14 +28,12 @@ import {
 } from "../../gc";
 import { ContainerRuntimeGCMessage } from "../../messageTypes";
 import { pkgVersion } from "../../packageVersion";
-import { configProvider } from "./gcUnitTestHelpers";
 
 describe("Garbage Collection Stats", () => {
 	// Nodes in the reference graph.
 	const nodes: string[] = ["/node1", "/node2", "/node3", "/node4", "/node5", "/node6"];
 	const testPkgPath = ["testPkg"];
 
-	let injectedSettings: Record<string, ConfigTypes> = {};
 	let mockLogger: MockLogger;
 	let mc: MonitoringContext<MockLogger>;
 	let clock: SinonFakeTimers;
@@ -133,7 +130,7 @@ describe("Garbage Collection Stats", () => {
 	beforeEach(() => {
 		lastGCMessage = undefined;
 		mockLogger = new MockLogger();
-		mc = mixinMonitoringContext(mockLogger, configProvider(injectedSettings));
+		mc = mixinMonitoringContext(mockLogger);
 
 		// Set up initial GC graph with 5 nodes and 2 are unreferenced.
 		defaultGCData.gcNodes["/"] = [nodes[0]];
@@ -165,7 +162,6 @@ describe("Garbage Collection Stats", () => {
 	afterEach(() => {
 		clock.reset();
 		mockLogger.clear();
-		injectedSettings = {};
 		defaultGCData = { gcNodes: {} };
 	});
 

@@ -64,9 +64,6 @@ export interface CompatApis {
 }
 
 // @internal (undocumented)
-export type CompatVersionKind = "FullCompat" | "NoCompat" | "LoaderCompat";
-
-// @internal (undocumented)
 export const ContainerRuntimeApi: {
     version: string;
     ContainerRuntime: typeof ContainerRuntime;
@@ -94,13 +91,17 @@ export const DataRuntimeApi: {
 };
 
 // @internal (undocumented)
-export type DescribeCompat = DescribeCompatSuite & Record<"skip" | "only" | "noCompat", DescribeCompatSuite>;
+export type DescribeCompat = DescribeCompatSuite & {
+    skip: DescribeCompatSuite;
+    only: DescribeCompatSuite;
+    noCompat: DescribeCompatSuite;
+};
 
 // @internal
 export const describeCompat: DescribeCompat;
 
 // @internal (undocumented)
-export type DescribeCompatSuite = (name: string, compatVersionKind: CompatVersionKind, tests: (this: Mocha.Suite, provider: (options?: ITestObjectProviderOptions) => ITestObjectProvider, apis: CompatApis) => void) => Mocha.Suite | void;
+export type DescribeCompatSuite = (name: string, compatVersion: string, tests: (this: Mocha.Suite, provider: (options?: ITestObjectProviderOptions) => ITestObjectProvider, apis: CompatApis) => void) => Mocha.Suite | void;
 
 // @internal (undocumented)
 export interface DescribeE2EDocInfo {
