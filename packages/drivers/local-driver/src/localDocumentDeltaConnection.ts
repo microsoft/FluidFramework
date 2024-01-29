@@ -15,6 +15,7 @@ import { LocalWebSocketServer } from "@fluidframework/server-local-server";
 import { IWebSocketServer } from "@fluidframework/server-services-core";
 import type { Socket } from "socket.io-client";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { UsageError } from "@fluidframework/driver-utils";
 
 const testProtocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
 
@@ -79,9 +80,18 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 
 	/**
 	 * Submits a new signal to the server
+	 *
+	 * @param content - Content of the signal.
+	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	public submitSignal(message: any): void {
-		this.emitMessages("submitSignal", [[message]]);
+	public submitSignal(content: any, targetClientId?: string): void {
+		this.checkNotDisposed();
+
+		if (targetClientId && this.details.supportedFeatures?.submit_signals_v2 !== true) {
+			throw new UsageError("Sending signals to specific client ids is not supported.");
+		}
+
+		this.emitMessages("submitSignal", [[content]]);
 	}
 
 	/**
