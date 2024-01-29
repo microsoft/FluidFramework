@@ -1140,14 +1140,15 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 	});
 
-	it("closes if session expires after stashing", async function () {
+	it("stashes session expiry", async function () {
 		const pendingOps = await getPendingOps(provider, false, async (c, d) => {
-
+			const map = await d.getSharedObject<SharedMap>(mapId);
+			[...Array(lots).keys()].map((i) => map.set(i.toString(), i));
 		});
 		const pendingState = JSON.parse(pendingOps);
-		console.log((pendingState.pendingRuntimeState).sessionExpiryTimerStarted);
+		assert.ok(pendingState.pendingRuntimeState.sessionExpiryTimerStarted);
 	});
-	
+
 	it("can make changes offline and stash them", async function () {
 		const pendingOps = await getPendingOps(provider, false, async (c, d) => {
 			const map = await d.getSharedObject<SharedMap>(mapId);

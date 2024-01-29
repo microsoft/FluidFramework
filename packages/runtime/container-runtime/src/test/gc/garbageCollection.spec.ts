@@ -238,17 +238,14 @@ describe("Garbage Collection Tests", () => {
 		const timenow = 5000; // arbitrary number
 		clock.tick(timenow);
 		gc = createGarbageCollector(
-			{sessionExpiryTimerStarted: 0},
+			{ sessionExpiryTimerStarted: 0 },
 			undefined /* gcBlobsMap */,
 			undefined /* gcMetadata */,
 			() => {
 				closeCalled = true;
 			},
 		);
-		assert(
-			closeCalled === false,
-			"Close should have been called",
-		);
+		assert(closeCalled === false, "Close should have been called");
 	});
 
 	it("Pending session expiry closes container", () => {
@@ -257,17 +254,14 @@ describe("Garbage Collection Tests", () => {
 		const timenow = defaultSessionExpiryDurationMs;
 		clock.tick(timenow + timethen);
 		gc = createGarbageCollector(
-			{sessionExpiryTimerStarted: timethen},
+			{ sessionExpiryTimerStarted: timethen },
 			undefined /* gcBlobsMap */,
 			undefined /* gcMetadata */,
 			() => {
 				closeCalled = true;
 			},
 		);
-		assert(
-			closeCalled,
-			"Close should have been called",
-		);
+		assert(closeCalled, "Close should have been called");
 	});
 
 	describe("addedOutboundReference", () => {

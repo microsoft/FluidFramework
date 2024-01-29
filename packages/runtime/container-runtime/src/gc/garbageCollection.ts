@@ -188,8 +188,6 @@ export class GarbageCollector implements IGarbageCollector {
 			timeoutMs = overrideSessionExpiryTimeoutMs ?? this.configs.sessionExpiryTimeoutMs;
 
 			if (pendingSessionExpiryTimerStarted) {
-				const datenow = Date.now();
-				console.log(datenow);
 				const timeLapsedSincePendingTimer = Date.now() - pendingSessionExpiryTimerStarted;
 				timeoutMs -= timeLapsedSincePendingTimer;
 			}
