@@ -17,15 +17,16 @@
 import { TinyliciousClient } from "./TinyliciousClient";
 
 export {
-	ITelemetryBaseEvent,
-	ITelemetryBaseLogger,
-	ITinyliciousAudience,
-	TinyliciousClientProps,
-	TinyliciousConnectionConfig,
-	TinyliciousContainerServices,
-	TinyliciousMember,
-	TinyliciousUser,
+	type ITelemetryBaseEvent,
+	type ITelemetryBaseLogger,
+	type ITinyliciousAudience,
+	type TinyliciousClientProps,
+	type TinyliciousConnectionConfig,
+	type TinyliciousContainerServices,
+	type TinyliciousMember,
+	type TinyliciousUser,
 } from "./interfaces";
 export { TinyliciousClient } from "./TinyliciousClient";
-// eslint-disable-next-line import/no-default-export
+
+// eslint-disable-next-line import/no-default-export, unicorn/prefer-export-from
 export default TinyliciousClient;

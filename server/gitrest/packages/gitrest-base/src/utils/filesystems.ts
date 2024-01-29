@@ -70,6 +70,8 @@ export class RedisFsManagerFactory implements IFileSystemManagerFactory {
 		this.redisParams = {
 			expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
 			enableHashmapRedisFs,
+			enableRedisMetrics: this.redisFsConfig.enableRedisFsMetrics,
+			redisApiMetricsSamplingPeriod: this.redisFsConfig.redisApiMetricsSamplingPeriod,
 		};
 	}
 
