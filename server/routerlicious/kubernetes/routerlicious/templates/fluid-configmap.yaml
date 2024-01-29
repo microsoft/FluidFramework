@@ -90,7 +90,6 @@ data:
         "alfred": {
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
             "maxMessageSize": "16KB",
-            "maxNumberOfClientsPerDocument": {{ .Values.alfred.maxNumberOfClientsPerDocument }},
             "numberOfMessagesPerTrace": {{ .Values.alfred.numberOfMessagesPerTrace }},
             "sessionStickinessDurationMs": {{ .Values.alfred.sessionStickinessDurationMs }},
             "enableConnectionCountLogging": {{ .Values.alfred.enableConnectionCountLogging }},
@@ -126,9 +125,6 @@ data:
             "maxMessageSize": "16KB",
             "maxNumberOfClientsPerDocument": {{ .Values.nexus.maxNumberOfClientsPerDocument }},
             "numberOfMessagesPerTrace": {{ .Values.nexus.numberOfMessagesPerTrace }},
-            "sessionStickinessDurationMs": {{ .Values.nexus.sessionStickinessDurationMs }},
-            "enableConnectionCountLogging": {{ .Values.nexus.enableConnectionCountLogging }},
-            "ignoreEphemeralFlag": {{ .Values.nexus.ignoreEphemeralFlag }},
             "throttling": {
                 "socketConnectionsPerTenant": {{ toJson .Values.nexus.throttling.socketConnectionsPerTenant }},
                 "socketConnectionsPerCluster": {{ toJson .Values.nexus.throttling.socketConnectionsPerCluster }},
@@ -148,11 +144,9 @@ data:
                 "enableCustomSocketIoAdapter": {{ .Values.nexus.socketIoAdapter.enableCustomSocketIoAdapter }},
                 "shouldDisableDefaultNamespace": {{ .Values.nexus.socketIoAdapter.shouldDisableDefaultNamespace }}
             },
-            "enforceServerGeneratedDocumentId": {{ .Values.nexus.enforceServerGeneratedDocumentId }},
             "socketIo" : {
                 "perMessageDeflate": {{ .Values.nexus.socketIo.perMessageDeflate}}
-            },
-            "getDeltasRequestMaxOpsRange": {{ .Values.nexus.getDeltasRequestMaxOpsRange }}
+            }
         },
         "client": {
             "type": "browser",

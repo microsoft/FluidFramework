@@ -15,10 +15,8 @@ alfred:
   cert: cert
   tenants: []
   key: jwt_key
-  maxNumberOfClientsPerDocument: 1000000
   numberOfMessagesPerTrace: 100
   sessionStickinessDurationMs: 3600000
-  enableConnectionCountLogging: false
   ignoreEphemeralFlag: true
   throttling:
     restCallsPerTenant:
@@ -39,16 +37,9 @@ alfred:
         intervalInMs: 1000000
       getDeltas: disabled
       getSession: disabled
-    socketConnectionsPerTenant: disabled
-    socketConnectionsPerCluster: disabled
     submitOps: disabled
     submitSignal: disabled
-  socketIoAdapter:
-    enableCustomSocketIoAdapter: true
-    shouldDisableDefaultNamespace: false
   enforceServerGeneratedDocumentId: false
-  socketIo:
-    perMessageDeflate: true
   getDeltasRequestMaxOpsRange: 2000
 
 nexus:
@@ -61,9 +52,6 @@ nexus:
   key: jwt_key
   maxNumberOfClientsPerDocument: 1000000
   numberOfMessagesPerTrace: 100
-  sessionStickinessDurationMs: 3600000
-  enableConnectionCountLogging: false
-  ignoreEphemeralFlag: true
   throttling:
     socketConnectionsPerTenant: disabled
     socketConnectionsPerCluster: disabled
@@ -72,10 +60,8 @@ nexus:
   socketIoAdapter:
     enableCustomSocketIoAdapter: true
     shouldDisableDefaultNamespace: false
-  enforceServerGeneratedDocumentId: false
   socketIo:
-    perMessageDeflate: true
-  getDeltasRequestMaxOpsRange: 2000
+    perMessageDeflate: false
 
 storage:
   enableWholeSummaryUpload: false
