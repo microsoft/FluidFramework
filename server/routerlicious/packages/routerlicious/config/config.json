@@ -364,6 +364,9 @@
 		}
 	],
 	"tokenRevocation": {
-		"enable": true
+		"enable": false
+	},
+	"clusterDraining": {
+		"enable": false
 	}
 }

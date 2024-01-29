@@ -6,7 +6,7 @@
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedTree, TreeView, ITree } from "@fluidframework/tree";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { Inventory, treeConfiguration } from "./schema";
+import { Inventory, treeConfiguration } from "./schema.js";
 
 const treeKey = "tree";
 

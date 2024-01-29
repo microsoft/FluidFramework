@@ -304,9 +304,10 @@ export function create(
 						fileSystemManagerFactories,
 						repoManagerParams.isEphemeralContainer,
 					);
-					const fsManager = fileSystemManagerFactory.create(
-						repoManagerParams.fileSystemManagerParams,
-					);
+					const fsManager = fileSystemManagerFactory.create({
+						...repoManagerParams.fileSystemManagerParams,
+						rootDir: repoManager.path,
+					});
 					await checkSoftDeleted(
 						fsManager,
 						repoManager.path,
@@ -379,9 +380,10 @@ export function create(
 					fileSystemManagerFactories,
 					repoManagerParams.isEphemeralContainer,
 				);
-				const fsManager = fileSystemManagerFactory.create(
-					repoManagerParams.fileSystemManagerParams,
-				);
+				const fsManager = fileSystemManagerFactory.create({
+					...repoManagerParams.fileSystemManagerParams,
+					rootDir: repoManager.path,
+				});
 				// A new document cannot already be soft-deleted.
 				if (!optimizeForInitialSummary) {
 					await checkSoftDeleted(
@@ -434,9 +436,10 @@ export function create(
 						fileSystemManagerFactories,
 						repoManagerParams.isEphemeralContainer,
 					);
-					const fsManager = fileSystemManagerFactory.create(
-						repoManagerParams.fileSystemManagerParams,
-					);
+					const fsManager = fileSystemManagerFactory.create({
+						...repoManagerParams.fileSystemManagerParams,
+						rootDir: repoManager.path,
+					});
 					return deleteSummary(
 						repoManager,
 						fsManager,

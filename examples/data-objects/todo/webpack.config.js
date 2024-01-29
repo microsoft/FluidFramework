@@ -19,6 +19,9 @@ module.exports = (env) => {
 				main: "./src/index.ts",
 			},
 			resolve: {
+				extensionAlias: {
+					".js": [".ts", ".tsx", ".js"],
+				},
 				extensions: [".ts", ".tsx", ".js"],
 			},
 			module: {
@@ -35,7 +38,7 @@ module.exports = (env) => {
 						],
 					},
 					{
-						test: /\.js$/,
+						test: /\.m?js$/,
 						use: [require.resolve("source-map-loader")],
 						enforce: "pre",
 					},

@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-nodejs-modules
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { type ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { AttachState } from "@fluidframework/container-definitions";
@@ -45,6 +44,7 @@ function createOdspClient(): OdspClient {
 		tokenProvider: new OdspTestTokenProvider(clientCreds), // Token provider using the provided test credentials.
 		siteUrl: "<site_url>",
 		driveId: "<raas_drive_id>",
+		filePath: "<file_path>",
 	};
 
 	return new OdspClient({ connection: connectionProperties });

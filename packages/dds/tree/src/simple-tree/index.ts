@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { ITree, TreeView, TreeConfiguration, WrapperTreeView } from "./tree.js";
+export { ITree, TreeView, TreeViewEvents, TreeConfiguration, WrapperTreeView } from "./tree.js";
 export {
 	TreeNodeSchema,
 	NodeFromSchema,
@@ -50,4 +50,4 @@ export {
 } from "./testRecursiveDomain.js";
 
 export { TreeNode, Unhydrated, TreeArrayNodeBase } from "./types.js";
-export { TreeArrayNode, IterableTreeArrayContent } from "./treeListNode.js";
+export { TreeArrayNode, IterableTreeArrayContent } from "./treeArrayNode.js";

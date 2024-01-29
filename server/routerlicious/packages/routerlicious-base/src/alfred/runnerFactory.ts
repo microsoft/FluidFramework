@@ -42,6 +42,7 @@ export class AlfredResources implements core.IResources {
 		public documentRepository: core.IDocumentRepository,
 		public documentDeleteService: IDocumentDeleteService,
 		public serviceMessageResourceManager?: core.IServiceMessageResourceManager,
+		public clusterDrainingChecker?: core.IClusterDrainingChecker,
 	) {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
 		const nodeClusterConfig: Partial<services.INodeClusterConfig> | undefined = config.get(
@@ -359,6 +360,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			documentRepository,
 			documentDeleteService,
 			serviceMessageResourceManager,
+			customizations?.clusterDrainingChecker,
 		);
 	}
 }
@@ -382,6 +384,7 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
 			resources.producer,
 			resources.documentRepository,
 			resources.documentDeleteService,
+			resources.clusterDrainingChecker,
 		);
 	}
 }

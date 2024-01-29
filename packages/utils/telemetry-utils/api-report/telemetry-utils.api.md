@@ -6,6 +6,7 @@
 
 /// <reference types="node" />
 
+import { ConfigTypes } from '@fluidframework/core-interfaces';
 import { EventEmitter } from 'events';
 import { EventEmitterEventType } from '@fluid-internal/client-utils';
 import { IConfigProviderBase } from '@fluidframework/core-interfaces';
@@ -432,6 +433,9 @@ export class UsageError extends LoggingError implements IUsageError, IFluidError
 
 // @internal
 export function validatePrecondition(condition: boolean, message: string, props?: ITelemetryBaseProperties): asserts condition;
+
+// @internal
+export const wrapConfigProviderWithDefaults: (original: IConfigProviderBase | undefined, defaults: Record<string, ConfigTypes>) => IConfigProviderBase;
 
 // @internal
 export function wrapError<T extends LoggingError>(innerError: unknown, newErrorFn: (message: string) => T): T;

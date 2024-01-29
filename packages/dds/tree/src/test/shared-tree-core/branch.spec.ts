@@ -12,6 +12,9 @@ import {
 } from "../../shared-tree-core/index.js";
 import {
 	GraphCommit,
+	Revertible,
+	RevertibleResult,
+	RevertibleStatus,
 	RevisionTag,
 	findAncestor,
 	findCommonAncestor,
@@ -29,10 +32,10 @@ import {
 	createTestUndoRedoStacks,
 	failCodec,
 	mintRevisionTag,
-	testIdCompressor,
+	testRevisionTagCodec,
 } from "../utils.js";
 
-const defaultChangeFamily = new DefaultChangeFamily(testIdCompressor, failCodec, {
+const defaultChangeFamily = new DefaultChangeFamily(testRevisionTagCodec, failCodec, {
 	jsonValidator: noopValidator,
 });
 
@@ -592,6 +595,270 @@ describe("Branches", () => {
 			});
 			branch.fork();
 			assert.equal(forkCount, 2);
+		});
+	});
+
+	describe("Revertibles", () => {
+		it("triggers a revertible event for changes made to the local branch", () => {
+			const branch = create();
+
+			const revertiblesCreated: Revertible[] = [];
+			const unsubscribe = branch.on("newRevertible", (revertible) => {
+				assert.equal(revertible.status, RevertibleStatus.Valid);
+				const retainResult = revertible.retain();
+				assert.equal(retainResult, RevertibleResult.Success);
+				revertiblesCreated.push(revertible);
+			});
+
+			change(branch);
+
+			assert.equal(revertiblesCreated.length, 1);
+
+			change(branch);
+
+			assert.equal(revertiblesCreated.length, 2);
+
+			// Each revert also leads to the creation of a revertible event
+			revertiblesCreated[1].revert();
+
+			assert.equal(revertiblesCreated.length, 3);
+
+			unsubscribe();
+		});
+
+		it("triggers a revertibleDisposed event for discarded and reverted revertibles", () => {
+			const branch = create();
+
+			const revertiblesCreated: Revertible[] = [];
+			const unsubscribe1 = branch.on("newRevertible", (revertible) => {
+				assert.equal(revertible.status, RevertibleStatus.Valid);
+				const retainResult = revertible.retain();
+				assert.equal(retainResult, RevertibleResult.Success);
+				revertiblesCreated.push(revertible);
+			});
+			const revertiblesDisposed: Revertible[] = [];
+			const unsubscribe2 = branch.on("revertibleDisposed", (revertible) => {
+				assert.equal(revertible.status, RevertibleStatus.Disposed);
+				revertiblesDisposed.push(revertible);
+			});
+
+			change(branch);
+			change(branch);
+
+			assert.equal(revertiblesCreated.length, 2);
+			assert.equal(revertiblesDisposed.length, 0);
+
+			const discardResult = revertiblesCreated[0].discard();
+			assert.equal(discardResult, RevertibleResult.Success);
+
+			assert.equal(revertiblesDisposed.length, 1);
+			assert.equal(revertiblesDisposed[0], revertiblesCreated[0]);
+
+			const revertResult = revertiblesCreated[1].revert();
+			assert.equal(revertResult, RevertibleResult.Success);
+
+			assert.equal(revertiblesDisposed.length, 2);
+			assert.equal(revertiblesDisposed[1], revertiblesCreated[1]);
+
+			unsubscribe1();
+			unsubscribe2();
+		});
+
+		it("Non-retained Revertibles are automatically GC'ed", () => {
+			const branch = create();
+
+			const revertiblesCreated: Revertible[] = [];
+			const unsubscribe1 = branch.on("newRevertible", (revertible) => {
+				assert.equal(revertible.status, RevertibleStatus.Valid);
+				revertiblesCreated.push(revertible);
+			});
+			const revertiblesDisposed: Revertible[] = [];
+			const unsubscribe2 = branch.on("revertibleDisposed", (revertible) => {
+				assert.equal(revertible.status, RevertibleStatus.Disposed);
+				revertiblesDisposed.push(revertible);
+			});
+
+			change(branch);
+
+			assert.equal(revertiblesCreated.length, 1);
+			assert.equal(revertiblesDisposed.length, 1);
+			assert.equal(revertiblesDisposed[0], revertiblesCreated[0]);
+			assert.equal(revertiblesDisposed[0].status, RevertibleStatus.Disposed);
+
+			unsubscribe1();
+			unsubscribe2();
+		});
+
+		it("Retained Revertibles are not GC'ed until they are reverted or discarded", () => {
+			const branch = create();
+
+			const revertiblesCreated: Revertible[] = [];
+			const unsubscribe1 = branch.on("newRevertible", (revertible) => {
+				assert.equal(revertible.status, RevertibleStatus.Valid);
+				const retainResult = revertible.retain();
+				assert.equal(retainResult, RevertibleResult.Success);
+				revertiblesCreated.push(revertible);
+			});
+			const revertiblesDisposed: Revertible[] = [];
+			const unsubscribe2 = branch.on("revertibleDisposed", (revertible) => {
+				assert.equal(revertible.status, RevertibleStatus.Disposed);
+				revertiblesDisposed.push(revertible);
+			});
+
+			// Make change that we will retain then revert
+			change(branch);
+
+			assert.equal(revertiblesCreated.length, 1);
+			assert.equal(revertiblesDisposed.length, 0);
+			assert.equal(revertiblesCreated[0].status, RevertibleStatus.Valid);
+
+			const revertResult = revertiblesCreated[0].revert();
+			assert.equal(revertResult, RevertibleResult.Success);
+
+			assert.equal(revertiblesCreated.length, 2); // The revert creates a new revertible
+			assert.equal(revertiblesDisposed.length, 1);
+			assert.equal(revertiblesDisposed[0], revertiblesCreated[0]);
+			assert.equal(revertiblesDisposed[0].status, RevertibleStatus.Disposed);
+
+			revertiblesCreated.length = 0;
+			revertiblesDisposed.length = 0;
+
+			// Make change that we will retain then discard
+			change(branch);
+
+			assert.equal(revertiblesCreated.length, 1);
+			assert.equal(revertiblesDisposed.length, 0);
+			assert.equal(revertiblesCreated[0].status, RevertibleStatus.Valid);
+
+			const discardResult = revertiblesCreated[0].discard();
+			assert.equal(discardResult, RevertibleResult.Success);
+
+			assert.equal(revertiblesCreated.length, 1);
+			assert.equal(revertiblesDisposed.length, 1);
+			assert.equal(revertiblesDisposed[0], revertiblesCreated[0]);
+			assert.equal(revertiblesDisposed[0].status, RevertibleStatus.Disposed);
+
+			unsubscribe1();
+			unsubscribe2();
+		});
+
+		it("Revertibles can be retained by multiple listeners", () => {
+			const branch = create();
+
+			const revertiblesCreated1: Revertible[] = [];
+			const unsubscribe1 = branch.on("newRevertible", (r) => {
+				assert.equal(r.status, RevertibleStatus.Valid);
+				const retainResult = r.retain();
+				assert.equal(retainResult, RevertibleResult.Success);
+				revertiblesCreated1.push(r);
+			});
+
+			const revertiblesCreated2: Revertible[] = [];
+			const unsubscribe2 = branch.on("newRevertible", (r) => {
+				assert.equal(r.status, RevertibleStatus.Valid);
+				const retainResult = r.retain();
+				assert.equal(retainResult, RevertibleResult.Success);
+				revertiblesCreated2.push(r);
+			});
+
+			change(branch);
+
+			assert.equal(revertiblesCreated1.length, 1);
+			assert.equal(revertiblesCreated2.length, 1);
+			assert.equal(revertiblesCreated1[0], revertiblesCreated2[0]);
+			const revertible = revertiblesCreated1[0];
+
+			const discard1Result = revertible.discard();
+			assert.equal(discard1Result, RevertibleResult.Success);
+			assert.equal(revertible.status, RevertibleStatus.Valid);
+
+			const discard2Result = revertible.discard();
+			assert.equal(discard2Result, RevertibleResult.Success);
+			assert.equal(revertible.status, RevertibleStatus.Disposed);
+
+			unsubscribe1();
+			unsubscribe2();
+		});
+
+		it("Disposed revertibles cannot be retained or discarded or reverted", () => {
+			const branch = create();
+
+			const revertiblesCreated: Revertible[] = [];
+			const unsubscribe = branch.on("newRevertible", (r) => {
+				assert.equal(r.status, RevertibleStatus.Valid);
+				const retainResult = r.retain();
+				assert.equal(retainResult, RevertibleResult.Success);
+				revertiblesCreated.push(r);
+			});
+
+			change(branch);
+
+			assert.equal(revertiblesCreated.length, 1);
+			const revertible = revertiblesCreated[0];
+
+			const discard1Result = revertible.discard();
+			assert.equal(discard1Result, RevertibleResult.Success);
+			assert.equal(revertible.status, RevertibleStatus.Disposed);
+
+			assert.equal(revertible.retain(), RevertibleResult.Failure);
+			assert.equal(revertible.discard(), RevertibleResult.Failure);
+			assert.equal(revertible.revert(), RevertibleResult.Failure);
+
+			assert.equal(revertible.status, RevertibleStatus.Disposed);
+			unsubscribe();
+		});
+
+		it("Disposing of a branch also disposes of its revertibles", () => {
+			const branch = create();
+
+			const revertiblesCreated: Revertible[] = [];
+			const unsubscribe1 = branch.on("newRevertible", (r) => {
+				assert.equal(r.status, RevertibleStatus.Valid);
+				const retainResult = r.retain();
+				assert.equal(retainResult, RevertibleResult.Success);
+				revertiblesCreated.push(r);
+			});
+
+			const revertiblesDisposed: Revertible[] = [];
+			const unsubscribe2 = branch.on("revertibleDisposed", (revertible) => {
+				assert.equal(revertible.status, RevertibleStatus.Disposed);
+				revertiblesDisposed.push(revertible);
+			});
+
+			change(branch);
+
+			assert.equal(revertiblesCreated.length, 1);
+			assert.equal(revertiblesDisposed.length, 0);
+
+			branch.dispose();
+
+			assert.equal(revertiblesCreated.length, 1);
+			assert.equal(revertiblesDisposed.length, 1);
+			assert.equal(revertiblesCreated[0], revertiblesDisposed[0]);
+
+			unsubscribe1();
+			unsubscribe2();
+		});
+
+		it.skip("triggers revertible events for each change merged into the local branch", () => {
+			const parentBranch = create();
+			const childBranch = parentBranch.fork();
+
+			let revertibleCount = 0;
+			const unsubscribe = parentBranch.on("newRevertible", () => {
+				revertibleCount += 1;
+			});
+
+			change(childBranch);
+			change(childBranch);
+
+			assert.equal(revertibleCount, 0);
+
+			parentBranch.merge(childBranch);
+
+			assert.equal(revertibleCount, 2);
+
+			unsubscribe();
 		});
 	});
 

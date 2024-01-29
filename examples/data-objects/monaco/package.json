@@ -12,6 +12,7 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
+	"type": "module",
 	"main": "lib/index.js",
 	"module": "lib/index.js",
 	"types": "lib/index.d.ts",
@@ -50,7 +51,7 @@
 	"devDependencies": {
 		"@fluid-tools/webpack-fluid-loader": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.29.0-227332",
+		"@fluidframework/build-tools": "^0.29.0",
 		"@fluidframework/eslint-config-fluid": "^3.3.0",
 		"@types/react": "^17.0.44",
 		"css-loader": "^1.0.0",

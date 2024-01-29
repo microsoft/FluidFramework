@@ -4,7 +4,6 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { IIdCompressor } from "@fluidframework/id-compressor";
 import { ICodecFamily, ICodecOptions, makeCodecFamily } from "../../codec/index.js";
 import {
 	ChangeFamily,
@@ -75,7 +74,8 @@ import {
 	NodeExistenceState,
 	RebaseRevisionMetadata,
 } from "./fieldChangeHandler.js";
-import { FieldKind, FieldKindWithEditor, withEditor } from "./fieldKind.js";
+import { FlexFieldKind } from "./fieldKind.js";
+import { FieldKindWithEditor, withEditor } from "./fieldKindWithEditor.js";
 import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind.js";
 import { GenericChangeset } from "./genericFieldKindTypes.js";
 import {
@@ -103,16 +103,11 @@ export class ModularChangeFamily
 
 	public constructor(
 		public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
-		idCompressor: IIdCompressor,
+		revisionTagCodec: RevisionTagCodec,
 		fieldBatchCodec: FieldBatchCodec,
 		codecOptions: ICodecOptions,
 	) {
-		this.latestCodec = makeV0Codec(
-			fieldKinds,
-			new RevisionTagCodec(idCompressor),
-			fieldBatchCodec,
-			codecOptions,
-		);
+		this.latestCodec = makeV0Codec(fieldKinds, revisionTagCodec, fieldBatchCodec, codecOptions);
 		this.codecs = makeCodecFamily([[0, this.latestCodec]]);
 	}
 
@@ -121,10 +116,10 @@ export class ModularChangeFamily
 	}
 
 	/**
-	 * Produces an equivalent list of `FieldChangeset`s that all target the same {@link FieldKind}.
+	 * Produces an equivalent list of `FieldChangeset`s that all target the same {@link FlexFieldKind}.
 	 * @param changes - The list of `FieldChange`s whose `FieldChangeset`s needs to be normalized.
 	 * @returns An object that contains both the equivalent list of `FieldChangeset`s that all
-	 * target the same {@link FieldKind}, and the `FieldKind` that they target.
+	 * target the same {@link FlexFieldKind}, and the `FieldKind` that they target.
 	 * The returned `FieldChangeset`s may be a shallow copy of the input `FieldChange`s.
 	 */
 	private normalizeFieldChanges(
@@ -409,7 +404,10 @@ export class ModularChangeFamily
 			: undefined;
 
 		// Destroys only occur in rollback changesets, which are never inverted.
-		assert(change.change.destroys === undefined, "Unexpected destroys in change to invert");
+		assert(
+			change.change.destroys === undefined,
+			0x89a /* Unexpected destroys in change to invert */,
+		);
 
 		const revInfo = change.change.revisions;
 		return makeModularChangeset(
@@ -814,7 +812,7 @@ function composeBuildsAndDestroys(changes: TaggedChange<ModularChangeset>[]) {
 						} else {
 							assert(
 								destroyCount === chunk.topLevelLength,
-								"Expected build and destroy to have the same length",
+								0x89b /* Expected build and destroy to have the same length */,
 							);
 							deleteFromNestedMap(allDestroys, setRevisionKey, id);
 						}
@@ -841,7 +839,7 @@ function composeBuildsAndDestroys(changes: TaggedChange<ModularChangeset>[]) {
 					} else {
 						assert(
 							count === chunk.topLevelLength,
-							"Expected build and destroy to have the same length",
+							0x89c /* Expected build and destroy to have the same length */,
 						);
 						deleteFromNestedMap(allBuilds, setRevisionKey, id);
 					}
@@ -1036,7 +1034,7 @@ function isEmptyNodeChangeset(change: NodeChangeset): boolean {
 }
 
 export function getFieldKind(
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	kind: FieldKindIdentifier,
 ): FieldKindWithEditor {
 	if (kind === genericFieldKind.identifier) {
@@ -1048,7 +1046,7 @@ export function getFieldKind(
 }
 
 export function getChangeHandler(
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	kind: FieldKindIdentifier,
 ): FieldChangeHandler<unknown> {
 	return getFieldKind(fieldKinds, kind).changeHandler;
@@ -1310,11 +1308,36 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		change: FieldChangeset,
 		maxId: ChangesetLocalId = brand(-1),
 	): void {
+		const modularChange = this.buildChange(field, fieldKind, change, maxId);
+		this.applyChange(modularChange);
+	}
+
+	/**
+	 * Adds a change to the edit builder
+	 * @param field - the field which is being edited
+	 * @param fieldKind - the kind of the field
+	 * @param change - the change to the field
+	 * @param maxId - the highest `ChangesetLocalId` used in this change
+	 */
+	public buildChange(
+		field: FieldUpPath,
+		fieldKind: FieldKindIdentifier,
+		change: FieldChangeset,
+		maxId: ChangesetLocalId = brand(-1),
+	): ModularChangeset {
 		const changeMap = this.buildChangeMap(field, fieldKind, change);
-		this.applyChange(makeModularChangeset(changeMap, maxId));
+		return makeModularChangeset(changeMap, maxId);
 	}
 
 	public submitChanges(changes: EditDescription[], maxId: ChangesetLocalId = brand(-1)) {
+		const modularChange = this.buildChanges(changes, maxId);
+		this.applyChange(modularChange);
+	}
+
+	public buildChanges(
+		changes: EditDescription[],
+		maxId: ChangesetLocalId = brand(-1),
+	): ModularChangeset {
 		const changeMaps = changes.map((change) =>
 			makeAnonChange(
 				change.type === "global"
@@ -1334,7 +1357,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		if (maxId >= 0) {
 			composedChange.maxId = maxId;
 		}
-		this.applyChange(composedChange);
+		return composedChange;
 	}
 
 	public generateId(count?: number): ChangesetLocalId {

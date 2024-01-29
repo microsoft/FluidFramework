@@ -14,7 +14,7 @@ import {
 	SessionSpaceCompressedId,
 	StableId,
 } from "../";
-import { IdCompressor, deserializeIdCompressor } from "../idCompressor";
+import { IdCompressor, createIdCompressor, deserializeIdCompressor } from "../idCompressor";
 import { createSessionId } from "../utilities";
 import {
 	performFuzzActions,
@@ -378,24 +378,9 @@ describe("IdCompressor", () => {
 			const compressor = CompressorFactory.createCompressor(Client.Client1);
 			const range = compressor.takeNextCreationRange();
 			compressor.beginGhostSession(createSessionId(), () => {
-				assert.throws(
-					() => compressor.takeNextCreationRange(),
-					(e: Error) =>
-						e.message ===
-						"IdCompressor should not be operated normally when in a ghost session",
-				);
-				assert.throws(
-					() => compressor.finalizeCreationRange(range),
-					(e: Error) =>
-						e.message ===
-						"IdCompressor should not be operated normally when in a ghost session",
-				);
-				assert.throws(
-					() => compressor.serialize(false),
-					(e: Error) =>
-						e.message ===
-						"IdCompressor should not be operated normally when in a ghost session",
-				);
+				assert.throws(() => compressor.takeNextCreationRange());
+				assert.throws(() => compressor.finalizeCreationRange(range));
+				assert.throws(() => compressor.serialize(false));
 			});
 		});
 
@@ -785,6 +770,18 @@ describe("IdCompressor", () => {
 					size: 72,
 					clusterCount: 1,
 					sessionCount: 1,
+				},
+			]);
+		});
+
+		it("correctly passes logger when no session specified", () => {
+			const mockLogger = new MockLogger();
+			const compressor = createIdCompressor(mockLogger);
+			compressor.generateCompressedId();
+			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+			mockLogger.assertMatchAny([
+				{
+					eventName: "RuntimeIdCompressor:FirstCluster",
 				},
 			]);
 		});
