@@ -108,7 +108,6 @@ extends:
     taskLint: true
     taskLintName: ci:eslint
     poolBuild: NewLarge-linux-1ES
-    poolBuild: Large
     checkoutSubmodules: true
     taskBundleAnalysis: false
     checks:
