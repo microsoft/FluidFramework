@@ -248,7 +248,7 @@ export class DocumentDeltaConnection
 		return this.details.serviceConfiguration;
 	}
 
-	protected checkNotDisposed() {
+	private checkNotDisposed() {
 		assert(!this.disposed, 0x20c /* "connection disposed" */);
 	}
 

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
 import {
 	IClient,
@@ -85,7 +86,7 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
 	public submitSignal(content: any, targetClientId?: string): void {
-		this.checkNotDisposed();
+		assert(!this.disposed, "connection disposed");
 
 		if (targetClientId && this.details.supportedFeatures?.submit_signals_v2 !== true) {
 			throw new UsageError("Sending signals to specific client ids is not supported.");
