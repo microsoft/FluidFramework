@@ -370,7 +370,7 @@ export class FluidDataStoreRuntime
 			}
 
 			// Check for a data type reference first
-			const context = this.getChannelContext(id);
+			const context = this.contexts.get(id);
 			if (context !== undefined && parser.isLeaf(1)) {
 				try {
 					const channel = await context.getChannel();
@@ -403,7 +403,7 @@ export class FluidDataStoreRuntime
 	public async getChannel(id: string): Promise<IChannel> {
 		this.verifyNotClosed();
 
-		const context = this.getChannelContext(id);
+		const context = this.contexts.get(id);
 		if (context === undefined) {
 			throw new LoggingError("Channel does not exist");
 		}
