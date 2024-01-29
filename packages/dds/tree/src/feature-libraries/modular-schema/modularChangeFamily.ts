@@ -42,7 +42,6 @@ import {
 	brand,
 	deleteFromNestedMap,
 	forEachInNestedMap,
-	getOrAddEmptyToMap,
 	getOrAddInMap,
 	IdAllocationState,
 	IdAllocator,
@@ -84,7 +83,6 @@ import {
 	FieldChangeset,
 	ModularChangeset,
 	NodeChangeset,
-	NodeExistsConstraint,
 } from "./modularChangeTypes.js";
 import { makeV0Codec } from "./modularChangeCodecs.js";
 

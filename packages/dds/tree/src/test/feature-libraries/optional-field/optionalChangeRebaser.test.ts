@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { CrossFieldManager, NodeChangeset, Optional } from "../../../feature-libraries/index.js";
+import { CrossFieldManager, NodeChangeset } from "../../../feature-libraries/index.js";
 import {
 	ChangesetLocalId,
 	DeltaFieldChanges,
@@ -49,7 +49,6 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import { assertEqual } from "./optionalFieldUtils.js";
-import { Tagged } from "@fluidframework/core-interfaces";
 
 type RevisionTagMinter = () => RevisionTag;
 

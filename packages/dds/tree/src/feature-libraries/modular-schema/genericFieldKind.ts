@@ -9,7 +9,6 @@ import {
 	DeltaMark,
 	makeAnonChange,
 	RevisionMetadataSource,
-	tagChange,
 	TaggedChange,
 } from "../../core/index.js";
 import { fail, IdAllocator } from "../../util/index.js";

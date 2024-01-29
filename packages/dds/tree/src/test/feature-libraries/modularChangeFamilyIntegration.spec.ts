@@ -50,7 +50,6 @@ import { DetachIdOverrideType } from "../../feature-libraries/sequence-field/ind
 import { MarkMaker } from "./sequence-field/testEdits.js";
 // eslint-disable-next-line import/no-internal-modules
 import { purgeUnusedCellOrderingInfo } from "./sequence-field/utils.js";
-import { merge } from "../objMerge.js";
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
 	[sequence].map((f) => [f.identifier, f]),
@@ -347,7 +346,6 @@ describe("ModularChangeFamily integration", () => {
 				]),
 			};
 
-			const diff = merge(actual, expected);
 			assertDeltaEqual(actual, expected);
 		});
 

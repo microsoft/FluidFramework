@@ -14,7 +14,6 @@ import {
 	ChangesetLocalId,
 	ChangeAtomId,
 	RevisionInfo,
-	TaggedChange,
 } from "../../../core/index.js";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";

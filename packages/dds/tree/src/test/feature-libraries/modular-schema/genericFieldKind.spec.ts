@@ -14,8 +14,6 @@ import {
 } from "../../../feature-libraries/index.js";
 import {
 	makeAnonChange,
-	tagChange,
-	TaggedChange,
 	FieldKey,
 	DeltaFieldMap,
 	DeltaFieldChanges,

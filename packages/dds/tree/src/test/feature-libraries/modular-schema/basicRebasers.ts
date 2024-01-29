@@ -4,7 +4,6 @@
  */
 
 import { TUnsafe, Type } from "@sinclair/typebox";
-import { assert } from "@fluidframework/core-utils";
 import {
 	FieldChangeHandler,
 	FieldChangeRebaser,

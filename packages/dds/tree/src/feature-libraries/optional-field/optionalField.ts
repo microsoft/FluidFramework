@@ -6,7 +6,6 @@
 import { assert } from "@fluidframework/core-utils";
 import {
 	TaggedChange,
-	tagChange,
 	ChangesetLocalId,
 	RevisionTag,
 	areEqualChangeAtomIds,
@@ -578,14 +577,6 @@ export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, Option
 
 	createEmpty: () => ({ moves: [], childChanges: [] }),
 };
-
-function areEqualRegisterIds(a: RegisterId, b: RegisterId): boolean {
-	if (typeof a === "string" || typeof b === "string") {
-		return a === b;
-	}
-
-	return areEqualChangeAtomIds(a, b);
-}
 
 function* relevantRemovedRoots(
 	{ change, revision }: TaggedChange<OptionalChangeset>,
