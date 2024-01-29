@@ -61,7 +61,7 @@ nexus:
     enableCustomSocketIoAdapter: true
     shouldDisableDefaultNamespace: false
   socketIo:
-    perMessageDeflate: false
+    perMessageDeflate: true
 
 storage:
   enableWholeSummaryUpload: false
