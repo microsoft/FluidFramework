@@ -12,6 +12,7 @@ import {
 	tagChange,
 	tagRollbackInverse,
 	RevisionInfo,
+	TaggedChange,
 } from "../../../core/index.js";
 import {
 	BoundFieldChangeRebaser,
@@ -22,6 +23,8 @@ import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js"
 import { TestChange } from "../../testChange.js";
 import { deepFreeze, mintRevisionTag } from "../../utils.js";
 import { IdAllocator, brand, idAllocatorFromMaxId, makeArray } from "../../../util/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import {
@@ -644,12 +647,16 @@ const generateChildStates: ChildStateGenerator<TestState, TestChangeset> = funct
 };
 
 const fieldRebaser: BoundFieldChangeRebaser<TestChangeset> = {
-	rebase,
+	rebase: (
+		change: TestChangeset,
+		base: TaggedChange<TestChangeset>,
+		metadata?: RebaseRevisionMetadata,
+	): TestChangeset => rebase(change, base, { metadata }),
 	invert,
 	compose: (changes, metadata) => compose(changes, metadata),
 	rebaseComposed: (metadata, change, ...baseChanges) => {
 		const composedChanges = compose(baseChanges, metadata);
-		return rebase(change, makeAnonChange(composedChanges), metadata);
+		return rebase(change, makeAnonChange(composedChanges), { metadata });
 	},
 	assertEqual: (change1, change2) => {
 		if (change1 === undefined && change2 === undefined) {
