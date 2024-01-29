@@ -82,7 +82,7 @@ const childComposer = (
 	nodeChange2: NodeChangeset | undefined,
 ): NodeChangeset => {
 	if (nodeChange1 === undefined) {
-		assert(nodeChange2 !== undefined, "Should composed two undefined changesets");
+		assert(nodeChange2 !== undefined, "Should not compose two undefined changesets");
 		return nodeChange2;
 	} else if (nodeChange2 === undefined) {
 		return nodeChange1;
