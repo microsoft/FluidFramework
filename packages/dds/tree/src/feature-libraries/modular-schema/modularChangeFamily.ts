@@ -207,7 +207,6 @@ export class ModularChangeFamily
 		const { revInfos, maxId } = getRevInfoFromTaggedChanges(changes);
 		const idState: IdAllocationState = { maxId };
 
-		// TODO: Handle case where `activeChanges` is empty.
 		return activeChanges.reduce(
 			(change1, change2) =>
 				makeAnonChange(this.composePair(change1, change2, revInfos, idState)),

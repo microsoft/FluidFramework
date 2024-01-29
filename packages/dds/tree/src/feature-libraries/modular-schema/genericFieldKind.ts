@@ -203,19 +203,21 @@ export function convertGenericChange<TChange>(
 		makeAnonChange(target.editor.buildChildChange(index, nodeChange)),
 	);
 
-	return perIndex.reduce(
-		(a, b) =>
-			makeAnonChange(
-				target.rebaser.compose(
-					a,
-					b,
-					composeChild,
-					genId,
-					invalidCrossFieldManager,
-					revisionMetadata,
-				),
+	if (perIndex.length === 0) {
+		return target.createEmpty();
+	}
+
+	return perIndex.reduce((a, b) =>
+		makeAnonChange(
+			target.rebaser.compose(
+				a,
+				b,
+				composeChild,
+				genId,
+				invalidCrossFieldManager,
+				revisionMetadata,
 			),
-		makeAnonChange(target.createEmpty()),
+		),
 	).change;
 }
 
