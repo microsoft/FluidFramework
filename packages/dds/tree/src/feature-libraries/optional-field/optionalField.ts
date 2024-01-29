@@ -169,6 +169,9 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				const entry = srcToDst.get(originalSrc);
 				assert(entry !== undefined, "There should be a corresponding entry");
 				entry[0] = dstWithRevision;
+				if (target === "nodeTargeting") {
+					entry[1] = target;
+				}
 			} else {
 				srcToDst.set(srcWithRevision, [dstWithRevision, target]);
 			}
