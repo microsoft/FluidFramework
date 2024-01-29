@@ -8,7 +8,6 @@ import {
 	TaggedChange,
 	ChangesetLocalId,
 	RevisionTag,
-	areEqualChangeAtomIds,
 	DeltaFieldChanges,
 	DeltaDetachedNodeRename,
 	DeltaMark,
