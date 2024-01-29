@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { SharedTree } from "@fluid-experimental/tree";
+import { BuildNode, Change, SharedTree, StablePlace, TraitLabel } from "@fluid-experimental/tree";
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
@@ -24,98 +25,86 @@ class TestDataObject extends DataObject {
 	}
 }
 
-const dataObjectFactory1 = new DataObjectFactory(
+const dataObjectFactory = new DataObjectFactory(
 	"test",
 	TestDataObject,
 	[SharedTree.getFactory()],
 	undefined,
 );
-const runtimeFactory1 = new ContainerRuntimeFactoryWithDefaultDataStore({
-	defaultFactory: dataObjectFactory1,
-	registryEntries: [["test", Promise.resolve(dataObjectFactory1)]],
+const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+	defaultFactory: dataObjectFactory,
+	registryEntries: [["test", Promise.resolve(dataObjectFactory)]],
 });
 
-class TestDataObject2 extends DataObject {
-	public get _context() {
-		return this.context;
-	}
-	public get _runtime() {
-		return this.runtime;
-	}
-	public get _root() {
-		return this.root;
-	}
-
-	protected async initializingFirstTime(props?: any): Promise<void> {
-		const tree = this.runtime.createChannel("tree", SharedTree.getFactory().type);
-		this.root.set("tree", tree.handle);
-	}
-}
-
-const dataObjectFactory2 = new DataObjectFactory(
-	"test",
-	TestDataObject2,
-	[SharedTree.getFactory()],
-	undefined,
-);
-const runtimeFactory2 = new ContainerRuntimeFactoryWithDefaultDataStore({
-	defaultFactory: dataObjectFactory2,
-	registryEntries: [["test", Promise.resolve(dataObjectFactory2)]],
-	runtimeOptions: { enableGroupedBatching: true },
-});
-
-describeCompat("Creating data store with tree", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) => {
+describeCompat("Can attach Legacy Shared Tree", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) => {
 	let provider: ITestObjectProvider;
 	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 
-	it("attached container, createDataStore", async () => {
-		const container = await provider.createContainer(runtimeFactory1);
+	it("attached container, detached data store, tree attached to data store", async () => {
+		const container = await provider.createContainer(runtimeFactory);
 		const rootObject = (await container.getEntryPoint()) as ITestDataObject;
-		const dataStore = await rootObject._context.containerRuntime.createDataStore("test");
+		const containerRuntime = rootObject._context.containerRuntime;
 
+		const dataStore = await containerRuntime.createDataStore("test");
 		const testDataObject = (await dataStore.entryPoint.get()) as TestDataObject;
 
-		testDataObject._runtime.createChannel("tree", SharedTree.getFactory().type);
-		rootObject._root.set("tree", testDataObject.handle);
-		await provider.ensureSynchronized();
-	});
-
-	it("attached container, createDetachedDataStore", async () => {
-		const container = await provider.createContainer(runtimeFactory1);
-		const rootObject = (await container.getEntryPoint()) as ITestDataObject;
-
-		const testDataObject = await dataObjectFactory1.createInstance(
-			rootObject._context.containerRuntime,
+		const tree = testDataObject._runtime.createChannel(
+			"tree",
+			SharedTree.getFactory().type,
+		) as SharedTree;
+		const inventoryNode: BuildNode = {
+			definition: "abc",
+			traits: {
+				quantity: {
+					definition: "quantity",
+					payload: 0,
+				},
+			},
+		};
+		tree.applyEdit(
+			Change.insertTree(
+				inventoryNode,
+				StablePlace.atStartOf({
+					parent: tree.currentView.root,
+					label: "inventory" as TraitLabel,
+				}),
+			),
 		);
 
-		testDataObject._runtime.createChannel("tree", SharedTree.getFactory().type);
+		testDataObject._root.set("tree", tree.handle);
 		rootObject._root.set("tree", testDataObject.handle);
 		await provider.ensureSynchronized();
 	});
 
-	// Test Data Object 2
-	it("2 attached container, createDataStore", async () => {
-		const container = await provider.createContainer(runtimeFactory2);
-		const rootObject = (await container.getEntryPoint()) as ITestDataObject;
-		const dataStore = await rootObject._context.containerRuntime.createDataStore("test");
-
-		const testDataObject = (await dataStore.entryPoint.get()) as TestDataObject2;
-
-		rootObject._root.set("tree", testDataObject.handle);
-		await provider.ensureSynchronized();
-	});
-
-	it("2 attached container, createDetachedDataStore", async () => {
-		const container = await provider.createContainer(runtimeFactory2);
-		const rootObject = (await container.getEntryPoint()) as ITestDataObject;
-
-		const testDataObject = await dataObjectFactory2.createInstance(
-			rootObject._context.containerRuntime,
+	it("Attached container, attached data store, detached tree", async () => {
+		const container = await provider.createContainer(runtimeFactory);
+		const testObj = (await container.getEntryPoint()) as ITestDataObject;
+		const someNodeId = "someNodeId" as TraitLabel;
+		const tree = testObj._runtime.createChannel(
+			"abc",
+			SharedTree.getFactory().type,
+		) as SharedTree;
+		const inventoryNode: BuildNode = {
+			definition: someNodeId,
+			traits: {
+				quantity: {
+					definition: "quantity",
+					payload: 5,
+				},
+			},
+		};
+		tree.applyEdit(
+			Change.insertTree(
+				inventoryNode,
+				StablePlace.atStartOf({
+					parent: tree.currentView.root,
+					label: someNodeId,
+				}),
+			),
 		);
-
-		rootObject._root.set("tree", testDataObject.handle);
+		assert.doesNotThrow(() => testObj._root.set("any", tree.handle), "Can't attach tree");
 		await provider.ensureSynchronized();
 	});
 });
