@@ -323,7 +323,8 @@ export interface IGarbageCollectionRuntime {
 
 /** Defines the contract for the garbage collector. */
 export interface IGarbageCollector {
-	sessionExpiryTimerStarted: number | undefined;
+	/** Tells the time at which session expiry started */
+	readonly sessionExpiryTimerStarted: number | undefined;
 	/** Tells whether GC should run or not. */
 	readonly shouldRunGC: boolean;
 	/** Tells whether the GC state in summary needs to be reset in the next summary. */
