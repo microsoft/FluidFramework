@@ -4,6 +4,9 @@
  */
 
 const tscDependsOn = ["^tsc", "^api", "build:genver", "ts2esm"];
+
+const checkFormattingTasks = ["prettier", "check:biome", "check:prettier"];
+
 /**
  * The settings in this file configure the Fluid build tools, such as fluid-build and flub. Some settings apply to the
  * whole repo, while others apply only to the client release group.
@@ -34,11 +37,17 @@ module.exports = {
 			script: false,
 		},
 		"lint": {
-			dependsOn: ["prettier", "eslint", "good-fences", "depcruise", "check:release-tags"],
+			dependsOn: [
+				...checkFormattingTasks,
+				"eslint",
+				"good-fences",
+				"depcruise",
+				"check:release-tags",
+			],
 			script: false,
 		},
 		"checks": {
-			dependsOn: ["prettier"],
+			dependsOn: [...checkFormattingTasks],
 			script: false,
 		},
 		"checks:fix": {
@@ -82,8 +91,20 @@ module.exports = {
 		"depcruise": [],
 		"check:release-tags": ["tsc"],
 		"check:are-the-types-wrong": ["build"],
+		"check:format": {
+			dependsOn: [...checkFormattingTasks],
+			script: false,
+		},
+		"format": {
+			dependsOn: ["format:prettier", "format:biome"],
+			script: false,
+		},
+		"check:biome": [],
+		"check:prettier": [],
 		"eslint": [...tscDependsOn, "commonjs"],
 		"good-fences": [],
+		"format:biome": [],
+		"format:prettier": [],
 		"prettier": [],
 		"prettier:fix": [],
 		"webpack": ["^tsc", "^build:esnext"],
@@ -193,6 +214,10 @@ module.exports = {
 			],
 			"package-lockfiles-npm-version": [
 				"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
+			],
+			"npm-package-json-prettier": [
+				// These packages use biome for formatting
+				"build-tools/",
 			],
 			"npm-package-json-scripts-args": [
 				// server/routerlicious and server/routerlicious/packages/routerlicious use

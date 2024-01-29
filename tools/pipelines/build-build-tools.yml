@@ -114,4 +114,4 @@ extends:
     - syncpack:deps
     - syncpack:versions
     - generate:packageList
-    - prettier
+    - check:format

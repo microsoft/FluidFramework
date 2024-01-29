@@ -62,9 +62,13 @@ export class PrettierTask extends LeafWithDoneFileTask {
 			if (existsSync(ignoreFile)) {
 				const ignoreFileContent = await readFileAsync(ignoreFile, "utf8");
 				ignoreEntries = ignoreFileContent.split(/\r?\n/);
-				ignoreEntries = ignoreEntries.filter((value) => value && !value.startsWith("#"));
+				ignoreEntries = ignoreEntries.filter(
+					(value) => value && !value.startsWith("#"),
+				);
 			} else if (this.ignorePath) {
-				this.traceError(`error generating done file content, unable to find ${ignoreFile}`);
+				this.traceError(
+					`error generating done file content, unable to find ${ignoreFile}`,
+				);
 				return undefined;
 			}
 		} catch (e) {
