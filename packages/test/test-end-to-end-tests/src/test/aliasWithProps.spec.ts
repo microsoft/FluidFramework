@@ -11,7 +11,7 @@ import {
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { FluidObject, IEvent } from "@fluidframework/core-interfaces";
+import { FluidObject, IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
 import { type ITestObjectProvider } from "@fluidframework/test-utils";
 
 interface TestDataObjectTypes {
@@ -35,6 +35,10 @@ const propsKey = "props";
 class TestDataObject extends DataObject<TestDataObjectTypes> {
 	public get _context() {
 		return this.context;
+	}
+
+	public get _root() {
+		return this.root;
 	}
 
 	public getValue(): string | undefined {
@@ -68,14 +72,17 @@ class RuntimeFactoryWithProps extends BaseContainerRuntimeFactory {
 
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
 		const props = { a: "b" };
-		const [, dataStore] = await this.defaultFactory.createInstance2(runtime, props);
+		const [, dataStore] = await this.defaultFactory.constructInstance(runtime, props);
 		await dataStore.trySetAlias(defaultDataStoreId);
 	}
 }
 
 describeCompat("HotSwap", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 	// Registry -----------------------------------------
-	const dataObjectFactory = new DataObjectFactory("TestDataObject", TestDataObject, [], {});
+	const childDataObjectFactory = new DataObjectFactory("Child", TestDataObject, [], {});
+	const dataObjectFactory = new DataObjectFactory("Test", TestDataObject, [], {}, [
+		childDataObjectFactory.registryEntry,
+	]);
 	const runtimeFactory = new RuntimeFactoryWithProps(dataObjectFactory);
 
 	let provider: ITestObjectProvider;
@@ -101,7 +108,7 @@ describeCompat("HotSwap", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 		props: TestDataObjectProps,
 		alias: string,
 	) => {
-		const [object, datastore] = await factory.createInstance2(runtime, props);
+		const [object, datastore] = await factory.constructInstance(runtime, props);
 		const result = await datastore.trySetAlias(alias);
 		if (result !== "Success") {
 			const handle = await runtime.getAliasedDataStoreEntryPoint(alias);
@@ -128,5 +135,37 @@ describeCompat("HotSwap", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 		const newObject1 = await newObjectPromise1;
 		const newObject2 = await newObjectPromise2;
 		assert(newObject1.getValue() === newObject2.getValue(), "Aliasing should have worked");
+	});
+
+	it("Can create with deep package path", async () => {
+		const container = await provider.createContainer(runtimeFactory);
+		const dataObject = (await container.getEntryPoint()) as TestDataObject;
+		const runtime = dataObject._context.containerRuntime as IContainerRuntime;
+
+		const props = { a: "1 is different from 2" };
+		const [newObject] = await childDataObjectFactory.constructInstance(runtime, props, [
+			"Test",
+			"Child",
+		]);
+		dataObject._root.set("newObject", newObject.handle);
+		await provider.ensureSynchronized();
+		assert.deepEqual(
+			newObject._context.packagePath,
+			["Test", "Child"],
+			"Expected package path to be deeper than 1",
+		);
+
+		const container2 = await provider.loadContainer(runtimeFactory);
+		await provider.ensureSynchronized();
+
+		const dataObject2 = (await container2.getEntryPoint()) as TestDataObject;
+		const newObject2Handle = dataObject2._root.get<IFluidHandle<TestDataObject>>("newObject");
+		assert(newObject2Handle !== undefined, "Expected newObject to be defined");
+		const newObject2 = await newObject2Handle.get();
+		assert.deepEqual(
+			newObject2._context.packagePath,
+			["Test", "Child"],
+			"Expected newObject to be defined",
+		);
 	});
 });

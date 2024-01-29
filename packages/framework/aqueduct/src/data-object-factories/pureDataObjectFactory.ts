@@ -260,11 +260,23 @@ export class PureDataObjectFactory<
 		return this.createNonRootInstanceCore(runtime, [this.type], initialState);
 	}
 
-	public async createInstance2(
+	/**
+	 * Creates a new instance of the object.
+	 * @param runtime - container runtime. It is the runtime that will be used to create the object. It will produce
+	 * the underlying infrastructure to get the data object to operate.
+	 * @param initialState - The initial state to provide to the created component.
+	 * @param packagePath - The path to the data store factory to use to create the data object.
+	 * @returns an array containing the object created by this factory and an IDataStore object that enables users to
+	 * alias the data object.
+	 * The data object is attached only when it is attached to the handle graph that connects to an aliased object or
+	 * when the data object is aliased.
+	 */
+	public async constructInstance(
 		containerRuntime: IContainerRuntimeBase,
 		initialState?: I["InitialState"],
+		packagePath?: Readonly<string[]>,
 	): Promise<[TObj, IDataStore]> {
-		const context = containerRuntime.createDetachedDataStore([this.type]);
+		const context = containerRuntime.createDetachedDataStore(packagePath ?? [this.type]);
 		const { instance, runtime } = await createDataObject(
 			this.ctor,
 			context,
