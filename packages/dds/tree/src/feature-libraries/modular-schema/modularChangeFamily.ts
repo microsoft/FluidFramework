@@ -41,6 +41,7 @@ import {
 import {
 	brand,
 	deleteFromNestedMap,
+	fail,
 	forEachInNestedMap,
 	getOrAddEmptyToMap,
 	getOrAddInMap,
@@ -909,6 +910,45 @@ function* relevantRemovedRootsFromFields(
 		};
 		yield* handler.relevantRemovedRoots(tagChange(fieldChange.change, fieldRevision), delegate);
 	}
+}
+
+// todoj: getDetachedNode needs to be implemented in checkout or wherever we're gonna be calling this
+export function addMissingBuilds(
+	change: TaggedChange<ModularChangeset>,
+	getDetachedNode: (id: DeltaDetachedNodeId) => TreeChunk,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+): ModularChangeset {
+	const roots = relevantRemovedRoots(change, fieldKinds);
+	const allBuilds: ChangeAtomIdMap<TreeChunk> = new Map();
+
+	// transfer all existing builds
+	if (change.change.builds !== undefined) {
+		for (const [revisionKey, innerMap] of change.change.builds) {
+			allBuilds.set(revisionKey, innerMap);
+		}
+	}
+
+	for (const root of roots) {
+		const builds = getOrAddInMap(allBuilds, root.major, new Map<ChangesetLocalId, TreeChunk>());
+		const node = getDetachedNode(root) ?? fail("missing detached node");
+		const changesetLocalId: ChangesetLocalId = brand(root.minor);
+		assert(!builds.has(changesetLocalId), "changeset id already has ");
+		builds.set(changesetLocalId, node);
+	}
+
+	const { fieldChanges, maxId, revisions, constraintViolationCount, destroys } = change.change;
+	return makeModularChangeset(
+		fieldChanges,
+		maxId,
+		revisions,
+		constraintViolationCount,
+		allBuilds,
+		destroys,
+	);
+}
+
+function filterBuilds(change: TaggedChange<ModularChangeset>): ModularChangeset {
+
 }
 
 /**

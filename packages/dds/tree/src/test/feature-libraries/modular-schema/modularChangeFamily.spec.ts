@@ -40,7 +40,7 @@ import {
 	ChangeEncodingContext,
 	RevisionTagCodec,
 } from "../../../core/index.js";
-import { brand, fail } from "../../../util/index.js";
+import { brand, fail, nestedMapFromFlatList, tryGetFromNestedMap } from "../../../util/index.js";
 import { ICodecOptions, makeCodecFamily } from "../../../codec/index.js";
 import {
 	EncodingTestData,
@@ -55,6 +55,7 @@ import {
 	ModularChangeFamily,
 	relevantRemovedRoots as relevantDetachedTreesImplementation,
 	intoDelta,
+	addMissingBuilds,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import { jsonObject, singleJsonCursor } from "../../../domains/index.js";
@@ -98,6 +99,47 @@ const singleNodeField = new FieldKindWithEditor(
 	(a, b) => false,
 	new Set(),
 );
+
+const removedRootsFieldKind: FieldKindIdentifier = brand("HasRemovedRootsRefs");
+interface HasRemovedRootsRefs {
+	shallow: DeltaDetachedNodeId[];
+	nested: HasRemovedRootsRefs[];
+}
+const handler: FieldChangeHandler<HasRemovedRootsRefs, any> = {
+	relevantRemovedRoots: (
+		{ change, revision }: TaggedChange<HasRemovedRootsRefs>,
+		relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
+	) => {
+		return [
+			...change.shallow.map((id) => makeDetachedNodeId(id.major ?? revision, id.minor)),
+			...change.nested.flatMap((c) =>
+				Array.from(
+					relevantRemovedRootsFromChild({
+						fieldChanges: new Map([
+							[
+								brand("nested"),
+								{ fieldKind: removedRootsFieldKind, change: brand(c) },
+							],
+						]),
+					}),
+				),
+			),
+		];
+	},
+} as unknown as FieldChangeHandler<HasRemovedRootsRefs, any>;
+const hasRemovedRootsRefsField = new FieldKindWithEditor(
+	removedRootsFieldKind,
+	Multiplicity.Single,
+	handler,
+	() => false,
+	new Set(),
+);
+const mockFieldKinds = new Map([[removedRootsFieldKind, hasRemovedRootsRefsField]]);
+
+function relevantRemovedRoots(input: TaggedChange<ModularChangeset>): DeltaDetachedNodeId[] {
+	deepFreeze(input);
+	return Array.from(relevantDetachedTreesImplementation(input, mockFieldKinds));
+}
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
 	[singleNodeField, valueField].map((field) => [field.identifier, field]),
@@ -902,48 +944,6 @@ describe("ModularChangeFamily", () => {
 	});
 
 	describe("relevantRemovedRoots", () => {
-		const fieldKind: FieldKindIdentifier = brand("HasRemovedRootsRefs");
-		interface HasRemovedRootsRefs {
-			shallow: DeltaDetachedNodeId[];
-			nested: HasRemovedRootsRefs[];
-		}
-		const handler: FieldChangeHandler<HasRemovedRootsRefs, any> = {
-			relevantRemovedRoots: (
-				{ change, revision }: TaggedChange<HasRemovedRootsRefs>,
-				relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
-			) => {
-				return [
-					...change.shallow.map((id) =>
-						makeDetachedNodeId(id.major ?? revision, id.minor),
-					),
-					...change.nested.flatMap((c) =>
-						Array.from(
-							relevantRemovedRootsFromChild({
-								fieldChanges: new Map([
-									[brand("nested"), { fieldKind, change: brand(c) }],
-								]),
-							}),
-						),
-					),
-				];
-			},
-		} as unknown as FieldChangeHandler<HasRemovedRootsRefs, any>;
-		const hasRemovedRootsRefsField = new FieldKindWithEditor(
-			fieldKind,
-			Multiplicity.Single,
-			handler,
-			() => false,
-			new Set(),
-		);
-		const mockFieldKinds = new Map([[fieldKind, hasRemovedRootsRefsField]]);
-
-		function relevantRemovedRoots(
-			input: TaggedChange<ModularChangeset>,
-		): DeltaDetachedNodeId[] {
-			deepFreeze(input);
-			return Array.from(relevantDetachedTreesImplementation(input, mockFieldKinds));
-		}
-
 		it("sibling fields", () => {
 			const aMajor = mintRevisionTag();
 			const a1 = { major: aMajor, minor: 1 };
@@ -961,8 +961,8 @@ describe("ModularChangeFamily", () => {
 			};
 			const input: ModularChangeset = {
 				fieldChanges: new Map([
-					[brand("fA"), { fieldKind, change: brand(changeA) }],
-					[brand("fB"), { fieldKind, change: brand(changeB) }],
+					[brand("fA"), { fieldKind: removedRootsFieldKind, change: brand(changeA) }],
+					[brand("fB"), { fieldKind: removedRootsFieldKind, change: brand(changeB) }],
 				]),
 			};
 
@@ -989,7 +989,9 @@ describe("ModularChangeFamily", () => {
 				nested: [changeB],
 			};
 			const input: ModularChangeset = {
-				fieldChanges: new Map([[brand("fA"), { fieldKind, change: brand(changeA) }]]),
+				fieldChanges: new Map([
+					[brand("fA"), { fieldKind: removedRootsFieldKind, change: brand(changeA) }],
+				]),
 			};
 
 			const actual = relevantRemovedRoots(makeAnonChange(input));
@@ -1007,7 +1009,9 @@ describe("ModularChangeFamily", () => {
 				nested: [changeB],
 			};
 			const input: ModularChangeset = {
-				fieldChanges: new Map([[brand("fA"), { fieldKind, change: brand(changeA) }]]),
+				fieldChanges: new Map([
+					[brand("fA"), { fieldKind: removedRootsFieldKind, change: brand(changeA) }],
+				]),
 			};
 
 			const actual = relevantRemovedRoots(tagChange(input, major));
@@ -1034,8 +1038,22 @@ describe("ModularChangeFamily", () => {
 			};
 			const input: ModularChangeset = {
 				fieldChanges: new Map([
-					[brand("fA"), { fieldKind, change: brand(changeA), revision: majorAB }],
-					[brand("fC"), { fieldKind, change: brand(changeC), revision: majorC }],
+					[
+						brand("fA"),
+						{
+							fieldKind: removedRootsFieldKind,
+							change: brand(changeA),
+							revision: majorAB,
+						},
+					],
+					[
+						brand("fC"),
+						{
+							fieldKind: removedRootsFieldKind,
+							change: brand(changeC),
+							revision: majorC,
+						},
+					],
 				]),
 			};
 
@@ -1045,6 +1063,174 @@ describe("ModularChangeFamily", () => {
 				{ major: majorAB, minor: 2 },
 				{ major: majorC, minor: 1 },
 			]);
+		});
+	});
+
+	describe.only("adds missing builds", () => {
+		const aMajor = mintRevisionTag();
+		const a1 = { major: aMajor, minor: 1 };
+		const a2 = { major: aMajor, minor: 2 };
+		const bMajor = mintRevisionTag();
+		const b1 = { major: bMajor, minor: 1 };
+
+		const node2 = singleJsonCursor(2);
+		const node2Chunk = treeChunkFromCursor(node2);
+		const node3 = singleJsonCursor(3);
+		const node3Chunk = treeChunkFromCursor(node3);
+
+		const nodesArray: [DeltaDetachedNodeId, TreeChunk][] = [
+			[a1, node1Chunk],
+			[a2, node2Chunk],
+			[b1, node3Chunk],
+		];
+		const nodeMap = nestedMapFromFlatList(
+			nodesArray.map(([{ major, minor }, chunk]) => [major, minor, chunk]),
+		);
+
+		const getDetachedNode = ({ major, minor }: DeltaDetachedNodeId) => {
+			return tryGetFromNestedMap(nodeMap, major, minor) ?? fail("invalid id");
+		};
+
+		it("from root", () => {
+			const changeA: HasRemovedRootsRefs = {
+				shallow: [a1, a2],
+				nested: [],
+			};
+			const changeB: HasRemovedRootsRefs = {
+				shallow: [b1],
+				nested: [],
+			};
+			const input: ModularChangeset = {
+				fieldChanges: new Map([
+					[
+						brand("fA"),
+						{
+							fieldKind: removedRootsFieldKind,
+							change: brand(changeA),
+							revision: aMajor,
+						},
+					],
+					[
+						brand("fB"),
+						{
+							fieldKind: removedRootsFieldKind,
+							change: brand(changeB),
+							revision: bMajor,
+						},
+					],
+				]),
+			};
+
+			const expected: ModularChangeset = {
+				fieldChanges: new Map([
+					[
+						brand("fA"),
+						{
+							fieldKind: removedRootsFieldKind,
+							change: brand(changeA),
+							revision: aMajor,
+						},
+					],
+					[
+						brand("fB"),
+						{
+							fieldKind: removedRootsFieldKind,
+							change: brand(changeB),
+							revision: bMajor,
+						},
+					],
+				]),
+				builds: new Map([
+					[
+						aMajor,
+						new Map([
+							[brand(1), node1Chunk],
+							[brand(2), node2Chunk],
+						]),
+					],
+					[bMajor, new Map([[brand(1), node3Chunk]])],
+				]),
+			};
+
+			const withBuilds = addMissingBuilds(
+				makeAnonChange(input),
+				getDetachedNode,
+				mockFieldKinds,
+			);
+			assert.deepEqual(withBuilds, expected);
+		});
+
+		it("from nested", () => {
+			const changeC: HasRemovedRootsRefs = {
+				shallow: [a1],
+				nested: [],
+			};
+			const changeB: HasRemovedRootsRefs = {
+				shallow: [],
+				nested: [changeC],
+			};
+			const changeA: HasRemovedRootsRefs = {
+				shallow: [],
+				nested: [changeB],
+			};
+			const input: ModularChangeset = {
+				fieldChanges: new Map([
+					[brand("fA"), { fieldKind: removedRootsFieldKind, change: brand(changeA) }],
+				]),
+			};
+
+			const expected: ModularChangeset = {
+				fieldChanges: new Map([
+					[brand("fA"), { fieldKind: removedRootsFieldKind, change: brand(changeA) }],
+				]),
+				builds: new Map([[aMajor, new Map([[brand(1), node1Chunk]])]]),
+			};
+
+			const withBuilds = addMissingBuilds(
+				makeAnonChange(input),
+				getDetachedNode,
+				mockFieldKinds,
+			);
+			assert.deepEqual(withBuilds, expected);
+		});
+
+		it("with existing builds", () => {
+			const changeA: HasRemovedRootsRefs = {
+				shallow: [a1],
+				nested: [],
+			};
+			const input: ModularChangeset = {
+				fieldChanges: new Map([
+					[brand("fA"), { fieldKind: removedRootsFieldKind, change: brand(changeA) }],
+				]),
+				builds: new Map([
+					[undefined, new Map([[brand(2), node2Chunk]])],
+					[aMajor, new Map([[brand(2), node2Chunk]])],
+				]),
+			};
+
+			const expected: ModularChangeset = {
+				fieldChanges: new Map([
+					[brand("fA"), { fieldKind: removedRootsFieldKind, change: brand(changeA) }],
+				]),
+				builds: new Map([
+					[undefined, new Map([[brand(2), node2Chunk]])],
+					[
+						aMajor,
+						new Map([
+							[brand(1), node1Chunk],
+							[brand(2), node2Chunk],
+						]),
+					],
+				]),
+			};
+
+			const withBuilds = addMissingBuilds(
+				makeAnonChange(input),
+				getDetachedNode,
+				mockFieldKinds,
+			);
+			assert.deepEqual(withBuilds, expected);
 		});
 	});
 
