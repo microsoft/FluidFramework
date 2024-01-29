@@ -322,6 +322,17 @@ describe("Garbage Collection Tests", () => {
 				1,
 				"submitMessage should not be called yet, didn't pass Grace Period yet",
 			);
+			gc.processMessage({} as any, false /* local */);
+
+			//* Assert that unreference tracker was deleted?
+			//* Or just run GC and find that its unref timestamp is Now
+			gc.collectGarbage({});
+
+			//* Wait Tombstone time and run GC again - Node0 will be TombstoneReady again because GC Data didn't change.
+			//* For validating the fix - We could fake it by changing the GC Data returned if fullGC is passed in. Might be too fiddley.
+			//* If we did, then we could assert that updateTombstonedRoutes is NOT called again since the data would show Node0 referenced.
+
+			//* Instead, we could scope this test to simply verify that fullGC is passed in the next GC run after the op is processed.
 		});
 
 		it("Sweep Disabled - Should Tombstone SweepReady nodes", async () => {

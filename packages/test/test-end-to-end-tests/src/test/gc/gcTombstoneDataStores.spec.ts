@@ -838,7 +838,11 @@ describeCompat("GC data store tombstone tests", "2.0.0-rc.1.0.0", (getTestObject
 			},
 		);
 
-		itExpects(
+		//* ONLY
+		//* ONLY
+		//* ONLY
+		//* ONLY
+		itExpects.only(
 			"Requesting tombstoned datastore triggers auto-recovery",
 			[
 				// 1A
@@ -892,6 +896,15 @@ describeCompat("GC data store tombstone tests", "2.0.0-rc.1.0.0", (getTestObject
 				dataStoreA._root.set("dsB", dataStoreB.handle);
 				defaultDataObject._root.set("dsA", dataStoreA.handle);
 				defaultDataObject._root.delete("dsA");
+
+				//* Creep into the runtime and call getGCData with all the references as-is
+				//* This GC Data will show dataStoreA as unreferenced.
+
+				//* Then reference dataStoreA again, but monkey-patch runtime's getGCData to return
+				//* the GC Data from above, which wrongly shows dataStoreA as unreferenced.
+				//* Ok but actually, what I want to do is get at defaultDataObject's GC Data, not the runtime's.
+				//* And show that incremental GC never clears it, but full GC does.
+				//* So that when we add full GC to auto-recovery, it will work.
 
 				// Summarize to set unreferenced timestamp.
 				// Then wait the Tombstone timeout and update current timestamp, and summarize again
