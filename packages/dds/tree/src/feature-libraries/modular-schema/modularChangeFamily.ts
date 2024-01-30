@@ -41,7 +41,6 @@ import {
 import {
 	brand,
 	deleteFromNestedMap,
-	fail,
 	forEachInNestedMap,
 	getOrAddEmptyToMap,
 	getOrAddInMap,
@@ -912,28 +911,35 @@ function* relevantRemovedRootsFromFields(
 	}
 }
 
-// todoj: getDetachedNode needs to be implemented in checkout or wherever we're gonna be calling this
+/**
+ * Adds any builds missing from the provided change that are relevant to the change.
+ * Calls {@link relevantRemovedRoots} to determine which builds are relevant.
+ *
+ * @param change - The change to be applied.
+ * @param getDetachedNode - The function to retrieve a tree chunk from the corresponding detached node id.
+ * @param fieldKinds - The field kinds to delegate to.
+ */
 export function addMissingBuilds(
 	change: TaggedChange<ModularChangeset>,
-	getDetachedNode: (id: DeltaDetachedNodeId) => TreeChunk,
+	getDetachedNode: (id: DeltaDetachedNodeId) => TreeChunk | undefined,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 ): ModularChangeset {
 	const roots = relevantRemovedRoots(change, fieldKinds);
-	const allBuilds: ChangeAtomIdMap<TreeChunk> = new Map();
-
-	// transfer all existing builds
-	if (change.change.builds !== undefined) {
-		for (const [revisionKey, innerMap] of change.change.builds) {
-			allBuilds.set(revisionKey, innerMap);
-		}
-	}
+	const existingBuilds: ChangeAtomIdMap<TreeChunk> = change.change.builds ?? new Map();
 
 	for (const root of roots) {
-		const builds = getOrAddInMap(allBuilds, root.major, new Map<ChangesetLocalId, TreeChunk>());
-		const node = getDetachedNode(root) ?? fail("missing detached node");
+		const builds = getOrAddInMap(
+			existingBuilds,
+			root.major,
+			new Map<ChangesetLocalId, TreeChunk>(),
+		);
+		const node = getDetachedNode(root);
 		const changesetLocalId: ChangesetLocalId = brand(root.minor);
-		assert(!builds.has(changesetLocalId), "changeset id already has ");
-		builds.set(changesetLocalId, node);
+		assert(!builds.has(changesetLocalId), "changeset id already has node");
+
+		if (node !== undefined) {
+			builds.set(changesetLocalId, node);
+		}
 	}
 
 	const { fieldChanges, maxId, revisions, constraintViolationCount, destroys } = change.change;
@@ -942,13 +948,63 @@ export function addMissingBuilds(
 		maxId,
 		revisions,
 		constraintViolationCount,
-		allBuilds,
+		existingBuilds,
 		destroys,
 	);
 }
 
-function filterBuilds(change: TaggedChange<ModularChangeset>): ModularChangeset {
+/**
+ * Removes any builds from the provided change that are not relevant to the change.
+ * Calls {@link relevantRemovedRoots} to determine which builds are relevant.
+ *
+ * @param change - The change to be applied.
+ * @param fieldKinds - The field kinds to delegate to.
+ * @returns a {@link ModularChangeset} with only builds relevant to the change.
+ */
+export function filterBuilds(
+	change: TaggedChange<ModularChangeset>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+): ModularChangeset {
+	const roots = relevantRemovedRoots(change, fieldKinds);
+	const existingBuilds = change.change.builds;
 
+	if (existingBuilds === undefined) {
+		return change.change;
+	}
+
+	const rootSets = new Map<RevisionTag | undefined, Set<number>>();
+	for (const { major, minor } of roots) {
+		const builds = getOrAddInMap(rootSets, major, new Set());
+		builds.add(minor);
+	}
+
+	for (const [major, builds] of existingBuilds.entries()) {
+		const rootSet = rootSets.get(major);
+		if (rootSet !== undefined) {
+			for (const id of builds.keys()) {
+				if (!rootSet.has(id)) {
+					builds.delete(id);
+				}
+			}
+
+			if (builds.size === 0) {
+				existingBuilds.delete(major);
+			}
+		} else {
+			// if this revision does not exist in the relevant removed roots, delete it from the builds
+			existingBuilds.delete(major);
+		}
+	}
+
+	const { fieldChanges, maxId, revisions, constraintViolationCount, destroys } = change.change;
+	return makeModularChangeset(
+		fieldChanges,
+		maxId,
+		revisions,
+		constraintViolationCount,
+		existingBuilds.size > 0 ? existingBuilds : undefined,
+		destroys,
+	);
 }
 
 /**

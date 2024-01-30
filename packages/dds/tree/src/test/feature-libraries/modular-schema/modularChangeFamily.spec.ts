@@ -56,6 +56,7 @@ import {
 	relevantRemovedRoots as relevantDetachedTreesImplementation,
 	intoDelta,
 	addMissingBuilds,
+	filterBuilds,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import { jsonObject, singleJsonCursor } from "../../../domains/index.js";
@@ -1066,7 +1067,7 @@ describe("ModularChangeFamily", () => {
 		});
 	});
 
-	describe.only("adds missing builds", () => {
+	describe("adds missing builds", () => {
 		const aMajor = mintRevisionTag();
 		const a1 = { major: aMajor, minor: 1 };
 		const a2 = { major: aMajor, minor: 2 };
@@ -1231,6 +1232,123 @@ describe("ModularChangeFamily", () => {
 				mockFieldKinds,
 			);
 			assert.deepEqual(withBuilds, expected);
+		});
+	});
+
+	describe("filters builds", () => {
+		const aMajor = mintRevisionTag();
+		const bMajor = mintRevisionTag();
+		const b1 = { major: bMajor, minor: 1 };
+
+		const node2 = singleJsonCursor(2);
+		const node2Chunk = treeChunkFromCursor(node2);
+		const node3 = singleJsonCursor(3);
+		const node3Chunk = treeChunkFromCursor(node3);
+
+		it("with a valid relevant removed root", () => {
+			const changeB: HasRemovedRootsRefs = {
+				shallow: [b1],
+				nested: [],
+			};
+			const input: ModularChangeset = {
+				fieldChanges: new Map([
+					[
+						brand("fB"),
+						{
+							fieldKind: removedRootsFieldKind,
+							change: brand(changeB),
+							revision: bMajor,
+						},
+					],
+				]),
+				builds: new Map([
+					[
+						aMajor,
+						new Map([
+							[brand(1), node1Chunk],
+							[brand(2), node2Chunk],
+						]),
+					],
+					[bMajor, new Map([[brand(1), node3Chunk]])],
+				]),
+			};
+
+			const expected: ModularChangeset = {
+				fieldChanges: new Map([
+					[
+						brand("fB"),
+						{
+							fieldKind: removedRootsFieldKind,
+							change: brand(changeB),
+							revision: bMajor,
+						},
+					],
+				]),
+				builds: new Map([[bMajor, new Map([[brand(1), node3Chunk]])]]),
+			};
+
+			const filtered = filterBuilds(makeAnonChange(input), mockFieldKinds);
+			assert.deepEqual(filtered, expected);
+		});
+
+		it("with no relevant removed roots in the changeset", () => {
+			const input: ModularChangeset = {
+				fieldChanges: new Map([]),
+				builds: new Map([
+					[
+						aMajor,
+						new Map([
+							[brand(1), node1Chunk],
+							[brand(2), node2Chunk],
+						]),
+					],
+					[bMajor, new Map([[brand(1), node3Chunk]])],
+				]),
+			};
+
+			const expected: ModularChangeset = {
+				fieldChanges: new Map([]),
+			};
+
+			const filtered = filterBuilds(makeAnonChange(input), mockFieldKinds);
+			assert.deepEqual(filtered, expected);
+		});
+
+		it("only when a removed root is not relevant", () => {
+			const changeB: HasRemovedRootsRefs = {
+				shallow: [b1],
+				nested: [],
+			};
+			const input: ModularChangeset = {
+				fieldChanges: new Map([
+					[
+						brand("fB"),
+						{
+							fieldKind: removedRootsFieldKind,
+							change: brand(changeB),
+							revision: bMajor,
+						},
+					],
+				]),
+				builds: new Map([[bMajor, new Map([[brand(1), node3Chunk]])]]),
+			};
+
+			const expected: ModularChangeset = {
+				fieldChanges: new Map([
+					[
+						brand("fB"),
+						{
+							fieldKind: removedRootsFieldKind,
+							change: brand(changeB),
+							revision: bMajor,
+						},
+					],
+				]),
+				builds: new Map([[bMajor, new Map([[brand(1), node3Chunk]])]]),
+			};
+
+			const filtered = filterBuilds(makeAnonChange(input), mockFieldKinds);
+			assert.deepEqual(filtered, expected);
 		});
 	});
 
