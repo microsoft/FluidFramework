@@ -152,7 +152,7 @@ export function generateTestTrees() {
 		{
 			name: "move-across-fields",
 			runScenario: async (takeSnapshot) => {
-				const provider = new TestTreeProviderLite(2);
+				const provider = new TestTreeProviderLite(2, factory);
 				const tree1 = provider.trees[0].checkout;
 				const tree2 = provider.trees[1].checkout;
 
@@ -217,7 +217,7 @@ export function generateTestTrees() {
 			name: "insert-and-remove",
 			runScenario: async (takeSnapshot) => {
 				const value = "42";
-				const provider = new TestTreeProviderLite(2);
+				const provider = new TestTreeProviderLite(2, factory);
 				const tree1 = provider.trees[0].schematizeInternal(emptyJsonSequenceConfig);
 				provider.processMessages();
 				const tree2 =
@@ -266,7 +266,7 @@ export function generateTestTrees() {
 				): ITreeCursorSynchronous =>
 					cursorForTypedTreeData({ schema: docSchema }, schema, data);
 
-				const provider = new TestTreeProviderLite(2);
+				const provider = new TestTreeProviderLite(2, factory);
 				const tree = provider.trees[0].schematizeInternal(config);
 				const view = tree.checkout;
 				view.editor.optionalField(rootField).set(makeCursor(testNode, {}), true);
@@ -306,7 +306,7 @@ export function generateTestTrees() {
 			name: "competing-removes",
 			runScenario: async (takeSnapshot) => {
 				for (const index of [0, 1, 2, 3]) {
-					const provider = new TestTreeProviderLite(4);
+					const provider = new TestTreeProviderLite(4, factory);
 					const config: InitializeAndSchematizeConfiguration = {
 						schema: jsonSequenceRootSchema,
 						initialTree: [0, 1, 2, 3],
