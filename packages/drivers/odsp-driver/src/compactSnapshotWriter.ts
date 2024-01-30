@@ -10,8 +10,8 @@ import {
 	ISequencedDocumentMessage,
 	ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
+import { ISnapshot } from "@fluidframework/driver-definitions";
 import { snapshotMinReadVersion } from "./compactSnapshotParser";
-import { ISnapshotContents } from "./odspPublicUtils";
 import { TreeBuilderSerializer } from "./WriteBufferUtils";
 import {
 	addBoolProperty,
@@ -144,7 +144,7 @@ function writeOpsSection(rootNode: NodeCore, ops: ISequencedDocumentMessage[]) {
  * @param snapshotContents - snapshot tree contents to serialize
  * @returns ReadBuffer - binary representation of the data.
  */
-export function convertToCompactSnapshot(snapshotContents: ISnapshotContents): Uint8Array {
+export function convertToCompactSnapshot(snapshotContents: ISnapshot): Uint8Array {
 	const builder = new TreeBuilderSerializer();
 	// Create the root node.
 	const rootNode = builder.addNode();
@@ -166,7 +166,7 @@ export function convertToCompactSnapshot(snapshotContents: ISnapshotContents): U
 	writeSnapshotSection(rootNode, snapshotContents.snapshotTree, snapshotContents.sequenceNumber);
 
 	// Add Blobs
-	writeBlobsSection(rootNode, snapshotContents.blobs);
+	writeBlobsSection(rootNode, snapshotContents.blobContents);
 
 	// Then write the ops node.
 	writeOpsSection(rootNode, snapshotContents.ops);

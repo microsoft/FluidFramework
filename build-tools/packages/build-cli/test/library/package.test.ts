@@ -8,7 +8,7 @@ import { parseJSON } from "date-fns";
 
 import { VersionDetails } from "@fluidframework/build-tools";
 
-import { generateReleaseGitTagName, sortVersions } from "../../src/lib/package";
+import { generateReleaseGitTagName, sortVersions } from "../../src/library/package";
 
 describe("VersionDetails sorting", async () => {
 	const versions: VersionDetails[] = [
