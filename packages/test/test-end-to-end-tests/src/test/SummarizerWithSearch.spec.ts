@@ -17,7 +17,7 @@ import {
 	SummaryCollection,
 } from "@fluidframework/container-runtime";
 import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
-import { SharedCounter } from "@fluidframework/counter";
+import type { SharedCounter } from "@fluidframework/counter";
 import { FluidDataStoreRuntime, mixinSummaryHandler } from "@fluidframework/datastore";
 import { DriverHeader, ISummaryContext } from "@fluidframework/driver-definitions";
 import type { SharedMatrix } from "@fluidframework/matrix";
@@ -148,7 +148,7 @@ describeCompat(
 	"Prepare for Summary with Search Blobs",
 	"2.0.0-rc.1.0.0",
 	(getTestObjectProvider, apis) => {
-		const { SharedMatrix } = apis.dds;
+		const { SharedMatrix, SharedCounter } = apis.dds;
 		const { DataObject, DataObjectFactory } = apis.dataRuntime;
 		const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 
