@@ -7,7 +7,6 @@ import { createIdCompressor } from "@fluidframework/id-compressor";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import {
 	ImplicitFieldSchema,
-	SchemaFactory,
 	TreeConfiguration,
 	TreeFieldFromImplicitField,
 	InsertableTreeFieldFromImplicitField,
@@ -17,33 +16,13 @@ import { typeboxValidator } from "../../external-utilities/index.js";
 import { ForestType } from "../../shared-tree/index.js";
 
 /**
- * Helper for making small test schemas.
- */
-export function makeSchema<TSchema extends ImplicitFieldSchema>(
-	fn: (factory: SchemaFactory) => TSchema,
-) {
-	return fn(new SchemaFactory(`test.schema.${Math.random().toString(36).slice(2)}`));
-}
-
-// Returns true if the given function is a class constructor (i.e., should be invoked with 'new')
-// eslint-disable-next-line @typescript-eslint/ban-types
-function isCtor(candidate: Function) {
-	return candidate.prototype?.constructor.name !== undefined;
-}
-
-/**
  * Given the schema and initial tree data, returns a hydrated tree node.
  */
 export function getRoot<TSchema extends ImplicitFieldSchema>(
-	schema: TSchema | ((factory: SchemaFactory) => TSchema),
+	schema: TSchema,
 	initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>,
 ): TreeFieldFromImplicitField<TSchema> {
-	// Schema objects may also be class constructors.
-	if (typeof schema === "function" && !isCtor(schema)) {
-		// eslint-disable-next-line no-param-reassign
-		schema = makeSchema(schema as (builder: SchemaFactory) => TSchema);
-	}
-	const config = new TreeConfiguration(schema as TSchema, initialTree);
+	const config = new TreeConfiguration(schema, initialTree);
 	const factory = new TreeFactory({
 		jsonValidator: typeboxValidator,
 		forest: ForestType.Reference,

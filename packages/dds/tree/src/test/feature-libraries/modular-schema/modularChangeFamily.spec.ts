@@ -67,7 +67,7 @@ import { ajvValidator } from "../../codec/index.js";
 import { ValueChangeset, valueField } from "./basicRebasers.js";
 
 const singleNodeRebaser: FieldChangeRebaser<NodeChangeset> = {
-	compose: (changes, composeChild) => composeChild(changes),
+	compose: (change1, change2, composeChild) => composeChild(change1.change, change2.change),
 	invert: (change, invertChild) => invertChild(change.change),
 	rebase: (change, base, rebaseChild) => rebaseChild(change, base.change) ?? {},
 	amendCompose: () => fail("Not supported"),
@@ -91,6 +91,7 @@ const singleNodeHandler: FieldChangeHandler<NodeChangeset> = {
 	relevantRemovedRoots: (change, relevantRemovedRootsFromChild) =>
 		relevantRemovedRootsFromChild(change.change),
 	isEmpty: (change) => change.fieldChanges === undefined,
+	createEmpty: () => ({}),
 };
 
 const singleNodeField = new FieldKindWithEditor(
