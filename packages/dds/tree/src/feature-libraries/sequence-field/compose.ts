@@ -189,20 +189,8 @@ function composeMarks<TNodeChange>(
 	moveEffects: MoveEffectTable<TNodeChange>,
 	revisionMetadata: RevisionMetadataSource,
 ): Mark<TNodeChange> {
-	let nodeChange: TNodeChange | undefined = composeChildChanges(
-		baseMark.changes,
-		newMark.changes,
-		composeChild,
-	);
-	if (nodeChange !== undefined) {
-		const baseSource = getMoveIn(baseMark);
+	const nodeChange = handleNodeChanges(baseMark, baseRev, newMark, composeChild, moveEffects);
 
-		// TODO: Make sure composeChild is not called twice on the node changes.
-		if (baseSource !== undefined) {
-			setModifyAfter(moveEffects, getEndpoint(baseSource, baseRev), nodeChange);
-			nodeChange = undefined;
-		}
-	}
 	if (isImpactfulCellRename(newMark, newRev, revisionMetadata)) {
 		const newAttachAndDetach = asAttachAndDetach(newMark);
 		const newDetachRevision = newAttachAndDetach.detach.revision ?? newRev;
@@ -440,6 +428,26 @@ function createNoopMark<TNodeChange>(
 		mark.cellId = cellId;
 	}
 	return mark;
+}
+
+function handleNodeChanges<TNodeChange>(
+	baseMark: Mark<TNodeChange>,
+	baseRev: RevisionTag | undefined,
+	newMark: Mark<TNodeChange>,
+	composeChild: NodeChangeComposer<TNodeChange>,
+	moveEffects: MoveEffectTable<TNodeChange>,
+): TNodeChange | undefined {
+	if (newMark.changes !== undefined) {
+		const baseSource = getMoveIn(baseMark);
+
+		// TODO: Make sure composeChild is not called twice on the node changes.
+		if (baseSource !== undefined) {
+			setModifyAfter(moveEffects, getEndpoint(baseSource, baseRev), newMark.changes);
+			return undefined;
+		}
+	}
+
+	return composeChildChanges(baseMark.changes, newMark.changes, composeChild);
 }
 
 function composeChildChanges<TNodeChange>(
