@@ -13,11 +13,7 @@ import {
 import { CellFactory } from "@fluidframework/cell";
 import { DirectoryFactory, IDirectory, MapFactory } from "@fluidframework/map";
 import { SharedMatrixFactory, SharedMatrix } from "@fluidframework/matrix";
-import { TreeFactory, SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
-import {
-	SharedTreeFactory as LegacySharedTreeFactory,
-	SharedTree as LegacySharedTree,
-} from "@fluid-experimental/tree";
+import { TreeFactory, SchemaFactory, ITree, TreeConfiguration } from "@fluidframework/tree";
 import { ConsensusQueueFactory } from "@fluidframework/ordered-collection";
 import { ReferenceType, SharedStringFactory } from "@fluidframework/sequence";
 import { IChannel, IChannelFactory } from "@fluidframework/datastore-definitions";
@@ -133,7 +129,7 @@ describe("DDS Handle Encoding", () => {
 		),
 		createTestCase(
 			new TreeFactory({}),
-			(dds) => {
+			(dds: ITree) => {
 				const builder = new SchemaFactory("test");
 				class Bar extends builder.object("bar", {
 					h: builder.optional(builder.handle),
@@ -146,14 +142,6 @@ describe("DDS Handle Encoding", () => {
 				const treeView = dds.schematize(config);
 
 				treeView.root.h = handle;
-			},
-			[handle.absolutePath] /* expectedHandles */,
-		),
-		createTestCase(
-			LegacySharedTree.getFactory(),
-			(dds) => {
-				// dds.
-				//
 			},
 			[handle.absolutePath] /* expectedHandles */,
 		),

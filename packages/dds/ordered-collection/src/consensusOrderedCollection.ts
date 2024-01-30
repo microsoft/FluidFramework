@@ -38,10 +38,10 @@ interface IConsensusOrderedCollectionValue<T> {
 /**
  * An operation for consensus ordered collection
  */
-interface IConsensusOrderedCollectionAddOperation {
+interface IConsensusOrderedCollectionAddOperation<T> {
 	opName: "add";
 	// serialized value
-	value: string;
+	value: string | { version: "2"; value: T };
 }
 
 interface IConsensusOrderedCollectionAcquireOperation {
@@ -65,19 +65,14 @@ interface IConsensusOrderedCollectionReleaseOperation {
 	acquireId: string;
 }
 
-type IConsensusOrderedCollectionOperation =
-	| IConsensusOrderedCollectionAddOperation
+type IConsensusOrderedCollectionOperation<T> =
+	| IConsensusOrderedCollectionAddOperation<T>
 	| IConsensusOrderedCollectionAcquireOperation
 	| IConsensusOrderedCollectionCompleteOperation
 	| IConsensusOrderedCollectionReleaseOperation;
 
 /** The type of the resolve function to call after the local operation is ack'd */
 type PendingResolve<T> = (value: IConsensusOrderedCollectionValue<T> | undefined) => void;
-
-interface IConsensusOrderedCollectionLocalOpMetadata<T> {
-	resolve: PendingResolve<T>;
-	handles?: T;
-}
 
 /**
  * For job tracking, we need to keep track of which client "owns" a given value.
@@ -132,19 +127,16 @@ export class ConsensusOrderedCollection<T = any>
 	 * Add a value to the consensus collection.
 	 */
 	public async add(value: T): Promise<void> {
-		const valueSer = this.serializeValue(value, this.serializer);
-
 		if (!this.isAttached()) {
 			// For the case where this is not attached yet, explicitly JSON
 			// clone the value to match the behavior of going thru the wire.
-			const addValue = this.deserializeValue(valueSer, this.serializer) as T;
-			this.addCore(addValue);
+			this.addCore(value);
 			return;
 		}
 
-		await this.submit<IConsensusOrderedCollectionAddOperation>({
+		await this.submit<IConsensusOrderedCollectionAddOperation<T>>({
 			opName: "add",
-			value: valueSer,
+			value: { version: "2", value },
 		});
 	}
 
@@ -294,16 +286,14 @@ export class ConsensusOrderedCollection<T = any>
 		localOpMetadata: unknown,
 	) {
 		if (message.type === MessageType.Operation) {
-			const op = message.contents as IConsensusOrderedCollectionOperation;
+			const op = message.contents as IConsensusOrderedCollectionOperation<T>;
 			let value: IConsensusOrderedCollectionValue<T> | undefined;
 			switch (op.opName) {
 				case "add":
-					if (local) {
-						const { handles } =
-							localOpMetadata as IConsensusOrderedCollectionLocalOpMetadata<T>;
-						this.addCore(handles);
-					} else {
+					if (typeof op.value === "string") {
 						this.addCore(this.deserializeValue(op.value, this.serializer) as T);
+					} else {
+						this.addCore(op.value.value);
 					}
 					break;
 
@@ -323,18 +313,15 @@ export class ConsensusOrderedCollection<T = any>
 					unreachableCase(op);
 			}
 			if (local) {
-				const { resolve, handles } =
-					localOpMetadata as IConsensusOrderedCollectionLocalOpMetadata<T>;
 				// Resolve the pending promise for this operation now that we have received an ack for it.
-				// const resolve = localOpMetadata as PendingResolve<T>;
-				resolve(handles);
+				const resolve = localOpMetadata as PendingResolve<T>;
+				resolve(value);
 			}
 		}
 	}
 
-	private async submit<TMessage extends IConsensusOrderedCollectionOperation>(
+	private async submit<TMessage extends IConsensusOrderedCollectionOperation<T>>(
 		message: TMessage,
-		handles?: T,
 	): Promise<IConsensusOrderedCollectionValue<T> | undefined> {
 		assert(this.isAttached(), 0x06a /* "Trying to submit message while detached!" */);
 
@@ -342,7 +329,7 @@ export class ConsensusOrderedCollection<T = any>
 			(resolve) => {
 				// Send the resolve function as the localOpMetadata. This will be provided back to us when the
 				// op is ack'd.
-				this.submitLocalMessage(message, { resolve, handles });
+				this.submitLocalMessage(message, resolve);
 				// If we fail due to runtime being disposed, it's better to return undefined then unhandled exception.
 			},
 		).catch((error) => undefined);
