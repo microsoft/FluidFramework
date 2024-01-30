@@ -18,7 +18,7 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { UsageError } from ".";
+import { UsageError } from "@fluidframework/telemetry-utils";
 
 /**
  * @internal
