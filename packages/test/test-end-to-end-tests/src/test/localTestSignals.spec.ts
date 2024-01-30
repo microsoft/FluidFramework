@@ -240,7 +240,7 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 		assert.equal(user3SignalReceivedCount, 1, "client 3 should not receive signal");
 	});
 
-	it.skip("Validate container runtime targeted signals", async () => {
+	it.skip("Validate ContainerRuntime targeted signals", async () => {
 		let user1SignalReceivedCount = 0;
 		let user2SignalReceivedCount = 0;
 		let user3SignalReceivedCount = 0;
