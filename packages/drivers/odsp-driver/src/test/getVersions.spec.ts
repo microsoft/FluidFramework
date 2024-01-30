@@ -91,7 +91,7 @@ describe("Tests for snapshot fetch", () => {
 		ops: [],
 		sequenceNumber: 0,
 		latestSequenceNumber: 0,
-		snapshotInNewFormat: true,
+		snapshotFormatV: 1,
 	};
 
 	const value: IVersionedValueWithEpoch = {
@@ -179,7 +179,7 @@ describe("Tests for snapshot fetch", () => {
 				ops: [],
 				sequenceNumber: 0,
 				latestSequenceNumber: 0,
-				snapshotInNewFormat: true,
+				snapshotFormatV: 1,
 			};
 
 			const latestValue: IVersionedValueWithEpoch = {

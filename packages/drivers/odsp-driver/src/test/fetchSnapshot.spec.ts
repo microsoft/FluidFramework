@@ -69,7 +69,7 @@ describe("Tests for snapshot fetch", () => {
 		ops: [],
 		sequenceNumber: 0,
 		latestSequenceNumber: 0,
-		snapshotInNewFormat: true,
+		snapshotFormatV: 1,
 	};
 	before(async () => {
 		hashedDocumentId = await getHashedDocumentId(driveId, itemId);

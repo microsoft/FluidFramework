@@ -126,7 +126,7 @@ describe("Snapshot Format Conversion Tests", () => {
 			ops,
 			sequenceNumber: 0,
 			latestSequenceNumber: 2,
-			snapshotInNewFormat: true,
+			snapshotFormatV: 1,
 		};
 		const logger = new MockLogger();
 		const compactSnapshot = convertToCompactSnapshot(snapshotContents);
@@ -157,7 +157,7 @@ describe("Snapshot Format Conversion Tests", () => {
 			ops: [],
 			sequenceNumber: 0,
 			latestSequenceNumber: 2,
-			snapshotInNewFormat: true,
+			snapshotFormatV: 1,
 		};
 		const logger = new MockLogger();
 		const compactSnapshot = convertToCompactSnapshot(snapshotContents);

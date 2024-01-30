@@ -311,7 +311,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 												latestSequenceNumber:
 													snapshotCachedEntry.latestSequenceNumber,
 												sequenceNumber: snapshotCachedEntry.sequenceNumber,
-												snapshotInNewFormat: true,
+												snapshotFormatV: 1,
 											};
 											return snapshot;
 										}

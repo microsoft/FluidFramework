@@ -89,7 +89,7 @@ describe("Tests for prefetching snapshot", () => {
 		ops: [],
 		sequenceNumber: 0,
 		latestSequenceNumber: 0,
-		snapshotInNewFormat: true,
+		snapshotFormatV: 1,
 	};
 
 	const value: IVersionedValueWithEpoch = {

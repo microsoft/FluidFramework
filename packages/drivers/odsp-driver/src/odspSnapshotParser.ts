@@ -77,7 +77,7 @@ export function convertOdspSnapshotToSnapshotTreeAndBlobs(odspSnapshot: IOdspSna
 			odspSnapshot.ops && odspSnapshot.ops.length > 0
 				? odspSnapshot.ops[odspSnapshot.ops.length - 1].sequenceNumber
 				: sequenceNumber,
-		snapshotInNewFormat: true,
+		snapshotFormatV: 1,
 	};
 	return val;
 }

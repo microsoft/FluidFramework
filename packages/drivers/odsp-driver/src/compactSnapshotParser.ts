@@ -256,7 +256,7 @@ export function parseCompactSnapshotResponse(
 		...blobContents,
 		ops: records.deltas !== undefined ? readOpsSection(records.deltas) : [],
 		latestSequenceNumber: records.lsn,
-		snapshotInNewFormat: true,
+		snapshotFormatV: 1,
 		telemetryProps: {
 			...telemetryProps,
 			durationSnapshotTree,

@@ -483,5 +483,5 @@ export function getJoinSessionCacheKey(odspResolvedUrl: IOdspResolvedUrl) {
 export function isInstanceOfISnapshot(
 	obj: ISnapshotContents | ISnapshot | undefined,
 ): obj is ISnapshot {
-	return obj !== undefined && "snapshotInNewFormat" in obj && obj.snapshotInNewFormat === true;
+	return obj !== undefined && "snapshotFormatV" in obj && obj.snapshotFormatV === 1;
 }

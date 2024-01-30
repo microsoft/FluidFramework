@@ -266,7 +266,7 @@ export interface ISnapshot {
     ops: ISequencedDocumentMessage[];
     sequenceNumber: number | undefined;
     // (undocumented)
-    snapshotInNewFormat: true;
+    snapshotFormatV: 1;
     // (undocumented)
     snapshotTree: ISnapshotTree;
 }

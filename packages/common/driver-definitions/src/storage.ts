@@ -484,7 +484,7 @@ export interface ISnapshot {
 	 */
 	latestSequenceNumber: number | undefined;
 
-	snapshotInNewFormat: true;
+	snapshotFormatV: 1;
 }
 
 /**

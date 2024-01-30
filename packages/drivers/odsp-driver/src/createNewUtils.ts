@@ -50,7 +50,7 @@ export function convertCreateNewSummaryTreeToTreeAndBlobs(
 		ops: [],
 		sequenceNumber,
 		latestSequenceNumber: sequenceNumber,
-		snapshotInNewFormat: true,
+		snapshotFormatV: 1,
 	};
 
 	return snapshotTreeValue;
