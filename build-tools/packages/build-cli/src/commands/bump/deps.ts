@@ -25,10 +25,10 @@ import {
 	indentString,
 	isDependencyUpdateType,
 	npmCheckUpdates,
-} from "../../lib";
+} from "../../library";
 import { ReleaseGroup } from "../../releaseGroups";
 // eslint-disable-next-line import/no-internal-modules
-import { npmCheckUpdatesHomegrown } from "../../lib/package";
+import { npmCheckUpdatesHomegrown } from "../../library/package";
 
 /**
  * Update the dependency version of a specified package or release group. That is, if one or more packages in the repo

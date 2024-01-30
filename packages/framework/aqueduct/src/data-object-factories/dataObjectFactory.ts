@@ -4,12 +4,12 @@
  */
 
 import { DirectoryFactory, MapFactory, SharedDirectory, SharedMap } from "@fluidframework/map";
-import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
-import { IChannelFactory } from "@fluidframework/datastore-definitions";
-import { FluidObjectSymbolProvider } from "@fluidframework/synthesize";
+import { type NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
+import { type IChannelFactory } from "@fluidframework/datastore-definitions";
+import { type FluidObjectSymbolProvider } from "@fluidframework/synthesize";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 
-import { DataObject, DataObjectTypes, IDataObjectProps } from "../data-objects";
+import { type DataObject, type DataObjectTypes, type IDataObjectProps } from "../data-objects";
 import { PureDataObjectFactory } from "./pureDataObjectFactory";
 
 /**
@@ -25,7 +25,7 @@ export class DataObjectFactory<
 	TObj extends DataObject<I>,
 	I extends DataObjectTypes = DataObjectTypes,
 > extends PureDataObjectFactory<TObj, I> {
-	constructor(
+	public constructor(
 		type: string,
 		ctor: new (props: IDataObjectProps<I>) => TObj,
 		sharedObjects: readonly IChannelFactory[] = [],
@@ -35,13 +35,13 @@ export class DataObjectFactory<
 	) {
 		const mergedObjects = [...sharedObjects];
 
-		if (!sharedObjects.find((factory) => factory.type === DirectoryFactory.Type)) {
+		if (!sharedObjects.some((factory) => factory.type === DirectoryFactory.Type)) {
 			// User did not register for directory
 			mergedObjects.push(SharedDirectory.getFactory());
 		}
 
 		// TODO: Remove SharedMap factory when compatibility with SharedMap DataObject is no longer needed in 0.10
-		if (!sharedObjects.find((factory) => factory.type === MapFactory.Type)) {
+		if (!sharedObjects.some((factory) => factory.type === MapFactory.Type)) {
 			// User did not register for map
 			mergedObjects.push(SharedMap.getFactory());
 		}
