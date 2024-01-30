@@ -384,6 +384,9 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
 			resources.producer,
 			resources.documentRepository,
 			resources.documentDeleteService,
+			null,
+			null,
+			null,
 			resources.clusterDrainingChecker,
 		);
 	}
