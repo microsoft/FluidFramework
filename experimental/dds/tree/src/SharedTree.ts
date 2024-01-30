@@ -767,7 +767,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		// instance of the DataObject is created for generating summaries and will never have local edits.
 		if (this.editLog.numberOfLocalEdits > 0) {
 			assert(
-				!this.isAttached(),
+				this.runtime.attachState !== AttachState.Attached,
 				0x62e /* Summarizing should not occur with local edits except on first attach. */
 			);
 			if (this.writeFormat === WriteFormat.v0_1_1) {
