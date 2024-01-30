@@ -15,8 +15,7 @@ import {
 	ISnapshotFetchOptions,
 } from "@fluidframework/driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";
-import { IConfigProvider, UsageError } from "@fluidframework/telemetry-utils";
-import { ISnapshotContents } from "./odspPublicUtils";
+import { IConfigProvider } from "@fluidframework/telemetry-utils";
 
 const maximumCacheDurationMs: FiveDaysMs = 432000000; // 5 * 24 * 60 * 60 * 1000 = 5 days in ms
 
@@ -210,12 +209,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 		return this.combineProtocolAndAppSnapshotTree(appTree, protocolTree);
 	}
 
-	public async getSnapshot(
-		version?: api.IVersion,
-		snapshotFetchOptions?: ISnapshotFetchOptions,
-	): Promise<ISnapshot | undefined> {
-		throw new UsageError("Not implemented yet!");
-	}
+	public abstract getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
 
 	public abstract getVersions(
 		// eslint-disable-next-line @rushstack/no-new-null
@@ -276,11 +270,11 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 	}
 
 	protected initializeFromSnapshot(
-		odspSnapshotCacheValue: ISnapshotContents,
+		odspSnapshotCacheValue: ISnapshot,
 		cacheOps: boolean = true,
 	): string | undefined {
 		this._snapshotSequenceNumber = odspSnapshotCacheValue.sequenceNumber;
-		const { snapshotTree, blobs, ops } = odspSnapshotCacheValue;
+		const { snapshotTree, blobContents, ops } = odspSnapshotCacheValue;
 
 		// id should be undefined in case of just ops in snapshot.
 		let id: string | undefined;
@@ -290,8 +284,8 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 			this.setRootTree(id, snapshotTree);
 		}
 
-		if (blobs) {
-			this.initBlobsCache(blobs);
+		if (blobContents) {
+			this.initBlobsCache(blobContents);
 		}
 
 		if (cacheOps) {
