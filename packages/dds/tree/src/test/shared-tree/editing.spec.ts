@@ -1165,6 +1165,24 @@ describe("Editing", () => {
 			expectJsonTree(tree, expectedState);
 		});
 
+		it("can handle concurrent moves of the same node", () => {
+			const tree1 = makeTreeFromJson([{ foo: [], bar: [] }, "A"]);
+			const tree2 = tree1.fork();
+
+			const fooList: UpPath = { parent: rootNode, parentField: brand("foo"), parentIndex: 0 };
+			const barList: UpPath = { parent: rootNode, parentField: brand("bar"), parentIndex: 0 };
+
+			tree1.editor.move(rootField, 1, 1, { parent: fooList, field: brand("") }, 0);
+			expectJsonTree(tree1, [{ foo: ["A"], bar: [] }]);
+			tree2.editor.move(rootField, 1, 1, { parent: barList, field: brand("") }, 0);
+			expectJsonTree(tree2, [{ foo: [], bar: ["A"] }]);
+
+			tree1.merge(tree2, false);
+			tree2.rebaseOnto(tree1);
+
+			expectJsonTree([tree1, tree2], [{ foo: [], bar: ["A"] }]);
+		});
+
 		it("can move different nodes with 3 different fields", () => {
 			const tree = makeTreeFromJson({
 				foo: ["A", "B", "C", "D"],
