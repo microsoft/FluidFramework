@@ -378,6 +378,7 @@ class RebaseQueue<T> {
 			this.baseMarks.revision,
 			this.metadata,
 		);
+
 		const movedEffect = getMovedEffectFromBaseMark(
 			this.moveEffects,
 			baseMark,
