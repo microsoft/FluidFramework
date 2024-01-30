@@ -16,6 +16,7 @@ import {
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 
 const testContainerConfig: ITestContainerConfig = {
 	fluidDataObjectType: DataObjectFactoryType.Test,
@@ -30,6 +31,8 @@ const waitForSignal = async (...signallers: { once(e: "signal", l: () => void): 
 			}),
 		),
 	);
+
+type RuntimeType = IFluidDataStoreRuntime | ContainerRuntime;
 
 describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
@@ -203,11 +206,17 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 		let user1SignalReceivedCount: number;
 		let user2SignalReceivedCount: number;
 		let user3SignalReceivedCount: number;
+
+		// Type Casting `as ContainerRuntime` since IContainerRuntimeBase does not have targetSignal parameter
 		const user1ContainerRuntime = dataObject1.context.containerRuntime as ContainerRuntime;
 		const user2ContainerRuntime = dataObject2.context.containerRuntime as ContainerRuntime;
 		const user3ContainerRuntime = dataObject3.context.containerRuntime as ContainerRuntime;
 
-		const sendAndVerifyRemoteSignals = async (runtime1, runtime2, runtime3) => {
+		const sendAndVerifyRemoteSignals = async (
+			runtime1: RuntimeType,
+			runtime2: RuntimeType,
+			runtime3: RuntimeType,
+		) => {
 			runtime1.on("signal", (message: IInboundSignalMessage, local: boolean) => {
 				assert.equal(local, false, "Signal should be remote");
 				if (message.type === "TestSignal") {
@@ -246,7 +255,11 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 			assert.equal(user3SignalReceivedCount, 1, "client 3 should not receive signal");
 		};
 
-		const sendAndVerifyLocalSignals = async (localRuntime, remoteRuntime1, remoteRuntime2) => {
+		const sendAndVerifyLocalSignals = async (
+			localRuntime: RuntimeType,
+			remoteRuntime1: RuntimeType,
+			remoteRuntime2: RuntimeType,
+		) => {
 			localRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
 				assert.equal(local, true, "Signal should be local");
 				if (message.type === "TestSignal") {
