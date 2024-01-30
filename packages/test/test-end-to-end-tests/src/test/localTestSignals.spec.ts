@@ -15,6 +15,7 @@ import {
 } from "@fluidframework/test-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { ConnectionState } from "@fluidframework/container-loader";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
 
 const testContainerConfig: ITestContainerConfig = {
 	fluidDataObjectType: DataObjectFactoryType.Test,
@@ -234,6 +235,51 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 
 		dataObject2.runtime.submitSignal("TestSignal", true, dataObject1.runtime.clientId);
 		await waitForSignal(dataObject1.runtime);
+		assert.equal(user1SignalReceivedCount, 1, "client 1 did not receive signal");
+		assert.equal(user2SignalReceivedCount, 1, "client 2 should not receive signal");
+		assert.equal(user3SignalReceivedCount, 1, "client 3 should not receive signal");
+	});
+
+	it.skip("Validate host runtime targeted signals", async () => {
+		let user1SignalReceivedCount = 0;
+		let user2SignalReceivedCount = 0;
+		let user3SignalReceivedCount = 0;
+		const user1ContainerRuntime = dataObject1.context.containerRuntime as ContainerRuntime;
+		const user2ContainerRuntime = dataObject2.context.containerRuntime as ContainerRuntime;
+		const user3ContainerRuntime = dataObject3.context.containerRuntime as ContainerRuntime;
+
+		user1ContainerRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+			if (message.type === "TestSignal") {
+				user1SignalReceivedCount += 1;
+			}
+		});
+
+		user2ContainerRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+			if (message.type === "TestSignal") {
+				user2SignalReceivedCount += 1;
+			}
+		});
+
+		user3ContainerRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+			if (message.type === "TestSignal") {
+				user3SignalReceivedCount += 1;
+			}
+		});
+
+		user1ContainerRuntime.submitSignal("TestSignal", true, dataObject2.runtime.clientId);
+		await waitForSignal(user2ContainerRuntime);
+		assert.equal(user1SignalReceivedCount, 0, "client 1 should not receive signal");
+		assert.equal(user2SignalReceivedCount, 1, "client 2 did not receive signal");
+		assert.equal(user3SignalReceivedCount, 0, "client 3 should not receive signal");
+
+		user1ContainerRuntime.submitSignal("TestSignal", true, dataObject3.runtime.clientId);
+		await waitForSignal(user3ContainerRuntime);
+		assert.equal(user1SignalReceivedCount, 0, "client 1 should not receive signal");
+		assert.equal(user2SignalReceivedCount, 1, "client 2 should not receive signal");
+		assert.equal(user3SignalReceivedCount, 1, "client 3 did not receive signal");
+
+		user2ContainerRuntime.submitSignal("TestSignal", true, dataObject1.runtime.clientId);
+		await waitForSignal(user1ContainerRuntime);
 		assert.equal(user1SignalReceivedCount, 1, "client 1 did not receive signal");
 		assert.equal(user2SignalReceivedCount, 1, "client 2 should not receive signal");
 		assert.equal(user3SignalReceivedCount, 1, "client 3 should not receive signal");
