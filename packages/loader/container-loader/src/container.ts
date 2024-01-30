@@ -2508,6 +2508,8 @@ export class Container
 			(this.protocolHandler.quorum.get("code") ??
 				this.protocolHandler.quorum.get("code2")) as IFluidCodeDetails | undefined;
 
+		const existing = snapshot !== undefined;
+
 		const context = new ContainerContext(
 			this.options,
 			this.scope,
@@ -2535,7 +2537,7 @@ export class Container
 			() => this.connected,
 			getSpecifiedCodeDetails,
 			this._deltaManager.clientDetails,
-			true, // existing
+			existing,
 			this.subLogger,
 			pendingLocalState,
 			snapshot,
@@ -2544,7 +2546,7 @@ export class Container
 		this._runtime = await PerformanceEvent.timedExecAsync(
 			this.subLogger,
 			{ eventName: "InstantiateRuntime" },
-			async () => runtimeFactory.instantiateRuntime(context, true /* existing */),
+			async () => runtimeFactory.instantiateRuntime(context, existing),
 		);
 		this._lifecycleEvents.emit("runtimeInstantiated");
 
