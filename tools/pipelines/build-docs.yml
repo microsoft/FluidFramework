@@ -319,6 +319,8 @@ stages:
           submodules: false
           clean: true
 
+        - template: templates/include-use-node-version.yml
+
         - task: DownloadPipelineArtifact@2
           displayName: 'Copy fluidframework-docs to public folder'
           inputs:
