@@ -104,6 +104,13 @@ export interface Attach {
 /**
  * @internal
  */
+export interface Rehydrate {
+	type: "rehydrate";
+}
+
+/**
+ * @internal
+ */
 export interface TriggerRebase {
 	type: "rebase";
 }
@@ -609,26 +616,37 @@ export function mixinAttach<
 >(
 	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
 	options: DDSFuzzSuiteOptions,
-): DDSFuzzModel<TChannelFactory, TOperation | Attach, TState> {
+): DDSFuzzModel<TChannelFactory, TOperation | Attach | Rehydrate, TState> {
 	const { numOpsBeforeAttach } = options.detachedStartOptions;
 	if (numOpsBeforeAttach === 0) {
 		// not wrapping the reducer/generator in this case makes stepping through the harness slightly less painful.
-		return model as DDSFuzzModel<TChannelFactory, TOperation | Attach, TState>;
+		return model as DDSFuzzModel<TChannelFactory, TOperation | Attach | Rehydrate, TState>;
 	}
-	const attachOp = async (): Promise<TOperation | Attach> => {
+	const attachOp = async (): Promise<TOperation | Attach | Rehydrate> => {
 		return { type: "attach" };
 	};
-	const generatorFactory: () => AsyncGenerator<TOperation | Attach, TState> = () => {
+	const rehydrateOp = async (): Promise<TOperation | Attach | Rehydrate> => {
+		return { type: "rehydrate" };
+	};
+	const generatorFactory: () => AsyncGenerator<TOperation | Attach | Rehydrate, TState> = () => {
 		const baseGenerator = model.generatorFactory();
-		const opsBeforeAttach = takeAsync(numOpsBeforeAttach, baseGenerator);
-		return chainAsync(opsBeforeAttach, takeAsync(1, attachOp), baseGenerator);
+		return chainAsync(
+			takeAsync(numOpsBeforeAttach, baseGenerator),
+			takeAsync(1, rehydrateOp),
+			takeAsync(numOpsBeforeAttach, baseGenerator),
+			takeAsync(1, attachOp),
+			baseGenerator,
+		);
 	};
 
 	const minimizationTransforms = model.minimizationTransforms as
-		| MinimizationTransform<TOperation | Attach>[]
+		| MinimizationTransform<TOperation | Attach | Rehydrate>[]
 		| undefined;
 
-	const reducer: AsyncReducer<TOperation | Attach, TState> = async (state, operation) => {
+	const reducer: AsyncReducer<TOperation | Attach | Rehydrate, TState> = async (
+		state,
+		operation,
+	) => {
 		if (operation.type === "attach") {
 			state.isDetached = false;
 			assert.equal(state.clients.length, 1);
@@ -672,7 +690,31 @@ export function mixinAttach<
 				summarizerClient,
 			};
 		}
+		if (operation.type === "rehydrate") {
+			state.isDetached = true;
+			assert.equal(state.clients.length, 1);
+			const clientA = state.clients[0];
 
+			const clients = await Promise.all(
+				Array.from({ length: 1 }, async (_, index) =>
+					loadClient(
+						state.containerRuntimeFactory,
+						clientA,
+						model.factory,
+						index === 0 ? "summarizer" : makeFriendlyClientId(state.random, index),
+						options,
+					),
+				),
+			);
+			const summarizerClient = clients[0];
+			clients[0] = state.clients[0];
+			return {
+				...state,
+				isDetached: true,
+				clients,
+				summarizerClient,
+			};
+		}
 		return model.reducer(state, operation as TOperation);
 	};
 	return {
@@ -1262,7 +1304,13 @@ const getFullModel = <TChannelFactory extends IChannelFactory, TOperation extend
 	options: DDSFuzzSuiteOptions,
 ): DDSFuzzModel<
 	TChannelFactory,
-	TOperation | AddClient | Attach | ChangeConnectionState | TriggerRebase | Synchronize
+	| TOperation
+	| AddClient
+	| Attach
+	| Rehydrate
+	| ChangeConnectionState
+	| TriggerRebase
+	| Synchronize
 > =>
 	mixinAttach(
 		mixinSynchronization(
