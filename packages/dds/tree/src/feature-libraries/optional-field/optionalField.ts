@@ -184,7 +184,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		const composedMoves: OptionalChangeset["moves"] = [];
 		for (const [src, [dst, target]] of srcToDst.entries()) {
-			// TODO: Targeting
 			composedMoves.push([src, dst, target]);
 		}
 
