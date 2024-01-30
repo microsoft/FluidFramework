@@ -349,9 +349,9 @@ we also want to ensure that the associated memory needs can be constrained.
 How we should go about evicting repair data from the forest is dependent on the set of merge semantics we support.
 For this V1 of undo, we intend to allow editing of removed content,
 meaning it can be edited after it is removed and before (as well as after) it is restored,
-but solely in situations where the issuer of the edit was now aware of the item being removed.
+but solely in situations where the issuer of the edit was not aware of the item being removed.
 In other words, we only allow new edits to be generated on in-document trees,
-and we tolerate the fact that some of those edits will end up affecting removed trees due to concurrency.
+and we tolerate the fact that some of those edits will end up affecting removed trees due to concurrency and branching.
 
 In the future, we will also support editing already removed trees.
 
@@ -377,7 +377,7 @@ There are two kinds of cases where a client would need to include such a refresh
 For a given `SharedTreeView`, the repair data associated with a given removed tree T must _not_ be garbage-collected if _either_ of the following criteria apply:
 
 -   The local user may make an edit that requires T.
-    -   This could be due to the revert of the edit that let to T being removed.
+    -   This could be due to the revert of the edit that led to T being removed.
     -   This could be due to the revert of an edit that edits T.
     -   This could be due to a merge of a branch whose commits made an edit that requires T.
 -   A peer edit P might be received such that P's ref sequence number might be lower than the sequence number of the edit that last removed or edited T.
@@ -449,13 +449,12 @@ There are two situations where a peer should ignore the refresher:
     (i.e., the local client has not garbage-collected it).
     This can be detected by checking the `TreeIndex` before adding the refresher to it (and to the forest).
 -   The refresher is for a tree that has already been restored.
-    This can be detected during rebasing of the refresher.
+    This can be detected after rebasing of the changeset, by querying the relevant detached roots for the changeset.
 
 Adopting the refresher in either of those cases could lead to a memory leak or could lead to the wrong tree being restored later on.
 
 Note that for the sake of getting started on the implementation of refreshers,
 it's fine to always send the refreshers so long as the receiving peers know when to ignore them.
-Doing this might be easier as a first step since it means that the re-submit code path doesn't need to worry about converting an edit that doesn't include the refresher into an edit that does.
 
 ### Repair Data In Summaries
 
