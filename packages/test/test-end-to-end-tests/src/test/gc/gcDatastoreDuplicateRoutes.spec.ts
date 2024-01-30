@@ -27,7 +27,7 @@ import { defaultGCConfig } from "./gcTestConfigs.js";
  * Validates this scenario: When two DDSes in the same datastore has one change, gets summarized, and then gc is called
  * from loading a new container. We do not want to allow duplicate GC routes to be created in this scenario.
  */
-describeCompat("GC Data Store Duplicates", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("GC Data Store Duplicates", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
 	let provider: ITestObjectProvider;
 	let mainContainer: IContainer;
@@ -38,7 +38,7 @@ describeCompat("GC Data Store Duplicates", "NoCompat", (getTestObjectProvider, a
 		return summarizeNow(summarizer);
 	}
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		mainContainer = await provider.makeTestContainer(defaultGCConfig);
 		mainDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;

@@ -7,9 +7,9 @@ overrides:
   socket.io-parser: ^4.2.1
 
 patchedDependencies:
-  '@microsoft/api-extractor@7.38.3':
-    hash: t5dutvxrlkz26qgmievy2jdkpi
-    path: patches/@microsoft__api-extractor@7.38.3.patch
+  '@microsoft/api-extractor@7.39.1':
+    hash: 5jttfhtxwdhxb7mhu7m3cyak6i
+    path: patches/@microsoft__api-extractor@7.39.1.patch
 
 importers:
 
@@ -58,7 +58,7 @@ importers:
       '@fluidframework/build-tools': ^0.28.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources-previous': npm:@fluidframework/gitresources@2.0.0
-      '@microsoft/api-extractor': ^7.38.3
+      '@microsoft/api-extractor': ^7.39.1
       concurrently: ^8.2.1
       copyfiles: ^2.4.1
       eslint: ~8.27.0
@@ -71,7 +71,7 @@ importers:
       '@fluidframework/build-tools': 0.28.0
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/gitresources-previous': /@fluidframework/gitresources/2.0.0
-      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi
+      '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i
       concurrently: 8.2.1
       copyfiles: 2.4.1
       eslint: 8.27.0
@@ -85,7 +85,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/protocol-definitions': ^3.1.0
+      '@fluidframework/protocol-definitions': ^3.2.0-231454
       '@fluidframework/server-kafka-orderer-previous': npm:@fluidframework/server-kafka-orderer@2.0.0
       '@fluidframework/server-services-core': workspace:~
       '@types/node': ^18.17.1
@@ -95,7 +95,7 @@ importers:
       rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
-      '@fluidframework/protocol-definitions': 3.1.0
+      '@fluidframework/protocol-definitions': 3.2.0-231454
       '@fluidframework/server-services-core': link:../services-core
     devDependencies:
       '@fluid-tools/build-cli': 0.26.1_arb67uuw3qsmr24y5xn6pymdwm
@@ -120,7 +120,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': workspace:~
       '@fluidframework/protocol-base': workspace:~
-      '@fluidframework/protocol-definitions': ^3.1.0
+      '@fluidframework/protocol-definitions': ^3.2.0-231454
       '@fluidframework/server-lambdas-driver': workspace:~
       '@fluidframework/server-lambdas-previous': npm:@fluidframework/server-lambdas@2.0.0
       '@fluidframework/server-services-client': workspace:~
@@ -164,7 +164,7 @@ importers:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/gitresources': link:../gitresources
       '@fluidframework/protocol-base': link:../protocol-base
-      '@fluidframework/protocol-definitions': 3.1.0
+      '@fluidframework/protocol-definitions': 3.2.0-231454
       '@fluidframework/server-lambdas-driver': link:../lambdas-driver
       '@fluidframework/server-services-client': link:../services-client
       '@fluidframework/server-services-core': link:../services-core
@@ -275,7 +275,7 @@ importers:
       '@fluidframework/build-tools': ^0.28.0
       '@fluidframework/common-utils': ^3.1.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/protocol-definitions': ^3.1.0
+      '@fluidframework/protocol-definitions': ^3.2.0-231454
       '@fluidframework/server-lambdas': workspace:~
       '@fluidframework/server-local-server-previous': npm:@fluidframework/server-local-server@2.0.0
       '@fluidframework/server-memory-orderer': workspace:~
@@ -283,8 +283,8 @@ importers:
       '@fluidframework/server-services-core': workspace:~
       '@fluidframework/server-services-telemetry': workspace:~
       '@fluidframework/server-test-utils': workspace:~
-      '@microsoft/api-extractor': ^7.38.3
-      '@types/jsrsasign': ^8.0.8
+      '@microsoft/api-extractor': ^7.39.1
+      '@types/jsrsasign': ^10.5.12
       '@types/mocha': ^10.0.1
       '@types/nock': ^9.3.0
       '@types/node': ^18.17.1
@@ -295,7 +295,7 @@ importers:
       debug: ^4.3.4
       eslint: ~8.27.0
       events: ^3.1.0
-      jsrsasign: ^10.5.25
+      jsrsasign: ^11.0.0
       mocha: ^10.2.0
       nock: ^13.3.3
       prettier: ~3.0.3
@@ -308,7 +308,7 @@ importers:
       webpack-cli: ^4.9.2
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/protocol-definitions': 3.1.0
+      '@fluidframework/protocol-definitions': 3.2.0-231454
       '@fluidframework/server-lambdas': link:../lambdas
       '@fluidframework/server-memory-orderer': link:../memory-orderer
       '@fluidframework/server-services-client': link:../services-client
@@ -317,7 +317,7 @@ importers:
       '@fluidframework/server-test-utils': link:../test-utils
       debug: 4.3.4
       events: 3.3.0
-      jsrsasign: 10.8.6
+      jsrsasign: 11.0.0
       uuid: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli': 0.26.1_u7qdhkoo3ay2mtnmijn73feu3u
@@ -325,8 +325,8 @@ importers:
       '@fluidframework/build-tools': 0.28.0_qiwzlxsc7nv6vcdymu2njnpbxe
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-local-server-previous': /@fluidframework/server-local-server/2.0.0
-      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.17.6
-      '@types/jsrsasign': 8.0.13
+      '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.17.6
+      '@types/jsrsasign': 10.5.12
       '@types/mocha': 10.0.1
       '@types/nock': 9.3.1
       '@types/node': 18.17.6
@@ -353,7 +353,7 @@ importers:
       '@fluidframework/common-utils': ^3.1.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/protocol-base': workspace:~
-      '@fluidframework/protocol-definitions': ^3.1.0
+      '@fluidframework/protocol-definitions': ^3.2.0-231454
       '@fluidframework/server-lambdas': workspace:~
       '@fluidframework/server-memory-orderer-previous': npm:@fluidframework/server-memory-orderer@2.0.0
       '@fluidframework/server-services-client': workspace:~
@@ -385,7 +385,7 @@ importers:
     dependencies:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/protocol-base': link:../protocol-base
-      '@fluidframework/protocol-definitions': 3.1.0
+      '@fluidframework/protocol-definitions': 3.2.0-231454
       '@fluidframework/server-lambdas': link:../lambdas
       '@fluidframework/server-services-client': link:../services-client
       '@fluidframework/server-services-core': link:../services-core
@@ -429,8 +429,8 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': workspace:~
       '@fluidframework/protocol-base-previous': npm:@fluidframework/protocol-base@2.0.0
-      '@fluidframework/protocol-definitions': ^3.1.0
-      '@microsoft/api-extractor': ^7.38.3
+      '@fluidframework/protocol-definitions': ^3.2.0-231454
+      '@microsoft/api-extractor': ^7.39.1
       '@types/assert': ^1.5.1
       '@types/mocha': ^10.0.1
       '@types/node': ^18.17.1
@@ -446,7 +446,7 @@ importers:
     dependencies:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/gitresources': link:../gitresources
-      '@fluidframework/protocol-definitions': 3.1.0
+      '@fluidframework/protocol-definitions': 3.2.0-231454
       events: 3.3.0
     devDependencies:
       '@fluid-tools/build-cli': 0.26.1_arb67uuw3qsmr24y5xn6pymdwm
@@ -454,7 +454,7 @@ importers:
       '@fluidframework/build-tools': 0.28.0_@types+node@18.17.6
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/protocol-base-previous': /@fluidframework/protocol-base/2.0.0
-      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.17.6
+      '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.17.6
       '@types/assert': 1.5.6
       '@types/mocha': 10.0.1
       '@types/node': 18.17.6
@@ -475,7 +475,7 @@ importers:
       '@fluidframework/common-utils': ^3.1.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': workspace:~
-      '@fluidframework/protocol-definitions': ^3.1.0
+      '@fluidframework/protocol-definitions': ^3.2.0-231454
       '@fluidframework/server-kafka-orderer': workspace:~
       '@fluidframework/server-lambdas': workspace:~
       '@fluidframework/server-lambdas-driver': workspace:~
@@ -505,7 +505,7 @@ importers:
     dependencies:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/gitresources': link:../gitresources
-      '@fluidframework/protocol-definitions': 3.1.0
+      '@fluidframework/protocol-definitions': 3.2.0-231454
       '@fluidframework/server-kafka-orderer': link:../kafka-orderer
       '@fluidframework/server-lambdas': link:../lambdas
       '@fluidframework/server-lambdas-driver': link:../lambdas-driver
@@ -546,7 +546,7 @@ importers:
       '@fluidframework/common-utils': ^3.1.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': workspace:~
-      '@fluidframework/protocol-definitions': ^3.1.0
+      '@fluidframework/protocol-definitions': ^3.2.0-231454
       '@fluidframework/server-kafka-orderer': workspace:~
       '@fluidframework/server-lambdas': workspace:~
       '@fluidframework/server-lambdas-driver': workspace:~
@@ -609,7 +609,7 @@ importers:
     dependencies:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/gitresources': link:../gitresources
-      '@fluidframework/protocol-definitions': 3.1.0
+      '@fluidframework/protocol-definitions': 3.2.0-231454
       '@fluidframework/server-kafka-orderer': link:../kafka-orderer
       '@fluidframework/server-lambdas': link:../lambdas
       '@fluidframework/server-lambdas-driver': link:../lambdas-driver
@@ -682,7 +682,7 @@ importers:
       '@fluidframework/build-tools': ^0.28.0
       '@fluidframework/common-utils': ^3.1.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/protocol-definitions': ^3.1.0
+      '@fluidframework/protocol-definitions': ^3.2.0-231454
       '@fluidframework/server-services-client': workspace:~
       '@fluidframework/server-services-core': workspace:~
       '@fluidframework/server-services-ordering-kafkanode': workspace:~
@@ -727,7 +727,7 @@ importers:
       winston: ^3.6.0
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/protocol-definitions': 3.1.0
+      '@fluidframework/protocol-definitions': 3.2.0-231454
       '@fluidframework/server-services-client': link:../services-client
       '@fluidframework/server-services-core': link:../services-core
       '@fluidframework/server-services-ordering-kafkanode': link:../services-ordering-kafkanode
@@ -785,11 +785,11 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': workspace:~
       '@fluidframework/protocol-base': workspace:~
-      '@fluidframework/protocol-definitions': ^3.1.0
+      '@fluidframework/protocol-definitions': ^3.2.0-231454
       '@fluidframework/server-services-client-previous': npm:@fluidframework/server-services-client@2.0.0
-      '@microsoft/api-extractor': ^7.38.3
+      '@microsoft/api-extractor': ^7.39.1
       '@types/debug': ^4.1.5
-      '@types/jsrsasign': ^8.0.8
+      '@types/jsrsasign': ^10.5.12
       '@types/mocha': ^10.0.1
       '@types/node': ^18.17.1
       axios: ^1.6.2
@@ -801,7 +801,7 @@ importers:
       debug: ^4.3.4
       eslint: ~8.27.0
       json-stringify-safe: ^5.0.1
-      jsrsasign: ^10.5.25
+      jsrsasign: ^11.0.0
       jwt-decode: ^4.0.0
       mocha: ^10.2.0
       prettier: ~3.0.3
@@ -814,12 +814,12 @@ importers:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/gitresources': link:../gitresources
       '@fluidframework/protocol-base': link:../protocol-base
-      '@fluidframework/protocol-definitions': 3.1.0
+      '@fluidframework/protocol-definitions': 3.2.0-231454
       axios: 1.6.2_debug@4.3.4
       crc-32: 1.2.0
       debug: 4.3.4
       json-stringify-safe: 5.0.1
-      jsrsasign: 10.8.6
+      jsrsasign: 11.0.0
       jwt-decode: 4.0.0
       querystring: 0.2.1
       sillyname: 0.1.0
@@ -830,9 +830,9 @@ importers:
       '@fluidframework/build-tools': 0.28.0_@types+node@18.17.6
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-services-client-previous': /@fluidframework/server-services-client/2.0.0
-      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.17.6
+      '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.17.6
       '@types/debug': 4.1.8
-      '@types/jsrsasign': 8.0.13
+      '@types/jsrsasign': 10.5.12
       '@types/mocha': 10.0.1
       '@types/node': 18.17.6
       axios-mock-adapter: 1.21.5_axios@1.6.2
@@ -853,7 +853,7 @@ importers:
       '@fluidframework/common-utils': ^3.1.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': workspace:~
-      '@fluidframework/protocol-definitions': ^3.1.0
+      '@fluidframework/protocol-definitions': ^3.2.0-231454
       '@fluidframework/server-services-client': workspace:~
       '@fluidframework/server-services-core-previous': npm:@fluidframework/server-services-core@2.0.0
       '@fluidframework/server-services-telemetry': workspace:~
@@ -870,7 +870,7 @@ importers:
     dependencies:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/gitresources': link:../gitresources
-      '@fluidframework/protocol-definitions': 3.1.0
+      '@fluidframework/protocol-definitions': 3.2.0-231454
       '@fluidframework/server-services-client': link:../services-client
       '@fluidframework/server-services-telemetry': link:../services-telemetry
       '@types/nconf': 0.10.3
@@ -1048,7 +1048,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': workspace:~
       '@fluidframework/protocol-base': workspace:~
-      '@fluidframework/protocol-definitions': ^3.1.0
+      '@fluidframework/protocol-definitions': ^3.2.0-231454
       '@fluidframework/server-services-client': workspace:~
       '@fluidframework/server-services-core': workspace:~
       '@fluidframework/server-services-shared-previous': npm:@fluidframework/server-services-shared@2.0.0
@@ -1091,7 +1091,7 @@ importers:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/gitresources': link:../gitresources
       '@fluidframework/protocol-base': link:../protocol-base
-      '@fluidframework/protocol-definitions': 3.1.0
+      '@fluidframework/protocol-definitions': 3.2.0-231454
       '@fluidframework/server-services-client': link:../services-client
       '@fluidframework/server-services-core': link:../services-core
       '@fluidframework/server-services-telemetry': link:../services-telemetry
@@ -1191,7 +1191,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/protocol-definitions': ^3.1.0
+      '@fluidframework/protocol-definitions': ^3.2.0-231454
       '@fluidframework/server-services-client': workspace:~
       '@fluidframework/server-services-core': workspace:~
       '@fluidframework/server-services-telemetry': workspace:~
@@ -1230,7 +1230,7 @@ importers:
       winston: ^3.6.0
       winston-transport: ^4.5.0
     dependencies:
-      '@fluidframework/protocol-definitions': 3.1.0
+      '@fluidframework/protocol-definitions': 3.2.0-231454
       '@fluidframework/server-services-client': link:../services-client
       '@fluidframework/server-services-core': link:../services-core
       '@fluidframework/server-services-telemetry': link:../services-telemetry
@@ -1283,7 +1283,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': workspace:~
       '@fluidframework/protocol-base': workspace:~
-      '@fluidframework/protocol-definitions': ^3.1.0
+      '@fluidframework/protocol-definitions': ^3.2.0-231454
       '@fluidframework/server-services-client': workspace:~
       '@fluidframework/server-services-core': workspace:~
       '@fluidframework/server-services-telemetry': workspace:~
@@ -1311,7 +1311,7 @@ importers:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/gitresources': link:../gitresources
       '@fluidframework/protocol-base': link:../protocol-base
-      '@fluidframework/protocol-definitions': 3.1.0
+      '@fluidframework/protocol-definitions': 3.2.0-231454
       '@fluidframework/server-services-client': link:../services-client
       '@fluidframework/server-services-core': link:../services-core
       '@fluidframework/server-services-telemetry': link:../services-telemetry
@@ -1349,7 +1349,7 @@ importers:
       '@fluidframework/gitresources': workspace:~
       '@fluidframework/mocha-test-setup': ~2.0.0-internal.6.2.0
       '@fluidframework/protocol-base': workspace:~
-      '@fluidframework/protocol-definitions': ^3.1.0
+      '@fluidframework/protocol-definitions': ^3.2.0-231454
       '@fluidframework/server-lambdas': workspace:~
       '@fluidframework/server-local-server': workspace:~
       '@fluidframework/server-memory-orderer': workspace:~
@@ -1359,7 +1359,7 @@ importers:
       '@fluidframework/server-services-telemetry': workspace:~
       '@fluidframework/server-services-utils': workspace:~
       '@fluidframework/server-test-utils': workspace:~
-      '@microsoft/api-extractor': ^7.38.3
+      '@microsoft/api-extractor': ^7.39.1
       '@types/compression': ^1.7.2
       '@types/cookie-parser': ^1.4.1
       '@types/cors': ^2.8.4
@@ -1380,7 +1380,6 @@ importers:
       body-parser: ^1.17.1
       charwise: ^3.0.1
       compression: ^1.7.2
-      concurrently: ^8.2.1
       cookie-parser: ^1.4.3
       copyfiles: ^2.4.1
       cors: ^2.8.4
@@ -1412,7 +1411,7 @@ importers:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/gitresources': link:../gitresources
       '@fluidframework/protocol-base': link:../protocol-base
-      '@fluidframework/protocol-definitions': 3.1.0
+      '@fluidframework/protocol-definitions': 3.2.0-231454
       '@fluidframework/server-lambdas': link:../lambdas
       '@fluidframework/server-local-server': link:../local-server
       '@fluidframework/server-memory-orderer': link:../memory-orderer
@@ -1446,7 +1445,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': 2.0.0-internal.7.0.0
-      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.18.4
+      '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.18.4
       '@types/compression': 1.7.3
       '@types/cookie-parser': 1.4.3
       '@types/cors': 2.8.14
@@ -1462,7 +1461,6 @@ importers:
       '@types/rimraf': 3.0.2
       '@types/split': 0.3.28
       '@types/uuid': 9.0.2
-      concurrently: 8.2.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
@@ -2312,7 +2310,7 @@ packages:
       '@fluid-tools/version-tools': 0.26.1_typescript@4.5.5
       '@fluidframework/build-tools': 0.26.2
       '@fluidframework/bundle-size-tools': 0.26.1
-      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi
+      '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i
       '@oclif/core': 3.5.0
       '@oclif/plugin-autocomplete': 2.3.10_typescript@4.5.5
       '@oclif/plugin-commands': 3.0.3
@@ -2378,7 +2376,7 @@ packages:
       '@fluid-tools/version-tools': 0.26.1_mmpl2z7rynse2pmynonhikz2qy
       '@fluidframework/build-tools': 0.26.2_@types+node@18.17.6
       '@fluidframework/bundle-size-tools': 0.26.1
-      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.17.6
+      '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.17.6
       '@oclif/core': 3.5.0
       '@oclif/plugin-autocomplete': 2.3.10_mmpl2z7rynse2pmynonhikz2qy
       '@oclif/plugin-commands': 3.0.3
@@ -2444,7 +2442,7 @@ packages:
       '@fluid-tools/version-tools': 0.26.1_typescript@4.5.5
       '@fluidframework/build-tools': 0.26.2
       '@fluidframework/bundle-size-tools': 0.26.1
-      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi
+      '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i
       '@oclif/core': 3.5.0
       '@oclif/plugin-autocomplete': 2.3.10_typescript@4.5.5
       '@oclif/plugin-commands': 3.0.3
@@ -2510,7 +2508,7 @@ packages:
       '@fluid-tools/version-tools': 0.26.1_mmpl2z7rynse2pmynonhikz2qy
       '@fluidframework/build-tools': 0.26.2_qiwzlxsc7nv6vcdymu2njnpbxe
       '@fluidframework/bundle-size-tools': 0.26.1_webpack-cli@4.10.0
-      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.17.6
+      '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.17.6
       '@oclif/core': 3.5.0
       '@oclif/plugin-autocomplete': 2.3.10_mmpl2z7rynse2pmynonhikz2qy
       '@oclif/plugin-commands': 3.0.3
@@ -2714,7 +2712,7 @@ packages:
       '@fluidframework/bundle-size-tools': 0.26.2
       '@manypkg/get-packages': 2.2.0
       '@octokit/core': 4.2.4
-      '@rushstack/node-core-library': 3.61.0
+      '@rushstack/node-core-library': 3.62.0
       async: 3.2.5
       chalk: 2.4.2
       cosmiconfig: 8.3.6_typescript@5.1.6
@@ -2758,7 +2756,7 @@ packages:
       '@fluidframework/bundle-size-tools': 0.26.2
       '@manypkg/get-packages': 2.2.0
       '@octokit/core': 4.2.4
-      '@rushstack/node-core-library': 3.61.0_@types+node@18.17.6
+      '@rushstack/node-core-library': 3.62.0_@types+node@18.17.6
       async: 3.2.5
       chalk: 2.4.2
       cosmiconfig: 8.3.6_typescript@5.1.6
@@ -2802,7 +2800,7 @@ packages:
       '@fluidframework/bundle-size-tools': 0.26.2_webpack-cli@4.10.0
       '@manypkg/get-packages': 2.2.0
       '@octokit/core': 4.2.4
-      '@rushstack/node-core-library': 3.61.0_@types+node@18.17.6
+      '@rushstack/node-core-library': 3.62.0_@types+node@18.17.6
       async: 3.2.5
       chalk: 2.4.2
       cosmiconfig: 8.3.6_typescript@5.1.6
@@ -3179,6 +3177,11 @@ packages:
 
   /@fluidframework/protocol-definitions/3.1.0:
     resolution: {integrity: sha512-BgGF82z4sk5M4torMR38NGjHjFG9t6Y653UcGOlXiIaGQMDZpRfrxiIuq53Gb12OTfUgbNtvBJL1W46JfLvzQw==}
+    dev: true
+
+  /@fluidframework/protocol-definitions/3.2.0-231454:
+    resolution: {integrity: sha512-aAC7firDZhUhXKU/PjD9Ty7BZt6aTKqOdhsueet7CLgSr/iN+uIsmDCBVIoFsS72bQyZtQYu/61XKegA63+qMg==}
+    dev: false
 
   /@fluidframework/server-kafka-orderer/2.0.0:
     resolution: {integrity: sha512-3Wn0XLecbz8kytyfE4mukFUUeoEEnzAFFfEBzjBelpkS6bbAZ/7TdLLJ34q9JS8Cnb5vqreFfJCaHbboIUe6YQ==}
@@ -4854,32 +4857,32 @@ packages:
       - '@types/node'
     dev: true
 
-  /@microsoft/api-extractor-model/7.28.2:
-    resolution: {integrity: sha512-vkojrM2fo3q4n4oPh4uUZdjJ2DxQ2+RnDQL/xhTWSRUNPF6P4QyrvY357HBxbnltKcYu+nNNolVqc6TIGQ73Ig==}
+  /@microsoft/api-extractor-model/7.28.4:
+    resolution: {integrity: sha512-vucgyPmgHrJ/D4/xQywAmjTmSfxAx2/aDmD6TkIoLu51FdsAfuWRbijWA48AePy60OO+l+mmy9p2P/CEeBZqig==}
     dependencies:
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.61.0
+      '@rushstack/node-core-library': 3.63.0
     transitivePeerDependencies:
       - '@types/node'
     dev: true
 
-  /@microsoft/api-extractor-model/7.28.2_@types+node@18.17.6:
-    resolution: {integrity: sha512-vkojrM2fo3q4n4oPh4uUZdjJ2DxQ2+RnDQL/xhTWSRUNPF6P4QyrvY357HBxbnltKcYu+nNNolVqc6TIGQ73Ig==}
+  /@microsoft/api-extractor-model/7.28.4_@types+node@18.17.6:
+    resolution: {integrity: sha512-vucgyPmgHrJ/D4/xQywAmjTmSfxAx2/aDmD6TkIoLu51FdsAfuWRbijWA48AePy60OO+l+mmy9p2P/CEeBZqig==}
     dependencies:
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.61.0_@types+node@18.17.6
+      '@rushstack/node-core-library': 3.63.0_@types+node@18.17.6
     transitivePeerDependencies:
       - '@types/node'
     dev: true
 
-  /@microsoft/api-extractor-model/7.28.2_@types+node@18.18.4:
-    resolution: {integrity: sha512-vkojrM2fo3q4n4oPh4uUZdjJ2DxQ2+RnDQL/xhTWSRUNPF6P4QyrvY357HBxbnltKcYu+nNNolVqc6TIGQ73Ig==}
+  /@microsoft/api-extractor-model/7.28.4_@types+node@18.18.4:
+    resolution: {integrity: sha512-vucgyPmgHrJ/D4/xQywAmjTmSfxAx2/aDmD6TkIoLu51FdsAfuWRbijWA48AePy60OO+l+mmy9p2P/CEeBZqig==}
     dependencies:
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.61.0_@types+node@18.18.4
+      '@rushstack/node-core-library': 3.63.0_@types+node@18.18.4
     transitivePeerDependencies:
       - '@types/node'
     dev: true
@@ -4904,64 +4907,64 @@ packages:
       - '@types/node'
     dev: true
 
-  /@microsoft/api-extractor/7.38.3_t5dutvxrlkz26qgmievy2jdkpi:
-    resolution: {integrity: sha512-xt9iYyC5f39281j77JTA9C3ISJpW1XWkCcnw+2vM78CPnro6KhPfwQdPDfwS5JCPNuq0grm8cMdPUOPvrchDWw==}
+  /@microsoft/api-extractor/7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i:
+    resolution: {integrity: sha512-V0HtCufWa8hZZvSmlEzQZfINcJkHAU/bmpyJQj6w+zpI87EkR8DuBOW6RWrO9c7mUYFZoDaNgUTyKo83ytv+QQ==}
     hasBin: true
     dependencies:
-      '@microsoft/api-extractor-model': 7.28.2
+      '@microsoft/api-extractor-model': 7.28.4
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.61.0
+      '@rushstack/node-core-library': 3.63.0
       '@rushstack/rig-package': 0.5.1
       '@rushstack/ts-command-line': 4.17.1
       colors: 1.2.5
       lodash: 4.17.21
-      resolve: 1.22.2
+      resolve: 1.22.8
       semver: 7.5.4
       source-map: 0.6.1
-      typescript: 5.0.4
+      typescript: 5.3.3
     transitivePeerDependencies:
       - '@types/node'
     dev: true
     patched: true
 
-  /@microsoft/api-extractor/7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.17.6:
-    resolution: {integrity: sha512-xt9iYyC5f39281j77JTA9C3ISJpW1XWkCcnw+2vM78CPnro6KhPfwQdPDfwS5JCPNuq0grm8cMdPUOPvrchDWw==}
+  /@microsoft/api-extractor/7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.17.6:
+    resolution: {integrity: sha512-V0HtCufWa8hZZvSmlEzQZfINcJkHAU/bmpyJQj6w+zpI87EkR8DuBOW6RWrO9c7mUYFZoDaNgUTyKo83ytv+QQ==}
     hasBin: true
     dependencies:
-      '@microsoft/api-extractor-model': 7.28.2_@types+node@18.17.6
+      '@microsoft/api-extractor-model': 7.28.4_@types+node@18.17.6
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.61.0_@types+node@18.17.6
+      '@rushstack/node-core-library': 3.63.0_@types+node@18.17.6
       '@rushstack/rig-package': 0.5.1
       '@rushstack/ts-command-line': 4.17.1
       colors: 1.2.5
       lodash: 4.17.21
-      resolve: 1.22.2
+      resolve: 1.22.8
       semver: 7.5.4
       source-map: 0.6.1
-      typescript: 5.0.4
+      typescript: 5.3.3
     transitivePeerDependencies:
       - '@types/node'
     dev: true
     patched: true
 
-  /@microsoft/api-extractor/7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.18.4:
-    resolution: {integrity: sha512-xt9iYyC5f39281j77JTA9C3ISJpW1XWkCcnw+2vM78CPnro6KhPfwQdPDfwS5JCPNuq0grm8cMdPUOPvrchDWw==}
+  /@microsoft/api-extractor/7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.18.4:
+    resolution: {integrity: sha512-V0HtCufWa8hZZvSmlEzQZfINcJkHAU/bmpyJQj6w+zpI87EkR8DuBOW6RWrO9c7mUYFZoDaNgUTyKo83ytv+QQ==}
     hasBin: true
     dependencies:
-      '@microsoft/api-extractor-model': 7.28.2_@types+node@18.18.4
+      '@microsoft/api-extractor-model': 7.28.4_@types+node@18.18.4
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.61.0_@types+node@18.18.4
+      '@rushstack/node-core-library': 3.63.0_@types+node@18.18.4
       '@rushstack/rig-package': 0.5.1
       '@rushstack/ts-command-line': 4.17.1
       colors: 1.2.5
       lodash: 4.17.21
-      resolve: 1.22.2
+      resolve: 1.22.8
       semver: 7.5.4
       source-map: 0.6.1
-      typescript: 5.0.4
+      typescript: 5.3.3
     transitivePeerDependencies:
       - '@types/node'
     dev: true
@@ -6362,7 +6365,7 @@ packages:
       fs-extra: 7.0.1
       import-lazy: 4.0.0
       jju: 1.4.0
-      resolve: 1.22.2
+      resolve: 1.22.8
       semver: 7.3.8
       z-schema: 5.0.5
     dev: true
@@ -6379,7 +6382,7 @@ packages:
       fs-extra: 7.0.1
       import-lazy: 4.0.0
       jju: 1.4.0
-      resolve: 1.22.2
+      resolve: 1.22.8
       semver: 7.5.4
       z-schema: 5.0.5
     dev: true
@@ -6397,25 +6400,7 @@ packages:
       fs-extra: 7.0.1
       import-lazy: 4.0.0
       jju: 1.4.0
-      resolve: 1.22.2
-      semver: 7.5.4
-      z-schema: 5.0.5
-    dev: true
-
-  /@rushstack/node-core-library/3.61.0_@types+node@18.18.4:
-    resolution: {integrity: sha512-tdOjdErme+/YOu4gPed3sFS72GhtWCgNV9oDsHDnoLY5oDfwjKUc9Z+JOZZ37uAxcm/OCahDHfuu2ugqrfWAVQ==}
-    peerDependencies:
-      '@types/node': '*'
-    peerDependenciesMeta:
-      '@types/node':
-        optional: true
-    dependencies:
-      '@types/node': 18.18.4
-      colors: 1.2.5
-      fs-extra: 7.0.1
-      import-lazy: 4.0.0
-      jju: 1.4.0
-      resolve: 1.22.2
+      resolve: 1.22.8
       semver: 7.5.4
       z-schema: 5.0.5
     dev: true
@@ -6455,17 +6440,70 @@ packages:
       z-schema: 5.0.5
     dev: true
 
+  /@rushstack/node-core-library/3.63.0:
+    resolution: {integrity: sha512-Q7B3dVpBQF1v+mUfxNcNZh5uHVR8ntcnkN5GYjbBLrxUYHBGKbnCM+OdcN+hzCpFlLBH6Ob0dEHhZ0spQwf24A==}
+    peerDependencies:
+      '@types/node': '*'
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
+    dependencies:
+      colors: 1.2.5
+      fs-extra: 7.0.1
+      import-lazy: 4.0.0
+      jju: 1.4.0
+      resolve: 1.22.8
+      semver: 7.5.4
+      z-schema: 5.0.5
+    dev: true
+
+  /@rushstack/node-core-library/3.63.0_@types+node@18.17.6:
+    resolution: {integrity: sha512-Q7B3dVpBQF1v+mUfxNcNZh5uHVR8ntcnkN5GYjbBLrxUYHBGKbnCM+OdcN+hzCpFlLBH6Ob0dEHhZ0spQwf24A==}
+    peerDependencies:
+      '@types/node': '*'
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
+    dependencies:
+      '@types/node': 18.17.6
+      colors: 1.2.5
+      fs-extra: 7.0.1
+      import-lazy: 4.0.0
+      jju: 1.4.0
+      resolve: 1.22.8
+      semver: 7.5.4
+      z-schema: 5.0.5
+    dev: true
+
+  /@rushstack/node-core-library/3.63.0_@types+node@18.18.4:
+    resolution: {integrity: sha512-Q7B3dVpBQF1v+mUfxNcNZh5uHVR8ntcnkN5GYjbBLrxUYHBGKbnCM+OdcN+hzCpFlLBH6Ob0dEHhZ0spQwf24A==}
+    peerDependencies:
+      '@types/node': '*'
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
+    dependencies:
+      '@types/node': 18.18.4
+      colors: 1.2.5
+      fs-extra: 7.0.1
+      import-lazy: 4.0.0
+      jju: 1.4.0
+      resolve: 1.22.8
+      semver: 7.5.4
+      z-schema: 5.0.5
+    dev: true
+
   /@rushstack/rig-package/0.4.0:
     resolution: {integrity: sha512-FnM1TQLJYwSiurP6aYSnansprK5l8WUK8VG38CmAaZs29ZeL1msjK0AP1VS4ejD33G0kE/2cpsPsS9jDenBMxw==}
     dependencies:
-      resolve: 1.22.2
+      resolve: 1.22.8
       strip-json-comments: 3.1.1
     dev: true
 
   /@rushstack/rig-package/0.5.1:
     resolution: {integrity: sha512-pXRYSe29TjRw7rqxD4WS3HN/sRSbfr+tJs4a9uuaSIBAITbUggygdhuG0VrO0EO+QqH91GhYMN4S6KRtOEmGVA==}
     dependencies:
-      resolve: 1.22.2
+      resolve: 1.22.8
       strip-json-comments: 3.1.1
     dev: true
 
@@ -7266,8 +7304,8 @@ packages:
       '@types/node': 18.17.6
     dev: true
 
-  /@types/jsrsasign/8.0.13:
-    resolution: {integrity: sha512-+0Ij59D6NXP48KkeLhPXeQKOyLjvA9CD7zacc0Svy2IWHdl62BmDeTvGSIwKaGZSoamLJOo+on1AG/wPRLsd7A==}
+  /@types/jsrsasign/10.5.12:
+    resolution: {integrity: sha512-sOA+eVnHU+FziThpMhuqs/tjFKe5gHVJKIS7g1BzhXP+e2FS8OvtzM0K3IzFxVksDOr98Gz5FJiZVxZ9uFoHhw==}
     dev: true
 
   /@types/keyv/3.1.4:
@@ -10875,8 +10913,8 @@ packages:
     resolution: {integrity: sha512-gozW2blMLJCeFpBwugLTGyvVjNoeo1knonXAcatC6bjPBZitotxdWf7Gimr25N4c0AAOo4eOUfaG82IJPDpqCA==}
     dependencies:
       debug: 3.2.7
-      is-core-module: 2.12.1
-      resolve: 1.22.2
+      is-core-module: 2.13.1
+      resolve: 1.22.8
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -10997,7 +11035,7 @@ packages:
       is-glob: 4.0.3
       minimatch: 3.1.2
       object.values: 1.1.6
-      resolve: 1.22.2
+      resolve: 1.22.8
       tsconfig-paths: 3.14.2
     transitivePeerDependencies:
       - eslint-import-resolver-typescript
@@ -11028,7 +11066,7 @@ packages:
       is-glob: 4.0.3
       minimatch: 3.1.2
       object.values: 1.1.6
-      resolve: 1.22.2
+      resolve: 1.22.8
       tsconfig-paths: 3.14.2
     transitivePeerDependencies:
       - eslint-import-resolver-typescript
@@ -13866,13 +13904,13 @@ packages:
       semver: 7.5.4
     dev: true
 
-  /jsrsasign/10.8.6:
-    resolution: {integrity: sha512-bQmbVtsfbgaKBTWCKiDCPlUPbdlRIK/FzSwT3BzIgZl/cU6TqXu6pZJsCI/dJVrZ9Gir5GC4woqw9shH/v7MBw==}
-    dev: false
-
   /jsrsasign/10.9.0:
     resolution: {integrity: sha512-QWLUikj1SBJGuyGK8tjKSx3K7Y69KYJnrs/pQ1KZ6wvZIkHkWjZ1PJDpuvc1/28c1uP0KW9qn1eI1LzHQqDOwQ==}
     dev: true
+
+  /jsrsasign/11.0.0:
+    resolution: {integrity: sha512-BtRwVKS+5dsgPpAtzJcpo5OoWjSs1/zllSBG0+8o8/aV0Ki76m6iZwHnwnsqoTdhfFZDN1XIdcaZr5ZkP+H2gg==}
+    dev: false
 
   /jssm-viz-cli/5.89.2:
     resolution: {integrity: sha512-LMUh0iqc8vXK1IzbarXgmWyeNEAHoYOIS0qt6NeC4slIhY+l3Pz7t1Qh+FLLbtECXWJJcBdlUMeLVB2E4re5Bg==}
@@ -15504,7 +15542,7 @@ packages:
     resolution: {integrity: sha512-/5CMN3T0R4XTj4DcGaexo+roZSdSFW/0AOOTROrjxzCG1wrWXEsGbRKevjlIL+ZDE4sZlJr5ED4YW0yqmkK+eA==}
     dependencies:
       hosted-git-info: 2.8.9
-      resolve: 1.22.2
+      resolve: 1.22.8
       semver: 5.7.2
       validate-npm-package-license: 3.0.4
     dev: true
@@ -17435,7 +17473,7 @@ packages:
     resolution: {integrity: sha512-/njmZ8s1wVeR6pjTZ+0nCnv8SpZNRMT2D1RLOJQESlYFDBvwpTA4KWJpZ+sBJ4+vhjILRcK7JIFdGCdxEAAitg==}
     engines: {node: '>= 0.10'}
     dependencies:
-      resolve: 1.22.2
+      resolve: 1.22.8
     dev: true
 
   /redent/3.0.0:
@@ -17612,7 +17650,7 @@ packages:
   /resolve/1.19.0:
     resolution: {integrity: sha512-rArEXAgsBG4UgRGcynxWIWKFvh/XZCcS8UJdHhwy91zwAvCZIbcs+vAbflgBnNjYMs/i/i+/Ux6IZhML1yPvxg==}
     dependencies:
-      is-core-module: 2.12.1
+      is-core-module: 2.13.1
       path-parse: 1.0.7
     dev: true
 
@@ -17620,7 +17658,7 @@ packages:
     resolution: {integrity: sha512-Sb+mjNHOULsBv818T40qSPeRiuWLyaGMa5ewydRLFimneixmVy2zdivRl+AF6jaYPC8ERxGDmFSiqui6SfPd+g==}
     hasBin: true
     dependencies:
-      is-core-module: 2.12.1
+      is-core-module: 2.13.1
       path-parse: 1.0.7
       supports-preserve-symlinks-flag: 1.0.0
     dev: true
@@ -17637,7 +17675,7 @@ packages:
     resolution: {integrity: sha512-iMDbmAWtfU+MHpxt/I5iWI7cY6YVEZUQ3MBgPQ++XD1PELuJHIl82xBmObyP2KyQmkNB2dsqF7seoQQiAn5yDQ==}
     hasBin: true
     dependencies:
-      is-core-module: 2.12.1
+      is-core-module: 2.13.1
       path-parse: 1.0.7
       supports-preserve-symlinks-flag: 1.0.0
     dev: true
@@ -19492,6 +19530,12 @@ packages:
 
   /typescript/5.1.6:
     resolution: {integrity: sha512-zaWCozRZ6DLEWAWFrVDz1H6FVXzUSfTy5FUMWsQlU8Ym5JP9eO4xkTIROFCQvhQf61z6O/G6ugw3SgAnvvm+HA==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+    dev: true
+
+  /typescript/5.3.3:
+    resolution: {integrity: sha512-pXWcraxM0uxAS+tN0AG/BF2TyqmHO014Z070UsJ+pFvYuRSq8KH8DmWpnbXe0pEPDHXZV3FcAbJkijJ5oNEnWw==}
     engines: {node: '>=14.17'}
     hasBin: true
     dev: true

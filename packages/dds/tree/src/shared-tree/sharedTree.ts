@@ -420,12 +420,10 @@ export enum ForestType {
 	Optimized = 1,
 }
 
-// TODO: The default summaryEncodeType is set to Uncompressed as there are many out of schema tests that break when using Compressed.
-// This should eventually be changed to use Compressed as the default tree compression strategy so production gets the compressed format.
 export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
 	jsonValidator: noopValidator,
 	forest: ForestType.Reference,
-	treeEncodeType: TreeCompressionStrategy.Uncompressed,
+	treeEncodeType: TreeCompressionStrategy.Compressed,
 };
 
 /**

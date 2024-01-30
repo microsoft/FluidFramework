@@ -11,6 +11,7 @@ import {
 	IRequest,
 	IResponse,
 	IProvideFluidHandleContext,
+	ISignalEnvelope,
 } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
@@ -46,6 +47,8 @@ import {
 	ITelemetryLoggerExt,
 	UsageError,
 	LoggingError,
+	createSampledLogger,
+	IEventSampler,
 } from "@fluidframework/telemetry-utils";
 import {
 	DriverHeader,
@@ -76,7 +79,6 @@ import {
 	IGarbageCollectionData,
 	IEnvelope,
 	IInboundSignalMessage,
-	ISignalEnvelope,
 	NamedFluidDataStoreRegistryEntries,
 	ISummaryTreeWithStats,
 	ISummarizeInternalResult,
@@ -861,14 +863,34 @@ export class ContainerRuntime
 				"@fluidframework/id-compressor"
 			);
 
-			const pendingLocalState = context.pendingLocalState as IPendingRuntimeState;
+			/**
+			 * Because the IdCompressor emits so much telemetry, this function is used to sample
+			 * approximately 5% of all clients. Only the given percentage of sessions will emit telemetry.
+			 */
+			const idCompressorEventSampler: IEventSampler = (() => {
+				const isIdCompressorTelemetryEnabled = Math.random() < 0.05;
+				return {
+					sample: () => {
+						return isIdCompressorTelemetryEnabled;
+					},
+				};
+			})();
 
+			const compressorLogger = createSampledLogger(logger, idCompressorEventSampler);
+			const pendingLocalState = context.pendingLocalState as IPendingRuntimeState;
 			if (pendingLocalState?.pendingIdCompressorState !== undefined) {
-				idCompressor = deserializeIdCompressor(pendingLocalState.pendingIdCompressorState);
+				idCompressor = deserializeIdCompressor(
+					pendingLocalState.pendingIdCompressorState,
+					compressorLogger,
+				);
 			} else if (serializedIdCompressor !== undefined) {
-				idCompressor = deserializeIdCompressor(serializedIdCompressor, createSessionId());
+				idCompressor = deserializeIdCompressor(
+					serializedIdCompressor,
+					createSessionId(),
+					compressorLogger,
+				);
 			} else {
-				idCompressor = createIdCompressor(logger);
+				idCompressor = createIdCompressor(compressorLogger);
 			}
 		}
 
@@ -2511,15 +2533,23 @@ export class ContainerRuntime
 		return this.dataStores.createDetachedDataStoreCore(pkg, true, rootDataStoreId);
 	}
 
-	public createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached {
-		return this.dataStores.createDetachedDataStoreCore(pkg, false);
+	public createDetachedDataStore(
+		pkg: Readonly<string[]>,
+		groupId?: string,
+	): IFluidDataStoreContextDetached {
+		return this.dataStores.createDetachedDataStoreCore(pkg, false, undefined, groupId);
 	}
 
-	public async createDataStore(pkg: string | string[]): Promise<IDataStore> {
+	public async createDataStore(pkg: string | string[], groupId?: string): Promise<IDataStore> {
 		const id = uuid();
 		return channelToDataStore(
 			await this.dataStores
-				._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id)
+				._createFluidDataStoreContext(
+					Array.isArray(pkg) ? pkg : [pkg],
+					id,
+					undefined,
+					groupId,
+				)
 				.realize(),
 			id,
 			this,
@@ -2920,6 +2950,12 @@ export class ContainerRuntime
 	 * data store or an attachment blob.
 	 */
 	public async getGCNodePackagePath(nodePath: string): Promise<readonly string[] | undefined> {
+		// GC uses "/" when adding "root" references, e.g. for Aliasing or as part of Tombstone Auto-Recovery.
+		// These have no package path so return a special value.
+		if (nodePath === "/") {
+			return ["<GCROOT>"];
+		}
+
 		switch (this.getNodeType(nodePath)) {
 			case GCNodeType.Blob:
 				return [BlobManager.basePath];
@@ -3685,6 +3721,7 @@ export class ContainerRuntime
 		localOpMetadata: unknown,
 		opMetadata: Record<string, unknown> | undefined,
 	) {
+		assert(!this.isSummarizerClient, "Summarizer never reconnects so should never resubmit");
 		switch (message.type) {
 			case ContainerMessageType.FluidDataStoreOp:
 				// For Operations, call resubmitDataStoreOp which will find the right store
@@ -3706,8 +3743,8 @@ export class ContainerRuntime
 				this.submit(message);
 				break;
 			case ContainerMessageType.GC:
-				// GC op is only sent in summarizer which should never reconnect.
-				throw new LoggingError("GC op not expected to be resubmitted in summarizer");
+				this.submit(message);
+				break;
 			default: {
 				// This case should be very rare - it would imply an op was stashed from a
 				// future version of runtime code and now is being applied on an older version.

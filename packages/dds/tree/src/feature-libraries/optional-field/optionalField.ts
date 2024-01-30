@@ -10,7 +10,6 @@ import {
 	ChangesetLocalId,
 	RevisionTag,
 	areEqualChangeAtomIds,
-	RevisionMetadataSource,
 	DeltaFieldChanges,
 	DeltaDetachedNodeRename,
 	DeltaMark,
@@ -26,8 +25,6 @@ import {
 	NodeChangeRebaser,
 	NodeChangeset,
 	FieldEditor,
-	CrossFieldManager,
-	getIntention,
 	NodeExistenceState,
 	FieldChangeHandler,
 	RelevantRemovedRootsFromChild,
@@ -157,9 +154,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	compose: (
 		changes: TaggedChange<OptionalChangeset>[],
 		composeChild: NodeChangeComposer,
-		genId: IdAllocator,
-		crossFieldManager: CrossFieldManager,
-		revisionMetadata: RevisionMetadataSource,
 	): OptionalChangeset => {
 		const getBidirectionalMaps = (
 			moves: OptionalChangeset["moves"],
@@ -192,7 +186,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				if (id === "self") {
 					return id;
 				}
-				const intention = getIntention(id.revision ?? revision, revisionMetadata);
+				const intention = id.revision ?? revision;
 				return { revision: intention, localId: id.localId };
 			};
 
@@ -354,16 +348,12 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		change: OptionalChangeset,
 		overTagged: TaggedChange<OptionalChangeset>,
 		rebaseChild: NodeChangeRebaser,
-		genId: IdAllocator,
-		crossFieldManager: CrossFieldManager,
-		revisionMetadata: RevisionMetadataSource,
-		existenceState?: NodeExistenceState,
 	): OptionalChangeset => {
 		const withIntention = (id: RegisterId): RegisterId => {
 			if (id === "self") {
 				return id;
 			}
-			const intention = getIntention(id.revision ?? overTagged.revision, revisionMetadata);
+			const intention = id.revision ?? overTagged.revision;
 			return { revision: intention, localId: id.localId };
 		};
 

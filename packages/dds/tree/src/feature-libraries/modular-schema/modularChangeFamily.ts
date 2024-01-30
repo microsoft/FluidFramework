@@ -502,6 +502,7 @@ export class ModularChangeFamily
 		const crossFieldTable: RebaseTable = {
 			...newCrossFieldTable<FieldChange>(),
 			rebasedFieldToContext: new Map(),
+			rebasedNodeCache: new Map(),
 		};
 
 		let constraintState = newConstraintState(change.constraintViolationCount ?? 0);
@@ -544,7 +545,30 @@ export class ModularChangeFamily
 				field.change = fieldKind.changeHandler.rebaser.rebase(
 					fieldChangeset,
 					tagChange(baseChangeset, context.baseRevision),
-					(node) => node,
+					(curr, base, existenceState) => {
+						const key = curr ?? base;
+						if (key === undefined) {
+							return undefined;
+						}
+
+						const prior = crossFieldTable.rebasedNodeCache.get(key);
+						if (prior !== undefined) {
+							return prior;
+						}
+
+						// This is needed when the first rebase pass results in node changes from the rebased
+						// changeset being moved to a different location.
+						return this.rebaseNodeChange(
+							curr,
+							tagChange(base, context.baseRevision),
+							genId,
+							crossFieldTable,
+							() => true,
+							rebaseMetadata,
+							constraintState,
+							existenceState,
+						);
+					},
 					genId,
 					newCrossFieldManager(crossFieldTable),
 					rebaseMetadata,
@@ -693,7 +717,8 @@ export class ModularChangeFamily
 		constraintState: ConstraintState,
 		existenceState: NodeExistenceState = NodeExistenceState.Alive,
 	): NodeChangeset | undefined {
-		if (change === undefined && over.change?.fieldChanges === undefined) {
+		const key = change ?? over.change;
+		if (key === undefined) {
 			return undefined;
 		}
 
@@ -739,6 +764,7 @@ export class ModularChangeFamily
 			}
 		}
 
+		crossFieldTable.rebasedNodeCache.set(key, rebasedChange);
 		return rebasedChange;
 	}
 
@@ -1071,6 +1097,22 @@ interface InvertContext {
 
 interface RebaseTable extends CrossFieldTable<FieldChange> {
 	rebasedFieldToContext: Map<FieldChange, FieldChangeContext>;
+	/**
+	 * This map caches the output of a prior rebasing computation for a node, keyed on that computation's input.
+	 * The input for such a computation is characterized by a pair of node changesets:
+	 * - The node changeset from the input changeset being rebased
+	 * - The corresponding node changeset from the changeset being rebased over.
+	 *
+	 * Either of these may be undefined so we adopt the following convention:
+	 * - If the node changeset from the changeset being rebased is defined, then we use that as the key
+	 * - Otherwise, if the node changeset from the changeset being rebased over is defined, then we use that as the key
+	 * - Otherwise, we don't cache the output (which will be undefined anyway).
+	 *
+	 * This map is needed once we switch from the initial pass (which generates a new changeset) to the second pass which
+	 * performs surgery on the changeset generated in the first pass: we don't want to re-run the rebasing of nested
+	 * changes. Instead we want to keep using the objects generated in the first pass and mutate them where needed.
+	 */
+	rebasedNodeCache: Map<NodeChangeset, NodeChangeset>;
 }
 
 interface FieldChangeContext {
@@ -1308,11 +1350,36 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		change: FieldChangeset,
 		maxId: ChangesetLocalId = brand(-1),
 	): void {
+		const modularChange = this.buildChange(field, fieldKind, change, maxId);
+		this.applyChange(modularChange);
+	}
+
+	/**
+	 * Adds a change to the edit builder
+	 * @param field - the field which is being edited
+	 * @param fieldKind - the kind of the field
+	 * @param change - the change to the field
+	 * @param maxId - the highest `ChangesetLocalId` used in this change
+	 */
+	public buildChange(
+		field: FieldUpPath,
+		fieldKind: FieldKindIdentifier,
+		change: FieldChangeset,
+		maxId: ChangesetLocalId = brand(-1),
+	): ModularChangeset {
 		const changeMap = this.buildChangeMap(field, fieldKind, change);
-		this.applyChange(makeModularChangeset(changeMap, maxId));
+		return makeModularChangeset(changeMap, maxId);
 	}
 
 	public submitChanges(changes: EditDescription[], maxId: ChangesetLocalId = brand(-1)) {
+		const modularChange = this.buildChanges(changes, maxId);
+		this.applyChange(modularChange);
+	}
+
+	public buildChanges(
+		changes: EditDescription[],
+		maxId: ChangesetLocalId = brand(-1),
+	): ModularChangeset {
 		const changeMaps = changes.map((change) =>
 			makeAnonChange(
 				change.type === "global"
@@ -1332,7 +1399,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		if (maxId >= 0) {
 			composedChange.maxId = maxId;
 		}
-		this.applyChange(composedChange);
+		return composedChange;
 	}
 
 	public generateId(count?: number): ChangesetLocalId {
