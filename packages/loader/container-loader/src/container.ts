@@ -2508,7 +2508,7 @@ export class Container
 			(this.protocolHandler.quorum.get("code") ??
 				this.protocolHandler.quorum.get("code2")) as IFluidCodeDetails | undefined;
 
-		const existing = snapshot !== undefined;
+		const existing = snapshotTree !== undefined;
 
 		const context = new ContainerContext(
 			this.options,
