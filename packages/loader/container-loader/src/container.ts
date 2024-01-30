@@ -1216,7 +1216,7 @@ export class Container
 		return JSON.stringify(detachedContainerState);
 	}
 
-	public attach = runSingle(
+	public readonly attach = runSingle(
 		async (
 			request: IRequest,
 			attachProps?: { deltaConnection?: "none" | "delayed" },
