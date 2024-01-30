@@ -266,19 +266,19 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 			}
 		});
 
-		user1ContainerRuntime.submitSignal("TestSignal", true, dataObject2.runtime.clientId);
+		user1ContainerRuntime.submitSignal("TestSignal", true, user2ContainerRuntime.clientId);
 		await waitForSignal(user2ContainerRuntime);
 		assert.equal(user1SignalReceivedCount, 0, "client 1 should not receive signal");
 		assert.equal(user2SignalReceivedCount, 1, "client 2 did not receive signal");
 		assert.equal(user3SignalReceivedCount, 0, "client 3 should not receive signal");
 
-		user1ContainerRuntime.submitSignal("TestSignal", true, dataObject3.runtime.clientId);
+		user1ContainerRuntime.submitSignal("TestSignal", true, user3ContainerRuntime.clientId);
 		await waitForSignal(user3ContainerRuntime);
 		assert.equal(user1SignalReceivedCount, 0, "client 1 should not receive signal");
 		assert.equal(user2SignalReceivedCount, 1, "client 2 should not receive signal");
 		assert.equal(user3SignalReceivedCount, 1, "client 3 did not receive signal");
 
-		user2ContainerRuntime.submitSignal("TestSignal", true, dataObject1.runtime.clientId);
+		user2ContainerRuntime.submitSignal("TestSignal", true, user1ContainerRuntime.clientId);
 		await waitForSignal(user1ContainerRuntime);
 		assert.equal(user1SignalReceivedCount, 1, "client 1 did not receive signal");
 		assert.equal(user2SignalReceivedCount, 1, "client 2 should not receive signal");
