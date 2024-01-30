@@ -345,6 +345,7 @@ describe("ModularChangeFamily integration", () => {
 					],
 				]),
 			};
+
 			assertDeltaEqual(actual, expected);
 		});
 
