@@ -767,10 +767,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		// ever invoked on a DataObject containing local changes when it is attached for the first time. In post-attach flows, an extra
 		// instance of the DataObject is created for generating summaries and will never have local edits.
 		if (this.editLog.numberOfLocalEdits > 0) {
-			assert(
-				this.runtime.attachState !== AttachState.Attached,
-				0x62e /* Summarizing should not occur with local edits except on first attach. */
-			);
 			if (this.writeFormat === WriteFormat.v0_1_1) {
 				// Since we're the first client to attach, we can safely finalize ourselves since we're the only ones who have made IDs.
 				this.idCompressor.finalizeCreationRange(this.idCompressor.takeNextCreationRange());
