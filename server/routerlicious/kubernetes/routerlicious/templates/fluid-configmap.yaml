@@ -156,7 +156,8 @@ data:
             "groupId": "{{ template "deli.fullname" . }}",
             "checkpointBatchSize": 10,
             "checkpointTimeIntervalMsec": 1000,
-            "restartOnCheckpointFailure": {{ .Values.deli.restartOnCheckpointFailure }}
+            "restartOnCheckpointFailure": {{ .Values.deli.restartOnCheckpointFailure }},
+            "enableEphemeralContainerSummaryCleanup": {{ .Values.deli.enableEphemeralContainerSummaryCleanup }}
         },
         "scribe": {
             "kafkaClientId": "{{ template "scribe.fullname" . }}",
