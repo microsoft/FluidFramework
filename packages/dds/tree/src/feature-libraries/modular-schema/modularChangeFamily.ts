@@ -1245,7 +1245,8 @@ function newCrossFieldManager<T>(crossFieldTable: CrossFieldTable<T>): CrossFiel
 				}
 
 				if (
-					getFirstFromCrossFieldMap(getQueries(target), revision, id, count) !== undefined
+					getFirstFromCrossFieldMap(getQueries(target), revision, id, count).value !==
+					undefined
 				) {
 					manager.fieldInvalidated = true;
 				}
