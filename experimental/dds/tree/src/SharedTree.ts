@@ -737,6 +737,9 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		return createSingleBlobSummary(snapshotFileName, this.saveSerializedSummary({ serializer }));
 	}
 
+	/**
+	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).getAttachSummary}
+	 */
 	public override getAttachSummary(
 		fullTree?: boolean | undefined,
 		trackState?: boolean | undefined,
