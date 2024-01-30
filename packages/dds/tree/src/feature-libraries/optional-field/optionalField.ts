@@ -161,6 +161,11 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			withRevisionOrUndefined(change2.reservedDetachId, revision2);
 
 		const { srcToDst, dstToSrc } = getBidirectionalMaps(change1.moves, revision1);
+
+		// This loop will update srcToDst to map from registers before either change to
+		// registers after both changes have been applied.
+		// dstToSrc maps from registers after change1 is applied to registers before.
+		// This loop will not change dstToSrc.
 		for (const [src, dst, target] of change2.moves) {
 			const srcWithRevision = withRevision(src, revision2);
 			const dstWithRevision = withRevision(dst, revision2);
