@@ -386,7 +386,7 @@ class RebaseQueue<T> {
 		);
 
 		if (movedEffect !== undefined) {
-			newMark = addMarkEffect(newMark, movedEffect);
+			newMark = addMovedMarkEffect(newMark, movedEffect);
 		}
 
 		return {
@@ -418,12 +418,20 @@ class RebaseQueue<T> {
 		return {
 			baseMark: sizedBaseMark,
 			newMark:
-				movedMark === undefined ? sizedNewMark : addMarkEffect(sizedNewMark, movedMark),
+				movedMark === undefined
+					? sizedNewMark
+					: addMovedMarkEffect(sizedNewMark, movedMark),
 		};
 	}
 }
 
-function addMarkEffect<T>(mark: Mark<T>, effect: MarkEffect): Mark<T> {
+/**
+ * Combines `mark` and `effect` into a single mark.
+ * This function is only intended to handle cases where `mark` is part of a changeset being rebased
+ * and `effect` is an effect from the same changeset whose target has been moved by the base changeset.
+ * @returns a mark which has the composite effect of `mark` and `effect`.
+ */
+function addMovedMarkEffect<T>(mark: Mark<T>, effect: MarkEffect): Mark<T> {
 	if (isMoveIn(mark) && isMoveOut(effect)) {
 		const result: Mark<T> = {
 			...mark,
@@ -438,7 +446,7 @@ function addMarkEffect<T>(mark: Mark<T>, effect: MarkEffect): Mark<T> {
 	} else if (isTombstone(mark)) {
 		return { ...mark, ...effect };
 	}
-	assert(false, 0x818 /* Unexpected combination of moved and new marks */);
+	assert(false, 0x818 /* Unexpected combination of mark effects at source and destination */);
 }
 
 /**
