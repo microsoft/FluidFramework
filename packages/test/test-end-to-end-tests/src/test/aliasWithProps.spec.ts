@@ -72,7 +72,7 @@ class RuntimeFactoryWithProps extends BaseContainerRuntimeFactory {
 
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
 		const props = { a: "b" };
-		const [, dataStore] = await this.defaultFactory.constructInstance(runtime, props);
+		const [, dataStore] = await this.defaultFactory.createInstanceWithDataStore(runtime, props);
 		await dataStore.trySetAlias(defaultDataStoreId);
 	}
 }
@@ -108,7 +108,7 @@ describeCompat("HotSwap", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 		props: TestDataObjectProps,
 		alias: string,
 	) => {
-		const [object, datastore] = await factory.constructInstance(runtime, props);
+		const [object, datastore] = await factory.createInstanceWithDataStore(runtime, props);
 		const result = await datastore.trySetAlias(alias);
 		if (result !== "Success") {
 			const handle = await runtime.getAliasedDataStoreEntryPoint(alias);
@@ -165,10 +165,11 @@ describeCompat("HotSwap", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 		const runtime = dataObject._context.containerRuntime as IContainerRuntime;
 
 		const props = { a: "1 is different from 2" };
-		const [newObject] = await childDataObjectFactory.constructInstance(runtime, props, [
-			"Test",
-			"Child",
-		]);
+		const [newObject] = await childDataObjectFactory.createInstanceWithDataStore(
+			runtime,
+			props,
+			["Test", "Child"],
+		);
 		dataObject._root.set("newObject", newObject.handle);
 		await provider.ensureSynchronized();
 		assert.deepEqual(

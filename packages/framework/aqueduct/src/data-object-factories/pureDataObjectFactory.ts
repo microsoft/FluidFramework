@@ -261,7 +261,7 @@ export class PureDataObjectFactory<
 	}
 
 	/**
-	 * Creates a new instance of the object.
+	 * Creates a new instance of the object with a datastore which exposes the aliasing api.
 	 * @param runtime - container runtime. It is the runtime that will be used to create the object. It will produce
 	 * the underlying infrastructure to get the data object to operate.
 	 * @param initialState - The initial state to provide to the created component.
@@ -271,7 +271,7 @@ export class PureDataObjectFactory<
 	 * The data object is attached only when it is attached to the handle graph that connects to an aliased object or
 	 * when the data object is aliased.
 	 */
-	public async constructInstance(
+	public async createInstanceWithDataStore(
 		containerRuntime: IContainerRuntimeBase,
 		initialState?: I["InitialState"],
 		packagePath?: Readonly<string[]>,
