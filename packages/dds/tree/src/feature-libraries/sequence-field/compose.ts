@@ -6,10 +6,8 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	ChangeAtomId,
-	makeAnonChange,
 	RevisionMetadataSource,
 	RevisionTag,
-	tagChange,
 	TaggedChange,
 } from "../../core/index.js";
 import { asMutable, brand, fail, fakeIdAllocator, IdAllocator } from "../../util/index.js";
@@ -78,7 +76,7 @@ import { CellOrderingMethod, sequenceConfig } from "./config.js";
 export type NodeChangeComposer<TNodeChange> = (
 	change1: TNodeChange | undefined,
 	change2: TNodeChange | undefined,
-) => TNodeChange;
+) => TNodeChange | undefined;
 
 /**
  * Composes a sequence of changesets into a single changeset.
@@ -127,7 +125,7 @@ function composeMarkLists<TNodeChange>(
 		genId,
 		moveEffects,
 		revisionMetadata,
-		(a, b) => composeChildChanges(a, b.change, composeChild),
+		(a, b) => composeChildChanges(a, b, composeChild),
 	);
 	while (!queue.isEmpty()) {
 		const { baseMark, newMark } = queue.pop();
@@ -198,14 +196,10 @@ function composeMarks<TNodeChange>(
 	);
 	if (nodeChange !== undefined) {
 		const baseSource = getMoveIn(baseMark);
+
+		// TODO: Make sure composeChild is not called twice on the node changes.
 		if (baseSource !== undefined) {
-			setModifyAfter(
-				moveEffects,
-				getEndpoint(baseSource, baseRev),
-				nodeChange,
-				newRev,
-				composeChild,
-			);
+			setModifyAfter(moveEffects, getEndpoint(baseSource, baseRev), nodeChange);
 			nodeChange = undefined;
 		}
 	}
@@ -423,7 +417,7 @@ function composeMarks<TNodeChange>(
 					revision: baseMark.revision,
 					localId: baseMark.id,
 				},
-				changes: composeChildChanges(nodeChange, nodeChanges?.change, composeChild),
+				changes: composeChildChanges(nodeChange, nodeChanges, composeChild),
 			};
 			return vestige;
 		}
@@ -499,7 +493,7 @@ function amendComposeI<TNodeChange>(
 ): MarkList<TNodeChange> {
 	const factory = new MarkListFactory<TNodeChange>();
 	const queue = new MarkQueue(marks, undefined, moveEffects, true, fakeIdAllocator, (a, b) =>
-		composeChildChanges(a, b.change, composeChild),
+		composeChildChanges(a, b, composeChild),
 	);
 
 	while (!queue.isEmpty()) {
@@ -529,7 +523,7 @@ export class ComposeQueue<T> {
 		genId: IdAllocator,
 		moveEffects: MoveEffectTable<T>,
 		private readonly revisionMetadata: RevisionMetadataSource,
-		composeChanges?: (a: T | undefined, b: TaggedChange<T>) => T | undefined,
+		composeChanges?: NodeChangeComposer<T>,
 	) {
 		this.baseMarks = new MarkQueue(
 			baseMarks,
@@ -773,21 +767,19 @@ function setModifyAfter<T>(
 	moveEffects: MoveEffectTable<T>,
 	{ revision, localId: id }: ChangeAtomId,
 	modifyAfter: T,
-	modifyRevision: RevisionTag | undefined,
-	composeChanges: NodeChangeComposer<T>,
 ) {
 	const target = CrossFieldTarget.Source;
 	const count = 1;
 	const effect = getMoveEffect(moveEffects, target, revision, id, count, false);
 	let newEffect: MoveEffect<T>;
 	if (effect.value !== undefined) {
-		const nodeChange =
-			effect.value.modifyAfter !== undefined
-				? composeChanges(effect.value.modifyAfter.change, modifyAfter)
-				: modifyAfter;
-		newEffect = { ...effect.value, modifyAfter: makeAnonChange(nodeChange) };
+		assert(
+			effect.value.modifyAfter === undefined,
+			"Unexpected move of multiple changesets for the same node",
+		);
+		newEffect = { ...effect.value, modifyAfter };
 	} else {
-		newEffect = { modifyAfter: tagChange(modifyAfter, modifyRevision) };
+		newEffect = { modifyAfter };
 	}
 	setMoveEffect(moveEffects, target, revision, id, count, newEffect);
 }
