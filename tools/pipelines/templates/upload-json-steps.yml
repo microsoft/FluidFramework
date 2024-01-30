@@ -19,42 +19,33 @@ steps:
   clean: true
 
 # Download the api-extractor outputs
-- template: download-pipeline-artifact.yml
+- template: download-api-extractor-artifact.yml
   parameters:
-    pipelineDefinition: Build - common-definitions
-    branchName: ${{ variables['Build.SourceBranch'] }}
-- template: download-pipeline-artifact.yml
+    pipelineName: Build - common-definitions
+- template: download-api-extractor-artifact.yml
   parameters:
-    pipelineDefinition: Build - common-utils
-    branchName: ${{ variables['Build.SourceBranch'] }}
-- template: download-pipeline-artifact.yml
+    pipelineName: Build - common-utils
+- template: download-api-extractor-artifact.yml
   parameters:
-    pipelineDefinition: Build - container-definitions
-    branchName: ${{ variables['Build.SourceBranch'] }}
-- template: download-pipeline-artifact.yml
+    pipelineName: Build - container-definitions
+- template: download-api-extractor-artifact.yml
   parameters:
-    pipelineDefinition: Build - core-interfaces
-    branchName: ${{ variables['Build.SourceBranch'] }}
-- template: download-pipeline-artifact.yml
+    pipelineName: Build - core-interfaces
+- template: download-api-extractor-artifact.yml
   parameters:
-    pipelineDefinition: Build - driver-definitions
-    branchName: ${{ variables['Build.SourceBranch'] }}
-- template: download-pipeline-artifact.yml
+    pipelineName: Build - driver-definitions
+- template: download-api-extractor-artifact.yml
   parameters:
-    pipelineDefinition: Build - protocol-definitions
-    branchName: ${{ variables['Build.SourceBranch'] }}
-- template: download-pipeline-artifact.yml
+    pipelineName: Build - protocol-definitions
+- template: download-api-extractor-artifact.yml
   parameters:
-    pipelineDefinition: Build - azure
-    branchName: ${{ variables['Build.SourceBranch'] }}
-- template: download-pipeline-artifact.yml
+    pipelineName: Build - azure
+- template: download-api-extractor-artifact.yml
   parameters:
-    pipelineDefinition: Build - client packages
-    branchName: ${{ variables['Build.SourceBranch'] }}
-- template: download-pipeline-artifact.yml
+    pipelineName: Build - client packages
+- template: download-api-extractor-artifact.yml
   parameters:
-    pipelineDefinition: server-routerlicious
-    branchName: ${{ variables['Build.SourceBranch'] }}
+    pipelineName: server-routerlicious
 
 # Copy and merge the api-extractor outputs to a central location
 - task: CopyFiles@2

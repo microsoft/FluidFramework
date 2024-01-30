@@ -1,14 +1,17 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-# download-pipeline-artifact pipeline
-
+# download-api-extractor-artifact pipeline
+# Downloads the _api-extractor-temp artifact from a specific internal pipeline using
+# branchName and pipelineName as parameters. By default, the branch triggering this
+# pipeline will be used as branchName. 
 parameters:
-- name: pipelineDefinition
+- name: pipelineName
   type: string
 
 - name: branchName
   type: string
+  default: ${{ variables['Build.SourceBranch'] }}
   
 steps:
 # Download the api-extractor outputs
@@ -19,7 +22,7 @@ steps:
   inputs:
     buildType: specific
     project: internal
-    pipeline: ${{ parameters.pipelineDefinition }}
+    pipeline: ${{ parameters.pipelineName }}
     buildVersionToDownload: latestFromBranch
     branchName: ${{ parameters.branchName }}
     artifact: _api-extractor-temp
