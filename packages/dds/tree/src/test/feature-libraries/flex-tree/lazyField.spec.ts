@@ -10,28 +10,29 @@ import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 
 import {
-	type AllowedTypes,
+	type FlexAllowedTypes,
 	Any,
 	FieldKinds,
 	cursorForJsonableTreeNode,
 	cursorForJsonableTreeField,
-} from "../../../feature-libraries";
-import { FieldAnchor, FieldKey, rootFieldKey, UpPath } from "../../../core";
-import { forestWithContent, flexTreeViewWithContent } from "../../utils";
-import { leaf, leaf as leafDomain, SchemaBuilder } from "../../../domains";
-import { brand } from "../../../util";
+	FlexFieldSchema,
+} from "../../../feature-libraries/index.js";
+import { FieldAnchor, FieldKey, rootFieldKey, UpPath } from "../../../core/index.js";
+import { forestWithContent, flexTreeViewWithContent } from "../../utils.js";
+import { leaf, leaf as leafDomain, SchemaBuilder } from "../../../domains/index.js";
+import { brand } from "../../../util/index.js";
 import {
 	LazyField,
 	LazyOptionalField,
 	LazySequence,
 	LazyValueField,
-} from "../../../feature-libraries/flex-tree/lazyField";
+} from "../../../feature-libraries/flex-tree/lazyField.js";
 import {
 	getReadonlyContext,
 	initializeCursor,
 	readonlyTreeWithContent,
 	rootFieldAnchor,
-} from "./utils";
+} from "./utils.js";
 
 const detachedField: FieldKey = brand("detached");
 const detachedFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: detachedField };
@@ -39,7 +40,7 @@ const detachedFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: detached
 /**
  * Test {@link LazyField} implementation.
  */
-class TestLazyField<TTypes extends AllowedTypes> extends LazyField<
+class TestLazyField<TTypes extends FlexAllowedTypes> extends LazyField<
 	typeof FieldKinds.optional,
 	TTypes
 > {}
@@ -48,26 +49,26 @@ describe("LazyField", () => {
 	it("LazyField implementations do not allow edits to detached trees", () => {
 		const builder = new SchemaBuilder({ scope: "lazyTree" });
 		builder.object("empty", {});
-		const schema = builder.intoSchema(SchemaBuilder.optional(Any));
+		const schema = builder.intoSchema(FlexFieldSchema.create(FieldKinds.optional, [Any]));
 		const forest = forestWithContent({ schema, initialTree: {} });
 		const context = getReadonlyContext(forest, schema);
 		const cursor = initializeCursor(context, detachedFieldAnchor);
 
 		const sequenceField = new LazySequence(
 			context,
-			SchemaBuilder.sequence(Any),
+			FlexFieldSchema.create(FieldKinds.sequence, [Any]),
 			cursor,
 			detachedFieldAnchor,
 		);
 		const optionalField = new LazyOptionalField(
 			context,
-			SchemaBuilder.optional(Any),
+			FlexFieldSchema.create(FieldKinds.optional, [Any]),
 			cursor,
 			detachedFieldAnchor,
 		);
 		const valueField = new LazyValueField(
 			context,
-			SchemaBuilder.required(Any),
+			FlexFieldSchema.create(FieldKinds.required, [Any]),
 			cursor,
 			detachedFieldAnchor,
 		);
@@ -102,7 +103,9 @@ describe("LazyField", () => {
 		// #region Tree and schema initialization
 
 		const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
-		const rootSchema = SchemaBuilder.optional(builder.object("object", {}));
+		const rootSchema = FlexFieldSchema.create(FieldKinds.optional, [
+			builder.object("object", {}),
+		]);
 		const schema = builder.intoSchema(rootSchema);
 
 		// Note: this tree initialization is strictly to enable construction of the lazy field.
@@ -115,21 +118,27 @@ describe("LazyField", () => {
 
 		const anyOptionalField = new TestLazyField(
 			context,
-			SchemaBuilder.optional(Any),
+			FlexFieldSchema.create(FieldKinds.optional, [Any]),
 			cursor,
 			detachedFieldAnchor,
 		);
 
-		assert(anyOptionalField.is(SchemaBuilder.optional(Any)));
+		assert(anyOptionalField.is(FlexFieldSchema.create(FieldKinds.optional, [Any])));
 
-		assert(!anyOptionalField.is(SchemaBuilder.optional([])));
-		assert(!anyOptionalField.is(SchemaBuilder.optional(leafDomain.boolean)));
-		assert(!anyOptionalField.is(SchemaBuilder.required([])));
-		assert(!anyOptionalField.is(SchemaBuilder.required(Any)));
-		assert(!anyOptionalField.is(SchemaBuilder.required(leafDomain.boolean)));
-		assert(!anyOptionalField.is(SchemaBuilder.sequence([])));
-		assert(!anyOptionalField.is(SchemaBuilder.sequence(Any)));
-		assert(!anyOptionalField.is(SchemaBuilder.sequence(leafDomain.boolean)));
+		assert(!anyOptionalField.is(FlexFieldSchema.create(FieldKinds.optional, [])));
+		assert(
+			!anyOptionalField.is(FlexFieldSchema.create(FieldKinds.optional, [leafDomain.boolean])),
+		);
+		assert(!anyOptionalField.is(FlexFieldSchema.create(FieldKinds.required, [])));
+		assert(!anyOptionalField.is(FlexFieldSchema.create(FieldKinds.required, [Any])));
+		assert(
+			!anyOptionalField.is(FlexFieldSchema.create(FieldKinds.required, [leafDomain.boolean])),
+		);
+		assert(!anyOptionalField.is(FlexFieldSchema.create(FieldKinds.sequence, [])));
+		assert(!anyOptionalField.is(FlexFieldSchema.create(FieldKinds.sequence, [Any])));
+		assert(
+			!anyOptionalField.is(FlexFieldSchema.create(FieldKinds.sequence, [leafDomain.boolean])),
+		);
 
 		// #endregion
 
@@ -137,24 +146,48 @@ describe("LazyField", () => {
 
 		const booleanOptionalField = new LazyOptionalField(
 			context,
-			SchemaBuilder.optional(leafDomain.boolean),
+			FlexFieldSchema.create(FieldKinds.optional, [leafDomain.boolean]),
 			cursor,
 			detachedFieldAnchor,
 		);
 
-		assert(booleanOptionalField.is(SchemaBuilder.optional(leafDomain.boolean)));
+		assert(
+			booleanOptionalField.is(
+				FlexFieldSchema.create(FieldKinds.optional, [leafDomain.boolean]),
+			),
+		);
 
-		assert(!booleanOptionalField.is(SchemaBuilder.optional(Any)));
-		assert(!booleanOptionalField.is(SchemaBuilder.optional(leafDomain.number)));
-		assert(!booleanOptionalField.is(SchemaBuilder.required([])));
-		assert(!booleanOptionalField.is(SchemaBuilder.required(Any)));
-		assert(!booleanOptionalField.is(SchemaBuilder.required(leafDomain.boolean)));
-		assert(!booleanOptionalField.is(SchemaBuilder.required(leafDomain.number)));
-		assert(!booleanOptionalField.is(SchemaBuilder.sequence([])));
-		assert(!booleanOptionalField.is(SchemaBuilder.sequence(Any)));
-		assert(!booleanOptionalField.is(SchemaBuilder.sequence(leafDomain.boolean)));
-		assert(!booleanOptionalField.is(SchemaBuilder.sequence(leafDomain.number)));
-		assert(!booleanOptionalField.is(SchemaBuilder.optional([])));
+		assert(!booleanOptionalField.is(FlexFieldSchema.create(FieldKinds.optional, [Any])));
+		assert(
+			!booleanOptionalField.is(
+				FlexFieldSchema.create(FieldKinds.optional, [leafDomain.number]),
+			),
+		);
+		assert(!booleanOptionalField.is(FlexFieldSchema.create(FieldKinds.required, [])));
+		assert(!booleanOptionalField.is(FlexFieldSchema.create(FieldKinds.required, [Any])));
+		assert(
+			!booleanOptionalField.is(
+				FlexFieldSchema.create(FieldKinds.required, [leafDomain.boolean]),
+			),
+		);
+		assert(
+			!booleanOptionalField.is(
+				FlexFieldSchema.create(FieldKinds.required, [leafDomain.number]),
+			),
+		);
+		assert(!booleanOptionalField.is(FlexFieldSchema.create(FieldKinds.sequence, [])));
+		assert(!booleanOptionalField.is(FlexFieldSchema.create(FieldKinds.sequence, [Any])));
+		assert(
+			!booleanOptionalField.is(
+				FlexFieldSchema.create(FieldKinds.sequence, [leafDomain.boolean]),
+			),
+		);
+		assert(
+			!booleanOptionalField.is(
+				FlexFieldSchema.create(FieldKinds.sequence, [leafDomain.number]),
+			),
+		);
+		assert(!booleanOptionalField.is(FlexFieldSchema.create(FieldKinds.optional, [])));
 
 		// #endregion
 	});
@@ -162,9 +195,9 @@ describe("LazyField", () => {
 	it("parent", () => {
 		const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
 		const struct = builder.object("object", {
-			foo: SchemaBuilder.optional(leafDomain.primitives),
+			foo: FlexFieldSchema.create(FieldKinds.optional, leafDomain.primitives),
 		});
-		const rootSchema = SchemaBuilder.optional(struct);
+		const rootSchema = FlexFieldSchema.create(FieldKinds.optional, [struct]);
 		const schema = builder.intoSchema(rootSchema);
 
 		const { context, cursor } = readonlyTreeWithContent({
@@ -190,7 +223,7 @@ describe("LazyField", () => {
 
 		const leafField = new TestLazyField(
 			context,
-			SchemaBuilder.optional(leafDomain.primitives),
+			FlexFieldSchema.create(FieldKinds.optional, leafDomain.primitives),
 			cursor,
 			{
 				parent: parentAnchor,
@@ -203,7 +236,7 @@ describe("LazyField", () => {
 
 describe("LazyOptionalField", () => {
 	const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
-	const rootSchema = SchemaBuilder.optional(leafDomain.number);
+	const rootSchema = FlexFieldSchema.create(FieldKinds.optional, [leafDomain.number]);
 	const schema = builder.intoSchema(rootSchema);
 
 	describe("Field with value", () => {
@@ -216,7 +249,7 @@ describe("LazyOptionalField", () => {
 
 		it("boxedAt", () => {
 			const boxedResult = field.boxedAt(0) ?? assert.fail();
-			assert.equal(boxedResult.type, leafDomain.number.name);
+			assert.equal(boxedResult.schema, leafDomain.number);
 			assert.equal(boxedResult.value, 42);
 		});
 
@@ -278,22 +311,22 @@ describe("LazyOptionalField", () => {
 			schema,
 			initialTree: 5,
 		});
-		assert.equal(view.editableTree.content, 5);
-		view.editableTree.content = 6;
-		assert.equal(view.editableTree.content, 6);
-		view.editableTree.content = undefined;
-		assert.equal(view.editableTree.content, undefined);
-		view.editableTree.content = cursorForJsonableTreeNode({
+		assert.equal(view.flexTree.content, 5);
+		view.flexTree.content = 6;
+		assert.equal(view.flexTree.content, 6);
+		view.flexTree.content = undefined;
+		assert.equal(view.flexTree.content, undefined);
+		view.flexTree.content = cursorForJsonableTreeNode({
 			type: leaf.string.name,
 			value: 7,
 		});
-		assert.equal(view.editableTree.content, 7);
+		assert.equal(view.flexTree.content, 7);
 	});
 });
 
 describe("LazyValueField", () => {
 	const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
-	const rootSchema = SchemaBuilder.required(leafDomain.string);
+	const rootSchema = FlexFieldSchema.create(FieldKinds.required, [leafDomain.string]);
 	const schema = builder.intoSchema(rootSchema);
 
 	const initialTree = "Hello world";
@@ -308,7 +341,7 @@ describe("LazyValueField", () => {
 
 	it("boxedAt", () => {
 		const boxedResult = field.boxedAt(0) ?? assert.fail();
-		assert.equal(boxedResult.type, leafDomain.string.name);
+		assert.equal(boxedResult.schema, leafDomain.string);
 		assert.equal(boxedResult.value, initialTree);
 	});
 
@@ -334,18 +367,18 @@ describe("LazyValueField", () => {
 			schema,
 			initialTree: "X",
 		});
-		assert.equal(view.editableTree.content, "X");
-		view.editableTree.content = "Y";
-		assert.equal(view.editableTree.content, "Y");
+		assert.equal(view.flexTree.content, "X");
+		view.flexTree.content = "Y";
+		assert.equal(view.flexTree.content, "Y");
 		const zCursor = cursorForJsonableTreeNode({ type: leaf.string.name, value: "Z" });
-		view.editableTree.content = zCursor;
-		assert.equal(view.editableTree.content, "Z");
+		view.flexTree.content = zCursor;
+		assert.equal(view.flexTree.content, "Z");
 	});
 });
 
 describe("LazySequence", () => {
 	const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
-	const rootSchema = SchemaBuilder.sequence(leafDomain.number);
+	const rootSchema = FlexFieldSchema.create(FieldKinds.sequence, [leafDomain.number]);
 	const schema = builder.intoSchema(rootSchema);
 
 	/**
@@ -364,7 +397,7 @@ describe("LazySequence", () => {
 			schema,
 			initialTree: data,
 		});
-		return view.editableTree;
+		return view.flexTree;
 	}
 
 	it("atIndex", () => {
@@ -389,15 +422,15 @@ describe("LazySequence", () => {
 	it("boxedAt", () => {
 		const sequence = testSequence([37, 42]);
 		const boxedResult0 = sequence.boxedAt(0) ?? assert.fail();
-		assert.equal(boxedResult0.type, leafDomain.number.name);
+		assert.equal(boxedResult0.schema, leafDomain.number);
 		assert.equal(boxedResult0.value, 37);
 
 		const boxedResult1 = sequence.boxedAt(1) ?? assert.fail();
-		assert.equal(boxedResult1.type, leafDomain.number.name);
+		assert.equal(boxedResult1.schema, leafDomain.number);
 		assert.equal(boxedResult1.value, 42);
 
 		const boxedResultNeg1 = sequence.boxedAt(-1) ?? assert.fail();
-		assert.equal(boxedResultNeg1.type, leafDomain.number.name);
+		assert.equal(boxedResultNeg1.schema, leafDomain.number);
 		assert.equal(boxedResultNeg1.value, 42);
 
 		assert.equal(sequence.boxedAt(2), undefined);
@@ -419,34 +452,34 @@ describe("LazySequence", () => {
 		const sequence = testSequence([37, 42]);
 		const mapResult = sequence.mapBoxed((value) => value);
 		assert.equal(mapResult.length, 2);
-		assert.equal(mapResult[0].type, leafDomain.number.name);
+		assert.equal(mapResult[0].schema, leafDomain.number);
 		assert.equal(mapResult[0].value, 37);
-		assert.equal(mapResult[1].type, leafDomain.number.name);
+		assert.equal(mapResult[1].schema, leafDomain.number);
 		assert.equal(mapResult[1].value, 42);
 	});
 
 	it("asArray", () => {
 		const sequence = testSequence([37, 42]);
-		const array = sequence.asArray;
+		const array = [...sequence];
 		assert.deepEqual(array, [37, 42]);
 	});
 
 	describe("insertAt", () => {
 		it("basic use", () => {
 			const sequence = testMutableSequence([]);
-			assert.deepEqual(sequence.asArray, []);
+			assert.deepEqual([...sequence], []);
 			sequence.insertAt(0, []);
-			assert.deepEqual(sequence.asArray, []);
+			assert.deepEqual([...sequence], []);
 			sequence.insertAt(0, [10]);
-			assert.deepEqual(sequence.asArray, [10]);
+			assert.deepEqual([...sequence], [10]);
 			sequence.insertAt(0, [11]);
-			assert.deepEqual(sequence.asArray, [11, 10]);
+			assert.deepEqual([...sequence], [11, 10]);
 			sequence.insertAt(1, [12]);
-			assert.deepEqual(sequence.asArray, [11, 12, 10]);
+			assert.deepEqual([...sequence], [11, 12, 10]);
 			sequence.insertAt(3, [13]);
-			assert.deepEqual(sequence.asArray, [11, 12, 10, 13]);
+			assert.deepEqual([...sequence], [11, 12, 10, 13]);
 			sequence.insertAt(1, [1, 2, 3]);
-			assert.deepEqual(sequence.asArray, [11, 1, 2, 3, 12, 10, 13]);
+			assert.deepEqual([...sequence], [11, 1, 2, 3, 12, 10, 13]);
 			assert.throws(
 				() => sequence.insertAt(-1, []),
 				(e: Error) => validateAssertionError(e, /index/),
@@ -471,14 +504,14 @@ describe("LazySequence", () => {
 
 		it("with cursors", () => {
 			const sequence = testMutableSequence([]);
-			assert.deepEqual(sequence.asArray, []);
+			assert.deepEqual([...sequence], []);
 			sequence.insertAt(0, cursorForJsonableTreeField([]));
-			assert.deepEqual(sequence.asArray, []);
+			assert.deepEqual([...sequence], []);
 			sequence.insertAt(
 				0,
 				cursorForJsonableTreeField([{ type: leaf.number.name, value: 10 }]),
 			);
-			assert.deepEqual(sequence.asArray, [10]);
+			assert.deepEqual([...sequence], [10]);
 			sequence.insertAt(
 				0,
 				cursorForJsonableTreeField([
@@ -486,7 +519,7 @@ describe("LazySequence", () => {
 					{ type: leaf.number.name, value: 12 },
 				]),
 			);
-			assert.deepEqual(sequence.asArray, [11, 12, 10]);
+			assert.deepEqual([...sequence], [11, 12, 10]);
 		});
 	});
 });

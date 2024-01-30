@@ -12,7 +12,7 @@ import {
 	FieldUpPath,
 	TreeNodeSchemaIdentifier,
 	UpPath,
-} from "../../core";
+} from "../../core/index.js";
 
 import {
 	PrefixedPath,
@@ -22,12 +22,12 @@ import {
 	stackTreeNodeCursor,
 	// Allow importing from this specific file which is being tested:
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../feature-libraries/treeCursorUtils";
-import { brand } from "../../util";
+} from "../../feature-libraries/treeCursorUtils.js";
+import { brand } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { adapter } from "../../feature-libraries/treeTextCursor";
-import { leaf } from "../../domains";
-import { expectEqualFieldPaths, expectEqualPaths } from "../utils";
+import { adapter } from "../../feature-libraries/treeTextCursor.js";
+import { leaf } from "../../domains/index.js";
+import { expectEqualFieldPaths, expectEqualPaths } from "../utils.js";
 
 describe("treeCursorUtils", () => {
 	const root: UpPath = {

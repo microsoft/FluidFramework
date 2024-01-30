@@ -121,7 +121,7 @@ function getNewTreeView(tree: ITree) {
 	return tree.schematize(new TreeConfiguration(QuantityType, () => ({ quantity: 0 })));
 }
 
-describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
+describeCompat("Stamped v2 ops", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {
@@ -199,7 +199,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 		options: { enableOfflineLoad: true },
 	};
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		provider = getTestObjectProvider();
 		// Creates the document as v1 of the code with a SharedCell
 		const container = await provider.createContainer(runtimeFactory1);

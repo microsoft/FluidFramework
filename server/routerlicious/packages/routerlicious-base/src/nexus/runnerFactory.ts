@@ -107,6 +107,7 @@ export class NexusResources implements core.IResources {
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
 		public collaborationSessionEvents?: TypedEventEmitter<ICollaborationSessionEvents>,
 		public serviceMessageResourceManager?: core.IServiceMessageResourceManager,
+		public clusterDrainingChecker?: core.IClusterDrainingChecker,
 	) {
 		const socketIoAdapterConfig = config.get("nexus:socketIoAdapter");
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
@@ -535,6 +536,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			revokedTokenChecker,
 			collaborationSessionEvents,
 			serviceMessageResourceManager,
+			customizations?.clusterDrainingChecker,
 		);
 	}
 }
@@ -564,6 +566,7 @@ export class NexusRunnerFactory implements core.IRunnerFactory<NexusResources> {
 			resources.tokenRevocationManager,
 			resources.revokedTokenChecker,
 			resources.collaborationSessionEvents,
+			resources.clusterDrainingChecker,
 		);
 	}
 }

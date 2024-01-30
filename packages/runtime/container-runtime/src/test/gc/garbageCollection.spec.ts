@@ -9,7 +9,7 @@ import {
 	ContainerErrorTypes,
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
-import { IErrorBase, ITelemetryBaseEvent, ConfigTypes } from "@fluidframework/core-interfaces";
+import { IErrorBase, ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	gcBlobPrefix,
@@ -61,7 +61,7 @@ import {
 	metadataBlobName,
 } from "../../summary";
 import { pkgVersion } from "../../packageVersion";
-import { configProvider } from "./gcUnitTestHelpers";
+import { createTestConfigProvider } from "./gcUnitTestHelpers";
 
 type GcWithPrivates = IGarbageCollector & {
 	readonly runtime: IGarbageCollectionRuntime;
@@ -90,8 +90,8 @@ describe("Garbage Collection Tests", () => {
 	// Nodes in the reference graph.
 	const nodes: string[] = ["/node1", "/node2", "/node3", "/node4", "/node5", "/node6"];
 	const testPkgPath = ["testPkg"];
+	const configProvider = createTestConfigProvider();
 
-	let injectedSettings: Record<string, ConfigTypes> = {};
 	let mockLogger: MockLogger;
 	let mc: MonitoringContext<MockLogger>;
 	let clock: SinonFakeTimers;
@@ -192,13 +192,13 @@ describe("Garbage Collection Tests", () => {
 	beforeEach(() => {
 		gc = undefined;
 		mockLogger = new MockLogger();
-		mc = mixinMonitoringContext(mockLogger, configProvider(injectedSettings));
+		mc = mixinMonitoringContext(mockLogger, configProvider);
 	});
 
 	afterEach(() => {
 		clock.reset();
 		mockLogger.clear();
-		injectedSettings = {};
+		configProvider.clear();
 		defaultGCData = { gcNodes: {} };
 		gc?.dispose();
 	});
@@ -230,6 +230,41 @@ describe("Garbage Collection Tests", () => {
 			closeCalledAfterExactTicks(defaultSessionExpiryDurationMs),
 			"Close should have been called at exactly defaultSessionExpiryDurationMs",
 		);
+	});
+
+	describe("addedOutboundReference", () => {
+		it("ignores target relative URLs", () => {
+			const garbageCollector = createGarbageCollector();
+			const spies = {
+				telemetryTracker: { nodeUsed: spy(garbageCollector.telemetryTracker, "nodeUsed") },
+			};
+			garbageCollector.addedOutboundReference("/from", "to/relative/url");
+			mockLogger.assertMatch(
+				[{ eventName: "GarbageCollector:InvalidRelativeOutboundRoute", category: "error" }],
+				"Expected error log",
+			);
+			assert.equal(
+				spies.telemetryTracker.nodeUsed.callCount,
+				0,
+				"nodeUsed should not be called",
+			);
+		});
+		it("tracks target absolute URLs", () => {
+			const garbageCollector = createGarbageCollector();
+			const spies = {
+				telemetryTracker: { nodeUsed: spy(garbageCollector.telemetryTracker, "nodeUsed") },
+			};
+			garbageCollector.addedOutboundReference("/from", "/to/absolute/url");
+			mockLogger.assertMatchNone(
+				[{ eventName: "GarbageCollector:InvalidRelativeOutboundRoute" }],
+				"unexpected events logged",
+			);
+			assert.equal(
+				spies.telemetryTracker.nodeUsed.callCount,
+				1,
+				"nodeUsed should have been called",
+			);
+		});
 	});
 
 	describe("runSweepPhase", () => {
@@ -898,8 +933,10 @@ describe("Garbage Collection Tests", () => {
 			const inactiveTimeoutMs = 500;
 
 			beforeEach(() => {
-				injectedSettings["Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs"] =
-					inactiveTimeoutMs;
+				configProvider.set(
+					"Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs",
+					inactiveTimeoutMs,
+				);
 			});
 
 			summarizerContainerTests(
@@ -1081,8 +1118,10 @@ describe("Garbage Collection Tests", () => {
 
 		it("Unreferenced nodes transition through Inactive, TombstoneReady and SweepReady states", async () => {
 			const inactiveTimeoutMs = 500;
-			injectedSettings["Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs"] =
-				inactiveTimeoutMs;
+			configProvider.set(
+				"Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs",
+				inactiveTimeoutMs,
+			);
 
 			const garbageCollector = createGarbageCollector({});
 

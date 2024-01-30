@@ -12,21 +12,21 @@ import {
 	DDSFuzzHarnessEvents,
 } from "@fluid-private/test-dds-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { UpPath, Anchor, JsonableTree, Value } from "../../../core";
+import { UpPath, Anchor, JsonableTree, Value } from "../../../core/index.js";
 import {
 	SharedTreeTestFactory,
 	createTestUndoRedoStacks,
 	toJsonableTree,
 	validateTree,
 	validateTreeConsistency,
-} from "../../utils";
+} from "../../utils.js";
 import {
 	makeOpGenerator,
 	EditGeneratorOpWeights,
 	FuzzTestState,
 	viewFromState,
-} from "./fuzzEditGenerators";
-import { fuzzReducer } from "./fuzzEditReducers";
+} from "./fuzzEditGenerators.js";
+import { fuzzReducer } from "./fuzzEditReducers.js";
 import {
 	RevertibleSharedTreeView,
 	createAnchors,
@@ -34,8 +34,8 @@ import {
 	isRevertibleSharedTreeView,
 	onCreate,
 	validateAnchors,
-} from "./fuzzUtils";
-import { Operation } from "./operationTypes";
+} from "./fuzzUtils.js";
+import { Operation } from "./operationTypes.js";
 
 /**
  * This interface is meant to be used for tests that require you to store a branch of a tree
@@ -52,7 +52,7 @@ describe("Fuzz - undo/redo", () => {
 
 	const undoRedoWeights: Partial<EditGeneratorOpWeights> = {
 		insert: 1,
-		delete: 1,
+		remove: 1,
 	};
 
 	describe.skip("Inorder undo/redo matches the initial/final state", () => {
@@ -217,8 +217,7 @@ describe("Fuzz - undo/redo", () => {
 			numberOfClients: 3,
 			emitter,
 			detachedStartOptions: {
-				enabled: false,
-				attachProbability: 0,
+				numOpsBeforeAttach: 0,
 			},
 			saveFailures: {
 				directory: failureDirectory,
@@ -229,7 +228,7 @@ describe("Fuzz - undo/redo", () => {
 
 	const unSequencedUndoRedoWeights: Partial<EditGeneratorOpWeights> = {
 		insert: 1,
-		delete: 1,
+		remove: 1,
 		undo: 1,
 		redo: 1,
 	};
@@ -283,8 +282,7 @@ describe("Fuzz - undo/redo", () => {
 			// This test is targeted at long-running undo/redo scenarios, so having a single client start detached and later attach
 			// is not particularly interesting
 			detachedStartOptions: {
-				enabled: false,
-				attachProbability: 1,
+				numOpsBeforeAttach: 0,
 			},
 			saveFailures: {
 				directory: failureDirectory,

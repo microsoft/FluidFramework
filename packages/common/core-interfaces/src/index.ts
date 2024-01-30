@@ -58,3 +58,4 @@ export type {
 export { LogLevel } from "./logger";
 export type { FluidObjectProviderKeys, FluidObject, FluidObjectKeys } from "./provider";
 export type { ConfigTypes, IConfigProviderBase } from "./config";
+export type { ISignalEnvelope } from "./messages";

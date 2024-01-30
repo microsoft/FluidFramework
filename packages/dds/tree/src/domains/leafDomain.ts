@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { SchemaBuilderInternal } from "../feature-libraries";
-import { ValueSchema } from "../core";
+import { SchemaBuilderInternal } from "../feature-libraries/index.js";
+import { ValueSchema } from "../core/index.js";
 
 /**
  * Names in this domain follow https://en.wikipedia.org/wiki/Reverse_domain_name_notation
@@ -64,7 +64,7 @@ export const leaf = {
 	string,
 
 	/**
-	 * {@link LeafNodeSchema} for holding an {@link @fluidframework/core-interfaces#IFluidHandle}.
+	 * {@link LeafNodeSchema} for holding an {@link @fluidframework/core-interfaces#(IFluidHandle:interface)}.
 	 */
 	handle,
 

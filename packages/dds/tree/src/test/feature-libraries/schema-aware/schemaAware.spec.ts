@@ -14,22 +14,25 @@ import {
 	TypedFields,
 	UnbrandedName,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/schema-aware/schemaAware";
+} from "../../../feature-libraries/schema-aware/schemaAware.js";
 
-import { TreeNodeSchemaIdentifier } from "../../../core";
-import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../../util";
+import { TreeNodeSchemaIdentifier } from "../../../core/index.js";
+import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../../util/index.js";
 import {
 	valueSymbol,
 	FieldKinds,
 	typeNameSymbol,
 	ContextuallyTypedNodeDataObject,
-	TreeNodeSchema,
-	TreeFieldSchema,
-	AllowedTypes,
-} from "../../../feature-libraries";
-import { leaf, SchemaBuilder } from "../../../domains";
-// eslint-disable-next-line import/no-internal-modules
-import { FlexList, FlexListToNonLazyArray } from "../../../feature-libraries/typed-schema/flexList";
+	FlexTreeNodeSchema,
+	FlexFieldSchema,
+	FlexAllowedTypes,
+} from "../../../feature-libraries/index.js";
+import { leaf, SchemaBuilder } from "../../../domains/index.js";
+import {
+	FlexList,
+	FlexListToNonLazyArray,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/typed-schema/flexList.js";
 
 // Test UnbrandedName
 {
@@ -50,14 +53,14 @@ import { FlexList, FlexListToNonLazyArray } from "../../../feature-libraries/typ
 
 	// Check the various ways to refer to child types produce the same results
 	{
-		const numberField1 = TreeFieldSchema.create(required, [numberSchema]);
+		const numberField1 = FlexFieldSchema.create(required, [numberSchema]);
 		const numberField2 = SchemaBuilder.required(numberSchema);
-		const numberField3 = TreeFieldSchema.createUnsafe(required, [numberSchema]);
+		const numberField3 = FlexFieldSchema.createUnsafe(required, [numberSchema]);
 		type check1_ = requireAssignableTo<typeof numberField1, typeof numberField2>;
 		type check2_ = requireAssignableTo<typeof numberField2, typeof numberField3>;
 		type check3_ = requireAssignableTo<typeof numberField3, typeof numberField1>;
 
-		const numberFieldLazy = TreeFieldSchema.create(required, [() => numberSchema]);
+		const numberFieldLazy = FlexFieldSchema.create(required, [() => numberSchema]);
 		type NonLazy = FlexListToNonLazyArray<typeof numberFieldLazy.allowedTypes>;
 		type check4_ = requireAssignableTo<NonLazy, typeof numberField1.allowedTypes>;
 	}
@@ -78,12 +81,12 @@ import { FlexList, FlexListToNonLazyArray } from "../../../feature-libraries/typ
 
 	// Recursive case:
 	const boxSchema = builder.objectRecursive("box", {
-		children: TreeFieldSchema.createUnsafe(sequence, [ballSchema, () => boxSchema]),
+		children: FlexFieldSchema.createUnsafe(sequence, [ballSchema, () => boxSchema]),
 	});
 
 	{
 		// Recursive objects don't get this type checking automatically, so confirm it
-		type _check = requireAssignableTo<typeof boxSchema, TreeNodeSchema>;
+		type _check = requireAssignableTo<typeof boxSchema, FlexTreeNodeSchema>;
 	}
 
 	type x = typeof numberSchema.name;
@@ -203,14 +206,14 @@ import { FlexList, FlexListToNonLazyArray } from "../../../feature-libraries/typ
 		// Check child handling
 		{
 			type ChildSchema = typeof parentField;
-			type ChildSchemaTypes = ChildSchema extends TreeFieldSchema<any, infer Types>
+			type ChildSchemaTypes = ChildSchema extends FlexFieldSchema<any, infer Types>
 				? Types
 				: never;
 			type AllowedChildTypes = ChildSchema["allowedTypes"];
 			type _check = requireAssignableTo<ChildSchemaTypes, AllowedChildTypes>;
 			type BoolChild = ChildSchemaTypes[1];
-			type _check3 = requireAssignableTo<ChildSchemaTypes, AllowedTypes>;
-			type _check4 = requireAssignableTo<ChildSchemaTypes, FlexList<TreeNodeSchema>>;
+			type _check3 = requireAssignableTo<ChildSchemaTypes, FlexAllowedTypes>;
+			type _check4 = requireAssignableTo<ChildSchemaTypes, FlexList<FlexTreeNodeSchema>>;
 			type NormalizedChildSchemaTypes = FlexListToNonLazyArray<ChildSchemaTypes>;
 			type ChildTypes = AllowedTypesToFlexInsertableTree<ChildSchemaTypes>;
 		}
@@ -225,7 +228,7 @@ import { FlexList, FlexListToNonLazyArray } from "../../../feature-libraries/typ
 	{
 		const builder2 = new SchemaBuilder({ scope: "SchemaAwareRecursiveTest" });
 		const rec = builder2.objectRecursive("rec", {
-			x: TreeFieldSchema.createUnsafe(optional, [() => rec]),
+			x: FlexFieldSchema.createUnsafe(optional, [() => rec]),
 		});
 
 		type RecObjectSchema = typeof rec;
@@ -233,8 +236,8 @@ import { FlexList, FlexListToNonLazyArray } from "../../../feature-libraries/typ
 
 		{
 			// Recursive objects don't get this type checking automatically, so confirm it
-			type _check1 = requireAssignableTo<RecObjectSchema, TreeNodeSchema>;
-			type _check2 = requireAssignableTo<RecFieldSchema, TreeFieldSchema>;
+			type _check1 = requireAssignableTo<RecObjectSchema, FlexTreeNodeSchema>;
+			type _check2 = requireAssignableTo<RecFieldSchema, FlexFieldSchema>;
 		}
 
 		// Confirm schema's recursive type is correct.
@@ -286,14 +289,14 @@ import { FlexList, FlexListToNonLazyArray } from "../../../feature-libraries/typ
 		// Check child handling
 		{
 			type ChildSchema = typeof boxSchema.objectNodeFieldsObject.children;
-			type ChildSchemaTypes = ChildSchema extends TreeFieldSchema<any, infer Types>
+			type ChildSchemaTypes = ChildSchema extends FlexFieldSchema<any, infer Types>
 				? Types
 				: never;
 			type AllowedChildTypes = ChildSchema["allowedTypes"];
 			type _check = requireAssignableTo<ChildSchemaTypes, AllowedChildTypes>;
 			type BoxChild = ChildSchemaTypes[1];
-			type _check3 = requireAssignableTo<ChildSchemaTypes, AllowedTypes>;
-			type _check4 = requireAssignableTo<ChildSchemaTypes, FlexList<TreeNodeSchema>>;
+			type _check3 = requireAssignableTo<ChildSchemaTypes, FlexAllowedTypes>;
+			type _check4 = requireAssignableTo<ChildSchemaTypes, FlexList<FlexTreeNodeSchema>>;
 			type NormalizedChildSchemaTypes = FlexListToNonLazyArray<ChildSchemaTypes>;
 			{
 				{

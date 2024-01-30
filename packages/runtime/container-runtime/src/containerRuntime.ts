@@ -11,6 +11,7 @@ import {
 	IRequest,
 	IResponse,
 	IProvideFluidHandleContext,
+	ISignalEnvelope,
 } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
@@ -46,12 +47,13 @@ import {
 	ITelemetryLoggerExt,
 	UsageError,
 	LoggingError,
+	createSampledLogger,
+	IEventSampler,
 } from "@fluidframework/telemetry-utils";
 import {
 	DriverHeader,
 	FetchSource,
 	IDocumentStorageService,
-	ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
@@ -77,7 +79,6 @@ import {
 	IGarbageCollectionData,
 	IEnvelope,
 	IInboundSignalMessage,
-	ISignalEnvelope,
 	NamedFluidDataStoreRegistryEntries,
 	ISummaryTreeWithStats,
 	ISummarizeInternalResult,
@@ -862,14 +863,34 @@ export class ContainerRuntime
 				"@fluidframework/id-compressor"
 			);
 
-			const pendingLocalState = context.pendingLocalState as IPendingRuntimeState;
+			/**
+			 * Because the IdCompressor emits so much telemetry, this function is used to sample
+			 * approximately 5% of all clients. Only the given percentage of sessions will emit telemetry.
+			 */
+			const idCompressorEventSampler: IEventSampler = (() => {
+				const isIdCompressorTelemetryEnabled = Math.random() < 0.05;
+				return {
+					sample: () => {
+						return isIdCompressorTelemetryEnabled;
+					},
+				};
+			})();
 
+			const compressorLogger = createSampledLogger(logger, idCompressorEventSampler);
+			const pendingLocalState = context.pendingLocalState as IPendingRuntimeState;
 			if (pendingLocalState?.pendingIdCompressorState !== undefined) {
-				idCompressor = deserializeIdCompressor(pendingLocalState.pendingIdCompressorState);
+				idCompressor = deserializeIdCompressor(
+					pendingLocalState.pendingIdCompressorState,
+					compressorLogger,
+				);
 			} else if (serializedIdCompressor !== undefined) {
-				idCompressor = deserializeIdCompressor(serializedIdCompressor, createSessionId());
+				idCompressor = deserializeIdCompressor(
+					serializedIdCompressor,
+					createSessionId(),
+					compressorLogger,
+				);
 			} else {
-				idCompressor = createIdCompressor(logger);
+				idCompressor = createIdCompressor(compressorLogger);
 			}
 		}
 
@@ -1371,15 +1392,17 @@ export class ContainerRuntime
 
 		const pendingRuntimeState = pendingLocalState as IPendingRuntimeState | undefined;
 
-		const maxSnapshotCacheDurationMs = this._storage?.policies?.maximumCacheDurationMs;
-		if (
-			maxSnapshotCacheDurationMs !== undefined &&
-			maxSnapshotCacheDurationMs > 5 * 24 * 60 * 60 * 1000
-		) {
-			// This is a runtime enforcement of what's already explicit in the policy's type itself,
-			// which dictates the value is either undefined or exactly 5 days in ms.
-			// As long as the actual value is less than 5 days, the assumptions GC makes here are valid.
-			throw new UsageError("Driver's maximumCacheDurationMs policy cannot exceed 5 days");
+		if (context.attachState === AttachState.Attached) {
+			const maxSnapshotCacheDurationMs = this._storage?.policies?.maximumCacheDurationMs;
+			if (
+				maxSnapshotCacheDurationMs !== undefined &&
+				maxSnapshotCacheDurationMs > 5 * 24 * 60 * 60 * 1000
+			) {
+				// This is a runtime enforcement of what's already explicit in the policy's type itself,
+				// which dictates the value is either undefined or exactly 5 days in ms.
+				// As long as the actual value is less than 5 days, the assumptions GC makes here are valid.
+				throw new UsageError("Driver's maximumCacheDurationMs policy cannot exceed 5 days");
+			}
 		}
 
 		this.garbageCollector = GarbageCollector.create({
@@ -1411,9 +1434,6 @@ export class ContainerRuntime
 				// Must set to false to prevent sending summary handle which would be pointing to
 				// a summary with an older protocol state.
 				canReuseHandle: false,
-				// Must set to true to throw on any data stores failure that was too severe to be handled.
-				// We also are not decoding the base summaries at the root.
-				throwOnFailure: true,
 				// If GC should not run, let the summarizer node know so that it does not track GC state.
 				gcDisabled: !this.garbageCollector.shouldRunGC,
 			},
@@ -2054,6 +2074,8 @@ export class ContainerRuntime
 					this.closeFn(error);
 					throw error;
 				}
+				// Note: Even if its compat behavior allows it, we don't know how to apply this stashed op.
+				// All we can do is ignore it (similar to on process).
 			}
 		}
 	}
@@ -2268,6 +2290,7 @@ export class ContainerRuntime
 					messageWithContext.message,
 					local,
 					localOpMetadata,
+					(from, to) => this.garbageCollector.addedOutboundReference(from, to),
 				);
 				break;
 			case ContainerMessageType.BlobAttach:
@@ -2407,6 +2430,9 @@ export class ContainerRuntime
 		assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
 	}
 
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IContainerRuntimeBase.orderSequentially}
+	 */
 	public orderSequentially<T>(callback: () => T): T {
 		let checkpoint: IBatchCheckpoint | undefined;
 		let result: T;
@@ -2438,9 +2464,21 @@ export class ContainerRuntime
 					throw error2;
 				}
 			} else {
-				// pre-0.58 error message: orderSequentiallyCallbackException
-				this.closeFn(new GenericError("orderSequentially callback exception", error));
+				this.closeFn(
+					wrapError(
+						error,
+						(errorMessage) =>
+							new GenericError(
+								`orderSequentially callback exception: ${errorMessage}`,
+								error,
+								{
+									orderSequentiallyCalls: this._orderSequentiallyCalls,
+								},
+							),
+					),
+				);
 			}
+
 			throw error; // throw the original error for the consumer of the runtime
 		} finally {
 			this._orderSequentiallyCalls--;
@@ -2495,15 +2533,23 @@ export class ContainerRuntime
 		return this.dataStores.createDetachedDataStoreCore(pkg, true, rootDataStoreId);
 	}
 
-	public createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached {
-		return this.dataStores.createDetachedDataStoreCore(pkg, false);
+	public createDetachedDataStore(
+		pkg: Readonly<string[]>,
+		groupId?: string,
+	): IFluidDataStoreContextDetached {
+		return this.dataStores.createDetachedDataStoreCore(pkg, false, undefined, groupId);
 	}
 
-	public async createDataStore(pkg: string | string[]): Promise<IDataStore> {
+	public async createDataStore(pkg: string | string[], groupId?: string): Promise<IDataStore> {
 		const id = uuid();
 		return channelToDataStore(
 			await this.dataStores
-				._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id)
+				._createFluidDataStoreContext(
+					Array.isArray(pkg) ? pkg : [pkg],
+					id,
+					undefined,
+					groupId,
+				)
 				.realize(),
 			id,
 			this,
@@ -2904,6 +2950,12 @@ export class ContainerRuntime
 	 * data store or an attachment blob.
 	 */
 	public async getGCNodePackagePath(nodePath: string): Promise<readonly string[] | undefined> {
+		// GC uses "/" when adding "root" references, e.g. for Aliasing or as part of Tombstone Auto-Recovery.
+		// These have no package path so return a special value.
+		if (nodePath === "/") {
+			return ["<GCROOT>"];
+		}
+
 		switch (this.getNodeType(nodePath)) {
 			case GCNodeType.Blob:
 				return [BlobManager.basePath];
@@ -2999,7 +3051,6 @@ export class ContainerRuntime
 		assert(this.outbox.isEmpty, 0x3d1 /* Can't trigger summary in the middle of a batch */);
 
 		// We close the summarizer and download a new snapshot and reload the container
-		let latestSnapshotVersionId: string | undefined;
 		if (refreshLatestAck === true) {
 			return this.prefetchLatestSummaryThenClose(
 				createChildLogger({
@@ -3215,34 +3266,18 @@ export class ContainerRuntime
 				return { stage: "generate", ...generateSummaryData, error: continueResult.error };
 			}
 
-			// It may happen that the lastAck it not correct due to missing summaryAck in case of single commit
-			// summary. So if the previous summarizer closes just after submitting the summary and before
-			// submitting the summaryOp then we can't rely on summaryAck. So in case we have
-			// latestSnapshotVersionId from storage and it does not match with the lastAck ackHandle, then use
-			// the one fetched from storage as parent as that is the latest.
-			let summaryContext: ISummaryContext;
-			if (
-				lastAck?.summaryAck.contents.handle !== latestSnapshotVersionId &&
-				latestSnapshotVersionId !== undefined
-			) {
-				summaryContext = {
-					proposalHandle: undefined,
-					ackHandle: latestSnapshotVersionId,
-					referenceSequenceNumber: summaryRefSeqNum,
-				};
-			} else if (lastAck === undefined) {
-				summaryContext = {
-					proposalHandle: undefined,
-					ackHandle: this.loadedFromVersionId,
-					referenceSequenceNumber: summaryRefSeqNum,
-				};
-			} else {
-				summaryContext = {
-					proposalHandle: lastAck.summaryOp.contents.handle,
-					ackHandle: lastAck.summaryAck.contents.handle,
-					referenceSequenceNumber: summaryRefSeqNum,
-				};
-			}
+			const summaryContext =
+				lastAck === undefined
+					? {
+							proposalHandle: undefined,
+							ackHandle: this.loadedFromVersionId,
+							referenceSequenceNumber: summaryRefSeqNum,
+					  }
+					: {
+							proposalHandle: lastAck.summaryOp.contents.handle,
+							ackHandle: lastAck.summaryAck.contents.handle,
+							referenceSequenceNumber: summaryRefSeqNum,
+					  };
 
 			let handle: string;
 			try {
@@ -3686,6 +3721,7 @@ export class ContainerRuntime
 		localOpMetadata: unknown,
 		opMetadata: Record<string, unknown> | undefined,
 	) {
+		assert(!this.isSummarizerClient, "Summarizer never reconnects so should never resubmit");
 		switch (message.type) {
 			case ContainerMessageType.FluidDataStoreOp:
 				// For Operations, call resubmitDataStoreOp which will find the right store
@@ -3707,13 +3743,14 @@ export class ContainerRuntime
 				this.submit(message);
 				break;
 			case ContainerMessageType.GC:
-				// GC op is only sent in summarizer which should never reconnect.
-				throw new LoggingError("GC op not expected to be resubmitted in summarizer");
+				this.submit(message);
+				break;
 			default: {
 				// This case should be very rare - it would imply an op was stashed from a
-				// future version of runtime code and now is being applied on an older version
+				// future version of runtime code and now is being applied on an older version.
 				const compatBehavior = message.compatDetails?.behavior;
 				if (compatBehaviorAllowsMessageType(message.type, compatBehavior)) {
+					// We do not ultimately resubmit it, to be consistent with this version of the code.
 					this.logger.sendTelemetryEvent({
 						eventName: "resubmitUnrecognizedMessageTypeAllowed",
 						messageDetails: { type: message.type, compatBehavior },
@@ -3770,7 +3807,7 @@ export class ContainerRuntime
 		 * and then close as the current main client is likely to be re-elected as the parent summarizer again.
 		 */
 		if (!result.isSummaryTracked && result.isSummaryNewer) {
-			const fetchResult = await this.fetchLatestSnapshotFromStorage(
+			await this.fetchLatestSnapshotFromStorage(
 				summaryLogger,
 				{
 					eventName: "RefreshLatestSummaryAckFetch",
@@ -3780,32 +3817,7 @@ export class ContainerRuntime
 				readAndParseBlob,
 			);
 
-			/**
-			 * If the fetched snapshot is older than the one for which the ack was received, close the container.
-			 * This should never happen because an ack should be sent after the latest summary is updated in the server.
-			 * However, there are couple of scenarios where it's possible:
-			 * 1. A file was modified externally resulting in modifying the snapshot's sequence number. This can lead to
-			 * the document being unusable and we should not proceed.
-			 * 2. The server DB failed after the ack was sent which may delete the corresponding snapshot. Ideally, in
-			 * such cases, the file will be rolled back along with the ack and we will eventually reach a consistent
-			 * state.
-			 */
-			if (fetchResult.latestSnapshotRefSeq < summaryRefSeq) {
-				const error = DataProcessingError.create(
-					"Fetched snapshot is older than the received ack",
-					"RefreshLatestSummaryAck",
-					undefined /* sequencedMessage */,
-					{
-						ackHandle,
-						summaryRefSeq,
-						fetchedSnapshotRefSeq: fetchResult.latestSnapshotRefSeq,
-					},
-				);
-				this.disposeFn(error);
-				throw error;
-			}
-
-			await this.closeStaleSummarizer("RefreshLatestSummaryAckFetch");
+			await this.closeStaleSummarizer();
 			return;
 		}
 
@@ -3834,7 +3846,7 @@ export class ContainerRuntime
 			readAndParseBlob,
 		);
 
-		await this.closeStaleSummarizer("RefreshLatestSummaryFromServerFetch");
+		await this.closeStaleSummarizer();
 
 		return {
 			stage: "base",
@@ -3844,7 +3856,7 @@ export class ContainerRuntime
 		};
 	}
 
-	private async closeStaleSummarizer(codePath: string): Promise<void> {
+	private async closeStaleSummarizer(): Promise<void> {
 		// Delay before restarting summarizer to prevent the summarizer from restarting too frequently.
 		await delay(this.closeSummarizerDelayMs);
 		this._summarizer?.stop("latestSummaryStateStale");

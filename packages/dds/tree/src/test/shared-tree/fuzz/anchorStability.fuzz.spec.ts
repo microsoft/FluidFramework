@@ -11,21 +11,21 @@ import {
 	DDSFuzzHarnessEvents,
 } from "@fluid-private/test-dds-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { UpPath, Anchor, Value } from "../../../core";
-import { TreeContent } from "../../../shared-tree";
+import { UpPath, Anchor, Value } from "../../../core/index.js";
+import { TreeContent } from "../../../shared-tree/index.js";
 import {
 	cursorsFromContextualData,
-	jsonableTreeFromCursor,
+	jsonableTreeFromFieldCursor,
 	typeNameSymbol,
-} from "../../../feature-libraries";
-import { SharedTreeTestFactory, createTestUndoRedoStacks, validateTree } from "../../utils";
+} from "../../../feature-libraries/index.js";
+import { SharedTreeTestFactory, createTestUndoRedoStacks, validateTree } from "../../utils.js";
 import {
 	makeOpGenerator,
 	EditGeneratorOpWeights,
 	FuzzTestState,
 	viewFromState,
-} from "./fuzzEditGenerators";
-import { fuzzReducer } from "./fuzzEditReducers";
+} from "./fuzzEditGenerators.js";
+import { fuzzReducer } from "./fuzzEditReducers.js";
 import {
 	createAnchors,
 	validateAnchors,
@@ -33,8 +33,9 @@ import {
 	fuzzSchema,
 	failureDirectory,
 	RevertibleSharedTreeView,
-} from "./fuzzUtils";
-import { Operation } from "./operationTypes";
+	deterministicIdCompressorFactory,
+} from "./fuzzUtils.js";
+import { Operation } from "./operationTypes.js";
 
 interface AnchorFuzzTestState extends FuzzTestState {
 	// Parallel array to `clients`: set in testStart
@@ -58,11 +59,9 @@ const config = {
 	},
 } satisfies TreeContent;
 
-const initialTreeJson = cursorsFromContextualData(
-	config,
-	config.schema.rootFieldSchema,
-	config.initialTree,
-).map(jsonableTreeFromCursor);
+const initialTreeJson = jsonableTreeFromFieldCursor(
+	cursorsFromContextualData(config, config.schema.rootFieldSchema, config.initialTree),
+);
 
 /**
  * Fuzz tests in this suite are meant to exercise specific code paths or invariants.
@@ -77,7 +76,7 @@ describe("Fuzz - anchor stability", () => {
 	describe("Anchors are unaffected by aborted transaction", () => {
 		const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 			insert: 1,
-			delete: 2,
+			remove: 2,
 			move: 2,
 			fieldSelection: {
 				optional: 1,
@@ -132,14 +131,15 @@ describe("Fuzz - anchor stability", () => {
 			},
 			// AB#5745: Starting a transaction while detached, submitting edits, then attaching hits 0x428.
 			// Once this is fixed, this fuzz test could also include working from a detached state if desired.
-			detachedStartOptions: { enabled: false, attachProbability: 1 },
+			detachedStartOptions: { numOpsBeforeAttach: 0 },
 			clientJoinOptions: { maxNumberOfClients: 1, clientAddProbability: 0 },
+			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 		});
 	});
 	describe("Anchors are stable", () => {
 		const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 			insert: 2,
-			delete: 2,
+			remove: 2,
 			move: 2,
 			undo: 1,
 			redo: 1,
@@ -201,12 +201,13 @@ describe("Fuzz - anchor stability", () => {
 
 		createDDSFuzzSuite(model, {
 			defaultTestCount: runsPerBatch,
-			detachedStartOptions: { enabled: false, attachProbability: 1 },
+			detachedStartOptions: { numOpsBeforeAttach: 0 },
 			numberOfClients: 2,
 			emitter,
 			saveFailures: {
 				directory: failureDirectory,
 			},
+			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 			skip: [0],
 		});
 	});

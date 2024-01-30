@@ -5,6 +5,7 @@
 
 export type {
 	DriverError,
+	DriverErrorTypes,
 	IAnyDriverError,
 	IAuthorizationError,
 	IDriverErrorBase,
@@ -13,7 +14,7 @@ export type {
 	ILocationRedirectionError,
 	IThrottlingWarning,
 } from "./driverError";
-export { DriverErrorType, DriverErrorTypes } from "./driverError";
+export {} from "./driverError";
 export type {
 	FiveDaysMs,
 	IDeltasFetchResult,
@@ -22,10 +23,13 @@ export type {
 	IDocumentDeltaConnectionEvents,
 	IDocumentDeltaStorageService,
 	IDocumentService,
+	IDocumentServiceEvents,
 	IDocumentServiceFactory,
 	IDocumentServicePolicies,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
+	ISnapshot,
+	ISnapshotFetchOptions,
 	IStream,
 	IStreamResult,
 	ISummaryContext,

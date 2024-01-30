@@ -4,11 +4,12 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { RevisionTag, TaggedChange } from "../../core";
-import { IdAllocator } from "../../util";
-import { Mark } from "./types";
-import { applyMoveEffectsToMark, MoveEffectTable } from "./moveEffectTable";
-import { splitMark } from "./utils";
+import { RevisionTag } from "../../core/index.js";
+import { IdAllocator } from "../../util/index.js";
+import { Mark } from "./types.js";
+import { applyMoveEffectsToMark, MoveEffectTable } from "./moveEffectTable.js";
+import { splitMark } from "./utils.js";
+import { NodeChangeComposer } from "./compose.js";
 
 export class MarkQueue<T> {
 	private readonly stack: Mark<T>[] = [];
@@ -20,7 +21,9 @@ export class MarkQueue<T> {
 		private readonly moveEffects: MoveEffectTable<T>,
 		private readonly consumeEffects: boolean,
 		private readonly genId: IdAllocator,
-		private readonly composeChanges?: (a: T | undefined, b: TaggedChange<T>) => T | undefined,
+
+		// TODO: This should probably be handled by ComposeQueue instead
+		private readonly composeChanges?: NodeChangeComposer<T>,
 	) {
 		this.list = list;
 	}

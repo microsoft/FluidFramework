@@ -3,9 +3,9 @@
 Here we detail the vision for the first implementation of undo/redo.
 This implementation is meant to satisfy our needs for parity with experimental (AKA legacy) SharedTree.
 
-Note that the system described here allows for changes to subtrees that were concurrently deleted to have an impact on that subtree,
+Note that the system described here allows for changes to subtrees that were concurrently removed to have an impact on that subtree,
 even when the deletion is sequenced before the subtree-impacting change.
-This system does not, however support editing of subtrees that were deleted prior,
+This system does not, however support editing of subtrees that were removed prior,
 though we discuss what this would require.
 
 Related:
@@ -35,7 +35,7 @@ Redo changesets should be created by inverting the corresponding undo changeset 
 This is preferable to rebasing the original edit over all the edits that were applied since before the original edit:
 
 -   It is better at mitigating data-loss caused by undo.
-    For example, undoing an insert will delete any content that has since been added under the inserted node.
+    For example, undoing an insert will remove any content that has since been added under the inserted node.
     Applying the inverse of the undo will restore that content while re-applying the original insert will not.
 -   It is more efficient as it doesn't require rebasing over as many edits.
 
@@ -131,7 +131,7 @@ It can be still be thought of as sparse if we ignore the fact that sequenced com
 
 -   Creating an undo (or redo) edit
 -   Applying a (peer or local) undo (or redo) edit on a `SharedTreeView`
--   Applying the effect of a move (peer or local) that pulls content out from a previously deleted subtree and into the document tree
+-   Applying the effect of a move (peer or local) that pulls content out from a previously removed subtree and into the document tree
 -   Applying the effect of an edit that targets already removed content
 -   Applying the effect of rebasing local destructive changes
     (i.e., overwrites and deletions)
@@ -140,7 +140,7 @@ It can be still be thought of as sparse if we ignore the fact that sequenced com
 Note that, while these are the only cases where a client needs to access the repair data for the subtree of interest,
 it is necessary to keep the repair data be kept up to date until such a case arises.
 This then forces us to consider cases where the repair data is not needed but is edited.
-This can happen when a client edits a region of the document tree while that region is concurrently deleted by another client.
+This can happen when a client edits a region of the document tree while that region is concurrently removed by another client.
 
 ### Storing Repair Data in the Forest
 
@@ -152,7 +152,7 @@ This approach is motivated by the following points:
 
 -   Aside from a pair of performance-motivated exceptions (covered below) the repair data content is solely relevant to applying changes to the forest.
 -   The needs of repair data storage, reading, and editing, are identical to that of in-document data, which the forest satisfies.
--   Storing both in the same forest makes it easy to efficiently remove/restore deleted content because it saves us from having to export/import it from and to the forest.
+-   Storing both in the same forest makes it easy to efficiently restore removed content because it saves us from having to export/import it from and to the forest.
 
 The alternative, coupling repair data with the changesets that birthed them, is undesirable for the following reasons:
 
@@ -205,7 +205,7 @@ and can use `removed-${forestRootId}` as a way of generating unique paths.
 Repair data is typically created when document data would otherwise be erased.
 There are two cases that can lead to the erasure of document data:
 
--   When a subtree is deleted
+-   When a subtree is removed
 -   When the value on an node is overwritten
 
 When a changeset is applied to the `SharedTreeView`,
@@ -213,7 +213,7 @@ for every change conveyed by the changeset that would erase document data,
 the `SharedTreeView` must do the following:
 
 -   Generate a new `ForestRootId`.
--   Translate that change into an equivalent delta that preserves the otherwise deleted subtree
+-   Translate that change into an equivalent delta that preserves the otherwise removed subtree
     by moving that subtree to a part of the forest that lies outside the scope of the document.
 -   Apply that delta to the forest.
 -   Update the `TreeIndex` so it has an entry associating the removed subtree's `ChangeAtomId` and `ForestRootId`.
@@ -245,7 +245,7 @@ There are three cases that can lead the consumption of repair data:
 
 -   When a subtree's deletion is inverted
 -   When the overwrite of a node's value is inverted
--   When a deleted node is resurrected by a move that was concurrent to, but sequenced after, the deletion,
+-   When a removed node is resurrected by a move that was concurrent to, but sequenced after, the deletion,
     and that move's destination lies within the document tree.
     (This last scenario is not yet supported and is subject to debate.)
 
@@ -263,9 +263,9 @@ the `SharedTreeView` must do the following:
 It is possible for repair data to be edited by edits that were authored concurrently to the edit that lead to the creation of that repair data.
 Note that this includes cases where:
 
--   The edit is contained within a single deleted subtree
--   The edit spans a pair of deleted subtrees
--   The edit spans a deleted subtree and the document tree
+-   The edit is contained within a single removed subtree
+-   The edit spans a pair of removed subtrees
+-   The edit spans a removed subtree and the document tree
 
 When a changeset is applied to the `SharedTreeView`,
 for every change conveyed by the changeset that edits repair data,
@@ -349,9 +349,9 @@ we also want to ensure that the associated memory needs can be constrained.
 How we should go about evicting repair data from the forest is dependent on the set of merge semantics we support.
 For this V1 of undo, we intend to allow editing of removed content,
 meaning it can be edited after it is removed and before (as well as after) it is restored,
-but solely in situations where the issuer of the edit was now aware of the item being removed.
+but solely in situations where the issuer of the edit was not aware of the item being removed.
 In other words, we only allow new edits to be generated on in-document trees,
-and we tolerate the fact that some of those edits will end up affecting removed trees due to concurrency.
+and we tolerate the fact that some of those edits will end up affecting removed trees due to concurrency and branching.
 
 In the future, we will also support editing already removed trees.
 
@@ -377,7 +377,7 @@ There are two kinds of cases where a client would need to include such a refresh
 For a given `SharedTreeView`, the repair data associated with a given removed tree T must _not_ be garbage-collected if _either_ of the following criteria apply:
 
 -   The local user may make an edit that requires T.
-    -   This could be due to the revert of the edit that let to T being removed.
+    -   This could be due to the revert of the edit that led to T being removed.
     -   This could be due to the revert of an edit that edits T.
     -   This could be due to a merge of a branch whose commits made an edit that requires T.
 -   A peer edit P might be received such that P's ref sequence number might be lower than the sequence number of the edit that last removed or edited T.
@@ -449,13 +449,12 @@ There are two situations where a peer should ignore the refresher:
     (i.e., the local client has not garbage-collected it).
     This can be detected by checking the `TreeIndex` before adding the refresher to it (and to the forest).
 -   The refresher is for a tree that has already been restored.
-    This can be detected during rebasing of the refresher.
+    This can be detected after rebasing of the changeset, by querying the relevant detached roots for the changeset.
 
 Adopting the refresher in either of those cases could lead to a memory leak or could lead to the wrong tree being restored later on.
 
 Note that for the sake of getting started on the implementation of refreshers,
 it's fine to always send the refreshers so long as the receiving peers know when to ignore them.
-Doing this might be easier as a first step since it means that the re-submit code path doesn't need to worry about converting an edit that doesn't include the refresher into an edit that does.
 
 ### Repair Data In Summaries
 
@@ -485,7 +484,7 @@ but also because the local user may not be aware of what those edits are,
 or may not be aware of their very existence.
 
 Despite all that, it can at times be desirable to undo of _a specific peer edit_.
-For example, a peer may delete content that the local user would not want deleted.
+For example, a peer may remove content that the local user would not want removed.
 The local user could verbally ask the peer to undo that change,
 but that may be impractical, or it may simply be impossible if the peer has terminated their session.
 
@@ -506,12 +505,12 @@ For example, the `SharedTreeView` could keep a record of the repair data entries
 (but not the repair data itself)
 that have been revived by the edits that lie within the current collaboration window.
 
-#### Supporting Edits To Deleted Content
+#### Supporting Edits To Removed Content
 
-Instead of prohibiting edits to content that has been deleted (and whose deletion is known as opposed to concurrent),
+Instead of prohibiting edits to content that has been removed (and whose deletion is known as opposed to concurrent),
 we may want to allow such edits.
 This would give applications more options for dealing with situations where a client has locally performed some amount of work
-that involves editing the deleted region of the document.
+that involves editing the removed region of the document.
 Indeed, under the current system, that work cannot be reconciled with the rest of the document, and must be abandoned.
 This is likely to occur if client applications use local branches to stage their work.
 
@@ -521,12 +520,12 @@ This could be supported by requiring clients with such a need to do the followin
 2.  Send a repair data refresher alongside any edit that affects the subtree in question,
     similarly to how a refresher is sent in undo scenarios.
 
-#1 is harder than it sounds because it requires determining which of possibly many deleted subtrees may be of interest to the local client.
+#1 is harder than it sounds because it requires determining which of possibly many removed subtrees may be of interest to the local client.
 In principle, any local branch that was forked from the trunk before the deletion of a subtree may include edits for that subtree,
 or may in the future start including such edits.
 This implies that none of the repair data for such edits could be collected.
 
-In addition to branches, one must also consider any anchors (on any and all branches) that point to nodes within the deleted subtrees.
+In addition to branches, one must also consider any anchors (on any and all branches) that point to nodes within the removed subtrees.
 The local client may indeed dereference such an anchor and expect to be able to edit the content under it,
 even after the branch on which that anchor resides has been made aware of the subtree's deletion.
 
@@ -534,7 +533,7 @@ It may be tempting to think that #2 is not necessary:
 couldn't clients that have garbage-collected the repair data for the subtree of interest just ignore the edits made to the subtree?
 The subtree's state may become relevant again due to its deletion being undone,
 but the issuer of the undo will issue a refresher for it if needed.
-Unfortunately, #2 is needed because any edit made to the deleted subtree may entail moving content out of that subtree and into the document tree.
+Unfortunately, #2 is needed because any edit made to the removed subtree may entail moving content out of that subtree and into the document tree.
 If clients that have garbage-collected the repair data for the subtree of interest have not been provided with a refresher before that,
 then they will be unable to show an updated document tree.
 
@@ -557,7 +556,7 @@ Node destructuring is a feature that would allow a client to decompose a node by
 while at the same time transforming all of the immediate children of that node into individual roots.
 The children can then be consumed to create a new node, or moved.
 
-This destructuring feature interacts with repair data because deleted nodes can be destructured.
+This destructuring feature interacts with repair data because removed nodes can be destructured.
 When that happens, the `SharedTreeView` would need to update both the `Forest` and the `TreeIndex` to remove the entry for the destructured node if there is one,
 and add entries for the new roots if the destructured node had any children.
 
@@ -571,7 +570,7 @@ so long as those edits were outside the collaboration window.
 
 Note that this performance optimization will cause problems if _any_ of the following becomes true:
 
--   A client can edit deleted content even after witnessing the sequenced edit that performs the deletion.
+-   A client can edit removed content even after witnessing the sequenced edit that performs the deletion.
 -   Edits from one session can be undone by a different session. There are different ways this could become true:
     -   A client can undo edits that were generated by its peers.
     -   The ability to undo edits for a given can be preserved between sessions.

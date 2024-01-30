@@ -9,7 +9,7 @@ import type {
 	FluidObject,
 } from "@fluidframework/core-interfaces";
 
-import { type IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { type IDocumentStorageService, type ISnapshot } from "@fluidframework/driver-definitions";
 import type {
 	IClientDetails,
 	ISequencedDocumentMessage,
@@ -202,6 +202,11 @@ export interface IContainerContext {
 	 * @privateremarks Tracking in AB#5714
 	 */
 	readonly id: string;
+
+	/**
+	 * This contains all parts of a snapshot like blobContents, ops etc.
+	 */
+	readonly snapshotWithContents?: ISnapshot;
 }
 
 /**

@@ -6,8 +6,8 @@
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import * as api from "@fluidframework/protocol-definitions";
+import { ISnapshot } from "@fluidframework/driver-definitions";
 import { IOdspSnapshot, IOdspSnapshotCommit } from "./contracts";
-import { ISnapshotContents } from "./odspPublicUtils";
 
 /**
  * Build a tree hierarchy base on a flat tree
@@ -51,9 +51,7 @@ function buildHierarchy(flatTree: IOdspSnapshotCommit): api.ISnapshotTree {
  * Converts existing IOdspSnapshot to snapshot tree, blob array and ops
  * @param odspSnapshot - snapshot
  */
-export function convertOdspSnapshotToSnapshotTreeAndBlobs(
-	odspSnapshot: IOdspSnapshot,
-): ISnapshotContents {
+export function convertOdspSnapshotToSnapshotTreeAndBlobs(odspSnapshot: IOdspSnapshot): ISnapshot {
 	const blobsWithBufferContent = new Map<string, ArrayBuffer>();
 	if (odspSnapshot.blobs) {
 		odspSnapshot.blobs.forEach((blob) => {
@@ -70,8 +68,8 @@ export function convertOdspSnapshotToSnapshotTreeAndBlobs(
 
 	const sequenceNumber = odspSnapshot?.trees[0].sequenceNumber;
 
-	const val: ISnapshotContents = {
-		blobs: blobsWithBufferContent,
+	const val: ISnapshot = {
+		blobContents: blobsWithBufferContent,
 		ops: odspSnapshot.ops?.map((op) => op.op) ?? [],
 		sequenceNumber,
 		snapshotTree: buildHierarchy(odspSnapshot.trees[0]),
@@ -79,6 +77,7 @@ export function convertOdspSnapshotToSnapshotTreeAndBlobs(
 			odspSnapshot.ops && odspSnapshot.ops.length > 0
 				? odspSnapshot.ops[odspSnapshot.ops.length - 1].sequenceNumber
 				: sequenceNumber,
+		snapshotFormatV: 1,
 	};
 	return val;
 }

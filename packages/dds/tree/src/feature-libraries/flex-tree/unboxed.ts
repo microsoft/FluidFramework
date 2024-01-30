@@ -3,24 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import { ITreeSubscriptionCursor, inCursorNode } from "../../core";
-import { FieldKind } from "../modular-schema";
-import { FieldKinds } from "../default-schema";
-import { AllowedTypes, TreeFieldSchema, TreeNodeSchema, schemaIsLeaf } from "../typed-schema";
-import { Context } from "./context";
+import { ITreeSubscriptionCursor, inCursorNode } from "../../core/index.js";
+import { FlexFieldKind } from "../modular-schema/index.js";
+import { FieldKinds } from "../default-schema/index.js";
+import {
+	FlexAllowedTypes,
+	FlexFieldSchema,
+	FlexTreeNodeSchema,
+	schemaIsLeaf,
+} from "../typed-schema/index.js";
+import { Context } from "./context.js";
 import {
 	FlexTreeNode,
 	FlexTreeUnboxField,
 	FlexTreeUnboxNode,
 	FlexTreeUnboxNodeUnion,
-} from "./flexTreeTypes";
-import { makeTree } from "./lazyNode";
-import { makeField } from "./lazyField";
+} from "./flexTreeTypes.js";
+import { makeTree } from "./lazyNode.js";
+import { makeField } from "./lazyField.js";
 
 /**
  * See {@link FlexTreeUnboxNode} for documentation on what unwrapping this performs.
  */
-export function unboxedTree<TSchema extends TreeNodeSchema>(
+export function unboxedTree<TSchema extends FlexTreeNodeSchema>(
 	context: Context,
 	schema: TSchema,
 	cursor: ITreeSubscriptionCursor,
@@ -35,9 +40,9 @@ export function unboxedTree<TSchema extends TreeNodeSchema>(
 /**
  * See {@link FlexTreeUnboxNodeUnion} for documentation on what unwrapping this performs.
  */
-export function unboxedUnion<TTypes extends AllowedTypes>(
+export function unboxedUnion<TTypes extends FlexAllowedTypes>(
 	context: Context,
-	schema: TreeFieldSchema<FieldKind, TTypes>,
+	schema: FlexFieldSchema<FlexFieldKind, TTypes>,
 	cursor: ITreeSubscriptionCursor,
 ): FlexTreeUnboxNodeUnion<TTypes> {
 	const type = schema.monomorphicChildType;
@@ -52,7 +57,7 @@ export function unboxedUnion<TTypes extends AllowedTypes>(
  * @param schema - the TreeFieldStoredSchema of the field.
  * @param cursor - the cursor, which must point to the field being proxified.
  */
-export function unboxedField<TSchema extends TreeFieldSchema>(
+export function unboxedField<TSchema extends FlexFieldSchema>(
 	context: Context,
 	schema: TSchema,
 	cursor: ITreeSubscriptionCursor,

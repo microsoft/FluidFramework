@@ -12,7 +12,7 @@ import {
 	IConsensusRegisterCollection,
 } from "@fluidframework/register-collection";
 
-import type { IMigrationTool } from "../migrationInterfaces";
+import type { IMigrationTool } from "../migrationInterfaces/index.js";
 
 const pactMapKey = "pact-map";
 const crcKey = "crc";

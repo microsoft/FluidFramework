@@ -50,8 +50,6 @@ import {
 	ISummarizerNodeWithGC,
 	SummarizeInternalFn,
 	ITelemetryContext,
-	IIdCompressor,
-	IIdCompressorCore,
 	VisibilityState,
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
@@ -67,6 +65,7 @@ import {
 	tagCodeArtifacts,
 	ThresholdCounter,
 } from "@fluidframework/telemetry-utils";
+import { IIdCompressor, IIdCompressorCore } from "@fluidframework/id-compressor";
 import {
 	dataStoreAttributesBlobName,
 	hasIsolatedChannels,
@@ -78,7 +77,7 @@ import {
 	summarizerClientType,
 } from "./summary";
 import { ContainerRuntime } from "./containerRuntime";
-import { sendGCUnexpectedUsageEvent } from "./gc";
+import { detectOutboundRoutesViaDDSKey, sendGCUnexpectedUsageEvent } from "./gc";
 
 function createAttributes(
 	pkg: readonly string[],
@@ -115,6 +114,7 @@ export interface IFluidDataStoreContextProps {
 	readonly scope: FluidObject;
 	readonly createSummarizerNodeFn: CreateChildSummarizerNodeFn;
 	readonly pkg?: Readonly<string[]>;
+	readonly groupId?: string;
 }
 
 /** Properties necessary for creating a local FluidDataStoreContext */
@@ -272,6 +272,8 @@ export abstract class FluidDataStoreContext
 	private readonly _containerRuntime: ContainerRuntime;
 	public readonly storage: IDocumentStorageService;
 	public readonly scope: FluidObject;
+	// Represents the group to which the data store belongs too.
+	public readonly groupId: string | undefined;
 	protected pkg?: readonly string[];
 
 	constructor(
@@ -287,6 +289,7 @@ export abstract class FluidDataStoreContext
 		this.storage = props.storage;
 		this.scope = props.scope;
 		this.pkg = props.pkg;
+		this.groupId = props.groupId;
 
 		// URIs use slashes as delimiters. Handles use URIs.
 		// Thus having slashes in types almost guarantees trouble down the road!
@@ -650,13 +653,20 @@ export abstract class FluidDataStoreContext
 	}
 
 	/**
+	 * @deprecated There is no replacement for this, its functionality is no longer needed.
+	 * It will be removed in a future release, sometime after 2.0.0-internal.8.0.0
+	 *
 	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
 	 * all references added in the system.
 	 * @param srcHandle - The handle of the node that added the reference.
 	 * @param outboundHandle - The handle of the outbound node that is referenced.
 	 */
 	public addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) {
-		this._containerRuntime.addedGCOutboundReference(srcHandle, outboundHandle);
+		// By default, skip this call since the ContainerRuntime will detect the outbound route directly.
+		if (this.mc.config.getBoolean(detectOutboundRoutesViaDDSKey) === true) {
+			// Note: The ContainerRuntime code will check this same setting to avoid double counting.
+			this._containerRuntime.addedGCOutboundReference(srcHandle, outboundHandle);
+		}
 	}
 
 	/**
@@ -941,8 +951,7 @@ export abstract class FluidDataStoreContext
 				summarizeInternal,
 				id,
 				createParam,
-				// DDS will not create failure summaries
-				{ throwOnFailure: true },
+				undefined /* config */,
 				getGCDataFn,
 			);
 	}

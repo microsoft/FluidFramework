@@ -4,13 +4,13 @@
  */
 
 import { ObjectOptions, Static, Type } from "@sinclair/typebox";
-import { schemaFormat, RevisionTagSchema, ChangesetLocalId } from "../../core";
+import { schemaFormat, RevisionTagSchema, ChangesetLocalId } from "../../core/index.js";
 import {
 	brandedNumberType,
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnlySchema,
-} from "../../util";
-import { EncodedFieldBatch } from "../chunked-forest";
+} from "../../util/index.js";
+import { EncodedFieldBatch } from "../chunked-forest/index.js";
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
@@ -18,19 +18,10 @@ export const ChangesetLocalIdSchema = brandedNumberType<ChangesetLocalId>({
 	multipleOf: 1,
 });
 
-export const EncodedChangeAtomId = Type.Object(
-	{
-		/**
-		 * Uniquely identifies the changeset within which the change was made.
-		 */
-		revision: Type.Optional(RevisionTagSchema),
-		/**
-		 * Uniquely identifies, in the scope of the changeset, the change made to the field.
-		 */
-		localId: ChangesetLocalIdSchema,
-	},
-	noAdditionalProps,
-);
+export const EncodedChangeAtomId = Type.Union([
+	Type.Tuple([ChangesetLocalIdSchema, RevisionTagSchema]),
+	ChangesetLocalIdSchema,
+]);
 
 const EncodedValueChange = Type.Object(
 	{

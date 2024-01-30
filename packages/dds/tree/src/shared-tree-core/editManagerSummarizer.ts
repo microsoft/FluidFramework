@@ -12,12 +12,18 @@ import {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
-import { ICodecOptions, IJsonCodec } from "../codec";
-import { ChangeFamily, ChangeFamilyEditor, EncodedRevisionTag, RevisionTag } from "../core";
-import { JsonCompatibleReadOnly } from "../util";
-import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "./sharedTreeCore";
-import { EditManager, SummaryData } from "./editManager";
-import { makeEditManagerCodec } from "./editManagerCodecs";
+import { ICodecOptions, IJsonCodec } from "../codec/index.js";
+import {
+	ChangeEncodingContext,
+	ChangeFamily,
+	ChangeFamilyEditor,
+	EncodedRevisionTag,
+	RevisionTag,
+} from "../core/index.js";
+import { JsonCompatibleReadOnly } from "../util/index.js";
+import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "./sharedTreeCore.js";
+import { EditManager, SummaryData } from "./editManager.js";
+import { makeEditManagerCodec } from "./editManagerCodecs.js";
 
 const stringKey = "String";
 
@@ -41,7 +47,12 @@ export class EditManagerSummarizer<TChangeset> implements Summarizable {
 			TChangeset,
 			ChangeFamily<ChangeFamilyEditor, TChangeset>
 		>,
-		revisionTagCodec: IJsonCodec<RevisionTag, EncodedRevisionTag>,
+		revisionTagCodec: IJsonCodec<
+			RevisionTag,
+			EncodedRevisionTag,
+			EncodedRevisionTag,
+			ChangeEncodingContext
+		>,
 		options: ICodecOptions,
 	) {
 		const changesetCodec = this.editManager.changeFamily.codecs.resolve(formatVersion);

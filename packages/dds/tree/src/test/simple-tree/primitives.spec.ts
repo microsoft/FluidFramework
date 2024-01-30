@@ -4,8 +4,14 @@
  */
 
 import { strict as assert } from "assert";
-import { ImplicitFieldSchema, InsertableTreeFieldFromImplicitField } from "../../class-tree";
-import { getRoot, makeSchema, pretty } from "./utils";
+import {
+	ImplicitFieldSchema,
+	InsertableTreeFieldFromImplicitField,
+	SchemaFactory,
+} from "../../simple-tree/index.js";
+import { getRoot, pretty } from "./utils.js";
+
+const schemaFactory = new SchemaFactory("Test");
 
 // Construct a SharedTree with each of the above primitives as the root and then
 // 'deepEquals' compares the proxy with the original primitive value.
@@ -24,14 +30,14 @@ describe("Primitives", () => {
 		schema: TSchema,
 		value: InsertableTreeFieldFromImplicitField<TSchema>,
 	) {
-		// Paranoid check that the given value is in fact preserved.
-		assert.deepEqual(
-			value,
-			JSON.parse(JSON.stringify(value)),
-			`Expected ${pretty(value)} to be preserved by JSON.`,
-		);
-
 		it(`initialTree(${pretty(value)}) preserves ${typeof value} ${pretty(value)}`, () => {
+			// Paranoid check that the given value is in fact preserved.
+			assert.deepEqual(
+				value,
+				JSON.parse(JSON.stringify(value)),
+				`Expected ${pretty(value)} to be preserved by JSON.`,
+			);
+
 			const actual = getRoot(schema, () => value);
 			assert.deepEqual(actual, value, "Readback of initialTree must match expected value.");
 		});
@@ -123,18 +129,18 @@ describe("Primitives", () => {
 	}
 
 	describe("null", () => {
-		const schema = makeSchema((_) => _.null);
+		const schema = schemaFactory.null;
 		checkExact(schema, null);
 	});
 
 	describe("boolean", () => {
-		const schema = makeSchema((_) => _.boolean);
+		const schema = schemaFactory.boolean;
 		[true, false].forEach((value) => checkExact(schema, value));
 	});
 
 	describe("number", () => {
 		describe("with schema [_.number]", () => {
-			const schema = makeSchema((_) => _.number);
+			const schema = schemaFactory.number;
 
 			// Test a handful of extreme values to sanity check that they round-trip as expected.
 			[
@@ -162,13 +168,13 @@ describe("Primitives", () => {
 		describe("with schema [_.number, _.null]", () => {
 			// JSON coerces non-finite numbers to 'null'.  This succeeds when 'null' is
 			// permitted by schema.
-			const schema = makeSchema((_) => [_.number, _.null]);
+			const schema = [schemaFactory.number, schemaFactory.null];
 			[-Infinity, NaN, Infinity].forEach((value) => checkCoerced(schema, value));
 		});
 	});
 
 	describe("string", () => {
-		const schema = makeSchema((_) => _.string);
+		const schema = schemaFactory.string;
 		[
 			"", // empty string
 			"!~", // printable ascii range
