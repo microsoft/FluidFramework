@@ -449,7 +449,7 @@ There are two situations where a peer should ignore the refresher:
     (i.e., the local client has not garbage-collected it).
     This can be detected by checking the `TreeIndex` before adding the refresher to it (and to the forest).
 -   The refresher is for a tree that has already been restored.
-    This can be detected during after rebasing of the refresher, by querying the relevant detached roots for the changeset.
+    This can be detected after rebasing of the changeset, by querying the relevant detached roots for the changeset.
 
 Adopting the refresher in either of those cases could lead to a memory leak or could lead to the wrong tree being restored later on.
 
