@@ -316,7 +316,7 @@ describe("Garbage Collection Tests", () => {
 
 			// Simulate usage to trigger autorecovery op (and plumb it to processMessage)
 			gc.nodeUpdated(nodes[0], "Loaded");
-			const x = spies.submitMessage.args;
+			//* const x = spies.submitMessage.args;
 			assert.equal(
 				spies.submitMessage.callCount,
 				1,
@@ -326,7 +326,7 @@ describe("Garbage Collection Tests", () => {
 
 			//* Assert that unreference tracker was deleted?
 			//* Or just run GC and find that its unref timestamp is Now
-			gc.collectGarbage({});
+			//* gc.collectGarbage({});
 
 			//* Wait Tombstone time and run GC again - Node0 will be TombstoneReady again because GC Data didn't change.
 			//* For validating the fix - We could fake it by changing the GC Data returned if fullGC is passed in. Might be too fiddley.

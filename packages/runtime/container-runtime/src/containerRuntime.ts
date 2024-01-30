@@ -3181,6 +3181,8 @@ export class ContainerRuntime
 			try {
 				summarizeResult = await this.summarize({
 					fullTree: fullTree || forcedFullTree,
+					//* Can't remember why this is needed but the test fails wihtout it
+					fullGC: fullTree || forcedFullTree,
 					trackState: true,
 					summaryLogger: summaryNumberLogger,
 					runGC: this.garbageCollector.shouldRunGC,

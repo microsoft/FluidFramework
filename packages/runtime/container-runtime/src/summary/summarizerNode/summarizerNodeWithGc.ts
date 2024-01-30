@@ -220,6 +220,13 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		// called and the node's data has not changed since last summary, the GC data in initial details is returned.
 		await this.loadBaseGCDetails();
 
+		if (
+			this.telemetryNodeId &&
+			global.__testhook__gcDataOverrides?.[this.telemetryNodeId] !== undefined
+		) {
+			return { gcNodes: { ["/"]: global.__testhook__gcDataOverrides[this.telemetryNodeId] } };
+		}
+
 		// If there is no new data since last summary and we have GC data from the previous run, return it. The previous
 		// GC data may not be available if loaded from a snapshot with either GC disabled or before GC was added.
 		// Note - canReuseHandle is checked to be consistent with summarize - generate GC data for nodes for which
