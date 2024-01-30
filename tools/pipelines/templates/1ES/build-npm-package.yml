@@ -194,7 +194,7 @@ extends:
               # over time and it might be necessary to bump it.
               # AB#6680 is also relevant here, which tracks rethinking how and where we run tests (likely with
               # a focus on e2e tests)
-              # Note, This was recent updated to 90 minutes to account for the additional build time added from extending 
+              # Note, This was recently updated to 90 minutes to account for the additional build time added from extending 
               # the Microsoft 1ES template required for corporate security compliance
               timeoutInMinutes: 90
             variables:
