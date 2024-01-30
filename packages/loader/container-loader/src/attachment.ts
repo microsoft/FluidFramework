@@ -4,7 +4,7 @@
  */
 import { AttachState } from "@fluidframework/container-definitions";
 import { CombinedAppAndProtocolSummary } from "@fluidframework/driver-utils";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { ISnapshotTree, ISummaryTree } from "@fluidframework/protocol-definitions";
 import { assert } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { getSnapshotTreeAndBlobsFromSerializedContainer } from "./utils";
@@ -106,7 +106,7 @@ export interface AttachProcessProps {
 	 * @returns A compatible storage service
 	 */
 	readonly createOrGetStorageService: (
-		data: DetachedDataWithOutstandingBlobs | AttachingDataWithBlobs | AttachingDataWithoutBlobs,
+		data: ISummaryTree | undefined,
 	) => Promise<Pick<IDocumentStorageService, "createBlob" | "uploadSummaryWithContext">>;
 
 	/**
@@ -137,12 +137,19 @@ export interface AttachProcessProps {
  * @param props - The data and services necessary to run the attachment process
  */
 export const runRetriableAttachProcess = async (props: AttachProcessProps): Promise<void> => {
+	const {
+		detachedBlobStorage,
+		createOrGetStorageService,
+		setAttachmentData,
+		createAttachmentSummary,
+		offlineLoadEnabled,
+	} = props;
 	let currentData: AttachmentData = props.initialAttachmentData;
 
 	if (currentData.blobs === undefined) {
 		// If attachment blobs were uploaded in detached state we will go through a different attach flow
 		const outstandingAttachmentBlobs =
-			props.detachedBlobStorage !== undefined && props.detachedBlobStorage.size > 0;
+			detachedBlobStorage !== undefined && detachedBlobStorage.size > 0;
 		// Determine the next phase of attaching which depends on if there are attachment blobs
 		// if there are, we will stay detached, so an empty file can be created, and the blobs
 		// uploaded, otherwise we will get the summary to create the file with and move to attaching
@@ -157,34 +164,32 @@ export const runRetriableAttachProcess = async (props: AttachProcessProps): Prom
 					summary: props.createAttachmentSummary(),
 					blobs: "none",
 			  };
-		props.setAttachmentData(currentData);
+		setAttachmentData(currentData);
 	}
 
 	// this has to run here, as it is what creates the file
 	// and we need to file for all possible cases after this point
-	const storage = await props.createOrGetStorageService(currentData);
+	const storage = await createOrGetStorageService(currentData.summary);
 
 	if (currentData.blobs === "outstanding") {
 		const { redirectTable } = currentData;
 		// upload blobs to storage
-		assert(!!props.detachedBlobStorage, 0x24e /* "assertion for type narrowing" */);
+		assert(!!detachedBlobStorage, 0x24e /* "assertion for type narrowing" */);
 
 		// build a table mapping IDs assigned locally to IDs assigned by storage and pass it to runtime to
 		// support blob handles that only know about the local IDs
-		while (redirectTable.size < props.detachedBlobStorage.size) {
-			const newIds = props.detachedBlobStorage
-				.getBlobIds()
-				.filter((id) => !redirectTable.has(id));
+		while (redirectTable.size < detachedBlobStorage.size) {
+			const newIds = detachedBlobStorage.getBlobIds().filter((id) => !redirectTable.has(id));
 			for (const id of newIds) {
-				const blob = await props.detachedBlobStorage.readBlob(id);
+				const blob = await detachedBlobStorage.readBlob(id);
 				const response = await storage.createBlob(blob);
 				redirectTable.set(id, response.id);
 			}
 		}
-		props.setAttachmentData(
+		setAttachmentData(
 			(currentData = {
 				state: AttachState.Attaching,
-				summary: props.createAttachmentSummary(redirectTable),
+				summary: createAttachmentSummary(redirectTable),
 				blobs: "done",
 			}),
 		);
@@ -203,10 +208,10 @@ export const runRetriableAttachProcess = async (props: AttachProcessProps): Prom
 		});
 	}
 
-	props.setAttachmentData(
+	setAttachmentData(
 		(currentData = {
 			state: AttachState.Attached,
-			snapshot: props.offlineLoadEnabled
+			snapshot: offlineLoadEnabled
 				? getSnapshotTreeAndBlobsFromSerializedContainer(currentData.summary)
 				: undefined,
 		}),

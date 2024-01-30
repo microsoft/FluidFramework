@@ -1279,7 +1279,7 @@ export class Container
 					};
 
 					const createOrGetStorageService: AttachProcessProps["createOrGetStorageService"] =
-						async (data) => {
+						async (summary) => {
 							// Actually go and create the resolved document
 							if (this.service === undefined) {
 								const createNewResolvedUrl =
@@ -1292,7 +1292,7 @@ export class Container
 								this.service = await runWithRetry(
 									async () =>
 										this.serviceFactory.createContainer(
-											data.summary,
+											summary,
 											createNewResolvedUrl,
 											this.subLogger,
 											false, // clientIsSummarizer
@@ -1303,8 +1303,8 @@ export class Container
 										cancel: this._deltaManager.closeAbortController.signal,
 									}, // progress
 								);
-								this.storageAdapter.connectToService(this.service);
 							}
+							this.storageAdapter.connectToService(this.service);
 							return this.storageAdapter;
 						};
 

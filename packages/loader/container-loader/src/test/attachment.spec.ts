@@ -79,12 +79,13 @@ const createProxyWithFailDefault = <T extends Record<string, any> | undefined>(
 			if (p in t) {
 				return Reflect.get(t, p, r);
 			}
-			// sometimes types get inspected to see if they are promises
-			// and we don't want to fail the inspection process
-			if (p in Promise.resolve()) {
-				return undefined;
-			}
-			assert.fail(`unexpected call too ${p.toString()}`);
+
+			return new Proxy(
+				{},
+				{
+					get: () => assert.fail(`unexpected call too ${p.toString()}`),
+				},
+			);
 		},
 	}) as T;
 };
@@ -481,8 +482,8 @@ describe("runRetriableAttachProcess", () => {
 					initialAttachmentData: initial,
 					offlineLoadEnabled: true,
 					setAttachmentData: (data) => (attachmentData = data),
-					createOrGetStorageService: async (data) => {
-						assert.notStrictEqual(data.summary, undefined, "data.summary");
+					createOrGetStorageService: async (summary) => {
+						assert.notStrictEqual(summary, undefined, "data.summary");
 						return createProxyWithFailDefault();
 					},
 				}),
