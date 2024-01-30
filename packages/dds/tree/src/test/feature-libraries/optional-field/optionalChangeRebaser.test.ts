@@ -201,7 +201,7 @@ function composeList(
 ): OptionalChangeset {
 	const moveEffects = failCrossFieldManager;
 	const idAllocator = idAllocatorFromMaxId(getMaxId(...changes.map((c) => c.change)));
-	let composed: OptionalChangeset = { moves: [], childChanges: [] };
+	let composed: OptionalChangeset = createEmpty();
 	const metadataOrDefault = metadata ?? defaultRevisionMetadataFromChanges(changes);
 
 	for (const change of changes) {
