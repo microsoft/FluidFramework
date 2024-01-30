@@ -57,7 +57,10 @@ import {
 import { runGarbageCollection } from "./gcReferenceGraphAlgorithm";
 import { IGarbageCollectionSnapshotData, IGarbageCollectionState } from "./gcSummaryDefinitions";
 import { GCSummaryStateTracker } from "./gcSummaryStateTracker";
-import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";
+import {
+	UnreferencedStateTracker,
+	UnreferencedStateTrackerMap,
+} from "./gcUnreferencedStateTracker";
 import { GCTelemetryTracker } from "./gcTelemetry";
 
 /**
@@ -112,8 +115,15 @@ export class GarbageCollector implements IGarbageCollector {
 	private readonly initializeGCStateFromBaseSnapshotP: Promise<void>;
 	// The GC details generated from the base snapshot.
 	private readonly baseGCDetailsP: Promise<IGarbageCollectionDetailsBase>;
-	// Map of node ids to their unreferenced state tracker.
-	private readonly unreferencedNodesState: Map<string, UnreferencedStateTracker> = new Map();
+
+	/**
+	 * Map of node ids to their unreferenced state tracker
+	 * NOTE: The set of keys in this map is considered as the set of unreferenced nodes
+	 * as of the last GC run. So in between runs, nothing should be added or removed.
+	 */
+	private readonly unreferencedNodesState: UnreferencedStateTrackerMap =
+		new UnreferencedStateTrackerMap();
+
 	// The Timer responsible for closing the container when the session has expired
 	private sessionExpiryTimer: Timer | undefined;
 
@@ -608,16 +618,10 @@ export class GarbageCollector implements IGarbageCollector {
 	): { tombstoneReadyNodeIds: Set<string>; sweepReadyNodeIds: Set<string> } {
 		// 1. Marks all referenced nodes by clearing their unreferenced tracker, if any.
 		for (const nodeId of allReferencedNodeIds) {
-			const nodeStateTracker = this.unreferencedNodesState.get(nodeId);
-			if (nodeStateTracker !== undefined) {
-				// Stop tracking so as to clear out any running timers.
-				nodeStateTracker.stopTracking();
-				// Delete the node as we don't need to track it any more.
-				this.unreferencedNodesState.delete(nodeId);
-			}
+			this.unreferencedNodesState.delete(nodeId);
 		}
 
-		// 2. Mark unreferenced nodes in this run by starting unreferenced tracking for them.
+		// 2. Mark unreferenced nodes in this run by starting or updating unreferenced tracking for them.
 		const tombstoneReadyNodeIds: Set<string> = new Set();
 		const sweepReadyNodeIds: Set<string> = new Set();
 		for (const nodeId of gcResult.deletedNodeIds) {
@@ -939,13 +943,9 @@ export class GarbageCollector implements IGarbageCollector {
 
 		// Clear unreferenced state tracking for deleted nodes.
 		for (const nodeId of deletedNodeIds) {
-			const nodeStateTracker = this.unreferencedNodesState.get(nodeId);
-			if (nodeStateTracker !== undefined) {
-				// Stop tracking so as to clear out any running timers.
-				nodeStateTracker.stopTracking();
-				// Delete the node as we don't need to track it any more.
-				this.unreferencedNodesState.delete(nodeId);
-			}
+			// Usually we avoid modifying the set of unreferencedNodesState keys in between GC runs,
+			// but this is ok since this node won't exist at all in the next GC run.
+			this.unreferencedNodesState.delete(nodeId);
 			this.deletedNodes.add(nodeId);
 		}
 	}
@@ -1098,6 +1098,12 @@ export class GarbageCollector implements IGarbageCollector {
 			fromId: fromNodePath,
 			autorecovery,
 		});
+
+		// This node is referenced - Clear its unreferenced state
+		// But don't delete the node id from the map yet.
+		// When generating GC stats, the set of nodes in here is used as the baseline for
+		// what was unreferenced in the last GC run.
+		this.unreferencedNodesState.get(toNodePath)?.stopTracking();
 	}
 
 	/**
@@ -1131,17 +1137,17 @@ export class GarbageCollector implements IGarbageCollector {
 			updatedAttachmentBlobCount: 0,
 		};
 
-		const updateNodeStats = (nodeId: string, referenced: boolean) => {
+		const updateNodeStats = (nodeId: string, isReferenced: boolean) => {
 			markPhaseStats.nodeCount++;
 			// If there is no previous GC data, every node's state is generated and is considered as updated.
 			// Otherwise, find out if any node went from referenced to unreferenced or vice-versa.
+			const wasNotReferenced = this.unreferencedNodesState.has(nodeId);
 			const stateUpdated =
-				this.gcDataFromLastRun === undefined ||
-				this.unreferencedNodesState.has(nodeId) === referenced;
+				this.gcDataFromLastRun === undefined || wasNotReferenced === isReferenced;
 			if (stateUpdated) {
 				markPhaseStats.updatedNodeCount++;
 			}
-			if (!referenced) {
+			if (!isReferenced) {
 				markPhaseStats.unrefNodeCount++;
 			}
 
@@ -1150,7 +1156,7 @@ export class GarbageCollector implements IGarbageCollector {
 				if (stateUpdated) {
 					markPhaseStats.updatedDataStoreCount++;
 				}
-				if (!referenced) {
+				if (!isReferenced) {
 					markPhaseStats.unrefDataStoreCount++;
 				}
 			}
@@ -1159,7 +1165,7 @@ export class GarbageCollector implements IGarbageCollector {
 				if (stateUpdated) {
 					markPhaseStats.updatedAttachmentBlobCount++;
 				}
-				if (!referenced) {
+				if (!isReferenced) {
 					markPhaseStats.unrefAttachmentBlobCount++;
 				}
 			}
