@@ -42,7 +42,6 @@ import {
 	brand,
 	deleteFromNestedMap,
 	forEachInNestedMap,
-	getOrAddEmptyToMap,
 	getOrAddInMap,
 	IdAllocationState,
 	IdAllocator,
@@ -84,7 +83,6 @@ import {
 	FieldChangeset,
 	ModularChangeset,
 	NodeChangeset,
-	NodeExistsConstraint,
 } from "./modularChangeTypes.js";
 import { makeV0Codec } from "./modularChangeCodecs.js";
 
@@ -123,73 +121,113 @@ export class ModularChangeFamily
 	 * The returned `FieldChangeset`s may be a shallow copy of the input `FieldChange`s.
 	 */
 	private normalizeFieldChanges(
-		changes: readonly FieldChange[],
+		change1: FieldChange | undefined,
+		change2: FieldChange | undefined,
 		genId: IdAllocator,
 		revisionMetadata: RevisionMetadataSource,
 	): {
 		fieldKind: FieldKindWithEditor;
-		changesets: FieldChangeset[];
+		change1: FieldChangeset | undefined;
+		change2: FieldChangeset | undefined;
 	} {
 		// TODO: Handle the case where changes have conflicting field kinds
-		const nonGenericChange = changes.find(
-			(change) => change.fieldKind !== genericFieldKind.identifier,
-		);
-		if (nonGenericChange === undefined) {
+		const kind =
+			change1 !== undefined && change1.fieldKind !== genericFieldKind.identifier
+				? change1.fieldKind
+				: change2?.fieldKind ?? genericFieldKind.identifier;
+
+		if (kind === genericFieldKind.identifier) {
 			// All the changes are generic
-			return { fieldKind: genericFieldKind, changesets: changes.map((c) => c.change) };
+			return {
+				fieldKind: genericFieldKind,
+				change1: change1?.change,
+				change2: change2?.change,
+			};
 		}
-		const kind = nonGenericChange.fieldKind;
 		const fieldKind = getFieldKind(this.fieldKinds, kind);
 		const handler = fieldKind.changeHandler;
-		const normalizedChanges = changes.map((change) => {
-			if (change.fieldKind === genericFieldKind.identifier) {
-				// The cast is based on the `fieldKind` check above
-				const genericChange = change.change as unknown as GenericChangeset;
-				return convertGenericChange(
-					genericChange,
-					handler,
-					(children) =>
-						this.composeNodeChanges(
-							children,
-							genId,
-							newCrossFieldTable(),
-							revisionMetadata,
-						),
+		const normalizedChange1 = this.normalizeFieldChange(
+			change1,
+			handler,
+			genId,
+			revisionMetadata,
+		);
+		const normalizedChange2 = this.normalizeFieldChange(
+			change2,
+			handler,
+			genId,
+			revisionMetadata,
+		);
+		return { fieldKind, change1: normalizedChange1, change2: normalizedChange2 };
+	}
+
+	private normalizeFieldChange<T>(
+		fieldChange: FieldChange | undefined,
+		handler: FieldChangeHandler<T>,
+		genId: IdAllocator,
+		revisionMetadata: RevisionMetadataSource,
+	): FieldChangeset | undefined {
+		if (fieldChange === undefined) {
+			return undefined;
+		}
+
+		if (fieldChange.fieldKind !== genericFieldKind.identifier) {
+			return fieldChange.change;
+		}
+
+		// The cast is based on the `fieldKind` check above
+		const genericChange = fieldChange.change as unknown as GenericChangeset;
+		const convertedChange = convertGenericChange(
+			genericChange,
+			handler,
+			(child1, child2) =>
+				this.composeNodeChanges(
+					child1,
+					undefined,
+					child2,
+					undefined,
 					genId,
+					newCrossFieldTable(),
 					revisionMetadata,
-				) as FieldChangeset;
-			}
-			return change.change;
-		});
-		return { fieldKind, changesets: normalizedChanges };
+				),
+			genId,
+			revisionMetadata,
+		) as FieldChangeset;
+
+		return convertedChange;
 	}
 
 	public compose(changes: TaggedChange<ModularChangeset>[]): ModularChangeset {
-		const { revInfos, maxId } = getRevInfoFromTaggedChanges(changes);
-		if (changes.length === 1) {
-			const { fieldChanges, builds, destroys, constraintViolationCount } = changes[0].change;
-			return makeModularChangeset(
-				fieldChanges,
-				maxId,
-				revInfos,
-				constraintViolationCount,
-				builds,
-				destroys,
-			);
-		}
-		const revisionMetadata: RevisionMetadataSource = revisionMetadataSourceFromInfo(revInfos);
-		const idState: IdAllocationState = { maxId };
-		const genId: IdAllocator = idAllocatorFromState(idState);
-		const crossFieldTable = newCrossFieldTable<ComposeData>();
-
-		const changesWithoutConstraintViolations = changes.filter(
+		const activeChanges = changes.filter(
 			(change) => (change.change.constraintViolationCount ?? 0) === 0,
 		);
 
+		const { revInfos, maxId } = getRevInfoFromTaggedChanges(changes);
+		const idState: IdAllocationState = { maxId };
+
+		return activeChanges.reduce(
+			(change1, change2) =>
+				makeAnonChange(this.composePair(change1, change2, revInfos, idState)),
+			makeAnonChange({ fieldChanges: new Map() }),
+		).change;
+	}
+
+	private composePair(
+		change1: TaggedChange<ModularChangeset>,
+		change2: TaggedChange<ModularChangeset>,
+		revInfos: RevisionInfo[],
+		idState: IdAllocationState,
+	) {
+		const genId: IdAllocator = idAllocatorFromState(idState);
+		const revisionMetadata: RevisionMetadataSource = revisionMetadataSourceFromInfo(revInfos);
+
+		const crossFieldTable = newCrossFieldTable<ComposeData>();
+
 		const composedFields = this.composeFieldMaps(
-			changesWithoutConstraintViolations.map((change) =>
-				tagChange(change.change.fieldChanges, revisionFromTaggedChange(change)),
-			),
+			change1.change.fieldChanges,
+			change1.revision,
+			change2.change.fieldChanges,
+			change2.revision,
 			genId,
 			crossFieldTable,
 			revisionMetadata,
@@ -204,8 +242,16 @@ export class ModularChangeFamily
 					field.fieldKind,
 				).rebaser.amendCompose(
 					field.change,
-					(children) =>
-						this.composeNodeChanges(children, genId, crossFieldTable, revisionMetadata),
+					(child1, child2) =>
+						this.composeNodeChanges(
+							child1,
+							change1.revision,
+							child2,
+							change2.revision,
+							genId,
+							crossFieldTable,
+							revisionMetadata,
+						),
 					genId,
 					newCrossFieldManager(crossFieldTable),
 					revisionMetadata,
@@ -219,9 +265,7 @@ export class ModularChangeFamily
 			0x59b /* Should not need more than one amend pass. */,
 		);
 
-		const { allBuilds, allDestroys } = composeBuildsAndDestroys(
-			changesWithoutConstraintViolations,
-		);
+		const { allBuilds, allDestroys } = composeBuildsAndDestroys([change1, change2]);
 
 		return makeModularChangeset(
 			this.pruneFieldMap(composedFields),
@@ -234,46 +278,56 @@ export class ModularChangeFamily
 	}
 
 	private composeFieldMaps(
-		changes: TaggedChange<FieldChangeMap>[],
+		change1: FieldChangeMap | undefined,
+		revision1: RevisionTag | undefined,
+		change2: FieldChangeMap | undefined,
+		revision2: RevisionTag | undefined,
 		genId: IdAllocator,
 		crossFieldTable: CrossFieldTable<ComposeData>,
 		revisionMetadata: RevisionMetadataSource,
 	): FieldChangeMap {
-		const fieldChanges = new Map<FieldKey, FieldChange[]>();
-		for (const change of changes) {
-			for (const [key, fieldChange] of change.change) {
-				const fieldChangeToCompose =
-					fieldChange.revision !== undefined || change.revision === undefined
-						? fieldChange
-						: {
-								...fieldChange,
-								revision: change.revision,
-						  };
-
-				getOrAddEmptyToMap(fieldChanges, key).push(fieldChangeToCompose);
-			}
+		const composedFields: FieldChangeMap = new Map();
+		const fields = new Set<FieldKey>();
+		for (const field of change1?.keys() ?? []) {
+			fields.add(field);
 		}
 
-		const composedFields: FieldChangeMap = new Map();
-		for (const [field, changesForField] of fieldChanges) {
-			const { fieldKind, changesets } = this.normalizeFieldChanges(
-				changesForField,
-				genId,
-				revisionMetadata,
-			);
-			assert(
-				changesets.length === changesForField.length,
-				0x4a8 /* Number of changes should be constant when normalizing */,
-			);
+		for (const field of change2?.keys() ?? []) {
+			fields.add(field);
+		}
+
+		for (const field of fields) {
+			const fieldChange1 = change1?.get(field);
+			const fieldChange2 = change2?.get(field);
+
+			const {
+				fieldKind,
+				change1: normalizedFieldChange1,
+				change2: normalizedFieldChange2,
+			} = this.normalizeFieldChanges(fieldChange1, fieldChange2, genId, revisionMetadata);
 
 			const manager = newCrossFieldManager(crossFieldTable);
-			const taggedChangesets = changesets.map((change, i) =>
-				tagChange(change, changesForField[i].revision),
+			const taggedChange1 = tagChange(
+				normalizedFieldChange1 ?? fieldKind.changeHandler.createEmpty(),
+				fieldChange1?.revision ?? revision1,
+			);
+			const taggedChange2 = tagChange(
+				normalizedFieldChange2 ?? fieldKind.changeHandler.createEmpty(),
+				fieldChange2?.revision ?? revision2,
 			);
 			const composedChange = fieldKind.changeHandler.rebaser.compose(
-				taggedChangesets,
-				(children) =>
-					this.composeNodeChanges(children, genId, crossFieldTable, revisionMetadata),
+				taggedChange1,
+				taggedChange2,
+				(child1, child2) =>
+					this.composeNodeChanges(
+						child1,
+						revision1,
+						child2,
+						revision2,
+						genId,
+						crossFieldTable,
+						revisionMetadata,
+					),
 				genId,
 				manager,
 				revisionMetadata,
@@ -289,37 +343,26 @@ export class ModularChangeFamily
 			// TODO: Could optimize by checking that composedField is non-empty
 			composedFields.set(field, composedField);
 		}
+
 		return composedFields;
 	}
 
 	private composeNodeChanges(
-		changes: TaggedChange<NodeChangeset>[],
+		change1: NodeChangeset | undefined,
+		revision1: RevisionTag | undefined,
+		change2: NodeChangeset | undefined,
+		revision2: RevisionTag | undefined,
 		genId: IdAllocator,
 		crossFieldTable: CrossFieldTable<ComposeData>,
 		revisionMetadata: RevisionMetadataSource,
 	): NodeChangeset {
-		const fieldChanges: TaggedChange<FieldChangeMap>[] = [];
-		let nodeExistsConstraint: NodeExistsConstraint | undefined;
-		for (const change of changes) {
-			// Composition is part of two codepaths:
-			//   1. Combining multiple changesets into a transaction
-			//   2. Generating a state update after rebasing a branch that has
-			//        more than one changeset
-			// In the first codepath, none of the constraints will be violated and
-			// we need the constraint to be stored on the given node in the transaction.
-			// In the second path, the constraint may have been violated, but the state is tracked
-			// as part of `constraintViolationCount` and the change won't be rebased further.
-			if (change.change.nodeExistsConstraint !== undefined) {
-				nodeExistsConstraint = { ...change.change.nodeExistsConstraint };
-			}
-
-			if (change.change.fieldChanges !== undefined) {
-				fieldChanges.push(tagChange(change.change.fieldChanges, change.revision));
-			}
-		}
+		const nodeExistsConstraint = change1?.nodeExistsConstraint ?? change2?.nodeExistsConstraint;
 
 		const composedFieldChanges = this.composeFieldMaps(
-			fieldChanges,
+			change1?.fieldChanges,
+			revision1,
+			change2?.fieldChanges,
+			revision2,
 			genId,
 			crossFieldTable,
 			revisionMetadata,
@@ -535,9 +578,11 @@ export class ModularChangeFamily
 				assert(context !== undefined, 0x852 /* Every field should have a context */);
 				const {
 					fieldKind,
-					changesets: [fieldChangeset, baseChangeset],
+					change1: fieldChangeset,
+					change2: baseChangeset,
 				} = this.normalizeFieldChanges(
-					[context.newChange, context.baseChange],
+					context.newChange,
+					context.baseChange,
 					genId,
 					revisionMetadata,
 				);
@@ -610,8 +655,9 @@ export class ModularChangeFamily
 			};
 			const {
 				fieldKind,
-				changesets: [fieldChangeset, baseChangeset],
-			} = this.normalizeFieldChanges([fieldChange, baseChanges], genId, revisionMetadata);
+				change1: fieldChangeset,
+				change2: baseChangeset,
+			} = this.normalizeFieldChanges(fieldChange, baseChanges, genId, revisionMetadata);
 
 			const { revision } = over;
 			const taggedBaseChange = { revision, change: baseChangeset };
@@ -667,8 +713,9 @@ export class ModularChangeFamily
 
 				const {
 					fieldKind,
-					changesets: [fieldChangeset, baseChangeset],
-				} = this.normalizeFieldChanges([fieldChange, baseChanges], genId, revisionMetadata);
+					change1: fieldChangeset,
+					change2: baseChangeset,
+				} = this.normalizeFieldChanges(fieldChange, baseChanges, genId, revisionMetadata);
 
 				const manager = newCrossFieldManager(crossFieldTable);
 				const rebasedChangeset = fieldKind.changeHandler.rebaser.rebase(

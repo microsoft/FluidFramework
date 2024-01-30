@@ -148,13 +148,20 @@ export function composeNoVerify(
 	changes: TaggedChange<TestChangeset>[],
 	revInfos?: RevisionInfo[],
 ): TestChangeset {
-	return composeI(changes, (childChanges) => TestChange.compose(childChanges, false), revInfos);
+	return composeI(
+		changes,
+		(change1, change2) => TestChange.compose(change1, change2, false),
+		revInfos,
+	);
 }
 
 export function compose(
 	changes: TaggedChange<TestChangeset>[],
 	revInfos?: RevisionInfo[] | RevisionMetadataSource,
-	childComposer?: (childChanges: TaggedChange<TestChange>[]) => TestChange,
+	childComposer?: (
+		change1: TestChange | undefined,
+		change2: TestChange | undefined,
+	) => TestChange,
 ): TestChangeset {
 	return composeI(changes, childComposer ?? TestChange.compose, revInfos);
 }
@@ -175,9 +182,12 @@ export function shallowCompose<T>(
 ): SF.Changeset<T> {
 	return composeI(
 		changes,
-		(children) => {
-			assert(children.length === 1, "Should only have one child to compose");
-			return children[0].change;
+		(child1, child2) => {
+			assert(
+				child1 === undefined || child2 === undefined,
+				"Should only have one child to compose",
+			);
+			return child1 ?? child2 ?? fail("One of the children should be defined");
 		},
 		revInfos,
 	);
@@ -185,7 +195,7 @@ export function shallowCompose<T>(
 
 function composeI<T>(
 	changes: TaggedChange<SF.Changeset<T>>[],
-	composer: (childChanges: TaggedChange<T>[]) => T,
+	composer: (change1: T | undefined, change2: T | undefined) => T,
 	revInfos?: RevisionInfo[] | RevisionMetadataSource,
 ): SF.Changeset<T> {
 	const updatedChanges = changes.map(({ change, revision, rollbackOf }) => ({
@@ -193,19 +203,31 @@ function composeI<T>(
 		revision,
 		rollbackOf,
 	}));
-	const moveEffects = SF.newCrossFieldTable();
-	const idAllocator = continuingAllocator(changes);
-	let composed = SF.compose(
-		updatedChanges,
-		composer,
-		idAllocator,
-		moveEffects,
+	const idAllocator = continuingAllocator(updatedChanges);
+	const metadata =
 		revInfos !== undefined
 			? Array.isArray(revInfos)
 				? revisionMetadataSourceFromInfo(revInfos)
 				: revInfos
-			: defaultRevisionMetadataFromChanges(updatedChanges),
-	);
+			: defaultRevisionMetadataFromChanges(updatedChanges);
+
+	let composed: SF.Changeset<T> = [];
+	for (const change of updatedChanges) {
+		composed = composePair(makeAnonChange(composed), change, composer, metadata, idAllocator);
+	}
+
+	return composed;
+}
+
+function composePair<T>(
+	change1: TaggedChange<SF.Changeset<T>>,
+	change2: TaggedChange<SF.Changeset<T>>,
+	composer: (change1: T | undefined, change2: T | undefined) => T,
+	metadata: RevisionMetadataSource,
+	idAllocator: IdAllocator,
+): SF.Changeset<T> {
+	const moveEffects = SF.newCrossFieldTable();
+	let composed = SF.compose(change1, change2, composer, idAllocator, moveEffects, metadata);
 
 	if (moveEffects.isInvalidated) {
 		resetCrossFieldTable(moveEffects);
