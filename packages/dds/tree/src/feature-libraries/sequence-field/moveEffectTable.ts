@@ -16,6 +16,7 @@ import {
 	splitMarkEffect,
 } from "./utils.js";
 import { MoveMarkEffect, tryGetVestigialEndpoint } from "./helperTypes.js";
+import { NodeChangeComposer } from "./compose.js";
 
 export type MoveEffectTable<T> = CrossFieldManager<MoveEffect<T>>;
 
@@ -27,7 +28,7 @@ export interface MoveEffect<T> {
 	 * Node changes which should be applied to this mark.
 	 * If this mark already has node changes, `modifyAfter` should be composed as later changes.
 	 */
-	modifyAfter?: TaggedChange<T>;
+	modifyAfter?: T;
 
 	/**
 	 * Only used during rebasing.
@@ -168,7 +169,7 @@ function applyMoveEffectsToSource<T>(
 	revision: RevisionTag | undefined,
 	effects: MoveEffectTable<T>,
 	consumeEffect: boolean,
-	composeChildren?: (a: T | undefined, b: TaggedChange<T>) => T | undefined,
+	composeChildren?: NodeChangeComposer<T>,
 ): Mark<T> {
 	let nodeChange = mark.changes;
 	const modifyAfter = getModifyAfter(
@@ -242,7 +243,7 @@ export function applyMoveEffectsToMark<T>(
 	revision: RevisionTag | undefined,
 	effects: MoveEffectTable<T>,
 	consumeEffect: boolean,
-	composeChildren?: (a: T | undefined, b: TaggedChange<T>) => T | undefined,
+	composeChildren?: NodeChangeComposer<T>,
 ): Mark<T>[] {
 	return applyMoveEffectsToActiveMarks<T>(
 		applyMoveEffectsToVestigialMarks<T>(
@@ -264,7 +265,7 @@ function applyMoveEffectsToVestigialMarks<T>(
 	effects: MoveEffectTable<T>,
 	revision: RevisionTag | undefined,
 	consumeEffect: boolean,
-	composeChildren: ((a: T | undefined, b: TaggedChange<T>) => T | undefined) | undefined,
+	composeChildren: NodeChangeComposer<T> | undefined,
 ): Mark<T>[] {
 	const outputQueue: Mark<T>[] = [];
 	let mark = inputQueue.shift();
@@ -308,7 +309,7 @@ function applyMoveEffectsToActiveMarks<T>(
 	revision: RevisionTag | undefined,
 	effects: MoveEffectTable<T>,
 	consumeEffect: boolean,
-	composeChildren: ((a: T | undefined, b: TaggedChange<T>) => T | undefined) | undefined,
+	composeChildren: NodeChangeComposer<T> | undefined,
 ) {
 	const outputQueue: Mark<T>[] = [];
 	let mark = inputQueue.shift();
@@ -472,7 +473,7 @@ export function getModifyAfter<T>(
 	id: MoveId,
 	count: number,
 	consumeEffect: boolean = true,
-): TaggedChange<T> | undefined {
+): T | undefined {
 	const target = CrossFieldTarget.Source;
 	const effect = getMoveEffect(moveEffects, target, revision, id, count);
 

@@ -653,11 +653,12 @@ const fieldRebaser: BoundFieldChangeRebaser<TestChangeset> = {
 		metadata?: RebaseRevisionMetadata,
 	): TestChangeset => rebase(change, base, { metadata }),
 	invert,
-	compose: (changes, metadata) => compose(changes, metadata),
+	compose: (change1, change2, metadata) => compose([change1, change2], metadata),
 	rebaseComposed: (metadata, change, ...baseChanges) => {
 		const composedChanges = compose(baseChanges, metadata);
 		return rebase(change, makeAnonChange(composedChanges), { metadata });
 	},
+	createEmpty: () => [],
 	assertEqual: (change1, change2) => {
 		if (change1 === undefined && change2 === undefined) {
 			return true;

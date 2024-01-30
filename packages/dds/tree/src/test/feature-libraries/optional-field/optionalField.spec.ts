@@ -158,12 +158,16 @@ describe("optionalField", () => {
 
 	describe("Rebaser", () => {
 		it("can be composed", () => {
-			const simpleChildComposer = (changes: TaggedChange<NodeChangeset>[]) => {
-				assert.equal(changes.length, 1);
-				return changes[0].change;
+			const simpleChildComposer = (
+				c1: NodeChangeset | undefined,
+				c2: NodeChangeset | undefined,
+			) => {
+				assert(c1 === nodeChange1 && c2 === undefined);
+				return c1;
 			};
 			const composed = optionalChangeRebaser.compose(
-				[change1, change2],
+				change1,
+				change2,
 				simpleChildComposer,
 				fakeIdAllocator,
 				failCrossFieldManager,
@@ -199,12 +203,14 @@ describe("optionalField", () => {
 
 			assert.deepEqual(
 				optionalChangeRebaser.compose(
-					[change1, change4],
-					(changes: TaggedChange<NodeChangeset>[]): NodeChangeset => {
-						assert.deepEqual(
-							changes.map((c) => c.change),
-							[nodeChange1, nodeChange2],
-						);
+					change1,
+					change4,
+					(
+						c1: NodeChangeset | undefined,
+						c2: NodeChangeset | undefined,
+					): NodeChangeset => {
+						assert.deepEqual(c1, nodeChange1);
+						assert.deepEqual(c2, nodeChange2);
 						return arbitraryChildChange;
 					},
 					fakeIdAllocator,
@@ -511,7 +517,8 @@ describe("optionalField", () => {
 				const changes = [hasChildChanges, clear];
 				const changeAndClear = makeAnonChange(
 					optionalChangeRebaser.compose(
-						changes,
+						hasChildChanges,
+						clear,
 						(): NodeChangeset => nodeChange1,
 						fakeIdAllocator,
 						failCrossFieldManager,
@@ -589,7 +596,8 @@ describe("optionalField", () => {
 				const changes = [fill, hasChildChanges];
 				const fillAndChange = makeAnonChange(
 					optionalChangeRebaser.compose(
-						changes,
+						fill,
+						hasChildChanges,
 						(): NodeChangeset => nodeChange1,
 						fakeIdAllocator,
 						failCrossFieldManager,
@@ -608,7 +616,8 @@ describe("optionalField", () => {
 				const changes = [hasChildChanges, clear];
 				const changeAndClear = makeAnonChange(
 					optionalChangeRebaser.compose(
-						changes,
+						hasChildChanges,
+						clear,
 						(): NodeChangeset => nodeChange1,
 						fakeIdAllocator,
 						failCrossFieldManager,
@@ -634,7 +643,8 @@ describe("optionalField", () => {
 				const changes = [restore, hasChildChanges];
 				const restoreAndChange = makeAnonChange(
 					optionalChangeRebaser.compose(
-						changes,
+						restore,
+						hasChildChanges,
 						(): NodeChangeset => nodeChange1,
 						fakeIdAllocator,
 						failCrossFieldManager,

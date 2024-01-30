@@ -55,6 +55,10 @@ export function isEmpty<T>(change: Changeset<T>): boolean {
 	return change.length === 0;
 }
 
+export function createEmpty<T>(): Changeset<T> {
+	return [];
+}
+
 export function isNewAttach(mark: Mark<unknown>, revision?: RevisionTag): boolean {
 	return isNewAttachEffect(mark, mark.cellId, revision);
 }
@@ -1080,7 +1084,11 @@ export function withRevision<TMark extends Mark<unknown>>(
 ): TMark {
 	const cloned = cloneMark(mark);
 	addRevision(cloned, revision);
-	if (cloned.cellId !== undefined && cloned.cellId.revision === undefined) {
+	if (
+		cloned.cellId !== undefined &&
+		cloned.cellId.revision === undefined &&
+		revision !== undefined
+	) {
 		(cloned.cellId as Mutable<CellId>).revision = revision;
 	}
 	return cloned;
