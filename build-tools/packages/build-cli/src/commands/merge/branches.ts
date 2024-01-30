@@ -8,7 +8,7 @@ import chalk from "chalk";
 import { strict as assert } from "node:assert";
 
 import { BaseCommand } from "../../base";
-import { Repository, createPullRequest, getCommitInfo, pullRequestExists } from "../../lib";
+import { Repository, createPullRequest, getCommitInfo, pullRequestExists } from "../../library";
 
 interface CleanupBranch {
 	branch: string;
