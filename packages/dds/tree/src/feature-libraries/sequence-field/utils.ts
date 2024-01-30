@@ -923,7 +923,7 @@ export function splitMark<T, TMark extends Mark<T> & Partial<VestigialEndpoint>>
 	return [mark1, mark2];
 }
 
-function splitMarkEffect<TEffect extends MarkEffect>(
+export function splitMarkEffect<TEffect extends MarkEffect>(
 	effect: TEffect,
 	length: number,
 ): [TEffect, TEffect] {

@@ -8,7 +8,13 @@ import { ChangeAtomId, RevisionTag, TaggedChange } from "../../core/index.js";
 import { CrossFieldManager, CrossFieldTarget } from "../modular-schema/index.js";
 import { RangeQueryResult, brand } from "../../util/index.js";
 import { CellMark, Mark, MarkEffect, MoveId, MoveIn, MoveOut } from "./types.js";
-import { areEqualCellIds, cloneMark, isAttachAndDetachEffect, splitMark } from "./utils.js";
+import {
+	areEqualCellIds,
+	cloneMark,
+	isAttachAndDetachEffect,
+	splitMark,
+	splitMarkEffect,
+} from "./utils.js";
 import { MoveMarkEffect, tryGetVestigialEndpoint } from "./helperTypes.js";
 import { NodeChangeComposer } from "./compose.js";
 
@@ -25,9 +31,15 @@ export interface MoveEffect<T> {
 	modifyAfter?: T;
 
 	/**
-	 * A mark which should be moved to the same position as this mark.
+	 * Only used during rebasing.
+	 * An effect from changeset being rebased which should be moved to the same position as this mark.
 	 */
-	movedMark?: Mark<T>;
+	movedEffect?: MarkEffect;
+
+	/**
+	 * Rebased changes for a node which has been moved to the position of this mark.
+	 */
+	rebasedChanges?: T;
 
 	/**
 	 * The ID of the new endpoint associated with this mark.
@@ -125,9 +137,9 @@ function adjustMoveEffectBasis<T>(effect: MoveEffectWithBasis<T>, newBasis: Move
 		};
 	}
 
-	if (effect.movedMark !== undefined) {
-		const [_mark1, mark2] = splitMark(effect.movedMark, basisShift);
-		adjusted.movedMark = mark2;
+	if (effect.movedEffect !== undefined) {
+		const [_mark1, mark2] = splitMarkEffect(effect.movedEffect, basisShift);
+		adjusted.movedEffect = mark2;
 	}
 
 	return adjusted;

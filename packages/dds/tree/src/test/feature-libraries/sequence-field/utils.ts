@@ -237,10 +237,18 @@ function composePair<T>(
 	return composed;
 }
 
+export interface RebaseConfig {
+	readonly metadata?: RebaseRevisionMetadata;
+	readonly childRebaser?: (
+		child: TestChange | undefined,
+		base: TestChange | undefined,
+	) => TestChange | undefined;
+}
+
 export function rebase(
 	change: TestChangeset,
 	base: TaggedChange<TestChangeset>,
-	revisionMetadata?: RebaseRevisionMetadata,
+	config: RebaseConfig = {},
 ): TestChangeset {
 	const cleanChange = purgeUnusedCellOrderingInfo(change);
 	const cleanBase = { ...base, change: purgeUnusedCellOrderingInfo(base.change) };
@@ -248,18 +256,20 @@ export function rebase(
 	deepFreeze(cleanBase);
 
 	const metadata =
-		revisionMetadata ??
+		config.metadata ??
 		rebaseRevisionMetadataFromInfo(
 			defaultRevInfosFromChanges([cleanBase, makeAnonChange(cleanChange)]),
 			[cleanBase.revision],
 		);
+
+	const childRebaser = config.childRebaser ?? TestChange.rebase;
 
 	const moveEffects = SF.newCrossFieldTable();
 	const idAllocator = idAllocatorFromMaxId(getMaxId(cleanChange, cleanBase.change));
 	let rebasedChange = SF.rebase(
 		cleanChange,
 		cleanBase,
-		TestChange.rebase,
+		childRebaser,
 		idAllocator,
 		moveEffects,
 		metadata,
@@ -269,7 +279,7 @@ export function rebase(
 		rebasedChange = SF.rebase(
 			cleanChange,
 			cleanBase,
-			TestChange.rebase,
+			childRebaser,
 			idAllocator,
 			moveEffects,
 			metadata,
@@ -294,11 +304,9 @@ export function rebaseOverChanges(
 	const revisionInfo = revInfos ?? defaultRevInfosFromChanges(baseChanges);
 	for (const base of baseChanges) {
 		currChange = tagChange(
-			rebase(
-				currChange.change,
-				base,
-				rebaseRevisionMetadataFromInfo(revisionInfo, [base.revision]),
-			),
+			rebase(currChange.change, base, {
+				metadata: rebaseRevisionMetadataFromInfo(revisionInfo, [base.revision]),
+			}),
 			currChange.revision,
 		);
 	}
@@ -311,7 +319,7 @@ export function rebaseOverComposition(
 	base: TestChangeset,
 	metadata: RebaseRevisionMetadata,
 ): TestChangeset {
-	return rebase(change, makeAnonChange(base), metadata);
+	return rebase(change, makeAnonChange(base), { metadata });
 }
 
 function resetCrossFieldTable(table: SF.CrossFieldTable) {
