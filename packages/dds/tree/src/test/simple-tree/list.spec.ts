@@ -4,7 +4,10 @@
  */
 
 import { strict as assert } from "assert";
+import { SchemaFactory } from "../../simple-tree/index.js";
 import { getRoot, pretty } from "./utils.js";
+
+const schemaFactory = new SchemaFactory("test");
 
 describe("List", () => {
 	/** Formats 'args' array, inserting commas and eliding trailing undefines.  */
@@ -41,20 +44,14 @@ describe("List", () => {
 
 	/** Helper that creates a new List<number> proxy */
 	function createNumberList(items: readonly number[]) {
-		const list = getRoot(
-			(_) => _.array(_.number),
-			() => items,
-		);
+		const list = getRoot(schemaFactory.array(schemaFactory.number), () => items);
 		assert.deepEqual(list, items);
 		return list;
 	}
 
 	/** Helper that creates a new List<string> proxy */
 	function createStringList(items: readonly string[]) {
-		const list = getRoot(
-			(_) => _.array(_.string),
-			() => items,
-		);
+		const list = getRoot(schemaFactory.array(schemaFactory.string), () => items);
 		assert.deepEqual(list, items);
 		return list;
 	}

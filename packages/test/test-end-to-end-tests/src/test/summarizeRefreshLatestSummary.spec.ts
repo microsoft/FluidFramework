@@ -9,7 +9,7 @@ import {
 	ITestContainerConfig,
 	ITestObjectProvider,
 	createSummarizer,
-	mockConfigProvider,
+	createTestConfigProvider,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
@@ -24,10 +24,10 @@ import { Deferred } from "@fluidframework/core-utils";
 
 describeCompat(
 	"Summarizer can refresh a snapshot from the server",
-	"NoCompat",
+	"2.0.0-rc.1.0.0",
 	(getTestObjectProvider) => {
 		let provider: ITestObjectProvider;
-		beforeEach(async () => {
+		beforeEach("getTestObjectProvider", async () => {
 			provider = getTestObjectProvider({ syncSummarizer: true });
 		});
 
@@ -65,6 +65,8 @@ describeCompat(
 				},
 			};
 			const mockLogger = new MockLogger();
+			const configProvider = createTestConfigProvider();
+			configProvider.set("Fluid.Summarizer.immediatelyRefreshLatestSummaryAck", true);
 			const testContainerConfig: ITestContainerConfig = {
 				runtimeOptions: {
 					summaryOptions: {
@@ -73,9 +75,7 @@ describeCompat(
 				},
 				loaderProps: {
 					logger: mockLogger,
-					configProvider: mockConfigProvider({
-						"Fluid.Summarizer.immediatelyRefreshLatestSummaryAck": true,
-					}),
+					configProvider,
 				},
 			};
 			const container = await provider.makeTestContainer(testContainerConfig);

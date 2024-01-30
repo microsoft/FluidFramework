@@ -91,15 +91,26 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 			runtime,
 		);
 
-		// Before doing any heuristics or proceeding with its refreshing, if there is a summary ack received while
-		// this summarizer catches up, let's refresh state before proceeding with the summarization.
-		const lastAckRefSeq = await summarizer.handleSummaryAck();
+		// If there have been any acks newer that the one this client loaded from until now, process them before
+		// starting the running summarizer which will trigger summary heuristics.
+		// This is done primarily to handle scenarios where the summarizer loads from a cached snapshot and there
+		// is newer one available. The ack for the newer summary is processed before summarizing because otherwise
+		// that summary would fail as it has an older parent.
+		let nextReferenceSequenceNumber = runtime.deltaManager.initialSequenceNumber + 1;
+		const latestAck = summaryCollection.latestAck;
+		if (
+			latestAck !== undefined &&
+			latestAck.summaryOp.referenceSequenceNumber >= nextReferenceSequenceNumber
+		) {
+			await summarizer.handleSummaryAck(latestAck);
+			nextReferenceSequenceNumber = latestAck.summaryOp.referenceSequenceNumber + 1;
+		}
 
 		await summarizer.waitStart();
 
-		// Handle summary acks asynchronously
+		// Process summary acks asynchronously
 		// Note: no exceptions are thrown from processIncomingSummaryAcks handler as it handles all exceptions
-		summarizer.processIncomingSummaryAcks(lastAckRefSeq).catch((error) => {
+		summarizer.processIncomingSummaryAcks(nextReferenceSequenceNumber).catch((error) => {
 			createChildLogger({ logger }).sendErrorEvent(
 				{ eventName: "HandleSummaryAckFatalError" },
 				error,
@@ -280,44 +291,37 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 				: defaultMaxAttemptsForSubmitFailures;
 	}
 
-	private async handleSummaryAck(): Promise<number> {
-		const lastAck: IAckedSummary | undefined = this.summaryCollection.latestAck;
-		let refSequenceNumber = -1;
-		// In case we haven't received the lastestAck yet, just return.
-		if (lastAck !== undefined) {
-			refSequenceNumber = lastAck.summaryOp.referenceSequenceNumber;
-			const summaryLogger = this.tryGetCorrelatedLogger(refSequenceNumber) ?? this.mc.logger;
-			const summaryOpHandle = lastAck.summaryOp.contents.handle;
-			const summaryAckHandle = lastAck.summaryAck.contents.handle;
-			while (this.summarizingLock !== undefined) {
-				summaryLogger.sendTelemetryEvent({
-					eventName: "RefreshAttemptWithSummarizerRunning",
-					referenceSequenceNumber: refSequenceNumber,
+	private async handleSummaryAck(ack: IAckedSummary) {
+		const refSequenceNumber = ack.summaryOp.referenceSequenceNumber;
+		const summaryLogger = this.tryGetCorrelatedLogger(refSequenceNumber) ?? this.mc.logger;
+		const summaryOpHandle = ack.summaryOp.contents.handle;
+		const summaryAckHandle = ack.summaryAck.contents.handle;
+		while (this.summarizingLock !== undefined) {
+			summaryLogger.sendTelemetryEvent({
+				eventName: "RefreshAttemptWithSummarizerRunning",
+				referenceSequenceNumber: refSequenceNumber,
+				proposalHandle: summaryOpHandle,
+				ackHandle: summaryAckHandle,
+			});
+			await this.summarizingLock;
+		}
+
+		// Make sure we block any summarizer from being executed/enqueued while
+		// executing the refreshLatestSummaryAck.
+		// https://dev.azure.com/fluidframework/internal/_workitems/edit/779
+		await this.lockedSummaryAction(
+			() => {},
+			async () => {
+				const options: IRefreshSummaryAckOptions = {
 					proposalHandle: summaryOpHandle,
 					ackHandle: summaryAckHandle,
-				});
-				await this.summarizingLock;
-			}
-
-			// Make sure we block any summarizer from being executed/enqueued while
-			// executing the refreshLatestSummaryAck.
-			// https://dev.azure.com/fluidframework/internal/_workitems/edit/779
-			await this.lockedSummaryAction(
-				() => {},
-				async () => {
-					const options: IRefreshSummaryAckOptions = {
-						proposalHandle: summaryOpHandle,
-						ackHandle: summaryAckHandle,
-						summaryRefSeq: refSequenceNumber,
-						summaryLogger,
-					};
-					await this.refreshLatestSummaryAckAndHandleError(options);
-				},
-				() => {},
-			);
-			refSequenceNumber++;
-		}
-		return refSequenceNumber;
+					summaryRefSeq: refSequenceNumber,
+					summaryLogger,
+				};
+				await this.refreshLatestSummaryAckAndHandleError(options);
+			},
+			() => {},
+		);
 	}
 
 	private readonly refreshLatestSummaryAckAndHandleError = async (
@@ -350,32 +354,22 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 	};
 
 	/**
-	 * Responsible for receiving and processing all the summaryAcks.
-	 * In case there was a summary ack processed by the running summarizer before processIncomingSummaryAcks is called,
-	 * it will wait for the summary ack that is newer than the one indicated by the lastAckRefSeq.
-	 * @param lastAckRefSeq - Identifies the minimum reference sequence number the summarizer needs to wait for.
-	 * In case of a negative number, the summarizer will wait for ANY summary ack that is greater than the deltaManager's initial sequence number,
-	 * and, in case of a positive one, it will wait for a summary ack that is greater than this current reference sequence number.
+	 * Responsible for receiving and processing all the summary acks.
+	 * It starts processing ACKs after the one for the summary this client loaded from (initialSequenceNumber). Any
+	 * ACK before that is not interesting as it will simply be ignored.
+	 *
+	 * @param referenceSequenceNumber - The referenceSequenceNumber of the summary from which to start processing
+	 * acks.
 	 */
-	private async processIncomingSummaryAcks(lastAckRefSeq: number) {
-		let refSequenceNumber =
-			lastAckRefSeq > 0 ? lastAckRefSeq : this.runtime.deltaManager.initialSequenceNumber;
+	private async processIncomingSummaryAcks(referenceSequenceNumber: number) {
+		// Start waiting for acks that are for summaries newer that the one this client loaded from.
+		let nextReferenceSequenceNumber = referenceSequenceNumber;
 		while (!this.disposed) {
-			const summaryLogger = this.tryGetCorrelatedLogger(refSequenceNumber) ?? this.mc.logger;
-
-			// Initialize ack with undefined if exception happens inside of waitSummaryAck on second iteration,
-			// we record undefined, not previous handles.
-			await this.summaryCollection.waitSummaryAck(refSequenceNumber);
-
-			summaryLogger.sendTelemetryEvent({
-				eventName: "processIncomingSummaryAcks",
-				referenceSequenceNumber: refSequenceNumber,
-				lastAckRefSeq,
-			});
-
-			refSequenceNumber = await this.handleSummaryAck();
-			// A valid Summary Ack must have been processed.
-			assert(refSequenceNumber >= 0, 0x58f /* Invalid ref sequence number */);
+			const ackedSummary = await this.summaryCollection.waitSummaryAck(
+				nextReferenceSequenceNumber,
+			);
+			await this.handleSummaryAck(ackedSummary);
+			nextReferenceSequenceNumber = ackedSummary.summaryOp.referenceSequenceNumber + 1;
 		}
 	}
 
@@ -590,7 +584,17 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 				};
 				const summarizeResult = this.generator.summarize(summaryOptions, resultsBuilder);
 				// ensure we wait till the end of the process
-				return summarizeResult.receivedSummaryAckOrNack;
+				const result = await summarizeResult.receivedSummaryAckOrNack;
+				if (!result.success) {
+					this.mc.logger.sendErrorEvent(
+						{
+							eventName: "SummarizeFailed",
+							maxAttempts: 1,
+							summaryAttempts: 1,
+						},
+						result.error,
+					);
+				}
 			},
 			() => {
 				this.afterSummaryAction();
@@ -643,6 +647,7 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 		let summaryAttempts = 0;
 		let summaryAttemptsPerPhase = 0;
 		let summaryAttemptPhase = 0;
+		let error: any;
 		while (summaryAttemptPhase < attemptOptions.length) {
 			if (this.cancellationToken.cancelled) {
 				return;
@@ -681,6 +686,8 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 				return;
 			}
 
+			error = ackNackResult.error;
+
 			// Check for retryDelay that can come from summaryNack, upload summary or submit summary flows.
 			// Retry the same step only once per retryAfter response.
 			const submitResult = await resultSummarize.summarySubmitted;
@@ -702,6 +709,14 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 				await delay(delaySeconds * 1000);
 			}
 		}
+		this.mc.logger.sendErrorEvent(
+			{
+				eventName: "SummarizeFailed",
+				maxAttempts: attemptOptions.length,
+				summaryAttempts: summaryAttemptPhase,
+			},
+			error,
+		);
 		this.stopSummarizerCallback("failToSummarize");
 	}
 
@@ -752,6 +767,7 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 		let done = false;
 		let status: "success" | "failure" | "canceled" = "success";
 		let results: ISummarizeResults | undefined;
+		let error: any;
 		do {
 			currentAttempt++;
 			if (this.cancellationToken.cancelled) {
@@ -786,11 +802,12 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 
 			// Emit "summarize" event for this failed attempt.
 			status = "failure";
+			error = ackNackResult.error;
 			const eventProps: ISummarizeEventProps = {
 				result: status,
 				currentAttempt,
 				maxAttempts,
-				error: ackNackResult.error,
+				error,
 			};
 			this.emit("summarize", eventProps);
 
@@ -827,6 +844,9 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 			// Ack / nack is the final step, so if it succeeds we're done.
 			const ackNackResult = await summarizeResult.receivedSummaryAckOrNack;
 			status = ackNackResult.success ? "success" : "failure";
+			if (!ackNackResult.success) {
+				error = ackNackResult.error;
+			}
 			const eventProps: ISummarizeEventProps = {
 				result: status,
 				currentAttempt,
@@ -839,6 +859,14 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 
 		// If summarization is still unsuccessful, stop the summarizer.
 		if (status === "failure") {
+			this.mc.logger.sendErrorEvent(
+				{
+					eventName: "SummarizeFailed",
+					maxAttempts,
+					summaryAttempts: currentAttempt,
+				},
+				error,
+			);
 			this.stopSummarizerCallback("failToSummarize");
 		}
 		return results;

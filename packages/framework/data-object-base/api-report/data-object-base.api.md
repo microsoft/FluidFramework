@@ -72,16 +72,23 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
 
 // @internal (undocumented)
 export class RuntimeFactory extends RuntimeFactoryHelper {
-    constructor(props: {
-        defaultStoreFactory: IFluidDataStoreFactory;
-        storeFactories: IFluidDataStoreFactory[];
-        requestHandlers?: RuntimeRequestHandler[];
-        provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
-    });
+    constructor(props: RuntimeFactoryProps);
     // (undocumented)
     instantiateFirstTime(runtime: ContainerRuntime): Promise<void>;
     // (undocumented)
     preInitialize(context: IContainerContext, existing: boolean): Promise<ContainerRuntime>;
+}
+
+// @internal
+export interface RuntimeFactoryProps {
+    // (undocumented)
+    defaultStoreFactory: IFluidDataStoreFactory;
+    // (undocumented)
+    provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+    // @deprecated (undocumented)
+    requestHandlers?: RuntimeRequestHandler[];
+    // (undocumented)
+    storeFactories: IFluidDataStoreFactory[];
 }
 
 ```

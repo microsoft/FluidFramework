@@ -98,7 +98,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 
 		assert(
 			runtime.idCompressor !== undefined,
-			"IdCompressor must be enabled to use SharedTree",
+			0x886 /* IdCompressor must be enabled to use SharedTree */,
 		);
 		this.idCompressor = runtime.idCompressor;
 		const mintRevisionTag = () => this.idCompressor.generateCompressedId();
@@ -300,7 +300,7 @@ export interface Summarizable {
 
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).getAttachSummary}
-	 * @param stringify - Serializes the contents of the component (including {@link IFluidHandle}s) for storage.
+	 * @param stringify - Serializes the contents of the component (including {@link (IFluidHandle:interface)}s) for storage.
 	 */
 	getAttachSummary(
 		stringify: SummaryElementStringifier,
@@ -312,7 +312,7 @@ export interface Summarizable {
 
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).summarize}
-	 * @param stringify - Serializes the contents of the component (including {@link IFluidHandle}s) for storage.
+	 * @param stringify - Serializes the contents of the component (including {@link (IFluidHandle:interface)}s) for storage.
 	 */
 	summarize(
 		stringify: SummaryElementStringifier,

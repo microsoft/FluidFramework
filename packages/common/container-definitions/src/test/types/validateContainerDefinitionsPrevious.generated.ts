@@ -168,26 +168,14 @@ use_old_TypeAliasDeclaration_ConnectionState_EstablishingConnection(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "EnumDeclaration_ContainerErrorType": {"forwardCompat": false}
+* "RemovedEnumDeclaration_ContainerErrorType": {"forwardCompat": false}
 */
-declare function get_old_EnumDeclaration_ContainerErrorType():
-    TypeOnly<old.ContainerErrorType>;
-declare function use_current_EnumDeclaration_ContainerErrorType(
-    use: TypeOnly<current.ContainerErrorType>): void;
-use_current_EnumDeclaration_ContainerErrorType(
-    get_old_EnumDeclaration_ContainerErrorType());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "EnumDeclaration_ContainerErrorType": {"backCompat": false}
+* "RemovedEnumDeclaration_ContainerErrorType": {"backCompat": false}
 */
-declare function get_current_EnumDeclaration_ContainerErrorType():
-    TypeOnly<current.ContainerErrorType>;
-declare function use_old_EnumDeclaration_ContainerErrorType(
-    use: TypeOnly<old.ContainerErrorType>): void;
-use_old_EnumDeclaration_ContainerErrorType(
-    get_current_EnumDeclaration_ContainerErrorType());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -391,6 +379,7 @@ declare function get_old_InterfaceDeclaration_IContainer():
 declare function use_current_InterfaceDeclaration_IContainer(
     use: TypeOnly<current.IContainer>): void;
 use_current_InterfaceDeclaration_IContainer(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainer());
 
 /*

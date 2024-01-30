@@ -5,7 +5,7 @@
 
 import { FieldKey } from "../core/index.js";
 import {
-	TreeFieldSchema,
+	FlexFieldSchema,
 	FlexTreeSchema,
 	FlexTreeTypedField,
 	FlexTreeContext,
@@ -24,9 +24,9 @@ import { ITreeCheckoutFork, ITreeCheckout } from "./treeCheckout.js";
  * 2. This object should be combined with or accessible from the TreeContext to allow easy access to thinks like branching.
  * @internal
  */
-export interface FlexTreeView<in out TRoot extends TreeFieldSchema> extends IDisposable {
+export interface FlexTreeView<in out TRoot extends FlexFieldSchema> extends IDisposable {
 	/**
-	 * Context for controlling the EditableTree nodes produced from {@link FlexTreeView.editableTree}.
+	 * Context for controlling the EditableTree nodes produced from {@link FlexTreeView.flexTree}.
 	 *
 	 * @remarks
 	 * This is an owning reference: disposing of this view disposes its context.
@@ -44,7 +44,7 @@ export interface FlexTreeView<in out TRoot extends TreeFieldSchema> extends IDis
 	/**
 	 * Get a typed view of the tree content using the editable-tree-2 API.
 	 */
-	readonly editableTree: FlexTreeTypedField<TRoot>;
+	readonly flexTree: FlexTreeTypedField<TRoot>;
 
 	/**
 	 * Spawn a new view which is based off of the current state of this view.
@@ -59,7 +59,7 @@ export interface FlexTreeView<in out TRoot extends TreeFieldSchema> extends IDis
  * {@link FlexTreeView} that has forked off of the main trunk/branch.
  * @internal
  */
-export interface ITreeViewFork<in out TRoot extends TreeFieldSchema> extends FlexTreeView<TRoot> {
+export interface ITreeViewFork<in out TRoot extends FlexFieldSchema> extends FlexTreeView<TRoot> {
 	readonly checkout: ITreeCheckoutFork;
 }
 
@@ -67,12 +67,12 @@ export interface ITreeViewFork<in out TRoot extends TreeFieldSchema> extends Fle
  * Implementation of FlexTreeView wrapping a ITreeCheckout.
  */
 export class CheckoutFlexTreeView<
-	in out TRoot extends TreeFieldSchema,
+	in out TRoot extends FlexFieldSchema,
 	out TCheckout extends ITreeCheckout = ITreeCheckout,
 > implements FlexTreeView<TRoot>
 {
 	public readonly context: Context;
-	public readonly editableTree: FlexTreeTypedField<TRoot>;
+	public readonly flexTree: FlexTreeTypedField<TRoot>;
 	public constructor(
 		public readonly checkout: TCheckout,
 		public readonly schema: FlexTreeSchema<TRoot>,
@@ -87,7 +87,7 @@ export class CheckoutFlexTreeView<
 			nodeKeyManager,
 			nodeKeyFieldKey,
 		);
-		this.editableTree = this.context.root as FlexTreeTypedField<TRoot>;
+		this.flexTree = this.context.root as FlexTreeTypedField<TRoot>;
 	}
 
 	public [disposeSymbol](): void {

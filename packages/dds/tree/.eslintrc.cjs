@@ -6,7 +6,7 @@
 module.exports = {
 	extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"],
 	parserOptions: {
-		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
+		project: ["./tsconfig.json"],
 	},
 	rules: {
 		"@typescript-eslint/no-namespace": "off",
@@ -22,19 +22,13 @@ module.exports = {
 				caughtErrorsIgnorePattern: "^_",
 			},
 		],
-		"import/no-internal-modules": [
-			"error",
-			{
-				// Allow imports from sibling and ancestral sibling directories,
-				// but not from cousin directories. Parent is allowed but only
-				// because there isn't a known way to deny it.
-				allow: ["*/index.js"],
-			},
-		],
 	},
 	overrides: [
 		{
 			files: ["src/test/**/*"],
+			parserOptions: {
+				project: ["./src/test/tsconfig.json"],
+			},
 			rules: {
 				"@typescript-eslint/no-unused-vars": ["off"],
 			},

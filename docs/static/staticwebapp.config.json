@@ -1,12 +1,11 @@
 {
-  "routes": [
-    {
-      "route": "/docs/apis",
-      "redirect": "/docs/api/v1",
-      "statusCode": 301
-    }
-  ],
   "globalHeaders": {
     "cache-control": "must-revalidate, max-age=3600"
+  },
+  "navigationFallback": {
+    "rewrite": "/api/fallback"
+  },
+  "platform": {
+    "apiRuntime": "node:18"
   }
 }

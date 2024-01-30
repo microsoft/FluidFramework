@@ -11,7 +11,7 @@ import {
 	makeBubble,
 	randomColor,
 } from "@fluid-example/bubblebench-common";
-import { observe } from "./proxy";
+import { observe } from "./proxy/index.js";
 
 interface IApp {
 	clients: IArrayish<IClient>;
