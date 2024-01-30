@@ -1585,7 +1585,7 @@ importers:
       '@fluid-tools/build-cli': 0.29.0_lzbrbjkjqqnlnvbwteayq6k5jm
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
-      '@fluidframework/eslint-config-fluid': file:common/build/eslint-config-fluid_loebgezstcsvd2poh2d55fifke
+      '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@types/express': 4.17.21
       '@types/fs-extra': 9.0.13
       '@types/node': 18.19.1
@@ -45307,45 +45307,6 @@ packages:
 
   /zwitch/1.0.5:
     resolution: {integrity: sha512-V50KMwwzqJV0NpZIZFwfOD5/lyny3WlSzRiXgA0G7VUnRlqttta1L6UQIHzd6EuBY/cHGfwTIck7w1yH6Q5zUw==}
-    dev: true
-
-  file:common/build/eslint-config-fluid/src/fluid-custom-rules:
-    resolution: {directory: common/build/eslint-config-fluid/src/fluid-custom-rules, type: directory}
-    name: eslint-plugin-fluid-custom-rules
-    version: 1.0.0
-    dev: true
-
-  file:common/build/eslint-config-fluid_loebgezstcsvd2poh2d55fifke:
-    resolution: {directory: common/build/eslint-config-fluid, type: directory}
-    id: file:common/build/eslint-config-fluid
-    name: '@fluidframework/eslint-config-fluid'
-    version: 3.3.0
-    dependencies:
-      '@microsoft/tsdoc': 0.14.2
-      '@rushstack/eslint-patch': 1.4.0
-      '@rushstack/eslint-plugin': 0.13.1_loebgezstcsvd2poh2d55fifke
-      '@rushstack/eslint-plugin-security': 0.7.1_loebgezstcsvd2poh2d55fifke
-      '@typescript-eslint/eslint-plugin': 6.7.5_kyvm7vo2gnj3vejfc2zkbqg7l4
-      '@typescript-eslint/parser': 6.7.5_loebgezstcsvd2poh2d55fifke
-      eslint-config-prettier: 9.0.0_eslint@8.50.0
-      eslint-import-resolver-typescript: 3.6.1_23enhn7pppnolyoizx6fvous5q
-      eslint-plugin-eslint-comments: 3.2.0_eslint@8.50.0
-      eslint-plugin-fluid-custom-rules: file:common/build/eslint-config-fluid/src/fluid-custom-rules
-      eslint-plugin-import: /eslint-plugin-i/2.29.1_qkgnnbjqevbkx5nf2343uj5ca4
-      eslint-plugin-jsdoc: 46.8.2_eslint@8.50.0
-      eslint-plugin-promise: 6.1.1_eslint@8.50.0
-      eslint-plugin-react: 7.33.2_eslint@8.50.0
-      eslint-plugin-react-hooks: 4.6.0_eslint@8.50.0
-      eslint-plugin-tsdoc: 0.2.17
-      eslint-plugin-unicorn: 48.0.1_eslint@8.50.0
-      eslint-plugin-unused-imports: 3.0.0_o7kaekouewryr5qn434fjasyba
-      ts-morph: 20.0.0
-    transitivePeerDependencies:
-      - eslint
-      - eslint-import-resolver-node
-      - eslint-import-resolver-webpack
-      - supports-color
-      - typescript
     dev: true
 
   file:tools/changelog-generator-wrapper:
