@@ -133,7 +133,6 @@ export class GCSummaryStateTracker {
 	 * If none of the components changed, it returns a summary handle for the entire GC data.
 	 */
 	public summarize(
-		fullTree: boolean,
 		trackState: boolean,
 		gcState: IGarbageCollectionState,
 		deletedNodes: Set<string>,
@@ -167,7 +166,7 @@ export class GCSummaryStateTracker {
 			serializedDeletedNodes,
 		};
 
-		if (trackState && !fullTree && this.latestSummaryData !== undefined) {
+		if (trackState && this.latestSummaryData !== undefined) {
 			// If nothing changed since last summary, send a summary handle for the entire GC data.
 			if (
 				this.latestSummaryData.serializedGCState === serializedGCState &&
