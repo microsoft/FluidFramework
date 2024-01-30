@@ -69,6 +69,7 @@ deli:
     maxTime: 60000
     maxMessages: 500
   restartOnCheckpointFailure: true
+  enableEphemeralContainerSummaryCleanup: true
 
 scriptorium:
   name: scriptorium
