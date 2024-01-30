@@ -376,7 +376,6 @@
 		},
 		"patchedDependencies": {
 			"@microsoft/api-extractor@7.39.1": "patches/@microsoft__api-extractor@7.39.1.patch",
-			"socket.io-client@4.7.2": "patches/socket.io-client@4.7.2.patch",
 			"tsc-multi@1.1.0": "patches/tsc-multi@1.1.0.patch"
 		}
 	}
