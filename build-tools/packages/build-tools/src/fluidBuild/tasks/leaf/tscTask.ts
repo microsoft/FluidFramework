@@ -443,16 +443,18 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 				tsBuildInfoFiles.push(tsBuildInfo);
 			}
 
-			const configFile = this.configFileFullPath;
-			let config = "";
-			if (existsSync(configFile)) {
-				// Include the config file if it exists so that we can detect changes
-				config = await readFileAsync(this.configFileFullPath, "utf8");
+			const configs: string[] = [];
+			const configFiles = this.configFileFullPaths;
+			for (const configFile of configFiles) {
+				if (existsSync(configFile)) {
+					// Include the config file if it exists so that we can detect changes
+					configs.push(await readFileAsync(configFile, "utf8"));
+				}
 			}
 
 			return JSON.stringify({
 				version: await this.getToolVersion(),
-				config,
+				configs,
 				tsBuildInfoFiles,
 			});
 		} catch (e) {
@@ -460,7 +462,7 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 			return undefined;
 		}
 	}
-	protected abstract get configFileFullPath(): string;
+	protected abstract get configFileFullPaths(): string[];
 	protected abstract getToolVersion(): Promise<string>;
 }
 
@@ -497,14 +499,14 @@ export class TscMultiTask extends LeafWithDoneFileTask {
 		try {
 			// The path to the tsbuildinfo file differs based on if it's a CJS vs. ESM build. Use the presence of "esnext" in
 			// the command string to determine which file to use.
-			const tsbuildinfo = this.getPackageFileFullPath(
-				command.includes("esnext")
+			const tsbuildinfoPath = this.getPackageFileFullPath(
+				command.includes("tsc-multi.esm.json")
 					? "tsconfig.mjs.tsbuildinfo"
 					: "tsconfig.cjs.tsbuildinfo",
 			);
-			if (!existsSync(tsbuildinfo)) {
+			if (!existsSync(tsbuildinfoPath)) {
 				// No tsbuildinfo file, so we need to build
-				return undefined;
+				throw new Error(`no tsbuildinfo file found: ${tsbuildinfoPath}`);
 			}
 
 			const files = [...commonFiles];
@@ -520,7 +522,7 @@ export class TscMultiTask extends LeafWithDoneFileTask {
 				return { name, hash };
 			});
 
-			const buildInfo = readFileSync(tsbuildinfo).toString();
+			const buildInfo = readFileSync(tsbuildinfoPath).toString();
 			const version = await getInstalledPackageVersion("tsc-multi", this.node.pkg.directory);
 			const hashes = await Promise.all(hashesP);
 			const result = JSON.stringify({
@@ -530,7 +532,7 @@ export class TscMultiTask extends LeafWithDoneFileTask {
 			});
 			return result;
 		} catch (e) {
-			this.traceError(`error generating done file content. ${e}`);
+			this.traceError(`error generating done file content: ${e}`);
 		}
 		return undefined;
 	}

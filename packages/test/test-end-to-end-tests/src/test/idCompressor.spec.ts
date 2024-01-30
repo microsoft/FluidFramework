@@ -16,11 +16,7 @@ import {
 } from "@fluidframework/test-utils";
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
 import type { SharedCell } from "@fluidframework/cell";
-import {
-	IIdCompressor,
-	SessionSpaceCompressedId,
-	StableId,
-} from "@fluidframework/runtime-definitions";
+import { IIdCompressor, SessionSpaceCompressedId, StableId } from "@fluidframework/id-compressor";
 import type { SharedObjectCore } from "@fluidframework/shared-object-base";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
@@ -33,7 +29,7 @@ function getIdCompressor(dds: SharedObjectCore): IIdCompressor {
 	return (dds as any).runtime.idCompressor as IIdCompressor;
 }
 
-describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("Runtime IdCompressor", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) => {
 	const {
 		dataRuntime: { DataObject, DataObjectFactory },
 		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
@@ -108,7 +104,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 	const createContainer = async (): Promise<IContainer> =>
 		provider.createContainer(runtimeFactory);
 
-	beforeEach(async () => {
+	beforeEach("setupContainers", async () => {
 		provider = getTestObjectProvider();
 		container1 = await createContainer();
 		mainDataStore = (await container1.getEntryPoint()) as TestDataObject;
@@ -618,61 +614,74 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 	});
 });
 
-describeCompat("IdCompressor in detached container", "NoCompat", (getTestObjectProvider, apis) => {
-	let provider: ITestObjectProvider;
-	let request: IRequest;
+// No-compat: 2.0.0-internal.8.x and earlier versions of container-runtime don't finalize ids prior to attaching.
+// Even older versions of the runtime also don't have an id compression feature enabled.
+describeCompat(
+	"IdCompressor in detached container",
+	"2.0.0-rc.1.0.0",
+	(getTestObjectProvider, apis) => {
+		let provider: ITestObjectProvider;
+		let request: IRequest;
 
-	beforeEach(() => {
-		provider = getTestObjectProvider();
-		request = provider.driver.createCreateNewRequest(provider.documentId);
-	});
+		beforeEach("getTestObjectProvider", () => {
+			provider = getTestObjectProvider();
+			request = provider.driver.createCreateNewRequest(provider.documentId);
+		});
 
-	it("Compressors sync after detached container attaches and sends an op", async () => {
-		const testConfig: ITestContainerConfig = {
-			fluidDataObjectType: DataObjectFactoryType.Test,
-			registry: [["sharedCell", apis.dds.SharedCell.getFactory()]],
-			runtimeOptions: {
-				enableRuntimeIdCompressor: true,
-			},
-		};
-		const loader = provider.makeTestLoader(testConfig);
-		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+		it("Compressors sync after detached container attaches and sends an op", async () => {
+			const testConfig: ITestContainerConfig = {
+				fluidDataObjectType: DataObjectFactoryType.Test,
+				registry: [["sharedCell", apis.dds.SharedCell.getFactory()]],
+				runtimeOptions: {
+					enableRuntimeIdCompressor: true,
+				},
+			};
+			const loader = provider.makeTestLoader(testConfig);
+			const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
-		// Get the root dataStore from the detached container.
-		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
-		const testChannel1 = await dataStore.getSharedObject<SharedCell>("sharedCell");
+			// Get the root dataStore from the detached container.
+			const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
+			const testChannel1 = await dataStore.getSharedObject<SharedCell>("sharedCell");
 
-		// Generate an Id before attaching the container
-		(testChannel1 as any).runtime.idCompressor.generateCompressedId();
-		// Attach the container. The generated Id won't be synced until another op
-		// is sent after attaching becuase most DDSs don't send ops until they are attached.
-		await container.attach(request);
+			// Generate an Id before attaching the container
+			(testChannel1 as any).runtime.idCompressor.generateCompressedId();
+			// Attach the container. The generated Id won't be synced until another op
+			// is sent after attaching becuase most DDSs don't send ops until they are attached.
+			await container.attach(request);
 
-		// Create another container to test sync
-		const url: any = await container.getAbsoluteUrl("");
-		const loader2 = provider.makeTestLoader(testConfig) as Loader;
-		const container2 = await loader2.resolve({ url });
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const testChannel2 = await dataStore2.getSharedObject<SharedCell>("sharedCell");
-		// Generate an Id in the second attached container and send an op to send the Ids
-		(testChannel2 as any).runtime.idCompressor.generateCompressedId();
-		testChannel2.set("value");
+			// Create another container to test sync
+			const url: any = await container.getAbsoluteUrl("");
+			const loader2 = provider.makeTestLoader(testConfig) as Loader;
+			const container2 = await loader2.resolve({ url });
+			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const testChannel2 = await dataStore2.getSharedObject<SharedCell>("sharedCell");
+			// Generate an Id in the second attached container and send an op to send the Ids
+			(testChannel2 as any).runtime.idCompressor.generateCompressedId();
+			testChannel2.set("value");
 
-		await provider.ensureSynchronized();
+			await provider.ensureSynchronized();
 
-		// Send an op in the first container to get its Ids sent
-		testChannel1.set("value2");
+			// Send an op in the first container to get its Ids sent
+			testChannel1.set("value2");
 
-		await provider.ensureSynchronized();
+			await provider.ensureSynchronized();
 
-		// Compressor from second container will get the first 512 Ids (0-511)
-		assert.strictEqual((testChannel2 as any).runtime.idCompressor.normalizeToOpSpace(-1), 0);
-		// Compressor from first container gets second cluster starting at 512 after sending an op
-		assert.strictEqual((testChannel1 as any).runtime.idCompressor.normalizeToOpSpace(-1), 513);
-	});
-});
+			// Compressor from first container will get the first 512 Ids (0-511) as its id should be finalized
+			// on attach
+			assert.strictEqual(
+				(testChannel1 as any).runtime.idCompressor.normalizeToOpSpace(-1),
+				0,
+			);
+			// Compressor from second container gets second cluster starting at 512 after sending an op
+			assert.strictEqual(
+				(testChannel2 as any).runtime.idCompressor.normalizeToOpSpace(-1),
+				513,
+			);
+		});
+	},
+);
 
-describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => {
+describeCompat("IdCompressor Summaries", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	const enabledConfig: ITestContainerConfig = {
 		runtimeOptions: { enableRuntimeIdCompressor: true },
@@ -681,7 +690,7 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 	const createContainer = async (config?: ITestContainerConfig): Promise<IContainer> =>
 		provider.makeTestContainer(config);
 
-	beforeEach(async () => {
+	beforeEach("getTestObjectProvider", async () => {
 		provider = getTestObjectProvider();
 	});
 

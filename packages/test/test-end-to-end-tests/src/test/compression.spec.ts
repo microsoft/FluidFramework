@@ -6,6 +6,8 @@
 // eslint-disable-next-line import/no-nodejs-modules
 import * as crypto from "crypto";
 import { strict as assert } from "assert";
+// TODO:AB#6558: This should be provided based on the compatibility configuration.
+// eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
 	DataObjectFactoryType,
@@ -38,7 +40,7 @@ const compressionSuite = (getProvider) => {
 			fluidDataObjectType: DataObjectFactoryType.Test,
 		};
 
-		beforeEach(async () => {
+		beforeEach("createLocalAndRemoteMaps", async () => {
 			provider = await getProvider();
 
 			const localContainer = await provider.makeTestContainer(testContainerConfig);

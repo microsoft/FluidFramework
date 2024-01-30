@@ -210,7 +210,10 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 				? this.fileSystemManagerFactories.defaultFileSystemManagerFactory
 				: this.fileSystemManagerFactories.ephemeralFileSystemManagerFactory;
 
-		const fileSystemManager = fileSystemManagerFactory.create(params.fileSystemManagerParams);
+		const fileSystemManager = fileSystemManagerFactory.create({
+			...params.fileSystemManagerParams,
+			rootDir: directoryPath,
+		});
 
 		// We define the function below to be able to call it either on its own or within the mutex.
 		const action = async () => {

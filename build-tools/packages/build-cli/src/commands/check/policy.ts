@@ -11,7 +11,7 @@ import { EOL as newline } from "node:os";
 import { Context, getFluidBuildConfig, Handler, policyHandlers } from "@fluidframework/build-tools";
 
 import { BaseCommand } from "../../base";
-import { Repository } from "../../lib";
+import { Repository } from "../../library";
 
 type policyAction = "handle" | "resolve" | "final";
 

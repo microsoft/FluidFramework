@@ -4,7 +4,7 @@
  */
 import { strict as assert } from "node:assert";
 
-import { SchemaFactory, SharedTree } from "@fluid-experimental/tree2";
+import { SchemaFactory, SharedTree } from "@fluidframework/tree";
 import { AttachState } from "@fluidframework/container-definitions";
 import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
@@ -43,7 +43,7 @@ describe("AzureClient", () => {
 	let client: AzureClient;
 	let schema: ContainerSchema;
 
-	beforeEach(() => {
+	beforeEach("createAzureClient", () => {
 		client = createAzureClient();
 		schema = {
 			initialObjects: {

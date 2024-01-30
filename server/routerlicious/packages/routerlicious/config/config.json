@@ -135,7 +135,8 @@
 			"enable": true
 		},
 		"getDeltasRequestMaxOpsRange": 2000,
-		"useNodeCluster": false
+		"useNodeCluster": false,
+		"enableLatencyMetric": false
 	},
 	"riddler": {
 		"useNodeCluster": false
@@ -204,7 +205,8 @@
 			"maxTime": 60000,
 			"maxMessages": 500
 		},
-		"restartOnCheckpointFailure": true
+		"restartOnCheckpointFailure": true,
+		"enableEphemeralContainerSummaryCleanup": true
 	},
 	"scribe": {
 		"kafkaClientId": "scribe",
@@ -383,6 +385,9 @@
 		}
 	],
 	"tokenRevocation": {
-		"enable": true
+		"enable": false
+	},
+	"clusterDraining": {
+		"enable": false
 	}
 }

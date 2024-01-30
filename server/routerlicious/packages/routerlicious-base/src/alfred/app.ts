@@ -13,6 +13,7 @@ import {
 	IDocumentRepository,
 	ITokenRevocationManager,
 	IRevokedTokenChecker,
+	IClusterDrainingChecker,
 } from "@fluidframework/server-services-core";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
@@ -50,9 +51,11 @@ export function create(
 	tokenRevocationManager?: ITokenRevocationManager,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+	clusterDrainingChecker?: IClusterDrainingChecker,
 ) {
 	// Maximum REST request size
 	const requestSize = config.get("alfred:restJsonSize");
+	const enableLatencyMetric = config.get("alfred:enableLatencyMetric") ?? false;
 	const httpServerConfig: IHttpServerConfig = config.get("system:httpServer");
 
 	// Express app configuration
@@ -82,17 +85,25 @@ export function create(
 	const loggerFormat = config.get("logger:morganFormat");
 	if (loggerFormat === "json") {
 		app.use(
-			jsonMorganLoggerMiddleware("alfred", (tokens, req, res) => {
-				const additionalProperties: Record<string, any> = {
-					[HttpProperties.driverVersion]: tokens.req(req, res, DriverVersionHeaderName),
-					[BaseTelemetryProperties.tenantId]: getTenantIdFromRequest(req.params),
-					[BaseTelemetryProperties.documentId]: getIdFromRequest(req.params),
-				};
-				if (req.body?.isEphemeralContainer !== undefined) {
-					additionalProperties.isEphemeralContainer = req.body.isEphemeralContainer;
-				}
-				return additionalProperties;
-			}),
+			jsonMorganLoggerMiddleware(
+				"alfred",
+				(tokens, req, res) => {
+					const additionalProperties: Record<string, any> = {
+						[HttpProperties.driverVersion]: tokens.req(
+							req,
+							res,
+							DriverVersionHeaderName,
+						),
+						[BaseTelemetryProperties.tenantId]: getTenantIdFromRequest(req.params),
+						[BaseTelemetryProperties.documentId]: getIdFromRequest(req.params),
+					};
+					if (req.body?.isEphemeralContainer !== undefined) {
+						additionalProperties.isEphemeralContainer = req.body.isEphemeralContainer;
+					}
+					return additionalProperties;
+				},
+				enableLatencyMetric,
+			),
 		);
 	} else {
 		app.use(alternativeMorganLoggerMiddleware(loggerFormat));
@@ -120,6 +131,7 @@ export function create(
 		tokenRevocationManager,
 		revokedTokenChecker,
 		collaborationSessionEventEmitter,
+		clusterDrainingChecker,
 	);
 
 	app.use(routes.api);

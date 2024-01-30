@@ -183,6 +183,10 @@ describeCompat("No Delta stream loading mode testing", "FullCompat", (getTestObj
 	for (const testConfig of testConfigs) {
 		it(`Validate Load Modes: ${JSON.stringify(testConfig ?? "undefined")}`, async function () {
 			const provider = getTestObjectProvider();
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6980
+			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				this.skip();
+			}
 			switch (provider.driver.type) {
 				case "local":
 					break;

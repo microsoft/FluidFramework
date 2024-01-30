@@ -9,10 +9,10 @@ import { type SharedTreeShim, SharedTreeShimFactory } from "@fluid-experimental/
 import {
 	type ITree,
 	type TreeView,
-	TreeFactory,
+	SharedTree,
 	SchemaFactory,
 	TreeConfiguration,
-} from "@fluid-experimental/tree2";
+} from "@fluidframework/tree";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import {
@@ -28,7 +28,7 @@ import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { type IChannel } from "@fluidframework/datastore-definitions";
 import { waitForContainerConnection, type ITestObjectProvider } from "@fluidframework/test-utils";
 
-const newSharedTreeFactory = new TreeFactory({});
+const newSharedTreeFactory = SharedTree.getFactory();
 const builder = new SchemaFactory("test");
 // For now this is the schema of the view.root
 class HandleType extends builder.object("handleObj", {
@@ -45,7 +45,7 @@ function getNewTreeView(tree: ITree): TreeView<HandleType> {
 // A Test Data Object that exposes some basic functionality.
 class TestDataObject extends DataObject {
 	private channel?: IChannel;
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+
 	public get _root() {
 		return this.root;
 	}
@@ -83,13 +83,12 @@ class TestDataObject extends DataObject {
 }
 
 class ChildDataObject extends DataObject {
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public get _root() {
 		return this.root;
 	}
 }
 
-describeCompat("Storing handles detached", "NoCompat", (getTestObjectProvider) => {
+describeCompat("Storing handles detached", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {
@@ -97,6 +96,7 @@ describeCompat("Storing handles detached", "NoCompat", (getTestObjectProvider) =
 				state: "disabled",
 			},
 		},
+		enableRuntimeIdCompressor: true,
 	};
 
 	const sharedTreeShimFactory = new SharedTreeShimFactory(newSharedTreeFactory);
@@ -117,7 +117,7 @@ describeCompat("Storing handles detached", "NoCompat", (getTestObjectProvider) =
 
 	let provider: ITestObjectProvider;
 
-	beforeEach(async () => {
+	beforeEach("getTestObjectProvider", async () => {
 		provider = getTestObjectProvider();
 	});
 

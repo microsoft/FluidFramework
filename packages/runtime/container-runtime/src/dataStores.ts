@@ -33,6 +33,7 @@ import {
 	create404Response,
 	createResponseError,
 	GCDataBuilder,
+	isSerializedHandle,
 	responseToException,
 	SummaryTreeBuilder,
 	unpackChildNodesUsedRoutes,
@@ -61,7 +62,7 @@ import {
 } from "./dataStoreContext";
 import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs";
 import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
-import { GCNodeType, disableDatastoreSweepKey } from "./gc";
+import { GCNodeType, detectOutboundRoutesViaDDSKey, disableDatastoreSweepKey } from "./gc";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summary";
 
 type PendingAliasResolve = (success: boolean) => void;
@@ -152,6 +153,7 @@ export class DataStores implements IDisposable {
 					createSummarizerNodeFn: this.getCreateChildSummarizerNodeFn(key, {
 						type: CreateSummarizerNodeSource.FromSummary,
 					}),
+					groupId: value.groupId,
 				});
 			} else {
 				if (typeof value !== "object") {
@@ -238,6 +240,7 @@ export class DataStores implements IDisposable {
 			runtime: this.runtime,
 			storage: new StorageServiceWithAttachBlobs(this.runtime.storage, flatAttachBlobs),
 			scope: this.runtime.scope,
+			groupId: snapshotTree?.groupId,
 			createSummarizerNodeFn: this.getCreateChildSummarizerNodeFn(attachMessage.id, {
 				type: CreateSummarizerNodeSource.FromAttach,
 				sequenceNumber: message.sequenceNumber,
@@ -343,6 +346,7 @@ export class DataStores implements IDisposable {
 		pkg: Readonly<string[]>,
 		isRoot: boolean,
 		id = uuid(),
+		groupId?: string,
 	): IFluidDataStoreContextDetached {
 		assert(!id.includes("/"), 0x30c /* Id cannot contain slashes */);
 
@@ -358,12 +362,13 @@ export class DataStores implements IDisposable {
 			makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
 			snapshotTree: undefined,
 			isRootDataStore: isRoot,
+			groupId,
 		});
 		this.contexts.addUnbound(context);
 		return context;
 	}
 
-	public _createFluidDataStoreContext(pkg: string[], id: string, props?: any) {
+	public _createFluidDataStoreContext(pkg: string[], id: string, props?: any, groupId?: string) {
 		assert(!id.includes("/"), 0x30d /* Id cannot contain slashes */);
 		const context = new LocalFluidDataStoreContext({
 			id,
@@ -378,6 +383,7 @@ export class DataStores implements IDisposable {
 			snapshotTree: undefined,
 			isRootDataStore: false,
 			createProps: props,
+			groupId,
 		});
 		this.contexts.addUnbound(context);
 		return context;
@@ -441,6 +447,7 @@ export class DataStores implements IDisposable {
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localMessageMetadata: unknown,
+		addedOutboundReference: (fromNodePath: string, toNodePath: string) => void,
 	) {
 		const envelope = message.contents as IEnvelope;
 		const transformed = { ...message, contents: envelope.contents };
@@ -461,6 +468,13 @@ export class DataStores implements IDisposable {
 
 		assert(!!context, 0x162 /* "There should be a store context for the op" */);
 		context.process(transformed, local, localMessageMetadata);
+
+		// By default, we use the new behavior of detecting outbound routes here.
+		// If this setting is true, then DataStoreContext would be notifying GC instead.
+		if (this.mc.config.getBoolean(detectOutboundRoutesViaDDSKey) !== true) {
+			// Notify GC of any outbound references that were added by this op.
+			detectOutboundReferences(envelope, addedOutboundReference);
+		}
 
 		// Notify that a GC node for the data store changed. This is used to detect if a deleted data store is
 		// being used.
@@ -830,12 +844,15 @@ export class DataStores implements IDisposable {
 
 			const dataStoreContext = this.contexts.get(dataStoreId);
 			if (dataStoreContext === undefined) {
-				this.mc.logger.sendErrorEvent({
+				// If the data store hasn't already been deleted, log an error because this should never happen.
+				// If the data store has already been deleted, log a telemetry event. This can happen because multiple GC
+				// sweep ops can contain the same data store. It would be interesting to track how often this happens.
+				const alreadyDeleted = this.isDataStoreDeleted(`/${dataStoreId}`);
+				this.mc.logger.sendTelemetryEvent({
 					eventName: "DeletedDataStoreNotFound",
+					category: alreadyDeleted ? "generic" : "error",
 					...tagCodeArtifacts({ id: dataStoreId }),
-					details: {
-						alreadyDeleted: this.isDataStoreDeleted(dataStoreId),
-					},
+					details: { alreadyDeleted },
 				});
 				continue;
 			}
@@ -851,8 +868,11 @@ export class DataStores implements IDisposable {
 	}
 
 	/**
-	 * This is called to update objects whose routes are tombstones. Tombstoned datastore contexts enable testing
-	 * scenarios with accessing deleted content without actually deleting content from summaries.
+	 * This is called to update objects whose routes are tombstones.
+	 *
+	 * A Tombstoned object has been unreferenced long enough that GC knows it won't be referenced again.
+	 * Tombstoned objects are eventually deleted by GC.
+	 *
 	 * @param tombstonedRoutes - The routes that are tombstones in all data stores in this Container.
 	 */
 	public updateTombstonedRoutes(tombstonedRoutes: readonly string[]) {
@@ -943,4 +963,45 @@ export function getSummaryForDatastores(
 			trees: datastoresTrees,
 		};
 	}
+}
+
+/**
+ * Traverse this op's contents and detect any outbound routes that were added by this op.
+ *
+ * @internal
+ */
+export function detectOutboundReferences(
+	envelope: IEnvelope,
+	addedOutboundReference: (fromNodePath: string, toNodePath: string) => void,
+): void {
+	// These will be built up as we traverse the envelope contents
+	const outboundPaths: string[] = [];
+	let ddsAddress: string | undefined;
+
+	function recursivelyFindHandles(obj: unknown) {
+		if (typeof obj === "object" && obj !== null) {
+			for (const [key, value] of Object.entries(obj)) {
+				// If 'value' is a serialized IFluidHandle, it represents a new outbound route.
+				if (isSerializedHandle(value)) {
+					outboundPaths.push(value.url);
+				}
+
+				// NOTE: This is taking a hard dependency on the fact that in our DataStore implementation,
+				// the address of the DDS is stored in a property called "address".  This is not ideal.
+				// An alternative would be for the op envelope to include the absolute path (built up as it is submitted)
+				if (key === "address" && ddsAddress === undefined) {
+					ddsAddress = value;
+				}
+
+				recursivelyFindHandles(value);
+			}
+		}
+	}
+
+	recursivelyFindHandles(envelope.contents);
+
+	// GC node paths are all absolute paths, hence the "" prefix.
+	// e.g. this will yield "/dataStoreId/ddsId"
+	const fromPath = ["", envelope.address, ddsAddress].join("/");
+	outboundPaths.forEach((toPath) => addedOutboundReference(fromPath, toPath));
 }

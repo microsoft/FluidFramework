@@ -8,9 +8,9 @@ import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/exam
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { InventoryListContainerRuntimeFactory } from "../src/model";
-import type { IInventoryListAppModel } from "../src/modelInterfaces";
-import { DebugView, InventoryListAppView } from "../src/view";
+import { InventoryListContainerRuntimeFactory } from "../src/model/index.js";
+import type { IInventoryListAppModel } from "../src/modelInterfaces.js";
+import { DebugView, InventoryListAppView } from "../src/view/index.js";
 
 const updateTabForId = (id: string) => {
 	// Update the URL with the actual ID

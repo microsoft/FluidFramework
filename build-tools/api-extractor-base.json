@@ -8,10 +8,6 @@
 			// TODO: Consider enabling this in the future.
 			"ae-missing-release-tag": {
 				"logLevel": "none"
-			},
-			// TODO: Add missing documentation and remove this rule override
-			"ae-undocumented": {
-				"logLevel": "none"
 			}
 		}
 	}

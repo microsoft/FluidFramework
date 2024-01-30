@@ -170,7 +170,9 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 
 	/**
 	 * Invokes the given callback and guarantees that all operations generated within the callback will be ordered
-	 * sequentially. Total size of all messages must be less than maxOpSize.
+	 * sequentially.
+	 *
+	 * If the callback throws an error, the container will close and the error will be logged.
 	 */
 	orderSequentially(callback: () => void): void;
 
@@ -197,14 +199,22 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * already attached DDS (or non-attached DDS that will eventually get attached to storage) will result in this
 	 * store being attached to storage.
 	 * @param pkg - Package name of the data store factory
+	 * @param groupId - group to which this data stores belongs to. This is also known at service side and can be used to
+	 * fetch snapshot contents like snapshot tree, blobs using this id from the storage.
 	 */
-	createDataStore(pkg: string | string[]): Promise<IDataStore>;
+	createDataStore(pkg: string | string[], groupId?: string): Promise<IDataStore>;
 
 	/**
 	 * Creates detached data store context. Only after context.attachRuntime() is called,
 	 * data store initialization is considered complete.
+	 * @param pkg - Package name of the data store factory
+	 * @param groupId - group to which this data stores belongs to. This is also known at service side and can be used to
+	 * fetch snapshot contents like snapshot tree, blobs using this id from the storage.
 	 */
-	createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached;
+	createDetachedDataStore(
+		pkg: Readonly<string[]>,
+		groupId?: string,
+	): IFluidDataStoreContextDetached;
 
 	/**
 	 * Get an absolute url for a provided container-relative request.
@@ -382,6 +392,8 @@ export interface IFluidDataStoreContext
 	readonly logger: ITelemetryBaseLogger;
 	readonly clientDetails: IClientDetails;
 	readonly idCompressor?: IIdCompressor;
+	// Represents the group to which the data store belongs too.
+	readonly groupId?: string;
 	/**
 	 * Indicates the attachment state of the data store to a host service.
 	 */
@@ -481,6 +493,9 @@ export interface IFluidDataStoreContext
 	getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
 
 	/**
+	 * @deprecated There is no replacement for this, its functionality is no longer needed at this layer.
+	 * It will be removed in a future release, sometime after 2.0.0-internal.8.0.0
+	 *
 	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
 	 * all references added in the system.
 	 * @param srcHandle - The handle of the node that added the reference.

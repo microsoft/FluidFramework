@@ -23,7 +23,7 @@ import {
 	IGCMetadata,
 	IGarbageCollector,
 	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/container-runtime/dist/gc/index.js";
+} from "@fluidframework/container-runtime/test/gc";
 
 // IContainerRuntime type that exposes garbage collector which is a private property.
 type IContainerRuntimeWithPrivates = IContainerRuntime & {
@@ -34,7 +34,7 @@ type IContainerRuntimeWithPrivates = IContainerRuntime & {
  * Validates that when the runtime GC version changes, we reset GC state and regenerate summary. Basically, when we
  * update the GC version due to bugs, newer versions re-run GC and older versions stop running GC.
  */
-describeCompat("GC version update", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("GC version update", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) => {
 	const {
 		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
 	} = apis;
@@ -123,7 +123,7 @@ describeCompat("GC version update", "NoCompat", (getTestObjectProvider, apis) =>
 		containerRuntime.garbageCollector.getMetadata = getMetadataOverride;
 	}
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		mainContainer = await provider.createContainer(defaultRuntimeFactory);
 		const dataStore1 = (await mainContainer.getEntryPoint()) as ITestFluidObject;

@@ -15,12 +15,12 @@ import { IFileEntry } from '@fluidframework/odsp-driver-definitions';
 import { IOdspResolvedUrl } from '@fluidframework/odsp-driver-definitions';
 import { IOdspUrlParts } from '@fluidframework/odsp-driver-definitions';
 import { IPersistedCache } from '@fluidframework/odsp-driver-definitions';
-import { IPrefetchSnapshotContents as IPrefetchSnapshotContents_2 } from './odspCache';
 import { IRelaySessionAwareDriverFactory } from '@fluidframework/odsp-driver-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharingLinkKind } from '@fluidframework/odsp-driver-definitions';
+import { ISnapshot } from '@fluidframework/driver-definitions';
 import { ISnapshotOptions } from '@fluidframework/odsp-driver-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISocketStorageDiscovery } from '@fluidframework/odsp-driver-definitions';
@@ -33,7 +33,6 @@ import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { OdspResourceTokenFetchOptions } from '@fluidframework/odsp-driver-definitions';
 import { PromiseCache } from '@fluidframework/core-utils';
 import { RateLimiter } from '@fluidframework/driver-utils';
-import { ShareLinkTypes } from '@fluidframework/odsp-driver-definitions';
 import { TokenFetcher } from '@fluidframework/odsp-driver-definitions';
 
 // @alpha
@@ -49,7 +48,7 @@ export enum ClpCompliantAppHeader {
 export function createLocalOdspDocumentServiceFactory(localSnapshot: Uint8Array | string): IDocumentServiceFactory;
 
 // @alpha
-export function createOdspCreateContainerRequest(siteUrl: string, driveId: string, filePath: string, fileName: string, createShareLinkType?: ShareLinkTypes | ISharingLinkKind): IRequest;
+export function createOdspCreateContainerRequest(siteUrl: string, driveId: string, filePath: string, fileName: string, createShareLinkType?: ISharingLinkKind): IRequest;
 
 // @alpha
 export function createOdspUrl(l: OdspFluidDataStoreLocator): string;
@@ -161,7 +160,7 @@ export interface IPersistedFileCache {
 }
 
 // @alpha (undocumented)
-export interface IPrefetchSnapshotContents extends ISnapshotContents {
+export interface IPrefetchSnapshotContents extends ISnapshot {
     // (undocumented)
     fluidEpoch: string;
     // (undocumented)
@@ -174,7 +173,7 @@ export interface ISharingLinkHeader {
     [SharingLinkHeader.isSharingLinkToRedeem]: boolean;
 }
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export interface ISnapshotContents {
     // (undocumented)
     blobs: Map<string, ArrayBuffer>;
@@ -187,7 +186,7 @@ export interface ISnapshotContents {
 }
 
 // @internal
-export interface ISnapshotContentsWithProps extends ISnapshotContents {
+export interface ISnapshotContentsWithProps extends ISnapshot {
     // (undocumented)
     telemetryProps: Record<string, number>;
 }
@@ -233,7 +232,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory, 
     // (undocumented)
     protected persistedCache: IPersistedCache;
     // (undocumented)
-    get snapshotPrefetchResultCache(): PromiseCache<string, IPrefetchSnapshotContents_2>;
+    get snapshotPrefetchResultCache(): PromiseCache<string, IPrefetchSnapshotContents>;
 }
 
 // @internal @deprecated (undocumented)

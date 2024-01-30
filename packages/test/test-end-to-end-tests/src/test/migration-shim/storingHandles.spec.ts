@@ -24,8 +24,8 @@ import {
 	disposeSymbol,
 	SchemaFactory,
 	TreeConfiguration,
-	TreeFactory,
-} from "@fluid-experimental/tree2";
+	SharedTree,
+} from "@fluidframework/tree";
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import {
@@ -61,12 +61,10 @@ function getHandle(tree: LegacySharedTree): IFluidHandle | undefined {
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const nodeId = rootNode.traits.get(legacyNodeId)![0];
 	const legacyNode = tree.currentView.getViewNode(nodeId);
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 	return legacyNode.payload.handle as IFluidHandle | undefined;
 }
 
 class ChildDataObject extends DataObject {
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public get _root() {
 		return this.root;
 	}
@@ -75,7 +73,7 @@ class ChildDataObject extends DataObject {
 // A Test Data Object that exposes some basic functionality.
 class TestDataObject extends DataObject {
 	private channel?: IChannel;
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+
 	public get _root() {
 		return this.root;
 	}
@@ -148,7 +146,7 @@ function getNewTreeView(tree: ITree): TreeView<HandleType> {
 	);
 }
 
-describeCompat("Storing handles", "NoCompat", (getTestObjectProvider) => {
+describeCompat("Storing handles", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {
@@ -156,6 +154,7 @@ describeCompat("Storing handles", "NoCompat", (getTestObjectProvider) => {
 				state: "disabled",
 			},
 		},
+		enableRuntimeIdCompressor: true,
 	};
 
 	// V1 of the registry -----------------------------------------
@@ -172,12 +171,13 @@ describeCompat("Storing handles", "NoCompat", (getTestObjectProvider) => {
 	const runtimeFactory1 = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataObjectFactory1,
 		registryEntries: [dataObjectFactory1.registryEntry],
+		runtimeOptions,
 	});
 
 	// V2 of the registry (the migration registry) -----------------------------------------
 	// V2 of the code: Registry setup to migrate the document
 	const legacySharedTreeFactory = LegacySharedTree.getFactory();
-	const newSharedTreeFactory = new TreeFactory({});
+	const newSharedTreeFactory = SharedTree.getFactory();
 
 	const migrationShimFactory = new MigrationShimFactory(
 		legacySharedTreeFactory,
@@ -222,7 +222,7 @@ describeCompat("Storing handles", "NoCompat", (getTestObjectProvider) => {
 
 	let provider: ITestObjectProvider;
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		provider = getTestObjectProvider();
 		// Creates the document as v1 of the code
 		const container = await provider.createContainer(runtimeFactory1);

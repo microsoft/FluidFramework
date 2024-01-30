@@ -21,13 +21,13 @@ describe("Ink", () => {
 	let dataStoreRuntime: MockFluidDataStoreRuntime;
 	let pen: IPen;
 
-	beforeEach(async () => {
+	beforeEach("createInk", async () => {
 		dataStoreRuntime = new MockFluidDataStoreRuntime();
 		ink = new Ink(dataStoreRuntime, "ink", InkFactory.Attributes);
 	});
 
 	describe("Ink in local state", () => {
-		beforeEach(() => {
+		beforeEach("setupInkInLocalState", () => {
 			dataStoreRuntime.local = true;
 			pen = {
 				color: { r: 0, g: 161 / 255, b: 241 / 255, a: 0 },
@@ -175,7 +175,7 @@ describe("Ink", () => {
 		let ink2: Ink;
 		let containerRuntimeFactory: MockContainerRuntimeFactory;
 
-		beforeEach(() => {
+		beforeEach("createConnectedInks", () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 			// Connect the first Ink.
@@ -339,7 +339,7 @@ describe("Ink", () => {
 		let containerRuntime2: MockContainerRuntimeForReconnection;
 		let ink2: Ink;
 
-		beforeEach(() => {
+		beforeEach("createConnectedInks", () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
 			// Connect the first Ink.

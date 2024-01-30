@@ -22,11 +22,14 @@ import { WebpackTask } from "./leaf/webpackTask";
 import { GroupTask } from "./groupTask";
 import { Task } from "./task";
 import { FlubListTask, FlubCheckLayerTask, FlubCheckPolicyTask } from "./leaf/flubTasks";
+import { RenameTypesTask } from "./leaf/renamerTask";
+import { Ts2EsmTask } from "./leaf/ts2EsmTask";
 
 // Map of executable name to LeafTasks
 const executableToLeafTask: {
 	[key: string]: new (node: BuildPackage, command: string, taskName?: string) => LeafTask;
 } = {
+	"ts2esm": Ts2EsmTask,
 	"tsc": TscTask,
 	"tsc-multi": TscMultiTask,
 	"tslint": TsLintTask,
@@ -46,6 +49,11 @@ const executableToLeafTask: {
 	"flub generate typetests": TypeValidationTask,
 	"fluid-type-test-generator": TypeValidationTask,
 	"depcruise": DepCruiseTask,
+
+	// Note that this assumes that "renamer" is ONLY used for renaming types. If it is used in a different task in the
+	// pipeline then this mapping will have to be updated.
+	"renamer": RenameTypesTask,
+	"flub rename-types": RenameTypesTask,
 };
 
 export class TaskFactory {

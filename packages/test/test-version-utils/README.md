@@ -78,11 +78,6 @@ Therefore, we would test the following combinations:
 -   Use for tests that targets the loader layer, and don't care about compat combinations of other layers.
 -   Test combination generated: [CompatKind.None, CompatKind.Loader]
 
-`NoCompat` - generate one test variant that doesn't varies version of any layers.
-
--   Use for tests that doesn't benefit or require any compat testing.
--   Test combination generated: [CompatKind.None]
-
 This compat `describe*` function will also load the APIs with appropriate version and provide the test with a
 `TestObjectProvider` object, where the test can use to access Fluid functionality. Even when compat testing
 is not necessary, `TestObjectProvider` provide functionalities that help writing Fluid tests, and it allows the test
@@ -170,9 +165,25 @@ The legacy version are installed in their own version folder
 Legacy versions of all packages in all categories are installed regardless of what compat combination is requested.
 (See `packageList` in `src/testApi.ts`).
 
-For now, the current version are statically bound to also provide type. Although it can be switch to
-dynamic loading for consistency (or don't want to force the script to be loaded if they are not needed).
-Currently, we don't have such scenario yet.
+For now, the current versions are statically bound to also provide typings.
+This is a lie since the public API of a package may change over time: `ContainerRuntime` in FF@10.0.0 will not have the
+same public API as `ContainerRuntime` in FF@1.0.0.
+
+For the most part, public API breaks are relatively contained and the type is "correct enough" that increasing the
+complexity of the typing setup isn't worth the associated redesign.
+However, this does give rise to several places in this package and test-utils that have intentional "back-compat" code.
+See for example [`versionHasMovedSparsedMatrix`](https://github.com/microsoft/FluidFramework/blob/e5b339c9e0cd6b96410ff2bc02206c66c636ccd9/packages/test/test-version-utils/src/versionUtils.ts#L467) or [explicitly using ContainerRuntime.load over the newer variant](https://github.com/microsoft/FluidFramework/blob/e5b339c9e0cd6b96410ff2bc02206c66c636ccd9/packages/test/test-utils/src/testContainerRuntimeFactory.ts#L67).
+
+Thus it's important to keep in mind that the type provided by static import or `import type` might not align exactly with the
+runtime object once taking the compatibility configuration into account.
+
+### ChannelFactoryRegistry Rewriting
+
+This package currently has [some logic](https://github.com/microsoft/FluidFramework/blob/e5b339c9e0cd6b96410ff2bc02206c66c636ccd9/packages/test/test-version-utils/src/compatUtils.ts#L67) to rewrite the ChannelFactoryRegistry used to create a TestObjectProvider.
+
+This means that statically importing and referencing a DDS in a test file _will_ correctly result in referencing the version of that DDS defined in the compatibility configuration,
+but this happens implicitly.
+Test authors are encouraged to use the `apis` argument of `describeCompat`'s test creation callback to reference the DDS instead.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
 

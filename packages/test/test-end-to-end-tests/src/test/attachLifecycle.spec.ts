@@ -14,7 +14,7 @@ import {
 } from "@fluidframework/test-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
-import { ISharedMap, IValueChanged } from "@fluidframework/map";
+import type { ISharedMap, IValueChanged } from "@fluidframework/map";
 import type { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { AttachState } from "@fluidframework/container-definitions";
@@ -43,6 +43,10 @@ describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider
 	const { SharedString } = apis.dds;
 	before(function () {
 		const provider = getTestObjectProvider();
+		// TODO: Re-enable after cross version compat bugs are fixed - ADO:6978
+		if (provider.type === "TestObjectProviderWithVersionedLoad") {
+			this.skip();
+		}
 		switch (provider.driver.type) {
 			case "local":
 			case "tinylicious":

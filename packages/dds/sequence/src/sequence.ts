@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import Deque from "double-ended-queue";
 import { assert, Deferred } from "@fluidframework/core-utils";
 import { bufferToString } from "@fluid-internal/client-utils";
 import { LoggingError, createChildLogger } from "@fluidframework/telemetry-utils";
@@ -212,6 +213,17 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		return ops;
 	}
 
+	/**
+	 * Note: this field only provides a lower-bound on the reference sequence numbers for in-flight ops.
+	 * The exact reason isn't understood, but some e2e tests suggest that the runtime may sometimes process
+	 * incoming leave/join ops before putting an op that this DDS submits over the wire.
+	 *
+	 * E.g. SharedString submits an op while deltaManager has lastSequenceNumber = 10, but before the runtime
+	 * puts this op over the wire, it processes a client join/leave op with sequence number 11, so the referenceSequenceNumber
+	 * on the SharedString op is 11.
+	 */
+	private readonly inFlightRefSeqs = new Deque<number>();
+
 	// eslint-disable-next-line import/no-deprecated
 	protected client: Client;
 	/** `Deferred` that triggers once the object is loaded */
@@ -233,6 +245,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	) {
 		super(id, dataStoreRuntime, attributes, "fluid_sequence_");
 
+		const getMinInFlightRefSeq = () => this.inFlightRefSeqs.get(0);
 		this.guardReentrancy =
 			dataStoreRuntime.options.sharedStringPreventReentrancy ?? true
 				? ensureNoReentrancy
@@ -258,6 +271,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				namespace: "SharedSegmentSequence.MergeTreeClient",
 			}),
 			dataStoreRuntime.options,
+			getMinInFlightRefSeq,
 		);
 
 		this.client.prependListener("delta", (opArgs, deltaArgs) => {
@@ -275,7 +289,14 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		this.intervalCollections = new DefaultMap(
 			this.serializer,
 			this.handle,
-			(op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
+			(op, localOpMetadata) => {
+				if (!this.isAttached()) {
+					return;
+				}
+
+				this.inFlightRefSeqs.push(this.runtime.deltaManager.lastSequenceNumber);
+				this.submitLocalMessage(op, localOpMetadata);
+			},
 			new SequenceIntervalCollectionValueType(),
 			dataStoreRuntime.options,
 		);
@@ -427,6 +448,8 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		if (!this.isAttached()) {
 			return;
 		}
+
+		this.inFlightRefSeqs.push(this.runtime.deltaManager.lastSequenceNumber);
 		const translated = makeHandlesSerializable(message, this.serializer, this.handle);
 		const metadata = this.client.peekPendingSegmentGroups(
 			message.type === MergeTreeDeltaType.GROUP ? message.ops.length : 1,
@@ -596,6 +619,8 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
 	 */
 	protected reSubmitCore(content: any, localOpMetadata: unknown) {
+		const originalRefSeq = this.inFlightRefSeqs.shift();
+		assert(originalRefSeq !== undefined, "Expected a recorded refSeq when resubmitting an op");
 		if (
 			!this.intervalCollections.tryResubmitMessage(
 				content,
@@ -683,6 +708,12 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
+		if (local) {
+			const recordedRefSeq = this.inFlightRefSeqs.shift();
+			assert(recordedRefSeq !== undefined, "No pending recorded refSeq found");
+			assert(recordedRefSeq <= message.referenceSequenceNumber, "RefSeq mismatch");
+		}
+
 		// if loading isn't complete, we need to cache all
 		// incoming ops to be applied after loading is complete
 		if (this.deferIncomingOps) {
@@ -730,7 +761,13 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 */
 	protected applyStashedOp(content: any): unknown {
-		return this.client.applyStashedOp(parseHandles(content, this.serializer));
+		this.inFlightRefSeqs.push(this.runtime.deltaManager.lastSequenceNumber);
+		const parsedContent = parseHandles(content, this.serializer);
+		const metadata =
+			this.intervalCollections.tryGetStashedOpLocalMetadata(parsedContent) ??
+			this.client.applyStashedOp(parsedContent);
+		assert(!!metadata, 0x87d /* Metadata is undefined */);
+		return metadata;
 	}
 
 	private summarizeMergeTree(serializer: IFluidSerializer): ISummaryTreeWithStats {

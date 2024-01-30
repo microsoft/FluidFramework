@@ -46,6 +46,7 @@ USAGE
 * [`flub merge`](docs/merge.md) - Sync branches depending on the batch size passed
 * [`flub package`](docs/package.md)
 * [`flub release`](docs/release.md) - Release commands are used to manage the Fluid release process.
+* [`flub rename-types`](docs/rename-types.md) - Renames type declaration files from .d.ts to .d.mts.
 * [`flub run`](docs/run.md) - Generate a report from input bundle stats collected through the collect bundleStats command.
 * [`flub typetests`](docs/typetests.md) - Updates configuration for type tests in package.json files. If the previous version changes after running preparation, then npm install must be run before building.
 

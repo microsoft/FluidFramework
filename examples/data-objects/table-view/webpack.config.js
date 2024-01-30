@@ -16,6 +16,9 @@ module.exports = (env) => {
 		{
 			entry: "./src/index.ts",
 			resolve: {
+				extensionAlias: {
+					".js": [".ts", ".tsx", ".js"],
+				},
 				extensions: [".mjs", ".ts", ".tsx", ".js"],
 				fallback: {
 					dgram: false,
@@ -44,7 +47,7 @@ module.exports = (env) => {
 						exclude: /node_modules/,
 					},
 					{
-						test: /\.js$/,
+						test: /\.m?js$/,
 						use: [require.resolve("source-map-loader")],
 						enforce: "pre",
 					},

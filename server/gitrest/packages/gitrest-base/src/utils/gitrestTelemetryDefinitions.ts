@@ -11,6 +11,11 @@ export enum GitRestLumberEventName {
 	RetrieveLatestFullSummaryFromStorage = "RetrieveLatestFullSummaryFromStorage",
 	WholeSummaryManagerReadSummary = "ReadSummary",
 	WholeSummaryManagerWriteSummary = "WriteSummary",
+	ComputeSummaryTreeEntries = "ComputeSummaryTreeEntries",
+	WriteSummaryTree = "WriteSummaryTree",
+	CreateSummaryVersion = "CreateSummaryVersion",
+	CreateDocumentRef = "CreateDocumentRef",
+	UpdateDocumentRef = "UpdateDocumentRef",
 
 	// Misc
 	CheckSoftDeleted = "CheckSoftDeleted",
