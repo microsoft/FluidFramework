@@ -68,9 +68,8 @@ import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modul
 import { TestChangeset } from "./testEdits.js";
 
 export function assertChangesetsEqual<T>(actual: SF.Changeset<T>, expected: SF.Changeset<T>): void {
-	const updatedActual = purgeUnusedCellOrderingInfo(actual);
 	const updatedExpected = purgeUnusedCellOrderingInfo(expected);
-	strict.deepEqual(updatedActual, updatedExpected);
+	strict.deepEqual(actual, updatedExpected);
 }
 
 export function purgeUnusedCellOrderingInfo<T>(change: SF.Changeset<T>): SF.Changeset<T> {
