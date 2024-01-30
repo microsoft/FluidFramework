@@ -273,7 +273,7 @@ describe("Garbage Collection Tests", () => {
 		//* ONLY
 		//* ONLY
 		//* ONLY
-		it.only("Tombstone then Delete", async () => {
+		it("Tombstone then Delete", async () => {
 			// Simple starting reference graph - root and two nodes
 			defaultGCData.gcNodes["/"] = [nodes[0], nodes[1]];
 			defaultGCData.gcNodes[nodes[0]] = [];
@@ -333,6 +333,7 @@ describe("Garbage Collection Tests", () => {
 			//* If we did, then we could assert that updateTombstonedRoutes is NOT called again since the data would show Node0 referenced.
 
 			//* Instead, we could scope this test to simply verify that fullGC is passed in the next GC run after the op is processed.
+			//* Also think about the case where GC isn't run (i.e. Summarizer closes). The next Summarizer should again process the op and be good.
 		});
 
 		it("Sweep Disabled - Should Tombstone SweepReady nodes", async () => {

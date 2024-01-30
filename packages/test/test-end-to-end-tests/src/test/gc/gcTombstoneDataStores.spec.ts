@@ -837,15 +837,9 @@ describeCompat("GC data store tombstone tests", "2.0.0-rc.1.0.0", (getTestObject
 				);
 			},
 		);
-
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		itExpects.only(
+		itExpects(
 			"Requesting tombstoned datastore triggers auto-recovery",
 			[
-				//* Figure these out
 				// 1A
 				{
 					eventName:
@@ -861,19 +855,217 @@ describeCompat("GC data store tombstone tests", "2.0.0-rc.1.0.0", (getTestObject
 					category: "error",
 				},
 				// 3A
-				// {
-				// 	eventName:
-				// 		"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
-				// 	clientType: "interactive",
-				// 	category: "error",
-				// },
+				{
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
+					clientType: "interactive",
+					category: "error",
+				},
 				// 3B
-				// {
-				// 	eventName:
-				// 		"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
-				// 	clientType: "interactive",
-				// 	category: "error",
-				// },
+				{
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
+					clientType: "interactive",
+					category: "error",
+				},
+			],
+			async () => {
+				const mockLogger = new MockLogger();
+				const summarizerMockLogger = new MockLogger();
+				const initialContainer = await makeContainer();
+				const { container: summarizingContainer, summarizer } = await loadSummarizer(
+					initialContainer,
+					/* summaryVersion: */ undefined,
+					summarizerMockLogger,
+				);
+				await waitForContainerConnection(initialContainer);
+
+				const defaultDataObject =
+					(await initialContainer.getEntryPoint()) as ITestDataObject;
+
+				// Create dataStoreA and dataStoreB. dataStoreA has reference to dataStoreB. Then unreference dataStoreA.
+				const dataStoreA = await createDataStore(defaultDataObject);
+				const dataStoreB = await createDataStore(defaultDataObject);
+				const dataStoreAId = dataStoreA._context.id;
+				const dataStoreBId = dataStoreB._context.id;
+				dataStoreA._root.set("dsB", dataStoreB.handle);
+				defaultDataObject._root.set("dsA", dataStoreA.handle);
+				defaultDataObject._root.delete("dsA");
+
+				// Summarize to set unreferenced timestamp.
+				// Then wait the Tombstone timeout and update current timestamp, and summarize again
+				await summarize(summarizer);
+				await delay(tombstoneTimeoutMs);
+				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer, true);
+				const { summaryVersion } = await summarize(summarizer);
+
+				// The datastore should be tombstoned in the snapshot this container loads from
+				const container1 = await loadContainer(
+					summaryVersion,
+					/* disableTombstoneFailureViaGCGenerationOption: */ false,
+					mockLogger,
+				);
+
+				// Simulate an invalid reference to DataStoreA from the app, for this properly unreferenced (Tombstoned) object (will affect subtree including B too)
+				const entryPoint1 = (await container1.getEntryPoint()) as ITestDataObject;
+				const tombstoneErrorResponse1 = await (
+					entryPoint1._context.containerRuntime as ContainerRuntime
+				).resolveHandle({
+					url: dataStoreAId,
+				});
+				assert.equal(
+					tombstoneErrorResponse1.status,
+					404,
+					"Should not be able to retrieve a tombstoned datastore in non-summarizer clients (1A)",
+				);
+				assert.equal(
+					tombstoneErrorResponse1.value,
+					`DataStore was tombstoned: ${dataStoreAId}`,
+					"Expected the Tombstone error message (1A)",
+				);
+				assert.equal(
+					tombstoneErrorResponse1.headers?.[TombstoneResponseHeaderKey],
+					true,
+					"Expected the Tombstone header (1A)",
+				);
+
+				// The GC TombstoneLoaded op should roundtrip here
+				await provider.ensureSynchronized();
+
+				// TombstoneLoaded op should trigger Revived event
+				[mockLogger, summarizerMockLogger].forEach((logger, i) =>
+					logger.assertMatch(
+						[
+							{
+								eventName:
+									"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Revived",
+								clientType: i === 0 ? "interactive" : "noninteractive/summarizer",
+							},
+						],
+						`Missing expected revived event from Auto-Recovery [${
+							i === 0 ? "mockLogger" : "summarizerMockLogger"
+						}]`,
+					),
+				);
+
+				// This request still fails because Auto-Recovery only affects the next summary (via next GC run)
+				const tombstoneErrorResponse_Interactive = await (
+					entryPoint1._context.containerRuntime as ContainerRuntime
+				).resolveHandle({
+					url: dataStoreAId,
+				});
+				assert.equal(
+					tombstoneErrorResponse_Interactive.status,
+					404,
+					"Expected tombstone error - Auto-Recovery shouldn't affect in-progress Interactive sessions (1A again)",
+				);
+
+				// Auto-Recovery: This summary will have the unref timestamp reset due to the GC TombstoneLoaded op
+				const { summaryVersion: summaryVersion2 } = await summarize(summarizer);
+				const container2 = await loadContainer(summaryVersion2);
+
+				// Verify that the object is not Tombstoned in summarizingContainer - it just summarized with the TombstoneLoaded op
+				const summarizerResponse = await (
+					summarizer as unknown as { runtime: ContainerRuntime }
+				).runtime.resolveHandle({
+					url: dataStoreAId,
+				});
+				assert.equal(
+					summarizerResponse.status,
+					200,
+					"Auto-Recovery should have kicked in immediately in Summarizer after summarizing with the TombstoneLoaded op",
+				);
+
+				// Container2 loaded after auto-recovery: These requests succeed because the datastores are no longer tombstoned
+				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
+				const successResponse2A = await (
+					entryPoint2._context.containerRuntime as ContainerRuntime
+				).resolveHandle({
+					url: dataStoreAId,
+				});
+				assert.equal(
+					successResponse2A.status,
+					200,
+					"Auto-Recovery should have made the object no longer tombstoned (2A)",
+				);
+				assert.notEqual(
+					successResponse2A.headers?.[TombstoneResponseHeaderKey],
+					true,
+					"DID NOT Expect tombstone header to be set on the success response (2A)",
+				);
+				const successResponse2B = await (
+					entryPoint2._context.containerRuntime as ContainerRuntime
+				).resolveHandle({
+					url: dataStoreBId,
+				});
+				assert.equal(
+					successResponse2B.status,
+					200,
+					"Auto-Recovery should have made the object no longer tombstoned (2B)",
+				);
+				assert.notEqual(
+					successResponse2B.headers?.[TombstoneResponseHeaderKey],
+					true,
+					"DID NOT Expect tombstone header to be set on the success response (2B)",
+				);
+
+				// Wait the Tombstone timeout then summarize and load another container
+				// It will be tombstoned again since it's been unreferenced the whole time
+				await delay(tombstoneTimeoutMs);
+				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer, true);
+				const { summaryVersion: summaryVersion3 } = await summarize(summarizer);
+				const container3 = await loadContainer(summaryVersion3);
+				const entryPoint3 = (await container3.getEntryPoint()) as ITestDataObject;
+				const tombstoneErrorResponse3A = await (
+					entryPoint3._context.containerRuntime as ContainerRuntime
+				).resolveHandle({
+					url: dataStoreAId,
+				});
+				assert.equal(
+					tombstoneErrorResponse3A.status,
+					404,
+					"Object should become tombstoned again after the timeout (3A)",
+				);
+				assert.equal(
+					tombstoneErrorResponse3A.value,
+					`DataStore was tombstoned: ${dataStoreAId}`,
+					"Expected the Tombstone error message (3A)",
+				);
+				const tombstoneErrorResponse3B = await (
+					entryPoint3._context.containerRuntime as ContainerRuntime
+				).resolveHandle({
+					url: dataStoreBId,
+				});
+				assert.equal(
+					tombstoneErrorResponse3B.status,
+					404,
+					"Object should become tombstoned again after the timeout (3B)",
+				);
+				assert.equal(
+					tombstoneErrorResponse3B.value,
+					`DataStore was tombstoned: ${dataStoreBId}`,
+					"Expected the Tombstone error message (3B)",
+				);
+			},
+		);
+
+		itExpects(
+			"Requesting WRONGLY-tombstoned datastore triggers auto-recovery and self-repair",
+			[
+				// 1A
+				{
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
+					clientType: "interactive",
+					category: "error",
+				},
+				// During the Summarize after auto-recovery is triggered (results in summaryVersion2)
+				{
+					eventName: "fluid:telemetry:Summarizer:Running:gcUnknownOutboundReferences",
+					clientType: "noninteractive/summarizer",
+					// id: { value: "/default/root", tag: "CodeArtifact" }, (nested object comparison not supported)
+					summarizeReason: "onDemand/Summarize after auto-recovery",
+				},
 			],
 			async () => {
 				const mockLogger = new MockLogger();
@@ -890,28 +1082,22 @@ describeCompat("GC data store tombstone tests", "2.0.0-rc.1.0.0", (getTestObject
 				const defaultDataObject =
 					(await initialContainer.getEntryPoint()) as ITestDataObject;
 
-				//* Don't need B?
-				// Create dataStoreA and dataStoreB. dataStoreA has reference to dataStoreB.
+				// Create dataStoreA and dataStoreX and reference them from the default data object.
+				// They will both remain referenced, but the reference will be "lost" (by intentionally corrupting the GC Data)
+				// dataStoreX's purpose is for updating the currentReferenceTimestamp before summarizing by sending ops
 				const dataStoreA = await createDataStore(defaultDataObject);
-				// const dataStoreB = await createDataStore(defaultDataObject);
 				const dataStoreX = await createDataStore(defaultDataObject);
 				const dataStoreAId = dataStoreA._context.id;
-				// const dataStoreBId = dataStoreB._context.id;
-				// dataStoreA._root.set("dsB", dataStoreB.handle);
 				defaultDataObject._root.set("dsA", dataStoreA.handle);
 				defaultDataObject._root.set("dsX", dataStoreX.handle);
 
-				// Summarize to get a baseline for incremental summary/GC
+				// Summarize to get a baseline for incremental summary/GC, then load a new summarizer (and close the first one)
 				const { summaryVersion: summaryVersion0 } = await summarize(summarizer0);
 				summarizingContainer0.close();
-
-				// When the Summarizer loads, simulate empty GC state, so dataStoreA and dataStoreB appear unreferenced.
-				// This simulates an FF bug that miscalculates or corrupts the GC State.
-				//* configProvider.set("__testhook.emptyGCState", true);
 				const { container: closeMe, summarizer: summarizer_toBeCorrupted } =
 					await loadSummarizer(initialContainer, summaryVersion0, summarizerMockLogger);
-				//* configProvider.set("__testhook.emptyGCState", false);
 
+				//* TODO: Find a better way to inject this corruption (without requiring change to actual code)
 				// Generate a summary with corrupted GC Data (missing route to dataStore A)
 				global.__testhook__gcDataOverrides = {};
 				global.__testhook__gcDataOverrides["/default/root"] = ["/default"];
@@ -927,7 +1113,7 @@ describeCompat("GC data store tombstone tests", "2.0.0-rc.1.0.0", (getTestObject
 
 				// Then wait the Tombstone timeout and update current timestamp, and summarize again
 				await delay(tombstoneTimeoutMs);
-				dataStoreX._root.set("update", "timestamp");
+				dataStoreX._root.set("update", "timestamp"); //* Might hit Tombstone Changed event?
 				const { container: summarizingContainer, summarizer } = await loadSummarizer(
 					initialContainer,
 					summaryVersion_corrupted,
@@ -988,23 +1174,23 @@ describeCompat("GC data store tombstone tests", "2.0.0-rc.1.0.0", (getTestObject
 				);
 
 				// This request still fails because Auto-Recovery only affects the next summary (via next GC run)
-				tombstoneError = undefined;
-				try {
-					await handleA1!.get();
-				} catch (error: any) {
-					tombstoneError = error;
-				}
-				assert.equal(
-					tombstoneError?.code,
-					404,
+				// BUT - it doesn't log because the handle has the result cached
+				//* Maybe switch back to request-based check here...
+				await assert.rejects(
+					async () => {
+						await handleA1!.get();
+					},
+					(tsError: any) => tsError?.code === 404,
 					"Tombstone error from handle.get should have 404 status code (1A again)",
 				);
 
-				// Auto-Recovery: This summary will have the unref timestamp reset due to the GC TombstoneLoaded op
-				const { summaryVersion: summaryVersion2 } = await summarize(summarizer);
+				//* Full GC doesn't reset _all_ timestamps right?
+				// Auto-Recovery: This summary will have the unref timestamp reset and will run full GC due to the GC TombstoneLoaded op
+				const { summaryVersion: summaryVersion2 } = await summarize(summarizer, {
+					reason: "Summarize after auto-recovery",
+				});
 				const container2 = await loadContainer(summaryVersion2);
 
-				//* Better way to do this since it's actually referenced? This feels fine I think since it's the Summarizer.
 				// Verify that the object is not Tombstoned in summarizingContainer - it just summarized with the TombstoneLoaded op
 				const summarizerResponse = await (
 					summarizer as unknown as { runtime: ContainerRuntime }
@@ -1024,64 +1210,19 @@ describeCompat("GC data store tombstone tests", "2.0.0-rc.1.0.0", (getTestObject
 					"Auto-Recovery should have made the object no longer tombstoned (2A)",
 				);
 
-				//* B?
-				// const successResponse2B = await (
-				// 	entryPoint2._context.containerRuntime as ContainerRuntime
-				// ).resolveHandle({
-				// 	url: dataStoreBId,
-				// });
-				// assert.equal(
-				// 	successResponse2B.status,
-				// 	200,
-				// 	"Auto-Recovery should have made the object no longer tombstoned (2B)",
-				// );
-				// assert.notEqual(
-				// 	successResponse2B.headers?.[TombstoneResponseHeaderKey],
-				// 	true,
-				// 	"DID NOT Expect tombstone header to be set on the success response (2B)",
-				// );
-
-				//*
-				//* With the Full GC fix, they _won't_ be tombstoned at this point.
-				//*
-
 				// Wait the Tombstone timeout then summarize and load another container
-				// It will be tombstoned again since it's been unreferenced the whole time
+				// Since auto-recovery triggered full GC, the corruption was repaired and GC knows dataStoreA is referenced
 				await delay(tombstoneTimeoutMs);
-				dataStoreX._root.set("update", "timestamp again");
-				//*				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer, true);
+				dataStoreX._root.set("update", "timestamp again"); //* Curious: Might hit Tombstone Changed event, w/o fullGC recovery?
 				const { summaryTree, summaryVersion: summaryVersion3 } =
 					await summarize(summarizer);
 				const container3 = await loadContainer(summaryVersion3);
 				const defaultDataObject3 = (await container3.getEntryPoint()) as ITestDataObject;
 				const handleA3 = defaultDataObject3._root.get<IFluidHandle>("dsA");
-				tombstoneError = undefined;
-				try {
-					await handleA3!.get();
-				} catch (error: any) {
-					tombstoneError = error;
-				}
-				assert.equal(
-					tombstoneError?.code,
-					404,
-					"Object should become tombstoned again after the timeout (3A)",
+				await assert.doesNotReject(
+					async () => handleA3!.get(),
+					"Corrupted GC Data should have been repaired such that this object is known to be referenced (3A)",
 				);
-				//* B?
-				// const tombstoneErrorResponse3B = await (
-				// 	entryPoint3._context.containerRuntime as ContainerRuntime
-				// ).resolveHandle({
-				// 	url: dataStoreBId,
-				// });
-				// assert.equal(
-				// 	tombstoneErrorResponse3B.status,
-				// 	404,
-				// 	"Object should become tombstoned again after the timeout (3B)",
-				// );
-				// assert.equal(
-				// 	tombstoneErrorResponse3B.value,
-				// 	`DataStore was tombstoned: ${dataStoreBId}`,
-				// 	"Expected the Tombstone error message (3B)",
-				// );
 			},
 		);
 	});

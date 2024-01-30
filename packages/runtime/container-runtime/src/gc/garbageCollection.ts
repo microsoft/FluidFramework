@@ -107,6 +107,8 @@ export class GarbageCollector implements IGarbageCollector {
 	private tombstones: string[] = [];
 	// A list of nodes that have been deleted during sweep phase.
 	private deletedNodes: Set<string> = new Set();
+	/** If true, the next GC run will do fullGC mode to regenerate the GC data for each node */
+	private fullGCModeForRecovery: boolean = false;
 
 	// Promise when resolved returns the GC data data in the base snapshot.
 	private readonly baseSnapshotDataP: Promise<IGarbageCollectionSnapshotData | undefined>;
@@ -453,8 +455,12 @@ export class GarbageCollector implements IGarbageCollector {
 		telemetryContext?: ITelemetryContext,
 	): Promise<IGCStats | undefined> {
 		const fullGC =
-			options.fullGC ??
-			(this.configs.runFullGC === true || this.summaryStateTracker.doesSummaryStateNeedReset);
+			this.fullGCModeForRecovery ||
+			(options.fullGC ??
+				(this.configs.runFullGC === true ||
+					this.summaryStateTracker.doesSummaryStateNeedReset));
+
+		this.fullGCModeForRecovery = false;
 
 		// Add the options that are used to run GC to the telemetry context.
 		telemetryContext?.setMultiple("fluid_GC", "Options", {
@@ -876,6 +882,10 @@ export class GarbageCollector implements IGarbageCollector {
 				// Mark the node as referenced to ensure it isn't Swept
 				const tombstonedNodePath = message.contents.nodePath;
 				this.addedOutboundReference("/", tombstonedNodePath);
+
+				// In case the cause of the TombstoneLoaded event is incorrect GC Data,
+				// do fullGC on the next run to get a chance to repair (in the likely case the bug is not deterministic)
+				this.fullGCModeForRecovery = true;
 
 				break;
 			}
