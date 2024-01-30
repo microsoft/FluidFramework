@@ -254,11 +254,15 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 				}
 			});
 			remoteRuntime1.on("signal", (message: IInboundSignalMessage, local: boolean) => {
-				throw new Error("Should not receive signal");
+				throw new Error("Remote client should not receive signal");
 			});
 			remoteRuntime2.on("signal", (message: IInboundSignalMessage, local: boolean) => {
-				throw new Error("Should not receive signal");
+				throw new Error("Remote client should not receive signal");
 			});
+
+			localRuntime.submitSignal("TestSignal", true, localRuntime.clientId);
+			await waitForSignal(localRuntime);
+			assert.equal(user1SignalReceivedCount, 1, "client 1 did not receive signal");
 		};
 
 		beforeEach(() => {
