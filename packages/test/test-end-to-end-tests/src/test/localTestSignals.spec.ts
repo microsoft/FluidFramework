@@ -207,7 +207,7 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 		let user2SignalReceivedCount: number;
 		let user3SignalReceivedCount: number;
 
-		// Type Casting `as ContainerRuntime` since IContainerRuntimeBase does not have targetSignal parameter
+		// Type Casting `as ContainerRuntime` since IContainerRuntimeBase does not have targetClientId argument
 		const user1ContainerRuntime = dataObject1.context.containerRuntime as ContainerRuntime;
 		const user2ContainerRuntime = dataObject2.context.containerRuntime as ContainerRuntime;
 		const user3ContainerRuntime = dataObject3.context.containerRuntime as ContainerRuntime;
