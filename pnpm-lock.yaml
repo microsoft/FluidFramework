@@ -45,7 +45,7 @@ importers:
       jest: ^29.6.2
       mocha: ^10.2.0
       prettier: ~3.0.3
-      pretty-quick: ^3.1.3
+      pretty-quick: ^4.0.0
       rimraf: ^4.4.0
       run-script-os: ^1.1.6
       syncpack: ^9.8.4
@@ -72,7 +72,7 @@ importers:
       jest: 29.7.0
       mocha: 10.2.0
       prettier: 3.0.3
-      pretty-quick: 3.1.3_prettier@3.0.3
+      pretty-quick: 4.0.0_prettier@3.0.3
       rimraf: 4.4.1
       run-script-os: 1.1.6
       syncpack: 9.8.6
@@ -1438,7 +1438,6 @@ importers:
   examples/benchmarks/odspsnapshotfetch-perftestapp:
     specifiers:
       '@fluid-tools/build-cli': ^0.29.0
-      '@fluid-tools/fluidapp-odsp-urlresolver': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.29.0
       '@fluidframework/core-utils': workspace:~
@@ -1446,6 +1445,7 @@ importers:
       '@fluidframework/odsp-doclib-utils': workspace:~
       '@fluidframework/odsp-driver': workspace:~
       '@fluidframework/odsp-driver-definitions': workspace:~
+      '@fluidframework/odsp-urlresolver': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/tool-utils': workspace:~
       '@types/express': ^4.11.0
@@ -1471,11 +1471,11 @@ importers:
       webpack-hot-middleware: ^2.25.3
       webpack-merge: ^5.8.0
     dependencies:
-      '@fluid-tools/fluidapp-odsp-urlresolver': link:../../../packages/drivers/fluidapp-odsp-urlResolver
       '@fluidframework/core-utils': link:../../../packages/common/core-utils
       '@fluidframework/odsp-doclib-utils': link:../../../packages/utils/odsp-doclib-utils
       '@fluidframework/odsp-driver': link:../../../packages/drivers/odsp-driver
       '@fluidframework/odsp-driver-definitions': link:../../../packages/drivers/odsp-driver-definitions
+      '@fluidframework/odsp-urlresolver': link:../../../packages/drivers/odsp-urlResolver
       '@fluidframework/telemetry-utils': link:../../../packages/utils/telemetry-utils
       '@fluidframework/tool-utils': link:../../../packages/utils/tool-utils
       express: 4.18.2
@@ -6877,6 +6877,7 @@ importers:
       '@fluidframework/test-runtime-utils': workspace:~
       '@microsoft/api-extractor': ^7.39.1
       '@types/diff': ^3.5.1
+      '@types/double-ended-queue': ^2.1.0
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/uuid': ^9.0.2
@@ -6884,6 +6885,7 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       diff: ^3.5.0
+      double-ended-queue: ^2.1.0-0
       eslint: ~8.50.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
@@ -6907,6 +6909,7 @@ importers:
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/shared-object-base': link:../shared-object-base
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
+      double-ended-queue: 2.1.0-0
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -6922,6 +6925,7 @@ importers:
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
       '@types/diff': 3.5.8
+      '@types/double-ended-queue': 2.1.7
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
@@ -7552,65 +7556,6 @@ importers:
       rimraf: 4.4.1
       typescript: 5.1.6
 
-  packages/drivers/fluidapp-odsp-urlResolver:
-    specifiers:
-      '@arethetypeswrong/cli': ^0.13.3
-      '@fluid-internal/client-utils': workspace:~
-      '@fluid-tools/build-cli': ^0.29.0
-      '@fluid-tools/fluidapp-odsp-urlresolver-previous': npm:@fluid-tools/fluidapp-odsp-urlresolver@2.0.0-internal.8.0.0
-      '@fluidframework/build-common': ^2.0.3
-      '@fluidframework/build-tools': ^0.29.0
-      '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/core-utils': workspace:~
-      '@fluidframework/driver-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ^3.3.0
-      '@fluidframework/mocha-test-setup': workspace:~
-      '@fluidframework/odsp-driver': workspace:~
-      '@fluidframework/odsp-driver-definitions': workspace:~
-      '@microsoft/api-extractor': ^7.39.1
-      '@types/mocha': ^9.1.1
-      '@types/node': ^18.19.0
-      copyfiles: ^2.4.1
-      cross-env: ^7.0.3
-      eslint: ~8.50.0
-      mocha: ^10.2.0
-      mocha-json-output-reporter: ^2.0.1
-      mocha-multi-reporters: ^1.5.1
-      moment: ^2.21.0
-      prettier: ~3.0.3
-      rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
-      typescript: ~5.1.6
-    dependencies:
-      '@fluid-internal/client-utils': link:../../common/client-utils
-      '@fluidframework/core-interfaces': link:../../common/core-interfaces
-      '@fluidframework/core-utils': link:../../common/core-utils
-      '@fluidframework/driver-definitions': link:../../common/driver-definitions
-      '@fluidframework/odsp-driver': link:../odsp-driver
-      '@fluidframework/odsp-driver-definitions': link:../odsp-driver-definitions
-    devDependencies:
-      '@arethetypeswrong/cli': 0.13.3
-      '@fluid-tools/build-cli': 0.29.0_mhw3tufvtaceew37hrkkevjcli
-      '@fluid-tools/fluidapp-odsp-urlresolver-previous': /@fluid-tools/fluidapp-odsp-urlresolver/2.0.0-internal.8.0.0
-      '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
-      '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
-      '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
-      '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
-      '@types/mocha': 9.1.1
-      '@types/node': 18.19.1
-      copyfiles: 2.4.1
-      cross-env: 7.0.3
-      eslint: 8.50.0
-      mocha: 10.2.0
-      mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
-      mocha-multi-reporters: 1.5.1_mocha@10.2.0
-      moment: 2.29.4
-      prettier: 3.0.3
-      rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
-      typescript: 5.1.6
-
   packages/drivers/local-driver:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
@@ -7825,10 +7770,12 @@ importers:
   packages/drivers/odsp-urlResolver:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.29.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.29.0
       '@fluidframework/core-interfaces': workspace:~
+      '@fluidframework/core-utils': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.3.0
       '@fluidframework/mocha-test-setup': workspace:~
@@ -7850,7 +7797,9 @@ importers:
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
+      '@fluid-internal/client-utils': link:../../common/client-utils
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
+      '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/odsp-driver': link:../odsp-driver
       '@fluidframework/odsp-driver-definitions': link:../odsp-driver-definitions
@@ -8369,6 +8318,8 @@ importers:
   packages/framework/client-logger/app-insights-logger:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@fluid-tools/build-cli': ^0.29.0
+      '@fluidframework/app-insights-logger-previous': npm:@fluidframework/app-insights-logger@2.0.0-rc.1.0.1
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.29.0
       '@fluidframework/core-interfaces': workspace:~
@@ -8402,6 +8353,8 @@ importers:
       '@ungap/structured-clone': 1.2.0
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@fluid-tools/build-cli': 0.29.0_mhw3tufvtaceew37hrkkevjcli
+      '@fluidframework/app-insights-logger-previous': /@fluidframework/app-insights-logger/2.0.0-rc.1.0.1_tslib@1.14.1
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
       '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
@@ -11518,7 +11471,6 @@ importers:
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.29.0
       '@fluid-tools/fetch-tool-previous': npm:@fluid-tools/fetch-tool@2.0.0-internal.8.0.0
-      '@fluid-tools/fluidapp-odsp-urlresolver': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.29.0
       '@fluidframework/container-runtime': workspace:~
@@ -11543,7 +11495,6 @@ importers:
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
-      '@fluid-tools/fluidapp-odsp-urlresolver': link:../../drivers/fluidapp-odsp-urlResolver
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
@@ -15781,6 +15732,19 @@ packages:
       sha.js: 2.4.11
     dev: true
 
+  /@fluid-internal/client-utils/2.0.0-rc.1.0.1:
+    resolution: {integrity: sha512-O4nqXfHQKEOiz2qzt/ipyGzQ7AVx8S58fnIN7ah1l+ziz3VJL10uFECAqw9y8zJx3QNIr2NIsBByW0L8DxKl+A==}
+    dependencies:
+      '@fluidframework/core-interfaces': 2.0.0-rc.1.0.1
+      '@fluidframework/core-utils': 2.0.0-rc.1.0.1
+      '@types/events': 3.0.3
+      base64-js: 1.5.1
+      buffer: 6.0.3
+      events: 3.3.0
+      lodash: 4.17.21
+      sha.js: 2.4.11
+    dev: true
+
   /@fluid-tools/benchmark/0.47.0:
     resolution: {integrity: sha512-lQ2ijhUJ68aOHqH1UxOBmAsSWfx2dIuI4vAlQ4e/ueh0a8KUZ8D8AUpJPu1k1pwuTlOuvb629BY9Q4HC6H/KBQ==}
     dependencies:
@@ -16123,6 +16087,17 @@ packages:
     transitivePeerDependencies:
       - debug
       - supports-color
+    dev: true
+
+  /@fluidframework/app-insights-logger/2.0.0-rc.1.0.1_tslib@1.14.1:
+    resolution: {integrity: sha512-mauEYkEiDfG1fjjmTPsBXEHXy8laPXSQ54vqSFvPPyqr6ryjbCO6Hx8bhmKEuXYnAqbHlrhkpa36RF/pE60eIA==}
+    dependencies:
+      '@fluidframework/core-interfaces': 2.0.0-rc.1.0.1
+      '@fluidframework/telemetry-utils': 2.0.0-rc.1.0.1
+      '@microsoft/applicationinsights-web': 2.8.16_tslib@1.14.1
+    transitivePeerDependencies:
+      - supports-color
+      - tslib
     dev: true
 
   /@fluidframework/aqueduct/2.0.0-internal.8.0.0:
@@ -16540,8 +16515,16 @@ packages:
     resolution: {integrity: sha512-4GkmxbeekjHf2R442GZ+ohJ6l/JB6l10/GfhzzrVqBduH2dff8M4ipqm+BFbVkF8ODglIvuSc/8/VBrUWzcE2Q==}
     dev: true
 
+  /@fluidframework/core-interfaces/2.0.0-rc.1.0.1:
+    resolution: {integrity: sha512-Xazv2hOxnQ/TBBlEC4zYUq4DGG+i8zdzhfoPr3xkj+fiOle1R6r2qG5SO6tzEVqXDNzefO/76YUNSYwgNJHWww==}
+    dev: true
+
   /@fluidframework/core-utils/2.0.0-internal.8.0.0:
     resolution: {integrity: sha512-J459z21XEE7ahhAac61xl+NUYcTq9PYTOWdvX9gpcs9FSLzYn1Osen4SZoPDlIy693+HFbbZFDCTiqvw/uYRcQ==}
+    dev: true
+
+  /@fluidframework/core-utils/2.0.0-rc.1.0.1:
+    resolution: {integrity: sha512-FCNN2cH5IYzODuSyk6F3creB2ssZAhpII4KSOxcPsUElZu7BAAMME04uvHleOkMOh/LfQW8NNnP1XvHt7+Z3GA==}
     dev: true
 
   /@fluidframework/counter/2.0.0-internal.8.0.0:
@@ -17833,6 +17816,20 @@ packages:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
       '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
       '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/protocol-definitions': 3.1.0
+      debug: 4.3.4
+      events: 3.3.0
+      uuid: 9.0.1
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+
+  /@fluidframework/telemetry-utils/2.0.0-rc.1.0.1:
+    resolution: {integrity: sha512-AHGK8pPUUGfE9L3lDpQN6JRS2s3oKEQGktH2lNu85f5zjMPUhLV6ZIIwt5G2ILbNpZuLuyEjQkaSEXlpxGFt6g==}
+    dependencies:
+      '@fluid-internal/client-utils': 2.0.0-rc.1.0.1
+      '@fluidframework/core-interfaces': 2.0.0-rc.1.0.1
+      '@fluidframework/core-utils': 2.0.0-rc.1.0.1
       '@fluidframework/protocol-definitions': 3.1.0
       debug: 4.3.4
       events: 3.3.0
@@ -19158,7 +19155,6 @@ packages:
       '@microsoft/applicationinsights-shims': 2.0.2
       '@microsoft/dynamicproto-js': 1.1.9
       tslib: 1.14.1
-    dev: false
 
   /@microsoft/applicationinsights-channel-js/2.8.16_tslib@1.14.1:
     resolution: {integrity: sha512-k0W4UKmkVfKgdCyKjcadiysCfndK4PrO6FhU4Jt3B4PaUmTs2w2ematfq2EqKOTsfkSAfo036jx6Rf/OOT3Rfg==}
@@ -19170,7 +19166,6 @@ packages:
       '@microsoft/applicationinsights-shims': 2.0.2
       '@microsoft/dynamicproto-js': 1.1.9
       tslib: 1.14.1
-    dev: false
 
   /@microsoft/applicationinsights-common/2.8.16_tslib@1.14.1:
     resolution: {integrity: sha512-rZutcK7gzixhdtfUVkjy10Kn+/i66ti6YqBN2pFopOkgpqyGydtVhWio2TGrtAK3Pjz8cj7yUkrO+Z0y6/McFA==}
@@ -19181,7 +19176,6 @@ packages:
       '@microsoft/applicationinsights-shims': 2.0.2
       '@microsoft/dynamicproto-js': 1.1.9
       tslib: 1.14.1
-    dev: false
 
   /@microsoft/applicationinsights-core-js/2.8.16_tslib@1.14.1:
     resolution: {integrity: sha512-pO5rR6UuiPymiHFj8XxNXhQgBSTvyHWygf+gdEVDh0xpUXYFO99bZe0Ux0D0HqYqVkJrRfXzL1Ocru6+S0x53Q==}
@@ -19191,7 +19185,6 @@ packages:
       '@microsoft/applicationinsights-shims': 2.0.2
       '@microsoft/dynamicproto-js': 1.1.9
       tslib: 1.14.1
-    dev: false
 
   /@microsoft/applicationinsights-dependencies-js/2.8.16_tslib@1.14.1:
     resolution: {integrity: sha512-AsfNQKEXChQNnwVo+kI4GSLxcyfUeR6T4I0nfHOYNoBYGTsAl2D8gwgEiz7nldBe4dsW9a3Kkb5qmpX8tT/IUg==}
@@ -19203,7 +19196,6 @@ packages:
       '@microsoft/applicationinsights-shims': 2.0.2
       '@microsoft/dynamicproto-js': 1.1.9
       tslib: 1.14.1
-    dev: false
 
   /@microsoft/applicationinsights-properties-js/2.8.16_tslib@1.14.1:
     resolution: {integrity: sha512-Ug/rk6lGYKoyX2/tyBwsgA2h+zwtFTs0ZUXiwLUlPlqFKIfEKzMvSYUsTPR3oRFvO0PcNxeQ8V7uNyo8VONwxA==}
@@ -19215,11 +19207,9 @@ packages:
       '@microsoft/applicationinsights-shims': 2.0.2
       '@microsoft/dynamicproto-js': 1.1.9
       tslib: 1.14.1
-    dev: false
 
   /@microsoft/applicationinsights-shims/2.0.2:
     resolution: {integrity: sha512-PoHEgsnmcqruLNHZ/amACqdJ6YYQpED0KSRe6J7gIJTtpZC1FfFU9b1fmDKDKtFoUSrPzEh1qzO3kmRZP0betg==}
-    dev: false
 
   /@microsoft/applicationinsights-web-snippet/1.0.1:
     resolution: {integrity: sha512-2IHAOaLauc8qaAitvWS+U931T+ze+7MNWrDHY47IENP5y2UA0vqJDu67kWZDdpCN1fFC77sfgfB+HV7SrKshnQ==}
@@ -19239,11 +19229,9 @@ packages:
       '@microsoft/applicationinsights-shims': 2.0.2
       '@microsoft/dynamicproto-js': 1.1.9
       tslib: 1.14.1
-    dev: false
 
   /@microsoft/dynamicproto-js/1.1.9:
     resolution: {integrity: sha512-n1VPsljTSkthsAFYdiWfC+DKzK2WwcRp83Y1YAqdX552BstvsDjft9YXppjUzp11BPsapDoO1LDgrDB0XVsfNQ==}
-    dev: false
 
   /@microsoft/load-themed-styles/1.10.295:
     resolution: {integrity: sha512-W+IzEBw8a6LOOfRJM02dTT7BDZijxm+Z7lhtOAz1+y9vQm1Kdz9jlAO+qCEKsfxtUOmKilW8DIRqFw2aUgKeGg==}
@@ -29204,21 +29192,6 @@ packages:
       signal-exit: 3.0.7
       strip-eof: 1.0.0
 
-  /execa/4.1.0:
-    resolution: {integrity: sha512-j5W0//W7f8UxAn8hXVnwG8tLwdiUy4FJLcSupCg6maBYZDpyBvTApK7KyuI4bKj8KOh1r2YH+6ucuYtJv1bTZA==}
-    engines: {node: '>=10'}
-    dependencies:
-      cross-spawn: 7.0.3
-      get-stream: 5.2.0
-      human-signals: 1.1.1
-      is-stream: 2.0.1
-      merge-stream: 2.0.0
-      npm-run-path: 4.0.1
-      onetime: 5.1.2
-      signal-exit: 3.0.7
-      strip-final-newline: 2.0.0
-    dev: true
-
   /execa/5.1.1:
     resolution: {integrity: sha512-8uSpZZocAZRBAPIEINJj3Lo9HyGitllczc27Eh5YYojjMFMn8yHMDMaUHE2Jqfq05D/wucwI4JGURyXt1vchyg==}
     engines: {node: '>=10'}
@@ -31554,11 +31527,6 @@ packages:
   /human-id/4.1.0:
     resolution: {integrity: sha512-WYeWmHXGo1ZPGZuy7I2c+sgM83GvlQR1jrF1zLX6fID9JEVGkZgZe8PHj5HacWC7d9V0rNc4iRVhb9QmO55CUQ==}
     hasBin: true
-    dev: true
-
-  /human-signals/1.1.1:
-    resolution: {integrity: sha512-SEQu7vl8KjNL2eoGBLF3+wAjpsNfA9XMlXAYj/3EdaNfAlxKthD1xjEQfGOUhllCGGJVNY34bRr6lPINhNjyZw==}
-    engines: {node: '>=8.12.0'}
     dev: true
 
   /human-signals/2.1.0:
@@ -36138,17 +36106,6 @@ packages:
       dns-packet: 1.3.4
       thunky: 1.1.0
 
-  /multimatch/4.0.0:
-    resolution: {integrity: sha512-lDmx79y1z6i7RNx0ZGCPq1bzJ6ZoDDKbvh7jxr9SJcWLkShMzXrHbYVpTdnhNM5MXpDUxCQ4DgqVttVXlBgiBQ==}
-    engines: {node: '>=8'}
-    dependencies:
-      '@types/minimatch': 3.0.5
-      array-differ: 3.0.0
-      array-union: 2.1.0
-      arrify: 2.0.1
-      minimatch: 3.1.2
-    dev: true
-
   /multimatch/5.0.0:
     resolution: {integrity: sha512-ypMKuglUrZUD99Tk2bUQ+xNQj43lPEfAeX2o9cTteAmShXy2VHDJpuwu1o0xqoKCt9jLVAvwyFKdLTPXKAfJyA==}
     engines: {node: '>=10'}
@@ -37725,6 +37682,11 @@ packages:
     resolution: {integrity: sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==}
     engines: {node: '>=8.6'}
 
+  /picomatch/3.0.1:
+    resolution: {integrity: sha512-I3EurrIQMlRc9IaAZnqRR044Phh2DXY+55o7uJ0V+hYZAcQYSuFWsc9q5PvyDHUSCe1Qxn/iBz+78s86zWnGag==}
+    engines: {node: '>=10'}
+    dev: true
+
   /pidtree/0.3.1:
     resolution: {integrity: sha512-qQbW94hLHEqCg7nhby4yRC7G2+jYHY4Rguc2bjw7Uug4GIJuu1tvf2uHaZv5Q8zdt+WKJ6qK1FOI6amaWUo5FA==}
     engines: {node: '>=0.10'}
@@ -38289,20 +38251,21 @@ packages:
     engines: {node: '>= 0.8'}
     dev: true
 
-  /pretty-quick/3.1.3_prettier@3.0.3:
-    resolution: {integrity: sha512-kOCi2FJabvuh1as9enxYmrnBC6tVMoVOenMaBqRfsvBHB0cbpYHjdQEpSglpASDFEXVwplpcGR4CLEaisYAFcA==}
-    engines: {node: '>=10.13'}
+  /pretty-quick/4.0.0_prettier@3.0.3:
+    resolution: {integrity: sha512-M+2MmeufXb/M7Xw3Afh1gxcYpj+sK0AxEfnfF958ktFeAyi5MsKY5brymVURQLgPLV1QaF5P4pb2oFJ54H3yzQ==}
+    engines: {node: '>=14'}
     hasBin: true
     peerDependencies:
-      prettier: '>=2.0.0'
+      prettier: ^3.0.0
     dependencies:
-      chalk: 3.0.0
-      execa: 4.1.0
-      find-up: 4.1.0
+      execa: 5.1.1
+      find-up: 5.0.0
       ignore: 5.3.0
       mri: 1.2.0
-      multimatch: 4.0.0
+      picocolors: 1.0.0
+      picomatch: 3.0.1
       prettier: 3.0.3
+      tslib: 2.6.2
     dev: true
 
   /prettyjson/1.2.5:
