@@ -1266,7 +1266,29 @@ function verifyPartialLengths(
 	return count;
 }
 
-export function verifyExpected(
+/**
+ * Enable stricter partial length assertions
+ *
+ * Note that these assertions can be expensive, and so should not be enabled in
+ * production code or tests that run through thousands of ops (e.g. the SharedString
+ * fuzz tests).
+ *
+ * @internal
+ */
+export function enableStrictPartialLengthChecks() {
+	PartialSequenceLengths.options.verifier = verify;
+	PartialSequenceLengths.options.verifyExpected = verifyExpected;
+}
+
+/**
+ * @internal
+ */
+export function disableStrictPartialLengthChecks() {
+	PartialSequenceLengths.options.verifier = undefined;
+	PartialSequenceLengths.options.verifyExpected = undefined;
+}
+
+function verifyExpected(
 	mergeTree: MergeTree,
 	node: IMergeBlock,
 	refSeq: number,
@@ -1305,7 +1327,7 @@ export function verifyExpected(
 	}
 }
 
-export function verify(partialSeqLengths: PartialSequenceLengths) {
+function verify(partialSeqLengths: PartialSequenceLengths) {
 	if (partialSeqLengths["clientSeqNumbers"]) {
 		for (const cliSeq of partialSeqLengths["clientSeqNumbers"]) {
 			if (cliSeq) {

@@ -5,7 +5,10 @@
 
 import { strict as assert } from "assert";
 import { LoggingError } from "@fluidframework/telemetry-utils";
-import { PartialSequenceLengths, verify, verifyExpected } from "../partialLengths";
+import {
+	disableStrictPartialLengthChecks,
+	enableStrictPartialLengthChecks,
+} from "../partialLengths";
 import { MergeTree } from "../mergeTree";
 import { ReconnectTestHelper } from "./reconnectHelper";
 
@@ -42,14 +45,12 @@ import { ReconnectTestHelper } from "./reconnectHelper";
 for (const incremental of [true, false]) {
 	describe(`obliterate partial lengths incremental = ${incremental}`, () => {
 		beforeEach(() => {
-			PartialSequenceLengths.options.verifier = verify;
-			PartialSequenceLengths.options.verifyExpected = verifyExpected;
+			enableStrictPartialLengthChecks();
 			MergeTree.options.incrementalUpdate = incremental;
 		});
 
 		afterEach(() => {
-			PartialSequenceLengths.options.verifier = undefined;
-			PartialSequenceLengths.options.verifyExpected = undefined;
+			disableStrictPartialLengthChecks();
 			MergeTree.options.incrementalUpdate = true;
 		});
 
