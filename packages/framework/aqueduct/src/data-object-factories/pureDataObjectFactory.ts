@@ -295,11 +295,6 @@ export class PureDataObjectFactory<
 	 * Creates a new root instance of the object. Uses container's registry to find this factory.
 	 * It's expected that only container owners would use this functionality, as only such developers
 	 * have knowledge of entries in container registry.
-	 *
-	 * This immediately makes the root instance live. If the container is attached before this is called, changes will
-	 * be sent over the network. If the container is detached, when the container is attached, the instance will show
-	 * up on remote clients.
-	 *
 	 * The name in this registry for such record should match type of this factory.
 	 * @param runtime - container runtime. It's registry is used to create an object.
 	 * @param initialState - The initial state to provide to the created component.
