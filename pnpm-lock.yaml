@@ -1585,7 +1585,7 @@ importers:
       '@fluid-tools/build-cli': 0.29.0_lzbrbjkjqqnlnvbwteayq6k5jm
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
-      '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
+      '@fluidframework/eslint-config-fluid': file:common/build/eslint-config-fluid_loebgezstcsvd2poh2d55fifke
       '@types/express': 4.17.21
       '@types/fs-extra': 9.0.13
       '@types/node': 18.19.1
@@ -18343,7 +18343,7 @@ packages:
     dependencies:
       '@jest/fake-timers': 29.7.0
       '@jest/types': 29.6.3
-      '@types/node': 18.19.1
+      '@types/node': 18.19.7
       jest-mock: 29.7.0
     dev: true
 
@@ -18382,7 +18382,7 @@ packages:
     dependencies:
       '@jest/types': 29.6.3
       '@sinonjs/fake-timers': 10.3.0
-      '@types/node': 18.19.1
+      '@types/node': 18.19.7
       jest-message-util: 29.7.0
       jest-mock: 29.7.0
       jest-util: 29.7.0
@@ -21913,7 +21913,7 @@ packages:
     resolution: {integrity: sha512-fB3Zu92ucau0iQ0JMCFQE7b/dv8Ot07NI3KaZIkIUNXq82k4eBAqUaneXfleGY9JWskeS9y+u0nXMyspcuQrCg==}
     dependencies:
       '@types/connect': 3.4.38
-      '@types/node': 18.19.1
+      '@types/node': 18.19.7
 
   /@types/cacheable-request/6.0.3:
     resolution: {integrity: sha512-IQ3EbTzGxIigb1I3qPZc1rWJnH0BmSKv5QYTalEwweFvyBDLSAe24zP0le/hyi7ecGfZVlIVAg4BZqb8WBwKqw==}
@@ -22082,7 +22082,7 @@ packages:
   /@types/express-serve-static-core/4.17.41:
     resolution: {integrity: sha512-OaJ7XLaelTgrvlZD8/aa0vvvxZdUmlCn6MtWeB7TkiKW70BQLc9XEPpDLPdbo52ZhXUCrznlWdCHWxJWtdyajA==}
     dependencies:
-      '@types/node': 18.19.1
+      '@types/node': 18.19.7
       '@types/qs': 6.9.10
       '@types/range-parser': 1.2.7
       '@types/send': 0.17.4
@@ -22250,7 +22250,7 @@ packages:
   /@types/jsdom/20.0.1:
     resolution: {integrity: sha512-d0r18sZPmMQr1eG35u12FZfhIXNrnsPU/g5wvRKCUf/tOGilKKwYMYGqh33BNR6ba+2gkHw1EUiHoN3mn7E5IQ==}
     dependencies:
-      '@types/node': 18.19.1
+      '@types/node': 18.19.7
       '@types/tough-cookie': 4.0.5
       parse5: 7.1.2
     dev: true
@@ -22513,7 +22513,7 @@ packages:
     dependencies:
       '@types/http-errors': 2.0.4
       '@types/mime': 3.0.4
-      '@types/node': 18.19.1
+      '@types/node': 18.19.7
 
   /@types/sha.js/2.4.4:
     resolution: {integrity: sha512-Qukd+D6S2Hm0wLVt2Vh+/eWBIoUt+wF8jWjBsG4F8EFQRwKtYvtXCPcNl2OEUQ1R+eTr3xuSaBYUyM3WD1x/Qw==}
@@ -25707,7 +25707,7 @@ packages:
   /chrome-launcher/0.11.2:
     resolution: {integrity: sha512-jx0kJDCXdB2ARcDMwNCtrf04oY1Up4rOmVu+fqJ5MTPOOIG8EhRcEU9NZfXZc6dMw9FU8o1r21PNp8V2M0zQ+g==}
     dependencies:
-      '@types/node': 18.19.1
+      '@types/node': 18.19.7
       is-wsl: 2.2.0
       lighthouse-logger: 1.4.2
       mkdirp: 0.5.1
@@ -33190,7 +33190,7 @@ packages:
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
     dependencies:
       '@jest/types': 29.6.3
-      '@types/node': 18.19.1
+      '@types/node': 18.19.7
       jest-util: 29.7.0
     dev: true
 
@@ -37748,7 +37748,7 @@ packages:
       on-exit-leak-free: 2.1.2
       pino-abstract-transport: 1.1.0
       pump: 3.0.0
-      readable-stream: 4.4.2
+      readable-stream: 4.5.2
       secure-json-parse: 2.7.0
       sonic-boom: 3.7.0
       strip-json-comments: 3.1.1
@@ -39355,17 +39355,6 @@ packages:
       inherits: 2.0.4
       string_decoder: 1.3.0
       util-deprecate: 1.0.2
-
-  /readable-stream/4.4.2:
-    resolution: {integrity: sha512-Lk/fICSyIhodxy1IDK2HazkeGjSmezAWX2egdtJnYhtzKEsBPJowlI6F6LPb5tqIQILrMbx22S5o3GuJavPusA==}
-    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
-    dependencies:
-      abort-controller: 3.0.0
-      buffer: 6.0.3
-      events: 3.3.0
-      process: 0.11.10
-      string_decoder: 1.3.0
-    dev: true
 
   /readable-stream/4.5.2:
     resolution: {integrity: sha512-yjavECdqeZ3GLXNgRXgeQEdz9fvDDkNKyHnbHRFtOr7/LcfgBcmct7t/ET+HaCTqfh06OzoAxrkN/IfjJBVe+g==}
@@ -41173,7 +41162,7 @@ packages:
     resolution: {integrity: sha512-9/5CApkKKl6bS6jJ2D0DQllwz/1xq3cyJCR6DLgAQnkj5djCuq8NbflEdD2TI01p8qzS9qaKjzxM9cHT11ezmg==}
     engines: {node: '>=5.0'}
     dependencies:
-      '@types/node': 18.19.1
+      '@types/node': 18.19.7
       image-ssim: 0.2.0
       jpeg-js: 0.1.2
     dev: true
@@ -45318,6 +45307,45 @@ packages:
 
   /zwitch/1.0.5:
     resolution: {integrity: sha512-V50KMwwzqJV0NpZIZFwfOD5/lyny3WlSzRiXgA0G7VUnRlqttta1L6UQIHzd6EuBY/cHGfwTIck7w1yH6Q5zUw==}
+    dev: true
+
+  file:common/build/eslint-config-fluid/src/fluid-custom-rules:
+    resolution: {directory: common/build/eslint-config-fluid/src/fluid-custom-rules, type: directory}
+    name: eslint-plugin-fluid-custom-rules
+    version: 1.0.0
+    dev: true
+
+  file:common/build/eslint-config-fluid_loebgezstcsvd2poh2d55fifke:
+    resolution: {directory: common/build/eslint-config-fluid, type: directory}
+    id: file:common/build/eslint-config-fluid
+    name: '@fluidframework/eslint-config-fluid'
+    version: 3.3.0
+    dependencies:
+      '@microsoft/tsdoc': 0.14.2
+      '@rushstack/eslint-patch': 1.4.0
+      '@rushstack/eslint-plugin': 0.13.1_loebgezstcsvd2poh2d55fifke
+      '@rushstack/eslint-plugin-security': 0.7.1_loebgezstcsvd2poh2d55fifke
+      '@typescript-eslint/eslint-plugin': 6.7.5_kyvm7vo2gnj3vejfc2zkbqg7l4
+      '@typescript-eslint/parser': 6.7.5_loebgezstcsvd2poh2d55fifke
+      eslint-config-prettier: 9.0.0_eslint@8.50.0
+      eslint-import-resolver-typescript: 3.6.1_23enhn7pppnolyoizx6fvous5q
+      eslint-plugin-eslint-comments: 3.2.0_eslint@8.50.0
+      eslint-plugin-fluid-custom-rules: file:common/build/eslint-config-fluid/src/fluid-custom-rules
+      eslint-plugin-import: /eslint-plugin-i/2.29.1_qkgnnbjqevbkx5nf2343uj5ca4
+      eslint-plugin-jsdoc: 46.8.2_eslint@8.50.0
+      eslint-plugin-promise: 6.1.1_eslint@8.50.0
+      eslint-plugin-react: 7.33.2_eslint@8.50.0
+      eslint-plugin-react-hooks: 4.6.0_eslint@8.50.0
+      eslint-plugin-tsdoc: 0.2.17
+      eslint-plugin-unicorn: 48.0.1_eslint@8.50.0
+      eslint-plugin-unused-imports: 3.0.0_o7kaekouewryr5qn434fjasyba
+      ts-morph: 20.0.0
+    transitivePeerDependencies:
+      - eslint
+      - eslint-import-resolver-node
+      - eslint-import-resolver-webpack
+      - supports-color
+      - typescript
     dev: true
 
   file:tools/changelog-generator-wrapper:

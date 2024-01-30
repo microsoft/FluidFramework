@@ -16,8 +16,8 @@ importers:
       eslint: ~8.50.0
       eslint-config-prettier: ~9.0.0
       eslint-import-resolver-typescript: ~3.6.1
-      eslint-plugin-custom-rules: file:./src/custom-rules
       eslint-plugin-eslint-comments: ~3.2.0
+      eslint-plugin-fluid-custom-rules: file:./src/fluid-custom-rules
       eslint-plugin-import: npm:eslint-plugin-i@~2.29.0
       eslint-plugin-jsdoc: ~46.8.1
       eslint-plugin-promise: ~6.1.1
@@ -43,8 +43,8 @@ importers:
       '@typescript-eslint/parser': 6.7.2_loebgezstcsvd2poh2d55fifke
       eslint-config-prettier: 9.0.0_eslint@8.50.0
       eslint-import-resolver-typescript: 3.6.1_nbewz26gznihfyugy74gtikc2y
-      eslint-plugin-custom-rules: file:src/custom-rules
       eslint-plugin-eslint-comments: 3.2.0_eslint@8.50.0
+      eslint-plugin-fluid-custom-rules: file:src/fluid-custom-rules
       eslint-plugin-import: /eslint-plugin-i/2.29.1_2ye4nrpnt7yfkizftepuryz34u
       eslint-plugin-jsdoc: 46.8.1_eslint@8.50.0
       eslint-plugin-promise: 6.1.1_eslint@8.50.0
@@ -67,7 +67,7 @@ importers:
       sort-json: 2.0.1
       typescript: 5.1.6
     dependenciesMeta:
-      eslint-plugin-custom-rules:
+      eslint-plugin-fluid-custom-rules:
         injected: true
 
 packages:
@@ -316,13 +316,13 @@ packages:
   /@types/concat-stream/1.6.1:
     resolution: {integrity: sha512-eHE4cQPoj6ngxBZMvVf6Hw7Mh4jMW4U9lpGmS5GBPB9RYxlFg+CHaVN7ErNY4W9XfLIEn20b4VDYaIrbq0q4uA==}
     dependencies:
-      '@types/node': 8.10.66
+      '@types/node': 20.11.2
     dev: true
 
   /@types/form-data/0.0.33:
     resolution: {integrity: sha512-8BSvG1kGm83cyJITQMZSulnl6QV8jqAGreJsc5tPu1Jq0vTSOiY/k24Wx82JRpWwZSqrala6sd5rWi6aNXvqcw==}
     dependencies:
-      '@types/node': 8.10.66
+      '@types/node': 20.11.2
     dev: true
 
   /@types/glob/7.2.0:
@@ -3780,8 +3780,8 @@ packages:
       - supports-color
     dev: true
 
-  file:src/custom-rules:
-    resolution: {directory: src/custom-rules, type: directory}
-    name: eslint-plugin-custom-rules
+  file:src/fluid-custom-rules:
+    resolution: {directory: src/fluid-custom-rules, type: directory}
+    name: eslint-plugin-fluid-custom-rules
     version: 1.0.0
     dev: false

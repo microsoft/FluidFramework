@@ -6536,9 +6536,9 @@ packages:
     resolution: {integrity: sha512-V50KMwwzqJV0NpZIZFwfOD5/lyny3WlSzRiXgA0G7VUnRlqttta1L6UQIHzd6EuBY/cHGfwTIck7w1yH6Q5zUw==}
     dev: true
 
-  file:../../common/build/eslint-config-fluid/src/custom-rules:
-    resolution: {directory: ../../common/build/eslint-config-fluid/src/custom-rules, type: directory}
-    name: eslint-plugin-custom-rules
+  file:../../common/build/eslint-config-fluid/src/fluid-custom-rules:
+    resolution: {directory: ../../common/build/eslint-config-fluid/src/fluid-custom-rules, type: directory}
+    name: eslint-plugin-fluid-custom-rules
     version: 1.0.0
     dev: true
 
@@ -6556,7 +6556,7 @@ packages:
       '@typescript-eslint/parser': 6.7.5_bpztyfltmpuv6lhsgzfwtmxhte
       eslint-config-prettier: 9.0.0_eslint@8.55.0
       eslint-import-resolver-typescript: 3.6.1_qdfkx7gk6ri6dqmzhi7yrouuje
-      eslint-plugin-custom-rules: file:../../common/build/eslint-config-fluid/src/custom-rules
+      eslint-plugin-fluid-custom-rules: file:../../common/build/eslint-config-fluid/src/fluid-custom-rules
       eslint-plugin-eslint-comments: 3.2.0_eslint@8.55.0
       eslint-plugin-import: /eslint-plugin-i/2.29.1_j7h7oj6rrhtikhzta4fgkou42e
       eslint-plugin-jsdoc: 46.8.2_eslint@8.55.0

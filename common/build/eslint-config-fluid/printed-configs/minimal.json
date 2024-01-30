@@ -23,7 +23,7 @@
     "plugins": [
         "eslint-comments",
         "import",
-        "custom-rules",
+        "fluid-custom-rules",
         "unicorn",
         "unused-imports",
         "tsdoc",
@@ -460,9 +460,6 @@
         "curly": [
             0
         ],
-        "custom-rules/no-member-release-tags": [
-            "error"
-        ],
         "default-case": [
             "error"
         ],
@@ -530,6 +527,9 @@
         ],
         "flowtype/union-intersection-spacing": [
             "off"
+        ],
+        "fluid-custom-rules/no-member-release-tags": [
+            "error"
         ],
         "for-direction": [
             "error"
