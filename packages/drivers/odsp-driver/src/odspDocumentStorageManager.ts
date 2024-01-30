@@ -300,18 +300,21 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 
 										// Record the cache age
 										props.cacheEntryAge = age;
-									}
-
-									// Snapshot from cache could be in older format, so transform that before returning.
-									if (isInstanceOfISnapshot(snapshotCachedEntry)) {
-										return snapshotCachedEntry;
-									} else {
-										const snapshot: ISnapshot = {
-											...snapshotCachedEntry,
-											blobContents: snapshotCachedEntry.blobs,
-											snapshotInNewFormat: true,
-										};
-										return snapshot;
+										// Snapshot from cache could be in older format, so transform that before returning.
+										if (isInstanceOfISnapshot(snapshotCachedEntry)) {
+											return snapshotCachedEntry;
+										} else {
+											const snapshot: ISnapshot = {
+												snapshotTree: snapshotCachedEntry.snapshotTree,
+												blobContents: snapshotCachedEntry.blobs,
+												ops: snapshotCachedEntry.ops,
+												latestSequenceNumber:
+													snapshotCachedEntry.latestSequenceNumber,
+												sequenceNumber: snapshotCachedEntry.sequenceNumber,
+												snapshotInNewFormat: true,
+											};
+											return snapshot;
+										}
 									}
 								},
 							);
