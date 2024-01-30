@@ -79,13 +79,9 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 
 	/**
 	 * Submits a new signal to the server
-	 *
-	 * @param content - Content of the signal.
-	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	public submitSignal(content: any, targetClientId?: string): void {
-		// TODO: Add targetClientId support
-		this.emitMessages("submitSignal", [[content]]);
+	public submitSignal(message: any): void {
+		this.emitMessages("submitSignal", [[message]]);
 	}
 
 	/**
