@@ -15,7 +15,6 @@ export {
 	IThrottlingWarning,
 } from "./driverError";
 export {
-	GetSnapshotOptions,
 	FetchSource,
 	FiveDaysMs,
 	IDeltasFetchResult,

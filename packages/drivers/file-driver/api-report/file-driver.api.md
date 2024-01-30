@@ -65,7 +65,7 @@ export const FileSnapshotWriterClassFactory: <TBase extends ReaderConstructor>(B
         buildTree(snapshotTree: api.ISnapshotTree): Promise<api.ITree>;
         repositoryUrl: string;
         readonly policies?: IDocumentStorageServicePolicies | undefined;
-        getSnapshot?(version?: api.IVersion | undefined, snapshotFetchOptions?: ISnapshotFetchOptions | undefined): Promise<ISnapshot | undefined>;
+        getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions | undefined): Promise<ISnapshot>;
         createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse>;
         downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree>;
         readonly disposed?: boolean | undefined;
@@ -102,7 +102,7 @@ export const FluidFetchReaderFileSnapshotWriter: {
         buildTree(snapshotTree: api.ISnapshotTree): Promise<api.ITree>;
         repositoryUrl: string;
         readonly policies?: IDocumentStorageServicePolicies | undefined;
-        getSnapshot?(version?: api.IVersion | undefined, snapshotFetchOptions?: ISnapshotFetchOptions | undefined): Promise<ISnapshot | undefined>;
+        getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions | undefined): Promise<ISnapshot>;
         createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse>;
         downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree>;
         readonly disposed?: boolean | undefined;

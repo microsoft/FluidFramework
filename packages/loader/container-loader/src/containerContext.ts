@@ -99,7 +99,7 @@ export class ContainerContext implements IContainerContext {
 		public readonly existing: boolean,
 		public readonly taggedLogger: ITelemetryLoggerExt,
 		public readonly pendingLocalState?: unknown,
-		public readonly snapshot?: ISnapshot,
+		public readonly snapshotWithContents?: ISnapshot,
 	) {}
 
 	public getLoadedFromVersion(): IVersion | undefined {

@@ -2446,16 +2446,16 @@ export class Container
 		specifiedVersion: string | undefined,
 	): Promise<{ snapshot?: ISnapshot | ISnapshotTree; versionId?: string }> {
 		if (
-			this.mc.config.getBoolean("Fluid.Container.FetchSnapshotInNewFormat") === true &&
-			this.service?.policies?.supportNewSnapshotFormat === true
+			this.mc.config.getBoolean("Fluid.Container.FetchSnapshotUsingGetSnapshotApi") ===
+				true &&
+			this.service?.policies?.supportGetSnapshotApi === true
 		) {
 			const snapshot = await this.storageAdapter.getSnapshot({
-				id: specifiedVersion ?? "",
-				treeId: specifiedVersion ?? "",
+				versionId: specifiedVersion,
 			});
 			const version: IVersion = {
-				id: snapshot?.snapshotTree.id ?? "",
-				treeId: snapshot?.snapshotTree.id ?? "",
+				id: snapshot.snapshotTree.id ?? "",
+				treeId: snapshot.snapshotTree.id ?? "",
 			};
 			this._loadedFromVersion = version;
 
@@ -2465,7 +2465,7 @@ export class Container
 					id: version.id,
 				});
 			}
-			return { snapshot, versionId: version?.id };
+			return { snapshot, versionId: version.id };
 		}
 		return this.fetchSnapshotTree(specifiedVersion);
 	}
@@ -2508,8 +2508,6 @@ export class Container
 			(this.protocolHandler.quorum.get("code") ??
 				this.protocolHandler.quorum.get("code2")) as IFluidCodeDetails | undefined;
 
-		const existing = snapshotTree !== undefined;
-
 		const context = new ContainerContext(
 			this.options,
 			this.scope,
@@ -2537,7 +2535,7 @@ export class Container
 			() => this.connected,
 			getSpecifiedCodeDetails,
 			this._deltaManager.clientDetails,
-			existing,
+			true, // existing
 			this.subLogger,
 			pendingLocalState,
 			snapshot,
@@ -2546,7 +2544,7 @@ export class Container
 		this._runtime = await PerformanceEvent.timedExecAsync(
 			this.subLogger,
 			{ eventName: "InstantiateRuntime" },
-			async () => runtimeFactory.instantiateRuntime(context, existing),
+			async () => runtimeFactory.instantiateRuntime(context, true /* existing */),
 		);
 		this._lifecycleEvents.emit("runtimeInstantiated");
 

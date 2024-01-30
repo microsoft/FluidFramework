@@ -129,15 +129,13 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 		return this._storageService.getSnapshotTree(version, scenarioName);
 	}
 
-	public async getSnapshot(
-		version?: IVersion,
-		snapshotFetchOptions?: ISnapshotFetchOptions,
-	): Promise<ISnapshot | undefined> {
-		assert(
-			this._storageService.getSnapshot !== undefined,
-			"getSnapshot api should exist in ContainerStorageAdapter",
+	public async getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot> {
+		if (this._storageService.getSnapshot !== undefined) {
+			return this._storageService.getSnapshot(snapshotFetchOptions);
+		}
+		throw new UsageError(
+			"getSnapshot api should exist in internal storage in ContainerStorageAdapter",
 		);
-		return this._storageService.getSnapshot(version, snapshotFetchOptions);
 	}
 
 	public async readBlob(id: string): Promise<ArrayBufferLike> {
@@ -212,7 +210,7 @@ class BlobOnlyStorage implements IDocumentStorageService {
 
 	/* eslint-disable @typescript-eslint/unbound-method */
 	public getSnapshotTree: () => Promise<ISnapshotTree | null> = this.notCalled;
-	public getSnapshot: () => Promise<ISnapshot | undefined> = this.notCalled;
+	public getSnapshot: () => Promise<ISnapshot> = this.notCalled;
 	public getVersions: () => Promise<IVersion[]> = this.notCalled;
 	public write: () => Promise<IVersion> = this.notCalled;
 	public uploadSummaryWithContext: () => Promise<string> = this.notCalled;

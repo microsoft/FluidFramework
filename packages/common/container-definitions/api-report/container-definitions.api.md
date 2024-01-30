@@ -177,7 +177,7 @@ export interface IContainerContext {
     // (undocumented)
     readonly quorum: IQuorumClients;
     readonly scope: FluidObject;
-    readonly snapshot?: ISnapshot;
+    readonly snapshotWithContents?: ISnapshot;
     // (undocumented)
     readonly storage: IDocumentStorageService;
     // (undocumented)

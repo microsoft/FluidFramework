@@ -25,7 +25,7 @@ import {
 	INack,
 	NackErrorType,
 } from "@fluidframework/protocol-definitions";
-import { LoggingError, wrapError } from "@fluidframework/telemetry-utils";
+import { LoggingError, UsageError, wrapError } from "@fluidframework/telemetry-utils";
 
 export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFactory {
 	private readonly _documentServices = new Map<IResolvedUrl, FaultInjectionDocumentService>();
@@ -353,13 +353,12 @@ export class FaultInjectionDocumentStorageService implements IDocumentStorageSer
 		return this.internal.getSnapshotTree(version, scenarioName);
 	}
 
-	public async getSnapshot(version, snapshotFetchOptions?: ISnapshotFetchOptions) {
+	public async getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions) {
 		this.throwIfOffline();
-		assert(
-			this.internal.getSnapshot !== undefined,
-			"getSnapshot api should exist in faultInjectionStorageService",
-		);
-		return this.internal.getSnapshot(version, snapshotFetchOptions);
+		if (this.internal.getSnapshot !== undefined) {
+			return this.internal.getSnapshot(snapshotFetchOptions);
+		}
+		throw new UsageError("GetSnapshotApi not present");
 	}
 
 	public async getVersions(versionId, count, scenarioName, fetchSource) {

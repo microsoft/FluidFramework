@@ -161,10 +161,13 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
 	// eslint-disable-next-line @rushstack/no-new-null
 	getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
 
-	getSnapshot?(
-		version?: IVersion,
-		snapshotFetchOptions?: ISnapshotFetchOptions,
-	): Promise<ISnapshot | undefined>;
+	/**
+	 * Returns the snapshot which can contain other artifacts too like blob contents, ops etc. It is different from
+	 * `getSnapshotTree` api in that, that API only returns the snapshot tree from the snapshot.
+	 * @param snapshotFetchOptions - Options specified by the caller to specify and want certain behavior from the
+	 * driver when fetching the snapshot.
+	 */
+	getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
 
 	/**
 	 * Retrieves all versions of the document starting at the specified versionId - or null if from the head
@@ -348,10 +351,11 @@ export interface IDocumentServicePolicies {
 	readonly summarizeProtocolTree?: boolean;
 
 	/**
-	 * Whether the driver supports fetching of snapshot in new format which container all
-	 * contents along with the snapshot tree.
+	 * Whether the driver supports the new getSnapshot api which returns snapshot which
+	 * contains all contents along with the snapshot tree. Enable this by default when the
+	 * driver can fully support the api.
 	 */
-	readonly supportNewSnapshotFormat?: boolean;
+	readonly supportGetSnapshotApi?: boolean;
 }
 
 /**
@@ -484,20 +488,25 @@ export interface ISnapshot {
 }
 
 /**
- * Additional key in the loader request header
- * @alpha
- */
-export enum GetSnapshotOptions {
-	// Indicate scenario in which the snapshot is fetched
-	scenarioName = "scenarioName",
-	// Tell driver to cache the fetched snapshot.
-	cacheSnapshot = "cacheSnapshot",
-}
-
-/**
+ * Snapshot fetch options which are used to communicate different things to the driver
+ * when fetching the snapshot.
  * @alpha
  */
 export interface ISnapshotFetchOptions {
-	[GetSnapshotOptions.scenarioName]: string;
-	[GetSnapshotOptions.cacheSnapshot]: boolean;
+	/**
+	 * Indicates scenario in which the snapshot is fetched. It is a free form string  mostly
+	 * used for telemetry purposes.
+	 */
+	scenarioName?: string;
+	/**
+	 * Tell driver to cache the fetched snapshot. Driver is supposed to cache the fetched snapshot if this is
+	 * set to true. If undefined, then it is upto the driver, to cache it or not.
+	 */
+	cacheSnapshot?: boolean;
+
+	/**
+	 * Version of the snapshot to be fetched. Certain storage services just keep 1 snapshot for the
+	 * container, so specifying version is not necessary for storage services.
+	 */
+	versionId?: string;
 }

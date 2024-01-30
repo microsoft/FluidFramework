@@ -20,7 +20,7 @@ import {
 	IVersion,
 } from "@fluidframework/protocol-definitions";
 import { IDisposable } from "@fluidframework/core-interfaces";
-import { GenericError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { GenericError, ITelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils";
 import { runWithRetry } from "@fluidframework/driver-utils";
 
 export class RetriableDocumentStorageService implements IDocumentStorageService, IDisposable {
@@ -66,18 +66,16 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 		);
 	}
 
-	public async getSnapshot(
-		version?: IVersion,
-		snapshotFetchOptions?: ISnapshotFetchOptions,
-	): Promise<ISnapshot | undefined> {
+	public async getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot> {
 		return this.runWithRetry(
 			async () =>
 				this.internalStorageServiceP.then(async (s) => {
-					assert(
-						s.getSnapshot !== undefined,
-						"getSnapshot api should exist in RetriableDocStorageService",
+					if (s.getSnapshot !== undefined) {
+						return s.getSnapshot(snapshotFetchOptions);
+					}
+					throw new UsageError(
+						"getSnapshot api should exist on internal storage in RetriableDocStorageService class",
 					);
-					return s.getSnapshot(version, snapshotFetchOptions);
 				}),
 			"storage_getSnapshot",
 		);

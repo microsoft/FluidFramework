@@ -142,7 +142,7 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
     // (undocumented)
     downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
     // (undocumented)
-    getSnapshot(version?: IVersion, snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot | undefined>;
+    getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
     // (undocumented)
     getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
     // (undocumented)

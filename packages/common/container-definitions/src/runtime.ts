@@ -200,9 +200,9 @@ export interface IContainerContext {
 	readonly id: string;
 
 	/**
-	 * This snapshot contains other artifacts too like blobContents, ops etc.
+	 * This contains all parts of a snapshot like blobContents, ops etc.
 	 */
-	readonly snapshot?: ISnapshot;
+	readonly snapshotWithContents?: ISnapshot;
 }
 
 /**
