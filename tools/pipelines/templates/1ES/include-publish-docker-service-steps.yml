@@ -81,4 +81,3 @@ jobs:
     # specified as a runtime variable (variables from variable groups apparently are never available "statically"
     # at parse/compile time, so can't be used with template-expression syntax ( '${{ }}' )).
     - serviceConnection: $(containerRegistryConnection)
-  
