@@ -915,7 +915,7 @@ function* relevantRemovedRootsFromFields(
  * Adds any builds missing from the provided change that are relevant to the change.
  * Calls {@link relevantRemovedRoots} to determine which builds are relevant.
  *
- * @param change - The change to be applied.
+ * @param change - The change to base the new modified change on, this does not modify the input change.
  * @param getDetachedNode - The function to retrieve a tree chunk from the corresponding detached node id.
  * @param fieldKinds - The field kinds to delegate to.
  */
@@ -925,20 +925,23 @@ export function addMissingBuilds(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 ): ModularChangeset {
 	const roots = relevantRemovedRoots(change, fieldKinds);
-	const existingBuilds: ChangeAtomIdMap<TreeChunk> = change.change.builds ?? new Map();
+	const builds: ChangeAtomIdMap<TreeChunk> = new Map();
+
+	// deep clone the builds map
+	change.change.builds?.forEach((innerMap, revision) => {
+		const innerDstMap = getOrAddInMap(builds, revision, new Map<ChangesetLocalId, TreeChunk>());
+
+		innerMap.forEach((chunk, id) => innerDstMap.set(id, chunk));
+	});
 
 	for (const root of roots) {
-		const builds = getOrAddInMap(
-			existingBuilds,
-			root.major,
-			new Map<ChangesetLocalId, TreeChunk>(),
-		);
+		const innerMap = getOrAddInMap(builds, root.major, new Map<ChangesetLocalId, TreeChunk>());
 		const node = getDetachedNode(root);
 		const changesetLocalId: ChangesetLocalId = brand(root.minor);
-		assert(!builds.has(changesetLocalId), "changeset id already has node");
+		assert(!innerMap.has(changesetLocalId), "changeset id already has node");
 
 		if (node !== undefined) {
-			builds.set(changesetLocalId, node);
+			innerMap.set(changesetLocalId, node);
 		}
 	}
 
@@ -948,7 +951,7 @@ export function addMissingBuilds(
 		maxId,
 		revisions,
 		constraintViolationCount,
-		existingBuilds,
+		builds,
 		destroys,
 	);
 }
@@ -957,7 +960,7 @@ export function addMissingBuilds(
  * Removes any builds from the provided change that are not relevant to the change.
  * Calls {@link relevantRemovedRoots} to determine which builds are relevant.
  *
- * @param change - The change to be applied.
+ * @param change - The change to base the new modified change on, this does not modify the input change.
  * @param fieldKinds - The field kinds to delegate to.
  * @returns a {@link ModularChangeset} with only builds relevant to the change.
  */
@@ -966,33 +969,36 @@ export function filterBuilds(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 ): ModularChangeset {
 	const roots = relevantRemovedRoots(change, fieldKinds);
-	const existingBuilds = change.change.builds;
+	const builds: ChangeAtomIdMap<TreeChunk> = new Map();
 
-	if (existingBuilds === undefined) {
-		return change.change;
-	}
+	// deep clone the builds map
+	change.change.builds?.forEach((innerMap, revision) => {
+		const innerDstMap = getOrAddInMap(builds, revision, new Map<ChangesetLocalId, TreeChunk>());
+
+		innerMap.forEach((chunk, id) => innerDstMap.set(id, chunk));
+	});
 
 	const rootSets = new Map<RevisionTag | undefined, Set<number>>();
 	for (const { major, minor } of roots) {
-		const builds = getOrAddInMap(rootSets, major, new Set());
-		builds.add(minor);
+		const rootsSet = getOrAddInMap(rootSets, major, new Set());
+		rootsSet.add(minor);
 	}
 
-	for (const [major, builds] of existingBuilds.entries()) {
-		const rootSet = rootSets.get(major);
+	for (const [revision, innerMap] of builds.entries()) {
+		const rootSet = rootSets.get(revision);
 		if (rootSet !== undefined) {
-			for (const id of builds.keys()) {
+			for (const id of innerMap.keys()) {
 				if (!rootSet.has(id)) {
-					builds.delete(id);
+					innerMap.delete(id);
 				}
 			}
 
-			if (builds.size === 0) {
-				existingBuilds.delete(major);
+			if (innerMap.size === 0) {
+				builds.delete(revision);
 			}
 		} else {
 			// if this revision does not exist in the relevant removed roots, delete it from the builds
-			existingBuilds.delete(major);
+			builds.delete(revision);
 		}
 	}
 
@@ -1002,7 +1008,7 @@ export function filterBuilds(
 		maxId,
 		revisions,
 		constraintViolationCount,
-		existingBuilds.size > 0 ? existingBuilds : undefined,
+		builds.size > 0 ? builds : undefined,
 		destroys,
 	);
 }
