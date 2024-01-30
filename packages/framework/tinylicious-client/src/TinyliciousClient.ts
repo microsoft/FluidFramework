@@ -3,11 +3,15 @@
  * Licensed under the MIT License.
  */
 import { Loader } from "@fluidframework/container-loader";
-import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
+import {
+	type IDocumentServiceFactory,
+	type IUrlResolver,
+} from "@fluidframework/driver-definitions";
 import {
 	AttachState,
-	IContainer,
-	IFluidModuleWithDetails,
+	type IHostLoader,
+	type IContainer,
+	type IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import {
@@ -16,23 +20,24 @@ import {
 	InsecureTinyliciousUrlResolver,
 } from "@fluidframework/tinylicious-driver";
 import {
-	ContainerSchema,
+	type ContainerSchema,
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
-	IFluidContainer,
-	IRootDataObject,
+	type IFluidContainer,
+	type IRootDataObject,
 	createServiceAudience,
 } from "@fluidframework/fluid-static";
-import { IClient } from "@fluidframework/protocol-definitions";
-import { FluidObject } from "@fluidframework/core-interfaces";
+import { type IClient } from "@fluidframework/protocol-definitions";
+import { type ConfigTypes, type FluidObject } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
-import { TinyliciousClientProps, TinyliciousContainerServices } from "./interfaces";
+import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils";
+import { type TinyliciousClientProps, type TinyliciousContainerServices } from "./interfaces";
 import { createTinyliciousAudienceMember } from "./TinyliciousAudience";
 
 /**
  * Provides the ability to have a Fluid object backed by a Tinylicious service.
  *
- * See {@link https://fluidframework.com/docs/testing/tinylicious/}
+ * @see {@link https://fluidframework.com/docs/testing/tinylicious/}
  * @internal
  */
 export class TinyliciousClient {
@@ -43,7 +48,7 @@ export class TinyliciousClient {
 	 * Creates a new client instance using configuration parameters.
 	 * @param props - Optional. Properties for initializing a new TinyliciousClient instance
 	 */
-	constructor(private readonly props?: TinyliciousClientProps) {
+	public constructor(private readonly props?: TinyliciousClientProps) {
 		const tokenProvider = new InsecureTinyliciousTokenProvider();
 		this.urlResolver = new InsecureTinyliciousUrlResolver(
 			this.props?.connection?.port,
@@ -136,7 +141,7 @@ export class TinyliciousClient {
 		};
 	}
 
-	private createLoader(schema: ContainerSchema) {
+	private createLoader(schema: ContainerSchema): IHostLoader {
 		const containerRuntimeFactory = createDOProviderContainerRuntimeFactory({
 			schema,
 		});
@@ -158,12 +163,17 @@ export class TinyliciousClient {
 			mode: "write",
 		};
 
+		const featureGates: Record<string, ConfigTypes> = {
+			// T9s client requires a write connection by default
+			"Fluid.Container.ForceWriteConnection": true,
+		};
 		const loader = new Loader({
 			urlResolver: this.urlResolver,
 			documentServiceFactory: this.documentServiceFactory,
 			codeLoader,
 			logger: this.props?.logger,
 			options: { client },
+			configProvider: wrapConfigProviderWithDefaults(/* original */ undefined, featureGates),
 		});
 
 		return loader;

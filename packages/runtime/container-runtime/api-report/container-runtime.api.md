@@ -118,11 +118,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     get connected(): boolean;
     // (undocumented)
-    createDataStore(pkg: string | string[]): Promise<IDataStore>;
+    createDataStore(pkg: string | string[], groupId?: string): Promise<IDataStore>;
     // @deprecated (undocumented)
     _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string): Promise<IDataStore>;
     // (undocumented)
-    createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached;
+    createDetachedDataStore(pkg: Readonly<string[]>, groupId?: string): IFluidDataStoreContextDetached;
     // (undocumented)
     createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;
     createSummary(blobRedirectTable?: Map<string, string>, telemetryContext?: ITelemetryContext): ISummaryTree;
@@ -805,7 +805,7 @@ export type SummarizeResultPart<TSuccess, TFailure = undefined> = {
 
 // @alpha (undocumented)
 export type SummarizerStopReason =
-/** Summarizer client failed to summarize in all 3 consecutive attempts. */
+/** Summarizer client failed to summarize in all attempts. */
 "failToSummarize"
 /** Parent client reported that it is no longer connected. */
 | "parentNotConnected"
