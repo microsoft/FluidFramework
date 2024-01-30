@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { ISnapshot } from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl, ICacheEntry } from "@fluidframework/odsp-driver-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { delay } from "@fluidframework/core-utils";
@@ -17,7 +18,7 @@ import {
 import { LocalPersistentCache, NonPersistentCache } from "../odspCache";
 import { INewFileInfo } from "../odspUtils";
 import { createOdspUrl } from "../createOdspUrl";
-import { getHashedDocumentId, ISnapshotContents } from "../odspPublicUtils";
+import { getHashedDocumentId } from "../odspPublicUtils";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import {
 	OdspDocumentStorageService,
@@ -80,16 +81,17 @@ describe("Tests for snapshot fetch", () => {
 		blobs: [],
 	};
 
-	const content: ISnapshotContents = {
+	const content: ISnapshot = {
 		snapshotTree: {
 			id: "id",
 			blobs: {},
 			trees: {},
 		},
-		blobs: new Map(),
+		blobContents: new Map(),
 		ops: [],
 		sequenceNumber: 0,
 		latestSequenceNumber: 0,
+		snapshotFormatV: 1,
 	};
 
 	const value: IVersionedValueWithEpoch = {
@@ -167,16 +169,17 @@ describe("Tests for snapshot fetch", () => {
 		});
 
 		it("should not fetch from cache with the same snapshot", async () => {
-			const latestContent: ISnapshotContents = {
+			const latestContent: ISnapshot = {
 				snapshotTree: {
 					id: "WrongId",
 					blobs: {},
 					trees: {},
 				},
-				blobs: new Map(),
+				blobContents: new Map(),
 				ops: [],
 				sequenceNumber: 0,
 				latestSequenceNumber: 0,
+				snapshotFormatV: 1,
 			};
 
 			const latestValue: IVersionedValueWithEpoch = {

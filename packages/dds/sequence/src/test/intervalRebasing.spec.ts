@@ -277,6 +277,57 @@ describe("interval rebasing", () => {
 		assertConsistent(clients);
 	});
 
+	it("zamboni avoids modifying segments with pending interval changes", () => {
+		// C-AB
+		// D-C-AB
+		// E-HIJ-FG-D-C-AB
+		//   ^----------^
+		clients[2].sharedString.insertText(0, "AB");
+		clients[0].sharedString.insertText(0, "C");
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+		clients[1].containerRuntime.connected = false;
+		clients[2].sharedString.insertText(0, "D");
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+		clients[2].sharedString.insertText(0, "E");
+		clients[1].sharedString.insertText(0, "FG");
+		clients[1].sharedString.insertText(0, "HIJ");
+		clients[0].containerRuntime.connected = false;
+		const collection_0 = clients[1].sharedString.getIntervalCollection("comments");
+		collection_0.add({ start: 0, end: 7 });
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+		clients[1].containerRuntime.connected = true;
+	});
+
+	// Reproduction of seed 70. Appears to be some problem with normalization of segments interacting
+	// with sliding logic on reconnect. The ordering of the 22222 and 11 segments is not consistent
+	// across clients even when in the collab window, and the local reference gets put on this segment.
+	// So clients[0] disagrees with the others about where the reference slides.
+	it.skip("AB#6552", () => {
+		// Note: all 3 clients submit edits. When debugging this test, it might be helpful to
+		// add a 4th client that doesn't submit any edits. E.g.:
+		// clients = constructClients(containerRuntimeFactory, 4);
+		clients[0].sharedString.insertText(0, "000");
+		containerRuntimeFactory.processAllMessages();
+		clients[0].containerRuntime.connected = false;
+		clients[1].containerRuntime.connected = false;
+		clients[1].sharedString.insertText(0, "11");
+		clients[0].sharedString.insertText(1, "22222");
+		clients[0].sharedString
+			.getIntervalCollection("test collection")
+			.add({ start: { pos: 1, side: Side.After }, end: { pos: 1, side: Side.After } });
+		clients[0].sharedString.removeRange(0, 6);
+		clients[2].sharedString.removeRange(0, 2);
+		containerRuntimeFactory.processAllMessages();
+		clients[0].sharedString.insertText(1, "3");
+		clients[1].containerRuntime.connected = true;
+		clients[0].containerRuntime.connected = true;
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+	});
+
 	it("doesn't create empty segment group when obliterated segment was obliterated by other client during reconnect", () => {
 		// A
 		// ((A))-[D]

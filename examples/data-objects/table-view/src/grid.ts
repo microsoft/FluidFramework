@@ -7,7 +7,7 @@ import { colIndexToName } from "@fluid-example/table-document";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ISheetlet, createSheetletProducer } from "@tiny-calc/micro";
 import type { IMatrixProducer } from "@tiny-calc/nano";
-import { BorderRect } from "./borderstyle";
+import { BorderRect } from "./borderstyle.js";
 import * as styles from "./index.css";
 
 // eslint-disable-next-line unicorn/no-unsafe-regex

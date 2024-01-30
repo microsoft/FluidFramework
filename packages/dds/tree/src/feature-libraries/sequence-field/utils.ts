@@ -41,7 +41,6 @@ import {
 	DetachFields,
 	IdRange,
 } from "./types.js";
-import { isMoveMark, MoveEffectTable } from "./moveEffectTable.js";
 import {
 	EmptyInputCellMark,
 	MoveMarkEffect,
@@ -54,6 +53,10 @@ import { DetachIdOverrideType } from "./format.js";
 
 export function isEmpty<T>(change: Changeset<T>): boolean {
 	return change.length === 0;
+}
+
+export function createEmpty<T>(): Changeset<T> {
+	return [];
 }
 
 export function isNewAttach(mark: Mark<unknown>, revision?: RevisionTag): boolean {
@@ -886,13 +889,6 @@ export function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 }
 
 /**
- * @internal
- */
-export function newMoveEffectTable<T>(): MoveEffectTable<T> {
-	return newCrossFieldTable();
-}
-
-/**
  * Splits the `mark` into two marks such that the first returned mark has length `length`.
  * @param mark - The mark to split.
  * @param revision - The revision of the changeset the mark is part of.
@@ -927,7 +923,7 @@ export function splitMark<T, TMark extends Mark<T> & Partial<VestigialEndpoint>>
 	return [mark1, mark2];
 }
 
-function splitMarkEffect<TEffect extends MarkEffect>(
+export function splitMarkEffect<TEffect extends MarkEffect>(
 	effect: TEffect,
 	length: number,
 ): [TEffect, TEffect] {
@@ -1088,7 +1084,11 @@ export function withRevision<TMark extends Mark<unknown>>(
 ): TMark {
 	const cloned = cloneMark(mark);
 	addRevision(cloned, revision);
-	if (cloned.cellId !== undefined && cloned.cellId.revision === undefined) {
+	if (
+		cloned.cellId !== undefined &&
+		cloned.cellId.revision === undefined &&
+		revision !== undefined
+	) {
 		(cloned.cellId as Mutable<CellId>).revision = revision;
 	}
 	return cloned;
@@ -1114,14 +1114,6 @@ export function addRevision(effect: MarkEffect, revision: RevisionTag | undefine
 		0x829 /* Should not overwrite mark revision */,
 	);
 	effect.revision = revision;
-}
-
-export function getMarkMoveId(mark: Mark<unknown>): MoveId | undefined {
-	if (isMoveMark(mark)) {
-		return mark.id;
-	}
-
-	return undefined;
 }
 
 export function getEndpoint(

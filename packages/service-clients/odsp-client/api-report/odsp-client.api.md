@@ -46,6 +46,7 @@ export interface OdspClientProps {
 // @beta
 export interface OdspConnectionConfig {
     driveId: string;
+    filePath: string;
     siteUrl: string;
     tokenProvider: IOdspTokenProvider;
 }

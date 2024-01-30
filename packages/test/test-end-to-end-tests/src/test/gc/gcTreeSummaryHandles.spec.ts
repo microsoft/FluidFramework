@@ -178,7 +178,7 @@ async function submitAndAckSummary(
  */
 describeCompat(
 	"GC Tree stored as a handle in summaries",
-	"NoCompat",
+	"2.0.0-rc.1.0.0",
 	(getTestObjectProvider, apis) => {
 		const {
 			containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
@@ -293,7 +293,7 @@ describeCompat(
 		}
 
 		describe("Stores handle in summary when GC state does not change", () => {
-			beforeEach(async () => {
+			beforeEach("setup", async () => {
 				provider = getTestObjectProvider({ syncSummarizer: true });
 				// Wrap the document service factory in the driver so that the `uploadSummaryCb` function is called every
 				// time the summarizer client uploads a summary.
