@@ -17,6 +17,7 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"bench": "mocha --timeout 999999 --perfMode --parentProcess --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js",
+		"bench:size": "mocha --timeout 999999 --perfMode --fgrep @Size",
 		"bench:profile": "mocha --v8-prof --v8-logfile=profile.log --v8-no-logfile-per-isolate --timeout 999999 --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js && node --prof-process profile.log > profile.txt && rimraf profile.log && echo See results in profile.txt",
 		"bench:profile:inspect-brk": "mocha --enable-source-maps --inspect-brk --timeout 999999 --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js",
 		"build": "fluid-build . --task build",
