@@ -5,7 +5,7 @@
 
 import Deque from "double-ended-queue";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { IEventThisPlaceHolder, IEventProvider } from "@fluidframework/core-interfaces";
+import { IEventThisPlaceHolder, IEventProvider, IEvent } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	IFluidDataStoreRuntime,
@@ -54,7 +54,7 @@ interface ISetOpMetadata {
  * Events emitted by Shared Matrix.
  * @alpha
  */
-export interface ISharedMatrixEvents<T> extends ISharedObjectEvents {
+export interface ISharedMatrixEvents<T> extends IEvent {
 	/**
 	 * This event is only emitted when the SetCell Resolution Policy is First Write Win(FWW).
 	 * This is emitted when two clients race and send changes without observing each other changes,
@@ -120,7 +120,7 @@ export interface ISharedMatrix<T = any>
  * @alpha
  */
 export class SharedMatrix<T = any>
-	extends SharedObject<ISharedMatrixEvents<T>>
+	extends SharedObject<ISharedMatrixEvents<T> & ISharedObjectEvents>
 	implements ISharedMatrix<T>
 {
 	protected readonly consumers = new Set<IMatrixConsumer<MatrixItem<T>>>();

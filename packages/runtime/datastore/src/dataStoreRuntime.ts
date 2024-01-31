@@ -103,8 +103,8 @@ export interface ISharedObjectRegistry {
  * Base data store class
  * @alpha
  */
-export class FluidDataStoreRuntime
-	extends TypedEventEmitter<IFluidDataStoreRuntimeEvents>
+export class FluidDataStoreRuntime<TEvents = Record<string, never>>
+	extends TypedEventEmitter<TEvents & IFluidDataStoreRuntimeEvents>
 	implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext
 {
 	/**
@@ -640,8 +640,6 @@ export class FluidDataStoreRuntime
 							0x17c /* "Unexpected attach (local) channel OP" */,
 						);
 					} else {
-						assert(!this.contexts.has(id), 0x17d /* "Unexpected attach channel OP" */);
-
 						const summarizerNodeParams = {
 							type: CreateSummarizerNodeSource.FromAttach,
 							sequenceNumber: message.sequenceNumber,
@@ -652,7 +650,7 @@ export class FluidDataStoreRuntime
 							attachMessage,
 							summarizerNodeParams,
 						);
-						this.contexts.set(id, remoteChannelContext);
+						this.attachRemoteChannel(id, remoteChannelContext);
 					}
 					break;
 				}
@@ -672,6 +670,12 @@ export class FluidDataStoreRuntime
 				message,
 			);
 		}
+	}
+
+	/** @internal */
+	protected attachRemoteChannel(id: string, remoteChannelContext: IChannelContext) {
+		assert(!this.contexts.has(id), 0x17d /* "Unexpected attach channel OP" */);
+		this.contexts.set(id, remoteChannelContext);
 	}
 
 	public processSignal(message: IInboundSignalMessage, local: boolean) {

@@ -42,7 +42,7 @@ export enum DataStoreMessageType {
 }
 
 // @alpha
-export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
+export class FluidDataStoreRuntime<TEvents = Record<string, never>> extends TypedEventEmitter<TEvents & IFluidDataStoreRuntimeEvents> implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     constructor(dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean, provideEntryPoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>);
     // (undocumented)
     get absolutePath(): string;
@@ -50,6 +50,8 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
     attachGraph(): void;
+    // @internal (undocumented)
+    protected attachRemoteChannel(id: string, remoteChannelContext: IChannelContext): void;
     // (undocumented)
     get attachState(): AttachState;
     // (undocumented)
