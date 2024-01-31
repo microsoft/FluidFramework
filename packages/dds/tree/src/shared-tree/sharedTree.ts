@@ -364,6 +364,7 @@ function requireSchema<TRoot extends FlexFieldSchema>(
 			onDispose();
 		},
 	);
+	assert(!slots.has(ViewSlot), "Cannot create second view from checkout");
 	slots.set(ViewSlot, view);
 
 	const unregister = checkout.storedSchema.on("afterSchemaChange", () => {
@@ -465,6 +466,7 @@ export class TrySchematizeTreeView<in out TRootSchema extends ImplicitFieldSchem
 	private readonly viewSchema: ViewSchema;
 
 	private updating = false;
+	private disposed = false;
 
 	// TODO: fix typing so this can be `TreeNode | undefined`
 	private lastRoot: unknown;
@@ -509,9 +511,10 @@ export class TrySchematizeTreeView<in out TRootSchema extends ImplicitFieldSchem
 	 * undefined if disposed.
 	 */
 	public getViewOrError(): CheckoutFlexTreeView<FlexFieldSchema> | SchematizeError {
-		if (this.view === undefined) {
+		if (this.disposed) {
 			throw new UsageError("Accessed a disposed TreeView.");
 		}
+		assert(this.view !== undefined, "unexpected getViewOrError");
 		return this.view;
 	}
 
@@ -537,7 +540,9 @@ export class TrySchematizeTreeView<in out TRootSchema extends ImplicitFieldSchem
 						assert(cleanupCheckOutEvents !== undefined, "missing cleanup");
 						cleanupCheckOutEvents();
 						this.view = undefined;
-						this.update();
+						if (!this.disposed) {
+							this.update();
+						}
 					},
 					this.nodeKeyManager,
 					this.nodeKeyFieldKey,
@@ -590,6 +595,7 @@ export class TrySchematizeTreeView<in out TRootSchema extends ImplicitFieldSchem
 
 	public [disposeSymbol](): void {
 		this.getViewOrError();
+		this.disposed = true;
 		this.disposeView();
 	}
 

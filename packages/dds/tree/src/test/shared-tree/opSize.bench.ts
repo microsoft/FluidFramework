@@ -12,6 +12,7 @@ import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
 import { ISharedTree, ITreeCheckout, SharedTreeFactory } from "../../shared-tree/index.js";
 import { JsonCompatibleReadOnly, brand, getOrAddEmptyToMap } from "../../util/index.js";
 import {
+	AllowedUpdateType,
 	FieldKey,
 	forEachNode,
 	JsonableTree,
@@ -21,7 +22,6 @@ import {
 } from "../../core/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import { SchemaBuilder, leaf } from "../../domains/index.js";
-import { flexTreeViewWithContent } from "../utils.js";
 
 // Notes:
 // 1. Within this file "percentile" is commonly used, and seems to refer to a portion (0 to 1) or some maximum size.
@@ -58,7 +58,8 @@ function initializeTestTree(
 	state: JsonableTree = initialTestJsonTree,
 ): ITreeCheckout {
 	const writeCursor = cursorForJsonableTreeNode(state);
-	return flexTreeViewWithContent({
+	return tree.schematizeInternal({
+		allowedSchemaModifications: AllowedUpdateType.Initialize,
 		initialTree: [writeCursor],
 		schema: fullSchemaData,
 	}).checkout;

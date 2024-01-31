@@ -73,7 +73,7 @@ function generateCompleteTree(
 		"test",
 	);
 	const view = tree.schematizeInternal({
-		allowedSchemaModifications: AllowedUpdateType.None,
+		allowedSchemaModifications: AllowedUpdateType.Initialize,
 		schema: testSchema,
 		initialTree: [],
 	}).checkout;
@@ -260,7 +260,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 				const docSchema = innerBuilder.intoSchema(SchemaBuilder.optional(testNode));
 
 				const config = {
-					allowedSchemaModifications: AllowedUpdateType.None,
+					allowedSchemaModifications: AllowedUpdateType.Initialize,
 					schema: docSchema,
 					initialTree: undefined,
 				} as const;
@@ -316,7 +316,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 					const config: InitializeAndSchematizeConfiguration = {
 						schema: jsonSequenceRootSchema,
 						initialTree: [0, 1, 2, 3],
-						allowedSchemaModifications: AllowedUpdateType.None,
+						allowedSchemaModifications: AllowedUpdateType.Initialize,
 					};
 					const tree1 = provider.trees[0].schematizeInternal(config).checkout;
 					provider.processMessages();
@@ -344,7 +344,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 				const baseTree = factory.create(runtime, "test");
 
 				const tree1 = baseTree.schematizeInternal({
-					allowedSchemaModifications: AllowedUpdateType.None,
+					allowedSchemaModifications: AllowedUpdateType.Initialize,
 					schema: jsonSequenceRootSchema,
 					initialTree: [],
 				}).checkout;
@@ -398,7 +398,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 				const docSchema = innerBuilder.intoSchema(SchemaBuilder.optional(leaf.handle));
 
 				const config = {
-					allowedSchemaModifications: AllowedUpdateType.None,
+					allowedSchemaModifications: AllowedUpdateType.Initialize,
 					schema: docSchema,
 					initialTree: undefined,
 				};
@@ -439,7 +439,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 				const docSchema = innerBuilder.intoSchema(SchemaBuilder.sequence(seqMapSchema));
 
 				const config = {
-					allowedSchemaModifications: AllowedUpdateType.None,
+					allowedSchemaModifications: AllowedUpdateType.Initialize,
 					schema: docSchema,
 					initialTree: [],
 				};

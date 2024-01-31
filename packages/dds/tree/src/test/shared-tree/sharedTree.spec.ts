@@ -916,7 +916,7 @@ describe("SharedTree", () => {
 			const provider = new TestTreeProviderLite(2);
 			const content = {
 				schema: stringSequenceRootSchema,
-				allowedSchemaModifications: AllowedUpdateType.None,
+				allowedSchemaModifications: AllowedUpdateType.Initialize,
 				initialTree: ["A", "B", "C", "D"],
 			} satisfies InitializeAndSchematizeConfiguration;
 			const tree1 = provider.trees[0].schematizeInternal(content);
@@ -990,7 +990,7 @@ describe("SharedTree", () => {
 			const provider = new TestTreeProviderLite(2);
 			const content = {
 				schema: stringSequenceRootSchema,
-				allowedSchemaModifications: AllowedUpdateType.None,
+				allowedSchemaModifications: AllowedUpdateType.Initialize,
 				initialTree: ["A", "B", "C", "D"],
 			} satisfies InitializeAndSchematizeConfiguration;
 			const tree1 = provider.trees[0].schematizeInternal(content);
@@ -1053,7 +1053,7 @@ describe("SharedTree", () => {
 					const provider = new TestTreeProviderLite(2);
 					const content = {
 						schema,
-						allowedSchemaModifications: AllowedUpdateType.None,
+						allowedSchemaModifications: AllowedUpdateType.Initialize,
 						initialTree: [["a"]],
 					} satisfies InitializeAndSchematizeConfiguration;
 					const tree1 = provider.trees[0].schematizeInternal(content);
@@ -1120,7 +1120,7 @@ describe("SharedTree", () => {
 			const schema = sb.intoSchema(outerListSchema);
 			const config = {
 				schema,
-				allowedSchemaModifications: AllowedUpdateType.None,
+				allowedSchemaModifications: AllowedUpdateType.Initialize,
 				initialTree: [["a"]],
 			};
 
@@ -1394,7 +1394,7 @@ describe("SharedTree", () => {
 			const tree1 = provider.trees[0].schematizeInternal({
 				initialTree: ["A", "B", "C", "D"],
 				schema: stringSequenceRootSchema,
-				allowedSchemaModifications: AllowedUpdateType.None,
+				allowedSchemaModifications: AllowedUpdateType.Initialize,
 			});
 			provider.processMessages();
 			const tree2 =
@@ -1446,7 +1446,7 @@ describe("SharedTree", () => {
 			const config = {
 				initialTree: ["a"],
 				schema: stringSequenceRootSchema,
-				allowedSchemaModifications: AllowedUpdateType.None,
+				allowedSchemaModifications: AllowedUpdateType.Initialize,
 			};
 			const view1 = provider.trees[0].schematizeInternal(config);
 			await provider.ensureSynchronized();
@@ -1487,7 +1487,7 @@ describe("SharedTree", () => {
 
 			provider.trees[0].schematizeInternal({
 				schema: numberSequenceRootSchema,
-				allowedSchemaModifications: AllowedUpdateType.None,
+				allowedSchemaModifications: AllowedUpdateType.Initialize,
 				initialTree: [0, 1, 2],
 			});
 
@@ -1570,7 +1570,7 @@ describe("SharedTree", () => {
 			const parent = parentTree.schematizeInternal({
 				initialTree: ["A"],
 				schema: stringSequenceRootSchema,
-				allowedSchemaModifications: AllowedUpdateType.None,
+				allowedSchemaModifications: AllowedUpdateType.Initialize,
 			});
 			parent.checkout.transaction.start();
 			parent.flexTree.insertAtStart(["B"]);
@@ -1620,13 +1620,13 @@ describe("SharedTree", () => {
 
 			const view1 = provider.trees[0].schematizeInternal({
 				schema: stringSequenceRootSchema,
-				allowedSchemaModifications: AllowedUpdateType.None,
+				allowedSchemaModifications: AllowedUpdateType.Initialize,
 				initialTree: [value1],
 			});
 
 			provider.trees[1].schematizeInternal({
 				schema: stringSequenceRootSchema,
-				allowedSchemaModifications: AllowedUpdateType.None,
+				allowedSchemaModifications: AllowedUpdateType.Initialize,
 				initialTree: [value2],
 			});
 

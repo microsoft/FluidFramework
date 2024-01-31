@@ -698,7 +698,7 @@ function itView(
 	};
 	const config = {
 		...content,
-		allowedSchemaModifications: AllowedUpdateType.None,
+		allowedSchemaModifications: AllowedUpdateType.Initialize,
 	};
 	it(`${title} (root view)`, () => {
 		const provider = new TestTreeProviderLite();

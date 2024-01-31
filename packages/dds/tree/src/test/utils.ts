@@ -750,13 +750,13 @@ export const numberSequenceRootSchema = new SchemaBuilderBase(FieldKinds.sequenc
 
 export const emptyJsonSequenceConfig = {
 	schema: jsonSequenceRootSchema,
-	allowedSchemaModifications: AllowedUpdateType.None,
+	allowedSchemaModifications: AllowedUpdateType.Initialize,
 	initialTree: [],
 } satisfies InitializeAndSchematizeConfiguration;
 
 export const emptyStringSequenceConfig = {
 	schema: stringSequenceRootSchema,
-	allowedSchemaModifications: AllowedUpdateType.None,
+	allowedSchemaModifications: AllowedUpdateType.Initialize,
 	initialTree: [],
 } satisfies InitializeAndSchematizeConfiguration;
 
