@@ -38,7 +38,10 @@ import {
 } from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
+import {
+	IFluidDataStoreChannel,
+	IGarbageCollectionDetailsBase,
+} from "@fluidframework/runtime-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base";
 import type { SharedMap } from "@fluidframework/map";
@@ -131,9 +134,8 @@ describeCompat("GC data store tombstone tests", "2.0.0-rc.1.0.0", (getTestObject
 		container: IContainer,
 		summaryVersion?: string,
 		logger?: MockLogger,
-		testConfig: ITestContainerConfig = summarizerTestConfig,
 	) => {
-		return createSummarizer(provider, container, testConfig, summaryVersion, logger);
+		return createSummarizer(provider, container, summarizerTestConfig, summaryVersion, logger);
 	};
 	const summarize = async (summarizer: ISummarizer, options?: IOnDemandSummarizeOptions) => {
 		await provider.ensureSynchronized();
@@ -1099,30 +1101,32 @@ describeCompat("GC data store tombstone tests", "2.0.0-rc.1.0.0", (getTestObject
 				// Summarize to get a baseline for incremental summary/GC, then load a new summarizer (and close the first one)
 				const { summaryVersion: summaryVersion0 } = await summarize(summarizer0);
 				summarizingContainer0.close();
-				// (clone summarizerTestConfig and specify to run full GC which is needed to ensure the testhook kicks in)
-				const testConfig: ITestContainerConfig = JSON.parse(
-					JSON.stringify(summarizerTestConfig),
-				);
-				testConfig.runtimeOptions!.gcOptions!.runFullGC = true;
 				const { container: closeMe, summarizer: summarizer_toBeCorrupted } =
-					await loadSummarizer(
-						initialContainer,
-						summaryVersion0,
-						summarizerMockLogger,
-						testConfig,
-					);
+					await loadSummarizer(initialContainer, summaryVersion0, summarizerMockLogger);
 
-				//* TODO: Find a better way to inject this corruption (without requiring change to actual code)
+				// Monkey patch in the tweak to GC Data
+				const garbageCollector_toBeCorrupted = (
+					summarizer_toBeCorrupted as unknown as {
+						runtime: {
+							garbageCollector: {
+								baseGCDetailsP: Promise<IGarbageCollectionDetailsBase>;
+							};
+						};
+					}
+				).runtime.garbageCollector;
+				garbageCollector_toBeCorrupted.baseGCDetailsP =
+					garbageCollector_toBeCorrupted.baseGCDetailsP.then((baseGCDetails) => {
+						baseGCDetails.gcData!.gcNodes["/default/root"] = ["/default"];
+						return baseGCDetails;
+					});
+
 				// Generate a summary with corrupted GC Data (missing route to dataStore A)
-				global.__testhook__gcDataOverrides = {};
-				global.__testhook__gcDataOverrides["/default/root"] = ["/default"];
 				const { summaryVersion: summaryVersion_corrupted } = await summarize(
 					summarizer_toBeCorrupted,
 					{
 						reason: "Summarize with corrupted GC Data",
 					},
 				);
-				global.__testhook__gcDataOverrides = {};
 				closeMe.close();
 
 				// Then wait the Tombstone timeout and update current timestamp, and summarize again
