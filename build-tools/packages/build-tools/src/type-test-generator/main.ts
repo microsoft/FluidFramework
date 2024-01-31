@@ -20,7 +20,7 @@ import { ExtractorConfig } from "@microsoft/api-extractor";
 const packageObject: PackageJson = readJsonSync("package.json");
 const previousPackageName = `${packageObject.name}-previous`;
 
-const previousBasePath = `./node_modules/${previousPackageName}`;
+const previousBasePath = path.join("node_modules", previousPackageName);
 
 const previousPackageJsonPath = `${previousBasePath}/package.json`;
 
@@ -29,9 +29,31 @@ if (!existsSync(previousPackageJsonPath)) {
 		`${previousPackageJsonPath} not found. You may need to install the package via pnpm install. Note that type tests logic looks specifically for a package named '${previousPackageName}'`,
 	);
 }
-const typeRollupFilePath = ExtractorConfig.tryLoadForFolder({
-	startingFolder: previousBasePath,
-});
+
+/**
+ * Retrieves the alpha trimmed file path for type definitions from the API Extractor configuration.
+ * @returns {string} The path to the alpha trimmed type definitions file.
+ * @throws {Error} If api-extractor config cannot be loaded or if the alpha trimmed file path is undefined
+ */
+function getAlphaTypeRollupPathsFromExtractorConfig(): string {
+	//Load the api-extractor
+	const extractorConfigOptions = ExtractorConfig.tryLoadForFolder({
+		startingFolder: previousBasePath,
+	});
+	if (!extractorConfigOptions || !extractorConfigOptions.configObjectFullPath) {
+		throw new Error("Failed to load extractor configuration.");
+	}
+	const apiExtractorConfigPath = extractorConfigOptions.configObjectFullPath;
+	const apiExtractorConfig = readJsonSync(extractorConfigOptions.configObjectFullPath);
+	// Resolve the api-extractor-base file path
+	const baseConfigPath = path.resolve(
+		path.dirname(apiExtractorConfigPath),
+		apiExtractorConfig.extends,
+	);
+	const baseConfig = readJsonSync(baseConfigPath);
+
+	return baseConfig.dtsRollup["alphaTrimmedFilePath"];
+}
 
 /**
  * Extracts the type definition file path from the 'exports' field of a given package.json.
@@ -62,19 +84,22 @@ function getTypePathsFromExport(previousPackageJson: PackageJson): string {
 	}
 	return typeDefinitionFilePath;
 }
-let typeDefinitionFilePath;
+
+const typeRollupPaths = getAlphaTypeRollupPathsFromExtractorConfig();
+
+let typeDefinitionFilePath: string;
 
 // Check if a specified typeRollupFile exists
-if (typeRollupFilePath) {
-	typeDefinitionFilePath = typeRollupFilePath;
+if (typeRollupPaths) {
+	typeDefinitionFilePath = typeRollupPaths;
 } else {
-	// Try to read the 'types' field from the package.json of the previous package
 	const previousPackageJson: PackageJson = readJsonSync(previousPackageJsonPath);
-	if (previousPackageJson.types) {
-		typeDefinitionFilePath = path.join(previousBasePath, previousPackageJson.types);
-		// Check the exports entries
-	} else if (previousPackageJson.exports) {
+	// Check the exports entries
+	if (previousPackageJson.exports) {
 		typeDefinitionFilePath = getTypePathsFromExport(previousPackageJson);
+		// Check the types field from the previous package.json as a fallback
+	} else if (previousPackageJson.types) {
+		typeDefinitionFilePath = path.join(previousBasePath, previousPackageJson.types);
 	} else {
 		throw new Error(
 			`Type definition file path could not be determined from '${previousPackageJsonPath}'. No 'exports' nor 'type' fields found.`,
