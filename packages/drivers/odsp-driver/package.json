@@ -77,7 +77,7 @@
 		"@fluidframework/protocol-definitions": "^3.2.0-231454",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"node-fetch": "^2.6.9",
-		"socket.io-client": "^4.6.1",
+		"socket.io-client": "^4.7.3",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
@@ -120,6 +120,15 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_ISnapshotContentsWithProps": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IPrefetchSnapshotContents": {
+				"backCompat": false,
+				"forwardCompat": false
+			}
+		}
 	}
 }

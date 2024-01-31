@@ -24,7 +24,7 @@ import type { SharedMatrix } from "@fluidframework/matrix";
 
 describeCompat(
 	"Op reentry and rebasing during pending batches",
-	"2.0.0-rc.1.0.0",
+	"NoCompat",
 	(getTestObjectProvider, apis) => {
 		const { SharedMap, SharedDirectory, SharedMatrix, SharedCounter } = apis.dds;
 		const registry: ChannelFactoryRegistry = [

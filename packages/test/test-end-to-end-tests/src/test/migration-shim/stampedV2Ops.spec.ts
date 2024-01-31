@@ -123,7 +123,7 @@ function getNewTreeView(tree: ITree): TreeView<QuantityType> {
 	return tree.schematize(new TreeConfiguration(QuantityType, () => ({ quantity: 0 })));
 }
 
-describeCompat("Stamped v2 ops", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {
