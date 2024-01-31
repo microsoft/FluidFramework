@@ -1052,14 +1052,17 @@ describeCompat("GC data store tombstone tests", "2.0.0-rc.1.0.0", (getTestObject
 			},
 		);
 
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		itExpects.only(
+		itExpects(
 			"Requesting WRONGLY-tombstoned datastore triggers auto-recovery and self-repair",
 			[
 				// 1A
+				{
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
+					clientType: "interactive",
+					category: "error",
+				},
+				// 1A again
 				{
 					eventName:
 						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
@@ -1192,14 +1195,16 @@ describeCompat("GC data store tombstone tests", "2.0.0-rc.1.0.0", (getTestObject
 				);
 
 				// This request still fails because Auto-Recovery only affects the next summary (via next GC run)
-				// BUT - it doesn't log because the handle has the result cached
-				//* Maybe switch back to request-based check here...
-				await assert.rejects(
-					async () => {
-						await handleA1!.get();
-					},
-					(tsError: any) => tsError?.code === 404,
-					"Tombstone error from handle.get should have 404 status code (1A again)",
+				// NOTE: We have to use request pattern because handleA1 has its result cached so will not exercise the right codepath
+				const tombstoneErrorResponse_Interactive = await (
+					defaultDataObject1._context.containerRuntime as ContainerRuntime
+				).resolveHandle({
+					url: dataStoreAId,
+				});
+				assert.equal(
+					tombstoneErrorResponse_Interactive.status,
+					404,
+					"Expected tombstone error - Auto-Recovery shouldn't affect in-progress Interactive sessions (1A again)",
 				);
 
 				// Auto-Recovery: This summary will have the unref timestamp reset and will run full GC due to the GC TombstoneLoaded op

@@ -1095,7 +1095,6 @@ export class GarbageCollector implements IGarbageCollector {
 		// When generating GC stats, the set of nodes in here is used as the baseline for
 		// what was unreferenced in the last GC run.
 		this.unreferencedNodesState.get(toNodePath)?.stopTracking();
-		this.tombstones.splice(this.tombstones.indexOf(toNodePath), 1); //* Maybe this should be here, to avoid more TS_Requested events (write test to confirm?)
 	}
 
 	/**
