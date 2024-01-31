@@ -21,7 +21,7 @@ npm i @fluidframework/container-runtime
 
 ## API Documentation
 
-API documentation for **@fluidframework/container-runtime** is available at <https://fluidframework.com/docs/api/v1/container-runtime>.
+API documentation for **@fluidframework/container-runtime** is available at <https://fluidframework.com/docs/apis/container-runtime>.
 
 ## Contribution Guidelines
 

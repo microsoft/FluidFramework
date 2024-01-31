@@ -12,6 +12,7 @@ import {
 	tagChange,
 	tagRollbackInverse,
 	RevisionInfo,
+	TaggedChange,
 } from "../../../core/index.js";
 import {
 	BoundFieldChangeRebaser,
@@ -22,6 +23,8 @@ import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js"
 import { TestChange } from "../../testChange.js";
 import { deepFreeze, mintRevisionTag } from "../../utils.js";
 import { IdAllocator, brand, idAllocatorFromMaxId, makeArray } from "../../../util/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import {
@@ -644,13 +647,18 @@ const generateChildStates: ChildStateGenerator<TestState, TestChangeset> = funct
 };
 
 const fieldRebaser: BoundFieldChangeRebaser<TestChangeset> = {
-	rebase,
+	rebase: (
+		change: TestChangeset,
+		base: TaggedChange<TestChangeset>,
+		metadata?: RebaseRevisionMetadata,
+	): TestChangeset => rebase(change, base, { metadata }),
 	invert,
-	compose: (changes, metadata) => compose(changes, metadata),
+	compose: (change1, change2, metadata) => compose([change1, change2], metadata),
 	rebaseComposed: (metadata, change, ...baseChanges) => {
 		const composedChanges = compose(baseChanges, metadata);
-		return rebase(change, makeAnonChange(composedChanges), metadata);
+		return rebase(change, makeAnonChange(composedChanges), { metadata });
 	},
+	createEmpty: () => [],
 	assertEqual: (change1, change2) => {
 		if (change1 === undefined && change2 === undefined) {
 			return true;
@@ -973,7 +981,7 @@ export function testSandwichComposing() {
 				assertChangesetsEqual(sandwichParts1to6, []);
 			}),
 		);
-		it.skip("[move, move, modify, move] ↷ [del]", () =>
+		it("[move, move, modify, move] ↷ [del]", () =>
 			withConfig(() => {
 				const [mo1, mi1] = Mark.move(1, brand(1));
 				const move1 = tagChange([mi1, mo1], tag1);
@@ -999,21 +1007,7 @@ export function testSandwichComposing() {
 					mod,
 					move3,
 				];
-				// Ret3: RF3 -> RT3
-				// -Mod:        Mod
-				// Ret2:        RF2 -> RT2
-				// Ret1:               RF1 -> RT1
-				//  Del:                      Del
-				// Mov1:               MI1 <- MO1
-				// Mov2:        MI2 <- MO2        // MO2 is made to point to RT3, which causes RT3 to be made to point to RF2
-				// +Mod:        Mod
-				// Mov3: MI3 -> MO3
-				// When +Mod is composed, its effect is sent to RF2 instead of RF3.
-				// This happens because, during the composition of RT2 and MO2,
-				// we send effects endpoint updating effects to bridge the temporary location, but MO2 has a finalEndpoint set to RT3,
-				// so we send to RT3 a new finalEndpoint that points to RF2.
-				// This happens because, during the composition of (RT3 + RF2) and MI2,
-				// MO2 gets sent a new finalEndpoint that points to RT3.
+
 				const sandwich = compose(changes);
 				const pruned = prune(sandwich);
 				const noTombstones = withoutTombstones(pruned);

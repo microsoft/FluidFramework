@@ -11,6 +11,7 @@ import { ICreateBlobResponse } from '@fluidframework/protocol-definitions';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IErrorEvent } from '@fluidframework/core-interfaces';
+import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { INack } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
@@ -150,7 +151,7 @@ export interface IDocumentDeltaStorageService {
 }
 
 // @alpha (undocumented)
-export interface IDocumentService {
+export interface IDocumentService extends IEventProvider<IDocumentServiceEvents> {
     connectToDeltaStorage(): Promise<IDocumentDeltaStorageService>;
     connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection>;
     connectToStorage(): Promise<IDocumentStorageService>;
@@ -158,6 +159,11 @@ export interface IDocumentService {
     policies?: IDocumentServicePolicies;
     // (undocumented)
     resolvedUrl: IResolvedUrl;
+}
+
+// @alpha
+export interface IDocumentServiceEvents extends IEvent {
+    (event: "metadataUpdate", listener: (metadata: Record<string, string>) => void): any;
 }
 
 // @alpha (undocumented)
@@ -170,12 +176,14 @@ export interface IDocumentServiceFactory {
 export interface IDocumentServicePolicies {
     readonly storageOnly?: boolean;
     readonly summarizeProtocolTree?: boolean;
+    readonly supportGetSnapshotApi?: boolean;
 }
 
 // @alpha
 export interface IDocumentStorageService extends Partial<IDisposable> {
     createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
     downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
+    getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
     getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
     getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion[]>;
     readonly policies?: IDocumentStorageServicePolicies;
@@ -247,6 +255,27 @@ export interface IResolvedUrl {
     type: "fluid";
     // (undocumented)
     url: string;
+}
+
+// @alpha (undocumented)
+export interface ISnapshot {
+    // (undocumented)
+    blobContents: Map<string, ArrayBuffer>;
+    latestSequenceNumber: number | undefined;
+    // (undocumented)
+    ops: ISequencedDocumentMessage[];
+    sequenceNumber: number | undefined;
+    // (undocumented)
+    snapshotFormatV: 1;
+    // (undocumented)
+    snapshotTree: ISnapshotTree;
+}
+
+// @alpha
+export interface ISnapshotFetchOptions {
+    cacheSnapshot?: boolean;
+    scenarioName?: string;
+    versionId?: string;
 }
 
 // @alpha

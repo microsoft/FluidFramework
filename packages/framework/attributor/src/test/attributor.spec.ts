@@ -2,9 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
-import { IUser } from "@fluidframework/protocol-definitions";
-import { AttributionInfo } from "@fluidframework/runtime-definitions";
+import { strict as assert } from "node:assert";
+import { type IUser } from "@fluidframework/protocol-definitions";
+import { type AttributionInfo } from "@fluidframework/runtime-definitions";
 import { Attributor } from "../attributor";
 
 describe("Attributor", () => {
@@ -22,7 +22,7 @@ describe("Attributor", () => {
 			[51, { user: { id: "b" }, timestamp: 60 }],
 		];
 		const attributor = new Attributor(entries);
-		assert.deepEqual(Array.from(attributor.entries()), entries);
+		assert.deepEqual([...attributor.entries()], entries);
 	});
 
 	it("getAttributionInfo throws on attempt to retrieve user information for an invalid key", () => {

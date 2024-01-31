@@ -41,7 +41,6 @@ import {
 	DetachFields,
 	IdRange,
 } from "./types.js";
-import { isMoveMark, MoveEffectTable } from "./moveEffectTable.js";
 import {
 	EmptyInputCellMark,
 	MoveMarkEffect,
@@ -54,6 +53,10 @@ import { DetachIdOverrideType } from "./format.js";
 
 export function isEmpty<T>(change: Changeset<T>): boolean {
 	return change.length === 0;
+}
+
+export function createEmpty<T>(): Changeset<T> {
+	return [];
 }
 
 export function isNewAttach(mark: Mark<unknown>, revision?: RevisionTag): boolean {
@@ -206,7 +209,7 @@ export function compareCellPositionsUsingTombstones(
 		// If both changesets know of both cells, but we've been asked to compare different cells,
 		// Then either the changesets they originate from do not represent the same context,
 		// or the ordering of their cells in inconsistent.
-		assert(false, "Inconsistent cell ordering");
+		assert(false, 0x8a0 /* Inconsistent cell ordering */);
 	}
 	if (newChangeKnowsOfOldMarkCellRevision) {
 		// The changeset that contains `newMarkCell` has tombstones for the revision that created `oldMarkCell`,
@@ -231,7 +234,10 @@ export function compareCellPositionsUsingTombstones(
 		// The only case where the old mark cell should have no revision is when composing anonymous changesets
 		// into a transaction, in which case the new mark cell should also have no revision, which is handled above.
 		// In all other cases, the old mark cell should have a revision.
-		assert(oldMarkCell.revision !== undefined, "Old mark cell should have a revision");
+		assert(
+			oldMarkCell.revision !== undefined,
+			0x8a1 /* Old mark cell should have a revision */,
+		);
 
 		// Note that these indices are for ordering the revisions in which the cells were named, not the revisions
 		// of the changesets in which the marks targeting these cells appear.
@@ -267,7 +273,7 @@ export function compareCellPositionsUsingTombstones(
 			//
 			// The same scenario can arise in the context of compose (just consider composing `old'` and `new'` from
 			// the examples above) with the same resolution.
-			assert(false, "Invalid cell ordering scenario");
+			assert(false, 0x8a2 /* Invalid cell ordering scenario */);
 		}
 
 		// The absence of metadata for a cell with a defined revision means that the cell is from a revision that
@@ -883,13 +889,6 @@ export function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 }
 
 /**
- * @internal
- */
-export function newMoveEffectTable<T>(): MoveEffectTable<T> {
-	return newCrossFieldTable();
-}
-
-/**
  * Splits the `mark` into two marks such that the first returned mark has length `length`.
  * @param mark - The mark to split.
  * @param revision - The revision of the changeset the mark is part of.
@@ -924,7 +923,7 @@ export function splitMark<T, TMark extends Mark<T> & Partial<VestigialEndpoint>>
 	return [mark1, mark2];
 }
 
-function splitMarkEffect<TEffect extends MarkEffect>(
+export function splitMarkEffect<TEffect extends MarkEffect>(
 	effect: TEffect,
 	length: number,
 ): [TEffect, TEffect] {
@@ -1085,7 +1084,11 @@ export function withRevision<TMark extends Mark<unknown>>(
 ): TMark {
 	const cloned = cloneMark(mark);
 	addRevision(cloned, revision);
-	if (cloned.cellId !== undefined && cloned.cellId.revision === undefined) {
+	if (
+		cloned.cellId !== undefined &&
+		cloned.cellId.revision === undefined &&
+		revision !== undefined
+	) {
 		(cloned.cellId as Mutable<CellId>).revision = revision;
 	}
 	return cloned;
@@ -1111,14 +1114,6 @@ export function addRevision(effect: MarkEffect, revision: RevisionTag | undefine
 		0x829 /* Should not overwrite mark revision */,
 	);
 	effect.revision = revision;
-}
-
-export function getMarkMoveId(mark: Mark<unknown>): MoveId | undefined {
-	if (isMoveMark(mark)) {
-		return mark.id;
-	}
-
-	return undefined;
 }
 
 export function getEndpoint(

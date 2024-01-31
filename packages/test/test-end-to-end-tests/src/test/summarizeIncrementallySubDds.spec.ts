@@ -459,7 +459,7 @@ class TestIncrementalSummaryTreeDDS extends SharedObject {
  */
 describeCompat(
 	"Incremental summaries can be generated for DDS content",
-	"NoCompat",
+	"2.0.0-rc.1.0.0",
 	(getTestObjectProvider) => {
 		let provider: ITestObjectProvider;
 		const defaultFactory = new TestFluidObjectFactory([
@@ -528,7 +528,7 @@ describeCompat(
 			);
 		}
 
-		beforeEach(async () => {
+		beforeEach("getTestObjectProvider", async () => {
 			provider = getTestObjectProvider({ syncSummarizer: true });
 		});
 

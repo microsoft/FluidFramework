@@ -138,10 +138,17 @@ export function resolveVersion(requested: string, installed: boolean) {
 		}
 		throw new Error(`No matching version found in ${baseModulePath} (requested: ${requested})`);
 	} else {
-		const result = execSync(
-			`npm v @fluidframework/container-loader@"${requested}" version --json`,
-			{ encoding: "utf8" },
-		);
+		let result: string | undefined;
+		try {
+			result = execSync(
+				`npm v @fluidframework/container-loader@"${requested}" version --json`,
+				{ encoding: "utf8" },
+			);
+		} catch (error: any) {
+			throw new Error(
+				`Error while running: npm v @fluidframework/container-loader@"${requested}" version --json`,
+			);
+		}
 		if (result === "" || result === undefined) {
 			throw new Error(`No version published as ${requested}`);
 		}
@@ -310,7 +317,12 @@ export const loadPackage = async (modulePath: string, pkg: string): Promise<any>
 			primaryExport = pkgJson.exports;
 		} else {
 			const exp = pkgJson.exports["."];
-			primaryExport = typeof exp === "string" ? exp : exp.require.default;
+			primaryExport =
+				typeof exp === "string"
+					? exp
+					: exp.require !== undefined
+					? exp.require.default
+					: exp.default;
 			if (primaryExport === undefined) {
 				throw new Error(`Package ${pkg} defined subpath exports but no '.' entry.`);
 			}
@@ -361,7 +373,7 @@ export function getRequestedVersion(
 		return baseVersion;
 	}
 	if (typeof requested === "string") {
-		return requested;
+		return resolveVersion(requested, false);
 	}
 	if (requested > 0) {
 		throw new Error("Only negative values are supported for `requested` param.");

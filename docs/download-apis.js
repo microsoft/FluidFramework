@@ -5,6 +5,7 @@
 
 /*
  * This download script is used to download the api json docs from the azure storage.
+ * Saves each model under `_doc-models/<version>`.
  */
 
 const chalk = require("chalk");
@@ -29,12 +30,7 @@ Promise.all(
 				: `-${version}`;
 		const url = `https://fluidframework.blob.core.windows.net/api-extractor-json/latest${versionPostfix}.tar.gz`;
 
-		const destination = path.resolve(
-			__dirname,
-			"..",
-			`_api-extractor-temp-${version}`, // Always add version postfix to output directory
-			"doc-models",
-		);
+		const destination = path.resolve(__dirname, "_doc-models", version);
 
 		// Delete any existing contents in the directory before downloading artifact
 		await fs.ensureDir(destination);

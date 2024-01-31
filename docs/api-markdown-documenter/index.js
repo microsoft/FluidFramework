@@ -17,13 +17,7 @@ const docVersions = versions.params.previousVersions.concat(versions.params.curr
 
 Promise.all(
 	docVersions.map(async (version) => {
-		const apiReportsDirectoryPath = path.resolve(
-			__dirname,
-			"..",
-			"..",
-			`_api-extractor-temp-${version}`,
-			"doc-models",
-		);
+		const apiReportsDirectoryPath = path.resolve(__dirname, "..", "_doc-models", version);
 
 		const apiDocsDirectoryPath = path.resolve(
 			__dirname,
@@ -34,7 +28,11 @@ Promise.all(
 			version,
 		);
 
-		const uriRootDirectoryPath = `docs/api/${version}`;
+		// Note: the leading slash in the URI root is important.
+		// It tells Hugo to enterpret the links as relative to the site root, rather than
+		// relative to the document containing the link.
+		// See documentation here: https://gohugo.io/content-management/urls/#relative-urls
+		const uriRootDirectoryPath = `/docs/api/${version}`;
 
 		await renderApiDocumentation(
 			apiReportsDirectoryPath,

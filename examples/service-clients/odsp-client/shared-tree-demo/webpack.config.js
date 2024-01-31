@@ -17,6 +17,9 @@ module.exports = (env) => {
 				start: "./src/index.tsx",
 			},
 			resolve: {
+				extensionAlias: {
+					".js": [".ts", ".tsx", ".js"],
+				},
 				extensions: [".ts", ".tsx", ".js"],
 			},
 			module: {

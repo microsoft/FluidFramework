@@ -14,6 +14,7 @@ import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
 import { assert } from "@fluidframework/core-utils";
 import {
 	applyDelta,
+	DeltaDetachedNodeBuild,
 	DeltaFieldChanges,
 	FieldKey,
 	forEachField,
@@ -35,8 +36,6 @@ import { ICodecOptions, noopValidator } from "../../codec/index.js";
 import { FieldBatchEncodingContext, FieldBatchCodec } from "../chunked-forest/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { chunkField, defaultChunkPolicy } from "../chunked-forest/chunkTree.js";
-// eslint-disable-next-line import/no-internal-modules
-import { DetachedNodeBuild } from "../../core/tree/delta.js";
 import { Format } from "./format.js";
 import { ForestCodec, makeForestSummarizerCodec } from "./codec.js";
 /**
@@ -84,7 +83,7 @@ export class ForestSummarizer implements Summarizable {
 					{ fieldKey: key, parent: undefined },
 					innerCursor,
 				) === TreeNavigationResult.Ok,
-				"failed to navigate to field",
+				0x892 /* failed to navigate to field */,
 			);
 			fieldMap.set(key, innerCursor as ITreeCursorSynchronous & ITreeSubscriptionCursor);
 		});
@@ -137,7 +136,7 @@ export class ForestSummarizer implements Summarizable {
 			);
 			const allocator = idAllocatorFromMaxId();
 			const fieldChanges: [FieldKey, DeltaFieldChanges][] = [];
-			const build: DetachedNodeBuild[] = [];
+			const build: DeltaDetachedNodeBuild[] = [];
 			for (const [fieldKey, field] of fields) {
 				const chunked = chunkField(field, defaultChunkPolicy);
 				const nodeCursors = chunked.flatMap((chunk) =>

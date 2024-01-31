@@ -22,7 +22,7 @@ module.exports = {
 				exclude: /node_modules/,
 			},
 			{
-				test: /\.js$/,
+				test: /\.m?js$/,
 				use: [require.resolve("source-map-loader")],
 				enforce: "pre",
 			},
@@ -31,6 +31,9 @@ module.exports = {
 	// Webpack 5 does not support automatic polyfilling of node modules, setting node to false will help simulate webpack 5 behavior by throwing build errors when we rely on node polyfills
 	node: false,
 	resolve: {
+		extensionAlias: {
+			".js": [".ts", ".tsx", ".js"],
+		},
 		extensions: [".tsx", ".ts", ".js"],
 	},
 	// Some of Fluid's dependencies depend on things like global and process.env.NODE_ENV being defined. This won't be set in Webpack 5 by default, so we are setting it with the define plugin.
