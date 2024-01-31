@@ -9036,6 +9036,7 @@ importers:
       '@types/node': ^18.19.0
       '@types/sinon': ^7.0.13
       '@types/ungap__structured-clone': ^1.2.0
+      '@types/uuid': ^9.0.2
       '@ungap/structured-clone': ^1.2.0
       c8: ^8.0.1
       copyfiles: ^2.4.1
@@ -9088,6 +9089,7 @@ importers:
       '@types/node': 18.19.1
       '@types/sinon': 7.5.2
       '@types/ungap__structured-clone': 1.2.0
+      '@types/uuid': 9.0.7
       c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
