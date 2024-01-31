@@ -38,7 +38,7 @@ function isCodeProposalTestPackage(pkg: unknown): pkg is ICodeProposalTestPackag
 }
 
 // REVIEW: enable compat testing?
-describeCompat("CodeProposal.EndToEnd", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("CodeProposal.EndToEnd", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
 	const packageV1: ICodeProposalTestPackage = {
 		name: "test",
@@ -104,7 +104,7 @@ describeCompat("CodeProposal.EndToEnd", "NoCompat", (getTestObjectProvider, apis
 
 	let provider: ITestObjectProvider;
 	let containers: IContainer[];
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		provider = getTestObjectProvider();
 		containers = [];
 

@@ -1,6 +1,6 @@
 {
 	"name": "server-release-group-root",
-	"version": "3.0.0",
+	"version": "3.1.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -119,7 +119,7 @@
 			]
 		},
 		"patchedDependencies": {
-			"@microsoft/api-extractor@7.38.3": "patches/@microsoft__api-extractor@7.38.3.patch"
+			"@microsoft/api-extractor@7.39.1": "patches/@microsoft__api-extractor@7.39.1.patch"
 		}
 	}
 }
