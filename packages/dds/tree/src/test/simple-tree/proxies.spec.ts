@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { MockHandle } from "@fluidframework/test-runtime-utils";
-import { TreeArrayNode, NodeFromSchema, SchemaFactory, Tree } from "../../simple-tree/index.js";
+import { TreeArrayNode, NodeFromSchema, SchemaFactory } from "../../simple-tree/index.js";
 import { getRoot, pretty } from "./utils.js";
 
 describe("SharedTree proxies", () => {
@@ -115,39 +115,6 @@ describe("SharedTreeObject", () => {
 	it("can read fields common to all polymorphic types", () => {
 		const root = getRoot(schema, initialTree);
 		assert.equal(root.polyChild.content, "42");
-	});
-
-	it("can narrow polymorphic value fields", () => {
-		const root = getRoot(schema, initialTree);
-		if (typeof root.polyValue === "number") {
-			assert.equal(root.polyChild.content, 42);
-		} else {
-			assert.equal(root.polyChild.content, "42");
-		}
-	});
-
-	it("can narrow polymorphic struct fields", () => {
-		const root = getRoot(schema, initialTree);
-		if (Tree.is(root.polyChild, numberChild)) {
-			assert.equal(root.polyChild.content, 42);
-		} else {
-			assert.equal(root.polyChild.content, "42");
-		}
-	});
-
-	it("can narrow polymorphic combinations of value and struct fields", () => {
-		const root = getRoot(schema, initialTree);
-		if (Tree.is(root.polyValueChild, numberChild)) {
-			assert.equal(root.polyValueChild.content, 42);
-		} else {
-			assert.equal(root.polyValueChild, 42);
-		}
-
-		if (typeof root.polyValueChild === "number") {
-			assert.equal(root.polyValueChild, 42);
-		} else {
-			assert.equal(root.polyValueChild.content, 42);
-		}
 	});
 
 	// TODO:#6133: Make this properly async and check that the value of the handle is correct

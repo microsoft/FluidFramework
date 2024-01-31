@@ -134,8 +134,7 @@
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/synthesize": "workspace:~",
-		"@fluidframework/view-interfaces": "workspace:~",
-		"uuid": "^9.0.0"
+		"@fluidframework/view-interfaces": "workspace:~"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",

@@ -908,6 +908,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
     get edits(): OrderedEditSet<InternalizedChange>;
     equals(sharedTree: SharedTree): boolean;
     generateNodeId(override?: string): NodeId;
+    // (undocumented)
+    getAttachSummary(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined): ISummaryTreeWithStats;
     static getFactory(...args: SharedTreeArgs<WriteFormat.v0_0_2>): SharedTreeFactory;
     // (undocumented)
     static getFactory(...args: SharedTreeArgs<WriteFormat.v0_1_1>): SharedTreeFactory;
