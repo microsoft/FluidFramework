@@ -848,13 +848,6 @@ describeCompat("GC data store tombstone tests", "2.0.0-rc.1.0.0", (getTestObject
 					clientType: "interactive",
 					category: "error",
 				},
-				// 1A again
-				{
-					eventName:
-						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
-					clientType: "interactive",
-					category: "error",
-				},
 				// 3A
 				{
 					eventName:
@@ -949,16 +942,17 @@ describeCompat("GC data store tombstone tests", "2.0.0-rc.1.0.0", (getTestObject
 					),
 				);
 
-				// This request still fails because Auto-Recovery only affects the next summary (via next GC run)
-				const tombstoneErrorResponse_Interactive = await (
+				// This succeeds even though this Interactive session already loaded.
+				// Because we cleared the Tombstone state when the reference was "added" back by Auto-Recovery
+				const successResponse_Interactive = await (
 					entryPoint1._context.containerRuntime as ContainerRuntime
 				).resolveHandle({
 					url: dataStoreAId,
 				});
 				assert.equal(
-					tombstoneErrorResponse_Interactive.status,
-					404,
-					"Expected tombstone error - Auto-Recovery shouldn't affect in-progress Interactive sessions (1A again)",
+					successResponse_Interactive.status,
+					200,
+					"Auto-Recovery should clear the Tombstone state (1A again)",
 				);
 
 				// Auto-Recovery: This summary will have the unref timestamp reset due to the GC TombstoneLoaded op

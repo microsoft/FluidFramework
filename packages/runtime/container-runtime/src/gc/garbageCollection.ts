@@ -1084,11 +1084,15 @@ export class GarbageCollector implements IGarbageCollector {
 			autorecovery,
 		});
 
-		// This node is referenced - Clear its unreferenced state
+		// This node is referenced - Clear its unreferenced state immediately
 		// But don't delete the node id from the map yet.
 		// When generating GC stats, the set of nodes in here is used as the baseline for
 		// what was unreferenced in the last GC run.
 		this.unreferencedNodesState.get(toNodePath)?.stopTracking();
+
+		// Also clear the tombstone state immediately
+		this.tombstones.splice(this.tombstones.indexOf(toNodePath), 1);
+		this.runtime.updateTombstonedRoutes(this.tombstones);
 	}
 
 	/**
