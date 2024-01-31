@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
+import { IContainerRuntimeBase, IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import {
 	ITestObjectProvider,
 	ITestContainerConfig,
@@ -15,7 +15,6 @@ import {
 } from "@fluidframework/test-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 
 const testContainerConfig: ITestContainerConfig = {
@@ -32,16 +31,12 @@ const waitForSignal = async (...signallers: { once(e: "signal", l: () => void): 
 		),
 	);
 
-type RuntimeType = IFluidDataStoreRuntime | ContainerRuntime;
+type RuntimeType = IFluidDataStoreRuntime | IContainerRuntimeBase;
 
 describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let dataObject1: ITestFluidObject;
 	let dataObject2: ITestFluidObject;
-	let dataObject3: ITestFluidObject;
-	let user1ContainerRuntime: ContainerRuntime;
-	let user2ContainerRuntime: ContainerRuntime;
-	let user3ContainerRuntime: ContainerRuntime;
 
 	beforeEach("setup", async () => {
 		provider = getTestObjectProvider();
@@ -51,23 +46,12 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 		const container2 = await provider.loadTestContainer(testContainerConfig);
 		dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 
-		const container3 = await provider.loadTestContainer(testContainerConfig);
-		dataObject3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
-
-		// Type Casting `as ContainerRuntime` since IContainerRuntimeBase does not have targetClientId argument
-		user1ContainerRuntime = dataObject1.context.containerRuntime as ContainerRuntime;
-		user2ContainerRuntime = dataObject2.context.containerRuntime as ContainerRuntime;
-		user3ContainerRuntime = dataObject3.context.containerRuntime as ContainerRuntime;
-
 		// need to be connected to send signals
 		if (container1.connectionState !== ConnectionState.Connected) {
 			await new Promise((resolve) => container1.once("connected", resolve));
 		}
 		if (container2.connectionState !== ConnectionState.Connected) {
 			await new Promise((resolve) => container2.once("connected", resolve));
-		}
-		if (container3.connectionState !== ConnectionState.Connected) {
-			await new Promise((resolve) => container3.once("connected", resolve));
 		}
 	});
 	describe("Attach signal Handlers on Both Clients", () => {
@@ -101,6 +85,8 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 		it("Validate host runtime signals", async () => {
 			let user1SignalReceivedCount = 0;
 			let user2SignalReceivedCount = 0;
+			const user1ContainerRuntime = dataObject1.context.containerRuntime;
+			const user2ContainerRuntime = dataObject2.context.containerRuntime;
 
 			user1ContainerRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
 				if (message.type === "TestSignal") {
@@ -131,6 +117,8 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 		let user2HostSignalReceivedCount = 0;
 		let user1CompSignalReceivedCount = 0;
 		let user2CompSignalReceivedCount = 0;
+		const user1ContainerRuntime = dataObject1.context.containerRuntime;
+		const user2ContainerRuntime = dataObject2.context.containerRuntime;
 		const user1DtaStoreRuntime = dataObject1.runtime;
 		const user2DataStoreRuntime = dataObject2.runtime;
 
@@ -205,17 +193,99 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 		);
 	});
 
-	// Skipped Tests: Targeted signal functionality is not currently supported by all services
-	describe.skip("Targeted Signals", () => {
+	describe("Unsupported Targeted Signals", () => {
 		let user1SignalReceivedCount: number;
 		let user2SignalReceivedCount: number;
 		let user3SignalReceivedCount: number;
+		let dataObject3: ITestFluidObject;
+		let user1ContainerRuntime: IContainerRuntimeBase;
+		let user2ContainerRuntime: IContainerRuntimeBase;
+		let user3ContainerRuntime: IContainerRuntimeBase;
 
-		const sendAndVerifyRemoteSignals = async (
+		async function sendAndVerifyBroadcast(
+			localRuntime: RuntimeType,
+			remoteRuntime1: RuntimeType,
+			remoteRuntime2: RuntimeType,
+		) {
+			localRuntime.on("signal", function (message: IInboundSignalMessage, local: boolean) {
+				assert.equal(local, true, "Signal should be local");
+				if (message.type === "TestSignal") {
+					user1SignalReceivedCount += 1;
+				}
+			});
+			remoteRuntime1.on("signal", function (message: IInboundSignalMessage, local: boolean) {
+				assert.equal(local, false, "Signal should be remote");
+				if (message.type === "TestSignal") {
+					user2SignalReceivedCount += 1;
+				}
+			});
+			remoteRuntime2.on("signal", function (message: IInboundSignalMessage, local: boolean) {
+				assert.equal(local, false, "Signal should be remote");
+				if (message.type === "TestSignal") {
+					user3SignalReceivedCount += 1;
+				}
+			});
+
+			localRuntime.submitSignal("TestSignal", true, dataObject1.runtime.clientId);
+			await waitForSignal(remoteRuntime1);
+			assert.equal(user1SignalReceivedCount, 1, "client 1 should not receive signal");
+			assert.equal(user2SignalReceivedCount, 1, "client 2 did not receive signal");
+			assert.equal(user3SignalReceivedCount, 1, "client 3 should not receive signal");
+		}
+
+		beforeEach("3rd container setup", async () => {
+			user1SignalReceivedCount = 0;
+			user2SignalReceivedCount = 0;
+			user3SignalReceivedCount = 0;
+
+			const container3 = await provider.loadTestContainer(testContainerConfig);
+			dataObject3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
+
+			// Type Casting `as ContainerRuntime` since IContainerRuntimeBase does not have targetClientId argument
+			user1ContainerRuntime = dataObject1.context.containerRuntime;
+			user2ContainerRuntime = dataObject2.context.containerRuntime;
+			user3ContainerRuntime = dataObject3.context.containerRuntime;
+
+			if (container3.connectionState !== ConnectionState.Connected) {
+				await new Promise((resolve) => container3.once("connected", resolve));
+			}
+		});
+
+		it("Validate data store runtime broadcast ", async () => {
+			await sendAndVerifyBroadcast(
+				dataObject1.runtime,
+				dataObject2.runtime,
+				dataObject3.runtime,
+			);
+		});
+
+		it("Validate ContainerRuntime broadcast", async () => {
+			await sendAndVerifyBroadcast(
+				user1ContainerRuntime,
+				user2ContainerRuntime,
+				user3ContainerRuntime,
+			);
+		});
+	});
+
+	/**
+	 * Skipped tests - targeted signal functionality is not currently supported by all services
+	 * @see {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/5852}
+	 */
+	describe.skip("Supported Targeted Signals", () => {
+		let user1SignalReceivedCount: number;
+		let user2SignalReceivedCount: number;
+		let user3SignalReceivedCount: number;
+		let dataObject3: ITestFluidObject;
+		let user1ContainerRuntime: IContainerRuntimeBase;
+		let user2ContainerRuntime: IContainerRuntimeBase;
+		let user3ContainerRuntime: IContainerRuntimeBase;
+
+		async function sendAndVerifyRemoteSignals(
 			runtime1: RuntimeType,
 			runtime2: RuntimeType,
 			runtime3: RuntimeType,
-		) => {
+		) {
 			runtime1.on("signal", (message: IInboundSignalMessage, local: boolean) => {
 				assert.equal(local, false, "Signal should be remote");
 				if (message.type === "TestSignal") {
@@ -235,30 +305,30 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 				}
 			});
 
-			runtime1.submitSignal("TestSignal", true, runtime2.clientId);
+			runtime1.submitSignal("TestSignal", true, dataObject1.runtime.clientId);
 			await waitForSignal(runtime2);
 			assert.equal(user1SignalReceivedCount, 0, "client 1 should not receive signal");
 			assert.equal(user2SignalReceivedCount, 1, "client 2 did not receive signal");
 			assert.equal(user3SignalReceivedCount, 0, "client 3 should not receive signal");
 
-			runtime1.submitSignal("TestSignal", true, runtime3.clientId);
+			runtime1.submitSignal("TestSignal", true, dataObject2.runtime.clientId);
 			await waitForSignal(runtime3);
 			assert.equal(user1SignalReceivedCount, 0, "client 1 should not receive signal");
 			assert.equal(user2SignalReceivedCount, 1, "client 2 should not receive signal");
 			assert.equal(user3SignalReceivedCount, 1, "client 3 did not receive signal");
 
-			runtime2.submitSignal("TestSignal", true, runtime1.clientId);
+			runtime2.submitSignal("TestSignal", true, dataObject3.runtime.clientId);
 			await waitForSignal(runtime1);
 			assert.equal(user1SignalReceivedCount, 1, "client 1 did not receive signal");
 			assert.equal(user2SignalReceivedCount, 1, "client 2 should not receive signal");
 			assert.equal(user3SignalReceivedCount, 1, "client 3 should not receive signal");
-		};
+		}
 
-		const sendAndVerifyLocalSignals = async (
+		async function sendAndVerifyLocalSignals(
 			localRuntime: RuntimeType,
 			remoteRuntime1: RuntimeType,
 			remoteRuntime2: RuntimeType,
-		) => {
+		) {
 			localRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
 				assert.equal(local, true, "Signal should be local");
 				if (message.type === "TestSignal") {
@@ -272,15 +342,27 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 				throw new Error("Remote client should not receive signal");
 			});
 
-			localRuntime.submitSignal("TestSignal", true, localRuntime.clientId);
+			localRuntime.submitSignal("TestSignal", true, dataObject1.runtime.clientId);
 			await waitForSignal(localRuntime);
 			assert.equal(user1SignalReceivedCount, 1, "client 1 did not receive signal");
-		};
+		}
 
-		beforeEach(() => {
+		beforeEach("3rd container setup", async () => {
 			user1SignalReceivedCount = 0;
 			user2SignalReceivedCount = 0;
 			user3SignalReceivedCount = 0;
+
+			const container3 = await provider.loadTestContainer(testContainerConfig);
+			dataObject3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
+
+			// Type Casting `as ContainerRuntime` since IContainerRuntimeBase does not have targetClientId argument
+			user1ContainerRuntime = dataObject1.context.containerRuntime;
+			user2ContainerRuntime = dataObject2.context.containerRuntime;
+			user3ContainerRuntime = dataObject3.context.containerRuntime;
+
+			if (container3.connectionState !== ConnectionState.Connected) {
+				await new Promise((resolve) => container3.once("connected", resolve));
+			}
 		});
 
 		it("Validate data store runtime remote signals", async () => {
