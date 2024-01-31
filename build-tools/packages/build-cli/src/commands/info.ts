@@ -9,7 +9,7 @@ import { table } from "table";
 
 import { BaseCommand } from "../base";
 import { releaseGroupFlag } from "../flags";
-import { PackageVersionList } from "../lib";
+import { PackageVersionList } from "../library";
 
 /**
  * The root `info` command.

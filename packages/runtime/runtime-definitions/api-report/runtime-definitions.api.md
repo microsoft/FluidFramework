@@ -121,10 +121,10 @@ export interface IAttachMessage {
 export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents> {
     // (undocumented)
     readonly clientDetails: IClientDetails;
-    createDataStore(pkg: string | string[]): Promise<IDataStore>;
+    createDataStore(pkg: string | string[], groupId?: string): Promise<IDataStore>;
     // @deprecated (undocumented)
     _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string): Promise<IDataStore>;
-    createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached;
+    createDetachedDataStore(pkg: Readonly<string[]>, groupId?: string): IFluidDataStoreContextDetached;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;
     getQuorum(): IQuorumClients;
@@ -225,6 +225,8 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     id: string,
     createParam: CreateChildSummarizerNodeParam): CreateChildSummarizerNodeFn;
     getQuorum(): IQuorumClients;
+    // (undocumented)
+    readonly groupId?: string;
     // (undocumented)
     readonly id: string;
     // (undocumented)
