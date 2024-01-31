@@ -1932,6 +1932,7 @@ importers:
       puppeteer: ^17.1.3
       react: ^17.0.1
       rimraf: ^4.4.0
+      source-map-loader: ^2.0.0
       ts-jest: ^29.1.1
       ts-loader: ^9.3.0
       typescript: ~5.1.6
@@ -1966,6 +1967,7 @@ importers:
       prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
+      source-map-loader: 2.0.2_webpack@5.89.0
       ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
@@ -11681,6 +11683,7 @@ importers:
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
+      '@fluidframework/devtools-core': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.3.0
@@ -11731,6 +11734,7 @@ importers:
       '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
+      '@fluidframework/devtools-core': link:../devtools/devtools-core
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/local-driver': link:../../drivers/local-driver
