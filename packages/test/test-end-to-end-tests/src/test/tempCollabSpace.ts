@@ -302,8 +302,7 @@ export class TempCollabSpaceRuntime
 		return newChannel;
 	}
 
-	public releaseCellChannel(channel: ITempChannel) {
-		const channelId = (channel as Channel).id;
+	protected mapChannelToCell(channelId: string) {
 		const parts = channelId.split(",");
 		assert(parts.length === 3, "wrong channel ID");
 		const rowId = parts[0];
@@ -318,10 +317,10 @@ export class TempCollabSpaceRuntime
 
 		const rowCount = this.matrix.rowCount;
 		const colCount = this.matrix.colCount;
-		
+
 		let row;
 		for (row = 1; row < rowCount; row++) {
-			if (this.matrix.getCell(row, 0) as unknown as string === rowId) {
+			if ((this.matrix.getCell(row, 0) as unknown as string) === rowId) {
 				break;
 			}
 		}
@@ -329,20 +328,29 @@ export class TempCollabSpaceRuntime
 
 		let col;
 		for (col = 1; col < colCount; col++) {
-			if (this.matrix.getCell(0, col) as unknown as string === colId) {
+			if ((this.matrix.getCell(0, col) as unknown as string) === colId) {
 				break;
 			}
 		}
 		assert(col !== colCount, "channel not found");
 
+		return { row, col, iteration };
+	}
+
+	// TBD - need to build a lot of protections here on when it's safe to do this operaton
+	public releaseCellChannel(channel: ITempChannel) {
+		const channelId = (channel as Channel).id;
+		const { row, col, iteration } = this.mapChannelToCell(channelId);
+
 		const currValue = this.matrix.getCell(row, col);
 		if (currValue !== undefined && String(currValue?.iteration) === iteration) {
 			// Same iteration, so channel represents the cell. Copy data from channel
-			this.matrix.setCell(row, col, {...currValue, value: channel.value as string})
+			this.matrix.setCell(row, col, { ...currValue, value: channel.value as string });
 		}
 
-		// TBD
-		// Destry channel
+		// Is this safe? Anything else we need to do?
+		this.contexts.delete(channelId);
+		this.notBoundedChannelContextSet.delete(channelId);
 	}
 
 	// #region IMatrixProducer
@@ -505,21 +513,12 @@ export function sampleFactory() {
 	return new TempCollabSpaceRuntimeFactory("MatrixWithCollab", [new CounterFactory()]);
 }
 
-describe("Temp Collab Space", () => {
-	beforeEach(() => {});
-
-	it("test", async () => {
-		// const runtimeFactory = sampleFactory();
-		// runtimeFactory.instantiateDataStore()
-	});
-});
-
 /**
  * Validates that incremental summaries can be performed at the sub DDS level, i.e., a DDS can summarizer its
  * contents incrementally.
  */
 describeCompat(
-	"Incremental summaries can be generated for DDS content",
+	"Temporal Collab Spaces",
 	"2.0.0-rc.1.0.0",
 	(getTestObjectProvider) => {
 		let provider: ITestObjectProvider;
@@ -574,9 +573,14 @@ describeCompat(
 				global.gc();
 			}
 
-			const channel = (await datastore.getCellChannel(100, 5)) as ISharedCounter;
-			channel.increment(100);
 			let value = await datastore.getCellAsync(100, 5);
+
+			const channel = (await datastore.getCellChannel(100, 5)) as ISharedCounter;
+			// TBD - this fails as we are not properlly initializing channel
+			// assert(channel.value === value?.value, "not the same value");
+
+			channel.increment(100);
+			value = await datastore.getCellAsync(100, 5);
 			assert(channel.value === value?.value, "not the same value");
 
 			datastore.releaseCellChannel(channel);

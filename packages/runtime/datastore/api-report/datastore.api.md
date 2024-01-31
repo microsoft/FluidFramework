@@ -103,6 +103,8 @@ export class FluidDataStoreRuntime<TEvents = Record<string, never>> extends Type
     get logger(): ITelemetryLoggerExt;
     makeVisibleAndAttachGraph(): void;
     // (undocumented)
+    protected readonly notBoundedChannelContextSet: Set<string>;
+    // (undocumented)
     get objectsRoutingContext(): this;
     // (undocumented)
     readonly options: ILoaderOptions;

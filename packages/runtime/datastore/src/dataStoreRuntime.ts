@@ -169,7 +169,7 @@ export class FluidDataStoreRuntime<TEvents = Record<string, never>>
 
 	private readonly deferredAttached = new Deferred<void>();
 	private readonly localChannelContextQueue = new Map<string, LocalChannelContextBase>();
-	private readonly notBoundedChannelContextSet = new Set<string>();
+	protected readonly notBoundedChannelContextSet = new Set<string>();
 	private _attachState: AttachState;
 	public visibilityState: VisibilityState;
 	// A list of handles that are bound when the data store is not visible. We have to make them visible when the data
