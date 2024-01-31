@@ -12,12 +12,12 @@ import {
 	Tree,
 	TreeConfiguration,
 	disposeSymbol,
-} from "@fluid-experimental/tree2";
+} from "@fluidframework/tree";
 
 import { TypedEmitter } from "tiny-typed-emitter";
 import { v4 as uuid } from "uuid";
 
-import type { IInventoryItem, IInventoryItemEvents, IInventoryList } from "../modelInterfaces";
+import type { IInventoryItem, IInventoryItemEvents, IInventoryList } from "../modelInterfaces.js";
 
 // To define the tree schema, we'll make a series of calls to a SchemaBuilder to produce schema objects.
 // The final schema object will later be used as an argument to the schematize call.  AB#5967
@@ -31,7 +31,7 @@ export class InventoryItem extends builder.object("Contoso:InventoryItem-1.0.0",
 	// The number in stock
 	quantity: builder.number,
 }) {}
-const InventoryItemList = builder.list(InventoryItem);
+const InventoryItemList = builder.array(InventoryItem);
 type InventoryItemList = NodeFromSchema<typeof InventoryItemList>;
 
 export class InventorySchema extends builder.object("Contoso:Inventory-1.0.0", {

@@ -3,21 +3,22 @@
  * Licensed under the MIT License.
  */
 import {
-	ApiClass,
-	ApiEnum,
-	ApiFunction,
-	ApiInterface,
-	ApiItem,
+	type ApiClass,
+	type ApiEnum,
+	type ApiFunction,
+	type ApiInterface,
+	type ApiItem,
 	ApiItemKind,
-	ApiNamespace,
-	ApiTypeAlias,
-	ApiVariable,
+	type ApiNamespace,
+	type ApiTypeAlias,
+	type ApiVariable,
 } from "@microsoft/api-extractor-model";
 
-import { SectionNode } from "../../documentation-domain";
-import { ApiModuleLike, filterByKind } from "../../utilities";
-import { ApiItemTransformationConfiguration } from "../configuration";
+import { type SectionNode } from "../../documentation-domain";
+import { type ApiModuleLike, filterByKind } from "../../utilities";
+import { type ApiItemTransformationConfiguration } from "../configuration";
 import { createChildDetailsSection, createMemberTables } from "../helpers";
+import { filterItems } from "../ApiItemTransformUtilities";
 
 /**
  * Default documentation transform for module-like API items (packages, namespaces).
@@ -58,41 +59,39 @@ import { createChildDetailsSection, createMemberTables } from "../helpers";
  */
 export function transformApiModuleLike(
 	apiItem: ApiModuleLike,
-	childItems: readonly ApiItem[],
 	config: Required<ApiItemTransformationConfiguration>,
 	generateChildContent: (apiItem: ApiItem) => SectionNode[],
 ): SectionNode[] {
 	const children: SectionNode[] = [];
 
-	const hasAnyChildren = childItems.length > 0;
-
-	if (hasAnyChildren) {
+	const filteredChildren = filterItems(apiItem.members, config);
+	if (filteredChildren.length > 0) {
 		// Accumulate child items
-		const interfaces = filterByKind(childItems, [ApiItemKind.Interface]).map(
+		const interfaces = filterByKind(filteredChildren, [ApiItemKind.Interface]).map(
 			(_apiItem) => _apiItem as ApiInterface,
 		);
 
-		const classes = filterByKind(childItems, [ApiItemKind.Class]).map(
+		const classes = filterByKind(filteredChildren, [ApiItemKind.Class]).map(
 			(_apiItem) => _apiItem as ApiClass,
 		);
 
-		const namespaces = filterByKind(childItems, [ApiItemKind.Namespace]).map(
+		const namespaces = filterByKind(filteredChildren, [ApiItemKind.Namespace]).map(
 			(_apiItem) => _apiItem as ApiNamespace,
 		);
 
-		const types = filterByKind(childItems, [ApiItemKind.TypeAlias]).map(
+		const types = filterByKind(filteredChildren, [ApiItemKind.TypeAlias]).map(
 			(_apiItem) => _apiItem as ApiTypeAlias,
 		);
 
-		const functions = filterByKind(childItems, [ApiItemKind.Function]).map(
+		const functions = filterByKind(filteredChildren, [ApiItemKind.Function]).map(
 			(_apiItem) => _apiItem as ApiFunction,
 		);
 
-		const enums = filterByKind(childItems, [ApiItemKind.Enum]).map(
+		const enums = filterByKind(filteredChildren, [ApiItemKind.Enum]).map(
 			(_apiItem) => _apiItem as ApiEnum,
 		);
 
-		const variables = filterByKind(childItems, [ApiItemKind.Variable]).map(
+		const variables = filterByKind(filteredChildren, [ApiItemKind.Variable]).map(
 			(_apiItem) => _apiItem as ApiVariable,
 		);
 

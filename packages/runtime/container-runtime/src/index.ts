@@ -23,7 +23,6 @@ export {
 	DefaultSummaryConfiguration,
 	ICompressionRuntimeOptions,
 	CompressionAlgorithms,
-	TEST_requestSummarizer,
 } from "./containerRuntime";
 export {
 	ContainerMessageType,
@@ -31,9 +30,11 @@ export {
 	IContainerRuntimeMessageCompatDetails,
 	CompatModeBehavior,
 	RecentlyAddedContainerRuntimeMessageDetails,
+	UnknownContainerRuntimeMessage,
 } from "./messageTypes";
 export { IBlobManagerLoadInfo } from "./blobManager";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry";
+export { detectOutboundReferences } from "./dataStores";
 export {
 	GCNodeType,
 	IGCMetadata,
@@ -93,5 +94,21 @@ export {
 	IRetriableFailureResult,
 	ISummarizeEventProps,
 } from "./summary";
-export { isStableId, generateStableId, assertIsStableId } from "./id-compressor";
 export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle";
+
+// Re-exports for backwards compatibility.
+// Will be removed in the future.
+export {
+	/**
+	 * @deprecated Import from `@fluidframework/id-compressor` instead.
+	 */
+	assertIsStableId,
+	/**
+	 * @deprecated Import from `@fluidframework/id-compressor` instead.
+	 */
+	generateStableId,
+	/**
+	 * @deprecated Import from `@fluidframework/id-compressor` instead.
+	 */
+	isStableId,
+} from "@fluidframework/id-compressor";

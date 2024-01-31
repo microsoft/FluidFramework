@@ -96,6 +96,30 @@ use_old_ClassDeclaration_EventAndErrorTrackingLogger(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDocumentIdStrategy": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IDocumentIdStrategy():
+    TypeOnly<old.IDocumentIdStrategy>;
+declare function use_current_InterfaceDeclaration_IDocumentIdStrategy(
+    use: TypeOnly<current.IDocumentIdStrategy>): void;
+use_current_InterfaceDeclaration_IDocumentIdStrategy(
+    get_old_InterfaceDeclaration_IDocumentIdStrategy());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDocumentIdStrategy": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IDocumentIdStrategy():
+    TypeOnly<current.IDocumentIdStrategy>;
+declare function use_old_InterfaceDeclaration_IDocumentIdStrategy(
+    use: TypeOnly<old.IDocumentIdStrategy>): void;
+use_old_InterfaceDeclaration_IDocumentIdStrategy(
+    get_current_InterfaceDeclaration_IDocumentIdStrategy());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IOpProcessingController": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IOpProcessingController():
@@ -199,7 +223,6 @@ declare function get_old_InterfaceDeclaration_ITestObjectProvider():
 declare function use_current_InterfaceDeclaration_ITestObjectProvider(
     use: TypeOnly<current.ITestObjectProvider>): void;
 use_current_InterfaceDeclaration_ITestObjectProvider(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ITestObjectProvider());
 
 /*
@@ -212,7 +235,6 @@ declare function get_current_InterfaceDeclaration_ITestObjectProvider():
 declare function use_old_InterfaceDeclaration_ITestObjectProvider(
     use: TypeOnly<old.ITestObjectProvider>): void;
 use_old_InterfaceDeclaration_ITestObjectProvider(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITestObjectProvider());
 
 /*
@@ -369,7 +391,6 @@ declare function get_old_ClassDeclaration_TestObjectProvider():
 declare function use_current_ClassDeclaration_TestObjectProvider(
     use: TypeOnly<current.TestObjectProvider>): void;
 use_current_ClassDeclaration_TestObjectProvider(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_TestObjectProvider());
 
 /*
@@ -382,8 +403,31 @@ declare function get_current_ClassDeclaration_TestObjectProvider():
 declare function use_old_ClassDeclaration_TestObjectProvider(
     use: TypeOnly<old.TestObjectProvider>): void;
 use_old_ClassDeclaration_TestObjectProvider(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_TestObjectProvider());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_TestObjectProviderWithVersionedLoad": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_TestObjectProviderWithVersionedLoad():
+    TypeOnly<old.TestObjectProviderWithVersionedLoad>;
+declare function use_current_ClassDeclaration_TestObjectProviderWithVersionedLoad(
+    use: TypeOnly<current.TestObjectProviderWithVersionedLoad>): void;
+use_current_ClassDeclaration_TestObjectProviderWithVersionedLoad(
+    get_old_ClassDeclaration_TestObjectProviderWithVersionedLoad());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_TestObjectProviderWithVersionedLoad": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_TestObjectProviderWithVersionedLoad():
+    TypeOnly<current.TestObjectProviderWithVersionedLoad>;
+declare function use_old_ClassDeclaration_TestObjectProviderWithVersionedLoad(
+    use: TypeOnly<old.TestObjectProviderWithVersionedLoad>): void;
+use_old_ClassDeclaration_TestObjectProviderWithVersionedLoad(
+    get_current_ClassDeclaration_TestObjectProviderWithVersionedLoad());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -652,6 +696,54 @@ use_old_TypeAliasDeclaration_fluidEntryPoint(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_getContainerEntryPointBackCompat": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_getContainerEntryPointBackCompat():
+    TypeOnly<typeof old.getContainerEntryPointBackCompat>;
+declare function use_current_FunctionDeclaration_getContainerEntryPointBackCompat(
+    use: TypeOnly<typeof current.getContainerEntryPointBackCompat>): void;
+use_current_FunctionDeclaration_getContainerEntryPointBackCompat(
+    get_old_FunctionDeclaration_getContainerEntryPointBackCompat());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_getContainerEntryPointBackCompat": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_getContainerEntryPointBackCompat():
+    TypeOnly<typeof current.getContainerEntryPointBackCompat>;
+declare function use_old_FunctionDeclaration_getContainerEntryPointBackCompat(
+    use: TypeOnly<typeof old.getContainerEntryPointBackCompat>): void;
+use_old_FunctionDeclaration_getContainerEntryPointBackCompat(
+    get_current_FunctionDeclaration_getContainerEntryPointBackCompat());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_getDataStoreEntryPointBackCompat": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_getDataStoreEntryPointBackCompat():
+    TypeOnly<typeof old.getDataStoreEntryPointBackCompat>;
+declare function use_current_FunctionDeclaration_getDataStoreEntryPointBackCompat(
+    use: TypeOnly<typeof current.getDataStoreEntryPointBackCompat>): void;
+use_current_FunctionDeclaration_getDataStoreEntryPointBackCompat(
+    get_old_FunctionDeclaration_getDataStoreEntryPointBackCompat());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_getDataStoreEntryPointBackCompat": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_getDataStoreEntryPointBackCompat():
+    TypeOnly<typeof current.getDataStoreEntryPointBackCompat>;
+declare function use_old_FunctionDeclaration_getDataStoreEntryPointBackCompat(
+    use: TypeOnly<typeof old.getDataStoreEntryPointBackCompat>): void;
+use_old_FunctionDeclaration_getDataStoreEntryPointBackCompat(
+    get_current_FunctionDeclaration_getDataStoreEntryPointBackCompat());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_getUnexpectedLogErrorException": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_getUnexpectedLogErrorException():
@@ -676,26 +768,14 @@ use_old_FunctionDeclaration_getUnexpectedLogErrorException(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_mockConfigProvider": {"forwardCompat": false}
+* "RemovedVariableDeclaration_mockConfigProvider": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_mockConfigProvider():
-    TypeOnly<typeof old.mockConfigProvider>;
-declare function use_current_VariableDeclaration_mockConfigProvider(
-    use: TypeOnly<typeof current.mockConfigProvider>): void;
-use_current_VariableDeclaration_mockConfigProvider(
-    get_old_VariableDeclaration_mockConfigProvider());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_mockConfigProvider": {"backCompat": false}
+* "RemovedVariableDeclaration_mockConfigProvider": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_mockConfigProvider():
-    TypeOnly<typeof current.mockConfigProvider>;
-declare function use_old_VariableDeclaration_mockConfigProvider(
-    use: TypeOnly<typeof old.mockConfigProvider>): void;
-use_old_VariableDeclaration_mockConfigProvider(
-    get_current_VariableDeclaration_mockConfigProvider());
 
 /*
 * Validate forward compat by using old type in place of current type

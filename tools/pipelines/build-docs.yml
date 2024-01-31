@@ -2,7 +2,14 @@
 # Licensed under the MIT License.
 
 # build-docs pipeline
-# This pipeline builds the main branch docs each time the client packages are built
+# This pipeline builds the main branch docs as well as previous major release branch docs each time the client packages are built.
+# Note that the method for getting the api json for main differs from previous versions. For main, the pipeline bundles
+# the published artifacts from other pipeline resources and publishes an artifact to the pipeline which can be later downloaded.
+# However, for previous version branches (in this case: 1.0) cannot run on the pipeline to generate resources. Thus, api-extractor
+# was run on 1.0 locally and manually published to the azure storage as "lts-1.0.tar.gz" which is later downloaded using 
+# the AzureCLI@2 task. 
+# For now, the only previous version which is manually uploaded is lts. However, for any previous versions which cannot run on the
+# pipeline, we assume that the api json content would be uploaded to the azure storage in the format: latest-${{version}}.tar.gz
 
 name: $(Build.BuildId)
 
@@ -81,32 +88,47 @@ variables:
   - name: pnpmStorePath
     value: $(Pipeline.Workspace)/.pnpm-store
 
+# TODO: Move trigger to pipeline designated for artifact model generation. Currently, 
+# the website docs builds and deploys on each commit. However, inconsistencies between 
+# the release branches and main is causing the website to change unexpectedly we can 
+# move the release/* trigger after separating the deploy step to another pipeline
 # no PR triggers
 trigger:
   branches:
     include:
-    - release/*
+    # - release/*
     - main
 pr: none
 
+# TODO: the download artifact step is currently targetting the latest pipeline run from each resource.
+# However, this is causing inconsistencies in the doc in scenarios where the latest runs on each pipeline
+# is not the same (e.g. mix of main and lts). Temporarily setting the branch to main explicitly.
 resources:
   pipelines:
   - pipeline: common_definitions
     source: Build - common-definitions
+    branch: main
   - pipeline: common_utils
     source: Build - common-utils
+    branch: main
   - pipeline: container_definitions
     source: Build - container-definitions
+    branch: main
   - pipeline: core_interfaces
     source: Build - core-interfaces
+    branch: main
   - pipeline: driver_definitions
     source: Build - driver-definitions
+    branch: main
   - pipeline: protocol_definitions
     source: Build - protocol-definitions
+    branch: main
   - pipeline: azure
     source: Build - azure
+    branch: main
   - pipeline: client
     source: Build - client packages
+    branch: main
     trigger:
       branches:
         include:
@@ -114,6 +136,7 @@ resources:
         - docs/**
   - pipeline: server
     source: server-routerlicious
+    branch: main
 
 stages:
 - stage: build
@@ -179,13 +202,6 @@ stages:
           submodules: false
           clean: true
 
-        - task: DownloadPipelineArtifact@2
-          displayName: 'Copy api-extractor JSON to staging folder'
-          inputs:
-            source: current
-            artifact: api-extractor-combined
-            path: '$(Build.SourcesDirectory)/_api-extractor-temp/doc-models'
-
         - template: templates/include-use-node-version.yml
 
         - template: templates/include-install-pnpm.yml
@@ -205,7 +221,7 @@ stages:
           inputs:
             command: 'custom'
             workingDir: $(Build.SourcesDirectory)/docs
-            customCommand: 'run build'
+            customCommand: 'run ci:build'
 
         - task: AzureArtifacts.manifest-generator-task.manifest-generator-task.ManifestGeneratorTask@0
           displayName: 'Generate SBOM'
@@ -310,5 +326,6 @@ stages:
             skip_app_build: true # site was built in previous stage
             cwd: $(Build.SourcesDirectory)
             app_location: 'docs/public'
+            api_location: 'docs/api'
             output_location: ''
             azure_static_web_apps_api_token: '${{ variables.deploymentToken }}'

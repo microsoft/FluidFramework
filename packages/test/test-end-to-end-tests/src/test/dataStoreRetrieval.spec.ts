@@ -4,14 +4,13 @@
  */
 
 import { strict as assert } from "assert";
-import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import { describeCompat, ITestDataObject } from "@fluid-private/test-version-utils";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 
 /**
  * These tests retrieve a data store after its creation but at different stages of visibility.
@@ -87,14 +86,16 @@ describeCompat(
 		);
 
 		let provider: ITestObjectProvider;
-		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
 
-		beforeEach(() => {
+		beforeEach("getTestObjectProvider", function () {
 			provider = getTestObjectProvider();
 		});
 
-		it("Requesting data store before outer data store completes initialization", async () => {
+		it("Requesting data store before outer data store completes initialization", async function () {
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6978
+			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				this.skip();
+			}
 			const containerRuntimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 				ContainerRuntimeFactoryWithDefaultDataStore,
 				{
@@ -103,7 +104,6 @@ describeCompat(
 						[outerDataObjectFactory.type, Promise.resolve(outerDataObjectFactory)],
 						[innerDataObjectFactory.type, Promise.resolve(innerDataObjectFactory)],
 					],
-					requestHandlers: [innerRequestHandler],
 				},
 			);
 			const request = provider.driver.createCreateNewRequest(provider.documentId);
@@ -120,7 +120,11 @@ describeCompat(
 			await assert.doesNotReject(container.attach(request), "Container did not attach");
 		});
 
-		it("Requesting data store before outer data store (non-root) completes initialization", async () => {
+		it("Requesting data store before outer data store (non-root) completes initialization", async function () {
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6978
+			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				this.skip();
+			}
 			const containerRuntimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 				ContainerRuntimeFactoryWithDefaultDataStore,
 				{
@@ -129,7 +133,6 @@ describeCompat(
 						[outerDataObjectFactory.type, Promise.resolve(outerDataObjectFactory)],
 						[innerDataObjectFactory.type, Promise.resolve(innerDataObjectFactory)],
 					],
-					requestHandlers: [innerRequestHandler],
 				},
 			);
 			const request = provider.driver.createCreateNewRequest(provider.documentId);

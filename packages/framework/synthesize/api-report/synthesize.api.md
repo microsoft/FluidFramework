@@ -4,20 +4,20 @@
 
 ```ts
 
-// @internal
+// @alpha
 export type AsyncFluidObjectProvider<O, R = undefined> = AsyncOptionalFluidObjectProvider<O> & AsyncRequiredFluidObjectProvider<R>;
 
-// @internal
+// @alpha
 export type AsyncOptionalFluidObjectProvider<T> = T extends undefined ? Record<string, never> : {
     [P in keyof T]?: Promise<T[P] | undefined>;
 };
 
-// @internal
+// @alpha
 export type AsyncRequiredFluidObjectProvider<T> = T extends undefined ? Record<string, never> : {
     [P in keyof T]: Promise<NonNullable<Exclude<T[P], undefined | null>>>;
 };
 
-// @internal
+// @alpha
 export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
     constructor(...parents: (IFluidDependencySynthesizer | undefined)[]);
     has(type: string, excludeParents?: boolean): boolean;
@@ -28,24 +28,24 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
     unregister(type: keyof TMap): void;
 }
 
-// @internal
+// @alpha
 export type FluidObjectProvider<T> = NonNullable<T> | Promise<NonNullable<T>> | ((dependencyContainer: IFluidDependencySynthesizer) => NonNullable<T>) | ((dependencyContainer: IFluidDependencySynthesizer) => Promise<NonNullable<T>>);
 
-// @internal
+// @alpha
 export type FluidObjectSymbolProvider<T> = {
     [P in keyof T]?: P;
 };
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export const IFluidDependencySynthesizer: keyof IProvideFluidDependencySynthesizer;
 
-// @internal
+// @alpha
 export interface IFluidDependencySynthesizer extends IProvideFluidDependencySynthesizer {
     has(type: string): boolean;
     synthesize<O, R = undefined | Record<string, never>>(optionalTypes: FluidObjectSymbolProvider<O>, requiredTypes: Required<FluidObjectSymbolProvider<R>>): AsyncFluidObjectProvider<O, R>;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IProvideFluidDependencySynthesizer {
     // (undocumented)
     IFluidDependencySynthesizer: IFluidDependencySynthesizer;

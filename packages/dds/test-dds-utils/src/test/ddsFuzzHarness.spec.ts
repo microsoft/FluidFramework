@@ -15,7 +15,7 @@ import {
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { AsyncGenerator, chainAsync, done, takeAsync } from "@fluid-private/stochastic-test-utils";
 // eslint-disable-next-line import/no-internal-modules
-import { Counter } from "@fluid-private/stochastic-test-utils/dist/test/utils";
+import { Counter } from "@fluid-private/stochastic-test-utils/test/utils";
 import {
 	BaseOperation,
 	ChangeConnectionState,
@@ -102,7 +102,7 @@ function verifyClientsSendOpsToEachOther(state: DDSFuzzTestState<SharedNothingFa
 
 const defaultOptions: DDSFuzzSuiteOptions = {
 	...defaultDDSFuzzSuiteOptions,
-	detachedStartOptions: { enabled: false, attachProbability: 0 },
+	detachedStartOptions: { numOpsBeforeAttach: 0 },
 };
 
 describe("DDS Fuzz Harness", () => {
@@ -162,8 +162,7 @@ describe("DDS Fuzz Harness", () => {
 				validationStrategy: { type: "fixedInterval", interval: 2 },
 				reconnectProbability: 0,
 				detachedStartOptions: {
-					enabled: false,
-					attachProbability: 1,
+					numOpsBeforeAttach: 0,
 				},
 			};
 
@@ -297,8 +296,7 @@ describe("DDS Fuzz Harness", () => {
 				...defaultDDSFuzzSuiteOptions,
 				validationStrategy: { type: "random", probability: 0.25 },
 				detachedStartOptions: {
-					enabled: false,
-					attachProbability: 1,
+					numOpsBeforeAttach: 0,
 				},
 			};
 			it("generates synchronize ops", async () => {
@@ -472,13 +470,11 @@ describe("DDS Fuzz Harness", () => {
 
 	describe("mixinAttach", () => {
 		describe("with detached start enabled", () => {
-			// eslint-disable-next-line unicorn/consistent-function-scoping
 			const makeOptions = (): DDSFuzzSuiteOptions => ({
 				...defaultDDSFuzzSuiteOptions,
 				numberOfClients: 3,
 				detachedStartOptions: {
-					enabled: true,
-					attachProbability: 1,
+					numOpsBeforeAttach: 5,
 				},
 				emitter: new TypedEventEmitter(),
 			});
@@ -514,7 +510,7 @@ describe("DDS Fuzz Harness", () => {
 					mixinAttach(
 						{
 							...baseModel,
-							generatorFactory: () => takeAsync(1, baseModel.generatorFactory()),
+							generatorFactory: () => takeAsync(6, baseModel.generatorFactory()),
 						},
 						options,
 					),
@@ -525,19 +521,17 @@ describe("DDS Fuzz Harness", () => {
 					["A", "B", "C"],
 				);
 				assert.equal(finalState.summarizerClient.channel.id, "summarizer");
-				assert.deepEqual(generatedOperations[0], { type: "attach" });
+				assert.deepEqual(generatedOperations[5], { type: "attach" });
 				verifyClientsSendOpsToEachOther(finalState);
 			});
 		});
 
 		describe("with detached start disabled", () => {
-			// eslint-disable-next-line unicorn/consistent-function-scoping
 			const makeOptions = (): DDSFuzzSuiteOptions => ({
 				...defaultDDSFuzzSuiteOptions,
 				numberOfClients: 3,
 				detachedStartOptions: {
-					enabled: false,
-					attachProbability: 0,
+					numOpsBeforeAttach: 0,
 				},
 				emitter: new TypedEventEmitter(),
 			});
@@ -881,13 +875,9 @@ describe("DDS Fuzz Harness", () => {
 					assert(file1Exists);
 
 					const contents: unknown = JSON.parse(
-						// eslint-disable-next-line unicorn/prefer-json-parse-buffer
 						fs.readFileSync(path.join(jsonDir, "0.json"), { encoding: "utf8" }),
 					);
-					assert.deepEqual(contents, [
-						{ type: "attach" },
-						{ clientId: "B", type: "noop" },
-					]);
+					assert.deepEqual(contents, [{ clientId: "A", type: "noop" }]);
 				});
 			}
 		});

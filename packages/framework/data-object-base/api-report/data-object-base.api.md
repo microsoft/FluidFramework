@@ -18,7 +18,6 @@ import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IProvideFluidHandle } from '@fluidframework/core-interfaces';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
@@ -28,7 +27,7 @@ import { RuntimeFactoryHelper } from '@fluidframework/runtime-utils';
 import { RuntimeRequestHandler } from '@fluidframework/request-handler';
 
 // @internal (undocumented)
-export abstract class LazyLoadedDataObject<TRoot extends ISharedObject = ISharedObject, TEvents extends IEvent = IEvent> extends EventForwarder<TEvents> implements IFluidLoadable, IProvideFluidHandle, IFluidRouter {
+export abstract class LazyLoadedDataObject<TRoot extends ISharedObject = ISharedObject, TEvents extends IEvent = IEvent> extends EventForwarder<TEvents> implements IFluidLoadable, IProvideFluidHandle {
     constructor(context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime, root: ISharedObject);
     // (undocumented)
     protected readonly context: IFluidDataStoreContext;
@@ -40,8 +39,6 @@ export abstract class LazyLoadedDataObject<TRoot extends ISharedObject = IShared
     get IFluidHandle(): IFluidHandle<this>;
     // (undocumented)
     get IFluidLoadable(): this;
-    // @deprecated (undocumented)
-    get IFluidRouter(): this;
     // (undocumented)
     get IProvideFluidHandle(): this;
     // (undocumented)
@@ -75,16 +72,23 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
 
 // @internal (undocumented)
 export class RuntimeFactory extends RuntimeFactoryHelper {
-    constructor(props: {
-        defaultStoreFactory: IFluidDataStoreFactory;
-        storeFactories: IFluidDataStoreFactory[];
-        requestHandlers?: RuntimeRequestHandler[];
-        provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
-    });
+    constructor(props: RuntimeFactoryProps);
     // (undocumented)
     instantiateFirstTime(runtime: ContainerRuntime): Promise<void>;
     // (undocumented)
     preInitialize(context: IContainerContext, existing: boolean): Promise<ContainerRuntime>;
+}
+
+// @internal
+export interface RuntimeFactoryProps {
+    // (undocumented)
+    defaultStoreFactory: IFluidDataStoreFactory;
+    // (undocumented)
+    provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+    // @deprecated (undocumented)
+    requestHandlers?: RuntimeRequestHandler[];
+    // (undocumented)
+    storeFactories: IFluidDataStoreFactory[];
 }
 
 ```

@@ -17,7 +17,6 @@ import {
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { rootDataStoreRequestHandler } from "@fluidframework/request-handler";
 
 // By default, the container loads in read mode.  However, pick() attempts silently fail if not in write
 // mode.  To overcome this and test pick(), we can register a fake task (which always tries to perform
@@ -36,7 +35,6 @@ describeCompat("AgentScheduler", "FullCompat", (getTestObjectProvider, apis) => 
 			AgentSchedulerFactory.type,
 			new AgentSchedulerFactory(),
 			{},
-			[rootDataStoreRequestHandler],
 		),
 	};
 
@@ -52,14 +50,18 @@ describeCompat("AgentScheduler", "FullCompat", (getTestObjectProvider, apis) => 
 		return scheduler;
 	};
 
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 
 	describe("Single client", () => {
 		let scheduler: IAgentScheduler;
 
-		beforeEach(async () => {
+		beforeEach("createScheduler", async function () {
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6979
+			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				this.skip();
+			}
 			const container = await createContainer();
 			scheduler = await getAgentScheduler(container);
 		});
@@ -119,7 +121,11 @@ describeCompat("AgentScheduler", "FullCompat", (getTestObjectProvider, apis) => 
 		let scheduler1: IAgentScheduler;
 		let scheduler2: IAgentScheduler;
 
-		beforeEach(async () => {
+		beforeEach("createContainersAndSchedulers", async function () {
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6979
+			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				this.skip();
+			}
 			// Create a new Container for the first document.
 			container1 = await createContainer();
 			scheduler1 = await getAgentScheduler(container1);
@@ -253,7 +259,11 @@ describeCompat("AgentScheduler", "FullCompat", (getTestObjectProvider, apis) => 
 		let scheduler1: IAgentScheduler;
 		let scheduler2: IAgentScheduler;
 
-		beforeEach(async () => {
+		beforeEach("createContainersAndSchedulers", async function () {
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6979
+			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				this.skip();
+			}
 			container1 = await createContainer();
 			scheduler1 = await getContainerEntryPointBackCompat<IAgentScheduler>(container1);
 

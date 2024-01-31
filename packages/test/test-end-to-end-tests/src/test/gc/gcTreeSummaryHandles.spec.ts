@@ -18,10 +18,9 @@ import {
 	SummarizerStopReason,
 	SummaryCollection,
 } from "@fluidframework/container-runtime";
-import { IRequest } from "@fluidframework/core-interfaces";
 import { DriverHeader, ISummaryContext } from "@fluidframework/driver-definitions";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { gcTreeKey, IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import { gcTreeKey } from "@fluidframework/runtime-definitions";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
@@ -179,7 +178,7 @@ async function submitAndAckSummary(
  */
 describeCompat(
 	"GC Tree stored as a handle in summaries",
-	"NoCompat",
+	"2.0.0-rc.1.0.0",
 	(getTestObjectProvider, apis) => {
 		const {
 			containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
@@ -191,14 +190,11 @@ describeCompat(
 		const runtimeOptions: IContainerRuntimeOptions = {
 			gcOptions: { gcAllowed: true },
 		};
-		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
 		const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 			ContainerRuntimeFactoryWithDefaultDataStore,
 			{
 				defaultFactory,
 				registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
-				requestHandlers: [innerRequestHandler],
 				runtimeOptions,
 			},
 		);
@@ -297,7 +293,7 @@ describeCompat(
 		}
 
 		describe("Stores handle in summary when GC state does not change", () => {
-			beforeEach(async () => {
+			beforeEach("setup", async () => {
 				provider = getTestObjectProvider({ syncSummarizer: true });
 				// Wrap the document service factory in the driver so that the `uploadSummaryCb` function is called every
 				// time the summarizer client uploads a summary.

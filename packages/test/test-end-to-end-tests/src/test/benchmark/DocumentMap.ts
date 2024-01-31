@@ -13,12 +13,13 @@ import {
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils";
-import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
-	ITelemetryLoggerExt,
-} from "@fluidframework/telemetry-utils";
+	IFluidHandle,
+	IRequest,
+} from "@fluidframework/core-interfaces";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 
 import {
 	CompressionAlgorithms,

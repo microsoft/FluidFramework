@@ -10,31 +10,28 @@
  */
 
 export {
-	FluidContainer,
 	createFluidContainer,
-	IFluidContainer,
-	IFluidContainerEvents,
-	InitialObjects,
+	type IFluidContainer,
+	type IFluidContainerEvents,
+	type InitialObjects,
 } from "./fluidContainer";
+export { createDOProviderContainerRuntimeFactory } from "./rootDataObject";
+export { createServiceAudience } from "./serviceAudience";
 export {
-	DOProviderContainerRuntimeFactory,
-	createDOProviderContainerRuntimeFactory,
-} from "./rootDataObject";
-export { ServiceAudience, createServiceAudience } from "./serviceAudience";
-export {
-	ContainerSchema,
-	DataObjectClass,
-	IConnection,
-	IMember,
-	IRootDataObject,
-	IServiceAudience,
-	IServiceAudienceEvents,
-	LoadableObjectClass,
-	LoadableObjectClassRecord,
-	LoadableObjectCtor,
-	LoadableObjectRecord,
-	MemberChangedListener,
-	Myself,
-	SharedObjectClass,
-	IProvideRootDataObject,
+	type ContainerSchema,
+	type ContainerAttachProps,
+	type DataObjectClass,
+	type IConnection,
+	type IMember,
+	type IRootDataObject,
+	type IServiceAudience,
+	type IServiceAudienceEvents,
+	type LoadableObjectClass,
+	type LoadableObjectClassRecord,
+	type LoadableObjectCtor,
+	type LoadableObjectRecord,
+	type MemberChangedListener,
+	type Myself,
+	type SharedObjectClass,
+	type IProvideRootDataObject,
 } from "./types";

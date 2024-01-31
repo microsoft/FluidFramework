@@ -361,6 +361,23 @@ module.exports = {
 		 * We may wish to address this in the future.
 		 */
 		"import/no-nodejs-modules": ["error", { allow: ["events"] }],
+
+		/**
+		 * Allow Fluid Framework to import from its own internal packages.
+		 * https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/no-internal-modules.md
+		 */
+		"import/no-internal-modules": [
+			"error",
+			{
+				allow: [
+					"@fluidframework/*/internal",
+					// Allow imports from sibling and ancestral sibling directories,
+					// but not from cousin directories. Parent is allowed but only
+					// because there isn't a known way to deny it.
+					"*/index.js",
+				],
+			},
+		],
 	},
 	overrides: [
 		{

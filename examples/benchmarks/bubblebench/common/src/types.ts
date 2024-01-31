@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { normal, randomColor, rnd } from "./rnd";
+import { normal, randomColor, rnd } from "./rnd.js";
 
 /**
  * @internal
@@ -30,7 +30,7 @@ export interface IBubble {
 export interface IClient {
 	clientId: string;
 	color: string;
-	bubbles: IArrayish<IBubble>;
+	bubbles: IBubble[];
 }
 
 /**

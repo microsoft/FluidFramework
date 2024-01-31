@@ -44,14 +44,14 @@ export interface IRouterliciousDriverPolicies {
     maxConcurrentStorageRequests: number;
 }
 
-// @internal
+// @public
 export interface ITokenProvider {
     documentPostCreateCallback?(documentId: string, creationToken: string): Promise<void>;
     fetchOrdererToken(tenantId: string, documentId?: string, refresh?: boolean): Promise<ITokenResponse>;
     fetchStorageToken(tenantId: string, documentId: string, refresh?: boolean): Promise<ITokenResponse>;
 }
 
-// @internal (undocumented)
+// @public (undocumented)
 export interface ITokenResponse {
     fromCache?: boolean;
     jwt: string;
@@ -69,12 +69,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
     createContainer(createNewSummary: ISummaryTree | undefined, resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean, session?: ISession): Promise<IDocumentService>;
-}
-
-// @internal @deprecated
-export enum RouterliciousErrorType {
-    fileNotFoundOrAccessDeniedError = "fileNotFoundOrAccessDeniedError",
-    sslCertError = "sslCertError"
 }
 
 // @internal

@@ -271,6 +271,7 @@ declare function get_old_InterfaceDeclaration_IPrefetchSnapshotContents():
 declare function use_current_InterfaceDeclaration_IPrefetchSnapshotContents(
     use: TypeOnly<current.IPrefetchSnapshotContents>): void;
 use_current_InterfaceDeclaration_IPrefetchSnapshotContents(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IPrefetchSnapshotContents());
 
 /*
@@ -283,6 +284,7 @@ declare function get_current_InterfaceDeclaration_IPrefetchSnapshotContents():
 declare function use_old_InterfaceDeclaration_IPrefetchSnapshotContents(
     use: TypeOnly<old.IPrefetchSnapshotContents>): void;
 use_old_InterfaceDeclaration_IPrefetchSnapshotContents(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IPrefetchSnapshotContents());
 
 /*
@@ -343,6 +345,7 @@ declare function get_old_InterfaceDeclaration_ISnapshotContentsWithProps():
 declare function use_current_InterfaceDeclaration_ISnapshotContentsWithProps(
     use: TypeOnly<current.ISnapshotContentsWithProps>): void;
 use_current_InterfaceDeclaration_ISnapshotContentsWithProps(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISnapshotContentsWithProps());
 
 /*
@@ -355,6 +358,7 @@ declare function get_current_InterfaceDeclaration_ISnapshotContentsWithProps():
 declare function use_old_InterfaceDeclaration_ISnapshotContentsWithProps(
     use: TypeOnly<old.ISnapshotContentsWithProps>): void;
 use_old_InterfaceDeclaration_ISnapshotContentsWithProps(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISnapshotContentsWithProps());
 
 /*
@@ -884,6 +888,30 @@ declare function use_old_FunctionDeclaration_isOdcUrl(
     use: TypeOnly<typeof old.isOdcUrl>): void;
 use_old_FunctionDeclaration_isOdcUrl(
     get_current_FunctionDeclaration_isOdcUrl());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_isOdspResolvedUrl": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_isOdspResolvedUrl():
+    TypeOnly<typeof old.isOdspResolvedUrl>;
+declare function use_current_FunctionDeclaration_isOdspResolvedUrl(
+    use: TypeOnly<typeof current.isOdspResolvedUrl>): void;
+use_current_FunctionDeclaration_isOdspResolvedUrl(
+    get_old_FunctionDeclaration_isOdspResolvedUrl());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_isOdspResolvedUrl": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_isOdspResolvedUrl():
+    TypeOnly<typeof current.isOdspResolvedUrl>;
+declare function use_old_FunctionDeclaration_isOdspResolvedUrl(
+    use: TypeOnly<typeof old.isOdspResolvedUrl>): void;
+use_old_FunctionDeclaration_isOdspResolvedUrl(
+    get_current_FunctionDeclaration_isOdspResolvedUrl());
 
 /*
 * Validate forward compat by using old type in place of current type

@@ -5,13 +5,13 @@
 
 /**
  * Types supported by {@link IConfigProviderBase}.
- * @internal
+ * @public
  */
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
 /**
  * Base interface for providing configurations to enable/disable/control features.
- * @internal
+ * @public
  */
 export interface IConfigProviderBase {
 	/**

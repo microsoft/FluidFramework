@@ -10,13 +10,13 @@ import { assertWithMessage } from './Common';
 
 /**
  * An object which can generate node IDs and convert node IDs between compressed and stable variants
- * @internal
+ * @alpha
  */
 export interface NodeIdContext extends NodeIdGenerator, NodeIdConverter {}
 
 /**
  * An object which can generate node IDs
- * @internal
+ * @alpha
  */
 export interface NodeIdGenerator {
 	/**
@@ -35,7 +35,7 @@ export interface NodeIdGenerator {
 
 /**
  * An object which can convert node IDs between compressed and stable variants
- * @internal
+ * @alpha
  */
 export interface NodeIdConverter {
 	/**

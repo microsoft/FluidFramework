@@ -8,14 +8,11 @@ import {
 	IEventProvider,
 	ITelemetryBaseLogger,
 	IDisposable,
-	// eslint-disable-next-line import/no-deprecated
-	IFluidRouter,
 	IProvideFluidHandleContext,
 	IFluidHandle,
 	IRequest,
 	IResponse,
 	FluidObject,
-	IFluidHandleContext,
 } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
@@ -31,6 +28,7 @@ import {
 	ISequencedDocumentMessage,
 	ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 import { IProvideFluidDataStoreFactory } from "./dataStoreFactory";
 import { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry";
 import { IGarbageCollectionData, IGarbageCollectionDetailsBase } from "./garbageCollection";
@@ -42,7 +40,6 @@ import {
 	ITelemetryContext,
 	SummarizeInternalFn,
 } from "./summary";
-import { IIdCompressor } from "./id-compressor";
 
 /**
  * Runtime flush mode handling
@@ -160,38 +157,6 @@ export interface IDataStore {
 	 * with it.
 	 */
 	readonly entryPoint: IFluidHandle<FluidObject>;
-
-	/**
-	 * @deprecated Requesting will not be supported in a future major release.
-	 * Instead, access the objects within the DataStore using entryPoint, and then navigate from there using
-	 * app-specific logic (e.g. retrieving a handle from a DDS, or the entryPoint object could implement a request paradigm itself)
-	 *
-	 * IMPORTANT: This overload is provided for back-compat where IDataStore.request(\{ url: "/" \}) is already implemented and used.
-	 * The functionality it can provide (if the DataStore implementation is built for it) is redundant with @see {@link IDataStore.entryPoint}.
-	 *
-	 * Refer to Removing-IFluidRouter.md for details on migrating from the request pattern to using entryPoint.
-	 *
-	 * @param request - Only requesting \{ url: "/" \} is supported, requesting arbitrary URLs is deprecated.
-	 */
-	request(request: { url: "/"; headers?: undefined }): Promise<IResponse>;
-
-	/**
-	 * Issue a request against the DataStore for a resource within it.
-	 * @param request - The request to be issued against the DataStore
-	 *
-	 * @deprecated Requesting an arbitrary URL with headers will not be supported in a future major release.
-	 * Instead, access the objects within the DataStore using entryPoint, and then navigate from there using
-	 * app-specific logic (e.g. retrieving a handle from a DDS, or the entryPoint object could implement a request paradigm itself)
-	 *
-	 * Refer to Removing-IFluidRouter.md for details on migrating from the request pattern to using entryPoint.
-	 */
-	request(request: IRequest): Promise<IResponse>;
-
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	readonly IFluidRouter: IFluidRouter;
 }
 
 /**
@@ -205,15 +170,11 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 
 	/**
 	 * Invokes the given callback and guarantees that all operations generated within the callback will be ordered
-	 * sequentially. Total size of all messages must be less than maxOpSize.
+	 * sequentially.
+	 *
+	 * If the callback throws an error, the container will close and the error will be logged.
 	 */
 	orderSequentially(callback: () => void): void;
-
-	/**
-	 * Executes a request against the container runtime
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	request(request: IRequest): Promise<IResponse>;
 
 	/**
 	 * Submits a container runtime level signal to be sent to other clients.
@@ -238,14 +199,22 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * already attached DDS (or non-attached DDS that will eventually get attached to storage) will result in this
 	 * store being attached to storage.
 	 * @param pkg - Package name of the data store factory
+	 * @param groupId - group to which this data stores belongs to. This is also known at service side and can be used to
+	 * fetch snapshot contents like snapshot tree, blobs using this id from the storage.
 	 */
-	createDataStore(pkg: string | string[]): Promise<IDataStore>;
+	createDataStore(pkg: string | string[], groupId?: string): Promise<IDataStore>;
 
 	/**
 	 * Creates detached data store context. Only after context.attachRuntime() is called,
 	 * data store initialization is considered complete.
+	 * @param pkg - Package name of the data store factory
+	 * @param groupId - group to which this data stores belongs to. This is also known at service side and can be used to
+	 * fetch snapshot contents like snapshot tree, blobs using this id from the storage.
 	 */
-	createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached;
+	createDetachedDataStore(
+		pkg: Readonly<string[]>,
+		groupId?: string,
+	): IFluidDataStoreContextDetached;
 
 	/**
 	 * Get an absolute url for a provided container-relative request.
@@ -265,11 +234,6 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * Returns the current audience.
 	 */
 	getAudience(): IAudience;
-
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	readonly IFluidHandleContext: IFluidHandleContext;
 }
 
 /**
@@ -375,12 +339,6 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	readonly entryPoint: IFluidHandle<FluidObject>;
 
 	request(request: IRequest): Promise<IResponse>;
-
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	readonly IFluidRouter: IFluidRouter;
 }
 
 /**
@@ -434,6 +392,8 @@ export interface IFluidDataStoreContext
 	readonly logger: ITelemetryBaseLogger;
 	readonly clientDetails: IClientDetails;
 	readonly idCompressor?: IIdCompressor;
+	// Represents the group to which the data store belongs too.
+	readonly groupId?: string;
 	/**
 	 * Indicates the attachment state of the data store to a host service.
 	 */
@@ -533,6 +493,9 @@ export interface IFluidDataStoreContext
 	getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
 
 	/**
+	 * @deprecated There is no replacement for this, its functionality is no longer needed at this layer.
+	 * It will be removed in a future release, sometime after 2.0.0-internal.8.0.0
+	 *
 	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
 	 * all references added in the system.
 	 * @param srcHandle - The handle of the node that added the reference.

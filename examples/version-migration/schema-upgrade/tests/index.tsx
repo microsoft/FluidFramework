@@ -13,10 +13,10 @@ import {
 import React from "react";
 import ReactDOM from "react-dom";
 
-import type { IInventoryListAppModel } from "../src/modelInterfaces";
-import { DebugView, InventoryListAppView } from "../src/view";
-import { inventoryListDataTransformationCallback } from "../src/dataTransform";
-import { DemoCodeLoader } from "../src/demoCodeLoader";
+import type { IInventoryListAppModel } from "../src/modelInterfaces.js";
+import { DebugView, InventoryListAppView } from "../src/view/index.js";
+import { inventoryListDataTransformationCallback } from "../src/dataTransform.js";
+import { DemoCodeLoader } from "../src/demoCodeLoader.js";
 
 const updateTabForId = (id: string) => {
 	// Update the URL with the actual ID

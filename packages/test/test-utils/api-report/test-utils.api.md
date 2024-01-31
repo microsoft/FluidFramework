@@ -58,7 +58,7 @@ import { RuntimeRequestHandler } from '@fluidframework/request-handler';
 // @internal (undocumented)
 export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFactory]>;
 
-// @internal
+// @alpha
 export function createAndAttachContainer(source: IFluidCodeDetails, loader: IHostLoader, attachRequest: IRequest): Promise<IContainer>;
 
 // @internal
@@ -88,6 +88,9 @@ export function createSummarizerFromFactory(provider: ITestObjectProvider, conta
     container: IContainer;
     summarizer: ISummarizer;
 }>;
+
+// @internal
+export const createTestConfigProvider: () => ITestConfigProvider;
 
 // @internal
 export const createTestContainerRuntimeFactory: (containerRuntimeCtor: typeof ContainerRuntime) => {
@@ -152,7 +155,7 @@ export interface IDocumentIdStrategy {
     update(resolvedUrl?: IResolvedUrl): void;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IOpProcessingController {
     // (undocumented)
     pauseProcessing(...containers: IContainer[]): Promise<void>;
@@ -164,10 +167,16 @@ export interface IOpProcessingController {
     resumeProcessing(...containers: IContainer[]): void;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IProvideTestFluidObject {
     // (undocumented)
     readonly ITestFluidObject: ITestFluidObject;
+}
+
+// @internal
+export interface ITestConfigProvider extends IConfigProviderBase {
+    clear: () => void;
+    set: (key: string, value: ConfigTypes) => void;
 }
 
 // @internal (undocumented)
@@ -179,7 +188,7 @@ export interface ITestContainerConfig {
     runtimeOptions?: IContainerRuntimeOptions;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface ITestFluidObject extends IProvideTestFluidObject, IFluidLoadable {
     // (undocumented)
     readonly channel: IFluidDataStoreChannel;
@@ -216,7 +225,7 @@ export interface ITestObjectProvider {
     urlResolver: IUrlResolver;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export class LoaderContainerTracker implements IOpProcessingController {
     constructor(syncSummarizerClients?: boolean);
     add<LoaderType extends IHostLoader>(loader: LoaderType): void;
@@ -234,18 +243,18 @@ export class LocalCodeLoader implements ICodeDetailsLoader {
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
 
-// @internal (undocumented)
-export const mockConfigProvider: (settings?: Record<string, ConfigTypes>) => IConfigProviderBase;
-
 // @internal
 export const retryWithEventualValue: <T>(callback: () => Promise<T>, check: (value: T) => boolean, defaultValue: T, maxTries?: number, backOffMs?: number) => Promise<T>;
 
 // @internal
-export function summarizeNow(summarizer: ISummarizer, inputs?: string | IOnDemandSummarizeOptions): Promise<{
+export function summarizeNow(summarizer: ISummarizer, inputs?: string | IOnDemandSummarizeOptions): Promise<SummaryInfo>;
+
+// @internal
+export interface SummaryInfo {
+    summaryRefSeq: number;
     summaryTree: ISummaryTree;
     summaryVersion: string;
-    summaryRefSeq: number;
-}>;
+}
 
 // @internal (undocumented)
 export type SupportedExportInterfaces = Partial<IProvideRuntimeFactory & IProvideFluidDataStoreFactory & IProvideFluidDataStoreRegistry & IProvideFluidCodeDetailsComparer>;
@@ -278,13 +287,11 @@ export class TestFluidObject implements ITestFluidObject {
     get handle(): IFluidHandle<this>;
     // (undocumented)
     get IFluidLoadable(): this;
-    // @deprecated (undocumented)
-    get IFluidRouter(): this;
     // (undocumented)
     initialize(existing: boolean): Promise<void>;
     // (undocumented)
     get ITestFluidObject(): this;
-    // @deprecated (undocumented)
+    // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
     root: ISharedMap;

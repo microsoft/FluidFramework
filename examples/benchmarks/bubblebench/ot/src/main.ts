@@ -7,7 +7,7 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedJson1 } from "@fluid-experimental/sharejs-json1";
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { AppState } from "./state";
+import { AppState } from "./state.js";
 
 /**
  * @internal
@@ -19,7 +19,10 @@ export class Bubblebench extends DataObject {
 
 	protected async initializingFirstTime() {
 		const tree = (this.maybeTree = SharedJson1.create(this.runtime));
-		tree.replace([], tree.get(), { clients: [] });
+		const initialTree = { clients: [] };
+		// unknown used to workaround recursive Doc type that otherwise results in
+		// "Type instantiation is excessively deep and possibly infinite" error.
+		tree.replace<unknown, typeof initialTree>([], tree.get(), initialTree);
 		this.root.set("tree", this.maybeTree.handle);
 	}
 

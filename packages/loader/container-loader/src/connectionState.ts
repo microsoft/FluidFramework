@@ -4,7 +4,7 @@
  */
 
 /**
- * @internal
+ * @public
  */
 export enum ConnectionState {
 	/**

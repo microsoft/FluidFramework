@@ -3,19 +3,18 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-deprecated */
-
 import { LocalReferencePosition } from "./localReference";
 import { ISegment } from "./mergeTreeNodes";
+// eslint-disable-next-line import/no-deprecated
 import { SortedSegmentSet } from "./sortedSegmentSet";
 
 /**
- * @internal
+ * @alpha
  */
 export type Trackable = ISegment | LocalReferencePosition;
 
 /**
- * @internal
+ * @alpha
  */
 export interface ITrackingGroup {
 	tracked: readonly Trackable[];
@@ -26,12 +25,14 @@ export interface ITrackingGroup {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export class TrackingGroup implements ITrackingGroup {
+	// eslint-disable-next-line import/no-deprecated
 	private readonly trackedSet: SortedSegmentSet<Trackable>;
 
 	constructor() {
+		// eslint-disable-next-line import/no-deprecated
 		this.trackedSet = new SortedSegmentSet<Trackable>();
 	}
 
@@ -102,7 +103,8 @@ export class UnorderedTrackingGroup implements ITrackingGroup {
 }
 
 /**
- * @internal
+ * A collection of {@link ITrackingGroup}.
+ * @alpha
  */
 export class TrackingGroupCollection {
 	private readonly _trackingGroups: Set<ITrackingGroup>;

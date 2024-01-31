@@ -4,25 +4,30 @@
  */
 
 /**
- * Flags enum that dictates behavior of a ReferencePosition
- * @internal
+ * Flags enum that dictates behavior of a {@link ReferencePosition}
+ * @alpha
  */
 export enum ReferenceType {
 	Simple = 0x0,
 	/**
-	 * Allows this reference to be located using the `findTile` API on merge-tree.
+	 * Allows this reference to be located using the `searchForMarker` API on merge-tree.
 	 */
 	Tile = 0x1,
+
 	/**
-	 * @deprecated this functionality is no longer supported and will be removed
+	 * Denotes that this reference begins the start of an interval. This is
+	 * generally not meaningful outside the context of interval collections
+	 * on SharedString.
 	 */
-	NestBegin = 0x2,
-	/**
-	 * @deprecated this functionality is no longer supported and will be removed
-	 */
-	NestEnd = 0x4,
 	RangeBegin = 0x10,
+
+	/**
+	 * Denotes that this reference is the end of an interval. This is
+	 * generally not meaningful outside the context of interval collections
+	 * on SharedString.
+	 */
 	RangeEnd = 0x20,
+
 	/**
 	 * When a segment is marked removed (locally or with ack), this reference will slide to the first
 	 * valid option of:
@@ -43,7 +48,7 @@ export enum ReferenceType {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IMarkerDef {
 	refType?: ReferenceType;
@@ -51,7 +56,7 @@ export interface IMarkerDef {
 
 // Note: Assigned positive integers to avoid clashing with MergeTreeMaintenanceType
 /**
- * @internal
+ * @alpha
  */
 export const MergeTreeDeltaType = {
 	INSERT: 0,
@@ -61,15 +66,16 @@ export const MergeTreeDeltaType = {
 	 * @deprecated The ability to create group ops will be removed in an upcoming release, as group ops are redundant with he native batching capabilities of the runtime
 	 */
 	GROUP: 3,
+	OBLITERATE: 4,
 } as const;
 
 /**
- * @internal
+ * @alpha
  */
 export type MergeTreeDeltaType = (typeof MergeTreeDeltaType)[keyof typeof MergeTreeDeltaType];
 
 /**
- * @internal
+ * @alpha
  */
 export interface IMergeTreeDelta {
 	/**
@@ -80,7 +86,7 @@ export interface IMergeTreeDelta {
 
 /**
  * A position specified relative to a segment.
- * @internal
+ * @alpha
  */
 export interface IRelativePosition {
 	/**
@@ -100,7 +106,7 @@ export interface IRelativePosition {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
 	type: typeof MergeTreeDeltaType.INSERT;
@@ -112,7 +118,7 @@ export interface IMergeTreeInsertMsg extends IMergeTreeDelta {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
 	type: typeof MergeTreeDeltaType.REMOVE;
@@ -126,17 +132,26 @@ export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
  * @deprecated We no longer intend to support this functionality and it will
  * be removed in a future release. There is no replacement for this
  * functionality.
- * @internal
+ * @alpha
  */
-export interface ICombiningOp {
-	name: string;
-	defaultValue?: any;
-	minValue?: any;
-	maxValue?: any;
+export interface IMergeTreeObliterateMsg extends IMergeTreeDelta {
+	type: typeof MergeTreeDeltaType.OBLITERATE;
+	pos1?: number;
+	/**
+	 * This field is currently unused, but we keep it around to make the union
+	 * type of all merge-tree messages have the same fields
+	 */
+	relativePos1?: never;
+	pos2?: number;
+	/**
+	 * This field is currently unused, but we keep it around to make the union
+	 * type of all merge-tree messages have the same fields
+	 */
+	relativePos2?: never;
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
 	type: typeof MergeTreeDeltaType.ANNOTATE;
@@ -145,17 +160,14 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
 	pos2?: number;
 	relativePos2?: IRelativePosition;
 	props: Record<string, any>;
-	/**
-	 * @deprecated We no longer intend to support this functionality and it will
-	 * be removed in a future release. There is no replacement for this
-	 * functionality.
-	 */
-	combiningOp?: ICombiningOp;
 }
 
 /**
- * @deprecated The ability to create group ops will be removed in an upcoming release, as group ops are redundant with the native batching capabilities of the runtime
- * @internal
+ * @deprecated The ability to create group ops will be removed in an upcoming
+ * release, as group ops are redundant with the native batching capabilities
+ * of the runtime
+ *
+ * @alpha
  */
 export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
 	type: typeof MergeTreeDeltaType.GROUP;
@@ -163,18 +175,22 @@ export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IJSONSegment {
 	props?: Record<string, any>;
 }
 
 /**
- * @internal
+ * @alpha
  */
-export type IMergeTreeDeltaOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMergeTreeAnnotateMsg;
+export type IMergeTreeDeltaOp =
+	| IMergeTreeInsertMsg
+	| IMergeTreeRemoveMsg
+	| IMergeTreeAnnotateMsg
+	| IMergeTreeObliterateMsg;
 
 /**
- * @internal
+ * @alpha
  */
 export type IMergeTreeOp = IMergeTreeDeltaOp | IMergeTreeGroupMsg;

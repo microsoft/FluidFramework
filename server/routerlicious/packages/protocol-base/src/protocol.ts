@@ -19,7 +19,7 @@ import {
 import { IQuorumSnapshot, Quorum } from "./quorum";
 
 /**
- * @internal
+ * @alpha
  */
 export interface IScribeProtocolState {
 	sequenceNumber: number;
@@ -30,7 +30,7 @@ export interface IScribeProtocolState {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface IProtocolHandler {
 	readonly quorum: IQuorum;
@@ -154,10 +154,27 @@ export class ProtocolOpHandler implements IProtocolHandler {
 	public getProtocolState(): IScribeProtocolState {
 		// return a new object every time
 		// this ensures future state changes will not affect outside callers
+
+		const snapshot = this._quorum.snapshot();
+
+		const quorumMembers = snapshot.members;
+
+		// Removing any identifying client information
+		quorumMembers.forEach((member) => {
+			member[1] = {
+				...member[1],
+				client: {
+					...member[1].client,
+					user: { id: "" },
+				},
+			};
+		});
+
 		return {
 			sequenceNumber: this.sequenceNumber,
 			minimumSequenceNumber: this.minimumSequenceNumber,
 			...this._quorum.snapshot(),
+			members: quorumMembers,
 		};
 	}
 }

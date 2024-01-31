@@ -149,6 +149,8 @@ export interface ISubmitSummaryOptions extends ISummarizeOptions {
 export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
 	/** Reason for generating summary. */
 	readonly reason: string;
+	/** In case of a failure, will attempt to retry based on if the failure is retriable. */
+	readonly retryOnFailure?: boolean;
 }
 
 /**
@@ -375,7 +377,7 @@ export type EnqueueSummarizeResult =
  * @alpha
  */
 export type SummarizerStopReason =
-	/** Summarizer client failed to summarize in all 3 consecutive attempts. */
+	/** Summarizer client failed to summarize in all attempts. */
 	| "failToSummarize"
 	/** Parent client reported that it is no longer connected. */
 	| "parentNotConnected"
@@ -418,7 +420,7 @@ export interface ISummarizerEvents extends IEvent {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
 	/**

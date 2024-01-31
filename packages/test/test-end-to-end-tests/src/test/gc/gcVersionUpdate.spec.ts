@@ -8,11 +8,7 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntimeOptions, ISummarizer } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import {
-	channelsTreeName,
-	gcTreeKey,
-	IContainerRuntimeBase,
-} from "@fluidframework/runtime-definitions";
+import { channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
@@ -23,12 +19,11 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { IRequest } from "@fluidframework/core-interfaces";
 import {
 	IGCMetadata,
 	IGarbageCollector,
 	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/container-runtime/dist/gc/index.js";
+} from "@fluidframework/container-runtime/test/gc";
 
 // IContainerRuntime type that exposes garbage collector which is a private property.
 type IContainerRuntimeWithPrivates = IContainerRuntime & {
@@ -39,7 +34,7 @@ type IContainerRuntimeWithPrivates = IContainerRuntime & {
  * Validates that when the runtime GC version changes, we reset GC state and regenerate summary. Basically, when we
  * update the GC version due to bugs, newer versions re-run GC and older versions stop running GC.
  */
-describeCompat("GC version update", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("GC version update", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) => {
 	const {
 		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
 	} = apis;
@@ -55,15 +50,11 @@ describeCompat("GC version update", "NoCompat", (getTestObjectProvider, apis) =>
 		gcOptions: { gcAllowed: true },
 	};
 
-	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
-
 	const defaultRuntimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 		ContainerRuntimeFactoryWithDefaultDataStore,
 		{
 			defaultFactory,
 			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
-			requestHandlers: [innerRequestHandler],
 			runtimeOptions,
 		},
 	);
@@ -132,7 +123,7 @@ describeCompat("GC version update", "NoCompat", (getTestObjectProvider, apis) =>
 		containerRuntime.garbageCollector.getMetadata = getMetadataOverride;
 	}
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		mainContainer = await provider.createContainer(defaultRuntimeFactory);
 		const dataStore1 = (await mainContainer.getEntryPoint()) as ITestFluidObject;

@@ -48,8 +48,8 @@ describe("entryPoint compat", () => {
 		return provider.createContainer(runtimeFactory);
 	}
 
-	describeCompat("no compat", "NoCompat", (getTestObjectProvider) => {
-		beforeEach(async () => {
+	describeCompat("no compat", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+		beforeEach("getTestObjectProvider", async () => {
 			provider = getTestObjectProvider();
 		});
 
@@ -58,36 +58,13 @@ describe("entryPoint compat", () => {
 			const entryPoint = await container.getEntryPoint?.();
 			assert.notStrictEqual(entryPoint, undefined, "entryPoint was undefined");
 		});
-
-		// TODO: Remove this test when request is removed from Container AB#4991
-		it("request pattern", async () => {
-			const container = await createContainer();
-			const requestResult = await container.request({ url: "/" });
-
-			assert.strictEqual(requestResult.status, 200, requestResult.value);
-			assert.notStrictEqual(requestResult.value, undefined, "requestResult was undefined");
-		});
-
-		// TODO: Remove this test when request is removed from Container AB#4991
-		it("both entryPoint and request pattern", async () => {
-			const container = await createContainer();
-			const entryPoint = await container.getEntryPoint?.();
-			const requestResult = await container.request({ url: "/" });
-
-			assert.strictEqual(requestResult.status, 200, requestResult.value);
-			assert.strictEqual(
-				entryPoint,
-				requestResult.value,
-				"entryPoint and requestResult expected to be the same",
-			);
-		});
 	});
 
 	const loaderWithRequest = "2.0.0-internal.7.0.0";
 	describeInstallVersions({
 		requestAbsoluteVersions: [loaderWithRequest],
 	})("loader compat", (_) => {
-		beforeEach(async () => {
+		beforeEach("getVersionedTestObjectProvider", async () => {
 			provider = await getVersionedTestObjectProvider(
 				pkgVersion, // base version
 				loaderWithRequest,
@@ -100,7 +77,7 @@ describe("entryPoint compat", () => {
 
 		it("request pattern works", async () => {
 			const container = await createContainer();
-			const requestResult = await container.request({ url: "/" });
+			const requestResult = await (container as any).request({ url: "/" });
 
 			assert.strictEqual(requestResult.status, 200, requestResult.value);
 			assert.notStrictEqual(requestResult.value, undefined, "requestResult was undefined");
@@ -108,7 +85,7 @@ describe("entryPoint compat", () => {
 
 		it("request pattern works when entryPoint is available", async () => {
 			const container = await createContainer();
-			const requestResult = await container.request({ url: "/" });
+			const requestResult = await (container as any).request({ url: "/" });
 
 			// Verify request pattern still works for older loaders (even with entryPoint available)
 			assert.strictEqual(requestResult.status, 200, requestResult.value);

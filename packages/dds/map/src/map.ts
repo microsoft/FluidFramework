@@ -30,7 +30,7 @@ const snapshotFileName = "header";
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link SharedMap}.
  *
  * @sealed
- * @internal
+ * @alpha
  */
 export class MapFactory implements IChannelFactory {
 	/**
@@ -89,7 +89,8 @@ export class MapFactory implements IChannelFactory {
 
 /**
  * {@inheritDoc ISharedMap}
- * @internal
+ * @public
+ * @deprecated Please use SharedTree for new containers.  SharedMap is supported for loading preexisting Fluid Framework 1.0 containers only.
  */
 export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
 	/**

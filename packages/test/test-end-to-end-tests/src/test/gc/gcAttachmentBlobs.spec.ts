@@ -16,7 +16,7 @@ import {
 } from "@fluidframework/test-utils";
 import { describeCompat, ITestDataObject } from "@fluid-private/test-version-utils";
 // eslint-disable-next-line import/no-internal-modules
-import { BlobManager } from "@fluidframework/container-runtime/dist/blobManager.js";
+import { BlobManager } from "@fluidframework/container-runtime/test/blobManager";
 import {
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
@@ -30,7 +30,7 @@ import {
 /**
  * Validates that unreferenced blobs are marked as unreferenced and deleted correctly.
  */
-describeCompat("Garbage collection of blobs", "NoCompat", (getTestObjectProvider) => {
+describeCompat("Garbage collection of blobs", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 	// If deleteUnreferencedContent is true, GC is run in test mode where content that is not referenced is
 	// deleted after each GC run.
 	const tests = (deleteUnreferencedContent: boolean = false) => {
@@ -121,7 +121,7 @@ describeCompat("Garbage collection of blobs", "NoCompat", (getTestObjectProvider
 			return summarizerDefaultDataStore._context.containerRuntime as ContainerRuntime;
 		}
 
-		beforeEach(async function () {
+		beforeEach("setup", async function () {
 			provider = getTestObjectProvider();
 			if (!driverSupportsBlobs(provider.driver)) {
 				this.skip();

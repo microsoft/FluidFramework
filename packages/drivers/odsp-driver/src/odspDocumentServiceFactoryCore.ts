@@ -4,6 +4,7 @@
  */
 
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/core-interfaces";
+import { PromiseCache } from "@fluidframework/core-utils";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
@@ -25,13 +26,17 @@ import {
 	IOdspUrlParts,
 	SharingLinkScope,
 	SharingLinkRole,
-	ShareLinkTypes,
 	ISharingLinkKind,
 	ISocketStorageDiscovery,
 	IRelaySessionAwareDriverFactory,
 } from "@fluidframework/odsp-driver-definitions";
 import { v4 as uuid } from "uuid";
-import { INonPersistentCache, LocalPersistentCache, NonPersistentCache } from "./odspCache";
+import {
+	INonPersistentCache,
+	IPrefetchSnapshotContents,
+	LocalPersistentCache,
+	NonPersistentCache,
+} from "./odspCache";
 import { createOdspCacheAndTracker, ICacheAndTracker } from "./epochTracker";
 import { OdspDocumentService } from "./odspDocumentService";
 import {
@@ -50,7 +55,7 @@ import {
  *
  * This constructor should be used by environments that support dynamic imports and that wish
  * to leverage code splitting as a means to keep bundles as small as possible.
- * @internal
+ * @alpha
  */
 export class OdspDocumentServiceFactoryCore
 	implements IDocumentServiceFactory, IRelaySessionAwareDriverFactory
@@ -58,7 +63,7 @@ export class OdspDocumentServiceFactoryCore
 	private readonly nonPersistentCache: INonPersistentCache = new NonPersistentCache();
 	private readonly socketReferenceKeyPrefix?: string;
 
-	public get snapshotPrefetchResultCache() {
+	public get snapshotPrefetchResultCache(): PromiseCache<string, IPrefetchSnapshotContents> {
 		return this.nonPersistentCache.snapshotPrefetchResultCache;
 	}
 
@@ -96,7 +101,7 @@ export class OdspDocumentServiceFactoryCore
 		};
 
 		let fileInfo: INewFileInfo | IExistingFileInfo;
-		let createShareLinkParam: ShareLinkTypes | ISharingLinkKind | undefined;
+		let createShareLinkParam: ISharingLinkKind | undefined;
 		if (odspResolvedUrl.itemId) {
 			fileInfo = {
 				type: "Existing",
@@ -155,7 +160,6 @@ export class OdspDocumentServiceFactoryCore
 				createShareLinkParam: createShareLinkParam
 					? JSON.stringify(createShareLinkParam)
 					: undefined,
-				enableShareLinkWithCreate: this.hostPolicy.enableShareLinkWithCreate,
 				enableSingleRequestForShareLinkWithCreate:
 					this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
 			},
@@ -196,7 +200,6 @@ export class OdspDocumentServiceFactoryCore
 								?.forceAccessTokenViaAuthorizationHeader,
 							odspResolvedUrl.isClpCompliantApp,
 							this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
-							this.hostPolicy.enableShareLinkWithCreate,
 					  )
 					: await module.createNewContainerOnExistingFile(
 							getStorageToken,
@@ -324,9 +327,9 @@ export class OdspDocumentServiceFactoryCore
 function getSharingLinkParams(
 	hostPolicy: HostStoragePolicy,
 	searchParams: URLSearchParams,
-): ShareLinkTypes | ISharingLinkKind | undefined {
+): ISharingLinkKind | undefined {
 	// extract request parameters for creation of sharing link (if provided) if the feature is enabled
-	let createShareLinkParam: ShareLinkTypes | ISharingLinkKind | undefined;
+	let createShareLinkParam: ISharingLinkKind | undefined;
 	if (hostPolicy.enableSingleRequestForShareLinkWithCreate) {
 		const createLinkScope = searchParams.get("createLinkScope");
 		const createLinkRole = searchParams.get("createLinkRole");
@@ -337,11 +340,6 @@ function getSharingLinkParams(
 					? { role: SharingLinkRole[createLinkRole] }
 					: {}),
 			};
-		}
-	} else if (hostPolicy.enableShareLinkWithCreate) {
-		const createLinkType = searchParams.get("createLinkType");
-		if (createLinkType && ShareLinkTypes[createLinkType]) {
-			createShareLinkParam = ShareLinkTypes[createLinkType || ""];
 		}
 	}
 	return createShareLinkParam;

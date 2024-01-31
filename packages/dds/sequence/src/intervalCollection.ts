@@ -7,7 +7,7 @@
 /* eslint-disable import/no-deprecated */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
 import {
 	addProperties,
@@ -35,6 +35,7 @@ import {
 	IValueOpEmitter,
 	IValueOperation,
 	IValueType,
+	IValueTypeOperationValue,
 	SequenceOptions,
 } from "./defaultMapInterfaces";
 import {
@@ -53,6 +54,7 @@ import {
 	startReferenceSlidingPreference,
 	sequenceIntervalHelpers,
 	createInterval,
+	IntervalDeltaOpType,
 } from "./intervals";
 import {
 	EndpointIndex,
@@ -87,7 +89,7 @@ import {
  * If a SequencePlace is the endpoint of a range (e.g. start/end of an interval or search range),
  * the Side value means it is exclusive if it is nearer to the other position and inclusive if it is farther.
  * E.g. the start of a range with Side.After is exclusive of the character at the position.
- * @internal
+ * @alpha
  */
 export type SequencePlace = number | "start" | "end" | InteriorSequencePlace;
 
@@ -95,7 +97,7 @@ export type SequencePlace = number | "start" | "end" | InteriorSequencePlace;
  * A sequence place that does not refer to the special endpoint segments.
  *
  * See {@link SequencePlace} for additional context.
- * @internal
+ * @alpha
  */
 export interface InteriorSequencePlace {
 	pos: number;
@@ -106,7 +108,7 @@ export interface InteriorSequencePlace {
  * Defines a side relative to a character in a sequence.
  *
  * @remarks See {@link SequencePlace} for additional context on usage.
- * @internal
+ * @alpha
  */
 export enum Side {
 	Before = 0,
@@ -578,6 +580,13 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<
 		return { rebasedOp, rebasedLocalOpMetadata: localOpMetadata };
 	};
 
+	const applyStashedOp: IValueOperation<IntervalCollection<T>>["applyStashedOp"] = (
+		collection,
+		op,
+	) => {
+		return collection.applyStashedOp(op);
+	};
+
 	return new Map<IntervalOpType, IValueOperation<IntervalCollection<T>>>([
 		[
 			IntervalOpType.ADD,
@@ -592,6 +601,7 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<
 					collection.ackAdd(params, local, op, localOpMetadata);
 				},
 				rebase,
+				applyStashedOp,
 			},
 		],
 		[
@@ -605,6 +615,7 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<
 					// Deletion of intervals is based on id, so requires no rebasing.
 					return { rebasedOp: op, rebasedLocalOpMetadata: localOpMetadata };
 				},
+				applyStashedOp,
 			},
 		],
 		[
@@ -620,13 +631,14 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<
 					collection.ackChange(params, local, op, localOpMetadata);
 				},
 				rebase,
+				applyStashedOp,
 			},
 		],
 	]);
 }
 
 /**
- * @internal
+ * @alpha
  */
 export type DeserializeCallback = (properties: PropertySet) => void;
 
@@ -665,7 +677,7 @@ class IntervalCollectionIterator<TInterval extends ISerializableInterval>
 
 /**
  * Change events emitted by `IntervalCollection`s
- * @internal
+ * @alpha
  */
 export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> extends IEvent {
 	/**
@@ -690,7 +702,7 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 			op: ISequencedDocumentMessage | undefined,
 			slide: boolean,
 		) => void,
-	);
+	): void;
 	/**
 	 * This event is invoked whenever an interval is added or removed from the collection.
 	 * `local` reflects whether the change originated locally.
@@ -703,7 +715,7 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 			local: boolean,
 			op: ISequencedDocumentMessage | undefined,
 		) => void,
-	);
+	): void;
 	/**
 	 * This event is invoked whenever an interval's properties have changed.
 	 * `interval` reflects the state of the updated properties.
@@ -721,19 +733,35 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 			local: boolean,
 			op: ISequencedDocumentMessage | undefined,
 		) => void,
-	);
+	): void;
+	/**
+	 * This event is invoked whenever an interval's endpoints or properties (or both) have changed.
+	 * `interval` reflects the state of the updated endpoints or properties.
+	 * `propertyDeltas` is a map-like whose keys contain all values that were changed, and whose
+	 * values contain all previous values of the property set.
+	 * This object can be used directly in a call to `changeProperties` to revert the property change if desired.
+	 * 'previousInterval' contains transient `ReferencePosition`s at the same location as the interval's original
+	 * endpoints. These references should be used for position information only. In the case of a property change
+	 * only, this argument should be undefined.
+	 * `local` reflects whether the change originated locally.
+	 * `slide` is true if the change is due to sliding on removal of position.
+	 */
+	(
+		event: "changed",
+		listener: (
+			interval: TInterval,
+			propertyDeltas: PropertySet,
+			previousInterval: TInterval | undefined,
+			local: boolean,
+			slide: boolean,
+		) => void,
+	): void;
 }
-
-// solely for type checking in the implementation of add - will be removed once
-// deprecated signatures are removed
-const isSequencePlace = (place: any): place is SequencePlace => {
-	return typeof place === "number" || typeof place === "string" || place.pos !== undefined;
-};
 
 /**
  * Collection of intervals that supports addition, modification, removal, and efficient spatial querying.
  * Changes to this collection will be incur updates on collaborating clients (i.e. they are not local-only).
- * @internal
+ * @alpha
  */
 export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
@@ -762,12 +790,10 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	getIntervalById(id: string): TInterval | undefined;
 	/**
 	 * Creates a new interval and add it to the collection.
-	 * @deprecated call IntervalCollection.add without specifying an intervalType
 	 * @param start - interval start position (inclusive)
 	 * @param end - interval end position (exclusive)
-	 * @param intervalType - type of the interval. All intervals are SlideOnRemove. Intervals may not be Transient.
 	 * @param props - properties of the interval
-	 * @returns The created interval
+	 * @returns - the created interval
 	 * @remarks See documentation on {@link SequenceInterval} for comments on
 	 * interval endpoint semantics: there are subtleties with how the current
 	 * half-open behavior is represented.
@@ -833,21 +859,6 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * the case that the entire interval has been deleted should be resolved at
 	 * the same time as this ticket
 	 */
-	add(
-		start: SequencePlace,
-		end: SequencePlace,
-		intervalType: IntervalType,
-		props?: PropertySet,
-	): TInterval;
-	/**
-	 * Creates a new interval and add it to the collection.
-	 * @param start - interval start position (inclusive)
-	 * @param end - interval end position (exclusive)
-	 * @param props - properties of the interval
-	 * @returns - the created interval
-	 * @remarks - See documentation on {@link SequenceInterval} for comments on interval endpoint semantics: there are subtleties
-	 * with how the current half-open behavior is represented.
-	 */
 	add({
 		start,
 		end,
@@ -864,20 +875,17 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 */
 	removeIntervalById(id: string): TInterval | undefined;
 	/**
-	 * Changes the properties on an existing interval.
-	 * @param id - Id of the interval whose properties should be changed
-	 * @param props - Property set to apply to the interval. Shallow merging is used between any existing properties
-	 * and `prop`, i.e. the interval will end up with a property object equivalent to `{ ...oldProps, ...props }`.
-	 */
-	changeProperties(id: string, props: PropertySet);
-	/**
-	 * Changes the endpoints of an existing interval.
-	 * @param id - Id of the interval to change
-	 * @param start - New start value. To leave the endpoint unchanged, pass the current value.
-	 * @param end - New end value. To leave the endpoint unchanged, pass the current value.
+	 * Changes the endpoints, properties, or both of an existing interval.
+	 * @param id - Id of the Interval to change
 	 * @returns the interval that was changed, if it existed in the collection.
+	 * Pass the desired new start position, end position, and/or properties in an object. Start and end positions must be changed
+	 * simultaneously - they must either both be specified or both undefined. To only change the properties, leave both endpoints
+	 * undefined. To only change the endpoints, leave the properties undefined.
 	 */
-	change(id: string, start: SequencePlace, end: SequencePlace): TInterval | undefined;
+	change(
+		id: string,
+		{ start, end, props }: { start?: SequencePlace; end?: SequencePlace; props?: PropertySet },
+	): TInterval | undefined;
 
 	attachDeserializer(onDeserialize: DeserializeCallback): void;
 	/**
@@ -1213,10 +1221,12 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			previousInterval.start.refType = ReferenceType.Transient;
 			previousInterval.end.refType = ReferenceType.Transient;
 			this.emit("changeInterval", interval, previousInterval, local, op, slide);
+			this.emit("changed", interval, undefined, previousInterval ?? undefined, local, slide);
 			previousInterval.start.refType = startRefType;
 			previousInterval.end.refType = endRefType;
 		} else {
 			this.emit("changeInterval", interval, previousInterval, local, op, slide);
+			this.emit("changed", interval, undefined, previousInterval ?? undefined, local, slide);
 		}
 	}
 
@@ -1243,15 +1253,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 	/**
 	 * {@inheritdoc IIntervalCollection.add}
-	 * @deprecated call IntervalCollection.add without specifying an intervalType
 	 */
-	public add(
-		start: SequencePlace,
-		end: SequencePlace,
-		intervalType: IntervalType,
-		props?: PropertySet,
-	): TInterval;
-
 	public add({
 		start,
 		end,
@@ -1260,47 +1262,12 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		start: SequencePlace;
 		end: SequencePlace;
 		props?: PropertySet;
-	}): TInterval;
-
-	public add(
-		start:
-			| SequencePlace
-			| {
-					start: SequencePlace;
-					end: SequencePlace;
-					props?: PropertySet;
-			  },
-		end?: SequencePlace,
-		intervalType?: IntervalType,
-		props?: PropertySet,
-	): TInterval {
-		let intStart: SequencePlace;
-		let intEnd: SequencePlace;
-		let type: IntervalType;
-		let properties: PropertySet | undefined;
-
-		if (isSequencePlace(start)) {
-			intStart = start;
-			assert(end !== undefined, 0x7c0 /* end must be defined */);
-			intEnd = end;
-			assert(intervalType !== undefined, 0x7c1 /* intervalType must be defined */);
-			type = intervalType;
-			properties = props;
-		} else {
-			intStart = start.start;
-			intEnd = start.end;
-			type = IntervalType.SlideOnRemove;
-			properties = start.props;
-		}
-
+	}): TInterval {
 		if (!this.localCollection) {
 			throw new LoggingError("attach must be called prior to adding intervals");
 		}
-		if (type & IntervalType.Transient) {
-			throw new LoggingError("Can not add transient intervals");
-		}
 
-		const { startSide, endSide, startPos, endPos } = endpointPosAndSide(intStart, intEnd);
+		const { startSide, endSide, startPos, endPos } = endpointPosAndSide(start, end);
 
 		assert(
 			startPos !== undefined &&
@@ -1312,13 +1279,13 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 		const stickiness = computeStickinessFromSide(startPos, startSide, endPos, endSide);
 
-		this.assertStickinessEnabled(intStart, intEnd);
+		this.assertStickinessEnabled(start, end);
 
 		const interval: TInterval = this.localCollection.addInterval(
 			toSequencePlace(startPos, startSide),
 			toSequencePlace(endPos, endSide),
-			type,
-			properties,
+			IntervalType.SlideOnRemove,
+			props,
 		);
 
 		if (interval) {
@@ -1329,7 +1296,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			const serializedInterval: ISerializedInterval = {
 				start: startPos,
 				end: endPos,
-				intervalType: type,
+				intervalType: IntervalType.SlideOnRemove,
 				properties: interval.properties,
 				sequenceNumber: this.client?.getCurrentSeq() ?? 0,
 				stickiness,
@@ -1337,7 +1304,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 				endSide,
 			};
 			const localSeq = this.getNextLocalSeq();
-			this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
+			if (this.isCollaborating) {
+				this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
+			}
 			// Local ops get submitted to the server. Remote ops have the deserializer run.
 			this.emitter.emit("add", undefined, serializedInterval, { localSeq });
 		}
@@ -1387,73 +1356,54 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		}
 		return interval;
 	}
-
-	/**
-	 * {@inheritdoc IIntervalCollection.changeProperties}
-	 */
-	public changeProperties(id: string, props: PropertySet) {
-		if (!this.attached) {
-			throw new LoggingError("Attach must be called before accessing intervals");
-		}
-		if (typeof id !== "string") {
-			throw new LoggingError("Change API requires an ID that is a string");
-		}
-		if (!props) {
-			throw new LoggingError("changeProperties should be called with a property set");
-		}
-		// prevent the overwriting of an interval label, it should remain unchanged
-		// once it has been inserted into the collection.
-		if (props[reservedRangeLabelsKey] !== undefined) {
-			throw new LoggingError(
-				"The label property should not be modified once inserted to the collection",
-			);
-		}
-
-		const interval = this.getIntervalById(id);
-		if (interval) {
-			const deltaProps = interval.addProperties(
-				props,
-				true,
-				this.isCollaborating ? UnassignedSequenceNumber : UniversalSequenceNumber,
-			);
-			const serializedInterval: ISerializedInterval = interval.serialize();
-
-			// Emit a change op that will only change properties. Add the ID to
-			// the property bag provided by the caller.
-			serializedInterval.start = undefined as any;
-			serializedInterval.end = undefined as any;
-
-			serializedInterval.properties = props;
-			serializedInterval.properties[reservedIntervalIdKey] = interval.getIntervalId();
-			const localSeq = this.getNextLocalSeq();
-			this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
-			this.emitter.emit("change", undefined, serializedInterval, { localSeq });
-			this.emit("propertyChanged", interval, deltaProps, true, undefined);
-		}
-	}
-
 	/**
 	 * {@inheritdoc IIntervalCollection.change}
 	 */
-	public change(id: string, start: SequencePlace, end: SequencePlace) {
+	public change(
+		id: string,
+		{ start, end, props }: { start?: SequencePlace; end?: SequencePlace; props?: PropertySet },
+	): TInterval | undefined {
 		if (!this.localCollection) {
 			throw new LoggingError("Attach must be called before accessing intervals");
 		}
 
 		// Force id to be a string.
 		if (typeof id !== "string") {
-			throw new LoggingError("Change API requires an ID that is a string");
+			throw new UsageError("Change API requires an ID that is a string");
+		}
+
+		// Ensure that both start and end are defined or both are undefined.
+		if ((start === undefined) !== (end === undefined)) {
+			throw new UsageError(
+				"Change API requires both start and end to be defined or undefined",
+			);
+		}
+
+		// prevent the overwriting of an interval label, it should remain unchanged
+		// once it has been inserted into the collection.
+		if (props?.[reservedRangeLabelsKey] !== undefined) {
+			throw new UsageError(
+				"The label property should not be modified once inserted to the collection",
+			);
 		}
 
 		const interval = this.getIntervalById(id);
 		if (interval) {
-			const newInterval = this.localCollection.changeInterval(interval, start, end);
-			if (!newInterval) {
-				return undefined;
+			let deltaProps: PropertySet | undefined;
+			let newInterval: TInterval | undefined;
+			if (props !== undefined) {
+				deltaProps = interval.addProperties(
+					props,
+					true,
+					this.isCollaborating ? UnassignedSequenceNumber : UniversalSequenceNumber,
+				);
 			}
-			if (!this.isCollaborating && newInterval instanceof SequenceInterval) {
-				setSlideOnRemove(newInterval.start);
-				setSlideOnRemove(newInterval.end);
+			if (start !== undefined && end !== undefined) {
+				newInterval = this.localCollection.changeInterval(interval, start, end);
+				if (!this.isCollaborating && newInterval instanceof SequenceInterval) {
+					setSlideOnRemove(newInterval.start);
+					setSlideOnRemove(newInterval.end);
+				}
 			}
 			const serializedInterval: SerializedIntervalDelta = interval.serialize();
 			const { startPos, startSide, endPos, endSide } = endpointPosAndSide(start, end);
@@ -1463,15 +1413,32 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			serializedInterval.startSide = startSide;
 			serializedInterval.endSide = endSide;
 			serializedInterval.stickiness = stickiness;
-			// Emit a property bag containing only the ID, as we don't intend for this op to change any properties.
+			// Emit a property bag containing the ID and the other (if any) properties changed
 			serializedInterval.properties = {
 				[reservedIntervalIdKey]: interval.getIntervalId(),
+				...props,
 			};
 			const localSeq = this.getNextLocalSeq();
-			this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
+			if (this.isCollaborating) {
+				this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
+			}
+
 			this.emitter.emit("change", undefined, serializedInterval, { localSeq });
-			this.addPendingChange(id, serializedInterval);
-			this.emitChange(newInterval, interval, true, false);
+			if (deltaProps !== undefined) {
+				this.emit("propertyChanged", interval, deltaProps, true, undefined);
+				this.emit(
+					"changed",
+					newInterval ?? interval,
+					deltaProps,
+					newInterval ? interval : undefined,
+					true,
+					false,
+				);
+			}
+			if (newInterval) {
+				this.addPendingChange(id, serializedInterval);
+				this.emitChange(newInterval, interval, true, false);
+			}
 			return newInterval;
 		}
 		// No interval to change
@@ -1625,6 +1592,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			const changedProperties = Object.keys(newProps).length > 0;
 			if (changedProperties) {
 				this.emit("propertyChanged", interval, deltaProps, local, op);
+				this.emit("changed", interval, deltaProps, undefined, local, false);
 			}
 		}
 	}
@@ -1724,6 +1692,53 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		}
 
 		return rebased;
+	}
+
+	public applyStashedOp(op: IValueTypeOperationValue): IMapMessageLocalMetadata {
+		let interval: TInterval | undefined;
+		let props: PropertySet | undefined;
+		let intervalId: string;
+		switch (op.opName) {
+			case IntervalDeltaOpType.ADD: {
+				assert(op.value.start !== undefined, 0x87a /* start is undefined */);
+				assert(op.value.end !== undefined, 0x87b /* end is undefined */);
+				interval = this.add({
+					start: op.value.start,
+					end: op.value.end,
+					props: op.value.properties,
+				});
+				const metadata = {
+					localSeq: this.getNextLocalSeq(),
+				};
+				if (interval !== undefined) {
+					this.localSeqToSerializedInterval.set(metadata.localSeq, interval.serialize());
+				}
+				return metadata;
+			}
+			case IntervalDeltaOpType.DELETE:
+				this.removeIntervalById(op.value.properties?.intervalId);
+				return {
+					localSeq: this.getNextLocalSeq(),
+				};
+			case IntervalDeltaOpType.CHANGE: {
+				assert(op.value.properties !== undefined, 0x87c /* properties is undefined */);
+				({ intervalId, ...props } = op.value.properties);
+				interval = this.change(intervalId, {
+					start: op.value.start,
+					end: op.value.end,
+					props,
+				});
+				const metadata = {
+					localSeq: this.getNextLocalSeq(),
+				};
+				if (interval !== undefined) {
+					this.localSeqToSerializedInterval.set(metadata.localSeq, interval.serialize());
+				}
+				return metadata;
+			}
+			default:
+				unreachableCase(op.opName, `Unknown interval op type: ${op.opName}`);
+		}
 	}
 
 	private getSlideToSegment(

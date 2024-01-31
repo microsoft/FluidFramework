@@ -28,64 +28,34 @@ export function getGCVersion(metadata?: IGCMetadata): GCVersion {
 }
 
 /**
- * Indicates whether Tombstone Enforcement is allowed for this document based on the current/persisted
- * TombstoneGeneration values
- *
- * In order to protect old documents that were created at a time when known bugs exist that violate GC's invariants
- * such that enforcing GC Tombstone (Failing on Tombstone load/usage) would cause legitimate data loss,
- * the container author may increment the generation value for Tombstone such that containers created
- * with a different value will not be subjected to GC enforcement.
- *
- * If no generation is provided at runtime, this defaults to return true to maintain expected default behavior
- *
- * @param persistedGeneration - The persisted tombstoneGeneration value
- * @param currentGeneration - The current app-provided tombstoneGeneration value
- * @returns true if GC Tombstone enforcement (Fail on Tombstone load/usage) should be allowed for this document
- */
-export function shouldAllowGcTombstoneEnforcement(
-	persistedGeneration: number | undefined,
-	currentGeneration: number | undefined,
-): boolean {
-	// If no Generation value is provided for this session, then we should default to letting Tombstone feature behave as intended.
-	if (currentGeneration === undefined) {
-		return true;
-	}
-	return persistedGeneration === currentGeneration;
-}
-
-/**
- * Indicates whether Sweep is allowed for this document based on the GC Feature Matrix and current SweepGeneration
+ * Indicates whether Sweep is allowed for this document based on the persisted GC Feature Matrix and current gcGeneration.
+ * This applies to the entire Sweep Phase the same - both Tombstone Enforcement (i.e. should loading a Tombstone fail?) and Deletion.
  *
  * In order to protect old documents that were created at a time when known bugs exist that violate GC's invariants
  * such that enforcing GC Sweep would cause legitimate data loss, the container author may increment the generation value for Sweep
  * such that containers created with a different value will not be subjected to GC Sweep.
  *
- * If no generation is provided, Sweep will be disabled.
- * Passing 0 is a special case: Sweep will be enabled for any document with gcSweepGeneration OR gcTombstoneGeneration as 0.
+ * If no generation is provided, Sweep will be enabled for all documents.
  *
- * @param persistedGenerations - The persisted sweep/tombstone generations from the GC Feature Matrix
- * @param currentGeneration - The current app-provided sweepGeneration value
+ * For backwards compatibility, the current generation value is also compared against the persisted gcTombstoneGeneration if present.
+ *
+ * @param featureMatrix - The GC Feature Matrix, containing the persisted generation value
+ * @param currentGeneration - The current app-provided gcGeneration value
  * @returns true if GC Sweep should be allowed for this document
  */
 export function shouldAllowGcSweep(
-	persistedGenerations: Pick<GCFeatureMatrix, "sweepGeneration" | "tombstoneGeneration">,
+	featureMatrix: GCFeatureMatrix,
 	currentGeneration: number | undefined,
 ): boolean {
-	// If no Generation value is provided for this session, default to false
+	// If no Generation value is provided for this session, default to true
 	if (currentGeneration === undefined) {
-		return false;
+		return true;
 	}
 
-	// 0 is a special case: It matches both SweepGeneration and TombstoneGeneration
-	// This is an optimistic measure to maximize coverage of GC Sweep if no bumps to TombstoneGeneration are needed before enabling Sweep.
-	if (currentGeneration === 0) {
-		return (
-			persistedGenerations.sweepGeneration === 0 ||
-			persistedGenerations.tombstoneGeneration === 0
-		);
-	}
+	// tombstoneGeneration is the predecessor and needs to be supported for back-compat reasons
+	const targetGeneration = featureMatrix.tombstoneGeneration ?? featureMatrix.gcGeneration;
 
-	return persistedGenerations.sweepGeneration === currentGeneration;
+	return currentGeneration === targetGeneration;
 }
 
 /**
@@ -151,19 +121,12 @@ export function concatGarbageCollectionStates(
 /**
  * Helper function that clones the GC data.
  * @param gcData - The GC data to clone.
- * @param filter - Optional function to filter out node ids not to be included in the cloned GC data. Returns
- * true to filter out nodes.
  * @returns a clone of the given GC data.
  */
-export function cloneGCData(
-	gcData: IGarbageCollectionData,
-	filter?: (id: string) => boolean,
-): IGarbageCollectionData {
+export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionData {
 	const clonedGCNodes: { [id: string]: string[] } = {};
 	for (const [id, outboundRoutes] of Object.entries(gcData.gcNodes)) {
-		if (filter?.(id) !== true) {
-			clonedGCNodes[id] = Array.from(outboundRoutes);
-		}
+		clonedGCNodes[id] = Array.from(outboundRoutes);
 	}
 	return {
 		gcNodes: clonedGCNodes,
@@ -302,4 +265,20 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
  */
 export function trimLeadingAndTrailingSlashes(str: string) {
 	return str.replace(/^\/+|\/+$/g, "");
+}
+
+/**
+ * Utility to implement compat behaviors given an unknown message type
+ * The parameters are typed to support compile-time enforcement of handling all known types/behaviors
+ *
+ * @param _unknownGCMessageType - Typed as never to ensure all known types have been
+ * handled before calling this function (e.g. in a switch statement).
+ * @param compatBehavior - Typed redundantly with CompatModeBehavior to ensure handling is added when updating that type
+ */
+export function compatBehaviorAllowsGCMessageType(
+	_unknownGCMessageType: never,
+	compatBehavior: "Ignore" | "FailToProcess" | undefined,
+): boolean {
+	// undefined defaults to same behavior as "FailToProcess"
+	return compatBehavior === "Ignore";
 }

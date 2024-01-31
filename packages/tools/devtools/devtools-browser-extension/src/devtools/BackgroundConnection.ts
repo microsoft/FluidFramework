@@ -11,7 +11,7 @@ import {
 	type IMessageRelayEvents,
 	isDevtoolsMessage,
 	devtoolsMessageSource,
-} from "@fluid-experimental/devtools-core";
+} from "@fluidframework/devtools-core";
 
 import { browser } from "../Globals";
 import {
@@ -76,7 +76,7 @@ export class BackgroundConnection
 		/**
 		 * All messages sent through the returned instance's {@link BackgroundConnection.postMessage}
 		 * method will get this value written to their 'source' property.
-		 * @see {@link @fluid-experimental/devtools-core#ISourcedDevtoolsMessage}
+		 * @see {@link @fluidframework/devtools-core#ISourcedDevtoolsMessage}
 		 */
 		private readonly messageSource: string,
 	) {

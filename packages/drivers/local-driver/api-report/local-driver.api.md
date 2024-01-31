@@ -14,6 +14,7 @@ import { IDocumentDeltaConnection } from '@fluidframework/driver-definitions';
 import { IDocumentDeltaStorageService } from '@fluidframework/driver-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentService } from '@fluidframework/driver-definitions';
+import { IDocumentServiceEvents } from '@fluidframework/driver-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IDocumentServicePolicies } from '@fluidframework/driver-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
@@ -35,11 +36,12 @@ import { IVersion } from '@fluidframework/protocol-definitions';
 import { IWebSocketServer } from '@fluidframework/server-services-core';
 import { NackErrorType } from '@fluidframework/protocol-definitions';
 import type { Socket } from 'socket.io-client';
+import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @internal
 export function createLocalDocumentService(resolvedUrl: IResolvedUrl, localDeltaConnectionServer: ILocalDeltaConnectionServer, tokenProvider: ITokenProvider, tenantId: string, documentId: string, documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection>, policies?: IDocumentServicePolicies, innerDocumentService?: IDocumentService, logger?: ITelemetryBaseLogger): IDocumentService;
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export function createLocalResolverCreateNewRequest(documentId: string): IRequest;
 
 // @internal
@@ -60,7 +62,7 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 }
 
 // @internal
-export class LocalDocumentService implements IDocumentService {
+export class LocalDocumentService extends TypedEventEmitter<IDocumentServiceEvents> implements IDocumentService {
     constructor(resolvedUrl: IResolvedUrl, localDeltaConnectionServer: ILocalDeltaConnectionServer, tokenProvider: ITokenProvider, tenantId: string, documentId: string, documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection>, policies?: IDocumentServicePolicies, innerDocumentService?: IDocumentService | undefined, logger?: ITelemetryBaseLogger | undefined);
     connectToDeltaStorage(): Promise<IDocumentDeltaStorageService>;
     connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection>;
@@ -73,7 +75,7 @@ export class LocalDocumentService implements IDocumentService {
     readonly resolvedUrl: IResolvedUrl;
 }
 
-// @internal
+// @alpha
 export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
     constructor(localDeltaConnectionServer: ILocalDeltaConnectionServer, policies?: IDocumentServicePolicies | undefined, innerDocumentService?: IDocumentService | undefined);
     // (undocumented)
@@ -101,12 +103,12 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
     // (undocumented)
     readBlob(blobId: string): Promise<ArrayBufferLike>;
     // (undocumented)
-    get repositoryUrl(): string;
+    readonly repositoryUrl: string;
     // (undocumented)
     uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
 }
 
-// @internal
+// @alpha
 export class LocalResolver implements IUrlResolver {
     constructor();
     // (undocumented)

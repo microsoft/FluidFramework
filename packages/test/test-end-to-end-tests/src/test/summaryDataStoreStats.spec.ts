@@ -16,8 +16,7 @@ import {
 	ISummaryConfiguration,
 	DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime";
-import { ITelemetryBaseEvent, IRequest } from "@fluidframework/core-interfaces";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils";
 import { ITestObjectProvider, timeoutAwait } from "@fluidframework/test-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
@@ -36,7 +35,7 @@ class TestDataObject extends DataObject {
 	}
 }
 
-describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider) => {
+describeCompat("Generate Summary Stats", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	const dataObjectFactory = new DataObjectFactory("TestDataObject", TestDataObject, [], []);
 
@@ -58,12 +57,9 @@ describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider) => 
 			gcAllowed: true,
 		},
 	};
-	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-		runtime.IFluidHandleContext.resolveHandle(request);
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataObjectFactory,
 		registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-		requestHandlers: [innerRequestHandler],
 		runtimeOptions,
 	});
 
@@ -107,7 +103,7 @@ describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider) => 
 	const createContainer = async (logger): Promise<IContainer> =>
 		provider.createContainer(runtimeFactory, { logger });
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		provider = getTestObjectProvider();
 		mockLogger = new MockLogger();
 		// Create a Container for the first client.

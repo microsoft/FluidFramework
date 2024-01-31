@@ -8,7 +8,7 @@
  *
  * @deprecated In favor of {@link @fluidframework/container-definitions#IFluidPackageEnvironment}
  * to have code loading modules in same package.
- * @internal
+ * @alpha
  */
 export interface IFluidPackageEnvironment {
 	/**
@@ -42,7 +42,7 @@ export interface IFluidPackageEnvironment {
  *
  * @deprecated In favor of {@link @fluidframework/container-definitions#IFluidPackage}
  * to have code loading modules in same package.
- * @internal
+ * @alpha
  */
 export interface IFluidPackage {
 	/**
@@ -86,7 +86,7 @@ export const isFluidPackage = (pkg: unknown): pkg is Readonly<IFluidPackage> =>
  *
  * @deprecated in favor of {@link @fluidframework/container-definitions#IFluidCodeDetailsConfig}
  * to have code loading modules in same package.
- * @internal
+ * @alpha
  */
 export interface IFluidCodeDetailsConfig {
 	readonly [key: string]: string;
@@ -97,7 +97,7 @@ export interface IFluidCodeDetailsConfig {
  *
  * @deprecated in favor of {@link @fluidframework/container-definitions#IFluidCodeDetails}
  * to have code loading modules in same package.
- * @internal
+ * @alpha
  */
 export interface IFluidCodeDetails {
 	/**

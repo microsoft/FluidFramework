@@ -12,11 +12,8 @@ import {
 } from "@fluidframework/azure-client";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 
-import {
-	IConfigProviderBase,
-	MockLogger,
-	createMultiSinkLogger,
-} from "@fluidframework/telemetry-utils";
+import { MockLogger, createMultiSinkLogger } from "@fluidframework/telemetry-utils";
+import { IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { createAzureTokenProvider } from "./AzureTokenFactory";
 
 /**

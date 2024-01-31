@@ -5,11 +5,13 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
-import { Marker, reservedMarkerIdKey } from "../mergeTreeNodes";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { Marker, SegmentGroup, reservedMarkerIdKey } from "../mergeTreeNodes";
 import { IMergeTreeOp, ReferenceType } from "../ops";
 import { clone } from "../properties";
 import { TextSegment } from "../textSegment";
 import { TestClient } from "./testClient";
+import { TestClientLogger, createClientsAtInitialState } from "./testClientLogger";
 
 describe("resetPendingSegmentsToOp", () => {
 	let client: TestClient;
@@ -164,7 +166,7 @@ describe("resetPendingSegmentsToOp", () => {
 			assert(client.mergeTree.pendingSegments?.empty);
 
 			opList.push({
-				op: client.annotateRangeLocal(0, client.getLength(), { foo: "bar" }, undefined)!,
+				op: client.annotateRangeLocal(0, client.getLength(), { foo: "bar" })!,
 				refSeq: client.getCurrentSeq(),
 			});
 			applyOpList(client);
@@ -176,7 +178,7 @@ describe("resetPendingSegmentsToOp", () => {
 			assert(client.mergeTree.pendingSegments?.empty);
 
 			opList.push({
-				op: client.annotateRangeLocal(0, client.getLength(), { foo: "bar" }, undefined)!,
+				op: client.annotateRangeLocal(0, client.getLength(), { foo: "bar" })!,
 				refSeq: client.getCurrentSeq(),
 			});
 			opList.push({
@@ -196,7 +198,7 @@ describe("resetPendingSegmentsToOp", () => {
 
 		it("nacked insertSegment and annotateRange", async () => {
 			opList.push({
-				op: client.annotateRangeLocal(0, client.getLength(), { foo: "bar" }, undefined)!,
+				op: client.annotateRangeLocal(0, client.getLength(), { foo: "bar" })!,
 				refSeq: client.getCurrentSeq(),
 			});
 			const oldops = opList;
@@ -248,7 +250,7 @@ describe("resetPendingSegmentsToOp", () => {
 		it("for text segments", () => {
 			const insertOp = client.insertTextLocal(0, "abc", { prop1: "foo" });
 			assert(insertOp);
-			client.annotateRangeLocal(0, 3, { prop2: "bar" }, undefined);
+			client.annotateRangeLocal(0, 3, { prop2: "bar" });
 
 			const otherClient = new TestClient();
 			otherClient.startOrUpdateCollaboration("other user");
@@ -262,5 +264,37 @@ describe("resetPendingSegmentsToOp", () => {
 			assert(otherSegment !== undefined && TextSegment.is(otherSegment));
 			assert.deepStrictEqual(otherSegment.properties, clone({ prop1: "foo" }));
 		});
+	});
+});
+
+describe("resetPendingSegmentsToOp.rebase", () => {
+	it("rebase with oustanding ops", () => {
+		const clients = createClientsAtInitialState({ initialState: "0123456789" }, "A", "B");
+
+		const logger = new TestClientLogger(clients.all);
+		const ops: [ISequencedDocumentMessage, SegmentGroup][] = Array.from({ length: 10 }).map(
+			(_, i) => [
+				clients.A.makeOpMessage(
+					clients.A.annotateRangeLocal(0, clients.A.getLength(), { prop: i }),
+					i + 1,
+				),
+				clients.A.peekPendingSegmentGroups()!,
+			],
+		);
+
+		ops.push(
+			...ops
+				.splice(Math.floor(ops.length / 2))
+				.map<[ISequencedDocumentMessage, SegmentGroup]>(([op, sg]) => [
+					clients.A.makeOpMessage(
+						clients.A.regeneratePendingOp(op.contents as IMergeTreeOp, sg),
+						op.sequenceNumber,
+					),
+					clients.A.peekPendingSegmentGroups()!,
+				]),
+		);
+
+		ops.forEach(([op]) => clients.all.forEach((c) => c.applyMsg(op)));
+		logger.validate();
 	});
 });

@@ -151,6 +151,7 @@ declare function get_old_ClassDeclaration_ContainerRuntime():
 declare function use_current_ClassDeclaration_ContainerRuntime(
     use: TypeOnly<current.ContainerRuntime>): void;
 use_current_ClassDeclaration_ContainerRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_ContainerRuntime());
 
 /*
@@ -163,7 +164,6 @@ declare function get_current_ClassDeclaration_ContainerRuntime():
 declare function use_old_ClassDeclaration_ContainerRuntime(
     use: TypeOnly<old.ContainerRuntime>): void;
 use_old_ClassDeclaration_ContainerRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ContainerRuntime());
 
 /*
@@ -265,26 +265,26 @@ use_old_ClassDeclaration_FluidDataStoreRegistry(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_GCFeatureMatrix": {"forwardCompat": false}
+* "TypeAliasDeclaration_GCFeatureMatrix": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_GCFeatureMatrix():
+declare function get_old_TypeAliasDeclaration_GCFeatureMatrix():
     TypeOnly<old.GCFeatureMatrix>;
-declare function use_current_InterfaceDeclaration_GCFeatureMatrix(
+declare function use_current_TypeAliasDeclaration_GCFeatureMatrix(
     use: TypeOnly<current.GCFeatureMatrix>): void;
-use_current_InterfaceDeclaration_GCFeatureMatrix(
-    get_old_InterfaceDeclaration_GCFeatureMatrix());
+use_current_TypeAliasDeclaration_GCFeatureMatrix(
+    get_old_TypeAliasDeclaration_GCFeatureMatrix());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_GCFeatureMatrix": {"backCompat": false}
+* "TypeAliasDeclaration_GCFeatureMatrix": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_GCFeatureMatrix():
+declare function get_current_TypeAliasDeclaration_GCFeatureMatrix():
     TypeOnly<current.GCFeatureMatrix>;
-declare function use_old_InterfaceDeclaration_GCFeatureMatrix(
+declare function use_old_TypeAliasDeclaration_GCFeatureMatrix(
     use: TypeOnly<old.GCFeatureMatrix>): void;
-use_old_InterfaceDeclaration_GCFeatureMatrix(
-    get_current_InterfaceDeclaration_GCFeatureMatrix());
+use_old_TypeAliasDeclaration_GCFeatureMatrix(
+    get_current_TypeAliasDeclaration_GCFeatureMatrix());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -800,7 +800,6 @@ declare function get_old_InterfaceDeclaration_IGCStats():
 declare function use_current_InterfaceDeclaration_IGCStats(
     use: TypeOnly<current.IGCStats>): void;
 use_current_InterfaceDeclaration_IGCStats(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IGCStats());
 
 /*
@@ -862,6 +861,30 @@ declare function use_old_InterfaceDeclaration_IGeneratedSummaryStats(
     use: TypeOnly<old.IGeneratedSummaryStats>): void;
 use_old_InterfaceDeclaration_IGeneratedSummaryStats(
     get_current_InterfaceDeclaration_IGeneratedSummaryStats());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IMarkPhaseStats": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IMarkPhaseStats():
+    TypeOnly<old.IMarkPhaseStats>;
+declare function use_current_InterfaceDeclaration_IMarkPhaseStats(
+    use: TypeOnly<current.IMarkPhaseStats>): void;
+use_current_InterfaceDeclaration_IMarkPhaseStats(
+    get_old_InterfaceDeclaration_IMarkPhaseStats());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IMarkPhaseStats": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IMarkPhaseStats():
+    TypeOnly<current.IMarkPhaseStats>;
+declare function use_old_InterfaceDeclaration_IMarkPhaseStats(
+    use: TypeOnly<old.IMarkPhaseStats>): void;
+use_old_InterfaceDeclaration_IMarkPhaseStats(
+    get_current_InterfaceDeclaration_IMarkPhaseStats());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1538,6 +1561,30 @@ use_old_InterfaceDeclaration_ISummaryRuntimeOptions(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISweepPhaseStats": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ISweepPhaseStats():
+    TypeOnly<old.ISweepPhaseStats>;
+declare function use_current_InterfaceDeclaration_ISweepPhaseStats(
+    use: TypeOnly<current.ISweepPhaseStats>): void;
+use_current_InterfaceDeclaration_ISweepPhaseStats(
+    get_old_InterfaceDeclaration_ISweepPhaseStats());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISweepPhaseStats": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ISweepPhaseStats():
+    TypeOnly<current.ISweepPhaseStats>;
+declare function use_old_InterfaceDeclaration_ISweepPhaseStats(
+    use: TypeOnly<old.ISweepPhaseStats>): void;
+use_old_InterfaceDeclaration_ISweepPhaseStats(
+    get_current_InterfaceDeclaration_ISweepPhaseStats());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IUploadSummaryResult": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IUploadSummaryResult():
@@ -1757,9 +1804,9 @@ use_old_TypeAliasDeclaration_SubmitSummaryResult(
 * "TypeAliasDeclaration_SummarizeResultPart": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_SummarizeResultPart():
-    TypeOnly<old.SummarizeResultPart<any,any>>;
+    TypeOnly<old.SummarizeResultPart<any>>;
 declare function use_current_TypeAliasDeclaration_SummarizeResultPart(
-    use: TypeOnly<current.SummarizeResultPart<any,any>>): void;
+    use: TypeOnly<current.SummarizeResultPart<any>>): void;
 use_current_TypeAliasDeclaration_SummarizeResultPart(
     get_old_TypeAliasDeclaration_SummarizeResultPart());
 
@@ -1769,9 +1816,9 @@ use_current_TypeAliasDeclaration_SummarizeResultPart(
 * "TypeAliasDeclaration_SummarizeResultPart": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_SummarizeResultPart():
-    TypeOnly<current.SummarizeResultPart<any,any>>;
+    TypeOnly<current.SummarizeResultPart<any>>;
 declare function use_old_TypeAliasDeclaration_SummarizeResultPart(
-    use: TypeOnly<old.SummarizeResultPart<any,any>>): void;
+    use: TypeOnly<old.SummarizeResultPart<any>>): void;
 use_old_TypeAliasDeclaration_SummarizeResultPart(
     get_current_TypeAliasDeclaration_SummarizeResultPart());
 
@@ -1870,30 +1917,6 @@ declare function use_old_TypeAliasDeclaration_SummaryStage(
     use: TypeOnly<old.SummaryStage>): void;
 use_old_TypeAliasDeclaration_SummaryStage(
     get_current_TypeAliasDeclaration_SummaryStage());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_TEST_requestSummarizer": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_TEST_requestSummarizer():
-    TypeOnly<typeof old.TEST_requestSummarizer>;
-declare function use_current_FunctionDeclaration_TEST_requestSummarizer(
-    use: TypeOnly<typeof current.TEST_requestSummarizer>): void;
-use_current_FunctionDeclaration_TEST_requestSummarizer(
-    get_old_FunctionDeclaration_TEST_requestSummarizer());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_TEST_requestSummarizer": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_TEST_requestSummarizer():
-    TypeOnly<typeof current.TEST_requestSummarizer>;
-declare function use_old_FunctionDeclaration_TEST_requestSummarizer(
-    use: TypeOnly<typeof old.TEST_requestSummarizer>): void;
-use_old_FunctionDeclaration_TEST_requestSummarizer(
-    get_current_FunctionDeclaration_TEST_requestSummarizer());
 
 /*
 * Validate forward compat by using old type in place of current type

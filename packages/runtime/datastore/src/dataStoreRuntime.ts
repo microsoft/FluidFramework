@@ -51,7 +51,6 @@ import {
 	ISummaryTreeWithStats,
 	VisibilityState,
 	ITelemetryContext,
-	IIdCompressor,
 } from "@fluidframework/runtime-definitions";
 import {
 	convertSnapshotTreeToSummaryTree,
@@ -72,6 +71,7 @@ import {
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import { v4 as uuid } from "uuid";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 import { IChannelContext, summarizeChannel } from "./channelContext";
 import {
 	LocalChannelContext,
@@ -82,7 +82,7 @@ import { RemoteChannelContext } from "./remoteChannelContext";
 import { FluidObjectHandle } from "./fluidHandle";
 
 /**
- * @internal
+ * @alpha
  */
 export enum DataStoreMessageType {
 	// Creates a new channel
@@ -91,7 +91,7 @@ export enum DataStoreMessageType {
 }
 
 /**
- * @internal
+ * @alpha
  */
 export interface ISharedObjectRegistry {
 	// TODO consider making this async. A consequence is that either the creation of a distributed data type
@@ -101,44 +101,16 @@ export interface ISharedObjectRegistry {
 
 /**
  * Base data store class
- * @internal
+ * @alpha
  */
 export class FluidDataStoreRuntime
 	extends TypedEventEmitter<IFluidDataStoreRuntimeEvents>
 	implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext
 {
 	/**
-	 * @deprecated Instantiate the class using its constructor instead.
-	 *
-	 * Loads the data store runtime
-	 * @param context - The data store context
-	 * @param sharedObjectRegistry - The registry of shared objects used by this data store
-	 * @param existing - If loading from an existing file.
-	 */
-	public static load(
-		context: IFluidDataStoreContext,
-		sharedObjectRegistry: ISharedObjectRegistry,
-		existing: boolean,
-	): FluidDataStoreRuntime {
-		return new FluidDataStoreRuntime(
-			context,
-			sharedObjectRegistry,
-			existing,
-			async (dataStoreRuntime) => dataStoreRuntime.entryPoint,
-		);
-	}
-
-	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.entryPoint}
 	 */
 	public readonly entryPoint: IFluidHandle<FluidObject>;
-
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	public get IFluidRouter() {
-		return this;
-	}
 
 	public get connected(): boolean {
 		return this.dataStoreContext.connected;
@@ -446,7 +418,7 @@ export class FluidDataStoreRuntime
 
 		this.verifyNotClosed();
 
-		assert(!this.contexts.has(id), "addChannel() with existing ID");
+		assert(!this.contexts.has(id), 0x865 /* addChannel() with existing ID */);
 
 		const type = channel.attributes.type;
 		const factory = this.sharedObjectRegistry.get(channel.attributes.type);
@@ -792,6 +764,10 @@ export class FluidDataStoreRuntime
 	 * @param outboundHandle - The handle of the outbound node that is referenced.
 	 */
 	private addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) {
+		// Note: This is deprecated on IFluidDataStoreContext, and in an n/n-1 scenario where the
+		// ContainerRuntime is newer, it will actually be a no-op since then the ContainerRuntime
+		// will be the one to call addedGCOutboundReference directly.
+		// But on the flip side, if the ContainerRuntime is older, then it's important we still call this.
 		this.dataStoreContext.addedGCOutboundReference?.(srcHandle, outboundHandle);
 	}
 
@@ -1184,7 +1160,7 @@ export const mixinRequestHandler = (
  * @param handler - handler that returns info about blob to be added to summary.
  * Or undefined not to add anything to summary.
  * @param Base - base class, inherits from FluidDataStoreRuntime
- * @internal
+ * @alpha
  */
 export const mixinSummaryHandler = (
 	handler: (

@@ -17,7 +17,7 @@ import {
 import { AttachState } from "@fluidframework/container-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 
-describeCompat("Cache CreateNewSummary", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("Cache CreateNewSummary", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) => {
 	const {
 		dataRuntime: { DataObject, DataObjectFactory },
 		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
@@ -63,7 +63,7 @@ describeCompat("Cache CreateNewSummary", "NoCompat", (getTestObjectProvider, api
 
 	let mockLogger: MockLogger;
 
-	beforeEach(function () {
+	beforeEach("getTestObjectProvider", function () {
 		provider = getTestObjectProvider();
 		// Currently, only ODSP caches new summary.
 		if (provider.driver.type !== "odsp") {

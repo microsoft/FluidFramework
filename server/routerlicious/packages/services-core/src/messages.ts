@@ -49,7 +49,7 @@ export const BoxcarType = "boxcar";
 
 /**
  * Base class for messages placed on the distributed log
- * @internal
+ * @alpha
  */
 export interface IMessage {
 	// The type of the message
@@ -69,7 +69,7 @@ export enum SystemOperations {
 
 /**
  * Object that indicates a specific session/document in the system
- * @internal
+ * @alpha
  */
 export interface IRoutingKey {
 	// The tenant id
@@ -140,7 +140,7 @@ export interface IRawOperationMessageBatch extends IRoutingKey {
 
 // Need to change this name - it isn't necessarily ticketed
 /**
- * @internal
+ * @alpha
  */
 export interface ITicketedMessage extends IMessage, IRoutingKey {}
 
@@ -181,7 +181,7 @@ export interface ITicketedSignalMessage extends ITicketedMessage {
 
 /**
  * A sequenced operation
- * @internal
+ * @alpha
  */
 export interface ISequencedOperationMessage extends ITicketedMessage {
 	// The type of the message
