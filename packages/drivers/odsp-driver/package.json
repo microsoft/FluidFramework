@@ -120,6 +120,15 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_ISnapshotContentsWithProps": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IPrefetchSnapshotContents": {
+				"backCompat": false,
+				"forwardCompat": false
+			}
+		}
 	}
 }

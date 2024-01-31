@@ -15,7 +15,6 @@ import { VestigialEndpointMark } from "../../../feature-libraries/sequence-field
 import { CrossFieldTarget, SequenceField as SF } from "../../../feature-libraries/index.js";
 import { brand, idAllocatorFromMaxId } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
-import { TaggedChange, tagChange } from "../../../core/index.js";
 import { mintRevisionTag } from "../../utils.js";
 
 const tag1 = mintRevisionTag();
@@ -30,15 +29,15 @@ export function testMarkQueue() {
 			const change3 = TestChange.mint([], 3);
 			const moveEffects = SF.newCrossFieldTable() as MoveEffectTable<TestChange>;
 			const effect1: MoveEffect<TestChange> & { basis: MoveId } = {
-				modifyAfter: tagChange(change1, tag2),
+				modifyAfter: change1,
 				basis: brand(0),
 			};
 			const effect2: MoveEffect<TestChange> & { basis: MoveId } = {
-				modifyAfter: tagChange(change2, tag2),
+				modifyAfter: change2,
 				basis: brand(0),
 			};
 			const effect3: MoveEffect<TestChange> & { basis: MoveId } = {
-				modifyAfter: tagChange(change3, tag2),
+				modifyAfter: change3,
 				basis: brand(0),
 			};
 			moveEffects.set(CrossFieldTarget.Source, tag1, brand(1), 1, effect1, false);
@@ -57,10 +56,9 @@ export function testMarkQueue() {
 				moveEffects,
 				true,
 				idAllocator,
-				(a: TestChange | undefined, b: TaggedChange<TestChange>) => {
+				(a: TestChange | undefined, b: TestChange | undefined) => {
 					assert.equal(a, undefined);
-					assert.equal(b.revision, tag2);
-					return b.change;
+					return b;
 				},
 			);
 			const actual = [];

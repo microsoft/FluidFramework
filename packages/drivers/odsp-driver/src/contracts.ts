@@ -5,6 +5,7 @@
 
 import * as api from "@fluidframework/protocol-definitions";
 import { HostStoragePolicy } from "@fluidframework/odsp-driver-definitions";
+import { ISnapshot } from "@fluidframework/driver-definitions";
 import { ISnapshotContents } from "./odspPublicUtils";
 
 /**
@@ -165,6 +166,8 @@ export interface IOdspSnapshot {
  */
 export interface HostStoragePolicyInternal extends HostStoragePolicy {
 	summarizerClient?: boolean;
+
+	supportGetSnapshotApi?: boolean;
 }
 
 export interface ICreateFileResponse {
@@ -207,8 +210,17 @@ export interface IFlushOpsResponse {
 
 /**
  * Represents the cached snapshot value.
+ * @deprecated - This will be replaced with ISnapshotCachedEntry2 which wraps the new ISnapshot interface.
+ * For now, to support back compat from cache, we need to keep it for now.
  */
 export interface ISnapshotCachedEntry extends ISnapshotContents {
+	cacheEntryTime: number;
+}
+
+/**
+ * Represents the cached snapshot value.
+ */
+export interface ISnapshotCachedEntry2 extends ISnapshot {
 	cacheEntryTime: number;
 }
 

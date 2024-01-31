@@ -275,8 +275,7 @@ describe("TaskManager fuzz testing with rebasing", () => {
 		saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
 		// AB#5341: enabling 'start from detached' within the fuzz harness demonstrates eventual consistency failures.
 		detachedStartOptions: {
-			enabled: false,
-			attachProbability: 0.2,
+			numOpsBeforeAttach: 0,
 		},
 		// Uncomment this line to replay a specific seed:
 		// replay: 0,
