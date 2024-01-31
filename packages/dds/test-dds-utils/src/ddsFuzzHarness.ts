@@ -1129,7 +1129,7 @@ function runTest<TChannelFactory extends IChannelFactory, TOperation extends Bas
 		//
 		// it should be noted that if a timeout occurs during minimization, the
 		// intermediate results are not lost and will still be written to the file.
-		const noMinimizationTimeout = Math.max(2_000, this.timeout());
+		const noMinimizationTimeout = Math.max(2000, this.timeout());
 		this.timeout(shouldMinimize ? 5 * noMinimizationTimeout : noMinimizationTimeout);
 
 		try {
