@@ -92,7 +92,7 @@ function assertAttributionMatches(
 // unit tests.
 describeCompat("Attributor", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 

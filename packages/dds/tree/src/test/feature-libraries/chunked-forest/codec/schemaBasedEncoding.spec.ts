@@ -11,6 +11,7 @@ import {
 	intoStoredSchema,
 	TreeCompressionStrategy,
 	isFluidHandle,
+	FlexFieldSchema,
 } from "../../../../feature-libraries/index.js";
 
 import {
@@ -47,9 +48,9 @@ import {
 	storedLibrary,
 	testTrees,
 } from "../../../testTrees.js";
-import { leaf, SchemaBuilder } from "../../../../domains/index.js";
+import { leaf } from "../../../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { fieldKinds } from "../../../../feature-libraries/default-schema/index.js";
+import { FieldKinds, fieldKinds } from "../../../../feature-libraries/default-schema/index.js";
 import { ajvValidator } from "../../../codec/index.js";
 import { takeSnapshot, useSnapshotDirectory } from "../../../snapshots/index.js";
 import { checkFieldEncode, checkNodeEncode } from "./checkEncode.js";
@@ -80,7 +81,7 @@ describe("schemaBasedEncoding", () => {
 						return onlyTypeShape;
 					},
 				},
-				SchemaBuilder.required(minimal),
+				FlexFieldSchema.create(FieldKinds.required, [minimal]),
 				cache,
 			);
 			// This is expected since this case should be optimized to just encode the inner shape.
@@ -107,7 +108,7 @@ describe("schemaBasedEncoding", () => {
 						return onlyTypeShape;
 					},
 				},
-				SchemaBuilder.required([minimal, leaf.number]),
+				FlexFieldSchema.create(FieldKinds.required, [minimal, leaf.number]),
 				cache,
 			);
 			// There are multiple choices about how this case should be optimized, but the current implementation does this:
@@ -130,7 +131,7 @@ describe("schemaBasedEncoding", () => {
 						return onlyTypeShape;
 					},
 				},
-				SchemaBuilder.sequence(minimal),
+				FlexFieldSchema.create(FieldKinds.sequence, [minimal]),
 				cache,
 			);
 			// There are multiple choices about how this case should be optimized, but the current implementation does this:

@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse } from "@fluidframework/core-interfaces";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { type IRequest, type IResponse } from "@fluidframework/core-interfaces";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { RequestParser, create404Response } from "@fluidframework/runtime-utils";
 // eslint-disable-next-line import/no-deprecated
-import { RuntimeRequestHandler } from "./requestHandlers";
+import { type RuntimeRequestHandler } from "./requestHandlers";
 
 /**
  * The RuntimeRequestHandlerBuilder creates a runtime request handler based on request handlers.
@@ -18,7 +18,7 @@ class RuntimeRequestHandlerBuilder {
 	private readonly handlers: RuntimeRequestHandler[] = [];
 
 	// eslint-disable-next-line import/no-deprecated
-	public pushHandler(...handlers: RuntimeRequestHandler[]) {
+	public pushHandler(...handlers: RuntimeRequestHandler[]): void {
 		if (handlers !== undefined) {
 			this.handlers.push(...handlers);
 		}
@@ -37,12 +37,16 @@ class RuntimeRequestHandlerBuilder {
 }
 
 /**
+ * Deprecated.
+ *
  * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
  *
  * @internal
  */
-// eslint-disable-next-line import/no-deprecated
-export function buildRuntimeRequestHandler(...handlers: RuntimeRequestHandler[]) {
+export function buildRuntimeRequestHandler(
+	// eslint-disable-next-line import/no-deprecated
+	...handlers: RuntimeRequestHandler[]
+): (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse> {
 	const builder = new RuntimeRequestHandlerBuilder();
 	builder.pushHandler(...handlers);
 	return async (request: IRequest, runtime: IContainerRuntime) =>

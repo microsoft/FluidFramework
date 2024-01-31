@@ -10,6 +10,7 @@ import {
 	ICheckpointService,
 	IClientManager,
 	IContext,
+	IClusterDrainingChecker,
 	IDeliState,
 	IDocument,
 	IDocumentRepository,
@@ -69,6 +70,7 @@ export class DeliLambdaFactory
 		private readonly signalProducer: IProducer | undefined,
 		private readonly reverseProducer: IProducer,
 		private readonly serviceConfiguration: IServiceConfiguration,
+		private readonly clusterDrainingChecker?: IClusterDrainingChecker | undefined,
 	) {
 		super();
 	}
@@ -233,14 +235,19 @@ export class DeliLambdaFactory
 					closeType === LambdaCloseType.Error
 				) {
 					if (document?.isEphemeralContainer) {
-						// Call to historian to delete summaries
-						await requestWithRetry(
-							async () => gitManager.deleteSummary(false),
-							"deliLambda_onClose" /* callName */,
-							getLumberBaseProperties(documentId, tenantId) /* telemetryProperties */,
-							(error) => true /* shouldRetry */,
-							3 /* maxRetries */,
-						);
+						if (this.serviceConfiguration.deli.enableEphemeralContainerSummaryCleanup) {
+							// Call to historian to delete summaries
+							await requestWithRetry(
+								async () => gitManager.deleteSummary(false),
+								"deliLambda_onClose" /* callName */,
+								getLumberBaseProperties(
+									documentId,
+									tenantId,
+								) /* telemetryProperties */,
+								(error) => true /* shouldRetry */,
+								3 /* maxRetries */,
+							);
+						}
 
 						// Delete the document metadata
 						await runWithRetry(
@@ -274,6 +281,28 @@ export class DeliLambdaFactory
 						"session.isSessionActive": keepSessionActive,
 						"lastAccessTime": Date.now(),
 					};
+
+					// Set skip session stickiness to be true if cluster is in draining
+					if (this.clusterDrainingChecker) {
+						try {
+							const isClusterDraining =
+								await this.clusterDrainingChecker.isClusterDraining();
+							if (isClusterDraining) {
+								Lumberjack.info(
+									"Cluster is in draining, set skip session stickiness to be true",
+								);
+								// Skip session stickiness if cluster is in draining
+								data["session.ignoreSessionStickiness"] = true;
+							}
+						} catch (error) {
+							Lumberjack.error(
+								"Failed to get cluster draining status",
+								getLumberBaseProperties(documentId, tenantId),
+								error,
+							);
+						}
+					}
+
 					await this.documentRepository.updateOne(filter, data, undefined);
 					const message = `Marked session alive as false and active as ${keepSessionActive} for closeType:
                         ${JSON.stringify(closeType)}`;

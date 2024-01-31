@@ -9,8 +9,8 @@ import cors from "cors";
 import express from "express";
 import fetch from "node-fetch";
 
-import { ClientManager } from "../utilities";
-import { assertValidTaskData, ITaskData } from "../model-interface";
+import { ClientManager } from "../utilities/index.js";
+import { assertValidTaskData, ITaskData } from "../model-interface/index.js";
 
 /**
  * Expected shape of the "broadcast-signal" message that is sent to the /broadcast-signal service endpoint.

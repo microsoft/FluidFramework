@@ -32,7 +32,7 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 	let provider: ITestObjectProvider;
 	const capturedBatches: IDocumentMessage[][] = [];
 
-	beforeEach(() => {
+	beforeEach("setup", () => {
 		provider = getTestObjectProvider();
 		capturedBatches.splice(0);
 	});

@@ -154,13 +154,13 @@ stages:
             flags: --compatVersion=0 --tenantIndex=0
           - name: N-1
             flags: --compatVersion=-1 --tenantIndex=1
-          - name: LTS
-            flags: --compatVersion=LTS --tenantIndex=2
           - name: Cross-Version
             flags: --compatVersion=CROSS_VERSION
           # Assumes Non-compat and N-1 scenarios are covered
+          # Tests N-2 to LTS+1 back compat for loader
+          # Tests N-2 to LTS+3 back compat for loader + driver
           - name: N-2ToLTS+1-back-compat
-            flags: --compatVersion=FULL --tenantIndex=3
+            flags: --compatVersion=V2_INT_3 --tenantIndex=3
         env:
           login__microsoft__clientId: $(login-microsoft-clientId)
           login__microsoft__secret: $(login-microsoft-secret)

@@ -5,7 +5,7 @@
 
 import { FieldKey } from "../core/index.js";
 import {
-	TreeFieldSchema,
+	FlexFieldSchema,
 	FlexTreeSchema,
 	FlexTreeTypedField,
 	FlexTreeContext,
@@ -24,7 +24,7 @@ import { ITreeCheckoutFork, ITreeCheckout } from "./treeCheckout.js";
  * 2. This object should be combined with or accessible from the TreeContext to allow easy access to thinks like branching.
  * @internal
  */
-export interface FlexTreeView<in out TRoot extends TreeFieldSchema> extends IDisposable {
+export interface FlexTreeView<in out TRoot extends FlexFieldSchema> extends IDisposable {
 	/**
 	 * Context for controlling the EditableTree nodes produced from {@link FlexTreeView.flexTree}.
 	 *
@@ -59,7 +59,7 @@ export interface FlexTreeView<in out TRoot extends TreeFieldSchema> extends IDis
  * {@link FlexTreeView} that has forked off of the main trunk/branch.
  * @internal
  */
-export interface ITreeViewFork<in out TRoot extends TreeFieldSchema> extends FlexTreeView<TRoot> {
+export interface ITreeViewFork<in out TRoot extends FlexFieldSchema> extends FlexTreeView<TRoot> {
 	readonly checkout: ITreeCheckoutFork;
 }
 
@@ -67,7 +67,7 @@ export interface ITreeViewFork<in out TRoot extends TreeFieldSchema> extends Fle
  * Implementation of FlexTreeView wrapping a ITreeCheckout.
  */
 export class CheckoutFlexTreeView<
-	in out TRoot extends TreeFieldSchema,
+	in out TRoot extends FlexFieldSchema,
 	out TCheckout extends ITreeCheckout = ITreeCheckout,
 > implements FlexTreeView<TRoot>
 {

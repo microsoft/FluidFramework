@@ -8,7 +8,7 @@ import {
 	SchemaBuilderBase,
 	leaf,
 	FieldKinds,
-	TreeFieldSchema,
+	FlexFieldSchema,
 	FlexTreeTypedNode,
 	FlexTreeTypedField,
 	InsertableFlexNode,
@@ -27,10 +27,10 @@ export const bubbleSchema = builder.object("BubbleBenchAppStateBubble-1.0.0", {
 export const clientSchema = builder.object("BubbleBenchAppStateClient-1.0.0", {
 	clientId: leaf.string,
 	color: leaf.string,
-	bubbles: TreeFieldSchema.create(FieldKinds.sequence, [bubbleSchema]),
+	bubbles: FlexFieldSchema.create(FieldKinds.sequence, [bubbleSchema]),
 });
 
-export const rootAppStateSchema = TreeFieldSchema.create(FieldKinds.sequence, [clientSchema]);
+export const rootAppStateSchema = FlexFieldSchema.create(FieldKinds.sequence, [clientSchema]);
 
 export const appSchemaData = builder.intoSchema(rootAppStateSchema);
 
