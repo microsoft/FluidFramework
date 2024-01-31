@@ -224,17 +224,13 @@ describe("SharedTree", () => {
 			});
 			const schemaGeneralized = builder.intoSchema(Any);
 			{
-				const view = tree.requireSchema(schemaGeneralized, AllowedUpdateType.None, () =>
-					assert.fail(),
-				);
+				const view = tree.requireSchema(schemaGeneralized, () => assert.fail());
 				assert.equal(view, undefined);
 			}
 
 			const log: string[] = [];
 			{
-				const view = tree.requireSchema(schemaEmpty, AllowedUpdateType.None, () =>
-					log.push("empty"),
-				);
+				const view = tree.requireSchema(schemaEmpty, () => log.push("empty"));
 				assert(view !== undefined);
 			}
 			assert.deepEqual(log, []);
@@ -243,7 +239,7 @@ describe("SharedTree", () => {
 			assert.deepEqual(log, ["empty"]);
 
 			{
-				const view = tree.requireSchema(schemaGeneralized, AllowedUpdateType.None, () =>
+				const view = tree.requireSchema(schemaGeneralized, () =>
 					// TypeScript's type narrowing turned "log" into never[] here since it assumes methods never modify anything, so we have to cast it back to a string[]:
 					(log as string[]).push("general"),
 				);
@@ -933,9 +929,8 @@ describe("SharedTree", () => {
 
 			provider.processMessages();
 			const tree2 =
-				provider.trees[1].requireSchema(content.schema, AllowedUpdateType.None, () =>
-					fail("schema changed"),
-				) ?? fail("schematize failed");
+				provider.trees[1].requireSchema(content.schema, () => fail("schema changed")) ??
+				fail("schematize failed");
 			const {
 				undoStack: undoStack2,
 				redoStack: redoStack2,
@@ -1403,10 +1398,8 @@ describe("SharedTree", () => {
 			});
 			provider.processMessages();
 			const tree2 =
-				provider.trees[1].requireSchema(
-					stringSequenceRootSchema,
-					AllowedUpdateType.None,
-					() => fail("schema changed"),
+				provider.trees[1].requireSchema(stringSequenceRootSchema, () =>
+					fail("schema changed"),
 				) ?? fail("invalid schema");
 
 			// Validate initialization
@@ -1478,7 +1471,7 @@ describe("SharedTree", () => {
 			const loadedContainer = await loader.resolve({ url }, pendingOps);
 			const dataStore = (await loadedContainer.getEntryPoint()) as ITestFluidObject;
 			const tree = assertSchema(
-				await dataStore.getSharedObject<ISharedTree>("TestSharedTree"),
+				await dataStore.getSharedObject<SharedTree>("TestSharedTree"),
 				stringSequenceRootSchema,
 			);
 			await waitForContainerConnection(loadedContainer, true);
@@ -1735,8 +1728,8 @@ describe("SharedTree", () => {
 });
 
 function assertSchema<TRoot extends FlexFieldSchema>(
-	tree: ISharedTree,
+	tree: SharedTree,
 	schema: FlexTreeSchema<TRoot>,
 ): FlexTreeView<TRoot> {
-	return tree.requireSchema(schema, AllowedUpdateType.None, () => assert.fail()) ?? assert.fail();
+	return tree.requireSchema(schema, () => assert.fail());
 }

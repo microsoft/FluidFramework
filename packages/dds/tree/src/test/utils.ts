@@ -56,6 +56,7 @@ import {
 	InitializeAndSchematizeConfiguration,
 	SharedTreeContentSnapshot,
 	CheckoutFlexTreeView,
+	TreeCheckout,
 } from "../shared-tree/index.js";
 import {
 	buildForest,
@@ -663,7 +664,7 @@ export function checkoutWithContent(
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 	},
-): ITreeCheckout {
+): TreeCheckout {
 	return flexTreeViewWithContent(content, args).checkout;
 }
 

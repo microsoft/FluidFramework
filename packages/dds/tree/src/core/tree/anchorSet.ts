@@ -262,6 +262,17 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 		});
 	}
 
+	/**
+	 * Allows access to data stored on the AnchorSet in "slots".
+	 * Use {@link anchorSlot} to create slots.
+	 *
+	 * @privateRemarks
+	 * This forwards to the slots of the special above root anchor which locate can't access.
+	 */
+	public get slots(): BrandedMapSubset<AnchorSlot<any>> {
+		return this.root.slots;
+	}
+
 	public on<K extends keyof AnchorSetRootEvents>(
 		eventName: K,
 		listener: AnchorSetRootEvents[K],

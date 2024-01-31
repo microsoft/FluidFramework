@@ -99,6 +99,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
     locate(anchor: Anchor): AnchorNode | undefined;
     // (undocumented)
     on<K extends keyof AnchorSetRootEvents>(eventName: K, listener: AnchorSetRootEvents[K]): () => void;
+    get slots(): BrandedMapSubset<AnchorSlot<any>>;
     track(path: UpPath | null): Anchor;
 }
 
@@ -1003,7 +1004,6 @@ export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : fals
 // @internal
 export interface ISharedTree extends ISharedObject, ITree {
     contentSnapshot(): SharedTreeContentSnapshot;
-    requireSchema<TRoot extends FlexFieldSchema>(schema: FlexTreeSchema<TRoot>, allowedSchemaModifications: AllowedUpdateType, onSchemaIncompatible: () => void): FlexTreeView<TRoot> | undefined;
     schematizeInternal<TRoot extends FlexFieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>, onDispose?: () => void): FlexTreeView<TRoot>;
 }
 
