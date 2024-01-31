@@ -267,18 +267,13 @@ export interface IFluidDataStoreChannel extends IDisposable {
 
 	/**
 	 * Synchronously retrieves the summary used as part of the initial summary message
-	 *
-	 * @deprecated - Use getAttachSummaryAndGCData instead
 	 */
 	getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
 
 	/**
-	 * Synchronously retrieves the Summary and GC Data (representing the outbound routes present) for the initial state of the DataStore
+	 * Synchronously retrieves GC Data (representing the outbound routes present) for the initial state of the DataStore
 	 */
-	getAttachSummaryAndGCData?(
-		includeGCData: boolean,
-		telemetryContext?: ITelemetryContext,
-	): [ISummaryTreeWithStats, IGarbageCollectionData | undefined];
+	getAttachGCData?(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
 
 	/**
 	 * Processes the op.

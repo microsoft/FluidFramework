@@ -720,11 +720,7 @@ export class FluidDataStoreRuntime
 	 * - Adds a node for this channel.
 	 * @param builder - The builder that contains the GC nodes for this channel's children.
 	 */
-	private updateGCNodes(builder?: GCDataBuilder) {
-		if (builder === undefined) {
-			return;
-		}
-
+	private updateGCNodes(builder: GCDataBuilder) {
 		// Add a back route to self in each child's GC nodes. If any child is referenced, then its parent should
 		// be considered referenced as well.
 		builder.addRouteToAllNodes(this.absolutePath);
@@ -853,13 +849,61 @@ export class FluidDataStoreRuntime
 	}
 
 	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
-		return this.getAttachSummaryAndGCData(/* includeGCData: */ false)[0];
+		const summaryBuilder = new SummaryTreeBuilder();
+		this.getAttachData((contextId: string, context: LocalChannelContextBase) => {
+			let summaryTree: ISummaryTreeWithStats;
+			if (context.isLoaded) {
+				const contextSummary = context.getAttachSummary(telemetryContext);
+				assert(
+					contextSummary.summary.type === SummaryType.Tree,
+					0x180 /* "getAttachSummary should always return a tree" */,
+				);
+
+				summaryTree = { stats: contextSummary.stats, summary: contextSummary.summary };
+			} else {
+				// If this channel is not yet loaded, then there should be no changes in the snapshot from which
+				// it was created as it is detached container. So just use the previous snapshot.
+				assert(
+					!!this.dataStoreContext.baseSnapshot,
+					0x181 /* "BaseSnapshot should be there as detached container loaded from snapshot" */,
+				);
+				summaryTree = convertSnapshotTreeToSummaryTree(
+					this.dataStoreContext.baseSnapshot.trees[contextId],
+				);
+			}
+			summaryBuilder.addWithStats(contextId, summaryTree);
+		}, telemetryContext);
+
+		return summaryBuilder.getSummaryTree();
 	}
 
-	public getAttachSummaryAndGCData(
-		includeGCData: boolean,
+	/**
+	 * Get the GC Data for the initial state being attached so remote clients can learn of this DataStore's outbound routes
+	 */
+	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
+		const gcDataBuilder = new GCDataBuilder();
+		this.getAttachData((contextId: string, context: LocalChannelContextBase) => {
+			//* Unsure about this check
+			if (context.isLoaded) {
+				const contextGCData = context.getAttachGCData(telemetryContext);
+
+				// Incorporate the GC Data for this context
+				gcDataBuilder.prefixAndAddNodes(contextId, contextGCData.gcNodes);
+			}
+		}, telemetryContext);
+		this.updateGCNodes(gcDataBuilder);
+
+		return gcDataBuilder.getGCData();
+	}
+
+	/**
+	 * Helper method for preparing to attach this dataStore.
+	 * Runs the callback for each bound context to incorporate its data however the caller specifies
+	 */
+	private getAttachData(
+		includeLocalContext: (contextId: string, context: LocalChannelContextBase) => void,
 		telemetryContext?: ITelemetryContext,
-	): [ISummaryTreeWithStats, IGarbageCollectionData | undefined] {
+	): void {
 		/**
 		 * back-compat 0.59.1000 - getAttachSummary() is called when making a data store globally visible (previously
 		 * attaching state). Ideally, attachGraph() should have already be called making it locally visible. However,
@@ -880,51 +924,15 @@ export class FluidDataStoreRuntime
 		//  "The data store should be locally visible when generating attach summary",
 		// );
 
-		const summaryBuilder = new SummaryTreeBuilder();
-		const gcDataBuilder = includeGCData ? new GCDataBuilder() : undefined;
-
-		// Craft the .attributes file for each shared object
 		for (const [contextId, context] of this.contexts) {
 			if (!(context instanceof LocalChannelContextBase)) {
 				throw new LoggingError("Should only be called with local channel handles");
 			}
 
 			if (!this.notBoundedChannelContextSet.has(contextId)) {
-				let summaryTree: ISummaryTreeWithStats;
-				if (context.isLoaded) {
-					const [contextSummary, contextGCData] =
-						context.getAttachSummaryAndGCData(telemetryContext);
-					assert(
-						contextSummary.summary.type === SummaryType.Tree,
-						0x180 /* "getAttachSummary should always return a tree" */,
-					);
-
-					// Incorporate the GC Data for this context
-					gcDataBuilder?.prefixAndAddNodes(contextId, contextGCData.gcNodes);
-
-					summaryTree = { stats: contextSummary.stats, summary: contextSummary.summary };
-				} else {
-					// If this channel is not yet loaded, then there should be no changes in the snapshot from which
-					// it was created as it is detached container. So just use the previous snapshot.
-					assert(
-						!!this.dataStoreContext.baseSnapshot,
-						0x181 /* "BaseSnapshot should be there as detached container loaded from snapshot" */,
-					);
-					summaryTree = convertSnapshotTreeToSummaryTree(
-						this.dataStoreContext.baseSnapshot.trees[contextId],
-					);
-				}
-				summaryBuilder.addWithStats(contextId, summaryTree);
+				includeLocalContext(contextId, context);
 			}
 		}
-
-		const attachSummary = summaryBuilder.getSummaryTree();
-
-		// We need to include the GC Data so remote clients can learn of this DataStore's outbound routes
-		this.updateGCNodes(gcDataBuilder);
-		const gcData = gcDataBuilder?.getGCData();
-
-		return [attachSummary, gcData];
 	}
 
 	public submitMessage(type: DataStoreMessageType, content: any, localOpMetadata: unknown) {

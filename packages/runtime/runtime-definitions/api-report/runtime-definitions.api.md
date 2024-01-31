@@ -175,9 +175,8 @@ export interface IFluidDataStoreChannel extends IDisposable {
     attachGraph(): void;
     readonly attachState: AttachState;
     readonly entryPoint: IFluidHandle<FluidObject>;
-    // @deprecated
+    getAttachGCData?(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
-    getAttachSummaryAndGCData?(includeGCData: boolean, telemetryContext?: ITelemetryContext): [ISummaryTreeWithStats, IGarbageCollectionData | undefined];
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)
     readonly id: string;

@@ -1141,10 +1141,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 			0x150 /* "pkg should be available in local data store context" */,
 		);
 
-		const [attachSummary, gcData] = this.channel.getAttachSummaryAndGCData?.(
-			includeGCData,
-			telemetryContext,
-		) ?? [this.channel.getAttachSummary(telemetryContext)];
+		const attachSummary = this.channel.getAttachSummary(telemetryContext);
 
 		// Wrap dds summaries in .channels subtree.
 		wrapSummaryInChannelsTree(attachSummary);
@@ -1153,9 +1150,11 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		const attributes = createAttributes(this.pkg, this.isInMemoryRoot());
 		addBlobToSummary(attachSummary, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
-		const type = this.pkg[this.pkg.length - 1];
-
-		return { attachSummary, type, gcData };
+		return {
+			attachSummary,
+			type: this.pkg[this.pkg.length - 1],
+			gcData: includeGCData ? this.channel.getAttachGCData?.(telemetryContext) : undefined,
+		};
 	}
 
 	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
