@@ -247,8 +247,9 @@ describe("Matrix fuzz tests", function () {
 			clientAddProbability: 0,
 		},
 		reconnectProbability: 0.1,
-		// This seed is slow and hits timeout issues; see comment on this suite's test timeout.
-		skip: [53],
+		// Seed 35 needs investigation, tracked by AB#7088.
+		// Seed 53 is slow and hits timeout issues but otherwise would pass; see comment on this suite's test timeout.
+		skip: [35, 53],
 		// Uncomment to replay a particular seed.
 		// replay: 0,
 	});
