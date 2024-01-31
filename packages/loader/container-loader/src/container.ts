@@ -87,6 +87,7 @@ import {
 	GenericError,
 	UsageError,
 } from "@fluidframework/telemetry-utils";
+import { IResponse } from "@fluidframework/core-interfaces";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
 import {
@@ -568,7 +569,7 @@ export class Container
 	private service: IDocumentService | undefined;
 
 	private _runtime: IRuntime | undefined;
-	private get runtime() {
+	public get runtime() {
 		if (this._runtime === undefined) {
 			throw new Error("Attempted to access runtime before it was defined");
 		}
@@ -2585,4 +2586,18 @@ export interface IContainerExperimental extends IContainer {
 	 * given to a newly loaded container.
 	 */
 	closeAndGetPendingLocalState?(stopBlobAttachingSignal?: AbortSignal): Promise<string>;
+}
+
+/**
+ * @deprecated Will be removed in future major release.
+ * @alpha
+ */
+export async function requestOnIContainer_Deprecated(container: IContainer): Promise<FluidObject> {
+	const containerCast = container as Container;
+	if ("request" in containerCast.runtime && typeof containerCast.runtime.request === "function") {
+		const response: IResponse = await (containerCast.runtime as any).request({ url: "/" });
+		assert(response.status === 200, "requesting '/' should return default data object");
+		return response.value as FluidObject;
+	}
+	throw new UsageError("Invalid usage of requestOnIContainer_Deprecated");
 }

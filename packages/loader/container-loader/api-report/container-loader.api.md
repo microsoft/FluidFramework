@@ -129,6 +129,9 @@ export class Loader implements IHostLoader {
 // @alpha
 export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number) => IProtocolHandler;
 
+// @alpha @deprecated (undocumented)
+export function requestOnIContainer_Deprecated(container: IContainer): Promise<FluidObject>;
+
 // @alpha
 export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;
 
