@@ -111,7 +111,7 @@ function getNewTreeView(tree: ITree): TreeView<InventorySchema> {
 	);
 }
 
-describeCompat("HotSwap", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("HotSwap", "NoCompat", (getTestObjectProvider) => {
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {
