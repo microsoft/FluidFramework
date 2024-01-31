@@ -459,7 +459,23 @@ export class DataStores implements IDisposable {
 			return;
 		}
 
-		assert(!!context, 0x162 /* "There should be a store context for the op" */);
+		if (context === undefined) {
+			// Former assert 0x162
+			throw DataProcessingError.create(
+				"No context for op",
+				"processFluidDataStoreOp",
+				message,
+				{
+					local,
+					messageDetails: JSON.stringify({
+						type: message.type,
+						contentType: typeof message.contents,
+					}),
+					...tagCodeArtifacts({ address: envelope.address }),
+				},
+			);
+		}
+
 		context.process(transformed, local, localMessageMetadata);
 
 		// Notify that a GC node for the data store changed. This is used to detect if a deleted data store is
