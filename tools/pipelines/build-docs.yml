@@ -326,6 +326,7 @@ stages:
           condition: eq(variables.shouldDeploy, true)
           inputs:
             skip_app_build: true # site was built in previous stage
+            skip_api_build: true # api is written in js, no build needed
             cwd: $(Build.SourcesDirectory)
             app_location: 'docs/public'
             api_location: 'docs/api'
