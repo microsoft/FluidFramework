@@ -534,7 +534,12 @@ describeCompat("GC unreferenced timestamp", "2.0.0-rc.1.0.0", (getTestObjectProv
 			 * The difference from previous test case is that the reference from B to C is added before B is referenced and
 			 * observed by summarizer. So, the summarizer does not see this reference until B is attached.
 			 */
-			it(`Scenario 6 - Node re-referenced via new unreferenced DataStore attaching`, async () => {
+			//* ONLY
+			//* ONLY
+			//* ONLY
+			//* ONLY
+			//* ONLY
+			it.only(`Scenario 6 - Node re-referenced via new DataStore attaching`, async () => {
 				const { summarizer } = await createSummarizer(provider, mainContainer, {
 					loaderProps: { configProvider },
 				});
@@ -592,7 +597,7 @@ describeCompat("GC unreferenced timestamp", "2.0.0-rc.1.0.0", (getTestObjectProv
 			 * This difference from the previous test case is that there is another level of indirection here that
 			 * references the node which was unreferenced in previous summary.
 			 */
-			it(`Scenario 7 - Node re-referenced via new unreferenced DataStore attaching (extra indirection)`, async () => {
+			it(`Scenario 7 - Node re-referenced via new DataStore attaching (extra indirection)`, async () => {
 				const { summarizer } = await createSummarizer(provider, mainContainer, {
 					loaderProps: { configProvider },
 				});
@@ -656,7 +661,7 @@ describeCompat("GC unreferenced timestamp", "2.0.0-rc.1.0.0", (getTestObjectProv
 			 *
 			 * Validates that the unreferenced time for C is t2 which is > t1.
 			 */
-			it(`Scenario 8 - Node re-referenced via new unreferenced DDS attaching`, async () => {
+			it(`Scenario 8 - Node re-referenced via new DDS attaching`, async () => {
 				const { summarizer } = await createSummarizer(provider, mainContainer, {
 					loaderProps: { configProvider },
 				});
@@ -722,7 +727,7 @@ describeCompat("GC unreferenced timestamp", "2.0.0-rc.1.0.0", (getTestObjectProv
 			 *
 			 * Validates that the unreferenced time for C is t2 which is > t1.
 			 */
-			it(`Scenario 9 - Node re-referenced via new unreferenced DDS attaching (extra indirection)`, async () => {
+			it(`Scenario 9 - Node re-referenced via new DDS attaching (extra indirection)`, async () => {
 				const { summarizer } = await createSummarizer(provider, mainContainer, {
 					loaderProps: { configProvider },
 				});

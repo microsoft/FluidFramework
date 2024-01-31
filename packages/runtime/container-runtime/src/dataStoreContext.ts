@@ -649,8 +649,10 @@ export abstract class FluidDataStoreContext
 	}
 
 	/**
-	 * @deprecated There is no replacement for this, its functionality is no longer needed.
+	 * @deprecated There is no replacement for this, its functionality is no longer needed at this layer.
 	 * It will be removed in a future release, sometime after 2.0.0-internal.8.0.0
+	 *
+	 * Similar capability is exposed with from/to string paths instead of handles via @see addedGCOutboundRoute
 	 *
 	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
 	 * all references added in the system.
@@ -665,6 +667,15 @@ export abstract class FluidDataStoreContext
 		}
 	}
 
+	/**
+	 * (Same as @see addedGCOutboundReference, but with string paths instead of handles)
+	 *
+	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
+	 * all references added in the system.
+	 *
+	 * @param fromPath - The absolute path of the node that added the reference.
+	 * @param toPath - The absolute path of the outbound node that is referenced.
+	 */
 	public addedGCOutboundRoute(fromPath: string, toPath: string) {
 		this._containerRuntime.addedGCOutboundReference(
 			{ absolutePath: fromPath },

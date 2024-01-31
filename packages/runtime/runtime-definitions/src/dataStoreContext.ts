@@ -506,6 +506,8 @@ export interface IFluidDataStoreContext
 	addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
 
 	/**
+	 * (Same as @see addedGCOutboundReference, but with string paths instead of handles)
+	 *
 	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
 	 * all references added in the system.
 	 *
