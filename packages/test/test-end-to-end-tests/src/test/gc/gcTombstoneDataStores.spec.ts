@@ -131,8 +131,9 @@ describeCompat("GC data store tombstone tests", "2.0.0-rc.1.0.0", (getTestObject
 		container: IContainer,
 		summaryVersion?: string,
 		logger?: MockLogger,
+		testConfig: ITestContainerConfig = summarizerTestConfig,
 	) => {
-		return createSummarizer(provider, container, summarizerTestConfig, summaryVersion, logger);
+		return createSummarizer(provider, container, testConfig, summaryVersion, logger);
 	};
 	const summarize = async (summarizer: ISummarizer, options?: IOnDemandSummarizeOptions) => {
 		await provider.ensureSynchronized();
@@ -1049,7 +1050,11 @@ describeCompat("GC data store tombstone tests", "2.0.0-rc.1.0.0", (getTestObject
 			},
 		);
 
-		itExpects(
+		//* ONLY
+		//* ONLY
+		//* ONLY
+		//* ONLY
+		itExpects.only(
 			"Requesting WRONGLY-tombstoned datastore triggers auto-recovery and self-repair",
 			[
 				// 1A
@@ -1094,8 +1099,18 @@ describeCompat("GC data store tombstone tests", "2.0.0-rc.1.0.0", (getTestObject
 				// Summarize to get a baseline for incremental summary/GC, then load a new summarizer (and close the first one)
 				const { summaryVersion: summaryVersion0 } = await summarize(summarizer0);
 				summarizingContainer0.close();
+				// (clone summarizerTestConfig and specify to run full GC which is needed to ensure the testhook kicks in)
+				const testConfig: ITestContainerConfig = JSON.parse(
+					JSON.stringify(summarizerTestConfig),
+				);
+				testConfig.runtimeOptions!.gcOptions!.runFullGC = true;
 				const { container: closeMe, summarizer: summarizer_toBeCorrupted } =
-					await loadSummarizer(initialContainer, summaryVersion0, summarizerMockLogger);
+					await loadSummarizer(
+						initialContainer,
+						summaryVersion0,
+						summarizerMockLogger,
+						testConfig,
+					);
 
 				//* TODO: Find a better way to inject this corruption (without requiring change to actual code)
 				// Generate a summary with corrupted GC Data (missing route to dataStore A)
@@ -1104,8 +1119,7 @@ describeCompat("GC data store tombstone tests", "2.0.0-rc.1.0.0", (getTestObject
 				const { summaryVersion: summaryVersion_corrupted } = await summarize(
 					summarizer_toBeCorrupted,
 					{
-						reason: "end-to-end test",
-						fullTree: true,
+						reason: "Summarize with corrupted GC Data",
 					},
 				);
 				global.__testhook__gcDataOverrides = {};
@@ -1184,7 +1198,6 @@ describeCompat("GC data store tombstone tests", "2.0.0-rc.1.0.0", (getTestObject
 					"Tombstone error from handle.get should have 404 status code (1A again)",
 				);
 
-				//* Full GC doesn't reset _all_ timestamps right?
 				// Auto-Recovery: This summary will have the unref timestamp reset and will run full GC due to the GC TombstoneLoaded op
 				const { summaryVersion: summaryVersion2 } = await summarize(summarizer, {
 					reason: "Summarize after auto-recovery",
