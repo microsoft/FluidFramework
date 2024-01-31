@@ -52,10 +52,7 @@ export class GCSummaryStateTracker {
 	public updatedDSCountSinceLastSummary: number = 0;
 
 	/** API for ensuring the correct auto-recovery mitigations */
-	public autoRecovery: {
-		requestFullGCOnNextRun(): void;
-		fullGCRequested(): boolean;
-	} = {
+	public autoRecovery = {
 		requestFullGCOnNextRun: () => {
 			this.fullGCModeForAutoRecovery = true;
 		},

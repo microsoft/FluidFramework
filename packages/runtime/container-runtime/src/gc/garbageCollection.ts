@@ -453,10 +453,10 @@ export class GarbageCollector implements IGarbageCollector {
 		telemetryContext?: ITelemetryContext,
 	): Promise<IGCStats | undefined> {
 		const fullGC =
-			this.summaryStateTracker.autoRecovery.fullGCRequested() ||
-			(options.fullGC ??
-				(this.configs.runFullGC === true ||
-					this.summaryStateTracker.doesSummaryStateNeedReset));
+			options.fullGC ??
+			(this.configs.runFullGC === true ||
+				this.summaryStateTracker.autoRecovery.fullGCRequested() ||
+				this.summaryStateTracker.doesSummaryStateNeedReset);
 
 		// Add the options that are used to run GC to the telemetry context.
 		telemetryContext?.setMultiple("fluid_GC", "Options", {
@@ -879,7 +879,7 @@ export class GarbageCollector implements IGarbageCollector {
 				const tombstonedNodePath = message.contents.nodePath;
 				this.addedOutboundReference("/", tombstonedNodePath);
 
-				// In case the cause of the TombstoneLoaded event is incorrect GC Data,
+				// In case the cause of the TombstoneLoaded event is incorrect GC Data (i.e. the object is actually reachable),
 				// do fullGC on the next run to get a chance to repair (in the likely case the bug is not deterministic)
 				this.summaryStateTracker.autoRecovery.requestFullGCOnNextRun();
 

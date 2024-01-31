@@ -268,11 +268,6 @@ describe("Garbage Collection Tests", () => {
 	});
 
 	describe("runSweepPhase", () => {
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		//* ONLY
 		it("Tombstone then Delete", async () => {
 			// Simple starting reference graph - root and two nodes
 			defaultGCData.gcNodes["/"] = [nodes[0], nodes[1]];
@@ -314,26 +309,19 @@ describe("Garbage Collection Tests", () => {
 			);
 			spies.updateTombstonedRoutes.resetHistory();
 
-			// Simulate usage to trigger autorecovery op (and plumb it to processMessage)
-			gc.nodeUpdated(nodes[0], "Loaded");
-			//* const x = spies.submitMessage.args;
+			// Skip past Sweep Grace Period. GC Sweep op should be submitted
+			clock.tick(defaultSweepGracePeriodMs);
+			await gc.collectGarbage({});
+
 			assert.equal(
 				spies.submitMessage.callCount,
 				1,
-				"submitMessage should not be called yet, didn't pass Grace Period yet",
+				"submitMessage should be called since Sweep is enabled",
 			);
-			gc.processMessage({} as any, false /* local */);
-
-			//* Assert that unreference tracker was deleted?
-			//* Or just run GC and find that its unref timestamp is Now
-			//* gc.collectGarbage({});
-
-			//* Wait Tombstone time and run GC again - Node0 will be TombstoneReady again because GC Data didn't change.
-			//* For validating the fix - We could fake it by changing the GC Data returned if fullGC is passed in. Might be too fiddley.
-			//* If we did, then we could assert that updateTombstonedRoutes is NOT called again since the data would show Node0 referenced.
-
-			//* Instead, we could scope this test to simply verify that fullGC is passed in the next GC run after the op is processed.
-			//* Also think about the case where GC isn't run (i.e. Summarizer closes). The next Summarizer should again process the op and be good.
+			assert(
+				spies.updateTombstonedRoutes.alwaysCalledWith([]),
+				"No additional nodes should be Tombstoned",
+			);
 		});
 
 		it("Sweep Disabled - Should Tombstone SweepReady nodes", async () => {

@@ -1,8 +1,9 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
 import {
@@ -840,6 +841,7 @@ describeCompat("GC data store tombstone tests", "2.0.0-rc.1.0.0", (getTestObject
 				);
 			},
 		);
+
 		itExpects(
 			"Requesting tombstoned datastore triggers auto-recovery",
 			[
@@ -1107,7 +1109,7 @@ describeCompat("GC data store tombstone tests", "2.0.0-rc.1.0.0", (getTestObject
 				const { container: closeMe, summarizer: summarizer_toBeCorrupted } =
 					await loadSummarizer(initialContainer, summaryVersion0, summarizerMockLogger);
 
-				// Monkey patch in the tweak to GC Data
+				// Monkey patch in the tweak to GC Data, removing outbound routes from default's root DDS
 				const garbageCollector_toBeCorrupted = (
 					summarizer_toBeCorrupted as unknown as {
 						runtime: {
@@ -1119,6 +1121,7 @@ describeCompat("GC data store tombstone tests", "2.0.0-rc.1.0.0", (getTestObject
 				).runtime.garbageCollector;
 				garbageCollector_toBeCorrupted.baseGCDetailsP =
 					garbageCollector_toBeCorrupted.baseGCDetailsP.then((baseGCDetails) => {
+						// baseGCDetails outbound routes for this DDS currently include dataStoreA and dataStoreX. Remove those.
 						baseGCDetails.gcData!.gcNodes["/default/root"] = ["/default"];
 						return baseGCDetails;
 					});
@@ -1236,8 +1239,7 @@ describeCompat("GC data store tombstone tests", "2.0.0-rc.1.0.0", (getTestObject
 				// Since auto-recovery triggered full GC, the corruption was repaired and GC knows dataStoreA is referenced
 				await delay(tombstoneTimeoutMs);
 				dataStoreX._root.set("update", "timestamp again"); //* Curious: Might hit Tombstone Changed event, w/o fullGC recovery?
-				const { summaryTree, summaryVersion: summaryVersion3 } =
-					await summarize(summarizer);
+				const { summaryVersion: summaryVersion3 } = await summarize(summarizer);
 				const container3 = await loadContainer(summaryVersion3);
 				const defaultDataObject3 = (await container3.getEntryPoint()) as ITestDataObject;
 				const handleA3 = defaultDataObject3._root.get<IFluidHandle>("dsA");
