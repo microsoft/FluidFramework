@@ -97,7 +97,9 @@ export default class PackageReportCommand extends PackageCommand<typeof PackageR
 			hasTscMultiDep: Object.hasOwn(packageJson.devDependencies ?? {}, "tsc-multi"),
 			hasRenameTypesScript: pkg.getScript("build:rename-types") !== undefined,
 			runsTests: pkg.getScript("test") !== undefined,
-			usesTscMulti: pkg.getScript("tsc")?.includes("tsc-multi"),
+			usesTscMulti:
+				pkg.getScript("tsc")?.includes("tsc-multi") === true ||
+				pkg.getScript("build:esnext")?.includes("tsc-multi"),
 			usesNewTsConfigs,
 		};
 		this.packageMetadata.push(metadata);
