@@ -17,7 +17,7 @@ importers:
       eslint-config-prettier: ~9.0.0
       eslint-import-resolver-typescript: ~3.6.1
       eslint-plugin-eslint-comments: ~3.2.0
-      eslint-plugin-fluid-custom-rules: file:./src/fluid-custom-rules
+      eslint-plugin-fluid-internal: file:./src/fluid-internal
       eslint-plugin-import: npm:eslint-plugin-i@~2.29.0
       eslint-plugin-jsdoc: ~46.8.1
       eslint-plugin-promise: ~6.1.1
@@ -44,7 +44,7 @@ importers:
       eslint-config-prettier: 9.0.0_eslint@8.50.0
       eslint-import-resolver-typescript: 3.6.1_23enhn7pppnolyoizx6fvous5q
       eslint-plugin-eslint-comments: 3.2.0_eslint@8.50.0
-      eslint-plugin-fluid-custom-rules: file:src/fluid-custom-rules
+      eslint-plugin-fluid-internal: file:src/fluid-internal
       eslint-plugin-import: /eslint-plugin-i/2.29.1_qkgnnbjqevbkx5nf2343uj5ca4
       eslint-plugin-jsdoc: 46.8.2_eslint@8.50.0
       eslint-plugin-promise: 6.1.1_eslint@8.50.0
@@ -67,7 +67,7 @@ importers:
       sort-json: 2.0.1
       typescript: 5.1.6
     dependenciesMeta:
-      eslint-plugin-fluid-custom-rules:
+      eslint-plugin-fluid-internal:
         injected: true
 
 packages:
@@ -316,13 +316,13 @@ packages:
   /@types/concat-stream/1.6.1:
     resolution: {integrity: sha512-eHE4cQPoj6ngxBZMvVf6Hw7Mh4jMW4U9lpGmS5GBPB9RYxlFg+CHaVN7ErNY4W9XfLIEn20b4VDYaIrbq0q4uA==}
     dependencies:
-      '@types/node': 8.10.66
+      '@types/node': 20.11.13
     dev: true
 
   /@types/form-data/0.0.33:
     resolution: {integrity: sha512-8BSvG1kGm83cyJITQMZSulnl6QV8jqAGreJsc5tPu1Jq0vTSOiY/k24Wx82JRpWwZSqrala6sd5rWi6aNXvqcw==}
     dependencies:
-      '@types/node': 8.10.66
+      '@types/node': 20.11.13
     dev: true
 
   /@types/glob/7.2.0:
@@ -3731,8 +3731,8 @@ packages:
       - supports-color
     dev: true
 
-  file:src/fluid-custom-rules:
-    resolution: {directory: src/fluid-custom-rules, type: directory}
-    name: eslint-plugin-fluid-custom-rules
-    version: 1.0.0
+  file:src/fluid-internal:
+    resolution: {directory: src/fluid-internal, type: directory}
+    name: eslint-plugin-fluid-internal
+    version: 0.1.0
     dev: false
