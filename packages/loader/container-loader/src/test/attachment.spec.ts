@@ -461,7 +461,7 @@ describe("runRetriableAttachProcess", () => {
 					createOrGetStorageService: async () =>
 						// only the summary should be left to upload
 						createProxyWithFailDefault<IDocumentStorageService>({
-							uploadSummaryWithContext: async () => Promise.resolve(uuid),
+							uploadSummaryWithContext: async () => Promise.resolve(uuid()),
 						}),
 				}),
 			);
