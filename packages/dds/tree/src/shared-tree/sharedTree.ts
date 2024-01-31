@@ -61,6 +61,7 @@ import {
 } from "../simple-tree/index.js";
 import {
 	InitializeAndSchematizeConfiguration,
+	TreeContent,
 	UpdateType,
 	ensureSchema,
 	evaluateUpdate,
@@ -288,7 +289,7 @@ export class SharedTree
 		// TODO: support adapters and include them here.
 
 		const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, config.schema);
-		if (!ensureSchema(viewSchema, config.allowedSchemaModifications, this.checkout)) {
+		if (!ensureSchema(viewSchema, config.allowedSchemaModifications, this.checkout, config)) {
 			fail("Schematize failed");
 		}
 
@@ -304,12 +305,17 @@ export class SharedTree
 	public schematize<TRoot extends ImplicitFieldSchema>(
 		config: TreeConfiguration<TRoot>,
 	): TreeView<TreeFieldFromImplicitField<TRoot>> {
-		return new TrySchematizeTreeView(
+		const view = new TrySchematizeTreeView(
 			this.checkout,
 			config,
 			createNodeKeyManager(this.runtime.idCompressor),
 			brand(defaultNodeKeyFieldKey),
 		);
+		// As a subjective API design choice, we initialize the tree here if it is not already initialized.
+		if (view.error?.canInitialize === true) {
+			view.upgradeSchema();
+		}
+		return view;
 	}
 
 	protected override async loadCore(services: IChannelStorageService): Promise<void> {
@@ -451,7 +457,7 @@ export class TrySchematizeTreeView<in out TRootSchema extends ImplicitFieldSchem
 	 * 3. disposed: `view` is undefined, and using this object will error. Some methods also transiently leave view undefined.
 	 */
 	private view: CheckoutFlexTreeView<FlexFieldSchema> | SchematizeError | undefined;
-	private readonly flexConfig: InitializeAndSchematizeConfiguration;
+	private readonly flexConfig: TreeContent;
 	public readonly events: ISubscribable<TreeViewEvents> &
 		IEmitter<TreeViewEvents> &
 		HasListeners<TreeViewEvents> = createEmitter();
@@ -469,13 +475,8 @@ export class TrySchematizeTreeView<in out TRootSchema extends ImplicitFieldSchem
 		public readonly nodeKeyManager: NodeKeyManager,
 		public readonly nodeKeyFieldKey: FieldKey,
 	) {
-		this.flexConfig = {
-			...toFlexConfig(config),
-			// TODO: correct allowedSchemaModifications
-			allowedSchemaModifications: AllowedUpdateType.None,
-		};
-		const flexConfig = toFlexConfig(config);
-		this.viewSchema = new ViewSchema(defaultSchemaPolicy, {}, flexConfig.schema);
+		this.flexConfig = toFlexConfig(config);
+		this.viewSchema = new ViewSchema(defaultSchemaPolicy, {}, this.flexConfig.schema);
 		this.update();
 	}
 
@@ -496,7 +497,8 @@ export class TrySchematizeTreeView<in out TRootSchema extends ImplicitFieldSchem
 
 		const result = ensureSchema(
 			this.viewSchema,
-			AllowedUpdateType.SchemaCompatible,
+			// eslint-disable-next-line no-bitwise
+			AllowedUpdateType.SchemaCompatible | AllowedUpdateType.Initialize,
 			this.checkout,
 			this.flexConfig,
 		);
@@ -520,8 +522,8 @@ export class TrySchematizeTreeView<in out TRootSchema extends ImplicitFieldSchem
 		this.updating = true;
 		const compatibility = evaluateUpdate(
 			this.viewSchema,
-			AllowedUpdateType.SchemaCompatible,
-			true,
+			// eslint-disable-next-line no-bitwise
+			AllowedUpdateType.SchemaCompatible | AllowedUpdateType.Initialize,
 			this.checkout,
 		);
 		this.disposeView();

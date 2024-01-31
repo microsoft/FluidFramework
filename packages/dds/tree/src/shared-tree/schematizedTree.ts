@@ -96,53 +96,61 @@ export function initializeContent(
 }
 
 export enum UpdateType {
+	/**
+	 * Already compatible, no update needed.
+	 */
 	None,
+	/**
+	 * Empty: needs initializing.
+	 */
 	Initialize,
+	/**
+	 * Schema can be upgraded leaving tree as is.
+	 */
 	SchemaCompatible,
+	/**
+	 * No update currently supported.
+	 */
 	Incompatible,
 }
 
 export function evaluateUpdate(
 	viewSchema: ViewSchema,
 	allowedSchemaModifications: AllowedUpdateType,
-	allowInitialize: boolean,
 	checkout: TreeCheckout,
 ): UpdateType {
-	// Check for empty.
-	const canInitialize =
-		allowInitialize && checkout.forest.isEmpty && schemaDataIsEmpty(checkout.storedSchema);
-
 	const compatibility = viewSchema.checkCompatibility(checkout.storedSchema);
-	switch (allowedSchemaModifications) {
-		case AllowedUpdateType.None: {
-			if (compatibility.read !== Compatibility.Compatible) {
-				// Existing stored schema permits trees which are incompatible with the view schema
-				return canInitialize ? UpdateType.Initialize : UpdateType.Incompatible;
-			}
 
-			if (compatibility.write !== Compatibility.Compatible) {
-				// TODO: support readonly mode in this case.
-				// View schema permits trees which are incompatible with the stored schema
-				return canInitialize ? UpdateType.Initialize : UpdateType.Incompatible;
-			}
-
-			return UpdateType.None;
-		}
-		case AllowedUpdateType.SchemaCompatible: {
-			if (compatibility.read !== Compatibility.Compatible) {
-				// Existing stored schema permits trees which are incompatible with the view schema, so schema can not be updated
-				return canInitialize ? UpdateType.Initialize : UpdateType.Incompatible;
-			}
-			if (compatibility.write !== Compatibility.Compatible) {
-				return canInitialize ? UpdateType.Initialize : UpdateType.SchemaCompatible;
-			}
-
-			return UpdateType.None;
-		}
-		default: {
-			unreachableCase(allowedSchemaModifications);
-		}
+	if (
+		compatibility.read === Compatibility.Compatible &&
+		compatibility.write === Compatibility.Compatible
+	) {
+		// Compatible as is
+		return UpdateType.None;
 	}
+
+	// eslint-disable-next-line no-bitwise
+	if (allowedSchemaModifications & AllowedUpdateType.Initialize && canInitialize(checkout)) {
+		return UpdateType.Initialize;
+	}
+
+	if (compatibility.read !== Compatibility.Compatible) {
+		// Existing stored schema permits trees which are incompatible with the view schema, so schema can not be updated
+		return UpdateType.Incompatible;
+	}
+
+	assert(compatibility.write === Compatibility.Incompatible, "unexpected case");
+	assert(compatibility.read === Compatibility.Compatible, "unexpected case");
+
+	// eslint-disable-next-line no-bitwise
+	return allowedSchemaModifications & AllowedUpdateType.SchemaCompatible
+		? UpdateType.SchemaCompatible
+		: UpdateType.Incompatible;
+}
+
+export function canInitialize(checkout: TreeCheckout): boolean {
+	// Check for empty.
+	return checkout.forest.isEmpty && schemaDataIsEmpty(checkout.storedSchema);
 }
 
 // TODO: move this off tree
@@ -150,9 +158,15 @@ export function ensureSchema(
 	viewSchema: ViewSchema,
 	allowedSchemaModifications: AllowedUpdateType,
 	checkout: TreeCheckout,
-	treeContent?: TreeContent,
+	treeContent: TreeContent | undefined,
 ): boolean {
-	const updatedNeeded = evaluateUpdate(viewSchema, allowedSchemaModifications, true, checkout);
+	let possibleModifications = allowedSchemaModifications;
+	if (treeContent === undefined) {
+		// Clear bit for Initialize if initial tree is not provided.
+		// eslint-disable-next-line no-bitwise
+		possibleModifications &= ~AllowedUpdateType.Initialize;
+	}
+	const updatedNeeded = evaluateUpdate(viewSchema, possibleModifications, checkout);
 	switch (updatedNeeded) {
 		case UpdateType.None: {
 			return true;

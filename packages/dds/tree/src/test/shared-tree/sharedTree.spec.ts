@@ -104,7 +104,7 @@ describe("SharedTree", () => {
 			const provider = new TestTreeProviderLite(2);
 			const content = {
 				schema: stringSequenceRootSchema,
-				allowedSchemaModifications: AllowedUpdateType.None,
+				allowedSchemaModifications: AllowedUpdateType.Initialize,
 				initialTree: ["x"],
 			} satisfies InitializeAndSchematizeConfiguration;
 			const tree1 = provider.trees[0].schematizeInternal(content);
@@ -122,7 +122,7 @@ describe("SharedTree", () => {
 			assert.deepEqual(tree.contentSnapshot().schema.rootFieldSchema, storedEmptyFieldSchema);
 
 			const view = tree.schematizeInternal({
-				allowedSchemaModifications: AllowedUpdateType.None,
+				allowedSchemaModifications: AllowedUpdateType.Initialize,
 				initialTree: 10,
 				schema,
 			});
@@ -154,7 +154,7 @@ describe("SharedTree", () => {
 			tree.checkout.updateSchema(storedSchemaGeneralized);
 			assert.throws(() => {
 				tree.schematizeInternal({
-					allowedSchemaModifications: AllowedUpdateType.None,
+					allowedSchemaModifications: AllowedUpdateType.Initialize,
 					initialTree: 5,
 					schema,
 				});
@@ -281,7 +281,7 @@ describe("SharedTree", () => {
 			"the tree",
 		);
 		const view = sharedTree.schematizeInternal({
-			allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
+			allowedSchemaModifications: AllowedUpdateType.Initialize,
 			initialTree: 1,
 			schema,
 		});
@@ -308,7 +308,7 @@ describe("SharedTree", () => {
 			});
 		}
 		sharedTree.schematizeInternal({
-			allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
+			allowedSchemaModifications: AllowedUpdateType.Initialize,
 			initialTree: ["x"],
 			schema: stringSequenceRootSchema,
 		});
@@ -329,7 +329,7 @@ describe("SharedTree", () => {
 		// Apply an edit to the first tree which inserts a node with a value
 		const view1 = provider.trees[0].schematizeInternal({
 			schema: stringSequenceRootSchema,
-			allowedSchemaModifications: AllowedUpdateType.None,
+			allowedSchemaModifications: AllowedUpdateType.Initialize,
 			initialTree: [value],
 		});
 
@@ -352,7 +352,7 @@ describe("SharedTree", () => {
 		const value = 42;
 		provider.trees[0].schematizeInternal({
 			schema: jsonSequenceRootSchema,
-			allowedSchemaModifications: AllowedUpdateType.None,
+			allowedSchemaModifications: AllowedUpdateType.Initialize,
 			initialTree: [value],
 		});
 		await provider.summarize();
@@ -427,7 +427,7 @@ describe("SharedTree", () => {
 				const config = {
 					schema,
 					initialTree: undefined,
-					allowedSchemaModifications: AllowedUpdateType.None,
+					allowedSchemaModifications: AllowedUpdateType.Initialize,
 				} satisfies InitializeAndSchematizeConfiguration;
 				const view1 = tree1.schematizeInternal(config);
 				const editable1 = view1.flexTree;
@@ -545,7 +545,7 @@ describe("SharedTree", () => {
 
 		const tree1 = provider.trees[0].schematizeInternal({
 			schema: stringSequenceRootSchema,
-			allowedSchemaModifications: AllowedUpdateType.None,
+			allowedSchemaModifications: AllowedUpdateType.Initialize,
 			initialTree: ["Z", "A", "C"],
 		});
 
@@ -611,7 +611,7 @@ describe("SharedTree", () => {
 
 		summarizingTree.schematizeInternal({
 			schema: stringSequenceRootSchema,
-			allowedSchemaModifications: AllowedUpdateType.None,
+			allowedSchemaModifications: AllowedUpdateType.Initialize,
 			initialTree: ["a", "b", "c"],
 		});
 
@@ -641,7 +641,7 @@ describe("SharedTree", () => {
 
 		summarizingTree.schematizeInternal({
 			schema: stringSequenceRootSchema,
-			allowedSchemaModifications: AllowedUpdateType.None,
+			allowedSchemaModifications: AllowedUpdateType.Initialize,
 			initialTree: ["a", "b", "c"],
 		});
 

@@ -314,7 +314,7 @@ describe("SharedTreeCore", () => {
 		const config = {
 			schema,
 			initialTree: undefined,
-			allowedSchemaModifications: AllowedUpdateType.None,
+			allowedSchemaModifications: AllowedUpdateType.Initialize,
 		} satisfies InitializeAndSchematizeConfiguration;
 
 		const view1 = tree1.schematizeInternal(config);

@@ -50,8 +50,9 @@ T extends readonly LazyItem<FlexTreeNodeSchema>[] ? InsertableFlexNode<Assume<Fl
 
 // @internal
 export enum AllowedUpdateType {
+    Initialize = 1,
     None = 0,
-    SchemaCompatible = 1
+    SchemaCompatible = 2
 }
 
 // @internal

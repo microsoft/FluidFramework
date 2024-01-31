@@ -78,7 +78,7 @@ export function viewFromState(
 			tree.schematizeInternal({
 				initialTree,
 				schema: fuzzSchema,
-				allowedSchemaModifications: AllowedUpdateType.None,
+				allowedSchemaModifications: AllowedUpdateType.Initialize,
 			}),
 		)
 	);
