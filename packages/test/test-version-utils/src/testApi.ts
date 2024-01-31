@@ -13,14 +13,16 @@ import { Loader } from "@fluidframework/container-loader";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 
 // Data Runtime API
-import { SharedCell } from "@fluidframework/cell";
-import { SharedCounter } from "@fluidframework/counter";
-import { Ink } from "@fluidframework/ink";
-import { SharedDirectory, SharedMap } from "@fluidframework/map";
-import { SharedMatrix } from "@fluidframework/matrix";
-import { ConsensusQueue } from "@fluidframework/ordered-collection";
-import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import { SharedString } from "@fluidframework/sequence";
+import cell, { SharedCell } from "@fluidframework/cell";
+import counter, { SharedCounter } from "@fluidframework/counter";
+import ink, { Ink } from "@fluidframework/ink";
+import map, { SharedDirectory, SharedMap } from "@fluidframework/map";
+import matrix, { SharedMatrix } from "@fluidframework/matrix";
+import orderedCollection, { ConsensusQueue } from "@fluidframework/ordered-collection";
+import registerCollection, {
+	ConsensusRegisterCollection,
+} from "@fluidframework/register-collection";
+import sequence, { SharedString } from "@fluidframework/sequence";
 import { TestFluidObjectFactory } from "@fluidframework/test-utils";
 
 // ContainerRuntime and Data Runtime API
@@ -29,7 +31,7 @@ import {
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
+import sequenceDeprecated, { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 
 import * as semver from "semver";
 import { pkgVersion } from "./packageVersion.js";
@@ -136,6 +138,26 @@ export const DataRuntimeApi = {
 		SharedString,
 		SparseMatrix,
 	},
+	/**
+	 * Contains all APIs from imported DDS packages.
+	 * Keep in mind that regardless of the DataRuntime version,
+	 * the APIs will be typechecked as if they were from the latest version.
+	 *
+	 * @remarks - Using these APIs in an e2e test puts additional burden on the test author and anyone making
+	 * changes to those APIs in the future, since this will necessitate back-compat logic in the tests.
+	 * Using non-stable APIs in e2e tests for that reason is discouraged.
+	 */
+	packages: {
+		cell,
+		counter,
+		ink,
+		map,
+		matrix,
+		orderedCollection,
+		registerCollection,
+		sequence,
+		sequenceDeprecated,
+	},
 };
 
 // #endregion
@@ -190,15 +212,15 @@ async function loadDataRuntime(baseVersion: string, requested?: number | string)
 		const [
 			{ DataObject, DataObjectFactory },
 			{ TestFluidObjectFactory },
-			{ SharedMap, SharedDirectory },
-			{ SharedString },
-			{ SharedCell },
-			{ SharedCounter },
-			{ SharedMatrix },
-			{ Ink },
-			{ ConsensusQueue },
-			{ ConsensusRegisterCollection },
-			{ SparseMatrix },
+			map,
+			sequence,
+			cell,
+			counter,
+			matrix,
+			ink,
+			orderedCollection,
+			registerCollection,
+			sequenceDeprecated,
 		] = await Promise.all([
 			loadPackage(modulePath, "@fluidframework/aqueduct"),
 			loadPackage(modulePath, "@fluidframework/test-utils"),
@@ -217,6 +239,15 @@ async function loadDataRuntime(baseVersion: string, requested?: number | string)
 					: "@fluidframework/sequence",
 			),
 		]);
+		const { SharedCell } = cell;
+		const { SharedCounter } = counter;
+		const { Ink } = ink;
+		const { SharedDirectory, SharedMap } = map;
+		const { SharedMatrix } = matrix;
+		const { ConsensusQueue } = orderedCollection;
+		const { ConsensusRegisterCollection } = registerCollection;
+		const { SharedString } = sequence;
+		const { SparseMatrix } = sequenceDeprecated;
 		/* eslint-enable @typescript-eslint/no-shadow */
 
 		const dataRuntime = {
@@ -235,6 +266,17 @@ async function loadDataRuntime(baseVersion: string, requested?: number | string)
 				ConsensusRegisterCollection,
 				SharedString,
 				SparseMatrix,
+			},
+			packages: {
+				map,
+				sequence,
+				cell,
+				counter,
+				matrix,
+				ink,
+				orderedCollection,
+				registerCollection,
+				sequenceDeprecated,
 			},
 		};
 		dataRuntimeCache.set(version, dataRuntime);

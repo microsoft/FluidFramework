@@ -25,7 +25,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import { SequenceInterval, SharedString } from "@fluidframework/sequence";
+import type { SequenceInterval, SharedString } from "@fluidframework/sequence";
 import { SharedCell } from "@fluidframework/cell";
 import { Ink } from "@fluidframework/ink";
 import type { SharedMatrix } from "@fluidframework/matrix";
@@ -121,7 +121,7 @@ describeCompat(
 	`Dehydrate Rehydrate Container Test`,
 	"FullCompat",
 	(getTestObjectProvider, apis) => {
-		const { SharedMap, SharedDirectory, SharedMatrix, SharedCounter } = apis.dds;
+		const { SharedMap, SharedDirectory, SharedMatrix, SharedCounter, SharedString } = apis.dds;
 		function assertSubtree(tree: ISnapshotTree, key: string, msg?: string): ISnapshotTree {
 			const subTree = tree.trees[key];
 			assert(subTree, msg ?? `${key} subtree not present`);

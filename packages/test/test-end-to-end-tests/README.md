@@ -31,10 +31,13 @@ This argument provides Fluid public APIs which internally reference the package 
 The APIs are organized roughly by layer, i.e. `apis.dds` exports the various DDS types,
 `apis.containerRuntime` exports concepts for building a container runtime (including bits of `@fluidframework/aqueduct`), etc.
 
+Less common APIs can be found on `apis.<layer-name>.packages.<package-name>` (package names are unscoped and camelCased).
+Keep in mind that if these APIs change over time, tests depending on them will either need to have a reduced compat matrix or include back-compat logic.
+
 ### ❌ Incorrect
 
 ```typescript
-import { SharedString } from "@fluidframework/sequence";
+import { SharedString, createOverlappingIntervalsIndex } from "@fluidframework/sequence";
 
 const registry: ChannelFactoryRegistry = [["sharedString", SharedString.getFactory()]];
 const testContainerConfig: ITestContainerConfig = {
@@ -48,8 +51,11 @@ describeCompat("SharedString", "FullCompat", (getTestObjectProvider) => {
 		provider = getTestObjectProvider();
 	});
 
-	it("supports collaborative text", async () => {
+	it("supports collaborative text with intervals", async () => {
 		const container1 = await provider.makeTestContainer(testContainerConfig);
+		const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
+		const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
+		const overlapping = createOverlappingIntervalsIndex(sharedString1);
 	});
 });
 ```
@@ -57,9 +63,11 @@ describeCompat("SharedString", "FullCompat", (getTestObjectProvider) => {
 #### ✅ Correct
 
 ```typescript
-describeCompat("SharedString", "FullCompat", (getTestObjectProvider, apis) => {
-	const { SharedString } = apis.dds;
-	// Note that `SharedString` below is equivalent to `apis.dds.SharedString`.
+describeCompat("SharedString", "FullCompat", (getTestObjectProvider, api) => {
+	const { SharedString } = api.dds;
+	const { createOverlappingIntervalsIndex } = api.dataRuntime.packages.sequence;
+
+	// Note that `SharedString` below is equivalent to `api.dds.SharedString`.
 	// It can be used as if you had imported it from @fluidframework/sequence at runtime.
 	const registry: ChannelFactoryRegistry = [["sharedString", SharedString.getFactory()]];
 	const testContainerConfig: ITestContainerConfig = {
@@ -74,6 +82,9 @@ describeCompat("SharedString", "FullCompat", (getTestObjectProvider, apis) => {
 
 	it("supports collaborative text", async () => {
 		const container1 = await provider.makeTestContainer(testContainerConfig);
+		const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
+		const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
+		const overlapping = createOverlappingIntervalsIndex(sharedString1);
 	});
 });
 ```
