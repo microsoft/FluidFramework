@@ -4,6 +4,7 @@
  */
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 import * as Redis from "ioredis";
@@ -41,6 +42,8 @@ export class AlfredResources implements core.IResources {
 		public documentsCollectionName: string,
 		public documentRepository: core.IDocumentRepository,
 		public documentDeleteService: IDocumentDeleteService,
+		public tokenRevocationManager?: core.ITokenRevocationManager,
+		public revokedTokenChecker?: core.IRevokedTokenChecker,
 		public serviceMessageResourceManager?: core.IServiceMessageResourceManager,
 		public clusterDrainingChecker?: core.IClusterDrainingChecker,
 	) {
@@ -343,6 +346,27 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		// Service Message setup
 		const serviceMessageResourceManager = customizations?.serviceMessageResourceManager;
 
+		// Set up token revocation if enabled
+		/**
+		 * Always have a revoked token checker,
+		 * just make sure it rejects existing revoked tokens even with the feature flag disabled
+		 */
+		const revokedTokenChecker: core.IRevokedTokenChecker =
+			customizations?.revokedTokenChecker ?? new utils.DummyRevokedTokenChecker();
+		const tokenRevocationEnabled: boolean = utils.getBooleanFromConfig(
+			"tokenRevocation:enable",
+			config,
+		);
+		let tokenRevocationManager: core.ITokenRevocationManager | undefined;
+		if (tokenRevocationEnabled) {
+			tokenRevocationManager =
+				customizations?.tokenRevocationManager ?? new utils.DummyTokenRevocationManager();
+			await tokenRevocationManager.initialize().catch((error) => {
+				// Do NOT crash the service if token revocation feature cannot be initialized properly.
+				Lumberjack.error("Failed to initialize token revocation manager", undefined, error);
+			});
+		}
+
 		return new AlfredResources(
 			config,
 			producer,
@@ -359,6 +383,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			documentsCollectionName,
 			documentRepository,
 			documentDeleteService,
+			tokenRevocationManager,
+			revokedTokenChecker,
 			serviceMessageResourceManager,
 			customizations?.clusterDrainingChecker,
 		);
@@ -384,8 +410,8 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
 			resources.producer,
 			resources.documentRepository,
 			resources.documentDeleteService,
-			null,
-			null,
+			resources.tokenRevocationManager,
+			resources.revokedTokenChecker,
 			null,
 			resources.clusterDrainingChecker,
 		);
