@@ -146,7 +146,7 @@ export const TestDataObjectType2 = "@fluid-example/test-dataStore2";
  */
 describeCompat(
 	"Prepare for Summary with Search Blobs",
-	"2.0.0-rc.1.0.0",
+	"NoCompat",
 	(getTestObjectProvider, apis) => {
 		const { SharedMatrix, SharedCounter } = apis.dds;
 		const { DataObject, DataObjectFactory } = apis.dataRuntime;
