@@ -86,16 +86,21 @@ describeCompat(
 			await waitForContainerConnection(container2);
 
 			// The first summary needs to be generated otherwise the summarizer will only generate one summary.
+			// Submitting an op will cause the first summary to be generated.
 			dataObject._root.set(`first`, "op");
 			await provider.ensureSynchronized();
-			mockLogger.assertMatch([
-				{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_start" },
-				{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_end" },
-				{ eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_start" },
-				{ eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_end" },
-			]);
+			mockLogger.assertMatch(
+				[
+					{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_start" },
+					{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_end" },
+					{ eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_start" },
+					{ eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_end" },
+				],
+				"expected first summary to be generated",
+			);
 			mockLogger.clear();
 
+			// All this does is make a promise that the container will see two summaries.
 			const twoSummariesDeferred = new Deferred<void>();
 			const summaryVersions: string[] = [];
 			let summariesSeen = 0;
@@ -117,19 +122,22 @@ describeCompat(
 			dataObject._root.set(`a`, "op1");
 			dataObject2._root.set(`b`, "op2");
 			await provider.ensureSynchronized();
+			// Wait for two summaries to be seen by the container.
 			await twoSummariesDeferred.promise;
 
-			// This verifies that two summaries were generated in succession from two ops.
-			mockLogger.assertMatch([
-				{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_start" },
-				{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_end" },
-				{ eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_start" },
-				{ eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_end" },
-				{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_start" },
-				{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_end" },
-				{ eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_start" },
-				{ eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_end" },
-			]);
+			mockLogger.assertMatch(
+				[
+					{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_start" },
+					{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_end" },
+					{ eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_start" },
+					{ eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_end" },
+					{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_start" },
+					{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_end" },
+					{ eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_start" },
+					{ eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_end" },
+				],
+				"two summaries should be generated in succession from two ops.",
+			);
 			assert.strictEqual(summaryVersions.length, 2, "expected 2 consecutive summaries");
 		});
 	},
