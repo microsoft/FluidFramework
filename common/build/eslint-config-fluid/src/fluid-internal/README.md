@@ -8,11 +8,11 @@ See [ESLint: Name a Plugin](https://eslint.org/docs/latest/extend/plugins) for m
 
 ## Background
 
-The `eslint-plugin-fluid-internal` is a nested package living inside the `@fluidframework/eslint-config-fluid` package. This structure is induced by the `ESLint`'s requirements which enforce:
+The `eslint-plugin-fluid-internal` is a nested package living inside the `@fluidframework/eslint-config-fluid` package. Although, it is a best practice to avoid the nested package structure, this decision was inevitably induced by the `ESLint`'s requirements which enforce:
 
 -   Each plugin to be an npm module with a name in the format of `eslint-plugin-foo` or `@scope/eslint-plugin-foo`.
 
-See [ESLint: Name a Plugin](https://eslint.org/docs/latest/extend/plugins#name-a-plugin) for more details.
+See [ESLint: Name a Plugin](https://eslint.org/docs/latest/extend/plugins#name-a-plugin) for more details. If there is a development in unifying the separate package structure, it should be done to ensure stronger package maintainability.
 
 ## Rules
 
@@ -26,4 +26,3 @@ Currently there are two custom rules within the package:
 To begin enforcing a new custom rule, make sure to include it in the `rules` field of the appropriate config module (`minimal.js`, `recommended.js`, or `strict.js`).
 
 Since `eslint-plugin-fluid-internal` is a dependency of `@fluidframework/eslint-config-fluid` package, any package using `@fluidframework/eslint-config-fluid` as its `devDependencies` will be able to apply the custom rules.
-
