@@ -127,6 +127,9 @@ interface IEfficientMatrix extends Omit<ISharedMatrix<MatrixExternalType>, "getC
 	getCellAsync(row: number, col: number): Promise<MatrixItem<MatrixExternalType>>;
 
 	getCellChannel(row: number, col: number): Promise<ITempChannel>;
+
+	// Experimental! It can be called only when condirions are right (no changes in collab window, no records on undo stack)
+	releaseCellChannel(channel: ITempChannel);
 }
 
 /*
@@ -259,7 +262,7 @@ export class TempCollabSpaceRuntime
 		}
 		const rowId = this.matrix.getCell(row, 0) as unknown as string;
 		const colId = this.matrix.getCell(0, col) as unknown as string;
-		const channelId = `${rowId}-${colId}-${cellValue.iteration}`;
+		const channelId = `${rowId},${colId},${cellValue.iteration}`;
 		const channel = this.contexts.get(channelId)?.getChannel();
 
 		return {
@@ -297,6 +300,49 @@ export class TempCollabSpaceRuntime
 		this.addChannel(newChannel);
 
 		return newChannel;
+	}
+
+	public releaseCellChannel(channel: ITempChannel) {
+		const channelId = (channel as Channel).id;
+		const parts = channelId.split(",");
+		assert(parts.length === 3, "wrong channel ID");
+		const rowId = parts[0];
+		const colId = parts[1];
+		const iteration = parts[2];
+
+		// TBD
+		// This needs to be way more efficient by building a reverse mapping and maintaining it through all operations!
+		// Need to reconcile which layer does such mapping. At the moment, this is done outside of matrix - in Tablero
+		// component. We should either move it here (and ideally - in compatible way, i.e. not changing document schema),
+		// or move most of the channel logic to the layer that implements row/col stable IDs.
+
+		const rowCount = this.matrix.rowCount;
+		const colCount = this.matrix.colCount;
+		
+		let row;
+		for (row = 1; row < rowCount; row++) {
+			if (this.matrix.getCell(row, 0) as unknown as string === rowId) {
+				break;
+			}
+		}
+		assert(row !== rowCount, "channel not found");
+
+		let col;
+		for (col = 1; col < colCount; col++) {
+			if (this.matrix.getCell(0, col) as unknown as string === colId) {
+				break;
+			}
+		}
+		assert(col !== colCount, "channel not found");
+
+		const currValue = this.matrix.getCell(row, col);
+		if (currValue !== undefined && String(currValue?.iteration) === iteration) {
+			// Same iteration, so channel represents the cell. Copy data from channel
+			this.matrix.setCell(row, col, {...currValue, value: channel.value as string})
+		}
+
+		// TBD
+		// Destry channel
 	}
 
 	// #region IMatrixProducer
@@ -503,7 +549,7 @@ describeCompat(
 			const datastore = (await container.getEntryPoint()) as TempCollabSpaceRuntime;
 
 			const cols = 40;
-			const rows = 100000;
+			const rows = 10000;
 
 			// +700Mb, but only +200Mb if accounting GC after that.
 			datastore.insertCols(0, cols);
@@ -513,6 +559,7 @@ describeCompat(
 				global.gc();
 			}
 
+			// 100K rows test numbers:
 			// +550Mb with GC step after that having almost no impact
 			// Though if GC did not run in a step above, this number is much higher (+1GB),
 			// suggesting that actual memory growth is 1GB, but 500Mb offset could be coming
@@ -523,16 +570,21 @@ describeCompat(
 				}
 			}
 
-			const channel = (await datastore.getCellChannel(100, 5)) as ISharedCounter;
-			channel.increment(100);
-			const value = await datastore.getCellAsync(100, 5);
-			assert(channel.value === value?.value, "not the same value");
-
 			if (global?.gc !== undefined) {
 				global.gc();
 			}
 
-			// Read arbitrary column; 1.9s on my dev box
+			const channel = (await datastore.getCellChannel(100, 5)) as ISharedCounter;
+			channel.increment(100);
+			let value = await datastore.getCellAsync(100, 5);
+			assert(channel.value === value?.value, "not the same value");
+
+			datastore.releaseCellChannel(channel);
+			value = await datastore.getCellAsync(100, 5);
+			assert(channel.value === value?.value, "not the same value");
+
+			// 100K rows test numbers:
+			// Read arbitrary column: 1s on my dev box
 			// But only 234ms if using non-async function (and thus not doing await here)!
 			const start = performance.now();
 			for (let i = 0; i < rows; i++) {
