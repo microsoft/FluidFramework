@@ -13,9 +13,6 @@ patchedDependencies:
   '@microsoft/api-extractor@7.39.1':
     hash: 5jttfhtxwdhxb7mhu7m3cyak6i
     path: patches/@microsoft__api-extractor@7.39.1.patch
-  socket.io-client@4.7.2:
-    hash: p7f5djbjd3zgfisasebtom74n4
-    path: patches/socket.io-client@4.7.2.patch
   tsc-multi@1.1.0:
     hash: bwju7gmfuwum2ryv7w6vqpkpiy
     path: patches/tsc-multi@1.1.0.patch
@@ -7422,7 +7419,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      socket.io-client: ^4.6.1
+      socket.io-client: ^4.7.3
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
@@ -7454,7 +7451,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      socket.io-client: 4.7.2_p7f5djbjd3zgfisasebtom74n4
+      socket.io-client: 4.7.4
       tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
@@ -7592,7 +7589,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      socket.io-client: ^4.6.1
+      socket.io-client: ^4.7.3
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
       url: ^0.11.0
@@ -7639,7 +7636,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      socket.io-client: 4.7.2_p7f5djbjd3zgfisasebtom74n4
+      socket.io-client: 4.7.4
       tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
@@ -7680,7 +7677,7 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^7.4.2
-      socket.io-client: ^4.6.1
+      socket.io-client: ^4.7.3
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
@@ -7697,7 +7694,7 @@ importers:
       '@fluidframework/protocol-definitions': 3.2.0-231454
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       node-fetch: 2.7.0
-      socket.io-client: 4.7.2_p7f5djbjd3zgfisasebtom74n4
+      socket.io-client: 4.7.4
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -7915,7 +7912,7 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^7.4.2
-      socket.io-client: ^4.6.1
+      socket.io-client: ^4.7.3
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
       url-parse: ^1.5.8
@@ -7934,7 +7931,7 @@ importers:
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       cross-fetch: 3.1.8
       json-stringify-safe: 5.0.1
-      socket.io-client: 4.7.2_p7f5djbjd3zgfisasebtom74n4
+      socket.io-client: 4.7.4
       url-parse: 1.5.10
       uuid: 9.0.1
     devDependencies:
@@ -9036,6 +9033,7 @@ importers:
       '@types/node': ^18.19.0
       '@types/sinon': ^7.0.13
       '@types/ungap__structured-clone': ^1.2.0
+      '@types/uuid': ^9.0.2
       '@ungap/structured-clone': ^1.2.0
       c8: ^8.0.1
       copyfiles: ^2.4.1
@@ -9088,6 +9086,7 @@ importers:
       '@types/node': 18.19.1
       '@types/sinon': 7.5.2
       '@types/ungap__structured-clone': 1.2.0
+      '@types/uuid': 9.0.7
       c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -17069,7 +17068,7 @@ packages:
       '@fluidframework/protocol-definitions': 3.1.0
       '@fluidframework/telemetry-utils': 2.0.0-internal.8.0.0
       node-fetch: 2.7.0
-      socket.io-client: 4.7.2_p7f5djbjd3zgfisasebtom74n4
+      socket.io-client: 4.7.4
       uuid: 9.0.1
     transitivePeerDependencies:
       - bufferutil
@@ -17208,7 +17207,7 @@ packages:
       '@fluidframework/telemetry-utils': 2.0.0-internal.8.0.0
       cross-fetch: 3.1.8
       json-stringify-safe: 5.0.1
-      socket.io-client: 4.7.2_p7f5djbjd3zgfisasebtom74n4
+      socket.io-client: 4.7.4
       url-parse: 1.5.10
       uuid: 9.0.1
     transitivePeerDependencies:
@@ -17235,7 +17234,7 @@ packages:
       '@fluidframework/telemetry-utils': 2.0.0-internal.8.0.0
       cross-fetch: 3.1.8
       json-stringify-safe: 5.0.1
-      socket.io-client: 4.7.2_p7f5djbjd3zgfisasebtom74n4
+      socket.io-client: 4.7.4
       url-parse: 1.5.10
       uuid: 9.0.1
     transitivePeerDependencies:
@@ -40853,8 +40852,8 @@ packages:
       - bufferutil
       - utf-8-validate
 
-  /socket.io-client/4.7.2_p7f5djbjd3zgfisasebtom74n4:
-    resolution: {integrity: sha512-vtA0uD4ibrYD793SOIAwlo8cj6haOeMHrGvwPxJsxH7CeIksqJ+3Zc06RvWTIFgiSqx4A3sOnTXpfAEE2Zyz6w==}
+  /socket.io-client/4.7.4:
+    resolution: {integrity: sha512-wh+OkeF0rAVCrABWQBaEjLfb7DVPotMbu0cgWgyR0v6eA4EoVnAwcIeIbcdTE3GT/H3kbdLl7OoH2+asoDRIIg==}
     engines: {node: '>=10.0.0'}
     dependencies:
       '@socket.io/component-emitter': 3.1.0
@@ -40865,7 +40864,6 @@ packages:
       - bufferutil
       - supports-color
       - utf-8-validate
-    patched: true
 
   /socket.io-parser/4.2.4:
     resolution: {integrity: sha512-/GbIKmo8ioc+NIWIhwdecY0ge+qVBSMdgxGygevmdHj24bsfgtCmcUUcQ5ZzcylGFHsN3k4HB4Cgkl96KVnuew==}
