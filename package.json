@@ -29,7 +29,7 @@
 		"build:gendocs:server:routerlicious": "copyfiles \"server/routerlicious/**/*.api.json\" ./_api-extractor-temp/doc-models/ -e \"**/node_modules/**\" -f -V",
 		"build:readme": "markdown-magic --files \"**/*.md\" !docs",
 		"bundle-analysis:collect": "npm run webpack:profile && flub generate bundleStats",
-		"bundle-analysis:run": "flub run bundleStats --dangerfile build-tools/packages/build-cli/lib/lib/dangerfile.js",
+		"bundle-analysis:run": "flub run bundleStats --dangerfile build-tools/packages/build-cli/lib/library/dangerfile.js",
 		"changeset": "flub changeset add --releaseGroup client",
 		"check:are-the-types-wrong": "fluid-build --task check:are-the-types-wrong",
 		"check:versions": "flub check buildVersion -g client --path .",
@@ -376,7 +376,6 @@
 		},
 		"patchedDependencies": {
 			"@microsoft/api-extractor@7.39.1": "patches/@microsoft__api-extractor@7.39.1.patch",
-			"socket.io-client@4.7.2": "patches/socket.io-client@4.7.2.patch",
 			"tsc-multi@1.1.0": "patches/tsc-multi@1.1.0.patch"
 		}
 	}

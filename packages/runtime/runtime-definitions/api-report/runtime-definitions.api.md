@@ -244,7 +244,7 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
 
 // @alpha (undocumented)
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
-    attachRuntime(factory: IProvideFluidDataStoreFactory, dataStoreRuntime: IFluidDataStoreChannel): Promise<void>;
+    attachRuntime(factory: IProvideFluidDataStoreFactory, dataStoreRuntime: IFluidDataStoreChannel): Promise<IDataStore>;
 }
 
 // @alpha (undocumented)

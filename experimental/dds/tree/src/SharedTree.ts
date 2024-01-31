@@ -30,7 +30,7 @@ import {
 	createSampledLogger,
 	IEventSampler,
 } from '@fluidframework/telemetry-utils';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { ISummaryTreeWithStats, ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { fail, copyPropertyIfDefined, RestOrArray, unwrapRestOrArray } from './Common';
 import { EditHandle, EditLog, OrderedEditSet } from './EditLog';
 import {
@@ -738,6 +738,32 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	}
 
 	/**
+	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).getAttachSummary}
+	 */
+	public override getAttachSummary(
+		fullTree?: boolean | undefined,
+		trackState?: boolean | undefined,
+		telemetryContext?: ITelemetryContext | undefined
+	): ISummaryTreeWithStats {
+		// If local changes exist, emulate the sequencing of those changes.
+		// Doing so is necessary so edits created during DataObject.initializingFirstTime are included.
+		// Doing so is safe because it is guaranteed that the DDS has not yet been attached. This is because summary creation is only
+		// ever invoked on a DataObject containing local changes when it is attached for the first time. In post-attach flows, an extra
+		// instance of the DataObject is created for generating summaries and will never have local edits.
+		if (this.editLog.numberOfLocalEdits > 0) {
+			if (this.writeFormat === WriteFormat.v0_1_1) {
+				// Since we're the first client to attach, we can safely finalize ourselves since we're the only ones who have made IDs.
+				this.idCompressor.finalizeCreationRange(this.idCompressor.takeNextCreationRange());
+				for (const edit of this.editLog.getLocalEdits()) {
+					this.internStringsFromEdit(edit);
+				}
+			}
+			this.editLog.sequenceLocalEdits();
+		}
+		return super.getAttachSummary(fullTree, trackState, telemetryContext);
+	}
+
+	/**
 	 * Saves this SharedTree into a serialized summary. This is used for testing.
 	 *
 	 * @param summarizer - Optional summarizer to use. If not passed in, SharedTree's summarizer is used.
@@ -761,26 +787,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * Saves this SharedTree into a deserialized summary.
 	 */
 	public saveSummary(): SharedTreeSummaryBase {
-		// If local changes exist, emulate the sequencing of those changes.
-		// Doing so is necessary so edits created during DataObject.initializingFirstTime are included.
-		// Doing so is safe because it is guaranteed that the DDS has not yet been attached. This is because summary creation is only
-		// ever invoked on a DataObject containing local changes when it is attached for the first time. In post-attach flows, an extra
-		// instance of the DataObject is created for generating summaries and will never have local edits.
-		if (this.editLog.numberOfLocalEdits > 0) {
-			assert(
-				this.runtime.attachState !== AttachState.Attached,
-				0x62e /* Summarizing should not occur with local edits except on first attach. */
-			);
-			if (this.writeFormat === WriteFormat.v0_1_1) {
-				// Since we're the first client to attach, we can safely finalize ourselves since we're the only ones who have made IDs.
-				this.idCompressor.finalizeCreationRange(this.idCompressor.takeNextCreationRange());
-				for (const edit of this.editLog.getLocalEdits()) {
-					this.internStringsFromEdit(edit);
-				}
-			}
-			this.editLog.sequenceLocalEdits();
-		}
-
 		assert(this.editLog.numberOfLocalEdits === 0, 0x62f /* generateSummary must not be called with local edits */);
 		return this.generateSummary();
 	}

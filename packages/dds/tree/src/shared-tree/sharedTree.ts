@@ -53,7 +53,7 @@ import { brand, disposeSymbol, fail } from "../util/index.js";
 import {
 	ITree,
 	TreeConfiguration,
-	WrapperTreeView as ClassWrapperTreeView,
+	WrapperTreeView,
 	toFlexConfig,
 	ImplicitFieldSchema,
 	TreeFieldFromImplicitField,
@@ -385,7 +385,7 @@ export class SharedTree
 	): TreeView<TreeFieldFromImplicitField<TRoot>> {
 		const flexConfig = toFlexConfig(config);
 		const view = this.schematizeInternal(flexConfig);
-		return new ClassWrapperTreeView(view);
+		return new WrapperTreeView(view);
 	}
 
 	protected override async loadCore(services: IChannelStorageService): Promise<void> {
