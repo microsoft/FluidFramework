@@ -328,7 +328,7 @@ describe("runRetriableAttachProcess", () => {
 					},
 					createOrGetStorageService: async () =>
 						createProxyWithFailDefault<IDocumentStorageService>({
-							createBlob: async () => Promise.resolve(uuid()),
+							createBlob: async () => Promise.resolve({ id: uuid() }),
 						}),
 					detachedBlobStorage,
 				});
@@ -371,7 +371,7 @@ describe("runRetriableAttachProcess", () => {
 						return emptySummary;
 					},
 					createOrGetStorageService: async () => ({
-						createBlob: async () => Promise.resolve(uuid()),
+						createBlob: async () => Promise.resolve({ id: uuid() }),
 						uploadSummaryWithContext: () => {
 							throw error;
 						},
