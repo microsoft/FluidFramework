@@ -39,6 +39,9 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 	let dataObject1: ITestFluidObject;
 	let dataObject2: ITestFluidObject;
 	let dataObject3: ITestFluidObject;
+	let user1ContainerRuntime: ContainerRuntime;
+	let user2ContainerRuntime: ContainerRuntime;
+	let user3ContainerRuntime: ContainerRuntime;
 
 	beforeEach("setup", async () => {
 		provider = getTestObjectProvider();
@@ -50,6 +53,11 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 
 		const container3 = await provider.loadTestContainer(testContainerConfig);
 		dataObject3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
+
+		// Type Casting `as ContainerRuntime` since IContainerRuntimeBase does not have targetClientId argument
+		user1ContainerRuntime = dataObject1.context.containerRuntime as ContainerRuntime;
+		user2ContainerRuntime = dataObject2.context.containerRuntime as ContainerRuntime;
+		user3ContainerRuntime = dataObject3.context.containerRuntime as ContainerRuntime;
 
 		// need to be connected to send signals
 		if (container1.connectionState !== ConnectionState.Connected) {
@@ -93,8 +101,6 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 		it("Validate host runtime signals", async () => {
 			let user1SignalReceivedCount = 0;
 			let user2SignalReceivedCount = 0;
-			const user1ContainerRuntime = dataObject1.context.containerRuntime;
-			const user2ContainerRuntime = dataObject2.context.containerRuntime;
 
 			user1ContainerRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
 				if (message.type === "TestSignal") {
@@ -125,8 +131,6 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 		let user2HostSignalReceivedCount = 0;
 		let user1CompSignalReceivedCount = 0;
 		let user2CompSignalReceivedCount = 0;
-		const user1ContainerRuntime = dataObject1.context.containerRuntime;
-		const user2ContainerRuntime = dataObject2.context.containerRuntime;
 		const user1DtaStoreRuntime = dataObject1.runtime;
 		const user2DataStoreRuntime = dataObject2.runtime;
 
@@ -206,11 +210,6 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 		let user1SignalReceivedCount: number;
 		let user2SignalReceivedCount: number;
 		let user3SignalReceivedCount: number;
-
-		// Type Casting `as ContainerRuntime` since IContainerRuntimeBase does not have targetClientId argument
-		const user1ContainerRuntime = dataObject1.context.containerRuntime as ContainerRuntime;
-		const user2ContainerRuntime = dataObject2.context.containerRuntime as ContainerRuntime;
-		const user3ContainerRuntime = dataObject3.context.containerRuntime as ContainerRuntime;
 
 		const sendAndVerifyRemoteSignals = async (
 			runtime1: RuntimeType,
