@@ -12,7 +12,6 @@ import {
 	IResponse,
 	IProvideFluidHandleContext,
 	ISignalEnvelope,
-	IEventProvider,
 } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
@@ -26,7 +25,6 @@ import {
 	ILoader,
 	LoaderHeader,
 	IGetPendingLocalStateProps,
-	IContainerEvents,
 } from "@fluidframework/container-definitions";
 import {
 	IContainerRuntime,
@@ -939,22 +937,9 @@ export class ContainerRuntime
 	public readonly options: ILoaderOptions;
 	private imminentClosure: boolean = false;
 
-	/**
-	 * Going forward this is the source of truth for the current clientId.
-	 * @see _getClientId for more details on fallback logic.
-	 */
-	private _clientId: string | undefined;
-	/**
-	 * Kept to maintain old behavior when containerEvents is not provided to the ContainerRuntime constructor.
-	 * If it is, we set up event subscriptions to update {@link ContainerRuntime#_clientId} when the Container connects,
-	 * that's the source of truth for the current clientId, and _getClientId should not be used at all.
-	 */
 	private readonly _getClientId: () => string | undefined;
 	public get clientId(): string | undefined {
-		if (this.containerEvents === undefined) {
-			return this._getClientId();
-		}
-		return this._clientId;
+		return this._getClientId();
 	}
 
 	public readonly clientDetails: IClientDetails;
@@ -1228,7 +1213,6 @@ export class ContainerRuntime
 			// the runtime configuration overrides
 			...runtimeOptions.summaryOptions?.summaryConfigOverrides,
 		},
-		private readonly containerEvents?: IEventProvider<IContainerEvents>,
 	) {
 		super();
 
@@ -1266,10 +1250,6 @@ export class ContainerRuntime
 		this.isSummarizerClient = this.clientDetails.type === summarizerClientType;
 		this.loadedFromVersionId = context.getLoadedFromVersion()?.id;
 		this._getClientId = () => context.clientId;
-		this._clientId = context.clientId;
-		this.containerEvents?.on("connected", (clientId: string) => {
-			this._clientId = clientId;
-		});
 		this._getAttachState = () => context.attachState;
 		this.getAbsoluteUrl = async (relativeUrl: string) => {
 			if (context.getAbsoluteUrl === undefined) {
