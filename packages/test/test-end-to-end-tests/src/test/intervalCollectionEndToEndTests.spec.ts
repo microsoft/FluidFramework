@@ -81,7 +81,7 @@ const assertIntervals = (
 	assert.deepEqual(actualPos, expected, "intervals are not as expected");
 };
 
-describeCompat("IntervalCollection with stashed ops", "NoCompat", (getTestObjectProvider) => {
+describeCompat("IntervalCollection with stashed ops", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let container1: IContainerExperimental;
 	let sharedString1: SharedString;

@@ -125,7 +125,7 @@ describeCompat("SharedString", "FullCompat", (getTestObjectProvider) => {
 	});
 });
 
-describeCompat("SharedString grouped batching", "NoCompat", (getTestObjectProvider) => {
+describeCompat("SharedString grouped batching", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();

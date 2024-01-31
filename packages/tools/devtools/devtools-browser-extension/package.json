@@ -93,7 +93,7 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
-		"@microsoft/api-extractor": "^7.38.3",
+		"@microsoft/api-extractor": "^7.39.1",
 		"@types/chai": "^4.0.0",
 		"@types/chrome": "0.0.232",
 		"@types/expect-puppeteer": "2.2.1",

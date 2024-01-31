@@ -7,7 +7,7 @@ import assert from "assert";
 import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
 import type { ISharedDirectory, SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedCell } from "@fluidframework/cell";
-import { SharedCounter } from "@fluidframework/counter";
+import type { SharedCounter } from "@fluidframework/counter";
 import {
 	ReferenceType,
 	reservedMarkerIdKey,
@@ -76,8 +76,8 @@ type SharedObjCallback = (
 
 // Introduced in 0.37
 // REVIEW: enable compat testing
-describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
-	const { SharedMap, SharedDirectory } = apis.dds;
+describeCompat("stashed ops", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) => {
+	const { SharedMap, SharedDirectory, SharedCounter } = apis.dds;
 	const registry: ChannelFactoryRegistry = [
 		[mapId, SharedMap.getFactory()],
 		[stringId, SharedString.getFactory()],
@@ -1728,8 +1728,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 });
 
-describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
-	const { SharedMap, SharedDirectory } = apis.dds;
+describeCompat("stashed ops", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) => {
+	const { SharedMap, SharedDirectory, SharedCounter } = apis.dds;
 	const registry: ChannelFactoryRegistry = [
 		[mapId, SharedMap.getFactory()],
 		[stringId, SharedString.getFactory()],

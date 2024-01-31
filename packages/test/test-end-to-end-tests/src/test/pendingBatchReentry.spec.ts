@@ -19,14 +19,14 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { SharedCell } from "@fluidframework/cell";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { SharedCounter } from "@fluidframework/counter";
-import { SharedMatrix } from "@fluidframework/matrix";
+import type { SharedCounter } from "@fluidframework/counter";
+import type { SharedMatrix } from "@fluidframework/matrix";
 
 describeCompat(
 	"Op reentry and rebasing during pending batches",
-	"NoCompat",
+	"2.0.0-rc.1.0.0",
 	(getTestObjectProvider, apis) => {
-		const { SharedMap, SharedDirectory } = apis.dds;
+		const { SharedMap, SharedDirectory, SharedMatrix, SharedCounter } = apis.dds;
 		const registry: ChannelFactoryRegistry = [
 			["map", SharedMap.getFactory()],
 			["sharedString", SharedString.getFactory()],

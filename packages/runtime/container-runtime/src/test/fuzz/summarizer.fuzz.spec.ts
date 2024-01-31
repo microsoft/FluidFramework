@@ -7,12 +7,12 @@ import { take } from "@fluid-private/stochastic-test-utils";
 import { createSummarizerFuzzSuite, operationGenerator, baseModel } from "./fuzzUtils";
 
 /**
- * Fuzz test should test that we eventually recover and send a summary successfully
- * For DDS we test for eventual consistency. For summarizer we could test for eventual recovery
+ * Summarizer fuzz test should test that we eventually recover and send a summary successfully.
+ * For DDS, we test for eventual consistency. For summarizer, we could test for eventual recovery.
  * After performing operations (i.e. disconnects, summaryNacks, ops from other clients, etc.) we should:
- * - start a fresh sumarizer
+ * - start a fresh summarizer
  * - attempt a summary
- * If the system doesn't recover properly, then we have a bug to fix
+ * If the system doesn't recover properly, then we have a bug to fix.
  */
 
 describe("Summarizer fuzz testing", () => {
