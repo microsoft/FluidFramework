@@ -14,6 +14,7 @@ import { generateStableId } from '@fluidframework/id-compressor';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IContainerContext } from '@fluidframework/container-definitions';
+import { IContainerEvents } from '@fluidframework/container-definitions';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
 import { IContainerRuntimeEvents } from '@fluidframework/container-runtime-definitions';
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
@@ -98,7 +99,7 @@ export enum ContainerMessageType {
 
 // @alpha
 export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents & ISummarizerEvents> implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider, IProvideFluidHandleContext {
-    protected constructor(context: IContainerContext, registry: IFluidDataStoreRegistry, metadata: IContainerRuntimeMetadata | undefined, electedSummarizerData: ISerializedElection | undefined, chunks: [string, string[]][], dataStoreAliasMap: [string, string][], runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>, containerScope: FluidObject, logger: ITelemetryLoggerExt, existing: boolean, blobManagerSnapshot: IBlobManagerLoadInfo, _storage: IDocumentStorageService, idCompressor: (IIdCompressor & IIdCompressorCore) | undefined, provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>, requestHandler?: ((request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>) | undefined, summaryConfiguration?: ISummaryConfiguration);
+    protected constructor(context: IContainerContext, registry: IFluidDataStoreRegistry, metadata: IContainerRuntimeMetadata | undefined, electedSummarizerData: ISerializedElection | undefined, chunks: [string, string[]][], dataStoreAliasMap: [string, string][], runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>, containerScope: FluidObject, logger: ITelemetryLoggerExt, existing: boolean, blobManagerSnapshot: IBlobManagerLoadInfo, _storage: IDocumentStorageService, idCompressor: (IIdCompressor & IIdCompressorCore) | undefined, provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>, requestHandler?: ((request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>) | undefined, summaryConfiguration?: ISummaryConfiguration, containerEvents?: IEventProvider<IContainerEvents> | undefined);
     // (undocumented)
     protected addContainerStateToSummary(summaryTree: ISummaryTreeWithStats, fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext): void;
     addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;

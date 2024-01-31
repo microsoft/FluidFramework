@@ -114,7 +114,7 @@ import {
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
-import { ReportOpPerfTelemetry, IPerfSignalReport } from "./connectionTelemetry";
+import { IPerfSignalReport } from "./connectionTelemetry";
 import {
 	IPendingBatchMessage,
 	IPendingLocalState,
@@ -946,8 +946,8 @@ export class ContainerRuntime
 	private _clientId: string | undefined;
 	/**
 	 * Kept to maintain old behavior when containerEvents is not provided to the ContainerRuntime constructor.
-	 * If it is, we set up event subscriptions to update {@link _clientId} when the Container connects, that's the
-	 * source of truth for the current clientId, and _getClientId should not be used at all.
+	 * If it is, we set up event subscriptions to update {@link ContainerRuntime#_clientId} when the Container connects,
+	 * that's the source of truth for the current clientId, and _getClientId should not be used at all.
 	 */
 	private readonly _getClientId: () => string | undefined;
 	public get clientId(): string | undefined {
@@ -1267,7 +1267,9 @@ export class ContainerRuntime
 		this.loadedFromVersionId = context.getLoadedFromVersion()?.id;
 		this._getClientId = () => context.clientId;
 		this._clientId = context.clientId;
-		this.containerEvents?.on("connected", (clientId: string) => { this._clientId = clientId; });
+		this.containerEvents?.on("connected", (clientId: string) => {
+			this._clientId = clientId;
+		});
 		this._getAttachState = () => context.attachState;
 		this.getAbsoluteUrl = async (relativeUrl: string) => {
 			if (context.getAbsoluteUrl === undefined) {
@@ -1711,7 +1713,7 @@ export class ContainerRuntime
 			groupedBatchingEnabled: this.groupedBatchingEnabled,
 		});
 
-		ReportOpPerfTelemetry(this.clientId, this.deltaManager, this.logger);
+		// ReportOpPerfTelemetry(this.clientId, this.deltaManager, this.logger);
 		BindBatchTracker(this, this.logger);
 
 		this.entryPoint = new LazyPromise(async () => {

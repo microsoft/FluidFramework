@@ -28,6 +28,7 @@ import {
 	MessageType,
 	ISummaryContent,
 } from "@fluidframework/protocol-definitions";
+import { OpPerfTelemetry } from "./connectionTelemetry";
 
 /**
  * {@inheritDoc @fluidframework/container-definitions#IContainerContext}
@@ -100,11 +101,13 @@ export class ContainerContext implements IContainerContext {
 		public readonly clientDetails: IClientDetails,
 		public readonly existing: boolean,
 		public readonly taggedLogger: ITelemetryLoggerExt,
-		public readonly pendingLocalState?: unknown
+		public readonly pendingLocalState?: unknown,
 	) {
 		this.containerEvents.on("connected", (clientId) => {
 			this._clientId = clientId;
 		});
+		// Start op perf telemetry monitoring/reporting
+		new OpPerfTelemetry(this.clientId, this.deltaManager, this.taggedLogger);
 	}
 
 	public getLoadedFromVersion(): IVersion | undefined {
