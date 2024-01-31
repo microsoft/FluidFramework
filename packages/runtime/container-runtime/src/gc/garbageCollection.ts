@@ -194,19 +194,14 @@ export class GarbageCollector implements IGarbageCollector {
 			const overrideSessionExpiryTimeoutMs = this.mc.config.getNumber(
 				"Fluid.GarbageCollection.TestOverride.SessionExpiryMs",
 			);
-			let timeoutMs;
-			timeoutMs = overrideSessionExpiryTimeoutMs ?? this.configs.sessionExpiryTimeoutMs;
+			let timeoutMs = this.configs.sessionExpiryTimeoutMs;
 
 			if (pendingSessionExpiryTimerStarted) {
 				const timeLapsedSincePendingTimer = Date.now() - pendingSessionExpiryTimerStarted;
 				timeoutMs -= timeLapsedSincePendingTimer;
 			}
-
-			if (timeoutMs <= 0) {
-				this.runtime.closeFn(
-					new ClientSessionExpiredError(`Client session expired.`, timeoutMs),
-				);
-			}
+			
+			timeoutMs = overrideSessionExpiryTimeoutMs ?? timeoutMs;
 
 			this.sessionExpiryTimer = new Timer(timeoutMs, () => {
 				this.runtime.closeFn(

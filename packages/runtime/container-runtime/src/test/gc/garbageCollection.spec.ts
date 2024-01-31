@@ -261,6 +261,7 @@ describe("Garbage Collection Tests", () => {
 				closeCalled = true;
 			},
 		);
+		clock.tick(1);
 		assert(closeCalled, "Close should have been called");
 	});
 
