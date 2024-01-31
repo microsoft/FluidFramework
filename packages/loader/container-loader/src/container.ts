@@ -41,6 +41,7 @@ import {
 	IDocumentServiceFactory,
 	IDocumentStorageService,
 	IResolvedUrl,
+	ISnapshot,
 	IThrottlingWarning,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
@@ -50,6 +51,7 @@ import {
 	isOnline,
 	isCombinedAppAndProtocolSummary,
 	MessageType2,
+	isInstanceOfISnapshot,
 	runWithRetry,
 } from "@fluidframework/driver-utils";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
@@ -1598,9 +1600,12 @@ export class Container
 		// Fetch specified snapshot.
 		const { snapshot, versionId } =
 			pendingLocalState === undefined
-				? await this.fetchSnapshotTree(specifiedVersion)
+				? await this.fetchSnapshot(specifiedVersion)
 				: { snapshot: pendingLocalState.baseSnapshot, versionId: undefined };
 
+		const snapshotTree: ISnapshotTree | undefined = isInstanceOfISnapshot(snapshot)
+			? snapshot.snapshotTree
+			: snapshot;
 		if (pendingLocalState) {
 			this.attachmentData = {
 				state: AttachState.Attached,
@@ -1610,19 +1615,19 @@ export class Container
 				},
 			};
 		} else {
-			assert(snapshot !== undefined, 0x237 /* "Snapshot should exist" */);
+			assert(snapshotTree !== undefined, 0x237 /* "Snapshot should exist" */);
 			if (this.offlineLoadEnabled) {
-				const blobs = await getBlobContentsFromTree(snapshot, this.storageAdapter);
+				const blobs = await getBlobContentsFromTree(snapshotTree, this.storageAdapter);
 				this.attachmentData = {
 					state: AttachState.Attached,
-					snapshot: { tree: snapshot, blobs },
+					snapshot: { tree: snapshotTree, blobs },
 				};
 			}
 		}
 
 		const attributes: IDocumentAttributes = await this.getDocumentAttributes(
 			this.storageAdapter,
-			snapshot,
+			snapshotTree,
 		);
 
 		// If we saved ops, we will replay them and don't need DeltaManager to fetch them
@@ -1709,15 +1714,20 @@ export class Container
 
 		// ...load in the existing quorum
 		// Initialize the protocol handler
-		await this.initializeProtocolStateFromSnapshot(attributes, this.storageAdapter, snapshot);
+		await this.initializeProtocolStateFromSnapshot(
+			attributes,
+			this.storageAdapter,
+			snapshotTree,
+		);
 
 		timings.phase3 = performance.now();
 		const codeDetails = this.getCodeDetailsFromQuorum();
 		await this.instantiateRuntime(
 			codeDetails,
-			snapshot,
+			snapshotTree,
 			// give runtime a dummy value so it knows we're loading from a stash blob
 			pendingLocalState ? pendingLocalState?.pendingRuntimeState ?? {} : undefined,
+			isInstanceOfISnapshot(snapshot) ? snapshot : undefined,
 		);
 
 		// replay saved ops
@@ -2412,10 +2422,39 @@ export class Container
 		return { snapshot, versionId: version?.id };
 	}
 
+	private async fetchSnapshot(
+		specifiedVersion: string | undefined,
+	): Promise<{ snapshot?: ISnapshot | ISnapshotTree; versionId?: string }> {
+		if (
+			this.mc.config.getBoolean("Fluid.Container.FetchSnapshotUsingGetSnapshotApi") ===
+				true &&
+			this.service?.policies?.supportGetSnapshotApi === true
+		) {
+			const snapshot = await this.storageAdapter.getSnapshot({
+				versionId: specifiedVersion,
+			});
+			const version: IVersion = {
+				id: snapshot.snapshotTree.id ?? "",
+				treeId: snapshot.snapshotTree.id ?? "",
+			};
+			this._loadedFromVersion = version;
+
+			if (snapshot === undefined && specifiedVersion !== undefined) {
+				this.mc.logger.sendErrorEvent({
+					eventName: "getSnapshotTreeFailed",
+					id: version.id,
+				});
+			}
+			return { snapshot, versionId: version.id };
+		}
+		return this.fetchSnapshotTree(specifiedVersion);
+	}
+
 	private async instantiateRuntime(
 		codeDetails: IFluidCodeDetails,
-		snapshot: ISnapshotTree | undefined,
+		snapshotTree: ISnapshotTree | undefined,
 		pendingLocalState?: unknown,
+		snapshot?: ISnapshot,
 	) {
 		assert(this._runtime?.disposed !== false, 0x0dd /* "Existing runtime not disposed" */);
 
@@ -2449,12 +2488,12 @@ export class Container
 			(this.protocolHandler.quorum.get("code") ??
 				this.protocolHandler.quorum.get("code2")) as IFluidCodeDetails | undefined;
 
-		const existing = snapshot !== undefined;
+		const existing = snapshotTree !== undefined;
 
 		const context = new ContainerContext(
 			this.options,
 			this.scope,
-			snapshot,
+			snapshotTree,
 			this._loadedFromVersion,
 			this._deltaManager,
 			this.storageAdapter,
@@ -2481,6 +2520,7 @@ export class Container
 			existing,
 			this.subLogger,
 			pendingLocalState,
+			snapshot,
 		);
 
 		this._runtime = await PerformanceEvent.timedExecAsync(

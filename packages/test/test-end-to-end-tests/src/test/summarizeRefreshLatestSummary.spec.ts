@@ -24,7 +24,7 @@ import { Deferred } from "@fluidframework/core-utils";
 
 describeCompat(
 	"Summarizer can refresh a snapshot from the server",
-	"2.0.0-rc.1.0.0",
+	"NoCompat",
 	(getTestObjectProvider) => {
 		let provider: ITestObjectProvider;
 		beforeEach("getTestObjectProvider", async () => {
