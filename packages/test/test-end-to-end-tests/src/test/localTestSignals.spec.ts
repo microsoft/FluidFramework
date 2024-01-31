@@ -241,7 +241,6 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 			const container3 = await provider.loadTestContainer(testContainerConfig);
 			dataObject3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
 
-			// Type Casting `as ContainerRuntime` since IContainerRuntimeBase does not have targetClientId argument
 			user1ContainerRuntime = dataObject1.context.containerRuntime;
 			user2ContainerRuntime = dataObject2.context.containerRuntime;
 			user3ContainerRuntime = dataObject3.context.containerRuntime;
@@ -355,7 +354,6 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 			const container3 = await provider.loadTestContainer(testContainerConfig);
 			dataObject3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
 
-			// Type Casting `as ContainerRuntime` since IContainerRuntimeBase does not have targetClientId argument
 			user1ContainerRuntime = dataObject1.context.containerRuntime;
 			user2ContainerRuntime = dataObject2.context.containerRuntime;
 			user3ContainerRuntime = dataObject3.context.containerRuntime;
