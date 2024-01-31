@@ -52,7 +52,7 @@
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize",
-		"webpack": "webpack --color --config webpack.config.js"
+		"webpack": "webpack --color --config webpack.config.cjs"
 	},
 	"c8": {
 		"all": true,

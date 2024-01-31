@@ -34,7 +34,7 @@
 		"start:app": "start-server-and-test start:services \"5236|5237\" start:client",
 		"start:app:test": "start-server-and-test start:services \"5236|5237\" start:client:test",
 		"start:client": "webpack serve",
-		"start:client:test": "webpack serve --config webpack.test.js",
+		"start:client:test": "webpack serve --config webpack.test.cjs",
 		"start:customer-service": "cross-env CUSTOMER_SERVICE_PORT=5237 node dist/src/mock-customer-service/start.js",
 		"start:external-data-service": "cross-env EXTERNAL_DATA_SERVICE_PORT=5236 node dist/src/mock-external-data-service/start.js",
 		"start:services": "start-server-and-test start:external-data-service 5236 start:customer-service",
