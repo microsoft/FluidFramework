@@ -88,6 +88,8 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 	 * Gets an aliased data store with the given id. Throws an error if the data store cannot be retrieved.
 	 */
 	async function getAliasedDataStoreEntryPoint(dataObject: ITestFluidObject, id: string) {
+		// Back compat support - older versions of the runtime do not have getAliasedDataStoreEntryPoint
+		// Can be removed once we no longer support ^2.0.0-internal.7.0.0
 		const dataStore = await (runtimeOf(dataObject).getAliasedDataStoreEntryPoint?.(id) ??
 			(runtimeOf(dataObject) as any).getRootDataStore(id, false /* wait */));
 		if (dataStore === undefined) {
