@@ -534,12 +534,7 @@ describeCompat("GC unreferenced timestamp", "2.0.0-rc.1.0.0", (getTestObjectProv
 			 * The difference from previous test case is that the reference from B to C is added before B is referenced and
 			 * observed by summarizer. So, the summarizer does not see this reference until B is attached.
 			 */
-			//* ONLY
-			//* ONLY
-			//* ONLY
-			//* ONLY
-			//* ONLY
-			it.only(`Scenario 6 - Node re-referenced via new DataStore attaching`, async () => {
+			it(`Scenario 6 - Node re-referenced via new DataStore attaching`, async () => {
 				const { summarizer } = await createSummarizer(provider, mainContainer, {
 					loaderProps: { configProvider },
 				});

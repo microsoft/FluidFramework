@@ -883,13 +883,13 @@ export class FluidDataStoreRuntime
 	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
 		const gcDataBuilder = new GCDataBuilder();
 		this.getAttachData((contextId: string, context: LocalChannelContextBase) => {
-			//* Unsure about this check
 			if (context.isLoaded) {
 				const contextGCData = context.getAttachGCData(telemetryContext);
 
 				// Incorporate the GC Data for this context
 				gcDataBuilder.prefixAndAddNodes(contextId, contextGCData.gcNodes);
 			}
+			// else: Rehydrating detached container case. GC doesn't run until the container is attached, so nothing to do here.
 		}, telemetryContext);
 		this.updateGCNodes(gcDataBuilder);
 
