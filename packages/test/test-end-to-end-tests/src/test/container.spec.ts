@@ -65,7 +65,7 @@ const codeDetails: IFluidCodeDetails = { package: "test" };
 const timeoutMs = 500;
 
 // REVIEW: enable compat testing?
-describeCompat("Container", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	const loaderContainerTracker = new LoaderContainerTracker();
 	before(function () {
@@ -852,7 +852,7 @@ describeCompat("Container", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 	});
 });
 
-describeCompat("Driver", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("Driver", "NoCompat", (getTestObjectProvider) => {
 	it("Driver Storage Policy Values", async () => {
 		const provider = getTestObjectProvider();
 		const fiveDaysMs: FiveDaysMs = 432_000_000;

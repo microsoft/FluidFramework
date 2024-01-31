@@ -222,7 +222,7 @@ async function waitForSummaryOp(container: IContainer): Promise<boolean> {
 	});
 }
 
-describeCompat("Summarizer with local changes", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 
 	beforeEach("setup", async function () {
