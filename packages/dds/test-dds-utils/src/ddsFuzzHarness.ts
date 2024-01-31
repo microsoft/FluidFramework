@@ -14,6 +14,7 @@ import {
 } from "@fluidframework/id-compressor";
 import {
 	BaseFuzzTestState,
+	chainAsync,
 	createFuzzDescribe,
 	defaultOptions,
 	done,
@@ -27,6 +28,7 @@ import {
 	AsyncReducer,
 	SaveInfo,
 	saveOpsToFile,
+	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import {
 	MockFluidDataStoreRuntime,
@@ -324,8 +326,7 @@ export interface DDSFuzzSuiteOptions {
 	 * an attach op.
 	 */
 	detachedStartOptions: {
-		attachProbability: number;
-		enabled: boolean;
+		numOpsBeforeAttach: number;
 	};
 
 	/**
@@ -463,8 +464,7 @@ export interface DDSFuzzSuiteOptions {
 export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
 	defaultTestCount: defaultOptions.defaultTestCount,
 	detachedStartOptions: {
-		attachProbability: 0.2,
-		enabled: true,
+		numOpsBeforeAttach: 5,
 	},
 	emitter: new TypedEventEmitter(),
 	numberOfClients: 3,
@@ -610,23 +610,18 @@ export function mixinAttach<
 	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
 	options: DDSFuzzSuiteOptions,
 ): DDSFuzzModel<TChannelFactory, TOperation | Attach, TState> {
-	const { enabled, attachProbability } = options.detachedStartOptions;
-	if (!enabled) {
+	const { numOpsBeforeAttach } = options.detachedStartOptions;
+	if (numOpsBeforeAttach === 0) {
 		// not wrapping the reducer/generator in this case makes stepping through the harness slightly less painful.
 		return model as DDSFuzzModel<TChannelFactory, TOperation | Attach, TState>;
 	}
-
+	const attachOp = async (): Promise<TOperation | Attach> => {
+		return { type: "attach" };
+	};
 	const generatorFactory: () => AsyncGenerator<TOperation | Attach, TState> = () => {
 		const baseGenerator = model.generatorFactory();
-		return async (state): Promise<TOperation | Attach | typeof done> => {
-			if (state.isDetached && state.random.bool(attachProbability)) {
-				return {
-					type: "attach",
-				};
-			}
-
-			return baseGenerator(state);
-		};
+		const opsBeforeAttach = takeAsync(numOpsBeforeAttach, baseGenerator);
+		return chainAsync(opsBeforeAttach, takeAsync(1, attachOp), baseGenerator);
 	};
 
 	const minimizationTransforms = model.minimizationTransforms as
@@ -1060,7 +1055,7 @@ export async function runTestForSeed<
 		options.containerRuntimeOptions,
 	);
 
-	const startDetached = options.detachedStartOptions.enabled;
+	const startDetached = options.detachedStartOptions.numOpsBeforeAttach !== 0;
 	const initialClient = createDetachedClient(
 		containerRuntimeFactory,
 		model.factory,

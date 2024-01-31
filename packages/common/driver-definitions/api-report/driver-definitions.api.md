@@ -176,12 +176,14 @@ export interface IDocumentServiceFactory {
 export interface IDocumentServicePolicies {
     readonly storageOnly?: boolean;
     readonly summarizeProtocolTree?: boolean;
+    readonly supportGetSnapshotApi?: boolean;
 }
 
 // @alpha
 export interface IDocumentStorageService extends Partial<IDisposable> {
     createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
     downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
+    getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
     getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
     getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion[]>;
     readonly policies?: IDocumentStorageServicePolicies;
@@ -253,6 +255,27 @@ export interface IResolvedUrl {
     type: "fluid";
     // (undocumented)
     url: string;
+}
+
+// @alpha (undocumented)
+export interface ISnapshot {
+    // (undocumented)
+    blobContents: Map<string, ArrayBuffer>;
+    latestSequenceNumber: number | undefined;
+    // (undocumented)
+    ops: ISequencedDocumentMessage[];
+    sequenceNumber: number | undefined;
+    // (undocumented)
+    snapshotFormatV: 1;
+    // (undocumented)
+    snapshotTree: ISnapshotTree;
+}
+
+// @alpha
+export interface ISnapshotFetchOptions {
+    cacheSnapshot?: boolean;
+    scenarioName?: string;
+    versionId?: string;
 }
 
 // @alpha
