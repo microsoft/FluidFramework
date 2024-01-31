@@ -58,7 +58,7 @@ module.exports = {
 		// Plugin documentation: https://www.npmjs.com/package/eslint-plugin-unicorn
 		"unicorn",
 		// Custom ESLint rules
-		"fluid-custom-rules",
+		"fluid-internal",
 	],
 	reportUnusedDisableDirectives: true,
 	ignorePatterns: [
@@ -69,7 +69,7 @@ module.exports = {
 		/**
 		 * Restrict including release tags inside the member class / interface.
 		 */
-		"fluid-custom-rules/no-member-release-tags": "error",
+		"fluid-internal/no-member-release-tags": "error",
 
 		/**
 		 * The @rushstack rules are documented in the package README:

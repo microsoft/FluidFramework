@@ -23,7 +23,7 @@
     "plugins": [
         "eslint-comments",
         "import",
-        "fluid-custom-rules",
+        "fluid-internal",
         "unicorn",
         "unused-imports",
         "tsdoc",
@@ -528,7 +528,7 @@
         "flowtype/union-intersection-spacing": [
             "off"
         ],
-        "fluid-custom-rules/no-member-release-tags": [
+        "fluid-internal/no-member-release-tags": [
             "error"
         ],
         "for-direction": [
