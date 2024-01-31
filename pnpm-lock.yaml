@@ -9284,6 +9284,7 @@ importers:
       '@types/double-ended-queue': ^2.1.0
       '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
+      '@types/node': ^18.19.0
       '@types/sinon': ^7.0.13
       '@types/uuid': ^9.0.2
       c8: ^8.0.1
@@ -9326,17 +9327,18 @@ importers:
       '@arethetypeswrong/cli': 0.13.3
       '@fluid-private/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-tools/benchmark': 0.48.0
-      '@fluid-tools/build-cli': 0.29.0_loebgezstcsvd2poh2d55fifke
+      '@fluid-tools/build-cli': 0.29.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.29.0
+      '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
       '@fluidframework/container-runtime-previous': /@fluidframework/container-runtime/2.0.0-internal.8.0.0
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/test-runtime-utils': link:../test-runtime-utils
-      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi
+      '@microsoft/api-extractor': 7.38.3_t5dutvxrlkz26qgmievy2jdkpi_@types+node@18.19.1
       '@types/double-ended-queue': 2.1.7
       '@types/events': 3.0.3
       '@types/mocha': 9.1.1
+      '@types/node': 18.19.1
       '@types/sinon': 7.5.2
       '@types/uuid': 9.0.7
       c8: 8.0.1

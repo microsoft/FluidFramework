@@ -213,6 +213,7 @@
 		"@types/double-ended-queue": "^2.1.0",
 		"@types/events": "^3.0.0",
 		"@types/mocha": "^9.1.1",
+		"@types/node": "^18.19.0",
 		"@types/sinon": "^7.0.13",
 		"@types/uuid": "^9.0.2",
 		"c8": "^8.0.1",
