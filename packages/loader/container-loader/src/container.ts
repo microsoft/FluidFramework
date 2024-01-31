@@ -2481,7 +2481,7 @@ export class Container
 			this._deltaManager.clientDetails,
 			existing,
 			this.subLogger,
-			pendingLocalState
+			pendingLocalState,
 		);
 
 		this._runtime = await PerformanceEvent.timedExecAsync(

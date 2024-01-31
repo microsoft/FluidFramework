@@ -87,7 +87,7 @@ class OpPerfTelemetry {
 	private readonly deltaLatencyLogger: ISampledTelemetryLogger;
 
 	public constructor(
-		private clientId: string | undefined,
+		private readonly clientIdGetter: () => string | undefined,
 		private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		logger: ITelemetryLoggerExt,
 	) {
@@ -121,7 +121,6 @@ class OpPerfTelemetry {
 		this.deltaManager.on("op", (message) => this.afterProcessingOp(message));
 
 		this.deltaManager.on("connect", (details, opsBehind) => {
-			this.clientId = details.clientId;
 			if (opsBehind !== undefined) {
 				this.connectionOpSeqNumber = this.deltaManager.lastKnownSeqNumber;
 				this.gap = opsBehind;
@@ -183,7 +182,7 @@ class OpPerfTelemetry {
 
 		this.deltaManager.inbound.on("push", (message: ISequencedDocumentMessage) => {
 			if (
-				this.clientId === message.clientId &&
+				this.clientIdGetter() === message.clientId &&
 				message.type === MessageType.Operation &&
 				(this.opLatencyLogger.isSamplingDisabled ||
 					this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber)
@@ -304,7 +303,7 @@ class OpPerfTelemetry {
 		}
 
 		if (
-			this.clientId === message.clientId &&
+			this.clientIdGetter() === message.clientId &&
 			(this.opLatencyLogger.isSamplingDisabled ||
 				this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber)
 		) {
@@ -370,9 +369,9 @@ export interface IPerfSignalReport {
 }
 
 export function ReportOpPerfTelemetry(
-	clientId: string | undefined,
+	clientIdGetter: () => string | undefined,
 	deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 	logger: ITelemetryLoggerExt,
 ) {
-	new OpPerfTelemetry(clientId, deltaManager, logger);
+	new OpPerfTelemetry(clientIdGetter, deltaManager, logger);
 }

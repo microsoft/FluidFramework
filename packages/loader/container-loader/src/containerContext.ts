@@ -100,7 +100,7 @@ export class ContainerContext implements IContainerContext {
 		public readonly clientDetails: IClientDetails,
 		public readonly existing: boolean,
 		public readonly taggedLogger: ITelemetryLoggerExt,
-		public readonly pendingLocalState?: unknown
+		public readonly pendingLocalState?: unknown,
 	) {
 		this.containerEvents.on("connected", (clientId) => {
 			this._clientId = clientId;
