@@ -274,17 +274,17 @@ extends:
               fi
 
         # for npm ci in component detection and set version
-        - template: /tools/pipelines/templates/1ES/include-use-node-version.yml@self
+        - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
         # Component detection
         - ${{ if eq(parameters.shouldPublishNpmPackages, true) }}:
-          - template: /tools/pipelines/templates/1ES/include-generate-notice-steps.yml@self
+          - template: /tools/pipelines/templates/include-generate-notice-steps.yml@self
             parameters:
               buildDirectory: ${{ parameters.buildDirectory }}
               requireNotice: ${{ parameters.shouldReleaseDockerImage }}
 
         - ${{ if eq(parameters.packageManager, 'pnpm') }}:
-          - template: /tools/pipelines/templates/1ES/include-install-pnpm.yml@self
+          - template: /tools/pipelines/templates/include-install-pnpm.yml@self
             parameters:
               buildDirectory: ${{ parameters.buildDirectory }}
 
@@ -298,7 +298,7 @@ extends:
               script: |
                 ${{ parameters.packageManagerInstallCommand }}
 
-          - template: /tools/pipelines/templates/1ES/include-set-package-version.yml@self
+          - template: /tools/pipelines/templates/include-set-package-version.yml@self
             parameters:
               buildDirectory: ${{ parameters.buildDirectory }}
               buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
