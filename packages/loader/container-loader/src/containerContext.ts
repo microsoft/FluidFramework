@@ -14,8 +14,9 @@ import {
 	ILoaderOptions,
 	IFluidCodeDetails,
 	IBatchMessage,
+	IContainerEvents,
 } from "@fluidframework/container-definitions";
-import { FluidObject } from "@fluidframework/core-interfaces";
+import { FluidObject, IEventProvider } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
 	IClientDetails,
@@ -41,8 +42,9 @@ export class ContainerContext implements IContainerContext {
 		["referenceSequenceNumbers", true],
 	]);
 
+	private _clientId: string | undefined;
 	public get clientId(): string | undefined {
-		return this._getClientId();
+		return this._clientId;
 	}
 
 	/**
@@ -91,15 +93,19 @@ export class ContainerContext implements IContainerContext {
 		public readonly updateDirtyContainerState: (dirty: boolean) => void,
 		public readonly getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>,
 		private readonly _getContainerDiagnosticId: () => string | undefined,
-		private readonly _getClientId: () => string | undefined,
+		private readonly containerEvents: IEventProvider<IContainerEvents>,
 		private readonly _getAttachState: () => AttachState,
 		private readonly _getConnected: () => boolean,
 		public readonly getSpecifiedCodeDetails: () => IFluidCodeDetails | undefined,
 		public readonly clientDetails: IClientDetails,
 		public readonly existing: boolean,
 		public readonly taggedLogger: ITelemetryLoggerExt,
-		public readonly pendingLocalState?: unknown,
-	) {}
+		public readonly pendingLocalState?: unknown
+	) {
+		this.containerEvents.on("connected", (clientId) => {
+			this._clientId = clientId;
+		});
+	}
 
 	public getLoadedFromVersion(): IVersion | undefined {
 		return this._version;

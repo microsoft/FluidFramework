@@ -883,6 +883,7 @@ export class Container
 				logger: this.mc.logger,
 				connectionStateChanged: (value, oldState, reason) => {
 					if (value === ConnectionState.Connected) {
+						// TODO: update the clientid in reportopteelmetry
 						this._clientId = this.connectionStateHandler.pendingClientId;
 					}
 					this.logConnectionStateChangeTelemetry(value, oldState, reason);
@@ -2473,14 +2474,14 @@ export class Container
 			this.updateDirtyContainerState,
 			this.getAbsoluteUrl,
 			() => this.resolvedUrl?.id,
-			() => this.clientId,
+			this,
 			() => this.attachState,
 			() => this.connected,
 			getSpecifiedCodeDetails,
 			this._deltaManager.clientDetails,
 			existing,
 			this.subLogger,
-			pendingLocalState,
+			pendingLocalState
 		);
 
 		this._runtime = await PerformanceEvent.timedExecAsync(
