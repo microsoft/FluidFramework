@@ -26,48 +26,58 @@ const previousPackageJsonPath = `${previousBasePath}/package.json`;
 
 if (!existsSync(previousPackageJsonPath)) {
 	throw new Error(
-		`${previousPackageJsonPath} not found. You may need to install the package via pnpm install.`,
+		`${previousPackageJsonPath} not found. You may need to install the package via pnpm install. Note that type tests logic looks specifically for a package named '${previousPackageName}'`,
 	);
 }
 const typeRollupFilePath = ExtractorConfig.tryLoadForFolder({
 	startingFolder: previousBasePath,
 });
 
+/**
+ * Extracts the type definition file path from the 'exports' field of a given package.json.
+ * Checks both 'import' and 'require' resolution methods to find the appropriate path.
+ * If the path is found, it is returned. Otherwise, an error is thrown.
+ * @param previousPackageJson
+ * @returns string - A type definition filepath based on the appropriate export.
+ */
+function getTypePathsFromExport(previousPackageJson: PackageJson): string {
+	if (!previousPackageJson.exports) {
+		throw new Error("The 'exports' field is missing in the package.json.");
+	}
+
+	const extractTypesPath = (exportEntry: any): string | undefined => {
+		return exportEntry?.types ? path.join(previousBasePath, exportEntry.types) : undefined;
+	};
+	const defaultSubpath = ".";
+	const exportEntry = previousPackageJson.exports[defaultSubpath];
+
+	// Check both 'import' and 'require' resolution methods
+	const typeDefinitionFilePath =
+		extractTypesPath(exportEntry?.import) ?? extractTypesPath(exportEntry?.require);
+	if (!typeDefinitionFilePath) {
+		// If no valid path is found, throw an error
+		throw new Error(
+			`Type definition file path could not be determined from the 'exports' field of '${previousPackageJsonPath}' using the default export entry '.'`,
+		);
+	}
+	return typeDefinitionFilePath;
+}
 let typeDefinitionFilePath;
 
+// Check if a specified typeRollupFile exists
 if (typeRollupFilePath) {
-	// Check if a specified typeRollupFile exists
-	if (typeRollupFilePath === undefined) {
-		throw new Error(`Type rollup file '${typeRollupFilePath}' not found.`);
-	}
 	typeDefinitionFilePath = typeRollupFilePath;
 } else {
 	// Try to read the 'types' field from the package.json of the previous package
-	const previousPackageJson: PackageJson = readJsonSync(`${previousBasePath}/package.json`);
+	const previousPackageJson: PackageJson = readJsonSync(previousPackageJsonPath);
 	if (previousPackageJson.types) {
 		typeDefinitionFilePath = path.join(previousBasePath, previousPackageJson.types);
+		// Check the exports entries
 	} else if (previousPackageJson.exports) {
-		// Function to extract types path from an export entry
-		const extractTypesPath = (exportEntry: any): string | undefined => {
-			return exportEntry?.types ? path.join(previousBasePath, exportEntry.types) : undefined;
-		};
-
-		const defaultSubpath = ".";
-		const exportEntry = previousPackageJson.exports[defaultSubpath];
-
-		// Check both 'import' and 'require' resolution methods
-		typeDefinitionFilePath =
-			extractTypesPath(exportEntry?.import) || extractTypesPath(exportEntry?.require);
-
-		if (!typeDefinitionFilePath) {
-			// If no valid path is found, throw an error
-			throw new Error(
-				"Type definition file path could not be determined from the 'exports' field of the package.json of the previous version.",
-			);
-		}
+		typeDefinitionFilePath = getTypePathsFromExport(previousPackageJson);
 	} else {
 		throw new Error(
-			"Type definition file path could not be determined from the package.json of the previous version.",
+			`Type definition file path could not be determined from '${previousPackageJsonPath}'. No 'exports' nor 'type' fields found.`,
 		);
 	}
 }
