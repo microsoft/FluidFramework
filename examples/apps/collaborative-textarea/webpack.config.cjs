@@ -48,6 +48,6 @@ module.exports = (env) => {
 				}),
 			],
 		},
-		isProduction ? require("./webpack.prod") : require("./webpack.dev"),
+		isProduction ? require("./webpack.prod.cjs") : require("./webpack.dev.cjs"),
 	);
 };
