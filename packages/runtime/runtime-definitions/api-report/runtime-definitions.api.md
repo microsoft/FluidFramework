@@ -399,7 +399,9 @@ export interface ISummaryTreeWithStats {
 
 // @public
 export interface ITelemetryContext {
+    // @deprecated
     get(prefix: string, property: string): TelemetryEventPropertyType;
+    // @deprecated
     serialize(): string;
     set(prefix: string, property: string, value: TelemetryEventPropertyType): void;
     setMultiple(prefix: string, property: string, values: Record<string, TelemetryEventPropertyType>): void;
