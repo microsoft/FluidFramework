@@ -379,7 +379,7 @@ async function validateBlobsReferenceState(
  */
 describeCompat(
 	"GC delete attachment blobs in test mode",
-	"2.0.0-rc.1.0.0",
+	"NoCompat",
 	(getTestObjectProvider) => {
 		// If deleteContent is true, GC is run in test mode where content that is not referenced is
 		// deleted after each GC run.

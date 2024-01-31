@@ -29,7 +29,7 @@ function getIdCompressor(dds: SharedObjectCore): IIdCompressor {
 	return (dds as any).runtime.idCompressor as IIdCompressor;
 }
 
-describeCompat("Runtime IdCompressor", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) => {
+describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis) => {
 	const {
 		dataRuntime: { DataObject, DataObjectFactory },
 		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
@@ -618,7 +618,7 @@ describeCompat("Runtime IdCompressor", "2.0.0-rc.1.0.0", (getTestObjectProvider,
 // Even older versions of the runtime also don't have an id compression feature enabled.
 describeCompat(
 	"IdCompressor in detached container",
-	"2.0.0-rc.1.0.0",
+	"NoCompat",
 	(getTestObjectProvider, apis) => {
 		let provider: ITestObjectProvider;
 		let request: IRequest;
@@ -681,7 +681,7 @@ describeCompat(
 	},
 );
 
-describeCompat("IdCompressor Summaries", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	const enabledConfig: ITestContainerConfig = {
 		runtimeOptions: { enableRuntimeIdCompressor: true },

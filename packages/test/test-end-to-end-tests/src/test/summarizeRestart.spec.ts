@@ -18,7 +18,7 @@ import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
 
 describeCompat(
 	"Summarizer closes instead of refreshing",
-	"2.0.0-rc.1.0.0",
+	"NoCompat",
 	(getTestObjectProvider, apis) => {
 		const { SharedCounter } = apis.dds;
 

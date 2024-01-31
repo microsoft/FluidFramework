@@ -834,7 +834,7 @@ describeCompat("SharedDirectory", "FullCompat", (getTestObjectProvider, apis) =>
 
 describeCompat(
 	"SharedDirectory orderSequentially",
-	"2.0.0-rc.1.0.0",
+	"NoCompat",
 	(getTestObjectProvider, apis) => {
 		const { SharedDirectory } = apis.dds;
 		const directoryId = "directoryKey";
@@ -1282,7 +1282,7 @@ describeCompat(
 
 describeCompat(
 	"SharedDirectory ordering maintenance",
-	"2.0.0-rc.1.0.0",
+	"NoCompat",
 	(getTestObjectProvider, apis) => {
 		const { SharedDirectory } = apis.dds;
 		const directoryId = "directoryKey";

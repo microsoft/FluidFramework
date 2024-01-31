@@ -168,7 +168,7 @@ describeCompat("SharedCounter", "FullCompat", (getTestObjectProvider, apis) => {
 
 describeCompat(
 	"SharedCounter orderSequentially",
-	"2.0.0-rc.1.0.0",
+	"NoCompat",
 	(getTestObjectProvider, apis) => {
 		const { SharedCounter } = apis.dds;
 
