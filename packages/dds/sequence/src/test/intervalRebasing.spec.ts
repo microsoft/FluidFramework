@@ -13,7 +13,7 @@ import {
 import {
 	disableStrictPartialLengthChecks,
 	enableStrictPartialLengthChecks,
-} from "@fluidframework/merge-tree";
+} from "@fluidframework/merge-tree/dist/test";
 import { SharedString } from "../sharedString";
 import { IntervalStickiness } from "../intervals";
 import { Side } from "../intervalCollection";

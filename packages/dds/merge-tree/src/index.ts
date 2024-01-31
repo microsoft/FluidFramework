@@ -96,10 +96,6 @@ export {
 	ReferenceType,
 	IMergeTreeObliterateMsg,
 } from "./ops";
-export {
-	enableStrictPartialLengthChecks,
-	disableStrictPartialLengthChecks,
-} from "./partialLengths";
 export { addProperties, createMap, MapLike, matchProperties, PropertySet } from "./properties";
 export {
 	compareReferencePositions,

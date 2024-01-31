@@ -249,14 +249,8 @@ export interface Dictionary<TKey, TData> {
     remove(key: TKey): void;
 }
 
-// @internal (undocumented)
-export function disableStrictPartialLengthChecks(): void;
-
 // @alpha (undocumented)
 export function discardMergeTreeDeltaRevertible(revertibles: MergeTreeDeltaRevertible[]): void;
-
-// @internal
-export function enableStrictPartialLengthChecks(): void;
 
 // @internal
 export function getSlideToSegoff(segoff: {

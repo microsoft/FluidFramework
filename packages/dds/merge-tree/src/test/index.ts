@@ -127,3 +127,7 @@ export {
 	UnassignedSequenceNumber,
 	UniversalSequenceNumber,
 } from "../index";
+export {
+	enableStrictPartialLengthChecks,
+	disableStrictPartialLengthChecks,
+} from "../partialLengths";
