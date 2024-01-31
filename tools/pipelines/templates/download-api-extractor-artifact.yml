@@ -2,13 +2,13 @@
 # Licensed under the MIT License.
 
 # download-api-extractor-artifact pipeline
-# Downloads the _api-extractor-temp artifact from a specific internal pipeline using
-# branchName and pipelineName as parameters. By default, the branch triggering this
-# pipeline will be used as branchName. 
 parameters:
+# Name of the internal pipeline where the artifact is published
 - name: pipelineName
   type: string
 
+# Branch name to filter specific runs. Takes the most recent completed build which
+# matches the branch name. By default, the branch triggering this pipeline is used
 - name: branchName
   type: string
   default: ${{ variables['Build.SourceBranch'] }}
