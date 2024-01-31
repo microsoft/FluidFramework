@@ -19,6 +19,7 @@ import { unreachableCase } from "@fluidframework/core-utils";
 import { getGitType } from "@fluidframework/protocol-base";
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
+import { ISnapshot } from "@fluidframework/driver-definitions";
 import {
 	IOdspSummaryPayload,
 	IOdspSummaryTree,
@@ -26,7 +27,6 @@ import {
 	OdspSummaryTreeValue,
 } from "./contracts";
 import { getWithRetryForTokenRefresh, maxUmpPostBodySize } from "./odspUtils";
-import { ISnapshotContents } from "./odspPublicUtils";
 import { EpochTracker, FetchType } from "./epochTracker";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { runWithRetry } from "./retryUtils";
@@ -37,19 +37,20 @@ import { runWithRetry } from "./retryUtils";
 export function convertCreateNewSummaryTreeToTreeAndBlobs(
 	summary: ISummaryTree,
 	treeId: string,
-): ISnapshotContents {
+): ISnapshot {
 	const protocolSummary = summary.tree[".protocol"] as ISummaryTree;
 	const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
 	const sequenceNumber = documentAttributes.sequenceNumber;
-	const blobs = new Map<string, ArrayBuffer>();
-	const snapshotTree = convertCreateNewSummaryTreeToTreeAndBlobsCore(summary, blobs);
+	const blobContents = new Map<string, ArrayBuffer>();
+	const snapshotTree = convertCreateNewSummaryTreeToTreeAndBlobsCore(summary, blobContents);
 	snapshotTree.id = treeId;
-	const snapshotTreeValue: ISnapshotContents = {
+	const snapshotTreeValue: ISnapshot = {
 		snapshotTree,
-		blobs,
+		blobContents,
 		ops: [],
 		sequenceNumber,
 		latestSequenceNumber: sequenceNumber,
+		snapshotFormatV: 1,
 	};
 
 	return snapshotTreeValue;

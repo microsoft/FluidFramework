@@ -23,7 +23,7 @@ import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interface
 
 describeCompat(
 	"Concurrent op processing via DDS event handlers",
-	"2.0.0-rc.1.0.0",
+	"NoCompat",
 	(getTestObjectProvider, apis) => {
 		const { SharedMap, SharedDirectory } = apis.dds;
 		const mapId = "mapKey";
