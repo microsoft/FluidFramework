@@ -13,7 +13,7 @@ import {
 	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions";
 import {
-	// IChannel,
+	IChannel,
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 	Serializable,
@@ -30,8 +30,10 @@ import {
 	MatrixItem,
 	ISharedMatrixEvents,
 } from "@fluidframework/matrix";
+import { UsageError } from "@fluidframework/telemetry-utils";
+
 import { IMatrixConsumer, IMatrixReader, IMatrixProducer } from "@tiny-calc/nano";
-import { CounterFactory } from "@fluidframework/counter";
+import { CounterFactory, ISharedCounter } from "@fluidframework/counter";
 import { v4 as uuid } from "uuid";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
@@ -103,20 +105,19 @@ import { IContainer, LoaderHeader } from "@fluidframework/container-definitions"
  *
  */
 
+/*
+ * Public APIs
+ */
+
 // interface for internal communication
 interface ITempChannel {
-	getValue(): unknown;
+	readonly value: unknown;
 }
-
-const matrixId = "matrix";
+type Channel = IChannel & ITempChannel;
 
 interface MatrixExternalType {
 	value: Serializable<unknown>;
 	type: string;
-}
-
-interface MatrixInernalType extends MatrixExternalType {
-	iteration: number;
 }
 
 interface IEfficientMatrix extends Omit<ISharedMatrix<MatrixExternalType>, "getCell"> {
@@ -124,8 +125,38 @@ interface IEfficientMatrix extends Omit<ISharedMatrix<MatrixExternalType>, "getC
 	// Removing it causes a bunch of type issues, so leaving NYI version for now.
 	getCell(row: number, col: number): MatrixItem<MatrixExternalType>;
 	getCellAsync(row: number, col: number): Promise<MatrixItem<MatrixExternalType>>;
+
+	getCellChannel(row: number, col: number): Promise<ITempChannel>;
 }
 
+/*
+ * Internal busineess
+ */
+const matrixId = "matrix";
+
+interface MatrixInernalType extends MatrixExternalType {
+	iteration: number;
+}
+
+type ICellInfo =
+	| {
+			value: undefined;
+			channel: undefined;
+			channelId: undefined;
+	  }
+	| {
+			value: Exclude<MatrixItem<MatrixInernalType>, undefined>;
+			channel: Promise<ITempChannel> | undefined;
+			channelId: string;
+	  };
+
+/*
+	To be implemented:
+	- "conflict" events
+	- Types that do not support collaboration (like numbers, dates)
+		Right now we assume that every type is represented by channel factory, but there is no need
+		for that if types are not collaborative.
+*/
 
 export class TempCollabSpaceRuntime
 	extends FluidDataStoreRuntime<ISharedMatrixEvents<MatrixExternalType>>
@@ -214,12 +245,58 @@ export class TempCollabSpaceRuntime
 		this.matrix.switchSetCellPolicy();
 	}
 
-	// Assumption here is that this public API is called after
-	// Data store had a chance to process all ops, including remote (on load) and stashed.
-	// And thus if
-	public get matrix() {
+	protected get matrix() {
 		assert(this.matrixInternal !== undefined, "not initialized");
 		return this.matrixInternal;
+	}
+
+	protected getCellInfo(rowArg: number, colArg: number): ICellInfo {
+		const row = rowArg + 1;
+		const col = colArg + 1;
+		const cellValue = this.matrix.getCell(row, col);
+		if (cellValue === undefined) {
+			return { value: undefined, channel: undefined, channelId: undefined };
+		}
+		const rowId = this.matrix.getCell(row, 0) as unknown as string;
+		const colId = this.matrix.getCell(0, col) as unknown as string;
+		const channelId = `${rowId}-${colId}-${cellValue.iteration}`;
+		const channel = this.contexts.get(channelId)?.getChannel();
+
+		return {
+			value: cellValue,
+			channel: channel as Promise<ITempChannel> | undefined,
+			channelId,
+		};
+	}
+
+	protected getFactoryForValueType(type: string, onlyCollaborativeTypes: boolean) {
+		// Matrix is in the list of channels, but it's "internal" type - not allowed to be used in cells.
+		if (type === SharedMatrixFactory.Type) {
+			return undefined;
+		}
+		const factory = this.sharedObjectRegistry.get(type);
+		return factory;
+	}
+
+	public async getCellChannel(row: number, col: number): Promise<ITempChannel> {
+		const { value, channel, channelId } = this.getCellInfo(row, col);
+		if (value === undefined) {
+			throw new UsageError("Can't create channel for undefined cell");
+		}
+		if (channel !== undefined) {
+			return channel;
+		}
+
+		const factory = this.getFactoryForValueType(value.type, true /* onlyCollaborativeTypes */);
+		assert(factory !== undefined, "Factory is missing for matrix type");
+
+		const newChannel = factory.create(this, channelId) as Channel;
+
+		// TBD - need to initialize it with value.value!
+
+		this.addChannel(newChannel);
+
+		return newChannel;
 	}
 
 	// #region IMatrixProducer
@@ -246,42 +323,30 @@ export class TempCollabSpaceRuntime
 		return this.matrix.colCount - 1;
 	}
 
-	public getCell(rowArg: number, colArg: number): MatrixItem<MatrixExternalType> {
+	public getCell(row: number, col: number): MatrixItem<MatrixExternalType> {
 		// Implementation below can't deal with async nature of getting to channels.
 		throw new Error("use getCellAsync()");
 
-	/*
-		const row = rowArg + 1;
-		const col = colArg + 1;
-		const cellValue = this.matrix.getCell(row, col);
-		if (cellValue === undefined) {
-			return undefined;
+		/*
+		const {value, channel} = this.getCellInfo(row, col);
+		if (value === undefined) {
+			return {value: undefined, type: "undefined" };
 		}
-		const rowId = this.matrix.getCell(row, 0) as unknown as string;
-		const colId = this.matrix.getCell(0, col) as unknown as string;
-		const channelId = `${rowId}-${colId}-${cellValue.iteration}`;
-		const channel = this.contexts.get(channelId)?.getChannel();
 		if (channel !== undefined) {
 			 throw new Error("use getCellAsync()");
 		}
-		const value = channel === cellValue.value;
-		return { value, type: cellValue.type };
+		const val = channel === value.value;
+		return { value: val, type: value.type };
 		*/
 	}
 
-	public async getCellAsync(rowArg: number, colArg: number): Promise<MatrixItem<MatrixExternalType>> {
-		const row = rowArg + 1;
-		const col = colArg + 1;
-		const cellValue = this.matrix.getCell(row, col);
-		if (cellValue === undefined) {
-			return undefined;
+	public async getCellAsync(row: number, col: number): Promise<MatrixItem<MatrixExternalType>> {
+		const { value, channel } = this.getCellInfo(row, col);
+		if (value === undefined) {
+			return { value: undefined, type: "undefined" };
 		}
-		const rowId = this.matrix.getCell(row, 0) as unknown as string;
-		const colId = this.matrix.getCell(0, col) as unknown as string;
-		const channelId = `${rowId}-${colId}-${cellValue.iteration}`;
-		const channel = (await this.contexts.get(channelId)?.getChannel()) as ITempChannel | undefined;
-		const value = channel === undefined ? cellValue.value : (channel.getValue() as string);
-		return { value, type: cellValue.type };
+		const val = channel === undefined ? value.value : ((await channel).value as string);
+		return { value: val, type: value.type };
 	}
 
 	public get matrixProducer(): IMatrixProducer<MatrixItem<MatrixExternalType>> {
@@ -298,6 +363,14 @@ export class TempCollabSpaceRuntime
 		if (value === undefined) {
 			this.matrix.setCell(row, col, value);
 		} else {
+			// Check that we will be able to create a channel for it in the future.
+			if (
+				this.getFactoryForValueType(value.type, false /* onlyCollaborativeTypes */) ===
+				undefined
+			) {
+				throw new UsageError("Matrix: Unknown value type");
+			}
+
 			const currentValue = this.matrix.getCell(row, col);
 			const iteration = currentValue ? currentValue.iteration + 1 : 1;
 			const valueInternal = { ...value, iteration };
@@ -344,11 +417,6 @@ export class TempCollabSpaceRuntime
 
 	// #endregion ISharedMatrix
 }
-
-/*
-	To be implemented:
-	- "conflict" events
-*/
 
 export class TempCollabSpaceRuntimeFactory implements IFluidDataStoreFactory {
 	// TBD - incorporate ITempChannel requirement to sharedObjectRegistry
@@ -441,7 +509,7 @@ describeCompat(
 			datastore.insertCols(0, cols);
 			datastore.insertRows(0, rows);
 
-			if (global !== undefined && global.gc !== undefined) {
+			if (global?.gc !== undefined) {
 				global.gc();
 			}
 
@@ -451,11 +519,16 @@ describeCompat(
 			// from the fact that GC did not had a chance to run and cleanup after previous step.
 			for (let r = 0; r < rows; r++) {
 				for (let c = 0; c < cols; c++) {
-					datastore.setCell(r, c, { value: "foo", type: "foo" });
+					datastore.setCell(r, c, { value: 5, type: CounterFactory.Type });
 				}
 			}
 
-			if (global !== undefined && global.gc !== undefined) {
+			const channel = (await datastore.getCellChannel(100, 5)) as ISharedCounter;
+			channel.increment(100);
+			const value = await datastore.getCellAsync(100, 5);
+			assert(channel.value === value?.value, "not the same value");
+
+			if (global?.gc !== undefined) {
 				global.gc();
 			}
 
@@ -463,8 +536,8 @@ describeCompat(
 			// But only 234ms if using non-async function (and thus not doing await here)!
 			const start = performance.now();
 			for (let i = 0; i < rows; i++) {
-				// await datastore.getCellAsync(i, 5);
-				datastore.getCell(i, 5);
+				await datastore.getCellAsync(i, 5);
+				// datastore.getCell(i, 5);
 			}
 			const time = performance.now() - start;
 

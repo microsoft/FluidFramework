@@ -124,6 +124,8 @@ export class FluidDataStoreRuntime<TEvents = Record<string, never>> extends Type
     // (undocumented)
     setConnectionState(connected: boolean, clientId?: string): void;
     // (undocumented)
+    protected readonly sharedObjectRegistry: ISharedObjectRegistry;
+    // (undocumented)
     submitMessage(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;
     submitSignal(type: string, content: any, targetClientId?: string): void;
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;

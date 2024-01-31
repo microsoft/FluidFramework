@@ -221,7 +221,7 @@ export class FluidDataStoreRuntime<TEvents = Record<string, never>>
 	 */
 	public constructor(
 		private readonly dataStoreContext: IFluidDataStoreContext,
-		private readonly sharedObjectRegistry: ISharedObjectRegistry,
+		protected readonly sharedObjectRegistry: ISharedObjectRegistry,
 		existing: boolean,
 		provideEntryPoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
 	) {
