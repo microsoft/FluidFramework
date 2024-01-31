@@ -23,7 +23,7 @@ Currently there are two custom rules within the package:
 
 ## Applying the Custom Rules
 
-Once creating a new custom rule, make sure to include the new rule in `minimal.js`'s `rules` field.
+To begin enforcing a new custom rule, make sure to include it in the `rules` field of the appropriate config module (`minimal.js`, `recommended.js`, or `strict.js`).
 
 Since `eslint-plugin-fluid-internal` is a dependency of `@fluidframework/eslint-config-fluid` package, any package using `@fluidframework/eslint-config-fluid` as its `devDependencies` will be able to apply the custom rules.
 
