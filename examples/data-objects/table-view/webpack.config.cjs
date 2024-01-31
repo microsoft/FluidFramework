@@ -17,7 +17,7 @@ module.exports = (env) => {
 			entry: "./src/index.ts",
 			resolve: {
 				extensionAlias: {
-					".js": [".ts", ".tsx", ".js"],
+					".js": [".ts", ".tsx", ".js", ".cjs", ".mjs"],
 				},
 				extensions: [".mjs", ".ts", ".tsx", ".js"],
 				fallback: {
