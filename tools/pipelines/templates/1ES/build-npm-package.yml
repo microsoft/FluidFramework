@@ -638,6 +638,7 @@ extends:
               variables:
               - name: pipelineTelemetryWorkdir
                 value: $(Pipeline.Workspace)/pipelineTelemetryWorkdir
+              - group: ado-feeds
               steps:
               - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
                 parameters:
