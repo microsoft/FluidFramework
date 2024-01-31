@@ -323,8 +323,8 @@ export interface IGarbageCollectionRuntime {
 
 /** Defines the contract for the garbage collector. */
 export interface IGarbageCollector {
-	/** Tells the time at which session expiry timer started in a previous container. 
-	 * This is only set when loading from a stashed container and will be equal to the time at 
+	/** Tells the time at which session expiry timer started in a previous container.
+	 * This is only set when loading from a stashed container and will be equal to the time at
 	 * which the original container started the session expiry timer.
 	 */
 	readonly sessionExpiryTimerStarted: number | undefined;

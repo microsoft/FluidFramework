@@ -200,9 +200,12 @@ export class GarbageCollector implements IGarbageCollector {
 				const timeLapsedSincePendingTimer = Date.now() - pendingSessionExpiryTimerStarted;
 				timeoutMs -= timeLapsedSincePendingTimer;
 			}
-			
 			timeoutMs = overrideSessionExpiryTimeoutMs ?? timeoutMs;
-
+			if (timeoutMs <= 0) {
+				this.runtime.closeFn(
+					new ClientSessionExpiredError(`Client session expired.`, timeoutMs),
+				);
+			}
 			this.sessionExpiryTimer = new Timer(timeoutMs, () => {
 				this.runtime.closeFn(
 					new ClientSessionExpiredError(`Client session expired.`, timeoutMs),
