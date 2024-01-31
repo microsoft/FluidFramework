@@ -27,4 +27,3 @@ To begin enforcing a new custom rule, make sure to include it in the `rules` fie
 
 Since `eslint-plugin-fluid-internal` is a dependency of `@fluidframework/eslint-config-fluid` package, any package using `@fluidframework/eslint-config-fluid` as its `devDependencies` will be able to apply the custom rules.
 
-Note, until the next release of the `@fluidframework/eslint-config-fluid`, in order to have custom rules working, install the local version of the package using `"@fluidframework/eslint-config-fluid": "file:relative-path"` (Check `@fluid-tools/api-markdown-documenter` as an reference).
