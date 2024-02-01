@@ -122,6 +122,18 @@ export async function fetchHelper(
 					{ driverVersion },
 				);
 			}
+
+			if (!response.ok && response.redirected) {
+				// Return redirected response to allow callers of fetchHelper to handle the redirect.
+				const redirectHeaders = headersToMap(response.headers);
+				return {
+					content: response,
+					headers: redirectHeaders,
+					propsToLog: getSPOAndGraphRequestIdsFromResponse(redirectHeaders),
+					duration: performance.now() - start,
+				};
+			}
+
 			if (!response.ok || response.status < 200 || response.status >= 300) {
 				throwOdspNetworkError(
 					// pre-0.58 error message prefix: odspFetchError

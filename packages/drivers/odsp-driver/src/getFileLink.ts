@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -14,6 +15,7 @@ import {
 } from "@fluidframework/odsp-driver-definitions";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import {
+	TokenFetchOptionsEx,
 	fetchHelper,
 	getWithRetryForTokenRefresh,
 	toInstrumentedOdspTokenFetcher,
@@ -90,6 +92,52 @@ export async function getFileLink(
 	return fileLink;
 }
 
+async function getRequestInformation(
+	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
+	odspUrlParts: IOdspUrlParts,
+	logger: ITelemetryLoggerExt,
+	options: TokenFetchOptionsEx,
+	fileItem: FileItemLite,
+) {
+	const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
+		logger,
+		odspUrlParts,
+		getToken,
+		true /* throwOnNullToken */,
+	);
+	const storageToken = await storageTokenFetcher(options, "GetFileLinkCore");
+	assert(
+		storageToken !== null,
+		0x2bb /* "Instrumented token fetcher with throwOnNullToken = true should never return null" */,
+	);
+
+	// IMPORTANT: In past we were using GetFileByUrl() API to get to the list item that was corresponding
+	// to the file. This was intentionally replaced with GetFileById() to solve the following issue:
+	// GetFileByUrl() uses webDavUrl to locate list item. This API does not work for Consumer scenarios
+	// where webDavUrl is constructed using legacy ODC format for backward compatibility reasons.
+	// GetFileByUrl() does not understand that format and thus fails. GetFileById() relies on file item
+	// unique guid (sharepointIds.listItemUniqueId) and it works uniformly across Consumer and Commercial.
+	const { url, headers } = getUrlAndHeadersWithAuth(
+		`${
+			odspUrlParts.siteUrl
+		}/_api/web/GetFileById(@a1)/ListItemAllFields/GetSharingInformation?@a1=guid${encodeURIComponent(
+			`'${fileItem.sharepointIds.listItemUniqueId}'`,
+		)}`,
+		storageToken,
+		true,
+	);
+	const requestInit = {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json;odata=verbose",
+			"Accept": "application/json;odata=verbose",
+			...headers,
+		},
+	};
+
+	return { url, requestInit };
+}
+
 async function getFileLinkCore(
 	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
 	odspUrlParts: IOdspUrlParts,
@@ -106,42 +154,34 @@ async function getFileLinkCore(
 			let additionalProps;
 			const fileLink = await getWithRetryForTokenRefresh(async (options) => {
 				attempts++;
-				const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
-					logger,
-					odspUrlParts,
+
+				const { url, requestInit } = await getRequestInformation(
 					getToken,
-					true /* throwOnNullToken */,
-				);
-				const storageToken = await storageTokenFetcher(options, "GetFileLinkCore");
-				assert(
-					storageToken !== null,
-					0x2bb /* "Instrumented token fetcher with throwOnNullToken = true should never return null" */,
+					odspUrlParts,
+					logger,
+					options,
+					fileItem,
 				);
 
-				// IMPORTANT: In past we were using GetFileByUrl() API to get to the list item that was corresponding
-				// to the file. This was intentionally replaced with GetFileById() to solve the following issue:
-				// GetFileByUrl() uses webDavUrl to locate list item. This API does not work for Consumer scenarios
-				// where webDavUrl is constructed using legacy ODC format for backward compatibility reasons.
-				// GetFileByUrl() does not understand that format and thus fails. GetFileById() relies on file item
-				// unique guid (sharepointIds.listItemUniqueId) and it works uniformly across Consumer and Commercial.
-				const { url, headers } = getUrlAndHeadersWithAuth(
-					`${
-						odspUrlParts.siteUrl
-					}/_api/web/GetFileById(@a1)/ListItemAllFields/GetSharingInformation?@a1=guid${encodeURIComponent(
-						`'${fileItem.sharepointIds.listItemUniqueId}'`,
-					)}`,
-					storageToken,
-					true,
-				);
-				const requestInit = {
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json;odata=verbose",
-						"Accept": "application/json;odata=verbose",
-						...headers,
-					},
-				};
-				const response = await fetchHelper(url, requestInit);
+				let response = await fetchHelper(url, requestInit);
+
+				// Handle redirects by requesting new tokens & retrying the API call against the new site URL. 
+				if (!response.content.ok && response.content.redirected) {
+					odspUrlParts.siteUrl = response.content.url.split("/_api/")[0];
+
+					const redirectedResponseInformation = await getRequestInformation(
+						getToken,
+						odspUrlParts,
+						logger,
+						options,
+						fileItem,
+					);
+					response = await fetchHelper(
+						redirectedResponseInformation.url,
+						redirectedResponseInformation.requestInit,
+					);
+				}
+
 				additionalProps = response.propsToLog;
 
 				const sharingInfo = await response.content.json();
