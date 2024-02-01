@@ -123,7 +123,12 @@ export interface IBatchMessage {
  * @alpha
  */
 export interface IContainerContext {
-	// Used to be ILoaderOptions, this is staging for eventual removal.
+	/**
+	 * Not recommended for general use, is used in some cases to control various runtime behaviors.
+	 *
+	 * @remarks
+	 * Used to be ILoaderOptions, this is staging for eventual removal.
+	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	readonly options: Record<string | number, any>;
 	readonly clientId: string | undefined;

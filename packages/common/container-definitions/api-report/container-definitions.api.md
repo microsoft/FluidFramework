@@ -170,7 +170,6 @@ export interface IContainerContext {
     readonly id: string;
     // (undocumented)
     readonly loader: ILoader;
-    // (undocumented)
     readonly options: Record<string | number, any>;
     // (undocumented)
     pendingLocalState?: unknown;
@@ -403,7 +402,7 @@ export interface ILoaderHeader {
     [LoaderHeader.version]: string | undefined;
 }
 
-// @alpha (undocumented)
+// @alpha
 export type ILoaderOptions = {
     cache?: boolean;
     client?: IClient;

@@ -531,6 +531,7 @@ export interface IHostLoader extends ILoader {
 }
 
 /**
+ * Options to configure various behaviors of the ILoader.
  * @alpha
  */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
