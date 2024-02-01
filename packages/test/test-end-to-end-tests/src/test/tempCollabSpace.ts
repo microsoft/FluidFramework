@@ -76,22 +76,36 @@ import { IContainer, LoaderHeader } from "@fluidframework/container-definitions"
  *
  * Some notes on implementation:
  *  1. When it comes to channel creation, we could chose between these two options:
- *     1. Do not send channel attach op. Any future op for a channel results in implicit channel creation
+ *     1. Do not send channel attach op (or content on next / each op). Any future op for a channel results in implicit
+ *        channel creation
+ *        - If such channel is no longer "rooted" in the cell, we have nowhere to get initial state for channel
+ *          creation! And thus we might need to delay that process up until channel is rooted again (through undo op).
  *     2. We could send attach ops, but when processing one, ignore it if channel is already created.
- *     Second approach has some key advantages:
- *     - We can use attach op content to validate that indeed conversion from interop format to collab format was
- *       functional. If not, we should close container with error, and not continue as eventual consistency is broken
- *       (ideally, all other clients should ignore all other ops from "looser" client that were already sent and acked;
- *       "looser" in this context - a client who was not the first to send channel attach op and discover mismatch).
- *     - This also removes the need to store hashes as alaternative way to validate such transitions as being
- *       functional.
- *     - A client (when receiving first channel op) may find itself in a position where channel is not longer associated
- *       with any cell. But undo can still bring it back. Such client (at least in today's system) has no place to get
- *       initial state for a channel (Matrix does not behave like Sequence DDS - it does not store all states of all
- *       clients within collab window, it only stores latest state)
- *     That said, we should delay sending attach op until there are any changes in the channel. User could be scrolling
- *     through table and that might create channels in anticipation of user typing (rich components are created and they
- *     need channel to initialize and render), but user might not edit anything.
+ *        - This can not be required step (but can be optional). That's because other client could have destroyed channel,
+ *          and would need to figure out initial state when it sees an op comming for non-existing channel. A client with
+ *          undo records is likely to keep channels much longer (in memory) then other clients, and thus may send ops (undo)
+ *          when all other clients already destroyed such channel.
+ *        - Thus, sending attach ops is more like corener case of #3 below.
+ *        - That said, we should delay sending attach op until there are any changes in the channel. User could be scrolling
+ *          through table and that might create channels in anticipation of user typing (rich components are created and they
+ *          need channel to initialize and render), but user might not edit anything. And thus we better move to #3.
+ *     3. Include the value before change with every op. It would be only used by clients (for creation of channel, or
+ *          validation) if receiving client either does not have that channel created, or such channel has no ops overlapping
+ *          with collab window
+ *        - We can use op content to validate that indeed conversion from interop format to collab format was
+ *          functional. If not, we should close container with error, and not continue as eventual consistency is broken
+ *          (ideally, all other clients should ignore all other ops from "looser" client that were already sent and acked;
+ *          "looser" in this context - a client who was not the first to send channel attach op and discover mismatch).
+ *        - This also removes the need to store hashes as alternative way to validate such transitions as being
+ *          functional.
+ *        - A client (when receiving first channel op) may find itself in a position where channel is not longer associated
+ *          with any cell. But undo can still bring it back. Such client (at least in today's system) has no place to get
+ *          initial state for a channel (Matrix does not behave like Sequence DDS - it does not store all states of all
+ *          clients within collab window, it only stores latest state)
+ *        - Leaving possible performance / bandwith issues aside, it will be hard to accomplish that design, unless we push
+ *          that responsibility to channels. Consider op rebasing case - Matrix (or code around it) can't reconstuct the
+ *          state of the cell before such op - we simply do not have enough data to do so. That said, most DDSs do not have
+ *          that data either, as they use LWW (Last Writer Wins) policy and simply do not track such state.
  * 2. We need to map channel names to cells (when receiving channel op while channel is not created yet). There are a
  *    number of ways to do so:
  *    - each op (in addition to channel name) could include column / row information, which could be mapped to current
@@ -112,7 +126,14 @@ import { IContainer, LoaderHeader } from "@fluidframework/container-definitions"
 // interface for internal communication
 interface ITempChannel {
 	readonly value: unknown;
+
+	// Tells if channel has a any local (non-acked) changes.
+	readonly dirty: boolean;
+
+	// describes the sequence number of last op in this channel
+	readonly lastSeqNumber: number;
 }
+
 type Channel = IChannel & ITempChannel;
 
 interface MatrixExternalType {
@@ -121,15 +142,40 @@ interface MatrixExternalType {
 }
 
 interface IEfficientMatrix extends Omit<ISharedMatrix<MatrixExternalType>, "getCell"> {
+	// Semantics of this operation differ substantially from regular matrix.
+	// This will overwrite the value of the cell, thus creating a new collab channel (in the future)
+	// Usually used to change cell type to a different type.
+	// When such change occurs, the old channel that was associated with this cell becomes
+	// non-rooted, i.e. it no longer is accosiated wit the cell. Ops might still come in for such channel
+	// due to races / offline clients.
+	// Old channel could come back to life (become again rooted / associated with cell) through undo!
+	setCell(rowArg: number, colArg: number, value: MatrixItem<MatrixExternalType>);
+
 	// TBD - need to get rid of synchronous version, as I do not think we can deliver it.
 	// Removing it causes a bunch of type issues, so leaving NYI version for now.
 	getCell(row: number, col: number): MatrixItem<MatrixExternalType>;
 	getCellAsync(row: number, col: number): Promise<MatrixItem<MatrixExternalType>>;
 
+	// Returns collab channel that is associated with a cell. Type of the channel depeds on type of cell
+	// If collab channel already exists, it is returned. Otherwise new channel is created.
+	// While channel is active, it represents the truth for a cell. getCell*() API will
+	// return channel value while channel exists.
 	getCellChannel(row: number, col: number): Promise<ITempChannel>;
 
-	// Experimental! It can be called only when condirions are right (no changes in collab window, no records on undo stack)
-	releaseCellChannel(channel: ITempChannel);
+	// Save content from channel to cell
+	// Operation could fail for multiple reasons:
+	//  - due to FWW merge policy used, and another client either doing save or overwriting cell.
+    //  - if channel is no longer "rooted" in a cell.
+	// In general, this operation does not change how system should evaluate cell value - all clients
+	// should continue to treat channel content as a source of truth unless/untill it's safe to destroy channel
+	// But it's a prerequisite to ability of clients to destroy channel.
+	saveChannelState(channel: ITempChannel);
+
+	// Experimental! It can be called only when condirions are right:
+	// - data has been saved to cell in non-conflicting matter.
+	//   - this means there are no channel ops in between last save's ref seq number and current point in time!
+	// - no records on undo stack
+	destroyCellChannel(channel: ITempChannel);
 }
 
 /*
@@ -138,7 +184,16 @@ interface IEfficientMatrix extends Omit<ISharedMatrix<MatrixExternalType>, "getC
 const matrixId = "matrix";
 
 interface MatrixInernalType extends MatrixExternalType {
+	// This is channel ID modifier.
+	// Each cell could have only one active channel, but many passive channels associated with it.
+	// Every time a cell is overwritten, iteration number is bumped, creating new channel.
+	// Old channel might be still around and could be returned through undo.
 	iteration: number;
+
+	// Every time channel saves its state in the cell, it records a sequence number when such change
+	// was valid. The value in the cell is the truth only if there are no other changes in the channel
+	// past that sequence number.
+	seq: number;
 }
 
 type ICellInfo =
@@ -159,6 +214,8 @@ type ICellInfo =
 	- Types that do not support collaboration (like numbers, dates)
 		Right now we assume that every type is represented by channel factory, but there is no need
 		for that if types are not collaborative.
+	- Properly implement GC of channels (and exposure of channel info to GC)
+	- hange events - changes being made by channels should result in events fired by this object.
 */
 
 export class TempCollabSpaceRuntime
@@ -337,20 +394,69 @@ export class TempCollabSpaceRuntime
 		return { row, col, iteration };
 	}
 
-	// TBD - need to build a lot of protections here on when it's safe to do this operaton
-	public releaseCellChannel(channel: ITempChannel) {
+	// Saves or destoys channel, depending on the arguments
+	protected saveOrDestroyChannel(channel: ITempChannel, allowSave: boolean, allowDestroy) {
 		const channelId = (channel as Channel).id;
+
+		// Can't do anything if there are any local changes.
+		if (channel.dirty) {
+			return;
+		}
+
+		const refSeq = this.deltaManager.lastSequenceNumber;
+		assert(channel.lastSeqNumber <= refSeq, "invalid seq number");
+
 		const { row, col, iteration } = this.mapChannelToCell(channelId);
 
 		const currValue = this.matrix.getCell(row, col);
-		if (currValue !== undefined && String(currValue?.iteration) === iteration) {
-			// Same iteration, so channel represents the cell. Copy data from channel
-			this.matrix.setCell(row, col, { ...currValue, value: channel.value as string });
+
+		// TBD - can this be optimized and assume only single client can undo such operation?
+		// 
+		// If channel is no longer associated with a cell, can't do much!
+		// We are dealing with non-rooted channel. It could be returned back to life through undo
+		// It's possible that it sits on undo stack of multiple clients (imagine that both clients
+		// concurrently changed type of a column - one offline, one not, and thus either of them can run
+		// undo and return it back to life).
+		// In the worst case, this channel will be collected by GC (though need to validate that!)
+		if (currValue === undefined || String(currValue.iteration) !== iteration) {
+			return;
 		}
 
-		// Is this safe? Anything else we need to do?
-		this.contexts.delete(channelId);
-		this.notBoundedChannelContextSet.delete(channelId);
+		assert(currValue.seq <= refSeq, "invalid seq number");
+
+		// Note on op grouping and equal sequence numbers: There will be cases (due to reentrancy when
+		// processing op batches) where ligic below could be optimized to require less saves, because
+		// we would do unnessasary saves. While true, this would also requrie tracking more state in cells.
+		// Given that chances of that are low, and code is correct, it's better to rely on extra saves
+		// then inefficiency of managing more state.
+		if (currValue.seq > channel.lastSeqNumber) {
+			// Nothing to save. Channel can be destoyed
+
+			// Validate that actually values match!
+			assert(channel.value === currValue.value, "values are not matching!!!!");
+
+			if (allowDestroy) {
+				// Is this safe? Anything else we need to do?
+				this.contexts.delete(channelId);
+				this.notBoundedChannelContextSet.delete(channelId);
+			}
+		} else if (allowSave) {
+			// Channel can't be destroyed and needs saving.
+			this.matrix.setCell(row, col, {
+				...currValue, // value, iteration, type
+				value: channel.value as string,
+				seq: refSeq,
+			});
+		}
+	}
+
+	public saveChannelState(channel: ITempChannel) {
+		this.saveOrDestroyChannel(channel, true /* allowSave */, false /* allowDestroy */);
+	}
+
+	// TBD - need to build a lot of protections here on when it's safe to do this operaton
+	public destroyCellChannel(channel: ITempChannel) {
+		this.saveOrDestroyChannel(channel, true /* allowSave */, true /* allowDestroy */);
 	}
 
 	// #region IMatrixProducer
@@ -427,7 +533,8 @@ export class TempCollabSpaceRuntime
 
 			const currentValue = this.matrix.getCell(row, col);
 			const iteration = currentValue ? currentValue.iteration + 1 : 1;
-			const valueInternal = { ...value, iteration };
+			const seq = this.deltaManager.lastSequenceNumber;
+			const valueInternal = { ...value, iteration, seq };
 			this.matrix.setCell(row, col, valueInternal);
 		}
 	}
@@ -517,87 +624,85 @@ export function sampleFactory() {
  * Validates that incremental summaries can be performed at the sub DDS level, i.e., a DDS can summarizer its
  * contents incrementally.
  */
-describeCompat(
-	"Temporal Collab Spaces",
-	"2.0.0-rc.1.0.0",
-	(getTestObjectProvider) => {
-		let provider: ITestObjectProvider;
-		const defaultFactory = sampleFactory();
-		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
-			defaultFactory,
-			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
-			runtimeOptions: {},
+describeCompat("Temporal Collab Spaces", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+	let provider: ITestObjectProvider;
+	const defaultFactory = sampleFactory();
+	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+		defaultFactory,
+		registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+		runtimeOptions: {},
+	});
+
+	const createContainer = async (): Promise<IContainer> => {
+		return provider.createContainer(runtimeFactory);
+	};
+
+	async function loadContainer(summaryVersion: string) {
+		return provider.loadContainer(runtimeFactory, undefined, {
+			[LoaderHeader.version]: summaryVersion,
 		});
+	}
 
-		const createContainer = async (): Promise<IContainer> => {
-			return provider.createContainer(runtimeFactory);
-		};
+	beforeEach("getTestObjectProvider", async () => {
+		provider = getTestObjectProvider({ syncSummarizer: true });
+	});
 
-		async function loadContainer(summaryVersion: string) {
-			return provider.loadContainer(runtimeFactory, undefined, {
-				[LoaderHeader.version]: summaryVersion,
-			});
+	it("Basic test", async () => {
+		const container = await createContainer();
+		const datastore = (await container.getEntryPoint()) as TempCollabSpaceRuntime;
+
+		const cols = 40;
+		const rows = 10000;
+
+		// +700Mb, but only +200Mb if accounting GC after that.
+		datastore.insertCols(0, cols);
+		datastore.insertRows(0, rows);
+
+		if (global?.gc !== undefined) {
+			global.gc();
 		}
 
-		beforeEach("getTestObjectProvider", async () => {
-			provider = getTestObjectProvider({ syncSummarizer: true });
-		});
-
-		it("Basic test", async () => {
-			const container = await createContainer();
-			const datastore = (await container.getEntryPoint()) as TempCollabSpaceRuntime;
-
-			const cols = 40;
-			const rows = 10000;
-
-			// +700Mb, but only +200Mb if accounting GC after that.
-			datastore.insertCols(0, cols);
-			datastore.insertRows(0, rows);
-
-			if (global?.gc !== undefined) {
-				global.gc();
+		// 100K rows test numbers:
+		// +550Mb with GC step after that having almost no impact
+		// Though if GC did not run in a step above, this number is much higher (+1GB),
+		// suggesting that actual memory growth is 1GB, but 500Mb offset could be coming
+		// from the fact that GC did not had a chance to run and cleanup after previous step.
+		for (let r = 0; r < rows; r++) {
+			for (let c = 0; c < cols; c++) {
+				datastore.setCell(r, c, { value: 5, type: CounterFactory.Type });
 			}
+		}
 
-			// 100K rows test numbers:
-			// +550Mb with GC step after that having almost no impact
-			// Though if GC did not run in a step above, this number is much higher (+1GB),
-			// suggesting that actual memory growth is 1GB, but 500Mb offset could be coming
-			// from the fact that GC did not had a chance to run and cleanup after previous step.
-			for (let r = 0; r < rows; r++) {
-				for (let c = 0; c < cols; c++) {
-					datastore.setCell(r, c, { value: 5, type: CounterFactory.Type });
-				}
-			}
+		if (global?.gc !== undefined) {
+			global.gc();
+		}
 
-			if (global?.gc !== undefined) {
-				global.gc();
-			}
+		let value = await datastore.getCellAsync(100, 5);
 
-			let value = await datastore.getCellAsync(100, 5);
+		const channel = (await datastore.getCellChannel(100, 5)) as ISharedCounter;
+		// TBD - this fails as we are not properlly initializing channel
+		// assert(channel.value === value?.value, "not the same value");
 
-			const channel = (await datastore.getCellChannel(100, 5)) as ISharedCounter;
-			// TBD - this fails as we are not properlly initializing channel
-			// assert(channel.value === value?.value, "not the same value");
+		channel.increment(100);
+		value = await datastore.getCellAsync(100, 5);
+		assert(channel.value === value?.value, "not the same value");
 
-			channel.increment(100);
-			value = await datastore.getCellAsync(100, 5);
-			assert(channel.value === value?.value, "not the same value");
+		datastore.saveChannelState(channel);
+		datastore.destroyCellChannel(channel);
 
-			datastore.releaseCellChannel(channel);
-			value = await datastore.getCellAsync(100, 5);
-			assert(channel.value === value?.value, "not the same value");
+		value = await datastore.getCellAsync(100, 5);
+		assert(channel.value === value?.value, "not the same value");
 
-			// 100K rows test numbers:
-			// Read arbitrary column: 1s on my dev box
-			// But only 234ms if using non-async function (and thus not doing await here)!
-			const start = performance.now();
-			for (let i = 0; i < rows; i++) {
-				await datastore.getCellAsync(i, 5);
-				// datastore.getCell(i, 5);
-			}
-			const time = performance.now() - start;
+		// 100K rows test numbers:
+		// Read arbitrary column: 1s on my dev box
+		// But only 234ms if using non-async function (and thus not doing await here)!
+		const start = performance.now();
+		for (let i = 0; i < rows; i++) {
+			await datastore.getCellAsync(i, 5);
+			// datastore.getCell(i, 5);
+		}
+		const time = performance.now() - start;
 
-			await provider.ensureSynchronized();
-		});
-	},
-);
+		await provider.ensureSynchronized();
+	});
+});
