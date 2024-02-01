@@ -5,7 +5,6 @@
 
 export type {
 	DriverError,
-	DriverErrorTypes,
 	IAnyDriverError,
 	IAuthorizationError,
 	IDriverErrorBase,
@@ -14,7 +13,7 @@ export type {
 	ILocationRedirectionError,
 	IThrottlingWarning,
 } from "./driverError";
-export {} from "./driverError";
+export { DriverErrorTypes } from "./driverError";
 export type {
 	FiveDaysMs,
 	IDeltasFetchResult,

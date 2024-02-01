@@ -22,7 +22,7 @@ export type {
 	ReadOnlyInfo,
 } from "./deltas";
 export type { ContainerWarning, ICriticalContainerError } from "./error";
-export { ContainerErrorTypes, ContainerErrorType } from "./error";
+export { ContainerErrorTypes } from "./error";
 export type {
 	ConnectionState,
 	ICodeDetailsLoader,

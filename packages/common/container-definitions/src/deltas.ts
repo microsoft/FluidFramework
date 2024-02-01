@@ -3,21 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type IDisposable,
-	type IEventProvider,
-	type IEvent,
-	type IErrorEvent,
-	type IErrorBase,
+import type {
+	IDisposable,
+	IEventProvider,
+	IEvent,
+	IErrorEvent,
+	IErrorBase,
 } from "@fluidframework/core-interfaces";
-import { type IAnyDriverError } from "@fluidframework/driver-definitions";
-import {
-	type IClientConfiguration,
-	type IClientDetails,
-	type IDocumentMessage,
-	type ISequencedDocumentMessage,
-	type ISignalMessage,
-	type ITokenClaims,
+import type { IAnyDriverError } from "@fluidframework/driver-definitions";
+import type {
+	IClientConfiguration,
+	IClientDetails,
+	IDocumentMessage,
+	ISequencedDocumentMessage,
+	ISignalMessage,
+	ITokenClaims,
 } from "@fluidframework/protocol-definitions";
 
 /**

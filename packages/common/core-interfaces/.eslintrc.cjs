@@ -8,4 +8,8 @@ module.exports = {
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
+	rules: {
+		// TODO: Enabling this may require breaking changes.
+		"@typescript-eslint/consistent-indexed-object-style": "off",
+	},
 };

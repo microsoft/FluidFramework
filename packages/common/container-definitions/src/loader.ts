@@ -17,12 +17,12 @@ import type {
 	ISequencedProposal,
 	ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
-import { type IResolvedUrl } from "@fluidframework/driver-definitions";
-import { type IAudience } from "./audience";
+import type { IResolvedUrl } from "@fluidframework/driver-definitions";
+import type { IAudience } from "./audience";
 import type { IDeltaManager, ReadOnlyInfo } from "./deltas";
 import type { ICriticalContainerError, ContainerWarning } from "./error";
-import { type IFluidModule } from "./fluidModule";
-import { type AttachState } from "./runtime";
+import type { IFluidModule } from "./fluidModule";
+import type { AttachState } from "./runtime";
 import type {
 	IFluidCodeDetails,
 	IFluidPackage,
@@ -693,8 +693,6 @@ export interface IProvideLoader {
  * @alpha
  */
 export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
-	// eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
 	blobsContents?: { [path: string]: ArrayBufferLike };
-	// eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
 	trees: { [path: string]: ISnapshotTreeWithBlobContents };
 }

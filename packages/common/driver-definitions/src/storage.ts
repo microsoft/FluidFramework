@@ -3,31 +3,31 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type IDisposable,
-	type IEventProvider,
-	type IErrorEvent,
-	type ITelemetryBaseLogger,
-	type IEvent,
+import type {
+	IDisposable,
+	IEventProvider,
+	IErrorEvent,
+	ITelemetryBaseLogger,
+	IEvent,
 } from "@fluidframework/core-interfaces";
-import {
-	type ConnectionMode,
-	type IClient,
-	type IClientConfiguration,
-	type ICreateBlobResponse,
-	type IDocumentMessage,
-	type INack,
-	type ISequencedDocumentMessage,
-	type ISignalClient,
-	type ISignalMessage,
-	type ISnapshotTree,
-	type ISummaryHandle,
-	type ISummaryTree,
-	type ITokenClaims,
-	type IVersion,
+import type {
+	ConnectionMode,
+	IClient,
+	IClientConfiguration,
+	ICreateBlobResponse,
+	IDocumentMessage,
+	INack,
+	ISequencedDocumentMessage,
+	ISignalClient,
+	ISignalMessage,
+	ISnapshotTree,
+	ISummaryHandle,
+	ISummaryTree,
+	ITokenClaims,
+	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { type IAnyDriverError } from "./driverError";
-import { type IResolvedUrl } from "./urlResolver";
+import type { IAnyDriverError } from "./driverError";
+import type { IResolvedUrl } from "./urlResolver";
 
 /**
  * @internal

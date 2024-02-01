@@ -10,7 +10,6 @@
  * to have code loading modules in same package.
  * @alpha
  */
-// eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
 export interface IFluidPackageEnvironment {
 	/**
 	 * The name of the target. For a browser environment, this could be umd for scripts
@@ -53,7 +52,6 @@ export interface IFluidPackage {
 	/**
 	 * This object represents the Fluid specific properties of the package
 	 */
-	// eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
 	fluid: {
 		/**
 		 * The name of the of the environment. This should be something like browser, or node
@@ -90,7 +88,6 @@ export const isFluidPackage = (pkg: unknown): pkg is Readonly<IFluidPackage> =>
  * to have code loading modules in same package.
  * @alpha
  */
-// eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
 export interface IFluidCodeDetailsConfig {
 	readonly [key: string]: string;
 }

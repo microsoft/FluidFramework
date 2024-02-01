@@ -9,7 +9,7 @@ import type {
 	FluidObject,
 } from "@fluidframework/core-interfaces";
 
-import { type IDocumentStorageService, type ISnapshot } from "@fluidframework/driver-definitions";
+import type { IDocumentStorageService, ISnapshot } from "@fluidframework/driver-definitions";
 import type {
 	IClientDetails,
 	ISequencedDocumentMessage,
@@ -21,11 +21,11 @@ import type {
 	IQuorumClients,
 	ISummaryContent,
 } from "@fluidframework/protocol-definitions";
-import { type IAudience } from "./audience";
-import { type IDeltaManager } from "./deltas";
-import { type ICriticalContainerError } from "./error";
-import { type ILoader, type ILoaderOptions } from "./loader";
-import { type IFluidCodeDetails } from "./fluidPackage";
+import type { IAudience } from "./audience";
+import type { IDeltaManager } from "./deltas";
+import type { ICriticalContainerError } from "./error";
+import type { ILoader, ILoaderOptions } from "./loader";
+import type { IFluidCodeDetails } from "./fluidPackage";
 
 /**
  * The attachment state of some Fluid data (e.g. a container or data store), denoting whether it is uploaded to the
