@@ -252,17 +252,6 @@ extends:
                       absolutePathToTelemetryGenerator=$(absolutePathToTelemetryGenerator)
                       BuildReason=${{ variables['Build.Reason'] }}
 
-                    Variables used with template syntax:
-                      stageVariableWithTemplateSyntax=${{ variables.stageVariableWithTemplateSyntax }}
-                      stageVariableWithTemplateSyntaxReadonly=${{ variables.stageVariableWithTemplateSyntaxReadonly }}
-                      jobVariableWithTemplateSyntax=${{ variables.jobVariableWithTemplateSyntax }}
-                      jobVariableWithTemplateSyntaxReadonly=${{ variables.jobVariableWithTemplateSyntaxReadonly }}
-                    Variables used with macro syntax:
-                      stageVariableWithTemplateSyntax=$(stageVariableWithTemplateSyntax)
-                      stageVariableWithTemplateSyntaxReadonly=$(stageVariableWithTemplateSyntaxReadonly)
-                      jobVariableWithTemplateSyntax=$(jobVariableWithTemplateSyntax)
-                      jobVariableWithTemplateSyntaxReadonly=$(jobVariableWithTemplateSyntaxReadonly)
-
                     Publish Parameters:
                       interdependencyRange='${{ parameters.interdependencyRange }}'
                       packageTypesOverride='${{ parameters.packageTypesOverride }}'
