@@ -403,7 +403,7 @@ export interface ILoaderHeader {
     [LoaderHeader.version]: string | undefined;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export type ILoaderOptions = {
     cache?: boolean;
     client?: IClient;
