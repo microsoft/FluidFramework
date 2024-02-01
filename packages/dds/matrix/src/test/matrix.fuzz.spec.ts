@@ -139,7 +139,7 @@ function makeGenerator(optionsParam?: Partial<GeneratorOptions>): AsyncGenerator
 		...optionsParam,
 	};
 
-	const maxDimensionSizeChange = 1;
+	const maxDimensionSizeChange = 3;
 
 	const insertRows: Generator<InsertRows, State> = ({ random, client }) => ({
 		type: "insertRows",
@@ -247,9 +247,8 @@ describe("Matrix fuzz tests", function () {
 			clientAddProbability: 0,
 		},
 		reconnectProbability: 0.1,
-		// Seed 35 needs investigation, tracked by AB#7088.
-		// Seed 53 is slow and hits timeout issues but otherwise would pass; see comment on this suite's test timeout.
-		skip: [35, 53],
+		// Seed 53 needs investigation, tracked by AB#7088.
+		skip: [53],
 		// Uncomment to replay a particular seed.
 		// replay: 0,
 	});
