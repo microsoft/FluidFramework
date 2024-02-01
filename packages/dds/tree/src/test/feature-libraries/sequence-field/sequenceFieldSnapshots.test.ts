@@ -8,14 +8,13 @@ import { RevisionTagCodec } from "../../../core/index.js";
 import { SequenceField } from "../../../feature-libraries/index.js";
 import { TestChange } from "../../testChange.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { sessionId } from "../../snapshots/testTrees.js";
+import { testSessionId } from "../../utils.js";
 import { generatePopulatedMarks } from "./populatedMarks.js";
 
 export function testSnapshots() {
 	describe("Snapshots", () => {
 		useSnapshotDirectory("sequence-field");
-		const idCompressor = createIdCompressor(sessionId);
+		const idCompressor = createIdCompressor(testSessionId);
 		const family = SequenceField.sequenceFieldChangeCodecFactory(
 			TestChange.codec,
 			new RevisionTagCodec(idCompressor),

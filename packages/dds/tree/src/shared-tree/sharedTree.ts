@@ -67,7 +67,7 @@ import {
 	evaluateUpdate,
 } from "./schematizedTree.js";
 import { TreeCheckout, CheckoutEvents, createTreeCheckout } from "./treeCheckout.js";
-import { FlexTreeView, CheckoutFlexTreeView } from "./treeView.js";
+import { CheckoutFlexTreeView } from "./treeView.js";
 import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
@@ -113,17 +113,6 @@ export interface ISharedTree extends ISharedObject, ITree {
 	 * This does not include everything that is included in a tree summary, since information about how to merge future edits is omitted.
 	 */
 	contentSnapshot(): SharedTreeContentSnapshot;
-
-	/**
-	 * Like {@link ITree.schematize}, but uses the flex-tree schema system and exposes the tree as a flex-tree.
-	 * @privateRemarks
-	 * This has to avoid its name colliding with `schematize`.
-	 * TODO: Either ITree and ISharedTree should be split into separate objects, the methods should be merged or a better convention for resolving such name conflicts should be selected.
-	 */
-	schematizeInternal<TRoot extends FlexFieldSchema>(
-		config: InitializeAndSchematizeConfiguration<TRoot>,
-		onDispose?: () => void,
-	): FlexTreeView<TRoot>;
 }
 
 /**
@@ -232,6 +221,20 @@ export class SharedTree
 		});
 	}
 
+	public contentSnapshot(): SharedTreeContentSnapshot {
+		const cursor = this.checkout.forest.allocateCursor();
+		try {
+			moveToDetachedField(this.checkout.forest, cursor);
+			return {
+				schema: this.storedSchema.clone(),
+				tree: jsonableTreeFromFieldCursor(cursor),
+				removed: this.checkout.getRemovedRoots(),
+			};
+		} finally {
+			cursor.free();
+		}
+	}
+
 	/**
 	 * Like {@link ISharedTree.schematizeInternal}, but will never modify the document.
 	 * Intended for tests that don't need to handle (but should detect and fail on) out of schema cases.
@@ -259,20 +262,12 @@ export class SharedTree
 		);
 	}
 
-	public contentSnapshot(): SharedTreeContentSnapshot {
-		const cursor = this.checkout.forest.allocateCursor();
-		try {
-			moveToDetachedField(this.checkout.forest, cursor);
-			return {
-				schema: this.storedSchema.clone(),
-				tree: jsonableTreeFromFieldCursor(cursor),
-				removed: this.checkout.getRemovedRoots(),
-			};
-		} finally {
-			cursor.free();
-		}
-	}
-
+	/**
+	 * Like {@link ITree.schematize}, but uses the flex-tree schema system and exposes the tree as a flex-tree.
+	 * @privateRemarks
+	 * This has to avoid its name colliding with `schematize`.
+	 * TODO: Either ITree and ISharedTree should be split into separate objects, the methods should be merged or a better convention for resolving such name conflicts should be selected.
+	 */
 	public schematizeInternal<TRoot extends FlexFieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
 		onDispose?: () => void,
@@ -333,7 +328,7 @@ export class SharedTree
  */
 const ViewSlot = anchorSlot<CheckoutFlexTreeView<any>>();
 
-function requireSchema<TRoot extends FlexFieldSchema>(
+export function requireSchema<TRoot extends FlexFieldSchema>(
 	checkout: TreeCheckout,
 	viewSchema: ViewSchema<TRoot>,
 	onDispose: () => void,

@@ -73,7 +73,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 */
 	private readonly messageCodec: IJsonCodec<DecodedMessage<TChange>, unknown>;
 
-	private readonly idCompressor: IIdCompressor;
+	public readonly idCompressor: IIdCompressor;
 
 	/**
 	 * @param summarizables - Summarizers for all indexes used by this tree

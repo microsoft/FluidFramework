@@ -50,6 +50,7 @@ import {
 	numberSequenceRootSchema,
 	ConnectionSetter,
 	SharedTreeWithConnectionStateSetter,
+	treeTestFactory,
 } from "../utils.js";
 import {
 	ForestType,
@@ -115,10 +116,7 @@ describe("SharedTree", () => {
 		});
 
 		it("initialize tree", () => {
-			const tree = factory.create(
-				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-				"the tree",
-			);
+			const tree = treeTestFactory();
 			assert.deepEqual(tree.contentSnapshot().schema.rootFieldSchema, storedEmptyFieldSchema);
 
 			const view = tree.schematizeInternal({
@@ -223,10 +221,7 @@ describe("SharedTree", () => {
 				libraries: [leaf.library],
 			});
 			const schemaGeneralized = builder.intoSchema(Any);
-			{
-				const view = tree.requireSchema(schemaGeneralized, () => assert.fail());
-				assert.equal(view, undefined);
-			}
+			assert.throws(() => tree.requireSchema(schemaGeneralized, () => undefined));
 
 			const log: string[] = [];
 			{
@@ -276,10 +271,7 @@ describe("SharedTree", () => {
 			jsonValidator: typeboxValidator,
 			forest: ForestType.Reference,
 		});
-		const sharedTree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"the tree",
-		);
+		const sharedTree = treeTestFactory();
 		const view = sharedTree.schematizeInternal({
 			allowedSchemaModifications: AllowedUpdateType.Initialize,
 			initialTree: 1,
@@ -294,11 +286,7 @@ describe("SharedTree", () => {
 	});
 
 	it("contentSnapshot", () => {
-		const factory = new SharedTreeFactory();
-		const sharedTree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"the tree",
-		);
+		const sharedTree = treeTestFactory();
 		{
 			const snapshot = sharedTree.contentSnapshot();
 			assert.deepEqual(snapshot.tree, []);
@@ -808,7 +796,7 @@ describe("SharedTree", () => {
 	});
 
 	it("can process changes while detached", async () => {
-		const onCreate = (t: ISharedTree) => {
+		const onCreate = (t: SharedTree) => {
 			const view = t.schematizeInternal(emptyStringSequenceConfig);
 			view.flexTree.insertAtStart(["B"]);
 			view.flexTree.insertAtStart(["A"]);

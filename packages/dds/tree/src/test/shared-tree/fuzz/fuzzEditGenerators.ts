@@ -14,11 +14,12 @@ import {
 } from "@fluid-private/stochastic-test-utils";
 import { Client, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import {
-	ISharedTree,
 	FlexTreeView,
 	SharedTreeFactory,
 	TreeContent,
 	ITreeViewFork,
+	SharedTree,
+	ISharedTree,
 } from "../../../shared-tree/index.js";
 import { brand, fail, getOrCreate } from "../../../util/index.js";
 import {
@@ -55,7 +56,7 @@ export interface FuzzTestState extends DDSFuzzTestState<SharedTreeFactory> {
 	 * SharedTrees undergoing a transaction will have a forked view in {@link transactionViews} instead,
 	 * which should be used in place of this view until the transaction is complete.
 	 */
-	view?: Map<ISharedTree, FlexTreeView<typeof fuzzSchema.rootFieldSchema>>;
+	view?: Map<SharedTree, FlexTreeView<typeof fuzzSchema.rootFieldSchema>>;
 	/**
 	 * Schematized view of clients undergoing transactions.
 	 * Edits to this view are not visible to other clients until the transaction is closed.
@@ -74,7 +75,7 @@ export function viewFromState(
 	state.view ??= new Map();
 	return (
 		state.transactionViews?.get(client.channel) ??
-		getOrCreate(state.view, client.channel, (tree) =>
+		getOrCreate(state.view, client.channel as SharedTree, (tree) =>
 			tree.schematizeInternal({
 				initialTree,
 				schema: fuzzSchema,

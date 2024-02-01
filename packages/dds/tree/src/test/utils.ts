@@ -76,6 +76,9 @@ import {
 	cursorForMapTreeNode,
 	SchemaBuilderBase,
 	FieldKinds,
+	FlexTreeSchema,
+	ViewSchema,
+	defaultSchemaPolicy,
 } from "../feature-libraries/index.js";
 import {
 	moveToDetachedField,
@@ -128,6 +131,10 @@ import {
 import { HasListeners, IEmitter, ISubscribable } from "../events/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeSchemaCodec } from "../feature-libraries/schema-index/codec.js";
+// eslint-disable-next-line import/no-internal-modules
+import { SharedTreeOptions, requireSchema } from "../shared-tree/sharedTree.js";
+// eslint-disable-next-line import/no-internal-modules
+import { ensureSchema } from "../shared-tree/schematizedTree.js";
 
 // Testing utilities
 
@@ -547,13 +554,13 @@ export class SharedTreeTestFactory extends SharedTreeFactory {
 		id: string,
 		services: IChannelServices,
 		channelAttributes: Readonly<IChannelAttributes>,
-	): Promise<ISharedTree> {
+	): Promise<SharedTree> {
 		const tree = (await super.load(runtime, id, services, channelAttributes)) as SharedTree;
 		this.onLoad?.(tree);
 		return tree;
 	}
 
-	public override create(runtime: IFluidDataStoreRuntime, id: string): ISharedTree {
+	public override create(runtime: IFluidDataStoreRuntime, id: string): SharedTree {
 		const tree = super.create(runtime, id) as SharedTree;
 		this.onCreate(tree);
 		return tree;
@@ -1155,3 +1162,97 @@ export function mintRevisionTag(): RevisionTag {
 }
 
 export const testRevisionTagCodec = new RevisionTagCodec(testIdCompressor);
+
+/**
+ * Like {@link ISharedTree.schematizeInternal}, but will never modify the document.
+ * Intended for tests that don't need to handle (but should detect and fail on) out of schema cases.
+ *
+ * @param schema - The view schema to use.
+ * @param onDispose - A callback.
+ * Invoked when the returned ISharedTreeView becomes invalid to use due to a change to the stored schema which makes it incompatible with the view schema.
+ * Called at most once.
+ * @returns a view compatible with the provided schema, or undefined if the stored schema is not compatible with the provided view schema.
+ * If this becomes invalid to use due to a change in the stored schema, onDispose will be invoked.
+ */
+export function requireSchema2<TRoot extends FlexFieldSchema>(
+	tree: SharedTree,
+	schema: FlexTreeSchema<TRoot>,
+	onDispose: () => void,
+	nodeKeyManager?: NodeKeyManager,
+	nodeKeyFieldKey?: FieldKey,
+): CheckoutFlexTreeView<TRoot> {
+	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, schema);
+	return requireSchema(
+		tree.checkout,
+		viewSchema,
+		onDispose,
+		nodeKeyManager ?? createMockNodeKeyManager(),
+		nodeKeyFieldKey ?? brand(defaultNodeKeyFieldKey),
+	);
+}
+
+/**
+ * Like {@link ITree.schematize}, but uses the flex-tree schema system and exposes the tree as a flex-tree.
+ * @privateRemarks
+ * This has to avoid its name colliding with `schematize`.
+ * TODO: Either ITree and ISharedTree should be split into separate objects, the methods should be merged or a better convention for resolving such name conflicts should be selected.
+ */
+export function schematizeInternal<TRoot extends FlexFieldSchema>(
+	tree: SharedTree,
+	config: InitializeAndSchematizeConfiguration<TRoot>,
+	onDispose?: () => void,
+	nodeKeyManager?: NodeKeyManager,
+	nodeKeyFieldKey?: FieldKey,
+): CheckoutFlexTreeView<TRoot> {
+	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, config.schema);
+	if (!ensureSchema(viewSchema, config.allowedSchemaModifications, tree.checkout, config)) {
+		assert.fail("Schematize failed");
+	}
+
+	return requireSchema(
+		tree.checkout,
+		viewSchema,
+		onDispose ?? (() => {}),
+		nodeKeyManager ?? createMockNodeKeyManager(),
+		nodeKeyFieldKey ?? brand(defaultNodeKeyFieldKey),
+	);
+}
+
+// Session ids used for the created trees' IdCompressors must be deterministic.
+// TestTreeProviderLite does this by default.
+// Test trees which manually create their data store runtime must set up their trees'
+// session ids explicitly.
+// Note: trees which simulate attach scenarios using the mocks should finalize ids created
+// while detached. This is only relevant for attach scenarios as the mocks set up appropriate
+// finalization when messages are processed.
+export const testSessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
+
+/**
+ * Simple non-factory based wrapper around `new SharedTree` with test appropriate defaults.
+ *
+ * See TestTreeProvider, TestTreeProviderLite and SharedTreeFactory for other ways to build trees.
+ *
+ * If what is needed is a view, see options to create one without making a SharedTree instance.
+ */
+export function treeTestFactory(
+	options: {
+		id?: string;
+		runtime?: IFluidDataStoreRuntime;
+		attributes?: IChannelAttributes;
+		optionsParam?: SharedTreeOptions;
+		telemetryContextPrefix?: string;
+	} = {},
+): SharedTree {
+	return new SharedTree(
+		options.id ?? "tree",
+		options.runtime ??
+			new MockFluidDataStoreRuntime({
+				idCompressor: createIdCompressor(testSessionId),
+				clientId: "test-client",
+				id: "test",
+			}),
+		options.attributes ?? new SharedTreeFactory().attributes,
+		options.optionsParam ?? { jsonValidator: typeboxValidator },
+		options.telemetryContextPrefix ?? "SharedTree",
+	);
+}

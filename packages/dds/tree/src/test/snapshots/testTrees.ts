@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
+import { createIdCompressor } from "@fluidframework/id-compressor";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { brand } from "../../util/index.js";
 import {
@@ -32,6 +32,8 @@ import {
 	insert,
 	jsonSequenceRootSchema,
 	remove,
+	testSessionId,
+	treeTestFactory,
 } from "../utils.js";
 import {
 	AllowedUpdateType,
@@ -63,15 +65,14 @@ function generateCompleteTree(
 	nodesPerField: number,
 	factory: SharedTreeFactory,
 ): ISharedTree {
-	const idCompressor = createIdCompressor(sessionId);
-	const tree = factory.create(
-		new MockFluidDataStoreRuntime({
+	const idCompressor = createIdCompressor(testSessionId);
+	const tree = treeTestFactory({
+		runtime: new MockFluidDataStoreRuntime({
 			clientId: "test-client",
 			id: "test",
 			idCompressor,
 		}),
-		"test",
-	);
+	});
 	const view = tree.schematizeInternal({
 		allowedSchemaModifications: AllowedUpdateType.Initialize,
 		schema: testSchema,
@@ -127,15 +128,6 @@ function generateTreeRecursively(
 		}
 	}
 }
-
-// Session ids used for the created trees' IdCompressors must be deterministic.
-// TestTreeProviderLite does this by default.
-// Test trees which manually create their data store runtime must set up their trees'
-// session ids explicitly.
-// Note: trees which simulate attach scenarios using the mocks should finalize ids created
-// while detached. This is only relevant for attach scenarios as the mocks set up appropriate
-// finalization when messages are processed.
-export const sessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
 
 // TODO: The generated test trees should eventually be updated to use the chunked-forest.
 export function generateTestTrees(useUncompressedEncode?: boolean) {
@@ -335,13 +327,14 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 		{
 			name: "concurrent-inserts",
 			runScenario: async (takeSnapshot) => {
-				const idCompressor = createIdCompressor(sessionId);
-				const runtime = new MockFluidDataStoreRuntime({
-					clientId: "test-client",
-					id: "test",
-					idCompressor,
+				const idCompressor = createIdCompressor(testSessionId);
+				const baseTree = treeTestFactory({
+					runtime: new MockFluidDataStoreRuntime({
+						clientId: "test-client",
+						id: "test",
+						idCompressor,
+					}),
 				});
-				const baseTree = factory.create(runtime, "test");
 
 				const tree1 = baseTree.schematizeInternal({
 					allowedSchemaModifications: AllowedUpdateType.Initialize,
@@ -402,15 +395,14 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 					schema: docSchema,
 					initialTree: undefined,
 				};
-				const idCompressor = createIdCompressor(sessionId);
-				const tree = factory.create(
-					new MockFluidDataStoreRuntime({
+				const idCompressor = createIdCompressor(testSessionId);
+				const tree = treeTestFactory({
+					runtime: new MockFluidDataStoreRuntime({
 						clientId: "test-client",
 						id: "test",
 						idCompressor,
 					}),
-					"test",
-				);
+				});
 				const view = tree.schematizeInternal(config).checkout;
 
 				const field = view.editor.optionalField({
@@ -444,15 +436,16 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 					initialTree: [],
 				};
 
-				const idCompressor = createIdCompressor(sessionId);
-				const tree = factory.create(
-					new MockFluidDataStoreRuntime({
+				const idCompressor = createIdCompressor(testSessionId);
+				const tree = treeTestFactory({
+					id: `test-${testEncodeType}`,
+					runtime: new MockFluidDataStoreRuntime({
 						clientId: "test-client",
 						id: "test",
 						idCompressor,
 					}),
-					`test-${testEncodeType}`,
-				);
+				});
+
 				const view = tree.schematizeInternal(config).checkout;
 				view.transaction.start();
 				// We must make this shallow change to the sequence field as part of the same transaction as the

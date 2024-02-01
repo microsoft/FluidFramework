@@ -1005,7 +1005,6 @@ export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : fals
 // @internal
 export interface ISharedTree extends ISharedObject, ITree {
     contentSnapshot(): SharedTreeContentSnapshot;
-    schematizeInternal<TRoot extends FlexFieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>, onDispose?: () => void): FlexTreeView<TRoot>;
 }
 
 // @internal

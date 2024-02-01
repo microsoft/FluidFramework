@@ -13,8 +13,7 @@ import {
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { sessionId } from "../../snapshots/testTrees.js";
+import { testSessionId } from "../../utils.js";
 
 function generateTestChangesets(
 	idCompressor: IIdCompressor,
@@ -74,7 +73,7 @@ function generateTestChangesets(
 export function testSnapshots() {
 	describe("Snapshots", () => {
 		useSnapshotDirectory("optional-field");
-		const idCompressor = createIdCompressor(sessionId);
+		const idCompressor = createIdCompressor(testSessionId);
 		const changesets = generateTestChangesets(idCompressor);
 		idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
 		const family = makeOptionalFieldCodecFamily(
@@ -87,7 +86,7 @@ export function testSnapshots() {
 				const codec = family.resolve(version);
 				for (const { name, change } of changesets) {
 					it(name, () => {
-						const encoded = codec.json.encode(change, { originatorId: sessionId });
+						const encoded = codec.json.encode(change, { originatorId: testSessionId });
 						takeJsonSnapshot(encoded);
 					});
 				}
