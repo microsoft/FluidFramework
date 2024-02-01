@@ -87,6 +87,9 @@ describeCompat(
 
 			// The first summary needs to be generated otherwise the summarizer will only generate one summary.
 			// Submitting an op will cause the first summary to be generated.
+			// Specifically consecutive summaries occur because the retry logic based on the call to trySummarize
+			// requires the summarizerLock to be defined. By generating the first summary, the summary lock becomes
+			// defined and the heuristics runner runs in the afterSummaryAction.
 			dataObject._root.set(`first`, "op");
 			await provider.ensureSynchronized();
 			mockLogger.assertMatch(
