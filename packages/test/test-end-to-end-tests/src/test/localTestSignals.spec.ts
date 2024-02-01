@@ -195,7 +195,11 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 		);
 	});
 
-	describe("Unsupported Targeted Signals", () => {
+	/**
+	 * Skipped tests - DeltaDocumentConnection currently throws for unsupported targeted signals
+	 * @see {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/5852}
+	 */
+	describe.skip("Unsupported Targeted Signals", () => {
 		let user1SignalReceivedCount: number;
 		let user2SignalReceivedCount: number;
 		let user3SignalReceivedCount: number;
