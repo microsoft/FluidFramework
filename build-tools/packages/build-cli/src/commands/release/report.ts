@@ -36,7 +36,7 @@ import {
 	getRanges,
 	sortVersions,
 	toReportKind,
-} from "../../lib";
+} from "../../library";
 import { CommandLogger } from "../../logging";
 import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../../releaseGroups";
 

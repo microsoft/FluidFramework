@@ -144,6 +144,7 @@
 		"@types/benchmark": "^2.1.0",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
+		"@types/uuid": "^9.0.2",
 		"benchmark": "^2.1.4",
 		"c8": "^8.0.1",
 		"copyfiles": "^2.4.1",

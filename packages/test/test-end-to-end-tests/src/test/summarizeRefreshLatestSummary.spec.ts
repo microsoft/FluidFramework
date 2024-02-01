@@ -10,7 +10,7 @@ import { ITestObjectProvider, createSummarizer, summarizeNow } from "@fluidframe
 
 describeCompat(
 	"Summarizer can refresh a snapshot from the server",
-	"2.0.0-rc.1.0.0",
+	"NoCompat",
 	(getTestObjectProvider) => {
 		let provider: ITestObjectProvider;
 		const createContainer = async (): Promise<IContainer> => {

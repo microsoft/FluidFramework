@@ -19,7 +19,7 @@ import { ContainerErrorTypes } from "@fluidframework/container-definitions";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 
 // REVIEW: enable compat testing?
-describeCompat("Errors Types", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("Errors Types", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let fileName: string;
 	let containerUrl: IResolvedUrl;
