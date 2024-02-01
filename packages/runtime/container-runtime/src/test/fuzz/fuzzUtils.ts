@@ -302,7 +302,7 @@ function runTestForSeed(
 	const initialState: SummarizerFuzzTestState = {
 		containerRuntimeFactory,
 		random,
-		// ! TODO: Properly set up client
+		// ! TODO: Properly set up client AB#6951
 		summarizer: createSummarizer(),
 	};
 
@@ -336,13 +336,13 @@ function runTest(
 function makeReducer(): Reducer<SummarizerOperation, SummarizerFuzzTestState> {
 	return combineReducers<SummarizerOperation, SummarizerFuzzTestState>({
 		disconnect: (state: SummarizerFuzzTestState, op: SummarizerOperation) => {
-			// ! TODO
+			// ! TODO AB#6951
 		},
 		summaryNack: (state: SummarizerFuzzTestState, op: SummarizerOperation) => {
-			// ! TODO
+			// ! TODO AB#6951
 		},
 		submitOp: (state: SummarizerFuzzTestState, op: SummarizerOperation) => {
-			// ! TODO
+			// ! TODO AB#6951
 		},
 	});
 }
