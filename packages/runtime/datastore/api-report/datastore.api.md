@@ -48,6 +48,8 @@ export class FluidDataStoreRuntime<TEvents = Record<string, never>> extends Type
     get absolutePath(): string;
     addChannel(channel: IChannel): void;
     // (undocumented)
+    protected applyStashedChannelChannelOp(address: string, contents: any): Promise<unknown>;
+    // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
     attachGraph(): void;
     // @internal (undocumented)
@@ -86,8 +88,6 @@ export class FluidDataStoreRuntime<TEvents = Record<string, never>> extends Type
     getAudience(): IAudience;
     // (undocumented)
     getChannel(id: string): Promise<IChannel>;
-    // @internal (undocumented)
-    protected getChannelContext(id: string): IChannelContext;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)
     getQuorum(): IQuorumClients;
@@ -111,12 +111,16 @@ export class FluidDataStoreRuntime<TEvents = Record<string, never>> extends Type
     // (undocumented)
     process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // (undocumented)
+    protected processChannelOp(address: string, message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+    // (undocumented)
     processSignal(message: IInboundSignalMessage, local: boolean): void;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
     resolveHandle(request: IRequest): Promise<IResponse>;
     reSubmit(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;
+    // (undocumented)
+    protected reSubmitChannelOp(address: string, contents: any, localOpMetadata: unknown): void;
     rollback?(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;
     // (undocumented)
     get rootRoutingContext(): this;
@@ -124,11 +128,13 @@ export class FluidDataStoreRuntime<TEvents = Record<string, never>> extends Type
     get routeContext(): IFluidHandleContext;
     protected sendAttachChannelOp(channel: IChannel): void;
     // (undocumented)
+    protected setChannelDirty(address: string): void;
+    // (undocumented)
     setConnectionState(connected: boolean, clientId?: string): void;
     // (undocumented)
     protected readonly sharedObjectRegistry: ISharedObjectRegistry;
     // (undocumented)
-    submitMessage(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;
+    protected submitChannelOp(address: string, contents: any, localOpMetadata: unknown): void;
     submitSignal(type: string, content: any, targetClientId?: string): void;
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
     updateUsedRoutes(usedRoutes: string[]): void;

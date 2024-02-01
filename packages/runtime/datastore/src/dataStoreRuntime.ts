@@ -393,8 +393,7 @@ export class FluidDataStoreRuntime<TEvents = Record<string, never>>
 		}
 	}
 
-	/** @internal */
-	protected getChannelContext(id: string) {
+	private getChannelContext(id: string) {
 		const channelContext = this.contexts.get(id);
 		assert(!!channelContext, 0x185 /* "Channel not found" */);
 		return channelContext;
@@ -656,7 +655,13 @@ export class FluidDataStoreRuntime<TEvents = Record<string, never>>
 				}
 
 				case DataStoreMessageType.ChannelOp:
-					this.processChannelOp(message, local, localOpMetadata);
+					const envelope = message.contents as IEnvelope;
+
+					const transformed: ISequencedDocumentMessage = {
+						...message,
+						contents: envelope.contents,
+					};
+					this.processChannelOp(envelope.address, transformed, local, localOpMetadata);
 					break;
 				default:
 					unreachableCase(type, "unreached");
@@ -879,10 +884,6 @@ export class FluidDataStoreRuntime<TEvents = Record<string, never>>
 		return summaryBuilder.getSummaryTree();
 	}
 
-	public submitMessage(type: DataStoreMessageType, content: any, localOpMetadata: unknown) {
-		this.submit(type, content, localOpMetadata);
-	}
-
 	/**
 	 * Submits the signal to be sent to other clients.
 	 * @param type - Type of the signal.
@@ -922,7 +923,7 @@ export class FluidDataStoreRuntime<TEvents = Record<string, never>>
 		this.submit(DataStoreMessageType.Attach, message);
 	}
 
-	private submitChannelOp(address: string, contents: any, localOpMetadata: unknown) {
+	protected submitChannelOp(address: string, contents: any, localOpMetadata: unknown) {
 		const envelope: IEnvelope = { address, contents };
 		this.submit(DataStoreMessageType.ChannelOp, envelope, localOpMetadata);
 	}
@@ -950,8 +951,7 @@ export class FluidDataStoreRuntime<TEvents = Record<string, never>>
 			case DataStoreMessageType.ChannelOp: {
 				// For Operations, find the right channel and trigger resubmission on it.
 				const envelope = content as IEnvelope;
-				const channelContext = this.getChannelContext(envelope.address);
-				channelContext.reSubmit(envelope.contents, localOpMetadata);
+				this.reSubmitChannelOp(envelope.address, envelope.contents, localOpMetadata);
 				break;
 			}
 			case DataStoreMessageType.Attach:
@@ -961,6 +961,11 @@ export class FluidDataStoreRuntime<TEvents = Record<string, never>>
 			default:
 				unreachableCase(type);
 		}
+	}
+
+	protected reSubmitChannelOp(address: string, contents: any, localOpMetadata: unknown) {
+		const channelContext = this.getChannelContext(address);
+		channelContext.reSubmit(contents, localOpMetadata);
 	}
 
 	/**
@@ -1003,36 +1008,32 @@ export class FluidDataStoreRuntime<TEvents = Record<string, never>>
 			}
 			case DataStoreMessageType.ChannelOp: {
 				const envelope = content.content as IEnvelope;
-				const channelContext = this.getChannelContext(envelope.address);
-				await channelContext.getChannel();
-				return channelContext.applyStashedOp(envelope.contents);
+				return this.applyStashedChannelChannelOp(envelope.address, envelope.contents);
 			}
 			default:
 				unreachableCase(type);
 		}
 	}
 
-	private setChannelDirty(address: string): void {
+	protected async applyStashedChannelChannelOp(address: string, contents: any) {
+		const channelContext = this.getChannelContext(address);
+		await channelContext.getChannel();
+		return channelContext.applyStashedOp(contents);
+	}
+
+	protected setChannelDirty(address: string): void {
 		this.verifyNotClosed();
 		this.dataStoreContext.setChannelDirty(address);
 	}
 
-	private processChannelOp(
+	protected processChannelOp(
+		address: string,
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
-		this.verifyNotClosed();
-
-		const envelope = message.contents as IEnvelope;
-
-		const transformed: ISequencedDocumentMessage = {
-			...message,
-			contents: envelope.contents,
-		};
-
-		const channelContext = this.getChannelContext(envelope.address);
-		channelContext.processOp(transformed, local, localOpMetadata);
+		const channelContext = this.getChannelContext(address);
+		channelContext.processOp(message, local, localOpMetadata);
 	}
 
 	private attachListener() {

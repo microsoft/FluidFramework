@@ -25,16 +25,6 @@ export class SharedCounter extends SharedCounterBase implements ICollabChannel {
 		super(id, runtime, attributes);
 		this._value = initialValue;
 	}
-
-	// TBD
-	public get dirty(): boolean {
-		return true;
-	}
-
-	// TBD
-	public get lastSeqNumber(): number {
-		return 0;
-	}
 }
 
 export class CounterFactory extends CounterFactoryBase {

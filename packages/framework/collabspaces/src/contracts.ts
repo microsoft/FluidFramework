@@ -12,12 +12,6 @@ import { ISharedMatrix, MatrixItem } from "@fluidframework/matrix";
  */
 export interface ICollabChannelCore {
 	readonly value: unknown;
-
-	// Tells if channel has a any local (non-acked) changes.
-	readonly dirty: boolean;
-
-	// describes the sequence number of last op in this channel
-	readonly lastSeqNumber: number;
 }
 
 export type ICollabChannel = IChannel & ICollabChannelCore;

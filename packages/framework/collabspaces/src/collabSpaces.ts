@@ -5,6 +5,8 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+
 import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
@@ -135,6 +137,16 @@ type ICellInfo =
 			channelId: string;
 	  };
 
+interface IChannelTrackingInfo {
+	// Sequence number of the last message for this channel.
+	// Only evaluated for acked messages. I.e. if there are any local pending messages, this propertly
+	// is not reflecting such messages.
+	seq: number;
+
+	// Number of local non-acked messages. Value is never negative. Positive numbers means channel is "dirty".
+	pendingChangeCount: number;
+}
+
 /*
 	To be implemented:
 	- "conflict" events
@@ -150,6 +162,7 @@ export class TempCollabSpaceRuntime
 	implements IEfficientMatrix
 {
 	protected matrixInternal?: SharedMatrix<MatrixInernalType>;
+	protected channelInfo: Map<string, IChannelTrackingInfo> = new Map();
 
 	constructor(
 		dataStoreContext: IFluidDataStoreContext,
@@ -172,15 +185,65 @@ export class TempCollabSpaceRuntime
 	}
 	*/
 
-	// getChannelContext():
 	// Called on various paths, like op processing, where channel should exists.
-	// We can overwrite it and not send attach op if we want to have a design where
-	// attaches are implicit (i.e. without ops). This requires substantial changes in design,
-	// including
-	// - Likely conveying (row, col) info on all ops for the channels, such that clients could quickly
-	//   map channel ID to a cell (though other designs are possible)
-	// - remaping that info on reSubmit() flow
-	// protected getChannelContext(id: string): IChannelContext {}
+	protected updatePendingCoutner(address: string, diff: number) {
+		if (address === matrixId) {
+			return;
+		}
+		const channel = this.contexts.get(address);
+		if (channel === undefined) {
+			throw "TBD";
+		}
+
+		const record = this.channelInfo.get(address);
+		assert(record !== undefined, "every channel should have a record");
+
+		record.pendingChangeCount += diff;
+		assert(record.pendingChangeCount >= 0, "counter should be non-negative!");
+	}
+
+	protected setChannelDirty(address: string): void {
+		// TBD - this should never happen.
+		// It's not very clear RE what it means in context of this implementation.
+		// Currently it is used to force summmary for a channel, but such channels
+		// likely can't be used for temp collab spaces, as we could destroy them prematurely.
+		// We could likely take it into account, but not clear if it's needed yet.
+		assert(false, "logic error");
+		// super.setChannelDirty(dirty);
+	}
+
+	protected async applyStashedChannelChannelOp(address: string, contents: any) {
+		// This operation does not change counter, at least not directly.
+		// It will result in channel sending op, and that's how it will be accoutned for.
+		// That said, need to ensure we have a channel allocated for it.
+		this.updatePendingCoutner(address, 0);
+		super.applyStashedChannelChannelOp(address, contents);
+	}
+
+	protected processChannelOp(
+		address: string,
+		message: ISequencedDocumentMessage,
+		local: boolean,
+		localOpMetadata: unknown,
+	) {
+		// offset increase by submitChannelOp()
+		this.updatePendingCoutner(address, -1);
+		super.processChannelOp(address, message, local, localOpMetadata);
+	}
+
+	protected reSubmitChannelOp(address: string, contents: any, localOpMetadata: unknown) {
+		// Message was not sent, so our +1 in submitChannelOp() needs to be offset
+		// DDS may chose to send any number of ops (including zero) as part of resubmit flow
+		// All such ops would be properly accounted on submitChannelOp() path.
+		this.updatePendingCoutner(address, -1);
+		super.reSubmitChannelOp(address, contents, localOpMetadata);
+	}
+
+	protected submitChannelOp(address: string, contents: any, localOpMetadata: unknown) {
+		this.updatePendingCoutner(address, 1);
+		super.submitChannelOp(address, contents, localOpMetadata);
+	}
+
 	// protected sendAttachChannelOp(channel: IChannel): void {}
 
 	public processSignal(message: any, local: boolean) {
@@ -200,8 +263,15 @@ export class TempCollabSpaceRuntime
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummaryTreeWithStats> {
-		// We can do certain clenup here to GC unneeded data
+		// TBD: We can do certain clenup here to GC unneeded data
 		// But system should work correctly without it.
+
+		// TBD:
+		// Summarize this.channelInfo
+
+		// TBD:
+		// Either summarize this.channelInfo as part of getAttachSummary() or assert it's empty
+
 		return super.summarize(fullTree, trackState, telemetryContext);
 	}
 
@@ -283,6 +353,12 @@ export class TempCollabSpaceRuntime
 		const newChannel = factory.create2(this, channelId, value.value);
 		this.addChannel(newChannel);
 
+		assert(!this.channelInfo.has(channelId), "channel is in inconsistent state");
+		this.channelInfo.set(channelId, {
+			seq: -1,
+			pendingChangeCount: 0,
+		});
+
 		return newChannel;
 	}
 
@@ -325,13 +401,16 @@ export class TempCollabSpaceRuntime
 	protected saveOrDestroyChannel(channel: ICollabChannelCore, allowSave: boolean, allowDestroy) {
 		const channelId = (channel as ICollabChannel).id;
 
+		const record = this.channelInfo.get(channelId);
+		assert(record !== undefined, "every channel should have a record");
+
 		// Can't do anything if there are any local changes.
-		if (channel.dirty) {
+		if (record.pendingChangeCount > 0) {
 			return;
 		}
 
 		const refSeq = this.deltaManager.lastSequenceNumber;
-		assert(channel.lastSeqNumber <= refSeq, "invalid seq number");
+		assert(record.seq <= refSeq, "invalid seq number");
 
 		const { row, col, iteration } = this.mapChannelToCell(channelId);
 
@@ -356,7 +435,7 @@ export class TempCollabSpaceRuntime
 		// we would do unnessasary saves. While true, this would also requrie tracking more state in cells.
 		// Given that chances of that are low, and code is correct, it's better to rely on extra saves
 		// then inefficiency of managing more state.
-		if (currValue.seq > channel.lastSeqNumber) {
+		if (currValue.seq > record.seq) {
 			// Nothing to save. Channel can be destoyed
 
 			// Validate that actually values match!
@@ -366,6 +445,7 @@ export class TempCollabSpaceRuntime
 				// Is this safe? Anything else we need to do?
 				this.contexts.delete(channelId);
 				this.notBoundedChannelContextSet.delete(channelId);
+				this.channelInfo.delete(channelId);
 			}
 		} else if (allowSave) {
 			// Channel can't be destroyed and needs saving.
