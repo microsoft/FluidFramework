@@ -32,6 +32,7 @@ import {
 	insert,
 	jsonSequenceRootSchema,
 	remove,
+	schematizeInternal,
 	testSessionId,
 	treeTestFactory,
 } from "../utils.js";
@@ -73,7 +74,7 @@ function generateCompleteTree(
 			idCompressor,
 		}),
 	});
-	const view = tree.schematizeInternal({
+	const view = schematizeInternal(tree, {
 		allowedSchemaModifications: AllowedUpdateType.Initialize,
 		schema: testSchema,
 		initialTree: [],
@@ -216,10 +217,12 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 			runScenario: async (takeSnapshot) => {
 				const value = "42";
 				const provider = new TestTreeProviderLite(2, factory);
-				const tree1 = provider.trees[0].schematizeInternal(emptyJsonSequenceConfig);
+				const tree1 = schematizeInternal(provider.trees[0], emptyJsonSequenceConfig);
 				provider.processMessages();
-				const tree2 =
-					provider.trees[1].schematizeInternal(emptyJsonSequenceConfig).checkout;
+				const tree2 = schematizeInternal(
+					provider.trees[1],
+					emptyJsonSequenceConfig,
+				).checkout;
 				provider.processMessages();
 
 				// Insert node
@@ -265,11 +268,11 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 					cursorForTypedTreeData({ schema: docSchema }, schema, data);
 
 				const provider = new TestTreeProviderLite(2, factory);
-				const tree = provider.trees[0].schematizeInternal(config);
+				const tree = schematizeInternal(provider.trees[0], config);
 				const view = tree.checkout;
 				view.editor.optionalField(rootField).set(makeCursor(testNode, {}), true);
 				provider.processMessages();
-				const view2 = provider.trees[1].schematizeInternal(config).checkout;
+				const view2 = schematizeInternal(provider.trees[1], config).checkout;
 
 				view2.editor
 					.optionalField({ parent: rootNode, field: brand("root 1 child") })
@@ -310,9 +313,9 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 						initialTree: [0, 1, 2, 3],
 						allowedSchemaModifications: AllowedUpdateType.Initialize,
 					};
-					const tree1 = provider.trees[0].schematizeInternal(config).checkout;
+					const tree1 = schematizeInternal(provider.trees[0], config).checkout;
 					provider.processMessages();
-					const tree2 = provider.trees[1].schematizeInternal(config).checkout;
+					const tree2 = schematizeInternal(provider.trees[1], config).checkout;
 					const tree3 = provider.trees[2].schematizeInternal(config).checkout;
 					const tree4 = provider.trees[3].schematizeInternal(config).checkout;
 					provider.processMessages();
@@ -403,7 +406,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 						idCompressor,
 					}),
 				});
-				const view = tree.schematizeInternal(config).checkout;
+				const view = schematizeInternal(tree, config).checkout;
 
 				const field = view.editor.optionalField({
 					parent: undefined,
@@ -446,7 +449,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 					}),
 				});
 
-				const view = tree.schematizeInternal(config).checkout;
+				const view = schematizeInternal(tree, config).checkout;
 				view.transaction.start();
 				// We must make this shallow change to the sequence field as part of the same transaction as the
 				// nested change. Otherwise, the nested change will be represented using the generic field kind.

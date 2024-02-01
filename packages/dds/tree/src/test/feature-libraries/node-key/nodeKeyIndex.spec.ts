@@ -26,7 +26,12 @@ import {
 } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { NodeKeys } from "../../../feature-libraries/flex-tree/nodeKeys.js";
-import { SummarizeType, TestTreeProvider, flexTreeWithContent } from "../../utils.js";
+import {
+	SummarizeType,
+	TestTreeProvider,
+	flexTreeWithContent,
+	schematizeInternal,
+} from "../../utils.js";
 import { AllowedUpdateType } from "../../../core/index.js";
 
 const builder = new SchemaBuilder({ scope: "node key index tests", libraries: [nodeKeySchema] });
@@ -142,7 +147,8 @@ describe("Node Key Index", () => {
 
 		const manager1 = createMockNodeKeyManager();
 		const key = manager1.generateLocalNodeKey();
-		tree.schematizeInternal(
+		schematizeInternal(
+			tree,
 			{
 				initialTree: {
 					[nodeKeyFieldKey]: manager1.stabilizeNodeKey(key),
@@ -160,7 +166,8 @@ describe("Node Key Index", () => {
 		await provider.summarize();
 		const tree2 = await provider.createTree();
 		await provider.ensureSynchronized();
-		const view2 = tree2.schematizeInternal(
+		const view2 = schematizeInternal(
+			tree2,
 			{
 				initialTree: {
 					[nodeKeyFieldKey]: "not used",
