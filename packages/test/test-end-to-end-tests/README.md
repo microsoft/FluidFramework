@@ -33,6 +33,7 @@ The APIs are organized roughly by layer, i.e. `apis.dds` exports the various DDS
 
 Less common APIs can be found on `apis.<layer-name>.packages.<package-name>` (package names are unscoped and camelCased).
 Keep in mind that if these APIs change over time, tests depending on them will either need to have a reduced compat matrix or include back-compat logic.
+See "Change contents of dds, then rehydrate and then check summary" for an example of such a test.
 
 ### ❌ Incorrect
 
