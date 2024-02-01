@@ -162,7 +162,7 @@ extends:
         name: Azure-Pipelines-1ESPT-ExDShared
         image: windows-2022
         os: windows
-    # Skip tagging if Github PR coming from a fork;  This skips Microsoft security checks that won't work on forks. 
+    # Skip tagging if Github PR coming from a fork;  This skips Microsoft security checks that won't work on forks.
     settings:
       skipBuildTagsForGitHubPullRequests: true
     customBuildTags:
@@ -194,7 +194,7 @@ extends:
               # over time and it might be necessary to bump it.
               # AB#6680 is also relevant here, which tracks rethinking how and where we run tests (likely with
               # a focus on e2e tests)
-              # Note, This was recently updated to 90 minutes to account for the additional build time added from extending 
+              # Note, This was recently updated to 90 minutes to account for the additional build time added from extending
               # the Microsoft 1ES template required for corporate security compliance
               timeoutInMinutes: 90
             variables:
@@ -636,8 +636,13 @@ extends:
               displayName: Upload pipeline run telemetry to Kusto
               pool: Small-1ES
               variables:
+              - group: ado-feeds
               - name: pipelineTelemetryWorkdir
                 value: $(Pipeline.Workspace)/pipelineTelemetryWorkdir
+                readonly: true
+              - name: absolutePathToTelemetryGenerator
+                value: $(Build.SourcesDirectory)/tools/telemetry-generator
+                readonly: true
               steps:
               - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
                 parameters:
