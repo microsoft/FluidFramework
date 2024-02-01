@@ -9,7 +9,7 @@ on:
     branches:
       - main
       - next
-      - release/*
+      - release/**/*
 
 permissions:
   pull-requests: write
