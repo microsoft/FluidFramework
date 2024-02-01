@@ -245,7 +245,7 @@ describe("Garbage Collection Tests", () => {
 				closeCalled = true;
 			},
 		);
-		assert(closeCalled === false, "Close should have been called");
+		assert(closeCalled === false, "Close should not have been called");
 	});
 
 	it("Pending session expiry closes container", () => {
