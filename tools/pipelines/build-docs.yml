@@ -329,6 +329,6 @@ stages:
             skip_api_build: true # api is written in js, no build needed
             cwd: $(Build.SourcesDirectory)
             app_location: 'docs/public'
-            api_location: 'docs/api'
+            api_location: 'api'
             output_location: ''
             azure_static_web_apps_api_token: '${{ variables.deploymentToken }}'
