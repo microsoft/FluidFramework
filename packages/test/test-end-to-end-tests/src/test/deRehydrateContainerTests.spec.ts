@@ -594,7 +594,13 @@ describeCompat(
 					change(id: string, start: number, end: number): SequenceInterval | undefined;
 				}
 
-				if (semver.lt(apis.dataRuntime.version, "2.0.0-internal.8.0.0")) {
+				// Note: "dev" prereleases have to be special-cased since semver orders prerelease tags alphabetically,
+				// so dev builds (i.e. -dev or -dev-rc) sort as before official internal releases.
+				const isCurrentApi =
+					apis.dataRuntime.version.includes("dev") ||
+					semver.gte(apis.dataRuntime.version, "2.0.0-internal.8.0.0");
+
+				if (!isCurrentApi) {
 					// Versions of @fluidframework/sequence before this version had a different `add` API.
 					// See https://github.com/microsoft/FluidFramework/commit/e5b463cc8b24a411581c3e48f62ce1eea68dd639
 					// for the removal of that API.
@@ -627,7 +633,7 @@ describeCompat(
 					id1 = interval1.getIntervalId();
 					assert.strictEqual(typeof id0, "string");
 					assert.strictEqual(typeof id1, "string");
-					if (semver.lt(apis.dataRuntime.version, "2.0.0-internal.8.0.0")) {
+					if (!isCurrentApi) {
 						// Versions of @fluidframework/sequence before this version had a different `change` API.
 						// See https://github.com/microsoft/FluidFramework/commit/12c83d26962a1d76db6eb0ccad31fd6a7976a1af
 						(intervalsBefore as unknown as OldIntervalCollection).change(id0, 2, 3);
