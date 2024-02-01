@@ -5,7 +5,7 @@
 
 const {
 	params: { currentVersion, ltsVersion },
-} = require("../../data/versions.json");
+} = require("../../docs/data/versions.json");
 
 // Map of incoming URL paths to redirect URLs
 const routes = new Map([
