@@ -1,0 +1,10 @@
+parameters:
+  - name: jobs
+    type: object
+    default: {}
+
+stages:
+- stage: my_stage
+  displayName: My Stage
+  dependsOn: [] # this stage doesn't depend on preceding stage
+  jobs: ${{ parameters.jobs }}

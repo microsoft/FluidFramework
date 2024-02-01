@@ -1,0 +1,28 @@
+parameters:
+- name: myParamWithTemplateDefault
+  type: boolean
+  default: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
+- name: myParamWithRuntimeDefault
+  type: boolean
+  default: $[ ne(variables['Build.Reason'], 'PullRequest') ]
+- name: myParamWithMacroValuePassedIn
+  type: string
+
+# Testing how
+extends:
+  template: /tools/pipelines/my-inner-template.yml
+  parameters:
+    jobs:
+    - job: my_job
+      displayName: My Job
+      variables:
+      - name: variableFromMyTemplateJob
+        value: variableFromMyTemplateJob
+      steps:
+      - bash: |
+          echo parameters.myParamWithTemplateDefault: ${{ parameters.myParamWithTemplateDefault }};
+          echo parameters.myParamWithRuntimeDefault: ${{ parameters.myParamWithRuntimeDefault }};
+          echo parameters.myParamWithMacroValuePassedIn: ${{ parameters.myParamWithMacroValuePassedIn }};
+          echo variables.variableFromMyTemplateJob (template): ${{ variables.variableFromMyTemplateJob }};
+          echo variables.variableFromMyTemplateJob (macro): $(variableFromMyTemplateJob);
+        displayName: 'Print values'
