@@ -490,11 +490,6 @@ export class FluidDataStoreRuntime<TEvents = Record<string, never>>
 			// If this handle is already attached no need to attach again.
 			if (!channel.handle.isAttached) {
 				channel.handle.attachGraph();
-
-				assert(
-					this.isAttached,
-					0x182 /* "Data store should be attached to attach the channel." */,
-				);
 				assert(
 					this.visibilityState === VisibilityState.GloballyVisible,
 					0x2d0 /* "Data store should be globally visible to attach channels." */,

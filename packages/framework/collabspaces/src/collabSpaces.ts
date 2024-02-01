@@ -344,6 +344,11 @@ export class TempCollabSpaceRuntime
 		const newChannel = factory.create2(this, channelId, value.value);
 		this.addChannel(newChannel);
 
+		// Feels like I should call this.bindChannel(newChannel) here, but it fails - this.notBoundedChannelContextSet
+		// gets cleared first and then we get back (recursion) into this.bindChannel() and hit assert.
+		// Feels like right way to do so is call bindToContext(), but it's not API on channel.
+		newChannel.handle.attachGraph();
+
 		assert(!this.channelInfo.has(channelId), "channel is in inconsistent state");
 		this.channelInfo.set(channelId, {
 			seq: -1,
@@ -424,6 +429,8 @@ export class TempCollabSpaceRuntime
 		}
 
 		assert(currValue.seq <= refSeq, "invalid seq number");
+
+		// TBD - need to take into account this.visibilityState!!!
 
 		// Note on op grouping and equal sequence numbers: There will be cases (due to reentrancy when
 		// processing op batches) where ligic below could be optimized to require less saves, because
