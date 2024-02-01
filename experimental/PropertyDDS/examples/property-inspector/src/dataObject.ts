@@ -15,7 +15,7 @@ import { IDirectory, ISharedDirectory, IValueChanged, SharedDirectory } from "@f
 import {
 	LazyLoadedDataObject,
 	LazyLoadedDataObjectFactory,
-} from "@fluidframework/data-object-base";
+} from "@fluid-experimental/data-object-base";
 import { BaseProperty } from "@fluid-experimental/property-properties";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 

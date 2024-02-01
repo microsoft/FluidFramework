@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	LazyLoadedDataObject,
 	LazyLoadedDataObjectFactory,
-} from "@fluidframework/data-object-base";
+} from "@fluid-experimental/data-object-base";
+import { assert } from "@fluidframework/core-utils";
+import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	createDetachedLocalReferencePosition,
 	createRemoveRangeOp,

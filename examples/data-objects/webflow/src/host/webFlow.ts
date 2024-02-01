@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import {
+	LazyLoadedDataObjectFactory,
+	LazyLoadedDataObject,
+} from "@fluid-experimental/data-object-base";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions";
-import {
-	LazyLoadedDataObjectFactory,
-	LazyLoadedDataObject,
-} from "@fluidframework/data-object-base";
 import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
 import { FlowDocument } from "../document/index.js";
 import { hostType } from "../package.js";
