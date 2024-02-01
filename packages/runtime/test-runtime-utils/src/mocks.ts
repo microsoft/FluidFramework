@@ -784,10 +784,6 @@ export class MockFluidDataStoreRuntime
 		return null;
 	}
 
-	public submitMessage(type: MessageType, content: any) {
-		return null;
-	}
-
 	private submitMessageInternal(messageContent: any, localOpMetadata: unknown): number {
 		assert(
 			this.containerRuntime !== undefined,

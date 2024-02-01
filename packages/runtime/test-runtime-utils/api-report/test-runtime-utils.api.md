@@ -493,8 +493,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     setConnectionState(connected: boolean, clientId?: string): void;
     // (undocumented)
-    submitMessage(type: MessageType, content: any): null;
-    // (undocumented)
     submitSignal(type: string, content: any): null;
     // (undocumented)
     summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
