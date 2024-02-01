@@ -11,7 +11,6 @@ parameters:
 # matches the branch name. By default, the branch triggering this pipeline is used
 - name: branchName
   type: string
-  default: ${{ variables['Build.SourceBranch'] }}
   
 steps:
 # Download the api-extractor outputs
