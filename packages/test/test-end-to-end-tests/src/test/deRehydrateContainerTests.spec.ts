@@ -24,16 +24,16 @@ import {
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
+import type { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import type { SequenceInterval, SharedString } from "@fluidframework/sequence";
-import { SharedCell } from "@fluidframework/cell";
-import { Ink } from "@fluidframework/ink";
+import type { SharedCell } from "@fluidframework/cell";
+import type { Ink } from "@fluidframework/ink";
 import type { SharedMatrix } from "@fluidframework/matrix";
-import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/ordered-collection";
+import type { ConsensusOrderedCollection } from "@fluidframework/ordered-collection";
 import type { SharedCounter } from "@fluidframework/counter";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
+import type { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -121,7 +121,18 @@ describeCompat(
 	`Dehydrate Rehydrate Container Test`,
 	"FullCompat",
 	(getTestObjectProvider, apis) => {
-		const { SharedMap, SharedDirectory, SharedMatrix, SharedCounter, SharedString } = apis.dds;
+		const {
+			SharedMap,
+			SharedDirectory,
+			SharedMatrix,
+			SharedCounter,
+			SharedString,
+			SharedCell,
+			Ink,
+			ConsensusQueue,
+			ConsensusRegisterCollection,
+			SparseMatrix,
+		} = apis.dds;
 		function assertSubtree(tree: ISnapshotTree, key: string, msg?: string): ISnapshotTree {
 			const subTree = tree.trees[key];
 			assert(subTree, msg ?? `${key} subtree not present`);
