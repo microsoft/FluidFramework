@@ -19,10 +19,24 @@ function sampleFactory() {
 }
 
 /*
+ * Things to cover:
+ * 1. Attached & Detached modes (for container, data store runtime)
+ * 2. Connected & disconnected states
+ * 3. Collaboration across multiple clients.
+ * 4. Save transitions between the states, including
+ *    - One user removing collab channel, while otehrs do not, and continue eventually making changes
+ *    - Loading from summary that has collab channel removed (from summary), but some clients keep it in memory.
+ *    - Fuzz tests
+ */
+
+/*
  * This dance with describe() -> describeCompat() and dynamic input is here only because
  * of mismatch in module types. In other places where we use @fluid-private/test-version-utils,
  * we solve this problem by putting "type": "module" in package.json.
  * This is Ok for test-only packages, but not ideal for package with shipping code.
+ * // TBD(Pri0) - this fails when run from console (time-out), and succeeds when run from debugger (no time-outs)
+ *    I believe this is due to describeCompat() being nested inside of describe().
+ *    While we can increase timeout, it's better to find the right solution for this import problem.
  */
 describe("Temporal Collab Spaces 1", () => {
 	it("Sub-entry", async () => {
@@ -60,7 +74,7 @@ describe("Temporal Collab Spaces 1", () => {
 					const datastore = (await container.getEntryPoint()) as TempCollabSpaceRuntime;
 
 					const cols = 40;
-					const rows = 10000;
+					const rows = 1000;
 
 					// +700Mb, but only +200Mb if accounting GC after that.
 					datastore.insertCols(0, cols);
@@ -89,8 +103,8 @@ describe("Temporal Collab Spaces 1", () => {
 
 					const channel = (await datastore.getCellChannel(100, 5)) as ISharedCounter &
 						ICollabChannelCore;
-					// TBD - this fails as we are not properlly initializing channel
-					// assert(channel.value === value?.value, "not the same value");
+
+					assert(channel.value === value?.value, "not the same value");
 
 					channel.increment(100);
 					value = await datastore.getCellAsync(100, 5);

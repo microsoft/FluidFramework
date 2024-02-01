@@ -11,6 +11,7 @@ import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	IFluidDataStoreContext,
+	VisibilityState,
 } from "@fluidframework/runtime-definitions";
 import { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { FluidDataStoreRuntime, IChannelContext } from "@fluidframework/datastore";
@@ -107,6 +108,8 @@ import {
  * 3. When evaluating cell value, we need to check if it has active channel associated with it. This operation should
  *    be optimized to be fast, especially for main case (no channel)
  *
+ * TO DO // TBD(Pri1):
+ * 1. Summarizer removing non-needed channels
  */
 
 const matrixId = "matrix";
@@ -194,7 +197,6 @@ export class TempCollabSpaceRuntime
 	}
 
 	protected setChannelDirty(address: string): void {
-		// TBD - this should never happen.
 		// It's not very clear RE what it means in context of this implementation.
 		// Currently it is used to force summmary for a channel, but such channels
 		// likely can't be used for temp collab spaces, as we could destroy them prematurely.
@@ -254,14 +256,14 @@ export class TempCollabSpaceRuntime
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummaryTreeWithStats> {
-		// TBD: We can do certain clenup here to GC unneeded data
+		// TBD(Pri2): We can do certain cleanup here to GC unneeded data
 		// But system should work correctly without it.
 
-		// TBD:
+		// TBD(Pri0):
 		// Summarize this.channelInfo
 
-		// TBD:
-		// Either summarize this.channelInfo as part of getAttachSummary() or assert it's empty
+		// TBD(Pri0):
+		// Summarize this.channelInfo as part of getAttachSummary() or assert it's empty
 
 		return super.summarize(fullTree, trackState, telemetryContext);
 	}
@@ -270,7 +272,7 @@ export class TempCollabSpaceRuntime
 		if (!this.contexts.has(id)) {
 			super.attachRemoteChannel(id, remoteChannelContext);
 		} else {
-			// TBD - we should verify that initial state conveyed in this op is exactly
+			// TBD(Pri2) - we should verify that initial state conveyed in this op is exactly
 			// the same as the one this client started with.
 		}
 	}
@@ -351,6 +353,10 @@ export class TempCollabSpaceRuntime
 
 		assert(!this.channelInfo.has(channelId), "channel is in inconsistent state");
 		this.channelInfo.set(channelId, {
+			// -1 here is important for couple reasons:
+			// If this object is detached, we have no sequence to operate with, and any future sequences
+			// should be higher than this starting point.
+			// If it's attached, then any sequence below current sequence number is good and has same treatment.
 			seq: -1,
 			pendingChangeCount: 0,
 		});
@@ -365,7 +371,7 @@ export class TempCollabSpaceRuntime
 		const colId = parts[1];
 		const iteration = parts[2];
 
-		// TBD
+		// TBD(Pri1)
 		// This needs to be way more efficient by building a reverse mapping and maintaining it through all operations!
 		// Need to reconcile which layer does such mapping. At the moment, this is done outside of matrix - in Tablero
 		// component. We should either move it here (and ideally - in compatible way, i.e. not changing document schema),
@@ -409,14 +415,17 @@ export class TempCollabSpaceRuntime
 			return;
 		}
 
-		const refSeq = this.deltaManager.lastSequenceNumber;
+		// Are ops flying? If not, we have no clue if channel was saved or not.
+		const attached = this.visibilityState !== VisibilityState.GloballyVisible;
+
+		const refSeq = attached ? -1 : this.deltaManager.lastSequenceNumber;
 		assert(record.seq <= refSeq, "invalid seq number");
 
 		const { row, col, iteration } = this.mapChannelToCell(channelId);
 
 		const currValue = this.matrix.getCell(row, col);
 
-		// TBD - can this be optimized and assume only single client can undo such operation?
+		// TBD(Pri2) - can this be optimized and assume only single client can undo such operation?
 		//
 		// If channel is no longer associated with a cell, can't do much!
 		// We are dealing with non-rooted channel. It could be returned back to life through undo
@@ -430,16 +439,24 @@ export class TempCollabSpaceRuntime
 
 		assert(currValue.seq <= refSeq, "invalid seq number");
 
-		// TBD - need to take into account this.visibilityState!!!
-
 		// Note on op grouping and equal sequence numbers: There will be cases (due to reentrancy when
 		// processing op batches) where ligic below could be optimized to require less saves, because
 		// we would do unnessasary saves. While true, this would also requrie tracking more state in cells.
 		// Given that chances of that are low, and code is correct, it's better to rely on extra saves
 		// then inefficiency of managing more state.
-		if (currValue.seq > record.seq) {
-			// Nothing to save. Channel can be destoyed
 
+		const doSave = allowSave && !attached && currValue.seq <= record.seq;
+		const destroy = allowDestroy && (attached ? currValue.seq > record.seq : doSave);
+
+		if (doSave) {
+			this.matrix.setCell(row, col, {
+				...currValue, // value, iteration, type
+				value: channel.value as string,
+				seq: refSeq,
+			});
+		}
+
+		if (destroy) {
 			// Validate that actually values match!
 			assert(channel.value === currValue.value, "values are not matching!!!!");
 
@@ -449,13 +466,6 @@ export class TempCollabSpaceRuntime
 				this.notBoundedChannelContextSet.delete(channelId);
 				this.channelInfo.delete(channelId);
 			}
-		} else if (allowSave) {
-			// Channel can't be destroyed and needs saving.
-			this.matrix.setCell(row, col, {
-				...currValue, // value, iteration, type
-				value: channel.value as string,
-				seq: refSeq,
-			});
 		}
 	}
 
@@ -463,7 +473,7 @@ export class TempCollabSpaceRuntime
 		this.saveOrDestroyChannel(channel, true /* allowSave */, false /* allowDestroy */);
 	}
 
-	// TBD - need to build a lot of protections here on when it's safe to do this operaton
+	// TBD(Pri1) - need to build a lot of protections here on when it's safe to do this operaton
 	public destroyCellChannel(channel: ICollabChannelCore) {
 		this.saveOrDestroyChannel(channel, true /* allowSave */, true /* allowDestroy */);
 	}
