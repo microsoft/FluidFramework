@@ -234,9 +234,9 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 
 			localRuntime.submitSignal("TestSignal", true, localRuntime.clientId);
 			await waitForSignal(remoteRuntime1);
-			assert.equal(user1SignalReceivedCount, 1, "client 1 should not receive signal");
+			assert.equal(user1SignalReceivedCount, 1, "client 1 did not receive signal");
 			assert.equal(user2SignalReceivedCount, 1, "client 2 did not receive signal");
-			assert.equal(user3SignalReceivedCount, 1, "client 3 should not receive signal");
+			assert.equal(user3SignalReceivedCount, 1, "client 3 did not receive signal");
 		}
 
 		beforeEach("3rd container setup", async () => {
