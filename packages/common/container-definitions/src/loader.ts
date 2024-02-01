@@ -531,7 +531,7 @@ export interface IHostLoader extends ILoader {
 }
 
 /**
- * @public
+ * @alpha
  */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type ILoaderOptions = {
