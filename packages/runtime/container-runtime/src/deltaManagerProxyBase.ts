@@ -3,14 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { EventForwarder } from "@fluid-internal/client-utils";
-import {
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type {
+	IConnectionDetails,
 	IDeltaManager,
 	IDeltaManagerEvents,
 	IDeltaQueue,
 	IDeltaSender,
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
+import type { IErrorBase } from "@fluidframework/core-interfaces";
+import type { IAnyDriverError } from "@fluidframework/driver-definitions";
 import {
 	IClientConfiguration,
 	IClientDetails,
@@ -24,7 +27,7 @@ import {
  * proxy implementations can override specific methods.
  */
 export class DeltaManagerProxyBase
-	extends EventForwarder<IDeltaManagerEvents>
+	extends TypedEventEmitter<IDeltaManagerEvents>
 	implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>
 {
 	public get IDeltaSender(): IDeltaSender {
@@ -94,11 +97,24 @@ export class DeltaManagerProxyBase
 	constructor(
 		protected readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 	) {
-		super(deltaManager);
+		super();
+		this.deltaManager.on("prepareSend", this.onPrepareSend);
+		this.deltaManager.on("submitOp", this.onSubmitOp);
+		this.deltaManager.on("op", this.onOp);
+		this.deltaManager.on("pong", this.onPong);
+		this.deltaManager.on("connect", this.onConnect);
+		this.deltaManager.on("disconnect", this.onDisconnect);
+		this.deltaManager.on("readonly", this.onReadonly);
 	}
 
 	public dispose(): void {
-		super.dispose();
+		this.deltaManager.off("prepareSend", this.onPrepareSend);
+		this.deltaManager.off("submitOp", this.onSubmitOp);
+		this.deltaManager.off("op", this.onOp);
+		this.deltaManager.off("pong", this.onPong);
+		this.deltaManager.off("connect", this.onConnect);
+		this.deltaManager.off("disconnect", this.onDisconnect);
+		this.deltaManager.off("readonly", this.onReadonly);
 	}
 
 	public submitSignal(content: any, targetClientId?: string): void {
@@ -108,4 +124,29 @@ export class DeltaManagerProxyBase
 	public flush(): void {
 		return this.deltaManager.flush();
 	}
+
+	private readonly onPrepareSend = (messageBuffer: any[]): void => {
+		this.emit("prepareSend", messageBuffer);
+	};
+	private readonly onSubmitOp = (message: IDocumentMessage): void => {
+		this.emit("submitOp", message);
+	};
+	private readonly onOp = (message: ISequencedDocumentMessage, processingTime: number): void => {
+		this.emit("op", message, processingTime);
+	};
+	private readonly onPong = (latency: number): void => {
+		this.emit("pong", latency);
+	};
+	private readonly onConnect = (details: IConnectionDetails, opsBehind?: number): void => {
+		this.emit("connect", details, opsBehind);
+	};
+	private readonly onDisconnect = (reason: string, error?: IAnyDriverError): void => {
+		this.emit("disconnect", reason, error);
+	};
+	private readonly onReadonly = (
+		readonly: boolean,
+		readonlyConnectionReason?: { reason: string; error?: IErrorBase },
+	): void => {
+		this.emit("readonly", readonly, readonlyConnectionReason);
+	};
 }
