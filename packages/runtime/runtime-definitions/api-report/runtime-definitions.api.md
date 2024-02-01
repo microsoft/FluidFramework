@@ -118,10 +118,10 @@ export interface IAttachMessage {
 export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents> {
     // (undocumented)
     readonly clientDetails: IClientDetails;
-    createDataStore(pkg: string | string[]): Promise<IDataStore>;
+    createDataStore(pkg: string | string[], groupId?: string): Promise<IDataStore>;
     // @deprecated (undocumented)
     _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string): Promise<IDataStore>;
-    createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached;
+    createDetachedDataStore(pkg: Readonly<string[]>, groupId?: string): IFluidDataStoreContextDetached;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;
     getQuorum(): IQuorumClients;
@@ -220,6 +220,8 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     createParam: CreateChildSummarizerNodeParam): CreateChildSummarizerNodeFn;
     getQuorum(): IQuorumClients;
     // (undocumented)
+    readonly groupId?: string;
+    // (undocumented)
     readonly id: string;
     // (undocumented)
     readonly idCompressor?: IIdCompressor;
@@ -242,7 +244,7 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
 
 // @alpha (undocumented)
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
-    attachRuntime(factory: IProvideFluidDataStoreFactory, dataStoreRuntime: IFluidDataStoreChannel): Promise<void>;
+    attachRuntime(factory: IProvideFluidDataStoreFactory, dataStoreRuntime: IFluidDataStoreChannel): Promise<IDataStore>;
 }
 
 // @alpha (undocumented)
@@ -397,7 +399,9 @@ export interface ISummaryTreeWithStats {
 
 // @public
 export interface ITelemetryContext {
+    // @deprecated
     get(prefix: string, property: string): TelemetryEventPropertyType;
+    // @deprecated
     serialize(): string;
     set(prefix: string, property: string, value: TelemetryEventPropertyType): void;
     setMultiple(prefix: string, property: string, values: Record<string, TelemetryEventPropertyType>): void;

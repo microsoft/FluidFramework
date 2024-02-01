@@ -62,6 +62,7 @@ gitrest:
     ephemeralfilesystem:
       name: redisFs
     persistLatestFullSummary: false
+    persistLatestFullEphemeralSummary: false
     repoPerDocEnabled: false
     enableRepositoryManagerMetrics: false
     apiMetricsSamplingPeriod: 100
@@ -69,6 +70,8 @@ gitrest:
     enableOptimizedInitialSummary: false
     enableSlimGitInit: false
     enableRedisFsMetrics: false
+    enableHashmapRedisFs: false
+    enableRedisFsOptimizedStat: false
     redisApiMetricsSamplingPeriod: 0
   redis:
     host: redis

@@ -53,7 +53,7 @@ export const library = builder.intoLibrary();
 	});
 	const _field = FlexFieldSchema.createUnsafe(FieldKinds.optional, [node]);
 	// All these cause TSC to "RangeError: Maximum call stack size exceeded"
-	// const _field4 = TreeFieldSchema.create(FieldKinds.optional, [node]);
+	// const _field4 = FlexFieldSchema.create(FieldKinds.optional, [node]);
 	// const _field2 = b.optional(node);
 	// const _field3 = SchemaBuilder.optional(node);
 	// const schema = b.intoSchema(field);

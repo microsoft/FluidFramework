@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import Deque from "double-ended-queue";
 import { assert } from "@fluidframework/core-utils";
 import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -141,6 +142,17 @@ export class SharedMatrix<T = any>
 		return new SharedMatrixFactory();
 	}
 
+	/**
+	 * Note: this field only provides a lower-bound on the reference sequence numbers for in-flight ops.
+	 * The exact reason isn't understood, but some e2e tests suggest that the runtime may sometimes process
+	 * incoming leave/join ops before putting an op that this DDS submits over the wire.
+	 *
+	 * E.g. SharedMatrix submits an op while deltaManager has lastSequenceNumber = 10, but before the runtime
+	 * puts this op over the wire, it processes a client join/leave op with sequence number 11, so the referenceSequenceNumber
+	 * on the SharedMatrix op is 11.
+	 */
+	private readonly inFlightRefSeqs = new Deque<number>();
+
 	private readonly rows: PermutationVector; // Map logical row to storage handle (if any)
 	private readonly cols: PermutationVector; // Map logical col to storage handle (if any)
 
@@ -172,12 +184,14 @@ export class SharedMatrix<T = any>
 
 		this.setCellLwwToFwwPolicySwitchOpSeqNumber =
 			_isSetCellConflictResolutionPolicyFWW === true ? 0 : -1;
+		const getMinInFlightRefSeq = () => this.inFlightRefSeqs.get(0);
 		this.rows = new PermutationVector(
 			SnapshotPath.rows,
 			this.logger,
 			runtime,
 			this.onRowDelta,
 			this.onRowHandlesRecycled,
+			getMinInFlightRefSeq,
 		);
 
 		this.cols = new PermutationVector(
@@ -186,6 +200,7 @@ export class SharedMatrix<T = any>
 			runtime,
 			this.onColDelta,
 			this.onColHandlesRecycled,
+			getMinInFlightRefSeq,
 		);
 	}
 
@@ -351,9 +366,9 @@ export class SharedMatrix<T = any>
 		rowHandle: Handle,
 		colHandle: Handle,
 		localSeq = this.nextLocalSeq(),
-		rowsRefSeq = this.rows.getCollabWindow().currentSeq,
-		colsRefSeq = this.cols.getCollabWindow().currentSeq,
 	) {
+		const rowsRefSeq = this.rows.getCollabWindow().currentSeq;
+		const colsRefSeq = this.cols.getCollabWindow().currentSeq;
 		assert(
 			this.isAttached(),
 			0x1e2 /* "Caller must ensure 'isAttached()' before calling 'sendSetCellOp'." */,
@@ -574,6 +589,7 @@ export class SharedMatrix<T = any>
 			0x01d /* "Trying to submit message to runtime while detached!" */,
 		);
 
+		this.inFlightRefSeqs.push(this.runtime.deltaManager.lastSequenceNumber);
 		super.submitLocalMessage(
 			makeHandlesSerializable(message, this.serializer, this.handle),
 			localOpMetadata,
@@ -627,6 +643,8 @@ export class SharedMatrix<T = any>
 	}
 
 	protected reSubmitCore(content: any, localOpMetadata: unknown) {
+		const originalRefSeq = this.inFlightRefSeqs.shift();
+		assert(originalRefSeq !== undefined, "Expected a recorded refSeq when resubmitting an op");
 		switch (content.target) {
 			case SnapshotPath.cols:
 				this.submitColMessage(
@@ -679,16 +697,7 @@ export class SharedMatrix<T = any>
 						lastCellModificationDetails === undefined ||
 						referenceSeqNumber >= lastCellModificationDetails.seqNum
 					) {
-						this.sendSetCellOp(
-							row,
-							col,
-							setOp.value,
-							rowHandle,
-							colHandle,
-							localSeq,
-							rowsRefSeq,
-							colsRefSeq,
-						);
+						this.sendSetCellOp(row, col, setOp.value, rowHandle, colHandle, localSeq);
 					} else if (this.pending.getCell(rowHandle, colHandle) !== undefined) {
 						// Clear the pending changes if any as we are not sending the op.
 						this.pending.setCell(rowHandle, colHandle, undefined);
@@ -763,6 +772,17 @@ export class SharedMatrix<T = any>
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
+		if (local) {
+			const recordedRefSeq = this.inFlightRefSeqs.shift();
+			assert(recordedRefSeq !== undefined, "No pending recorded refSeq found");
+			// TODO: AB#7076: Some equivalent assert should be enabled. This fails some e2e stashed op tests because
+			// the deltaManager may have seen more messages than the runtime has processed while amidst the stashed op
+			// flow, so e.g. when `applyStashedOp` is called and the DDS is put in a state where it expects an ack for
+			// one of its messages, the delta manager has actually already seen subsequent messages from collaborators
+			// which the in-flight message is concurrent to.
+			// See "handles stashed ops created on top of sequenced local ops" for one such test case.
+			// assert(recordedRefSeq <= message.referenceSequenceNumber, "RefSeq mismatch");
+		}
 		const msg = parseHandles(rawMessage, this.serializer);
 
 		const contents = msg.contents;
@@ -977,6 +997,7 @@ export class SharedMatrix<T = any>
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 */
 	protected applyStashedOp(content: any): unknown {
+		this.inFlightRefSeqs.push(this.runtime.deltaManager.lastSequenceNumber);
 		const parsedContent = parseHandles(content, this.serializer);
 		if (
 			parsedContent.target === SnapshotPath.cols ||

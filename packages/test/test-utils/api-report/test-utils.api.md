@@ -90,6 +90,9 @@ export function createSummarizerFromFactory(provider: ITestObjectProvider, conta
 }>;
 
 // @internal
+export const createTestConfigProvider: () => ITestConfigProvider;
+
+// @internal
 export const createTestContainerRuntimeFactory: (containerRuntimeCtor: typeof ContainerRuntime) => {
     new (type: string, dataStoreFactory: IFluidDataStoreFactory, runtimeOptions?: IContainerRuntimeOptions, requestHandlers?: RuntimeRequestHandler[]): {
         type: string;
@@ -170,6 +173,12 @@ export interface IProvideTestFluidObject {
     readonly ITestFluidObject: ITestFluidObject;
 }
 
+// @internal
+export interface ITestConfigProvider extends IConfigProviderBase {
+    clear: () => void;
+    set: (key: string, value: ConfigTypes) => void;
+}
+
 // @internal (undocumented)
 export interface ITestContainerConfig {
     enableAttribution?: boolean;
@@ -233,9 +242,6 @@ export class LocalCodeLoader implements ICodeDetailsLoader {
     constructor(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, runtimeOptions?: IContainerRuntimeOptions);
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
-
-// @internal (undocumented)
-export const mockConfigProvider: (settings?: Record<string, ConfigTypes>) => IConfigProviderBase;
 
 // @internal
 export const retryWithEventualValue: <T>(callback: () => Promise<T>, check: (value: T) => boolean, defaultValue: T, maxTries?: number, backOffMs?: number) => Promise<T>;

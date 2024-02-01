@@ -4,17 +4,17 @@
  */
 
 import {
-	IEvent,
-	IFluidHandle,
-	IFluidLoadable,
-	IRequest,
-	IResponse,
-	IProvideFluidHandle,
+	type IEvent,
+	type IFluidHandle,
+	type IFluidLoadable,
+	type IRequest,
+	type IResponse,
+	type IProvideFluidHandle,
 } from "@fluidframework/core-interfaces";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { type IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+import { type IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { FluidObjectHandle } from "@fluidframework/datastore";
-import { ISharedObject } from "@fluidframework/shared-object-base";
+import { type ISharedObject } from "@fluidframework/shared-object-base";
 import { EventForwarder } from "@fluid-internal/client-utils";
 import { create404Response } from "@fluidframework/runtime-utils";
 
@@ -30,13 +30,21 @@ export abstract class LazyLoadedDataObject<
 {
 	private _handle?: IFluidHandle<this>;
 
-	public get IFluidLoadable() {
+	/**
+	 * {@inheritDoc @fluidframework/core-interfaces#IProvideFluidLoadable.IFluidLoadable}
+	 */
+	public get IFluidLoadable(): this {
 		return this;
 	}
-	public get IFluidHandle() {
+
+	/**
+	 * {@inheritDoc @fluidframework/core-interfaces#IProvideFluidHandle.IFluidHandle}
+	 */
+	public get IFluidHandle(): IFluidHandle<this> {
 		return this.handle;
 	}
-	public get IProvideFluidHandle() {
+
+	public get IProvideFluidHandle(): this {
 		return this;
 	}
 
@@ -70,6 +78,8 @@ export abstract class LazyLoadedDataObject<
 
 	// #endregion IFluidLoadable
 
+	// TODO: Use unknown (or a stronger type) instead of any. Breaking change.
+	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
 	public abstract create(props?: any);
 	public abstract load(
 		context: IFluidDataStoreContext,
