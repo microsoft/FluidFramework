@@ -31,7 +31,9 @@ const waitForSignal = async (...signallers: { once(e: "signal", l: () => void): 
 		),
 	);
 
-type RuntimeType = IFluidDataStoreRuntime | IContainerRuntimeBase;
+type IContainerRuntimeBaseWithClientId = IContainerRuntimeBase & { clientId?: string | undefined };
+
+type RuntimeType = IFluidDataStoreRuntime | IContainerRuntimeBaseWithClientId;
 
 describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
@@ -198,9 +200,9 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 		let user2SignalReceivedCount: number;
 		let user3SignalReceivedCount: number;
 		let dataObject3: ITestFluidObject;
-		let user1ContainerRuntime: IContainerRuntimeBase;
-		let user2ContainerRuntime: IContainerRuntimeBase;
-		let user3ContainerRuntime: IContainerRuntimeBase;
+		let user1ContainerRuntime: IContainerRuntimeBaseWithClientId;
+		let user2ContainerRuntime: IContainerRuntimeBaseWithClientId;
+		let user3ContainerRuntime: IContainerRuntimeBaseWithClientId;
 
 		async function sendAndVerifyBroadcast(
 			localRuntime: RuntimeType,
@@ -226,7 +228,7 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 				}
 			});
 
-			localRuntime.submitSignal("TestSignal", true, dataObject1.runtime.clientId);
+			localRuntime.submitSignal("TestSignal", true, localRuntime.clientId);
 			await waitForSignal(remoteRuntime1);
 			assert.equal(user1SignalReceivedCount, 1, "client 1 should not receive signal");
 			assert.equal(user2SignalReceivedCount, 1, "client 2 did not receive signal");
@@ -276,9 +278,9 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 		let user2SignalReceivedCount: number;
 		let user3SignalReceivedCount: number;
 		let dataObject3: ITestFluidObject;
-		let user1ContainerRuntime: IContainerRuntimeBase;
-		let user2ContainerRuntime: IContainerRuntimeBase;
-		let user3ContainerRuntime: IContainerRuntimeBase;
+		let user1ContainerRuntime: IContainerRuntimeBaseWithClientId;
+		let user2ContainerRuntime: IContainerRuntimeBaseWithClientId;
+		let user3ContainerRuntime: IContainerRuntimeBaseWithClientId;
 
 		async function sendAndVerifyRemoteSignals(
 			runtime1: RuntimeType,
@@ -304,19 +306,19 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 				}
 			});
 
-			runtime1.submitSignal("TestSignal", true, dataObject1.runtime.clientId);
+			runtime1.submitSignal("TestSignal", true, runtime2.clientId);
 			await waitForSignal(runtime2);
 			assert.equal(user1SignalReceivedCount, 0, "client 1 should not receive signal");
 			assert.equal(user2SignalReceivedCount, 1, "client 2 did not receive signal");
 			assert.equal(user3SignalReceivedCount, 0, "client 3 should not receive signal");
 
-			runtime1.submitSignal("TestSignal", true, dataObject2.runtime.clientId);
+			runtime1.submitSignal("TestSignal", true, runtime3.clientId);
 			await waitForSignal(runtime3);
 			assert.equal(user1SignalReceivedCount, 0, "client 1 should not receive signal");
 			assert.equal(user2SignalReceivedCount, 1, "client 2 should not receive signal");
 			assert.equal(user3SignalReceivedCount, 1, "client 3 did not receive signal");
 
-			runtime2.submitSignal("TestSignal", true, dataObject3.runtime.clientId);
+			runtime2.submitSignal("TestSignal", true, runtime1.clientId);
 			await waitForSignal(runtime1);
 			assert.equal(user1SignalReceivedCount, 1, "client 1 did not receive signal");
 			assert.equal(user2SignalReceivedCount, 1, "client 2 should not receive signal");
@@ -341,7 +343,7 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 				throw new Error("Remote client should not receive signal");
 			});
 
-			localRuntime.submitSignal("TestSignal", true, dataObject1.runtime.clientId);
+			localRuntime.submitSignal("TestSignal", true, localRuntime.clientId);
 			await waitForSignal(localRuntime);
 			assert.equal(user1SignalReceivedCount, 1, "client 1 did not receive signal");
 		}
