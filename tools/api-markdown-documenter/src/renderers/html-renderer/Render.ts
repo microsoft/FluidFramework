@@ -5,8 +5,8 @@
 
 import type { DocumentNode, DocumentationNode } from "../../documentation-domain";
 import { type DocumentWriter, createDocumentWriter } from "../DocumentWriter";
-import { RenderConfiguration, defaultRenderers } from "./configuration";
-import { RenderContext, getContextWithDefaults } from "./RenderContext";
+import { type RenderConfiguration, defaultRenderers } from "./configuration";
+import { type RenderContext, getContextWithDefaults } from "./RenderContext";
 
 /**
  * Renders a {@link DocumentNode} as HTML, and returns the resulting file contents as a `string`.
