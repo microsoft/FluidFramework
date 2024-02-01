@@ -130,7 +130,8 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@tiny-calc/nano": "0.0.0-alpha.5",
-		"lz4js": "^0.2.0"
+		"lz4js": "^0.2.0",
+		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
@@ -151,6 +152,7 @@
 		"@microsoft/api-extractor": "^7.39.1",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
+		"@types/uuid": "^9.0.2",
 		"c8": "^8.0.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",

@@ -21,6 +21,8 @@ import {
 	ISharedMatrixEvents,
 } from "@fluidframework/matrix";
 import { UsageError } from "@fluidframework/telemetry-utils";
+import { IMatrixConsumer, IMatrixReader, IMatrixProducer } from "@tiny-calc/nano";
+import { v4 as uuid } from "uuid";
 import {
 	MatrixExternalType,
 	ICollabChannel,
@@ -28,9 +30,6 @@ import {
 	IEfficientMatrix,
 	ICollabChannelFactory,
 } from "./contracts";
-
-import { IMatrixConsumer, IMatrixReader, IMatrixProducer } from "@tiny-calc/nano";
-import { v4 as uuid } from "uuid";
 
 /*
  * This is a prototype, an implementation of sparse matrix that natively supports collaboration.
@@ -157,12 +156,13 @@ interface IChannelTrackingInfo {
 	- hange events - changes being made by channels should result in events fired by this object.
 */
 
+/** @internal */
 export class TempCollabSpaceRuntime
 	extends FluidDataStoreRuntime<ISharedMatrixEvents<MatrixExternalType>>
 	implements IEfficientMatrix
 {
-	protected matrixInternal?: SharedMatrix<MatrixInernalType>;
-	protected channelInfo: Map<string, IChannelTrackingInfo> = new Map();
+	private matrixInternal?: SharedMatrix<MatrixInernalType>;
+	private readonly channelInfo: Map<string, IChannelTrackingInfo> = new Map();
 
 	constructor(
 		dataStoreContext: IFluidDataStoreContext,
@@ -176,23 +176,14 @@ export class TempCollabSpaceRuntime
 		super(dataStoreContext, sharedObjectRegistry, existing, provideEntryPoint);
 	}
 
-	// When channel is created, need to call this.bindChannel(channel) right away
-	// to ensure it's attached (and thus starts sending ops)
-	/*
-	protected createChannelCore(channel: IChannel) {
-		super.createChannelCore(channel);
-		super.bindChannel(channel);
-	}
-	*/
-
 	// Called on various paths, like op processing, where channel should exists.
-	protected updatePendingCoutner(address: string, diff: number) {
+	private updatePendingCoutner(address: string, diff: number) {
 		if (address === matrixId) {
 			return;
 		}
 		const channel = this.contexts.get(address);
 		if (channel === undefined) {
-			throw "TBD";
+			throw new Error("TBD");
 		}
 
 		const record = this.channelInfo.get(address);
@@ -217,7 +208,7 @@ export class TempCollabSpaceRuntime
 		// It will result in channel sending op, and that's how it will be accoutned for.
 		// That said, need to ensure we have a channel allocated for it.
 		this.updatePendingCoutner(address, 0);
-		super.applyStashedChannelChannelOp(address, contents);
+		return super.applyStashedChannelChannelOp(address, contents);
 	}
 
 	protected processChannelOp(
@@ -305,12 +296,12 @@ export class TempCollabSpaceRuntime
 		this.matrix.switchSetCellPolicy();
 	}
 
-	protected get matrix() {
+	private get matrix() {
 		assert(this.matrixInternal !== undefined, "not initialized");
 		return this.matrixInternal;
 	}
 
-	protected getCellInfo(rowArg: number, colArg: number): ICellInfo {
+	private getCellInfo(rowArg: number, colArg: number): ICellInfo {
 		const row = rowArg + 1;
 		const col = colArg + 1;
 		const cellValue = this.matrix.getCell(row, col);
@@ -329,7 +320,7 @@ export class TempCollabSpaceRuntime
 		};
 	}
 
-	protected getFactoryForValueType(type: string, onlyCollaborativeTypes: boolean) {
+	private getFactoryForValueType(type: string, onlyCollaborativeTypes: boolean) {
 		// Matrix is in the list of channels, but it's "internal" type - not allowed to be used in cells.
 		if (type === SharedMatrixFactory.Type) {
 			return undefined;
@@ -362,7 +353,7 @@ export class TempCollabSpaceRuntime
 		return newChannel;
 	}
 
-	protected mapChannelToCell(channelId: string) {
+	private mapChannelToCell(channelId: string) {
 		const parts = channelId.split(",");
 		assert(parts.length === 3, "wrong channel ID");
 		const rowId = parts[0];
@@ -398,7 +389,11 @@ export class TempCollabSpaceRuntime
 	}
 
 	// Saves or destoys channel, depending on the arguments
-	protected saveOrDestroyChannel(channel: ICollabChannelCore, allowSave: boolean, allowDestroy) {
+	private saveOrDestroyChannel(
+		channel: ICollabChannelCore,
+		allowSave: boolean,
+		allowDestroy: boolean,
+	) {
 		const channelId = (channel as ICollabChannel).id;
 
 		const record = this.channelInfo.get(channelId);

@@ -2,29 +2,38 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IChannel, Serializable } from "@fluidframework/datastore-definitions";
-import { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import {
+	IChannel,
+	Serializable,
+	IChannelFactory,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions";
 import { ISharedMatrix, MatrixItem } from "@fluidframework/matrix";
 
 /**
  * Interface for internal communication
  * Additional requirements to channel over standard IChannel interface
+ * @internal
  */
 export interface ICollabChannelCore {
 	readonly value: unknown;
 }
 
+/** @internal */
 export type ICollabChannel = IChannel & ICollabChannelCore;
 
+/** @internal */
 export interface ICollabChannelFactory extends IChannelFactory {
 	create2(document: IFluidDataStoreRuntime, id: string, initialValue: unknown): ICollabChannel;
 }
 
+/** @internal */
 export interface MatrixExternalType {
 	value: Serializable<unknown>;
 	type: string;
 }
 
+/** @internal */
 export interface IEfficientMatrix extends Omit<ISharedMatrix<MatrixExternalType>, "getCell"> {
 	// Semantics of this operation differ substantially from regular matrix.
 	// This will overwrite the value of the cell, thus creating a new collab channel (in the future)

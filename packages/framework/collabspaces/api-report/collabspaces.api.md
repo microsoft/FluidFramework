@@ -4,6 +4,134 @@
 
 ```ts
 
+import { FluidDataStoreRuntime } from '@fluidframework/datastore';
+import { FluidObject } from '@fluidframework/core-interfaces';
+import { IChannel } from '@fluidframework/datastore-definitions';
+import { IChannelContext } from '@fluidframework/datastore';
+import { IChannelFactory } from '@fluidframework/datastore-definitions';
+import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions';
+import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
+import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
+import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
+import { IMatrixConsumer } from '@tiny-calc/nano';
+import { IMatrixProducer } from '@tiny-calc/nano';
+import { IMatrixReader } from '@tiny-calc/nano';
+import { IRequest } from '@fluidframework/core-interfaces';
+import { IResponse } from '@fluidframework/core-interfaces';
+import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ISharedMatrix } from '@fluidframework/matrix';
+import { ISharedMatrixEvents } from '@fluidframework/matrix';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { ITelemetryContext } from '@fluidframework/runtime-definitions';
+import { MatrixItem } from '@fluidframework/matrix';
+import { Serializable } from '@fluidframework/datastore-definitions';
+
+// @internal (undocumented)
+export type ICollabChannel = IChannel & ICollabChannelCore;
+
+// @internal
+export interface ICollabChannelCore {
+    // (undocumented)
+    readonly value: unknown;
+}
+
+// @internal (undocumented)
+export interface ICollabChannelFactory extends IChannelFactory {
+    // (undocumented)
+    create2(document: IFluidDataStoreRuntime, id: string, initialValue: unknown): ICollabChannel;
+}
+
+// @internal (undocumented)
+export interface IEfficientMatrix extends Omit<ISharedMatrix<MatrixExternalType>, "getCell"> {
+    // (undocumented)
+    destroyCellChannel(channel: ICollabChannelCore): any;
+    // (undocumented)
+    getCell(row: number, col: number): MatrixItem<MatrixExternalType>;
+    // (undocumented)
+    getCellAsync(row: number, col: number): Promise<MatrixItem<MatrixExternalType>>;
+    // (undocumented)
+    getCellChannel(row: number, col: number): Promise<ICollabChannelCore>;
+    // (undocumented)
+    saveChannelState(channel: ICollabChannelCore): any;
+    // (undocumented)
+    setCell(rowArg: number, colArg: number, value: MatrixItem<MatrixExternalType>): any;
+}
+
+// @internal (undocumented)
+export interface MatrixExternalType {
+    // (undocumented)
+    type: string;
+    // (undocumented)
+    value: Serializable<unknown>;
+}
+
+// @internal (undocumented)
+export class TempCollabSpaceRuntime extends FluidDataStoreRuntime<ISharedMatrixEvents<MatrixExternalType>> implements IEfficientMatrix {
+    constructor(dataStoreContext: IFluidDataStoreContext, sharedObjects: Readonly<ICollabChannelFactory[]>, existing: boolean, provideEntryPoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>);
+    // (undocumented)
+    protected applyStashedChannelChannelOp(address: string, contents: any): Promise<unknown>;
+    // (undocumented)
+    protected attachRemoteChannel(id: string, remoteChannelContext: IChannelContext): void;
+    // (undocumented)
+    closeMatrix(consumer: IMatrixConsumer<MatrixItem<MatrixExternalType>>): void;
+    // (undocumented)
+    get colCount(): number;
+    // (undocumented)
+    destroyCellChannel(channel: ICollabChannelCore): void;
+    // (undocumented)
+    getCell(row: number, col: number): MatrixItem<MatrixExternalType>;
+    // (undocumented)
+    getCellAsync(row: number, col: number): Promise<MatrixItem<MatrixExternalType>>;
+    // (undocumented)
+    getCellChannel(row: number, col: number): Promise<ICollabChannelCore>;
+    initialize(existing: boolean): Promise<void>;
+    // (undocumented)
+    insertCols(colStartArg: number, countArg: number): void;
+    // (undocumented)
+    insertRows(rowStartArg: number, countArg: number): void;
+    // (undocumented)
+    get matrixProducer(): IMatrixProducer<MatrixItem<MatrixExternalType>>;
+    // (undocumented)
+    openMatrix(consumer: IMatrixConsumer<MatrixItem<MatrixExternalType>>): IMatrixReader<MatrixItem<MatrixExternalType>>;
+    // (undocumented)
+    protected processChannelOp(address: string, message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+    // (undocumented)
+    processSignal(message: any, local: boolean): void;
+    // (undocumented)
+    removeCols(colStart: number, count: number): void;
+    // (undocumented)
+    removeRows(rowStart: number, count: number): void;
+    // (undocumented)
+    request(request: IRequest): Promise<IResponse>;
+    // (undocumented)
+    protected reSubmitChannelOp(address: string, contents: any, localOpMetadata: unknown): void;
+    // (undocumented)
+    rollback(type: string, content: any, localOpMetadata: unknown): void;
+    // (undocumented)
+    get rowCount(): number;
+    // (undocumented)
+    saveChannelState(channel: ICollabChannelCore): void;
+    // (undocumented)
+    setCell(rowArg: number, colArg: number, value: MatrixItem<MatrixExternalType>): void;
+    // (undocumented)
+    protected setChannelDirty(address: string): void;
+    // (undocumented)
+    protected submitChannelOp(address: string, contents: any, localOpMetadata: unknown): void;
+    // (undocumented)
+    summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
+}
+
+// @internal (undocumented)
+export class TempCollabSpaceRuntimeFactory implements IFluidDataStoreFactory {
+    constructor(type: string, sharedObjects: readonly ICollabChannelFactory[]);
+    // (undocumented)
+    get IFluidDataStoreFactory(): this;
+    // (undocumented)
+    instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<IFluidDataStoreChannel>;
+    // (undocumented)
+    readonly type: string;
+}
+
 // (No @packageDocumentation comment for this package)
 
 ```

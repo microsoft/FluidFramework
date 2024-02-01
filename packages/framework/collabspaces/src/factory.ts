@@ -15,13 +15,14 @@ import { TempCollabSpaceRuntime } from "./collabSpaces";
 
 /**
  *
- *  Factory for collab spaces
+ * Factory for collab spaces
  *
  */
+/** @internal */
 export class TempCollabSpaceRuntimeFactory implements IFluidDataStoreFactory {
 	constructor(
 		public readonly type: string,
-		protected sharedObjects: readonly ICollabChannelFactory[],
+		private readonly sharedObjects: readonly ICollabChannelFactory[],
 	) {
 		if (this.type === "") {
 			throw new Error("undefined type member");
