@@ -127,7 +127,7 @@
                                       true,
                                       {
                                         "type": "__fluid_handle__",
-                                        "url": "/test/test"
+                                        "url": "/test/tree"
                                       },
                                       []
                                     ]
@@ -223,7 +223,7 @@
                           true,
                           {
                             "type": "__fluid_handle__",
-                            "url": "/test/test"
+                            "url": "/test/tree"
                           },
                           []
                         ]

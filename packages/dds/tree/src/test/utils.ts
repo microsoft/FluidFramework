@@ -1239,7 +1239,7 @@ export function treeTestFactory(
 		id?: string;
 		runtime?: IFluidDataStoreRuntime;
 		attributes?: IChannelAttributes;
-		optionsParam?: SharedTreeOptions;
+		options?: SharedTreeOptions;
 		telemetryContextPrefix?: string;
 	} = {},
 ): SharedTree {
@@ -1252,7 +1252,7 @@ export function treeTestFactory(
 				id: "test",
 			}),
 		options.attributes ?? new SharedTreeFactory().attributes,
-		options.optionsParam ?? { jsonValidator: typeboxValidator },
+		options.options ?? { jsonValidator: typeboxValidator },
 		options.telemetryContextPrefix ?? "SharedTree",
 	);
 }

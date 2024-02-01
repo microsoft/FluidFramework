@@ -47,7 +47,7 @@ import {
 } from "../../core/index.js";
 import { leaf, SchemaBuilder } from "../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { defaultSharedTreeOptions } from "../../shared-tree/sharedTree.js";
+import { SharedTreeOptions, defaultSharedTreeOptions } from "../../shared-tree/sharedTree.js";
 
 const rootField: FieldUpPath = { parent: undefined, field: rootFieldKey };
 const rootNode: UpPath = {
@@ -64,7 +64,7 @@ function generateCompleteTree(
 	fields: FieldKey[],
 	height: number,
 	nodesPerField: number,
-	factory: SharedTreeFactory,
+	options: SharedTreeOptions,
 ): ISharedTree {
 	const idCompressor = createIdCompressor(testSessionId);
 	const tree = treeTestFactory({
@@ -73,6 +73,7 @@ function generateCompleteTree(
 			id: "test",
 			idCompressor,
 		}),
+		options,
 	});
 	const view = schematizeInternal(tree, {
 		allowedSchemaModifications: AllowedUpdateType.Initialize,
@@ -133,13 +134,14 @@ function generateTreeRecursively(
 // TODO: The generated test trees should eventually be updated to use the chunked-forest.
 export function generateTestTrees(useUncompressedEncode?: boolean) {
 	const testEncodeType = useUncompressedEncode === true ? "uncompressed" : "default-compression";
-	const factory = new SharedTreeFactory({
+	const factoryOptions = {
 		jsonValidator: typeboxValidator,
 		treeEncodeType:
 			useUncompressedEncode === true
 				? TreeCompressionStrategy.Uncompressed
 				: defaultSharedTreeOptions.treeEncodeType,
-	});
+	};
+	const factory = new SharedTreeFactory(factoryOptions);
 	const testTrees: {
 		only?: boolean;
 		skip?: boolean;
@@ -337,6 +339,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 						id: "test",
 						idCompressor,
 					}),
+					options: factoryOptions,
 				});
 
 				const tree1 = schematizeInternal(baseTree, {
@@ -379,7 +382,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 				const fieldKeyB: FieldKey = brand("FieldB");
 				const fieldKeyC: FieldKey = brand("FieldC");
 				await takeSnapshot(
-					generateCompleteTree([fieldKeyA, fieldKeyB, fieldKeyC], 2, 3, factory),
+					generateCompleteTree([fieldKeyA, fieldKeyB, fieldKeyC], 2, 3, factoryOptions),
 					`final-${testEncodeType}`,
 				);
 			},
@@ -405,6 +408,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 						id: "test",
 						idCompressor,
 					}),
+					options: factoryOptions,
 				});
 				const view = schematizeInternal(tree, config).checkout;
 
@@ -447,6 +451,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 						id: "test",
 						idCompressor,
 					}),
+					options: factoryOptions,
 				});
 
 				const view = schematizeInternal(tree, config).checkout;
@@ -479,7 +484,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 			name: "empty-root",
 			runScenario: async (takeSnapshot) => {
 				await takeSnapshot(
-					generateCompleteTree([], 0, 0, factory),
+					generateCompleteTree([], 0, 0, factoryOptions),
 					`final-${testEncodeType}`,
 				);
 			},
