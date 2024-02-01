@@ -250,11 +250,11 @@ describe("Garbage Collection Tests", () => {
 
 	it("Pending session expiry closes container", () => {
 		let closeCalled = false;
-		const timethen = 12345;
-		const timenow = defaultSessionExpiryDurationMs;
-		clock.tick(timenow + timethen);
+		const sessionExpiryTimerStarted = 12345;
+		const timenow = sessionExpiryTimerStarted + defaultSessionExpiryDurationMs;
+		clock.tick(timenow);
 		gc = createGarbageCollector(
-			{ sessionExpiryTimerStarted: timethen },
+			{ sessionExpiryTimerStarted },
 			undefined /* gcBlobsMap */,
 			undefined /* gcMetadata */,
 			() => {
