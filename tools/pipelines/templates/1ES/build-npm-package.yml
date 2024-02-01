@@ -180,6 +180,15 @@ extends:
       - stage: build
         displayName: Build Stage
         dependsOn: [] # this stage doesn't depend on preceding stage
+        variables:
+        - name: stageVariableWithTemplateSyntax
+          value: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
+        - name: stageVariableWithTemplateSyntaxReadonly
+          value: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
+          readonly: true
+        - name: testCoverage
+          value: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
+          readonly: true
         jobs:
           # Job - Build
           - job: build
@@ -199,8 +208,6 @@ extends:
               timeoutInMinutes: 90
             variables:
               - group: ado-feeds
-              - name: testCoverage
-                value: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
               - name: releaseBuildVar
                 value: '$[variables.releaseBuild]'
               - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
@@ -210,6 +217,11 @@ extends:
               # used in a few places in the pipeline to push custom telemetry to Kusto.
               - name: absolutePathToTelemetryGenerator
                 value: $(Build.SourcesDirectory)/tools/telemetry-generator
+                readonly: true
+              - name: jobVariableWithTemplateSyntax
+                value: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
+              - name: jobVariableWithTemplateSyntaxReadonly
+                value: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
                 readonly: true
             steps:
               # Setup
@@ -249,6 +261,17 @@ extends:
                     Variables:
                       absolutePathToTelemetryGenerator=$(absolutePathToTelemetryGenerator)
                       BuildReason=${{ variables['Build.Reason'] }}
+
+                    Variables used with template syntax:
+                      stageVariableWithTemplateSyntax=${{ variables.stageVariableWithTemplateSyntax }}
+                      stageVariableWithTemplateSyntaxReadonly=${{ variables.stageVariableWithTemplateSyntaxReadonly }}
+                      jobVariableWithTemplateSyntax=${{ variables.jobVariableWithTemplateSyntax }}
+                      jobVariableWithTemplateSyntaxReadonly=${{ variables.jobVariableWithTemplateSyntaxReadonly }}
+                    Variables used with macro syntax:
+                      stageVariableWithTemplateSyntax=$(stageVariableWithTemplateSyntax)
+                      stageVariableWithTemplateSyntaxReadonly=$(stageVariableWithTemplateSyntaxReadonly)
+                      jobVariableWithTemplateSyntax=$(jobVariableWithTemplateSyntax)
+                      jobVariableWithTemplateSyntaxReadonly=$(jobVariableWithTemplateSyntaxReadonly)
 
                     Publish Parameters:
                       interdependencyRange='${{ parameters.interdependencyRange }}'
