@@ -165,7 +165,7 @@ async function getFileLinkCore(
 
 				let response = await fetchHelper(url, requestInit);
 
-				// Handle redirects by requesting new tokens & retrying the API call against the new site URL. 
+				// Handle redirects by requesting new tokens & retrying the API call against the new site URL.
 				if (!response.content.ok && response.content.redirected) {
 					odspUrlParts.siteUrl = response.content.url.split("/_api/")[0];
 
