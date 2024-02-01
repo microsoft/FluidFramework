@@ -178,8 +178,6 @@ extends:
         - ${{ if eq(parameters.releaseKind, 'docker') }}:
           - name: tagNameOnReleaseImage
             value: ${{ parameters.tagName }}
-        - name: ComponentDetection.Timeout
-          value: 900
       jobs:
       - job: build
         displayName: Build Container - ${{ parameters.containerName }}
@@ -188,6 +186,7 @@ extends:
           hostPathToPackArtifact: $(Build.ArtifactStagingDirectory)/pack
           hostPathToTestResultsArtifact: $(Build.ArtifactStagingDirectory)/${{ parameters.buildDirectory }}/nyc
           hostPathToApiExtractorArtifact: $(Build.ArtifactStagingDirectory)/_api-extractor-temp
+          ComponentDetection.Timeout: 900
         steps:
         # Setup
         - checkout: self
