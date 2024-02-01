@@ -5,12 +5,9 @@
 
 import { strict as assert } from "assert";
 import { LoggingError } from "@fluidframework/telemetry-utils";
-import {
-	disableStrictPartialLengthChecks,
-	enableStrictPartialLengthChecks,
-} from "../partialLengths";
 import { MergeTree } from "../mergeTree";
 import { ReconnectTestHelper } from "./reconnectHelper";
+import { useStrictPartialLengthChecks } from "./testUtils";
 
 /**
  * Some tests contain ASCII diagrams of the trees to make it easier to reason about
@@ -44,13 +41,13 @@ import { ReconnectTestHelper } from "./reconnectHelper";
 
 for (const incremental of [true, false]) {
 	describe(`obliterate partial lengths incremental = ${incremental}`, () => {
+		useStrictPartialLengthChecks();
+
 		beforeEach(() => {
-			enableStrictPartialLengthChecks();
 			MergeTree.options.incrementalUpdate = incremental;
 		});
 
 		afterEach(() => {
-			disableStrictPartialLengthChecks();
 			MergeTree.options.incrementalUpdate = true;
 		});
 

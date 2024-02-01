@@ -22,6 +22,7 @@ export {
 	markRangeRemoved,
 	nodeOrdinalsHaveIntegrity,
 	validatePartialLengths,
+	useStrictPartialLengthChecks,
 } from "./testUtils";
 export {
 	annotateRange,
@@ -127,7 +128,3 @@ export {
 	UnassignedSequenceNumber,
 	UniversalSequenceNumber,
 } from "../index";
-export {
-	enableStrictPartialLengthChecks,
-	disableStrictPartialLengthChecks,
-} from "../partialLengths";

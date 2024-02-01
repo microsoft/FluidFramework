@@ -4,22 +4,19 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	disableStrictPartialLengthChecks,
-	enableStrictPartialLengthChecks,
-} from "../partialLengths";
 import { MergeTree } from "../mergeTree";
 import { ReconnectTestHelper } from "./reconnectHelper";
+import { useStrictPartialLengthChecks } from "./testUtils";
 
 for (const incremental of [true, false]) {
 	describe(`obliterate partial lengths incremental = ${incremental}`, () => {
+		useStrictPartialLengthChecks();
+
 		beforeEach(() => {
-			enableStrictPartialLengthChecks();
 			MergeTree.options.incrementalUpdate = incremental;
 		});
 
 		afterEach(() => {
-			disableStrictPartialLengthChecks();
 			MergeTree.options.incrementalUpdate = true;
 		});
 

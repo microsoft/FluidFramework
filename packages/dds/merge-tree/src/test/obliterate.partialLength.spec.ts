@@ -5,12 +5,8 @@
 
 import { strict as assert } from "assert";
 import { MergeTreeDeltaType } from "../ops";
-import {
-	enableStrictPartialLengthChecks,
-	disableStrictPartialLengthChecks,
-} from "../partialLengths";
 import { TestClient } from "./testClient";
-import { insertText, validatePartialLengths } from "./testUtils";
+import { insertText, useStrictPartialLengthChecks, validatePartialLengths } from "./testUtils";
 
 describe("obliterate partial lengths", () => {
 	let client: TestClient;
@@ -18,8 +14,9 @@ describe("obliterate partial lengths", () => {
 	const localClientId = 17;
 	const remoteClientId = 18;
 
+	useStrictPartialLengthChecks();
+
 	beforeEach(() => {
-		enableStrictPartialLengthChecks();
 		client = new TestClient({
 			mergeTreeEnableObliterate: true,
 		});
@@ -34,10 +31,6 @@ describe("obliterate partial lengths", () => {
 		}
 		assert.equal(client.getText(), "hello world");
 		refSeq = client.getCurrentSeq();
-	});
-
-	afterEach(() => {
-		disableStrictPartialLengthChecks();
 	});
 
 	it("removes text", () => {

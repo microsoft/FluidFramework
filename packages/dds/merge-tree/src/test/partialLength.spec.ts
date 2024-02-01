@@ -6,12 +6,8 @@
 import { UnassignedSequenceNumber } from "../constants";
 import { MergeTree } from "../mergeTree";
 import { MergeTreeDeltaType } from "../ops";
-import {
-	enableStrictPartialLengthChecks,
-	disableStrictPartialLengthChecks,
-} from "../partialLengths";
 import { TextSegment } from "../textSegment";
-import { insertSegments, insertText, markRangeRemoved, validatePartialLengths } from "./testUtils";
+import { insertSegments, insertText, markRangeRemoved, useStrictPartialLengthChecks, validatePartialLengths } from "./testUtils";
 
 describe("partial lengths", () => {
 	let mergeTree: MergeTree;
@@ -19,8 +15,9 @@ describe("partial lengths", () => {
 	const remoteClientId = 18;
 	const refSeq = 0;
 
+	useStrictPartialLengthChecks();
+
 	beforeEach(() => {
-		enableStrictPartialLengthChecks();
 		mergeTree = new MergeTree();
 		insertSegments({
 			mergeTree,
@@ -33,10 +30,6 @@ describe("partial lengths", () => {
 		});
 
 		mergeTree.startCollaboration(localClientId, /* minSeq: */ 0, /* currentSeq: */ 0);
-	});
-
-	afterEach(() => {
-		disableStrictPartialLengthChecks();
 	});
 
 	it("passes with no additional ops", () => {

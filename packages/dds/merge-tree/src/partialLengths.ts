@@ -1185,7 +1185,7 @@ export class PartialSequenceLengths {
 }
 
 /* eslint-disable @typescript-eslint/dot-notation */
-function verifyPartialLengths(
+function verifyPartialLengthsInner(
 	partialSeqLengths: PartialSequenceLengths,
 	partialLengths: PartialSequenceLengthsSet,
 	clientPartials: boolean,
@@ -1266,29 +1266,7 @@ function verifyPartialLengths(
 	return count;
 }
 
-/**
- * Enable stricter partial length assertions
- *
- * Note that these assertions can be expensive, and so should not be enabled in
- * production code or tests that run through thousands of ops (e.g. the SharedString
- * fuzz tests).
- *
- * @internal
- */
-export function enableStrictPartialLengthChecks() {
-	PartialSequenceLengths.options.verifier = verify;
-	PartialSequenceLengths.options.verifyExpected = verifyExpected;
-}
-
-/**
- * @internal
- */
-export function disableStrictPartialLengthChecks() {
-	PartialSequenceLengths.options.verifier = undefined;
-	PartialSequenceLengths.options.verifyExpected = undefined;
-}
-
-function verifyExpected(
+export function verifyExpectedPartialLengths(
 	mergeTree: MergeTree,
 	node: IMergeBlock,
 	refSeq: number,
@@ -1327,11 +1305,11 @@ function verifyExpected(
 	}
 }
 
-function verify(partialSeqLengths: PartialSequenceLengths) {
+export function verifyPartialLengths(partialSeqLengths: PartialSequenceLengths) {
 	if (partialSeqLengths["clientSeqNumbers"]) {
 		for (const cliSeq of partialSeqLengths["clientSeqNumbers"]) {
 			if (cliSeq) {
-				verifyPartialLengths(partialSeqLengths, cliSeq, true);
+				verifyPartialLengthsInner(partialSeqLengths, cliSeq, true);
 			}
 		}
 
@@ -1341,7 +1319,7 @@ function verify(partialSeqLengths: PartialSequenceLengths) {
 			0x059 /* "Client view exists but flat view does not!" */,
 		);
 
-		verifyPartialLengths(partialSeqLengths, partialSeqLengths["partialLengths"], false);
+		verifyPartialLengthsInner(partialSeqLengths, partialSeqLengths["partialLengths"], false);
 	} else {
 		// If we don't have a client view, we shouldn't have the flat view either
 		assert(

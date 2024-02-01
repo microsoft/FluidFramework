@@ -10,10 +10,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import {
-	disableStrictPartialLengthChecks,
-	enableStrictPartialLengthChecks,
-} from "@fluidframework/merge-tree/dist/test";
+import { useStrictPartialLengthChecks } from "@fluidframework/merge-tree/dist/test";
 import { SharedString } from "../sharedString";
 import { IntervalStickiness } from "../intervals";
 import { Side } from "../intervalCollection";
@@ -90,14 +87,11 @@ describe("interval rebasing", () => {
 	let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
 	let clients: [Client, Client, Client];
 
+	useStrictPartialLengthChecks();
+
 	beforeEach(() => {
-		enableStrictPartialLengthChecks();
 		containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 		clients = constructClients(containerRuntimeFactory);
-	});
-
-	afterEach(() => {
-		disableStrictPartialLengthChecks();
 	});
 
 	it("does not crash for an interval that lies on segment that has been removed locally", () => {
@@ -526,6 +520,9 @@ describe("interval rebasing", () => {
 	});
 
 	// todo: potentially related to AB#7050
+	// 
+	// this is a reduced fuzz test from the suite
+	// `SharedString with rebasing and reconnect`
 	it.skip("...", async () => {
 		const A = constructClient(containerRuntimeFactory, "A");
 
@@ -636,12 +633,12 @@ describe("interval rebasing", () => {
 	it("delete and insert text into range containing interval while disconnected", async () => {
 		// 012
 		// (0)-x-12
+		clients[0].containerRuntime.connected = false;
 		const intervals = clients[0].sharedString.getIntervalCollection("comments");
 		clients[0].sharedString.insertText(0, "012");
 		intervals.add({ start: 0, end: 2, props: { intervalId: "0" } });
 		assertSequenceIntervals(clients[0].sharedString, intervals, [{ start: 0, end: 2 }]);
 
-		clients[0].containerRuntime.connected = false;
 		clients[0].sharedString.insertText(1, "x");
 		clients[0].sharedString.removeRange(0, 1);
 		clients[0].containerRuntime.connected = true;
