@@ -1,8 +1,0 @@
-variables:
-- name: variableFromMyPipeline
-  value: variableFromMyPipeline
-
-extends:
-  template: /tools/pipelines/my-template.yml
-  parameters:
-    myParamWithMacroValuePassedIn: $(test)
