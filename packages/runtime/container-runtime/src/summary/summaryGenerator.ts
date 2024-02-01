@@ -439,6 +439,8 @@ export class SummaryGenerator {
 					...summarizeTelemetryProps,
 					handle: ackNackOp.contents.handle,
 				});
+				// This processes the summary ack of the successful summary. This is so that the next summary does not
+				// start before the ack of the previous summary is processed.
 				await this.refreshLatestSummaryCallback({
 					proposalHandle: summarizeOp.contents.handle,
 					ackHandle: ackNackOp.contents.handle,
