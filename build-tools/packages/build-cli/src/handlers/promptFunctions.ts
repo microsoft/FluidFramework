@@ -6,7 +6,7 @@ import chalk from "chalk";
 import { Machine } from "jssm";
 
 import { type InstructionalPrompt, mapADOLinks } from "../instructionalPromptWriter";
-import { difference, generateReleaseBranchName, getPreReleaseDependencies } from "../lib";
+import { difference, generateReleaseBranchName, getPreReleaseDependencies } from "../library";
 import { CommandLogger } from "../logging";
 import { MachineState } from "../machines";
 import { isReleaseGroup } from "../releaseGroups";

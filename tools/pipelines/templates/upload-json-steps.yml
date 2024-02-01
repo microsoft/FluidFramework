@@ -19,24 +19,33 @@ steps:
   clean: true
 
 # Download the api-extractor outputs
-- download: common_definitions
-  artifact: _api-extractor-temp
-- download: common_utils
-  artifact: _api-extractor-temp
-- download: container_definitions
-  artifact: _api-extractor-temp
-- download: core_interfaces
-  artifact: _api-extractor-temp
-- download: driver_definitions
-  artifact: _api-extractor-temp
-- download: protocol_definitions
-  artifact: _api-extractor-temp
-- download: azure
-  artifact: _api-extractor-temp
-- download: client
-  artifact: _api-extractor-temp
-- download: server
-  artifact: _api-extractor-temp
+- template: download-api-extractor-artifact.yml
+  parameters:
+    pipelineName: Build - common-definitions
+- template: download-api-extractor-artifact.yml
+  parameters:
+    pipelineName: Build - common-utils
+- template: download-api-extractor-artifact.yml
+  parameters:
+    pipelineName: Build - container-definitions
+- template: download-api-extractor-artifact.yml
+  parameters:
+    pipelineName: Build - core-interfaces
+- template: download-api-extractor-artifact.yml
+  parameters:
+    pipelineName: Build - driver-definitions
+- template: download-api-extractor-artifact.yml
+  parameters:
+    pipelineName: Build - protocol-definitions
+- template: download-api-extractor-artifact.yml
+  parameters:
+    pipelineName: Build - azure
+- template: download-api-extractor-artifact.yml
+  parameters:
+    pipelineName: Build - client packages
+- template: download-api-extractor-artifact.yml
+  parameters:
+    pipelineName: server-routerlicious
 
 # Copy and merge the api-extractor outputs to a central location
 - task: CopyFiles@2

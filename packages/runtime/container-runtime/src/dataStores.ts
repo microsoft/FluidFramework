@@ -19,6 +19,7 @@ import {
 	CreateSummarizerNodeSource,
 	IAttachMessage,
 	IEnvelope,
+	IFluidDataStoreChannel,
 	IFluidDataStoreContextDetached,
 	IGarbageCollectionData,
 	IInboundSignalMessage,
@@ -61,7 +62,7 @@ import {
 	LocalDetachedFluidDataStoreContext,
 } from "./dataStoreContext";
 import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs";
-import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
+import { IDataStoreAliasMessage, channelToDataStore, isDataStoreAliasMessage } from "./dataStore";
 import { GCNodeType, detectOutboundRoutesViaDDSKey, disableDatastoreSweepKey } from "./gc";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summary";
 
@@ -153,6 +154,7 @@ export class DataStores implements IDisposable {
 					createSummarizerNodeFn: this.getCreateChildSummarizerNodeFn(key, {
 						type: CreateSummarizerNodeSource.FromSummary,
 					}),
+					groupId: value.groupId,
 				});
 			} else {
 				if (typeof value !== "object") {
@@ -239,6 +241,7 @@ export class DataStores implements IDisposable {
 			runtime: this.runtime,
 			storage: new StorageServiceWithAttachBlobs(this.runtime.storage, flatAttachBlobs),
 			scope: this.runtime.scope,
+			groupId: snapshotTree?.groupId,
 			createSummarizerNodeFn: this.getCreateChildSummarizerNodeFn(attachMessage.id, {
 				type: CreateSummarizerNodeSource.FromAttach,
 				sequenceNumber: message.sequenceNumber,
@@ -344,6 +347,7 @@ export class DataStores implements IDisposable {
 		pkg: Readonly<string[]>,
 		isRoot: boolean,
 		id = uuid(),
+		groupId?: string,
 	): IFluidDataStoreContextDetached {
 		assert(!id.includes("/"), 0x30c /* Id cannot contain slashes */);
 
@@ -359,12 +363,15 @@ export class DataStores implements IDisposable {
 			makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
 			snapshotTree: undefined,
 			isRootDataStore: isRoot,
+			groupId,
+			channelToDataStoreFn: (channel: IFluidDataStoreChannel, channelId: string) =>
+				channelToDataStore(channel, channelId, this.runtime, this, this.runtime.logger),
 		});
 		this.contexts.addUnbound(context);
 		return context;
 	}
 
-	public _createFluidDataStoreContext(pkg: string[], id: string, props?: any) {
+	public _createFluidDataStoreContext(pkg: string[], id: string, props?: any, groupId?: string) {
 		assert(!id.includes("/"), 0x30d /* Id cannot contain slashes */);
 		const context = new LocalFluidDataStoreContext({
 			id,
@@ -379,6 +386,7 @@ export class DataStores implements IDisposable {
 			snapshotTree: undefined,
 			isRootDataStore: false,
 			createProps: props,
+			groupId,
 		});
 		this.contexts.addUnbound(context);
 		return context;
@@ -461,7 +469,23 @@ export class DataStores implements IDisposable {
 			return;
 		}
 
-		assert(!!context, 0x162 /* "There should be a store context for the op" */);
+		if (context === undefined) {
+			// Former assert 0x162
+			throw DataProcessingError.create(
+				"No context for op",
+				"processFluidDataStoreOp",
+				message,
+				{
+					local,
+					messageDetails: JSON.stringify({
+						type: message.type,
+						contentType: typeof message.contents,
+					}),
+					...tagCodeArtifacts({ address: envelope.address }),
+				},
+			);
+		}
+
 		context.process(transformed, local, localMessageMetadata);
 
 		// By default, we use the new behavior of detecting outbound routes here.

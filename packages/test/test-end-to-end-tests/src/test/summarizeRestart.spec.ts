@@ -15,12 +15,13 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils";
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
-import { SharedCounter } from "@fluidframework/counter";
 
 describeCompat(
 	"Summarizer closes instead of refreshing",
-	"2.0.0-rc.1.0.0",
-	(getTestObjectProvider) => {
+	"NoCompat",
+	(getTestObjectProvider, apis) => {
+		const { SharedCounter } = apis.dds;
+
 		const configProvider = createTestConfigProvider();
 		const testContainerConfig: ITestContainerConfig = {
 			runtimeOptions: {

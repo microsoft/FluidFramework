@@ -183,10 +183,5 @@ describe("IntervalCollection fuzz testing with rebasing", () => {
 			flushMode: FlushMode.TurnBased,
 			enableGroupedBatching: true,
 		},
-		// Skipped due to 0x54e, see AB#5337 or comment on "default interval collection" fuzz suite.
-		skip: [
-			1, 9, 11, 12, 15, 16, 19, 21, 23, 26, 28, 30, 31, 32, 33, 36, 41, 42, 45, 46, 47, 49,
-			51, 53, 55, 56, 57, 59, 61, 65, 66, 73, 74, 77, 79, 81, 85, 87, 89, 90, 92, 94, 98,
-		],
 	});
 });

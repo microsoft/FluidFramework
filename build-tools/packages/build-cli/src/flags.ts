@@ -15,7 +15,7 @@ import {
 	VersionScheme,
 } from "@fluid-tools/version-tools";
 
-import { DependencyUpdateType } from "./lib";
+import { DependencyUpdateType } from "./library";
 import { isReleaseGroup, ReleaseGroup } from "./releaseGroups";
 
 /**

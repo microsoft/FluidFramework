@@ -108,8 +108,8 @@
 		"@fluidframework/protocol-definitions": "^3.2.0-231454",
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/tinylicious-driver": "workspace:~",
-		"uuid": "^9.0.0"
+		"@fluidframework/telemetry-utils": "workspace:~",
+		"@fluidframework/tinylicious-driver": "workspace:~"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
