@@ -31,28 +31,43 @@ if (!existsSync(previousPackageJsonPath)) {
 }
 
 /**
- * Retrieves the alpha trimmed file path for type definitions from the API Extractor configuration.
+ * Attempts to retrieve  a specified type of rollup file path for type definitions from the API Extractor configuration.
+ * @param {string} rollupType - The type of rollup file path to retrieve (ex: "alpha", "beta", "public").
  * @returns {string} The path to the alpha trimmed type definitions file.
  * @throws {Error} If api-extractor config cannot be loaded or if the alpha trimmed file path is undefined
  */
-function getAlphaTypeRollupPathsFromExtractorConfig(): string {
-	//Load the api-extractor
-	const extractorConfigOptions = ExtractorConfig.tryLoadForFolder({
-		startingFolder: previousBasePath,
-	});
-	if (!extractorConfigOptions || !extractorConfigOptions.configObjectFullPath) {
-		throw new Error("Failed to load extractor configuration.");
+function getTypeRollupPathFromExtractorConfig(
+	rollupType: "alpha" | "beta" | "public" | "untrimmed",
+): string | undefined {
+	try {
+		//Load the api-extractor
+		const extractorConfigOptions = ExtractorConfig.tryLoadForFolder({
+			startingFolder: previousBasePath,
+		});
+		if (!extractorConfigOptions || !extractorConfigOptions.configObjectFullPath) {
+			console.warn(
+				"API Extractor configuration not found. Falling back to default behavior.",
+			);
+			return undefined;
+		}
+		const apiExtractorConfigPath = extractorConfigOptions.configObjectFullPath;
+		const apiExtractorConfig = readJsonSync(extractorConfigOptions.configObjectFullPath);
+		// Resolve the api-extractor-base file path
+		const baseConfigPath = path.resolve(
+			path.dirname(apiExtractorConfigPath),
+			apiExtractorConfig.extends,
+		);
+		const baseConfig = readJsonSync(baseConfigPath);
+		const rollupPath = baseConfig.dtsRollup[`${rollupType}TrimmedFilePath`];
+		if (!rollupPath) {
+			console.warn(`Rollup path for "${rollupType}" not found.`);
+			return undefined;
+		}
+		return rollupPath;
+	} catch (error) {
+		console.error(`Error loading API Extractor configuration: ${error}`);
+		return undefined;
 	}
-	const apiExtractorConfigPath = extractorConfigOptions.configObjectFullPath;
-	const apiExtractorConfig = readJsonSync(extractorConfigOptions.configObjectFullPath);
-	// Resolve the api-extractor-base file path
-	const baseConfigPath = path.resolve(
-		path.dirname(apiExtractorConfigPath),
-		apiExtractorConfig.extends,
-	);
-	const baseConfig = readJsonSync(baseConfigPath);
-
-	return baseConfig.dtsRollup["alphaTrimmedFilePath"];
 }
 
 /**
@@ -62,7 +77,7 @@ function getAlphaTypeRollupPathsFromExtractorConfig(): string {
  * @param previousPackageJson
  * @returns string - A type definition filepath based on the appropriate export.
  */
-function getTypePathsFromExport(previousPackageJson: PackageJson): string {
+function getTypePathFromExport(previousPackageJson: PackageJson): string {
 	if (!previousPackageJson.exports) {
 		throw new Error("The 'exports' field is missing in the package.json.");
 	}
@@ -85,7 +100,7 @@ function getTypePathsFromExport(previousPackageJson: PackageJson): string {
 	return typeDefinitionFilePath;
 }
 
-const typeRollupPaths = getAlphaTypeRollupPathsFromExtractorConfig();
+const typeRollupPaths = getTypeRollupPathFromExtractorConfig("alpha");
 
 let typeDefinitionFilePath: string;
 
@@ -96,7 +111,7 @@ if (typeRollupPaths) {
 	const previousPackageJson: PackageJson = readJsonSync(previousPackageJsonPath);
 	// Check the exports entries
 	if (previousPackageJson.exports) {
-		typeDefinitionFilePath = getTypePathsFromExport(previousPackageJson);
+		typeDefinitionFilePath = getTypePathFromExport(previousPackageJson);
 		// Check the types field from the previous package.json as a fallback
 	} else if (previousPackageJson.types) {
 		typeDefinitionFilePath = path.join(previousBasePath, previousPackageJson.types);
