@@ -26,17 +26,23 @@ export class SharedCounter extends SharedCounterBase implements ICollabChannel {
 		this._value = initialValue;
 	}
 
+	// TBD
 	public get dirty(): boolean {
 		return true;
 	}
 
+	// TBD
 	public get lastSeqNumber(): number {
 		return 0;
 	}
 }
 
 export class CounterFactory extends CounterFactoryBase {
-	public create2(document: IFluidDataStoreRuntime, id: string, initialValue: unknown): ICollabChannel {
+	public create2(
+		document: IFluidDataStoreRuntime,
+		id: string,
+		initialValue: unknown,
+	): ICollabChannel {
 		const counter = new SharedCounter(id, document, this.attributes, initialValue as number);
 		counter.initializeLocal();
 		return counter;

@@ -74,7 +74,8 @@ describeCompat("Temporal Collab Spaces", "2.0.0-rc.1.0.0", (getTestObjectProvide
 
 		let value = await datastore.getCellAsync(100, 5);
 
-		const channel = (await datastore.getCellChannel(100, 5)) as (ISharedCounter & ICollabChannelCore);
+		const channel = (await datastore.getCellChannel(100, 5)) as ISharedCounter &
+			ICollabChannelCore;
 		// TBD - this fails as we are not properlly initializing channel
 		// assert(channel.value === value?.value, "not the same value");
 

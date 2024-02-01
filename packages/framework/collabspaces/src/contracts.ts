@@ -2,18 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import {
-	IChannel,
-	Serializable,
-} from "@fluidframework/datastore-definitions";
-import {
-	IChannelFactory,
-	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import {
-	ISharedMatrix,
-	MatrixItem,
-} from "@fluidframework/matrix";
+import { IChannel, Serializable } from "@fluidframework/datastore-definitions";
+import { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { ISharedMatrix, MatrixItem } from "@fluidframework/matrix";
 
 /**
  * Interface for internal communication
@@ -64,7 +55,7 @@ export interface IEfficientMatrix extends Omit<ISharedMatrix<MatrixExternalType>
 	// Save content from channel to cell
 	// Operation could fail for multiple reasons:
 	//  - due to FWW merge policy used, and another client either doing save or overwriting cell.
-    //  - if channel is no longer "rooted" in a cell.
+	//  - if channel is no longer "rooted" in a cell.
 	// In general, this operation does not change how system should evaluate cell value - all clients
 	// should continue to treat channel content as a source of truth unless/untill it's safe to destroy channel
 	// But it's a prerequisite to ability of clients to destroy channel.

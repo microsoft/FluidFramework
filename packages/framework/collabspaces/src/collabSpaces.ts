@@ -10,14 +10,8 @@ import {
 	ITelemetryContext,
 	IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions";
-import {
-	IChannelFactory,
-	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import {
-	FluidDataStoreRuntime,
-	IChannelContext,
-} from "@fluidframework/datastore";
+import { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { FluidDataStoreRuntime, IChannelContext } from "@fluidframework/datastore";
 import {
 	SharedMatrix,
 	SharedMatrixFactory,
@@ -35,7 +29,6 @@ import {
 
 import { IMatrixConsumer, IMatrixReader, IMatrixProducer } from "@tiny-calc/nano";
 import { v4 as uuid } from "uuid";
-
 
 /*
  * This is a prototype, an implementation of sparse matrix that natively supports collaboration.
@@ -114,7 +107,6 @@ import { v4 as uuid } from "uuid";
  *    be optimized to be fast, especially for main case (no channel)
  *
  */
-
 
 const matrixId = "matrix";
 
@@ -346,7 +338,7 @@ export class TempCollabSpaceRuntime
 		const currValue = this.matrix.getCell(row, col);
 
 		// TBD - can this be optimized and assume only single client can undo such operation?
-		// 
+		//
 		// If channel is no longer associated with a cell, can't do much!
 		// We are dealing with non-rooted channel. It could be returned back to life through undo
 		// It's possible that it sits on undo stack of multiple clients (imagine that both clients

@@ -8,9 +8,7 @@ import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions";
-import {
-	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 
 import { IEfficientMatrix, ICollabChannelFactory } from "./contracts";
 import { TempCollabSpaceRuntime } from "./collabSpaces";
@@ -51,5 +49,3 @@ export class TempCollabSpaceRuntimeFactory implements IFluidDataStoreFactory {
 		return runtime;
 	}
 }
-
-
