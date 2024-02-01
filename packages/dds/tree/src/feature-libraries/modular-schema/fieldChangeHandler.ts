@@ -75,6 +75,8 @@ export interface FieldChangeHandler<
 	 * and could be removed from the ModularChangeset tree without changing its behavior.
 	 */
 	isEmpty(change: TChangeset): boolean;
+
+	createEmpty(): TChangeset;
 }
 
 export interface FieldChangeRebaser<TChangeset> {
@@ -87,7 +89,8 @@ export interface FieldChangeRebaser<TChangeset> {
 	 * See `ChangeRebaser` for more details.
 	 */
 	compose(
-		changes: TaggedChange<TChangeset>[],
+		change1: TaggedChange<TChangeset>,
+		change2: TaggedChange<TChangeset>,
 		composeChild: NodeChangeComposer,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
@@ -142,12 +145,13 @@ export interface FieldChangeRebaser<TChangeset> {
  * This should only be used for fields where the child nodes cannot be edited.
  */
 export function referenceFreeFieldChangeRebaser<TChangeset>(data: {
-	compose: (changes: TChangeset[]) => TChangeset;
+	compose: (change1: TChangeset, change2: TChangeset) => TChangeset;
 	invert: (change: TChangeset) => TChangeset;
 	rebase: (change: TChangeset, over: TChangeset) => TChangeset;
 }): FieldChangeRebaser<TChangeset> {
 	return isolatedFieldChangeRebaser({
-		compose: (changes, _composeChild, _genId) => data.compose(changes.map((c) => c.change)),
+		compose: (change1, change2, _composeChild, _genId) =>
+			data.compose(change1.change, change2.change),
 		invert: (change, _invertChild, _genId) => data.invert(change.change),
 		rebase: (change, over, _rebaseChild, _genId) => data.rebase(change, over.change),
 	});
@@ -208,7 +212,10 @@ export type NodeChangeRebaser = (
 /**
  * @internal
  */
-export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => NodeChangeset;
+export type NodeChangeComposer = (
+	change1: NodeChangeset | undefined,
+	change2: NodeChangeset | undefined,
+) => NodeChangeset;
 
 /**
  * @internal

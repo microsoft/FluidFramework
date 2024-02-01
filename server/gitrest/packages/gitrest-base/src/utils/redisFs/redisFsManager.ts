@@ -35,6 +35,7 @@ import {
 export interface RedisFsConfig {
 	enableRedisFsMetrics: boolean;
 	redisApiMetricsSamplingPeriod: number;
+	enableOptimizedStat: boolean;
 }
 
 export class RedisFsManager implements IFileSystemManager {
@@ -362,8 +363,17 @@ export class RedisFs implements IFileSystemPromises {
 	public async stat(filepath: PathLike, options?: StatOptions): Promise<Stats | BigIntStats>;
 	public async stat(filepath: PathLike, options?: any): Promise<Stats | BigIntStats> {
 		const filepathString = filepath.toString();
-		const data = await executeRedisFsApiWithMetric(
-			async () => this.redisFsClient.get<string | Buffer>(filepathString),
+		const dataLength = await executeRedisFsApiWithMetric(
+			async () => {
+				if (this.redisFsConfig.enableOptimizedStat) {
+					return this.redisFsClient.peek(filepathString);
+				}
+				const data = await this.redisFsClient.get<string | Buffer>(filepathString);
+				if (data === null) {
+					return -1;
+				}
+				return data.length;
+			},
 			RedisFsApis.Stat,
 			this.redisFsConfig.enableRedisFsMetrics,
 			this.redisFsConfig.redisApiMetricsSamplingPeriod,
@@ -373,11 +383,11 @@ export class RedisFs implements IFileSystemPromises {
 			true,
 		);
 
-		if (data === null) {
+		if (dataLength === -1) {
 			throw new RedisFsError(SystemErrors.ENOENT, filepath.toString());
 		}
 
-		const fsEntityType = data === "" ? RedisFSConstants.directory : RedisFSConstants.file;
+		const fsEntityType = dataLength === 0 ? RedisFSConstants.directory : RedisFSConstants.file;
 
 		return getStats(fsEntityType);
 	}
