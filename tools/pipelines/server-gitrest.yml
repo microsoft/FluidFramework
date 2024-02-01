@@ -46,7 +46,7 @@ trigger:
     include:
     - .prettierignore
     - fluidBuild.config.cjs
-    - server/gitrest
+    - server/routerlicious
     - tools/pipelines/server-gitrest.yml
     - tools/pipelines/templates/build-docker-service.yml
     - tools/pipelines/templates/include-set-package-version.yml
@@ -72,7 +72,7 @@ pr:
     include:
     - .prettierignore
     - fluidBuild.config.cjs
-    - server/gitrest
+    - server/routerlicious
     - tools/pipelines/server-gitrest.yml
     - tools/pipelines/templates/build-docker-service.yml
     - tools/pipelines/templates/include-set-package-version.yml
@@ -90,7 +90,7 @@ extends:
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     packageManagerInstallCommand: 'pnpm config set recursive-install false ; pnpm i --frozen-lockfile ; pnpm config set recursive-install true'
     packageManager: pnpm
-    buildDirectory: server/gitrest
+    buildDirectory: server/routerlicious
     containerName: fluidframework/routerlicious/gitrest
     test: test
     tagName: gitrest

@@ -16,12 +16,12 @@ Releases a package or release group.
 
 ```
 USAGE
-  $ flub release [-v | --quiet] [-g client|server|azure|build-tools|gitrest|historian | -p <value>] [-t
+  $ flub release [-v | --quiet] [-g client|server|azure|build-tools | -p <value>] [-t
     major|minor|patch] [-x | --install | --commit | --branchCheck | --updateCheck | --policyCheck]
 
 FLAGS
   -g, --releaseGroup=<option>  Name of a release group.
-                               <options: client|server|azure|build-tools|gitrest|historian>
+                               <options: client|server|azure|build-tools|>
   -p, --package=<value>        Name of package. You can use scoped or unscoped package names. For example, both
                                @fluid-tools/benchmark and benchmark are valid.
   -t, --bumpType=<option>      Version bump type.
@@ -95,12 +95,12 @@ Prints a list of released versions of a package or release group. Releases are g
 
 ```
 USAGE
-  $ flub release history [--json] [-v | --quiet] [-g client|server|azure|build-tools|gitrest|historian | -p <value>]
+  $ flub release history [--json] [-v | --quiet] [-g client|server|azure|build-tools | -p <value>]
     [-l <value>]
 
 FLAGS
   -g, --releaseGroup=<option>  Name of a release group.
-                               <options: client|server|azure|build-tools|gitrest|historian>
+                               <options: client|server|azure|build-tools|>
   -l, --limit=<value>          Limits the number of displayed releases for each release group. Results are sorted by
                                semver, so '--limit 10' will return the 10 highest semver releases for the release group.
   -p, --package=<value>        Name of package. You can use scoped or unscoped package names. For example, both
@@ -140,7 +140,7 @@ Generates a report of Fluid Framework releases.
 ```
 USAGE
   $ flub release report [--json] [-v | --quiet] [-i | -r | -s] [-g
-    client|server|azure|build-tools|gitrest|historian] [-o <value>]
+    client|server|azure|build-tools|] [-o <value>]
 
 FLAGS
   -g, --releaseGroup=<option>
@@ -152,7 +152,7 @@ FLAGS
 
       If you want to report on a particular release, check out the git tag for the release version you want to report on
       before running this command.
-      <options: client|server|azure|build-tools|gitrest|historian>
+      <options: client|server|azure|build-tools|>
 
   -i, --interactive
       Choose the version of each release group and package to contain in the release report.
@@ -243,8 +243,8 @@ Updates which .d.ts file is referenced by the `types` field in package.json. Thi
 ```
 USAGE
   $ flub release setPackageTypesField --types <value> [--json] [-v | --quiet] [--checkFileExists] [--concurrency <value>] [--all |
-    --dir <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
-    client|server|azure|build-tools|gitrest|historian|all] [--private] [--scope <value> | --skipScope <value>]
+    --dir <value> | --packages | -g client|server|azure|build-tools|all | --releaseGroupRoot
+    client|server|azure|build-tools|all] [--private] [--scope <value> | --skipScope <value>]
 
 FLAGS
   --[no-]checkFileExists  Check if the file path exists
@@ -255,7 +255,7 @@ PACKAGE SELECTION FLAGS
   -g, --releaseGroup=<option>...  Run on all child packages within the specified release groups. This does not include
                                   release group root packages. To include those, use the --releaseGroupRoot argument.
                                   Cannot be used with --all, --dir, or --packages.
-                                  <options: client|server|azure|build-tools|gitrest|historian|all>
+                                  <options: client|server|azure|build-tools|all>
   --all                           Run on all packages and release groups. Cannot be used with --all, --dir,
                                   --releaseGroup, or --releaseGroupRoot.
   --dir=<value>                   Run on the package in this directory. Cannot be used with --all, --dir,
@@ -265,7 +265,7 @@ PACKAGE SELECTION FLAGS
   --releaseGroupRoot=<option>...  Run on the root package of the specified release groups. This does not include any
                                   child packages within the release group. To include those, use the --releaseGroup
                                   argument. Cannot be used with --all, --dir, or --packages.
-                                  <options: client|server|azure|build-tools|gitrest|historian|all>
+                                  <options: client|server|azure|build-tools|all>
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.

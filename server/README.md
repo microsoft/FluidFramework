@@ -50,7 +50,7 @@ For development, you'll also need to give docker access to your drive (Shared Dr
 To locally test changes across [GitRest](./gitrest), [Historian](./historian), and [Routerlicious](./routerlicious), run `docker compose -f docker-compose.dev.yml up` from `server/` instead of `server/routerlicious`. Then, when making a change, rebuild the relevant service and restart it. For example,
 
 ```shell
-cd server/gitrest
+cd server/routerlicious
 npm run build
 cd ..
 docker compose restart gitrest

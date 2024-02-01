@@ -52,10 +52,6 @@ Here's the list of release group workspaces:
     -   [./azure](./azure). (Published in the `@fluidframework/` namespace)
 -   routerlicious (Reference Fluid Ordering Service) (Rooted in [./server/routerlicious](./server/routerlicious). Configured by [./server/routerlicious/lerna.json](server/routerlicious/lerna.json))
     -   [Packages](./server/routerlicious/packages) (Published in the `@fluidframework/` namespace)
--   gitrest (Rooted in [./server/gitrest](./server/gitrest). Configured by [./server/gitrest/lerna.json](./server/gitrest/lerna.json))
-    -   [Packages](./server/gitrest/packages) (Published in the `@fluidframework/` namespace)
--   historian (Rooted in [./server/historian](./server/historian). Configured by [./server/historian/lerna.json](./server/historian/lerna.json))
-    -   [Packages](./server/historian/packages) (Published in the `@fluidframework/` namespace)
 -   build-tools (Rooted in [./build-tools](./build-tools). Configured by [./build-tools/lerna.json](./build-tools/lerna.json))
     -   [Packages](./build-tools/packages) (Published in a mix of `@fluidframework/` and `@fluid-tools/` namespaces)
 
