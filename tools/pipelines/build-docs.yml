@@ -186,6 +186,13 @@ stages:
             targetPath: '$(Build.SourcesDirectory)/docs/public'
             artifactName: 'fluidframework-docs'
             publishLocation: 'pipeline'
+        
+        - task: PublishPipelineArtifact@1
+          displayName: 'Publish docs/api artifact'
+          inputs:
+            targetPath: '$(Build.SourcesDirectory)/docs/api'
+            artifactName: 'fluidframework-docs-api'
+            publishLocation: 'pipeline'
 
   # BEGIN Secure development tasks
 - stage: guardian

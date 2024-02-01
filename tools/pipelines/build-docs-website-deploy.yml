@@ -34,12 +34,10 @@ parameters:
     - old
 
 variables:
-- name: isMain
-  value: ${{ eq(variables['Build.SourceBranchName'], 'main') }}
 - name: shouldDeploy
   value: ${{ or(
     eq(parameters.deployOverride, 'force'),
-    and(eq(variables.isMain, true), eq(parameters.deployOverride, 'default'))
+    and(eq(variables['Build.SourceBranchName'], 'main'), eq(parameters.deployOverride, 'default'))
     )}}
 - name: deploymentToken
   ${{ if eq( parameters['deployEnvironment'], 'new' ) }}:
@@ -55,10 +53,6 @@ stages:
     - job: deploy_site
       displayName: 'Deploy website'
       steps:
-        - checkout: self
-          submodules: false
-          clean: true
-
         - task: DownloadPipelineArtifact@2
           displayName: 'Copy fluidframework-docs to public folder'
           inputs:
@@ -70,10 +64,23 @@ stages:
             artifact: fluidframework-docs
             path: '$(Build.SourcesDirectory)/docs/public'
 
+        - task: DownloadPipelineArtifact@2
+          displayName: 'Copy fluidframework-docs-api to api folder'
+          inputs:
+            source: specific
+            project: internal
+            pipeline: build-docs
+            branchName: main
+            buildVersionToDownload: latestFromBranch
+            artifact: fluidframework-docs-api
+            path: '$(Build.SourcesDirectory)/docs/api'
+
         - task: AzureStaticWebApp@0
           displayName: 'Deploy website to ASWA'
           condition: eq(variables.shouldDeploy, true)
           inputs:
+            skip_app_build: true # site was built in previous stage
+            skip_api_build: true # api is written in js, no build needed
             cwd: $(Build.SourcesDirectory)
             app_location: 'docs/public'
             api_location: 'docs/api'
