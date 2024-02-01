@@ -284,18 +284,19 @@ importers:
       '@fluidframework/server-services-telemetry': workspace:~
       '@fluidframework/server-test-utils': workspace:~
       '@microsoft/api-extractor': ^7.39.1
-      '@types/jsrsasign': ^8.0.8
+      '@types/jsrsasign': ^10.5.12
       '@types/mocha': ^10.0.1
       '@types/nock': ^9.3.0
       '@types/node': ^18.17.1
       '@types/sinon': ^9.0.9
+      '@types/uuid': ^9.0.2
       c8: ^8.0.1
       concurrently: ^8.2.1
       copyfiles: ^2.4.1
       debug: ^4.3.4
       eslint: ~8.27.0
       events: ^3.1.0
-      jsrsasign: ^10.5.25
+      jsrsasign: ^11.0.0
       mocha: ^10.2.0
       nock: ^13.3.3
       prettier: ~3.0.3
@@ -317,7 +318,7 @@ importers:
       '@fluidframework/server-test-utils': link:../test-utils
       debug: 4.3.4
       events: 3.3.0
-      jsrsasign: 10.8.6
+      jsrsasign: 11.0.0
       uuid: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli': 0.26.1_u7qdhkoo3ay2mtnmijn73feu3u
@@ -326,11 +327,12 @@ importers:
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-local-server-previous': /@fluidframework/server-local-server/2.0.0
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.17.6
-      '@types/jsrsasign': 8.0.13
+      '@types/jsrsasign': 10.5.12
       '@types/mocha': 10.0.1
       '@types/nock': 9.3.1
       '@types/node': 18.17.6
       '@types/sinon': 9.0.11
+      '@types/uuid': 9.0.2
       c8: 8.0.1
       concurrently: 8.2.1
       copyfiles: 2.4.1
@@ -789,9 +791,10 @@ importers:
       '@fluidframework/server-services-client-previous': npm:@fluidframework/server-services-client@2.0.0
       '@microsoft/api-extractor': ^7.39.1
       '@types/debug': ^4.1.5
-      '@types/jsrsasign': ^8.0.8
+      '@types/jsrsasign': ^10.5.12
       '@types/mocha': ^10.0.1
       '@types/node': ^18.17.1
+      '@types/uuid': ^9.0.2
       axios: ^1.6.2
       axios-mock-adapter: ^1.19.0
       c8: ^8.0.1
@@ -801,7 +804,7 @@ importers:
       debug: ^4.3.4
       eslint: ~8.27.0
       json-stringify-safe: ^5.0.1
-      jsrsasign: ^10.5.25
+      jsrsasign: ^11.0.0
       jwt-decode: ^4.0.0
       mocha: ^10.2.0
       prettier: ~3.0.3
@@ -819,7 +822,7 @@ importers:
       crc-32: 1.2.0
       debug: 4.3.4
       json-stringify-safe: 5.0.1
-      jsrsasign: 10.8.6
+      jsrsasign: 11.0.0
       jwt-decode: 4.0.0
       querystring: 0.2.1
       sillyname: 0.1.0
@@ -832,9 +835,10 @@ importers:
       '@fluidframework/server-services-client-previous': /@fluidframework/server-services-client/2.0.0
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.17.6
       '@types/debug': 4.1.8
-      '@types/jsrsasign': 8.0.13
+      '@types/jsrsasign': 10.5.12
       '@types/mocha': 10.0.1
       '@types/node': 18.17.6
+      '@types/uuid': 9.0.2
       axios-mock-adapter: 1.21.5_axios@1.6.2
       c8: 8.0.1
       concurrently: 8.2.1
@@ -1062,6 +1066,7 @@ importers:
       '@types/nconf': ^0.10.2
       '@types/node': ^18.17.1
       '@types/supertest': ^2.0.5
+      '@types/uuid': ^9.0.2
       axios: ^1.6.2
       body-parser: ^1.17.1
       c8: ^8.0.1
@@ -1125,6 +1130,7 @@ importers:
       '@types/nconf': 0.10.3
       '@types/node': 18.17.6
       '@types/supertest': 2.0.12
+      '@types/uuid': 9.0.2
       axios: 1.6.2_debug@4.3.4
       c8: 8.0.1
       concurrently: 8.2.1
@@ -1293,6 +1299,7 @@ importers:
       '@types/node': ^18.17.1
       '@types/sinon': ^9.0.9
       '@types/string-hash': ^1.1.1
+      '@types/uuid': ^9.0.2
       assert: ^2.0.0
       c8: ^8.0.1
       concurrently: ^8.2.1
@@ -1332,6 +1339,7 @@ importers:
       '@types/node': 18.17.6
       '@types/sinon': 9.0.11
       '@types/string-hash': 1.1.1
+      '@types/uuid': 9.0.2
       c8: 8.0.1
       concurrently: 8.2.1
       eslint: 8.27.0
@@ -7304,8 +7312,8 @@ packages:
       '@types/node': 18.17.6
     dev: true
 
-  /@types/jsrsasign/8.0.13:
-    resolution: {integrity: sha512-+0Ij59D6NXP48KkeLhPXeQKOyLjvA9CD7zacc0Svy2IWHdl62BmDeTvGSIwKaGZSoamLJOo+on1AG/wPRLsd7A==}
+  /@types/jsrsasign/10.5.12:
+    resolution: {integrity: sha512-sOA+eVnHU+FziThpMhuqs/tjFKe5gHVJKIS7g1BzhXP+e2FS8OvtzM0K3IzFxVksDOr98Gz5FJiZVxZ9uFoHhw==}
     dev: true
 
   /@types/keyv/3.1.4:
@@ -13904,13 +13912,13 @@ packages:
       semver: 7.5.4
     dev: true
 
-  /jsrsasign/10.8.6:
-    resolution: {integrity: sha512-bQmbVtsfbgaKBTWCKiDCPlUPbdlRIK/FzSwT3BzIgZl/cU6TqXu6pZJsCI/dJVrZ9Gir5GC4woqw9shH/v7MBw==}
-    dev: false
-
   /jsrsasign/10.9.0:
     resolution: {integrity: sha512-QWLUikj1SBJGuyGK8tjKSx3K7Y69KYJnrs/pQ1KZ6wvZIkHkWjZ1PJDpuvc1/28c1uP0KW9qn1eI1LzHQqDOwQ==}
     dev: true
+
+  /jsrsasign/11.0.0:
+    resolution: {integrity: sha512-BtRwVKS+5dsgPpAtzJcpo5OoWjSs1/zllSBG0+8o8/aV0Ki76m6iZwHnwnsqoTdhfFZDN1XIdcaZr5ZkP+H2gg==}
+    dev: false
 
   /jssm-viz-cli/5.89.2:
     resolution: {integrity: sha512-LMUh0iqc8vXK1IzbarXgmWyeNEAHoYOIS0qt6NeC4slIhY+l3Pz7t1Qh+FLLbtECXWJJcBdlUMeLVB2E4re5Bg==}

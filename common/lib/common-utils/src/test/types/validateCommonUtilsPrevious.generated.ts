@@ -120,26 +120,14 @@ use_old_TypeAliasDeclaration_EventEmitterEventType(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_EventForwarder": {"forwardCompat": false}
+* "RemovedClassDeclaration_EventForwarder": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_EventForwarder():
-    TypeOnly<old.EventForwarder>;
-declare function use_current_ClassDeclaration_EventForwarder(
-    use: TypeOnly<current.EventForwarder>);
-use_current_ClassDeclaration_EventForwarder(
-    get_old_ClassDeclaration_EventForwarder());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_EventForwarder": {"backCompat": false}
+* "RemovedClassDeclaration_EventForwarder": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_EventForwarder():
-    TypeOnly<current.EventForwarder>;
-declare function use_old_ClassDeclaration_EventForwarder(
-    use: TypeOnly<old.EventForwarder>);
-use_old_ClassDeclaration_EventForwarder(
-    get_current_ClassDeclaration_EventForwarder());
 
 /*
 * Validate forward compat by using old type in place of current type

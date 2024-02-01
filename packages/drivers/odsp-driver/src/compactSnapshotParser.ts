@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ISnapshotContents } from "./odspPublicUtils";
+import { ISnapshot } from "@fluidframework/driver-definitions";
 import { ReadBuffer } from "./ReadBufferUtils";
 import {
 	assertBlobCoreInstance,
@@ -29,7 +29,7 @@ export const currentReadVersion = "1.0";
  * represents how many times slower parsing path is executed. This will be then logged into telemetry.
  * @internal
  */
-export interface ISnapshotContentsWithProps extends ISnapshotContents {
+export interface ISnapshotContentsWithProps extends ISnapshot {
 	telemetryProps: Record<string, number>;
 }
 
@@ -40,7 +40,7 @@ export interface ISnapshotContentsWithProps extends ISnapshotContents {
 function readBlobSection(node: NodeTypes) {
 	assertNodeCoreInstance(node, "TreeBlobs should be of type NodeCore");
 	let slowBlobStructureCount = 0;
-	const blobs: Map<string, ArrayBuffer> = new Map();
+	const blobContents: Map<string, ArrayBuffer> = new Map();
 	for (const blob of node) {
 		assertNodeCoreInstance(blob, "blob should be node");
 
@@ -56,7 +56,7 @@ function readBlobSection(node: NodeTypes) {
 		) {
 			// "id": <node name>
 			// "data": <blob>
-			blobs.set(blob.getString(1), blob.getBlob(3).arrayBuffer);
+			blobContents.set(blob.getString(1), blob.getBlob(3).arrayBuffer);
 			continue;
 		}
 
@@ -67,9 +67,9 @@ function readBlobSection(node: NodeTypes) {
 		const records = getNodeProps(blob);
 		assertBlobCoreInstance(records.data, "data should be of BlobCore type");
 		const id = getStringInstance(records.id, "blob id should be string");
-		blobs.set(id, records.data.arrayBuffer);
+		blobContents.set(id, records.data.arrayBuffer);
 	}
-	return { blobs, slowBlobStructureCount };
+	return { blobContents, slowBlobStructureCount };
 }
 
 /**
@@ -249,19 +249,20 @@ export function parseCompactSnapshotResponse(
 	);
 
 	const [snapshot, durationSnapshotTree] = measure(() => readSnapshotSection(records.snapshot));
-	const [blobs, durationBlobs] = measure(() => readBlobSection(records.blobs));
+	const [blobContents, durationBlobs] = measure(() => readBlobSection(records.blobs));
 
 	return {
 		...snapshot,
-		...blobs,
+		...blobContents,
 		ops: records.deltas !== undefined ? readOpsSection(records.deltas) : [],
 		latestSequenceNumber: records.lsn,
+		snapshotFormatV: 1,
 		telemetryProps: {
 			...telemetryProps,
 			durationSnapshotTree,
 			durationBlobs,
 			slowTreeStructureCount: snapshot.slowTreeStructureCount,
-			slowBlobStructureCount: blobs.slowBlobStructureCount,
+			slowBlobStructureCount: blobContents.slowBlobStructureCount,
 		},
 	};
 }

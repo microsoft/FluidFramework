@@ -28,6 +28,8 @@ export {
 	IDocumentServicePolicies,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
+	ISnapshot,
+	ISnapshotFetchOptions,
 	IStream,
 	IStreamResult,
 	ISummaryContext,

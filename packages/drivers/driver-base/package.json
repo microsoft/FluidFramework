@@ -122,7 +122,7 @@
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.1.0",
+		"@fluidframework/protocol-definitions": "^3.2.0-231454",
 		"@fluidframework/telemetry-utils": "workspace:~"
 	},
 	"devDependencies": {
@@ -146,7 +146,7 @@
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"socket.io-client": "^4.6.1",
+		"socket.io-client": "^4.7.3",
 		"tsc-multi": "^1.1.0",
 		"typescript": "~5.1.6"
 	},

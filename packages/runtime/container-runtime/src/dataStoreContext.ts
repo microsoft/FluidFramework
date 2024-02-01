@@ -46,6 +46,7 @@ import {
 	SummarizeInternalFn,
 	ITelemetryContext,
 	VisibilityState,
+	IDataStore,
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import {
@@ -109,6 +110,7 @@ export interface IFluidDataStoreContextProps {
 	readonly scope: FluidObject;
 	readonly createSummarizerNodeFn: CreateChildSummarizerNodeFn;
 	readonly pkg?: Readonly<string[]>;
+	readonly groupId?: string;
 }
 
 /** Properties necessary for creating a local FluidDataStoreContext */
@@ -121,6 +123,11 @@ export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContext
 	 * @deprecated 0.16 Issue #1635, #3631
 	 */
 	readonly createProps?: any;
+}
+
+/** Properties necessary for creating a local FluidDataStoreContext */
+export interface ILocalDetachedFluidDataStoreContextProps extends ILocalFluidDataStoreContextProps {
+	readonly channelToDataStoreFn: (channel: IFluidDataStoreChannel, id: string) => IDataStore;
 }
 
 /** Properties necessary for creating a remote FluidDataStoreContext */
@@ -267,6 +274,8 @@ export abstract class FluidDataStoreContext
 	private readonly _containerRuntime: ContainerRuntime;
 	public readonly storage: IDocumentStorageService;
 	public readonly scope: FluidObject;
+	// Represents the group to which the data store belongs too.
+	public readonly groupId: string | undefined;
 	protected pkg?: readonly string[];
 
 	constructor(
@@ -282,6 +291,7 @@ export abstract class FluidDataStoreContext
 		this.storage = props.storage;
 		this.scope = props.scope;
 		this.pkg = props.pkg;
+		this.groupId = props.groupId;
 
 		// URIs use slashes as delimiters. Handles use URIs.
 		// Thus having slashes in types almost guarantees trouble down the road!
@@ -1190,15 +1200,20 @@ export class LocalDetachedFluidDataStoreContext
 	extends LocalFluidDataStoreContextBase
 	implements IFluidDataStoreContextDetached
 {
-	constructor(props: ILocalFluidDataStoreContextProps) {
+	constructor(props: ILocalDetachedFluidDataStoreContextProps) {
 		super(props);
 		this.detachedRuntimeCreation = true;
+		this.channelToDataStoreFn = props.channelToDataStoreFn;
 	}
+	private readonly channelToDataStoreFn: (
+		channel: IFluidDataStoreChannel,
+		id: string,
+	) => IDataStore;
 
 	public async attachRuntime(
 		registry: IProvideFluidDataStoreFactory,
 		dataStoreChannel: IFluidDataStoreChannel,
-	) {
+	): Promise<IDataStore> {
 		assert(this.detachedRuntimeCreation, 0x154 /* "runtime creation is already attached" */);
 		this.detachedRuntimeCreation = false;
 
@@ -1227,6 +1242,8 @@ export class LocalDetachedFluidDataStoreContext
 		if (await this.isRoot()) {
 			dataStoreChannel.makeVisibleAndAttachGraph();
 		}
+
+		return this.channelToDataStoreFn(dataStoreChannel, this.id);
 	}
 
 	public async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {

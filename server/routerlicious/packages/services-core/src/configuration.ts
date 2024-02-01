@@ -26,6 +26,9 @@ export interface IDeliServerConfiguration {
 	// Enables creating join/leave signals for write clients
 	enableWriteClientSignals: boolean;
 
+	// Enables ephemeral container summary deletion on deli close
+	enableEphemeralContainerSummaryCleanup: boolean;
+
 	// Enables deli to maintain batches as it produces them to the next lambdas
 	maintainBatches: boolean;
 
@@ -220,6 +223,7 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
 		enableNackMessages: true,
 		enableOpHashing: true,
 		enableAutoDSNUpdate: false,
+		enableEphemeralContainerSummaryCleanup: true,
 		checkForIdleClientsOnStartup: false,
 		maintainBatches: false,
 		enableWriteClientSignals: false,
