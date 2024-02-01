@@ -56,6 +56,8 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
     get value(): number;
+    // (undocumented)
+    protected _value: number;
 }
 
 ```

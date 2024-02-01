@@ -75,7 +75,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
 		return new CounterFactory();
 	}
 
-	private _value: number = 0;
+	protected _value: number = 0;
 
 	/**
 	 * {@inheritDoc ISharedCounter.value}

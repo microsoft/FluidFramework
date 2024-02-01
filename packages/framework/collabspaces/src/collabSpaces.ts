@@ -8,38 +8,34 @@ import { FluidObject, IRequest, IResponse } from "@fluidframework/core-interface
 import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
-	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions";
 import {
-	IChannel,
 	IChannelFactory,
 	IFluidDataStoreRuntime,
-	Serializable,
 } from "@fluidframework/datastore-definitions";
 import {
 	FluidDataStoreRuntime,
 	IChannelContext,
-	ISharedObjectRegistry,
 } from "@fluidframework/datastore";
 import {
 	SharedMatrix,
 	SharedMatrixFactory,
-	ISharedMatrix,
 	MatrixItem,
 	ISharedMatrixEvents,
 } from "@fluidframework/matrix";
 import { UsageError } from "@fluidframework/telemetry-utils";
+import {
+	MatrixExternalType,
+	ICollabChannel,
+	ICollabChannelCore,
+	IEfficientMatrix,
+	ICollabChannelFactory,
+} from "./contracts";
 
 import { IMatrixConsumer, IMatrixReader, IMatrixProducer } from "@tiny-calc/nano";
-import { CounterFactory, ISharedCounter } from "@fluidframework/counter";
 import { v4 as uuid } from "uuid";
 
-import { describeCompat } from "@fluid-private/test-version-utils";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 
 /*
  * This is a prototype, an implementation of sparse matrix that natively supports collaboration.
@@ -119,68 +115,7 @@ import { IContainer, LoaderHeader } from "@fluidframework/container-definitions"
  *
  */
 
-/*
- * Public APIs
- */
 
-// interface for internal communication
-interface ITempChannel {
-	readonly value: unknown;
-
-	// Tells if channel has a any local (non-acked) changes.
-	readonly dirty: boolean;
-
-	// describes the sequence number of last op in this channel
-	readonly lastSeqNumber: number;
-}
-
-type Channel = IChannel & ITempChannel;
-
-interface MatrixExternalType {
-	value: Serializable<unknown>;
-	type: string;
-}
-
-interface IEfficientMatrix extends Omit<ISharedMatrix<MatrixExternalType>, "getCell"> {
-	// Semantics of this operation differ substantially from regular matrix.
-	// This will overwrite the value of the cell, thus creating a new collab channel (in the future)
-	// Usually used to change cell type to a different type.
-	// When such change occurs, the old channel that was associated with this cell becomes
-	// non-rooted, i.e. it no longer is accosiated wit the cell. Ops might still come in for such channel
-	// due to races / offline clients.
-	// Old channel could come back to life (become again rooted / associated with cell) through undo!
-	setCell(rowArg: number, colArg: number, value: MatrixItem<MatrixExternalType>);
-
-	// TBD - need to get rid of synchronous version, as I do not think we can deliver it.
-	// Removing it causes a bunch of type issues, so leaving NYI version for now.
-	getCell(row: number, col: number): MatrixItem<MatrixExternalType>;
-	getCellAsync(row: number, col: number): Promise<MatrixItem<MatrixExternalType>>;
-
-	// Returns collab channel that is associated with a cell. Type of the channel depeds on type of cell
-	// If collab channel already exists, it is returned. Otherwise new channel is created.
-	// While channel is active, it represents the truth for a cell. getCell*() API will
-	// return channel value while channel exists.
-	getCellChannel(row: number, col: number): Promise<ITempChannel>;
-
-	// Save content from channel to cell
-	// Operation could fail for multiple reasons:
-	//  - due to FWW merge policy used, and another client either doing save or overwriting cell.
-    //  - if channel is no longer "rooted" in a cell.
-	// In general, this operation does not change how system should evaluate cell value - all clients
-	// should continue to treat channel content as a source of truth unless/untill it's safe to destroy channel
-	// But it's a prerequisite to ability of clients to destroy channel.
-	saveChannelState(channel: ITempChannel);
-
-	// Experimental! It can be called only when condirions are right:
-	// - data has been saved to cell in non-conflicting matter.
-	//   - this means there are no channel ops in between last save's ref seq number and current point in time!
-	// - no records on undo stack
-	destroyCellChannel(channel: ITempChannel);
-}
-
-/*
- * Internal busineess
- */
 const matrixId = "matrix";
 
 interface MatrixInernalType extends MatrixExternalType {
@@ -204,7 +139,7 @@ type ICellInfo =
 	  }
 	| {
 			value: Exclude<MatrixItem<MatrixInernalType>, undefined>;
-			channel: Promise<ITempChannel> | undefined;
+			channel: Promise<ICollabChannelCore> | undefined;
 			channelId: string;
 	  };
 
@@ -226,10 +161,13 @@ export class TempCollabSpaceRuntime
 
 	constructor(
 		dataStoreContext: IFluidDataStoreContext,
-		sharedObjectRegistry: ISharedObjectRegistry,
+		sharedObjects: Readonly<ICollabChannelFactory[]>,
 		existing: boolean,
 		provideEntryPoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
 	) {
+		const factories: IChannelFactory[] = [...sharedObjects, new SharedMatrixFactory()];
+		const sharedObjectRegistry = new Map(factories.map((ext) => [ext.type, ext]));
+
 		super(dataStoreContext, sharedObjectRegistry, existing, provideEntryPoint);
 	}
 
@@ -324,7 +262,7 @@ export class TempCollabSpaceRuntime
 
 		return {
 			value: cellValue,
-			channel: channel as Promise<ITempChannel> | undefined,
+			channel: channel as Promise<ICollabChannelCore> | undefined,
 			channelId,
 		};
 	}
@@ -335,10 +273,10 @@ export class TempCollabSpaceRuntime
 			return undefined;
 		}
 		const factory = this.sharedObjectRegistry.get(type);
-		return factory;
+		return factory as ICollabChannelFactory;
 	}
 
-	public async getCellChannel(row: number, col: number): Promise<ITempChannel> {
+	public async getCellChannel(row: number, col: number): Promise<ICollabChannelCore> {
 		const { value, channel, channelId } = this.getCellInfo(row, col);
 		if (value === undefined) {
 			throw new UsageError("Can't create channel for undefined cell");
@@ -350,10 +288,7 @@ export class TempCollabSpaceRuntime
 		const factory = this.getFactoryForValueType(value.type, true /* onlyCollaborativeTypes */);
 		assert(factory !== undefined, "Factory is missing for matrix type");
 
-		const newChannel = factory.create(this, channelId) as Channel;
-
-		// TBD - need to initialize it with value.value!
-
+		const newChannel = factory.create2(this, channelId, value.value);
 		this.addChannel(newChannel);
 
 		return newChannel;
@@ -395,8 +330,8 @@ export class TempCollabSpaceRuntime
 	}
 
 	// Saves or destoys channel, depending on the arguments
-	protected saveOrDestroyChannel(channel: ITempChannel, allowSave: boolean, allowDestroy) {
-		const channelId = (channel as Channel).id;
+	protected saveOrDestroyChannel(channel: ICollabChannelCore, allowSave: boolean, allowDestroy) {
+		const channelId = (channel as ICollabChannel).id;
 
 		// Can't do anything if there are any local changes.
 		if (channel.dirty) {
@@ -450,12 +385,12 @@ export class TempCollabSpaceRuntime
 		}
 	}
 
-	public saveChannelState(channel: ITempChannel) {
+	public saveChannelState(channel: ICollabChannelCore) {
 		this.saveOrDestroyChannel(channel, true /* allowSave */, false /* allowDestroy */);
 	}
 
 	// TBD - need to build a lot of protections here on when it's safe to do this operaton
-	public destroyCellChannel(channel: ITempChannel) {
+	public destroyCellChannel(channel: ICollabChannelCore) {
 		this.saveOrDestroyChannel(channel, true /* allowSave */, true /* allowDestroy */);
 	}
 
@@ -578,131 +513,3 @@ export class TempCollabSpaceRuntime
 
 	// #endregion ISharedMatrix
 }
-
-export class TempCollabSpaceRuntimeFactory implements IFluidDataStoreFactory {
-	// TBD - incorporate ITempChannel requirement to sharedObjectRegistry
-	private readonly sharedObjectRegistry: ISharedObjectRegistry;
-
-	constructor(
-		public readonly type: string,
-		sharedObjects: readonly IChannelFactory[],
-	) {
-		if (this.type === "") {
-			throw new Error("undefined type member");
-		}
-		const factories: IChannelFactory[] = [...sharedObjects, new SharedMatrixFactory()];
-		this.sharedObjectRegistry = new Map(factories.map((ext) => [ext.type, ext]));
-	}
-
-	public get IFluidDataStoreFactory() {
-		return this;
-	}
-
-	public async instantiateDataStore(
-		context: IFluidDataStoreContext,
-		existing: boolean,
-	): Promise<IFluidDataStoreChannel> {
-		const runtime = new TempCollabSpaceRuntime(
-			context,
-			this.sharedObjectRegistry,
-			existing,
-			async (runtimeArg: IFluidDataStoreRuntime) => {
-				return runtimeArg as TempCollabSpaceRuntime as IEfficientMatrix;
-			},
-		);
-
-		await runtime.initialize(existing);
-		return runtime;
-	}
-}
-
-export function sampleFactory() {
-	return new TempCollabSpaceRuntimeFactory("MatrixWithCollab", [new CounterFactory()]);
-}
-
-/**
- * Validates that incremental summaries can be performed at the sub DDS level, i.e., a DDS can summarizer its
- * contents incrementally.
- */
-describeCompat("Temporal Collab Spaces", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
-	let provider: ITestObjectProvider;
-	const defaultFactory = sampleFactory();
-	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
-		defaultFactory,
-		registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
-		runtimeOptions: {},
-	});
-
-	const createContainer = async (): Promise<IContainer> => {
-		return provider.createContainer(runtimeFactory);
-	};
-
-	async function loadContainer(summaryVersion: string) {
-		return provider.loadContainer(runtimeFactory, undefined, {
-			[LoaderHeader.version]: summaryVersion,
-		});
-	}
-
-	beforeEach("getTestObjectProvider", async () => {
-		provider = getTestObjectProvider({ syncSummarizer: true });
-	});
-
-	it("Basic test", async () => {
-		const container = await createContainer();
-		const datastore = (await container.getEntryPoint()) as TempCollabSpaceRuntime;
-
-		const cols = 40;
-		const rows = 10000;
-
-		// +700Mb, but only +200Mb if accounting GC after that.
-		datastore.insertCols(0, cols);
-		datastore.insertRows(0, rows);
-
-		if (global?.gc !== undefined) {
-			global.gc();
-		}
-
-		// 100K rows test numbers:
-		// +550Mb with GC step after that having almost no impact
-		// Though if GC did not run in a step above, this number is much higher (+1GB),
-		// suggesting that actual memory growth is 1GB, but 500Mb offset could be coming
-		// from the fact that GC did not had a chance to run and cleanup after previous step.
-		for (let r = 0; r < rows; r++) {
-			for (let c = 0; c < cols; c++) {
-				datastore.setCell(r, c, { value: 5, type: CounterFactory.Type });
-			}
-		}
-
-		if (global?.gc !== undefined) {
-			global.gc();
-		}
-
-		let value = await datastore.getCellAsync(100, 5);
-
-		const channel = (await datastore.getCellChannel(100, 5)) as ISharedCounter;
-		// TBD - this fails as we are not properlly initializing channel
-		// assert(channel.value === value?.value, "not the same value");
-
-		channel.increment(100);
-		value = await datastore.getCellAsync(100, 5);
-		assert(channel.value === value?.value, "not the same value");
-
-		datastore.saveChannelState(channel);
-		datastore.destroyCellChannel(channel);
-
-		value = await datastore.getCellAsync(100, 5);
-		assert(channel.value === value?.value, "not the same value");
-
-		// 100K rows test numbers:
-		// Read arbitrary column: 1s on my dev box
-		// But only 234ms if using non-async function (and thus not doing await here)!
-		const start = performance.now();
-		for (let i = 0; i < rows; i++) {
-			await datastore.getCellAsync(i, 5);
-			// datastore.getCell(i, 5);
-		}
-		const time = performance.now() - start;
-
-		await provider.ensureSynchronized();
-	});
-});
