@@ -180,15 +180,6 @@ extends:
       - stage: build
         displayName: Build Stage
         dependsOn: [] # this stage doesn't depend on preceding stage
-        variables:
-        - name: stageVariableWithTemplateSyntax
-          value: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
-        - name: stageVariableWithTemplateSyntaxReadonly
-          value: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
-          readonly: true
-        - name: testCoverage
-          value: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
-          readonly: true
         jobs:
           # Job - Build
           - job: build
@@ -217,11 +208,6 @@ extends:
               # used in a few places in the pipeline to push custom telemetry to Kusto.
               - name: absolutePathToTelemetryGenerator
                 value: $(Build.SourcesDirectory)/tools/telemetry-generator
-                readonly: true
-              - name: jobVariableWithTemplateSyntax
-                value: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
-              - name: jobVariableWithTemplateSyntaxReadonly
-                value: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
                 readonly: true
             steps:
               # Setup
