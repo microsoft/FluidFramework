@@ -24,6 +24,10 @@ import {
 	intoStoredSchema,
 	SchemaBuilderBase,
 	FlexTreeTypedField,
+	ViewSchema,
+	defaultSchemaPolicy,
+	createMockNodeKeyManager,
+	nodeKeyFieldKey,
 } from "../../feature-libraries/index.js";
 import {
 	ChunkedForest,
@@ -33,7 +37,7 @@ import {
 	ObjectForest,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/object-forest/objectForest.js";
-import { disposeSymbol, fail } from "../../util/index.js";
+import { brand, disposeSymbol, fail } from "../../util/index.js";
 import {
 	SharedTreeTestFactory,
 	SummarizeType,
@@ -77,6 +81,8 @@ import { typeboxValidator } from "../../external-utilities/index.js";
 import { EditManager } from "../../shared-tree-core/index.js";
 import { leaf, SchemaBuilder } from "../../domains/index.js";
 import { SchemaFactory, TreeConfiguration } from "../../simple-tree/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { requireSchema } from "../../shared-tree/sharedTree.js";
 
 describe("SharedTree", () => {
 	describe("schematize", () => {
@@ -222,25 +228,22 @@ describe("SharedTree", () => {
 				libraries: [leaf.library],
 			});
 			const schemaGeneralized = builder.intoSchema(Any);
-			assert.throws(() => tree.requireSchema(schemaGeneralized, () => undefined));
+			assert.throws(() => assertSchema(tree, schemaGeneralized));
 
 			const log: string[] = [];
 			{
-				const view = tree.requireSchema(schemaEmpty, () => log.push("empty"));
-				assert(view !== undefined);
+				assertSchema(tree, schemaEmpty, () => log.push("empty"));
 			}
 			assert.deepEqual(log, []);
 			updateSchema(tree, schemaGeneralized);
 
 			assert.deepEqual(log, ["empty"]);
 
-			{
-				const view = tree.requireSchema(schemaGeneralized, () =>
-					// TypeScript's type narrowing turned "log" into never[] here since it assumes methods never modify anything, so we have to cast it back to a string[]:
-					(log as string[]).push("general"),
-				);
-				assert(view !== undefined);
-			}
+			assertSchema(tree, schemaGeneralized, () =>
+				// TypeScript's type narrowing turned "log" into never[] here since it assumes methods never modify anything, so we have to cast it back to a string[]:
+				(log as string[]).push("general"),
+			);
+
 			assert.deepEqual(log, ["empty"]);
 			updateSchema(tree, schemaEmpty);
 			assert.deepEqual(log, ["empty", "general"]);
@@ -273,7 +276,7 @@ describe("SharedTree", () => {
 			forest: ForestType.Reference,
 		});
 		const sharedTree = treeTestFactory();
-		const view = sharedTree.schematizeInternal({
+		const view = schematizeInternal(sharedTree, {
 			allowedSchemaModifications: AllowedUpdateType.Initialize,
 			initialTree: 1,
 			schema,
@@ -296,7 +299,7 @@ describe("SharedTree", () => {
 				nodeSchema: new Map(),
 			});
 		}
-		sharedTree.schematizeInternal({
+		schematizeInternal(sharedTree, {
 			allowedSchemaModifications: AllowedUpdateType.Initialize,
 			initialTree: ["x"],
 			schema: stringSequenceRootSchema,
@@ -598,7 +601,7 @@ describe("SharedTree", () => {
 		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 		const [summarizingTree] = provider.trees;
 
-		summarizingTree.schematizeInternal({
+		schematizeInternal(summarizingTree, {
 			schema: stringSequenceRootSchema,
 			allowedSchemaModifications: AllowedUpdateType.Initialize,
 			initialTree: ["a", "b", "c"],
@@ -628,7 +631,7 @@ describe("SharedTree", () => {
 		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 		const [summarizingTree] = provider.trees;
 
-		summarizingTree.schematizeInternal({
+		schematizeInternal(summarizingTree, {
 			schema: stringSequenceRootSchema,
 			allowedSchemaModifications: AllowedUpdateType.Initialize,
 			initialTree: ["a", "b", "c"],
@@ -798,7 +801,7 @@ describe("SharedTree", () => {
 
 	it("can process changes while detached", async () => {
 		const onCreate = (t: SharedTree) => {
-			const view = t.schematizeInternal(emptyStringSequenceConfig);
+			const view = schematizeInternal(t, emptyStringSequenceConfig);
 			view.flexTree.insertAtStart(["B"]);
 			view.flexTree.insertAtStart(["A"]);
 			assert.deepEqual([...view.flexTree], ["A", "B"]);
@@ -917,9 +920,7 @@ describe("SharedTree", () => {
 			} = createTestUndoRedoStacks(tree1.checkout.events);
 
 			provider.processMessages();
-			const tree2 =
-				provider.trees[1].requireSchema(content.schema, () => fail("schema changed")) ??
-				fail("schematize failed");
+			const tree2 = assertSchema(provider.trees[1], content.schema);
 			const {
 				undoStack: undoStack2,
 				redoStack: redoStack2,
@@ -1386,10 +1387,7 @@ describe("SharedTree", () => {
 				allowedSchemaModifications: AllowedUpdateType.Initialize,
 			});
 			provider.processMessages();
-			const tree2 =
-				provider.trees[1].requireSchema(stringSequenceRootSchema, () =>
-					fail("schema changed"),
-				) ?? fail("invalid schema");
+			const tree2 = assertSchema(provider.trees[1], stringSequenceRootSchema);
 
 			// Validate initialization
 			validateViewConsistency(tree1.checkout, tree2.checkout);
@@ -1556,7 +1554,7 @@ describe("SharedTree", () => {
 
 	it("process changes while detached", async () => {
 		const onCreate = (parentTree: SharedTree) => {
-			const parent = parentTree.schematizeInternal({
+			const parent = schematizeInternal(parentTree, {
 				initialTree: ["A"],
 				schema: stringSequenceRootSchema,
 				allowedSchemaModifications: AllowedUpdateType.Initialize,
@@ -1719,6 +1717,14 @@ describe("SharedTree", () => {
 function assertSchema<TRoot extends FlexFieldSchema>(
 	tree: SharedTree,
 	schema: FlexTreeSchema<TRoot>,
+	onDispose: () => void = () => assert.fail(),
 ): FlexTreeView<TRoot> {
-	return tree.requireSchema(schema, () => assert.fail());
+	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, schema);
+	return requireSchema(
+		tree.checkout,
+		viewSchema,
+		onDispose,
+		createMockNodeKeyManager(),
+		brand(nodeKeyFieldKey),
+	);
 }

@@ -316,8 +316,8 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 					const tree1 = schematizeInternal(provider.trees[0], config).checkout;
 					provider.processMessages();
 					const tree2 = schematizeInternal(provider.trees[1], config).checkout;
-					const tree3 = provider.trees[2].schematizeInternal(config).checkout;
-					const tree4 = provider.trees[3].schematizeInternal(config).checkout;
+					const tree3 = schematizeInternal(provider.trees[2], config).checkout;
+					const tree4 = schematizeInternal(provider.trees[3], config).checkout;
 					provider.processMessages();
 					remove(tree1, index, 1);
 					remove(tree2, index, 1);
@@ -339,7 +339,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 					}),
 				});
 
-				const tree1 = baseTree.schematizeInternal({
+				const tree1 = schematizeInternal(baseTree, {
 					allowedSchemaModifications: AllowedUpdateType.Initialize,
 					schema: jsonSequenceRootSchema,
 					initialTree: [],

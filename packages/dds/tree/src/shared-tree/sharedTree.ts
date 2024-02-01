@@ -40,7 +40,6 @@ import {
 	nodeKeyFieldKey as defaultNodeKeyFieldKey,
 	jsonableTreeFromFieldCursor,
 	TreeCompressionStrategy,
-	FlexTreeSchema,
 	ViewSchema,
 	NodeKeyManager,
 	makeMitigatedChangeFamily,
@@ -59,13 +58,7 @@ import {
 	getProxyForField,
 	SchemaIncompatible,
 } from "../simple-tree/index.js";
-import {
-	InitializeAndSchematizeConfiguration,
-	TreeContent,
-	UpdateType,
-	ensureSchema,
-	evaluateUpdate,
-} from "./schematizedTree.js";
+import { TreeContent, UpdateType, ensureSchema, evaluateUpdate } from "./schematizedTree.js";
 import { TreeCheckout, CheckoutEvents, createTreeCheckout } from "./treeCheckout.js";
 import { CheckoutFlexTreeView } from "./treeView.js";
 import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
@@ -233,68 +226,6 @@ export class SharedTree
 		} finally {
 			cursor.free();
 		}
-	}
-
-	/**
-	 * Like {@link ISharedTree.schematizeInternal}, but will never modify the document.
-	 * Intended for tests that don't need to handle (but should detect and fail on) out of schema cases.
-	 *
-	 * @param schema - The view schema to use.
-	 * @param onDispose - A callback.
-	 * Invoked when the returned ISharedTreeView becomes invalid to use due to a change to the stored schema which makes it incompatible with the view schema.
-	 * Called at most once.
-	 * @returns a view compatible with the provided schema, or undefined if the stored schema is not compatible with the provided view schema.
-	 * If this becomes invalid to use due to a change in the stored schema, onDispose will be invoked.
-	 */
-	public requireSchema<TRoot extends FlexFieldSchema>(
-		schema: FlexTreeSchema<TRoot>,
-		onDispose: () => void,
-		nodeKeyManager?: NodeKeyManager,
-		nodeKeyFieldKey?: FieldKey,
-	): CheckoutFlexTreeView<TRoot> {
-		const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, schema);
-		return requireSchema(
-			this.checkout,
-			viewSchema,
-			onDispose,
-			nodeKeyManager ?? createNodeKeyManager(this.runtime.idCompressor),
-			nodeKeyFieldKey ?? brand(defaultNodeKeyFieldKey),
-		);
-	}
-
-	/**
-	 * Like {@link ITree.schematize}, but uses the flex-tree schema system and exposes the tree as a flex-tree.
-	 * @privateRemarks
-	 * This has to avoid its name colliding with `schematize`.
-	 * TODO: Either ITree and ISharedTree should be split into separate objects, the methods should be merged or a better convention for resolving such name conflicts should be selected.
-	 */
-	public schematizeInternal<TRoot extends FlexFieldSchema>(
-		config: InitializeAndSchematizeConfiguration<TRoot>,
-		onDispose?: () => void,
-		nodeKeyManager?: NodeKeyManager,
-		nodeKeyFieldKey?: FieldKey,
-	): CheckoutFlexTreeView<TRoot> {
-		const slots = this.checkout.forest.anchors.slots;
-		if (slots.has(ViewSlot)) {
-			throw new UsageError(
-				"Only one view can be constructed from a given tree at a time. Dispose of the first before creating a second.",
-			);
-		}
-
-		// TODO: support adapters and include them here.
-
-		const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, config.schema);
-		if (!ensureSchema(viewSchema, config.allowedSchemaModifications, this.checkout, config)) {
-			fail("Schematize failed");
-		}
-
-		return requireSchema(
-			this.checkout,
-			viewSchema,
-			onDispose ?? (() => {}),
-			nodeKeyManager ?? createNodeKeyManager(this.runtime.idCompressor),
-			nodeKeyFieldKey ?? brand(defaultNodeKeyFieldKey),
-		);
 	}
 
 	public schematize<TRoot extends ImplicitFieldSchema>(
