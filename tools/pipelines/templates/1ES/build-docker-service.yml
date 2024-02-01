@@ -178,6 +178,8 @@ extends:
         - ${{ if eq(parameters.releaseKind, 'docker') }}:
           - name: tagNameOnReleaseImage
             value: ${{ parameters.tagName }}
+        - name: ComponentDetection.Timeout
+          value: 900
       jobs:
       - job: build
         displayName: Build Container - ${{ parameters.containerName }}
