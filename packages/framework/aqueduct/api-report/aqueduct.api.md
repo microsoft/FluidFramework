@@ -159,7 +159,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
     get IFluidDataStoreFactory(): this;
     // (undocumented)
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry | undefined;
-    instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<FluidDataStoreRuntime<Record<string, never>>>;
+    instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<FluidDataStoreRuntime>;
     get registryEntry(): NamedFluidDataStoreRegistryEntry;
     // (undocumented)
     readonly type: string;
