@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { type IAudience, type IContainer } from "@fluidframework/container-definitions";
+import {
+	type IAudienceOwner,
+	type IAudience,
+	type IContainer,
+} from "@fluidframework/container-definitions";
 import { type IFluidLoadable } from "@fluidframework/core-interfaces";
 import { type IClient } from "@fluidframework/protocol-definitions";
 
@@ -90,10 +94,10 @@ export interface ContainerDevtoolsProps extends HasContainerKey {
  * - {@link GetContainerState.Message}: When received, {@link ContainerStateChange.Message} will be posted in response.
  *
  * - {@link ConnectContainer.Message}: When received, {@link @fluidframework/container-definitions#IContainer.connect}
- * will be called on the {@link ContainerDevtools.container} (if it is disconnected).
+ * will be called on the {@link ContainerDevtools.container} (if it is connected).
  *
  * - {@link DisconnectContainer.Message}: When received, {@link @fluidframework/container-definitions#IContainer.disconnect}
- * will be called on the {@link ContainerDevtools.container} (if it is connected).
+ * will be called on the {@link ContainerDevtools.container} (if it is disconnected).
  *
  * - {@link CloseContainer.Message}: When received, {@link @fluidframework/container-definitions#IContainer.close}
  * will be called on the {@link ContainerDevtools.container}.
@@ -188,37 +192,36 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 			clientId,
 		});
 		this.postContainerStateChange();
-		this.postAudienceStateChange();
 	};
 
 	private readonly containerDisconnectedHandler = (): void => {
+		const clientId = this.container.clientId;
 		this._connectionStateLog.push({
 			newState: ContainerStateChangeKind.Disconnected,
 			timestamp: Date.now(),
-			clientId: undefined,
+			clientId,
 		});
 		this.postContainerStateChange();
-		this.postAudienceStateChange();
 	};
 
 	private readonly containerClosedHandler = (): void => {
+		const clientId = this.container.clientId;
 		this._connectionStateLog.push({
 			newState: ContainerStateChangeKind.Closed,
 			timestamp: Date.now(),
-			clientId: undefined,
+			clientId,
 		});
 		this.postContainerStateChange();
-		this.postAudienceStateChange();
 	};
 
 	private readonly containerDisposedHandler = (): void => {
+		const clientId = this.container.clientId;
 		this._connectionStateLog.push({
 			newState: ContainerStateChangeKind.Disposed,
 			timestamp: Date.now(),
-			clientId: undefined,
+			clientId,
 		});
 		this.postContainerStateChange();
-		this.postAudienceStateChange();
 	};
 
 	// #endregion
@@ -288,7 +291,11 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		[DisconnectContainer.MessageType]: async (untypedMessage) => {
 			const message = untypedMessage as DisconnectContainer.Message;
 			if (message.data.containerKey === this.containerKey) {
+				// Once disconnected, the devtools user will no longer be able to operate the container, it should be removed from the audience list.
+				const audience = this.container.audience as IAudienceOwner;
+				audience.removeMember(this.container.clientId as string);
 				this.container.disconnect(/* TODO: Specify devtools reason here once it is supported */);
+				this.postContainerStateChange();
 				return true;
 			}
 			return false;
