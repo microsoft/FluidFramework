@@ -210,6 +210,9 @@ export class PureDataObjectFactory<
 	 * @param initialState - The initial state to provide to the created data store.
 	 * @returns an object created by this factory. Data store and objects created are not attached to container.
 	 * They get attached only when a handle to one of them is attached to already attached objects.
+	 *
+	 * @deprecated - it's best we don't expose the IFluidDataStoreContext as much as possible. This is a runtime
+	 * concept. Use createInstance or createInstanceWithDataStore instead.
 	 */
 	public async createChildInstance(
 		parentContext: IFluidDataStoreContext,
@@ -231,6 +234,9 @@ export class PureDataObjectFactory<
 	 * @param initialState - The initial state to provide to the created component.
 	 * @returns an object created by this factory. Data store and objects created are not attached to container.
 	 * They get attached only when a handle to one of them is attached to already attached objects.
+	 *
+	 * @deprecated - it's best we don't expose the IFluidDataStoreContext as much as possible. This is a runtime
+	 * concept. Use createInstance or createInstanceWithDataStore instead.
 	 */
 	public async createPeerInstance(
 		peerContext: IFluidDataStoreContext,
@@ -300,6 +306,9 @@ export class PureDataObjectFactory<
 	 * @param initialState - The initial state to provide to the created component.
 	 * @returns an object created by this factory. Data store and objects created are not attached to container.
 	 * They get attached only when a handle to one of them is attached to already attached objects.
+	 *
+	 * @deprecated - the issue with createRootInstance originally and now is that it does not allow the customer to
+	 * decide the conflict resolution policy when an aliasing conflict occurs. Use createInstanceWithDataStore instead.
 	 */
 	public async createRootInstance(
 		rootDataStoreId: string,
