@@ -600,6 +600,7 @@
             "error",
             {
                 "allow": [
+                    "@fluidframework/*/beta",
                     "@fluidframework/*/internal",
                     "*/index.js"
                 ]
