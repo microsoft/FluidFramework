@@ -56,7 +56,7 @@ export const shortCodeMap = {
 	"0x032": "localSeq greater than collab window",
 	"0x033": "Segment group undefined",
 	"0x034": "Segment group not at head of pending rebase queue",
-	"0x035": "Segment group not at head of segment pending queue",
+	"0x035": "Segment group not in segment pending queue",
 	"0x036": "Segment has no pending properties",
 	"0x037": "Segment already has assigned sequence number",
 	"0x038": "Incoming op sequence# < local collabWindow's currentSequence#",

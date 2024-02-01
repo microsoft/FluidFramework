@@ -41,6 +41,15 @@ export class SegmentGroupCollection {
 		return this.segmentGroups.shift()?.data;
 	}
 
+	public remove?(segmentGroup: SegmentGroup): boolean {
+		const found = this.segmentGroups.find((v) => v.data === segmentGroup);
+		if (found === undefined) {
+			return false;
+		}
+		this.segmentGroups.remove(found);
+		return true;
+	}
+
 	/**
 	 * @deprecated This functionality was not meant to be exported and will be removed in a future release
 	 */
