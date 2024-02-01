@@ -105,7 +105,7 @@ describe("SharedString fuzz testing with rebased batches", () => {
 });
 
 // todo: potentially related to AB#7050
-// 
+//
 // `intervalRebasing.spec.ts` contains some reduced tests exhibiting the crashes
 // linked to AB#7050
 describe.skip("SharedString fuzz testing with rebased batches and reconnect", () => {

@@ -15,7 +15,11 @@ import { walkAllChildSegments } from "../mergeTreeNodeWalk";
 import { UnassignedSequenceNumber } from "../constants";
 import { LocalReferenceCollection } from "../localReference";
 import { loadText } from "./text";
-import { PartialSequenceLengths, verifyExpectedPartialLengths, verifyPartialLengths } from "../partialLengths";
+import {
+	PartialSequenceLengths,
+	verifyExpectedPartialLengths,
+	verifyPartialLengths,
+} from "../partialLengths";
 
 export function loadTextFromFile(filename: string, mergeTree: MergeTree, segLimit = 0) {
 	const content = fs.readFileSync(filename, "utf8");
@@ -280,10 +284,10 @@ export function useStrictPartialLengthChecks() {
 	beforeEach(() => {
 		PartialSequenceLengths.options.verifier = verifyPartialLengths;
 		PartialSequenceLengths.options.verifyExpected = verifyExpectedPartialLengths;
-	})
-	
+	});
+
 	afterEach(() => {
 		PartialSequenceLengths.options.verifier = undefined;
-		PartialSequenceLengths.options.verifyExpected = undefined;	
-	})
+		PartialSequenceLengths.options.verifyExpected = undefined;
+	});
 }

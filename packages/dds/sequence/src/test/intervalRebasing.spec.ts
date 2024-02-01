@@ -520,7 +520,7 @@ describe("interval rebasing", () => {
 	});
 
 	// todo: potentially related to AB#7050
-	// 
+	//
 	// this is a reduced fuzz test from the suite
 	// `SharedString with rebasing and reconnect`
 	it.skip("...", async () => {

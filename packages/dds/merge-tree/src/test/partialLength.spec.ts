@@ -7,7 +7,13 @@ import { UnassignedSequenceNumber } from "../constants";
 import { MergeTree } from "../mergeTree";
 import { MergeTreeDeltaType } from "../ops";
 import { TextSegment } from "../textSegment";
-import { insertSegments, insertText, markRangeRemoved, useStrictPartialLengthChecks, validatePartialLengths } from "./testUtils";
+import {
+	insertSegments,
+	insertText,
+	markRangeRemoved,
+	useStrictPartialLengthChecks,
+	validatePartialLengths,
+} from "./testUtils";
 
 describe("partial lengths", () => {
 	let mergeTree: MergeTree;
