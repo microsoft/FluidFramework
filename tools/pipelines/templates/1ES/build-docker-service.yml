@@ -129,6 +129,8 @@ extends:
         name: Azure-Pipelines-1ESPT-ExDShared
         image: windows-2022
         os: windows
+      componentgovernance:
+        timeoutInMinutes: 15
     # Skip tagging if Github PR coming from a fork;  This skips Microsoft security checks that won't work on forks. 
     settings:
       skipBuildTagsForGitHubPullRequests: true
