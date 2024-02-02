@@ -1049,6 +1049,11 @@ describe("SharedTree", () => {
 					const tree1 = schematizeInternal(provider.trees[0], content);
 					const { undoStack: undoStack1, unsubscribe: unsubscribe1 } =
 						createTestUndoRedoStacks(tree1.checkout.events);
+
+					// This test does not correctly handle views getting invalidated by schema changes, so avoid concurrent schematize
+					// which causes view invalidation when resolving the merge.
+					provider.processMessages();
+
 					const tree2 = schematizeInternal(provider.trees[1], content);
 					const { undoStack: undoStack2, unsubscribe: unsubscribe2 } =
 						createTestUndoRedoStacks(tree2.checkout.events);

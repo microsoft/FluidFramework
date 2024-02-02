@@ -76,7 +76,6 @@ import {
 	cursorForMapTreeNode,
 	SchemaBuilderBase,
 	FieldKinds,
-	FlexTreeSchema,
 	ViewSchema,
 	defaultSchemaPolicy,
 } from "../feature-libraries/index.js";
@@ -1162,34 +1161,6 @@ export function mintRevisionTag(): RevisionTag {
 }
 
 export const testRevisionTagCodec = new RevisionTagCodec(testIdCompressor);
-
-/**
- * Like {@link ISharedTree.schematizeInternal}, but will never modify the document.
- * Intended for tests that don't need to handle (but should detect and fail on) out of schema cases.
- *
- * @param schema - The view schema to use.
- * @param onDispose - A callback.
- * Invoked when the returned ISharedTreeView becomes invalid to use due to a change to the stored schema which makes it incompatible with the view schema.
- * Called at most once.
- * @returns a view compatible with the provided schema, or undefined if the stored schema is not compatible with the provided view schema.
- * If this becomes invalid to use due to a change in the stored schema, onDispose will be invoked.
- */
-export function requireSchema2<TRoot extends FlexFieldSchema>(
-	tree: SharedTree,
-	schema: FlexTreeSchema<TRoot>,
-	onDispose: () => void,
-	nodeKeyManager?: NodeKeyManager,
-	nodeKeyFieldKey?: FieldKey,
-): CheckoutFlexTreeView<TRoot> {
-	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, schema);
-	return requireSchema(
-		tree.checkout,
-		viewSchema,
-		onDispose,
-		nodeKeyManager ?? createMockNodeKeyManager(),
-		nodeKeyFieldKey ?? brand(defaultNodeKeyFieldKey),
-	);
-}
 
 /**
  * Like {@link ITree.schematize}, but uses the flex-tree schema system and exposes the tree as a flex-tree.
