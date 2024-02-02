@@ -16,7 +16,6 @@ import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IIdCompressor } from '@fluidframework/id-compressor';
-import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IProvideFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
@@ -230,7 +229,7 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     readonly logger: ITelemetryBaseLogger;
     makeLocallyVisible(): void;
     // (undocumented)
-    readonly options: ILoaderOptions;
+    readonly options: Record<string | number, any>;
     readonly packagePath: readonly string[];
     readonly scope: FluidObject;
     setChannelDirty(address: string): void;

@@ -690,7 +690,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				.catch((error) => {
 					this.loadFinished(error);
 				});
-			if (this.dataStoreRuntime.options?.sequenceInitializeFromHeaderOnly !== true) {
+			if (this.dataStoreRuntime.options.sequenceInitializeFromHeaderOnly !== true) {
 				// if we not doing partial load, await the catch up ops,
 				// and the finalization of the load
 				await loadCatchUpOps;
@@ -807,7 +807,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		}
 		const needsTransformation = message.referenceSequenceNumber !== message.sequenceNumber - 1;
 		let stashMessage: Readonly<ISequencedDocumentMessage> = message;
-		if (this.runtime.options?.newMergeTreeSnapshotFormat !== true) {
+		if (this.runtime.options.newMergeTreeSnapshotFormat !== true) {
 			if (needsTransformation) {
 				this.on("sequenceDelta", transformOps);
 			}
@@ -815,7 +815,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 		this.client.applyMsg(message, local);
 
-		if (this.runtime.options?.newMergeTreeSnapshotFormat !== true) {
+		if (this.runtime.options.newMergeTreeSnapshotFormat !== true) {
 			if (needsTransformation) {
 				this.removeListener("sequenceDelta", transformOps);
 				// shallow clone the message as we only overwrite top level properties,
