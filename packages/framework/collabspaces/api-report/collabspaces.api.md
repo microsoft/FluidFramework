@@ -79,6 +79,8 @@ export class TempCollabSpaceRuntime extends FluidDataStoreRuntime<ISharedMatrixE
     // (undocumented)
     destroyCellChannel(channel: ICollabChannelCore): void;
     // (undocumented)
+    getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
+    // (undocumented)
     getCell(row: number, col: number): MatrixItem<MatrixExternalType>;
     // (undocumented)
     getCellAsync(row: number, col: number): Promise<MatrixItem<MatrixExternalType>>;

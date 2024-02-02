@@ -220,7 +220,7 @@ export class FluidDataStoreRuntime<TEvents = Record<string, never>>
 	 * and the primary way of interacting with some Fluid objects, and should be used if possible.
 	 */
 	public constructor(
-		private readonly dataStoreContext: IFluidDataStoreContext,
+		protected readonly dataStoreContext: IFluidDataStoreContext,
 		protected readonly sharedObjectRegistry: ISharedObjectRegistry,
 		existing: boolean,
 		provideEntryPoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
@@ -649,7 +649,7 @@ export class FluidDataStoreRuntime<TEvents = Record<string, never>>
 					break;
 				}
 
-				case DataStoreMessageType.ChannelOp:
+				case DataStoreMessageType.ChannelOp: {
 					const envelope = message.contents as IEnvelope;
 
 					const transformed: ISequencedDocumentMessage = {
@@ -658,6 +658,7 @@ export class FluidDataStoreRuntime<TEvents = Record<string, never>>
 					};
 					this.processChannelOp(envelope.address, transformed, local, localOpMetadata);
 					break;
+				}
 				default:
 					unreachableCase(type, "unreached");
 			}

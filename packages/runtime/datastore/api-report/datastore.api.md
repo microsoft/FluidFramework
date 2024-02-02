@@ -74,6 +74,8 @@ export class FluidDataStoreRuntime<TEvents = Record<string, never>> extends Type
     // (undocumented)
     protected createChannelCore(channel: IChannel): void;
     // (undocumented)
+    protected readonly dataStoreContext: IFluidDataStoreContext;
+    // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
     dispose(): void;
