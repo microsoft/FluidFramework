@@ -4,6 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { type IDisposable } from "@fluidframework/core-interfaces";
 import {
 	type IDevtoolsMessage,
 	type ISourcedDevtoolsMessage,
@@ -26,6 +27,23 @@ import {
 	devtoolsScriptMessageLoggingOptions,
 	formatDevtoolsScriptMessageForLogging,
 } from "./Logging";
+
+/**
+ * {@link BackgroundConnection} input parameters.
+ */
+export interface BackgroundConnectionParameters {
+	/**
+	 * All messages sent through the returned instance's {@link BackgroundConnection.postMessage}
+	 * method will get this value written to their 'source' property.
+	 * @see {@link @fluidframework/devtools-core#ISourcedDevtoolsMessage}
+	 */
+	messageSource: string;
+
+	/**
+	 * The ID of the tab being connected to through the background service worker.
+	 */
+	tabId: number;
+}
 
 /**
  * Message relay for communicating with the Background Script.
@@ -54,15 +72,39 @@ import {
  */
 export class BackgroundConnection
 	extends TypedEventEmitter<IMessageRelayEvents>
-	implements IMessageRelay
+	implements IMessageRelay, IDisposable
 {
+	/**
+	 * {@inheritDoc BackgroundConnectionParameters.messageSource}
+	 */
+	public readonly messageSource: string;
+
+	/**
+	 * {@inheritDoc BackgroundConnectionParameters.tabId}
+	 */
+	public readonly tabId: number;
+
 	/**
 	 * Port connection to the Background Script
 	 */
 	private backgroundServiceConnection!: TypedPortConnection;
 
-	public static async Initialize(): Promise<BackgroundConnection> {
-		const connection = new BackgroundConnection(extensionMessageSource);
+	/**
+	 * Whether or not the connection has been disposed.
+	 */
+	private _disposed: boolean = false;
+
+	/**
+	 * {@inheritDoc @fluidframework/core-interfaces#IDisposable.disposed}
+	 */
+	public get disposed(): boolean {
+		return this._disposed;
+	}
+
+	public static async Initialize(
+		props: BackgroundConnectionParameters,
+	): Promise<BackgroundConnection> {
+		const connection = new BackgroundConnection(props);
 		await new Promise((resolve) => {
 			connection.once("tabConnected", resolve);
 		});
@@ -72,15 +114,11 @@ export class BackgroundConnection
 	/**
 	 * Creates an instance of {@link BackgroundConnection}.
 	 */
-	private constructor(
-		/**
-		 * All messages sent through the returned instance's {@link BackgroundConnection.postMessage}
-		 * method will get this value written to their 'source' property.
-		 * @see {@link @fluidframework/devtools-core#ISourcedDevtoolsMessage}
-		 */
-		private readonly messageSource: string,
-	) {
+	private constructor(props: BackgroundConnectionParameters) {
 		super();
+
+		this.messageSource = props.messageSource;
+		this.tabId = props.tabId;
 
 		this.connectToBackgroundService();
 	}
@@ -101,6 +139,13 @@ export class BackgroundConnection
 			this.backgroundServiceConnection,
 			devtoolsScriptMessageLoggingOptions,
 		);
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/core-interfaces#IDisposable.dispose}
+	 */
+	public dispose(): void {
+		this._disposed = true;
 	}
 
 	/**
@@ -170,7 +215,7 @@ export class BackgroundConnection
 			source: this.messageSource,
 			type: devToolsInitMessageType,
 			data: {
-				tabId: browser.devtools.inspectedWindow.tabId,
+				tabId: this.tabId,
 			},
 		};
 		postMessageToPort(
