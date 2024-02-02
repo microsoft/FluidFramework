@@ -168,11 +168,7 @@ describe("GCSummaryStateTracker tests", () => {
 		});
 	});
 
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	it.only("Autorecovery", async () => {
+	it("Autorecovery: requesting Full GC", async () => {
 		const tracker: GCSummaryStateTrackerWithPrivates = new GCSummaryStateTracker(
 			{
 				shouldRunGC: true,
@@ -182,12 +178,12 @@ describe("GCSummaryStateTracker tests", () => {
 			},
 			false /* wasGCRunInBaseSnapshot */,
 		) as any;
-		assert.equal(tracker.autoRecovery.fullGCRequested, false, "Should be false by default");
+		assert.equal(tracker.autoRecovery.fullGCRequested(), false, "Should be false by default");
 
 		tracker.autoRecovery.requestFullGCOnNextRun();
 
 		assert.equal(
-			tracker.autoRecovery.fullGCRequested,
+			tracker.autoRecovery.fullGCRequested(),
 			true,
 			"Should be true after requesting full GC",
 		);
@@ -195,7 +191,12 @@ describe("GCSummaryStateTracker tests", () => {
 		// After the first summary succeeds (refreshLatestSummary called), the state should be reset.
 		await tracker.refreshLatestSummary({ isSummaryTracked: true, isSummaryNewer: true });
 
-		assert.equal(tracker.autoRecovery.fullGCRequested, false, "Should be false after Summary Ack");
+		assert.equal(
+			tracker.autoRecovery.fullGCRequested(),
+			false,
+			"Should be false after Summary Ack",
+		);
+	});
 
 	/**
 	 * These tests validate that the GC data is written in summary incrementally. Basically, only parts of the GC
