@@ -61,17 +61,17 @@ export class AlfredResources implements core.IResources {
 		const producerClosedP = this.producer.close();
 		const mongoClosedP = this.mongoManager.close();
 		const tokenRevocationManagerP = this.tokenRevocationManager
-            ? this.tokenRevocationManager.close()
-            : Promise.resolve();
+			? this.tokenRevocationManager.close()
+			: Promise.resolve();
 		const serviceMessageManagerP = this.serviceMessageResourceManager
 			? this.serviceMessageResourceManager.close()
 			: Promise.resolve();
 		await Promise.all([
-            producerClosedP,
-            mongoClosedP,
-            tokenRevocationManagerP,
-            serviceMessageManagerP,
-        ]);
+			producerClosedP,
+			mongoClosedP,
+			tokenRevocationManagerP,
+			serviceMessageManagerP,
+		]);
 	}
 }
 
