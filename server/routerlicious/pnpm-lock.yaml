@@ -4,7 +4,7 @@ overrides:
   '@types/node': ^18.17.1
   nx>@yarnpkg/parsers: 3.0.0-rc.48.1
   qs: ^6.11.0
-  socket.io-parser: ^4.2.1
+  socket.io-parser: ^4.2.4
   sharp: ^0.33.2
 
 patchedDependencies:
@@ -1088,7 +1088,7 @@ importers:
       serialize-error: ^8.1.0
       socket.io: ^4.6.2
       socket.io-adapter: ^2.4.0
-      socket.io-parser: ^4.2.1
+      socket.io-parser: ^4.2.4
       supertest: ^3.1.0
       typescript: ~4.5.5
       uuid: ^9.0.0
