@@ -7,15 +7,7 @@ import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { Project, SourceFile } from "ts-morph";
 import { typeOnly } from "./compatibility";
-import {getPreviousPackageJsonPath, getTypeRollupPathFromExtractorConfig, checkExportsAndTypes, typeDataFromFile, generateCompatibilityTestCases} from "./typeTestUtils";
-
-const previousPackageJsonPath = getPreviousPackageJsonPath();
-
-if (!existsSync(previousPackageJsonPath)) {
-	throw new Error(
-		`${previousPackageJsonPath} not found. You may need to install the package via pnpm install. Note that type tests logic looks specifically for a package named '${previousPackageName}'`,
-	);
-}
+import { getTypeRollupPathFromExtractorConfig, checkExportsAndTypes, typeDataFromFile, generateCompatibilityTestCases, prepareAndSkipTestGenerationIfDisabled} from "./typeTestUtils";
 
 const typeRollupPaths = getTypeRollupPathFromExtractorConfig("alpha");
 
@@ -28,39 +20,7 @@ if (typeRollupPaths) {
 	typeDefinitionFilePath = checkExportsAndTypes()
 }
 
-const testPath = `./src/test/types`;
-// remove scope if it exists
-const unscopedName = path.basename(packageObject.name);
-
-const fileBaseName = unscopedName
-	.split("-")
-	.map((p) => p[0].toUpperCase() + p.substring(1))
-	.join("");
-const filePath = `${testPath}/validate${fileBaseName}Previous.generated.ts`;
-
-if (packageObject.typeValidation?.disabled) {
-	console.log("skipping type test generation because they are disabled in package.json");
-	// force means to ignore the error if the file does not exist.
-	rmSync(filePath, { force: true });
-	process.exit(0);
-}
-
-{
-	// Information about the previous package from the package.json is not needed,
-	// but error if its missing since it's nice to separate errors for the dep missing here vs not installed.
-	// This block ensures that a critical dependency (the previous package version) is correctly declared in the project's package.json. 
-	const previousDep = packageObject?.devDependencies?.[previousPackageName];
-	if (typeof previousDep !== "string") {
-		throw new Error(`Did not find devDependency ${previousPackageName} in package.json`);
-	}
-}
-
-
-if (!existsSync(`${previousBasePath}/package.json`)) {
-	throw new Error(
-		`${previousBasePath} not found. You may need to install the package via pnpm install.`,
-	);
-}
+prepareAndSkipTestGenerationIfDisabled();
 
 const currentFile = new Project({
 	skipFileDependencyResolution: true,

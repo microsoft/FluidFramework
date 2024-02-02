@@ -5,6 +5,7 @@
 
 import { readJsonSync } from "fs-extra";
 import path from "node:path";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { Project, SourceFile } from "ts-morph";
 import { BrokenCompatTypes } from "../common/fluidRepo";
 import { PackageJson } from "../common/npmPackage";
@@ -20,8 +21,20 @@ const packageObject: PackageJson = readJsonSync("package.json");
 const previousPackageName = `${packageObject.name}-previous`;
 const previousBasePath = path.join("node_modules", previousPackageName);
 
+try {
+	ensureDevDependencyExists(packageObject, previousPackageName);
+}catch(error) {
+	console.error(error);
+}
+
 export function getPreviousPackageJsonPath(): string {
-	return `${previousBasePath}/package.json`;
+	const previousPackageJsonPath = `${previousBasePath}/package.json`;
+	if (!existsSync(previousPackageJsonPath)) {
+		throw new Error(
+			`${previousPackageJsonPath} not found. You may need to install the package via pnpm install. Note that type tests logic looks specifically for a package named '${previousPackageName}'`,
+		);
+	}
+	return previousPackageJsonPath;
 }
 
 
@@ -66,7 +79,7 @@ export function getTypeRollupPathFromExtractorConfig(
 }
 
 /**
- * Extracts the type definition file path from the 'exports' field of a given package.json.
+ * Attempts to extract the type definition file path from the 'exports' field of a given package.json.
  * Checks both 'import' and 'require' resolution methods to find the appropriate path.
  * If the path is found, it is returned. Otherwise, an error is thrown.
  * @param previousPackageJson
@@ -94,13 +107,16 @@ export function getTypePathFromExport(previousPackageJson: PackageJson): string 
 	}
 	return typeDefinitionFilePath;
 }
-
+/**
+ * 
+ * @returns string representing type definition file path
+ */
 export function checkExportsAndTypes(): string {
 	const previousPackageJson: PackageJson = readJsonSync(getPreviousPackageJsonPath());
 	// Check the exports entries
 	if (previousPackageJson.exports) {
 		return getTypePathFromExport(previousPackageJson);
-		// Check the types field from the previous package.json as a fallback
+	// Check the types field from the previous package.json as a fallback
 	} else if (previousPackageJson.types) {
 		return path.join(previousBasePath, previousPackageJson.types);
 	} else {
@@ -188,4 +204,65 @@ export function generateCompatibilityTestCases(testString: string[], previousDat
 		testString.push("");
 	}
 	return testString;
+}
+
+export function prepareAndSkipTestGenerationIfDisabled(){
+	const testPath = `./src/test/types`;
+	// remove scope if it exists
+	const unscopedName = path.basename(packageObject.name);
+
+	const fileBaseName = unscopedName
+		.split("-")
+		.map((p) => p[0].toUpperCase() + p.substring(1))
+		.join("");
+	const filePath = `${testPath}/validate${fileBaseName}Previous.generated.ts`;
+	if (packageObject.typeValidation?.disabled) {
+		console.log("skipping type test generation because they are disabled in package.json");
+		// force means to ignore the error if the file does not exist.
+		rmSync(filePath, { force: true });
+		process.exit(0);
+	}
+}
+
+// Information about the previous package from the package.json is not needed,
+// but error if its missing since it's nice to separate errors for the dep missing here vs not installed.
+// This block ensures that a critical dependency (the previous package version) is correctly declared in the project's package.json.
+function ensureDevDependencyExists(packageObject: PackageJson, dependencyName: string): void {
+    const dependencyVersion = packageObject?.devDependencies?.[dependencyName];
+    if (typeof dependencyVersion !== "string") {
+        throw new Error(`Did not find devDependency ${dependencyName} in package.json`);
+    }
+}
+
+/**
+ * Initializes TypeScript projects for the current and previous package versions and loads specific source files.
+ * @param {string} currentBasePath - The base path for the current package version.
+ * @param {string} previousBasePath - The base path for the previous package version.
+ * @param {string} typeDefinitionFilePath - The path to the type definition file for the previous version.
+ * @param {string} previousPackageName - The package name of the previous version.
+ * @returns {{ currentFile: SourceFile, previousFile: SourceFile }} - The loaded source files for the current and previous versions.
+ */
+function initializeProjectsAndLoadFiles(currentBasePath, previousBasePath, typeDefinitionFilePath, previousPackageName) {
+    const currentProject = new Project({
+        skipFileDependencyResolution: true,
+        tsConfigFilePath: path.join(currentBasePath, "tsconfig.json"),
+    });
+    const currentFile = currentProject.getSourceFileOrThrow("index.ts");
+
+    const previousTsConfigPath = path.join(previousBasePath, "tsconfig.json");
+    const project = new Project({
+        skipFileDependencyResolution: true,
+        tsConfigFilePath: existsSync(previousTsConfigPath) ? previousTsConfigPath : undefined,
+    });
+
+    let previousFile;
+    if (existsSync(typeDefinitionFilePath)) {
+        project.addSourceFilesAtPaths(typeDefinitionFilePath);
+        previousFile = project.getSourceFileOrThrow(`${previousPackageName}-alpha.d.ts`);
+    } else {
+        project.addSourceFilesAtPaths(path.join(previousBasePath, "dist", "**/*.d.ts"));
+        previousFile = project.getSourceFileOrThrow("index.d.ts");
+    }
+
+    return { currentFile, previousFile };
 }
