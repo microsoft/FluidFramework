@@ -1793,7 +1793,7 @@ describe("SharedTree", () => {
 				treeEncodeType: TreeCompressionStrategy.Uncompressed,
 			});
 			const provider = await TestTreeProvider.create(1, SummarizeType.onDemand, factory);
-			provider.trees[0].schematizeInternal({
+			schematizeFlexTree(provider.trees[0], {
 				schema: stringSequenceRootSchema,
 				allowedSchemaModifications: AllowedUpdateType.None,
 				initialTree: ["A", "B", "C"],
@@ -1832,7 +1832,7 @@ describe("SharedTree", () => {
 			});
 			const provider2 = await TestTreeProvider.create(1, SummarizeType.onDemand, factory2);
 
-			provider2.trees[0].schematizeInternal({
+			schematizeFlexTree(provider2.trees[0], {
 				schema: stringSequenceRootSchema,
 				allowedSchemaModifications: AllowedUpdateType.None,
 				initialTree: ["A", "B", "C"],
