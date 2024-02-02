@@ -113,12 +113,11 @@
     </ul>
     {{ $packages := index $.Site.Data.packages $selectedApiVersion }}
     {{ $DDSes := index $packages "DDSes" }}
-    {{ $resultString := "fluid-framework" }}
+    {{ $resultArray := slice "fluid-framework" }}
     {{ range $DDSes }}
-        {{ $parts := split . "/" }}
-        {{ $resultString = printf "%s,%s" $resultString (index $parts 1) }}
+        {{ $element := index (split . "/") 1 }}
+        {{ $resultArray = $resultArray | append $element }}
     {{ end }}
-    {{ $resultArray := split $resultString "," }}
 
     {{ $isPackageActive := false }}
     {{ range $resultArray }}
@@ -196,8 +195,7 @@
                     {{ end }}
                 {{ end }}
                 {{ $isDDSActive := false }}
-                {{ $modifiedArray := after 1 $resultArray }}
-                {{ range $modifiedArray }}
+                {{ range after 1 $resultArray }}
                     {{ if in $current.RelPermalink . }}
                         {{ $isDDSActive = true }}
                     {{ end }}
@@ -234,6 +232,7 @@
                                         {{ end }}
                                     {{ end }}
                                     <li class="panel {{ if $isCurrentPage }}active{{ end }} {{ if $hasActiveLeaf }}active-leaf{{ end }}">
+
                                         <a href="{{$targetPage.RelPermalink}}" 
                                         class="packages nav-page padding-35px" 
                                         data-toggle="collapse" 
@@ -253,12 +252,12 @@
         
                                                     <li class="panel type-definitions {{ if $isCategoryActive }}active expanded{{ else }}collapsed{{ end }}">
                                                         <div href="#" class="api-item-kind {{ $categoryLower }}-link padding-45px" 
-                                                            data-toggle="collapse" data-target="#dds-{{ $category }}-content"
+                                                            data-toggle="collapse" data-target="#dds-{{ $packageKey }}-{{ $category }}-content"
                                                         >
                                                             {{ $categoryPlural }}
                                                         </div>
                                                         
-                                                        <ul id="dds-{{ $category }}-content" class="collapse {{ if $isCategoryActive }}in{{ end }}">
+                                                        <ul id="dds-{{ $packageKey }}-{{ $category }}-content" class="collapse {{ if $isCategoryActive }}in{{ end }}">
                                                             {{ range $item := index $apiDetails $category }}
                                                                 {{ $itemLink := print (relURL $.Site.Data.versions.apiDocsDirectory) $selectedApiVersion "/" $packageKey "/" (lower $item) "-" $categoryLower }}
                                                                 {{ $isActiveItem := in $currentTrimmedLink (trim (print (lower $item) "-" $categoryLower "/") " ") }}
