@@ -10,8 +10,7 @@ import {
 	makeVersionedValidatedCodec,
 } from "../codec/index.js";
 import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../core/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { SchemaAndPolicy } from "../feature-libraries/chunked-forest/codec/codecs.js";
+import { SchemaAndPolicy } from "../feature-libraries/index.js";
 import {
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnlySchema,
