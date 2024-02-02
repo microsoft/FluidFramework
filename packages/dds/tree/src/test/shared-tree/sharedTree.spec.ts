@@ -1745,7 +1745,7 @@ describe("SharedTree", () => {
 				jsonValidator: typeboxValidator,
 				treeEncodeType: TreeCompressionStrategy.Compressed,
 			});
-			const provider = new TestTreeProviderLite(1, factory);
+			const provider = new TestTreeProviderLite(2, factory);
 			const tree = provider.trees[0].checkout;
 
 			// Initial schema which allows sequence of strings under field "foo".
