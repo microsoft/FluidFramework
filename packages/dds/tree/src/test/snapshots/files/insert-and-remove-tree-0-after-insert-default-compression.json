@@ -56,22 +56,15 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1
+                                      "type": "com.fluidframework.leaf.string",
+                                      "value": true
                                     }
-                                  },
-                                  {
-                                    "a": 0
                                   }
                                 ],
                                 "data": [
                                   [
-                                    1,
-                                    [
-                                      "com.fluidframework.leaf.string",
-                                      true,
-                                      "42",
-                                      []
-                                    ]
+                                    0,
+                                    "42"
                                   ]
                                 ]
                               }
