@@ -16,28 +16,67 @@ import { IntervalStickiness } from "../intervals";
 import { Side } from "../intervalCollection";
 import { assertConsistent, Client } from "./intervalTestUtils";
 
+function constructClient(
+	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
+	id: string,
+) {
+	const dataStoreRuntime = new MockFluidDataStoreRuntime();
+	dataStoreRuntime.options = {
+		intervalStickinessEnabled: true,
+		mergeTreeEnableObliterate: true,
+	};
+	const sharedString = new SharedString(dataStoreRuntime, id, SharedStringFactory.Attributes);
+	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	const services: IChannelServices = {
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
+		objectStorage: new MockStorage(),
+	};
+
+	sharedString.initializeLocal();
+
+	return {
+		sharedString,
+		containerRuntime,
+		services,
+	};
+}
+
+async function loadClient(
+	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
+	source: Client,
+	id: string,
+): Promise<Client> {
+	const { summary } = source.sharedString.getAttachSummary();
+
+	const dataStoreRuntime = new MockFluidDataStoreRuntime();
+	dataStoreRuntime.options = {
+		intervalStickinessEnabled: true,
+		mergeTreeEnableObliterate: true,
+	};
+	const factory = SharedString.getFactory();
+	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	const services: IChannelServices = {
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
+		objectStorage: MockStorage.createFromSummary(summary),
+	};
+	const sharedString = await factory.load(dataStoreRuntime, id, services, factory.attributes);
+
+	return {
+		sharedString,
+		containerRuntime,
+	};
+}
+
 function constructClients(
 	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
 	numClients = 3,
 ): [Client, Client, Client] {
 	return Array.from({ length: numClients }, (_, index) => {
-		const dataStoreRuntime = new MockFluidDataStoreRuntime();
-		dataStoreRuntime.options = {
-			intervalStickinessEnabled: true,
-			mergeTreeEnableObliterate: true,
-		};
-		const sharedString = new SharedString(
-			dataStoreRuntime,
+		const { sharedString, containerRuntime, services } = constructClient(
+			containerRuntimeFactory,
 			String.fromCharCode(index + 65),
-			SharedStringFactory.Attributes,
 		);
-		const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-		const services: IChannelServices = {
-			deltaConnection: dataStoreRuntime.createDeltaConnection(),
-			objectStorage: new MockStorage(),
-		};
 
-		sharedString.initializeLocal();
 		sharedString.connect(services);
 		return { containerRuntime, sharedString };
 	}) as [Client, Client, Client];
@@ -299,6 +338,30 @@ describe("interval rebasing", () => {
 		containerRuntimeFactory.processAllMessages();
 		assertConsistent(clients);
 		clients[1].containerRuntime.connected = true;
+	});
+
+	it("zamboni avoids modifying segments with pending interval changes through multiple reconnects", async () => {
+		// Note: the specifics of the attach flow shouldn't be necessary here to reproduce this issue.
+		// All that's necessary is that the "R" segment is zamboni'd.
+		// However, due to zamboni's fragility, some care needs to be taken for that to happen.
+		// See AB#7048 for more details.
+		const A = constructClient(containerRuntimeFactory, "A");
+		A.sharedString.insertText(0, "Rr");
+		A.sharedString.connect(A.services);
+		const B = await loadClient(containerRuntimeFactory, A, "B");
+		B.sharedString.removeRange(0, 1);
+		const collection = A.sharedString.getIntervalCollection("comments");
+		collection.add({ start: { pos: 1, side: Side.After }, end: { pos: 0, side: Side.Before } });
+		A.containerRuntime.connected = false;
+		containerRuntimeFactory.processAllMessages();
+		B.sharedString.insertText(0, "8");
+		A.containerRuntime.connected = true;
+		A.containerRuntime.connected = false;
+		B.sharedString.insertText(0, "J");
+		containerRuntimeFactory.processAllMessages();
+		A.containerRuntime.connected = true;
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
 	});
 
 	// Reproduction of seed 70. Appears to be some problem with normalization of segments interacting
