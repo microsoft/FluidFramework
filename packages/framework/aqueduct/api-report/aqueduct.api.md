@@ -146,14 +146,14 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 // @alpha
 export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends DataObjectTypes = DataObjectTypes> implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry> {
     constructor(type: string, ctor: new (props: IDataObjectProps<I>) => TObj, sharedObjects: readonly IChannelFactory[], optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>, registryEntries?: NamedFluidDataStoreRegistryEntries, runtimeClass?: typeof FluidDataStoreRuntime);
-    createChildInstance(parentContext: IFluidDataStoreContext, initialState?: I["InitialState"]): Promise<TObj>;
-    createInstance(runtime: IContainerRuntimeBase, initialState?: I["InitialState"]): Promise<TObj>;
+    createChildInstance(parentContext: IFluidDataStoreContext, initialState?: I["InitialState"], groupId?: string): Promise<TObj>;
+    createInstance(runtime: IContainerRuntimeBase, initialState?: I["InitialState"], groupId?: string): Promise<TObj>;
     // (undocumented)
     protected createInstanceCore(context: IFluidDataStoreContextDetached, initialState?: I["InitialState"]): Promise<TObj>;
-    createInstanceWithDataStore(containerRuntime: IContainerRuntimeBase, initialState?: I["InitialState"], packagePath?: Readonly<string[]>): Promise<[TObj, IDataStore]>;
+    createInstanceWithDataStore(containerRuntime: IContainerRuntimeBase, initialState?: I["InitialState"], packagePath?: Readonly<string[]>, groupId?: string): Promise<[TObj, IDataStore]>;
     // (undocumented)
-    protected createNonRootInstanceCore(containerRuntime: IContainerRuntimeBase, packagePath: Readonly<string[]>, initialState?: I["InitialState"]): Promise<TObj>;
-    createPeerInstance(peerContext: IFluidDataStoreContext, initialState?: I["InitialState"]): Promise<TObj>;
+    protected createNonRootInstanceCore(containerRuntime: IContainerRuntimeBase, packagePath: Readonly<string[]>, initialState?: I["InitialState"], groupId?: string): Promise<TObj>;
+    createPeerInstance(peerContext: IFluidDataStoreContext, initialState?: I["InitialState"], groupId?: string): Promise<TObj>;
     // @deprecated
     createRootInstance(rootDataStoreId: string, runtime: IContainerRuntime, initialState?: I["InitialState"]): Promise<TObj>;
     // (undocumented)

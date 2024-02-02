@@ -208,17 +208,22 @@ export class PureDataObjectFactory<
 	 * @param context - The context being used to create the runtime
 	 * (the created object will have its own new context created as well)
 	 * @param initialState - The initial state to provide to the created data store.
+	 * @param groupId - group to which this data stores belongs to. The datastores with groupId might not be loaded
+	 * immediately. This groupId is also known at service side and can be used to fetch snapshot contents like
+	 * snapshot tree, blobs using this id from the storage.
 	 * @returns an object created by this factory. Data store and objects created are not attached to container.
 	 * They get attached only when a handle to one of them is attached to already attached objects.
 	 */
 	public async createChildInstance(
 		parentContext: IFluidDataStoreContext,
 		initialState?: I["InitialState"],
+		groupId?: string,
 	): Promise<TObj> {
 		return this.createNonRootInstanceCore(
 			parentContext.containerRuntime,
 			[...parentContext.packagePath, this.type],
 			initialState,
+			groupId,
 		);
 	}
 
@@ -229,17 +234,22 @@ export class PureDataObjectFactory<
 	 * @param context - The component context being used to create the object
 	 * (the created object will have its own new context created as well)
 	 * @param initialState - The initial state to provide to the created component.
+	 * @param groupId - group to which this data stores belongs to. The datastores with groupId might not be loaded
+	 * immediately. This groupId is also known at service side and can be used to fetch snapshot contents like
+	 * snapshot tree, blobs using this id from the storage.
 	 * @returns an object created by this factory. Data store and objects created are not attached to container.
 	 * They get attached only when a handle to one of them is attached to already attached objects.
 	 */
 	public async createPeerInstance(
 		peerContext: IFluidDataStoreContext,
 		initialState?: I["InitialState"],
+		groupId?: string,
 	): Promise<TObj> {
 		return this.createNonRootInstanceCore(
 			peerContext.containerRuntime,
 			peerContext.packagePath,
 			initialState,
+			groupId,
 		);
 	}
 
@@ -250,14 +260,18 @@ export class PureDataObjectFactory<
 	 * The name in this registry for such record should match type of this factory.
 	 * @param runtime - container runtime. It's registry is used to create an object.
 	 * @param initialState - The initial state to provide to the created component.
+	 * @param groupId - group to which this data stores belongs to. The datastores with groupId might not be loaded
+	 * immediately. This groupId is also known at service side and can be used to fetch snapshot contents like
+	 * snapshot tree, blobs using this id from the storage.
 	 * @returns an object created by this factory. Data store and objects created are not attached to container.
 	 * They get attached only when a handle to one of them is attached to already attached objects.
 	 */
 	public async createInstance(
 		runtime: IContainerRuntimeBase,
 		initialState?: I["InitialState"],
+		groupId?: string,
 	): Promise<TObj> {
-		return this.createNonRootInstanceCore(runtime, [this.type], initialState);
+		return this.createNonRootInstanceCore(runtime, [this.type], initialState, groupId);
 	}
 
 	/**
@@ -275,8 +289,12 @@ export class PureDataObjectFactory<
 		containerRuntime: IContainerRuntimeBase,
 		initialState?: I["InitialState"],
 		packagePath?: Readonly<string[]>,
+		groupId?: string,
 	): Promise<[TObj, IDataStore]> {
-		const context = containerRuntime.createDetachedDataStore(packagePath ?? [this.type]);
+		const context = containerRuntime.createDetachedDataStore(
+			packagePath ?? [this.type],
+			groupId,
+		);
 		const { instance, runtime } = await createDataObject(
 			this.ctor,
 			context,
@@ -333,8 +351,9 @@ export class PureDataObjectFactory<
 		containerRuntime: IContainerRuntimeBase,
 		packagePath: Readonly<string[]>,
 		initialState?: I["InitialState"],
+		groupId?: string,
 	): Promise<TObj> {
-		const context = containerRuntime.createDetachedDataStore(packagePath);
+		const context = containerRuntime.createDetachedDataStore(packagePath, groupId);
 		return this.createInstanceCore(context, initialState);
 	}
 
