@@ -14,12 +14,7 @@ import {
 	reservedMarkerSimpleTypeKey,
 	reservedTileLabelsKey,
 } from "@fluidframework/merge-tree";
-import {
-	getTextAndMarkers,
-	SharedString,
-	IIntervalCollection,
-	SequenceInterval,
-} from "@fluidframework/sequence";
+import type { SharedString, IIntervalCollection, SequenceInterval } from "@fluidframework/sequence";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import {
 	ChannelFactoryRegistry,
@@ -77,7 +72,9 @@ type SharedObjCallback = (
 // Introduced in 0.37
 // REVIEW: enable compat testing
 describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
-	const { SharedMap, SharedDirectory, SharedCounter } = apis.dds;
+	const { SharedMap, SharedDirectory, SharedCounter, SharedString } = apis.dds;
+	const { getTextAndMarkers } = apis.dataRuntime.packages.sequence;
+
 	const registry: ChannelFactoryRegistry = [
 		[mapId, SharedMap.getFactory()],
 		[stringId, SharedString.getFactory()],
@@ -1729,7 +1726,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 });
 
 describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
-	const { SharedMap, SharedDirectory, SharedCounter } = apis.dds;
+	const { SharedMap, SharedDirectory, SharedCounter, SharedString } = apis.dds;
 	const registry: ChannelFactoryRegistry = [
 		[mapId, SharedMap.getFactory()],
 		[stringId, SharedString.getFactory()],

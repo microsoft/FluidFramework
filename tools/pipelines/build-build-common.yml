@@ -89,6 +89,7 @@ extends:
     tagName: build-common
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
+    testCoverage: ${{ variables.testCoverage }}
     taskBuild: false
     taskBuildDocs: false
     taskLint: false

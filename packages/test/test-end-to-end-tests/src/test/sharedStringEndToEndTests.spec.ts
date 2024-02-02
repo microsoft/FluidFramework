@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { Marker, ReferenceType, reservedMarkerIdKey } from "@fluidframework/merge-tree";
-import { SharedString } from "@fluidframework/sequence";
+import type { SharedString } from "@fluidframework/sequence";
 import {
 	ITestObjectProvider,
 	ITestContainerConfig,
@@ -20,17 +20,16 @@ import {
 import { describeCompat } from "@fluid-private/test-version-utils";
 
 const stringId = "sharedStringKey";
-const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
-const testContainerConfig: ITestContainerConfig = {
-	fluidDataObjectType: DataObjectFactoryType.Test,
-	registry,
-};
-const groupedBatchingContainerConfig: ITestContainerConfig = {
-	...testContainerConfig,
-	runtimeOptions: { enableGroupedBatching: true },
-};
 
-describeCompat("SharedString", "FullCompat", (getTestObjectProvider) => {
+describeCompat("SharedString", "FullCompat", (getTestObjectProvider, apis) => {
+	const { SharedString } = apis.dds;
+
+	const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+	};
+
 	let provider: ITestObjectProvider;
 	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
@@ -125,7 +124,19 @@ describeCompat("SharedString", "FullCompat", (getTestObjectProvider) => {
 	});
 });
 
-describeCompat("SharedString grouped batching", "NoCompat", (getTestObjectProvider) => {
+describeCompat("SharedString grouped batching", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedString } = apis.dds;
+
+	const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+	};
+	const groupedBatchingContainerConfig: ITestContainerConfig = {
+		...testContainerConfig,
+		runtimeOptions: { enableGroupedBatching: true },
+	};
+
 	let provider: ITestObjectProvider;
 	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
