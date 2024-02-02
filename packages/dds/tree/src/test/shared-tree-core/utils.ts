@@ -10,10 +10,12 @@ import {
 	DefaultChangeFamily,
 	DefaultChangeset,
 	DefaultEditBuilder,
+	TreeCompressionStrategy,
 	makeFieldBatchCodec,
 } from "../../feature-libraries/index.js";
 import { testRevisionTagCodec } from "../utils.js";
 import { ICodecOptions } from "../../codec/index.js";
+import { TreeStoredSchemaRepository, TreeStoredSchemaSubscription } from "../../core/index.js";
 
 /**
  * A `SharedTreeCore` with
@@ -31,6 +33,8 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 		runtime: IFluidDataStoreRuntime = new MockFluidDataStoreRuntime(),
 		id = "TestSharedTreeCore",
 		summarizables: readonly Summarizable[] = [],
+		schema: TreeStoredSchemaSubscription = new TreeStoredSchemaRepository(),
+		chunkCompressionStrategy: TreeCompressionStrategy = TreeCompressionStrategy.Uncompressed,
 	) {
 		const codecOptions: ICodecOptions = { jsonValidator: typeboxValidator };
 		super(
@@ -39,12 +43,14 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 				testRevisionTagCodec,
 				makeFieldBatchCodec(codecOptions),
 				codecOptions,
+				chunkCompressionStrategy,
 			),
 			codecOptions,
 			id,
 			runtime,
 			TestSharedTreeCore.attributes,
 			id,
+			schema,
 		);
 	}
 

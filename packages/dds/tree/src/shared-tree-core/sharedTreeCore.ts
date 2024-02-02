@@ -87,7 +87,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 
 	private readonly idCompressor: IIdCompressor;
 
-	private readonly schema: TreeStoredSchemaSubscription | undefined;
+	private readonly schema: TreeStoredSchemaSubscription;
 
 	/**
 	 * @param summarizables - Summarizers for all indexes used by this tree
@@ -107,7 +107,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
 		telemetryContextPrefix: string,
-		schema?: TreeStoredSchemaSubscription,
+		schema: TreeStoredSchemaSubscription,
 	) {
 		super(id, runtime, attributes, telemetryContextPrefix);
 

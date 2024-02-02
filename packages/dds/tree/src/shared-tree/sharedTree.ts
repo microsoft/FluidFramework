@@ -259,6 +259,7 @@ export class SharedTree
 			fieldBatchCodec,
 			events: this._events,
 			removedRoots,
+			chunkCompressionStrategy: options.treeEncodeType,
 		});
 	}
 
