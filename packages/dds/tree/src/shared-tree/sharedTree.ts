@@ -247,7 +247,7 @@ export class SharedTree
 			runtime,
 			attributes,
 			telemetryContextPrefix,
-			schema,
+			{ schema, policy: defaultSchemaPolicy },
 		);
 		this._events = createEmitter<CheckoutEvents>();
 		const localBranch = this.getLocalBranch();

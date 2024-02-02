@@ -20,15 +20,9 @@ import {
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { ICodecOptions, IJsonCodec } from "../codec/index.js";
-import {
-	ChangeFamily,
-	ChangeFamilyEditor,
-	GraphCommit,
-	RevisionTagCodec,
-	TreeStoredSchemaSubscription,
-} from "../core/index.js";
+import { ChangeFamily, ChangeFamilyEditor, GraphCommit, RevisionTagCodec } from "../core/index.js";
 import { brand, JsonCompatibleReadOnly } from "../util/index.js";
-import { defaultSchemaPolicy } from "../feature-libraries/index.js";
+import { SchemaAndPolicy } from "../feature-libraries/index.js";
 import { SharedTreeBranch, getChangeReplaceType } from "./branch.js";
 import { EditManagerSummarizer } from "./editManagerSummarizer.js";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
@@ -87,7 +81,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 
 	private readonly idCompressor: IIdCompressor;
 
-	private readonly schema: TreeStoredSchemaSubscription;
+	private readonly schemaAndPolicy: SchemaAndPolicy;
 
 	/**
 	 * @param summarizables - Summarizers for all indexes used by this tree
@@ -107,11 +101,11 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
 		telemetryContextPrefix: string,
-		schema: TreeStoredSchemaSubscription,
+		schemaAndPolicy: SchemaAndPolicy,
 	) {
 		super(id, runtime, attributes, telemetryContextPrefix);
 
-		this.schema = schema;
+		this.schemaAndPolicy = schemaAndPolicy;
 
 		assert(
 			runtime.idCompressor !== undefined,
@@ -149,7 +143,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 
 		const revisionTagCodec = new RevisionTagCodec(runtime.idCompressor);
 		this.summarizables = [
-			new EditManagerSummarizer(this.editManager, revisionTagCodec, options, this.schema),
+			new EditManagerSummarizer(
+				this.editManager,
+				revisionTagCodec,
+				options,
+				this.schemaAndPolicy,
+			),
 			...summarizables,
 		];
 		assert(
@@ -241,10 +240,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 				sessionId: this.editManager.localSessionId,
 			},
 			{
-				schema:
-					this.schema !== undefined
-						? { policy: defaultSchemaPolicy, schema: this.schema }
-						: undefined,
+				schema: this.schemaAndPolicy ?? undefined,
 			},
 		);
 		this.submitLocalMessage(this.serializer.encode(message, this.handle));

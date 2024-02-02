@@ -11,6 +11,7 @@ import {
 	DefaultChangeset,
 	DefaultEditBuilder,
 	TreeCompressionStrategy,
+	defaultSchemaPolicy,
 	makeFieldBatchCodec,
 } from "../../feature-libraries/index.js";
 import { testRevisionTagCodec } from "../utils.js";
@@ -50,7 +51,7 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 			runtime,
 			TestSharedTreeCore.attributes,
 			id,
-			schema,
+			{ policy: defaultSchemaPolicy, schema },
 		);
 	}
 
