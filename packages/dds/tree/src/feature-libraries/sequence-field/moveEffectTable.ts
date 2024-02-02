@@ -16,7 +16,6 @@ import {
 	splitMarkEffect,
 } from "./utils.js";
 import { MoveMarkEffect } from "./helperTypes.js";
-import { NodeChangeComposer } from "./compose.js";
 
 export type MoveEffectTable<T> = CrossFieldManager<MoveEffect<T>>;
 
@@ -156,36 +155,13 @@ function applyMoveEffectsToDest(
 
 function applyMoveEffectsToSource<T>(
 	mark: Mark<T>,
-	endpoint: ChangeAtomId,
 	updateFinalEndpoint: boolean,
 	revision: RevisionTag | undefined,
 	effects: MoveEffectTable<T>,
-	composeChildren?: NodeChangeComposer<T>,
 ): Mark<T> {
-	let nodeChange = mark.changes;
-	const modifyAfter = getModifyAfter(
-		effects,
-		endpoint.revision ?? revision,
-		endpoint.localId,
-		mark.count,
-	);
-	if (modifyAfter !== undefined) {
-		assert(
-			composeChildren !== undefined,
-			0x569 /* Must provide a change composer if modifying moves */,
-		);
-		nodeChange = composeChildren(mark.changes, modifyAfter);
-	}
-
 	const newMark = cloneMark(mark);
 	if (updateFinalEndpoint && isMoveOut(newMark)) {
 		applySourceEffects(newMark, mark.count, revision, effects);
-	}
-
-	if (nodeChange !== undefined) {
-		newMark.changes = nodeChange;
-	} else {
-		delete newMark.changes;
 	}
 
 	return newMark;
@@ -223,16 +199,14 @@ export function applyMoveEffectsToMark<T>(
 	mark: Mark<T>,
 	revision: RevisionTag | undefined,
 	effects: MoveEffectTable<T>,
-	composeChildren?: NodeChangeComposer<T>,
 ): Mark<T>[] {
-	return applyMoveEffectsToActiveMarks<T>([mark], revision, effects, composeChildren);
+	return applyMoveEffectsToActiveMarks<T>([mark], revision, effects);
 }
 
 function applyMoveEffectsToActiveMarks<T>(
 	inputQueue: Mark<T>[],
 	revision: RevisionTag | undefined,
 	effects: MoveEffectTable<T>,
-	composeChildren: NodeChangeComposer<T> | undefined,
 ) {
 	const outputQueue: Mark<T>[] = [];
 	let mark = inputQueue.shift();
@@ -285,22 +259,6 @@ function applyMoveEffectsToActiveMarks<T>(
 
 				const newMark = cloneMark(mark);
 				applySourceEffects(newMark.detach as MoveOut, mark.count, detachRevision, effects);
-
-				const newChanges = getModifyAfter(
-					effects,
-					detachRevision,
-					mark.detach.id,
-					mark.count,
-				);
-
-				if (newChanges !== undefined) {
-					assert(
-						composeChildren !== undefined,
-						0x814 /* Must provide a change composer if modifying moves */,
-					);
-					newMark.changes = composeChildren(mark.changes, newChanges);
-				}
-
 				outputQueue.push(newMark);
 			} else {
 				outputQueue.push(mark);
@@ -323,16 +281,7 @@ function applyMoveEffectsToActiveMarks<T>(
 						inputQueue.unshift(secondMark);
 					}
 
-					outputQueue.push(
-						applyMoveEffectsToSource(
-							mark,
-							{ revision: mark.revision, localId: mark.id },
-							true,
-							revision,
-							effects,
-							composeChildren,
-						),
-					);
+					outputQueue.push(applyMoveEffectsToSource(mark, true, revision, effects));
 					break;
 				}
 				case "MoveIn": {
@@ -369,27 +318,6 @@ function applyMoveEffectsToActiveMarks<T>(
 		mark = inputQueue.shift();
 	}
 	return outputQueue;
-}
-
-// It is expected that the range from `id` to `id + count - 1` has the same move effect.
-// The call sites to this function are making queries about a mark which has already been split by a `MarkQueue`
-// to match the ranges in `moveEffects`.
-// TODO: Reduce the duplication between this and other MoveEffect helpers
-export function getModifyAfter<T>(
-	moveEffects: MoveEffectTable<T>,
-	revision: RevisionTag | undefined,
-	id: MoveId,
-	count: number,
-): T | undefined {
-	const target = CrossFieldTarget.Source;
-	const effect = getMoveEffect(moveEffects, target, revision, id, count);
-
-	if (effect.value?.modifyAfter !== undefined) {
-		assert(effect.length === count, 0x6ee /* Expected effect to cover entire mark */);
-		return effect.value.modifyAfter;
-	}
-
-	return undefined;
 }
 
 function getEndpoint(

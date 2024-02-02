@@ -1043,10 +1043,6 @@ export function withNodeChange<
 >(mark: TMark, changes: TNodeChange | undefined): TMark {
 	const newMark = { ...mark };
 	if (changes !== undefined) {
-		assert(
-			mark.type !== "MoveIn",
-			0x6a7 /* Cannot have a node change on a MoveIn or ReturnTo mark */,
-		);
 		newMark.changes = changes;
 	} else {
 		delete newMark.changes;

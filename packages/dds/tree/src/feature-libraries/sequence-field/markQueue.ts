@@ -5,11 +5,9 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { RevisionTag } from "../../core/index.js";
-import { IdAllocator } from "../../util/index.js";
 import { Mark } from "./types.js";
 import { applyMoveEffectsToMark, MoveEffectTable } from "./moveEffectTable.js";
 import { splitMark } from "./utils.js";
-import { NodeChangeComposer } from "./compose.js";
 
 export class MarkQueue<T> {
 	private readonly stack: Mark<T>[] = [];
@@ -19,10 +17,6 @@ export class MarkQueue<T> {
 		private readonly list: readonly Mark<T>[],
 		public readonly revision: RevisionTag | undefined,
 		private readonly moveEffects: MoveEffectTable<T>,
-		private readonly genId: IdAllocator,
-
-		// TODO: This should probably be handled by ComposeQueue instead
-		private readonly composeChanges?: NodeChangeComposer<T>,
 	) {
 		this.list = list;
 	}
@@ -46,12 +40,7 @@ export class MarkQueue<T> {
 				return undefined;
 			}
 
-			const splitMarks = applyMoveEffectsToMark(
-				mark,
-				this.revision,
-				this.moveEffects,
-				this.composeChanges,
-			);
+			const splitMarks = applyMoveEffectsToMark(mark, this.revision, this.moveEffects);
 
 			if (splitMarks.length === 0) {
 				return undefined;
