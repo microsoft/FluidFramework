@@ -210,7 +210,8 @@ export class PureDataObjectFactory<
 	 * @param initialState - The initial state to provide to the created data store.
 	 * @param groupId - group to which this data stores belongs to. The datastores with groupId might not be loaded
 	 * immediately. This groupId is also known at service side and can be used to fetch snapshot contents like
-	 * snapshot tree, blobs using this id from the storage.
+	 * snapshot tree, blobs using this id from the storage. Snapshot for a datastore with no groupId will definitely
+	 * be included in the snapshot on load.
 	 * @returns an object created by this factory. Data store and objects created are not attached to container.
 	 * They get attached only when a handle to one of them is attached to already attached objects.
 	 */
@@ -236,7 +237,8 @@ export class PureDataObjectFactory<
 	 * @param initialState - The initial state to provide to the created component.
 	 * @param groupId - group to which this data stores belongs to. The datastores with groupId might not be loaded
 	 * immediately. This groupId is also known at service side and can be used to fetch snapshot contents like
-	 * snapshot tree, blobs using this id from the storage.
+	 * snapshot tree, blobs using this id from the storage. Snapshot for a datastore with no groupId will definitely
+	 * be included in the snapshot on load.
 	 * @returns an object created by this factory. Data store and objects created are not attached to container.
 	 * They get attached only when a handle to one of them is attached to already attached objects.
 	 */
@@ -262,7 +264,8 @@ export class PureDataObjectFactory<
 	 * @param initialState - The initial state to provide to the created component.
 	 * @param groupId - group to which this data stores belongs to. The datastores with groupId might not be loaded
 	 * immediately. This groupId is also known at service side and can be used to fetch snapshot contents like
-	 * snapshot tree, blobs using this id from the storage.
+	 * snapshot tree, blobs using this id from the storage. Snapshot for a datastore with no groupId will definitely
+	 * be included in the snapshot on load.
 	 * @returns an object created by this factory. Data store and objects created are not attached to container.
 	 * They get attached only when a handle to one of them is attached to already attached objects.
 	 */
