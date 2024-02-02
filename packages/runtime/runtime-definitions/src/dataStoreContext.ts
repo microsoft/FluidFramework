@@ -519,7 +519,7 @@ export interface IFluidDataStoreContext
 	 * @param fromPath - The absolute path of the node that added the reference.
 	 * @param toPath - The absolute path of the outbound node that is referenced.
 	 */
-	addedGCOutboundRoute?(fromPath: string, toPath: string);
+	addedGCOutboundRoute?(fromPath: string, toPath: string): void;
 }
 
 /**

@@ -10,12 +10,7 @@ import {
 	IRequest,
 } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle } from "@fluidframework/datastore";
-import {
-	ISequencedDocumentMessage,
-	ISnapshotTree,
-	ITreeEntry,
-	TreeEntry,
-} from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
 	AliasResult,
 	channelsTreeName,
@@ -41,6 +36,7 @@ import {
 	createResponseError,
 	GCDataBuilder,
 	isSerializedHandle,
+	processAttachMessageGCData,
 	responseToException,
 	SummaryTreeBuilder,
 	unpackChildNodesUsedRoutes,
@@ -205,46 +201,20 @@ export class DataStores implements IDisposable {
 	/** For sampling. Only log once per container */
 	private shouldSendAttachLog = true;
 
-	/** @returns true if it found/processed GC Data, false otherwise */
-	private extractAndProcessAttachGCData(id: string, entries?: ITreeEntry[]): boolean {
-		const gcDataEntry = entries?.find((e) => e.path === ".gcdata");
-
-		// Old attach messages won't have GC Data (And REALLY old ones won't even have a snapshot ITree!)
-		if (gcDataEntry === undefined) {
-			return false;
-		}
-
-		assert(
-			gcDataEntry.type === TreeEntry.Blob && gcDataEntry.value.encoding === "utf-8",
-			"GC data should be a utf-8-encoded blob",
-		);
-
-		const gcData = JSON.parse(gcDataEntry.value.contents) as IGarbageCollectionData;
-		for (const [nodeId, outboundRoutes] of Object.entries(gcData.gcNodes)) {
-			const fromHandle = {
-				absolutePath: `/${id}${nodeId === "/" ? "" : nodeId}`,
-			};
-			outboundRoutes.forEach((route) => {
-				const toHandle = {
-					absolutePath: `${route}`,
-				};
-
-				this.runtime.addedGCOutboundReference(fromHandle, toHandle);
-			});
-		}
-		return true;
-	}
-
 	public processAttachMessage(message: ISequencedDocumentMessage, local: boolean) {
 		const attachMessage = message.contents as InboundAttachMessage;
 
 		this.dataStoresSinceLastGC.push(attachMessage.id);
 
 		// We need to process the GC Data for both local and remote attach messages
-		const foundGCData = this.extractAndProcessAttachGCData(
-			attachMessage.id,
-			attachMessage.snapshot?.entries,
-		);
+		const foundGCData = processAttachMessageGCData(attachMessage.snapshot, (nodeId, toPath) => {
+			// nodeId is the relative path under the node being attached. Always starts with "/", but no trailing "/" after an id
+			const fromPath = `/${attachMessage.id}${nodeId === "/" ? "" : nodeId}`;
+			this.runtime.addedGCOutboundReference(
+				{ absolutePath: fromPath },
+				{ absolutePath: toPath },
+			);
+		});
 
 		// Only log once per container to avoid noise/cost.
 		// Allows longitudinal tracking of various state (e.g. foundGCData), and some sampled details

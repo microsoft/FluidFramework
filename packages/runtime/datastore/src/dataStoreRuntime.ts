@@ -38,8 +38,6 @@ import {
 	ISummaryBlob,
 	ISummaryTree,
 	IQuorumClients,
-	ITreeEntry,
-	TreeEntry,
 } from "@fluidframework/protocol-definitions";
 import {
 	CreateChildSummarizerNodeParam,
@@ -67,6 +65,7 @@ import {
 	GCDataBuilder,
 	unpackChildNodesUsedRoutes,
 	addBlobToSummary,
+	processAttachMessageGCData,
 } from "@fluidframework/runtime-utils";
 import {
 	IChannel,
@@ -576,31 +575,6 @@ export class FluidDataStoreRuntime
 		return this.dataStoreContext.uploadBlob(blob, signal);
 	}
 
-	/** @returns true if it found/processed GC Data, false otherwise */
-	private extractAndProcessAttachGCData(id: string, entries: ITreeEntry[]): boolean {
-		const gcDataEntry = entries.find((e) => e.path === ".gcdata");
-
-		// Old attach messages won't have GC Data
-		if (gcDataEntry === undefined) {
-			return false;
-		}
-
-		assert(
-			gcDataEntry.type === TreeEntry.Blob && gcDataEntry.value.encoding === "utf-8",
-			"GC data should be a utf-8-encoded blob",
-		);
-
-		const gcData = JSON.parse(gcDataEntry.value.contents) as IGarbageCollectionData;
-		for (const [nodeId, outboundRoutes] of Object.entries(gcData.gcNodes)) {
-			// Expecting "/DataStoreId/DDSId"  (since nodeId will be "/" unless and until we support sub-DDS GC Nodes)
-			const fromPath = `/${this.id}/${id}${nodeId === "/" ? "" : nodeId}`;
-			outboundRoutes.forEach((toPath) => {
-				this.addedGCOutboundRoute(fromPath, toPath);
-			});
-		}
-		return true;
-	}
-
 	private createRemoteChannelContext(
 		attachMessage: IAttachMessage,
 		summarizerNodeParams: CreateChildSummarizerNodeParam,
@@ -640,7 +614,11 @@ export class FluidDataStoreRuntime
 					const id = attachMessage.id;
 
 					// We need to process the GC Data for both local and remote attach messages
-					this.extractAndProcessAttachGCData(id, attachMessage.snapshot.entries);
+					processAttachMessageGCData(attachMessage.snapshot, (nodeId, toPath) => {
+						// Note: nodeId will be "/" unless and until we support sub-DDS GC Nodes
+						const fromPath = `/${this.id}/${id}${nodeId === "/" ? "" : nodeId}`;
+						this.dataStoreContext.addedGCOutboundRoute?.(fromPath, toPath);
+					});
 
 					// If a non-local operation then go and create the object
 					// Otherwise mark it as officially attached.
@@ -801,11 +779,6 @@ export class FluidDataStoreRuntime
 		// will be the one to call addedGCOutboundReference directly.
 		// But on the flip side, if the ContainerRuntime is older, then it's important we still call this.
 		this.dataStoreContext.addedGCOutboundReference?.(srcHandle, outboundHandle);
-	}
-
-	/** @see addedGCOutboundReference, but with string inputs instead of handles */
-	private addedGCOutboundRoute(fromPath: string, toPath: string) {
-		this.dataStoreContext.addedGCOutboundRoute?.(fromPath, toPath);
 	}
 
 	/**

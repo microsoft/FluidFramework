@@ -28,7 +28,7 @@ import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
  * Validates that the unreferenced timestamp is correctly set in the GC summary tree. Also, the timestamp is removed
  * when an unreferenced node becomes referenced again.
  */
-describeCompat("GC unreferenced timestamp", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) => {
+describeCompat("GC unreferenced timestamp", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
 
 	const configProvider = createTestConfigProvider();
