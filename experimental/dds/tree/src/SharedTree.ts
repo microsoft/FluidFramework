@@ -1427,7 +1427,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 *
 	 * @param content - op to apply locally.
 	 */
-	protected applyStashedOp(op: unknown): StashedLocalOpMetadata {
+	protected applyStashedOp(op: unknown): void {
 		// In some scenarios, edit ops need to have their edits transformed before application and resubmission. The transformation
 		// occurs in this method, and the result is passed to `resubmitCore` via the return value of this function.
 		const sharedTreeOp = op as SharedTreeOp | SharedTreeOp_0_0_2;
@@ -1505,14 +1505,14 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 					default:
 						fail('Unknown version');
 				}
-				this.applyEditLocally(stashedEdit, undefined);
-				return { transformedEdit: stashedEdit };
+				this.applyEditInternal(stashedEdit);
+				return;
 			}
 			// Handle and update ops are only acknowledged by the client that generated them upon sequencing--no local changes necessary.
 			case SharedTreeOpType.Handle:
 			case SharedTreeOpType.Update:
 			case SharedTreeOpType.NoOp:
-				return {};
+				return;
 			default:
 				fail('Unrecognized op');
 		}

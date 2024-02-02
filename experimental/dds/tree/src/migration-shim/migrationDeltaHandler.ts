@@ -7,7 +7,7 @@ import { MessageType, type ISequencedDocumentMessage } from '@fluidframework/pro
 import { type IChannelAttributes, type IDeltaHandler } from '@fluidframework/datastore-definitions';
 import { assert } from '@fluidframework/core-utils';
 import { type IOpContents, type IShimDeltaHandler } from './types.js';
-import { attributesMatch, emptyLocalMetadata, isBarrierOp, isStampedOp } from './utils.js';
+import { attributesMatch, isBarrierOp, isStampedOp } from './utils.js';
 
 /**
  * Handles incoming and outgoing deltas/ops for the Migration Shim distributed data structure.
@@ -119,16 +119,18 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 		return this.treeDeltaHandler.reSubmit(contents, localOpMetadata);
 	}
 
-	public applyStashedOp(contents: unknown): unknown {
+	public applyStashedOp(contents: unknown): void {
 		const opContents = contents as IOpContents;
 		if (this.isInV1StateAndIsBarrierOp(opContents)) {
-			return emptyLocalMetadata;
+			this.submitLocalMessage(opContents);
+			return;
 		}
 
 		if (this.shouldDropOp(opContents)) {
-			return emptyLocalMetadata;
+			this.submitLocalMessage(opContents);
+			return;
 		}
-		return this.treeDeltaHandler.applyStashedOp(contents) ?? emptyLocalMetadata;
+		this.treeDeltaHandler.applyStashedOp(contents);
 	}
 
 	public rollback?(contents: unknown, localOpMetadata: unknown): void {
