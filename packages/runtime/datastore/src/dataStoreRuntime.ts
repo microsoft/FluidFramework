@@ -823,29 +823,31 @@ export class FluidDataStoreRuntime
 
 	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
 		const summaryBuilder = new SummaryTreeBuilder();
-		this.getAttachData((contextId: string, context: LocalChannelContextBase) => {
-			let summaryTree: ISummaryTreeWithStats;
-			if (context.isLoaded) {
-				const contextSummary = context.getAttachSummary(telemetryContext);
-				assert(
-					contextSummary.summary.type === SummaryType.Tree,
-					0x180 /* "getAttachSummary should always return a tree" */,
-				);
+		this.visitLocalBoundContextsDuringAttach(
+			(contextId: string, context: LocalChannelContextBase) => {
+				let summaryTree: ISummaryTreeWithStats;
+				if (context.isLoaded) {
+					const contextSummary = context.getAttachSummary(telemetryContext);
+					assert(
+						contextSummary.summary.type === SummaryType.Tree,
+						0x180 /* "getAttachSummary should always return a tree" */,
+					);
 
-				summaryTree = { stats: contextSummary.stats, summary: contextSummary.summary };
-			} else {
-				// If this channel is not yet loaded, then there should be no changes in the snapshot from which
-				// it was created as it is detached container. So just use the previous snapshot.
-				assert(
-					!!this.dataStoreContext.baseSnapshot,
-					0x181 /* "BaseSnapshot should be there as detached container loaded from snapshot" */,
-				);
-				summaryTree = convertSnapshotTreeToSummaryTree(
-					this.dataStoreContext.baseSnapshot.trees[contextId],
-				);
-			}
-			summaryBuilder.addWithStats(contextId, summaryTree);
-		}, telemetryContext);
+					summaryTree = { stats: contextSummary.stats, summary: contextSummary.summary };
+				} else {
+					// If this channel is not yet loaded, then there should be no changes in the snapshot from which
+					// it was created as it is detached container. So just use the previous snapshot.
+					assert(
+						!!this.dataStoreContext.baseSnapshot,
+						0x181 /* "BaseSnapshot should be there as detached container loaded from snapshot" */,
+					);
+					summaryTree = convertSnapshotTreeToSummaryTree(
+						this.dataStoreContext.baseSnapshot.trees[contextId],
+					);
+				}
+				summaryBuilder.addWithStats(contextId, summaryTree);
+			},
+		);
 
 		return summaryBuilder.getSummaryTree();
 	}
@@ -855,15 +857,17 @@ export class FluidDataStoreRuntime
 	 */
 	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
 		const gcDataBuilder = new GCDataBuilder();
-		this.getAttachData((contextId: string, context: LocalChannelContextBase) => {
-			if (context.isLoaded) {
-				const contextGCData = context.getAttachGCData(telemetryContext);
+		this.visitLocalBoundContextsDuringAttach(
+			(contextId: string, context: LocalChannelContextBase) => {
+				if (context.isLoaded) {
+					const contextGCData = context.getAttachGCData(telemetryContext);
 
-				// Incorporate the GC Data for this context
-				gcDataBuilder.prefixAndAddNodes(contextId, contextGCData.gcNodes);
-			}
-			// else: Rehydrating detached container case. GC doesn't run until the container is attached, so nothing to do here.
-		}, telemetryContext);
+					// Incorporate the GC Data for this context
+					gcDataBuilder.prefixAndAddNodes(contextId, contextGCData.gcNodes);
+				}
+				// else: Rehydrating detached container case. GC doesn't run until the container is attached, so nothing to do here.
+			},
+		);
 		this.updateGCNodes(gcDataBuilder);
 
 		return gcDataBuilder.getGCData();
@@ -873,9 +877,8 @@ export class FluidDataStoreRuntime
 	 * Helper method for preparing to attach this dataStore.
 	 * Runs the callback for each bound context to incorporate its data however the caller specifies
 	 */
-	private getAttachData(
-		includeLocalContext: (contextId: string, context: LocalChannelContextBase) => void,
-		telemetryContext?: ITelemetryContext,
+	private visitLocalBoundContextsDuringAttach(
+		visitor: (contextId: string, context: LocalChannelContextBase) => void,
 	): void {
 		/**
 		 * back-compat 0.59.1000 - getAttachSummary() is called when making a data store globally visible (previously
@@ -903,7 +906,7 @@ export class FluidDataStoreRuntime
 			}
 
 			if (!this.notBoundedChannelContextSet.has(contextId)) {
-				includeLocalContext(contextId, context);
+				visitor(contextId, context);
 			}
 		}
 	}
