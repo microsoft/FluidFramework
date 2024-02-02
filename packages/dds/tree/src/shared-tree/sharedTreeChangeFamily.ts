@@ -19,6 +19,7 @@ import {
 	ModularChangeFamily,
 	ModularChangeset,
 	FieldBatchCodec,
+	TreeCompressionStrategy,
 } from "../feature-libraries/index.js";
 import { Mutable, fail } from "../util/index.js";
 import { makeSharedTreeChangeCodecFamily } from "./sharedTreeChangeCodecs.js";
@@ -46,12 +47,14 @@ export class SharedTreeChangeFamily
 		revisionTagCodec: RevisionTagCodec,
 		fieldBatchCodec: FieldBatchCodec,
 		codecOptions: ICodecOptions,
+		chunkCompressionStrategy?: TreeCompressionStrategy,
 	) {
 		this.modularChangeFamily = new ModularChangeFamily(
 			fieldKinds,
 			revisionTagCodec,
 			fieldBatchCodec,
 			codecOptions,
+			chunkCompressionStrategy,
 		);
 		this.codecs = makeSharedTreeChangeCodecFamily(
 			this.modularChangeFamily.latestCodec,
