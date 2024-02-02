@@ -59,6 +59,7 @@ import {
 	chunkTree,
 } from "../chunked-forest/index.js";
 import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
+import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 import {
 	CrossFieldManager,
 	CrossFieldMap,
@@ -104,8 +105,15 @@ export class ModularChangeFamily
 		revisionTagCodec: RevisionTagCodec,
 		fieldBatchCodec: FieldBatchCodec,
 		codecOptions: ICodecOptions,
+		chunkCompressionStrategy?: TreeCompressionStrategy,
 	) {
-		this.latestCodec = makeV0Codec(fieldKinds, revisionTagCodec, fieldBatchCodec, codecOptions);
+		this.latestCodec = makeV0Codec(
+			fieldKinds,
+			revisionTagCodec,
+			fieldBatchCodec,
+			codecOptions,
+			chunkCompressionStrategy,
+		);
 		this.codecs = makeCodecFamily([[0, this.latestCodec]]);
 	}
 
