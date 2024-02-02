@@ -831,6 +831,7 @@ export class SharedDirectory
 					const localValue = this.makeLocal(
 						key,
 						currentSubDir.absolutePath,
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 						parseHandles(serializable, this.serializer),
 					);
 					currentSubDir.populateStorage(key, localValue);

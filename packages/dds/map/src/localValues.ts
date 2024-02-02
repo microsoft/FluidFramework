@@ -123,6 +123,10 @@ export class LocalValueMaker {
 				type: "__fluid_handle__",
 				url: serializable.value as string,
 			};
+			// NOTE: here we require the use of `parseHandles` because the roundtrip
+			// through a string is necessary to resolve the absolute path of
+			// legacy handles (`ValueType.Shared`)
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			serializable.value = serializer.encode(parseHandles(handle, serializer), bind);
 		}
 
