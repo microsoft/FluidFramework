@@ -87,8 +87,10 @@ export function PopupView(props: PopupViewProps): React.ReactElement {
 		};
 	}, [foundDevtools, setFoundDevtools]);
 
-	// TODO: retry button on not found.
 	// TODO: spinner for loading
+	// TODO: retry button on not found.
+	// TODO: display "how to use devtools" when devtools aren't foun
+	// TODO: display "how to find devtools" when devtools are found.
 	return (
 		<div>
 			{foundDevtools === undefined && <div>Loading...</div>}

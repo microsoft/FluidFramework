@@ -4,7 +4,6 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { type IDisposable } from "@fluidframework/core-interfaces";
 import {
 	type IDevtoolsMessage,
 	type ISourcedDevtoolsMessage,
@@ -70,7 +69,7 @@ export interface BackgroundConnectionParameters {
  */
 export class BackgroundConnection
 	extends TypedEventEmitter<IMessageRelayEvents>
-	implements IMessageRelay, IDisposable
+	implements IMessageRelay
 {
 	/**
 	 * {@inheritDoc BackgroundConnectionParameters.messageSource}
