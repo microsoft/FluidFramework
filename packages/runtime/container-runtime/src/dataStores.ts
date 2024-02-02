@@ -20,6 +20,7 @@ import {
 	gcDataBlobKey,
 	IAttachMessage,
 	IEnvelope,
+	IFluidDataStoreChannel,
 	IFluidDataStoreContextDetached,
 	IGarbageCollectionData,
 	IInboundSignalMessage,
@@ -64,7 +65,7 @@ import {
 	LocalDetachedFluidDataStoreContext,
 } from "./dataStoreContext";
 import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs";
-import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
+import { IDataStoreAliasMessage, channelToDataStore, isDataStoreAliasMessage } from "./dataStore";
 import { GCNodeType, detectOutboundRoutesViaDDSKey, disableDatastoreSweepKey } from "./gc";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summary";
 
@@ -415,6 +416,8 @@ export class DataStores implements IDisposable {
 			snapshotTree: undefined,
 			isRootDataStore: isRoot,
 			groupId,
+			channelToDataStoreFn: (channel: IFluidDataStoreChannel, channelId: string) =>
+				channelToDataStore(channel, channelId, this.runtime, this, this.runtime.logger),
 		});
 		this.contexts.addUnbound(context);
 		return context;
@@ -518,7 +521,23 @@ export class DataStores implements IDisposable {
 			return;
 		}
 
-		assert(!!context, 0x162 /* "There should be a store context for the op" */);
+		if (context === undefined) {
+			// Former assert 0x162
+			throw DataProcessingError.create(
+				"No context for op",
+				"processFluidDataStoreOp",
+				message,
+				{
+					local,
+					messageDetails: JSON.stringify({
+						type: message.type,
+						contentType: typeof message.contents,
+					}),
+					...tagCodeArtifacts({ address: envelope.address }),
+				},
+			);
+		}
+
 		context.process(transformed, local, localMessageMetadata);
 
 		// By default, we use the new behavior of detecting outbound routes here.

@@ -23,12 +23,7 @@ import {
 	IResponse,
 } from "@fluidframework/core-interfaces";
 import { assert, Deferred, LazyPromise, unreachableCase } from "@fluidframework/core-utils";
-import {
-	IAudience,
-	IDeltaManager,
-	AttachState,
-	ILoaderOptions,
-} from "@fluidframework/container-definitions";
+import { IAudience, IDeltaManager, AttachState } from "@fluidframework/container-definitions";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import {
 	IClientDetails,
@@ -179,7 +174,8 @@ export class FluidDataStoreRuntime
 	private readonly pendingHandlesToMakeVisible: Set<IFluidHandle> = new Set();
 
 	public readonly id: string;
-	public readonly options: ILoaderOptions;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	public readonly options: Record<string | number, any>;
 	public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	private readonly quorum: IQuorumClients;
 	private readonly audience: IAudience;

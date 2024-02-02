@@ -21,7 +21,6 @@ import {
 	IRuntime,
 	ICriticalContainerError,
 	AttachState,
-	ILoaderOptions,
 	ILoader,
 	LoaderHeader,
 	IGetPendingLocalStateProps,
@@ -934,7 +933,7 @@ export class ContainerRuntime
 		return runtime;
 	}
 
-	public readonly options: ILoaderOptions;
+	public readonly options: Record<string | number, any>;
 	private imminentClosure: boolean = false;
 
 	private readonly _getClientId: () => string | undefined;
@@ -1245,7 +1244,9 @@ export class ContainerRuntime
 		this.submitSummaryFn = submitSummaryFn;
 		this.submitSignalFn = submitSignalFn;
 
-		this.options = options;
+		// TODO: After IContainerContext.options is removed, we'll just create a new blank object {} here.
+		// Values are generally expected to be set from the runtime side.
+		this.options = options ?? {};
 		this.clientDetails = clientDetails;
 		this.isSummarizerClient = this.clientDetails.type === summarizerClientType;
 		this.loadedFromVersionId = context.getLoadedFromVersion()?.id;
