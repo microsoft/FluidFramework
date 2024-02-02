@@ -95,7 +95,7 @@
             {{ $selectedApiVersion = $.Site.Data.versions.params.currentVersion }}
         {{ end }}
         {{ $apiOverviewPage := printf "%s%s" $.Site.Data.versions.apiDocsDirectory $selectedApiVersion }}
-         <li {{ if in $current.RelPermalink "/docs/api" }} class="active" {{ end }}>  <!-- {{ if $in_api_section }} class="active" {{ end }} doesn't work -->
+         <li {{ if in $current.RelPermalink "/docs/api" }} class="active" {{ end }}>
             <a class="docs-home" href={{$apiOverviewPage}} {{ if $api_home_active }}
                 aria-label="Current Page: API Overview" {{ end }}>API Overview</a>
         </li>
