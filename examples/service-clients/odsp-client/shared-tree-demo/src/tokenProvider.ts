@@ -4,7 +4,7 @@
  */
 
 import { PublicClientApplication } from "@azure/msal-browser";
-import { IOdspTokenProvider } from "@fluid-experimental/odsp-client";
+import { IOdspTokenProvider } from "@fluid-experimental/odsp-client/beta";
 import { TokenResponse } from "@fluidframework/odsp-driver-definitions";
 
 export class OdspTestTokenProvider implements IOdspTokenProvider {

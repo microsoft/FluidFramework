@@ -4,7 +4,7 @@
  */
 import { strict as assert } from "node:assert";
 
-import { OdspClient } from "@fluid-experimental/odsp-client";
+import { OdspClient } from "@fluid-experimental/odsp-client/beta";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";

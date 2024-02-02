@@ -14,21 +14,11 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/index.d.mts",
+				"types": "./lib/odsp-client-public.d.mts",
 				"default": "./lib/index.mjs"
 			},
 			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
-		"./alpha": {
-			"import": {
-				"types": "./lib/odsp-client-alpha.d.mts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/odsp-client-alpha.d.ts",
+				"types": "./dist/odsp-client-public.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
@@ -42,6 +32,16 @@
 				"default": "./dist/index.js"
 			}
 		},
+		"./fruit": {
+			"import": {
+				"types": "./lib/odsp-client-alpha.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/odsp-client-alpha.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
 		"./internal": {
 			"import": {
 				"types": "./lib/index.d.mts",
@@ -51,21 +51,11 @@
 				"types": "./dist/index.d.ts",
 				"default": "./dist/index.js"
 			}
-		},
-		"./public": {
-			"import": {
-				"types": "./lib/odsp-client-public.d.mts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/odsp-client-public.d.ts",
-				"default": "./dist/index.js"
-			}
 		}
 	},
 	"main": "dist/index.js",
 	"module": "lib/index.mjs",
-	"types": "dist/index.d.ts",
+	"types": "dist/odsp-client-public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --local",
