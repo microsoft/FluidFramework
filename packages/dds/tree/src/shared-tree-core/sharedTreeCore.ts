@@ -256,6 +256,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		localOpMetadata: unknown,
 	) {
 		const contents: unknown = this.serializer.decode(message.contents);
+		// Empty context object is passed in, as our decode function is schema-agnostic.
 		const { commit, sessionId } = this.messageCodec.decode(contents, {});
 		this.editManager.addSequencedChange(
 			{ ...commit, sessionId },
@@ -282,6 +283,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	}
 
 	protected override reSubmitCore(content: JsonCompatibleReadOnly, localOpMetadata: unknown) {
+		// Empty context object is passed in, as our decode function is schema-agnostic.
 		const {
 			commit: { revision },
 		} = this.messageCodec.decode(content, {});
@@ -294,6 +296,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			!this.getLocalBranch().isTransacting(),
 			0x674 /* Unexpected transaction is open while applying stashed ops */,
 		);
+		// Empty context object is passed in, as our decode function is schema-agnostic.
 		const {
 			commit: { revision, change },
 		} = this.messageCodec.decode(content, {});
