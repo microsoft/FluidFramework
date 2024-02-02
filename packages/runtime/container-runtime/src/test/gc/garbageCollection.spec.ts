@@ -181,6 +181,7 @@ describe("Garbage Collection Tests", () => {
 			getNodePackagePath: async (nodeId: string) => testPkgPath,
 			getLastSummaryTimestampMs: () => Date.now(),
 			submitMessage: (message: ContainerRuntimeGCMessage) => {},
+			sessionExpiryTimerStarted: createParams.sessionExpiryTimerStarted,
 		}) as GcWithPrivates;
 	}
 	let gc: GcWithPrivates | undefined;
@@ -207,29 +208,62 @@ describe("Garbage Collection Tests", () => {
 		clock.restore();
 	});
 
-	it("Session expiry closes container", () => {
-		let closeCalled = false;
-		function closeCalledAfterExactTicks(ticks: number) {
-			clock.tick(ticks - 1);
-			if (closeCalled) {
-				return false;
+	describe("Session expiry", () => {
+		it("Session expiry closes container", () => {
+			let closeCalled = false;
+			function closeCalledAfterExactTicks(ticks: number) {
+				clock.tick(ticks - 1);
+				if (closeCalled) {
+					return false;
+				}
+				clock.tick(1);
+				return closeCalled;
 			}
-			clock.tick(1);
-			return closeCalled;
-		}
 
-		gc = createGarbageCollector(
-			{},
-			undefined /* gcBlobsMap */,
-			undefined /* gcMetadata */,
-			() => {
-				closeCalled = true;
-			},
-		);
-		assert(
-			closeCalledAfterExactTicks(defaultSessionExpiryDurationMs),
-			"Close should have been called at exactly defaultSessionExpiryDurationMs",
-		);
+			gc = createGarbageCollector(
+				{},
+				undefined /* gcBlobsMap */,
+				undefined /* gcMetadata */,
+				() => {
+					closeCalled = true;
+				},
+			);
+			assert(
+				closeCalledAfterExactTicks(defaultSessionExpiryDurationMs),
+				"Close should have been called at exactly defaultSessionExpiryDurationMs",
+			);
+		});
+
+		it("Session expiry is adjusted by sessionExpiryTimerStarted", () => {
+			let closeCalled = false;
+			const sessionExpiryTimerStarted = defaultSessionExpiryDurationMs - 1; // arbitrary number
+			clock.tick(sessionExpiryTimerStarted + defaultSessionExpiryDurationMs - 1);
+			gc = createGarbageCollector(
+				{ sessionExpiryTimerStarted },
+				undefined /* gcBlobsMap */,
+				undefined /* gcMetadata */,
+				() => {
+					closeCalled = true;
+				},
+			);
+			assert(closeCalled === false, "Close should not have been called");
+			clock.tick(1);
+			assert(closeCalled, "Close should have been called");
+		});
+
+		it("it throws when already expired", () => {
+			clock.tick(defaultSessionExpiryDurationMs + 1);
+			assert.throws(() =>
+				createGarbageCollector(
+					{ sessionExpiryTimerStarted: 1 },
+					undefined /* gcBlobsMap */,
+					undefined /* gcMetadata */,
+					() => {
+						throw new Error("Session expired");
+					},
+				),
+			);
+		});
 	});
 
 	describe("addedOutboundReference", () => {

@@ -12,7 +12,7 @@ import {
 	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { FetchSource } from "@fluidframework/driver-definitions";
+import { FetchSource, ISnapshot } from "@fluidframework/driver-definitions";
 import {
 	IOdspSnapshot,
 	HostStoragePolicyInternal,
@@ -22,7 +22,7 @@ import {
 import { IPrefetchSnapshotContents, LocalPersistentCache } from "../odspCache";
 import { createCacheSnapshotKey, INewFileInfo } from "../odspUtils";
 import { createOdspUrl } from "../createOdspUrl";
-import { getHashedDocumentId, ISnapshotContents } from "../odspPublicUtils";
+import { getHashedDocumentId } from "../odspPublicUtils";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
 import { prefetchLatestSnapshot } from "../prefetchLatestSnapshot";
@@ -79,16 +79,17 @@ describe("Tests for prefetching snapshot", () => {
 		blobs: [],
 	};
 
-	const content: ISnapshotContents = {
+	const content: ISnapshot = {
 		snapshotTree: {
 			id: "id",
 			blobs: {},
 			trees: {},
 		},
-		blobs: new Map(),
+		blobContents: new Map(),
 		ops: [],
 		sequenceNumber: 0,
 		latestSequenceNumber: 0,
+		snapshotFormatV: 1,
 	};
 
 	const value: IVersionedValueWithEpoch = {

@@ -19,6 +19,7 @@ export enum RedisFsApis {
 	Rmdir = "Rmdir",
 	KeysByPrefix = "keysByPrefix",
 	HKeysByPrefix = "hkeysByPrefix",
+	InitHashmapFs = "initHashmapFs",
 }
 
 export enum RedisFSConstants {

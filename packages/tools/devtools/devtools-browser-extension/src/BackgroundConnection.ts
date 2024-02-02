@@ -28,8 +28,11 @@ import {
  */
 export interface BackgroundConnectionParameters {
 	/**
-	 * All messages sent through the returned instance's {@link BackgroundConnection.postMessage}
-	 * method will get this value written to their 'source' property.
+	 * This value will get written to the {@link @fluidframework/devtools-core#ISourcedDevtoolsMessage.source} property
+	 * of all messages sent via {@link BackgroundConnection.postMessage}.
+	 *
+	 * It will also be used as context metadata for console debug logging.
+	 *
 	 * @see {@link @fluidframework/devtools-core#ISourcedDevtoolsMessage}
 	 */
 	messageSource: string;
@@ -85,18 +88,6 @@ export class BackgroundConnection
 	private backgroundServiceConnection!: TypedPortConnection;
 
 	/**
-	 * Whether or not the connection has been disposed.
-	 */
-	private _disposed: boolean = false;
-
-	/**
-	 * {@inheritDoc @fluidframework/core-interfaces#IDisposable.disposed}
-	 */
-	public get disposed(): boolean {
-		return this._disposed;
-	}
-
-	/**
 	 * Creates a new {@link BackgroundConnection}.
 	 */
 	public static async Initialize(
@@ -135,13 +126,6 @@ export class BackgroundConnection
 
 		this.logDebugMessage(`Posting message to background service:`, sourcedMessage);
 		this.backgroundServiceConnection.postMessage(sourcedMessage);
-	}
-
-	/**
-	 * {@inheritDoc @fluidframework/core-interfaces#IDisposable.dispose}
-	 */
-	public dispose(): void {
-		this._disposed = true;
 	}
 
 	/**

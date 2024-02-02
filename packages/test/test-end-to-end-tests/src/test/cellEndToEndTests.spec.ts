@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { ISharedCell, SharedCell } from "@fluidframework/cell";
+import type { ISharedCell, SharedCell } from "@fluidframework/cell";
 import { ConfigTypes, IConfigProviderBase, IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	ITestObjectProvider,
@@ -21,13 +21,16 @@ import { Serializable } from "@fluidframework/datastore-definitions";
 import { IContainer } from "@fluidframework/container-definitions";
 
 const cellId = "cellKey";
-const registry: ChannelFactoryRegistry = [[cellId, SharedCell.getFactory()]];
-const testContainerConfig: ITestContainerConfig = {
-	fluidDataObjectType: DataObjectFactoryType.Test,
-	registry,
-};
 
-describeCompat("SharedCell", "FullCompat", (getTestObjectProvider) => {
+describeCompat("SharedCell", "FullCompat", (getTestObjectProvider, apis) => {
+	const { SharedCell } = apis.dds;
+
+	const registry: ChannelFactoryRegistry = [[cellId, SharedCell.getFactory()]];
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+	};
+
 	let provider: ITestObjectProvider;
 	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
@@ -301,7 +304,9 @@ describeCompat("SharedCell", "FullCompat", (getTestObjectProvider) => {
 	});
 });
 
-describeCompat("SharedCell orderSequentially", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("SharedCell orderSequentially", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedCell } = apis.dds;
+
 	let provider: ITestObjectProvider;
 	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
@@ -319,8 +324,9 @@ describeCompat("SharedCell orderSequentially", "2.0.0-rc.1.0.0", (getTestObjectP
 	const errorMessage = "callback failure";
 
 	beforeEach("setup", async () => {
-		const configWithFeatureGates = {
-			...testContainerConfig,
+		const configWithFeatureGates: ITestContainerConfig = {
+			fluidDataObjectType: DataObjectFactoryType.Test,
+			registry: [[cellId, SharedCell.getFactory()]],
 			loaderProps: {
 				configProvider: configProvider({
 					"Fluid.ContainerRuntime.EnableRollback": true,
