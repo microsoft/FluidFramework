@@ -215,6 +215,7 @@ export class SharedTree
 			revisionTagCodec,
 			fieldBatchCodec,
 			options,
+			options.treeEncodeType,
 		);
 		const changeFamily = makeMitigatedChangeFamily(
 			innerChangeFamily,
@@ -246,6 +247,7 @@ export class SharedTree
 			runtime,
 			attributes,
 			telemetryContextPrefix,
+			schema,
 		);
 		this._events = createEmitter<CheckoutEvents>();
 		const localBranch = this.getLocalBranch();

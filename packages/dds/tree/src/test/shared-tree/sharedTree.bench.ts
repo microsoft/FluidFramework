@@ -13,6 +13,7 @@ import {
 	jsonableTreeFromCursor,
 	cursorForTypedData,
 	cursorForTypedTreeData,
+	TreeCompressionStrategy,
 } from "../../feature-libraries/index.js";
 import { singleJsonCursor } from "../../domains/index.js";
 import {
@@ -22,7 +23,7 @@ import {
 	flexTreeViewWithContent,
 	checkoutWithContent,
 } from "../utils.js";
-import { FlexTreeView } from "../../shared-tree/index.js";
+import { FlexTreeView, SharedTreeFactory } from "../../shared-tree/index.js";
 import { rootFieldKey } from "../../core/index.js";
 import {
 	deepPath,
@@ -43,6 +44,8 @@ import {
 	wideRootSchema,
 	wideSchema,
 } from "../scalableTestTrees.js";
+// eslint-disable-next-line import/no-internal-modules
+import { typeboxValidator } from "../../external-utilities/typeboxValidator.js";
 
 // number of nodes in test for wide trees
 const nodesCountWide = [
@@ -56,6 +59,11 @@ const nodesCountDeep = [
 	[10, BenchmarkType.Perspective],
 	[100, BenchmarkType.Measurement],
 ];
+
+const factory = new SharedTreeFactory({
+	jsonValidator: typeboxValidator,
+	treeEncodeType: TreeCompressionStrategy.Uncompressed,
+});
 
 // TODO: Once the "BatchTooLarge" error is no longer an issue, extend tests for larger trees.
 describe("SharedTree benchmarks", () => {
@@ -340,7 +348,7 @@ describe("SharedTree benchmarks", () => {
 						assert.equal(state.iterationsPerBatch, 1);
 
 						// Setup
-						const provider = new TestTreeProviderLite();
+						const provider = new TestTreeProviderLite(1, factory);
 						// TODO: specify a schema for these trees.
 						const [tree] = provider.trees;
 						for (let i = 0; i < size; i++) {
@@ -378,7 +386,7 @@ describe("SharedTree benchmarks", () => {
 						assert.equal(state.iterationsPerBatch, 1);
 
 						// Setup
-						const provider = new TestTreeProviderLite(nbPeers);
+						const provider = new TestTreeProviderLite(nbPeers, factory);
 						for (let iCommit = 0; iCommit < nbCommits; iCommit++) {
 							for (let iPeer = 0; iPeer < nbPeers; iPeer++) {
 								const peer = provider.trees[iPeer];

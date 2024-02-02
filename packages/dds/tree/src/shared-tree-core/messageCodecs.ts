@@ -12,8 +12,14 @@ import {
 	EncodedRevisionTag,
 	RevisionTag,
 } from "../core/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { SchemaAndPolicy } from "../feature-libraries/chunked-forest/codec/codecs.js";
 import { DecodedMessage } from "./messageTypes.js";
 import { Message } from "./messageFormat.js";
+
+export interface MessageEncodingContext {
+	schema?: SchemaAndPolicy;
+}
 
 export function makeMessageCodec<TChangeset>(
 	changeCodec: ChangeFamilyCodec<TChangeset>,
@@ -24,16 +30,33 @@ export function makeMessageCodec<TChangeset>(
 		ChangeEncodingContext
 	>,
 	options: ICodecOptions,
-): IJsonCodec<DecodedMessage<TChangeset>> {
+): IJsonCodec<
+	DecodedMessage<TChangeset>,
+	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnly,
+	MessageEncodingContext
+> {
 	// TODO: consider adding version and using makeVersionedValidatedCodec
-	return withSchemaValidation<DecodedMessage<TChangeset>, TAnySchema>(
+	return withSchemaValidation<
+		DecodedMessage<TChangeset>,
+		TAnySchema,
+		JsonCompatibleReadOnly,
+		JsonCompatibleReadOnly,
+		MessageEncodingContext
+	>(
 		Message(changeCodec.encodedSchema ?? Type.Any()),
 		{
-			encode: ({ commit, sessionId: originatorId }: DecodedMessage<TChangeset>) => {
+			encode: (
+				{ commit, sessionId: originatorId }: DecodedMessage<TChangeset>,
+				context: MessageEncodingContext,
+			) => {
 				const message: Message = {
 					revision: revisionTagCodec.encode(commit.revision, { originatorId }),
 					originatorId,
-					changeset: changeCodec.encode(commit.change, { originatorId }),
+					changeset: changeCodec.encode(commit.change, {
+						originatorId,
+						schema: context.schema,
+					}),
 				};
 				return message as unknown as JsonCompatibleReadOnly;
 			},
