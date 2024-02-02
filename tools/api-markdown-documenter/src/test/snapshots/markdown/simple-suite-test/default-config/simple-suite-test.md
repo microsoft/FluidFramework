@@ -223,6 +223,12 @@ Test function
 export declare function testFunction<TTypeParameter>(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;
 ```
 
+##### Type Parameters
+
+| Parameter | Description |
+| --- | --- |
+| TTypeParameter | A test type parameter |
+
 #### Remarks {#testfunction-remarks}
 
 This is a test [link](./simple-suite-test/testinterface-interface) to another API member
