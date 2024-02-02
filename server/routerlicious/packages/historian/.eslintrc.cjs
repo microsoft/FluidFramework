@@ -5,11 +5,9 @@
 
 module.exports = {
 	extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"],
-	parserOptions: {
-		project: ["./tsconfig.json"],
-	},
 	rules: {
 		"@typescript-eslint/strict-boolean-expressions": "off",
 		"import/no-nodejs-modules": "off",
+		"promise/catch-or-return": ["error", { allowFinally: true }],
 	},
 };

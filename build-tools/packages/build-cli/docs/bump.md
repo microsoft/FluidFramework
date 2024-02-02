@@ -87,7 +87,7 @@ Update the dependency version of a specified package or release group. That is, 
 USAGE
   $ flub bump deps PACKAGE_OR_RELEASE_GROUP [-v | --quiet] [--prerelease -t
     latest|newest|greatest|minor|patch|@next|@canary] [--onlyBumpPrerelease] [-g
-    client|server|azure|build-tools|gitrest|historian | -p <value>] [-x | --install | --commit |  |  | ]
+    client|server|azure|build-tools | -p <value>] [-x | --install | --commit |  |  | ]
     [--updateChecker ncu|homegrown]
 
 ARGUMENTS
@@ -95,7 +95,7 @@ ARGUMENTS
 
 FLAGS
   -g, --releaseGroup=<option>  Only bump dependencies within this release group.
-                               <options: client|server|azure|build-tools|gitrest|historian>
+                               <options: client|server|azure|build-tools>
   -p, --package=<value>        Only bump dependencies of this package. You can use scoped or unscoped package names. For
                                example, both @fluid-tools/markdown-magic and markdown-magic are valid.
   -t, --updateType=<option>    [default: minor] Bump the current version of the dependency according to this bump type.

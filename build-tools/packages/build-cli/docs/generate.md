@@ -17,8 +17,8 @@ Tags asserts by replacing their message with a unique numerical value.
 ```
 USAGE
   $ flub generate assertTags [-v | --quiet] [--disableConfig] [--concurrency <value>] [--all | --dir <value> | --packages
-    | -g client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
-    client|server|azure|build-tools|gitrest|historian|all] [--private] [--scope <value> | --skipScope <value>]
+    | -g client|server|azure|build-tools|all | --releaseGroupRoot
+    client|server|azure|build-tools|all] [--private] [--scope <value> | --skipScope <value>]
 
 FLAGS
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
@@ -27,7 +27,7 @@ PACKAGE SELECTION FLAGS
   -g, --releaseGroup=<option>...  Run on all child packages within the specified release groups. This does not include
                                   release group root packages. To include those, use the --releaseGroupRoot argument.
                                   Cannot be used with --all, --dir, or --packages.
-                                  <options: client|server|azure|build-tools|gitrest|historian|all>
+                                  <options: client|server|azure|build-tools|all>
   --all                           Run on all packages and release groups. Cannot be used with --all, --dir,
                                   --releaseGroup, or --releaseGroupRoot.
   --dir=<value>                   Run on the package in this directory. Cannot be used with --all, --dir,
@@ -37,7 +37,7 @@ PACKAGE SELECTION FLAGS
   --releaseGroupRoot=<option>...  Run on the root package of the specified release groups. This does not include any
                                   child packages within the release group. To include those, use the --releaseGroup
                                   argument. Cannot be used with --all, --dir, or --packages.
-                                  <options: client|server|azure|build-tools|gitrest|historian|all>
+                                  <options: client|server|azure|build-tools|all>
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
@@ -131,11 +131,11 @@ Generate a changelog for packages based on changesets.
 
 ```
 USAGE
-  $ flub generate changelog -g client|server|azure|build-tools|gitrest|historian [-v | --quiet] [--version <value>]
+  $ flub generate changelog -g client|server|azure|build-tools [-v | --quiet] [--version <value>]
 
 FLAGS
   -g, --releaseGroup=<option>  (required) Name of a release group.
-                               <options: client|server|azure|build-tools|gitrest|historian>
+                               <options: client|server|azure|build-tools|>
   --version=<value>            The version for which to generate the changelog. If this is not provided, the version of
                                the package according to package.json will be used.
 
@@ -161,14 +161,14 @@ Generates a new changeset file. You will be prompted to select the packages affe
 ```
 USAGE
   $ flub generate changeset [--json] [-v | --quiet] [-b <value>] [--empty -g
-    client|server|azure|build-tools|gitrest|historian] [--all] [--uiMode default|simple]
+    client|server|azure|build-tools|] [--all] [--uiMode default|simple]
 
 FLAGS
   -b, --branch=<value>         [default: main] The branch to compare the current changes against. The current changes
                                will be compared with this branch to populate the list of changed packages. You must have
                                a valid remote pointing to the microsoft/FluidFramework repo.
   -g, --releaseGroup=<option>  Name of a release group.
-                               <options: client|server|azure|build-tools|gitrest|historian>
+                               <options: client|server|azure|build-tools|>
   --all                        Include ALL packages, including examples and other unpublished packages.
   --empty                      Create an empty changeset file. If this flag is used, all other flags are ignored. A new,
                                randomly named changeset file will be created every time --empty is used.
@@ -217,12 +217,12 @@ Generates a summary of all changesets. This is used to generate an UPCOMING.md f
 
 ```
 USAGE
-  $ flub generate upcoming -g client|server|azure|build-tools|gitrest|historian -t major|minor [--json] [-v | --quiet]
+  $ flub generate upcoming -g client|server|azure|build-tools -t major|minor [--json] [-v | --quiet]
     [--out <value>]
 
 FLAGS
   -g, --releaseGroup=<option>  (required) Name of a release group.
-                               <options: client|server|azure|build-tools|gitrest|historian>
+                               <options: client|server|azure|build-tools|>
   -t, --releaseType=<option>   (required) The type of release for which the upcoming file is being generated.
                                <options: major|minor>
   --out=<value>                [default: UPCOMING.md] Output the results to this file.

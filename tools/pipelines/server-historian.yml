@@ -46,7 +46,7 @@ trigger:
     include:
     - .prettierignore
     - fluidBuild.config.cjs
-    - server/historian
+    - server/routerlicious
     - tools/pipelines/server-historian.yml
     - tools/pipelines/templates/build-docker-service.yml
     - tools/pipelines/templates/include-set-package-version.yml
@@ -72,7 +72,7 @@ pr:
     include:
     - .prettierignore
     - fluidBuild.config.cjs
-    - server/historian
+    - server/routerlicious
     - tools/pipelines/server-historian.yml
     - tools/pipelines/templates/build-docker-service.yml
     - tools/pipelines/templates/include-set-package-version.yml
@@ -88,7 +88,7 @@ extends:
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     releaseKind: ${{ parameters.releaseKind }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
-    buildDirectory: server/historian
+    buildDirectory: server/routerlicious
     containerName: fluidframework/routerlicious/historian
     # We need to install only the root dependencies; historian has native deps that don't install in CI since we use
     # Docker to do the actual build in CI. We need the root dependencies so setting package versions works.

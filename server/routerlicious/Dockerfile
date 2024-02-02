@@ -55,6 +55,10 @@ COPY packages/services-utils/package*.json packages/services-utils/
 COPY packages/test-utils/package*.json packages/test-utils/
 COPY packages/protocol-base/package*.json packages/protocol-base/
 COPY packages/tinylicious/package*.json packages/tinylicious/
+COPY packages/gitrest-base/package*.json packages/gitrest-base/
+COPY packages/gitrest/package*.json packages/gitrest/
+COPY packages/historian-base/package*.json packages/historian-base/
+COPY packages/historian/package*.json packages/historian/
 
 RUN corepack enable
 
@@ -84,4 +88,4 @@ USER node
 ENTRYPOINT ["/tini", "--"]
 
 # And set the default command to start the server
-CMD ["npm", "run", "alfred"]
+CMD ["node", "packages/routerlicious/dist/alfred/www.js"]

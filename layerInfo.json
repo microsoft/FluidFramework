@@ -198,7 +198,7 @@
 				"deps": ["Server-Libs"]
 			},
 			"GitRest": {
-				"dirs": ["server/gitrest/", "server/gitrest/packages/"],
+				"packages": ["@fluidframework/gitrest", "@fluidframework/gitrest-base"],
 				"deps": [
 					"Server-Libs",
 					"Common-Utils",
@@ -209,7 +209,7 @@
 				]
 			},
 			"Historian": {
-				"dirs": ["server/historian/", "server/historian/packages/"],
+				"packages": ["@fluidframework/historian", "@fluidframework/historian-base"],
 				"deps": [
 					"Server-Libs",
 					"Common-Utils",

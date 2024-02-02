@@ -122,14 +122,6 @@ module.exports = {
 			directory: "server/routerlicious",
 			defaultInterdependencyRange: "workspace:~",
 		},
-		"gitrest": {
-			directory: "server/gitrest",
-			defaultInterdependencyRange: "^",
-		},
-		"historian": {
-			directory: "server/historian",
-			defaultInterdependencyRange: "^",
-		},
 
 		// Independent packages
 		"build": "common/build",
@@ -155,8 +147,6 @@ module.exports = {
 			"docs/themes/thxvscode/layouts/",
 			"docs/themes/thxvscode/static/assets/",
 			"docs/tutorials/.*\\.tsx?",
-			"server/gitrest/package.json",
-			"server/historian/package.json",
 			"tools/markdown-magic/test/package.json",
 		],
 		// Exclusion per handler
@@ -252,26 +242,12 @@ module.exports = {
 				"^tools/",
 			],
 			"npm-package-json-clean-script": [
-				"server/gitrest/package.json",
-				"server/historian/package.json",
 				"tools/getkeys/package.json",
 				"tools/markdown-magic/package.json",
 			],
-			"npm-strange-package-name": [
-				"server/gitrest/package.json",
-				"server/historian/package.json",
-				"package.json",
-			],
-			"npm-package-readmes": [
-				"server/gitrest/package.json",
-				"server/historian/package.json",
-				"package.json",
-			],
-			"npm-package-folder-name": [
-				"server/gitrest/package.json",
-				"server/historian/package.json",
-				"package.json",
-			],
+			"npm-strange-package-name": ["package.json"],
+			"npm-package-readmes": ["package.json"],
+			"npm-package-folder-name": ["package.json"],
 			"npm-package-json-script-dep": ["^build-tools/"],
 			"npm-public-package-requirements": [
 				// Test packages published only for the purpose of running tests in CI.
@@ -294,8 +270,6 @@ module.exports = {
 				// TODO: add api-extractor infra and remove these overrides
 				"^build-tools/packages/",
 				"^tools/bundle-size-tools/",
-				"^server/historian/",
-				"^server/gitrest/",
 				"^server/routerlicious/",
 				"^examples/data-objects/table-document/",
 				"^experimental/framework/data-objects/",
