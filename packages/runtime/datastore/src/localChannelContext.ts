@@ -135,7 +135,6 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 			this._channel !== undefined,
 			0x18d /* "Channel should be loaded to take snapshot" */,
 		);
-
 		return summarizeChannel(
 			this._channel,
 			true /* fullTree */,
