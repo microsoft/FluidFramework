@@ -10,25 +10,9 @@ import {
 	ITestFluidObject,
 	createTestConfigProvider,
 } from "@fluidframework/test-utils";
-import { SharedString } from "@fluidframework/sequence";
+import { type SharedString } from "@fluidframework/sequence";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { ILoaderProps } from "@fluidframework/container-loader";
-
-const customConfigProvider = createTestConfigProvider();
-customConfigProvider.set("Fluid.Container.ForceWriteConnection", true);
-const loaderPropsThatForceWriteConnection: Partial<ILoaderProps> = {
-	configProvider: customConfigProvider,
-};
-
-const stringId = "stringKey";
-const configWithReadConnection: ITestContainerConfig = {
-	fluidDataObjectType: DataObjectFactoryType.Test,
-	registry: [[stringId, SharedString.getFactory()]],
-};
-const configWithWriteConnection = {
-	...configWithReadConnection,
-	loaderProps: loaderPropsThatForceWriteConnection,
-};
 
 /**
  * Regression tests for issue where clients loading a container with a write connection (vs the read connection
@@ -39,6 +23,24 @@ describeCompat(
 	// TODO: this should be "2.0.0-rc.2.0.0" (I think) once the bugs with describeCompat are fixed and versions are used correctly
 	"NoCompat",
 	(getTestObjectProvider, apis) => {
+		const { SharedString } = apis.dds;
+
+		const customConfigProvider = createTestConfigProvider();
+		customConfigProvider.set("Fluid.Container.ForceWriteConnection", true);
+		const loaderPropsThatForceWriteConnection: Partial<ILoaderProps> = {
+			configProvider: customConfigProvider,
+		};
+
+		const stringId = "stringKey";
+		const configWithReadConnection: ITestContainerConfig = {
+			fluidDataObjectType: DataObjectFactoryType.Test,
+			registry: [[stringId, SharedString.getFactory()]],
+		};
+		const configWithWriteConnection = {
+			...configWithReadConnection,
+			loaderProps: loaderPropsThatForceWriteConnection,
+		};
+
 		let provider: ITestObjectProvider;
 		beforeEach("getTestObjectProvider", () => {
 			provider = getTestObjectProvider();
