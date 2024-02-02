@@ -6,7 +6,7 @@
 import assert from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { SharedMap } from "@fluidframework/map";
+import type { SharedMap } from "@fluidframework/map";
 import {
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
@@ -93,7 +93,8 @@ async function getAndValidateDataObject(
  * new non-root data stores should not become visible (or reachable from root) until their handles are added to a
  * visible DDS.
  */
-describeCompat("New Fluid objects visibility", "FullCompat", (getTestObjectProvider) => {
+describeCompat("New Fluid objects visibility", "FullCompat", (getTestObjectProvider, { dds }) => {
+	const { SharedMap } = dds;
 	let provider: ITestObjectProvider;
 	let container1: IContainer;
 	let containerRuntime1: ContainerRuntime;
@@ -104,8 +105,12 @@ describeCompat("New Fluid objects visibility", "FullCompat", (getTestObjectProvi
 	 * If detachedMode is false, the tests creates new data stores in attached container and validates their visibility.
 	 */
 	const tests = (detachedMode: boolean) => {
-		beforeEach(async function () {
+		beforeEach("setup", async function () {
 			provider = getTestObjectProvider();
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6978
+			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				this.skip();
+			}
 			if (provider.driver.type !== "local") {
 				this.skip();
 			}

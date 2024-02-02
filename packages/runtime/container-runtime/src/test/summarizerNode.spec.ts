@@ -175,17 +175,6 @@ describe("Runtime", () => {
 			});
 
 			describe("Create Child", () => {
-				it("Should fail to create child from summary if parent does not have summary", () => {
-					createRoot();
-					expectThrow(
-						() => createMid({ type: CreateSummarizerNodeSource.FromSummary }),
-						"create child",
-						"no parent summary",
-						"0x1ac",
-					);
-					assert(midNode === undefined, "should not be created");
-				});
-
 				it("Should fail to create child with same id", () => {
 					createRoot();
 					createMid({ type: CreateSummarizerNodeSource.Local });

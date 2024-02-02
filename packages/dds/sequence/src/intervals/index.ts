@@ -9,6 +9,7 @@ export {
 	ISerializableInterval,
 	IntervalOpType,
 	IntervalType,
+	IntervalDeltaOpType,
 	IIntervalHelpers,
 	IntervalStickiness,
 	SerializedIntervalDelta,

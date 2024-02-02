@@ -1,0 +1,89 @@
+# This file is a map of labels to repo glob paths. See https://github.com/marketplace/actions/labeler
+# for more details about the config format. The labels in this file will be added AND removed from PRs as the files
+# edited in the PR change. See https://github.com/microsoft/FluidFramework/blob/main/.github/workflows/pr-labeler.yml to
+# see how this config file is used.
+
+"area: build":
+  - ".github/*"
+  - ".github/workflows/**"
+  - "build-tools/**"
+  - "common/build/**"
+  - "tools/markdown-magic/**"
+  - "tools/pipelines/**"
+
+"area: contributor experience":
+  - ".vscode/**"
+
+"area: dds":
+  - experimental/dds/**
+  - packages/dds/**
+
+"area: dds: tree":
+  - experimental/dds/tree/**
+  - experimental/dds/tree2/**
+  - packages/dds/tree/**
+
+"area: dds: propertydds":
+  - experimental/PropertyDDS/**
+
+"area: dds: sharedstring":
+  - packages/dds/sequence/**
+
+"area: definitions":
+  - common/lib/container-definitions/**
+  - common/lib/core-interfaces/**
+  - common/lib/driver-definitions/**
+
+"area: dev experience":
+  - experimental/framework/**
+
+"area: driver":
+  - packages/drivers/**
+
+"area: examples":
+  - examples/**
+  - experimental/examples/**
+
+"area: framework":
+  - packages/framework/**
+
+"area: loader":
+  - packages/loader/**
+
+"area: odsp-driver":
+  - packages/drivers/*odsp*/**
+  - packages/utils/odsp-doclib-utils/**
+
+# Add "area: repo" label to any root or .github changes
+"area: repo":
+  - any: ["*", ".github/**", "!BREAKING.md"]
+
+"area: runtime":
+  - packages/runtime/**
+
+"area: server":
+  - server/**
+
+"area: tests":
+  - packages/test/**
+
+"area: tools":
+  - any: ["common/build/**", "tools/**", "!tools/markdown-magic/**"]
+
+"area: website":
+  - any: ["docs/**", "!docs/content/**"]
+
+"breaking change":
+  - BREAKING.md
+
+dependencies:
+  - lerna-package-lock.json
+  - package-lock.json
+  - pnpm-lock.yaml
+
+documentation:
+  - docs/content/**
+
+# flag changes to public APIs so they can be reviewed to see if they're breaking
+"public api change":
+  - "**/api-report/**"

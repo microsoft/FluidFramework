@@ -13,7 +13,8 @@ import {
 
 /**
  * Type of "valueChanged" event parameter.
- * @alpha
+ * @sealed
+ * @public
  */
 export interface IValueChanged {
 	/**
@@ -35,9 +36,9 @@ export interface IValueChanged {
  * @remarks When used as a Map, operates on its keys.
  * @alpha
  */
-// TODO: Use `unknown` instead (breaking change).
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface IDirectory
+	// TODO: Use `unknown` instead (breaking change).
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	extends Map<string, any>,
 		IEventProvider<IDirectoryEvents>,
 		Partial<IDisposable> {
@@ -297,7 +298,8 @@ export interface IDirectoryValueChanged extends IValueChanged {
 
 /**
  * Events emitted in response to changes to the {@link ISharedMap | map} data.
- * @alpha
+ * @sealed
+ * @public
  */
 export interface ISharedMapEvents extends ISharedObjectEvents {
 	/**
@@ -336,7 +338,8 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
  * {@link @fluidframework/datastore#FluidObjectHandle}.
  *
  * For more information, including example usages, see {@link https://fluidframework.com/docs/data-structures/map/}.
- * @alpha
+ * @sealed
+ * @public
  */
 // TODO: Use `unknown` instead (breaking change).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

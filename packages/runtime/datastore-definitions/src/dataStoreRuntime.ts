@@ -12,12 +12,7 @@ import {
 	IFluidHandle,
 	FluidObject,
 } from "@fluidframework/core-interfaces";
-import {
-	IAudience,
-	IDeltaManager,
-	AttachState,
-	ILoaderOptions,
-} from "@fluidframework/container-definitions";
+import { IAudience, IDeltaManager, AttachState } from "@fluidframework/container-definitions";
 import {
 	IDocumentMessage,
 	IQuorumClients,
@@ -25,11 +20,11 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import { IIdCompressor } from "@fluidframework/id-compressor";
-import { IChannel } from ".";
+import { IChannel } from "./channel";
 
 /**
  * Events emitted by {@link IFluidDataStoreRuntime}.
- * @alpha
+ * @public
  */
 export interface IFluidDataStoreRuntimeEvents extends IEvent {
 	(event: "disconnected" | "dispose" | "attaching" | "attached", listener: () => void);
@@ -40,7 +35,7 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
 
 /**
  * Represents the runtime for the data store. Contains helper functions/state of the data store.
- * @alpha
+ * @public
  */
 export interface IFluidDataStoreRuntime
 	extends IEventProvider<IFluidDataStoreRuntimeEvents>,
@@ -53,7 +48,8 @@ export interface IFluidDataStoreRuntime
 	readonly channelsRoutingContext: IFluidHandleContext;
 	readonly objectsRoutingContext: IFluidHandleContext;
 
-	readonly options: ILoaderOptions;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	readonly options: Record<string | number, any>;
 
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 

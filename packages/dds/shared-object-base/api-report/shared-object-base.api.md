@@ -28,7 +28,7 @@ export function createSingleBlobSummary(key: string, content: string | Uint8Arra
 
 // @internal
 export class FluidSerializer implements IFluidSerializer {
-    constructor(context: IFluidHandleContext, handleParsedCb: (handle: IFluidHandle) => void);
+    constructor(context: IFluidHandleContext, handleParsedCb?: (handle: IFluidHandle) => void);
     decode(input: any): any;
     encode(input: any, bind: IFluidHandle): any;
     // (undocumented)
@@ -44,7 +44,7 @@ export class FluidSerializer implements IFluidSerializer {
     stringify(input: any, bind: IFluidHandle): string;
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export interface IFluidSerializer {
     decode(input: any): any;
     encode(value: any, bind: IFluidHandle): any;
@@ -52,21 +52,13 @@ export interface IFluidSerializer {
     stringify(value: any, bind: IFluidHandle): string;
 }
 
-// @internal
-export interface ISerializedHandle {
-    // (undocumented)
-    type: "__fluid_handle__";
-    // (undocumented)
-    url: string;
-}
-
-// @alpha
+// @public
 export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends IChannel, IEventProvider<TEvent> {
     bindToContext(): void;
     getGCData(fullGC?: boolean): IGarbageCollectionData;
 }
 
-// @alpha
+// @public
 export interface ISharedObjectEvents extends IErrorEvent {
     // @eventProperty
     (event: "pre-op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
@@ -74,19 +66,16 @@ export interface ISharedObjectEvents extends IErrorEvent {
     (event: "op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
-// @internal (undocumented)
-export const isSerializedHandle: (value: any) => value is ISerializedHandle;
-
-// @internal
+// @alpha
 export function makeHandlesSerializable(value: any, serializer: IFluidSerializer, bind: IFluidHandle): any;
 
-// @internal
+// @alpha
 export function parseHandles(value: any, serializer: IFluidSerializer): any;
 
 // @internal
 export function serializeHandles(value: any, serializer: IFluidSerializer, bind: IFluidHandle): string | undefined;
 
-// @alpha
+// @public
 export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends SharedObjectCore<TEvent> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, telemetryContextPrefix: string);
     // (undocumented)
@@ -100,7 +89,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     protected abstract summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext): ISummaryTreeWithStats;
 }
 
-// @alpha
+// @public
 export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     protected abstract applyStashedOp(content: any): unknown;

@@ -9,6 +9,7 @@ export {
 	mixinMonitoringContext,
 	IConfigProvider,
 	loggerToMonitoringContext,
+	wrapConfigProviderWithDefaults,
 } from "./config";
 export {
 	DataCorruptionError,
@@ -80,22 +81,3 @@ export {
 	ITelemetryPropertiesExt,
 	TelemetryEventCategory,
 } from "./telemetryTypes";
-
-/**
- * Types supported by {@link IConfigProviderBase}.
- * @deprecated Use ConfigTypes from fluidFramework/core-interfaces
- *
- * @internal
- */
-export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
-
-/**
- * Base interface for providing configurations to enable/disable/control features.
- *
- * @deprecated Use IConfigProviderBase from fluidFramework/core-interfaces
- *
- * @internal
- */
-export interface IConfigProviderBase {
-	getRawConfig(name: string): ConfigTypes;
-}

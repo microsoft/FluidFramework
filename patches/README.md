@@ -7,15 +7,6 @@ The files in this folder are patches for packages we depend on within the repo. 
 
 Each patch is described here, along with any relevant links to issues or PRs and any additional relevant details.
 
-### socket.io-client
-
-This patch updates the `exports` field in package.json to be correct for TypeScript projects using
-`moduleResolution: node16`.
-
-It applies the changes covered in this PR: https://github.com/socketio/socket.io-client/pull/1595
-
-As soon as a version of the package is released with the changes in that PR, this patch can be removed.
-
 ### @microsoft/api-extractor
 
 This patch adds a required fix to make it possible to validate release tag compatibility across package boundaries.
@@ -35,7 +26,8 @@ Related github issue: https://github.com/microsoft/rushstack/issues/4425
 ### tsc-multi
 
 This patch adds support for rewriting imports in declaration (.d.ts) files by adding an "afterDeclarations" handler to
-supplement the existing "after" handler. To enable this feature, add `"rewriteDtsImports": true` to the tsc-multi target
-config. If `rewriteDtsImports` is false or omitted, behavior should match exactly what it is today without this feature.
+supplement the existing "after" handler. To enable this feature, add `"dtsExtName": ".d.mts"` to the tsc-multi target
+config. The value should be the desired file extension for declaration files. If `dtsExtName` is omitted, behavior
+should match exactly what it is today without this feature.
 
 The relevant changes can be found on this branch: <https://github.com/tylerbutler/tsc-multi/tree/dts-imports>

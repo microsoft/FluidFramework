@@ -13,7 +13,7 @@ export { LoaderContainerTracker } from "./loaderContainerTracker";
 export { fluidEntryPoint, LocalCodeLoader, SupportedExportInterfaces } from "./localCodeLoader";
 export { createAndAttachContainer, createLoader } from "./localLoader";
 export { retryWithEventualValue } from "./retry";
-export { mockConfigProvider } from "./TestConfigs";
+export { createTestConfigProvider, ITestConfigProvider } from "./TestConfigs";
 export {
 	createTestContainerRuntimeFactory,
 	TestContainerRuntimeFactory,
@@ -31,7 +31,12 @@ export {
 	TestObjectProvider,
 	TestObjectProviderWithVersionedLoad,
 } from "./testObjectProvider";
-export { createSummarizer, createSummarizerFromFactory, summarizeNow } from "./TestSummaryUtils";
+export {
+	createSummarizer,
+	createSummarizerFromFactory,
+	summarizeNow,
+	SummaryInfo,
+} from "./TestSummaryUtils";
 export {
 	defaultTimeoutDurationMs,
 	timeoutAwait,

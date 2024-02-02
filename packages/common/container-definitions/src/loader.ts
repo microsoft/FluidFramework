@@ -5,6 +5,7 @@
 
 import { IRequest, FluidObject, IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 import {
+	IClient,
 	IClientDetails,
 	IDocumentMessage,
 	IQuorumClients,
@@ -22,7 +23,7 @@ import { IFluidCodeDetails, IFluidPackage, IProvideFluidCodeDetailsComparer } fr
 
 /**
  * Encapsulates a module entry point with corresponding code details.
- * @internal
+ * @alpha
  */
 export interface IFluidModuleWithDetails {
 	/**
@@ -42,7 +43,7 @@ export interface IFluidModuleWithDetails {
 /**
  * Fluid code loader resolves a code module matching the document schema, i.e. code details, such as
  * a package name and package version range.
- * @internal
+ * @alpha
  */
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
 	/**
@@ -245,12 +246,19 @@ export interface IContainerEvents extends IEvent {
 	 * @see {@link IContainer.isDirty}
 	 */
 	(event: "saved", listener: (dirty: boolean) => void);
+
+	/**
+	 * Emitted when the some of the properties related to the container are initialized or updated.
+	 * This emitted metadata will the props which are updated. If consumer wants to read full set of
+	 * metadata then they can read it off the container from {@link IContainer.containerMetadata} prop.
+	 */
+	(event: "metadataUpdate", listener: (metadata: Record<string, string>) => void);
 }
 
 /**
  * Namespace for the different connection states a container can be in.
  * PLEASE NOTE: The sequence of the numerical values does no correspond to the typical connection state progression.
- * @alpha
+ * @public
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace ConnectionState {
@@ -258,33 +266,33 @@ export namespace ConnectionState {
 	 * The container is not connected to the delta server.
 	 * Note - When in this state the container may be about to reconnect,
 	 * or may remain disconnected until explicitly told to connect.
-	 * @alpha
+	 * @public
 	 */
 	export type Disconnected = 0;
 
 	/**
 	 * The container is disconnected but actively trying to establish a new connection.
 	 * PLEASE NOTE that this numerical value falls out of the order you may expect for this state.
-	 * @alpha
+	 * @public
 	 */
 	export type EstablishingConnection = 3;
 
 	/**
 	 * The container has an inbound connection only, and is catching up to the latest known state from the service.
-	 * @alpha
+	 * @public
 	 */
 	export type CatchingUp = 1;
 
 	/**
 	 * The container is fully connected and syncing.
-	 * @alpha
+	 * @public
 	 */
 	export type Connected = 2;
 }
 
 /**
  * Type defining the different states of connectivity a Container can be in.
- * @alpha
+ * @public
  */
 export type ConnectionState =
 	| ConnectionState.Disconnected
@@ -296,7 +304,6 @@ export type ConnectionState =
  * The Host's view of a Container and its connection to storage
  * @alpha
  */
-// eslint-disable-next-line import/no-deprecated
 export interface IContainer extends IEventProvider<IContainerEvents> {
 	/**
 	 * The Delta Manager supporting the op stream for this Container
@@ -467,6 +474,13 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	 * Use this as the primary way of getting access to the user-defined logic within the container.
 	 */
 	getEntryPoint(): Promise<FluidObject>;
+
+	/**
+	 * Exposes any metadata/props related to the container. This is full set of metadata props which the container wants to
+	 * expose. Whenever container receives updates from `IContainerEvents.metadataUpdate` event, we overwrite only those
+	 * updated props in the update and rest remains the same.
+	 */
+	containerMetadata: Record<string, string>;
 }
 
 /**
@@ -517,12 +531,11 @@ export interface IHostLoader extends ILoader {
 }
 
 /**
+ * Options to configure various behaviors of the ILoader.
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type ILoaderOptions = {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	[key in string | number]: any;
-} & {
 	/**
 	 * @deprecated This option has been deprecated and will be removed in a future release
 	 * Set caching behavior for the loader. If true, we will load a container from cache if one
@@ -533,6 +546,16 @@ export type ILoaderOptions = {
 	 * Defaults to false.
 	 */
 	cache?: boolean;
+
+	/**
+	 * @deprecated Do not use.
+	 */
+	client?: IClient;
+
+	/**
+	 * @deprecated Do not use.
+	 */
+	enableOfflineLoad?: boolean;
 
 	/**
 	 * Provide the current Loader through the scope object when creating Containers. It is added
@@ -551,7 +574,7 @@ export type ILoaderOptions = {
 
 /**
  * Accepted header keys for requests coming to the Loader
- * @internal
+ * @alpha
  */
 export enum LoaderHeader {
 	/**

@@ -35,13 +35,13 @@
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
-			"src/test/**/*.ts",
-			"lib/test/**/*.js"
+			"src/test/**/*.*ts",
+			"lib/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
-			"src/**/*.ts",
-			"lib/**/*.js"
+			"src/**/*.*ts",
+			"lib/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [
@@ -53,14 +53,14 @@
 	},
 	"dependencies": {
 		"@fluidframework/common-utils": "^1.1.1",
-		"@fluidframework/gitresources": "^3.0.0-211732",
+		"@fluidframework/gitresources": "^3.0.0",
 		"@fluidframework/protocol-definitions": "^1.1.0",
-		"@fluidframework/server-services": "^3.0.0-211732",
-		"@fluidframework/server-services-client": "^3.0.0-211732",
-		"@fluidframework/server-services-core": "^3.0.0-211732",
-		"@fluidframework/server-services-shared": "^3.0.0-211732",
-		"@fluidframework/server-services-telemetry": "^3.0.0-211732",
-		"@fluidframework/server-services-utils": "^3.0.0-211732",
+		"@fluidframework/server-services": "^3.0.0",
+		"@fluidframework/server-services-client": "^3.0.0",
+		"@fluidframework/server-services-core": "^3.0.0",
+		"@fluidframework/server-services-shared": "^3.0.0",
+		"@fluidframework/server-services-telemetry": "^3.0.0",
+		"@fluidframework/server-services-utils": "^3.0.0",
 		"axios": "^1.6.2",
 		"body-parser": "^1.17.2",
 		"compression": "^1.7.3",
@@ -78,7 +78,7 @@
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/server-test-utils": "^3.0.0-211732",
+		"@fluidframework/server-test-utils": "^3.0.0",
 		"@types/compression": "0.0.36",
 		"@types/cors": "^2.8.4",
 		"@types/debug": "^4.1.5",
@@ -91,7 +91,7 @@
 		"@types/uuid": "^3.4.4",
 		"async": "^3.2.2",
 		"axios-mock-adapter": "^1.19.0",
-		"c8": "^7.7.1",
+		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.27.0",
 		"eslint-config-prettier": "~9.0.0",

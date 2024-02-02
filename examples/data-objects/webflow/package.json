@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/webflow",
-	"version": "2.0.0-internal.9.0.0",
+	"version": "2.0.0-rc.1.0.0",
 	"private": true,
 	"description": "Collaborative markdown editor.",
 	"homepage": "https://fluidframework.com",
@@ -51,9 +51,9 @@
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
-			"**/*.d.ts",
-			"src/test/**/*.ts",
-			"dist/test/**/*.js"
+			"**/*.d.*ts",
+			"src/test/**/*.*ts",
+			"dist/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"extension": [
@@ -63,8 +63,8 @@
 			".jsx"
 		],
 		"include": [
-			"src/**/*.ts",
-			"dist/**/*.js"
+			"src/**/*.*ts",
+			"dist/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"require": [
@@ -93,8 +93,8 @@
 		"@fluid-private/test-version-utils": "workspace:~",
 		"@fluid-tools/webpack-fluid-loader": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.28.0",
-		"@fluidframework/eslint-config-fluid": "^3.1.0",
+		"@fluidframework/build-tools": "^0.29.0",
+		"@fluidframework/eslint-config-fluid": "^3.3.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
@@ -103,7 +103,7 @@
 		"@types/node": "^18.19.0",
 		"@types/react": "^17.0.44",
 		"@types/react-dom": "^17.0.18",
-		"c8": "^7.7.1",
+		"c8": "^8.0.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"css-loader": "^1.0.0",

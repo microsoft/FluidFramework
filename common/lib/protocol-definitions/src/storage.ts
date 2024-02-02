@@ -117,6 +117,13 @@ export interface ITree {
 	 * Indicates that this tree is unreferenced. If this is not present, the tree is considered referenced.
 	 */
 	unreferenced?: true;
+
+	/**
+	 * Represents the group to which the tree belongs to. When the server returns the snapshot to
+	 * the client, and this tree is missing in that snapshot, then this could be used to request the contents
+	 * from the service.
+	 */
+	groupId?: string;
 }
 
 /**
@@ -131,6 +138,13 @@ export interface ISnapshotTree {
 	 * Indicates that this tree is unreferenced. If this is not present, the tree is considered referenced.
 	 */
 	unreferenced?: true;
+
+	/**
+	 * Represents the group to which the snapshot tree belongs to. When the server returns the snapshot to
+	 * the client, and this tree is missing in that snapshot, then this could be used to request the contents
+	 * from the service.
+	 */
+	groupId?: string;
 }
 
 /**

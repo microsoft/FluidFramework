@@ -24,6 +24,7 @@ import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISequencedProposal } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
+import { ISnapshot } from '@fluidframework/driver-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryContent } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
@@ -34,14 +35,14 @@ import { IUsageError } from '@fluidframework/core-interfaces';
 import { IVersion } from '@fluidframework/protocol-definitions';
 import { MessageType } from '@fluidframework/protocol-definitions';
 
-// @alpha
+// @public
 export enum AttachState {
     Attached = "Attached",
     Attaching = "Attaching",
     Detached = "Detached"
 }
 
-// @alpha
+// @public
 export namespace ConnectionState {
     export type CatchingUp = 1;
     export type Connected = 2;
@@ -49,20 +50,10 @@ export namespace ConnectionState {
     export type EstablishingConnection = 3;
 }
 
-// @alpha
+// @public
 export type ConnectionState = ConnectionState.Disconnected | ConnectionState.EstablishingConnection | ConnectionState.CatchingUp | ConnectionState.Connected;
 
-// @internal @deprecated
-export enum ContainerErrorType {
-    clientSessionExpiredError = "clientSessionExpiredError",
-    dataCorruptionError = "dataCorruptionError",
-    dataProcessingError = "dataProcessingError",
-    genericError = "genericError",
-    throttlingError = "throttlingError",
-    usageError = "usageError"
-}
-
-// @internal
+// @alpha
 export const ContainerErrorTypes: {
     readonly clientSessionExpiredError: "clientSessionExpiredError";
     readonly genericError: "genericError";
@@ -72,7 +63,7 @@ export const ContainerErrorTypes: {
     readonly usageError: "usageError";
 };
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export type ContainerErrorTypes = (typeof ContainerErrorTypes)[keyof typeof ContainerErrorTypes];
 
 // @alpha
@@ -80,7 +71,7 @@ export interface ContainerWarning extends IErrorBase {
     logged?: boolean;
 }
 
-// @alpha
+// @public
 export interface IAudience extends EventEmitter {
     getMember(clientId: string): IClient | undefined;
     getMembers(): Map<string, IClient>;
@@ -105,12 +96,12 @@ export interface IBatchMessage {
     referenceSequenceNumber?: number;
 }
 
-// @internal
+// @alpha
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
 
-// @alpha
+// @public
 export interface IConnectionDetails {
     checkpointSequenceNumber: number | undefined;
     // (undocumented)
@@ -133,6 +124,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
     readonly closed: boolean;
     connect(): void;
     readonly connectionState: ConnectionState;
+    containerMetadata: Record<string, string>;
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     disconnect(): void;
     dispose(error?: ICriticalContainerError): void;
@@ -178,13 +170,13 @@ export interface IContainerContext {
     readonly id: string;
     // (undocumented)
     readonly loader: ILoader;
-    // (undocumented)
-    readonly options: ILoaderOptions;
+    readonly options: Record<string | number, any>;
     // (undocumented)
     pendingLocalState?: unknown;
     // (undocumented)
     readonly quorum: IQuorumClients;
     readonly scope: FluidObject;
+    readonly snapshotWithContents?: ISnapshot;
     // (undocumented)
     readonly storage: IDocumentStorageService;
     // (undocumented)
@@ -217,6 +209,7 @@ export interface IContainerEvents extends IEvent {
     (event: "op", listener: (message: ISequencedDocumentMessage) => void): any;
     (event: "dirty", listener: (dirty: boolean) => void): any;
     (event: "saved", listener: (dirty: boolean) => void): any;
+    (event: "metadataUpdate", listener: (metadata: Record<string, string>) => void): any;
 }
 
 // @internal (undocumented)
@@ -228,10 +221,10 @@ export interface IContainerLoadMode {
     pauseAfterLoad?: boolean;
 }
 
-// @alpha
+// @public
 export type ICriticalContainerError = IErrorBase;
 
-// @alpha
+// @public @sealed
 export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender {
     readonly active: boolean;
     readonly clientDetails: IClientDetails;
@@ -252,7 +245,7 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
     readonly version: string;
 }
 
-// @alpha
+// @public @sealed
 export interface IDeltaManagerEvents extends IEvent {
     // @deprecated (undocumented)
     (event: "prepareSend", listener: (messageBuffer: any[]) => void): any;
@@ -268,7 +261,7 @@ export interface IDeltaManagerEvents extends IEvent {
     }) => void): any;
 }
 
-// @alpha
+// @public @sealed
 export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, IDisposable {
     idle: boolean;
     length: number;
@@ -283,21 +276,21 @@ export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, ID
     }>;
 }
 
-// @alpha
+// @public @sealed
 export interface IDeltaQueueEvents<T> extends IErrorEvent {
     (event: "push", listener: (task: T) => void): any;
     (event: "op", listener: (task: T) => void): any;
     (event: "idle", listener: (count: number, duration: number) => void): any;
 }
 
-// @alpha
+// @public @sealed
 export interface IDeltaSender {
     flush(): void;
 }
 
 export { IErrorBase }
 
-// @internal
+// @alpha
 export interface IFluidBrowserPackage extends IFluidPackage {
     // (undocumented)
     fluid: {
@@ -306,7 +299,7 @@ export interface IFluidBrowserPackage extends IFluidPackage {
     };
 }
 
-// @internal
+// @alpha
 export interface IFluidBrowserPackageEnvironment extends IFluidPackageEnvironment {
     umd: {
         files: string[];
@@ -346,7 +339,7 @@ export interface IFluidModule {
     fluidExport: FluidObject<IRuntimeFactory & IProvideFluidCodeDetailsComparer>;
 }
 
-// @internal
+// @alpha
 export interface IFluidModuleWithDetails {
     details: IFluidCodeDetails;
     module: IFluidModule;
@@ -409,11 +402,11 @@ export interface ILoaderHeader {
     [LoaderHeader.version]: string | undefined;
 }
 
-// @alpha (undocumented)
+// @alpha
 export type ILoaderOptions = {
-    [key in string | number]: any;
-} & {
     cache?: boolean;
+    client?: IClient;
+    enableOfflineLoad?: boolean;
     provideScopeLoader?: boolean;
     maxClientLeaveWaitTime?: number;
 };
@@ -462,13 +455,13 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
     instantiateRuntime(context: IContainerContext, existing: boolean): Promise<IRuntime>;
 }
 
-// @internal
+// @alpha
 export const isFluidBrowserPackage: (maybePkg: unknown) => maybePkg is Readonly<IFluidBrowserPackage>;
 
 // @internal
 export const isFluidCodeDetails: (details: unknown) => details is Readonly<IFluidCodeDetails>;
 
-// @internal
+// @alpha
 export const isFluidPackage: (pkg: unknown) => pkg is Readonly<IFluidPackage>;
 
 // @alpha
@@ -487,7 +480,7 @@ export { IThrottlingWarning }
 
 export { IUsageError }
 
-// @internal
+// @alpha
 export enum LoaderHeader {
     // @deprecated (undocumented)
     cache = "fluid-cache",
@@ -500,7 +493,7 @@ export enum LoaderHeader {
     version = "version"
 }
 
-// @alpha (undocumented)
+// @public (undocumented)
 export type ReadOnlyInfo = {
     readonly readonly: false | undefined;
 } | {

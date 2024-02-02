@@ -74,13 +74,17 @@ export const gcVersionUpgradeToV4Key = "Fluid.GarbageCollection.GCVersionUpgrade
 export const disableDatastoreSweepKey = "Fluid.GarbageCollection.DisableDataStoreSweep";
 /** Config key to disable GC sweep for attachment blobs. */
 export const disableAttachmentBlobSweepKey = "Fluid.GarbageCollection.DisableAttachmentBlobSweep";
+/** Config key to revert new paradigm of detecting outbound routes in ContainerRuntime layer (use true) */
+export const detectOutboundRoutesViaDDSKey = "Fluid.GarbageCollection.DetectOutboundRoutesViaDDS";
+/** Config key to disable auto-recovery mechanism that protects Tombstones that are loaded from being swept (use true) */
+export const disableAutoRecoveryKey = "Fluid.GarbageCollection.DisableAutoRecovery";
 
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
 
 /**
- * The maximum snapshot cache expiry in the driver. This is used to calculate the sweep timeout.
- * Sweep timeout = session expiry timeout + snapshot cache expiry timeout + a buffer.
+ * The maximum snapshot cache expiry in the driver. This is used to calculate the tombstone timeout.
+ * Tombstone timeout = session expiry timeout + snapshot cache expiry timeout + a buffer.
  * The snapshot cache expiry timeout cannot be known precisely but the upper bound is 5 days, i.e., any snapshot
  * in cache will be invalidated before 5 days.
  */
@@ -114,6 +118,21 @@ export type GCFeatureMatrix =
 	  };
 
 /**
+ * Deprecated properties formerly included in @see IGCMetadata.
+ * These may be found in old snapshots, so we need to support them for backwards compatibility.
+ */
+export interface IGCMetadata_Deprecated {
+	/**
+	 * How long to wait after an object is unreferenced before deleting it via GC Sweep
+	 *
+	 * @deprecated Replaced by @see IGCMetadata.tombstoneTimeoutMs
+	 */
+	readonly sweepTimeoutMs?: number;
+}
+
+/**
+ * GC-specific metadata to be written into the summary.
+ *
  * @alpha
  */
 export interface IGCMetadata {
@@ -148,8 +167,15 @@ export interface IGCMetadata {
 	readonly sweepEnabled?: boolean;
 	/** If this is present, the session for this container will expire after this time and the container will close */
 	readonly sessionExpiryTimeoutMs?: number;
-	/** How long to wait after an object is unreferenced before deleting it via GC Sweep */
-	readonly sweepTimeoutMs?: number;
+	/**
+	 * How long to wait after an object is unreferenced before it becomes a Tombstone.
+	 *
+	 * After this point, there's a grace period before the object is deleted.
+	 * @see IGCRuntimeOptions.sweepGracePeriodMs
+	 *
+	 * So the full sweep timeout in a session is tombstoneTimeoutMs + sweepGracePeriodMs.
+	 */
+	readonly tombstoneTimeoutMs?: number;
 }
 
 /**
@@ -229,6 +255,8 @@ export type GCNodeType = (typeof GCNodeType)[keyof typeof GCNodeType];
 export const GarbageCollectionMessageType = {
 	/** Message sent directing GC to delete the given nodes */
 	Sweep: "Sweep",
+	/** Message sent notifying GC that a Tombstoned object was Loaded */
+	TombstoneLoaded: "TombstoneLoaded",
 } as const;
 
 /**
@@ -242,16 +270,28 @@ export type GarbageCollectionMessageType =
  * @internal
  */
 export interface ISweepMessage {
-	type: "Sweep";
-	// The ids of nodes that are deleted.
+	/** @see GarbageCollectionMessageType.Sweep */
+	type: typeof GarbageCollectionMessageType.Sweep;
+	/** The ids of nodes that are deleted. */
 	deletedNodeIds: string[];
+}
+
+/**
+ * The GC TombstoneLoaded message.
+ * @internal
+ */
+export interface ITombstoneLoadedMessage {
+	/** @see GarbageCollectionMessageType.TombstoneLoaded */
+	type: typeof GarbageCollectionMessageType.TombstoneLoaded;
+	/** The id of Tombstoned node that was loaded. */
+	nodePath: string;
 }
 
 /**
  * Type for a message to be used for sending / received garbage collection messages.
  * @internal
  */
-export type GarbageCollectionMessage = ISweepMessage;
+export type GarbageCollectionMessage = ISweepMessage | ITombstoneLoadedMessage;
 
 /**
  * Defines the APIs for the runtime object to be passed to the garbage collector.
@@ -283,6 +323,12 @@ export interface IGarbageCollectionRuntime {
 
 /** Defines the contract for the garbage collector. */
 export interface IGarbageCollector {
+	/**
+	 * Tells the time at which session expiry timer started in a previous container.
+	 * This is only set when loading from a stashed container and will be equal to the
+	 * original container's local client time when it was loaded (and started the session expiry timer).
+	 */
+	readonly sessionExpiryTimerStarted: number | undefined;
 	/** Tells whether GC should run or not. */
 	readonly shouldRunGC: boolean;
 	/** Tells whether the GC state in summary needs to be reset in the next summary. */
@@ -354,6 +400,7 @@ export interface IGarbageCollectorCreateParams {
 	readonly getLastSummaryTimestampMs: () => number | undefined;
 	readonly readAndParseBlob: ReadAndParseBlob;
 	readonly submitMessage: (message: ContainerRuntimeGCMessage) => void;
+	readonly sessionExpiryTimerStarted?: number | undefined;
 }
 
 /**
@@ -445,8 +492,8 @@ export interface IGarbageCollectorConfigs {
 	readonly runFullGC: boolean | undefined;
 	/** The time in ms to expire a session for a client for gc. */
 	readonly sessionExpiryTimeoutMs: number | undefined;
-	/** The time after which an unreferenced node is ready to be swept. */
-	readonly sweepTimeoutMs: number | undefined;
+	/** The time after which an unreferenced node can be Tombstoned - i.e. GC knows it can't be referenced again (revived). */
+	readonly tombstoneTimeoutMs: number | undefined;
 	/**
 	 * The delay between tombstone and sweep. Not persisted, so concurrent sessions may use different values.
 	 * Sweep is implemented in an eventually-consistent way so this is acceptable.

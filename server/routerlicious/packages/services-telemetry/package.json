@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-services-telemetry",
-	"version": "3.0.0",
+	"version": "3.1.0",
 	"description": "Fluid server telemetry utilities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -25,7 +25,7 @@
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../.prettierignore",
-		"test": "mocha --recursive \"dist/test/*.spec.js\"",
+		"test": "mocha --recursive \"dist/test/*.spec.*js\"",
 		"test:coverage": "c8 npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
@@ -35,13 +35,13 @@
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
-			"src/test/**/*.ts",
-			"dist/test/**/*.js"
+			"src/test/**/*.*ts",
+			"dist/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
-			"src/**/*.ts",
-			"dist/**/*.js"
+			"src/**/*.*ts",
+			"dist/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [
@@ -52,7 +52,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/common-utils": "3.0.0-220318",
+		"@fluidframework/common-utils": "^3.1.0",
 		"json-stringify-safe": "^5.0.1",
 		"path-browserify": "^1.0.1",
 		"serialize-error": "^8.1.0",
@@ -68,7 +68,7 @@
 		"@types/node": "^18.17.1",
 		"@types/supertest": "^2.0.5",
 		"@types/uuid": "^9.0.2",
-		"c8": "^7.7.1",
+		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.27.0",
 		"mocha": "^10.2.0",

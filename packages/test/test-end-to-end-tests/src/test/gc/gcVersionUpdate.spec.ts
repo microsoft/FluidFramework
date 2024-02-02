@@ -23,7 +23,7 @@ import {
 	IGCMetadata,
 	IGarbageCollector,
 	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/container-runtime/dist/gc/index.js";
+} from "@fluidframework/container-runtime/test/gc";
 
 // IContainerRuntime type that exposes garbage collector which is a private property.
 type IContainerRuntimeWithPrivates = IContainerRuntime & {
@@ -123,7 +123,7 @@ describeCompat("GC version update", "NoCompat", (getTestObjectProvider, apis) =>
 		containerRuntime.garbageCollector.getMetadata = getMetadataOverride;
 	}
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		mainContainer = await provider.createContainer(defaultRuntimeFactory);
 		const dataStore1 = (await mainContainer.getEntryPoint()) as ITestFluidObject;

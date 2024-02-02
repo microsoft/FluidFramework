@@ -13,6 +13,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { detectVersionScheme, fromInternalScheme } from "@fluid-tools/version-tools";
 import { lock } from "proper-lockfile";
 import * as semver from "semver";
+import { assert } from "@fluidframework/core-utils";
 import { pkgVersion } from "./packageVersion.js";
 import { InstalledPackage } from "./testApi.js";
 
@@ -137,10 +138,17 @@ export function resolveVersion(requested: string, installed: boolean) {
 		}
 		throw new Error(`No matching version found in ${baseModulePath} (requested: ${requested})`);
 	} else {
-		const result = execSync(
-			`npm v @fluidframework/container-loader@"${requested}" version --json`,
-			{ encoding: "utf8" },
-		);
+		let result: string | undefined;
+		try {
+			result = execSync(
+				`npm v @fluidframework/container-loader@"${requested}" version --json`,
+				{ encoding: "utf8" },
+			);
+		} catch (error: any) {
+			throw new Error(
+				`Error while running: npm v @fluidframework/container-loader@"${requested}" version --json`,
+			);
+		}
 		if (result === "" || result === undefined) {
 			throw new Error(`No version published as ${requested}`);
 		}
@@ -309,7 +317,12 @@ export const loadPackage = async (modulePath: string, pkg: string): Promise<any>
 			primaryExport = pkgJson.exports;
 		} else {
 			const exp = pkgJson.exports["."];
-			primaryExport = typeof exp === "string" ? exp : exp.require.default;
+			primaryExport =
+				typeof exp === "string"
+					? exp
+					: exp.require !== undefined
+					? exp.require.default
+					: exp.default;
 			if (primaryExport === undefined) {
 				throw new Error(`Package ${pkg} defined subpath exports but no '.' entry.`);
 			}
@@ -360,7 +373,7 @@ export function getRequestedVersion(
 		return baseVersion;
 	}
 	if (typeof requested === "string") {
-		return requested;
+		return resolveVersion(requested, false);
 	}
 	if (requested > 0) {
 		throw new Error("Only negative values are supported for `requested` param.");
@@ -370,7 +383,7 @@ export function getRequestedVersion(
 
 	// if the baseVersion passed is an internal version
 	if (adjustPublicMajor === false && (scheme === "internal" || scheme === "internalPrerelease")) {
-		const [publicVersion, internalVersion /* prereleaseIdentifier */] = fromInternalScheme(
+		const [publicVersion, internalVersion, prereleaseIdentifier] = fromInternalScheme(
 			baseVersion,
 			/** allowPrereleases */ true,
 			/** allowAnyPrereleaseId */ true,
@@ -379,6 +392,7 @@ export function getRequestedVersion(
 		const internalSchemeRange = internalSchema(
 			publicVersion.version,
 			internalVersion.version,
+			prereleaseIdentifier,
 			requested,
 		);
 		return resolveVersion(internalSchemeRange, false);
@@ -411,8 +425,29 @@ export function getRequestedVersion(
 	return resolveVersion(`^0.${requestedMinorVersion}.0-0`, false);
 }
 
-function internalSchema(publicVersion: string, internalVersion: string, requested: number): string {
-	if (semver.eq(publicVersion, "2.0.0") && semver.lt(internalVersion, "2.0.0")) {
+function internalSchema(
+	publicVersion: string,
+	internalVersion: string,
+	prereleaseIdentifier: string,
+	requested: number,
+): string {
+	if (requested === 0) {
+		return `${publicVersion}-${prereleaseIdentifier}.${internalVersion}`;
+	}
+
+	// Here we handle edge cases of converting the early rc/internal releases.
+	// We convert early rc releases to internal releases, and early internal releases to public releases.
+	if (prereleaseIdentifier === "rc" || prereleaseIdentifier === "dev-rc") {
+		if (semver.eq(publicVersion, "2.0.0")) {
+			const parsed = semver.parse(internalVersion);
+			assert(parsed !== null, "internalVersion should be parsable");
+			if (parsed.major + requested < 1) {
+				// If the request will evaluate to a pre-RC release, we need to convert the request
+				// to the equivalent internal release request.
+				return internalSchema("2.0.0", "8.0.0", "internal", requested + parsed.major);
+			}
+		}
+	} else if (semver.eq(publicVersion, "2.0.0") && semver.lt(internalVersion, "2.0.0")) {
 		if (requested === -1) {
 			return `^1.0.0-0`;
 		}
@@ -457,9 +492,11 @@ function internalSchema(publicVersion: string, internalVersion: string, requeste
 		throw new Error(err as string);
 	}
 
-	return `>=${publicVersion}-internal.${parsedVersion.major - 1}.0.0 <${publicVersion}-internal.${
-		parsedVersion.major
-	}.0.0`;
+	// Convert any pre/dev release indicators to internal or rc; default to "internal"
+	const idToUse = prereleaseIdentifier.includes("rc") ? "rc" : "internal";
+	return `>=${publicVersion}-${idToUse}.${
+		parsedVersion.major - 1
+	}.0.0 <${publicVersion}-${idToUse}.${parsedVersion.major}.0.0`;
 }
 
 /**

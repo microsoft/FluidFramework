@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { TreeConfiguration, SchemaFactory } from "@fluid-experimental/tree2";
+import { TreeConfiguration, SchemaFactory } from "fluid-framework";
 
 const sb = new SchemaFactory("fc1db2e8-0a00-11ee-be56-0242ac120002");
 
@@ -18,8 +18,8 @@ export class Letter extends sb.object("Letter", {
 }) {}
 
 export class App extends sb.object("App", {
-	letters: sb.list(Letter),
-	word: sb.list(Letter),
+	letters: sb.array(Letter),
+	word: sb.array(Letter),
 }) {}
 
 export const treeConfiguration = new TreeConfiguration(App, () => ({

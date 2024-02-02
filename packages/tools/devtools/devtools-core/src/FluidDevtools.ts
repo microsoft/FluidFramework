@@ -21,7 +21,7 @@ import {
 } from "./messaging";
 import { type IFluidDevtools } from "./IFluidDevtools";
 import { type DevtoolsFeatureFlags } from "./Features";
-import { type DevtoolsLogger } from "./DevtoolsLogger";
+import { type IDevtoolsLogger } from "./DevtoolsLogger";
 import { type ContainerKey } from "./CommonInterfaces";
 import { pkgVersion as devtoolsVersion } from "./packageVersion";
 
@@ -75,7 +75,7 @@ export interface FluidDevtoolsProps {
 	 * This is provided to the Devtools instance strictly to enable communicating supported / desired functionality with
 	 * external listeners.
 	 */
-	logger?: DevtoolsLogger;
+	logger?: IDevtoolsLogger;
 
 	/**
 	 * (optional) List of Containers to initialize the devtools with.
@@ -118,7 +118,7 @@ export class FluidDevtools implements IFluidDevtools {
 	/**
 	 * (optional) Telemetry logger associated with the Fluid runtime.
 	 */
-	public readonly logger: DevtoolsLogger | undefined;
+	public readonly logger: IDevtoolsLogger | undefined;
 
 	/**
 	 * Stores Container-level devtools instances registered with this object.

@@ -232,6 +232,7 @@ export function configureWebSocketServices(
 	socketTracker?: core.IWebSocketTracker,
 	revokedTokenChecker?: core.IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+	clusterDrainingChecker?: core.IClusterDrainingChecker,
 ) {
 	webSocketServer.on("connection", (socket: core.IWebSocket) => {
 		// Map from client IDs on this connection to the object ID and user info.
@@ -332,6 +333,31 @@ export function configureWebSocketServices(
 					2,
 				)}`;
 				return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
+			}
+
+			// Check if current cluster is in draining
+			if (clusterDrainingChecker) {
+				let clusterInDraining = false;
+				try {
+					clusterInDraining = await clusterDrainingChecker.isClusterDraining();
+				} catch (error) {
+					Lumberjack.error(
+						"Failed to get cluster draining status. Will allow requests to proceed.",
+						undefined,
+						error,
+					);
+					clusterInDraining = false;
+				}
+				if (clusterInDraining) {
+					// TODO: add a new error class
+					Lumberjack.info(
+						"Reject connect document request because cluster is draining.",
+						{
+							tenantId: message.tenantId,
+						},
+					);
+					throw new NetworkError(503, "Cluster is not available. Please retry later.");
+				}
 			}
 
 			const clientId = generateClientId();
@@ -612,11 +638,15 @@ export function configureWebSocketServices(
 			(connectedMessage as any).timestamp = connectedTimestamp;
 
 			// Track socket and tokens for this connection
-			if (socketTracker && claims.jti) {
-				socketTracker.addSocketForToken(
-					core.createCompositeTokenId(message.tenantId, message.id, claims.jti),
-					socket,
-				);
+			if (socketTracker) {
+				if (claims.jti) {
+					socketTracker.addSocketForToken(
+						core.createCompositeTokenId(message.tenantId, message.id, claims.jti),
+						socket,
+					);
+				} else {
+					socketTracker.addSocket(socket);
+				}
 			}
 
 			// Set up listener to forward signal to clients in the collaboration session when the broadcast-signal endpoint is called

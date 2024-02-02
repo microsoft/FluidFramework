@@ -15,12 +15,12 @@ import { IFileEntry } from '@fluidframework/odsp-driver-definitions';
 import { IOdspResolvedUrl } from '@fluidframework/odsp-driver-definitions';
 import { IOdspUrlParts } from '@fluidframework/odsp-driver-definitions';
 import { IPersistedCache } from '@fluidframework/odsp-driver-definitions';
-import { IPrefetchSnapshotContents as IPrefetchSnapshotContents_2 } from './odspCache';
 import { IRelaySessionAwareDriverFactory } from '@fluidframework/odsp-driver-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharingLinkKind } from '@fluidframework/odsp-driver-definitions';
+import { ISnapshot } from '@fluidframework/driver-definitions';
 import { ISnapshotOptions } from '@fluidframework/odsp-driver-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISocketStorageDiscovery } from '@fluidframework/odsp-driver-definitions';
@@ -33,10 +33,9 @@ import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { OdspResourceTokenFetchOptions } from '@fluidframework/odsp-driver-definitions';
 import { PromiseCache } from '@fluidframework/core-utils';
 import { RateLimiter } from '@fluidframework/driver-utils';
-import { ShareLinkTypes } from '@fluidframework/odsp-driver-definitions';
 import { TokenFetcher } from '@fluidframework/odsp-driver-definitions';
 
-// @internal
+// @alpha
 export function checkUrl(documentUrl: URL): DriverPreCheckInfo | undefined;
 
 // @internal (undocumented)
@@ -45,16 +44,16 @@ export enum ClpCompliantAppHeader {
     isClpCompliantApp = "X-CLP-Compliant-App"
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export function createLocalOdspDocumentServiceFactory(localSnapshot: Uint8Array | string): IDocumentServiceFactory;
 
-// @internal
-export function createOdspCreateContainerRequest(siteUrl: string, driveId: string, filePath: string, fileName: string, createShareLinkType?: ShareLinkTypes | ISharingLinkKind): IRequest;
+// @alpha
+export function createOdspCreateContainerRequest(siteUrl: string, driveId: string, filePath: string, fileName: string, createShareLinkType?: ISharingLinkKind): IRequest;
 
-// @internal
+// @alpha
 export function createOdspUrl(l: OdspFluidDataStoreLocator): string;
 
-// @internal
+// @alpha
 export function encodeOdspFluidDataStoreLocator(locator: OdspFluidDataStoreLocator): string;
 
 // @alpha
@@ -100,10 +99,10 @@ export type FetchTypeInternal = FetchType | "cache";
 // @internal
 export function getApiRoot(origin: string): string;
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export function getHashedDocumentId(driveId: string, itemId: string): Promise<string>;
 
-// @internal
+// @alpha
 export function getLocatorFromOdspUrl(url: URL, requireFluidSignature?: boolean): OdspFluidDataStoreLocator | undefined;
 
 // @internal
@@ -161,7 +160,7 @@ export interface IPersistedFileCache {
 }
 
 // @alpha (undocumented)
-export interface IPrefetchSnapshotContents extends ISnapshotContents {
+export interface IPrefetchSnapshotContents extends ISnapshot {
     // (undocumented)
     fluidEpoch: string;
     // (undocumented)
@@ -174,7 +173,7 @@ export interface ISharingLinkHeader {
     [SharingLinkHeader.isSharingLinkToRedeem]: boolean;
 }
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export interface ISnapshotContents {
     // (undocumented)
     blobs: Map<string, ArrayBuffer>;
@@ -187,7 +186,7 @@ export interface ISnapshotContents {
 }
 
 // @internal
-export interface ISnapshotContentsWithProps extends ISnapshotContents {
+export interface ISnapshotContentsWithProps extends ISnapshot {
     // (undocumented)
     telemetryProps: Record<string, number>;
 }
@@ -204,13 +203,13 @@ export function isOdspResolvedUrl(resolvedUrl: IResolvedUrl): resolvedUrl is IOd
 // @internal
 export function isSpoUrl(url: string): boolean;
 
-// @internal
+// @alpha
 export const locatorQueryParamName = "nav";
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export const OdcApiSiteOrigin = "https://my.microsoftpersonalcontent.com";
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export const OdcFileSiteOrigin = "https://1drv.ms";
 
 // @alpha
@@ -233,7 +232,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory, 
     // (undocumented)
     protected persistedCache: IPersistedCache;
     // (undocumented)
-    get snapshotPrefetchResultCache(): PromiseCache<string, IPrefetchSnapshotContents_2>;
+    get snapshotPrefetchResultCache(): PromiseCache<string, IPrefetchSnapshotContents>;
 }
 
 // @internal @deprecated (undocumented)
@@ -249,7 +248,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
     resolve(request: IRequest): Promise<IOdspResolvedUrl>;
 }
 
-// @internal
+// @alpha
 export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     constructor(shareLinkFetcherProps?: ShareLinkFetcherProps | undefined, logger?: ITelemetryBaseLogger, appName?: string | undefined, getContext?: ((resolvedUrl: IOdspResolvedUrl, dataStorePath: string) => Promise<string | undefined>) | undefined);
     appendDataStorePath(requestUrl: URL, pathToAppend: string): string | undefined;
@@ -260,7 +259,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     resolve(request: IRequest): Promise<IOdspResolvedUrl>;
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface OdspFluidDataStoreLocator extends IOdspUrlParts {
     // (undocumented)
     appName?: string;
@@ -277,10 +276,10 @@ export interface OdspFluidDataStoreLocator extends IOdspUrlParts {
 // @internal
 export function parseCompactSnapshotResponse(buffer: Uint8Array, logger: ITelemetryLoggerExt): ISnapshotContentsWithProps;
 
-// @internal
+// @alpha
 export function prefetchLatestSnapshot(resolvedUrl: IResolvedUrl, getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, persistedCache: IPersistedCache, forceAccessTokenViaAuthorizationHeader: boolean, logger: ITelemetryBaseLogger, hostSnapshotFetchOptions: ISnapshotOptions | undefined, enableRedeemFallback?: boolean, fetchBinarySnapshotFormat?: boolean, snapshotFormatFetchType?: SnapshotFormatSupportType, odspDocumentServiceFactory?: OdspDocumentServiceFactory): Promise<boolean>;
 
-// @internal
+// @alpha
 export interface ShareLinkFetcherProps {
     identityType: IdentityType;
     tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>;
@@ -292,7 +291,7 @@ export enum SharingLinkHeader {
     isSharingLinkToRedeem = "isSharingLinkToRedeem"
 }
 
-// @internal
+// @alpha
 export enum SnapshotFormatSupportType {
     // (undocumented)
     Binary = 1,
@@ -302,7 +301,7 @@ export enum SnapshotFormatSupportType {
     JsonAndBinary = 2
 }
 
-// @internal
+// @alpha
 export function storeLocatorInOdspUrl(url: URL, locator: OdspFluidDataStoreLocator): void;
 
 // (No @packageDocumentation comment for this package)

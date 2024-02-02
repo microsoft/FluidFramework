@@ -6,11 +6,11 @@
 import { strict as assert } from "assert";
 import { stub } from "sinon";
 import { v4 as uuid } from "uuid";
-import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
+import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt, MockLogger, isFluidError } from "@fluidframework/telemetry-utils";
-import { DriverErrorTypes, IAnyDriverError } from "@fluidframework/driver-definitions";
-import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
+import { IAnyDriverError } from "@fluidframework/driver-definitions";
+import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils/internal";
 import { Socket } from "socket.io-client";
 import { EpochTracker } from "../../epochTracker";
 import { LocalPersistentCache } from "../../odspCache";
@@ -171,7 +171,7 @@ describe("OdspDocumentDeltaConnection tests", () => {
 			assert(isFluidError(err), "should be a Fluid error");
 			assert(err.message.includes("TestSocketError"), "error message should match");
 			assert(
-				err.errorType === DriverErrorTypes.genericNetworkError,
+				err.errorType === OdspErrorTypes.genericNetworkError,
 				"errortype should be correct",
 			);
 		}
@@ -204,7 +204,7 @@ describe("OdspDocumentDeltaConnection tests", () => {
 			assert(isFluidError(err), "should be a Fluid error");
 			assert(err.message.includes("TestSocketError"), "error message should match");
 			assert(
-				err.errorType === DriverErrorTypes.genericNetworkError,
+				err.errorType === OdspErrorTypes.genericNetworkError,
 				"errortype should be correct",
 			);
 		}
@@ -235,7 +235,7 @@ describe("OdspDocumentDeltaConnection tests", () => {
 			assert(isFluidError(err), "should be a Fluid error");
 			assert(err.message.includes("connect_timeout"), "error message should match");
 			assert(
-				err.errorType === DriverErrorTypes.genericNetworkError,
+				err.errorType === OdspErrorTypes.genericNetworkError,
 				"errortype should be correct",
 			);
 		}
@@ -271,7 +271,7 @@ describe("OdspDocumentDeltaConnection tests", () => {
 			errorReceived.message.includes("server_disconnect"),
 			"should container server disconnect event",
 		);
-		assert(errorReceived.errorType, DriverErrorTypes.genericNetworkError);
+		assert(errorReceived.errorType, OdspErrorTypes.genericNetworkError);
 		assert(socket?.connected, "socket should still be connected");
 		assert(
 			socket.listenerCount("server_disconnect") === 1,
@@ -308,7 +308,7 @@ describe("OdspDocumentDeltaConnection tests", () => {
 			errorReceived.message.includes("server_disconnect"),
 			"should container server disconnect event",
 		);
-		assert(errorReceived.errorType, DriverErrorTypes.genericNetworkError);
+		assert(errorReceived.errorType, OdspErrorTypes.genericNetworkError);
 		assert(socket !== undefined && !socket.connected, "socket should be disconnected");
 		checkListenerCount(socket);
 	});
@@ -343,7 +343,7 @@ describe("OdspDocumentDeltaConnection tests", () => {
 			errorReceived.message.includes("socket.io (disconnect): TestSocketError"),
 			"should container disconnect event",
 		);
-		assert(errorReceived.errorType, DriverErrorTypes.genericNetworkError);
+		assert(errorReceived.errorType, OdspErrorTypes.genericNetworkError);
 		assert(errorReceived.socketErrorType === details.context.type);
 		assert(errorReceived.socketCode === details.context.code);
 		assert(socket !== undefined && !socket.connected, "socket should be closed");
@@ -378,7 +378,7 @@ describe("OdspDocumentDeltaConnection tests", () => {
 			errorReceived.message.includes("socket.io (error): TestSocketError"),
 			"should container disconnect event",
 		);
-		assert(errorReceived.errorType, DriverErrorTypes.genericNetworkError);
+		assert(errorReceived.errorType, OdspErrorTypes.genericNetworkError);
 		assert(socket !== undefined && !socket.connected, "socket should be closed");
 		checkListenerCount(socket);
 	});

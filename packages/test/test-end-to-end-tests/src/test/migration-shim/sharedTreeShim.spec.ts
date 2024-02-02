@@ -8,11 +8,11 @@ import { strict as assert } from "assert";
 import { type SharedTreeShim, SharedTreeShimFactory } from "@fluid-experimental/tree";
 import {
 	type ITree,
-	TreeFactory,
+	SharedTree,
 	type TreeView,
 	SchemaFactory,
 	TreeConfiguration,
-} from "@fluid-experimental/tree2";
+} from "@fluidframework/tree";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
@@ -66,11 +66,12 @@ describeCompat("SharedTreeShim", "NoCompat", (getTestObjectProvider) => {
 				state: "disabled",
 			},
 		},
+		enableRuntimeIdCompressor: true,
 	};
 
 	// V2 of the registry (the migration registry) -----------------------------------------
 	// V2 of the code: Registry setup to migrate the document
-	const newSharedTreeFactory = new TreeFactory({});
+	const newSharedTreeFactory = SharedTree.getFactory();
 	const sharedTreeShimFactory = new SharedTreeShimFactory(newSharedTreeFactory);
 
 	const dataObjectFactory = new DataObjectFactory(
@@ -89,7 +90,7 @@ describeCompat("SharedTreeShim", "NoCompat", (getTestObjectProvider) => {
 
 	let provider: ITestObjectProvider;
 
-	beforeEach(async () => {
+	beforeEach("getTestObjectProvider", async () => {
 		provider = getTestObjectProvider();
 	});
 
