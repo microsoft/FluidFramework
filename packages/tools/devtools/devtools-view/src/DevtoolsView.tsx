@@ -192,11 +192,6 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 		createChildLogger({ logger: telemetryOptInLogger }),
 	);
 
-	const supportedFeaturesRef = React.useRef<DevtoolsFeatureFlags | undefined>();
-
-	React.useEffect(() => {
-		supportedFeaturesRef.current = supportedFeatures;
-	}, [supportedFeatures]);
 
 	React.useEffect(() => {
 		/**
@@ -244,22 +239,6 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 			messageRelay.off("message", messageHandler);
 		};
 	}, [messageRelay, setSupportedFeatures, telemetryOptInLogger]);
-
-	React.useEffect(() => {
-		const handleRequest = (): void => {
-			const responseEvent = new CustomEvent("responseFromPage", {
-				detail: supportedFeatures,
-			});
-			window.dispatchEvent(responseEvent);
-		};
-		// This event comes from the Content script is a request from the DevTools browser extension
-		window.addEventListener("requestingSupportedFeatures", handleRequest);
-
-		// Cleanup the event listener when the component unmounts
-		return () => {
-			window.removeEventListener("requestingSupportedFeatures", handleRequest);
-		};
-	}, []);
 
 	// Manage the query timeout
 	React.useEffect(() => {

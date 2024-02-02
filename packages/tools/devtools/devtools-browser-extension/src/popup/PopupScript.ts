@@ -4,6 +4,7 @@
  */
 import { browser } from "../Globals";
 import { initializePopupView } from "./InitializePopupView";
+
 /**
  * This module is the extensions "pop-up" script.
  * It runs when the extension's action button is clicked.
@@ -18,9 +19,26 @@ import { initializePopupView } from "./InitializePopupView";
 //   If not, we may want to display an error message with a link to docs explaining how to
 //   use them.
 
-const port = browser.runtime.connect({ name: "popup-background-channel" });
-
+// TODO: double check that tab selection can't change while popup is being displayed.
 browser.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+	if (tabs.length === 0) {
+		console.debug("No active tab.");
+		return;
+	}
+
+	// TODO: verify this
+	if (tabs.length > 1) {
+		console.error("More than one active tab found. This is not expected.");
+		return;
+	}
+
+	if (tabs[0].id === undefined) {
+		console.error("Tab does not define an ID.");
+		return;
+	}
+
+	const tabId = tabs[0].id;
+
 	const popupElement = document.createElement("div");
 	popupElement.id = "fluid-devtools-popup";
 	popupElement.style.height = "100%";
@@ -29,15 +47,7 @@ browser.tabs.query({ active: true, currentWindow: true }, (tabs) => {
 		'To use the Fluid Devtools, open the browser Devtools pane (F12) and click the "Fluid Developer Tools" tab.';
 
 	document.body.append(popupElement);
-	initializePopupView(popupElement).then(() => {
-		if (tabs.length === 0 || tabs[0].id === undefined) {
-			console.error("No active tab found or tab ID is undefined");
-			return;
-		}
-		// Send message to webpage
-		port.postMessage({ tabID: tabs[0].id, data: "Requesting supportedFeatures" });
-		port.onMessage.addListener((response) => {
-			console.log("Received response", response);
-		});
+	initializePopupView(popupElement, tabId).then(() => {
+		console.debug(`Rendered popup for tab ${tabId}!`);
 	}, console.error);
 });
