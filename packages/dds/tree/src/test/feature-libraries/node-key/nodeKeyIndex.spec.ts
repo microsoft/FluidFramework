@@ -155,7 +155,7 @@ describe("Node Key Index", () => {
 					child: undefined,
 				},
 				schema: nodeSchemaData,
-				allowedSchemaModifications: AllowedUpdateType.None,
+				allowedSchemaModifications: AllowedUpdateType.Initialize,
 			},
 			() => undefined,
 			createMockNodeKeyManager(),
