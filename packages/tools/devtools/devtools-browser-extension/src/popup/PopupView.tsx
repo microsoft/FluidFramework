@@ -92,8 +92,12 @@ export function PopupView(props: PopupViewProps): React.ReactElement {
 	return (
 		<div>
 			{foundDevtools === undefined && <div>Loading...</div>}
-			{foundDevtools === true && <div>Devtools found! The webpage is correctly setup to use Devtools. Open the browser's devtools panel to view the Fluid Devtools extension.
-</div>}
+			{foundDevtools === true && (
+				<div>
+					Devtools found! Open the browser`&apos;`s devtools panel to view the Fluid
+					Devtools extension.
+				</div>
+			)}
 			{foundDevtools === false && <div>Devtools not found.</div>}
 		</div>
 	);

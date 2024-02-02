@@ -23,6 +23,6 @@ export async function initializePopupView(target: HTMLElement, tabId: number): P
 	});
 
 	ReactDOM.render(React.createElement(PopupView, { backgroundServiceConnection }), target, () => {
-		console.log("Rendered Popup view in devtools window!");
+		console.log("Rendered Popup view!");
 	});
 }
