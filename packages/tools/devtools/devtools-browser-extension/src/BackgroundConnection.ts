@@ -96,6 +96,9 @@ export class BackgroundConnection
 		return this._disposed;
 	}
 
+	/**
+	 * Creates a new {@link BackgroundConnection}.
+	 */
 	public static async Initialize(
 		props: BackgroundConnectionParameters,
 	): Promise<BackgroundConnection> {
@@ -169,6 +172,9 @@ export class BackgroundConnection
 		return this.emitMessage(message);
 	};
 
+	/**
+	 * Emits the provided message to subscribers of the `message` event.
+	 */
 	private emitMessage(message: ISourcedDevtoolsMessage): boolean {
 		this.logDebugMessage(`Relaying message from Background Service:`, message);
 		return this.emit("message", message);
