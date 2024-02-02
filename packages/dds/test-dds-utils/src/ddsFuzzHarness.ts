@@ -1098,7 +1098,7 @@ export async function runTestForSeed<
 	let operationCount = 0;
 	const finalState = await performFuzzActionsAsync(
 		model.generatorFactory(),
-		(state, operation) => {
+		async (state, operation) => {
 			operationCount++;
 			return model.reducer(state, operation);
 		},
