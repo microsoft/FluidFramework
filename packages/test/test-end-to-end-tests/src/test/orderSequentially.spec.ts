@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
+import type { SharedString } from "@fluidframework/sequence";
 import {
 	ITestObjectProvider,
 	ITestContainerConfig,
@@ -28,7 +28,9 @@ const cellId = "cellKey";
 const mapId = "mapKey";
 
 describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvider, apis) => {
-	const { SharedMap, SharedDirectory } = apis.dds;
+	const { SharedMap, SharedDirectory, SharedString } = apis.dds;
+	const { SequenceDeltaEvent } = apis.dataRuntime.packages.sequence;
+
 	const registry: ChannelFactoryRegistry = [
 		[stringId, SharedString.getFactory()],
 		[string2Id, SharedString.getFactory()],

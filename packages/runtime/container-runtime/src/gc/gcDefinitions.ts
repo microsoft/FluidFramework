@@ -323,6 +323,12 @@ export interface IGarbageCollectionRuntime {
 
 /** Defines the contract for the garbage collector. */
 export interface IGarbageCollector {
+	/**
+	 * Tells the time at which session expiry timer started in a previous container.
+	 * This is only set when loading from a stashed container and will be equal to the
+	 * original container's local client time when it was loaded (and started the session expiry timer).
+	 */
+	readonly sessionExpiryTimerStarted: number | undefined;
 	/** Tells whether GC should run or not. */
 	readonly shouldRunGC: boolean;
 	/** Tells whether the GC state in summary needs to be reset in the next summary. */
@@ -394,6 +400,7 @@ export interface IGarbageCollectorCreateParams {
 	readonly getLastSummaryTimestampMs: () => number | undefined;
 	readonly readAndParseBlob: ReadAndParseBlob;
 	readonly submitMessage: (message: ContainerRuntimeGCMessage) => void;
+	readonly sessionExpiryTimerStarted?: number | undefined;
 }
 
 /**
