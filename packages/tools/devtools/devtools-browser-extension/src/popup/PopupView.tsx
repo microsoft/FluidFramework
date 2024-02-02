@@ -23,7 +23,7 @@ const loggingContext = "FLUID_DEVTOOLS(Popup)";
 const getSupportedFeaturesMessage = GetDevtoolsFeatures.createMessage();
 
 /**
- * Props needed for BG service
+ * Props containing critical BG service connection used for message passing with webpage
  */
 export interface PopupViewProps {
 	backgroundServiceConnection: BackgroundConnection;
@@ -36,7 +36,7 @@ export interface PopupViewProps {
 export function PopupView(props: PopupViewProps): React.ReactElement {
 	const { backgroundServiceConnection } = props;
 
-	// Set of features supported by the Devtools. true is devtools found, false not found and undefined means still looking
+	// Set of features supported by the Devtools. True is devtools found, false not found and undefined means still looking
 	const [foundDevtools, setFoundDevtools] = React.useState<boolean | undefined>(undefined);
 
 	React.useEffect(() => {
@@ -60,7 +60,6 @@ export function PopupView(props: PopupViewProps): React.ReactElement {
 				context: loggingContext,
 			});
 		}
-		// Upon receiving any message, handle it with messageHandler
 		backgroundServiceConnection.on("message", messageHandler);
 
 		// Query for supported feature set
@@ -89,12 +88,12 @@ export function PopupView(props: PopupViewProps): React.ReactElement {
 
 	// TODO: spinner for loading
 	// TODO: retry button on not found.
-	// TODO: display "how to use devtools" when devtools aren't foun
-	// TODO: display "how to find devtools" when devtools are found.
+	// TODO: display "how to use devtools" when devtools aren't found
 	return (
 		<div>
 			{foundDevtools === undefined && <div>Loading...</div>}
-			{foundDevtools === true && <div>Devtools found!</div>}
+			{foundDevtools === true && <div>Devtools found! The webpage is correctly setup to use Devtools. Open the browser's devtools panel to view the Fluid Devtools extension.
+</div>}
 			{foundDevtools === false && <div>Devtools not found.</div>}
 		</div>
 	);

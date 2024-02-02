@@ -105,7 +105,7 @@ export function handleIncomingMessage(
 	loggingOptions?: MessageLoggingOptions,
 ): void {
 	// TODO: remove loggingOptions once things settle.
-	
+
 	if (message === undefined || !isDevtoolsMessage(message)) {
 		return;
 	}
