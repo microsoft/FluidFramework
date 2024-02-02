@@ -4,7 +4,6 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { type IDisposable } from "@fluidframework/core-interfaces";
 import {
 	type IDevtoolsMessage,
 	type ISourcedDevtoolsMessage,
@@ -67,7 +66,7 @@ export interface BackgroundConnectionParameters {
  */
 export class BackgroundConnection
 	extends TypedEventEmitter<IMessageRelayEvents>
-	implements IMessageRelay, IDisposable
+	implements IMessageRelay
 {
 	/**
 	 * {@inheritDoc BackgroundConnectionParameters.messageSource}
@@ -83,18 +82,6 @@ export class BackgroundConnection
 	 * Port connection to the Background Script
 	 */
 	private backgroundServiceConnection!: TypedPortConnection;
-
-	/**
-	 * Whether or not the connection has been disposed.
-	 */
-	private _disposed: boolean = false;
-
-	/**
-	 * {@inheritDoc @fluidframework/core-interfaces#IDisposable.disposed}
-	 */
-	public get disposed(): boolean {
-		return this._disposed;
-	}
 
 	/**
 	 * Creates a new {@link BackgroundConnection}.
@@ -135,13 +122,6 @@ export class BackgroundConnection
 
 		this.logDebugMessage(`Posting message to background service:`, sourcedMessage);
 		this.backgroundServiceConnection.postMessage(sourcedMessage);
-	}
-
-	/**
-	 * {@inheritDoc @fluidframework/core-interfaces#IDisposable.dispose}
-	 */
-	public dispose(): void {
-		this._disposed = true;
 	}
 
 	/**
