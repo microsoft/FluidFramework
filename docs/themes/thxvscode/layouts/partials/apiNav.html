@@ -147,8 +147,9 @@
                             {{ $lowerItem := lower $item }}
                             {{ $link := printf "%s/%s-%s" $FFLink $lowerItem (lower $subcategoryName | singularize) }}
                             {{ if eq $subcategoryName "Types" }}
-                                {{ $link = printf "%s#%s-typealias" $FFLink $lowerItem }}                                                
+                                {{ $link = printf "%s/%s-typealias" $FFLink $lowerItem }}
                             {{ end }}
+                            
                             {{ $isActive = in $current.RelPermalink $link }}
                             
                             {{ if $isActive }}
@@ -174,7 +175,7 @@
                                             {{ $lowerItem := lower $item }}
                                             {{ $link := printf "%s/%s-%s" $FFLink $lowerItem (lower $subcategoryName | singularize) }}
                                             {{ if eq $subcategoryName "Types" }}
-                                                {{ $link = printf "%s#%s-typealias" $FFLink $lowerItem }}                                                
+                                                {{ $link = printf "%s/%s-typealias" $FFLink $lowerItem }}                                               
                                             {{ end }}
                                             {{ $isActive = in $current.RelPermalink $link }}
                                             <li class="panel {{ if $isActive }}active expanded{{ else }}collapsed{{ end }}">
