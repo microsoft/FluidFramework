@@ -2991,7 +2991,10 @@ export class ContainerRuntime
 	 * @param srcHandle - The handle of the node that added the reference.
 	 * @param outboundHandle - The handle of the outbound node that is referenced.
 	 */
-	public addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) {
+	public addedGCOutboundReference(
+		srcHandle: { absolutePath: string },
+		outboundHandle: { absolutePath: string },
+	) {
 		this.garbageCollector.addedOutboundReference(
 			srcHandle.absolutePath,
 			outboundHandle.absolutePath,
