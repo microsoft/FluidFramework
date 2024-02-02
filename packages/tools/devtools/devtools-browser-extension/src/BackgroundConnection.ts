@@ -27,8 +27,11 @@ import {
  */
 export interface BackgroundConnectionParameters {
 	/**
-	 * All messages sent through the returned instance's {@link BackgroundConnection.postMessage}
-	 * method will get this value written to their 'source' property.
+	 * This value will get written to the {@link @fluidframework/devtools-core#ISourcedDevtoolsMessage.source} property
+	 * of all messages sent via {@link BackgroundConnection.postMessage}.
+	 *
+	 * It will also be used as context metadata for console debug logging.
+	 *
 	 * @see {@link @fluidframework/devtools-core#ISourcedDevtoolsMessage}
 	 */
 	messageSource: string;
