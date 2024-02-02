@@ -794,9 +794,13 @@ export class ContainerRuntime
 
 		const registry = new FluidDataStoreRegistry(registryEntries);
 
+		const baseSnapshotTree =
+			context.snapshotWithContents !== undefined
+				? context.snapshotWithContents.snapshotTree
+				: context.baseSnapshot;
 		const tryFetchBlob = async <T>(blobName: string): Promise<T | undefined> => {
-			const blobId = context.baseSnapshot?.blobs[blobName];
-			if (context.baseSnapshot && blobId) {
+			const blobId = baseSnapshotTree?.blobs[blobName];
+			if (baseSnapshotTree && blobId) {
 				// IContainerContext storage api return type still has undefined in 0.39 package version.
 				// So once we release 0.40 container-defn package we can remove this check.
 				assert(
@@ -818,7 +822,7 @@ export class ContainerRuntime
 
 		// read snapshot blobs needed for BlobManager to load
 		const blobManagerSnapshot = await BlobManager.load(
-			context.baseSnapshot?.trees[blobsTreeName],
+			baseSnapshotTree?.trees[blobsTreeName],
 			async (id) => {
 				// IContainerContext storage api return type still has undefined in 0.39 package version.
 				// So once we release 0.40 container-defn package we can remove this check.
@@ -1233,10 +1237,13 @@ export class ContainerRuntime
 			loader,
 			pendingLocalState,
 			supportedFeatures,
+			snapshotWithContents,
 		} = context;
 
 		this.innerDeltaManager = deltaManager;
 		this.deltaManager = new DeltaManagerSummarizerProxy(this.innerDeltaManager);
+		const baseSnapshotTree =
+			snapshotWithContents !== undefined ? snapshotWithContents.snapshotTree : baseSnapshot;
 
 		// Here we could wrap/intercept on these functions to block/modify outgoing messages if needed.
 		// This makes ContainerRuntime the final gatekeeper for outgoing messages.
@@ -1408,7 +1415,7 @@ export class ContainerRuntime
 		this.garbageCollector = GarbageCollector.create({
 			runtime: this,
 			gcOptions: this.runtimeOptions.gcOptions,
-			baseSnapshot,
+			baseSnapshot: baseSnapshotTree,
 			baseLogger: this.mc.logger,
 			existing,
 			metadata,
@@ -1429,7 +1436,7 @@ export class ContainerRuntime
 			// Latest change sequence number, no changes since summary applied yet
 			loadedFromSequenceNumber,
 			// Summary reference sequence number, undefined if no summary yet
-			baseSnapshot !== undefined ? loadedFromSequenceNumber : undefined,
+			baseSnapshotTree !== undefined ? loadedFromSequenceNumber : undefined,
 			{
 				// Must set to false to prevent sending summary handle which would be pointing to
 				// a summary with an older protocol state.
@@ -1443,12 +1450,12 @@ export class ContainerRuntime
 			async () => this.garbageCollector.getBaseGCDetails(),
 		);
 
-		if (baseSnapshot) {
-			this.summarizerNode.updateBaseSummaryState(baseSnapshot);
+		if (baseSnapshotTree) {
+			this.summarizerNode.updateBaseSummaryState(baseSnapshotTree);
 		}
 
 		this.dataStores = new DataStores(
-			getSummaryForDatastores(baseSnapshot, metadata),
+			getSummaryForDatastores(baseSnapshotTree, metadata),
 			this,
 			(attachMsg) => this.submit({ type: ContainerMessageType.Attach, contents: attachMsg }),
 			(id: string, createParam: CreateChildSummarizerNodeParam) =>
