@@ -380,7 +380,7 @@ const styles = [
 		extraDescription: `1 transaction`,
 	},
 ];
-// TODO: schemas in this file should be updated/fixed to enable compressed encoding.
+// TODO: ADO#7111 schemas in this file should be updated/fixed to enable compressed encoding.
 const factory = new SharedTreeFactory({
 	jsonValidator: typeboxValidator,
 	treeEncodeType: TreeCompressionStrategy.Uncompressed,

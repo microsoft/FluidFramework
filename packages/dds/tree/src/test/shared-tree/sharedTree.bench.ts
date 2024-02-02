@@ -60,6 +60,7 @@ const nodesCountDeep = [
 	[100, BenchmarkType.Measurement],
 ];
 
+// TODO: ADO#7111 Schema should be fixed to enable schema based encoding.
 const factory = new SharedTreeFactory({
 	jsonValidator: typeboxValidator,
 	treeEncodeType: TreeCompressionStrategy.Uncompressed,
