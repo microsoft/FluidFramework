@@ -89,3 +89,4 @@ extends:
     tagName: common-utils
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
+    testCoverage: ${{ variables.testCoverage }}

@@ -102,11 +102,13 @@ describeCompat("Attributor for SharedCell", "NoCompat", (getTestObjectProvider, 
 			configProvider: configProvider({
 				[enableOnNewFileKey]: runtimeAttributor !== undefined,
 			}),
+			// TODO this option shouldn't live here - this options object is global to the container
+			// and not specific to the individual dataStoreRuntime.
 			options: {
 				attribution: {
 					track: runtimeAttributor !== undefined,
 				},
-			},
+			} as any,
 		},
 	});
 
