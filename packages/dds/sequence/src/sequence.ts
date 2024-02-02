@@ -594,11 +594,12 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		const insertIndex: number = Math.max(start, end);
 
 		// Insert first, so local references can slide to the inserted seg if any
-		const insert = this.client.insertSegmentLocal(insertIndex, segment);
-		if (insert) {
-			if (start < end) {
-				this.client.removeRangeLocal(start, end);
-			}
+		const insert = this.guardReentrancy(() =>
+			this.client.insertSegmentLocal(insertIndex, segment),
+		);
+
+		if (insert && start < end) {
+			this.removeRange(start, end);
 		}
 	}
 
@@ -690,7 +691,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				.catch((error) => {
 					this.loadFinished(error);
 				});
-			if (this.dataStoreRuntime.options?.sequenceInitializeFromHeaderOnly !== true) {
+			if (this.dataStoreRuntime.options.sequenceInitializeFromHeaderOnly !== true) {
 				// if we not doing partial load, await the catch up ops,
 				// and the finalization of the load
 				await loadCatchUpOps;
@@ -711,7 +712,13 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		if (local) {
 			const recordedRefSeq = this.inFlightRefSeqs.shift();
 			assert(recordedRefSeq !== undefined, "No pending recorded refSeq found");
-			assert(recordedRefSeq <= message.referenceSequenceNumber, "RefSeq mismatch");
+			// TODO: AB#7076: Some equivalent assert should be enabled. This fails some e2e stashed op tests because
+			// the deltaManager may have seen more messages than the runtime has processed while amidst the stashed op
+			// flow, so e.g. when `applyStashedOp` is called and the DDS is put in a state where it expects an ack for
+			// one of its messages, the delta manager has actually already seen subsequent messages from collaborators
+			// which the in-flight message is concurrent to.
+			// See "handles stashed ops created on top of sequenced local ops" for one such test case.
+			// assert(recordedRefSeq <= message.referenceSequenceNumber, "RefSeq mismatch");
 		}
 
 		// if loading isn't complete, we need to cache all
@@ -801,7 +808,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		}
 		const needsTransformation = message.referenceSequenceNumber !== message.sequenceNumber - 1;
 		let stashMessage: Readonly<ISequencedDocumentMessage> = message;
-		if (this.runtime.options?.newMergeTreeSnapshotFormat !== true) {
+		if (this.runtime.options.newMergeTreeSnapshotFormat !== true) {
 			if (needsTransformation) {
 				this.on("sequenceDelta", transformOps);
 			}
@@ -809,7 +816,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 		this.client.applyMsg(message, local);
 
-		if (this.runtime.options?.newMergeTreeSnapshotFormat !== true) {
+		if (this.runtime.options.newMergeTreeSnapshotFormat !== true) {
 			if (needsTransformation) {
 				this.removeListener("sequenceDelta", transformOps);
 				// shallow clone the message as we only overwrite top level properties,

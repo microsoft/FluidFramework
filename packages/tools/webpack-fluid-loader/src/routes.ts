@@ -16,7 +16,7 @@ import {
 	odspTokensCache,
 	OdspTokenConfig,
 } from "@fluidframework/tool-utils";
-import { IOdspTokens, getServer } from "@fluidframework/odsp-doclib-utils";
+import { IOdspTokens, getServer } from "@fluidframework/odsp-doclib-utils/internal";
 import Axios from "axios";
 import { RouteOptions } from "./loader";
 import { createManifestResponse } from "./bohemiaIntercept";

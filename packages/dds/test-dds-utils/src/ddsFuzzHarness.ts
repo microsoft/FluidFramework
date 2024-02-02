@@ -1123,8 +1123,9 @@ function runTest<TChannelFactory extends IChannelFactory, TOperation extends Bas
 		// the actual error
 		//
 		// it should be noted that if a timeout occurs during minimization, the
-		// intermediate results are not lost and will still be written to the file
-		this.timeout(shouldMinimize ? 10_000 : 2000);
+		// intermediate results are not lost and will still be written to the file.
+		const noMinimizationTimeout = Math.max(2000, this.timeout());
+		this.timeout(shouldMinimize ? 5 * noMinimizationTimeout : noMinimizationTimeout);
 
 		try {
 			// don't write to files in CI

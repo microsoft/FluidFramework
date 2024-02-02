@@ -100,44 +100,6 @@ trigger:
     - main
 pr: none
 
-# TODO: the download artifact step is currently targetting the latest pipeline run from each resource.
-# However, this is causing inconsistencies in the doc in scenarios where the latest runs on each pipeline
-# is not the same (e.g. mix of main and lts). Temporarily setting the branch to main explicitly.
-resources:
-  pipelines:
-  - pipeline: common_definitions
-    source: Build - common-definitions
-    branch: main
-  - pipeline: common_utils
-    source: Build - common-utils
-    branch: main
-  - pipeline: container_definitions
-    source: Build - container-definitions
-    branch: main
-  - pipeline: core_interfaces
-    source: Build - core-interfaces
-    branch: main
-  - pipeline: driver_definitions
-    source: Build - driver-definitions
-    branch: main
-  - pipeline: protocol_definitions
-    source: Build - protocol-definitions
-    branch: main
-  - pipeline: azure
-    source: Build - azure
-    branch: main
-  - pipeline: client
-    source: Build - client packages
-    branch: main
-    trigger:
-      branches:
-        include:
-        - main
-        - docs/**
-  - pipeline: server
-    source: server-routerlicious
-    branch: main
-
 stages:
 - stage: build
   displayName: 'Build website'
@@ -324,6 +286,7 @@ stages:
           condition: eq(variables.shouldDeploy, true)
           inputs:
             skip_app_build: true # site was built in previous stage
+            skip_api_build: true # api is written in js, no build needed
             cwd: $(Build.SourcesDirectory)
             app_location: 'docs/public'
             api_location: 'docs/api'

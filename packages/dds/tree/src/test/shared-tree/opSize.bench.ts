@@ -6,6 +6,12 @@ import { strict as assert, fail } from "assert";
 import Table from "easy-table";
 import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import {
+	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils";
+import { createIdCompressor } from "@fluidframework/id-compressor";
 import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
 import { ISharedTree, ITreeCheckout, SharedTree } from "../../shared-tree/index.js";
 import { JsonCompatibleReadOnly, brand, getOrAddEmptyToMap } from "../../util/index.js";
@@ -19,7 +25,7 @@ import {
 	Value,
 } from "../../core/index.js";
 import { SchemaBuilder, leaf } from "../../domains/index.js";
-import { schematizeInternal, treeTestFactory } from "../utils.js";
+import { schematizeInternal } from "../utils.js";
 
 // Notes:
 // 1. Within this file "percentile" is commonly used, and seems to refer to a portion (0 to 1) or some maximum size.
@@ -47,6 +53,26 @@ const initialTestJsonTree = {
 };
 
 const childrenFieldKey: FieldKey = brand("children");
+
+/**
+ * Create a default attached tree for op submission
+ */
+function createConnectedTree(): ISharedTree {
+	const containerRuntimeFactory = new MockContainerRuntimeFactory();
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({
+		idCompressor: createIdCompressor(),
+	});
+	containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	const tree = factory.create(
+		new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+		"test",
+	);
+	tree.connect({
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
+		objectStorage: new MockStorage(),
+	});
+	return tree;
+}
 
 /*
  * Updates the given `tree` to the given `schema` and inserts `state` as its root.
@@ -432,7 +458,7 @@ describe("Op Size", () => {
 
 	describe("Insert Nodes", () => {
 		function benchmarkOps(transactionStyle: TransactionStyle, percentile: number): void {
-			const tree = treeTestFactory();
+			const tree = createConnectedTree();
 			initializeOpDataCollection(tree);
 			const view = initializeTestTree(tree);
 			deleteCurrentOps(); // We don't want to record any ops from initializing the tree.
@@ -461,7 +487,7 @@ describe("Op Size", () => {
 
 	describe("Remove Nodes", () => {
 		function benchmarkOps(transactionStyle: TransactionStyle, percentile: number): void {
-			const tree = treeTestFactory();
+			const tree = createConnectedTree();
 			initializeOpDataCollection(tree);
 			const childByteSize = getSuccessfulOpByteSize(
 				Operation.Remove,
@@ -495,7 +521,7 @@ describe("Op Size", () => {
 
 	describe("Edit Nodes", () => {
 		function benchmarkOps(transactionStyle: TransactionStyle, percentile: number): void {
-			const tree = treeTestFactory();
+			const tree = createConnectedTree();
 			initializeOpDataCollection(tree);
 			// Note that the child node byte size for the initial tree here should be arbitrary.
 			const view = initializeTestTree(tree, createInitialTree(BENCHMARK_NODE_COUNT, 1000));
@@ -569,7 +595,7 @@ describe("Op Size", () => {
 					Edit: editNodeCount,
 				} = distribution;
 
-				const tree = treeTestFactory();
+				const tree = createConnectedTree();
 				initializeOpDataCollection(tree);
 
 				// remove
@@ -652,7 +678,7 @@ describe("Op Size", () => {
 					Edit: editNodeCount,
 				} = distribution;
 
-				const tree = treeTestFactory();
+				const tree = createConnectedTree();
 				initializeOpDataCollection(tree);
 
 				// remove
