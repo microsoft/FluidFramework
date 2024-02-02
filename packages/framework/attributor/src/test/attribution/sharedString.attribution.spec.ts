@@ -662,7 +662,7 @@ describe("SharedString Attribution", () => {
 			},
 		];
 
-		it.only("Generate a new document", async () => {
+		it.skip("Generate a new document", async () => {
 			const paths = getDocumentPaths("default");
 			const attributionlessGenerator = chain(
 				take(100, makeOperationGenerator({ validateInterval })),

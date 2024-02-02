@@ -346,11 +346,15 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 */
 	protected abstract onDisconnect();
 
+	/**
+	 * The serializer to serialize / parse handles.
+	 */
 	protected abstract get serializer(): IFluidSerializer;
 
 	/**
 	 * Submits a message by the local client to the runtime.
-	 * @param content - Content of the message
+	 * @param content - Content of the message. Note: handles contained in the
+	 * message object should not be encoded in any way
 	 * @param localOpMetadata - The local metadata associated with the message. This is kept locally by the runtime
 	 * and not sent to the server. This will be sent back when this message is received back from the server. This is
 	 * also sent if we are asked to resubmit the message.

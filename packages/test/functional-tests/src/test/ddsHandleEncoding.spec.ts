@@ -166,7 +166,6 @@ describe("DDS Handle Encoding", () => {
 			},
 			[handle.absolutePath] /* expectedHandles */,
 		),
-		// can't have handles: counter, task manager,
 	];
 
 	testCases.forEach((testCase) => {
