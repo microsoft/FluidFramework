@@ -221,8 +221,31 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * E.g. SharedString submits an op while deltaManager has lastSequenceNumber = 10, but before the runtime
 	 * puts this op over the wire, it processes a client join/leave op with sequence number 11, so the referenceSequenceNumber
 	 * on the SharedString op is 11.
+	 *
+	 * The reference sequence numbers placed in this queue are also not accurate for stashed ops due to how the applyStashedOp
+	 * flow works at the runtime level. This is a legitimate bug, and AB#6602 tracks one way to fix it (stop reaching all the way
+	 * to deltaManager's lastSequenceNumber to obtain refSeq, instead leveraging some analogous notion on the container or datastore
+	 * runtime).
 	 */
 	private readonly inFlightRefSeqs = new Deque<number>();
+
+	private ongoingResubmitRefSeq: number | undefined;
+
+	/**
+	 * Gets the reference sequence number (i.e. sequence number of the runtime's last processed op) for an op submitted
+	 * in the current context.
+	 *
+	 * This value can be optionally overridden using `useResubmitRefSeq`.
+	 * IntervalCollection's resubmit logic currently relies on preserving merge information from when the op was originally submitted,
+	 * even if the op is resubmitted more than once. Thus during resubmit, `inFlightRefSeqs` gets populated with the
+	 * original refSeq rather than the refSeq at the time of reconnection.
+	 *
+	 * @remarks - In some not fully understood cases, the runtime may process incoming ops before putting an op that this
+	 * DDS submits over the wire. See `inFlightRefSeqs` for more details.
+	 */
+	private get currentRefSeq() {
+		return this.ongoingResubmitRefSeq ?? this.runtime.deltaManager.lastSequenceNumber;
+	}
 
 	// eslint-disable-next-line import/no-deprecated
 	protected client: Client;
@@ -294,7 +317,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 					return;
 				}
 
-				this.inFlightRefSeqs.push(this.runtime.deltaManager.lastSequenceNumber);
+				this.inFlightRefSeqs.push(this.currentRefSeq);
 				this.submitLocalMessage(op, localOpMetadata);
 			},
 			new SequenceIntervalCollectionValueType(),
@@ -449,7 +472,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			return;
 		}
 
-		this.inFlightRefSeqs.push(this.runtime.deltaManager.lastSequenceNumber);
+		this.inFlightRefSeqs.push(this.currentRefSeq);
 		const translated = makeHandlesSerializable(message, this.serializer, this.handle);
 		const metadata = this.client.peekPendingSegmentGroups(
 			message.type === MergeTreeDeltaType.GROUP ? message.ops.length : 1,
@@ -622,19 +645,21 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	protected reSubmitCore(content: any, localOpMetadata: unknown) {
 		const originalRefSeq = this.inFlightRefSeqs.shift();
 		assert(originalRefSeq !== undefined, "Expected a recorded refSeq when resubmitting an op");
-		if (
-			!this.intervalCollections.tryResubmitMessage(
-				content,
-				localOpMetadata as IMapMessageLocalMetadata,
-			)
-		) {
-			this.submitSequenceMessage(
-				this.client.regeneratePendingOp(
-					content as IMergeTreeOp,
-					localOpMetadata as SegmentGroup | SegmentGroup[],
-				),
-			);
-		}
+		this.useResubmitRefSeq(originalRefSeq, () => {
+			if (
+				!this.intervalCollections.tryResubmitMessage(
+					content,
+					localOpMetadata as IMapMessageLocalMetadata,
+				)
+			) {
+				this.submitSequenceMessage(
+					this.client.regeneratePendingOp(
+						content as IMergeTreeOp,
+						localOpMetadata as SegmentGroup | SegmentGroup[],
+					),
+				);
+			}
+		});
 	}
 
 	/**
@@ -768,7 +793,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 */
 	protected applyStashedOp(content: any): unknown {
-		this.inFlightRefSeqs.push(this.runtime.deltaManager.lastSequenceNumber);
+		this.inFlightRefSeqs.push(this.currentRefSeq);
 		const parsedContent = parseHandles(content, this.serializer);
 		const metadata =
 			this.intervalCollections.tryGetStashedOpLocalMetadata(parsedContent) ??
@@ -903,6 +928,20 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		for (const key of this.intervalCollections.keys()) {
 			const intervalCollection = this.intervalCollections.get(key);
 			intervalCollection.attachGraph(this.client, key);
+		}
+	}
+
+	/**
+	 * Overrides the "currently applicable reference sequence number" for the duration of the callback.
+	 * See remarks on `currentRefSeq` for more context.
+	 */
+	private useResubmitRefSeq(refSeq: number, callback: () => void) {
+		const previousResubmitRefSeq = this.ongoingResubmitRefSeq;
+		this.ongoingResubmitRefSeq = refSeq;
+		try {
+			callback();
+		} finally {
+			this.ongoingResubmitRefSeq = previousResubmitRefSeq;
 		}
 	}
 }
