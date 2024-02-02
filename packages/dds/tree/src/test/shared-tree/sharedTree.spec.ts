@@ -258,6 +258,7 @@ describe("SharedTree", () => {
 	});
 
 	it("handle in op", async () => {
+		// TODO: schema should be specified to enable compressed encoding.
 		const provider = await TestTreeProvider.create(
 			2,
 			SummarizeType.disabled,
