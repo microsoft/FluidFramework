@@ -891,7 +891,7 @@ export class GarbageCollector implements IGarbageCollector {
 
 				// Mark the node as referenced to ensure it isn't Swept
 				const tombstonedNodePath = message.contents.nodePath;
-				this.addedOutboundReference("/", tombstonedNodePath);
+				this.addedOutboundReference("/", tombstonedNodePath, true /* autorecovery */);
 
 				// In case the cause of the TombstoneLoaded event is incorrect GC Data (i.e. the object is actually reachable),
 				// do fullGC on the next run to get a chance to repair (in the likely case the bug is not deterministic)
