@@ -13,9 +13,6 @@ patchedDependencies:
   '@microsoft/api-extractor@7.39.1':
     hash: 5jttfhtxwdhxb7mhu7m3cyak6i
     path: patches/@microsoft__api-extractor@7.39.1.patch
-  socket.io-client@4.7.2:
-    hash: p7f5djbjd3zgfisasebtom74n4
-    path: patches/socket.io-client@4.7.2.patch
   tsc-multi@1.1.0:
     hash: bwju7gmfuwum2ryv7w6vqpkpiy
     path: patches/tsc-multi@1.1.0.patch
@@ -207,6 +204,7 @@ importers:
       '@fluidframework/protocol-definitions': ^3.2.0-231454
       '@microsoft/api-extractor': ^7.39.1
       '@types/jsrsasign': ^10.5.12
+      '@types/uuid': ^9.0.2
       copyfiles: ^2.4.1
       eslint: ~8.50.0
       eslint-config-prettier: ~9.0.0
@@ -229,6 +227,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i
       '@types/jsrsasign': 10.5.12
+      '@types/uuid': 9.0.7
       copyfiles: 2.4.1
       eslint: 8.50.0
       eslint-config-prettier: 9.0.0_eslint@8.50.0
@@ -585,6 +584,7 @@ importers:
       '@types/jest-environment-puppeteer': 2.2.0
       '@types/node': ^18.19.0
       '@types/puppeteer': 1.3.0
+      '@types/uuid': ^9.0.2
       clean-webpack-plugin: ^4.0.0
       cross-env: ^7.0.3
       css-loader: ^1.0.0
@@ -631,6 +631,7 @@ importers:
       '@types/jest-environment-puppeteer': 2.2.0
       '@types/node': 18.19.1
       '@types/puppeteer': 1.3.0
+      '@types/uuid': 9.0.7
       clean-webpack-plugin: 4.0.0_webpack@5.89.0
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -3004,6 +3005,7 @@ importers:
       '@types/puppeteer': 1.3.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
+      '@types/uuid': ^9.0.2
       cross-env: ^7.0.3
       css-loader: ^1.0.0
       eslint: ~8.50.0
@@ -3052,6 +3054,7 @@ importers:
       '@types/puppeteer': 1.3.0
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
+      '@types/uuid': 9.0.7
       cross-env: 7.0.3
       css-loader: 1.0.1_webpack@5.89.0
       eslint: 8.50.0
@@ -3253,7 +3256,6 @@ importers:
       ts-jest: ^29.1.1
       ts-loader: ^9.3.0
       typescript: ~5.1.6
-      uuid: ^9.0.0
       valid-url: ^1.0.9
       webpack: ^5.82.0
       webpack-cli: ^4.9.2
@@ -3289,7 +3291,6 @@ importers:
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       style-loader: 1.3.0_webpack@5.89.0
-      uuid: 9.0.1
       valid-url: 1.0.9
     devDependencies:
       '@fluidframework/build-common': 2.0.3
@@ -4879,6 +4880,7 @@ importers:
       '@types/lodash': ^4.14.118
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
+      '@types/uuid': ^9.0.2
       axios: ^1.6.2
       buffer: ^6.0.3
       chai: ^4.2.0
@@ -4937,6 +4939,7 @@ importers:
       '@types/lodash': 4.14.202
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
+      '@types/uuid': 9.0.7
       chai: 4.3.10
       cross-env: 7.0.3
       easy-table: 1.2.0
@@ -6317,6 +6320,7 @@ importers:
       '@fluidframework/test-runtime-utils': workspace:~
       '@microsoft/api-extractor': ^7.39.1
       '@types/mocha': ^9.1.1
+      '@types/uuid': ^9.0.2
       c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
@@ -6350,6 +6354,7 @@ importers:
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i
       '@types/mocha': 9.1.1
+      '@types/uuid': 9.0.7
       c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -6498,7 +6503,6 @@ importers:
       tsc-multi: ^1.1.0
       tslib: ^1.10.0
       typescript: ~5.1.6
-      uuid: ^9.0.0
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -6548,7 +6552,6 @@ importers:
       ts-node: 10.9.1_ggysxzqxruqvydtrq6zb2nxvwm
       tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
-      uuid: 9.0.1
 
   packages/dds/merge-tree:
     specifiers:
@@ -6655,6 +6658,7 @@ importers:
       '@microsoft/api-extractor': ^7.39.1
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
+      '@types/uuid': ^9.0.2
       c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
@@ -6692,6 +6696,7 @@ importers:
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
+      '@types/uuid': 9.0.7
       c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -6966,6 +6971,7 @@ importers:
       '@types/benchmark': ^2.1.0
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
+      '@types/uuid': ^9.0.2
       benchmark: ^2.1.4
       c8: ^8.0.1
       copyfiles: ^2.4.1
@@ -7008,6 +7014,7 @@ importers:
       '@types/benchmark': 2.1.5
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
+      '@types/uuid': 9.0.7
       benchmark: 2.1.4
       c8: 8.0.1
       copyfiles: 2.4.1
@@ -7422,7 +7429,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      socket.io-client: ^4.6.1
+      socket.io-client: ^4.7.3
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
@@ -7454,7 +7461,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      socket.io-client: 4.7.2_p7f5djbjd3zgfisasebtom74n4
+      socket.io-client: 4.7.4
       tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
@@ -7592,7 +7599,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      socket.io-client: ^4.6.1
+      socket.io-client: ^4.7.3
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
       url: ^0.11.0
@@ -7639,7 +7646,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      socket.io-client: 4.7.2_p7f5djbjd3zgfisasebtom74n4
+      socket.io-client: 4.7.4
       tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
@@ -7668,6 +7675,7 @@ importers:
       '@types/node': ^18.19.0
       '@types/node-fetch': ^2.5.10
       '@types/sinon': ^7.0.13
+      '@types/uuid': ^9.0.2
       c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
@@ -7680,7 +7688,7 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^7.4.2
-      socket.io-client: ^4.6.1
+      socket.io-client: ^4.7.3
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
@@ -7697,7 +7705,7 @@ importers:
       '@fluidframework/protocol-definitions': 3.2.0-231454
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       node-fetch: 2.7.0
-      socket.io-client: 4.7.2_p7f5djbjd3zgfisasebtom74n4
+      socket.io-client: 4.7.4
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -7712,6 +7720,7 @@ importers:
       '@types/node': 18.19.1
       '@types/node-fetch': 2.6.9
       '@types/sinon': 7.5.2
+      '@types/uuid': 9.0.7
       c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -7915,7 +7924,7 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^7.4.2
-      socket.io-client: ^4.6.1
+      socket.io-client: ^4.7.3
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
       url-parse: ^1.5.8
@@ -7934,7 +7943,7 @@ importers:
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       cross-fetch: 3.1.8
       json-stringify-safe: 5.0.1
-      socket.io-client: 4.7.2_p7f5djbjd3zgfisasebtom74n4
+      socket.io-client: 4.7.4
       url-parse: 1.5.10
       uuid: 9.0.1
     devDependencies:
@@ -8113,6 +8122,7 @@ importers:
       '@fluidframework/telemetry-utils': workspace:~
       '@microsoft/api-extractor': ^7.39.1
       '@types/node': ^18.19.0
+      '@types/uuid': ^9.0.2
       copyfiles: ^2.4.1
       eslint: ~8.50.0
       prettier: ~3.0.3
@@ -8142,6 +8152,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
       '@types/node': 18.19.1
+      '@types/uuid': 9.0.7
       copyfiles: 2.4.1
       eslint: 8.50.0
       prettier: 3.0.3
@@ -8188,7 +8199,6 @@ importers:
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
-      uuid: ^9.0.0
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
       '@fluidframework/container-definitions': link:../../common/container-definitions
@@ -8204,7 +8214,6 @@ importers:
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/synthesize': link:../synthesize
       '@fluidframework/view-interfaces': link:../view-interfaces
-      uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.29.0_mhw3tufvtaceew37hrkkevjcli
@@ -8822,7 +8831,6 @@ importers:
       tinylicious: ^3.1.0-231702
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
-      uuid: ^9.0.0
     dependencies:
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-loader': link:../../loader/container-loader
@@ -8837,7 +8845,6 @@ importers:
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       '@fluidframework/tinylicious-driver': link:../../drivers/tinylicious-driver
-      uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.29.0_mhw3tufvtaceew37hrkkevjcli
@@ -9036,6 +9043,7 @@ importers:
       '@types/node': ^18.19.0
       '@types/sinon': ^7.0.13
       '@types/ungap__structured-clone': ^1.2.0
+      '@types/uuid': ^9.0.2
       '@ungap/structured-clone': ^1.2.0
       c8: ^8.0.1
       copyfiles: ^2.4.1
@@ -9088,6 +9096,7 @@ importers:
       '@types/node': 18.19.1
       '@types/sinon': 7.5.2
       '@types/ungap__structured-clone': 1.2.0
+      '@types/uuid': 9.0.7
       c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -9123,6 +9132,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/sinon': ^7.0.13
+      '@types/uuid': ^9.0.2
       axios: ^1.6.2
       c8: ^8.0.1
       copyfiles: ^2.4.1
@@ -9165,6 +9175,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/sinon': 7.5.2
+      '@types/uuid': 9.0.7
       c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -10318,12 +10329,10 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
-      uuid: ^9.0.0
     dependencies:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/protocol-definitions': 3.2.0-231454
-      uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.29.0_loebgezstcsvd2poh2d55fifke
@@ -10364,6 +10373,7 @@ importers:
       '@fluidframework/tool-utils': workspace:~
       '@microsoft/api-extractor': ^7.39.1
       '@types/node': ^18.19.0
+      '@types/uuid': ^9.0.2
       agentkeepalive: ^4.5.0
       axios: ^1.6.2
       c8: ^8.0.1
@@ -10404,6 +10414,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
       '@types/node': 18.19.1
+      '@types/uuid': 9.0.7
       c8: 8.0.1
       copyfiles: 2.4.1
       eslint: 8.50.0
@@ -17081,7 +17092,7 @@ packages:
       '@fluidframework/protocol-definitions': 3.1.0
       '@fluidframework/telemetry-utils': 2.0.0-internal.8.0.0
       node-fetch: 2.7.0
-      socket.io-client: 4.7.2_p7f5djbjd3zgfisasebtom74n4
+      socket.io-client: 4.7.4
       uuid: 9.0.1
     transitivePeerDependencies:
       - bufferutil
@@ -17220,7 +17231,7 @@ packages:
       '@fluidframework/telemetry-utils': 2.0.0-internal.8.0.0
       cross-fetch: 3.1.8
       json-stringify-safe: 5.0.1
-      socket.io-client: 4.7.2_p7f5djbjd3zgfisasebtom74n4
+      socket.io-client: 4.7.4
       url-parse: 1.5.10
       uuid: 9.0.1
     transitivePeerDependencies:
@@ -17247,7 +17258,7 @@ packages:
       '@fluidframework/telemetry-utils': 2.0.0-internal.8.0.0
       cross-fetch: 3.1.8
       json-stringify-safe: 5.0.1
-      socket.io-client: 4.7.2_p7f5djbjd3zgfisasebtom74n4
+      socket.io-client: 4.7.4
       url-parse: 1.5.10
       uuid: 9.0.1
     transitivePeerDependencies:
@@ -40865,8 +40876,8 @@ packages:
       - bufferutil
       - utf-8-validate
 
-  /socket.io-client/4.7.2_p7f5djbjd3zgfisasebtom74n4:
-    resolution: {integrity: sha512-vtA0uD4ibrYD793SOIAwlo8cj6haOeMHrGvwPxJsxH7CeIksqJ+3Zc06RvWTIFgiSqx4A3sOnTXpfAEE2Zyz6w==}
+  /socket.io-client/4.7.4:
+    resolution: {integrity: sha512-wh+OkeF0rAVCrABWQBaEjLfb7DVPotMbu0cgWgyR0v6eA4EoVnAwcIeIbcdTE3GT/H3kbdLl7OoH2+asoDRIIg==}
     engines: {node: '>=10.0.0'}
     dependencies:
       '@socket.io/component-emitter': 3.1.0
@@ -40877,7 +40888,6 @@ packages:
       - bufferutil
       - supports-color
       - utf-8-validate
-    patched: true
 
   /socket.io-parser/4.2.4:
     resolution: {integrity: sha512-/GbIKmo8ioc+NIWIhwdecY0ge+qVBSMdgxGygevmdHj24bsfgtCmcUUcQ5ZzcylGFHsN3k4HB4Cgkl96KVnuew==}

@@ -30,7 +30,7 @@ import {
 /**
  * Validates that unreferenced blobs are marked as unreferenced and deleted correctly.
  */
-describeCompat("Garbage collection of blobs", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("Garbage collection of blobs", "NoCompat", (getTestObjectProvider) => {
 	// If deleteUnreferencedContent is true, GC is run in test mode where content that is not referenced is
 	// deleted after each GC run.
 	const tests = (deleteUnreferencedContent: boolean = false) => {

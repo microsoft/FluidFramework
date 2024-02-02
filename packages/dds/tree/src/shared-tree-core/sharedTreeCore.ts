@@ -212,6 +212,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 				this.detachedRevision,
 			);
 		}
+
+		// Don't submit the op if it is not attached
+		if (!this.isAttached()) {
+			return;
+		}
+
 		const message = this.messageCodec.encode({
 			commit,
 			sessionId: this.editManager.localSessionId,

@@ -11,7 +11,7 @@ import {
 	generateBumpVersionBranchName,
 	generateReleaseBranchName,
 	getDefaultBumpTypeForBranch,
-} from "../../src/lib/branches";
+} from "../../src/library/branches";
 
 describe("generateBumpVersionBranchName", () => {
 	it("semver versions", () => {

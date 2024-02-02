@@ -19,7 +19,7 @@ import {
 import { FlushMode, FlushModeExperimental } from "@fluidframework/runtime-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-describeCompat("Fewer batches", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) => {
+describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
 
 	const mapId = "mapId";

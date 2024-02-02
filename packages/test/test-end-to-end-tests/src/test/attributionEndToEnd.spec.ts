@@ -90,7 +90,7 @@ function assertAttributionMatches(
 
 // TODO: Expand the e2e tests in this suite to cover interesting combinations of configuration and versioning that aren't covered by mixinAttributor
 // unit tests.
-describeCompat("Attributor", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("Attributor", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
@@ -113,12 +113,14 @@ describeCompat("Attributor", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 			configProvider: configProvider({
 				[enableOnNewFileKey]: runtimeAttributor !== undefined,
 			}),
+			// TODO this option shouldn't live here - this options object is global to the container
+			// and not specific to the individual dataStoreRuntime.
 			options: {
 				attribution: {
 					track: runtimeAttributor !== undefined,
 					policyFactory: createInsertOnlyAttributionPolicy,
 				},
-			},
+			} as any,
 		},
 	});
 

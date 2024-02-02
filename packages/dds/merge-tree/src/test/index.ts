@@ -22,6 +22,7 @@ export {
 	markRangeRemoved,
 	nodeOrdinalsHaveIntegrity,
 	validatePartialLengths,
+	useStrictPartialLengthChecks,
 } from "./testUtils";
 export {
 	annotateRange,

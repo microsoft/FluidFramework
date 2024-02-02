@@ -6,10 +6,10 @@
 import { strict as assert } from "assert";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { stringToBuffer } from "@fluid-internal/client-utils";
+import { ISnapshot } from "@fluidframework/driver-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { parseCompactSnapshotResponse } from "../compactSnapshotParser";
 import { convertToCompactSnapshot } from "../compactSnapshotWriter";
-import { ISnapshotContents } from "../odspPublicUtils";
 
 const snapshotTree: ISnapshotTree = {
 	id: "SnapshotId",
@@ -53,7 +53,7 @@ const snapshotTree: ISnapshotTree = {
 	},
 };
 
-const blobs = new Map<string, ArrayBuffer>([
+const blobContents = new Map<string, ArrayBuffer>([
 	[
 		"bARADgIe4qmDjJl2l2zz12IM3",
 		stringToBuffer(
@@ -120,18 +120,19 @@ const ops: ISequencedDocumentMessage[] = [
 
 describe("Snapshot Format Conversion Tests", () => {
 	it("Conversion test", async () => {
-		const snapshotContents: ISnapshotContents = {
+		const snapshotContents: ISnapshot = {
 			snapshotTree,
-			blobs,
+			blobContents,
 			ops,
 			sequenceNumber: 0,
 			latestSequenceNumber: 2,
+			snapshotFormatV: 1,
 		};
 		const logger = new MockLogger();
 		const compactSnapshot = convertToCompactSnapshot(snapshotContents);
 		const result = parseCompactSnapshotResponse(compactSnapshot, logger.toTelemetryLogger());
 		assert.deepStrictEqual(result.snapshotTree, snapshotTree, "Tree structure should match");
-		assert.deepStrictEqual(result.blobs, blobs, "Blobs content should match");
+		assert.deepStrictEqual(result.blobContents, blobContents, "Blobs content should match");
 		assert.deepStrictEqual(result.ops, ops, "Ops should match");
 		assert(result.sequenceNumber === 0, "Seq number should match");
 		assert(result.latestSequenceNumber === 2, "Latest sequence number should match");
@@ -150,18 +151,19 @@ describe("Snapshot Format Conversion Tests", () => {
 	});
 
 	it("Conversion test with empty ops", async () => {
-		const snapshotContents: ISnapshotContents = {
+		const snapshotContents: ISnapshot = {
 			snapshotTree,
-			blobs,
+			blobContents,
 			ops: [],
 			sequenceNumber: 0,
 			latestSequenceNumber: 2,
+			snapshotFormatV: 1,
 		};
 		const logger = new MockLogger();
 		const compactSnapshot = convertToCompactSnapshot(snapshotContents);
 		const result = parseCompactSnapshotResponse(compactSnapshot, logger.toTelemetryLogger());
 		assert.deepStrictEqual(result.snapshotTree, snapshotTree, "Tree structure should match");
-		assert.deepStrictEqual(result.blobs, blobs, "Blobs content should match");
+		assert.deepStrictEqual(result.blobContents, blobContents, "Blobs content should match");
 		assert.deepStrictEqual(result.ops, [], "Ops should match");
 		assert(result.sequenceNumber === 0, "Seq number should match");
 		assert(result.latestSequenceNumber === 2, "Latest sequence number should match");
