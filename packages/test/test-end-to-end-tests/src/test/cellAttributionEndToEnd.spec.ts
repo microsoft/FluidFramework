@@ -76,7 +76,7 @@ function assertAttributionMatches(
 	}
 }
 
-describeCompat("Attributor for SharedCell", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("Attributor for SharedCell", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
@@ -99,11 +99,13 @@ describeCompat("Attributor for SharedCell", "2.0.0-rc.1.0.0", (getTestObjectProv
 			configProvider: configProvider({
 				[enableOnNewFileKey]: runtimeAttributor !== undefined,
 			}),
+			// TODO this option shouldn't live here - this options object is global to the container
+			// and not specific to the individual dataStoreRuntime.
 			options: {
 				attribution: {
 					track: runtimeAttributor !== undefined,
 				},
-			},
+			} as any,
 		},
 	});
 

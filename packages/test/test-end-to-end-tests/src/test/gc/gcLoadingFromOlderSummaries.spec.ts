@@ -30,7 +30,7 @@ import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
  * Validates that when a summarizer loads from an older summary and gets an ack for a newer summary, it disposes
  * rather than trying to update its state from the new summary.
  */
-describeCompat("GC loading from older summaries", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("GC loading from older summaries", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let mainContainer: IContainer;
 	let containerRuntime: IContainerRuntime;

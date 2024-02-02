@@ -100,7 +100,7 @@ describe("JSON Snapshot Format Conversion Tests", () => {
 		assert(result.latestSequenceNumber === 3, "Latest sequence number should match");
 		assert((result.snapshotTree.id = snapshotTree.id), "Snapshot id should match");
 		assert(result.ops.length === 2, "2 ops should be there");
-		assert(result.blobs.size === 2, "2 blobs should be there");
+		assert(result.blobContents.size === 2, "2 blobs should be there");
 		assert(Object.keys(result.snapshotTree.trees).length === 2, "2 trees should be there");
 		const shouldBeEmptyTree =
 			result.snapshotTree.trees[".app"]?.trees[".channels"]?.trees[
