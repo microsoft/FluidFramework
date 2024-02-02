@@ -8,9 +8,9 @@ import ReactDOM from "react-dom";
 
 import { DevtoolsPanel } from "@fluid-internal/devtools-view";
 
+import { BackgroundConnection } from "../BackgroundConnection";
 import { browser } from "../Globals";
 import { extensionMessageSource } from "../messaging";
-import { BackgroundConnection } from "./BackgroundConnection";
 import { formatDevtoolsScriptMessageForLogging } from "./Logging";
 import { OneDSLogger } from "./TelemetryLogging";
 
