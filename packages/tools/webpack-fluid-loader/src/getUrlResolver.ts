@@ -10,6 +10,7 @@ import { ITinyliciousRouteOptions, RouteOptions } from "./loader";
 import { OdspUrlResolver } from "./odspUrlResolver";
 
 const dockerUrls = {
+	deltaStreamUrl: "http://localhost:3002",
 	hostUrl: "http://localhost:3000",
 	ordererUrl: "http://localhost:3003",
 	storageUrl: "http://localhost:3001",
@@ -34,6 +35,7 @@ export function getUrlResolver(
 		case "docker":
 			assert(options.tenantId !== undefined, 0x31e /* options.tenantId is undefined */);
 			return new InsecureUrlResolver(
+				dockerUrls.deltaStreamUrl,
 				dockerUrls.hostUrl,
 				dockerUrls.ordererUrl,
 				dockerUrls.storageUrl,
@@ -50,6 +52,7 @@ export function getUrlResolver(
 			if (options.discoveryEndpoint !== undefined) {
 				return new InsecureUrlResolver(
 					"",
+					"",
 					options.discoveryEndpoint,
 					"https://dummy-historian",
 					options.tenantId,
@@ -59,6 +62,7 @@ export function getUrlResolver(
 
 			const fluidHost = options.fluidHost ?? "";
 			return new InsecureUrlResolver(
+				fluidHost.replace("www", "nexus"),
 				fluidHost,
 				fluidHost.replace("www", "alfred"),
 				fluidHost.replace("www", "historian"),
@@ -68,6 +72,7 @@ export function getUrlResolver(
 		case "tinylicious": {
 			const urls = tinyliciousUrls(options);
 			return new InsecureUrlResolver(
+				"",
 				urls.hostUrl,
 				urls.ordererUrl,
 				urls.storageUrl,

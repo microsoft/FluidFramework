@@ -14,6 +14,7 @@ import { ITestDriver, RouterliciousEndpoint } from "@fluidframework/test-driver-
 import { RouterliciousDriverApiType, RouterliciousDriverApi } from "./routerliciousDriverApi";
 
 interface IServiceEndpoint {
+	deltaStreamUrl: string;
 	hostUrl: string;
 	ordererUrl: string;
 	deltaStorageUrl: string;
@@ -21,6 +22,7 @@ interface IServiceEndpoint {
 
 const dockerConfig = (driverPolicies?: IRouterliciousDriverPolicies) => ({
 	serviceEndpoint: {
+		deltaStreamUrl: "http://localhost:3002",
 		hostUrl: "http://localhost:3000",
 		ordererUrl: "http://localhost:3003",
 		deltaStorageUrl: "http://localhost:3001",
@@ -44,6 +46,7 @@ function getConfig(
 		// The deltaStorageUrl is firstly set to https://dummy-historian to make the workflow successful.
 		return {
 			serviceEndpoint: {
+				deltaStreamUrl: "",
 				hostUrl: "",
 				ordererUrl: discoveryEndpoint,
 				deltaStorageUrl: "https://dummy-historian",
@@ -178,6 +181,7 @@ export class RouterliciousTestDriver implements ITestDriver {
 
 	createUrlResolver(): InsecureUrlResolver {
 		return new InsecureUrlResolver(
+			this.serviceEndpoints.deltaStreamUrl,
 			this.serviceEndpoints.hostUrl,
 			this.serviceEndpoints.ordererUrl,
 			this.serviceEndpoints.deltaStorageUrl,

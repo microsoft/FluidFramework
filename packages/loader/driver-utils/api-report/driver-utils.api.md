@@ -208,7 +208,7 @@ export interface ICompressionStorageConfig {
 
 // @internal
 export class InsecureUrlResolver implements IUrlResolver {
-    constructor(hostUrl: string, ordererUrl: string, storageUrl: string, tenantId: string, bearer: string, isForNodeTest?: boolean);
+    constructor(deltaStreamUrl: string, hostUrl: string, ordererUrl: string, storageUrl: string, tenantId: string, bearer: string, isForNodeTest?: boolean);
     // (undocumented)
     createCreateNewRequest(fileName?: string): IRequest;
     // (undocumented)

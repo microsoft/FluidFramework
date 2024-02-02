@@ -28,6 +28,7 @@ export class InsecureUrlResolver implements IUrlResolver {
 	private readonly cache = new Map<string, Promise<IResolvedUrl>>();
 
 	constructor(
+		private readonly deltaStreamUrl: string,
 		private readonly hostUrl: string,
 		private readonly ordererUrl: string,
 		private readonly storageUrl: string,
@@ -97,6 +98,7 @@ export class InsecureUrlResolver implements IUrlResolver {
 			const createNewResponse: IResolvedUrl = {
 				endpoints: {
 					deltaStorageUrl: `${this.ordererUrl}/deltas/${encodedTenantId}/new`,
+					deltaStreamUrl: this.deltaStreamUrl,
 					ordererUrl: this.ordererUrl,
 					storageUrl: `${this.storageUrl}/repos/${encodedTenantId}`,
 				},
@@ -121,6 +123,7 @@ export class InsecureUrlResolver implements IUrlResolver {
 		const response: IResolvedUrl = {
 			endpoints: {
 				deltaStorageUrl,
+				deltaStreamUrl: this.deltaStreamUrl,
 				ordererUrl: this.ordererUrl,
 				storageUrl,
 			},
