@@ -69,57 +69,6 @@ async function loadClient(
 	};
 }
 
-function constructClient(
-	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
-	id: string,
-) {
-	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	dataStoreRuntime.options = {
-		intervalStickinessEnabled: true,
-		mergeTreeEnableObliterate: true,
-	};
-	const sharedString = new SharedString(dataStoreRuntime, id, SharedStringFactory.Attributes);
-	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-	const services: IChannelServices = {
-		deltaConnection: dataStoreRuntime.createDeltaConnection(),
-		objectStorage: new MockStorage(),
-	};
-
-	sharedString.initializeLocal();
-
-	return {
-		sharedString,
-		containerRuntime,
-		services,
-	};
-}
-
-async function loadClient(
-	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
-	source: Client,
-	id: string,
-): Promise<Client> {
-	const { summary } = source.sharedString.getAttachSummary();
-
-	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	dataStoreRuntime.options = {
-		intervalStickinessEnabled: true,
-		mergeTreeEnableObliterate: true,
-	};
-	const factory = SharedString.getFactory();
-	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-	const services: IChannelServices = {
-		deltaConnection: dataStoreRuntime.createDeltaConnection(),
-		objectStorage: MockStorage.createFromSummary(summary),
-	};
-	const sharedString = await factory.load(dataStoreRuntime, id, services, factory.attributes);
-
-	return {
-		sharedString,
-		containerRuntime,
-	};
-}
-
 function constructClients(
 	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
 	numClients = 3,
