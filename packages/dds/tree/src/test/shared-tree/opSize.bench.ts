@@ -25,17 +25,18 @@ import {
 	Value,
 } from "../../core/index.js";
 import { SchemaBuilder, leaf } from "../../domains/index.js";
-import { schematizeInternal } from "../utils.js";
+import { schematizeInternal, treeTestFactory } from "../utils.js";
 
 // Notes:
 // 1. Within this file "percentile" is commonly used, and seems to refer to a portion (0 to 1) or some maximum size.
 // While it would be useful and interesting to have some distribution of op sizes and measure some percentile from that distribution,
 // that does not appear to be what these tests are doing.
-// 2. Data from these tests are just printed: no other data collection is done. If a comparison is desire, manually run the tests before and after.
+// 2. Data from these tests are just printed: no other data collection is done. If a comparison is desired, manually run the tests before and after.
 // 3. Major changes in these sizes (regressions, optimizations or the tests not collecting what they should) do not make these tests fail.
 // 4. These tests are currently implemented as integration tests, meaning they use lots of dependencies and high level APIs.
 // They could be reimplemented targeted the lower level APIs if desired.
 // 5. "large" node just get a long repeated string value, not a complex tree, so tree encoding is not really covered here.
+// TODO: fix above issues.
 
 const builder = new SchemaBuilder({ scope: "opSize" });
 
@@ -57,16 +58,13 @@ const childrenFieldKey: FieldKey = brand("children");
 /**
  * Create a default attached tree for op submission
  */
-function createConnectedTree(): ISharedTree {
+function createConnectedTree(): SharedTree {
 	const containerRuntimeFactory = new MockContainerRuntimeFactory();
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({
 		idCompressor: createIdCompressor(),
 	});
 	containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-	const tree = factory.create(
-		new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-		"test",
-	);
+	const tree = treeTestFactory({ runtime: dataStoreRuntime });
 	tree.connect({
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
