@@ -9,6 +9,41 @@ import { IDeltaConnection, IDeltaHandler } from "@fluidframework/datastore-defin
 import { DataProcessingError } from "@fluidframework/telemetry-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 
+const stashedOpMetadataMark = Symbol();
+
+type StashedObjectMetadata = { contents: any; metadata: unknown }[] &
+	Record<typeof stashedOpMetadataMark, typeof stashedOpMetadataMark>;
+
+function createStashedOpMetadata(): StashedObjectMetadata {
+	const arr = [];
+	Object.defineProperty(arr, stashedOpMetadataMark, {
+		value: stashedOpMetadataMark,
+		writable: false,
+		enumerable: true,
+	});
+	return arr as any as StashedObjectMetadata;
+}
+
+function isStashedOpMetadata(md: unknown): md is StashedObjectMetadata {
+	return (
+		Array.isArray(md) &&
+		stashedOpMetadataMark in md &&
+		md[stashedOpMetadataMark] === stashedOpMetadataMark
+	);
+}
+
+function process(
+	content: any,
+	localOpMetaData: unknown,
+	func: (contents: any, metadata: unknown) => void,
+) {
+	if (isStashedOpMetadata(localOpMetaData)) {
+		localOpMetaData.forEach(({ contents, metadata }) => func(contents, metadata));
+	} else {
+		func(content, localOpMetaData);
+	}
+}
+
 export class ChannelDeltaConnection implements IDeltaConnection {
 	private _handler: IDeltaHandler | undefined;
 
@@ -22,7 +57,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 
 	constructor(
 		private _connected: boolean,
-		public readonly submit: (content: any, localOpMetadata: unknown) => void,
+		private readonly submitFn: (content: any, localOpMetadata: unknown) => void,
 		public readonly dirty: () => void,
 		/** @deprecated There is no replacement for this, its functionality is no longer needed at this layer. */
 		public readonly addedGCOutboundReference: (
@@ -44,7 +79,9 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 	public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
 		try {
 			// catches as data processing error whether or not they come from async pending queues
-			this.handler.process(message, local, localOpMetadata);
+			process(message.contents, localOpMetadata, (contents, metadata) =>
+				this.handler.process({ ...message, contents }, local, metadata),
+			);
 		} catch (error) {
 			throw DataProcessingError.wrapIfUnrecognized(
 				error,
@@ -55,17 +92,41 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 	}
 
 	public reSubmit(content: any, localOpMetadata: unknown) {
-		this.handler.reSubmit(content, localOpMetadata);
+		process(content, localOpMetadata, this.handler.reSubmit.bind(this.handler));
 	}
 
 	public rollback(content: any, localOpMetadata: unknown) {
 		if (this.handler.rollback === undefined) {
 			throw new Error("Handler doesn't support rollback");
 		}
-		this.handler.rollback(content, localOpMetadata);
+		process(content, localOpMetadata, this.handler.rollback.bind(this.handler));
 	}
 
 	public applyStashedOp(content: any): unknown {
-		return this.handler.applyStashedOp(content);
+		try {
+			this.statedOpMd = createStashedOpMetadata();
+			const md = this.handler.applyStashedOp(content);
+			if (md !== undefined) {
+				// temporary assert while we migrate dds to the new pattern
+				// after migration we will always return statedOpMd
+				assert(
+					(this.statedOpMd?.length ?? 0) === 0,
+					"statedOpMd should be empty if metadata returned. this means ops were submitted and local op metadata was returned. this will cause a corruption",
+				);
+				return md;
+			}
+			return this.statedOpMd;
+		} finally {
+			this.statedOpMd = undefined;
+		}
+	}
+
+	private statedOpMd: StashedObjectMetadata | undefined;
+	public submit(contents: any, metadata: unknown): void {
+		if (this.statedOpMd !== undefined) {
+			this.statedOpMd.push({ contents, metadata });
+		} else {
+			this.submitFn(contents, metadata);
+		}
 	}
 }

@@ -7,6 +7,8 @@ import { type IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { type IStampedContents, type IOpContents } from './types.js';
 import { type IMigrationOp } from './migrationShim.js';
 
+export const emptyLocalMetadata = Symbol();
+
 /**
  * Checks if two channel attributes objects match.
  * @param attributes1 - The first channel attributes object to compare.
