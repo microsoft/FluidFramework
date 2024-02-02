@@ -102,7 +102,6 @@ extends:
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
-    testCoverage: ${{ variables.testCoverage }}
     packageManager: pnpm
     buildDirectory: azure
     tagName: azure

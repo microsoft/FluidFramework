@@ -41,7 +41,6 @@ extends:
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
     buildDirectory: server/routerlicious/packages/tinylicious
-    testCoverage: ${{ variables.testCoverage }}
     tagName: tinylicious
     taskBuild: build
     taskBuildDocs: false
