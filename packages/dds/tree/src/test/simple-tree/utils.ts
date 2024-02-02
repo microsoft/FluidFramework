@@ -8,7 +8,7 @@ import {
 	nodeKeyFieldKey as defaultNodeKeyFieldKey,
 } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { SchematizingTreeView } from "../../shared-tree/sharedTree.js";
+import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
 import {
 	ImplicitFieldSchema,
 	TreeConfiguration,
@@ -44,10 +44,10 @@ export function getRoot<TSchema extends ImplicitFieldSchema>(
  */
 export function getView<TSchema extends ImplicitFieldSchema>(
 	config: TreeConfiguration<TSchema>,
-): SchematizingTreeView<TSchema> {
+): SchematizingSimpleTreeView<TSchema> {
 	const flexConfig = toFlexConfig(config);
 	const checkout = checkoutWithContent(flexConfig);
-	return new SchematizingTreeView<TSchema>(
+	return new SchematizingSimpleTreeView<TSchema>(
 		checkout,
 		config,
 		createMockNodeKeyManager(),

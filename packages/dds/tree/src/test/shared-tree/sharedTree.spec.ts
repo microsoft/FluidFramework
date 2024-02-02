@@ -82,7 +82,7 @@ import { EditManager } from "../../shared-tree-core/index.js";
 import { leaf, SchemaBuilder } from "../../domains/index.js";
 import { SchemaFactory, TreeConfiguration } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { requireSchema } from "../../shared-tree/sharedTree.js";
+import { requireSchema } from "../../shared-tree/schematizingTreeView.js";
 
 describe("SharedTree", () => {
 	describe("schematize", () => {

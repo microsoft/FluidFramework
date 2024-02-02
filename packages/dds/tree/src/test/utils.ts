@@ -131,9 +131,11 @@ import { HasListeners, IEmitter, ISubscribable } from "../events/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeSchemaCodec } from "../feature-libraries/schema-index/codec.js";
 // eslint-disable-next-line import/no-internal-modules
-import { SharedTreeOptions, requireSchema } from "../shared-tree/sharedTree.js";
+import { SharedTreeOptions } from "../shared-tree/sharedTree.js";
 // eslint-disable-next-line import/no-internal-modules
 import { ensureSchema } from "../shared-tree/schematizedTree.js";
+// eslint-disable-next-line import/no-internal-modules
+import { requireSchema } from "../shared-tree/schematizingTreeView.js";
 
 // Testing utilities
 
