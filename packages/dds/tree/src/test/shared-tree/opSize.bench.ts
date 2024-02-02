@@ -25,7 +25,7 @@ import {
 	Value,
 } from "../../core/index.js";
 import { SchemaBuilder, leaf } from "../../domains/index.js";
-import { schematizeInternal, treeTestFactory } from "../utils.js";
+import { schematizeFlexTree, treeTestFactory } from "../utils.js";
 
 // Notes:
 // 1. Within this file "percentile" is commonly used, and seems to refer to a portion (0 to 1) or some maximum size.
@@ -80,7 +80,7 @@ function initializeTestTree(
 	state: JsonableTree = initialTestJsonTree,
 ): ITreeCheckout {
 	const writeCursor = cursorForJsonableTreeNode(state);
-	return schematizeInternal(tree, {
+	return schematizeFlexTree(tree, {
 		allowedSchemaModifications: AllowedUpdateType.Initialize,
 		initialTree: [writeCursor],
 		schema: fullSchemaData,

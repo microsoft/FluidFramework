@@ -1164,11 +1164,8 @@ export const testRevisionTagCodec = new RevisionTagCodec(testIdCompressor);
 
 /**
  * Like {@link ITree.schematize}, but uses the flex-tree schema system and exposes the tree as a flex-tree.
- * @privateRemarks
- * This has to avoid its name colliding with `schematize`.
- * TODO: Either ITree and ISharedTree should be split into separate objects, the methods should be merged or a better convention for resolving such name conflicts should be selected.
  */
-export function schematizeInternal<TRoot extends FlexFieldSchema>(
+export function schematizeFlexTree<TRoot extends FlexFieldSchema>(
 	tree: SharedTree,
 	config: InitializeAndSchematizeConfiguration<TRoot>,
 	onDispose?: () => void,

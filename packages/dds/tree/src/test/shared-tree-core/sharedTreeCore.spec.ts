@@ -42,7 +42,7 @@ import {
 	typeNameSymbol,
 } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
-import { SharedTreeTestFactory, schematizeInternal } from "../utils.js";
+import { SharedTreeTestFactory, schematizeFlexTree } from "../utils.js";
 import { InitializeAndSchematizeConfiguration } from "../../shared-tree/index.js";
 import { leaf } from "../../domains/index.js";
 import { TestSharedTreeCore } from "./utils.js";
@@ -317,9 +317,9 @@ describe("SharedTreeCore", () => {
 			allowedSchemaModifications: AllowedUpdateType.Initialize,
 		} satisfies InitializeAndSchematizeConfiguration;
 
-		const view1 = schematizeInternal(tree1, config);
+		const view1 = schematizeFlexTree(tree1, config);
 		containerRuntimeFactory.processAllMessages();
-		const view2 = schematizeInternal(tree2, config);
+		const view2 = schematizeFlexTree(tree2, config);
 		const editable1 = view1.flexTree;
 		const editable2 = view2.flexTree;
 

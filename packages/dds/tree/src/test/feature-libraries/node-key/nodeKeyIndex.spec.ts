@@ -30,7 +30,7 @@ import {
 	SummarizeType,
 	TestTreeProvider,
 	flexTreeWithContent,
-	schematizeInternal,
+	schematizeFlexTree,
 } from "../../utils.js";
 import { AllowedUpdateType } from "../../../core/index.js";
 
@@ -147,7 +147,7 @@ describe("Node Key Index", () => {
 
 		const manager1 = createMockNodeKeyManager();
 		const key = manager1.generateLocalNodeKey();
-		schematizeInternal(
+		schematizeFlexTree(
 			tree,
 			{
 				initialTree: {
@@ -166,7 +166,7 @@ describe("Node Key Index", () => {
 		await provider.summarize();
 		const tree2 = await provider.createTree();
 		await provider.ensureSynchronized();
-		const view2 = schematizeInternal(
+		const view2 = schematizeFlexTree(
 			tree2,
 			{
 				initialTree: {

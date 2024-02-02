@@ -153,7 +153,18 @@ export function canInitialize(checkout: TreeCheckout): boolean {
 	return checkout.forest.isEmpty && schemaDataIsEmpty(checkout.storedSchema);
 }
 
-// TODO: move this off tree
+/**
+ * Ensure a {@link TreeCheckout} can be used with a given {@link ViewSchema}.
+ *
+ * @remarks
+ * It is up to the caller to ensure that compatibility is reevaluated if the checkout's stored schema is edited in the future.
+ *
+ * @param viewSchema - View schema that `checkout` should be made compatible with.
+ * @param allowedSchemaModifications - Flags enum describing the ways this is allowed to modify `checkout`.
+ * @param checkout - To be modified as needed to be compatible with `viewSchema`.
+ * @param treeContent - Content to be used to initialize `checkout`'s the tree if needed and allowed.
+ * @returns true iff checkout now is compatible with `viewSchema`.
+ */
 export function ensureSchema(
 	viewSchema: ViewSchema,
 	allowedSchemaModifications: AllowedUpdateType,

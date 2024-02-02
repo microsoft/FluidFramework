@@ -231,7 +231,7 @@ export class SharedTree
 	public schematize<TRoot extends ImplicitFieldSchema>(
 		config: TreeConfiguration<TRoot>,
 	): TreeView<TreeFieldFromImplicitField<TRoot>> {
-		const view = new TrySchematizeTreeView(
+		const view = new SchematizingTreeView(
 			this.checkout,
 			config,
 			createNodeKeyManager(this.runtime.idCompressor),
@@ -306,6 +306,7 @@ export function requireSchema<TRoot extends FlexFieldSchema>(
 
 	return view;
 }
+
 /**
  * @internal
  */
@@ -374,7 +375,7 @@ export class SharedTreeFactory implements IChannelFactory {
 /**
  * Implementation of TreeView wrapping a FlexTreeView.
  */
-export class TrySchematizeTreeView<in out TRootSchema extends ImplicitFieldSchema>
+export class SchematizingTreeView<in out TRootSchema extends ImplicitFieldSchema>
 	implements TreeView<TreeFieldFromImplicitField<TRootSchema>>
 {
 	/**

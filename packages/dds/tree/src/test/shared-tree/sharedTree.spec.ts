@@ -55,7 +55,7 @@ import {
 	ConnectionSetter,
 	SharedTreeWithConnectionStateSetter,
 	treeTestFactory,
-	schematizeInternal,
+	schematizeFlexTree,
 } from "../utils.js";
 import {
 	ForestType,
@@ -115,8 +115,8 @@ describe("SharedTree", () => {
 				allowedSchemaModifications: AllowedUpdateType.Initialize,
 				initialTree: ["x"],
 			} satisfies InitializeAndSchematizeConfiguration;
-			const tree1 = schematizeInternal(provider.trees[0], content);
-			schematizeInternal(provider.trees[1], content);
+			const tree1 = schematizeFlexTree(provider.trees[0], content);
+			schematizeFlexTree(provider.trees[1], content);
 			provider.processMessages();
 
 			assert.deepEqual([...tree1.flexTree], ["x"]);
@@ -126,7 +126,7 @@ describe("SharedTree", () => {
 			const tree = treeTestFactory();
 			assert.deepEqual(tree.contentSnapshot().schema.rootFieldSchema, storedEmptyFieldSchema);
 
-			const view = schematizeInternal(tree, {
+			const view = schematizeFlexTree(tree, {
 				allowedSchemaModifications: AllowedUpdateType.Initialize,
 				initialTree: 10,
 				schema,
@@ -142,7 +142,7 @@ describe("SharedTree", () => {
 			tree.checkout.updateSchema(storedSchema);
 
 			// No op upgrade with AllowedUpdateType.None does not error
-			const schematized = schematizeInternal(tree, {
+			const schematized = schematizeFlexTree(tree, {
 				allowedSchemaModifications: AllowedUpdateType.None,
 				initialTree: 10,
 				schema,
@@ -158,7 +158,7 @@ describe("SharedTree", () => {
 			) as SharedTree;
 			tree.checkout.updateSchema(storedSchemaGeneralized);
 			assert.throws(() => {
-				schematizeInternal(tree, {
+				schematizeFlexTree(tree, {
 					allowedSchemaModifications: AllowedUpdateType.Initialize,
 					initialTree: 5,
 					schema,
@@ -172,7 +172,7 @@ describe("SharedTree", () => {
 				"the tree",
 			) as SharedTree;
 			tree.checkout.updateSchema(storedSchema);
-			const schematized = schematizeInternal(tree, {
+			const schematized = schematizeFlexTree(tree, {
 				allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
 				initialTree: 5,
 				schema: schemaGeneralized,
@@ -276,7 +276,7 @@ describe("SharedTree", () => {
 			forest: ForestType.Reference,
 		});
 		const sharedTree = treeTestFactory();
-		const view = schematizeInternal(sharedTree, {
+		const view = schematizeFlexTree(sharedTree, {
 			allowedSchemaModifications: AllowedUpdateType.Initialize,
 			initialTree: 1,
 			schema,
@@ -299,7 +299,7 @@ describe("SharedTree", () => {
 				nodeSchema: new Map(),
 			});
 		}
-		schematizeInternal(sharedTree, {
+		schematizeFlexTree(sharedTree, {
 			allowedSchemaModifications: AllowedUpdateType.Initialize,
 			initialTree: ["x"],
 			schema: stringSequenceRootSchema,
@@ -319,7 +319,7 @@ describe("SharedTree", () => {
 		const value = "42";
 
 		// Apply an edit to the first tree which inserts a node with a value
-		const view1 = schematizeInternal(provider.trees[0], {
+		const view1 = schematizeFlexTree(provider.trees[0], {
 			schema: stringSequenceRootSchema,
 			allowedSchemaModifications: AllowedUpdateType.Initialize,
 			initialTree: [value],
@@ -342,7 +342,7 @@ describe("SharedTree", () => {
 	it("can summarize and load", async () => {
 		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 		const value = 42;
-		schematizeInternal(provider.trees[0], {
+		schematizeFlexTree(provider.trees[0], {
 			schema: jsonSequenceRootSchema,
 			allowedSchemaModifications: AllowedUpdateType.Initialize,
 			initialTree: [value],
@@ -421,7 +421,7 @@ describe("SharedTree", () => {
 					initialTree: undefined,
 					allowedSchemaModifications: AllowedUpdateType.Initialize,
 				} satisfies InitializeAndSchematizeConfiguration;
-				const view1 = schematizeInternal(tree1, config);
+				const view1 = schematizeFlexTree(tree1, config);
 				const editable1 = view1.flexTree;
 
 				editable1.content = { [typeNameSymbol]: node.name, child: undefined };
@@ -535,7 +535,7 @@ describe("SharedTree", () => {
 
 		const [container1, container2, container3] = provider.containers;
 
-		const tree1 = schematizeInternal(provider.trees[0], {
+		const tree1 = schematizeFlexTree(provider.trees[0], {
 			schema: stringSequenceRootSchema,
 			allowedSchemaModifications: AllowedUpdateType.Initialize,
 			initialTree: ["Z", "A", "C"],
@@ -601,7 +601,7 @@ describe("SharedTree", () => {
 		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 		const [summarizingTree] = provider.trees;
 
-		schematizeInternal(summarizingTree, {
+		schematizeFlexTree(summarizingTree, {
 			schema: stringSequenceRootSchema,
 			allowedSchemaModifications: AllowedUpdateType.Initialize,
 			initialTree: ["a", "b", "c"],
@@ -631,7 +631,7 @@ describe("SharedTree", () => {
 		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 		const [summarizingTree] = provider.trees;
 
-		schematizeInternal(summarizingTree, {
+		schematizeFlexTree(summarizingTree, {
 			schema: stringSequenceRootSchema,
 			allowedSchemaModifications: AllowedUpdateType.Initialize,
 			initialTree: ["a", "b", "c"],
@@ -675,7 +675,7 @@ describe("SharedTree", () => {
 
 	it("can summarize local edits in the attach summary", async () => {
 		const onCreate = (tree: SharedTree) => {
-			const view = schematizeInternal(tree, emptyStringSequenceConfig);
+			const view = schematizeFlexTree(tree, emptyStringSequenceConfig);
 			view.flexTree.insertAtStart(["A"]);
 			view.flexTree.insertAtEnd(["C"]);
 			assert.deepEqual([...view.flexTree], ["A", "C"]);
@@ -703,7 +703,7 @@ describe("SharedTree", () => {
 	it("can tolerate local edits submitted as part of a transaction in the attach summary", async () => {
 		const onCreate = (tree: SharedTree) => {
 			// Schematize uses a transaction as well
-			const view = schematizeInternal(tree, emptyStringSequenceConfig);
+			const view = schematizeFlexTree(tree, emptyStringSequenceConfig);
 			view.checkout.transaction.start();
 			view.flexTree.insertAtStart(["A"]);
 			view.flexTree.insertAt(1, ["C"]);
@@ -765,7 +765,7 @@ describe("SharedTree", () => {
 
 	it("has bounded memory growth in EditManager", () => {
 		const provider = new TestTreeProviderLite(2);
-		schematizeInternal(provider.trees[0], emptyStringSequenceConfig)[disposeSymbol]();
+		schematizeFlexTree(provider.trees[0], emptyStringSequenceConfig)[disposeSymbol]();
 		provider.processMessages();
 
 		const [tree1, tree2] = provider.trees.map(
@@ -801,7 +801,7 @@ describe("SharedTree", () => {
 
 	it("can process changes while detached", async () => {
 		const onCreate = (t: SharedTree) => {
-			const view = schematizeInternal(t, emptyStringSequenceConfig);
+			const view = schematizeFlexTree(t, emptyStringSequenceConfig);
 			view.flexTree.insertAtStart(["B"]);
 			view.flexTree.insertAtStart(["A"]);
 			assert.deepEqual([...view.flexTree], ["A", "B"]);
@@ -820,12 +820,12 @@ describe("SharedTree", () => {
 		it("the insert of a node in a sequence field", () => {
 			const value = "42";
 			const provider = new TestTreeProviderLite(2);
-			const tree1 = schematizeInternal(provider.trees[0], emptyStringSequenceConfig);
+			const tree1 = schematizeFlexTree(provider.trees[0], emptyStringSequenceConfig);
 			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
 				tree1.checkout.events,
 			);
 			provider.processMessages();
-			const tree2 = schematizeInternal(provider.trees[1], emptyStringSequenceConfig);
+			const tree2 = schematizeFlexTree(provider.trees[1], emptyStringSequenceConfig);
 			provider.processMessages();
 
 			// Insert node
@@ -856,12 +856,12 @@ describe("SharedTree", () => {
 			const value2 = "B";
 			const value3 = "C";
 			const provider = new TestTreeProviderLite(2);
-			const tree1 = schematizeInternal(provider.trees[0], emptyStringSequenceConfig);
+			const tree1 = schematizeFlexTree(provider.trees[0], emptyStringSequenceConfig);
 			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
 				tree1.checkout.events,
 			);
 			provider.processMessages();
-			const tree2 = schematizeInternal(provider.trees[1], emptyStringSequenceConfig);
+			const tree2 = schematizeFlexTree(provider.trees[1], emptyStringSequenceConfig);
 			provider.processMessages();
 
 			// Insert node
@@ -911,7 +911,7 @@ describe("SharedTree", () => {
 				allowedSchemaModifications: AllowedUpdateType.Initialize,
 				initialTree: ["A", "B", "C", "D"],
 			} satisfies InitializeAndSchematizeConfiguration;
-			const tree1 = schematizeInternal(provider.trees[0], content);
+			const tree1 = schematizeFlexTree(provider.trees[0], content);
 
 			const {
 				undoStack: undoStack1,
@@ -983,14 +983,14 @@ describe("SharedTree", () => {
 				allowedSchemaModifications: AllowedUpdateType.Initialize,
 				initialTree: ["A", "B", "C", "D"],
 			} satisfies InitializeAndSchematizeConfiguration;
-			const tree1 = schematizeInternal(provider.trees[0], content);
+			const tree1 = schematizeFlexTree(provider.trees[0], content);
 
 			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
 				tree1.checkout.events,
 			);
 
 			provider.processMessages();
-			const tree2 = schematizeInternal(provider.trees[1], content);
+			const tree2 = schematizeFlexTree(provider.trees[1], content);
 
 			const root1 = tree1.flexTree;
 			const root2 = tree2.flexTree;
@@ -1046,7 +1046,7 @@ describe("SharedTree", () => {
 						allowedSchemaModifications: AllowedUpdateType.Initialize,
 						initialTree: [["a"]],
 					} satisfies InitializeAndSchematizeConfiguration;
-					const tree1 = schematizeInternal(provider.trees[0], content);
+					const tree1 = schematizeFlexTree(provider.trees[0], content);
 					const { undoStack: undoStack1, unsubscribe: unsubscribe1 } =
 						createTestUndoRedoStacks(tree1.checkout.events);
 
@@ -1054,7 +1054,7 @@ describe("SharedTree", () => {
 					// which causes view invalidation when resolving the merge.
 					provider.processMessages();
 
-					const tree2 = schematizeInternal(provider.trees[1], content);
+					const tree2 = schematizeFlexTree(provider.trees[1], content);
 					const { undoStack: undoStack2, unsubscribe: unsubscribe2 } =
 						createTestUndoRedoStacks(tree2.checkout.events);
 
@@ -1161,7 +1161,7 @@ describe("SharedTree", () => {
 			}
 
 			function peerFromSharedTree(tree: SharedTreeWithConnectionStateSetter): Peer {
-				const view = schematizeInternal(tree, config);
+				const view = schematizeFlexTree(tree, config);
 				const peer: Peer = {
 					view,
 					outerList: view.flexTree,
@@ -1335,7 +1335,7 @@ describe("SharedTree", () => {
 		it("triggers revertible events for local changes", () => {
 			const value = "42";
 			const provider = new TestTreeProviderLite(2);
-			const tree1 = schematizeInternal(provider.trees[0], emptyStringSequenceConfig);
+			const tree1 = schematizeFlexTree(provider.trees[0], emptyStringSequenceConfig);
 			provider.processMessages();
 			const tree2 = assertSchema(provider.trees[1], stringSequenceRootSchema);
 
@@ -1386,7 +1386,7 @@ describe("SharedTree", () => {
 		it("doesn't trigger a revertible event for rebases", () => {
 			const provider = new TestTreeProviderLite(2);
 			// Initialize the tree
-			const tree1 = schematizeInternal(provider.trees[0], {
+			const tree1 = schematizeFlexTree(provider.trees[0], {
 				initialTree: ["A", "B", "C", "D"],
 				schema: stringSequenceRootSchema,
 				allowedSchemaModifications: AllowedUpdateType.Initialize,
@@ -1440,7 +1440,7 @@ describe("SharedTree", () => {
 				schema: stringSequenceRootSchema,
 				allowedSchemaModifications: AllowedUpdateType.Initialize,
 			};
-			const view1 = schematizeInternal(provider.trees[0], config);
+			const view1 = schematizeFlexTree(provider.trees[0], config);
 			await provider.ensureSynchronized();
 
 			const pausedContainer: IContainerExperimental = provider.containers[0];
@@ -1477,7 +1477,7 @@ describe("SharedTree", () => {
 		it("Anchors can be created and dereferenced", () => {
 			const provider = new TestTreeProviderLite();
 
-			schematizeInternal(provider.trees[0], {
+			schematizeFlexTree(provider.trees[0], {
 				schema: numberSequenceRootSchema,
 				allowedSchemaModifications: AllowedUpdateType.Initialize,
 				initialTree: [0, 1, 2],
@@ -1504,7 +1504,7 @@ describe("SharedTree", () => {
 
 	it("don't send ops before committing", () => {
 		const provider = new TestTreeProviderLite(2);
-		const tree1 = schematizeInternal(provider.trees[0], emptyStringSequenceConfig);
+		const tree1 = schematizeFlexTree(provider.trees[0], emptyStringSequenceConfig);
 		provider.processMessages();
 		const tree2 = provider.trees[1];
 		let opsReceived = 0;
@@ -1521,7 +1521,7 @@ describe("SharedTree", () => {
 
 	it("send only one op after committing", () => {
 		const provider = new TestTreeProviderLite(2);
-		const tree1 = schematizeInternal(provider.trees[0], emptyStringSequenceConfig);
+		const tree1 = schematizeFlexTree(provider.trees[0], emptyStringSequenceConfig);
 		provider.processMessages();
 		const tree2 = provider.trees[1];
 		let opsReceived = 0;
@@ -1537,7 +1537,7 @@ describe("SharedTree", () => {
 
 	it("do not send an op after committing if nested", () => {
 		const provider = new TestTreeProviderLite(2);
-		const tree1 = schematizeInternal(provider.trees[0], emptyStringSequenceConfig);
+		const tree1 = schematizeFlexTree(provider.trees[0], emptyStringSequenceConfig);
 		provider.processMessages();
 		const tree2 = provider.trees[1];
 		let opsReceived = 0;
@@ -1559,7 +1559,7 @@ describe("SharedTree", () => {
 
 	it("process changes while detached", async () => {
 		const onCreate = (parentTree: SharedTree) => {
-			const parent = schematizeInternal(parentTree, {
+			const parent = schematizeFlexTree(parentTree, {
 				initialTree: ["A"],
 				schema: stringSequenceRootSchema,
 				allowedSchemaModifications: AllowedUpdateType.Initialize,
@@ -1610,13 +1610,13 @@ describe("SharedTree", () => {
 			const value1 = "42";
 			const value2 = "42";
 
-			const view1 = schematizeInternal(provider.trees[0], {
+			const view1 = schematizeFlexTree(provider.trees[0], {
 				schema: stringSequenceRootSchema,
 				allowedSchemaModifications: AllowedUpdateType.Initialize,
 				initialTree: [value1],
 			});
 
-			schematizeInternal(provider.trees[1], {
+			schematizeFlexTree(provider.trees[1], {
 				schema: stringSequenceRootSchema,
 				allowedSchemaModifications: AllowedUpdateType.Initialize,
 				initialTree: [value2],

@@ -30,7 +30,7 @@ import {
 	UpPath,
 } from "../../../core/index.js";
 import { DownPath, FlexTreeNode, toDownPath } from "../../../feature-libraries/index.js";
-import { schematizeInternal } from "../../utils.js";
+import { schematizeFlexTree } from "../../utils.js";
 import {
 	FieldEditTypes,
 	FuzzInsert,
@@ -77,7 +77,7 @@ export function viewFromState(
 	return (
 		state.transactionViews?.get(client.channel) ??
 		getOrCreate(state.view, client.channel as SharedTree, (tree) =>
-			schematizeInternal(tree, {
+			schematizeFlexTree(tree, {
 				initialTree,
 				schema: fuzzSchema,
 				allowedSchemaModifications: AllowedUpdateType.Initialize,
