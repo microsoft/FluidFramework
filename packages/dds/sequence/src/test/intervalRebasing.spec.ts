@@ -361,7 +361,7 @@ describe("interval rebasing", () => {
 		containerRuntimeFactory.processAllMessages();
 		A.containerRuntime.connected = true;
 		containerRuntimeFactory.processAllMessages();
-		assertConsistent(clients);
+		assertConsistent([A, B]);
 	});
 
 	// Reproduction of seed 70. Appears to be some problem with normalization of segments interacting
