@@ -14,12 +14,12 @@ import { MergeTree } from "../mergeTree";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk";
 import { UnassignedSequenceNumber } from "../constants";
 import { LocalReferenceCollection } from "../localReference";
-import { loadText } from "./text";
 import {
 	PartialSequenceLengths,
 	verifyExpectedPartialLengths,
 	verifyPartialLengths,
 } from "../partialLengths";
+import { loadText } from "./text";
 
 export function loadTextFromFile(filename: string, mergeTree: MergeTree, segLimit = 0) {
 	const content = fs.readFileSync(filename, "utf8");

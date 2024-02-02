@@ -10,6 +10,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
+// eslint-disable-next-line import/no-internal-modules
 import { useStrictPartialLengthChecks } from "@fluidframework/merge-tree/dist/test";
 import { SharedString } from "../sharedString";
 import { IntervalStickiness } from "../intervals";
