@@ -1795,7 +1795,7 @@ describe("SharedTree", () => {
 			const provider = await TestTreeProvider.create(1, SummarizeType.onDemand, factory);
 			schematizeFlexTree(provider.trees[0], {
 				schema: stringSequenceRootSchema,
-				allowedSchemaModifications: AllowedUpdateType.None,
+				allowedSchemaModifications: AllowedUpdateType.Initialize,
 				initialTree: ["A", "B", "C"],
 			});
 
@@ -1834,7 +1834,7 @@ describe("SharedTree", () => {
 
 			schematizeFlexTree(provider2.trees[0], {
 				schema: stringSequenceRootSchema,
-				allowedSchemaModifications: AllowedUpdateType.None,
+				allowedSchemaModifications: AllowedUpdateType.Initialize,
 				initialTree: ["A", "B", "C"],
 			});
 
