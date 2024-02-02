@@ -109,9 +109,6 @@ import {
  *      uuids for columns / rows.
  * 3. When evaluating cell value, we need to check if it has active channel associated with it. This operation should
  *    be optimized to be fast, especially for main case (no channel)
- *
- * TO DO // TBD(Pri1):
- * 1. Summarizer removing non-needed channels
  */
 
 const matrixId = "matrix";
@@ -199,7 +196,6 @@ export class TempCollabSpaceRuntime
 				this.criticalError(new Error("collabSpaces: intergity violation"));
 			}
 
-			// TBD(Pri0): Need to create context.
 			// Here are two considerations:
 			// This is syncronous function, while creation of the channel is async
 			// We might not be able to create a channel IF this channel is not rooted in a cell.
@@ -210,6 +206,7 @@ export class TempCollabSpaceRuntime
 			if (currValue === undefined || String(currValue.iteration) !== iteration) {
 				// This channel is not rooted (not current). We do not have initial state (before ops started
 				// to flow) to create it. Thus the only option - accumulate ops for later usage.
+				// TBD(Pri1): Need to create context.
 				this.criticalError(Error("TBD"));
 			} else {
 				this.createCollabChannel(currValue, address);
@@ -247,7 +244,7 @@ export class TempCollabSpaceRuntime
 		localOpMetadata: unknown,
 	) {
 		// offset increase by submitChannelOp()
-		this.updatePendingCoutner(address, -1, true /* allowImplicitCreation */);
+		this.updatePendingCoutner(address, local ? -1 : 0, true /* allowImplicitCreation */);
 		super.processChannelOp(address, message, local, localOpMetadata);
 	}
 
@@ -308,6 +305,7 @@ export class TempCollabSpaceRuntime
 	protected attachRemoteChannel(id: string, remoteChannelContext: IChannelContext) {
 		if (!this.contexts.has(id)) {
 			super.attachRemoteChannel(id, remoteChannelContext);
+			this.channelCreated(id);
 		} else {
 			// TBD(Pri2) - we should verify that initial state conveyed in this op is exactly
 			// the same as the one this client started with.
@@ -329,13 +327,18 @@ export class TempCollabSpaceRuntime
 			// Insert row/col for tracking row/col internal IDs
 			this.matrixInternal.insertCols(0, 1);
 			this.matrixInternal.insertRows(0, 1);
+
+			// Ensure it will attach when this data store attaches
+			this.matrixInternal.bindToContext();
 		} else {
 			this.matrixInternal = (await this.getChannel(matrixId)) as SharedMatrix;
 
 			assert(this.dataStoreContext.baseSnapshot !== undefined, "loading from snasphot");
+			const blobId = this.dataStoreContext.baseSnapshot.blobs[channelSummaryBlobName];
+			assert(blobId !== undefined, "channelInfo not present");
 			this.channelInfo = await readAndParse<Record<string, IChannelTrackingInfo>>(
 				this.dataStoreContext.storage,
-				this.dataStoreContext.baseSnapshot[channelSummaryBlobName],
+				blobId,
 			);
 		}
 		this.matrix.switchSetCellPolicy();
@@ -374,18 +377,7 @@ export class TempCollabSpaceRuntime
 		return factory as ICollabChannelFactory;
 	}
 
-	private createCollabChannel(value: MatrixInternalType, channelId: string) {
-		const factory = this.getFactoryForValueType(value.type, true /* onlyCollaborativeTypes */);
-		assert(factory !== undefined, "Factory is missing for matrix type");
-
-		const newChannel = factory.create2(this, channelId, value.value);
-		this.addChannel(newChannel);
-
-		// Feels like I should call this.bindChannel(newChannel) here, but it fails - this.notBoundedChannelContextSet
-		// gets cleared first and then we get back (recursion) into this.bindChannel() and hit assert.
-		// Feels like right way to do so is call bindToContext(), but it's not API on channel.
-		newChannel.handle.attachGraph();
-
+	private channelCreated(channelId: string) {
 		assert(this.channelInfo[channelId] === undefined, "channel is in inconsistent state");
 		this.channelInfo[channelId] = {
 			// -1 here is important for couple reasons:
@@ -395,6 +387,24 @@ export class TempCollabSpaceRuntime
 			seq: -1,
 			pendingChangeCount: 0,
 		};
+	}
+	private createCollabChannel(value: MatrixInternalType, channelId: string) {
+		const factory = this.getFactoryForValueType(value.type, true /* onlyCollaborativeTypes */);
+		assert(factory !== undefined, "Factory is missing for matrix type");
+
+		const newChannel = factory.create2(this, channelId, value.value);
+		this.addChannel(newChannel);
+
+		// TBD(Pri2) - make sure it is properly attached to data store.
+		// Everywhere in code we call appropriate newChannel.bindToContext(), but that's not an API on a channel interface.
+		// Feels like I should call this.bindChannel(newChannel) here, but it fails - this.notBoundedChannelContextSet
+		// gets cleared first and then we get back (recursion) into this.bindChannel() and hit assert.
+		// this.bind(newChannel.handle) does not seem to work properly if this happens in detached container.
+		// newChannel.handle.attachGraph() seems like works the best, even though it's deprecated.
+		// We can add bindToContext() to ICollabChannelCore, but it feels like that should be better way to do it!
+		newChannel.handle.attachGraph();
+
+		this.channelCreated(channelId);
 
 		return newChannel;
 	}
@@ -418,7 +428,7 @@ export class TempCollabSpaceRuntime
 		const colId = parts[1];
 		const iteration = parts[2];
 
-		// TBD(Pri1)
+		// TBD(Pri0)
 		// This needs to be way more efficient by building a reverse mapping and maintaining it through all operations!
 		// Need to reconcile which layer does such mapping. At the moment, this is done outside of matrix - in Tablero
 		// component. We should either move it here (and ideally - in compatible way, i.e. not changing document schema),
@@ -571,7 +581,11 @@ export class TempCollabSpaceRuntime
 		if (value === undefined) {
 			return { value: undefined, type: "undefined" };
 		}
-		const val = channel === undefined ? value.value : ((await channel).value as string);
+		let val = value.value;
+		if (channel !== undefined) {
+			const ch = await channel;
+			val = ch.value as string;
+		}
 		return { value: val, type: value.type };
 	}
 

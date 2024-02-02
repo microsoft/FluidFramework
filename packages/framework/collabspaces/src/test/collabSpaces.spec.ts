@@ -57,13 +57,11 @@ describe("Temporal Collab Spaces 1", () => {
 					return provider.createContainer(runtimeFactory);
 				};
 
-				/*
-				async function loadContainer(summaryVersion: string) {
+				async function loadContainer(/* summaryVersion: string */) {
 					return provider.loadContainer(runtimeFactory, undefined, {
-						[LoaderHeader.version]: summaryVersion,
+						// [LoaderHeader.version]: summaryVersion,
 					});
 				}
-				*/
 
 				beforeEach("getTestObjectProvider", async () => {
 					provider = getTestObjectProvider({ syncSummarizer: true });
@@ -73,8 +71,15 @@ describe("Temporal Collab Spaces 1", () => {
 					const container = await createContainer();
 					const datastore = (await container.getEntryPoint()) as TempCollabSpaceRuntime;
 
+					const container2 = await loadContainer();
+					const datastore2 = (await container2.getEntryPoint()) as TempCollabSpaceRuntime;
+
+					await provider.ensureSynchronized();
+
 					const cols = 40;
-					const rows = 1000;
+					const rows = 100;
+					const row = 5;
+					const col = 10;
 
 					// +700Mb, but only +200Mb if accounting GC after that.
 					datastore.insertCols(0, cols);
@@ -99,30 +104,56 @@ describe("Temporal Collab Spaces 1", () => {
 						global.gc();
 					}
 
-					let value = await datastore.getCellAsync(100, 5);
+					// TBD(Pri0): this synchronization takes very long time!
+					// There are obviously a lot of ops, but it should still take relatively short amount of time.
+					// Two things to check:
+					// 1. Looks like our local test pipeline is slow, probably something easy to improve
+					// 2. Enable op grouping, possibly compression by default to reduce amount of data that goes through
+					//    local server
+					await provider.ensureSynchronized();
 
-					const channel = (await datastore.getCellChannel(100, 5)) as ISharedCounter &
+					assert(datastore.rowCount === datastore2.rowCount, "syncronized");
+					assert(datastore.colCount === datastore2.colCount, "syncronized");
+
+					let value = await datastore.getCellAsync(row, col);
+
+					const channel = (await datastore.getCellChannel(row, col)) as ISharedCounter &
 						ICollabChannelCore;
+					const channel2 = await datastore.getCellChannel(row, col);
+					assert(channel === channel2, "can get to same channel");
 
-					assert(channel.value === value?.value, "not the same value");
+					assert(channel.value === value?.value, "Channel has the same initial state");
 
 					channel.increment(100);
-					value = await datastore.getCellAsync(100, 5);
-					assert(channel.value === value?.value, "not the same value");
+					const channelValue = channel.value;
 
+					value = await datastore.getCellAsync(row, col);
+					assert(channelValue === value?.value, "Channel and cell has the same value");
+
+					await provider.ensureSynchronized();
+
+					let value2 = await datastore2.getCellAsync(row, col);
+					assert(channelValue === value2?.value, "Another container has the same value!");
+
+					// Save changes and destroy channel
 					datastore.saveChannelState(channel);
 					datastore.destroyCellChannel(channel);
 
-					value = await datastore.getCellAsync(100, 5);
-					assert(channel.value === value?.value, "not the same value");
+					await provider.ensureSynchronized();
+
+					value = await datastore.getCellAsync(row, col);
+					assert(channelValue === value?.value, "Value was properly stored in matrix");
+
+					value2 = await datastore2.getCellAsync(row, col);
+					assert(channelValue === value2?.value, "Another container has the same value!");
 
 					// 100K rows test numbers:
 					// Read arbitrary column: 1s on my dev box
 					// But only 234ms if using non-async function (and thus not doing await here)!
 					const start = performance.now();
 					for (let i = 0; i < rows; i++) {
-						await datastore.getCellAsync(i, 5);
-						// datastore.getCell(i, 5);
+						await datastore.getCellAsync(i, col);
+						// datastore.getCell(i, col);
 					}
 					const time = performance.now() - start;
 					console.log(time);
