@@ -192,7 +192,6 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 		createChildLogger({ logger: telemetryOptInLogger }),
 	);
 
-
 	React.useEffect(() => {
 		/**
 		 * Handlers for inbound messages related to the registry.
