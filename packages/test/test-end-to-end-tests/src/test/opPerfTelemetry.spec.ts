@@ -34,9 +34,10 @@ const configWithWriteConnection = {
  * Regression tests for issue where clients loading a container with a write connection (vs the read connection
  * that became the default) would never generate OpRoundtripTime telemetry.
  */
-describeCompat.noCompat(
+describeCompat(
 	"All clients generate OpRoundtripTime telemetry",
-	"2.0.0-rc.2.0.0",
+	// TODO: this should be "2.0.0-rc.2.0.0" (I think) once the bugs with describeCompat are fixed and versions are used correctly
+	"NoCompat",
 	(getTestObjectProvider, apis) => {
 		let provider: ITestObjectProvider;
 		beforeEach("getTestObjectProvider", () => {
