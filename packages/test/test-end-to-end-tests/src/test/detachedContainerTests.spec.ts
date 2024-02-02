@@ -24,7 +24,7 @@ import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
-import { SharedString } from "@fluidframework/sequence";
+import type { SharedString } from "@fluidframework/sequence";
 import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 import { createChildLogger, isFluidError } from "@fluidframework/telemetry-utils";
 import {
@@ -61,7 +61,7 @@ const createFluidObject = async (dataStoreContext: IFluidDataStoreContext, type:
 };
 
 describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis) => {
-	const { SharedMap, SharedDirectory, SharedMatrix } = apis.dds;
+	const { SharedMap, SharedDirectory, SharedMatrix, SharedString } = apis.dds;
 
 	const registry: ChannelFactoryRegistry = [
 		[sharedStringId, SharedString.getFactory()],
@@ -894,7 +894,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 
 // Review: Run with Full Compat?
 describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) => {
-	const { SharedMap, SharedDirectory, SharedMatrix } = apis.dds;
+	const { SharedMap, SharedDirectory, SharedMatrix, SharedString } = apis.dds;
 
 	const registry: ChannelFactoryRegistry = [
 		[sharedStringId, SharedString.getFactory()],

@@ -81,6 +81,7 @@ extends:
     buildDirectory: tools/api-markdown-documenter
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
+    testCoverage: ${{ variables.testCoverage }}
     tagName: api-markdown-documenter
     taskBuild: build
     taskBuildDocs: true

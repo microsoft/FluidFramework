@@ -33,7 +33,7 @@ import {
 	ISocketStorageDiscovery,
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions";
-import { hasFacetCodes } from "@fluidframework/odsp-doclib-utils";
+import { hasFacetCodes } from "@fluidframework/odsp-doclib-utils/internal";
 import { IOdspCache } from "./odspCache";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
 import {

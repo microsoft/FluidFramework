@@ -19,7 +19,6 @@ import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IIdCompressor } from '@fluidframework/id-compressor';
 import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
-import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
@@ -117,7 +116,7 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     // (undocumented)
     readonly objectsRoutingContext: IFluidHandleContext;
     // (undocumented)
-    readonly options: ILoaderOptions;
+    readonly options: Record<string | number, any>;
     // (undocumented)
     readonly rootRoutingContext: IFluidHandleContext;
     submitSignal(type: string, content: any, targetClientId?: string): void;

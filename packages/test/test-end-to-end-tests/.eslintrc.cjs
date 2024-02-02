@@ -21,6 +21,7 @@ module.exports = {
 					"@fluidframework/map",
 					"@fluidframework/matrix",
 					"@fluidframework/counter",
+					"@fluidframework/sequence",
 				].map((importName) => ({
 					name: importName,
 					message:

@@ -21,7 +21,6 @@ import {
 	IRuntime,
 	ICriticalContainerError,
 	AttachState,
-	ILoaderOptions,
 	ILoader,
 	LoaderHeader,
 	IGetPendingLocalStateProps,
@@ -554,6 +553,10 @@ export interface IPendingRuntimeState {
 	 * Pending idCompressor state
 	 */
 	pendingIdCompressorState?: SerializedIdCompressorWithOngoingSession;
+	/**
+	 * Time at which session expiry timer started.
+	 */
+	sessionExpiryTimerStarted?: number | undefined;
 }
 
 const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconnects";
@@ -934,7 +937,7 @@ export class ContainerRuntime
 		return runtime;
 	}
 
-	public readonly options: ILoaderOptions;
+	public readonly options: Record<string | number, any>;
 	private imminentClosure: boolean = false;
 
 	private readonly _getClientId: () => string | undefined;
@@ -1245,7 +1248,9 @@ export class ContainerRuntime
 		this.submitSummaryFn = submitSummaryFn;
 		this.submitSignalFn = submitSignalFn;
 
-		this.options = options;
+		// TODO: After IContainerContext.options is removed, we'll just create a new blank object {} here.
+		// Values are generally expected to be set from the runtime side.
+		this.options = options ?? {};
 		this.clientDetails = clientDetails;
 		this.isSummarizerClient = this.clientDetails.type === summarizerClientType;
 		this.loadedFromVersionId = context.getLoadedFromVersion()?.id;
@@ -1418,6 +1423,7 @@ export class ContainerRuntime
 			getLastSummaryTimestampMs: () => this.messageAtLastSummary?.timestamp,
 			readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),
 			submitMessage: (message: ContainerRuntimeGCMessage) => this.submit(message),
+			sessionExpiryTimerStarted: pendingRuntimeState?.sessionExpiryTimerStarted,
 		});
 
 		const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
@@ -3021,7 +3027,10 @@ export class ContainerRuntime
 	 * @param srcHandle - The handle of the node that added the reference.
 	 * @param outboundHandle - The handle of the outbound node that is referenced.
 	 */
-	public addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) {
+	public addedGCOutboundReference(
+		srcHandle: { absolutePath: string },
+		outboundHandle: { absolutePath: string },
+	) {
 		this.garbageCollector.addedOutboundReference(
 			srcHandle.absolutePath,
 			outboundHandle.absolutePath,
@@ -3957,6 +3966,7 @@ export class ContainerRuntime
 					pending,
 					pendingAttachmentBlobs,
 					pendingIdCompressorState,
+					sessionExpiryTimerStarted: this.garbageCollector.sessionExpiryTimerStarted,
 				};
 				event.end({
 					attachmentBlobsSize: Object.keys(pendingAttachmentBlobs ?? {}).length,

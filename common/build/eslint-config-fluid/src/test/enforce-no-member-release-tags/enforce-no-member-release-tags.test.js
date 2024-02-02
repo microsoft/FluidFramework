@@ -21,7 +21,7 @@ describe("Do not allow release tags on members", function () {
 		return new ESLint({
 			useEslintrc: false,
 			overrideConfig: eslintConfig,
-			rulePaths: [path.join(__dirname, "../../custom-rules")],
+			rulePaths: [path.join(__dirname, "../../fluid-internal/rules")],
 		});
 	}
 
