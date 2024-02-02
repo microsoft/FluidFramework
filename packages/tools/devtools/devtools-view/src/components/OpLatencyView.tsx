@@ -84,9 +84,7 @@ export function OpLatencyView(): React.ReactElement {
 			},
 			data: [],
 		});
-	const disabledSamplingKey = "Fluid.Telemetry.DisableSampling";
-	const unsampledTelemetry = sessionStorage.getItem(disabledSamplingKey);
-
+	const unsampledTelemetry = localStorage.getItem("Fluid.Telemetry.DisableSampling");
 	// Render the text conditionally
 	const renderInstructions = unsampledTelemetry !== "true";
 
@@ -161,7 +159,7 @@ export function OpLatencyView(): React.ReactElement {
 					{`Unsampled telemetry has not been enabled and is necessary for this feature to work as designed. To enable it, open the web console and set the Disable Sampling flag to true using the following command:`}
 					<pre
 						style={{ whiteSpace: "pre-wrap", wordWrap: "break-word" }}
-					>{`sessionStorage.setItem("${disabledSamplingKey}", "true");`}</pre>
+					>{`localStorage.setItem("Fluid.Telemetry.DisableSampling", "true");`}</pre>
 					{`\nIMPORTANT: This flag is only intended for local development with Devtools and should not be enabled in production scenarios.`}
 				</Body1>
 			) : (

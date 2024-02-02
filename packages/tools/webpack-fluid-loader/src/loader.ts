@@ -16,21 +16,20 @@ import {
 	IFluidCodeDetails,
 	IFluidModuleWithDetails,
 	IFluidModule,
-	// LoaderHeader,
+	LoaderHeader,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
 import { HostStoragePolicy, IPersistedCache } from "@fluidframework/odsp-driver-definitions";
 import { IUser } from "@fluidframework/protocol-definitions";
 import { IFluidMountableView } from "@fluidframework/view-interfaces";
-import { FluidObject, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { RequestParser } from "@fluidframework/runtime-utils";
 import { InsecureUrlResolver } from "@fluidframework/driver-utils";
 import { Port } from "webpack-dev-server";
-import { createChildLogger, sessionStorageConfigProvider } from "@fluidframework/telemetry-utils";
-import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools-core";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { getUrlResolver } from "./getUrlResolver";
 import { deltaConnectionServer, getDocumentServiceFactory } from "./getDocumentServiceFactory";
 import { OdspPersistentCache } from "./odspPersistantCache";
@@ -165,7 +164,6 @@ async function createWebLoader(
 	codeDetails: IFluidCodeDetails,
 	testOrderer: boolean = false,
 	odspPersistantCache?: IPersistedCache,
-	logger?: ITelemetryBaseLogger,
 ): Promise<Loader> {
 	const odspHostStoragePolicy: HostStoragePolicy = {};
 	if (window.location.hash === "#binarySnapshot") {
@@ -207,24 +205,10 @@ async function createWebLoader(
 		addFakeDetailsIfNeeded(codeDetails.package as IFluidPackage, fluidModule),
 	);
 
-	// Test
 	return new Loader({
 		urlResolver: testOrderer ? new LocalResolver() : urlResolver,
 		documentServiceFactory,
 		codeLoader,
-		logger,
-		options: {
-			client: {
-				details: {
-					capabilities: { interactive: true },
-				},
-				permission: [],
-				scopes: [],
-				user: { id: "" },
-				mode: "write",
-			},
-		},
-		configProvider: sessionStorageConfigProvider.value,
 	});
 }
 
@@ -269,8 +253,6 @@ export async function start(
 	const urlResolver = getUrlResolver(options);
 	const odspPersistantCache = new OdspPersistentCache();
 
-	const devtoolsLogger = createDevtoolsLogger();
-
 	// Create the loader that is used to load the Container.
 	const loader1 = await createWebLoader(
 		documentId,
@@ -280,7 +262,6 @@ export async function start(
 		codeDetails,
 		testOrderer,
 		odspPersistantCache,
-		devtoolsLogger,
 	);
 
 	let container1: IContainer;
@@ -317,16 +298,11 @@ export async function start(
 		// delta stream within the critical load flow.
 		container1 = await loader1.resolve({
 			url: documentUrl,
-			// headers: { [LoaderHeader.loadMode]: { deltaConnection: "none" } },
+			headers: { [LoaderHeader.loadMode]: { deltaConnection: "none" } },
 		});
 		container1.connect();
 		containers.push(container1);
 	}
-
-	initializeDevtools({
-		logger: devtoolsLogger,
-		initialContainers: [{ containerKey: "my-container", container: container1 }],
-	});
 
 	let leftDiv: HTMLDivElement = div;
 	let rightDiv: HTMLDivElement | undefined;
