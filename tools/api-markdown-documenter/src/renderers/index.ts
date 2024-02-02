@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { createDocumentWriter, DocumentWriter } from "./DocumentWriter";
+export { DocumentWriter } from "./DocumentWriter";
 export {
 	type RenderConfiguration as HtmlRenderConfiguration,
 	type RenderContext as HtmlRenderContext,
