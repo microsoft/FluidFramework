@@ -23,12 +23,7 @@ import {
 	IResponse,
 } from "@fluidframework/core-interfaces";
 import { assert, Deferred, LazyPromise, unreachableCase } from "@fluidframework/core-utils";
-import {
-	IAudience,
-	IDeltaManager,
-	AttachState,
-	ILoaderOptions,
-} from "@fluidframework/container-definitions";
+import { IAudience, IDeltaManager, AttachState } from "@fluidframework/container-definitions";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import {
 	IClientDetails,
@@ -51,7 +46,7 @@ import {
 	ISummaryTreeWithStats,
 	VisibilityState,
 	ITelemetryContext,
-	IIdCompressor,
+	gcDataBlobKey,
 } from "@fluidframework/runtime-definitions";
 import {
 	convertSnapshotTreeToSummaryTree,
@@ -64,6 +59,8 @@ import {
 	exceptionToResponse,
 	GCDataBuilder,
 	unpackChildNodesUsedRoutes,
+	addBlobToSummary,
+	processAttachMessageGCData,
 } from "@fluidframework/runtime-utils";
 import {
 	IChannel,
@@ -72,6 +69,7 @@ import {
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import { v4 as uuid } from "uuid";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 import { IChannelContext, summarizeChannel } from "./channelContext";
 import {
 	LocalChannelContext,
@@ -82,7 +80,7 @@ import { RemoteChannelContext } from "./remoteChannelContext";
 import { FluidObjectHandle } from "./fluidHandle";
 
 /**
- * @public
+ * @alpha
  */
 export enum DataStoreMessageType {
 	// Creates a new channel
@@ -91,7 +89,7 @@ export enum DataStoreMessageType {
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface ISharedObjectRegistry {
 	// TODO consider making this async. A consequence is that either the creation of a distributed data type
@@ -101,45 +99,16 @@ export interface ISharedObjectRegistry {
 
 /**
  * Base data store class
- *
- * @public
+ * @alpha
  */
 export class FluidDataStoreRuntime
 	extends TypedEventEmitter<IFluidDataStoreRuntimeEvents>
 	implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext
 {
 	/**
-	 * @deprecated Instantiate the class using its constructor instead.
-	 *
-	 * Loads the data store runtime
-	 * @param context - The data store context
-	 * @param sharedObjectRegistry - The registry of shared objects used by this data store
-	 * @param existing - If loading from an existing file.
-	 */
-	public static load(
-		context: IFluidDataStoreContext,
-		sharedObjectRegistry: ISharedObjectRegistry,
-		existing: boolean,
-	): FluidDataStoreRuntime {
-		return new FluidDataStoreRuntime(
-			context,
-			sharedObjectRegistry,
-			existing,
-			async (dataStoreRuntime) => dataStoreRuntime.entryPoint,
-		);
-	}
-
-	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.entryPoint}
 	 */
 	public readonly entryPoint: IFluidHandle<FluidObject>;
-
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	public get IFluidRouter() {
-		return this;
-	}
 
 	public get connected(): boolean {
 		return this.dataStoreContext.connected;
@@ -205,7 +174,8 @@ export class FluidDataStoreRuntime
 	private readonly pendingHandlesToMakeVisible: Set<IFluidHandle> = new Set();
 
 	public readonly id: string;
-	public readonly options: ILoaderOptions;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	public readonly options: Record<string | number, any>;
 	public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	private readonly quorum: IQuorumClients;
 	private readonly audience: IAudience;
@@ -432,34 +402,70 @@ export class FluidDataStoreRuntime
 		return context.getChannel();
 	}
 
-	public createChannel(id: string = uuid(), type: string): IChannel {
+	/**
+	 * Api which allows caller to create the channel first and then add it to the runtime.
+	 * The channel type should be present in the registry, otherwise the runtime would reject
+	 * the channel. Also the runtime used to create the channel object should be same to which
+	 * it is added.
+	 * @param channel - channel which needs to be added to the runtime.
+	 */
+	public addChannel(channel: IChannel): void {
+		const id = channel.id;
 		if (id.includes("/")) {
 			throw new UsageError(`Id cannot contain slashes: ${id}`);
 		}
 
 		this.verifyNotClosed();
 
+		assert(!this.contexts.has(id), 0x865 /* addChannel() with existing ID */);
+
+		const type = channel.attributes.type;
+		const factory = this.sharedObjectRegistry.get(channel.attributes.type);
+		if (factory === undefined) {
+			throw new Error(`Channel Factory ${type} not registered`);
+		}
+
+		this.createChannelContext(channel);
+		// Channels (DDS) should not be created in summarizer client.
+		this.identifyLocalChangeInSummarizer("DDSCreatedInSummarizer", id, type);
+	}
+
+	public createChannel(id: string = uuid(), type: string): IChannel {
+		if (id.includes("/")) {
+			throw new UsageError(`Id cannot contain slashes: ${id}`);
+		}
+
+		this.verifyNotClosed();
 		assert(!this.contexts.has(id), 0x179 /* "createChannel() with existing ID" */);
-		this.notBoundedChannelContextSet.add(id);
+
+		assert(type !== undefined, 0x209 /* "Factory Type should be defined" */);
+		const factory = this.sharedObjectRegistry.get(type);
+		if (factory === undefined) {
+			throw new Error(`Channel Factory ${type} not registered`);
+		}
+
+		const channel = factory.create(this, id);
+		this.createChannelContext(channel);
+		// Channels (DDS) should not be created in summarizer client.
+		this.identifyLocalChangeInSummarizer("DDSCreatedInSummarizer", id, type);
+		return channel;
+	}
+
+	private createChannelContext(channel: IChannel) {
+		this.notBoundedChannelContextSet.add(channel.id);
 		const context = new LocalChannelContext(
-			id,
-			this.sharedObjectRegistry,
-			type,
+			channel,
 			this,
 			this.dataStoreContext,
 			this.dataStoreContext.storage,
 			this.logger,
-			(content, localOpMetadata) => this.submitChannelOp(id, content, localOpMetadata),
+			(content, localOpMetadata) =>
+				this.submitChannelOp(channel.id, content, localOpMetadata),
 			(address: string) => this.setChannelDirty(address),
 			(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
 				this.addedGCOutboundReference(srcHandle, outboundHandle),
 		);
-		this.contexts.set(id, context);
-
-		// Channels (DDS) should not be created in summarizer client.
-		this.identifyLocalChangeInSummarizer("DDSCreatedInSummarizer", id, type);
-
-		return context.channel;
+		this.contexts.set(channel.id, context);
 	}
 
 	/**
@@ -475,7 +481,7 @@ export class FluidDataStoreRuntime
 		this.notBoundedChannelContextSet.delete(channel.id);
 		// If our data store is attached, then attach the channel.
 		if (this.isAttached) {
-			this.attachChannel(channel);
+			this.makeChannelLocallyVisible(channel);
 			return;
 		}
 
@@ -602,6 +608,13 @@ export class FluidDataStoreRuntime
 				case DataStoreMessageType.Attach: {
 					const attachMessage = message.contents as IAttachMessage;
 					const id = attachMessage.id;
+
+					// We need to process the GC Data for both local and remote attach messages
+					processAttachMessageGCData(attachMessage.snapshot, (nodeId, toPath) => {
+						// Note: nodeId will be "/" unless and until we support sub-DDS GC Nodes
+						const fromPath = `/${this.id}/${id}${nodeId === "/" ? "" : nodeId}`;
+						this.dataStoreContext.addedGCOutboundRoute?.(fromPath, toPath);
+					});
 
 					// If a non-local operation then go and create the object
 					// Otherwise mark it as officially attached.
@@ -757,6 +770,10 @@ export class FluidDataStoreRuntime
 	 * @param outboundHandle - The handle of the outbound node that is referenced.
 	 */
 	private addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) {
+		// Note: This is deprecated on IFluidDataStoreContext, and in an n/n-1 scenario where the
+		// ContainerRuntime is newer, it will actually be a no-op since then the ContainerRuntime
+		// will be the one to call addedGCOutboundReference directly.
+		// But on the flip side, if the ContainerRuntime is older, then it's important we still call this.
 		this.dataStoreContext.addedGCOutboundReference?.(srcHandle, outboundHandle);
 	}
 
@@ -801,6 +818,64 @@ export class FluidDataStoreRuntime
 	}
 
 	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
+		const summaryBuilder = new SummaryTreeBuilder();
+		this.visitLocalBoundContextsDuringAttach(
+			(contextId: string, context: LocalChannelContextBase) => {
+				let summaryTree: ISummaryTreeWithStats;
+				if (context.isLoaded) {
+					const contextSummary = context.getAttachSummary(telemetryContext);
+					assert(
+						contextSummary.summary.type === SummaryType.Tree,
+						0x180 /* "getAttachSummary should always return a tree" */,
+					);
+
+					summaryTree = { stats: contextSummary.stats, summary: contextSummary.summary };
+				} else {
+					// If this channel is not yet loaded, then there should be no changes in the snapshot from which
+					// it was created as it is detached container. So just use the previous snapshot.
+					assert(
+						!!this.dataStoreContext.baseSnapshot,
+						0x181 /* "BaseSnapshot should be there as detached container loaded from snapshot" */,
+					);
+					summaryTree = convertSnapshotTreeToSummaryTree(
+						this.dataStoreContext.baseSnapshot.trees[contextId],
+					);
+				}
+				summaryBuilder.addWithStats(contextId, summaryTree);
+			},
+		);
+
+		return summaryBuilder.getSummaryTree();
+	}
+
+	/**
+	 * Get the GC Data for the initial state being attached so remote clients can learn of this DataStore's outbound routes
+	 */
+	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
+		const gcDataBuilder = new GCDataBuilder();
+		this.visitLocalBoundContextsDuringAttach(
+			(contextId: string, context: LocalChannelContextBase) => {
+				if (context.isLoaded) {
+					const contextGCData = context.getAttachGCData(telemetryContext);
+
+					// Incorporate the GC Data for this context
+					gcDataBuilder.prefixAndAddNodes(contextId, contextGCData.gcNodes);
+				}
+				// else: Rehydrating detached container case. GC doesn't run until the container is attached, so nothing to do here.
+			},
+		);
+		this.updateGCNodes(gcDataBuilder);
+
+		return gcDataBuilder.getGCData();
+	}
+
+	/**
+	 * Helper method for preparing to attach this dataStore.
+	 * Runs the callback for each bound context to incorporate its data however the caller specifies
+	 */
+	private visitLocalBoundContextsDuringAttach(
+		visitor: (contextId: string, context: LocalChannelContextBase) => void,
+	): void {
 		/**
 		 * back-compat 0.59.1000 - getAttachSummary() is called when making a data store globally visible (previously
 		 * attaching state). Ideally, attachGraph() should have already be called making it locally visible. However,
@@ -821,39 +896,15 @@ export class FluidDataStoreRuntime
 		//  "The data store should be locally visible when generating attach summary",
 		// );
 
-		const summaryBuilder = new SummaryTreeBuilder();
-
-		// Craft the .attributes file for each shared object
 		for (const [contextId, context] of this.contexts) {
 			if (!(context instanceof LocalChannelContextBase)) {
 				throw new LoggingError("Should only be called with local channel handles");
 			}
 
 			if (!this.notBoundedChannelContextSet.has(contextId)) {
-				let summaryTree: ISummaryTreeWithStats;
-				if (context.isLoaded) {
-					const contextSummary = context.getAttachSummary(telemetryContext);
-					assert(
-						contextSummary.summary.type === SummaryType.Tree,
-						0x180 /* "getAttachSummary should always return a tree" */,
-					);
-					summaryTree = { stats: contextSummary.stats, summary: contextSummary.summary };
-				} else {
-					// If this channel is not yet loaded, then there should be no changes in the snapshot from which
-					// it was created as it is detached container. So just use the previous snapshot.
-					assert(
-						!!this.dataStoreContext.baseSnapshot,
-						0x181 /* "BaseSnapshot should be there as detached container loaded from snapshot" */,
-					);
-					summaryTree = convertSnapshotTreeToSummaryTree(
-						this.dataStoreContext.baseSnapshot.trees[contextId],
-					);
-				}
-				summaryBuilder.addWithStats(contextId, summaryTree);
+				visitor(contextId, context);
 			}
 		}
-
-		return summaryBuilder.getSummaryTree();
 	}
 
 	public submitMessage(type: DataStoreMessageType, content: any, localOpMetadata: unknown) {
@@ -879,9 +930,10 @@ export class FluidDataStoreRuntime
 	}
 
 	/**
-	 * Attach channel should only be called after the data store has been attached
+	 * Assuming this DataStore is already attached, this will make the given channel locally visible
+	 * by submitting its attach op.
 	 */
-	private attachChannel(channel: IChannel): void {
+	private makeChannelLocallyVisible(channel: IChannel): void {
 		this.verifyNotClosed();
 		// If this handle is already attached no need to attach again.
 		if (channel.handle.isAttached) {
@@ -901,6 +953,11 @@ export class FluidDataStoreRuntime
 			true /* fullTree */,
 			false /* trackState */,
 		);
+
+		// We need to include the channel's GC Data so remote clients can learn of this channel's outbound routes
+		const gcData = channel.getGCData(/* fullGC: */ true);
+		addBlobToSummary(summarizeResult, gcDataBlobKey, JSON.stringify(gcData));
+
 		// Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
 		const snapshot = convertSummaryTreeToITree(summarizeResult.summary);
 
@@ -1128,8 +1185,7 @@ export class FluidDataStoreRuntime
  * Request handler is only called when data store can't resolve request, i.e. for custom requests.
  * @param Base - base class, inherits from FluidDataStoreRuntime
  * @param requestHandler - request handler to mix in
- *
- * @public
+ * @internal
  */
 export const mixinRequestHandler = (
 	requestHandler: (request: IRequest, runtime: FluidDataStoreRuntime) => Promise<IResponse>,
@@ -1150,8 +1206,7 @@ export const mixinRequestHandler = (
  * @param handler - handler that returns info about blob to be added to summary.
  * Or undefined not to add anything to summary.
  * @param Base - base class, inherits from FluidDataStoreRuntime
- *
- * @public
+ * @alpha
  */
 export const mixinSummaryHandler = (
 	handler: (

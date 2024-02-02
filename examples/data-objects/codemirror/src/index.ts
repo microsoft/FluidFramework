@@ -17,11 +17,11 @@ import {
 
 import React from "react";
 
-import { CodeMirrorComponent, SmdeFactory } from "./codeMirror";
-import { CodeMirrorReactView } from "./codeMirrorView";
+import { CodeMirrorComponent, SmdeFactory } from "./codeMirror.js";
+import { CodeMirrorReactView } from "./codeMirrorView.js";
 
-export { CodeMirrorComponent, SmdeFactory } from "./codeMirror";
-export { CodeMirrorReactView } from "./codeMirrorView";
+export { CodeMirrorComponent, SmdeFactory } from "./codeMirror.js";
+export { CodeMirrorReactView } from "./codeMirrorView.js";
 
 const defaultComponentId = "default";
 
@@ -75,4 +75,7 @@ class CodeMirrorFactory extends RuntimeFactoryHelper {
 	}
 }
 
+/**
+ * @internal
+ */
 export const fluidExport = new CodeMirrorFactory();

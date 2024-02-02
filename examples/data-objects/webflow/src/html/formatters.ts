@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { Marker, TextSegment } from "@fluidframework/merge-tree";
+import { Marker, TextSegment } from "@fluidframework/sequence";
 import { DocSegmentKind, getCss, getDocSegmentKind } from "../document/index.js";
 import { emptyObject, TagName } from "../util/index.js";
 import { getAttrs, syncAttrs } from "../util/attr.js";
@@ -235,6 +235,9 @@ class TextFormatter extends Formatter<ITextState> {
 	}
 }
 
+/**
+ * @internal
+ */
 export const htmlFormatter = Object.freeze(new HtmlFormatter());
 const paragraphFormatter = Object.freeze(new ParagraphFormatter(TagName.p));
 const tagsFormatter = Object.freeze(new TagsFormatter());

@@ -16,6 +16,9 @@ import { Lumberjack } from "@fluidframework/server-services-telemetry";
 // mysterious overhead.
 const MaxKafkaMessageSize = 900 * 1024;
 
+/**
+ * @internal
+ */
 export function createProducer(
 	type: string,
 	kafkaEndPoint: string,

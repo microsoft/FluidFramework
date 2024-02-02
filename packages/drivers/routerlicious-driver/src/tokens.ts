@@ -7,6 +7,7 @@ import { ITokenClaims } from "@fluidframework/protocol-definitions";
 
 /**
  * Abstracts the discovery of claims contained within a token.
+ * @internal
  */
 export interface ITokenService {
 	/**
@@ -16,6 +17,9 @@ export interface ITokenService {
 	extractClaims(token: string): ITokenClaims;
 }
 
+/**
+ * @public
+ */
 export interface ITokenResponse {
 	/**
 	 * {@link https://jwt.io/introduction/ | JSON Web Token (JWT)} value.
@@ -33,6 +37,7 @@ export interface ITokenResponse {
 /**
  * Abstracts the token fetching mechanism for a hosting application.
  * The hosting application is responsible for providing an implementation.
+ * @public
  */
 export interface ITokenProvider {
 	/**
@@ -82,8 +87,7 @@ export interface ITokenProvider {
 	 *
 	 * * Using the callback may have performance impact on the document creation process.
 	 *
-	 * * Any exceptions thrown in the callback would fail the creation workflow
-	 * (see {@link RouterliciousDocumentServiceFactory.createContainer} for more details).
+	 * * Any exceptions thrown in the callback would fail the creation workflow.
 	 *
 	 * @param documentId - Document ID.
 	 * @param creationToken - A special token that doesn't provide any kind of access, but it has the user's payload

@@ -33,6 +33,7 @@ export interface IConnectedClient {
 
 /**
  * Identifies a collaboration session for a particular document in a particular instance (tenant) of a Fluid Service.
+ * @internal
  */
 export interface IRoom {
 	/**
@@ -48,6 +49,7 @@ export interface IRoom {
 
 /**
  * Payload of the event emitted when the broadcastSignal endpoint is called.
+ * @internal
  */
 export interface IBroadcastSignalEventPayload {
 	/**
@@ -62,6 +64,7 @@ export interface IBroadcastSignalEventPayload {
 
 /**
  * Events emitted during Fluid clients collaboration session
+ * @internal
  */
 export interface ICollaborationSessionEvents extends IEvent {
 	/**

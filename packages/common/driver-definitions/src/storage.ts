@@ -8,6 +8,7 @@ import {
 	IEventProvider,
 	IErrorEvent,
 	ITelemetryBaseLogger,
+	IEvent,
 } from "@fluidframework/core-interfaces";
 import {
 	ConnectionMode,
@@ -28,6 +29,9 @@ import {
 import { IAnyDriverError } from "./driverError";
 import { IResolvedUrl } from "./urlResolver";
 
+/**
+ * @internal
+ */
 export interface IDeltasFetchResult {
 	/**
 	 * Sequential set of messages starting from 'from' sequence number.
@@ -45,6 +49,7 @@ export interface IDeltasFetchResult {
 
 /**
  * Interface to provide access to stored deltas for a shared object
+ * @internal
  */
 export interface IDeltaStorageService {
 	/**
@@ -66,10 +71,14 @@ export interface IDeltaStorageService {
 	): Promise<IDeltasFetchResult>;
 }
 
+/**
+ * @alpha
+ */
 export type IStreamResult<T> = { done: true } | { done: false; value: T };
 
 /**
  * Read interface for the Queue
+ * @alpha
  */
 export interface IStream<T> {
 	read(): Promise<IStreamResult<T>>;
@@ -77,6 +86,7 @@ export interface IStream<T> {
 
 /**
  * Interface to provide access to stored deltas for a shared object
+ * @alpha
  */
 export interface IDocumentDeltaStorageService {
 	/**
@@ -102,11 +112,15 @@ export interface IDocumentDeltaStorageService {
 // If a driver started using a larger value,
 // internal assumptions of the Runtime's GC feature will be violated
 // DO NOT INCREASE THIS TYPE'S VALUE
+/**
+ * @alpha
+ */
 export type FiveDaysMs = 432_000_000; /* 5 days in milliseconds */
 
 /**
  * Policies describing attributes or characteristics of the driver's storage service,
  * to direct how other components interact with the driver
+ * @alpha
  */
 export interface IDocumentStorageServicePolicies {
 	/**
@@ -127,6 +141,7 @@ export interface IDocumentStorageServicePolicies {
 
 /**
  * Interface to provide access to snapshots saved for a shared object
+ * @alpha
  */
 export interface IDocumentStorageService extends Partial<IDisposable> {
 	repositoryUrl: string;
@@ -145,6 +160,14 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
 	// TODO: use `undefined` instead.
 	// eslint-disable-next-line @rushstack/no-new-null
 	getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
+
+	/**
+	 * Returns the snapshot which can contain other artifacts too like blob contents, ops etc. It is different from
+	 * `getSnapshotTree` api in that, that API only returns the snapshot tree from the snapshot.
+	 * @param snapshotFetchOptions - Options specified by the caller to specify and want certain behavior from the
+	 * driver when fetching the snapshot.
+	 */
+	getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
 
 	/**
 	 * Retrieves all versions of the document starting at the specified versionId - or null if from the head
@@ -191,6 +214,21 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
 	downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
 }
 
+/**
+ * Events emitted by {@link IDocumentService}.
+ * @alpha
+ */
+export interface IDocumentServiceEvents extends IEvent {
+	/**
+	 * This event is used to communicate any metadata related to the container. We might have received metadata from the service.
+	 * Read more info on this event from here `IContainer.containerMetadata`.
+	 */
+	(event: "metadataUpdate", listener: (metadata: Record<string, string>) => void);
+}
+
+/**
+ * @alpha
+ */
 export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
 	(event: "nack", listener: (documentId: string, message: INack[]) => void);
 	(event: "disconnect", listener: (reason: IAnyDriverError) => void);
@@ -202,6 +240,9 @@ export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
 	(event: "error", listener: (error: any) => void);
 }
 
+/**
+ * @alpha
+ */
 export interface IDocumentDeltaConnection
 	extends IDisposable,
 		IEventProvider<IDocumentDeltaConnectionEvents> {
@@ -280,6 +321,9 @@ export interface IDocumentDeltaConnection
 	submitSignal(content: any, targetClientId?: string): void;
 }
 
+/**
+ * @alpha
+ */
 export enum LoaderCachingPolicy {
 	/**
 	 * The loader should not implement any prefetching or caching policy.
@@ -292,6 +336,9 @@ export enum LoaderCachingPolicy {
 	Prefetch,
 }
 
+/**
+ * @alpha
+ */
 export interface IDocumentServicePolicies {
 	/**
 	 * Do not connect to delta stream
@@ -302,9 +349,19 @@ export interface IDocumentServicePolicies {
 	 * Summarizer uploads the protocol tree too when summarizing.
 	 */
 	readonly summarizeProtocolTree?: boolean;
+
+	/**
+	 * Whether the driver supports the new getSnapshot api which returns snapshot which
+	 * contains all contents along with the snapshot tree. Enable this by default when the
+	 * driver can fully support the api.
+	 */
+	readonly supportGetSnapshotApi?: boolean;
 }
 
-export interface IDocumentService {
+/**
+ * @alpha
+ */
+export interface IDocumentService extends IEventProvider<IDocumentServiceEvents> {
 	resolvedUrl: IResolvedUrl;
 
 	/**
@@ -342,6 +399,9 @@ export interface IDocumentService {
 	dispose(error?: any): void;
 }
 
+/**
+ * @alpha
+ */
 export interface IDocumentServiceFactory {
 	/**
 	 * Creates the document service after extracting different endpoints URLs from a resolved URL.
@@ -382,6 +442,7 @@ export interface IDocumentServiceFactory {
 /**
  * Context for uploading a summary to storage.
  * Indicates the previously acked summary.
+ * @alpha
  */
 export interface ISummaryContext {
 	/**
@@ -397,7 +458,55 @@ export interface ISummaryContext {
 	readonly referenceSequenceNumber: number;
 }
 
+/**
+ * @alpha
+ */
 export enum FetchSource {
 	default = "default",
 	noCache = "noCache",
+}
+
+/**
+ * @alpha
+ */
+export interface ISnapshot {
+	snapshotTree: ISnapshotTree;
+	blobContents: Map<string, ArrayBuffer>;
+	ops: ISequencedDocumentMessage[];
+
+	/**
+	 * Sequence number of the snapshot
+	 */
+	sequenceNumber: number | undefined;
+
+	/**
+	 * Sequence number for the latest op/snapshot for the file in ODSP
+	 */
+	latestSequenceNumber: number | undefined;
+
+	snapshotFormatV: 1;
+}
+
+/**
+ * Snapshot fetch options which are used to communicate different things to the driver
+ * when fetching the snapshot.
+ * @alpha
+ */
+export interface ISnapshotFetchOptions {
+	/**
+	 * Indicates scenario in which the snapshot is fetched. It is a free form string  mostly
+	 * used for telemetry purposes.
+	 */
+	scenarioName?: string;
+	/**
+	 * Tell driver to cache the fetched snapshot. Driver is supposed to cache the fetched snapshot if this is
+	 * set to true. If undefined, then it is upto the driver, to cache it or not.
+	 */
+	cacheSnapshot?: boolean;
+
+	/**
+	 * Version of the snapshot to be fetched. Certain storage services just keep 1 snapshot for the
+	 * container, so specifying version is not necessary for storage services.
+	 */
+	versionId?: string;
 }

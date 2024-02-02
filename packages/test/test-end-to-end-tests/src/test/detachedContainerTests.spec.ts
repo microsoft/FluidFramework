@@ -4,27 +4,29 @@
  */
 
 import { strict as assert } from "assert";
-
 import { SharedCell } from "@fluidframework/cell";
 import { Deferred } from "@fluidframework/core-utils";
-import { AttachState, IContainer } from "@fluidframework/container-definitions";
+import {
+	AttachState,
+	IContainer,
+	IRuntime,
+	IRuntimeFactory,
+} from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
-import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { DataStoreMessageType } from "@fluidframework/datastore";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { Ink, IColor } from "@fluidframework/ink";
-import { SharedMap, SharedDirectory } from "@fluidframework/map";
-import { SharedMatrix } from "@fluidframework/matrix";
+import type { SharedMap, SharedDirectory } from "@fluidframework/map";
+import type { SharedMatrix } from "@fluidframework/matrix";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger, isFluidError } from "@fluidframework/telemetry-utils";
 import {
 	ITestContainerConfig,
 	DataObjectFactoryType,
@@ -36,8 +38,10 @@ import {
 	TestFluidObjectFactory,
 	waitForContainerConnection,
 	timeoutPromise,
+	getContainerEntryPointBackCompat,
+	getDataStoreEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, describeNoCompat, itExpects } from "@fluid-private/test-version-utils";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -51,36 +55,36 @@ const sharedMatrixId = "smatrix1Key";
 const sharedInkId = "sink1Key";
 const sparseMatrixId = "sparsematrixKey";
 
-const registry: ChannelFactoryRegistry = [
-	[sharedStringId, SharedString.getFactory()],
-	[sharedMapId, SharedMap.getFactory()],
-	[crcId, ConsensusRegisterCollection.getFactory()],
-	[sharedDirectoryId, SharedDirectory.getFactory()],
-	[sharedCellId, SharedCell.getFactory()],
-	[sharedInkId, Ink.getFactory()],
-	[sharedMatrixId, SharedMatrix.getFactory()],
-	[cocId, ConsensusQueue.getFactory()],
-	[sparseMatrixId, SparseMatrix.getFactory()],
-];
-
-const testContainerConfig: ITestContainerConfig = {
-	fluidDataObjectType: DataObjectFactoryType.Test,
-	registry,
-};
-
 const createFluidObject = async (dataStoreContext: IFluidDataStoreContext, type: string) => {
-	return requestFluidObject<ITestFluidObject>(
-		await dataStoreContext.containerRuntime.createDataStore(type),
-		"",
-	);
+	const dataStore = await dataStoreContext.containerRuntime.createDataStore(type);
+	return getDataStoreEntryPointBackCompat<ITestFluidObject>(dataStore);
 };
 
-describeFullCompat("Detached Container", (getTestObjectProvider) => {
+describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap, SharedDirectory, SharedMatrix } = apis.dds;
+
+	const registry: ChannelFactoryRegistry = [
+		[sharedStringId, SharedString.getFactory()],
+		[sharedMapId, SharedMap.getFactory()],
+		[crcId, ConsensusRegisterCollection.getFactory()],
+		[sharedDirectoryId, SharedDirectory.getFactory()],
+		[sharedCellId, SharedCell.getFactory()],
+		[sharedInkId, Ink.getFactory()],
+		[sharedMatrixId, SharedMatrix.getFactory()],
+		[cocId, ConsensusQueue.getFactory()],
+		[sparseMatrixId, SparseMatrix.getFactory()],
+	];
+
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+	};
+
 	let provider: ITestObjectProvider;
 	let request: IRequest;
 	let loader: Loader;
 
-	beforeEach(() => {
+	beforeEach("setup", function () {
 		provider = getTestObjectProvider();
 		request = provider.driver.createCreateNewRequest(provider.documentId);
 		loader = provider.makeTestLoader(testContainerConfig) as Loader;
@@ -152,11 +156,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 	it("DataStores in detached container", async () => {
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 		// Get the root dataStore from the detached container.
-		const response = await container.request({ url: "/" });
-		if (response.mimeType !== "fluid/object" && response.status !== 200) {
-			assert.fail("Root dataStore should be created in detached container");
-		}
-		const dataStore = response.value as ITestFluidObject;
+		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 
 		// Create a sub dataStore of type TestFluidObject and verify that it is attached.
 		const subDataStore = await createFluidObject(dataStore.context, "default");
@@ -175,8 +175,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 	it("DataStores in attached container", async () => {
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 		// Get the root dataStore from the detached container.
-		const response = await container.request({ url: "/" });
-		const dataStore = response.value as ITestFluidObject;
+		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 
 		// Create a sub dataStore of type TestFluidObject.
 		const testDataStore = await createFluidObject(dataStore.context, "default");
@@ -203,7 +202,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 
 	it("can create DDS in detached container and attach / update it", async function () {
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-		const dsClient1 = await requestFluidObject<ITestFluidObject>(container, "/");
+		const dsClient1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 
 		// Create a DDS after the root data store is created and loaded.
 		const mapClient1 = SharedMap.create(dsClient1.runtime);
@@ -217,7 +216,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		const url: any = await container.getAbsoluteUrl("");
 		// Load a second container and validate it can load the DDS.
 		const container2 = await loader.resolve({ url });
-		const dsClient2 = await requestFluidObject<ITestFluidObject>(container2, "/");
+		const dsClient2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 		const mapClient2 = await dsClient2.root.get<IFluidHandle<SharedMap>>("map")?.get();
 		assert(mapClient2 !== undefined, "Map is not available in the second client");
 
@@ -243,8 +242,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 	it("Load attached container and check for dataStores", async () => {
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 		// Get the root dataStore from the detached container.
-		const response = await container.request({ url: "/" });
-		const dataStore = response.value as ITestFluidObject;
+		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 
 		// Create a sub dataStore of type TestFluidObject.
 		const subDataStore1 = await createFluidObject(dataStore.context, "default");
@@ -261,8 +259,11 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		const container2 = await loader2.resolve({ url: requestUrl2 });
 
 		// Get the sub dataStore and assert that it is attached.
-		const response2 = await container2.request({ url: `/${subDataStore1.context.id}` });
-		const subDataStore2 = response2.value as ITestFluidObject;
+		const entryPoint2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+		const subDataStore2Handle: IFluidHandle<ITestFluidObject> | undefined =
+			entryPoint2.root.get("attachKey");
+		assert(subDataStore2Handle !== undefined, "handle should exist");
+		const subDataStore2 = await subDataStore2Handle.get();
 		assert(
 			subDataStore2.runtime.attachState !== AttachState.Detached,
 			"DataStore should be attached!!",
@@ -291,8 +292,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
 		// Get the root dataStore from the detached container.
-		const response = await container.request({ url: "/" });
-		const dataStore = response.value as ITestFluidObject;
+		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 		const testChannel1 = await dataStore.getSharedObject<SharedString>(sharedStringId);
 
 		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
@@ -351,8 +351,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
 		// Get the root dataStore from the detached container.
-		const response = await container.request({ url: "/" });
-		const dataStore = response.value as ITestFluidObject;
+		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 		const testChannel1 = await dataStore.getSharedObject<SharedMap>(sharedMapId);
 
 		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
@@ -404,8 +403,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
 		// Get the root dataStore from the detached container.
-		const response = await container.request({ url: "/" });
-		const dataStore = response.value as ITestFluidObject;
+		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 
 		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
 			if (runtimeMessage === false) {
@@ -457,18 +455,17 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
 		// Get the root dataStore from the detached container.
-		const response = await container.request({ url: "/" });
-		const dataStore = response.value as ITestFluidObject;
+		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 
 		const containerP = container.attach(request);
 		if (container.attachState === AttachState.Detached) {
 			await timeoutPromise((resolve) => container.once("attaching", resolve));
 		}
 
-		const router = await dataStore.context.containerRuntime.createDataStore([
+		const newDataStore = await dataStore.context.containerRuntime.createDataStore([
 			testDataStoreType,
 		]);
-		const comp2 = await requestFluidObject<ITestFluidObject>(router, "/");
+		const comp2 = await getDataStoreEntryPointBackCompat<ITestFluidObject>(newDataStore);
 
 		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
 			if (runtimeMessage === false) {
@@ -514,8 +511,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
 		// Get the root dataStore from the detached container.
-		const response = await container.request({ url: "/" });
-		const dataStore = response.value as ITestFluidObject;
+		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 		const testChannel1 =
 			await dataStore.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
 
@@ -573,8 +569,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
 		// Get the root dataStore from the detached container.
-		const response = await container.request({ url: "/" });
-		const dataStore = response.value as ITestFluidObject;
+		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 		const testChannel1 = await dataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
 
 		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
@@ -625,8 +620,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
 		// Get the root dataStore from the detached container.
-		const response = await container.request({ url: "/" });
-		const dataStore = response.value as ITestFluidObject;
+		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 		const testChannel1 = await dataStore.getSharedObject<SharedCell>(sharedCellId);
 
 		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
@@ -676,8 +670,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
 		// Get the root dataStore from the detached container.
-		const response = await container.request({ url: "/" });
-		const dataStore = response.value as ITestFluidObject;
+		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 		const testChannel1 = await dataStore.getSharedObject<Ink>(sharedInkId);
 
 		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
@@ -749,8 +742,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
 		// Get the root dataStore from the detached container.
-		const response = await container.request({ url: "/" });
-		const dataStore = response.value as ITestFluidObject;
+		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 		const testChannel1 = await dataStore.getSharedObject<ConsensusQueue>(cocId);
 
 		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
@@ -803,8 +795,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
 		// Get the root dataStore from the detached container.
-		const response = await container.request({ url: "/" });
-		const dataStore = response.value as ITestFluidObject;
+		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 		const testChannel1 = await dataStore.getSharedObject<SparseMatrix>(sparseMatrixId);
 
 		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
@@ -853,8 +844,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
 		// Get the root dataStore from the detached container.
-		const response = await container.request({ url: "/" });
-		const dataStore = response.value as ITestFluidObject;
+		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 		const testChannel1 = await dataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
 
 		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
@@ -903,12 +893,31 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 });
 
 // Review: Run with Full Compat?
-describeNoCompat("Detached Container", (getTestObjectProvider) => {
+describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap, SharedDirectory, SharedMatrix } = apis.dds;
+
+	const registry: ChannelFactoryRegistry = [
+		[sharedStringId, SharedString.getFactory()],
+		[sharedMapId, SharedMap.getFactory()],
+		[crcId, ConsensusRegisterCollection.getFactory()],
+		[sharedDirectoryId, SharedDirectory.getFactory()],
+		[sharedCellId, SharedCell.getFactory()],
+		[sharedInkId, Ink.getFactory()],
+		[sharedMatrixId, SharedMatrix.getFactory()],
+		[cocId, ConsensusQueue.getFactory()],
+		[sparseMatrixId, SparseMatrix.getFactory()],
+	];
+
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+	};
+
 	let provider: ITestObjectProvider;
 	let request: IRequest;
 	let loader: Loader;
 
-	beforeEach(() => {
+	beforeEach("setup", () => {
 		provider = getTestObjectProvider();
 		request = provider.driver.createCreateNewRequest(provider.documentId);
 		loader = provider.makeTestLoader(testContainerConfig) as Loader;
@@ -966,6 +975,194 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
 	}).timeout(5000);
 
 	itExpects(
+		"Container should not be closed on network failure during attach and succeed on retry",
+		[],
+		async () => {
+			const loaderWithConfig = provider.createLoader(
+				[[provider.defaultCodeDetails, provider.createFluidEntryPoint()]],
+				{
+					configProvider: {
+						getRawConfig: (name) =>
+							name === "Fluid.Container.RetryOnAttachFailure" ? true : undefined,
+					},
+				},
+			);
+
+			const container = await loaderWithConfig.createDetachedContainer(
+				provider.defaultCodeDetails,
+			);
+
+			const oldFunc = provider.documentServiceFactory.createContainer;
+			provider.documentServiceFactory.createContainer = (a, b, c) => {
+				throw new Error("Test Error");
+			};
+			try {
+				await container.attach(request);
+				assert.fail("expected attach to fail!");
+			} catch (e) {
+				provider.documentServiceFactory.createContainer = oldFunc;
+			}
+			assert.strictEqual(container.closed, false, "Container should not be closed");
+
+			await container.attach(request);
+
+			assert.strictEqual(container.closed, false, "Container should not be closed");
+		},
+	);
+
+	itExpects("Attach can be called multiple times with the same parameters", [], async () => {
+		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+
+		const attaches: [Promise<void>, Promise<void>] = [
+			container.attach(request),
+			container.attach(request),
+		];
+
+		assert.strictEqual(attaches[0], attaches[1], "promises should match for parallel calls");
+
+		await Promise.all(attaches);
+		assert.strictEqual(container.closed, false, "Container should not be closed");
+	});
+
+	itExpects("Attach can't be called multiple times with different parameters", [], async () => {
+		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+
+		const attachP = container.attach(request);
+
+		// the second should fail, as the arguments don't match
+		try {
+			await container.attach({ ...request });
+			assert.fail("should fail");
+		} catch (e) {
+			assert(isFluidError(e), "should be a Fluid error");
+			assert.equal(e.message, "Subsequent calls cannot use different arguments.");
+		}
+
+		await attachP;
+
+		assert.strictEqual(container.closed, false, "Container should not be closed");
+	});
+	itExpects(
+		"Container should be closed when runtime.createSummary fails during attach",
+		[
+			{
+				eventName: "fluid:telemetry:Container:ContainerClose",
+				error: "runtime.createSummary failed!",
+			},
+		],
+		async () => {
+			const loaderWithBadRuntime = provider.createLoader(
+				new Map([
+					[
+						provider.defaultCodeDetails,
+						{
+							IRuntimeFactory: {
+								get IRuntimeFactory() {
+									return this;
+								},
+								instantiateRuntime: async (context, existing) => {
+									const entrypoint = provider.createFluidEntryPoint();
+									const runtimeFactory: FluidObject<IRuntimeFactory> =
+										"fluidExport" in entrypoint
+											? entrypoint.fluidExport
+											: entrypoint;
+
+									assert(
+										runtimeFactory.IRuntimeFactory,
+										"entrypoint is not runtime factory",
+									);
+
+									const runtime =
+										await runtimeFactory.IRuntimeFactory.instantiateRuntime(
+											context,
+											existing,
+										);
+
+									return new Proxy(runtime, {
+										get: (t, p: keyof IRuntime, r): any => {
+											if (p === "createSummary") {
+												assert.fail("runtime.createSummary failed!");
+											}
+											return Reflect.get(t, p, r);
+										},
+									});
+								},
+							},
+						},
+					],
+				]),
+			);
+			const container = await loaderWithBadRuntime.createDetachedContainer(
+				provider.defaultCodeDetails,
+			);
+			try {
+				await container.attach(request);
+				assert.fail("expected attach to fail!");
+			} catch (e) {}
+			assert.strictEqual(container.closed, true, "Container should be closed");
+		},
+	);
+	itExpects(
+		"Container should be closed when runtime.setAttachState fails during attach",
+		[
+			{
+				eventName: "fluid:telemetry:Container:ContainerClose",
+				error: "runtime.setAttachState failed!",
+			},
+		],
+		async () => {
+			const loaderWithBadRuntime = provider.createLoader(
+				new Map([
+					[
+						provider.defaultCodeDetails,
+						{
+							IRuntimeFactory: {
+								get IRuntimeFactory() {
+									return this;
+								},
+								instantiateRuntime: async (context, existing) => {
+									const entrypoint = provider.createFluidEntryPoint();
+									const runtimeFactory: FluidObject<IRuntimeFactory> =
+										"fluidExport" in entrypoint
+											? entrypoint.fluidExport
+											: entrypoint;
+
+									assert(
+										runtimeFactory.IRuntimeFactory,
+										"entrypoint is not runtime factory",
+									);
+
+									const runtime =
+										await runtimeFactory.IRuntimeFactory.instantiateRuntime(
+											context,
+											existing,
+										);
+
+									return new Proxy(runtime, {
+										get: (t, p: keyof IRuntime, r): any => {
+											if (p === "setAttachState") {
+												assert.fail("runtime.setAttachState failed!");
+											}
+											return Reflect.get(t, p, r);
+										},
+									});
+								},
+							},
+						},
+					],
+				]),
+			);
+			const container = await loaderWithBadRuntime.createDetachedContainer(
+				provider.defaultCodeDetails,
+			);
+			try {
+				await container.attach(request);
+				assert.fail("expected attach to fail!");
+			} catch (e) {}
+			assert.strictEqual(container.closed, true, "Container should be closed");
+		},
+	);
+	itExpects(
 		"Container should be closed on failed attach with non retryable error",
 		[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "Test Error" }],
 		async () => {
@@ -986,34 +1183,4 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
 			assert.strictEqual(container.closed, true, "Container should be closed");
 		},
 	);
-
-	it("Directly attach container through service factory, should resolve to same container", async () => {
-		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-		// Get the root dataStore from the detached container.
-		const response = await container.request({ url: "/" });
-		const dataStore = response.value as ITestFluidObject;
-
-		// Create a sub dataStore of type TestFluidObject.
-		const subDataStore1 = await createFluidObject(dataStore.context, "default");
-		dataStore.root.set("attachKey", subDataStore1.handle);
-
-		const summaryForAttach: ISummaryTree = JSON.parse(container.serialize());
-		const resolvedUrl = await provider.urlResolver.resolve(request);
-		assert(resolvedUrl);
-		const service = await provider.documentServiceFactory.createContainer(
-			summaryForAttach,
-			resolvedUrl,
-		);
-		const absoluteUrl = await provider.urlResolver.getAbsoluteUrl(service.resolvedUrl, "/");
-
-		const container2 = await loader.resolve({ url: absoluteUrl });
-		// Get the root dataStore from the detached container.
-		const response2 = await container2.request({ url: "/" });
-		const dataStore2 = response2.value as ITestFluidObject;
-		assert.strictEqual(
-			dataStore2.root.get("attachKey").absolutePath,
-			subDataStore1.handle.absolutePath,
-			"Stored handle should match!!",
-		);
-	});
 });

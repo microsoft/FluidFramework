@@ -6,20 +6,18 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import {
-	IEvent,
-	IFluidHandle,
-	IFluidLoadable,
-	// eslint-disable-next-line import/no-deprecated
-	IFluidRouter,
-	IProvideFluidHandle,
-	IRequest,
-	IResponse,
+	type IEvent,
+	type IFluidHandle,
+	type IFluidLoadable,
+	type IProvideFluidHandle,
+	type IRequest,
+	type IResponse,
 } from "@fluidframework/core-interfaces";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
-import { AsyncFluidObjectProvider } from "@fluidframework/synthesize";
+import { type IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { type IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+import { type AsyncFluidObjectProvider } from "@fluidframework/synthesize";
 import { create404Response } from "@fluidframework/runtime-utils";
-import { DataObjectTypes, IDataObjectProps } from "./types";
+import { type DataObjectTypes, type IDataObjectProps } from "./types";
 
 /**
  * This is a bare-bones base class that does basic setup and enables for factory on an initialize call.
@@ -27,12 +25,11 @@ import { DataObjectTypes, IDataObjectProps } from "./types";
  * you are creating another base data store class
  *
  * @typeParam I - The optional input types used to strongly type the data object
- * @public
+ * @alpha
  */
 export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes>
 	extends TypedEventEmitter<I["Events"] & IEvent>
-	// eslint-disable-next-line import/no-deprecated
-	implements IFluidLoadable, IFluidRouter, IProvideFluidHandle
+	implements IFluidLoadable, IProvideFluidHandle
 {
 	/**
 	 * This is your FluidDataStoreRuntime object
@@ -57,20 +54,21 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 
 	protected initializeP: Promise<void> | undefined;
 
-	public get id() {
+	public get id(): string {
 		return this.runtime.id;
 	}
+
 	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 * {@inheritDoc @fluidframework/core-interfaces#IProvideFluidLoadable.IFluidLoadable}
 	 */
-	// eslint-disable-next-line import/no-deprecated
-	public get IFluidRouter() {
+	public get IFluidLoadable(): this {
 		return this;
 	}
-	public get IFluidLoadable() {
-		return this;
-	}
-	public get IFluidHandle() {
+
+	/**
+	 * {@inheritDoc @fluidframework/core-interfaces#IProvideFluidHandle.IFluidHandle}
+	 */
+	public get IFluidHandle(): IFluidHandle<this> {
 		return this.handle;
 	}
 
@@ -85,7 +83,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 		return this.runtime.entryPoint as IFluidHandle<this>;
 	}
 
-	public static async getDataObject(runtime: IFluidDataStoreRuntime) {
+	public static async getDataObject(runtime: IFluidDataStoreRuntime): Promise<PureDataObject> {
 		const obj = await runtime.entryPoint.get();
 		return obj as PureDataObject;
 	}
@@ -97,11 +95,15 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 		this.providers = props.providers;
 		this.initProps = props.initProps;
 
+		/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+		/* eslint-disable @typescript-eslint/no-explicit-any */
 		assert(
 			(this.runtime as any)._dataObject === undefined,
 			0x0bd /* "Object runtime already has DataObject!" */,
 		);
 		(this.runtime as any)._dataObject = this;
+		/* eslint-enable @typescript-eslint/no-explicit-any */
+		/* eslint-enable @typescript-eslint/no-unsafe-member-access */
 	}
 
 	/**

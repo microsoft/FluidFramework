@@ -13,7 +13,7 @@ import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { NamedFluidDataStoreRegistryEntry } from '@fluidframework/runtime-definitions';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
-// @public (undocumented)
+// @alpha (undocumented)
 export class AgentSchedulerFactory implements IFluidDataStoreFactory {
     // (undocumented)
     static createChildInstance(parentContext: IFluidDataStoreContext): Promise<IAgentScheduler>;
@@ -29,10 +29,10 @@ export class AgentSchedulerFactory implements IFluidDataStoreFactory {
     readonly type = "_scheduler";
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export const IAgentScheduler: keyof IProvideAgentScheduler;
 
-// @public
+// @alpha
 export interface IAgentScheduler extends IProvideAgentScheduler, IEventProvider<IAgentSchedulerEvents>, IFluidLoadable {
     pick(taskId: string, worker: () => Promise<void>): Promise<void>;
     pickedTasks(): string[];
@@ -40,24 +40,24 @@ export interface IAgentScheduler extends IProvideAgentScheduler, IEventProvider<
     release(...taskUrls: string[]): Promise<void>;
 }
 
-// @public
+// @alpha
 export interface IAgentSchedulerEvents extends IEvent {
     (event: "picked" | "released" | "lost", listener: (taskId: string) => void): any;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface IProvideAgentScheduler {
     // (undocumented)
     readonly IAgentScheduler: IAgentScheduler;
 }
 
-// @public
+// @alpha
 export interface ITaskSubscriptionEvents extends IEvent {
     // (undocumented)
     (event: "gotTask" | "lostTask", listener: () => void): any;
 }
 
-// @public
+// @alpha
 export class TaskSubscription extends TypedEventEmitter<ITaskSubscriptionEvents> {
     constructor(agentScheduler: IAgentScheduler, taskId: string);
     haveTask(): boolean;

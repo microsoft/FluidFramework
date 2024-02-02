@@ -34,6 +34,7 @@ export {
 } from "./dataStoreRegistry";
 export {
 	gcBlobPrefix,
+	gcDataBlobKey,
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
 	gcTreeKey,
@@ -65,16 +66,3 @@ export {
 	SummarizeInternalFn,
 	totalBlobSizePropertyName,
 } from "./summary";
-export {
-	IIdCompressorCore,
-	IIdCompressor,
-	SerializedIdCompressor,
-	SerializedIdCompressorWithOngoingSession,
-	SerializedIdCompressorWithNoSession,
-	SessionSpaceCompressedId,
-	OpSpaceCompressedId,
-	SessionId,
-	StableId,
-	IdCreationRange,
-	initialClusterCapacity,
-} from "./id-compressor";

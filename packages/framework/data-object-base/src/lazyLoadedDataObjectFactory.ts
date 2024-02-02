@@ -3,26 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import { FluidObject, IRequest } from "@fluidframework/core-interfaces";
+import { type FluidObject, type IRequest } from "@fluidframework/core-interfaces";
 import {
-	FluidDataStoreRuntime,
-	ISharedObjectRegistry,
+	type FluidDataStoreRuntime,
+	type ISharedObjectRegistry,
 	mixinRequestHandler,
 } from "@fluidframework/datastore";
 import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
 import { assert, LazyPromise } from "@fluidframework/core-utils";
 import {
-	IFluidDataStoreContext,
-	IFluidDataStoreFactory,
-	IFluidDataStoreRegistry,
-	NamedFluidDataStoreRegistryEntries,
+	type IFluidDataStoreContext,
+	type IFluidDataStoreFactory,
+	type IFluidDataStoreRegistry,
+	type NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
-import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
-import { ISharedObject } from "@fluidframework/shared-object-base";
-import { LazyLoadedDataObject } from "./lazyLoadedDataObject";
+import {
+	type IFluidDataStoreRuntime,
+	type IChannelFactory,
+} from "@fluidframework/datastore-definitions";
+import { type ISharedObject } from "@fluidframework/shared-object-base";
+import { type LazyLoadedDataObject } from "./lazyLoadedDataObject";
 
 /**
- * @public
+ * @internal
  */
 export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject>
 	implements IFluidDataStoreFactory
@@ -30,7 +33,7 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject>
 	public readonly ISharedObjectRegistry: ISharedObjectRegistry;
 	public readonly IFluidDataStoreRegistry: IFluidDataStoreRegistry | undefined;
 
-	constructor(
+	public constructor(
 		public readonly type: string,
 		private readonly ctor: new (
 			context: IFluidDataStoreContext,
@@ -52,11 +55,11 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject>
 		}
 
 		this.ISharedObjectRegistry = new Map(
-			sharedObjects.concat(this.root).map((ext) => [ext.type, ext]),
+			[...sharedObjects, this.root].map((ext) => [ext.type, ext]),
 		);
 	}
 
-	public get IFluidDataStoreFactory() {
+	public get IFluidDataStoreFactory(): this {
 		return this;
 	}
 
@@ -84,10 +87,12 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject>
 		);
 	}
 
+	// TODO: Use unknown (or a stronger type) instead of any. Breaking change.
+	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
 	public async create(parentContext: IFluidDataStoreContext, props?: any): Promise<FluidObject> {
 		const { containerRuntime, packagePath } = parentContext;
 
-		const dataStore = await containerRuntime.createDataStore(packagePath.concat(this.type));
+		const dataStore = await containerRuntime.createDataStore([...packagePath, this.type]);
 		return dataStore.entryPoint.get();
 	}
 
@@ -95,7 +100,7 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject>
 		context: IFluidDataStoreContext,
 		runtime: IFluidDataStoreRuntime,
 		existing: boolean,
-	) {
+	): T | LazyPromise<T> {
 		// New data store instances are synchronously created.  Loading a previously created
 		// store is deferred (via a LazyPromise) until requested by invoking `.then()`.
 		return existing
@@ -106,8 +111,8 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject>
 	private createCore(
 		context: IFluidDataStoreContext,
 		runtime: IFluidDataStoreRuntime,
-		props?: any,
-	) {
+		props?: unknown,
+	): T {
 		const root = runtime.createChannel("root", this.root.type) as ISharedObject;
 		const instance = new this.ctor(context, runtime, root);
 		instance.create(props);
@@ -119,7 +124,7 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject>
 		context: IFluidDataStoreContext,
 		runtime: IFluidDataStoreRuntime,
 		existing: boolean,
-	) {
+	): Promise<T> {
 		const instance = new this.ctor(
 			context,
 			runtime,

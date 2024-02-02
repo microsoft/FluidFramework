@@ -8,13 +8,13 @@ import { DriverError } from '@fluidframework/driver-definitions';
 import { IDriverErrorBase } from '@fluidframework/driver-definitions';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 
-// @public (undocumented)
+// @alpha (undocumented)
 export type CacheContentType = "snapshot" | "ops";
 
-// @public
+// @internal
 export function getKeyForCacheEntry(entry: ICacheEntry): string;
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface HostStoragePolicy {
     avoidPrefetchSnapshotCache?: boolean;
     cacheCreateNewSummary?: boolean;
@@ -37,50 +37,50 @@ export interface HostStoragePolicy {
     snapshotOptions?: ISnapshotOptions;
 }
 
-// @public
+// @alpha
 export interface ICacheEntry extends IEntry {
     file: IFileEntry;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface ICollabSessionOptions {
     // @deprecated (undocumented)
     forceAccessTokenViaAuthorizationHeader?: boolean;
     unauthenticatedUserDisplayName?: string;
 }
 
-// @public
+// @alpha
 export type IdentityType = "Consumer" | "Enterprise";
 
-// @public
+// @alpha
 export interface IEntry {
     key: string;
     type: CacheContentType;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface IFileEntry {
     docId: string;
     resolvedUrl: IResolvedUrl;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export type InstrumentedStorageTokenFetcher = (options: TokenFetchOptions, name: string, alwaysRecordTokenFetchTelemetry?: boolean) => Promise<string | null>;
 
-// @public
+// @alpha
 export interface IOdspError extends Omit<IDriverErrorBase, "errorType">, IOdspErrorAugmentations {
     // (undocumented)
-    readonly errorType: OdspErrorType;
+    readonly errorType: OdspErrorTypes;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface IOdspErrorAugmentations {
     facetCodes?: string[];
     redirectLocation?: string;
     serverEpoch?: string;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
     // (undocumented)
     codeHint?: {
@@ -116,7 +116,7 @@ export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
     url: string;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface IOdspUrlParts {
     // (undocumented)
     driveId: string;
@@ -126,39 +126,39 @@ export interface IOdspUrlParts {
     siteUrl: string;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface IOpsCachingPolicy {
     batchSize?: number;
     timerGranularity?: number;
     totalOpsToCache?: number;
 }
 
-// @public
+// @alpha
 export interface IPersistedCache {
     get(entry: ICacheEntry): Promise<any>;
     put(entry: ICacheEntry, value: any): Promise<void>;
     removeEntries(file: IFileEntry): Promise<void>;
 }
 
-// @public
+// @alpha
 export interface IProvideSessionAwareDriverFactory {
     // (undocumented)
     readonly IRelaySessionAwareDriverFactory: IRelaySessionAwareDriverFactory;
 }
 
-// @public
+// @alpha
 export interface IRelaySessionAwareDriverFactory extends IProvideSessionAwareDriverFactory {
     // (undocumented)
     getRelayServiceSessionInfo(resolvedUrl: IResolvedUrl): Promise<ISocketStorageDiscovery | undefined>;
 }
 
-// @public
+// @alpha
 export interface ISharingLink extends ISharingLinkKind {
     // (undocumented)
     webUrl: string;
 }
 
-// @public
+// @alpha
 export interface ISharingLinkKind {
     // (undocumented)
     role?: SharingLinkRole;
@@ -166,7 +166,7 @@ export interface ISharingLinkKind {
     scope: SharingLinkScope;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface ISnapshotOptions {
     // (undocumented)
     blobs?: number;
@@ -174,13 +174,12 @@ export interface ISnapshotOptions {
     channels?: number;
     // (undocumented)
     deltas?: number;
-    // (undocumented)
     mds?: number;
     // (undocumented)
     timeout?: number;
 }
 
-// @public
+// @alpha
 export interface ISocketStorageDiscovery {
     // (undocumented)
     deltaStorageUrl: string;
@@ -190,6 +189,7 @@ export interface ISocketStorageDiscovery {
     refreshSessionDurationSeconds?: number;
     // (undocumented)
     runtimeTenantId?: string;
+    sensitivityLabelsInfo?: string;
     // (undocumented)
     snapshotStorageUrl: string;
     socketToken?: string;
@@ -197,27 +197,13 @@ export interface ISocketStorageDiscovery {
     tenantId: string;
 }
 
-// @public
+// @internal
 export const isTokenFromCache: (tokenResponse: string | TokenResponse | null) => boolean | undefined;
 
-// @public (undocumented)
+// @alpha (undocumented)
 export type OdspError = IOdspError | (DriverError & IOdspErrorAugmentations);
 
-// @public @deprecated
-export enum OdspErrorType {
-    blockedIPAddress = "blockedIPAddress",
-    cannotCatchUp = "cannotCatchUp",
-    fetchTimeout = "fetchTimeout",
-    // (undocumented)
-    fetchTokenError = "fetchTokenError",
-    fluidNotEnabled = "fluidNotEnabled",
-    invalidFileNameError = "invalidFileNameError",
-    outOfStorageError = "outOfStorageError",
-    serviceReadOnly = "serviceReadOnly",
-    snapshotTooBig = "snapshotTooBig"
-}
-
-// @public
+// @alpha
 export const OdspErrorTypes: {
     readonly invalidFileNameError: "invalidFileNameError";
     readonly snapshotTooBig: "snapshotTooBig";
@@ -246,34 +232,27 @@ export const OdspErrorTypes: {
     readonly usageError: "usageError";
 };
 
-// @public (undocumented)
+// @alpha (undocumented)
 export type OdspErrorTypes = (typeof OdspErrorTypes)[keyof typeof OdspErrorTypes];
 
-// @public
+// @alpha
 export interface OdspResourceTokenFetchOptions extends TokenFetchOptions {
     driveId?: string;
     itemId?: string;
     siteUrl: string;
 }
 
-// @public
+// @alpha
 export interface ShareLinkInfoType {
     createLink?: {
-        type?: ShareLinkTypes | ISharingLinkKind;
-        link?: string | ISharingLink;
+        link?: ISharingLink;
         error?: any;
         shareId?: string;
     };
     sharingLinkToRedeem?: string;
 }
 
-// @public @deprecated (undocumented)
-export enum ShareLinkTypes {
-    // (undocumented)
-    csl = "csl"
-}
-
-// @public
+// @alpha
 export enum SharingLinkRole {
     // (undocumented)
     edit = "edit",
@@ -281,7 +260,7 @@ export enum SharingLinkRole {
     view = "view"
 }
 
-// @public
+// @alpha
 export enum SharingLinkScope {
     // (undocumented)
     anonymous = "anonymous",
@@ -293,23 +272,23 @@ export enum SharingLinkScope {
     users = "users"
 }
 
-// @public
+// @internal
 export const snapshotKey = "snapshot";
 
-// @public
+// @alpha
 export type TokenFetcher<T> = (options: T) => Promise<string | TokenResponse | null>;
 
-// @public
+// @alpha
 export interface TokenFetchOptions {
     claims?: string;
     refresh: boolean;
     tenantId?: string;
 }
 
-// @public
+// @internal
 export const tokenFromResponse: (tokenResponse: string | TokenResponse | null | undefined) => string | null;
 
-// @public
+// @beta
 export interface TokenResponse {
     fromCache?: boolean;
     token: string;

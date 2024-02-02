@@ -23,6 +23,7 @@
     "plugins": [
         "eslint-comments",
         "import",
+        "fluid-internal",
         "unicorn",
         "unused-imports",
         "tsdoc",
@@ -527,6 +528,9 @@
         "flowtype/union-intersection-spacing": [
             "off"
         ],
+        "fluid-internal/no-member-release-tags": [
+            "error"
+        ],
         "for-direction": [
             "error"
         ],
@@ -588,7 +592,14 @@
             }
         ],
         "import/no-internal-modules": [
-            "error"
+            "error",
+            {
+                "allow": [
+                    "@fluidframework/*/beta",
+                    "@fluidframework/*/internal",
+                    "*/index.js"
+                ]
+            }
         ],
         "import/no-named-as-default": [
             1

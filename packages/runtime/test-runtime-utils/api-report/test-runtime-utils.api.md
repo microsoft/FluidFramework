@@ -19,6 +19,7 @@ import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
+import { IdCreationRange } from '@fluidframework/id-compressor';
 import { IDeltaConnection } from '@fluidframework/datastore-definitions';
 import { IDeltaHandler } from '@fluidframework/datastore-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
@@ -34,10 +35,9 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitions';
-import { IIdCompressor } from '@fluidframework/runtime-definitions';
-import { IIdCompressorCore } from '@fluidframework/runtime-definitions';
+import { IIdCompressor } from '@fluidframework/id-compressor';
+import { IIdCompressorCore } from '@fluidframework/id-compressor';
 import { ILoader } from '@fluidframework/container-definitions';
-import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
@@ -59,18 +59,18 @@ import { ScopeType } from '@fluidframework/protocol-definitions';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 import { VisibilityState } from '@fluidframework/runtime-definitions';
 
-// @public
+// @internal
 export interface IInsecureUser extends IUser {
     name: string;
 }
 
-// @public
+// @alpha
 export interface IMockContainerRuntimeOptions {
     readonly enableGroupedBatching?: boolean;
     readonly flushMode?: FlushMode;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface IMockContainerRuntimePendingMessage {
     // (undocumented)
     clientSequenceNumber: number;
@@ -80,7 +80,7 @@ export interface IMockContainerRuntimePendingMessage {
     localOpMetadata: unknown;
 }
 
-// @public
+// @internal
 export class InsecureTokenProvider implements ITokenProvider {
     constructor(
     tenantKey: string,
@@ -92,7 +92,7 @@ export class InsecureTokenProvider implements ITokenProvider {
     fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
 }
 
-// @public
+// @alpha
 export class MockContainerRuntime {
     constructor(dataStoreRuntime: MockFluidDataStoreRuntime, factory: MockContainerRuntimeFactory, mockContainerRuntimeOptions?: IMockContainerRuntimeOptions, overrides?: {
         minimumSequenceNumber?: number | undefined;
@@ -113,7 +113,11 @@ export class MockContainerRuntime {
     dirty(): void;
     // (undocumented)
     protected readonly factory: MockContainerRuntimeFactory;
+    // (undocumented)
+    finalizeIdRange(range: IdCreationRange): void;
     flush(): void;
+    // (undocumented)
+    getGeneratedIdRange(): IdCreationRange | undefined;
     // (undocumented)
     protected readonly overrides?: {
         minimumSequenceNumber?: number | undefined;
@@ -129,7 +133,7 @@ export class MockContainerRuntime {
     submit(messageContent: any, localOpMetadata: unknown): number;
 }
 
-// @public
+// @alpha
 export class MockContainerRuntimeFactory {
     constructor(mockContainerRuntimeOptions?: IMockContainerRuntimeOptions);
     // (undocumented)
@@ -153,9 +157,11 @@ export class MockContainerRuntimeFactory {
     protected readonly runtimes: MockContainerRuntime[];
     // (undocumented)
     sequenceNumber: number;
+    // (undocumented)
+    synchronizeIdCompressors(): void;
 }
 
-// @public
+// @alpha
 export class MockContainerRuntimeFactoryForReconnection extends MockContainerRuntimeFactory {
     // (undocumented)
     clearOutstandingClientMessages(clientId: string): void;
@@ -165,7 +171,7 @@ export class MockContainerRuntimeFactoryForReconnection extends MockContainerRun
     }): MockContainerRuntimeForReconnection;
 }
 
-// @public
+// @alpha
 export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
     constructor(dataStoreRuntime: MockFluidDataStoreRuntime, factory: MockContainerRuntimeFactoryForReconnection, runtimeOptions?: IMockContainerRuntimeOptions, overrides?: {
         minimumSequenceNumber?: number;
@@ -179,7 +185,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
     submit(messageContent: any, localOpMetadata: unknown): number;
 }
 
-// @public
+// @alpha
 export class MockDeltaConnection implements IDeltaConnection {
     constructor(submitFn: (messageContent: any, localOpMetadata: unknown) => number, dirtyFn: () => void);
     // (undocumented)
@@ -200,11 +206,11 @@ export class MockDeltaConnection implements IDeltaConnection {
     submit(messageContent: any, localOpMetadata: unknown): number;
 }
 
-// @public
+// @alpha
 export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents> implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
     constructor();
     // (undocumented)
-    get active(): boolean;
+    readonly active: boolean;
     // (undocumented)
     readonly clientDetails: IClientDetails;
     // (undocumented)
@@ -234,7 +240,7 @@ export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents> imp
     // (undocumented)
     lastSequenceNumber: number;
     // (undocumented)
-    get maxMessageSize(): number;
+    readonly maxMessageSize: number;
     // (undocumented)
     minimumSequenceNumber: number;
     // (undocumented)
@@ -251,7 +257,7 @@ export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents> imp
     get version(): string;
 }
 
-// @public
+// @alpha
 export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     constructor();
     // (undocumented)
@@ -291,7 +297,7 @@ export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     }>;
 }
 
-// @public
+// @internal
 export class MockEmptyDeltaConnection implements IDeltaConnection {
     // (undocumented)
     attach(handler: any): void;
@@ -303,9 +309,9 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
     submit(messageContent: any): number;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export class MockFluidDataStoreContext implements IFluidDataStoreContext {
-    constructor(id?: string, existing?: boolean, logger?: ITelemetryLoggerExt);
+    constructor(id?: string, existing?: boolean, logger?: ITelemetryLoggerExt, interactive?: boolean);
     attachState: AttachState;
     // (undocumented)
     baseSnapshot: ISnapshotTree | undefined;
@@ -356,7 +362,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     once(event: string | symbol, listener: (...args: any[]) => void): this;
     // (undocumented)
-    options: ILoaderOptions;
+    options: Record<string | number, any>;
     // (undocumented)
     packagePath: readonly string[];
     // (undocumented)
@@ -373,17 +379,18 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
-// @public
+// @alpha
 export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext {
     constructor(overrides?: {
         clientId?: string;
         entryPoint?: IFluidHandle<FluidObject>;
         id?: string;
         logger?: ITelemetryLoggerExt;
+        idCompressor?: IIdCompressor & IIdCompressorCore;
     });
     // (undocumented)
     get absolutePath(): string;
-    // (undocumented)
+    // @deprecated (undocumented)
     addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
     // (undocumented)
     applyStashedOp(content: any): Promise<void>;
@@ -440,9 +447,9 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     readonly id: string;
     // (undocumented)
+    idCompressor?: IIdCompressor & IIdCompressorCore;
+    // (undocumented)
     get IFluidHandleContext(): IFluidHandleContext;
-    // @deprecated (undocumented)
-    get IFluidRouter(): this;
     // (undocumented)
     get isAttached(): boolean;
     // (undocumented)
@@ -457,7 +464,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     get objectsRoutingContext(): IFluidHandleContext;
     // (undocumented)
-    options: ILoaderOptions;
+    options: Record<string | number, any>;
     // (undocumented)
     readonly path = "";
     // (undocumented)
@@ -466,7 +473,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     processSignal(message: any, local: boolean): void;
     // (undocumented)
     quorum: MockQuorumClients;
-    // @deprecated (undocumented)
+    // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
     requestDataStore(request: IRequest): Promise<IResponse>;
@@ -502,7 +509,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     waitAttached(): Promise<void>;
 }
 
-// @public
+// @alpha
 export class MockHandle<T> implements IFluidHandle {
     constructor(value: T, path?: string, absolutePath?: string);
     // (undocumented)
@@ -523,7 +530,7 @@ export class MockHandle<T> implements IFluidHandle {
     protected readonly value: T;
 }
 
-// @public
+// @alpha
 export class MockObjectStorageService implements IChannelStorageService {
     constructor(contents: {
         [key: string]: string;
@@ -536,7 +543,7 @@ export class MockObjectStorageService implements IChannelStorageService {
     readBlob(path: string): Promise<ArrayBufferLike>;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export class MockQuorumClients implements IQuorumClients, EventEmitter {
     constructor(...members: [string, Partial<ISequencedClient>][]);
     // (undocumented)
@@ -583,7 +590,7 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
     setMaxListeners(n: number): this;
 }
 
-// @public
+// @alpha
 export class MockSharedObjectServices implements IChannelServices {
     constructor(contents: {
         [key: string]: string;
@@ -596,7 +603,7 @@ export class MockSharedObjectServices implements IChannelServices {
     objectStorage: MockObjectStorageService;
 }
 
-// @public
+// @alpha
 export class MockStorage implements IChannelStorageService {
     constructor(tree?: ITree | undefined);
     // (undocumented)
@@ -611,7 +618,7 @@ export class MockStorage implements IChannelStorageService {
     protected tree?: ITree | undefined;
 }
 
-// @public
+// @internal
 export function validateAssertionError(error: Error, expectedErrorMsg: string | RegExp): boolean;
 
 // (No @packageDocumentation comment for this package)

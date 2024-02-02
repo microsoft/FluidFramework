@@ -13,7 +13,7 @@ export { LoaderContainerTracker } from "./loaderContainerTracker";
 export { fluidEntryPoint, LocalCodeLoader, SupportedExportInterfaces } from "./localCodeLoader";
 export { createAndAttachContainer, createLoader } from "./localLoader";
 export { retryWithEventualValue } from "./retry";
-export { mockConfigProvider } from "./TestConfigs";
+export { createTestConfigProvider, ITestConfigProvider } from "./TestConfigs";
 export {
 	createTestContainerRuntimeFactory,
 	TestContainerRuntimeFactory,
@@ -24,12 +24,19 @@ export {
 	DataObjectFactoryType,
 	EventAndErrorTrackingLogger,
 	getUnexpectedLogErrorException,
+	IDocumentIdStrategy,
 	IOpProcessingController,
 	ITestContainerConfig,
 	ITestObjectProvider,
 	TestObjectProvider,
+	TestObjectProviderWithVersionedLoad,
 } from "./testObjectProvider";
-export { createSummarizer, createSummarizerFromFactory, summarizeNow } from "./TestSummaryUtils";
+export {
+	createSummarizer,
+	createSummarizerFromFactory,
+	summarizeNow,
+	SummaryInfo,
+} from "./TestSummaryUtils";
 export {
 	defaultTimeoutDurationMs,
 	timeoutAwait,
@@ -37,5 +44,9 @@ export {
 	TimeoutWithError,
 	TimeoutWithValue,
 } from "./timeoutUtils";
-export { waitForContainerConnection } from "./containerUtils";
+export {
+	waitForContainerConnection,
+	getContainerEntryPointBackCompat,
+	getDataStoreEntryPointBackCompat,
+} from "./containerUtils";
 export { createContainerRuntimeFactoryWithDefaultDataStore } from "./testContainerRuntimeFactoryWithDefaultDataStore";

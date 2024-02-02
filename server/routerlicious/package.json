@@ -1,6 +1,6 @@
 {
 	"name": "server-release-group-root",
-	"version": "3.0.0",
+	"version": "3.1.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -42,8 +42,8 @@
 		"policy-check": "cd ../.. && npm run policy-check",
 		"policy-check:asserts": "cd ../.. && npm run policy-check:asserts",
 		"policy-check:fix": "cd ../.. && npm run policy-check:fix",
-		"prettier": "prettier --check . --ignore-path ./.prettierignore",
-		"prettier:fix": "prettier --write . --ignore-path ./.prettierignore",
+		"prettier": "prettier --check . --cache --ignore-path ./.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ./.prettierignore",
 		"restart": "docker compose restart alfred && docker-compose restart deli && docker-compose restart scriptorium",
 		"start": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up",
 		"start:debug": "docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.debug.yml up",
@@ -55,7 +55,7 @@
 		"test": "pnpm run -r --no-sort --stream --no-bail test",
 		"test:copyresults": "copyfiles --exclude \"**/node_modules/**\" \"**/nyc/**\" nyc",
 		"test:coverage": "c8 npm run test:report",
-		"test:fromroot": "mocha \"packages/**/dist/test/**/*.spec.js\" --exit",
+		"test:fromroot": "mocha \"packages/**/dist/test/**/*.spec.*js\" --exit",
 		"test:report": "pnpm run -r --no-sort --stream --no-bail test -- -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"tsc": "pnpm run -r --stream tsc",
 		"typetests:gen": "pnpm -r typetests:gen",
@@ -82,10 +82,10 @@
 		"@fluid-private/changelog-generator-wrapper": "file:../../tools/changelog-generator-wrapper",
 		"@fluid-tools/build-cli": "^0.26.1",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.26.1",
+		"@fluidframework/build-tools": "^0.28.0",
 		"@microsoft/api-documenter": "^7.21.6",
 		"@microsoft/api-extractor": "^7.34.4",
-		"c8": "^7.7.1",
+		"c8": "^8.0.1",
 		"changesets-format-with-issue-links": "^0.3.0",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
@@ -96,7 +96,7 @@
 		"run-script-os": "^1.1.5",
 		"typescript": "~4.5.5"
 	},
-	"packageManager": "pnpm@7.33.5+sha512.4e499f22fffe5845aa8f9463e1386b2d72c3134e0ebef9409360ad844fef0290e82b479b32eb2ec0f30e56607e1820c22167829fd62656d41a8fd0cc4a0f4267",
+	"packageManager": "pnpm@7.33.6+sha512.90e27fd38047f18583f3342f784cc3f187f4d4caac89ebc1fffae18dcd7b2dde7678a0bf237481bcb8f7e8e66135fa34803856e4eb2c442ce082ffab5d9d241f",
 	"engines": {
 		"node": ">=14.17.0"
 	},
@@ -117,6 +117,9 @@
 			"ignoreMissing": [
 				"@types/node"
 			]
+		},
+		"patchedDependencies": {
+			"@microsoft/api-extractor@7.39.1": "patches/@microsoft__api-extractor@7.39.1.patch"
 		}
 	}
 }

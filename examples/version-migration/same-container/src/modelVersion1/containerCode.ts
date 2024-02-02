@@ -12,13 +12,22 @@ import {
 import type { IContainer } from "@fluidframework/container-definitions";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
-import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces";
-import { InventoryListAppModel } from "./appModel";
-import { InventoryListInstantiationFactory } from "./inventoryList";
+import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces.js";
+import { InventoryListAppModel } from "./appModel.js";
+import { InventoryListInstantiationFactory } from "./inventoryList.js";
 
+/**
+ * @internal
+ */
 export const inventoryListId = "default-inventory-list";
+/**
+ * @internal
+ */
 export const migrationToolId = "migration-tool";
 
+/**
+ * @internal
+ */
 export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeFactory<IInventoryListAppModel> {
 	/**
 	 * Constructor for the factory. Supports a test mode which spawns the summarizer instantly.

@@ -13,11 +13,11 @@ import {
 import { fromUtf8ToBase64 } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import { getW3CData } from "@fluidframework/driver-base";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
+import { ISnapshot } from "@fluidframework/driver-definitions";
 import {
 	IOdspResolvedUrl,
 	ISnapshotOptions,
-	OdspErrorType,
+	OdspErrorTypes,
 	InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
@@ -29,7 +29,7 @@ import {
 import { fetchIncorrectResponse, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import {
 	IOdspSnapshot,
-	ISnapshotCachedEntry,
+	ISnapshotCachedEntry2,
 	IVersionedValueWithEpoch,
 	persistedCacheValueVersion,
 } from "./contracts";
@@ -44,7 +44,6 @@ import {
 	measure,
 	measureP,
 } from "./odspUtils";
-import { ISnapshotContents } from "./odspPublicUtils";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "./odspSnapshotParser";
 import {
 	currentReadVersion,
@@ -56,7 +55,7 @@ import { pkgVersion } from "./packageVersion";
 
 /**
  * Enum to support different types of snapshot formats.
- * @public
+ * @alpha
  */
 export enum SnapshotFormatSupportType {
 	Json = 0,
@@ -86,7 +85,7 @@ export async function fetchSnapshot(
 		url: string,
 		fetchOptions: { [index: string]: any },
 	) => Promise<IOdspResponse<unknown>>,
-): Promise<ISnapshotContents> {
+): Promise<ISnapshot> {
 	const path = `/trees/${versionId}`;
 	let queryParams: ISnapshotOptions = {};
 
@@ -126,7 +125,7 @@ export async function fetchSnapshotWithRedeem(
 	putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
 	removeEntries: () => Promise<void>,
 	enableRedeemFallback?: boolean,
-): Promise<ISnapshotContents> {
+): Promise<ISnapshot> {
 	// back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
 	const sharingLinkToRedeem = (odspResolvedUrl as any).sharingLinkToRedeem;
 	if (sharingLinkToRedeem) {
@@ -164,7 +163,7 @@ export async function fetchSnapshotWithRedeem(
 				// If redeem failed, that most likely means user has no permissions to access a file,
 				// and thus it's not worth it logging extra errors - same error will be logged by end-to-end
 				// flow (container open) based on a failure above.
-				logger.sendErrorEvent(
+				logger.sendTelemetryEvent(
 					{
 						eventName: "RedeemFallback",
 						errorType: error.errorType,
@@ -191,8 +190,8 @@ export async function fetchSnapshotWithRedeem(
 			if (
 				(typeof error === "object" &&
 					error !== null &&
-					error.errorType === DriverErrorType.authorizationError) ||
-				error.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError
+					error.errorType === OdspErrorTypes.authorizationError) ||
+				error.errorType === OdspErrorTypes.fileNotFoundOrAccessDeniedError
 			) {
 				await removeEntries();
 			}
@@ -249,7 +248,7 @@ async function fetchLatestSnapshotCore(
 	) => Promise<ISnapshotRequestAndResponseOptions>,
 	putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
 	enableRedeemFallback?: boolean,
-): Promise<ISnapshotContents> {
+): Promise<ISnapshot> {
 	return getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
 		const storageToken = await storageTokenFetcher(tokenFetchOptions, "TreesLatest", true);
 		assert(storageToken !== null, 0x1e5 /* "Storage token should not be null" */);
@@ -328,7 +327,7 @@ async function fetchLatestSnapshotCore(
 						let content: IOdspSnapshot;
 						[content, parseTime] = measure(() => JSON.parse(text) as IOdspSnapshot);
 						validateBlobsAndTrees(content);
-						const snapshotContents: ISnapshotContents =
+						const snapshotContents: ISnapshot =
 							convertOdspSnapshotToSnapshotTreeAndBlobs(content);
 						parsedSnapshotContents = {
 							...odspResponse,
@@ -365,7 +364,7 @@ async function fetchLatestSnapshotCore(
 						) {
 							throw new NonRetryableError(
 								"Returned odsp snapshot is malformed. No trees or blobs!",
-								DriverErrorType.incorrectServerResponse,
+								OdspErrorTypes.incorrectServerResponse,
 								propsToLog,
 							);
 						}
@@ -386,7 +385,7 @@ async function fetchLatestSnapshotCore(
 					default:
 						throw new NonRetryableError(
 							"Unknown snapshot content type",
-							DriverErrorType.incorrectServerResponse,
+							OdspErrorTypes.incorrectServerResponse,
 							propsToLog,
 						);
 				}
@@ -400,7 +399,7 @@ async function fetchLatestSnapshotCore(
 					(errorMessage) =>
 						new NonRetryableError(
 							`Error parsing snapshot response: ${errorMessage}`,
-							DriverErrorType.genericError,
+							OdspErrorTypes.genericError,
 							propsToLog,
 						),
 				);
@@ -437,7 +436,7 @@ async function fetchLatestSnapshotCore(
 					fluidEpoch !== undefined,
 					0x1e6 /* "Epoch  should be present in response" */,
 				);
-				const value: ISnapshotCachedEntry = {
+				const value: ISnapshotCachedEntry2 = {
 					...snapshot,
 					cacheEntryTime: Date.now(),
 				};
@@ -452,7 +451,7 @@ async function fetchLatestSnapshotCore(
 
 			event.end({
 				trees,
-				blobs: snapshot.blobs?.size ?? 0,
+				blobs: snapshot.blobContents?.size ?? 0,
 				leafNodes: numBlobs,
 				encodedBlobsSize,
 				sequenceNumber,
@@ -490,8 +489,8 @@ async function fetchLatestSnapshotCore(
 			if (
 				typeof error === "object" &&
 				error !== null &&
-				(error.errorType === DriverErrorType.fetchFailure ||
-					error.errorType === OdspErrorType.fetchTimeout)
+				(error.errorType === OdspErrorTypes.fetchFailure ||
+					error.errorType === OdspErrorTypes.fetchTimeout)
 			) {
 				error[getWithRetryForTokenRefreshRepeat] = true;
 			}
@@ -536,11 +535,11 @@ function getFormBodyAndHeaders(
 	return { body: postBody, headers: header };
 }
 
-export function evalBlobsAndTrees(snapshot: ISnapshotContents) {
+export function evalBlobsAndTrees(snapshot: ISnapshot) {
 	const trees = countTreesInSnapshotTree(snapshot.snapshotTree);
-	const numBlobs = snapshot.blobs.size;
+	const numBlobs = snapshot.blobContents.size;
 	let encodedBlobsSize = 0;
-	for (const [_, blobContent] of snapshot.blobs) {
+	for (const [_, blobContent] of snapshot.blobContents) {
 		encodedBlobsSize += blobContent.byteLength;
 	}
 	return { trees, numBlobs, encodedBlobsSize };
@@ -649,8 +648,8 @@ function isRedeemSharingLinkError(odspResolvedUrl: IOdspResolvedUrl, error: any)
 		odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem !== undefined &&
 		typeof error === "object" &&
 		error !== null &&
-		(error.errorType === DriverErrorType.authorizationError ||
-			error.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError)
+		(error.errorType === OdspErrorTypes.authorizationError ||
+			error.errorType === OdspErrorTypes.fileNotFoundOrAccessDeniedError)
 	) {
 		return true;
 	}

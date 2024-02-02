@@ -19,7 +19,7 @@ import { SummarizeReason } from "./summaryGenerator";
 /**
  * Similar to AbortSignal, but using promise instead of events
  * @param T - cancellation reason type
- * @public
+ * @alpha
  */
 export interface ICancellationToken<T> {
 	/** Tells if this cancellable token is cancelled */
@@ -33,13 +33,13 @@ export interface ICancellationToken<T> {
 
 /**
  * Similar to AbortSignal, but using promise instead of events
- * @public
+ * @alpha
  */
 export type ISummaryCancellationToken = ICancellationToken<SummarizerStopReason>;
 
 /**
  * Data required to update internal tracking state after receiving a Summary Ack.
- * @public
+ * @alpha
  */
 export interface IRefreshSummaryAckOptions {
 	/** Handle from the ack's summary op. */
@@ -53,7 +53,7 @@ export interface IRefreshSummaryAckOptions {
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface ISummarizerInternalsProvider {
 	/** Encapsulates the work to walk the internals of the running container to generate a summary */
@@ -78,7 +78,7 @@ export interface ISummarizerOptions {
 }
 
 /**
- * @public
+ * @internal
  */
 export interface ISummarizingWarning extends ContainerWarning {
 	readonly errorType: "summarizingError";
@@ -86,7 +86,7 @@ export interface ISummarizingWarning extends ContainerWarning {
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface IConnectableRuntime {
 	readonly disposed: boolean;
@@ -96,7 +96,7 @@ export interface IConnectableRuntime {
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface ISummarizerRuntime extends IConnectableRuntime {
 	readonly logger: ITelemetryLoggerExt;
@@ -117,7 +117,7 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
 
 /**
  * Options affecting summarize behavior.
- * @public
+ * @alpha
  */
 export interface ISummarizeOptions {
 	/** True to generate the full tree with no handle reuse optimizations; defaults to false */
@@ -132,7 +132,7 @@ export interface ISummarizeOptions {
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface ISubmitSummaryOptions extends ISummarizeOptions {
 	/** Logger to use for correlated summary events */
@@ -144,16 +144,18 @@ export interface ISubmitSummaryOptions extends ISummarizeOptions {
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
 	/** Reason for generating summary. */
 	readonly reason: string;
+	/** In case of a failure, will attempt to retry based on if the failure is retriable. */
+	readonly retryOnFailure?: boolean;
 }
 
 /**
  * Options to use when enqueueing a summarize attempt.
- * @public
+ * @alpha
  */
 export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
 	/** If specified, The summarize attempt will not occur until after this sequence number. */
@@ -171,7 +173,7 @@ export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
 /**
  * In addition to the normal summary tree + stats, this contains additional stats
  * only relevant at the root of the tree.
- * @public
+ * @alpha
  */
 export interface IGeneratedSummaryStats extends ISummaryStats {
 	/** The total number of data stores in the container. */
@@ -190,7 +192,7 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
 
 /**
  * Base results for all submitSummary attempts.
- * @public
+ * @alpha
  */
 export interface IBaseSummarizeResult {
 	readonly stage: "base";
@@ -203,7 +205,7 @@ export interface IBaseSummarizeResult {
 
 /**
  * Results of submitSummary after generating the summary tree.
- * @public
+ * @alpha
  */
 export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "stage"> {
 	readonly stage: "generate";
@@ -219,7 +221,7 @@ export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "
 
 /**
  * Results of submitSummary after uploading the tree to storage.
- * @public
+ * @alpha
  */
 export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "stage"> {
 	readonly stage: "upload";
@@ -231,7 +233,7 @@ export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "
 
 /**
  * Results of submitSummary after submitting the summarize op.
- * @public
+ * @alpha
  */
 export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stage" | "error"> {
 	readonly stage: "submit";
@@ -256,7 +258,7 @@ export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stag
  * 3. "upload" - the summary was uploaded to storage, and the result contains the server-provided handle
  *
  * 4. "submit" - the summarize op was submitted, and the result contains the op client sequence number.
- * @public
+ * @alpha
  */
 export type SubmitSummaryResult =
 	| IBaseSummarizeResult
@@ -266,13 +268,13 @@ export type SubmitSummaryResult =
 
 /**
  * The stages of Summarize, used to describe how far progress succeeded in case of a failure at a later stage.
- * @public
+ * @alpha
  */
 export type SummaryStage = SubmitSummaryResult["stage"] | "unknown";
 
 /**
  * Type for summarization failures that are retriable.
- * @public
+ * @alpha
  */
 export interface IRetriableFailureResult {
 	readonly retryAfterSeconds?: number;
@@ -280,14 +282,14 @@ export interface IRetriableFailureResult {
 
 /**
  * The data in summarizer result when submit summary stage fails.
- * @public
+ * @alpha
  */
 export interface SubmitSummaryFailureData extends IRetriableFailureResult {
 	stage: SummaryStage;
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface IBroadcastSummaryResult {
 	readonly summarizeOp: ISummaryOpMessage;
@@ -295,7 +297,7 @@ export interface IBroadcastSummaryResult {
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface IAckSummaryResult {
 	readonly summaryAckOp: ISummaryAckMessage;
@@ -303,7 +305,7 @@ export interface IAckSummaryResult {
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface INackSummaryResult extends IRetriableFailureResult {
 	readonly summaryNackOp: ISummaryNackMessage;
@@ -311,7 +313,7 @@ export interface INackSummaryResult extends IRetriableFailureResult {
 }
 
 /**
- * @public
+ * @alpha
  */
 export type SummarizeResultPart<TSuccess, TFailure = undefined> =
 	| {
@@ -326,7 +328,7 @@ export type SummarizeResultPart<TSuccess, TFailure = undefined> =
 	  };
 
 /**
- * @public
+ * @alpha
  */
 export interface ISummarizeResults {
 	/** Resolves when we generate, upload, and submit the summary. */
@@ -342,7 +344,7 @@ export interface ISummarizeResults {
 }
 
 /**
- * @public
+ * @alpha
  */
 export type EnqueueSummarizeResult =
 	| (ISummarizeResults & {
@@ -372,10 +374,10 @@ export type EnqueueSummarizeResult =
 	  };
 
 /**
- * @public
+ * @alpha
  */
 export type SummarizerStopReason =
-	/** Summarizer client failed to summarize in all 3 consecutive attempts. */
+	/** Summarizer client failed to summarize in all attempts. */
 	| "failToSummarize"
 	/** Parent client reported that it is no longer connected. */
 	| "parentNotConnected"
@@ -401,7 +403,7 @@ export type SummarizerStopReason =
 	| "latestSummaryStateStale";
 
 /**
- * @public
+ * @alpha
  */
 export interface ISummarizeEventProps {
 	result: "success" | "failure" | "canceled";
@@ -411,14 +413,14 @@ export interface ISummarizeEventProps {
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface ISummarizerEvents extends IEvent {
 	(event: "summarize", listener: (props: ISummarizeEventProps) => void);
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
 	/**

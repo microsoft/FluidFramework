@@ -4,9 +4,6 @@
 # include-publish-npm-package-steps template to publish NPM packages/projects
 
 parameters:
-- name: namespace
-  type: boolean
-
 - name: feedUrl
   type: string
 
@@ -30,35 +27,11 @@ steps:
   inputs:
     targetType: 'inline'
     workingDirectory: $(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}
-    ${{ if eq(parameters.namespace, true) }}:
-      ${{ if ne(parameters.feedKind, 'public') }}:
-        script: |
-          echo Generating .npmrc for ${{ parameters.feedUrl }}
-          echo "@fluidframework:registry=${{ parameters.feedUrl }}" >> ./.npmrc
-          echo "@fluid-example:registry=${{ parameters.feedUrl }}" >> ./.npmrc
-          echo "@fluid-internal:registry=${{ parameters.feedUrl }}" >> ./.npmrc
-          echo "@fluid-private:registry=${{ parameters.feedUrl }}" >> ./.npmrc
-          echo "@fluid-experimental:registry=${{ parameters.feedUrl }}" >> ./.npmrc
-          echo "@fluid-tools:registry=${{ parameters.feedUrl }}" >> ./.npmrc
-          echo "always-auth=true" >> ./.npmrc
-          cat .npmrc
-      ${{ if eq(parameters.feedKind, 'public') }}:
-        # The official feed excludes @fluid-example and @fluid-private. While earlier steps should also exclude these
-        # packages, excluding those scopes here is an additional defense.
-        script: |
-          echo Generating .npmrc for ${{ parameters.feedUrl }}
-          echo "@fluidframework:registry=${{ parameters.feedUrl }}" >> ./.npmrc
-          echo "@fluid-experimental:registry=${{ parameters.feedUrl }}" >> ./.npmrc
-          echo "@fluid-tools:registry=${{ parameters.feedUrl }}" >> ./.npmrc
-          echo "@fluid-internal:registry=${{ parameters.feedUrl }}" >> ./.npmrc
-          echo "always-auth=true" >> ./.npmrc
-          cat .npmrc
-    ${{ if eq(parameters.namespace, false) }}:
-      script: |
-        echo Generating .npmrc for ${{ parameters.feedUrl }}
-        echo "registry=${{ parameters.feedUrl }}" >> ./.npmrc
-        echo "always-auth=true" >> ./.npmrc
-        cat .npmrc
+    script: |
+      echo Generating .npmrc for ${{ parameters.feedUrl }}
+      echo "registry=${{ parameters.feedUrl }}" >> ./.npmrc
+      echo "always-auth=true" >> ./.npmrc
+      cat .npmrc
 - task: npmAuthenticate@0
   displayName: npm Authenticate for ${{ parameters.artifactPath }}
   inputs:
@@ -70,13 +43,14 @@ steps:
     targetType: 'inline'
     workingDirectory: $(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}
     script: |
-      tag="--tag canary"
+      echo "Artifact path: ${{ parameters.artifactPath }}"
+      tag="--tag rc"
       if [[ "$(release)" == "release" ]]; then
         if [ "$(isLatest)" = "true" ]; then
           tag="--tag latest"
         fi
       elif [[ "$(Build.SourceBranch)" = refs/heads/main ]]; then
-        tag="--tag next"
+        tag="--tag dev"
       fi
       echo Tag: $tag
       cp .npmrc ~/.npmrc
@@ -135,13 +109,14 @@ steps:
                   exit 1
                 fi
             else
-              feedId=$(grep -oP '_packaging/\K[^/]+(?=/npm/)' publish_log)
+              feedName=$(grep -oP '_packaging/\K[^/]+(?=/npm/)' publish_log)
+              echo "Feed Name: $feedName"
 
-              if [[ $release == "release" && $feedId == "build" ]]; then
+              if [[ "$(release)" == "release" && $feedName == "build" ]]; then
                 packageVersion=$(grep -oP 'npm notice version:\s+\K[^\s]+' publish_log)
 
                 if [ "${{ parameters.artifactPath }}" == "scoped" ]; then
-                  scopes=("fluidframework" "fluid-tools" "fluid-internal" "fluid-experimental")
+                  scopes=("fluidframework" "fluid-tools" "fluid-internal" "fluid-experimental" "fluid-private" "fluid-example")
                   for scope in "${scopes[@]}"; do
                       if [[ "$packageName" == "$scope"* ]]; then
                           packageName="@${packageName/$scope-/$scope/}"
@@ -149,9 +124,9 @@ steps:
                   done
                 fi
 
-                baseURL="${${{ parameters.feedUrl }}%/registry/}"
-                feedPromotionUrl="${baseURL/_packaging/_apis/packaging/feeds}"
+                feedPromotionUrl="$(ado-feeds-api-base)/packaging/feeds/${feedName}/npm/${packageName}/versions/${packageVersion}?api-version=7.1-preview.1"
 
+                echo "Promoting ${packageName} to release view using: ${feedPromotionUrl}"
                 response=$(curl -f -s -X PATCH \
                   -H "Content-Type: application/json" \
                   -H "Accept: application/json" \

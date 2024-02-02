@@ -6,7 +6,7 @@
 import { IsoDate } from "./date";
 
 /**
- * @public
+ * @alpha
  */
 export interface IDocumentAttributes {
 	/**
@@ -21,7 +21,7 @@ export interface IDocumentAttributes {
 }
 
 /**
- * @public
+ * @alpha
  */
 export enum FileMode {
 	File = "100644",
@@ -32,8 +32,7 @@ export enum FileMode {
 
 /**
  * Raw blob stored within the tree.
- *
- * @public
+ * @alpha
  */
 export interface IBlob {
 	/**
@@ -44,18 +43,19 @@ export interface IBlob {
 	/**
 	 * The encoding of the contents string
 	 */
+	// eslint-disable-next-line unicorn/text-encoding-identifier-case
 	encoding: "utf-8" | "base64";
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface IAttachment {
 	id: string;
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface ICreateBlobResponse {
 	id: string;
@@ -63,8 +63,7 @@ export interface ICreateBlobResponse {
 
 /**
  * A tree entry wraps a path with a type of node.
- *
- * @public
+ * @alpha
  */
 export type ITreeEntry = {
 	/**
@@ -94,8 +93,7 @@ export type ITreeEntry = {
 
 /**
  * Type of entries that can be stored in a tree.
- *
- * @public
+ * @alpha
  */
 export enum TreeEntry {
 	Blob = "Blob",
@@ -104,7 +102,7 @@ export enum TreeEntry {
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface ITree {
 	entries: ITreeEntry[];
@@ -119,10 +117,17 @@ export interface ITree {
 	 * Indicates that this tree is unreferenced. If this is not present, the tree is considered referenced.
 	 */
 	unreferenced?: true;
+
+	/**
+	 * Represents the group to which the tree belongs to. When the server returns the snapshot to
+	 * the client, and this tree is missing in that snapshot, then this could be used to request the contents
+	 * from the service.
+	 */
+	groupId?: string;
 }
 
 /**
- * @public
+ * @alpha
  */
 export interface ISnapshotTree {
 	id?: string;
@@ -133,10 +138,17 @@ export interface ISnapshotTree {
 	 * Indicates that this tree is unreferenced. If this is not present, the tree is considered referenced.
 	 */
 	unreferenced?: true;
+
+	/**
+	 * Represents the group to which the snapshot tree belongs to. When the server returns the snapshot to
+	 * the client, and this tree is missing in that snapshot, then this could be used to request the contents
+	 * from the service.
+	 */
+	groupId?: string;
 }
 
 /**
- * @public
+ * @internal
  */
 export interface ISnapshotTreeEx extends ISnapshotTree {
 	id: string;
@@ -145,8 +157,7 @@ export interface ISnapshotTreeEx extends ISnapshotTree {
 
 /**
  * Represents a version of the snapshot of a data store.
- *
- * @public
+ * @alpha
  */
 export interface IVersion {
 	/**

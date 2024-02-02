@@ -13,24 +13,21 @@ import {
 	DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IFluidRouter } from "@fluidframework/core-interfaces";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import {
-	ConfigTypes,
-	IConfigProviderBase,
-	createChildLogger,
-} from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	ITestContainerConfig,
 	DataObjectFactoryType,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluid-private/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { IDataStore } from "@fluidframework/runtime-definitions";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 
-describeFullCompat("Named root data stores", (getTestObjectProvider) => {
+describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 
@@ -71,10 +68,10 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 			loaderProps: { configProvider: configProvider(featureGates) },
 		};
 		container1 = await provider.makeTestContainer(configWithFeatureGates);
-		dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "/");
+		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 
 		container2 = await provider.loadTestContainer(configWithFeatureGates);
-		dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "/");
+		dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 
 		await provider.ensureSynchronized();
 	};
@@ -91,7 +88,10 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 	 * Gets an aliased data store with the given id. Throws an error if the data store cannot be retrieved.
 	 */
 	async function getAliasedDataStoreEntryPoint(dataObject: ITestFluidObject, id: string) {
-		const dataStore = await runtimeOf(dataObject).getAliasedDataStoreEntryPoint(id);
+		// Back compat support - older versions of the runtime do not have getAliasedDataStoreEntryPoint
+		// Can be removed once we no longer support ^2.0.0-internal.7.0.0
+		const dataStore = await (runtimeOf(dataObject).getAliasedDataStoreEntryPoint?.(id) ??
+			(runtimeOf(dataObject) as any).getRootDataStore(id, false /* wait */));
 		if (dataStore === undefined) {
 			throw new Error("Could not get aliased data store");
 		}
@@ -99,7 +99,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 	}
 
 	describe("Legacy APIs", () => {
-		beforeEach(async () => setupContainers(testContainerConfig));
+		beforeEach("setupContainers", async () => setupContainers(testContainerConfig));
 		afterEach(async () => reset());
 
 		it("Datastore creation with legacy API returns datastore which can be aliased", async () => {
@@ -110,18 +110,18 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 	});
 
 	describe("Aliasing", () => {
-		beforeEach(async () => setupContainers());
+		beforeEach("setupContainers", async () => setupContainers());
 		afterEach(async () => reset());
 
 		const alias = "alias";
 
-		it("Assign multiple data stores to the same alias, first write wins, same container - detached", async () => {
+		it("Assign multiple data stores to the same alias, first write wins, same container - detached", async function () {
 			const loader = provider.makeTestLoader(testContainerConfig) as Loader;
 			const container: IContainer = await loader.createDetachedContainer(
 				provider.defaultCodeDetails,
 			);
 			const request = provider.driver.createCreateNewRequest(provider.documentId);
-			const dataObject = await requestFluidObject<ITestFluidObject>(container, "/");
+			const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 			const ds1 = await runtimeOf(dataObject).createDataStore(packageName);
 			const ds2 = await runtimeOf(dataObject).createDataStore(packageName);
 
@@ -139,7 +139,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 			assert.equal(aliasResult3, "Conflict");
 		});
 
-		it("Assign multiple data stores to the same alias, first write wins, same container", async () => {
+		it("Assign multiple data stores to the same alias, first write wins, same container", async function () {
 			const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
 			const ds2 = await runtimeOf(dataObject1).createDataStore(packageName);
 
@@ -167,7 +167,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 			);
 		});
 
-		it("Aliasing a datastore is idempotent", async () => {
+		it("Aliasing a datastore is idempotent", async function () {
 			const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
 
 			const aliasResult1 = await ds1.trySetAlias(alias);
@@ -179,7 +179,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 			assert.ok(await getAliasedDataStoreEntryPoint(dataObject1, alias));
 		});
 
-		it("Aliasing a datastore while aliasing", async () => {
+		it("Aliasing a datastore while aliasing", async function () {
 			const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
 			const ds2 = await runtimeOf(dataObject1).createDataStore(packageName);
 			const ds3 = await runtimeOf(dataObject1).createDataStore(packageName);
@@ -216,8 +216,8 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 		it(
 			"Trying to create multiple datastores aliased to the same value on the same client " +
 				"will always return the same datastore",
-			async () => {
-				const datastores: IFluidRouter[] = [];
+			async function () {
+				const datastores: IDataStore[] = [];
 				const createAliasedDataStore = async () => {
 					try {
 						await getAliasedDataStoreEntryPoint(dataObject1, alias);
@@ -241,7 +241,11 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 			},
 		);
 
-		it("Aliasing a datastore during an alias operation with the same name", async () => {
+		it("Aliasing a datastore during an alias operation with the same name", async function () {
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6978
+			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				this.skip();
+			}
 			const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
 			const ds2 = await runtimeOf(dataObject1).createDataStore(packageName);
 
@@ -262,7 +266,7 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 			assert.equal(aliasResult4, "Success");
 		});
 
-		it("Aliasing a previously aliased datastore will fail", async () => {
+		it("Aliasing a previously aliased datastore will fail", async function () {
 			const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
 
 			const aliasResult1 = await ds1.trySetAlias(alias);
@@ -274,7 +278,11 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 			assert.ok(await getAliasedDataStoreEntryPoint(dataObject1, alias));
 		});
 
-		it("Aliasing a datastore which previously failed to alias will succeed", async () => {
+		it("Aliasing a datastore which previously failed to alias will succeed", async function () {
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6978
+			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				this.skip();
+			}
 			const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
 			const ds2 = await runtimeOf(dataObject1).createDataStore(packageName);
 
@@ -313,7 +321,8 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 
 			await provider.ensureSynchronized();
 			const container3 = await provider.loadTestContainer(testContainerConfig);
-			const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "/");
+			const dataObject3 =
+				await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
 
 			await provider.ensureSynchronized();
 			assert.ok(await getAliasedDataStoreEntryPoint(dataObject3, alias));
@@ -322,7 +331,12 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 		it(
 			"Assign multiple data stores to the same alias, first write wins, " +
 				"different containers from snapshot",
-			async () => {
+			async function () {
+				// TODO: Re-enable after cross version compat bugs are fixed - ADO:6978
+				if (provider.type === "TestObjectProviderWithVersionedLoad") {
+					this.skip();
+				}
+
 				await setupContainers({
 					...testContainerConfig,
 					runtimeOptions: {
@@ -375,7 +389,8 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 						[LoaderHeader.version]: version,
 					}, // requestHeader
 				);
-				const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "/");
+				const dataObject3 =
+					await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
 				const ds3 = await runtimeOf(dataObject3).createDataStore(packageName);
 				const aliasResult3 = await ds3.trySetAlias(alias);
 
@@ -384,7 +399,11 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 			},
 		);
 
-		it("getAliasedDataStoreEntryPoint only returns aliased data stores", async () => {
+		it("getAliasedDataStoreEntryPoint only returns aliased data stores", async function () {
+			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6978
+			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				this.skip();
+			}
 			const dataStore = await runtimeOf(dataObject1).createDataStore(packageName);
 			const dataObject = (await dataStore.entryPoint?.get()) as ITestFluidObject;
 			assert(dataObject !== undefined, "could not create data store");

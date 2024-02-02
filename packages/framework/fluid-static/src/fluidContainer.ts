@@ -3,17 +3,27 @@
  * Licensed under the MIT License.
  */
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
+import {
+	type IEvent,
+	type IEventProvider,
+	type IFluidLoadable,
+} from "@fluidframework/core-interfaces";
 import {
 	AttachState,
-	IContainer,
-	ICriticalContainerError,
-	ConnectionState,
+	type IContainer,
+	type ICriticalContainerError,
+	type ConnectionState,
 } from "@fluidframework/container-definitions";
-import type { ContainerSchema, IRootDataObject, LoadableObjectClass } from "./types";
+import type {
+	ContainerSchema,
+	ContainerAttachProps,
+	IRootDataObject,
+	LoadableObjectClass,
+} from "./types";
 
 /**
  * Extract the type of 'initialObjects' from the given {@link ContainerSchema} type.
+ * @public
  */
 export type InitialObjects<T extends ContainerSchema> = {
 	// Construct a LoadableObjectRecord type by enumerating the keys of
@@ -30,6 +40,10 @@ export type InitialObjects<T extends ContainerSchema> = {
 
 /**
  * Events emitted from {@link IFluidContainer}.
+ *
+ * @remarks Note: external implementations of this interface are not supported.
+ * @sealed
+ * @public
  */
 export interface IFluidContainerEvents extends IEvent {
 	/**
@@ -94,6 +108,9 @@ export interface IFluidContainerEvents extends IEvent {
  * @typeparam TContainerSchema - Used to determine the type of 'initialObjects'.
  *
  * @remarks Note: external implementations of this interface are not supported.
+ *
+ * @sealed
+ * @public
  */
 export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	extends IEventProvider<IFluidContainerEvents> {
@@ -159,7 +176,7 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	 *
 	 * @returns A promise which resolves when the attach is complete, with the string identifier of the container.
 	 */
-	attach(): Promise<string>;
+	attach(props?: ContainerAttachProps): Promise<string>;
 
 	/**
 	 * Attempts to connect the container to the delta stream and process operations.
@@ -169,7 +186,7 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	 * @remarks
 	 *
 	 * This should only be called when the container is in the
-	 * {@link @fluidframework/container-definitions#ConnectionState.Disconnected} state.
+	 * {@link @fluidframework/container-definitions#(ConnectionState:namespace).Disconnected} state.
 	 *
 	 * This can be determined by observing {@link IFluidContainer.connectionState}.
 	 */
@@ -181,7 +198,7 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	 * @remarks
 	 *
 	 * This should only be called when the container is in the
-	 * {@link @fluidframework/container-definitions#ConnectionState.Connected} state.
+	 * {@link @fluidframework/container-definitions#(ConnectionState:namespace).Connected} state.
 	 *
 	 * This can be determined by observing {@link IFluidContainer.connectionState}.
 	 */
@@ -209,6 +226,20 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 }
 
 /**
+ * Creates an {@link IFluidContainer} from the provided `container` and `rootDataObject`.
+ *
+ * @internal
+ */
+export function createFluidContainer<
+	TContainerSchema extends ContainerSchema = ContainerSchema,
+>(props: {
+	container: IContainer;
+	rootDataObject: IRootDataObject;
+}): IFluidContainer<TContainerSchema> {
+	return new FluidContainer<TContainerSchema>(props.container, props.rootDataObject);
+}
+
+/**
  * Base {@link IFluidContainer} implementation.
  *
  * @typeparam TContainerSchema - Used to determine the type of 'initialObjects'.
@@ -216,17 +247,19 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
  *
  * Note: this implementation is not complete. Consumers who rely on {@link IFluidContainer.attach}
  * will need to utilize or provide a service-specific implementation of this type that implements that method.
+ * @deprecated use {@link createFluidContainer} and {@link IFluidContainer} instead
+ * @internal
  */
-export class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
+class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	extends TypedEventEmitter<IFluidContainerEvents>
 	implements IFluidContainer<TContainerSchema>
 {
-	private readonly connectedHandler = () => this.emit("connected");
-	private readonly disconnectedHandler = () => this.emit("disconnected");
-	private readonly disposedHandler = (error?: ICriticalContainerError) =>
+	private readonly connectedHandler = (): boolean => this.emit("connected");
+	private readonly disconnectedHandler = (): boolean => this.emit("disconnected");
+	private readonly disposedHandler = (error?: ICriticalContainerError): boolean =>
 		this.emit("disposed", error);
-	private readonly savedHandler = () => this.emit("saved");
-	private readonly dirtyHandler = () => this.emit("dirty");
+	private readonly savedHandler = (): boolean => this.emit("saved");
+	private readonly dirtyHandler = (): boolean => this.emit("dirty");
 
 	public constructor(
 		private readonly container: IContainer,
@@ -257,7 +290,7 @@ export class FluidContainer<TContainerSchema extends ContainerSchema = Container
 	/**
 	 * {@inheritDoc IFluidContainer.disposed}
 	 */
-	public get disposed() {
+	public get disposed(): boolean {
 		return this.container.closed;
 	}
 
@@ -287,7 +320,7 @@ export class FluidContainer<TContainerSchema extends ContainerSchema = Container
 	 * The reason is because externally we are presenting a separation between the service and the `FluidContainer`,
 	 * but internally this separation is not there.
 	 */
-	public async attach(): Promise<string> {
+	public async attach(props?: ContainerAttachProps): Promise<string> {
 		if (this.container.attachState !== AttachState.Detached) {
 			throw new Error("Cannot attach container. Container is not in detached state.");
 		}
@@ -318,7 +351,7 @@ export class FluidContainer<TContainerSchema extends ContainerSchema = Container
 	/**
 	 * {@inheritDoc IFluidContainer.dispose}
 	 */
-	public dispose() {
+	public dispose(): void {
 		this.container.close();
 		this.container.off("connected", this.connectedHandler);
 		this.container.off("closed", this.disposedHandler);
@@ -334,8 +367,6 @@ export class FluidContainer<TContainerSchema extends ContainerSchema = Container
 	 * Gets the underlying {@link @fluidframework/container-definitions#IContainer}.
 	 *
 	 * @remarks Used to power debug tooling.
-	 *
-	 * @internal
 	 */
 	public readonly INTERNAL_CONTAINER_DO_NOT_USE?: () => IContainer = () => {
 		return this.container;

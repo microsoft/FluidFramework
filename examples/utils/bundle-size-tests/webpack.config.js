@@ -60,7 +60,7 @@ webpackModuleRules.push(
 		exclude: /node_modules/,
 	},
 	{
-		test: /\.js$/,
+		test: /\.m?js$/,
 		use: [require.resolve("source-map-loader")],
 		enforce: "pre",
 	},
@@ -77,7 +77,7 @@ module.exports = {
 		odspDriver: "./src/odspDriver",
 		odspPrefetchSnapshot: "./src/odspPrefetchSnapshot",
 		sharedString: "./src/sharedString",
-		sharedTree2: "./src/sharedTree2",
+		sharedTree: "./src/sharedTree",
 	},
 	mode: "production",
 	module: {

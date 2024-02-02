@@ -2,17 +2,19 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { IMember, IServiceAudience } from "@fluidframework/fluid-static";
-import { IUser } from "@fluidframework/protocol-definitions";
-import { ITokenProvider } from "@fluidframework/routerlicious-driver";
+import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { type IMember, type IServiceAudience } from "@fluidframework/fluid-static";
+import { type IUser } from "@fluidframework/protocol-definitions";
+import { type ITokenProvider } from "@fluidframework/routerlicious-driver";
 // Re-export so developers can build loggers without pulling in core-interfaces
-export { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+export {
+	type ITelemetryBaseEvent,
+	type ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 
 /**
  * Props for initializing a {@link TinyliciousClient}
- *
- * @public
+ * @internal
  */
 export interface TinyliciousClientProps {
 	/**
@@ -28,8 +30,7 @@ export interface TinyliciousClientProps {
 
 /**
  * Parameters for establishing a connection with the a Tinylicious service.
- *
- * @public
+ * @internal
  */
 export interface TinyliciousConnectionConfig {
 	/**
@@ -62,8 +63,7 @@ export interface TinyliciousConnectionConfig {
  * the FluidContainer is persisted in the backend and consumed by users. Any functionality regarding
  * how the data is handled within the FluidContainer itself, i.e. which data objects or DDSes to use,
  * will not be included here but rather on the FluidContainer class itself.
- *
- * @public
+ * @internal
  */
 export interface TinyliciousContainerServices {
 	/**
@@ -76,8 +76,7 @@ export interface TinyliciousContainerServices {
 /**
  * Since Tinylicious provides user names for all of its members, we extend the `IUser` interface to include
  * this service-specific value.
- *
- * @public
+ * @internal
  */
 export interface TinyliciousUser extends IUser {
 	/**
@@ -89,8 +88,7 @@ export interface TinyliciousUser extends IUser {
 /**
  * Since Tinylicious provides user names for all of its members, we extend the `IMember` interface to include
  * this service-specific value. It will be returned for all audience members connected to Tinylicious.
- *
- * @public
+ * @internal
  */
 export interface TinyliciousMember extends IMember {
 	/**
@@ -101,7 +99,6 @@ export interface TinyliciousMember extends IMember {
 
 /**
  * Tinylicious-specific {@link @fluidframework/fluid-static#IServiceAudience} implementation.
- *
- * @public
+ * @internal
  */
 export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;

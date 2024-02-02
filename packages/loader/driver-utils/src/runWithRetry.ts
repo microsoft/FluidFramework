@@ -13,7 +13,7 @@ import { pkgVersion } from "./packageVersion";
 /**
  * Interface describing an object passed to various network APIs.
  * It allows caller to control cancellation, as well as learn about any delays.
- * @public
+ * @internal
  */
 export interface IProgress {
 	/**
@@ -44,7 +44,7 @@ export interface IProgress {
 }
 
 /**
- * @public
+ * @internal
  */
 export async function runWithRetry<T>(
 	api: (cancel?: AbortSignal) => Promise<T>,
@@ -150,13 +150,13 @@ const MaxReconnectDelayInMsWhenEndpointIsNotReachable = 8000;
  * @param delayMs - wait time for previous iteration
  * @param error - error based on which we decide wait time.
  * @returns Wait time to wait for.
- * @public
+ * @internal
  */
 export function calculateMaxWaitTime(delayMs: number, error: unknown): number {
 	const retryDelayFromError = getRetryDelayFromError(error);
 	let newDelayMs = Math.max(retryDelayFromError ?? 0, delayMs * 2);
 	newDelayMs = Math.min(
-		delayMs,
+		newDelayMs,
 		isFluidError(error) && error.getTelemetryProperties().endpointReached === true
 			? MaxReconnectDelayInMsWhenEndpointIsReachable
 			: MaxReconnectDelayInMsWhenEndpointIsNotReachable,

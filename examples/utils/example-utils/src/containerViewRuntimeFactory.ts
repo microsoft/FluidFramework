@@ -12,8 +12,14 @@ import { IFluidMountableView } from "@fluidframework/view-interfaces";
 
 const dataStoreId = "modelDataStore";
 
+/**
+ * @internal
+ */
 export type ViewCallback<T> = (fluidModel: T) => any;
 
+/**
+ * @internal
+ */
 export async function getDataStoreEntryPoint<T>(
 	containerRuntime: IContainerRuntime,
 	alias: string,
@@ -29,6 +35,9 @@ export async function getDataStoreEntryPoint<T>(
 	return entryPointHandle.get();
 }
 
+/**
+ * @internal
+ */
 export interface IFluidMountableViewEntryPoint {
 	getDefaultDataObject(): Promise<FluidObject>;
 	getMountableDefaultView(path?: string): Promise<IFluidMountableView>;
@@ -38,6 +47,7 @@ export interface IFluidMountableViewEntryPoint {
  * The ContainerViewRuntimeFactory is an example utility built to support binding a single model to a single view
  * within the container.  For more-robust implementation of binding views within the container, check out the examples
  * \@fluid-example/app-integration-container-views and \@fluid-example/multiview-container
+ * @internal
  */
 export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory {
 	constructor(
@@ -48,6 +58,7 @@ export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory 
 		// and add our default view request handler.
 		super({
 			registryEntries: new Map([[dataStoreFactory.type, Promise.resolve(dataStoreFactory)]]),
+			runtimeOptions: { enableRuntimeIdCompressor: true },
 			provideEntryPoint: async (
 				containerRuntime: IContainerRuntime,
 			): Promise<IFluidMountableViewEntryPoint> => {

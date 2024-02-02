@@ -10,9 +10,9 @@ export {
 	createResponseError,
 	exceptionToResponse,
 	Factory,
-	requestFluidObject,
 	responseToException,
 } from "./dataStoreHelpers";
+export { ISerializedHandle, isSerializedHandle } from "./handles";
 export { ObjectStoragePartition } from "./objectstoragepartition";
 export { getNormalizedObjectStoragePathParts, listBlobsAtTreePath } from "./objectstorageutils";
 export { RequestParser } from "./requestParser";
@@ -29,6 +29,7 @@ export {
 	GCDataBuilder,
 	getBlobSize,
 	mergeStats,
+	processAttachMessageGCData,
 	SummaryTreeBuilder,
 	TelemetryContext,
 	utf8ByteLength,

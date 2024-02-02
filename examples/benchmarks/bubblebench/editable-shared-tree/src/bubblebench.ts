@@ -8,15 +8,18 @@ import {
 	ISharedTree,
 	FlexTreeView,
 	SharedTreeFactory,
-} from "@fluid-experimental/tree2";
+} from "@fluidframework/tree";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { AppState } from "./appState";
-import { appSchemaData, rootAppStateSchema } from "./schema";
+import { AppState } from "./appState.js";
+import { appSchemaData, rootAppStateSchema } from "./schema.js";
 
 // Key used to store/retrieve the SharedTree instance within the root SharedMap.
 const treeKey = "treeKey";
 
+/**
+ * @internal
+ */
 export class Bubblebench extends DataObject {
 	public static readonly Name = "@fluid-example/bubblebench-sharedtree";
 
@@ -42,7 +45,7 @@ export class Bubblebench extends DataObject {
 
 	protected async hasInitialized() {
 		this._appState = new AppState(
-			this.tree.editableTree,
+			this.tree.flexTree,
 			/* stageWidth: */ 640,
 			/* stageHeight: */ 480,
 			/* numBubbles: */ 1,
@@ -99,6 +102,7 @@ export class Bubblebench extends DataObject {
 /**
  * The DataObjectFactory declares the Fluid object and defines any additional distributed data structures.
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
+ * @internal
  */
 export const BubblebenchInstantiationFactory = new DataObjectFactory(
 	Bubblebench.Name,

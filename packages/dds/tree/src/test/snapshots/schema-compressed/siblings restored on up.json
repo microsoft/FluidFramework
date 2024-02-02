@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "identifiers": [
+    "Cursor Test Suite.Map"
+  ],
+  "shapes": [
+    {
+      "c": {
+        "extraFields": 1
+      }
+    },
+    {
+      "d": 0
+    },
+    {
+      "a": 1
+    }
+  ],
+  "data": [
+    [
+      0,
+      0,
+      false,
+      [
+        "X",
+        2,
+        [
+          0,
+          0,
+          false,
+          [
+            "q",
+            0,
+            "Cursor Test Suite.Empty object 2",
+            false,
+            []
+          ],
+          0,
+          "Cursor Test Suite.Empty object 3",
+          false,
+          []
+        ]
+      ]
+    ]
+  ]
+}

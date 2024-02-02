@@ -37,6 +37,9 @@ import { IQuorumSnapshot, getGitMode, getGitType } from "@fluidframework/protoco
 import { gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
 
 // Forked from DocumentStorage to remove to server dependencies and enable testing of other data stores.
+/**
+ * @internal
+ */
 export class TestDocumentStorage implements IDocumentStorage {
 	constructor(
 		private readonly databaseManager: IDatabaseManager,
@@ -243,6 +246,7 @@ export class TestDocumentStorage implements IDocumentStorage {
  * @param summaryTree - summary tree to be written to storage.
  * @param blobsShaCache - cache so that duplicate blobs are written only once.
  * @param snapshot - snapshot tree.
+ * @internal
  */
 export async function writeSummaryTree(
 	manager: IGitManager,

@@ -13,7 +13,7 @@ import { format as prettier } from "prettier";
 import prompts from "prompts";
 
 import { BaseCommand } from "../../base";
-import { Repository, getDefaultBumpTypeForBranch } from "../../lib";
+import { Repository, getDefaultBumpTypeForBranch } from "../../library";
 import { releaseGroupFlag } from "../../flags";
 
 /**

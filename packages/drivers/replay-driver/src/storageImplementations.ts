@@ -4,10 +4,12 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
 	IDocumentService,
+	IDocumentServiceEvents,
 	IDocumentServiceFactory,
 	IDocumentStorageService,
 	IResolvedUrl,
@@ -26,12 +28,16 @@ import { ReadDocumentStorageServiceBase } from "./replayController";
 
 /**
  * Structure of snapshot on disk, when we store snapshot as single file
+ * @internal
  */
 export interface IFileSnapshot {
 	tree: ITree;
 	commits: { [key: string]: ITree };
 }
 
+/**
+ * @internal
+ */
 export class FileSnapshotReader
 	extends ReadDocumentStorageServiceBase
 	implements IDocumentStorageService
@@ -100,6 +106,9 @@ export class FileSnapshotReader
 	}
 }
 
+/**
+ * @internal
+ */
 export class SnapshotStorage extends ReadDocumentStorageServiceBase {
 	protected docId?: string;
 
@@ -134,6 +143,9 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
 	}
 }
 
+/**
+ * @internal
+ */
 export class OpStorage extends ReadDocumentStorageServiceBase {
 	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
 		return [];
@@ -148,11 +160,16 @@ export class OpStorage extends ReadDocumentStorageServiceBase {
 	}
 }
 
-export class StaticStorageDocumentService implements IDocumentService {
+export class StaticStorageDocumentService
+	extends TypedEventEmitter<IDocumentServiceEvents>
+	implements IDocumentService
+{
 	constructor(
 		public readonly resolvedUrl: IResolvedUrl,
 		private readonly storage: IDocumentStorageService,
-	) {}
+	) {
+		super();
+	}
 
 	public dispose() {}
 
@@ -170,6 +187,9 @@ export class StaticStorageDocumentService implements IDocumentService {
 	}
 }
 
+/**
+ * @internal
+ */
 export class StaticStorageDocumentServiceFactory implements IDocumentServiceFactory {
 	public constructor(protected readonly storage: IDocumentStorageService) {}
 

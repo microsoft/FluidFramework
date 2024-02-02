@@ -17,14 +17,12 @@ import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
-import { IFluidRouter } from '@fluidframework/core-interfaces';
-import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 
-// @public
+// @alpha
 export interface IContainerRuntime extends IProvideFluidDataStoreRegistry, IContainerRuntimeBaseWithCombinedEvents {
     readonly attachState: AttachState;
     // (undocumented)
@@ -40,23 +38,19 @@ export interface IContainerRuntime extends IProvideFluidDataStoreRegistry, ICont
     readonly flushMode: FlushMode;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
-    // @deprecated
-    getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
     readonly isDirty: boolean;
     // (undocumented)
-    readonly options: ILoaderOptions;
-    // @deprecated
-    resolveHandle(request: IRequest): Promise<IResponse>;
+    readonly options: Record<string | number, any>;
     // (undocumented)
     readonly scope: FluidObject;
     // (undocumented)
     readonly storage: IDocumentStorageService;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase & IEventProvider<IContainerRuntimeEvents>;
 
-// @public
+// @alpha
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
     // (undocumented)
     (event: "dirty" | "disconnected" | "dispose" | "saved" | "attached", listener: () => void): any;
@@ -64,7 +58,7 @@ export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
     (event: "connected", listener: (clientId: string) => void): any;
 }
 
-// @public @deprecated (undocumented)
+// @alpha @deprecated (undocumented)
 export interface IContainerRuntimeWithResolveHandle_Deprecated extends IContainerRuntime {
     // (undocumented)
     readonly IFluidHandleContext: IFluidHandleContext;

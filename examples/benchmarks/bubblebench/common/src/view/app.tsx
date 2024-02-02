@@ -5,9 +5,9 @@
 
 import React, { useEffect, useState } from "react";
 import useResizeObserver from "use-resize-observer";
-import { Stats } from "../stats";
-import { IAppState, IBubble } from "../types";
-import { StageView } from "./stage";
+import { Stats } from "../stats.js";
+import { IAppState, IBubble } from "../types.js";
+import { StageView } from "./stage.js";
 
 const formatFloat = (n: number): number => Math.round(n * 10) / 10;
 interface IAppProps {
@@ -68,6 +68,10 @@ function collide(left: IBubble, right: IBubble): void {
 	right.vy = rvy + dy * impulse;
 }
 
+// eslint-disable-next-line jsdoc/require-description
+/**
+ * @internal
+ */
 export const AppView: React.FC<IAppProps> = ({ app }: IAppProps) => {
 	const [stats] = useState<Stats>(new Stats());
 	const [, setFrame] = useState<number>(0);

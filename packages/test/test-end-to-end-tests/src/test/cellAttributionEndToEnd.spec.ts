@@ -10,7 +10,6 @@ import {
 	enableOnNewFileKey,
 	IRuntimeAttributor,
 } from "@fluid-experimental/attributor";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedCell } from "@fluidframework/cell";
 import {
 	ITestObjectProvider,
@@ -18,14 +17,11 @@ import {
 	DataObjectFactoryType,
 	ChannelFactoryRegistry,
 	ITestFluidObject,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import {
-	describeNoCompat,
-	itSkipsFailureOnSpecificDrivers,
-} from "@fluid-private/test-version-utils";
+import { describeCompat, itSkipsFailureOnSpecificDrivers } from "@fluid-private/test-version-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
-
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 const cellId = "sharedCellKey";
 const registry: ChannelFactoryRegistry = [[cellId, SharedCell.getFactory()]];
 const testContainerConfig: ITestContainerConfig = {
@@ -80,9 +76,9 @@ function assertAttributionMatches(
 	}
 }
 
-describeNoCompat("Attributor for SharedCell", (getTestObjectProvider) => {
+describeCompat("Attributor for SharedCell", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 
@@ -91,7 +87,7 @@ describeNoCompat("Attributor for SharedCell", (getTestObjectProvider) => {
 	});
 
 	const sharedCellFromContainer = async (container: IContainer) => {
-		const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+		const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 		return dataObject.getSharedObject<SharedCell>(cellId);
 	};
 
@@ -103,11 +99,13 @@ describeNoCompat("Attributor for SharedCell", (getTestObjectProvider) => {
 			configProvider: configProvider({
 				[enableOnNewFileKey]: runtimeAttributor !== undefined,
 			}),
+			// TODO this option shouldn't live here - this options object is global to the container
+			// and not specific to the individual dataStoreRuntime.
 			options: {
 				attribution: {
 					track: runtimeAttributor !== undefined,
 				},
-			},
+			} as any,
 		},
 	});
 

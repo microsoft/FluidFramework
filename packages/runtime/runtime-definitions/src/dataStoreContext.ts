@@ -8,21 +8,13 @@ import {
 	IEventProvider,
 	ITelemetryBaseLogger,
 	IDisposable,
-	// eslint-disable-next-line import/no-deprecated
-	IFluidRouter,
 	IProvideFluidHandleContext,
 	IFluidHandle,
 	IRequest,
 	IResponse,
 	FluidObject,
-	IFluidHandleContext,
 } from "@fluidframework/core-interfaces";
-import {
-	IAudience,
-	IDeltaManager,
-	AttachState,
-	ILoaderOptions,
-} from "@fluidframework/container-definitions";
+import { IAudience, IDeltaManager, AttachState } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
 	IClientDetails,
@@ -31,6 +23,7 @@ import {
 	ISequencedDocumentMessage,
 	ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 import { IProvideFluidDataStoreFactory } from "./dataStoreFactory";
 import { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry";
 import { IGarbageCollectionData, IGarbageCollectionDetailsBase } from "./garbageCollection";
@@ -42,10 +35,10 @@ import {
 	ITelemetryContext,
 	SummarizeInternalFn,
 } from "./summary";
-import { IIdCompressor } from "./id-compressor";
 
 /**
  * Runtime flush mode handling
+ * @alpha
  */
 export enum FlushMode {
 	/**
@@ -60,6 +53,9 @@ export enum FlushMode {
 	TurnBased,
 }
 
+/**
+ * @internal
+ */
 export enum FlushModeExperimental {
 	/**
 	 * When in Async flush mode, the runtime will accumulate all operations across JS turns and send them as a single
@@ -76,6 +72,7 @@ export enum FlushModeExperimental {
 /**
  * This tells the visibility state of a Fluid object. It basically tracks whether the object is not visible, visible
  * locally within the container only or visible globally to all clients.
+ * @alpha
  */
 export const VisibilityState = {
 	/**
@@ -101,8 +98,14 @@ export const VisibilityState = {
 	 */
 	GloballyVisible: "GloballyVisible",
 };
+/**
+ * @alpha
+ */
 export type VisibilityState = (typeof VisibilityState)[keyof typeof VisibilityState];
 
+/**
+ * @alpha
+ */
 export interface IContainerRuntimeBaseEvents extends IEvent {
 	(event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void);
 	/**
@@ -122,6 +125,7 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
  * the `IContainerRuntime.getAliasedDataStoreEntryPoint` function. The current datastore should be discarded
  * and will be garbage collected. The current datastore cannot be aliased to a different value.
  * 'AlreadyAliased' - the datastore has already been previously bound to another alias name.
+ * @alpha
  */
 export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
 
@@ -130,6 +134,7 @@ export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
  * - Handle to the data store's entryPoint
  * - Fluid router for the data store
  * - Can be assigned an alias
+ * @alpha
  */
 export interface IDataStore {
 	/**
@@ -147,43 +152,12 @@ export interface IDataStore {
 	 * with it.
 	 */
 	readonly entryPoint: IFluidHandle<FluidObject>;
-
-	/**
-	 * @deprecated Requesting will not be supported in a future major release.
-	 * Instead, access the objects within the DataStore using entryPoint, and then navigate from there using
-	 * app-specific logic (e.g. retrieving a handle from a DDS, or the entryPoint object could implement a request paradigm itself)
-	 *
-	 * IMPORTANT: This overload is provided for back-compat where IDataStore.request(\{ url: "/" \}) is already implemented and used.
-	 * The functionality it can provide (if the DataStore implementation is built for it) is redundant with @see {@link IDataStore.entryPoint}.
-	 *
-	 * Refer to Removing-IFluidRouter.md for details on migrating from the request pattern to using entryPoint.
-	 *
-	 * @param request - Only requesting \{ url: "/" \} is supported, requesting arbitrary URLs is deprecated.
-	 */
-	request(request: { url: "/"; headers?: undefined }): Promise<IResponse>;
-
-	/**
-	 * Issue a request against the DataStore for a resource within it.
-	 * @param request - The request to be issued against the DataStore
-	 *
-	 * @deprecated Requesting an arbitrary URL with headers will not be supported in a future major release.
-	 * Instead, access the objects within the DataStore using entryPoint, and then navigate from there using
-	 * app-specific logic (e.g. retrieving a handle from a DDS, or the entryPoint object could implement a request paradigm itself)
-	 *
-	 * Refer to Removing-IFluidRouter.md for details on migrating from the request pattern to using entryPoint.
-	 */
-	request(request: IRequest): Promise<IResponse>;
-
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	readonly IFluidRouter: IFluidRouter;
 }
 
 /**
  * A reduced set of functionality of IContainerRuntime that a data store context/data store runtime will need
  * TODO: this should be merged into IFluidDataStoreContext
+ * @alpha
  */
 export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents> {
 	readonly logger: ITelemetryBaseLogger;
@@ -191,15 +165,11 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 
 	/**
 	 * Invokes the given callback and guarantees that all operations generated within the callback will be ordered
-	 * sequentially. Total size of all messages must be less than maxOpSize.
+	 * sequentially.
+	 *
+	 * If the callback throws an error, the container will close and the error will be logged.
 	 */
 	orderSequentially(callback: () => void): void;
-
-	/**
-	 * Executes a request against the container runtime
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	request(request: IRequest): Promise<IResponse>;
 
 	/**
 	 * Submits a container runtime level signal to be sent to other clients.
@@ -210,7 +180,6 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 
 	/**
 	 * @deprecated 0.16 Issue #1537, #3631
-	 * @internal
 	 */
 	_createDataStoreWithProps(
 		pkg: string | string[],
@@ -225,14 +194,22 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * already attached DDS (or non-attached DDS that will eventually get attached to storage) will result in this
 	 * store being attached to storage.
 	 * @param pkg - Package name of the data store factory
+	 * @param groupId - group to which this data stores belongs to. This is also known at service side and can be used to
+	 * fetch snapshot contents like snapshot tree, blobs using this id from the storage.
 	 */
-	createDataStore(pkg: string | string[]): Promise<IDataStore>;
+	createDataStore(pkg: string | string[], groupId?: string): Promise<IDataStore>;
 
 	/**
 	 * Creates detached data store context. Only after context.attachRuntime() is called,
 	 * data store initialization is considered complete.
+	 * @param pkg - Package name of the data store factory
+	 * @param groupId - group to which this data stores belongs to. This is also known at service side and can be used to
+	 * fetch snapshot contents like snapshot tree, blobs using this id from the storage.
 	 */
-	createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached;
+	createDetachedDataStore(
+		pkg: Readonly<string[]>,
+		groupId?: string,
+	): IFluidDataStoreContextDetached;
 
 	/**
 	 * Get an absolute url for a provided container-relative request.
@@ -252,11 +229,6 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * Returns the current audience.
 	 */
 	getAudience(): IAudience;
-
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	readonly IFluidHandleContext: IFluidHandleContext;
 }
 
 /**
@@ -264,6 +236,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
  *
  * Functionality include attach, snapshot, op/signal processing, request routes, expose an entryPoint,
  * and connection state notifications
+ * @alpha
  */
 export interface IFluidDataStoreChannel extends IDisposable {
 	readonly id: string;
@@ -288,9 +261,14 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	makeVisibleAndAttachGraph(): void;
 
 	/**
-	 * Retrieves the summary used as part of the initial summary message
+	 * Synchronously retrieves the summary used as part of the initial summary message
 	 */
 	getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
+
+	/**
+	 * Synchronously retrieves GC Data (representing the outbound routes present) for the initial state of the DataStore
+	 */
+	getAttachGCData?(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
 
 	/**
 	 * Processes the op.
@@ -361,14 +339,11 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	readonly entryPoint: IFluidHandle<FluidObject>;
 
 	request(request: IRequest): Promise<IResponse>;
-
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	readonly IFluidRouter: IFluidRouter;
 }
 
+/**
+ * @alpha
+ */
 export type CreateChildSummarizerNodeFn = (
 	summarizeInternal: SummarizeInternalFn,
 	getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
@@ -378,6 +353,9 @@ export type CreateChildSummarizerNodeFn = (
 	getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
 ) => ISummarizerNodeWithGC;
 
+/**
+ * @alpha
+ */
 export interface IFluidDataStoreContextEvents extends IEvent {
 	(event: "attaching" | "attached", listener: () => void);
 }
@@ -385,6 +363,7 @@ export interface IFluidDataStoreContextEvents extends IEvent {
 /**
  * Represents the context for the data store. It is used by the data store runtime to
  * get information and call functionality to the container.
+ * @alpha
  */
 export interface IFluidDataStoreContext
 	extends IEventProvider<IFluidDataStoreContextEvents>,
@@ -404,7 +383,8 @@ export interface IFluidDataStoreContext
 	 * The package path of the data store as per the package factory.
 	 */
 	readonly packagePath: readonly string[];
-	readonly options: ILoaderOptions;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	readonly options: Record<string | number, any>;
 	readonly clientId: string | undefined;
 	readonly connected: boolean;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
@@ -413,6 +393,8 @@ export interface IFluidDataStoreContext
 	readonly logger: ITelemetryBaseLogger;
 	readonly clientDetails: IClientDetails;
 	readonly idCompressor?: IIdCompressor;
+	// Represents the group to which the data store belongs too.
+	readonly groupId?: string;
 	/**
 	 * Indicates the attachment state of the data store to a host service.
 	 */
@@ -512,14 +494,33 @@ export interface IFluidDataStoreContext
 	getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
 
 	/**
+	 * @deprecated There is no replacement for this, its functionality is no longer needed at this layer.
+	 * It will be removed in a future release, sometime after 2.0.0-internal.8.0.0
+	 *
+	 * Similar capability is exposed with from/to string paths instead of handles via @see addedGCOutboundRoute
+	 *
 	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
 	 * all references added in the system.
 	 * @param srcHandle - The handle of the node that added the reference.
 	 * @param outboundHandle - The handle of the outbound node that is referenced.
 	 */
 	addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
+
+	/**
+	 * (Same as @see addedGCOutboundReference, but with string paths instead of handles)
+	 *
+	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
+	 * all references added in the system.
+	 *
+	 * @param fromPath - The absolute path of the node that added the reference.
+	 * @param toPath - The absolute path of the outbound node that is referenced.
+	 */
+	addedGCOutboundRoute?(fromPath: string, toPath: string): void;
 }
 
+/**
+ * @alpha
+ */
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
 	/**
 	 * Binds a runtime to the context.
@@ -527,5 +528,5 @@ export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
 	attachRuntime(
 		factory: IProvideFluidDataStoreFactory,
 		dataStoreRuntime: IFluidDataStoreChannel,
-	): Promise<void>;
+	): Promise<IDataStore>;
 }

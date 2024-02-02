@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 import { strict as assert } from "assert";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
@@ -12,15 +14,9 @@ import {
 	InactiveResponseHeaderKey,
 	ISummarizer,
 } from "@fluidframework/container-runtime";
-import {
-	IFluidHandle,
-	IFluidHandleContext,
-	IRequest,
-	IResponse,
-} from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { MockLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import {
 	ITestContainerConfig,
@@ -30,35 +26,24 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import {
-	describeNoCompat,
+	describeCompat,
 	ITestDataObject,
 	itExpects,
 	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
-import { SharedMap } from "@fluidframework/map";
-import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base";
-import { waitForContainerWriteModeConnectionWrite } from "./gcTestSummaryUtils.js";
-
-/**
- * We manufacture a handle to simulate a bug where an object is unreferenced in GC's view
- * (and reminder, interactive clients never update their GC data after loading),
- * but someone still has a handle to it.
- *
- * It's possible to achieve this truly with multiple clients where one revives it mid-session
- * after it was unreferenced for the inactive timeout, but that's more complex to implement
- * in a test and is no better than this approach
- */
-function manufactureHandle<T>(handleContext: IFluidHandleContext, url: string): IFluidHandle<T> {
-	const serializer = new FluidSerializer(handleContext, () => {});
-	const handle: IFluidHandle<T> = parseHandles({ type: "__fluid_handle__", url }, serializer);
-	return handle;
-}
+import { delay } from "@fluidframework/core-utils";
+import type { ISharedDirectory } from "@fluidframework/map";
+import {
+	manufactureHandle,
+	waitForContainerWriteModeConnectionWrite,
+} from "./gcTestSummaryUtils.js";
 
 /**
  * Validates this scenario: When a GC node (data store or attachment blob) becomes inactive, i.e, it has been
  * unreferenced for a certain amount of time, using the node results in an error telemetry.
  */
-describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
+describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap, SharedDirectory } = apis.dds;
 	const revivedEvent = "fluid:telemetry:ContainerRuntime:InactiveObject_Revived";
 	const changedEvent = "fluid:telemetry:ContainerRuntime:InactiveObject_Changed";
 	const loadedEvent = "fluid:telemetry:ContainerRuntime:InactiveObject_Loaded";
@@ -70,7 +55,6 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 		const { throwOnInactiveLoad } = params;
 		return {
 			runtimeOptions: {
-				summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
 				gcOptions: { inactiveTimeoutMs, throwOnInactiveLoad },
 			},
 		};
@@ -103,6 +87,22 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 		);
 	}
 
+	async function loadContainer(
+		configNoLoaderProps: ITestContainerConfig, // loaderProps gets overwritten
+		summaryVersion: string,
+		logger?: MockLogger,
+	) {
+		return provider.loadTestContainer(
+			{
+				...configNoLoaderProps,
+				loaderProps: { logger },
+			},
+			{
+				[LoaderHeader.version]: summaryVersion,
+			},
+		);
+	}
+
 	/**
 	 * Loads a summarizer client with the given version (if any) and returns its container runtime and summary
 	 * collection.
@@ -119,11 +119,8 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 		};
 		const summarizerContainer = await provider.loadTestContainer(config, requestHeader);
 
-		const defaultDataStore = await requestFluidObject<ITestDataObject>(
-			summarizerContainer,
-			"default",
-		);
-		return defaultDataStore._context.containerRuntime as ContainerRuntime;
+		const summarizer = await summarizerContainer.getEntryPoint();
+		return (summarizer as any).runtime as ContainerRuntime;
 	}
 
 	async function summarize(containerRuntime: ContainerRuntime) {
@@ -146,7 +143,12 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 			return summaryResult.summaryVersion;
 		};
 
-		beforeEach(async function () {
+		async function createNewDataObject(runtime: IContainerRuntimeBase = containerRuntime) {
+			const dataStore = await runtime.createDataStore(TestDataObjectType);
+			return dataStore.entryPoint.get() as Promise<ITestDataObject>;
+		}
+
+		beforeEach("setup", async function () {
 			provider = getTestObjectProvider({ syncSummarizer: true });
 			// These tests validate the end-to-end behavior of GC features by generating ops and summaries. However,
 			// it does not post these summaries or download them. So, it doesn't need to run against real services.
@@ -156,7 +158,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 
 			mockLogger = new MockLogger();
 			mainContainer = await provider.makeTestContainer(testContainerConfig);
-			defaultDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "/");
+			defaultDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 			containerRuntime = defaultDataStore._context.containerRuntime;
 			await waitForContainerConnection(mainContainer);
 		});
@@ -169,8 +171,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 					...testContainerConfigWithThrowOption, // But summarizer should NOT throw
 					loaderProps: { logger: mockLogger },
 				});
-				const dataStore = await containerRuntime.createDataStore(TestDataObjectType);
-				const dataObject = await requestFluidObject<ITestDataObject>(dataStore, "");
+				const dataObject = await createNewDataObject();
 				const url = dataObject.handle.absolutePath;
 
 				defaultDataStore._root.set("dataStore1", dataObject.handle);
@@ -255,10 +256,11 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 					...testContainerConfig,
 					loaderProps: { logger: mockLogger },
 				});
-				const summarizerDefaultDataStore = await requestFluidObject<ITestDataObject>(
-					summarizerRuntime,
-					"/",
-				);
+				const entryPoint = await summarizerRuntime.getAliasedDataStoreEntryPoint("default");
+				if (entryPoint === undefined) {
+					throw new Error("Summarizer must have default data store");
+				}
+				const summarizerDefaultDataStore = (await entryPoint.get()) as ITestDataObject;
 
 				// Upload an attachment blobs and mark them referenced.
 				const blobContents = "Blob contents";
@@ -337,8 +339,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 					...testContainerConfigWithThrowOption, // But summarizer should NOT throw
 					loaderProps: { logger: mockLogger },
 				});
-				const dataStore = await containerRuntime.createDataStore(TestDataObjectType);
-				const dataObject = (await dataStore.entryPoint.get()) as ITestDataObject;
+				const dataObject = await createNewDataObject();
 				const dataStoreUrl = dataObject.handle.absolutePath;
 				const ddsUrl = dataObject._root.handle.absolutePath;
 
@@ -391,18 +392,6 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 		);
 
 		describe("Interactive (non-summarizer) clients", () => {
-			/**
-			 * Our partners use ContainerRuntime.resolveHandle to issue requests. We can't easily call it directly,
-			 * but the test containers are wired up to route requests to this function.
-			 * (See the innerRequestHandler used in LocalCodeLoader for how it works)
-			 */
-			async function containerRuntime_resolveHandle(
-				container: IContainer,
-				request: IRequest,
-			): Promise<IResponse> {
-				return container.request(request);
-			}
-
 			/** Expected type of error thrown when loading an inactiveObject (if disallowed) */
 			type InactiveLoadError = Error & {
 				code: number;
@@ -432,12 +421,9 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 					);
 
 					// Create a data store, mark it as referenced and then unreferenced
-					const dataStore = await requestFluidObject<ITestDataObject>(
-						await containerRuntime.createDataStore(TestDataObjectType),
-						"",
-					);
-					const dataStoreUrl = dataStore.handle.absolutePath;
-					defaultDataStore._root.set("dataStore", dataStore.handle);
+					const dataObject = await createNewDataObject();
+					const dataStoreUrl = dataObject.handle.absolutePath;
+					defaultDataStore._root.set("dataStore", dataObject.handle);
 					defaultDataStore._root.delete("dataStore");
 
 					// Summarize the container while it's unreferenced. This summary will be used to load another container.
@@ -448,17 +434,13 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 
 					// Load a non-summarizer container from the above summary that uses the mock logger. This container has to
 					// be in "write" mode for GC to initialize unreferenced nodes from summary.
-					const container2 = await provider.loadTestContainer(
-						{
-							...testContainerConfigWithThrowOption,
-							loaderProps: { logger: mockLogger },
-						},
-						{ [LoaderHeader.version]: summaryVersion1 },
+					const container2 = await loadContainer(
+						testContainerConfigWithThrowOption,
+						summaryVersion1,
+						mockLogger,
 					);
-					const defaultDataStoreContainer2 = await requestFluidObject<ITestDataObject>(
-						container2,
-						"/",
-					);
+					const defaultDataStoreContainer2 =
+						(await container2.getEntryPoint()) as ITestDataObject;
 					defaultDataStoreContainer2._root.set("mode", "write");
 					await waitForContainerWriteModeConnectionWrite(container2);
 
@@ -481,7 +463,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 						assert.equal(
 							inactiveError?.underlyingResponseHeaders?.[InactiveResponseHeaderKey],
 							true,
-							"Inactive error from handle.get should include the tombstone flag",
+							"Inactive error from handle.get should include the inactive flag",
 						);
 					}
 					mockLogger.assertMatch(
@@ -521,11 +503,8 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 					);
 
 					// Create a data store, mark it as referenced and then unreferenced
-					const dataStore = await requestFluidObject<ITestDataObject>(
-						await containerRuntime.createDataStore(TestDataObjectType),
-						"",
-					);
-					const dds = dataStore._runtime.createChannel(
+					const dataObject = await createNewDataObject();
+					const dds = dataObject._runtime.createChannel(
 						"dds1",
 						SharedMap.getFactory().type,
 					);
@@ -541,17 +520,13 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 
 					// Load a non-summarizer container from the above summary that uses the mock logger. This container has to
 					// be in "write" mode for GC to initialize unreferenced nodes from summary.
-					const container2 = await provider.loadTestContainer(
-						{
-							...testContainerConfigWithThrowOption,
-							loaderProps: { logger: mockLogger },
-						},
-						{ [LoaderHeader.version]: summaryVersion1 },
+					const container2 = await loadContainer(
+						testContainerConfigWithThrowOption,
+						summaryVersion1,
+						mockLogger,
 					);
-					const defaultDataStoreContainer2 = await requestFluidObject<ITestDataObject>(
-						container2,
-						"/",
-					);
+					const defaultDataStoreContainer2 =
+						(await container2.getEntryPoint()) as ITestDataObject;
 					defaultDataStoreContainer2._root.set("mode", "write");
 					await waitForContainerWriteModeConnectionWrite(container2);
 
@@ -607,12 +582,9 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 					);
 
 					// Create a data store, mark it as referenced and then unreferenced
-					const dataStore = await requestFluidObject<ITestDataObject>(
-						await containerRuntime.createDataStore(TestDataObjectType),
-						"",
-					);
-					const url = dataStore.handle.absolutePath;
-					defaultDataStore._root.set("dataStore", dataStore.handle);
+					const dataObject = await createNewDataObject();
+					const url = dataObject.handle.absolutePath;
+					defaultDataStore._root.set("dataStore", dataObject.handle);
 					defaultDataStore._root.delete("dataStore");
 
 					// Summarize the container while it's unreferenced. This summary will be used to load another container.
@@ -623,21 +595,20 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 
 					// Load a non-summarizer container from the above summary that uses the mock logger. This container has to
 					// be in "write" mode for GC to initialize unreferenced nodes from summary.
-					const container2 = await provider.loadTestContainer(
-						{
-							...testContainerConfigWithThrowOption,
-							loaderProps: { logger: mockLogger },
-						},
-						{ [LoaderHeader.version]: summaryVersion1 },
+					const container2 = await loadContainer(
+						testContainerConfigWithThrowOption,
+						summaryVersion1,
+						mockLogger,
 					);
-					const defaultDataStoreContainer2 = await requestFluidObject<ITestDataObject>(
-						container2,
-						"/",
-					);
+					const defaultDataStoreContainer2 =
+						(await container2.getEntryPoint()) as ITestDataObject;
 					defaultDataStoreContainer2._root.set("mode", "write");
 					await waitForContainerWriteModeConnectionWrite(container2);
 
-					const response = await containerRuntime_resolveHandle(container2, {
+					const container2Runtime = defaultDataStoreContainer2._context
+						.containerRuntime as ContainerRuntime;
+
+					const response = await container2Runtime.resolveHandle({
 						url,
 						headers: { [AllowInactiveRequestHeaderKey]: true },
 					});
@@ -678,13 +649,10 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 					);
 
 					// Create a data store, mark it as referenced and then unreferenced
-					const dataStore = await requestFluidObject<ITestDataObject>(
-						await containerRuntime.createDataStore(TestDataObjectType),
-						"",
-					);
-					const url = dataStore.handle.absolutePath;
-					const unreferencedId = dataStore._context.id;
-					defaultDataStore._root.set("dataStore", dataStore.handle);
+					const dataObject = await createNewDataObject();
+					const url = dataObject.handle.absolutePath;
+					const unreferencedId = dataObject._context.id;
+					defaultDataStore._root.set("dataStore", dataObject.handle);
 					defaultDataStore._root.delete("dataStore");
 
 					// Summarize the container while it's unreferenced. This summary will be used to load another container.
@@ -695,17 +663,13 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 
 					// Load a non-summarizer container from the above summary that uses the mock logger. This container has to
 					// be in "write" mode for GC to initialize unreferenced nodes from summary.
-					const container2 = await provider.loadTestContainer(
-						{
-							...testContainerConfig, // NOT including the throwOnInactiveLoad flag
-							loaderProps: { logger: mockLogger },
-						},
-						{ [LoaderHeader.version]: summaryVersion1 },
+					const container2 = await loadContainer(
+						testContainerConfig, // NOT including the throwOnInactiveLoad flag
+						summaryVersion1,
+						mockLogger,
 					);
-					const defaultDataStoreContainer2 = await requestFluidObject<ITestDataObject>(
-						container2,
-						"/",
-					);
+					const defaultDataStoreContainer2 =
+						(await container2.getEntryPoint()) as ITestDataObject;
 					defaultDataStoreContainer2._root.set("mode", "write");
 					await waitForContainerWriteModeConnectionWrite(container2);
 
@@ -760,13 +724,10 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 					},
 				);
 
-				const dataStore = await requestFluidObject<ITestDataObject>(
-					await containerRuntime.createDataStore(TestDataObjectType),
-					"",
-				);
+				const dataObject = await createNewDataObject();
 
 				// Mark dataStore as referenced and then unreferenced; summarize.
-				defaultDataStore._root.set("dataStore", dataStore.handle);
+				defaultDataStore._root.set("dataStore", dataObject.handle);
 				defaultDataStore._root.delete("dataStore");
 				const summaryVersion1 = await waitForSummary(summarizer1);
 
@@ -789,8 +750,8 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 				await waitForInactiveTimeout();
 
 				// Send an op for the deleted data store and revived it. There should not be any errors.
-				dataStore._root.set("key", "value");
-				defaultDataStore._root.set("dataStore", dataStore.handle);
+				dataObject._root.set("key", "value");
+				defaultDataStore._root.set("dataStore", dataObject.handle);
 				await provider.ensureSynchronized();
 
 				// Summarize now. This is when the inactive object events will be logged.
@@ -798,6 +759,200 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 					waitForSummary(summarizer2),
 					"Summary wasn't successful",
 				);
+			},
+		);
+
+		it("Reviving an InactiveObject clears Inactive state immediately in interactive client (but not for its subtree)", async () => {
+			const container1 = mainContainer;
+			const { summarizer: summarizer1 } = await createSummarizer(
+				provider,
+				container1,
+				testContainerConfig,
+			);
+			const defaultDataObject1 = (await container1.getEntryPoint()) as ITestDataObject;
+			await waitForContainerConnection(container1);
+
+			const dataObjectA_1 = await createNewDataObject();
+			const dataObjectB_1 = await createNewDataObject();
+			const idA = dataObjectA_1._context.id;
+			const idB = dataObjectB_1._context.id;
+
+			// Reference A from the container entrypoint, and B from A
+			defaultDataObject1._root.set("A", dataObjectA_1.handle);
+			dataObjectA_1._root.set("B", dataObjectB_1.handle);
+
+			// Then unreference the A-B chain (but leave it intact), and Summarize to start unreferenced tracking
+			defaultDataObject1._root.delete("A");
+			await provider.ensureSynchronized();
+			const { summaryVersion: summaryVersion1 } = await summarizeNow(summarizer1);
+
+			// A and B are unreferenced in container2/container3. Timers will be set
+			// We need two containers because each event type is only logged once per container
+			const mockLogger2 = new MockLogger();
+			const container2 = await loadContainer(
+				testContainerConfig,
+				summaryVersion1,
+				mockLogger2,
+			);
+			const defaultDataObject2 = (await container2.getEntryPoint()) as ITestDataObject;
+			const mockLogger3 = new MockLogger();
+			const container3 = await loadContainer(
+				testContainerConfig,
+				summaryVersion1,
+				mockLogger3,
+			);
+			const defaultDataObject3 = (await container3.getEntryPoint()) as ITestDataObject;
+
+			// Wait the Inactive Timeout. Timers will fire
+			await delay(inactiveTimeoutMs);
+
+			// Load A in container2 and ensure InactiveObject_Loaded is logged
+			const handleA_2 = manufactureHandle<ITestDataObject>(
+				defaultDataObject2._context.IFluidHandleContext, // yields the ContaineRuntime's handleContext
+				idA,
+			);
+			await handleA_2.get();
+			mockLogger2.assertMatch([
+				{
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
+					id: { value: `/${idA}`, tag: "CodeArtifact" },
+				},
+			]);
+
+			// Reference A again in container1. Should be revived on container3
+			defaultDataObject1._root.set("A", dataObjectA_1.handle);
+			await provider.ensureSynchronized();
+
+			// Since A was directly revived, its unreferenced state was cleared immediately so we shouldn't see InactiveObject logs for it
+			const handleA_3 = defaultDataObject3._root.get<IFluidHandle<ITestDataObject>>("A");
+			const dataObjectA_3 = await handleA_3!.get();
+			mockLogger3.assertMatchNone([
+				{
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
+				},
+			]);
+
+			// Since B wasn't directly revived, it wrongly still thinks it's Inactive. Next GC will clear it up.
+			const handleB_3 = dataObjectA_3?._root.get<IFluidHandle<ITestDataObject>>("B");
+			await handleB_3!.get();
+			mockLogger3.assertMatch([
+				{
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
+					id: { value: `/${idB}`, tag: "CodeArtifact" },
+				},
+			]);
+		});
+
+		const newDDSFn = async (
+			dataObject: ITestDataObject,
+		): Promise<[ISharedDirectory, IFluidHandle]> => {
+			const dds = SharedDirectory.create(dataObject._runtime, "dds");
+			return [dds, dds.handle];
+		};
+		const newDataStoreFn = async (
+			dataObject: ITestDataObject,
+		): Promise<[ISharedDirectory, IFluidHandle]> => {
+			const dataObject2 = await createNewDataObject(dataObject._context.containerRuntime);
+			return [dataObject2._root, dataObject2.handle];
+		};
+		[[newDDSFn, "DDS"] as const, [newDataStoreFn, "DataStore"] as const].forEach(
+			([newDirectoryFn, type]) => {
+				it(`Reviving an InactiveObject via [${type}] Attach Op clears Inactive state immediately in interactive client (but not for its subtree)`, async () => {
+					const container1 = mainContainer;
+					const { summarizer: summarizer1 } = await createSummarizer(
+						provider,
+						container1,
+						testContainerConfig,
+					);
+					const defaultDataObject1 =
+						(await container1.getEntryPoint()) as ITestDataObject;
+					await waitForContainerConnection(container1);
+
+					const dataObjectA_1 = await createNewDataObject();
+					const dataObjectB_1 = await createNewDataObject();
+					const idA = dataObjectA_1._context.id;
+					const idB = dataObjectB_1._context.id;
+
+					// Reference A from the container entrypoint, and B from A
+					defaultDataObject1._root.set("A", dataObjectA_1.handle);
+					dataObjectA_1._root.set("B", dataObjectB_1.handle);
+
+					// Then unreference the A-B chain (but leave it intact), and Summarize to start unreferenced tracking
+					defaultDataObject1._root.delete("A");
+					await provider.ensureSynchronized();
+					const { summaryVersion: summaryVersion1 } = await summarizeNow(summarizer1);
+
+					// A and B are unreferenced in container2/container3. Timers will be set
+					// We need two containers because each event type is only logged once per container
+					const mockLogger2 = new MockLogger();
+					const container2 = await loadContainer(
+						testContainerConfig,
+						summaryVersion1,
+						mockLogger2,
+					);
+					const defaultDataObject2 =
+						(await container2.getEntryPoint()) as ITestDataObject;
+					const mockLogger3 = new MockLogger();
+					const container3 = await loadContainer(
+						testContainerConfig,
+						summaryVersion1,
+						mockLogger3,
+					);
+					const defaultDataObject3 =
+						(await container3.getEntryPoint()) as ITestDataObject;
+
+					// Wait the Inactive Timeout. Timers will fire
+					await delay(inactiveTimeoutMs);
+
+					// Load A in container2 and ensure InactiveObject_Loaded is logged
+					const handleA_2 = manufactureHandle<ITestDataObject>(
+						defaultDataObject2._context.IFluidHandleContext, // yields the ContaineRuntime's handleContext
+						idA,
+					);
+					await handleA_2.get();
+					mockLogger2.assertMatch([
+						{
+							eventName:
+								"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
+							id: { value: `/${idA}`, tag: "CodeArtifact" },
+						},
+					]);
+
+					// Reference A again in container3 via DataStore attach op. Should be properly revived in container3 itself
+					const manufacturedHandleA_3 = manufactureHandle<ITestDataObject>(
+						defaultDataObject3._context.IFluidHandleContext, // yields the ContaineRuntime's handleContext
+						idA,
+					);
+					const [newDirectory_3, handleToAttach_3] =
+						await newDirectoryFn(defaultDataObject3);
+					newDirectory_3.set("A", manufacturedHandleA_3);
+					defaultDataObject3._root.set("NewDirectory", handleToAttach_3);
+					await provider.ensureSynchronized();
+
+					// Since A was directly revived, its unreferenced state was cleared immediately so we shouldn't see InactiveObject logs for it
+					const handleA_3 = newDirectory_3.get<IFluidHandle<ITestDataObject>>("A");
+					const dataObjectA_3 = await handleA_3!.get();
+					mockLogger3.assertMatchNone([
+						{
+							eventName:
+								"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
+						},
+					]);
+
+					// Since B wasn't directly revived, it wrongly still thinks it's Inactive. Next GC will clear it up.
+					const handleB_3 = dataObjectA_3?._root.get<IFluidHandle<ITestDataObject>>("B");
+					await handleB_3!.get();
+					mockLogger3.assertMatch([
+						{
+							eventName:
+								"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
+							id: { value: `/${idB}`, tag: "CodeArtifact" },
+						},
+					]);
+				});
 			},
 		);
 	});

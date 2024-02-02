@@ -1,5 +1,75 @@
 # @fluidframework/matrix
 
+## 2.0.0-rc.1.0.0
+
+### Minor Changes
+
+-   Updated server dependencies ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
+
+    The following Fluid server dependencies have been updated to the latest version, 3.0.0. [See the full changelog.](https://github.com/microsoft/FluidFramework/releases/tag/server_v3.0.0)
+
+    -   @fluidframework/gitresources
+    -   @fluidframework/server-kafka-orderer
+    -   @fluidframework/server-lambdas
+    -   @fluidframework/server-lambdas-driver
+    -   @fluidframework/server-local-server
+    -   @fluidframework/server-memory-orderer
+    -   @fluidframework/protocol-base
+    -   @fluidframework/server-routerlicious
+    -   @fluidframework/server-routerlicious-base
+    -   @fluidframework/server-services
+    -   @fluidframework/server-services-client
+    -   @fluidframework/server-services-core
+    -   @fluidframework/server-services-ordering-kafkanode
+    -   @fluidframework/server-services-ordering-rdkafka
+    -   @fluidframework/server-services-ordering-zookeeper
+    -   @fluidframework/server-services-shared
+    -   @fluidframework/server-services-telemetry
+    -   @fluidframework/server-services-utils
+    -   @fluidframework/server-test-utils
+    -   tinylicious
+
+-   Updated @fluidframework/protocol-definitions ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
+
+    The @fluidframework/protocol-definitions dependency has been upgraded to v3.1.0. [See the full
+    changelog.](https://github.com/microsoft/FluidFramework/blob/main/common/lib/protocol-definitions/CHANGELOG.md#310)
+
+-   shared-object-base: SharedObject processGCDataCore now takes IFluidSerializer rather than SummarySerializer ([#18803](https://github.com/microsoft/FluidFramework/issues/18803)) [396b8e9738](https://github.com/microsoft/FluidFramework/commits/396b8e9738156ff88b62424a0076f09fb5028a32)
+
+    This change should be a no-op for consumers, and `SummarySerializer` and `IFluidSerializer` expose the same consumer facing APIs. This change just makes our APIs more consistent by only using interfaces, rather than a mix of interfaces and concrete implementations.
+
+## 2.0.0-internal.8.0.0
+
+### Major Changes
+
+-   sequence: Some function return types are now void instead of any [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The return types of some functions have changed from `any` to `void` because the projects are now being compiled with
+    the `noImplicitAny` TypeScript compilation option. This does not represent a logic change and only serves to make the
+    typing of these functions more accurate.
+
+-   datastore-definitions: Jsonable and Serializable now require a generic parameter [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The `Jsonable` and `Serializable` types from @fluidframework/datastore-definitions now require a generic parameter and
+    if that type is `any` or `unknown`will return a new result `JsonableTypeWith<>` that more accurately represents the
+    limitation of serialization.
+
+    Additional modifications:
+
+    -   `Jsonable`'s `TReplacement` parameter default has also been changed from `void` to `never`, which now disallows
+        `void`.
+    -   Unrecognized primitive types like `symbol` are now filtered to `never` instead of `{}`.
+    -   Recursive types with arrays (`[]`) are now supported.
+
+    `Serializable` is commonly used for DDS values and now requires more precision when using them. For example SharedMatrix
+    (unqualified) has an `any` default that meant values were `Serializable<any>` (i.e. `any`), but now `Serializable<any>`
+    is `JsonableTypeWith<IFluidHandle>` which may be problematic for reading or writing. Preferred correction is to specify
+    the value type but casting through `any` may provide a quick fix.
+
+## 2.0.0-internal.7.4.0
+
+Dependency updates only.
+
 ## 2.0.0-internal.7.3.0
 
 Dependency updates only.

@@ -6,7 +6,8 @@
 import { colIndexToName } from "@fluid-example/table-document";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ISheetlet, createSheetletProducer } from "@tiny-calc/micro";
-import { BorderRect } from "./borderstyle";
+import type { IMatrixProducer } from "@tiny-calc/nano";
+import { BorderRect } from "./borderstyle.js";
 import * as styles from "./index.css";
 
 // eslint-disable-next-line unicorn/no-unsafe-regex
@@ -21,6 +22,11 @@ const enum KeyCode {
 	arrowRight = "ArrowRight", // 39
 	arrowDown = "ArrowDown", // 40
 }
+
+// Extract Value type from createSheetletProducer requirements. (Value is not exported.)
+type GridContentType = Parameters<typeof createSheetletProducer>[0] extends IMatrixProducer<infer T>
+	? T
+	: never;
 
 export class GridView {
 	private get numRows() {
@@ -73,7 +79,7 @@ export class GridView {
 	}
 
 	constructor(
-		private readonly matrix: SharedMatrix,
+		private readonly matrix: SharedMatrix<GridContentType>,
 		private readonly getFormula: () => string,
 		private readonly setFormula: (val: string) => void,
 		private readonly setSelectionSummary: (val: string) => void,

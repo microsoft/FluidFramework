@@ -16,12 +16,17 @@ import { assert, delay } from "@fluidframework/core-utils";
 import { LogLevel } from "@fluidframework/core-interfaces";
 import * as api from "@fluidframework/protocol-definitions";
 import { promiseRaceWithWinner } from "@fluidframework/driver-base";
-import { ISummaryContext, DriverErrorType, FetchSource } from "@fluidframework/driver-definitions";
+import {
+	ISummaryContext,
+	FetchSource,
+	ISnapshot,
+	ISnapshotFetchOptions,
+} from "@fluidframework/driver-definitions";
 import { RateLimiter, NonRetryableError } from "@fluidframework/driver-utils";
 import {
 	IOdspResolvedUrl,
 	ISnapshotOptions,
-	OdspErrorType,
+	OdspErrorTypes,
 	InstrumentedStorageTokenFetcher,
 	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
@@ -30,6 +35,7 @@ import {
 	HostStoragePolicyInternal,
 	IVersionedValueWithEpoch,
 	ISnapshotCachedEntry,
+	ISnapshotCachedEntry2,
 } from "./contracts";
 import {
 	downloadSnapshot,
@@ -40,8 +46,11 @@ import {
 } from "./fetchSnapshot";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { IOdspCache, IPrefetchSnapshotContents } from "./odspCache";
-import { createCacheSnapshotKey, getWithRetryForTokenRefresh } from "./odspUtils";
-import { ISnapshotContents } from "./odspPublicUtils";
+import {
+	createCacheSnapshotKey,
+	getWithRetryForTokenRefresh,
+	isInstanceOfISnapshot,
+} from "./odspUtils";
 import { EpochTracker } from "./epochTracker";
 import type { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
 import { FlushResult } from "./odspDocumentDeltaConnection";
@@ -204,6 +213,15 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		return super.getSnapshotTree(version, scenarioName);
 	}
 
+	public async getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot> {
+		assert(this.hostPolicy.supportGetSnapshotApi !== true, "api should not be called yet");
+		// This is just temporary as this api is not yet enabled in service policies.
+		return this.fetchSnapshot(
+			this.hostPolicy.snapshotOptions,
+			snapshotFetchOptions?.scenarioName,
+		);
+	}
+
 	public async getVersions(
 		// eslint-disable-next-line @rushstack/no-new-null
 		blobid: string | null,
@@ -233,16 +251,13 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		// If count is one, we can use the trees/latest API, which returns the latest version and trees in a single request for better performance
 		if (count === 1 && (blobid === null || blobid === this.documentId)) {
 			const hostSnapshotOptions = this.hostPolicy.snapshotOptions;
-			const odspSnapshotCacheValue: ISnapshotContents = await PerformanceEvent.timedExecAsync(
+			const odspSnapshotCacheValue: ISnapshot = await PerformanceEvent.timedExecAsync(
 				this.logger,
 				{ eventName: "ObtainSnapshot", fetchSource },
 				async (event: PerformanceEvent) => {
 					const props: GetVersionsTelemetryProps = {};
 					let cacheLookupTimeInSerialFetch = 0;
-					let retrievedSnapshot:
-						| ISnapshotContents
-						| IPrefetchSnapshotContents
-						| undefined;
+					let retrievedSnapshot: ISnapshot | IPrefetchSnapshotContents | undefined;
 
 					let method: string;
 					let prefetchWaitStartTime: number = performance.now();
@@ -255,10 +270,14 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					} else {
 						// Here's the logic to grab the persistent cache snapshot implemented by the host
 						// Epoch tracker is responsible for communicating with the persistent cache, handling epochs and cache versions
-						const cachedSnapshotP: Promise<ISnapshotContents | undefined> =
-							this.epochTracker
-								.get(createCacheSnapshotKey(this.odspResolvedUrl))
-								.then(async (snapshotCachedEntry: ISnapshotCachedEntry) => {
+						const cachedSnapshotP: Promise<ISnapshot | undefined> = this.epochTracker
+							.get(createCacheSnapshotKey(this.odspResolvedUrl))
+							.then(
+								async (
+									snapshotCachedEntry:
+										| ISnapshotCachedEntry
+										| ISnapshotCachedEntry2,
+								) => {
 									if (snapshotCachedEntry !== undefined) {
 										// If the cached entry does not contain the entry time, then assign it a default of 30 days old.
 										const age =
@@ -281,10 +300,24 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 
 										// Record the cache age
 										props.cacheEntryAge = age;
+										// Snapshot from cache could be in older format, so transform that before returning.
+										if (isInstanceOfISnapshot(snapshotCachedEntry)) {
+											return snapshotCachedEntry;
+										} else {
+											const snapshot: ISnapshot = {
+												snapshotTree: snapshotCachedEntry.snapshotTree,
+												blobContents: snapshotCachedEntry.blobs,
+												ops: snapshotCachedEntry.ops,
+												latestSequenceNumber:
+													snapshotCachedEntry.latestSequenceNumber,
+												sequenceNumber: snapshotCachedEntry.sequenceNumber,
+												snapshotFormatV: 1,
+											};
+											return snapshot;
+										}
 									}
-
-									return snapshotCachedEntry;
-								});
+								},
+							);
 						// Based on the concurrentSnapshotFetch policy:
 						// Either retrieve both the network and cache snapshots concurrently and pick the first to return,
 						// or grab the cache value and then the network value if the cache value returns undefined.
@@ -427,14 +460,14 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			if (!versionsResponse) {
 				throw new NonRetryableError(
 					"No response from /versions endpoint",
-					DriverErrorType.genericNetworkError,
+					OdspErrorTypes.genericNetworkError,
 					{ driverVersion },
 				);
 			}
 			if (!Array.isArray(versionsResponse.value)) {
 				throw new NonRetryableError(
 					"Incorrect response from /versions endpoint, expected an array",
-					DriverErrorType.genericNetworkError,
+					OdspErrorTypes.genericNetworkError,
 					{ driverVersion },
 				);
 			}
@@ -467,7 +500,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	private async fetchSnapshotCore(
 		hostSnapshotOptions: ISnapshotOptions | undefined,
 		scenarioName?: string,
-	): Promise<ISnapshotContents | IPrefetchSnapshotContents> {
+	): Promise<ISnapshot | IPrefetchSnapshotContents> {
 		// Don't look into cache, if the host specifically tells us so.
 		if (!this.hostPolicy.avoidPrefetchSnapshotCache) {
 			const prefetchCacheKey = getKeyForCacheEntry(
@@ -554,7 +587,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			const errorType = error.errorType;
 			// If the snapshot size is too big and the host specified the size limitation(specified in hostSnapshotOptions), then don't try to fetch the snapshot again.
 			if (
-				errorType === OdspErrorType.snapshotTooBig &&
+				errorType === OdspErrorTypes.snapshotTooBig &&
 				hostSnapshotOptions?.mds !== undefined &&
 				this.hostPolicy.summarizerClient !== true
 			) {
@@ -562,8 +595,8 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			}
 			// If the first snapshot request was with blobs and we either timed out or the size was too big, then try to fetch without blobs.
 			if (
-				(errorType === OdspErrorType.snapshotTooBig ||
-					errorType === OdspErrorType.fetchTimeout) &&
+				(errorType === OdspErrorTypes.snapshotTooBig ||
+					errorType === OdspErrorTypes.fetchTimeout) &&
 				snapshotOptions.blobs
 			) {
 				this.logger.sendErrorEvent({
@@ -684,7 +717,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		if (!this.snapshotUrl) {
 			throw new NonRetryableError(
 				"Method failed because no snapshot url was available",
-				DriverErrorType.genericError,
+				OdspErrorTypes.genericError,
 				{ driverVersion },
 			);
 		}
@@ -694,7 +727,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		if (!this.attachmentPOSTUrl) {
 			throw new NonRetryableError(
 				"Method failed because no attachment POST url was available",
-				DriverErrorType.genericError,
+				OdspErrorTypes.genericError,
 				{ driverVersion },
 			);
 		}
@@ -704,7 +737,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		if (!this.attachmentGETUrl) {
 			throw new NonRetryableError(
 				"Method failed because no attachment GET url was available",
-				DriverErrorType.genericError,
+				OdspErrorTypes.genericError,
 				{ driverVersion },
 			);
 		}
@@ -746,8 +779,8 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				treeId = snapshot.snapshotTree.id;
 				this.setRootTree(treeId, snapshot.snapshotTree);
 			}
-			if (snapshot.blobs) {
-				this.initBlobsCache(snapshot.blobs);
+			if (snapshot.blobContents) {
+				this.initBlobsCache(snapshot.blobContents);
 			}
 			// If the version id doesn't match with the id of the tree, then use the id of first tree which in that case
 			// will be the actual id of tree to be fetched.

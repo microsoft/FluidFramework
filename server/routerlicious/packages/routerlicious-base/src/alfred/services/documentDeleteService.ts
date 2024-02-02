@@ -5,10 +5,16 @@
 
 import { NetworkError } from "@fluidframework/server-services-client";
 
+/**
+ * @internal
+ */
 export interface IDocumentDeleteService {
 	deleteDocument(tenantId: string, documentId: string): Promise<void>;
 }
 
+/**
+ * @internal
+ */
 export class DocumentDeleteService implements IDocumentDeleteService {
 	constructor() {}
 

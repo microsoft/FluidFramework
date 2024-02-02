@@ -3,13 +3,19 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * @alpha
+ */
 export interface ISnapshotOptions {
 	blobs?: number;
 	deltas?: number;
 	channels?: number;
-	/*
+
+	/**
 	 * Maximum Data size (in bytes)
-	 * If specified, SPO will fail snapshot request with 413 error (see OdspErrorType.snapshotTooBig)
+	 *
+	 * @remarks
+	 * If specified, SPO will fail snapshot request with 413 error (see {@link @fluidframework/odsp-driver-definitions#(OdspErrorTypes:variable).snapshotTooBig})
 	 * if snapshot is bigger in size than specified limit.
 	 */
 	mds?: number;
@@ -22,6 +28,9 @@ export interface ISnapshotOptions {
 	timeout?: number;
 }
 
+/**
+ * @alpha
+ */
 export interface IOpsCachingPolicy {
 	/**
 	 * Batch size. Controls how many ops are grouped together as single cache entry
@@ -50,6 +59,9 @@ export interface IOpsCachingPolicy {
 	totalOpsToCache?: number;
 }
 
+/**
+ * @alpha
+ */
 export interface ICollabSessionOptions {
 	/**
 	 * Value indicating the display name for session that admits unauthenticated user.
@@ -69,6 +81,9 @@ export interface ICollabSessionOptions {
 	forceAccessTokenViaAuthorizationHeader?: boolean;
 }
 
+/**
+ * @alpha
+ */
 export interface HostStoragePolicy {
 	snapshotOptions?: ISnapshotOptions;
 

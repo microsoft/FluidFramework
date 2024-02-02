@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/azure-local-service",
-	"version": "2.0.0-internal.7.4.0",
+	"version": "2.0.0-rc.1.0.0",
 	"description": "Local implementation of the Azure Fluid Relay service for testing/development use",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -10,12 +10,29 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
+	"type": "commonjs",
 	"exports": {
 		".": {
 			"default": {
 				"types": "./dist/index.d.ts",
 				"default": "./dist/index.js"
 			}
+		},
+		"./alpha": {
+			"types": "./dist/azure-local-service-alpha.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./beta": {
+			"types": "./dist/azure-local-service-beta.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./internal": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./public": {
+			"types": "./dist/azure-local-service-public.d.ts",
+			"default": "./dist/index.js"
 		}
 	},
 	"main": "dist/index.js",
@@ -25,15 +42,17 @@
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
+		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
-		"lint": "npm run prettier && npm run eslint",
+		"lint": "npm run prettier && npm run check:release-tags && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
-		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
+		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"start": "forever start dist/index.js",
 		"start:debug": "node --inspect=0.0.0.0:9229 dist/index.js",
 		"stop": "forever stop dist/index.js",
@@ -41,13 +60,14 @@
 		"tsc": "tsc"
 	},
 	"dependencies": {
-		"tinylicious": "^2.0.2"
+		"tinylicious": "^3.1.0-231702"
 	},
 	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.13.3",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.28.0",
-		"@fluidframework/eslint-config-fluid": "^3.1.0",
-		"@microsoft/api-extractor": "^7.38.3",
+		"@fluidframework/build-tools": "^0.29.0",
+		"@fluidframework/eslint-config-fluid": "^3.3.0",
+		"@microsoft/api-extractor": "^7.39.1",
 		"eslint": "~8.50.0",
 		"eslint-config-prettier": "~9.0.0",
 		"forever": "^4.0.3",
