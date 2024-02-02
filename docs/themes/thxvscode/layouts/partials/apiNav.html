@@ -114,12 +114,12 @@
     {{ $packages := index $.Site.Data.packages $selectedApiVersion }}
     {{ $DDSes := index $packages "DDSes" }}
     {{ $resultArray := slice "fluid-framework" }}
+    {{ $isPackageActive := false }}
     {{ range $DDSes }}
-        {{ $element := index (split . "/") 1 }}
-        {{ $resultArray = $resultArray | append $element }}
+        {{ $resultArray = $resultArray | append (index (split . "/") 1) }}
     {{ end }}
 
-    {{ $isPackageActive := false }}
+    
     {{ range $resultArray }}
         {{ if in $current.RelPermalink . }}
             {{ $isPackageActive = true }}
@@ -141,17 +141,14 @@
                 {{ $activeSubCategory := "" }}
                 {{ range $categoryName := $specificCategories }}
                     {{ $category := index $packages $categoryName }}
-                    {{ range $subcategoryName, $subcategoryItems := $category }}
-                        {{ range $item := $subcategoryItems }}
-                            {{ $lowerItem := lower $item }}
-                            {{ $link := printf "%s/%s-%s" $FFLink $lowerItem (lower $subcategoryName | singularize) }}
+                    {{ range $subcategoryName, $APIs := $category }}
+                        {{ range $api := $APIs }}
+                            {{ $link := printf "%s/%s-%s" $FFLink (lower $api) (lower $subcategoryName | singularize) }}
                             {{ if eq $subcategoryName "Types" }}
-                                {{ $link = printf "%s/%s-typealias" $FFLink $lowerItem }}
+                                {{ $link = printf "%s/%s-typealias" $FFLink (lower $api) }}
                             {{ end }}
                             
-                            {{ $isActive = in $current.RelPermalink $link }}
-                            
-                            {{ if $isActive }}
+                            {{ if in $current.RelPermalink $link }}
                                 {{ $activeCategory = $categoryName }}
                                 {{ $activeSubCategory = $subcategoryName }}
                             {{ end }}
@@ -165,21 +162,20 @@
                     <li class="panel {{ if $isCategoryActive }}active expanded{{ else }}collapsed{{ end }}">
                         <a class="area" href="#{{ $categoryName }}-articles" data-toggle="collapse">{{ $categoryName }}</a>
                         <ul id="{{ $categoryName }}-articles" class="collapse {{ if $isCategoryActive }}in{{ end }}">
-                            {{ range $subcategoryName, $subcategoryItems := $category }}
+                            {{ range $subcategoryName, $APIs := $category }}
                                 {{ $isSubCategoryActive := and (eq $activeSubCategory $subcategoryName) $isCategoryActive }}
                                 <li class="panel type-definitions {{ if $isSubCategoryActive }}active expanded{{ else }}collapsed{{ end }}">
                                     <a class="area padding-35px" href="#{{ $categoryName }}-{{ $subcategoryName }}-articles" data-toggle="collapse">{{ $subcategoryName }}</a>
                                     <ul id="{{ $categoryName }}-{{ $subcategoryName }}-articles" class="collapse {{ if $isSubCategoryActive }}in{{ end }}">
-                                        {{ range $item := $subcategoryItems }}
-                                            {{ $lowerItem := lower $item }}
-                                            {{ $link := printf "%s/%s-%s" $FFLink $lowerItem (lower $subcategoryName | singularize) }}
+                                        {{ range $api := $APIs }}
+                                            {{ $link := printf "%s/%s-%s" $FFLink (lower $api) (lower $subcategoryName | singularize) }}
                                             {{ if eq $subcategoryName "Types" }}
-                                                {{ $link = printf "%s/%s-typealias" $FFLink $lowerItem }}                                               
+                                                {{ $link = printf "%s/%s-typealias" $FFLink (lower $api) }}                                               
                                             {{ end }}
                                             {{ $isActive = in $current.RelPermalink $link }}
                                             <li class="panel {{ if $isActive }}active expanded{{ else }}collapsed{{ end }}">
                                                 <a class="padding-45px nav-page" href="{{ $link }}">
-                                                    {{ partial "breakOnCapitals.html" $item }}
+                                                    {{ partial "breakOnCapitals.html" $api }}
                                                 </a>
                                             </li>
                                         {{ end }}
