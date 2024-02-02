@@ -98,6 +98,9 @@ export enum FlushModeExperimental {
 export const gcBlobPrefix = "__gc";
 
 // @internal
+export const gcDataBlobKey = ".gcdata";
+
+// @internal
 export const gcDeletedBlobKey = "__deletedNodes";
 
 // @internal
@@ -171,6 +174,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
     attachGraph(): void;
     readonly attachState: AttachState;
     readonly entryPoint: IFluidHandle<FluidObject>;
+    getAttachGCData?(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)
@@ -193,6 +197,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegistry>, IProvideFluidHandleContext {
     // @deprecated (undocumented)
     addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
+    addedGCOutboundRoute?(fromPath: string, toPath: string): void;
     readonly attachState: AttachState;
     // (undocumented)
     readonly baseSnapshot: ISnapshotTree | undefined;
