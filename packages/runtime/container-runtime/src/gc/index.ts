@@ -39,6 +39,7 @@ export {
 	UnreferencedState,
 	throwOnTombstoneLoadOverrideKey,
 	GarbageCollectionMessage,
+	GarbageCollectionMessageType,
 	ISweepMessage,
 } from "./gcDefinitions";
 export {

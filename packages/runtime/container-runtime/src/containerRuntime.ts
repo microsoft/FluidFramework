@@ -2923,7 +2923,7 @@ export class ContainerRuntime
 		// GC uses "/" when adding "root" references, e.g. for Aliasing or as part of Tombstone Auto-Recovery.
 		// These have no package path so return a special value.
 		if (nodePath === "/") {
-			return ["<GCROOT>"];
+			return ["_gcRoot"];
 		}
 
 		switch (this.getNodeType(nodePath)) {

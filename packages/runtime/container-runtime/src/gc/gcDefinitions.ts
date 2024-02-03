@@ -375,7 +375,7 @@ export interface IGarbageCollector {
 		headerData?: RuntimeHeaderData,
 	): void;
 	/** Called when a reference is added to a node. Used to identify nodes that were referenced between summaries. */
-	addedOutboundReference(fromNodePath: string, toNodePath: string): void;
+	addedOutboundReference(fromNodePath: string, toNodePath: string, autorecovery?: true): void;
 	/** Called to process a garbage collection message. */
 	processMessage(message: ContainerRuntimeGCMessage, local: boolean): void;
 	/** Returns true if this node has been deleted by GC during sweep phase. */
