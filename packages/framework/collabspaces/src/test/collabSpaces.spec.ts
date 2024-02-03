@@ -53,7 +53,7 @@ describe("Temporal Collab Spaces 1", () => {
 					return cp;
 				};
 
-				async function loadContainer(/* summaryVersion: string */) {
+				async function addContainerInstance(/* summaryVersion: string */) {
 					// TBD(Pri1): ensure we produce summary before loading here.
 
 					const container = await provider.loadContainer(runtimeFactory, undefined, {
@@ -88,7 +88,7 @@ describe("Temporal Collab Spaces 1", () => {
 				const cols = 40;
 				const rows = 100;
 
-				async function initializeContainer(collabSpace: TempCollabSpaceRuntime) {
+				async function populateInitialMatrix(collabSpace: TempCollabSpaceRuntime) {
 					// +700Mb, but only +200Mb if accounting GC after that.
 					collabSpace.insertCols(0, cols);
 					collabSpace.insertRows(0, rows);
@@ -121,7 +121,7 @@ describe("Temporal Collab Spaces 1", () => {
 					}
 				}
 
-				async function ensureSameValue(
+				async function ensureSameValues(
 					row: number,
 					col: number,
 					value: unknown,
@@ -162,9 +162,9 @@ describe("Temporal Collab Spaces 1", () => {
 					assert(collabSpace.isAttached, "data store is not attached");
 
 					// Have a secont container that follows passivley the first one
-					await loadContainer();
+					await addContainerInstance();
 
-					await initializeContainer(collabSpace);
+					await populateInitialMatrix(collabSpace);
 
 					// TBD(Pri1): this synchronization takes very long time!
 					// There are obviously a lot of ops, but it should still take relatively short amount of time.
@@ -180,53 +180,54 @@ describe("Temporal Collab Spaces 1", () => {
 					// Create a collab channel to start collaboration.
 					const channel = (await collabSpace.getCellChannel(row, col)) as ISharedCounter;
 					let channel2 = (await collabSpace.getCellChannel(row, col)) as ISharedCounter;
-					assert(channel === channel2, "can get to same channel");
+					assert(channel === channel2, "getCellChannel() returns same channel");
 
 					// If channel is not properly attached, then the rest of the test will fail as
 					// data will not be replicated properly.
 					assert(channel.isAttached(), "channel is not properly attached");
 
-					await ensureSameValue(row, col, initialValue, channel);
+					await ensureSameValues(row, col, initialValue, channel);
 
 					// Collaborate a bit :)
 					channel.increment(100);
 					initialValue += 100;
 
 					await provider.ensureSynchronized();
-					await ensureSameValue(row, col, initialValue, channel);
+					await ensureSameValues(row, col, initialValue, channel);
 
 					// Before channel has a chance to be saved or destroyed, let's load 3rd container from that state
 					// and validate it can follow
-					await loadContainer();
+					await addContainerInstance();
 
 					// Also let's grap channel in second container for later manipulations
 					channel2 = (await collabSpaces[2].getCellChannel(row, col)) as ISharedCounter;
 
 					// Save changes and destroy channel
 					let destroyed = collabSpace.destroyCellChannel(channel);
-					assert(!destroyed, "can't be destroyed without saving ops rountrip first");
+					assert(
+						!destroyed,
+						"can't be destroyed without matrix save ops doing rountrip first",
+					);
 					collabSpace.saveChannelState(channel);
 					await provider.ensureSynchronized();
-					await ensureSameValue(row, col, initialValue, channel);
+					await ensureSameValues(row, col, initialValue, channel);
 
 					destroyed = collabSpace.destroyCellChannel(channel);
-					// If feels like we can't guarantee that actually, as we might need one more op
-					// to make it possible. Not sure.
 					assert(destroyed, "Channel should be destroyed by now!");
 
 					// Add one more container and observe they are all equal
 					// TBD(Pri1): It would be nice somehow to validate that such channel was dropped from summary!
-					await loadContainer();
-					await ensureSameValue(row, col, initialValue, channel2);
+					await addContainerInstance();
+					await ensureSameValues(row, col, initialValue, channel2);
 
 					// After one container destroed the channel (and 3rd container loaded without channel),
 					// let's test that op showing up on that channel will be processed correctly by all containers.
 					channel2.increment(10);
 					initialValue += 10;
 					await provider.ensureSynchronized();
-					await ensureSameValue(row, col, initialValue, channel2);
+					await ensureSameValues(row, col, initialValue, channel2);
 
-					// Finally, test concurrent editing / creation of the channels
+					// Finally, test concurrent editing / creation of the channels by multiple containers
 					const channel2a = (await collabSpace.getCellChannel(
 						row + 1,
 						col,
@@ -235,6 +236,8 @@ describe("Temporal Collab Spaces 1", () => {
 						row + 1,
 						col,
 					)) as ISharedCounter;
+
+					// Concurrent changes - clients do not see each other changes yet
 					initialValue = channel2a.value;
 					channel2a.increment(10);
 					channel2b.increment(20);
@@ -242,9 +245,11 @@ describe("Temporal Collab Spaces 1", () => {
 						channel2a.value !== channel2b.value,
 						"test infra should not process all ops synchronously",
 					);
+
+					// syncrhonize - all containers should see exactly same changes
 					await provider.ensureSynchronized();
 					assert(channel2a.value === channel2b.value, "syncrhonized");
-					await ensureSameValue(row + 1, col, initialValue + 30, channel2a);
+					await ensureSameValues(row + 1, col, initialValue + 30, channel2a);
 
 					// Useful mostly if you debug and want measure column reading speed - read one column
 					await measureReadSpeed(col, collabSpace);
