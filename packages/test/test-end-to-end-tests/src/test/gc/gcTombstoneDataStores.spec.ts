@@ -1137,18 +1137,19 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 
 				// Then wait the Tombstone timeout and update current timestamp, and summarize again
 				await delay(tombstoneTimeoutMs);
-				dataStoreX._root.set("update", "timestamp"); //* Might hit Tombstone Changed event?
-				const { container: summarizingContainer, summarizer } = await loadSummarizer(
+				dataStoreX._root.set("update", "timestamp");
+				const { summarizer } = await loadSummarizer(
 					initialContainer,
 					summaryVersion_corrupted,
 					summarizerMockLogger,
 				);
-				const { summaryVersion } = await summarize(summarizer);
+				const { summaryVersion: summaryVersion_withTombstone } =
+					await summarize(summarizer);
 
 				// The datastore should be tombstoned in the snapshot this container loads from,
 				// even though the datastores are properly referenced and easily reachable.
 				const container1 = await loadContainer(
-					summaryVersion,
+					summaryVersion_withTombstone,
 					/* disableTombstoneFailureViaGCGenerationOption: */ false,
 					mockLogger,
 				);
@@ -1211,21 +1212,21 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				);
 
 				// Auto-Recovery: This summary will have the unref timestamp reset and will run full GC due to the GC TombstoneLoaded op
-				const { summaryVersion: summaryVersion2 } = await summarize(summarizer, {
+				const { summaryVersion: summaryVersion_repaired } = await summarize(summarizer, {
 					reason: "Summarize after auto-recovery",
 				});
-				const container2 = await loadContainer(summaryVersion2);
+				const container2 = await loadContainer(summaryVersion_repaired);
 
 				// Verify that the object is not Tombstoned in summarizingContainer - it just summarized with the TombstoneLoaded op
-				const summarizerResponse = await (
-					summarizer as unknown as { runtime: ContainerRuntime }
-				).runtime.resolveHandle({
-					url: dataStoreAId,
-				});
-				assert.equal(
-					summarizerResponse.status,
-					200,
-					"Auto-Recovery should have kicked in immediately in Summarizer after summarizing with the TombstoneLoaded op",
+				const tombstones = (
+					summarizer as unknown as {
+						runtime: { garbageCollector: { tombstones: string[] } };
+					}
+				).runtime.garbageCollector.tombstones;
+				assert.deepEqual(
+					tombstones,
+					[],
+					"Expected no Tombstones. Auto-Recovery should have kicked in immediately in Summarizer after summarizing with the TombstoneLoaded op",
 				);
 
 				// Container2 loaded after auto-recovery: These requests succeed because the datastores are no longer tombstoned
@@ -1237,10 +1238,12 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 
 				// Wait the Tombstone timeout then summarize and load another container
 				// Since auto-recovery triggered full GC, the corruption was repaired and GC knows dataStoreA is referenced
+				// Otherwise it would have been unreferenced and would have become tombstoned again
 				await delay(tombstoneTimeoutMs);
-				dataStoreX._root.set("update", "timestamp again"); //* Curious: Might hit Tombstone Changed event, w/o fullGC recovery?
-				const { summaryVersion: summaryVersion3 } = await summarize(summarizer);
-				const container3 = await loadContainer(summaryVersion3);
+				dataStoreX._root.set("update", "timestamp again");
+				const { summaryVersion: summaryVersion_stillRepaired } =
+					await summarize(summarizer);
+				const container3 = await loadContainer(summaryVersion_stillRepaired);
 				const defaultDataObject3 = (await container3.getEntryPoint()) as ITestDataObject;
 				const handleA3 = defaultDataObject3._root.get<IFluidHandle>("dsA");
 				await assert.doesNotReject(
