@@ -44,7 +44,7 @@ export interface IEfficientMatrix extends Omit<ISharedMatrix<MatrixExternalType>
 	// Old channel could come back to life (become again rooted / associated with cell) through undo!
 	setCell(rowArg: number, colArg: number, value: MatrixItem<MatrixExternalType>);
 
-	// TBD(Pri0) - need to get rid of synchronous version, as I do not think we can deliver it.
+	// TBD(Pri1) - need to get rid of synchronous version, as I do not think we can deliver it.
 	// Removing it causes a bunch of type issues, so leaving NYI version for now.
 	getCell(row: number, col: number): MatrixItem<MatrixExternalType>;
 	getCellAsync(row: number, col: number): Promise<MatrixItem<MatrixExternalType>>;

@@ -541,7 +541,6 @@ export class TempCollabSpaceRuntime
 		this.saveOrDestroyChannel(channel, true /* allowSave */, false /* allowDestroy */);
 	}
 
-	// TBD(Pri1) - need to build a lot of protections here on when it's safe to do this operaton
 	public destroyCellChannel(channel: ICollabChannelCore) {
 		const res = this.saveOrDestroyChannel(
 			channel,

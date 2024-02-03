@@ -157,7 +157,7 @@ describe("Temporal Collab Spaces 1", () => {
 
 					await initializeContainer(collabSpace);
 
-					// TBD(Pri0): this synchronization takes very long time!
+					// TBD(Pri1): this synchronization takes very long time!
 					// There are obviously a lot of ops, but it should still take relatively short amount of time.
 					// Two things to check:
 					// 1. Looks like our local test pipeline is slow, probably something easy to improve
@@ -169,9 +169,8 @@ describe("Temporal Collab Spaces 1", () => {
 					let initialValue = (await collabSpace.getCellAsync(row, col))?.value as number;
 
 					// Create a collab channel to start collaboration.
-					const channel = (await collabSpace.getCellChannel(row, col)) as ISharedCounter &
-						ICollabChannelCore;
-					const channel2 = await collabSpace.getCellChannel(row, col);
+					const channel = (await collabSpace.getCellChannel(row, col)) as ISharedCounter;
+					let channel2 = (await collabSpace.getCellChannel(row, col)) as ISharedCounter;
 					assert(channel === channel2, "can get to same channel");
 
 					await ensureSameValue(initialValue, channel);
@@ -187,6 +186,9 @@ describe("Temporal Collab Spaces 1", () => {
 					// and validate it can follow
 					await loadContainer();
 
+					// Also let's grap channel in second container for later manipulations
+					channel2 = (await collabSpaces[2].getCellChannel(row, col)) as ISharedCounter;
+
 					// Save changes and destroy channel
 					let destroyed = collabSpace.destroyCellChannel(channel);
 					assert(!destroyed, "can't be destroyed without saving ops rountrip first");
@@ -200,8 +202,20 @@ describe("Temporal Collab Spaces 1", () => {
 					assert(destroyed, "Channel should be destroyed by now!");
 
 					// Add one more container and observe they are all equal
+					// TBD(Pri1): It would be nice somehow to validate that such channel was dropped from summary!
 					await loadContainer();
 					await ensureSameValue(initialValue);
+
+					// TBD(Pri0): This does not work - SummarizerNodeWithGC.createChild() asserts as it does not like
+					// the fact that we are creating a new node for the existing path (such node existed in the past)
+					// After one container destroed the channel (and 3rd container loaded without channel),
+					// let's test that op showing up on that channel will be processed correctly by all containers.
+					/*
+					channel2.increment(10);
+					initialValue += 10;
+					await provider.ensureSynchronized();
+					await ensureSameValue(initialValue);
+					*/
 
 					// Useful mostly if you debug and want measure column reading speed - read one column
 					await measureReadSpeed(collabSpace);
