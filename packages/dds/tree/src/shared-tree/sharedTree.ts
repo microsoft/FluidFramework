@@ -215,6 +215,7 @@ export class SharedTree
 			revisionTagCodec,
 			fieldBatchCodec,
 			options,
+			options.treeEncodeType,
 		);
 		const changeFamily = makeMitigatedChangeFamily(
 			innerChangeFamily,
@@ -246,6 +247,7 @@ export class SharedTree
 			runtime,
 			attributes,
 			telemetryContextPrefix,
+			{ schema, policy: defaultSchemaPolicy },
 		);
 		this._events = createEmitter<CheckoutEvents>();
 		const localBranch = this.getLocalBranch();
@@ -257,6 +259,7 @@ export class SharedTree
 			fieldBatchCodec,
 			events: this._events,
 			removedRoots,
+			chunkCompressionStrategy: options.treeEncodeType,
 		});
 	}
 

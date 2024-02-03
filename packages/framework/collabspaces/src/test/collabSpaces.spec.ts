@@ -43,7 +43,7 @@ describe("Temporal Collab Spaces 1", () => {
 		const importModule = await import("@fluid-private/test-version-utils");
 		importModule.describeCompat(
 			"Temporal Collab Spaces",
-			"2.0.0-rc.1.0.0",
+			"NoCompat",
 			(getTestObjectProvider) => {
 				const createContainer = async (): Promise<TempCollabSpaceRuntime> => {
 					const container = await provider.createContainer(runtimeFactory);
@@ -152,6 +152,10 @@ describe("Temporal Collab Spaces 1", () => {
 				it("Basic test", async () => {
 					const collabSpace = await createContainer();
 
+					// Ensure that data store is properly attached. It should be, as default
+					// data store is aliased (and thus attached) in test container
+					assert(collabSpace.isAttached, "data store is not attached");
+
 					// Have a secont container that follows passivley the first one
 					await loadContainer();
 
@@ -173,6 +177,10 @@ describe("Temporal Collab Spaces 1", () => {
 					let channel2 = (await collabSpace.getCellChannel(row, col)) as ISharedCounter;
 					assert(channel === channel2, "can get to same channel");
 
+					// If channel is not properly attached, then the rest of the test will fail as
+					// data will not be replicated properly.
+					assert(channel.isAttached(), "channel is not properly attached");
+
 					await ensureSameValue(initialValue, channel);
 
 					// Collaborate a bit :)
@@ -180,7 +188,7 @@ describe("Temporal Collab Spaces 1", () => {
 					initialValue += 100;
 
 					await provider.ensureSynchronized();
-					await ensureSameValue(initialValue);
+					await ensureSameValue(initialValue, channel);
 
 					// Before channel has a chance to be saved or destroyed, let's load 3rd container from that state
 					// and validate it can follow
@@ -194,7 +202,7 @@ describe("Temporal Collab Spaces 1", () => {
 					assert(!destroyed, "can't be destroyed without saving ops rountrip first");
 					collabSpace.saveChannelState(channel);
 					await provider.ensureSynchronized();
-					await ensureSameValue(initialValue);
+					await ensureSameValue(initialValue, channel);
 
 					destroyed = collabSpace.destroyCellChannel(channel);
 					// If feels like we can't guarantee that actually, as we might need one more op
@@ -204,7 +212,7 @@ describe("Temporal Collab Spaces 1", () => {
 					// Add one more container and observe they are all equal
 					// TBD(Pri1): It would be nice somehow to validate that such channel was dropped from summary!
 					await loadContainer();
-					await ensureSameValue(initialValue);
+					await ensureSameValue(initialValue, channel2);
 
 					// TBD(Pri0): This does not work - SummarizerNodeWithGC.createChild() asserts as it does not like
 					// the fact that we are creating a new node for the existing path (such node existed in the past)
@@ -214,7 +222,7 @@ describe("Temporal Collab Spaces 1", () => {
 					channel2.increment(10);
 					initialValue += 10;
 					await provider.ensureSynchronized();
-					await ensureSameValue(initialValue);
+					await ensureSameValue(initialValue, channel2);
 					*/
 
 					// Useful mostly if you debug and want measure column reading speed - read one column

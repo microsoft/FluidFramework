@@ -414,6 +414,8 @@ export class TempCollabSpaceRuntime
 		// newChannel.handle.attachGraph() seems like works the best, even though it's deprecated.
 		// We can add bindToContext() to ICollabChannelCore, but it feels like that should be better way to do it!
 		newChannel.handle.attachGraph();
+		// this.bind(newChannel.handle)
+		// this.bindChannel(newChannel);
 
 		this.channelCreated(channelId);
 

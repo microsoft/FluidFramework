@@ -14,7 +14,6 @@ export { fromBase64ToUtf8, fromUtf8ToBase64, toUtf8 } from "./base64Encoding";
 export { Uint8ArrayToArrayBuffer } from "./bufferShared";
 export { delay } from "./delay";
 export { doIfNotDisposed } from "./disposal";
-export { EventForwarder } from "./eventForwarder";
 export { Heap, IComparer, IHeapNode, NumberComparer } from "./heap";
 /**
  * NOTE: This export is remapped to export from "./indexBrowser" in browser environments via package.json.
