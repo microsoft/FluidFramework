@@ -128,19 +128,6 @@ describe("Garbage Collection Tests", () => {
 		return sweepReadyRoutes;
 	}
 
-	/**
-	 * Calls collectGarbage and then notifies the summaryStateTracker as if the summary was ack'd
-	 * This is important for testing state that is only reset once we've confirmed that the GC result was included in a successful summary
-	 */
-	async function runGCAndSimulateSummaryAck(fullGCOverride?: boolean) {
-		assert(!!gc, "PRECONDITION: gc should be initialized");
-		await gc.collectGarbage({ fullGC: fullGCOverride });
-		await gc.summaryStateTracker.refreshLatestSummary({
-			isSummaryTracked: true,
-			isSummaryNewer: false,
-		});
-	}
-
 	function createGarbageCollector(
 		params: {
 			createParams?: Partial<IGarbageCollectorCreateParams>;
@@ -453,7 +440,12 @@ describe("Garbage Collection Tests", () => {
 			};
 
 			// Nodes 0 and 1 are referenced (use correct gcData via fullGC true)
-			await runGCAndSimulateSummaryAck(/* fullGCOverride: */ true);
+			// Simulate successful summary ack to clear doesGCStateNeedReset flag so it doesn't interfere (it leads to fullGC too)
+			await gc.collectGarbage({ fullGC: true });
+			await gc.summaryStateTracker.refreshLatestSummary({
+				isSummaryTracked: true,
+				isSummaryNewer: false,
+			});
 			assert(
 				!gc.unreferencedNodesState.has(nodes[0]),
 				"node 0 should not be unreferenced to start",
@@ -461,7 +453,7 @@ describe("Garbage Collection Tests", () => {
 
 			// Now run GC again - this time with the corrupted data (via fullGC false)
 			clock.tick(10);
-			await runGCAndSimulateSummaryAck(/* fullGCOverride: */ false);
+			await gc.collectGarbage({ fullGC: false });
 			assert.equal(
 				gc.unreferencedNodesState.get(nodes[0])?.state,
 				UnreferencedState.Active, // This means recently unreferenced
@@ -470,7 +462,7 @@ describe("Garbage Collection Tests", () => {
 
 			// Let node 0 become Tombstoned and verify it
 			clock.tick(defaultTombstoneTimeoutMs);
-			await runGCAndSimulateSummaryAck();
+			await gc.collectGarbage({});
 			assert.equal(
 				gc.unreferencedNodesState.get(nodes[0])?.state,
 				UnreferencedState.TombstoneReady,
@@ -508,28 +500,25 @@ describe("Garbage Collection Tests", () => {
 				"node 0 should be unreferenced but 'Active' after initial Autorecovery moment (it was TombstoneReady)",
 			);
 
-			// Autorecovery: Full GC will be true here... and as many times as we call it until we get the ack
-			spies.gc.runGC.resetHistory();
-			await gc.collectGarbage({});
-			await gc.collectGarbage({});
-			await gc.collectGarbage({});
-			assert.deepEqual(
-				spies.gc.runGC.args.map(([fullGC]) => fullGC),
-				[true, true, true],
-				"runGC should be called 3 times with fullGC true",
-			);
-
-			// Now finally simulate a successful GC/Summary.
+			// Simulate a successful GC/Summary.
 			// GC Data corruption should be fixed (nodes[0] should be referenced again) and autorecovery fullGC state should be reset
 			spies.gc.runGC.resetHistory();
-			await runGCAndSimulateSummaryAck();
+			await gc.collectGarbage({});
 			assert(
 				spies.gc.runGC.calledWith(/* fullGC: */ true),
-				"runGC should be called with fullGC true, then false (after summary ack resets state)",
+				"runGC should be called with fullGC true",
 			);
 			assert(
-				gc.summaryStateTracker.fullGCModeForAutoRecovery === false,
-				"fullGCModeForAutoRecovery should have been reset to false",
+				gc.summaryStateTracker.fullGCModeForAutoRecovery,
+				"fullGCModeForAutoRecovery should NOT have been reset to false yet",
+			);
+			await gc.summaryStateTracker.refreshLatestSummary({
+				isSummaryTracked: true,
+				isSummaryNewer: false,
+			});
+			assert(
+				!gc.summaryStateTracker.fullGCModeForAutoRecovery,
+				"fullGCModeForAutoRecovery should have been reset to false now",
 			);
 
 			// Lastly, confirm that the node was successfully restored
