@@ -54,6 +54,7 @@ import {
 	GarbageCollectionMessage,
 	GarbageCollectionMessageType,
 	GCTelemetryTracker,
+	IGCStats,
 } from "../../gc";
 import { ContainerMessageType, ContainerRuntimeGCMessage } from "../../messageTypes";
 import {
@@ -64,16 +65,19 @@ import {
 import { pkgVersion } from "../../packageVersion";
 import { createTestConfigProvider } from "./gcUnitTestHelpers";
 
+type WithPrivates<T, TPrivates> = Omit<T, keyof TPrivates> & TPrivates;
+
 type GcWithPrivates = IGarbageCollector & {
 	readonly runtime: IGarbageCollectionRuntime;
 	readonly configs: IGarbageCollectorConfigs;
-	readonly summaryStateTracker: Omit<
+	readonly summaryStateTracker: WithPrivates<
 		GCSummaryStateTracker,
-		"latestSummaryGCVersion" | "latestSummaryData"
-	> & {
-		latestSummaryGCVersion: GCVersion;
-		latestSummaryData: IGCSummaryTrackingData | undefined;
-	};
+		{
+			latestSummaryGCVersion: GCVersion;
+			latestSummaryData: IGCSummaryTrackingData | undefined;
+			fullGCModeForAutoRecovery: boolean;
+		}
+	>;
 	readonly telemetryTracker: GCTelemetryTracker;
 	readonly mc: MonitoringContext;
 	readonly sessionExpiryTimer: Omit<Timer, "defaultTimeout"> & { defaultTimeout: number };
@@ -82,6 +86,7 @@ type GcWithPrivates = IGarbageCollector & {
 	readonly deletedNodes: Set<string>;
 	readonly unreferencedNodesState: Map<string, UnreferencedStateTracker>;
 	readonly submitMessage: (message: ContainerRuntimeGCMessage) => void;
+	runGC: (fullGC: boolean) => Promise<IGCStats>;
 };
 
 describe("Garbage Collection Tests", () => {
@@ -121,6 +126,19 @@ describe("Garbage Collection Tests", () => {
 			delete defaultGCData.gcNodes[nodeId];
 		}
 		return sweepReadyRoutes;
+	}
+
+	/**
+	 * Calls collectGarbage and then notifies the summaryStateTracker as if the summary was ack'd
+	 * This is important for testing state that is only reset once we've confirmed that the GC result was included in a successful summary
+	 */
+	async function runGCAndSimulateSummaryAck(fullGCOverride?: boolean) {
+		assert(!!gc, "PRECONDITION: gc should be initialized");
+		await gc.collectGarbage({ fullGC: fullGCOverride });
+		await gc.summaryStateTracker.refreshLatestSummary({
+			isSummaryTracked: true,
+			isSummaryNewer: false,
+		});
 	}
 
 	function createGarbageCollector(
@@ -307,7 +325,7 @@ describe("Garbage Collection Tests", () => {
 		});
 	});
 
-	describe("runSweepPhase", () => {
+	describe("Tombstone and Sweep", () => {
 		it("Tombstone then Delete", async () => {
 			// Simple starting reference graph - root and two nodes
 			defaultGCData.gcNodes["/"] = [nodes[0], nodes[1]];
@@ -315,12 +333,12 @@ describe("Garbage Collection Tests", () => {
 			defaultGCData.gcNodes[nodes[1]] = [];
 
 			// Sweep enabled
-			gc = createGarbageCollector({ gcOptions: { enableGCSweep: true } });
+			gc = createGarbageCollector({ createParams: { gcOptions: { enableGCSweep: true } } });
 			// These spies will let us monitor how each of these functions are called (or not) during runSweepPhase.
 			// The original behavior of the function is preserved, but we can check how it was called.
 			const spies = {
-						updateTombstonedRoutes: spy(gc.runtime, "updateTombstonedRoutes"),
-					submitMessage: spy(gc, "submitMessage"),
+				updateTombstonedRoutes: spy(gc.runtime, "updateTombstonedRoutes"),
+				submitMessage: spy(gc, "submitMessage"),
 			};
 
 			// Nodes 0 and 1 are referenced
@@ -402,6 +420,123 @@ describe("Garbage Collection Tests", () => {
 				spies.submitMessage.callCount,
 				0,
 				"submitMessage should not be called since Sweep is disabled",
+			);
+		});
+
+		it("Autorecovery upon loading a Tombstoned node", async () => {
+			// Simple starting reference graph - root and two nodes
+			defaultGCData.gcNodes["/"] = [nodes[0], nodes[1]];
+			defaultGCData.gcNodes[nodes[0]] = [];
+			defaultGCData.gcNodes[nodes[1]] = [];
+
+			// Simulate GC Data with a route missing (nodes[0] is referenced but missing here)
+			// We'll return this from getGCData unless fullGC is passed in.
+			const corruptedGCData: IGarbageCollectionData = JSON.parse(
+				JSON.stringify(defaultGCData),
+			);
+			corruptedGCData.gcNodes["/"] = [nodes[1]];
+
+			// getGCData set up to sometimes return the corrupted data
+			gc = createGarbageCollector({
+				getGCData: async (fullGC?: boolean) => {
+					return fullGC ? defaultGCData : corruptedGCData;
+				},
+			});
+			// These spies will let us monitor how each of these functions are called (or not) during runSweepPhase.
+			// The original behavior of the function is preserved, but we can check how it was called.
+			const spies = {
+				gc: {
+					submitMessage: spy(gc, "submitMessage"),
+					addedOutboundReference: spy(gc, "addedOutboundReference"),
+					runGC: spy(gc, "runGC"),
+				},
+			};
+
+			// Nodes 0 and 1 are referenced (use correct gcData via fullGC true)
+			await runGCAndSimulateSummaryAck(/* fullGCOverride: */ true);
+			assert(
+				!gc.unreferencedNodesState.has(nodes[0]),
+				"node 0 should not be unreferenced to start",
+			);
+
+			// Now run GC again - this time with the corrupted data (via fullGC false)
+			clock.tick(10);
+			await runGCAndSimulateSummaryAck(/* fullGCOverride: */ false);
+			assert.equal(
+				gc.unreferencedNodesState.get(nodes[0])?.state,
+				UnreferencedState.Active, // This means recently unreferenced
+				"node 0 should appear unreferenced after running GC with corrupted GC Data",
+			);
+
+			// Let node 0 become Tombstoned and verify it
+			clock.tick(defaultTombstoneTimeoutMs);
+			await runGCAndSimulateSummaryAck();
+			assert.equal(
+				gc.unreferencedNodesState.get(nodes[0])?.state,
+				UnreferencedState.TombstoneReady,
+				"node 0 should be TombstoneReady",
+			);
+			assert.deepEqual(gc.tombstones, [nodes[0]], "node 0 should be in the Tombstones list");
+
+			// Simulate usage to trigger TombstoneLoaded op.
+			gc.nodeUpdated(nodes[0], "Loaded");
+			const [gcTombstoneLoadedMessage] = spies.gc.submitMessage.args[0];
+			assert.deepEqual(
+				gcTombstoneLoadedMessage,
+				{
+					type: ContainerMessageType.GC,
+					contents: {
+						type: GarbageCollectionMessageType.TombstoneLoaded,
+						nodePath: nodes[0],
+					},
+					compatDetails: { behavior: "Ignore" },
+				} satisfies ContainerRuntimeGCMessage,
+				"submitted message not as expected",
+			);
+
+			// Plumb the message to processMessage fn to trigger autorecovery
+			// Autorecovery: addedOutboundReference should be called with the tombstoned node, which should transition to "Active" state
+			gc.processMessage(gcTombstoneLoadedMessage, true /* local */);
+			assert.deepEqual(
+				spies.gc.addedOutboundReference.args[0],
+				["/", nodes[0], /* autorecovery: */ true],
+				"addedOutboundReference should be called with node 0",
+			);
+			assert.equal(
+				gc.unreferencedNodesState.get(nodes[0])?.state,
+				UnreferencedState.Active,
+				"node 0 should be unreferenced but 'Active' after initial Autorecovery moment (it was TombstoneReady)",
+			);
+
+			// Autorecovery: Full GC will be true here... and as many times as we call it until we get the ack
+			spies.gc.runGC.resetHistory();
+			await gc.collectGarbage({});
+			await gc.collectGarbage({});
+			await gc.collectGarbage({});
+			assert.deepEqual(
+				spies.gc.runGC.args.map(([fullGC]) => fullGC),
+				[true, true, true],
+				"runGC should be called 3 times with fullGC true",
+			);
+
+			// Now finally simulate a successful GC/Summary.
+			// GC Data corruption should be fixed (nodes[0] should be referenced again) and autorecovery fullGC state should be reset
+			spies.gc.runGC.resetHistory();
+			await runGCAndSimulateSummaryAck();
+			assert(
+				spies.gc.runGC.calledWith(/* fullGC: */ true),
+				"runGC should be called with fullGC true, then false (after summary ack resets state)",
+			);
+			assert(
+				gc.summaryStateTracker.fullGCModeForAutoRecovery === false,
+				"fullGCModeForAutoRecovery should have been reset to false",
+			);
+
+			// Lastly, confirm that the node was successfully restored
+			// (not actually that interesting since we're hardcoding the GC Data, but still)
+			assert(
+				!gc.unreferencedNodesState.has(nodes[0]),
+				"node 0 should not be unreferenced after repairing GC Data",
 			);
 		});
 	});
