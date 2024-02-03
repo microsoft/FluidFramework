@@ -6,8 +6,8 @@
 
 import { FluidDataStoreRuntime } from '@fluidframework/datastore';
 import { FluidObject } from '@fluidframework/core-interfaces';
+import { IAttachMessage } from '@fluidframework/runtime-definitions';
 import { IChannel } from '@fluidframework/datastore-definitions';
-import { IChannelContext } from '@fluidframework/datastore';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
@@ -71,7 +71,7 @@ export class TempCollabSpaceRuntime extends FluidDataStoreRuntime<ISharedMatrixE
     // (undocumented)
     protected applyStashedChannelChannelOp(address: string, contents: any): Promise<unknown>;
     // (undocumented)
-    protected attachRemoteChannel(id: string, remoteChannelContext: IChannelContext): void;
+    protected attachRemoteChannel(id: string, sequenceNumber: number, attachMessage: IAttachMessage): void;
     // (undocumented)
     closeMatrix(consumer: IMatrixConsumer<MatrixItem<MatrixExternalType>>): void;
     // (undocumented)
@@ -113,6 +113,8 @@ export class TempCollabSpaceRuntime extends FluidDataStoreRuntime<ISharedMatrixE
     get rowCount(): number;
     // (undocumented)
     saveChannelState(channel: ICollabChannelCore): void;
+    // (undocumented)
+    protected sendAttachChannelOp(channel: IChannel): void;
     // (undocumented)
     setCell(rowArg: number, colArg: number, value: MatrixItem<MatrixExternalType>): void;
     // (undocumented)

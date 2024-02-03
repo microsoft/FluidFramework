@@ -6,6 +6,7 @@
 
 import { AttachState } from '@fluidframework/container-definitions';
 import { FluidObject } from '@fluidframework/core-interfaces';
+import { IAttachMessage } from '@fluidframework/runtime-definitions';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
@@ -52,7 +53,7 @@ export class FluidDataStoreRuntime<TEvents = Record<string, never>> extends Type
     applyStashedOp(content: any): Promise<unknown>;
     attachGraph(): void;
     // @internal (undocumented)
-    protected attachRemoteChannel(id: string, remoteChannelContext: IChannelContext): void;
+    protected attachRemoteChannel(id: string, sequenceNumber: number, attachMessage: IAttachMessage): void;
     // (undocumented)
     get attachState(): AttachState;
     // (undocumented)

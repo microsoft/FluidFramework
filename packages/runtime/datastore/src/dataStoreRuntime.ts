@@ -630,17 +630,7 @@ export class FluidDataStoreRuntime<TEvents = Record<string, never>>
 							0x17c /* "Unexpected attach (local) channel OP" */,
 						);
 					} else {
-						const summarizerNodeParams = {
-							type: CreateSummarizerNodeSource.FromAttach,
-							sequenceNumber: message.sequenceNumber,
-							snapshot: attachMessage.snapshot,
-						};
-
-						const remoteChannelContext = this.createRemoteChannelContext(
-							attachMessage,
-							summarizerNodeParams,
-						);
-						this.attachRemoteChannel(id, remoteChannelContext);
+						this.attachRemoteChannel(id, message.sequenceNumber, attachMessage);
 					}
 					break;
 				}
@@ -670,7 +660,21 @@ export class FluidDataStoreRuntime<TEvents = Record<string, never>>
 	}
 
 	/** @internal */
-	protected attachRemoteChannel(id: string, remoteChannelContext: IChannelContext) {
+	protected attachRemoteChannel(
+		id: string,
+		sequenceNumber: number,
+		attachMessage: IAttachMessage,
+	) {
+		const summarizerNodeParams = {
+			type: CreateSummarizerNodeSource.FromAttach,
+			sequenceNumber,
+			snapshot: attachMessage.snapshot,
+		};
+
+		const remoteChannelContext = this.createRemoteChannelContext(
+			attachMessage,
+			summarizerNodeParams,
+		);
 		assert(!this.contexts.has(id), 0x17d /* "Unexpected attach channel OP" */);
 		this.contexts.set(id, remoteChannelContext);
 	}
@@ -988,7 +992,7 @@ export class FluidDataStoreRuntime<TEvents = Record<string, never>>
 		this.sendAttachChannelOp(channel);
 
 		const context = this.contexts.get(channel.id) as LocalChannelContextBase;
-		context.makeVisible();		
+		context.makeVisible();
 	}
 
 	protected submitChannelOp(address: string, contents: any, localOpMetadata: unknown) {

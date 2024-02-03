@@ -88,10 +88,6 @@ describe("Temporal Collab Spaces 1", () => {
 				const cols = 40;
 				const rows = 100;
 
-				// Cell we will be interogating
-				const row = 5;
-				const col = 10;
-
 				async function initializeContainer(collabSpace: TempCollabSpaceRuntime) {
 					// +700Mb, but only +200Mb if accounting GC after that.
 					collabSpace.insertCols(0, cols);
@@ -125,7 +121,12 @@ describe("Temporal Collab Spaces 1", () => {
 					}
 				}
 
-				async function ensureSameValue(value: unknown, channel?: ICollabChannelCore) {
+				async function ensureSameValue(
+					row: number,
+					col: number,
+					value: unknown,
+					channel?: ICollabChannelCore,
+				) {
 					// const cp1 = collabSpaces[0];
 					if (channel) {
 						assert(channel.value === value, "Cahnnel value is not the same!");
@@ -136,7 +137,7 @@ describe("Temporal Collab Spaces 1", () => {
 					}
 				}
 
-				async function measureReadSpeed(collabSpace: TempCollabSpaceRuntime) {
+				async function measureReadSpeed(col: number, collabSpace: TempCollabSpaceRuntime) {
 					// 100K rows test numbers:
 					// Read arbitrary column: 1s on my dev box
 					// But only 234ms if using non-async function (and thus not doing await here)!
@@ -150,6 +151,10 @@ describe("Temporal Collab Spaces 1", () => {
 				}
 
 				it("Basic test", async () => {
+					// Cell we will be interogating
+					const row = 5;
+					const col = 10;
+
 					const collabSpace = await createContainer();
 
 					// Ensure that data store is properly attached. It should be, as default
@@ -181,14 +186,14 @@ describe("Temporal Collab Spaces 1", () => {
 					// data will not be replicated properly.
 					assert(channel.isAttached(), "channel is not properly attached");
 
-					await ensureSameValue(initialValue, channel);
+					await ensureSameValue(row, col, initialValue, channel);
 
 					// Collaborate a bit :)
 					channel.increment(100);
 					initialValue += 100;
 
 					await provider.ensureSynchronized();
-					await ensureSameValue(initialValue, channel);
+					await ensureSameValue(row, col, initialValue, channel);
 
 					// Before channel has a chance to be saved or destroyed, let's load 3rd container from that state
 					// and validate it can follow
@@ -202,7 +207,7 @@ describe("Temporal Collab Spaces 1", () => {
 					assert(!destroyed, "can't be destroyed without saving ops rountrip first");
 					collabSpace.saveChannelState(channel);
 					await provider.ensureSynchronized();
-					await ensureSameValue(initialValue, channel);
+					await ensureSameValue(row, col, initialValue, channel);
 
 					destroyed = collabSpace.destroyCellChannel(channel);
 					// If feels like we can't guarantee that actually, as we might need one more op
@@ -212,21 +217,37 @@ describe("Temporal Collab Spaces 1", () => {
 					// Add one more container and observe they are all equal
 					// TBD(Pri1): It would be nice somehow to validate that such channel was dropped from summary!
 					await loadContainer();
-					await ensureSameValue(initialValue, channel2);
+					await ensureSameValue(row, col, initialValue, channel2);
 
-					// TBD(Pri0): This does not work - SummarizerNodeWithGC.createChild() asserts as it does not like
-					// the fact that we are creating a new node for the existing path (such node existed in the past)
 					// After one container destroed the channel (and 3rd container loaded without channel),
 					// let's test that op showing up on that channel will be processed correctly by all containers.
-					/*
 					channel2.increment(10);
 					initialValue += 10;
 					await provider.ensureSynchronized();
-					await ensureSameValue(initialValue, channel2);
-					*/
+					await ensureSameValue(row, col, initialValue, channel2);
+
+					// Finally, test concurrent editing / creation of the channels
+					const channel2a = (await collabSpace.getCellChannel(
+						row + 1,
+						col,
+					)) as ISharedCounter;
+					const channel2b = (await collabSpaces[1].getCellChannel(
+						row + 1,
+						col,
+					)) as ISharedCounter;
+					initialValue = channel2a.value;
+					channel2a.increment(10);
+					channel2b.increment(20);
+					assert(
+						channel2a.value !== channel2b.value,
+						"test infra should not process all ops synchronously",
+					);
+					await provider.ensureSynchronized();
+					assert(channel2a.value === channel2b.value, "syncrhonized");
+					await ensureSameValue(row + 1, col, initialValue + 30, channel2a);
 
 					// Useful mostly if you debug and want measure column reading speed - read one column
-					await measureReadSpeed(collabSpace);
+					await measureReadSpeed(col, collabSpace);
 				});
 			},
 		);

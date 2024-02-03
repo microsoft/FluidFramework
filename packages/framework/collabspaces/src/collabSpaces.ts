@@ -12,9 +12,14 @@ import {
 	ITelemetryContext,
 	IFluidDataStoreContext,
 	VisibilityState,
+	IAttachMessage,
 } from "@fluidframework/runtime-definitions";
-import { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { FluidDataStoreRuntime, IChannelContext } from "@fluidframework/datastore";
+import {
+	IChannel,
+	IChannelFactory,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions";
+import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 import {
 	SharedMatrix,
 	SharedMatrixFactory,
@@ -272,7 +277,18 @@ export class TempCollabSpaceRuntime
 		super.submitChannelOp(address, contents, localOpMetadata);
 	}
 
-	// protected sendAttachChannelOp(channel: IChannel): void {}
+	protected sendAttachChannelOp(channel: IChannel): void {
+		// TBD(Pri0): sending op is optional (and whole system has to work correctly without such ops)
+		// That said, sending it is useful for validation purposes (to validate we start with same state)
+		// Currently this does not work:
+		// We are hitting 0x1b6 assert in SummarizerNodeWithGC.createChild() due to us creating a new node for the
+		// existing path (such node existed in the past). SummarizerNodeWithGC.deleteChild() should be properly
+		// called when we get rid of context - this will also make sure that overall GC / summarization machinery
+		// has proper knowledge of the state.
+		if (channel.id === matrixId) {
+			super.sendAttachChannelOp(channel);
+		}
+	}
 
 	public processSignal(message: any, local: boolean) {
 		this.criticalError(new Error("Not supported"));
@@ -313,9 +329,13 @@ export class TempCollabSpaceRuntime
 		return summary;
 	}
 
-	protected attachRemoteChannel(id: string, remoteChannelContext: IChannelContext) {
+	protected attachRemoteChannel(
+		id: string,
+		sequenceNumber: number,
+		attachMessage: IAttachMessage,
+	) {
 		if (!this.contexts.has(id)) {
-			super.attachRemoteChannel(id, remoteChannelContext);
+			super.attachRemoteChannel(id, sequenceNumber, attachMessage);
 			this.channelCreated(id);
 		} else {
 			// TBD(Pri2) - we should verify that initial state conveyed in this op is exactly
