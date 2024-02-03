@@ -137,7 +137,7 @@
 
                                 {{ $isCurrentPage := in (trim $current.RelPermalink " ") (trim $targetPage.RelPermalink " ") }}
                                 {{ $hasActiveLeaf := false }}
-                                {{ range $category := slice "Interface" "Class" "Enum" }}
+                                {{ range $category := slice "Interface" "Class" "Enum" "TypeAlias" }}
                                     {{ if isset $apiDetails $category }}
                                         {{ $currentTrimmedLink := trim $current.RelPermalink " " }}
                                         {{ $categoryLower := lower $category }}
@@ -157,9 +157,9 @@
                                         {{ (path.Base $targetPage.RelPermalink) | humanize | title }}
                                     </a>
                                     <ul id="leaf-docs-nav-{{ $isCurrentPage }}" class="leaf-docs-nav collapse {{ if $isCurrentPage }}in{{ end }}">
-                                        {{ $plurals := dict "Interface" "Interfaces" "Class" "Classes" "Enum" "Enums" }}
+                                        {{ $plurals := dict "Interface" "Interfaces" "Class" "Classes" "Enum" "Enums" "TypeAlias" "Types" }}
     
-                                        {{ range $category := slice "Interface" "Class" "Enum" }}
+                                        {{ range $category := slice "Interface" "Class" "Enum" "TypeAlias" }}
                                             {{ if isset $apiDetails $category }}
                                                 {{ $currentTrimmedLink := trim $current.RelPermalink " " }}
                                                 {{ $categoryLower := lower $category }}
@@ -263,4 +263,3 @@
         {{ end }}
     </select>
 </nav>
-

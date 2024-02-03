@@ -21,7 +21,6 @@ import {
 	IRuntime,
 	ICriticalContainerError,
 	AttachState,
-	ILoaderOptions,
 	ILoader,
 	LoaderHeader,
 	IGetPendingLocalStateProps,
@@ -47,6 +46,8 @@ import {
 	ITelemetryLoggerExt,
 	UsageError,
 	LoggingError,
+	createSampledLogger,
+	IEventSampler,
 } from "@fluidframework/telemetry-utils";
 import {
 	DriverHeader,
@@ -552,6 +553,10 @@ export interface IPendingRuntimeState {
 	 * Pending idCompressor state
 	 */
 	pendingIdCompressorState?: SerializedIdCompressorWithOngoingSession;
+	/**
+	 * Time at which session expiry timer started.
+	 */
+	sessionExpiryTimerStarted?: number | undefined;
 }
 
 const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconnects";
@@ -861,14 +866,34 @@ export class ContainerRuntime
 				"@fluidframework/id-compressor"
 			);
 
-			const pendingLocalState = context.pendingLocalState as IPendingRuntimeState;
+			/**
+			 * Because the IdCompressor emits so much telemetry, this function is used to sample
+			 * approximately 5% of all clients. Only the given percentage of sessions will emit telemetry.
+			 */
+			const idCompressorEventSampler: IEventSampler = (() => {
+				const isIdCompressorTelemetryEnabled = Math.random() < 0.05;
+				return {
+					sample: () => {
+						return isIdCompressorTelemetryEnabled;
+					},
+				};
+			})();
 
+			const compressorLogger = createSampledLogger(logger, idCompressorEventSampler);
+			const pendingLocalState = context.pendingLocalState as IPendingRuntimeState;
 			if (pendingLocalState?.pendingIdCompressorState !== undefined) {
-				idCompressor = deserializeIdCompressor(pendingLocalState.pendingIdCompressorState);
+				idCompressor = deserializeIdCompressor(
+					pendingLocalState.pendingIdCompressorState,
+					compressorLogger,
+				);
 			} else if (serializedIdCompressor !== undefined) {
-				idCompressor = deserializeIdCompressor(serializedIdCompressor, createSessionId());
+				idCompressor = deserializeIdCompressor(
+					serializedIdCompressor,
+					createSessionId(),
+					compressorLogger,
+				);
 			} else {
-				idCompressor = createIdCompressor(logger);
+				idCompressor = createIdCompressor(compressorLogger);
 			}
 		}
 
@@ -912,7 +937,7 @@ export class ContainerRuntime
 		return runtime;
 	}
 
-	public readonly options: ILoaderOptions;
+	public readonly options: Record<string | number, any>;
 	private imminentClosure: boolean = false;
 
 	private readonly _getClientId: () => string | undefined;
@@ -1223,7 +1248,9 @@ export class ContainerRuntime
 		this.submitSummaryFn = submitSummaryFn;
 		this.submitSignalFn = submitSignalFn;
 
-		this.options = options;
+		// TODO: After IContainerContext.options is removed, we'll just create a new blank object {} here.
+		// Values are generally expected to be set from the runtime side.
+		this.options = options ?? {};
 		this.clientDetails = clientDetails;
 		this.isSummarizerClient = this.clientDetails.type === summarizerClientType;
 		this.loadedFromVersionId = context.getLoadedFromVersion()?.id;
@@ -1396,6 +1423,7 @@ export class ContainerRuntime
 			getLastSummaryTimestampMs: () => this.messageAtLastSummary?.timestamp,
 			readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),
 			submitMessage: (message: ContainerRuntimeGCMessage) => this.submit(message),
+			sessionExpiryTimerStarted: pendingRuntimeState?.sessionExpiryTimerStarted,
 		});
 
 		const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
@@ -2511,15 +2539,23 @@ export class ContainerRuntime
 		return this.dataStores.createDetachedDataStoreCore(pkg, true, rootDataStoreId);
 	}
 
-	public createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached {
-		return this.dataStores.createDetachedDataStoreCore(pkg, false);
+	public createDetachedDataStore(
+		pkg: Readonly<string[]>,
+		groupId?: string,
+	): IFluidDataStoreContextDetached {
+		return this.dataStores.createDetachedDataStoreCore(pkg, false, undefined, groupId);
 	}
 
-	public async createDataStore(pkg: string | string[]): Promise<IDataStore> {
+	public async createDataStore(pkg: string | string[], groupId?: string): Promise<IDataStore> {
 		const id = uuid();
 		return channelToDataStore(
 			await this.dataStores
-				._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id)
+				._createFluidDataStoreContext(
+					Array.isArray(pkg) ? pkg : [pkg],
+					id,
+					undefined,
+					groupId,
+				)
 				.realize(),
 			id,
 			this,
@@ -2991,7 +3027,10 @@ export class ContainerRuntime
 	 * @param srcHandle - The handle of the node that added the reference.
 	 * @param outboundHandle - The handle of the outbound node that is referenced.
 	 */
-	public addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) {
+	public addedGCOutboundReference(
+		srcHandle: { absolutePath: string },
+		outboundHandle: { absolutePath: string },
+	) {
 		this.garbageCollector.addedOutboundReference(
 			srcHandle.absolutePath,
 			outboundHandle.absolutePath,
@@ -3927,6 +3966,7 @@ export class ContainerRuntime
 					pending,
 					pendingAttachmentBlobs,
 					pendingIdCompressorState,
+					sessionExpiryTimerStarted: this.garbageCollector.sessionExpiryTimerStarted,
 				};
 				event.end({
 					attachmentBlobsSize: Object.keys(pendingAttachmentBlobs ?? {}).length,

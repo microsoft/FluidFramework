@@ -130,6 +130,36 @@ describe("Runtime", () => {
 	});
 
 	describe("Container Runtime", () => {
+		describe("IdCompressor", () => {
+			it("finalizes idRange on attach", async () => {
+				const logger = new MockLogger();
+				const containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext({}, logger) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {
+						flushMode: FlushMode.TurnBased,
+						enableRuntimeIdCompressor: true,
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				logger.clear();
+
+				const compressor = containerRuntime.idCompressor;
+				assert(compressor !== undefined);
+				compressor.generateCompressedId();
+				containerRuntime.createSummary();
+
+				const range = compressor.takeNextCreationRange();
+				assert.equal(
+					range.ids,
+					undefined,
+					"All Ids should have been finalized after calling createSummary()",
+				);
+			});
+		});
+
 		describe("flushMode setting", () => {
 			it("Default flush mode", async () => {
 				const containerRuntime = await ContainerRuntime.loadRuntime({

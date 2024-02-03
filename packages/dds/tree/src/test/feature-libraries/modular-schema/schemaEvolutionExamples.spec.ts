@@ -389,7 +389,7 @@ describe("Schema Evolution Examples", () => {
 	// 	);
 	// 	const builder = new SchemaBuilder("adapters examples", defaultContentLibrary);
 	// 	const formattedText = builder.objectRecursive(formattedTextIdentifier, {
-	// 		content: TreeFieldSchema.createUnsafe(
+	// 		content: FlexFieldSchema.createUnsafe(
 	// 			FieldKinds.sequence,
 	// 			() => formattedText,
 	// 			codePoint,
@@ -411,7 +411,7 @@ describe("Schema Evolution Examples", () => {
 	// 	});
 	// 	// And canvas is still the same storage wise, but its view schema references the updated positionedCanvasItem2:
 	// 	const canvas2 = builder.object(canvasIdentifier, {
-	// 		items: TreeFieldSchema.create(FieldKinds.sequence, positionedCanvasItemNew),
+	// 		items: FlexFieldSchema.create(FieldKinds.sequence, positionedCanvasItemNew),
 	// 	});
 
 	// 	const viewCollection: SchemaCollection = builder.intoSchema(

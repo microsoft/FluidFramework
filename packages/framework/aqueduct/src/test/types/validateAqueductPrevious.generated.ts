@@ -103,6 +103,7 @@ declare function get_old_ClassDeclaration_DataObjectFactory():
 declare function use_current_ClassDeclaration_DataObjectFactory(
     use: TypeOnly<current.DataObjectFactory<any>>): void;
 use_current_ClassDeclaration_DataObjectFactory(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_DataObjectFactory());
 
 /*
@@ -199,6 +200,7 @@ declare function get_old_ClassDeclaration_PureDataObjectFactory():
 declare function use_current_ClassDeclaration_PureDataObjectFactory(
     use: TypeOnly<current.PureDataObjectFactory<any>>): void;
 use_current_ClassDeclaration_PureDataObjectFactory(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_PureDataObjectFactory());
 
 /*

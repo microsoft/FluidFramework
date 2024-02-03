@@ -391,7 +391,11 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 					).timeout(chunkingBatchesTimeoutMs);
 				}));
 
-			itExpects(
+			/**
+			 * ADO:6510 to investigate and re-enable.
+			 * The test times out likely due to its nature of creating large payloads.
+			 */
+			itExpects.skip(
 				"Large ops fail when compression chunking is disabled by feature gate",
 				[
 					{
