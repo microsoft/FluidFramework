@@ -13,7 +13,7 @@ import {
 	odspTokensCache,
 	OdspTokenConfig,
 } from "@fluidframework/tool-utils";
-import { getServer, IOdspTokens } from "@fluidframework/odsp-doclib-utils";
+import { getServer, IOdspTokens } from "@fluidframework/odsp-doclib-utils/internal";
 import { assert } from "@fluidframework/core-utils";
 import config from "../webpack.config.cjs";
 

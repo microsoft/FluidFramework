@@ -178,6 +178,8 @@ describe("versionUtils", () => {
 			createTest("2.0.0-dev.2.1.0.110039", -2, adjustPublicMajor, "^1.0.0-0");
 			createTest("2.0.0-dev-rc.1.0.0.223149", -1, adjustPublicMajor, "^2.0.0-internal.8.0.0");
 			createTest("2.0.0-dev-rc.1.5.3.223149", -2, adjustPublicMajor, "^2.0.0-internal.7.0.0");
+			createTest("2.0.0-dev-rc.2.0.0.233243", -1, adjustPublicMajor, "^2.0.0-rc.1.0.0");
+			createTest("2.0.0-dev-rc.2.0.0.233243", -2, adjustPublicMajor, "^2.0.0-internal.8.0.0");
 		});
 	});
 

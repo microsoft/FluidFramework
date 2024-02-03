@@ -10,7 +10,7 @@ import {
 	TokenRequestCredentials,
 	getFetchTokenUrl,
 	unauthPostAsync,
-} from "@fluidframework/odsp-doclib-utils";
+} from "@fluidframework/odsp-doclib-utils/internal";
 import { IOdspTokenProvider } from "@fluid-experimental/odsp-client";
 import { IOdspCredentials } from "./OdspClientFactory";
 
