@@ -225,9 +225,9 @@ export declare function testFunction<TTypeParameter extends TestInterface = Test
 
 ##### Type Parameters
 
-| Parameter | Default | Description |
-| --- | --- | --- |
-| TTypeParameter | [TestInterface](./simple-suite-test/testinterface-interface) | A test type parameter |
+| Parameter | Constraint | Default | Description |
+| --- | --- | --- | --- |
+| TTypeParameter | [TestInterface](./simple-suite-test/testinterface-interface) | [TestInterface](./simple-suite-test/testinterface-interface) | A test type parameter |
 
 #### Remarks {#testfunction-remarks}
 

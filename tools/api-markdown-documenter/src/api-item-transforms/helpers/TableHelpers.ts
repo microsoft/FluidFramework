@@ -319,24 +319,39 @@ export function createTypeParametersSummaryTable(
 	contextApiItem: ApiItem,
 	config: Required<ApiItemTransformationConfiguration>,
 ): TableNode {
-	// Only display "Defaults" column if there are any "optional" type parameters present.
+	// Only display the "Constraint" column if there are any constraints present among the type parameters.
+	const hasAnyConstraints = apiTypeParameters.some(
+		(apiTypeParameter) => !apiTypeParameter.constraintExcerpt.isEmpty,
+	);
+
+	// Only display the "Default" column if there are any defaults present among the type parameters.
 	const hasAnyDefaults = apiTypeParameters.some(
-		(apiTypeParameter) => apiTypeParameter.isOptional,
+		(apiTypeParameter) => !apiTypeParameter.defaultTypeExcerpt.isEmpty,
 	);
 
 	const headerRowCells: TableHeaderCellNode[] = [
 		TableHeaderCellNode.createFromPlainText("Parameter"),
 	];
+	if (hasAnyConstraints) {
+		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Constraint"));
+	}
 	if (hasAnyDefaults) {
 		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Default"));
 	}
 	headerRowCells.push(TableHeaderCellNode.createFromPlainText("Description"));
 	const headerRow = new TableHeaderRowNode(headerRowCells);
 
+	function createTypeConstraintCell(apiParameter: TypeParameter): TableBodyCellNode {
+		const constraintSpan = createExcerptSpanWithHyperlinks(
+			apiParameter.constraintExcerpt,
+			config,
+		);
+		return constraintSpan === undefined
+			? TableBodyCellNode.Empty
+			: new TableBodyCellNode([constraintSpan]);
+	}
+
 	function createTypeDefaultCell(apiParameter: TypeParameter): TableBodyCellNode {
-		if (!apiParameter.isOptional) {
-			return TableBodyCellNode.Empty;
-		}
 		const excerptSpan = createExcerptSpanWithHyperlinks(
 			apiParameter.defaultTypeExcerpt,
 			config,
@@ -351,6 +366,9 @@ export function createTypeParametersSummaryTable(
 		const bodyRowCells: TableBodyCellNode[] = [
 			TableBodyCellNode.createFromPlainText(apiTypeParameter.name),
 		];
+		if (hasAnyConstraints) {
+			bodyRowCells.push(createTypeConstraintCell(apiTypeParameter));
+		}
 		if (hasAnyDefaults) {
 			bodyRowCells.push(createTypeDefaultCell(apiTypeParameter));
 		}
