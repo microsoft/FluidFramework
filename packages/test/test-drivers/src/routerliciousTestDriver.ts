@@ -42,14 +42,14 @@ function getConfig(
 	assert(tenantId, "Missing tenantId");
 	assert(tenantSecret, "Missing tenant secret");
 	if (discoveryEndpoint !== undefined) {
-		// The hostUrl and deltaStorageUrl will be replaced by the URLs of the discovery result.
+		// The hostUrl, deltaStreamUrl and deltaStorageUrl will be replaced by the URLs of the discovery result.
 		// The deltaStorageUrl is firstly set to https://dummy-historian to make the workflow successful.
 		return {
 			serviceEndpoint: {
-				deltaStreamUrl: "",
 				hostUrl: "",
 				ordererUrl: discoveryEndpoint,
 				deltaStorageUrl: "https://dummy-historian",
+				deltaStreamUrl: "",
 			},
 			tenantId,
 			tenantSecret,
@@ -62,6 +62,7 @@ function getConfig(
 			hostUrl: fluidHost,
 			ordererUrl: fluidHost.replace("www", "alfred"),
 			deltaStorageUrl: fluidHost.replace("www", "historian"),
+			deltaStreamUrl: fluidHost.replace("www", "nexus"),
 		},
 		tenantId,
 		tenantSecret,
