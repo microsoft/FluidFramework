@@ -7,7 +7,7 @@ const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = (env) => {
-	const config = require("./webpack.config")(env);
+	const config = require("./webpack.config.cjs")(env);
 	return {
 		...config,
 		entry: {
