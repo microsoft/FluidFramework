@@ -68,5 +68,6 @@ export interface IEfficientMatrix extends Omit<ISharedMatrix<MatrixExternalType>
 	// - data has been saved to cell in non-conflicting matter.
 	//   - this means there are no channel ops in between last save's ref seq number and current point in time!
 	// - no records on undo stack
-	destroyCellChannel(channel: ICollabChannelCore);
+	// Returns true if channel was actually destroyed.
+	destroyCellChannel(channel: ICollabChannelCore): boolean;
 }

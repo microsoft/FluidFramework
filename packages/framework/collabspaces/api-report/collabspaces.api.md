@@ -44,7 +44,7 @@ export interface ICollabChannelFactory extends IChannelFactory {
 // @internal (undocumented)
 export interface IEfficientMatrix extends Omit<ISharedMatrix<MatrixExternalType>, "getCell"> {
     // (undocumented)
-    destroyCellChannel(channel: ICollabChannelCore): any;
+    destroyCellChannel(channel: ICollabChannelCore): boolean;
     // (undocumented)
     getCell(row: number, col: number): MatrixItem<MatrixExternalType>;
     // (undocumented)
@@ -77,7 +77,7 @@ export class TempCollabSpaceRuntime extends FluidDataStoreRuntime<ISharedMatrixE
     // (undocumented)
     get colCount(): number;
     // (undocumented)
-    destroyCellChannel(channel: ICollabChannelCore): void;
+    destroyCellChannel(channel: ICollabChannelCore): boolean;
     // (undocumented)
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     // (undocumented)

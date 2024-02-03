@@ -218,6 +218,8 @@ export class TempCollabSpaceRuntime
 
 		record.pendingChangeCount += diff;
 		assert(record.pendingChangeCount >= 0, "counter should be non-negative!");
+
+		return record;
 	}
 
 	protected setChannelDirty(address: string): void {
@@ -244,7 +246,16 @@ export class TempCollabSpaceRuntime
 		localOpMetadata: unknown,
 	) {
 		// offset increase by submitChannelOp()
-		this.updatePendingCoutner(address, local ? -1 : 0, true /* allowImplicitCreation */);
+		const record = this.updatePendingCoutner(
+			address,
+			local ? -1 : 0,
+			true /* allowImplicitCreation */,
+		);
+		if (record) {
+			assert(record.seq <= message.sequenceNumber, "seq");
+			record.seq = message.sequenceNumber;
+		}
+
 		super.processChannelOp(address, message, local, localOpMetadata);
 	}
 
@@ -464,23 +475,23 @@ export class TempCollabSpaceRuntime
 	) {
 		const channelId = (channel as ICollabChannel).id;
 
-		const record = this.channelInfo[channelId];
-		assert(record !== undefined, "every channel should have a record");
+		const channelnfo = this.channelInfo[channelId];
+		assert(channelnfo !== undefined, "every channel should have a record");
 
 		// Can't do anything if there are any local changes.
-		if (record.pendingChangeCount > 0) {
-			return;
+		if (channelnfo.pendingChangeCount > 0) {
+			return { saved: false, destroyd: false };
 		}
 
 		// Are ops flying? If not, we have no clue if channel was saved or not.
-		const attached = this.visibilityState !== VisibilityState.GloballyVisible;
+		const attached = this.visibilityState === VisibilityState.GloballyVisible;
 
-		const refSeq = attached ? -1 : this.deltaManager.lastSequenceNumber;
-		assert(record.seq <= refSeq, "invalid seq number");
+		const refSeq = attached ? this.deltaManager.lastSequenceNumber : -1;
+		assert(channelnfo.seq <= refSeq, "invalid seq number");
 
 		const { row, col, iteration } = this.mapChannelToCell(channelId);
 
-		const currValue = this.matrix.getCell(row, col);
+		const savedValue = this.matrix.getCell(row, col);
 
 		// TBD(Pri2) - can this be optimized and assume only single client can undo such operation?
 		//
@@ -490,11 +501,11 @@ export class TempCollabSpaceRuntime
 		// concurrently changed type of a column - one offline, one not, and thus either of them can run
 		// undo and return it back to life).
 		// In the worst case, this channel will be collected by GC (though need to validate that!)
-		if (currValue === undefined || String(currValue.iteration) !== iteration) {
-			return;
+		if (savedValue === undefined || String(savedValue.iteration) !== iteration) {
+			return { saved: false, destroyd: false };
 		}
 
-		assert(currValue.seq <= refSeq, "invalid seq number");
+		assert(savedValue.seq <= refSeq, "invalid seq number");
 
 		// Note on op grouping and equal sequence numbers: There will be cases (due to reentrancy when
 		// processing op batches) where ligic below could be optimized to require less saves, because
@@ -502,28 +513,28 @@ export class TempCollabSpaceRuntime
 		// Given that chances of that are low, and code is correct, it's better to rely on extra saves
 		// then inefficiency of managing more state.
 
-		const doSave = allowSave && !attached && currValue.seq <= record.seq;
-		const destroy = allowDestroy && (attached ? currValue.seq > record.seq : doSave);
+		const saved = allowSave && (!attached || savedValue.seq <= channelnfo.seq);
+		const destroyd = allowDestroy && (attached ? savedValue.seq > channelnfo.seq : saved);
 
-		if (doSave) {
+		if (saved) {
 			this.matrix.setCell(row, col, {
-				...currValue, // value, iteration, type
+				...savedValue, // value, iteration, type
 				value: channel.value as string,
 				seq: refSeq,
 			});
 		}
 
-		if (destroy) {
+		if (destroyd) {
 			// Validate that actually values match!
-			assert(channel.value === currValue.value, "values are not matching!!!!");
+			assert(channel.value === savedValue.value, "values are not matching!!!!");
 
-			if (allowDestroy) {
-				// Is this safe? Anything else we need to do?
-				this.contexts.delete(channelId);
-				this.notBoundedChannelContextSet.delete(channelId);
-				this.channelInfo[channelId] = undefined;
-			}
+			// Is this safe? Anything else we need to do?
+			this.contexts.delete(channelId);
+			this.notBoundedChannelContextSet.delete(channelId);
+			this.channelInfo[channelId] = undefined;
 		}
+
+		return { saved, destroyd };
 	}
 
 	public saveChannelState(channel: ICollabChannelCore) {
@@ -532,7 +543,12 @@ export class TempCollabSpaceRuntime
 
 	// TBD(Pri1) - need to build a lot of protections here on when it's safe to do this operaton
 	public destroyCellChannel(channel: ICollabChannelCore) {
-		this.saveOrDestroyChannel(channel, true /* allowSave */, true /* allowDestroy */);
+		const res = this.saveOrDestroyChannel(
+			channel,
+			true /* allowSave */,
+			true /* allowDestroy */,
+		);
+		return res.destroyd;
 	}
 
 	// #region IMatrixProducer

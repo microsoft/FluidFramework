@@ -45,7 +45,38 @@ describe("Temporal Collab Spaces 1", () => {
 			"Temporal Collab Spaces",
 			"2.0.0-rc.1.0.0",
 			(getTestObjectProvider) => {
+				const createContainer = async (): Promise<TempCollabSpaceRuntime> => {
+					const container = await provider.createContainer(runtimeFactory);
+					containers.push(container);
+					const cp = (await container.getEntryPoint()) as TempCollabSpaceRuntime;
+					collabSpaces.push(cp);
+					return cp;
+				};
+
+				async function loadContainer(/* summaryVersion: string */) {
+					// TBD(Pri1): ensure we produce summary before loading here.
+
+					const container = await provider.loadContainer(runtimeFactory, undefined, {
+						// [LoaderHeader.version]: summaryVersion,
+					});
+					containers.push(container);
+					const cp = (await container.getEntryPoint()) as TempCollabSpaceRuntime;
+					collabSpaces.push(cp);
+
+					await provider.ensureSynchronized();
+					ensureSameSize();
+
+					return cp;
+				}
+
+				beforeEach("getTestObjectProvider", async () => {
+					provider = getTestObjectProvider({ syncSummarizer: true });
+				});
+
 				let provider: ITestObjectProvider;
+				const containers: IContainer[] = [];
+				const collabSpaces: TempCollabSpaceRuntime[] = [];
+
 				const defaultFactory = sampleFactory();
 				const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 					defaultFactory,
@@ -53,37 +84,18 @@ describe("Temporal Collab Spaces 1", () => {
 					runtimeOptions: {},
 				});
 
-				const createContainer = async (): Promise<IContainer> => {
-					return provider.createContainer(runtimeFactory);
-				};
+				// Size of the matrix
+				const cols = 40;
+				const rows = 100;
 
-				async function loadContainer(/* summaryVersion: string */) {
-					return provider.loadContainer(runtimeFactory, undefined, {
-						// [LoaderHeader.version]: summaryVersion,
-					});
-				}
+				// Cell we will be interogating
+				const row = 5;
+				const col = 10;
 
-				beforeEach("getTestObjectProvider", async () => {
-					provider = getTestObjectProvider({ syncSummarizer: true });
-				});
-
-				it("Basic test", async () => {
-					const container = await createContainer();
-					const datastore = (await container.getEntryPoint()) as TempCollabSpaceRuntime;
-
-					const container2 = await loadContainer();
-					const datastore2 = (await container2.getEntryPoint()) as TempCollabSpaceRuntime;
-
-					await provider.ensureSynchronized();
-
-					const cols = 40;
-					const rows = 100;
-					const row = 5;
-					const col = 10;
-
+				async function initializeContainer(collabSpace: TempCollabSpaceRuntime) {
 					// +700Mb, but only +200Mb if accounting GC after that.
-					datastore.insertCols(0, cols);
-					datastore.insertRows(0, rows);
+					collabSpace.insertCols(0, cols);
+					collabSpace.insertRows(0, rows);
 
 					if (global?.gc !== undefined) {
 						global.gc();
@@ -96,13 +108,54 @@ describe("Temporal Collab Spaces 1", () => {
 					// from the fact that GC did not had a chance to run and cleanup after previous step.
 					for (let r = 0; r < rows; r++) {
 						for (let c = 0; c < cols; c++) {
-							datastore.setCell(r, c, { value: 5, type: CounterFactory.Type });
+							collabSpace.setCell(r, c, { value: 5, type: CounterFactory.Type });
 						}
 					}
 
 					if (global?.gc !== undefined) {
 						global.gc();
 					}
+				}
+
+				function ensureSameSize() {
+					const cp1 = collabSpaces[0];
+					for (const cp of collabSpaces) {
+						assert(cp1.rowCount === cp.rowCount, "syncronized");
+						assert(cp1.colCount === cp.colCount, "syncronized");
+					}
+				}
+
+				async function ensureSameValue(value: unknown, channel?: ICollabChannelCore) {
+					// const cp1 = collabSpaces[0];
+					if (channel) {
+						assert(channel.value === value, "Cahnnel value is not the same!");
+					}
+					for (const cp of collabSpaces) {
+						const value2 = await cp.getCellAsync(row, col);
+						assert(value === value2?.value, "Non-synchronized value!");
+					}
+				}
+
+				async function measureReadSpeed(collabSpace: TempCollabSpaceRuntime) {
+					// 100K rows test numbers:
+					// Read arbitrary column: 1s on my dev box
+					// But only 234ms if using non-async function (and thus not doing await here)!
+					const start = performance.now();
+					for (let i = 0; i < rows; i++) {
+						await collabSpace.getCellAsync(i, col);
+						// collabSpace.getCell(i, col);
+					}
+					const time = performance.now() - start;
+					console.log(time);
+				}
+
+				it("Basic test", async () => {
+					const collabSpace = await createContainer();
+
+					// Have a secont container that follows passivley the first one
+					await loadContainer();
+
+					await initializeContainer(collabSpace);
 
 					// TBD(Pri0): this synchronization takes very long time!
 					// There are obviously a lot of ops, but it should still take relatively short amount of time.
@@ -111,54 +164,47 @@ describe("Temporal Collab Spaces 1", () => {
 					// 2. Enable op grouping, possibly compression by default to reduce amount of data that goes through
 					//    local server
 					await provider.ensureSynchronized();
+					ensureSameSize();
 
-					assert(datastore.rowCount === datastore2.rowCount, "syncronized");
-					assert(datastore.colCount === datastore2.colCount, "syncronized");
+					let initialValue = (await collabSpace.getCellAsync(row, col))?.value as number;
 
-					let value = await datastore.getCellAsync(row, col);
-
-					const channel = (await datastore.getCellChannel(row, col)) as ISharedCounter &
+					// Create a collab channel to start collaboration.
+					const channel = (await collabSpace.getCellChannel(row, col)) as ISharedCounter &
 						ICollabChannelCore;
-					const channel2 = await datastore.getCellChannel(row, col);
+					const channel2 = await collabSpace.getCellChannel(row, col);
 					assert(channel === channel2, "can get to same channel");
 
-					assert(channel.value === value?.value, "Channel has the same initial state");
+					await ensureSameValue(initialValue, channel);
 
+					// Collaborate a bit :)
 					channel.increment(100);
-					const channelValue = channel.value;
-
-					value = await datastore.getCellAsync(row, col);
-					assert(channelValue === value?.value, "Channel and cell has the same value");
+					initialValue += 100;
 
 					await provider.ensureSynchronized();
+					await ensureSameValue(initialValue);
 
-					let value2 = await datastore2.getCellAsync(row, col);
-					assert(channelValue === value2?.value, "Another container has the same value!");
+					// Before channel has a chance to be saved or destroyed, let's load 3rd container from that state
+					// and validate it can follow
+					await loadContainer();
 
 					// Save changes and destroy channel
-					datastore.saveChannelState(channel);
-					datastore.destroyCellChannel(channel);
-
+					let destroyed = collabSpace.destroyCellChannel(channel);
+					assert(!destroyed, "can't be destroyed without saving ops rountrip first");
+					collabSpace.saveChannelState(channel);
 					await provider.ensureSynchronized();
+					await ensureSameValue(initialValue);
 
-					value = await datastore.getCellAsync(row, col);
-					assert(channelValue === value?.value, "Value was properly stored in matrix");
+					destroyed = collabSpace.destroyCellChannel(channel);
+					// If feels like we can't guarantee that actually, as we might need one more op
+					// to make it possible. Not sure.
+					assert(destroyed, "Channel should be destroyed by now!");
 
-					value2 = await datastore2.getCellAsync(row, col);
-					assert(channelValue === value2?.value, "Another container has the same value!");
+					// Add one more container and observe they are all equal
+					await loadContainer();
+					await ensureSameValue(initialValue);
 
-					// 100K rows test numbers:
-					// Read arbitrary column: 1s on my dev box
-					// But only 234ms if using non-async function (and thus not doing await here)!
-					const start = performance.now();
-					for (let i = 0; i < rows; i++) {
-						await datastore.getCellAsync(i, col);
-						// datastore.getCell(i, col);
-					}
-					const time = performance.now() - start;
-					console.log(time);
-
-					await provider.ensureSynchronized();
+					// Useful mostly if you debug and want measure column reading speed - read one column
+					await measureReadSpeed(collabSpace);
 				});
 			},
 		);
