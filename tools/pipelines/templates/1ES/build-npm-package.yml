@@ -574,7 +574,7 @@ extends:
                       displayName: Publish Artifacts - bundle-analysis
                       condition: and( succeeded(), ne(variables['Build.Reason'], 'PullRequest'), eq(${{ parameters.taskPublishBundleSizeArtifacts }}, true) )
                       targetPath: $(Build.ArtifactStagingDirectory)/bundleAnalysis
-                      artifactname: bundleAnalysis
+                      artifactName: bundleAnalysis
                       sbomEnabled: false
                       publishLocation: pipeline
 
