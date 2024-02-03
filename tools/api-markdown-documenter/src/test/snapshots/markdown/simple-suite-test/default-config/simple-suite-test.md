@@ -220,14 +220,14 @@ Test function
 #### Signature {#testfunction-signature}
 
 ```typescript
-export declare function testFunction<TTypeParameter>(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;
+export declare function testFunction<TTypeParameter extends TestInterface = TestInterface>(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;
 ```
 
 ##### Type Parameters
 
-| Parameter | Description |
-| --- | --- |
-| TTypeParameter | A test type parameter |
+| Parameter | Default | Description |
+| --- | --- | --- |
+| TTypeParameter | [TestInterface](./simple-suite-test/testinterface-interface) | A test type parameter |
 
 #### Remarks {#testfunction-remarks}
 
