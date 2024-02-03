@@ -3,6 +3,7 @@
 ## 0.13.0
 
 -   Fixed a bug where type parameter information was only being generated for `interface` and `class` items.
+-   Adds "Constraint" and "Default" columns to type parameter tables when any are present among the type parameters.
 
 ### ⚠ BREAKING CHANGES
 
