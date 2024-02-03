@@ -27,6 +27,9 @@ import { MatrixItem } from '@fluidframework/matrix';
 import { Serializable } from '@fluidframework/datastore-definitions';
 
 // @internal (undocumented)
+export type CollabSpaceCellType = MatrixItem<MatrixExternalType>;
+
+// @internal (undocumented)
 export type ICollabChannel = IChannel & ICollabChannelCore;
 
 // @internal
@@ -73,7 +76,7 @@ export class TempCollabSpaceRuntime extends FluidDataStoreRuntime<ISharedMatrixE
     // (undocumented)
     protected attachRemoteChannel(id: string, sequenceNumber: number, attachMessage: IAttachMessage): void;
     // (undocumented)
-    closeMatrix(consumer: IMatrixConsumer<MatrixItem<MatrixExternalType>>): void;
+    closeMatrix(consumer: IMatrixConsumer<CollabSpaceCellType>): void;
     // (undocumented)
     get colCount(): number;
     // (undocumented)
@@ -81,9 +84,9 @@ export class TempCollabSpaceRuntime extends FluidDataStoreRuntime<ISharedMatrixE
     // (undocumented)
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     // (undocumented)
-    getCell(row: number, col: number): MatrixItem<MatrixExternalType>;
+    getCell(row: number, col: number): CollabSpaceCellType;
     // (undocumented)
-    getCellAsync(row: number, col: number): Promise<MatrixItem<MatrixExternalType>>;
+    getCellAsync(row: number, col: number): Promise<CollabSpaceCellType>;
     // (undocumented)
     getCellChannel(row: number, col: number): Promise<ICollabChannelCore>;
     initialize(existing: boolean): Promise<void>;
@@ -92,9 +95,9 @@ export class TempCollabSpaceRuntime extends FluidDataStoreRuntime<ISharedMatrixE
     // (undocumented)
     insertRows(rowStartArg: number, countArg: number): void;
     // (undocumented)
-    get matrixProducer(): IMatrixProducer<MatrixItem<MatrixExternalType>>;
+    get matrixProducer(): IMatrixProducer<CollabSpaceCellType>;
     // (undocumented)
-    openMatrix(consumer: IMatrixConsumer<MatrixItem<MatrixExternalType>>): IMatrixReader<MatrixItem<MatrixExternalType>>;
+    openMatrix(consumer: IMatrixConsumer<CollabSpaceCellType>): IMatrixReader<CollabSpaceCellType>;
     // (undocumented)
     protected processChannelOp(address: string, message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // (undocumented)
@@ -116,7 +119,7 @@ export class TempCollabSpaceRuntime extends FluidDataStoreRuntime<ISharedMatrixE
     // (undocumented)
     protected sendAttachChannelOp(channel: IChannel): void;
     // (undocumented)
-    setCell(rowArg: number, colArg: number, value: MatrixItem<MatrixExternalType>): void;
+    setCell(rowArg: number, colArg: number, value: CollabSpaceCellType): void;
     // (undocumented)
     protected setChannelDirty(address: string): void;
     // (undocumented)

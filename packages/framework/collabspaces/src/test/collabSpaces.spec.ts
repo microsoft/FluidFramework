@@ -8,7 +8,7 @@ import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
 
-import { ICollabChannelCore } from "../contracts";
+import { ICollabChannelCore, CollabSpaceCellType } from "../contracts";
 import { TempCollabSpaceRuntime } from "../collabSpaces";
 import { TempCollabSpaceRuntimeFactory } from "../factory";
 
@@ -88,7 +88,10 @@ describe("Temporal Collab Spaces 1", () => {
 				const cols = 40;
 				const rows = 100;
 
-				async function populateInitialMatrix(collabSpace: TempCollabSpaceRuntime) {
+				async function populateInitialMatrix(
+					collabSpace: TempCollabSpaceRuntime,
+					value: CollabSpaceCellType,
+				) {
 					// +700Mb, but only +200Mb if accounting GC after that.
 					collabSpace.insertCols(0, cols);
 					collabSpace.insertRows(0, rows);
@@ -104,7 +107,7 @@ describe("Temporal Collab Spaces 1", () => {
 					// from the fact that GC did not had a chance to run and cleanup after previous step.
 					for (let r = 0; r < rows; r++) {
 						for (let c = 0; c < cols; c++) {
-							collabSpace.setCell(r, c, { value: 5, type: CounterFactory.Type });
+							collabSpace.setCell(r, c, value);
 						}
 					}
 
@@ -151,7 +154,7 @@ describe("Temporal Collab Spaces 1", () => {
 				}
 
 				it("Basic test", async () => {
-					// Cell we will be interogating
+					// Cell we will be interrogating
 					const row = 5;
 					const col = 10;
 
@@ -164,7 +167,12 @@ describe("Temporal Collab Spaces 1", () => {
 					// Have a secont container that follows passivley the first one
 					await addContainerInstance();
 
-					await populateInitialMatrix(collabSpace);
+					// Populate initial state of the matrix - insert a ton of rows & columns and populate
+					// all cells with same data.
+					await populateInitialMatrix(collabSpace, {
+						value: 5,
+						type: CounterFactory.Type,
+					});
 
 					// TBD(Pri1): this synchronization takes very long time!
 					// There are obviously a lot of ops, but it should still take relatively short amount of time.
@@ -220,7 +228,7 @@ describe("Temporal Collab Spaces 1", () => {
 					await addContainerInstance();
 					await ensureSameValues(row, col, initialValue, channel2);
 
-					// After one container destroed the channel (and 3rd container loaded without channel),
+					// After one container destroyed the channel (and 3rd container loaded without channel),
 					// let's test that op showing up on that channel will be processed correctly by all containers.
 					channel2.increment(10);
 					initialValue += 10;

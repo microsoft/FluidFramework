@@ -34,6 +34,9 @@ export interface MatrixExternalType {
 }
 
 /** @internal */
+export type CollabSpaceCellType = MatrixItem<MatrixExternalType>;
+
+/** @internal */
 export interface IEfficientMatrix extends Omit<ISharedMatrix<MatrixExternalType>, "getCell"> {
 	// Semantics of this operation differ substantially from regular matrix.
 	// This will overwrite the value of the cell, thus creating a new collab channel (in the future)

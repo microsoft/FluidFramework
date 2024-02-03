@@ -37,6 +37,7 @@ import {
 	ICollabChannelCore,
 	IEfficientMatrix,
 	ICollabChannelFactory,
+	CollabSpaceCellType,
 } from "./contracts";
 
 /*
@@ -574,14 +575,12 @@ export class TempCollabSpaceRuntime
 
 	// #region IMatrixProducer
 
-	openMatrix(
-		consumer: IMatrixConsumer<MatrixItem<MatrixExternalType>>,
-	): IMatrixReader<MatrixItem<MatrixExternalType>> {
+	openMatrix(consumer: IMatrixConsumer<CollabSpaceCellType>): IMatrixReader<CollabSpaceCellType> {
 		this.matrix.openMatrix(consumer);
 		return this;
 	}
 
-	closeMatrix(consumer: IMatrixConsumer<MatrixItem<MatrixExternalType>>): void {
+	closeMatrix(consumer: IMatrixConsumer<CollabSpaceCellType>): void {
 		this.matrix.closeMatrix(consumer);
 	}
 
@@ -596,7 +595,7 @@ export class TempCollabSpaceRuntime
 		return this.matrix.colCount - 1;
 	}
 
-	public getCell(row: number, col: number): MatrixItem<MatrixExternalType> {
+	public getCell(row: number, col: number): CollabSpaceCellType {
 		// Implementation below can't deal with async nature of getting to channels.
 		this.criticalError(new Error("use getCellAsync()"));
 
@@ -613,7 +612,7 @@ export class TempCollabSpaceRuntime
 		*/
 	}
 
-	public async getCellAsync(row: number, col: number): Promise<MatrixItem<MatrixExternalType>> {
+	public async getCellAsync(row: number, col: number): Promise<CollabSpaceCellType> {
 		const { value, channel } = this.getCellInfo(row, col);
 		if (value === undefined) {
 			return { value: undefined, type: "undefined" };
@@ -626,7 +625,7 @@ export class TempCollabSpaceRuntime
 		return { value: val, type: value.type };
 	}
 
-	public get matrixProducer(): IMatrixProducer<MatrixItem<MatrixExternalType>> {
+	public get matrixProducer(): IMatrixProducer<CollabSpaceCellType> {
 		return this;
 	}
 
@@ -634,7 +633,7 @@ export class TempCollabSpaceRuntime
 
 	// #region IMatrixWriter
 
-	public setCell(rowArg: number, colArg: number, value: MatrixItem<MatrixExternalType>) {
+	public setCell(rowArg: number, colArg: number, value: CollabSpaceCellType) {
 		const row = rowArg + 1;
 		const col = colArg + 1;
 		if (value === undefined) {
