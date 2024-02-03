@@ -333,8 +333,8 @@ export function createTypeParametersSummaryTable(
 	headerRowCells.push(TableHeaderCellNode.createFromPlainText("Description"));
 	const headerRow = new TableHeaderRowNode(headerRowCells);
 
-	function createModifierCell(apiParameter: TypeParameter): TableBodyCellNode {
-		if (apiParameter.isOptional) {
+	function createTypeDefaultCell(apiParameter: TypeParameter): TableBodyCellNode {
+		if (!apiParameter.isOptional) {
 			return TableBodyCellNode.Empty;
 		}
 		const excerptSpan = createExcerptSpanWithHyperlinks(
@@ -352,7 +352,7 @@ export function createTypeParametersSummaryTable(
 			TableBodyCellNode.createFromPlainText(apiTypeParameter.name),
 		];
 		if (hasAnyDefaults) {
-			bodyRowCells.push(createModifierCell(apiTypeParameter));
+			bodyRowCells.push(createTypeDefaultCell(apiTypeParameter));
 		}
 		bodyRowCells.push(createTypeParameterSummaryCell(apiTypeParameter, contextApiItem, config));
 
