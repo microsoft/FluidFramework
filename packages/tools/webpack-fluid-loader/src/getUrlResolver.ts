@@ -22,6 +22,7 @@ export const tinyliciousUrls = (options: ITinyliciousRouteOptions) => {
 	const port = options.tinyliciousPort ?? defaultTinyliciousPort;
 
 	return {
+		deltaStreamUrl: `http://localhost:${port}`,
 		hostUrl: `http://localhost:${port}`,
 		ordererUrl: `http://localhost:${port}`,
 		storageUrl: `http://localhost:${port}`,
@@ -75,7 +76,7 @@ export function getUrlResolver(
 				urls.hostUrl,
 				urls.ordererUrl,
 				urls.storageUrl,
-				"",
+				ursl.deltaStreamUrl,
 				"tinylicious",
 				options.bearerSecret ?? "",
 			);
