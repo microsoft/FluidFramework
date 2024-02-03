@@ -35,6 +35,7 @@ import {
 	EditDescription,
 } from "../modular-schema/index.js";
 import { FieldBatchCodec } from "../chunked-forest/index.js";
+import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds.js";
 
 export type DefaultChangeset = ModularChangeset;
@@ -51,12 +52,14 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
 		revisionTagCodec: RevisionTagCodec,
 		fieldBatchCodec: FieldBatchCodec,
 		codecOptions: ICodecOptions,
+		chunkCompressionStrategy?: TreeCompressionStrategy,
 	) {
 		this.modularFamily = new ModularChangeFamily(
 			fieldKinds,
 			revisionTagCodec,
 			fieldBatchCodec,
 			codecOptions,
+			chunkCompressionStrategy,
 		);
 	}
 
