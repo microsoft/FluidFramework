@@ -33,8 +33,7 @@
 			"trailingComma": "all",
 			"quoteProperties": "asNeeded",
 			"quoteStyle": "double",
-			"bracketSpacing": true,
-			"bracketSameLine": false
+			"bracketSpacing": true
 		}
 	},
 	"json": {
