@@ -49,7 +49,7 @@ export interface ISharedCellEvents<T> extends ISharedObjectEvents {
 export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> implements ISharedCell<T> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // (undocumented)
-    protected applyStashedOp(content: unknown): unknown;
+    protected applyStashedOp(content: unknown): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedCell;
     delete(): void;
     empty(): boolean;

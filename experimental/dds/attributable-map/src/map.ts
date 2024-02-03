@@ -397,8 +397,8 @@ export class AttributableMap extends SharedObject<ISharedMapEvents> implements I
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 */
-	protected applyStashedOp(content: unknown): unknown {
-		return this.kernel.tryApplyStashedOp(content as IMapOperation);
+	protected applyStashedOp(content: unknown): void {
+		this.kernel.tryApplyStashedOp(content as IMapOperation);
 	}
 
 	/**
