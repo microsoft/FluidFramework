@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Package, updatePackageJsonFile } from "@fluidframework/build-tools";
+import { Package, PackageJson, updatePackageJsonFile } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import * as JSON5 from "json5";
 import path from "node:path";
@@ -32,6 +32,9 @@ export default class UpdateProjectCommand extends PackageCommand<typeof UpdatePr
 		}),
 		attw: Flags.boolean({
 			description: "Add are-the-types-wrong script and dependencies.",
+		}),
+		exports: Flags.boolean({
+			description: "Add an exports field.",
 		}),
 		...PackageCommand.flags,
 	};
@@ -67,6 +70,10 @@ export default class UpdateProjectCommand extends PackageCommand<typeof UpdatePr
 
 		if (flags.ts2esm) {
 			await this.addTs2Esm(pkg);
+		}
+
+		if (flags.exports) {
+			await this.addExports(pkg);
 		}
 	}
 
@@ -254,18 +261,7 @@ export default class UpdateProjectCommand extends PackageCommand<typeof UpdatePr
 			// }
 
 			json.types = "dist/index.d.ts";
-			json.exports = {
-				".": {
-					import: {
-						types: "./lib/index.d.mts",
-						default: "./lib/index.mjs",
-					},
-					require: {
-						types: "./dist/index.d.ts",
-						default: "./dist/index.js",
-					},
-				},
-			};
+			this.addExportsJson(json);
 
 			const tsConfigEsnextPath = path.resolve(pkg.directory, "tsconfig.esnext.json");
 			try {
@@ -305,6 +301,30 @@ export default class UpdateProjectCommand extends PackageCommand<typeof UpdatePr
 			packageJson.scripts.ts2esm = "ts2esm ./tsconfig.json ./src/test/tsconfig.json";
 			packageJson.devDependencies.ts2esm = "^1.1.0";
 		});
+	}
+
+	private async addExports(pkg: Package): Promise<void> {
+		updatePackageJsonFile(pkg.directory, (json) => this.addExportsJson(json));
+	}
+
+	private addExportsJson(json: PackageJson): void {
+		if (json.exports !== undefined) {
+			return;
+		}
+
+		// TODO: make this more intelligent if needed
+		json.exports = {
+			".": {
+				import: {
+					types: "./lib/index.d.mts",
+					default: "./lib/index.mjs",
+				},
+				require: {
+					types: "./dist/index.d.ts",
+					default: "./dist/index.js",
+				},
+			},
+		};
 	}
 
 	private async renameTypes(pkg: Package): Promise<void> {
