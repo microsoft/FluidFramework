@@ -98,6 +98,7 @@ export class GarbageCollector implements IGarbageCollector {
 		return this.configs.shouldRunGC;
 	}
 
+	public readonly sessionExpiryTimerStarted: number | undefined;
 	// Keeps track of the GC state from the last run.
 	private gcDataFromLastRun: IGarbageCollectionData | undefined;
 	// Keeps a list of references (edges in the GC graph) between GC runs. Each entry has a node id and a list of
@@ -175,6 +176,7 @@ export class GarbageCollector implements IGarbageCollector {
 
 		const baseSnapshot = createParams.baseSnapshot;
 		const readAndParseBlob = createParams.readAndParseBlob;
+		const pendingSessionExpiryTimerStarted = createParams.sessionExpiryTimerStarted;
 
 		this.mc = createChildMonitoringContext({
 			logger: createParams.baseLogger,
@@ -192,14 +194,26 @@ export class GarbageCollector implements IGarbageCollector {
 			const overrideSessionExpiryTimeoutMs = this.mc.config.getNumber(
 				"Fluid.GarbageCollection.TestOverride.SessionExpiryMs",
 			);
-			const timeoutMs = overrideSessionExpiryTimeoutMs ?? this.configs.sessionExpiryTimeoutMs;
+			let timeoutMs = this.configs.sessionExpiryTimeoutMs;
 
+			if (pendingSessionExpiryTimerStarted) {
+				// NOTE: This assumes the client clock hasn't been tampered with since the original session
+				const timeLapsedSincePendingTimer = Date.now() - pendingSessionExpiryTimerStarted;
+				timeoutMs -= timeLapsedSincePendingTimer;
+			}
+			timeoutMs = overrideSessionExpiryTimeoutMs ?? timeoutMs;
+			if (timeoutMs <= 0) {
+				this.runtime.closeFn(
+					new ClientSessionExpiredError(`Client session expired.`, timeoutMs),
+				);
+			}
 			this.sessionExpiryTimer = new Timer(timeoutMs, () => {
 				this.runtime.closeFn(
 					new ClientSessionExpiredError(`Client session expired.`, timeoutMs),
 				);
 			});
 			this.sessionExpiryTimer.start();
+			this.sessionExpiryTimerStarted = Date.now();
 		}
 
 		this.summaryStateTracker = new GCSummaryStateTracker(

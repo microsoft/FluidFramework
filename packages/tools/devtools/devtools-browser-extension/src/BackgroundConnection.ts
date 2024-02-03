@@ -13,19 +13,34 @@ import {
 	devtoolsMessageSource,
 } from "@fluidframework/devtools-core";
 
-import { browser } from "../Globals";
+import { browser } from "./Globals";
 import {
 	devToolsInitAcknowledgementType,
 	type DevToolsInitMessage,
 	devToolsInitMessageType,
 	extensionMessageSource,
-	postMessageToPort,
 	type TypedPortConnection,
-} from "../messaging";
-import {
-	devtoolsScriptMessageLoggingOptions,
-	formatDevtoolsScriptMessageForLogging,
-} from "./Logging";
+} from "./messaging";
+
+/**
+ * {@link BackgroundConnection} input parameters.
+ */
+export interface BackgroundConnectionParameters {
+	/**
+	 * This value will get written to the {@link @fluidframework/devtools-core#ISourcedDevtoolsMessage.source} property
+	 * of all messages sent via {@link BackgroundConnection.postMessage}.
+	 *
+	 * It will also be used as context metadata for console debug logging.
+	 *
+	 * @see {@link @fluidframework/devtools-core#ISourcedDevtoolsMessage}
+	 */
+	messageSource: string;
+
+	/**
+	 * The ID of the tab being connected to through the background service worker.
+	 */
+	tabId: number;
+}
 
 /**
  * Message relay for communicating with the Background Script.
@@ -57,12 +72,27 @@ export class BackgroundConnection
 	implements IMessageRelay
 {
 	/**
+	 * {@inheritDoc BackgroundConnectionParameters.messageSource}
+	 */
+	public readonly messageSource: string;
+
+	/**
+	 * {@inheritDoc BackgroundConnectionParameters.tabId}
+	 */
+	public readonly tabId: number;
+
+	/**
 	 * Port connection to the Background Script
 	 */
 	private backgroundServiceConnection!: TypedPortConnection;
 
-	public static async Initialize(): Promise<BackgroundConnection> {
-		const connection = new BackgroundConnection(extensionMessageSource);
+	/**
+	 * Creates a new {@link BackgroundConnection}.
+	 */
+	public static async Initialize(
+		props: BackgroundConnectionParameters,
+	): Promise<BackgroundConnection> {
+		const connection = new BackgroundConnection(props);
 		await new Promise((resolve) => {
 			connection.once("tabConnected", resolve);
 		});
@@ -72,15 +102,11 @@ export class BackgroundConnection
 	/**
 	 * Creates an instance of {@link BackgroundConnection}.
 	 */
-	private constructor(
-		/**
-		 * All messages sent through the returned instance's {@link BackgroundConnection.postMessage}
-		 * method will get this value written to their 'source' property.
-		 * @see {@link @fluidframework/devtools-core#ISourcedDevtoolsMessage}
-		 */
-		private readonly messageSource: string,
-	) {
+	private constructor(props: BackgroundConnectionParameters) {
 		super();
+
+		this.messageSource = props.messageSource;
+		this.tabId = props.tabId;
 
 		this.connectToBackgroundService();
 	}
@@ -96,11 +122,9 @@ export class BackgroundConnection
 			...message,
 			source: this.messageSource,
 		};
-		postMessageToPort(
-			sourcedMessage,
-			this.backgroundServiceConnection,
-			devtoolsScriptMessageLoggingOptions,
-		);
+
+		this.logDebugMessage(`Posting message to background service:`, sourcedMessage);
+		this.backgroundServiceConnection.postMessage(sourcedMessage);
 	}
 
 	/**
@@ -123,34 +147,31 @@ export class BackgroundConnection
 
 		// Handle init-acknowledgment message from background service
 		if (message.type === devToolsInitAcknowledgementType) {
-			console.log(
-				formatDevtoolsScriptMessageForLogging("Background initialization complete."),
-			);
+			this.logDebugMessage("Background initialization complete.");
 			return this.emit("tabConnected");
 		}
 
 		// Forward incoming message onto subscribers.
-		console.log(
-			formatDevtoolsScriptMessageForLogging(`Relaying message from Background Service:`),
-			message,
-		);
-		return this.emit("message", message);
+		return this.emitMessage(message);
 	};
+
+	/**
+	 * Emits the provided message to subscribers of the `message` event.
+	 */
+	private emitMessage(message: ISourcedDevtoolsMessage): boolean {
+		this.logDebugMessage(`Relaying message from Background Service:`, message);
+		return this.emit("message", message);
+	}
 
 	/**
 	 * Handler for a disconnect event coming from the background service.
 	 * Log the disconnection and re-establish the connection.
 	 */
 	private readonly onBackgroundServiceDisconnect = (): void => {
-		console.log(
-			formatDevtoolsScriptMessageForLogging(
-				"Disconnected from Background script. Attempting to reconnect.",
-			),
-		);
-		/**
-		 * No need to clean up the disconnected event listener here since if the event emitter is not accessible,
-		 * even if it has listeners attached to it, it will be garbage collected.
-		 */
+		this.logDebugMessage("Disconnected from Background script. Attempting to reconnect...");
+
+		//  No need to clean up the disconnected event listener here since if the event emitter is not accessible,
+		// even if it has listeners attached to it, it will be garbage collected.
 		this.connectToBackgroundService();
 	};
 
@@ -158,7 +179,7 @@ export class BackgroundConnection
 	 * Connects to the Background Script.
 	 */
 	private readonly connectToBackgroundService = (): void => {
-		console.log(formatDevtoolsScriptMessageForLogging("Connecting to Background script..."));
+		this.logDebugMessage("Connecting to Background script...");
 
 		// Create a connection to the background page
 		this.backgroundServiceConnection = browser.runtime.connect({
@@ -170,14 +191,10 @@ export class BackgroundConnection
 			source: this.messageSource,
 			type: devToolsInitMessageType,
 			data: {
-				tabId: browser.devtools.inspectedWindow.tabId,
+				tabId: this.tabId,
 			},
 		};
-		postMessageToPort(
-			initMessage,
-			this.backgroundServiceConnection,
-			devtoolsScriptMessageLoggingOptions,
-		);
+		this.postMessage(initMessage);
 
 		// Bind listeners
 		this.backgroundServiceConnection.onMessage.addListener(this.onBackgroundServiceMessage);
@@ -185,4 +202,8 @@ export class BackgroundConnection
 			this.onBackgroundServiceDisconnect,
 		);
 	};
+
+	private logDebugMessage(text: string, ...args: unknown[]): void {
+		console.debug(`FLUID_DEVTOOLS(${this.messageSource}):${text}`, args);
+	}
 }
