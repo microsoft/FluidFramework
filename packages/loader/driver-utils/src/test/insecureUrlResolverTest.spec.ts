@@ -21,10 +21,10 @@ describe("Insecure Url Resolver Test", () => {
 
 	beforeEach(() => {
 		resolver = new InsecureUrlResolver(
-			deltaStreamUrl,
 			hostUrl,
 			ordererUrl,
 			storageUrl,
+			deltaStreamUrl,
 			tenantId,
 			bearer,
 		);

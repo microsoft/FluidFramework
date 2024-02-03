@@ -35,10 +35,10 @@ export function getUrlResolver(
 		case "docker":
 			assert(options.tenantId !== undefined, 0x31e /* options.tenantId is undefined */);
 			return new InsecureUrlResolver(
-				dockerUrls.deltaStreamUrl,
 				dockerUrls.hostUrl,
 				dockerUrls.ordererUrl,
 				dockerUrls.storageUrl,
+				dockerUrls.deltaStreamUrl,
 				options.tenantId,
 				options.bearerSecret ?? "",
 			);
@@ -52,9 +52,9 @@ export function getUrlResolver(
 			if (options.discoveryEndpoint !== undefined) {
 				return new InsecureUrlResolver(
 					"",
-					"",
 					options.discoveryEndpoint,
 					"https://dummy-historian",
+					"", //deltaStreamUrl
 					options.tenantId,
 					options.bearerSecret ?? "",
 				);
@@ -62,20 +62,20 @@ export function getUrlResolver(
 
 			const fluidHost = options.fluidHost ?? "";
 			return new InsecureUrlResolver(
-				fluidHost.replace("www", "nexus"),
 				fluidHost,
 				fluidHost.replace("www", "alfred"),
 				fluidHost.replace("www", "historian"),
+				fluidHost.replace("www", "nexus"),
 				options.tenantId,
 				options.bearerSecret ?? "",
 			);
 		case "tinylicious": {
 			const urls = tinyliciousUrls(options);
 			return new InsecureUrlResolver(
-				"",
 				urls.hostUrl,
 				urls.ordererUrl,
 				urls.storageUrl,
+				"",
 				"tinylicious",
 				options.bearerSecret ?? "",
 			);

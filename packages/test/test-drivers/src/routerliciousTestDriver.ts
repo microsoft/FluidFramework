@@ -181,10 +181,10 @@ export class RouterliciousTestDriver implements ITestDriver {
 
 	createUrlResolver(): InsecureUrlResolver {
 		return new InsecureUrlResolver(
-			this.serviceEndpoints.deltaStreamUrl,
 			this.serviceEndpoints.hostUrl,
 			this.serviceEndpoints.ordererUrl,
 			this.serviceEndpoints.deltaStorageUrl,
+			this.serviceEndpoints.deltaStreamUrl,
 			this.tenantId,
 			"", // Don't need the bearer secret for NodeTest
 			true,

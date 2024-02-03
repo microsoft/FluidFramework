@@ -28,10 +28,10 @@ export class InsecureUrlResolver implements IUrlResolver {
 	private readonly cache = new Map<string, Promise<IResolvedUrl>>();
 
 	constructor(
-		private readonly deltaStreamUrl: string,
 		private readonly hostUrl: string,
 		private readonly ordererUrl: string,
 		private readonly storageUrl: string,
+		private readonly deltaStreamUrl: string,
 		private readonly tenantId: string,
 		private readonly bearer: string,
 		private readonly isForNodeTest: boolean = false,
