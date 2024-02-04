@@ -23,7 +23,8 @@ function sampleFactory() {
 }
 
 /*
- * Things to cover:
+ * // TBD(Pri0):
+ * Things to test:
  * 1. Attached & Detached modes (for container, data store runtime)
  * 2. Connected & disconnected states
  * 3. Collaboration across multiple clients.
@@ -153,7 +154,7 @@ describe("Temporal Collab Spaces", () => {
 						type: CounterFactory.Type,
 					});
 
-					// TBD(Pri1): this synchronization takes very long time (for medium sized tables, like 100x40)!
+					// TBD(Pri0): this synchronization takes very long time (for medium sized tables, like 100x40)!
 					// There are obviously a lot of ops, but it should still take relatively short amount of time.
 					// This might be an test code issue, but also (much worse) - a production code inefficiency.
 					// Two things to check:
