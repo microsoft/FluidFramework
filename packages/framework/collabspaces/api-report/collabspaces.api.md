@@ -4,30 +4,19 @@
 
 ```ts
 
-import { FluidDataStoreRuntime } from '@fluidframework/datastore';
-import { FluidObject } from '@fluidframework/core-interfaces';
-import { IAttachMessage } from '@fluidframework/runtime-definitions';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
-import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions';
-import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import { IMatrixConsumer } from '@tiny-calc/nano';
-import { IMatrixProducer } from '@tiny-calc/nano';
-import { IMatrixReader } from '@tiny-calc/nano';
-import { IRequest } from '@fluidframework/core-interfaces';
-import { IResponse } from '@fluidframework/core-interfaces';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedMatrix } from '@fluidframework/matrix';
-import { ISharedMatrixEvents } from '@fluidframework/matrix';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { MatrixItem } from '@fluidframework/matrix';
 import { Serializable } from '@fluidframework/datastore-definitions';
 
 // @internal (undocumented)
 export type CollabSpaceCellType = MatrixItem<MatrixExternalType>;
+
+// @internal (undocumented)
+export function createCollabSpace(sharedObjects: Readonly<ICollabChannelFactory[]>): IFluidDataStoreFactory;
 
 // @internal (undocumented)
 export type ICollabChannel = IChannel & ICollabChannelCore;
@@ -60,83 +49,18 @@ export interface IEfficientMatrix extends Omit<ISharedMatrix<MatrixExternalType>
     setCell(rowArg: number, colArg: number, value: MatrixItem<MatrixExternalType>): any;
 }
 
+// @internal
+export interface IEfficientMatrixTest {
+    // (undocumented)
+    isAttached: boolean;
+}
+
 // @internal (undocumented)
 export interface MatrixExternalType {
     // (undocumented)
     type: string;
     // (undocumented)
     value: Serializable<unknown>;
-}
-
-// @internal (undocumented)
-export class TempCollabSpaceRuntime extends FluidDataStoreRuntime<ISharedMatrixEvents<MatrixExternalType>> implements IEfficientMatrix {
-    constructor(dataStoreContext: IFluidDataStoreContext, sharedObjects: Readonly<ICollabChannelFactory[]>, existing: boolean, provideEntryPoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>);
-    // (undocumented)
-    protected applyStashedChannelChannelOp(address: string, contents: any): Promise<unknown>;
-    // (undocumented)
-    protected attachRemoteChannel(id: string, sequenceNumber: number, attachMessage: IAttachMessage): void;
-    // (undocumented)
-    closeMatrix(consumer: IMatrixConsumer<CollabSpaceCellType>): void;
-    // (undocumented)
-    get colCount(): number;
-    // (undocumented)
-    destroyCellChannel(channel: ICollabChannelCore): boolean;
-    // (undocumented)
-    getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
-    // (undocumented)
-    getCell(row: number, col: number): CollabSpaceCellType;
-    // (undocumented)
-    getCellAsync(row: number, col: number): Promise<CollabSpaceCellType>;
-    // (undocumented)
-    getCellChannel(row: number, col: number): Promise<ICollabChannelCore>;
-    initialize(existing: boolean): Promise<void>;
-    // (undocumented)
-    insertCols(colStartArg: number, countArg: number): void;
-    // (undocumented)
-    insertRows(rowStartArg: number, countArg: number): void;
-    // (undocumented)
-    get matrixProducer(): IMatrixProducer<CollabSpaceCellType>;
-    // (undocumented)
-    openMatrix(consumer: IMatrixConsumer<CollabSpaceCellType>): IMatrixReader<CollabSpaceCellType>;
-    // (undocumented)
-    protected processChannelOp(address: string, message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    // (undocumented)
-    processSignal(message: any, local: boolean): void;
-    // (undocumented)
-    removeCols(colStart: number, count: number): void;
-    // (undocumented)
-    removeRows(rowStart: number, count: number): void;
-    // (undocumented)
-    request(request: IRequest): Promise<IResponse>;
-    // (undocumented)
-    protected reSubmitChannelOp(address: string, contents: any, localOpMetadata: unknown): void;
-    // (undocumented)
-    rollback(type: string, content: any, localOpMetadata: unknown): void;
-    // (undocumented)
-    get rowCount(): number;
-    // (undocumented)
-    saveChannelState(channel: ICollabChannelCore): void;
-    // (undocumented)
-    protected sendAttachChannelOp(channel: IChannel): void;
-    // (undocumented)
-    setCell(rowArg: number, colArg: number, value: CollabSpaceCellType): void;
-    // (undocumented)
-    protected setChannelDirty(address: string): void;
-    // (undocumented)
-    protected submitChannelOp(address: string, contents: any, localOpMetadata: unknown): void;
-    // (undocumented)
-    summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
-}
-
-// @internal (undocumented)
-export class TempCollabSpaceRuntimeFactory implements IFluidDataStoreFactory {
-    constructor(type: string, sharedObjects: readonly ICollabChannelFactory[]);
-    // (undocumented)
-    get IFluidDataStoreFactory(): this;
-    // (undocumented)
-    instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<IFluidDataStoreChannel>;
-    // (undocumented)
-    readonly type: string;
 }
 
 // (No @packageDocumentation comment for this package)

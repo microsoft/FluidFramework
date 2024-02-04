@@ -6,10 +6,10 @@
 export {
 	MatrixExternalType,
 	IEfficientMatrix,
+	IEfficientMatrixTest,
 	ICollabChannelFactory,
 	ICollabChannelCore,
 	ICollabChannel,
 	CollabSpaceCellType,
 } from "./contracts";
-export { TempCollabSpaceRuntime } from "./collabSpaces";
-export { TempCollabSpaceRuntimeFactory } from "./factory";
+export { createCollabSpace } from "./factory";

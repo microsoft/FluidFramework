@@ -74,3 +74,11 @@ export interface IEfficientMatrix extends Omit<ISharedMatrix<MatrixExternalType>
 	// Returns true if channel was actually destroyed.
 	destroyCellChannel(channel: ICollabChannelCore): boolean;
 }
+
+/**
+ * Interface for testing purposes only.
+ * @internal
+ */
+export interface IEfficientMatrixTest {
+	isAttached: boolean;
+}

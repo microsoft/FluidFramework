@@ -8,14 +8,18 @@ import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
 
-import { ICollabChannelCore, CollabSpaceCellType } from "../contracts";
-import { TempCollabSpaceRuntime } from "../collabSpaces";
-import { TempCollabSpaceRuntimeFactory } from "../factory";
+import {
+	ICollabChannelCore,
+	CollabSpaceCellType,
+	IEfficientMatrix,
+	IEfficientMatrixTest,
+} from "../contracts";
+import { createCollabSpace } from "../factory";
 
 import { CounterFactory, ISharedCounter } from "./counterFactory";
 
 function sampleFactory() {
-	return new TempCollabSpaceRuntimeFactory("MatrixWithCollab", [new CounterFactory()]);
+	return createCollabSpace([new CounterFactory()]);
 }
 
 /*
@@ -38,17 +42,33 @@ function sampleFactory() {
  *    I believe this is due to describeCompat() being nested inside of describe().
  *    While we can increase timeout, it's better to find the right solution for this import problem.
  */
-describe("Temporal Collab Spaces 1", () => {
-	it("Sub-entry", async () => {
+describe("Temporal Collab Spaces", () => {
+	it("Creating tests", async () => {
 		const importModule = await import("@fluid-private/test-version-utils");
 		importModule.describeCompat(
 			"Temporal Collab Spaces",
 			"NoCompat",
 			(getTestObjectProvider) => {
-				const createContainer = async (): Promise<TempCollabSpaceRuntime> => {
+				let provider: ITestObjectProvider;
+				let containers: IContainer[] = [];
+				let collabSpaces: IEfficientMatrix[] = [];
+
+				// Size of the matrix
+				const cols = 7;
+				const rows = 20;
+
+				const defaultFactory = sampleFactory();
+				const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+					defaultFactory,
+					registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+					runtimeOptions: {},
+				});
+
+				const createContainer = async () => {
 					const container = await provider.createContainer(runtimeFactory);
 					containers.push(container);
-					const cp = (await container.getEntryPoint()) as TempCollabSpaceRuntime;
+					const cp = (await container.getEntryPoint()) as IEfficientMatrix &
+						IEfficientMatrixTest;
 					collabSpaces.push(cp);
 					return cp;
 				};
@@ -60,7 +80,7 @@ describe("Temporal Collab Spaces 1", () => {
 						// [LoaderHeader.version]: summaryVersion,
 					});
 					containers.push(container);
-					const cp = (await container.getEntryPoint()) as TempCollabSpaceRuntime;
+					const cp = (await container.getEntryPoint()) as IEfficientMatrix;
 					collabSpaces.push(cp);
 
 					await provider.ensureSynchronized();
@@ -73,23 +93,19 @@ describe("Temporal Collab Spaces 1", () => {
 					provider = getTestObjectProvider({ syncSummarizer: true });
 				});
 
-				let provider: ITestObjectProvider;
-				const containers: IContainer[] = [];
-				const collabSpaces: TempCollabSpaceRuntime[] = [];
-
-				const defaultFactory = sampleFactory();
-				const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
-					defaultFactory,
-					registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
-					runtimeOptions: {},
+				afterEach(() => {
+					for (const container of containers) {
+						container.close();
+					}
+					containers = [];
+					collabSpaces = [];
 				});
 
-				// Size of the matrix
-				const cols = 40;
-				const rows = 100;
-
+				/**
+				 * Populates collab space with initial values
+				 */
 				async function populateInitialMatrix(
-					collabSpace: TempCollabSpaceRuntime,
+					collabSpace: IEfficientMatrix,
 					value: CollabSpaceCellType,
 				) {
 					// +700Mb, but only +200Mb if accounting GC after that.
@@ -116,6 +132,40 @@ describe("Temporal Collab Spaces 1", () => {
 					}
 				}
 
+				/**
+				 * Creates a pair of containers and initializes them with initial state
+				 * @returns collab space
+				 */
+				async function initialize() {
+					const collabSpace = await createContainer();
+
+					// Ensure that data store is properly attached. It should be, as default
+					// data store is aliased (and thus attached) in test container
+					assert(collabSpace.isAttached, "data store is not attached");
+
+					// Have a secont container that follows passivley the first one
+					await addContainerInstance();
+
+					// Populate initial state of the matrix - insert a ton of rows & columns and populate
+					// all cells with same data.
+					await populateInitialMatrix(collabSpace, {
+						value: 5,
+						type: CounterFactory.Type,
+					});
+
+					// TBD(Pri1): this synchronization takes very long time (for medium sized tables, like 100x40)!
+					// There are obviously a lot of ops, but it should still take relatively short amount of time.
+					// This might be an test code issue, but also (much worse) - a production code inefficiency.
+					// Two things to check:
+					// 1. Looks like our local test pipeline is slow, probably something easy to improve
+					// 2. Enable op grouping, possibly compression by default to reduce amount of data that goes through
+					//    local server
+					await provider.ensureSynchronized();
+					ensureSameSize();
+
+					return collabSpace;
+				}
+
 				function ensureSameSize() {
 					const cp1 = collabSpaces[0];
 					for (const cp of collabSpaces) {
@@ -140,7 +190,7 @@ describe("Temporal Collab Spaces 1", () => {
 					}
 				}
 
-				async function measureReadSpeed(col: number, collabSpace: TempCollabSpaceRuntime) {
+				async function measureReadSpeed(col: number, collabSpace: IEfficientMatrix) {
 					// 100K rows test numbers:
 					// Read arbitrary column: 1s on my dev box
 					// But only 234ms if using non-async function (and thus not doing await here)!
@@ -156,32 +206,9 @@ describe("Temporal Collab Spaces 1", () => {
 				it("Basic test", async () => {
 					// Cell we will be interrogating
 					const row = 5;
-					const col = 10;
+					const col = 3;
 
-					const collabSpace = await createContainer();
-
-					// Ensure that data store is properly attached. It should be, as default
-					// data store is aliased (and thus attached) in test container
-					assert(collabSpace.isAttached, "data store is not attached");
-
-					// Have a secont container that follows passivley the first one
-					await addContainerInstance();
-
-					// Populate initial state of the matrix - insert a ton of rows & columns and populate
-					// all cells with same data.
-					await populateInitialMatrix(collabSpace, {
-						value: 5,
-						type: CounterFactory.Type,
-					});
-
-					// TBD(Pri1): this synchronization takes very long time!
-					// There are obviously a lot of ops, but it should still take relatively short amount of time.
-					// Two things to check:
-					// 1. Looks like our local test pipeline is slow, probably something easy to improve
-					// 2. Enable op grouping, possibly compression by default to reduce amount of data that goes through
-					//    local server
-					await provider.ensureSynchronized();
-					ensureSameSize();
+					const collabSpace = await initialize();
 
 					let initialValue = (await collabSpace.getCellAsync(row, col))?.value as number;
 
@@ -207,6 +234,13 @@ describe("Temporal Collab Spaces 1", () => {
 					// and validate it can follow
 					await addContainerInstance();
 
+					// implementation detail: due to op grouping and issue with same sequence numbers, we need
+					// one more batch to ensure channel could be safely destroyed below (and test to validate it).
+					// Make some arbitrary change, but also test insertion flow.
+					collabSpace.insertRows(rows, 1);
+					await provider.ensureSynchronized();
+					ensureSameSize();
+
 					// Also let's grap channel in second container for later manipulations
 					channel2 = (await collabSpaces[2].getCellChannel(row, col)) as ISharedCounter;
 
@@ -217,6 +251,7 @@ describe("Temporal Collab Spaces 1", () => {
 						"can't be destroyed without matrix save ops doing rountrip first",
 					);
 					collabSpace.saveChannelState(channel);
+
 					await provider.ensureSynchronized();
 					await ensureSameValues(row, col, initialValue, channel);
 
@@ -235,18 +270,28 @@ describe("Temporal Collab Spaces 1", () => {
 					await provider.ensureSynchronized();
 					await ensureSameValues(row, col, initialValue, channel2);
 
-					// Finally, test concurrent editing / creation of the channels by multiple containers
+					// Useful mostly if you debug and want measure column reading speed - read one column
+					await measureReadSpeed(col, collabSpace);
+				});
+
+				it("Concurrent changes", async () => {
+					// Cell we will be interrogating
+					const row = 6;
+					const col = 3;
+
+					const collabSpace = await initialize();
+
 					const channel2a = (await collabSpace.getCellChannel(
-						row + 1,
+						row,
 						col,
 					)) as ISharedCounter;
 					const channel2b = (await collabSpaces[1].getCellChannel(
-						row + 1,
+						row,
 						col,
 					)) as ISharedCounter;
 
 					// Concurrent changes - clients do not see each other changes yet
-					initialValue = channel2a.value;
+					const initialValue = channel2a.value;
 					channel2a.increment(10);
 					channel2b.increment(20);
 					assert(
@@ -257,10 +302,64 @@ describe("Temporal Collab Spaces 1", () => {
 					// syncrhonize - all containers should see exactly same changes
 					await provider.ensureSynchronized();
 					assert(channel2a.value === channel2b.value, "syncrhonized");
-					await ensureSameValues(row + 1, col, initialValue + 30, channel2a);
+					await ensureSameValues(row, col, initialValue + 30, channel2a);
+				});
 
-					// Useful mostly if you debug and want measure column reading speed - read one column
-					await measureReadSpeed(col, collabSpace);
+				it("Channel overwrite", async () => {
+					// Cell we will be interrogating
+					const row = 7;
+					const col = 3;
+
+					const collabSpace = await initialize();
+
+					const channel2a = (await collabSpace.getCellChannel(
+						row,
+						col,
+					)) as ISharedCounter;
+
+					// Make some changes on a channel
+					const initialValue = channel2a.value;
+					let overwriteValue = initialValue + 100;
+					channel2a.increment(10);
+
+					// TBD(Pri1): Test fails if this synchronizaiton is removed, due to Pri1 comment in
+					// TempCollabSpaceRuntime.updatePendingCoutner()
+					// The issue should be fixed, and test should be duplicated - one version to run with this
+					// extra synchronizaiton, and one without.
+					await provider.ensureSynchronized();
+
+					// Overwrite it!
+					const collabSpace2 = collabSpaces[1];
+					collabSpace2.setCell(row, col, {
+						value: overwriteValue,
+						type: CounterFactory.Type,
+					});
+
+					// syncrhonize - all containers should see exactly same changes
+					await provider.ensureSynchronized();
+					await ensureSameValues(row, col, overwriteValue);
+
+					assert(channel2a.value === initialValue + 10, "No impact on unrooted channel");
+
+					// Retrieve channel for same cell
+					const channel2b = (await collabSpace.getCellChannel(
+						row,
+						col,
+					)) as ISharedCounter;
+					const channel2c = (await collabSpace2.getCellChannel(
+						row,
+						col,
+					)) as ISharedCounter;
+					assert(channel2b.value === overwriteValue, "overwritten value");
+					assert(channel2c.value === overwriteValue, "overwritten value");
+
+					channel2c.increment(10);
+					overwriteValue += 10;
+					await provider.ensureSynchronized();
+					await ensureSameValues(row, col, overwriteValue);
+					assert(channel2b.value === overwriteValue, "overwritten value");
+					assert(channel2c.value === overwriteValue, "overwritten value");
+					assert(channel2a.value === initialValue + 10, "No impact on unrooted channel");
 				});
 			},
 		);

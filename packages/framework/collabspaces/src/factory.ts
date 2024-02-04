@@ -19,15 +19,9 @@ import { TempCollabSpaceRuntime } from "./collabSpaces";
  *
  */
 /** @internal */
-export class TempCollabSpaceRuntimeFactory implements IFluidDataStoreFactory {
-	constructor(
-		public readonly type: string,
-		private readonly sharedObjects: readonly ICollabChannelFactory[],
-	) {
-		if (this.type === "") {
-			throw new Error("undefined type member");
-		}
-	}
+class TempCollabSpaceRuntimeFactory implements IFluidDataStoreFactory {
+	public readonly type = "CollabSpace-DataStore";
+	constructor(private readonly sharedObjects: readonly ICollabChannelFactory[]) {}
 
 	public get IFluidDataStoreFactory() {
 		return this;
@@ -49,4 +43,11 @@ export class TempCollabSpaceRuntimeFactory implements IFluidDataStoreFactory {
 		await runtime.initialize(existing);
 		return runtime;
 	}
+}
+
+/** @internal */
+export function createCollabSpace(
+	sharedObjects: Readonly<ICollabChannelFactory[]>,
+): IFluidDataStoreFactory {
+	return new TempCollabSpaceRuntimeFactory(sharedObjects);
 }
