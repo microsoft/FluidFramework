@@ -205,7 +205,9 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 
 	/**
 	 * Invokes the given callback and guarantees that all operations generated within the callback will be ordered
-	 * sequentially. Total size of all messages must be less than maxOpSize.
+	 * sequentially.
+	 *
+	 * If the callback throws an error, the container will close and the error will be logged.
 	 */
 	orderSequentially(callback: () => void): void;
 
