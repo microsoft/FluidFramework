@@ -1,52 +1,40 @@
 {
 	"v1": {
-		"Audience": {
-			"Interfaces": ["IMember", "IServiceAudience", "IServiceAudienceEvents"],
-			"Types": ["Myself"]
+		"FluidFramework": {
+			"Audience": {
+				"Interfaces": ["IMember", "IServiceAudience", "IServiceAudienceEvents"],
+				"Types": ["Myself"]
+			},
+			"Container": {
+				"Interfaces": ["ContainerSchema", "IFluidContainer"]
+			},
+			"DDSes": {
+				"Map": {
+					"Interfaces": ["ISharedMap", "ISharedMapEvents", "IValueChanged"],
+					"Classes": ["SharedMap"]
+				},
+				"Tree": { "Interfaces": ["ITree"] }
+			}
 		},
-		"Container": {
-			"Enums": ["AttachState"],
-			"Interfaces": ["ContainerSchema", "IFluidContainerEvents", "IConnection"],
-			"Types": [
-				"ConnectionStateType",
-				"ICriticalContainerError",
-				"ContainerErrorTypes",
-				"DriverErrorTypes",
-				"DataObjectClass",
-				"InitialObjects",
-				"LoadableObjectClass",
-				"LoadableObjectClassRecord",
-				"LoadableObjectCtor",
-				"LoadableObjectClass",
-				"SharedObjectClass"
-			]
-		},
-		"DDSes": ["@fluidframework/map"],
 		"serviceClients": ["@fluidframework/azure-client", "@fluidframework/tinylicious-client"]
 	},
 	"v2": {
-		"Audience": {
-			"Interfaces": ["IMember", "IServiceAudience", "IServiceAudienceEvents"],
-			"Types": ["Myself"]
+		"FluidFramework": {
+			"Audience": {
+				"Interfaces": ["IMember", "IServiceAudience", "IServiceAudienceEvents"],
+				"Types": ["Myself"]
+			},
+			"Container": {
+				"Interfaces": ["ContainerSchema", "IFluidContainer"]
+			},
+			"DDSes": {
+				"Map": {
+					"Interfaces": ["ISharedMap", "ISharedMapEvents", "IValueChanged"],
+					"Classes": ["SharedMap"]
+				},
+				"Tree": { "Interfaces": ["ITree"] }
+			}
 		},
-		"Container": {
-			"Enums": ["AttachState"],
-			"Interfaces": ["ContainerSchema", "IFluidContainerEvents", "IConnection"],
-			"Types": [
-				"ConnectionStateType",
-				"ICriticalContainerError",
-				"ContainerErrorTypes",
-				"DriverErrorTypes",
-				"DataObjectClass",
-				"InitialObjects",
-				"LoadableObjectClass",
-				"LoadableObjectClassRecord",
-				"LoadableObjectCtor",
-				"LoadableObjectClass",
-				"SharedObjectClass"
-			]
-		},
-		"DDSes": ["@fluidframework/map", "@fluidframework/tree"],
 		"serviceClients": ["@fluidframework/azure-client", "@fluid-experimental/odsp-client"]
 	}
 }

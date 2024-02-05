@@ -193,12 +193,6 @@
 	> li li > a {
 		padding: 5px 25px;
 		position: relative;
-
-
-		/* Further increased padding for specific API endpoints */
-		&.leaf-node {
-			padding: 5px 45px;
-		}
 	}
 
 	.padding-35px {
