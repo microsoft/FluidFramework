@@ -5,12 +5,10 @@
 
 import { strict as assert } from "assert";
 import { SessionId } from "@fluidframework/id-compressor";
-import { cursorForJsonableTreeNode } from "../feature-libraries/index.js";
 import {
 	makeAnonChange,
 	FieldKey,
 	tagChange,
-	deltaForSet,
 	RevisionTag,
 	TaggedChange,
 	RevisionMetadataSource,
@@ -26,7 +24,7 @@ describe("TestChange", () => {
 	it("can be composed", () => {
 		const change1 = TestChange.mint([0, 1], 2);
 		const change2 = TestChange.mint([0, 1, 2], 3);
-		const composed = TestChange.compose([makeAnonChange(change1), makeAnonChange(change2)]);
+		const composed = TestChange.compose(change1, change2);
 
 		const expected = TestChange.mint([0, 1], [2, 3]);
 		assert.deepEqual(composed, expected);
@@ -35,10 +33,7 @@ describe("TestChange", () => {
 	it("can be composed without verification", () => {
 		const change1 = TestChange.mint([0], 1);
 		const change2 = TestChange.mint([2], 3);
-		const composed = TestChange.compose(
-			[makeAnonChange(change1), makeAnonChange(change2)],
-			false,
-		);
+		const composed = TestChange.compose(change1, change2, false);
 
 		const expected = TestChange.mint([0], [1, 3]);
 		assert.deepEqual(composed, expected);
@@ -47,7 +42,7 @@ describe("TestChange", () => {
 	it("composition of inverses leads to normalized form", () => {
 		const change1 = TestChange.mint([0], [1, 2]);
 		const change2 = TestChange.mint([0, 1, 2], [-2, -1, 3]);
-		const composed = TestChange.compose([makeAnonChange(change1), makeAnonChange(change2)]);
+		const composed = TestChange.compose(change1, change2);
 
 		const expected = TestChange.mint([0], [3]);
 		assert.deepEqual(composed, expected);
@@ -74,18 +69,13 @@ describe("TestChange", () => {
 		const change1 = TestChange.mint([0, 1], [2, 3]);
 		const tag = mintRevisionTag();
 		const delta = TestChange.toDelta(tagChange(change1, tag));
-		const fooField: FieldKey = brand("foo");
+		const field: FieldKey = brand("testIntentions");
 		const expected = new Map([
 			[
-				fooField,
-				deltaForSet(
-					cursorForJsonableTreeNode({
-						type: brand("test"),
-						value: "2|3",
-					}),
-					{ major: tag, minor: 424243 },
-					{ major: tag, minor: 424242 },
-				),
+				field,
+				{
+					local: [{ count: 2 }, { count: 3 }],
+				},
 			],
 		]);
 
@@ -115,7 +105,7 @@ describe("TestChange", () => {
 		baseChanges.forEach((base) => deepFreeze(base));
 		deepFreeze(change);
 
-		const composed = TestChange.compose(baseChanges);
+		const composed = TestChange.composeList(baseChanges.map((c) => c.change));
 		const rebaseResult = TestChange.rebase(change, composed);
 		assert(rebaseResult !== undefined, "Shouldn't get undefined.");
 		return rebaseResult;
@@ -152,13 +142,14 @@ describe("TestChange", () => {
 					rebase: (change, base) => {
 						return TestChange.rebase(change, base.change) ?? TestChange.emptyChange;
 					},
-					compose: (changes) => {
-						return TestChange.compose(changes);
+					compose: (change1, change2) => {
+						return TestChange.compose(change1.change, change2.change);
 					},
 					invert: (change) => {
 						return TestChange.invert(change.change);
 					},
 					rebaseComposed,
+					createEmpty: () => TestChange.emptyChange,
 				},
 				{ numberOfEditsToRebase: 4, numberOfEditsToRebaseOver: 4 },
 			);

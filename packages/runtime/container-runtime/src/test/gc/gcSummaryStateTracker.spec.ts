@@ -168,6 +168,36 @@ describe("GCSummaryStateTracker tests", () => {
 		});
 	});
 
+	it("Autorecovery: requesting Full GC", async () => {
+		const tracker: GCSummaryStateTrackerWithPrivates = new GCSummaryStateTracker(
+			{
+				shouldRunGC: true,
+				tombstoneMode: false,
+				gcVersionInBaseSnapshot: 1,
+				gcVersionInEffect: 1,
+			},
+			false /* wasGCRunInBaseSnapshot */,
+		) as any;
+		assert.equal(tracker.autoRecovery.fullGCRequested(), false, "Should be false by default");
+
+		tracker.autoRecovery.requestFullGCOnNextRun();
+
+		assert.equal(
+			tracker.autoRecovery.fullGCRequested(),
+			true,
+			"Should be true after requesting full GC",
+		);
+
+		// After the first summary succeeds (refreshLatestSummary called), the state should be reset.
+		await tracker.refreshLatestSummary({ isSummaryTracked: true, isSummaryNewer: true });
+
+		assert.equal(
+			tracker.autoRecovery.fullGCRequested(),
+			false,
+			"Should be false after Summary Ack",
+		);
+	});
+
 	/**
 	 * These tests validate that the GC data is written in summary incrementally. Basically, only parts of the GC
 	 * data that has changed since the last successful summary is re-written, rest is written as SummaryHandle.

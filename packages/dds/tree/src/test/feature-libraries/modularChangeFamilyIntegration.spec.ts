@@ -34,7 +34,7 @@ import {
 	failCodec,
 	mintRevisionTag,
 	testChangeReceiver,
-	testIdCompressor,
+	testRevisionTagCodec,
 } from "../utils.js";
 import {
 	intoDelta,
@@ -55,7 +55,7 @@ const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Ma
 	[sequence].map((f) => [f.identifier, f]),
 );
 
-const family = new ModularChangeFamily(fieldKinds, testIdCompressor, failCodec, {
+const family = new ModularChangeFamily(fieldKinds, testRevisionTagCodec, failCodec, {
 	jsonValidator: typeboxValidator,
 });
 
@@ -345,6 +345,7 @@ describe("ModularChangeFamily integration", () => {
 					],
 				]),
 			};
+
 			assertDeltaEqual(actual, expected);
 		});
 
@@ -597,12 +598,6 @@ function normalizeDeltaFieldChanges(
 	const normalized: Mutable<DeltaFieldChanges> = {};
 	if (delta.local !== undefined && delta.local.length > 0) {
 		normalized.local = delta.local.map((mark) => normalizeDeltaMark(mark, genId, idMap));
-	}
-	if (delta.build !== undefined && delta.build.length > 0) {
-		normalized.build = delta.build.map(({ id, trees }) => ({
-			id: normalizeDeltaDetachedNodeId(id, genId, idMap),
-			trees,
-		}));
 	}
 	if (delta.global !== undefined && delta.global.length > 0) {
 		normalized.global = delta.global.map(({ id, fields }) => ({

@@ -7,10 +7,11 @@ import {
 	FieldKinds,
 	InsertableFlexField,
 	InsertableFlexNode,
-	TreeFieldSchema,
+	FlexFieldSchema,
 	typeNameSymbol,
+	SchemaBuilderBase,
 } from "../feature-libraries/index.js";
-import { leaf, jsonSchema, SchemaBuilder } from "../domains/index.js";
+import { leaf, jsonSchema } from "../domains/index.js";
 import { brand, requireAssignableTo } from "../util/index.js";
 import { FlexTreeView, TreeContent } from "../shared-tree/index.js";
 import { FieldKey, moveToDetachedField, rootFieldKey, UpPath } from "../core/index.js";
@@ -24,7 +25,7 @@ import { FieldKey, moveToDetachedField, rootFieldKey, UpPath } from "../core/ind
  */
 export const localFieldKey: FieldKey = brand("foo");
 
-const deepBuilder = new SchemaBuilder({
+const deepBuilder = new SchemaBuilderBase(FieldKinds.required, {
 	scope: "scalable",
 	name: "sharedTree.bench: deep",
 	libraries: [jsonSchema],
@@ -32,17 +33,17 @@ const deepBuilder = new SchemaBuilder({
 
 // Test data in "deep" mode: a linked list with a number at the end.
 const linkedListSchema = deepBuilder.objectRecursive("linkedList", {
-	foo: TreeFieldSchema.createUnsafe(FieldKinds.required, [() => linkedListSchema, leaf.number]),
+	foo: FlexFieldSchema.createUnsafe(FieldKinds.required, [() => linkedListSchema, leaf.number]),
 });
 
-const wideBuilder = new SchemaBuilder({
+const wideBuilder = new SchemaBuilderBase(FieldKinds.required, {
 	scope: "scalable",
 	name: "sharedTree.bench: wide",
 	libraries: [jsonSchema],
 });
 
 export const wideRootSchema = wideBuilder.object("WideRoot", {
-	foo: TreeFieldSchema.create(FieldKinds.sequence, [leaf.number]),
+	foo: FlexFieldSchema.create(FieldKinds.sequence, [leaf.number]),
 });
 
 export const wideSchema = wideBuilder.intoSchema(wideRootSchema);
@@ -239,7 +240,7 @@ export function readWideEditableTree(tree: FlexTreeView<typeof wideSchema.rootFi
 } {
 	let sum = 0;
 	let nodesCount = 0;
-	const root = tree.editableTree;
+	const root = tree.flexTree;
 	const field = root.content.foo;
 	assert(field.length !== 0);
 	for (const currentNode of field) {
@@ -254,7 +255,7 @@ export function readDeepEditableTree(tree: FlexTreeView<typeof deepSchema.rootFi
 	value: number;
 } {
 	let depth = 0;
-	let currentNode = tree.editableTree.content;
+	let currentNode = tree.flexTree.content;
 	while (currentNode.is(linkedListSchema)) {
 		currentNode = currentNode.foo;
 		depth++;

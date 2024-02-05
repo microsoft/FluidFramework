@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { SessionId } from "@fluidframework/id-compressor";
 import { bufferToString, IsoBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
 import { fail, JsonCompatibleReadOnly } from "../util/index.js";
+import { ChangeEncodingContext } from "../core/index.js";
 
 /**
  * Translates decoded data to encoded data.
@@ -110,21 +110,6 @@ export interface IJsonCodec<
 		IDecoder<TDecoded, TValidate, TContext> {
 	encodedSchema?: TAnySchema;
 }
-
-/**
- * Specialization of {@link IJsonCodec} for codecs requiring the originator ID as context.
- *
- * @privateRemarks -
- * TODO: This type is likely better placed nearer to editing code, where knowledge of the session id is
- * a common concern for encoding revision tags using id compressor.
- * TODO: Rename; it's not so much 'aware' as 'requiring' the session id to function, which is generally how
- * context should be used for codecs.
- */
-export type SessionAwareCodec<
-	TDecoded,
-	TEncoded = JsonCompatibleReadOnly,
-	TValidate = TEncoded,
-> = IJsonCodec<TDecoded, TEncoded, TValidate, SessionId>;
 
 /**
  * @remarks TODO: We might consider using DataView or some kind of writer instead of IsoBuffer.
@@ -307,7 +292,7 @@ export function withSchemaValidation<
 	EncodedSchema extends TSchema,
 	TEncodedFormat = JsonCompatibleReadOnly,
 	TValidate = TEncodedFormat,
-	TContext = void,
+	TContext = ChangeEncodingContext,
 >(
 	schema: EncodedSchema,
 	codec: IJsonCodec<TInMemoryFormat, TEncodedFormat, TValidate, TContext>,

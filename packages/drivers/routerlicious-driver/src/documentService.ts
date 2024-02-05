@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import * as api from "@fluidframework/driver-definitions";
-import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import { RateLimiter, NetworkErrorBasic, canRetryOnError } from "@fluidframework/driver-utils";
 import { IClient } from "@fluidframework/protocol-definitions";
 import io from "socket.io-client";
 import { PerformanceEvent, wrapError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { RouterliciousErrorTypes } from "./errorUtils";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
 import { DocumentStorageService } from "./documentStorageService";
 import { R11sDocumentDeltaConnection } from "./documentDeltaConnection";
@@ -42,7 +43,10 @@ const RediscoverAfterTimeSinceDiscoveryMs = 5 * 60000; // 5 minute
  * clients.
  */
 // eslint-disable-next-line import/namespace
-export class DocumentService implements api.IDocumentService {
+export class DocumentService
+	extends TypedEventEmitter<api.IDocumentServiceEvents>
+	implements api.IDocumentService
+{
 	private lastDiscoveredAt: number = Date.now();
 	private discoverP: Promise<void> | undefined;
 
@@ -73,7 +77,9 @@ export class DocumentService implements api.IDocumentService {
 		private storageRestWrapper: RouterliciousStorageRestWrapper,
 		private readonly storageTokenFetcher: TokenFetcher,
 		private readonly ordererTokenFetcher: TokenFetcher,
-	) {}
+	) {
+		super();
+	}
 
 	private documentStorageService: DocumentStorageService | undefined;
 
@@ -221,7 +227,7 @@ export class DocumentService implements api.IDocumentService {
 										(errorMessage) =>
 											new NetworkErrorBasic(
 												`The Host-provided token fetcher threw an error`,
-												DriverErrorTypes.fetchTokenError,
+												RouterliciousErrorTypes.fetchTokenError,
 												canRetryOnError(error),
 												{ errorMessage, driverVersion },
 											),

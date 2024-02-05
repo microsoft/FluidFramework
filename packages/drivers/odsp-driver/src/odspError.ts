@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
+import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils/internal";
 import { NonRetryableError } from "@fluidframework/driver-utils";
-import { OdspError } from "@fluidframework/odsp-driver-definitions";
+import { OdspError, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
 import { getCircularReplacer, IFluidErrorBase } from "@fluidframework/telemetry-utils";
 import { IOdspSocketError } from "./contracts";
 import { pkgVersion as driverVersion } from "./packageVersion";
@@ -37,7 +36,7 @@ export function errorObjectFromSocketError(
 	} catch (error) {
 		return new NonRetryableError(
 			"Internal error: errorObjectFromSocketError",
-			DriverErrorType.fileNotFoundOrAccessDeniedError,
+			OdspErrorTypes.fileNotFoundOrAccessDeniedError,
 			{ driverVersion },
 		);
 	}

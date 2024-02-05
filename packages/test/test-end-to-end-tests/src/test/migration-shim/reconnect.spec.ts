@@ -33,12 +33,17 @@ import {
 import { LoaderHeader } from "@fluidframework/container-definitions";
 import { type IContainerExperimental } from "@fluidframework/container-loader";
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { type ConfigTypes, type IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { type IChannel } from "@fluidframework/datastore-definitions";
 import {
 	createSummarizerFromFactory,
 	summarizeNow,
 	type ITestObjectProvider,
 } from "@fluidframework/test-utils";
+
+const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+	getRawConfig: (name: string): ConfigTypes => settings[name],
+});
 
 const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
 
@@ -196,10 +201,12 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 
 	const loaderProps = {
-		options: { enableOfflineLoad: true },
+		configProvider: configProvider({
+			"Fluid.Container.enableOfflineLoad": true,
+		}),
 	};
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		provider = getTestObjectProvider();
 		// Creates the document as v1 of the code with a SharedCell
 		const container = await provider.createContainer(runtimeFactory1);

@@ -4,6 +4,7 @@ kind: "Package"
 type: apis
 package: "fluid-framework"
 unscopedPackageName: "fluid-framework"
+version: "v1"
 area: "libraries"
 summary: "The fluid-framework package bundles a collection of Fluid Framework client packages for easy use when paired with a corresponding service client package (for example, @<!-- -->fluidframework/azure-client or @<!-- -->fluidframework/tinylicious-client)."
 children:
@@ -14,4 +15,3 @@ children:
 layout: aggPackage
 draft: false
 ---
-
