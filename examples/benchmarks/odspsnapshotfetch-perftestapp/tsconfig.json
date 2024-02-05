@@ -3,11 +3,9 @@
 		"../../../common/build/build-common/tsconfig.base.json",
 		"../../../common/build/build-common/tsconfig.esm-only.json",
 	],
+  "include": ["src/**/*"],
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "lib",
-		"jsx": "react",
-		"composite": true,
 	},
-	"include": ["src/**/*"],
 }

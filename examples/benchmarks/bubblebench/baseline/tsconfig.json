@@ -1,11 +1,13 @@
 {
-	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"extends": [
+		"../../../../common/build/build-common/tsconfig.base.json",
+		"../../../../common/build/build-common/tsconfig.esm-only.json",
+	],
+	"include": ["src/**/*"],
 	"exclude": ["dist", "node_modules"],
 	"compilerOptions": {
-		"module": "esnext",
-		"lib": ["ESNext", "DOM"],
+    "rootDir": "./src",
 		"outDir": "dist",
-		"jsx": "react",
 		"types": [
 			"react",
 			"react-dom",
@@ -15,5 +17,4 @@
 			"expect-puppeteer",
 		],
 	},
-	"include": ["src/**/*"],
 }

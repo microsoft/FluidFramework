@@ -11,7 +11,7 @@ import { TableView } from "./tableView.js";
 
 const tableModelFactory = createDataStoreFactory(
 	tableModelType,
-	import(/* webpackChunkName: "table-view", webpackPreload: true */ "./tableModel").then((m) =>
+	import(/* webpackChunkName: "table-view", webpackPreload: true */ "./tableModel.js").then((m) =>
 		m.TableModel.getFactory(),
 	),
 );
