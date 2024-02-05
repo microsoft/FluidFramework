@@ -44,7 +44,7 @@
 		"test:mocha": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:snapshots:regen": "npm run test:mocha -- --snapshot",
-		"test:stress": "cross-env FUZZ_TEST_COUNT=20 FUZZ_STRESS_RUN=true mocha --ignore \"dist/test/memory/**/*\" --recursive \"dist/test/**/*.spec.js\"",
+		"test:stress": "cross-env FUZZ_TEST_COUNT=20 FUZZ_STRESS_RUN=true mocha --ignore \"dist/test/memory/**/*\" --recursive \"dist/test/**/*.spec.js\" -r @fluidframework/mocha-test-setup",
 		"ts2esm": "ts2esm ./tsconfig.json ./src/test/tsconfig.json",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
