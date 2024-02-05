@@ -191,7 +191,7 @@ export class MigrationTool extends DataObject implements IMigrationTool {
     // (undocumented)
     protected initializingFirstTime(): Promise<void>;
     // (undocumented)
-    get migrationState(): "collaborating" | "migrated" | "stopping" | "migrating";
+    get migrationState(): "collaborating" | "stopping" | "migrating" | "migrated";
     // (undocumented)
     get newContainerId(): string | undefined;
     // (undocumented)
@@ -262,7 +262,7 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
     // (undocumented)
     protected initializingFirstTime(): Promise<void>;
     // (undocumented)
-    get migrationState(): "collaborating" | "proposingMigration" | "stoppingCollaboration" | "proposingV2Code" | "waitingForV2ProposalCompletion" | "readyForMigration" | "migrated";
+    get migrationState(): "collaborating" | "migrated" | "proposingMigration" | "stoppingCollaboration" | "proposingV2Code" | "waitingForV2ProposalCompletion" | "readyForMigration";
     // (undocumented)
     get proposedVersion(): string | undefined;
     // (undocumented)
