@@ -24,7 +24,7 @@ import type {
 import type { IAudience } from "./audience";
 import type { IDeltaManager } from "./deltas";
 import type { ICriticalContainerError } from "./error";
-import type { ILoader, ILoaderOptions } from "./loader";
+import type { ILoader } from "./loader";
 import type { IFluidCodeDetails } from "./fluidPackage";
 
 /**
@@ -127,7 +127,14 @@ export interface IBatchMessage {
  * @alpha
  */
 export interface IContainerContext {
-	readonly options: ILoaderOptions;
+	/**
+	 * Not recommended for general use, is used in some cases to control various runtime behaviors.
+	 *
+	 * @remarks
+	 * Used to be ILoaderOptions, this is staging for eventual removal.
+	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	readonly options: Record<string | number, any>;
 	readonly clientId: string | undefined;
 	readonly clientDetails: IClientDetails;
 	readonly storage: IDocumentStorageService;

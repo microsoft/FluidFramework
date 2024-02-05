@@ -3,13 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	IRequest,
-	FluidObject,
-	IEvent,
-	IEventProvider,
-} from "@fluidframework/core-interfaces";
-import type {
+import { IRequest, FluidObject, IEvent, IEventProvider } from "@fluidframework/core-interfaces";
+import {
+	IClient,
 	IClientDetails,
 	IDocumentMessage,
 	IQuorumClients,
@@ -539,12 +535,11 @@ export interface IHostLoader extends ILoader {
 }
 
 /**
- * @public
+ * Options to configure various behaviors of the ILoader.
+ * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type ILoaderOptions = {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	[key in string | number]: any;
-} & {
 	/**
 	 * @deprecated This option has been deprecated and will be removed in a future release
 	 * Set caching behavior for the loader. If true, we will load a container from cache if one
@@ -555,6 +550,16 @@ export type ILoaderOptions = {
 	 * Defaults to false.
 	 */
 	cache?: boolean;
+
+	/**
+	 * @deprecated Do not use.
+	 */
+	client?: IClient;
+
+	/**
+	 * @deprecated Do not use.
+	 */
+	enableOfflineLoad?: boolean;
 
 	/**
 	 * Provide the current Loader through the scope object when creating Containers. It is added

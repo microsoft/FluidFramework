@@ -6535,6 +6535,12 @@ packages:
     resolution: {integrity: sha512-V50KMwwzqJV0NpZIZFwfOD5/lyny3WlSzRiXgA0G7VUnRlqttta1L6UQIHzd6EuBY/cHGfwTIck7w1yH6Q5zUw==}
     dev: true
 
+  file:../../common/build/eslint-config-fluid/src/fluid-internal:
+    resolution: {directory: ../../common/build/eslint-config-fluid/src/fluid-internal, type: directory}
+    name: eslint-plugin-fluid-internal
+    version: 0.1.0
+    dev: true
+
   file:../../common/build/eslint-config-fluid_bpztyfltmpuv6lhsgzfwtmxhte:
     resolution: {directory: ../../common/build/eslint-config-fluid, type: directory}
     id: file:../../common/build/eslint-config-fluid
@@ -6550,6 +6556,7 @@ packages:
       eslint-config-prettier: 9.0.0_eslint@8.55.0
       eslint-import-resolver-typescript: 3.6.1_tpu45zodljnzvckpnsmhtdqkmi
       eslint-plugin-eslint-comments: 3.2.0_eslint@8.55.0
+      eslint-plugin-fluid-internal: file:../../common/build/eslint-config-fluid/src/fluid-internal
       eslint-plugin-import: /eslint-plugin-i/2.29.0_j7h7oj6rrhtikhzta4fgkou42e
       eslint-plugin-jsdoc: 46.8.2_eslint@8.55.0
       eslint-plugin-promise: 6.1.1_eslint@8.55.0

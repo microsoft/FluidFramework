@@ -308,11 +308,10 @@ function getIntentionIfMetadataProvided(
  */
 export function normalizeCellRename<TNodeChange>(
 	mark: CellMark<AttachAndDetach, TNodeChange>,
-	nodeChange?: TNodeChange,
 ): CellMark<AttachAndDetach | DetachOfRemovedNodes, TNodeChange> {
 	assert(mark.cellId !== undefined, 0x823 /* AttachAndDetach marks should have a cell ID */);
 	if (mark.attach.type !== "Insert" || isNewAttachEffect(mark.attach, mark.cellId)) {
-		return withNodeChange(mark, nodeChange);
+		return mark;
 	}
 	// Normalization: when the attach is a revive, we rely on the implicit reviving semantics of the
 	// detach instead of using an explicit revive effect in an AttachAndDetach mark.
@@ -322,7 +321,7 @@ export function normalizeCellRename<TNodeChange>(
 			count: mark.count,
 			cellId: mark.cellId,
 		},
-		nodeChange ?? mark.changes,
+		mark.changes,
 	);
 }
 
@@ -1082,6 +1081,10 @@ export function withRevision<TMark extends Mark<unknown>>(
 	mark: TMark,
 	revision: RevisionTag | undefined,
 ): TMark {
+	if (revision === undefined) {
+		return mark;
+	}
+
 	const cloned = cloneMark(mark);
 	addRevision(cloned, revision);
 	if (
@@ -1094,11 +1097,7 @@ export function withRevision<TMark extends Mark<unknown>>(
 	return cloned;
 }
 
-export function addRevision(effect: MarkEffect, revision: RevisionTag | undefined): void {
-	if (revision === undefined) {
-		return;
-	}
-
+function addRevision(effect: MarkEffect, revision: RevisionTag): void {
 	if (effect.type === NoopMarkType) {
 		return;
 	}
