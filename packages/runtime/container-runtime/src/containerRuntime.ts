@@ -1693,7 +1693,7 @@ export class ContainerRuntime
 			groupedBatchingEnabled: this.groupedBatchingEnabled,
 		});
 
-		ReportOpPerfTelemetry(() => this.clientId, this.deltaManager, this.logger);
+		ReportOpPerfTelemetry(() => this.clientId, this.deltaManager, this.logger); // @note OpPerfTelemetry instatiation (original)
 		BindBatchTracker(this, this.logger);
 
 		this.entryPoint = new LazyPromise(async () => {

@@ -86,9 +86,28 @@ class OpPerfTelemetry {
 	private static readonly DELTA_LATENCY_SAMPLE_RATE = 100;
 	private readonly deltaLatencyLogger: ISampledTelemetryLogger;
 
+	/**
+	 * Create an intsance of OpPerfTelemetry which starts monitoring and generation of telemetry related to op performance.
+	 *
+	 * @param getClientId - Function that returns the clientId of the current container.
+	 * @param deltaManager - DeltaManager instance to monitor.
+	 * @param logger - Telemetry logger to write events to.
+	 */
 	public constructor(
-		private readonly clientIdGetter: () => string | undefined,
+		/**
+		 * Function that returns the clientId of the current container.
+		 *
+		 * @remarks It can return undefined if the container has not established a connection with the server.
+		 * If it has and then loses the connection, this could return the last known clientId.
+		 */
+		private readonly getClientId: () => string | undefined,
+		/**
+		 * DeltaManager instance to monitor.
+		 */
 		private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+		/**
+		 * Telemetry logger to write events to.
+		 */
 		logger: ITelemetryLoggerExt,
 	) {
 		this.logger = createChildLogger({ logger, namespace: "OpPerf" });
@@ -182,7 +201,7 @@ class OpPerfTelemetry {
 
 		this.deltaManager.inbound.on("push", (message: ISequencedDocumentMessage) => {
 			if (
-				this.clientIdGetter() === message.clientId &&
+				this.getClientId() === message.clientId &&
 				message.type === MessageType.Operation &&
 				(this.opLatencyLogger.isSamplingDisabled ||
 					this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber)
@@ -303,7 +322,7 @@ class OpPerfTelemetry {
 		}
 
 		if (
-			this.clientIdGetter() === message.clientId &&
+			this.getClientId() === message.clientId &&
 			(this.opLatencyLogger.isSamplingDisabled ||
 				this.clientSequenceNumberForLatencyStatistics === message.clientSequenceNumber)
 		) {
@@ -368,10 +387,17 @@ export interface IPerfSignalReport {
 	trackingSignalSequenceNumber: number | undefined;
 }
 
+/**
+ * Starts monitoring and generation of telemetry related to op performance.
+ *
+ * @param getClientId - Function that returns the clientId of the current container.
+ * @param deltaManager - DeltaManager instance to monitor.
+ * @param logger - Telemetry logger to write events to.
+ */
 export function ReportOpPerfTelemetry(
-	clientIdGetter: () => string | undefined,
+	getClientId: () => string | undefined,
 	deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 	logger: ITelemetryLoggerExt,
-) {
-	new OpPerfTelemetry(clientIdGetter, deltaManager, logger);
+): void {
+	new OpPerfTelemetry(getClientId, deltaManager, logger);
 }
