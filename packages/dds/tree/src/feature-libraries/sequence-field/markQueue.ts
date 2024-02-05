@@ -19,7 +19,6 @@ export class MarkQueue<T> {
 		private readonly list: readonly Mark<T>[],
 		public readonly revision: RevisionTag | undefined,
 		private readonly moveEffects: MoveEffectTable<T>,
-		private readonly consumeEffects: boolean,
 		private readonly genId: IdAllocator,
 
 		// TODO: This should probably be handled by ComposeQueue instead
@@ -51,7 +50,6 @@ export class MarkQueue<T> {
 				mark,
 				this.revision,
 				this.moveEffects,
-				this.consumeEffects,
 				this.composeChanges,
 			);
 

@@ -271,8 +271,8 @@ class RebaseQueue<T> {
 		genId: IdAllocator,
 		private readonly moveEffects: MoveEffectTable<T>,
 	) {
-		this.baseMarks = new MarkQueue(baseMarks, baseRevision, moveEffects, false, genId);
-		this.newMarks = new MarkQueue(newMarks, undefined, moveEffects, false, genId);
+		this.baseMarks = new MarkQueue(baseMarks, baseRevision, moveEffects, genId);
+		this.newMarks = new MarkQueue(newMarks, undefined, moveEffects, genId);
 		this.baseMarksCellSources = cellSourcesFromMarks(
 			baseMarks,
 			baseRevision,

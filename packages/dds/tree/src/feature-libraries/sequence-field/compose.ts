@@ -10,7 +10,7 @@ import {
 	RevisionTag,
 	TaggedChange,
 } from "../../core/index.js";
-import { brand, fail, fakeIdAllocator, IdAllocator } from "../../util/index.js";
+import { brand, fail, IdAllocator } from "../../util/index.js";
 import { CrossFieldManager, CrossFieldTarget } from "../modular-schema/index.js";
 import {
 	Changeset,
@@ -27,7 +27,6 @@ import { MarkQueue } from "./markQueue.js";
 import {
 	getMoveEffect,
 	setMoveEffect,
-	isMoveMark,
 	MoveEffectTable,
 	MoveEffect,
 	isMoveIn,
@@ -64,7 +63,7 @@ import {
 	compareCellPositionsUsingTombstones,
 	CellOrder,
 } from "./utils.js";
-import { EmptyInputCellMark, VestigialEndpoint } from "./helperTypes.js";
+import { EmptyInputCellMark } from "./helperTypes.js";
 import { CellOrderingMethod, sequenceConfig } from "./config.js";
 
 /**
@@ -233,18 +232,10 @@ function composeMarksIgnoreChild<TNodeChange>(
 
 			// baseMark is a detach which cancels with the attach portion of the AttachAndDetach,
 			// so we are just left with the detach portion of the AttachAndDetach.
-			const newDetach: CellMark<Detach, TNodeChange> & Partial<VestigialEndpoint> = {
+			const newDetach: CellMark<Detach, TNodeChange> = {
 				...newAttachAndDetach.detach,
 				count: baseMark.count,
 			};
-			// We may need to apply effects to the source location of the base MoveOut so we annotate the mark with
-			// information about that location.
-			if (isMoveOut(baseMark)) {
-				newDetach.vestigialEndpoint = {
-					revision: baseMark.revision,
-					localId: baseMark.id,
-				};
-			}
 			return newDetach;
 		}
 
@@ -390,20 +381,6 @@ function composeMarksIgnoreChild<TNodeChange>(
 			detach,
 		});
 	} else {
-		if (isMoveMark(baseMark) && isMoveMark(newMark)) {
-			// The marks must be inverses, since `newMark` is filling the cells which `baseMark` emptied.
-			// We return a noop that is annotated with information about the endpoint it used to be because there may
-			// be more node changes on `newMark`'s source mark which need to be included here.
-			// We will remove the the annotation during `amendCompose` or pruning.
-			const vestige: Mark<TNodeChange> & VestigialEndpoint = {
-				count: baseMark.count,
-				vestigialEndpoint: {
-					revision: baseMark.revision,
-					localId: baseMark.id,
-				},
-			};
-			return vestige;
-		}
 		const length = baseMark.count;
 		return createNoopMark(length, undefined);
 	}
@@ -466,38 +443,6 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
 	return withNodeChange(withRevision(mark, revision), nodeChanges);
 }
 
-export function amendCompose<TNodeChange>(
-	marks: MarkList<TNodeChange>,
-	composeChild: NodeChangeComposer<TNodeChange>,
-	genId: IdAllocator,
-	manager: CrossFieldManager,
-): MarkList<TNodeChange> {
-	return amendComposeI(marks, composeChild, manager as MoveEffectTable<TNodeChange>);
-}
-
-function amendComposeI<TNodeChange>(
-	marks: MarkList<TNodeChange>,
-	composeChild: NodeChangeComposer<TNodeChange>,
-	moveEffects: MoveEffectTable<TNodeChange>,
-): MarkList<TNodeChange> {
-	const factory = new MarkListFactory<TNodeChange>();
-	const queue = new MarkQueue(marks, undefined, moveEffects, true, fakeIdAllocator, (a, b) =>
-		composeChildChanges(a, b, composeChild),
-	);
-
-	while (!queue.isEmpty()) {
-		const mark = queue.dequeue() as Mark<TNodeChange> & Partial<VestigialEndpoint>;
-		if (mark.vestigialEndpoint !== undefined) {
-			// Any effects that target this endpoint should have been applied either during the first compose pass,
-			// or during the `MarkQueue`'s reading for this pass.
-			delete mark.vestigialEndpoint;
-		}
-		factory.push(mark);
-	}
-
-	return factory.list;
-}
-
 export class ComposeQueue<T> {
 	private readonly baseMarks: MarkQueue<T>;
 	private readonly newMarks: MarkQueue<T>;
@@ -514,22 +459,8 @@ export class ComposeQueue<T> {
 		private readonly revisionMetadata: RevisionMetadataSource,
 		composeChanges?: NodeChangeComposer<T>,
 	) {
-		this.baseMarks = new MarkQueue(
-			baseMarks,
-			baseRevision,
-			moveEffects,
-			true,
-			genId,
-			composeChanges,
-		);
-		this.newMarks = new MarkQueue(
-			newMarks,
-			newRevision,
-			moveEffects,
-			true,
-			genId,
-			composeChanges,
-		);
+		this.baseMarks = new MarkQueue(baseMarks, baseRevision, moveEffects, genId, composeChanges);
+		this.newMarks = new MarkQueue(newMarks, newRevision, moveEffects, genId, composeChanges);
 		this.baseMarksCellSources = cellSourcesFromMarks(
 			baseMarks,
 			baseRevision,
@@ -760,16 +691,8 @@ function setModifyAfter<T>(
 	const target = CrossFieldTarget.Source;
 	const count = 1;
 	const effect = getMoveEffect(moveEffects, target, revision, id, count, false);
-	let newEffect: MoveEffect<T>;
-	if (effect.value !== undefined) {
-		assert(
-			effect.value.modifyAfter === undefined,
-			"Unexpected move of multiple changesets for the same node",
-		);
-		newEffect = { ...effect.value, modifyAfter };
-	} else {
-		newEffect = { modifyAfter };
-	}
+	const newEffect: MoveEffect<T> =
+		effect.value !== undefined ? { ...effect.value, modifyAfter } : { modifyAfter };
 	setMoveEffect(moveEffects, target, revision, id, count, newEffect);
 }
 

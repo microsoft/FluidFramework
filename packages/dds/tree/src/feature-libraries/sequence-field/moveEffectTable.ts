@@ -15,7 +15,7 @@ import {
 	splitMark,
 	splitMarkEffect,
 } from "./utils.js";
-import { MoveMarkEffect, tryGetVestigialEndpoint } from "./helperTypes.js";
+import { MoveMarkEffect } from "./helperTypes.js";
 import { NodeChangeComposer } from "./compose.js";
 
 export type MoveEffectTable<T> = CrossFieldManager<MoveEffect<T>>;
@@ -150,16 +150,8 @@ function applyMoveEffectsToDest(
 	count: number,
 	revision: RevisionTag | undefined,
 	effects: MoveEffectTable<unknown>,
-	consumeEffects: boolean,
 ) {
-	updateEndpoint(
-		markEffect,
-		count,
-		CrossFieldTarget.Destination,
-		revision,
-		effects,
-		consumeEffects,
-	);
+	updateEndpoint(markEffect, count, CrossFieldTarget.Destination, revision, effects);
 }
 
 function applyMoveEffectsToSource<T>(
@@ -168,7 +160,6 @@ function applyMoveEffectsToSource<T>(
 	updateFinalEndpoint: boolean,
 	revision: RevisionTag | undefined,
 	effects: MoveEffectTable<T>,
-	consumeEffect: boolean,
 	composeChildren?: NodeChangeComposer<T>,
 ): Mark<T> {
 	let nodeChange = mark.changes;
@@ -177,7 +168,6 @@ function applyMoveEffectsToSource<T>(
 		endpoint.revision ?? revision,
 		endpoint.localId,
 		mark.count,
-		consumeEffect,
 	);
 	if (modifyAfter !== undefined) {
 		assert(
@@ -189,7 +179,7 @@ function applyMoveEffectsToSource<T>(
 
 	const newMark = cloneMark(mark);
 	if (updateFinalEndpoint && isMoveOut(newMark)) {
-		applySourceEffects(newMark, mark.count, revision, effects, consumeEffect);
+		applySourceEffects(newMark, mark.count, revision, effects);
 	}
 
 	if (nodeChange !== undefined) {
@@ -206,9 +196,8 @@ function applySourceEffects(
 	count: number,
 	revision: RevisionTag | undefined,
 	effects: MoveEffectTable<unknown>,
-	consumeEffects: boolean,
 ) {
-	updateEndpoint(markEffect, count, CrossFieldTarget.Source, revision, effects, consumeEffects);
+	updateEndpoint(markEffect, count, CrossFieldTarget.Source, revision, effects);
 }
 
 function updateEndpoint(
@@ -217,17 +206,9 @@ function updateEndpoint(
 	target: CrossFieldTarget,
 	revision: RevisionTag | undefined,
 	effects: MoveEffectTable<unknown>,
-	consumeEffects: boolean,
 ) {
 	const markRevision = markEffect.revision ?? revision;
-	const finalDest = getEndpoint(
-		effects,
-		target,
-		markRevision,
-		markEffect.id,
-		count,
-		consumeEffects,
-	);
+	const finalDest = getEndpoint(effects, target, markRevision, markEffect.id, count);
 
 	if (finalDest !== undefined) {
 		if (areEqualCellIds(finalDest, { revision: markRevision, localId: markEffect.id })) {
@@ -242,73 +223,15 @@ export function applyMoveEffectsToMark<T>(
 	mark: Mark<T>,
 	revision: RevisionTag | undefined,
 	effects: MoveEffectTable<T>,
-	consumeEffect: boolean,
 	composeChildren?: NodeChangeComposer<T>,
 ): Mark<T>[] {
-	return applyMoveEffectsToActiveMarks<T>(
-		applyMoveEffectsToVestigialMarks<T>(
-			[mark],
-			effects,
-			revision,
-			consumeEffect,
-			composeChildren,
-		),
-		revision,
-		effects,
-		consumeEffect,
-		composeChildren,
-	);
-}
-
-function applyMoveEffectsToVestigialMarks<T>(
-	inputQueue: Mark<T>[],
-	effects: MoveEffectTable<T>,
-	revision: RevisionTag | undefined,
-	consumeEffect: boolean,
-	composeChildren: NodeChangeComposer<T> | undefined,
-): Mark<T>[] {
-	const outputQueue: Mark<T>[] = [];
-	let mark = inputQueue.shift();
-	while (mark !== undefined) {
-		const vestige = tryGetVestigialEndpoint(mark);
-		if (vestige !== undefined) {
-			const effect = getMoveEffect(
-				effects,
-				CrossFieldTarget.Source,
-				vestige.revision ?? revision,
-				vestige.localId,
-				mark.count,
-			);
-			if (effect.length < mark.count) {
-				const [firstMark, secondMark] = splitMark(mark, effect.length);
-				mark = firstMark;
-				inputQueue.unshift(secondMark);
-			}
-
-			outputQueue.push(
-				applyMoveEffectsToSource(
-					mark,
-					vestige,
-					false,
-					revision,
-					effects,
-					consumeEffect,
-					composeChildren,
-				),
-			);
-		} else {
-			outputQueue.push(mark);
-		}
-		mark = inputQueue.shift();
-	}
-	return outputQueue;
+	return applyMoveEffectsToActiveMarks<T>([mark], revision, effects, composeChildren);
 }
 
 function applyMoveEffectsToActiveMarks<T>(
 	inputQueue: Mark<T>[],
 	revision: RevisionTag | undefined,
 	effects: MoveEffectTable<T>,
-	consumeEffect: boolean,
 	composeChildren: NodeChangeComposer<T> | undefined,
 ) {
 	const outputQueue: Mark<T>[] = [];
@@ -338,13 +261,7 @@ function applyMoveEffectsToActiveMarks<T>(
 					} else {
 						updatedAttach = { ...mark.attach };
 					}
-					applyMoveEffectsToDest(
-						updatedAttach,
-						mark.count,
-						attachRevision,
-						effects,
-						consumeEffect,
-					);
+					applyMoveEffectsToDest(updatedAttach, mark.count, attachRevision, effects);
 					outputQueue.push({
 						...mark,
 						attach: updatedAttach,
@@ -367,20 +284,13 @@ function applyMoveEffectsToActiveMarks<T>(
 				}
 
 				const newMark = cloneMark(mark);
-				applySourceEffects(
-					newMark.detach as MoveOut,
-					mark.count,
-					detachRevision,
-					effects,
-					consumeEffect,
-				);
+				applySourceEffects(newMark.detach as MoveOut, mark.count, detachRevision, effects);
 
 				const newChanges = getModifyAfter(
 					effects,
 					detachRevision,
 					mark.detach.id,
 					mark.count,
-					consumeEffect,
 				);
 
 				if (newChanges !== undefined) {
@@ -420,7 +330,6 @@ function applyMoveEffectsToActiveMarks<T>(
 							true,
 							revision,
 							effects,
-							consumeEffect,
 							composeChildren,
 						),
 					);
@@ -447,7 +356,6 @@ function applyMoveEffectsToActiveMarks<T>(
 						mark.count,
 						revision,
 						effects,
-						consumeEffect,
 					);
 					outputQueue.push(newMark);
 					break;
@@ -472,18 +380,12 @@ export function getModifyAfter<T>(
 	revision: RevisionTag | undefined,
 	id: MoveId,
 	count: number,
-	consumeEffect: boolean = true,
 ): T | undefined {
 	const target = CrossFieldTarget.Source;
 	const effect = getMoveEffect(moveEffects, target, revision, id, count);
 
 	if (effect.value?.modifyAfter !== undefined) {
 		assert(effect.length === count, 0x6ee /* Expected effect to cover entire mark */);
-		if (consumeEffect) {
-			const newEffect = { ...effect.value };
-			delete newEffect.modifyAfter;
-			setMoveEffect(moveEffects, target, revision, id, count, newEffect, false);
-		}
 		return effect.value.modifyAfter;
 	}
 
@@ -496,7 +398,6 @@ function getEndpoint(
 	revision: RevisionTag | undefined,
 	id: MoveId,
 	count: number,
-	consumeEffect: boolean = true,
 ): ChangeAtomId | undefined {
 	const effect = getMoveEffect(moveEffects, target, revision, id, count);
 	assert(effect.length === count, 0x815 /* Expected effect to cover entire mark */);
@@ -504,10 +405,5 @@ function getEndpoint(
 		return undefined;
 	}
 
-	if (consumeEffect) {
-		const newEffect = { ...effect.value };
-		delete newEffect.endpoint;
-		setMoveEffect(moveEffects, target, revision, id, count, newEffect, false);
-	}
 	return effect.value.endpoint;
 }
