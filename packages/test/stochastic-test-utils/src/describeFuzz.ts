@@ -124,14 +124,3 @@ export const describeFuzz: DescribeFuzz = createFuzzDescribe();
  * @internal
  */
 export const describeStress: DescribeStress = createFuzzDescribe();
-
-/**
- * Scenarios you'd like to support:
- * - Run more tests in stress pipeline
- * - Start tests at arbitrary seed (i.e. pick randomly, but record which seeds are being run)
- * - Run tests as part of GH checks rather than post-hoc in CI
- * - Have "short" / "long" variants?
- * - Minimize and upload JSON as a test artifact?
- * - Telemetry upload to test client to make alerts?
- *
- */
