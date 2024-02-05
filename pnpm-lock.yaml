@@ -4900,7 +4900,7 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      msgpackr: ^1.4.7
+      msgpackr: ^1.10.1
       pako: ^2.0.4
       prettier: ~3.0.3
       rimraf: ^4.4.0
@@ -4922,7 +4922,7 @@ importers:
       fastest-json-copy: 1.0.1
       lodash: 4.17.21
       lz4js: 0.2.0
-      msgpackr: 1.10.0
+      msgpackr: 1.10.1
       pako: 2.1.0
       uuid: 9.0.1
     devDependencies:
@@ -36432,8 +36432,8 @@ packages:
     dev: false
     optional: true
 
-  /msgpackr/1.10.0:
-    resolution: {integrity: sha512-rVQ5YAQDoZKZLX+h8tNq7FiHrPJoeGHViz3U4wIcykhAEpwF/nH2Vbk8dQxmpX5JavkI8C7pt4bnkJ02ZmRoUw==}
+  /msgpackr/1.10.1:
+    resolution: {integrity: sha512-r5VRLv9qouXuLiIBrLpl2d5ZvPt8svdQTl5/vMvE4nzDMyEX4sgW5yWhuBBj5UmgwOTWj8CIdSXn5sAfsHAWIQ==}
     optionalDependencies:
       msgpackr-extract: 3.0.2
     dev: false

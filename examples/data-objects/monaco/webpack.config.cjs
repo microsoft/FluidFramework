@@ -70,7 +70,7 @@ module.exports = (env) => {
 			},
 			resolve: {
 				extensionAlias: {
-					".js": [".ts", ".tsx", ".js"],
+					".js": [".ts", ".tsx", ".js", ".cjs", ".mjs"],
 				},
 				extensions: [".tsx", ".ts", ".js"],
 			},
