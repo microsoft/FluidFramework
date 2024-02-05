@@ -268,7 +268,6 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 
 	React.useEffect(() => {
 		setBrowserID(getOrCreateBrowserId());
-
 		setUUID(uuidv4());
 	}, []);
 
@@ -509,12 +508,6 @@ function Menu(props: MenuProps): React.ReactElement {
 	const usageLogger = useLogger();
 	const sessionID = useSessionId();
 	const browserID = useBrowserId();
-
-	console.log("/////BROWSER/////////");
-	console.log(browserID);
-	console.log("/////SESSION/////////");
-	console.log(sessionID);
-
 	const styles = useMenuStyles();
 
 	function onContainerClicked(containerKey: ContainerKey): void {
@@ -524,7 +517,7 @@ function Menu(props: MenuProps): React.ReactElement {
 			details: {
 				target: "Menu_Container",
 				sessionID,
-				browserID
+				browserID,
 			},
 		});
 	}
@@ -535,7 +528,7 @@ function Menu(props: MenuProps): React.ReactElement {
 			eventName: "Navigation",
 			details: { target: "Menu_Telemetry" },
 			sessionID,
-			browserID
+			browserID,
 		});
 	}
 
@@ -545,7 +538,7 @@ function Menu(props: MenuProps): React.ReactElement {
 			eventName: "Navigation",
 			details: { target: "Menu_Settings" },
 			sessionID,
-			browserID
+			browserID,
 		});
 	}
 
@@ -555,7 +548,7 @@ function Menu(props: MenuProps): React.ReactElement {
 			eventName: "Navigation",
 			details: { target: "Menu_Home" },
 			sessionID,
-			browserID
+			browserID,
 		});
 	}
 
@@ -565,7 +558,7 @@ function Menu(props: MenuProps): React.ReactElement {
 			eventName: "Navigation",
 			details: { target: "Menu_OpLatency" },
 			sessionID,
-			browserID
+			browserID,
 		});
 	}
 

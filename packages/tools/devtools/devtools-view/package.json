@@ -61,13 +61,10 @@
 		"@fluidframework/protocol-definitions": "^3.2.0-231454",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@types/uuid": "^9.0.2",
-		"install": "^0.13.0",
-		"npm": "^10.2.5",
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1",
 		"react-split-pane": "^0.1.92",
 		"recharts": "^2.7.2",
-		"scheduler": "^0.20.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
