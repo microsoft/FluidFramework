@@ -40,6 +40,7 @@ export class RedisFsManagerFactory implements IFileSystemManagerFactory {
 			enableRedisFsMetrics: (config.get("git:enableRedisFsMetrics") as boolean) ?? true,
 			redisApiMetricsSamplingPeriod:
 				(config.get("git:redisApiMetricsSamplingPeriod") as number) ?? 0,
+			enableOptimizedStat: (config.get("git:enableRedisFsOptimizedStat") as boolean) ?? false,
 		};
 		const redisConfig = config.get("redis");
 		this.redisOptions = {

@@ -5,7 +5,7 @@
 
 import { ITelemetryBaseLogger, IDisposable, FluidObject } from "@fluidframework/core-interfaces";
 
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { IDocumentStorageService, ISnapshot } from "@fluidframework/driver-definitions";
 import {
 	IClientDetails,
 	ISequencedDocumentMessage,
@@ -20,7 +20,7 @@ import {
 import { IAudience } from "./audience";
 import { IDeltaManager } from "./deltas";
 import { ICriticalContainerError } from "./error";
-import { ILoader, ILoaderOptions } from "./loader";
+import { ILoader } from "./loader";
 import { IFluidCodeDetails } from "./fluidPackage";
 
 /**
@@ -123,7 +123,14 @@ export interface IBatchMessage {
  * @alpha
  */
 export interface IContainerContext {
-	readonly options: ILoaderOptions;
+	/**
+	 * Not recommended for general use, is used in some cases to control various runtime behaviors.
+	 *
+	 * @remarks
+	 * Used to be ILoaderOptions, this is staging for eventual removal.
+	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	readonly options: Record<string | number, any>;
 	readonly clientId: string | undefined;
 	readonly clientDetails: IClientDetails;
 	readonly storage: IDocumentStorageService;
@@ -198,6 +205,11 @@ export interface IContainerContext {
 	 * @privateremarks Tracking in AB#5714
 	 */
 	readonly id: string;
+
+	/**
+	 * This contains all parts of a snapshot like blobContents, ops etc.
+	 */
+	readonly snapshotWithContents?: ISnapshot;
 }
 
 /**

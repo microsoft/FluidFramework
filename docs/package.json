@@ -45,7 +45,6 @@
 		"@vscode/codicons": "0.0.33",
 		"chalk": "^4.1.2",
 		"concurrently": "^8.2.1",
-		"cpy": "^8.1.2",
 		"deepdash": "^5.3.9",
 		"download": "8.0.0",
 		"fs-extra": "^11.1.1",

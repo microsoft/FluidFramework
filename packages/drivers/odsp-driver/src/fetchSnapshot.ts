@@ -13,6 +13,7 @@ import {
 import { fromUtf8ToBase64 } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import { getW3CData } from "@fluidframework/driver-base";
+import { ISnapshot } from "@fluidframework/driver-definitions";
 import {
 	IOdspResolvedUrl,
 	ISnapshotOptions,
@@ -25,10 +26,13 @@ import {
 	isRuntimeMessage,
 	NonRetryableError,
 } from "@fluidframework/driver-utils";
-import { fetchIncorrectResponse, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
+import {
+	fetchIncorrectResponse,
+	throwOdspNetworkError,
+} from "@fluidframework/odsp-doclib-utils/internal";
 import {
 	IOdspSnapshot,
-	ISnapshotCachedEntry,
+	ISnapshotCachedEntry2,
 	IVersionedValueWithEpoch,
 	persistedCacheValueVersion,
 } from "./contracts";
@@ -43,7 +47,6 @@ import {
 	measure,
 	measureP,
 } from "./odspUtils";
-import { ISnapshotContents } from "./odspPublicUtils";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "./odspSnapshotParser";
 import {
 	currentReadVersion,
@@ -85,7 +88,7 @@ export async function fetchSnapshot(
 		url: string,
 		fetchOptions: { [index: string]: any },
 	) => Promise<IOdspResponse<unknown>>,
-): Promise<ISnapshotContents> {
+): Promise<ISnapshot> {
 	const path = `/trees/${versionId}`;
 	let queryParams: ISnapshotOptions = {};
 
@@ -125,7 +128,7 @@ export async function fetchSnapshotWithRedeem(
 	putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
 	removeEntries: () => Promise<void>,
 	enableRedeemFallback?: boolean,
-): Promise<ISnapshotContents> {
+): Promise<ISnapshot> {
 	// back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
 	const sharingLinkToRedeem = (odspResolvedUrl as any).sharingLinkToRedeem;
 	if (sharingLinkToRedeem) {
@@ -248,7 +251,7 @@ async function fetchLatestSnapshotCore(
 	) => Promise<ISnapshotRequestAndResponseOptions>,
 	putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
 	enableRedeemFallback?: boolean,
-): Promise<ISnapshotContents> {
+): Promise<ISnapshot> {
 	return getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
 		const storageToken = await storageTokenFetcher(tokenFetchOptions, "TreesLatest", true);
 		assert(storageToken !== null, 0x1e5 /* "Storage token should not be null" */);
@@ -327,7 +330,7 @@ async function fetchLatestSnapshotCore(
 						let content: IOdspSnapshot;
 						[content, parseTime] = measure(() => JSON.parse(text) as IOdspSnapshot);
 						validateBlobsAndTrees(content);
-						const snapshotContents: ISnapshotContents =
+						const snapshotContents: ISnapshot =
 							convertOdspSnapshotToSnapshotTreeAndBlobs(content);
 						parsedSnapshotContents = {
 							...odspResponse,
@@ -436,7 +439,7 @@ async function fetchLatestSnapshotCore(
 					fluidEpoch !== undefined,
 					0x1e6 /* "Epoch  should be present in response" */,
 				);
-				const value: ISnapshotCachedEntry = {
+				const value: ISnapshotCachedEntry2 = {
 					...snapshot,
 					cacheEntryTime: Date.now(),
 				};
@@ -451,7 +454,7 @@ async function fetchLatestSnapshotCore(
 
 			event.end({
 				trees,
-				blobs: snapshot.blobs?.size ?? 0,
+				blobs: snapshot.blobContents?.size ?? 0,
 				leafNodes: numBlobs,
 				encodedBlobsSize,
 				sequenceNumber,
@@ -535,11 +538,11 @@ function getFormBodyAndHeaders(
 	return { body: postBody, headers: header };
 }
 
-export function evalBlobsAndTrees(snapshot: ISnapshotContents) {
+export function evalBlobsAndTrees(snapshot: ISnapshot) {
 	const trees = countTreesInSnapshotTree(snapshot.snapshotTree);
-	const numBlobs = snapshot.blobs.size;
+	const numBlobs = snapshot.blobContents.size;
 	let encodedBlobsSize = 0;
-	for (const [_, blobContent] of snapshot.blobs) {
+	for (const [_, blobContent] of snapshot.blobContents) {
 		encodedBlobsSize += blobContent.byteLength;
 	}
 	return { trees, numBlobs, encodedBlobsSize };

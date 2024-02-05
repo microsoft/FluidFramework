@@ -33,12 +33,17 @@ import {
 import { LoaderHeader } from "@fluidframework/container-definitions";
 import { type IContainerExperimental } from "@fluidframework/container-loader";
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { type ConfigTypes, type IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { type IChannel } from "@fluidframework/datastore-definitions";
 import {
 	createSummarizerFromFactory,
 	summarizeNow,
 	type ITestObjectProvider,
 } from "@fluidframework/test-utils";
+
+const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+	getRawConfig: (name: string): ConfigTypes => settings[name],
+});
 
 const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
 
@@ -121,7 +126,7 @@ function getNewTreeView(tree: ITree) {
 	return tree.schematize(new TreeConfiguration(QuantityType, () => ({ quantity: 0 })));
 }
 
-describeCompat("Stamped v2 ops", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {
@@ -196,7 +201,9 @@ describeCompat("Stamped v2 ops", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 
 	const loaderProps = {
-		options: { enableOfflineLoad: true },
+		configProvider: configProvider({
+			"Fluid.Container.enableOfflineLoad": true,
+		}),
 	};
 
 	beforeEach("setup", async () => {

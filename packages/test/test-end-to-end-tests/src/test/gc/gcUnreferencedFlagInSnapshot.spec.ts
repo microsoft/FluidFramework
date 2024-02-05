@@ -30,7 +30,7 @@ import { defaultGCConfig } from "./gcTestConfigs.js";
  */
 describeCompat(
 	"GC unreferenced flag in downloaded snapshot",
-	"2.0.0-rc.1.0.0",
+	"NoCompat",
 	(getTestObjectProvider) => {
 		let provider: ITestObjectProvider;
 		let mainContainer: IContainer;
