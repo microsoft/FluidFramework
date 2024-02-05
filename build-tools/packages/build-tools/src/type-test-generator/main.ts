@@ -3,13 +3,35 @@
  * Licensed under the MIT License.
  */
 
-import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { readJsonSync } from "fs-extra";
+import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { Project, SourceFile } from "ts-morph";
 import { typeOnly } from "./compatibility";
-import { getTypeRollupPathFromExtractorConfig, checkExportsAndTypes, typeDataFromFile, generateCompatibilityTestCases, prepareAndSkipTestGenerationIfDisabled} from "./typeTestUtils";
+import {
+	ensureDevDependencyExists,
+	getTypeRollupPathFromExtractorConfig,
+	getTypeDefinitionFilePath,
+	typeDataFromFile,
+	generateCompatibilityTestCases,
+	prepareAndSkipTestGenerationIfDisabled,
+	initializeProjectsAndLoadFiles,
+} from "./typeTestUtils";
+import { PackageJson } from "../common/npmPackage";
 
-const typeRollupPaths = getTypeRollupPathFromExtractorConfig("alpha");
+// Do not check that file exists before opening:
+// Doing so is a time of use vs time of check issue so opening the file could fail anyway.
+// Do not catch error from opening file since the default behavior is fine (exits process with error showing useful message)
+const packageObject: PackageJson = readJsonSync("package.json");
+const previousPackageName = `${packageObject.name}-previous`;
+const previousBasePath = path.join("node_modules", previousPackageName);
+
+try {
+	ensureDevDependencyExists(packageObject, previousPackageName);
+} catch (error) {
+	console.error(error);
+}
+
+const typeRollupPaths = getTypeRollupPathFromExtractorConfig("alpha", previousBasePath);
 
 let typeDefinitionFilePath: string;
 
@@ -17,32 +39,16 @@ let typeDefinitionFilePath: string;
 if (typeRollupPaths) {
 	typeDefinitionFilePath = typeRollupPaths;
 } else {
-	typeDefinitionFilePath = checkExportsAndTypes()
+	typeDefinitionFilePath = getTypeDefinitionFilePath(previousBasePath);
 }
 
-prepareAndSkipTestGenerationIfDisabled();
+const filePath = prepareAndSkipTestGenerationIfDisabled(packageObject);
 
-const currentFile = new Project({
-	skipFileDependencyResolution: true,
-	tsConfigFilePath: "tsconfig.json",
-}).getSourceFileOrThrow("index.ts");
-
-const previousTsConfigPath = `${previousBasePath}/tsconfig.json`;
-let previousFile: SourceFile;
-const project = new Project({
-	skipFileDependencyResolution: true,
-	tsConfigFilePath: existsSync(previousTsConfigPath) ? previousTsConfigPath : undefined,
-});
-// Check for existence of alpha and add appropriate file
-if (existsSync(typeDefinitionFilePath)) {
-	project.addSourceFilesAtPaths(typeDefinitionFilePath);
-	previousFile = project.getSourceFileOrThrow(`${previousPackageName}-alpha.d.ts`);
-	// Fall back to using .d.ts
-} else {
-	project.addSourceFilesAtPaths(`${previousBasePath}/dist/**/*.d.ts`);
-	previousFile = project.getSourceFileOrThrow("index.d.ts");
-}
-
+const { currentFile, previousFile } = initializeProjectsAndLoadFiles(
+	typeDefinitionFilePath,
+	previousBasePath,
+	previousPackageName,
+);
 const currentTypeMap = typeDataFromFile(currentFile);
 const previousData = [...typeDataFromFile(previousFile).values()];
 
@@ -67,7 +73,12 @@ import type * as current from "../../index";
 	typeOnly,
 ];
 
-const testCases = generateCompatibilityTestCases(testString, previousData, currentTypeMap);
+const testCases = generateCompatibilityTestCases(
+	previousData,
+	currentTypeMap,
+	packageObject,
+	testString,
+);
 
 mkdirSync("./src/test/types", { recursive: true });
 
