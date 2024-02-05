@@ -3,8 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, FluidObject, IEvent, IEventProvider } from "@fluidframework/core-interfaces";
-import {
+import type {
+	IRequest,
+	FluidObject,
+	IEvent,
+	IEventProvider,
+} from "@fluidframework/core-interfaces";
+import type {
 	IClient,
 	IClientDetails,
 	IDocumentMessage,
