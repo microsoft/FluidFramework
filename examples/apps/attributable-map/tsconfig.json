@@ -5,6 +5,7 @@
 	],
 	"include": ["src/**/*"],
 	"compilerOptions": {
+		"rootDir": "./src",
 		"outDir": "lib",
 		"types": ["jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer"],
 	},

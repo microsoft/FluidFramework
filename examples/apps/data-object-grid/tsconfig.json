@@ -5,8 +5,9 @@
 	],
 	"include": ["src/**/*"],
 	"compilerOptions": {
-		"target": "es6",
+		"rootDir": "./src",
 		"outDir": "lib",
+		"target": "es6",
 		"types": [
 			"jest",
 			"puppeteer",
