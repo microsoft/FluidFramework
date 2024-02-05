@@ -1,5 +1,8 @@
 {
-	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"extends": [
+		"../../../../common/build/build-common/tsconfig.base.json",
+		"../../../../common/build/build-common/tsconfig.esm-only.json",
+	],
 	"exclude": ["dist", "node_modules"],
 	"compilerOptions": {
 		"module": "esnext",
@@ -14,6 +17,7 @@
 			"jest-environment-puppeteer",
 			"expect-puppeteer",
 		],
+		"rootDir": "./src",
 	},
 	"include": ["src/**/*"],
 }

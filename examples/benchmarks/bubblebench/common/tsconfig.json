@@ -1,5 +1,8 @@
 {
-	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"extends": [
+		"../../../../common/build/build-common/tsconfig.base.json",
+		"../../../../common/build/build-common/tsconfig.esm-only.json",
+	],
 	"exclude": ["dist", "node_modules"],
 	"compilerOptions": {
 		"module": "esnext",
@@ -7,6 +10,7 @@
 		"outDir": "dist",
 		"jsx": "react",
 		"types": ["mocha", "react", "react-dom"],
+		"rootDir": "./src",
 	},
 	"include": ["src/**/*"],
 }

@@ -15,7 +15,7 @@ import {
 	IContainerCreateProps,
 	IContainerLoadProps,
 	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/container-loader/dist/container";
+} from "@fluidframework/container-loader/test/container";
 import { waitForContainerConnection } from "./containerUtils";
 import { debug } from "./debug";
 import { IOpProcessingController } from "./testObjectProvider";

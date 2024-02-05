@@ -1,10 +1,14 @@
 {
-	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"extends": [
+		"../../../../common/build/build-common/tsconfig.base.json",
+		"../../../../common/build/build-common/tsconfig.esm-only.json",
+	],
 	"compilerOptions": {
 		"module": "esnext",
 		"outDir": "lib",
 		"jsx": "react",
 		"types": ["react", "react-dom"],
+		"rootDir": "./src",
 	},
 	"include": ["src/**/*", "tests/**/*"],
 }
