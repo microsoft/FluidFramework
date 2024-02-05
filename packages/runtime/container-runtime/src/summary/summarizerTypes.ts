@@ -141,6 +141,8 @@ export interface ISubmitSummaryOptions extends ISummarizeOptions {
 	readonly cancellationToken: ISummaryCancellationToken;
 	/** Summarization may be attempted multiple times. This tells whether this is the final summarization attempt. */
 	readonly finalAttempt?: boolean;
+	/** The sequence number of the latest summary used to validate if summary state is correct before summarizing */
+	readonly latestSummaryRefSeqNum: number;
 }
 
 /**

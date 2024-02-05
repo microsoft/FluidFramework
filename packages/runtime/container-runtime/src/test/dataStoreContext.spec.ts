@@ -113,7 +113,7 @@ describe("Data Store Context Tests", () => {
 				0,
 				0,
 			);
-			summarizerNode.startSummary(0, createChildLogger());
+			summarizerNode.startSummary(0, createChildLogger(), 0);
 
 			createSummarizerNodeFn = (
 				summarizeInternal: SummarizeInternalFn,
@@ -612,7 +612,7 @@ describe("Data Store Context Tests", () => {
 					0,
 					0,
 				);
-				summarizerNode.startSummary(0, createChildLogger());
+				summarizerNode.startSummary(0, createChildLogger(), 0);
 
 				createSummarizerNodeFn = (
 					summarizeInternal: SummarizeInternalFn,
@@ -760,7 +760,7 @@ describe("Data Store Context Tests", () => {
 					undefined,
 					getRootBaseGCDetails,
 				);
-				summarizerNode.startSummary(0, createChildLogger());
+				summarizerNode.startSummary(0, createChildLogger(), 0);
 
 				createSummarizerNodeFn = (
 					summarizeInternal: SummarizeInternalFn,
@@ -1072,7 +1072,7 @@ describe("Data Store Context Tests", () => {
 				0,
 				0,
 			);
-			summarizerNode.startSummary(0, createChildLogger());
+			summarizerNode.startSummary(0, createChildLogger(), 0);
 
 			createSummarizerNodeFn = (
 				summarizeInternal: SummarizeInternalFn,

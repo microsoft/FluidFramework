@@ -38,6 +38,7 @@ describeCompat("GC loading from older summaries", "NoCompat", (getTestObjectProv
 
 	const configProvider = createTestConfigProvider();
 	configProvider.set("Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs", 10);
+	configProvider.set("Fluid.ContainerRuntime.SubmitSummary.shouldValidatePreSummaryState", false);
 	const testConfig: ITestContainerConfig = {
 		...defaultGCConfig,
 		loaderProps: { configProvider },
@@ -98,7 +99,10 @@ describeCompat("GC loading from older summaries", "NoCompat", (getTestObjectProv
 
 	itExpects(
 		"disposes the summarizer when loading from an older summary",
-		[{ eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed" }],
+		[
+			{ eventName: "fluid:telemetry:Summarizer:Running:LatestSummaryRefSeqNumMismatch" },
+			{ eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed" },
+		],
 		async () => {
 			const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer);
 

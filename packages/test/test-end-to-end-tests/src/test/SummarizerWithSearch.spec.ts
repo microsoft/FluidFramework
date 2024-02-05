@@ -110,6 +110,7 @@ async function submitAndAckSummary(
 	provider: ITestObjectProvider,
 	summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection },
 	logger: ITelemetryLoggerExt,
+	latestSummaryRefSeqNum: number,
 	fullTree: boolean = false,
 	cancellationToken = neverCancelledSummaryToken,
 ) {
@@ -122,6 +123,7 @@ async function submitAndAckSummary(
 		refreshLatestAck: false,
 		summaryLogger: logger,
 		cancellationToken,
+		latestSummaryRefSeqNum,
 	});
 	assert(result.stage === "submit", "The summary was not submitted");
 	// Wait for the above summary to be ack'd.
@@ -321,10 +323,13 @@ describeCompat(
 			containerRuntime: ContainerRuntime;
 			summaryCollection: SummaryCollection;
 		}): Promise<string> {
+			const latestSummaryRefSeqNum =
+				latestAckedSummary?.summaryOp.referenceSequenceNumber ?? 0;
 			const summaryResult = await submitAndAckSummary(
 				provider,
 				summarizerClient,
 				logger,
+				latestSummaryRefSeqNum,
 				false, // fullTree
 			);
 			latestAckedSummary = summaryResult.ackedSummary;
@@ -380,6 +385,7 @@ describeCompat(
 					refreshLatestAck: false,
 					summaryLogger: logger,
 					cancellationToken: neverCancelledSummaryToken,
+					latestSummaryRefSeqNum: 0,
 				});
 				assert(result.stage === "submit", "The summary was not submitted");
 				await waitForSummaryOp(summarizerClient.containerRuntime);
@@ -416,11 +422,14 @@ describeCompat(
 					summarizerClient2.containerRuntime.deltaManager.lastSequenceNumber;
 
 				// Submit a summary
+				const latestSummaryRefSeqNum =
+					latestAckedSummary?.summaryOp.referenceSequenceNumber ?? 0;
 				const result = await summarizerClient2.containerRuntime.submitSummary({
 					fullTree: false,
 					refreshLatestAck: false,
 					summaryLogger: logger,
 					cancellationToken: neverCancelledSummaryToken,
+					latestSummaryRefSeqNum,
 				});
 				assert(result.stage === "submit", "The summary was not submitted");
 
@@ -475,6 +484,7 @@ describeCompat(
 					refreshLatestAck: false,
 					summaryLogger: logger,
 					cancellationToken: neverCancelledSummaryToken,
+					latestSummaryRefSeqNum: summary1.summaryRefSeq,
 				});
 				assert(result.stage === "submit", "The summary was not submitted");
 				await waitForSummaryOp(summarizer2.containerRuntime);

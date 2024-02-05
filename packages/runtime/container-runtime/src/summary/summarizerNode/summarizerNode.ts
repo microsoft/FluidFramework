@@ -33,6 +33,7 @@ import {
 	EscapedPath,
 	ICreateChildDetails,
 	IRefreshSummaryResult,
+	IStartSummaryResult,
 	ISummarizerNodeRootContract,
 	parseSummaryForSubtrees,
 	SummaryNode,
@@ -96,7 +97,11 @@ export class SummarizerNode implements IRootSummarizerNode {
 		});
 	}
 
-	public startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryBaseLogger) {
+	public startSummary(
+		referenceSequenceNumber: number,
+		summaryLogger: ITelemetryBaseLogger,
+		latestSummaryRefSeqNum: number,
+	): IStartSummaryResult {
 		assert(
 			this.wipSummaryLogger === undefined,
 			0x19f /* "wipSummaryLogger should not be set yet in startSummary" */,
@@ -106,12 +111,41 @@ export class SummarizerNode implements IRootSummarizerNode {
 			0x1a0 /* "Already tracking a summary" */,
 		);
 
+		let nodes = 1;
+		let invalidNodes = 0;
+		const sequenceNumberMismatchKeySet = new Set<string>();
+
+		const nodeLatestSummaryRefSeqNum = this._latestSummary?.referenceSequenceNumber;
+		if (
+			nodeLatestSummaryRefSeqNum !== undefined &&
+			latestSummaryRefSeqNum !== nodeLatestSummaryRefSeqNum
+		) {
+			invalidNodes++;
+			sequenceNumberMismatchKeySet.add(
+				`${latestSummaryRefSeqNum}-${nodeLatestSummaryRefSeqNum}`,
+			);
+		}
+
 		this.wipSummaryLogger = summaryLogger;
 
 		for (const child of this.children.values()) {
-			child.startSummary(referenceSequenceNumber, this.wipSummaryLogger);
+			const childStartSummaryResult = child.startSummary(
+				referenceSequenceNumber,
+				this.wipSummaryLogger,
+				latestSummaryRefSeqNum,
+			);
+			nodes += childStartSummaryResult.nodes;
+			invalidNodes += childStartSummaryResult.invalidNodes;
+			for (const invalidSequenceNumber of childStartSummaryResult.mismatchNumbers) {
+				sequenceNumberMismatchKeySet.add(invalidSequenceNumber);
+			}
 		}
 		this.wipReferenceSequenceNumber = referenceSequenceNumber;
+		return {
+			nodes,
+			invalidNodes,
+			mismatchNumbers: Array.from(sequenceNumberMismatchKeySet),
+		};
 	}
 
 	public async summarize(
