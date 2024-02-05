@@ -55,7 +55,7 @@ export function getUrlResolver(
 					"",
 					options.discoveryEndpoint,
 					"https://dummy-historian",
-					"", //deltaStreamUrl
+					"", // deltaStreamUrl
 					options.tenantId,
 					options.bearerSecret ?? "",
 				);
@@ -76,7 +76,7 @@ export function getUrlResolver(
 				urls.hostUrl,
 				urls.ordererUrl,
 				urls.storageUrl,
-				ursl.deltaStreamUrl,
+				urls.deltaStreamUrl,
 				"tinylicious",
 				options.bearerSecret ?? "",
 			);
