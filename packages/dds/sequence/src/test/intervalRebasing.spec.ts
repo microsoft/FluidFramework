@@ -340,6 +340,30 @@ describe("interval rebasing", () => {
 		clients[1].containerRuntime.connected = true;
 	});
 
+	it("zamboni avoids modifying segments with pending interval changes through multiple reconnects", async () => {
+		// Note: the specifics of the attach flow shouldn't be necessary here to reproduce this issue.
+		// All that's necessary is that the "R" segment is zamboni'd.
+		// However, due to zamboni's fragility, some care needs to be taken for that to happen.
+		// See AB#7048 for more details.
+		const A = constructClient(containerRuntimeFactory, "A");
+		A.sharedString.insertText(0, "Rr");
+		A.sharedString.connect(A.services);
+		const B = await loadClient(containerRuntimeFactory, A, "B");
+		B.sharedString.removeRange(0, 1);
+		const collection = A.sharedString.getIntervalCollection("comments");
+		collection.add({ start: { pos: 1, side: Side.After }, end: { pos: 0, side: Side.Before } });
+		A.containerRuntime.connected = false;
+		containerRuntimeFactory.processAllMessages();
+		B.sharedString.insertText(0, "8");
+		A.containerRuntime.connected = true;
+		A.containerRuntime.connected = false;
+		B.sharedString.insertText(0, "J");
+		containerRuntimeFactory.processAllMessages();
+		A.containerRuntime.connected = true;
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent([A, B]);
+	});
+
 	// Reproduction of seed 70. Appears to be some problem with normalization of segments interacting
 	// with sliding logic on reconnect. The ordering of the 22222 and 11 segments is not consistent
 	// across clients even when in the collab window, and the local reference gets put on this segment.

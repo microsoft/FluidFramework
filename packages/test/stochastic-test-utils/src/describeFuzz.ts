@@ -5,11 +5,16 @@
 
 import process from "process";
 
-function createFuzzSuite(
-	tests: (this: Mocha.Suite, args: FuzzSuiteArguments) => void,
-	args: FuzzSuiteArguments,
+function createSuite<TArgs extends StressSuiteArguments>(
+	tests: (this: Mocha.Suite, args: TArgs) => void,
+	args: TArgs,
 ) {
 	return function (this: Mocha.Suite) {
+		if (args.isStress) {
+			// Stress runs may have tests which are expected to take longer amounts of time.
+			// Don't override the timeout if it's already set to a higher value, though.
+			this.timeout(Math.max(10_000, this.timeout()));
+		}
 		tests.bind(this)(args);
 	};
 }
@@ -17,15 +22,20 @@ function createFuzzSuite(
 /**
  * @internal
  */
-export type DescribeFuzzSuite = (
-	name: string,
-	tests: (this: Mocha.Suite, args: FuzzSuiteArguments) => void,
-) => Mocha.Suite | void;
+export interface StressSuiteArguments {
+	/**
+	 * Whether the current run is a stress run, which generally runs longer or more programatically generated tests.
+	 *
+	 * Packages which use this should generally have a `test:stress` script in their package.json for conveniently running
+	 * the equivalent checks locally.
+	 */
+	isStress: boolean;
+}
 
 /**
  * @internal
  */
-export interface FuzzSuiteArguments {
+export interface FuzzSuiteArguments extends StressSuiteArguments {
 	/**
 	 * The number of tests this suite should produce up to a constant factor.
 	 * It's up to the suite author to decide which parameters to vary in order to scale up the number of tests.
@@ -34,16 +44,32 @@ export interface FuzzSuiteArguments {
 	 * `4 * testCount` tests) is fine.
 	 */
 	testCount: number;
-	/**
-	 * Whether the current run is a stress run.
-	 */
-	isStress: boolean;
 }
 
 /**
  * @internal
  */
-export type DescribeFuzz = DescribeFuzzSuite & Record<"skip" | "only", DescribeFuzzSuite>;
+export type CreateMochaSuite<TArgs> = (
+	name: string,
+	createTests: (this: Mocha.Suite, args: TArgs) => void,
+) => Mocha.Suite | void;
+
+/**
+ * A mocha-like test suite which is also provided some context to its test creation callback.
+ * @internal
+ */
+export type MochaSuiteWithArguments<TArgs> = CreateMochaSuite<TArgs> &
+	Record<"skip" | "only", CreateMochaSuite<TArgs>>;
+
+/**
+ * @internal
+ */
+export type DescribeStress = MochaSuiteWithArguments<StressSuiteArguments>;
+
+/**
+ * @internal
+ */
+export type DescribeFuzz = MochaSuiteWithArguments<FuzzSuiteArguments>;
 
 /**
  * @internal
@@ -72,9 +98,9 @@ export function createFuzzDescribe(optionsArg?: FuzzDescribeOptions): DescribeFu
 	const isStress = process.env?.FUZZ_STRESS_RUN !== undefined && !!process.env?.FUZZ_STRESS_RUN;
 	const args = { testCount, isStress };
 	const d: DescribeFuzz = (name, tests) =>
-		(isStress ? describe.only : describe)(name, createFuzzSuite(tests, args));
-	d.skip = (name, tests) => describe.skip(name, createFuzzSuite(tests, args));
-	d.only = (name, tests) => describe.only(name, createFuzzSuite(tests, args));
+		(isStress ? describe.only : describe)(name, createSuite(tests, args));
+	d.skip = (name, tests) => describe.skip(name, createSuite(tests, args));
+	d.only = (name, tests) => describe.only(name, createSuite(tests, args));
 	return d;
 }
 
@@ -86,3 +112,15 @@ export function createFuzzDescribe(optionsArg?: FuzzDescribeOptions): DescribeFu
  * @internal
  */
 export const describeFuzz: DescribeFuzz = createFuzzDescribe();
+
+/**
+ * Like `Mocha.describe`, but enables detection of whether the current run is a stress run.
+ * The test creation callback receives an `isStress` parameter which it should use to support
+ * this functionality as it deems fit.
+ *
+ * @privateRemarks - Reusing `createFuzzDescribe` here means tests will also receive a testCount parameter,
+ * but since the typing doesn't include that information it shouldn't be used.
+ *
+ * @internal
+ */
+export const describeStress: DescribeStress = createFuzzDescribe();

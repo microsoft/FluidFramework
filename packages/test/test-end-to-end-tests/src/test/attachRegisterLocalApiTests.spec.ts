@@ -24,7 +24,7 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 // REVIEW: enable compat testing?
 describeCompat(
 	`Attach/Reference Api Tests For Attached Container`,
-	"2.0.0-internal.8.0.0",
+	"NoCompat" /* 2.0.0-internal.8.0.0 */,
 	(getTestObjectProvider, apis) => {
 		const { SharedMap } = apis.dds;
 		const codeDetails: IFluidCodeDetails = {
