@@ -12,7 +12,7 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
-  "type": "commonjs",
+	"type": "commonjs",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {

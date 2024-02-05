@@ -3,7 +3,7 @@
 		"../../../common/build/build-common/tsconfig.base.json",
 		"../../../common/build/build-common/tsconfig.esm-only.json",
 	],
-  "include": ["src/**/*"],
+	"include": ["src/**/*"],
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "lib",

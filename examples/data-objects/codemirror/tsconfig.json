@@ -5,8 +5,8 @@
 	],
 	"include": ["src/**/*"],
 	"compilerOptions": {
-    "rootDir": "./src",
-    "outDir": "lib",
+		"rootDir": "./src",
+		"outDir": "lib",
 		"target": "es6",
 		"types": ["node", "react"],
 	},
