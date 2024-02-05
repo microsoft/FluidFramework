@@ -165,7 +165,7 @@ export class ReplayFileDeltaConnection extends TypedEventEmitter<IDocumentDeltaC
     // (undocumented)
     submit(documentMessages: IDocumentMessage[]): void;
     // (undocumented)
-    submitSignal(message: any): Promise<void>;
+    submitSignal(message: unknown): Promise<void>;
     // (undocumented)
     get version(): string;
 }

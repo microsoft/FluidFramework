@@ -138,7 +138,7 @@ class NoDeltaStream
 			}),
 		);
 	}
-	submitSignal(message: any): void {
+	submitSignal(message: unknown): void {
 		this.emit("nack", this.clientId, {
 			operation: message,
 			content: { message: "Cannot submit signal with storage-only connection", code: 403 },
@@ -1065,7 +1065,7 @@ export class ConnectionManager implements IConnectionManager {
 		};
 	}
 
-	public submitSignal(content: any, targetClientId?: string) {
+	public submitSignal(content: unknown, targetClientId?: string) {
 		if (this.connection !== undefined) {
 			this.connection.submitSignal(content, targetClientId);
 		} else {

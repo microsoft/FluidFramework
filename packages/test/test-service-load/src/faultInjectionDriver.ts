@@ -240,7 +240,7 @@ export class FaultInjectionDocumentDeltaConnection
 	/**
 	 * Submit a new signal to the server
 	 */
-	submitSignal(message: any): void {
+	submitSignal(message: unknown): void {
 		if (this.online) {
 			this.internal.submitSignal(message);
 		}
