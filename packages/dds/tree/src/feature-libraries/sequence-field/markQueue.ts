@@ -55,8 +55,8 @@ export class MarkQueue<T> {
 	}
 
 	/**
-	 * Dequeues the first `length` sized portion of the next mark.
-	 * The caller must verify that the next mark (as returned by peek) is longer than this length.
+	 * Dequeues the first `length` sized portion of the next mark,
+	 * or the entire next mark if `length` is longer than the mark's length.
 	 * @param length - The length to dequeue, measured in the input context.
 	 */
 	public dequeueUpTo(length: number): Mark<T> {

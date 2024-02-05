@@ -536,9 +536,9 @@ export class ComposeQueue<T> {
 						this.revisionMetadata,
 					);
 					if (cmp < 0) {
-						return { baseMark: this.baseMarks.dequeueUpTo(-cmp) };
+						return this.dequeueBase(-cmp);
 					} else if (cmp > 0) {
-						return { newMark: this.newMarks.dequeueUpTo(cmp) };
+						return this.dequeueNew(cmp);
 					} else {
 						return this.dequeueBoth();
 					}
@@ -555,8 +555,8 @@ export class ComposeQueue<T> {
 		}
 	}
 
-	private dequeueBase(): ComposeMarks<T> {
-		const baseMark = this.baseMarks.dequeue();
+	private dequeueBase(length: number = Infinity): ComposeMarks<T> {
+		const baseMark = this.baseMarks.dequeueUpTo(length);
 		const movedChanges = getMovedChangesFromMark(
 			this.moveEffects,
 			baseMark,
@@ -571,8 +571,8 @@ export class ComposeQueue<T> {
 		return { baseMark, newMark };
 	}
 
-	private dequeueNew(): ComposeMarks<T> {
-		const newMark = this.newMarks.dequeue();
+	private dequeueNew(length: number = Infinity): ComposeMarks<T> {
+		const newMark = this.newMarks.dequeueUpTo(length);
 		const baseMark = createNoopMark(
 			newMark.count,
 			undefined,
