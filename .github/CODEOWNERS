@@ -34,3 +34,7 @@
 /packages/dds/sequence                     @microsoft/fluid-cr-merge-tree
 /experimental/dds/sequence-deprecated      @microsoft/fluid-cr-merge-tree
 
+# shared tree and tree related dds
+/packages/dds/tree                         @microsoft/fluid-cr-tree
+/experimental/dds/tree                     @microsoft/fluid-cr-tree
+
