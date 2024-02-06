@@ -2,8 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import React from "react";
+import ReactDOM from "react-dom";
 import { browser } from "../Globals";
-import { initializePopupView } from "./InitializePopupView";
+import { BackgroundConnection } from "../BackgroundConnection";
+import { extensionMessageSource } from "../messaging";
+import { PopupView } from "./PopupView";
 
 /**
  * This module is the extensions "pop-up" script.
@@ -51,3 +55,20 @@ browser.tabs.query({ active: true, currentWindow: true }, (tabs) => {
 		console.debug(`Rendered popup for tab ${tabId}!`);
 	}, console.error);
 });
+
+/**
+ * Renders the Fluid Popup view into the provided target element.
+ *
+ * @param target - The element into which the popup view will be rendered.
+ */
+export async function initializePopupView(target: HTMLElement, tabId: number): Promise<void> {
+	const backgroundServiceConnection = await BackgroundConnection.Initialize({
+		// TODO: devtools-panel-specific source
+		messageSource: extensionMessageSource,
+		tabId,
+	});
+
+	ReactDOM.render(React.createElement(PopupView, { backgroundServiceConnection }), target, () => {
+		console.log("Rendered Popup view!");
+	});
+}

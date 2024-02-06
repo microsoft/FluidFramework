@@ -30,18 +30,19 @@ export interface PopupViewProps {
 }
 
 /**
- * Component that renders when you click extension
+ * Component that renders when the user clicks the extension icon *in the browser toolbar*
  * @returns popup component
  */
 export function PopupView(props: PopupViewProps): React.ReactElement {
 	const { backgroundServiceConnection } = props;
 
-	// Set of features supported by the Devtools. True is devtools found, false not found and undefined means still looking
+	// Indicates if Fluid Devtools is running in the current page (i.e. the application is using it and initialized it correctly).
+	// Undefined means still looking or that the message which is sent to discover this has not been sent yet.
 	const [foundDevtools, setFoundDevtools] = React.useState<boolean | undefined>(undefined);
 
 	React.useEffect(() => {
 		/**
-		 * Handlers for inbound messages related to the registry.
+		 * Handlers for inbound messages.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
 			[DevtoolsFeatures.MessageType]: async (untypedMessage) => {
@@ -53,7 +54,7 @@ export function PopupView(props: PopupViewProps): React.ReactElement {
 		};
 
 		/**
-		 * Event handler for messages coming from the Message Relay
+		 * Event handler for messages coming from the Background Script.
 		 */
 		function messageHandler(message: Partial<ISourcedDevtoolsMessage>): void {
 			handleIncomingMessage(message, inboundMessageHandlers, {
@@ -88,17 +89,29 @@ export function PopupView(props: PopupViewProps): React.ReactElement {
 
 	// TODO: spinner for loading
 	// TODO: retry button on not found.
-	// TODO: display "how to use devtools" when devtools aren't found
 	return (
 		<div>
-			{foundDevtools === undefined && <div>Loading...</div>}
+			{foundDevtools === undefined && (
+				<div>Searching for Fluid Devtools in the current tab...</div>
+			)}
 			{foundDevtools === true && (
 				<div>
 					Devtools found! Open the browser`&apos;`s devtools panel to view the Fluid
 					Devtools extension.
 				</div>
 			)}
-			{foundDevtools === false && <div>Devtools not found.</div>}
+			{foundDevtools === false && (
+				<div>
+					Devtools not found. Visit the documentation{" "}
+					<a
+						href="https://github.com/microsoft/FluidFramework/blob/main/packages/tools/devtools/devtools/README.md"
+						target="_blank"
+						rel="noreferrer"
+					>
+						here
+					</a>
+				</div>
+			)}
 		</div>
 	);
 }
