@@ -49,6 +49,7 @@ export function PopupView(props: PopupViewProps): React.ReactElement {
 				// We don't actually care what the supported features are here, we're just using the response
 				// as verification that Fluid Devtools are running on the page.
 				setFoundDevtools(true);
+				clearTimeout(responseTimeout);
 				return true;
 			},
 		};
@@ -65,27 +66,33 @@ export function PopupView(props: PopupViewProps): React.ReactElement {
 
 		// Query for supported feature set
 		backgroundServiceConnection.postMessage(getSupportedFeaturesMessage);
-
-		return (): void => {
-			backgroundServiceConnection.off("message", messageHandler);
-		};
-	}, [backgroundServiceConnection, setFoundDevtools]);
-
-	// Start timer for response timeout
-	React.useEffect(() => {
 		let responseTimeout: NodeJS.Timeout | undefined;
-
-		// If we have already received a response, or have already timed out once,
-		// don't start a new timeout.
 		if (foundDevtools === undefined) {
 			responseTimeout = setTimeout(() => {
 				setFoundDevtools(false);
 			}, queryTimeoutInMilliseconds);
 		}
-		return () => {
-			clearTimeout(responseTimeout);
+
+		return (): void => {
+			backgroundServiceConnection.off("message", messageHandler);
 		};
-	}, [foundDevtools, setFoundDevtools]);
+	}, [backgroundServiceConnection, foundDevtools, setFoundDevtools]);
+
+	// // Start timer for response timeout
+	// React.useEffect(() => {
+	// 	let responseTimeout: NodeJS.Timeout | undefined;
+
+	// 	// If we have already received a response, or have already timed out once,
+	// 	// don't start a new timeout.
+	// 	if (foundDevtools === undefined) {
+	// 		responseTimeout = setTimeout(() => {
+	// 			setFoundDevtools(false);
+	// 		}, queryTimeoutInMilliseconds);
+	// 	}
+	// 	return () => {
+	// 		clearTimeout(responseTimeout);
+	// 	};
+	// }, [foundDevtools, setFoundDevtools]);
 
 	// TODO: spinner for loading
 	// TODO: retry button on not found.
