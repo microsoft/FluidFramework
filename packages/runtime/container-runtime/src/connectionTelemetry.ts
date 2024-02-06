@@ -89,7 +89,7 @@ class OpPerfTelemetry {
 	private readonly deltaLatencyLogger: ISampledTelemetryLogger;
 
 	/**
-	 * Create an intsance of OpPerfTelemetry which starts monitoring and generation of telemetry related to op performance.
+	 * Create an instance of OpPerfTelemetry which starts monitoring and generating telemetry related to op performance.
 	 *
 	 * @param clientId - The clientId of the current container.
 	 * @param deltaManager - DeltaManager instance to monitor.
