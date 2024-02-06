@@ -17,6 +17,7 @@ import {
 	RevisionTag,
 	tagChange,
 	tagRollbackInverse,
+	UpPath,
 } from "../../core/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import {
@@ -226,6 +227,32 @@ describe("ModularChangeFamily integration", () => {
 	});
 
 	describe("compose", () => {
+		it("nested moves", () => {
+			const [changeReceiver, getChanges] = testChangeReceiver(family);
+			const editor = new DefaultEditBuilder(family, changeReceiver);
+			const nodeAPath: UpPath = { parent: undefined, parentField: fieldA, parentIndex: 0 };
+			const nodeBPath: UpPath = { parent: nodeAPath, parentField: fieldB, parentIndex: 0 };
+
+			editor.sequenceField({ parent: undefined, field: fieldA }).move(0, 1, 0);
+			editor.sequenceField({ parent: nodeAPath, field: fieldB }).move(0, 1, 0);
+			editor.sequenceField({ parent: nodeBPath, field: fieldC }).remove(0, 1);
+
+			const [moveA, moveB, removeC] = getChanges();
+
+			const remove = tagChange(removeC, tag1);
+			const move = tagChange(
+				family.compose([makeAnonChange(moveA), makeAnonChange(moveB)]),
+				tag2,
+			);
+
+			const moveInverse = tagRollbackInverse(family.invert(move, true), tag3, tag2);
+
+			const composed = family.compose([moveInverse, remove, move]);
+			const expected = family.compose([remove]);
+			const composedDelta = intoDelta(makeAnonChange(composed), fieldKinds);
+			const expectedDelta = intoDelta(makeAnonChange(expected), fieldKinds);
+			assertDeltaEqual(composedDelta, expectedDelta);
+		});
 		it("cross-field move and nested changes", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
 			const editor = new DefaultEditBuilder(family, changeReceiver);
