@@ -230,10 +230,10 @@ describe("Temporal Collab Spaces", () => {
 		row: number,
 		col: number,
 		value: unknown,
-		channel?: ICollabChannelCore,
+		channels: ICollabChannelCore[] = [],
 	) {
 		// const cp1 = collabSpaces[0];
-		if (channel) {
+		for (const channel of channels) {
 			assert(channel.value === value, "Cahnnel value is not the same!");
 		}
 		for (const cp of collabSpaces) {
@@ -318,7 +318,7 @@ describe("Temporal Collab Spaces", () => {
 		let initialValue = (await collabSpace.getCellAsync(row, col))?.value as number;
 
 		// Create a collab channel to start collaboration.
-		const channel = (await collabSpace.getCellChannel(row, col)) as ISharedCounter;
+		let channel = (await collabSpace.getCellChannel(row, col)) as ISharedCounter;
 		let channel2 = (await collabSpace.getCellChannel(row, col)) as ISharedCounter;
 		assert(channel === channel2, "getCellChannel() returns same channel");
 
@@ -326,14 +326,14 @@ describe("Temporal Collab Spaces", () => {
 		// data will not be replicated properly.
 		assert(channel.isAttached(), "channel is not properly attached");
 
-		await ensureSameValues(row, col, initialValue, channel);
+		await ensureSameValues(row, col, initialValue, [channel]);
 
 		// Collaborate a bit :)
 		channel.increment(100);
 		initialValue += 100;
 
 		await provider.ensureSynchronized();
-		await ensureSameValues(row, col, initialValue, channel);
+		await ensureSameValues(row, col, initialValue, [channel]);
 
 		// Before channel has a chance to be saved or destroyed, let's load 3rd container from that state
 		// and validate it can follow
@@ -355,7 +355,7 @@ describe("Temporal Collab Spaces", () => {
 		collabSpace.saveChannelState(channel);
 
 		await provider.ensureSynchronized();
-		await ensureSameValues(row, col, initialValue, channel);
+		await ensureSameValues(row, col, initialValue, [channel]);
 
 		destroyed = collabSpace.destroyCellChannel(channel);
 		assert(destroyed, "Channel should be destroyed by now!");
@@ -372,7 +372,7 @@ describe("Temporal Collab Spaces", () => {
 
 		// Add one more container and observe they are all equal
 		await addContainerInstance();
-		await ensureSameValues(row, col, initialValue, channel2);
+		await ensureSameValues(row, col, initialValue, [channel2]);
 
 		// Validate that channel is not present in summary!
 		if (runSummaryValidation) {
@@ -380,12 +380,15 @@ describe("Temporal Collab Spaces", () => {
 			assert(channel3 === undefined, "channel was not removed from summary");
 		}
 
+		// recreate deleted channel
+		channel = (await collabSpace.getCellChannel(row, col)) as ISharedCounter;
+
 		// After one container destroyed the channel (and 3rd container loaded without channel),
 		// let's test that op showing up on that channel will be processed correctly by all containers.
 		channel2.increment(10);
 		initialValue += 10;
 		await provider.ensureSynchronized();
-		await ensureSameValues(row, col, initialValue, channel2);
+		await ensureSameValues(row, col, initialValue, [channel, channel2]);
 
 		// Useful mostly if you debug and want measure column reading speed - read one column
 		await measureReadSpeed(col, collabSpace);
@@ -412,8 +415,7 @@ describe("Temporal Collab Spaces", () => {
 
 		// syncrhonize - all containers should see exactly same changes
 		await provider.ensureSynchronized();
-		assert(channel2a.value === channel2b.value, "syncrhonized");
-		await ensureSameValues(row, col, initialValue + 30, channel2a);
+		await ensureSameValues(row, col, initialValue + 30, [channel2a, channel2b]);
 	});
 
 	// Baseline for a number of tests (with different arguments)
@@ -455,15 +457,13 @@ describe("Temporal Collab Spaces", () => {
 		// Retrieve channel for same cell
 		const channel2b = (await collabSpace.getCellChannel(row, col)) as ISharedCounter;
 		const channel2c = (await collabSpace2.getCellChannel(row, col)) as ISharedCounter;
-		assert(channel2b.value === overwriteValue, "overwritten value");
-		assert(channel2c.value === overwriteValue, "overwritten value");
+		await ensureSameValues(row, col, overwriteValue, [channel2b, channel2c]);
 
 		channel2c.increment(10);
 		overwriteValue += 10;
 		await provider.ensureSynchronized();
 		await ensureSameValues(row, col, overwriteValue);
-		assert(channel2b.value === overwriteValue, "overwritten value");
-		assert(channel2c.value === overwriteValue, "overwritten value");
+		await ensureSameValues(row, col, overwriteValue, [channel2b, channel2c]);
 		assert(channel2a.value === initialValue + 10, "No impact on unrooted channel");
 
 		// TBD(Pri1): Need to implement undo - restore original channel, validate that none

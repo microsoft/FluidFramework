@@ -279,15 +279,9 @@ export class TempCollabSpaceRuntime
 	}
 
 	protected sendAttachChannelOp(channel: IChannel): void {
+		// TBD(Pri3): review later
 		// Sending op is optional (and whole system has to work correctly without such ops)
 		// That said, sending it is useful for validation purposes (to validate we start with same state)
-		// Currently this does not work:
-		// TBD(Pri0):
-		// Once we add more tests and recreate
-		// We will hit  0x1b6 assert in SummarizerNodeWithGC.createChild() due to us
-		// creating a new node for the existing path (such node existed in the past). SummarizerNodeWithGC.deleteChild() should be properly
-		// called when we get rid of context - this will also make sure that overall GC / summarization machinery
-		// has proper knowledge of the state.
 		if (channel.id === matrixId) {
 			super.sendAttachChannelOp(channel);
 		}
