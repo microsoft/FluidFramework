@@ -1090,6 +1090,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 				const summary3 = await summarizeNow(summarizer);
 				// Validate that the deleted blob's state is correct in the summary.
 				validateBlobStateInSummary(summary3.summaryTree, blob1NodePath);
-			});
+			}),
+		);
 	});
 });

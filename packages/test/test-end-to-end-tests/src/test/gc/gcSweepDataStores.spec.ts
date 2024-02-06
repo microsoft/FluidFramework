@@ -590,7 +590,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				const { unreferencedId, summarizingContainer, summarizer } =
 					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
 				const sweepReadyDataStoreNodePath = `/${unreferencedId}`;
-				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
+				await sendOpToUpdateSummaryTimestampToNow(summarizer);
 
 				// The datastore should NOT be swept here.
 				// We need to do fullTree because the GC data won't change (since it's not swept).

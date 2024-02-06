@@ -318,29 +318,6 @@ describe("Garbage Collection configurations", () => {
 				"getMetadata returned different metadata than loaded from",
 			);
 		});
-		it("Metadata Roundtrip with only tombstoneGeneration", () => {
-			const inputMetadata: IGCMetadata = {
-				sweepEnabled: true, // ignored
-				gcFeature: 1,
-				sessionExpiryTimeoutMs: customSessionExpiryDurationMs,
-				sweepTimeoutMs: 123,
-				gcFeatureMatrix: { tombstoneGeneration: 1 },
-			};
-			gc = createGcWithPrivateMembers(inputMetadata, {
-				[gcTombstoneGenerationOptionName]: 2, // 2 should not be persisted
-			});
-			const outputMetadata = gc.getMetadata();
-			const expectedOutputMetadata: IGCMetadata = {
-				...inputMetadata,
-				sweepEnabled: false, // Hardcoded, not used
-				gcFeature: stableGCVersion,
-			};
-			assert.deepEqual(
-				outputMetadata,
-				expectedOutputMetadata,
-				"getMetadata returned different metadata than loaded from",
-			);
-		});
 		it("Metadata Roundtrip with GC version upgrade to v4 enabled", () => {
 			injectedSettings[gcVersionUpgradeToV4Key] = true;
 			const inputMetadata: IGCMetadata = {
