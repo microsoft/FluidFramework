@@ -81,6 +81,9 @@ function writeTreeSectionCore(treesNode: NodeCore, snapshotTree: ISnapshotTree) 
 			const childNode = treeNode.addNode("list");
 			writeTreeSectionCore(childNode, value);
 		}
+		if (snapshotTree.groupId) {
+			addDictionaryStringProperty(treeNode, "groupId", snapshotTree.groupId);
+		}
 	}
 
 	if (snapshotTree.blobs) {

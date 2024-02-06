@@ -147,6 +147,21 @@ function readTreeSection(node: NodeCore) {
 			}
 
 			// "name": <node name>
+			// "children": <blob id>
+			// groupId: <group name>
+			if (
+				length === 6 &&
+				treeNode.getMaybeString(2) === "children" &&
+				treeNode.getMaybeString(4) === "groupId"
+			) {
+				const result = readTreeSection(treeNode.getNode(3));
+				trees[treeNode.getString(1)] = result.snapshotTree;
+				slowTreeStructureCount += result.slowTreeStructureCount;
+				snapshotTree.groupId = treeNode.getMaybeString(5);
+				continue;
+			}
+
+			// "name": <node name>
 			// "unreferenced": true
 			// "children": <blob id>
 			if (
@@ -161,6 +176,25 @@ function readTreeSection(node: NodeCore) {
 				snapshotTree.unreferenced = true;
 				continue;
 			}
+
+			// "name": <node name>
+			// "unreferenced": true
+			// "children": <blob id>
+			// groupId: <group name>
+			if (
+				length === 8 &&
+				treeNode.getMaybeString(2) === "unreferenced" &&
+				treeNode.getMaybeString(4) === "children" &&
+				treeNode.getMaybeString(6) === "groupId"
+			) {
+				const result = readTreeSection(treeNode.getNode(5));
+				trees[treeNode.getString(1)] = result.snapshotTree;
+				slowTreeStructureCount += result.slowTreeStructureCount;
+				assert(treeNode.getBool(3), 0x3db /* Unreferenced if present should be true */);
+				snapshotTree.unreferenced = true;
+				snapshotTree.groupId = treeNode.getMaybeString(7);
+				continue;
+			}
 		}
 
 		/**
@@ -173,6 +207,11 @@ function readTreeSection(node: NodeCore) {
 			assertBoolInstance(records.unreferenced, "Unreferenced flag should be bool");
 			assert(records.unreferenced, 0x281 /* "Unreferenced if present should be true" */);
 			snapshotTree.unreferenced = true;
+		}
+
+		if (records.groupId !== undefined) {
+			const groupId = getStringInstance(records.groupId, "groupId should be a string");
+			snapshotTree.groupId = groupId;
 		}
 
 		const path = getStringInstance(records.name, "Path name should be string");
