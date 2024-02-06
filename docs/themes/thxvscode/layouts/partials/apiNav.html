@@ -137,12 +137,16 @@
                 <li class="panel {{if $isActive }}active{{end}}">
                     <a class="area{{if $isActive }} active expanded{{ end }} nav-page" href="{{ $FFLink }}">Complete Reference</a>
                 </li>
-                
-                {{ $specificCategories := slice "Audience" "Container" }}
+                {{ $.Scratch.Add "specificCategories" (slice) }}
+                {{ range $key, $value := $FluidFramework }}
+                    {{ if ne $key "DDSes" }}
+                        {{ $.Scratch.Add "specificCategories" (slice $key) }}
+                    {{ end }}
+                {{ end }}
                 {{ $activeCategory := "" }}
                 {{ $activeSubCategory := "" }}
                 {{ $activeAPI := "" }}
-                {{ range $categoryName := $specificCategories }}
+                {{ range $categoryName := $.Scratch.Get "specificCategories" }}
                     {{ $category := index $FluidFramework $categoryName }}
                     {{ range $subcategoryName, $APIs := $category }}
                         {{ range $api := $APIs }}
@@ -160,7 +164,7 @@
                     {{ end }}
                 {{ end }}
                 
-                {{ range $categoryName := $specificCategories }}
+                {{ range $categoryName := $.Scratch.Get "specificCategories" }}
                     {{ $category := index $FluidFramework $categoryName }}
                     {{ $isCategoryActive := eq $activeCategory $categoryName }}
                     <li class="panel {{ if $isCategoryActive }}active expanded{{ else }}collapsed{{ end }}">
@@ -189,7 +193,7 @@
                         </ul>
                     </li>
                 {{ end }}
-                {{ range $specificCategories }}
+                {{ range $.Scratch.Get "specificCategories" }}
                     {{ if in $current.RelPermalink . }}
                         {{ $isPackageActive = true }}
                     {{ end }}
