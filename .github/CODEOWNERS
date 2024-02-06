@@ -1,12 +1,26 @@
+# -------------------------------------------------------------------------
+#
+# Please read and understand all of this documentation before modifying this file.
+#
+# Ownership via this file will block PR until an owner approves. 
+# Taking ownership requires a commitment to review all PRs for the selected files.
+#
 # Lines starting with '#' are comments.
+#
 # Each line is a file pattern followed by one or more owners.
 # More details on the format: https://help.github.com/articles/about-codeowners/
-
+#
 # When updating this file, you should also consider updating the GitHub label config in actions-labeler.yml so that
 # any area changes are labeled correctly.
-
+#
 # ORDER MATTERS! The last matching pattern has the most precedence.
+# Be careful not to break existing ownership patterns.
+#
+# Do not assign ownership to indviduals. Use a Team: https://github.com/orgs/microsoft/teams/fluid-cr/teams
+# Using individuals can break processing of this file if they are not contributors, or lose contributors status
+# which can and does happen. 
+#
+# ------------------------------------------------------------------------
 
-# NOTICE: Ownership via this file will block PR until an owner approves. 
-# Taking ownership requires a commitment to review all PRs for the selected files.
+
 
