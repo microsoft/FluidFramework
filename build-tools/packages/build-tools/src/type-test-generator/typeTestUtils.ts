@@ -28,15 +28,13 @@ export function ensureDevDependencyExists(
 
 /**
  * Fetches the path of the previous package.json or throws an error if not found.
- * @param previousBasePath - A string representing the previous base path
+ * @param previousBasePath - A string representing the previous package.json path
  * @returns
  */
 export function getPreviousPackageJsonPath(previousBasePath: string): string {
 	const previousPackageJsonPath = `${previousBasePath}/package.json`;
 	if (!existsSync(previousPackageJsonPath)) {
-		throw new Error(
-			`${previousPackageJsonPath} not found. You may need to install the package via pnpm install. Note that type tests logic looks specifically for a package named '${previousPackageName}'`,
-		);
+		throw new Error(`${previousPackageJsonPath} not found.`);
 	}
 	return previousPackageJsonPath;
 }
