@@ -46,7 +46,7 @@ import {
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { SharedString } from "@fluidframework/sequence";
+import type { SharedString } from "@fluidframework/sequence";
 
 const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
 const testContainerConfig: ITestContainerConfig = {
@@ -118,7 +118,8 @@ class TestDataObject1 extends DataObject {
 	}
 }
 
-describeCompat("Summaries", "NoCompat", (getTestObjectProvider) => {
+describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedString } = apis.dds;
 	let provider: ITestObjectProvider;
 	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
