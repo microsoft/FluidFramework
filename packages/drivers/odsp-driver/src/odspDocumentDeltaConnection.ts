@@ -750,7 +750,6 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			targetClientId,
 		};
 
-		// Wrap the signal object inside an array before passing it to emitMessages method
 		this.emitMessages("submitSignal", [signal]);
 	}
 
