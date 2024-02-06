@@ -623,7 +623,7 @@ export class ComposeQueue<T> {
 		const newMark = this.newMarks.peek();
 		assert(
 			baseMark !== undefined && newMark !== undefined,
-			0x697 /* Cannot peek length unless both mark queues are non-empty */,
+			"Cannot peek length unless both mark queues are non-empty",
 		);
 
 		return Math.min(newMark.count, baseMark.count);
