@@ -1541,6 +1541,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.3.0
+      '@fluidframework/fluid-static': workspace:~
       '@fluidframework/id-compressor': workspace:~
       '@fluidframework/matrix': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
@@ -1571,6 +1572,7 @@ importers:
       '@fluidframework/azure-client': link:../../../azure/packages/azure-client
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
+      '@fluidframework/fluid-static': link:../../../packages/framework/fluid-static
       '@fluidframework/matrix': link:../../../packages/dds/matrix
       '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
       '@fluidframework/tree': link:../../../packages/dds/tree
