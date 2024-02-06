@@ -20,6 +20,7 @@ import { create404Response } from "@fluidframework/runtime-utils";
 
 /**
  * @internal
+ * @deprecated Not recommended for use.  For lazy loading of data objects, prefer to defer dereferencing their handles.
  */
 export abstract class LazyLoadedDataObject<
 		TRoot extends ISharedObject = ISharedObject,
