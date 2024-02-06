@@ -526,7 +526,7 @@ export class TempCollabSpaceRuntime
 
 		const { row, col, iteration } = this.mapChannelToCell(channelId);
 
-		const savedValue = this.matrix.getCell(row, col);
+		let savedValue = this.matrix.getCell(row, col);
 
 		// TBD(Pri2) - can this be optimized and assume only single client can undo such operation?
 		//
@@ -552,11 +552,12 @@ export class TempCollabSpaceRuntime
 		const destroyd = allowDestroy && (attached ? savedValue.seq > channelnfo.seq : saved);
 
 		if (saved) {
-			this.matrix.setCell(row, col, {
+			savedValue = {
 				...savedValue, // value, iteration, type
 				value: channel.value as string,
 				seq: refSeq,
-			});
+			}
+			this.matrix.setCell(row, col, savedValue);
 		}
 
 		if (destroyd) {
@@ -664,7 +665,8 @@ export class TempCollabSpaceRuntime
 
 			const currentValue = this.matrix.getCell(row, col);
 			const iteration = currentValue ? currentValue.iteration + 1 : 1;
-			const seq = this.deltaManager.lastSequenceNumber;
+			const attached = this.visibilityState === VisibilityState.GloballyVisible;
+			const seq = attached ? this.deltaManager.lastSequenceNumber : -1;
 			const valueInternal = { ...value, iteration, seq };
 			this.matrix.setCell(row, col, valueInternal);
 		}
