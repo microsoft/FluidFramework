@@ -172,6 +172,8 @@ export class TempCollabSpaceRuntime
 {
 	private matrixInternal?: SharedMatrix<MatrixInternalType>;
 	private channelInfo: Record<string, IChannelTrackingInfo | undefined> = {};
+	private readonly rowMap: Map<string, number> = new Map();
+	private readonly colMap: Map<string, number> = new Map();
 
 	constructor(
 		dataStoreContext: IFluidDataStoreContext,
@@ -203,7 +205,7 @@ export class TempCollabSpaceRuntime
 			}
 
 			// Here are two considerations:
-			// This is syncronous function, while creation of the channel is async
+			// This is synchronous function, while creation of the channel is async
 			// We might not be able to create a channel IF this channel is not rooted in a cell.
 			// We will need to hold on to all the ops, when if/when (through undo) channel becomes
 			// active again, recreated it!
@@ -455,6 +457,22 @@ export class TempCollabSpaceRuntime
 		return this.createCollabChannel(value, channelId);
 	}
 
+	private populateRowColMaps() {
+		const rowCount = this.matrix.rowCount;
+		const colCount = this.matrix.colCount;
+		let rowIdIndex;
+		for (rowIdIndex = 1; rowIdIndex < rowCount; rowIdIndex++) {
+			const currentRowId = this.matrix.getCell(rowIdIndex, 0) as unknown as string;
+			this.rowMap.set(currentRowId, rowIdIndex);
+		}
+
+		let colIdIndex;
+		for (colIdIndex = 1; colIdIndex < colCount; colIdIndex++) {
+			const currentColId = this.matrix.getCell(0, colIdIndex) as unknown as string;
+			this.colMap.set(currentColId, colIdIndex);
+		}
+	}
+	
 	private mapChannelToCell(channelId: string) {
 		const parts = channelId.split(",");
 		assert(parts.length === 3, "wrong channel ID");
@@ -462,35 +480,20 @@ export class TempCollabSpaceRuntime
 		const colId = parts[1];
 		const iteration = parts[2];
 
-		// TBD(Pri0)
-		// This needs to be way more efficient by building a reverse mapping and maintaining it through all operations!
-		// Need to reconcile which layer does such mapping. At the moment, this is done outside of matrix - in Tablero
-		// component. We should either move it here (and ideally - in compatible way, i.e. not changing document schema),
-		// or move most of the channel logic to the layer that implements row/col stable IDs.
-
-		const rowCount = this.matrix.rowCount;
-		const colCount = this.matrix.colCount;
-
-		let row;
-		for (row = 1; row < rowCount; row++) {
-			if ((this.matrix.getCell(row, 0) as unknown as string) === rowId) {
-				break;
-			}
+		// In case the channel is about to be created for the first time we need to populate the rowMap and colMap maps.
+		if (this.rowMap.size === 0 || this.colMap.size === 0) {
+			this.populateRowColMaps();
 		}
-		assert(row !== rowCount, "channel not found");
 
-		let col;
-		for (col = 1; col < colCount; col++) {
-			if ((this.matrix.getCell(0, col) as unknown as string) === colId) {
-				break;
-			}
-		}
-		assert(col !== colCount, "channel not found");
+		const row = this.rowMap.get(rowId);
+		const col = this.colMap.get(colId);
 
+		assert(row !== undefined, "channel's row not found");
+		assert(col !== undefined, "channel's col not found");
 		return { row, col, iteration };
 	}
 
-	// Saves or destoys channel, depending on the arguments
+	// Saves or destroys channel, depending on the arguments
 	private saveOrDestroyChannel(
 		channel: ICollabChannelCore,
 		allowSave: boolean,
@@ -666,12 +669,18 @@ export class TempCollabSpaceRuntime
 		// generate new ID for a columns
 		while (count > 0) {
 			count--;
-			this.matrix.setCell(0, col, uuid() as unknown as MatrixInternalType);
+			const colId = uuid();
+			this.matrix.setCell(0, col, colId as unknown as MatrixInternalType);
+			this.colMap.set(colId, col);
 			col++;
 		}
 	}
 
 	public removeCols(colStart: number, count: number) {
+		for (let i = 0; i < count; i++) {
+			const colId = this.matrix.getCell(0, colStart + 1 + i) as unknown as string;
+			this.colMap.delete(colId);
+		}
 		this.matrix.removeCols(colStart + 1, count);
 	}
 
@@ -683,12 +692,18 @@ export class TempCollabSpaceRuntime
 		// generate new ID for a columns
 		while (count > 0) {
 			count--;
-			this.matrix.setCell(row, 0, uuid() as unknown as MatrixInternalType);
+			const rowId = uuid();
+			this.matrix.setCell(row, 0, rowId as unknown as MatrixInternalType);
+			this.rowMap.set(rowId, row);
 			row++;
 		}
 	}
 
 	public removeRows(rowStart: number, count: number) {
+		for (let i = 0; i < count; i++) {
+			const rowId = this.matrix.getCell(rowStart + 1 + i, 0) as unknown as string;
+			this.rowMap.delete(rowId);
+		}
 		this.matrix.removeRows(rowStart + 1, count);
 	}
 
