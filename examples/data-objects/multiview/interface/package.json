@@ -37,7 +37,6 @@
 		"@fluidframework/eslint-config-fluid": "^3.3.0",
 		"@types/expect-puppeteer": "5.0.6",
 		"@types/node": "^18.19.0",
-		"@types/puppeteer": "7.0.4",
 		"@types/react": "^17.0.44",
 		"@types/react-dom": "^17.0.18",
 		"eslint": "~8.50.0",

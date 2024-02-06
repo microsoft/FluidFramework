@@ -83,7 +83,6 @@
 		"@types/expect-puppeteer": "5.0.6",
 		"@types/jest": "29.5.3",
 		"@types/jest-environment-puppeteer": "5.0.6",
-		"@types/puppeteer": "7.0.4",
 		"@types/uuid": "^9.0.2",
 		"clean-webpack-plugin": "^4.0.0",
 		"concurrently": "^8.2.1",

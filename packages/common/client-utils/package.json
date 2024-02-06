@@ -108,7 +108,6 @@
 		"@types/jest-environment-puppeteer": "5.0.6",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
-		"@types/puppeteer": "7.0.4",
 		"@types/rewire": "^2.5.28",
 		"@types/sha.js": "^2.4.4",
 		"@types/sinon": "^7.0.13",
