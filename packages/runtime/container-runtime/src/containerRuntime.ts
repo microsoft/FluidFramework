@@ -553,6 +553,10 @@ export interface IPendingRuntimeState {
 	 * Pending idCompressor state
 	 */
 	pendingIdCompressorState?: SerializedIdCompressorWithOngoingSession;
+	/**
+	 * Time at which session expiry timer started.
+	 */
+	sessionExpiryTimerStarted?: number | undefined;
 }
 
 const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconnects";
@@ -1419,6 +1423,7 @@ export class ContainerRuntime
 			getLastSummaryTimestampMs: () => this.messageAtLastSummary?.timestamp,
 			readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),
 			submitMessage: (message: ContainerRuntimeGCMessage) => this.submit(message),
+			sessionExpiryTimerStarted: pendingRuntimeState?.sessionExpiryTimerStarted,
 		});
 
 		const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
@@ -2954,7 +2959,7 @@ export class ContainerRuntime
 		// GC uses "/" when adding "root" references, e.g. for Aliasing or as part of Tombstone Auto-Recovery.
 		// These have no package path so return a special value.
 		if (nodePath === "/") {
-			return ["<GCROOT>"];
+			return ["_gcRoot"];
 		}
 
 		switch (this.getNodeType(nodePath)) {
@@ -3961,6 +3966,7 @@ export class ContainerRuntime
 					pending,
 					pendingAttachmentBlobs,
 					pendingIdCompressorState,
+					sessionExpiryTimerStarted: this.garbageCollector.sessionExpiryTimerStarted,
 				};
 				event.end({
 					attachmentBlobsSize: Object.keys(pendingAttachmentBlobs ?? {}).length,
