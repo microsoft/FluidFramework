@@ -1024,38 +1024,40 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 			}
 		});
 
-		[true, undefined].forEach((blobOnlySweep) => 
-		it(`updates deleted blob state in the summary [blobOnlySweep=${blobOnlySweep}]`, async () => {
-			gcOptions.blobOnlySweep = blobOnlySweep;
+		[true, undefined].forEach((blobOnlySweep) =>
+			it(`updates deleted blob state in the summary [blobOnlySweep=${blobOnlySweep}]`, async () => {
+				gcOptions.blobOnlySweep = blobOnlySweep;
 
-			const { dataStore: mainDataStore, summarizer } = await createDataStoreAndSummarizer();
+				const { dataStore: mainDataStore, summarizer } =
+					await createDataStoreAndSummarizer();
 
-			// Upload an attachment blob.
-			const blob1Contents = "Blob contents 1";
-			const blob1Handle = await mainDataStore._runtime.uploadBlob(
-				stringToBuffer(blob1Contents, "utf-8"),
-			);
-			const blob1NodePath = blob1Handle.absolutePath;
+				// Upload an attachment blob.
+				const blob1Contents = "Blob contents 1";
+				const blob1Handle = await mainDataStore._runtime.uploadBlob(
+					stringToBuffer(blob1Contents, "utf-8"),
+				);
+				const blob1NodePath = blob1Handle.absolutePath;
 
-			// Reference and then unreference the blob so that it's unreferenced in the next summary.
-			mainDataStore._root.set("blob1", blob1Handle);
-			mainDataStore._root.delete("blob1");
+				// Reference and then unreference the blob so that it's unreferenced in the next summary.
+				mainDataStore._root.set("blob1", blob1Handle);
+				mainDataStore._root.delete("blob1");
 
-			// Summarize so that blob is marked unreferenced.
-			await provider.ensureSynchronized();
-			await summarizeNow(summarizer);
+				// Summarize so that blob is marked unreferenced.
+				await provider.ensureSynchronized();
+				await summarizeNow(summarizer);
 
-			// Wait for sweep timeout so that blob is ready to be deleted.
-			await delay(sweepTimeoutMs + 10);
+				// Wait for sweep timeout so that blob is ready to be deleted.
+				await delay(sweepTimeoutMs + 10);
 
-			// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
-			mainDataStore._root.set("key", "value");
-			await provider.ensureSynchronized();
+				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
+				mainDataStore._root.set("key", "value");
+				await provider.ensureSynchronized();
 
-			// Summarize so that the sweep ready blob is deleted.
-			const summary2 = await summarizeNow(summarizer);
-			// Validate that the deleted blob's state is correct in the summary.
-			validateBlobStateInSummary(summary2.summaryTree, blob1NodePath);
-		}));
+				// Summarize so that the sweep ready blob is deleted.
+				const summary2 = await summarizeNow(summarizer);
+				// Validate that the deleted blob's state is correct in the summary.
+				validateBlobStateInSummary(summary2.summaryTree, blob1NodePath);
+			}),
+		);
 	});
 });
