@@ -86,22 +86,22 @@ describe("Garbage Collection Helpers Tests", () => {
 				expectedShouldAllowValue: false,
 			},
 			{
-				persisted: { sweepGeneration: 0 },
+				persisted: { sweepGeneration: 0, tombstoneGeneration: 0 },
 				current: 0,
 				expectedShouldAllowValue: true,
 			},
 			{
-				persisted: { sweepGeneration: 1 },
+				persisted: { sweepGeneration: 1, tombstoneGeneration: 1 },
 				current: 1,
 				expectedShouldAllowValue: true,
 			},
 			{
-				persisted: { sweepGeneration: 1 },
+				persisted: { sweepGeneration: 1, tombstoneGeneration: 1 },
 				current: 2,
 				expectedShouldAllowValue: false,
 			},
 			{
-				persisted: { sweepGeneration: 2 },
+				persisted: { sweepGeneration: 2, tombstoneGeneration: 2 },
 				current: 1,
 				expectedShouldAllowValue: false,
 			},
