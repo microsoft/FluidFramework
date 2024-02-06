@@ -418,7 +418,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
-      '@types/puppeteer': 7.0.4
       cross-env: ^7.0.3
       eslint: ~8.50.0
       html-webpack-plugin: ^5.5.0
@@ -457,7 +456,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       cross-env: 7.0.3
       eslint: 8.50.0
       html-webpack-plugin: 5.5.3_webpack@5.89.0
@@ -468,7 +466,7 @@ importers:
       process: 0.11.10
       puppeteer: 22.0.0_typescript@5.1.6
       rimraf: 4.4.1
-      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
+      ts-jest: 29.1.1_ecmfbsa7xktltfxeyroqilg2n4
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
@@ -497,7 +495,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
-      '@types/puppeteer': 7.0.4
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       cross-env: ^7.0.3
@@ -546,7 +543,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       cross-env: 7.0.3
@@ -584,7 +580,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
-      '@types/puppeteer': 7.0.4
       '@types/uuid': ^9.0.2
       clean-webpack-plugin: ^4.0.0
       cross-env: ^7.0.3
@@ -631,7 +626,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       '@types/uuid': 9.0.7
       clean-webpack-plugin: 4.0.0_webpack@5.89.0
       cross-env: 7.0.3
@@ -681,7 +675,6 @@ importers:
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
       '@types/prop-types': ^15
-      '@types/puppeteer': 7.0.4
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       '@types/uuid': ^9.0.2
@@ -751,7 +744,6 @@ importers:
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
       '@types/prop-types': 15.7.11
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       '@types/uuid': 9.0.7
@@ -800,7 +792,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
-      '@types/puppeteer': 7.0.4
       cross-env: ^7.0.3
       eslint: ~8.50.0
       fluid-framework: workspace:~
@@ -842,7 +833,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       cross-env: 7.0.3
       eslint: 8.50.0
       html-webpack-plugin: 5.5.3_webpack@5.89.0
@@ -881,7 +871,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
-      '@types/puppeteer': 7.0.4
       clean-webpack-plugin: ^4.0.0
       cross-env: ^7.0.3
       css-loader: ^1.0.0
@@ -925,7 +914,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       clean-webpack-plugin: 4.0.0_webpack@5.89.0
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -973,7 +961,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
-      '@types/puppeteer': 7.0.4
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       '@types/uuid': ^9.0.2
@@ -1034,7 +1021,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       '@types/uuid': 9.0.7
@@ -1076,7 +1062,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
-      '@types/puppeteer': 7.0.4
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       cross-env: ^7.0.3
@@ -1114,7 +1099,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       cross-env: 7.0.3
@@ -1220,7 +1204,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
-      '@types/puppeteer': 7.0.4
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       cross-env: ^7.0.3
@@ -1261,7 +1244,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       cross-env: 7.0.3
@@ -1300,7 +1282,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
-      '@types/puppeteer': 7.0.4
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       cross-env: ^7.0.3
@@ -1341,7 +1322,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       cross-env: 7.0.3
@@ -1379,7 +1359,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
-      '@types/puppeteer': 7.0.4
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       cross-env: ^7.0.3
@@ -1418,7 +1397,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       cross-env: 7.0.3
@@ -1667,7 +1645,7 @@ importers:
       rimraf: 4.4.1
       start-server-and-test: 1.15.5
       tinylicious: 3.1.0-231702
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_ecmfbsa7xktltfxeyroqilg2n4
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       tslib: 1.14.1
       typescript: 5.1.6
@@ -1691,7 +1669,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
-      '@types/puppeteer': 7.0.4
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       cross-env: ^7.0.3
@@ -1730,7 +1707,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       cross-env: 7.0.3
@@ -1771,7 +1747,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
-      '@types/puppeteer': 7.0.4
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       cross-env: ^7.0.3
@@ -1809,7 +1784,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       cross-env: 7.0.3
@@ -1922,7 +1896,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
-      '@types/puppeteer': 7.0.4
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       cross-env: ^7.0.3
@@ -1957,7 +1930,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       cross-env: 7.0.3
@@ -1992,7 +1964,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
-      '@types/puppeteer': 7.0.4
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       cross-env: ^7.0.3
@@ -2029,7 +2000,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       cross-env: 7.0.3
@@ -2132,7 +2102,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
-      '@types/puppeteer': 7.0.4
       cross-env: ^7.0.3
       eslint: ~8.50.0
       jest: ^29.6.2
@@ -2164,7 +2133,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       cross-env: 7.0.3
       eslint: 8.50.0
       jest: 29.7.0_@types+node@18.19.1
@@ -2194,7 +2162,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
-      '@types/puppeteer': 7.0.4
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       copyfiles: ^2.4.1
@@ -2230,7 +2197,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       copyfiles: 2.4.1
@@ -2278,7 +2244,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
-      '@types/puppeteer': 7.0.4
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       copyfiles: ^2.4.1
@@ -2327,7 +2292,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       copyfiles: 2.4.1
@@ -2363,7 +2327,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
-      '@types/puppeteer': 7.0.4
       cross-env: ^7.0.3
       eslint: ~8.50.0
       jest: ^29.6.2
@@ -2393,7 +2356,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       cross-env: 7.0.3
       eslint: 8.50.0
       jest: 29.7.0_@types+node@18.19.1
@@ -2418,7 +2380,6 @@ importers:
       '@fluidframework/eslint-config-fluid': ^3.3.0
       '@types/expect-puppeteer': 5.0.6
       '@types/node': ^18.19.0
-      '@types/puppeteer': 7.0.4
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       eslint: ~8.50.0
@@ -2438,7 +2399,6 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@types/expect-puppeteer': 5.0.6
       '@types/node': 18.19.1
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       eslint: 8.50.0
@@ -2464,7 +2424,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
-      '@types/puppeteer': 7.0.4
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       copyfiles: ^2.4.1
@@ -2499,7 +2458,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       copyfiles: 2.4.1
@@ -2533,7 +2491,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
-      '@types/puppeteer': 7.0.4
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       copyfiles: ^2.4.1
@@ -2568,7 +2525,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       copyfiles: 2.4.1
@@ -2602,7 +2558,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
-      '@types/puppeteer': 7.0.4
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       copyfiles: ^2.4.1
@@ -2637,7 +2592,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       copyfiles: 2.4.1
@@ -3007,7 +2961,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
-      '@types/puppeteer': 7.0.4
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       '@types/uuid': ^9.0.2
@@ -3056,7 +3009,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       '@types/uuid': 9.0.7
@@ -3229,7 +3181,6 @@ importers:
       '@types/lodash.isequal': ^4.5.6
       '@types/node': ^18.19.0
       '@types/node-fetch': ^2.5.10
-      '@types/puppeteer': 7.0.4
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       '@types/valid-url': ^1.0.3
@@ -3311,7 +3262,6 @@ importers:
       '@types/lodash.isequal': 4.5.8
       '@types/node': 18.19.1
       '@types/node-fetch': 2.6.9
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       '@types/valid-url': 1.0.7
@@ -3360,7 +3310,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
-      '@types/puppeteer': 7.0.4
       '@types/uuid': ^9.0.2
       assert: ^2.0.0
       axios: ^1.6.2
@@ -3414,7 +3363,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       '@types/uuid': 9.0.7
       clean-webpack-plugin: 4.0.0_webpack@5.89.0
       cross-env: 7.0.3
@@ -3453,7 +3401,6 @@ importers:
       '@fluidframework/test-utils': workspace:~
       '@types/expect-puppeteer': 5.0.6
       '@types/node': ^18.19.0
-      '@types/puppeteer': 7.0.4
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       cross-env: ^7.0.3
@@ -3494,7 +3441,6 @@ importers:
       '@fluidframework/test-utils': link:../../../../packages/test/test-utils
       '@types/expect-puppeteer': 5.0.6
       '@types/node': 18.19.1
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       cross-env: 7.0.3
@@ -3535,6 +3481,7 @@ importers:
       cross-env: ^7.0.3
       eslint: ~8.50.0
       prettier: ~3.0.3
+      puppeteer: ^22.0.0
       rimraf: ^4.4.0
       source-map-loader: ^2.0.0
       string-replace-loader: ^3.1.0
@@ -3567,6 +3514,7 @@ importers:
       cross-env: 7.0.3
       eslint: 8.50.0
       prettier: 3.0.3
+      puppeteer: 22.0.0_typescript@5.1.6
       rimraf: 4.4.1
       string-replace-loader: 3.1.0_webpack@5.89.0
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
@@ -3674,7 +3622,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
-      '@types/puppeteer': 7.0.4
       clean-webpack-plugin: ^4.0.0
       cross-env: ^7.0.3
       css-loader: ^1.0.0
@@ -3719,7 +3666,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       clean-webpack-plugin: 4.0.0_webpack@5.89.0
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -3770,7 +3716,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
-      '@types/puppeteer': 7.0.4
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       '@types/uuid': ^9.0.2
@@ -3834,7 +3779,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       '@types/uuid': 9.0.7
@@ -3891,7 +3835,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
-      '@types/puppeteer': 7.0.4
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       '@types/uuid': ^9.0.2
@@ -3955,7 +3898,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       '@types/uuid': 9.0.7
@@ -4009,7 +3951,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
-      '@types/puppeteer': 7.0.4
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       '@types/uuid': ^9.0.2
@@ -4072,7 +4013,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       '@types/uuid': 9.0.7
@@ -4119,7 +4059,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
-      '@types/puppeteer': 7.0.4
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       clean-webpack-plugin: ^4.0.0
@@ -4164,7 +4103,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       clean-webpack-plugin: 4.0.0_webpack@5.89.0
@@ -4201,7 +4139,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
-      '@types/puppeteer': 7.0.4
       clean-webpack-plugin: ^4.0.0
       cross-env: ^7.0.3
       css-loader: ^1.0.0
@@ -4240,7 +4177,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       clean-webpack-plugin: 4.0.0_webpack@5.89.0
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -4276,7 +4212,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
-      '@types/puppeteer': 7.0.4
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       clean-webpack-plugin: ^4.0.0
@@ -4323,7 +4258,6 @@ importers:
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       clean-webpack-plugin: 4.0.0_webpack@5.89.0
@@ -4384,7 +4318,6 @@ importers:
       '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
-      '@types/puppeteer': 7.0.4
       '@types/uuid': ^9.0.2
       clean-webpack-plugin: ^4.0.0
       concurrently: ^8.2.1
@@ -4455,7 +4388,6 @@ importers:
       '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       '@types/uuid': 9.0.7
       clean-webpack-plugin: 4.0.0_webpack@5.89.0
       concurrently: 8.2.2
@@ -4518,7 +4450,6 @@ importers:
       '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
-      '@types/puppeteer': 7.0.4
       '@types/uuid': ^9.0.2
       clean-webpack-plugin: ^4.0.0
       concurrently: ^8.2.1
@@ -4593,7 +4524,6 @@ importers:
       '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       '@types/uuid': 9.0.7
       clean-webpack-plugin: 4.0.0_webpack@5.89.0
       concurrently: 8.2.2
@@ -5294,7 +5224,7 @@ importers:
       jest-junit: 10.0.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_ecmfbsa7xktltfxeyroqilg2n4
       typescript: 5.1.6
 
   experimental/PropertyDDS/services/property-query-service:
@@ -5926,7 +5856,6 @@ importers:
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      '@types/puppeteer': 7.0.4
       '@types/rewire': ^2.5.28
       '@types/sha.js': ^2.4.4
       '@types/sinon': ^7.0.13
@@ -5980,7 +5909,6 @@ importers:
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       '@types/rewire': 2.5.30
       '@types/sha.js': 2.4.4
       '@types/sinon': 7.5.2
@@ -11003,7 +10931,6 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/proxyquire': ^1.3.28
-      '@types/puppeteer': 7.0.4
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       '@types/sinon': ^7.0.13
@@ -11079,7 +11006,6 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/proxyquire': 1.3.31
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       '@types/sinon': 7.5.2
@@ -11473,7 +11399,7 @@ importers:
       prop-types: 15.8.1
       rimraf: 4.4.1
       simple-git: 3.21.0
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_ecmfbsa7xktltfxeyroqilg2n4
       typescript: 5.1.6
       vite: 4.5.0_@types+node@18.19.1
 
@@ -12167,7 +12093,7 @@ packages:
     resolution: {integrity: sha512-gTXYh3M5wb7FRXQy+FErKFAv90BnlOuNn1QkCK2lREoPAjrQCO49+HVSrFoe5uakFAF5eenS75KbO2vQiLrTMQ==}
     engines: {node: '>=6.9.0'}
     dependencies:
-      '@babel/code-frame': 7.23.4
+      '@babel/code-frame': 7.23.5
       '@babel/generator': 7.23.4
       '@babel/helper-module-transforms': 7.23.3_@babel+core@7.12.9
       '@babel/helpers': 7.23.4
@@ -13900,7 +13826,7 @@ packages:
       outdent: 0.5.0
       prettier: 2.8.8
       resolve-from: 5.0.0
-      semver: 7.5.4
+      semver: 7.6.0
     dev: true
 
   /@changesets/assemble-release-plan/5.2.4:
@@ -13911,7 +13837,7 @@ packages:
       '@changesets/get-dependents-graph': 1.3.6
       '@changesets/types': 5.2.1
       '@manypkg/get-packages': 1.1.3
-      semver: 7.5.4
+      semver: 7.6.0
     dev: true
 
   /@changesets/changelog-git/0.1.14:
@@ -13984,7 +13910,7 @@ packages:
       '@manypkg/get-packages': 1.1.3
       chalk: 2.4.2
       fs-extra: 7.0.1
-      semver: 7.5.4
+      semver: 7.6.0
     dev: true
 
   /@changesets/get-release-plan/3.0.17:
@@ -15799,8 +15725,8 @@ packages:
     resolution: {integrity: sha512-fmBMnKDkWeIDtTMlacDGEN7mX7Lpc2Mg3BuRscDGOU51tn1cxIR7WPcWWbn4wcOhCvqmC2UuNRHUEWumpmpWxg==}
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/datastore-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-utils': 2.0.0-internal.8.0.0
       '@fluidframework/protocol-definitions': 3.1.0
@@ -15821,7 +15747,7 @@ packages:
       '@fluidframework/cell': 2.0.0-internal.8.0.0
       '@fluidframework/container-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/container-loader': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
       '@fluidframework/counter': 2.0.0-internal.8.0.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/map': 2.0.0-internal.8.0.0
@@ -15840,7 +15766,7 @@ packages:
     dependencies:
       '@fluid-experimental/devtools-core': 2.0.0-internal.8.0.0
       '@fluidframework/container-definitions': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
       '@fluidframework/fluid-static': 2.0.0-internal.8.0.0
     transitivePeerDependencies:
       - debug
@@ -15852,8 +15778,8 @@ packages:
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
       '@fluidframework/container-runtime': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/datastore-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/id-compressor': 2.0.0-internal.8.0.0
       '@fluidframework/protocol-definitions': 3.1.0
@@ -16125,8 +16051,8 @@ packages:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
       '@fluid-tools/fluidapp-odsp-urlresolver': 2.0.0-internal.8.0.0
       '@fluidframework/container-runtime': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/datastore': 2.0.0-internal.8.0.0
       '@fluidframework/driver-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/odsp-doclib-utils': 2.0.0-internal.8.0.0
@@ -16150,8 +16076,8 @@ packages:
     resolution: {integrity: sha512-e5VImHMXynxEQOXa7rN0jXkGw39HMl2836VcTS55k1oUbTy1IPi/D/+7ptxSouthC9ksFeSDgDX3JyJx/RYmWQ==}
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/driver-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/odsp-driver': 2.0.0-internal.8.0.0
       '@fluidframework/odsp-driver-definitions': 2.0.0-internal.8.0.0
@@ -16185,8 +16111,8 @@ packages:
     dependencies:
       '@fluidframework/container-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/container-loader': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/driver-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-utils': 2.0.0-internal.8.0.0
       '@fluidframework/local-driver': 2.0.0-internal.8.0.0
@@ -16225,8 +16151,8 @@ packages:
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
       '@fluidframework/container-definitions': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/datastore': 2.0.0-internal.8.0.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/map': 2.0.0-internal.8.0.0
@@ -16258,8 +16184,8 @@ packages:
       '@fluidframework/container-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/container-runtime': 2.0.0-internal.8.0.0
       '@fluidframework/container-runtime-definitions': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/datastore': 2.0.0-internal.8.0.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/map': 2.0.0-internal.8.0.0
@@ -16281,8 +16207,8 @@ packages:
       '@fluidframework/container-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/container-runtime': 2.0.0-internal.8.0.0_debug@4.3.4
       '@fluidframework/container-runtime-definitions': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/datastore': 2.0.0-internal.8.0.0_debug@4.3.4
       '@fluidframework/datastore-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/map': 2.0.0-internal.8.0.0_debug@4.3.4
@@ -16302,8 +16228,8 @@ packages:
     dependencies:
       '@fluidframework/container-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/container-loader': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/driver-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-utils': 2.0.0-internal.8.0.0
       '@fluidframework/fluid-static': 2.0.0-internal.8.0.0
@@ -16542,8 +16468,8 @@ packages:
   /@fluidframework/cell/2.0.0-internal.8.0.0:
     resolution: {integrity: sha512-C7Ly2+7kfmtH59ND47+YwV7mfW4zsVimSUK1v11gZDOKVcPAUZavRGXEukVKBtFdns6Wz/ms7eMuVuFN6WQdOw==}
     dependencies:
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/datastore-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-utils': 2.0.0-internal.8.0.0
       '@fluidframework/protocol-definitions': 3.1.0
@@ -16571,7 +16497,7 @@ packages:
   /@fluidframework/container-definitions/2.0.0-internal.8.0.0:
     resolution: {integrity: sha512-GRssbcyou3XyNsRa9gJe+kxIKGsysL7H5TymYATbIpQFCydCgBp7flMt6eaFnIJEyaAfHSS/IG82X9MWxp3SwQ==}
     dependencies:
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
       '@fluidframework/driver-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/protocol-definitions': 3.1.0
       events: 3.3.0
@@ -16582,8 +16508,8 @@ packages:
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
       '@fluidframework/container-definitions': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/driver-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-utils': 2.0.0-internal.8.0.0_debug@4.3.4
       '@fluidframework/protocol-base': 2.0.2
@@ -16602,7 +16528,7 @@ packages:
     resolution: {integrity: sha512-CVKDSHEUpBiBGZRClnEyr1HP67g74RjU3jIRy93D/0eUMSoXfXayqbm5HJmuUwQleggIfiVrwB4gT0oi+TbrZw==}
     dependencies:
       '@fluidframework/container-definitions': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
       '@fluidframework/driver-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/protocol-definitions': 3.1.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.8.0.0
@@ -16616,8 +16542,8 @@ packages:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
       '@fluidframework/container-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/container-runtime-definitions': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/datastore': 2.0.0-internal.8.0.0
       '@fluidframework/driver-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-utils': 2.0.0-internal.8.0.0
@@ -16642,8 +16568,8 @@ packages:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
       '@fluidframework/container-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/container-runtime-definitions': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/datastore': 2.0.0-internal.8.0.0_debug@4.3.4
       '@fluidframework/driver-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-utils': 2.0.0-internal.8.0.0_debug@4.3.4
@@ -16674,10 +16600,6 @@ packages:
     resolution: {integrity: sha512-Xazv2hOxnQ/TBBlEC4zYUq4DGG+i8zdzhfoPr3xkj+fiOle1R6r2qG5SO6tzEVqXDNzefO/76YUNSYwgNJHWww==}
     dev: true
 
-  /@fluidframework/core-utils/2.0.0-internal.8.0.0:
-    resolution: {integrity: sha512-J459z21XEE7ahhAac61xl+NUYcTq9PYTOWdvX9gpcs9FSLzYn1Osen4SZoPDlIy693+HFbbZFDCTiqvw/uYRcQ==}
-    dev: true
-
   /@fluidframework/core-utils/2.0.0-internal.8.0.4:
     resolution: {integrity: sha512-nEhANcubee6brQJwlovWlINNOHxIOKxgEV4bP4VDYg8aJkJTfFAQxFsr3eDjoj3sUBFL+ou31OzVikDsztFSgg==}
     dev: true
@@ -16689,8 +16611,8 @@ packages:
   /@fluidframework/counter/2.0.0-internal.8.0.0:
     resolution: {integrity: sha512-l/0FdY55cUIfjrrj5exiyYp37U+v/8NO1XlDW+M0Im+3AGf8c8BStgqvLExBbTKdykMb+hvEnHINrqd3JJYOnw==}
     dependencies:
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/datastore-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-utils': 2.0.0-internal.8.0.0
       '@fluidframework/protocol-definitions': 3.1.0
@@ -16708,8 +16630,8 @@ packages:
       '@fluidframework/container-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/container-runtime': 2.0.0-internal.8.0.0
       '@fluidframework/container-runtime-definitions': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/datastore': 2.0.0-internal.8.0.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/request-handler': 2.0.0-internal.8.0.0
@@ -16725,7 +16647,7 @@ packages:
     resolution: {integrity: sha512-YmWzQi90EI1EtFD9YwX6bQV+lEId7+fdzxtyeeeIFhpvnr6Orcabo4VwcVUSpQ7PahjU8DGtAv/MQZ1yHko6Vg==}
     dependencies:
       '@fluidframework/container-definitions': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
       '@fluidframework/id-compressor': 2.0.0-internal.8.0.0
       '@fluidframework/protocol-definitions': 3.1.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.8.0.0
@@ -16738,8 +16660,8 @@ packages:
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
       '@fluidframework/container-definitions': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/datastore-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-utils': 2.0.0-internal.8.0.0
@@ -16759,8 +16681,8 @@ packages:
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
       '@fluidframework/container-definitions': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/datastore-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-utils': 2.0.0-internal.8.0.0_debug@4.3.4
@@ -16778,7 +16700,7 @@ packages:
   /@fluidframework/dds-interceptions/2.0.0-internal.8.0.0:
     resolution: {integrity: sha512-pGpK+fb0bKCWC5Ti6Woj0eilBB5FI2z81Cww31CyhGYM3phDz5eAAapO0wIKeMcl0I3RRtNgaWkFNTXgHvY7vQ==}
     dependencies:
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/map': 2.0.0-internal.8.0.0
       '@fluidframework/merge-tree': 2.0.0-internal.8.0.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.8.0.0
@@ -16791,7 +16713,7 @@ packages:
   /@fluidframework/debugger/2.0.0-internal.8.0.0:
     resolution: {integrity: sha512-ATppJqBplHUCiIVupIkS9ynbTlgbouBWQsHzYgxI3dLw+ryZ/LA0bbbKBWkagtYG+kZ5rWt4+iAerdj3KkIOhA==}
     dependencies:
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/driver-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-utils': 2.0.0-internal.8.0.0
       '@fluidframework/protocol-definitions': 3.1.0
@@ -16806,8 +16728,8 @@ packages:
     resolution: {integrity: sha512-8H+carNmcZNFVtASDyClpfP52xttu8Dd9wjp0f4+4SRxgaNo2jIcK2kWdNHPPYmAH1VxC/Q252ha7wvmbXfqag==}
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/driver-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-utils': 2.0.0-internal.8.0.0
       '@fluidframework/protocol-definitions': 3.1.0
@@ -16821,8 +16743,8 @@ packages:
     resolution: {integrity: sha512-8H+carNmcZNFVtASDyClpfP52xttu8Dd9wjp0f4+4SRxgaNo2jIcK2kWdNHPPYmAH1VxC/Q252ha7wvmbXfqag==}
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/driver-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-utils': 2.0.0-internal.8.0.0_debug@4.3.4
       '@fluidframework/protocol-definitions': 3.1.0
@@ -16835,7 +16757,7 @@ packages:
   /@fluidframework/driver-definitions/2.0.0-internal.8.0.0:
     resolution: {integrity: sha512-Z9g4aHScCbxjA238LkPmzXFsImznGcObV21Mhf1jI1S9epcpZeDlQupvF+lO51EK9S3A4ttb1Xa0hCLvYcwGAQ==}
     dependencies:
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
       '@fluidframework/protocol-definitions': 3.1.0
     dev: true
 
@@ -16843,8 +16765,8 @@ packages:
     resolution: {integrity: sha512-w2Fy9y7E2arXlPxmXknaK9ZFNlASKuMg8ShuyazAevlWGmTXmg/z4d1YffvNO8y0pLexQ6ROC5PCe0FMCMvBig==}
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/driver-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/gitresources': 2.0.2
       '@fluidframework/protocol-base': 2.0.2
@@ -16863,8 +16785,8 @@ packages:
     resolution: {integrity: sha512-w2Fy9y7E2arXlPxmXknaK9ZFNlASKuMg8ShuyazAevlWGmTXmg/z4d1YffvNO8y0pLexQ6ROC5PCe0FMCMvBig==}
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/driver-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/gitresources': 2.0.2
       '@fluidframework/protocol-base': 2.0.2
@@ -16882,8 +16804,8 @@ packages:
   /@fluidframework/driver-web-cache/2.0.0-internal.8.0.0:
     resolution: {integrity: sha512-jbOJ4nTHjZ612lOBJE2B1kpparWasXFlxXlXJBJIqGBZxbIy+Uw2lC6axAgz2oph3z7BshU1JWvl7oDlOi0ryA==}
     dependencies:
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/odsp-driver-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/telemetry-utils': 2.0.0-internal.8.0.0
       idb: 6.1.5
@@ -16924,8 +16846,8 @@ packages:
     resolution: {integrity: sha512-/F9MN58BWLWnUFPojHW8kfTHV2IExSGa78FfZ+dJwAz9xSsKaMDEz5EkXHSHuvKpIkBMI9Cfb36sUiPfEHWFYg==}
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/driver-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-utils': 2.0.0-internal.8.0.0
       '@fluidframework/protocol-definitions': 3.1.0
@@ -16942,7 +16864,7 @@ packages:
       '@fluidframework/aqueduct': 2.0.0-internal.8.0.0
       '@fluidframework/container-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/container-loader': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
       '@fluidframework/driver-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/odsp-driver': 2.0.0-internal.8.0.0
       '@fluidframework/odsp-driver-definitions': 2.0.0-internal.8.0.0
@@ -16966,7 +16888,7 @@ packages:
       '@fluidframework/container-loader': 2.0.0-internal.8.0.0
       '@fluidframework/container-runtime': 2.0.0-internal.8.0.0
       '@fluidframework/container-runtime-definitions': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
       '@fluidframework/datastore-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/protocol-definitions': 3.1.0
       '@fluidframework/request-handler': 2.0.0-internal.8.0.0
@@ -16988,8 +16910,8 @@ packages:
     resolution: {integrity: sha512-aOll78R2BXCICryJXT8hxNo/nFX94o1xooQQ8drkHanir8KoGQ5NXzli66urNlq8KZjHYiksnkkc6bYcS7Y0pg==}
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/telemetry-utils': 2.0.0-internal.8.0.0
       sorted-btree: 1.8.1
       uuid: 9.0.1
@@ -17000,7 +16922,7 @@ packages:
   /@fluidframework/ink/2.0.0-internal.8.0.0:
     resolution: {integrity: sha512-+Dp4WE+cXT4k17zDMIHuCj/NV5ODtLCOjwdt3R6nDJr1v3nIu07einrOmNnnqOKDjXT17lI4UkdCFkDza/6GwA==}
     dependencies:
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
       '@fluidframework/datastore-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-utils': 2.0.0-internal.8.0.0
       '@fluidframework/protocol-definitions': 3.1.0
@@ -17016,8 +16938,8 @@ packages:
     resolution: {integrity: sha512-+76fE2dW0ikeAEec+pY680rqsZ55jh1aE0278SOV1GxiMnA+C+v3zxPjMixg9ixVJYi6F2xJOBfNZnkQMQ2VSA==}
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/driver-base': 2.0.0-internal.8.0.0
       '@fluidframework/driver-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-utils': 2.0.0-internal.8.0.0
@@ -17045,8 +16967,8 @@ packages:
     resolution: {integrity: sha512-+76fE2dW0ikeAEec+pY680rqsZ55jh1aE0278SOV1GxiMnA+C+v3zxPjMixg9ixVJYi6F2xJOBfNZnkQMQ2VSA==}
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/driver-base': 2.0.0-internal.8.0.0_debug@4.3.4
       '@fluidframework/driver-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-utils': 2.0.0-internal.8.0.0_debug@4.3.4
@@ -17074,8 +16996,8 @@ packages:
     resolution: {integrity: sha512-hf3IMWsiLbX7wOB8Fivha3Ca0NEQoW9mJSNNhdss/D4cPOdgeXysaxMq4aiyVopSEZ5aQEkmjG6Gyedc2ReHEA==}
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/datastore-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-utils': 2.0.0-internal.8.0.0
       '@fluidframework/merge-tree': 2.0.0-internal.8.0.0
@@ -17094,8 +17016,8 @@ packages:
     resolution: {integrity: sha512-hf3IMWsiLbX7wOB8Fivha3Ca0NEQoW9mJSNNhdss/D4cPOdgeXysaxMq4aiyVopSEZ5aQEkmjG6Gyedc2ReHEA==}
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/datastore-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-utils': 2.0.0-internal.8.0.0_debug@4.3.4
       '@fluidframework/merge-tree': 2.0.0-internal.8.0.0_debug@4.3.4
@@ -17114,8 +17036,8 @@ packages:
     resolution: {integrity: sha512-LWPg6znffVyWB7Zh6SpQwUBB3vEW9bx+YMNouR24bKUz9/UBupxT+4tQ6ng5uO6LBU1O6Ref/KhqhXwWl5rudA==}
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/datastore-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-utils': 2.0.0-internal.8.0.0
       '@fluidframework/merge-tree': 2.0.0-internal.8.0.0
@@ -17137,8 +17059,8 @@ packages:
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
       '@fluidframework/container-definitions': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/datastore-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/protocol-definitions': 3.1.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.8.0.0
@@ -17155,8 +17077,8 @@ packages:
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
       '@fluidframework/container-definitions': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/datastore-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/protocol-definitions': 3.1.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.8.0.0
@@ -17171,7 +17093,7 @@ packages:
   /@fluidframework/mocha-test-setup/2.0.0-internal.8.0.0:
     resolution: {integrity: sha512-R4AvkrJDqnSDbfm8IGCKUqcmHUpKYQwJv1jOlr/Sw3aoSngoGzIylqXi1020uR969BEMMc4GP3jVy399B15w5w==}
     dependencies:
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
       '@fluidframework/test-driver-definitions': 2.0.0-internal.8.0.0
       mocha: 10.2.0
       source-map-support: 0.5.21
@@ -17181,8 +17103,8 @@ packages:
     resolution: {integrity: sha512-B+qWR7YwM03q0CPpSA2DTYkQQMgvCCYs8+GYVqGt19bSF/sNR+YNkgHgiM+gFJSA81FyzM/u8BgESbjYUlgoKQ==}
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/driver-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-utils': 2.0.0-internal.8.0.0
       '@fluidframework/odsp-driver-definitions': 2.0.0-internal.8.0.0
@@ -17198,8 +17120,8 @@ packages:
     resolution: {integrity: sha512-B+qWR7YwM03q0CPpSA2DTYkQQMgvCCYs8+GYVqGt19bSF/sNR+YNkgHgiM+gFJSA81FyzM/u8BgESbjYUlgoKQ==}
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/driver-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-utils': 2.0.0-internal.8.0.0_debug@4.3.4
       '@fluidframework/odsp-driver-definitions': 2.0.0-internal.8.0.0
@@ -17221,8 +17143,8 @@ packages:
     resolution: {integrity: sha512-J3bdL26/Ukfc9zitIB43me85fXsn0vmERwgNf34WEP72L1kaIbBwRlbmvXcsvrbfjk8qnNotMMvNkfiex/C4JQ==}
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/driver-base': 2.0.0-internal.8.0.0
       '@fluidframework/driver-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-utils': 2.0.0-internal.8.0.0
@@ -17245,7 +17167,7 @@ packages:
   /@fluidframework/odsp-urlresolver/2.0.0-internal.8.0.0:
     resolution: {integrity: sha512-p1GSti2DtYE+Atua1ktjVUyfBTROJrRql0783/tm4YU1vZiIaoEJw0cZ2ScqlEihIzmB9SPne8cYcvly+sOy4A==}
     dependencies:
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
       '@fluidframework/driver-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/odsp-driver': 2.0.0-internal.8.0.0
       '@fluidframework/odsp-driver-definitions': 2.0.0-internal.8.0.0
@@ -17261,8 +17183,8 @@ packages:
     resolution: {integrity: sha512-YCvGRCwuD0GagQDp9KoHuaO2vbAaMp2y1sleXKMe8FJNO9EIhdcXzJQr3EcwFYL8wrKY5UpyjwfH/WVBkInVFA==}
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/datastore-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/protocol-definitions': 3.1.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.8.0.0
@@ -17302,8 +17224,8 @@ packages:
     resolution: {integrity: sha512-siTjPbAuVKQPVX/fGEBlXZU8vVlsNLph5CtM3GsUt73MP2dvXBlPeh3VEIYAS6ux4Qu4BNxE3pij1afElM5OHw==}
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/datastore-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-utils': 2.0.0-internal.8.0.0
       '@fluidframework/protocol-definitions': 3.1.0
@@ -17318,8 +17240,8 @@ packages:
     resolution: {integrity: sha512-7z0fNxoBmVsIHrQcwpvjke/l4jDun9NPxmDyzzwYgmd4yAALSwVmEnyXirbioP/8whDAn0EOPfJZmwy1ulolXg==}
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/driver-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-utils': 2.0.0-internal.8.0.0
       '@fluidframework/protocol-definitions': 3.1.0
@@ -17333,8 +17255,8 @@ packages:
     resolution: {integrity: sha512-skRQwN1n7syZIMyEkQZhQHITwqkWJhpIB1+kE4XFIWaGr9E9El6Kop6f6U26ASm6xJxjFpFXwlAxMvBlCxo+cA==}
     dependencies:
       '@fluidframework/container-runtime-definitions': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/runtime-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/runtime-utils': 2.0.0-internal.8.0.0
     transitivePeerDependencies:
@@ -17346,8 +17268,8 @@ packages:
     resolution: {integrity: sha512-skRQwN1n7syZIMyEkQZhQHITwqkWJhpIB1+kE4XFIWaGr9E9El6Kop6f6U26ASm6xJxjFpFXwlAxMvBlCxo+cA==}
     dependencies:
       '@fluidframework/container-runtime-definitions': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/runtime-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/runtime-utils': 2.0.0-internal.8.0.0_debug@4.3.4
     transitivePeerDependencies:
@@ -17359,8 +17281,8 @@ packages:
     resolution: {integrity: sha512-b8nqd5IBfPhbKbGlFQqF0C3a89HuAl5UDplUH3/5f3kuCU6qkJnIIdYXs9udfH6kyPg68xmsZtGX6yrlSoU0eg==}
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/driver-base': 2.0.0-internal.8.0.0
       '@fluidframework/driver-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-utils': 2.0.0-internal.8.0.0
@@ -17386,8 +17308,8 @@ packages:
     resolution: {integrity: sha512-b8nqd5IBfPhbKbGlFQqF0C3a89HuAl5UDplUH3/5f3kuCU6qkJnIIdYXs9udfH6kyPg68xmsZtGX6yrlSoU0eg==}
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/driver-base': 2.0.0-internal.8.0.0_debug@4.3.4
       '@fluidframework/driver-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-utils': 2.0.0-internal.8.0.0_debug@4.3.4
@@ -17412,8 +17334,8 @@ packages:
   /@fluidframework/routerlicious-urlresolver/2.0.0-internal.8.0.0:
     resolution: {integrity: sha512-6zjRhuZFTN7NFv6kjVqds9jTmYmk3lnkdMzq3aMxq86xucgwkHG4wnQjVck+zjQ+SwQNhmVyg2ujjghczQyocw==}
     dependencies:
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/driver-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/protocol-definitions': 3.1.0
       nconf: 0.12.1
@@ -17424,7 +17346,7 @@ packages:
     resolution: {integrity: sha512-A3c40Um3dG84qSHW5GXoAjbdI7Zhx4vaDzkSd99WYrDNAX/J2T9TwkEkoIJBHzwo8qi6NDMso+gzZ3cPsWvizA==}
     dependencies:
       '@fluidframework/container-definitions': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
       '@fluidframework/driver-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/id-compressor': 2.0.0-internal.8.0.0
       '@fluidframework/protocol-definitions': 3.1.0
@@ -17438,8 +17360,8 @@ packages:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
       '@fluidframework/container-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/container-runtime-definitions': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/datastore-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-utils': 2.0.0-internal.8.0.0
       '@fluidframework/protocol-definitions': 3.1.0
@@ -17456,8 +17378,8 @@ packages:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
       '@fluidframework/container-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/container-runtime-definitions': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/datastore-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-utils': 2.0.0-internal.8.0.0_debug@4.3.4
       '@fluidframework/protocol-definitions': 3.1.0
@@ -17472,8 +17394,8 @@ packages:
     resolution: {integrity: sha512-lH2Kx2/+qstabDVKEHkUJqr9BL7IDKy+BlJfUbkSxSix59qJv6EX8R0tfLdCkFt9VvzgAOAC8BJjJmY4JN67IA==}
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/datastore-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/merge-tree': 2.0.0-internal.8.0.0
       '@fluidframework/protocol-definitions': 3.1.0
@@ -17542,7 +17464,7 @@ packages:
       json-stringify-safe: 5.0.1
       lodash: 4.17.21
       nconf: 0.12.1
-      semver: 7.5.4
+      semver: 7.6.0
       sha.js: 2.4.11
       uuid: 9.0.1
     transitivePeerDependencies:
@@ -17897,8 +17819,8 @@ packages:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
       '@fluidframework/container-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/container-runtime': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/datastore': 2.0.0-internal.8.0.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/protocol-definitions': 3.1.0
@@ -17917,8 +17839,8 @@ packages:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
       '@fluidframework/container-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/container-runtime': 2.0.0-internal.8.0.0_debug@4.3.4
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/datastore': 2.0.0-internal.8.0.0_debug@4.3.4
       '@fluidframework/datastore-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/protocol-definitions': 3.1.0
@@ -17934,7 +17856,7 @@ packages:
   /@fluidframework/shared-summary-block/2.0.0-internal.8.0.0:
     resolution: {integrity: sha512-u29MVc3/98fTFpyPtPHghQ+TY9UR/3NVXBRmyRhBP2pOuHZdLGWXz1tRNYA7lFWq1faSBX5whiYccEjydsAOfw==}
     dependencies:
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
       '@fluidframework/datastore-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-utils': 2.0.0-internal.8.0.0
       '@fluidframework/protocol-definitions': 3.1.0
@@ -17948,7 +17870,7 @@ packages:
   /@fluidframework/synthesize/2.0.0-internal.8.0.0:
     resolution: {integrity: sha512-JcT+T2wFQkCPjV45YFBJQa0Uth7PkVBCMFjWBlT312RU7a+fpscdgp3Q4flZbCswGIPI0TY/Mxj1dK1sy0i7EQ==}
     dependencies:
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
     dev: true
 
   /@fluidframework/task-manager/2.0.0-internal.8.0.0:
@@ -17956,8 +17878,8 @@ packages:
     dependencies:
       '@fluidframework/container-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/container-runtime-definitions': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/datastore-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-utils': 2.0.0-internal.8.0.0
       '@fluidframework/protocol-definitions': 3.1.0
@@ -17973,8 +17895,8 @@ packages:
     resolution: {integrity: sha512-imoUFHkqb76pRCvZV8AtfZj02SDj5NcWpL7A/WmW9aF5I/z/AflAfJBI37KpyJz/uUYSWa4J9qB9rYAjTvt9tA==}
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/protocol-definitions': 3.1.0
       debug: 4.3.4
       events: 3.3.0
@@ -18000,7 +17922,7 @@ packages:
   /@fluidframework/test-driver-definitions/2.0.0-internal.8.0.0:
     resolution: {integrity: sha512-CW5vuLphrcF572Pr/qgXf+Zt2pWWVZqcY/ofm50h+Zzs/OP/Q2c6z41X2R7UfRSpgi0HZqOKGFJiCVcjfRqMWA==}
     dependencies:
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
       '@fluidframework/driver-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/protocol-definitions': 3.1.0
       uuid: 9.0.1
@@ -18011,8 +17933,8 @@ packages:
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
       '@fluidframework/container-definitions': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/datastore-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/id-compressor': 2.0.0-internal.8.0.0
@@ -18037,8 +17959,8 @@ packages:
     dependencies:
       '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
       '@fluidframework/container-definitions': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/datastore-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/id-compressor': 2.0.0-internal.8.0.0
@@ -18071,8 +17993,8 @@ packages:
       '@fluidframework/container-loader': 2.0.0-internal.8.0.0
       '@fluidframework/container-runtime': 2.0.0-internal.8.0.0_debug@4.3.4
       '@fluidframework/container-runtime-definitions': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/datastore': 2.0.0-internal.8.0.0_debug@4.3.4
       '@fluidframework/datastore-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-definitions': 2.0.0-internal.8.0.0
@@ -18102,8 +18024,8 @@ packages:
     dependencies:
       '@fluidframework/container-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/container-loader': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/driver-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-utils': 2.0.0-internal.8.0.0
       '@fluidframework/fluid-static': 2.0.0-internal.8.0.0
@@ -18124,7 +18046,7 @@ packages:
   /@fluidframework/tinylicious-driver/2.0.0-internal.8.0.0:
     resolution: {integrity: sha512-M3jTrRX62hdddE61vKzLE0MwGX//qdgJfKtta/TPTaXS03vnq8KUvtQFZyqA+7L0gYhSF0LeROowsU05bqRAlw==}
     dependencies:
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
       '@fluidframework/driver-definitions': 2.0.0-internal.8.0.0
       '@fluidframework/driver-utils': 2.0.0-internal.8.0.0
       '@fluidframework/protocol-definitions': 3.1.0
@@ -18142,7 +18064,7 @@ packages:
   /@fluidframework/tool-utils/2.0.0-internal.8.0.0:
     resolution: {integrity: sha512-QwsDnjI6G5I5KBKmFDGrOQTGci613h/nON3Aj2zDnrGZ1yojHULx14Wx0vMwnmEeBc/9oiEAGgyR9qIjouoO7w==}
     dependencies:
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
+      '@fluidframework/core-utils': 2.0.0-internal.8.0.4
       '@fluidframework/driver-utils': 2.0.0-internal.8.0.0_debug@4.3.4
       '@fluidframework/odsp-doclib-utils': 2.0.0-internal.8.0.0_debug@4.3.4
       '@fluidframework/protocol-definitions': 3.1.0
@@ -18171,7 +18093,7 @@ packages:
   /@fluidframework/view-adapters/2.0.0-internal.8.0.0:
     resolution: {integrity: sha512-J3K1s46x68RiSKDB77aBlosV3qX7Lp9LU5uCq7/Ha9PEBI/YICqnfEX1zWuwFpabtKiOZynLPGynQHsUo7zywQ==}
     dependencies:
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
       '@fluidframework/view-interfaces': 2.0.0-internal.8.0.0
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
@@ -18180,7 +18102,7 @@ packages:
   /@fluidframework/view-interfaces/2.0.0-internal.8.0.0:
     resolution: {integrity: sha512-IePYmP5ic8vviX9gh8zB+DS0zXG/excLg/gRRwUVn8KW49S7qbSFjZglnQhsrnqVZxcg8CVW2GgXkKwza7n0Qg==}
     dependencies:
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
+      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.4
     dev: true
 
   /@fwouts/vite-tsconfig-paths/4.2.1_ah7snkqdiegnosaxffkwmchslm:
@@ -19730,7 +19652,7 @@ packages:
       read-package-json-fast: 2.0.3
       readdir-scoped-modules: 1.1.0
       rimraf: 3.0.2
-      semver: 7.5.4
+      semver: 7.6.0
       ssri: 8.0.1
       treeverse: 1.0.4
       walk-up-path: 1.0.0
@@ -19743,7 +19665,7 @@ packages:
     resolution: {integrity: sha512-8KG5RD0GVP4ydEzRn/I4BNDuxDtqVbOdm8675T49OIG/NGhaK0pjPX7ZcDlvKYbA+ulvVK3ztfcF4uBdOxuJbQ==}
     dependencies:
       '@gar/promisify': 1.1.3
-      semver: 7.5.4
+      semver: 7.6.0
     dev: true
 
   /@npmcli/fs/2.1.2:
@@ -19751,14 +19673,14 @@ packages:
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
     dependencies:
       '@gar/promisify': 1.1.3
-      semver: 7.5.4
+      semver: 7.6.0
     dev: true
 
   /@npmcli/fs/3.1.0:
     resolution: {integrity: sha512-7kZUAaLscfgbwBQRbvdMYaZOWyMEcPTH/tJjnyAWJ/dvvs9Ef+CERx/qJb9GExJpl1qipaDGn7KqHnFGGixd0w==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     dependencies:
-      semver: 7.5.4
+      semver: 7.6.0
     dev: true
 
   /@npmcli/git/2.1.0:
@@ -19770,7 +19692,7 @@ packages:
       npm-pick-manifest: 6.1.1
       promise-inflight: 1.0.1
       promise-retry: 2.0.1
-      semver: 7.5.4
+      semver: 7.6.0
       which: 2.0.2
     transitivePeerDependencies:
       - bluebird
@@ -19786,7 +19708,7 @@ packages:
       proc-log: 3.0.0
       promise-inflight: 1.0.1
       promise-retry: 2.0.1
-      semver: 7.5.4
+      semver: 7.6.0
       which: 3.0.1
     transitivePeerDependencies:
       - bluebird
@@ -19827,7 +19749,7 @@ packages:
       cacache: 15.3.0
       json-parse-even-better-errors: 2.3.1
       pacote: 12.0.3
-      semver: 7.5.4
+      semver: 7.6.0
     transitivePeerDependencies:
       - bluebird
       - supports-color
@@ -19932,7 +19854,7 @@ packages:
       natural-orderby: 2.0.3
       object-treeify: 1.1.33
       password-prompt: 1.1.3
-      semver: 7.5.4
+      semver: 7.6.0
       string-width: 4.2.3
       strip-ansi: 6.0.1
       supports-color: 8.1.1
@@ -20003,7 +19925,7 @@ packages:
       load-json-file: 5.3.0
       npm: 9.8.1
       npm-run-path: 4.0.1
-      semver: 7.5.4
+      semver: 7.6.0
       shelljs: 0.8.5
       tslib: 2.6.2
       validate-npm-package-name: 5.0.0
@@ -20269,7 +20191,7 @@ packages:
       '@types/shimmer': 1.0.5
       import-in-the-middle: 1.4.2
       require-in-the-middle: 7.2.0
-      semver: 7.5.4
+      semver: 7.6.0
       shimmer: 1.2.1
     transitivePeerDependencies:
       - supports-color
@@ -21714,7 +21636,7 @@ packages:
       util-deprecate: 1.0.2
       watchpack: 2.4.0
       webpack: 4.47.0_webpack-cli@4.10.0
-      ws: 8.14.2
+      ws: 8.16.0
       x-default-browser: 0.4.0
     transitivePeerDependencies:
       - '@storybook/mdx2-csf'
@@ -23455,7 +23377,7 @@ packages:
       debug: 4.3.4
       globby: 11.1.0
       is-glob: 4.0.3
-      semver: 7.5.4
+      semver: 7.6.0
       ts-api-utils: 1.0.3_typescript@5.1.6
       typescript: 5.1.6
     transitivePeerDependencies:
@@ -23536,7 +23458,7 @@ packages:
       '@typescript-eslint/types': 6.13.0
       '@typescript-eslint/typescript-estree': 6.13.0_typescript@5.1.6
       eslint: 8.50.0
-      semver: 7.5.4
+      semver: 7.6.0
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -23555,7 +23477,7 @@ packages:
       '@typescript-eslint/types': 6.7.5
       '@typescript-eslint/typescript-estree': 6.7.5_typescript@5.1.6
       eslint: 8.50.0
-      semver: 7.5.4
+      semver: 7.6.0
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -24808,7 +24730,7 @@ packages:
   /axios/0.26.1:
     resolution: {integrity: sha512-fPwcX4EvnSHuInCMItEhAGnaSEXRBjtzh9fOtsE6E1G6p7vl7edEeZe11QHf18+6+9gR5PbKV/sGKNaD8YaMeA==}
     dependencies:
-      follow-redirects: 1.15.3
+      follow-redirects: 1.15.5
     transitivePeerDependencies:
       - debug
     dev: true
@@ -24816,7 +24738,7 @@ packages:
   /axios/0.26.1_debug@4.3.4:
     resolution: {integrity: sha512-fPwcX4EvnSHuInCMItEhAGnaSEXRBjtzh9fOtsE6E1G6p7vl7edEeZe11QHf18+6+9gR5PbKV/sGKNaD8YaMeA==}
     dependencies:
-      follow-redirects: 1.15.3_debug@4.3.4
+      follow-redirects: 1.15.5_debug@4.3.4
     transitivePeerDependencies:
       - debug
     dev: true
@@ -25299,7 +25221,7 @@ packages:
     dependencies:
       arg-parser: 1.2.0
       commander: 9.5.0
-      semver: 7.5.4
+      semver: 7.6.0
     dev: true
 
   /bfj/7.1.0:
@@ -25674,7 +25596,7 @@ packages:
     resolution: {integrity: sha512-xq+q3SRMOxGivLhBNaUdC64hDTQwejJ+H0T/NB1XMtTVEwNTrfFF3gAxiyW0Bu/xWEGhjVKgUcMhCrUy2+uCWg==}
     dependencies:
       base64-js: 1.5.1
-      ieee754: 1.1.13
+      ieee754: 1.2.1
       isarray: 1.0.0
     dev: true
 
@@ -25706,7 +25628,7 @@ packages:
   /builtins/5.0.1:
     resolution: {integrity: sha512-qwVpFEHNfhYJIzNRBvd2C1kyo6jz3ZSMPyyuR47OPdiKWlbYnZNyDWuyR175qDnAJLiCo5fBBqPb3RiXgWlkOQ==}
     dependencies:
-      semver: 7.5.4
+      semver: 7.6.0
 
   /bytes/3.0.0:
     resolution: {integrity: sha512-pMhOfFDPiv9t5jjIXkHosWmkSyQbvsgEVNkz0ERHbuLh2T/7j4Mqqpz523Fe8MVY89KC6Sh/QfS2sM+SjgFDcw==}
@@ -27163,7 +27085,7 @@ packages:
     resolution: {integrity: sha512-WSg6l2sre6yVp0C4HYzYSJUn6H5tp7av6ZkGyiIKayR+xBqEYPrtxL+LAz8f+wD2VJs7/PDlK+SokaMkCxIGpw==}
     engines: {node: '>=14.x'}
     dependencies:
-      semver: 7.5.4
+      semver: 7.6.0
     dev: true
 
   /create-hash/1.2.0:
@@ -27393,7 +27315,7 @@ packages:
       postcss-modules-values: 4.0.0_postcss@8.4.31
       postcss-value-parser: 4.2.0
       schema-utils: 3.3.0
-      semver: 7.5.4
+      semver: 7.6.0
       webpack: 5.89.0_webpack-cli@4.10.0
     dev: true
 
@@ -28201,7 +28123,7 @@ packages:
   /diagnostic-channel/1.1.1:
     resolution: {integrity: sha512-r2HV5qFkUICyoaKlBEpLKHjxMXATUf/l+h8UZPGBHGLy4DDiY2sOLcIctax4eRnTw5wH2jTMExLntGPJ8eOJxw==}
     dependencies:
-      semver: 7.5.4
+      semver: 7.6.0
     dev: false
 
   /didyoumean/1.2.2:
@@ -29224,7 +29146,7 @@ packages:
     dependencies:
       '@typescript-eslint/utils': 5.62.0_loebgezstcsvd2poh2d55fifke
       eslint: 8.50.0
-      jest: 29.7.0_@types+node@18.19.1
+      jest: 29.7.0
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -29927,7 +29849,7 @@ packages:
   /extrareqp2/1.0.0_debug@4.3.4:
     resolution: {integrity: sha512-Gum0g1QYb6wpPJCVypWP3bbIuaibcFiJcpuPM10YSXp/tzqi84x9PJageob+eN4xVRIOto4wjSGNLyMD54D2xA==}
     dependencies:
-      follow-redirects: 1.15.3_debug@4.3.4
+      follow-redirects: 1.15.5_debug@4.3.4
     transitivePeerDependencies:
       - debug
     dev: true
@@ -30492,7 +30414,7 @@ packages:
       vue-template-compiler:
         optional: true
     dependencies:
-      '@babel/code-frame': 7.23.4
+      '@babel/code-frame': 7.23.5
       chalk: 2.4.2
       eslint: 8.50.0
       micromatch: 3.1.10
@@ -30520,7 +30442,7 @@ packages:
       vue-template-compiler:
         optional: true
     dependencies:
-      '@babel/code-frame': 7.23.4
+      '@babel/code-frame': 7.23.5
       '@types/json-schema': 7.0.15
       chalk: 4.1.2
       chokidar: 3.5.3
@@ -30532,7 +30454,7 @@ packages:
       memfs: 3.5.3
       minimatch: 3.1.2
       schema-utils: 2.7.0
-      semver: 7.5.4
+      semver: 7.6.0
       tapable: 1.1.3
       typescript: 5.1.6
       webpack: 4.47.0_webpack-cli@4.10.0
@@ -30552,7 +30474,7 @@ packages:
       vue-template-compiler:
         optional: true
     dependencies:
-      '@babel/code-frame': 7.23.4
+      '@babel/code-frame': 7.23.5
       '@types/json-schema': 7.0.15
       chalk: 4.1.2
       chokidar: 3.5.3
@@ -30564,7 +30486,7 @@ packages:
       memfs: 3.5.3
       minimatch: 3.1.2
       schema-utils: 2.7.0
-      semver: 7.5.4
+      semver: 7.6.0
       tapable: 1.1.3
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
@@ -31982,7 +31904,7 @@ packages:
     engines: {node: '>=8.0.0'}
     dependencies:
       eventemitter3: 4.0.7
-      follow-redirects: 1.15.3_debug@4.3.4
+      follow-redirects: 1.15.5_debug@4.3.4
       requires-port: 1.0.0
     transitivePeerDependencies:
       - debug
@@ -34500,7 +34422,7 @@ packages:
       lodash.isstring: 4.0.1
       lodash.once: 4.1.1
       ms: 2.1.3
-      semver: 7.5.4
+      semver: 7.6.0
 
   /jsprim/1.4.2:
     resolution: {integrity: sha512-P2bSOMAc/ciLz6DzgjVlGJP9+BrJWu5UDGK70C2iweC5QBIeFf0ZXRvGjEj2uYgrY2MkAAhsSWHDWlFtEroZWw==}
@@ -36853,7 +36775,7 @@ packages:
       nopt: 5.0.0
       npmlog: 6.0.2
       rimraf: 3.0.2
-      semver: 7.5.4
+      semver: 7.6.0
       tar: 6.2.0
       which: 2.0.2
     transitivePeerDependencies:
@@ -36874,7 +36796,7 @@ packages:
       nopt: 6.0.0
       npmlog: 6.0.2
       rimraf: 3.0.2
-      semver: 7.5.4
+      semver: 7.6.0
       tar: 6.2.0
       which: 2.0.2
     transitivePeerDependencies:
@@ -36959,7 +36881,7 @@ packages:
     dependencies:
       hosted-git-info: 4.1.0
       is-core-module: 2.13.1
-      semver: 7.5.4
+      semver: 7.6.0
       validate-npm-package-license: 3.0.4
     dev: true
 
@@ -36969,7 +36891,7 @@ packages:
     dependencies:
       hosted-git-info: 6.1.1
       is-core-module: 2.13.1
-      semver: 7.5.4
+      semver: 7.6.0
       validate-npm-package-license: 3.0.4
     dev: true
 
@@ -37052,7 +36974,7 @@ packages:
       rc-config-loader: 4.1.3
       remote-git-tags: 3.0.0
       rimraf: 5.0.5
-      semver: 7.5.4
+      semver: 7.6.0
       semver-utils: 1.1.4
       source-map-support: 0.5.21
       spawn-please: 2.0.2
@@ -37069,14 +36991,14 @@ packages:
     resolution: {integrity: sha512-09OmyDkNLYwqKPOnbI8exiOZU2GVVmQp7tgez2BPi5OZC8M82elDAps7sxC4l//uSUtotWqoEIDwjRvWH4qz8w==}
     engines: {node: '>=10'}
     dependencies:
-      semver: 7.5.4
+      semver: 7.6.0
     dev: true
 
   /npm-install-checks/6.3.0:
     resolution: {integrity: sha512-W29RiK/xtpCGqn6f3ixfRYGk+zRyr+Ew9F2E20BfXxT5/euLdA/Nm7fO7OeTGuAmTs30cpgInyJ0cYe708YTZw==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     dependencies:
-      semver: 7.5.4
+      semver: 7.6.0
     dev: true
 
   /npm-normalize-package-bin/1.0.1:
@@ -37099,7 +37021,7 @@ packages:
     dependencies:
       hosted-git-info: 6.1.1
       proc-log: 3.0.0
-      semver: 7.5.4
+      semver: 7.6.0
       validate-npm-package-name: 5.0.0
     dev: true
 
@@ -37108,7 +37030,7 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       hosted-git-info: 4.1.0
-      semver: 7.5.4
+      semver: 7.6.0
       validate-npm-package-name: 3.0.0
     dev: true
 
@@ -37136,7 +37058,7 @@ packages:
       npm-install-checks: 4.0.0
       npm-normalize-package-bin: 1.0.1
       npm-package-arg: 8.1.5
-      semver: 7.5.4
+      semver: 7.6.0
     dev: true
 
   /npm-pick-manifest/8.0.2:
@@ -37146,7 +37068,7 @@ packages:
       npm-install-checks: 6.3.0
       npm-normalize-package-bin: 3.0.1
       npm-package-arg: 10.1.0
-      semver: 7.5.4
+      semver: 7.6.0
     dev: true
 
   /npm-registry-fetch/12.0.2:
@@ -37467,7 +37389,7 @@ packages:
       got: 11.8.6
       lodash.template: 4.5.0
       normalize-package-data: 3.0.3
-      semver: 7.5.4
+      semver: 7.6.0
       yeoman-environment: 3.19.3
       yeoman-generator: 5.10.0_yeoman-environment@3.19.3
     transitivePeerDependencies:
@@ -37871,7 +37793,7 @@ packages:
       got: 12.6.1
       registry-auth-token: 5.0.2
       registry-url: 6.0.1
-      semver: 7.5.4
+      semver: 7.6.0
     dev: true
 
   /pacote/12.0.3:
@@ -38561,7 +38483,7 @@ packages:
       loader-utils: 2.0.4
       postcss: 7.0.39
       schema-utils: 3.3.0
-      semver: 7.5.4
+      semver: 7.6.0
       webpack: 4.47.0_webpack-cli@4.10.0
     dev: true
 
@@ -41043,14 +40965,14 @@ packages:
     resolution: {integrity: sha512-0Ju4+6A8iOnpL/Thra7dZsSlOHYAHIeMxfhWQRI1/VLcT3WDBZKKtQt/QkBOsiIN9ZpuvHE6cGZ0x4glCMmfiA==}
     engines: {node: '>=12'}
     dependencies:
-      semver: 7.5.4
+      semver: 7.6.0
     dev: true
 
   /semver-try-require/6.2.3:
     resolution: {integrity: sha512-6q1N/Vr/4/G0EcQ1k4svN5kwfh3MJs4Gfl+zBAVcKn+AeIjKLwTXQ143Y6YHu6xEeN5gSCbCD1/5+NwCipLY5A==}
     engines: {node: ^14||^16||>=18}
     dependencies:
-      semver: 7.5.4
+      semver: 7.6.0
     dev: true
 
   /semver-utils/1.1.4:
@@ -41087,7 +41009,6 @@ packages:
     hasBin: true
     dependencies:
       lru-cache: 6.0.0
-    dev: true
 
   /send/0.18.0:
     resolution: {integrity: sha512-qqWzuOjSFOuqPjFe4NOsMLafToQQwBSOEpS+FwEt3A2V3vKubTquT3vmLTQpFgMXp8AlFWFuP1qKaJZOtPpVXg==}
@@ -41241,7 +41162,7 @@ packages:
     dependencies:
       color: 4.2.3
       detect-libc: 2.0.2
-      semver: 7.5.4
+      semver: 7.6.0
     optionalDependencies:
       '@img/sharp-darwin-arm64': 0.33.2
       '@img/sharp-darwin-x64': 0.33.2
@@ -43251,39 +43172,6 @@ packages:
       yargs-parser: 21.1.1
     dev: true
 
-  /ts-jest/29.1.1_gvmt7aj7nai5bnvsxmiksfugce:
-    resolution: {integrity: sha512-D6xjnnbP17cC85nliwGiL+tpoKN0StpgE0TeOjXQTU6MVCfsB4v7aW05CgQ/1OywGb0x/oy9hHFnN+sczTiRaA==}
-    engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
-    hasBin: true
-    peerDependencies:
-      '@babel/core': '>=7.0.0-beta.0 <8'
-      '@jest/types': ^29.0.0
-      babel-jest: ^29.0.0
-      esbuild: '*'
-      jest: ^29.0.0
-      typescript: '>=4.3 <6'
-    peerDependenciesMeta:
-      '@babel/core':
-        optional: true
-      '@jest/types':
-        optional: true
-      babel-jest:
-        optional: true
-      esbuild:
-        optional: true
-    dependencies:
-      bs-logger: 0.2.6
-      fast-json-stable-stringify: 2.1.0
-      jest: 29.7.0_@types+node@18.19.1
-      jest-util: 29.7.0
-      json5: 2.2.3
-      lodash.memoize: 4.1.2
-      make-error: 1.3.6
-      semver: 7.5.4
-      typescript: 5.1.6
-      yargs-parser: 21.1.1
-    dev: true
-
   /ts-loader/9.5.1_535b6rdv6xzubhvm4whegmtnju:
     resolution: {integrity: sha512-rNH3sK9kGZcH9dYzC7CewQm4NtxJTjSEVRJ2DyBZR7f8/wcta+iV44UPCXc5+nzDzivKtlzV6c9P4e+oFhDLYg==}
     engines: {node: '>=12.0.0'}
@@ -44130,7 +44018,7 @@ packages:
       is-yarn-global: 0.4.1
       latest-version: 7.0.0
       pupa: 3.1.0
-      semver: 7.5.4
+      semver: 7.6.0
       semver-diff: 4.0.0
       xdg-basedir: 5.1.0
     dev: true
@@ -45961,7 +45849,7 @@ packages:
       preferred-pm: 3.1.2
       pretty-bytes: 5.6.0
       readable-stream: 4.4.2
-      semver: 7.5.4
+      semver: 7.6.0
       slash: 3.0.0
       strip-ansi: 6.0.1
       text-table: 0.2.0
@@ -45992,7 +45880,7 @@ packages:
       pacote: 15.2.0
       read-pkg-up: 7.0.1
       run-async: 2.4.1
-      semver: 7.5.4
+      semver: 7.6.0
       shelljs: 0.8.5
       sort-keys: 4.2.0
       text-table: 0.2.0

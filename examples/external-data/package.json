@@ -94,7 +94,6 @@
 		"@types/lodash.isequal": "^4.5.6",
 		"@types/node": "^18.19.0",
 		"@types/node-fetch": "^2.5.10",
-		"@types/puppeteer": "7.0.4",
 		"@types/react": "^17.0.44",
 		"@types/react-dom": "^17.0.18",
 		"@types/valid-url": "^1.0.3",
