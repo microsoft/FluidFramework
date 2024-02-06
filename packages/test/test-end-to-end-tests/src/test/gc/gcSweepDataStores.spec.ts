@@ -46,7 +46,10 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 	);
 	const settings = {};
 
-	const gcOptions: IGCRuntimeOptions = { inactiveTimeoutMs: 0 };
+	const defaultGCOptions: IGCRuntimeOptions = {
+		inactiveTimeoutMs: 0,
+	};
+	let gcOptions: IGCRuntimeOptions = defaultGCOptions;
 	const testContainerConfig: ITestContainerConfig = {
 		runtimeOptions: {
 			summaryOptions: {
@@ -68,6 +71,7 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 		}
 		settings["Fluid.GarbageCollection.RunSweep"] = true;
 		settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
+		gcOptions = defaultGCOptions;
 	});
 
 	async function loadContainer(summaryVersion: string) {
@@ -492,6 +496,40 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 			],
 			async () => {
 				settings["Fluid.GarbageCollection.DisableDataStoreSweep"] = true;
+
+				const { unreferencedId, summarizingContainer, summarizer } =
+					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+				const sweepReadyDataStoreNodePath = `/${unreferencedId}`;
+				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
+
+				// The datastore should NOT be swept here.
+				// We need to do fullTree because the GC data won't change (since it's not swept).
+				// But the validation depends on the GC subtree being present (not a handle).
+				const summary2 = await summarize(summarizer, {
+					reason: "end-to-end test",
+					fullTree: true,
+				});
+
+				// Validate that the data store's state is correct in the summary - it shouldn't have been deleted.
+				validateDataStoreStateInSummary(
+					summary2.summaryTree,
+					sweepReadyDataStoreNodePath,
+					false /* expectDelete */,
+				);
+			},
+		);
+
+		itExpects(
+			"blobOnlySweep option set - DOES NOT update deleted data store state in the summary",
+			[
+				{
+					// Since we do full tree summary, everything is loaded including the sweepReady node
+					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Loaded",
+					clientType: "noninteractive/summarizer",
+				},
+			],
+			async () => {
+				gcOptions.blobOnlySweep = true;
 
 				const { unreferencedId, summarizingContainer, summarizer } =
 					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);

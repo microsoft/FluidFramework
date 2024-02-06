@@ -39,7 +39,12 @@ import {
 describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 	const sweepTimeoutMs = 200;
 	const settings = {};
-	const gcOptions: IGCRuntimeOptions = { inactiveTimeoutMs: 0 };
+	const gcOptions: IGCRuntimeOptions = {
+		inactiveTimeoutMs: 0,
+		//* Eh, some tests should run with it unset...
+		// Ensure that GC for blobs works as expected when this is true
+		blobOnlySweep: true,
+	};
 	const testContainerConfig: ITestContainerConfig = {
 		runtimeOptions: {
 			summaryOptions: {

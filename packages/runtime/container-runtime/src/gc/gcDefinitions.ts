@@ -218,6 +218,8 @@ export interface IGarbageCollector {
 	readonly throwOnTombstoneLoad: boolean;
 	/** Tells whether using a tombstone object should fail or merely log. */
 	readonly throwOnTombstoneUsage: boolean;
+	/** Tells whether we're ONLY sweeping blobs (if Sweep is enabled). */
+	readonly blobOnlySweep: boolean;
 	/** Initialize the state from the base snapshot after its creation. */
 	initializeBaseState(): Promise<void>;
 	/** Run garbage collection and update the reference / used state of the system. */
