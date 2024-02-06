@@ -309,7 +309,10 @@ export class DocumentDeltaConnection
 		return this.details.initialClients;
 	}
 
-	protected emitMessages(type: string, messages: (IDocumentMessage | unknown)[][] | ISentSignalMessage[]) {
+	protected emitMessages(
+		type: string,
+		messages: (IDocumentMessage | unknown)[][] | ISentSignalMessage[],
+	) {
 		// Although the implementation here disconnects the socket and does not reuse it, other subclasses
 		// (e.g. OdspDocumentDeltaConnection) may reuse the socket.  In these cases, we need to avoid emitting
 		// on the still-live socket.
