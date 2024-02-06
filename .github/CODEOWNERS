@@ -32,6 +32,9 @@
 #
 # ------------------------------------------------------------------------
 
+# ID compressor
+/packages/runtime/id-compressor            @microsoft/fluid-cr-id-compressor
+
 # merge tree and merge tree related dds
 /packages/dds/merge-tree                   @microsoft/fluid-cr-merge-tree
 /packages/dds/matrix                       @microsoft/fluid-cr-merge-tree
