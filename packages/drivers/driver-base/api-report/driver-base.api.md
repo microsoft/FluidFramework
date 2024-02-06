@@ -14,6 +14,7 @@ import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentDeltaConnection } from '@fluidframework/driver-definitions';
 import { IDocumentDeltaConnectionEvents } from '@fluidframework/driver-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ISentSignalMessage } from '@fluidframework/protocol-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalClient } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
@@ -50,7 +51,7 @@ export class DocumentDeltaConnection extends EventEmitterWithErrorHandling<IDocu
     // (undocumented)
     protected earlySignalHandler: (msg: ISignalMessage | ISignalMessage[]) => void;
     // (undocumented)
-    protected emitMessages(type: string, messages: unknown[][]): void;
+    protected emitMessages(type: string, messages: (IDocumentMessage | unknown)[][] | ISentSignalMessage[]): void;
     // (undocumented)
     static readonly eventsAlwaysForwarded: string[];
     // (undocumented)
