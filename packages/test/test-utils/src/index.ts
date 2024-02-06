@@ -33,6 +33,7 @@ export {
 } from "./testObjectProvider";
 export {
 	createSummarizer,
+	createSummarizerCore,
 	createSummarizerFromFactory,
 	summarizeNow,
 	SummaryInfo,
