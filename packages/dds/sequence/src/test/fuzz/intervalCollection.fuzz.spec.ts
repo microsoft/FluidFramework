@@ -207,9 +207,9 @@ describe("IntervalCollection fuzz testing", () => {
 		// on segments that can be zamboni'd.
 		// TODO:AB#5337: re-enable these seeds.
 		skip: [
-			2, 3, 7, 8, 9, 10, 12, 15, 17, 19, 22, 23, 24, 26, 28, 29, 31, 32, 33, 37, 38, 41, 43,
-			46, 52, 53, 54, 57, 62, 64, 65, 66, 68, 69, 71, 75, 76, 77, 78, 79, 81, 83, 86, 87, 88,
-			95, 96, 98,
+			1, 4, 5, 12, 13, 15, 16, 17, 18, 19, 28, 29, 24, 25, 28, 31, 34, 35, 36, 37, 38, 40, 41,
+			43, 45, 46, 47, 49, 52, 60, 62, 64, 66, 68, 69, 70, 71, 73, 74, 78, 80, 83, 85, 86, 91,
+			92, 93,
 		],
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
@@ -225,7 +225,7 @@ describe("IntervalCollection no reconnect fuzz testing", () => {
 	const options = {
 		...defaultFuzzOptions,
 		// AB#4477: Same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477
-		skip: [88],
+		skip: [68],
 		reconnectProbability: 0.0,
 		clientJoinOptions: {
 			maxNumberOfClients: 3,
@@ -250,10 +250,11 @@ describe("IntervalCollection fuzz testing with rebased batches", () => {
 		...defaultFuzzOptions,
 		// AB#4477: Either the same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477,
 		// or 0x54e, see AB#5337 or comment on "default interval collection" fuzz suite.
-		skip: [
-			1, 2, 3, 5, 6, 11, 14, 16, 17, 20, 22, 27, 29, 32, 34, 38, 39, 41, 42, 43, 52, 56, 58,
-			60, 67, 68, 69, 71, 79, 86, 94, 95,
-		],
+		// skip: [
+		// 	1, 2, 3, 5, 6, 11, 14, 16, 17, 20, 22, 27, 29, 32, 34, 38, 39, 41, 42, 43, 52, 56, 58,
+		// 	60, 67, 68, 69, 71, 79, 86, 94, 95,
+		// ],
+		skip: [44],
 		reconnectProbability: 0.0,
 		clientJoinOptions: {
 			maxNumberOfClients: 3,

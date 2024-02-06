@@ -669,7 +669,9 @@ export function mixinAttach<
 						state.containerRuntimeFactory,
 						clientA,
 						model.factory,
-						index === 0 ? "summarizer" : makeFriendlyClientId(state.random, index),
+						index === 0 && clientA.channel.id !== "summarizer"
+							? "summarizer"
+							: makeFriendlyClientId(state.random, index),
 						options,
 					),
 				),
@@ -680,8 +682,12 @@ export function mixinAttach<
 			// However, now that we're transitioning to an attached state, the summarizer client should never have any edits.
 			// Thus we use one of the clients we just loaded as the summarizer client, and keep the client around that we generated the
 			// attach summary from.
-			const summarizerClient = clients[0];
-			clients[0] = state.clients[0];
+			let summarizerClient = clients[0];
+			if (clientA.channel.id === "summarizer") {
+				summarizerClient = clientA;
+			} else {
+				clients[0] = state.clients[0];
+			}
 
 			return {
 				...state,
@@ -689,29 +695,28 @@ export function mixinAttach<
 				clients,
 				summarizerClient,
 			};
-		}
-		if (operation.type === "rehydrate") {
-			state.isDetached = true;
-			assert.equal(state.clients.length, 1);
+		} else if (operation.type === "rehydrate") {
 			const clientA = state.clients[0];
+			assert.equal(state.clients.length, 1);
+			state.isDetached = true;
 
-			const clients = await Promise.all(
-				Array.from({ length: 1 }, async (_, index) =>
-					loadClient(
-						state.containerRuntimeFactory,
-						clientA,
-						model.factory,
-						index === 0 ? "summarizer" : makeFriendlyClientId(state.random, index),
-						options,
-					),
-				),
+			const factory = new MockContainerRuntimeFactoryForReconnection(
+				options.containerRuntimeOptions,
 			);
-			const summarizerClient = clients[0];
-			clients[0] = state.clients[0];
+			state.containerRuntimeFactory = factory;
+			const summarizerClient = await loadDetached(
+				state.containerRuntimeFactory,
+				clientA,
+				model.factory,
+				"summarizer",
+				options,
+			);
+
 			return {
 				...state,
+				// containerRuntimeFactory: factory,
 				isDetached: true,
-				clients,
+				clients: [summarizerClient],
 				summarizerClient,
 			};
 		}
@@ -1060,6 +1065,50 @@ async function loadClient<TChannelFactory extends IChannelFactory>(
 		factory.attributes,
 	)) as ReturnType<TChannelFactory["create"]>;
 	channel.connect(services);
+	const newClient: Client<TChannelFactory> = {
+		channel,
+		containerRuntime,
+		dataStoreRuntime,
+	};
+	options.emitter.emit("clientCreate", newClient);
+	return newClient;
+}
+
+async function loadDetached<TChannelFactory extends IChannelFactory>(
+	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
+	summarizerClient: Client<TChannelFactory>,
+	factory: TChannelFactory,
+	clientId: string,
+	options: Omit<DDSFuzzSuiteOptions, "only" | "skip">,
+): Promise<Client<TChannelFactory>> {
+	containerRuntimeFactory.synchronizeIdCompressors();
+
+	const { summary } = await summarizerClient.channel.summarize();
+	let idCompressorSummary: SerializedIdCompressorWithNoSession | undefined;
+	if (summarizerClient.dataStoreRuntime.idCompressor !== undefined) {
+		idCompressorSummary = summarizerClient.dataStoreRuntime.idCompressor.serialize(false);
+	}
+
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({
+		clientId,
+		idCompressor:
+			options.idCompressorFactory === undefined
+				? undefined
+				: options.idCompressorFactory(idCompressorSummary),
+	});
+	dataStoreRuntime.local = true;
+	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	const services: IChannelServices = {
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
+		objectStorage: MockStorage.createFromSummary(summary),
+	};
+
+	const channel = (await factory.load(
+		dataStoreRuntime,
+		clientId,
+		services,
+		factory.attributes,
+	)) as ReturnType<TChannelFactory["create"]>;
 	const newClient: Client<TChannelFactory> = {
 		channel,
 		containerRuntime,

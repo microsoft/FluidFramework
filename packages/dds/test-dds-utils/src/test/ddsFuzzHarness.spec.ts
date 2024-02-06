@@ -510,7 +510,7 @@ describe("DDS Fuzz Harness", () => {
 					mixinAttach(
 						{
 							...baseModel,
-							generatorFactory: () => takeAsync(11, baseModel.generatorFactory()),
+							generatorFactory: () => takeAsync(12, baseModel.generatorFactory()),
 						},
 						options,
 					),
