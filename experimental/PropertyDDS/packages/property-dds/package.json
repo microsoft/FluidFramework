@@ -53,7 +53,7 @@
 		"fastest-json-copy": "^1.0.1",
 		"lodash": "^4.17.21",
 		"lz4js": "^0.2.0",
-		"msgpackr": "^1.4.7",
+		"msgpackr": "^1.10.1",
 		"pako": "^2.0.4",
 		"uuid": "^9.0.0"
 	},

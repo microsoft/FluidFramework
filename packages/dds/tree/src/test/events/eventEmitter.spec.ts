@@ -16,13 +16,10 @@ interface TestEvents {
 describe("EventEmitter", () => {
 	it("emits events", () => {
 		const emitter = createEmitter<TestEvents>();
-		let opened = false;
-		emitter.on("open", () => {
-			assert(!opened, "Event should only be fired once");
-			opened = true;
-		});
+		const log: string[] = [];
+		emitter.on("open", () => log.push("opened"));
 		emitter.emit("open");
-		assert(opened);
+		assert.deepEqual(log, ["opened"]);
 	});
 
 	it("emits events and collects their results", () => {
@@ -100,6 +97,11 @@ describe("EventEmitter", () => {
 		assert(!closed);
 	});
 
+	// TODO: this behavior is questionable due to how it relates to unregister events.
+	// If events registered twice stop firing when unregistered once, that seems odd.
+	// Also if two place (that don't know about each-other) add some callback for the same event,
+	// it seems off that the behavior, and how they have to handle un-registration depends on if the functions they provided
+	// happen to compare equal (ex: two calls to a logger or fail could hit this).
 	it("ignores duplicate events", () => {
 		const emitter = createEmitter<TestEvents>();
 		let count = 0;
@@ -133,6 +135,38 @@ describe("EventEmitter", () => {
 					"Event has no listeners. Event deregistration functions may only be invoked once.",
 				),
 		);
+	});
+
+	it("skips events adding during event", () => {
+		const emitter = createEmitter<TestEvents>();
+		const log: string[] = [];
+		const unsubscribe = emitter.on("open", () => {
+			log.push("A");
+			emitter.on("open", () => {
+				log.push("B");
+			});
+		});
+		emitter.emit("open");
+		unsubscribe();
+		assert.deepEqual(log, ["A"]);
+		emitter.emit("open");
+		assert.deepEqual(log, ["A", "B"]);
+	});
+
+	it("reentrant events", () => {
+		const emitter = createEmitter<TestEvents>();
+		const log: string[] = [];
+		const unsubscribe = emitter.on("open", () => {
+			log.push("A1");
+			emitter.on("open", () => {
+				log.push("B");
+			});
+			unsubscribe();
+			emitter.emit("open");
+			log.push("A2");
+		});
+		emitter.emit("open");
+		assert.deepEqual(log, ["A1", "B", "A2"]);
 	});
 });
 
