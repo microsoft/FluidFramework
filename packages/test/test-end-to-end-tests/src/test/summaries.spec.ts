@@ -17,7 +17,11 @@ import {
 } from "@fluidframework/container-runtime";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { channelsTreeName, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import {
+	channelsTreeName,
+	FlushMode,
+	IFluidDataStoreFactory,
+} from "@fluidframework/runtime-definitions";
 import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	waitForContainerConnection,
@@ -27,6 +31,9 @@ import {
 	summarizeNow,
 	createSummarizer,
 	getContainerEntryPointBackCompat,
+	ITestFluidObject,
+	ChannelFactoryRegistry,
+	DataObjectFactoryType,
 } from "@fluidframework/test-utils";
 import {
 	describeCompat,
@@ -38,6 +45,7 @@ import {
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
+import { SharedString } from "@fluidframework/sequence";
 
 const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
 const testContainerConfig: ITestContainerConfig = {
@@ -400,6 +408,99 @@ describeCompat("Summaries", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 		defaultDataStore._root.set("key", "value");
 		await provider.ensureSynchronized();
 		await summaryCollection.waitSummaryAck(container.deltaManager.lastSequenceNumber);
+	});
+
+	function isUnsummarizedOpsNack(error) {
+		assert.strictEqual(error?.statusCode, 429);
+		assert.strictEqual(
+			error?.message,
+			"Nack (ThrottlingError): Submit a summary before inserting additional operations",
+		);
+	}
+
+	async function getNackProm(container: IContainer) {
+		return new Promise<void>((resolve) => {
+			const callback = (reason) => {
+				const obj = reason;
+				isUnsummarizedOpsNack(obj.error);
+				resolve();
+				container.deltaManager.off("disconnect", callback);
+			};
+			container.deltaManager.on("disconnect", callback);
+		});
+	}
+
+	it("test", async function () {
+		if (provider.driver.type !== "local") {
+			this.skip();
+		}
+		const stringId = "sharedStringKey";
+		const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
+		const config: ITestContainerConfig = {
+			...testContainerConfig,
+			fluidDataObjectType: DataObjectFactoryType.Test,
+			registry,
+			runtimeOptions: {
+				flushMode: FlushMode.Immediate,
+			},
+		};
+		const configNoSummarizer: ITestContainerConfig = {
+			...config,
+			runtimeOptions: {
+				...config.runtimeOptions,
+				summaryOptions: {
+					summaryConfigOverrides: {
+						state: "disabled",
+					},
+				},
+			},
+		};
+		const container1 = await provider.makeTestContainer(configNoSummarizer);
+		const entryPoint1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+		const sharedString1 = await entryPoint1.getSharedObject<SharedString>(stringId);
+
+		const container2 = await provider.loadTestContainer(configNoSummarizer);
+		const entryPoint2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+		const sharedString2 = await entryPoint2.getSharedObject<SharedString>(stringId);
+
+		await waitForContainerConnection(container1);
+		await waitForContainerConnection(container2);
+		await provider.ensureSynchronized();
+
+		// Max unsummarized ops is currently 200 for local service in e2e tests (see localServerTestDriver.ts)
+		for (let i = 0; i < 200; i++) {
+			sharedString1.insertText(0, "a");
+		}
+		await provider.ensureSynchronized();
+		{
+			// op 201 will get nacked
+			const prom = getNackProm(container1);
+			sharedString1.insertText(0, "a");
+			await prom;
+		}
+		{
+			// op 202 will get nacked
+			const prom = getNackProm(container1);
+			sharedString1.insertText(0, "a");
+			await prom;
+		}
+
+		// We can't call ensureSynchornized here as container1 will reconnect loop
+		await flushPromises();
+
+		assert.strictEqual(sharedString1.getLength(), 202);
+		assert.strictEqual(sharedString2.getLength(), 200);
+
+		const { summarizer } = await createSummarizer(provider, container2, config);
+		await summarizeNow(summarizer);
+
+		// Op 203 will succeed since we summarized
+		sharedString1.insertText(0, "a");
+
+		await provider.ensureSynchronized();
+		await flushPromises();
+		assert.strictEqual(sharedString1.getLength(), 203);
+		assert.strictEqual(sharedString2.getLength(), 203);
 	});
 });
 
