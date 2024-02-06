@@ -738,15 +738,21 @@ describe("Garbage Collection configurations", () => {
 				);
 			});
 		});
-		describe("shouldRunSweep", () => {
+		//* ONLY
+		//* ONLY
+		//* ONLY
+		//* ONLY
+		//* ONLY
+		describe.only("shouldRunSweep", () => {
 			const testCases: {
 				shouldRunGC: boolean;
 				sweepEnabled: boolean;
+				blobOnlySweep?: true;
 				shouldRunSweep?: boolean;
-				expectedShouldRunSweep: boolean;
+				expectedShouldRunSweep: IGarbageCollectorConfigs["shouldRunSweep"];
 			}[] = [
 				{
-					shouldRunGC: false,
+					shouldRunGC: false, // Veto power
 					sweepEnabled: true,
 					shouldRunSweep: true,
 					expectedShouldRunSweep: false,
@@ -760,12 +766,20 @@ describe("Garbage Collection configurations", () => {
 				{
 					shouldRunGC: true,
 					sweepEnabled: true,
-					shouldRunSweep: false,
+					shouldRunSweep: false, // Veto power
 					expectedShouldRunSweep: false,
 				},
 				{
 					shouldRunGC: true,
-					sweepEnabled: false,
+					sweepEnabled: true,
+					blobOnlySweep: true,
+					shouldRunSweep: false, // Veto power
+					expectedShouldRunSweep: false,
+				},
+				{
+					shouldRunGC: true,
+					sweepEnabled: false, // Overriden by shouldRunSweep
+					blobOnlySweep: true, // Ignored when shouldRunSweep is set
 					shouldRunSweep: true,
 					expectedShouldRunSweep: true,
 				},
@@ -777,6 +791,18 @@ describe("Garbage Collection configurations", () => {
 				{
 					shouldRunGC: true,
 					sweepEnabled: false,
+					expectedShouldRunSweep: false,
+				},
+				{
+					shouldRunGC: true,
+					sweepEnabled: true,
+					blobOnlySweep: true,
+					expectedShouldRunSweep: "ONLY_BLOBS",
+				},
+				{
+					shouldRunGC: true,
+					sweepEnabled: false,
+					blobOnlySweep: true,
 					expectedShouldRunSweep: false,
 				},
 			];
@@ -787,6 +813,7 @@ describe("Garbage Collection configurations", () => {
 					gc = createGcWithPrivateMembers(
 						undefined /* metadata */,
 						{
+							blobOnlySweep: testCase.blobOnlySweep, //* Name metadata key
 							[gcSweepGenerationOptionName]: testCase.sweepEnabled ? 1 : undefined,
 						} /* gcOptions */,
 					);
