@@ -134,6 +134,10 @@ export class GarbageCollector implements IGarbageCollector {
 	public get throwOnTombstoneUsage(): boolean {
 		return this.configs.throwOnTombstoneUsage;
 	}
+	/** Tells whether we're ONLY sweeping blobs (only applicable if Sweep is enabled). */
+	public get blobOnlySweep(): boolean {
+		return this.configs.shouldRunSweep === "ONLY_BLOBS";
+	}
 
 	/** For a given node path, returns the node's package path. */
 	private readonly getNodePackagePath: (
@@ -386,7 +390,7 @@ export class GarbageCollector implements IGarbageCollector {
 		// tombstones.
 		// If this call is because we are refreshing from a snapshot due to an ack, it is likely that the GC state
 		// in the snapshot is newer than this client's. And so, the deleted / tombstone nodes need to be updated.
-		if (this.configs.shouldRunSweep) {
+		if (this.configs.shouldRunSweep !== false) {
 			const snapshotDeletedNodes = snapshotData?.deletedNodes
 				? new Set(snapshotData.deletedNodes)
 				: undefined;
@@ -728,7 +732,7 @@ export class GarbageCollector implements IGarbageCollector {
 			this.runtime.updateTombstonedRoutes(this.tombstones);
 		}
 
-		if (this.configs.shouldRunSweep && nodesToDelete.length > 0) {
+		if (this.configs.shouldRunSweep !== false && nodesToDelete.length > 0) {
 			// Do not send DDS node ids in the GC op. This is an optimization to reduce its size. Since GC applies to
 			// to data store only, all its DDSes are deleted along with it. The DDS ids will be retrieved from the
 			// local state when processing the op.

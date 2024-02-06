@@ -2948,8 +2948,13 @@ export class ContainerRuntime
 		const { dataStoreRoutes, blobManagerRoutes } =
 			this.getDataStoreAndBlobManagerRoutes(sweepReadyRoutes);
 
-		const deletedRoutes = this.dataStores.deleteSweepReadyNodes(dataStoreRoutes);
-		return deletedRoutes.concat(this.blobManager.deleteSweepReadyNodes(blobManagerRoutes));
+		// Start with Blob routes, and only add DataStore routes if applicable
+		const deletedRoutes = this.blobManager.deleteSweepReadyNodes(blobManagerRoutes);
+		if (this.garbageCollector.blobOnlySweep) {
+			return deletedRoutes;
+		}
+
+		return deletedRoutes.concat(this.dataStores.deleteSweepReadyNodes(dataStoreRoutes));
 	}
 
 	/**

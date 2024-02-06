@@ -318,6 +318,29 @@ describe("Garbage Collection configurations", () => {
 				"getMetadata returned different metadata than loaded from",
 			);
 		});
+		it("Metadata Roundtrip with only tombstoneGeneration", () => {
+			const inputMetadata: IGCMetadata = {
+				sweepEnabled: true, // ignored
+				gcFeature: 1,
+				sessionExpiryTimeoutMs: customSessionExpiryDurationMs,
+				sweepTimeoutMs: 123,
+				gcFeatureMatrix: { tombstoneGeneration: 1 },
+			};
+			gc = createGcWithPrivateMembers(inputMetadata, {
+				[gcTombstoneGenerationOptionName]: 2, // 2 should not be persisted
+			});
+			const outputMetadata = gc.getMetadata();
+			const expectedOutputMetadata: IGCMetadata = {
+				...inputMetadata,
+				sweepEnabled: false, // Hardcoded, not used
+				gcFeature: stableGCVersion,
+			};
+			assert.deepEqual(
+				outputMetadata,
+				expectedOutputMetadata,
+				"getMetadata returned different metadata than loaded from",
+			);
+		});
 		it("Metadata Roundtrip with GC version upgrade to v4 enabled", () => {
 			injectedSettings[gcVersionUpgradeToV4Key] = true;
 			const inputMetadata: IGCMetadata = {
@@ -759,8 +782,9 @@ describe("Garbage Collection configurations", () => {
 				shouldRunGC: boolean;
 				sweepEnabled_doc: boolean;
 				sweepEnabled_session: boolean;
+				blobOnlySweep?: true;
 				shouldRunSweep?: boolean;
-				expectedShouldRunSweep: boolean;
+				expectedShouldRunSweep: IGarbageCollectorConfigs["shouldRunSweep"];
 			}[] = [
 				{
 					shouldRunGC: false, // Veto power
@@ -773,6 +797,7 @@ describe("Garbage Collection configurations", () => {
 					shouldRunGC: true,
 					sweepEnabled_doc: true,
 					sweepEnabled_session: true,
+					blobOnlySweep: true, // Ignored when shouldRunSweep is set
 					shouldRunSweep: true,
 					expectedShouldRunSweep: true,
 				},
@@ -780,14 +805,15 @@ describe("Garbage Collection configurations", () => {
 					shouldRunGC: true,
 					sweepEnabled_doc: true,
 					sweepEnabled_session: true,
+					blobOnlySweep: true,
 					shouldRunSweep: false, // Veto power
 					expectedShouldRunSweep: false,
 				},
 				{
 					shouldRunGC: true,
 					sweepEnabled_doc: true,
-					sweepEnabled_session: false,
-					shouldRunSweep: true, // Overrides sweepEnabled_session
+					sweepEnabled_session: false, // Overriden by shouldRunSweep
+					shouldRunSweep: true,
 					expectedShouldRunSweep: true,
 				},
 				{
@@ -800,13 +826,22 @@ describe("Garbage Collection configurations", () => {
 					shouldRunGC: true,
 					sweepEnabled_doc: true,
 					sweepEnabled_session: false, // Veto
+					blobOnlySweep: true, //* This should probably actually win here (makes sense with sweepEnabled_session being undefined not false)
 					expectedShouldRunSweep: false,
 				},
 				{
 					shouldRunGC: true,
 					sweepEnabled_doc: false, // Veto
 					sweepEnabled_session: true,
+					blobOnlySweep: true,
 					expectedShouldRunSweep: false,
+				},
+				{
+					shouldRunGC: true,
+					sweepEnabled_doc: true,
+					sweepEnabled_session: true,
+					blobOnlySweep: true,
+					expectedShouldRunSweep: "ONLY_BLOBS",
 				},
 			];
 			testCases.forEach((testCase, index) => {
@@ -820,6 +855,7 @@ describe("Garbage Collection configurations", () => {
 						} /* metadata */,
 						{
 							enableGCSweep: testCase.sweepEnabled_session ? true : undefined,
+							blobOnlySweep: testCase.blobOnlySweep,
 							[gcGenerationOptionName]: testCase.sweepEnabled_doc ? 1 : 2,
 						} /* gcOptions */,
 					);

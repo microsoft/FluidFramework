@@ -46,11 +46,12 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 	);
 	const settings = {};
 
-	const gcOptions: IGCRuntimeOptions = {
+	const defaultGCOptions: IGCRuntimeOptions = {
 		inactiveTimeoutMs: 0,
 		enableGCSweep: true,
 		sweepGracePeriodMs: 0, // Skip Tombstone, these tests focus on Sweep
 	};
+	let gcOptions: IGCRuntimeOptions = defaultGCOptions;
 	const testContainerConfig: ITestContainerConfig = {
 		runtimeOptions: {
 			summaryOptions: {
@@ -71,6 +72,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 			this.skip();
 		}
 		settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
+		gcOptions = defaultGCOptions;
 	});
 
 	async function loadContainer(summaryVersion: string) {
@@ -567,6 +569,40 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				// Validate that the data store's state is correct in the summary - it shouldn't have been deleted.
 				validateDataStoreStateInSummary(
 					summary3.summaryTree,
+					sweepReadyDataStoreNodePath,
+					false /* expectDelete */,
+				);
+			},
+		);
+
+		itExpects(
+			"blobOnlySweep option set - DOES NOT update deleted data store state in the summary",
+			[
+				{
+					// Since we do full tree summary, everything is loaded including the sweepReady node
+					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Loaded",
+					clientType: "noninteractive/summarizer",
+				},
+			],
+			async () => {
+				gcOptions.blobOnlySweep = true;
+
+				const { unreferencedId, summarizingContainer, summarizer } =
+					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+				const sweepReadyDataStoreNodePath = `/${unreferencedId}`;
+				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
+
+				// The datastore should NOT be swept here.
+				// We need to do fullTree because the GC data won't change (since it's not swept).
+				// But the validation depends on the GC subtree being present (not a handle).
+				const summary2 = await summarize(summarizer, {
+					reason: "end-to-end test",
+					fullTree: true,
+				});
+
+				// Validate that the data store's state is correct in the summary - it shouldn't have been deleted.
+				validateDataStoreStateInSummary(
+					summary2.summaryTree,
 					sweepReadyDataStoreNodePath,
 					false /* expectDelete */,
 				);

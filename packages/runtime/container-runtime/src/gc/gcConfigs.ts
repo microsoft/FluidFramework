@@ -142,7 +142,8 @@ export function generateGCConfigs(
 		!shouldRunGC || sweepTimeoutMs === undefined
 			? false
 			: mc.config.getBoolean(runSweepKey) ??
-			  (sweepAllowed && createParams.gcOptions.enableGCSweep === true);
+				(!sweepAllowed ? false : !createParams.gcOptions.enableGCSweep ? false : createParams.gcOptions.blobOnlySweep ? "ONLY_BLOBS" : true);
+				//* (!sweepAllowed ? false : createParams.gcOptions.blobOnlySweep ? "ONLY_BLOBS" : createParams.gcOptions.enableGCSweep);
 
 	// Override inactive timeout if test config or gc options to override it is set.
 	const inactiveTimeoutMs =
