@@ -228,7 +228,7 @@ FluidFramework.com's Logical Hierarchy is defined in `packages.json` within the 
 
 #### Structure
 
-- **FluidFramework**: Groupings Divided into the sub-categories; Classes, Enums, Interfaces and Types. Which contain the APIs that should be exposed in the Logical Hierarchy
+- **FluidFramework**: FluidFramework is split up into groupings which is then divided into the sub-categories; Classes, Enums, Interfaces and Types. The sub-categories contain the APIs that should be exposed in the Logical Hierarchy.
 - **Service Clients**: Lists integration packages for the framework.
 
 ### Table of Contents
