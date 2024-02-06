@@ -11,11 +11,10 @@
 "@fluidframework/odsp-driver": minor
 "@fluidframework/replay-driver": minor
 "@fluidframework/runtime-definitions": minor
-"@fluid-private/test-end-to-end-tests": minor
 "@fluid-private/test-loader-utils": minor
 "@fluidframework/test-runtime-utils": minor
 ---
 
-Type changes
+submitSignal type changes
 
-`content` Type change from `any`/`IDocumentMessage` to `unknown` for submitSignal functions
+`content` type change from `any`/`IDocumentMessage` to `unknown` for submitSignal functions.
