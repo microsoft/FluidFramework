@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { globals } from "../jest.config";
+import { globals } from "../jest.config.cjs";
 
 // Skipping these tests as the example doesn't seem to be working
 describe.skip("partial checkout", () => {

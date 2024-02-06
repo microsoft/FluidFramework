@@ -4,7 +4,7 @@
  */
 
 import { retryWithEventualValue } from "@fluidframework/test-utils";
-import { globals } from "../../jest.config";
+import { globals } from "../../jest.config.cjs";
 
 describe("End to end tests", () => {
 	/**
