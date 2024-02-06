@@ -38,3 +38,5 @@
 /packages/dds/tree                         @microsoft/fluid-cr-tree
 /experimental/dds/tree                     @microsoft/fluid-cr-tree
 
+# ID compressor
+/packages/runtime/id-compressor            @microsoft/fluid-cr-id-compressor
