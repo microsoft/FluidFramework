@@ -460,19 +460,17 @@ export class TempCollabSpaceRuntime
 	private populateRowColMaps() {
 		const rowCount = this.matrix.rowCount;
 		const colCount = this.matrix.colCount;
-		let rowIdIndex;
-		for (rowIdIndex = 1; rowIdIndex < rowCount; rowIdIndex++) {
+		for (let rowIdIndex = 1; rowIdIndex < rowCount; rowIdIndex++) {
 			const currentRowId = this.matrix.getCell(rowIdIndex, 0) as unknown as string;
 			this.rowMap.set(currentRowId, rowIdIndex);
 		}
 
-		let colIdIndex;
-		for (colIdIndex = 1; colIdIndex < colCount; colIdIndex++) {
+		for (let colIdIndex = 1; colIdIndex < colCount; colIdIndex++) {
 			const currentColId = this.matrix.getCell(0, colIdIndex) as unknown as string;
 			this.colMap.set(currentColId, colIdIndex);
 		}
 	}
-	
+
 	private mapChannelToCell(channelId: string) {
 		const parts = channelId.split(",");
 		assert(parts.length === 3, "wrong channel ID");
@@ -480,7 +478,7 @@ export class TempCollabSpaceRuntime
 		const colId = parts[1];
 		const iteration = parts[2];
 
-		// In case the channel is about to be created for the first time we need to populate the rowMap and colMap maps.
+		// In case the channel is about to be created we need to populate the rowMap and colMap maps.
 		if (this.rowMap.size === 0 || this.colMap.size === 0) {
 			this.populateRowColMaps();
 		}
