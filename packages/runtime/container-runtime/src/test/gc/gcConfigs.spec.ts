@@ -738,12 +738,7 @@ describe("Garbage Collection configurations", () => {
 				);
 			});
 		});
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		describe.only("shouldRunSweep", () => {
+		describe("shouldRunSweep", () => {
 			const testCases: {
 				shouldRunGC: boolean;
 				sweepEnabled: boolean;
@@ -760,6 +755,7 @@ describe("Garbage Collection configurations", () => {
 				{
 					shouldRunGC: true,
 					sweepEnabled: true,
+					blobOnlySweep: true, // Ignored when shouldRunSweep is set
 					shouldRunSweep: true,
 					expectedShouldRunSweep: true,
 				},
@@ -779,7 +775,6 @@ describe("Garbage Collection configurations", () => {
 				{
 					shouldRunGC: true,
 					sweepEnabled: false, // Overriden by shouldRunSweep
-					blobOnlySweep: true, // Ignored when shouldRunSweep is set
 					shouldRunSweep: true,
 					expectedShouldRunSweep: true,
 				},
@@ -813,7 +808,7 @@ describe("Garbage Collection configurations", () => {
 					gc = createGcWithPrivateMembers(
 						undefined /* metadata */,
 						{
-							blobOnlySweep: testCase.blobOnlySweep, //* Name metadata key
+							blobOnlySweep: testCase.blobOnlySweep,
 							[gcSweepGenerationOptionName]: testCase.sweepEnabled ? 1 : undefined,
 						} /* gcOptions */,
 					);

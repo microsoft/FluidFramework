@@ -39,12 +39,10 @@ import {
 describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 	const sweepTimeoutMs = 200;
 	const settings = {};
-	const gcOptions: IGCRuntimeOptions = {
+	const defaultGCOptions: IGCRuntimeOptions = {
 		inactiveTimeoutMs: 0,
-		//* Eh, some tests should run with it unset...
-		// Ensure that GC for blobs works as expected when this is true
-		blobOnlySweep: true,
 	};
+	let gcOptions: IGCRuntimeOptions = defaultGCOptions;
 	const testContainerConfig: ITestContainerConfig = {
 		runtimeOptions: {
 			summaryOptions: {
@@ -105,6 +103,7 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		settings["Fluid.GarbageCollection.RunSweep"] = true;
 		settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
+		gcOptions = defaultGCOptions;
 	});
 
 	describe("Attachment blobs in attached container", () => {
@@ -1025,7 +1024,10 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 			}
 		});
 
-		it("updates deleted blob state in the summary", async () => {
+		[true, undefined].forEach((blobOnlySweep) => 
+		it(`updates deleted blob state in the summary [blobOnlySweep=${blobOnlySweep}]`, async () => {
+			gcOptions.blobOnlySweep = blobOnlySweep;
+
 			const { dataStore: mainDataStore, summarizer } = await createDataStoreAndSummarizer();
 
 			// Upload an attachment blob.
@@ -1054,6 +1056,6 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 			const summary2 = await summarizeNow(summarizer);
 			// Validate that the deleted blob's state is correct in the summary.
 			validateBlobStateInSummary(summary2.summaryTree, blob1NodePath);
-		});
+		}));
 	});
 });
