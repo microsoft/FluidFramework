@@ -468,7 +468,7 @@ importers:
       process: 0.11.10
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
@@ -559,7 +559,7 @@ importers:
       process: 0.11.10
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
@@ -644,7 +644,7 @@ importers:
       process: 0.11.10
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
@@ -852,7 +852,7 @@ importers:
       prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
@@ -937,7 +937,7 @@ importers:
       process: 0.11.10
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
@@ -1050,7 +1050,7 @@ importers:
       puppeteer: 17.1.3
       rimraf: 4.4.1
       style-loader: 1.3.0_webpack@5.89.0
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
@@ -1060,6 +1060,7 @@ importers:
 
   examples/benchmarks/bubblebench/baseline:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-example/bubblebench-common': workspace:~
       '@fluid-example/example-utils': workspace:~
       '@fluid-tools/webpack-fluid-loader': workspace:~
@@ -1090,6 +1091,7 @@ importers:
       rimraf: ^4.4.0
       ts-jest: ^29.1.1
       ts-loader: ^9.3.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       webpack: ^5.82.0
       webpack-cli: ^4.9.2
@@ -1105,6 +1107,7 @@ importers:
       '@fluidframework/map': link:../../../../packages/dds/map
       react: 17.0.2
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/webpack-fluid-loader': link:../../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
@@ -1125,8 +1128,9 @@ importers:
       prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
       webpack-cli: 4.10.0_o3vqr5s7sd4b3hfy35jxofofzu
@@ -1135,6 +1139,7 @@ importers:
 
   examples/benchmarks/bubblebench/common:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-experimental/tree': workspace:~
       '@fluid-tools/build-cli': ^0.29.0
       '@fluidframework/aqueduct': workspace:~
@@ -1164,6 +1169,7 @@ importers:
       react: ^17.0.1
       react-dom: ^17.0.1
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       use-resize-observer: ^7.0.0
     dependencies:
@@ -1179,6 +1185,7 @@ importers:
       react-dom: 17.0.2_react@17.0.2
       use-resize-observer: 7.1.0_sfoxds7t5ydpegc3knd667wn6m
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.29.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
@@ -1198,10 +1205,12 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   examples/benchmarks/bubblebench/editable-shared-tree:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-example/bubblebench-common': workspace:~
       '@fluid-example/example-utils': workspace:~
       '@fluid-experimental/tree': workspace:~
@@ -1234,6 +1243,7 @@ importers:
       rimraf: ^4.4.0
       ts-jest: ^29.1.1
       ts-loader: ^9.3.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       typescript-formatter: ^7.1.0
       webpack: ^5.82.0
@@ -1252,6 +1262,7 @@ importers:
       '@fluidframework/tree': link:../../../../packages/dds/tree
       react: 17.0.2
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/webpack-fluid-loader': link:../../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
@@ -1272,8 +1283,9 @@ importers:
       prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
       typescript-formatter: 7.2.2_typescript@5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
@@ -1283,6 +1295,7 @@ importers:
 
   examples/benchmarks/bubblebench/ot:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-example/bubblebench-common': workspace:~
       '@fluid-example/example-utils': workspace:~
       '@fluid-experimental/sharejs-json1': workspace:~
@@ -1315,6 +1328,7 @@ importers:
       rimraf: ^4.4.0
       ts-jest: ^29.1.1
       ts-loader: ^9.3.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       webpack: ^5.82.0
       webpack-cli: ^4.9.2
@@ -1332,6 +1346,7 @@ importers:
       ot-json1: 1.0.2
       react: 17.0.2
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/webpack-fluid-loader': link:../../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
@@ -1352,8 +1367,9 @@ importers:
       prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
       webpack-cli: 4.10.0_o3vqr5s7sd4b3hfy35jxofofzu
@@ -1362,6 +1378,7 @@ importers:
 
   examples/benchmarks/bubblebench/sharedtree:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-example/bubblebench-common': workspace:~
       '@fluid-example/example-utils': workspace:~
       '@fluid-experimental/tree': workspace:~
@@ -1393,6 +1410,7 @@ importers:
       rimraf: ^4.4.0
       ts-jest: ^29.1.1
       ts-loader: ^9.3.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       webpack: ^5.82.0
       webpack-cli: ^4.9.2
@@ -1409,6 +1427,7 @@ importers:
       '@fluidframework/map': link:../../../../packages/dds/map
       react: 17.0.2
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/webpack-fluid-loader': link:../../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
@@ -1429,8 +1448,9 @@ importers:
       prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
       webpack-cli: 4.10.0_o3vqr5s7sd4b3hfy35jxofofzu
@@ -1439,6 +1459,7 @@ importers:
 
   examples/benchmarks/odspsnapshotfetch-perftestapp:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-tools/build-cli': ^0.29.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.29.0
@@ -1484,6 +1505,7 @@ importers:
       nconf: 0.12.1
       webpack-dev-server: 4.6.0_wvskkfkvbt5crqa4uyjlq44kiy
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.29.0_lzbrbjkjqqnlnvbwteayq6k5jm
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
@@ -1667,7 +1689,7 @@ importers:
       rimraf: 4.4.1
       start-server-and-test: 1.15.5
       tinylicious: 3.1.0-231702
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       tslib: 1.14.1
       typescript: 5.1.6
@@ -1678,6 +1700,7 @@ importers:
 
   examples/data-objects/canvas:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-example/example-utils': workspace:~
       '@fluid-tools/webpack-fluid-loader': workspace:~
       '@fluidframework/aqueduct': workspace:~
@@ -1721,6 +1744,7 @@ importers:
       '@fluidframework/ink': link:../../../packages/dds/ink
       react: 17.0.2
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
@@ -1755,6 +1779,7 @@ importers:
 
   examples/data-objects/clicker:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-example/example-utils': workspace:~
       '@fluid-tools/webpack-fluid-loader': workspace:~
       '@fluidframework/aqueduct': workspace:~
@@ -1799,6 +1824,7 @@ importers:
       '@fluidframework/task-manager': link:../../../packages/dds/task-manager
       react: 17.0.2
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
@@ -1820,7 +1846,7 @@ importers:
       prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
@@ -1830,6 +1856,7 @@ importers:
 
   examples/data-objects/codemirror:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-example/example-utils': workspace:~
       '@fluid-tools/webpack-fluid-loader': workspace:~
       '@fluidframework/aqueduct': workspace:~
@@ -1887,6 +1914,7 @@ importers:
       events: 3.3.0
       react: 17.0.2
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
@@ -1909,6 +1937,7 @@ importers:
 
   examples/data-objects/diceroller:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-example/example-utils': workspace:~
       '@fluid-tools/webpack-fluid-loader': workspace:~
       '@fluidframework/aqueduct': workspace:~
@@ -1948,6 +1977,7 @@ importers:
       '@fluidframework/view-interfaces': link:../../../packages/framework/view-interfaces
       react: 17.0.2
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
@@ -1968,7 +1998,7 @@ importers:
       prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
@@ -1978,6 +2008,7 @@ importers:
 
   examples/data-objects/inventory-app:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-example/example-utils': workspace:~
       '@fluid-tools/webpack-fluid-loader': workspace:~
       '@fluidframework/aqueduct': workspace:~
@@ -2020,6 +2051,7 @@ importers:
       '@fluidframework/tree': link:../../../packages/dds/tree
       react: 17.0.2
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
@@ -2041,7 +2073,7 @@ importers:
       puppeteer: 17.1.3
       rimraf: 4.4.1
       source-map-loader: 2.0.2_webpack@5.89.0
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
@@ -2051,6 +2083,7 @@ importers:
 
   examples/data-objects/monaco:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-example/example-utils': workspace:~
       '@fluid-tools/webpack-fluid-loader': workspace:~
       '@fluidframework/aqueduct': workspace:~
@@ -2092,6 +2125,7 @@ importers:
       monaco-editor: 0.30.1
       react: 17.0.2
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_webpack-cli@4.10.0
@@ -2173,7 +2207,7 @@ importers:
       prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
@@ -2244,7 +2278,7 @@ importers:
       puppeteer: 17.1.3
       rimraf: 4.4.1
       style-loader: 1.3.0_webpack@5.89.0
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
@@ -2341,7 +2375,7 @@ importers:
       puppeteer: 17.1.3
       rimraf: 4.4.1
       style-loader: 1.3.0_webpack@5.89.0
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
@@ -2402,7 +2436,7 @@ importers:
       prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
@@ -2513,7 +2547,7 @@ importers:
       puppeteer: 17.1.3
       rimraf: 4.4.1
       style-loader: 1.3.0_webpack@5.89.0
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
@@ -2582,7 +2616,7 @@ importers:
       puppeteer: 17.1.3
       rimraf: 4.4.1
       style-loader: 1.3.0_webpack@5.89.0
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
@@ -2651,7 +2685,7 @@ importers:
       puppeteer: 17.1.3
       rimraf: 4.4.1
       style-loader: 1.3.0_webpack@5.89.0
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
@@ -2661,6 +2695,7 @@ importers:
 
   examples/data-objects/prosemirror:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-example/example-utils': workspace:~
       '@fluid-tools/webpack-fluid-loader': workspace:~
       '@fluidframework/aqueduct': workspace:~
@@ -2743,6 +2778,7 @@ importers:
       prosemirror-view: 1.32.4
       react: 17.0.2
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
@@ -2768,6 +2804,7 @@ importers:
 
   examples/data-objects/smde:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-example/example-utils': workspace:~
       '@fluid-tools/webpack-fluid-loader': workspace:~
       '@fluidframework/aqueduct': workspace:~
@@ -2826,6 +2863,7 @@ importers:
       react: 17.0.2
       simplemde: 1.11.2
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_webpack-cli@4.10.0
@@ -2918,6 +2956,7 @@ importers:
 
   examples/data-objects/table-view:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-example/example-utils': workspace:~
       '@fluid-example/table-document': workspace:~
       '@fluid-tools/webpack-fluid-loader': workspace:~
@@ -2964,6 +3003,7 @@ importers:
       '@tiny-calc/nano': 0.0.0-alpha.5
       react: 17.0.2
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
@@ -2987,6 +3027,7 @@ importers:
 
   examples/data-objects/todo:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-example/example-utils': workspace:~
       '@fluid-experimental/react-inputs': workspace:~
       '@fluid-tools/webpack-fluid-loader': workspace:~
@@ -3046,6 +3087,7 @@ importers:
       react-dom: 17.0.2_react@17.0.2
       uuid: 9.0.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
@@ -3332,7 +3374,7 @@ importers:
       stream-http: 3.2.0
       supertest: 3.4.2
       tinylicious: 3.1.0-231702
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
@@ -3430,7 +3472,7 @@ importers:
       rimraf: 4.4.1
       start-server-and-test: 1.15.5
       tinylicious: 3.1.0-231702
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
@@ -3731,7 +3773,7 @@ importers:
       process: 0.11.10
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
@@ -3852,7 +3894,7 @@ importers:
       puppeteer: 17.1.3
       rimraf: 4.4.1
       style-loader: 1.3.0_webpack@5.89.0
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
@@ -3973,7 +4015,7 @@ importers:
       puppeteer: 17.1.3
       rimraf: 4.4.1
       style-loader: 1.3.0_webpack@5.89.0
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
@@ -4090,7 +4132,7 @@ importers:
       start-server-and-test: 1.15.5
       style-loader: 1.3.0_webpack@5.89.0
       tinylicious: 3.1.0-231702
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
@@ -4177,7 +4219,7 @@ importers:
       prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
@@ -4252,7 +4294,7 @@ importers:
       process: 0.11.10
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
@@ -4337,7 +4379,7 @@ importers:
       process: 0.11.10
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
@@ -5294,7 +5336,7 @@ importers:
       jest-junit: 10.0.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
       typescript: 5.1.6
 
   experimental/PropertyDDS/services/property-query-service:
@@ -6002,7 +6044,7 @@ importers:
       rewire: 5.0.0
       rimraf: 4.4.1
       sinon: 7.5.0
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
       ts-node: 10.9.1_ggysxzqxruqvydtrq6zb2nxvwm
       tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
@@ -11110,7 +11152,7 @@ importers:
       sinon: 7.5.0
       sinon-chrome: 3.0.1
       start-server-and-test: 1.15.5
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
@@ -11332,7 +11374,7 @@ importers:
       prettier: 3.0.3
       puppeteer: 17.1.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
@@ -11473,7 +11515,7 @@ importers:
       prop-types: 15.8.1
       rimraf: 4.4.1
       simple-git: 3.21.0
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
       typescript: 5.1.6
       vite: 4.5.0_@types+node@18.19.1
 
@@ -16764,7 +16806,7 @@ packages:
       eslint-config-prettier: 9.0.0_eslint@8.50.0
       eslint-import-resolver-typescript: 3.6.1_ptoqaxx4zydtl73iuefwc5ceta
       eslint-plugin-eslint-comments: 3.2.0_eslint@8.50.0
-      eslint-plugin-import: /eslint-plugin-i/2.29.0_qkgnnbjqevbkx5nf2343uj5ca4
+      eslint-plugin-import: /eslint-plugin-i/2.29.0_vbz3upjaqqip6sbto2camnstqu
       eslint-plugin-jsdoc: 46.8.2_eslint@8.50.0
       eslint-plugin-promise: 6.1.1_eslint@8.50.0
       eslint-plugin-react: 7.33.2_eslint@8.50.0
@@ -23927,14 +23969,6 @@ packages:
       ajv: 6.12.6
     dev: true
 
-  /ajv-formats/2.1.1:
-    resolution: {integrity: sha512-Wx0Kx52hxE7C18hkMEggYlEifqWZtYaRgouJor+WMdPnQyEK13vgEWyVNup7SoeeoLMsr4kf5h6dOW11I15MUA==}
-    peerDependenciesMeta:
-      ajv:
-        optional: true
-    dependencies:
-      ajv: 8.12.0
-
   /ajv-formats/2.1.1_ajv@8.12.0:
     resolution: {integrity: sha512-Wx0Kx52hxE7C18hkMEggYlEifqWZtYaRgouJor+WMdPnQyEK13vgEWyVNup7SoeeoLMsr4kf5h6dOW11I15MUA==}
     peerDependencies:
@@ -23944,7 +23978,6 @@ packages:
         optional: true
     dependencies:
       ajv: 8.12.0
-    dev: true
 
   /ajv-keywords/3.5.2_ajv@6.12.6:
     resolution: {integrity: sha512-5p6WTN0DdTGVQk6VjcEju19IgaHudalcfabD7yhDGeA6bcQnmL+CpveLJq/3hvfwd1aof6L386Ougkx6RfyMIQ==}
@@ -28858,7 +28891,7 @@ packages:
       enhanced-resolve: 5.15.0
       eslint: 8.50.0
       eslint-module-utils: 2.8.0_qkgnnbjqevbkx5nf2343uj5ca4
-      eslint-plugin-import: /eslint-plugin-i/2.29.0_qkgnnbjqevbkx5nf2343uj5ca4
+      eslint-plugin-import: /eslint-plugin-i/2.29.0_vbz3upjaqqip6sbto2camnstqu
       fast-glob: 3.3.2
       get-tsconfig: 4.7.2
       is-core-module: 2.13.1
@@ -28870,7 +28903,7 @@ packages:
       - supports-color
     dev: true
 
-  /eslint-module-utils/2.8.0_2fdjpxztni4ct7ibb6nnscsdt4:
+  /eslint-module-utils/2.8.0_62axpgaukyzoyqg7a4wuabw3mq:
     resolution: {integrity: sha512-aWajIYfsqCKRDgUfjEXNN/JlrzauMuSEy5sbd7WXbtW3EH6A6MpwEh42c7qD+MqQo9QMJ6fWLAeIJynx0g6OAw==}
     engines: {node: '>=4'}
     peerDependencies:
@@ -28895,7 +28928,6 @@ packages:
       debug: 3.2.7
       eslint: 8.50.0
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.6.1_ptoqaxx4zydtl73iuefwc5ceta
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -28987,7 +29019,7 @@ packages:
       lodash.upperfirst: 4.3.1
     dev: true
 
-  /eslint-plugin-i/2.29.0_qkgnnbjqevbkx5nf2343uj5ca4:
+  /eslint-plugin-i/2.29.0_vbz3upjaqqip6sbto2camnstqu:
     resolution: {integrity: sha512-slGeTS3GQzx9267wLJnNYNO8X9EHGsc75AKIAFvnvMYEcTJKotPKL1Ru5PIGVHIVet+2DsugePWp8Oxpx8G22w==}
     engines: {node: '>=12'}
     peerDependencies:
@@ -28997,7 +29029,7 @@ packages:
       doctrine: 2.1.0
       eslint: 8.50.0
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.8.0_2fdjpxztni4ct7ibb6nnscsdt4
+      eslint-module-utils: 2.8.0_62axpgaukyzoyqg7a4wuabw3mq
       get-tsconfig: 4.7.2
       is-glob: 4.0.3
       minimatch: 3.1.2
@@ -30746,10 +30778,6 @@ packages:
 
   /git-sha1/0.1.2:
     resolution: {integrity: sha512-2e/nZezdVlyCopOCYHeW0onkbZg7xP1Ad6pndPy1rCygeRykefUS6r7oA5cJRGEFvseiaz5a/qUHFVX1dd6Isg==}
-    dev: true
-
-  /github-from-package/0.0.0:
-    resolution: {integrity: sha512-SyHy3T1v2NUXn29OsWdxmK6RwHD+vkj3v8en8AOBZ1wBQ/hCAQ5bAQTD02kW4W9tUp/3Qh6J8r9EvntiyCmOOw==}
     dev: true
 
   /github-slugger/1.5.0:
@@ -40800,7 +40828,7 @@ packages:
     dependencies:
       '@types/json-schema': 7.0.15
       ajv: 8.12.0
-      ajv-formats: 2.1.1
+      ajv-formats: 2.1.1_ajv@8.12.0
       ajv-keywords: 5.1.0_ajv@8.12.0
 
   /scoped-regex/2.1.0:
@@ -43007,39 +43035,6 @@ packages:
         optional: true
     dependencies:
       '@babel/core': 7.23.3
-      bs-logger: 0.2.6
-      fast-json-stable-stringify: 2.1.0
-      jest: 29.7.0_@types+node@18.19.1
-      jest-util: 29.7.0
-      json5: 2.2.3
-      lodash.memoize: 4.1.2
-      make-error: 1.3.6
-      semver: 7.5.4
-      typescript: 5.1.6
-      yargs-parser: 21.1.1
-    dev: true
-
-  /ts-jest/29.1.1_gvmt7aj7nai5bnvsxmiksfugce:
-    resolution: {integrity: sha512-D6xjnnbP17cC85nliwGiL+tpoKN0StpgE0TeOjXQTU6MVCfsB4v7aW05CgQ/1OywGb0x/oy9hHFnN+sczTiRaA==}
-    engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
-    hasBin: true
-    peerDependencies:
-      '@babel/core': '>=7.0.0-beta.0 <8'
-      '@jest/types': ^29.0.0
-      babel-jest: ^29.0.0
-      esbuild: '*'
-      jest: ^29.0.0
-      typescript: '>=4.3 <6'
-    peerDependenciesMeta:
-      '@babel/core':
-        optional: true
-      '@jest/types':
-        optional: true
-      babel-jest:
-        optional: true
-      esbuild:
-        optional: true
-    dependencies:
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
       jest: 29.7.0_@types+node@18.19.1
