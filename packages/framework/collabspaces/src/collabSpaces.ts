@@ -229,12 +229,12 @@ export class TempCollabSpaceRuntime
 	}
 
 	protected setChannelDirty(address: string): void {
-		// It's not very clear RE what it means in context of this implementation.
+		// TBD(Pri2): Need to review the structure here, and ensure that we do not
+		// support channel calling this API, as we have no mechanism to take that into account.
 		// Currently it is used to force summmary for a channel, but such channels
 		// likely can't be used for temp collab spaces, as we could destroy them prematurely.
 		// We could likely take it into account, but not clear if it's needed yet.
-		assert(false, "logic error");
-		// super.setChannelDirty(dirty);
+		super.setChannelDirty(address);
 	}
 
 	protected async applyStashedChannelChannelOp(address: string, contents: any) {
@@ -279,11 +279,13 @@ export class TempCollabSpaceRuntime
 	}
 
 	protected sendAttachChannelOp(channel: IChannel): void {
-		// TBD(Pri0): sending op is optional (and whole system has to work correctly without such ops)
+		// Sending op is optional (and whole system has to work correctly without such ops)
 		// That said, sending it is useful for validation purposes (to validate we start with same state)
 		// Currently this does not work:
-		// We are hitting 0x1b6 assert in SummarizerNodeWithGC.createChild() due to us creating a new node for the
-		// existing path (such node existed in the past). SummarizerNodeWithGC.deleteChild() should be properly
+		// TBD(Pri0):
+		// Once we add more tests and recreate
+		// We will hit  0x1b6 assert in SummarizerNodeWithGC.createChild() due to us
+		// creating a new node for the existing path (such node existed in the past). SummarizerNodeWithGC.deleteChild() should be properly
 		// called when we get rid of context - this will also make sure that overall GC / summarization machinery
 		// has proper knowledge of the state.
 		if (channel.id === matrixId) {
@@ -400,6 +402,15 @@ export class TempCollabSpaceRuntime
 		};
 	}
 
+	// For test purposes only!
+	public async getCellDebugInfo(
+		row: number,
+		col: number,
+	): Promise<{ channel?: ICollabChannelCore }> {
+		const result = this.getCellInfo(row, col);
+		return { channel: await result.channel };
+	}
+
 	private getFactoryForValueType(type: string, onlyCollaborativeTypes: boolean) {
 		// Matrix is in the list of channels, but it's "internal" type - not allowed to be used in cells.
 		if (type === SharedMatrixFactory.Type) {
@@ -420,6 +431,7 @@ export class TempCollabSpaceRuntime
 			pendingChangeCount: 0,
 		};
 	}
+
 	private createCollabChannel(value: MatrixInternalType, channelId: string) {
 		const factory = this.getFactoryForValueType(value.type, true /* onlyCollaborativeTypes */);
 		assert(factory !== undefined, "Factory is missing for matrix type");
@@ -550,6 +562,9 @@ export class TempCollabSpaceRuntime
 		if (destroyd) {
 			// Validate that actually values match!
 			assert(channel.value === savedValue.value, "values are not matching!!!!");
+
+			// Force summarizer sub-system to summarize this object and get rid of deleted channel
+			this.setChannelDirty(channelId);
 
 			// Is this safe? Anything else we need to do?
 			this.contexts.delete(channelId);

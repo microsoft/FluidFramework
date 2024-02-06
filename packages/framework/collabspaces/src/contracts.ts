@@ -81,4 +81,7 @@ export interface IEfficientMatrix extends Omit<ISharedMatrix<MatrixExternalType>
  */
 export interface IEfficientMatrixTest {
 	isAttached: boolean;
+
+	// Returns a structure with various debug info about the cell
+	getCellDebugInfo(row: number, col: number): Promise<{ channel?: ICollabChannelCore }>;
 }

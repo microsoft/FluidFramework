@@ -9,11 +9,15 @@ import {
 	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
 	TestObjectProvider,
+	summarizeNow,
+	createSummarizerCore,
 } from "@fluidframework/test-utils";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
+import { ISummarizer, SummaryCollection } from "@fluidframework/container-runtime";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import { Loader as ContainerLoader } from "@fluidframework/container-loader";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 
 import {
 	ICollabChannelCore,
@@ -44,7 +48,9 @@ function sampleFactory() {
 describe("Temporal Collab Spaces", () => {
 	let provider: ITestObjectProvider;
 	let containers: IContainer[] = [];
-	let collabSpaces: IEfficientMatrix[] = [];
+	let collabSpaces: (IEfficientMatrix & IEfficientMatrixTest)[] = [];
+	let summaryCollection: SummaryCollection | undefined;
+	let summarizer: ISummarizer;
 
 	// Size of the matrix
 	const cols = 7;
@@ -60,9 +66,10 @@ describe("Temporal Collab Spaces", () => {
 	const createContainer = async () => {
 		const container = await provider.createContainer(runtimeFactory);
 		containers.push(container);
-		const cp = (await container.getEntryPoint()) as IEfficientMatrix & IEfficientMatrixTest;
-		collabSpaces.push(cp);
-		return cp;
+		const collabSpace = (await container.getEntryPoint()) as IEfficientMatrix &
+			IEfficientMatrixTest;
+		collabSpaces.push(collabSpace);
+		return { container, collabSpace };
 	};
 
 	async function addContainerInstance(/* summaryVersion: string */) {
@@ -72,7 +79,7 @@ describe("Temporal Collab Spaces", () => {
 			// [LoaderHeader.version]: summaryVersion,
 		});
 		containers.push(container);
-		const cp = (await container.getEntryPoint()) as IEfficientMatrix;
+		const cp = (await container.getEntryPoint()) as IEfficientMatrix & IEfficientMatrixTest;
 		collabSpaces.push(cp);
 
 		await provider.ensureSynchronized();
@@ -105,7 +112,13 @@ describe("Temporal Collab Spaces", () => {
 		}
 		containers = [];
 		collabSpaces = [];
+		summaryCollection = undefined;
 	});
+
+	async function waitForSummary() {
+		assert(summaryCollection !== undefined, "summary setup properly");
+		return summaryCollection.waitSummaryAck(containers[0].deltaManager.lastSequenceNumber);
+	}
 
 	/**
 	 * Populates collab space with initial values
@@ -143,7 +156,13 @@ describe("Temporal Collab Spaces", () => {
 	 * @returns collab space
 	 */
 	async function initialize() {
-		const collabSpace = await createContainer();
+		const { container, collabSpace } = await createContainer();
+
+		// Create and setup a summary collection that will be used to track and wait for summaries.
+		summaryCollection = new SummaryCollection(container.deltaManager, createChildLogger());
+
+		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
+		summarizer = (await createSummarizerCore(container, loader)).summarizer;
 
 		// Ensure that data store is properly attached. It should be, as default
 		// data store is aliased (and thus attached) in test container
@@ -261,10 +280,25 @@ describe("Temporal Collab Spaces", () => {
 		destroyed = collabSpace.destroyCellChannel(channel);
 		assert(destroyed, "Channel should be destroyed by now!");
 
+		// TBD(Pri0): Need to flip runSummaryValidation to true.
+		// This fails due to deleted channel. Need to figure out proper solution
+		const runSummaryValidation = false;
+
+		// Force summary to test that channel is gone.
+		if (runSummaryValidation) {
+			await summarizeNow(summarizer);
+			await waitForSummary();
+		}
+
 		// Add one more container and observe they are all equal
-		// TBD(Pri1): It would be nice somehow to validate that such channel was dropped from summary!
 		await addContainerInstance();
 		await ensureSameValues(row, col, initialValue, channel2);
+
+		// Validate that channel is not present in summary!
+		if (runSummaryValidation) {
+			const channel3 = await collabSpaces[2].getCellDebugInfo(row, col);
+			assert(channel3 === undefined, "channel was not removed from summary");
+		}
 
 		// After one container destroyed the channel (and 3rd container loaded without channel),
 		// let's test that op showing up on that channel will be processed correctly by all containers.
@@ -302,7 +336,8 @@ describe("Temporal Collab Spaces", () => {
 		await ensureSameValues(row, col, initialValue + 30, channel2a);
 	});
 
-	it("Channel overwrite", async () => {
+	// Baseline for a number of tests (with different arguments)
+	async function ChannelOverwrite(synchronize: boolean) {
 		// Cell we will be interrogating
 		const row = 7;
 		const col = 3;
@@ -316,11 +351,13 @@ describe("Temporal Collab Spaces", () => {
 		let overwriteValue = initialValue + 100;
 		channel2a.increment(10);
 
-		// TBD(Pri1): Test fails if this synchronizaiton is removed, due to Pri1 comment in
-		// TempCollabSpaceRuntime.updatePendingCoutner()
-		// The issue should be fixed, and test should be duplicated - one version to run with this
-		// extra synchronizaiton, and one without.
-		await provider.ensureSynchronized();
+		// We test vastly different scenario depending on if we wait or not.
+		// If we do not wait, then we test concurrent changes in channel and overwrite
+		// (and thus test what happens if ops arrive to not known to a client unrooted channel).
+		// If we wait, then there is not concurrency at all.
+		if (synchronize) {
+			await provider.ensureSynchronized();
+		}
 
 		// Overwrite it!
 		const collabSpace2 = collabSpaces[1];
@@ -348,5 +385,22 @@ describe("Temporal Collab Spaces", () => {
 		assert(channel2b.value === overwriteValue, "overwritten value");
 		assert(channel2c.value === overwriteValue, "overwritten value");
 		assert(channel2a.value === initialValue + 10, "No impact on unrooted channel");
+
+		// TBD(Pri1): Need to implement undo - restore original channel, validate that none
+		// of the changes that were made before were lost, and that further collaboration could
+		// be done on this channel.
+		// Plus redo, and come back to second channel.
+	}
+
+	it("Channel overwrite with syncronization", async () => {
+		await ChannelOverwrite(true);
+	});
+
+	// TBD(Pri1): Test fails if this synchronizaiton is removed, due to Pri1 comment in
+	// TempCollabSpaceRuntime.updatePendingCoutner()
+	// The issue should be fixed, and test should be duplicated - one version to run with this
+	// extra synchronizaiton, and one without.
+	it.skip("Channel overwrite without syncronization", async () => {
+		await ChannelOverwrite(false);
 	});
 });
