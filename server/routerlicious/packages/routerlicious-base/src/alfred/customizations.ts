@@ -4,6 +4,7 @@
  */
 
 import {
+	IClusterDrainingChecker,
 	IDocumentRepository,
 	IStorageNameAllocator,
 	ITokenRevocationManager,
@@ -24,4 +25,5 @@ export interface IAlfredResourcesCustomizations {
 	revokedTokenChecker?: IRevokedTokenChecker;
 	webSocketTracker?: IWebSocketTracker;
 	serviceMessageResourceManager?: IServiceMessageResourceManager;
+	clusterDrainingChecker?: IClusterDrainingChecker;
 }

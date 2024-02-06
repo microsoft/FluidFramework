@@ -1,0 +1,288 @@
+{
+  "type": "tree",
+  "tree": {
+    "type": "tree",
+    "indexes": {
+      "type": "tree",
+      "entries": [
+        {
+          "type": "tree",
+          "EditManager": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "String": {
+                "type": "blob",
+                "content": {
+                  "trunk": [
+                    {
+                      "change": [
+                        {
+                          "schema": {
+                            "new": {
+                              "version": 1,
+                              "nodes": {
+                                "com.fluidframework.leaf.boolean": {
+                                  "leaf": 2
+                                },
+                                "com.fluidframework.leaf.handle": {
+                                  "leaf": 3
+                                },
+                                "com.fluidframework.leaf.null": {
+                                  "leaf": 4
+                                },
+                                "com.fluidframework.leaf.number": {
+                                  "leaf": 0
+                                },
+                                "com.fluidframework.leaf.string": {
+                                  "leaf": 1
+                                },
+                                "has-sequence-map.SeqMap": {
+                                  "map": {
+                                    "kind": "Sequence",
+                                    "types": [
+                                      "has-sequence-map.SeqMap"
+                                    ]
+                                  }
+                                }
+                              },
+                              "root": {
+                                "kind": "Sequence",
+                                "types": [
+                                  "has-sequence-map.SeqMap"
+                                ]
+                              }
+                            },
+                            "old": {
+                              "version": 1,
+                              "nodes": {},
+                              "root": {
+                                "kind": "Forbidden",
+                                "types": []
+                              }
+                            }
+                          }
+                        }
+                      ],
+                      "revision": 1,
+                      "sequenceNumber": -9007199254740990,
+                      "sessionId": "beefbeef-beef-4000-8000-000000000001"
+                    },
+                    {
+                      "change": [
+                        {
+                          "data": {
+                            "maxId": 1,
+                            "changes": [
+                              {
+                                "fieldKey": "rootFieldKey",
+                                "fieldKind": "Sequence",
+                                "change": [
+                                  {
+                                    "count": 1,
+                                    "effect": {
+                                      "insert": {
+                                        "id": 0
+                                      }
+                                    },
+                                    "cellId": {
+                                      "atom": 0
+                                    },
+                                    "changes": {
+                                      "fieldChanges": [
+                                        {
+                                          "fieldKey": "foo",
+                                          "fieldKind": "Sequence",
+                                          "change": [
+                                            {
+                                              "count": 1,
+                                              "effect": {
+                                                "insert": {
+                                                  "id": 1
+                                                }
+                                              },
+                                              "cellId": {
+                                                "atom": 1
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ]
+                              }
+                            ],
+                            "builds": {
+                              "builds": [
+                                [
+                                  [
+                                    [
+                                      0,
+                                      0
+                                    ],
+                                    [
+                                      1,
+                                      1
+                                    ]
+                                  ]
+                                ]
+                              ],
+                              "trees": {
+                                "version": 1,
+                                "identifiers": [],
+                                "shapes": [
+                                  {
+                                    "c": {
+                                      "type": "has-sequence-map.SeqMap",
+                                      "value": false,
+                                      "extraFields": 1
+                                    }
+                                  },
+                                  {
+                                    "a": 0
+                                  }
+                                ],
+                                "data": [
+                                  [
+                                    0,
+                                    []
+                                  ],
+                                  [
+                                    0,
+                                    []
+                                  ]
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      ],
+                      "revision": 4,
+                      "sequenceNumber": -9007199254740989,
+                      "sessionId": "beefbeef-beef-4000-8000-000000000001"
+                    }
+                  ],
+                  "branches": [],
+                  "version": 1
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "Schema": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "SchemaString": {
+                "type": "blob",
+                "content": {
+                  "version": 1,
+                  "nodes": {
+                    "com.fluidframework.leaf.boolean": {
+                      "leaf": 2
+                    },
+                    "com.fluidframework.leaf.handle": {
+                      "leaf": 3
+                    },
+                    "com.fluidframework.leaf.null": {
+                      "leaf": 4
+                    },
+                    "com.fluidframework.leaf.number": {
+                      "leaf": 0
+                    },
+                    "com.fluidframework.leaf.string": {
+                      "leaf": 1
+                    },
+                    "has-sequence-map.SeqMap": {
+                      "map": {
+                        "kind": "Sequence",
+                        "types": [
+                          "has-sequence-map.SeqMap"
+                        ]
+                      }
+                    }
+                  },
+                  "root": {
+                    "kind": "Sequence",
+                    "types": [
+                      "has-sequence-map.SeqMap"
+                    ]
+                  }
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "Forest": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "ForestTree": {
+                "type": "blob",
+                "content": {
+                  "keys": [
+                    "rootFieldKey"
+                  ],
+                  "fields": {
+                    "version": 1,
+                    "identifiers": [],
+                    "shapes": [
+                      {
+                        "c": {
+                          "type": "has-sequence-map.SeqMap",
+                          "value": false,
+                          "extraFields": 1
+                        }
+                      },
+                      {
+                        "a": 0
+                      }
+                    ],
+                    "data": [
+                      [
+                        0,
+                        [
+                          "foo",
+                          [
+                            []
+                          ]
+                        ]
+                      ]
+                    ]
+                  },
+                  "version": 1
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "DetachedFieldIndex": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "DetachedFieldIndexBlob": {
+                "type": "blob",
+                "content": {
+                  "version": 1,
+                  "data": [],
+                  "maxId": 1
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

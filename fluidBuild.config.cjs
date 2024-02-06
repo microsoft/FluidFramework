@@ -7,6 +7,9 @@ const tscDependsOn = ["^tsc", "^api", "build:genver", "ts2esm"];
 /**
  * The settings in this file configure the Fluid build tools, such as fluid-build and flub. Some settings apply to the
  * whole repo, while others apply only to the client release group.
+ *
+ * See https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-tools/src/common/fluidTaskDefinitions.ts
+ * for details on the task and dependency definition format.
  */
 module.exports = {
 	tasks: {
@@ -274,6 +277,35 @@ module.exports = {
 				"package.json",
 			],
 			"npm-package-json-script-dep": ["^build-tools/"],
+			"npm-public-package-requirements": [
+				// Test packages published only for the purpose of running tests in CI.
+				"^azure/packages/test/",
+				"^packages/service-clients/end-to-end-tests/",
+				"^packages/test/test-app-insights-logger/",
+				"^packages/test/test-service-load/",
+				"^packages/test/test-end-to-end-tests/",
+
+				// JS packages, which do not use api-extractor
+				"^common/build/",
+
+				// PropertyDDS packages, which are not production
+				"^experimental/PropertyDDS/",
+
+				// Tools packages that are not library packages
+				"^packages/tools/fetch-tool/",
+				"^tools/test-tools/",
+
+				// TODO: add api-extractor infra and remove these overrides
+				"^build-tools/packages/",
+				"^tools/bundle-size-tools/",
+				"^server/historian/",
+				"^server/gitrest/",
+				"^server/routerlicious/",
+				"^examples/data-objects/table-document/",
+				"^experimental/framework/data-objects/",
+				"^tools/telemetry-generator/",
+				"^packages/tools/webpack-fluid-loader/",
+			],
 		},
 		packageNames: {
 			// The allowed package scopes for the repo.
@@ -361,6 +393,31 @@ module.exports = {
 			tsc: {
 				ignoreDevDependencies: ["@fluid-tools/webpack-fluid-loader"],
 			},
+		},
+		// Requirements applied to all `public` packages.
+		publicPackageRequirements: {
+			// The following scripts are all currently required to ensure api-extractor is run correctly in local builds and pipelines
+			requiredScripts: [
+				// TODO: Add as a requirement once all packages have been updated to produce dual esm/commonjs builds
+				// {
+				// 	name: "api",
+				// 	body: "fluid-build . --task api",
+				// },
+				{
+					name: "build:docs",
+					body: "fluid-build . --task api",
+				},
+				{
+					name: "ci:build:docs",
+					body: "api-extractor run",
+				},
+				{
+					name: "check:release-tags",
+					body: "api-extractor run --local --config ./api-extractor-lint.json",
+				},
+			],
+			// All of our public packages should be using api-extractor
+			requiredDevDependencies: ["@microsoft/api-extractor"],
 		},
 	},
 

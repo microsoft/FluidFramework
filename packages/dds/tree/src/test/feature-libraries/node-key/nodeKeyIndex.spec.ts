@@ -21,7 +21,7 @@ import {
 	FlexTreeTypedField,
 	Any,
 	createMockNodeKeyManager,
-	TreeFieldSchema,
+	FlexFieldSchema,
 	InsertableFlexField,
 } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -32,7 +32,7 @@ import { AllowedUpdateType } from "../../../core/index.js";
 const builder = new SchemaBuilder({ scope: "node key index tests", libraries: [nodeKeySchema] });
 const nodeSchema = builder.objectRecursive("node", {
 	...nodeKeyField,
-	child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => nodeSchema]),
+	child: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => nodeSchema]),
 });
 const nodeSchemaData = builder.intoSchema(SchemaBuilder.optional(nodeSchema));
 
@@ -265,7 +265,7 @@ describe("Node Key Index", () => {
 			libraries: [nodeKeySchema],
 		});
 		const nodeSchemaNoKey = builder2.objectRecursive("node", {
-			child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => nodeSchemaNoKey]),
+			child: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => nodeSchemaNoKey]),
 		});
 		const nodeSchemaDataNoKey = builder2.intoSchema(
 			SchemaBuilder.optional(nodeSchemaNoKey),

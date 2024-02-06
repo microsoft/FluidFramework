@@ -4,6 +4,7 @@
  */
 
 import { performance } from "@fluid-internal/client-utils";
+import { ISignalEnvelope } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import {
 	IFluidErrorBase,
@@ -19,7 +20,11 @@ import {
 	DeltaStreamConnectionForbiddenError,
 	NonRetryableError,
 } from "@fluidframework/driver-utils";
-import { IClient, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import {
+	IClient,
+	ISequencedDocumentMessage,
+	ISignalMessage,
+} from "@fluidframework/protocol-definitions";
 import {
 	IOdspResolvedUrl,
 	TokenFetchOptions,
@@ -28,7 +33,7 @@ import {
 	ISocketStorageDiscovery,
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions";
-import { hasFacetCodes } from "@fluidframework/odsp-doclib-utils";
+import { hasFacetCodes } from "@fluidframework/odsp-doclib-utils/internal";
 import { IOdspCache } from "./odspCache";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
 import {
@@ -39,6 +44,7 @@ import {
 import { fetchJoinSession } from "./vroom";
 import { EpochTracker } from "./epochTracker";
 import { pkgVersion as driverVersion } from "./packageVersion";
+import { policyLabelsUpdatesSignalType } from "./contracts";
 
 /**
  * This OdspDelayLoadedDeltaStream is used by OdspDocumentService.ts to delay load the delta connection
@@ -53,6 +59,12 @@ export class OdspDelayLoadedDeltaStream {
 	private currentConnection?: OdspDocumentDeltaConnection;
 
 	private _relayServiceTenantAndSessionId: string | undefined;
+
+	// Tracks the time at which the Policy Labels were updated the last time. This is used to resolve race conditions
+	// between label updates from the join session and the Fluid signals and they could have same or different timestamps.
+	// So this timestamp is updated with timestamp from the service/signals with the most recent timestamp. We could also
+	// receive stale data from join session as that call is made at intervals, so we need to update with only most recent data.
+	private labelUpdateTimestamp: number = -1;
 
 	/**
 	 * @param odspResolvedUrl - resolved url identifying document that will be managed by this service instance.
@@ -81,6 +93,7 @@ export class OdspDelayLoadedDeltaStream {
 		private readonly hostPolicy: HostStoragePolicy,
 		private readonly epochTracker: EpochTracker,
 		private readonly opsReceived: (ops: ISequencedDocumentMessage[]) => void,
+		private readonly metadataUpdateHandler: (metadata: Record<string, string>) => void,
 		private readonly socketReferenceKeyPrefix?: string,
 	) {
 		this.joinSessionKey = getJoinSessionCacheKey(this.odspResolvedUrl);
@@ -161,6 +174,11 @@ export class OdspDelayLoadedDeltaStream {
 					!requestWebsocketTokenFromJoinSession,
 				);
 			}
+			if (websocketEndpoint.sensitivityLabelsInfo !== undefined) {
+				this.emitMetaDataUpdateEvent({
+					sensitivityLabelsInfo: websocketEndpoint.sensitivityLabelsInfo,
+				});
+			}
 			try {
 				const connection = await this.createDeltaConnection(
 					websocketEndpoint.tenantId,
@@ -172,6 +190,9 @@ export class OdspDelayLoadedDeltaStream {
 				connection.on("op", (documentId, ops: ISequencedDocumentMessage[]) => {
 					this.opsReceived(ops);
 				});
+				connection.on("signal", this.signalHandler);
+				// Also process the initial signals
+				this.signalHandler(connection.initialSignals);
 				// On disconnect with 401/403 error code, we can just clear the joinSession cache as we will again
 				// get the auth error on reconnecting and face latency.
 				connection.once("disconnect", (error: any) => {
@@ -209,6 +230,26 @@ export class OdspDelayLoadedDeltaStream {
 			}
 		});
 	}
+
+	private readonly signalHandler = (signalsArg: ISignalMessage | ISignalMessage[]) => {
+		const signals = Array.isArray(signalsArg) ? signalsArg : [signalsArg];
+		signals.forEach((signal: ISignalMessage) => {
+			// Make sure it is not for a specific client as `PolicyLabelsUpdate` is meant for all clients.
+			if (signal.clientId === null) {
+				// We could have some issues/irregularities in parsing signals, so put it in try/catch block
+				// and ignore the error as we can have labels update later on through join session response.
+				let envelope: ISignalEnvelope | undefined;
+				try {
+					envelope = JSON.parse(signal.content as string) as ISignalEnvelope;
+				} catch (err) {}
+				if (envelope?.contents?.type === policyLabelsUpdatesSignalType) {
+					this.emitMetaDataUpdateEvent({
+						sensitivityLabelsInfo: JSON.stringify(envelope.contents.content),
+					});
+				}
+			}
+		});
+	};
 
 	private clearJoinSessionTimer() {
 		if (this.joinSessionRefreshTimer !== undefined) {
@@ -338,6 +379,12 @@ export class OdspDelayLoadedDeltaStream {
 				isRefreshingJoinSession,
 				this.hostPolicy.sessionOptions?.unauthenticatedUserDisplayName,
 			);
+			// Emit event only in case it is fetched from the network.
+			if (joinSessionResponse.sensitivityLabelsInfo !== undefined) {
+				this.emitMetaDataUpdateEvent({
+					sensitivityLabelsInfo: joinSessionResponse.sensitivityLabelsInfo,
+				});
+			}
 			return {
 				entryTime: Date.now(),
 				joinSessionResponse,
@@ -399,6 +446,21 @@ export class OdspDelayLoadedDeltaStream {
 			}
 		}
 		return response.joinSessionResponse;
+	}
+
+	private emitMetaDataUpdateEvent(metadata: Record<string, string>) {
+		const label = JSON.parse(metadata.sensitivityLabelsInfo) as {
+			labels: unknown;
+			timestamp: number;
+		};
+		const time = label.timestamp;
+		assert(time > 0, "time should be positive");
+		if (time > this.labelUpdateTimestamp) {
+			this.labelUpdateTimestamp = time;
+			this.metadataUpdateHandler({
+				sensitivityLabelsInfo: metadata.sensitivityLabelsInfo,
+			});
+		}
 	}
 
 	private calculateJoinSessionRefreshDelta(

@@ -59,24 +59,34 @@ export function create(
 	app.use(bindTelemetryContext());
 	const loggerFormat = config.get("logger:morganFormat");
 	if (loggerFormat === "json") {
+		const enableResponseCloseLatencyMetric =
+			config.get("enableResponseCloseLatencyMetric") ?? false;
 		app.use(
-			jsonMorganLoggerMiddleware("historian", (tokens, req, res) => {
-				const tenantId = getTenantIdFromRequest(req.params);
-				const additionalProperties: Record<string, any> = {
-					[HttpProperties.driverVersion]: tokens.req(req, res, DriverVersionHeaderName),
-					[BaseTelemetryProperties.tenantId]: tenantId,
-					[BaseTelemetryProperties.documentId]: getDocumentIdFromRequest(
-						tenantId,
-						req.get("Authorization"),
-					),
-				};
-				if (req.get(Constants.IsEphemeralContainer) !== undefined) {
-					additionalProperties.isEphemeralContainer = req.get(
-						Constants.IsEphemeralContainer,
-					);
-				}
-				return additionalProperties;
-			}),
+			jsonMorganLoggerMiddleware(
+				"historian",
+				(tokens, req, res) => {
+					const tenantId = getTenantIdFromRequest(req.params);
+					const additionalProperties: Record<string, any> = {
+						[HttpProperties.driverVersion]: tokens.req(
+							req,
+							res,
+							DriverVersionHeaderName,
+						),
+						[BaseTelemetryProperties.tenantId]: tenantId,
+						[BaseTelemetryProperties.documentId]: getDocumentIdFromRequest(
+							tenantId,
+							req.get("Authorization"),
+						),
+					};
+					if (req.get(Constants.IsEphemeralContainer) !== undefined) {
+						additionalProperties.isEphemeralContainer = req.get(
+							Constants.IsEphemeralContainer,
+						);
+					}
+					return additionalProperties;
+				},
+				enableResponseCloseLatencyMetric,
+			),
 		);
 	} else {
 		app.use(alternativeMorganLoggerMiddleware(loggerFormat));

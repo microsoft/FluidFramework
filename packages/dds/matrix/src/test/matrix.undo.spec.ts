@@ -451,7 +451,7 @@ import { UndoRedoStackManager } from "./undoRedoStackManager";
 					};
 				});
 
-				beforeEach(async () => {
+				beforeEach("createMatrix", async () => {
 					dataStoreRuntime = new MockFluidDataStoreRuntime();
 					matrix1 = new SharedMatrix(
 						dataStoreRuntime,
@@ -518,7 +518,7 @@ import { UndoRedoStackManager } from "./undoRedoStackManager";
 					};
 				});
 
-				beforeEach(async () => {
+				beforeEach("createMatrices", async () => {
 					containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 					// Create and connect the first SharedMatrix.

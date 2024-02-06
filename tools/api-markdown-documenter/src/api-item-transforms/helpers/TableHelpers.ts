@@ -319,24 +319,46 @@ export function createTypeParametersSummaryTable(
 	contextApiItem: ApiItem,
 	config: Required<ApiItemTransformationConfiguration>,
 ): TableNode {
-	// Only display "Modifiers" column if there are any optional parameters present.
-	const hasOptionalParameters = apiTypeParameters.some(
-		(apiTypeParameter) => apiTypeParameter.isOptional,
+	// Only display the "Constraint" column if there are any constraints present among the type parameters.
+	const hasAnyConstraints = apiTypeParameters.some(
+		(apiTypeParameter) => !apiTypeParameter.constraintExcerpt.isEmpty,
+	);
+
+	// Only display the "Default" column if there are any defaults present among the type parameters.
+	const hasAnyDefaults = apiTypeParameters.some(
+		(apiTypeParameter) => !apiTypeParameter.defaultTypeExcerpt.isEmpty,
 	);
 
 	const headerRowCells: TableHeaderCellNode[] = [
 		TableHeaderCellNode.createFromPlainText("Parameter"),
 	];
-	if (hasOptionalParameters) {
-		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Modifiers"));
+	if (hasAnyConstraints) {
+		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Constraint"));
+	}
+	if (hasAnyDefaults) {
+		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Default"));
 	}
 	headerRowCells.push(TableHeaderCellNode.createFromPlainText("Description"));
 	const headerRow = new TableHeaderRowNode(headerRowCells);
 
-	function createModifierCell(apiParameter: TypeParameter): TableBodyCellNode {
-		return apiParameter.isOptional
-			? TableBodyCellNode.createFromPlainText("optional")
-			: TableBodyCellNode.Empty;
+	function createTypeConstraintCell(apiParameter: TypeParameter): TableBodyCellNode {
+		const constraintSpan = createExcerptSpanWithHyperlinks(
+			apiParameter.constraintExcerpt,
+			config,
+		);
+		return constraintSpan === undefined
+			? TableBodyCellNode.Empty
+			: new TableBodyCellNode([constraintSpan]);
+	}
+
+	function createTypeDefaultCell(apiParameter: TypeParameter): TableBodyCellNode {
+		const excerptSpan = createExcerptSpanWithHyperlinks(
+			apiParameter.defaultTypeExcerpt,
+			config,
+		);
+		return excerptSpan === undefined
+			? TableBodyCellNode.Empty
+			: new TableBodyCellNode([excerptSpan]);
 	}
 
 	const bodyRows: TableBodyRowNode[] = [];
@@ -344,8 +366,11 @@ export function createTypeParametersSummaryTable(
 		const bodyRowCells: TableBodyCellNode[] = [
 			TableBodyCellNode.createFromPlainText(apiTypeParameter.name),
 		];
-		if (hasOptionalParameters) {
-			bodyRowCells.push(createModifierCell(apiTypeParameter));
+		if (hasAnyConstraints) {
+			bodyRowCells.push(createTypeConstraintCell(apiTypeParameter));
+		}
+		if (hasAnyDefaults) {
+			bodyRowCells.push(createTypeDefaultCell(apiTypeParameter));
 		}
 		bodyRowCells.push(createTypeParameterSummaryCell(apiTypeParameter, contextApiItem, config));
 

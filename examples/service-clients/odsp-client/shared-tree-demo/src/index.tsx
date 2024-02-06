@@ -6,11 +6,11 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import { ITree, IFluidContainer } from "fluid-framework";
-import { loadFluidData, containerSchema, createFluidData } from "./fluid";
-import { treeConfiguration, Letter } from "./schema";
+import { loadFluidData, containerSchema, createFluidData } from "./fluid.js";
+import { treeConfiguration, Letter } from "./schema.js";
 // eslint-disable-next-line import/no-unassigned-import
 import "./output.css";
-import { ReactApp } from "./reactApp";
+import { ReactApp } from "./reactApp.js";
 
 async function start(): Promise<void> {
 	const app = document.createElement("div");
@@ -88,7 +88,7 @@ async function start(): Promise<void> {
 
 		// If the app is in a `createNew` state - no itemId, and the container is detached, we attach the container.
 		// This uploads the container to the service and connects to the collaboration session.
-		itemId = await container.attach();
+		itemId = await container.attach({ filePath: "foo/bar", fileName: "shared-tree-demo" });
 
 		// The newly attached container is given a unique ID that can be used to access the container in another session
 		// eslint-disable-next-line require-atomic-updates
