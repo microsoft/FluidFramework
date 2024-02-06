@@ -26,6 +26,11 @@ export function ensureDevDependencyExists(
 	}
 }
 
+/**
+ * Fetches the path of the previous package.json or throws an error if not found.
+ * @param previousBasePath - A string representing the previous base path
+ * @returns
+ */
 export function getPreviousPackageJsonPath(previousBasePath: string): string {
 	const previousPackageJsonPath = `${previousBasePath}/package.json`;
 	if (!existsSync(previousPackageJsonPath)) {
@@ -193,6 +198,15 @@ export function initializeProjectsAndLoadFiles(
 	return { currentFile, previousFile };
 }
 
+/**
+ * Generates compatibility test cases between the previous type definitions and the current type map.
+ * This function constructs test cases to validate forward and backward compatibility of types.
+ * @param previousData - array of type data from the previous file
+ * @param currentTypeMap - map containing curren type data
+ * @param packageObject - package.json object containing type validation settings
+ * @param testString - array to store generated test strings
+ * @returns - string array representing generated compatibility test cases
+ */
 export function generateCompatibilityTestCases(
 	previousData: TypeData[],
 	currentTypeMap: Map<string, TypeData>,
@@ -254,8 +268,9 @@ export function generateCompatibilityTestCases(
 
 /**
  * Prepares the file path for type validation tests and skips test generation if disabled in package.json.
+ * @param packageObject - the package.json object
+ * @returns type validation file path
  */
-
 export function prepareAndSkipTestGenerationIfDisabled(packageObject): string {
 	const testPath = `./src/test/types`;
 	// remove scope if it exists
