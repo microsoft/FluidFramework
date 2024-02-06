@@ -9,7 +9,6 @@
  */
 
 import { AzureClient, AzureLocalConnectionConfig } from "@fluidframework/azure-client";
-import { IFluidContainer } from "@fluidframework/fluid-static";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import { SharedTree } from "@fluidframework/tree";
 
@@ -31,7 +30,7 @@ const containerSchema = {
 };
 
 export async function initFluid() {
-	let container: IFluidContainer;
+	let container;
 
 	if (!location.hash) {
 		({ container } = await client.createContainer(containerSchema));

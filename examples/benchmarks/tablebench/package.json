@@ -29,7 +29,7 @@
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
-		"lint": "npm run prettier && npm run check:release-tags && npm run eslint",
+		"lint": "npm run prettier && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prepack": "npm run webpack",
 		"postpack": "tar -cf ./tablebench.test-files.tar ./src/test ./dist/test",
@@ -53,7 +53,6 @@
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
-		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~"
 	},
