@@ -556,7 +556,7 @@ export class TempCollabSpaceRuntime
 				...savedValue, // value, iteration, type
 				value: channel.value as string,
 				seq: refSeq,
-			}
+			};
 			this.matrix.setCell(row, col, savedValue);
 		}
 
