@@ -339,6 +339,7 @@ export interface IGarbageCollectorConfigs {
 	/**
 	 * Tracks if sweep phase should run or not. Even if the sweep phase is enabled for a document (see sweepEnabled), it
 	 * can be explicitly disabled via feature flags. It also won't run if session expiry is not enabled.
+	 * There is also an option to only sweep blobs (this respects all other conditions otherwise).
 	 */
 	readonly shouldRunSweep: boolean | "ONLY_BLOBS";
 	/**
