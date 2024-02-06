@@ -20,6 +20,12 @@
 # Using individuals can break processing of this file if they are not contributors, or lose contributors status
 # which can and does happen. 
 #
+# Team maintainers can control how PRs are assigned to their team members. 
+# This can be modified under the settings for the team which is only visiable to maintainer.
+#
+# If you create a new team its parent should be set to fluid-cr, as teams are microsoft wide,
+# and we use the parent team to organize them.
+#
 # ------------------------------------------------------------------------
 
 
