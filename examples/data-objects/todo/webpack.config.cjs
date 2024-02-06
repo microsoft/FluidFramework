@@ -6,6 +6,7 @@
 const fluidRoute = require("@fluid-tools/webpack-fluid-loader");
 const path = require("path");
 const { merge } = require("webpack-merge");
+const webpack = require("webpack");
 
 const pkg = require("./package.json");
 const fluidPackageName = pkg.name.slice(1);
@@ -53,6 +54,11 @@ module.exports = (env) => {
 				devtoolNamespace: fluidPackageName,
 				libraryTarget: "umd",
 			},
+			plugins: [
+				new webpack.ProvidePlugin({
+					process: "process/browser",
+				}),
+			],
 			devServer: { devMiddleware: { stats: "minimal" } },
 			// This impacts which files are watched by the dev server (and likely by webpack if watch is true).
 			// This should be configurable under devServer.static.watch

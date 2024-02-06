@@ -6,6 +6,7 @@
 const fluidRoute = require("@fluid-tools/webpack-fluid-loader");
 const path = require("path");
 const { merge } = require("webpack-merge");
+const webpack = require("webpack");
 
 const pkg = require("./package.json");
 const fluidPackageName = pkg.name.slice(1);
@@ -44,6 +45,11 @@ module.exports = (env) => {
 				globalObject: "(typeof self !== 'undefined' ? self : this)",
 				libraryTarget: "umd",
 			},
+			plugins: [
+				new webpack.ProvidePlugin({
+					process: "process/browser",
+				}),
+			],
 			devServer: {
 				headers: {
 					"Access-Control-Allow-Origin": "*",
