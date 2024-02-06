@@ -3081,7 +3081,6 @@ importers:
   examples/data-objects/webflow:
     specifiers:
       '@fluid-example/example-utils': workspace:~
-      '@fluid-experimental/data-object-base': workspace:~
       '@fluid-private/test-version-utils': workspace:~
       '@fluid-tools/webpack-fluid-loader': workspace:~
       '@fluidframework/aqueduct': workspace:~
@@ -3137,7 +3136,6 @@ importers:
       webpack-merge: ^5.8.0
     dependencies:
       '@fluid-example/example-utils': link:../../utils/example-utils
-      '@fluid-experimental/data-object-base': link:../../../packages/framework/data-object-base
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
       '@fluidframework/core-utils': link:../../../packages/common/core-utils
@@ -4349,7 +4347,6 @@ importers:
     specifiers:
       '@fluid-example/example-utils': workspace:~
       '@fluid-example/schemas': workspace:~
-      '@fluid-experimental/data-object-base': workspace:~
       '@fluid-experimental/property-binder': workspace:~
       '@fluid-experimental/property-changeset': workspace:~
       '@fluid-experimental/property-common': workspace:~
@@ -4414,7 +4411,6 @@ importers:
     dependencies:
       '@fluid-example/example-utils': link:../../../../examples/utils/example-utils
       '@fluid-example/schemas': link:../schemas
-      '@fluid-experimental/data-object-base': link:../../../../packages/framework/data-object-base
       '@fluid-experimental/property-binder': link:../../packages/property-binder
       '@fluid-experimental/property-changeset': link:../../packages/property-changeset
       '@fluid-experimental/property-common': link:../../packages/property-common
@@ -4482,7 +4478,6 @@ importers:
     specifiers:
       '@fluid-example/example-utils': workspace:~
       '@fluid-example/schemas': workspace:~
-      '@fluid-experimental/data-object-base': workspace:~
       '@fluid-experimental/property-binder': workspace:~
       '@fluid-experimental/property-changeset': workspace:~
       '@fluid-experimental/property-common': workspace:~
@@ -4550,7 +4545,6 @@ importers:
     dependencies:
       '@fluid-example/example-utils': link:../../../../examples/utils/example-utils
       '@fluid-example/schemas': link:../schemas
-      '@fluid-experimental/data-object-base': link:../../../../packages/framework/data-object-base
       '@fluid-experimental/property-binder': link:../../packages/property-binder
       '@fluid-experimental/property-changeset': link:../../packages/property-changeset
       '@fluid-experimental/property-common': link:../../packages/property-common
@@ -23905,14 +23899,6 @@ packages:
       ajv: 6.12.6
     dev: true
 
-  /ajv-formats/2.1.1:
-    resolution: {integrity: sha512-Wx0Kx52hxE7C18hkMEggYlEifqWZtYaRgouJor+WMdPnQyEK13vgEWyVNup7SoeeoLMsr4kf5h6dOW11I15MUA==}
-    peerDependenciesMeta:
-      ajv:
-        optional: true
-    dependencies:
-      ajv: 8.12.0
-
   /ajv-formats/2.1.1_ajv@8.12.0:
     resolution: {integrity: sha512-Wx0Kx52hxE7C18hkMEggYlEifqWZtYaRgouJor+WMdPnQyEK13vgEWyVNup7SoeeoLMsr4kf5h6dOW11I15MUA==}
     peerDependencies:
@@ -23922,7 +23908,6 @@ packages:
         optional: true
     dependencies:
       ajv: 8.12.0
-    dev: true
 
   /ajv-keywords/3.5.2_ajv@6.12.6:
     resolution: {integrity: sha512-5p6WTN0DdTGVQk6VjcEju19IgaHudalcfabD7yhDGeA6bcQnmL+CpveLJq/3hvfwd1aof6L386Ougkx6RfyMIQ==}
@@ -30724,10 +30709,6 @@ packages:
 
   /git-sha1/0.1.2:
     resolution: {integrity: sha512-2e/nZezdVlyCopOCYHeW0onkbZg7xP1Ad6pndPy1rCygeRykefUS6r7oA5cJRGEFvseiaz5a/qUHFVX1dd6Isg==}
-    dev: true
-
-  /github-from-package/0.0.0:
-    resolution: {integrity: sha512-SyHy3T1v2NUXn29OsWdxmK6RwHD+vkj3v8en8AOBZ1wBQ/hCAQ5bAQTD02kW4W9tUp/3Qh6J8r9EvntiyCmOOw==}
     dev: true
 
   /github-slugger/1.5.0:
@@ -40778,7 +40759,7 @@ packages:
     dependencies:
       '@types/json-schema': 7.0.15
       ajv: 8.12.0
-      ajv-formats: 2.1.1
+      ajv-formats: 2.1.1_ajv@8.12.0
       ajv-keywords: 5.1.0_ajv@8.12.0
 
   /scoped-regex/2.1.0:

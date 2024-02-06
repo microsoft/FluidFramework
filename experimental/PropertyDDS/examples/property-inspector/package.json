@@ -39,7 +39,6 @@
 	"dependencies": {
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-example/schemas": "workspace:~",
-		"@fluid-experimental/data-object-base": "workspace:~",
 		"@fluid-experimental/property-binder": "workspace:~",
 		"@fluid-experimental/property-changeset": "workspace:~",
 		"@fluid-experimental/property-common": "workspace:~",
