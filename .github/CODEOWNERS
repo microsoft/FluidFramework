@@ -32,7 +32,9 @@
 /packages/dds/merge-tree                   @microsoft/fluid-cr-merge-tree
 /packages/dds/matrix                       @microsoft/fluid-cr-merge-tree
 /packages/dds/sequence                     @microsoft/fluid-cr-merge-tree
-/packages/dds/tree                         @microsoft/fluid-cr-tree
 /experimental/dds/sequence-deprecated      @microsoft/fluid-cr-merge-tree
+
+# shared tree and tree related dds
+/packages/dds/tree                         @microsoft/fluid-cr-tree
 /experimental/dds/tree                     @microsoft/fluid-cr-tree
 
