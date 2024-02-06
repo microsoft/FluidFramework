@@ -28,5 +28,9 @@
 #
 # ------------------------------------------------------------------------
 
-
+# merge tree and merge tree related dds
+/packages/dds/merge-tree                   @microsoft/fluid-cr-merge-tree
+/packages/dds/matrix                       @microsoft/fluid-cr-merge-tree
+/packages/dds/sequence                     @microsoft/fluid-cr-merge-tree
+/experimental/dds/sequence-deprecated      @microsoft/fluid-cr-merge-tree
 
