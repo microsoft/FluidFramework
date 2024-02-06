@@ -9,6 +9,7 @@
  */
 
 import { AzureClient, AzureLocalConnectionConfig } from "@fluidframework/azure-client";
+import { IFluidContainer } from "@fluidframework/fluid-static";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import { SharedTree } from "@fluidframework/tree";
 
@@ -30,13 +31,12 @@ const containerSchema = {
 };
 
 export async function initFluid() {
-	let container;
+	let container: IFluidContainer;
 
 	if (!location.hash) {
 		({ container } = await client.createContainer(containerSchema));
 
 		// TODO: Waiting for 'attach()' is a work around for https://dev.azure.com/fluidframework/internal/_workitems/edit/6805
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		await container.attach().then((containerId) => (location.hash = containerId));
 	} else {
 		({ container } = await client.getContainer(location.hash.substring(1), containerSchema));
