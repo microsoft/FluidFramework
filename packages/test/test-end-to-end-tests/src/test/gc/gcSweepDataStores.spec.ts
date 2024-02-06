@@ -536,19 +536,8 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				validateDataStoreStateInSummary(summary3.summaryTree, sweepReadyDataStoreNodePath);
 			},
 		);
-
-		itExpects(
-			"disableDatastoreSweep true - DOES NOT update deleted data store state in the summary",
-			[
-				{
-					// Since we do full tree summary, everything is loaded including the sweepReady node
-					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Loaded",
-					clientType: "noninteractive/summarizer",
-				},
-			],
-			async () => {
-				settings["Fluid.GarbageCollection.DisableDataStoreSweep"] = true;
-
+		describe("DataStore Sweep Disabled - DOES NOT update deleted data store state in the summary", () => {
+			async function ensureDataStoreSweepDisabled() {
 				const { unreferencedId, summarizer } =
 					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
 				const sweepReadyDataStoreNodePath = `/${unreferencedId}`;
@@ -572,42 +561,37 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 					sweepReadyDataStoreNodePath,
 					false /* expectDelete */,
 				);
-			},
-		);
+			}
 
-		itExpects(
-			"blobOnlySweep option set - DOES NOT update deleted data store state in the summary",
-			[
-				{
-					// Since we do full tree summary, everything is loaded including the sweepReady node
-					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Loaded",
-					clientType: "noninteractive/summarizer",
+			itExpects(
+				"via disableDatastoreSweep config setting",
+				[
+					{
+						// Since we do full tree summary, everything is loaded including the sweepReady node
+						eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Loaded",
+						clientType: "noninteractive/summarizer",
+					},
+				],
+				async () => {
+					settings["Fluid.GarbageCollection.DisableDataStoreSweep"] = true;
+					await ensureDataStoreSweepDisabled();
 				},
-			],
-			async () => {
-				gcOptions.blobOnlySweep = true;
-
-				const { unreferencedId, summarizingContainer, summarizer } =
-					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
-				const sweepReadyDataStoreNodePath = `/${unreferencedId}`;
-				await sendOpToUpdateSummaryTimestampToNow(summarizer);
-
-				// The datastore should NOT be swept here.
-				// We need to do fullTree because the GC data won't change (since it's not swept).
-				// But the validation depends on the GC subtree being present (not a handle).
-				const summary2 = await summarize(summarizer, {
-					reason: "end-to-end test",
-					fullTree: true,
-				});
-
-				// Validate that the data store's state is correct in the summary - it shouldn't have been deleted.
-				validateDataStoreStateInSummary(
-					summary2.summaryTree,
-					sweepReadyDataStoreNodePath,
-					false /* expectDelete */,
-				);
-			},
-		);
+			);
+			itExpects(
+				"via blobOnlySweep GC option",
+				[
+					{
+						// Since we do full tree summary, everything is loaded including the sweepReady node
+						eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Loaded",
+						clientType: "noninteractive/summarizer",
+					},
+				],
+				async () => {
+					gcOptions.blobOnlySweep = true;
+					await ensureDataStoreSweepDisabled();
+				},
+			);
+		});
 	});
 
 	describe("Sweep with ValidateSummaryBeforeUpload enabled", () => {

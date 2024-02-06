@@ -295,7 +295,7 @@ export interface IGarbageCollector {
 	readonly throwOnTombstoneLoad: boolean;
 	/** Tells whether using a tombstone object should fail or merely log. */
 	readonly throwOnTombstoneUsage: boolean;
-	/** Tells whether we're ONLY sweeping blobs (if Sweep is enabled). */
+	/** Tells whether we're ONLY sweeping blobs (if Sweep is allowed). */
 	readonly blobOnlySweep: boolean;
 	/** Initialize the state from the base snapshot after its creation. */
 	initializeBaseState(): Promise<void>;
@@ -428,7 +428,7 @@ export interface IGarbageCollectorConfigs {
 	 */
 	readonly gcEnabled: boolean;
 	/**
-	 * Tracks if sweep phase is enabled for this document. This is specified during document creation and doesn't change
+	 * Tracks if sweep phase is allowed for this document. This is specified during document creation and doesn't change
 	 * throughout its lifetime.
 	 */
 	readonly sweepEnabled: boolean;
@@ -438,9 +438,9 @@ export interface IGarbageCollectorConfigs {
 	 */
 	readonly shouldRunGC: boolean;
 	/**
-	 * Tracks if sweep phase should run or not. Even if the sweep phase is enabled for a document (see sweepEnabled), it
+	 * Tracks if sweep phase should run or not. Even if the sweep phase is allowed for a document (see sweepEnabled), it
 	 * can be explicitly disabled via feature flags. It also won't run if session expiry is not enabled.
-	 * There is also an option to only sweep blobs (this respects all other conditions otherwise).
+	 * There is also an option to only sweep blobs.
 	 */
 	readonly shouldRunSweep: boolean | "ONLY_BLOBS";
 	/**

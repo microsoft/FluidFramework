@@ -802,6 +802,13 @@ describe("Garbage Collection configurations", () => {
 				{
 					shouldRunGC: true,
 					sweepEnabled_doc: true,
+					sweepEnabled_session: true,
+					blobOnlySweep: true,
+					expectedShouldRunSweep: "ONLY_BLOBS",
+				},
+				{
+					shouldRunGC: true,
+					sweepEnabled_doc: true,
 					sweepEnabled_session: false, // Veto
 					blobOnlySweep: true, //* This should probably actually win here (makes sense with sweepEnabled_session being undefined not false)
 					expectedShouldRunSweep: false,
@@ -812,13 +819,6 @@ describe("Garbage Collection configurations", () => {
 					sweepEnabled_session: true,
 					blobOnlySweep: true,
 					expectedShouldRunSweep: false,
-				},
-				{
-					shouldRunGC: true,
-					sweepEnabled_doc: true,
-					sweepEnabled_session: true,
-					blobOnlySweep: true,
-					expectedShouldRunSweep: "ONLY_BLOBS",
 				},
 			];
 			testCases.forEach((testCase, index) => {

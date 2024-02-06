@@ -40,7 +40,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 	const settings = {};
 	const defaultGCOptions: IGCRuntimeOptions = {
 		inactiveTimeoutMs: 0,
-		enableGCSweep: true, //* blobOnlySweep needs to override this, or change the tests
+		enableGCSweep: true,
 		sweepGracePeriodMs: 0, // Skip Tombstone, these tests focus on Sweep
 	};
 	let gcOptions: IGCRuntimeOptions = defaultGCOptions;
