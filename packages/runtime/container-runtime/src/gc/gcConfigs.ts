@@ -140,10 +140,11 @@ export function generateGCConfigs(
 	 * 4. Sweep should be enabled for this container. This can be overridden via runSweep
 	 * feature flag.
 	 */
-	const shouldRunSweep =
+	const shouldRunSweep: IGarbageCollectorConfigs["shouldRunSweep"] =
 		shouldRunGC &&
 		sweepTimeoutMs !== undefined &&
-		(mc.config.getBoolean(runSweepKey) ?? sweepEnabled);
+		(mc.config.getBoolean(runSweepKey) ??
+			(!sweepEnabled ? false : createParams.gcOptions.blobOnlySweep ? "ONLY_BLOBS" : true));
 
 	// Override inactive timeout if test config or gc options to override it is set.
 	const inactiveTimeoutMs =
