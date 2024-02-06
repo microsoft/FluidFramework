@@ -12,7 +12,10 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { createIdCompressor } from "@fluidframework/id-compressor";
-import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
+import {
+	TreeCompressionStrategy,
+	cursorForJsonableTreeNode,
+} from "../../feature-libraries/index.js";
 import { ISharedTree, ITreeCheckout, SharedTreeFactory } from "../../shared-tree/index.js";
 import { JsonCompatibleReadOnly, brand, getOrAddEmptyToMap } from "../../util/index.js";
 import {
@@ -377,8 +380,11 @@ const styles = [
 		extraDescription: `1 transaction`,
 	},
 ];
-
-const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
+// TODO: ADO#7111 schemas in this file should be updated/fixed to enable compressed encoding.
+const factory = new SharedTreeFactory({
+	jsonValidator: typeboxValidator,
+	treeEncodeType: TreeCompressionStrategy.Uncompressed,
+});
 
 describe("Op Size", () => {
 	const opsByBenchmarkName: Map<string, ISequencedDocumentMessage[]> = new Map();
