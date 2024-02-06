@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils";
 import { RevisionTag } from "../../core/index.js";
 import { Mark } from "./types.js";
-import { applyMoveEffectsToMark, MoveEffectTable } from "./moveEffectTable.js";
+import { splitMarkForMoveEffects, MoveEffectTable } from "./moveEffectTable.js";
 import { splitMark } from "./utils.js";
 
 export class MarkQueue<T> {
@@ -32,26 +32,16 @@ export class MarkQueue<T> {
 	}
 
 	public tryDequeue(): Mark<T> | undefined {
-		if (this.stack.length > 0) {
-			return this.stack.pop();
-		} else if (this.index < this.list.length) {
-			const mark = this.list[this.index++];
-			if (mark === undefined) {
-				return undefined;
-			}
-
-			const splitMarks = applyMoveEffectsToMark(mark, this.revision, this.moveEffects);
-
-			if (splitMarks.length === 0) {
-				return undefined;
-			}
-
-			const result = splitMarks[0];
-			for (let i = splitMarks.length - 1; i > 0; i--) {
-				this.stack.push(splitMarks[i]);
-			}
-			return result;
+		const mark = this.stack.length > 0 ? this.stack.pop() : this.list[this.index++];
+		if (mark === undefined) {
+			return undefined;
 		}
+
+		const splitMarks = splitMarkForMoveEffects(mark, this.revision, this.moveEffects);
+		for (let i = splitMarks.length - 1; i > 0; i--) {
+			this.stack.push(splitMarks[i]);
+		}
+		return splitMarks[0];
 	}
 
 	/**

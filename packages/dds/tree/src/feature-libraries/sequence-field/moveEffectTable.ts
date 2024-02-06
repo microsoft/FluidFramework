@@ -8,13 +8,7 @@ import { ChangeAtomId, RevisionTag, TaggedChange } from "../../core/index.js";
 import { CrossFieldManager, CrossFieldTarget } from "../modular-schema/index.js";
 import { RangeQueryResult, brand } from "../../util/index.js";
 import { CellMark, Mark, MarkEffect, MoveId, MoveIn, MoveOut } from "./types.js";
-import {
-	areEqualCellIds,
-	cloneMark,
-	isAttachAndDetachEffect,
-	splitMark,
-	splitMarkEffect,
-} from "./utils.js";
+import { isAttachAndDetachEffect, splitMark, splitMarkEffect } from "./utils.js";
 import { MoveMarkEffect } from "./helperTypes.js";
 
 export type MoveEffectTable<T> = CrossFieldManager<MoveEffect<T>>;
@@ -144,194 +138,47 @@ function adjustMoveEffectBasis<T>(effect: MoveEffectWithBasis<T>, newBasis: Move
 	return adjusted;
 }
 
-function applyMoveEffectsToDest(
-	markEffect: MoveIn,
-	count: number,
-	revision: RevisionTag | undefined,
-	effects: MoveEffectTable<unknown>,
-) {
-	updateEndpoint(markEffect, count, CrossFieldTarget.Destination, revision, effects);
-}
-
-function applyMoveEffectsToSource<T>(
-	mark: Mark<T>,
-	updateFinalEndpoint: boolean,
-	revision: RevisionTag | undefined,
-	effects: MoveEffectTable<T>,
-): Mark<T> {
-	const newMark = cloneMark(mark);
-	if (updateFinalEndpoint && isMoveOut(newMark)) {
-		applySourceEffects(newMark, mark.count, revision, effects);
-	}
-
-	return newMark;
-}
-
-function applySourceEffects(
-	markEffect: MoveOut,
-	count: number,
-	revision: RevisionTag | undefined,
-	effects: MoveEffectTable<unknown>,
-) {
-	updateEndpoint(markEffect, count, CrossFieldTarget.Source, revision, effects);
-}
-
-function updateEndpoint(
-	markEffect: MoveMarkEffect,
-	count: number,
-	target: CrossFieldTarget,
-	revision: RevisionTag | undefined,
-	effects: MoveEffectTable<unknown>,
-) {
-	const markRevision = markEffect.revision ?? revision;
-	const finalDest = getEndpoint(effects, target, markRevision, markEffect.id, count);
-
-	if (finalDest !== undefined) {
-		if (areEqualCellIds(finalDest, { revision: markRevision, localId: markEffect.id })) {
-			delete markEffect.finalEndpoint;
-		} else {
-			markEffect.finalEndpoint = finalDest;
-		}
-	}
-}
-
-export function applyMoveEffectsToMark<T>(
+export function splitMarkForMoveEffects<T>(
 	mark: Mark<T>,
 	revision: RevisionTag | undefined,
 	effects: MoveEffectTable<T>,
 ): Mark<T>[] {
-	return applyMoveEffectsToActiveMarks<T>([mark], revision, effects);
+	const length = getFirstMoveEffectLength(mark, mark.count, revision, effects);
+	return length < mark.count ? splitMark(mark, length) : [mark];
 }
 
-function applyMoveEffectsToActiveMarks<T>(
-	inputQueue: Mark<T>[],
-	revision: RevisionTag | undefined,
-	effects: MoveEffectTable<T>,
-) {
-	const outputQueue: Mark<T>[] = [];
-	let mark = inputQueue.shift();
-	while (mark !== undefined) {
-		if (isAttachAndDetachEffect(mark)) {
-			if (isMoveIn(mark.attach)) {
-				if (isMoveOut(mark.detach)) {
-					// Move effects should not be applied to intermediate move locations.
-					outputQueue.push(mark);
-				} else {
-					const attachRevision = mark.attach.revision ?? revision;
-					const effect = getMoveEffect(
-						effects,
-						CrossFieldTarget.Destination,
-						attachRevision,
-						mark.attach.id,
-						mark.count,
-					);
-
-					let updatedAttach: MoveIn;
-					if (effect.length < mark.count) {
-						const [firstMark, secondMark] = splitMark(mark, effect.length);
-						mark = firstMark;
-						updatedAttach = firstMark.attach as MoveIn;
-						inputQueue.unshift(secondMark);
-					} else {
-						updatedAttach = { ...mark.attach };
-					}
-					applyMoveEffectsToDest(updatedAttach, mark.count, attachRevision, effects);
-					outputQueue.push({
-						...mark,
-						attach: updatedAttach,
-					});
-				}
-			} else if (isMoveOut(mark.detach)) {
-				const detachRevision = mark.detach.revision ?? revision;
-				const effect = getMoveEffect(
-					effects,
-					CrossFieldTarget.Source,
-					detachRevision,
-					mark.detach.id,
-					mark.count,
-				);
-
-				if (effect.length < mark.count) {
-					const [firstMark, secondMark] = splitMark(mark, effect.length);
-					mark = firstMark;
-					inputQueue.unshift(secondMark);
-				}
-
-				const newMark = cloneMark(mark);
-				applySourceEffects(newMark.detach as MoveOut, mark.count, detachRevision, effects);
-				outputQueue.push(newMark);
-			} else {
-				outputQueue.push(mark);
-			}
-		} else if (isMoveMark(mark)) {
-			const type = mark.type;
-			switch (type) {
-				case "MoveOut": {
-					const effect = getMoveEffect(
-						effects,
-						CrossFieldTarget.Source,
-						mark.revision ?? revision,
-						mark.id,
-						mark.count,
-					);
-
-					if (effect.length < mark.count) {
-						const [firstMark, secondMark] = splitMark(mark, effect.length);
-						mark = firstMark;
-						inputQueue.unshift(secondMark);
-					}
-
-					outputQueue.push(applyMoveEffectsToSource(mark, true, revision, effects));
-					break;
-				}
-				case "MoveIn": {
-					const effect = getMoveEffect(
-						effects,
-						CrossFieldTarget.Destination,
-						mark.revision ?? revision,
-						mark.id,
-						mark.count,
-					);
-
-					if (effect.length < mark.count) {
-						const [firstMark, secondMark] = splitMark(mark, effect.length);
-						mark = firstMark;
-						inputQueue.unshift(secondMark);
-					}
-
-					const newMark = cloneMark(mark);
-					applyMoveEffectsToDest(
-						newMark as CellMark<MoveIn, T>,
-						mark.count,
-						revision,
-						effects,
-					);
-					outputQueue.push(newMark);
-					break;
-				}
-				default:
-					unreachableCase(type);
-			}
-		} else {
-			outputQueue.push(mark);
-		}
-		mark = inputQueue.shift();
-	}
-	return outputQueue;
-}
-
-function getEndpoint(
-	moveEffects: MoveEffectTable<unknown>,
-	target: CrossFieldTarget,
-	revision: RevisionTag | undefined,
-	id: MoveId,
+function getFirstMoveEffectLength(
+	markEffect: MarkEffect,
 	count: number,
-): ChangeAtomId | undefined {
-	const effect = getMoveEffect(moveEffects, target, revision, id, count);
-	assert(effect.length === count, 0x815 /* Expected effect to cover entire mark */);
-	if (effect.value?.endpoint === undefined) {
-		return undefined;
+	revision: RevisionTag | undefined,
+	effects: MoveEffectTable<unknown>,
+): number {
+	if (isMoveMark(markEffect)) {
+		return getMoveEffect(
+			effects,
+			getCrossFieldTargetFromMove(markEffect),
+			markEffect.revision ?? revision,
+			markEffect.id,
+			count,
+		).length;
+	} else if (isAttachAndDetachEffect(markEffect)) {
+		return Math.min(
+			getFirstMoveEffectLength(markEffect.attach, count, revision, effects),
+			getFirstMoveEffectLength(markEffect.detach, count, revision, effects),
+		);
 	}
 
-	return effect.value.endpoint;
+	return count;
+}
+
+export function getCrossFieldTargetFromMove(mark: MoveMarkEffect): CrossFieldTarget {
+	const type = mark.type;
+	switch (type) {
+		case "MoveIn":
+			return CrossFieldTarget.Destination;
+		case "MoveOut":
+			return CrossFieldTarget.Source;
+		default:
+			unreachableCase(type);
+	}
 }
