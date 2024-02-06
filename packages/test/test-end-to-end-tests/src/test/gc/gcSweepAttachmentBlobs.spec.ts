@@ -1053,9 +1053,9 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 			}
 		});
 
-		[true, undefined].forEach((blobOnlySweep) =>
-			it(`updates deleted blob state in the summary [blobOnlySweep=${blobOnlySweep}]`, async () => {
-				gcOptions.blobOnlySweep = blobOnlySweep;
+		[true, undefined].forEach((enableGCSweep_BlobsOnly) =>
+			it(`updates deleted blob state in the summary [enableGCSweep_BlobsOnly=${enableGCSweep_BlobsOnly}]`, async () => {
+				gcOptions.enableGCSweep_BlobsOnly = enableGCSweep_BlobsOnly;
 
 				const { dataStore: mainDataStore, summarizer } =
 					await createDataStoreAndSummarizer();

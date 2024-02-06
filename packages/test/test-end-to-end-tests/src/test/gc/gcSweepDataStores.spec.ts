@@ -578,7 +578,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				},
 			);
 			itExpects(
-				"via blobOnlySweep GC option",
+				"via enableGCSweep_BlobsOnly GC option",
 				[
 					{
 						// Since we do full tree summary, everything is loaded including the sweepReady node
@@ -587,7 +587,7 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 					},
 				],
 				async () => {
-					gcOptions.blobOnlySweep = true;
+					gcOptions.enableGCSweep_BlobsOnly = true;
 					await ensureDataStoreSweepDisabled();
 				},
 			);

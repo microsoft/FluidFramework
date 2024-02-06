@@ -135,7 +135,7 @@ export class GarbageCollector implements IGarbageCollector {
 		return this.configs.throwOnTombstoneUsage;
 	}
 	/** Tells whether we're ONLY sweeping blobs (only applicable if Sweep is allowed). */
-	public get blobOnlySweep(): boolean {
+	public get sweepOnlyBlobs(): boolean {
 		return this.configs.shouldRunSweep === "ONLY_BLOBS";
 	}
 

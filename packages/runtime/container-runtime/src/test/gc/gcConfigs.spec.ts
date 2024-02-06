@@ -759,7 +759,7 @@ describe("Garbage Collection configurations", () => {
 				shouldRunGC: boolean;
 				sweepEnabled_doc: boolean;
 				sweepEnabled_session: boolean;
-				blobOnlySweep?: true;
+				sweepEnabled_onlyBlobs?: true;
 				shouldRunSweep?: boolean;
 				expectedShouldRunSweep: IGarbageCollectorConfigs["shouldRunSweep"];
 			}[] = [
@@ -774,7 +774,7 @@ describe("Garbage Collection configurations", () => {
 					shouldRunGC: true,
 					sweepEnabled_doc: true,
 					sweepEnabled_session: true,
-					blobOnlySweep: true, // Ignored when shouldRunSweep is set
+					sweepEnabled_onlyBlobs: true, // Ignored when shouldRunSweep is set
 					shouldRunSweep: true,
 					expectedShouldRunSweep: true,
 				},
@@ -782,7 +782,7 @@ describe("Garbage Collection configurations", () => {
 					shouldRunGC: true,
 					sweepEnabled_doc: true,
 					sweepEnabled_session: true,
-					blobOnlySweep: true,
+					sweepEnabled_onlyBlobs: true,
 					shouldRunSweep: false, // Veto power
 					expectedShouldRunSweep: false,
 				},
@@ -803,21 +803,21 @@ describe("Garbage Collection configurations", () => {
 					shouldRunGC: true,
 					sweepEnabled_doc: true,
 					sweepEnabled_session: true,
-					blobOnlySweep: true,
+					sweepEnabled_onlyBlobs: true,
 					expectedShouldRunSweep: "ONLY_BLOBS",
 				},
 				{
 					shouldRunGC: true,
 					sweepEnabled_doc: true,
-					sweepEnabled_session: false, // Veto
-					blobOnlySweep: true, //* This should probably actually win here (makes sense with sweepEnabled_session being undefined not false)
-					expectedShouldRunSweep: false,
+					sweepEnabled_session: false,
+					sweepEnabled_onlyBlobs: true,
+					expectedShouldRunSweep: "ONLY_BLOBS",
 				},
 				{
 					shouldRunGC: true,
 					sweepEnabled_doc: false, // Veto
 					sweepEnabled_session: true,
-					blobOnlySweep: true,
+					sweepEnabled_onlyBlobs: true,
 					expectedShouldRunSweep: false,
 				},
 			];
@@ -832,7 +832,7 @@ describe("Garbage Collection configurations", () => {
 						} /* metadata */,
 						{
 							enableGCSweep: testCase.sweepEnabled_session ? true : undefined,
-							blobOnlySweep: testCase.blobOnlySweep,
+							enableGCSweep_BlobsOnly: testCase.sweepEnabled_onlyBlobs,
 							[gcGenerationOptionName]: testCase.sweepEnabled_doc ? 1 : 2,
 						} /* gcOptions */,
 					);

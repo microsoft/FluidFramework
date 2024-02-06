@@ -2950,7 +2950,7 @@ export class ContainerRuntime
 
 		// Start with Blob routes, and only add DataStore routes if applicable
 		const deletedRoutes = this.blobManager.deleteSweepReadyNodes(blobManagerRoutes);
-		if (this.garbageCollector.blobOnlySweep) {
+		if (this.garbageCollector.sweepOnlyBlobs) {
 			return deletedRoutes;
 		}
 
