@@ -6,7 +6,7 @@
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const path = require("path");
 const { merge } = require("webpack-merge");
-const webpack = require("webpack");
+const webpack = require("webpack"); //to access built-in plugins
 
 module.exports = (env) => {
 	const isProduction = env?.production;
