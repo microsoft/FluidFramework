@@ -7,6 +7,8 @@ import { assert } from "@fluidframework/core-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { delay } from "@fluidframework/core-utils";
 
 import {
 	ICollabChannelCore,
@@ -58,11 +60,16 @@ describe("Temporal Collab Spaces", () => {
 				const cols = 7;
 				const rows = 20;
 
+				const runtimeOptions: IContainerRuntimeOptions = {
+					enableGroupedBatching: true,
+					chunkSizeInBytes: 950000,
+					maxBatchSizeInBytes: 990000,
+				};
 				const defaultFactory = sampleFactory();
 				const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 					defaultFactory,
 					registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
-					runtimeOptions: {},
+					runtimeOptions,
 				});
 
 				const createContainer = async () => {
@@ -109,9 +116,20 @@ describe("Temporal Collab Spaces", () => {
 					collabSpace: IEfficientMatrix,
 					value: CollabSpaceCellType,
 				) {
+					// Container is in "read" connection mode. If
+					// This will cause it to go through resubmit flow and it's super expensive.
+					// So let's make sure these ops (related to matrix size setting) go through first
+					// (and force container into "write" mode), such that we do not pay the cost of resubmitting
+					// a ton of setCell() calls later!
+					collabSpace.insertRows(0, 1);
+					await provider.ensureSynchronized();
+
 					// +700Mb, but only +200Mb if accounting GC after that.
 					collabSpace.insertCols(0, cols);
-					collabSpace.insertRows(0, rows);
+					collabSpace.insertRows(0, rows - 1);
+
+					// Roughly how many cells were changed due to row/col ID tracking
+					let cells = cols + rows;
 
 					if (global?.gc !== undefined) {
 						global.gc();
@@ -122,8 +140,17 @@ describe("Temporal Collab Spaces", () => {
 					// Though if GC did not run in a step above, this number is much higher (+1GB),
 					// suggesting that actual memory growth is 1GB, but 500Mb offset could be coming
 					// from the fact that GC did not had a chance to run and cleanup after previous step.
-					for (let r = 0; r < rows; r++) {
-						for (let c = 0; c < cols; c++) {
+					for (let c = 0; c < cols; c++) {
+						// Batches are becoming too large. When testing 40 x 100K.
+						// Thus flush ops sooner in smaller chunks. It mostly ensures we do not run out of memory.
+						// 10K cell updates correspons roughtly to 2.5Mb of content before compression
+						cells += rows;
+						if (cells >= 10000) {
+							await delay(0);
+							cells = 0;
+						}
+
+						for (let r = 0; r < rows; r++) {
 							collabSpace.setCell(r, c, value);
 						}
 					}
@@ -147,6 +174,7 @@ describe("Temporal Collab Spaces", () => {
 					// Have a secont container that follows passivley the first one
 					await addContainerInstance();
 
+					const start = performance.now();
 					// Populate initial state of the matrix - insert a ton of rows & columns and populate
 					// all cells with same data.
 					await populateInitialMatrix(collabSpace, {
@@ -154,16 +182,12 @@ describe("Temporal Collab Spaces", () => {
 						type: CounterFactory.Type,
 					});
 
-					// TBD(Pri0): this synchronization takes very long time (for medium sized tables, like 100x40)!
-					// There are obviously a lot of ops, but it should still take relatively short amount of time.
-					// This might be an test code issue, but also (much worse) - a production code inefficiency.
-					// Two things to check:
-					// 1. Looks like our local test pipeline is slow, probably something easy to improve
-					// 2. Enable op grouping, possibly compression by default to reduce amount of data that goes through
-					//    local server
 					await provider.ensureSynchronized();
-					ensureSameSize();
 
+					const time = performance.now() - start;
+					console.log("Time to populate", time);
+
+					ensureSameSize();
 					return collabSpace;
 				}
 
