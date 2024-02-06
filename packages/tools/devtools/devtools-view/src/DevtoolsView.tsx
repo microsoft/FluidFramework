@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import React, { useState } from "react";
-import { v4 as uuidv4 } from "uuid";
+import React from "react";
 import {
 	Button,
 	FluentProvider,
@@ -29,13 +28,6 @@ import {
 	type InboundHandlers,
 	type ISourcedDevtoolsMessage,
 } from "@fluidframework/devtools-core";
-import {
-	TelemetryContext,
-	useSessionId,
-	useBrowserId,
-	getOrCreateBrowserId,
-} from "./TelemetryContext";
-
 import {
 	ContainerDevtoolsView,
 	LandingView,
@@ -263,39 +255,28 @@ export function DevtoolsView(props: DevtoolsViewProps): React.ReactElement {
 		setQueryTimedOut(false);
 		messageRelay.postMessage(getSupportedFeaturesMessage);
 	}
-	const [uuid, setUUID] = useState<string>("");
-	const [browserID, setBrowserID] = useState<string>("");
-
-	React.useEffect(() => {
-		setBrowserID(getOrCreateBrowserId());
-		setUUID(uuidv4());
-	}, []);
 
 	return (
-		<TelemetryContext.Provider value={{ sessionId: uuid, browserId: browserID }}>
-			<LoggerContext.Provider value={topLevelLogger}>
-				<ThemeContext.Provider
-					value={{ themeInfo: selectedTheme, setTheme: setSelectedTheme }}
-				>
-					<FluentProvider theme={selectedTheme.theme} style={{ height: "100%" }}>
-						{supportedFeatures === undefined ? (
-							<>
-								{!queryTimedOut && <Waiting />}
-								{queryTimedOut && !isMessageDismissed && (
-									<NoDevtoolsErrorBar
-										dismiss={(): void => setIsMessageDismissed(true)}
-										retrySearch={(): void => retryQuery()}
-									/>
-								)}
-								<_DevtoolsView supportedFeatures={{}} />
-							</>
-						) : (
-							<_DevtoolsView supportedFeatures={supportedFeatures} />
-						)}
-					</FluentProvider>
-				</ThemeContext.Provider>
-			</LoggerContext.Provider>
-		</TelemetryContext.Provider>
+		<LoggerContext.Provider value={topLevelLogger}>
+			<ThemeContext.Provider value={{ themeInfo: selectedTheme, setTheme: setSelectedTheme }}>
+				<FluentProvider theme={selectedTheme.theme} style={{ height: "100%" }}>
+					{supportedFeatures === undefined ? (
+						<>
+							{!queryTimedOut && <Waiting />}
+							{queryTimedOut && !isMessageDismissed && (
+								<NoDevtoolsErrorBar
+									dismiss={(): void => setIsMessageDismissed(true)}
+									retrySearch={(): void => retryQuery()}
+								/>
+							)}
+							<_DevtoolsView supportedFeatures={{}} />
+						</>
+					) : (
+						<_DevtoolsView supportedFeatures={supportedFeatures} />
+					)}
+				</FluentProvider>
+			</ThemeContext.Provider>
+		</LoggerContext.Provider>
 	);
 }
 
@@ -506,8 +487,6 @@ interface MenuProps {
 function Menu(props: MenuProps): React.ReactElement {
 	const { currentSelection, setSelection, supportedFeatures, containers } = props;
 	const usageLogger = useLogger();
-	const sessionID = useSessionId();
-	const browserID = useBrowserId();
 	const styles = useMenuStyles();
 
 	function onContainerClicked(containerKey: ContainerKey): void {
@@ -516,8 +495,6 @@ function Menu(props: MenuProps): React.ReactElement {
 			eventName: "Navigation",
 			details: {
 				target: "Menu_Container",
-				sessionID,
-				browserID,
 			},
 		});
 	}
@@ -527,8 +504,6 @@ function Menu(props: MenuProps): React.ReactElement {
 		usageLogger?.sendTelemetryEvent({
 			eventName: "Navigation",
 			details: { target: "Menu_Telemetry" },
-			sessionID,
-			browserID,
 		});
 	}
 
@@ -537,8 +512,6 @@ function Menu(props: MenuProps): React.ReactElement {
 		usageLogger?.sendTelemetryEvent({
 			eventName: "Navigation",
 			details: { target: "Menu_Settings" },
-			sessionID,
-			browserID,
 		});
 	}
 
@@ -547,8 +520,6 @@ function Menu(props: MenuProps): React.ReactElement {
 		usageLogger?.sendTelemetryEvent({
 			eventName: "Navigation",
 			details: { target: "Menu_Home" },
-			sessionID,
-			browserID,
 		});
 	}
 
@@ -557,8 +528,6 @@ function Menu(props: MenuProps): React.ReactElement {
 		usageLogger?.sendTelemetryEvent({
 			eventName: "Navigation",
 			details: { target: "Menu_OpLatency" },
-			sessionID,
-			browserID,
 		});
 	}
 

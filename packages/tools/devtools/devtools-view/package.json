@@ -65,6 +65,7 @@
 		"react-dom": "^17.0.1",
 		"react-split-pane": "^0.1.92",
 		"recharts": "^2.7.2",
+		"scheduler": "^0.20.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
