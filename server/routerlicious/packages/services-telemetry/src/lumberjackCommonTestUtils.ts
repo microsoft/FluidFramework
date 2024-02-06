@@ -19,7 +19,7 @@ import {
  */
 export class TestLumberjack extends Lumberjack {
 	public static reset() {
-		Lumberjack._instance = undefined;
+		this._instance = undefined;
 	}
 }
 

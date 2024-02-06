@@ -134,6 +134,10 @@ parameters:
 - name: publish
   type: boolean
 
+# Indicates if tests should be run with code coverage analysis.
+- name: testCoverage
+  type: boolean
+
 # The `resources` specify the location and version of the 1ES Pipeline Template.
 resources:
   repositories:
@@ -162,7 +166,7 @@ extends:
         name: Azure-Pipelines-1ESPT-ExDShared
         image: windows-2022
         os: windows
-    # Skip tagging if Github PR coming from a fork;  This skips Microsoft security checks that won't work on forks. 
+    # Skip tagging if Github PR coming from a fork;  This skips Microsoft security checks that won't work on forks.
     settings:
       skipBuildTagsForGitHubPullRequests: true
     customBuildTags:
@@ -185,7 +189,7 @@ extends:
           - job: build
             displayName: Build
             ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
-              timeoutInMinutes: 60
+              timeoutInMinutes: 90
             ${{ else }}:
               # CI builds run more aggressive compat configurations which can take longer.
               # See "FullCompat" under packages\test\test-version-utils\README.md for more details.
@@ -194,11 +198,11 @@ extends:
               # over time and it might be necessary to bump it.
               # AB#6680 is also relevant here, which tracks rethinking how and where we run tests (likely with
               # a focus on e2e tests)
-              timeoutInMinutes: 60
+              # Note, This was recently updated to 90 minutes to account for the additional build time added from extending
+              # the Microsoft 1ES template required for corporate security compliance
+              timeoutInMinutes: 90
             variables:
               - group: ado-feeds
-              - name: testCoverage
-                value: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
               - name: releaseBuildVar
                 value: '$[variables.releaseBuild]'
               - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
@@ -241,7 +245,7 @@ extends:
                       LintName: ${{ parameters.taskLintName }}
                       PublishDocs=${{ parameters.publishDocs }}
                       Test=${{ convertToJson(parameters.taskTest) }}
-                      TestCoverage=$(testCoverage)
+                      TestCoverage=${{ parameters.testCoverage }}
                       TestResultDirs=${{ convertToJson(parameters.testResultDirs) }}
 
                     Variables:
@@ -346,6 +350,7 @@ extends:
                         parameters:
                           taskTestStep: '${{ taskTestStep }}'
                           buildDirectory: '${{ parameters.buildDirectory }}'
+                          testCoverage: ${{ parameters.testCoverage }}
 
                   - ${{ if contains(convertToJson(parameters.taskTest), 'tinylicious') }}:
                     # Copy files so all artifacts we publish end up under the same parent folder.
@@ -369,7 +374,7 @@ extends:
                   # Some webpacked file using externals introduce file name with quotes in them
                   # and Istanbul's cobertura reporter doesn't escape them causing parse error when we publish
                   # A quick fix to patch the file with sed. (See https://github.com/bcoe/c8/issues/302)
-                  - ${{ if eq(variables['testCoverage'], true) }}:
+                  - ${{ if parameters.testCoverage }}:
                       - task: Bash@3
                         displayName: Check for nyc/report directory
                         inputs:
@@ -569,7 +574,7 @@ extends:
                       displayName: Publish Artifacts - bundle-analysis
                       condition: and( succeeded(), ne(variables['Build.Reason'], 'PullRequest'), eq(${{ parameters.taskPublishBundleSizeArtifacts }}, true) )
                       targetPath: $(Build.ArtifactStagingDirectory)/bundleAnalysis
-                      artifactname: bundleAnalysis
+                      artifactName: bundleAnalysis
                       sbomEnabled: false
                       publishLocation: pipeline
 
@@ -614,13 +619,32 @@ extends:
           condition: succeededOrFailed()
           dependsOn:
             - build
+            # NOTE: This is brittle; we need to only apply these stage dependencies when the corresponding stages actually
+            # get created in the pipeline, in the include-publish-npm-package.yml file, so we want to match the compile-time
+            # conditions *and exact stage names* that exist there. At some point it might be preferable to always create the
+            # stages, control their execution with 'condition:', and update this stage to always depend on all previous
+            # stages (while still running if some of the dependencies were skipped).
+            - ${{ if eq(variables.publish, true) }}:
+              - ${{ if eq(variables['testBuild'], true) }}:
+                - publish_npm_internal_test
+              - ${{ if eq(variables['testBuild'], false) }}:
+                - publish_npm_internal_build
+              - ${{ if and(eq(variables['testBuild'], false), eq(parameters.isReleaseGroup, true)) }}:
+                - publish_npm_internal_dev
+              - ${{ if or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')) }}:
+                - publish_npm_public
           jobs:
             - job: upload_run_telemetry
               displayName: Upload pipeline run telemetry to Kusto
               pool: Small-1ES
               variables:
+              - group: ado-feeds
               - name: pipelineTelemetryWorkdir
                 value: $(Pipeline.Workspace)/pipelineTelemetryWorkdir
+                readonly: true
+              - name: absolutePathToTelemetryGenerator
+                value: $(Build.SourcesDirectory)/tools/telemetry-generator
+                readonly: true
               steps:
               - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
                 parameters:

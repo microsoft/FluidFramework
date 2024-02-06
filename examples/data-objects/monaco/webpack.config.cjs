@@ -36,7 +36,7 @@ module.exports = (env) => {
 					// This example currently has missing sourcemap issues.
 					// Disabling source mapping allows it to be runnable with these issues.
 					// {
-					//     test: /\.js$/,
+					//     test: /\.m?js$/,
 					//     use: [require.resolve("source-map-loader")],
 					//     enforce: "pre"
 					// },
@@ -70,7 +70,7 @@ module.exports = (env) => {
 			},
 			resolve: {
 				extensionAlias: {
-					".js": [".ts", ".tsx", ".js"],
+					".js": [".ts", ".tsx", ".js", ".cjs", ".mjs"],
 				},
 				extensions: [".tsx", ".ts", ".js"],
 			},

@@ -21,7 +21,6 @@ import {
 	IRuntime,
 	ICriticalContainerError,
 	AttachState,
-	ILoaderOptions,
 	ILoader,
 	LoaderHeader,
 	IGetPendingLocalStateProps,
@@ -554,6 +553,10 @@ export interface IPendingRuntimeState {
 	 * Pending idCompressor state
 	 */
 	pendingIdCompressorState?: SerializedIdCompressorWithOngoingSession;
+	/**
+	 * Time at which session expiry timer started.
+	 */
+	sessionExpiryTimerStarted?: number | undefined;
 }
 
 const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconnects";
@@ -934,7 +937,7 @@ export class ContainerRuntime
 		return runtime;
 	}
 
-	public readonly options: ILoaderOptions;
+	public readonly options: Record<string | number, any>;
 	private imminentClosure: boolean = false;
 
 	private readonly _getClientId: () => string | undefined;
@@ -1245,7 +1248,9 @@ export class ContainerRuntime
 		this.submitSummaryFn = submitSummaryFn;
 		this.submitSignalFn = submitSignalFn;
 
-		this.options = options;
+		// TODO: After IContainerContext.options is removed, we'll just create a new blank object {} here.
+		// Values are generally expected to be set from the runtime side.
+		this.options = options ?? {};
 		this.clientDetails = clientDetails;
 		this.isSummarizerClient = this.clientDetails.type === summarizerClientType;
 		this.loadedFromVersionId = context.getLoadedFromVersion()?.id;
@@ -1418,6 +1423,7 @@ export class ContainerRuntime
 			getLastSummaryTimestampMs: () => this.messageAtLastSummary?.timestamp,
 			readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),
 			submitMessage: (message: ContainerRuntimeGCMessage) => this.submit(message),
+			sessionExpiryTimerStarted: pendingRuntimeState?.sessionExpiryTimerStarted,
 		});
 
 		const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
@@ -1693,7 +1699,7 @@ export class ContainerRuntime
 			groupedBatchingEnabled: this.groupedBatchingEnabled,
 		});
 
-		ReportOpPerfTelemetry(this.clientId, this.deltaManager, this.logger);
+		ReportOpPerfTelemetry(this.clientId, this.deltaManager, this, this.logger);
 		BindBatchTracker(this, this.logger);
 
 		this.entryPoint = new LazyPromise(async () => {
@@ -2533,15 +2539,23 @@ export class ContainerRuntime
 		return this.dataStores.createDetachedDataStoreCore(pkg, true, rootDataStoreId);
 	}
 
-	public createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached {
-		return this.dataStores.createDetachedDataStoreCore(pkg, false);
+	public createDetachedDataStore(
+		pkg: Readonly<string[]>,
+		groupId?: string,
+	): IFluidDataStoreContextDetached {
+		return this.dataStores.createDetachedDataStoreCore(pkg, false, undefined, groupId);
 	}
 
-	public async createDataStore(pkg: string | string[]): Promise<IDataStore> {
+	public async createDataStore(pkg: string | string[], groupId?: string): Promise<IDataStore> {
 		const id = uuid();
 		return channelToDataStore(
 			await this.dataStores
-				._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id)
+				._createFluidDataStoreContext(
+					Array.isArray(pkg) ? pkg : [pkg],
+					id,
+					undefined,
+					groupId,
+				)
 				.realize(),
 			id,
 			this,
@@ -2945,7 +2959,7 @@ export class ContainerRuntime
 		// GC uses "/" when adding "root" references, e.g. for Aliasing or as part of Tombstone Auto-Recovery.
 		// These have no package path so return a special value.
 		if (nodePath === "/") {
-			return ["<GCROOT>"];
+			return ["_gcRoot"];
 		}
 
 		switch (this.getNodeType(nodePath)) {
@@ -3013,7 +3027,10 @@ export class ContainerRuntime
 	 * @param srcHandle - The handle of the node that added the reference.
 	 * @param outboundHandle - The handle of the outbound node that is referenced.
 	 */
-	public addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) {
+	public addedGCOutboundReference(
+		srcHandle: { absolutePath: string },
+		outboundHandle: { absolutePath: string },
+	) {
 		this.garbageCollector.addedOutboundReference(
 			srcHandle.absolutePath,
 			outboundHandle.absolutePath,
@@ -3949,6 +3966,7 @@ export class ContainerRuntime
 					pending,
 					pendingAttachmentBlobs,
 					pendingIdCompressorState,
+					sessionExpiryTimerStarted: this.garbageCollector.sessionExpiryTimerStarted,
 				};
 				event.end({
 					attachmentBlobsSize: Object.keys(pendingAttachmentBlobs ?? {}).length,

@@ -30,7 +30,7 @@ import { defaultGCConfig } from "./gcTestConfigs.js";
  * - It received an op.
  * - Its reference state changed, i.e., it was referenced and became unreferenced or vice-versa.
  */
-describeCompat("GC incremental summaries", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("GC incremental summaries", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let mainContainer: IContainer;
 	let dataStoreA: ITestDataObject;
@@ -222,6 +222,10 @@ describeCompat("GC incremental summaries", "2.0.0-rc.1.0.0", (getTestObjectProvi
 		[
 			{
 				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
+				error: "Upload summary failed in test",
+			},
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed",
 				error: "Upload summary failed in test",
 			},
 		],

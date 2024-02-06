@@ -1,5 +1,59 @@
 # @fluidframework/sequence
 
+## 2.0.0-rc.1.0.0
+
+### Minor Changes
+
+-   Updated server dependencies ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
+
+    The following Fluid server dependencies have been updated to the latest version, 3.0.0. [See the full changelog.](https://github.com/microsoft/FluidFramework/releases/tag/server_v3.0.0)
+
+    -   @fluidframework/gitresources
+    -   @fluidframework/server-kafka-orderer
+    -   @fluidframework/server-lambdas
+    -   @fluidframework/server-lambdas-driver
+    -   @fluidframework/server-local-server
+    -   @fluidframework/server-memory-orderer
+    -   @fluidframework/protocol-base
+    -   @fluidframework/server-routerlicious
+    -   @fluidframework/server-routerlicious-base
+    -   @fluidframework/server-services
+    -   @fluidframework/server-services-client
+    -   @fluidframework/server-services-core
+    -   @fluidframework/server-services-ordering-kafkanode
+    -   @fluidframework/server-services-ordering-rdkafka
+    -   @fluidframework/server-services-ordering-zookeeper
+    -   @fluidframework/server-services-shared
+    -   @fluidframework/server-services-telemetry
+    -   @fluidframework/server-services-utils
+    -   @fluidframework/server-test-utils
+    -   tinylicious
+
+-   sequence: Remove the signature of IntervalCollection.add that takes a type parameter ([#18916](https://github.com/microsoft/FluidFramework/issues/18916)) [e5b463cc8b](https://github.com/microsoft/FluidFramework/commits/e5b463cc8b24a411581c3e48f62ce1eea68dd639)
+
+    The previously deprecated signature of `IntervalCollection.add` that takes an `IntervalType` as a parameter is now being
+    removed. The new signature is called without the type parameter and takes the `start`, `end`, and `properties`
+    parameters as a single object.
+
+-   Updated @fluidframework/protocol-definitions ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
+
+    The @fluidframework/protocol-definitions dependency has been upgraded to v3.1.0. [See the full
+    changelog.](https://github.com/microsoft/FluidFramework/blob/main/common/lib/protocol-definitions/CHANGELOG.md#310)
+
+-   sequence: Remove the findTile API ([#18908](https://github.com/microsoft/FluidFramework/issues/18908)) [29b093e55c](https://github.com/microsoft/FluidFramework/commits/29b093e55cb2a7e98c9445b735783f463acfb3bb)
+
+    The `findTile` API that was previously deprecated is now being removed. The new `searchForMarker` function provides similar functionality, and can be called with the start position, the client ID, the desired marker label to find, and the search direction, where a value of `true` indicates a forward search.
+
+-   sequence: Unify the change and changeProperties methods ([#18981](https://github.com/microsoft/FluidFramework/issues/18981)) [31ce11010a](https://github.com/microsoft/FluidFramework/commits/31ce11010a9bd2be95e805544d84df9e21b6c9a7)
+
+    Instead of having two separate APIs to modify an interval's endpoints and properties, combine both into the same method, IntervalCollection.change. Change is called with a string id value as the first parameter, and an object containing the start value, the end value, and/or the properties, depending on the desired modifications to the interval. Start and end must both be either defined or undefined.
+
+    The old functionality and signatures were deprecated in the internal.7.4.0 minor release.
+
+-   shared-object-base: SharedObject processGCDataCore now takes IFluidSerializer rather than SummarySerializer ([#18803](https://github.com/microsoft/FluidFramework/issues/18803)) [396b8e9738](https://github.com/microsoft/FluidFramework/commits/396b8e9738156ff88b62424a0076f09fb5028a32)
+
+    This change should be a no-op for consumers, and `SummarySerializer` and `IFluidSerializer` expose the same consumer facing APIs. This change just makes our APIs more consistent by only using interfaces, rather than a mix of interfaces and concrete implementations.
+
 ## 2.0.0-internal.8.0.0
 
 ### Major Changes

@@ -14,6 +14,7 @@ import {
 } from "@fluidframework/id-compressor";
 import {
 	BaseFuzzTestState,
+	chainAsync,
 	createFuzzDescribe,
 	defaultOptions,
 	done,
@@ -27,6 +28,7 @@ import {
 	AsyncReducer,
 	SaveInfo,
 	saveOpsToFile,
+	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import {
 	MockFluidDataStoreRuntime,
@@ -324,8 +326,7 @@ export interface DDSFuzzSuiteOptions {
 	 * an attach op.
 	 */
 	detachedStartOptions: {
-		attachProbability: number;
-		enabled: boolean;
+		numOpsBeforeAttach: number;
 	};
 
 	/**
@@ -463,8 +464,7 @@ export interface DDSFuzzSuiteOptions {
 export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
 	defaultTestCount: defaultOptions.defaultTestCount,
 	detachedStartOptions: {
-		attachProbability: 0.2,
-		enabled: true,
+		numOpsBeforeAttach: 5,
 	},
 	emitter: new TypedEventEmitter(),
 	numberOfClients: 3,
@@ -610,23 +610,18 @@ export function mixinAttach<
 	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
 	options: DDSFuzzSuiteOptions,
 ): DDSFuzzModel<TChannelFactory, TOperation | Attach, TState> {
-	const { enabled, attachProbability } = options.detachedStartOptions;
-	if (!enabled) {
+	const { numOpsBeforeAttach } = options.detachedStartOptions;
+	if (numOpsBeforeAttach === 0) {
 		// not wrapping the reducer/generator in this case makes stepping through the harness slightly less painful.
 		return model as DDSFuzzModel<TChannelFactory, TOperation | Attach, TState>;
 	}
-
+	const attachOp = async (): Promise<TOperation | Attach> => {
+		return { type: "attach" };
+	};
 	const generatorFactory: () => AsyncGenerator<TOperation | Attach, TState> = () => {
 		const baseGenerator = model.generatorFactory();
-		return async (state): Promise<TOperation | Attach | typeof done> => {
-			if (state.isDetached && state.random.bool(attachProbability)) {
-				return {
-					type: "attach",
-				};
-			}
-
-			return baseGenerator(state);
-		};
+		const opsBeforeAttach = takeAsync(numOpsBeforeAttach, baseGenerator);
+		return chainAsync(opsBeforeAttach, takeAsync(1, attachOp), baseGenerator);
 	};
 
 	const minimizationTransforms = model.minimizationTransforms as
@@ -1060,7 +1055,7 @@ export async function runTestForSeed<
 		options.containerRuntimeOptions,
 	);
 
-	const startDetached = options.detachedStartOptions.enabled;
+	const startDetached = options.detachedStartOptions.numOpsBeforeAttach !== 0;
 	const initialClient = createDetachedClient(
 		containerRuntimeFactory,
 		model.factory,
@@ -1100,12 +1095,20 @@ export async function runTestForSeed<
 
 	options.emitter.emit("testStart", initialState);
 
+	let operationCount = 0;
 	const finalState = await performFuzzActionsAsync(
 		model.generatorFactory(),
-		model.reducer,
+		async (state, operation) => {
+			operationCount++;
+			return model.reducer(state, operation);
+		},
 		initialState,
 		saveInfo,
 	);
+
+	// Sanity-check that the generator produced at least one operation. If it failed to do so,
+	// this usually indicates an error on the part of the test author.
+	assert(operationCount > 0, "Generator should have produced at least one operation.");
 
 	options.emitter.emit("testEnd", finalState);
 
@@ -1128,8 +1131,9 @@ function runTest<TChannelFactory extends IChannelFactory, TOperation extends Bas
 		// the actual error
 		//
 		// it should be noted that if a timeout occurs during minimization, the
-		// intermediate results are not lost and will still be written to the file
-		this.timeout(shouldMinimize ? 10_000 : 2000);
+		// intermediate results are not lost and will still be written to the file.
+		const noMinimizationTimeout = Math.max(2000, this.timeout());
+		this.timeout(shouldMinimize ? 5 * noMinimizationTimeout : noMinimizationTimeout);
 
 		try {
 			// don't write to files in CI

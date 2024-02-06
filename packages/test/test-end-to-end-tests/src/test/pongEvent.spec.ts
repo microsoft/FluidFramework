@@ -20,7 +20,7 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 const codeDetails: IFluidCodeDetails = { package: "test" };
 
 describe("Pong", () => {
-	describeCompat("Pong", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+	describeCompat("Pong", "NoCompat", (getTestObjectProvider) => {
 		let provider: ITestObjectProvider;
 		const loaderContainerTracker = new LoaderContainerTracker();
 
