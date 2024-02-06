@@ -432,7 +432,7 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 		});
 	}
 
-	it("test", async function () {
+	it("Can summarize after hitting nack on unsummarized ops", async function () {
 		if (provider.driver.type !== "local") {
 			this.skip();
 		}
@@ -503,7 +503,7 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 		await flushPromises();
 		assert.strictEqual(sharedString1.getLength(), 203);
 		assert.strictEqual(sharedString2.getLength(), 203);
-	});
+	}).timeout(3000);
 });
 
 describeCompat("Summaries", "NoCompat", (getTestObjectProvider) => {
