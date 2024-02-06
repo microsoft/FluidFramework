@@ -8,6 +8,7 @@
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./dist",
+		"noImplicitAny": true,
 		"noImplicitOverride": true,
 	},
 }
