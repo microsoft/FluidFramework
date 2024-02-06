@@ -112,7 +112,7 @@ async function loadSharedDirectory(
 
 function generateTestScenarios(): TestScenario[] {
 	const runtimeFactory = new MockContainerRuntimeFactory();
-	const dataStoreRuntime = new MockFluidDataStoreRuntime();
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: "A" });
 	runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const factory = SharedDirectory.getFactory();
 
