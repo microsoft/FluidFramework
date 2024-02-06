@@ -4,6 +4,7 @@
  */
 
 import React from "react";
+
 import {
 	Button,
 	FluentProvider,
@@ -28,6 +29,7 @@ import {
 	type InboundHandlers,
 	type ISourcedDevtoolsMessage,
 } from "@fluidframework/devtools-core";
+
 import {
 	ContainerDevtoolsView,
 	LandingView,
@@ -487,15 +489,14 @@ interface MenuProps {
 function Menu(props: MenuProps): React.ReactElement {
 	const { currentSelection, setSelection, supportedFeatures, containers } = props;
 	const usageLogger = useLogger();
+
 	const styles = useMenuStyles();
 
 	function onContainerClicked(containerKey: ContainerKey): void {
 		setSelection({ type: "containerMenuSelection", containerKey });
 		usageLogger?.sendTelemetryEvent({
 			eventName: "Navigation",
-			details: {
-				target: "Menu_Container",
-			},
+			details: { target: "Menu_Container" },
 		});
 	}
 
