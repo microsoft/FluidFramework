@@ -106,7 +106,6 @@ export interface IConnectionDetails {
     checkpointSequenceNumber: number | undefined;
     // (undocumented)
     claims: ITokenClaims;
-    // (undocumented)
     clientId: string;
     // (undocumented)
     serviceConfiguration: IClientConfiguration;
