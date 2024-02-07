@@ -914,6 +914,7 @@ export class DataStores implements IDisposable {
 
 			// Ignore sub-data store routes because a data store and its sub-routes are deleted together, so, we only
 			// need to delete the data store.
+			// These routes will still be returned below as among the deleted routes
 			if (pathParts.length > 2) {
 				continue;
 			}

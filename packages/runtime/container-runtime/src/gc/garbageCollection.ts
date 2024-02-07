@@ -582,8 +582,9 @@ export class GarbageCollector implements IGarbageCollector {
 		);
 
 		// 4. Run the Sweep phase.
-		// It will tombstone any tombstone-ready nodes, and initiate the deletion of sweep-ready nodes by sending a
-		// sweep op. All clients, including this one, will delete these nodes once it processes the op.
+		// It will initiate the deletion (sending the GC Sweep op) of any sweep-ready nodes that are
+		// allowed to be deleted per config, and tombstone the rest along with the tombstone-ready nodes.
+		// Note that no nodes will be deleted until the GC Sweep op is processed.
 		this.runSweepPhase(gcResult, tombstoneReadyNodeIds, sweepReadyNodeIds);
 
 		this.gcDataFromLastRun = cloneGCData(gcData);
@@ -1242,22 +1243,6 @@ export class GarbageCollector implements IGarbageCollector {
 		sweepPhaseStats.lifetimeDataStoreCount += sweepPhaseStats.deletedDataStoreCount;
 		sweepPhaseStats.lifetimeAttachmentBlobCount += sweepPhaseStats.deletedAttachmentBlobCount;
 
-		if (this.configs.shouldRunSweep) {
-			return sweepPhaseStats;
-		}
-
-		// If sweep is not enabled, the current sweep-ready node stats should be added to deleted stats since this
-		// is the final state the node will be in.
-		// If sweep is enabled, this will happen in the run after the GC op round trips back.
-		for (const nodeId of sweepReadyNodes) {
-			sweepPhaseStats.deletedNodeCount++;
-			const nodeType = this.runtime.getNodeType(nodeId);
-			if (nodeType === GCNodeType.DataStore) {
-				sweepPhaseStats.deletedDataStoreCount++;
-			} else if (nodeType === GCNodeType.Blob) {
-				sweepPhaseStats.deletedAttachmentBlobCount++;
-			}
-		}
 		return sweepPhaseStats;
 	}
 }
