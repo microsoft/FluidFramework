@@ -470,17 +470,18 @@ describe("Temporal Collab Spaces", () => {
 		// of the changes that were made before were lost, and that further collaboration could
 		// be done on this channel.
 		// Plus redo, and come back to second channel.
+		// This will require fixing production code - converting deferred channels to rooted channels
+
+		// TBD(Pri1): Need to ensure that summarization for deferred channels and loading from such summaries works
+		// Once we add logic to root deferred channels, we will need to add summary and loading of new container to test
+		// such conversion works correctly.
 	}
 
 	it("Channel overwrite with syncronization", async () => {
 		await ChannelOverwrite(true);
 	});
 
-	// TBD(Pri1): Test fails if this synchronizaiton is removed, due to Pri1 comment in
-	// TempCollabSpaceRuntime.updatePendingCoutner()
-	// The issue should be fixed, and test should be duplicated - one version to run with this
-	// extra synchronizaiton, and one without.
-	it.skip("Channel overwrite without syncronization", async () => {
+	it("Channel overwrite without syncronization", async () => {
 		await ChannelOverwrite(false);
 	});
 });
