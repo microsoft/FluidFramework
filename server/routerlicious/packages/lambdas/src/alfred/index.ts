@@ -1108,7 +1108,7 @@ export function configureWebSocketServices(
 							: [contentBatch];
 
 						for (const content of contents) {
-							if ("targetClientId" in content) {
+							if (typeof content === "object" && "targetClientId" in content) {
 								const targetClientId = content.targetClientId;
 								const signalMessage: ISignalMessage = {
 									clientId,
