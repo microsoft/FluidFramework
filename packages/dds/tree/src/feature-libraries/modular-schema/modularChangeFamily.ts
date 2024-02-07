@@ -59,6 +59,7 @@ import {
 	chunkTree,
 } from "../chunked-forest/index.js";
 import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
+import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 import {
 	CrossFieldManager,
 	CrossFieldMap,
@@ -104,8 +105,15 @@ export class ModularChangeFamily
 		revisionTagCodec: RevisionTagCodec,
 		fieldBatchCodec: FieldBatchCodec,
 		codecOptions: ICodecOptions,
+		chunkCompressionStrategy?: TreeCompressionStrategy,
 	) {
-		this.latestCodec = makeV0Codec(fieldKinds, revisionTagCodec, fieldBatchCodec, codecOptions);
+		this.latestCodec = makeV0Codec(
+			fieldKinds,
+			revisionTagCodec,
+			fieldBatchCodec,
+			codecOptions,
+			chunkCompressionStrategy,
+		);
 		this.codecs = makeCodecFamily([[0, this.latestCodec]]);
 	}
 
@@ -223,7 +231,7 @@ export class ModularChangeFamily
 
 		const crossFieldTable = newCrossFieldTable<ComposeData>();
 
-		const composedFields = this.composeFieldMaps(
+		let composedFields = this.composeFieldMaps(
 			change1.change.fieldChanges,
 			change1.revision,
 			change2.change.fieldChanges,
@@ -234,36 +242,17 @@ export class ModularChangeFamily
 		);
 
 		if (crossFieldTable.invalidatedFields.size > 0) {
-			const fieldsToUpdate = crossFieldTable.invalidatedFields;
 			crossFieldTable.invalidatedFields = new Set();
-			for (const field of fieldsToUpdate) {
-				const amendedChange = getChangeHandler(
-					this.fieldKinds,
-					field.fieldKind,
-				).rebaser.amendCompose(
-					field.change,
-					(child1, child2) =>
-						this.composeNodeChanges(
-							child1,
-							change1.revision,
-							child2,
-							change2.revision,
-							genId,
-							crossFieldTable,
-							revisionMetadata,
-						),
-					genId,
-					newCrossFieldManager(crossFieldTable),
-					revisionMetadata,
-				);
-				field.change = brand(amendedChange);
-			}
+			composedFields = this.composeFieldMaps(
+				change1.change.fieldChanges,
+				change1.revision,
+				change2.change.fieldChanges,
+				change2.revision,
+				genId,
+				crossFieldTable,
+				revisionMetadata,
+			);
 		}
-
-		assert(
-			crossFieldTable.invalidatedFields.size === 0,
-			0x59b /* Should not need more than one amend pass. */,
-		);
 
 		const { allBuilds, allDestroys } = composeBuildsAndDestroys([change1, change2]);
 

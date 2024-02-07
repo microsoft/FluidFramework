@@ -10,6 +10,7 @@ import {
 	makeVersionedValidatedCodec,
 } from "../codec/index.js";
 import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../core/index.js";
+import { SchemaAndPolicy } from "../feature-libraries/index.js";
 import {
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnlySchema,
@@ -23,6 +24,10 @@ import {
 	SequencedCommit,
 	version,
 } from "./editManagerFormat.js";
+
+export interface EditManagerEncodingContext {
+	readonly schema?: SchemaAndPolicy;
+}
 
 export function makeEditManagerCodec<TChangeset>(
 	changeCodec: IMultiFormatCodec<
@@ -38,7 +43,12 @@ export function makeEditManagerCodec<TChangeset>(
 		ChangeEncodingContext
 	>,
 	options: ICodecOptions,
-): IJsonCodec<SummaryData<TChangeset>> {
+): IJsonCodec<
+	SummaryData<TChangeset>,
+	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnly,
+	ChangeEncodingContext
+> {
 	const format = EncodedEditManager(
 		changeCodec.json.encodedSchema ?? JsonCompatibleReadOnlySchema,
 	);
@@ -63,19 +73,29 @@ export function makeEditManagerCodec<TChangeset>(
 
 	const codec: IJsonCodec<
 		SummaryData<TChangeset>,
-		EncodedEditManager<TChangeset>
+		EncodedEditManager<TChangeset>,
+		EncodedEditManager<TChangeset>,
+		EditManagerEncodingContext
 	> = makeVersionedValidatedCodec(options, new Set([version]), format, {
-		encode: (data) => {
+		encode: (data, context: EditManagerEncodingContext) => {
 			const json: EncodedEditManager<TChangeset> = {
 				trunk: data.trunk.map((commit) =>
-					encodeCommit(commit, { originatorId: commit.sessionId }),
+					encodeCommit(commit, {
+						originatorId: commit.sessionId,
+						schema: context.schema,
+					}),
 				),
 				branches: Array.from(data.branches.entries(), ([sessionId, branch]) => [
 					sessionId,
 					{
-						base: revisionTagCodec.encode(branch.base, { originatorId: sessionId }),
+						base: revisionTagCodec.encode(branch.base, {
+							originatorId: sessionId,
+						}),
 						commits: branch.commits.map((commit) =>
-							encodeCommit(commit, { originatorId: commit.sessionId }),
+							encodeCommit(commit, {
+								originatorId: commit.sessionId,
+								schema: context.schema,
+							}),
 						),
 					},
 				]),
@@ -115,5 +135,10 @@ export function makeEditManagerCodec<TChangeset>(
 	// TODO: makeVersionedValidatedCodec and withSchemaValidation should allow the codec to decode JsonCompatibleReadOnly, or Versioned or something like that,
 	// and not leak the internal encoded format in the API surface.
 	// Fixing that would remove the need for this cast.
-	return codec as unknown as IJsonCodec<SummaryData<TChangeset>>;
+	return codec as unknown as IJsonCodec<
+		SummaryData<TChangeset>,
+		JsonCompatibleReadOnly,
+		JsonCompatibleReadOnly,
+		ChangeEncodingContext
+	>;
 }
