@@ -15,7 +15,7 @@ import {
 	VersionScheme,
 } from "@fluid-tools/version-tools";
 
-import { DependencyUpdateType } from "./lib";
+import { DependencyUpdateType } from "./library";
 import { isReleaseGroup, ReleaseGroup } from "./releaseGroups";
 
 /**
@@ -69,7 +69,7 @@ export const releaseGroupWithAllFlag = Flags.custom<ReleaseGroup | "all">({
 export const packageSelectorFlag = Flags.custom({
 	char: "p",
 	description:
-		"Name of package. You can use scoped or unscoped package names. For example, both @fluid-tools/markdown-magic and markdown-magic are valid.",
+		"Name of package. You can use scoped or unscoped package names. For example, both @fluid-tools/benchmark and benchmark are valid.",
 	multiple: false,
 });
 

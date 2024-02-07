@@ -13,8 +13,8 @@ import {
 	pushScope,
 	getLoginPageUrl,
 	TokenRequestCredentials,
-} from "@fluidframework/odsp-doclib-utils";
-import jwtDecode from "jwt-decode";
+} from "@fluidframework/odsp-doclib-utils/internal";
+import { jwtDecode } from "jwt-decode";
 import { Mutex } from "async-mutex";
 import { debug } from "./debug";
 import { IAsyncCache, loadRC, saveRC, lockRC } from "./fluidToolRC";
@@ -24,6 +24,9 @@ const odspAuthRedirectPort = 7000;
 const odspAuthRedirectOrigin = `http://localhost:${odspAuthRedirectPort}`;
 const odspAuthRedirectUri = new URL("/auth/callback", odspAuthRedirectOrigin).href;
 
+/**
+ * @internal
+ */
 export const getMicrosoftConfiguration = (): IClientConfig => ({
 	get clientId() {
 		if (!process.env.login__microsoft__clientId) {
@@ -41,6 +44,9 @@ export const getMicrosoftConfiguration = (): IClientConfig => ({
 	},
 });
 
+/**
+ * @internal
+ */
 export type OdspTokenConfig =
 	| {
 			type: "password";
@@ -53,6 +59,9 @@ export type OdspTokenConfig =
 			redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>;
 	  };
 
+/**
+ * @internal
+ */
 export interface IOdspTokenManagerCacheKey {
 	readonly isPush: boolean;
 	readonly userOrServer: string;
@@ -73,6 +82,9 @@ const cacheKeyToString = (key: IOdspTokenManagerCacheKey) => {
 	return `${key.userOrServer}${key.isPush ? "[Push]" : ""}`;
 };
 
+/**
+ * @internal
+ */
 export class OdspTokenManager {
 	private readonly storageCache = new Map<string, IOdspTokens>();
 	private readonly pushCache = new Map<string, IOdspTokens>();
@@ -329,6 +341,9 @@ async function loadAndPatchRC() {
 	return rc;
 }
 
+/**
+ * @internal
+ */
 export const odspTokensCache: IAsyncCache<IOdspTokenManagerCacheKey, IOdspTokens> = {
 	async get(key: IOdspTokenManagerCacheKey): Promise<IOdspTokens | undefined> {
 		const rc = await loadAndPatchRC();

@@ -11,7 +11,6 @@ import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
-import { ICombiningOp } from '@fluidframework/merge-tree';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
@@ -20,10 +19,7 @@ import { IJSONSegment } from '@fluidframework/merge-tree';
 import { IMergeTreeDeltaCallbackArgs } from '@fluidframework/merge-tree';
 import { IMergeTreeDeltaOpArgs } from '@fluidframework/merge-tree';
 import { IMergeTreeGroupMsg } from '@fluidframework/merge-tree';
-import { IMergeTreeInsertMsg } from '@fluidframework/merge-tree';
 import { IMergeTreeMaintenanceCallbackArgs } from '@fluidframework/merge-tree';
-import { IMergeTreeOp } from '@fluidframework/merge-tree';
-import { IMergeTreeRemoveMsg } from '@fluidframework/merge-tree';
 import { IRelativePosition } from '@fluidframework/merge-tree';
 import { ISegment } from '@fluidframework/merge-tree';
 import { ISegmentAction } from '@fluidframework/merge-tree';
@@ -32,70 +28,76 @@ import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { LocalReferencePosition } from '@fluidframework/merge-tree';
+import { MapLike } from '@fluidframework/merge-tree';
 import { Marker } from '@fluidframework/merge-tree';
 import { MergeTreeDeltaOperationType } from '@fluidframework/merge-tree';
 import { MergeTreeDeltaOperationTypes } from '@fluidframework/merge-tree';
 import { MergeTreeDeltaRevertible } from '@fluidframework/merge-tree';
+import { MergeTreeDeltaType } from '@fluidframework/merge-tree';
 import { MergeTreeMaintenanceType } from '@fluidframework/merge-tree';
 import { MergeTreeRevertibleDriver } from '@fluidframework/merge-tree';
 import { PropertiesManager } from '@fluidframework/merge-tree';
 import { PropertySet } from '@fluidframework/merge-tree';
-import { RangeStackMap } from '@fluidframework/merge-tree';
 import { ReferencePosition } from '@fluidframework/merge-tree';
 import { ReferenceType } from '@fluidframework/merge-tree';
+import { reservedMarkerIdKey } from '@fluidframework/merge-tree';
+import { reservedRangeLabelsKey } from '@fluidframework/merge-tree';
+import { reservedTileLabelsKey } from '@fluidframework/merge-tree';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 import { SlidingPreference } from '@fluidframework/merge-tree';
-import { SummarySerializer } from '@fluidframework/shared-object-base';
 import { TextSegment } from '@fluidframework/merge-tree';
+import { TrackingGroup } from '@fluidframework/merge-tree';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
-// @alpha
+// @internal
 export function appendAddIntervalToRevertibles(interval: SequenceInterval, revertibles: SharedStringRevertible[]): SharedStringRevertible[];
 
-// @alpha
+// @internal
 export function appendChangeIntervalToRevertibles(string: SharedString, newInterval: SequenceInterval, previousInterval: SequenceInterval, revertibles: SharedStringRevertible[]): SharedStringRevertible[];
 
-// @alpha
+// @internal
 export function appendDeleteIntervalToRevertibles(string: SharedString, interval: SequenceInterval, revertibles: SharedStringRevertible[]): SharedStringRevertible[];
 
-// @alpha
+// @internal
 export function appendIntervalPropertyChangedToRevertibles(interval: SequenceInterval, deltas: PropertySet, revertibles: SharedStringRevertible[]): SharedStringRevertible[];
 
-// @alpha
+// @internal
 export function appendSharedStringDeltaToRevertibles(string: SharedString, delta: SequenceDeltaEvent, revertibles: SharedStringRevertible[]): void;
 
-// @public (undocumented)
+export { BaseSegment }
+
+// @internal (undocumented)
 export function createEndpointIndex(sharedString: SharedString): IEndpointIndex<SequenceInterval>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function createEndpointInRangeIndex(sharedString: SharedString): IEndpointInRangeIndex<SequenceInterval>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function createIdIntervalIndex<TInterval extends ISerializableInterval>(): IIdIntervalIndex<TInterval>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function createOverlappingIntervalsIndex(sharedString: SharedString): IOverlappingIntervalsIndex<SequenceInterval>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function createOverlappingSequenceIntervalsIndex(sharedString: SharedString): SequenceIntervalIndexes.Overlapping;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function createStartpointInRangeIndex(sharedString: SharedString): IStartpointInRangeIndex<SequenceInterval>;
 
-// @public (undocumented)
+// @alpha (undocumented)
 export type DeserializeCallback = (properties: PropertySet) => void;
 
-// @alpha
+// @internal
 export function discardSharedStringRevertibles(sharedString: SharedString, revertibles: SharedStringRevertible[]): void;
 
-// @public
+// @internal
 export function getTextAndMarkers(sharedString: SharedString, label: string, start?: number, end?: number): {
     parallelText: string[];
     parallelMarkers: Marker[];
 };
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IEndpointIndex<TInterval extends ISerializableInterval> extends IntervalIndex<TInterval> {
     // (undocumented)
     nextInterval(pos: number): TInterval | undefined;
@@ -103,13 +105,13 @@ export interface IEndpointIndex<TInterval extends ISerializableInterval> extends
     previousInterval(pos: number): TInterval | undefined;
 }
 
-// @public
+// @internal
 export interface IEndpointInRangeIndex<TInterval extends ISerializableInterval> extends IntervalIndex<TInterval> {
     // (undocumented)
     findIntervalsWithEndpointInRange(start: number, end: number): TInterval[];
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IIdIntervalIndex<TInterval extends ISerializableInterval> extends IntervalIndex<TInterval>, Iterable<TInterval> {
     // (undocumented)
     [Symbol.iterator](): Iterator<TInterval>;
@@ -117,27 +119,23 @@ export interface IIdIntervalIndex<TInterval extends ISerializableInterval> exten
     getIntervalById(id: string): TInterval | undefined;
 }
 
-// @public
+// @alpha
 export interface IInterval {
     // (undocumented)
     clone(): IInterval;
     compare(b: IInterval): number;
     compareEnd(b: IInterval): number;
     compareStart(b: IInterval): number;
-    // @internal
     modify(label: string, start: SequencePlace | undefined, end: SequencePlace | undefined, op?: ISequencedDocumentMessage, localSeq?: number, useNewSlidingBehavior?: boolean): IInterval | undefined;
     // (undocumented)
     overlaps(b: IInterval): boolean;
-    // @internal
     union(b: IInterval): IInterval;
 }
 
-// @public
+// @alpha
 export interface IIntervalCollection<TInterval extends ISerializableInterval> extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
     // (undocumented)
     [Symbol.iterator](): Iterator<TInterval>;
-    // @deprecated
-    add(start: SequencePlace, end: SequencePlace, intervalType: IntervalType, props?: PropertySet): TInterval;
     add({ start, end, props, }: {
         start: SequencePlace;
         end: SequencePlace;
@@ -148,8 +146,11 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval> ex
     // (undocumented)
     readonly attached: boolean;
     attachIndex(index: IntervalIndex<TInterval>): void;
-    change(id: string, start: SequencePlace, end: SequencePlace): TInterval | undefined;
-    changeProperties(id: string, props: PropertySet): any;
+    change(id: string, { start, end, props }: {
+        start?: SequencePlace;
+        end?: SequencePlace;
+        props?: PropertySet;
+    }): TInterval | undefined;
     // (undocumented)
     CreateBackwardIteratorWithEndPosition(endPosition: number): Iterator<TInterval>;
     // (undocumented)
@@ -159,33 +160,34 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval> ex
     // (undocumented)
     CreateForwardIteratorWithStartPosition(startPosition: number): Iterator<TInterval>;
     detachIndex(index: IntervalIndex<TInterval>): boolean;
-    // (undocumented)
+    // @deprecated (undocumented)
     findOverlappingIntervals(startPosition: number, endPosition: number): TInterval[];
     gatherIterationResults(results: TInterval[], iteratesForward: boolean, start?: number, end?: number): void;
     // (undocumented)
     getIntervalById(id: string): TInterval | undefined;
     map(fn: (interval: TInterval) => void): void;
-    // (undocumented)
+    // @deprecated (undocumented)
     nextInterval(pos: number): TInterval | undefined;
-    // (undocumented)
+    // @deprecated (undocumented)
     previousInterval(pos: number): TInterval | undefined;
     removeIntervalById(id: string): TInterval | undefined;
 }
 
-// @public
+// @alpha
 export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> extends IEvent {
-    (event: "changeInterval", listener: (interval: TInterval, previousInterval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined, slide: boolean) => void): any;
-    (event: "addInterval" | "deleteInterval", listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined) => void): any;
-    (event: "propertyChanged", listener: (interval: TInterval, propertyDeltas: PropertySet, local: boolean, op: ISequencedDocumentMessage | undefined) => void): any;
+    (event: "changeInterval", listener: (interval: TInterval, previousInterval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined, slide: boolean) => void): void;
+    (event: "addInterval" | "deleteInterval", listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined) => void): void;
+    (event: "propertyChanged", listener: (interval: TInterval, propertyDeltas: PropertySet, local: boolean, op: ISequencedDocumentMessage | undefined) => void): void;
+    (event: "changed", listener: (interval: TInterval, propertyDeltas: PropertySet, previousInterval: TInterval | undefined, local: boolean, slide: boolean) => void): void;
 }
 
-// @public @sealed @deprecated (undocumented)
+// @internal @sealed @deprecated (undocumented)
 export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
     // (undocumented)
     create(label: string, start: SequencePlace | undefined, end: SequencePlace | undefined, client: Client | undefined, intervalType: IntervalType, op?: ISequencedDocumentMessage, fromSnapshot?: boolean, useNewSlidingBehavior?: boolean): TInterval;
 }
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export interface IJSONRunSegment<T> extends IJSONSegment {
     // (undocumented)
     items: Serializable<T>[];
@@ -197,7 +199,7 @@ export interface IMapMessageLocalMetadata {
     localSeq: number;
 }
 
-// @public
+// @alpha
 export interface InteriorSequencePlace {
     // (undocumented)
     pos: number;
@@ -205,13 +207,13 @@ export interface InteriorSequencePlace {
     side: Side;
 }
 
-// @public
+// @internal
 export class Interval implements ISerializableInterval {
     constructor(start: number, end: number, props?: PropertySet);
-    // @internal (undocumented)
-    addProperties(newProps: PropertySet, collaborating?: boolean, seq?: number, op?: ICombiningOp): PropertySet | undefined;
+    // (undocumented)
+    addProperties(newProps: PropertySet, collaborating?: boolean, seq?: number): PropertySet | undefined;
     addPropertySet(props: PropertySet): void;
-    // @internal (undocumented)
+    // (undocumented)
     auxProps: PropertySet[] | undefined;
     // (undocumented)
     clone(): Interval;
@@ -225,46 +227,47 @@ export class Interval implements ISerializableInterval {
     getIntervalId(): string;
     // (undocumented)
     getProperties(): PropertySet;
-    // @internal
     modify(label: string, start?: SequencePlace, end?: SequencePlace, op?: ISequencedDocumentMessage): Interval | undefined;
     // (undocumented)
     overlaps(b: Interval): boolean;
     properties: PropertySet;
-    // @internal (undocumented)
-    propertyManager: PropertiesManager;
-    // @internal (undocumented)
+    // (undocumented)
+    readonly propertyManager: PropertiesManager;
+    // (undocumented)
     serialize(): ISerializedInterval;
     // (undocumented)
     start: number;
-    // @internal
     union(b: Interval): Interval;
 }
 
-// @public
+// @alpha
 export interface IntervalIndex<TInterval extends ISerializableInterval> {
     add(interval: TInterval): void;
     remove(interval: TInterval): void;
 }
 
-// @public
+// @internal
 export interface IntervalLocator {
     interval: SequenceInterval;
     label: string;
 }
 
-// @public
+// @internal
 export function intervalLocatorFromEndpoint(potentialEndpoint: LocalReferencePosition): IntervalLocator | undefined;
 
-// @alpha
+// @internal
 export const IntervalOpType: {
+    readonly PROPERTY_CHANGED: "propertyChanged";
+    readonly POSITION_REMOVE: "positionRemove";
     readonly ADD: "add";
     readonly DELETE: "delete";
     readonly CHANGE: "change";
-    readonly PROPERTY_CHANGED: "propertyChanged";
-    readonly POSITION_REMOVE: "positionRemove";
 };
 
-// @alpha
+// @internal (undocumented)
+export type IntervalOpType = (typeof IntervalOpType)[keyof typeof IntervalOpType];
+
+// @internal
 export type IntervalRevertible = {
     event: typeof IntervalOpType.CHANGE;
     interval: SequenceInterval;
@@ -298,7 +301,7 @@ export type IntervalRevertible = {
     mergeTreeRevertible: MergeTreeDeltaRevertible;
 };
 
-// @internal
+// @alpha
 export const IntervalStickiness: {
     readonly NONE: 0;
     readonly START: 1;
@@ -306,13 +309,11 @@ export const IntervalStickiness: {
     readonly FULL: 3;
 };
 
-// @internal
+// @alpha
 export type IntervalStickiness = (typeof IntervalStickiness)[keyof typeof IntervalStickiness];
 
-// @public (undocumented)
+// @alpha (undocumented)
 export enum IntervalType {
-    // @deprecated (undocumented)
-    Nest = 1,
     // (undocumented)
     Simple = 0,
     SlideOnRemove = 2,
@@ -320,14 +321,16 @@ export enum IntervalType {
     Transient = 4
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInterval> extends IntervalIndex<TInterval> {
     // (undocumented)
     findOverlappingIntervals(start: SequencePlace, end: SequencePlace): TInterval[];
     gatherIterationResults(results: TInterval[], iteratesForward: boolean, start?: SequencePlace, end?: SequencePlace): void;
 }
 
-// @public
+export { ISegment }
+
+// @alpha
 export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {
     operation: TOperation;
     position: number;
@@ -335,19 +338,19 @@ export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationT
     segment: ISegment;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface ISerializableInterval extends IInterval {
-    // @internal (undocumented)
+    // (undocumented)
     addProperties(props: PropertySet, collaborating?: boolean, seq?: number): PropertySet | undefined;
     getIntervalId(): string | undefined;
     properties: PropertySet;
-    // @internal (undocumented)
+    // (undocumented)
     propertyManager: PropertiesManager;
-    // @internal (undocumented)
+    // (undocumented)
     serialize(): ISerializedInterval;
 }
 
-// @internal
+// @alpha
 export interface ISerializedInterval {
     end: number | "start" | "end";
     // (undocumented)
@@ -361,44 +364,65 @@ export interface ISerializedInterval {
     stickiness?: IntervalStickiness;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export interface ISharedIntervalCollection<TInterval extends ISerializableInterval> {
     // (undocumented)
     getIntervalCollection(label: string): IIntervalCollection<TInterval>;
 }
 
-// @public
+// @alpha
 export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
     // (undocumented)
-    (event: "createIntervalCollection", listener: (label: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "createIntervalCollection", listener: (label: string, local: boolean, target: IEventThisPlaceHolder) => void): void;
     // (undocumented)
-    (event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: IEventThisPlaceHolder) => void): any;
+    (event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: IEventThisPlaceHolder) => void): void;
     // (undocumented)
-    (event: "maintenance", listener: (event: SequenceMaintenanceEvent, target: IEventThisPlaceHolder) => void): any;
+    (event: "maintenance", listener: (event: SequenceMaintenanceEvent, target: IEventThisPlaceHolder) => void): void;
 }
 
-// @public
+// @alpha
 export interface ISharedString extends SharedSegmentSequence<SharedStringSegment> {
-    insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): IMergeTreeInsertMsg | undefined;
+    insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): void;
     insertText(pos: number, text: string, props?: PropertySet): void;
     posFromRelativePos(relativePos: IRelativePosition): number;
 }
 
-// @public
+// @internal
 export interface IStartpointInRangeIndex<TInterval extends ISerializableInterval> extends IntervalIndex<TInterval> {
     // (undocumented)
     findIntervalsWithStartpointInRange(start: number, end: number): TInterval[];
 }
 
-// @internal
+// @internal @deprecated
 export interface IValueOpEmitter {
-    emit(opName: string, previousValue: any, params: any, localOpMetadata: IMapMessageLocalMetadata): void;
+    // @deprecated
+    emit(opName: IntervalOpType, previousValue: undefined, params: SerializedIntervalDelta, localOpMetadata: IMapMessageLocalMetadata): void;
 }
 
-// @alpha
+export { LocalReferencePosition }
+
+export { MapLike }
+
+export { Marker }
+
+export { MergeTreeDeltaType }
+
+export { PropertySet }
+
+export { ReferencePosition }
+
+export { ReferenceType }
+
+export { reservedMarkerIdKey }
+
+export { reservedRangeLabelsKey }
+
+export { reservedTileLabelsKey }
+
+// @internal
 export function revertSharedStringRevertibles(sharedString: SharedString, revertibles: SharedStringRevertible[]): void;
 
-// @public
+// @alpha
 export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationType> {
     constructor(opArgs: IMergeTreeDeltaOpArgs, deltaArgs: IMergeTreeDeltaCallbackArgs, mergeTreeClient: Client);
     readonly isLocal: boolean;
@@ -406,7 +430,7 @@ export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationTyp
     readonly opArgs: IMergeTreeDeltaOpArgs;
 }
 
-// @public
+// @alpha
 export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {
     constructor(deltaArgs: IMergeTreeDeltaCallbackArgs<TOperation>, mergeTreeClient: Client);
     get clientId(): string | undefined;
@@ -419,15 +443,14 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
     get ranges(): readonly Readonly<ISequenceDeltaRange<TOperation>>[];
 }
 
-// @public
+// @alpha
 export class SequenceInterval implements ISerializableInterval {
     constructor(client: Client,
     start: LocalReferencePosition,
     end: LocalReferencePosition, intervalType: IntervalType, props?: PropertySet, startSide?: Side, endSide?: Side);
-    // @internal
     addPositionChangeListeners(beforePositionChange: () => void, afterPositionChange: () => void): void;
-    // @internal (undocumented)
-    addProperties(newProps: PropertySet, collab?: boolean, seq?: number, op?: ICombiningOp): PropertySet | undefined;
+    // (undocumented)
+    addProperties(newProps: PropertySet, collab?: boolean, seq?: number): PropertySet | undefined;
     // (undocumented)
     clone(): SequenceInterval;
     compare(b: SequenceInterval): number;
@@ -439,32 +462,29 @@ export class SequenceInterval implements ISerializableInterval {
     getIntervalId(): string;
     // (undocumented)
     intervalType: IntervalType;
-    // @internal
     modify(label: string, start: SequencePlace | undefined, end: SequencePlace | undefined, op?: ISequencedDocumentMessage, localSeq?: number, useNewSlidingBehavior?: boolean): SequenceInterval;
     // (undocumented)
     overlaps(b: SequenceInterval): boolean;
     // (undocumented)
     overlapsPos(bstart: number, bend: number): boolean;
     properties: PropertySet;
-    // @internal (undocumented)
+    // (undocumented)
     propertyManager: PropertiesManager;
-    // @internal
     removePositionChangeListeners(): void;
-    // @internal (undocumented)
+    // (undocumented)
     serialize(): ISerializedInterval;
     start: LocalReferencePosition;
     // (undocumented)
     readonly startSide: Side;
-    // @internal (undocumented)
+    // (undocumented)
     get stickiness(): IntervalStickiness;
-    // @internal
     union(b: SequenceInterval): SequenceInterval;
 }
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export const sequenceIntervalHelpers: IIntervalHelpers<SequenceInterval>;
 
-// @public
+// @internal
 export namespace SequenceIntervalIndexes {
     export interface Overlapping extends IOverlappingIntervalsIndex<SequenceInterval> {
         findOverlappingIntervalsBySegoff(startSegoff: {
@@ -477,14 +497,14 @@ export namespace SequenceIntervalIndexes {
     }
 }
 
-// @public
+// @alpha
 export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenanceType> {
     constructor(opArgs: IMergeTreeDeltaOpArgs | undefined, deltaArgs: IMergeTreeMaintenanceCallbackArgs, mergeTreeClient: Client);
     // (undocumented)
     readonly opArgs: IMergeTreeDeltaOpArgs | undefined;
 }
 
-// @public
+// @internal
 export interface SequenceOptions {
     // (undocumented)
     [key: string]: boolean;
@@ -492,13 +512,13 @@ export interface SequenceOptions {
     mergeTreeReferencesCanSlideToEndpoint: boolean;
 }
 
-// @public
+// @alpha
 export type SequencePlace = number | "start" | "end" | InteriorSequencePlace;
 
 // @internal
 export type SerializedIntervalDelta = Omit<ISerializedInterval, "start" | "end" | "properties"> & Partial<Pick<ISerializedInterval, "start" | "end" | "properties">>;
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export class SharedIntervalCollection extends SharedObject implements ISharedIntervalCollection<Interval> {
     // (undocumented)
     readonly [Symbol.toStringTag]: string;
@@ -522,7 +542,7 @@ export class SharedIntervalCollection extends SharedObject implements ISharedInt
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
 }
 
-// @public @deprecated
+// @internal @deprecated
 export class SharedIntervalCollectionFactory implements IChannelFactory {
     // (undocumented)
     static readonly Attributes: IChannelAttributes;
@@ -538,10 +558,10 @@ export class SharedIntervalCollectionFactory implements IChannelFactory {
     get type(): string;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export abstract class SharedSegmentSequence<T extends ISegment> extends SharedObject<ISharedSegmentSequenceEvents> implements ISharedIntervalCollection<SequenceInterval>, MergeTreeRevertibleDriver {
     constructor(dataStoreRuntime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, segmentFromSpec: (spec: IJSONSegment) => ISegment);
-    annotateRange(start: number, end: number, props: PropertySet, combiningOp?: ICombiningOp): void;
+    annotateRange(start: number, end: number, props: PropertySet): void;
     // (undocumented)
     protected applyStashedOp(content: any): unknown;
     // (undocumented)
@@ -568,10 +588,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
         posAfterEnd: number | undefined;
     };
     // @deprecated (undocumented)
-    getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap;
-    // @deprecated (undocumented)
     groupOperation(groupOp: IMergeTreeGroupMsg): void;
-    // @internal
     protected guardReentrancy: <TRet>(callback: () => TRet) => TRet;
     // (undocumented)
     id: string;
@@ -585,6 +602,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     get loaded(): Promise<void>;
     protected loadedDeferred: Deferred<void>;
     localReferencePositionToPosition(lref: ReferencePosition): number;
+    obliterateRange(start: number, end: number): void;
     // (undocumented)
     protected onConnect(): void;
     // (undocumented)
@@ -592,24 +610,22 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     posFromRelativePos(relativePos: IRelativePosition): number;
     // (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    protected processGCDataCore(serializer: SummarySerializer): void;
+    protected processGCDataCore(serializer: IFluidSerializer): void;
     removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     // (undocumented)
-    removeRange(start: number, end: number): IMergeTreeRemoveMsg;
+    removeRange(start: number, end: number): void;
     protected replaceRange(start: number, end: number, segment: ISegment): void;
     resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number | undefined;
     // (undocumented)
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
     // (undocumented)
     readonly segmentFromSpec: (spec: IJSONSegment) => ISegment;
-    // @deprecated (undocumented)
-    submitSequenceMessage(message: IMergeTreeOp): void;
     // (undocumented)
     protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     walkSegments<TClientData>(handler: ISegmentAction<TClientData>, start?: number, end?: number, accum?: TClientData, splitRange?: boolean): void;
 }
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
     constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, specToSegment: (spec: IJSONSegment) => ISegment);
     getItemCount(): number;
@@ -622,17 +638,11 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
     remove(start: number, end: number): void;
 }
 
-// @public
+// @alpha
 export class SharedString extends SharedSegmentSequence<SharedStringSegment> implements ISharedString {
     constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
-    annotateMarker(marker: Marker, props: PropertySet, combiningOp?: ICombiningOp): void;
-    annotateMarkerNotifyConsensus(marker: Marker, props: PropertySet, callback: (m: Marker) => void): void;
+    annotateMarker(marker: Marker, props: PropertySet): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedString;
-    // @deprecated
-    findTile(startPos: number | undefined, tileLabel: string, preceding?: boolean): {
-        tile: ReferencePosition;
-        pos: number;
-    } | undefined;
     static getFactory(): SharedStringFactory;
     getMarkerFromId(id: string): ISegment | undefined;
     getText(start?: number, end?: number): string;
@@ -641,19 +651,19 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     getTextWithPlaceholders(start?: number, end?: number): string;
     // (undocumented)
     id: string;
-    insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): IMergeTreeInsertMsg | undefined;
+    insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): void;
     insertMarkerRelative(relativePos1: IRelativePosition, refType: ReferenceType, props?: PropertySet): void;
     insertText(pos: number, text: string, props?: PropertySet): void;
     insertTextRelative(relativePos1: IRelativePosition, text: string, props?: PropertySet): void;
     // (undocumented)
     get ISharedString(): ISharedString;
-    removeText(start: number, end: number): IMergeTreeRemoveMsg;
+    removeText(start: number, end: number): void;
     replaceText(start: number, end: number, text: string, props?: PropertySet): void;
     protected rollback(content: any, localOpMetadata: unknown): void;
     searchForMarker(startPos: number, markerLabel: string, forwards?: boolean): Marker | undefined;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export class SharedStringFactory implements IChannelFactory {
     // (undocumented)
     static readonly Attributes: IChannelAttributes;
@@ -671,13 +681,13 @@ export class SharedStringFactory implements IChannelFactory {
     get type(): string;
 }
 
-// @alpha
+// @internal
 export type SharedStringRevertible = MergeTreeDeltaRevertible | IntervalRevertible;
 
-// @public (undocumented)
+// @alpha (undocumented)
 export type SharedStringSegment = TextSegment | Marker;
 
-// @public
+// @alpha
 export enum Side {
     // (undocumented)
     After = 1,
@@ -685,7 +695,7 @@ export enum Side {
     Before = 0
 }
 
-// @public @deprecated (undocumented)
+// @internal @deprecated (undocumented)
 export class SubSequence<T> extends BaseSegment {
     constructor(items: Serializable<T>[]);
     // (undocumented)
@@ -697,7 +707,7 @@ export class SubSequence<T> extends BaseSegment {
     // (undocumented)
     protected createSplitSegmentAt(pos: number): SubSequence<T> | undefined;
     // (undocumented)
-    static fromJSONObject<U>(spec: Serializable): SubSequence<U> | undefined;
+    static fromJSONObject<U>(spec: any): SubSequence<U> | undefined;
     // (undocumented)
     static is(segment: ISegment): segment is SubSequence<any>;
     // (undocumented)
@@ -713,5 +723,9 @@ export class SubSequence<T> extends BaseSegment {
     // (undocumented)
     static readonly typeString: string;
 }
+
+export { TextSegment }
+
+export { TrackingGroup }
 
 ```

@@ -5,6 +5,7 @@
 
 /**
  * Options to be used with {@link DataBinder.registerOnPath}
+ * @internal
  */
 export interface IRegisterOnPathOptions {
 	replaceExisting?: boolean;

@@ -12,7 +12,7 @@ import {
 	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { FetchSource } from "@fluidframework/driver-definitions";
+import { FetchSource, ISnapshot } from "@fluidframework/driver-definitions";
 import {
 	IOdspSnapshot,
 	HostStoragePolicyInternal,
@@ -22,7 +22,7 @@ import {
 import { IPrefetchSnapshotContents, LocalPersistentCache } from "../odspCache";
 import { createCacheSnapshotKey, INewFileInfo } from "../odspUtils";
 import { createOdspUrl } from "../createOdspUrl";
-import { getHashedDocumentId, ISnapshotContents } from "../odspPublicUtils";
+import { getHashedDocumentId } from "../odspPublicUtils";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
 import { prefetchLatestSnapshot } from "../prefetchLatestSnapshot";
@@ -79,16 +79,17 @@ describe("Tests for prefetching snapshot", () => {
 		blobs: [],
 	};
 
-	const content: ISnapshotContents = {
+	const content: ISnapshot = {
 		snapshotTree: {
 			id: "id",
 			blobs: {},
 			trees: {},
 		},
-		blobs: new Map(),
+		blobContents: new Map(),
 		ops: [],
 		sequenceNumber: 0,
 		latestSequenceNumber: 0,
+		snapshotFormatV: 1,
 	};
 
 	const value: IVersionedValueWithEpoch = {
@@ -325,7 +326,8 @@ describe("Tests for prefetching snapshot", () => {
 					),
 			);
 
-			mockFetchSingle(
+			// This will store the response with wrong epoch in the cache
+			await mockFetchSingle(
 				async () =>
 					prefetchLatestSnapshot(
 						resolved,
@@ -347,18 +349,26 @@ describe("Tests for prefetching snapshot", () => {
 					),
 			);
 
-			let errorOccurred = false;
-			const version = await service.getVersions(null, 1).catch((err) => {
-				errorOccurred = true;
-				return undefined;
-			});
+			await mockFetchSingle(
+				async () => service.getVersions(null, 1),
+				async () =>
+					createResponse(
+						{ "x-fluid-epoch": "epoch1", "content-type": "application/json" },
+						odspSnapshot,
+						200,
+					),
+			);
 
-			assert.deepStrictEqual(version, undefined, "incorrect version");
-			assert.deepStrictEqual(errorOccurred, true, "error didn't occur");
-			assert(
-				mockLogger.events.filter((event) =>
-					event.eventName.includes("PrefetchSnapshotError"),
-				).length === 1,
+			mockLogger.assertMatchAny(
+				[
+					{
+						error: "Epoch mismatch",
+						errorType: "fileOverwrittenInStorage",
+						serverEpoch: "epoch2",
+						clientEpoch: "epoch1",
+						fetchType: "treesLatest",
+					},
+				],
 				"Snapshot prefetch has different epoch",
 			);
 		});
@@ -374,7 +384,9 @@ describe("Tests for prefetching snapshot", () => {
 						200,
 					),
 			);
-			mockFetchSingle(
+
+			// This will store the response with wrong epoch in the cache
+			await mockFetchSingle(
 				async () =>
 					prefetchLatestSnapshot(
 						resolved,
@@ -396,20 +408,26 @@ describe("Tests for prefetching snapshot", () => {
 					),
 			);
 
-			let errorOccurred = false;
-			const version = await service
-				.getVersions(null, 1, undefined, FetchSource.noCache)
-				.catch((err) => {
-					errorOccurred = true;
-					return undefined;
-				});
+			await mockFetchSingle(
+				async () => service.getVersions(null, 1, FetchSource.noCache),
+				async () =>
+					createResponse(
+						{ "x-fluid-epoch": "epoch1", "content-type": "application/json" },
+						odspSnapshot,
+						200,
+					),
+			);
 
-			assert.deepStrictEqual(version, undefined, "incorrect version");
-			assert.deepStrictEqual(errorOccurred, true, "error didn't occur");
-			assert(
-				mockLogger.events.filter((event) =>
-					event.eventName.includes("PrefetchSnapshotError"),
-				).length === 1,
+			mockLogger.assertMatchAny(
+				[
+					{
+						error: "Epoch mismatch",
+						errorType: "fileOverwrittenInStorage",
+						serverEpoch: "epoch2",
+						clientEpoch: "epoch1",
+						fetchType: "treesLatest",
+					},
+				],
 				"Snapshot prefetch has different epoch",
 			);
 		});
@@ -456,7 +474,9 @@ describe("Tests for prefetching snapshot", () => {
 						200,
 					),
 			);
-			mockFetchSingle(
+
+			// This will store the response with wrong epoch in the cache
+			await mockFetchSingle(
 				async () =>
 					prefetchLatestSnapshot(
 						resolved,
@@ -478,19 +498,26 @@ describe("Tests for prefetching snapshot", () => {
 					),
 			);
 
-			let errorOccurred = false;
-			const version = await service.getVersions(null, 1, undefined).catch((err) => {
-				errorOccurred = true;
-				return undefined;
-			});
+			await mockFetchSingle(
+				async () => service.getVersions(null, 1, undefined),
+				async () =>
+					createResponse(
+						{ "x-fluid-epoch": "epoch1", "content-type": "application/json" },
+						odspSnapshot,
+						200,
+					),
+			);
 
-			assert.deepStrictEqual(version, undefined, "incorrect version");
-			assert.deepStrictEqual(errorOccurred, true, "error didn't occur");
-
-			assert(
-				mockLogger.events.filter((event) =>
-					event.eventName.includes("PrefetchSnapshotError"),
-				).length === 1,
+			mockLogger.assertMatchAny(
+				[
+					{
+						error: "Epoch mismatch",
+						errorType: "fileOverwrittenInStorage",
+						serverEpoch: "epoch2",
+						clientEpoch: "epoch1",
+						fetchType: "treesLatest",
+					},
+				],
 				"Snapshot prefetch has different epoch",
 			);
 		});

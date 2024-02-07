@@ -13,7 +13,7 @@ import {
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { type ISharedCounter, SharedCounter } from "..";
+import { type ISharedCounter, SharedCounter } from "../index";
 import { CounterFactory } from "../counterFactory";
 
 class TestSharedCounter extends SharedCounter {
@@ -27,7 +27,7 @@ describe("SharedCounter", () => {
 	let dataStoreRuntime: MockFluidDataStoreRuntime;
 	let factory: IChannelFactory;
 
-	beforeEach(async () => {
+	beforeEach("createTestCounter", async () => {
 		dataStoreRuntime = new MockFluidDataStoreRuntime();
 		factory = SharedCounter.getFactory();
 		testCounter = factory.create(dataStoreRuntime, "counter") as ISharedCounter;
@@ -123,7 +123,7 @@ describe("SharedCounter", () => {
 		let testCounter2: ISharedCounter;
 		let containerRuntimeFactory: MockContainerRuntimeFactory;
 
-		beforeEach(() => {
+		beforeEach("createTestCounters", () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 			// Connect the first SharedCounter.
@@ -209,7 +209,7 @@ describe("SharedCounter", () => {
 		let containerRuntime2: MockContainerRuntimeForReconnection;
 		let testCounter2: ISharedCounter;
 
-		beforeEach(() => {
+		beforeEach("createTestCounters", () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
 			// Connect the first SharedCounter.

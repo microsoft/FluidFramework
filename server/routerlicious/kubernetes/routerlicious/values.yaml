@@ -1,6 +1,3 @@
-## Fluid image version
-image: prague.azurecr.io/prague-server:latest
-
 ## Specify a imagePullPolicy
 ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
 imagePullPolicy: IfNotPresent
@@ -57,7 +54,7 @@ storage:
 
 checkpoints:
   localCheckpointEnabled: false
-  checkpointsTTLInSeconds: 864000
+  checkpointsTTLInSeconds: -1
   kafkaCheckpointOnReprocessingOp: false
 
 session:
@@ -72,6 +69,7 @@ deli:
     maxTime: 60000
     maxMessages: 500
   restartOnCheckpointFailure: true
+  enableEphemeralContainerSummaryCleanup: true
 
 scriptorium:
   name: scriptorium
@@ -169,3 +167,13 @@ lumberjack:
   options:
     enableGlobalTelemetryContext: true
     enableSanitization: false
+
+config:
+  configDumpEnabled: false
+  secretNamesToRedactInConfigDump:
+    - mongo.globalDbEndpoint
+    - mongo.operationsDbEndpoint
+    - redis.pass
+    - redisForTenantCache.pass
+    - redis2.pass
+    - redisForThrottling.pass

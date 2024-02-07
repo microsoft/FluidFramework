@@ -11,7 +11,7 @@ import type { ISequencedDocumentMessage } from "@fluidframework/protocol-definit
 import { MessageType } from "@fluidframework/protocol-definitions";
 
 import { assert } from "@fluidframework/core-utils";
-import type { ISameContainerMigrationTool } from "../migrationInterfaces";
+import type { ISameContainerMigrationTool } from "../migrationInterfaces/index.js";
 
 const pactMapKey = "pact-map";
 const newVersionKey = "newVersion";
@@ -22,6 +22,9 @@ const newVersionKey = "newVersion";
 // changing as we connect and that the Migrator should NOT take action.  Otherwise the Migrator would need to have the knowledge that it shouldn't immediately act upon
 // the state changes if not connected.
 
+/**
+ * @internal
+ */
 export class SameContainerMigrationTool extends DataObject implements ISameContainerMigrationTool {
 	private _pactMap: IPactMap<string> | undefined;
 	private readonly _containerP: Promise<IContainer>;
@@ -424,6 +427,7 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
  * The DataObjectFactory is used by Fluid Framework to instantiate our DataObject.  We provide it with a unique name
  * and the constructor it will call.  The third argument lists the other data structures it will utilize.  In this
  * scenario, the fourth argument is not used.
+ * @internal
  */
 export const SameContainerMigrationToolInstantiationFactory =
 	new DataObjectFactory<SameContainerMigrationTool>(

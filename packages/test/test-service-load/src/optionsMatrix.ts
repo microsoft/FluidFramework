@@ -8,7 +8,7 @@ import {
 	generatePairwiseOptions,
 	OptionsMatrix,
 	numberCases,
-} from "@fluid-internal/test-pairwise-generator";
+} from "@fluid-private/test-pairwise-generator";
 import {
 	CompressionAlgorithms,
 	IContainerRuntimeOptions,
@@ -16,12 +16,14 @@ import {
 	ISummaryRuntimeOptions,
 } from "@fluidframework/container-runtime";
 import { ILoaderOptions } from "@fluidframework/container-loader";
-import { ConfigTypes, LoggingError } from "@fluidframework/telemetry-utils";
+import { LoggingError } from "@fluidframework/telemetry-utils";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { ConfigTypes } from "@fluidframework/core-interfaces";
 import { ILoadTestConfig, OptionOverride } from "./testConfigFile";
 
 const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
 	cache: booleanCases,
+	client: [undefined],
 	provideScopeLoader: booleanCases,
 	maxClientLeaveWaitTime: numberCases,
 	summarizeProtocolTree: [undefined],
@@ -66,7 +68,9 @@ const gcOptionsMatrix: OptionsMatrix<IGCRuntimeOptions> = {
 	disableGC: booleanCases,
 	gcAllowed: booleanCases,
 	runFullGC: booleanCases,
-	sessionExpiryTimeoutMs: [undefined], // Don't want coverage here
+	sessionExpiryTimeoutMs: [undefined], // Don't want sessions to expire at a fixed time
+	enableGCSweep: [undefined], // Don't need coverage here, GC sweep is tested separately
+	sweepGracePeriodMs: [undefined], // Don't need coverage here, GC sweep is tested separately
 };
 
 const summaryOptionsMatrix: OptionsMatrix<ISummaryRuntimeOptions> = {

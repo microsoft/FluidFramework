@@ -12,6 +12,13 @@ import { ReferenceType } from "../ops";
 import { PropertySet } from "../properties";
 import { MergeTree } from "../mergeTree";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk";
+import { UnassignedSequenceNumber } from "../constants";
+import { LocalReferenceCollection } from "../localReference";
+import {
+	PartialSequenceLengths,
+	verifyExpectedPartialLengths,
+	verifyPartialLengths,
+} from "../partialLengths";
 import { loadText } from "./text";
 
 export function loadTextFromFile(filename: string, mergeTree: MergeTree, segLimit = 0) {
@@ -179,22 +186,30 @@ function getPartialLengths(
 
 	const isInserted = (segment: ISegment) =>
 		segment.seq === undefined ||
-		(segment.seq !== -1 && segment.seq <= seq) ||
+		(segment.seq !== UnassignedSequenceNumber && segment.seq <= seq) ||
 		(localSeq !== undefined &&
-			segment.seq === -1 &&
+			segment.seq === UnassignedSequenceNumber &&
 			segment.localSeq !== undefined &&
 			segment.localSeq <= localSeq);
 
 	const isRemoved = (segment: ISegment) =>
 		segment.removedSeq !== undefined &&
 		((localSeq !== undefined &&
-			segment.removedSeq === -1 &&
+			segment.removedSeq === UnassignedSequenceNumber &&
 			segment.localRemovedSeq !== undefined &&
 			segment.localRemovedSeq <= localSeq) ||
-			(segment.removedSeq !== -1 && segment.removedSeq <= seq));
+			(segment.removedSeq !== UnassignedSequenceNumber && segment.removedSeq <= seq));
+
+	const isMoved = (segment: ISegment) =>
+		segment.movedSeq !== undefined &&
+		((localSeq !== undefined &&
+			segment.movedSeq === UnassignedSequenceNumber &&
+			segment.localMovedSeq !== undefined &&
+			segment.localMovedSeq <= localSeq) ||
+			(segment.movedSeq !== UnassignedSequenceNumber && segment.movedSeq <= seq));
 
 	walkAllChildSegments(mergeBlock, (segment) => {
-		if (isInserted(segment) && !isRemoved(segment)) {
+		if (isInserted(segment) && !isRemoved(segment) && !isMoved(segment)) {
 			actualLen += segment.cachedLength;
 		}
 		return true;
@@ -245,4 +260,34 @@ export function validatePartialLengths(
 		assert.equal(partialLen, len);
 		assert.equal(actualLen, len);
 	}
+}
+
+export function validateRefCount(collection?: LocalReferenceCollection) {
+	if (!collection) {
+		return;
+	}
+
+	const expectedLength = Array.from(collection).length;
+
+	// eslint-disable-next-line @typescript-eslint/dot-notation
+	assert.equal(collection["refCount"], expectedLength);
+}
+
+/**
+ * Enable stricter partial length assertions inside tests
+ *
+ * Note that these assertions can be expensive, and so should not be enabled in
+ * production code or tests that run through thousands of ops (e.g. the SharedString
+ * fuzz tests).
+ */
+export function useStrictPartialLengthChecks() {
+	beforeEach(() => {
+		PartialSequenceLengths.options.verifier = verifyPartialLengths;
+		PartialSequenceLengths.options.verifyExpected = verifyExpectedPartialLengths;
+	});
+
+	afterEach(() => {
+		PartialSequenceLengths.options.verifier = undefined;
+		PartialSequenceLengths.options.verifyExpected = undefined;
+	});
 }

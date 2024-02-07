@@ -18,23 +18,16 @@
  * @packageDocumentation
  */
 
+export { DataObjectFactory, PureDataObjectFactory } from "./data-object-factories";
 export {
-	DataObjectFactory,
-	IRootDataObjectFactory,
-	PureDataObjectFactory,
-} from "./data-object-factories";
-export { DataObject, DataObjectTypes, IDataObjectProps, PureDataObject } from "./data-objects";
+	DataObject,
+	type DataObjectTypes,
+	type IDataObjectProps,
+	PureDataObject,
+} from "./data-objects";
 export {
 	BaseContainerRuntimeFactory,
+	type BaseContainerRuntimeFactoryProps,
 	ContainerRuntimeFactoryWithDefaultDataStore,
+	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
 } from "./container-runtime-factories";
-export {
-	defaultFluidObjectRequestHandler,
-	defaultRouteRequestHandler,
-	mountableViewRequestHandler,
-} from "./request-handlers";
-export {
-	getDefaultObjectFromContainer,
-	getObjectFromContainer,
-	getObjectWithIdFromContainer,
-} from "./utils";

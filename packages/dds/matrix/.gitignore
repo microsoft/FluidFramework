@@ -56,3 +56,6 @@ temp_modules/
 
 bench/dist/
 bench/profile.txt
+
+# Output folder for fuzz tests
+src/test/results

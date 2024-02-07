@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { ISegment, SegmentGroup } from "../mergeTreeNodes";
 import {
 	appendToMergeTreeDeltaRevertibles,

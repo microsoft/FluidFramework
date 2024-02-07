@@ -6,34 +6,18 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { EventEmitter } from "events";
-import { assert } from "@fluidframework/core-utils";
-import { ILoader } from "@fluidframework/container-definitions";
-import {
-	// eslint-disable-next-line import/no-deprecated
-	createGroupOp,
-	createRemoveRangeOp,
-	Marker,
-	ReferenceType,
-	TextSegment,
-	IMergeTreeDeltaOp,
-} from "@fluidframework/merge-tree";
-import { SharedString } from "@fluidframework/sequence";
+// eslint-disable-next-line import/no-deprecated
+import { createGroupOp, createRemoveRangeOp, IMergeTreeDeltaOp } from "@fluidframework/merge-tree";
+import { SharedString, Marker, ReferenceType, TextSegment } from "@fluidframework/sequence";
 import { exampleSetup } from "prosemirror-example-setup";
 import { DOMSerializer, Schema, Slice } from "prosemirror-model";
 import { addListNodes } from "prosemirror-schema-list";
 import { EditorState, Plugin, Transaction } from "prosemirror-state";
 
 import { EditorView } from "prosemirror-view";
-import { ComponentView } from "./componentView";
-import {
-	IProseMirrorNode,
-	nodeTypeKey,
-	ProseMirrorTransactionBuilder,
-	sliceToGroupOps,
-} from "./fluidBridge";
-import { schema } from "./fluidSchema";
-import { FootnoteView } from "./footnoteView";
-import { create as createSelection } from "./selection";
+import { IProseMirrorNode, ProseMirrorTransactionBuilder, sliceToGroupOps } from "./fluidBridge.js";
+import { schema } from "./fluidSchema.js";
+import { create as createSelection } from "./selection.js";
 export const IRichTextEditor: keyof IProvideRichTextEditor = "IRichTextEditor";
 
 export interface IProvideRichTextEditor {
@@ -56,10 +40,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 	private state: EditorState;
 	private editorView: EditorView | undefined;
 
-	constructor(
-		private readonly text: SharedString,
-		private readonly loader: ILoader,
-	) {
+	constructor(private readonly text: SharedString) {
 		super();
 
 		this.plugin = new Plugin({
@@ -105,20 +86,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 			} else if (Marker.is(segment)) {
 				// TODO are marks applied to the structural nodes as well? Or just inner text?
 
-				const nodeType = segment.properties![nodeTypeKey];
 				switch (segment.refType) {
-					case ReferenceType.NestBegin:
-						// Create the new node, add it to the top's content, and push it on the stack
-						const newNode = { type: nodeType, content: [] };
-						top.content!.push(newNode);
-						nodeStack.push(newNode);
-						break;
-
-					case ReferenceType.NestEnd:
-						const popped = nodeStack.pop();
-						assert(popped!.type === nodeType, "NestEnd top-node type has wrong type");
-						break;
-
 					case ReferenceType.Simple:
 						// TODO consolidate the text segment and simple references
 						const nodeJson: IProseMirrorNode = {
@@ -235,10 +203,6 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 
 		const editorView = new EditorView(textArea, {
 			state: this.state,
-			nodeViews: {
-				fluid: (node, view, getPos) => new ComponentView(node, view, getPos, this.loader),
-				footnote: (node, view, getPos) => new FootnoteView(node, view, getPos, this.loader),
-			},
 		});
 
 		this.editorView = editorView;
@@ -292,10 +256,9 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 						operations = operations.concat(sliceOperations);
 					}
 
-					/* eslint-disable import/no-deprecated */
+					// eslint-disable-next-line import/no-deprecated
 					const groupOp = createGroupOp(...operations);
 					this.text.groupOperation(groupOp);
-					/* eslint-enable import/no-deprecated */
 
 					break;
 				}
@@ -358,10 +321,9 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 						operations = operations.concat(sliceOperations);
 					}
 
-					/* eslint-disable import/no-deprecated */
+					// eslint-disable-next-line import/no-deprecated
 					const groupOp = createGroupOp(...operations);
 					this.text.groupOperation(groupOp);
-					/* eslint-enable import/no-deprecated */
 
 					break;
 				}

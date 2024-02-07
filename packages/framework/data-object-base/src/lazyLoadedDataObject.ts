@@ -4,49 +4,48 @@
  */
 
 import {
-	IEvent,
-	IFluidHandle,
-	IFluidLoadable,
-	IRequest,
-	IResponse,
-	IProvideFluidHandle,
-	// eslint-disable-next-line import/no-deprecated
-	IFluidRouter,
+	type IEvent,
+	type IFluidHandle,
+	type IFluidLoadable,
+	type IRequest,
+	type IResponse,
+	type IProvideFluidHandle,
 } from "@fluidframework/core-interfaces";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { type IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+import { type IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { FluidObjectHandle } from "@fluidframework/datastore";
-import { ISharedObject } from "@fluidframework/shared-object-base";
+import { type ISharedObject } from "@fluidframework/shared-object-base";
 import { EventForwarder } from "@fluid-internal/client-utils";
 import { create404Response } from "@fluidframework/runtime-utils";
 
 /**
- * @public
+ * @internal
+ * @deprecated Not recommended for use.  For lazy loading of data objects, prefer to defer dereferencing their handles.
  */
 export abstract class LazyLoadedDataObject<
 		TRoot extends ISharedObject = ISharedObject,
 		TEvents extends IEvent = IEvent,
 	>
 	extends EventForwarder<TEvents>
-	// eslint-disable-next-line import/no-deprecated
-	implements IFluidLoadable, IProvideFluidHandle, IFluidRouter
+	implements IFluidLoadable, IProvideFluidHandle
 {
 	private _handle?: IFluidHandle<this>;
 
 	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 * {@inheritDoc @fluidframework/core-interfaces#IProvideFluidLoadable.IFluidLoadable}
 	 */
-	// eslint-disable-next-line import/no-deprecated
-	public get IFluidRouter() {
+	public get IFluidLoadable(): this {
 		return this;
 	}
-	public get IFluidLoadable() {
-		return this;
-	}
-	public get IFluidHandle() {
+
+	/**
+	 * {@inheritDoc @fluidframework/core-interfaces#IProvideFluidHandle.IFluidHandle}
+	 */
+	public get IFluidHandle(): IFluidHandle<this> {
 		return this.handle;
 	}
-	public get IProvideFluidHandle() {
+
+	public get IProvideFluidHandle(): this {
 		return this;
 	}
 
@@ -61,15 +60,11 @@ export abstract class LazyLoadedDataObject<
 		this.root = root as TRoot;
 	}
 
-	// #region IFluidRouter
-
 	public async request(r: IRequest): Promise<IResponse> {
 		return r.url === "" || r.url === "/"
 			? { status: 200, mimeType: "fluid/object", value: this }
 			: create404Response(r);
 	}
-
-	// #endregion IFluidRouter
 
 	// #region IFluidLoadable
 
@@ -84,6 +79,8 @@ export abstract class LazyLoadedDataObject<
 
 	// #endregion IFluidLoadable
 
+	// TODO: Use unknown (or a stronger type) instead of any. Breaking change.
+	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
 	public abstract create(props?: any);
 	public abstract load(
 		context: IFluidDataStoreContext,

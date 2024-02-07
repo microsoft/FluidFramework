@@ -23,6 +23,7 @@ import {
 
 /**
  * Manages storage of throttling metrics and usage data in redis.
+ * @internal
  */
 export class RedisThrottleAndUsageStorageManager implements IThrottleAndUsageStorageManager {
 	private readonly expireAfterSeconds: number = 60 * 60 * 24;

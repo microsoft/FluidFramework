@@ -135,13 +135,17 @@
 			},
 			"Tests": {
 				"dev": true,
-				"dirs": ["packages/test/", "azure/packages/test/"]
+				"dirs": [
+					"packages/test/",
+					"azure/packages/test/",
+					"packages/service-clients/end-to-end-tests"
+				]
 			},
 			"Test-Utils": {
 				"dev": true,
 				"packages": [
-					"@fluid-internal/stochastic-test-utils",
-					"@fluid-internal/test-dds-utils",
+					"@fluid-private/stochastic-test-utils",
+					"@fluid-private/test-dds-utils",
 					"@fluidframework/local-driver",
 					"@fluidframework/test-runtime-utils",
 					"@fluid-tools/webpack-fluid-loader"
@@ -156,6 +160,10 @@
 					"Routerlicious-Driver",
 					"Server-Shared-Utils"
 				]
+			},
+			"OdspClient": {
+				"dirs": ["packages/service-clients/odsp-client"],
+				"deps": ["Container-Definitions", "Framework", "Driver"]
 			},
 			"UberPackage": {
 				"packages": ["fluid-framework"],

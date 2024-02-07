@@ -3,42 +3,37 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-deprecated
-import { IRequest, IFluidRouter, FluidObject } from "@fluidframework/core-interfaces";
+import { type IRequest, type FluidObject } from "@fluidframework/core-interfaces";
 import {
 	FluidDataStoreRuntime,
-	ISharedObjectRegistry,
+	type ISharedObjectRegistry,
 	mixinRequestHandler,
 } from "@fluidframework/datastore";
 import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
 import {
-	IFluidDataStoreContext,
-	IContainerRuntimeBase,
-	IFluidDataStoreFactory,
-	IFluidDataStoreRegistry,
-	IProvideFluidDataStoreRegistry,
-	NamedFluidDataStoreRegistryEntries,
-	NamedFluidDataStoreRegistryEntry,
-	IFluidDataStoreContextDetached,
+	type IFluidDataStoreContext,
+	type IContainerRuntimeBase,
+	type IFluidDataStoreFactory,
+	type IFluidDataStoreRegistry,
+	type IProvideFluidDataStoreRegistry,
+	type NamedFluidDataStoreRegistryEntries,
+	type NamedFluidDataStoreRegistryEntry,
+	type IFluidDataStoreContextDetached,
+	type IDataStore,
 } from "@fluidframework/runtime-definitions";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
-	AsyncFluidObjectProvider,
-	FluidObjectSymbolProvider,
-	IFluidDependencySynthesizer,
+	type IChannelFactory,
+	type IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions";
+import {
+	type AsyncFluidObjectProvider,
+	type FluidObjectSymbolProvider,
+	type IFluidDependencySynthesizer,
 } from "@fluidframework/synthesize";
 
 import { assert } from "@fluidframework/core-utils";
-import { IDataObjectProps, PureDataObject, DataObjectTypes } from "../data-objects";
-/**
- * Useful interface in places where it's useful to do type erasure for PureDataObject generic
- * @public
- */
-export interface IRootDataObjectFactory extends IFluidDataStoreFactory {
-	// eslint-disable-next-line import/no-deprecated
-	createRootInstance(rootDataStoreId: string, runtime: IContainerRuntime): Promise<IFluidRouter>;
-}
+import { type IDataObjectProps, type PureDataObject, type DataObjectTypes } from "../data-objects";
 
 /**
  * Proxy over PureDataObject
@@ -55,7 +50,10 @@ async function createDataObject<
 	runtimeClassArg: typeof FluidDataStoreRuntime,
 	existing: boolean,
 	initProps?: I["InitialState"],
-) {
+): Promise<{
+	instance: TObj;
+	runtime: FluidDataStoreRuntime;
+}> {
 	// base
 	let runtimeClass = runtimeClassArg;
 
@@ -129,21 +127,18 @@ async function createDataObject<
  *
  * @typeParam TObj - DataObject (concrete type)
  * @typeParam I - The input types for the DataObject
- * @public
+ * @alpha
  */
 export class PureDataObjectFactory<
 		TObj extends PureDataObject<I>,
 		I extends DataObjectTypes = DataObjectTypes,
 	>
-	implements
-		IFluidDataStoreFactory,
-		Partial<IProvideFluidDataStoreRegistry>,
-		IRootDataObjectFactory
+	implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry>
 {
 	private readonly sharedObjectRegistry: ISharedObjectRegistry;
 	private readonly registry: IFluidDataStoreRegistry | undefined;
 
-	constructor(
+	public constructor(
 		public readonly type: string,
 		private readonly ctor: new (props: IDataObjectProps<I>) => TObj,
 		sharedObjects: readonly IChannelFactory[],
@@ -160,11 +155,17 @@ export class PureDataObjectFactory<
 		this.sharedObjectRegistry = new Map(sharedObjects.map((ext) => [ext.type, ext]));
 	}
 
-	public get IFluidDataStoreFactory() {
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IProvideFluidDataStoreFactory.IFluidDataStoreFactory}
+	 */
+	public get IFluidDataStoreFactory(): this {
 		return this;
 	}
 
-	public get IFluidDataStoreRegistry() {
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IProvideFluidDataStoreRegistry.IFluidDataStoreRegistry}
+	 */
+	public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry | undefined {
 		return this.registry;
 	}
 
@@ -183,7 +184,10 @@ export class PureDataObjectFactory<
 	 *
 	 * @param context - data store context used to load a data store runtime
 	 */
-	public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
+	public async instantiateDataStore(
+		context: IFluidDataStoreContext,
+		existing: boolean,
+	): Promise<FluidDataStoreRuntime> {
 		const { runtime } = await createDataObject(
 			this.ctor,
 			context,
@@ -257,6 +261,37 @@ export class PureDataObjectFactory<
 	}
 
 	/**
+	 * Creates a new instance of the object with a datastore which exposes the aliasing api.
+	 * @param runtime - container runtime. It is the runtime that will be used to create the object. It will produce
+	 * the underlying infrastructure to get the data object to operate.
+	 * @param initialState - The initial state to provide to the created component.
+	 * @param packagePath - The path to the data store factory to use to create the data object.
+	 * @returns an array containing the object created by this factory and an IDataStore object that enables users to
+	 * alias the data object.
+	 * The data object is attached only when it is attached to the handle graph that connects to an aliased object or
+	 * when the data object is aliased.
+	 */
+	public async createInstanceWithDataStore(
+		containerRuntime: IContainerRuntimeBase,
+		initialState?: I["InitialState"],
+		packagePath?: Readonly<string[]>,
+	): Promise<[TObj, IDataStore]> {
+		const context = containerRuntime.createDetachedDataStore(packagePath ?? [this.type]);
+		const { instance, runtime } = await createDataObject(
+			this.ctor,
+			context,
+			this.sharedObjectRegistry,
+			this.optionalProviders,
+			this.runtimeClass,
+			false, // existing
+			initialState,
+		);
+		const dataStore = await context.attachRuntime(this, runtime);
+
+		return [instance, dataStore];
+	}
+
+	/**
 	 * Creates a new root instance of the object. Uses container's registry to find this factory.
 	 * It's expected that only container owners would use this functionality, as only such developers
 	 * have knowledge of entries in container registry.
@@ -265,14 +300,33 @@ export class PureDataObjectFactory<
 	 * @param initialState - The initial state to provide to the created component.
 	 * @returns an object created by this factory. Data store and objects created are not attached to container.
 	 * They get attached only when a handle to one of them is attached to already attached objects.
+	 *
+	 * @deprecated - the issue is that it does not allow the customer to decide the conflict resolution policy when an
+	 * aliasing conflict occurs. Use {@link PureDataObjectFactory.createInstanceWithDataStore} instead.
 	 */
 	public async createRootInstance(
 		rootDataStoreId: string,
 		runtime: IContainerRuntime,
 		initialState?: I["InitialState"],
 	): Promise<TObj> {
-		const context = runtime.createDetachedRootDataStore([this.type], rootDataStoreId);
-		return this.createInstanceCore(context, initialState);
+		const context = runtime.createDetachedDataStore([this.type]);
+		const { instance, runtime: dataStoreRuntime } = await createDataObject(
+			this.ctor,
+			context,
+			this.sharedObjectRegistry,
+			this.optionalProviders,
+			this.runtimeClass,
+			false, // existing
+			initialState,
+		);
+		const dataStore = await context.attachRuntime(this, dataStoreRuntime);
+		const result = await dataStore.trySetAlias(rootDataStoreId);
+		if (result !== "Success") {
+			const handle = await runtime.getAliasedDataStoreEntryPoint(rootDataStoreId);
+			assert(handle !== undefined, "Should have retrieved aliased handle");
+			return (await handle.get()) as TObj;
+		}
+		return instance;
 	}
 
 	protected async createNonRootInstanceCore(

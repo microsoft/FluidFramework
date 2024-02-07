@@ -16,6 +16,7 @@ import {
 	Bar,
 	CartesianGrid,
 	ComposedChart,
+	Label,
 	Legend,
 	Line,
 	ResponsiveContainer,
@@ -49,7 +50,7 @@ interface DataPoint {
 
 /**
  * Merges multiple {@link GraphDataSet}'s into singular objects by their x-axis (timestamp) value.
- * This method is necessary for showing composed graphs beacause Recharts expects data to be in a merged object format
+ * This method is necessary for showing composed graphs because Recharts expects data to be in a merged object format
  */
 const mergeDataSets = (dataSets: GraphDataSet[]): DataPoint[] => {
 	const xAxisDataPointToYAxisDataPointMap: Record<string, Record<string, number | string>> = {};
@@ -236,8 +237,8 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): React.Re
 					dy={16}
 					textAnchor="end"
 					fill={graphColorPalette.axisTick}
-					transform="rotate(-35)"
-					fontSize={16}
+					transform="rotate(-20)"
+					fontSize={14}
 				>
 					{payload.value}
 				</text>
@@ -251,15 +252,14 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): React.Re
 	 */
 	const CustomizedYAxisTick = (yAxisProps: any): React.ReactElement => {
 		const { x, y, payload } = yAxisProps;
-		/* eslint-disable react/prop-types */
+
 		return (
 			<g>
-				<text x={x} y={y} textAnchor="end" fill={graphColorPalette.axisTick} fontSize={16}>
+				<text x={x} y={y} textAnchor="end" fill={graphColorPalette.axisTick} fontSize={14}>
 					{`${payload.value}${props.yAxisUnitDisplayName ?? ""}`}
 				</text>
 			</g>
 		);
-		/* eslint-enable react/prop-types */
 	};
 
 	/**
@@ -396,7 +396,9 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): React.Re
 				data-testId="test-dynamic-composed-chart"
 			>
 				<CartesianGrid strokeDasharray="2 2" stroke={graphColorPalette.cartesianGrid} />
-				<XAxis dataKey={"x"} tick={<CustomizedXAxisTick />} />
+				<XAxis dataKey={"x"} tick={<CustomizedXAxisTick />}>
+					<Label value="Timestamp" offset={12} position="bottom" />
+				</XAxis>
 				<YAxis tick={<CustomizedYAxisTick />} />
 				<Tooltip
 					contentStyle={{

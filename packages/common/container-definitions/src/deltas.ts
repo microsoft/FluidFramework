@@ -25,7 +25,13 @@ import {
  * @public
  */
 export interface IConnectionDetails {
+	/**
+	 * The client's unique identifier assigned by the service.
+	 *
+	 * @remarks It is not stable across reconnections.
+	 */
 	clientId: string;
+
 	claims: ITokenClaims;
 	serviceConfiguration: IClientConfiguration;
 
@@ -34,16 +40,17 @@ export interface IConnectionDetails {
 	 *
 	 * @remarks
 	 *
-	 * It may lap actual last sequence number (quite a bit, if container is very active).
-	 * But it's the best information for client to figure out how far it is behind, at least
-	 * for "read" connections. "write" connections may use own "join" op to similar information,
-	 * that is likely to be more up-to-date.
+	 * It may lag behind the actual last sequence number (quite a bit, if the container is very active),
+	 * but it's the best information the client has to figure out how far behind it is, at least
+	 * for "read" connections. "write" connections may use the client's own "join" op to obtain similar
+	 * information which is likely to be more up-to-date.
 	 */
 	checkpointSequenceNumber: number | undefined;
 }
 
 /**
  * Contract supporting delivery of outbound messages to the server
+ * @sealed
  * @public
  */
 export interface IDeltaSender {
@@ -55,6 +62,7 @@ export interface IDeltaSender {
 
 /**
  * Events emitted by {@link IDeltaManager}.
+ * @sealed
  * @public
  */
 export interface IDeltaManagerEvents extends IEvent {
@@ -135,6 +143,7 @@ export interface IDeltaManagerEvents extends IEvent {
 
 /**
  * Manages the transmission of ops between the runtime and storage.
+ * @sealed
  * @public
  */
 export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender {
@@ -221,6 +230,7 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
 
 /**
  * Events emitted by {@link IDeltaQueue}.
+ * @sealed
  * @public
  */
 export interface IDeltaQueueEvents<T> extends IErrorEvent {
@@ -264,6 +274,7 @@ export interface IDeltaQueueEvents<T> extends IErrorEvent {
 
 /**
  * Queue of ops to be sent to or processed from storage
+ * @sealed
  * @public
  */
 export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, IDisposable {

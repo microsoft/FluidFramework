@@ -9,22 +9,29 @@
  * @packageDocumentation
  */
 
-export { FluidContainer, IFluidContainer, IFluidContainerEvents } from "./fluidContainer";
-export { DOProviderContainerRuntimeFactory } from "./rootDataObject";
-export { ServiceAudience } from "./serviceAudience";
 export {
-	ContainerSchema,
-	DataObjectClass,
-	IConnection,
-	IMember,
-	IRootDataObject,
-	IServiceAudience,
-	IServiceAudienceEvents,
-	LoadableObjectClass,
-	LoadableObjectClassRecord,
-	LoadableObjectCtor,
-	LoadableObjectRecord,
-	MemberChangedListener,
-	SharedObjectClass,
-	Myself,
+	createFluidContainer,
+	type IFluidContainer,
+	type IFluidContainerEvents,
+	type InitialObjects,
+} from "./fluidContainer";
+export { createDOProviderContainerRuntimeFactory } from "./rootDataObject";
+export { createServiceAudience } from "./serviceAudience";
+export {
+	type ContainerSchema,
+	type ContainerAttachProps,
+	type DataObjectClass,
+	type IConnection,
+	type IMember,
+	type IRootDataObject,
+	type IServiceAudience,
+	type IServiceAudienceEvents,
+	type LoadableObjectClass,
+	type LoadableObjectClassRecord,
+	type LoadableObjectCtor,
+	type LoadableObjectRecord,
+	type MemberChangedListener,
+	type Myself,
+	type SharedObjectClass,
+	type IProvideRootDataObject,
 } from "./types";

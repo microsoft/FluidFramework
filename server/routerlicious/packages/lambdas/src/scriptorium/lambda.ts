@@ -32,6 +32,9 @@ enum ScriptoriumStatus {
 	CheckpointFailed = "CheckpointFailed",
 }
 
+/**
+ * @internal
+ */
 export class ScriptoriumLambda implements IPartitionLambda {
 	private pending = new Map<string, ISequencedOperationMessage[]>();
 	private pendingOffset: IQueuedMessage | undefined;
@@ -259,7 +262,9 @@ export class ScriptoriumLambda implements IPartitionLambda {
 				...getLumberBaseProperties(documentId, tenantId),
 				...{ sequenceNumberRanges, insertBatchSize, scriptoriumMetricId },
 			},
-			(error) => error.code === 11000,
+			(error) =>
+				error.code === 11000 ||
+				error.message?.toString()?.indexOf("E11000 duplicate key") >= 0,
 			(error) => !this.clientFacadeRetryEnabled /* shouldRetry */,
 			undefined /* calculateIntervalMs */,
 			undefined /* onErrorFn */,

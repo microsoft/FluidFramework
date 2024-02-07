@@ -5,48 +5,37 @@
 
 import { strict as assert } from "assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { ISharedMap, SharedMap } from "@fluidframework/map";
-import {
-	acquireAndComplete,
-	ConsensusQueue,
-	ConsensusResult,
-	IConsensusOrderedCollection,
-	waitAcquireAndComplete,
-} from "@fluidframework/ordered-collection";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import type { ISharedMap, SharedMap } from "@fluidframework/map";
+import type { IConsensusOrderedCollection } from "@fluidframework/ordered-collection";
 import {
 	ChannelFactoryRegistry,
 	ITestFluidObject,
 	ITestContainerConfig,
 	ITestObjectProvider,
 	DataObjectFactoryType,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluid-internal/test-version-utils";
-
-interface ISharedObjectConstructor<T> {
-	create(runtime: IFluidDataStoreRuntime, id?: string): T;
-}
+import { describeCompat } from "@fluid-private/test-version-utils";
 
 const mapId = "mapKey";
-const registry: ChannelFactoryRegistry = [
-	[mapId, SharedMap.getFactory()],
-	[undefined, ConsensusQueue.getFactory()],
-];
-const testContainerConfig: ITestContainerConfig = {
-	fluidDataObjectType: DataObjectFactoryType.Test,
-	registry,
-};
 
-function generate(
-	name: string,
-	ctor: ISharedObjectConstructor<IConsensusOrderedCollection>,
-	input: any[],
-	output: any[],
-) {
-	describeFullCompat(name, (getTestObjectProvider) => {
+function generate(name: string, input: any[], output: any[]) {
+	describeCompat(name, "FullCompat", (getTestObjectProvider, apis) => {
+		const { SharedMap, ConsensusQueue } = apis.dds;
+		const { acquireAndComplete, ConsensusResult, waitAcquireAndComplete } =
+			apis.dataRuntime.packages.orderedCollection;
+
+		const registry: ChannelFactoryRegistry = [
+			[mapId, SharedMap.getFactory()],
+			[undefined, ConsensusQueue.getFactory()],
+		];
+		const testContainerConfig: ITestContainerConfig = {
+			fluidDataObjectType: DataObjectFactoryType.Test,
+			registry,
+		};
+
 		let provider: ITestObjectProvider;
-		beforeEach(() => {
+		beforeEach("getTestObjectProvider", () => {
 			provider = getTestObjectProvider();
 		});
 		let dataStore1: ITestFluidObject;
@@ -56,15 +45,15 @@ function generate(
 		let sharedMap2: ISharedMap;
 		let sharedMap3: ISharedMap;
 
-		beforeEach(async () => {
+		beforeEach("createSharedMaps", async () => {
 			// Create a Container for the first client.
 			const container1 = await provider.makeTestContainer(testContainerConfig);
-			dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+			dataStore1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 			sharedMap1 = await dataStore1.getSharedObject<SharedMap>(mapId);
 
 			// Load the Container that was created by the first client.
 			const container2 = await provider.loadTestContainer(testContainerConfig);
-			dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+			dataStore2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 			sharedMap2 = await dataStore2.getSharedObject<SharedMap>(mapId);
 			closeContainer2 = () => {
 				container2.close();
@@ -73,12 +62,12 @@ function generate(
 
 			// Load the Container that was created by the first client.
 			const container3 = await provider.loadTestContainer(testContainerConfig);
-			const dataStore3 = await requestFluidObject<ITestFluidObject>(container3, "default");
+			const dataStore3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
 			sharedMap3 = await dataStore3.getSharedObject<SharedMap>(mapId);
 		});
 
 		it("Should initialize after attach", async () => {
-			const collection1 = ctor.create(dataStore1.runtime);
+			const collection1 = ConsensusQueue.create(dataStore1.runtime);
 			for (const item of input) {
 				await collection1.add(item);
 			}
@@ -119,7 +108,7 @@ function generate(
 		});
 
 		it("Simultaneous add and remove should be ordered and value return to only one client", async () => {
-			const collection1 = ctor.create(dataStore1.runtime);
+			const collection1 = ConsensusQueue.create(dataStore1.runtime);
 			sharedMap1.set("collection", collection1.handle);
 			await provider.ensureSynchronized();
 
@@ -166,7 +155,7 @@ function generate(
 		});
 
 		it("Wait resolves", async () => {
-			const collection1 = ctor.create(dataStore1.runtime);
+			const collection1 = ConsensusQueue.create(dataStore1.runtime);
 			sharedMap1.set("collection", collection1.handle);
 			await provider.ensureSynchronized();
 
@@ -233,7 +222,7 @@ function generate(
 
 		it("Can store handles", async () => {
 			// Set up the collection with two handles and add it to the map so other containers can find it
-			const collection1 = ctor.create(dataStore1.runtime);
+			const collection1 = ConsensusQueue.create(dataStore1.runtime);
 			sharedMap1.set("test", "sampleValue");
 			sharedMap1.set("collection", collection1.handle);
 			await collection1.add(sharedMap1.handle);
@@ -262,7 +251,7 @@ function generate(
 		});
 
 		it("Can add and release data", async () => {
-			const collection1 = ctor.create(dataStore1.runtime);
+			const collection1 = ConsensusQueue.create(dataStore1.runtime);
 			sharedMap1.set("collection", collection1.handle);
 
 			await provider.ensureSynchronized();
@@ -293,7 +282,7 @@ function generate(
 		});
 
 		it("cancel on close", async () => {
-			const collection1 = ctor.create(dataStore1.runtime);
+			const collection1 = ConsensusQueue.create(dataStore1.runtime);
 			sharedMap1.set("collection", collection1.handle);
 
 			await provider.ensureSynchronized();
@@ -327,7 +316,7 @@ function generate(
 				this.skip();
 			}
 
-			const collection1 = ctor.create(dataStore1.runtime);
+			const collection1 = ConsensusQueue.create(dataStore1.runtime);
 			sharedMap1.set("collection", collection1.handle);
 			await provider.ensureSynchronized();
 
@@ -425,4 +414,4 @@ function generate(
 	});
 }
 
-generate("ConsensusQueue", ConsensusQueue, [1, 2, 3], [1, 2, 3]);
+generate("ConsensusQueue", [1, 2, 3], [1, 2, 3]);

@@ -20,8 +20,7 @@ import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
  * @param setInterceptionCallback - The interception callback to be called
  *
  * @returns A new SharedMap that intercepts the set method and calls the setInterceptionCallback.
- *
- * @public
+ * @internal
  */
 export function createSharedMapWithInterception(
 	sharedMap: SharedMap,

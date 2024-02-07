@@ -16,6 +16,7 @@ const { ValueProperty } = require("./valueProperty");
 
 /**
  * A primitive property for enums.
+ * @internal
  */
 export class EnumProperty extends Int32Property {
 	/**

@@ -3,13 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ModelContainerRuntimeFactory } from "@fluid-example/example-utils";
+import { ModelContainerRuntimeFactory, getDataStoreEntryPoint } from "@fluid-example/example-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-// eslint-disable-next-line import/no-deprecated
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 
-import { CollaborativeText } from "./fluid-object";
+import { CollaborativeText } from "./fluid-object/index.js";
 
 export interface ICollaborativeTextAppModel {
 	readonly collaborativeText: CollaborativeText;
@@ -42,11 +40,8 @@ export class CollaborativeTextContainerRuntimeFactory extends ModelContainerRunt
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
 	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
-		// eslint-disable-next-line import/no-deprecated
-		const collaborativeText = await requestFluidObject<CollaborativeText>(
-			await runtime.getRootDataStore(collaborativeTextId),
-			"",
+		return new CollaborativeTextAppModel(
+			await getDataStoreEntryPoint<CollaborativeText>(runtime, collaborativeTextId),
 		);
-		return new CollaborativeTextAppModel(collaborativeText);
 	}
 }

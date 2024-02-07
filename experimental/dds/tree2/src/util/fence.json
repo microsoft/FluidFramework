@@ -1,6 +1,0 @@
-{
-	"tags": ["util"],
-	"exports": ["index"],
-	// This module should have no imports. See comment in README.md.
-	"imports": []
-}

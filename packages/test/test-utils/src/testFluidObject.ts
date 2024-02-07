@@ -3,15 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-deprecated
-import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
-import {
-	IRequest,
-	IResponse,
-	IFluidHandle,
-	FluidObject,
-	IProvideFluidRouter,
-} from "@fluidframework/core-interfaces";
+import { IRequest, IResponse, IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	FluidObjectHandle,
 	FluidDataStoreRuntime,
@@ -25,12 +17,14 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
 import { assert } from "@fluidframework/core-utils";
+import { create404Response } from "@fluidframework/runtime-utils";
 import { ITestFluidObject } from "./interfaces";
 
 /**
  * A test Fluid object that will create a shared object for each key-value pair in the factoryEntries passed to load.
  * The shared objects can be retrieved by passing the key of the entry to getSharedObject.
  * It exposes the IFluidDataStoreContext and IFluidDataStoreRuntime.
+ * @internal
  */
 export class TestFluidObject implements ITestFluidObject {
 	public get ITestFluidObject() {
@@ -38,13 +32,6 @@ export class TestFluidObject implements ITestFluidObject {
 	}
 
 	public get IFluidLoadable() {
-		return this;
-	}
-
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	public get IFluidRouter() {
 		return this;
 	}
 
@@ -91,12 +78,10 @@ export class TestFluidObject implements ITestFluidObject {
 		throw new Error(`Shared object with id ${id} not found.`);
 	}
 
-	/**
-	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
 	public async request(request: IRequest): Promise<IResponse> {
-		// eslint-disable-next-line import/no-deprecated
-		return defaultFluidObjectRequestHandler(this, request);
+		return request.url === "" || request.url === "/" || request.url.startsWith("/?")
+			? { mimeType: "fluid/object", status: 200, value: this }
+			: create404Response(request);
 	}
 
 	public async initialize(existing: boolean) {
@@ -128,6 +113,9 @@ export class TestFluidObject implements ITestFluidObject {
 	}
 }
 
+/**
+ * @internal
+ */
 export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFactory]>;
 
 /**
@@ -159,6 +147,7 @@ export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFacto
  * `describeCompat` aims to provide:
  * `SharedMap`s always reference the current version of SharedMap.
  * AB#4670 tracks improving this situation.
+ * @internal
  */
 export class TestFluidObjectFactory implements IFluidDataStoreFactory {
 	public get IFluidDataStoreFactory() {
@@ -202,12 +191,13 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
 
 		const runtimeClass = mixinRequestHandler(
 			async (request: IRequest, rt: FluidDataStoreRuntime) => {
-				const maybeRouter: FluidObject<IProvideFluidRouter> = await rt.entryPoint.get();
+				// The provideEntryPoint callback below always returns FluidDataStoreRuntime, so this cast is safe
+				const dataObject = (await rt.entryPoint.get()) as FluidDataStoreRuntime;
 				assert(
-					maybeRouter.IFluidRouter !== undefined,
+					dataObject.request !== undefined,
 					"entryPoint should have been initialized by now",
 				);
-				return maybeRouter.IFluidRouter.request(request);
+				return dataObject.request(request);
 			},
 		);
 

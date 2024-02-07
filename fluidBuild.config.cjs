@@ -3,15 +3,18 @@
  * Licensed under the MIT License.
  */
 
-const tscDependsOn = ["^tsc", "build:genver"];
+const tscDependsOn = ["^tsc", "^api", "build:genver", "ts2esm"];
 /**
  * The settings in this file configure the Fluid build tools, such as fluid-build and flub. Some settings apply to the
  * whole repo, while others apply only to the client release group.
+ *
+ * See https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-tools/src/common/fluidTaskDefinitions.ts
+ * for details on the task and dependency definition format.
  */
 module.exports = {
 	tasks: {
 		"ci:build": {
-			dependsOn: ["compile", "eslint", "ci:build:docs"],
+			dependsOn: ["compile", "lint", "ci:build:docs", "build:manifest", "build:readme"],
 			script: false,
 		},
 		"full": {
@@ -19,11 +22,11 @@ module.exports = {
 			script: false,
 		},
 		"build": {
-			dependsOn: ["compile", "lint", "build:docs"],
+			dependsOn: ["compile", "lint", "build:docs", "build:manifest", "build:readme"],
 			script: false,
 		},
 		"compile": {
-			dependsOn: ["commonjs", "build:esnext", "build:copy", "build:test", "build:artifacts"],
+			dependsOn: ["commonjs", "build:esnext", "build:test", "build:copy"],
 			script: false,
 		},
 		"commonjs": {
@@ -31,7 +34,7 @@ module.exports = {
 			script: false,
 		},
 		"lint": {
-			dependsOn: ["prettier", "eslint", "good-fences", "depcruise"],
+			dependsOn: ["prettier", "eslint", "good-fences", "depcruise", "check:release-tags"],
 			script: false,
 		},
 		"checks": {
@@ -42,24 +45,43 @@ module.exports = {
 			dependsOn: ["^checks:fix"],
 			script: false,
 		},
-		"build:artifacts": {
-			dependsOn: ["build:manifest", "build:readme", "build:copy"],
-			script: false,
-		},
 		"build:copy": [],
 		"build:genver": [],
 		"typetests:gen": ["^tsc", "build:genver"], // we may reexport type from dependent packages, needs to build them first.
+		"ts2esm": [],
 		"tsc": tscDependsOn,
-		"build:esnext": tscDependsOn,
-		"build:test": [...tscDependsOn, "typetests:gen", "tsc"],
-		"build:docs": [...tscDependsOn, "tsc"],
-		"ci:build:docs": [...tscDependsOn, "tsc"],
+		"build:esnext": [...tscDependsOn, "^build:esnext"],
+		"build:test": [
+			// The tscDependsOn deps are not technically needed, but they are here because the fluid-build-tasks-tsc policy
+			// requires them. I don't want to change the policy right now.
+			...tscDependsOn,
+			"typetests:gen",
+			"tsc",
+			"api-extractor:commonjs",
+			"api-extractor:esnext",
+		],
+		"api": {
+			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
+			script: false,
+		},
+		"api-extractor:commonjs": ["tsc"],
+		"api-extractor:esnext": {
+			dependsOn: ["build:esnext"],
+			script: true,
+		},
+		"build:docs": ["tsc"],
+		"ci:build:docs": ["tsc"],
 		"build:readme": {
 			dependsOn: ["build:manifest"],
 			script: true,
 		},
-		"build:manifest": ["tsc"],
+		"build:manifest": {
+			dependsOn: ["tsc"],
+			script: true,
+		},
 		"depcruise": [],
+		"check:release-tags": ["tsc"],
+		"check:are-the-types-wrong": ["build"],
 		"eslint": [...tscDependsOn, "commonjs"],
 		"good-fences": [],
 		"prettier": [],
@@ -94,7 +116,7 @@ module.exports = {
 		},
 		"build-tools": {
 			directory: "build-tools",
-			defaultInterdependencyRange: "workspace:*",
+			defaultInterdependencyRange: "workspace:~",
 		},
 		"server": {
 			directory: "server/routerlicious",
@@ -122,7 +144,6 @@ module.exports = {
 			"tools/changelog-generator-wrapper",
 			"tools/getkeys",
 			"tools/test-tools",
-			"server/tinylicious",
 		],
 	},
 
@@ -143,6 +164,23 @@ module.exports = {
 			"extraneous-lockfiles": [
 				"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
 			],
+			"fluid-build-tasks-eslint": [
+				// Can be removed once the policy handler is updated to support tsc-multi as equivalent to tsc.
+				"^azure/packages/azure-client/package.json",
+				"^azure/packages/azure-service-utils/package.json",
+				"^experimental/dds/tree2/package.json",
+				"^experimental/dds/sequence-deprecated/package.json",
+				"^experimental/framework/tree-react-api/package.json",
+				"^packages/common/.*/package.json",
+				"^packages/dds/.*/package.json",
+				"^packages/drivers/.*/package.json",
+				"^packages/framework/.*/package.json",
+				"^packages/loader/.*/package.json",
+				"^packages/runtime/.*/package.json",
+				"^packages/service-clients/.*/package.json",
+				"^packages/utils/.*/package.json",
+				"^packages/loader/container-loader/package.json",
+			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
 				"tools/api-markdown-documenter/src/test/snapshots/.*",
@@ -156,6 +194,17 @@ module.exports = {
 			"package-lockfiles-npm-version": [
 				"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
 			],
+			"no-js-file-extensions": [
+				// PropertyDDS uses .js files which should be renamed eventually.
+				".*/PropertyDDS/.*",
+			],
+			"npm-package-json-scripts-args": [
+				// server/routerlicious and server/routerlicious/packages/routerlicious use
+				// linux only scripts that would require extra logic to validate properly.
+				// Ideally no packages would use OS specific scripts.
+				"^server/routerlicious/package.json",
+				"^server/routerlicious/packages/routerlicious/package.json",
+			],
 			"npm-package-json-script-clean": [
 				// eslint-config-fluid's build step generate printed configs that are checked in. No need to clean
 				"common/build/eslint-config-fluid/package.json",
@@ -163,10 +212,11 @@ module.exports = {
 				"tools/markdown-magic/package.json",
 			],
 			"npm-package-json-script-mocha-config": [
-				// these doesn't use mocha config for reporters yet.
+				// these don't use mocha config for reporters yet.
 				"^server/",
 				"^build-tools/",
 				"^common/lib/common-utils/package.json",
+				"^common/build/eslint-config-fluid/package.json",
 			],
 			"npm-package-json-test-scripts": [
 				"common/build/eslint-config-fluid/package.json",
@@ -186,6 +236,12 @@ module.exports = {
 				"^tools/markdown-magic",
 				// getKeys has a fake tsconfig.json to make ./eslintrc.cjs work, but we don't need clean script
 				"^tools/getkeys",
+			],
+			"npm-package-json-esm": [
+				// These are ESM-only packages and use tsc to build the ESM output. The policy handler doesn't understand this
+				// case.
+				"packages/dds/migration-shim/package.json",
+				"packages/test/functional-tests/package.json",
 			],
 			// This handler will be rolled out slowly, so excluding most packages here while we roll it out.
 			"npm-package-exports-field": [
@@ -220,6 +276,36 @@ module.exports = {
 				"server/historian/package.json",
 				"package.json",
 			],
+			"npm-package-json-script-dep": ["^build-tools/"],
+			"npm-public-package-requirements": [
+				// Test packages published only for the purpose of running tests in CI.
+				"^azure/packages/test/",
+				"^packages/service-clients/end-to-end-tests/",
+				"^packages/test/test-app-insights-logger/",
+				"^packages/test/test-service-load/",
+				"^packages/test/test-end-to-end-tests/",
+
+				// JS packages, which do not use api-extractor
+				"^common/build/",
+
+				// PropertyDDS packages, which are not production
+				"^experimental/PropertyDDS/",
+
+				// Tools packages that are not library packages
+				"^packages/tools/fetch-tool/",
+				"^tools/test-tools/",
+
+				// TODO: add api-extractor infra and remove these overrides
+				"^build-tools/packages/",
+				"^tools/bundle-size-tools/",
+				"^server/historian/",
+				"^server/gitrest/",
+				"^server/routerlicious/",
+				"^examples/data-objects/table-document/",
+				"^experimental/framework/data-objects/",
+				"^tools/telemetry-generator/",
+				"^packages/tools/webpack-fluid-loader/",
+			],
 		},
 		packageNames: {
 			// The allowed package scopes for the repo.
@@ -239,8 +325,8 @@ module.exports = {
 				npm: [
 					"@fluidframework",
 					"fluid-framework",
-					"tinylicious",
 					"@fluid-internal/client-utils",
+					"tinylicious",
 				],
 				// A list of packages published to our internal-build feed. Note that packages published
 				// to npm will also be published to this feed. This should be a minimal set required for legacy compat of
@@ -280,6 +366,10 @@ module.exports = {
 				["depcruise", "dependency-cruiser"],
 				["copyfiles", "copyfiles"],
 				["oclif", "oclif"],
+				["renamer", "renamer"],
+				["ts2esm", "ts2esm"],
+				["tsc-multi", "tsc-multi"],
+				["attw", "@arethetypeswrong/cli"],
 			],
 		},
 		// These packages are independently versioned and released, but we use pnpm workspaces in single packages to work
@@ -298,13 +388,36 @@ module.exports = {
 			"@fluidframework/protocol-definitions",
 			"@fluidframework/test-tools",
 			"fluidframework-docs",
-			"tinylicious",
 		],
 		fluidBuildTasks: {
 			tsc: {
-				ignoreTasks: ["tsc:watch"],
 				ignoreDevDependencies: ["@fluid-tools/webpack-fluid-loader"],
 			},
+		},
+		// Requirements applied to all `public` packages.
+		publicPackageRequirements: {
+			// The following scripts are all currently required to ensure api-extractor is run correctly in local builds and pipelines
+			requiredScripts: [
+				// TODO: Add as a requirement once all packages have been updated to produce dual esm/commonjs builds
+				// {
+				// 	name: "api",
+				// 	body: "fluid-build . --task api",
+				// },
+				{
+					name: "build:docs",
+					body: "fluid-build . --task api",
+				},
+				{
+					name: "ci:build:docs",
+					body: "api-extractor run",
+				},
+				{
+					name: "check:release-tags",
+					body: "api-extractor run --local --config ./api-extractor-lint.json",
+				},
+			],
+			// All of our public packages should be using api-extractor
+			requiredDevDependencies: ["@microsoft/api-extractor"],
 		},
 	},
 

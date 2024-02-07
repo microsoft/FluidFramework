@@ -1,5 +1,173 @@
 # @fluidframework/merge-tree
 
+## 2.0.0-rc.1.0.0
+
+### Minor Changes
+
+-   Updated server dependencies ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
+
+    The following Fluid server dependencies have been updated to the latest version, 3.0.0. [See the full changelog.](https://github.com/microsoft/FluidFramework/releases/tag/server_v3.0.0)
+
+    -   @fluidframework/gitresources
+    -   @fluidframework/server-kafka-orderer
+    -   @fluidframework/server-lambdas
+    -   @fluidframework/server-lambdas-driver
+    -   @fluidframework/server-local-server
+    -   @fluidframework/server-memory-orderer
+    -   @fluidframework/protocol-base
+    -   @fluidframework/server-routerlicious
+    -   @fluidframework/server-routerlicious-base
+    -   @fluidframework/server-services
+    -   @fluidframework/server-services-client
+    -   @fluidframework/server-services-core
+    -   @fluidframework/server-services-ordering-kafkanode
+    -   @fluidframework/server-services-ordering-rdkafka
+    -   @fluidframework/server-services-ordering-zookeeper
+    -   @fluidframework/server-services-shared
+    -   @fluidframework/server-services-telemetry
+    -   @fluidframework/server-services-utils
+    -   @fluidframework/server-test-utils
+    -   tinylicious
+
+-   Updated @fluidframework/protocol-definitions ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
+
+    The @fluidframework/protocol-definitions dependency has been upgraded to v3.1.0. [See the full
+    changelog.](https://github.com/microsoft/FluidFramework/blob/main/common/lib/protocol-definitions/CHANGELOG.md#310)
+
+-   sequence: Remove the findTile API ([#18908](https://github.com/microsoft/FluidFramework/issues/18908)) [29b093e55c](https://github.com/microsoft/FluidFramework/commits/29b093e55cb2a7e98c9445b735783f463acfb3bb)
+
+    The `findTile` API that was previously deprecated is now being removed. The new `searchForMarker` function provides similar functionality, and can be called with the start position, the client ID, the desired marker label to find, and the search direction, where a value of `true` indicates a forward search.
+
+## 2.0.0-internal.8.0.0
+
+### Major Changes
+
+-   sequence: Some function return types are now void instead of any [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The return types of some functions have changed from `any` to `void` because the projects are now being compiled with
+    the `noImplicitAny` TypeScript compilation option. This does not represent a logic change and only serves to make the
+    typing of these functions more accurate.
+
+-   sequence: Add experimental support for the obliterate operation [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    This change adds experimental support for _obliterate_, a form of _remove_ that deletes concurrently inserted segments.
+    To use, enable the `mergeTreeEnableObliterate` feature flag and call the new `obliterateRange` functions.
+
+    Note: this change may cause compilation errors for those attaching event listeners. As long as obliterate isn't used in
+    current handlers, their current implementation is sound.
+
+-   sequence: Removed Marker.hasSimpleType and made sequence operations return void [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    `Marker.hasSimpleType` was unused. Sequence operations now no longer return IMergeTree\*Msg types.
+    These types are redundant with the input.
+
+-   sequence: Removed several public exports from merge-tree and sequence [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The following APIs have been removed or marked internal in merge-tree and sequence. This functionality was never
+    intended for public export.
+
+    -   `BaseSegment.ack`
+    -   `Client`
+    -   `CollaborationWindow`
+    -   `compareNumbers`
+    -   `compareStrings`
+    -   `createAnnotateMarkerOp`
+    -   `createAnnotateRangeOp`
+    -   `createGroupOp`
+    -   `createInsertOp`
+    -   `createInsertSegmentOp`
+    -   `createRemoveRangeOp`
+    -   `IConsensusInfo`
+    -   `IConsensusValue`
+    -   `IMarkerModifiedAction`
+    -   `IMergeTreeTextHelper`
+    -   `LocalClientId`
+    -   `MergeTreeDeltaCallback`
+    -   `MergeTreeMaintenanceCallback`
+    -   `NonCollabClient`
+    -   `SegmentAccumulator`
+    -   `SegmentGroup`
+    -   `SegmentGroupCollection.enqueue`
+    -   `SegmentGroupCollection.dequeue`
+    -   `SegmentGroupCollection.pop`
+    -   `SortedSegmentSet`
+    -   `SortedSegmentSetItem`
+    -   `SortedSet`
+    -   `toRemovalInfo`
+    -   `TreeMaintenanceSequenceNumber`
+    -   `UniversalSequenceNumber`
+    -   `SharedSegmentSequence.submitSequenceMessage`
+
+-   merge-tree: Remove `IIntegerRange` [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    This interface is deprecated and was not intended for public export.
+
+-   sequence: Remove support for combining ops [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    In sequence, removed the following APIs:
+
+    -   the `combiningOp` argument from `SharedSegmentSequence.annotateRange` and `SharedString.annotateMarker`
+    -   the function `SharedString.annotateMarkerNotifyConsensus`
+
+    In merge-tree, removed the following APIs:
+
+    -   `ICombiningOp`
+    -   the `combiningOp` field from `IMergeTreeAnnotateMsg`
+    -   the `op` argument from `BaseSegment.addProperties`, `PropertiesManager.addProperties`, and `ReferencePosition.addProperties`
+    -   the enum variant `PropertiesRollback.Rewrite`.
+
+    This functionality was largely unused and had no test coverage.
+
+-   sequence: Removed several APIs [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    The following APIs have been removed:
+
+    -   `Client.getStackContext`
+    -   `SharedSegmentSequence.getStackContext`
+    -   `IntervalType.Nest`
+    -   `ReferenceType.NestBegin`
+    -   `ReferenceType.NestEnd`
+    -   `internedSpaces`
+    -   `RangeStackMap`
+    -   `refGetRangeLabels`
+    -   `refHasRangeLabel`
+    -   `refHasRangeLabels`
+
+    This functionality is deprecated, has low test coverage, and is largely unused.
+
+-   merge-tree: Remove several APIs [9a451d4946](https://github.com/microsoft/FluidFramework/commits/9a451d4946b5c51a52e4d1ab5bf51e7b285b0d74)
+
+    Removed the following APIs:
+
+    -   `Stack`
+    -   `clone`
+    -   `combine`
+    -   `createMap`
+    -   `extend`
+    -   `extendIfUndefined`
+    -   `matchProperties`
+
+    This functionality is deprecated and was not intended for public export.
+
+## 2.0.0-internal.7.4.0
+
+### Minor Changes
+
+-   sequence: Deprecated ICombiningOp, PropertiesRollback.Rewrite, and SharedString.annotateMarkerNotifyConsensus ([#18318](https://github.com/microsoft/FluidFramework/issues/18318)) [e67c2cac5f](https://github.com/microsoft/FluidFramework/commits/e67c2cac5f275fc5c875c0bc044bbb72aaf76648)
+
+    The `ICombiningOp` and its usage in various APIs has been deprecated. APIs affected include
+    `SharedSegmentSequence.annotateRange` and `SharedString.annotateMarker`. `SharedString.annotateMarkerNotifyConsensus`
+    has also been deprecated, because it is related to combining ops. This functionality had no test coverage and was
+    largely unused.
+
+## 2.0.0-internal.7.3.0
+
+### Minor Changes
+
+-   Deprecate BaseSegment.ack, Client, CollaborationWindow, compareNumbers, compareStrings, createAnnotateMarkerOp, createAnnotateRangeOp, createInsertOp, createInsertSegmentOp, createRemoveRangeOp, IConsensusInfo, IConsensusValue, IMarkerModifiedAction, IMergeTreeTextHelper, ISegment.ack, LocalClientId, MergeTreeDeltaCallback, MergeTreeMaintenanceCallback, NonCollabClient, SegmentAccumulator, SegmentGroup, SegmentGroupCollection.dequeue, SegmentGroupCollection.enqueue, SegmentGroupCollection.pop, SortedSegmentSet, SortedSegmentSetItem, SortedSet, toRemovalInfo, TreeMaintenanceSequenceNumber, UnassignedSequenceNumber, UniversalSequenceNumber ([#17952](https://github.com/microsoft/FluidFramework/issues/17952)) [b762798c48](https://github.com/microsoft/FluidFramework/commits/b762798c48ec581202fb5335e907637b8482edcc)
+
+    This functionality was not intended for export and will be removed in a future release.
+
 ## 2.0.0-internal.7.2.0
 
 Dependency updates only.

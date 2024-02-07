@@ -3,13 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { normal, randomColor, rnd } from "./rnd";
+import { normal, randomColor, rnd } from "./rnd.js";
 
+/**
+ * @internal
+ */
 export interface IArrayish<T>
 	extends ArrayLike<T>,
 		Pick<T[], "push" | "pop" | "map">,
 		Iterable<T> {}
 
+/**
+ * @internal
+ */
 export interface IBubble {
 	x: number;
 	y: number;
@@ -18,12 +24,18 @@ export interface IBubble {
 	vy: number;
 }
 
+/**
+ * @internal
+ */
 export interface IClient {
 	clientId: string;
 	color: string;
-	bubbles: IArrayish<IBubble>;
+	bubbles: IBubble[];
 }
 
+/**
+ * @internal
+ */
 export interface IAppState {
 	readonly localClient: IClient;
 	readonly clients: IArrayish<IClient>;
@@ -35,6 +47,10 @@ export interface IAppState {
 	applyEdits(): void;
 }
 
+// eslint-disable-next-line jsdoc/require-description
+/**
+ * @internal
+ */
 export function makeBubble(stageWidth: number, stageHeight: number): IBubble {
 	const radius = Math.max(normal() * 10 + 10, 3);
 	const maxSpeed = 4;
@@ -49,6 +65,10 @@ export function makeBubble(stageWidth: number, stageHeight: number): IBubble {
 	};
 }
 
+// eslint-disable-next-line jsdoc/require-description
+/**
+ * @internal
+ */
 export const makeClient = (
 	stageWidth: number,
 	stageHeight: number,

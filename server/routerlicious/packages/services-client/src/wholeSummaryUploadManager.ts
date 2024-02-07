@@ -9,6 +9,7 @@ import { convertSummaryTreeToWholeSummaryTree } from "./storageUtils";
 
 /**
  * Converts summary to snapshot tree and uploads with single snaphot tree payload.
+ * @internal
  */
 export class WholeSummaryUploadManager implements ISummaryUploadManager {
 	constructor(private readonly manager: IGitManager) {}

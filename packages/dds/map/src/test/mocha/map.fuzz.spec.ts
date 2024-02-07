@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
-import { strict as assert } from "assert";
-import { DDSFuzzModel, DDSFuzzTestState, createDDSFuzzSuite } from "@fluid-internal/test-dds-utils";
+import * as path from "node:path";
+import { strict as assert } from "node:assert";
+import { DDSFuzzModel, DDSFuzzTestState, createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import {
 	combineReducers,
@@ -13,7 +13,7 @@ import {
 	AsyncGenerator,
 	Generator,
 	takeAsync,
-} from "@fluid-internal/stochastic-test-utils";
+} from "@fluid-private/stochastic-test-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { MapFactory } from "../../map";
 import { ISharedMap } from "../../interfaces";
@@ -25,7 +25,7 @@ interface Clear {
 interface SetKey {
 	type: "setKey";
 	key: string;
-	value: Jsonable;
+	value: Jsonable<unknown>;
 }
 
 interface DeleteKey {
@@ -38,11 +38,11 @@ type Operation = SetKey | DeleteKey | Clear;
 // This type gets used a lot as the state object of the suite; shorthand it here.
 type State = DDSFuzzTestState<MapFactory>;
 
-function assertMapsAreEquivalent(a: ISharedMap, b: ISharedMap) {
+function assertMapsAreEquivalent(a: ISharedMap, b: ISharedMap): void {
 	assert.equal(a.size, b.size, `${a.id} and ${b.id} have different number of keys.`);
 	for (const key of a.keys()) {
-		const aVal = a.get(key);
-		const bVal = b.get(key);
+		const aVal: unknown = a.get(key);
+		const bVal: unknown = b.get(key);
 		assert.equal(aVal, bVal, `${a.id} and ${b.id} differ at ${key}: ${aVal} vs ${bVal}`);
 	}
 }

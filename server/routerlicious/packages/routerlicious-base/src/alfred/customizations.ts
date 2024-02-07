@@ -4,6 +4,7 @@
  */
 
 import {
+	IClusterDrainingChecker,
 	IDocumentRepository,
 	IStorageNameAllocator,
 	ITokenRevocationManager,
@@ -13,6 +14,9 @@ import {
 } from "@fluidframework/server-services-core";
 import { IDocumentDeleteService } from "./services";
 
+/**
+ * @internal
+ */
 export interface IAlfredResourcesCustomizations {
 	documentRepository?: IDocumentRepository;
 	storageNameAllocator?: IStorageNameAllocator;
@@ -21,4 +25,5 @@ export interface IAlfredResourcesCustomizations {
 	revokedTokenChecker?: IRevokedTokenChecker;
 	webSocketTracker?: IWebSocketTracker;
 	serviceMessageResourceManager?: IServiceMessageResourceManager;
+	clusterDrainingChecker?: IClusterDrainingChecker;
 }

@@ -10,8 +10,9 @@ import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
-import { ConfigTypes, IConfigProviderBase, MockLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ConnectionState } from "@fluidframework/container-loader";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { createAzureClient } from "./AzureClientFactory";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
@@ -23,7 +24,7 @@ describe("Container create scenarios", () => {
 	let client: AzureClient;
 	let schema: ContainerSchema;
 
-	beforeEach(() => {
+	beforeEach("createAzureClient", () => {
 		client = createAzureClient();
 		schema = {
 			initialObjects: {
@@ -164,7 +165,7 @@ describe("Container create with feature flags", () => {
 	let schema: ContainerSchema;
 	let mockLogger: MockLogger;
 
-	beforeEach(() => {
+	beforeEach("createAzureClient", () => {
 		mockLogger = new MockLogger();
 		client = createAzureClient(
 			undefined,

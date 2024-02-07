@@ -30,6 +30,15 @@
 			"type": "node",
 		},
 		{
+			"name": "fluid-build",
+			"program": "${workspaceFolder}/build-tools/packages/build-tools/bin/fluid-build",
+			"cwd": "${workspaceFolder}/packages/common/container-definitions",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": [".", "--task", "build"],
+		},
+		{
 			"name": "flub",
 			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
 			"cwd": "${workspaceFolder}",
@@ -38,17 +47,17 @@
 			"type": "node",
 			"args": ["release", "-g", "client", "-v", "--no-policyCheck"],
 		},
-    {
+		{
 			"name": "flub check policy",
 			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
-			"cwd": "${workspaceFolder}/build-tools",
+			"cwd": "${workspaceFolder}",
 			"request": "launch",
 			"skipFiles": ["<node_internals>/**"],
 			"type": "node",
-			"args": ["check", "policy",],
+			"args": ["check", "policy"],
 		},
 		{
-			"name": "flub check policy",
+			"name": "flub check policy --fix",
 			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
 			"cwd": "${workspaceFolder}",
 			"request": "launch",
@@ -74,6 +83,16 @@
 			"skipFiles": ["<node_internals>/**"],
 			"type": "node",
 			"args": ["release", "report", "-g", "build-tools", "-v"],
+		},
+		{
+			// Runs the `flub release fromTag build-tools_v0.26.1` command with a debugger attached.
+			"name": "flub release fromTag build-tools_v0.26.1",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
+			"cwd": "${workspaceFolder}",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": ["release", "fromTag", "build-tools_v0.26.1", "--json"],
 		},
 		{
 			// Runs the `flub list --private` command with a debugger attached.
@@ -288,7 +307,7 @@
 			"name": "Debug Current Mocha Test",
 			"env": {
 				// "fluid__test__driver": "odsp" //values: local, tinylicious, routerlicious, odsp,
-				// "fluid__test__backCompat": "FULL" //values: FULL This tests loader-driver compatibility for describeFullCompat tests
+				// "fluid__test__backCompat": "FULL" //values: FULL This tests loader-driver compatibility for describeCompat tests
 				// "FLUID_TEST_VERBOSE": "1"
 			},
 			"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha",
@@ -315,6 +334,13 @@
 				"${fileDirname}/../../dist/**/*.js",
 				"${fileDirname}/../../../dist/**/*.js",
 				"${fileDirname}/../../../../dist/**/*.js",
+				// e2e tests load ESM modules since test-end-to-end-tests specifies "type": "module" in its package.json.
+				// This ensures that source maps are loaded for those files as well (e.g. so putting a breakpoint in
+				// containerRuntime.ts while debugging a test in test-end-to-end-tests works)
+				"${workspaceFolder}/**/lib/**/!(*.spec,*.test,*.tests).mjs",
+				"${fileDirname}/../../lib/**/*.mjs",
+				"${fileDirname}/../../../lib/**/*.mjs",
+				"${fileDirname}/../../../../lib/**/*.mjs",
 			],
 			"preLaunchTask": "Build Current Tests",
 			"internalConsoleOptions": "openOnSessionStart",
@@ -325,7 +351,7 @@
 			"name": "Debug Current Test (JS)",
 			"env": {
 				// "fluid__test__driver": "odsp" //values: local, tinylicious, routerlicious, odsp,
-				// "fluid__test__backCompat": "FULL" //values: FULL This tests loader-driver compatibility for describeFullCompat tests
+				// "fluid__test__backCompat": "FULL" //values: FULL This tests loader-driver compatibility for describeCompat tests
 				// "FLUID_TEST_VERBOSE": "1"
 			},
 			"program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",

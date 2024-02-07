@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_ClassDeclaration_DummyRevokedTokenChecker():
     TypeOnly<old.DummyRevokedTokenChecker>;
 declare function use_current_ClassDeclaration_DummyRevokedTokenChecker(
-    use: TypeOnly<current.DummyRevokedTokenChecker>);
+    use: TypeOnly<current.DummyRevokedTokenChecker>): void;
 use_current_ClassDeclaration_DummyRevokedTokenChecker(
     get_old_ClassDeclaration_DummyRevokedTokenChecker());
 
@@ -41,7 +41,7 @@ use_current_ClassDeclaration_DummyRevokedTokenChecker(
 declare function get_current_ClassDeclaration_DummyRevokedTokenChecker():
     TypeOnly<current.DummyRevokedTokenChecker>;
 declare function use_old_ClassDeclaration_DummyRevokedTokenChecker(
-    use: TypeOnly<old.DummyRevokedTokenChecker>);
+    use: TypeOnly<old.DummyRevokedTokenChecker>): void;
 use_old_ClassDeclaration_DummyRevokedTokenChecker(
     get_current_ClassDeclaration_DummyRevokedTokenChecker());
 
@@ -53,7 +53,7 @@ use_old_ClassDeclaration_DummyRevokedTokenChecker(
 declare function get_old_ClassDeclaration_DummyTokenRevocationManager():
     TypeOnly<old.DummyTokenRevocationManager>;
 declare function use_current_ClassDeclaration_DummyTokenRevocationManager(
-    use: TypeOnly<current.DummyTokenRevocationManager>);
+    use: TypeOnly<current.DummyTokenRevocationManager>): void;
 use_current_ClassDeclaration_DummyTokenRevocationManager(
     get_old_ClassDeclaration_DummyTokenRevocationManager());
 
@@ -65,7 +65,7 @@ use_current_ClassDeclaration_DummyTokenRevocationManager(
 declare function get_current_ClassDeclaration_DummyTokenRevocationManager():
     TypeOnly<current.DummyTokenRevocationManager>;
 declare function use_old_ClassDeclaration_DummyTokenRevocationManager(
-    use: TypeOnly<old.DummyTokenRevocationManager>);
+    use: TypeOnly<old.DummyTokenRevocationManager>): void;
 use_old_ClassDeclaration_DummyTokenRevocationManager(
     get_current_ClassDeclaration_DummyTokenRevocationManager());
 
@@ -77,7 +77,7 @@ use_old_ClassDeclaration_DummyTokenRevocationManager(
 declare function get_old_ClassDeclaration_FluidServiceError():
     TypeOnly<old.FluidServiceError>;
 declare function use_current_ClassDeclaration_FluidServiceError(
-    use: TypeOnly<current.FluidServiceError>);
+    use: TypeOnly<current.FluidServiceError>): void;
 use_current_ClassDeclaration_FluidServiceError(
     get_old_ClassDeclaration_FluidServiceError());
 
@@ -89,7 +89,7 @@ use_current_ClassDeclaration_FluidServiceError(
 declare function get_current_ClassDeclaration_FluidServiceError():
     TypeOnly<current.FluidServiceError>;
 declare function use_old_ClassDeclaration_FluidServiceError(
-    use: TypeOnly<old.FluidServiceError>);
+    use: TypeOnly<old.FluidServiceError>): void;
 use_old_ClassDeclaration_FluidServiceError(
     get_current_ClassDeclaration_FluidServiceError());
 
@@ -101,7 +101,7 @@ use_old_ClassDeclaration_FluidServiceError(
 declare function get_old_EnumDeclaration_FluidServiceErrorCode():
     TypeOnly<old.FluidServiceErrorCode>;
 declare function use_current_EnumDeclaration_FluidServiceErrorCode(
-    use: TypeOnly<current.FluidServiceErrorCode>);
+    use: TypeOnly<current.FluidServiceErrorCode>): void;
 use_current_EnumDeclaration_FluidServiceErrorCode(
     get_old_EnumDeclaration_FluidServiceErrorCode());
 
@@ -113,7 +113,7 @@ use_current_EnumDeclaration_FluidServiceErrorCode(
 declare function get_current_EnumDeclaration_FluidServiceErrorCode():
     TypeOnly<current.FluidServiceErrorCode>;
 declare function use_old_EnumDeclaration_FluidServiceErrorCode(
-    use: TypeOnly<old.FluidServiceErrorCode>);
+    use: TypeOnly<old.FluidServiceErrorCode>): void;
 use_old_EnumDeclaration_FluidServiceErrorCode(
     get_current_EnumDeclaration_FluidServiceErrorCode());
 
@@ -125,7 +125,7 @@ use_old_EnumDeclaration_FluidServiceErrorCode(
 declare function get_old_InterfaceDeclaration_IApiCounters():
     TypeOnly<old.IApiCounters>;
 declare function use_current_InterfaceDeclaration_IApiCounters(
-    use: TypeOnly<current.IApiCounters>);
+    use: TypeOnly<current.IApiCounters>): void;
 use_current_InterfaceDeclaration_IApiCounters(
     get_old_InterfaceDeclaration_IApiCounters());
 
@@ -137,7 +137,7 @@ use_current_InterfaceDeclaration_IApiCounters(
 declare function get_current_InterfaceDeclaration_IApiCounters():
     TypeOnly<current.IApiCounters>;
 declare function use_old_InterfaceDeclaration_IApiCounters(
-    use: TypeOnly<old.IApiCounters>);
+    use: TypeOnly<old.IApiCounters>): void;
 use_old_InterfaceDeclaration_IApiCounters(
     get_current_InterfaceDeclaration_IApiCounters());
 
@@ -149,7 +149,7 @@ use_old_InterfaceDeclaration_IApiCounters(
 declare function get_old_InterfaceDeclaration_IRedisParameters():
     TypeOnly<old.IRedisParameters>;
 declare function use_current_InterfaceDeclaration_IRedisParameters(
-    use: TypeOnly<current.IRedisParameters>);
+    use: TypeOnly<current.IRedisParameters>): void;
 use_current_InterfaceDeclaration_IRedisParameters(
     get_old_InterfaceDeclaration_IRedisParameters());
 
@@ -161,7 +161,7 @@ use_current_InterfaceDeclaration_IRedisParameters(
 declare function get_current_InterfaceDeclaration_IRedisParameters():
     TypeOnly<current.IRedisParameters>;
 declare function use_old_InterfaceDeclaration_IRedisParameters(
-    use: TypeOnly<old.IRedisParameters>);
+    use: TypeOnly<old.IRedisParameters>): void;
 use_old_InterfaceDeclaration_IRedisParameters(
     get_current_InterfaceDeclaration_IRedisParameters());
 
@@ -173,7 +173,7 @@ use_old_InterfaceDeclaration_IRedisParameters(
 declare function get_old_InterfaceDeclaration_ISimpleThrottleConfig():
     TypeOnly<old.ISimpleThrottleConfig>;
 declare function use_current_InterfaceDeclaration_ISimpleThrottleConfig(
-    use: TypeOnly<current.ISimpleThrottleConfig>);
+    use: TypeOnly<current.ISimpleThrottleConfig>): void;
 use_current_InterfaceDeclaration_ISimpleThrottleConfig(
     get_old_InterfaceDeclaration_ISimpleThrottleConfig());
 
@@ -185,7 +185,7 @@ use_current_InterfaceDeclaration_ISimpleThrottleConfig(
 declare function get_current_InterfaceDeclaration_ISimpleThrottleConfig():
     TypeOnly<current.ISimpleThrottleConfig>;
 declare function use_old_InterfaceDeclaration_ISimpleThrottleConfig(
-    use: TypeOnly<old.ISimpleThrottleConfig>);
+    use: TypeOnly<old.ISimpleThrottleConfig>): void;
 use_old_InterfaceDeclaration_ISimpleThrottleConfig(
     get_current_InterfaceDeclaration_ISimpleThrottleConfig());
 
@@ -197,7 +197,7 @@ use_old_InterfaceDeclaration_ISimpleThrottleConfig(
 declare function get_old_InterfaceDeclaration_IThrottleConfig():
     TypeOnly<old.IThrottleConfig>;
 declare function use_current_InterfaceDeclaration_IThrottleConfig(
-    use: TypeOnly<current.IThrottleConfig>);
+    use: TypeOnly<current.IThrottleConfig>): void;
 use_current_InterfaceDeclaration_IThrottleConfig(
     get_old_InterfaceDeclaration_IThrottleConfig());
 
@@ -209,7 +209,7 @@ use_current_InterfaceDeclaration_IThrottleConfig(
 declare function get_current_InterfaceDeclaration_IThrottleConfig():
     TypeOnly<current.IThrottleConfig>;
 declare function use_old_InterfaceDeclaration_IThrottleConfig(
-    use: TypeOnly<old.IThrottleConfig>);
+    use: TypeOnly<old.IThrottleConfig>): void;
 use_old_InterfaceDeclaration_IThrottleConfig(
     get_current_InterfaceDeclaration_IThrottleConfig());
 
@@ -221,7 +221,7 @@ use_old_InterfaceDeclaration_IThrottleConfig(
 declare function get_old_InterfaceDeclaration_IThrottleMiddlewareOptions():
     TypeOnly<old.IThrottleMiddlewareOptions>;
 declare function use_current_InterfaceDeclaration_IThrottleMiddlewareOptions(
-    use: TypeOnly<current.IThrottleMiddlewareOptions>);
+    use: TypeOnly<current.IThrottleMiddlewareOptions>): void;
 use_current_InterfaceDeclaration_IThrottleMiddlewareOptions(
     get_old_InterfaceDeclaration_IThrottleMiddlewareOptions());
 
@@ -233,7 +233,7 @@ use_current_InterfaceDeclaration_IThrottleMiddlewareOptions(
 declare function get_current_InterfaceDeclaration_IThrottleMiddlewareOptions():
     TypeOnly<current.IThrottleMiddlewareOptions>;
 declare function use_old_InterfaceDeclaration_IThrottleMiddlewareOptions(
-    use: TypeOnly<old.IThrottleMiddlewareOptions>);
+    use: TypeOnly<old.IThrottleMiddlewareOptions>): void;
 use_old_InterfaceDeclaration_IThrottleMiddlewareOptions(
     get_current_InterfaceDeclaration_IThrottleMiddlewareOptions());
 
@@ -245,7 +245,7 @@ use_old_InterfaceDeclaration_IThrottleMiddlewareOptions(
 declare function get_old_InterfaceDeclaration_IWinstonConfig():
     TypeOnly<old.IWinstonConfig>;
 declare function use_current_InterfaceDeclaration_IWinstonConfig(
-    use: TypeOnly<current.IWinstonConfig>);
+    use: TypeOnly<current.IWinstonConfig>): void;
 use_current_InterfaceDeclaration_IWinstonConfig(
     get_old_InterfaceDeclaration_IWinstonConfig());
 
@@ -257,7 +257,7 @@ use_current_InterfaceDeclaration_IWinstonConfig(
 declare function get_current_InterfaceDeclaration_IWinstonConfig():
     TypeOnly<current.IWinstonConfig>;
 declare function use_old_InterfaceDeclaration_IWinstonConfig(
-    use: TypeOnly<old.IWinstonConfig>);
+    use: TypeOnly<old.IWinstonConfig>): void;
 use_old_InterfaceDeclaration_IWinstonConfig(
     get_current_InterfaceDeclaration_IWinstonConfig());
 
@@ -269,7 +269,7 @@ use_old_InterfaceDeclaration_IWinstonConfig(
 declare function get_old_ClassDeclaration_InMemoryApiCounters():
     TypeOnly<old.InMemoryApiCounters>;
 declare function use_current_ClassDeclaration_InMemoryApiCounters(
-    use: TypeOnly<current.InMemoryApiCounters>);
+    use: TypeOnly<current.InMemoryApiCounters>): void;
 use_current_ClassDeclaration_InMemoryApiCounters(
     get_old_ClassDeclaration_InMemoryApiCounters());
 
@@ -281,7 +281,7 @@ use_current_ClassDeclaration_InMemoryApiCounters(
 declare function get_current_ClassDeclaration_InMemoryApiCounters():
     TypeOnly<current.InMemoryApiCounters>;
 declare function use_old_ClassDeclaration_InMemoryApiCounters(
-    use: TypeOnly<old.InMemoryApiCounters>);
+    use: TypeOnly<old.InMemoryApiCounters>): void;
 use_old_ClassDeclaration_InMemoryApiCounters(
     get_current_ClassDeclaration_InMemoryApiCounters());
 
@@ -293,7 +293,7 @@ use_old_ClassDeclaration_InMemoryApiCounters(
 declare function get_old_ClassDeclaration_ScheduledJob():
     TypeOnly<old.ScheduledJob>;
 declare function use_current_ClassDeclaration_ScheduledJob(
-    use: TypeOnly<current.ScheduledJob>);
+    use: TypeOnly<current.ScheduledJob>): void;
 use_current_ClassDeclaration_ScheduledJob(
     get_old_ClassDeclaration_ScheduledJob());
 
@@ -305,7 +305,7 @@ use_current_ClassDeclaration_ScheduledJob(
 declare function get_current_ClassDeclaration_ScheduledJob():
     TypeOnly<current.ScheduledJob>;
 declare function use_old_ClassDeclaration_ScheduledJob(
-    use: TypeOnly<old.ScheduledJob>);
+    use: TypeOnly<old.ScheduledJob>): void;
 use_old_ClassDeclaration_ScheduledJob(
     get_current_ClassDeclaration_ScheduledJob());
 
@@ -317,8 +317,9 @@ use_old_ClassDeclaration_ScheduledJob(
 declare function get_old_ClassDeclaration_WebSocketTracker():
     TypeOnly<old.WebSocketTracker>;
 declare function use_current_ClassDeclaration_WebSocketTracker(
-    use: TypeOnly<current.WebSocketTracker>);
+    use: TypeOnly<current.WebSocketTracker>): void;
 use_current_ClassDeclaration_WebSocketTracker(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_WebSocketTracker());
 
 /*
@@ -329,7 +330,7 @@ use_current_ClassDeclaration_WebSocketTracker(
 declare function get_current_ClassDeclaration_WebSocketTracker():
     TypeOnly<current.WebSocketTracker>;
 declare function use_old_ClassDeclaration_WebSocketTracker(
-    use: TypeOnly<old.WebSocketTracker>);
+    use: TypeOnly<old.WebSocketTracker>): void;
 use_old_ClassDeclaration_WebSocketTracker(
     get_current_ClassDeclaration_WebSocketTracker());
 
@@ -341,7 +342,7 @@ use_old_ClassDeclaration_WebSocketTracker(
 declare function get_old_ClassDeclaration_WinstonLumberjackEngine():
     TypeOnly<old.WinstonLumberjackEngine>;
 declare function use_current_ClassDeclaration_WinstonLumberjackEngine(
-    use: TypeOnly<current.WinstonLumberjackEngine>);
+    use: TypeOnly<current.WinstonLumberjackEngine>): void;
 use_current_ClassDeclaration_WinstonLumberjackEngine(
     get_old_ClassDeclaration_WinstonLumberjackEngine());
 
@@ -353,7 +354,7 @@ use_current_ClassDeclaration_WinstonLumberjackEngine(
 declare function get_current_ClassDeclaration_WinstonLumberjackEngine():
     TypeOnly<current.WinstonLumberjackEngine>;
 declare function use_old_ClassDeclaration_WinstonLumberjackEngine(
-    use: TypeOnly<old.WinstonLumberjackEngine>);
+    use: TypeOnly<old.WinstonLumberjackEngine>): void;
 use_old_ClassDeclaration_WinstonLumberjackEngine(
     get_current_ClassDeclaration_WinstonLumberjackEngine());
 
@@ -365,7 +366,7 @@ use_old_ClassDeclaration_WinstonLumberjackEngine(
 declare function get_old_FunctionDeclaration_alternativeMorganLoggerMiddleware():
     TypeOnly<typeof old.alternativeMorganLoggerMiddleware>;
 declare function use_current_FunctionDeclaration_alternativeMorganLoggerMiddleware(
-    use: TypeOnly<typeof current.alternativeMorganLoggerMiddleware>);
+    use: TypeOnly<typeof current.alternativeMorganLoggerMiddleware>): void;
 use_current_FunctionDeclaration_alternativeMorganLoggerMiddleware(
     get_old_FunctionDeclaration_alternativeMorganLoggerMiddleware());
 
@@ -377,7 +378,7 @@ use_current_FunctionDeclaration_alternativeMorganLoggerMiddleware(
 declare function get_current_FunctionDeclaration_alternativeMorganLoggerMiddleware():
     TypeOnly<typeof current.alternativeMorganLoggerMiddleware>;
 declare function use_old_FunctionDeclaration_alternativeMorganLoggerMiddleware(
-    use: TypeOnly<typeof old.alternativeMorganLoggerMiddleware>);
+    use: TypeOnly<typeof old.alternativeMorganLoggerMiddleware>): void;
 use_old_FunctionDeclaration_alternativeMorganLoggerMiddleware(
     get_current_FunctionDeclaration_alternativeMorganLoggerMiddleware());
 
@@ -389,7 +390,7 @@ use_old_FunctionDeclaration_alternativeMorganLoggerMiddleware(
 declare function get_old_VariableDeclaration_bindCorrelationId():
     TypeOnly<typeof old.bindCorrelationId>;
 declare function use_current_VariableDeclaration_bindCorrelationId(
-    use: TypeOnly<typeof current.bindCorrelationId>);
+    use: TypeOnly<typeof current.bindCorrelationId>): void;
 use_current_VariableDeclaration_bindCorrelationId(
     get_old_VariableDeclaration_bindCorrelationId());
 
@@ -401,7 +402,7 @@ use_current_VariableDeclaration_bindCorrelationId(
 declare function get_current_VariableDeclaration_bindCorrelationId():
     TypeOnly<typeof current.bindCorrelationId>;
 declare function use_old_VariableDeclaration_bindCorrelationId(
-    use: TypeOnly<typeof old.bindCorrelationId>);
+    use: TypeOnly<typeof old.bindCorrelationId>): void;
 use_old_VariableDeclaration_bindCorrelationId(
     get_current_VariableDeclaration_bindCorrelationId());
 
@@ -413,7 +414,7 @@ use_old_VariableDeclaration_bindCorrelationId(
 declare function get_old_VariableDeclaration_bindTelemetryContext():
     TypeOnly<typeof old.bindTelemetryContext>;
 declare function use_current_VariableDeclaration_bindTelemetryContext(
-    use: TypeOnly<typeof current.bindTelemetryContext>);
+    use: TypeOnly<typeof current.bindTelemetryContext>): void;
 use_current_VariableDeclaration_bindTelemetryContext(
     get_old_VariableDeclaration_bindTelemetryContext());
 
@@ -425,7 +426,7 @@ use_current_VariableDeclaration_bindTelemetryContext(
 declare function get_current_VariableDeclaration_bindTelemetryContext():
     TypeOnly<typeof current.bindTelemetryContext>;
 declare function use_old_VariableDeclaration_bindTelemetryContext(
-    use: TypeOnly<typeof old.bindTelemetryContext>);
+    use: TypeOnly<typeof old.bindTelemetryContext>): void;
 use_old_VariableDeclaration_bindTelemetryContext(
     get_current_VariableDeclaration_bindTelemetryContext());
 
@@ -437,7 +438,7 @@ use_old_VariableDeclaration_bindTelemetryContext(
 declare function get_old_VariableDeclaration_choose():
     TypeOnly<typeof old.choose>;
 declare function use_current_VariableDeclaration_choose(
-    use: TypeOnly<typeof current.choose>);
+    use: TypeOnly<typeof current.choose>): void;
 use_current_VariableDeclaration_choose(
     get_old_VariableDeclaration_choose());
 
@@ -449,7 +450,7 @@ use_current_VariableDeclaration_choose(
 declare function get_current_VariableDeclaration_choose():
     TypeOnly<typeof current.choose>;
 declare function use_old_VariableDeclaration_choose(
-    use: TypeOnly<typeof old.choose>);
+    use: TypeOnly<typeof old.choose>): void;
 use_old_VariableDeclaration_choose(
     get_current_VariableDeclaration_choose());
 
@@ -461,7 +462,7 @@ use_old_VariableDeclaration_choose(
 declare function get_old_FunctionDeclaration_configureLogging():
     TypeOnly<typeof old.configureLogging>;
 declare function use_current_FunctionDeclaration_configureLogging(
-    use: TypeOnly<typeof current.configureLogging>);
+    use: TypeOnly<typeof current.configureLogging>): void;
 use_current_FunctionDeclaration_configureLogging(
     get_old_FunctionDeclaration_configureLogging());
 
@@ -473,7 +474,7 @@ use_current_FunctionDeclaration_configureLogging(
 declare function get_current_FunctionDeclaration_configureLogging():
     TypeOnly<typeof current.configureLogging>;
 declare function use_old_FunctionDeclaration_configureLogging(
-    use: TypeOnly<typeof old.configureLogging>);
+    use: TypeOnly<typeof old.configureLogging>): void;
 use_old_FunctionDeclaration_configureLogging(
     get_current_FunctionDeclaration_configureLogging());
 
@@ -485,7 +486,7 @@ use_old_FunctionDeclaration_configureLogging(
 declare function get_old_FunctionDeclaration_deleteSummarizedOps():
     TypeOnly<typeof old.deleteSummarizedOps>;
 declare function use_current_FunctionDeclaration_deleteSummarizedOps(
-    use: TypeOnly<typeof current.deleteSummarizedOps>);
+    use: TypeOnly<typeof current.deleteSummarizedOps>): void;
 use_current_FunctionDeclaration_deleteSummarizedOps(
     get_old_FunctionDeclaration_deleteSummarizedOps());
 
@@ -497,7 +498,7 @@ use_current_FunctionDeclaration_deleteSummarizedOps(
 declare function get_current_FunctionDeclaration_deleteSummarizedOps():
     TypeOnly<typeof current.deleteSummarizedOps>;
 declare function use_old_FunctionDeclaration_deleteSummarizedOps(
-    use: TypeOnly<typeof old.deleteSummarizedOps>);
+    use: TypeOnly<typeof old.deleteSummarizedOps>): void;
 use_old_FunctionDeclaration_deleteSummarizedOps(
     get_current_FunctionDeclaration_deleteSummarizedOps());
 
@@ -509,7 +510,7 @@ use_old_FunctionDeclaration_deleteSummarizedOps(
 declare function get_old_FunctionDeclaration_executeApiWithMetric():
     TypeOnly<typeof old.executeApiWithMetric>;
 declare function use_current_FunctionDeclaration_executeApiWithMetric(
-    use: TypeOnly<typeof current.executeApiWithMetric>);
+    use: TypeOnly<typeof current.executeApiWithMetric>): void;
 use_current_FunctionDeclaration_executeApiWithMetric(
     get_old_FunctionDeclaration_executeApiWithMetric());
 
@@ -521,7 +522,7 @@ use_current_FunctionDeclaration_executeApiWithMetric(
 declare function get_current_FunctionDeclaration_executeApiWithMetric():
     TypeOnly<typeof current.executeApiWithMetric>;
 declare function use_old_FunctionDeclaration_executeApiWithMetric(
-    use: TypeOnly<typeof old.executeApiWithMetric>);
+    use: TypeOnly<typeof old.executeApiWithMetric>): void;
 use_old_FunctionDeclaration_executeApiWithMetric(
     get_current_FunctionDeclaration_executeApiWithMetric());
 
@@ -533,7 +534,7 @@ use_old_FunctionDeclaration_executeApiWithMetric(
 declare function get_old_FunctionDeclaration_executeOnInterval():
     TypeOnly<typeof old.executeOnInterval>;
 declare function use_current_FunctionDeclaration_executeOnInterval(
-    use: TypeOnly<typeof current.executeOnInterval>);
+    use: TypeOnly<typeof current.executeOnInterval>): void;
 use_current_FunctionDeclaration_executeOnInterval(
     get_old_FunctionDeclaration_executeOnInterval());
 
@@ -545,7 +546,7 @@ use_current_FunctionDeclaration_executeOnInterval(
 declare function get_current_FunctionDeclaration_executeOnInterval():
     TypeOnly<typeof current.executeOnInterval>;
 declare function use_old_FunctionDeclaration_executeOnInterval(
-    use: TypeOnly<typeof old.executeOnInterval>);
+    use: TypeOnly<typeof old.executeOnInterval>): void;
 use_old_FunctionDeclaration_executeOnInterval(
     get_current_FunctionDeclaration_executeOnInterval());
 
@@ -557,7 +558,7 @@ use_old_FunctionDeclaration_executeOnInterval(
 declare function get_old_VariableDeclaration_executeRedisMultiWithHmsetExpire():
     TypeOnly<typeof old.executeRedisMultiWithHmsetExpire>;
 declare function use_current_VariableDeclaration_executeRedisMultiWithHmsetExpire(
-    use: TypeOnly<typeof current.executeRedisMultiWithHmsetExpire>);
+    use: TypeOnly<typeof current.executeRedisMultiWithHmsetExpire>): void;
 use_current_VariableDeclaration_executeRedisMultiWithHmsetExpire(
     get_old_VariableDeclaration_executeRedisMultiWithHmsetExpire());
 
@@ -569,7 +570,7 @@ use_current_VariableDeclaration_executeRedisMultiWithHmsetExpire(
 declare function get_current_VariableDeclaration_executeRedisMultiWithHmsetExpire():
     TypeOnly<typeof current.executeRedisMultiWithHmsetExpire>;
 declare function use_old_VariableDeclaration_executeRedisMultiWithHmsetExpire(
-    use: TypeOnly<typeof old.executeRedisMultiWithHmsetExpire>);
+    use: TypeOnly<typeof old.executeRedisMultiWithHmsetExpire>): void;
 use_old_VariableDeclaration_executeRedisMultiWithHmsetExpire(
     get_current_VariableDeclaration_executeRedisMultiWithHmsetExpire());
 
@@ -581,7 +582,7 @@ use_old_VariableDeclaration_executeRedisMultiWithHmsetExpire(
 declare function get_old_VariableDeclaration_executeRedisMultiWithHmsetExpireAndLpush():
     TypeOnly<typeof old.executeRedisMultiWithHmsetExpireAndLpush>;
 declare function use_current_VariableDeclaration_executeRedisMultiWithHmsetExpireAndLpush(
-    use: TypeOnly<typeof current.executeRedisMultiWithHmsetExpireAndLpush>);
+    use: TypeOnly<typeof current.executeRedisMultiWithHmsetExpireAndLpush>): void;
 use_current_VariableDeclaration_executeRedisMultiWithHmsetExpireAndLpush(
     get_old_VariableDeclaration_executeRedisMultiWithHmsetExpireAndLpush());
 
@@ -593,7 +594,7 @@ use_current_VariableDeclaration_executeRedisMultiWithHmsetExpireAndLpush(
 declare function get_current_VariableDeclaration_executeRedisMultiWithHmsetExpireAndLpush():
     TypeOnly<typeof current.executeRedisMultiWithHmsetExpireAndLpush>;
 declare function use_old_VariableDeclaration_executeRedisMultiWithHmsetExpireAndLpush(
-    use: TypeOnly<typeof old.executeRedisMultiWithHmsetExpireAndLpush>);
+    use: TypeOnly<typeof old.executeRedisMultiWithHmsetExpireAndLpush>): void;
 use_old_VariableDeclaration_executeRedisMultiWithHmsetExpireAndLpush(
     get_current_VariableDeclaration_executeRedisMultiWithHmsetExpireAndLpush());
 
@@ -605,7 +606,7 @@ use_old_VariableDeclaration_executeRedisMultiWithHmsetExpireAndLpush(
 declare function get_old_FunctionDeclaration_generateToken():
     TypeOnly<typeof old.generateToken>;
 declare function use_current_FunctionDeclaration_generateToken(
-    use: TypeOnly<typeof current.generateToken>);
+    use: TypeOnly<typeof current.generateToken>): void;
 use_current_FunctionDeclaration_generateToken(
     get_old_FunctionDeclaration_generateToken());
 
@@ -617,7 +618,7 @@ use_current_FunctionDeclaration_generateToken(
 declare function get_current_FunctionDeclaration_generateToken():
     TypeOnly<typeof current.generateToken>;
 declare function use_old_FunctionDeclaration_generateToken(
-    use: TypeOnly<typeof old.generateToken>);
+    use: TypeOnly<typeof old.generateToken>): void;
 use_old_FunctionDeclaration_generateToken(
     get_current_FunctionDeclaration_generateToken());
 
@@ -629,7 +630,7 @@ use_old_FunctionDeclaration_generateToken(
 declare function get_old_FunctionDeclaration_generateUser():
     TypeOnly<typeof old.generateUser>;
 declare function use_current_FunctionDeclaration_generateUser(
-    use: TypeOnly<typeof current.generateUser>);
+    use: TypeOnly<typeof current.generateUser>): void;
 use_current_FunctionDeclaration_generateUser(
     get_old_FunctionDeclaration_generateUser());
 
@@ -641,7 +642,7 @@ use_current_FunctionDeclaration_generateUser(
 declare function get_current_FunctionDeclaration_generateUser():
     TypeOnly<typeof current.generateUser>;
 declare function use_old_FunctionDeclaration_generateUser(
-    use: TypeOnly<typeof old.generateUser>);
+    use: TypeOnly<typeof old.generateUser>): void;
 use_old_FunctionDeclaration_generateUser(
     get_current_FunctionDeclaration_generateUser());
 
@@ -653,7 +654,7 @@ use_old_FunctionDeclaration_generateUser(
 declare function get_old_FunctionDeclaration_getBooleanFromConfig():
     TypeOnly<typeof old.getBooleanFromConfig>;
 declare function use_current_FunctionDeclaration_getBooleanFromConfig(
-    use: TypeOnly<typeof current.getBooleanFromConfig>);
+    use: TypeOnly<typeof current.getBooleanFromConfig>): void;
 use_current_FunctionDeclaration_getBooleanFromConfig(
     get_old_FunctionDeclaration_getBooleanFromConfig());
 
@@ -665,7 +666,7 @@ use_current_FunctionDeclaration_getBooleanFromConfig(
 declare function get_current_FunctionDeclaration_getBooleanFromConfig():
     TypeOnly<typeof current.getBooleanFromConfig>;
 declare function use_old_FunctionDeclaration_getBooleanFromConfig(
-    use: TypeOnly<typeof old.getBooleanFromConfig>);
+    use: TypeOnly<typeof old.getBooleanFromConfig>): void;
 use_old_FunctionDeclaration_getBooleanFromConfig(
     get_current_FunctionDeclaration_getBooleanFromConfig());
 
@@ -677,7 +678,7 @@ use_old_FunctionDeclaration_getBooleanFromConfig(
 declare function get_old_FunctionDeclaration_getCorrelationId():
     TypeOnly<typeof old.getCorrelationId>;
 declare function use_current_FunctionDeclaration_getCorrelationId(
-    use: TypeOnly<typeof current.getCorrelationId>);
+    use: TypeOnly<typeof current.getCorrelationId>): void;
 use_current_FunctionDeclaration_getCorrelationId(
     get_old_FunctionDeclaration_getCorrelationId());
 
@@ -689,7 +690,7 @@ use_current_FunctionDeclaration_getCorrelationId(
 declare function get_current_FunctionDeclaration_getCorrelationId():
     TypeOnly<typeof current.getCorrelationId>;
 declare function use_old_FunctionDeclaration_getCorrelationId(
-    use: TypeOnly<typeof old.getCorrelationId>);
+    use: TypeOnly<typeof old.getCorrelationId>): void;
 use_old_FunctionDeclaration_getCorrelationId(
     get_current_FunctionDeclaration_getCorrelationId());
 
@@ -701,7 +702,7 @@ use_old_FunctionDeclaration_getCorrelationId(
 declare function get_old_FunctionDeclaration_getCorrelationIdWithHttpFallback():
     TypeOnly<typeof old.getCorrelationIdWithHttpFallback>;
 declare function use_current_FunctionDeclaration_getCorrelationIdWithHttpFallback(
-    use: TypeOnly<typeof current.getCorrelationIdWithHttpFallback>);
+    use: TypeOnly<typeof current.getCorrelationIdWithHttpFallback>): void;
 use_current_FunctionDeclaration_getCorrelationIdWithHttpFallback(
     get_old_FunctionDeclaration_getCorrelationIdWithHttpFallback());
 
@@ -713,7 +714,7 @@ use_current_FunctionDeclaration_getCorrelationIdWithHttpFallback(
 declare function get_current_FunctionDeclaration_getCorrelationIdWithHttpFallback():
     TypeOnly<typeof current.getCorrelationIdWithHttpFallback>;
 declare function use_old_FunctionDeclaration_getCorrelationIdWithHttpFallback(
-    use: TypeOnly<typeof old.getCorrelationIdWithHttpFallback>);
+    use: TypeOnly<typeof old.getCorrelationIdWithHttpFallback>): void;
 use_old_FunctionDeclaration_getCorrelationIdWithHttpFallback(
     get_current_FunctionDeclaration_getCorrelationIdWithHttpFallback());
 
@@ -725,7 +726,7 @@ use_old_FunctionDeclaration_getCorrelationIdWithHttpFallback(
 declare function get_old_FunctionDeclaration_getCreationToken():
     TypeOnly<typeof old.getCreationToken>;
 declare function use_current_FunctionDeclaration_getCreationToken(
-    use: TypeOnly<typeof current.getCreationToken>);
+    use: TypeOnly<typeof current.getCreationToken>): void;
 use_current_FunctionDeclaration_getCreationToken(
     get_old_FunctionDeclaration_getCreationToken());
 
@@ -737,7 +738,7 @@ use_current_FunctionDeclaration_getCreationToken(
 declare function get_current_FunctionDeclaration_getCreationToken():
     TypeOnly<typeof current.getCreationToken>;
 declare function use_old_FunctionDeclaration_getCreationToken(
-    use: TypeOnly<typeof old.getCreationToken>);
+    use: TypeOnly<typeof old.getCreationToken>): void;
 use_old_FunctionDeclaration_getCreationToken(
     get_current_FunctionDeclaration_getCreationToken());
 
@@ -749,7 +750,7 @@ use_old_FunctionDeclaration_getCreationToken(
 declare function get_old_FunctionDeclaration_getHostIp():
     TypeOnly<typeof old.getHostIp>;
 declare function use_current_FunctionDeclaration_getHostIp(
-    use: TypeOnly<typeof current.getHostIp>);
+    use: TypeOnly<typeof current.getHostIp>): void;
 use_current_FunctionDeclaration_getHostIp(
     get_old_FunctionDeclaration_getHostIp());
 
@@ -761,7 +762,7 @@ use_current_FunctionDeclaration_getHostIp(
 declare function get_current_FunctionDeclaration_getHostIp():
     TypeOnly<typeof current.getHostIp>;
 declare function use_old_FunctionDeclaration_getHostIp(
-    use: TypeOnly<typeof old.getHostIp>);
+    use: TypeOnly<typeof old.getHostIp>): void;
 use_old_FunctionDeclaration_getHostIp(
     get_current_FunctionDeclaration_getHostIp());
 
@@ -773,7 +774,7 @@ use_old_FunctionDeclaration_getHostIp(
 declare function get_old_FunctionDeclaration_getNumberFromConfig():
     TypeOnly<typeof old.getNumberFromConfig>;
 declare function use_current_FunctionDeclaration_getNumberFromConfig(
-    use: TypeOnly<typeof current.getNumberFromConfig>);
+    use: TypeOnly<typeof current.getNumberFromConfig>): void;
 use_current_FunctionDeclaration_getNumberFromConfig(
     get_old_FunctionDeclaration_getNumberFromConfig());
 
@@ -785,7 +786,7 @@ use_current_FunctionDeclaration_getNumberFromConfig(
 declare function get_current_FunctionDeclaration_getNumberFromConfig():
     TypeOnly<typeof current.getNumberFromConfig>;
 declare function use_old_FunctionDeclaration_getNumberFromConfig(
-    use: TypeOnly<typeof old.getNumberFromConfig>);
+    use: TypeOnly<typeof old.getNumberFromConfig>): void;
 use_old_FunctionDeclaration_getNumberFromConfig(
     get_current_FunctionDeclaration_getNumberFromConfig());
 
@@ -797,7 +798,7 @@ use_old_FunctionDeclaration_getNumberFromConfig(
 declare function get_old_FunctionDeclaration_getParam():
     TypeOnly<typeof old.getParam>;
 declare function use_current_FunctionDeclaration_getParam(
-    use: TypeOnly<typeof current.getParam>);
+    use: TypeOnly<typeof current.getParam>): void;
 use_current_FunctionDeclaration_getParam(
     get_old_FunctionDeclaration_getParam());
 
@@ -809,7 +810,7 @@ use_current_FunctionDeclaration_getParam(
 declare function get_current_FunctionDeclaration_getParam():
     TypeOnly<typeof current.getParam>;
 declare function use_old_FunctionDeclaration_getParam(
-    use: TypeOnly<typeof old.getParam>);
+    use: TypeOnly<typeof old.getParam>): void;
 use_old_FunctionDeclaration_getParam(
     get_current_FunctionDeclaration_getParam());
 
@@ -821,7 +822,7 @@ use_old_FunctionDeclaration_getParam(
 declare function get_old_FunctionDeclaration_getRandomName():
     TypeOnly<typeof old.getRandomName>;
 declare function use_current_FunctionDeclaration_getRandomName(
-    use: TypeOnly<typeof current.getRandomName>);
+    use: TypeOnly<typeof current.getRandomName>): void;
 use_current_FunctionDeclaration_getRandomName(
     get_old_FunctionDeclaration_getRandomName());
 
@@ -833,7 +834,7 @@ use_current_FunctionDeclaration_getRandomName(
 declare function get_current_FunctionDeclaration_getRandomName():
     TypeOnly<typeof current.getRandomName>;
 declare function use_old_FunctionDeclaration_getRandomName(
-    use: TypeOnly<typeof old.getRandomName>);
+    use: TypeOnly<typeof old.getRandomName>): void;
 use_old_FunctionDeclaration_getRandomName(
     get_current_FunctionDeclaration_getRandomName());
 
@@ -845,7 +846,7 @@ use_old_FunctionDeclaration_getRandomName(
 declare function get_old_FunctionDeclaration_getTelemetryContextPropertiesWithHttpInfo():
     TypeOnly<typeof old.getTelemetryContextPropertiesWithHttpInfo>;
 declare function use_current_FunctionDeclaration_getTelemetryContextPropertiesWithHttpInfo(
-    use: TypeOnly<typeof current.getTelemetryContextPropertiesWithHttpInfo>);
+    use: TypeOnly<typeof current.getTelemetryContextPropertiesWithHttpInfo>): void;
 use_current_FunctionDeclaration_getTelemetryContextPropertiesWithHttpInfo(
     get_old_FunctionDeclaration_getTelemetryContextPropertiesWithHttpInfo());
 
@@ -857,7 +858,7 @@ use_current_FunctionDeclaration_getTelemetryContextPropertiesWithHttpInfo(
 declare function get_current_FunctionDeclaration_getTelemetryContextPropertiesWithHttpInfo():
     TypeOnly<typeof current.getTelemetryContextPropertiesWithHttpInfo>;
 declare function use_old_FunctionDeclaration_getTelemetryContextPropertiesWithHttpInfo(
-    use: TypeOnly<typeof old.getTelemetryContextPropertiesWithHttpInfo>);
+    use: TypeOnly<typeof old.getTelemetryContextPropertiesWithHttpInfo>): void;
 use_old_FunctionDeclaration_getTelemetryContextPropertiesWithHttpInfo(
     get_current_FunctionDeclaration_getTelemetryContextPropertiesWithHttpInfo());
 
@@ -869,7 +870,7 @@ use_old_FunctionDeclaration_getTelemetryContextPropertiesWithHttpInfo(
 declare function get_old_VariableDeclaration_getThrottleConfig():
     TypeOnly<typeof old.getThrottleConfig>;
 declare function use_current_VariableDeclaration_getThrottleConfig(
-    use: TypeOnly<typeof current.getThrottleConfig>);
+    use: TypeOnly<typeof current.getThrottleConfig>): void;
 use_current_VariableDeclaration_getThrottleConfig(
     get_old_VariableDeclaration_getThrottleConfig());
 
@@ -881,7 +882,7 @@ use_current_VariableDeclaration_getThrottleConfig(
 declare function get_current_VariableDeclaration_getThrottleConfig():
     TypeOnly<typeof current.getThrottleConfig>;
 declare function use_old_VariableDeclaration_getThrottleConfig(
-    use: TypeOnly<typeof old.getThrottleConfig>);
+    use: TypeOnly<typeof old.getThrottleConfig>): void;
 use_old_VariableDeclaration_getThrottleConfig(
     get_current_VariableDeclaration_getThrottleConfig());
 
@@ -893,7 +894,7 @@ use_old_VariableDeclaration_getThrottleConfig(
 declare function get_old_FunctionDeclaration_jsonMorganLoggerMiddleware():
     TypeOnly<typeof old.jsonMorganLoggerMiddleware>;
 declare function use_current_FunctionDeclaration_jsonMorganLoggerMiddleware(
-    use: TypeOnly<typeof current.jsonMorganLoggerMiddleware>);
+    use: TypeOnly<typeof current.jsonMorganLoggerMiddleware>): void;
 use_current_FunctionDeclaration_jsonMorganLoggerMiddleware(
     get_old_FunctionDeclaration_jsonMorganLoggerMiddleware());
 
@@ -905,7 +906,7 @@ use_current_FunctionDeclaration_jsonMorganLoggerMiddleware(
 declare function get_current_FunctionDeclaration_jsonMorganLoggerMiddleware():
     TypeOnly<typeof current.jsonMorganLoggerMiddleware>;
 declare function use_old_FunctionDeclaration_jsonMorganLoggerMiddleware(
-    use: TypeOnly<typeof old.jsonMorganLoggerMiddleware>);
+    use: TypeOnly<typeof old.jsonMorganLoggerMiddleware>): void;
 use_old_FunctionDeclaration_jsonMorganLoggerMiddleware(
     get_current_FunctionDeclaration_jsonMorganLoggerMiddleware());
 
@@ -917,7 +918,7 @@ use_old_FunctionDeclaration_jsonMorganLoggerMiddleware(
 declare function get_old_FunctionDeclaration_normalizePort():
     TypeOnly<typeof old.normalizePort>;
 declare function use_current_FunctionDeclaration_normalizePort(
-    use: TypeOnly<typeof current.normalizePort>);
+    use: TypeOnly<typeof current.normalizePort>): void;
 use_current_FunctionDeclaration_normalizePort(
     get_old_FunctionDeclaration_normalizePort());
 
@@ -929,7 +930,7 @@ use_current_FunctionDeclaration_normalizePort(
 declare function get_current_FunctionDeclaration_normalizePort():
     TypeOnly<typeof current.normalizePort>;
 declare function use_old_FunctionDeclaration_normalizePort(
-    use: TypeOnly<typeof old.normalizePort>);
+    use: TypeOnly<typeof old.normalizePort>): void;
 use_old_FunctionDeclaration_normalizePort(
     get_current_FunctionDeclaration_normalizePort());
 
@@ -941,7 +942,7 @@ use_old_FunctionDeclaration_normalizePort(
 declare function get_old_VariableDeclaration_parseBoolean():
     TypeOnly<typeof old.parseBoolean>;
 declare function use_current_VariableDeclaration_parseBoolean(
-    use: TypeOnly<typeof current.parseBoolean>);
+    use: TypeOnly<typeof current.parseBoolean>): void;
 use_current_VariableDeclaration_parseBoolean(
     get_old_VariableDeclaration_parseBoolean());
 
@@ -953,7 +954,7 @@ use_current_VariableDeclaration_parseBoolean(
 declare function get_current_VariableDeclaration_parseBoolean():
     TypeOnly<typeof current.parseBoolean>;
 declare function use_old_VariableDeclaration_parseBoolean(
-    use: TypeOnly<typeof old.parseBoolean>);
+    use: TypeOnly<typeof old.parseBoolean>): void;
 use_old_VariableDeclaration_parseBoolean(
     get_current_VariableDeclaration_parseBoolean());
 
@@ -965,7 +966,7 @@ use_old_VariableDeclaration_parseBoolean(
 declare function get_old_FunctionDeclaration_respondWithNetworkError():
     TypeOnly<typeof old.respondWithNetworkError>;
 declare function use_current_FunctionDeclaration_respondWithNetworkError(
-    use: TypeOnly<typeof current.respondWithNetworkError>);
+    use: TypeOnly<typeof current.respondWithNetworkError>): void;
 use_current_FunctionDeclaration_respondWithNetworkError(
     get_old_FunctionDeclaration_respondWithNetworkError());
 
@@ -977,7 +978,7 @@ use_current_FunctionDeclaration_respondWithNetworkError(
 declare function get_current_FunctionDeclaration_respondWithNetworkError():
     TypeOnly<typeof current.respondWithNetworkError>;
 declare function use_old_FunctionDeclaration_respondWithNetworkError(
-    use: TypeOnly<typeof old.respondWithNetworkError>);
+    use: TypeOnly<typeof old.respondWithNetworkError>): void;
 use_old_FunctionDeclaration_respondWithNetworkError(
     get_current_FunctionDeclaration_respondWithNetworkError());
 
@@ -989,7 +990,7 @@ use_old_FunctionDeclaration_respondWithNetworkError(
 declare function get_old_FunctionDeclaration_throttle():
     TypeOnly<typeof old.throttle>;
 declare function use_current_FunctionDeclaration_throttle(
-    use: TypeOnly<typeof current.throttle>);
+    use: TypeOnly<typeof current.throttle>): void;
 use_current_FunctionDeclaration_throttle(
     get_old_FunctionDeclaration_throttle());
 
@@ -1001,7 +1002,7 @@ use_current_FunctionDeclaration_throttle(
 declare function get_current_FunctionDeclaration_throttle():
     TypeOnly<typeof current.throttle>;
 declare function use_old_FunctionDeclaration_throttle(
-    use: TypeOnly<typeof old.throttle>);
+    use: TypeOnly<typeof old.throttle>): void;
 use_old_FunctionDeclaration_throttle(
     get_current_FunctionDeclaration_throttle());
 
@@ -1013,7 +1014,7 @@ use_old_FunctionDeclaration_throttle(
 declare function get_old_FunctionDeclaration_validateTokenClaims():
     TypeOnly<typeof old.validateTokenClaims>;
 declare function use_current_FunctionDeclaration_validateTokenClaims(
-    use: TypeOnly<typeof current.validateTokenClaims>);
+    use: TypeOnly<typeof current.validateTokenClaims>): void;
 use_current_FunctionDeclaration_validateTokenClaims(
     get_old_FunctionDeclaration_validateTokenClaims());
 
@@ -1025,7 +1026,7 @@ use_current_FunctionDeclaration_validateTokenClaims(
 declare function get_current_FunctionDeclaration_validateTokenClaims():
     TypeOnly<typeof current.validateTokenClaims>;
 declare function use_old_FunctionDeclaration_validateTokenClaims(
-    use: TypeOnly<typeof old.validateTokenClaims>);
+    use: TypeOnly<typeof old.validateTokenClaims>): void;
 use_old_FunctionDeclaration_validateTokenClaims(
     get_current_FunctionDeclaration_validateTokenClaims());
 
@@ -1037,7 +1038,7 @@ use_old_FunctionDeclaration_validateTokenClaims(
 declare function get_old_FunctionDeclaration_validateTokenScopeClaims():
     TypeOnly<typeof old.validateTokenScopeClaims>;
 declare function use_current_FunctionDeclaration_validateTokenScopeClaims(
-    use: TypeOnly<typeof current.validateTokenScopeClaims>);
+    use: TypeOnly<typeof current.validateTokenScopeClaims>): void;
 use_current_FunctionDeclaration_validateTokenScopeClaims(
     get_old_FunctionDeclaration_validateTokenScopeClaims());
 
@@ -1049,7 +1050,7 @@ use_current_FunctionDeclaration_validateTokenScopeClaims(
 declare function get_current_FunctionDeclaration_validateTokenScopeClaims():
     TypeOnly<typeof current.validateTokenScopeClaims>;
 declare function use_old_FunctionDeclaration_validateTokenScopeClaims(
-    use: TypeOnly<typeof old.validateTokenScopeClaims>);
+    use: TypeOnly<typeof old.validateTokenScopeClaims>): void;
 use_old_FunctionDeclaration_validateTokenScopeClaims(
     get_current_FunctionDeclaration_validateTokenScopeClaims());
 
@@ -1061,7 +1062,7 @@ use_old_FunctionDeclaration_validateTokenScopeClaims(
 declare function get_old_FunctionDeclaration_verifyStorageToken():
     TypeOnly<typeof old.verifyStorageToken>;
 declare function use_current_FunctionDeclaration_verifyStorageToken(
-    use: TypeOnly<typeof current.verifyStorageToken>);
+    use: TypeOnly<typeof current.verifyStorageToken>): void;
 use_current_FunctionDeclaration_verifyStorageToken(
     get_old_FunctionDeclaration_verifyStorageToken());
 
@@ -1073,7 +1074,7 @@ use_current_FunctionDeclaration_verifyStorageToken(
 declare function get_current_FunctionDeclaration_verifyStorageToken():
     TypeOnly<typeof current.verifyStorageToken>;
 declare function use_old_FunctionDeclaration_verifyStorageToken(
-    use: TypeOnly<typeof old.verifyStorageToken>);
+    use: TypeOnly<typeof old.verifyStorageToken>): void;
 use_old_FunctionDeclaration_verifyStorageToken(
     get_current_FunctionDeclaration_verifyStorageToken());
 
@@ -1085,7 +1086,7 @@ use_old_FunctionDeclaration_verifyStorageToken(
 declare function get_old_FunctionDeclaration_verifyToken():
     TypeOnly<typeof old.verifyToken>;
 declare function use_current_FunctionDeclaration_verifyToken(
-    use: TypeOnly<typeof current.verifyToken>);
+    use: TypeOnly<typeof current.verifyToken>): void;
 use_current_FunctionDeclaration_verifyToken(
     get_old_FunctionDeclaration_verifyToken());
 
@@ -1097,6 +1098,6 @@ use_current_FunctionDeclaration_verifyToken(
 declare function get_current_FunctionDeclaration_verifyToken():
     TypeOnly<typeof current.verifyToken>;
 declare function use_old_FunctionDeclaration_verifyToken(
-    use: TypeOnly<typeof old.verifyToken>);
+    use: TypeOnly<typeof old.verifyToken>): void;
 use_old_FunctionDeclaration_verifyToken(
     get_current_FunctionDeclaration_verifyToken());

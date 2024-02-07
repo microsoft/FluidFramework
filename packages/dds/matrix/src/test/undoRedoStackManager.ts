@@ -17,7 +17,7 @@ enum UndoRedoMode {
 }
 
 /**
- * Helper class for createing a stack over an array
+ * Helper class for creating a stack over an array
  */
 class Stack<T> {
 	public itemPushedCallback: (() => void) | undefined;
@@ -55,7 +55,6 @@ class Stack<T> {
 class UndoRedoStack extends Stack<Stack<IRevertible> | undefined> {
 	public push(item: Stack<IRevertible> | undefined) {
 		if (item !== undefined) {
-			// eslint-disable-next-line @typescript-eslint/unbound-method
 			item.itemPushedCallback = () => this.callItemPushedCallback;
 		}
 		super.push(item);

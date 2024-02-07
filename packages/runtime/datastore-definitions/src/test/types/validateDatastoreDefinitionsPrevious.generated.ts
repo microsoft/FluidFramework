@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_InterfaceDeclaration_IChannel():
     TypeOnly<old.IChannel>;
 declare function use_current_InterfaceDeclaration_IChannel(
-    use: TypeOnly<current.IChannel>);
+    use: TypeOnly<current.IChannel>): void;
 use_current_InterfaceDeclaration_IChannel(
     get_old_InterfaceDeclaration_IChannel());
 
@@ -41,7 +41,7 @@ use_current_InterfaceDeclaration_IChannel(
 declare function get_current_InterfaceDeclaration_IChannel():
     TypeOnly<current.IChannel>;
 declare function use_old_InterfaceDeclaration_IChannel(
-    use: TypeOnly<old.IChannel>);
+    use: TypeOnly<old.IChannel>): void;
 use_old_InterfaceDeclaration_IChannel(
     get_current_InterfaceDeclaration_IChannel());
 
@@ -53,7 +53,7 @@ use_old_InterfaceDeclaration_IChannel(
 declare function get_old_InterfaceDeclaration_IChannelAttributes():
     TypeOnly<old.IChannelAttributes>;
 declare function use_current_InterfaceDeclaration_IChannelAttributes(
-    use: TypeOnly<current.IChannelAttributes>);
+    use: TypeOnly<current.IChannelAttributes>): void;
 use_current_InterfaceDeclaration_IChannelAttributes(
     get_old_InterfaceDeclaration_IChannelAttributes());
 
@@ -65,7 +65,7 @@ use_current_InterfaceDeclaration_IChannelAttributes(
 declare function get_current_InterfaceDeclaration_IChannelAttributes():
     TypeOnly<current.IChannelAttributes>;
 declare function use_old_InterfaceDeclaration_IChannelAttributes(
-    use: TypeOnly<old.IChannelAttributes>);
+    use: TypeOnly<old.IChannelAttributes>): void;
 use_old_InterfaceDeclaration_IChannelAttributes(
     get_current_InterfaceDeclaration_IChannelAttributes());
 
@@ -77,7 +77,7 @@ use_old_InterfaceDeclaration_IChannelAttributes(
 declare function get_old_InterfaceDeclaration_IChannelFactory():
     TypeOnly<old.IChannelFactory>;
 declare function use_current_InterfaceDeclaration_IChannelFactory(
-    use: TypeOnly<current.IChannelFactory>);
+    use: TypeOnly<current.IChannelFactory>): void;
 use_current_InterfaceDeclaration_IChannelFactory(
     get_old_InterfaceDeclaration_IChannelFactory());
 
@@ -89,7 +89,7 @@ use_current_InterfaceDeclaration_IChannelFactory(
 declare function get_current_InterfaceDeclaration_IChannelFactory():
     TypeOnly<current.IChannelFactory>;
 declare function use_old_InterfaceDeclaration_IChannelFactory(
-    use: TypeOnly<old.IChannelFactory>);
+    use: TypeOnly<old.IChannelFactory>): void;
 use_old_InterfaceDeclaration_IChannelFactory(
     get_current_InterfaceDeclaration_IChannelFactory());
 
@@ -101,7 +101,7 @@ use_old_InterfaceDeclaration_IChannelFactory(
 declare function get_old_InterfaceDeclaration_IChannelServices():
     TypeOnly<old.IChannelServices>;
 declare function use_current_InterfaceDeclaration_IChannelServices(
-    use: TypeOnly<current.IChannelServices>);
+    use: TypeOnly<current.IChannelServices>): void;
 use_current_InterfaceDeclaration_IChannelServices(
     get_old_InterfaceDeclaration_IChannelServices());
 
@@ -113,7 +113,7 @@ use_current_InterfaceDeclaration_IChannelServices(
 declare function get_current_InterfaceDeclaration_IChannelServices():
     TypeOnly<current.IChannelServices>;
 declare function use_old_InterfaceDeclaration_IChannelServices(
-    use: TypeOnly<old.IChannelServices>);
+    use: TypeOnly<old.IChannelServices>): void;
 use_old_InterfaceDeclaration_IChannelServices(
     get_current_InterfaceDeclaration_IChannelServices());
 
@@ -125,7 +125,7 @@ use_old_InterfaceDeclaration_IChannelServices(
 declare function get_old_InterfaceDeclaration_IChannelStorageService():
     TypeOnly<old.IChannelStorageService>;
 declare function use_current_InterfaceDeclaration_IChannelStorageService(
-    use: TypeOnly<current.IChannelStorageService>);
+    use: TypeOnly<current.IChannelStorageService>): void;
 use_current_InterfaceDeclaration_IChannelStorageService(
     get_old_InterfaceDeclaration_IChannelStorageService());
 
@@ -137,7 +137,7 @@ use_current_InterfaceDeclaration_IChannelStorageService(
 declare function get_current_InterfaceDeclaration_IChannelStorageService():
     TypeOnly<current.IChannelStorageService>;
 declare function use_old_InterfaceDeclaration_IChannelStorageService(
-    use: TypeOnly<old.IChannelStorageService>);
+    use: TypeOnly<old.IChannelStorageService>): void;
 use_old_InterfaceDeclaration_IChannelStorageService(
     get_current_InterfaceDeclaration_IChannelStorageService());
 
@@ -149,7 +149,7 @@ use_old_InterfaceDeclaration_IChannelStorageService(
 declare function get_old_InterfaceDeclaration_IDeltaConnection():
     TypeOnly<old.IDeltaConnection>;
 declare function use_current_InterfaceDeclaration_IDeltaConnection(
-    use: TypeOnly<current.IDeltaConnection>);
+    use: TypeOnly<current.IDeltaConnection>): void;
 use_current_InterfaceDeclaration_IDeltaConnection(
     get_old_InterfaceDeclaration_IDeltaConnection());
 
@@ -161,7 +161,7 @@ use_current_InterfaceDeclaration_IDeltaConnection(
 declare function get_current_InterfaceDeclaration_IDeltaConnection():
     TypeOnly<current.IDeltaConnection>;
 declare function use_old_InterfaceDeclaration_IDeltaConnection(
-    use: TypeOnly<old.IDeltaConnection>);
+    use: TypeOnly<old.IDeltaConnection>): void;
 use_old_InterfaceDeclaration_IDeltaConnection(
     get_current_InterfaceDeclaration_IDeltaConnection());
 
@@ -173,7 +173,7 @@ use_old_InterfaceDeclaration_IDeltaConnection(
 declare function get_old_InterfaceDeclaration_IDeltaHandler():
     TypeOnly<old.IDeltaHandler>;
 declare function use_current_InterfaceDeclaration_IDeltaHandler(
-    use: TypeOnly<current.IDeltaHandler>);
+    use: TypeOnly<current.IDeltaHandler>): void;
 use_current_InterfaceDeclaration_IDeltaHandler(
     get_old_InterfaceDeclaration_IDeltaHandler());
 
@@ -185,7 +185,7 @@ use_current_InterfaceDeclaration_IDeltaHandler(
 declare function get_current_InterfaceDeclaration_IDeltaHandler():
     TypeOnly<current.IDeltaHandler>;
 declare function use_old_InterfaceDeclaration_IDeltaHandler(
-    use: TypeOnly<old.IDeltaHandler>);
+    use: TypeOnly<old.IDeltaHandler>): void;
 use_old_InterfaceDeclaration_IDeltaHandler(
     get_current_InterfaceDeclaration_IDeltaHandler());
 
@@ -197,7 +197,7 @@ use_old_InterfaceDeclaration_IDeltaHandler(
 declare function get_old_InterfaceDeclaration_IFluidDataStoreRuntime():
     TypeOnly<old.IFluidDataStoreRuntime>;
 declare function use_current_InterfaceDeclaration_IFluidDataStoreRuntime(
-    use: TypeOnly<current.IFluidDataStoreRuntime>);
+    use: TypeOnly<current.IFluidDataStoreRuntime>): void;
 use_current_InterfaceDeclaration_IFluidDataStoreRuntime(
     get_old_InterfaceDeclaration_IFluidDataStoreRuntime());
 
@@ -209,7 +209,7 @@ use_current_InterfaceDeclaration_IFluidDataStoreRuntime(
 declare function get_current_InterfaceDeclaration_IFluidDataStoreRuntime():
     TypeOnly<current.IFluidDataStoreRuntime>;
 declare function use_old_InterfaceDeclaration_IFluidDataStoreRuntime(
-    use: TypeOnly<old.IFluidDataStoreRuntime>);
+    use: TypeOnly<old.IFluidDataStoreRuntime>): void;
 use_old_InterfaceDeclaration_IFluidDataStoreRuntime(
     get_current_InterfaceDeclaration_IFluidDataStoreRuntime());
 
@@ -221,7 +221,7 @@ use_old_InterfaceDeclaration_IFluidDataStoreRuntime(
 declare function get_old_InterfaceDeclaration_IFluidDataStoreRuntimeEvents():
     TypeOnly<old.IFluidDataStoreRuntimeEvents>;
 declare function use_current_InterfaceDeclaration_IFluidDataStoreRuntimeEvents(
-    use: TypeOnly<current.IFluidDataStoreRuntimeEvents>);
+    use: TypeOnly<current.IFluidDataStoreRuntimeEvents>): void;
 use_current_InterfaceDeclaration_IFluidDataStoreRuntimeEvents(
     get_old_InterfaceDeclaration_IFluidDataStoreRuntimeEvents());
 
@@ -233,9 +233,33 @@ use_current_InterfaceDeclaration_IFluidDataStoreRuntimeEvents(
 declare function get_current_InterfaceDeclaration_IFluidDataStoreRuntimeEvents():
     TypeOnly<current.IFluidDataStoreRuntimeEvents>;
 declare function use_old_InterfaceDeclaration_IFluidDataStoreRuntimeEvents(
-    use: TypeOnly<old.IFluidDataStoreRuntimeEvents>);
+    use: TypeOnly<old.IFluidDataStoreRuntimeEvents>): void;
 use_old_InterfaceDeclaration_IFluidDataStoreRuntimeEvents(
     get_current_InterfaceDeclaration_IFluidDataStoreRuntimeEvents());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_Internal_InterfaceOfJsonableTypesWith": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_Internal_InterfaceOfJsonableTypesWith():
+    TypeOnly<old.Internal_InterfaceOfJsonableTypesWith<any>>;
+declare function use_current_InterfaceDeclaration_Internal_InterfaceOfJsonableTypesWith(
+    use: TypeOnly<current.Internal_InterfaceOfJsonableTypesWith<any>>): void;
+use_current_InterfaceDeclaration_Internal_InterfaceOfJsonableTypesWith(
+    get_old_InterfaceDeclaration_Internal_InterfaceOfJsonableTypesWith());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_Internal_InterfaceOfJsonableTypesWith": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_Internal_InterfaceOfJsonableTypesWith():
+    TypeOnly<current.Internal_InterfaceOfJsonableTypesWith<any>>;
+declare function use_old_InterfaceDeclaration_Internal_InterfaceOfJsonableTypesWith(
+    use: TypeOnly<old.Internal_InterfaceOfJsonableTypesWith<any>>): void;
+use_old_InterfaceDeclaration_Internal_InterfaceOfJsonableTypesWith(
+    get_current_InterfaceDeclaration_Internal_InterfaceOfJsonableTypesWith());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -243,9 +267,9 @@ use_old_InterfaceDeclaration_IFluidDataStoreRuntimeEvents(
 * "TypeAliasDeclaration_Jsonable": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_Jsonable():
-    TypeOnly<old.Jsonable>;
+    TypeOnly<old.Jsonable<any>>;
 declare function use_current_TypeAliasDeclaration_Jsonable(
-    use: TypeOnly<current.Jsonable>);
+    use: TypeOnly<current.Jsonable<any>>): void;
 use_current_TypeAliasDeclaration_Jsonable(
     get_old_TypeAliasDeclaration_Jsonable());
 
@@ -255,11 +279,35 @@ use_current_TypeAliasDeclaration_Jsonable(
 * "TypeAliasDeclaration_Jsonable": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_Jsonable():
-    TypeOnly<current.Jsonable>;
+    TypeOnly<current.Jsonable<any>>;
 declare function use_old_TypeAliasDeclaration_Jsonable(
-    use: TypeOnly<old.Jsonable>);
+    use: TypeOnly<old.Jsonable<any>>): void;
 use_old_TypeAliasDeclaration_Jsonable(
     get_current_TypeAliasDeclaration_Jsonable());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_JsonableTypeWith": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_JsonableTypeWith():
+    TypeOnly<old.JsonableTypeWith<any>>;
+declare function use_current_TypeAliasDeclaration_JsonableTypeWith(
+    use: TypeOnly<current.JsonableTypeWith<any>>): void;
+use_current_TypeAliasDeclaration_JsonableTypeWith(
+    get_old_TypeAliasDeclaration_JsonableTypeWith());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_JsonableTypeWith": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_JsonableTypeWith():
+    TypeOnly<current.JsonableTypeWith<any>>;
+declare function use_old_TypeAliasDeclaration_JsonableTypeWith(
+    use: TypeOnly<old.JsonableTypeWith<any>>): void;
+use_old_TypeAliasDeclaration_JsonableTypeWith(
+    get_current_TypeAliasDeclaration_JsonableTypeWith());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -267,9 +315,9 @@ use_old_TypeAliasDeclaration_Jsonable(
 * "TypeAliasDeclaration_Serializable": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_Serializable():
-    TypeOnly<old.Serializable>;
+    TypeOnly<old.Serializable<any>>;
 declare function use_current_TypeAliasDeclaration_Serializable(
-    use: TypeOnly<current.Serializable>);
+    use: TypeOnly<current.Serializable<any>>): void;
 use_current_TypeAliasDeclaration_Serializable(
     get_old_TypeAliasDeclaration_Serializable());
 
@@ -279,8 +327,8 @@ use_current_TypeAliasDeclaration_Serializable(
 * "TypeAliasDeclaration_Serializable": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_Serializable():
-    TypeOnly<current.Serializable>;
+    TypeOnly<current.Serializable<any>>;
 declare function use_old_TypeAliasDeclaration_Serializable(
-    use: TypeOnly<old.Serializable>);
+    use: TypeOnly<old.Serializable<any>>): void;
 use_old_TypeAliasDeclaration_Serializable(
     get_current_TypeAliasDeclaration_Serializable());

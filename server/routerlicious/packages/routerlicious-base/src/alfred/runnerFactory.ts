@@ -50,6 +50,9 @@ class NodeWebSocketServer implements core.IWebSocketServer {
 	}
 }
 
+/**
+ * @internal
+ */
 export class OrdererManager implements core.IOrdererManager {
 	constructor(
 		private readonly globalDbEnabled: boolean,
@@ -83,6 +86,9 @@ export class OrdererManager implements core.IOrdererManager {
 	}
 }
 
+/**
+ * @internal
+ */
 export class AlfredResources implements core.IResources {
 	public webServerFactory: core.IWebServerFactory;
 
@@ -118,6 +124,7 @@ export class AlfredResources implements core.IResources {
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
 		public collaborationSessionEvents?: TypedEventEmitter<ICollaborationSessionEvents>,
 		public serviceMessageResourceManager?: core.IServiceMessageResourceManager,
+		public clusterDrainingChecker?: core.IClusterDrainingChecker,
 	) {
 		const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
@@ -160,6 +167,9 @@ export class AlfredResources implements core.IResources {
 	}
 }
 
+/**
+ * @internal
+ */
 export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredResources> {
 	public async create(
 		config: Provider,
@@ -620,10 +630,14 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			revokedTokenChecker,
 			collaborationSessionEvents,
 			serviceMessageResourceManager,
+			customizations?.clusterDrainingChecker,
 		);
 	}
 }
 
+/**
+ * @internal
+ */
 export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources> {
 	public async create(resources: AlfredResources): Promise<core.IRunner> {
 		return new AlfredRunner(
@@ -654,6 +668,7 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
 			resources.tokenRevocationManager,
 			resources.revokedTokenChecker,
 			resources.collaborationSessionEvents,
+			resources.clusterDrainingChecker,
 		);
 	}
 }

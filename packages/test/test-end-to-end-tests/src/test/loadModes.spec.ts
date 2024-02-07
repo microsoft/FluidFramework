@@ -4,16 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-	IDataObjectProps,
-	getDefaultObjectFromContainer,
-} from "@fluidframework/aqueduct";
+import type { IDataObjectProps } from "@fluidframework/aqueduct";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IFluidHandle, IRequestHeader } from "@fluidframework/core-interfaces";
-import { SharedCounter } from "@fluidframework/counter";
+import type { SharedCounter } from "@fluidframework/counter";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import {
@@ -25,84 +19,83 @@ import {
 	DataObjectFactoryType,
 	ITestContainerConfig,
 	ITestFluidObject,
+	createSummarizerFromFactory,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
-import {
-	ContainerRuntime,
-	ISummarizer,
-	TEST_requestSummarizer,
-} from "@fluidframework/container-runtime";
-import { SharedMap } from "@fluidframework/map";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import type { SharedMap } from "@fluidframework/map";
 
 const counterKey = "count";
 
-/**
- * Implementation of counter dataObject for testing.
- */
-class TestDataObject extends DataObject {
-	public static readonly type = "@fluid-example/test-dataObject";
+// REVIEW: enable compat testing?
+describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedCounter } = apis.dds;
+	const { DataObject, DataObjectFactory } = apis.dataRuntime;
+	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 
-	public static getFactory() {
-		return TestDataObject.factory;
+	/**
+	 * Implementation of counter dataObject for testing.
+	 */
+	class TestDataObject extends DataObject {
+		public static readonly type = "@fluid-example/test-dataObject";
+
+		public static getFactory() {
+			return TestDataObject.factory;
+		}
+
+		private static readonly factory = new DataObjectFactory(
+			TestDataObject.type,
+			TestDataObject,
+			[],
+			{},
+		);
+
+		private counter!: SharedCounter;
+
+		/**
+		 * Expose the runtime for testing purposes.
+		 */
+
+		public runtime: IFluidDataStoreRuntime;
+
+		public constructor(props: IDataObjectProps) {
+			super(props);
+			this.runtime = props.runtime;
+		}
+
+		/**
+		 * Gets the current counter value.
+		 */
+		public get value(): number {
+			return this.counter.value;
+		}
+
+		/**
+		 * Increments the counter value by 1.
+		 */
+		public increment() {
+			this.counter.increment(1);
+		}
+
+		protected async initializingFirstTime() {
+			const counter = SharedCounter.create(this.runtime);
+			this.root.set(counterKey, counter.handle);
+		}
+
+		protected async hasInitialized() {
+			const counterHandle = this.root.get<IFluidHandle<SharedCounter>>(counterKey);
+			assert(counterHandle);
+			this.counter = await counterHandle.get();
+		}
 	}
 
-	private static readonly factory = new DataObjectFactory(
+	const testDataObjectFactory = new DataObjectFactory(
 		TestDataObject.type,
 		TestDataObject,
-		[],
+		[SharedCounter.getFactory()],
 		{},
 	);
 
-	private counter!: SharedCounter;
-
-	/**
-	 * Expose the runtime for testing purposes.
-	 */
-
-	public runtime: IFluidDataStoreRuntime;
-
-	public constructor(props: IDataObjectProps) {
-		super(props);
-		this.runtime = props.runtime;
-	}
-
-	/**
-	 * Gets the current counter value.
-	 */
-	public get value(): number {
-		return this.counter.value;
-	}
-
-	/**
-	 * Increments the counter value by 1.
-	 */
-	public increment() {
-		this.counter.increment(1);
-	}
-
-	protected async initializingFirstTime() {
-		const counter = SharedCounter.create(this.runtime);
-		this.root.set(counterKey, counter.handle);
-	}
-
-	protected async hasInitialized() {
-		const counterHandle = this.root.get<IFluidHandle<SharedCounter>>(counterKey);
-		assert(counterHandle);
-		this.counter = await counterHandle.get();
-	}
-}
-
-const testDataObjectFactory = new DataObjectFactory(
-	TestDataObject.type,
-	TestDataObject,
-	[SharedCounter.getFactory()],
-	{},
-);
-
-// REVIEW: enable compat testing?
-describeNoCompat("LoadModes", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	before(() => {
 		provider = getTestObjectProvider();
@@ -114,10 +107,10 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 	let container1: IContainer;
 	let dataObject1: TestDataObject;
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		documentId = createDocumentId();
 		container1 = await createContainer();
-		dataObject1 = await getDefaultObjectFromContainer<TestDataObject>(container1);
+		dataObject1 = (await container1.getEntryPoint()) as TestDataObject;
 	});
 
 	afterEach(() => {
@@ -166,34 +159,6 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 		});
 	}
 
-	async function createSummarizerFromContainer(container: IContainer): Promise<ISummarizer> {
-		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
-			defaultFactory: testDataObjectFactory,
-			registryEntries: [[testDataObjectFactory.type, Promise.resolve(testDataObjectFactory)]],
-		});
-		const loader = createLoader(
-			[[provider.defaultCodeDetails, runtimeFactory]],
-			provider.documentServiceFactory,
-			provider.urlResolver,
-			provider.logger,
-		);
-		loaderContainerTracker.add(loader);
-		const absoluteUrl = await container.getAbsoluteUrl("");
-		if (absoluteUrl === undefined) {
-			throw new Error("URL could not be resolved");
-		}
-		const summarizer = await TEST_requestSummarizer(loader, absoluteUrl);
-		await waitForSummarizerConnection(summarizer);
-		return summarizer;
-	}
-
-	async function waitForSummarizerConnection(summarizer: ISummarizer): Promise<void> {
-		const runtime = (summarizer as any).runtime as ContainerRuntime;
-		if (!runtime.connected) {
-			return new Promise((resolve) => runtime.once("connected", () => resolve()));
-		}
-	}
-
 	it("Can load a paused container", async () => {
 		const headers: IRequestHeader = {
 			[LoaderHeader.loadMode]: {
@@ -206,7 +171,7 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 			headers,
 		);
 		const initialSequenceNumber = container2.deltaManager.lastSequenceNumber;
-		const dataObject2 = await getDefaultObjectFromContainer<TestDataObject>(container2);
+		const dataObject2 = (await container2.getEntryPoint()) as TestDataObject;
 		const initialValue = dataObject2.value;
 
 		assert.strictEqual(dataObject1.value, dataObject2.value, "counter values should be equal");
@@ -260,7 +225,7 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 			testDataObjectFactory,
 			headers,
 		);
-		const dataObject2 = await getDefaultObjectFromContainer<TestDataObject>(container2);
+		const dataObject2 = (await container2.getEntryPoint()) as TestDataObject;
 
 		assert.strictEqual(
 			sequenceNumber,
@@ -298,7 +263,11 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 	});
 
 	it("Can load a paused container after a summary", async () => {
-		const summarizer = await createSummarizerFromContainer(container1);
+		const { summarizer } = await createSummarizerFromFactory(
+			provider,
+			container1,
+			testDataObjectFactory,
+		);
 		// Send 5 ops
 		const numIncrement = 5;
 		for (let i = 0; i < numIncrement; i++) {
@@ -325,7 +294,7 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 			testDataObjectFactory,
 			headers,
 		);
-		const dataObject2 = await getDefaultObjectFromContainer<TestDataObject>(container2);
+		const dataObject2 = (await container2.getEntryPoint()) as TestDataObject;
 
 		assert.strictEqual(
 			sequenceNumber,
@@ -365,10 +334,10 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 		const mapId = "mapKey";
 		const testContainerConfig: ITestContainerConfig = {
 			fluidDataObjectType: DataObjectFactoryType.Test,
-			registry: [[mapId, SharedMap.getFactory()]],
+			registry: [[mapId, apis.dds.SharedMap.getFactory()]],
 		};
 		const created = await provider.makeTestContainer(testContainerConfig);
-		const do1 = await requestFluidObject<ITestFluidObject>(created, "default");
+		const do1 = (await created.getEntryPoint()) as ITestFluidObject;
 		const map1 = await do1.getSharedObject<SharedMap>(mapId);
 
 		const headers: IRequestHeader = {
@@ -381,7 +350,7 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 			url: await provider.driver.createContainerUrl(provider.documentId),
 			headers,
 		});
-		const do2 = await requestFluidObject<ITestFluidObject>(loaded, "default");
+		const do2 = (await loaded.getEntryPoint()) as ITestFluidObject;
 		loaded.connect();
 		loaded.forceReadonly?.(true);
 		const map2 = await do2.getSharedObject<SharedMap>(mapId);
@@ -437,7 +406,11 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 		});
 
 		it("Throw if attempting to pause at a sequence number before the latest summary", async () => {
-			const summarizer = await createSummarizerFromContainer(container1);
+			const { summarizer } = await createSummarizerFromFactory(
+				provider,
+				container1,
+				testDataObjectFactory,
+			);
 			// Send 5 ops
 			const numIncrement = 5;
 			for (let i = 0; i < numIncrement; i++) {

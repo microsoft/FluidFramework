@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_InterfaceDeclaration_IAuthor():
     TypeOnly<old.IAuthor>;
 declare function use_current_InterfaceDeclaration_IAuthor(
-    use: TypeOnly<current.IAuthor>);
+    use: TypeOnly<current.IAuthor>): void;
 use_current_InterfaceDeclaration_IAuthor(
     get_old_InterfaceDeclaration_IAuthor());
 
@@ -41,7 +41,7 @@ use_current_InterfaceDeclaration_IAuthor(
 declare function get_current_InterfaceDeclaration_IAuthor():
     TypeOnly<current.IAuthor>;
 declare function use_old_InterfaceDeclaration_IAuthor(
-    use: TypeOnly<old.IAuthor>);
+    use: TypeOnly<old.IAuthor>): void;
 use_old_InterfaceDeclaration_IAuthor(
     get_current_InterfaceDeclaration_IAuthor());
 
@@ -53,7 +53,7 @@ use_old_InterfaceDeclaration_IAuthor(
 declare function get_old_InterfaceDeclaration_IBlob():
     TypeOnly<old.IBlob>;
 declare function use_current_InterfaceDeclaration_IBlob(
-    use: TypeOnly<current.IBlob>);
+    use: TypeOnly<current.IBlob>): void;
 use_current_InterfaceDeclaration_IBlob(
     get_old_InterfaceDeclaration_IBlob());
 
@@ -65,7 +65,7 @@ use_current_InterfaceDeclaration_IBlob(
 declare function get_current_InterfaceDeclaration_IBlob():
     TypeOnly<current.IBlob>;
 declare function use_old_InterfaceDeclaration_IBlob(
-    use: TypeOnly<old.IBlob>);
+    use: TypeOnly<old.IBlob>): void;
 use_old_InterfaceDeclaration_IBlob(
     get_current_InterfaceDeclaration_IBlob());
 
@@ -77,7 +77,7 @@ use_old_InterfaceDeclaration_IBlob(
 declare function get_old_InterfaceDeclaration_ICommit():
     TypeOnly<old.ICommit>;
 declare function use_current_InterfaceDeclaration_ICommit(
-    use: TypeOnly<current.ICommit>);
+    use: TypeOnly<current.ICommit>): void;
 use_current_InterfaceDeclaration_ICommit(
     get_old_InterfaceDeclaration_ICommit());
 
@@ -89,7 +89,7 @@ use_current_InterfaceDeclaration_ICommit(
 declare function get_current_InterfaceDeclaration_ICommit():
     TypeOnly<current.ICommit>;
 declare function use_old_InterfaceDeclaration_ICommit(
-    use: TypeOnly<old.ICommit>);
+    use: TypeOnly<old.ICommit>): void;
 use_old_InterfaceDeclaration_ICommit(
     get_current_InterfaceDeclaration_ICommit());
 
@@ -101,7 +101,7 @@ use_old_InterfaceDeclaration_ICommit(
 declare function get_old_InterfaceDeclaration_ICommitDetails():
     TypeOnly<old.ICommitDetails>;
 declare function use_current_InterfaceDeclaration_ICommitDetails(
-    use: TypeOnly<current.ICommitDetails>);
+    use: TypeOnly<current.ICommitDetails>): void;
 use_current_InterfaceDeclaration_ICommitDetails(
     get_old_InterfaceDeclaration_ICommitDetails());
 
@@ -113,7 +113,7 @@ use_current_InterfaceDeclaration_ICommitDetails(
 declare function get_current_InterfaceDeclaration_ICommitDetails():
     TypeOnly<current.ICommitDetails>;
 declare function use_old_InterfaceDeclaration_ICommitDetails(
-    use: TypeOnly<old.ICommitDetails>);
+    use: TypeOnly<old.ICommitDetails>): void;
 use_old_InterfaceDeclaration_ICommitDetails(
     get_current_InterfaceDeclaration_ICommitDetails());
 
@@ -125,7 +125,7 @@ use_old_InterfaceDeclaration_ICommitDetails(
 declare function get_old_InterfaceDeclaration_ICommitHash():
     TypeOnly<old.ICommitHash>;
 declare function use_current_InterfaceDeclaration_ICommitHash(
-    use: TypeOnly<current.ICommitHash>);
+    use: TypeOnly<current.ICommitHash>): void;
 use_current_InterfaceDeclaration_ICommitHash(
     get_old_InterfaceDeclaration_ICommitHash());
 
@@ -137,7 +137,7 @@ use_current_InterfaceDeclaration_ICommitHash(
 declare function get_current_InterfaceDeclaration_ICommitHash():
     TypeOnly<current.ICommitHash>;
 declare function use_old_InterfaceDeclaration_ICommitHash(
-    use: TypeOnly<old.ICommitHash>);
+    use: TypeOnly<old.ICommitHash>): void;
 use_old_InterfaceDeclaration_ICommitHash(
     get_current_InterfaceDeclaration_ICommitHash());
 
@@ -149,7 +149,7 @@ use_old_InterfaceDeclaration_ICommitHash(
 declare function get_old_InterfaceDeclaration_ICommitter():
     TypeOnly<old.ICommitter>;
 declare function use_current_InterfaceDeclaration_ICommitter(
-    use: TypeOnly<current.ICommitter>);
+    use: TypeOnly<current.ICommitter>): void;
 use_current_InterfaceDeclaration_ICommitter(
     get_old_InterfaceDeclaration_ICommitter());
 
@@ -161,7 +161,7 @@ use_current_InterfaceDeclaration_ICommitter(
 declare function get_current_InterfaceDeclaration_ICommitter():
     TypeOnly<current.ICommitter>;
 declare function use_old_InterfaceDeclaration_ICommitter(
-    use: TypeOnly<old.ICommitter>);
+    use: TypeOnly<old.ICommitter>): void;
 use_old_InterfaceDeclaration_ICommitter(
     get_current_InterfaceDeclaration_ICommitter());
 
@@ -173,7 +173,7 @@ use_old_InterfaceDeclaration_ICommitter(
 declare function get_old_InterfaceDeclaration_ICreateBlobParams():
     TypeOnly<old.ICreateBlobParams>;
 declare function use_current_InterfaceDeclaration_ICreateBlobParams(
-    use: TypeOnly<current.ICreateBlobParams>);
+    use: TypeOnly<current.ICreateBlobParams>): void;
 use_current_InterfaceDeclaration_ICreateBlobParams(
     get_old_InterfaceDeclaration_ICreateBlobParams());
 
@@ -185,7 +185,7 @@ use_current_InterfaceDeclaration_ICreateBlobParams(
 declare function get_current_InterfaceDeclaration_ICreateBlobParams():
     TypeOnly<current.ICreateBlobParams>;
 declare function use_old_InterfaceDeclaration_ICreateBlobParams(
-    use: TypeOnly<old.ICreateBlobParams>);
+    use: TypeOnly<old.ICreateBlobParams>): void;
 use_old_InterfaceDeclaration_ICreateBlobParams(
     get_current_InterfaceDeclaration_ICreateBlobParams());
 
@@ -197,7 +197,7 @@ use_old_InterfaceDeclaration_ICreateBlobParams(
 declare function get_old_InterfaceDeclaration_ICreateBlobResponse():
     TypeOnly<old.ICreateBlobResponse>;
 declare function use_current_InterfaceDeclaration_ICreateBlobResponse(
-    use: TypeOnly<current.ICreateBlobResponse>);
+    use: TypeOnly<current.ICreateBlobResponse>): void;
 use_current_InterfaceDeclaration_ICreateBlobResponse(
     get_old_InterfaceDeclaration_ICreateBlobResponse());
 
@@ -209,7 +209,7 @@ use_current_InterfaceDeclaration_ICreateBlobResponse(
 declare function get_current_InterfaceDeclaration_ICreateBlobResponse():
     TypeOnly<current.ICreateBlobResponse>;
 declare function use_old_InterfaceDeclaration_ICreateBlobResponse(
-    use: TypeOnly<old.ICreateBlobResponse>);
+    use: TypeOnly<old.ICreateBlobResponse>): void;
 use_old_InterfaceDeclaration_ICreateBlobResponse(
     get_current_InterfaceDeclaration_ICreateBlobResponse());
 
@@ -221,7 +221,7 @@ use_old_InterfaceDeclaration_ICreateBlobResponse(
 declare function get_old_InterfaceDeclaration_ICreateCommitParams():
     TypeOnly<old.ICreateCommitParams>;
 declare function use_current_InterfaceDeclaration_ICreateCommitParams(
-    use: TypeOnly<current.ICreateCommitParams>);
+    use: TypeOnly<current.ICreateCommitParams>): void;
 use_current_InterfaceDeclaration_ICreateCommitParams(
     get_old_InterfaceDeclaration_ICreateCommitParams());
 
@@ -233,7 +233,7 @@ use_current_InterfaceDeclaration_ICreateCommitParams(
 declare function get_current_InterfaceDeclaration_ICreateCommitParams():
     TypeOnly<current.ICreateCommitParams>;
 declare function use_old_InterfaceDeclaration_ICreateCommitParams(
-    use: TypeOnly<old.ICreateCommitParams>);
+    use: TypeOnly<old.ICreateCommitParams>): void;
 use_old_InterfaceDeclaration_ICreateCommitParams(
     get_current_InterfaceDeclaration_ICreateCommitParams());
 
@@ -245,7 +245,7 @@ use_old_InterfaceDeclaration_ICreateCommitParams(
 declare function get_old_InterfaceDeclaration_ICreateRefParams():
     TypeOnly<old.ICreateRefParams>;
 declare function use_current_InterfaceDeclaration_ICreateRefParams(
-    use: TypeOnly<current.ICreateRefParams>);
+    use: TypeOnly<current.ICreateRefParams>): void;
 use_current_InterfaceDeclaration_ICreateRefParams(
     get_old_InterfaceDeclaration_ICreateRefParams());
 
@@ -257,7 +257,7 @@ use_current_InterfaceDeclaration_ICreateRefParams(
 declare function get_current_InterfaceDeclaration_ICreateRefParams():
     TypeOnly<current.ICreateRefParams>;
 declare function use_old_InterfaceDeclaration_ICreateRefParams(
-    use: TypeOnly<old.ICreateRefParams>);
+    use: TypeOnly<old.ICreateRefParams>): void;
 use_old_InterfaceDeclaration_ICreateRefParams(
     get_current_InterfaceDeclaration_ICreateRefParams());
 
@@ -269,7 +269,7 @@ use_old_InterfaceDeclaration_ICreateRefParams(
 declare function get_old_InterfaceDeclaration_ICreateRepoParams():
     TypeOnly<old.ICreateRepoParams>;
 declare function use_current_InterfaceDeclaration_ICreateRepoParams(
-    use: TypeOnly<current.ICreateRepoParams>);
+    use: TypeOnly<current.ICreateRepoParams>): void;
 use_current_InterfaceDeclaration_ICreateRepoParams(
     get_old_InterfaceDeclaration_ICreateRepoParams());
 
@@ -281,7 +281,7 @@ use_current_InterfaceDeclaration_ICreateRepoParams(
 declare function get_current_InterfaceDeclaration_ICreateRepoParams():
     TypeOnly<current.ICreateRepoParams>;
 declare function use_old_InterfaceDeclaration_ICreateRepoParams(
-    use: TypeOnly<old.ICreateRepoParams>);
+    use: TypeOnly<old.ICreateRepoParams>): void;
 use_old_InterfaceDeclaration_ICreateRepoParams(
     get_current_InterfaceDeclaration_ICreateRepoParams());
 
@@ -293,7 +293,7 @@ use_old_InterfaceDeclaration_ICreateRepoParams(
 declare function get_old_InterfaceDeclaration_ICreateTagParams():
     TypeOnly<old.ICreateTagParams>;
 declare function use_current_InterfaceDeclaration_ICreateTagParams(
-    use: TypeOnly<current.ICreateTagParams>);
+    use: TypeOnly<current.ICreateTagParams>): void;
 use_current_InterfaceDeclaration_ICreateTagParams(
     get_old_InterfaceDeclaration_ICreateTagParams());
 
@@ -305,7 +305,7 @@ use_current_InterfaceDeclaration_ICreateTagParams(
 declare function get_current_InterfaceDeclaration_ICreateTagParams():
     TypeOnly<current.ICreateTagParams>;
 declare function use_old_InterfaceDeclaration_ICreateTagParams(
-    use: TypeOnly<old.ICreateTagParams>);
+    use: TypeOnly<old.ICreateTagParams>): void;
 use_old_InterfaceDeclaration_ICreateTagParams(
     get_current_InterfaceDeclaration_ICreateTagParams());
 
@@ -317,7 +317,7 @@ use_old_InterfaceDeclaration_ICreateTagParams(
 declare function get_old_InterfaceDeclaration_ICreateTreeEntry():
     TypeOnly<old.ICreateTreeEntry>;
 declare function use_current_InterfaceDeclaration_ICreateTreeEntry(
-    use: TypeOnly<current.ICreateTreeEntry>);
+    use: TypeOnly<current.ICreateTreeEntry>): void;
 use_current_InterfaceDeclaration_ICreateTreeEntry(
     get_old_InterfaceDeclaration_ICreateTreeEntry());
 
@@ -329,7 +329,7 @@ use_current_InterfaceDeclaration_ICreateTreeEntry(
 declare function get_current_InterfaceDeclaration_ICreateTreeEntry():
     TypeOnly<current.ICreateTreeEntry>;
 declare function use_old_InterfaceDeclaration_ICreateTreeEntry(
-    use: TypeOnly<old.ICreateTreeEntry>);
+    use: TypeOnly<old.ICreateTreeEntry>): void;
 use_old_InterfaceDeclaration_ICreateTreeEntry(
     get_current_InterfaceDeclaration_ICreateTreeEntry());
 
@@ -341,7 +341,7 @@ use_old_InterfaceDeclaration_ICreateTreeEntry(
 declare function get_old_InterfaceDeclaration_ICreateTreeParams():
     TypeOnly<old.ICreateTreeParams>;
 declare function use_current_InterfaceDeclaration_ICreateTreeParams(
-    use: TypeOnly<current.ICreateTreeParams>);
+    use: TypeOnly<current.ICreateTreeParams>): void;
 use_current_InterfaceDeclaration_ICreateTreeParams(
     get_old_InterfaceDeclaration_ICreateTreeParams());
 
@@ -353,7 +353,7 @@ use_current_InterfaceDeclaration_ICreateTreeParams(
 declare function get_current_InterfaceDeclaration_ICreateTreeParams():
     TypeOnly<current.ICreateTreeParams>;
 declare function use_old_InterfaceDeclaration_ICreateTreeParams(
-    use: TypeOnly<old.ICreateTreeParams>);
+    use: TypeOnly<old.ICreateTreeParams>): void;
 use_old_InterfaceDeclaration_ICreateTreeParams(
     get_current_InterfaceDeclaration_ICreateTreeParams());
 
@@ -365,7 +365,7 @@ use_old_InterfaceDeclaration_ICreateTreeParams(
 declare function get_old_InterfaceDeclaration_IHeader():
     TypeOnly<old.IHeader>;
 declare function use_current_InterfaceDeclaration_IHeader(
-    use: TypeOnly<current.IHeader>);
+    use: TypeOnly<current.IHeader>): void;
 use_current_InterfaceDeclaration_IHeader(
     get_old_InterfaceDeclaration_IHeader());
 
@@ -377,7 +377,7 @@ use_current_InterfaceDeclaration_IHeader(
 declare function get_current_InterfaceDeclaration_IHeader():
     TypeOnly<current.IHeader>;
 declare function use_old_InterfaceDeclaration_IHeader(
-    use: TypeOnly<old.IHeader>);
+    use: TypeOnly<old.IHeader>): void;
 use_old_InterfaceDeclaration_IHeader(
     get_current_InterfaceDeclaration_IHeader());
 
@@ -389,7 +389,7 @@ use_old_InterfaceDeclaration_IHeader(
 declare function get_old_InterfaceDeclaration_IPatchRefParams():
     TypeOnly<old.IPatchRefParams>;
 declare function use_current_InterfaceDeclaration_IPatchRefParams(
-    use: TypeOnly<current.IPatchRefParams>);
+    use: TypeOnly<current.IPatchRefParams>): void;
 use_current_InterfaceDeclaration_IPatchRefParams(
     get_old_InterfaceDeclaration_IPatchRefParams());
 
@@ -401,7 +401,7 @@ use_current_InterfaceDeclaration_IPatchRefParams(
 declare function get_current_InterfaceDeclaration_IPatchRefParams():
     TypeOnly<current.IPatchRefParams>;
 declare function use_old_InterfaceDeclaration_IPatchRefParams(
-    use: TypeOnly<old.IPatchRefParams>);
+    use: TypeOnly<old.IPatchRefParams>): void;
 use_old_InterfaceDeclaration_IPatchRefParams(
     get_current_InterfaceDeclaration_IPatchRefParams());
 
@@ -413,7 +413,7 @@ use_old_InterfaceDeclaration_IPatchRefParams(
 declare function get_old_InterfaceDeclaration_IRef():
     TypeOnly<old.IRef>;
 declare function use_current_InterfaceDeclaration_IRef(
-    use: TypeOnly<current.IRef>);
+    use: TypeOnly<current.IRef>): void;
 use_current_InterfaceDeclaration_IRef(
     get_old_InterfaceDeclaration_IRef());
 
@@ -425,7 +425,7 @@ use_current_InterfaceDeclaration_IRef(
 declare function get_current_InterfaceDeclaration_IRef():
     TypeOnly<current.IRef>;
 declare function use_old_InterfaceDeclaration_IRef(
-    use: TypeOnly<old.IRef>);
+    use: TypeOnly<old.IRef>): void;
 use_old_InterfaceDeclaration_IRef(
     get_current_InterfaceDeclaration_IRef());
 
@@ -437,7 +437,7 @@ use_old_InterfaceDeclaration_IRef(
 declare function get_old_InterfaceDeclaration_ITag():
     TypeOnly<old.ITag>;
 declare function use_current_InterfaceDeclaration_ITag(
-    use: TypeOnly<current.ITag>);
+    use: TypeOnly<current.ITag>): void;
 use_current_InterfaceDeclaration_ITag(
     get_old_InterfaceDeclaration_ITag());
 
@@ -449,7 +449,7 @@ use_current_InterfaceDeclaration_ITag(
 declare function get_current_InterfaceDeclaration_ITag():
     TypeOnly<current.ITag>;
 declare function use_old_InterfaceDeclaration_ITag(
-    use: TypeOnly<old.ITag>);
+    use: TypeOnly<old.ITag>): void;
 use_old_InterfaceDeclaration_ITag(
     get_current_InterfaceDeclaration_ITag());
 
@@ -461,7 +461,7 @@ use_old_InterfaceDeclaration_ITag(
 declare function get_old_InterfaceDeclaration_ITagger():
     TypeOnly<old.ITagger>;
 declare function use_current_InterfaceDeclaration_ITagger(
-    use: TypeOnly<current.ITagger>);
+    use: TypeOnly<current.ITagger>): void;
 use_current_InterfaceDeclaration_ITagger(
     get_old_InterfaceDeclaration_ITagger());
 
@@ -473,7 +473,7 @@ use_current_InterfaceDeclaration_ITagger(
 declare function get_current_InterfaceDeclaration_ITagger():
     TypeOnly<current.ITagger>;
 declare function use_old_InterfaceDeclaration_ITagger(
-    use: TypeOnly<old.ITagger>);
+    use: TypeOnly<old.ITagger>): void;
 use_old_InterfaceDeclaration_ITagger(
     get_current_InterfaceDeclaration_ITagger());
 
@@ -485,7 +485,7 @@ use_old_InterfaceDeclaration_ITagger(
 declare function get_old_InterfaceDeclaration_ITree():
     TypeOnly<old.ITree>;
 declare function use_current_InterfaceDeclaration_ITree(
-    use: TypeOnly<current.ITree>);
+    use: TypeOnly<current.ITree>): void;
 use_current_InterfaceDeclaration_ITree(
     get_old_InterfaceDeclaration_ITree());
 
@@ -497,7 +497,7 @@ use_current_InterfaceDeclaration_ITree(
 declare function get_current_InterfaceDeclaration_ITree():
     TypeOnly<current.ITree>;
 declare function use_old_InterfaceDeclaration_ITree(
-    use: TypeOnly<old.ITree>);
+    use: TypeOnly<old.ITree>): void;
 use_old_InterfaceDeclaration_ITree(
     get_current_InterfaceDeclaration_ITree());
 
@@ -509,7 +509,7 @@ use_old_InterfaceDeclaration_ITree(
 declare function get_old_InterfaceDeclaration_ITreeEntry():
     TypeOnly<old.ITreeEntry>;
 declare function use_current_InterfaceDeclaration_ITreeEntry(
-    use: TypeOnly<current.ITreeEntry>);
+    use: TypeOnly<current.ITreeEntry>): void;
 use_current_InterfaceDeclaration_ITreeEntry(
     get_old_InterfaceDeclaration_ITreeEntry());
 
@@ -521,6 +521,6 @@ use_current_InterfaceDeclaration_ITreeEntry(
 declare function get_current_InterfaceDeclaration_ITreeEntry():
     TypeOnly<current.ITreeEntry>;
 declare function use_old_InterfaceDeclaration_ITreeEntry(
-    use: TypeOnly<old.ITreeEntry>);
+    use: TypeOnly<old.ITreeEntry>): void;
 use_old_InterfaceDeclaration_ITreeEntry(
     get_current_InterfaceDeclaration_ITreeEntry());

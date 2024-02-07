@@ -29,7 +29,7 @@ import {
 	generateBumpVersionBranchName,
 	generateBumpVersionCommitMessage,
 	setVersion,
-} from "../lib";
+} from "../library";
 
 export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 	static readonly summary =

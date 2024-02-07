@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISummaryBlob } from "@fluidframework/protocol-definitions";
-import { IGCTestProvider, runGCTests } from "@fluid-internal/test-dds-utils";
+import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import {
 	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
@@ -52,7 +52,7 @@ describe("Map", () => {
 	describe("Local state", () => {
 		let map: SharedMap;
 
-		beforeEach(async () => {
+		beforeEach("createLocalMap", async () => {
 			map = createLocalMap("testMap");
 		});
 
@@ -141,6 +141,7 @@ describe("Map", () => {
 					map.set(undefined as unknown as string, "one");
 				}, "Should throw for key of undefined");
 				assert.throws(() => {
+					// eslint-disable-next-line unicorn/no-null
 					map.set(null as unknown as string, "two");
 				}, "Should throw for key of null");
 			});
@@ -429,7 +430,7 @@ describe("Map", () => {
 		let map1: SharedMap;
 		let map2: SharedMap;
 
-		beforeEach(async () => {
+		beforeEach("createConnectedMaps", async () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
 			// Create the first map
 			map1 = createConnectedMap("map1", containerRuntimeFactory);
@@ -545,7 +546,7 @@ describe("Map", () => {
 
 					containerRuntimeFactory.processAllMessages();
 
-					const retrieved = map1.get("object");
+					const retrieved = map1.get("object") as typeof containingObject;
 					const retrievedSubMap: unknown = await retrieved.subMapHandle.get();
 					assert.equal(retrievedSubMap, subMap, "could not get nested map 1");
 					const retrievedSubMap2: unknown = await retrieved.nestedObj.subMap2Handle.get();
@@ -889,7 +890,7 @@ describe("Map", () => {
 			}
 
 			/**
-			 * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.sharedObject}
+			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.sharedObject}
 			 */
 			public get sharedObject(): SharedMap {
 				// Return the remote SharedMap because we want to verify its summary data.
@@ -897,14 +898,14 @@ describe("Map", () => {
 			}
 
 			/**
-			 * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.expectedOutboundRoutes}
+			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.expectedOutboundRoutes}
 			 */
 			public get expectedOutboundRoutes(): string[] {
 				return this._expectedRoutes;
 			}
 
 			/**
-			 * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.addOutboundRoutes}
+			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.addOutboundRoutes}
 			 */
 			public async addOutboundRoutes(): Promise<void> {
 				const newSubMapId = `subMap-${++this.subMapCount}`;
@@ -915,7 +916,7 @@ describe("Map", () => {
 			}
 
 			/**
-			 * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.deleteOutboundRoutes}
+			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.deleteOutboundRoutes}
 			 */
 			public async deleteOutboundRoutes(): Promise<void> {
 				// Delete the last handle that was added.
@@ -932,7 +933,7 @@ describe("Map", () => {
 			}
 
 			/**
-			 * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.addNestedHandles}
+			 * {@inheritDoc @fluid-private/test-dds-utils#IGCTestProvider.addNestedHandles}
 			 */
 			public async addNestedHandles(): Promise<void> {
 				const subMapId1 = `subMap-${++this.subMapCount}`;

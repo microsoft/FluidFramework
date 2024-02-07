@@ -7,6 +7,9 @@ import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-serv
 import { ICollection, ICheckpointRepository } from "./database";
 import { ICheckpoint, IDeliState, IScribe } from "./document";
 
+/**
+ * @internal
+ */
 export class MongoCheckpointRepository implements ICheckpointRepository {
 	constructor(
 		private readonly collection: ICollection<ICheckpoint>,
@@ -31,11 +34,25 @@ export class MongoCheckpointRepository implements ICheckpointRepository {
 			return;
 		}
 		const pointReadFilter = this.composePointReadFilter(documentId, tenantId);
-		await this.collection.upsert(
-			pointReadFilter,
-			{ [this.checkpointType]: JSON.stringify(checkpoint) },
-			null,
-		);
+		try {
+			await this.collection.upsert(
+				pointReadFilter,
+				{ [this.checkpointType]: JSON.stringify(checkpoint) },
+				null,
+			);
+		} catch (error: any) {
+			const err = new Error(`Checkpoint upsert error:  ${error.message?.substring(0, 30)}`);
+			Lumberjack.error(
+				"Unexpected error when writing checkpoint",
+				{
+					...getLumberBaseProperties(documentId, tenantId),
+					pointReadFilter,
+					checkpointType: this.checkpointType,
+				},
+				err,
+			);
+			throw error;
+		}
 	}
 
 	async removeServiceCheckpoint(documentId, tenantId): Promise<void> {
@@ -59,6 +76,19 @@ export class MongoCheckpointRepository implements ICheckpointRepository {
 		documentId: string,
 		tenantId: string,
 	): { _id: string; documentId: string } & any {
+		const isError = !documentId || !tenantId;
+
+		if (isError) {
+			const error = new Error(`Cannot create filter due to missing parameter`);
+			Lumberjack.error(
+				"Missing parameter when writing checkpoint.",
+				{
+					...getLumberBaseProperties(documentId, tenantId),
+				},
+				error,
+			);
+		}
+
 		return { _id: documentId + tenantId, documentId };
 	}
 }

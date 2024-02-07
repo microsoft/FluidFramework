@@ -186,7 +186,7 @@ Test Mapped Type, using [TestEnum](./simple-suite-test#testenum-enum)
 #### Signature {#testmappedtype-signature}
 
 ```typescript
-export declare type TestMappedType = {
+export type TestMappedType = {
     [K in TestEnum]: boolean;
 };
 ```
@@ -202,7 +202,7 @@ Test Type-Alias
 #### Signature {#typealias-signature}
 
 ```typescript
-export declare type TypeAlias = string;
+export type TypeAlias = string;
 ```
 
 #### Remarks {#typealias-remarks}
@@ -220,8 +220,14 @@ Test function
 #### Signature {#testfunction-signature}
 
 ```typescript
-export declare function testFunction<TTypeParameter>(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;
+export declare function testFunction<TTypeParameter extends TestInterface = TestInterface>(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;
 ```
+
+##### Type Parameters
+
+| Parameter | Constraint | Default | Description |
+| --- | --- | --- | --- |
+| TTypeParameter | [TestInterface](./simple-suite-test/testinterface-interface) | [TestInterface](./simple-suite-test/testinterface-interface) | A test type parameter |
 
 #### Remarks {#testfunction-remarks}
 

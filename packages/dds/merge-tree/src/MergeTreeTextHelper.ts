@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-deprecated
-import { IIntegerRange } from "./base";
+import { IIntegerRange } from "./client";
 import { ISegment } from "./mergeTreeNodes";
 import { MergeTree } from "./mergeTree";
+// eslint-disable-next-line import/no-deprecated
 import { IMergeTreeTextHelper, TextSegment } from "./textSegment";
 
 interface ITextAccumulator {
@@ -15,6 +15,7 @@ interface ITextAccumulator {
 	parallelArrays?: boolean;
 }
 
+// eslint-disable-next-line import/no-deprecated
 export class MergeTreeTextHelper implements IMergeTreeTextHelper {
 	constructor(private readonly mergeTree: MergeTree) {}
 
@@ -45,9 +46,7 @@ export class MergeTreeTextHelper implements IMergeTreeTextHelper {
 		end: number | undefined,
 		refSeq: number,
 		clientId: number,
-		// eslint-disable-next-line import/no-deprecated
 	): IIntegerRange {
-		// eslint-disable-next-line import/no-deprecated
 		const range: IIntegerRange = {
 			end: end ?? this.mergeTree.getLength(refSeq, clientId),
 			start: start ?? 0,

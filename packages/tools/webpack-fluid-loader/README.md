@@ -1,6 +1,6 @@
 # @fluid-tools/webpack-fluid-loader
 
-This folder contains the webpack-fluid-loader. This package is meant to be used with the `webpack --serve` and is used by yo Fluid as the default `start` option.
+This folder contains the webpack-fluid-loader. This package is meant to be used with the `webpack --serve` and is used by Fluid as the default `start` option.
 
 This loader is intended for development purposes only and should not be used in production.
 
@@ -126,8 +126,7 @@ Two keys are provided to enable a production system to to regenerate a key witho
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
 
-Use of these trademarks or logos must follow Microsoft's [Trademark & Brand
-Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 

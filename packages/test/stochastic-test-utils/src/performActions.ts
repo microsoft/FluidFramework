@@ -31,6 +31,8 @@ import { combineReducers, combineReducersAsync } from "./combineReducers";
  * a given filepath.
  * This can be useful for debugging why a fuzz test may have failed.
  * Files can also be saved on failure.
+ *
+ * @internal
  */
 export async function performFuzzActionsAsync<
 	TOperation extends { type: string | number },
@@ -68,6 +70,8 @@ export async function performFuzzActionsAsync<
  * a given filepath.
  * This can be useful for debugging why a fuzz test may have failed.
  * Files can also be saved on failure.
+ *
+ * @internal
  */
 export async function performFuzzActionsAsync<
 	TOperation extends { type: string | number },
@@ -80,6 +84,9 @@ export async function performFuzzActionsAsync<
 	initialState: TState,
 	saveInfo?: SaveInfo,
 ): Promise<TState>;
+/**
+ * @internal
+ */
 export async function performFuzzActionsAsync<
 	TOperation extends { type: string | number },
 	TState extends BaseFuzzTestState,
@@ -128,6 +135,8 @@ export async function performFuzzActionsAsync<
  *
  * @param filepath - path to the file
  * @param operations - operations to save in the file
+ *
+ * @internal
  */
 export async function saveOpsToFile(filepath: string, operations: { type: string | number }[]) {
 	await fs.mkdir(path.dirname(filepath), { recursive: true });
@@ -149,6 +158,8 @@ export async function saveOpsToFile(filepath: string, operations: { type: string
  * a given filepath.
  * This can be useful for debugging why a fuzz test may have failed.
  * Files can also be saved on failure.
+ *
+ * @internal
  */
 export function performFuzzActions<
 	TOperation extends { type: string | number },
@@ -186,6 +197,8 @@ export function performFuzzActions<
  * a given filepath.
  * This can be useful for debugging why a fuzz test may have failed.
  * Files can also be saved on failure.
+ *
+ * @internal
  */
 export function performFuzzActions<
 	TOperation extends { type: string | number },
@@ -196,6 +209,9 @@ export function performFuzzActions<
 	initialState: TState,
 	saveInfo?: SaveInfo,
 ): TState;
+/**
+ * @internal
+ */
 export function performFuzzActions<
 	TOperation extends { type: string | number },
 	TState extends BaseFuzzTestState,
@@ -239,6 +255,8 @@ export function performFuzzActions<
  *
  * @param filepath - path to the file
  * @param operations - operations to save in the file
+ *
+ * @internal
  */
 function saveOpsToFileSync(filepath: string, operations: { type: string | number }[]) {
 	mkdirSync(path.dirname(filepath), { recursive: true });

@@ -7,9 +7,8 @@ import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime, DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeNoCompat, ITestDataObject } from "@fluid-internal/test-version-utils";
+import { describeCompat, ITestDataObject } from "@fluid-private/test-version-utils";
 import { benchmark } from "@fluid-tools/benchmark";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
 import { bufferToString } from "@fluid-internal/client-utils";
@@ -32,7 +31,7 @@ function readBlobContent(content: ISummaryBlob["content"]): unknown {
 	return JSON.parse(json);
 }
 
-describeNoCompat("Summarization - runtime benchmarks", (getTestObjectProvider) => {
+describeCompat("Summarization - runtime benchmarks", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let mainContainer: IContainer;
 
@@ -46,10 +45,7 @@ describeNoCompat("Summarization - runtime benchmarks", (getTestObjectProvider) =
 	benchmark({
 		title: "Generate summary tree",
 		benchmarkFnAsync: async () => {
-			const defaultDataStore = await requestFluidObject<ITestDataObject>(
-				mainContainer,
-				defaultDataStoreId,
-			);
+			const defaultDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 			const containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
 
 			await provider.ensureSynchronized();

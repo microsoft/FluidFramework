@@ -21,7 +21,7 @@ import {
 } from "./messaging";
 import { type IFluidDevtools } from "./IFluidDevtools";
 import { type DevtoolsFeatureFlags } from "./Features";
-import { type DevtoolsLogger } from "./DevtoolsLogger";
+import { type IDevtoolsLogger } from "./DevtoolsLogger";
 import { type ContainerKey } from "./CommonInterfaces";
 import { pkgVersion as devtoolsVersion } from "./packageVersion";
 
@@ -62,8 +62,7 @@ export function getContainerAlreadyRegisteredErrorText(containerKey: ContainerKe
 
 /**
  * Properties for configuring the Devtools.
- *
- * @public
+ * @internal
  */
 export interface FluidDevtoolsProps {
 	/**
@@ -76,7 +75,7 @@ export interface FluidDevtoolsProps {
 	 * This is provided to the Devtools instance strictly to enable communicating supported / desired functionality with
 	 * external listeners.
 	 */
-	logger?: DevtoolsLogger;
+	logger?: IDevtoolsLogger;
 
 	/**
 	 * (optional) List of Containers to initialize the devtools with.
@@ -119,7 +118,7 @@ export class FluidDevtools implements IFluidDevtools {
 	/**
 	 * (optional) Telemetry logger associated with the Fluid runtime.
 	 */
-	public readonly logger: DevtoolsLogger | undefined;
+	public readonly logger: IDevtoolsLogger | undefined;
 
 	/**
 	 * Stores Container-level devtools instances registered with this object.
@@ -381,8 +380,8 @@ export class FluidDevtools implements IFluidDevtools {
 	private getSupportedFeatures(): DevtoolsFeatureFlags {
 		return {
 			telemetry: this.logger !== undefined,
-			// Completed but disabled until we finish the story for unsampled telemetry that powers this feature
-			opLatencyTelemetry: false,
+			// Most work completed, but not ready to completely enable.
+			opLatencyTelemetry: true,
 		};
 	}
 }
@@ -396,8 +395,7 @@ export class FluidDevtools implements IFluidDevtools {
  *
  * It is automatically disposed on webpage unload, but it can be closed earlier by calling `dispose`
  * on the returned handle.
- *
- * @public
+ * @internal
  */
 export function initializeDevtools(props?: FluidDevtoolsProps): IFluidDevtools {
 	return FluidDevtools.initialize(props);

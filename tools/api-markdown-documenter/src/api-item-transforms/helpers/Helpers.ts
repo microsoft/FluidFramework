@@ -6,24 +6,31 @@ import {
 	ApiClass,
 	ApiDeclaredItem,
 	ApiDocumentedItem,
-	ApiEntryPoint,
+	type ApiEntryPoint,
 	ApiInterface,
-	ApiItem,
-	ApiItemKind,
+	type ApiItem,
+	type ApiItemKind,
 	ApiReturnTypeMixin,
-	Excerpt,
+	ApiTypeParameterListMixin,
+	type Excerpt,
 	ExcerptTokenKind,
-	HeritageType,
-	IResolveDeclarationReferenceResult,
-	TypeParameter,
+	type HeritageType,
+	type IResolveDeclarationReferenceResult,
+	type TypeParameter,
 } from "@microsoft/api-extractor-model";
-import { DocNode, DocNodeContainer, DocNodeKind, DocPlainText, DocSection } from "@microsoft/tsdoc";
-
-import { Heading } from "../../Heading";
 import {
-	DocumentationNode,
+	type DocNode,
+	type DocNodeContainer,
+	DocNodeKind,
+	type DocPlainText,
+	type DocSection,
+} from "@microsoft/tsdoc";
+
+import { type Heading } from "../../Heading";
+import {
+	type DocumentationNode,
 	DocumentationNodeType,
-	DocumentationParentNode,
+	type DocumentationParentNode,
 	FencedCodeBlockNode,
 	HeadingNode,
 	LineBreakNode,
@@ -31,14 +38,14 @@ import {
 	ParagraphNode,
 	PlainTextNode,
 	SectionNode,
-	SingleLineDocumentationNode,
+	type SingleLineDocumentationNode,
 	SingleLineSpanNode,
 	SpanNode,
 	UnorderedListNode,
 } from "../../documentation-domain";
-import { Logger } from "../../Logging";
+import { type Logger } from "../../Logging";
 import {
-	ApiFunctionLike,
+	type ApiFunctionLike,
 	injectSeparator,
 	getQualifiedApiItemName,
 	getSeeBlocks,
@@ -55,7 +62,7 @@ import {
 } from "../ApiItemTransformUtilities";
 import { transformTsdocSection } from "../TsdocNodeTransforms";
 import { getTsdocNodeTransformationOptions } from "../Utilities";
-import { ApiItemTransformationConfiguration } from "../configuration";
+import { type ApiItemTransformationConfiguration } from "../configuration";
 import { createParametersSummaryTable, createTypeParametersSummaryTable } from "./TableHelpers";
 
 /**
@@ -176,16 +183,6 @@ export function createHeritageTypesParagraph(
 		if (renderedImplementsTypes !== undefined) {
 			contents.push(new ParagraphNode([renderedImplementsTypes]));
 		}
-
-		// Render type parameters if there are any.
-		const renderedTypeParameters = createTypeParametersSection(
-			apiItem.typeParameters,
-			apiItem,
-			config,
-		);
-		if (renderedTypeParameters !== undefined) {
-			contents.push(new ParagraphNode([renderedTypeParameters]));
-		}
 	}
 
 	if (apiItem instanceof ApiInterface) {
@@ -198,16 +195,16 @@ export function createHeritageTypesParagraph(
 		if (renderedExtendsTypes !== undefined) {
 			contents.push(new ParagraphNode([renderedExtendsTypes]));
 		}
+	}
 
-		// Render type parameters if there are any.
+	// Render type parameters if there are any.
+	if (ApiTypeParameterListMixin.isBaseClassOf(apiItem) && apiItem.typeParameters.length > 0) {
 		const renderedTypeParameters = createTypeParametersSection(
 			apiItem.typeParameters,
 			apiItem,
 			config,
 		);
-		if (renderedTypeParameters !== undefined) {
-			contents.push(new ParagraphNode([renderedTypeParameters]));
-		}
+		contents.push(new ParagraphNode([renderedTypeParameters]));
 	}
 
 	if (contents.length === 0) {
@@ -269,19 +266,13 @@ function createHeritageTypeListSpan(
  * @param contextApiItem - The API item with which the example is associated.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  *
- * @returns The doc section if any type parameters were provided, otherwise `undefined`.
- *
  * @public
  */
 export function createTypeParametersSection(
 	typeParameters: readonly TypeParameter[],
 	contextApiItem: ApiItem,
 	config: Required<ApiItemTransformationConfiguration>,
-): SectionNode | undefined {
-	if (typeParameters.length === 0) {
-		return undefined;
-	}
-
+): SectionNode {
 	const typeParametersTable = createTypeParametersSummaryTable(
 		typeParameters,
 		contextApiItem,
@@ -327,7 +318,6 @@ export function createExcerptSpanWithHyperlinks(
 		// If it's hyperlink-able, then append a DocLinkTag
 		if (token.kind === ExcerptTokenKind.Reference && token.canonicalReference) {
 			const apiItemResult: IResolveDeclarationReferenceResult =
-				// eslint-disable-next-line unicorn/no-useless-undefined
 				config.apiModel.resolveDeclarationReference(token.canonicalReference, undefined);
 
 			if (apiItemResult.resolvedApiItem) {
@@ -683,11 +673,11 @@ function createExampleSection(
 	const exampleTitle = extractTitleFromExampleSection(example.content);
 
 	const headingTitle =
-		exampleTitle !== undefined
-			? `Example: ${exampleTitle}`
-			: example.exampleNumber === undefined
-			? "Example"
-			: `Example ${example.exampleNumber}`;
+		exampleTitle === undefined
+			? example.exampleNumber === undefined
+				? "Example"
+				: `Example ${example.exampleNumber}`
+			: `Example: ${exampleTitle}`;
 
 	// If our example contained a title line, we need to strip that content out of the body.
 	// Unfortunately, the input `DocNode` types are all class based, and do not expose their constructors, so it is
@@ -701,7 +691,7 @@ function createExampleSection(
 	}
 
 	const headingId = `${getQualifiedApiItemName(example.apiItem)}-example${
-		example.exampleNumber === undefined ? "" : example.exampleNumber
+		example.exampleNumber ?? ""
 	}`;
 
 	return wrapInSection([exampleParagraph], {

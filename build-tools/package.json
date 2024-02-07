@@ -1,6 +1,6 @@
 {
 	"name": "root",
-	"version": "0.26.2",
+	"version": "0.30.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -11,13 +11,13 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"scripts": {
-		"build": "pnpm run generate:packageList && pnpm run build:compile && pnpm run lint && pnpm run build:docs",
-		"build:compile": "pnpm run -r --stream build:compile",
-		"build:docs": "pnpm run -r --no-sort --stream build:docs",
-		"build:fast": "fluid-build --root .. -g build-tools",
+		"build": "pnpm run generate:packageList && fluid-build --task build",
+		"build:compile": "fluid-build --task compile",
+		"build:docs": "fluid-build --task build:docs",
+		"build:fast": "fluid-build --worker",
 		"changelog": "conventional-changelog -p conventionalcommits -i CHANGELOG.md -s -r 2 --commit-path . -t build-tools_v --context lerna.json",
 		"ci:build": "npm run build",
-		"ci:eslint": "pnpm run -r --no-sort --stream --no-bail eslint",
+		"ci:eslint": "fluid-build --task eslint",
 		"ci:test": "npm run test:mocha",
 		"ci:test:coverage": "npm run test:coverage",
 		"clean": "pnpm run -r --no-sort --stream clean && npm run clean:docs && npm run clean:nyc",
@@ -25,7 +25,7 @@
 		"clean:nyc": "rimraf --glob \"nyc/**\"",
 		"commit": "git-cz",
 		"format": "npm run prettier:fix",
-		"generate:packageList": "concurrently npm:generate:packageList:*",
+		"generate:packageList": "concurrently \"npm:generate:packageList:*\"",
 		"generate:packageList:internal-build": "flub list --no-private -g build-tools --feed internal-build --outFile feeds/internal-build.txt",
 		"generate:packageList:internal-dev": "flub list --no-private -g build-tools --feed internal-dev --outFile feeds/internal-dev.txt",
 		"generate:packageList:internal-test": "flub list --no-private -g build-tools --feed internal-test --outFile feeds/internal-test.txt",
@@ -37,8 +37,8 @@
 		"policy-check": "node packages/build-cli/bin/dev check policy",
 		"policy-check:asserts": "node packages/build-cli/bin/dev check policy --handler assert-short-codes --fix",
 		"policy-check:fix": "node packages/build-cli/bin/dev check policy --excludeHandler assert-short-codes --fix",
-		"prettier": "prettier --check . --ignore-path ../.prettierignore",
-		"prettier:fix": "prettier --write . --ignore-path ../.prettierignore",
+		"prettier": "prettier --check . --cache --ignore-path ../.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ../.prettierignore",
 		"syncpack:deps": "syncpack lint-semver-ranges --config syncpack.config.cjs",
 		"syncpack:deps:fix": "syncpack set-semver-ranges --config syncpack.config.cjs",
 		"syncpack:versions": "syncpack list-mismatches --config syncpack.config.cjs",
@@ -70,11 +70,11 @@
 		"@commitlint/cli": "^17.6.6",
 		"@commitlint/config-conventional": "^17.6.6",
 		"@commitlint/cz-commitlint": "^17.5.0",
-		"@fluid-tools/build-cli": "0.26.0-203096",
+		"@fluid-tools/build-cli": "~0.26.2",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.26.0-203096",
+		"@fluidframework/build-tools": "~0.26.2",
 		"@microsoft/api-documenter": "^7.22.24",
-		"@microsoft/api-extractor": "^7.36.1",
+		"@microsoft/api-extractor": "^7.39.1",
 		"c8": "^7.14.0",
 		"commitizen": "^4.3.0",
 		"concurrently": "^8.2.1",
@@ -83,6 +83,7 @@
 		"copyfiles": "^2.4.1",
 		"cz-conventional-changelog": "^3.3.0",
 		"cz-customizable": "^7.0.0",
+		"eslint": "~8.51.0",
 		"inquirer": "^8.2.5",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.1",
@@ -90,7 +91,7 @@
 		"syncpack": "^9.8.6",
 		"typescript": "~5.1.6"
 	},
-	"packageManager": "pnpm@7.33.5+sha512.4e499f22fffe5845aa8f9463e1386b2d72c3134e0ebef9409360ad844fef0290e82b479b32eb2ec0f30e56607e1820c22167829fd62656d41a8fd0cc4a0f4267",
+	"packageManager": "pnpm@7.33.6+sha512.90e27fd38047f18583f3342f784cc3f187f4d4caac89ebc1fffae18dcd7b2dde7678a0bf237481bcb8f7e8e66135fa34803856e4eb2c442ce082ffab5d9d241f",
 	"engines": {
 		"node": ">=14.17.0"
 	},
@@ -112,7 +113,8 @@
 		"overrides": {
 			"json5@<1.0.2": "^1.0.2",
 			"json5@>=2.0.0 <2.2.2": "^2.2.2",
-			"qs": "^6.11.0"
+			"qs": "^6.11.0",
+			"sharp": "^0.33.2"
 		}
 	}
 }

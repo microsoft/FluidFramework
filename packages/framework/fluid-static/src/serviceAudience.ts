@@ -4,9 +4,31 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IAudience, IContainer } from "@fluidframework/container-definitions";
-import { IClient } from "@fluidframework/protocol-definitions";
-import { IServiceAudience, IServiceAudienceEvents, IMember, Myself } from "./types";
+import { type IAudience, type IContainer } from "@fluidframework/container-definitions";
+import { type IClient } from "@fluidframework/protocol-definitions";
+import {
+	type IServiceAudience,
+	type IServiceAudienceEvents,
+	type IMember,
+	type Myself,
+} from "./types";
+
+/**
+ * Creates a service audience for the provided container.
+ *
+ * @param container - The container with which the audience is associated.
+ * @param createServiceMember - A function for creating audience members.
+ *
+ * @typeParam TMember - The {@link IMember} representation used by the audience.
+ *
+ * @internal
+ */
+export function createServiceAudience<TMember extends IMember = IMember>(props: {
+	container: IContainer;
+	createServiceMember: (audienceMember: IClient) => TMember;
+}): IServiceAudience<TMember> {
+	return new ServiceAudience(props.container, props.createServiceMember);
+}
 
 /**
  * Base class for providing audience information for sessions interacting with {@link IFluidContainer}
@@ -16,16 +38,18 @@ import { IServiceAudience, IServiceAudienceEvents, IMember, Myself } from "./typ
  * This can be extended by different service-specific client packages to additional parameters to
  * the user and client details returned in {@link IMember}.
  *
- * @typeParam M - A service-specific {@link IMember} implementation.
+ * @typeParam TMember - A service-specific {@link IMember} implementation.
+ *
+ * @internal
  */
-export abstract class ServiceAudience<M extends IMember = IMember>
-	extends TypedEventEmitter<IServiceAudienceEvents<M>>
-	implements IServiceAudience<M>
+class ServiceAudience<TMember extends IMember = IMember>
+	extends TypedEventEmitter<IServiceAudienceEvents<TMember>>
+	implements IServiceAudience<TMember>
 {
 	/**
 	 * Audience object which includes all the existing members of the {@link IFluidContainer | container}.
 	 */
-	protected readonly audience: IAudience;
+	private readonly audience: IAudience;
 
 	/**
 	 * Retain the most recent member list.
@@ -44,13 +68,14 @@ export abstract class ServiceAudience<M extends IMember = IMember>
 	 * every `addMember` event. It is mapped `clientId` to `M` to be better work with what the {@link IServiceAudience}
 	 * events provide.
 	 */
-	protected lastMembers = new Map<string, M>();
+	private lastMembers = new Map<string, TMember>();
 
-	constructor(
+	public constructor(
 		/**
 		 * Fluid Container to read the audience from.
 		 */
-		protected readonly container: IContainer,
+		private readonly container: IContainer,
+		private readonly createServiceMember: (audienceMember: IClient) => TMember,
 	) {
 		super();
 		this.audience = container.audience;
@@ -78,20 +103,13 @@ export abstract class ServiceAudience<M extends IMember = IMember>
 	}
 
 	/**
-	 * Provides ability for inheriting class to modify/extend the audience object.
-	 *
-	 * @param audienceMember - Record of a specific audience member.
-	 */
-	protected abstract createServiceMember(audienceMember: IClient): M;
-
-	/**
 	 * {@inheritDoc IServiceAudience.getMembers}
 	 */
-	public getMembers(): Map<string, M> {
-		const users = new Map<string, M>();
-		const clientMemberMap = new Map<string, M>();
+	public getMembers(): Map<string, TMember> {
+		const users = new Map<string, TMember>();
+		const clientMemberMap = new Map<string, TMember>();
 		// Iterate through the members and get the user specifics.
-		this.audience.getMembers().forEach((member: IClient, clientId: string) => {
+		for (const [clientId, member] of this.audience.getMembers()) {
 			if (this.shouldIncludeAsMember(member)) {
 				const userId = member.user.id;
 				// Ensure we're tracking the user
@@ -105,7 +123,7 @@ export abstract class ServiceAudience<M extends IMember = IMember>
 				user.connections.push({ id: clientId, mode: member.mode });
 				clientMemberMap.set(clientId, user);
 			}
-		});
+		}
 		this.lastMembers = clientMemberMap;
 		return users;
 	}
@@ -113,7 +131,7 @@ export abstract class ServiceAudience<M extends IMember = IMember>
 	/**
 	 * {@inheritDoc IServiceAudience.getMyself}
 	 */
-	public getMyself(): Myself<M> | undefined {
+	public getMyself(): Myself<TMember> | undefined {
 		const clientId = this.container.clientId;
 		if (clientId === undefined) {
 			return undefined;
@@ -124,12 +142,12 @@ export abstract class ServiceAudience<M extends IMember = IMember>
 			return undefined;
 		}
 
-		const myself: Myself<M> = { ...member, currentConnection: clientId };
+		const myself: Myself<TMember> = { ...member, currentConnection: clientId };
 
 		return myself;
 	}
 
-	private getMember(clientId: string): M | undefined {
+	private getMember(clientId: string): TMember | undefined {
 		// Fetch the user ID assoicated with this client ID from the runtime
 		const internalAudienceMember = this.audience.getMember(clientId);
 		if (internalAudienceMember === undefined) {
@@ -139,7 +157,7 @@ export abstract class ServiceAudience<M extends IMember = IMember>
 		const allMembers = this.getMembers();
 		const member = allMembers.get(internalAudienceMember?.user.id);
 		if (member === undefined) {
-			throw Error(
+			throw new Error(
 				`Attempted to fetch client ${clientId} that is not part of the current member list`,
 			);
 		}
@@ -152,7 +170,7 @@ export abstract class ServiceAudience<M extends IMember = IMember>
 	 *
 	 * @param member - Member to be included/omitted.
 	 */
-	protected shouldIncludeAsMember(member: IClient): boolean {
+	private shouldIncludeAsMember(member: IClient): boolean {
 		// Include only human members
 		return member.details.capabilities.interactive;
 	}

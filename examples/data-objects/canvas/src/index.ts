@@ -7,9 +7,12 @@ import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 import { DataObjectFactory } from "@fluidframework/aqueduct";
 import { Ink } from "@fluidframework/ink";
 import React from "react";
-import { Canvas } from "./canvas";
-import { CanvasView } from "./view";
+import { Canvas } from "./canvas.js";
+import { CanvasView } from "./view.js";
 
+/**
+ * @internal
+ */
 export const CanvasInstantiationFactory = new DataObjectFactory(
 	"Canvas",
 	Canvas,
@@ -20,6 +23,9 @@ export const CanvasInstantiationFactory = new DataObjectFactory(
 const canvasViewCallback = (canvas: Canvas): React.ReactElement =>
 	React.createElement(CanvasView, { canvas });
 
+/**
+ * @internal
+ */
 export const fluidExport = new ContainerViewRuntimeFactory<Canvas>(
 	CanvasInstantiationFactory,
 	canvasViewCallback,

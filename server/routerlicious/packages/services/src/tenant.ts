@@ -22,6 +22,9 @@ import {
 import { RawAxiosRequestHeaders } from "axios";
 import { IsEphemeralContainer } from ".";
 
+/**
+ * @internal
+ */
 export class Tenant implements core.ITenant {
 	public get id(): string {
 		return this.config.id;
@@ -47,6 +50,7 @@ export class Tenant implements core.ITenant {
 
 /**
  * Manages a collection of tenants
+ * @internal
  */
 export class TenantManager implements core.ITenantManager, core.ITenantConfigManager {
 	constructor(
@@ -144,12 +148,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			getDefaultHeaders,
 			getCorrelationId,
 		);
-		const historian = new Historian(
-			`${this.internalHistorianUrl}/repos/${encodeURIComponent(tenantId)}`,
-			true,
-			false,
-			tenantRestWrapper,
-		);
+		const historian = new Historian(baseUrl, true, false, tenantRestWrapper);
 		const gitManager = new GitManager(historian);
 
 		return gitManager;

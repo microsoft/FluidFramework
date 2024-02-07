@@ -4,33 +4,28 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ServiceAudience } from "@fluidframework/fluid-static";
-import { IClient } from "@fluidframework/protocol-definitions";
-import { ITinyliciousAudience, TinyliciousMember, TinyliciousUser } from "./interfaces";
+import { type IClient } from "@fluidframework/protocol-definitions";
+import { type TinyliciousMember, type TinyliciousUser } from "./interfaces";
 
 /**
- * {@inheritDoc ITinyliciousAudience}
+ * Creates a {@link TinyliciousMember} for the provided client.
  *
- * @public
+ * @remarks
+ * Assumes that the provided client's {@link @fluidframework/protocol-definitions#IClient.user} is of type {@link TinyliciousUser}.
+ * This function will fail if that is not the case.
  */
-export class TinyliciousAudience
-	extends ServiceAudience<TinyliciousMember>
-	implements ITinyliciousAudience
-{
-	/**
-	 * @internal
-	 */
-	protected createServiceMember(audienceMember: IClient): TinyliciousMember {
-		const tinyliciousUser = audienceMember.user as TinyliciousUser;
-		assert(
-			tinyliciousUser !== undefined && typeof tinyliciousUser.name === "string",
-			0x313 /* Specified user was not of type "TinyliciousUser". */,
-		);
+export function createTinyliciousAudienceMember(audienceMember: IClient): TinyliciousMember {
+	const tinyliciousUser = audienceMember.user as Partial<TinyliciousUser>;
+	assert(
+		tinyliciousUser !== undefined &&
+			typeof tinyliciousUser.id === "string" &&
+			typeof tinyliciousUser.name === "string",
+		0x313 /* Specified user was not of type "TinyliciousUser". */,
+	);
 
-		return {
-			userId: tinyliciousUser.id,
-			userName: tinyliciousUser.name,
-			connections: [],
-		};
-	}
+	return {
+		userId: tinyliciousUser.id,
+		userName: tinyliciousUser.name,
+		connections: [],
+	};
 }

@@ -10,11 +10,11 @@ import { FluidDataStoreRuntime } from '@fluidframework/datastore';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { FluidObjectSymbolProvider } from '@fluidframework/synthesize';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
-import { IContainer } from '@fluidframework/container-definitions';
 import { IContainerContext } from '@fluidframework/container-definitions';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
 import { IContainerRuntimeOptions } from '@fluidframework/container-runtime';
+import { IDataStore } from '@fluidframework/runtime-definitions';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions';
@@ -24,8 +24,6 @@ import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidDependencySynthesizer } from '@fluidframework/synthesize';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import type { IFluidMountableViewClass } from '@fluidframework/view-interfaces';
-import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IProvideFluidHandle } from '@fluidframework/core-interfaces';
 import { IRequest } from '@fluidframework/core-interfaces';
@@ -33,20 +31,13 @@ import { IResponse } from '@fluidframework/core-interfaces';
 import { ISharedDirectory } from '@fluidframework/map';
 import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions';
 import { NamedFluidDataStoreRegistryEntry } from '@fluidframework/runtime-definitions';
-import { RequestParser } from '@fluidframework/runtime-utils';
 import { RuntimeFactoryHelper } from '@fluidframework/runtime-utils';
 import { RuntimeRequestHandler } from '@fluidframework/request-handler';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
-// @public
+// @alpha
 export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements IProvideFluidDataStoreRegistry {
-    constructor(props: {
-        registryEntries: NamedFluidDataStoreRegistryEntries;
-        dependencyContainer?: IFluidDependencySynthesizer;
-        requestHandlers?: RuntimeRequestHandler[];
-        runtimeOptions?: IContainerRuntimeOptions;
-        provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
-    });
+    constructor(props: BaseContainerRuntimeFactoryProps);
     protected containerHasInitialized(runtime: IContainerRuntime): Promise<void>;
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
     // (undocumented)
@@ -59,16 +50,20 @@ export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements
     preInitialize(context: IContainerContext, existing: boolean): Promise<ContainerRuntime>;
 }
 
-// @public
+// @alpha
+export interface BaseContainerRuntimeFactoryProps {
+    // @deprecated (undocumented)
+    dependencyContainer?: IFluidDependencySynthesizer;
+    provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+    registryEntries: NamedFluidDataStoreRegistryEntries;
+    // @deprecated
+    requestHandlers?: RuntimeRequestHandler[];
+    runtimeOptions?: IContainerRuntimeOptions;
+}
+
+// @alpha
 export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRuntimeFactory {
-    constructor(props: {
-        defaultFactory: IFluidDataStoreFactory;
-        registryEntries: NamedFluidDataStoreRegistryEntries;
-        dependencyContainer?: IFluidDependencySynthesizer;
-        requestHandlers?: RuntimeRequestHandler[];
-        runtimeOptions?: IContainerRuntimeOptions;
-        provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
-    });
+    constructor(props: ContainerRuntimeFactoryWithDefaultDataStoreProps);
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
     // (undocumented)
     static readonly defaultDataStoreId = "default";
@@ -76,41 +71,39 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
     protected readonly defaultFactory: IFluidDataStoreFactory;
 }
 
-// @public
+// @alpha
+export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
+    // (undocumented)
+    defaultFactory: IFluidDataStoreFactory;
+    // @deprecated (undocumented)
+    dependencyContainer?: IFluidDependencySynthesizer;
+    provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
+    registryEntries: NamedFluidDataStoreRegistryEntries;
+    // @deprecated
+    requestHandlers?: RuntimeRequestHandler[];
+    runtimeOptions?: IContainerRuntimeOptions;
+}
+
+// @alpha
 export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> extends PureDataObject<I> {
     protected getUninitializedErrorString(item: string): string;
     initializeInternal(existing: boolean): Promise<void>;
     protected get root(): ISharedDirectory;
 }
 
-// @public
+// @alpha
 export class DataObjectFactory<TObj extends DataObject<I>, I extends DataObjectTypes = DataObjectTypes> extends PureDataObjectFactory<TObj, I> {
     constructor(type: string, ctor: new (props: IDataObjectProps<I>) => TObj, sharedObjects: readonly IChannelFactory[] | undefined, optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>, registryEntries?: NamedFluidDataStoreRegistryEntries, runtimeFactory?: typeof FluidDataStoreRuntime);
 }
 
-// @public
+// @alpha
 export interface DataObjectTypes {
     Events?: IEvent;
     InitialState?: any;
     OptionalProviders?: FluidObject;
 }
 
-// @public @deprecated
-export function defaultFluidObjectRequestHandler(fluidObject: FluidObject, request: IRequest): IResponse;
-
-// @public @deprecated
-export const defaultRouteRequestHandler: (defaultRootId: string) => (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse | undefined>;
-
-// @public @deprecated (undocumented)
-export function getDefaultObjectFromContainer<T = FluidObject>(container: IContainer): Promise<T>;
-
-// @public @deprecated (undocumented)
-export function getObjectFromContainer<T = FluidObject>(path: string, container: IContainer): Promise<T>;
-
-// @public @deprecated (undocumented)
-export function getObjectWithIdFromContainer<T = FluidObject>(id: string, container: IContainer): Promise<T>;
-
-// @public (undocumented)
+// @alpha (undocumented)
 export interface IDataObjectProps<I extends DataObjectTypes = DataObjectTypes> {
     // (undocumented)
     readonly context: IFluidDataStoreContext;
@@ -122,22 +115,13 @@ export interface IDataObjectProps<I extends DataObjectTypes = DataObjectTypes> {
     readonly runtime: IFluidDataStoreRuntime;
 }
 
-// @public
-export interface IRootDataObjectFactory extends IFluidDataStoreFactory {
-    // (undocumented)
-    createRootInstance(rootDataStoreId: string, runtime: IContainerRuntime): Promise<IFluidRouter>;
-}
-
-// @public @deprecated
-export const mountableViewRequestHandler: (MountableViewClass: IFluidMountableViewClass, handlers: RuntimeRequestHandler[]) => (request: RequestParser, runtime: IContainerRuntime) => Promise<IResponse>;
-
-// @public
-export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes> extends TypedEventEmitter<I["Events"] & IEvent> implements IFluidLoadable, IFluidRouter, IProvideFluidHandle {
+// @alpha
+export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes> extends TypedEventEmitter<I["Events"] & IEvent> implements IFluidLoadable, IProvideFluidHandle {
     constructor(props: IDataObjectProps<I>);
     protected readonly context: IFluidDataStoreContext;
     finishInitialization(existing: boolean): Promise<void>;
     // (undocumented)
-    static getDataObject(runtime: IFluidDataStoreRuntime): Promise<PureDataObject<DataObjectTypes>>;
+    static getDataObject(runtime: IFluidDataStoreRuntime): Promise<PureDataObject>;
     get handle(): IFluidHandle<this>;
     protected hasInitialized(): Promise<void>;
     // (undocumented)
@@ -146,8 +130,6 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     get IFluidHandle(): IFluidHandle<this>;
     // (undocumented)
     get IFluidLoadable(): this;
-    // @deprecated (undocumented)
-    get IFluidRouter(): this;
     initializeInternal(existing: boolean): Promise<void>;
     // (undocumented)
     protected initializeP: Promise<void> | undefined;
@@ -161,16 +143,18 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     protected readonly runtime: IFluidDataStoreRuntime;
 }
 
-// @public
-export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends DataObjectTypes = DataObjectTypes> implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry>, IRootDataObjectFactory {
+// @alpha
+export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends DataObjectTypes = DataObjectTypes> implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry> {
     constructor(type: string, ctor: new (props: IDataObjectProps<I>) => TObj, sharedObjects: readonly IChannelFactory[], optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>, registryEntries?: NamedFluidDataStoreRegistryEntries, runtimeClass?: typeof FluidDataStoreRuntime);
     createChildInstance(parentContext: IFluidDataStoreContext, initialState?: I["InitialState"]): Promise<TObj>;
     createInstance(runtime: IContainerRuntimeBase, initialState?: I["InitialState"]): Promise<TObj>;
     // (undocumented)
     protected createInstanceCore(context: IFluidDataStoreContextDetached, initialState?: I["InitialState"]): Promise<TObj>;
+    createInstanceWithDataStore(containerRuntime: IContainerRuntimeBase, initialState?: I["InitialState"], packagePath?: Readonly<string[]>): Promise<[TObj, IDataStore]>;
     // (undocumented)
     protected createNonRootInstanceCore(containerRuntime: IContainerRuntimeBase, packagePath: Readonly<string[]>, initialState?: I["InitialState"]): Promise<TObj>;
     createPeerInstance(peerContext: IFluidDataStoreContext, initialState?: I["InitialState"]): Promise<TObj>;
+    // @deprecated
     createRootInstance(rootDataStoreId: string, runtime: IContainerRuntime, initialState?: I["InitialState"]): Promise<TObj>;
     // (undocumented)
     get IFluidDataStoreFactory(): this;

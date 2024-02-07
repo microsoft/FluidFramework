@@ -13,6 +13,7 @@ import { validateCommandLineArgs } from "./utils";
 
 /**
  * @param fluidFileConverter - needs to be provided if "codeLoaderBundle" is not and vice versa
+ * @internal
  */
 export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
 	// eslint-disable-next-line @typescript-eslint/no-unused-expressions

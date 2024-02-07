@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-routerlicious",
-	"version": "3.0.0",
+	"version": "3.1.0",
 	"description": "Fluid reference server implementation",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -18,7 +18,7 @@
 		"alfred:debug": "node --inspect=0.0.0.0:5858 dist/alfred/www.js",
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:compile": "npm run tsc && npm run typetests:gen",
-		"clean": "rimraf --glob dist \"*.tsbuildinfo\" \"*.build.log\"",
+		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"copier": "node dist/copier/index.js",
 		"copier:debug": "node --inspect=0.0.0.0:5858 dist/copier/index.js",
 		"deli": "node dist/deli/index.js",
@@ -29,8 +29,8 @@
 		"format": "npm run prettier:fix",
 		"lint": "npm run prettier && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"prettier": "prettier --check . --ignore-path ../../.prettierignore",
-		"prettier:fix": "prettier --write . --ignore-path ../../.prettierignore",
+		"prettier": "prettier --check . --cache --ignore-path ../../.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../.prettierignore",
 		"scriptorium": "node dist/scriptorium/index.js",
 		"scriptorium:debug": "node --inspect=0.0.0.0:5858 dist/scriptorium/index.js",
 		"tsc": "tsc",
@@ -38,9 +38,9 @@
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
-		"@fluidframework/common-utils": "^3.0.0",
+		"@fluidframework/common-utils": "^3.1.0",
 		"@fluidframework/gitresources": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.0.0",
+		"@fluidframework/protocol-definitions": "^3.2.0-231454",
 		"@fluidframework/server-kafka-orderer": "workspace:~",
 		"@fluidframework/server-lambdas": "workspace:~",
 		"@fluidframework/server-lambdas-driver": "workspace:~",
@@ -61,7 +61,7 @@
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.26.1",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.26.1",
+		"@fluidframework/build-tools": "^0.28.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/server-local-server": "workspace:~",
 		"@fluidframework/server-routerlicious-previous": "npm:@fluidframework/server-routerlicious@2.0.0",

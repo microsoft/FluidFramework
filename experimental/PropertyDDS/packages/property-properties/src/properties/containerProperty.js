@@ -16,6 +16,7 @@ const { IndexedCollectionBaseProperty } = require("./indexedCollectionBaseProper
 
 /**
  * A property object that allows to add child properties dynamically.
+ * @internal
  */
 export class ContainerProperty extends IndexedCollectionBaseProperty {
 	/**

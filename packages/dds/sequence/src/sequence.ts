@@ -2,6 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import Deque from "double-ended-queue";
 import { assert, Deferred } from "@fluidframework/core-utils";
 import { bufferToString } from "@fluid-internal/client-utils";
 import { LoggingError, createChildLogger } from "@fluidframework/telemetry-utils";
@@ -12,13 +14,13 @@ import {
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	Client,
 	createAnnotateRangeOp,
 	// eslint-disable-next-line import/no-deprecated
 	createGroupOp,
 	createInsertOp,
 	createRemoveRangeOp,
-	ICombiningOp,
 	IJSONSegment,
 	IMergeTreeAnnotateMsg,
 	IMergeTreeDeltaOp,
@@ -29,15 +31,15 @@ import {
 	ISegment,
 	ISegmentAction,
 	LocalReferencePosition,
-	// eslint-disable-next-line import/no-deprecated
 	matchProperties,
 	MergeTreeDeltaType,
 	PropertySet,
-	RangeStackMap,
 	ReferencePosition,
 	ReferenceType,
 	MergeTreeRevertibleDriver,
 	SegmentGroup,
+	IMergeTreeObliterateMsg,
+	createObliterateRangeOp,
 	SlidingPreference,
 } from "@fluidframework/merge-tree";
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
@@ -47,7 +49,6 @@ import {
 	parseHandles,
 	SharedObject,
 	ISharedObjectEvents,
-	SummarySerializer,
 } from "@fluidframework/shared-object-base";
 import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
@@ -97,25 +98,25 @@ const contentPath = "content";
  * - `event` - Various information on the segments that were modified.
  *
  * - `target` - The sequence itself.
- * @public
+ * @alpha
  */
 export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 	(
 		event: "createIntervalCollection",
 		listener: (label: string, local: boolean, target: IEventThisPlaceHolder) => void,
-	);
+	): void;
 	(
 		event: "sequenceDelta",
 		listener: (event: SequenceDeltaEvent, target: IEventThisPlaceHolder) => void,
-	);
+	): void;
 	(
 		event: "maintenance",
 		listener: (event: SequenceMaintenanceEvent, target: IEventThisPlaceHolder) => void,
-	);
+	): void;
 }
 
 /**
- * @public
+ * @alpha
  */
 export abstract class SharedSegmentSequence<T extends ISegment>
 	extends SharedObject<ISharedSegmentSequenceEvents>
@@ -136,7 +137,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 *
 	 * An application using SharedString which explicitly wants to opt in to allowing reentrancy anyway can set `sharedStringPreventReentrancy`
 	 * on the data store options to `false`.
-	 * @internal
 	 */
 	protected guardReentrancy: <TRet>(callback: () => TRet) => TRet;
 
@@ -146,14 +146,13 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			switch (event.deltaOperation) {
 				case MergeTreeDeltaType.ANNOTATE: {
 					const lastAnnotate = ops[ops.length - 1] as IMergeTreeAnnotateMsg;
-					const props = {};
+					const props: PropertySet = {};
 					for (const key of Object.keys(r.propertyDeltas)) {
 						props[key] = r.segment.properties?.[key] ?? null;
 					}
 					if (
 						lastAnnotate &&
 						lastAnnotate.pos2 === r.position &&
-						// eslint-disable-next-line import/no-deprecated
 						matchProperties(lastAnnotate.props, props)
 					) {
 						lastAnnotate.pos2 += r.segment.cachedLength;
@@ -163,7 +162,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 								r.position,
 								r.position + r.segment.cachedLength,
 								props,
-								undefined,
 							),
 						);
 					}
@@ -190,12 +188,66 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 					break;
 				}
 
+				case MergeTreeDeltaType.OBLITERATE: {
+					const lastRem = ops[ops.length - 1] as IMergeTreeObliterateMsg;
+					if (lastRem?.pos1 === r.position) {
+						assert(
+							lastRem.pos2 !== undefined,
+							0x874 /* pos2 should not be undefined here */,
+						);
+						lastRem.pos2 += r.segment.cachedLength;
+					} else {
+						ops.push(
+							createObliterateRangeOp(
+								r.position,
+								r.position + r.segment.cachedLength,
+							),
+						);
+					}
+					break;
+				}
+
 				default:
 			}
 		}
 		return ops;
 	}
 
+	/**
+	 * Note: this field only provides a lower-bound on the reference sequence numbers for in-flight ops.
+	 * The exact reason isn't understood, but some e2e tests suggest that the runtime may sometimes process
+	 * incoming leave/join ops before putting an op that this DDS submits over the wire.
+	 *
+	 * E.g. SharedString submits an op while deltaManager has lastSequenceNumber = 10, but before the runtime
+	 * puts this op over the wire, it processes a client join/leave op with sequence number 11, so the referenceSequenceNumber
+	 * on the SharedString op is 11.
+	 *
+	 * The reference sequence numbers placed in this queue are also not accurate for stashed ops due to how the applyStashedOp
+	 * flow works at the runtime level. This is a legitimate bug, and AB#6602 tracks one way to fix it (stop reaching all the way
+	 * to deltaManager's lastSequenceNumber to obtain refSeq, instead leveraging some analogous notion on the container or datastore
+	 * runtime).
+	 */
+	private readonly inFlightRefSeqs = new Deque<number>();
+
+	private ongoingResubmitRefSeq: number | undefined;
+
+	/**
+	 * Gets the reference sequence number (i.e. sequence number of the runtime's last processed op) for an op submitted
+	 * in the current context.
+	 *
+	 * This value can be optionally overridden using `useResubmitRefSeq`.
+	 * IntervalCollection's resubmit logic currently relies on preserving merge information from when the op was originally submitted,
+	 * even if the op is resubmitted more than once. Thus during resubmit, `inFlightRefSeqs` gets populated with the
+	 * original refSeq rather than the refSeq at the time of reconnection.
+	 *
+	 * @remarks - In some not fully understood cases, the runtime may process incoming ops before putting an op that this
+	 * DDS submits over the wire. See `inFlightRefSeqs` for more details.
+	 */
+	private get currentRefSeq() {
+		return this.ongoingResubmitRefSeq ?? this.runtime.deltaManager.lastSequenceNumber;
+	}
+
+	// eslint-disable-next-line import/no-deprecated
 	protected client: Client;
 	/** `Deferred` that triggers once the object is loaded */
 	protected loadedDeferred = new Deferred<void>();
@@ -216,6 +268,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	) {
 		super(id, dataStoreRuntime, attributes, "fluid_sequence_");
 
+		const getMinInFlightRefSeq = () => this.inFlightRefSeqs.get(0);
 		this.guardReentrancy =
 			dataStoreRuntime.options.sharedStringPreventReentrancy ?? true
 				? ensureNoReentrancy
@@ -233,6 +286,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
 		});
 
+		// eslint-disable-next-line import/no-deprecated
 		this.client = new Client(
 			segmentFromSpec,
 			createChildLogger({
@@ -240,6 +294,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				namespace: "SharedSegmentSequence.MergeTreeClient",
 			}),
 			dataStoreRuntime.options,
+			getMinInFlightRefSeq,
 		);
 
 		this.client.prependListener("delta", (opArgs, deltaArgs) => {
@@ -257,7 +312,14 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		this.intervalCollections = new DefaultMap(
 			this.serializer,
 			this.handle,
-			(op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
+			(op, localOpMetadata) => {
+				if (!this.isAttached()) {
+					return;
+				}
+
+				this.inFlightRefSeqs.push(this.currentRefSeq);
+				this.submitLocalMessage(op, localOpMetadata);
+			},
 			new SequenceIntervalCollectionValueType(),
 			dataStoreRuntime.options,
 		);
@@ -267,12 +329,25 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * @param start - The inclusive start of the range to remove
 	 * @param end - The exclusive end of the range to remove
 	 */
-	public removeRange(start: number, end: number): IMergeTreeRemoveMsg {
-		return this.guardReentrancy(() => this.client.removeRangeLocal(start, end));
+	public removeRange(start: number, end: number): void {
+		this.guardReentrancy(() => this.client.removeRangeLocal(start, end));
 	}
 
 	/**
-	 * @deprecated The ability to create group ops will be removed in an upcoming release, as group ops are redundant with the native batching capabilities of the runtime
+	 * Obliterate is similar to remove, but differs in that segments concurrently
+	 * inserted into an obliterated range will also be removed
+	 *
+	 * @param start - The inclusive start of the range to obliterate
+	 * @param end - The exclusive end of the range to obliterate
+	 */
+	public obliterateRange(start: number, end: number): void {
+		this.guardReentrancy(() => this.client.obliterateRangeLocal(start, end));
+	}
+
+	/**
+	 * @deprecated The ability to create group ops will be removed in an upcoming
+	 * release, as group ops are redundant with the native batching capabilities
+	 * of the runtime
 	 */
 	public groupOperation(groupOp: IMergeTreeGroupMsg) {
 		this.guardReentrancy(() => this.client.localTransaction(groupOp));
@@ -312,16 +387,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * @param start - The inclusive start position of the range to annotate
 	 * @param end - The exclusive end position of the range to annotate
 	 * @param props - The properties to annotate the range with
-	 * @param combiningOp - Optional. Specifies how to combine values for the property, such as "incr" for increment.
 	 *
 	 */
-	public annotateRange(
-		start: number,
-		end: number,
-		props: PropertySet,
-		combiningOp?: ICombiningOp,
-	) {
-		this.guardReentrancy(() => this.client.annotateRangeLocal(start, end, props, combiningOp));
+	public annotateRange(start: number, end: number, props: PropertySet): void {
+		this.guardReentrancy(() => this.client.annotateRangeLocal(start, end, props));
 	}
 
 	public getPropertiesAtPosition(pos: number) {
@@ -398,13 +467,12 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		);
 	}
 
-	/**
-	 * @deprecated This method will no longer be public in an upcoming release as it is not safe to use outside of this class
-	 */
-	public submitSequenceMessage(message: IMergeTreeOp) {
+	private submitSequenceMessage(message: IMergeTreeOp) {
 		if (!this.isAttached()) {
 			return;
 		}
+
+		this.inFlightRefSeqs.push(this.currentRefSeq);
 		const translated = makeHandlesSerializable(message, this.serializer, this.handle);
 		const metadata = this.client.peekPendingSegmentGroups(
 			message.type === MergeTreeDeltaType.GROUP ? message.ops.length : 1,
@@ -412,7 +480,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 		// if loading isn't complete, we need to cache
 		// local ops until loading is complete, and then
-		// they will be resent
+		// they will be present
 		if (!this.loadedDeferred.isCompleted) {
 			this.loadedDeferredOutgoingOps.push(metadata ? [translated, metadata] : translated);
 		} else {
@@ -431,12 +499,13 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 	/**
 	 * Walk the underlying segments of the sequence.
-	 * The walked segments may extend beyond the range
-	 * if the segments cross the ranges start or end boundaries.
-	 * Set split range to true to ensure only segments within the
-	 * range are walked.
+	 * The walked segments may extend beyond the range if the segments cross the
+	 * ranges start or end boundaries.
 	 *
-	 * @param handler - The function to handle each segment
+	 * Set split range to true to ensure only segments within the range are walked.
+	 *
+	 * @param handler - The function to handle each segment. Traversal ends if
+	 * this function returns true.
 	 * @param start - Optional. The start of range walk.
 	 * @param end - Optional. The end of range walk
 	 * @param accum - Optional. An object that will be passed to the handler for accumulation
@@ -453,13 +522,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	}
 
 	/**
-	 * @deprecated this functionality is no longer supported and will be removed
-	 */
-	public getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap {
-		return this.client.getStackContext(startPos, rangeLabels);
-	}
-
-	/**
 	 * @returns The most recent sequence number which has been acked by the server and processed by this
 	 * SharedSegmentSequence.
 	 */
@@ -472,7 +534,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * @param refPos - The reference position to insert the segment at
 	 * @param segment - The segment to insert
 	 */
-	public insertAtReferencePosition(pos: ReferencePosition, segment: T) {
+	public insertAtReferencePosition(pos: ReferencePosition, segment: T): void {
 		this.guardReentrancy(() => this.client.insertAtReferencePositionLocal(pos, segment));
 	}
 	/**
@@ -480,7 +542,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * @param start - The position to insert the segment at
 	 * @param spec - The segment to inserts spec
 	 */
-	public insertFromSpec(pos: number, spec: IJSONSegment) {
+	public insertFromSpec(pos: number, spec: IJSONSegment): void {
 		const segment = this.segmentFromSpec(spec);
 		this.guardReentrancy(() => this.client.insertSegmentLocal(pos, segment));
 	}
@@ -533,7 +595,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * Runs serializer over the GC data for this SharedMatrix.
 	 * All the IFluidHandle's represent routes to other objects.
 	 */
-	protected processGCDataCore(serializer: SummarySerializer) {
+	protected processGCDataCore(serializer: IFluidSerializer) {
 		if (this.intervalCollections.size > 0) {
 			this.intervalCollections.serialize(serializer);
 		}
@@ -550,16 +612,17 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * @param end - The end of the range to replace
 	 * @param segment - The segment that will replace the range
 	 */
-	protected replaceRange(start: number, end: number, segment: ISegment) {
+	protected replaceRange(start: number, end: number, segment: ISegment): void {
 		// Insert at the max end of the range when start > end, but still remove the range later
 		const insertIndex: number = Math.max(start, end);
 
 		// Insert first, so local references can slide to the inserted seg if any
-		const insert = this.client.insertSegmentLocal(insertIndex, segment);
-		if (insert) {
-			if (start < end) {
-				this.client.removeRangeLocal(start, end);
-			}
+		const insert = this.guardReentrancy(() =>
+			this.client.insertSegmentLocal(insertIndex, segment),
+		);
+
+		if (insert && start < end) {
+			this.removeRange(start, end);
 		}
 	}
 
@@ -580,19 +643,23 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
 	 */
 	protected reSubmitCore(content: any, localOpMetadata: unknown) {
-		if (
-			!this.intervalCollections.tryResubmitMessage(
-				content,
-				localOpMetadata as IMapMessageLocalMetadata,
-			)
-		) {
-			this.submitSequenceMessage(
-				this.client.regeneratePendingOp(
-					content as IMergeTreeOp,
-					localOpMetadata as SegmentGroup | SegmentGroup[],
-				),
-			);
-		}
+		const originalRefSeq = this.inFlightRefSeqs.shift();
+		assert(originalRefSeq !== undefined, "Expected a recorded refSeq when resubmitting an op");
+		this.useResubmitRefSeq(originalRefSeq, () => {
+			if (
+				!this.intervalCollections.tryResubmitMessage(
+					content,
+					localOpMetadata as IMapMessageLocalMetadata,
+				)
+			) {
+				this.submitSequenceMessage(
+					this.client.regeneratePendingOp(
+						content as IMergeTreeOp,
+						localOpMetadata as SegmentGroup | SegmentGroup[],
+					),
+				);
+			}
+		});
 	}
 
 	/**
@@ -649,7 +716,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				.catch((error) => {
 					this.loadFinished(error);
 				});
-			if (this.dataStoreRuntime.options?.sequenceInitializeFromHeaderOnly !== true) {
+			if (this.dataStoreRuntime.options.sequenceInitializeFromHeaderOnly !== true) {
 				// if we not doing partial load, await the catch up ops,
 				// and the finalization of the load
 				await loadCatchUpOps;
@@ -667,6 +734,18 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
+		if (local) {
+			const recordedRefSeq = this.inFlightRefSeqs.shift();
+			assert(recordedRefSeq !== undefined, "No pending recorded refSeq found");
+			// TODO: AB#7076: Some equivalent assert should be enabled. This fails some e2e stashed op tests because
+			// the deltaManager may have seen more messages than the runtime has processed while amidst the stashed op
+			// flow, so e.g. when `applyStashedOp` is called and the DDS is put in a state where it expects an ack for
+			// one of its messages, the delta manager has actually already seen subsequent messages from collaborators
+			// which the in-flight message is concurrent to.
+			// See "handles stashed ops created on top of sequenced local ops" for one such test case.
+			// assert(recordedRefSeq <= message.referenceSequenceNumber, "RefSeq mismatch");
+		}
+
 		// if loading isn't complete, we need to cache all
 		// incoming ops to be applied after loading is complete
 		if (this.deferIncomingOps) {
@@ -714,7 +793,13 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 */
 	protected applyStashedOp(content: any): unknown {
-		return this.client.applyStashedOp(parseHandles(content, this.serializer));
+		this.inFlightRefSeqs.push(this.currentRefSeq);
+		const parsedContent = parseHandles(content, this.serializer);
+		const metadata =
+			this.intervalCollections.tryGetStashedOpLocalMetadata(parsedContent) ??
+			this.client.applyStashedOp(parsedContent);
+		assert(!!metadata, 0x87d /* Metadata is undefined */);
+		return metadata;
 	}
 
 	private summarizeMergeTree(serializer: IFluidSerializer): ISummaryTreeWithStats {
@@ -748,7 +833,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		}
 		const needsTransformation = message.referenceSequenceNumber !== message.sequenceNumber - 1;
 		let stashMessage: Readonly<ISequencedDocumentMessage> = message;
-		if (this.runtime.options?.newMergeTreeSnapshotFormat !== true) {
+		if (this.runtime.options.newMergeTreeSnapshotFormat !== true) {
 			if (needsTransformation) {
 				this.on("sequenceDelta", transformOps);
 			}
@@ -756,7 +841,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 		this.client.applyMsg(message, local);
 
-		if (this.runtime.options?.newMergeTreeSnapshotFormat !== true) {
+		if (this.runtime.options.newMergeTreeSnapshotFormat !== true) {
 			if (needsTransformation) {
 				this.removeListener("sequenceDelta", transformOps);
 				// shallow clone the message as we only overwrite top level properties,
@@ -843,6 +928,20 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		for (const key of this.intervalCollections.keys()) {
 			const intervalCollection = this.intervalCollections.get(key);
 			intervalCollection.attachGraph(this.client, key);
+		}
+	}
+
+	/**
+	 * Overrides the "currently applicable reference sequence number" for the duration of the callback.
+	 * See remarks on `currentRefSeq` for more context.
+	 */
+	private useResubmitRefSeq(refSeq: number, callback: () => void) {
+		const previousResubmitRefSeq = this.ongoingResubmitRefSeq;
+		this.ongoingResubmitRefSeq = refSeq;
+		try {
+			callback();
+		} finally {
+			this.ongoingResubmitRefSeq = previousResubmitRefSeq;
 		}
 	}
 }

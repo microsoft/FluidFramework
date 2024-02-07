@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/version-tools",
-	"version": "0.26.2",
+	"version": "0.30.0",
 	"description": "Versioning tools for Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -35,19 +35,20 @@
 		"build:compile": "npm run build:commonjs && npm run build:readme",
 		"build:docs": "api-extractor run --local",
 		"build:manifest": "oclif manifest",
-		"build:readme": "npm run build:manifest && fluid-readme generate readme",
+		"build:readme": "fluid-readme generate readme",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob dist lib oclif.manifest.json \"*.tsbuildinfo\" \"*.build.log\" _api-extractor-temp nyc",
-		"clean:manifest": "rimraf --glob \"oclif.manifest.json\"",
+		"clean": "rimraf --glob dist lib oclif.manifest.json \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
+		"clean:manifest": "rimraf --glob oclif.manifest.json",
+		"compile": "fluid-build . --task compile",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
 		"lint": "npm run prettier && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"postpack": "npm run clean:manifest",
-		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
-		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
+		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm run test",
 		"test:mocha": "mocha --forbid-only \"lib/test/**/*.test.js\"",
@@ -57,13 +58,13 @@
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
-			"src/test/**/*.ts",
-			"lib/test/**/*.js"
+			"src/test/**/*.*ts",
+			"lib/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
-			"src/**/*.ts",
-			"lib/**/*.js"
+			"src/**/*.*ts",
+			"lib/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [
@@ -85,10 +86,10 @@
 		"table": "^6.8.1"
 	},
 	"devDependencies": {
-		"@fluid-private/readme-command": "workspace:*",
+		"@fluid-private/readme-command": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/eslint-config-fluid": "^3.0.0",
-		"@microsoft/api-extractor": "^7.36.1",
+		"@fluidframework/eslint-config-fluid": "^3.2.0",
+		"@microsoft/api-extractor": "^7.39.1",
 		"@oclif/test": "~2.3.33",
 		"@types/chai": "^4.3.5",
 		"@types/mocha": "^9.1.1",

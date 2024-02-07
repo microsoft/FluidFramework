@@ -23,6 +23,7 @@
     "plugins": [
         "eslint-comments",
         "import",
+        "fluid-internal",
         "unused-imports",
         "promise",
         "jsdoc",
@@ -536,6 +537,9 @@
         "flowtype/union-intersection-spacing": [
             "off"
         ],
+        "fluid-internal/no-member-release-tags": [
+            "error"
+        ],
         "for-direction": [
             "error"
         ],
@@ -597,7 +601,14 @@
             }
         ],
         "import/no-internal-modules": [
-            "error"
+            "error",
+            {
+                "allow": [
+                    "@fluidframework/*/beta",
+                    "@fluidframework/*/internal",
+                    "*/index.js"
+                ]
+            }
         ],
         "import/no-named-as-default": [
             1
@@ -1790,6 +1801,7 @@
             ".tsx",
             ".d.ts",
             ".js",
+            ".jsx",
             ".jsx"
         ],
         "import/external-module-folders": [
@@ -1800,11 +1812,22 @@
             "@typescript-eslint/parser": [
                 ".ts",
                 ".tsx",
-                ".d.ts"
+                ".d.ts",
+                ".tsx"
             ]
         },
         "import/resolver": {
             "node": {
+                "extensions": [
+                    ".ts",
+                    ".tsx",
+                    ".d.ts",
+                    ".js",
+                    ".jsx",
+                    ".jsx"
+                ]
+            },
+            "typescript": {
                 "extensions": [
                     ".ts",
                     ".tsx",

@@ -1,5 +1,0 @@
-{
-	"tags": ["revertible"],
-	"exports": ["index"],
-	"imports": ["rebase"]
-}

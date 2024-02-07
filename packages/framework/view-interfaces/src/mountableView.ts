@@ -6,12 +6,12 @@
 import { FluidObject } from "@fluidframework/core-interfaces";
 
 /**
- * @public
+ * @internal
  */
 export const IFluidMountableView: keyof IProvideFluidMountableView = "IFluidMountableView";
 
 /**
- * @public
+ * @internal
  */
 export interface IProvideFluidMountableView {
 	readonly IFluidMountableView: IFluidMountableView;
@@ -19,8 +19,7 @@ export interface IProvideFluidMountableView {
 
 /**
  * IFluidMountableViewClass defines the statics on our class implementing IFluidMountableView.
- *
- * @public
+ * @internal
  */
 export interface IFluidMountableViewClass {
 	/**
@@ -44,8 +43,7 @@ export interface IFluidMountableViewClass {
  * This is not intended to be used as a general rendering/mounting approach, but rather as just a specific solution
  * for cross-bundle mounting.  General rendering/mounting should instead use the view adapters or make direct calls
  * to framework-specific rendering APIs.
- *
- * @public
+ * @internal
  */
 export interface IFluidMountableView extends IProvideFluidMountableView {
 	/**

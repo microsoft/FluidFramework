@@ -6,12 +6,16 @@
 export { combineReducers, combineReducersAsync } from "./combineReducers";
 export {
 	createFuzzDescribe,
+	CreateMochaSuite,
 	defaultOptions,
 	DescribeFuzz,
 	describeFuzz,
-	DescribeFuzzSuite,
+	DescribeStress,
+	describeStress,
 	FuzzDescribeOptions,
 	FuzzSuiteArguments,
+	MochaSuiteWithArguments,
+	StressSuiteArguments,
 } from "./describeFuzz";
 export {
 	asyncGeneratorFromArray,
@@ -30,7 +34,12 @@ export {
 	take,
 	takeAsync,
 } from "./generators";
-export { PerformanceWordMarkovChain, SpaceEfficientWordMarkovChain } from "./markovChain";
+export {
+	MarkovChain,
+	PerformanceWordMarkovChain,
+	SpaceEfficientWordMarkovChain,
+	WordSpacing,
+} from "./markovChain";
 export { performFuzzActions, performFuzzActionsAsync, saveOpsToFile } from "./performActions";
 export { makeRandom } from "./random";
 export {
@@ -46,4 +55,4 @@ export {
 	SaveInfo,
 	Weights,
 } from "./types";
-export { XSadd } from "./xsadd";
+export { XSadd, XSaddCtor } from "./xsadd";

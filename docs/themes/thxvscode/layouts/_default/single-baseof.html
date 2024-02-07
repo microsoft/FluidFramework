@@ -5,7 +5,9 @@
 <body>
     {{- if .Site.Params.cookies -}}
     <!-- EU Cookie Compliance JS -->
+    <link rel="stylesheet" href="/docs/assets/css/carousel.css">
     <script src="https://wcpstatic.microsoft.com/mscc/lib/v2/wcp-consent.js"></script>
+    <script type="text/javascript" src="/docs/themes/thxvscode/assets/js/carousel.js"></script>
     {{- end -}}
 
     <div id="main">
@@ -17,6 +19,7 @@
                 <div class="row">
                     {{ partial "navbar.html" . }}
                     <div role="main" id="main-content" class="col-sm-9 col-md-8 body">
+                        {{ partial "breadcrumb.html" . }}
                         <div>
                             <h1>{{.Title}}</h1>
                         </div>

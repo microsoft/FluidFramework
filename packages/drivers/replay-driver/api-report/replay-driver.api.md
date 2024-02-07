@@ -18,8 +18,9 @@ import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
+import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
-// @public (undocumented)
+// @internal (undocumented)
 export class FileSnapshotReader extends ReadDocumentStorageServiceBase implements IDocumentStorageService {
     constructor(json: IFileSnapshot);
     // (undocumented)
@@ -46,7 +47,7 @@ export class FileSnapshotReader extends ReadDocumentStorageServiceBase implement
     };
 }
 
-// @public
+// @internal
 export interface IFileSnapshot {
     // (undocumented)
     commits: {
@@ -56,7 +57,7 @@ export interface IFileSnapshot {
     tree: ITree;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export class OpStorage extends ReadDocumentStorageServiceBase {
     // (undocumented)
     getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;
@@ -66,7 +67,7 @@ export class OpStorage extends ReadDocumentStorageServiceBase {
     readBlob(blobId: string): Promise<ArrayBufferLike>;
 }
 
-// @public
+// @internal
 export abstract class ReadDocumentStorageServiceBase implements IDocumentStorageService {
     // (undocumented)
     createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse>;
@@ -84,7 +85,7 @@ export abstract class ReadDocumentStorageServiceBase implements IDocumentStorage
     uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string>;
 }
 
-// @public
+// @internal
 export abstract class ReplayController extends ReadDocumentStorageServiceBase {
     abstract fetchTo(currentOp: number): number | undefined;
     abstract getStartingOpSequence(): Promise<number>;
@@ -93,8 +94,8 @@ export abstract class ReplayController extends ReadDocumentStorageServiceBase {
     abstract replay(emitter: (op: api.ISequencedDocumentMessage[]) => void, fetchedOps: api.ISequencedDocumentMessage[]): Promise<void>;
 }
 
-// @public
-export class ReplayDocumentService implements api_2.IDocumentService {
+// @internal
+export class ReplayDocumentService extends TypedEventEmitter<api_2.IDocumentServiceEvents> implements api_2.IDocumentService {
     constructor(controller: api_2.IDocumentStorageService, deltaStorage: api_2.IDocumentDeltaConnection);
     connectToDeltaStorage(): Promise<api_2.IDocumentDeltaStorageService>;
     connectToDeltaStream(client: IClient): Promise<api_2.IDocumentDeltaConnection>;
@@ -107,7 +108,7 @@ export class ReplayDocumentService implements api_2.IDocumentService {
     get resolvedUrl(): api_2.IResolvedUrl;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
     constructor(documentServiceFactory: IDocumentServiceFactory, controller: ReplayController);
     // (undocumented)
@@ -117,7 +118,7 @@ export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export class SnapshotStorage extends ReadDocumentStorageServiceBase {
     constructor(storage: IDocumentStorageService, docTree: ISnapshotTree | null);
     // (undocumented)
@@ -134,7 +135,7 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
     protected readonly storage: IDocumentStorageService;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export class StaticStorageDocumentServiceFactory implements IDocumentServiceFactory {
     constructor(storage: IDocumentStorageService);
     // (undocumented)

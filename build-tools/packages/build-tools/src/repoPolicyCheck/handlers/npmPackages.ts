@@ -13,7 +13,7 @@ import sortPackageJson from "sort-package-json";
 import { PackageJson, updatePackageJsonFile } from "../../common/npmPackage";
 import { getFluidBuildConfig } from "../../common/fluidUtils";
 import { Handler, readFile, writeFile } from "../common";
-import { PackageNamePolicyConfig } from "../../common/fluidRepo";
+import { PackageNamePolicyConfig, ScriptRequirement } from "../../common/fluidRepo";
 
 const licenseId = "MIT";
 const author = "Microsoft and contributors";
@@ -367,15 +367,26 @@ function ensurePrivatePackagesComputed(): void {
 	});
 }
 
+interface ParsedArg {
+	arg: string;
+	original: string;
+}
+
 /**
- * Parses command line string into arguments following OS quote rules
+ * Parses command line string into arguments following OS quote rules.
+ *
+ * Note: no accommodation is made for a line of script where shell features are used
+ * such as redirects `>`, pipes `|`, or multiple command separators `&&` or `;`.
  *
  * @param commandLine - complete command line as a simple string
  * @param onlyDoubleQuotes - only consider double quotes for grouping
  * @returns array of ordered pairs of resolved `arg` strings (quotes and escapes resolved)
  *  and `original` corresponding strings.
  */
-function parseArgs(commandLine: string, { onlyDoubleQuotes }: { onlyDoubleQuotes: boolean }) {
+function parseArgs(
+	commandLine: string,
+	{ onlyDoubleQuotes }: { onlyDoubleQuotes: boolean },
+): ParsedArg[] {
 	const regexArg = onlyDoubleQuotes
 		? /(?<!\S)(?:[^\s"\\]|\\\S)*(?:(").*?(?:(?<=[^\\](?:\\\\)*)\1(?:[^\s"\\]|\\\S)*|$))*(?!\S)/g
 		: /(?<!\S)(?:[^\s'"\\]|\\\S)*(?:(['"]).*?(?:(?<=[^\\](?:\\\\)*)\1(?:[^\s'"\\]|\\\S)*|$))*(?!\S)/g;
@@ -396,30 +407,89 @@ function parseArgs(commandLine: string, { onlyDoubleQuotes }: { onlyDoubleQuotes
  * @param resolvedArg - string as it should appear to new process
  * @returns preferred string to use within a command line string
  */
-function quoteAndEscapeArgsForUniversalCommandLine(resolvedArg: string) {
+function quoteAndEscapeArgsForUniversalCommandLine(
+	resolvedArg: string,
+	{ forceQuote }: { forceQuote?: boolean } = {},
+) {
 	// Unix shells provide feature where arguments that can be resolved as globs
 	// are expanded before passed to new process. Detect those and group them
 	// to ensure consistent arg passing. (Grouping disables glob expansion.)
-	const regexGlob = /[*?[()]/;
+	const regexGlob = /[*?[]|\([^)]*\)/;
 	const notAGlob = resolvedArg.startsWith("-") || !regexGlob.test(resolvedArg);
 	// Double quotes are used for grouping arguments with whitespace and must be
 	// escaped with \ and \ itself must therefore be escaped.
 	// Unix shells also use single quotes for grouping. Rather than escape those,
 	// which Windows command shell would not unescape, those args must be grouped.
 	const escapedArg = resolvedArg.replace(/([\\"])/g, "\\$1");
-	return notAGlob && !/[\s']/.test(resolvedArg) ? escapedArg : `"${escapedArg}"`;
+	const canBeUnquoted = notAGlob && !forceQuote && !/[\s']/.test(resolvedArg);
+	return canBeUnquoted ? escapedArg : `"${escapedArg}"`;
 }
 
 /**
- * Parse command line as if unix shell, then form preferred command line
+ * Prepares argument to be part of command script line. It does some handling for
+ * special shell elements that parseArgs ignores.
  *
- * @param commandLine - unparsed command line
+ * @param parsedArg - one result from parseArgs
+ * @returns preferred string to use within a command script string
+ */
+function quoteAndEscapeArgsForUniversalScriptLine({ arg, original }: ParsedArg) {
+	// Check for exactly `&&` or `|`.
+	if (arg === "&&" || arg === "|") {
+		// Use quoting if original had any quoting.
+		return arg !== original ? `"${arg}"` : arg;
+	}
+
+	// Check for unquoted start of `&&` or `|`.
+	if (!/^['"]/.test(original)) {
+		const specialStart = /(^&&|^\|)(.+)$/.exec(arg);
+		if (specialStart) {
+			// Separate the `&&` or `|` from remainder that will be its own arg.
+			const remainder = quoteAndEscapeArgsForUniversalScriptLine({
+				arg: specialStart[2],
+				original: original.substring(specialStart[1].length),
+			});
+			return `${specialStart[1]} ${remainder}`;
+		}
+	}
+
+	// Check for unquoted tail `|`.
+	if (!/['"]$/.test(original)) {
+		const specialEnd = /^(.+)\|$/.exec(arg);
+		if (specialEnd) {
+			// Separate the `|` from prior that will be its own arg.
+			const prior = quoteAndEscapeArgsForUniversalScriptLine({
+				arg: specialEnd[1],
+				original: original.substring(0, original.length - 1),
+			});
+			return `${prior} |`;
+		}
+	}
+
+	// Among the special characters `>`, `|`, `;`, and `&`, check for `&` at
+	// start, pipe (with anything else), or `;`. Some common `&` uses like `2>&1`
+	// should also remain unquoted.
+	const forceQuote = /^&|[|;]/.test(arg);
+
+	return quoteAndEscapeArgsForUniversalCommandLine(arg, { forceQuote });
+}
+
+/**
+ * Parse script line as if unix shell, then form preferred script line.
+ *
+ * @param scriptLine - unparsed script line
  * @returns preferred command line
  */
-function getPreferredCommandLine(commandLine: string) {
-	return parseArgs(commandLine, { onlyDoubleQuotes: false })
-		.map((a) => quoteAndEscapeArgsForUniversalCommandLine(a.arg))
+function getPreferredScriptLine(scriptLine: string) {
+	return parseArgs(scriptLine, { onlyDoubleQuotes: false })
+		.map(quoteAndEscapeArgsForUniversalScriptLine)
 		.join(" ");
+}
+
+/**
+ * Tests that given value is defined.
+ */
+function isDefined<T>(v: T | undefined): v is T {
+	return v !== undefined;
 }
 
 let privatePackages: Set<string>;
@@ -429,12 +499,10 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-metadata-and-sorting",
 		match,
-		handler: (file) => {
-			let jsonStr: string;
-			let json;
+		handler: async (file) => {
+			let json: PackageJson;
 			try {
-				jsonStr = readFile(file);
-				json = JSON.parse(jsonStr);
+				json = JSON.parse(readFile(file));
 			} catch (err) {
 				return "Error parsing JSON file: " + file;
 			}
@@ -501,7 +569,7 @@ export const handlers: Handler[] = [
 		// If you'd like to introduce a new package scope or a new unscoped package, please discuss it first.
 		name: "npm-strange-package-name",
 		match,
-		handler: (file, root) => {
+		handler: async (file, root) => {
 			let json: { name: string };
 			try {
 				json = JSON.parse(readFile(file));
@@ -525,7 +593,7 @@ export const handlers: Handler[] = [
 		// Also verify that non-private packages don't take dependencies on private packages.
 		name: "npm-private-packages",
 		match,
-		handler: (file, root) => {
+		handler: async (file, root) => {
 			let json: { name: string; private?: boolean; dependencies: Record<string, string> };
 			try {
 				json = JSON.parse(readFile(file));
@@ -562,8 +630,8 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-readmes",
 		match,
-		handler: (file) => {
-			let json;
+		handler: async (file) => {
+			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file));
 			} catch (err) {
@@ -591,7 +659,7 @@ export const handlers: Handler[] = [
 			}
 		},
 		resolver: (file) => {
-			let json;
+			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file));
 			} catch (err) {
@@ -638,8 +706,8 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-folder-name",
 		match,
-		handler: (file) => {
-			let json;
+		handler: async (file) => {
+			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file));
 			} catch (err) {
@@ -666,8 +734,8 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-license",
 		match,
-		handler: (file, root) => {
-			let json;
+		handler: async (file, root) => {
+			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file));
 			} catch (err) {
@@ -711,8 +779,8 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-prettier",
 		match,
-		handler: (file) => {
-			let json;
+		handler: async (file) => {
+			let json: PackageJson;
 
 			try {
 				json = JSON.parse(readFile(file));
@@ -810,8 +878,8 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-script-clean",
 		match,
-		handler: (file) => {
-			let json;
+		handler: async (file) => {
+			let json: PackageJson;
 
 			try {
 				json = JSON.parse(readFile(file));
@@ -839,14 +907,14 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-script-dep",
 		match,
-		handler: (file, root) => {
+		handler: async (file, root) => {
 			const manifest = getFluidBuildConfig(root);
 			const commandPackages = manifest.policy?.dependencies?.commandPackages;
 			if (commandPackages === undefined) {
 				return;
 			}
 			const commandDep = new Map(commandPackages);
-			let json;
+			let json: PackageJson;
 
 			try {
 				json = JSON.parse(readFile(file));
@@ -859,7 +927,9 @@ export const handlers: Handler[] = [
 
 			if (hasScriptsField) {
 				const commands = new Set(
-					Object.values(json.scripts as string[]).map((s) => s.split(" ")[0]),
+					Object.values(json.scripts)
+						.filter(isDefined)
+						.map((s) => s.split(" ")[0]),
 				);
 				for (const command of commands.values()) {
 					const dep = commandDep.get(command);
@@ -881,13 +951,57 @@ export const handlers: Handler[] = [
 		},
 	},
 	{
+		name: "npm-package-json-scripts-args",
+		match,
+		handler: async (file) => {
+			let json: PackageJson;
+
+			try {
+				json = JSON.parse(readFile(file));
+			} catch (err) {
+				return "Error parsing JSON file: " + file;
+			}
+
+			const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
+			if (!hasScriptsField) {
+				return undefined;
+			}
+
+			const scriptsUsingInconsistentArgs = Object.entries(json.scripts)
+				.filter(([, scriptContent]) => {
+					const commandLine = scriptContent as string;
+					const preferredCommandLine = getPreferredScriptLine(commandLine);
+					return commandLine !== preferredCommandLine;
+				})
+				.map(([scriptName]) => scriptName);
+
+			return scriptsUsingInconsistentArgs.length > 0
+				? `${file} using inconsistent arguments in the following scripts:\n\t${scriptsUsingInconsistentArgs.join(
+						"\n\t",
+				  )}`
+				: undefined;
+		},
+		resolver: (file) => {
+			const result: { resolved: boolean; message?: string } = { resolved: true };
+			updatePackageJsonFile(path.dirname(file), (json) => {
+				Object.entries(json.scripts).forEach(([scriptName, scriptContent]) => {
+					if (scriptContent) {
+						json.scripts[scriptName] = getPreferredScriptLine(scriptContent);
+					}
+				});
+			});
+
+			return result;
+		},
+	},
+	{
 		name: "npm-package-json-test-scripts",
 		match,
-		handler: (file) => {
+		handler: async (file) => {
 			// This rules enforces that if the package have test files (in 'src/test', excluding 'src/test/types'),
 			// or mocha/jest dependencies, it should have a test scripts so that the pipeline will pick it up
 
-			let json;
+			let json: PackageJson;
 
 			try {
 				json = JSON.parse(readFile(file));
@@ -933,11 +1047,11 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-test-scripts-split",
 		match,
-		handler: (file) => {
+		handler: async (file) => {
 			// This rule enforces that because the pipeline split running these test in different steps, each project
 			// has the split set up property (into test:mocha, test:jest and test:realsvc). Release groups that don't
 			// have splits in the pipeline is excluded in the "handlerExclusions" in the fluidBuild.config.cjs
-			let json;
+			let json: PackageJson;
 
 			try {
 				json = JSON.parse(readFile(file));
@@ -981,9 +1095,9 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-script-mocha-config",
 		match,
-		handler: (file) => {
+		handler: async (file) => {
 			// This rule enforces that mocha will use a config file and setup both the console, json and xml reporters.
-			let json;
+			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file));
 			} catch (err) {
@@ -1019,9 +1133,9 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-script-jest-config",
 		match,
-		handler: (file) => {
+		handler: async (file) => {
 			// This rule enforces that jest will use a config file and setup both the default (console) and junit reporters.
-			let json;
+			let json: PackageJson;
 
 			try {
 				json = JSON.parse(readFile(file));
@@ -1079,10 +1193,10 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-esm",
 		match,
-		handler: (file) => {
+		handler: async (file) => {
 			// This rule enforces that we have a module field in the package iff we have a ESM build
 			// So that tools like webpack will pack up the right version.
-			let json;
+			let json: PackageJson;
 
 			try {
 				json = JSON.parse(readFile(file));
@@ -1116,9 +1230,9 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-clean-script",
 		match,
-		handler: (file) => {
+		handler: async (file) => {
 			// This rule enforces the "clean" script will delete all the build and test output
-			let json;
+			let json: PackageJson;
 
 			try {
 				json = JSON.parse(readFile(file));
@@ -1153,7 +1267,7 @@ export const handlers: Handler[] = [
 			}
 
 			if (cleanScript) {
-				if (cleanScript !== getPreferredCommandLine(cleanScript)) {
+				if (cleanScript !== getPreferredScriptLine(cleanScript)) {
 					return "'clean' script should double quote the globs and only the globs";
 				}
 			}
@@ -1173,7 +1287,7 @@ export const handlers: Handler[] = [
 					clean += ` ${missing.join(" ")}`;
 				}
 				// clean up for grouping
-				json.scripts["clean"] = getPreferredCommandLine(clean);
+				json.scripts["clean"] = getPreferredScriptLine(clean);
 			});
 
 			return result;
@@ -1182,7 +1296,7 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-types-field",
 		match,
-		handler: (file) => {
+		handler: async (file) => {
 			// This rule enforces each package has a types field in its package.json
 			let json: PackageJson;
 
@@ -1213,7 +1327,7 @@ export const handlers: Handler[] = [
 		// exports["."] field match the ones in the main/module/types fields.
 		name: "npm-package-exports-field",
 		match,
-		handler: (file) => {
+		handler: async (file) => {
 			let json: PackageJson;
 
 			try {
@@ -1298,6 +1412,129 @@ export const handlers: Handler[] = [
 					} catch (error: unknown) {
 						result.resolved = false;
 						result.message = (error as Error).message;
+					}
+				}
+			});
+
+			return result;
+		},
+	},
+	{
+		/**
+		 * Handler for {@link PolicyConfig.publicPackageRequirements}
+		 */
+		name: "npm-public-package-requirements",
+		match,
+		handler: async (packageJsonFilePath, rootDirectoryPath) => {
+			let packageJson: PackageJson;
+			try {
+				packageJson = JSON.parse(readFile(packageJsonFilePath));
+			} catch (err) {
+				return "Error parsing JSON file: " + packageJsonFilePath;
+			}
+
+			if (packageJson.private) {
+				// If the package is private, we have nothing to validate.
+				return;
+			}
+
+			const requirements =
+				getFluidBuildConfig(rootDirectoryPath).policy?.publicPackageRequirements;
+			if (requirements === undefined) {
+				// If no requirements have been specified, we have nothing to validate.
+				return;
+			}
+
+			const errors: string[] = [];
+
+			// Ensure the package has all required dev dependencies specified in the config.
+			if (requirements.requiredDevDependencies !== undefined) {
+				const devDependencies = Object.keys(packageJson.devDependencies ?? {});
+				for (const requiredDevDependency of requirements.requiredDevDependencies) {
+					if (!devDependencies.includes(requiredDevDependency)) {
+						errors.push(`Missing dev dependency: "${requiredDevDependency}"`);
+					}
+				}
+			}
+
+			// Ensure the package has all required scripts specified in the config.
+			if (requirements.requiredScripts !== undefined) {
+				const scriptNames = Object.keys(packageJson.scripts ?? {});
+				for (const requiredScript of requirements.requiredScripts) {
+					if (!scriptNames.includes(requiredScript.name)) {
+						// Enforce the script is present
+						errors.push(`Missing script: "${requiredScript.name}"`);
+					} else if (
+						requiredScript.bodyMustMatch === true &&
+						packageJson.scripts[requiredScript.name] !== requiredScript.body
+					) {
+						// Enforce that script body matches policy
+						errors.push(
+							`Expected body of script "${requiredScript.name}" to be "${
+								requiredScript.body
+							}". Found "${packageJson.scripts[requiredScript.name]}".`,
+						);
+					}
+				}
+			}
+
+			if (errors.length > 0) {
+				return [
+					`Policy violations for public package "${packageJson.name}":`,
+					...errors,
+				].join(`${newline}* `);
+			}
+		},
+		resolver: (packageJsonFilePath, rootDirectoryPath) => {
+			const result: { resolved: boolean; message?: string } = { resolved: true };
+			updatePackageJsonFile(path.dirname(packageJsonFilePath), (packageJson) => {
+				// If the package is private, there is nothing to fix.
+				if (packageJson.private === true) {
+					return result;
+				}
+
+				const requirements =
+					getFluidBuildConfig(rootDirectoryPath).policy?.publicPackageRequirements;
+				if (requirements === undefined) {
+					// If no requirements have been specified, we have nothing to validate.
+					return;
+				}
+
+				/**
+				 * Updates the package.json contents to ensure the requirements of the specified script are met.
+				 */
+				function applyScriptCorrection(script: ScriptRequirement): void {
+					// If the script is missing, or if it exists but its body doesn't satisfy the requirement,
+					// apply the correct script configuration.
+					if (
+						packageJson.scripts[script.name] === undefined ||
+						script.bodyMustMatch === true
+					) {
+						packageJson.scripts[script.name] = script.body;
+					}
+				}
+
+				if (requirements.requiredScripts !== undefined) {
+					// Ensure scripts body exists
+					if (packageJson.scripts === undefined) {
+						packageJson.scripts = {};
+					}
+
+					// Applies script corrections as needed for all script requirements
+					requirements.requiredScripts.forEach(applyScriptCorrection);
+				}
+
+				// If there are any missing required dev dependencies, report that the issues were not resolved (and
+				// the dependencies need to be added manually).
+				// TODO: In the future, we could consider having this code actually run the pnpm commands to install
+				// the missing deps.
+				if (requirements.requiredDevDependencies !== undefined) {
+					const devDependencies = Object.keys(packageJson.devDependencies ?? {});
+					for (const requiredDevDependency of requirements.requiredDevDependencies) {
+						if (!devDependencies.includes(requiredDevDependency)) {
+							result.resolved = false;
+							break;
+						}
 					}
 				}
 			});

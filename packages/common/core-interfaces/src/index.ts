@@ -45,13 +45,7 @@ export {
 // TypeScript forgets the index signature when customers augment IRequestHeader if we export *.
 // So we export the explicit members as a workaround:
 // https://github.com/microsoft/TypeScript/issues/18877#issuecomment-476921038
-export {
-	IRequest,
-	IRequestHeader,
-	IResponse,
-	IProvideFluidRouter,
-	IFluidRouter,
-} from "./fluidRouter";
+export { IRequest, IRequestHeader, IResponse } from "./fluidRouter";
 
 export {
 	IFluidHandleContext,
@@ -78,3 +72,5 @@ export type {
 } from "./logger";
 export { LogLevel } from "./logger";
 export { FluidObjectProviderKeys, FluidObject, FluidObjectKeys } from "./provider";
+export { ConfigTypes, IConfigProviderBase } from "./config";
+export { ISignalEnvelope } from "./messages";

@@ -3,11 +3,15 @@
  * Licensed under the MIT License.
  */
 import { Loader } from "@fluidframework/container-loader";
-import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
+import {
+	type IDocumentServiceFactory,
+	type IUrlResolver,
+} from "@fluidframework/driver-definitions";
 import {
 	AttachState,
-	IContainer,
-	IFluidModuleWithDetails,
+	type IHostLoader,
+	type IContainer,
+	type IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import {
@@ -16,22 +20,25 @@ import {
 	InsecureTinyliciousUrlResolver,
 } from "@fluidframework/tinylicious-driver";
 import {
-	ContainerSchema,
-	DOProviderContainerRuntimeFactory,
-	FluidContainer,
-	IFluidContainer,
-	IRootDataObject,
+	type ContainerSchema,
+	createDOProviderContainerRuntimeFactory,
+	createFluidContainer,
+	type IFluidContainer,
+	type IRootDataObject,
+	createServiceAudience,
 } from "@fluidframework/fluid-static";
-import { IClient } from "@fluidframework/protocol-definitions";
-import { TinyliciousClientProps, TinyliciousContainerServices } from "./interfaces";
-import { TinyliciousAudience } from "./TinyliciousAudience";
+import { type IClient } from "@fluidframework/protocol-definitions";
+import { type ConfigTypes, type FluidObject } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
+import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils";
+import { type TinyliciousClientProps, type TinyliciousContainerServices } from "./interfaces";
+import { createTinyliciousAudienceMember } from "./TinyliciousAudience";
 
 /**
  * Provides the ability to have a Fluid object backed by a Tinylicious service.
  *
- * See {@link https://fluidframework.com/docs/testing/tinylicious/}
- *
- * @public
+ * @see {@link https://fluidframework.com/docs/testing/tinylicious/}
+ * @internal
  */
 export class TinyliciousClient {
 	private readonly documentServiceFactory: IDocumentServiceFactory;
@@ -41,7 +48,7 @@ export class TinyliciousClient {
 	 * Creates a new client instance using configuration parameters.
 	 * @param props - Optional. Properties for initializing a new TinyliciousClient instance
 	 */
-	constructor(private readonly props?: TinyliciousClientProps) {
+	public constructor(private readonly props?: TinyliciousClientProps) {
 		const tokenProvider = new InsecureTinyliciousTokenProvider();
 		this.urlResolver = new InsecureTinyliciousUrlResolver(
 			this.props?.connection?.port,
@@ -57,8 +64,10 @@ export class TinyliciousClient {
 	 * @param containerSchema - Container schema for the new container.
 	 * @returns New detached container instance along with associated services.
 	 */
-	public async createContainer(containerSchema: ContainerSchema): Promise<{
-		container: IFluidContainer;
+	public async createContainer<TContainerSchema extends ContainerSchema>(
+		containerSchema: TContainerSchema,
+	): Promise<{
+		container: IFluidContainer<TContainerSchema>;
 		services: TinyliciousContainerServices;
 	}> {
 		const loader = this.createLoader(containerSchema);
@@ -71,7 +80,7 @@ export class TinyliciousClient {
 			config: {},
 		});
 
-		const rootDataObject = (await container.getEntryPoint()) as IRootDataObject;
+		const rootDataObject = await this.getContainerEntryPoint(container);
 
 		/**
 		 * See {@link FluidContainer.attach}
@@ -88,7 +97,10 @@ export class TinyliciousClient {
 			return container.resolvedUrl.id;
 		};
 
-		const fluidContainer = new FluidContainer(container, rootDataObject);
+		const fluidContainer = createFluidContainer<TContainerSchema>({
+			container,
+			rootDataObject,
+		});
 		fluidContainer.attach = attach;
 
 		const services = this.getContainerServices(container);
@@ -101,17 +113,20 @@ export class TinyliciousClient {
 	 * @param containerSchema - Container schema used to access data objects in the container.
 	 * @returns Existing container instance along with associated services.
 	 */
-	public async getContainer(
+	public async getContainer<TContainerSchema extends ContainerSchema>(
 		id: string,
-		containerSchema: ContainerSchema,
+		containerSchema: TContainerSchema,
 	): Promise<{
-		container: IFluidContainer;
+		container: IFluidContainer<TContainerSchema>;
 		services: TinyliciousContainerServices;
 	}> {
 		const loader = this.createLoader(containerSchema);
 		const container = await loader.resolve({ url: id });
-		const rootDataObject = (await container.getEntryPoint()) as IRootDataObject;
-		const fluidContainer = new FluidContainer(container, rootDataObject);
+		const rootDataObject = await this.getContainerEntryPoint(container);
+		const fluidContainer = createFluidContainer<TContainerSchema>({
+			container,
+			rootDataObject,
+		});
 		const services = this.getContainerServices(container);
 		return { container: fluidContainer, services };
 	}
@@ -119,12 +134,17 @@ export class TinyliciousClient {
 	// #region private
 	private getContainerServices(container: IContainer): TinyliciousContainerServices {
 		return {
-			audience: new TinyliciousAudience(container),
+			audience: createServiceAudience({
+				container,
+				createServiceMember: createTinyliciousAudienceMember,
+			}),
 		};
 	}
 
-	private createLoader(containerSchema: ContainerSchema) {
-		const containerRuntimeFactory = new DOProviderContainerRuntimeFactory(containerSchema);
+	private createLoader(schema: ContainerSchema): IHostLoader {
+		const containerRuntimeFactory = createDOProviderContainerRuntimeFactory({
+			schema,
+		});
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {
 				module: { fluidExport: containerRuntimeFactory },
@@ -143,15 +163,29 @@ export class TinyliciousClient {
 			mode: "write",
 		};
 
+		const featureGates: Record<string, ConfigTypes> = {
+			// T9s client requires a write connection by default
+			"Fluid.Container.ForceWriteConnection": true,
+		};
 		const loader = new Loader({
 			urlResolver: this.urlResolver,
 			documentServiceFactory: this.documentServiceFactory,
 			codeLoader,
 			logger: this.props?.logger,
 			options: { client },
+			configProvider: wrapConfigProviderWithDefaults(/* original */ undefined, featureGates),
 		});
 
 		return loader;
+	}
+
+	private async getContainerEntryPoint(container: IContainer): Promise<IRootDataObject> {
+		const rootDataObject: FluidObject<IRootDataObject> = await container.getEntryPoint();
+		assert(
+			rootDataObject.IRootDataObject !== undefined,
+			0x875 /* entryPoint must be of type IRootDataObject */,
+		);
+		return rootDataObject.IRootDataObject;
 	}
 	// #endregion
 }

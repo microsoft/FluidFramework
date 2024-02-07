@@ -71,8 +71,10 @@ export interface ApiItemTransformationOptions {
 declare namespace ApiItemUtilities {
     export {
         doesItemRequireOwnDocument,
+        filterItems,
         getHeadingForApiItem,
         getLinkForApiItem,
+        shouldItemBeIncluded,
         getDefaultValueBlock,
         getDeprecatedBlock,
         getExampleBlocks,
@@ -170,7 +172,7 @@ function createSummaryParagraph(apiItem: ApiItem, config: Required<ApiItemTransf
 function createThrowsSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>, headingText?: string): SectionNode | undefined;
 
 // @public
-function createTypeParametersSection(typeParameters: readonly TypeParameter[], contextApiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
+function createTypeParametersSection(typeParameters: readonly TypeParameter[], contextApiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode;
 
 // @public
 export const defaultConsoleLogger: Logger;
@@ -265,6 +267,7 @@ export interface DocumentationSuiteOptions {
     hierarchyBoundaries?: HierarchyBoundaries;
     includeBreadcrumb?: boolean;
     includeTopLevelDocumentHeading?: boolean;
+    minimumReleaseLevel?: Omit<ReleaseTag, ReleaseTag.None>;
     skipPackage?: (apiPackage: ApiPackage) => boolean;
 }
 
@@ -272,17 +275,10 @@ export interface DocumentationSuiteOptions {
 export type DocumentBoundaries = ApiMemberKind[];
 
 // @public
-export interface DocumentItemMetadata {
-    readonly apiItemKind: ApiItemKind;
-    readonly apiItemName: string;
-    readonly packageName: string | undefined;
-}
-
-// @public
 export class DocumentNode implements Parent<SectionNode>, DocumentNodeProps {
     constructor(properties: DocumentNodeProps);
+    readonly apiItem?: ApiItem;
     readonly children: SectionNode[];
-    readonly documentItemMetadata: DocumentItemMetadata;
     readonly documentPath: string;
     readonly frontMatter?: string;
     readonly type = DocumentationNodeType.Document;
@@ -290,8 +286,8 @@ export class DocumentNode implements Parent<SectionNode>, DocumentNodeProps {
 
 // @public
 export interface DocumentNodeProps {
+    readonly apiItem?: ApiItem;
     readonly children: SectionNode[];
-    readonly documentItemMetadata: DocumentItemMetadata;
     readonly documentPath: string;
     readonly frontMatter?: string;
 }
@@ -315,6 +311,9 @@ export interface FileSystemConfiguration {
     readonly newlineKind?: NewlineKind;
     outputDirectoryPath: string;
 }
+
+// @public
+function filterItems(apiItems: readonly ApiItem[], config: Required<ApiItemTransformationConfiguration>): ApiItem[];
 
 // @public
 export function getApiItemTransformationConfigurationWithDefaults(inputOptions: ApiItemTransformationConfiguration): Required<ApiItemTransformationConfiguration>;
@@ -592,6 +591,9 @@ export class SectionNode extends DocumentationParentNodeBase implements MultiLin
     get singleLine(): false;
     readonly type = DocumentationNodeType.Section;
 }
+
+// @public
+function shouldItemBeIncluded(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): boolean;
 
 // @public
 export interface SingleLineDocumentationNode<TData extends object = Data> extends DocumentationNode<TData> {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { IDirectory } from "../../interfaces";
 
 export function assertEquivalentDirectories(first: IDirectory, second: IDirectory): void {
@@ -13,7 +13,7 @@ export function assertEquivalentDirectories(first: IDirectory, second: IDirector
 function assertEventualConsistencyCore(
 	first: IDirectory | undefined,
 	second: IDirectory | undefined,
-) {
+): void {
 	assert(first !== undefined, "first root dir should be present");
 	assert(second !== undefined, "second root dir should be present");
 
@@ -56,4 +56,9 @@ function assertEventualConsistencyCore(
 		);
 		assertEventualConsistencyCore(subDirectory1, subDirectory2);
 	}
+
+	// Check for consistency of subdirectories ordering of both directories
+	const firstSubdirNames = [...first.subdirectories()].map(([dirName, _]) => dirName);
+	const secondSubdirNames = [...second.subdirectories()].map(([dirName, _]) => dirName);
+	assert.deepStrictEqual(firstSubdirNames, secondSubdirNames);
 }

@@ -11,7 +11,7 @@ import { SharedMap } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
 import { ConnectionState } from "@fluidframework/container-loader";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { createAzureClient } from "./AzureClientFactory";
 import { waitForMember } from "./utils";
 
@@ -24,7 +24,7 @@ describe("Fluid audience", () => {
 	let client: AzureClient;
 	let schema: ContainerSchema;
 
-	beforeEach(() => {
+	beforeEach("createAzureClient", () => {
 		client = createAzureClient("test-user-id-1", "test-user-name-1");
 		schema = {
 			initialObjects: {

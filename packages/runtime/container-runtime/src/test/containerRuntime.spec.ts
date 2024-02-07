@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 import { createSandbox, SinonFakeTimers, useFakeTimers } from "sinon";
 import {
 	AttachState,
-	ContainerErrorType,
 	ContainerErrorTypes,
 	IContainerContext,
 	ICriticalContainerError,
@@ -24,9 +23,7 @@ import {
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import {
-	ConfigTypes,
 	createChildLogger,
-	IConfigProviderBase,
 	isFluidError,
 	isILoggingError,
 	mixinMonitoringContext,
@@ -36,10 +33,10 @@ import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtim
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
 	IErrorBase,
-	IRequest,
 	IResponse,
 	FluidObject,
-	IGenericError,
+	ConfigTypes,
+	IConfigProviderBase,
 } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import {
@@ -52,6 +49,7 @@ import {
 	ContainerMessageType,
 	type RecentlyAddedContainerRuntimeMessageDetails,
 	type OutboundContainerRuntimeMessage,
+	type UnknownContainerRuntimeMessage,
 } from "../messageTypes";
 import { PendingStateManager } from "../pendingStateManager";
 import { DataStores } from "../dataStores";
@@ -132,6 +130,36 @@ describe("Runtime", () => {
 	});
 
 	describe("Container Runtime", () => {
+		describe("IdCompressor", () => {
+			it("finalizes idRange on attach", async () => {
+				const logger = new MockLogger();
+				const containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext({}, logger) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {
+						flushMode: FlushMode.TurnBased,
+						enableRuntimeIdCompressor: true,
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				logger.clear();
+
+				const compressor = containerRuntime.idCompressor;
+				assert(compressor !== undefined);
+				compressor.generateCompressedId();
+				containerRuntime.createSummary();
+
+				const range = compressor.takeNextCreationRange();
+				assert.equal(
+					range.ids,
+					undefined,
+					"All Ids should have been finalized after calling createSummary()",
+				);
+			});
+		});
+
 		describe("flushMode setting", () => {
 			it("Default flush mode", async () => {
 				const containerRuntime = await ContainerRuntime.loadRuntime({
@@ -209,7 +237,7 @@ describe("Runtime", () => {
 				}`, () => {
 					let containerRuntime: ContainerRuntime;
 					let mockContext: Partial<IContainerContext>;
-					const submittedOpsMetdata: any[] = [];
+					const submittedOpsMetadata: any[] = [];
 					const containerErrors: ICriticalContainerError[] = [];
 					const getMockContextForOrderSequentially = (): Partial<IContainerContext> => {
 						return {
@@ -233,10 +261,10 @@ describe("Runtime", () => {
 							) => {
 								if (contents.type === "groupedBatch") {
 									for (const subMessage of contents.contents) {
-										submittedOpsMetdata.push(subMessage.metadata);
+										submittedOpsMetadata.push(subMessage.metadata);
 									}
 								} else {
-									submittedOpsMetdata.push(appData);
+									submittedOpsMetadata.push(appData);
 								}
 								return opFakeSequenceNumber++;
 							},
@@ -271,7 +299,7 @@ describe("Runtime", () => {
 							provideEntryPoint: mockProvideEntryPoint,
 						});
 						containerErrors.length = 0;
-						submittedOpsMetdata.length = 0;
+						submittedOpsMetadata.length = 0;
 					});
 
 					it("Can't call flush() inside orderSequentially's callback", () => {
@@ -282,8 +310,16 @@ describe("Runtime", () => {
 						);
 
 						const error = getFirstContainerError();
+						assert(isFluidError(error));
 						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
-						assert.strictEqual(error.message, expectedOrderSequentiallyErrorMessage);
+						assert.strictEqual(
+							error.message,
+							`${expectedOrderSequentiallyErrorMessage}: 0x24c`,
+						);
+						assert.strictEqual(
+							error.getTelemetryProperties().orderSequentiallyCalls,
+							1,
+						);
 					});
 
 					it("Can't call flush() inside orderSequentially's callback when nested", () => {
@@ -296,8 +332,16 @@ describe("Runtime", () => {
 						);
 
 						const error = getFirstContainerError();
+						assert(isFluidError(error));
 						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
-						assert.strictEqual(error.message, expectedOrderSequentiallyErrorMessage);
+						assert.strictEqual(
+							error.message,
+							`${expectedOrderSequentiallyErrorMessage}: 0x24c`,
+						);
+						assert.strictEqual(
+							error.getTelemetryProperties().orderSequentiallyCalls,
+							2,
+						);
 					});
 
 					it("Can't call flush() inside orderSequentially's callback when nested ignoring exceptions", () => {
@@ -312,8 +356,16 @@ describe("Runtime", () => {
 						});
 
 						const error = getFirstContainerError();
+						assert(isFluidError(error));
 						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
-						assert.strictEqual(error.message, expectedOrderSequentiallyErrorMessage);
+						assert.strictEqual(
+							error.message,
+							`${expectedOrderSequentiallyErrorMessage}: 0x24c`,
+						);
+						assert.strictEqual(
+							error.getTelemetryProperties().orderSequentiallyCalls,
+							2,
+						);
 					});
 
 					it("Errors propagate to the container", () => {
@@ -326,8 +378,14 @@ describe("Runtime", () => {
 						const error = getFirstContainerError();
 						assert(isFluidError(error));
 						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
-						assert.strictEqual(error.message, expectedOrderSequentiallyErrorMessage);
-						assert.strictEqual((error as IGenericError).error.message, "Any");
+						assert.strictEqual(
+							error.message,
+							`${expectedOrderSequentiallyErrorMessage}: Any`,
+						);
+						assert.strictEqual(
+							error.getTelemetryProperties().orderSequentiallyCalls,
+							1,
+						);
 					});
 
 					it("Errors propagate to the container when nested", () => {
@@ -342,8 +400,14 @@ describe("Runtime", () => {
 						const error = getFirstContainerError();
 						assert(isFluidError(error));
 						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
-						assert.strictEqual(error.message, expectedOrderSequentiallyErrorMessage);
-						assert.strictEqual((error as IGenericError).error.message, "Any");
+						assert.strictEqual(
+							error.message,
+							`${expectedOrderSequentiallyErrorMessage}: Any`,
+						);
+						assert.strictEqual(
+							error.getTelemetryProperties().orderSequentiallyCalls,
+							2,
+						);
 					});
 
 					it("Batching property set properly", () => {
@@ -355,22 +419,22 @@ describe("Runtime", () => {
 						(containerRuntime as any).flush();
 
 						assert.strictEqual(
-							submittedOpsMetdata.length,
+							submittedOpsMetadata.length,
 							3,
 							"3 messages should be sent",
 						);
 						assert.strictEqual(
-							submittedOpsMetdata[0].batch,
+							submittedOpsMetadata[0].batch,
 							true,
 							"first message should be the batch start",
 						);
 						assert.strictEqual(
-							submittedOpsMetdata[1],
+							submittedOpsMetadata[1],
 							undefined,
 							"second message should not hold batch info",
 						);
 						assert.strictEqual(
-							submittedOpsMetdata[2].batch,
+							submittedOpsMetadata[2].batch,
 							false,
 							"third message should be the batch end",
 						);
@@ -407,7 +471,7 @@ describe("Runtime", () => {
 						(containerRuntime as any).flush();
 
 						assert.strictEqual(
-							submittedOpsMetdata.length,
+							submittedOpsMetadata.length,
 							0,
 							"no messages should be sent",
 						);
@@ -415,7 +479,7 @@ describe("Runtime", () => {
 						containerRuntime.setConnectionState(true);
 
 						assert.strictEqual(
-							submittedOpsMetdata.length,
+							submittedOpsMetadata.length,
 							6,
 							"6 messages should be sent",
 						);
@@ -430,7 +494,7 @@ describe("Runtime", () => {
 						];
 
 						assert.deepStrictEqual(
-							submittedOpsMetdata,
+							submittedOpsMetadata,
 							expectedBatchMetadata,
 							"batch metadata does not match",
 						);
@@ -442,12 +506,12 @@ describe("Runtime", () => {
 			let containerRuntime: ContainerRuntime;
 
 			it("By default, don't enforce the op reentry check", async () => {
-				containerRuntime = await ContainerRuntime.load(
-					getMockContext() as IContainerContext,
-					[],
-					undefined, // requestHandler
-					{}, // runtimeOptions
-				);
+				containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext() as IContainerContext,
+					registryEntries: [],
+					provideEntryPoint: mockProvideEntryPoint,
+					existing: false,
+				});
 
 				assert.ok(
 					containerRuntime.ensureNoDataModelChanges(() => {
@@ -469,14 +533,15 @@ describe("Runtime", () => {
 			});
 
 			it("If option enabled, enforce the op reentry check", async () => {
-				containerRuntime = await ContainerRuntime.load(
-					getMockContext() as IContainerContext,
-					[],
-					undefined, // requestHandler
-					{
+				containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext() as IContainerContext,
+					registryEntries: [],
+					runtimeOptions: {
 						enableOpReentryCheck: true,
-					}, // runtimeOptions
-				);
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+					existing: false,
+				});
 
 				assert.throws(() =>
 					containerRuntime.ensureNoDataModelChanges(() =>
@@ -496,16 +561,17 @@ describe("Runtime", () => {
 			});
 
 			it("If option enabled but disabled via feature gate, don't enforce the op reentry check", async () => {
-				containerRuntime = await ContainerRuntime.load(
-					getMockContext({
+				containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext({
 						"Fluid.ContainerRuntime.DisableOpReentryCheck": true,
 					}) as IContainerContext,
-					[],
-					undefined, // requestHandler
-					{
+					registryEntries: [],
+					runtimeOptions: {
 						enableOpReentryCheck: true,
-					}, // runtimeOptions
-				);
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+					existing: false,
+				});
 
 				containerRuntime.ensureNoDataModelChanges(() =>
 					containerRuntime.submitDataStoreOp("id", "test"),
@@ -522,12 +588,12 @@ describe("Runtime", () => {
 
 			it("Report at most 5 reentrant ops", async () => {
 				const mockLogger = new MockLogger();
-				containerRuntime = await ContainerRuntime.load(
-					getMockContext({}, mockLogger) as IContainerContext,
-					[],
-					undefined, // requestHandler
-					{}, // runtimeOptions
-				);
+				containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext({}, mockLogger) as IContainerContext,
+					registryEntries: [],
+					provideEntryPoint: mockProvideEntryPoint,
+					existing: false,
+				});
 
 				mockLogger.clear();
 				containerRuntime.ensureNoDataModelChanges(() => {
@@ -546,14 +612,15 @@ describe("Runtime", () => {
 			});
 
 			it("Can't call flush() inside ensureNoDataModelChanges's callback", async () => {
-				containerRuntime = await ContainerRuntime.load(
-					getMockContext() as IContainerContext,
-					[],
-					undefined, // requestHandler
-					{
+				containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext() as IContainerContext,
+					registryEntries: [],
+					runtimeOptions: {
 						flushMode: FlushMode.Immediate,
-					}, // runtimeOptions
-				);
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+					existing: false,
+				});
 
 				assert.throws(() =>
 					containerRuntime.ensureNoDataModelChanges(() => {
@@ -563,12 +630,12 @@ describe("Runtime", () => {
 			});
 
 			it("Can't create an infinite ensureNoDataModelChanges recursive call ", async () => {
-				containerRuntime = await ContainerRuntime.load(
-					getMockContext() as IContainerContext,
-					[],
-					undefined, // requestHandler
-					{}, // runtimeOptions
-				);
+				containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext() as IContainerContext,
+					registryEntries: [],
+					provideEntryPoint: mockProvideEntryPoint,
+					existing: false,
+				});
 
 				const callback = () => {
 					containerRuntime.ensureNoDataModelChanges(() => {
@@ -788,12 +855,8 @@ describe("Runtime", () => {
 			const getMockDataStores = (): DataStores => {
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 				return {
-					processFluidDataStoreOp: (
-						_message: ISequencedDocumentMessage,
-						_local: boolean,
-						_localMessageMetadata: unknown,
-					) => {},
-					setConnectionState: (_connected: boolean, _clientId?: string) => {},
+					processFluidDataStoreOp: (..._args) => {},
+					setConnectionState: (..._args) => {},
 				} as DataStores;
 			};
 
@@ -1052,6 +1115,127 @@ describe("Runtime", () => {
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 			});
+
+			it("can submit op compat behavior", async () => {
+				// Create a container runtime type where the submit method is public. This makes it easier to test
+				// submission and processing of ops. The other option is to send data store or alias ops whose
+				// processing requires creation of data store context and runtime as well.
+				type ContainerRuntimeWithSubmit = Omit<ContainerRuntime, "submit"> & {
+					submit(
+						containerRuntimeMessage: OutboundContainerRuntimeMessage,
+						localOpMetadata: unknown,
+						metadata: Record<string, unknown> | undefined,
+					): void;
+				};
+				const containerRuntimeWithSubmit =
+					containerRuntime as unknown as ContainerRuntimeWithSubmit;
+
+				const runtimeCompatMessage: Omit<
+					OutboundContainerRuntimeMessage,
+					"type" | "contents"
+				> & {
+					type: string;
+					contents: any;
+				} = {
+					type: "NEW",
+					contents: "Hello",
+					compatDetails: { behavior: "Ignore" },
+				};
+
+				assert.doesNotThrow(
+					() =>
+						containerRuntimeWithSubmit.submit(
+							runtimeCompatMessage as OutboundContainerRuntimeMessage,
+							undefined,
+							undefined,
+						),
+					"Cannot submit container runtime message with compatDetails",
+				);
+			});
+
+			/** Overwrites dataStores property and exposes private submit function with modified typing */
+			function patchContainerRuntime(): Omit<ContainerRuntime, "submit"> & {
+				submit: (containerRuntimeMessage: UnknownContainerRuntimeMessage) => void;
+			} {
+				const patched = containerRuntime as unknown as Omit<
+					ContainerRuntime,
+					"submit" | "dataStores"
+				> & {
+					submit: (containerRuntimeMessage: UnknownContainerRuntimeMessage) => void;
+					dataStores: Partial<DataStores>;
+				};
+
+				patched.dataStores = {
+					setConnectionState: (_connected: boolean, _clientId?: string) => {},
+					// Pass data store op right back to ContainerRuntime
+					resubmitDataStoreOp: (envelope, localOpMetadata) => {
+						containerRuntime.submitDataStoreOp(
+							envelope.address,
+							envelope.contents,
+							localOpMetadata,
+						);
+					},
+				} satisfies Partial<DataStores>;
+
+				return patched;
+			}
+
+			it("Op with unrecognized type and 'Ignore' compat behavior is ignored by resubmit", async () => {
+				const patchedContainerRuntime = patchContainerRuntime();
+
+				patchedContainerRuntime.setConnectionState(false);
+
+				patchedContainerRuntime.submitDataStoreOp("1", "test");
+				patchedContainerRuntime.submitDataStoreOp("2", "test");
+				patchedContainerRuntime.submit({
+					type: "FUTURE_TYPE" as any,
+					contents: "3",
+					compatDetails: { behavior: "Ignore" }, // This op should be ignored by resubmit
+				});
+				patchedContainerRuntime.submitDataStoreOp("4", "test");
+
+				assert.strictEqual(
+					submittedOps.length,
+					0,
+					"no messages should be sent while disconnected",
+				);
+
+				// Connect, which will trigger resubmit
+				patchedContainerRuntime.setConnectionState(true);
+
+				assert.strictEqual(
+					submittedOps.length,
+					3,
+					"Only 3 messages should be sent - Do not resubmit the future/unknown op",
+				);
+			});
+
+			it("Op with unrecognized type and no compat behavior causes resubmit to throw", async () => {
+				const patchedContainerRuntime = patchContainerRuntime();
+
+				patchedContainerRuntime.setConnectionState(false);
+
+				patchedContainerRuntime.submit({
+					type: "FUTURE_TYPE" as any,
+					contents: "3",
+					// No compatDetails so it will throw on resubmit.
+				});
+
+				assert.strictEqual(
+					submittedOps.length,
+					0,
+					"no messages should be sent while disconnected",
+				);
+
+				// Note: hitting this error case in practice would require a new op type to be deployed,
+				// one such op to be stashed, then a new session loads on older code that is unaware
+				// of the new op type.
+				assert.throws(() => {
+					// Connect, which will trigger resubmit
+					patchedContainerRuntime.setConnectionState(true);
+				}, "Expected resubmit to throw");
+			});
+
 			it("process remote op with unrecognized type and 'Ignore' compat behavior", async () => {
 				const futureRuntimeMessage: RecentlyAddedContainerRuntimeMessageDetails &
 					Record<string, unknown> = {
@@ -1077,37 +1261,6 @@ describe("Runtime", () => {
 			});
 
 			it("process remote op with unrecognized type and 'FailToProcess' compat behavior", async () => {
-				const futureRuntimeMessage = {
-					type: "FROM_THE_FUTURE",
-					contents: "Hello",
-				};
-
-				const packedOp: Omit<
-					ISequencedDocumentMessage,
-					| "term"
-					| "minimumSequenceNumber"
-					| "clientSequenceNumber"
-					| "referenceSequenceNumber"
-					| "timestamp"
-				> = {
-					type: MessageType.Operation,
-					contents: JSON.stringify(futureRuntimeMessage),
-					sequenceNumber: 123,
-					clientId: "someClientId",
-				};
-				assert.throws(
-					() =>
-						containerRuntime.process(
-							packedOp as ISequencedDocumentMessage,
-							false /* local */,
-						),
-					(error: IErrorBase) =>
-						error.errorType === ContainerErrorType.dataProcessingError,
-					"Ops with unrecognized type and 'FailToProcess' compat behavior should fail to process",
-				);
-			});
-
-			it("process remote op with unrecognized type and no compat behavior", async () => {
 				const futureRuntimeMessage: RecentlyAddedContainerRuntimeMessageDetails &
 					Record<string, unknown> = {
 					type: "FROM THE FUTURE",
@@ -1123,6 +1276,37 @@ describe("Runtime", () => {
 					| "referenceSequenceNumber"
 					| "timestamp"
 				> = {
+					type: MessageType.Operation,
+					contents: JSON.stringify(futureRuntimeMessage),
+					sequenceNumber: 123,
+					clientId: "someClientId",
+				};
+				assert.throws(
+					() =>
+						containerRuntime.process(
+							packedOp as ISequencedDocumentMessage,
+							false /* local */,
+						),
+					(error: IErrorBase) =>
+						error.errorType === ContainerErrorTypes.dataProcessingError,
+					"Ops with unrecognized type and 'FailToProcess' compat behavior should fail to process",
+				);
+			});
+
+			it("process remote op with unrecognized type and no compat behavior", async () => {
+				const futureRuntimeMessage = {
+					type: "FROM_THE_FUTURE",
+					contents: "Hello",
+				};
+
+				const packedOp: Omit<
+					ISequencedDocumentMessage,
+					| "term"
+					| "minimumSequenceNumber"
+					| "clientSequenceNumber"
+					| "referenceSequenceNumber"
+					| "timestamp"
+				> = {
 					contents: JSON.stringify(futureRuntimeMessage),
 					type: MessageType.Operation,
 					sequenceNumber: 123,
@@ -1135,7 +1319,7 @@ describe("Runtime", () => {
 							false /* local */,
 						),
 					(error: IErrorBase) =>
-						error.errorType === ContainerErrorType.dataProcessingError,
+						error.errorType === ContainerErrorTypes.dataProcessingError,
 					"Ops with unrecognized type and no specified compat behavior should fail to process",
 				);
 			});
@@ -1163,68 +1347,13 @@ describe("Runtime", () => {
 				assert.throws(
 					codeBlock,
 					(e: IErrorBase) =>
-						e.errorType === ContainerErrorType.usageError &&
+						e.errorType === ContainerErrorTypes.usageError &&
 						e.message === `Id cannot contain slashes: '${invalidId}'`,
 				);
 			});
 		});
 
 		describe("Supports mixin classes", () => {
-			it("old load method works", async () => {
-				const makeMixin = <T>(
-					Base: typeof ContainerRuntime,
-					methodName: string,
-					methodReturn: T,
-				) =>
-					class MixinContainerRuntime extends Base {
-						public static async load(
-							context: IContainerContext,
-							registryEntries: NamedFluidDataStoreRegistryEntries,
-							requestHandler?:
-								| ((
-										request: IRequest,
-										runtime: IContainerRuntime,
-								  ) => Promise<IResponse>)
-								| undefined,
-							runtimeOptions?: IContainerRuntimeOptions,
-							containerScope?: FluidObject,
-							existing?: boolean | undefined,
-							containerRuntimeCtor: typeof ContainerRuntime = MixinContainerRuntime,
-						): Promise<ContainerRuntime> {
-							return Base.load(
-								context,
-								registryEntries,
-								requestHandler,
-								runtimeOptions,
-								containerScope,
-								existing,
-								containerRuntimeCtor,
-							);
-						}
-
-						public [methodName](): T {
-							return methodReturn;
-						}
-					} as typeof ContainerRuntime;
-
-				const runtime = await makeMixin(
-					makeMixin(ContainerRuntime, "method1", "mixed in return"),
-					"method2",
-					42,
-				).load(
-					getMockContext() as IContainerContext,
-					[],
-					undefined, // requestHandler
-					{}, // runtimeOptions
-				);
-
-				assert.equal(
-					(runtime as unknown as { method1: () => any }).method1(),
-					"mixed in return",
-				);
-				assert.equal((runtime as unknown as { method2: () => any }).method2(), 42);
-			});
-
 			it("new loadRuntime method works", async () => {
 				const makeMixin = <T>(
 					Base: typeof ContainerRuntime,
@@ -1280,32 +1409,6 @@ describe("Runtime", () => {
 		});
 
 		describe("EntryPoint initialized correctly", () => {
-			it("when using old load method", async () => {
-				const myResponse: IResponse = {
-					mimeType: "fluid/object",
-					value: "hello!",
-					status: 200,
-				};
-				const containerRuntime = await ContainerRuntime.load(
-					getMockContext() as IContainerContext,
-					[], // registryEntries
-					async (req, ctrRuntime) => myResponse,
-					{}, // runtimeOptions
-					undefined, // containerScope
-					false, // existing
-					undefined, // containerRuntimeCtor
-				);
-				const request: IRequest = { url: "myUrl" };
-
-				// Calling request on the runtime should use the request handler we passed in the runtime's constructor.
-				const responseFromRequestMethod = await containerRuntime.request(request);
-				assert.deepEqual(
-					responseFromRequestMethod,
-					myResponse,
-					"request method in runtime did not return the expected object",
-				);
-			});
-
 			it("when using new loadRuntime method", async () => {
 				const myEntryPoint: FluidObject = {
 					myProp: "myValue",
@@ -1346,7 +1449,9 @@ describe("Runtime", () => {
 				});
 
 				// Calling request on the runtime should use the request handler we passed in the runtime's constructor.
-				const responseFromRequestMethod = await containerRuntime.request({ url: "/" });
+				const responseFromRequestMethod = await (containerRuntime as any).request({
+					url: "/",
+				});
 				assert.deepEqual(
 					responseFromRequestMethod,
 					myResponse,
