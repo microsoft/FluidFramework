@@ -7,9 +7,9 @@ import { ModelContainerRuntimeFactory, getDataStoreEntryPoint } from "@fluid-exa
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
-import { IDiceRoller } from "./interface";
-import { OldestClientDiceRollerInstantiationFactory } from "./oldestClientDiceRoller";
-import { TaskManagerDiceRollerInstantiationFactory } from "./taskManagerDiceRoller";
+import { IDiceRoller } from "./interface.js";
+import { OldestClientDiceRollerInstantiationFactory } from "./oldestClientDiceRoller.js";
+import { TaskManagerDiceRollerInstantiationFactory } from "./taskManagerDiceRoller.js";
 
 /**
  * The data model for our application.

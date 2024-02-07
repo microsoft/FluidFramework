@@ -10,8 +10,8 @@ import {
 	AllowedTypesToFlexInsertableTree,
 	FieldKinds,
 	InsertableFlexNode,
-	TreeFieldSchema,
-	TreeNodeSchema,
+	FlexFieldSchema,
+	FlexTreeNodeSchema,
 } from "../../../feature-libraries/index.js";
 import { requireAssignableTo } from "../../../util/index.js";
 
@@ -21,7 +21,7 @@ const builder = new SchemaBuilder({ scope: "Complex Schema Example" });
 export const stringTaskSchema = builder.fieldNode("StringTask", builder.string);
 // Polymorphic recursive schema:
 export const listTaskSchema = builder.objectRecursive("ListTask", {
-	items: TreeFieldSchema.createUnsafe(FieldKinds.sequence, [
+	items: FlexFieldSchema.createUnsafe(FieldKinds.sequence, [
 		stringTaskSchema,
 		() => listTaskSchema,
 	]),
@@ -29,7 +29,7 @@ export const listTaskSchema = builder.objectRecursive("ListTask", {
 
 {
 	// Recursive objects don't get this type checking automatically, so confirm it
-	type _check = requireAssignableTo<typeof listTaskSchema, TreeNodeSchema>;
+	type _check = requireAssignableTo<typeof listTaskSchema, FlexTreeNodeSchema>;
 }
 
 export const rootFieldSchema = SchemaBuilder.required([stringTaskSchema, listTaskSchema]);

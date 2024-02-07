@@ -7,6 +7,8 @@ import {
 	FetchSource,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
+	ISnapshot,
+	ISnapshotFetchOptions,
 	ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import {
@@ -16,6 +18,7 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
+import { UsageError } from "@fluidframework/telemetry-utils";
 
 /**
  * @internal
@@ -42,6 +45,15 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
 		scenarioName?: string,
 	): Promise<ISnapshotTree | null> {
 		return this.internalStorageService.getSnapshotTree(version, scenarioName);
+	}
+
+	public async getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot> {
+		if (this.internalStorageService.getSnapshot !== undefined) {
+			return this.internalStorageService.getSnapshot(snapshotFetchOptions);
+		}
+		throw new UsageError(
+			"getSnapshot api should exist on internal storage in documentStorageServiceProxy class",
+		);
 	}
 
 	public async getVersions(

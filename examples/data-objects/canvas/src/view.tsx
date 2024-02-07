@@ -7,7 +7,7 @@ import { IColor, InkCanvas } from "@fluidframework/ink";
 
 import React, { useEffect, useRef, useState } from "react";
 
-import { Canvas } from "./canvas";
+import { Canvas } from "./canvas.js";
 // eslint-disable-next-line import/no-unassigned-import
 import "./style.less";
 

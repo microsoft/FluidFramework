@@ -22,7 +22,6 @@ import {
 	cursorForJsonableTreeField,
 	chunkFieldSingle,
 	makeFieldBatchCodec,
-	TreeCompressionStrategy,
 } from "../../../feature-libraries/index.js";
 import {
 	makeAnonChange,
@@ -33,15 +32,15 @@ import {
 	FieldKindIdentifier,
 	FieldKey,
 	UpPath,
-	deltaForSet,
 	revisionMetadataSourceFromInfo,
 	ITreeCursorSynchronous,
 	DeltaFieldChanges,
 	DeltaRoot,
 	DeltaDetachedNodeId,
 	ChangeEncodingContext,
+	RevisionTagCodec,
 } from "../../../core/index.js";
-import { brand, fail } from "../../../util/index.js";
+import { brand } from "../../../util/index.js";
 import { ICodecOptions, makeCodecFamily } from "../../../codec/index.js";
 import {
 	EncodingTestData,
@@ -66,10 +65,9 @@ import { ajvValidator } from "../../codec/index.js";
 import { ValueChangeset, valueField } from "./basicRebasers.js";
 
 const singleNodeRebaser: FieldChangeRebaser<NodeChangeset> = {
-	compose: (changes, composeChild) => composeChild(changes),
+	compose: (change1, change2, composeChild) => composeChild(change1.change, change2.change),
 	invert: (change, invertChild) => invertChild(change.change),
 	rebase: (change, base, rebaseChild) => rebaseChild(change, base.change) ?? {},
-	amendCompose: () => fail("Not supported"),
 	prune: (change) => change,
 };
 
@@ -90,6 +88,7 @@ const singleNodeHandler: FieldChangeHandler<NodeChangeset> = {
 	relevantRemovedRoots: (change, relevantRemovedRootsFromChild) =>
 		relevantRemovedRootsFromChild(change.change),
 	isEmpty: (change) => change.fieldChanges === undefined,
+	createEmpty: () => ({}),
 };
 
 const singleNodeField = new FieldKindWithEditor(
@@ -107,10 +106,11 @@ const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Ma
 const codecOptions: ICodecOptions = {
 	jsonValidator: ajvValidator,
 };
+const revisionTagCodec = new RevisionTagCodec(new MockIdCompressor());
 const family = new ModularChangeFamily(
 	fieldKinds,
-	new MockIdCompressor(),
-	makeFieldBatchCodec(codecOptions, { encodeType: TreeCompressionStrategy.Uncompressed }),
+	revisionTagCodec,
+	makeFieldBatchCodec(codecOptions),
 	codecOptions,
 );
 
@@ -820,7 +820,16 @@ describe("ModularChangeFamily", () => {
 				local: [
 					{
 						count: 1,
-						fields: new Map([[fieldA, deltaForSet(node1, buildId, detachId)]]),
+						fields: new Map([
+							[
+								fieldA,
+								{
+									local: [
+										{ count: 1, detach: { minor: 0 }, attach: { minor: 1 } },
+									],
+								},
+							],
+						]),
 					},
 				],
 			};
@@ -828,7 +837,7 @@ describe("ModularChangeFamily", () => {
 			const expectedDelta: DeltaRoot = {
 				fields: new Map([
 					[fieldA, nodeDelta],
-					[fieldB, deltaForSet(singleJsonCursor(2), buildId, detachId)],
+					[fieldB, { local: [{ count: 1, detach: { minor: 1 }, attach: { minor: 2 } }] }],
 				]),
 			};
 

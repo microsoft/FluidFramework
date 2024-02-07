@@ -4,23 +4,23 @@
  */
 
 export {
-	TreeNodeSchema,
-	TreeFieldSchema,
+	FlexTreeNodeSchema,
+	FlexFieldSchema,
 	Any,
 	allowedTypesToTypeSet,
-	AllowedTypes,
+	FlexAllowedTypes,
 	LazyTreeNodeSchema,
 	LeafNodeSchema,
-	MapNodeSchema,
-	ObjectNodeSchema,
-	FieldNodeSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
+	FlexFieldNodeSchema,
 	FlexTreeSchema,
 	Unenforced,
 	AllowedTypeSet,
-	MapFieldSchema,
+	FlexMapFieldSchema,
 	SchemaCollection,
 	TreeNodeSchemaBase,
-	Fields,
+	FlexObjectNodeFields,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
@@ -35,9 +35,6 @@ export {
 export { ViewSchema } from "./view.js";
 
 export {
-	bannedFieldNames,
-	fieldApiPrefixes,
-	validateObjectNodeFieldName,
 	SchemaLibraryData,
 	SchemaLintConfiguration,
 	aggregateSchemaLibraries,

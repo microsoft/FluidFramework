@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { createIdCompressor } from "@fluidframework/id-compressor";
-import { SessionId } from "@fluidframework/runtime-definitions";
+import { createIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import {
 	ChangeFamily,
 	ChangeRebaser,
@@ -58,7 +57,7 @@ export function editManagerFactory<TChange = TestChange>(
 
 	if (autoDiscardRevertibles === true) {
 		// by default, discard revertibles in the edit manager tests
-		manager.localBranch.on("revertible", (revertible) => {
+		manager.localBranch.on("newRevertible", (revertible) => {
 			revertible.discard();
 		});
 	}

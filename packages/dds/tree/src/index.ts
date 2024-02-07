@@ -84,8 +84,8 @@ export {
 	MapTree,
 	Revertible,
 	RevertibleKind,
-	RevertResult,
-	DiscardResult,
+	RevertibleStatus,
+	RevertibleResult,
 	forbiddenFieldKindIdentifier,
 	StoredSchemaCollection,
 	ErasedTreeNodeSchemaDataFormat,
@@ -127,7 +127,7 @@ export {
 export { leaf } from "./domains/index.js";
 
 export {
-	FieldKind as FlexFieldKind,
+	FlexFieldKind,
 	Multiplicity,
 	isNeverField,
 	FullSchemaPolicy,
@@ -148,7 +148,7 @@ export {
 	SequenceFieldEditBuilder,
 	prefixPath,
 	prefixFieldPath,
-	cursorForJsonableTreeNode as singleTextCursor,
+	cursorForJsonableTreeNode,
 	stackTreeNodeCursor,
 	CursorAdapter,
 	CursorWithNode,
@@ -157,12 +157,12 @@ export {
 	FieldKinds,
 	ContextuallyTypedFieldData,
 	cursorFromContextualData,
-	AllowedTypes as FlexAllowedTypes,
-	TreeNodeSchema as FlexTreeNodeSchema,
+	FlexAllowedTypes,
+	FlexTreeNodeSchema,
 	FlexTreeSchema,
 	SchemaLibrary,
 	SchemaLibraryData,
-	TreeFieldSchema,
+	FlexFieldSchema,
 	Any,
 	NewFieldContent,
 	NodeExistsConstraint,
@@ -184,7 +184,7 @@ export {
 	FlexTreeObjectNode,
 	FlexTreeObjectNodeTyped,
 	AssignableFieldKinds,
-	FlexTreeContext as TreeContext,
+	FlexTreeContext,
 	FlexTreeTypedField,
 	FlexTreeTypedNode,
 	FlexTreeTypedNodeUnion,
@@ -192,14 +192,14 @@ export {
 	FlexTreeField,
 	FlexTreeNode,
 	TreeNodeSchemaBase,
-	FieldNodeSchema,
+	FlexFieldNodeSchema,
 	LeafNodeSchema,
-	MapNodeSchema,
-	ObjectNodeSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
 	CheckTypesOverlap,
 	SchemaBuilderBase,
-	ImplicitFieldSchema as FlexImplicitFieldSchema,
-	ImplicitAllowedTypes as FlexImplicitAllowedTypes,
+	FlexImplicitFieldSchema,
+	FlexImplicitAllowedTypes,
 	Unenforced,
 	schemaIsFieldNode,
 	schemaIsLeaf,
@@ -220,22 +220,18 @@ export {
 	ApplyMultiplicity,
 	NormalizeObjectNodeFields,
 	NormalizeFieldSchema,
-	Fields,
-	MapFieldSchema,
+	FlexObjectNodeFields,
+	FlexMapFieldSchema,
 	ArrayToUnion,
 	ExtractItemType,
 	LazyItem,
+	PropertyNameFromFieldKey,
+	ReservedObjectNodeFieldPropertyNames,
+	ReservedObjectNodeFieldPropertyNamePrefixes,
+	reservedObjectNodeFieldPropertyNames,
+	reservedObjectNodeFieldPropertyNamePrefixes,
+	FlexTreeObjectNodeFieldsInner,
 } from "./feature-libraries/index.js";
-
-export {
-	TreeArrayNode,
-	TreeMapNodeBase,
-	Unhydrated,
-	IterableTreeListContent,
-	TreeNode,
-	TreeArrayNodeBase,
-	create,
-} from "./simple-tree/index.js";
 
 export {
 	ISharedTree,
@@ -260,10 +256,16 @@ export {
 } from "./shared-tree/index.js";
 
 export {
+	TreeArrayNode,
+	Unhydrated,
+	IterableTreeArrayContent,
+	TreeNode,
+	TreeArrayNodeBase,
 	ITree,
 	TreeNodeSchema,
 	TreeConfiguration,
 	TreeView,
+	TreeViewEvents,
 	SchemaFactory,
 	Tree,
 	TreeApi,
@@ -301,7 +303,7 @@ export {
 	// test recursive schema for checking that d.ts files handles schema correctly
 	test_RecursiveObject,
 	test_RecursiveObject_base,
-} from "./class-tree/index.js";
+} from "./simple-tree/index.js";
 export { SharedTree, TreeFactory } from "./treeFactory.js";
 
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec/index.js";

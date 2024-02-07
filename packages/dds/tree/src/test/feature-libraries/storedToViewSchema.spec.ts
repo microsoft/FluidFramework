@@ -20,10 +20,10 @@ import {
 	Any,
 	FieldKinds,
 	LeafNodeSchema,
-	MapNodeSchema,
-	ObjectNodeSchema,
-	TreeFieldSchema,
-	TreeNodeSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
+	FlexFieldSchema,
+	FlexTreeNodeSchema,
 	TreeNodeSchemaBase,
 } from "../../feature-libraries/index.js";
 import {
@@ -46,17 +46,17 @@ describe("storedToViewSchema", () => {
 			brand<TreeNodeSchemaIdentifier>("y"),
 			ValueSchema.Number,
 		);
-		const schemaMap = new Map<TreeNodeSchemaIdentifier, TreeNodeSchema>([
+		const schemaMap = new Map<TreeNodeSchemaIdentifier, FlexTreeNodeSchema>([
 			[schemaX.name, schemaX],
 			[schemaY.name, schemaY],
 		]);
 		const roundTrip = [
-			["any", TreeFieldSchema.create(FieldKinds.optional, [Any])],
-			["forbidden", TreeFieldSchema.create(FieldKinds.forbidden, [Any])],
-			["no types", TreeFieldSchema.create(FieldKinds.optional, [])],
-			["one type", TreeFieldSchema.create(FieldKinds.optional, [schemaX])],
-			["lazy", TreeFieldSchema.create(FieldKinds.optional, [() => schemaX])],
-			["multiple types", TreeFieldSchema.create(FieldKinds.optional, [schemaX, schemaY])],
+			["any", FlexFieldSchema.create(FieldKinds.optional, [Any])],
+			["forbidden", FlexFieldSchema.create(FieldKinds.forbidden, [Any])],
+			["no types", FlexFieldSchema.create(FieldKinds.optional, [])],
+			["one type", FlexFieldSchema.create(FieldKinds.optional, [schemaX])],
+			["lazy", FlexFieldSchema.create(FieldKinds.optional, [() => schemaX])],
+			["multiple types", FlexFieldSchema.create(FieldKinds.optional, [schemaX, schemaY])],
 		] as const;
 		for (const [name, field] of roundTrip) {
 			it(name, () => {
@@ -72,7 +72,7 @@ describe("storedToViewSchema", () => {
 				rootFieldSchema: storedEmptyFieldSchema,
 				nodeSchema: new Map(),
 			});
-			assert(empty.rootFieldSchema.equals(TreeFieldSchema.empty));
+			assert(empty.rootFieldSchema.equals(FlexFieldSchema.empty));
 			assert.deepEqual(empty.nodeSchema, new Map());
 		});
 
@@ -141,9 +141,9 @@ describe("storedToViewSchema", () => {
 				assert.equal(nodeSchema.name, key);
 				if (storedNodeSchema instanceof MapNodeStoredSchema) {
 					// Since its tested separately, assume fields are converted correctly.
-					assert(nodeSchema instanceof MapNodeSchema);
+					assert(nodeSchema instanceof FlexMapNodeSchema);
 				} else {
-					assert(!(nodeSchema instanceof MapNodeSchema));
+					assert(!(nodeSchema instanceof FlexMapNodeSchema));
 				}
 
 				assert.equal(
@@ -151,7 +151,7 @@ describe("storedToViewSchema", () => {
 					(storedNodeSchema as Partial<LeafNodeStoredSchema>).leafValue,
 				);
 
-				if (nodeSchema instanceof ObjectNodeSchema) {
+				if (nodeSchema instanceof FlexObjectNodeSchema) {
 					assert(storedNodeSchema instanceof ObjectNodeStoredSchema);
 					assert.equal(
 						storedNodeSchema.objectNodeFields.size,

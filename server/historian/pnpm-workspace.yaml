@@ -1,2 +1,12 @@
+# This is the workspace definition for the hisorian release group. See https://pnpm.io/pnpm-workspace_yaml for more
+# information about the format.
+#
+# Guidelines for updating this file:
+#
+# 1. Keep the entries alphabetical wherever possible.
+# 2. DO NOT end a glob with "**". E.g. "packages/**". Doing so can include unexpected packages. This is especially true
+#    of packages for which we build ESM and CJS. Such packages sometimes have package.json files in their source or
+#    output directories during compilation.
+
 packages:
-  - "packages/**"
+  - "packages/*"
