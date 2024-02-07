@@ -198,19 +198,7 @@ describe("IntervalCollection fuzz testing", () => {
 
 	createDDSFuzzSuite(model, {
 		...defaultFuzzOptions,
-		// AB#4477: Seed 20, 60 and others with its call stack is the same root cause as skipped regression test in
-		// intervalCollection.spec.ts--search for 4477.
-		// AB#6552: Seeds 9 and 70 exposed a bug where the interval endpoints do not slide properly on shared string removeRange.
-		// The other failing seeds were added when the mocks were changed to properly update msn on reconnects.
-		// This exposed ways that `0x54e` can occur.
-		// The root cause of this bug is--roughly speaking--interval endpoints with StayOnRemove being placed
-		// on segments that can be zamboni'd.
-		// TODO:AB#5337: re-enable these seeds.
-		skip: [
-			1, 4, 5, 12, 13, 15, 16, 17, 18, 19, 28, 29, 24, 25, 28, 31, 34, 35, 36, 37, 38, 40, 41,
-			43, 45, 46, 47, 49, 52, 60, 62, 64, 66, 68, 69, 70, 71, 73, 74, 78, 80, 83, 85, 86, 91,
-			92, 93,
-		],
+		skip: [68],
 		// Note: there are some known eventual consistency issues which the tests don't currently reproduce.
 		// Search this package for AB#6552 (or look at that work item) for a skipped test and further details.
 		// Uncomment this line to replay a specific seed from its failure file:
@@ -226,7 +214,6 @@ describe("IntervalCollection no reconnect fuzz testing", () => {
 
 	const options = {
 		...defaultFuzzOptions,
-		// AB#4477: Same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477
 		skip: [68],
 		reconnectProbability: 0.0,
 		clientJoinOptions: {
@@ -250,12 +237,6 @@ describe("IntervalCollection fuzz testing with rebased batches", () => {
 
 	createDDSFuzzSuite(noReconnectWithRebaseModel, {
 		...defaultFuzzOptions,
-		// AB#4477: Either the same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477,
-		// or 0x54e, see AB#5337 or comment on "default interval collection" fuzz suite.
-		// skip: [
-		// 	1, 2, 3, 5, 6, 11, 14, 16, 17, 20, 22, 27, 29, 32, 34, 38, 39, 41, 42, 43, 52, 56, 58,
-		// 	60, 67, 68, 69, 71, 79, 86, 94, 95,
-		// ],
 		skip: [44],
 		reconnectProbability: 0.0,
 		clientJoinOptions: {
