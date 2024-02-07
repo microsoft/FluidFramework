@@ -143,23 +143,6 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
 	}
 }
 
-/**
- * @internal
- */
-export class OpStorage extends ReadDocumentStorageServiceBase {
-	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
-		return [];
-	}
-
-	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
-		throw new Error("no snapshot tree should be asked when playing ops");
-	}
-
-	public async readBlob(blobId: string): Promise<ArrayBufferLike> {
-		throw new Error(`Unknown blob ID: ${blobId}`);
-	}
-}
-
 export class StaticStorageDocumentService
 	extends TypedEventEmitter<IDocumentServiceEvents>
 	implements IDocumentService

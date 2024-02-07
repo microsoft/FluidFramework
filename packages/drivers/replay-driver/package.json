@@ -136,6 +136,10 @@
 		"broken": {
 			"ClassDeclaration_ReplayDocumentService": {
 				"forwardCompat": false
+			},
+			"RemovedClassDeclaration_OpStorage": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}
