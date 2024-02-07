@@ -84,4 +84,16 @@ export interface IEfficientMatrixTest {
 
 	// Returns a structure with various debug info about the cell
 	getCellDebugInfo(row: number, col: number): Promise<{ channel?: ICollabChannelCore }>;
+
+	getCellChannelIdDebugInfo(row: number, col: number): Promise<{ channelId: string }>;
+
+	getReverseMapsDebugInfo(
+		rowId: string,
+		colId: string,
+	): {
+		rowMapSize: number;
+		colMapSize: number;
+		rowIndex: number | undefined;
+		colIndex: number | undefined;
+	};
 }

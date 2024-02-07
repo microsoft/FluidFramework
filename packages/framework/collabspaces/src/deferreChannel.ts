@@ -26,11 +26,18 @@ import { pkgVersion } from "./packageVersion";
 
 const snapshotFileName = "header";
 
+/**
+ * Deferred Channel
+ */
 export class DeferredChannel extends SharedObject implements ICollabChannel {
 	readonly type = DeferredChannel.Type;
 	static readonly Type = "CollabSpacedDeferredChannelType";
 
 	private ops: ISequencedDocumentMessage[] = [];
+
+	public getOps() {
+		return this.ops;
+	}
 
 	public constructor(
 		id: string,
@@ -76,6 +83,9 @@ export class DeferredChannel extends SharedObject implements ICollabChannel {
 	}
 }
 
+/**
+ * Deferred Channel Factory
+ */
 export class DeferredChannelFactory implements IChannelFactory {
 	public static readonly Attributes: IChannelAttributes = {
 		type: DeferredChannel.Type,

@@ -22,6 +22,7 @@ import {
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import { Loader as ContainerLoader } from "@fluidframework/container-loader";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { IRevertible } from "@fluidframework/matrix";
 
 import {
 	ICollabChannelCore,
@@ -148,7 +149,8 @@ describe("Temporal Collab Spaces", () => {
 
 		// +700Mb, but only +200Mb if accounting GC after that.
 		collabSpace.insertCols(0, cols);
-		collabSpace.insertRows(0, rows - 1);
+		// the first row is already there
+		collabSpace.insertRows(1, rows - 1);
 
 		// Roughly how many cells were changed due to row/col ID tracking
 		let cells = cols + rows;
@@ -308,6 +310,104 @@ describe("Temporal Collab Spaces", () => {
 		assert(value2?.value === initialValue, "value was preserved correctly");
 	});
 
+	describe("Reverse Mapping tests", () => {
+		async function getRowAndColIdsFromChannelId(
+			collabSpace: IEfficientMatrix & IEfficientMatrixTest,
+			row: number,
+			col: number,
+		): Promise<{ rowId: string; colId: string }> {
+			const result = await collabSpace.getCellChannelIdDebugInfo(row, col);
+			const parts = result.channelId.split(",");
+			assert(parts.length === 3, "Invalid channel Id");
+			const rowId = parts[0];
+			const colId = parts[1];
+			return { rowId, colId };
+		}
+
+		it("Reverse Mapping: Basic test", async () => {
+			const collabSpace = await initialize();
+			const row = 5;
+			const col = 3;
+			const { rowId, colId } = await getRowAndColIdsFromChannelId(collabSpace, row, col);
+
+			const { rowMapSize, colMapSize, rowIndex, colIndex } =
+				collabSpace.getReverseMapsDebugInfo(rowId, colId);
+
+			assert(rowMapSize === rows, "rowMapSize is incorrect");
+			assert(rowIndex === row + 1, "rowIndex from the actual matrix has to be offset by 1");
+			assert(colMapSize === cols, "colMapSize is incorrect");
+			assert(colIndex === col + 1, "colIndex is correct");
+		});
+
+		it("Reverse Mapping: Basic row adding test", async () => {
+			const collabSpace = await initialize();
+			const row = 5;
+			const col = 3;
+			const numberOfNewRows = 2;
+			// Insert rows to validate the reverse mappings are updated correctly
+			collabSpace.insertRows(1, numberOfNewRows);
+			collabSpace.setCell(row, col, {
+				value: 5,
+				type: CounterFactory.Type,
+			});
+			const { rowId, colId } = await getRowAndColIdsFromChannelId(collabSpace, row, col);
+			const { rowMapSize, colMapSize, rowIndex, colIndex } =
+				collabSpace.getReverseMapsDebugInfo(rowId, colId);
+			assert(rowMapSize === rows + numberOfNewRows, "rowMapSize is incorrect");
+			assert(rowIndex === row + 1, "rowIndex is correct");
+			assert(colMapSize === cols, "colMapSize is incorrect");
+			assert(colIndex === col + 1, "colIndex is correct");
+		});
+
+		it("Reverse Mapping: Basic row removing test", async () => {
+			const collabSpace = await initialize();
+			const row = 1;
+			const col = 3;
+
+			const { rowId: nextRowId, colId: nextColId } = await getRowAndColIdsFromChannelId(
+				collabSpace,
+				row + 1,
+				col,
+			);
+			collabSpace.removeRows(row, 1);
+
+			const { rowId, colId } = await getRowAndColIdsFromChannelId(collabSpace, row, col);
+			assert(nextRowId === rowId, "rowId after removal should be the same as nextRowId");
+			assert(nextColId === colId, "colId after removal should be different");
+
+			const { rowMapSize, colMapSize, rowIndex, colIndex } =
+				collabSpace.getReverseMapsDebugInfo(rowId, colId);
+
+			assert(rowMapSize === rows - 1, "rowMapSize is incorrect");
+			assert(rowIndex === row + 1, "rowIndex is correct");
+			assert(colMapSize === cols, "colMapSize is incorrect");
+			assert(colIndex === col + 1, "colIndex is correct");
+		});
+
+		it("Reverse Mapping: Basic col removing test", async () => {
+			const collabSpace = await initialize();
+			const row = 1;
+			const col = 3;
+			const columnsToBeRemoved = 1;
+			const { colId: nextColId } = await getRowAndColIdsFromChannelId(
+				collabSpace,
+				row,
+				col + 1,
+			);
+			collabSpace.removeCols(col, columnsToBeRemoved);
+			const { rowId, colId } = await getRowAndColIdsFromChannelId(collabSpace, row, col);
+
+			assert(nextColId === colId, "colId after removal should be the same as nextColId");
+
+			const { rowMapSize, colMapSize, rowIndex, colIndex } =
+				collabSpace.getReverseMapsDebugInfo(rowId, colId);
+			assert(rowMapSize === rows, "rowMapSize is incorrect");
+			assert(rowIndex === row + 1, "rowIndex is correct");
+			assert(colMapSize === cols - columnsToBeRemoved, "colMapSize is incorrect");
+			assert(colIndex === col + 1, "colIndex is correct");
+		});
+	});
+
 	it("Basic test", async () => {
 		// Cell we will be interrogating
 		const row = 5;
@@ -425,13 +525,15 @@ describe("Temporal Collab Spaces", () => {
 		const col = 3;
 
 		const collabSpace = await initialize();
+		const collabSpace2 = collabSpaces[1];
 
 		const channel2a = (await collabSpace.getCellChannel(row, col)) as ISharedCounter;
 
 		// Make some changes on a channel
-		const initialValue = channel2a.value;
+		let initialValue = channel2a.value;
 		let overwriteValue = initialValue + 100;
 		channel2a.increment(10);
+		initialValue += 10;
 
 		// We test vastly different scenario depending on if we wait or not.
 		// If we do not wait, then we test concurrent changes in channel and overwrite
@@ -441,8 +543,15 @@ describe("Temporal Collab Spaces", () => {
 			await provider.ensureSynchronized();
 		}
 
+		// Create undo for second container
+		let undo2: IRevertible[] = [];
+		collabSpace2.openUndo({
+			pushToCurrentOperation(revertible: IRevertible) {
+				undo2.push(revertible);
+			},
+		});
+
 		// Overwrite it!
-		const collabSpace2 = collabSpaces[1];
 		collabSpace2.setCell(row, col, {
 			value: overwriteValue,
 			type: CounterFactory.Type,
@@ -452,37 +561,46 @@ describe("Temporal Collab Spaces", () => {
 		await provider.ensureSynchronized();
 		await ensureSameValues(row, col, overwriteValue);
 
-		assert(channel2a.value === initialValue + 10, "No impact on unrooted channel");
+		assert(channel2a.value === initialValue, "No impact on unrooted channel");
 
 		// Retrieve channel for same cell
-		const channel2b = (await collabSpace.getCellChannel(row, col)) as ISharedCounter;
-		const channel2c = (await collabSpace2.getCellChannel(row, col)) as ISharedCounter;
+		let channel2b = (await collabSpace.getCellChannel(row, col)) as ISharedCounter;
+		let channel2c = (await collabSpace2.getCellChannel(row, col)) as ISharedCounter;
 		await ensureSameValues(row, col, overwriteValue, [channel2b, channel2c]);
 
 		channel2c.increment(10);
 		overwriteValue += 10;
 		await provider.ensureSynchronized();
-		await ensureSameValues(row, col, overwriteValue);
 		await ensureSameValues(row, col, overwriteValue, [channel2b, channel2c]);
-		assert(channel2a.value === initialValue + 10, "No impact on unrooted channel");
+		assert(channel2a.value === initialValue, "No impact on unrooted channel");
 
-		// TBD(Pri1): Need to implement undo - restore original channel, validate that none
-		// of the changes that were made before were lost, and that further collaboration could
-		// be done on this channel.
-		// Plus redo, and come back to second channel.
-		// This will require fixing production code - converting deferred channels to rooted channels
+		/**
+		 * Undo all the changes from second container
+		 * This includes only matrix changes, i.e. cell overwrite.
+		 */
+		const toUndo = undo2.reverse();
+		undo2 = [];
+		for (const record of toUndo) {
+			record.revert();
+		}
+		await provider.ensureSynchronized();
+		channel2b = (await collabSpace.getCellChannel(row, col)) as ISharedCounter;
+		channel2c = (await collabSpace2.getCellChannel(row, col)) as ISharedCounter;
+		await ensureSameValues(row, col, initialValue, [channel2b, channel2c]);
 
 		// TBD(Pri1): Need to ensure that summarization for deferred channels and loading from such summaries works
 		// Once we add logic to root deferred channels, we will need to add summary and loading of new container to test
 		// such conversion works correctly.
 	}
 
-	it("Channel overwrite with syncronization", async () => {
-		await ChannelOverwrite(true);
-	});
+	describe("Channel Overwrite", () => {
+		it("With syncronization", async () => {
+			await ChannelOverwrite(true);
+		});
 
-	it("Channel overwrite without syncronization", async () => {
-		await ChannelOverwrite(false);
+		it("Without syncronization", async () => {
+			await ChannelOverwrite(false);
+		});
 	});
 });
 

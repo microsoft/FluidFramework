@@ -25,6 +25,7 @@ import {
 	SharedMatrixFactory,
 	MatrixItem,
 	ISharedMatrixEvents,
+	IUndoConsumer,
 } from "@fluidframework/matrix";
 import { UsageError } from "@fluidframework/telemetry-utils";
 import { addBlobToSummary } from "@fluidframework/runtime-utils";
@@ -142,8 +143,9 @@ type ICellInfo =
 	  }
 	| {
 			value: Exclude<MatrixItem<MatrixInternalType>, undefined>;
-			channel: ICollabChannel | undefined;
+			channel: Promise<ICollabChannel> | undefined;
 			channelId: string;
+			channelInfo: IChannelTrackingInfo | undefined;
 	  };
 
 interface IChannelTrackingInfo {
@@ -167,20 +169,18 @@ interface IChannelTrackingInfo {
 // for future use. If it becomes rooted at any future point in time (through undo/redo), it would need to transition
 // into non-deferred state by being replaced with real channel (by loading base state and applying all
 // accumulated ops)
-/*
-function isChannelDeffered(info: IChannelTrackingInfo) {
-	return info.type === DeferredChannel.Type;
+function isChannelDeffered(type?: string) {
+	return type === DeferredChannel.Type;
 }
-*/
 
 /*
-	To be implemented:
+	// TBD(Pri2) - to be implemented:
 	- "conflict" events
 	- Types that do not support collaboration (like numbers, dates)
 		Right now we assume that every type is represented by channel factory, but there is no need
 		for that if types are not collaborative.
 	- Properly implement GC of channels (and exposure of channel info to GC)
-	- hange events - changes being made by channels should result in events fired by this object.
+	- change events - changes being made by channels should result in events fired by this object.
 */
 
 /** @internal */
@@ -192,6 +192,7 @@ export class TempCollabSpaceRuntime
 	private channelInfo: Record<string, IChannelTrackingInfo | undefined> = {};
 	private readonly rowMap: Map<string, number> = new Map();
 	private readonly colMap: Map<string, number> = new Map();
+	private deferredChannels: Map<string, DeferredChannel> = new Map();
 
 	constructor(
 		dataStoreContext: IFluidDataStoreContext,
@@ -365,6 +366,9 @@ export class TempCollabSpaceRuntime
 		if (!this.contexts.has(id)) {
 			super.attachRemoteChannel(id, sequenceNumber, attachMessage);
 			if (id !== matrixId) {
+				// This should never happen, but if it does - this points to an issue of
+				// not tracking it properly in this.deferredChannels
+				assert(!isChannelDeffered(attachMessage.type), "deferred channels tracking");
 				this.channelCreated(id, attachMessage.type);
 			}
 		} else {
@@ -401,8 +405,61 @@ export class TempCollabSpaceRuntime
 				this.dataStoreContext.storage,
 				blobId,
 			);
+
+			// Rebuild defered channels
+			this.deferredChannels = new Map();
+			for (const [channelId, info] of Object.entries(this.channelInfo)) {
+				if (isChannelDeffered(info?.type)) {
+					const channel = await this.getChannel(channelId);
+					this.deferredChannels.set(channelId, channel as DeferredChannel);
+				}
+			}
 		}
 		this.matrix.switchSetCellPolicy();
+
+		// We need to ensure that we are tracking all the cells and when removing cells, we need to
+		// remove the tracking information as well as update the indexes in the map.
+		const removeCellsFromMap = (start: number, count: number, map: Map<string, any>) => {
+			if (count > 0) {
+				// Convert the map to an array of key-value pairs
+				const entries = Array.from(map.entries());
+
+				// Remove the specified range of items from the array
+				// Note the index from the reverse mapping is off by 1 as the matrix has a row and col tracking IDs
+				// and the map indexes are 0 based
+				entries.splice(start - 2, count);
+
+				// Clear the original map
+				map.clear();
+
+				// Re-populate the map with the remaining items from the array
+				entries.forEach(([key, value], index) => {
+					map.set(key, index + 1);
+				});
+			}
+		};
+
+		this.matrix.openMatrix({
+			rowsChanged: (rowStart: number, removedCount: number, insertedCount: number) => {
+				removeCellsFromMap(rowStart, removedCount, this.rowMap);
+			},
+			colsChanged: (colStart: number, removedCount: number, insertedCount: number) => {
+				removeCellsFromMap(colStart, removedCount, this.colMap);
+			},
+			cellsChanged: (
+				rowStart: number,
+				colStart: number,
+				rowCount: number,
+				colCount: number,
+			) => {
+				for (let row = rowStart; row < rowStart + rowCount; row++) {
+					for (let col = colStart; col < colStart + colCount; col++) {
+						// -1 due to first row & col tracking IDs
+						this.cellChanged(row - 1, col - 1);
+					}
+				}
+			},
+		});
 	}
 
 	private get matrix() {
@@ -410,7 +467,82 @@ export class TempCollabSpaceRuntime
 		return this.matrixInternal;
 	}
 
-	private async getCellInfo(rowArg: number, colArg: number): Promise<ICellInfo> {
+	private insertCellIntoReverseMap(
+		map: Map<string, number>,
+		index: number,
+		key: string,
+		value: number,
+	) {
+		// Convert the map to an array of key-value pairs
+		const entries = Array.from(map.entries());
+
+		// Insert the new key-value pair at the specified index
+		entries.splice(index, 0, [key, value]);
+
+		// Clear the original map
+		map.clear();
+
+		// Re-populate the map with the updated items from the array
+		entries.forEach(([localKey], newIndex) => {
+			map.set(localKey, newIndex + 1);
+		});
+	}
+
+	private addCellToReverseMap(row: number, col: number, info: ICellInfo) {
+		// Col and Row == -1 means cell that uniquely identify the rows and columns from the matrix.
+		if (col === -1) {
+			if (this.rowMap.size >= row + 1) {
+				// Cell added
+				this.insertCellIntoReverseMap(
+					this.rowMap,
+					row,
+					info.value as unknown as string,
+					row + 1,
+				);
+			} else {
+				this.rowMap.set(info.value as unknown as string, row + 1);
+			}
+		}
+		if (row === -1) {
+			this.colMap.set(info.value as unknown as string, col + 1);
+		}
+	}
+
+	private cellChanged(row: number, col: number) {
+		const info = this.getCellInfo(row, col);
+
+		if (info.value !== undefined) {
+			// Col and Row == -1 means cell that uniquely identify the rows and columns from the matrix.
+			this.addCellToReverseMap(row, col, info);
+
+			if (isChannelDeffered(info.channelInfo?.type)) {
+				const channelId = info.channelId;
+				// Need to update channel and convert it to real thing.
+				const deferredChannel = this.deferredChannels.get(channelId);
+				assert(deferredChannel !== undefined, "deferred channel not found");
+				this.deferredChannels.delete(channelId);
+
+				this.destroyChannelCore(channelId);
+
+				assert(
+					info.channelInfo?.pendingChangeCount === 0,
+					"no pending changes for deferred channel",
+				);
+				this.channelInfo[channelId] = undefined;
+				this.createCollabChannel(info.value, channelId);
+				for (const op of deferredChannel.getOps()) {
+					this.processChannelOp(
+						channelId,
+						op,
+						false /* local */,
+						undefined /* metadata */,
+					);
+				}
+			}
+		}
+	}
+
+	private getCellInfo(rowArg: number, colArg: number): ICellInfo {
 		const row = rowArg + 1;
 		const col = colArg + 1;
 		const cellValue = this.matrix.getCell(row, col);
@@ -420,18 +552,23 @@ export class TempCollabSpaceRuntime
 		const rowId = this.matrix.getCell(row, 0) as unknown as string;
 		const colId = this.matrix.getCell(0, col) as unknown as string;
 		const channelId = `${rowId},${colId},${cellValue.iteration}`;
-		const channel = await this.contexts.get(channelId)?.getChannel();
+		const channel = this.contexts.get(channelId)?.getChannel();
 
+		const channelInfo = this.channelInfo[channelId];
 		if (channel !== undefined) {
-			assert(this.channelInfo[channelId]?.type === cellValue.type, "Types do not match");
+			assert(
+				isChannelDeffered(channelInfo?.type) || channelInfo?.type === cellValue.type,
+				"Types do not match",
+			);
 		} else {
-			assert(this.channelInfo[channelId] === undefined, "channel exists without channelInfo");
+			assert(channelInfo === undefined, "channel exists without channelInfo");
 		}
 
 		return {
 			value: cellValue,
-			channel: channel as ICollabChannel | undefined,
+			channel: channel as Promise<ICollabChannel> | undefined,
 			channelId,
+			channelInfo,
 		};
 	}
 
@@ -440,8 +577,34 @@ export class TempCollabSpaceRuntime
 		row: number,
 		col: number,
 	): Promise<{ channel?: ICollabChannelCore }> {
-		const result = await this.getCellInfo(row, col);
-		return { channel: result.channel };
+		const result = this.getCellInfo(row, col);
+		return { channel: await result.channel };
+	}
+
+	// For test purposes only!
+	// Returns the channel ID for the cell.
+	public async getCellChannelIdDebugInfo(
+		row: number,
+		col: number,
+	): Promise<{ channelId?: string }> {
+		const result = this.getCellInfo(row, col);
+		return { channelId: result.channelId };
+	}
+
+	// For test purposes only!
+	// Returns the Reverse Map size and the actual indexes from matrix stored on the reverse mapping matrixes.
+	public getReverseMapsDebugInfo(
+		rowId: string,
+		colId: string,
+	): {
+		rowMapSize: number;
+		colMapSize: number;
+		rowIndex: number | undefined;
+		colIndex: number | undefined;
+	} {
+		const rowIndex = this.rowMap.get(rowId);
+		const colIndex = this.colMap.get(colId);
+		return { rowMapSize: this.rowMap.size, colMapSize: this.colMap.size, rowIndex, colIndex };
 	}
 
 	private getFactoryForValueType(type: string, onlyCollaborativeTypes: boolean) {
@@ -490,12 +653,16 @@ export class TempCollabSpaceRuntime
 		// this.bindChannel(newChannel);
 
 		this.channelCreated(channelId, value.type);
+		assert(!this.deferredChannels.has(channelId), "overwriting deferred channel");
+		if (isChannelDeffered(value.type)) {
+			this.deferredChannels.set(channelId, newChannel as DeferredChannel);
+		}
 
 		return newChannel;
 	}
 
 	public async getCellChannel(row: number, col: number): Promise<ICollabChannelCore> {
-		const { value, channel, channelId } = await this.getCellInfo(row, col);
+		const { value, channel, channelId } = this.getCellInfo(row, col);
 		if (value === undefined) {
 			throw new UsageError("Can't create channel for undefined cell");
 		}
@@ -506,20 +673,6 @@ export class TempCollabSpaceRuntime
 		return this.createCollabChannel(value, channelId);
 	}
 
-	private populateRowColMaps() {
-		const rowCount = this.matrix.rowCount;
-		const colCount = this.matrix.colCount;
-		for (let rowIdIndex = 1; rowIdIndex < rowCount; rowIdIndex++) {
-			const currentRowId = this.matrix.getCell(rowIdIndex, 0) as unknown as string;
-			this.rowMap.set(currentRowId, rowIdIndex);
-		}
-
-		for (let colIdIndex = 1; colIdIndex < colCount; colIdIndex++) {
-			const currentColId = this.matrix.getCell(0, colIdIndex) as unknown as string;
-			this.colMap.set(currentColId, colIdIndex);
-		}
-	}
-
 	private mapChannelToCell(channelId: string) {
 		const parts = channelId.split(",");
 		assert(parts.length === 3, "wrong channel ID");
@@ -527,17 +680,33 @@ export class TempCollabSpaceRuntime
 		const colId = parts[1];
 		const iteration = parts[2];
 
-		// In case the channel is about to be created we need to populate the rowMap and colMap maps.
-		if (this.rowMap.size === 0 || this.colMap.size === 0) {
-			this.populateRowColMaps();
-		}
-
 		const row = this.rowMap.get(rowId);
 		const col = this.colMap.get(colId);
 
-		assert(row !== undefined, "channel's row not found");
-		assert(col !== undefined, "channel's col not found");
+		assert(
+			row !== undefined && (this.matrix.getCell(row, 0) as unknown as string) === rowId,
+			"channel's row not found",
+		);
+		assert(
+			col !== undefined && (this.matrix.getCell(0, col) as unknown as string) === colId,
+			"channel's col not found",
+		);
 		return { row, col, iteration };
+	}
+
+	private destroyChannelCore(channelId: string) {
+		// Force summarizer sub-system to summarize this object and get rid of deleted channel
+		this.setChannelDirty(channelId);
+
+		// Is this safe? Anything else we need to do?
+		this.contexts.delete(channelId);
+		this.notBoundedChannelContextSet.delete(channelId);
+		this.channelInfo[channelId] = undefined;
+
+		// TBD(Pri2): We need to update GC data and ensure that it's accurate.
+		// To some extend it's a noop event from GC perspective, and resulting data in the cell
+		// represents same data, but need to double check that it's actually correct and tests
+		// have proper coverage.
 	}
 
 	// Saves or destroys channel, depending on the arguments
@@ -566,8 +735,6 @@ export class TempCollabSpaceRuntime
 
 		let savedValue = this.matrix.getCell(row, col);
 
-		// TBD(Pri2) - can this be optimized and assume only single client can undo such operation?
-		//
 		// If channel is no longer associated with a cell, can't do much!
 		// We are dealing with non-rooted channel. It could be returned back to life through undo
 		// It's possible that it sits on undo stack of multiple clients (imagine that both clients
@@ -602,19 +769,7 @@ export class TempCollabSpaceRuntime
 		if (destroyd) {
 			// Validate that actually values match!
 			assert(channel.value === savedValue.value, "values are not matching!!!!");
-
-			// Force summarizer sub-system to summarize this object and get rid of deleted channel
-			this.setChannelDirty(channelId);
-
-			// Is this safe? Anything else we need to do?
-			this.contexts.delete(channelId);
-			this.notBoundedChannelContextSet.delete(channelId);
-			this.channelInfo[channelId] = undefined;
-
-			// TBD(Pri2): We need to update GC data and ensure that it's accurate.
-			// To some extend it's a noop event from GC perspective, and resulting data in the cell
-			// represents same data, but need to double check that it's actually correct and tests
-			// have proper coverage.
+			this.destroyChannelCore(channelId);
 		}
 
 		return { saved, destroyd };
@@ -661,13 +816,13 @@ export class TempCollabSpaceRuntime
 	}
 
 	public async getCellAsync(row: number, col: number): Promise<CollabSpaceCellType> {
-		const { value, channel } = await this.getCellInfo(row, col);
+		const { value, channel } = this.getCellInfo(row, col);
 		if (value === undefined) {
 			return { value: undefined, type: "undefined" };
 		}
 		let val = value.value;
 		if (channel !== undefined) {
-			val = channel.value as string;
+			val = (await channel).value as string;
 		}
 		return { value: val, type: value.type };
 	}
@@ -717,18 +872,12 @@ export class TempCollabSpaceRuntime
 		// generate new ID for a columns
 		while (count > 0) {
 			count--;
-			const colId = uuid();
-			this.matrix.setCell(0, col, colId as unknown as MatrixInternalType);
-			this.colMap.set(colId, col);
+			this.matrix.setCell(0, col, uuid() as unknown as MatrixInternalType);
 			col++;
 		}
 	}
 
 	public removeCols(colStart: number, count: number) {
-		for (let i = 0; i < count; i++) {
-			const colId = this.matrix.getCell(0, colStart + 1 + i) as unknown as string;
-			this.colMap.delete(colId);
-		}
 		this.matrix.removeCols(colStart + 1, count);
 	}
 
@@ -740,19 +889,17 @@ export class TempCollabSpaceRuntime
 		// generate new ID for a columns
 		while (count > 0) {
 			count--;
-			const rowId = uuid();
-			this.matrix.setCell(row, 0, rowId as unknown as MatrixInternalType);
-			this.rowMap.set(rowId, row);
+			this.matrix.setCell(row, 0, uuid() as unknown as MatrixInternalType);
 			row++;
 		}
 	}
 
 	public removeRows(rowStart: number, count: number) {
-		for (let i = 0; i < count; i++) {
-			const rowId = this.matrix.getCell(rowStart + 1 + i, 0) as unknown as string;
-			this.rowMap.delete(rowId);
-		}
 		this.matrix.removeRows(rowStart + 1, count);
+	}
+
+	public openUndo(consumer: IUndoConsumer): void {
+		this.matrix.openUndo(consumer);
 	}
 
 	// #endregion ISharedMatrix
