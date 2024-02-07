@@ -46,13 +46,6 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 		this._disposed = true;
 	}
 
-	public get repositoryUrl(): string {
-		if (this.internalStorageService) {
-			return this.internalStorageService.repositoryUrl;
-		}
-		throw new Error("storage service not yet instantiated");
-	}
-
 	public async getSnapshotTree(
 		version?: IVersion,
 		scenarioName?: string,

@@ -136,6 +136,21 @@
 		"broken": {
 			"ClassDeclaration_ReplayDocumentService": {
 				"forwardCompat": false
+			},
+			"ClassDeclaration_FileSnapshotReader": {
+				"backCompat": false
+			},
+			"ClassDeclaration_OpStorage": {
+				"backCompat": false
+			},
+			"ClassDeclaration_ReadDocumentStorageServiceBase": {
+				"backCompat": false
+			},
+			"ClassDeclaration_ReplayController": {
+				"backCompat": false
+			},
+			"ClassDeclaration_SnapshotStorage": {
+				"backCompat": false
 			}
 		}
 	}

@@ -43,6 +43,7 @@ declare function get_current_ClassDeclaration_FileSnapshotReader():
 declare function use_old_ClassDeclaration_FileSnapshotReader(
     use: TypeOnly<old.FileSnapshotReader>): void;
 use_old_ClassDeclaration_FileSnapshotReader(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_FileSnapshotReader());
 
 /*
@@ -91,6 +92,7 @@ declare function get_current_ClassDeclaration_OpStorage():
 declare function use_old_ClassDeclaration_OpStorage(
     use: TypeOnly<old.OpStorage>): void;
 use_old_ClassDeclaration_OpStorage(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_OpStorage());
 
 /*
@@ -115,6 +117,7 @@ declare function get_current_ClassDeclaration_ReadDocumentStorageServiceBase():
 declare function use_old_ClassDeclaration_ReadDocumentStorageServiceBase(
     use: TypeOnly<old.ReadDocumentStorageServiceBase>): void;
 use_old_ClassDeclaration_ReadDocumentStorageServiceBase(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ReadDocumentStorageServiceBase());
 
 /*
@@ -139,6 +142,7 @@ declare function get_current_ClassDeclaration_ReplayController():
 declare function use_old_ClassDeclaration_ReplayController(
     use: TypeOnly<old.ReplayController>): void;
 use_old_ClassDeclaration_ReplayController(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ReplayController());
 
 /*
@@ -212,6 +216,7 @@ declare function get_current_ClassDeclaration_SnapshotStorage():
 declare function use_old_ClassDeclaration_SnapshotStorage(
     use: TypeOnly<old.SnapshotStorage>): void;
 use_old_ClassDeclaration_SnapshotStorage(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SnapshotStorage());
 
 /*

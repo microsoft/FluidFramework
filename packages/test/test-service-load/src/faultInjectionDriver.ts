@@ -341,9 +341,6 @@ export class FaultInjectionDocumentStorageService implements IDocumentStorageSer
 		}
 	}
 
-	public get repositoryUrl(): string {
-		return this.internal.repositoryUrl;
-	}
 	public get policies() {
 		return this.internal.policies;
 	}

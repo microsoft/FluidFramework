@@ -36,8 +36,6 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 	protected readonly blobsShaCache = new Map<string, string>();
 	private readonly summaryTreeUploadManager: ISummaryUploadManager;
 
-	public readonly repositoryUrl: string = "";
-
 	constructor(
 		private readonly id: string,
 		private readonly manager: GitManager,

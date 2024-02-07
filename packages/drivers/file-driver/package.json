@@ -75,6 +75,13 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_FluidFetchReader": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ISnapshotWriterStorage": {
+				"backCompat": false
+			}
+		}
 	}
 }

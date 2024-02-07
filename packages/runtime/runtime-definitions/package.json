@@ -136,6 +136,12 @@
 			"RemovedTypeAliasDeclaration_StableId": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"InterfaceDeclaration_IFluidDataStoreContext": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IFluidDataStoreContextDetached": {
+				"backCompat": false
 			}
 		}
 	}

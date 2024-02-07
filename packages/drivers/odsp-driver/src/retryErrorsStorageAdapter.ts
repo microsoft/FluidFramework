@@ -39,10 +39,6 @@ export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisp
 		this._disposed = true;
 	}
 
-	public get repositoryUrl(): string {
-		return this.internalStorageService.repositoryUrl;
-	}
-
 	// eslint-disable-next-line @rushstack/no-new-null
 	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
 		return this.runWithRetry(

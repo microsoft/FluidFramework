@@ -144,8 +144,6 @@ export interface IDocumentStorageServicePolicies {
  * @alpha
  */
 export interface IDocumentStorageService extends Partial<IDisposable> {
-	repositoryUrl: string;
-
 	/**
 	 * Policies implemented/instructed by driver.
 	 */
