@@ -8,6 +8,7 @@ import {
 	IClient,
 	IConnect,
 	IDocumentMessage,
+	ISentSignalMessage,
 	NackErrorType,
 } from "@fluidframework/protocol-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
@@ -80,8 +81,11 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 	/**
 	 * Submits a new signal to the server
 	 */
-	public submitSignal(message: IDocumentMessage): void {
-		this.emitMessages("submitSignal", [[message]]);
+	public submitSignal(content: unknown): void {
+		const message: ISentSignalMessage = {
+			content,
+		};
+		this.emitMessages("submitSignal", [message]);
 	}
 
 	/**

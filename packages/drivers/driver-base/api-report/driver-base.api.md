@@ -51,7 +51,7 @@ export class DocumentDeltaConnection extends EventEmitterWithErrorHandling<IDocu
     // (undocumented)
     protected earlySignalHandler: (msg: ISignalMessage | ISignalMessage[]) => void;
     // (undocumented)
-    protected emitMessages(type: string, messages: IDocumentMessage[][] | ISentSignalMessage[]): void;
+    protected emitMessages(type: string, messages: (IDocumentMessage[] | ISentSignalMessage)[]): void;
     // (undocumented)
     static readonly eventsAlwaysForwarded: string[];
     // (undocumented)
@@ -83,7 +83,7 @@ export class DocumentDeltaConnection extends EventEmitterWithErrorHandling<IDocu
     // (undocumented)
     protected readonly socket: Socket;
     submit(messages: IDocumentMessage[]): void;
-    submitSignal(content: IDocumentMessage, targetClientId?: string): void;
+    submitSignal(content: unknown, targetClientId?: string): void;
     get version(): string;
 }
 

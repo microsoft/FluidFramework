@@ -13,6 +13,7 @@ import {
 	FluidObject,
 	LogLevel,
 	IRequest,
+	ISignalEnvelope,
 } from "@fluidframework/core-interfaces";
 import {
 	AttachState,
@@ -2384,7 +2385,7 @@ export class Container
 		this.emit("op", message);
 	}
 
-	private submitSignal(content: unknown, targetClientId?: string) {
+	private submitSignal(content: ISignalEnvelope, targetClientId?: string) {
 		this._deltaManager.submitSignal(JSON.stringify(content), targetClientId);
 	}
 
