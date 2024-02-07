@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/driver-base",
-	"version": "2.0.0-rc.1.0.0",
+	"version": "2.0.0-rc.2.0.0",
 	"description": "Shared driver code for Fluid driver implementations",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -146,7 +146,7 @@
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"socket.io-client": "^4.6.1",
+		"socket.io-client": "^4.7.3",
 		"tsc-multi": "^1.1.0",
 		"typescript": "~5.1.6"
 	},

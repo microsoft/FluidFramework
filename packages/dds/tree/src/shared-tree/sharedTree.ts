@@ -53,7 +53,7 @@ import { brand, disposeSymbol, fail } from "../util/index.js";
 import {
 	ITree,
 	TreeConfiguration,
-	WrapperTreeView as ClassWrapperTreeView,
+	WrapperTreeView,
 	toFlexConfig,
 	ImplicitFieldSchema,
 	TreeFieldFromImplicitField,
@@ -215,6 +215,7 @@ export class SharedTree
 			revisionTagCodec,
 			fieldBatchCodec,
 			options,
+			options.treeEncodeType,
 		);
 		const changeFamily = makeMitigatedChangeFamily(
 			innerChangeFamily,
@@ -246,6 +247,7 @@ export class SharedTree
 			runtime,
 			attributes,
 			telemetryContextPrefix,
+			{ schema, policy: defaultSchemaPolicy },
 		);
 		this._events = createEmitter<CheckoutEvents>();
 		const localBranch = this.getLocalBranch();
@@ -257,6 +259,7 @@ export class SharedTree
 			fieldBatchCodec,
 			events: this._events,
 			removedRoots,
+			chunkCompressionStrategy: options.treeEncodeType,
 		});
 	}
 
@@ -385,7 +388,7 @@ export class SharedTree
 	): TreeView<TreeFieldFromImplicitField<TRoot>> {
 		const flexConfig = toFlexConfig(config);
 		const view = this.schematizeInternal(flexConfig);
-		return new ClassWrapperTreeView(view);
+		return new WrapperTreeView(view);
 	}
 
 	protected override async loadCore(services: IChannelStorageService): Promise<void> {

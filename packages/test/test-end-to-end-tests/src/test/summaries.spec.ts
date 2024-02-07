@@ -110,7 +110,7 @@ class TestDataObject1 extends DataObject {
 	}
 }
 
-describeCompat("Summaries", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("Summaries", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
@@ -404,7 +404,7 @@ describeCompat("Summaries", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 	});
 });
 
-describeCompat("Summaries", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("Summaries", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
@@ -463,7 +463,7 @@ describeCompat("Summaries", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 	it("TelemetryContext is populated with data even if summarize fails", getTestFn(true));
 });
 
-describeCompat("SingleCommit Summaries Tests", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let configForSingleCommitSummary: ITestContainerConfig;
 	beforeEach("setup", () => {

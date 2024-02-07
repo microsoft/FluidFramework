@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/routerlicious-driver",
-	"version": "2.0.0-rc.1.0.0",
+	"version": "2.0.0-rc.2.0.0",
 	"description": "Socket.IO + Git implementation of Fluid service API",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -130,7 +130,7 @@
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"cross-fetch": "^3.1.5",
 		"json-stringify-safe": "5.0.1",
-		"socket.io-client": "^4.6.1",
+		"socket.io-client": "^4.7.3",
 		"url-parse": "^1.5.8",
 		"uuid": "^9.0.0"
 	},

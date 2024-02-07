@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/webpack-fluid-loader",
-	"version": "2.0.0-rc.1.0.0",
+	"version": "2.0.0-rc.2.0.0",
 	"description": "Fluid object loader for webpack-dev-server",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -52,7 +52,7 @@
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize",
-		"webpack": "webpack --color --config webpack.config.js"
+		"webpack": "webpack --color --config webpack.config.cjs"
 	},
 	"c8": {
 		"all": true,

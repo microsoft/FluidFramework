@@ -6,9 +6,16 @@ import { strict as assert, fail } from "assert";
 import Table from "easy-table";
 import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import {
+	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils";
 import { createIdCompressor } from "@fluidframework/id-compressor";
-import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
+import {
+	TreeCompressionStrategy,
+	cursorForJsonableTreeNode,
+} from "../../feature-libraries/index.js";
 import { ISharedTree, ITreeCheckout, SharedTreeFactory } from "../../shared-tree/index.js";
 import { JsonCompatibleReadOnly, brand, getOrAddEmptyToMap } from "../../util/index.js";
 import {
@@ -49,6 +56,26 @@ const initialTestJsonTree = {
 };
 
 const childrenFieldKey: FieldKey = brand("children");
+
+/**
+ * Create a default attached tree for op submission
+ */
+function createConnectedTree(): ISharedTree {
+	const containerRuntimeFactory = new MockContainerRuntimeFactory();
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({
+		idCompressor: createIdCompressor(),
+	});
+	containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	const tree = factory.create(
+		new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+		"test",
+	);
+	tree.connect({
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
+		objectStorage: new MockStorage(),
+	});
+	return tree;
+}
 
 /*
  * Updates the given `tree` to the given `schema` and inserts `state` as its root.
@@ -353,8 +380,11 @@ const styles = [
 		extraDescription: `1 transaction`,
 	},
 ];
-
-const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
+// TODO: ADO#7111 schemas in this file should be updated/fixed to enable compressed encoding.
+const factory = new SharedTreeFactory({
+	jsonValidator: typeboxValidator,
+	treeEncodeType: TreeCompressionStrategy.Uncompressed,
+});
 
 describe("Op Size", () => {
 	const opsByBenchmarkName: Map<string, ISequencedDocumentMessage[]> = new Map();
@@ -436,10 +466,7 @@ describe("Op Size", () => {
 
 	describe("Insert Nodes", () => {
 		function benchmarkOps(transactionStyle: TransactionStyle, percentile: number): void {
-			const tree = factory.create(
-				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-				"test",
-			);
+			const tree = createConnectedTree();
 			initializeOpDataCollection(tree);
 			const view = initializeTestTree(tree);
 			deleteCurrentOps(); // We don't want to record any ops from initializing the tree.
@@ -468,10 +495,7 @@ describe("Op Size", () => {
 
 	describe("Remove Nodes", () => {
 		function benchmarkOps(transactionStyle: TransactionStyle, percentile: number): void {
-			const tree = factory.create(
-				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-				"test",
-			);
+			const tree = createConnectedTree();
 			initializeOpDataCollection(tree);
 			const childByteSize = getSuccessfulOpByteSize(
 				Operation.Remove,
@@ -505,10 +529,7 @@ describe("Op Size", () => {
 
 	describe("Edit Nodes", () => {
 		function benchmarkOps(transactionStyle: TransactionStyle, percentile: number): void {
-			const tree = factory.create(
-				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-				"test",
-			);
+			const tree = createConnectedTree();
 			initializeOpDataCollection(tree);
 			// Note that the child node byte size for the initial tree here should be arbitrary.
 			const view = initializeTestTree(tree, createInitialTree(BENCHMARK_NODE_COUNT, 1000));
@@ -582,10 +603,7 @@ describe("Op Size", () => {
 					Edit: editNodeCount,
 				} = distribution;
 
-				const tree = factory.create(
-					new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-					"test",
-				);
+				const tree = createConnectedTree();
 				initializeOpDataCollection(tree);
 
 				// remove
@@ -668,10 +686,7 @@ describe("Op Size", () => {
 					Edit: editNodeCount,
 				} = distribution;
 
-				const tree = factory.create(
-					new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-					"test",
-				);
+				const tree = createConnectedTree();
 				initializeOpDataCollection(tree);
 
 				// remove

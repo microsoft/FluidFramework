@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { Loader } from "@fluidframework/container-loader";
-import { SharedString } from "@fluidframework/sequence";
+import type { SharedString } from "@fluidframework/sequence";
 import {
 	ChannelFactoryRegistry,
 	createDocumentId,
@@ -27,7 +27,9 @@ import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { pkgVersion } from "../packageVersion.js";
 
 // REVIEW: enable compat testing?
-describeCompat("SharedString", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("SharedString", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedString } = apis.dds;
+
 	itExpects(
 		"Failure to Load in Shared String",
 		[
