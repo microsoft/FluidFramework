@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import path from "node:path";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
@@ -12,6 +13,8 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import { DirectoryFactory, IDirectory, SharedDirectory } from "../..";
+
+const fileBase = path.join(__dirname, "../../../src/test/mocha/snapshots/");
 
 interface TestScenario {
 	only?: boolean;
@@ -170,7 +173,7 @@ function runTestScenarios(testScenarios: TestScenario[]): void {
 		const itFn = only ? it.only : skip ? it.skip : it;
 		itFn(name, async () => {
 			const testDirectory = runScenario();
-			const snapshotData = takeSnapshot(testDirectory, `./snapshots/${name}.json`);
+			const snapshotData = takeSnapshot(testDirectory, `${fileBase}${name}.json`);
 			const secondDirectory = await loadSharedDirectory("B", snapshotData);
 			assertEquivalentDirectories(testDirectory, secondDirectory);
 		});
