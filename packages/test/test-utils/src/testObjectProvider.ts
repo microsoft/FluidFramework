@@ -105,6 +105,11 @@ export interface ITestObjectProvider {
 	 * containerRuntime/dataRuntime used in fluidEntryPoint will be used as is from what is passed in.
 	 *
 	 * @param packageEntries - list of code details and fluidEntryPoint pairs.
+	 *
+	 * @remarks
+	 *
+	 * The containers returned by the loader are not guaranteed to be in Connected state.
+	 * If your test requires it, make sure to do that explicitly (e.g. by using {@link waitForContainerConnection}).
 	 */
 	createLoader(
 		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
@@ -121,13 +126,26 @@ export interface ITestObjectProvider {
 	 * @param packageEntries - list of code details and fluidEntryPoint pairs.
 	 */
 
+	/**
+	 * Creates a container using the default document id.
+	 *
+	 * @remarks
+	 *
+	 * The container is not guaranteed to be in Connected state.
+	 * If your test requires it, make sure to do that explicitly (e.g. by using {@link waitForContainerConnection}).
+	 */
 	createContainer(
 		entryPoint: fluidEntryPoint,
 		loaderProps?: Partial<ILoaderProps>,
 	): Promise<IContainer>;
 
 	/**
-	 * Loads a container using the default document id
+	 * Loads a container using the default document id.
+	 *
+	 * @remarks
+	 *
+	 * The container is not guaranteed to be in Connected state.
+	 * If your test requires it, make sure to do that explicitly (e.g. by using {@link waitForContainerConnection}).
 	 */
 	loadContainer(
 		entryPoint: fluidEntryPoint,
@@ -139,6 +157,11 @@ export interface ITestObjectProvider {
 	 * Make a test loader. Containers created/loaded through this loader will be added to the OpProcessingController.
 	 * The version of the loader/containerRuntime/dataRuntime may vary based on compat config of the current run
 	 * @param testContainerConfig - optional configuring the test Container
+	 *
+	 * @remarks
+	 *
+	 * The containers returned by the loader are not guaranteed to be in Connected state.
+	 * If your test requires it, make sure to do that explicitly (e.g. by using {@link waitForContainerConnection}).
 	 */
 	makeTestLoader(testContainerConfig?: ITestContainerConfig): IHostLoader;
 
@@ -146,6 +169,11 @@ export interface ITestObjectProvider {
 	 * Make a container using a default document id and code details
 	 * Container loaded is automatically added to the OpProcessingController to manage op flow
 	 * @param testContainerConfig - optional configuring the test Container
+	 *
+	 * @remarks
+	 *
+	 * The container is not guaranteed to be in Connected state.
+	 * If your test requires it, make sure to do that explicitly (e.g. by using {@link waitForContainerConnection}).
 	 */
 	makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
 
@@ -154,6 +182,11 @@ export interface ITestObjectProvider {
 	 * IContainer loaded is automatically added to the OpProcessingController to manage op flow
 	 * @param testContainerConfig - optional configuring the test Container
 	 * @param requestHeader - optional headers to be supplied to the loader
+	 *
+	 * @remarks
+	 *
+	 * The container is not guaranteed to be in Connected state.
+	 * If your test requires it, make sure to do that explicitly (e.g. by using {@link waitForContainerConnection}).
 	 */
 	loadTestContainer(
 		testContainerConfig?: ITestContainerConfig,
