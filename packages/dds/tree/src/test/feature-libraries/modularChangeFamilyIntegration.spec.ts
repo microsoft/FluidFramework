@@ -253,6 +253,7 @@ describe("ModularChangeFamily integration", () => {
 			const expectedDelta = intoDelta(makeAnonChange(expected), fieldKinds);
 			assertDeltaEqual(composedDelta, expectedDelta);
 		});
+
 		it("cross-field move and nested changes", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
 			const editor = new DefaultEditBuilder(family, changeReceiver);

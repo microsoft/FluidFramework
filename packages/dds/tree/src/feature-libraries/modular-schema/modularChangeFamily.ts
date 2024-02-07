@@ -242,7 +242,7 @@ export class ModularChangeFamily
 			revisionMetadata,
 		);
 
-		if (crossFieldTable.invalidatedFields.size > 0) {
+		while (crossFieldTable.invalidatedFields.size > 0) {
 			const fieldsToUpdate = crossFieldTable.invalidatedFields;
 			crossFieldTable.invalidatedFields = new Set();
 			for (const fieldChange of fieldsToUpdate) {
@@ -277,8 +277,7 @@ export class ModularChangeFamily
 					fieldChange2,
 					composeNodes,
 					genId,
-					// TODO: This manager should ignore inval
-					newCrossFieldManager(crossFieldTable),
+					newCrossFieldManager(crossFieldTable, false),
 					revisionMetadata,
 				);
 				composedChange.change = brand(amendedChange);
@@ -1198,7 +1197,6 @@ function newComposeTable(): ComposeTable {
 		...newCrossFieldTable<FieldChange>(),
 		fieldToContext: new Map(),
 		nodeCache: new Map(),
-		fieldsWithUnvisitedNodes: new Set(),
 	};
 }
 
@@ -1212,8 +1210,6 @@ interface ComposeTable extends CrossFieldTable<FieldChange> {
 	 * Maps from an input changeset for a node (from change2 if it has one) to the cached composition of the changesets for that node.
 	 */
 	nodeCache: Map<NodeChangeset, NodeChangeset>;
-
-	fieldsWithUnvisitedNodes: Set<FieldChange>;
 }
 
 interface ComposeFieldContext {
@@ -1252,7 +1248,10 @@ interface CrossFieldManagerI<T> extends CrossFieldManager {
 	fieldInvalidated: boolean;
 }
 
-function newCrossFieldManager<T>(crossFieldTable: CrossFieldTable<T>): CrossFieldManagerI<T> {
+function newCrossFieldManager<T>(
+	crossFieldTable: CrossFieldTable<T>,
+	allowInval = true,
+): CrossFieldManagerI<T> {
 	const srcQueries: CrossFieldQuerySet = new Map();
 	const dstQueries: CrossFieldQuerySet = new Map();
 	const getMap = (target: CrossFieldTarget) =>
@@ -1274,7 +1273,7 @@ function newCrossFieldManager<T>(crossFieldTable: CrossFieldTable<T>): CrossFiel
 			newValue: unknown,
 			invalidateDependents: boolean,
 		) => {
-			if (invalidateDependents) {
+			if (invalidateDependents && allowInval) {
 				const dependentsMap =
 					target === CrossFieldTarget.Source
 						? crossFieldTable.srcDependents
