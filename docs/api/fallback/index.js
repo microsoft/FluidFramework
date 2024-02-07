@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-// const {
-// 	params: { currentVersion, ltsVersion },
-// } = require("../../data/versions.json");
+const {
+	params: { currentVersion, ltsVersion },
+} = require("../../data/versions.json");
 
-// // Map of incoming URL paths to redirect URLs
-// const routes = new Map([
-// 	["/docs/apis", `/docs/api/${currentVersion}`],
-// 	["/docs/api/current", `/docs/api/${currentVersion}`],
-// 	["/docs/api/lts", `/docs/api/${ltsVersion}`],
-// ]);
+// Map of incoming URL paths to redirect URLs
+const routes = new Map([
+	["/docs/apis", `/docs/api/${currentVersion}`],
+	["/docs/api/current", `/docs/api/${currentVersion}`],
+	["/docs/api/lts", `/docs/api/${ltsVersion}`],
+]);
 
 /**
  * Handles incoming HTTP requests and redirects them to the appropriate URL based on the current and LTS versions.
@@ -22,7 +22,15 @@
 module.exports = async (context, { headers }) => {
 	const { pathname, search } = new URL(headers["x-ms-original-url"]);
 
-	// const route = [...routes].find(([path, _]) => pathname.startsWith(path));
+	const route = [...routes].find(([path, _]) => pathname.startsWith(path));
 
-	context.res.json({ headers, pathname, search });
+	context.res.json({
+		status: route ? 302 : 404,
+		headers: { location: route ? pathname.replace(...route) + search : "/404" },
+		route
+	});
+	// context.res = {
+	// 	status: route ? 302 : 404,
+	// 	headers: { location: route ? pathname.replace(...route) + search : "/404" },
+	// };
 };
