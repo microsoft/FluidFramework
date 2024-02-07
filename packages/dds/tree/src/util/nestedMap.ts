@@ -48,7 +48,7 @@ export function tryAddToNestedMap<Key1, Key2, Value>(
 export function populateNestedMap<Key1, Key2, Value>(
 	source: NestedMap<Key1, Key2, Value>,
 	destination: NestedMap<Key1, Key2, Value>,
-	override = false,
+	override: boolean,
 ): void {
 	for (const [key1, innerMap] of source) {
 		const newInner = new Map(destination.get(key1));

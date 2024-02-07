@@ -217,7 +217,7 @@ describe("NestedMap unit tests", () => {
 				Map<string, number>
 			>();
 
-			populateNestedMap(sourceMap, destinationMap);
+			populateNestedMap(sourceMap, destinationMap, false);
 
 			assert.equal(destinationMap.get("Foo")?.get("Bar"), 1);
 			assert.equal(destinationMap.get("Foo")?.get("Baz"), 2);
@@ -257,7 +257,7 @@ describe("NestedMap unit tests", () => {
 			>();
 			setInNestedMap(destinationMap, "Foo", "Bar", 2);
 
-			populateNestedMap(sourceMap, destinationMap);
+			populateNestedMap(sourceMap, destinationMap, false);
 
 			assert.equal(destinationMap.get("Foo")?.get("Bar"), 2);
 			assert.equal(destinationMap.get("Foo")?.get("Baz"), 2);
