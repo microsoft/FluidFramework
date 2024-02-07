@@ -30,31 +30,31 @@ steps:
 - template: download-api-extractor-artifact.yml
   parameters:
     pipelineName: Build - container-definitions
-    branchName: ${{ 'main' }}
+    branchName: 'main'
 - template: download-api-extractor-artifact.yml
   parameters:
     pipelineName: Build - core-interfaces
-    branchName: ${{ 'main' }}
+    branchName: 'main'
 - template: download-api-extractor-artifact.yml
   parameters:
     pipelineName: Build - driver-definitions
-    branchName: ${{ 'main' }}
+    branchName: 'main'
 - template: download-api-extractor-artifact.yml
   parameters:
     pipelineName: Build - protocol-definitions
-    branchName: ${{ 'main' }}
+    branchName: 'main'
 - template: download-api-extractor-artifact.yml
   parameters:
     pipelineName: Build - azure
-    branchName: ${{ 'main' }}
+    branchName: 'main'
 - template: download-api-extractor-artifact.yml
   parameters:
     pipelineName: Build - client packages
-    branchName: ${{ 'main' }}
+    branchName: 'main'
 - template: download-api-extractor-artifact.yml
   parameters:
     pipelineName: server-routerlicious
-    branchName: ${{ 'main' }}
+    branchName: 'main'
 
 # Copy and merge the api-extractor outputs to a central location
 - task: CopyFiles@2
