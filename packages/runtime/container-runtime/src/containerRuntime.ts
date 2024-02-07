@@ -1699,7 +1699,7 @@ export class ContainerRuntime
 			groupedBatchingEnabled: this.groupedBatchingEnabled,
 		});
 
-		ReportOpPerfTelemetry(this.clientId, this.deltaManager, this.logger);
+		ReportOpPerfTelemetry(this.clientId, this.deltaManager, this, this.logger);
 		BindBatchTracker(this, this.logger);
 
 		this.entryPoint = new LazyPromise(async () => {
@@ -2959,7 +2959,7 @@ export class ContainerRuntime
 		// GC uses "/" when adding "root" references, e.g. for Aliasing or as part of Tombstone Auto-Recovery.
 		// These have no package path so return a special value.
 		if (nodePath === "/") {
-			return ["<GCROOT>"];
+			return ["_gcRoot"];
 		}
 
 		switch (this.getNodeType(nodePath)) {
