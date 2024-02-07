@@ -24,8 +24,5 @@ module.exports = async (context, { headers }) => {
 
 	// const route = [...routes].find(([path, _]) => pathname.startsWith(path));
 
-	context.res = {
-		status: 302,
-		headers: { location: "/docs/api/v2/fluid-framework" },
-	};
+	context.res.json(headers);
 };
