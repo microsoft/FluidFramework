@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-const {
-	params: { currentVersion, ltsVersion },
-} = require("../../data/versions.json");
+// const {
+// 	params: { currentVersion, ltsVersion },
+// } = require("../../data/versions.json");
 
-// Map of incoming URL paths to redirect URLs
-const routes = new Map([
-	["/docs/apis", `/docs/api/${currentVersion}`],
-	["/docs/api/current", `/docs/api/${currentVersion}`],
-	["/docs/api/lts", `/docs/api/${ltsVersion}`],
-]);
+// // Map of incoming URL paths to redirect URLs
+// const routes = new Map([
+// 	["/docs/apis", `/docs/api/${currentVersion}`],
+// 	["/docs/api/current", `/docs/api/${currentVersion}`],
+// 	["/docs/api/lts", `/docs/api/${ltsVersion}`],
+// ]);
 
 /**
  * Handles incoming HTTP requests and redirects them to the appropriate URL based on the current and LTS versions.
@@ -20,12 +20,12 @@ const routes = new Map([
  * If a matching route is found, it constructs and returns the redirect URL. Otherwise, it returns a 404 response.
  */
 module.exports = async (context, { headers }) => {
-	const { pathname, search } = new URL(headers["x-ms-original-url"]);
+	// const { pathname, search } = new URL(headers["x-ms-original-url"]);
 
-	const route = [...routes].find(([path, _]) => pathname.startsWith(path));
+	// const route = [...routes].find(([path, _]) => pathname.startsWith(path));
 
 	context.res = {
-		status: route ? 302 : 404,
+		status: 302,
 		headers: { location: "/docs/api/v2/fluid-framework" },
 	};
 };
