@@ -1033,7 +1033,7 @@ export function addMissingBuilds(
  * Removes any builds from the provided change that are not relevant to the change.
  * Calls {@link relevantRemovedRoots} to determine which builds are relevant.
  *
- * @param change - The change to base the new modified change on, this does not modify the input change.
+ * @param change - The change with potentially superfluous builds. Not mutated by this function.
  * @param fieldKinds - The field kinds to delegate to.
  * @returns a {@link ModularChangeset} with only builds relevant to the change.
  */
