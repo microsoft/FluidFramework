@@ -24,8 +24,14 @@ module.exports = async (context, { headers }) => {
 
 	const route = [...routes].find(([path, _]) => pathname.startsWith(path));
 
-	context.res = {
-		status: route ? 302 : 404,
-		headers: { location: route ? pathname.replace(...route) + search : "/404" },
-	};
+	// context.res = {
+	// 	status: route ? 302 : 404,
+	// 	headers: { location: route ? pathname.replace(...route) + search : "/404" },
+	// };
+	context.res.json({
+        text: route ? pathname.replace(...route) + search : "/404",
+        pathname,
+        route,
+		status: route ? 302 : 404
+    });
 };
