@@ -20,9 +20,9 @@
  * If a matching route is found, it constructs and returns the redirect URL. Otherwise, it returns a 404 response.
  */
 module.exports = async (context, { headers }) => {
-	// const { pathname, search } = new URL(headers["x-ms-original-url"]);
+	const { pathname, search } = new URL(headers["x-ms-original-url"]);
 
 	// const route = [...routes].find(([path, _]) => pathname.startsWith(path));
 
-	context.res.json(headers);
+	context.res.json({ headers, pathname, search });
 };
