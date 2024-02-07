@@ -936,6 +936,10 @@ export class GarbageCollector implements IGarbageCollector {
 	/**
 	 * Delete nodes that are sweep-ready. Call the runtime to delete these nodes and clear the unreferenced state
 	 * tracking for nodes that are actually deleted by the runtime.
+	 *
+	 * Note that this doesn't check any configuration around whether Sweep is enabled.
+	 * That happens before the op is submitted, and from that point, any client should execute the delete.
+	 *
 	 * @param sweepReadyNodeIds - The ids of nodes that are ready to be deleted.
 	 */
 	private deleteSweepReadyNodes(sweepReadyNodeIds: readonly string[]) {

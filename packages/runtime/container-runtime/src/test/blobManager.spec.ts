@@ -946,7 +946,7 @@ describe("BlobManager", () => {
 		// Support for this config has been removed.
 		const legacyKey_disableAttachmentBlobSweep =
 			"Fluid.GarbageCollection.DisableAttachmentBlobSweep";
-		[true, false, undefined].forEach((disableAttachmentBlobsSweep) =>
+		[true, undefined].forEach((disableAttachmentBlobsSweep) =>
 			it(`deletes unused blobs regardless of DisableAttachmentBlobsSweep setting [DisableAttachmentBlobsSweep=${disableAttachmentBlobsSweep}]`, async () => {
 				injectedSettings[legacyKey_disableAttachmentBlobSweep] =
 					disableAttachmentBlobsSweep;

@@ -157,8 +157,11 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 		configProvider.clear();
 	});
 
-	async function loadContainer(summaryVersion: string) {
-		return provider.loadTestContainer(testContainerConfig, {
+	async function loadContainer(
+		summaryVersion: string,
+		config: ITestContainerConfig = testContainerConfig,
+	) {
+		return provider.loadTestContainer(config, {
 			[LoaderHeader.version]: summaryVersion,
 		});
 	}
@@ -782,7 +785,16 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 
 					// Load a container from the above summary, process all ops (including any GC ops) and validate that
 					// the deleted data store cannot be retrieved.
-					const container2 = await loadContainer(summary.summaryVersion);
+					// We load with GC Disabled to confirm that the GC Op is processed regardless of such settings
+					const config_gcSweepDisabled = JSON.parse(
+						JSON.stringify(testContainerConfig),
+					) as ITestContainerConfig;
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					config_gcSweepDisabled.runtimeOptions!.gcOptions!.enableGCSweep = undefined;
+					const container2 = await loadContainer(
+						summary.summaryVersion,
+						config_gcSweepDisabled,
+					);
 					await waitForContainerConnection(container2);
 
 					await provider.ensureSynchronized();
