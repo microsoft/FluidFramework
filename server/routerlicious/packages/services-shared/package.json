@@ -73,7 +73,7 @@
 		"serialize-error": "^8.1.0",
 		"socket.io": "^4.6.2",
 		"socket.io-adapter": "^2.4.0",
-		"socket.io-parser": "^4.2.1",
+		"socket.io-parser": "^4.2.4",
 		"uuid": "^9.0.0",
 		"winston": "^3.6.0"
 	},

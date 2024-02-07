@@ -28,7 +28,7 @@
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"start": "start-server-and-test start:tinylicious 7070 start:test-app:client",
-		"start:test-app:client": "webpack serve --config webpack.config.js",
+		"start:test-app:client": "webpack serve --config webpack.config.cjs",
 		"start:tinylicious": "tinylicious",
 		"test": "npm run test:jest",
 		"test:coverage": "npm run test:jest:coverage",

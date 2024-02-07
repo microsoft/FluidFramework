@@ -5,7 +5,7 @@
 
 import fs from "fs";
 import util from "util";
-import { isOdspHostname, IOdspDriveItem } from "@fluidframework/odsp-doclib-utils";
+import { isOdspHostname, IOdspDriveItem } from "@fluidframework/odsp-doclib-utils/internal";
 import { paramSaveDir, paramURL, parseArguments } from "./fluidFetchArgs";
 import { connectionInfo, fluidFetchInit } from "./fluidFetchInit";
 import { fluidFetchMessages } from "./fluidFetchMessages";
