@@ -4,13 +4,11 @@
  */
 
 import React from "react";
-import { v4 as uuidv4 } from "uuid";
 import { type ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	type ITelemetryBaseEvent,
 	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { getOrCreateContinuityID } from "./TelemetryContext";
 
 /**
  * Context that provides a logger for Devtools to generate usage telemetry internally.
@@ -44,17 +42,9 @@ export function useLogger(): ITelemetryLoggerExt | undefined {
  * in the brower's devtools panel, selecting "Inspect", and switching to the Console tab.
  */
 export class ConsoleVerboseLogger implements ITelemetryBaseLogger {
-	private readonly sessionID?: string;
-	private readonly continuityID?: string;
-	public constructor(private readonly baseLogger?: ITelemetryBaseLogger) {
-		this.sessionID = uuidv4();
-		this.continuityID = getOrCreateContinuityID();
-	}
+	public constructor(private readonly baseLogger?: ITelemetryBaseLogger) {}
 
 	public send(event: ITelemetryBaseEvent): void {
-		event.sessionID = this.sessionID;
-		event.continuityID = this.continuityID;
-
 		// Deliberately using console.debug() instead of console.log() so the events are only shown when the console's
 		// verbosity level is set to "Verbose".
 		console.debug(`USAGE_TELEMETRY: ${JSON.stringify(event)}`);
@@ -99,18 +89,11 @@ export const useTelemetryOptIn = (): [boolean, React.Dispatch<React.SetStateActi
  * Logger that forwards events to another logger only when the setting to opt-in to usage telemetry is enabled.
  */
 export class TelemetryOptInLogger implements ITelemetryBaseLogger {
-	private readonly sessionID?: string;
-	private readonly continuityID?: string;
-	public constructor(private readonly baseLogger?: ITelemetryBaseLogger) {
-		this.sessionID = uuidv4();
-		this.continuityID = getOrCreateContinuityID();
-	}
+	public constructor(private readonly baseLogger?: ITelemetryBaseLogger) {}
 
 	public send(event: ITelemetryBaseEvent): void {
 		const optIn = getStorageValue(telemetryOptInKey);
 		if (optIn === true) {
-			event.sessionID = this.sessionID;
-			event.continuityID = this.continuityID;
 			this.baseLogger?.send(event);
 		}
 	}
