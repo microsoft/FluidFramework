@@ -762,7 +762,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 			},
 		);
 
-		it.only("Reviving an InactiveObject clears Inactive state immediately in interactive client (but not for its subtree)", async () => {
+		it("Reviving an InactiveObject clears Inactive state immediately in interactive client (but not for its subtree)", async () => {
 			const container1 = mainContainer;
 			const { summarizer: summarizer1 } = await createSummarizer(
 				provider,
