@@ -2107,10 +2107,10 @@ export class Container
 			this.connectionStateHandler.cancelEstablishingConnection(reason);
 		});
 
-		deltaManager.on("disconnect", (reason: IConnectionStateChangeReason) => {
+		deltaManager.on("disconnect", (text, error) => {
 			this.noopHeuristic?.notifyDisconnect();
 			if (!this.closed) {
-				this.connectionStateHandler.receivedDisconnectEvent(reason);
+				this.connectionStateHandler.receivedDisconnectEvent({ text, error });
 			}
 		});
 
