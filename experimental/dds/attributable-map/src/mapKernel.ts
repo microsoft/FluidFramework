@@ -356,6 +356,7 @@ export class AttributableMapKernel {
 
 		// Clear the data locally first.
 		this.clearCore(true);
+		this.clearAllAttribution();
 
 		// If we are not attached, don't submit the op.
 		if (!this.isAttached()) {
