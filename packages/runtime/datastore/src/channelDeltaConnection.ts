@@ -11,20 +11,20 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 
 const stashedOpMetadataMark = Symbol();
 
-type StashedObjectMetadata = { contents: any; metadata: unknown }[] &
+type StashedOpMetadata = { contents: any; metadata: unknown }[] &
 	Record<typeof stashedOpMetadataMark, typeof stashedOpMetadataMark>;
 
-function createStashedOpMetadata(): StashedObjectMetadata {
+function createStashedOpMetadata(): StashedOpMetadata {
 	const arr = [];
 	Object.defineProperty(arr, stashedOpMetadataMark, {
 		value: stashedOpMetadataMark,
 		writable: false,
 		enumerable: true,
 	});
-	return arr as any as StashedObjectMetadata;
+	return arr as any as StashedOpMetadata;
 }
 
-function isStashedOpMetadata(md: unknown): md is StashedObjectMetadata {
+function isStashedOpMetadata(md: unknown): md is StashedOpMetadata {
 	return (
 		Array.isArray(md) &&
 		stashedOpMetadataMark in md &&
@@ -32,7 +32,7 @@ function isStashedOpMetadata(md: unknown): md is StashedObjectMetadata {
 	);
 }
 
-function process(
+function processWithStashedOpMetadataHandling(
 	content: any,
 	localOpMetaData: unknown,
 	func: (contents: any, metadata: unknown) => void,
@@ -46,6 +46,7 @@ function process(
 
 export class ChannelDeltaConnection implements IDeltaConnection {
 	private _handler: IDeltaHandler | undefined;
+	private stashedOpMd: StashedOpMetadata | undefined;
 
 	private get handler(): IDeltaHandler {
 		assert(!!this._handler, 0x177 /* "Missing delta handler" */);
@@ -79,8 +80,11 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 	public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
 		try {
 			// catches as data processing error whether or not they come from async pending queues
-			process(message.contents, localOpMetadata, (contents, metadata) =>
-				this.handler.process({ ...message, contents }, local, metadata),
+			processWithStashedOpMetadataHandling(
+				message.contents,
+				localOpMetadata,
+				(contents, metadata) =>
+					this.handler.process({ ...message, contents }, local, metadata),
 			);
 		} catch (error) {
 			throw DataProcessingError.wrapIfUnrecognized(
@@ -92,39 +96,46 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 	}
 
 	public reSubmit(content: any, localOpMetadata: unknown) {
-		process(content, localOpMetadata, this.handler.reSubmit.bind(this.handler));
+		processWithStashedOpMetadataHandling(
+			content,
+			localOpMetadata,
+			this.handler.reSubmit.bind(this.handler),
+		);
 	}
 
 	public rollback(content: any, localOpMetadata: unknown) {
 		if (this.handler.rollback === undefined) {
 			throw new Error("Handler doesn't support rollback");
 		}
-		process(content, localOpMetadata, this.handler.rollback.bind(this.handler));
+		processWithStashedOpMetadataHandling(
+			content,
+			localOpMetadata,
+			this.handler.rollback.bind(this.handler),
+		);
 	}
 
 	public applyStashedOp(content: any): unknown {
 		try {
-			this.statedOpMd = createStashedOpMetadata();
+			this.stashedOpMd = createStashedOpMetadata();
 			const md = this.handler.applyStashedOp(content);
 			if (md !== undefined) {
 				// temporary assert while we migrate dds to the new pattern
-				// after migration we will always return statedOpMd
+				// after migration we will always return stashedOpMd
 				assert(
-					(this.statedOpMd?.length ?? 0) === 0,
-					"statedOpMd should be empty if metadata returned. this means ops were submitted and local op metadata was returned. this will cause a corruption",
+					(this.stashedOpMd?.length ?? 0) === 0,
+					"stashedOpMd should be empty if metadata returned. this means ops were submitted and local op metadata was returned. this will cause a corruption",
 				);
 				return md;
 			}
-			return this.statedOpMd;
+			return this.stashedOpMd;
 		} finally {
-			this.statedOpMd = undefined;
+			this.stashedOpMd = undefined;
 		}
 	}
 
-	private statedOpMd: StashedObjectMetadata | undefined;
 	public submit(contents: any, metadata: unknown): void {
-		if (this.statedOpMd !== undefined) {
-			this.statedOpMd.push({ contents, metadata });
+		if (this.stashedOpMd !== undefined) {
+			this.stashedOpMd.push({ contents, metadata });
 		} else {
 			this.submitFn(contents, metadata);
 		}
