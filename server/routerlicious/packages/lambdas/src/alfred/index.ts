@@ -11,6 +11,7 @@ import {
 	IConnected,
 	IDocumentMessage,
 	INack,
+	ISentSignalMessage,
 	ISignalMessage,
 	NackErrorType,
 	ScopeType,
@@ -1053,7 +1054,7 @@ export function configureWebSocketServices(
 		// Message sent when a new signal is submitted to the router
 		socket.on(
 			"submitSignal",
-			(clientId: string, contentBatches: (IDocumentMessage | IDocumentMessage[])[]) => {
+			(clientId: string, contentBatches: (ISentSignalMessage | ISentSignalMessage[])[]) => {
 				// Verify the user has subscription to the room.
 				const room = roomMap.get(clientId);
 				if (!room) {
@@ -1102,7 +1103,7 @@ export function configureWebSocketServices(
 						for (const content of contents) {
 							const signalMessage: ISignalMessage = {
 								clientId,
-								content,
+								content: content.content,
 							};
 
 							socket.emitToRoom(getRoomId(room), "signal", signalMessage);
