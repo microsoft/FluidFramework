@@ -42,6 +42,7 @@ import { ISweepMessage } from "@fluidframework/container-runtime/test/gc";
 import {
 	getGCDeletedStateFromSummary,
 	getGCStateFromSummary,
+	getGCTombstoneStateFromSummary,
 	manufactureHandle,
 } from "./gcTestSummaryUtils.js";
 
@@ -57,6 +58,7 @@ function validateDataStoreStateInSummary(
 	dataStoreNodePath: string,
 	expectDelete: boolean,
 	expectGCStateHandle: boolean,
+	expectTombstoned?: true,
 ) {
 	const shouldShouldNot = expectDelete ? "should" : "should not";
 
@@ -80,12 +82,25 @@ function validateDataStoreStateInSummary(
 
 	// Validate that the GC state does not contain an entry for the deleted data store.
 	const gcState = getGCStateFromSummary(summaryTree);
-	assert(gcState !== undefined, "GC tree is not available in the summary");
+	assert(gcState !== undefined, "PRECONDITION: GC tree should be available in the summary");
 	assert.notEqual(
 		Object.keys(gcState.gcNodes).includes(dataStoreNodePath),
 		expectDelete,
 		`Data store ${dataStoreNodePath} ${shouldShouldNot} have been removed from GC state`,
 	);
+
+	if (expectTombstoned) {
+		// Validate that the GC state does contain the Tombstone if expected
+		const tombstones = getGCTombstoneStateFromSummary(summaryTree);
+		assert(
+			tombstones !== undefined,
+			"PRECONDITION: GC Tombstones list should be available in the summary",
+		);
+		assert(
+			tombstones.includes(dataStoreNodePath),
+			`Data store ${dataStoreNodePath} should have been tombstoned`,
+		);
+	}
 
 	// Validate that the deleted nodes in the GC data has the deleted data store.
 	const deletedNodesState = getGCDeletedStateFromSummary(summaryTree);
@@ -520,16 +535,26 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 			);
 		});
 
-		it("disableDatastoreSweep true - DOES NOT update deleted data store state in the summary", async () => {
+		it("disableDatastoreSweep true - Tombstones the SweepReady data store state in the summary", async () => {
 			configProvider.set("Fluid.GarbageCollection.DisableDataStoreSweep", true);
 
-			const { unreferencedId, summarizer } =
+			const { unreferencedId, summarizer, summarizingContainer } =
 				await summarizationWithUnreferencedDataStoreAfterTime();
 			const sweepReadyDataStoreNodePath = `/${unreferencedId}`;
 
 			// Summarize. If sweep was enabled, the gc op will be sent with the deleted data store id. The data store
 			// will be removed in the subsequent summary.
 			await ensureSynchronizedAndSummarize(summarizer);
+
+			//* Maybe remove this since we can check at the end below
+			// const garbageCollector = (
+			// 	summarizingContainer as unknown as { garbageCollector: { tombstones: string[] } }
+			// ).garbageCollector;
+			// assert.deepEqual(
+			// 	garbageCollector.tombstones,
+			// 	[sweepReadyDataStoreNodePath],
+			// 	"Expected sweepReady node to be merely Tombstoned",
+			// );
 
 			// The datastore should NOT be swept here. If sweep was enabled, it would be deleted in this summary.
 			// We need to do fullTree because the GC data won't change (since it's not swept).
@@ -539,12 +564,13 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				fullTree: true,
 			});
 
-			// Validate that the data store's state is correct in the summary - it shouldn't have been deleted.
+			// Validate that the data store's state is correct in the summary - it should have been tombstoned not deleted.
 			validateDataStoreStateInSummary(
 				summary3.summaryTree,
 				sweepReadyDataStoreNodePath,
 				false /* expectDelete */,
 				false /* expectGCStateHandle */,
+				true /* expectTombstoned */,
 			);
 		});
 	});

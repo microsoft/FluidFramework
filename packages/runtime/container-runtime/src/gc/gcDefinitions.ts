@@ -70,9 +70,9 @@ export const throwOnTombstoneLoadOverrideKey =
 export const throwOnTombstoneUsageKey = "Fluid.GarbageCollection.ThrowOnTombstoneUsage";
 /** Config key to enable GC version upgrade. */
 export const gcVersionUpgradeToV4Key = "Fluid.GarbageCollection.GCVersionUpgradeToV4";
-/** Config key to disable GC sweep for datastores. */
+/** Config key to disable GC sweep for datastores. They'll merely be Tombstoned. */
 export const disableDatastoreSweepKey = "Fluid.GarbageCollection.DisableDataStoreSweep";
-/** Config key to disable GC sweep for attachment blobs. */
+/** Config key to disable GC sweep for attachment blobs. They'll merely be Tombstoned. */
 export const disableAttachmentBlobSweepKey = "Fluid.GarbageCollection.DisableAttachmentBlobSweep";
 /** Config key to revert new paradigm of detecting outbound routes in ContainerRuntime layer (use true) */
 export const detectOutboundRoutesViaDDSKey = "Fluid.GarbageCollection.DetectOutboundRoutesViaDDS";
