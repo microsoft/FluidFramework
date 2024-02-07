@@ -2059,6 +2059,9 @@ describe("Runtime", () => {
 			}
 
 			it("load snapshot with missing snapshot contents for datastores", async () => {
+				// In this test we will try to load the container runtime with a snapshot which has 2 datastores. However,
+				// snapshot for datastore "missingDataStore" does not container trees/blobs and we will check that this
+				// datastore fails to load currently.
 				const logger = new MockLogger();
 				const containerContext = getMockContext({}, logger) as IContainerContext;
 				(containerContext as any).snapshotWithContents = snapshotWithContents;
