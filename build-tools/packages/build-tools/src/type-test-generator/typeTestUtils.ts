@@ -43,7 +43,7 @@ export function getPreviousPackageJsonPath(previousBasePath: string): string {
  * Attempts to retrieve  a specified type of rollup file path for type definitions from the API Extractor configuration.
  * @param {string} rollupType - The type of rollup file path to retrieve (ex: "alpha", "beta", "public").
  * @returns {string} The path to the type definitions file for the specified rollupType, or undefined it cannot be found.
- * @throws {Error} If api-extractor config cannot be loaded. 
+ * @throws {Error} If api-extractor config cannot be loaded.
  */
 export function getTypeRollupPathFromExtractorConfig(
 	rollupType: "alpha" | "beta" | "public" | "untrimmed",
@@ -76,7 +76,7 @@ export function getTypeRollupPathFromExtractorConfig(
 		return rollupPath;
 	} catch (error) {
 		console.error(`Error loading API Extractor configuration: ${error}`);
-		throw(error);
+		throw error;
 	}
 }
 
