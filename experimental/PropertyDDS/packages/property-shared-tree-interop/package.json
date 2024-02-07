@@ -52,6 +52,18 @@
 		"ts-jest": "^29.1.1",
 		"typescript": "~5.1.6"
 	},
+	"fluidBuild": {
+		"tasks": {
+			"eslint": [
+				"build:esnext",
+				"build:test"
+			],
+			"build:test": [
+				"build:esnext",
+				"^tsc"
+			]
+		}
+	},
 	"typeValidation": {
 		"disabled": true,
 		"broken": {}
