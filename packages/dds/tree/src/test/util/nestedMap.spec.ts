@@ -220,10 +220,15 @@ describe("NestedMap unit tests", () => {
 			populateNestedMap(sourceMap, destinationMap, false);
 
 			assert.deepEqual(
-				destinationMap.get("Foo"),
+				destinationMap,
 				new Map([
-					["Bar", 1],
-					["Baz", 2],
+					[
+						"Foo",
+						new Map([
+							["Bar", 1],
+							["Baz", 2],
+						]),
+					],
 				]),
 			);
 		});
@@ -245,10 +250,15 @@ describe("NestedMap unit tests", () => {
 			populateNestedMap(sourceMap, destinationMap, true);
 
 			assert.deepEqual(
-				destinationMap.get("Foo"),
+				destinationMap,
 				new Map([
-					["Bar", 1],
-					["Baz", 2],
+					[
+						"Foo",
+						new Map([
+							["Bar", 1],
+							["Baz", 2],
+						]),
+					],
 				]),
 			);
 		});
@@ -270,10 +280,15 @@ describe("NestedMap unit tests", () => {
 			populateNestedMap(sourceMap, destinationMap, false);
 
 			assert.deepEqual(
-				destinationMap.get("Foo"),
+				destinationMap,
 				new Map([
-					["Bar", 2],
-					["Baz", 2],
+					[
+						"Foo",
+						new Map([
+							["Bar", 2],
+							["Baz", 2],
+						]),
+					],
 				]),
 			);
 		});
