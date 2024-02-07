@@ -60,7 +60,7 @@ function getRoomId(room: IRoom) {
 	return `${room.tenantId}/${room.documentId}`;
 }
 
-function getClientRoom(clientId: string) {
+function getClientRoomId(clientId: string) {
 	return `client#${clientId}`;
 }
 
@@ -1117,7 +1117,7 @@ export function configureWebSocketServices(
 									content: content.content,
 								};
 								roomId = content.targetClientId
-									? getClientRoom(content.targetClientId)
+									? getClientRoomId(content.targetClientId)
 									: getRoomId(room);
 							} else {
 								signalMessage = {
