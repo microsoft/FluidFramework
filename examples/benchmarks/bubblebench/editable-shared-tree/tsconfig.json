@@ -8,14 +8,7 @@
 		"jsx": "react",
 		"noImplicitAny": true,
 		"resolveJsonModule": true,
-		"types": [
-			"react",
-			"react-dom",
-			"jest",
-			"puppeteer",
-			"jest-environment-puppeteer",
-			"expect-puppeteer",
-		],
+		"types": ["react", "react-dom", "jest", "puppeteer", "jest-environment-puppeteer"],
 	},
 	"include": ["src/**/*"],
 }

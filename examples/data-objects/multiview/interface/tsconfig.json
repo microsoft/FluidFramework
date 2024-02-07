@@ -4,7 +4,7 @@
 		"module": "esnext",
 		"outDir": "lib",
 		"jsx": "react",
-		"types": ["react", "react-dom", "puppeteer", "expect-puppeteer"],
+		"types": ["react", "react-dom", "puppeteer"],
 	},
 	"include": ["src/**/*"],
 }

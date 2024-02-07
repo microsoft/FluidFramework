@@ -414,7 +414,6 @@ importers:
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
@@ -452,7 +451,6 @@ importers:
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
@@ -491,7 +489,6 @@ importers:
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/test-utils': workspace:~
       '@fluidframework/view-interfaces': workspace:~
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
@@ -539,7 +536,6 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@fluidframework/test-utils': link:../../../packages/test/test-utils
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
@@ -576,7 +572,6 @@ importers:
       '@fluidframework/eslint-config-fluid': ^3.3.0
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
@@ -622,7 +617,6 @@ importers:
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
@@ -670,7 +664,6 @@ importers:
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/view-adapters': workspace:~
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
@@ -739,7 +732,6 @@ importers:
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
@@ -788,7 +780,6 @@ importers:
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/tinylicious-client': workspace:~
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
@@ -829,7 +820,6 @@ importers:
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
@@ -867,7 +857,6 @@ importers:
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/task-manager': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
@@ -910,7 +899,6 @@ importers:
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
@@ -957,7 +945,6 @@ importers:
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/tinylicious-driver': workspace:~
       '@fluidframework/tree': workspace:~
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
@@ -1017,7 +1004,6 @@ importers:
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
@@ -1058,7 +1044,6 @@ importers:
       '@fluidframework/eslint-config-fluid': ^3.3.0
       '@fluidframework/map': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
@@ -1095,7 +1080,6 @@ importers:
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
@@ -1200,7 +1184,6 @@ importers:
       '@fluidframework/map': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/tree': workspace:~
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
@@ -1240,7 +1223,6 @@ importers:
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
@@ -1278,7 +1260,6 @@ importers:
       '@fluidframework/eslint-config-fluid': ^3.3.0
       '@fluidframework/map': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
@@ -1318,7 +1299,6 @@ importers:
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
@@ -1355,7 +1335,6 @@ importers:
       '@fluidframework/eslint-config-fluid': ^3.3.0
       '@fluidframework/map': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
@@ -1393,7 +1372,6 @@ importers:
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
@@ -1665,7 +1643,6 @@ importers:
       '@fluidframework/eslint-config-fluid': ^3.3.0
       '@fluidframework/ink': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
@@ -1703,7 +1680,6 @@ importers:
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
@@ -1743,7 +1719,6 @@ importers:
       '@fluidframework/task-manager': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/test-utils': workspace:~
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
@@ -1780,7 +1755,6 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@fluidframework/test-utils': link:../../../packages/test/test-utils
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
@@ -1892,7 +1866,6 @@ importers:
       '@fluidframework/map': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/view-interfaces': workspace:~
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
@@ -1926,7 +1899,6 @@ importers:
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
@@ -1960,7 +1932,6 @@ importers:
       '@fluidframework/eslint-config-fluid': ^3.3.0
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/tree': workspace:~
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
@@ -1996,7 +1967,6 @@ importers:
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
@@ -2098,7 +2068,6 @@ importers:
       '@fluidframework/eslint-config-fluid': ^3.3.0
       '@fluidframework/map': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
@@ -2129,7 +2098,6 @@ importers:
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
@@ -2158,7 +2126,6 @@ importers:
       '@fluidframework/build-tools': ^0.29.0
       '@fluidframework/eslint-config-fluid': ^3.3.0
       '@fluidframework/test-tools': ^1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
@@ -2193,7 +2160,6 @@ importers:
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
@@ -2240,7 +2206,6 @@ importers:
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/view-adapters': workspace:~
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
@@ -2288,7 +2253,6 @@ importers:
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
@@ -2323,7 +2287,6 @@ importers:
       '@fluidframework/eslint-config-fluid': ^3.3.0
       '@fluidframework/map': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
@@ -2352,7 +2315,6 @@ importers:
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
@@ -2378,7 +2340,6 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.29.0
       '@fluidframework/eslint-config-fluid': ^3.3.0
-      '@types/expect-puppeteer': 5.0.6
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -2397,7 +2358,6 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
-      '@types/expect-puppeteer': 5.0.6
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
@@ -2420,7 +2380,6 @@ importers:
       '@fluidframework/build-tools': ^0.29.0
       '@fluidframework/eslint-config-fluid': ^3.3.0
       '@fluidframework/test-tools': ^1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
@@ -2454,7 +2413,6 @@ importers:
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
@@ -2487,7 +2445,6 @@ importers:
       '@fluidframework/build-tools': ^0.29.0
       '@fluidframework/eslint-config-fluid': ^3.3.0
       '@fluidframework/test-tools': ^1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
@@ -2521,7 +2478,6 @@ importers:
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
@@ -2554,7 +2510,6 @@ importers:
       '@fluidframework/build-tools': ^0.29.0
       '@fluidframework/eslint-config-fluid': ^3.3.0
       '@fluidframework/test-tools': ^1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
@@ -2588,7 +2543,6 @@ importers:
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
@@ -2957,7 +2911,6 @@ importers:
       '@fluidframework/test-utils': workspace:~
       '@fluidframework/view-adapters': workspace:~
       '@fluidframework/view-interfaces': workspace:~
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
@@ -3005,7 +2958,6 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@fluidframework/test-utils': link:../../../packages/test/test-utils
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
@@ -3173,7 +3125,6 @@ importers:
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/tinylicious-driver': workspace:~
       '@types/cors': ^2.8.4
-      '@types/expect-puppeteer': 5.0.6
       '@types/express': ^4.11.0
       '@types/fs-extra': ^9.0.11
       '@types/jest': 29.5.3
@@ -3254,7 +3205,6 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@types/cors': 2.8.17
-      '@types/expect-puppeteer': 5.0.6
       '@types/express': 4.17.21
       '@types/fs-extra': 9.0.13
       '@types/jest': 29.5.3
@@ -3306,7 +3256,6 @@ importers:
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
@@ -3359,7 +3308,6 @@ importers:
       '@fluidframework/server-local-server': 3.1.0-231702
       '@fluidframework/test-runtime-utils': link:../../../../packages/runtime/test-runtime-utils
       '@fluidframework/test-tools': 1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
@@ -3399,7 +3347,6 @@ importers:
       '@fluidframework/odsp-driver-definitions': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/test-utils': workspace:~
-      '@types/expect-puppeteer': 5.0.6
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -3439,7 +3386,6 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@fluidframework/test-utils': link:../../../../packages/test/test-utils
-      '@types/expect-puppeteer': 5.0.6
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
@@ -3478,7 +3424,6 @@ importers:
       '@mixer/webpack-bundle-compare': ^0.1.0
       '@types/node': ^18.19.0
       '@types/puppeteer': 7.0.4
-      cross-env: ^7.0.3
       eslint: ~8.50.0
       prettier: ~3.0.3
       puppeteer: ^22.0.0
@@ -3511,7 +3456,6 @@ importers:
       '@mixer/webpack-bundle-compare': 0.1.1
       '@types/node': 18.19.1
       '@types/puppeteer': 7.0.4_typescript@5.1.6
-      cross-env: 7.0.3
       eslint: 8.50.0
       prettier: 3.0.3
       puppeteer: 22.0.0_typescript@5.1.6
@@ -3618,7 +3562,6 @@ importers:
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/tinylicious-driver': workspace:~
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
@@ -3662,7 +3605,6 @@ importers:
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
@@ -3712,7 +3654,6 @@ importers:
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/tinylicious-driver': workspace:~
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
@@ -3775,7 +3716,6 @@ importers:
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
@@ -3831,7 +3771,6 @@ importers:
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/tinylicious-driver': workspace:~
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
@@ -3894,7 +3833,6 @@ importers:
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
@@ -3947,7 +3885,6 @@ importers:
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/tinylicious-driver': workspace:~
       '@fluidframework/tree': workspace:~
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
@@ -4009,7 +3946,6 @@ importers:
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
@@ -4055,7 +3991,6 @@ importers:
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/view-adapters': workspace:~
       '@fluidframework/view-interfaces': workspace:~
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
@@ -4099,7 +4034,6 @@ importers:
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
@@ -4135,7 +4069,6 @@ importers:
       '@fluidframework/eslint-config-fluid': ^3.3.0
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
@@ -4173,7 +4106,6 @@ importers:
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
@@ -4208,7 +4140,6 @@ importers:
       '@fluidframework/eslint-config-fluid': ^3.3.0
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
@@ -4254,7 +4185,6 @@ importers:
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
@@ -4315,7 +4245,6 @@ importers:
       '@fluidframework/shared-object-base': workspace:~
       '@fluidframework/tinylicious-driver': workspace:~
       '@fluidframework/view-interfaces': workspace:~
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/uuid': ^9.0.2
@@ -4385,7 +4314,6 @@ importers:
     devDependencies:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_webpack-cli@4.10.0
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/uuid': 9.0.7
@@ -4447,7 +4375,6 @@ importers:
       '@material-ui/core': 4.12.4
       '@material-ui/lab': 4.0.0-alpha.61
       '@material-ui/styles': 4.11.5
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/uuid': ^9.0.2
@@ -4521,7 +4448,6 @@ importers:
     devDependencies:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_webpack-cli@4.10.0
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/uuid': 9.0.7
@@ -10923,7 +10849,6 @@ importers:
       '@microsoft/api-extractor': ^7.39.1
       '@types/chai': ^4.0.0
       '@types/chrome': 0.0.232
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/jsdom': ^21.1.1
@@ -10998,7 +10923,6 @@ importers:
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
       '@types/chai': 4.3.11
       '@types/chrome': 0.0.232
-      '@types/expect-puppeteer': 5.0.6
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
       '@types/jsdom': 21.1.6
@@ -22436,13 +22360,6 @@ packages:
 
   /@types/events/3.0.3:
     resolution: {integrity: sha512-trOc4AAUThEz9hapPtSd7wf5tiQKvTtu5b371UxXdTuqzIh0ArcRspRP0i0Viu+LXstIQ1z96t1nsPxT9ol01g==}
-
-  /@types/expect-puppeteer/5.0.6:
-    resolution: {integrity: sha512-71TRn11EozNfUYredjmVRuwtVnk0ZJIUmUcJhpMr0ffQ9M32RNUgz/w0G4nfgcAx9GAuBQhJ0lBZxLbkj+eZkA==}
-    dependencies:
-      '@types/jest': 29.5.3
-      '@types/puppeteer': 5.4.7
-    dev: true
 
   /@types/expect/1.20.4:
     resolution: {integrity: sha512-Q5Vn3yjTDyCMV50TB6VRIbQNxSE4OmZR86VSbGaNpfUolm0iePBB4KdEEHmxoY5sT2+2DIvXW0rvMDP2nHZ4Mg==}

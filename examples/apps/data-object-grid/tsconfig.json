@@ -5,14 +5,7 @@
 		"target": "es6",
 		"outDir": "lib",
 		"jsx": "react",
-		"types": [
-			"jest",
-			"puppeteer",
-			"jest-environment-puppeteer",
-			"expect-puppeteer",
-			"react",
-			"react-dom",
-		],
+		"types": ["jest", "puppeteer", "jest-environment-puppeteer", "react", "react-dom"],
 	},
 	"include": ["src/**/*"],
 }

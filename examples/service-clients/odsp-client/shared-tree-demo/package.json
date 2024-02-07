@@ -50,7 +50,6 @@
 		"@fluidframework/eslint-config-fluid": "^3.3.0",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@fluidframework/test-utils": "workspace:~",
-		"@types/expect-puppeteer": "5.0.6",
 		"@types/node": "^18.19.0",
 		"@types/react": "^17.0.44",
 		"@types/react-dom": "^17.0.18",

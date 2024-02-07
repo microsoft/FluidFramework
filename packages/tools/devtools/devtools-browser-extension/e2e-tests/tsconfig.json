@@ -4,7 +4,7 @@
 		"module": "esnext",
 		"outDir": "../dist/e2e-tests",
 		"composite": true,
-		"types": ["expect-puppeteer", "jest", "jest-environment-puppeteer", "puppeteer"],
+		"types": ["jest", "jest-environment-puppeteer", "puppeteer"],
 		"jsx": "react",
 		"forceConsistentCasingInFileNames": true,
 	},
