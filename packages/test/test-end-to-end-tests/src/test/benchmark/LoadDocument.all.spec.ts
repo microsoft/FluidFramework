@@ -38,7 +38,7 @@ describeE2EDocRun("Load Document", (getTestObjectProvider, getDocumentInfo) => {
 		await documentWrapper.initializeDocument();
 	});
 
-	beforeEach(async function () {
+	beforeEach("conditionalSkip", async function () {
 		const docData = getDocumentInfo();
 		if (
 			docData.supportedEndpoints &&

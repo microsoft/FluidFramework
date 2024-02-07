@@ -24,7 +24,7 @@ npm i @test/test-package -D
 
 ## API Documentation
 
-API documentation for **@test/test-package** is available at <https://fluidframework.com/docs/api/v1/test-package>.
+API documentation for **@test/test-package** is available at <https://fluidframework.com/docs/apis/test-package>.
 
 ## Scripts
 

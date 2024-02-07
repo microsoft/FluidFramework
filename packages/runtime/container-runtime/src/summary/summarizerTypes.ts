@@ -377,7 +377,7 @@ export type EnqueueSummarizeResult =
  * @alpha
  */
 export type SummarizerStopReason =
-	/** Summarizer client failed to summarize in all 3 consecutive attempts. */
+	/** Summarizer client failed to summarize in all attempts. */
 	| "failToSummarize"
 	/** Parent client reported that it is no longer connected. */
 	| "parentNotConnected"

@@ -32,7 +32,7 @@ import {
 	ForestSummarizer,
 	SchemaSummarizer,
 	buildForest,
-	TreeFieldSchema,
+	FlexFieldSchema,
 	buildChunkedForest,
 	makeTreeChunker,
 	DetachedFieldIndexSummarizer,
@@ -53,7 +53,7 @@ import { brand, disposeSymbol, fail } from "../util/index.js";
 import {
 	ITree,
 	TreeConfiguration,
-	WrapperTreeView as ClassWrapperTreeView,
+	WrapperTreeView,
 	toFlexConfig,
 	ImplicitFieldSchema,
 	TreeFieldFromImplicitField,
@@ -119,7 +119,7 @@ export interface ISharedTree extends ISharedObject, ITree {
 	 * This has to avoid its name colliding with `schematize`.
 	 * TODO: Either ITree and ISharedTree should be split into separate objects, the methods should be merged or a better convention for resolving such name conflicts should be selected.
 	 */
-	schematizeInternal<TRoot extends TreeFieldSchema>(
+	schematizeInternal<TRoot extends FlexFieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
 	): FlexTreeView<TRoot>;
 
@@ -138,7 +138,7 @@ export interface ISharedTree extends ISharedObject, ITree {
 	 * Once views actually have a view schema, onSchemaIncompatible can become an event on the view (which ends its lifetime),
 	 * instead of a separate callback.
 	 */
-	requireSchema<TRoot extends TreeFieldSchema>(
+	requireSchema<TRoot extends FlexFieldSchema>(
 		schema: FlexTreeSchema<TRoot>,
 		onSchemaIncompatible: () => void,
 	): FlexTreeView<TRoot> | undefined;
@@ -215,6 +215,7 @@ export class SharedTree
 			revisionTagCodec,
 			fieldBatchCodec,
 			options,
+			options.treeEncodeType,
 		);
 		const changeFamily = makeMitigatedChangeFamily(
 			innerChangeFamily,
@@ -246,6 +247,7 @@ export class SharedTree
 			runtime,
 			attributes,
 			telemetryContextPrefix,
+			{ schema, policy: defaultSchemaPolicy },
 		);
 		this._events = createEmitter<CheckoutEvents>();
 		const localBranch = this.getLocalBranch();
@@ -257,10 +259,11 @@ export class SharedTree
 			fieldBatchCodec,
 			events: this._events,
 			removedRoots,
+			chunkCompressionStrategy: options.treeEncodeType,
 		});
 	}
 
-	public requireSchema<TRoot extends TreeFieldSchema>(
+	public requireSchema<TRoot extends FlexFieldSchema>(
 		schema: FlexTreeSchema<TRoot>,
 		onSchemaIncompatible: () => void,
 		nodeKeyManager?: NodeKeyManager,
@@ -320,7 +323,7 @@ export class SharedTree
 		}
 	}
 
-	public schematizeInternal<TRoot extends TreeFieldSchema>(
+	public schematizeInternal<TRoot extends FlexFieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
 		nodeKeyManager?: NodeKeyManager,
 		nodeKeyFieldKey?: FieldKey,
@@ -385,7 +388,7 @@ export class SharedTree
 	): TreeView<TreeFieldFromImplicitField<TRoot>> {
 		const flexConfig = toFlexConfig(config);
 		const view = this.schematizeInternal(flexConfig);
-		return new ClassWrapperTreeView(view);
+		return new WrapperTreeView(view);
 	}
 
 	protected override async loadCore(services: IChannelStorageService): Promise<void> {
@@ -420,12 +423,10 @@ export enum ForestType {
 	Optimized = 1,
 }
 
-// TODO: The default summaryEncodeType is set to Uncompressed as there are many out of schema tests that break when using Compressed.
-// This should eventually be changed to use Compressed as the default tree compression strategy so production gets the compressed format.
 export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
 	jsonValidator: noopValidator,
 	forest: ForestType.Reference,
-	treeEncodeType: TreeCompressionStrategy.Uncompressed,
+	treeEncodeType: TreeCompressionStrategy.Compressed,
 };
 
 /**

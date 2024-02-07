@@ -44,7 +44,6 @@ fluid-framework
 @fluidframework/odsp-driver-definitions
 @fluidframework/odsp-driver
 @fluidframework/local-driver
-@fluid-tools/fluidapp-odsp-urlresolver
 @fluidframework/file-driver
 @fluidframework/driver-web-cache
 @fluidframework/driver-base

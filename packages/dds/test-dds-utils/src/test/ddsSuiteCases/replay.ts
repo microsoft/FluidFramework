@@ -34,7 +34,7 @@ const model: DDSFuzzModel<SharedNothingFactory, Operation> = {
 
 createDDSFuzzSuite(model, {
 	defaultTestCount: 5,
-	detachedStartOptions: { enabled: false, attachProbability: 0 },
+	detachedStartOptions: { numOpsBeforeAttach: 0 },
 	replay: 2,
 	// Note: this should point the replay to the source-controlled 2.json file in this directory.
 	saveFailures: { directory: path.join(__dirname, "../../../src/test/ddsSuiteCases") },

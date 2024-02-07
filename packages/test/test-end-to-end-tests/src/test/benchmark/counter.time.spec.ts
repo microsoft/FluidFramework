@@ -25,7 +25,7 @@ describeCompat("SharedCounter - runtime benchmarks", "NoCompat", (getTestObjectP
 	let provider: ITestObjectProvider;
 	const counters: ISharedCounter[] = [];
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		provider = getTestObjectProvider();
 
 		// Create a Container for the first client.

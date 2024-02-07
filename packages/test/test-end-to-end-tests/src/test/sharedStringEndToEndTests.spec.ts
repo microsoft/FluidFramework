@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { Marker, ReferenceType, reservedMarkerIdKey } from "@fluidframework/merge-tree";
-import { SharedString } from "@fluidframework/sequence";
+import type { SharedString } from "@fluidframework/sequence";
 import {
 	ITestObjectProvider,
 	ITestContainerConfig,
@@ -20,19 +20,18 @@ import {
 import { describeCompat } from "@fluid-private/test-version-utils";
 
 const stringId = "sharedStringKey";
-const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
-const testContainerConfig: ITestContainerConfig = {
-	fluidDataObjectType: DataObjectFactoryType.Test,
-	registry,
-};
-const groupedBatchingContainerConfig: ITestContainerConfig = {
-	...testContainerConfig,
-	runtimeOptions: { enableGroupedBatching: true },
-};
 
-describeCompat("SharedString", "FullCompat", (getTestObjectProvider) => {
+describeCompat("SharedString", "FullCompat", (getTestObjectProvider, apis) => {
+	const { SharedString } = apis.dds;
+
+	const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+	};
+
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 
@@ -40,7 +39,7 @@ describeCompat("SharedString", "FullCompat", (getTestObjectProvider) => {
 	let sharedString2: SharedString;
 	let dataObject1: ITestFluidObject;
 
-	beforeEach(async () => {
+	beforeEach("setupSharedStrings", async () => {
 		const container1 = await provider.makeTestContainer(testContainerConfig);
 		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 		sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
@@ -125,9 +124,21 @@ describeCompat("SharedString", "FullCompat", (getTestObjectProvider) => {
 	});
 });
 
-describeCompat("SharedString grouped batching", "NoCompat", (getTestObjectProvider) => {
+describeCompat("SharedString grouped batching", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedString } = apis.dds;
+
+	const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+	};
+	const groupedBatchingContainerConfig: ITestContainerConfig = {
+		...testContainerConfig,
+		runtimeOptions: { enableGroupedBatching: true },
+	};
+
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 
