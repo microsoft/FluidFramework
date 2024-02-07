@@ -41,16 +41,16 @@
 		"tsc": "tsc"
 	},
 	"dependencies": {
-		"@oclif/core": "^3.16.0",
-		"@oclif/plugin-help": "^6.0.9",
-		"@oclif/plugin-plugins": "^4.1.14",
-		"oclif": "^4.1.1",
+		"@oclif/core": "^3.19.1",
+		"@oclif/plugin-help": "^6.0.12",
+		"@oclif/plugin-plugins": "^4.2.1",
+		"oclif": "^4.4.7",
 		"semver": "^7.5.4"
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/eslint-config-fluid": "^3.2.0",
-		"@oclif/test": "~3.1.8",
+		"@oclif/test": "~3.1.14",
 		"@types/chai": "^4.3.5",
 		"@types/chai-arrays": "^2.0.0",
 		"@types/node": "^18.18.6",
@@ -60,7 +60,7 @@
 		"concurrently": "^8.2.1",
 		"eslint": "~8.51.0",
 		"eslint-config-oclif": "^5.0.0",
-		"eslint-config-oclif-typescript": "^3.0.33",
+		"eslint-config-oclif-typescript": "^3.0.44",
 		"eslint-config-prettier": "~9.0.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.1",
