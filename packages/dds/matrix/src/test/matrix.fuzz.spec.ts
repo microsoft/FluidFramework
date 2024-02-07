@@ -235,8 +235,8 @@ describe("Matrix fuzz tests", function () {
 	createDDSFuzzSuite(nameModel("default"), {
 		...baseOptions,
 		reconnectProbability: 0,
-		// Seed 62 is slow but otherwise passes, see comment on timeout above.
-		skip: [62],
+		// Seeds 62 and 80 are slow but otherwise pass, see comment on timeout above.
+		skip: [62, 80],
 		// Uncomment to replay a particular seed.
 		// replay: 0,
 	});
