@@ -1315,7 +1315,7 @@ describe("ModularChangeFamily", () => {
 			assert.deepEqual(filtered, expected);
 		});
 
-		it("only when a removed root is not relevant", () => {
+		it("unless it refers to a relevant root", () => {
 			const changeB: HasRemovedRootsRefs = {
 				shallow: [b1],
 				nested: [],
