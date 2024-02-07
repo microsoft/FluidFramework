@@ -127,7 +127,13 @@ describe("Temporal Collab Spaces", () => {
 
 	async function waitForSummary() {
 		assert(summaryCollection !== undefined, "summary setup properly");
-		return summaryCollection.waitSummaryAck(containers[0].deltaManager.lastSequenceNumber);
+		// create promise before we call summarizeNow, as otherwise we might miss summary and will wait
+		// forever for next one to happen
+		const wait = summaryCollection.waitSummaryAck(
+			containers[0].deltaManager.lastSequenceNumber,
+		);
+		await summarizeNow(summarizer!);
+		return wait;
 	}
 
 	/**
@@ -367,7 +373,6 @@ describe("Temporal Collab Spaces", () => {
 
 		// Force summary to test that channel is gone.
 		if (runSummaryValidation) {
-			await summarizeNow(summarizer!);
 			await waitForSummary();
 		}
 
@@ -420,7 +425,7 @@ describe("Temporal Collab Spaces", () => {
 	});
 
 	// Baseline for a number of tests (with different arguments)
-	async function ChannelOverwrite(synchronize: boolean) {
+	async function ChannelOverwrite(synchronize: boolean, loadSummarizer: boolean) {
 		// Cell we will be interrogating
 		const row = 7;
 		const col = 3;
@@ -475,6 +480,14 @@ describe("Temporal Collab Spaces", () => {
 		await ensureSameValues(row, col, overwriteValue, [channel2b, channel2c]);
 		assert(channel2a.value === initialValue, "No impact on unrooted channel");
 
+		// Force summary to test that channel is gone.
+		if (loadSummarizer) {
+			await waitForSummary();
+		}
+
+		await addContainerInstance();
+		await ensureSameValues(row, col, overwriteValue, [channel2b, channel2c]);
+
 		/**
 		 * Undo all the changes from second container
 		 * This includes only matrix changes, i.e. cell overwrite.
@@ -488,18 +501,22 @@ describe("Temporal Collab Spaces", () => {
 		channel2b = (await collabSpace.getCellChannel(row, col)) as ISharedCounter;
 		channel2c = (await collabSpace2.getCellChannel(row, col)) as ISharedCounter;
 		await ensureSameValues(row, col, initialValue, [channel2b, channel2c]);
-
-		// TBD(Pri1): Need to ensure that summarization for deferred channels and loading from such summaries works
-		// Once we add logic to root deferred channels, we will need to add summary and loading of new container to test
-		// such conversion works correctly.
 	}
 
 	it("Channel overwrite with syncronization", async () => {
-		await ChannelOverwrite(true);
+		await ChannelOverwrite(true, false);
+	});
+
+	it("Channel overwrite with syncronization & summarizer", async () => {
+		await ChannelOverwrite(true, true);
 	});
 
 	it("Channel overwrite without syncronization", async () => {
-		await ChannelOverwrite(false);
+		await ChannelOverwrite(false, false);
+	});
+
+	it("Channel overwrite without syncronization & summarizer", async () => {
+		await ChannelOverwrite(false, true);
 	});
 });
 

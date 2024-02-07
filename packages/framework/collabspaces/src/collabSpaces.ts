@@ -478,7 +478,8 @@ export class TempCollabSpaceRuntime
 		if (channel !== undefined) {
 			assert(
 				isChannelDeffered(channelInfo?.type) || channelInfo?.type === cellValue.type,
-				"Types do not match");
+				"Types do not match",
+			);
 		} else {
 			assert(channelInfo === undefined, "channel exists without channelInfo");
 		}
