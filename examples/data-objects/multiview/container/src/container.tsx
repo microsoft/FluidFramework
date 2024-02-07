@@ -17,7 +17,7 @@ import { FluidObject } from "@fluidframework/core-interfaces";
 
 import * as React from "react";
 
-import { DefaultView } from "./defaultView";
+import { DefaultView } from "./defaultView.js";
 
 // eslint-disable-next-line import/no-unassigned-import
 import "./style.css";

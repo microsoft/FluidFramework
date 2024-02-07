@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import * as api from "@fluidframework/driver-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { EmptyDeltaStorageService } from "./emptyDeltaStorageService";
@@ -16,7 +17,10 @@ import { ReplayDocumentDeltaConnection } from "./replayDocumentDeltaConnection";
  * @internal
  */
 // eslint-disable-next-line import/namespace
-export class ReplayDocumentService implements api.IDocumentService {
+export class ReplayDocumentService
+	extends TypedEventEmitter<api.IDocumentServiceEvents>
+	implements api.IDocumentService
+{
 	public static async create(
 		documentService: api.IDocumentService,
 		controller: ReplayController,
@@ -36,7 +40,9 @@ export class ReplayDocumentService implements api.IDocumentService {
 	constructor(
 		private readonly controller: api.IDocumentStorageService,
 		private readonly deltaStorage: api.IDocumentDeltaConnection,
-	) {}
+	) {
+		super();
+	}
 
 	public dispose() {}
 

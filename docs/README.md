@@ -219,9 +219,17 @@ The lighter an item is, the higher it goes in order (closer to the top).
 
 ### API menu
 
-The API menu is a bit more complex since it's driven by content.
-The left menu (API overview) is a list of grouped packages, the grouping comes from a yaml file in the `data` folder (`packages.yaml`).
-The API documentation is generated with metadata which allows the template to link pages and load the right information.
+FluidFramework.com's Logical Hierarchy is defined in `packages.json` within the `data` folder. It's structured around two main concepts; FluidFramework and Service Clients.
+
+#### Concepts
+
+- **FluidFramework**: The core uber package with sub-categories like `Audience`, `Container`, and `DDSes`. Each containing the APIs which should be exposed for that concept.
+- **Service Clients**: Packages connecting with FluidFramework (e.g., `@fluidframework/azure-client`).
+
+#### Structure
+
+- **FluidFramework**: FluidFramework is split up into groupings which is then divided into the sub-categories; Classes, Enums, Interfaces and Types. The sub-categories contain the APIs that should be exposed in the Logical Hierarchy.
+- **Service Clients**: Lists integration packages for the framework.
 
 ### Table of Contents
 
@@ -309,13 +317,13 @@ This shortcode can be found in `layouts/shortcodes/apiref.html`.
 `Markdown` like the following:
 
 ```markdown
-The {{< apiref "FluidContainer" "class" >}} class can be used to...
+The {{< apiref "fluid-static" "FluidContainer" "class" >}} class can be used to...
 ```
 
 will generate something like:
 
 ```markdown
-The <a href="{{ relref /docs/api/v1/fluid-static/ifluidcontainer-interface.md }}"><code>FluidContainer</code></a> class can be used to...
+The <a href="{{ relref /docs/apis/fluid-static/ifluidcontainer-interface.md }}"><code>FluidContainer</code></a> class can be used to...
 ```
 
 ## Working on the template
@@ -338,7 +346,6 @@ The following npm scripts are supported in this directory:
 | `build:api-documentation` | Convert package API reports (`.api.json` files) into Markdown. |
 | `build:md-magic` | Updates generated content in Markdown files. |
 | `build:md-magic:code` | `node markdown-magic-code.js` |
-| `build:redirects` | `node ./build-redirects.js` |
 | `build:repo-docs` | `npm run build:md-magic:code` |
 | `ci:build` | `npm run download && npm run build` |
 | `ci:linkcheck` | `start-server-and-test ci:start http://localhost:1313 linkcheck:full` |

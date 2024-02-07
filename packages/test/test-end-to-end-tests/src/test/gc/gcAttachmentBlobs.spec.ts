@@ -121,7 +121,7 @@ describeCompat("Garbage collection of blobs", "NoCompat", (getTestObjectProvider
 			return summarizerDefaultDataStore._context.containerRuntime as ContainerRuntime;
 		}
 
-		beforeEach(async function () {
+		beforeEach("setup", async function () {
 			provider = getTestObjectProvider();
 			if (!driverSupportsBlobs(provider.driver)) {
 				this.skip();

@@ -25,7 +25,7 @@ const config: webpack.Configuration = {
 				exclude: /node_modules/,
 			},
 			{
-				test: /\.js$/,
+				test: /\.m?js$/,
 				use: [require.resolve("source-map-loader")],
 				enforce: "pre",
 			},

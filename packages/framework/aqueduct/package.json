@@ -134,8 +134,7 @@
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/synthesize": "workspace:~",
-		"@fluidframework/view-interfaces": "workspace:~",
-		"uuid": "^9.0.0"
+		"@fluidframework/view-interfaces": "workspace:~"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
@@ -145,7 +144,7 @@
 		"@fluidframework/build-tools": "^0.29.0",
 		"@fluidframework/eslint-config-fluid": "^3.3.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@microsoft/api-extractor": "^7.38.3",
+		"@microsoft/api-extractor": "^7.39.1",
 		"@types/events": "^3.0.0",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
@@ -175,6 +174,13 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_DataObjectFactory": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_PureDataObjectFactory": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

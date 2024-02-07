@@ -31,8 +31,9 @@ import {
 	CreateChildSummarizerNodeFn,
 	CreateSummarizerNodeSource,
 	channelsTreeName,
+	IFluidDataStoreChannel,
 } from "@fluidframework/runtime-definitions";
-import { GCDataBuilder } from "@fluidframework/runtime-utils";
+import { GCDataBuilder, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import {
 	isFluidError,
 	MockLogger,
@@ -60,6 +61,8 @@ import {
 	WriteFluidDataStoreAttributes,
 	summarizerClientType,
 } from "../summary";
+import { channelToDataStore } from "../dataStore";
+import { DataStores } from "../dataStores";
 
 describe("Data Store Context Tests", () => {
 	const dataStoreId = "Test1";
@@ -204,9 +207,13 @@ describe("Data Store Context Tests", () => {
 				});
 
 				await localDataStoreContext.realize();
-				const attachMessage = localDataStoreContext.generateAttachMessage();
+				const {
+					attachSummary: { summary },
+					type,
+				} = localDataStoreContext.getAttachData(/* includeGCData: */ false);
+				const snapshot = convertSummaryTreeToITree(summary);
 
-				const attributesEntry = attachMessage.snapshot.entries.find(
+				const attributesEntry = snapshot.entries.find(
 					(e) => e.path === dataStoreAttributesBlobName,
 				);
 				assert(
@@ -238,11 +245,7 @@ describe("Data Store Context Tests", () => {
 					dataStoreAttributes.isRootDataStore,
 					"Local DataStore root state does not match",
 				);
-				assert.strictEqual(
-					attachMessage.type,
-					"TestDataStore1",
-					"Attach message type does not match.",
-				);
+				assert.strictEqual(type, "TestDataStore1", "Attach message type does not match.");
 			});
 
 			it("should generate exception when incorrectly created with array of packages", async () => {
@@ -295,8 +298,12 @@ describe("Data Store Context Tests", () => {
 
 				await localDataStoreContext.realize();
 
-				const attachMessage = localDataStoreContext.generateAttachMessage();
-				const attributesEntry = attachMessage.snapshot.entries.find(
+				const {
+					attachSummary: { summary },
+					type,
+				} = localDataStoreContext.getAttachData(/* includeGCData: */ false);
+				const snapshot = convertSummaryTreeToITree(summary);
+				const attributesEntry = snapshot.entries.find(
 					(e) => e.path === dataStoreAttributesBlobName,
 				);
 				assert(
@@ -327,11 +334,7 @@ describe("Data Store Context Tests", () => {
 					dataStoreAttributes.isRootDataStore,
 					"Local DataStore root state does not match",
 				);
-				assert.strictEqual(
-					attachMessage.type,
-					"SubComp",
-					"Attach message type does not match.",
-				);
+				assert.strictEqual(type, "SubComp", "Attach message type does not match.");
 			});
 
 			it("can correctly initialize root context", async () => {
@@ -1050,7 +1053,16 @@ describe("Data Store Context Tests", () => {
 		let scope: FluidObject;
 		let factory: IFluidDataStoreFactory;
 		const makeLocallyVisibleFn = () => {};
+		const channelToDataStoreFn = (fluidDataStore: IFluidDataStoreChannel, id: string) =>
+			channelToDataStore(
+				fluidDataStore,
+				id,
+				containerRuntime,
+				dataStores,
+				containerRuntime.logger,
+			);
 		let containerRuntime: ContainerRuntime;
+		let dataStores: DataStores;
 		let provideDsRuntimeWithFailingEntrypoint = false;
 
 		beforeEach(async () => {
@@ -1105,6 +1117,9 @@ describe("Data Store Context Tests", () => {
 				logger: createChildLogger(),
 				clientDetails: {},
 			} as ContainerRuntime;
+
+			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+			dataStores = {} as DataStores;
 		});
 
 		describe("Initialization", () => {
@@ -1121,6 +1136,7 @@ describe("Data Store Context Tests", () => {
 						makeLocallyVisibleFn,
 						snapshotTree: undefined,
 						isRootDataStore: true,
+						channelToDataStoreFn,
 					});
 
 				assert.throws(codeBlock, (e: Error) =>
@@ -1144,6 +1160,7 @@ describe("Data Store Context Tests", () => {
 						makeLocallyVisibleFn,
 						snapshotTree: undefined,
 						isRootDataStore: false,
+						channelToDataStoreFn,
 					});
 
 					const dataStore = await factory.instantiateDataStore(
@@ -1180,6 +1197,7 @@ describe("Data Store Context Tests", () => {
 						makeLocallyVisibleFn,
 						snapshotTree: undefined,
 						isRootDataStore: false,
+						channelToDataStoreFn,
 					});
 
 					const dataStore = await factory.instantiateDataStore(

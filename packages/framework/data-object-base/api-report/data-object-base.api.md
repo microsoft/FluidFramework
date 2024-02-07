@@ -26,7 +26,7 @@ import { ISharedObjectRegistry } from '@fluidframework/datastore';
 import { RuntimeFactoryHelper } from '@fluidframework/runtime-utils';
 import { RuntimeRequestHandler } from '@fluidframework/request-handler';
 
-// @internal (undocumented)
+// @internal @deprecated (undocumented)
 export abstract class LazyLoadedDataObject<TRoot extends ISharedObject = ISharedObject, TEvents extends IEvent = IEvent> extends EventForwarder<TEvents> implements IFluidLoadable, IProvideFluidHandle {
     constructor(context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime, root: ISharedObject);
     // (undocumented)
@@ -51,7 +51,7 @@ export abstract class LazyLoadedDataObject<TRoot extends ISharedObject = IShared
     protected readonly runtime: IFluidDataStoreRuntime;
 }
 
-// @internal (undocumented)
+// @internal @deprecated (undocumented)
 export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> implements IFluidDataStoreFactory {
     constructor(type: string, ctor: new (context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime, root: ISharedObject) => T, root: IChannelFactory, sharedObjects?: readonly IChannelFactory[], storeFactories?: readonly IFluidDataStoreFactory[]);
     // (undocumented)
@@ -72,16 +72,23 @@ export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> impleme
 
 // @internal (undocumented)
 export class RuntimeFactory extends RuntimeFactoryHelper {
-    constructor(props: {
-        defaultStoreFactory: IFluidDataStoreFactory;
-        storeFactories: IFluidDataStoreFactory[];
-        requestHandlers?: RuntimeRequestHandler[];
-        provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
-    });
+    constructor(props: RuntimeFactoryProps);
     // (undocumented)
     instantiateFirstTime(runtime: ContainerRuntime): Promise<void>;
     // (undocumented)
     preInitialize(context: IContainerContext, existing: boolean): Promise<ContainerRuntime>;
+}
+
+// @internal
+export interface RuntimeFactoryProps {
+    // (undocumented)
+    defaultStoreFactory: IFluidDataStoreFactory;
+    // (undocumented)
+    provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+    // @deprecated (undocumented)
+    requestHandlers?: RuntimeRequestHandler[];
+    // (undocumented)
+    storeFactories: IFluidDataStoreFactory[];
 }
 
 ```

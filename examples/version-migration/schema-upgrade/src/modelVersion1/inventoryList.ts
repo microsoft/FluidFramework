@@ -9,7 +9,7 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedString } from "@fluidframework/sequence";
 
-import type { IInventoryItem, IInventoryList } from "../modelInterfaces";
+import type { IInventoryItem, IInventoryList } from "../modelInterfaces.js";
 
 class InventoryItem extends EventEmitter implements IInventoryItem {
 	public get id() {

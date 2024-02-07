@@ -7,7 +7,7 @@
 const testTools = require("@fluidframework/test-tools");
 const { name } = require("./package.json");
 
-mappedPort = testTools.getTestPort(name);
+const mappedPort = testTools.getTestPort(name);
 process.env["PORT"] = mappedPort;
 
 module.exports = {
@@ -19,6 +19,10 @@ module.exports = {
 	testPathIgnorePatterns: ["/node_modules/", "dist"],
 	transform: {
 		"^.+\\.ts?$": "ts-jest",
+	},
+	moduleNameMapper: {
+		// Remove explicit .js from local paths to allow jest to find the .ts* files
+		"^(\\.{1,2}/.*)\\.js$": "$1",
 	},
 	reporters: [
 		"default",

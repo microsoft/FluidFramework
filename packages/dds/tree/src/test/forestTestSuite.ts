@@ -34,7 +34,6 @@ import {
 	jsonSchema,
 	jsonRoot,
 	singleJsonCursor,
-	SchemaBuilder,
 	leaf,
 } from "../domains/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
@@ -52,8 +51,9 @@ import {
 	defaultSchemaPolicy,
 	isNeverField,
 	cursorForTypedTreeData,
-	TreeFieldSchema,
+	FlexFieldSchema,
 	intoStoredSchema,
+	SchemaBuilderBase,
 } from "../feature-libraries/index.js";
 import {
 	applyTestDelta,
@@ -82,10 +82,10 @@ export interface ForestTestConfiguration {
 	skipCursorErrorCheck?: true;
 }
 
-const jsonDocumentSchema = new SchemaBuilder({
+const jsonDocumentSchema = new SchemaBuilderBase(FieldKinds.sequence, {
 	scope: "jsonDocumentSchema",
 	libraries: [jsonSchema],
-}).intoSchema(SchemaBuilder.sequence(jsonRoot));
+}).intoSchema(jsonRoot);
 
 const buildId = { minor: 42 };
 const buildId2 = { minor: 442 };
@@ -119,7 +119,7 @@ export function testForest(config: ForestTestConfiguration): void {
 					const schema = new TreeStoredSchemaRepository();
 					const forest = factory(schema);
 
-					const rootFieldSchema = TreeFieldSchema.create(FieldKinds.optional, jsonRoot);
+					const rootFieldSchema = FlexFieldSchema.create(FieldKinds.optional, jsonRoot);
 					schema.apply({
 						nodeSchema: new Map(
 							mapIterable(jsonSchema.nodeSchema.entries(), ([k, v]) => [k, v.stored]),
@@ -968,12 +968,17 @@ export function testForest(config: ForestTestConfiguration): void {
 				assert.deepEqual(actual, expected);
 			});
 			it("when moving the last node in the field", () => {
-				const builder = new SchemaBuilder({ scope: "moving" });
-				const root = builder.object("root", {
-					x: SchemaBuilder.sequence(leaf.number),
-					y: SchemaBuilder.sequence(leaf.number),
+				const builder = new SchemaBuilderBase(FieldKinds.sequence, {
+					scope: "moving",
+					libraries: [leaf.library],
 				});
-				const schema = builder.intoSchema(builder.optional(root));
+				const root = builder.object("root", {
+					x: leaf.number,
+					y: leaf.number,
+				});
+				const schema = builder.intoSchema(
+					FlexFieldSchema.create(FieldKinds.optional, [root]),
+				);
 
 				const forest = factory(new TreeStoredSchemaRepository(intoStoredSchema(schema)));
 				initializeForest(

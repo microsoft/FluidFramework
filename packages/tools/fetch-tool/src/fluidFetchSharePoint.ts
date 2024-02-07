@@ -13,7 +13,7 @@ import {
 	IOdspDriveItem,
 	getOdspRefreshTokenFn,
 	IOdspAuthRequestInfo,
-} from "@fluidframework/odsp-doclib-utils";
+} from "@fluidframework/odsp-doclib-utils/internal";
 import {
 	getMicrosoftConfiguration,
 	OdspTokenManager,

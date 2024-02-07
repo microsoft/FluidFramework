@@ -217,8 +217,7 @@ describe("Fuzz - undo/redo", () => {
 			numberOfClients: 3,
 			emitter,
 			detachedStartOptions: {
-				enabled: false,
-				attachProbability: 0,
+				numOpsBeforeAttach: 0,
 			},
 			saveFailures: {
 				directory: failureDirectory,
@@ -283,8 +282,7 @@ describe("Fuzz - undo/redo", () => {
 			// This test is targeted at long-running undo/redo scenarios, so having a single client start detached and later attach
 			// is not particularly interesting
 			detachedStartOptions: {
-				enabled: false,
-				attachProbability: 1,
+				numOpsBeforeAttach: 0,
 			},
 			saveFailures: {
 				directory: failureDirectory,
