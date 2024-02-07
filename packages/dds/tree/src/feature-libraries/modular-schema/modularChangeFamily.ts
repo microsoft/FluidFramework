@@ -255,6 +255,11 @@ export class ModularChangeFamily
 					node1: NodeChangeset | undefined,
 					node2: NodeChangeset | undefined,
 				): NodeChangeset => {
+					// Note that it is important that the key is `node ?? node1` and not `node1 ?? node2`.
+					// If the first changeset moves this node, the change handler may not have seen the second changeset's
+					// changes for this node on its first pass.
+					// In that case we will have cached an entry the call to `compose(node1, undefined)`, and we must make sure
+					// not to reuse the cached entry if a subsequent pass calls `compose(node1, node2)`.
 					const key = node2 ?? node1 ?? fail("Should not have two undefined nodes");
 					const cachedResult = crossFieldTable.nodeCache.get(key);
 					if (cachedResult !== undefined) {

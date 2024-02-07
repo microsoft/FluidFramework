@@ -228,29 +228,93 @@ describe("ModularChangeFamily integration", () => {
 
 	describe("compose", () => {
 		it("nested moves", () => {
+			/**
+			 * This test is intended to demonstrate the necessity of doing more than two compose passes through a field.
+			 *
+			 * Starting state [A, B, C]
+			 * This test composes
+			 * 1) a change which moves A to the right in the root field, moves B into A, and moves C into B.
+			 * 2) a modification to C
+			 *
+			 */
+
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
 			const editor = new DefaultEditBuilder(family, changeReceiver);
 			const nodeAPath: UpPath = { parent: undefined, parentField: fieldA, parentIndex: 0 };
-			const nodeBPath: UpPath = { parent: nodeAPath, parentField: fieldB, parentIndex: 0 };
 
-			editor.sequenceField({ parent: undefined, field: fieldA }).move(0, 1, 0);
-			editor.sequenceField({ parent: nodeAPath, field: fieldB }).move(0, 1, 0);
-			editor.sequenceField({ parent: nodeBPath, field: fieldC }).remove(0, 1);
+			// Moves A to an adjacent cell to its right
+			editor.sequenceField({ parent: undefined, field: fieldA }).move(0, 1, 1);
 
-			const [moveA, moveB, removeC] = getChanges();
-
-			const remove = tagChange(removeC, tag1);
-			const move = tagChange(
-				family.compose([makeAnonChange(moveA), makeAnonChange(moveB)]),
-				tag2,
+			// Moves B into A
+			editor.move(
+				{ parent: undefined, field: fieldA },
+				1,
+				1,
+				{ parent: nodeAPath, field: fieldB },
+				0,
 			);
 
-			const moveInverse = tagRollbackInverse(family.invert(move, true), tag3, tag2);
+			const nodeBPath: UpPath = { parent: nodeAPath, parentField: fieldB, parentIndex: 0 };
 
-			const composed = family.compose([moveInverse, remove, move]);
-			const expected = family.compose([remove]);
+			// Moves C into B
+			editor.move(
+				{ parent: undefined, field: fieldA },
+				1,
+				1,
+				{ parent: nodeBPath, field: fieldC },
+				0,
+			);
+
+			const nodeCPath: UpPath = { parent: nodeBPath, parentField: fieldC, parentIndex: 0 };
+
+			// Modifies C by removing a node from it
+			editor.sequenceField({ parent: nodeCPath, field: fieldC }).remove(0, 1);
+
+			const [moveA, moveB, moveC, removeD] = getChanges();
+
+			const moves = makeAnonChange(
+				family.compose([
+					makeAnonChange(moveA),
+					makeAnonChange(moveB),
+					makeAnonChange(moveC),
+				]),
+			);
+
+			const remove = makeAnonChange(removeD);
+
+			const composed = family.compose([moves, remove]);
 			const composedDelta = intoDelta(makeAnonChange(composed), fieldKinds);
-			const expectedDelta = intoDelta(makeAnonChange(expected), fieldKinds);
+
+			const nodeAChanges: DeltaFieldMap = new Map([
+				[fieldB, { local: [{ count: 1, attach: { minor: 1 } }] }],
+			]);
+
+			const nodeBChanges: DeltaFieldMap = new Map([
+				[
+					fieldC,
+					{
+						local: [{ count: 1, attach: { minor: 2 } }],
+					},
+				],
+			]);
+
+			const nodeCChanges: DeltaFieldMap = new Map([
+				[fieldC, { local: [{ count: 1, detach: { minor: 3 } }] }],
+			]);
+
+			const fieldAChanges: DeltaFieldChanges = {
+				local: [
+					{ count: 1, detach: { minor: 0 }, fields: nodeAChanges },
+					{ count: 1, attach: { minor: 0 } },
+					{ count: 1, detach: { minor: 1 }, fields: nodeBChanges },
+					{ count: 1, detach: { minor: 2 }, fields: nodeCChanges },
+				],
+			};
+
+			const expectedDelta: DeltaRoot = {
+				fields: new Map([[fieldA, fieldAChanges]]),
+			};
+
 			assertDeltaEqual(composedDelta, expectedDelta);
 		});
 
