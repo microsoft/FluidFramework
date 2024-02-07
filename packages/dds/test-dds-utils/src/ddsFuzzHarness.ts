@@ -1083,17 +1083,12 @@ async function loadDetached<TChannelFactory extends IChannelFactory>(
 	containerRuntimeFactory.synchronizeIdCompressors();
 
 	const { summary } = await summarizerClient.channel.summarize();
-	let idCompressorSummary: SerializedIdCompressorWithNoSession | undefined;
-	if (summarizerClient.dataStoreRuntime.idCompressor !== undefined) {
-		idCompressorSummary = summarizerClient.dataStoreRuntime.idCompressor.serialize(false);
-	}
+	const idCompressorSummary =  summarizerClient.dataStoreRuntime.idCompressor?.serialize(false);
+
 
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({
 		clientId,
-		idCompressor:
-			options.idCompressorFactory === undefined
-				? undefined
-				: options.idCompressorFactory(idCompressorSummary),
+		idCompressor: options.idCompressorFactory?.(idCompressorSummary),
 	});
 	dataStoreRuntime.local = true;
 	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
