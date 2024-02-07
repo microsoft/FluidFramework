@@ -480,7 +480,7 @@ export interface IGarbageCollectorConfigs {
 	 */
 	readonly shouldRunGC: boolean;
 	/**
-	 * Tracks if sweep phase should run or not, and if it should run only for attachment blobs.
+	 * Tracks if sweep phase should run or not, or if it should run only for attachment blobs.
 	 * Even if the sweep phase is allowed for a document (see sweepEnabled), it may be disabled or partially enabled
 	 * for the session, depending on a variety of other configurations present.
 	 */

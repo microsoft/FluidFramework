@@ -689,19 +689,34 @@ export class GarbageCollector implements IGarbageCollector {
 			return;
 		}
 
-		// If sweep is disabled, we'll tombstone both tombstone-ready and sweep-ready nodes.
+		// We'll build up the lists of nodes to be either Tombstoned or Deleted
+		// based on the configuration and the nodes' current state.
+		// We must Tombstone any sweep-ready node that Sweep won't run for.
 		// This is important because a container may never load during a node's Sweep Grace Period,
 		// so that node would directly become sweep-ready skipping over tombstone-ready state,
 		// but should be Tombstoned since Sweep is disabled.
-		const { nodesToTombstone, nodesToDelete } = this.configs.shouldRunSweep
-			? {
-					nodesToTombstone: [...tombstoneReadyNodes],
-					nodesToDelete: [...sweepReadyNodes],
-			  }
-			: {
-					nodesToTombstone: [...tombstoneReadyNodes, ...sweepReadyNodes],
-					nodesToDelete: [],
-			  };
+		const { nodesToTombstone, nodesToDelete } = {
+			nodesToTombstone: [...tombstoneReadyNodes],
+			nodesToDelete: [] as string[],
+		};
+		switch (this.configs.shouldRunSweep) {
+			case "YES":
+				nodesToDelete.push(...sweepReadyNodes);
+				break;
+			case "ONLY_BLOBS":
+				sweepReadyNodes.forEach((nodeId) => {
+					const nodeType = this.runtime.getNodeType(nodeId);
+					if (nodeType === GCNodeType.Blob) {
+						nodesToDelete.push(nodeId);
+					} else {
+						nodesToTombstone.push(nodeId);
+					}
+				});
+				break;
+			default: // case "NO":
+				nodesToTombstone.push(...sweepReadyNodes);
+				break;
+		}
 
 		if (this.configs.tombstoneMode) {
 			this.tombstones = nodesToTombstone;
@@ -709,7 +724,7 @@ export class GarbageCollector implements IGarbageCollector {
 			this.runtime.updateTombstonedRoutes(this.tombstones);
 		}
 
-		if (this.configs.shouldRunSweep && nodesToDelete.length > 0) {
+		if (nodesToDelete.length > 0) {
 			// Do not send DDS node ids in the GC op. This is an optimization to reduce its size. Since GC applies to
 			// to data store only, all its DDSes are deleted along with it. The DDS ids will be retrieved from the
 			// local state when processing the op.
