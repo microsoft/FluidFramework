@@ -48,6 +48,8 @@ import {
 	idAllocatorFromMaxId,
 	idAllocatorFromState,
 	Mutable,
+	populateNestedMap,
+	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../util/index.js";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
@@ -986,25 +988,30 @@ export function addMissingBuilds(
 	getDetachedNode: (id: DeltaDetachedNodeId) => TreeChunk | undefined,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 ): ModularChangeset {
-	const roots = relevantRemovedRoots(change, fieldKinds);
-	const builds: ChangeAtomIdMap<TreeChunk> = new Map();
+	const builds: ChangeAtomIdMap<TreeChunk> = new Map<
+		RevisionTag | undefined,
+		Map<ChangesetLocalId, TreeChunk>
+	>();
 
-	// deep clone the builds map
-	change.change.builds?.forEach((innerMap, revision) => {
-		const innerDstMap = getOrAddInMap(builds, revision, new Map<ChangesetLocalId, TreeChunk>());
+	for (const root of relevantRemovedRoots(change, fieldKinds)) {
+		const node = getDetachedNode(root);
 
-		innerMap.forEach((chunk, id) => innerDstMap.set(id, chunk));
-	});
-
-	for (const root of roots) {
-		const innerMap = getOrAddInMap(builds, root.major, new Map<ChangesetLocalId, TreeChunk>());
-		const changesetLocalId: ChangesetLocalId = brand(root.minor);
-
-		if (!innerMap.has(changesetLocalId)) {
-			const node = getDetachedNode(root);
-			assert(node !== undefined, "detached node should exit");
-			innerMap.set(changesetLocalId, node);
+		// if the detached node could not be found, it should exist in the original builds map
+		if (node === undefined) {
+			assert(change.change.builds !== undefined, "detached node should exist");
+			const original = tryGetFromNestedMap(change.change.builds, root.major, root.minor);
+			assert(original !== undefined, "detached node should exist");
 		}
+
+		setInNestedMap(builds, root.major, root.minor, node);
+	}
+
+	if (builds.size === 0) {
+		return change.change;
+	}
+
+	if (change.change.builds !== undefined) {
+		populateNestedMap(change.change.builds, builds, false);
 	}
 
 	const { fieldChanges, maxId, revisions, constraintViolationCount, destroys } = change.change;
