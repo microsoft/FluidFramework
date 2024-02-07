@@ -201,7 +201,7 @@ function makeGenerator(optionsParam?: Partial<GeneratorOptions>): AsyncGenerator
 	return async (state) => syncGenerator(state);
 }
 
-describe.only("Matrix fuzz tests", function () {
+describe("Matrix fuzz tests", function () {
 	/**
 	 * SparseArray2D's clearRows / clearCols involves a loop over 64k elements and is called on row/col handle recycle.
 	 * This makes some seeds rather slow (since that cost is paid 3 times per recycled row/col per client).

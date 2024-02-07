@@ -22,6 +22,7 @@ const baseOptions: Partial<DDSFuzzSuiteOptions> = {
 		maxNumberOfClients: 6,
 		clientAddProbability: 0.1,
 	},
+	// AB#7156: SharedTree does not yet support loading clients in a detached state
 	detachedStartOptions: { numOpsBeforeAttach: 0 },
 	reconnectProbability: 0.5,
 };
@@ -36,7 +37,7 @@ const baseOptions: Partial<DDSFuzzSuiteOptions> = {
  * The fuzz tests should validate that the clients do not crash and that their document states do not diverge.
  * See the "Fuzz - Targeted" test suite for tests that validate more specific code paths or invariants.
  */
-describe.only("Fuzz - Top-Level", () => {
+describe("Fuzz - Top-Level", () => {
 	const runsPerBatch = 50;
 	const opsPerRun = 20;
 	// TODO: Enable other types of ops.
