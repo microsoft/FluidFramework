@@ -40,6 +40,8 @@ export interface ISharedMatrix<T = any> extends IEventProvider<ISharedMatrixEven
     // (undocumented)
     insertRows(rowStart: number, count: number): void;
     // (undocumented)
+    openUndo(consumer: IUndoConsumer): void;
+    // (undocumented)
     removeCols(colStart: number, count: number): void;
     // (undocumented)
     removeRows(rowStart: number, count: number): void;
