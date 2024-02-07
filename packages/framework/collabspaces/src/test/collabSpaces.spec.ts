@@ -22,6 +22,7 @@ import {
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import { Loader as ContainerLoader } from "@fluidframework/container-loader";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { IRevertible } from "@fluidframework/matrix";
 
 import {
 	ICollabChannelCore,
@@ -425,13 +426,15 @@ describe("Temporal Collab Spaces", () => {
 		const col = 3;
 
 		const collabSpace = await initialize();
+		const collabSpace2 = collabSpaces[1];
 
 		const channel2a = (await collabSpace.getCellChannel(row, col)) as ISharedCounter;
 
 		// Make some changes on a channel
-		const initialValue = channel2a.value;
+		let initialValue = channel2a.value;
 		let overwriteValue = initialValue + 100;
 		channel2a.increment(10);
+		initialValue += 10;
 
 		// We test vastly different scenario depending on if we wait or not.
 		// If we do not wait, then we test concurrent changes in channel and overwrite
@@ -441,8 +444,15 @@ describe("Temporal Collab Spaces", () => {
 			await provider.ensureSynchronized();
 		}
 
+		// Create undo for second container
+		let undo2: IRevertible[] = [];
+		collabSpace2.openUndo({
+			pushToCurrentOperation(revertible: IRevertible) {
+				undo2.push(revertible);
+			},
+		});
+
 		// Overwrite it!
-		const collabSpace2 = collabSpaces[1];
 		collabSpace2.setCell(row, col, {
 			value: overwriteValue,
 			type: CounterFactory.Type,
@@ -452,25 +462,32 @@ describe("Temporal Collab Spaces", () => {
 		await provider.ensureSynchronized();
 		await ensureSameValues(row, col, overwriteValue);
 
-		assert(channel2a.value === initialValue + 10, "No impact on unrooted channel");
+		assert(channel2a.value === initialValue, "No impact on unrooted channel");
 
 		// Retrieve channel for same cell
-		const channel2b = (await collabSpace.getCellChannel(row, col)) as ISharedCounter;
-		const channel2c = (await collabSpace2.getCellChannel(row, col)) as ISharedCounter;
+		let channel2b = (await collabSpace.getCellChannel(row, col)) as ISharedCounter;
+		let channel2c = (await collabSpace2.getCellChannel(row, col)) as ISharedCounter;
 		await ensureSameValues(row, col, overwriteValue, [channel2b, channel2c]);
 
 		channel2c.increment(10);
 		overwriteValue += 10;
 		await provider.ensureSynchronized();
-		await ensureSameValues(row, col, overwriteValue);
 		await ensureSameValues(row, col, overwriteValue, [channel2b, channel2c]);
-		assert(channel2a.value === initialValue + 10, "No impact on unrooted channel");
+		assert(channel2a.value === initialValue, "No impact on unrooted channel");
 
-		// TBD(Pri1): Need to implement undo - restore original channel, validate that none
-		// of the changes that were made before were lost, and that further collaboration could
-		// be done on this channel.
-		// Plus redo, and come back to second channel.
-		// This will require fixing production code - converting deferred channels to rooted channels
+		/**
+		 * Undo all the changes from second container
+		 * This includes only matrix changes, i.e. cell overwrite.
+		 */
+		const toUndo = undo2.reverse();
+		undo2 = [];
+		for (const record of toUndo) {
+			record.revert();
+		}
+		await provider.ensureSynchronized();
+		channel2b = (await collabSpace.getCellChannel(row, col)) as ISharedCounter;
+		channel2c = (await collabSpace2.getCellChannel(row, col)) as ISharedCounter;
+		await ensureSameValues(row, col, initialValue, [channel2b, channel2c]);
 
 		// TBD(Pri1): Need to ensure that summarization for deferred channels and loading from such summaries works
 		// Once we add logic to root deferred channels, we will need to add summary and loading of new container to test

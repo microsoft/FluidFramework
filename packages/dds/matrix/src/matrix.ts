@@ -104,6 +104,8 @@ export interface ISharedMatrix<T = any>
 	removeCols(colStart: number, count: number): void;
 	insertRows(rowStart: number, count: number): void;
 	removeRows(rowStart: number, count: number): void;
+
+	openUndo(consumer: IUndoConsumer): void;
 }
 
 /**

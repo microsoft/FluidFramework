@@ -25,6 +25,7 @@ import {
 	SharedMatrixFactory,
 	MatrixItem,
 	ISharedMatrixEvents,
+	IUndoConsumer,
 } from "@fluidframework/matrix";
 import { UsageError } from "@fluidframework/telemetry-utils";
 import { addBlobToSummary } from "@fluidframework/runtime-utils";
@@ -142,8 +143,9 @@ type ICellInfo =
 	  }
 	| {
 			value: Exclude<MatrixItem<MatrixInternalType>, undefined>;
-			channel: ICollabChannel | undefined;
+			channel: Promise<ICollabChannel> | undefined;
 			channelId: string;
+			channelInfo: IChannelTrackingInfo | undefined;
 	  };
 
 interface IChannelTrackingInfo {
@@ -167,20 +169,18 @@ interface IChannelTrackingInfo {
 // for future use. If it becomes rooted at any future point in time (through undo/redo), it would need to transition
 // into non-deferred state by being replaced with real channel (by loading base state and applying all
 // accumulated ops)
-/*
-function isChannelDeffered(info: IChannelTrackingInfo) {
-	return info.type === DeferredChannel.Type;
+function isChannelDeffered(type?: string) {
+	return type === DeferredChannel.Type;
 }
-*/
 
 /*
-	To be implemented:
+	// TBD(Pri2) - to be implemented:
 	- "conflict" events
 	- Types that do not support collaboration (like numbers, dates)
 		Right now we assume that every type is represented by channel factory, but there is no need
 		for that if types are not collaborative.
 	- Properly implement GC of channels (and exposure of channel info to GC)
-	- hange events - changes being made by channels should result in events fired by this object.
+	- change events - changes being made by channels should result in events fired by this object.
 */
 
 /** @internal */
@@ -190,6 +190,7 @@ export class TempCollabSpaceRuntime
 {
 	private matrixInternal?: SharedMatrix<MatrixInternalType>;
 	private channelInfo: Record<string, IChannelTrackingInfo | undefined> = {};
+	private deferredChannels: Map<string, DeferredChannel> = new Map();
 
 	constructor(
 		dataStoreContext: IFluidDataStoreContext,
@@ -363,6 +364,9 @@ export class TempCollabSpaceRuntime
 		if (!this.contexts.has(id)) {
 			super.attachRemoteChannel(id, sequenceNumber, attachMessage);
 			if (id !== matrixId) {
+				// This should never happen, but if it does - this points to an issue of
+				// not tracking it properly in this.deferredChannels
+				assert(!isChannelDeffered(attachMessage.type), "deferred channels tracking");
 				this.channelCreated(id, attachMessage.type);
 			}
 		} else {
@@ -399,8 +403,35 @@ export class TempCollabSpaceRuntime
 				this.dataStoreContext.storage,
 				blobId,
 			);
+
+			// Rebuild defered channels
+			this.deferredChannels = new Map();
+			for (const [channelId, info] of Object.entries(this.channelInfo)) {
+				if (isChannelDeffered(info?.type)) {
+					const channel = await this.getChannel(channelId);
+					this.deferredChannels.set(channelId, channel as DeferredChannel);
+				}
+			}
 		}
 		this.matrix.switchSetCellPolicy();
+
+		this.matrix.openMatrix({
+			rowsChanged: (rowStart: number, removedCount: number, insertedCount: number) => {},
+			colsChanged: (colStart: number, removedCount: number, insertedCount: number) => {},
+			cellsChanged: (
+				rowStart: number,
+				colStart: number,
+				rowCount: number,
+				colCount: number,
+			) => {
+				for (let row = rowStart; row < rowStart + rowCount; row++) {
+					for (let col = colStart; col < colStart + colCount; col++) {
+						// -1 due to first row & col tracking IDs
+						this.cellChanged(row - 1, col - 1);
+					}
+				}
+			},
+		});
 	}
 
 	private get matrix() {
@@ -408,7 +439,30 @@ export class TempCollabSpaceRuntime
 		return this.matrixInternal;
 	}
 
-	private async getCellInfo(rowArg: number, colArg: number): Promise<ICellInfo> {
+	private cellChanged(row: number, col: number) {
+		const info = this.getCellInfo(row, col);
+		if (info.value !== undefined && isChannelDeffered(info.channelInfo?.type)) {
+			const channelId = info.channelId;
+			// Need to update channel and convert it to real thing.
+			const deferredChannel = this.deferredChannels.get(channelId);
+			assert(deferredChannel !== undefined, "deferred channel not found");
+			this.deferredChannels.delete(channelId);
+
+			this.destroyChannelCore(channelId);
+
+			assert(
+				info.channelInfo?.pendingChangeCount === 0,
+				"no pending changes for deferred channel",
+			);
+			this.channelInfo[channelId] = undefined;
+			this.createCollabChannel(info.value, channelId);
+			for (const op of deferredChannel.getOps()) {
+				this.processChannelOp(channelId, op, false /* local */, undefined /* metadata */);
+			}
+		}
+	}
+
+	private getCellInfo(rowArg: number, colArg: number): ICellInfo {
 		const row = rowArg + 1;
 		const col = colArg + 1;
 		const cellValue = this.matrix.getCell(row, col);
@@ -418,18 +472,22 @@ export class TempCollabSpaceRuntime
 		const rowId = this.matrix.getCell(row, 0) as unknown as string;
 		const colId = this.matrix.getCell(0, col) as unknown as string;
 		const channelId = `${rowId},${colId},${cellValue.iteration}`;
-		const channel = await this.contexts.get(channelId)?.getChannel();
+		const channel = this.contexts.get(channelId)?.getChannel();
 
+		const channelInfo = this.channelInfo[channelId];
 		if (channel !== undefined) {
-			assert(this.channelInfo[channelId]?.type === cellValue.type, "Types do not match");
+			assert(
+				isChannelDeffered(channelInfo?.type) || channelInfo?.type === cellValue.type,
+				"Types do not match");
 		} else {
-			assert(this.channelInfo[channelId] === undefined, "channel exists without channelInfo");
+			assert(channelInfo === undefined, "channel exists without channelInfo");
 		}
 
 		return {
 			value: cellValue,
-			channel: channel as ICollabChannel | undefined,
+			channel: channel as Promise<ICollabChannel> | undefined,
 			channelId,
+			channelInfo,
 		};
 	}
 
@@ -438,8 +496,8 @@ export class TempCollabSpaceRuntime
 		row: number,
 		col: number,
 	): Promise<{ channel?: ICollabChannelCore }> {
-		const result = await this.getCellInfo(row, col);
-		return { channel: result.channel };
+		const result = this.getCellInfo(row, col);
+		return { channel: await result.channel };
 	}
 
 	private getFactoryForValueType(type: string, onlyCollaborativeTypes: boolean) {
@@ -488,12 +546,16 @@ export class TempCollabSpaceRuntime
 		// this.bindChannel(newChannel);
 
 		this.channelCreated(channelId, value.type);
+		assert(!this.deferredChannels.has(channelId), "overwriting deferred channel");
+		if (isChannelDeffered(value.type)) {
+			this.deferredChannels.set(channelId, newChannel as DeferredChannel);
+		}
 
 		return newChannel;
 	}
 
 	public async getCellChannel(row: number, col: number): Promise<ICollabChannelCore> {
-		const { value, channel, channelId } = await this.getCellInfo(row, col);
+		const { value, channel, channelId } = this.getCellInfo(row, col);
 		if (value === undefined) {
 			throw new UsageError("Can't create channel for undefined cell");
 		}
@@ -539,6 +601,21 @@ export class TempCollabSpaceRuntime
 		return { row, col, iteration };
 	}
 
+	private destroyChannelCore(channelId: string) {
+		// Force summarizer sub-system to summarize this object and get rid of deleted channel
+		this.setChannelDirty(channelId);
+
+		// Is this safe? Anything else we need to do?
+		this.contexts.delete(channelId);
+		this.notBoundedChannelContextSet.delete(channelId);
+		this.channelInfo[channelId] = undefined;
+
+		// TBD(Pri2): We need to update GC data and ensure that it's accurate.
+		// To some extend it's a noop event from GC perspective, and resulting data in the cell
+		// represents same data, but need to double check that it's actually correct and tests
+		// have proper coverage.
+	}
+
 	// Saves or destoys channel, depending on the arguments
 	private saveOrDestroyChannel(
 		channel: ICollabChannelCore,
@@ -565,8 +642,6 @@ export class TempCollabSpaceRuntime
 
 		let savedValue = this.matrix.getCell(row, col);
 
-		// TBD(Pri2) - can this be optimized and assume only single client can undo such operation?
-		//
 		// If channel is no longer associated with a cell, can't do much!
 		// We are dealing with non-rooted channel. It could be returned back to life through undo
 		// It's possible that it sits on undo stack of multiple clients (imagine that both clients
@@ -601,19 +676,7 @@ export class TempCollabSpaceRuntime
 		if (destroyd) {
 			// Validate that actually values match!
 			assert(channel.value === savedValue.value, "values are not matching!!!!");
-
-			// Force summarizer sub-system to summarize this object and get rid of deleted channel
-			this.setChannelDirty(channelId);
-
-			// Is this safe? Anything else we need to do?
-			this.contexts.delete(channelId);
-			this.notBoundedChannelContextSet.delete(channelId);
-			this.channelInfo[channelId] = undefined;
-
-			// TBD(Pri2): We need to update GC data and ensure that it's accurate.
-			// To some extend it's a noop event from GC perspective, and resulting data in the cell
-			// represents same data, but need to double check that it's actually correct and tests
-			// have proper coverage.
+			this.destroyChannelCore(channelId);
 		}
 
 		return { saved, destroyd };
@@ -660,13 +723,13 @@ export class TempCollabSpaceRuntime
 	}
 
 	public async getCellAsync(row: number, col: number): Promise<CollabSpaceCellType> {
-		const { value, channel } = await this.getCellInfo(row, col);
+		const { value, channel } = this.getCellInfo(row, col);
 		if (value === undefined) {
 			return { value: undefined, type: "undefined" };
 		}
 		let val = value.value;
 		if (channel !== undefined) {
-			val = channel.value as string;
+			val = (await channel).value as string;
 		}
 		return { value: val, type: value.type };
 	}
@@ -740,6 +803,10 @@ export class TempCollabSpaceRuntime
 
 	public removeRows(rowStart: number, count: number) {
 		this.matrix.removeRows(rowStart + 1, count);
+	}
+
+	public openUndo(consumer: IUndoConsumer): void {
+		this.matrix.openUndo(consumer);
 	}
 
 	// #endregion ISharedMatrix
