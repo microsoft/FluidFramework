@@ -4561,6 +4561,7 @@ importers:
 
   experimental/PropertyDDS/packages/property-binder:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@babel/core': ^7.13.0
       '@babel/eslint-parser': ^7.22.15
       '@babel/plugin-proposal-decorators': ^7.20.4
@@ -4599,6 +4600,7 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       source-map-loader: ^2.0.0
+      tsc-multi: ^1.1.0
       typedoc: ^0.12.0
       typescript: ~5.1.6
       underscore: ^1.13.6
@@ -4611,6 +4613,7 @@ importers:
       lodash: 4.17.21
       underscore: 1.13.6
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@babel/core': 7.23.3
       '@babel/eslint-parser': 7.23.3_yelzh2go37tzk6gty5eh5ixj5u
       '@babel/plugin-proposal-decorators': 7.23.3_@babel+core@7.23.3
@@ -4644,6 +4647,7 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       source-map-loader: 2.0.2_webpack@5.89.0
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typedoc: 0.12.0
       typescript: 5.1.6
       webpack: 5.89.0
@@ -4783,6 +4787,7 @@ importers:
 
   experimental/PropertyDDS/packages/property-dds:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-experimental/property-changeset': workspace:~
       '@fluid-experimental/property-common': workspace:~
       '@fluid-experimental/property-properties': workspace:~
@@ -4830,6 +4835,7 @@ importers:
       pako: ^2.0.4
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -4852,6 +4858,7 @@ importers:
       pako: 2.1.0
       uuid: 9.0.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-experimental/property-common': link:../property-common
       '@fluid-private/test-drivers': link:../../../../packages/test/test-drivers
       '@fluidframework/build-common': 2.0.3
@@ -4882,6 +4889,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   experimental/PropertyDDS/packages/property-inspector-table:
@@ -5429,6 +5437,7 @@ importers:
 
   experimental/dds/ot/ot:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-private/test-dds-utils': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -5456,6 +5465,7 @@ importers:
       prettier: ~3.0.3
       quill-delta: ^4.2.2
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../../../packages/common/client-utils
@@ -5466,6 +5476,7 @@ importers:
       '@fluidframework/runtime-definitions': link:../../../../packages/runtime/runtime-definitions
       '@fluidframework/shared-object-base': link:../../../../packages/dds/shared-object-base
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-private/test-dds-utils': link:../../../../packages/dds/test-dds-utils
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
@@ -5486,10 +5497,12 @@ importers:
       prettier: 3.0.3
       quill-delta: 4.2.2
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   experimental/dds/ot/sharejs/json1:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-experimental/ot': workspace:~
       '@fluid-private/test-dds-utils': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -5516,6 +5529,7 @@ importers:
       ot-json1: ^1.0.1
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-experimental/ot': link:../../ot
@@ -5525,6 +5539,7 @@ importers:
       '@fluidframework/shared-object-base': link:../../../../../packages/dds/shared-object-base
       ot-json1: 1.0.2
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-private/test-dds-utils': link:../../../../../packages/dds/test-dds-utils
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
@@ -5545,10 +5560,12 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   experimental/dds/sequence-deprecated:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-private/test-dds-utils': workspace:~
       '@fluid-tools/build-cli': ^0.29.0
       '@fluidframework/build-common': ^2.0.3
@@ -5576,6 +5593,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
@@ -5585,6 +5603,7 @@ importers:
       '@fluidframework/sequence': link:../../../packages/dds/sequence
       '@fluidframework/shared-object-base': link:../../../packages/dds/shared-object-base
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-private/test-dds-utils': link:../../../packages/dds/test-dds-utils
       '@fluid-tools/build-cli': 0.29.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
@@ -5606,6 +5625,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   experimental/dds/tree:
@@ -11040,6 +11060,7 @@ importers:
 
   packages/tools/devtools/devtools-core:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.29.0
       '@fluidframework/build-common': ^2.0.3
@@ -11081,6 +11102,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../../common/client-utils
@@ -11098,6 +11120,7 @@ importers:
       '@fluidframework/telemetry-utils': link:../../../utils/telemetry-utils
       '@fluidframework/tree': link:../../../dds/tree
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.29.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0
@@ -11125,6 +11148,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   packages/tools/devtools/devtools-example:
