@@ -21,9 +21,6 @@ module.exports = {
 		],
 		dumpio: process.env.FLUID_TEST_VERBOSE !== undefined, // output browser console to cmd line
 		// slowMo: 500, // slows down process for easier viewing
-
-		// Use chrome-headless-shell since some tests don't work as-is with the new headless mode.
-		// AB#7150: Remove this once we have fixed the tests.
-		headless: "shell",
+		// headless: false, // run in the browser
 	},
 };
