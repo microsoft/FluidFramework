@@ -53,8 +53,10 @@ const newLocalRegister = <T>(sequenceNumber: number, value: T): ILocalRegister<T
 
 /**
  * An operation for consensus register collection
+ *
+ * The value stored in this op is serialized as a string and must be deserialized
  */
-interface IRegisterOperation {
+interface IRegisterOperationSerialized {
 	key: string;
 	type: "write";
 	serializedValue: string;
@@ -67,23 +69,28 @@ interface IRegisterOperation {
 }
 
 /**
- * IRegisterOperation format in versions \< 0.17 and \>8.0.0
+ * IRegisterOperation format in versions \< 0.17 and \>=2.0.0-rc.2.0.0
+ *
+ * The value stored in this op is _not_ serialized and is stored literally as `T`
  */
-interface IRegisterOperationOld<T> {
+interface IRegisterOperationPlain<T> {
 	key: string;
 	type: "write";
 	value: {
 		type: "Plain";
 		value: T;
 	};
-	refSeq: number;
+
+	// back-compat: files at rest written with runtime <= 0.13 do not have refSeq
+	refSeq: number | undefined;
 }
 
 /** Incoming ops could match any of these types */
-type IIncomingRegisterOperation<T> = IRegisterOperation | IRegisterOperationOld<T>;
+type IIncomingRegisterOperation<T> = IRegisterOperationSerialized | IRegisterOperationPlain<T>;
 
 /** Distinguish between incoming op formats so we know which type it is */
-const incomingOpMatchesCurrentFormat = (op): op is IRegisterOperation => "serializedValue" in op;
+const incomingOpMatchesSerializedFormat = (op): op is IRegisterOperationSerialized =>
+	"serializedValue" in op;
 
 /** The type of the resolve function to call after the local operation is ack'd */
 type PendingResolve = (winner: boolean) => void;
@@ -143,12 +150,11 @@ export class ConsensusRegisterCollection<T>
 	 */
 	public async write(key: string, value: T): Promise<boolean> {
 		if (!this.isAttached()) {
-			// JSON-roundtrip value for local writes to match the behavior of going through the wire
 			this.processInboundWrite(key, value, 0, 0, true);
 			return true;
 		}
 
-		const message: IRegisterOperationOld<T> = {
+		const message: IRegisterOperationPlain<T> = {
 			key,
 			type: "write",
 			value: {
@@ -246,7 +252,7 @@ export class ConsensusRegisterCollection<T>
 						0x06e /* "Message's reference sequence number < op's reference sequence number!" */,
 					);
 
-					const value = incomingOpMatchesCurrentFormat(op)
+					const value = incomingOpMatchesSerializedFormat(op)
 						? (this.parse(op.serializedValue, this.serializer) as T)
 						: op.value.value;
 					const winner = this.processInboundWrite(
