@@ -59,9 +59,7 @@ export function populateNestedMap<Key1, Key2, Value>(
 			}
 		}
 
-		if (newInner.size > 0) {
-			destination.set(key1, newInner);
-		}
+		destination.set(key1, newInner);
 	}
 }
 
