@@ -1439,6 +1439,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 				this.addPendingChange(id, serializedInterval);
 				this.emitChange(newInterval, interval, true, false);
 			}
+			return newInterval;
 		}
 		// No interval to change
 		return undefined;
@@ -1706,6 +1707,13 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 					end: op.value.end,
 					props: op.value.properties,
 				});
+				const metadata = {
+					localSeq: this.getNextLocalSeq(),
+				};
+				if (interval !== undefined) {
+					this.localSeqToSerializedInterval.set(metadata.localSeq, interval.serialize());
+				}
+				return metadata;
 			}
 			case IntervalDeltaOpType.DELETE:
 				this.removeIntervalById(op.value.properties?.intervalId);
