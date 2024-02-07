@@ -16,7 +16,6 @@ import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IIdCompressor } from '@fluidframework/id-compressor';
-import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IProvideFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
@@ -99,6 +98,9 @@ export enum FlushModeExperimental {
 export const gcBlobPrefix = "__gc";
 
 // @internal
+export const gcDataBlobKey = ".gcdata";
+
+// @internal
 export const gcDeletedBlobKey = "__deletedNodes";
 
 // @internal
@@ -128,7 +130,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     // (undocumented)
     readonly logger: ITelemetryBaseLogger;
     orderSequentially(callback: () => void): void;
-    submitSignal(type: string, content: any): void;
+    submitSignal(type: string, content: any, targetClientId?: string): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 }
@@ -172,6 +174,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
     attachGraph(): void;
     readonly attachState: AttachState;
     readonly entryPoint: IFluidHandle<FluidObject>;
+    getAttachGCData?(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)
@@ -194,6 +197,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegistry>, IProvideFluidHandleContext {
     // @deprecated (undocumented)
     addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
+    addedGCOutboundRoute?(fromPath: string, toPath: string): void;
     readonly attachState: AttachState;
     // (undocumented)
     readonly baseSnapshot: ISnapshotTree | undefined;
@@ -230,7 +234,7 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     readonly logger: ITelemetryBaseLogger;
     makeLocallyVisible(): void;
     // (undocumented)
-    readonly options: ILoaderOptions;
+    readonly options: Record<string | number, any>;
     readonly packagePath: readonly string[];
     readonly scope: FluidObject;
     setChannelDirty(address: string): void;
@@ -244,7 +248,7 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
 
 // @alpha (undocumented)
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
-    attachRuntime(factory: IProvideFluidDataStoreFactory, dataStoreRuntime: IFluidDataStoreChannel): Promise<void>;
+    attachRuntime(factory: IProvideFluidDataStoreFactory, dataStoreRuntime: IFluidDataStoreChannel): Promise<IDataStore>;
 }
 
 // @alpha (undocumented)
@@ -399,7 +403,9 @@ export interface ISummaryTreeWithStats {
 
 // @public
 export interface ITelemetryContext {
+    // @deprecated
     get(prefix: string, property: string): TelemetryEventPropertyType;
+    // @deprecated
     serialize(): string;
     set(prefix: string, property: string, value: TelemetryEventPropertyType): void;
     setMultiple(prefix: string, property: string, values: Record<string, TelemetryEventPropertyType>): void;

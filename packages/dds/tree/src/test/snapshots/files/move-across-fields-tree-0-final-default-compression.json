@@ -116,52 +116,43 @@
                                 "identifiers": [],
                                 "shapes": [
                                   {
+                                    "a": 2
+                                  },
+                                  {
                                     "c": {
-                                      "extraFields": 1
+                                      "type": "move-across-fields.Node",
+                                      "value": false,
+                                      "fields": [
+                                        [
+                                          "foo",
+                                          0
+                                        ],
+                                        [
+                                          "bar",
+                                          0
+                                        ]
+                                      ]
                                     }
                                   },
                                   {
-                                    "a": 0
+                                    "c": {
+                                      "type": "com.fluidframework.leaf.string",
+                                      "value": true
+                                    }
                                   }
                                 ],
                                 "data": [
                                   [
                                     1,
                                     [
-                                      "move-across-fields.Node",
-                                      false,
-                                      [
-                                        "foo",
-                                        [
-                                          "com.fluidframework.leaf.string",
-                                          true,
-                                          "a",
-                                          [],
-                                          "com.fluidframework.leaf.string",
-                                          true,
-                                          "b",
-                                          [],
-                                          "com.fluidframework.leaf.string",
-                                          true,
-                                          "c",
-                                          []
-                                        ],
-                                        "bar",
-                                        [
-                                          "com.fluidframework.leaf.string",
-                                          true,
-                                          "d",
-                                          [],
-                                          "com.fluidframework.leaf.string",
-                                          true,
-                                          "e",
-                                          [],
-                                          "com.fluidframework.leaf.string",
-                                          true,
-                                          "f",
-                                          []
-                                        ]
-                                      ]
+                                      "a",
+                                      "b",
+                                      "c"
+                                    ],
+                                    [
+                                      "d",
+                                      "e",
+                                      "f"
                                     ]
                                   ]
                                 ]

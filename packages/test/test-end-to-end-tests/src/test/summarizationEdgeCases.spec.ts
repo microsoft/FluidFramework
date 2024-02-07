@@ -21,7 +21,7 @@ import type { ISharedMap } from "@fluidframework/map";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 
 // These tests intend to ensure that summarization succeeds in edge case scenarios that rarely happen
-describeCompat("Summarization edge cases", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) => {
+describeCompat("Summarization edge cases", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
 	const testContainerConfig: ITestContainerConfig = {
 		runtimeOptions: {

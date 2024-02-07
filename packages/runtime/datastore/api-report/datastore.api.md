@@ -21,7 +21,6 @@ import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IIdCompressor } from '@fluidframework/id-compressor';
 import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
-import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
@@ -73,6 +72,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
     readonly entryPoint: IFluidHandle<FluidObject>;
+    getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
     // (undocumented)
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     // (undocumented)
@@ -96,7 +96,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     get objectsRoutingContext(): this;
     // (undocumented)
-    readonly options: ILoaderOptions;
+    readonly options: Record<string | number, any>;
     // (undocumented)
     process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // (undocumented)
