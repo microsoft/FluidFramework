@@ -234,6 +234,15 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			return;
 		}
 
+		const message = this.messageCodec.encode(
+			{
+				commit,
+				sessionId: this.editManager.localSessionId,
+			},
+			{
+				schema: this.schemaAndPolicy ?? undefined,
+			},
+		);
 		this.submitLocalMessage(message);
 	}
 
