@@ -1037,7 +1037,7 @@ export function addMissingBuilds(
  * @param fieldKinds - The field kinds to delegate to.
  * @returns a {@link ModularChangeset} with only builds relevant to the change.
  */
-export function filterBuilds(
+export function filterSuperfluousBuilds(
 	change: TaggedChange<ModularChangeset>,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 ): ModularChangeset {

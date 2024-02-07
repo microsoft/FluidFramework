@@ -56,7 +56,7 @@ import {
 	relevantRemovedRoots as relevantDetachedTreesImplementation,
 	intoDelta,
 	addMissingBuilds,
-	filterBuilds,
+	filterSuperfluousBuilds,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import { jsonObject, singleJsonCursor } from "../../../domains/index.js";
@@ -1288,7 +1288,7 @@ describe("ModularChangeFamily", () => {
 				builds: new Map([[bMajor, new Map([[brand(1), node3Chunk]])]]),
 			};
 
-			const filtered = filterBuilds(makeAnonChange(input), mockFieldKinds);
+			const filtered = filterSuperfluousBuilds(makeAnonChange(input), mockFieldKinds);
 			assert.deepEqual(filtered, expected);
 		});
 
@@ -1311,7 +1311,7 @@ describe("ModularChangeFamily", () => {
 				fieldChanges: new Map([]),
 			};
 
-			const filtered = filterBuilds(makeAnonChange(input), mockFieldKinds);
+			const filtered = filterSuperfluousBuilds(makeAnonChange(input), mockFieldKinds);
 			assert.deepEqual(filtered, expected);
 		});
 
@@ -1348,7 +1348,7 @@ describe("ModularChangeFamily", () => {
 				builds: new Map([[bMajor, new Map([[brand(1), node3Chunk]])]]),
 			};
 
-			const filtered = filterBuilds(makeAnonChange(input), mockFieldKinds);
+			const filtered = filterSuperfluousBuilds(makeAnonChange(input), mockFieldKinds);
 			assert.deepEqual(filtered, expected);
 		});
 	});
