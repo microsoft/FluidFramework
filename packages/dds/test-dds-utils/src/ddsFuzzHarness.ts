@@ -700,12 +700,11 @@ export function mixinAttach<
 			assert.equal(state.clients.length, 1);
 			state.isDetached = true;
 
-			const factory = new MockContainerRuntimeFactoryForReconnection(
+			const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection(
 				options.containerRuntimeOptions,
 			);
-			state.containerRuntimeFactory = factory;
 			const summarizerClient = await loadDetached(
-				state.containerRuntimeFactory,
+				containerRuntimeFactory,
 				clientA,
 				model.factory,
 				"summarizer",
@@ -714,7 +713,7 @@ export function mixinAttach<
 
 			return {
 				...state,
-				// containerRuntimeFactory: factory,
+				containerRuntimeFactory,
 				isDetached: true,
 				clients: [summarizerClient],
 				summarizerClient,
