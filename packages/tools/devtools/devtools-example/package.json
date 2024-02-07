@@ -27,7 +27,7 @@
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
 		"rebuild": "npm run clean && npm run build",
 		"start": "concurrently \"npm:watch:*\" npm:start:client",
-		"start:client": "webpack serve --config webpack.config.js",
+		"start:client": "webpack serve --config webpack.config.cjs",
 		"test": "npm run test:jest",
 		"test:coverage": "npm run test:jest:coverage",
 		"test:jest": "jest --detectOpenHandles",
