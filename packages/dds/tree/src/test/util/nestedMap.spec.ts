@@ -253,7 +253,7 @@ describe("NestedMap unit tests", () => {
 			);
 		});
 
-		it("does not override existing values by default", () => {
+		it("can choose to not override existing values", () => {
 			const sourceMap: NestedMap<string, string, number> = new Map<
 				string,
 				Map<string, number>
