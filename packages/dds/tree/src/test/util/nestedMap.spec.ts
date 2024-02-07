@@ -219,8 +219,13 @@ describe("NestedMap unit tests", () => {
 
 			populateNestedMap(sourceMap, destinationMap, false);
 
-			assert.equal(destinationMap.get("Foo")?.get("Bar"), 1);
-			assert.equal(destinationMap.get("Foo")?.get("Baz"), 2);
+			assert.deepEqual(
+				destinationMap.get("Foo"),
+				new Map([
+					["Bar", 1],
+					["Baz", 2],
+				]),
+			);
 		});
 
 		it("can override previous values", () => {
@@ -239,8 +244,13 @@ describe("NestedMap unit tests", () => {
 
 			populateNestedMap(sourceMap, destinationMap, true);
 
-			assert.equal(destinationMap.get("Foo")?.get("Bar"), 1);
-			assert.equal(destinationMap.get("Foo")?.get("Baz"), 2);
+			assert.deepEqual(
+				destinationMap.get("Foo"),
+				new Map([
+					["Bar", 1],
+					["Baz", 2],
+				]),
+			);
 		});
 
 		it("does not override existing values by default", () => {
@@ -259,8 +269,13 @@ describe("NestedMap unit tests", () => {
 
 			populateNestedMap(sourceMap, destinationMap, false);
 
-			assert.equal(destinationMap.get("Foo")?.get("Bar"), 2);
-			assert.equal(destinationMap.get("Foo")?.get("Baz"), 2);
+			assert.deepEqual(
+				destinationMap.get("Foo"),
+				new Map([
+					["Bar", 2],
+					["Baz", 2],
+				]),
+			);
 		});
 	});
 });
