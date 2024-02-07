@@ -25,11 +25,7 @@ const packageObject: PackageJson = readJsonSync("package.json");
 const previousPackageName = `${packageObject.name}-previous`;
 const previousBasePath = path.join("node_modules", previousPackageName);
 
-try {
-	ensureDevDependencyExists(packageObject, previousPackageName);
-} catch (error) {
-	console.error(error);
-}
+ensureDevDependencyExists(packageObject, previousPackageName);
 
 const typeRollupPaths = getTypeRollupPathFromExtractorConfig("alpha", previousBasePath);
 

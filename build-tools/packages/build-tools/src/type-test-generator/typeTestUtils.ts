@@ -14,7 +14,7 @@ import { getFullTypeName, getNodeTypeData, TypeData } from "../typeValidator/typ
 import { PackageJson } from "../common/npmPackage";
 
 // Information about the previous package from the package.json is not needed,
-// but error if its missing since it's nice to separate errors for the dep missing here vs not installed.
+// but error if it's missing since it's nice to separate errors for the dep missing here vs not installed.
 // This ensures that a critical dependency (the previous package version) is correctly declared in the project's package.json.
 export function ensureDevDependencyExists(
 	packageObject: PackageJson,
@@ -42,8 +42,8 @@ export function getPreviousPackageJsonPath(previousBasePath: string): string {
 /**
  * Attempts to retrieve  a specified type of rollup file path for type definitions from the API Extractor configuration.
  * @param {string} rollupType - The type of rollup file path to retrieve (ex: "alpha", "beta", "public").
- * @returns {string} The path to the alpha trimmed type definitions file.
- * @throws {Error} If api-extractor config cannot be loaded or if the alpha trimmed file path is undefined
+ * @returns {string} The path to the type definitions file for the specified rollupType, or undefined it cannot be found.
+ * @throws {Error} If api-extractor config cannot be loaded. 
  */
 export function getTypeRollupPathFromExtractorConfig(
 	rollupType: "alpha" | "beta" | "public" | "untrimmed",
@@ -76,7 +76,7 @@ export function getTypeRollupPathFromExtractorConfig(
 		return rollupPath;
 	} catch (error) {
 		console.error(`Error loading API Extractor configuration: ${error}`);
-		return undefined;
+		throw(error);
 	}
 }
 
