@@ -76,23 +76,7 @@ export function PopupView(props: PopupViewProps): React.ReactElement {
 		return (): void => {
 			backgroundServiceConnection.off("message", messageHandler);
 		};
-	}, [backgroundServiceConnection, foundDevtools, setFoundDevtools]);
-
-	// // Start timer for response timeout
-	// React.useEffect(() => {
-	// 	let responseTimeout: NodeJS.Timeout | undefined;
-
-	// 	// If we have already received a response, or have already timed out once,
-	// 	// don't start a new timeout.
-	// 	if (foundDevtools === undefined) {
-	// 		responseTimeout = setTimeout(() => {
-	// 			setFoundDevtools(false);
-	// 		}, queryTimeoutInMilliseconds);
-	// 	}
-	// 	return () => {
-	// 		clearTimeout(responseTimeout);
-	// 	};
-	// }, [foundDevtools, setFoundDevtools]);
+	}, [backgroundServiceConnection, setFoundDevtools]);
 
 	// TODO: spinner for loading
 	// TODO: retry button on not found.
