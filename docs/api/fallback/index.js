@@ -26,11 +26,7 @@ module.exports = async (context, { headers }) => {
 
 	context.res.json({
 		status: route ? 302 : 404,
-		headers: { location: route ? pathname.replace(...route) + search : "/404" },
+		location: route ? pathname.replace(...route) + search : "/404",
 		route
 	});
-	// context.res = {
-	// 	status: route ? 302 : 404,
-	// 	headers: { location: route ? pathname.replace(...route) + search : "/404" },
-	// };
 };
