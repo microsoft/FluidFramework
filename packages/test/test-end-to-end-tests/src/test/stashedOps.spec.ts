@@ -276,6 +276,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			const directory = await d.getSharedObject<SharedDirectory>(directoryId);
 			directory.set(testKey, testValue);
 			const string = await d.getSharedObject<SharedString>(stringId);
+			// todo re-enable after AB#7145
 			// const collection = string.getIntervalCollection(collectionId);
 			// collection.add({ start: testStart, end: testEnd });
 			// Submit a message with an unrecognized type
@@ -302,6 +303,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
 		const directory2 = await dataStore2.getSharedObject<SharedDirectory>(directoryId);
 		const string2 = await dataStore2.getSharedObject<SharedString>(stringId);
+		// todo re-enable after AB#7145
 		// const collection2 = string2.getIntervalCollection(collectionId);
 		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
