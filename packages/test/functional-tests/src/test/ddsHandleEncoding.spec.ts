@@ -157,7 +157,8 @@ describe("DDS Handle Encoding", () => {
 			(dds) => {
 				dds.add(handle).catch(() => {});
 			},
-			[handle.absolutePath] /* expectedHandles */,
+			// todo: AB#7149 this DDS does not currently support storing handles
+			[] /* expectedHandles */,
 		),
 		createTestCase(
 			new CellFactory(),
