@@ -15,19 +15,23 @@ trigger:
     - release/*
 
 extends:
-  template: templates/build-npm-package.yml
+  template: /tools/pipelines/templates/1ES/build-npm-package.yml@self
   parameters:
+    publish: false
     taskLint: false
     taskTest: [] # no tests
     taskPack: false
     taskBundleAnalysis: true
     taskPublishBundleSizeArtifacts: true
     taskBuildDocs: false
+    testCoverage: false
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
     buildDirectory: .
     tagName: bundle-artifacts
-    poolBuild: Large
+    # This pipeline doesn't generate production artifacts but the build-npm-package template is too intertwined with
+    # that scenario, which requires that the pipeline runs in the 1ES pool.
+    poolBuild: NewLarge-linux-1ES
     checkoutSubmodules: true
     releaseBuildOverride: none
     publishOverride: default

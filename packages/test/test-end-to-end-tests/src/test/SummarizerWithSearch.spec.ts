@@ -4,12 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-	PureDataObject,
-} from "@fluidframework/aqueduct";
+import type { PureDataObject } from "@fluidframework/aqueduct";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { IContainer, IRuntimeFactory, LoaderHeader } from "@fluidframework/container-definitions";
 import { ILoaderProps } from "@fluidframework/container-loader";
@@ -22,10 +17,10 @@ import {
 	SummaryCollection,
 } from "@fluidframework/container-runtime";
 import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
-import { SharedCounter } from "@fluidframework/counter";
+import type { SharedCounter } from "@fluidframework/counter";
 import { FluidDataStoreRuntime, mixinSummaryHandler } from "@fluidframework/datastore";
 import { DriverHeader, ISummaryContext } from "@fluidframework/driver-definitions";
-import { SharedMatrix } from "@fluidframework/matrix";
+import type { SharedMatrix } from "@fluidframework/matrix";
 import {
 	ISequencedDocumentMessage,
 	ISummaryTree,
@@ -47,30 +42,6 @@ interface ProvideSearchContent {
 }
 interface SearchContent extends ProvideSearchContent {
 	getSearchContent(): Promise<string | undefined>;
-}
-
-function createDataStoreRuntime(factory: typeof FluidDataStoreRuntime = FluidDataStoreRuntime) {
-	return mixinSummaryHandler(async (runtime: FluidDataStoreRuntime) => {
-		const obj: PureDataObject & FluidObject<SearchContent> =
-			await DataObject.getDataObject(runtime);
-		const searchObj = obj.SearchContent;
-		if (searchObj === undefined) {
-			return undefined;
-		}
-
-		// ODSP parser requires every search blob end with a line-feed character.
-		const searchContent = await searchObj.getSearchContent();
-		if (searchContent === undefined) {
-			return undefined;
-		}
-		const content = searchContent.endsWith("\n") ? searchContent : `${searchContent}\n`;
-		return {
-			// This is the path in snapshot that ODSP expects search blob (in plain text) to be for components
-			// that want to provide search content.
-			path: ["_search", "01"],
-			content,
-		};
-	}, factory);
 }
 
 /**
@@ -169,70 +140,102 @@ async function submitAndAckSummary(
 
 export const TestDataObjectType1 = "@fluid-example/test-dataStore1";
 export const TestDataObjectType2 = "@fluid-example/test-dataStore2";
-class TestDataObject2 extends DataObject {
-	public get _root() {
-		return this.root;
-	}
-	public get _context() {
-		return this.context;
-	}
-}
-class TestDataObject1 extends DataObject implements SearchContent {
-	public async getSearchContent(): Promise<string | undefined> {
-		return Promise.resolve("TestDataObject1 Search Blob");
-	}
-	public get SearchContent() {
-		return this;
-	}
-	public get _root() {
-		return this.root;
-	}
-
-	public get _context() {
-		return this.context;
-	}
-
-	private readonly matrixKey = "SharedMatrix";
-	private readonly counterKey = "Counter";
-	public matrix!: SharedMatrix;
-	public undoRedoStackManager!: UndoRedoStackManager;
-	public counter!: SharedCounter;
-
-	protected async initializingFirstTime() {
-		const sharedMatrix = SharedMatrix.create(this.runtime, this.matrixKey);
-		this.root.set(this.matrixKey, sharedMatrix.handle);
-
-		const dataStore = await this._context.containerRuntime.createDataStore(TestDataObjectType2);
-		const dsFactory2 = (await dataStore.entryPoint.get()) as TestDataObject2;
-		this.root.set("dsFactory2", dsFactory2.handle);
-
-		const counter = SharedCounter.create(this.runtime, this.counterKey);
-		this.root.set(this.counterKey, counter.handle);
-	}
-
-	protected async hasInitialized() {
-		const matrixHandle = this.root.get<IFluidHandle<SharedMatrix>>(this.matrixKey);
-		assert(matrixHandle !== undefined, "SharedMatrix not found");
-		this.matrix = await matrixHandle.get();
-
-		this.undoRedoStackManager = new UndoRedoStackManager();
-		this.matrix.insertRows(0, 3);
-		this.matrix.insertCols(0, 3);
-		this.matrix.openUndo(this.undoRedoStackManager);
-
-		const counterHandle = this.root.get<IFluidHandle<SharedCounter>>(this.counterKey);
-		assert(counterHandle);
-		this.counter = await counterHandle.get();
-	}
-}
 
 /**
  * Validates whether or not a GC Tree Summary Handle should be written to the summary.
  */
 describeCompat(
 	"Prepare for Summary with Search Blobs",
-	"2.0.0-rc.1.0.0",
-	(getTestObjectProvider) => {
+	"NoCompat",
+	(getTestObjectProvider, apis) => {
+		const { SharedMatrix, SharedCounter } = apis.dds;
+		const { DataObject, DataObjectFactory } = apis.dataRuntime;
+		const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
+
+		class TestDataObject2 extends DataObject {
+			public get _root() {
+				return this.root;
+			}
+			public get _context() {
+				return this.context;
+			}
+		}
+		class TestDataObject1 extends DataObject implements SearchContent {
+			public async getSearchContent(): Promise<string | undefined> {
+				return Promise.resolve("TestDataObject1 Search Blob");
+			}
+			public get SearchContent() {
+				return this;
+			}
+			public get _root() {
+				return this.root;
+			}
+
+			public get _context() {
+				return this.context;
+			}
+
+			private readonly matrixKey = "SharedMatrix";
+			private readonly counterKey = "Counter";
+			public matrix!: SharedMatrix;
+			public undoRedoStackManager!: UndoRedoStackManager;
+			public counter!: SharedCounter;
+
+			protected async initializingFirstTime() {
+				const sharedMatrix = SharedMatrix.create(this.runtime, this.matrixKey);
+				this.root.set(this.matrixKey, sharedMatrix.handle);
+
+				const dataStore =
+					await this._context.containerRuntime.createDataStore(TestDataObjectType2);
+				const dsFactory2 = (await dataStore.entryPoint.get()) as TestDataObject2;
+				this.root.set("dsFactory2", dsFactory2.handle);
+
+				const counter = SharedCounter.create(this.runtime, this.counterKey);
+				this.root.set(this.counterKey, counter.handle);
+			}
+
+			protected async hasInitialized() {
+				const matrixHandle = this.root.get<IFluidHandle<SharedMatrix>>(this.matrixKey);
+				assert(matrixHandle !== undefined, "SharedMatrix not found");
+				this.matrix = await matrixHandle.get();
+
+				this.undoRedoStackManager = new UndoRedoStackManager();
+				this.matrix.insertRows(0, 3);
+				this.matrix.insertCols(0, 3);
+				this.matrix.openUndo(this.undoRedoStackManager);
+
+				const counterHandle = this.root.get<IFluidHandle<SharedCounter>>(this.counterKey);
+				assert(counterHandle);
+				this.counter = await counterHandle.get();
+			}
+		}
+
+		function createDataStoreRuntime(
+			factory: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
+		) {
+			return mixinSummaryHandler(async (runtime: FluidDataStoreRuntime) => {
+				const obj: PureDataObject & FluidObject<SearchContent> =
+					await DataObject.getDataObject(runtime);
+				const searchObj = obj.SearchContent;
+				if (searchObj === undefined) {
+					return undefined;
+				}
+
+				// ODSP parser requires every search blob end with a line-feed character.
+				const searchContent = await searchObj.getSearchContent();
+				if (searchContent === undefined) {
+					return undefined;
+				}
+				const content = searchContent.endsWith("\n") ? searchContent : `${searchContent}\n`;
+				return {
+					// This is the path in snapshot that ODSP expects search blob (in plain text) to be for components
+					// that want to provide search content.
+					path: ["_search", "01"],
+					content,
+				};
+			}, factory);
+		}
+
 		let provider: ITestObjectProvider;
 		const dataStoreFactory1 = new DataObjectFactory(
 			TestDataObjectType1,

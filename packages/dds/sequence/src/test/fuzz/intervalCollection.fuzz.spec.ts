@@ -211,6 +211,8 @@ describe("IntervalCollection fuzz testing", () => {
 			43, 45, 46, 47, 49, 52, 60, 62, 64, 66, 68, 69, 70, 71, 73, 74, 78, 80, 83, 85, 86, 91,
 			92, 93,
 		],
+		// Note: there are some known eventual consistency issues which the tests don't currently reproduce.
+		// Search this package for AB#6552 (or look at that work item) for a skipped test and further details.
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
 	});

@@ -4,25 +4,25 @@
  */
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import {
 	AttachState,
-	IContainerContext,
-	ICriticalContainerError,
+	type IContainerContext,
+	type ICriticalContainerError,
 } from "@fluidframework/container-definitions";
 import { MockLogger, sessionStorageConfigProvider } from "@fluidframework/telemetry-utils";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { type IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
-import { ConfigTypes, FluidObject } from "@fluidframework/core-interfaces";
+import { type ConfigTypes, type FluidObject } from "@fluidframework/core-interfaces";
 import {
-	ISequencedDocumentMessage,
-	ISnapshotTree,
+	type ISequencedDocumentMessage,
+	type ISnapshotTree,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
 	createRuntimeAttributor,
 	enableOnNewFileKey,
-	IProvideRuntimeAttributor,
+	type IProvideRuntimeAttributor,
 	mixinAttributor,
 } from "../mixinAttributor";
 import { Attributor } from "../attributor";
@@ -51,7 +51,7 @@ describe("mixinAttributor", () => {
 				}
 			},
 			options: {},
-			updateDirtyContainerState: (_dirty: boolean) => {},
+			updateDirtyContainerState: (_dirty: boolean): void => {},
 			getLoadedFromVersion: () => undefined,
 		};
 	};
@@ -64,7 +64,8 @@ describe("mixinAttributor", () => {
 	let injectedSettings: Record<string, ConfigTypes> = {};
 
 	before(() => {
-		sessionStorageConfigProvider.value.getRawConfig = (name) => injectedSettings[name];
+		sessionStorageConfigProvider.value.getRawConfig = (name): ConfigTypes =>
+			injectedSettings[name];
 	});
 
 	afterEach(() => {
@@ -75,7 +76,7 @@ describe("mixinAttributor", () => {
 		sessionStorageConfigProvider.value.getRawConfig = oldRawConfig;
 	});
 
-	const setEnableOnNew = (val: boolean) => {
+	const setEnableOnNew = (val: boolean): void => {
 		injectedSettings[enableOnNewFileKey] = val;
 	};
 
@@ -218,7 +219,7 @@ describe("mixinAttributor", () => {
 		const testCases: { getContext: () => IContainerContext; testName: string }[] = [
 			{
 				testName: "for existing documents that had no attributor",
-				getContext: () => {
+				getContext: (): IContainerContext => {
 					setEnableOnNew(true);
 					const context = getMockContext() as Mutable<IContainerContext>;
 					const snapshot: ISnapshotTree = {
@@ -231,13 +232,13 @@ describe("mixinAttributor", () => {
 			},
 			{
 				testName: `for new documents with ${enableOnNewFileKey} unset`,
-				getContext: () => {
+				getContext: (): IContainerContext => {
 					return getMockContext() as IContainerContext;
 				},
 			},
 			{
 				testName: `for new documents with ${enableOnNewFileKey} set to false`,
-				getContext: () => {
+				getContext: (): IContainerContext => {
 					setEnableOnNew(false);
 					const context = getMockContext() as Mutable<IContainerContext>;
 					const snapshot: ISnapshotTree = {
