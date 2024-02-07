@@ -11,6 +11,7 @@ import {
 	IConnected,
 	IDocumentMessage,
 	INack,
+	ISentSignalMessage,
 	ISignalMessage,
 	NackErrorType,
 	ScopeType,
@@ -57,6 +58,10 @@ const summarizerClientType = "summarizer";
 
 function getRoomId(room: IRoom) {
 	return `${room.tenantId}/${room.documentId}`;
+}
+
+function getClientRoom(clientId: string) {
+	return `client#${clientId}`;
 }
 
 const getMessageMetadata = (documentId: string, tenantId: string) => ({
@@ -1053,7 +1058,10 @@ export function configureWebSocketServices(
 		// Message sent when a new signal is submitted to the router
 		socket.on(
 			"submitSignal",
-			(clientId: string, contentBatches: (IDocumentMessage | IDocumentMessage[])[]) => {
+			(
+				clientId: string,
+				contentBatches: (IDocumentMessage | IDocumentMessage[])[] | ISentSignalMessage[],
+			) => {
 				// Verify the user has subscription to the room.
 				const room = roomMap.get(clientId);
 				if (!room) {
@@ -1100,12 +1108,25 @@ export function configureWebSocketServices(
 							: [contentBatch];
 
 						for (const content of contents) {
-							const signalMessage: ISignalMessage = {
-								clientId,
-								content,
-							};
+							if ("targetClientId" in content) {
+								const targetClientId = content.targetClientId;
+								const signalMessage: ISignalMessage = {
+									clientId,
+									content: content.content,
+								};
+								socket.emitToRoom(
+									getClientRoom(targetClientId),
+									"signal",
+									signalMessage,
+								);
+							} else {
+								const signalMessage: ISignalMessage = {
+									clientId,
+									content,
+								};
 
-							socket.emitToRoom(getRoomId(room), "signal", signalMessage);
+								socket.emitToRoom(getRoomId(room), "signal", signalMessage);
+							}
 						}
 					});
 				}
