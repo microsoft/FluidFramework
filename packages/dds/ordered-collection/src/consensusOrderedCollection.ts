@@ -127,16 +127,19 @@ export class ConsensusOrderedCollection<T = any>
 	 * Add a value to the consensus collection.
 	 */
 	public async add(value: T): Promise<void> {
+		const valueSer = this.serializeValue(value, this.serializer);
+
 		if (!this.isAttached()) {
 			// For the case where this is not attached yet, explicitly JSON
 			// clone the value to match the behavior of going thru the wire.
-			this.addCore(value);
+			const addValue = this.deserializeValue(valueSer, this.serializer) as T;
+			this.addCore(addValue);
 			return;
 		}
 
 		await this.submit<IConsensusOrderedCollectionAddOperation<T>>({
 			opName: "add",
-			value: { version: "2", value },
+			value: valueSer,
 		});
 	}
 
