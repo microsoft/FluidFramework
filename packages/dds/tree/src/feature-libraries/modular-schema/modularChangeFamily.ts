@@ -41,6 +41,7 @@ import {
 import {
 	brand,
 	deleteFromNestedMap,
+	fail,
 	forEachInNestedMap,
 	getOrAddInMap,
 	IdAllocationState,
@@ -195,7 +196,7 @@ export class ModularChangeFamily
 					child2,
 					undefined,
 					genId,
-					newCrossFieldTable(),
+					newComposeTable(),
 					revisionMetadata,
 				),
 			genId,
@@ -229,9 +230,9 @@ export class ModularChangeFamily
 		const genId: IdAllocator = idAllocatorFromState(idState);
 		const revisionMetadata: RevisionMetadataSource = revisionMetadataSourceFromInfo(revInfos);
 
-		const crossFieldTable = newCrossFieldTable<ComposeData>();
+		const crossFieldTable = newComposeTable();
 
-		let composedFields = this.composeFieldMaps(
+		const composedFields = this.composeFieldMaps(
 			change1.change.fieldChanges,
 			change1.revision,
 			change2.change.fieldChanges,
@@ -242,16 +243,48 @@ export class ModularChangeFamily
 		);
 
 		if (crossFieldTable.invalidatedFields.size > 0) {
+			const fieldsToUpdate = crossFieldTable.invalidatedFields;
 			crossFieldTable.invalidatedFields = new Set();
-			composedFields = this.composeFieldMaps(
-				change1.change.fieldChanges,
-				change1.revision,
-				change2.change.fieldChanges,
-				change2.revision,
-				genId,
-				crossFieldTable,
-				revisionMetadata,
-			);
+			for (const fieldChange of fieldsToUpdate) {
+				const context = crossFieldTable.fieldToContext.get(fieldChange);
+				assert(context !== undefined, "Should have context for every invalidated field");
+				const { change1: fieldChange1, change2: fieldChange2, composedChange } = context;
+
+				const rebaser = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).rebaser;
+				const composeNodes = (
+					node1: NodeChangeset | undefined,
+					node2: NodeChangeset | undefined,
+				): NodeChangeset => {
+					const key = node1 ?? node2 ?? fail("Should not have two undefined nodes");
+					const cachedResult = crossFieldTable.nodeCache.get(key);
+					if (cachedResult !== undefined) {
+						return cachedResult;
+					}
+
+					return this.composeNodeChanges(
+						node1,
+						fieldChange1.revision,
+						node2,
+						fieldChange2.revision,
+						genId,
+						crossFieldTable,
+						revisionMetadata,
+					);
+				};
+
+				const amendedChange = rebaser.compose(
+					fieldChange1,
+					fieldChange2,
+					composeNodes,
+					genId,
+					newCrossFieldManager(crossFieldTable),
+					revisionMetadata,
+				);
+				composedChange.change = brand(amendedChange);
+			}
+
+			// TODO: See if we there's a reasonable way to assert that
+			// running a third pass would produce the same results.
 		}
 
 		const { allBuilds, allDestroys } = composeBuildsAndDestroys([change1, change2]);
@@ -272,7 +305,7 @@ export class ModularChangeFamily
 		change2: FieldChangeMap | undefined,
 		revision2: RevisionTag | undefined,
 		genId: IdAllocator,
-		crossFieldTable: CrossFieldTable<ComposeData>,
+		crossFieldTable: ComposeTable,
 		revisionMetadata: RevisionMetadataSource,
 	): FieldChangeMap {
 		const composedFields: FieldChangeMap = new Map();
@@ -304,6 +337,7 @@ export class ModularChangeFamily
 				normalizedFieldChange2 ?? fieldKind.changeHandler.createEmpty(),
 				fieldChange2?.revision ?? revision2,
 			);
+
 			const composedChange = fieldKind.changeHandler.rebaser.compose(
 				taggedChange1,
 				taggedChange2,
@@ -328,6 +362,11 @@ export class ModularChangeFamily
 			};
 
 			addFieldData(manager, composedField);
+			crossFieldTable.fieldToContext.set(composedField, {
+				change1: taggedChange1,
+				change2: taggedChange2,
+				composedChange: composedField,
+			});
 
 			// TODO: Could optimize by checking that composedField is non-empty
 			composedFields.set(field, composedField);
@@ -342,7 +381,7 @@ export class ModularChangeFamily
 		change2: NodeChangeset | undefined,
 		revision2: RevisionTag | undefined,
 		genId: IdAllocator,
-		crossFieldTable: CrossFieldTable<ComposeData>,
+		crossFieldTable: ComposeTable,
 		revisionMetadata: RevisionMetadataSource,
 	): NodeChangeset {
 		const nodeExistsConstraint = change1?.nodeExistsConstraint ?? change2?.nodeExistsConstraint;
@@ -366,6 +405,8 @@ export class ModularChangeFamily
 			composedNodeChange.nodeExistsConstraint = nodeExistsConstraint;
 		}
 
+		const key = change1 ?? change2 ?? fail("Should not compose two undefined changesets");
+		crossFieldTable.nodeCache.set(key, composedNodeChange);
 		return composedNodeChange;
 	}
 
@@ -425,9 +466,6 @@ export class ModularChangeFamily
 				);
 				invertedField.change = brand(amendedChange);
 			}
-
-			// TODO: See if we there's a reasonable way to assert that
-			// running a third pass would produce the same results.
 		}
 
 		// Rollback changesets destroy the nodes created by the change being rolled back.
@@ -1132,7 +1170,7 @@ interface InvertContext {
 }
 
 interface RebaseTable extends CrossFieldTable<FieldChange> {
-	rebasedFieldToContext: Map<FieldChange, FieldChangeContext>;
+	rebasedFieldToContext: Map<FieldChange, RebaseFieldContext>;
 	/**
 	 * This map caches the output of a prior rebasing computation for a node, keyed on that computation's input.
 	 * The input for such a computation is characterized by a pair of node changesets:
@@ -1151,10 +1189,36 @@ interface RebaseTable extends CrossFieldTable<FieldChange> {
 	rebasedNodeCache: Map<NodeChangeset, NodeChangeset>;
 }
 
-interface FieldChangeContext {
+interface RebaseFieldContext {
 	baseChange: FieldChange;
 	newChange: FieldChange;
 	baseRevision: RevisionTag | undefined;
+}
+
+function newComposeTable(): ComposeTable {
+	return {
+		...newCrossFieldTable<FieldChange>(),
+		fieldToContext: new Map(),
+		nodeCache: new Map(),
+	};
+}
+
+interface ComposeTable extends CrossFieldTable<FieldChange> {
+	/**
+	 * The key is change1 ?? change2.
+	 */
+	fieldToContext: Map<FieldChange, ComposeFieldContext>;
+
+	/**
+	 * Maps from an input changeset for a node (from change1 if it has one) to the cached composition of the changesets for that node.
+	 */
+	nodeCache: Map<NodeChangeset, NodeChangeset>;
+}
+
+interface ComposeFieldContext {
+	change1: TaggedChange<FieldChangeset>;
+	change2: TaggedChange<FieldChangeset>;
+	composedChange: FieldChange;
 }
 
 function newCrossFieldTable<T>(): CrossFieldTable<T> {
@@ -1179,8 +1243,6 @@ function newConstraintState(violationCount: number): ConstraintState {
 		violationCount,
 	};
 }
-
-type ComposeData = FieldChange;
 
 interface CrossFieldManagerI<T> extends CrossFieldManager {
 	table: CrossFieldTable<T>;
