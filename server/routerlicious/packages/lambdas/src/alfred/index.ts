@@ -1108,25 +1108,26 @@ export function configureWebSocketServices(
 							: [contentBatch];
 
 						for (const content of contents) {
+							let signalMessage: ISignalMessage;
+							let roomId: string;
+
 							if (typeof content === "object" && "targetClientId" in content) {
-								const targetClientId = content.targetClientId;
-								const signalMessage: ISignalMessage = {
+								signalMessage = {
 									clientId,
 									content: content.content,
 								};
-								socket.emitToRoom(
-									getClientRoom(targetClientId),
-									"signal",
-									signalMessage,
-								);
+								roomId = content.targetClientId
+									? getClientRoom(content.targetClientId)
+									: getRoomId(room);
 							} else {
-								const signalMessage: ISignalMessage = {
+								signalMessage = {
 									clientId,
 									content,
 								};
-
-								socket.emitToRoom(getRoomId(room), "signal", signalMessage);
+								roomId = getRoomId(room);
 							}
+
+							socket.emitToRoom(roomId, "signal", signalMessage);
 						}
 					});
 				}
