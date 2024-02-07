@@ -1190,8 +1190,9 @@ export class GarbageCollector implements IGarbageCollector {
 
 	/**
 	 * Generates the stats of a garbage collection sweep phase run.
-	 * @param deletedNodes - The nodes that have been deleted until this run.
-	 * @param sweepReadyNodes - The nodes that are sweep-ready in this GC run.
+	 * @param deletedNodes - The nodes that have already been deleted even before this run.
+	 * @param sweepReadyNodes - The nodes that are sweep-ready in this GC run. These will be deleted but are not deleted yet,
+	 * due to either sweep not being enabled or the Sweep Op needing to roundtrip before the delete is executed.
 	 * @param markPhaseStats - The stats of the mark phase run.
 	 * @returns the stats of the sweep phase run.
 	 */
@@ -1237,11 +1238,27 @@ export class GarbageCollector implements IGarbageCollector {
 			}
 		}
 
-		// If sweep is enabled, the counts from the mark phase stats do not include nodes that have been
+		// The counts from the mark phase stats do not include nodes that were
 		// deleted in previous runs. So, add the deleted node counts to life time stats.
 		sweepPhaseStats.lifetimeNodeCount += sweepPhaseStats.deletedNodeCount;
 		sweepPhaseStats.lifetimeDataStoreCount += sweepPhaseStats.deletedDataStoreCount;
 		sweepPhaseStats.lifetimeAttachmentBlobCount += sweepPhaseStats.deletedAttachmentBlobCount;
+
+		// These stats are used to estimate the impact of GC in terms of how much garbage is/will be cleaned up.
+		// So we include the current sweep-ready node stats since these nodes will be deleted eventually.
+		// - If sweep is enabled, this will happen in the run after the GC op round trips back
+		//   (they'll be in deletedNodes that time).
+		// - If sweep is not enabled, we still want to include these nodes since they
+		//   _will be_ deleted once it is enabled.
+		for (const nodeId of sweepReadyNodes) {
+			sweepPhaseStats.deletedNodeCount++;
+			const nodeType = this.runtime.getNodeType(nodeId);
+			if (nodeType === GCNodeType.DataStore) {
+				sweepPhaseStats.deletedDataStoreCount++;
+			} else if (nodeType === GCNodeType.Blob) {
+				sweepPhaseStats.deletedAttachmentBlobCount++;
+			}
+		}
 
 		return sweepPhaseStats;
 	}
