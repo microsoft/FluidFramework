@@ -39,6 +39,7 @@ import {
 	ICollabChannelFactory,
 	CollabSpaceCellType,
 } from "./contracts";
+import { DeferredChannel, DeferredChannelFactory } from "./deferreChannel";
 
 /*
  * This is a prototype, an implementation of sparse matrix that natively supports collaboration.
@@ -141,7 +142,7 @@ type ICellInfo =
 	  }
 	| {
 			value: Exclude<MatrixItem<MatrixInternalType>, undefined>;
-			channel: Promise<ICollabChannelCore> | undefined;
+			channel: ICollabChannel | undefined;
 			channelId: string;
 	  };
 
@@ -153,7 +154,24 @@ interface IChannelTrackingInfo {
 
 	// Number of local non-acked messages. Value is never negative. Positive numbers means channel is "dirty".
 	pendingChangeCount: number;
+
+	// Channel type. Used for debugging purposes only.
+	// Could remove in the the future if it results in consuming too much memory / impacts snapshot sizes badly.
+	type: string;
 }
+
+// If false, this channel was rooted at some point in appropriate cell, i.e. row ID, col ID & iteration
+// pointed to such channel. It might be still rooted. Such channels are "real" channels, i.e. they can apply
+// and send ops.
+// False means it was created as non-rooted, and channel is just DeferredChannel - it can only accumulate ops
+// for future use. If it becomes rooted at any future point in time (through undo/redo), it would need to transition
+// into non-deferred state by being replaced with real channel (by loading base state and applying all
+// accumulated ops)
+/*
+function isChannelDeffered(info: IChannelTrackingInfo) {
+	return info.type === DeferredChannel.Type;
+}
+*/
 
 /*
 	To be implemented:
@@ -181,7 +199,11 @@ export class TempCollabSpaceRuntime
 		existing: boolean,
 		provideEntryPoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
 	) {
-		const factories: IChannelFactory[] = [...sharedObjects, new SharedMatrixFactory()];
+		const factories: IChannelFactory[] = [
+			...sharedObjects,
+			new SharedMatrixFactory(),
+			new DeferredChannelFactory(),
+		];
 		const sharedObjectRegistry = new Map(factories.map((ext) => [ext.type, ext]));
 
 		super(dataStoreContext, sharedObjectRegistry, existing, provideEntryPoint);
@@ -212,15 +234,22 @@ export class TempCollabSpaceRuntime
 			const { row, col, iteration } = this.mapChannelToCell(address);
 			const currValue = this.matrix.getCell(row, col);
 			if (currValue === undefined || String(currValue.iteration) !== iteration) {
-				// This channel is not rooted (not current). We do not have initial state (before ops started
-				// to flow) to create it. Thus the only option - accumulate ops for later usage.
-				// TBD(Pri1): Need to create context.
-				this.criticalError(Error("TBD"));
+				this.createCollabChannel(
+					{
+						value: undefined,
+						type: DeferredChannel.Type,
+					},
+					address,
+				);
 			} else {
+				// TBD(Pri2): It would be useful to put a factory type on every op, such that we can
+				// cross-reference it against currValue.type
 				this.createCollabChannel(currValue, address);
 			}
 		}
 
+		// TBD(Pri2): It would be useful to put a factory type on every op, such that we can
+		// cross-reference it against record.type
 		const record = this.channelInfo[address];
 		assert(record !== undefined, "every channel should have a record");
 
@@ -231,12 +260,12 @@ export class TempCollabSpaceRuntime
 	}
 
 	protected setChannelDirty(address: string): void {
-		// It's not very clear RE what it means in context of this implementation.
+		// TBD(Pri2): Need to review the structure here, and ensure that we do not
+		// support channel calling this API, as we have no mechanism to take that into account.
 		// Currently it is used to force summmary for a channel, but such channels
 		// likely can't be used for temp collab spaces, as we could destroy them prematurely.
 		// We could likely take it into account, but not clear if it's needed yet.
-		assert(false, "logic error");
-		// super.setChannelDirty(dirty);
+		super.setChannelDirty(address);
 	}
 
 	protected async applyStashedChannelChannelOp(address: string, contents: any) {
@@ -281,13 +310,9 @@ export class TempCollabSpaceRuntime
 	}
 
 	protected sendAttachChannelOp(channel: IChannel): void {
-		// TBD(Pri0): sending op is optional (and whole system has to work correctly without such ops)
+		// TBD(Pri3): review later
+		// Sending op is optional (and whole system has to work correctly without such ops)
 		// That said, sending it is useful for validation purposes (to validate we start with same state)
-		// Currently this does not work:
-		// We are hitting 0x1b6 assert in SummarizerNodeWithGC.createChild() due to us creating a new node for the
-		// existing path (such node existed in the past). SummarizerNodeWithGC.deleteChild() should be properly
-		// called when we get rid of context - this will also make sure that overall GC / summarization machinery
-		// has proper knowledge of the state.
 		if (channel.id === matrixId) {
 			super.sendAttachChannelOp(channel);
 		}
@@ -339,7 +364,9 @@ export class TempCollabSpaceRuntime
 	) {
 		if (!this.contexts.has(id)) {
 			super.attachRemoteChannel(id, sequenceNumber, attachMessage);
-			this.channelCreated(id);
+			if (id !== matrixId) {
+				this.channelCreated(id, attachMessage.type);
+			}
 		} else {
 			// TBD(Pri2) - we should verify that initial state conveyed in this op is exactly
 			// the same as the one this client started with.
@@ -383,7 +410,7 @@ export class TempCollabSpaceRuntime
 		return this.matrixInternal;
 	}
 
-	private getCellInfo(rowArg: number, colArg: number): ICellInfo {
+	private async getCellInfo(rowArg: number, colArg: number): Promise<ICellInfo> {
 		const row = rowArg + 1;
 		const col = colArg + 1;
 		const cellValue = this.matrix.getCell(row, col);
@@ -393,13 +420,28 @@ export class TempCollabSpaceRuntime
 		const rowId = this.matrix.getCell(row, 0) as unknown as string;
 		const colId = this.matrix.getCell(0, col) as unknown as string;
 		const channelId = `${rowId},${colId},${cellValue.iteration}`;
-		const channel = this.contexts.get(channelId)?.getChannel();
+		const channel = await this.contexts.get(channelId)?.getChannel();
+
+		if (channel !== undefined) {
+			assert(this.channelInfo[channelId]?.type === cellValue.type, "Types do not match");
+		} else {
+			assert(this.channelInfo[channelId] === undefined, "channel exists without channelInfo");
+		}
 
 		return {
 			value: cellValue,
-			channel: channel as Promise<ICollabChannelCore> | undefined,
+			channel: channel as ICollabChannel | undefined,
 			channelId,
 		};
+	}
+
+	// For test purposes only!
+	public async getCellDebugInfo(
+		row: number,
+		col: number,
+	): Promise<{ channel?: ICollabChannelCore }> {
+		const result = await this.getCellInfo(row, col);
+		return { channel: result.channel };
 	}
 
 	private getFactoryForValueType(type: string, onlyCollaborativeTypes: boolean) {
@@ -411,8 +453,9 @@ export class TempCollabSpaceRuntime
 		return factory as ICollabChannelFactory;
 	}
 
-	private channelCreated(channelId: string) {
+	private channelCreated(channelId: string, type: string) {
 		assert(this.channelInfo[channelId] === undefined, "channel is in inconsistent state");
+		// New IChannelTrackingInfo is created
 		this.channelInfo[channelId] = {
 			// -1 here is important for couple reasons:
 			// If this object is detached, we have no sequence to operate with, and any future sequences
@@ -420,9 +463,15 @@ export class TempCollabSpaceRuntime
 			// If it's attached, then any sequence below current sequence number is good and has same treatment.
 			seq: -1,
 			pendingChangeCount: 0,
+			type,
 		};
 	}
-	private createCollabChannel(value: MatrixInternalType, channelId: string) {
+
+	// TBD(Pri2): We need to deal with GC data. This channel might have references to other resources (like images,
+	// or even other data stores.
+	// Logic should follow something similar to what happens in DataStoreRuntime.process() - see call to
+	// processAttachMessageGCData().
+	private createCollabChannel(value: MatrixExternalType, channelId: string) {
 		const factory = this.getFactoryForValueType(value.type, true /* onlyCollaborativeTypes */);
 		assert(factory !== undefined, "Factory is missing for matrix type");
 
@@ -440,13 +489,13 @@ export class TempCollabSpaceRuntime
 		// this.bind(newChannel.handle)
 		// this.bindChannel(newChannel);
 
-		this.channelCreated(channelId);
+		this.channelCreated(channelId, value.type);
 
 		return newChannel;
 	}
 
 	public async getCellChannel(row: number, col: number): Promise<ICollabChannelCore> {
-		const { value, channel, channelId } = this.getCellInfo(row, col);
+		const { value, channel, channelId } = await this.getCellInfo(row, col);
 		if (value === undefined) {
 			throw new UsageError("Can't create channel for undefined cell");
 		}
@@ -515,7 +564,7 @@ export class TempCollabSpaceRuntime
 
 		const { row, col, iteration } = this.mapChannelToCell(channelId);
 
-		const savedValue = this.matrix.getCell(row, col);
+		let savedValue = this.matrix.getCell(row, col);
 
 		// TBD(Pri2) - can this be optimized and assume only single client can undo such operation?
 		//
@@ -530,6 +579,7 @@ export class TempCollabSpaceRuntime
 		}
 
 		assert(savedValue.seq <= refSeq, "invalid seq number");
+		assert(this.channelInfo[channelId]?.type === savedValue.type, "Types differ!");
 
 		// Note on op grouping and equal sequence numbers: There will be cases (due to reentrancy when
 		// processing op batches) where ligic below could be optimized to require less saves, because
@@ -541,21 +591,30 @@ export class TempCollabSpaceRuntime
 		const destroyd = allowDestroy && (attached ? savedValue.seq > channelnfo.seq : saved);
 
 		if (saved) {
-			this.matrix.setCell(row, col, {
+			savedValue = {
 				...savedValue, // value, iteration, type
 				value: channel.value as string,
 				seq: refSeq,
-			});
+			};
+			this.matrix.setCell(row, col, savedValue);
 		}
 
 		if (destroyd) {
 			// Validate that actually values match!
 			assert(channel.value === savedValue.value, "values are not matching!!!!");
 
+			// Force summarizer sub-system to summarize this object and get rid of deleted channel
+			this.setChannelDirty(channelId);
+
 			// Is this safe? Anything else we need to do?
 			this.contexts.delete(channelId);
 			this.notBoundedChannelContextSet.delete(channelId);
 			this.channelInfo[channelId] = undefined;
+
+			// TBD(Pri2): We need to update GC data and ensure that it's accurate.
+			// To some extend it's a noop event from GC perspective, and resulting data in the cell
+			// represents same data, but need to double check that it's actually correct and tests
+			// have proper coverage.
 		}
 
 		return { saved, destroyd };
@@ -599,29 +658,16 @@ export class TempCollabSpaceRuntime
 	public getCell(row: number, col: number): CollabSpaceCellType {
 		// Implementation below can't deal with async nature of getting to channels.
 		this.criticalError(new Error("use getCellAsync()"));
-
-		/*
-		const {value, channel} = this.getCellInfo(row, col);
-		if (value === undefined) {
-			return {value: undefined, type: "undefined" };
-		}
-		if (channel !== undefined) {
-			 throw new Error("use getCellAsync()");
-		}
-		const val = channel === value.value;
-		return { value: val, type: value.type };
-		*/
 	}
 
 	public async getCellAsync(row: number, col: number): Promise<CollabSpaceCellType> {
-		const { value, channel } = this.getCellInfo(row, col);
+		const { value, channel } = await this.getCellInfo(row, col);
 		if (value === undefined) {
 			return { value: undefined, type: "undefined" };
 		}
 		let val = value.value;
 		if (channel !== undefined) {
-			const ch = await channel;
-			val = ch.value as string;
+			val = channel.value as string;
 		}
 		return { value: val, type: value.type };
 	}
@@ -634,6 +680,9 @@ export class TempCollabSpaceRuntime
 
 	// #region IMatrixWriter
 
+	// TBD(Pri2): Need to ensure that GC data gets updated properly.
+	// We could add or remove references to various resources (like image references, or maybe even other
+	// data stores), and thus it's important to ensure that GC data is updated on this workflow.
 	public setCell(rowArg: number, colArg: number, value: CollabSpaceCellType) {
 		const row = rowArg + 1;
 		const col = colArg + 1;
@@ -650,7 +699,8 @@ export class TempCollabSpaceRuntime
 
 			const currentValue = this.matrix.getCell(row, col);
 			const iteration = currentValue ? currentValue.iteration + 1 : 1;
-			const seq = this.deltaManager.lastSequenceNumber;
+			const attached = this.visibilityState === VisibilityState.GloballyVisible;
+			const seq = attached ? this.deltaManager.lastSequenceNumber : -1;
 			const valueInternal = { ...value, iteration, seq };
 			this.matrix.setCell(row, col, valueInternal);
 		}

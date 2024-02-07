@@ -3,17 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert, delay } from "@fluidframework/core-utils";
 import {
 	ITestObjectProvider,
 	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
 	TestObjectProvider,
+	summarizeNow,
+	createSummarizerCore,
 } from "@fluidframework/test-utils";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
+import {
+	IContainerRuntimeOptions,
+	ISummarizer,
+	SummaryCollection,
+} from "@fluidframework/container-runtime";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import { Loader as ContainerLoader } from "@fluidframework/container-loader";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 
 import {
 	ICollabChannelCore,
@@ -25,54 +33,58 @@ import { createCollabSpace } from "../factory";
 
 import { CounterFactory, ISharedCounter } from "./counterFactory";
 
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 function sampleFactory() {
 	return createCollabSpace([new CounterFactory()]);
 }
 
 /*
- * // TBD(Pri0):
+ * // TBD(Pri2):
  * Things to test:
- * 1. Attached & Detached modes (for container, data store runtime)
- * 2. Connected & disconnected states
- * 3. Collaboration across multiple clients.
- * 4. Save transitions between the states, including
- *    - One user removing collab channel, while otehrs do not, and continue eventually making changes
- *    - Loading from summary that has collab channel removed (from summary), but some clients keep it in memory.
- *    - Fuzz tests
+ * 1. Detached data store mode
+ * 2. Fuzz tests
  */
 
 describe("Temporal Collab Spaces", () => {
 	let provider: ITestObjectProvider;
 	let containers: IContainer[] = [];
-	let collabSpaces: IEfficientMatrix[] = [];
+	let collabSpaces: (IEfficientMatrix & IEfficientMatrixTest)[] = [];
+	let summaryCollection: SummaryCollection | undefined;
+	let summarizer: ISummarizer | undefined;
+	let loader: IHostLoader | undefined;
 
 	// Size of the matrix
 	const cols = 7;
 	const rows = 20;
 
+	const runtimeOptions: IContainerRuntimeOptions = {
+		enableGroupedBatching: true,
+		chunkSizeInBytes: 950000,
+		maxBatchSizeInBytes: 990000,
+	};
 	const defaultFactory = sampleFactory();
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory,
 		registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
-		runtimeOptions: {},
+		runtimeOptions,
 	});
 
 	const createContainer = async () => {
 		const container = await provider.createContainer(runtimeFactory);
 		containers.push(container);
-		const cp = (await container.getEntryPoint()) as IEfficientMatrix & IEfficientMatrixTest;
-		collabSpaces.push(cp);
-		return cp;
+		const collabSpace = (await container.getEntryPoint()) as IEfficientMatrix &
+			IEfficientMatrixTest;
+		collabSpaces.push(collabSpace);
+		return { container, collabSpace };
 	};
 
 	async function addContainerInstance(/* summaryVersion: string */) {
-		// TBD(Pri1): ensure we produce summary before loading here.
-
 		const container = await provider.loadContainer(runtimeFactory, undefined, {
 			// [LoaderHeader.version]: summaryVersion,
 		});
 		containers.push(container);
-		const cp = (await container.getEntryPoint()) as IEfficientMatrix;
+		const cp = (await container.getEntryPoint()) as IEfficientMatrix & IEfficientMatrixTest;
 		collabSpaces.push(cp);
 
 		await provider.ensureSynchronized();
@@ -96,6 +108,8 @@ describe("Temporal Collab Spaces", () => {
 		);
 		// syncSummarizer: true
 		provider.resetLoaderContainerTracker(true /* syncSummarizerClients */);
+
+		loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
 	});
 
 	afterEach(() => {
@@ -105,18 +119,39 @@ describe("Temporal Collab Spaces", () => {
 		}
 		containers = [];
 		collabSpaces = [];
+		summaryCollection = undefined;
+		summarizer = undefined;
+		loader = undefined;
 	});
+
+	async function waitForSummary() {
+		assert(summaryCollection !== undefined, "summary setup properly");
+		return summaryCollection.waitSummaryAck(containers[0].deltaManager.lastSequenceNumber);
+	}
 
 	/**
 	 * Populates collab space with initial values
 	 */
 	async function populateInitialMatrix(
-		collabSpace: IEfficientMatrix,
+		collabSpace: IEfficientMatrix & IEfficientMatrixTest,
 		value: CollabSpaceCellType,
 	) {
+		// Container is in "read" connection mode. If
+		// This will cause it to go through resubmit flow and it's super expensive.
+		// So let's make sure these ops (related to matrix size setting) go through first
+		// (and force container into "write" mode), such that we do not pay the cost of resubmitting
+		// a ton of setCell() calls later!
+		collabSpace.insertRows(0, 1);
+		if (collabSpace.isAttached) {
+			await provider.ensureSynchronized();
+		}
+
 		// +700Mb, but only +200Mb if accounting GC after that.
 		collabSpace.insertCols(0, cols);
-		collabSpace.insertRows(0, rows);
+		collabSpace.insertRows(0, rows - 1);
+
+		// Roughly how many cells were changed due to row/col ID tracking
+		let cells = cols + rows;
 
 		if (global?.gc !== undefined) {
 			global.gc();
@@ -127,8 +162,17 @@ describe("Temporal Collab Spaces", () => {
 		// Though if GC did not run in a step above, this number is much higher (+1GB),
 		// suggesting that actual memory growth is 1GB, but 500Mb offset could be coming
 		// from the fact that GC did not had a chance to run and cleanup after previous step.
-		for (let r = 0; r < rows; r++) {
-			for (let c = 0; c < cols; c++) {
+		for (let c = 0; c < cols; c++) {
+			// Batches are becoming too large. When testing 40 x 100K.
+			// Thus flush ops sooner in smaller chunks. It mostly ensures we do not run out of memory.
+			// 10K cell updates correspons roughtly to 2.5Mb of content before compression
+			cells += rows;
+			if (cells >= 10000) {
+				await delay(0);
+				cells = 0;
+			}
+
+			for (let r = 0; r < rows; r++) {
 				collabSpace.setCell(r, c, value);
 			}
 		}
@@ -143,7 +187,12 @@ describe("Temporal Collab Spaces", () => {
 	 * @returns collab space
 	 */
 	async function initialize() {
-		const collabSpace = await createContainer();
+		const { container, collabSpace } = await createContainer();
+
+		// Create and setup a summary collection that will be used to track and wait for summaries.
+		summaryCollection = new SummaryCollection(container.deltaManager, createChildLogger());
+
+		summarizer = (await createSummarizerCore(container, loader!)).summarizer;
 
 		// Ensure that data store is properly attached. It should be, as default
 		// data store is aliased (and thus attached) in test container
@@ -152,6 +201,7 @@ describe("Temporal Collab Spaces", () => {
 		// Have a secont container that follows passivley the first one
 		await addContainerInstance();
 
+		const start = performance.now();
 		// Populate initial state of the matrix - insert a ton of rows & columns and populate
 		// all cells with same data.
 		await populateInitialMatrix(collabSpace, {
@@ -159,16 +209,12 @@ describe("Temporal Collab Spaces", () => {
 			type: CounterFactory.Type,
 		});
 
-		// TBD(Pri0): this synchronization takes very long time (for medium sized tables, like 100x40)!
-		// There are obviously a lot of ops, but it should still take relatively short amount of time.
-		// This might be an test code issue, but also (much worse) - a production code inefficiency.
-		// Two things to check:
-		// 1. Looks like our local test pipeline is slow, probably something easy to improve
-		// 2. Enable op grouping, possibly compression by default to reduce amount of data that goes through
-		//    local server
 		await provider.ensureSynchronized();
-		ensureSameSize();
 
+		const time = performance.now() - start;
+		console.log("Time to populate", time);
+
+		ensureSameSize();
 		return collabSpace;
 	}
 
@@ -184,10 +230,10 @@ describe("Temporal Collab Spaces", () => {
 		row: number,
 		col: number,
 		value: unknown,
-		channel?: ICollabChannelCore,
+		channels: ICollabChannelCore[] = [],
 	) {
 		// const cp1 = collabSpaces[0];
-		if (channel) {
+		for (const channel of channels) {
 			assert(channel.value === value, "Cahnnel value is not the same!");
 		}
 		for (const cp of collabSpaces) {
@@ -209,6 +255,59 @@ describe("Temporal Collab Spaces", () => {
 		console.log(time);
 	}
 
+	it("Detached container test", async () => {
+		// Cell we will be interrogating
+		const row = 5;
+		const col = 3;
+
+		const container = await loader!.createDetachedContainer(provider.defaultCodeDetails);
+		containers.push(container);
+		const collabSpace = (await container.getEntryPoint()) as IEfficientMatrix &
+			IEfficientMatrixTest;
+		collabSpaces.push(collabSpace);
+
+		assert(!collabSpace.isAttached, "data store is not attached");
+
+		await populateInitialMatrix(collabSpace, {
+			value: 5,
+			type: CounterFactory.Type,
+		});
+
+		// Create a collab channel to start collaboration.
+		const channel = (await collabSpace.getCellChannel(row, col)) as ISharedCounter;
+		let channel2 = (await collabSpace.getCellChannel(row, col)) as ISharedCounter;
+		assert(channel === channel2, "getCellChannel() returns same channel");
+		assert(!channel.isAttached(), "channel is not properly attached");
+
+		// Collaborate a bit :)
+		let initialValue = (await collabSpace.getCellAsync(row, col))?.value as number;
+		channel.increment(100);
+		initialValue += 100;
+
+		// Save changes and destroy channel
+		const destroyed = collabSpace.destroyCellChannel(channel);
+		assert(destroyed, "in detached stayed it should be destroyed immidiatly");
+		let value2 = await collabSpace.getCellAsync(row, col);
+		assert(value2?.value === initialValue, "value was preserved correctly");
+
+		// Get channel back.
+		channel2 = (await collabSpace.getCellChannel(row, col)) as ISharedCounter;
+		assert(channel2.value === initialValue, "value was preserved correctly");
+		channel2.increment(10);
+		initialValue += 10;
+
+		const request = provider.driver.createCreateNewRequest(provider.documentId);
+		await container.attach(request);
+
+		// Have a secont container that follows passivley the first one
+		await addContainerInstance();
+		await provider.ensureSynchronized();
+
+		ensureSameSize();
+		value2 = await collabSpaces[1].getCellAsync(row, col);
+		assert(value2?.value === initialValue, "value was preserved correctly");
+	});
+
 	it("Basic test", async () => {
 		// Cell we will be interrogating
 		const row = 5;
@@ -219,7 +318,7 @@ describe("Temporal Collab Spaces", () => {
 		let initialValue = (await collabSpace.getCellAsync(row, col))?.value as number;
 
 		// Create a collab channel to start collaboration.
-		const channel = (await collabSpace.getCellChannel(row, col)) as ISharedCounter;
+		let channel = (await collabSpace.getCellChannel(row, col)) as ISharedCounter;
 		let channel2 = (await collabSpace.getCellChannel(row, col)) as ISharedCounter;
 		assert(channel === channel2, "getCellChannel() returns same channel");
 
@@ -227,14 +326,14 @@ describe("Temporal Collab Spaces", () => {
 		// data will not be replicated properly.
 		assert(channel.isAttached(), "channel is not properly attached");
 
-		await ensureSameValues(row, col, initialValue, channel);
+		await ensureSameValues(row, col, initialValue, [channel]);
 
 		// Collaborate a bit :)
 		channel.increment(100);
 		initialValue += 100;
 
 		await provider.ensureSynchronized();
-		await ensureSameValues(row, col, initialValue, channel);
+		await ensureSameValues(row, col, initialValue, [channel]);
 
 		// Before channel has a chance to be saved or destroyed, let's load 3rd container from that state
 		// and validate it can follow
@@ -256,22 +355,40 @@ describe("Temporal Collab Spaces", () => {
 		collabSpace.saveChannelState(channel);
 
 		await provider.ensureSynchronized();
-		await ensureSameValues(row, col, initialValue, channel);
+		await ensureSameValues(row, col, initialValue, [channel]);
 
 		destroyed = collabSpace.destroyCellChannel(channel);
 		assert(destroyed, "Channel should be destroyed by now!");
 
+		// TBD(Pri0): Need to flip runSummaryValidation to true.
+		// This fails due to deleted channel. Need to figure out proper solution
+		const runSummaryValidation = false;
+
+		// Force summary to test that channel is gone.
+		if (runSummaryValidation) {
+			await summarizeNow(summarizer!);
+			await waitForSummary();
+		}
+
 		// Add one more container and observe they are all equal
-		// TBD(Pri1): It would be nice somehow to validate that such channel was dropped from summary!
 		await addContainerInstance();
-		await ensureSameValues(row, col, initialValue, channel2);
+		await ensureSameValues(row, col, initialValue, [channel2]);
+
+		// Validate that channel is not present in summary!
+		if (runSummaryValidation) {
+			const channel3 = await collabSpaces[2].getCellDebugInfo(row, col);
+			assert(channel3 === undefined, "channel was not removed from summary");
+		}
+
+		// recreate deleted channel
+		channel = (await collabSpace.getCellChannel(row, col)) as ISharedCounter;
 
 		// After one container destroyed the channel (and 3rd container loaded without channel),
 		// let's test that op showing up on that channel will be processed correctly by all containers.
 		channel2.increment(10);
 		initialValue += 10;
 		await provider.ensureSynchronized();
-		await ensureSameValues(row, col, initialValue, channel2);
+		await ensureSameValues(row, col, initialValue, [channel, channel2]);
 
 		// Useful mostly if you debug and want measure column reading speed - read one column
 		await measureReadSpeed(col, collabSpace);
@@ -298,11 +415,11 @@ describe("Temporal Collab Spaces", () => {
 
 		// syncrhonize - all containers should see exactly same changes
 		await provider.ensureSynchronized();
-		assert(channel2a.value === channel2b.value, "syncrhonized");
-		await ensureSameValues(row, col, initialValue + 30, channel2a);
+		await ensureSameValues(row, col, initialValue + 30, [channel2a, channel2b]);
 	});
 
-	it("Channel overwrite", async () => {
+	// Baseline for a number of tests (with different arguments)
+	async function ChannelOverwrite(synchronize: boolean) {
 		// Cell we will be interrogating
 		const row = 7;
 		const col = 3;
@@ -316,11 +433,13 @@ describe("Temporal Collab Spaces", () => {
 		let overwriteValue = initialValue + 100;
 		channel2a.increment(10);
 
-		// TBD(Pri1): Test fails if this synchronizaiton is removed, due to Pri1 comment in
-		// TempCollabSpaceRuntime.updatePendingCoutner()
-		// The issue should be fixed, and test should be duplicated - one version to run with this
-		// extra synchronizaiton, and one without.
-		await provider.ensureSynchronized();
+		// We test vastly different scenario depending on if we wait or not.
+		// If we do not wait, then we test concurrent changes in channel and overwrite
+		// (and thus test what happens if ops arrive to not known to a client unrooted channel).
+		// If we wait, then there is not concurrency at all.
+		if (synchronize) {
+			await provider.ensureSynchronized();
+		}
 
 		// Overwrite it!
 		const collabSpace2 = collabSpaces[1];
@@ -338,15 +457,33 @@ describe("Temporal Collab Spaces", () => {
 		// Retrieve channel for same cell
 		const channel2b = (await collabSpace.getCellChannel(row, col)) as ISharedCounter;
 		const channel2c = (await collabSpace2.getCellChannel(row, col)) as ISharedCounter;
-		assert(channel2b.value === overwriteValue, "overwritten value");
-		assert(channel2c.value === overwriteValue, "overwritten value");
+		await ensureSameValues(row, col, overwriteValue, [channel2b, channel2c]);
 
 		channel2c.increment(10);
 		overwriteValue += 10;
 		await provider.ensureSynchronized();
 		await ensureSameValues(row, col, overwriteValue);
-		assert(channel2b.value === overwriteValue, "overwritten value");
-		assert(channel2c.value === overwriteValue, "overwritten value");
+		await ensureSameValues(row, col, overwriteValue, [channel2b, channel2c]);
 		assert(channel2a.value === initialValue + 10, "No impact on unrooted channel");
+
+		// TBD(Pri1): Need to implement undo - restore original channel, validate that none
+		// of the changes that were made before were lost, and that further collaboration could
+		// be done on this channel.
+		// Plus redo, and come back to second channel.
+		// This will require fixing production code - converting deferred channels to rooted channels
+
+		// TBD(Pri1): Need to ensure that summarization for deferred channels and loading from such summaries works
+		// Once we add logic to root deferred channels, we will need to add summary and loading of new container to test
+		// such conversion works correctly.
+	}
+
+	it("Channel overwrite with syncronization", async () => {
+		await ChannelOverwrite(true);
+	});
+
+	it("Channel overwrite without syncronization", async () => {
+		await ChannelOverwrite(false);
 	});
 });
+
+/* eslint-enable @typescript-eslint/no-non-null-assertion */

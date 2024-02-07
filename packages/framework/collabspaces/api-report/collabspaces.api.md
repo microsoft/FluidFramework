@@ -52,6 +52,10 @@ export interface IEfficientMatrix extends Omit<ISharedMatrix<MatrixExternalType>
 // @internal
 export interface IEfficientMatrixTest {
     // (undocumented)
+    getCellDebugInfo(row: number, col: number): Promise<{
+        channel?: ICollabChannelCore;
+    }>;
+    // (undocumented)
     isAttached: boolean;
 }
 
