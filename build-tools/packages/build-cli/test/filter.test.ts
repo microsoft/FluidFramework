@@ -166,15 +166,7 @@ describe("selectAndFilterPackages", async () => {
 			skipScope: undefined,
 		};
 
-<<<<<<< HEAD
-		const { selected, filtered } = await selectAndFilterPackages(
-			context,
-			selectionOptions,
-			filters,
-		);
-=======
 		const { selected } = selectAndFilterPackages(context, selectionOptions, filters);
->>>>>>> main
 		const names = selected.map((p) => p.name);
 		expect(names).to.be.containingAllOf([
 			"@fluidframework/build-common",
@@ -211,9 +203,8 @@ describe("selectAndFilterPackages", async () => {
 			selectionOptions,
 			filters,
 		);
-=======
+
 		const { selected } = selectAndFilterPackages(context, selectionOptions, filters);
->>>>>>> main
 		const names = selected.map((p) => p.name);
 
 		expect(names).to.be.equalTo([
