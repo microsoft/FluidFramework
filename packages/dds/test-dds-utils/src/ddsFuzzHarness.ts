@@ -1083,8 +1083,7 @@ async function loadDetached<TChannelFactory extends IChannelFactory>(
 	containerRuntimeFactory.synchronizeIdCompressors();
 
 	const { summary } = await summarizerClient.channel.summarize();
-	const idCompressorSummary =  summarizerClient.dataStoreRuntime.idCompressor?.serialize(false);
-
+	const idCompressorSummary = summarizerClient.dataStoreRuntime.idCompressor?.serialize(false);
 
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({
 		clientId,
