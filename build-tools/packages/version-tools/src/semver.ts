@@ -115,14 +115,16 @@ export function detectBumpType(
 		v2PrereleaseId = prereleaseId;
 	}
 
-	if(v1PrereleaseId === "internal" && v2PrereleaseId === "rc") {
+	if (v1PrereleaseId === "internal" && v2PrereleaseId === "rc") {
 		// This is a special case for RC and internal builds. RC builds are always a
 		// major bump compared to an internal build.
-		return "major"; 
+		return "major";
 	}
 
-	if(v1PrereleaseId !== v2PrereleaseId) {
-		throw new Error(`v1 prerelease ID: ${v1PrereleaseId} cannot be compared to v2 prerelease ID: ${v2PrereleaseId}`)
+	if (v1PrereleaseId !== v2PrereleaseId) {
+		throw new Error(
+			`v1 prerelease ID: ${v1PrereleaseId} cannot be compared to v2 prerelease ID: ${v2PrereleaseId}`,
+		);
 	}
 
 	if (semver.compareBuild(v1Parsed, v2Parsed) >= 0) {
