@@ -998,11 +998,11 @@ export function addMissingBuilds(
 
 	for (const root of roots) {
 		const innerMap = getOrAddInMap(builds, root.major, new Map<ChangesetLocalId, TreeChunk>());
-		const node = getDetachedNode(root);
 		const changesetLocalId: ChangesetLocalId = brand(root.minor);
-		assert(!innerMap.has(changesetLocalId), "changeset id already has node");
 
-		if (node !== undefined) {
+		if (!innerMap.has(changesetLocalId)) {
+			const node = getDetachedNode(root);
+			assert(node !== undefined, "detached node should exit");
 			innerMap.set(changesetLocalId, node);
 		}
 	}
