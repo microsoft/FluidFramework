@@ -546,16 +546,6 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 			// will be removed in the subsequent summary.
 			await ensureSynchronizedAndSummarize(summarizer);
 
-			//* Maybe remove this since we can check at the end below
-			// const garbageCollector = (
-			// 	summarizingContainer as unknown as { garbageCollector: { tombstones: string[] } }
-			// ).garbageCollector;
-			// assert.deepEqual(
-			// 	garbageCollector.tombstones,
-			// 	[sweepReadyDataStoreNodePath],
-			// 	"Expected sweepReady node to be merely Tombstoned",
-			// );
-
 			// The datastore should NOT be swept here. If sweep was enabled, it would be deleted in this summary.
 			// We need to do fullTree because the GC data won't change (since it's not swept).
 			// But the validation depends on the GC subtree being present (not a handle).
