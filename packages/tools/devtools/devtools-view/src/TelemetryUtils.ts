@@ -10,7 +10,7 @@ import {
 	type ITelemetryBaseEvent,
 	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { getOrCreateBrowserId } from "./TelemetryContext";
+import { getOrCreateContinuityID } from "./TelemetryContext";
 
 /**
  * Context that provides a logger for Devtools to generate usage telemetry internally.
@@ -48,7 +48,7 @@ export class ConsoleVerboseLogger implements ITelemetryBaseLogger {
 	private readonly continuityID?: string;
 	public constructor(private readonly baseLogger?: ITelemetryBaseLogger) {
 		this.sessionID = uuidv4();
-		this.continuityID = getOrCreateBrowserId();
+		this.continuityID = getOrCreateContinuityID();
 	}
 
 	public send(event: ITelemetryBaseEvent): void {
@@ -103,7 +103,7 @@ export class TelemetryOptInLogger implements ITelemetryBaseLogger {
 	private readonly continuityID?: string;
 	public constructor(private readonly baseLogger?: ITelemetryBaseLogger) {
 		this.sessionID = uuidv4();
-		this.continuityID = getOrCreateBrowserId();
+		this.continuityID = getOrCreateContinuityID();
 	}
 
 	public send(event: ITelemetryBaseEvent): void {

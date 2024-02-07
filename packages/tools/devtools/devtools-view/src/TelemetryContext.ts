@@ -5,19 +5,19 @@
 
 import { v4 as uuidv4 } from "uuid";
 
-const BROWSER_ID_KEY = "myAppBrowserId";
+const CONTINUITY_ID_KEY = "myAppBrowserId";
 
 /**
  * Method generating/grabbing browserID
  * @returns string for browserID
  */
-export const getOrCreateBrowserId = (): string => {
-	let browserId = localStorage.getItem(BROWSER_ID_KEY);
+export const getOrCreateContinuityID = (): string => {
+	let continuityID = localStorage.getItem(CONTINUITY_ID_KEY);
 
-	if (browserId === null || browserId === "") {
-		browserId = uuidv4();
-		localStorage.setItem(BROWSER_ID_KEY, browserId);
+	if (continuityID === null || continuityID === "") {
+		continuityID = uuidv4();
+		localStorage.setItem(CONTINUITY_ID_KEY, continuityID);
 	}
 
-	return browserId;
+	return continuityID;
 };
