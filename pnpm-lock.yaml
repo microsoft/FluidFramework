@@ -3477,8 +3477,6 @@ importers:
       '@fluidframework/tree': workspace:~
       '@mixer/webpack-bundle-compare': ^0.1.0
       '@types/node': ^18.19.0
-      '@types/puppeteer': 7.0.4
-      cross-env: ^7.0.3
       eslint: ~8.50.0
       prettier: ~3.0.3
       puppeteer: ^22.0.0
@@ -3510,8 +3508,6 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@mixer/webpack-bundle-compare': 0.1.1
       '@types/node': 18.19.1
-      '@types/puppeteer': 7.0.4_typescript@5.1.6
-      cross-env: 7.0.3
       eslint: 8.50.0
       prettier: 3.0.3
       puppeteer: 22.0.0_typescript@5.1.6
@@ -22787,19 +22783,6 @@ packages:
     resolution: {integrity: sha512-JdGWZZYL0vKapXF4oQTC5hLVNfOgdPrqeZ1BiQnGk5cB7HeE91EWUiTdVSdQPobRN8rIcdffjiOgCYJ/S8QrnQ==}
     dependencies:
       '@types/node': 18.19.1
-    dev: true
-
-  /@types/puppeteer/7.0.4_typescript@5.1.6:
-    resolution: {integrity: sha512-ja78vquZc8y+GM2al07GZqWDKQskQXygCDiu0e3uO0DMRKqE0MjrFBFmTulfPYzLB6WnL7Kl2tFPy0WXSpPomg==}
-    deprecated: This is a stub types definition. puppeteer provides its own type definitions, so you do not need this installed.
-    dependencies:
-      puppeteer: 22.0.0_typescript@5.1.6
-    transitivePeerDependencies:
-      - bufferutil
-      - encoding
-      - supports-color
-      - typescript
-      - utf-8-validate
     dev: true
 
   /@types/q/1.5.8:
