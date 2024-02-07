@@ -255,7 +255,7 @@ export class ModularChangeFamily
 					node1: NodeChangeset | undefined,
 					node2: NodeChangeset | undefined,
 				): NodeChangeset => {
-					const key = node1 ?? node2 ?? fail("Should not have two undefined nodes");
+					const key = node2 ?? node1 ?? fail("Should not have two undefined nodes");
 					const cachedResult = crossFieldTable.nodeCache.get(key);
 					if (cachedResult !== undefined) {
 						return cachedResult;
@@ -277,14 +277,12 @@ export class ModularChangeFamily
 					fieldChange2,
 					composeNodes,
 					genId,
+					// TODO: This manager should ignore inval
 					newCrossFieldManager(crossFieldTable),
 					revisionMetadata,
 				);
 				composedChange.change = brand(amendedChange);
 			}
-
-			// TODO: See if we there's a reasonable way to assert that
-			// running a third pass would produce the same results.
 		}
 
 		const { allBuilds, allDestroys } = composeBuildsAndDestroys([change1, change2]);
@@ -405,7 +403,7 @@ export class ModularChangeFamily
 			composedNodeChange.nodeExistsConstraint = nodeExistsConstraint;
 		}
 
-		const key = change1 ?? change2 ?? fail("Should not compose two undefined changesets");
+		const key = change2 ?? change1 ?? fail("Should not compose two undefined changesets");
 		crossFieldTable.nodeCache.set(key, composedNodeChange);
 		return composedNodeChange;
 	}
@@ -1200,19 +1198,22 @@ function newComposeTable(): ComposeTable {
 		...newCrossFieldTable<FieldChange>(),
 		fieldToContext: new Map(),
 		nodeCache: new Map(),
+		fieldsWithUnvisitedNodes: new Set(),
 	};
 }
 
 interface ComposeTable extends CrossFieldTable<FieldChange> {
 	/**
-	 * The key is change1 ?? change2.
+	 * Maps from a composed field to the context for that field.
 	 */
 	fieldToContext: Map<FieldChange, ComposeFieldContext>;
 
 	/**
-	 * Maps from an input changeset for a node (from change1 if it has one) to the cached composition of the changesets for that node.
+	 * Maps from an input changeset for a node (from change2 if it has one) to the cached composition of the changesets for that node.
 	 */
 	nodeCache: Map<NodeChangeset, NodeChangeset>;
+
+	fieldsWithUnvisitedNodes: Set<FieldChange>;
 }
 
 interface ComposeFieldContext {
