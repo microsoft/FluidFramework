@@ -26,7 +26,7 @@ import { ISharedObjectRegistry } from '@fluidframework/datastore';
 import { RuntimeFactoryHelper } from '@fluidframework/runtime-utils';
 import { RuntimeRequestHandler } from '@fluidframework/request-handler';
 
-// @internal (undocumented)
+// @internal @deprecated (undocumented)
 export abstract class LazyLoadedDataObject<TRoot extends ISharedObject = ISharedObject, TEvents extends IEvent = IEvent> extends EventForwarder<TEvents> implements IFluidLoadable, IProvideFluidHandle {
     constructor(context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime, root: ISharedObject);
     // (undocumented)
@@ -51,7 +51,7 @@ export abstract class LazyLoadedDataObject<TRoot extends ISharedObject = IShared
     protected readonly runtime: IFluidDataStoreRuntime;
 }
 
-// @internal (undocumented)
+// @internal @deprecated (undocumented)
 export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> implements IFluidDataStoreFactory {
     constructor(type: string, ctor: new (context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime, root: ISharedObject) => T, root: IChannelFactory, sharedObjects?: readonly IChannelFactory[], storeFactories?: readonly IFluidDataStoreFactory[]);
     // (undocumented)
