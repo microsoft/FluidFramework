@@ -34,7 +34,6 @@ import {
 	LoggingError,
 } from "@fluidframework/telemetry-utils";
 import { BlobManager, IBlobManagerLoadInfo, IBlobManagerRuntime } from "../blobManager";
-import { disableAttachmentBlobSweepKey } from "../gc";
 
 const MIN_TTL = 24 * 60 * 60; // same as ODSP
 abstract class BaseMockBlobStorage
@@ -944,10 +943,13 @@ describe("BlobManager", () => {
 			);
 		});
 
-		// DisableAttachmentBlobsSweep setting is checked in GC code _before_ calling BlobManager.
+		// Support for this config has been removed.
+		const legacyKey_disableAttachmentBlobSweep =
+			"Fluid.GarbageCollection.DisableAttachmentBlobSweep";
 		[true, false, undefined].forEach((disableAttachmentBlobsSweep) =>
 			it(`deletes unused blobs regardless of DisableAttachmentBlobsSweep setting [DisableAttachmentBlobsSweep=${disableAttachmentBlobsSweep}]`, async () => {
-				injectedSettings[disableAttachmentBlobSweepKey] = disableAttachmentBlobsSweep;
+				injectedSettings[legacyKey_disableAttachmentBlobSweep] =
+					disableAttachmentBlobsSweep;
 
 				await runtime.attach();
 				await runtime.connect();
