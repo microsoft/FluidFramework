@@ -212,6 +212,10 @@ module.exports = {
 				"experimental/PropertyDDS/packages/property-query/test/get_config.js",
 				"experimental/PropertyDDS/services/property-query-service/test/get_config.js",
 			],
+			"no-js-file-extensions": [
+				// PropertyDDS uses .js files which should be renamed eventually.
+				".*/PropertyDDS/.*",
+			],
 			"package-lockfiles-npm-version": [
 				"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
 			],

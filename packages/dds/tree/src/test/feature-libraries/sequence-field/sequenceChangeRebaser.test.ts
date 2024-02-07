@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+import { describeStress } from "@fluid-private/stochastic-test-utils";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import {
 	ChangesetLocalId,
@@ -677,7 +678,8 @@ const fieldRebaser: BoundFieldChangeRebaser<TestChangeset> = {
 
 export function testStateBasedRebaserAxioms() {
 	describe("State-based Rebaser Axioms", () => {
-		describe("Lineage Method", () => {
+		describeStress("Lineage Method", function ({ isStress }) {
+			this.timeout(30_000);
 			const allocator = idAllocatorFromMaxId();
 			const startingLength = 2;
 			const startingState: NodeState[] = makeArray(startingLength, () => ({
@@ -697,12 +699,13 @@ export function testStateBasedRebaserAxioms() {
 				fieldRebaser,
 				{
 					groupSubSuites: true,
-					numberOfEditsToVerifyAssociativity: 3,
+					numberOfEditsToVerifyAssociativity: isStress ? 4 : 3,
 					skipRebaseOverCompose: false,
 				},
 			);
 		});
-		describe("Tombstone Method", () => {
+		describeStress("Tombstone Method", function ({ isStress }) {
+			this.timeout(30_000);
 			const allocator = idAllocatorFromMaxId();
 			const startingLength = 2;
 			const startingState: NodeState[] = makeArray(startingLength, () => ({
@@ -722,7 +725,7 @@ export function testStateBasedRebaserAxioms() {
 				fieldRebaser,
 				{
 					groupSubSuites: true,
-					numberOfEditsToVerifyAssociativity: 3,
+					numberOfEditsToVerifyAssociativity: isStress ? 4 : 3,
 					skipRebaseOverCompose: false,
 				},
 			);
