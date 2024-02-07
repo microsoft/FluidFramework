@@ -9,7 +9,7 @@ import { Handler } from "../common";
  * interpreted by node as either CommonJS or ESM based on the `type` field in the nearest package.json file. This
  * can create unexpected behavior for JS files; changing the package.json nearest to one will change how the JS
  * is processed by node. Using explicit file extensions reduces ambiguity and ensures a CJS file isn't suddenly treated
- * like an ESM file..
+ * like an ESM file.
  */
 export const handler: Handler = {
 	name: "no-js-file-extensions",
