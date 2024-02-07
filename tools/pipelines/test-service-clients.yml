@@ -80,8 +80,8 @@ stages:
         artifactBuildId: $(resources.pipeline.client.runID)
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-          odsp__client__client__id: $(odsp-client-clientId)
-          odsp__client__client__secret: $(odsp-client-clientSecret)
+          odsp__client__clientId: $(odsp-client-clientId)
+          odsp__client__clientSecret: $(odsp-client-clientSecret)
           odsp__client__siteUrl: $(odsp-client-siteUrl)
           odsp__client__driveId: $(odsp-client-driveId)
           odsp__client__login__username: $(odsp-client-login-username)
