@@ -979,8 +979,6 @@ describe("Map", () => {
 				);
 			});
 
-			// attributable map doesn't do attribution for local operations
-			// so it doesn't do it for apply stashed ops either
 			it("can update attribution properly while applying stashed ops", async () => {
 				const serializable: ISerializableValue = { type: "Plain", value: "value" };
 				const op: IMapSetOperation = { type: "set", key: "key", value: serializable };
