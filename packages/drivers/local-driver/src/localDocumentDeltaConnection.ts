@@ -80,10 +80,14 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 
 	/**
 	 * Submits a new signal to the server
+	 *
+	 * @param content - Content of the signal.
+	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	public submitSignal(content: unknown): void {
+	public submitSignal(content: unknown, targetClientId?: string): void {
 		const message: ISentSignalMessage = {
 			content,
+			targetClientId,
 		};
 		this.emitMessages("submitSignal", [message]);
 	}
