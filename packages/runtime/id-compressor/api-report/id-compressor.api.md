@@ -44,7 +44,6 @@ export interface IdCreationRange {
 export interface IIdCompressor {
     decompress(id: SessionSpaceCompressedId): StableId;
     generateCompressedId(): SessionSpaceCompressedId;
-    // (undocumented)
     localSessionId: SessionId;
     normalizeToOpSpace(id: SessionSpaceCompressedId): OpSpaceCompressedId;
     normalizeToSessionSpace(id: OpSpaceCompressedId, originSessionId: SessionId): SessionSpaceCompressedId;
@@ -52,7 +51,7 @@ export interface IIdCompressor {
     tryRecompress(uncompressed: StableId): SessionSpaceCompressedId | undefined;
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface IIdCompressorCore {
     beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void): any;
     finalizeCreationRange(range: IdCreationRange): void;
