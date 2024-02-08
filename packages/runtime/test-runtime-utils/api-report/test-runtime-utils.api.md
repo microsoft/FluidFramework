@@ -139,7 +139,7 @@ export class MockContainerRuntimeFactory {
     // (undocumented)
     createContainerRuntime(dataStoreRuntime: MockFluidDataStoreRuntime): MockContainerRuntime;
     // (undocumented)
-    deleteContainerRuntime(containerRuntime: MockContainerRuntime): void;
+    removeContainerRuntime(containerRuntime: MockContainerRuntime): void;
     // (undocumented)
     getMinSeq(): number;
     protected messages: ISequencedDocumentMessage[];
