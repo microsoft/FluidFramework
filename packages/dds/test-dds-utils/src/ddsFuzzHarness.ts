@@ -708,11 +708,9 @@ export function mixinAttach<
 				}
 			}
 			state.containerRuntimeFactory.removeContainerRuntime(clientA.containerRuntime);
-			const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection(
-				options.containerRuntimeOptions,
-			);
+
 			const summarizerClient = await loadDetached(
-				containerRuntimeFactory,
+				state.containerRuntimeFactory,
 				clientA,
 				model.factory,
 				makeFriendlyClientId(state.random, 0),
@@ -721,7 +719,6 @@ export function mixinAttach<
 
 			return {
 				...state,
-				containerRuntimeFactory,
 				isDetached: true,
 				clients: [summarizerClient],
 				summarizerClient,
