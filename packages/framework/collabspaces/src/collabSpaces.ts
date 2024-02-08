@@ -790,7 +790,7 @@ export class TempCollabSpaceRuntime
 		// u2 is a string.
 		// Can't use === comparison, "-5" & -5 are equal from POV of this comparison.
 		// Coerse it to string to do proper comparison
-		return String(u1) == u2;
+		return String(u1) === u2;
 	}
 
 	// #region ISharedMatrix
