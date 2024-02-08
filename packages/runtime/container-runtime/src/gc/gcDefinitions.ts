@@ -41,6 +41,12 @@ export const nextGCVersion: GCVersion = 4;
 export const gcDisableThrowOnTombstoneLoadOptionName = "gcDisableThrowOnTombstoneLoad";
 
 /**
+ * This undocumented GC Option (on ContainerRuntime Options) allows an app to enable Sweep for blobs only.
+ * Only applies if enableGCSweep option is set to true.
+ */
+export const gcDisableDataStoreSweepOptionName = "disableDataStoreSweep";
+
+/**
  * This undocumented GC Option (on ContainerRuntime Options) allows configuring which documents can have Sweep enabled.
  * This provides a way to disable both Tombstone Enforcement and Sweep.
  *
