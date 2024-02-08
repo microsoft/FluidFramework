@@ -294,7 +294,7 @@ describe("Temporal Collab Spaces", () => {
 
 		// Save changes and destroy channel
 		const destroyed = collabSpace.destroyCellChannel(channel);
-		assert(destroyed, "in detached stayed it should be destroyed immidiatly");
+		assert(destroyed, "in detached stayed it should be destroyed immediately");
 		let value2 = await collabSpace.getCellAsync(row, col);
 		assert(value2?.value === initialValue, "value was preserved correctly");
 
@@ -307,7 +307,7 @@ describe("Temporal Collab Spaces", () => {
 		const request = provider.driver.createCreateNewRequest(provider.documentId);
 		await container.attach(request);
 
-		// Have a secont container that follows passivley the first one
+		// Have a second container that follows passively the first one
 		await addContainerInstance();
 		await provider.ensureSynchronized();
 
@@ -317,32 +317,40 @@ describe("Temporal Collab Spaces", () => {
 	});
 
 	describe("Reverse Mapping tests", () => {
-		async function getRowAndColIdsFromChannelId(
-			collabSpace: IEfficientMatrix & IEfficientMatrixTest,
-			row: number,
-			col: number,
-		): Promise<{ rowId: string; colId: string }> {
-			const result = await collabSpace.getCellChannelIdDebugInfo(row, col);
-			const parts = result.channelId.split(",");
-			assert(parts.length === 3, "Invalid channel Id");
-			const rowId = parts[0];
-			const colId = parts[1];
-			return { rowId, colId };
+		function compareMaps(
+			map1: { [id: string]: number },
+			map2: { [id: string]: number },
+		): boolean {
+			assert(Object.keys(map1).length === Object.keys(map2).length, "maps size is different");
+			for (const [id, rowValue] of Object.entries(map1)) {
+				if (id in map2) {
+					const colValue = map2[id];
+					assert(
+						rowValue === colValue,
+						`Values for id ${id} do not match: row = ${rowValue}, col = ${colValue}`,
+					);
+				} else {
+					assert(false, `No matching id found in map2 for ${id}`);
+				}
+			}
+			return true;
 		}
 
 		it("Reverse Mapping: Basic test", async () => {
 			const collabSpace = await initialize();
 			const row = 5;
 			const col = 3;
-			const { rowId, colId } = await getRowAndColIdsFromChannelId(collabSpace, row, col);
+			const { rowId, colId } = await collabSpace.getCellDebugInfo(row, col);
 
-			const { rowMapSize, colMapSize, rowIndex, colIndex } =
-				collabSpace.getReverseMapsDebugInfo(rowId, colId);
+			const debugMapInfo = collabSpace.getReverseMapsDebugInfo(rowId, colId);
 
-			assert(rowMapSize === rows, "rowMapSize is incorrect");
-			assert(rowIndex === row + 1, "rowIndex from the actual matrix has to be offset by 1");
-			assert(colMapSize === cols, "colMapSize is incorrect");
-			assert(colIndex === col + 1, "colIndex is correct");
+			assert(Object.keys(debugMapInfo.rowMap).length === rows, "rowMapSize is incorrect");
+			assert(
+				debugMapInfo.row === row,
+				"rowIndex from the actual matrix has to be offset by 1",
+			);
+			assert(Object.keys(debugMapInfo.colMap).length === cols, "colMapSize is incorrect");
+			assert(debugMapInfo.col === col, "colIndex is correct");
 		});
 
 		it("Reverse Mapping: Basic row adding test", async () => {
@@ -356,13 +364,19 @@ describe("Temporal Collab Spaces", () => {
 				value: 5,
 				type: CounterFactory.Type,
 			});
-			const { rowId, colId } = await getRowAndColIdsFromChannelId(collabSpace, row, col);
-			const { rowMapSize, colMapSize, rowIndex, colIndex } =
-				collabSpace.getReverseMapsDebugInfo(rowId, colId);
-			assert(rowMapSize === rows + numberOfNewRows, "rowMapSize is incorrect");
-			assert(rowIndex === row + 1, "rowIndex is correct");
-			assert(colMapSize === cols, "colMapSize is incorrect");
-			assert(colIndex === col + 1, "colIndex is correct");
+			const { rowId, colId } = await collabSpace.getCellDebugInfo(row, col);
+			const debugMapInfo = collabSpace.getReverseMapsDebugInfo(rowId, colId);
+
+			assert(
+				Object.keys(debugMapInfo.rowMap).length === rows + numberOfNewRows,
+				"rowMapSize is incorrect",
+			);
+			assert(
+				debugMapInfo.row === row,
+				"rowIndex from the actual matrix has to be offset by 1",
+			);
+			assert(Object.keys(debugMapInfo.colMap).length === cols, "colMapSize is incorrect");
+			assert(debugMapInfo.col === col, "colIndex is correct");
 		});
 
 		it("Reverse Mapping: Basic row removing test", async () => {
@@ -370,47 +384,141 @@ describe("Temporal Collab Spaces", () => {
 			const row = 1;
 			const col = 3;
 
-			const { rowId: nextRowId, colId: nextColId } = await getRowAndColIdsFromChannelId(
-				collabSpace,
+			const { rowId: nextRowId, colId: nextColId } = await collabSpace.getCellDebugInfo(
 				row + 1,
 				col,
 			);
 			collabSpace.removeRows(row, 1);
 
-			const { rowId, colId } = await getRowAndColIdsFromChannelId(collabSpace, row, col);
-			assert(nextRowId === rowId, "rowId after removal should be the same as nextRowId");
-			assert(nextColId === colId, "colId after removal should be different");
+			const debugCellInfo = await collabSpace.getCellDebugInfo(row, col);
+			assert(
+				nextRowId === debugCellInfo.rowId,
+				"rowId after removal should be the same as nextRowId",
+			);
+			assert(nextColId === debugCellInfo.colId, "colId after removal should be different");
 
-			const { rowMapSize, colMapSize, rowIndex, colIndex } =
-				collabSpace.getReverseMapsDebugInfo(rowId, colId);
+			const debugMapInfo = collabSpace.getReverseMapsDebugInfo(
+				debugCellInfo.rowId,
+				debugCellInfo.colId,
+			);
 
-			assert(rowMapSize === rows - 1, "rowMapSize is incorrect");
-			assert(rowIndex === row + 1, "rowIndex is correct");
-			assert(colMapSize === cols, "colMapSize is incorrect");
-			assert(colIndex === col + 1, "colIndex is correct");
+			assert(Object.keys(debugMapInfo.rowMap).length === rows - 1, "rowMapSize is incorrect");
+			assert(
+				debugMapInfo.row === row,
+				"rowIndex from the actual matrix has to be offset by 1",
+			);
+			assert(Object.keys(debugMapInfo.colMap).length === cols, "colMapSize is incorrect");
+			assert(debugMapInfo.col === col, "colIndex is correct");
 		});
 
 		it("Reverse Mapping: Basic col removing test", async () => {
 			const collabSpace = await initialize();
 			const row = 1;
 			const col = 3;
-			const columnsToBeRemoved = 1;
-			const { colId: nextColId } = await getRowAndColIdsFromChannelId(
-				collabSpace,
+			const columnsToBeRemoved = 2;
+			const { colId: nextColId } = await collabSpace.getCellDebugInfo(
 				row,
-				col + 1,
+				col + columnsToBeRemoved,
 			);
 			collabSpace.removeCols(col, columnsToBeRemoved);
-			const { rowId, colId } = await getRowAndColIdsFromChannelId(collabSpace, row, col);
+			const { rowId, colId } = await collabSpace.getCellDebugInfo(row, col);
 
 			assert(nextColId === colId, "colId after removal should be the same as nextColId");
 
-			const { rowMapSize, colMapSize, rowIndex, colIndex } =
-				collabSpace.getReverseMapsDebugInfo(rowId, colId);
-			assert(rowMapSize === rows, "rowMapSize is incorrect");
-			assert(rowIndex === row + 1, "rowIndex is correct");
-			assert(colMapSize === cols - columnsToBeRemoved, "colMapSize is incorrect");
-			assert(colIndex === col + 1, "colIndex is correct");
+			const debugMapInfo = collabSpace.getReverseMapsDebugInfo(rowId, colId);
+
+			assert(Object.keys(debugMapInfo.rowMap).length === rows, "rowMapSize is incorrect");
+			assert(
+				debugMapInfo.row === row,
+				"rowIndex from the actual matrix has to be offset by 1",
+			);
+			assert(
+				Object.keys(debugMapInfo.colMap).length === cols - columnsToBeRemoved,
+				"colMapSize is incorrect",
+			);
+			assert(debugMapInfo.col === col, "colIndex is correct");
+		});
+
+		it("Concurrent insertions", async () => {
+			// Cell we will be interrogating
+			const row = 5;
+			const col = 1;
+
+			const collabSpace = await initialize();
+
+			const { rowId: rowId1, colId: colId1 } = await collabSpace.getCellDebugInfo(row, col);
+			const { rowId: rowId2, colId: colId2 } = await collabSpaces[1].getCellDebugInfo(
+				row,
+				col,
+			);
+			assert(rowId2 === rowId1, "rowId should be the same");
+			assert(colId2 === colId1, "colId should be the same");
+
+			// Concurrent changes - clients do not see each other changes yet
+			collabSpace.insertRows(0, 11);
+			collabSpaces[1].insertRows(0, 4);
+
+			await provider.ensureSynchronized();
+
+			collabSpace.insertRows(0, 1);
+			collabSpaces[1].insertRows(0, 2);
+
+			// synchronize - all containers should see exactly same changes
+			await provider.ensureSynchronized();
+
+			const firstCollabResult = collabSpace.getReverseMapsDebugInfo();
+			const secondCollabResult = collabSpaces[1].getReverseMapsDebugInfo();
+
+			compareMaps(firstCollabResult.rowMap, secondCollabResult.rowMap);
+			compareMaps(firstCollabResult.colMap, secondCollabResult.colMap);
+		});
+
+		it("Concurrent operations", async () => {
+			// Cell we will be interrogating
+			const row = 7;
+			const col = 1;
+
+			const collabSpace = await initialize();
+
+			const { rowId: rowId1, colId: colId1 } = await collabSpace.getCellDebugInfo(row, col);
+			const { rowId: rowId2, colId: colId2 } = await collabSpaces[1].getCellDebugInfo(
+				row,
+				col,
+			);
+			assert(rowId2 === rowId1, "rowId should be the same");
+			assert(colId2 === colId1, "colId should be the same");
+
+			// Concurrent changes - clients do not see each other changes yet
+			collabSpace.removeRows(0, 1);
+			collabSpaces[1].insertRows(0, 4);
+
+			await provider.ensureSynchronized();
+
+			const collabResult1 = collabSpace.getReverseMapsDebugInfo();
+			const collabResult2 = collabSpaces[1].getReverseMapsDebugInfo();
+
+			compareMaps(collabResult1.rowMap, collabResult2.rowMap);
+			compareMaps(collabResult1.colMap, collabResult2.colMap);
+
+			collabSpace.insertRows(0, 1);
+			collabSpaces[1].removeRows(2, 1);
+
+			// synchronize - all containers should see exactly same changes
+			await provider.ensureSynchronized();
+
+			const collabResult3 = collabSpace.getReverseMapsDebugInfo();
+			const collabResult4 = collabSpaces[1].getReverseMapsDebugInfo();
+
+			compareMaps(collabResult3.rowMap, collabResult4.rowMap);
+			compareMaps(collabResult3.colMap, collabResult4.colMap);
+
+			const { rowId: rowId3, colId: colId3 } = await collabSpace.getCellDebugInfo(row, col);
+			const { rowId: rowId4, colId: colId4 } = await collabSpaces[1].getCellDebugInfo(
+				row,
+				col,
+			);
+			assert(rowId3 === rowId4, "rowId should be the same");
+			assert(colId3 === colId4, "colId should be the same");
 		});
 	});
 

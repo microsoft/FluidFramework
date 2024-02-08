@@ -52,20 +52,14 @@ export interface IEfficientMatrix extends Omit<ISharedMatrix<MatrixExternalType>
 // @internal
 export interface IEfficientMatrixTest {
     // (undocumented)
-    getCellChannelIdDebugInfo(row: number, col: number): Promise<{
-        channelId: string;
-    }>;
-    // (undocumented)
     getCellDebugInfo(row: number, col: number): Promise<{
         channel?: ICollabChannelCore;
+        channelId: string;
+        rowId: string;
+        colId: string;
     }>;
     // (undocumented)
-    getReverseMapsDebugInfo(rowId: string, colId: string): {
-        rowMapSize: number;
-        colMapSize: number;
-        rowIndex: number | undefined;
-        colIndex: number | undefined;
-    };
+    getReverseMapsDebugInfo(rowId?: string | undefined, colId?: string | undefined): ReverseMapsDebugInfoType;
     // (undocumented)
     isAttached: boolean;
 }
@@ -76,6 +70,22 @@ export interface MatrixExternalType {
     type: string;
     // (undocumented)
     value: Serializable<unknown>;
+}
+
+// @internal
+export interface ReverseMapsDebugInfoType {
+    // (undocumented)
+    col: number;
+    // (undocumented)
+    colMap: {
+        [id: string]: number;
+    };
+    // (undocumented)
+    row: number;
+    // (undocumented)
+    rowMap: {
+        [id: string]: number;
+    };
 }
 
 // (No @packageDocumentation comment for this package)

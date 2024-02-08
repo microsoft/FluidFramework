@@ -79,21 +79,42 @@ export interface IEfficientMatrix extends Omit<ISharedMatrix<MatrixExternalType>
  * Interface for testing purposes only.
  * @internal
  */
+export interface ReverseMapsDebugInfoType {
+	rowMap: { [id: string]: number };
+	colMap: { [id: string]: number };
+	row: number;
+	col: number;
+}
+
+/**
+ * Interface for testing purposes only.
+ * @internal
+ */
 export interface IEfficientMatrixTest {
 	isAttached: boolean;
 
 	// Returns a structure with various debug info about the cell
-	getCellDebugInfo(row: number, col: number): Promise<{ channel?: ICollabChannelCore }>;
-
-	getCellChannelIdDebugInfo(row: number, col: number): Promise<{ channelId: string }>;
+	getCellDebugInfo(
+		row: number,
+		col: number,
+	): Promise<{ channel?: ICollabChannelCore; channelId: string; rowId: string; colId: string }>;
 
 	getReverseMapsDebugInfo(
-		rowId: string,
-		colId: string,
-	): {
-		rowMapSize: number;
-		colMapSize: number;
-		rowIndex: number | undefined;
-		colIndex: number | undefined;
-	};
+		rowId?: string | undefined,
+		colId?: string | undefined,
+	): ReverseMapsDebugInfoType;
+}
+
+export type ReverseMapType = "row" | "col";
+
+export interface IReverseMap {
+	getRowId(rowId: string): number | undefined;
+	getColId(colId: string): number | undefined;
+
+	getRowMap(): { [id: string]: number };
+	getColMap(): { [id: string]: number };
+
+	removeCellsFromMap(type: ReverseMapType, start: number, count: number): void;
+
+	addCellToMap(type: ReverseMapType, id: string, index: number): void;
 }

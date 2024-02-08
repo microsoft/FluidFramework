@@ -39,8 +39,11 @@ import {
 	IEfficientMatrix,
 	ICollabChannelFactory,
 	CollabSpaceCellType,
+	ReverseMapType,
+	ReverseMapsDebugInfoType,
 } from "./contracts";
 import { DeferredChannel, DeferredChannelFactory } from "./deferreChannel";
+import { ReverseMap } from "./reverseMap";
 
 /*
  * This is a prototype, an implementation of sparse matrix that natively supports collaboration.
@@ -190,8 +193,7 @@ export class TempCollabSpaceRuntime
 {
 	private matrixInternal?: SharedMatrix<MatrixInternalType>;
 	private channelInfo: Record<string, IChannelTrackingInfo | undefined> = {};
-	private readonly rowMap: Map<string, number> = new Map();
-	private readonly colMap: Map<string, number> = new Map();
+	private readonly reverseMap: ReverseMap = new ReverseMap();
 	private deferredChannels: Map<string, DeferredChannel> = new Map();
 
 	constructor(
@@ -417,34 +419,16 @@ export class TempCollabSpaceRuntime
 		}
 		this.matrix.switchSetCellPolicy();
 
-		// We need to ensure that we are tracking all the cells and when removing cells, we need to
-		// remove the tracking information as well as update the indexes in the map.
-		const removeCellsFromMap = (start: number, count: number, map: Map<string, any>) => {
-			if (count > 0) {
-				// Convert the map to an array of key-value pairs
-				const entries = Array.from(map.entries());
-
-				// Remove the specified range of items from the array
-				// Note the index from the reverse mapping is off by 1 as the matrix has a row and col tracking IDs
-				// and the map indexes are 0 based
-				entries.splice(start - 2, count);
-
-				// Clear the original map
-				map.clear();
-
-				// Re-populate the map with the remaining items from the array
-				entries.forEach(([key, value], index) => {
-					map.set(key, index + 1);
-				});
-			}
-		};
-
 		this.matrix.openMatrix({
 			rowsChanged: (rowStart: number, removedCount: number, insertedCount: number) => {
-				removeCellsFromMap(rowStart, removedCount, this.rowMap);
+				// For the reverse mapping purposes, we can only process rows/columns deletion.
+				// We can't process rows/columns insertion as we don't have the information about the cells yet.
+				this.reverseMap.removeCellsFromMap("row", rowStart, removedCount);
 			},
 			colsChanged: (colStart: number, removedCount: number, insertedCount: number) => {
-				removeCellsFromMap(colStart, removedCount, this.colMap);
+				// For the reverse mapping purposes, we can only process rows/columns deletion.
+				// We can't process rows/columns insertion as we don't have the information about the cells yet.
+				this.reverseMap.removeCellsFromMap("col", colStart, removedCount);
 			},
 			cellsChanged: (
 				rowStart: number,
@@ -467,53 +451,20 @@ export class TempCollabSpaceRuntime
 		return this.matrixInternal;
 	}
 
-	private insertCellIntoReverseMap(
-		map: Map<string, number>,
-		index: number,
-		key: string,
-		value: number,
-	) {
-		// Convert the map to an array of key-value pairs
-		const entries = Array.from(map.entries());
-
-		// Insert the new key-value pair at the specified index
-		entries.splice(index, 0, [key, value]);
-
-		// Clear the original map
-		map.clear();
-
-		// Re-populate the map with the updated items from the array
-		entries.forEach(([localKey], newIndex) => {
-			map.set(localKey, newIndex + 1);
-		});
-	}
-
-	private addCellToReverseMap(row: number, col: number, info: ICellInfo) {
-		// Col and Row == -1 means cell that uniquely identify the rows and columns from the matrix.
-		if (col === -1) {
-			if (this.rowMap.size >= row + 1) {
-				// Cell added
-				this.insertCellIntoReverseMap(
-					this.rowMap,
-					row,
-					info.value as unknown as string,
-					row + 1,
-				);
-			} else {
-				this.rowMap.set(info.value as unknown as string, row + 1);
-			}
-		}
-		if (row === -1) {
-			this.colMap.set(info.value as unknown as string, col + 1);
-		}
-	}
-
 	private cellChanged(row: number, col: number) {
 		const info = this.getCellInfo(row, col);
 
 		if (info.value !== undefined) {
-			// Col and Row == -1 means cell that uniquely identify the rows and columns from the matrix.
-			this.addCellToReverseMap(row, col, info);
+			if (col === -1 || row === -1) {
+				// Col and Row == -1 means cell that uniquely identify the rows and columns from the matrix.
+				const mapInfo: { type: ReverseMapType; index: number } =
+					col === -1 ? { type: "row", index: row } : { type: "col", index: col };
+				this.reverseMap.addCellToMap(
+					mapInfo.type,
+					info.value as unknown as string,
+					mapInfo.index,
+				);
+			}
 
 			if (isChannelDeffered(info.channelInfo?.type)) {
 				const channelId = info.channelId;
@@ -576,35 +527,29 @@ export class TempCollabSpaceRuntime
 	public async getCellDebugInfo(
 		row: number,
 		col: number,
-	): Promise<{ channel?: ICollabChannelCore }> {
+	): Promise<{ channel?: ICollabChannelCore; channelId?: string; rowId: string; colId: string }> {
 		const result = this.getCellInfo(row, col);
-		return { channel: await result.channel };
-	}
-
-	// For test purposes only!
-	// Returns the channel ID for the cell.
-	public async getCellChannelIdDebugInfo(
-		row: number,
-		col: number,
-	): Promise<{ channelId?: string }> {
-		const result = this.getCellInfo(row, col);
-		return { channelId: result.channelId };
+		assert(result.channelId !== undefined, "channelId is missing");
+		const { rowId, colId } = this.parseChannelId(result.channelId);
+		return { channel: await result.channel, channelId: result.channelId, rowId, colId };
 	}
 
 	// For test purposes only!
 	// Returns the Reverse Map size and the actual indexes from matrix stored on the reverse mapping matrixes.
 	public getReverseMapsDebugInfo(
-		rowId: string,
-		colId: string,
-	): {
-		rowMapSize: number;
-		colMapSize: number;
-		rowIndex: number | undefined;
-		colIndex: number | undefined;
-	} {
-		const rowIndex = this.rowMap.get(rowId);
-		const colIndex = this.colMap.get(colId);
-		return { rowMapSize: this.rowMap.size, colMapSize: this.colMap.size, rowIndex, colIndex };
+		rowId?: string | undefined,
+		colId?: string | undefined,
+	): ReverseMapsDebugInfoType {
+		const row = rowId !== undefined ? this.reverseMap.getRowId(rowId) : -1;
+		const col = colId !== undefined ? this.reverseMap.getColId(colId) : -1;
+		assert(row !== undefined, "rowIndex is missing");
+		assert(col !== undefined, "colIndex is missing");
+		return {
+			rowMap: this.reverseMap.getRowMap(),
+			colMap: this.reverseMap.getColMap(),
+			row: row - 1,
+			col: col - 1,
+		};
 	}
 
 	private getFactoryForValueType(type: string, onlyCollaborativeTypes: boolean) {
@@ -673,15 +618,19 @@ export class TempCollabSpaceRuntime
 		return this.createCollabChannel(value, channelId);
 	}
 
-	private mapChannelToCell(channelId: string) {
+	private parseChannelId(channelId: string): { rowId: string; colId: string; iteration: string } {
 		const parts = channelId.split(",");
-		assert(parts.length === 3, "wrong channel ID");
+		assert(parts.length === 3, "Invalid channel Id");
 		const rowId = parts[0];
 		const colId = parts[1];
 		const iteration = parts[2];
+		return { rowId, colId, iteration };
+	}
 
-		const row = this.rowMap.get(rowId);
-		const col = this.colMap.get(colId);
+	private mapChannelToCell(channelId: string): { row: number; col: number; iteration: string } {
+		const { rowId, colId, iteration } = this.parseChannelId(channelId);
+		const row = this.reverseMap.getRowId(rowId);
+		const col = this.reverseMap.getColId(colId);
 
 		assert(
 			row !== undefined && (this.matrix.getCell(row, 0) as unknown as string) === rowId,
