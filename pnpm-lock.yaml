@@ -1769,6 +1769,7 @@ importers:
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/test-utils': workspace:~
       '@types/jest': 29.5.3
+      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -1806,6 +1807,7 @@ importers:
       '@fluidframework/test-tools': 1.0.195075
       '@fluidframework/test-utils': link:../../../packages/test/test-utils
       '@types/jest': 29.5.3
+      '@types/jest-environment-puppeteer': 5.0.6_typescript@5.1.6
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
@@ -1918,6 +1920,7 @@ importers:
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/view-interfaces': workspace:~
       '@types/jest': 29.5.3
+      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -1952,6 +1955,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
+      '@types/jest-environment-puppeteer': 5.0.6_typescript@5.1.6
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
@@ -1986,6 +1990,7 @@ importers:
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/tree': workspace:~
       '@types/jest': 29.5.3
+      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -2022,6 +2027,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
+      '@types/jest-environment-puppeteer': 5.0.6_typescript@5.1.6
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
@@ -2266,6 +2272,7 @@ importers:
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/view-adapters': workspace:~
       '@types/jest': 29.5.3
+      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -2314,6 +2321,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
+      '@types/jest-environment-puppeteer': 5.0.6_typescript@5.1.6
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
@@ -2349,6 +2357,7 @@ importers:
       '@fluidframework/map': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@types/jest': 29.5.3
+      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -2378,6 +2387,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
+      '@types/jest-environment-puppeteer': 5.0.6_typescript@5.1.6
       '@types/node': 18.19.1
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -2446,6 +2456,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^3.3.0
       '@fluidframework/test-tools': ^1.0.195075
       '@types/jest': 29.5.3
+      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -2480,6 +2491,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
+      '@types/jest-environment-puppeteer': 5.0.6_typescript@5.1.6
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
@@ -2513,6 +2525,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^3.3.0
       '@fluidframework/test-tools': ^1.0.195075
       '@types/jest': 29.5.3
+      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -2547,6 +2560,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
+      '@types/jest-environment-puppeteer': 5.0.6_typescript@5.1.6
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
@@ -2580,6 +2594,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^3.3.0
       '@fluidframework/test-tools': ^1.0.195075
       '@types/jest': 29.5.3
+      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -2614,6 +2629,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
+      '@types/jest-environment-puppeteer': 5.0.6_typescript@5.1.6
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
@@ -2983,6 +2999,7 @@ importers:
       '@fluidframework/view-adapters': workspace:~
       '@fluidframework/view-interfaces': workspace:~
       '@types/jest': 29.5.3
+      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -3031,6 +3048,7 @@ importers:
       '@fluidframework/test-tools': 1.0.195075
       '@fluidframework/test-utils': link:../../../packages/test/test-utils
       '@types/jest': 29.5.3
+      '@types/jest-environment-puppeteer': 5.0.6_typescript@5.1.6
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
@@ -3369,7 +3387,6 @@ importers:
       '@fluidframework/azure-client': link:../../../../azure/packages/azure-client
       '@fluidframework/routerlicious-driver': link:../../../../packages/drivers/routerlicious-driver
       '@fluidframework/telemetry-utils': link:../../../../packages/utils/telemetry-utils
-      '@types/jest-environment-puppeteer': 5.0.6_typescript@5.1.6
       assert: 2.1.0
       axios: 1.6.2
       events: 3.3.0
@@ -3388,6 +3405,7 @@ importers:
       '@fluidframework/test-runtime-utils': link:../../../../packages/runtime/test-runtime-utils
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
+      '@types/jest-environment-puppeteer': 5.0.6_typescript@5.1.6
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
       clean-webpack-plugin: 4.0.0_webpack@5.89.0
@@ -3791,7 +3809,6 @@ importers:
       '@fluidframework/task-manager': link:../../../packages/dds/task-manager
       '@fluidframework/telemetry-utils': link:../../../packages/utils/telemetry-utils
       '@fluidframework/tinylicious-driver': link:../../../packages/drivers/tinylicious-driver
-      '@types/jest-environment-puppeteer': 5.0.6_typescript@5.1.6
       events: 3.3.0
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
@@ -3803,6 +3820,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
+      '@types/jest-environment-puppeteer': 5.0.6_typescript@5.1.6
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
@@ -4552,7 +4570,6 @@ importers:
       '@material-ui/core': 4.12.4_sfoxds7t5ydpegc3knd667wn6m
       '@material-ui/lab': 4.0.0-alpha.61_phlbjj2qqbzyjdfzujtmlw3coi
       '@material-ui/styles': 4.11.5_sfoxds7t5ydpegc3knd667wn6m
-      '@types/jest-environment-puppeteer': 5.0.6_typescript@5.1.6
       events: 3.3.0
       jsonwebtoken: 8.5.1
       lodash: 4.17.21
@@ -4563,6 +4580,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_webpack-cli@4.10.0
       '@types/jest': 29.5.3
+      '@types/jest-environment-puppeteer': 5.0.6_typescript@5.1.6
       '@types/uuid': 9.0.7
       clean-webpack-plugin: 4.0.0_webpack@5.89.0
       concurrently: 8.2.2
@@ -11043,7 +11061,6 @@ importers:
       '@fluidframework/devtools-core': link:../devtools-core
       '@microsoft/1ds-core-js': 3.2.15_tslib@1.14.1
       '@microsoft/1ds-post-js': 3.2.15_tslib@1.14.1
-      '@types/jest-environment-puppeteer': 5.0.6_typescript@5.1.6
       '@types/uuid': 9.0.7
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
@@ -11067,6 +11084,7 @@ importers:
       '@types/chai': 4.3.11
       '@types/chrome': 0.0.232
       '@types/jest': 29.5.3
+      '@types/jest-environment-puppeteer': 5.0.6_typescript@5.1.6
       '@types/jsdom': 21.1.6
       '@types/jsdom-global': 3.0.7
       '@types/mocha': 9.1.1

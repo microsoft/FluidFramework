@@ -62,6 +62,7 @@
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@fluidframework/test-utils": "workspace:~",
 		"@types/jest": "29.5.3",
+		"@types/jest-environment-puppeteer": "5.0.6",
 		"@types/node": "^18.19.0",
 		"@types/react": "^17.0.44",
 		"@types/react-dom": "^17.0.18",
