@@ -45,6 +45,7 @@ import {
 	gcDisableThrowOnTombstoneLoadOptionName,
 	GCVersion,
 	runSessionExpiryKey,
+	disableDatastoreSweepKey,
 } from "../../gc";
 import { ContainerRuntimeGCMessage } from "../../messageTypes";
 import { IContainerRuntimeMetadata } from "../../summary";
@@ -177,7 +178,7 @@ describe("Garbage Collection configurations", () => {
 			assert(!gc.configs.gcEnabled, "gcEnabled incorrect");
 			assert(!gc.configs.shouldRunGC, "shouldRunGC incorrect");
 			assert(gc.configs.sweepEnabled, "sweepEnabled incorrect");
-			assert(!gc.configs.shouldRunSweep, "shouldRunSweep incorrect");
+			assert.equal(gc.configs.shouldRunSweep, "NO", "shouldRunSweep incorrect");
 			assert(
 				gc.configs.sessionExpiryTimeoutMs === undefined,
 				"sessionExpiryTimeoutMs incorrect",
@@ -370,7 +371,7 @@ describe("Garbage Collection configurations", () => {
 			assert(gc.configs.gcEnabled, "gcEnabled incorrect");
 			assert(gc.configs.shouldRunGC, "shouldRunGC incorrect");
 			assert(gc.configs.sweepEnabled, "sweepEnabled incorrect"); // Sweep is always allowed for a new container
-			assert(!gc.configs.shouldRunSweep, "shouldRunSweep incorrect");
+			assert.equal(gc.configs.shouldRunSweep, "NO", "shouldRunSweep incorrect");
 			assert(
 				gc.configs.sessionExpiryTimeoutMs !== undefined,
 				"sessionExpiryTimeoutMs incorrect",
@@ -782,60 +783,74 @@ describe("Garbage Collection configurations", () => {
 				shouldRunGC: boolean;
 				sweepEnabled_doc: boolean;
 				sweepEnabled_session: boolean;
+				disableDataStoreSweep?: true;
 				shouldRunSweep?: boolean;
-				expectedShouldRunSweep: boolean;
+				expectedShouldRunSweep: IGarbageCollectorConfigs["shouldRunSweep"];
 			}[] = [
 				{
-					shouldRunGC: false, // Veto power
+					shouldRunGC: false, // Veto
 					sweepEnabled_doc: true,
 					sweepEnabled_session: true,
+					disableDataStoreSweep: true,
 					shouldRunSweep: true,
-					expectedShouldRunSweep: false,
-				},
-				{
-					shouldRunGC: true,
-					sweepEnabled_doc: true,
-					sweepEnabled_session: true,
-					shouldRunSweep: true,
-					expectedShouldRunSweep: true,
-				},
-				{
-					shouldRunGC: true,
-					sweepEnabled_doc: true,
-					sweepEnabled_session: true,
-					shouldRunSweep: false, // Veto power
-					expectedShouldRunSweep: false,
-				},
-				{
-					shouldRunGC: true,
-					sweepEnabled_doc: true,
-					sweepEnabled_session: false,
-					shouldRunSweep: true, // Overrides sweepEnabled_session
-					expectedShouldRunSweep: true,
-				},
-				{
-					shouldRunGC: true,
-					sweepEnabled_doc: true,
-					sweepEnabled_session: true,
-					expectedShouldRunSweep: true,
-				},
-				{
-					shouldRunGC: true,
-					sweepEnabled_doc: true,
-					sweepEnabled_session: false, // Veto
-					expectedShouldRunSweep: false,
+					expectedShouldRunSweep: "NO",
 				},
 				{
 					shouldRunGC: true,
 					sweepEnabled_doc: false, // Veto
 					sweepEnabled_session: true,
-					expectedShouldRunSweep: false,
+					disableDataStoreSweep: true,
+					expectedShouldRunSweep: "NO",
+				},
+				{
+					shouldRunGC: true,
+					sweepEnabled_doc: true,
+					sweepEnabled_session: false, // Veto
+					disableDataStoreSweep: true,
+					expectedShouldRunSweep: "NO",
+				},
+				{
+					shouldRunGC: true,
+					sweepEnabled_doc: true,
+					sweepEnabled_session: true,
+					shouldRunSweep: false, // Veto
+					disableDataStoreSweep: true,
+					expectedShouldRunSweep: "NO",
+				},
+				{
+					shouldRunGC: true,
+					sweepEnabled_doc: true,
+					sweepEnabled_session: false, // Overriden by shouldRunSweep
+					shouldRunSweep: true,
+					expectedShouldRunSweep: "YES",
+				},
+				{
+					shouldRunGC: true,
+					sweepEnabled_doc: true,
+					sweepEnabled_session: true,
+					expectedShouldRunSweep: "YES",
+				},
+				{
+					shouldRunGC: true,
+					sweepEnabled_doc: true,
+					sweepEnabled_session: true,
+					disableDataStoreSweep: true,
+					expectedShouldRunSweep: "ONLY_BLOBS",
+				},
+				{
+					shouldRunGC: true,
+					sweepEnabled_doc: true,
+					sweepEnabled_session: true,
+					shouldRunSweep: true,
+					disableDataStoreSweep: true, // Applies after shouldRunSweep
+					expectedShouldRunSweep: "ONLY_BLOBS",
 				},
 			];
 			testCases.forEach((testCase, index) => {
 				it(`Test Case ${JSON.stringify(testCase)}`, () => {
 					injectedSettings[runGCKey] = testCase.shouldRunGC;
 					injectedSettings[runSweepKey] = testCase.shouldRunSweep;
+					injectedSettings[disableDatastoreSweepKey] = testCase.disableDataStoreSweep;
 					gc = createGcWithPrivateMembers(
 						{
 							gcFeatureMatrix: { gcGeneration: 1 },

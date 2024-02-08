@@ -85,7 +85,6 @@ describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 			this.skip();
 		}
 
-		settings["Fluid.GarbageCollection.DisableAttachmentBlobSweep"] = true; // Only sweep DataStores
 		settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = true;
 		settings["Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs"] = tombstoneTimeoutMs;
 	});
