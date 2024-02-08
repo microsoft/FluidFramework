@@ -219,11 +219,7 @@ export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
     // (undocumented)
     category?: TelemetryEventCategory;
     // (undocumented)
-    continuityID?: string | undefined;
-    // (undocumented)
     eventName: string;
-    // (undocumented)
-    sessionID?: string | undefined;
 }
 
 // @public

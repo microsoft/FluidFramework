@@ -73,7 +73,7 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 
 	private readonly sessionID?: string;
 	private readonly continuityID?: string;
-	private readonly CONTINUITY_ID_KEY = "myAppBrowserId";
+	private readonly CONTINUITY_ID_KEY = "Fluid.Devtools.ContinuityId";
 
 	public constructor() {
 		const channelConfig: IChannelConfiguration = {
