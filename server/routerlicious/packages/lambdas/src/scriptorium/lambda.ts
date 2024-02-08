@@ -46,6 +46,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 	private readonly maxDbBatchSize: number;
 	private readonly restartOnCheckpointFailure: boolean;
 	private readonly logSavedOpsTimeIntervalMs: number;
+	private readonly opsCountTelemetryEnabled: boolean;
 	private savedOpsCount: number = 0;
 
 	constructor(
@@ -60,18 +61,20 @@ export class ScriptoriumLambda implements IPartitionLambda {
 		this.maxDbBatchSize = this.providerConfig?.maxDbBatchSize ?? 1000;
 		this.restartOnCheckpointFailure = this.providerConfig?.restartOnCheckpointFailure;
 		this.logSavedOpsTimeIntervalMs = this.providerConfig?.logSavedOpsTimeIntervalMs ?? 60000;
+		this.opsCountTelemetryEnabled = this.providerConfig?.opsCountTelemetryEnabled;
 	}
 
 	public handler(message: IQueuedMessage) {
-		setInterval(() => {
-			if (this.savedOpsCount > 0) {
-				Lumberjack.info("Scriptorium: Ops saved to db.", {
-					savedOpsCount: this.savedOpsCount,
-					timeIntervalMs: this.logSavedOpsTimeIntervalMs,
-				});
-				this.savedOpsCount = 0;
-			}
-		}, this.logSavedOpsTimeIntervalMs);
+		if (this.opsCountTelemetryEnabled) {
+			setInterval(() => {
+				if (this.savedOpsCount > 0) {
+					Lumberjack.info("Scriptorium: Ops saved to db.", {
+						savedOpsCount: this.savedOpsCount,
+					});
+					this.savedOpsCount = 0;
+				}
+			}, this.logSavedOpsTimeIntervalMs);
+		}
 
 		const boxcar = extractBoxcar(message);
 
