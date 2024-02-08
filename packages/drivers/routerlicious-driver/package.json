@@ -182,6 +182,9 @@
 			"RemovedEnumDeclaration_RouterliciousErrorType": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"InterfaceDeclaration_IRouterliciousDriverPolicies": {
+				"backCompat": false
 			}
 		}
 	}

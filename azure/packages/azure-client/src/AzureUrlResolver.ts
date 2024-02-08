@@ -8,6 +8,14 @@ import {
 	type IResolvedUrl,
 	type IUrlResolver,
 } from "@fluidframework/driver-definitions";
+import type { IAzureResolvedUrl } from "@fluidframework/routerlicious-driver";
+
+/**
+ * Additional headers (beyond DriverHeader) used by the AzureUrlResolver.
+ */
+enum AzureDriverHeaders {
+	createAsEphemeral = "createAsEphemeral",
+}
 
 /**
  * Implementation of {@link @fluidframework/driver-definitions#IUrlResolver} to resolve documents stored using the
@@ -17,14 +25,13 @@ import {
  * providers that fulfill the {@link @fluidframework/routerlicious-driver#ITokenProvider} interface.
  */
 export class AzureUrlResolver implements IUrlResolver {
-	public constructor() {}
-
-	public async resolve(request: IRequest): Promise<IResolvedUrl> {
+	public async resolve(request: IRequest): Promise<IAzureResolvedUrl> {
 		const { ordererUrl, storageUrl, tenantId, containerId } = decodeAzureUrl(request.url);
 		// determine whether the request is for creating of a new container.
 		// such request has the `createNew` header set to true and doesn't have a container ID.
-		if (request.headers && request.headers[DriverHeader.createNew] === true) {
-			return {
+		if (request.headers?.[DriverHeader.createNew] === true) {
+			const resolvedCreateNewUrl: IAzureResolvedUrl = {
+				azureResolvedUrl: true,
 				endpoints: {
 					deltaStorageUrl: `${ordererUrl}/deltas/${tenantId}/new`,
 					ordererUrl,
@@ -37,12 +44,17 @@ export class AzureUrlResolver implements IUrlResolver {
 				type: "fluid",
 				url: `${ordererUrl}/${tenantId}/new`,
 			};
+			if (request.headers?.[AzureDriverHeaders.createAsEphemeral] === true) {
+				resolvedCreateNewUrl.createAsEphemeral = true;
+			}
+			return resolvedCreateNewUrl;
 		}
 		if (containerId === undefined) {
 			throw new Error("Azure URL did not contain containerId");
 		}
 		const documentUrl = `${ordererUrl}/${tenantId}/${containerId}`;
 		return {
+			azureResolvedUrl: true,
 			endpoints: {
 				deltaStorageUrl: `${ordererUrl}/deltas/${tenantId}/${containerId}`,
 				ordererUrl,
@@ -98,8 +110,13 @@ function decodeAzureUrl(urlString: string): {
  *
  * @param endpointUrl - URI to the Azure Fluid Relay service discovery endpoint.
  * @param tenantId - Unique tenant identifier.
+ * @param createAsEphemeral - Whether to create the new container as ephemeral.
  */
-export const createAzureCreateNewRequest = (endpointUrl: string, tenantId: string): IRequest => {
+export const createAzureCreateNewRequest = (
+	endpointUrl: string,
+	tenantId: string,
+	createAsEphemeral?: boolean,
+): IRequest => {
 	const url = new URL(endpointUrl);
 	url.searchParams.append("storage", encodeURIComponent(endpointUrl));
 	url.searchParams.append("tenantId", encodeURIComponent(tenantId));
@@ -107,6 +124,7 @@ export const createAzureCreateNewRequest = (endpointUrl: string, tenantId: strin
 		url: url.href,
 		headers: {
 			[DriverHeader.createNew]: true,
+			[AzureDriverHeaders.createAsEphemeral]: createAsEphemeral === true,
 		},
 	};
 };

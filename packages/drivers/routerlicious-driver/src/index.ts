@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+export { IAzureResolvedUrl } from "./azureResolvedUrl";
+
 // Tokens
 export { DefaultTokenProvider } from "./defaultTokenProvider";
 export { ITokenProvider, ITokenResponse, ITokenService } from "./tokens";

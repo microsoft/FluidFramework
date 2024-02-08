@@ -288,21 +288,25 @@ export class AzureClient {
 	private async createFluidContainer<TContainerSchema extends ContainerSchema>(
 		container: IContainer,
 		connection: AzureConnectionConfig,
+		// Option 1, add param to createFluidContainer:
+		// createAsEphemeral?: boolean,
 	): Promise<IFluidContainer<TContainerSchema>> {
-		const createNewRequest = createAzureCreateNewRequest(
-			connection.endpoint,
-			getTenantId(connection),
-		);
-
 		const rootDataObject = await this.getContainerEntryPoint(container);
 
 		/**
 		 * See {@link FluidContainer.attach}
+		 * Option 2, add param to attach:
+		 * createAsEphemeral?: boolean
 		 */
 		const attach = async (): Promise<string> => {
 			if (container.attachState !== AttachState.Detached) {
 				throw new Error("Cannot attach container. Container is not in detached state");
 			}
+			const createNewRequest = createAzureCreateNewRequest(
+				connection.endpoint,
+				getTenantId(connection),
+				// createAsEphemeral,
+			);
 			await container.attach(createNewRequest);
 			if (container.resolvedUrl === undefined) {
 				throw new Error("Resolved Url not available on attached container");

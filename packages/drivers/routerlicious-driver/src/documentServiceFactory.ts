@@ -40,6 +40,7 @@ import { ICache, InMemoryCache, NullCache } from "./cache";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { ISnapshotTreeVersion } from "./definitions";
 import { INormalizedWholeSnapshot } from "./contracts";
+import { isAzureResolvedUrl } from "./azureResolvedUrl";
 
 const maximumSnapshotCacheDurationMs: FiveDaysMs = 432_000_000; // 5 days in ms
 
@@ -52,7 +53,6 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
 	enableRestLess: true,
 	enableInternalSummaryCaching: true,
 	enableLongPollingDowngrade: true,
-	isEphemeralContainer: false,
 };
 
 /**
@@ -138,6 +138,10 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			resolvedUrl.endpoints.ordererUrl,
 		);
 
+		const createAsEphemeral = isAzureResolvedUrl(resolvedUrl)
+			? resolvedUrl.createAsEphemeral === true
+			: false;
+
 		const res = await PerformanceEvent.timedExecAsync(
 			logger2,
 			{
@@ -145,7 +149,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 				details: JSON.stringify({
 					enableDiscovery: this.driverPolicies.enableDiscovery,
 					sequenceNumber: documentAttributes.sequenceNumber,
-					isEphemeralContainer: this.driverPolicies.isEphemeralContainer,
+					isEphemeralContainer: createAsEphemeral,
 				}),
 			},
 			async (event) => {
@@ -159,7 +163,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 						values: quorumValues,
 						enableDiscovery: this.driverPolicies.enableDiscovery,
 						generateToken: this.tokenProvider.documentPostCreateCallback !== undefined,
-						isEphemeralContainer: this.driverPolicies.isEphemeralContainer,
+						isEphemeralContainer: createAsEphemeral,
 						enableAnyBinaryBlobOnFirstSummary: true,
 					})
 				).content;
