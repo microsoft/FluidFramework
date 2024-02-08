@@ -350,8 +350,8 @@ export interface ISignalMessageBase {
     clientConnectionNumber?: number;
     content: unknown;
     referenceSequenceNumber?: number;
-    type?: string;
     targetClientId?: string;
+    type?: string;
 }
 
 // @alpha (undocumented)
