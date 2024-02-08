@@ -66,10 +66,8 @@
 		"prettier": "~2.8.8",
 		"prettier-plugin-go-template": "^0.0.13",
 		"rimraf": "^5.0.1",
+		"shx": "^0.3.4",
 		"start-server-and-test": "^2.0.0"
-	},
-	"devDependencies": {
-		"shx": "^0.3.4"
 	},
 	"pnpm": {
 		"overrides": {
