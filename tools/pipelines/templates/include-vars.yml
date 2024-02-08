@@ -103,3 +103,7 @@ variables:
 - name: testCoverage
   value: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
   readonly: true
+
+# Set a cache dir for puppeteer
+- name: PUPPETEER_CACHE_DIR
+  value: $(Pipeline.Workspace)/.puppeteer-cache
