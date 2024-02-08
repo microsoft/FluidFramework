@@ -4,14 +4,15 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { FieldKey } from "../schema-stored";
-import { FieldUpPath, UpPath } from "./pathTree";
-import { TreeType, Value } from "./types";
+import { FieldKey } from "../schema-stored/index.js";
+import { FieldUpPath, UpPath } from "./pathTree.js";
+import { TreeType, Value } from "./types.js";
 
 /**
  * A symbol for marking an object as an {@link ITreeCursor}.
  *
  * Useful when APIs want to take in tree data in multiple formats, including cursors.
+ * @internal
  */
 export const CursorMarker: unique symbol = Symbol("CursorMarker");
 
@@ -28,7 +29,7 @@ export function isCursor(data: unknown): data is ITreeCursor {
 
 /**
  * A stateful low-level interface for reading tree data.
- * @alpha
+ * @internal
  *
  * @remarks Cursor exists so that specialized data formats can be viewed through
  * a common abstraction. This allows performance optimizations to be done based
@@ -284,7 +285,7 @@ export interface ITreeCursor {
  * For example, if a node is being inserted in the 5th position in a field "Foo", you can update a path in that node's subtree to its new path by prefixing it with
  * `{ parent: theNodeAboveTheMovedNode, rootFieldOverride: Foo, indexOffset: 5 }`.
  * See {@link prefixPath} and {@link prefixFieldPath} for how to apply the prefix to the paths.
- * @alpha
+ * @internal
  */
 export interface PathRootPrefix {
 	/**
@@ -309,7 +310,7 @@ export interface PathRootPrefix {
 }
 
 /**
- * @alpha
+ * @internal
  */
 export const enum CursorLocationType {
 	/**
@@ -327,7 +328,7 @@ export const enum CursorLocationType {
 
 /**
  * {@link ITreeCursor} that is never pending.
- * @alpha
+ * @internal
  */
 export interface ITreeCursorSynchronous extends ITreeCursor {
 	readonly pending: false;

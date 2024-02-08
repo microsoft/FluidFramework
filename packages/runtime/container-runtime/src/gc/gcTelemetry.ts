@@ -63,16 +63,24 @@ interface INodeUsageProps extends ICommonProps {
 	currentReferenceTimestampMs: number | undefined;
 	packagePath: readonly string[] | undefined;
 	fromId?: string;
+	autorecovery?: true;
 }
 
 /**
- * Encapsulates the logic that tracks the various telemetry logged by the Garbage Collector. There are 4 types of
- * telemetry logged:
+ * Encapsulates the logic that tracks the various telemetry logged by the Garbage Collector.
+ *
+ * These events are not logged as errors, just generic events, since there can be false positives:
+ *
  * 1. inactiveObject telemetry - When an inactive node is used - A node that has been unreferenced for inactiveTimeoutMs.
- * 2. sweepReadyObject telemetry - When a sweep ready node is used - A node that has been unreferenced for sweepTimeoutMs.
- * 3. Tombstone telemetry - When a tombstoned node is used - A node that that has been marked as tombstone.
- * 4. Sweep / deleted telemetry - When a node is detected as sweep ready in the sweep phase.
- * 5. Unknown outbound reference telemetry - When a node is referenced but GC is not explicitly notified of it.
+ * 2. tombstoneReadyObject telemetry - When a tombstone-ready node is used - A node that has been unreferenced for tombstoneTimeoutMs.
+ * 3. sweepReadyObject telemetry - When a sweep-ready node is used - A node that has been unreferenced for tombstoneTimeoutMs + sweepGracePeriodMs.
+ *
+ * These events are logged as errors since they are based on the core GC logic:
+ *
+ * 1. Tombstone telemetry - When a tombstoned node is used - A node that has been marked as tombstone.
+ * 2. Unknown outbound reference telemetry - When a node is referenced but GC was not notified of it when the new reference appeared.
+ *
+ * Note: The telemetry for a Deleted node being used is logged elsewhere in this package.
  */
 export class GCTelemetryTracker {
 	// Keeps track of unreferenced events that are logged for a node. This is used to limit the log generation to one
@@ -147,11 +155,11 @@ export class GCTelemetryTracker {
 				case UnreferencedState.Inactive:
 					return this.configs.inactiveTimeoutMs;
 				case UnreferencedState.TombstoneReady:
-					return this.configs.sweepTimeoutMs;
+					return this.configs.tombstoneTimeoutMs;
 				case UnreferencedState.SweepReady:
 					return (
-						this.configs.sweepTimeoutMs &&
-						this.configs.sweepTimeoutMs + this.configs.sweepGracePeriodMs
+						this.configs.tombstoneTimeoutMs &&
+						this.configs.tombstoneTimeoutMs + this.configs.sweepGracePeriodMs
 					);
 				default:
 					return undefined;
@@ -182,8 +190,6 @@ export class GCTelemetryTracker {
 		};
 
 		// If the node that is used is tombstoned, log a tombstone telemetry.
-		// Note that this is done before checking if "nodeStateTracker" is undefined below because unreferenced
-		// tracking may not have yet been enabled. That happens only after the client transitions to write mode.
 		if (nodeUsageProps.isTombstoned) {
 			this.logTombstoneUsageTelemetry(nodeUsageProps, unrefEventProps, nodeType, usageType);
 		}
@@ -337,7 +343,9 @@ export class GCTelemetryTracker {
 			}
 
 			if (missingExplicitRoutes.length > 0) {
-				logger.sendErrorEvent({
+				// Send as Generic not Error since there are known corner cases where this will fire.
+				// E.g. If an old client re-references a node via an attach op (that doesn't include GC Data)
+				logger.sendTelemetryEvent({
 					eventName: "gcUnknownOutboundReferences",
 					...tagCodeArtifacts({
 						id: nodeId,
@@ -389,6 +397,9 @@ export class GCTelemetryTracker {
 						fromPkg: fromPkg?.join("/"),
 					}),
 				};
+
+				// These are logged as generic events and not errors because there can be false positives. The Tombstone
+				// and Delete errors are separately logged and are reliable.
 				logger.sendTelemetryEvent(event);
 			}
 		}

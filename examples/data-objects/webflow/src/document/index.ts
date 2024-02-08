@@ -3,22 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/core-utils";
 import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
-import {
-	LazyLoadedDataObject,
-	LazyLoadedDataObjectFactory,
-} from "@fluidframework/data-object-base";
 import {
 	createDetachedLocalReferencePosition,
 	createRemoveRangeOp,
 	IMergeTreeRemoveMsg,
 	refGetTileLabels,
 } from "@fluidframework/merge-tree";
-import {
-	IFluidDataStoreContext,
-	IFluidDataStoreFactory,
-} from "@fluidframework/runtime-definitions";
 import {
 	SharedString,
 	SharedStringSegment,
@@ -34,7 +27,6 @@ import {
 	reservedTileLabelsKey,
 	TextSegment,
 } from "@fluidframework/sequence";
-import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
 import { clamp, TagName, TokenList } from "../util/index.js";
 import { IHTMLAttributes } from "../util/attr.js";
 import { documentType } from "../package.js";
@@ -142,20 +134,16 @@ const textId = "text";
 /**
  * @internal
  */
-export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDocumentEvents> {
-	private static readonly factory = new LazyLoadedDataObjectFactory<FlowDocument>(
+export class FlowDocument extends DataObject {
+	private static readonly factory = new DataObjectFactory<FlowDocument>(
 		documentType,
 		FlowDocument,
-		/* root: */ SharedDirectory.getFactory(),
 		[SharedString.getFactory()],
+		{},
 	);
 
-	public static getFactory(): IFluidDataStoreFactory {
+	public static getFactory() {
 		return FlowDocument.factory;
-	}
-
-	public static async create(parentContext: IFluidDataStoreContext, props?: any) {
-		return FlowDocument.factory.create(parentContext, props);
 	}
 
 	public get length() {
@@ -172,16 +160,21 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
 
 	private sharedString: SharedString;
 
-	public create() {
+	protected async initializingFirstTime(props?: any): Promise<void> {
 		// For 'findTile(..)', we must enable tracking of left/rightmost tiles:
 		Object.assign(this.runtime, { options: { ...(this.runtime.options || {}) } });
 
 		this.sharedString = SharedString.create(this.runtime);
 		this.root.set(textId, this.sharedString.handle);
-		this.forwardEvent(this.sharedString, "sequenceDelta", "maintenance");
+		this.sharedString.on("sequenceDelta", (event, target) => {
+			this.emit("sequenceDelta", event, target);
+		});
+		this.sharedString.on("maintenance", (event, target) => {
+			this.emit("maintenance", event, target);
+		});
 	}
 
-	public async load() {
+	protected async initializingFromExisting(): Promise<void> {
 		// For 'findTile(..)', we must enable tracking of left/rightmost tiles:
 		Object.assign(this.runtime, { options: { ...(this.runtime.options || {}) } });
 
@@ -190,7 +183,12 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
 			throw new Error("String not initialized properly");
 		}
 		this.sharedString = await handle.get();
-		this.forwardEvent(this.sharedString, "sequenceDelta", "maintenance");
+		this.sharedString.on("sequenceDelta", (event, target) => {
+			this.emit("sequenceDelta", event, target);
+		});
+		this.sharedString.on("maintenance", (event, target) => {
+			this.emit("maintenance", event, target);
+		});
 	}
 
 	public async getComponentFromMarker(marker: Marker) {
@@ -417,20 +415,20 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
 		this.sharedString.annotateRange(start, end, { attr });
 	}
 
-	public findTile(
-		position: number,
-		tileType: DocTile,
-		preceding: boolean,
-	): { tile: ReferencePosition; pos: number } {
-		return this.sharedString.findTile(position, tileType as unknown as string, preceding);
+	public searchForMarker(startPos: number, markerLabel: string, forwards: boolean) {
+		return this.sharedString.searchForMarker(startPos, markerLabel, forwards);
 	}
 
 	public findParagraph(position: number) {
-		const maybeStart = this.findTile(position, DocTile.paragraph, /* preceding: */ true);
-		const start = maybeStart ? maybeStart.pos : 0;
+		const maybeStart = this.searchForMarker(position, DocTile.paragraph, /* forwards: */ true);
+		const start = maybeStart
+			? this.sharedString.localReferencePositionToPosition(maybeStart)
+			: 0;
 
-		const maybeEnd = this.findTile(position, DocTile.paragraph, /* preceding: */ false);
-		const end = maybeEnd ? maybeEnd.pos + 1 : this.length;
+		const maybeEnd = this.searchForMarker(position, DocTile.paragraph, /* forwards: */ false);
+		const end = maybeEnd
+			? this.sharedString.localReferencePositionToPosition(maybeEnd) + 1
+			: this.length;
 
 		return { start, end };
 	}

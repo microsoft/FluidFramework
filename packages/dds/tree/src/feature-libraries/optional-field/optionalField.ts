@@ -6,18 +6,15 @@
 import { assert } from "@fluidframework/core-utils";
 import {
 	TaggedChange,
-	tagChange,
 	ChangesetLocalId,
 	RevisionTag,
-	areEqualChangeAtomIds,
-	RevisionMetadataSource,
 	DeltaFieldChanges,
 	DeltaDetachedNodeRename,
 	DeltaMark,
 	DeltaDetachedNodeId,
 	DeltaDetachedNodeChanges,
-} from "../../core";
-import { fail, Mutable, IdAllocator, SizedNestedMap } from "../../util";
+} from "../../core/index.js";
+import { Mutable, IdAllocator, SizedNestedMap } from "../../util/index.js";
 import {
 	ToDelta,
 	FieldChangeRebaser,
@@ -26,16 +23,14 @@ import {
 	NodeChangeRebaser,
 	NodeChangeset,
 	FieldEditor,
-	CrossFieldManager,
-	getIntention,
 	NodeExistenceState,
 	FieldChangeHandler,
 	RelevantRemovedRootsFromChild,
 	NodeChangePruner,
-} from "../modular-schema";
-import { nodeIdFromChangeAtom } from "../deltaUtils";
-import { RegisterId, OptionalChangeset } from "./optionalFieldChangeTypes";
-import { makeOptionalFieldCodecFamily } from "./optionalFieldCodecs";
+} from "../modular-schema/index.js";
+import { nodeIdFromChangeAtom } from "../deltaUtils.js";
+import { RegisterId, OptionalChangeset } from "./optionalFieldChangeTypes.js";
+import { makeOptionalFieldCodecFamily } from "./optionalFieldCodecs.js";
 
 interface IRegisterMap<T> {
 	set(id: RegisterId, childChange: T): void;
@@ -155,129 +150,73 @@ function tryInferInputContext(change: OptionalChangeset): "empty" | "filled" | u
 
 export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	compose: (
-		changes: TaggedChange<OptionalChangeset>[],
+		{ change: change1, revision: revision1 }: TaggedChange<OptionalChangeset>,
+		{ change: change2, revision: revision2 }: TaggedChange<OptionalChangeset>,
 		composeChild: NodeChangeComposer,
-		genId: IdAllocator,
-		crossFieldManager: CrossFieldManager,
-		revisionMetadata: RevisionMetadataSource,
 	): OptionalChangeset => {
-		const getBidirectionalMaps = (
-			moves: OptionalChangeset["moves"],
-		): {
-			srcToDst: RegisterMap<[dst: RegisterId, target: "nodeTargeting" | "cellTargeting"]>;
-			dstToSrc: RegisterMap<RegisterId>;
-		} => {
-			const srcToDst = new RegisterMap<
-				[dst: RegisterId, target: "nodeTargeting" | "cellTargeting"]
-			>();
-			const dstToSrc = new RegisterMap<RegisterId>();
-			for (const [src, dst, target] of moves) {
-				srcToDst.set(src, [dst, target]);
-				dstToSrc.set(dst, src);
-			}
-			return { srcToDst, dstToSrc };
-		};
+		const inputContext = tryInferInputContext(change1) ?? tryInferInputContext(change2);
 
-		let latestReservedDetachId: RegisterId | undefined;
-		let inputContext: "empty" | "filled" | undefined;
+		const earliestReservedDetachId: RegisterId | undefined =
+			withRevisionOrUndefined(change1.reservedDetachId, revision1) ??
+			withRevisionOrUndefined(change2.reservedDetachId, revision2);
 
-		const childChangesByOriginalId = new RegisterMap<TaggedChange<NodeChangeset>[]>();
-		// TODO: It might be possible to compose moves in place rather than repeatedly copy.
-		// Additionally, working out a 'register allocation' strategy which enables frequent cancellation of noop moves
-		// for sandwich rebases would help with cloning if in-place proves too difficult
-		const current = getBidirectionalMaps([]);
-		for (const { change, revision } of changes) {
-			inputContext ??= tryInferInputContext(change);
-			const withIntention = (id: RegisterId): RegisterId => {
-				if (id === "self") {
-					return id;
+		const { srcToDst, dstToSrc } = getBidirectionalMaps(change1.moves, revision1);
+
+		// This loop will update srcToDst to map from registers before either change to
+		// registers after both changes have been applied.
+		// dstToSrc maps from registers after change1 is applied to registers before.
+		// This loop will not change dstToSrc.
+		for (const [src, dst, target] of change2.moves) {
+			const srcWithRevision = withRevision(src, revision2);
+			const dstWithRevision = withRevision(dst, revision2);
+			const originalSrc = dstToSrc.get(srcWithRevision);
+			if (originalSrc !== undefined) {
+				const entry = srcToDst.get(originalSrc);
+				assert(entry !== undefined, "There should be a corresponding entry");
+				entry[0] = dstWithRevision;
+				if (target === "nodeTargeting") {
+					entry[1] = target;
 				}
-				const intention = getIntention(id.revision ?? revision, revisionMetadata);
-				return { revision: intention, localId: id.localId };
-			};
-
-			const nextSrcToDst = new RegisterMap<
-				[dst: RegisterId, target: "nodeTargeting" | "cellTargeting"]
-			>();
-			const nextDstToSrc = new RegisterMap<RegisterId>();
-
-			if (change.reservedDetachId !== undefined) {
-				latestReservedDetachId = withIntention(change.reservedDetachId);
+			} else {
+				srcToDst.set(srcWithRevision, [dstWithRevision, target]);
 			}
-
-			// Compose all the things that `change` moved.
-			for (const [unintentionedSrc, unintentionedDst, target] of change.moves) {
-				const src = withIntention(unintentionedSrc);
-				const dst = withIntention(unintentionedDst);
-				let originalSrc = current.dstToSrc.get(src);
-				let currentTarget: "cellTargeting" | "nodeTargeting" | undefined;
-				if (originalSrc !== undefined) {
-					const [dst2, existingTarget] =
-						current.srcToDst.get(originalSrc) ?? fail("expected backward mapping");
-					assert(
-						areEqualRegisterIds(dst2, src),
-						0x855 /* expected consistent backward mapping */,
-					);
-					currentTarget = existingTarget;
-				} else {
-					originalSrc = src;
-				}
-				nextSrcToDst.set(originalSrc, [
-					dst,
-					target === "cellTargeting" &&
-					(currentTarget === undefined || currentTarget === "cellTargeting")
-						? "cellTargeting"
-						: "nodeTargeting",
-				]);
-				nextDstToSrc.set(dst, originalSrc);
-			}
-
-			// Include any existing moves that `change` didn't affect.
-			for (const [src, [dst, target]] of current.srcToDst.entries()) {
-				if (!nextSrcToDst.has(src)) {
-					const intentionedDst = withIntention(dst);
-					nextSrcToDst.set(src, [intentionedDst, target]);
-					nextDstToSrc.set(intentionedDst, src);
-				}
-			}
-
-			for (const [id, childChange] of change.childChanges) {
-				const intentionedId = withIntention(id);
-				const originalId = current.dstToSrc.get(intentionedId) ?? intentionedId;
-				const existingChanges = childChangesByOriginalId.get(originalId);
-				const taggedChange = tagChange(childChange, revision);
-				if (existingChanges === undefined) {
-					childChangesByOriginalId.set(originalId, [taggedChange]);
-				} else {
-					existingChanges.push(taggedChange);
-				}
-			}
-
-			current.srcToDst = nextSrcToDst;
-			current.dstToSrc = nextDstToSrc;
 		}
 
 		const composedMoves: OptionalChangeset["moves"] = [];
-		for (const [src, [dst, target]] of current.srcToDst.entries()) {
+		for (const [src, [dst, target]] of srcToDst.entries()) {
 			composedMoves.push([src, dst, target]);
+		}
+
+		const childChanges2ByOriginalId = new RegisterMap<NodeChangeset>();
+		for (const [id, change] of change2.childChanges) {
+			const idWithRevision = withRevision(id, revision2);
+			const originalId = dstToSrc.get(idWithRevision);
+			childChanges2ByOriginalId.set(originalId ?? idWithRevision, change);
+		}
+
+		const composedChildChanges: OptionalChangeset["childChanges"] = [];
+		for (const [id, childChange1] of change1.childChanges) {
+			const idWithRevision = withRevision(id, revision1);
+			const childChange2 = childChanges2ByOriginalId.get(idWithRevision);
+			composedChildChanges.push([idWithRevision, composeChild(childChange1, childChange2)]);
+			childChanges2ByOriginalId.delete(idWithRevision);
+		}
+
+		for (const [id, childChange2] of childChanges2ByOriginalId.entries()) {
+			composedChildChanges.push([id, composeChild(undefined, childChange2)]);
 		}
 
 		const composed: OptionalChangeset = {
 			moves: composedMoves,
-			childChanges: Array.from(childChangesByOriginalId.entries(), ([id, childChanges]) => [
-				id,
-				composeChild(childChanges),
-			]),
+			childChanges: composedChildChanges,
 		};
 
 		if (inputContext === "empty") {
-			composed.reservedDetachId = latestReservedDetachId;
+			composed.reservedDetachId = earliestReservedDetachId;
 		}
 
 		return composed;
 	},
-
-	amendCompose: () => fail("Not implemented"),
 
 	invert: (
 		{ revision, change }: TaggedChange<OptionalChangeset>,
@@ -296,23 +235,43 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			invertIdMap.set(src, dst);
 		}
 
-		let inverseFillsSelf = false;
-		let inverseEmptiesSelf = false;
+		let changeEmptiesSelf = false;
+		let changeFillsSelf = false;
 		const invertedMoves: typeof change.moves = [];
 		for (const [src, dst] of moves) {
-			// TODO:AB#6298: This assert can legitimately fail for transactions, meaning we have little test coverage there.
-			assert(
-				src === "self" || dst === "self",
-				0x856 /* Invert is not currently supported for changes that transfer nodes between non-self registers. */,
-			);
-			if (src !== "self" && dst === "self") {
-				inverseEmptiesSelf = true;
-				// TODO:AB#6319: This might lead to a situation where we put a node in a register it never came from, and that register may not be empty.
-				invertedMoves.push([withIntention(dst), withIntention(src), "cellTargeting"]);
-			} else {
-				inverseFillsSelf = true;
-				invertedMoves.push([withIntention(dst), withIntention(src), "nodeTargeting"]);
-			}
+			changeEmptiesSelf ||= src === "self";
+			changeFillsSelf ||= dst === "self";
+
+			/* eslint-disable tsdoc/syntax */
+			/**
+			 * TODO:AB#6319: The targeting choices here are not really semantically right; this can lead to a situation where we put a node
+			 * in a non-empty register.
+			 *
+			 * Consider:
+			 * Start: field contents are "A". An edit E1 replaces "A" with "B". Then two branches with that edit on their undo-redo stack
+			 * concurrently undo it.
+			 *
+			 * Giving names to these edits:
+			 * E1: Replace A with B ( build [E1,1], move: cell:self->[E1,2], node:[E1,1]->self )
+			 * E2: undo E1 ( move: cell:self->[E1,1], node:[E1,2]->self )
+			 * E3, concurrent to E2: undo E1 ( move: cell:self->[E1,1], node:[E1,2]->self )
+			 *
+			 * Say E2 is sequenced first. Output context of E2 has registers "self" and [E1,1] filled with "A" and "B" respectively.
+			 *
+			 * Now consider E3' = rebase(E3 over E2).
+			 *
+			 * When rebasing the moves,
+			 * cell:self->[E1,1] remains the same as it targets the cell.
+			 * node:[E1,2]->self becomes self->self.
+			 *
+			 * This is an invalid edit for two reasons:
+			 * 1. It has two destinations for the "self" register
+			 * 2. One of those destinations is non-empty, without a corresponding move to empty it.
+			 */
+			/* eslint-enable tsdoc/syntax */
+			const target: "nodeTargeting" | "cellTargeting" =
+				src !== "self" && dst === "self" ? "cellTargeting" : "nodeTargeting";
+			invertedMoves.push([withIntention(dst), withIntention(src), target]);
 		}
 		const inverted: OptionalChangeset = {
 			moves: invertedMoves,
@@ -322,6 +281,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			]),
 		};
 
+		const inverseEmptiesSelf = changeFillsSelf;
+		const inverseFillsSelf = changeEmptiesSelf;
 		if (inverseFillsSelf && !inverseEmptiesSelf) {
 			inverted.reservedDetachId = { localId: genId.getNextId() };
 		}
@@ -332,16 +293,12 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		change: OptionalChangeset,
 		overTagged: TaggedChange<OptionalChangeset>,
 		rebaseChild: NodeChangeRebaser,
-		genId: IdAllocator,
-		crossFieldManager: CrossFieldManager,
-		revisionMetadata: RevisionMetadataSource,
-		existenceState?: NodeExistenceState,
 	): OptionalChangeset => {
 		const withIntention = (id: RegisterId): RegisterId => {
 			if (id === "self") {
 				return id;
 			}
-			const intention = getIntention(id.revision ?? overTagged.revision, revisionMetadata);
+			const intention = id.revision ?? overTagged.revision;
 			return { revision: intention, localId: id.localId };
 		};
 
@@ -451,6 +408,41 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		return prunedChange;
 	},
 };
+
+function getBidirectionalMaps(
+	moves: OptionalChangeset["moves"],
+	revision: RevisionTag | undefined,
+): {
+	srcToDst: RegisterMap<[dst: RegisterId, target: "nodeTargeting" | "cellTargeting"]>;
+	dstToSrc: RegisterMap<RegisterId>;
+} {
+	const srcToDst = new RegisterMap<
+		[dst: RegisterId, target: "nodeTargeting" | "cellTargeting"]
+	>();
+	const dstToSrc = new RegisterMap<RegisterId>();
+	for (const [src, dst, target] of moves) {
+		const srcWithRevision = withRevision(src, revision);
+		const dstWithRevision = withRevision(dst, revision);
+		srcToDst.set(srcWithRevision, [dstWithRevision, target]);
+		dstToSrc.set(dstWithRevision, srcWithRevision);
+	}
+	return { srcToDst, dstToSrc };
+}
+
+function withRevisionOrUndefined(
+	id: RegisterId | undefined,
+	revision: RevisionTag | undefined,
+): RegisterId | undefined {
+	return id !== undefined ? withRevision(id, revision) : undefined;
+}
+
+function withRevision(id: RegisterId, revision: RevisionTag | undefined): RegisterId {
+	if (id === "self") {
+		return id;
+	}
+
+	return { revision: id.revision ?? revision, localId: id.localId };
+}
 
 export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 	/**
@@ -583,16 +575,12 @@ export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, Option
 	relevantRemovedRoots,
 
 	isEmpty: (change: OptionalChangeset) =>
-		change.childChanges.length === 0 && change.moves.length === 0,
+		change.childChanges.length === 0 &&
+		change.moves.length === 0 &&
+		change.reservedDetachId === undefined,
+
+	createEmpty: () => ({ moves: [], childChanges: [] }),
 };
-
-function areEqualRegisterIds(a: RegisterId, b: RegisterId): boolean {
-	if (typeof a === "string" || typeof b === "string") {
-		return a === b;
-	}
-
-	return areEqualChangeAtomIds(a, b);
-}
 
 function* relevantRemovedRoots(
 	{ change, revision }: TaggedChange<OptionalChangeset>,

@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { LocalNodeKey, NodeKeyIndex, NodeKeyManager, StableNodeKey } from "../node-key";
-import { FlexTreeObjectNode } from "./flexTreeTypes";
+import { LocalNodeKey, NodeKeyIndex, NodeKeyManager, StableNodeKey } from "../node-key/index.js";
+import { FlexTreeObjectNode } from "./flexTreeTypes.js";
 
 /**
  * A collection of utilities for managing {@link StableNodeKey}s.
  * A node key can be assigned to a node and allows that node to be easily retrieved from the tree at a later time. (see `nodeKey.map`).
  * @remarks {@link LocalNodeKey}s are put on {@link FlexTreeObjectNode}s via a special field.
  * A node with a node key in its schema must always have a node key.
- * @alpha
+ * @internal
  */
 export interface NodeKeys {
 	/**

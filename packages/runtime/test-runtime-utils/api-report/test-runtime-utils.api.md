@@ -19,6 +19,7 @@ import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
+import { IdCreationRange } from '@fluidframework/id-compressor';
 import { IDeltaConnection } from '@fluidframework/datastore-definitions';
 import { IDeltaHandler } from '@fluidframework/datastore-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
@@ -37,7 +38,6 @@ import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitio
 import { IIdCompressor } from '@fluidframework/id-compressor';
 import { IIdCompressorCore } from '@fluidframework/id-compressor';
 import { ILoader } from '@fluidframework/container-definitions';
-import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
@@ -113,7 +113,11 @@ export class MockContainerRuntime {
     dirty(): void;
     // (undocumented)
     protected readonly factory: MockContainerRuntimeFactory;
+    // (undocumented)
+    finalizeIdRange(range: IdCreationRange): void;
     flush(): void;
+    // (undocumented)
+    getGeneratedIdRange(): IdCreationRange | undefined;
     // (undocumented)
     protected readonly overrides?: {
         minimumSequenceNumber?: number | undefined;
@@ -153,6 +157,8 @@ export class MockContainerRuntimeFactory {
     protected readonly runtimes: MockContainerRuntime[];
     // (undocumented)
     sequenceNumber: number;
+    // (undocumented)
+    synchronizeIdCompressors(): void;
 }
 
 // @alpha
@@ -356,7 +362,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     once(event: string | symbol, listener: (...args: any[]) => void): this;
     // (undocumented)
-    options: ILoaderOptions;
+    options: Record<string | number, any>;
     // (undocumented)
     packagePath: readonly string[];
     // (undocumented)
@@ -380,10 +386,11 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
         entryPoint?: IFluidHandle<FluidObject>;
         id?: string;
         logger?: ITelemetryLoggerExt;
+        idCompressor?: IIdCompressor & IIdCompressorCore;
     });
     // (undocumented)
     get absolutePath(): string;
-    // (undocumented)
+    // @deprecated (undocumented)
     addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
     // (undocumented)
     applyStashedOp(content: any): Promise<void>;
@@ -440,6 +447,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     readonly id: string;
     // (undocumented)
+    idCompressor?: IIdCompressor & IIdCompressorCore;
+    // (undocumented)
     get IFluidHandleContext(): IFluidHandleContext;
     // (undocumented)
     get isAttached(): boolean;
@@ -455,7 +464,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     get objectsRoutingContext(): IFluidHandleContext;
     // (undocumented)
-    options: ILoaderOptions;
+    options: Record<string | number, any>;
     // (undocumented)
     readonly path = "";
     // (undocumented)

@@ -6,20 +6,24 @@ import { strict as assert, fail } from "assert";
 import {
 	Any,
 	FlexTreeSchema,
-	TreeFieldSchema,
+	FlexFieldSchema,
 	FieldKinds,
 	allowsRepoSuperset,
 	defaultSchemaPolicy,
 	NewFieldContent,
 	intoStoredSchema,
-} from "../../feature-libraries";
-import { CheckoutEvents, ITreeCheckout } from "../../shared-tree";
-import { AllowedUpdateType, TreeStoredSchema, TreeStoredSchemaRepository } from "../../core";
-import { jsonSequenceRootSchema } from "../utils";
+} from "../../feature-libraries/index.js";
+import { CheckoutEvents, ITreeCheckout } from "../../shared-tree/index.js";
+import {
+	AllowedUpdateType,
+	TreeStoredSchema,
+	TreeStoredSchemaRepository,
+} from "../../core/index.js";
+import { jsonSequenceRootSchema } from "../utils.js";
 // eslint-disable-next-line import/no-internal-modules
-import { TreeContent, initializeContent, schematize } from "../../shared-tree/schematizedTree";
-import { createEmitter } from "../../events";
-import { SchemaBuilder, leaf } from "../../domains";
+import { TreeContent, initializeContent, schematize } from "../../shared-tree/schematizedTree.js";
+import { createEmitter } from "../../events/index.js";
+import { SchemaBuilder, leaf } from "../../domains/index.js";
 
 const builder = new SchemaBuilder({ scope: "test", name: "Schematize Tree Tests" });
 const root = leaf.number;
@@ -42,7 +46,7 @@ const emptySchema = new SchemaBuilder({
 		rejectEmpty: false,
 		rejectForbidden: false,
 	},
-}).intoSchema(TreeFieldSchema.empty);
+}).intoSchema(FlexFieldSchema.empty);
 
 function expectSchema(actual: TreeStoredSchema, expected: TreeStoredSchema): void {
 	// Check schema match
@@ -65,7 +69,7 @@ function makeSchemaRepository(repository: TreeStoredSchemaRepository): {
 
 describe("schematizeTree", () => {
 	describe("initializeContent", () => {
-		function testInitialize<TRoot extends TreeFieldSchema>(
+		function testInitialize<TRoot extends FlexFieldSchema>(
 			name: string,
 			content: TreeContent<TRoot>,
 		): void {

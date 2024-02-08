@@ -13,7 +13,7 @@ import {
 	pushScope,
 	getLoginPageUrl,
 	TokenRequestCredentials,
-} from "@fluidframework/odsp-doclib-utils";
+} from "@fluidframework/odsp-doclib-utils/internal";
 import { jwtDecode } from "jwt-decode";
 import { Mutex } from "async-mutex";
 import { debug } from "./debug";

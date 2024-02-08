@@ -37,14 +37,15 @@ trigger:
   paths:
     include:
     - .prettierignore
+    - common/build/build-common
     - common/lib/common-definitions
     - tools/pipelines/build-common-definitions.yml
-    - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/1ES/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
-    - tools/pipelines/templates/include-publish-npm-package.yml
-    - tools/pipelines/templates/include-publish-npm-package-deployment.yml
+    - tools/pipelines/templates/1ES/include-publish-npm-package.yml
+    - tools/pipelines/templates/1ES/include-publish-npm-package-deployment.yml
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
     - tools/pipelines/templates/include-git-tag-steps.yml
     - tools/pipelines/templates/include-use-node-version.yml
@@ -61,9 +62,10 @@ pr:
   paths:
     include:
     - .prettierignore
+    - common/build/build-common
     - common/lib/common-definitions
     - tools/pipelines/build-common-definitions.yml
-    - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/1ES/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
@@ -71,9 +73,17 @@ pr:
     - tools/pipelines/templates/include-process-test-results.yml
     - scripts/*
 
+variables:
+  - template: /tools/pipelines/templates/include-vars.yml@self
+    parameters:
+      publishOverride: '${{ parameters.publishOverride }}'
+      releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
+      buildNumberInPatch: ''
+
 extends:
-  template: templates/build-npm-package.yml
+  template: /tools/pipelines/templates/1ES/build-npm-package.yml@self
   parameters:
+    publish: ${{ variables.publish }}
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
@@ -81,4 +91,5 @@ extends:
     tagName: common-definitions
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
+    testCoverage: false
     taskTest: [] # no tests

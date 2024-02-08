@@ -12,10 +12,14 @@ export {
 	brandedStringType,
 	extractFromOpaque,
 	ExtractFromOpaque,
+	fromErased,
+	Erased,
+	ErasedType,
 	NameFromBranded,
 	Opaque,
 	ValueFromBranded,
-} from "./brand";
+	brandErased,
+} from "./brand.js";
 export {
 	deleteFromNestedMap,
 	getOrAddInMap,
@@ -30,10 +34,10 @@ export {
 	tryGetFromNestedMap,
 	nestedMapToFlatList,
 	nestedMapFromFlatList,
-} from "./nestedMap";
-export { addToNestedSet, NestedSet, nestedSetContains } from "./nestedSet";
-export { OffsetList, OffsetListFactory } from "./offsetList";
-export { TransactionResult } from "./transactionResult";
+} from "./nestedMap.js";
+export { addToNestedSet, NestedSet, nestedSetContains } from "./nestedSet.js";
+export { OffsetList, OffsetListFactory } from "./offsetList.js";
+export { TransactionResult } from "./transactionResult.js";
 export {
 	areSafelyAssignable,
 	Contravariant,
@@ -48,8 +52,8 @@ export {
 	requireFalse,
 	requireTrue,
 	requireAssignableTo,
-} from "./typeCheck";
-export { StackyIterator } from "./stackyIterator";
+} from "./typeCheck.js";
+export { StackyIterator } from "./stackyIterator.js";
 export {
 	asMutable,
 	clone,
@@ -73,21 +77,19 @@ export {
 	assertValidIndex,
 	assertValidRange,
 	assertNonNegativeSafeInteger,
-	generateStableId,
-	useDeterministicStableId,
-	useAsyncDeterministicStableId,
 	objectToMap,
 	invertMap,
 	oneFromSet,
 	Named,
+	compareNamed,
 	disposeSymbol,
 	IDisposable,
 	capitalize,
 	assertValidRangeIndices,
 	transformObjectMap,
 	compareStrings,
-} from "./utils";
-export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting";
+} from "./utils.js";
+export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting.js";
 
 export {
 	AllowOptional,
@@ -98,7 +100,7 @@ export {
 	FlattenKeys,
 	AllowOptionalNotFlattened,
 	RestrictiveReadonlyRecord,
-} from "./typeUtils";
+} from "./typeUtils.js";
 
 export {
 	BrandedKey,
@@ -106,7 +108,7 @@ export {
 	BrandedMapSubset,
 	getOrCreateSlotContent,
 	brandedSlot,
-} from "./brandedMap";
+} from "./brandedMap.js";
 
 export {
 	getFirstEntryFromRangeMap,
@@ -115,7 +117,7 @@ export {
 	RangeMap,
 	RangeQueryResult,
 	setInRangeMap,
-} from "./rangeMap";
+} from "./rangeMap.js";
 
 export {
 	IdAllocator,
@@ -123,4 +125,4 @@ export {
 	idAllocatorFromState,
 	IdAllocationState,
 	fakeIdAllocator,
-} from "./idAllocator";
+} from "./idAllocator.js";

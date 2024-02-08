@@ -4,8 +4,8 @@
  */
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { FieldKey } from "../../../core";
-import { brand } from "../../../util";
+import { FieldKey } from "../../../core/index.js";
+import { brand } from "../../../util/index.js";
 
 export interface Canada {
 	type: "FeatureCollection";

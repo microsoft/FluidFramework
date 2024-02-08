@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
+import type { SharedString } from "@fluidframework/sequence";
 import {
 	ITestObjectProvider,
 	ITestContainerConfig,
@@ -16,8 +16,8 @@ import {
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { IValueChanged, SharedDirectory, SharedMap } from "@fluidframework/map";
-import { SharedCell } from "@fluidframework/cell";
+import type { IValueChanged, SharedDirectory, SharedMap } from "@fluidframework/map";
+import type { SharedCell } from "@fluidframework/cell";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { Serializable } from "@fluidframework/datastore-definitions";
 
@@ -26,21 +26,25 @@ const string2Id = "sharedString2Key";
 const dirId = "sharedDirKey";
 const cellId = "cellKey";
 const mapId = "mapKey";
-const registry: ChannelFactoryRegistry = [
-	[stringId, SharedString.getFactory()],
-	[string2Id, SharedString.getFactory()],
-	[dirId, SharedDirectory.getFactory()],
-	[cellId, SharedCell.getFactory()],
-	[mapId, SharedMap.getFactory()],
-];
-const testContainerConfig: ITestContainerConfig = {
-	fluidDataObjectType: DataObjectFactoryType.Test,
-	registry,
-};
 
-describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvider) => {
+describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap, SharedDirectory, SharedString, SharedCell } = apis.dds;
+	const { SequenceDeltaEvent } = apis.dataRuntime.packages.sequence;
+
+	const registry: ChannelFactoryRegistry = [
+		[stringId, SharedString.getFactory()],
+		[string2Id, SharedString.getFactory()],
+		[dirId, SharedDirectory.getFactory()],
+		[cellId, SharedCell.getFactory()],
+		[mapId, SharedMap.getFactory()],
+	];
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+	};
+
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 
@@ -60,7 +64,7 @@ describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvi
 	});
 	const errorMessage = "callback failure";
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		const configWithFeatureGates = {
 			...testContainerConfig,
 			loaderProps: {

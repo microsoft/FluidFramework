@@ -43,13 +43,13 @@ tools/pipelines/
 # Test json
 build-tools/packages/build-tools/src/test/data/
 experimental/dds/tree/src/test/documents/
+packages/dds/matrix/src/test/results/**/*.json
 packages/dds/merge-tree/src/test/literature/*.txt
 packages/dds/merge-tree/src/test/results/*.json
 packages/dds/sequence/src/test/snapshots/**/*.json
 packages/dds/sequence/src/test/results/**/*.json
 packages/dds/sequence/src/test/fuzz/**/*.json
-packages/dds/tree/src/test/snapshots/files/*.json
-packages/dds/tree/src/test/snapshots/schema-files/*.json
+packages/dds/tree/src/test/snapshots/*/*.json
 packages/dds/tree/src/test/shared-tree/fuzz/failures/**/*.json
 packages/drivers/odsp-driver/src/test/**/*.json
 packages/framework/attributor/src/test/attribution/documents/**/*.json
@@ -95,6 +95,13 @@ docs/themes/thxvscode/assets/js/bundle.js
 
 # Ignore these scss files
 docs/themes/thxvscode/assets/scss/*
+
+# Generated
+docs/_doc-models
+docs/data/v*
+docs/public
+docs/resources
+docs/static/staticwebapp.config.json
 
 # This is a test file
 tools/markdown-magic/test/include.md

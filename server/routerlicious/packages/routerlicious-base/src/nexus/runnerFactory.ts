@@ -107,6 +107,7 @@ export class NexusResources implements core.IResources {
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
 		public collaborationSessionEvents?: TypedEventEmitter<ICollaborationSessionEvents>,
 		public serviceMessageResourceManager?: core.IServiceMessageResourceManager,
+		public clusterDrainingChecker?: core.IClusterDrainingChecker,
 	) {
 		const socketIoAdapterConfig = config.get("nexus:socketIoAdapter");
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
@@ -216,7 +217,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 		const redisClient: Redis.default | Redis.Cluster = redisConfig2.enableClustering
 			? new Redis.Cluster([{ port: redisConfig2.port, host: redisConfig2.host }], {
 					redisOptions: redisOptions2,
-					slotsRefreshTimeout: 10000,
+					slotsRefreshTimeout: 50000,
 					dnsLookup: (adr, callback) => callback(null, adr),
 					showFriendlyErrorStack: true,
 			  })
@@ -227,7 +228,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 		const redisClientForJwtCache: Redis.default | Redis.Cluster = redisConfig2.enableClustering
 			? new Redis.Cluster([{ port: redisConfig2.port, host: redisConfig2.host }], {
 					redisOptions: redisOptions2,
-					slotsRefreshTimeout: 10000,
+					slotsRefreshTimeout: 50000,
 					dnsLookup: (adr, callback) => callback(null, adr),
 					showFriendlyErrorStack: true,
 			  })
@@ -344,7 +345,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 						],
 						{
 							redisOptions: redisOptionsForThrottling,
-							slotsRefreshTimeout: 10000,
+							slotsRefreshTimeout: 50000,
 							dnsLookup: (adr, callback) => callback(null, adr),
 							showFriendlyErrorStack: true,
 						},
@@ -490,7 +491,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 				redisConfig.enableClustering
 					? new Redis.Cluster([{ port: redisConfig.port, host: redisConfig.host }], {
 							redisOptions,
-							slotsRefreshTimeout: 10000,
+							slotsRefreshTimeout: 50000,
 							dnsLookup: (adr, callback) => callback(null, adr),
 							showFriendlyErrorStack: true,
 					  })
@@ -590,6 +591,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			revokedTokenChecker,
 			collaborationSessionEvents,
 			serviceMessageResourceManager,
+			customizations?.clusterDrainingChecker,
 		);
 	}
 }
@@ -619,6 +621,7 @@ export class NexusRunnerFactory implements core.IRunnerFactory<NexusResources> {
 			resources.tokenRevocationManager,
 			resources.revokedTokenChecker,
 			resources.collaborationSessionEvents,
+			resources.clusterDrainingChecker,
 		);
 	}
 }

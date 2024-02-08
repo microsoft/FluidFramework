@@ -111,7 +111,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 				`test123 Redis Client Params, redisOptions, CE: ${redisConfig.enableClustering}`,
 				{
 					redisOptionsCopy,
-					slotsRefreshTimeout: 10000,
+					slotsRefreshTimeout: 50000,
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 					dnsLookup: (adr, callback) => callback(undefined, adr),
 					showFriendlyErrorStack: true,
@@ -129,7 +129,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 			const redisClient: Redis.default | Redis.Cluster = redisConfig.enableClustering
 				? new Redis.Cluster([{ port: redisConfig.port, host: redisConfig.host }], {
 						redisOptions,
-						slotsRefreshTimeout: 10000,
+						slotsRefreshTimeout: 50000,
 						dnsLookup: (adr, callback) => callback(null, adr),
 						showFriendlyErrorStack: true,
 				  })

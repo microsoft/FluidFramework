@@ -5,7 +5,7 @@
 
 import type { IEvent } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
-import { fail, getOrCreate } from "../util";
+import { fail, getOrCreate } from "../util/index.js";
 
 /**
  * Convert a union of types to an intersection of those types. Useful for `TransformEvents`.
@@ -18,7 +18,7 @@ export type UnionToIntersection<T> = (T extends any ? (k: T) => unknown : never)
 
 /**
  * `true` iff the given type is an acceptable shape for an event
- * @beta
+ * @public
  */
 export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : false;
 
@@ -39,7 +39,7 @@ export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : fals
  * }
  * ```
  *
- * @beta
+ * @public
  */
 export type Events<E> = {
 	[P in (string | symbol) & keyof E as IsEvent<E[P]> extends true ? P : never]: E[P];
@@ -73,7 +73,6 @@ export type TransformEvents<E extends Events<E>, Target extends IEvent = IEvent>
 /**
  * An object which allows the registration of listeners so that subscribers can be notified when an event happens.
  *
- * {@link createEmitter} can help implement this interface via delegation.
  * `EventEmitter` can be used as a base class to implement this via extension.
  * @param E - All the events that this emitter supports
  * @example
@@ -83,7 +82,10 @@ export type TransformEvents<E extends Events<E>, Target extends IEvent = IEvent>
  *   error: (errorCode: number) => void;
  * }>
  * ```
- * @beta
+ * @privateRemarks
+ * {@link createEmitter} can help implement this interface via delegation.
+ *
+ * @public
  */
 export interface ISubscribable<E extends Events<E>> {
 	/**
@@ -98,7 +100,7 @@ export interface ISubscribable<E extends Events<E>> {
 
 /**
  * Interface for an event emitter that can emit typed events to subscribed listeners.
- * @alpha
+ * @internal
  */
 export interface IEmitter<E extends Events<E>> {
 	/**
@@ -129,7 +131,7 @@ export interface IEmitter<E extends Events<E>> {
  *
  * A class can delegate handling {@link ISubscribable} to the returned value while using it to emit the events.
  * See also `EventEmitter` which be used as a base class to implement {@link ISubscribable} via extension.
- * @alpha
+ * @internal
  */
 export function createEmitter<E extends Events<E>>(
 	noListeners?: NoListenersCallback<E>,
@@ -140,12 +142,12 @@ export function createEmitter<E extends Events<E>>(
 /**
  * Called when the last listener for `eventName` is removed.
  * Useful for determining when to clean up resources related to detecting when the event might occurs.
- * @alpha
+ * @internal
  */
 export type NoListenersCallback<E extends Events<E>> = (eventName: keyof Events<E>) => void;
 
 /**
- * @alpha
+ * @internal
  */
 export interface HasListeners<E extends Events<E>> {
 	/**
@@ -195,6 +197,10 @@ export interface HasListeners<E extends Events<E>> {
  * ```
  */
 export class EventEmitter<E extends Events<E>> implements ISubscribable<E>, HasListeners<E> {
+	// TODO: because the inner data-structure here is a set, adding the same callback twice does not error,
+	// but only calls it once, and unsubscribing will stop calling it all together.
+	// This is surprising since it makes subscribing and unsubscribing not inverses (but instead both idempotent).
+	// This might be desired, but if so the documentation should indicate it.
 	private readonly listeners = new Map<keyof E, Set<(...args: unknown[]) => any>>();
 
 	// Because this is protected and not public, calling this externally (not from a subclass) makes sending events to the constructed instance impossible.
@@ -205,8 +211,12 @@ export class EventEmitter<E extends Events<E>> implements ISubscribable<E>, HasL
 		const listeners = this.listeners.get(eventName);
 		if (listeners !== undefined) {
 			const argArray: unknown[] = args; // TODO: Current TS (4.5.5) cannot spread `args` into `listener()`, but future versions (e.g. 4.8.4) can.
-			for (const listener of listeners.values()) {
-				listener(...argArray);
+			// This explicitly copies listeners so that new listeners added during this call to emit will not receive this event.
+			for (const listener of [...listeners]) {
+				// If listener has been unsubscribed while invoking other listeners, skip it.
+				if (listeners.has(listener)) {
+					listener(...argArray);
+				}
 			}
 		}
 	}
@@ -233,6 +243,10 @@ export class EventEmitter<E extends Events<E>> implements ISubscribable<E>, HasL
 	 * @param listener - the handler to run when the event is fired by the emitter
 	 * @returns a function which will deregister the listener when run.
 	 * This function will error if called more than once.
+	 * @privateRemarks
+	 * TODO:
+	 * invoking the returned callback can error even if its only called once if the same listener was provided to two calls to "on".
+	 * This behavior is not documented and its unclear if its a bug or not: see note on listeners.
 	 */
 	public on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void {
 		getOrCreate(this.listeners, eventName, () => new Set()).add(listener);
@@ -242,6 +256,7 @@ export class EventEmitter<E extends Events<E>> implements ISubscribable<E>, HasL
 	private off<K extends keyof Events<E>>(eventName: K, listener: E[K]): void {
 		const listeners =
 			this.listeners.get(eventName) ??
+			// TODO: consider making this (and assert below) a usage error since it can be triggered by users of the public API: maybe separate those use cases somehow?
 			fail(
 				"Event has no listeners. Event deregistration functions may only be invoked once.",
 			);

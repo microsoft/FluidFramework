@@ -18,14 +18,15 @@ import {
 } from "@fluidframework/test-utils";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { SharedMap } from "@fluidframework/map";
+import type { SharedMap } from "@fluidframework/map";
 import { describeCompat } from "@fluid-private/test-version-utils";
 
 // REVIEW: enable compat testing?
 describeCompat(
 	`Attach/Reference Api Tests For Attached Container`,
-	"NoCompat",
-	(getTestObjectProvider) => {
+	"NoCompat" /* 2.0.0-internal.8.0.0 */,
+	(getTestObjectProvider, apis) => {
+		const { SharedMap } = apis.dds;
 		const codeDetails: IFluidCodeDetails = {
 			package: "detachedContainerTestPackage1",
 			config: {},
@@ -78,7 +79,7 @@ describeCompat(
 		}
 
 		let provider: ITestObjectProvider;
-		beforeEach(async () => {
+		beforeEach("createLoader", async () => {
 			provider = getTestObjectProvider();
 			const documentId = createDocumentId();
 			const driver = provider.driver;

@@ -4,16 +4,13 @@
  */
 import { strict as assert } from "assert";
 
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-
-import { FieldKinds } from "../../../feature-libraries";
-import { ForestType, SharedTreeFactory } from "../../../shared-tree";
-import { typeboxValidator } from "../../../external-utilities";
-import { SchemaBuilder, leaf } from "../../../domains";
-import { flexTreeViewWithContent } from "../../utils";
+import { FieldKinds } from "../../../feature-libraries/index.js";
+import { ForestType, SharedTreeFactory } from "../../../shared-tree/index.js";
+import { typeboxValidator } from "../../../external-utilities/index.js";
+import { SchemaBuilder, leaf } from "../../../domains/index.js";
+import { flexTreeWithContent } from "../../utils.js";
 // eslint-disable-next-line import/no-internal-modules
-import { onNextChange } from "../../../feature-libraries/flex-tree/flexTreeTypes";
-import { AllowedUpdateType } from "../../../core";
+import { onNextChange } from "../../../feature-libraries/flex-tree/flexTreeTypes.js";
 
 describe("beforeChange/afterChange events", () => {
 	const builder = new SchemaBuilder({
@@ -36,8 +33,7 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("fire the expected number of times", () => {
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const root = tree.schematizeInternal({
+		const root = flexTreeWithContent({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -45,8 +41,7 @@ describe("beforeChange/afterChange events", () => {
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
-			allowedSchemaModifications: AllowedUpdateType.None,
-		}).editableTree.content;
+		}).content;
 
 		let rootBeforeChangeCount = 0;
 		let rootAfterChangeCount = 0;
@@ -114,7 +109,7 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(childBeforeChangeCount, 1);
 		assert.strictEqual(childAfterChangeCount, 1);
 
-		// Delete node - myOptionalNumber; should fire events on the root node
+		// Remove node - myOptionalNumber; should fire events on the root node
 		root.myOptionalNumber = undefined;
 
 		assert.strictEqual(rootBeforeChangeCount, 6);
@@ -144,8 +139,7 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("fire in the expected order and always together", () => {
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const root = tree.schematizeInternal({
+		const root = flexTreeWithContent({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -153,8 +147,7 @@ describe("beforeChange/afterChange events", () => {
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
-			allowedSchemaModifications: AllowedUpdateType.None,
-		}).editableTree.content;
+		}).content;
 
 		let beforeCounter = 0;
 		let afterCounter = 0;
@@ -173,7 +166,7 @@ describe("beforeChange/afterChange events", () => {
 		root.myString = "new string";
 		// Add a node where there was none before
 		root.myOptionalNumber = 3;
-		// Delete a node
+		// Remove a node
 		root.myOptionalNumber = undefined;
 		// Insert nodes in a sequence
 		// NOTE: events will fire for each inserted node (so 5 times)
@@ -200,8 +193,7 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("event argument contains the expected node", () => {
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const root = tree.schematizeInternal({
+		const root = flexTreeWithContent({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -209,8 +201,7 @@ describe("beforeChange/afterChange events", () => {
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
-			allowedSchemaModifications: AllowedUpdateType.None,
-		}).editableTree.content;
+		}).content;
 
 		let rootBeforeCounter = 0;
 		let rootAfterCounter = 0;
@@ -241,7 +232,7 @@ describe("beforeChange/afterChange events", () => {
 		root.myString = "new string";
 		// Add a node where there was none before
 		root.myOptionalNumber = 3;
-		// Delete a node
+		// Remove a node
 		root.myOptionalNumber = undefined;
 		// Insert nodes in a sequence
 		// NOTE: events will fire for each inserted node (so 5 times)
@@ -273,8 +264,7 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("listeners can be removed successfully", () => {
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const root = tree.schematizeInternal({
+		const root = flexTreeWithContent({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -282,8 +272,7 @@ describe("beforeChange/afterChange events", () => {
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
-			allowedSchemaModifications: AllowedUpdateType.None,
-		}).editableTree.content;
+		}).content;
 
 		let beforeHasFired = false;
 		let afterHasFired = false;
@@ -322,8 +311,7 @@ describe("beforeChange/afterChange events", () => {
 
 	it("tree is in correct state when events fire - primitive node deletions", () => {
 		const initialNumber = 20;
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const root = tree.schematizeInternal({
+		const root = flexTreeWithContent({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: initialNumber,
@@ -331,8 +319,7 @@ describe("beforeChange/afterChange events", () => {
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
-			allowedSchemaModifications: AllowedUpdateType.None,
-		}).editableTree.content;
+		}).content;
 
 		let totalListenerCalls = 0;
 
@@ -350,8 +337,7 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("tree is in correct state when events fire - primitive node additions", () => {
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const root = tree.schematizeInternal({
+		const root = flexTreeWithContent({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -359,8 +345,7 @@ describe("beforeChange/afterChange events", () => {
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
-			allowedSchemaModifications: AllowedUpdateType.None,
-		}).editableTree.content;
+		}).content;
 
 		const newNumber = 20;
 
@@ -380,8 +365,7 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("tree is in correct state when events fire - primitive node replacements", () => {
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const root = tree.schematizeInternal({
+		const root = flexTreeWithContent({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -389,8 +373,7 @@ describe("beforeChange/afterChange events", () => {
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
-			allowedSchemaModifications: AllowedUpdateType.None,
-		}).editableTree.content;
+		}).content;
 		let totalListenerCalls = 0;
 		const newString = "John";
 
@@ -408,8 +391,7 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("tree is in correct state when events fire - node inserts to sequence fields", () => {
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const root = tree.schematizeInternal({
+		const root = flexTreeWithContent({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -417,8 +399,7 @@ describe("beforeChange/afterChange events", () => {
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
-			allowedSchemaModifications: AllowedUpdateType.None,
-		}).editableTree.content;
+		}).content;
 
 		let totalListenerCalls = 0;
 
@@ -427,17 +408,17 @@ describe("beforeChange/afterChange events", () => {
 			switch (totalListenerCalls) {
 				case 1: {
 					// Before inserting the first node
-					assert.deepEqual(root.myNumberSequence.asArray, []);
+					assert.deepEqual([...root.myNumberSequence], []);
 					break;
 				}
 				case 3: {
 					// Before inserting the second node
-					assert.deepEqual(root.myNumberSequence.asArray, [0]);
+					assert.deepEqual([...root.myNumberSequence], [0]);
 					break;
 				}
 				case 5: {
 					// Before inserting the third node
-					assert.deepEqual(root.myNumberSequence.asArray, [0, 1]);
+					assert.deepEqual([...root.myNumberSequence], [0, 1]);
 					break;
 				}
 				// No default
@@ -448,17 +429,17 @@ describe("beforeChange/afterChange events", () => {
 			switch (totalListenerCalls) {
 				case 2: {
 					// After inserting the first node
-					assert.deepEqual(root.myNumberSequence.asArray, [0]);
+					assert.deepEqual([...root.myNumberSequence], [0]);
 					break;
 				}
 				case 4: {
 					// After inserting the second node
-					assert.deepEqual(root.myNumberSequence.asArray, [0, 1]);
+					assert.deepEqual([...root.myNumberSequence], [0, 1]);
 					break;
 				}
 				case 6: {
 					// After inserting the third node
-					assert.deepEqual(root.myNumberSequence.asArray, [0, 1, 2]);
+					assert.deepEqual([...root.myNumberSequence], [0, 1, 2]);
 					break;
 				}
 				// No default
@@ -470,8 +451,7 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("tree is in correct state when events fire - node removals from sequence fields", () => {
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const root = tree.schematizeInternal({
+		const root = flexTreeWithContent({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -479,8 +459,7 @@ describe("beforeChange/afterChange events", () => {
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
-			allowedSchemaModifications: AllowedUpdateType.None,
-		}).editableTree.content;
+		}).content;
 
 		let totalListenerCalls = 0;
 
@@ -488,20 +467,20 @@ describe("beforeChange/afterChange events", () => {
 			totalListenerCalls++;
 			if (totalListenerCalls === 1) {
 				// Before removing the first node
-				assert.deepEqual(root.myNumberSequence.asArray, [0, 1, 2, 3, 4]);
+				assert.deepEqual([...root.myNumberSequence], [0, 1, 2, 3, 4]);
 			} else if (totalListenerCalls === 3) {
 				// Before removing the second node
-				assert.deepEqual(root.myNumberSequence.asArray, [0, 2, 3, 4]);
+				assert.deepEqual([...root.myNumberSequence], [0, 2, 3, 4]);
 			}
 		});
 		root.on("afterChange", (args: unknown) => {
 			totalListenerCalls++;
 			if (totalListenerCalls === 2) {
 				// After removing the first node
-				assert.deepEqual(root.myNumberSequence.asArray, [0, 2, 3, 4]);
+				assert.deepEqual([...root.myNumberSequence], [0, 2, 3, 4]);
 			} else if (totalListenerCalls === 4) {
 				// After removing the second node
-				assert.deepEqual(root.myNumberSequence.asArray, [0, 3, 4]);
+				assert.deepEqual([...root.myNumberSequence], [0, 3, 4]);
 			}
 		});
 
@@ -510,8 +489,7 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("tree is in correct state when events fire - node moves in sequence fields", () => {
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const root = tree.schematizeInternal({
+		const root = flexTreeWithContent({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -519,8 +497,7 @@ describe("beforeChange/afterChange events", () => {
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
-			allowedSchemaModifications: AllowedUpdateType.None,
-		}).editableTree.content;
+		}).content;
 
 		let totalListenerCalls = 0;
 
@@ -529,22 +506,22 @@ describe("beforeChange/afterChange events", () => {
 			switch (totalListenerCalls) {
 				case 1: {
 					// Before detaching the first node
-					assert.deepEqual(root.myNumberSequence.asArray, [0, 1, 2]);
+					assert.deepEqual([...root.myNumberSequence], [0, 1, 2]);
 					break;
 				}
 				case 3: {
 					// Before detaching the second node
-					assert.deepEqual(root.myNumberSequence.asArray, [1, 2]);
+					assert.deepEqual([...root.myNumberSequence], [1, 2]);
 					break;
 				}
 				case 5: {
 					// Before re-attaching the first node
-					assert.deepEqual(root.myNumberSequence.asArray, [2]);
+					assert.deepEqual([...root.myNumberSequence], [2]);
 					break;
 				}
 				case 7: {
 					// Before re-attaching the second node
-					assert.deepEqual(root.myNumberSequence.asArray, [2, 0]);
+					assert.deepEqual([...root.myNumberSequence], [2, 0]);
 					break;
 				}
 				// No default
@@ -555,22 +532,22 @@ describe("beforeChange/afterChange events", () => {
 			switch (totalListenerCalls) {
 				case 2: {
 					// After detaching the first node
-					assert.deepEqual(root.myNumberSequence.asArray, [1, 2]);
+					assert.deepEqual([...root.myNumberSequence], [1, 2]);
 					break;
 				}
 				case 4: {
 					// After detaching the second node
-					assert.deepEqual(root.myNumberSequence.asArray, [2]);
+					assert.deepEqual([...root.myNumberSequence], [2]);
 					break;
 				}
 				case 6: {
 					// After re-attaching the first node
-					assert.deepEqual(root.myNumberSequence.asArray, [2, 0]);
+					assert.deepEqual([...root.myNumberSequence], [2, 0]);
 					break;
 				}
 				case 8: {
 					// After re-attaching the second node
-					assert.deepEqual(root.myNumberSequence.asArray, [2, 0, 1]);
+					assert.deepEqual([...root.myNumberSequence], [2, 0, 1]);
 					break;
 				}
 				// No default
@@ -582,8 +559,7 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("not emitted by nodes when they are replaced", () => {
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const root = tree.schematizeInternal({
+		const root = flexTreeWithContent({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -591,8 +567,7 @@ describe("beforeChange/afterChange events", () => {
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
-			allowedSchemaModifications: AllowedUpdateType.None,
-		}).editableTree.content;
+		}).content;
 
 		let beforeCounter = 0;
 		let afterCounter = 0;
@@ -612,8 +587,7 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("bubble up from the affected node to the root", () => {
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const root = tree.schematizeInternal({
+		const root = flexTreeWithContent({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -621,8 +595,7 @@ describe("beforeChange/afterChange events", () => {
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
-			allowedSchemaModifications: AllowedUpdateType.None,
-		}).editableTree.content;
+		}).content;
 
 		let rootBeforeCounter = 0;
 		let rootAfterCounter = 0;
@@ -666,8 +639,7 @@ describe("onNextChange event", () => {
 	const initialTree = { content: 3 };
 
 	it("fires exactly once after a change", () => {
-		const view = flexTreeViewWithContent({ schema, initialTree });
-		const editNode = view.editableTree.content;
+		const editNode = flexTreeWithContent({ schema, initialTree }).content;
 		let onNextChangeCount = 0;
 		editNode[onNextChange](() => (onNextChangeCount += 1));
 		assert(editNode.is(object));
@@ -678,16 +650,14 @@ describe("onNextChange event", () => {
 	});
 
 	it("can have at most one listener at a time", () => {
-		const view = flexTreeViewWithContent({ schema, initialTree });
-		const editNode = view.editableTree.content;
+		const editNode = flexTreeWithContent({ schema, initialTree }).content;
 		let onNextChangeEventCount = 0;
 		editNode[onNextChange](() => (onNextChangeEventCount += 1));
 		assert.throws(() => editNode[onNextChange](() => (onNextChangeEventCount += 1)));
 	});
 
 	it("can be subscribed to again after throwing and catching an error", () => {
-		const view = flexTreeViewWithContent({ schema, initialTree });
-		const editNode = view.editableTree.content;
+		const editNode = flexTreeWithContent({ schema, initialTree }).content;
 		assert(editNode.is(object));
 		editNode[onNextChange](() => {
 			throw new Error();
@@ -697,8 +667,7 @@ describe("onNextChange event", () => {
 	});
 
 	it("can be unsubscribed from", () => {
-		const view = flexTreeViewWithContent({ schema, initialTree });
-		const editNode = view.editableTree.content;
+		const editNode = flexTreeWithContent({ schema, initialTree }).content;
 		assert(editNode.is(object));
 		let onNextChangeEventFired = false;
 		const off = editNode[onNextChange](() => {
@@ -710,8 +679,7 @@ describe("onNextChange event", () => {
 	});
 
 	it("unsubscription has no effect if the event has already fired", () => {
-		const view = flexTreeViewWithContent({ schema, initialTree });
-		const editNode = view.editableTree.content;
+		const editNode = flexTreeWithContent({ schema, initialTree }).content;
 		assert(editNode.is(object));
 		const off = editNode[onNextChange](() => {});
 		editNode.content = 7;

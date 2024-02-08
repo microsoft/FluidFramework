@@ -3,38 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import path from "path";
-import { encodeTreeSchema, intoStoredSchema } from "../../feature-libraries";
-import { testTrees as schemaTestTrees } from "../testTrees";
-import {
-	createSchemaSnapshot,
-	dirPathTail,
-	regenTestDirectory,
-	regenerateSnapshots,
-	verifyEqualPastSchemaSnapshot,
-} from "./utils";
-
-const schemaDirPath = path.join(__dirname, `../../../${dirPathTail}/schema-files`);
-
-function getSchemaFilepath(name: string): string {
-	return path.join(schemaDirPath, `${name}.json`);
-}
+import { encodeTreeSchema, intoStoredSchema } from "../../feature-libraries/index.js";
+import { testTrees } from "../testTrees.js";
+import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshotTools.js";
 
 describe("schema snapshots", () => {
-	if (regenerateSnapshots) {
-		regenTestDirectory(schemaDirPath);
-	}
+	useSnapshotDirectory("schema-files");
 
-	for (const { name, schemaData } of schemaTestTrees) {
-		it(`${regenerateSnapshots ? "regenerate " : ""}for ${name}`, async () => {
+	for (const { name, schemaData } of testTrees) {
+		it(name, () => {
 			const encoded = encodeTreeSchema(intoStoredSchema(schemaData));
-
-			// eslint-disable-next-line unicorn/prefer-ternary
-			if (regenerateSnapshots) {
-				await createSchemaSnapshot(getSchemaFilepath(name), encoded);
-			} else {
-				await verifyEqualPastSchemaSnapshot(getSchemaFilepath(name), encoded, name);
-			}
+			takeJsonSnapshot(encoded);
 		});
 	}
 });

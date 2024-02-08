@@ -170,7 +170,7 @@ export function create(
 	const pub: Redis.default | Redis.Cluster = redisConfig.enableClustering
 		? new Redis.Cluster([{ port: redisConfig.port, host: redisConfig.host }], {
 				redisOptions: clone(options),
-				slotsRefreshTimeout: 10000,
+				slotsRefreshTimeout: 50000,
 				dnsLookup: (adr, callback) => callback(null, adr),
 				showFriendlyErrorStack: true,
 		  })
@@ -178,7 +178,7 @@ export function create(
 	const sub: Redis.default | Redis.Cluster = redisConfig.enableClustering
 		? new Redis.Cluster([{ port: redisConfig.port, host: redisConfig.host }], {
 				redisOptions: clone(options),
-				slotsRefreshTimeout: 10000,
+				slotsRefreshTimeout: 50000,
 				dnsLookup: (adr, callback) => callback(null, adr),
 				showFriendlyErrorStack: true,
 		  })

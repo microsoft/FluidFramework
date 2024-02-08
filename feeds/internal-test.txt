@@ -52,7 +52,6 @@ fluid-framework
 @fluidframework/odsp-driver-definitions
 @fluidframework/odsp-driver
 @fluidframework/local-driver
-@fluid-tools/fluidapp-odsp-urlresolver
 @fluidframework/file-driver
 @fluidframework/driver-web-cache
 @fluidframework/driver-base
@@ -77,7 +76,6 @@ fluid-framework
 @fluidframework/core-interfaces
 @fluidframework/container-definitions
 @fluid-internal/client-utils
-@fluid-experimental/tree-react-api
 @fluid-experimental/react-inputs
 @fluid-experimental/last-edited
 @fluid-experimental/data-objects

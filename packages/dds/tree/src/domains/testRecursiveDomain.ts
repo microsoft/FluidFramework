@@ -10,24 +10,29 @@
  * Currently we do not have tooling in place to test this in our test suite, and exporting these types here is a temporary crutch to aid in diagnosing this issue.
  */
 
-import { AllowedTypes, FieldKinds, SchemaBuilderBase, TreeFieldSchema } from "../feature-libraries";
-import { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../util";
-import { leaf } from "./leafDomain";
+import {
+	FlexAllowedTypes,
+	FieldKinds,
+	SchemaBuilderBase,
+	FlexFieldSchema,
+} from "../feature-libraries/index.js";
+import { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../util/index.js";
+import { leaf } from "./leafDomain.js";
 
 const builder = new SchemaBuilderBase(FieldKinds.optional, { scope: "Test Recursive Domain" });
 
 export const recursiveObject = builder.objectRecursive("object", {
-	recursive: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveObject]),
+	recursive: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveObject]),
 	number: leaf.number,
 });
 
-function fixRecursiveReference<T extends AllowedTypes>(...types: T): void {}
+function fixRecursiveReference<T extends FlexAllowedTypes>(...types: T): void {}
 
 const recursiveReference = () => recursiveObject2;
 fixRecursiveReference(recursiveReference);
 
 export const recursiveObject2 = builder.object("object2", {
-	recursive: TreeFieldSchema.create(FieldKinds.optional, [recursiveReference]),
+	recursive: FlexFieldSchema.create(FieldKinds.optional, [recursiveReference]),
 	number: leaf.number,
 });
 
@@ -44,11 +49,11 @@ export const library = builder.intoLibrary();
 {
 	const b = new SchemaBuilderBase(FieldKinds.optional, { scope: "Test Recursive Domain" });
 	const node = b.objectRecursive("object", {
-		child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => node]),
+		child: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => node]),
 	});
-	const _field = TreeFieldSchema.createUnsafe(FieldKinds.optional, [node]);
+	const _field = FlexFieldSchema.createUnsafe(FieldKinds.optional, [node]);
 	// All these cause TSC to "RangeError: Maximum call stack size exceeded"
-	// const _field4 = TreeFieldSchema.create(FieldKinds.optional, [node]);
+	// const _field4 = FlexFieldSchema.create(FieldKinds.optional, [node]);
 	// const _field2 = b.optional(node);
 	// const _field3 = SchemaBuilder.optional(node);
 	// const schema = b.intoSchema(field);

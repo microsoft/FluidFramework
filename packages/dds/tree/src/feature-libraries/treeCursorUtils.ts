@@ -17,12 +17,12 @@ import {
 	DetachedField,
 	rootField,
 	detachedFieldAsKey,
-} from "../core";
-import { fail } from "../util";
+} from "../core/index.js";
+import { fail } from "../util/index.js";
 
 /**
  * {@link ITreeCursorSynchronous} that can return the underlying node objects.
- * @alpha
+ * @internal
  */
 export interface CursorWithNode<TNode> extends ITreeCursorSynchronous {
 	/**
@@ -47,7 +47,7 @@ export interface CursorWithNode<TNode> extends ITreeCursorSynchronous {
  * Create a cursor, in `nodes` mode at the root of the provided tree.
  *
  * @returns an {@link ITreeCursorSynchronous} for a single root in `nodes` mode.
- * @alpha
+ * @internal
  */
 export function stackTreeNodeCursor<TNode>(
 	adapter: CursorAdapter<TNode>,
@@ -60,7 +60,7 @@ export function stackTreeNodeCursor<TNode>(
  * Create a cursor, in `fields` mode at the `detachedField` under the provided `root`.
  *
  * @returns an {@link ITreeCursorSynchronous} for `detachedField` of `root` in `fields` mode.
- * @alpha
+ * @internal
  */
 export function stackTreeFieldCursor<TNode>(
 	adapter: CursorAdapter<TNode>,
@@ -76,7 +76,7 @@ export function stackTreeFieldCursor<TNode>(
 
 /**
  * Provides functionality to allow a {@link stackTreeNodeCursor} and {@link stackTreeFieldCursor} to implement cursors.
- * @alpha
+ * @internal
  */
 export interface CursorAdapter<TNode> {
 	/**
@@ -382,7 +382,7 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 
 /**
  * Apply `prefix` to `path`.
- * @alpha
+ * @internal
  */
 export function prefixPath(
 	prefix: PathRootPrefix | undefined,
@@ -403,7 +403,7 @@ export function prefixPath(
 
 /**
  * Apply `prefix` to `path`.
- * @alpha
+ * @internal
  */
 export function prefixFieldPath(
 	prefix: PathRootPrefix | undefined,

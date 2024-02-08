@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 import { createSandbox, SinonFakeTimers, useFakeTimers } from "sinon";
 import {
 	AttachState,
-	ContainerErrorType,
 	ContainerErrorTypes,
 	IContainerContext,
 	ICriticalContainerError,
@@ -36,7 +35,6 @@ import {
 	IErrorBase,
 	IResponse,
 	FluidObject,
-	IGenericError,
 	ConfigTypes,
 	IConfigProviderBase,
 } from "@fluidframework/core-interfaces";
@@ -51,6 +49,7 @@ import {
 	ContainerMessageType,
 	type RecentlyAddedContainerRuntimeMessageDetails,
 	type OutboundContainerRuntimeMessage,
+	type UnknownContainerRuntimeMessage,
 } from "../messageTypes";
 import { PendingStateManager } from "../pendingStateManager";
 import { DataStores } from "../dataStores";
@@ -131,6 +130,36 @@ describe("Runtime", () => {
 	});
 
 	describe("Container Runtime", () => {
+		describe("IdCompressor", () => {
+			it("finalizes idRange on attach", async () => {
+				const logger = new MockLogger();
+				const containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext({}, logger) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {
+						flushMode: FlushMode.TurnBased,
+						enableRuntimeIdCompressor: true,
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				logger.clear();
+
+				const compressor = containerRuntime.idCompressor;
+				assert(compressor !== undefined);
+				compressor.generateCompressedId();
+				containerRuntime.createSummary();
+
+				const range = compressor.takeNextCreationRange();
+				assert.equal(
+					range.ids,
+					undefined,
+					"All Ids should have been finalized after calling createSummary()",
+				);
+			});
+		});
+
 		describe("flushMode setting", () => {
 			it("Default flush mode", async () => {
 				const containerRuntime = await ContainerRuntime.loadRuntime({
@@ -208,7 +237,7 @@ describe("Runtime", () => {
 				}`, () => {
 					let containerRuntime: ContainerRuntime;
 					let mockContext: Partial<IContainerContext>;
-					const submittedOpsMetdata: any[] = [];
+					const submittedOpsMetadata: any[] = [];
 					const containerErrors: ICriticalContainerError[] = [];
 					const getMockContextForOrderSequentially = (): Partial<IContainerContext> => {
 						return {
@@ -232,10 +261,10 @@ describe("Runtime", () => {
 							) => {
 								if (contents.type === "groupedBatch") {
 									for (const subMessage of contents.contents) {
-										submittedOpsMetdata.push(subMessage.metadata);
+										submittedOpsMetadata.push(subMessage.metadata);
 									}
 								} else {
-									submittedOpsMetdata.push(appData);
+									submittedOpsMetadata.push(appData);
 								}
 								return opFakeSequenceNumber++;
 							},
@@ -270,7 +299,7 @@ describe("Runtime", () => {
 							provideEntryPoint: mockProvideEntryPoint,
 						});
 						containerErrors.length = 0;
-						submittedOpsMetdata.length = 0;
+						submittedOpsMetadata.length = 0;
 					});
 
 					it("Can't call flush() inside orderSequentially's callback", () => {
@@ -281,8 +310,16 @@ describe("Runtime", () => {
 						);
 
 						const error = getFirstContainerError();
+						assert(isFluidError(error));
 						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
-						assert.strictEqual(error.message, expectedOrderSequentiallyErrorMessage);
+						assert.strictEqual(
+							error.message,
+							`${expectedOrderSequentiallyErrorMessage}: 0x24c`,
+						);
+						assert.strictEqual(
+							error.getTelemetryProperties().orderSequentiallyCalls,
+							1,
+						);
 					});
 
 					it("Can't call flush() inside orderSequentially's callback when nested", () => {
@@ -295,8 +332,16 @@ describe("Runtime", () => {
 						);
 
 						const error = getFirstContainerError();
+						assert(isFluidError(error));
 						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
-						assert.strictEqual(error.message, expectedOrderSequentiallyErrorMessage);
+						assert.strictEqual(
+							error.message,
+							`${expectedOrderSequentiallyErrorMessage}: 0x24c`,
+						);
+						assert.strictEqual(
+							error.getTelemetryProperties().orderSequentiallyCalls,
+							2,
+						);
 					});
 
 					it("Can't call flush() inside orderSequentially's callback when nested ignoring exceptions", () => {
@@ -311,8 +356,16 @@ describe("Runtime", () => {
 						});
 
 						const error = getFirstContainerError();
+						assert(isFluidError(error));
 						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
-						assert.strictEqual(error.message, expectedOrderSequentiallyErrorMessage);
+						assert.strictEqual(
+							error.message,
+							`${expectedOrderSequentiallyErrorMessage}: 0x24c`,
+						);
+						assert.strictEqual(
+							error.getTelemetryProperties().orderSequentiallyCalls,
+							2,
+						);
 					});
 
 					it("Errors propagate to the container", () => {
@@ -325,8 +378,14 @@ describe("Runtime", () => {
 						const error = getFirstContainerError();
 						assert(isFluidError(error));
 						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
-						assert.strictEqual(error.message, expectedOrderSequentiallyErrorMessage);
-						assert.strictEqual((error as IGenericError).error.message, "Any");
+						assert.strictEqual(
+							error.message,
+							`${expectedOrderSequentiallyErrorMessage}: Any`,
+						);
+						assert.strictEqual(
+							error.getTelemetryProperties().orderSequentiallyCalls,
+							1,
+						);
 					});
 
 					it("Errors propagate to the container when nested", () => {
@@ -341,8 +400,14 @@ describe("Runtime", () => {
 						const error = getFirstContainerError();
 						assert(isFluidError(error));
 						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
-						assert.strictEqual(error.message, expectedOrderSequentiallyErrorMessage);
-						assert.strictEqual((error as IGenericError).error.message, "Any");
+						assert.strictEqual(
+							error.message,
+							`${expectedOrderSequentiallyErrorMessage}: Any`,
+						);
+						assert.strictEqual(
+							error.getTelemetryProperties().orderSequentiallyCalls,
+							2,
+						);
 					});
 
 					it("Batching property set properly", () => {
@@ -354,22 +419,22 @@ describe("Runtime", () => {
 						(containerRuntime as any).flush();
 
 						assert.strictEqual(
-							submittedOpsMetdata.length,
+							submittedOpsMetadata.length,
 							3,
 							"3 messages should be sent",
 						);
 						assert.strictEqual(
-							submittedOpsMetdata[0].batch,
+							submittedOpsMetadata[0].batch,
 							true,
 							"first message should be the batch start",
 						);
 						assert.strictEqual(
-							submittedOpsMetdata[1],
+							submittedOpsMetadata[1],
 							undefined,
 							"second message should not hold batch info",
 						);
 						assert.strictEqual(
-							submittedOpsMetdata[2].batch,
+							submittedOpsMetadata[2].batch,
 							false,
 							"third message should be the batch end",
 						);
@@ -406,7 +471,7 @@ describe("Runtime", () => {
 						(containerRuntime as any).flush();
 
 						assert.strictEqual(
-							submittedOpsMetdata.length,
+							submittedOpsMetadata.length,
 							0,
 							"no messages should be sent",
 						);
@@ -414,7 +479,7 @@ describe("Runtime", () => {
 						containerRuntime.setConnectionState(true);
 
 						assert.strictEqual(
-							submittedOpsMetdata.length,
+							submittedOpsMetadata.length,
 							6,
 							"6 messages should be sent",
 						);
@@ -429,7 +494,7 @@ describe("Runtime", () => {
 						];
 
 						assert.deepStrictEqual(
-							submittedOpsMetdata,
+							submittedOpsMetadata,
 							expectedBatchMetadata,
 							"batch metadata does not match",
 						);
@@ -790,12 +855,8 @@ describe("Runtime", () => {
 			const getMockDataStores = (): DataStores => {
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 				return {
-					processFluidDataStoreOp: (
-						_message: ISequencedDocumentMessage,
-						_local: boolean,
-						_localMessageMetadata: unknown,
-					) => {},
-					setConnectionState: (_connected: boolean, _clientId?: string) => {},
+					processFluidDataStoreOp: (..._args) => {},
+					setConnectionState: (..._args) => {},
 				} as DataStores;
 			};
 
@@ -1092,6 +1153,89 @@ describe("Runtime", () => {
 				);
 			});
 
+			/** Overwrites dataStores property and exposes private submit function with modified typing */
+			function patchContainerRuntime(): Omit<ContainerRuntime, "submit"> & {
+				submit: (containerRuntimeMessage: UnknownContainerRuntimeMessage) => void;
+			} {
+				const patched = containerRuntime as unknown as Omit<
+					ContainerRuntime,
+					"submit" | "dataStores"
+				> & {
+					submit: (containerRuntimeMessage: UnknownContainerRuntimeMessage) => void;
+					dataStores: Partial<DataStores>;
+				};
+
+				patched.dataStores = {
+					setConnectionState: (_connected: boolean, _clientId?: string) => {},
+					// Pass data store op right back to ContainerRuntime
+					resubmitDataStoreOp: (envelope, localOpMetadata) => {
+						containerRuntime.submitDataStoreOp(
+							envelope.address,
+							envelope.contents,
+							localOpMetadata,
+						);
+					},
+				} satisfies Partial<DataStores>;
+
+				return patched;
+			}
+
+			it("Op with unrecognized type and 'Ignore' compat behavior is ignored by resubmit", async () => {
+				const patchedContainerRuntime = patchContainerRuntime();
+
+				patchedContainerRuntime.setConnectionState(false);
+
+				patchedContainerRuntime.submitDataStoreOp("1", "test");
+				patchedContainerRuntime.submitDataStoreOp("2", "test");
+				patchedContainerRuntime.submit({
+					type: "FUTURE_TYPE" as any,
+					contents: "3",
+					compatDetails: { behavior: "Ignore" }, // This op should be ignored by resubmit
+				});
+				patchedContainerRuntime.submitDataStoreOp("4", "test");
+
+				assert.strictEqual(
+					submittedOps.length,
+					0,
+					"no messages should be sent while disconnected",
+				);
+
+				// Connect, which will trigger resubmit
+				patchedContainerRuntime.setConnectionState(true);
+
+				assert.strictEqual(
+					submittedOps.length,
+					3,
+					"Only 3 messages should be sent - Do not resubmit the future/unknown op",
+				);
+			});
+
+			it("Op with unrecognized type and no compat behavior causes resubmit to throw", async () => {
+				const patchedContainerRuntime = patchContainerRuntime();
+
+				patchedContainerRuntime.setConnectionState(false);
+
+				patchedContainerRuntime.submit({
+					type: "FUTURE_TYPE" as any,
+					contents: "3",
+					// No compatDetails so it will throw on resubmit.
+				});
+
+				assert.strictEqual(
+					submittedOps.length,
+					0,
+					"no messages should be sent while disconnected",
+				);
+
+				// Note: hitting this error case in practice would require a new op type to be deployed,
+				// one such op to be stashed, then a new session loads on older code that is unaware
+				// of the new op type.
+				assert.throws(() => {
+					// Connect, which will trigger resubmit
+					patchedContainerRuntime.setConnectionState(true);
+				}, "Expected resubmit to throw");
+			});
+
 			it("process remote op with unrecognized type and 'Ignore' compat behavior", async () => {
 				const futureRuntimeMessage: RecentlyAddedContainerRuntimeMessageDetails &
 					Record<string, unknown> = {
@@ -1144,7 +1288,7 @@ describe("Runtime", () => {
 							false /* local */,
 						),
 					(error: IErrorBase) =>
-						error.errorType === ContainerErrorType.dataProcessingError,
+						error.errorType === ContainerErrorTypes.dataProcessingError,
 					"Ops with unrecognized type and 'FailToProcess' compat behavior should fail to process",
 				);
 			});
@@ -1175,7 +1319,7 @@ describe("Runtime", () => {
 							false /* local */,
 						),
 					(error: IErrorBase) =>
-						error.errorType === ContainerErrorType.dataProcessingError,
+						error.errorType === ContainerErrorTypes.dataProcessingError,
 					"Ops with unrecognized type and no specified compat behavior should fail to process",
 				);
 			});
@@ -1203,7 +1347,7 @@ describe("Runtime", () => {
 				assert.throws(
 					codeBlock,
 					(e: IErrorBase) =>
-						e.errorType === ContainerErrorType.usageError &&
+						e.errorType === ContainerErrorTypes.usageError &&
 						e.message === `Id cannot contain slashes: '${invalidId}'`,
 				);
 			});

@@ -1185,7 +1185,7 @@ export class PartialSequenceLengths {
 }
 
 /* eslint-disable @typescript-eslint/dot-notation */
-function verifyPartialLengths(
+function verifyPartialLengthsInner(
 	partialSeqLengths: PartialSequenceLengths,
 	partialLengths: PartialSequenceLengthsSet,
 	clientPartials: boolean,
@@ -1266,7 +1266,7 @@ function verifyPartialLengths(
 	return count;
 }
 
-export function verifyExpected(
+export function verifyExpectedPartialLengths(
 	mergeTree: MergeTree,
 	node: IMergeBlock,
 	refSeq: number,
@@ -1305,11 +1305,11 @@ export function verifyExpected(
 	}
 }
 
-export function verify(partialSeqLengths: PartialSequenceLengths) {
+export function verifyPartialLengths(partialSeqLengths: PartialSequenceLengths) {
 	if (partialSeqLengths["clientSeqNumbers"]) {
 		for (const cliSeq of partialSeqLengths["clientSeqNumbers"]) {
 			if (cliSeq) {
-				verifyPartialLengths(partialSeqLengths, cliSeq, true);
+				verifyPartialLengthsInner(partialSeqLengths, cliSeq, true);
 			}
 		}
 
@@ -1319,7 +1319,7 @@ export function verify(partialSeqLengths: PartialSequenceLengths) {
 			0x059 /* "Client view exists but flat view does not!" */,
 		);
 
-		verifyPartialLengths(partialSeqLengths, partialSeqLengths["partialLengths"], false);
+		verifyPartialLengthsInner(partialSeqLengths, partialSeqLengths["partialLengths"], false);
 	} else {
 		// If we don't have a client view, we shouldn't have the flat view either
 		assert(

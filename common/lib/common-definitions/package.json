@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/common-definitions",
-	"version": "1.1.0",
+	"version": "1.2.0",
 	"description": "Fluid common definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -14,21 +14,20 @@
 	"exports": {
 		".": {
 			"types": "./dist/index.d.ts",
-			"default": "./dist/index.cjs"
+			"default": "./dist/index.js"
 		}
 	},
-	"main": "dist/index.cjs",
+	"main": "dist/index.js",
 	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"api-extractor:commonjs": "api-extractor run --local",
-		"api-extractor:esnext": "copyfiles -u 1 \"dist/**/*-@(alpha|beta|public|untrimmed).d.ts\" lib",
+		"api-extractor:esnext": "api-extractor run --config ./api-extractor-esm.json",
 		"build": "npm run build:compile && concurrently npm:lint npm:build:docs",
 		"build:ci": "npm run build:compile",
 		"build:compile": "concurrently npm:typetests:gen npm:tsc npm:build:esnext",
 		"build:docs": "npm run api-extractor:commonjs && npm run api-extractor:esnext",
-		"build:esnext": "tsc-multi --config ../../build/build-common/tsc-multi.esm.json && npm run build:rename-types",
-		"build:rename-types": "renamer \"lib/**\" -f .d.ts -r .d.mts --force",
+		"build:esnext": "tsc-multi --config ../../build/build-common/tsc-multi.esm.json",
 		"check:are-the-types-wrong": "attw --pack",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build": "npm run build:compile",
@@ -43,7 +42,7 @@
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
-		"tsc": "tsc-multi --config ../../build/build-common/tsc-multi.cjs.json",
+		"tsc": "tsc",
 		"tsc:watch": "tsc --watch",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub generate typetests --prepare --dir ."
@@ -54,8 +53,8 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.26.1",
 		"@fluidframework/common-definitions-previous": "npm:@fluidframework/common-definitions@0.20.1",
-		"@fluidframework/eslint-config-fluid": "^3.1.0",
-		"@microsoft/api-extractor": "^7.38.3",
+		"@fluidframework/eslint-config-fluid": "^3.2.0",
+		"@microsoft/api-extractor": "^7.39.1",
 		"@types/node": "^16.18.38",
 		"concurrently": "^6.2.0",
 		"copyfiles": "^2.4.1",
@@ -81,8 +80,15 @@
 		}
 	},
 	"pnpm": {
+		"commentsOverrides": [
+			"sharp <0.32.6 has a vulnerability that Component Governance flags (https://github.com/advisories/GHSA-54xq-cgqr-rpm3). It's a transitive dependency through jssm-viz-cli, which hasn't updated to a version with the fix"
+		],
 		"patchedDependencies": {
-			"@microsoft/api-extractor@7.38.3": "../../../patches/@microsoft__api-extractor@7.38.3.patch"
+			"@microsoft/api-extractor@7.39.1": "../../../patches/@microsoft__api-extractor@7.39.1.patch",
+			"tsc-multi@1.1.0": "../../../patches/tsc-multi@1.1.0.patch"
+		},
+		"overrides": {
+			"sharp": "^0.33.2"
 		}
 	},
 	"typeValidation": {

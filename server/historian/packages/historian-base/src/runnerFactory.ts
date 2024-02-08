@@ -87,7 +87,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 					],
 					{
 						redisOptions,
-						slotsRefreshTimeout: 10000,
+						slotsRefreshTimeout: 50000,
 						dnsLookup: (adr, callback) => callback(null, adr),
 						showFriendlyErrorStack: true,
 					},
@@ -148,8 +148,8 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 							},
 						],
 						{
-							redisOptionsForThrottling,
-							slotsRefreshTimeout: 10000,
+							redisOptions: redisOptionsForThrottling,
+							slotsRefreshTimeout: 50000,
 							dnsLookup: (adr, callback) => callback(null, adr),
 							showFriendlyErrorStack: true,
 						},

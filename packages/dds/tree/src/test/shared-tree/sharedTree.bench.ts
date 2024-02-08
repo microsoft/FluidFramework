@@ -13,17 +13,18 @@ import {
 	jsonableTreeFromCursor,
 	cursorForTypedData,
 	cursorForTypedTreeData,
-} from "../../feature-libraries";
-import { singleJsonCursor } from "../../domains";
+	TreeCompressionStrategy,
+} from "../../feature-libraries/index.js";
+import { singleJsonCursor } from "../../domains/index.js";
 import {
 	insert,
 	TestTreeProviderLite,
 	toJsonableTree,
 	flexTreeViewWithContent,
 	checkoutWithContent,
-} from "../utils";
-import { FlexTreeView } from "../../shared-tree";
-import { rootFieldKey } from "../../core";
+} from "../utils.js";
+import { FlexTreeView, SharedTreeFactory } from "../../shared-tree/index.js";
+import { rootFieldKey } from "../../core/index.js";
 import {
 	deepPath,
 	deepSchema,
@@ -42,7 +43,9 @@ import {
 	readWideTreeAsJSObject,
 	wideRootSchema,
 	wideSchema,
-} from "../scalableTestTrees";
+} from "../scalableTestTrees.js";
+// eslint-disable-next-line import/no-internal-modules
+import { typeboxValidator } from "../../external-utilities/typeboxValidator.js";
 
 // number of nodes in test for wide trees
 const nodesCountWide = [
@@ -56,6 +59,12 @@ const nodesCountDeep = [
 	[10, BenchmarkType.Perspective],
 	[100, BenchmarkType.Measurement],
 ];
+
+// TODO: ADO#7111 Schema should be fixed to enable schema based encoding.
+const factory = new SharedTreeFactory({
+	jsonValidator: typeboxValidator,
+	treeEncodeType: TreeCompressionStrategy.Uncompressed,
+});
 
 // TODO: Once the "BatchTooLarge" error is no longer an issue, extend tests for larger trees.
 describe("SharedTree benchmarks", () => {
@@ -299,8 +308,8 @@ describe("SharedTree benchmarks", () => {
 						// Measure
 						const before = state.timer.now();
 						for (let value = 1; value <= setCount; value++) {
-							editor.delete(nodeIndex, 1);
-							editor.insert(nodeIndex, [singleJsonCursor(value)]);
+							editor.remove(nodeIndex, 1);
+							editor.insert(nodeIndex, singleJsonCursor(value));
 						}
 						const after = state.timer.now();
 						duration = state.timer.toSeconds(before, after);
@@ -340,11 +349,11 @@ describe("SharedTree benchmarks", () => {
 						assert.equal(state.iterationsPerBatch, 1);
 
 						// Setup
-						const provider = new TestTreeProviderLite();
+						const provider = new TestTreeProviderLite(1, factory);
 						// TODO: specify a schema for these trees.
 						const [tree] = provider.trees;
 						for (let i = 0; i < size; i++) {
-							insert(tree.view, i, "test");
+							insert(tree.checkout, i, "test");
 						}
 
 						// Measure
@@ -378,11 +387,11 @@ describe("SharedTree benchmarks", () => {
 						assert.equal(state.iterationsPerBatch, 1);
 
 						// Setup
-						const provider = new TestTreeProviderLite(nbPeers);
+						const provider = new TestTreeProviderLite(nbPeers, factory);
 						for (let iCommit = 0; iCommit < nbCommits; iCommit++) {
 							for (let iPeer = 0; iPeer < nbPeers; iPeer++) {
 								const peer = provider.trees[iPeer];
-								insert(peer.view, 0, `p${iPeer}c${iCommit}`);
+								insert(peer.checkout, 0, `p${iPeer}c${iCommit}`);
 							}
 						}
 

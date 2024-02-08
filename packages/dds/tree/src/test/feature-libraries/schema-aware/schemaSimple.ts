@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { SchemaBuilder, leaf } from "../../../domains";
-import { InsertableFlexNode, typeNameSymbol } from "../../../feature-libraries";
+import { SchemaBuilder, leaf } from "../../../domains/index.js";
+import { InsertableFlexNode, typeNameSymbol } from "../../../feature-libraries/index.js";
 
 const builder = new SchemaBuilder({ scope: "Simple Schema" });
 

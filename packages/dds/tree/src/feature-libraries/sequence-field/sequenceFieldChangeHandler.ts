@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { FieldChangeHandler } from "../modular-schema";
-import { Changeset } from "./types";
-import { sequenceFieldChangeRebaser } from "./sequenceFieldChangeRebaser";
-import { sequenceFieldChangeCodecFactory } from "./sequenceFieldCodecs";
-import { SequenceFieldEditor, sequenceFieldEditor } from "./sequenceFieldEditor";
-import { sequenceFieldToDelta } from "./sequenceFieldToDelta";
-import { isEmpty } from "./utils";
-import { relevantRemovedRoots } from "./relevantRemovedRoots";
+import { FieldChangeHandler } from "../modular-schema/index.js";
+import { Changeset } from "./types.js";
+import { sequenceFieldChangeRebaser } from "./sequenceFieldChangeRebaser.js";
+import { sequenceFieldChangeCodecFactory } from "./sequenceFieldCodecs.js";
+import { SequenceFieldEditor, sequenceFieldEditor } from "./sequenceFieldEditor.js";
+import { sequenceFieldToDelta } from "./sequenceFieldToDelta.js";
+import { createEmpty, isEmpty } from "./utils.js";
+import { relevantRemovedRoots } from "./relevantRemovedRoots.js";
 
 export type SequenceFieldChangeHandler = FieldChangeHandler<Changeset, SequenceFieldEditor>;
 
@@ -21,4 +21,5 @@ export const sequenceFieldChangeHandler: SequenceFieldChangeHandler = {
 	intoDelta: sequenceFieldToDelta,
 	relevantRemovedRoots,
 	isEmpty,
+	createEmpty,
 };

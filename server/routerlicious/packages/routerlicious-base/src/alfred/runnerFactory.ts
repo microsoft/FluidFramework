@@ -124,6 +124,7 @@ export class AlfredResources implements core.IResources {
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
 		public collaborationSessionEvents?: TypedEventEmitter<ICollaborationSessionEvents>,
 		public serviceMessageResourceManager?: core.IServiceMessageResourceManager,
+		public clusterDrainingChecker?: core.IClusterDrainingChecker,
 	) {
 		const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
@@ -245,7 +246,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			`test123 Redis Client Params, redisOptions2, CE: ${redisConfig2.enableClustering}`,
 			{
 				redisOptionsCopy,
-				slotsRefreshTimeout: 10000,
+				slotsRefreshTimeout: 50000,
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 				dnsLookup: (adr, callback) => callback(undefined, adr),
 				showFriendlyErrorStack: true,
@@ -264,7 +265,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const redisClient: Redis.default | Redis.Cluster = redisConfig2.enableClustering
 			? new Redis.Cluster([{ port: redisConfig2.port, host: redisConfig2.host }], {
 					redisOptions: redisOptions2,
-					slotsRefreshTimeout: 10000,
+					slotsRefreshTimeout: 50000,
 					dnsLookup: (adr, callback) => callback(null, adr),
 					showFriendlyErrorStack: true,
 			  })
@@ -274,7 +275,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const redisClientForJwtCache: Redis.default | Redis.Cluster = redisConfig2.enableClustering
 			? new Redis.Cluster([{ port: redisConfig2.port, host: redisConfig2.host }], {
 					redisOptions: redisOptions2,
-					slotsRefreshTimeout: 10000,
+					slotsRefreshTimeout: 50000,
 					dnsLookup: (adr, callback) => callback(null, adr),
 					showFriendlyErrorStack: true,
 			  })
@@ -384,7 +385,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			`test123 Redis Client Params, redisOptionsForThrottling, CE: ${redisConfigForThrottling.enableClustering}`,
 			{
 				redisOptionsCopy,
-				slotsRefreshTimeout: 10000,
+				slotsRefreshTimeout: 50000,
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 				dnsLookup: (adr, callback) => callback(undefined, adr),
 				showFriendlyErrorStack: true,
@@ -410,7 +411,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 						],
 						{
 							redisOptions: redisOptionsForThrottling,
-							slotsRefreshTimeout: 10000,
+							slotsRefreshTimeout: 50000,
 							dnsLookup: (adr, callback) => callback(null, adr),
 							showFriendlyErrorStack: true,
 						},
@@ -613,7 +614,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 				redisConfig.enableClustering
 					? new Redis.Cluster([{ port: redisConfig.port, host: redisConfig.host }], {
 							redisOptions,
-							slotsRefreshTimeout: 10000,
+							slotsRefreshTimeout: 50000,
 							dnsLookup: (adr, callback) => callback(null, adr),
 							showFriendlyErrorStack: true,
 					  })
@@ -725,6 +726,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			revokedTokenChecker,
 			collaborationSessionEvents,
 			serviceMessageResourceManager,
+			customizations?.clusterDrainingChecker,
 		);
 	}
 }
@@ -762,6 +764,7 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
 			resources.tokenRevocationManager,
 			resources.revokedTokenChecker,
 			resources.collaborationSessionEvents,
+			resources.clusterDrainingChecker,
 		);
 	}
 }

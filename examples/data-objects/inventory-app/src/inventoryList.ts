@@ -4,16 +4,13 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { ForestType, TreeFactory, TreeView, typeboxValidator, ITree } from "@fluidframework/tree";
+import { SharedTree, TreeView, ITree } from "@fluidframework/tree";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { Inventory, treeConfiguration } from "./schema";
+import { Inventory, treeConfiguration } from "./schema.js";
 
 const treeKey = "tree";
 
-const factory = new TreeFactory({
-	jsonValidator: typeboxValidator,
-	forest: ForestType.Reference,
-});
+const factory = SharedTree.getFactory();
 
 /**
  * @internal

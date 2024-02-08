@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ReferenceCountedBase } from "../../util";
-import { BasicChunkCursor } from "./basicChunk";
-import { ChunkedCursor, dummyRoot, TreeChunk } from "./chunk";
+import { ReferenceCountedBase } from "../../util/index.js";
+import { BasicChunkCursor } from "./basicChunk.js";
+import { ChunkedCursor, dummyRoot, TreeChunk } from "./chunk.js";
 
 /**
  * General purpose multi-node sequence chunk.

@@ -4,8 +4,16 @@
  */
 
 import { strict as assert } from "assert";
-import { ImplicitFieldSchema, SchemaFactory, TreeFieldFromImplicitField } from "../../class-tree";
-import { getRoot, makeSchema, pretty } from "./utils";
+import {
+	ImplicitFieldSchema,
+	NodeKind,
+	SchemaFactory,
+	TreeFieldFromImplicitField,
+	TreeNodeSchema,
+} from "../../simple-tree/index.js";
+import { getRoot, pretty } from "./utils.js";
+
+const schemaFactory = new SchemaFactory("Test");
 
 interface TestCase<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
 	schema: TSchema;
@@ -286,19 +294,39 @@ const tcs: TestCase[] = [
 		})(),
 		initialTree: ["A", "B"],
 	},
+	{
+		schema: (() => {
+			const _ = new SchemaFactory("test");
+			return _.object("special keys", {
+				value: _.number,
+				[""]: _.number,
+				set: _.number,
+				__proto__: _.number,
+				constructor: _.number,
+				setting: _.number,
+			});
+		})(),
+		initialTree: {
+			value: 1,
+			[""]: 2,
+			set: 3,
+			__proto__: 4,
+			constructor: 5,
+			setting: 6,
+		},
+	},
 ];
 
 testObjectLike(tcs);
+
+const factory = new SchemaFactory("test");
 
 describe("Object-like", () => {
 	describe("setting an invalid field", () => {
 		// TODO: Restore original behavior for bare '_.object()'?
 		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
 		it.skip("throws TypeError in strict mode", () => {
-			const root = getRoot(
-				makeSchema((_) => _.object("no fields", {})),
-				() => ({}),
-			);
+			const root = getRoot(schemaFactory.object("no fields", {}), () => ({}));
 			assert.throws(() => {
 				// The actual error "'TypeError: 'set' on proxy: trap returned falsish for property 'foo'"
 				(root as unknown as any).foo = 3;
@@ -308,97 +336,77 @@ describe("Object-like", () => {
 
 	describe("supports setting", () => {
 		describe("primitives", () => {
-			function check<const TSchema extends ImplicitFieldSchema>(
-				schema: TSchema,
-				before: TreeFieldFromImplicitField<TSchema>,
-				after: TreeFieldFromImplicitField<TSchema>,
+			function check<const TNode>(
+				schema: TreeNodeSchema<string, NodeKind, TNode>,
+				before: TNode,
+				after: TNode,
 			) {
 				describe(`required ${typeof before} `, () => {
 					it(`(${pretty(before)} -> ${pretty(after)})`, () => {
-						const root = getRoot(
-							makeSchema((_) => _.object("", { _value: schema })),
-							() => ({ _value: before }),
-						);
-						assert.equal(root._value, before);
-						root._value = after;
-						assert.equal(root._value, after);
+						const Root = factory.object("", { value: schema });
+						const root = getRoot(Root, () => ({ value: before }));
+						assert.equal(root.value, before);
+						root.value = after;
+						assert.equal(root.value, after);
 					});
 				});
 
 				describe(`optional ${typeof before}`, () => {
 					it(`(undefined -> ${pretty(before)} -> ${pretty(after)})`, () => {
 						const root = getRoot(
-							// Is there a way to avoid the cast to 'any' when using 'class-schema'?
-							// TODO: https://dev.azure.com/fluidframework/internal/_workitems/edit/6551
-							makeSchema((_) => _.object("", { _value: _.optional(schema as any) })),
-							() => ({ _value: undefined }),
+							schemaFactory.object("", { value: schemaFactory.optional(schema) }),
+							() => ({ value: undefined }),
 						);
-						assert.equal(root._value, undefined);
-						root._value = before;
-						assert.equal(root._value, before);
-						root._value = after;
-						assert.equal(root._value, after);
+						assert.equal(root.value, undefined);
+						root.value = before;
+						assert.equal(root.value, before);
+						root.value = after;
+						assert.equal(root.value, after);
 					});
 				});
 			}
 
-			check(
-				makeSchema((_) => _.boolean),
-				false,
-				true,
-			);
-			check(
-				makeSchema((_) => _.number),
-				0,
-				1,
-			);
-			check(
-				makeSchema((_) => _.string),
-				"",
-				"!",
-			);
+			check(schemaFactory.boolean, false, true);
+			check(schemaFactory.number, 0, 1);
+			check(schemaFactory.string, "", "!");
 		});
 
 		describe("required object", () => {
-			const schema = makeSchema((_) =>
-				_.object("parent", {
-					child: _.object("child", {
-						objId: _.number,
-					}),
-				}),
-			);
+			const Child = factory.object("child", {
+				objId: factory.number,
+			});
+			const Schema = factory.object("parent", {
+				child: Child,
+			});
 
 			const before = { objId: 0 };
 			const after = { objId: 1 };
 
 			it(`(${pretty(before)} -> ${pretty(after)})`, () => {
-				const root = getRoot(schema, () => ({ child: before }));
+				const root = getRoot(Schema, () => ({ child: before }));
 				assert.equal(root.child.objId, 0);
-				root.child = after;
+				root.child = new Child(after);
 				assert.equal(root.child.objId, 1);
 			});
 		});
 
 		describe("optional object", () => {
-			const schema = makeSchema((_) =>
-				_.object("parent", {
-					child: _.optional(
-						_.object("child", {
-							objId: _.number,
-						}),
-					),
-				}),
-			);
+			const Child = factory.object("child", {
+				objId: factory.number,
+			});
+			const Schema = factory.object("parent", {
+				child: factory.optional(Child),
+			});
 
 			const before = { objId: 0 };
 			const after = { objId: 1 };
 
 			it(`(undefined -> ${pretty(before)} -> ${pretty(after)})`, () => {
-				const root = getRoot(schema, () => ({ child: undefined }));
+				const root = getRoot(Schema, () => ({ child: undefined }));
 				assert.equal(root.child, undefined);
-				root.child = before;
+				root.child = new Child(before);
 				assert.equal(root.child.objId, 0);
-				root.child = after;
+				root.child = new Child(after);
 				assert.equal(root.child.objId, 1);
 			});
 		});

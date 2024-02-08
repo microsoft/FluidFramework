@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey } from "../schema-stored";
-import { ITreeCursorSynchronous } from "./cursor";
+import { RevisionTag } from "../rebase/index.js";
+import { FieldKey } from "../schema-stored/index.js";
+import { ITreeCursorSynchronous } from "./cursor.js";
 
 /**
  * This format describes changes that must be applied to a forest in order to update it.
@@ -67,13 +68,13 @@ import { ITreeCursorSynchronous } from "./cursor";
 /**
  * Represents the change made to a document.
  * Immutable, therefore safe to retain for async processing.
- * @alpha
+ * @internal
  */
 export interface Root<TTree = ProtoNode> {
 	/**
 	 * Changes to apply to the root fields.
 	 */
-	readonly fields?: FieldMap<TTree>;
+	readonly fields?: FieldMap;
 	/**
 	 * New detached nodes to be constructed.
 	 * The ordering has no significance.
@@ -93,6 +94,7 @@ export interface Root<TTree = ProtoNode> {
 	 */
 	readonly destroy?: readonly DetachedNodeDestruction[];
 }
+
 /**
  * The default representation for inserted content.
  *
@@ -100,7 +102,7 @@ export interface Root<TTree = ProtoNode> {
  * Ownership and lifetime of data referenced by this cursor is unclear,
  * so it is a poor abstraction for this use-case which needs to hold onto the data in a non-exclusive (readonly) way.
  * Cursors can be one supported way to input data, but aren't a good storage format.
- * @alpha
+ * @internal
  */
 export type ProtoNode = ITreeCursorSynchronous;
 
@@ -112,15 +114,15 @@ export type ProtoNode = ITreeCursorSynchronous;
  * Additionally, Cursors support sequences, so if using cursors, there are better ways to handle this than an array of cursors,
  * like using a cursor over all the content (starting in fields mode).
  * Long term something like TreeChunk should probably be used here.
- * @alpha
+ * @internal
  */
 export type ProtoNodes = readonly ProtoNode[];
 
 /**
  * Represents a change being made to a part of the document tree.
- * @alpha
+ * @internal
  */
-export interface Mark<TTree = ProtoNode> {
+export interface Mark {
 	/**
 	 * The number of nodes affected.
 	 * When `isAttachMark(mark)` is true, this is the number of new nodes being attached.
@@ -133,7 +135,7 @@ export interface Mark<TTree = ProtoNode> {
 	 * Modifications to the pre-existing content.
 	 * Must be undefined when `attach` is set but `detach` is not.
 	 */
-	readonly fields?: FieldMap<TTree>;
+	readonly fields?: FieldMap;
 
 	/**
 	 * When set, indicates that some pre-existing content is being detached and sent to the given detached field.
@@ -148,25 +150,25 @@ export interface Mark<TTree = ProtoNode> {
 
 /**
  * A globally unique ID for a node in a detached field.
- * @alpha
+ * @internal
  */
 export interface DetachedNodeId {
-	readonly major?: string | number;
+	readonly major?: RevisionTag;
 	readonly minor: number;
 }
 
 /**
- * @alpha
+ * @internal
  */
-export type FieldMap<TTree = ProtoNode> = ReadonlyMap<FieldKey, FieldChanges<TTree>>;
+export type FieldMap = ReadonlyMap<FieldKey, FieldChanges>;
 
 /**
  * Represents changes made to a detached node
- * @alpha
+ * @internal
  */
-export interface DetachedNodeChanges<TTree = ProtoNode> {
+export interface DetachedNodeChanges {
 	readonly id: DetachedNodeId;
-	readonly fields: FieldMap<TTree>;
+	readonly fields: FieldMap;
 }
 
 /**
@@ -174,7 +176,7 @@ export interface DetachedNodeChanges<TTree = ProtoNode> {
  *
  * Tree creation is idempotent: if a tree with the same ID already exists,
  * then this build is ignored in favor of the existing tree.
- * @alpha
+ * @internal
  */
 export interface DetachedNodeBuild<TTree = ProtoNode> {
 	readonly id: DetachedNodeId;
@@ -183,7 +185,7 @@ export interface DetachedNodeBuild<TTree = ProtoNode> {
 
 /**
  * Represents the destruction of detached nodes
- * @alpha
+ * @internal
  */
 export interface DetachedNodeDestruction {
 	readonly id: DetachedNodeId;
@@ -192,7 +194,7 @@ export interface DetachedNodeDestruction {
 
 /**
  * Represents a detached node being assigned a new `DetachedNodeId`.
- * @alpha
+ * @internal
  */
 export interface DetachedNodeRename {
 	readonly count: number;
@@ -202,16 +204,16 @@ export interface DetachedNodeRename {
 
 /**
  * Represents the changes to perform on a given field.
- * @alpha
+ * @internal
  */
-export interface FieldChanges<TTree = ProtoNode> {
+export interface FieldChanges {
 	/**
 	 * Represents a list of changes to the nodes in the field.
 	 * The index of each mark within the range of nodes, before
 	 * applying any of the changes, is not represented explicitly.
 	 * It corresponds to the sum of `mark.count` values for all previous marks for which `isAttachMark(mark)` is false.
 	 */
-	readonly local?: readonly Mark<TTree>[];
+	readonly local?: readonly Mark[];
 	/**
 	 * Changes to apply to detached nodes.
 	 * The ordering has no significance.
@@ -220,31 +222,7 @@ export interface FieldChanges<TTree = ProtoNode> {
 	 * For example, if one wishes to change a tree which is being renamed from ID A to ID B,
 	 * then the changes should be listed under ID A.
 	 */
-	readonly global?: readonly DetachedNodeChanges<TTree>[];
-	/**
-	 * New detached nodes to be constructed.
-	 * The ordering has no significance.
-	 *
-	 * @deprecated - Builds should be set at the root.
-	 * TODO:6308 migrate all reader/writers away from this and remove it.
-	 *
-	 * Build instructions for a root that is undergoing a rename should be listed under the starting name.
-	 * For example, if one wishes to build a tree which is being renamed from ID A to ID B,
-	 * then the build should be listed under ID A.
-	 */
-	readonly build?: readonly DetachedNodeBuild<TTree>[];
-	/**
-	 * New detached nodes to be destroyed.
-	 * The ordering has no significance.
-	 *
-	 * @deprecated - Destroys should be set at the root.
-	 * TODO:6308 migrate all reader/writers away from this and remove it.
-	 *
-	 * Destruction instructions for a root that is undergoing a rename should be listed under the final name.
-	 * For example, if one wishes to destroy a tree which is being renamed from ID A to ID B,
-	 * then the destruction should be listed under ID B.
-	 */
-	readonly destroy?: readonly DetachedNodeDestruction[];
+	readonly global?: readonly DetachedNodeChanges[];
 	/**
 	 * Detached whose associated ID needs to be updated.
 	 * The ordering has no significance.

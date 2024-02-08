@@ -6,10 +6,18 @@ import { strict as assert, fail } from "assert";
 import Table from "easy-table";
 import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { cursorForJsonableTreeNode } from "../../feature-libraries";
-import { ISharedTree, ITreeCheckout, SharedTreeFactory } from "../../shared-tree";
-import { JsonCompatibleReadOnly, brand, getOrAddEmptyToMap } from "../../util";
+import {
+	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils";
+import { createIdCompressor } from "@fluidframework/id-compressor";
+import {
+	TreeCompressionStrategy,
+	cursorForJsonableTreeNode,
+} from "../../feature-libraries/index.js";
+import { ISharedTree, ITreeCheckout, SharedTreeFactory } from "../../shared-tree/index.js";
+import { JsonCompatibleReadOnly, brand, getOrAddEmptyToMap } from "../../util/index.js";
 import {
 	AllowedUpdateType,
 	FieldKey,
@@ -18,9 +26,9 @@ import {
 	moveToDetachedField,
 	rootFieldKey,
 	Value,
-} from "../../core";
-import { typeboxValidator } from "../../external-utilities";
-import { SchemaBuilder, leaf } from "../../domains";
+} from "../../core/index.js";
+import { typeboxValidator } from "../../external-utilities/index.js";
+import { SchemaBuilder, leaf } from "../../domains/index.js";
 
 // Notes:
 // 1. Within this file "percentile" is commonly used, and seems to refer to a portion (0 to 1) or some maximum size.
@@ -48,6 +56,26 @@ const initialTestJsonTree = {
 };
 
 const childrenFieldKey: FieldKey = brand("children");
+
+/**
+ * Create a default attached tree for op submission
+ */
+function createConnectedTree(): ISharedTree {
+	const containerRuntimeFactory = new MockContainerRuntimeFactory();
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({
+		idCompressor: createIdCompressor(),
+	});
+	containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	const tree = factory.create(
+		new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+		"test",
+	);
+	tree.connect({
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
+		objectStorage: new MockStorage(),
+	});
+	return tree;
+}
 
 /*
  * Updates the given `tree` to the given `schema` and inserts `state` as its root.
@@ -172,12 +200,12 @@ function insertNodesWithSingleTransaction(
 	tree.transaction.commit();
 }
 
-function deleteNodesWithIndividualTransactions(
+function removeNodesWithIndividualTransactions(
 	tree: ITreeCheckout,
-	numDeletes: number,
-	deletesPerTransaction: number,
+	numRemovals: number,
+	removalsPerTransaction: number,
 ): void {
-	for (let i = 0; i < numDeletes; i++) {
+	for (let i = 0; i < numRemovals; i++) {
 		tree.transaction.start();
 		const path = {
 			parent: undefined,
@@ -185,12 +213,12 @@ function deleteNodesWithIndividualTransactions(
 			parentIndex: 0,
 		};
 		const field = tree.editor.sequenceField({ parent: path, field: childrenFieldKey });
-		field.delete(getChildrenLength(tree) - 1, deletesPerTransaction);
+		field.remove(getChildrenLength(tree) - 1, removalsPerTransaction);
 		tree.transaction.commit();
 	}
 }
 
-function deleteNodesWithSingleTransaction(tree: ITreeCheckout, numDeletes: number): void {
+function removeNodesWithSingleTransaction(tree: ITreeCheckout, numRemoved: number): void {
 	tree.transaction.start();
 	const path = {
 		parent: undefined,
@@ -198,7 +226,7 @@ function deleteNodesWithSingleTransaction(tree: ITreeCheckout, numDeletes: numbe
 		parentIndex: 0,
 	};
 	const field = tree.editor.sequenceField({ parent: path, field: childrenFieldKey });
-	field.delete(0, numDeletes);
+	field.remove(0, numRemoved);
 	tree.transaction.commit();
 }
 
@@ -219,7 +247,7 @@ function editNodesWithIndividualTransactions(
 	const editor = tree.editor.sequenceField({ parent: rootPath, field: childrenFieldKey });
 	for (let i = 0; i < numChildrenToEdit; i++) {
 		tree.transaction.start();
-		editor.delete(i, 1);
+		editor.remove(i, 1);
 		editor.insert(
 			i,
 			cursorForJsonableTreeNode({
@@ -247,7 +275,7 @@ function editNodesWithSingleTransaction(
 	const editor = tree.editor.sequenceField({ parent: rootPath, field: childrenFieldKey });
 	tree.transaction.start();
 	for (let i = 0; i < numChildrenToEdit; i++) {
-		editor.delete(i, 1);
+		editor.remove(i, 1);
 		editor.insert(
 			i,
 			cursorForJsonableTreeNode({
@@ -264,7 +292,7 @@ function editNodesWithSingleTransaction(
 
 enum Operation {
 	Insert = "Insert",
-	Delete = "Delete",
+	Remove = "Remove",
 	Edit = "Edit",
 }
 
@@ -275,7 +303,7 @@ enum TransactionStyle {
 
 /**
  * The following byte sizes in utf-8 encoded bytes of JsonableTree were found to be the maximum size that could be successfully
- * inserted/deleted/edited using the following node counts and either individual of singular (bulk) transactions.
+ * inserted/removed/edited using the following node counts and either individual of singular (bulk) transactions.
  *
  * Using any larger of a byte size of JsonableTree children causes the "BatchToLarge" error; this would require either:
  * Adding artificial wait, for e.x. by using a for-loop to segment our transactions into batches of less than the given node count.
@@ -295,7 +323,7 @@ const MAX_SUCCESSFUL_OP_BYTE_SIZES = {
 			},
 		},
 	},
-	Delete: {
+	Remove: {
 		[TransactionStyle.Individual]: {
 			nodeCounts: {
 				"100": 9700,
@@ -352,8 +380,11 @@ const styles = [
 		extraDescription: `1 transaction`,
 	},
 ];
-
-const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
+// TODO: ADO#7111 schemas in this file should be updated/fixed to enable compressed encoding.
+const factory = new SharedTreeFactory({
+	jsonValidator: typeboxValidator,
+	treeEncodeType: TreeCompressionStrategy.Uncompressed,
+});
 
 describe("Op Size", () => {
 	const opsByBenchmarkName: Map<string, ISequencedDocumentMessage[]> = new Map();
@@ -435,7 +466,7 @@ describe("Op Size", () => {
 
 	describe("Insert Nodes", () => {
 		function benchmarkOps(transactionStyle: TransactionStyle, percentile: number): void {
-			const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
+			const tree = createConnectedTree();
 			initializeOpDataCollection(tree);
 			const view = initializeTestTree(tree);
 			deleteCurrentOps(); // We don't want to record any ops from initializing the tree.
@@ -462,21 +493,21 @@ describe("Op Size", () => {
 		}
 	});
 
-	describe("Delete Nodes", () => {
+	describe("Remove Nodes", () => {
 		function benchmarkOps(transactionStyle: TransactionStyle, percentile: number): void {
-			const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
+			const tree = createConnectedTree();
 			initializeOpDataCollection(tree);
 			const childByteSize = getSuccessfulOpByteSize(
-				Operation.Delete,
+				Operation.Remove,
 				transactionStyle,
 				percentile,
 			);
 			const view = initializeTestTree(tree, createInitialTree(100, childByteSize));
 			deleteCurrentOps(); // We don't want to record any ops from initializing the tree.
 			if (transactionStyle === TransactionStyle.Individual) {
-				deleteNodesWithIndividualTransactions(view, 100, 1);
+				removeNodesWithIndividualTransactions(view, 100, 1);
 			} else {
-				deleteNodesWithSingleTransaction(view, 100);
+				removeNodesWithSingleTransaction(view, 100);
 			}
 			assertChildNodeCount(view, 0);
 		}
@@ -487,7 +518,7 @@ describe("Op Size", () => {
 					it(`${BENCHMARK_NODE_COUNT} ${word} nodes in ${
 						style === TransactionStyle.Individual
 							? extraDescription
-							: `1 transactions containing 1 delete of ${BENCHMARK_NODE_COUNT} nodes`
+							: `1 transactions containing 1 removal of ${BENCHMARK_NODE_COUNT} nodes`
 					}`, () => {
 						benchmarkOps(style, percentile);
 					});
@@ -498,7 +529,7 @@ describe("Op Size", () => {
 
 	describe("Edit Nodes", () => {
 		function benchmarkOps(transactionStyle: TransactionStyle, percentile: number): void {
-			const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
+			const tree = createConnectedTree();
 			initializeOpDataCollection(tree);
 			// Note that the child node byte size for the initial tree here should be arbitrary.
 			const view = initializeTestTree(tree, createInitialTree(BENCHMARK_NODE_COUNT, 1000));
@@ -529,7 +560,7 @@ describe("Op Size", () => {
 		}
 	});
 
-	describe("Insert, Delete & Edit Nodes", () => {
+	describe("Insert, Remove & Edit Nodes", () => {
 		const oneThirdNodeCount = Math.floor(BENCHMARK_NODE_COUNT * (1 / 3));
 		const seventyPercentCount = Math.floor(BENCHMARK_NODE_COUNT * 0.7);
 		const fifteenPercentCount = Math.floor(BENCHMARK_NODE_COUNT * 0.15);
@@ -542,51 +573,51 @@ describe("Op Size", () => {
 			{
 				[Operation.Insert]: oneThirdNodeCount,
 				[Operation.Edit]: oneThirdNodeCount,
-				[Operation.Delete]: oneThirdNodeCount,
+				[Operation.Remove]: oneThirdNodeCount,
 			},
 			{
 				[Operation.Insert]: seventyPercentCount,
 				[Operation.Edit]: fifteenPercentCount,
-				[Operation.Delete]: fifteenPercentCount,
+				[Operation.Remove]: fifteenPercentCount,
 			},
 			{
 				[Operation.Insert]: fifteenPercentCount,
 				[Operation.Edit]: seventyPercentCount,
-				[Operation.Delete]: fifteenPercentCount,
+				[Operation.Remove]: fifteenPercentCount,
 			},
 			{
 				[Operation.Insert]: fifteenPercentCount,
 				[Operation.Edit]: fifteenPercentCount,
-				[Operation.Delete]: seventyPercentCount,
+				[Operation.Remove]: seventyPercentCount,
 			},
 		];
 
 		describe("Individual Transactions", () => {
-			const benchmarkInsertDeleteEditNodesWithInvidiualTxs = (
+			const benchmarkInsertRemoveEditNodesWithInvidiualTxs = (
 				percentile: number,
 				distribution: OpKindDistribution,
 			) => {
 				const {
-					Delete: deleteNodeCount,
+					Remove: removeNodeCount,
 					Insert: insertNodeCount,
 					Edit: editNodeCount,
 				} = distribution;
 
-				const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
+				const tree = createConnectedTree();
 				initializeOpDataCollection(tree);
 
-				// delete
+				// remove
 				const childByteSize = getSuccessfulOpByteSize(
-					Operation.Delete,
+					Operation.Remove,
 					TransactionStyle.Individual,
 					percentile,
 				);
 				const view = initializeTestTree(
 					tree,
-					createInitialTree(deleteNodeCount, childByteSize),
+					createInitialTree(removeNodeCount, childByteSize),
 				);
 				deleteCurrentOps(); // We don't want to record the ops from initializing the tree.
-				deleteNodesWithIndividualTransactions(view, deleteNodeCount, 1);
+				removeNodesWithIndividualTransactions(view, removeNodeCount, 1);
 				assertChildNodeCount(view, 0);
 
 				// insert
@@ -624,11 +655,11 @@ describe("Op Size", () => {
 			};
 
 			for (const distribution of distributions) {
-				const suiteDescription = `Distribution: ${distribution.Insert}% insert, ${distribution.Edit}% edit, ${distribution.Delete}% delete`;
+				const suiteDescription = `Distribution: ${distribution.Insert}% insert, ${distribution.Edit}% edit, ${distribution.Remove}% remove`;
 				describe(suiteDescription, () => {
 					for (const { percentile } of sizes) {
 						it(`Percentile: ${percentile}`, () => {
-							benchmarkInsertDeleteEditNodesWithInvidiualTxs(
+							benchmarkInsertRemoveEditNodesWithInvidiualTxs(
 								percentile,
 								distribution,
 							);
@@ -640,36 +671,36 @@ describe("Op Size", () => {
 
 		// TODO:
 		// These tests don't actually do a single transaction (they do one per edit type).
-		// Therefor they are failing to test the size of transactions mixing inserts, deletes and edits.
-		// These tests also fail to clarify if the nodes being deleted are ones which were inserted or edited earlier,
+		// Therefor they are failing to test the size of transactions mixing inserts, removals and edits.
+		// These tests also fail to clarify if the nodes being removed are ones which were inserted or edited earlier,
 		// so it can't be used to test compaction of transient data within a transaction even if it was a single transaction.
 		// Instead correctness tests should cover that, and maybe this suite should simply be removed?
 		describe("Single Transactions", () => {
-			const benchmarkInsertDeleteEditNodesWithSingleTxs = (
+			const benchmarkInsertRemoveEditNodesWithSingleTxs = (
 				percentile: number,
 				distribution: OpKindDistribution,
 			) => {
 				const {
-					Delete: deleteNodeCount,
+					Remove: removedNodeCount,
 					Insert: insertNodeCount,
 					Edit: editNodeCount,
 				} = distribution;
 
-				const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
+				const tree = createConnectedTree();
 				initializeOpDataCollection(tree);
 
-				// delete
+				// remove
 				const childByteSize = getSuccessfulOpByteSize(
-					Operation.Delete,
+					Operation.Remove,
 					TransactionStyle.Single,
 					percentile,
 				);
 				const view = initializeTestTree(
 					tree,
-					createInitialTree(deleteNodeCount, childByteSize),
+					createInitialTree(removedNodeCount, childByteSize),
 				);
 				deleteCurrentOps(); // We don't want to record the ops from initializing the tree.
-				deleteNodesWithSingleTransaction(view, deleteNodeCount);
+				removeNodesWithSingleTransaction(view, removedNodeCount);
 				assertChildNodeCount(view, 0);
 
 				// insert
@@ -700,11 +731,11 @@ describe("Op Size", () => {
 			};
 
 			for (const distribution of distributions) {
-				const suiteDescription = `Distribution: ${distribution.Insert}% insert, ${distribution.Edit}% edit, ${distribution.Delete}% delete`;
+				const suiteDescription = `Distribution: ${distribution.Insert}% insert, ${distribution.Edit}% edit, ${distribution.Remove}% remove`;
 				describe(suiteDescription, () => {
 					for (const { percentile } of sizes) {
 						it(`Percentile: ${percentile}`, () => {
-							benchmarkInsertDeleteEditNodesWithSingleTxs(percentile, distribution);
+							benchmarkInsertRemoveEditNodesWithSingleTxs(percentile, distribution);
 						});
 					}
 				});

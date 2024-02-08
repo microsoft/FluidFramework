@@ -4,19 +4,21 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { fail } from "../util";
+import { fail } from "../util/index.js";
 import {
-	ObjectNodeSchema,
-	AllowedTypes,
-	FieldNodeSchema,
-	MapNodeSchema,
+	FlexObjectNodeSchema,
+	FlexFieldNodeSchema,
+	FlexMapNodeSchema,
 	FlexTreeNode,
 	FlexTreeObjectNode,
 	FlexTreeFieldNode,
 	FlexTreeMapNode,
-} from "../feature-libraries";
-import { TreeObjectNode, TreeMapNode, TreeNode } from "./types";
-import { TreeListNodeOld } from "./treeListNode";
+	assertFlexTreeEntityNotFreed,
+} from "../feature-libraries/index.js";
+import { TreeNode, TypedNode } from "./types.js";
+import { TreeArrayNode } from "./treeArrayNode.js";
+import { TreeMapNode } from "./schemaTypes.js";
+import { RawTreeNode } from "./rawNode.js";
 
 /** Associates an FlexTreeNode with a target object  */
 const targetSymbol = Symbol("FlexNodeTarget");
@@ -36,18 +38,25 @@ const flexNodeMap = new WeakMap<TreeNode, FlexTreeNode>();
  * Retrieves the flex node associated with the given target via {@link setFlexNode}.
  * @remarks Fails if the flex node has not been set.
  */
-export function getFlexNode<TSchema extends ObjectNodeSchema>(
-	target: TreeObjectNode<TSchema>,
+export function getFlexNode(
+	target: TypedNode<FlexObjectNodeSchema>,
+	allowFreed?: true,
 ): FlexTreeObjectNode;
-export function getFlexNode<TTypes extends AllowedTypes>(
-	target: TreeListNodeOld<TTypes>,
-): FlexTreeFieldNode<FieldNodeSchema>;
-export function getFlexNode<TSchema extends MapNodeSchema>(
-	target: TreeMapNode<TSchema>,
-): FlexTreeMapNode<TSchema>;
-export function getFlexNode(target: TreeNode): FlexTreeNode;
-export function getFlexNode(target: TreeNode): FlexTreeNode {
-	return flexNodeMap.get(target) ?? fail("Target is not associated with an flex node");
+export function getFlexNode(
+	target: TreeArrayNode,
+	allowFreed?: true,
+): FlexTreeFieldNode<FlexFieldNodeSchema>;
+export function getFlexNode(
+	target: TreeMapNode,
+	allowFreed?: true,
+): FlexTreeMapNode<FlexMapNodeSchema>;
+export function getFlexNode(target: TreeNode, allowFreed?: true): FlexTreeNode;
+export function getFlexNode(target: TreeNode, allowFreed = false): FlexTreeNode {
+	const node = flexNodeMap.get(target) ?? fail("Target is not associated with a flex node");
+	if (!(node instanceof RawTreeNode) && !allowFreed) {
+		assertFlexTreeEntityNotFreed(node);
+	}
+	return node;
 }
 
 /**

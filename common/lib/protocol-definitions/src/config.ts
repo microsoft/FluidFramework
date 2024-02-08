@@ -31,7 +31,7 @@ export interface IClientConfiguration {
 
 	/**
 	 * Set min op frequency with which noops would be sent in case of an active connection which is not sending any op.
-	 * See {@link IClientConfiguration#noopTimeFrequency} for more details.
+	 * See {@link IClientConfiguration.noopTimeFrequency} for more details.
 	 * 'Infinity' will disable this feature and if no value is provided, the client choses some reasonable value.
 	 */
 	noopCountFrequency?: number;

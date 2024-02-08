@@ -6,13 +6,16 @@
 	],
 	"typescript.tsdk": "node_modules/typescript/lib",
 
+  // We prefer to use type-only imports, so we want the autoimporter to do that by default.
+  "typescript.preferences.preferTypeOnlyAutoImports": true,
+
 	// Autodetecting tasks on a repo this size makes 'Tasks: Run Build Task' unusably slow.
 	// (See https://github.com/Microsoft/vscode/issues/34387)
 	"typescript.tsc.autoDetect": "off",
 	"npm.autoDetect": "off",
 
 	"files.associations": {
-		"tools/pipelines/*.yml": "azure-pipelines",
+		"**/tools/pipelines/**/*.yml": "azure-pipelines",
 		// good-fences' fence files support comments, so detect them as "jsonc" instead of "json":
 		"fence.json": "jsonc",
 		".git-blame-ignore-revs": "ignore",
