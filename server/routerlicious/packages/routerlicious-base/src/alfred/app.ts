@@ -21,6 +21,8 @@ import { json, urlencoded } from "body-parser";
 import compression from "compression";
 import cookieParser from "cookie-parser";
 import express from "express";
+import safeStringify from "json-stringify-safe";
+import shajs from "sha.js";
 import { Provider } from "nconf";
 import { DriverVersionHeaderName, IAlfredTenant } from "@fluidframework/server-services-client";
 import {
@@ -88,6 +90,14 @@ export function create(
 			jsonMorganLoggerMiddleware(
 				"alfred",
 				(tokens, req, res) => {
+					const XForwardedFor = "x-forwarded-for";
+					let hashedClientIP = "";
+					if (req.headers[XForwardedFor]) {
+						const XForwardedForHeaderValue = safeStringify(req.headers[XForwardedFor]);
+						hashedClientIP = shajs("sha256")
+							.update(`${XForwardedForHeaderValue}`)
+							.digest("hex");
+					}
 					const additionalProperties: Record<string, any> = {
 						[HttpProperties.driverVersion]: tokens.req(
 							req,
@@ -97,6 +107,7 @@ export function create(
 						[BaseTelemetryProperties.tenantId]: getTenantIdFromRequest(req.params),
 						[BaseTelemetryProperties.documentId]: getIdFromRequest(req.params),
 					};
+					additionalProperties.hashedClientIPAddress = hashedClientIP;
 					if (req.body?.isEphemeralContainer !== undefined) {
 						additionalProperties.isEphemeralContainer = req.body.isEphemeralContainer;
 					}
