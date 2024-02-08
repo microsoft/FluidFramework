@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-const {	currentVersion, ltsVersion } = require("./versions.json");
+const { currentVersion, ltsVersion } = require("./versions.json");
 
 // Map of incoming URL paths to redirect URLs
 const routes = new Map([
@@ -22,9 +22,8 @@ module.exports = async (context, { headers }) => {
 
 	const route = [...routes].find(([path, _]) => pathname.startsWith(path));
 
-	context.res.json({
-		testStatus: route ? 302 : 404,
-		testLocation: route ? pathname.replace(...route) + search : "/404",
-		testRoute: route
-	});
+	context.res = {
+		status: route ? 302 : 404,
+		headers: { location: route ? `${pathname.replace(...route)}${search}` : "/404" },
+	};
 };
