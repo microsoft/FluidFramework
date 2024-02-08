@@ -189,6 +189,18 @@ export interface IIdCompressor {
 	generateCompressedId(): SessionSpaceCompressedId;
 
 	/**
+	 * Generates a new ID that is guaranteed to be unique across all sessions known to this compressor without the need for any
+	 * normalization. The returned ID is not guaranteed to be a compressed ID (small number); it may be a stable ID (UUID string).
+	 * In Fluid, the likelihood of generating the bulkier stable ID is dictated by network conditions and is highly probably in
+	 * scenarios such as offline. This is still useful for use cases where simplicity is more important than performance and
+	 * this approach will often be superior to generating a UUID.
+	 * If small numbers are a requirement, `generateCompressedId` and normalization should be used instead.
+	 * See `IIdCompressor` for more details.
+	 * @returns A new local ID in session space.
+	 */
+	generateDocumentUniqueId(): (SessionSpaceCompressedId & OpSpaceCompressedId) | StableId;
+
+	/**
 	 * Normalizes a session space ID into op space.
 	 * The returned ID is in op space and can be safely serialized. However, it should be normalized back to session space before use.
 	 * See `IIdCompressor` for more details.
