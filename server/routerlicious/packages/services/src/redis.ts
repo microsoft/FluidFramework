@@ -47,8 +47,10 @@ export class RedisCache implements ICache {
 		try {
 			return this.client.get(this.getKey(key));
 		} catch (error) {
-			Lumberjack.error(`Error getting ${key} from cache.`, undefined, error);
-			return undefined;
+			// Cut off the key if it is too long
+			const keyShortened: string = key.length > 20 ? `${key.substring(0,20)}...` : key;
+			Lumberjack.error(`Error getting ${keyShortened} from cache.`, undefined, error);
+			throw error;
 		}
 	}
 
