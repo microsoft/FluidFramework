@@ -49,7 +49,8 @@ export class ReverseMap implements IReverseMap {
 
 	public addCellToMap(type: ReverseMapType, id: string, index: number): void {
 		if (type === "row") {
-			// this behavior is very specific to the way SharedMatrix does its row insertion.
+			// this behavior is very specific to the way SharedMatrix does its row insertion signal, in which we first get the row addition
+			// without the unique ids and soon after, the cell changes are triggered and we take opportunity to update the reverse map.
 			if (Object.keys(this.rowMap).length >= index + 1) {
 				// In case of insertion or rows within existing boundaries of the matrix, we will need to manually update
 				// the map to reflect and shift existing indexes. For example, if we insert a new row at index 2,

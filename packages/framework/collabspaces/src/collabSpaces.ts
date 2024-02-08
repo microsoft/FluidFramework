@@ -125,6 +125,8 @@ import { ReverseMap } from "./reverseMap";
 const matrixId = "matrix";
 const channelSummaryBlobName = "channelInfo";
 
+type uuidType = number | string;
+
 interface MatrixInternalType extends MatrixExternalType {
 	// This is channel ID modifier.
 	// Each cell could have only one active channel, but many passive channels associated with it.
@@ -347,10 +349,14 @@ export class TempCollabSpaceRuntime
 		// Do some garbage collection for channels that we do not need.
 		for (const [channelId, channel] of this.contexts) {
 			if (channelId !== matrixId) {
-				this.saveOrDestroyChannel(
+				const info = this.saveOrDestroyChannel(
 					(await channel.getChannel()) as ICollabChannel,
 					false /* allowSave */,
 					true /* allowDestroy */,
+				);
+				assert(
+					!info.destroyd || !this.deferredChannels.has(channelId),
+					"Deferred channels could not be destroyed - this cases daa loss!",
 				);
 			}
 		}
@@ -500,8 +506,8 @@ export class TempCollabSpaceRuntime
 		if (cellValue === undefined) {
 			return { value: undefined, channel: undefined, channelId: undefined };
 		}
-		const rowId = this.matrix.getCell(row, 0) as unknown as string;
-		const colId = this.matrix.getCell(0, col) as unknown as string;
+		const rowId = this.matrix.getCell(row, 0) as unknown as uuidType;
+		const colId = this.matrix.getCell(0, col) as unknown as uuidType;
 		const channelId = `${rowId},${colId},${cellValue.iteration}`;
 		const channel = this.contexts.get(channelId)?.getChannel();
 
@@ -633,11 +639,13 @@ export class TempCollabSpaceRuntime
 		const col = this.reverseMap.getColId(colId);
 
 		assert(
-			row !== undefined && (this.matrix.getCell(row, 0) as unknown as string) === rowId,
+			row !== undefined &&
+				this.areEqualUuid(this.matrix.getCell(row, 0) as unknown as uuidType, rowId),
 			"channel's row not found",
 		);
 		assert(
-			col !== undefined && (this.matrix.getCell(0, col) as unknown as string) === colId,
+			col !== undefined &&
+				this.areEqualUuid(this.matrix.getCell(0, col) as unknown as uuidType, colId),
 			"channel's col not found",
 		);
 		return { row, col, iteration };
@@ -709,7 +717,7 @@ export class TempCollabSpaceRuntime
 		if (saved) {
 			savedValue = {
 				...savedValue, // value, iteration, type
-				value: channel.value as string,
+				value: channel.value,
 				seq: refSeq,
 			};
 			this.matrix.setCell(row, col, savedValue);
@@ -771,7 +779,7 @@ export class TempCollabSpaceRuntime
 		}
 		let val = value.value;
 		if (channel !== undefined) {
-			val = (await channel).value as string;
+			val = (await channel).value;
 		}
 		return { value: val, type: value.type };
 	}
@@ -812,6 +820,22 @@ export class TempCollabSpaceRuntime
 
 	// #endregion IMatrixWriter
 
+	private uuid(): uuidType {
+		const compressor = this.dataStoreContext.idCompressor;
+		if (compressor !== undefined) {
+			return compressor.generateCompressedId();
+		}
+		return uuid();
+	}
+
+	private areEqualUuid(u1: uuidType, u2: string) {
+		// u1 could be a number (if ID compressor is On)
+		// u2 is a string.
+		// Can't use === comparison, "-5" & -5 are equal from POV of this comparison.
+		// Coerse it to string to do proper comparison
+		return String(u1) === u2;
+	}
+
 	// #region ISharedMatrix
 
 	public insertCols(colStartArg: number, countArg: number) {
@@ -821,7 +845,7 @@ export class TempCollabSpaceRuntime
 		// generate new ID for a columns
 		while (count > 0) {
 			count--;
-			this.matrix.setCell(0, col, uuid() as unknown as MatrixInternalType);
+			this.matrix.setCell(0, col, this.uuid() as unknown as MatrixInternalType);
 			col++;
 		}
 	}
@@ -838,7 +862,7 @@ export class TempCollabSpaceRuntime
 		// generate new ID for a columns
 		while (count > 0) {
 			count--;
-			this.matrix.setCell(row, 0, uuid() as unknown as MatrixInternalType);
+			this.matrix.setCell(row, 0, this.uuid() as unknown as MatrixInternalType);
 			row++;
 		}
 	}

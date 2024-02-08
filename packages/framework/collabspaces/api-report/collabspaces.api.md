@@ -24,7 +24,7 @@ export type ICollabChannel = IChannel & ICollabChannelCore;
 // @internal
 export interface ICollabChannelCore {
     // (undocumented)
-    readonly value: unknown;
+    readonly value: Serializable<unknown>;
 }
 
 // @internal (undocumented)

@@ -16,7 +16,7 @@ import { ISharedMatrix, MatrixItem } from "@fluidframework/matrix";
  * @internal
  */
 export interface ICollabChannelCore {
-	readonly value: unknown;
+	readonly value: Serializable<unknown>;
 }
 
 /** @internal */
