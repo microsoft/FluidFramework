@@ -343,7 +343,6 @@ export interface ISignalClient {
 // @public
 export interface ISignalMessage extends ISignalMessageBase {
     clientId: string | null;
-    targetClientId?: string;
 }
 
 // @public
@@ -352,6 +351,7 @@ export interface ISignalMessageBase {
     content: unknown;
     referenceSequenceNumber?: number;
     type?: string;
+    targetClientId?: string;
 }
 
 // @alpha (undocumented)
