@@ -988,10 +988,7 @@ export function addMissingBuilds(
 	getDetachedNode: (id: DeltaDetachedNodeId) => TreeChunk | undefined,
 	removedRoots: Iterable<DeltaDetachedNodeId>,
 ): ModularChangeset {
-	const builds: ChangeAtomIdMap<TreeChunk> = new Map<
-		RevisionTag | undefined,
-		Map<ChangesetLocalId, TreeChunk>
-	>();
+	const builds: ChangeAtomIdMap<TreeChunk> = new Map();
 
 	for (const root of removedRoots) {
 		const node = getDetachedNode(root);
@@ -1039,13 +1036,9 @@ export function filterSuperfluousBuilds(
 	removedRoots: Iterable<DeltaDetachedNodeId>,
 ): ModularChangeset {
 	const builds: ChangeAtomIdMap<TreeChunk> = new Map();
-
-	// deep clone the builds map
-	change.change.builds?.forEach((innerMap, revision) => {
-		const innerDstMap = getOrAddInMap(builds, revision, new Map<ChangesetLocalId, TreeChunk>());
-
-		innerMap.forEach((chunk, id) => innerDstMap.set(id, chunk));
-	});
+	if (change.change.builds !== undefined) {
+		populateNestedMap(change.change.builds, builds, true);
+	}
 
 	const rootSets = new Map<RevisionTag | undefined, Set<number>>();
 	for (const { major, minor } of removedRoots) {
