@@ -1996,6 +1996,7 @@ describe("Runtime", () => {
 				assert.strictEqual(state.pending?.pendingStates, pendingStates);
 			});
 		});
+
 		describe("Load Partial Snapshot with datastores with GroupId", () => {
 			let snapshotWithContents: ISnapshot;
 			let blobContents: Map<string, ArrayBuffer>;
