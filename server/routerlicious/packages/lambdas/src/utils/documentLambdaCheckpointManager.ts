@@ -85,6 +85,7 @@ export class DocumentCheckpointManager implements IDocumentCheckpointManager {
 			}
 		}, timeout);
 	}
+
 	public incrementRawMessageCounter() {
 		this.checkpointInfo.rawMessagesSinceCheckpoint++;
 	}
