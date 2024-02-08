@@ -255,12 +255,7 @@ export class ModularChangeFamily
 					node1: NodeChangeset | undefined,
 					node2: NodeChangeset | undefined,
 				): NodeChangeset => {
-					// Note that it is important that the key is `node ?? node1` and not `node1 ?? node2`.
-					// If the first changeset moves this node, the change handler may not have seen the second changeset's
-					// changes for this node on its first pass.
-					// In that case we will have cached an entry the call to `compose(node1, undefined)`, and we must make sure
-					// not to reuse the cached entry if a subsequent pass calls `compose(node1, node2)`.
-					const key = node2 ?? node1 ?? fail("Should not have two undefined nodes");
+					const key = composeCacheKeyFromNodeChangesets(node1, node2);
 					const cachedResult = crossFieldTable.nodeCache.get(key);
 					if (cachedResult !== undefined) {
 						return cachedResult;
@@ -407,7 +402,7 @@ export class ModularChangeFamily
 			composedNodeChange.nodeExistsConstraint = nodeExistsConstraint;
 		}
 
-		const key = change2 ?? change1 ?? fail("Should not compose two undefined changesets");
+		const key = composeCacheKeyFromNodeChangesets(change1, change2);
 		crossFieldTable.nodeCache.set(key, composedNodeChange);
 		return composedNodeChange;
 	}
@@ -1231,6 +1226,18 @@ function newCrossFieldTable<T>(): CrossFieldTable<T> {
 		dstDependents: new Map(),
 		invalidatedFields: new Set(),
 	};
+}
+
+function composeCacheKeyFromNodeChangesets(
+	change1: NodeChangeset | undefined,
+	change2: NodeChangeset | undefined,
+): NodeChangeset {
+	// Note that it is important that the key is `change2 ?? change1` and not `change1 ?? change2`.
+	// If the first changeset moves this node, the change handler may not have seen the second changeset's
+	// changes for this node on its first pass.
+	// In that case we will have cached an entry the call to `compose(change1, undefined)`, and we must make sure
+	// not to reuse the cached entry if a subsequent pass calls `compose(change1, change2)`.
+	return change2 ?? change1 ?? fail("Should not compose two undefined changesets");
 }
 
 /**
