@@ -216,8 +216,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			enableReadyCheck: true,
 			maxRetriesPerRequest: redisConfig2.maxRetriesPerRequest,
 			enableOfflineQueue: redisConfig2.enableOfflineQueue,
-			retryStrategy(times) {
-				const delay = Math.min(times * 50, 2000);
+			retryStrategy(attempts) {
+				const delay = Math.min(attempts * 50, 2000);
 				return delay;
 			},
 		};
@@ -332,8 +332,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			enableReadyCheck: true,
 			maxRetriesPerRequest: redisConfigForThrottling.maxRetriesPerRequest,
 			enableOfflineQueue: redisConfigForThrottling.enableOfflineQueue,
-			retryStrategy(times) {
-				const delay = Math.min(times * 50, 2000);
+			retryStrategy(attempts) {
+				const delay = Math.min(attempts * 50, 2000);
 				return delay;
 			},
 		};
@@ -547,8 +547,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 				enableReadyCheck: true,
 				maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
 				enableOfflineQueue: redisConfig.enableOfflineQueue,
-				retryStrategy(times) {
-					const delay = Math.min(times * 50, 2000);
+				retryStrategy(attempts) {
+					const delay = Math.min(attempts * 50, 2000);
 					return delay;
 				},
 			};

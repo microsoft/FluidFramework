@@ -82,8 +82,8 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 				enableReadyCheck: true,
 				maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
 				enableOfflineQueue: redisConfig.enableOfflineQueue,
-				retryStrategy(times) {
-					const delay = Math.min(times * 50, 2000);
+				retryStrategy(attempts) {
+					const delay = Math.min(attempts * 50, 2000);
 					return delay;
 				},
 			};
