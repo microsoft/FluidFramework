@@ -50,7 +50,7 @@
 		"@types/node": "^18.19.0",
 		"eslint": "~8.50.0",
 		"prettier": "~3.0.3",
-		"puppeteer": "^19.11.1",
+		"puppeteer": "^22.0.0",
 		"rimraf": "^4.4.0",
 		"string-replace-loader": "^3.1.0",
 		"ts-loader": "^9.3.0",
