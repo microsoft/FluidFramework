@@ -2835,6 +2835,7 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.3.0
+      '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.2.0-231454
       '@fluidframework/request-handler': workspace:~
       '@fluidframework/runtime-definitions': workspace:~
@@ -2873,6 +2874,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
+      '@fluidframework/mocha-test-setup': link:../../../packages/test/mocha-test-setup
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/test-utils': link:../../../packages/test/test-utils
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
@@ -3062,6 +3064,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^3.3.0
       '@fluidframework/map': workspace:~
       '@fluidframework/merge-tree': workspace:~
+      '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
@@ -3124,6 +3127,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
+      '@fluidframework/mocha-test-setup': link:../../../packages/test/mocha-test-setup
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/test-utils': link:../../../packages/test/test-utils
       '@types/debug': 4.1.12
