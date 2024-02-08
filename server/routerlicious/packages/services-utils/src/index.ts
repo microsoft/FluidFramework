@@ -43,6 +43,7 @@ export { normalizePort } from "./port";
 export {
 	executeRedisMultiWithHmsetExpire,
 	executeRedisMultiWithHmsetExpireAndLpush,
+	getRedisClusterRetryStrategy,
 	IRedisParameters,
 } from "./redisUtils";
 export {
