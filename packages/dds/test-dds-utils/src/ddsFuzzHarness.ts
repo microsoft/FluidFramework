@@ -674,9 +674,7 @@ export function mixinAttach<
 						state.containerRuntimeFactory,
 						clientA,
 						model.factory,
-						index === 0 && clientA.channel.id !== "summarizer"
-							? "summarizer"
-							: makeFriendlyClientId(state.random, index),
+						index === 0 ? "summarizer" : makeFriendlyClientId(state.random, index),
 						options,
 					),
 				),
@@ -687,12 +685,8 @@ export function mixinAttach<
 			// However, now that we're transitioning to an attached state, the summarizer client should never have any edits.
 			// Thus we use one of the clients we just loaded as the summarizer client, and keep the client around that we generated the
 			// attach summary from.
-			let summarizerClient = clients[0];
-			if (clientA.channel.id === "summarizer") {
-				summarizerClient = clientA;
-			} else {
-				clients[0] = state.clients[0];
-			}
+			const summarizerClient = clients[0];
+			clients[0] = state.clients[0];
 
 			return {
 				...state,
@@ -703,7 +697,6 @@ export function mixinAttach<
 		} else if (operation.type === "rehydrate") {
 			const clientA = state.clients[0];
 			assert.equal(state.clients.length, 1);
-			state.containerRuntimeFactory.removeContainerRuntime(clientA.containerRuntime);
 			// This is necessary to get all IdCreationRanges finalized before connecting further clients.
 			// The production codepath also finalizes ids before attaching. It's difficult for the mocks
 			// to be more direct about this as they don't directly manage any state related to attach
@@ -714,6 +707,7 @@ export function mixinAttach<
 					clientA.dataStoreRuntime.idCompressor?.finalizeCreationRange(range);
 				}
 			}
+			state.containerRuntimeFactory.removeContainerRuntime(clientA.containerRuntime);
 			const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection(
 				options.containerRuntimeOptions,
 			);
@@ -721,7 +715,7 @@ export function mixinAttach<
 				containerRuntimeFactory,
 				clientA,
 				model.factory,
-				"summarizer",
+				makeFriendlyClientId(state.random, 0),
 				options,
 			);
 
