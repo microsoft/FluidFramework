@@ -86,5 +86,8 @@
 				"node-fetch"
 			]
 		}
+	},
+	"devDependencies": {
+		"shx": "^0.3.4"
 	}
 }
