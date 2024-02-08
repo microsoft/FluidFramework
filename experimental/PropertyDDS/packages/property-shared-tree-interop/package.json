@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-shared-tree-interop",
-	"version": "2.0.0-rc.1.0.0",
+	"version": "2.0.0-rc.2.0.0",
 	"description": "Utilities for migration from PropertyDDS to the new SharedTree DDS",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -16,7 +16,7 @@
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:esnext": "tsc --project ./tsconfig.esnext.json",
+		"build:esnext": "tsc",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\" lib nyc",
 		"eslint": "eslint --format stylish src",
@@ -51,6 +51,18 @@
 		"rimraf": "^4.4.0",
 		"ts-jest": "^29.1.1",
 		"typescript": "~5.1.6"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"eslint": [
+				"build:esnext",
+				"build:test"
+			],
+			"build:test": [
+				"build:esnext",
+				"^tsc"
+			]
+		}
 	},
 	"typeValidation": {
 		"disabled": true,

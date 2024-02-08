@@ -3930,51 +3930,65 @@ export class ContainerRuntime
 		);
 	}
 
-	public async getPendingLocalState(props?: IGetPendingLocalStateProps): Promise<unknown> {
-		return PerformanceEvent.timedExecAsync(
-			this.mc.logger,
-			{
-				eventName: "getPendingLocalState",
-				notifyImminentClosure: props?.notifyImminentClosure,
-			},
-			async (event) => {
-				this.verifyNotClosed();
-				// in case imminentClosure is set to true by future code, we don't
-				// try to change its value
-				if (!this.imminentClosure) {
-					this.imminentClosure = props?.notifyImminentClosure ?? this.imminentClosure;
-				}
-				const stopBlobAttachingSignal = props?.stopBlobAttachingSignal;
-				if (this._orderSequentiallyCalls !== 0) {
-					throw new UsageError("can't get state during orderSequentially");
-				}
-				// Flush pending batch.
-				// getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
-				// to close current batch.
-				this.flush();
-				const pendingAttachmentBlobs = this.imminentClosure
-					? await this.blobManager.attachAndGetPendingBlobs(stopBlobAttachingSignal)
-					: undefined;
-				const pending = this.pendingStateManager.getLocalState();
-				if (!pendingAttachmentBlobs && !this.hasPendingMessages()) {
-					return; // no pending state to save
-				}
+	public getPendingLocalState(props?: IGetPendingLocalStateProps): unknown {
+		this.verifyNotClosed();
 
-				const pendingIdCompressorState = this.idCompressor?.serialize(true);
+		if (this._orderSequentiallyCalls !== 0) {
+			throw new UsageError("can't get state during orderSequentially");
+		}
+		this.imminentClosure ||= props?.notifyImminentClosure ?? false;
 
-				const pendingState: IPendingRuntimeState = {
-					pending,
-					pendingAttachmentBlobs,
-					pendingIdCompressorState,
-					sessionExpiryTimerStarted: this.garbageCollector.sessionExpiryTimerStarted,
-				};
-				event.end({
-					attachmentBlobsSize: Object.keys(pendingAttachmentBlobs ?? {}).length,
-					pendingOpsSize: pending?.pendingStates.length,
-				});
-				return pendingState;
-			},
-		);
+		const getSyncState = (
+			pendingAttachmentBlobs?: IPendingBlobs,
+		): IPendingRuntimeState | undefined => {
+			const pending = this.pendingStateManager.getLocalState();
+			if (pendingAttachmentBlobs === undefined && !this.hasPendingMessages()) {
+				return; // no pending state to save
+			}
+
+			const pendingIdCompressorState = this.idCompressor?.serialize(true);
+
+			return {
+				pending,
+				pendingIdCompressorState,
+				pendingAttachmentBlobs,
+				sessionExpiryTimerStarted: this.garbageCollector.sessionExpiryTimerStarted,
+			};
+		};
+		const perfEvent = {
+			eventName: "getPendingLocalState",
+			notifyImminentClosure: props?.notifyImminentClosure,
+		};
+		const logAndReturnPendingState = (
+			event: PerformanceEvent,
+			pendingState?: IPendingRuntimeState,
+		) => {
+			event.end({
+				attachmentBlobsSize: Object.keys(pendingState?.pendingAttachmentBlobs ?? {}).length,
+				pendingOpsSize: pendingState?.pending?.pendingStates.length,
+			});
+			return pendingState;
+		};
+
+		// Flush pending batch.
+		// getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
+		// to close current batch.
+		this.flush();
+
+		return props?.notifyImminentClosure === true
+			? PerformanceEvent.timedExecAsync(this.mc.logger, perfEvent, async (event) =>
+					logAndReturnPendingState(
+						event,
+						getSyncState(
+							await this.blobManager.attachAndGetPendingBlobs(
+								props?.stopBlobAttachingSignal,
+							),
+						),
+					),
+			  )
+			: PerformanceEvent.timedExec(this.mc.logger, perfEvent, (event) =>
+					logAndReturnPendingState(event, getSyncState()),
+			  );
 	}
 
 	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {

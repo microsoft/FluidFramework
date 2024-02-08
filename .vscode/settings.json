@@ -6,6 +6,9 @@
 	],
 	"typescript.tsdk": "node_modules/typescript/lib",
 
+  // We prefer to use type-only imports, so we want the autoimporter to do that by default.
+  "typescript.preferences.preferTypeOnlyAutoImports": true,
+
 	// Autodetecting tasks on a repo this size makes 'Tasks: Run Build Task' unusably slow.
 	// (See https://github.com/Microsoft/vscode/issues/34387)
 	"typescript.tsc.autoDetect": "off",
