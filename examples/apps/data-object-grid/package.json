@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/data-object-grid",
-	"version": "2.0.0-internal.8.0.5",
+	"version": "2.0.0-internal.8.0.6",
 	"private": true,
 	"description": "Data object grid creates child data objects from a registry and lays them out in a grid.",
 	"homepage": "https://fluidframework.com",

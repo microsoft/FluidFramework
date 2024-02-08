@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/attributable-map",
-	"version": "2.0.0-internal.8.0.5",
+	"version": "2.0.0-internal.8.0.6",
 	"private": true,
 	"description": "Minimal Fluid Container & Data Object sample to implement a hit counter as a standalone app.",
 	"homepage": "https://fluidframework.com",
