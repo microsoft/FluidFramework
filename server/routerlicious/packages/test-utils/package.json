@@ -76,6 +76,7 @@
 		"@types/node": "^18.17.1",
 		"@types/sinon": "^9.0.9",
 		"@types/string-hash": "^1.1.1",
+		"@types/uuid": "^9.0.2",
 		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.27.0",

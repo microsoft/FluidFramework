@@ -15,12 +15,7 @@ import {
 	IRequest,
 	IResponse,
 } from "@fluidframework/core-interfaces";
-import {
-	IAudience,
-	ILoader,
-	AttachState,
-	ILoaderOptions,
-} from "@fluidframework/container-definitions";
+import { IAudience, ILoader, AttachState } from "@fluidframework/container-definitions";
 
 import {
 	IQuorumClients,
@@ -676,7 +671,8 @@ export class MockFluidDataStoreRuntime
 	public readonly documentId: string = undefined as any;
 	public readonly id: string;
 	public readonly existing: boolean = undefined as any;
-	public options: ILoaderOptions = {};
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	public options: Record<string | number, any> = {};
 	public clientId: string;
 	public readonly path = "";
 	public readonly connected = true;

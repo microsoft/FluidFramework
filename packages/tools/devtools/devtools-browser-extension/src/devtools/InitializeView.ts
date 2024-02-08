@@ -8,7 +8,9 @@ import ReactDOM from "react-dom";
 
 import { DevtoolsPanel } from "@fluid-internal/devtools-view";
 
-import { BackgroundConnection } from "./BackgroundConnection";
+import { BackgroundConnection } from "../BackgroundConnection";
+import { browser } from "../Globals";
+import { extensionMessageSource } from "../messaging";
 import { formatDevtoolsScriptMessageForLogging } from "./Logging";
 import { OneDSLogger } from "./TelemetryLogging";
 
@@ -18,7 +20,12 @@ import { OneDSLogger } from "./TelemetryLogging";
  * @param target - The element into which the devtools view will be rendered.
  */
 export async function initializeDevtoolsView(target: HTMLElement): Promise<void> {
-	const connection = await BackgroundConnection.Initialize();
+	const connection = await BackgroundConnection.Initialize({
+		// TODO: devtools-panel-specific source
+		messageSource: extensionMessageSource,
+		// The devtools panel will always be associated with this fixed tabID
+		tabId: browser.devtools.inspectedWindow.tabId,
+	});
 
 	const logger = new OneDSLogger();
 	ReactDOM.render(

@@ -382,7 +382,7 @@ describeCompat("SharedMap", "FullCompat", (getTestObjectProvider, apis) => {
 	});
 });
 
-describeCompat("SharedMap orderSequentially", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) => {
+describeCompat("SharedMap orderSequentially", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
 	const mapId = "mapKey";
 	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
@@ -554,7 +554,7 @@ describeCompat("SharedMap orderSequentially", "2.0.0-rc.1.0.0", (getTestObjectPr
 
 describeCompat(
 	"addChannel() tests for the SharedMap",
-	"2.0.0-rc.1.0.0",
+	"NoCompat",
 	(getTestObjectProvider, apis) => {
 		const { SharedMap } = apis.dds;
 		const mapId = "mapKey";

@@ -178,7 +178,7 @@ async function submitAndAckSummary(
  */
 describeCompat(
 	"GC Tree stored as a handle in summaries",
-	"2.0.0-rc.1.0.0",
+	"NoCompat",
 	(getTestObjectProvider, apis) => {
 		const {
 			containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },

@@ -34,7 +34,7 @@ type MapCallback = (
 	map: SharedMap,
 ) => void | Promise<void>;
 
-describeCompat("Container dirty flag", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) => {
+describeCompat("Container dirty flag", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
 	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
 	const testContainerConfig: ITestContainerConfig = {

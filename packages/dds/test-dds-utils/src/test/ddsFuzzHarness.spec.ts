@@ -152,6 +152,17 @@ describe("DDS Fuzz Harness", () => {
 				assert.deepEqual(client.channel.methodCalls, ["loadCore"]);
 			}
 		});
+
+		it("throws a reasonable error if given an exhausted generator", async () => {
+			const model: Model = {
+				...baseModel,
+				generatorFactory: () => takeAsync(0, baseModel.generatorFactory()),
+			};
+			await assert.rejects(
+				runTestForSeed(model, defaultOptions, 0),
+				/Generator should have produced at least one operation/,
+			);
+		});
 	});
 
 	describe("mixinSynchronization", () => {

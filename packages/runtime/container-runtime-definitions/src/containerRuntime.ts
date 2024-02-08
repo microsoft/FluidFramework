@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { AttachState, IDeltaManager, ILoaderOptions } from "@fluidframework/container-definitions";
+import { AttachState, IDeltaManager } from "@fluidframework/container-definitions";
 import {
 	IEventProvider,
 	IRequest,
@@ -57,7 +57,8 @@ export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase &
 export interface IContainerRuntime
 	extends IProvideFluidDataStoreRegistry,
 		IContainerRuntimeBaseWithCombinedEvents {
-	readonly options: ILoaderOptions;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	readonly options: Record<string | number, any>;
 	readonly clientId: string | undefined;
 	readonly clientDetails: IClientDetails;
 	readonly connected: boolean;

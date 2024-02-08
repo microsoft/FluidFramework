@@ -72,6 +72,7 @@ async function renderApiDocumentation(inputDir, outputDir, uriRootDir, apiVersio
 			ApiItemKind.Enum,
 			ApiItemKind.Interface,
 			ApiItemKind.Namespace,
+			ApiItemKind.TypeAlias,
 		],
 		newlineKind: "lf",
 		uriRoot: uriRootDir,

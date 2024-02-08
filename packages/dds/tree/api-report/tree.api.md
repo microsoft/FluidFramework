@@ -1654,10 +1654,10 @@ export class test_RecursiveObject extends test_RecursiveObject_base {
 
 // @internal
 export const test_RecursiveObject_base: TreeNodeSchemaClass<"Test Recursive Domain.testObject", NodeKind.Object, object & TreeNode & ObjectFromSchemaRecord<    {
-readonly recursive: FieldSchema<import("./schemaTypes.js").FieldKind.Optional, readonly [() => typeof test_RecursiveObject]>;
+readonly recursive: FieldSchema<FieldKind.Optional, readonly [() => typeof test_RecursiveObject]>;
 readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
 }> & WithType<"Test Recursive Domain.testObject">, object & InsertableObjectFromSchemaRecord<    {
-readonly recursive: FieldSchema<import("./schemaTypes.js").FieldKind.Optional, readonly [() => typeof test_RecursiveObject]>;
+readonly recursive: FieldSchema<FieldKind.Optional, readonly [() => typeof test_RecursiveObject]>;
 readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
 }>, true>;
 

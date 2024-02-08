@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-dds",
-	"version": "2.0.0-rc.1.0.0",
+	"version": "2.0.0-rc.2.0.0",
 	"description": "definition of the property distributed data store",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -12,14 +12,15 @@
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
 	"main": "dist/index.js",
-	"module": "lib/index.js",
+	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
-		"build:esnext": "tsc --project ./tsconfig.esnext.json",
+		"build:esnext": "tsc-multi --config ../../../../common/build/build-common/tsc-multi.esm.json",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
+		"check:are-the-types-wrong": "attw --pack",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
@@ -53,11 +54,12 @@
 		"fastest-json-copy": "^1.0.1",
 		"lodash": "^4.17.21",
 		"lz4js": "^0.2.0",
-		"msgpackr": "^1.4.7",
+		"msgpackr": "^1.10.1",
 		"pako": "^2.0.4",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.13.3",
 		"@fluid-experimental/property-common": "workspace:~",
 		"@fluid-private/test-drivers": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
@@ -76,6 +78,7 @@
 		"@types/lodash": "^4.14.118",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
+		"@types/uuid": "^9.0.2",
 		"chai": "^4.2.0",
 		"cross-env": "^7.0.3",
 		"easy-table": "^1.1.1",
@@ -87,6 +90,7 @@
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
+		"tsc-multi": "^1.1.0",
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {

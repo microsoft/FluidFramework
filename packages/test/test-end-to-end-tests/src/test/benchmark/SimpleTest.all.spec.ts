@@ -8,7 +8,7 @@ import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { benchmarkAll, IBenchmarkParameters } from "./DocumentCreator.js";
 
-describeCompat("Simple Scenario Title", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("Simple Scenario Title", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 
 	before(async () => {

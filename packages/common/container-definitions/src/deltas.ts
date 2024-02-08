@@ -25,7 +25,13 @@ import {
  * @public
  */
 export interface IConnectionDetails {
+	/**
+	 * The client's unique identifier assigned by the service.
+	 *
+	 * @remarks It is not stable across reconnections.
+	 */
 	clientId: string;
+
 	claims: ITokenClaims;
 	serviceConfiguration: IClientConfiguration;
 
@@ -34,10 +40,10 @@ export interface IConnectionDetails {
 	 *
 	 * @remarks
 	 *
-	 * It may lap actual last sequence number (quite a bit, if container is very active).
-	 * But it's the best information for client to figure out how far it is behind, at least
-	 * for "read" connections. "write" connections may use own "join" op to similar information,
-	 * that is likely to be more up-to-date.
+	 * It may lag behind the actual last sequence number (quite a bit, if the container is very active),
+	 * but it's the best information the client has to figure out how far behind it is, at least
+	 * for "read" connections. "write" connections may use the client's own "join" op to obtain similar
+	 * information which is likely to be more up-to-date.
 	 */
 	checkpointSequenceNumber: number | undefined;
 }

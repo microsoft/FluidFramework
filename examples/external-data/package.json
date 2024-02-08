@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/app-integration-external-data",
-	"version": "2.0.0-rc.1.0.0",
+	"version": "2.0.0-rc.2.0.0",
 	"private": true,
 	"description": "Integrating an external data source with Fluid data.",
 	"homepage": "https://fluidframework.com",
@@ -34,7 +34,7 @@
 		"start:app": "start-server-and-test start:services \"5236|5237\" start:client",
 		"start:app:test": "start-server-and-test start:services \"5236|5237\" start:client:test",
 		"start:client": "webpack serve",
-		"start:client:test": "webpack serve --config webpack.test.js",
+		"start:client:test": "webpack serve --config webpack.test.cjs",
 		"start:customer-service": "cross-env CUSTOMER_SERVICE_PORT=5237 node dist/src/mock-customer-service/start.js",
 		"start:external-data-service": "cross-env EXTERNAL_DATA_SERVICE_PORT=5236 node dist/src/mock-external-data-service/start.js",
 		"start:services": "start-server-and-test start:external-data-service 5236 start:customer-service",
@@ -78,7 +78,6 @@
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1",
 		"style-loader": "^1.0.0",
-		"uuid": "^9.0.0",
 		"valid-url": "^1.0.9"
 	},
 	"devDependencies": {

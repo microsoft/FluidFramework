@@ -1,85 +1,49 @@
+# -------------------------------------------------------------------------
+#
+# Please read and understand all of this documentation before modifying this file.
+#
+# Ownership via this file will block PR until an owner approves.
+# Taking ownership requires a commitment to review all PRs for the selected files.
+#
 # Lines starting with '#' are comments.
+#
 # Each line is a file pattern followed by one or more owners.
 # More details on the format: https://help.github.com/articles/about-codeowners/
-
-# ORDER MATTERS! The last matching pattern has the most precedence.
-
+#
 # When updating this file, you should also consider updating the GitHub label config in actions-labeler.yml so that
 # any area changes are labeled correctly.
+#
+# ORDER MATTERS! The last matching pattern has the most precedence.
+# Be careful not to break existing ownership patterns.
+#
+# Do not assign ownership to indviduals. Use a Team: https://github.com/orgs/microsoft/teams/fluid-cr/teams .
+# Using individuals can break processing of this file if they are not contributors, or lose contributors status
+# which can and does happen. Use "function/area-based" teams rather than "organization-based" teams and add
+# individuals to each one; we use fluid-cr and its child teams (by convention named fluid-cr-<some-specifier>)
+# for this. One reason is that teams in Github cannot have multiple parents, i.e. they cannot be members of more
+# than one other team, so trying to reuse org-based teams to have the same people be reviewers of different areas
+# doesn't work.
+#
+# Team maintainers can control how PRs are assigned to their team members.
+# This can be modified under the settings for the team which is only visiable to maintainer.
+#
+# If you create a new team its parent should be set to fluid-cr, as teams are microsoft wide,
+# and we use the parent team to organize them.
+#
+# ------------------------------------------------------------------------
 
-# Files in the root
-/*.*                                                                      @microsoft/fluid-cr-core
+# ID compressor
+/packages/runtime/id-compressor            @microsoft/fluid-cr-id-compressor
 
-/.devcontainer/                                                           @microsoft/fluid-cr-infra
-/.github/                                                                 @microsoft/fluid-cr-infra
-/.github/ISSUE_TEMPLATE/                                                  @microsoft/fluid-cr-docs
-/.vscode/                                                                 @microsoft/fluid-cr-infra
+# merge tree and merge tree related dds
+/packages/dds/merge-tree                   @microsoft/fluid-cr-merge-tree
+/packages/dds/matrix                       @microsoft/fluid-cr-merge-tree
+/packages/dds/sequence                     @microsoft/fluid-cr-merge-tree
+/experimental/dds/sequence-deprecated      @microsoft/fluid-cr-merge-tree
 
-/azure/                                                                   @microsoft/fluid-cr-framework
+# shared tree and tree related dds
+/packages/dds/tree                         @microsoft/fluid-cr-tree
+/experimental/dds/tree                     @microsoft/fluid-cr-tree
 
-/build-tools/                                                             @microsoft/fluid-cr-infra
-
-/common/build/                                                            @microsoft/fluid-cr-infra
-/common/lib/                                                              @microsoft/fluid-cr-core
-/docs/                                                                    @microsoft/fluid-cr-docs
-
-/examples/                                                                @microsoft/fluid-cr-framework
-/experimental/                                                            @microsoft/fluid-cr-framework
-/experimental/PropertyDDS/                                                @evaliyev @karlbom @nedalhy @ruiterr
-/experimental/dds/tree/                                                   @microsoft/fluid-cr-tree
-/packages/dds/tree/                                                       @microsoft/fluid-cr-tree
-/packages/dds/                                                            @microsoft/fluid-cr-dds
-/packages/drivers/                                                        @microsoft/fluid-cr-drivers
-/packages/drivers/odsp*/                                                  @microsoft/fluid-cr-drivers @microsoft/fluid-cr-odsp
-/packages/framework/                                                      @microsoft/fluid-cr-framework
-/packages/loader/                                                         @microsoft/fluid-cr-loader
-/packages/runtime/                                                        @microsoft/fluid-cr-runtime
-/packages/test/                                                           @microsoft/fluid-cr-test
-/packages/tools/                                                          @microsoft/fluid-cr-tools
-/packages/tools/devtools/                                                 @microsoft/team-rohan
-/packages/utils/                                                          @microsoft/fluid-cr-infra
-/packages/utils/odsp-doclib-utils/                                        @microsoft/fluid-cr-odsp
-/packages/utils/telemetry-utils/                                          @microsoft/fluid-cr-telemetry
-/server/                                                                  @microsoft/fluid-cr-server
-/tools/                                                                   @microsoft/fluid-cr-tools
-/tools/api-markdown-documenter                                            @microsoft/fluid-cr-docs @microsoft/fluid-cr-infra
-/tools/markdown-magic/                                                    @microsoft/fluid-cr-infra
-/tools/markdown-magic/src/templates                                       @microsoft/fluid-cr-docs
-/tools/pipelines/                                                         @microsoft/fluid-cr-infra
-/tools/pipelines/build-azure.yml                                          @microsoft/fluid-cr-infra @microsoft/fluid-cr-framework
-
-# PUBLIC API REPORTS
-# All packages are assumed to have public APIs unless defined otherwise in the sections below.
-**/api-report/                                         @microsoft/fluid-cr-api
-# These packages represent the primary public API of the framework.
-azure/packages/azure-client/api-report/                @microsoft/fluid-cr-api
-azure/packages/azure-service-utils/api-report/         @microsoft/fluid-cr-api
-packages/framework/fluid-framework/api-report/         @microsoft/fluid-cr-api
-packages/framework/tinylicious-client/api-report/      @microsoft/fluid-cr-api
-
-packages/dds/tree/api-report/                          @microsoft/fluid-cr-tree
-
-# INTERNAL API REPORTS
-# The packages listed here are not necessarily considered part of the public API.
-packages/dds/shared-object-base/api-report/            @microsoft/fluid-cr-framework
-
-# TODO: uncomment once experimental reports have moved
-experimental/dds/**/api-report/                        @microsoft/fluid-cr-dds
-packages/framework/dds-interceptions/api-report/       @microsoft/fluid-cr-dds
-
-packages/framework/request-handler/api-report/         @microsoft/fluid-cr-runtime
-packages/dds/shared-summary-block/api-report/          @microsoft/fluid-cr-runtime
-packages/framework/synthesize/api-report/              @microsoft/fluid-cr-runtime
-
-packages/drivers/debugger/api-report/                  @microsoft/fluid-cr-tools
-packages/utils/tool-utils/api-report/                  @microsoft/fluid-cr-tools
-
-packages/loader/driver-utils/api-report/               @microsoft/fluid-cr-drivers
-packages/test/test-driver-definitions/api-report/      @microsoft/fluid-cr-drivers
-
-packages/drivers/routerlicious-driver/api-report/      @microsoft/fluid-cr-server
-
-experimental/dds/tree/api-report                       @microsoft/fluid-cr-tree
-
-# No owners for package.json files to avoid review spam when mono-repo dependencies are updated
-package.json @msfluid-bot
+# Fluid Devtools
+/packages/tools/devtools                   @microsoft/fluid-cr-devtools

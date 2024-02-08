@@ -28,7 +28,7 @@ import { waitForContainerWriteModeConnectionWrite } from "./gcTestSummaryUtils.j
  * Validates that we generate correct garbage collection stats, such as total number of nodes, number of unreferenced
  * nodes, data stores, blobs, etc.
  */
-describeCompat("Garbage Collection Stats", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let mainContainer: IContainer;
 	let mainDataObject: ITestDataObject;

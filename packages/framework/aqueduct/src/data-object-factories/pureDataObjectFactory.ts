@@ -19,6 +19,7 @@ import {
 	type NamedFluidDataStoreRegistryEntries,
 	type NamedFluidDataStoreRegistryEntry,
 	type IFluidDataStoreContextDetached,
+	type IDataStore,
 } from "@fluidframework/runtime-definitions";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
@@ -260,6 +261,37 @@ export class PureDataObjectFactory<
 	}
 
 	/**
+	 * Creates a new instance of the object with a datastore which exposes the aliasing api.
+	 * @param runtime - container runtime. It is the runtime that will be used to create the object. It will produce
+	 * the underlying infrastructure to get the data object to operate.
+	 * @param initialState - The initial state to provide to the created component.
+	 * @param packagePath - The path to the data store factory to use to create the data object.
+	 * @returns an array containing the object created by this factory and an IDataStore object that enables users to
+	 * alias the data object.
+	 * The data object is attached only when it is attached to the handle graph that connects to an aliased object or
+	 * when the data object is aliased.
+	 */
+	public async createInstanceWithDataStore(
+		containerRuntime: IContainerRuntimeBase,
+		initialState?: I["InitialState"],
+		packagePath?: Readonly<string[]>,
+	): Promise<[TObj, IDataStore]> {
+		const context = containerRuntime.createDetachedDataStore(packagePath ?? [this.type]);
+		const { instance, runtime } = await createDataObject(
+			this.ctor,
+			context,
+			this.sharedObjectRegistry,
+			this.optionalProviders,
+			this.runtimeClass,
+			false, // existing
+			initialState,
+		);
+		const dataStore = await context.attachRuntime(this, runtime);
+
+		return [instance, dataStore];
+	}
+
+	/**
 	 * Creates a new root instance of the object. Uses container's registry to find this factory.
 	 * It's expected that only container owners would use this functionality, as only such developers
 	 * have knowledge of entries in container registry.
@@ -268,14 +300,33 @@ export class PureDataObjectFactory<
 	 * @param initialState - The initial state to provide to the created component.
 	 * @returns an object created by this factory. Data store and objects created are not attached to container.
 	 * They get attached only when a handle to one of them is attached to already attached objects.
+	 *
+	 * @deprecated - the issue is that it does not allow the customer to decide the conflict resolution policy when an
+	 * aliasing conflict occurs. Use {@link PureDataObjectFactory.createInstanceWithDataStore} instead.
 	 */
 	public async createRootInstance(
 		rootDataStoreId: string,
 		runtime: IContainerRuntime,
 		initialState?: I["InitialState"],
 	): Promise<TObj> {
-		const context = runtime.createDetachedRootDataStore([this.type], rootDataStoreId);
-		return this.createInstanceCore(context, initialState);
+		const context = runtime.createDetachedDataStore([this.type]);
+		const { instance, runtime: dataStoreRuntime } = await createDataObject(
+			this.ctor,
+			context,
+			this.sharedObjectRegistry,
+			this.optionalProviders,
+			this.runtimeClass,
+			false, // existing
+			initialState,
+		);
+		const dataStore = await context.attachRuntime(this, dataStoreRuntime);
+		const result = await dataStore.trySetAlias(rootDataStoreId);
+		if (result !== "Success") {
+			const handle = await runtime.getAliasedDataStoreEntryPoint(rootDataStoreId);
+			assert(handle !== undefined, "Should have retrieved aliased handle");
+			return (await handle.get()) as TObj;
+		}
+		return instance;
 	}
 
 	protected async createNonRootInstanceCore(
