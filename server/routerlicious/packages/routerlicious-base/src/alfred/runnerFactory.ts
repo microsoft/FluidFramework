@@ -240,28 +240,6 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			expireAfterSeconds: redisConfig2.keyExpireAfterSeconds as number | undefined,
 		};
 
-		let redisOptionsCopy = { ...redisOptions2 };
-		redisOptionsCopy.password = "REDACTED";
-		Lumberjack.info(
-			`test123 Redis Client Params, redisOptions2, CE: ${redisConfig2.enableClustering}`,
-			{
-				redisOptionsCopy,
-				slotsRefreshTimeout: 50000,
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-				dnsLookup: (adr, callback) => callback(undefined, adr),
-				showFriendlyErrorStack: true,
-				clusterRetryStrategy(times) {
-					const delay = Math.min(times * 50, 2000);
-					return delay;
-				},
-			},
-		);
-		Lumberjack.info(
-			`test123 Redis Client Options, redisOptions2, CE: ${redisConfig2.enableClustering}`,
-			redisOptionsCopy,
-		);
-
-		console.log("test1234567");
 		const redisClient: Redis.default | Redis.Cluster = redisConfig2.enableClustering
 			? new Redis.Cluster([{ port: redisConfig2.port, host: redisConfig2.host }], {
 					redisOptions: redisOptions2,
@@ -378,27 +356,6 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 				| number
 				| undefined,
 		};
-
-		redisOptionsCopy = { ...redisOptionsForThrottling };
-		redisOptionsCopy.password = "REDACTED";
-		Lumberjack.info(
-			`test123 Redis Client Params, redisOptionsForThrottling, CE: ${redisConfigForThrottling.enableClustering}`,
-			{
-				redisOptionsCopy,
-				slotsRefreshTimeout: 50000,
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-				dnsLookup: (adr, callback) => callback(undefined, adr),
-				showFriendlyErrorStack: true,
-				clusterRetryStrategy(times) {
-					const delay = Math.min(times * 50, 2000);
-					return delay;
-				},
-			},
-		);
-		Lumberjack.info(
-			`test123 Redis Client Options, redisOptionsForThrottling, CE: ${redisConfigForThrottling.enableClustering}`,
-			redisOptionsCopy,
-		);
 
 		const redisClientForThrottling: Redis.default | Redis.Cluster =
 			redisConfigForThrottling.enableClustering
