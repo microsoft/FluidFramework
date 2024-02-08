@@ -255,7 +255,7 @@ function createCompatDescribe(): DescribeCompat {
 			case "NoCompat":
 				return createCompatSuite(tests, [CompatKind.None]);
 			default:
-			    return createCompatSuite(tests, undefined, compatVersion);
+				return createCompatSuite(tests, undefined, compatVersion);
 		}
 	};
 	const d: DescribeCompat = (name: string, compatVersion: string, tests) =>
