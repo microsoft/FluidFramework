@@ -11008,6 +11008,7 @@ importers:
       '@types/react-dom': ^17.0.18
       '@types/sinon': ^7.0.13
       '@types/sinon-chrome': ^2.2.11
+      '@types/uuid': ^9.0.2
       c8: ^8.0.1
       chai: ^4.2.0
       concurrently: ^8.2.1
@@ -11040,6 +11041,7 @@ importers:
       ts-loader: ^9.3.0
       tslib: ^1.10.0
       typescript: ~5.1.6
+      uuid: ^9.0.0
       webpack: ^5.82.0
       webpack-cli: ^4.9.2
     dependencies:
@@ -11051,9 +11053,11 @@ importers:
       '@fluidframework/devtools-core': link:../devtools-core
       '@microsoft/1ds-core-js': 3.2.15_tslib@1.14.1
       '@microsoft/1ds-post-js': 3.2.15_tslib@1.14.1
+      '@types/uuid': 9.0.7
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       tslib: 1.14.1
+      uuid: 9.0.1
     devDependencies:
       '@fluid-example/example-utils': link:../../../../examples/utils/example-utils
       '@fluid-experimental/react-inputs': link:../../../../experimental/framework/react-inputs
@@ -11378,7 +11382,6 @@ importers:
       '@types/react-dom': ^17.0.18
       '@types/recharts': ^1.8.24
       '@types/testing-library__jest-dom': ^5.14.5
-      '@types/uuid': ^9.0.2
       chai: ^4.2.0
       chalk: ^2.4.2
       concurrently: ^8.2.1
@@ -11408,7 +11411,6 @@ importers:
       simple-git: ^3.19.1
       ts-jest: ^29.1.1
       typescript: ~5.1.6
-      uuid: ^9.0.0
       vite: ^4.4.3
     dependencies:
       '@fluentui/react': 8.112.9_z2l4bd7d7kzuhnbxbmhiesmtme
@@ -11424,13 +11426,11 @@ importers:
       '@fluidframework/driver-definitions': link:../../../common/driver-definitions
       '@fluidframework/protocol-definitions': 3.2.0-231454
       '@fluidframework/telemetry-utils': link:../../../utils/telemetry-utils
-      '@types/uuid': 9.0.7
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       react-split-pane: 0.1.92_sfoxds7t5ydpegc3knd667wn6m
       recharts: 2.10.1_oxfzelaz5ynxsop2v2nu2h2m64
       scheduler: 0.20.2
-      uuid: 9.0.1
     devDependencies:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
