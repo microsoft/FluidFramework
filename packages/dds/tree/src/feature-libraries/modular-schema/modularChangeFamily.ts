@@ -1011,7 +1011,7 @@ export function addMissingBuilds(
 	}
 
 	if (change.change.builds !== undefined) {
-		populateNestedMap(change.change.builds, builds, false);
+		populateNestedMap(change.change.builds, builds, true);
 	}
 
 	const { fieldChanges, maxId, revisions, constraintViolationCount, destroys } = change.change;
