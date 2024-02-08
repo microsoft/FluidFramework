@@ -24,12 +24,20 @@ export class SocketIoRedisTopic implements core.ITopic {
  * @internal
  */
 export class SocketIoRedisPublisher implements core.IPublisher {
-	private readonly redisClient: Redis.Redis;
+	private readonly redisClient: Redis.Redis | Redis.Cluster;
 	private readonly io: any;
 	private readonly events = new EventEmitter();
 
-	constructor(options: Redis.RedisOptions) {
-		this.redisClient = new Redis.default(options);
+	constructor(options: Redis.RedisOptions, enableClustering: boolean = false) {
+		this.redisClient = enableClustering
+			? new Redis.Cluster([{ port: options.port, host: options.host }], {
+					redisOptions: options,
+					slotsRefreshTimeout: 50000,
+					dnsLookup: (adr, callback) => callback(null, adr),
+					showFriendlyErrorStack: true,
+			  })
+			: new Redis.default(options);
+
 		this.io = new SocketIoEmitter(this.redisClient);
 
 		this.redisClient.on("error", (error) => {

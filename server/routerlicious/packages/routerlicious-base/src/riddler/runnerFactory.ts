@@ -82,6 +82,10 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 				enableReadyCheck: true,
 				maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
 				enableOfflineQueue: redisConfig.enableOfflineQueue,
+				retryStrategy(times) {
+					const delay = Math.min(times * 50, 2000);
+					return delay;
+				},
 			};
 			if (redisConfig.enableAutoPipelining) {
 				/**
@@ -100,7 +104,15 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 			const redisParams = {
 				expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
 			};
-			const redisClient = new Redis.default(redisOptions);
+
+			const redisClient: Redis.default | Redis.Cluster = redisConfig.enableClustering
+				? new Redis.Cluster([{ port: redisConfig.port, host: redisConfig.host }], {
+						redisOptions,
+						slotsRefreshTimeout: 50000,
+						dnsLookup: (adr, callback) => callback(null, adr),
+						showFriendlyErrorStack: true,
+				  })
+				: new Redis.default(redisOptions);
 
 			cache = new RedisCache(redisClient, redisParams);
 		}

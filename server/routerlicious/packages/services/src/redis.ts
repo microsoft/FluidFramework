@@ -17,7 +17,7 @@ export class RedisCache implements ICache {
 	private readonly expireAfterSeconds: number = 60 * 60 * 24;
 	private readonly prefix: string = "page";
 	constructor(
-		private readonly client: Redis.default,
+		private readonly client: Redis.default | Redis.Cluster,
 		parameters?: IRedisParameters,
 	) {
 		if (parameters?.expireAfterSeconds) {
@@ -44,18 +44,28 @@ export class RedisCache implements ICache {
 	}
 
 	public async get(key: string): Promise<string> {
-		return this.client.get(this.getKey(key));
+		try {
+			return this.client.get(this.getKey(key));
+		} catch (error) {
+			Lumberjack.error(`Error getting ${key} from cache.`, undefined, error);
+			return undefined;
+		}
 	}
 
 	public async set(key: string, value: string, expireAfterSeconds?: number): Promise<void> {
-		const result = await this.client.set(
-			this.getKey(key),
-			value,
-			"EX",
-			expireAfterSeconds ?? this.expireAfterSeconds,
-		);
-		if (result !== "OK") {
-			throw new Error(result);
+		try {
+			const result = await this.client.set(
+				this.getKey(key),
+				value,
+				"EX",
+				expireAfterSeconds ?? this.expireAfterSeconds,
+			);
+			if (result !== "OK") {
+				throw new Error(result);
+			}
+		} catch (error) {
+			Lumberjack.error(`Error setting ${key} in cache.`, undefined, error);
+			return undefined;
 		}
 	}
 

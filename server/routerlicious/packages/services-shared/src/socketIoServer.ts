@@ -71,8 +71,8 @@ class SocketIoServer implements core.IWebSocketServer {
 
 	constructor(
 		private readonly io: Server,
-		private readonly pub: Redis.Redis,
-		private readonly sub: Redis.Redis,
+		private readonly pub: Redis.Redis | Redis.Cluster,
+		private readonly sub: Redis.Redis | Redis.Cluster,
 	) {
 		this.io.on("connection", (socket: Socket) => {
 			const webSocket = new SocketIoSocket(socket);
@@ -147,6 +147,10 @@ export function create(
 		enableReadyCheck: true,
 		maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
 		enableOfflineQueue: redisConfig.enableOfflineQueue,
+		retryStrategy(times) {
+			const delay = Math.min(times * 50, 2000);
+			return delay;
+		},
 	};
 	if (redisConfig.enableAutoPipelining) {
 		/**
@@ -163,8 +167,22 @@ export function create(
 		};
 	}
 
-	const pub = new Redis.default(clone(options));
-	const sub = new Redis.default(clone(options));
+	const pub: Redis.default | Redis.Cluster = redisConfig.enableClustering
+		? new Redis.Cluster([{ port: redisConfig.port, host: redisConfig.host }], {
+				redisOptions: clone(options),
+				slotsRefreshTimeout: 50000,
+				dnsLookup: (adr, callback) => callback(null, adr),
+				showFriendlyErrorStack: true,
+		  })
+		: new Redis.default(clone(options));
+	const sub: Redis.default | Redis.Cluster = redisConfig.enableClustering
+		? new Redis.Cluster([{ port: redisConfig.port, host: redisConfig.host }], {
+				redisOptions: clone(options),
+				slotsRefreshTimeout: 50000,
+				dnsLookup: (adr, callback) => callback(null, adr),
+				showFriendlyErrorStack: true,
+		  })
+		: new Redis.default(clone(options));
 
 	pub.on("error", (err) => {
 		winston.error("Error with Redis pub connection: ", err);
