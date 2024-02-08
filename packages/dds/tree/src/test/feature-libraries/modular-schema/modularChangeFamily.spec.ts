@@ -40,7 +40,7 @@ import {
 	ChangeEncodingContext,
 	RevisionTagCodec,
 } from "../../../core/index.js";
-import { brand, fail, nestedMapFromFlatList, tryGetFromNestedMap } from "../../../util/index.js";
+import { brand, nestedMapFromFlatList, tryGetFromNestedMap } from "../../../util/index.js";
 import { ICodecOptions, makeCodecFamily } from "../../../codec/index.js";
 import {
 	EncodingTestData,
@@ -1073,6 +1073,7 @@ describe("ModularChangeFamily", () => {
 		const a2 = { major: aMajor, minor: 2 };
 		const bMajor = mintRevisionTag();
 		const b1 = { major: bMajor, minor: 1 };
+		const cMajor = mintRevisionTag();
 
 		const node2 = singleJsonCursor(2);
 		const node2Chunk = treeChunkFromCursor(node2);
@@ -1089,7 +1090,7 @@ describe("ModularChangeFamily", () => {
 		);
 
 		const getDetachedNode = ({ major, minor }: DeltaDetachedNodeId) => {
-			return tryGetFromNestedMap(nodeMap, major, minor) ?? fail("invalid id");
+			return tryGetFromNestedMap(nodeMap, major, minor);
 		};
 
 		it("from root", () => {
@@ -1207,6 +1208,7 @@ describe("ModularChangeFamily", () => {
 				builds: new Map([
 					[undefined, new Map([[brand(2), node2Chunk]])],
 					[aMajor, new Map([[brand(2), node2Chunk]])],
+					[cMajor, new Map([[brand(1), node3Chunk]])],
 				]),
 			};
 
@@ -1223,6 +1225,7 @@ describe("ModularChangeFamily", () => {
 							[brand(2), node2Chunk],
 						]),
 					],
+					[cMajor, new Map([[brand(1), node3Chunk]])],
 				]),
 			};
 

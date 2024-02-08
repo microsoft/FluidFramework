@@ -1001,9 +1001,9 @@ export function addMissingBuilds(
 			assert(change.change.builds !== undefined, "detached node should exist");
 			const original = tryGetFromNestedMap(change.change.builds, root.major, root.minor);
 			assert(original !== undefined, "detached node should exist");
+		} else {
+			setInNestedMap(builds, root.major, root.minor, node);
 		}
-
-		setInNestedMap(builds, root.major, root.minor, node);
 	}
 
 	if (builds.size === 0) {
