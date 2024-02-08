@@ -977,23 +977,23 @@ function* relevantRemovedRootsFromFields(
 
 /**
  * Adds any builds missing from the provided change that are relevant to the change.
- * Calls {@link relevantRemovedRoots} to determine which builds are relevant.
  *
  * @param change - The change with potentially missing builds. Not mutated by this function.
  * @param getDetachedNode - The function to retrieve a tree chunk from the corresponding detached node id.
- * @param fieldKinds - The field kinds to delegate to.
+ * @param removedRoots - The set of removed roots that should be in memory for the given change to be applied.
+ * Can be retrieved by calling {@link relevantRemovedRoots}.
  */
 export function addMissingBuilds(
 	change: TaggedChange<ModularChangeset>,
 	getDetachedNode: (id: DeltaDetachedNodeId) => TreeChunk | undefined,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+	removedRoots: Iterable<DeltaDetachedNodeId>,
 ): ModularChangeset {
 	const builds: ChangeAtomIdMap<TreeChunk> = new Map<
 		RevisionTag | undefined,
 		Map<ChangesetLocalId, TreeChunk>
 	>();
 
-	for (const root of relevantRemovedRoots(change, fieldKinds)) {
+	for (const root of removedRoots) {
 		const node = getDetachedNode(root);
 
 		// if the detached node could not be found, it should exist in the original builds map
@@ -1030,14 +1030,14 @@ export function addMissingBuilds(
  * Calls {@link relevantRemovedRoots} to determine which builds are relevant.
  *
  * @param change - The change with potentially superfluous builds. Not mutated by this function.
- * @param fieldKinds - The field kinds to delegate to.
+ * @param removedRoots - The set of removed roots that should be in memory for the given change to be applied.
+ * Can be retrieved by calling {@link relevantRemovedRoots}.
  * @returns a {@link ModularChangeset} with only builds relevant to the change.
  */
 export function filterSuperfluousBuilds(
 	change: TaggedChange<ModularChangeset>,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+	removedRoots: Iterable<DeltaDetachedNodeId>,
 ): ModularChangeset {
-	const roots = relevantRemovedRoots(change, fieldKinds);
 	const builds: ChangeAtomIdMap<TreeChunk> = new Map();
 
 	// deep clone the builds map
@@ -1048,7 +1048,7 @@ export function filterSuperfluousBuilds(
 	});
 
 	const rootSets = new Map<RevisionTag | undefined, Set<number>>();
-	for (const { major, minor } of roots) {
+	for (const { major, minor } of removedRoots) {
 		const rootsSet = getOrAddInMap(rootSets, major, new Set());
 		rootsSet.add(minor);
 	}
