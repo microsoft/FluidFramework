@@ -40,6 +40,7 @@ import {
 	createSummarizerFromFactory,
 	summarizeNow,
 	type ITestObjectProvider,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 
 const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
@@ -278,6 +279,8 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 		const shim1 = testObj1.getTree<MigrationShim>();
 		const legacyTree1 = shim1.currentTree as LegacySharedTree;
 
+		await waitForContainerConnection(container1);
+
 		await provider.opProcessingController.pauseProcessing();
 		shim1.submitMigrateOp();
 
@@ -303,6 +306,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 		const container2 = await provider.loadContainer(runtimeFactory2, undefined, {
 			[LoaderHeader.version]: summaryVersion,
 		});
+		await waitForContainerConnection(container2);
 		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
 		const shim2 = testObj2.getTree<SharedTreeShim>();
 		assert(
