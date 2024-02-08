@@ -2,6 +2,7 @@ lockfileVersion: 5.4
 
 overrides:
   '@types/node@<18': ^18.19.0
+  '@types/puppeteer': npm:puppeteer
   node-fetch: ^2.6.9
   good-fences>nodegit: npm:empty-npm-package@1.0.0
   qs: ^6.11.0
@@ -417,13 +418,13 @@ importers:
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
       cross-env: ^7.0.3
       eslint: ~8.50.0
       expect-puppeteer: ^9.0.2
       html-webpack-plugin: ^5.5.0
       jest: ^29.6.2
+      jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^9.0.2
       prettier: ~3.0.3
@@ -455,13 +456,13 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
       cross-env: 7.0.3
       eslint: 8.50.0
       expect-puppeteer: 9.0.2
       html-webpack-plugin: 5.5.3_webpack@5.89.0
       jest: 29.7.0_@types+node@18.19.1
+      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_fwvjoj5ale4jdvhe6tcl5zcnma
       prettier: 3.0.3
@@ -494,7 +495,6 @@ importers:
       '@fluidframework/test-utils': workspace:~
       '@fluidframework/view-interfaces': workspace:~
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -504,6 +504,7 @@ importers:
       expect-puppeteer: ^9.0.2
       html-webpack-plugin: ^5.5.0
       jest: ^29.6.2
+      jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^9.0.2
       prettier: ~3.0.3
@@ -542,7 +543,6 @@ importers:
       '@fluidframework/test-tools': 1.0.195075
       '@fluidframework/test-utils': link:../../../packages/test/test-utils
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
@@ -551,6 +551,7 @@ importers:
       expect-puppeteer: 9.0.2
       html-webpack-plugin: 5.5.3_webpack@5.89.0
       jest: 29.7.0_@types+node@18.19.1
+      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_fwvjoj5ale4jdvhe6tcl5zcnma
       prettier: 3.0.3
@@ -589,6 +590,7 @@ importers:
       expect-puppeteer: ^9.0.2
       html-webpack-plugin: ^5.5.0
       jest: ^29.6.2
+      jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^9.0.2
       prettier: ~3.0.3
@@ -625,7 +627,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
+      '@types/jest-environment-puppeteer': 5.0.6_typescript@5.1.6
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
       clean-webpack-plugin: 4.0.0_webpack@5.89.0
@@ -634,6 +636,7 @@ importers:
       expect-puppeteer: 9.0.2
       html-webpack-plugin: 5.5.3_webpack@5.89.0
       jest: 29.7.0_@types+node@18.19.1
+      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_fwvjoj5ale4jdvhe6tcl5zcnma
       prettier: 3.0.3
@@ -673,7 +676,6 @@ importers:
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/view-adapters': workspace:~
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
       '@types/prop-types': ^15
       '@types/react': ^17.0.44
@@ -687,6 +689,7 @@ importers:
       html-loader: ^3.1.0
       html-webpack-plugin: ^5.5.0
       jest: ^29.6.2
+      jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^9.0.2
       prettier: ~3.0.3
@@ -742,7 +745,6 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
       '@types/prop-types': 15.7.11
       '@types/react': 17.0.71
@@ -756,6 +758,7 @@ importers:
       html-loader: 3.1.2_webpack@5.89.0
       html-webpack-plugin: 5.5.3_webpack@5.89.0
       jest: 29.7.0_@types+node@18.19.1
+      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_fwvjoj5ale4jdvhe6tcl5zcnma
       prettier: 3.0.3
@@ -799,6 +802,7 @@ importers:
       fluid-framework: workspace:~
       html-webpack-plugin: ^5.5.0
       jest: ^29.6.2
+      jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^9.0.2
       prettier: ~3.0.3
@@ -832,13 +836,14 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
+      '@types/jest-environment-puppeteer': 5.0.6_typescript@5.1.6
       '@types/node': 18.19.1
       cross-env: 7.0.3
       eslint: 8.50.0
       expect-puppeteer: 9.0.2
       html-webpack-plugin: 5.5.3_webpack@5.89.0
       jest: 29.7.0_@types+node@18.19.1
+      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_fwvjoj5ale4jdvhe6tcl5zcnma
       prettier: 3.0.3
@@ -879,6 +884,7 @@ importers:
       expect-puppeteer: ^9.0.2
       html-webpack-plugin: ^5.5.0
       jest: ^29.6.2
+      jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^9.0.2
       prettier: ~3.0.3
@@ -913,7 +919,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
+      '@types/jest-environment-puppeteer': 5.0.6_typescript@5.1.6
       '@types/node': 18.19.1
       clean-webpack-plugin: 4.0.0_webpack@5.89.0
       cross-env: 7.0.3
@@ -921,6 +927,7 @@ importers:
       expect-puppeteer: 9.0.2
       html-webpack-plugin: 5.5.3_webpack@5.89.0
       jest: 29.7.0_@types+node@18.19.1
+      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_fwvjoj5ale4jdvhe6tcl5zcnma
       prettier: 3.0.3
@@ -972,6 +979,7 @@ importers:
       expect-puppeteer: ^9.0.2
       html-webpack-plugin: ^5.5.0
       jest: ^29.6.2
+      jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^9.0.2
       prettier: ~3.0.3
@@ -1020,7 +1028,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
+      '@types/jest-environment-puppeteer': 5.0.6_typescript@5.1.6
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
@@ -1031,6 +1039,7 @@ importers:
       expect-puppeteer: 9.0.2
       html-webpack-plugin: 5.5.3_webpack@5.89.0
       jest: 29.7.0_@types+node@18.19.1
+      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_fwvjoj5ale4jdvhe6tcl5zcnma
       prettier: 3.0.3
@@ -1061,7 +1070,6 @@ importers:
       '@fluidframework/map': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -1069,6 +1077,7 @@ importers:
       eslint: ~8.50.0
       expect-puppeteer: ^9.0.2
       jest: ^29.6.2
+      jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^9.0.2
       prettier: ~3.0.3
@@ -1098,7 +1107,6 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
@@ -1106,6 +1114,7 @@ importers:
       eslint: 8.50.0
       expect-puppeteer: 9.0.2
       jest: 29.7.0_@types+node@18.19.1
+      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_fwvjoj5ale4jdvhe6tcl5zcnma
       prettier: 3.0.3
@@ -1211,6 +1220,7 @@ importers:
       eslint: ~8.50.0
       expect-puppeteer: ^9.0.2
       jest: ^29.6.2
+      jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^9.0.2
       prettier: ~3.0.3
@@ -1243,7 +1253,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
+      '@types/jest-environment-puppeteer': 5.0.6_typescript@5.1.6
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
@@ -1251,6 +1261,7 @@ importers:
       eslint: 8.50.0
       expect-puppeteer: 9.0.2
       jest: 29.7.0_@types+node@18.19.1
+      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_fwvjoj5ale4jdvhe6tcl5zcnma
       prettier: 3.0.3
@@ -1281,7 +1292,6 @@ importers:
       '@fluidframework/map': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -1289,6 +1299,7 @@ importers:
       eslint: ~8.50.0
       expect-puppeteer: ^9.0.2
       jest: ^29.6.2
+      jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^9.0.2
       ot-json1: ^1.0.1
@@ -1321,7 +1332,6 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
@@ -1329,6 +1339,7 @@ importers:
       eslint: 8.50.0
       expect-puppeteer: 9.0.2
       jest: 29.7.0_@types+node@18.19.1
+      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_fwvjoj5ale4jdvhe6tcl5zcnma
       prettier: 3.0.3
@@ -1358,7 +1369,6 @@ importers:
       '@fluidframework/map': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -1366,6 +1376,7 @@ importers:
       eslint: ~8.50.0
       expect-puppeteer: ^9.0.2
       jest: ^29.6.2
+      jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^9.0.2
       prettier: ~3.0.3
@@ -1396,7 +1407,6 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
@@ -1404,6 +1414,7 @@ importers:
       eslint: 8.50.0
       expect-puppeteer: 9.0.2
       jest: 29.7.0_@types+node@18.19.1
+      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_fwvjoj5ale4jdvhe6tcl5zcnma
       prettier: 3.0.3
@@ -1668,7 +1679,6 @@ importers:
       '@fluidframework/ink': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -1677,6 +1687,7 @@ importers:
       eslint: ~8.50.0
       expect-puppeteer: ^9.0.2
       jest: ^29.6.2
+      jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^9.0.2
       less: ~3.9.0
@@ -1706,7 +1717,6 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
@@ -1715,6 +1725,7 @@ importers:
       eslint: 8.50.0
       expect-puppeteer: 9.0.2
       jest: 29.7.0_@types+node@18.19.1
+      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_fwvjoj5ale4jdvhe6tcl5zcnma
       less: 3.9.0
@@ -1746,7 +1757,6 @@ importers:
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/test-utils': workspace:~
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -1754,6 +1764,7 @@ importers:
       eslint: ~8.50.0
       expect-puppeteer: ^9.0.2
       jest: ^29.6.2
+      jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^9.0.2
       prettier: ~3.0.3
@@ -1783,7 +1794,6 @@ importers:
       '@fluidframework/test-tools': 1.0.195075
       '@fluidframework/test-utils': link:../../../packages/test/test-utils
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
@@ -1791,6 +1801,7 @@ importers:
       eslint: 8.50.0
       expect-puppeteer: 9.0.2
       jest: 29.7.0_@types+node@18.19.1
+      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_fwvjoj5ale4jdvhe6tcl5zcnma
       prettier: 3.0.3
@@ -1895,7 +1906,6 @@ importers:
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/view-interfaces': workspace:~
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -1903,6 +1913,7 @@ importers:
       eslint: ~8.50.0
       expect-puppeteer: ^9.0.2
       jest: ^29.6.2
+      jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^9.0.2
       prettier: ~3.0.3
@@ -1929,7 +1940,6 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
@@ -1937,6 +1947,7 @@ importers:
       eslint: 8.50.0
       expect-puppeteer: 9.0.2
       jest: 29.7.0_@types+node@18.19.1
+      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_fwvjoj5ale4jdvhe6tcl5zcnma
       prettier: 3.0.3
@@ -1963,7 +1974,6 @@ importers:
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/tree': workspace:~
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -1971,6 +1981,7 @@ importers:
       eslint: ~8.50.0
       expect-puppeteer: ^9.0.2
       jest: ^29.6.2
+      jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^9.0.2
       prettier: ~3.0.3
@@ -1999,7 +2010,6 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
@@ -2007,6 +2017,7 @@ importers:
       eslint: 8.50.0
       expect-puppeteer: 9.0.2
       jest: 29.7.0_@types+node@18.19.1
+      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_fwvjoj5ale4jdvhe6tcl5zcnma
       prettier: 3.0.3
@@ -2101,12 +2112,12 @@ importers:
       '@fluidframework/map': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
       cross-env: ^7.0.3
       eslint: ~8.50.0
       expect-puppeteer: ^9.0.2
       jest: ^29.6.2
+      jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^9.0.2
       prettier: ~3.0.3
@@ -2132,12 +2143,12 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
       cross-env: 7.0.3
       eslint: 8.50.0
       expect-puppeteer: 9.0.2
       jest: 29.7.0_@types+node@18.19.1
+      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_fwvjoj5ale4jdvhe6tcl5zcnma
       prettier: 3.0.3
@@ -2161,7 +2172,6 @@ importers:
       '@fluidframework/eslint-config-fluid': ^3.3.0
       '@fluidframework/test-tools': ^1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -2171,6 +2181,7 @@ importers:
       eslint: ~8.50.0
       expect-puppeteer: ^9.0.2
       jest: ^29.6.2
+      jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^9.0.2
       prettier: ~3.0.3
@@ -2196,7 +2207,6 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
@@ -2206,6 +2216,7 @@ importers:
       eslint: 8.50.0
       expect-puppeteer: 9.0.2
       jest: 29.7.0_@types+node@18.19.1
+      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_fwvjoj5ale4jdvhe6tcl5zcnma
       prettier: 3.0.3
@@ -2243,7 +2254,6 @@ importers:
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/view-adapters': workspace:~
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -2253,6 +2263,7 @@ importers:
       eslint: ~8.50.0
       expect-puppeteer: ^9.0.2
       jest: ^29.6.2
+      jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^9.0.2
       prettier: ~3.0.3
@@ -2291,7 +2302,6 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
@@ -2301,6 +2311,7 @@ importers:
       eslint: 8.50.0
       expect-puppeteer: 9.0.2
       jest: 29.7.0_@types+node@18.19.1
+      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_fwvjoj5ale4jdvhe6tcl5zcnma
       prettier: 3.0.3
@@ -2326,12 +2337,12 @@ importers:
       '@fluidframework/map': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
       cross-env: ^7.0.3
       eslint: ~8.50.0
       expect-puppeteer: ^9.0.2
       jest: ^29.6.2
+      jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^9.0.2
       prettier: ~3.0.3
@@ -2355,12 +2366,12 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
       cross-env: 7.0.3
       eslint: 8.50.0
       expect-puppeteer: 9.0.2
       jest: 29.7.0_@types+node@18.19.1
+      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_fwvjoj5ale4jdvhe6tcl5zcnma
       prettier: 3.0.3
@@ -2423,7 +2434,6 @@ importers:
       '@fluidframework/eslint-config-fluid': ^3.3.0
       '@fluidframework/test-tools': ^1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -2433,6 +2443,7 @@ importers:
       eslint: ~8.50.0
       expect-puppeteer: ^9.0.2
       jest: ^29.6.2
+      jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^9.0.2
       prettier: ~3.0.3
@@ -2457,7 +2468,6 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
@@ -2467,6 +2477,7 @@ importers:
       eslint: 8.50.0
       expect-puppeteer: 9.0.2
       jest: 29.7.0_@types+node@18.19.1
+      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_fwvjoj5ale4jdvhe6tcl5zcnma
       prettier: 3.0.3
@@ -2490,7 +2501,6 @@ importers:
       '@fluidframework/eslint-config-fluid': ^3.3.0
       '@fluidframework/test-tools': ^1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -2500,6 +2510,7 @@ importers:
       eslint: ~8.50.0
       expect-puppeteer: ^9.0.2
       jest: ^29.6.2
+      jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^9.0.2
       prettier: ~3.0.3
@@ -2524,7 +2535,6 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
@@ -2534,6 +2544,7 @@ importers:
       eslint: 8.50.0
       expect-puppeteer: 9.0.2
       jest: 29.7.0_@types+node@18.19.1
+      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_fwvjoj5ale4jdvhe6tcl5zcnma
       prettier: 3.0.3
@@ -2557,7 +2568,6 @@ importers:
       '@fluidframework/eslint-config-fluid': ^3.3.0
       '@fluidframework/test-tools': ^1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -2567,6 +2577,7 @@ importers:
       eslint: ~8.50.0
       expect-puppeteer: ^9.0.2
       jest: ^29.6.2
+      jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^9.0.2
       prettier: ~3.0.3
@@ -2591,7 +2602,6 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
@@ -2601,6 +2611,7 @@ importers:
       eslint: 8.50.0
       expect-puppeteer: 9.0.2
       jest: 29.7.0_@types+node@18.19.1
+      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_fwvjoj5ale4jdvhe6tcl5zcnma
       prettier: 3.0.3
@@ -2960,7 +2971,6 @@ importers:
       '@fluidframework/view-adapters': workspace:~
       '@fluidframework/view-interfaces': workspace:~
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -2970,6 +2980,7 @@ importers:
       eslint: ~8.50.0
       expect-puppeteer: ^9.0.2
       jest: ^29.6.2
+      jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^9.0.2
       prettier: ~3.0.3
@@ -3008,7 +3019,6 @@ importers:
       '@fluidframework/test-tools': 1.0.195075
       '@fluidframework/test-utils': link:../../../packages/test/test-utils
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
@@ -3018,6 +3028,7 @@ importers:
       eslint: 8.50.0
       expect-puppeteer: 9.0.2
       jest: 29.7.0_@types+node@18.19.1
+      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_fwvjoj5ale4jdvhe6tcl5zcnma
       prettier: 3.0.3
@@ -3196,6 +3207,7 @@ importers:
       good-fences: ^1.1.1
       html-webpack-plugin: ^5.5.0
       jest: ^29.6.2
+      jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^9.0.2
       lodash.isequal: ^4.5.0
@@ -3259,7 +3271,7 @@ importers:
       '@types/express': 4.17.21
       '@types/fs-extra': 9.0.13
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
+      '@types/jest-environment-puppeteer': 5.0.6_typescript@5.1.6
       '@types/lodash.isequal': 4.5.8
       '@types/node': 18.19.1
       '@types/node-fetch': 2.6.9
@@ -3274,6 +3286,7 @@ importers:
       good-fences: 1.2.0
       html-webpack-plugin: 5.5.3_webpack@5.89.0
       jest: 29.7.0_@types+node@18.19.1
+      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_fwvjoj5ale4jdvhe6tcl5zcnma
       prettier: 3.0.3
@@ -3344,6 +3357,7 @@ importers:
       '@fluidframework/azure-client': link:../../../../azure/packages/azure-client
       '@fluidframework/routerlicious-driver': link:../../../../packages/drivers/routerlicious-driver
       '@fluidframework/telemetry-utils': link:../../../../packages/utils/telemetry-utils
+      '@types/jest-environment-puppeteer': 5.0.6_typescript@5.1.6
       assert: 2.1.0
       axios: 1.6.2
       events: 3.3.0
@@ -3362,7 +3376,6 @@ importers:
       '@fluidframework/test-runtime-utils': link:../../../../packages/runtime/test-runtime-utils
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
       clean-webpack-plugin: 4.0.0_webpack@5.89.0
@@ -3626,6 +3639,7 @@ importers:
       expect-puppeteer: ^9.0.2
       html-webpack-plugin: ^5.5.0
       jest: ^29.6.2
+      jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^9.0.2
       prettier: ~3.0.3
@@ -3661,7 +3675,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
+      '@types/jest-environment-puppeteer': 5.0.6_typescript@5.1.6
       '@types/node': 18.19.1
       clean-webpack-plugin: 4.0.0_webpack@5.89.0
       cross-env: 7.0.3
@@ -3669,6 +3683,7 @@ importers:
       expect-puppeteer: 9.0.2
       html-webpack-plugin: 5.5.3_webpack@5.89.0
       jest: 29.7.0_@types+node@18.19.1
+      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_fwvjoj5ale4jdvhe6tcl5zcnma
       prettier: 3.0.3
@@ -3725,6 +3740,7 @@ importers:
       expect-puppeteer: ^9.0.2
       html-webpack-plugin: ^5.5.0
       jest: ^29.6.2
+      jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^9.0.2
       prettier: ~3.0.3
@@ -3763,6 +3779,7 @@ importers:
       '@fluidframework/task-manager': link:../../../packages/dds/task-manager
       '@fluidframework/telemetry-utils': link:../../../packages/utils/telemetry-utils
       '@fluidframework/tinylicious-driver': link:../../../packages/drivers/tinylicious-driver
+      '@types/jest-environment-puppeteer': 5.0.6_typescript@5.1.6
       events: 3.3.0
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
@@ -3774,7 +3791,6 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
@@ -3787,6 +3803,7 @@ importers:
       expect-puppeteer: 9.0.2
       html-webpack-plugin: 5.5.3_webpack@5.89.0
       jest: 29.7.0_@types+node@18.19.1
+      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_fwvjoj5ale4jdvhe6tcl5zcnma
       prettier: 3.0.3
@@ -3844,6 +3861,7 @@ importers:
       expect-puppeteer: ^9.0.2
       html-webpack-plugin: ^5.5.0
       jest: ^29.6.2
+      jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^9.0.2
       prettier: ~3.0.3
@@ -3893,7 +3911,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
+      '@types/jest-environment-puppeteer': 5.0.6_typescript@5.1.6
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
@@ -3906,6 +3924,7 @@ importers:
       expect-puppeteer: 9.0.2
       html-webpack-plugin: 5.5.3_webpack@5.89.0
       jest: 29.7.0_@types+node@18.19.1
+      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_fwvjoj5ale4jdvhe6tcl5zcnma
       prettier: 3.0.3
@@ -3958,6 +3977,7 @@ importers:
       expect-puppeteer: ^9.0.2
       html-webpack-plugin: ^5.5.0
       jest: ^29.6.2
+      jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^9.0.2
       prettier: ~3.0.3
@@ -4008,7 +4028,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
+      '@types/jest-environment-puppeteer': 5.0.6_typescript@5.1.6
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
@@ -4019,6 +4039,7 @@ importers:
       expect-puppeteer: 9.0.2
       html-webpack-plugin: 5.5.3_webpack@5.89.0
       jest: 29.7.0_@types+node@18.19.1
+      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_fwvjoj5ale4jdvhe6tcl5zcnma
       prettier: 3.0.3
@@ -4064,6 +4085,7 @@ importers:
       expect-puppeteer: ^9.0.2
       html-webpack-plugin: ^5.5.0
       jest: ^29.6.2
+      jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^9.0.2
       prettier: ~3.0.3
@@ -4098,7 +4120,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
+      '@types/jest-environment-puppeteer': 5.0.6_typescript@5.1.6
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
@@ -4108,6 +4130,7 @@ importers:
       expect-puppeteer: 9.0.2
       html-webpack-plugin: 5.5.3_webpack@5.89.0
       jest: 29.7.0_@types+node@18.19.1
+      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_fwvjoj5ale4jdvhe6tcl5zcnma
       prettier: 3.0.3
@@ -4143,6 +4166,7 @@ importers:
       expect-puppeteer: ^9.0.2
       html-webpack-plugin: ^5.5.0
       jest: ^29.6.2
+      jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^9.0.2
       prettier: ~3.0.3
@@ -4172,7 +4196,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
+      '@types/jest-environment-puppeteer': 5.0.6_typescript@5.1.6
       '@types/node': 18.19.1
       clean-webpack-plugin: 4.0.0_webpack@5.89.0
       cross-env: 7.0.3
@@ -4180,6 +4204,7 @@ importers:
       expect-puppeteer: 9.0.2
       html-webpack-plugin: 5.5.3_webpack@5.89.0
       jest: 29.7.0_@types+node@18.19.1
+      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_fwvjoj5ale4jdvhe6tcl5zcnma
       prettier: 3.0.3
@@ -4218,6 +4243,7 @@ importers:
       expect-puppeteer: ^9.0.2
       html-webpack-plugin: ^5.5.0
       jest: ^29.6.2
+      jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^9.0.2
       prettier: ~3.0.3
@@ -4253,7 +4279,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
+      '@types/jest-environment-puppeteer': 5.0.6_typescript@5.1.6
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
@@ -4263,6 +4289,7 @@ importers:
       expect-puppeteer: 9.0.2
       html-webpack-plugin: 5.5.3_webpack@5.89.0
       jest: 29.7.0_@types+node@18.19.1
+      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_fwvjoj5ale4jdvhe6tcl5zcnma
       prettier: 3.0.3
@@ -4325,6 +4352,7 @@ importers:
       expect-puppeteer: ^9.0.2
       html-webpack-plugin: ^5.5.0
       jest: ^29.6.2
+      jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^9.0.2
       jsonwebtoken: ^8.4.0
@@ -4384,7 +4412,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_webpack-cli@4.10.0
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
+      '@types/jest-environment-puppeteer': 5.0.6_typescript@5.1.6
       '@types/uuid': 9.0.7
       clean-webpack-plugin: 4.0.0_webpack@5.89.0
       concurrently: 8.2.2
@@ -4394,6 +4422,7 @@ importers:
       expect-puppeteer: 9.0.2
       html-webpack-plugin: 5.5.3_webpack@5.89.0
       jest: 29.7.0
+      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_fwvjoj5ale4jdvhe6tcl5zcnma
       prettier: 3.0.3
@@ -4457,6 +4486,7 @@ importers:
       expect-puppeteer: ^9.0.2
       html-webpack-plugin: ^5.5.0
       jest: ^29.6.2
+      jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^9.0.2
       jsonwebtoken: ^8.4.0
@@ -4510,6 +4540,7 @@ importers:
       '@material-ui/core': 4.12.4_sfoxds7t5ydpegc3knd667wn6m
       '@material-ui/lab': 4.0.0-alpha.61_phlbjj2qqbzyjdfzujtmlw3coi
       '@material-ui/styles': 4.11.5_sfoxds7t5ydpegc3knd667wn6m
+      '@types/jest-environment-puppeteer': 5.0.6_typescript@5.1.6
       events: 3.3.0
       jsonwebtoken: 8.5.1
       lodash: 4.17.21
@@ -4520,7 +4551,6 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_webpack-cli@4.10.0
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/uuid': 9.0.7
       clean-webpack-plugin: 4.0.0_webpack@5.89.0
       concurrently: 8.2.2
@@ -4530,6 +4560,7 @@ importers:
       expect-puppeteer: 9.0.2
       html-webpack-plugin: 5.5.3_webpack@5.89.0
       jest: 29.7.0
+      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_fwvjoj5ale4jdvhe6tcl5zcnma
       prettier: 3.0.3
@@ -5867,6 +5898,7 @@ importers:
       eslint-config-prettier: ~9.0.0
       events: ^3.1.0
       jest: ^29.6.2
+      jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
       jest-puppeteer: ^9.0.2
       lodash: ^4.17.21
@@ -5904,7 +5936,7 @@ importers:
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
       '@types/base64-js': 1.3.2
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
+      '@types/jest-environment-puppeteer': 5.0.6_typescript@5.1.6
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/rewire': 2.5.30
@@ -5917,6 +5949,7 @@ importers:
       eslint: 8.50.0
       eslint-config-prettier: 9.0.0_eslint@8.50.0
       jest: 29.7.0_5hr63yjncn3tlo6qh7e6tsd2me
+      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_fwvjoj5ale4jdvhe6tcl5zcnma
       mocha: 10.2.0
@@ -10976,6 +11009,7 @@ importers:
       '@fluidframework/devtools-core': link:../devtools-core
       '@microsoft/1ds-core-js': 3.2.15_tslib@1.14.1
       '@microsoft/1ds-post-js': 3.2.15_tslib@1.14.1
+      '@types/jest-environment-puppeteer': 5.0.6_typescript@5.1.6
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       tslib: 1.14.1
@@ -10997,7 +11031,6 @@ importers:
       '@types/chai': 4.3.11
       '@types/chrome': 0.0.232
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
       '@types/jsdom': 21.1.6
       '@types/jsdom-global': 3.0.7
       '@types/mocha': 9.1.1
@@ -11181,6 +11214,7 @@ importers:
       jest: ^29.6.2
       jest-dev-server: ^4.3.0
       jest-environment-jsdom: ^29.6.2
+      jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
       prettier: ~3.0.3
       puppeteer: ^22.0.0
@@ -11237,7 +11271,7 @@ importers:
       '@testing-library/react': 12.1.5_sfoxds7t5ydpegc3knd667wn6m
       '@testing-library/user-event': 14.5.1_szfc7t2zqsdonxwckqxkjn2the
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 5.0.6
+      '@types/jest-environment-puppeteer': 5.0.6_typescript@5.1.6
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
@@ -11252,6 +11286,7 @@ importers:
       jest: 29.7.0_@types+node@18.19.1
       jest-dev-server: 4.4.0
       jest-environment-jsdom: 29.7.0
+      jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       prettier: 3.0.3
       puppeteer: 22.0.0_typescript@5.1.6
@@ -22577,12 +22612,18 @@ packages:
       '@types/istanbul-lib-report': 3.0.3
     dev: true
 
-  /@types/jest-environment-puppeteer/5.0.6:
+  /@types/jest-environment-puppeteer/5.0.6_typescript@5.1.6:
     resolution: {integrity: sha512-MAi9ey7sIRl0ddWsN3jaQQwC41eBfYghE6TKnJNbEXKxw1X6nF6TBCZA+DbQ+KDOb9e2BjUtiWWMZbgjhlTneg==}
     dependencies:
       '@jest/types': 27.5.1
-      '@types/puppeteer': 5.4.7
+      '@types/puppeteer': /puppeteer/22.0.0_typescript@5.1.6
       jest-environment-node: 27.5.1
+    transitivePeerDependencies:
+      - bufferutil
+      - encoding
+      - supports-color
+      - typescript
+      - utf-8-validate
     dev: true
 
   /@types/jest/29.5.3:
@@ -22779,12 +22820,6 @@ packages:
 
   /@types/proxyquire/1.3.31:
     resolution: {integrity: sha512-uALowNG2TSM1HNPMMOR0AJwv4aPYPhqB0xlEhkeRTMuto5hjoSPZkvgu1nbPUkz3gEPAHv4sy4DmKsurZiEfRQ==}
-    dev: true
-
-  /@types/puppeteer/5.4.7:
-    resolution: {integrity: sha512-JdGWZZYL0vKapXF4oQTC5hLVNfOgdPrqeZ1BiQnGk5cB7HeE91EWUiTdVSdQPobRN8rIcdffjiOgCYJ/S8QrnQ==}
-    dependencies:
-      '@types/node': 18.19.1
     dev: true
 
   /@types/q/1.5.8:
@@ -33632,7 +33667,7 @@ packages:
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
     dependencies:
       '@jest/types': 29.6.3
-      '@types/node': 18.19.1
+      '@types/node': 20.10.5
       chalk: 4.1.2
       ci-info: 3.9.0
       graceful-fs: 4.2.11
@@ -33995,7 +34030,7 @@ packages:
       whatwg-encoding: 2.0.0
       whatwg-mimetype: 3.0.0
       whatwg-url: 11.0.0
-      ws: 8.14.2
+      ws: 8.16.0
       xml-name-validator: 4.0.0
     transitivePeerDependencies:
       - bufferutil
