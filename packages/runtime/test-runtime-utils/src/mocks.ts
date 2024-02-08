@@ -443,7 +443,7 @@ export class MockContainerRuntimeFactory {
 		return containerRuntime;
 	}
 
-	public deleteContainerRuntime(containerRuntime: MockContainerRuntime) {
+	public removeContainerRuntime(containerRuntime: MockContainerRuntime) {
 		this.runtimes.delete(containerRuntime);
 	}
 

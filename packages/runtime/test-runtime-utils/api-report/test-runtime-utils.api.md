@@ -139,8 +139,6 @@ export class MockContainerRuntimeFactory {
     // (undocumented)
     createContainerRuntime(dataStoreRuntime: MockFluidDataStoreRuntime): MockContainerRuntime;
     // (undocumented)
-    removeContainerRuntime(containerRuntime: MockContainerRuntime): void;
-    // (undocumented)
     getMinSeq(): number;
     protected messages: ISequencedDocumentMessage[];
     // (undocumented)
@@ -154,6 +152,8 @@ export class MockContainerRuntimeFactory {
     pushMessage(msg: Partial<ISequencedDocumentMessage>): void;
     // (undocumented)
     readonly quorum: MockQuorumClients;
+    // (undocumented)
+    removeContainerRuntime(containerRuntime: MockContainerRuntime): void;
     protected readonly runtimeOptions: Required<IMockContainerRuntimeOptions>;
     // (undocumented)
     protected readonly runtimes: Set<MockContainerRuntime>;
