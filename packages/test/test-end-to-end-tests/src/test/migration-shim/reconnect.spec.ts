@@ -39,6 +39,7 @@ import {
 	createSummarizerFromFactory,
 	summarizeNow,
 	type ITestObjectProvider,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
@@ -366,6 +367,9 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 		const container1 = await provider.loadContainer(runtimeFactory2);
 		const url = await container1.getAbsoluteUrl("");
 		assert(url !== undefined, "Container url should be defined");
+
+		await waitForContainerConnection(container1);
+
 		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
 		const shim1 = testObj1.getTree<MigrationShim>();
 		const legacyTree1 = shim1.currentTree as LegacySharedTree;
@@ -391,6 +395,8 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 				[LoaderHeader.version]: summaryVersion,
 			},
 		);
+		await waitForContainerConnection(container2);
+
 		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
 		const shim2 = testObj2.getTree<SharedTreeShim>();
 		const newTree2 = shim2.currentTree;
