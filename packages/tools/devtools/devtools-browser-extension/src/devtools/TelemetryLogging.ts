@@ -139,7 +139,7 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 		const optIn = localStorage.getItem(telemetryOptInKey);
 
 		// Clear localStorage and reset identifiers if the user opts out
-		if (!optIn) {
+		if (optIn !== null && optIn !== "true") {
 			localStorage.removeItem(this.CONTINUITY_ID_KEY);
 			// Reset identifiers, ensuring any subsequent telemetry will have fresh identifiers if the user opts in again.
 			this.continuityID = uuidv4();
