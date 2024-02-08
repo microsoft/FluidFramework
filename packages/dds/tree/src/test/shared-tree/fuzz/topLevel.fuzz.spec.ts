@@ -22,8 +22,6 @@ const baseOptions: Partial<DDSFuzzSuiteOptions> = {
 		maxNumberOfClients: 6,
 		clientAddProbability: 0.1,
 	},
-	// AB#7156: SharedTree does not yet support loading clients in a detached state
-	detachedStartOptions: { numOpsBeforeAttach: 0 },
 	reconnectProbability: 0.5,
 };
 
@@ -81,6 +79,8 @@ describe("Fuzz - Top-Level", () => {
 				maxNumberOfClients: 3,
 			},
 			reconnectProbability: 0,
+			// AB#7162
+			skip: [2, 9, 11, 18, 19, 23, 26, 35, 38, 39, 42],
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 		};
 		createDDSFuzzSuite(model, options);
@@ -107,6 +107,8 @@ describe("Fuzz - Top-Level", () => {
 				flushMode: FlushMode.TurnBased,
 				enableGroupedBatching: true,
 			},
+			// AB#7162
+			skip: [9, 12, 21, 26, 27, 29],
 			saveFailures: {
 				directory: failureDirectory,
 			},

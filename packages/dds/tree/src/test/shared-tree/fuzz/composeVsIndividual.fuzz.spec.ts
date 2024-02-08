@@ -130,7 +130,6 @@ describe("Fuzz - composed vs individual changes", () => {
 		createDDSFuzzSuite(model, {
 			defaultTestCount: runsPerBatch,
 			numberOfClients: 1,
-			detachedStartOptions: { numOpsBeforeAttach: 0 },
 			emitter,
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 		});

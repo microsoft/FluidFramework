@@ -703,8 +703,17 @@ export function mixinAttach<
 		} else if (operation.type === "rehydrate") {
 			const clientA = state.clients[0];
 			assert.equal(state.clients.length, 1);
-			state.isDetached = true;
-
+			state.containerRuntimeFactory.removeContainerRuntime(clientA.containerRuntime);
+			// This is necessary to get all IdCreationRanges finalized before connecting further clients.
+			// The production codepath also finalizes ids before attaching. It's difficult for the mocks
+			// to be more direct about this as they don't directly manage any state related to attach
+			// (it's up to the user of the mocks to set them up how they want)
+			if (clientA.dataStoreRuntime.idCompressor !== undefined) {
+				const range = clientA.containerRuntime.getGeneratedIdRange();
+				if (range !== undefined) {
+					clientA.dataStoreRuntime.idCompressor?.finalizeCreationRange(range);
+				}
+			}
 			const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection(
 				options.containerRuntimeOptions,
 			);
