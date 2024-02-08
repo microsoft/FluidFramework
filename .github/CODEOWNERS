@@ -46,4 +46,4 @@
 /experimental/dds/tree/src                     @microsoft/fluid-cr-tree
 
 # Fluid Devtools source
-/packages/tools/devtools/src                   @microsoft/fluid-cr-devtools
+/packages/tools/devtools/**/src                   @microsoft/fluid-cr-devtools
