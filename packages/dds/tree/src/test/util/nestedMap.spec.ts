@@ -9,6 +9,7 @@ import {
 	getOrAddInNestedMap,
 	getOrDefaultInNestedMap,
 	NestedMap,
+	populateNestedMap,
 	setInNestedMap,
 	SizedNestedMap,
 	tryAddToNestedMap,
@@ -200,5 +201,96 @@ describe("NestedMap unit tests", () => {
 		// Clear map
 		map.clear();
 		assert.equal(map.size, 0);
+	});
+
+	describe("populateNestedMap", () => {
+		it("can populate an empty nested map", () => {
+			const sourceMap: NestedMap<string, string, number> = new Map<
+				string,
+				Map<string, number>
+			>();
+			setInNestedMap(sourceMap, "Foo", "Bar", 1);
+			setInNestedMap(sourceMap, "Foo", "Baz", 2);
+
+			const destinationMap: NestedMap<string, string, number> = new Map<
+				string,
+				Map<string, number>
+			>();
+
+			populateNestedMap(sourceMap, destinationMap, false);
+
+			assert.deepEqual(
+				destinationMap,
+				new Map([
+					[
+						"Foo",
+						new Map([
+							["Bar", 1],
+							["Baz", 2],
+						]),
+					],
+				]),
+			);
+		});
+
+		it("can override previous values", () => {
+			const sourceMap: NestedMap<string, string, number> = new Map<
+				string,
+				Map<string, number>
+			>();
+			setInNestedMap(sourceMap, "Foo", "Bar", 1);
+			setInNestedMap(sourceMap, "Foo", "Baz", 2);
+
+			const destinationMap: NestedMap<string, string, number> = new Map<
+				string,
+				Map<string, number>
+			>();
+			setInNestedMap(destinationMap, "Foo", "Bar", 2);
+
+			populateNestedMap(sourceMap, destinationMap, true);
+
+			assert.deepEqual(
+				destinationMap,
+				new Map([
+					[
+						"Foo",
+						new Map([
+							["Bar", 1],
+							["Baz", 2],
+						]),
+					],
+				]),
+			);
+		});
+
+		it("can choose to not override existing values", () => {
+			const sourceMap: NestedMap<string, string, number> = new Map<
+				string,
+				Map<string, number>
+			>();
+			setInNestedMap(sourceMap, "Foo", "Bar", 1);
+			setInNestedMap(sourceMap, "Foo", "Baz", 2);
+
+			const destinationMap: NestedMap<string, string, number> = new Map<
+				string,
+				Map<string, number>
+			>();
+			setInNestedMap(destinationMap, "Foo", "Bar", 2);
+
+			populateNestedMap(sourceMap, destinationMap, false);
+
+			assert.deepEqual(
+				destinationMap,
+				new Map([
+					[
+						"Foo",
+						new Map([
+							["Bar", 2],
+							["Baz", 2],
+						]),
+					],
+				]),
+			);
+		});
 	});
 });
