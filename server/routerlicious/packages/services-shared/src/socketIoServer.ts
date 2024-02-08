@@ -7,6 +7,7 @@ import { EventEmitter } from "events";
 import * as http from "http";
 import * as util from "util";
 import * as core from "@fluidframework/server-services-core";
+import { getRedisClusterRetryStrategy } from "@fluidframework/server-services-utils";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { clone } from "lodash";
 import * as Redis from "ioredis";
@@ -147,10 +148,7 @@ export function create(
 		enableReadyCheck: true,
 		maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
 		enableOfflineQueue: redisConfig.enableOfflineQueue,
-		retryStrategy(attempts) {
-			const delay = Math.min(attempts * 50, 2000);
-			return delay;
-		},
+		retryStrategy: getRedisClusterRetryStrategy({delayPerAttemptMs: 50, maxDelayMs: 2000}),
 	};
 	if (redisConfig.enableAutoPipelining) {
 		/**

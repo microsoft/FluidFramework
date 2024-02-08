@@ -190,10 +190,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			enableReadyCheck: true,
 			maxRetriesPerRequest: redisConfig2.maxRetriesPerRequest,
 			enableOfflineQueue: redisConfig2.enableOfflineQueue,
-			retryStrategy(attempts) {
-				const delay = Math.min(attempts * 50, 2000);
-				return delay;
-			},
+			retryStrategy: utils.getRedisClusterRetryStrategy({delayPerAttemptMs: 50, maxDelayMs: 2000}),
 		};
 		if (redisConfig2.enableAutoPipelining) {
 			/**
@@ -309,10 +306,8 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			enableReadyCheck: true,
 			maxRetriesPerRequest: redisConfigForThrottling.maxRetriesPerRequest,
 			enableOfflineQueue: redisConfigForThrottling.enableOfflineQueue,
-			retryStrategy(attempts) {
-				const delay = Math.min(attempts * 50, 2000);
-				return delay;
-			},
+			retryStrategy: utils.getRedisClusterRetryStrategy({delayPerAttemptMs: 50, maxDelayMs: 2000}),
+
 		};
 		if (redisConfigForThrottling.enableAutoPipelining) {
 			/**
@@ -467,10 +462,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 				enableReadyCheck: true,
 				maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
 				enableOfflineQueue: redisConfig.enableOfflineQueue,
-				retryStrategy(attempts) {
-					const delay = Math.min(attempts * 50, 2000);
-					return delay;
-				},
+				retryStrategy: utils.getRedisClusterRetryStrategy({delayPerAttemptMs: 50, maxDelayMs: 2000}),
 			};
 			if (redisConfig.enableAutoPipelining) {
 				/**

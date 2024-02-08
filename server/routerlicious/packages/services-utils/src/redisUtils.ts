@@ -119,3 +119,7 @@ export const executeRedisMultiWithHmsetExpireAndLpush = async (
 				reject(error);
 			});
 	});
+
+export const getRedisClusterRetryStrategy = (options: {delayPerAttemptMs: number; maxDelayMs: number}) =>
+(attempts: number) =>
+	Math.min(attempts * options.delayPerAttemptMs, options.maxDelayMs);

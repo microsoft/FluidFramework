@@ -5,7 +5,7 @@
 
 import * as os from "os";
 import cluster from "cluster";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter, getRedisClusterRetryStrategy } from "@fluidframework/common-utils";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { KafkaOrdererFactory } from "@fluidframework/server-kafka-orderer";
 import {
@@ -216,10 +216,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			enableReadyCheck: true,
 			maxRetriesPerRequest: redisConfig2.maxRetriesPerRequest,
 			enableOfflineQueue: redisConfig2.enableOfflineQueue,
-			retryStrategy(attempts) {
-				const delay = Math.min(attempts * 50, 2000);
-				return delay;
-			},
+			retryStrategy: getRedisClusterRetryStrategy({delayPerAttemptMs: 50, maxDelayMs: 2000}),
 		};
 		if (redisConfig2.enableAutoPipelining) {
 			/**
@@ -332,10 +329,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			enableReadyCheck: true,
 			maxRetriesPerRequest: redisConfigForThrottling.maxRetriesPerRequest,
 			enableOfflineQueue: redisConfigForThrottling.enableOfflineQueue,
-			retryStrategy(attempts) {
-				const delay = Math.min(attempts * 50, 2000);
-				return delay;
-			},
+			retryStrategy: getRedisClusterRetryStrategy({delayPerAttemptMs: 50, maxDelayMs: 2000}),
 		};
 		if (redisConfigForThrottling.enableAutoPipelining) {
 			/**
@@ -547,10 +541,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 				enableReadyCheck: true,
 				maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
 				enableOfflineQueue: redisConfig.enableOfflineQueue,
-				retryStrategy(attempts) {
-					const delay = Math.min(attempts * 50, 2000);
-					return delay;
-				},
+				retryStrategy: getRedisClusterRetryStrategy({delayPerAttemptMs: 50, maxDelayMs: 2000}),
 			};
 			if (redisConfig.enableAutoPipelining) {
 				/**
