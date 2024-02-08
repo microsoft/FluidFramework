@@ -6,11 +6,7 @@
 import { IQueuedMessage } from "@fluidframework/server-services-core";
 import { ICheckpoint } from "./checkpointHelper";
 
-export interface IDocumentCheckpointManager {
-	checkpointInfo: ICheckpoint;
-	noActiveClients: boolean;
-	useCheckpointIdleTimer: boolean;
-
+interface IDocumentCheckpointManager {
 	updateCheckpointMessages(message: IQueuedMessage);
 	clearCheckpointIdleTimer(): void;
 	resetCheckpointTimer(): void;
@@ -19,21 +15,24 @@ export interface IDocumentCheckpointManager {
 		idleTimeCheckpoint: (message: IQueuedMessage) => void,
 		isDocumentCorrupt?: boolean,
 	): void;
+	incrementRawMessageCounter(): void;
+	resetRawMessageCounter(): void;
+	getNoActiveClients(): boolean;
+	setNoActiveClients(noActiveClients: boolean): void;
+	getCheckpointInfo(): ICheckpoint;
 }
 
 export class DocumentCheckpointManager implements IDocumentCheckpointManager {
-	checkpointInfo: ICheckpoint = {
+	private readonly checkpointInfo: ICheckpoint = {
 		lastCheckpointTime: Date.now(),
 		rawMessagesSinceCheckpoint: 0,
 	};
-	noActiveClients: boolean = false;
-	useCheckpointIdleTimer: boolean;
 
-	constructor(createIdleTimer: boolean = true) {
-		this.useCheckpointIdleTimer = createIdleTimer;
-	}
+	private noActiveClients: boolean = false;
 
-	updateCheckpointMessages(message: IQueuedMessage) {
+	constructor() {}
+
+	public updateCheckpointMessages(message: IQueuedMessage) {
 		// updates checkpoint message
 		this.checkpointInfo.currentCheckpointMessage = message;
 
@@ -48,7 +47,7 @@ export class DocumentCheckpointManager implements IDocumentCheckpointManager {
 		}
 	}
 
-	clearCheckpointIdleTimer() {
+	public clearCheckpointIdleTimer() {
 		if (this.checkpointInfo.idleTimer !== undefined) {
 			clearTimeout(this.checkpointInfo.idleTimer);
 			this.checkpointInfo.idleTimer = undefined;
@@ -85,5 +84,24 @@ export class DocumentCheckpointManager implements IDocumentCheckpointManager {
 				}
 			}
 		}, timeout);
+	}
+	public incrementRawMessageCounter() {
+		this.checkpointInfo.rawMessagesSinceCheckpoint++;
+	}
+
+	public resetRawMessageCounter() {
+		this.checkpointInfo.rawMessagesSinceCheckpoint = 0;
+	}
+
+	public getNoActiveClients(): boolean {
+		return this.noActiveClients;
+	}
+
+	public setNoActiveClients(noActiveClients: boolean): void {
+		this.noActiveClients = noActiveClients;
+	}
+
+	public getCheckpointInfo() {
+		return this.checkpointInfo;
 	}
 }

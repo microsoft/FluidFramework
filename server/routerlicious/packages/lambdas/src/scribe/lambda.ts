@@ -46,7 +46,6 @@ import {
 	CheckpointReason,
 	IServerMetadata,
 	DocumentCheckpointManager,
-	IDocumentCheckpointManager,
 } from "../utils";
 import { ICheckpointManager, IPendingMessageReader, ISummaryWriter } from "./interfaces";
 import { getClientIds, initializeProtocol, sendToDeli } from "./utils";
@@ -90,8 +89,8 @@ export class ScribeLambda implements IPartitionLambda {
 	private closed: boolean = false;
 
 	// Used to control checkpoint logic
-	private readonly documentCheckpointManager: IDocumentCheckpointManager =
-		new DocumentCheckpointManager(true /* createIdleTimer */);
+	private readonly documentCheckpointManager: DocumentCheckpointManager =
+		new DocumentCheckpointManager();
 
 	private globalCheckpointOnly: boolean;
 
@@ -349,7 +348,7 @@ export class ScribeLambda implements IPartitionLambda {
 						`${value.operation.minimumSequenceNumber} != ${value.operation.sequenceNumber}`,
 					);
 
-					this.documentCheckpointManager.noActiveClients = true;
+					this.documentCheckpointManager.setNoActiveClients(true);
 					this.globalCheckpointOnly = true;
 					const enableServiceSummaryForTenant =
 						this.disableTransientTenantFiltering ||
@@ -449,14 +448,14 @@ export class ScribeLambda implements IPartitionLambda {
 
 		// Create the checkpoint
 		this.documentCheckpointManager.updateCheckpointMessages(message);
-		this.documentCheckpointManager.checkpointInfo.rawMessagesSinceCheckpoint++;
+		this.documentCheckpointManager.incrementRawMessageCounter();
 
-		if (this.documentCheckpointManager.noActiveClients) {
+		if (this.documentCheckpointManager.getNoActiveClients()) {
 			if (this.localCheckpointEnabled) {
 				this.globalCheckpointOnly = true;
 			}
 			this.prepareCheckpoint(message, CheckpointReason.NoClients);
-			this.documentCheckpointManager.noActiveClients = false;
+			this.documentCheckpointManager.setNoActiveClients(false);
 		} else {
 			const checkpointReason = this.getCheckpointReason();
 			if (checkpointReason !== undefined) {
@@ -487,7 +486,7 @@ export class ScribeLambda implements IPartitionLambda {
 		this.lastOffset = message.offset;
 		const reason = CheckpointReason[checkpointReason];
 		const checkpointResult = `Writing checkpoint. Reason: ${reason}`;
-		const checkpointProperties = this.documentCheckpointManager.checkpointInfo;
+		const checkpointProperties = this.documentCheckpointManager.getCheckpointInfo();
 		const lumberjackProperties = {
 			...getLumberBaseProperties(this.documentId, this.tenantId),
 			checkpointReason: reason,
@@ -685,7 +684,7 @@ export class ScribeLambda implements IPartitionLambda {
 			checkpoint,
 			this.protocolHead,
 			inserts,
-			this.documentCheckpointManager.noActiveClients,
+			this.documentCheckpointManager.getNoActiveClients(),
 			this.globalCheckpointOnly,
 			this.isDocumentCorrupt,
 		);
@@ -808,7 +807,7 @@ export class ScribeLambda implements IPartitionLambda {
 			return CheckpointReason.EveryMessage;
 		}
 
-		const checkpointInfo = this.documentCheckpointManager.checkpointInfo;
+		const checkpointInfo = this.documentCheckpointManager.getCheckpointInfo();
 
 		if (checkpointInfo.rawMessagesSinceCheckpoint >= checkpointHeuristics.maxMessages) {
 			// exceeded max messages since last checkpoint
@@ -828,7 +827,7 @@ export class ScribeLambda implements IPartitionLambda {
 			const checkpoint = this.generateScribeCheckpoint(initialScribeCheckpointMessage.offset);
 			this.checkpointCore(checkpoint, initialScribeCheckpointMessage, this.clearCache);
 			const checkpointResult = `Writing checkpoint. Reason: IdleTime`;
-			const checkpointInfo = this.documentCheckpointManager.checkpointInfo;
+			const checkpointInfo = this.documentCheckpointManager.getCheckpointInfo();
 			const lumberjackProperties = {
 				...getLumberBaseProperties(this.documentId, this.tenantId),
 				checkpointReason: "IdleTime",

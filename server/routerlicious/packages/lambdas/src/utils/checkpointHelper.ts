@@ -31,4 +31,7 @@ export interface ICheckpoint {
 
 	// time in milliseconds since the last checkpoint
 	lastCheckpointTime: number;
+
+	// last kafka checkpoint offset
+	lastkafkaCheckpointOffset?: number | undefined;
 }

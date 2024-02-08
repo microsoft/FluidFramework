@@ -76,7 +76,6 @@ import {
 	createRoomLeaveMessage,
 	CheckpointReason,
 	DocumentCheckpointManager,
-	IDocumentCheckpointManager,
 	IServerMetadata,
 } from "../utils";
 import { CheckpointContext } from "./checkpointContext";
@@ -269,8 +268,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	/**
 	 * Used for controlling checkpoint logic
 	 */
-	private readonly documentCheckpointManager: IDocumentCheckpointManager =
-		new DocumentCheckpointManager(true /* createIdleTimer */);
+	private readonly documentCheckpointManager = new DocumentCheckpointManager();
 
 	private globalCheckpointOnly: boolean;
 
@@ -354,8 +352,8 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		this.successfullyStartedLambdas = lastCheckpoint.successfullyStartedLambdas ?? [];
 
 		const msn = this.clientSeqManager.getMinimumSequenceNumber();
-		this.documentCheckpointManager.noActiveClients = msn === -1;
-		this.minimumSequenceNumber = this.documentCheckpointManager.noActiveClients
+		this.documentCheckpointManager.setNoActiveClients(msn === -1);
+		this.minimumSequenceNumber = this.documentCheckpointManager.getNoActiveClients()
 			? this.sequenceNumber
 			: msn;
 
@@ -450,12 +448,15 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
 			this.documentCheckpointManager.updateCheckpointMessages(rawMessage);
 			try {
+				const currentMessage =
+					this.documentCheckpointManager.getCheckpointInfo()
+						.currentKafkaCheckpointMessage;
 				if (
-					this.documentCheckpointManager.checkpointInfo.currentKafkaCheckpointMessage &&
+					currentMessage &&
 					this.serviceConfiguration.deli.kafkaCheckpointOnReprocessingOp
 				) {
 					this.context.checkpoint(
-						this.documentCheckpointManager.checkpointInfo.currentKafkaCheckpointMessage,
+						currentMessage,
 						this.serviceConfiguration.deli.restartOnCheckpointFailure,
 					);
 				}
@@ -512,7 +513,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 							ticketedMessage.type === MessageType.NoClient ||
 							ticketedMessage.type === MessageType.Control
 						) &&
-						this.documentCheckpointManager.noActiveClients &&
+						this.documentCheckpointManager.getNoActiveClients() &&
 						!this.serviceConfiguration.deli.disableNoClientMessage
 					) {
 						this.lastNoClientP = this.sendToRawDeltas(
@@ -651,7 +652,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			this.produceMessages(this.deltasProducer, produceToDeltas, rawMessage);
 		}
 
-		this.documentCheckpointManager.checkpointInfo.rawMessagesSinceCheckpoint++;
+		this.documentCheckpointManager.incrementRawMessageCounter();
 		this.documentCheckpointManager.updateCheckpointMessages(rawMessage);
 
 		if (this.lastMessageType === MessageType.ClientJoin) {
@@ -1115,10 +1116,10 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		const msn = this.clientSeqManager.getMinimumSequenceNumber();
 		if (msn === -1) {
 			this.minimumSequenceNumber = sequenceNumber;
-			this.documentCheckpointManager.noActiveClients = true;
+			this.documentCheckpointManager.setNoActiveClients(true);
 		} else {
 			this.minimumSequenceNumber = msn;
-			this.documentCheckpointManager.noActiveClients = false;
+			this.documentCheckpointManager.setNoActiveClients(false);
 		}
 
 		let sendType = SendType.Immediate;
@@ -1159,7 +1160,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			 */
 			case MessageType.NoClient: {
 				// Only rev if no clients have shown up since last noClient was sent to alfred.
-				if (this.documentCheckpointManager.noActiveClients) {
+				if (this.documentCheckpointManager.getNoActiveClients()) {
 					sequenceNumber = this.revSequenceNumber();
 					message.operation.referenceSequenceNumber = sequenceNumber;
 					this.minimumSequenceNumber = sequenceNumber;
@@ -1196,7 +1197,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 							// joined since last noClient was sent to alfred
 							if (
 								controlContents.clearCache &&
-								this.documentCheckpointManager.noActiveClients
+								this.documentCheckpointManager.getNoActiveClients()
 							) {
 								instruction = InstructionType.ClearCache;
 								const deliCacheMsg = `Deli cache will be cleared`;
@@ -1711,13 +1712,12 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	 * Generates a checkpoint for the current state
 	 */
 	private generateCheckpoint(reason: CheckpointReason): ICheckpointParams {
+		const checkpointInfo = this.documentCheckpointManager.getCheckpointInfo();
 		return {
 			reason,
 			deliState: this.generateDeliCheckpoint(),
-			deliCheckpointMessage: this.documentCheckpointManager.checkpointInfo
-				.currentCheckpointMessage as IQueuedMessage,
-			kafkaCheckpointMessage:
-				this.documentCheckpointManager.checkpointInfo.currentKafkaCheckpointMessage,
+			deliCheckpointMessage: checkpointInfo.currentCheckpointMessage as IQueuedMessage,
+			kafkaCheckpointMessage: checkpointInfo.currentKafkaCheckpointMessage,
 		};
 	}
 
@@ -1757,11 +1757,11 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	}
 
 	private setActivityIdleTimer() {
-		if (this.documentCheckpointManager.noActiveClients) {
+		if (this.documentCheckpointManager.getNoActiveClients()) {
 			return;
 		}
 		this.activityIdleTimer = setTimeout(() => {
-			if (!this.documentCheckpointManager.noActiveClients) {
+			if (!this.documentCheckpointManager.getNoActiveClients()) {
 				const noOpMessage = this.createOpMessage(MessageType.NoOp);
 				this.sendToRawDeltas(noOpMessage).catch((error) => {
 					const lumberjackProperties = {
@@ -1800,11 +1800,11 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	}
 
 	private setNoopConsolidationTimer() {
-		if (this.documentCheckpointManager.noActiveClients) {
+		if (this.documentCheckpointManager.getNoActiveClients()) {
 			return;
 		}
 		this.noopEvent = setTimeout(() => {
-			if (!this.documentCheckpointManager.noActiveClients) {
+			if (!this.documentCheckpointManager.getNoActiveClients()) {
 				const noOpMessage = this.createOpMessage(MessageType.NoOp);
 				this.sendToRawDeltas(noOpMessage).catch((error) => {
 					const lumberjackProperties = {
@@ -1926,18 +1926,13 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			return CheckpointReason.EveryMessage;
 		}
 
-		if (
-			this.documentCheckpointManager.checkpointInfo.rawMessagesSinceCheckpoint >=
-			checkpointHeuristics.maxMessages
-		) {
+		const checkpointInfo = this.documentCheckpointManager.getCheckpointInfo();
+		if (checkpointInfo.rawMessagesSinceCheckpoint >= checkpointHeuristics.maxMessages) {
 			// exceeded max messages since last checkpoint
 			return CheckpointReason.MaxMessages;
 		}
 
-		if (
-			Date.now() - this.documentCheckpointManager.checkpointInfo.lastCheckpointTime >=
-			checkpointHeuristics.maxTime
-		) {
+		if (Date.now() - checkpointInfo.lastCheckpointTime >= checkpointHeuristics.maxTime) {
 			// exceeded max time since last checkpoint
 			return CheckpointReason.MaxTime;
 		}
@@ -1949,7 +1944,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		}
 
 		if (
-			this.documentCheckpointManager.noActiveClients &&
+			this.documentCheckpointManager.getNoActiveClients() &&
 			messageType === MessageType.NoClient
 		) {
 			return CheckpointReason.NoClients;
