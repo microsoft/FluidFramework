@@ -643,7 +643,12 @@ export function mixinAttach<
 			// The production codepath also finalizes ids before attaching. It's difficult for the mocks
 			// to be more direct about this as they don't directly manage any state related to attach
 			// (it's up to the user of the mocks to set them up how they want)
-			state.containerRuntimeFactory.processAllMessages();
+			if (clientA.dataStoreRuntime.idCompressor !== undefined) {
+				const range = clientA.containerRuntime.getGeneratedIdRange();
+				if (range !== undefined) {
+					clientA.dataStoreRuntime.idCompressor?.finalizeCreationRange(range);
+				}
+			}
 
 			const clients = await Promise.all(
 				Array.from({ length: options.numberOfClients }, async (_, index) =>
