@@ -17,4 +17,4 @@ data/v*
 **/*:Zone.Identifier
 
 # Copy of versions json from data dir to redirect azure function
-api/fallback/versions.json
+api/
