@@ -91,7 +91,6 @@
 		"@fluidframework/server-local-server": "^3.1.0-231702",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@types/mocha": "^9.1.1",
 		"@types/nock": "^9.3.0",
