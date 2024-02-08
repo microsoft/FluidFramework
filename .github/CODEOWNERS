@@ -32,18 +32,18 @@
 #
 # ------------------------------------------------------------------------
 
-# ID compressor
-/packages/runtime/id-compressor            @microsoft/fluid-cr-id-compressor
+# ID compressor source
+/packages/runtime/id-compressor/src            @microsoft/fluid-cr-id-compressor
 
-# merge tree and merge tree related dds
-/packages/dds/merge-tree                   @microsoft/fluid-cr-merge-tree
-/packages/dds/matrix                       @microsoft/fluid-cr-merge-tree
-/packages/dds/sequence                     @microsoft/fluid-cr-merge-tree
-/experimental/dds/sequence-deprecated      @microsoft/fluid-cr-merge-tree
+# merge tree and merge tree related dds source
+/packages/dds/merge-tree/src                   @microsoft/fluid-cr-merge-tree
+/packages/dds/matrix/src                       @microsoft/fluid-cr-merge-tree
+/packages/dds/sequence/src                     @microsoft/fluid-cr-merge-tree
+/experimental/dds/sequence-deprecated/src      @microsoft/fluid-cr-merge-tree
 
-# shared tree and tree related dds
-/packages/dds/tree                         @microsoft/fluid-cr-tree
-/experimental/dds/tree                     @microsoft/fluid-cr-tree
+# shared tree and tree related dds source
+/packages/dds/tree/src                         @microsoft/fluid-cr-tree
+/experimental/dds/tree/src                     @microsoft/fluid-cr-tree
 
-# Fluid Devtools
-/packages/tools/devtools                   @microsoft/fluid-cr-devtools
+# Fluid Devtools source
+/packages/tools/devtools/**/src                   @microsoft/fluid-cr-devtools
