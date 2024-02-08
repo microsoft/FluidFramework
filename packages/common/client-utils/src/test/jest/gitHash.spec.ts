@@ -8,7 +8,7 @@
 
 import fs from "node:fs";
 import http from "node:http";
-import { AddressInfo } from "node:net";
+import { AddressInfo, type Socket } from "node:net";
 import path from "node:path";
 import rewire from "rewire";
 
@@ -107,6 +107,8 @@ describe("Client-Utils", () => {
 
 	let server: http.Server;
 
+	const sockets: Socket[] = [];
+
 	beforeAll(async () => {
 		// crypto is only available in secure contexts (https pages) or localhost,
 		// so start a basic server to make this available
@@ -114,6 +116,10 @@ describe("Client-Utils", () => {
 			res.statusCode = 200;
 			res.setHeader("Content-Type", "text/plain");
 			res.end("basic test server");
+		});
+
+		server.on("connection", (socket) => {
+			sockets.push(socket);
 		});
 
 		await new Promise<void>((resolve) => {
@@ -138,11 +144,17 @@ describe("Client-Utils", () => {
 		gifFile = await getFileContents(path.join(__dirname, `${dataDir}/assets/grid.gif`));
 	});
 
-	afterAll(async () => {
-		await new Promise((resolve) => {
-			server?.close(resolve);
-		});
-	});
+	afterAll(
+		async () =>
+			new Promise((resolve) => {
+				// Terminate any open connections so that 'server.close()' will complete.
+				const openSockets = sockets.filter((socket) => !socket.closed);
+				for (const socket of openSockets) {
+					socket.destroySoon();
+				}
+				server?.close(resolve);
+			}),
+	);
 
 	// Expected hashes are from git hash-object file...
 	// Make sure the hash is of the file and not of an LFS stub
