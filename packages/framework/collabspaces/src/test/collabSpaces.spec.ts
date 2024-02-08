@@ -30,14 +30,14 @@ import {
 	IEfficientMatrix,
 	IEfficientMatrixTest,
 } from "../contracts";
-import { createCollabSpace } from "../factory";
+import { createCollabSpaces } from "../factory";
 
 import { CounterFactory, ISharedCounter } from "./counterFactory";
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 function sampleFactory() {
-	return createCollabSpace([new CounterFactory()]);
+	return createCollabSpaces([new CounterFactory()]);
 }
 
 /*
