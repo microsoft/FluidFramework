@@ -33,6 +33,7 @@ import {
 	gcGenerationOptionName,
 	IGCMetadata_Deprecated,
 	disableDatastoreSweepKey,
+	gcDisableDataStoreSweepOptionName,
 } from "./gcDefinitions";
 import { getGCVersion, shouldAllowGcSweep } from "./gcHelpers";
 
@@ -150,7 +151,9 @@ export function generateGCConfigs(
 			? false
 			: mc.config.getBoolean(runSweepKey) ??
 			  (sweepAllowed && createParams.gcOptions.enableGCSweep === true);
-	const disableDatastoreSweep = mc.config.getBoolean(disableDatastoreSweepKey) === true;
+	const disableDatastoreSweep =
+		mc.config.getBoolean(disableDatastoreSweepKey) === true ||
+		createParams.gcOptions[gcDisableDataStoreSweepOptionName] === true;
 	const shouldRunSweep: IGarbageCollectorConfigs["shouldRunSweep"] = sweepEnabled
 		? disableDatastoreSweep
 			? "ONLY_BLOBS"
