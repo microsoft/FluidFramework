@@ -5,7 +5,7 @@
 
 import * as os from "os";
 import cluster from "cluster";
-import { TypedEventEmitter, getRedisClusterRetryStrategy } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { KafkaOrdererFactory } from "@fluidframework/server-kafka-orderer";
 import {
@@ -216,7 +216,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			enableReadyCheck: true,
 			maxRetriesPerRequest: redisConfig2.maxRetriesPerRequest,
 			enableOfflineQueue: redisConfig2.enableOfflineQueue,
-			retryStrategy: getRedisClusterRetryStrategy({
+			retryStrategy: utils.getRedisClusterRetryStrategy({
 				delayPerAttemptMs: 50,
 				maxDelayMs: 2000,
 			}),
@@ -332,7 +332,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			enableReadyCheck: true,
 			maxRetriesPerRequest: redisConfigForThrottling.maxRetriesPerRequest,
 			enableOfflineQueue: redisConfigForThrottling.enableOfflineQueue,
-			retryStrategy: getRedisClusterRetryStrategy({
+			retryStrategy: utils.getRedisClusterRetryStrategy({
 				delayPerAttemptMs: 50,
 				maxDelayMs: 2000,
 			}),
@@ -547,7 +547,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 				enableReadyCheck: true,
 				maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
 				enableOfflineQueue: redisConfig.enableOfflineQueue,
-				retryStrategy: getRedisClusterRetryStrategy({
+				retryStrategy: utils.getRedisClusterRetryStrategy({
 					delayPerAttemptMs: 50,
 					maxDelayMs: 2000,
 				}),
