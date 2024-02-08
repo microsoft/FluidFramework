@@ -11,7 +11,7 @@ const packageDir = `${__dirname}/../../..`;
 
 const config = getFluidTestMochaConfig(packageDir);
 const newConfig = {
-	"extends": "../.mocharc.js",
+	"extends": "../.mocharc.cjs",
 	"exit": true,
 	"fgrep": ["@Benchmark", "@MemoryUsage"],
 	"node-option": ["expose-gc", "gc-global", "unhandled-rejections=strict"], // without leading "--"
