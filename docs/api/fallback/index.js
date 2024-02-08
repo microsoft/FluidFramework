@@ -3,17 +3,12 @@
  * Licensed under the MIT License.
  */
 
-// const {
-// 	params: { currentVersion, ltsVersion },
-// } = require("../../data/versions.json");
-const currentVersion = "v2";
-const ltsVersion = "v1";
 
 // Map of incoming URL paths to redirect URLs
 const routes = new Map([
-	["/docs/apis", `/docs/api/${currentVersion}`],
-	["/docs/api/current", `/docs/api/${currentVersion}`],
-	["/docs/api/lts", `/docs/api/${ltsVersion}`],
+	["/docs/apis", `/docs/api/v2`],
+	["/docs/api/current", `/docs/api/v2`],
+	["/docs/api/lts", `/docs/api/v1`],
 ]);
 
 /**
@@ -29,6 +24,8 @@ module.exports = async (context, { headers }) => {
 	context.res.json({
 		testStatus: route ? 302 : 404,
 		testLocation: route ? pathname.replace(...route) + search : "/404",
-		testRoute: route
+		testRoute: route,
+		testPathname: pathname,
+		testSearch: search
 	});
 };
