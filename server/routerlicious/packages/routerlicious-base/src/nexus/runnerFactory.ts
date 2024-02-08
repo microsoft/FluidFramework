@@ -190,7 +190,10 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			enableReadyCheck: true,
 			maxRetriesPerRequest: redisConfig2.maxRetriesPerRequest,
 			enableOfflineQueue: redisConfig2.enableOfflineQueue,
-			retryStrategy: utils.getRedisClusterRetryStrategy({delayPerAttemptMs: 50, maxDelayMs: 2000}),
+			retryStrategy: utils.getRedisClusterRetryStrategy({
+				delayPerAttemptMs: 50,
+				maxDelayMs: 2000,
+			}),
 		};
 		if (redisConfig2.enableAutoPipelining) {
 			/**
@@ -214,7 +217,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 		const redisClient: Redis.default | Redis.Cluster = redisConfig2.enableClustering
 			? new Redis.Cluster([{ port: redisConfig2.port, host: redisConfig2.host }], {
 					redisOptions: redisOptions2,
-					slotsRefreshTimeout: 50000,
+					slotsRefreshTimeout: redisConfig2.slotsRefreshTimeout,
 					dnsLookup: (adr, callback) => callback(null, adr),
 					showFriendlyErrorStack: true,
 			  })
@@ -225,7 +228,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 		const redisClientForJwtCache: Redis.default | Redis.Cluster = redisConfig2.enableClustering
 			? new Redis.Cluster([{ port: redisConfig2.port, host: redisConfig2.host }], {
 					redisOptions: redisOptions2,
-					slotsRefreshTimeout: 50000,
+					slotsRefreshTimeout: redisConfig2.slotsRefreshTimeout,
 					dnsLookup: (adr, callback) => callback(null, adr),
 					showFriendlyErrorStack: true,
 			  })
@@ -306,8 +309,10 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			enableReadyCheck: true,
 			maxRetriesPerRequest: redisConfigForThrottling.maxRetriesPerRequest,
 			enableOfflineQueue: redisConfigForThrottling.enableOfflineQueue,
-			retryStrategy: utils.getRedisClusterRetryStrategy({delayPerAttemptMs: 50, maxDelayMs: 2000}),
-
+			retryStrategy: utils.getRedisClusterRetryStrategy({
+				delayPerAttemptMs: 50,
+				maxDelayMs: 2000,
+			}),
 		};
 		if (redisConfigForThrottling.enableAutoPipelining) {
 			/**
@@ -340,7 +345,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 						],
 						{
 							redisOptions: redisOptionsForThrottling,
-							slotsRefreshTimeout: 50000,
+							slotsRefreshTimeout: redisConfigForThrottling.slotsRefreshTimeout,
 							dnsLookup: (adr, callback) => callback(null, adr),
 							showFriendlyErrorStack: true,
 						},
@@ -462,7 +467,10 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 				enableReadyCheck: true,
 				maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
 				enableOfflineQueue: redisConfig.enableOfflineQueue,
-				retryStrategy: utils.getRedisClusterRetryStrategy({delayPerAttemptMs: 50, maxDelayMs: 2000}),
+				retryStrategy: utils.getRedisClusterRetryStrategy({
+					delayPerAttemptMs: 50,
+					maxDelayMs: 2000,
+				}),
 			};
 			if (redisConfig.enableAutoPipelining) {
 				/**
@@ -483,7 +491,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 				redisConfig.enableClustering
 					? new Redis.Cluster([{ port: redisConfig.port, host: redisConfig.host }], {
 							redisOptions,
-							slotsRefreshTimeout: 50000,
+							slotsRefreshTimeout: redisConfig.slotsRefreshTimeout,
 							dnsLookup: (adr, callback) => callback(null, adr),
 							showFriendlyErrorStack: true,
 					  })
