@@ -367,6 +367,11 @@ export interface ISignalMessage extends ISignalMessageBase {
 	 */
 	// eslint-disable-next-line @rushstack/no-new-null
 	clientId: string | null;
+
+	/**
+	 * When specified, the signal has only been sent to the provided client id
+	 */
+	targetClientId?: string;
 }
 
 /**
