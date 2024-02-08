@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-const { currentVersion, ltsVersion } = require("./versions.json");
+const {
+	params: { currentVersion, ltsVersion },
+} = require("./versions.json");
 
 // Map of incoming URL paths to redirect URLs
 const routes = new Map([
