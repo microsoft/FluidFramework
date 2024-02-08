@@ -68,6 +68,9 @@
 		"rimraf": "^5.0.1",
 		"start-server-and-test": "^2.0.0"
 	},
+	"devDependencies": {
+		"shx": "^0.3.4"
+	},
 	"pnpm": {
 		"overrides": {
 			"qs": "^6.11.0"
@@ -86,8 +89,5 @@
 				"node-fetch"
 			]
 		}
-	},
-	"devDependencies": {
-		"shx": "^0.3.4"
 	}
 }
