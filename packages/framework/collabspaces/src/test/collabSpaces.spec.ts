@@ -63,6 +63,7 @@ describe("Temporal Collab Spaces", () => {
 		enableGroupedBatching: true,
 		chunkSizeInBytes: 950000,
 		maxBatchSizeInBytes: 990000,
+		enableRuntimeIdCompressor: true,
 	};
 	const defaultFactory = sampleFactory();
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
