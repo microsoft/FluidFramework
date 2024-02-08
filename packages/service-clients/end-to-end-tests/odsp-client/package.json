@@ -27,8 +27,8 @@
 		"test": "npm run test:realsvc:odsp:run",
 		"test:coverage": "c8 npm test",
 		"test:realsvc:odsp": "cross-env npm run test:realsvc:odsp:run",
-		"test:realsvc:odsp:run": "mocha --recursive \"dist/test/*.spec.*js\" --exit --timeout 20000 --config src/test/.mocharc.js",
-		"test:realsvc:run": "mocha dist/test --config src/test/.mocharc.js",
+		"test:realsvc:odsp:run": "mocha --recursive \"dist/test/*.spec.*js\" --exit --timeout 20000 --config src/test/.mocharc.cjs",
+		"test:realsvc:run": "mocha dist/test --config src/test/.mocharc.cjs",
 		"test:realsvc:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:realsvc"
 	},
 	"c8": {

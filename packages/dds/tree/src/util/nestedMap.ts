@@ -41,17 +41,28 @@ export function tryAddToNestedMap<Key1, Key2, Value>(
 
 /**
  * Copies over all entries from the source map into the destination map.
+ * By default, does not override any existing values.
  *
  * @internal
  */
 export function populateNestedMap<Key1, Key2, Value>(
 	source: NestedMap<Key1, Key2, Value>,
 	destination: NestedMap<Key1, Key2, Value>,
+	override: boolean,
 ): void {
 	for (const [key1, innerMap] of source) {
-		destination.set(key1, new Map(innerMap));
+		const newInner = new Map(destination.get(key1));
+
+		for (const [key2, value] of innerMap) {
+			if (override || !newInner.has(key2)) {
+				newInner.set(key2, value);
+			}
+		}
+
+		destination.set(key1, newInner);
 	}
 }
+
 /**
  * Sets the value at (key1, key2) in map to value.
  * If there already is a value for (key1, key2), it is replaced with the provided one.
