@@ -35,6 +35,9 @@ module.exports = (env) => {
 				{
 					test: /\.m?js$/,
 					use: ["source-map-loader"],
+					resolve: {
+						fullySpecified: false,
+					},
 				},
 			],
 		},

@@ -73,7 +73,7 @@ describe("GC Telemetry Tracker", () => {
 			gcEnabled: true,
 			sweepEnabled: false,
 			shouldRunGC: true,
-			shouldRunSweep: false,
+			shouldRunSweep: "NO",
 			runFullGC: false,
 			testMode: false,
 			tombstoneMode: false,
