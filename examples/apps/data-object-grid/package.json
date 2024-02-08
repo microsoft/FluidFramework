@@ -85,6 +85,7 @@
 		"html-loader": "^3.1.0",
 		"html-webpack-plugin": "^5.5.0",
 		"jest": "^29.6.2",
+		"jest-environment-puppeteer": "^9.0.2",
 		"jest-junit": "^10.0.0",
 		"jest-puppeteer": "^9.0.2",
 		"prettier": "~3.0.3",
