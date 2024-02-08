@@ -12,6 +12,11 @@ import { formatDevtoolsScriptMessageForLogging } from "./Logging";
 
 const extensionVersion = chrome.runtime.getManifest().version;
 
+/**
+ * Key for the local storage entry that stores the usage telemetry opt-in setting.
+ */
+const telemetryOptInKey: string = "fluid:devtools:telemetry:optIn";
+
 const fetchHttpXHROverride: IXHROverride = {
 	sendPOST: (payload, oncomplete, sync) => {
 		const telemetryRequestData =
@@ -71,8 +76,8 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 	 */
 	private readonly enabled: boolean = false;
 
-	private readonly sessionID?: string;
-	private readonly continuityID?: string;
+	private sessionID?: string;
+	private continuityID?: string;
 	private readonly CONTINUITY_ID_KEY = "Fluid.Devtools.ContinuityId";
 
 	public constructor() {
@@ -131,6 +136,17 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 	 * {@inheritDoc @fluidframework/core-interfaces#ITelemetryBaseLogger.send}
 	 */
 	public send(event: ITelemetryBaseEvent): void {
+		const optIn = localStorage.getItem(telemetryOptInKey);
+
+		// Clear localStorage and reset identifiers if the user opts out
+		if (!optIn) {
+			localStorage.removeItem(this.CONTINUITY_ID_KEY);
+			// Reset identifiers, ensuring any subsequent telemetry will have fresh identifiers if the user opts in again.
+			this.continuityID = uuidv4();
+			this.sessionID = uuidv4();
+			return;
+		}
+
 		if (!this.enabled) {
 			return;
 		}
