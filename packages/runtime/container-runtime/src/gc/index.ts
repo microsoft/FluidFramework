@@ -32,6 +32,7 @@ export {
 	runSweepKey,
 	stableGCVersion,
 	disableAttachmentBlobSweepKey,
+	disableAutoRecoveryKey,
 	disableDatastoreSweepKey,
 	UnreferencedState,
 	throwOnTombstoneLoadOverrideKey,
