@@ -55,7 +55,6 @@
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/view-adapters": "workspace:~",
 		"prop-types": "^15.8.1",
 		"react": "^17.0.1",
 		"react-collapsible": "^2.7.0",

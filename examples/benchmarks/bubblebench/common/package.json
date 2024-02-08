@@ -59,7 +59,6 @@
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/map": "workspace:~",
-		"@fluidframework/view-interfaces": "workspace:~",
 		"best-random": "^1.0.0",
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1",

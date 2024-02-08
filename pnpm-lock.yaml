@@ -490,7 +490,6 @@ importers:
       '@fluidframework/sequence': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/test-utils': workspace:~
-      '@fluidframework/view-interfaces': workspace:~
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -528,7 +527,6 @@ importers:
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/sequence': link:../../../packages/dds/sequence
-      '@fluidframework/view-interfaces': link:../../../packages/framework/view-interfaces
       css-loader: 1.0.1_webpack@5.89.0
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
@@ -673,7 +671,6 @@ importers:
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
-      '@fluidframework/view-adapters': workspace:~
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -730,7 +727,6 @@ importers:
       '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
-      '@fluidframework/view-adapters': link:../../../packages/framework/view-adapters
       prop-types: 15.8.1
       react: 17.0.2
       react-collapsible: 2.10.0_sfoxds7t5ydpegc3knd667wn6m
@@ -1145,7 +1141,6 @@ importers:
       '@fluidframework/map': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
-      '@fluidframework/view-interfaces': workspace:~
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
@@ -1171,7 +1166,6 @@ importers:
       '@fluidframework/core-interfaces': link:../../../../packages/common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../../../packages/runtime/datastore-definitions
       '@fluidframework/map': link:../../../../packages/dds/map
-      '@fluidframework/view-interfaces': link:../../../../packages/framework/view-interfaces
       best-random: 1.0.3
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
@@ -1846,7 +1840,6 @@ importers:
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
       '@fluidframework/view-adapters': workspace:~
-      '@fluidframework/view-interfaces': workspace:~
       '@types/codemirror': 5.60.7
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
@@ -1880,7 +1873,6 @@ importers:
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/sequence': link:../../../packages/dds/sequence
       '@fluidframework/view-adapters': link:../../../packages/framework/view-adapters
-      '@fluidframework/view-interfaces': link:../../../packages/framework/view-interfaces
       codemirror: 5.65.16
       events: 3.3.0
       react: 17.0.2
@@ -1915,7 +1907,6 @@ importers:
       '@fluidframework/eslint-config-fluid': ^3.3.0
       '@fluidframework/map': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
-      '@fluidframework/view-interfaces': workspace:~
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -1943,7 +1934,6 @@ importers:
       '@fluid-example/example-utils': link:../../utils/example-utils
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
       '@fluidframework/map': link:../../../packages/dds/map
-      '@fluidframework/view-interfaces': link:../../../packages/framework/view-interfaces
       react: 17.0.2
     devDependencies:
       '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
@@ -2679,7 +2669,6 @@ importers:
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
       '@fluidframework/view-adapters': workspace:~
-      '@fluidframework/view-interfaces': workspace:~
       '@types/node': ^18.19.0
       '@types/orderedmap': ^1.0.0
       '@types/prosemirror-model': ^1.17.0
@@ -2727,7 +2716,6 @@ importers:
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/sequence': link:../../../packages/dds/sequence
       '@fluidframework/view-adapters': link:../../../packages/framework/view-adapters
-      '@fluidframework/view-interfaces': link:../../../packages/framework/view-interfaces
       events: 3.3.0
       orderedmap: 2.1.1
       prosemirror-example-setup: 1.2.2
@@ -2785,7 +2773,6 @@ importers:
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
       '@fluidframework/view-adapters': workspace:~
-      '@fluidframework/view-interfaces': workspace:~
       '@types/events': ^3.0.0
       '@types/react': ^17.0.44
       '@types/simplemde': ^1.11.7
@@ -2819,7 +2806,6 @@ importers:
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/sequence': link:../../../packages/dds/sequence
       '@fluidframework/view-adapters': link:../../../packages/framework/view-adapters
-      '@fluidframework/view-interfaces': link:../../../packages/framework/view-interfaces
       events: 3.3.0
       react: 17.0.2
       simplemde: 1.11.2
@@ -2928,7 +2914,6 @@ importers:
       '@fluidframework/matrix': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
-      '@fluidframework/view-interfaces': workspace:~
       '@tiny-calc/micro': 0.0.0-alpha.5
       '@tiny-calc/nano': 0.0.0-alpha.5
       '@types/node': ^18.19.0
@@ -2957,7 +2942,6 @@ importers:
       '@fluidframework/matrix': link:../../../packages/dds/matrix
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/sequence': link:../../../packages/dds/sequence
-      '@fluidframework/view-interfaces': link:../../../packages/framework/view-interfaces
       '@tiny-calc/micro': 0.0.0-alpha.5
       '@tiny-calc/nano': 0.0.0-alpha.5
       react: 17.0.2
@@ -3000,7 +2984,6 @@ importers:
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/test-utils': workspace:~
       '@fluidframework/view-adapters': workspace:~
-      '@fluidframework/view-interfaces': workspace:~
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -3039,7 +3022,6 @@ importers:
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/sequence': link:../../../packages/dds/sequence
       '@fluidframework/view-adapters': link:../../../packages/framework/view-adapters
-      '@fluidframework/view-interfaces': link:../../../packages/framework/view-interfaces
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       uuid: 9.0.1
@@ -3095,7 +3077,6 @@ importers:
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
       '@fluidframework/test-utils': workspace:~
-      '@fluidframework/view-interfaces': workspace:~
       '@types/debug': ^4.1.5
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
@@ -3143,7 +3124,6 @@ importers:
       '@fluidframework/merge-tree': link:../../../packages/dds/merge-tree
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
       '@fluidframework/sequence': link:../../../packages/dds/sequence
-      '@fluidframework/view-interfaces': link:../../../packages/framework/view-interfaces
       assert: 2.1.0
       debug: 4.3.4
       events: 3.3.0
@@ -4378,7 +4358,6 @@ importers:
       '@fluidframework/sequence': workspace:~
       '@fluidframework/shared-object-base': workspace:~
       '@fluidframework/tinylicious-driver': workspace:~
-      '@fluidframework/view-interfaces': workspace:~
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -4441,7 +4420,6 @@ importers:
       '@fluidframework/sequence': link:../../../../packages/dds/sequence
       '@fluidframework/shared-object-base': link:../../../../packages/dds/shared-object-base
       '@fluidframework/tinylicious-driver': link:../../../../packages/drivers/tinylicious-driver
-      '@fluidframework/view-interfaces': link:../../../../packages/framework/view-interfaces
       events: 3.3.0
       jsonwebtoken: 8.5.1
       lodash: 4.17.21
@@ -4508,7 +4486,6 @@ importers:
       '@fluidframework/sequence': workspace:~
       '@fluidframework/shared-object-base': workspace:~
       '@fluidframework/tinylicious-driver': workspace:~
-      '@fluidframework/view-interfaces': workspace:~
       '@hig/fonts': ^1.0.2
       '@material-ui/core': 4.12.4
       '@material-ui/lab': 4.0.0-alpha.61
@@ -4574,7 +4551,6 @@ importers:
       '@fluidframework/sequence': link:../../../../packages/dds/sequence
       '@fluidframework/shared-object-base': link:../../../../packages/dds/shared-object-base
       '@fluidframework/tinylicious-driver': link:../../../../packages/drivers/tinylicious-driver
-      '@fluidframework/view-interfaces': link:../../../../packages/framework/view-interfaces
       '@hig/fonts': 1.1.0
       '@material-ui/core': 4.12.4_sfoxds7t5ydpegc3knd667wn6m
       '@material-ui/lab': 4.0.0-alpha.61_phlbjj2qqbzyjdfzujtmlw3coi
@@ -8205,7 +8181,6 @@ importers:
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/synthesize': workspace:~
-      '@fluidframework/view-interfaces': workspace:~
       '@microsoft/api-extractor': ^7.39.1
       '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
@@ -8236,7 +8211,6 @@ importers:
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/synthesize': link:../synthesize
-      '@fluidframework/view-interfaces': link:../view-interfaces
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.29.0_mhw3tufvtaceew37hrkkevjcli
@@ -10015,7 +9989,6 @@ importers:
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.3.0
-      '@fluidframework/ink': workspace:~
       '@fluidframework/local-driver': workspace:~
       '@fluidframework/map': workspace:~
       '@fluidframework/matrix': workspace:~
@@ -10075,7 +10048,6 @@ importers:
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
-      '@fluidframework/ink': link:../../dds/ink
       '@fluidframework/local-driver': link:../../drivers/local-driver
       '@fluidframework/map': link:../../dds/map
       '@fluidframework/matrix': link:../../dds/matrix

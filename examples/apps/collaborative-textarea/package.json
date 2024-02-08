@@ -44,7 +44,6 @@
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
-		"@fluidframework/view-interfaces": "workspace:~",
 		"css-loader": "^1.0.0",
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1",
