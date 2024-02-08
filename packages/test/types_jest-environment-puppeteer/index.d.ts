@@ -8,8 +8,7 @@
 // jest-environment-puppeteer with the added globals.
 // See https://github.com/argos-ci/jest-puppeteer/issues/568.
 
-import type { JestPuppeteerConfig, JestPuppeteerGlobal } from "jest-environment-puppeteer";
-import PuppeteerEnvironment from "jest-environment-puppeteer";
+import type { JestPuppeteerGlobal } from "jest-environment-puppeteer";
 
 declare global {
 	const browser: JestPuppeteerGlobal["browser"];
@@ -18,9 +17,4 @@ declare global {
 	const jestPuppeteer: JestPuppeteerGlobal["jestPuppeteer"];
 }
 
-export {
-	type JestPuppeteerConfig,
-	type JestPuppeteerGlobal,
-	PuppeteerEnvironment as TestEnvironment,
-	PuppeteerEnvironment as default,
-};
+export * as default from "jest-environment-puppeteer";
