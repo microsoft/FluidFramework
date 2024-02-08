@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-/*
- * This download script is used to download the api json docs from the azure storage.
- * Saves each model under `_doc-models/<version>`.
+/*!
+ * This script creates a versions file for FF.com redirects based on current and lts versions.
+ * It reads the current and LTS version numbers from `docs/data/versions.json`,
+ * and writes these to `/docs/api/fallback/versions.json`.
  */
 
 const chalk = require("chalk");
@@ -17,9 +18,7 @@ const {
 
 const destination = path.resolve(__dirname, "api", "fallback", "versions.json");
 
-const buildRedirectJson = async () => {
-	await fs.writeFile(destination, JSON.stringify({ currentVersion, ltsVersion }, null, 4));
-};
+const buildRedirectJson = () => fs.writeFile(destination, JSON.stringify({ currentVersion, ltsVersion }, null, 4) + '\n');
 
 buildRedirectJson().then(
 	() => {

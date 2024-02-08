@@ -23,12 +23,6 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <link rel="manifest" href="/site.webmanifest">
-    <script>
-        (async function() {
-            const obj = await( await fetch(`/api/fallback`)).json();
-            console.log(obj);
-        }());
-    </script>
 
     <title>{{.Title}}</title>
     <!-- RSS feeds are not configured properly, so this is commented out for the time being. Issue #7612 -->
