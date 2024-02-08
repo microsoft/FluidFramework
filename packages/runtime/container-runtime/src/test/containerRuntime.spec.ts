@@ -2066,6 +2066,7 @@ describe("Runtime", () => {
 				const logger = new MockLogger();
 				const containerContext = getMockContext({}, logger) as IContainerContext;
 				(containerContext as any).snapshotWithContents = snapshotWithContents;
+				(containerContext as any).baseSnapshot = snapshotWithContents.snapshotTree;
 				containerContext.storage.readBlob = async (id: string) => {
 					return blobContents.get(id) as ArrayBuffer;
 				};
