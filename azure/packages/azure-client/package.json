@@ -122,7 +122,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.29.0",
 		"@fluidframework/counter": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^3.3.0",
+		"@fluidframework/eslint-config-fluid": "^3.5.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
