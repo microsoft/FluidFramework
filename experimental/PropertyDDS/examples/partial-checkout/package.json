@@ -79,7 +79,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.29.0",
 		"@types/jest": "29.5.3",
-		"@types/jest-environment-puppeteer": "5.0.6",
+		"@types/jest-environment-puppeteer": "workspace:",
 		"@types/uuid": "^9.0.2",
 		"clean-webpack-plugin": "^4.0.0",
 		"concurrently": "^8.2.1",
