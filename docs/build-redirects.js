@@ -18,7 +18,8 @@ const {
 
 const destination = path.resolve(__dirname, "api", "fallback", "versions.json");
 
-const buildRedirectJson = () => fs.writeFile(destination, JSON.stringify({ currentVersion, ltsVersion }, null, 4) + '\n');
+const buildRedirectJson = () =>
+	fs.writeFile(destination, JSON.stringify({ currentVersion, ltsVersion }, null, "\t") + "\n");
 
 buildRedirectJson().then(
 	() => {
@@ -26,9 +27,7 @@ buildRedirectJson().then(
 		process.exit(0);
 	},
 	(error) => {
-		console.error(
-			chalk.red(`Could not write redirects file to ${destination}`),
-		);
+		console.error(chalk.red(`Could not write redirects file to ${destination}`));
 		console.error(error);
 		process.exit(1);
 	},
