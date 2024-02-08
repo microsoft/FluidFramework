@@ -126,6 +126,9 @@ describe("Temporal Collab Spaces", () => {
 	});
 
 	async function waitForSummary() {
+		// ensure that all changes made it through
+		await provider.ensureSynchronized();
+
 		assert(summaryCollection !== undefined, "summary setup properly");
 		// create promise before we call summarizeNow, as otherwise we might miss summary and will wait
 		// forever for next one to happen
@@ -367,24 +370,14 @@ describe("Temporal Collab Spaces", () => {
 		destroyed = collabSpace.destroyCellChannel(channel);
 		assert(destroyed, "Channel should be destroyed by now!");
 
-		// TBD(Pri0): Need to flip runSummaryValidation to true.
-		// This fails due to deleted channel. Need to figure out proper solution
-		const runSummaryValidation = false;
-
-		// Force summary to test that channel is gone.
-		if (runSummaryValidation) {
-			await waitForSummary();
-		}
+		await waitForSummary();
 
 		// Add one more container and observe they are all equal
-		await addContainerInstance();
+		const cpLoaded = await addContainerInstance();
 		await ensureSameValues(row, col, initialValue, [channel2]);
 
-		// Validate that channel is not present in summary!
-		if (runSummaryValidation) {
-			const channel3 = await collabSpaces[2].getCellDebugInfo(row, col);
-			assert(channel3 === undefined, "channel was not removed from summary");
-		}
+		const channelInfo = await cpLoaded.getCellDebugInfo(row, col);
+		assert(channelInfo.channel === undefined, "channel was not removed from summary");
 
 		// recreate deleted channel
 		channel = (await collabSpace.getCellChannel(row, col)) as ISharedCounter;

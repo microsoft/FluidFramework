@@ -343,10 +343,14 @@ export class TempCollabSpaceRuntime
 		// Do some garbage collection for channels that we do not need.
 		for (const [channelId, channel] of this.contexts) {
 			if (channelId !== matrixId) {
-				this.saveOrDestroyChannel(
+				const info = this.saveOrDestroyChannel(
 					(await channel.getChannel()) as ICollabChannel,
 					false /* allowSave */,
 					true /* allowDestroy */,
+				);
+				assert(
+					!info.destroyd || !this.deferredChannels.has(channelId),
+					"Deferred channels could not be destroyed - this cases daa loss!",
 				);
 			}
 		}
