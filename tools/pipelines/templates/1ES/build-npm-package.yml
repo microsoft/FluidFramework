@@ -189,7 +189,7 @@ extends:
           - job: build
             displayName: Build
             ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
-              timeoutInMinutes: 90
+              timeoutInMinutes: 120
             ${{ else }}:
               # CI builds run more aggressive compat configurations which can take longer.
               # See "FullCompat" under packages\test\test-version-utils\README.md for more details.
@@ -199,8 +199,9 @@ extends:
               # AB#6680 is also relevant here, which tracks rethinking how and where we run tests (likely with
               # a focus on e2e tests)
               # Note, This was recently updated to 90 minutes to account for the additional build time added from extending
-              # the Microsoft 1ES template required for corporate security compliance
-              timeoutInMinutes: 90
+              # the Microsoft 1ES template required for corporate security compliance. Updated again to 120 to mitigate a
+              # series of build breaks due to timeouts.
+              timeoutInMinutes: 120
             variables:
               - group: ado-feeds
               - name: releaseBuildVar
