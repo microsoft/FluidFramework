@@ -33,5 +33,6 @@ tsdoc-metadata.json
 # TODO: This can be removed once the `flub add changeset` command no longer creates the UPCOMING file.
 UPCOMING.md
 
+# tshy build artifacts
 .tshy-build/
 .tshy/
