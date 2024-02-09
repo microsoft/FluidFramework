@@ -13,7 +13,7 @@ import {
 	createSummarizerCore,
 } from "@fluidframework/test-utils";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
+import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
 import {
 	IContainerRuntimeOptions,
 	ISummarizer,
@@ -63,6 +63,7 @@ describe("Temporal Collab Spaces", () => {
 		enableGroupedBatching: true,
 		chunkSizeInBytes: 950000,
 		maxBatchSizeInBytes: 990000,
+		// enableRuntimeIdCompressor: true,
 	};
 	const defaultFactory = sampleFactory();
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
@@ -80,10 +81,16 @@ describe("Temporal Collab Spaces", () => {
 		return { container, collabSpace };
 	};
 
-	async function addContainerInstance(/* summaryVersion: string */) {
-		const container = await provider.loadContainer(runtimeFactory, undefined, {
-			// [LoaderHeader.version]: summaryVersion,
-		});
+	async function addContainerInstance(summaryVersion?: string | undefined) {
+		const container = await provider.loadContainer(
+			runtimeFactory,
+			undefined,
+			summaryVersion !== undefined
+				? {
+						[LoaderHeader.version]: summaryVersion,
+				  }
+				: {},
+		);
 		containers.push(container);
 		const cp = (await container.getEntryPoint()) as IEfficientMatrix & IEfficientMatrixTest;
 		collabSpaces.push(cp);
@@ -125,15 +132,21 @@ describe("Temporal Collab Spaces", () => {
 		loader = undefined;
 	});
 
-	async function waitForSummary() {
+	async function waitForSummary(): Promise<string> {
+		// ensure that all changes made it through
+		await provider.ensureSynchronized();
+
 		assert(summaryCollection !== undefined, "summary setup properly");
 		// create promise before we call summarizeNow, as otherwise we might miss summary and will wait
 		// forever for next one to happen
 		const wait = summaryCollection.waitSummaryAck(
 			containers[0].deltaManager.lastSequenceNumber,
 		);
-		await summarizeNow(summarizer!);
-		return wait;
+		const summaryResult = await summarizeNow(summarizer!);
+		assert(summaryResult.summaryVersion !== undefined, "summary result");
+		const ackedSummary = await wait;
+		assert(ackedSummary.summaryAck.contents.handle !== undefined, "summary acked");
+		return summaryResult.summaryVersion;
 	}
 
 	/**
@@ -206,7 +219,7 @@ describe("Temporal Collab Spaces", () => {
 		// data store is aliased (and thus attached) in test container
 		assert(collabSpace.isAttached, "data store is not attached");
 
-		// Have a secont container that follows passivley the first one
+		// Have a second container that follows passivley the first one
 		await addContainerInstance();
 
 		const start = performance.now();
@@ -560,7 +573,7 @@ describe("Temporal Collab Spaces", () => {
 		await provider.ensureSynchronized();
 		ensureSameSize();
 
-		// Also let's grap channel in second container for later manipulations
+		// Also let's grab channel in second container for later manipulations
 		channel2 = (await collabSpaces[2].getCellChannel(row, col)) as ISharedCounter;
 
 		// Save changes and destroy channel
@@ -574,27 +587,22 @@ describe("Temporal Collab Spaces", () => {
 		destroyed = collabSpace.destroyCellChannel(channel);
 		assert(destroyed, "Channel should be destroyed by now!");
 
-		// TBD(Pri0): Need to flip runSummaryValidation to true.
-		// This fails due to deleted channel. Need to figure out proper solution
-		const runSummaryValidation = false;
-
-		// Force summary to test that channel is gone.
-		if (runSummaryValidation) {
-			await waitForSummary();
-		}
+		const summaryVersion = await waitForSummary();
 
 		// Add one more container and observe they are all equal
-		await addContainerInstance();
+		const cpLoaded = await addContainerInstance(summaryVersion);
 		await ensureSameValues(row, col, initialValue, [channel2]);
 
-		// Validate that channel is not present in summary!
-		if (runSummaryValidation) {
-			const channel3 = await collabSpaces[2].getCellDebugInfo(row, col);
-			assert(channel3 === undefined, "channel was not removed from summary");
-		}
+		const channelInfo = await cpLoaded.getCellDebugInfo(row, col);
+		assert(channelInfo.channel === undefined, "channel was not removed from summary");
 
 		// recreate deleted channel
 		channel = (await collabSpace.getCellChannel(row, col)) as ISharedCounter;
+
+		// TODO: (nichoc) investigate as without the following lines, the test fails.
+		// The newly created container that was loaded without the channel, fails to "re-create" it.
+		const newChannel = (await cpLoaded.getCellChannel(row, col)) as ISharedCounter;
+		assert(newChannel !== undefined, "newChannel was not found ");
 
 		// After one container destroyed the channel (and 3rd container loaded without channel),
 		// let's test that op showing up on that channel will be processed correctly by all containers.
@@ -626,7 +634,7 @@ describe("Temporal Collab Spaces", () => {
 			"test infra should not process all ops synchronously",
 		);
 
-		// syncrhonize - all containers should see exactly same changes
+		// synchronize - all containers should see exactly same changes
 		await provider.ensureSynchronized();
 		await ensureSameValues(row, col, initialValue + 30, [channel2a, channel2b]);
 	});
