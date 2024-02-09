@@ -11,6 +11,7 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
+	"type": "module",
 	"main": "lib/expressApp.js",
 	"module": "lib/expressApp.js",
 	"types": "lib/expressApp.d.ts",
