@@ -355,15 +355,15 @@ describe("Temporal Collab Spaces", () => {
 			const col = 3;
 			const { rowId, colId } = await collabSpace.getCellDebugInfo(row, col);
 
-			const debugMapInfo = collabSpace.getReverseMapsDebugInfo(rowId, colId);
-
+			const debugMapInfo = collabSpace.getReverseMapsDebugInfo();
+			const reverseCellInfo = collabSpace.getReverseMapCellDebugInfo(rowId, colId);
 			assert(Object.keys(debugMapInfo.rowMap).length === rows, "rowMapSize is incorrect");
 			assert(
-				debugMapInfo.row === row,
+				reverseCellInfo.row === row,
 				"rowIndex from the actual matrix has to be offset by 1",
 			);
 			assert(Object.keys(debugMapInfo.colMap).length === cols, "colMapSize is incorrect");
-			assert(debugMapInfo.col === col, "colIndex is correct");
+			assert(reverseCellInfo.col === col, "colIndex is correct");
 		});
 
 		it("Reverse Mapping: Basic row adding test", async () => {
@@ -378,18 +378,19 @@ describe("Temporal Collab Spaces", () => {
 				type: CounterFactory.Type,
 			});
 			const { rowId, colId } = await collabSpace.getCellDebugInfo(row, col);
-			const debugMapInfo = collabSpace.getReverseMapsDebugInfo(rowId, colId);
+			const debugMapInfo = collabSpace.getReverseMapsDebugInfo();
+			const reverseCellInfo = collabSpace.getReverseMapCellDebugInfo(rowId, colId);
 
 			assert(
 				Object.keys(debugMapInfo.rowMap).length === rows + numberOfNewRows,
 				"rowMapSize is incorrect",
 			);
 			assert(
-				debugMapInfo.row === row,
+				reverseCellInfo.row === row,
 				"rowIndex from the actual matrix has to be offset by 1",
 			);
 			assert(Object.keys(debugMapInfo.colMap).length === cols, "colMapSize is incorrect");
-			assert(debugMapInfo.col === col, "colIndex is correct");
+			assert(reverseCellInfo.col === col, "colIndex is correct");
 		});
 
 		it("Reverse Mapping: Basic row removing test", async () => {
@@ -410,18 +411,20 @@ describe("Temporal Collab Spaces", () => {
 			);
 			assert(nextColId === debugCellInfo.colId, "colId after removal should be different");
 
-			const debugMapInfo = collabSpace.getReverseMapsDebugInfo(
+			const debugMapInfo = collabSpace.getReverseMapsDebugInfo();
+
+			const reverseCellInfo = collabSpace.getReverseMapCellDebugInfo(
 				debugCellInfo.rowId,
 				debugCellInfo.colId,
 			);
 
 			assert(Object.keys(debugMapInfo.rowMap).length === rows - 1, "rowMapSize is incorrect");
 			assert(
-				debugMapInfo.row === row,
+				reverseCellInfo.row === row,
 				"rowIndex from the actual matrix has to be offset by 1",
 			);
 			assert(Object.keys(debugMapInfo.colMap).length === cols, "colMapSize is incorrect");
-			assert(debugMapInfo.col === col, "colIndex is correct");
+			assert(reverseCellInfo.col === col, "colIndex is correct");
 		});
 
 		it("Reverse Mapping: Basic col removing test", async () => {
@@ -438,18 +441,19 @@ describe("Temporal Collab Spaces", () => {
 
 			assert(nextColId === colId, "colId after removal should be the same as nextColId");
 
-			const debugMapInfo = collabSpace.getReverseMapsDebugInfo(rowId, colId);
+			const debugMapInfo = collabSpace.getReverseMapsDebugInfo();
+			const reverseCellInfo = collabSpace.getReverseMapCellDebugInfo(rowId, colId);
 
 			assert(Object.keys(debugMapInfo.rowMap).length === rows, "rowMapSize is incorrect");
 			assert(
-				debugMapInfo.row === row,
+				reverseCellInfo.row === row,
 				"rowIndex from the actual matrix has to be offset by 1",
 			);
 			assert(
 				Object.keys(debugMapInfo.colMap).length === cols - columnsToBeRemoved,
 				"colMapSize is incorrect",
 			);
-			assert(debugMapInfo.col === col, "colIndex is correct");
+			assert(reverseCellInfo.col === col, "colIndex is correct");
 		});
 
 		it("Concurrent insertions", async () => {

@@ -39,11 +39,9 @@ import {
 	IEfficientMatrix,
 	ICollabChannelFactory,
 	CollabSpaceCellType,
-	ReverseMapType,
-	ReverseMapsDebugInfoType,
 } from "./contracts";
 import { DeferredChannel, DeferredChannelFactory } from "./deferreChannel";
-import { ReverseMap } from "./reverseMap";
+import { ReverseMap, ReverseMapType } from "./reverseMap";
 
 /*
  * This is a prototype, an implementation of sparse matrix that natively supports collaboration.
@@ -537,24 +535,30 @@ export class TempCollabSpaceRuntime
 		const result = this.getCellInfo(row, col);
 		assert(result.channelId !== undefined, "channelId is missing");
 		const { rowId, colId } = this.parseChannelId(result.channelId);
-		return { channel: await result.channel, channelId: result.channelId, rowId, colId };
+		const channel = await result.channel;
+		return { channel, channelId: result.channelId, rowId, colId };
+	}
+
+	public getReverseMapCellDebugInfo(rowId: string, colId: string): { row: number; col: number } {
+		const row = this.reverseMap.getRowId(rowId);
+		const col = this.reverseMap.getColId(colId);
+		assert(row !== undefined, "rowIndex is missing");
+		assert(col !== undefined, "colIndex is missing");
+		return {
+			row: row - 1,
+			col: col - 1,
+		};
 	}
 
 	// For test purposes only!
 	// Returns the Reverse Map size and the actual indexes from matrix stored on the reverse mapping matrixes.
-	public getReverseMapsDebugInfo(
-		rowId?: string | undefined,
-		colId?: string | undefined,
-	): ReverseMapsDebugInfoType {
-		const row = rowId !== undefined ? this.reverseMap.getRowId(rowId) : -1;
-		const col = colId !== undefined ? this.reverseMap.getColId(colId) : -1;
-		assert(row !== undefined, "rowIndex is missing");
-		assert(col !== undefined, "colIndex is missing");
+	public getReverseMapsDebugInfo(): {
+		rowMap: { [id: string]: number };
+		colMap: { [id: string]: number };
+	} {
 		return {
 			rowMap: this.reverseMap.getRowMap(),
 			colMap: this.reverseMap.getColMap(),
-			row: row - 1,
-			col: col - 1,
 		};
 	}
 

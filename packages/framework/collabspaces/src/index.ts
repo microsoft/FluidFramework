@@ -11,6 +11,5 @@ export {
 	ICollabChannelCore,
 	ICollabChannel,
 	CollabSpaceCellType,
-	ReverseMapsDebugInfoType,
 } from "./contracts";
 export { createCollabSpace } from "./factory";

@@ -59,7 +59,19 @@ export interface IEfficientMatrixTest {
         colId: string;
     }>;
     // (undocumented)
-    getReverseMapsDebugInfo(rowId?: string | undefined, colId?: string | undefined): ReverseMapsDebugInfoType;
+    getReverseMapCellDebugInfo(rowId: string, colId: string): {
+        row: number;
+        col: number;
+    };
+    // (undocumented)
+    getReverseMapsDebugInfo(): {
+        rowMap: {
+            [id: string]: number;
+        };
+        colMap: {
+            [id: string]: number;
+        };
+    };
     // (undocumented)
     isAttached: boolean;
 }
@@ -70,22 +82,6 @@ export interface MatrixExternalType {
     type: string;
     // (undocumented)
     value: Serializable<unknown>;
-}
-
-// @internal
-export interface ReverseMapsDebugInfoType {
-    // (undocumented)
-    col: number;
-    // (undocumented)
-    colMap: {
-        [id: string]: number;
-    };
-    // (undocumented)
-    row: number;
-    // (undocumented)
-    rowMap: {
-        [id: string]: number;
-    };
 }
 
 // (No @packageDocumentation comment for this package)

@@ -79,17 +79,6 @@ export interface IEfficientMatrix extends Omit<ISharedMatrix<MatrixExternalType>
  * Interface for testing purposes only.
  * @internal
  */
-export interface ReverseMapsDebugInfoType {
-	rowMap: { [id: string]: number };
-	colMap: { [id: string]: number };
-	row: number;
-	col: number;
-}
-
-/**
- * Interface for testing purposes only.
- * @internal
- */
 export interface IEfficientMatrixTest {
 	isAttached: boolean;
 
@@ -99,22 +88,10 @@ export interface IEfficientMatrixTest {
 		col: number,
 	): Promise<{ channel?: ICollabChannelCore; channelId: string; rowId: string; colId: string }>;
 
-	getReverseMapsDebugInfo(
-		rowId?: string | undefined,
-		colId?: string | undefined,
-	): ReverseMapsDebugInfoType;
-}
+	getReverseMapsDebugInfo(): {
+		rowMap: { [id: string]: number };
+		colMap: { [id: string]: number };
+	};
 
-export type ReverseMapType = "row" | "col";
-
-export interface IReverseMap {
-	getRowId(rowId: string): number | undefined;
-	getColId(colId: string): number | undefined;
-
-	getRowMap(): { [id: string]: number };
-	getColMap(): { [id: string]: number };
-
-	removeCellsFromMap(type: ReverseMapType, start: number, count: number): void;
-
-	addCellToMap(type: ReverseMapType, id: string, index: number): void;
+	getReverseMapCellDebugInfo(rowId: string, colId: string): { row: number; col: number };
 }

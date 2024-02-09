@@ -2,7 +2,20 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IReverseMap, ReverseMapType } from "./contracts";
+
+export type ReverseMapType = "row" | "col";
+
+export interface IReverseMap {
+	getRowId(rowId: string): number | undefined;
+	getColId(colId: string): number | undefined;
+
+	getRowMap(): { [id: string]: number };
+	getColMap(): { [id: string]: number };
+
+	removeCellsFromMap(type: ReverseMapType, start: number, count: number): void;
+
+	addCellToMap(type: ReverseMapType, id: string, index: number): void;
+}
 
 export class ReverseMap implements IReverseMap {
 	private readonly rowMap: { [id: string]: number } = {};
