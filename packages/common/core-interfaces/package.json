@@ -14,8 +14,8 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/index.d.mts",
-				"default": "./lib/index.mjs"
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
 			},
 			"require": {
 				"types": "./dist/index.d.ts",
@@ -24,7 +24,7 @@
 		}
 	},
 	"main": "dist/index.js",
-	"module": "lib/index.mjs",
+	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
@@ -34,7 +34,7 @@
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
-		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
+		"build:esnext": "tsc",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
@@ -50,7 +50,7 @@
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
-		"tsc": "tsc",
+		"tsc": "tsc-multi --config ../../../common/build/build-common/tsc-multi.cjs.json",
 		"tsc:watch": "tsc --watch",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"

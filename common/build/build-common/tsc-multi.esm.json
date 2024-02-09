@@ -1,11 +1,13 @@
 {
 	"targets": [
 		{
-			"extname": ".mjs",
-			"dtsExtName": ".d.mts",
-			"module": "ESNext",
+			"extname": ".js",
+			"module": "Node16",
 			"moduleResolution": "Node16",
-			"outDir": "./lib"
+			"outDir": "./lib",
+			"packageOverrides": {
+				"package.json": { "type": "module" }
+			}
 		}
 	],
 	"projects": ["tsconfig.json"]

@@ -1,4 +1,14 @@
 {
-	"targets": [{ "extname": ".cjs", "module": "node16" }],
+	"targets": [
+		{
+			"extname": ".js",
+			"module": "Node16",
+			"moduleResolution": "Node16",
+			"outDir": "./dist",
+			"packageOverrides": {
+				"package.json": { "type": "commonjs" }
+			}
+		}
+	],
 	"projects": ["tsconfig.json"]
 }
