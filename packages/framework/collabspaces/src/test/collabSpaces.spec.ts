@@ -584,11 +584,6 @@ describe("Temporal Collab Spaces", () => {
 		// recreate deleted channel
 		channel = (await collabSpace.getCellChannel(row, col)) as ISharedCounter;
 
-		// TODO: (nichoc) investigate as without the following lines, the test fails.
-		// The newly created container that was loaded without the channel, fails to "re-create" it.
-		const newChannel = (await cpLoaded.getCellChannel(row, col)) as ISharedCounter;
-		assert(newChannel !== undefined, "newChannel was not found ");
-
 		// After one container destroyed the channel (and 3rd container loaded without channel),
 		// let's test that op showing up on that channel will be processed correctly by all containers.
 		channel2.increment(10);
