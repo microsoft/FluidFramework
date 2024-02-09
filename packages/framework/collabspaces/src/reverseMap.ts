@@ -26,43 +26,42 @@ export class ReverseMap implements IReverseMap {
 		return this.colMap;
 	}
 
-	private insertCellIntoRowMap(index: number, key: string, value: number) {
+	private insertCellIntoMap(type: ReverseMapType, index: number, key: string, value: number) {
+		const map = type === "row" ? this.rowMap : this.colMap;
 		// Convert the map to an array of key-value
 		// Notice we use Object.entries to keep the order from the map
-		const entries = Object.entries(this.rowMap); // we can also try sort((a, b) => a[1] - b[1]);
+		const entries = Object.entries(map); // we can also try sort((a, b) => a[1] - b[1]);
 
 		// Insert the new key-value pair at the specified index
 		entries.splice(index, 0, [key, value]);
 
 		// Clear the original map
-		Object.keys(this.rowMap).forEach((tempKey) => {
-			if (Object.prototype.hasOwnProperty.call(this.rowMap, tempKey)) {
-				Reflect.deleteProperty(this.rowMap, tempKey);
+		Object.keys(map).forEach((tempKey) => {
+			if (Object.prototype.hasOwnProperty.call(map, tempKey)) {
+				Reflect.deleteProperty(map, tempKey);
 			}
 		});
 
 		// Re-populate the map with the updated items from the array
 		entries.forEach(([localKey], newIndex) => {
-			this.rowMap[localKey] = newIndex + 1;
+			map[localKey] = newIndex + 1;
 		});
 	}
 
 	public addCellToMap(type: ReverseMapType, id: string, index: number): void {
-		if (type === "row") {
-			// this behavior is very specific to the way SharedMatrix does its row insertion signal, in which we first get the row addition
-			// without the unique ids and soon after, the cell changes are triggered and we take opportunity to update the reverse map.
-			if (Object.keys(this.rowMap).length >= index + 1) {
-				// In case of insertion or rows within existing boundaries of the matrix, we will need to manually update
-				// the map to reflect and shift existing indexes. For example, if we insert a new row at index 2,
-				// the existing row at index 2 will be shifted to index 3 and so on.
-				// Note this only applies for insertion within existing rows but removal as
-				//  rowsChanged and columnsChanged methods are responsible for processing it.
-				this.insertCellIntoRowMap(index, id, index + 1);
-			} else {
-				this.rowMap[id] = index + 1;
-			}
+		const map = type === "row" ? this.rowMap : this.colMap;
+		// if (type === "row") {
+		// this behavior is very specific to the way SharedMatrix does its row insertion signal, in which we first get the row addition
+		// without the unique ids and soon after, the cell changes are triggered and we take opportunity to update the reverse map.
+		if (Object.keys(map).length >= index + 1) {
+			// In case of insertion or rows within existing boundaries of the matrix, we will need to manually update
+			// the map to reflect and shift existing indexes. For example, if we insert a new row at index 2,
+			// the existing row at index 2 will be shifted to index 3 and so on.
+			// Note this only applies for insertion within existing rows but removal as
+			//  rowsChanged and columnsChanged methods are responsible for processing it.
+			this.insertCellIntoMap(type, index, id, index + 1);
 		} else {
-			this.colMap[id] = index + 1;
+			map[id] = index + 1;
 		}
 	}
 
