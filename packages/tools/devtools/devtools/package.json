@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/devtools",
-	"version": "2.0.0-rc.1.0.0",
+	"version": "2.0.0-rc.2.0.0",
 	"description": "Fluid Framework developer tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -75,7 +75,6 @@
 		"@fluidframework/devtools-previous": "npm:@fluid-experimental/devtools@2.0.0-internal.8.0.0",
 		"@fluidframework/eslint-config-fluid": "^3.3.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.39.1",
 		"@types/chai": "^4.0.0",
 		"@types/mocha": "^9.1.1",

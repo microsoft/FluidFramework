@@ -5,12 +5,12 @@
 ```ts
 
 import { ContainerRuntime } from '@fluidframework/container-runtime';
-import { EventForwarder } from '@fluid-internal/client-utils';
 import { FluidDataStoreRuntime } from '@fluidframework/datastore';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IContainerContext } from '@fluidframework/container-definitions';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
+import { IDisposable } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
@@ -25,14 +25,19 @@ import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectRegistry } from '@fluidframework/datastore';
 import { RuntimeFactoryHelper } from '@fluidframework/runtime-utils';
 import { RuntimeRequestHandler } from '@fluidframework/request-handler';
+import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @internal @deprecated (undocumented)
-export abstract class LazyLoadedDataObject<TRoot extends ISharedObject = ISharedObject, TEvents extends IEvent = IEvent> extends EventForwarder<TEvents> implements IFluidLoadable, IProvideFluidHandle {
+export abstract class LazyLoadedDataObject<TRoot extends ISharedObject = ISharedObject, TEvents extends IEvent = IEvent> extends TypedEventEmitter<TEvents> implements IFluidLoadable, IProvideFluidHandle, IDisposable {
     constructor(context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime, root: ISharedObject);
     // (undocumented)
     protected readonly context: IFluidDataStoreContext;
     // (undocumented)
     abstract create(props?: any): any;
+    // (undocumented)
+    dispose(): void;
+    // (undocumented)
+    get disposed(): boolean;
     // (undocumented)
     get handle(): IFluidHandle<this>;
     // (undocumented)
