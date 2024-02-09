@@ -63,7 +63,7 @@ export class Audience extends EventEmitter implements IAudienceOwner {
 	/**
 	 * Retrieves all the members in the audience.
 	 *
-	 * @remarks When the container is disconnected, this will keep returning the audience as it last seen before the
+	 * @remarks When the container is disconnected, this will keep returning the audience as it was last seen before the
 	 * container disconnected.
 	 */
 	public getMembers(): Map<string, IClient> {
