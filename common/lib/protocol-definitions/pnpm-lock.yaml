@@ -356,7 +356,7 @@ packages:
       eslint-config-prettier: 9.0.0_eslint@8.55.0
       eslint-import-resolver-typescript: 3.6.1_tpu45zodljnzvckpnsmhtdqkmi
       eslint-plugin-eslint-comments: 3.2.0_eslint@8.55.0
-      eslint-plugin-import: /eslint-plugin-i/2.29.0_j7h7oj6rrhtikhzta4fgkou42e
+      eslint-plugin-import: /eslint-plugin-i/2.29.0_p6unqcplhqas2g2cyfcrkqcjbu
       eslint-plugin-jsdoc: 46.8.2_eslint@8.55.0
       eslint-plugin-promise: 6.1.1_eslint@8.55.0
       eslint-plugin-react: 7.33.2_eslint@8.55.0
@@ -3756,7 +3756,7 @@ packages:
       enhanced-resolve: 5.15.0
       eslint: 8.55.0
       eslint-module-utils: 2.8.0_j7h7oj6rrhtikhzta4fgkou42e
-      eslint-plugin-import: /eslint-plugin-i/2.29.0_j7h7oj6rrhtikhzta4fgkou42e
+      eslint-plugin-import: /eslint-plugin-i/2.29.0_p6unqcplhqas2g2cyfcrkqcjbu
       fast-glob: 3.3.2
       get-tsconfig: 4.7.2
       is-core-module: 2.13.1
@@ -3768,7 +3768,7 @@ packages:
       - supports-color
     dev: true
 
-  /eslint-module-utils/2.8.0_762h3b5esehr7f4s6pbg6xsz7q:
+  /eslint-module-utils/2.8.0_bivn2jejdgdr2xrqprhu7oznga:
     resolution: {integrity: sha512-aWajIYfsqCKRDgUfjEXNN/JlrzauMuSEy5sbd7WXbtW3EH6A6MpwEh42c7qD+MqQo9QMJ6fWLAeIJynx0g6OAw==}
     engines: {node: '>=4'}
     peerDependencies:
@@ -3793,7 +3793,6 @@ packages:
       debug: 3.2.7
       eslint: 8.55.0
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.6.1_tpu45zodljnzvckpnsmhtdqkmi
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -3838,7 +3837,7 @@ packages:
       ignore: 5.2.4
     dev: true
 
-  /eslint-plugin-i/2.29.0_j7h7oj6rrhtikhzta4fgkou42e:
+  /eslint-plugin-i/2.29.0_p6unqcplhqas2g2cyfcrkqcjbu:
     resolution: {integrity: sha512-slGeTS3GQzx9267wLJnNYNO8X9EHGsc75AKIAFvnvMYEcTJKotPKL1Ru5PIGVHIVet+2DsugePWp8Oxpx8G22w==}
     engines: {node: '>=12'}
     peerDependencies:
@@ -3848,7 +3847,7 @@ packages:
       doctrine: 2.1.0
       eslint: 8.55.0
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.8.0_762h3b5esehr7f4s6pbg6xsz7q
+      eslint-module-utils: 2.8.0_bivn2jejdgdr2xrqprhu7oznga
       get-tsconfig: 4.7.2
       is-glob: 4.0.3
       minimatch: 3.1.2
