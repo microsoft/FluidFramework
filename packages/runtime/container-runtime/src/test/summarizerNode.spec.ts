@@ -242,6 +242,52 @@ describe("Runtime", () => {
 					rootNode.clearSummary();
 					rootNode.startSummary(12, logger, 0); // This is 0 since we did not "ack" the latest summary
 				});
+
+				it("Should succeed startSummary with the right sequence number", async () => {
+					createRoot();
+					rootNode.startSummary(11, logger, 0);
+					await rootNode.summarize(false);
+					rootNode.completeSummary("test-handle", true /* validateSummary */);
+					// Refreshing should be necessary for startSummary to occur
+					await rootNode.refreshLatestSummary("test-handle", 11);
+					const result = rootNode.startSummary(12, logger, 11);
+					assert.strictEqual(result.invalidNodes, 0, "startSummary have succeeded");
+				});
+
+				it("Should fail startSummary when missing refresh", async () => {
+					createRoot();
+					rootNode.startSummary(11, logger, 0);
+					await rootNode.summarize(false);
+					rootNode.completeSummary("test-handle", true /* validateSummary */);
+
+					// Failing to refresh the root node should generate failing summaries
+					const result = rootNode.startSummary(12, logger, 11);
+					assert.strictEqual(
+						result.invalidNodes,
+						1,
+						"startSummary fails due to no refresh",
+					);
+					assert.deepEqual(
+						result.mismatchNumbers,
+						new Set(["11-0"]),
+						"startSummary have succeeded",
+					);
+				});
+
+				it("Should fail startSummary with the wrong sequence number", async () => {
+					createRoot();
+					rootNode.startSummary(11, logger, 0);
+					await rootNode.summarize(false);
+					rootNode.completeSummary("test-handle", true /* validateSummary */);
+					await rootNode.refreshLatestSummary("test-handle", 11);
+					const result = rootNode.startSummary(12, logger, 0); // 0 is wrong here (so we can get invalid results)
+					assert.strictEqual(result.invalidNodes, 1, "expected failure wrong ref seq");
+					assert.deepEqual(
+						result.mismatchNumbers,
+						new Set(["0-11"]),
+						"startSummary have succeeded",
+					);
+				});
 			});
 
 			describe("Validate Summary", () => {

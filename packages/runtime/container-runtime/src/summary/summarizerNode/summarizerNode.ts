@@ -126,11 +126,8 @@ export class SummarizerNode implements IRootSummarizerNode {
 		let invalidNodes = 0;
 		const sequenceNumberMismatchKeySet = new Set<string>();
 
-		const nodeLatestSummaryRefSeqNum = this._latestSummary?.referenceSequenceNumber;
-		if (
-			nodeLatestSummaryRefSeqNum !== undefined &&
-			latestSummaryRefSeqNum !== nodeLatestSummaryRefSeqNum
-		) {
+		const nodeLatestSummaryRefSeqNum = this._latestSummary?.referenceSequenceNumber ?? 0;
+		if (latestSummaryRefSeqNum !== nodeLatestSummaryRefSeqNum) {
 			invalidNodes++;
 			sequenceNumberMismatchKeySet.add(
 				`${latestSummaryRefSeqNum}-${nodeLatestSummaryRefSeqNum}`,
