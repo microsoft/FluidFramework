@@ -1311,7 +1311,9 @@ function newCrossFieldManager<T>(
 			addDependency: boolean,
 		) => {
 			if (addDependency) {
-				// TODO: Can we assert only a single field has a dependency on this key?
+				// We assume that if there is already an entry for this ID it is because
+				// a field handler has called compose on the same node multiple times.
+				// In this case we only want to update the latest version, so we overwrite the dependency.
 				setInCrossFieldMap(getDependents(target), revision, id, count, currentFieldKey);
 			}
 			return getFirstFromCrossFieldMap(getMap(target), revision, id, count);
