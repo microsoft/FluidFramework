@@ -162,7 +162,10 @@ async function fetchWithLocationRedirectionHandling<T>(
 				throw error;
 			}
 
-			odspUrlParts.siteUrl = error.redirectUrl.split("/_api/")[0];
+			const newSiteDomain = new URL(error.redirectUrl).origin;
+			const oldSiteDomain = new URL(odspUrlParts.siteUrl).origin;
+
+			odspUrlParts.siteUrl = odspUrlParts.siteUrl.replace(oldSiteDomain, newSiteDomain);
 		}
 	}
 }
