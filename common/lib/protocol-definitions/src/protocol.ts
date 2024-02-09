@@ -332,7 +332,7 @@ export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMe
 
 /**
  * Common interface between incoming and outgoing signals.
- * @public
+ * @internal
  */
 export interface ISignalMessageBase {
 	/**
@@ -378,11 +378,8 @@ export interface ISignalMessage extends ISignalMessageBase {
  * Interface for signals sent by clients to the server when submit_signals_v2 is enabled.
  * @internal
  */
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface ISentSignalMessage extends ISignalMessageBase {
-	/**
-	 * When specified, the signal is only sent to the provided client id
-	 */
-	targetClientId?: string;
 }
 
 /**

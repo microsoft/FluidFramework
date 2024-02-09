@@ -274,7 +274,6 @@ export interface IQuorumProposalsEvents {
 
 // @internal
 export interface ISentSignalMessage extends ISignalMessageBase {
-    targetClientId?: string;
 }
 
 // @public
@@ -345,7 +344,7 @@ export interface ISignalMessage extends ISignalMessageBase {
     clientId: string | null;
 }
 
-// @public
+// @internal
 export interface ISignalMessageBase {
     clientConnectionNumber?: number;
     content: unknown;
