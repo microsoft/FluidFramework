@@ -11,14 +11,13 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
-	"type": "module",
+	"type": "commonjs",
 	"main": "dist/index.js",
-	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:esnext": "tsc-multi --config ../../../../common/build/build-common/tsc-multi.esm.json",
+		"build:esnext": "tsc",
 		"check:are-the-types-wrong": "attw --pack",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
@@ -31,8 +30,7 @@
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
 		"test:mocha": "mocha --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup",
-		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "tsc"
+		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
 	},
 	"c8": {
 		"all": true,
@@ -64,7 +62,7 @@
 		"best-random": "^1.0.0",
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1",
-		"use-resize-observer": "^7.0.0"
+		"use-resize-observer": "^9.1.0"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
@@ -86,7 +84,6 @@
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"tsc-multi": "^1.1.0",
 		"typescript": "~5.1.6"
 	},
 	"fluid": {
