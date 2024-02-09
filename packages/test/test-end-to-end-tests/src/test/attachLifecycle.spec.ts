@@ -38,14 +38,10 @@ const testConfigs = generatePairwiseOptions({
 	ddsSaveAfterAttach: [true, false],
 });
 
-describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider, apis) => {
+describeCompat.only("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedString } = apis.dds;
 	before(function () {
 		const provider = getTestObjectProvider();
-		// TODO: Re-enable after cross version compat bugs are fixed - ADO:6978
-		if (provider.type === "TestObjectProviderWithVersionedLoad") {
-			this.skip();
-		}
 		switch (provider.driver.type) {
 			case "local":
 			case "tinylicious":
