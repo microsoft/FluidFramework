@@ -152,9 +152,11 @@ export class MockContainerRuntimeFactory {
     pushMessage(msg: Partial<ISequencedDocumentMessage>): void;
     // (undocumented)
     readonly quorum: MockQuorumClients;
+    // (undocumented)
+    removeContainerRuntime(containerRuntime: MockContainerRuntime): void;
     protected readonly runtimeOptions: Required<IMockContainerRuntimeOptions>;
     // (undocumented)
-    protected readonly runtimes: MockContainerRuntime[];
+    protected readonly runtimes: Set<MockContainerRuntime>;
     // (undocumented)
     sequenceNumber: number;
     // (undocumented)
