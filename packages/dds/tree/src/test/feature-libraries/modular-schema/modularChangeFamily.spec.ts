@@ -1155,7 +1155,7 @@ describe("ModularChangeFamily", () => {
 			assert.deepEqual(withBuilds, expected);
 		});
 
-		describe("attemps to add relevant builds that are missing from the input", () => {
+		describe("attempts to add relevant builds that are missing from the input", () => {
 			it("adds the missing build if the detached node is available", () => {
 				const input: ModularChangeset = {
 					fieldChanges: new Map([]),
