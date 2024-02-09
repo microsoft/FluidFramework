@@ -675,23 +675,21 @@ export class CollabSpacesRuntime
 		const row = this.reverseMap.getRowIndex(rowId);
 		const col = this.reverseMap.getColIndex(colId);
 
-		if (row !== undefined) {
-			assert(
-				this.areEqualUuid(this.matrix.getCell(row, 0) as unknown as uuidType, rowId),
-				"channel's rowId mismatch",
-			);
-		} else {
+		if (row === undefined) {
 			return undefined;
 		}
+		assert(
+			this.areEqualUuid(this.matrix.getCell(row, 0) as unknown as uuidType, rowId),
+			"channel's rowId mismatch",
+		);
 
-		if (col !== undefined) {
-			assert(
-				this.areEqualUuid(this.matrix.getCell(0, col) as unknown as uuidType, colId),
-				"channel's colId mismatch",
-			);
-		} else {
+		if (col === undefined) {
 			return undefined;
 		}
+		assert(
+			this.areEqualUuid(this.matrix.getCell(0, col) as unknown as uuidType, colId),
+			"channel's colId mismatch",
+		);
 		return { row, col, iteration };
 	}
 
@@ -740,7 +738,6 @@ export class CollabSpacesRuntime
 		}
 
 		const { row, col, iteration } = mapping;
-
 		let savedValue = this.matrix.getCell(row, col);
 
 		// If channel is no longer associated with a cell, can't do much!

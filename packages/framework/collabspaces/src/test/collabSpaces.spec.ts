@@ -870,6 +870,146 @@ describe("Temporal Collab Spaces", () => {
 			]);
 		});
 	});
+
+	type Op = (cp: IEfficientMatrix) => Promise<unknown>;
+
+	// collaborate on a cell through collab channel
+	const collabFn: Op = async (cp: IEfficientMatrix) => {
+		// Cell might be undefined. If so, we can't really collab on it.
+		// Do some number of iterations to find some cell to collab, otherwise bail out.
+		for (let it = 0; it < 10; it++) {
+			const row = randNotInclusive(cp.rowCount);
+			const col = randNotInclusive(cp.colCount);
+			const value = await cp.getCellAsync(row, col);
+			if (value !== undefined) {
+				const channel = (await cp.getCellChannel(row, col)) as ISharedCounter;
+				channel.increment(rand(40));
+				break;
+			}
+		}
+	};
+
+	// Overwrite cell value
+	const overwriteCellFn: Op = async (cp: IEfficientMatrix) => {
+		const row = randNotInclusive(cp.rowCount);
+		const col = randNotInclusive(cp.colCount);
+		cp.setCell(row, col, {
+			value: rand(1000),
+			type: CounterFactory.Type,
+		});
+	};
+
+	// write undefined into cell
+	const overwriteCellUndefinedFn: Op = async (cp: IEfficientMatrix) => {
+		const row = randNotInclusive(cp.rowCount);
+		const col = randNotInclusive(cp.colCount);
+		cp.setCell(row, col, undefined);
+	};
+
+	// Syncronize containers and validate they all have exactly same state
+	const synchronizeAndValidateContainerFn = async () => {
+		await provider.ensureSynchronized();
+		ensureSameSize();
+
+		const cp0 = collabSpaces[0];
+		const rowCount = cp0.rowCount;
+		const colCount = cp0.colCount;
+		for (let row = 0; row < rowCount; row++) {
+			for (let col = 0; col < colCount; col++) {
+				const value = await cp0.getCellAsync(row, col);
+				await ensureSameValues(row, col, value?.value);
+			}
+		}
+	};
+
+	const addContainerInstanceFn: Op = async () => {
+		await waitForSummary();
+		await addContainerInstance();
+	};
+
+	const insertColsFn: Op = async (cp: IEfficientMatrix) => {
+		cp.insertCols(rand(cp.colCount), 1 + rand(3));
+	};
+
+	const insertRossFn: Op = async (cp: IEfficientMatrix) => {
+		cp.insertRows(rand(cp.rowCount), 1 + rand(3));
+	};
+
+	const removeColsFn: Op = async (cp: IEfficientMatrix) => {
+		const pos = randNotInclusive(cp.colCount);
+		// delete at most 1/3 of the matrix
+		const del = Math.max(randNotInclusive(cp.colCount - pos), Math.round(cp.colCount / 3));
+		cp.removeCols(pos, del);
+	};
+
+	const removeRowsFn: Op = async (cp: IEfficientMatrix) => {
+		const pos = randNotInclusive(cp.rowCount);
+		// delete at most 1/3 of the matrix
+		const del = Math.max(randNotInclusive(cp.rowCount - pos), Math.round(cp.rowCount / 3));
+		cp.removeRows(pos, del);
+	};
+
+	async function stressTest(operations: [number, Op][]) {
+		await initialize();
+
+		let priorityMax = 0;
+		for (const [pri] of operations) {
+			priorityMax += pri;
+		}
+
+		// Do 1000 operations
+		for (let step = 1; step <= 1000; step++) {
+			// Do operations in accordance with their probabilities
+			let opPriority = randNotInclusive(priorityMax);
+			for (let index = 0; ; ) {
+				opPriority -= operations[index][0];
+				if (opPriority < 0) {
+					const op = operations[index][1];
+					const cp = collabSpaces[randNotInclusive(collabSpaces.length)];
+					await op(cp);
+					break;
+				}
+			}
+			if (step % 1000 === 0) {
+				await synchronizeAndValidateContainerFn();
+			}
+		}
+	}
+
+	it("Editing stress test", async () => {
+		await stressTest([
+			[100, collabFn],
+			[20, overwriteCellFn],
+			[20, overwriteCellUndefinedFn],
+			[10, addContainerInstanceFn],
+		]);
+	});
+
+	it("Structure stress test", async () => {
+		await stressTest([
+			[20, collabFn],
+			[10, overwriteCellFn],
+			[10, overwriteCellUndefinedFn],
+			[10, addContainerInstanceFn],
+			[20, insertColsFn],
+			[20, insertRossFn],
+			[10, removeColsFn],
+			[10, removeRowsFn],
+		]);
+	});
+
+	it("General Stress test", async () => {
+		await stressTest([
+			[100, collabFn],
+			[20, overwriteCellFn],
+			[20, overwriteCellUndefinedFn],
+			[10, addContainerInstanceFn],
+			[10, insertColsFn],
+			[10, insertRossFn],
+			[5, removeColsFn],
+			[5, removeRowsFn],
+		]);
+	});
 });
 
 /* eslint-enable @typescript-eslint/no-non-null-assertion */
