@@ -4,7 +4,7 @@
  */
 
 import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
-import { compareArrays } from "@fluidframework/core-utils";
+import { compareArrays } from "../../index.js";
 
 const a4 = Array.from({ length: 4 }).fill(0);
 const a1024 = Array.from({ length: 1024 }).fill(0);

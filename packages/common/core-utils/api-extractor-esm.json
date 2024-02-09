@@ -1,5 +1,12 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
 	"extends": "../../../common/build/build-common/api-extractor-base-esm.json",
-	"mainEntryPointFilePath": "<projectFolder>/dist/esm/index.d.ts"
+	"mainEntryPointFilePath": "<projectFolder>/dist/esm/index.d.ts",
+	"dtsRollup": {
+		"enabled": true,
+		"alphaTrimmedFilePath": "<projectFolder>/lib/esm/<unscopedPackageName>-alpha.d.ts",
+		"betaTrimmedFilePath": "<projectFolder>/lib/esm/<unscopedPackageName>-beta.d.ts",
+		"publicTrimmedFilePath": "<projectFolder>/lib/esm/<unscopedPackageName>-public.d.ts",
+		"untrimmedFilePath": "<projectFolder>/lib/esm/<unscopedPackageName>-untrimmed.d.ts"
+	}
 }

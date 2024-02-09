@@ -9,5 +9,6 @@ const getFluidTestMochaConfig = require("@fluidframework/mocha-test-setup/mochar
 
 const packageDir = __dirname;
 const config = getFluidTestMochaConfig(packageDir);
-config.spec = "dist/test";
+// Ideally we would test the ESM output, but the tests need to be updated to work with ESM (mostly sinon)
+config.spec = "dist/commonjs/test";
 module.exports = config;

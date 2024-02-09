@@ -4,7 +4,7 @@
  */
 
 import { strict } from "node:assert";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "../index.js";
 
 describe("Assert", () => {
 	it("Validate Shortcode Format", async () => {

@@ -25,8 +25,6 @@
 			}
 		}
 	},
-	"main": "./dist/commonjs/index.js",
-	"types": "./dist/commonjs/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --local",
@@ -37,8 +35,7 @@
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
-		"build:esnext": "tshy",
-		"build:test": "tsc --project ./src/test/tsconfig.json",
+		"build:esnext": "tshy && npm run format",
 		"check:are-the-types-wrong": "attw --pack",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
@@ -55,7 +52,6 @@
 		"test:coverage": "c8 npm test",
 		"test:mocha": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "tshy",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
@@ -64,7 +60,7 @@
 		"cache-dir": "nyc/.cache",
 		"exclude": [
 			"src/test/**/*.*ts",
-			"dist/test/**/*.*js"
+			"dist/*/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
@@ -116,6 +112,16 @@
 					"api-extractor:esnext"
 				],
 				"script": false
+			},
+			"api-extractor:commonjs": {
+				"dependsOn": [
+					"build:esnext"
+				]
+			},
+			"check:release-tags": {
+				"dependsOn": [
+					"build:esnext"
+				]
 			}
 		}
 	},
@@ -123,10 +129,15 @@
 		"exports": {
 			"./package.json": "./package.json",
 			".": "./src/index.ts"
-		}
+		},
+		"exclude": [
+			"src/test/**/*"
+		]
 	},
 	"typeValidation": {
 		"disabled": true,
 		"broken": {}
-	}
+	},
+	"main": "./dist/commonjs/index.js",
+	"types": "./dist/commonjs/index.d.ts"
 }

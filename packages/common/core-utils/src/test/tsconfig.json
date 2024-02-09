@@ -1,6 +1,7 @@
 {
 	"extends": [
 		"../../../../../common/build/build-common/tsconfig.node16.json",
+		"../../tsconfig.json",
 	],
 	"include": ["./**/*"],
 	"references": [
@@ -10,7 +11,7 @@
 	],
 	"compilerOptions": {
 		"rootDir": "./",
-		"outDir": "../../lib/test",
+		"outDir": "../../dist/esm/test",
 		"types": ["mocha", "node"],
 	},
 }
