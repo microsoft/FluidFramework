@@ -38,7 +38,7 @@ const testConfigs = generatePairwiseOptions({
 	ddsSaveAfterAttach: [true, false],
 });
 
-describeCompat.only("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider, apis) => {
+describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedString } = apis.dds;
 	before(function () {
 		const provider = getTestObjectProvider();
