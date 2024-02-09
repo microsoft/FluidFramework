@@ -86,8 +86,7 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 			httpXHROverride: fetchHttpXHROverride,
 		};
 
-		this.sessionID = uuidv4();
-		this.continuityID = this.getOrCreateContinuityID();
+		this.generateIdentifiers();
 
 		// NOTE: this doesn't really use environment variables at runtime.
 		// The dotenv-webpack plugin for webpack does a search-and-replace for `process.env.<variable-name>`
@@ -131,6 +130,10 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 
 		return continuityID;
 	}
+	private generateIdentifiers(): void {
+		this.sessionID = uuidv4();
+		this.continuityID = this.getOrCreateContinuityID();
+	}
 
 	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#ITelemetryBaseLogger.send}
@@ -142,13 +145,17 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 		if (!optIn) {
 			localStorage.removeItem(this.CONTINUITY_ID_KEY);
 			// Reset identifiers, ensuring any subsequent telemetry will have fresh identifiers if the user opts in again.
-			this.continuityID = uuidv4();
-			this.sessionID = uuidv4();
+			this.continuityID = undefined;
+			this.sessionID = undefined;
 			return;
 		}
 
 		if (!this.enabled) {
 			return;
+		}
+
+		if ((!this.sessionID || this.continuityID) && optIn) {
+			this.generateIdentifiers();
 		}
 
 		// Note: the calls that the 1DS SDK makes to external endpoints might fail if the last part of the eventName is not uppercase
