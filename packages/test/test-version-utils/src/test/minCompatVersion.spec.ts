@@ -8,6 +8,7 @@ import { CompatKind } from "../../compatOptions.cjs";
 import { isCompatVersionBelowMinVersion } from "../compatConfig.js";
 import { pkgVersion } from "../packageVersion.js";
 import { getRequestedVersion } from "../versionUtils.js";
+import { testBaseVersion } from "../baseVersion.js";
 
 describe("Minimum Compat Version", () => {
 	const latestVersion = pkgVersion;
@@ -41,9 +42,9 @@ describe("Minimum Compat Version", () => {
 					compatVersion: -i,
 				}),
 				true,
-				`N-${i} is not lower than min version: ${getRequestedVersion(
-					latestVersion,
-					latestVersion,
+				`N-${i} is not lower than min version. ${getRequestedVersion(
+					testBaseVersion(-i),
+					-i,
 				)}`,
 			);
 		});
