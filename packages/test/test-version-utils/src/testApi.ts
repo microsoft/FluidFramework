@@ -13,8 +13,6 @@ import { Loader } from "@fluidframework/container-loader";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 
 // Data Runtime API
-import * as ink from "@fluid-experimental/ink";
-import { Ink } from "@fluid-experimental/ink";
 import * as cell from "@fluidframework/cell";
 import { SharedCell } from "@fluidframework/cell";
 import * as counter from "@fluidframework/counter";
@@ -58,7 +56,6 @@ const packageList = [
 	"@fluidframework/container-runtime",
 	"@fluidframework/cell",
 	"@fluidframework/counter",
-	"@fluid-experimental/ink",
 	"@fluidframework/map",
 	"@fluidframework/matrix",
 	"@fluidframework/ordered-collection",
@@ -136,7 +133,6 @@ export const DataRuntimeApi = {
 	dds: {
 		SharedCell,
 		SharedCounter,
-		Ink,
 		SharedDirectory,
 		SharedMap,
 		SharedMatrix,
@@ -157,7 +153,6 @@ export const DataRuntimeApi = {
 	packages: {
 		cell,
 		counter,
-		ink,
 		map,
 		matrix,
 		orderedCollection,
@@ -224,7 +219,6 @@ async function loadDataRuntime(baseVersion: string, requested?: number | string)
 			cell,
 			counter,
 			matrix,
-			ink,
 			orderedCollection,
 			registerCollection,
 			sequenceDeprecated,
@@ -236,7 +230,6 @@ async function loadDataRuntime(baseVersion: string, requested?: number | string)
 			loadPackage(modulePath, "@fluidframework/cell"),
 			loadPackage(modulePath, "@fluidframework/counter"),
 			loadPackage(modulePath, "@fluidframework/matrix"),
-			loadPackage(modulePath, "@fluid-experimental/ink"),
 			loadPackage(modulePath, "@fluidframework/ordered-collection"),
 			loadPackage(modulePath, "@fluidframework/register-collection"),
 			loadPackage(
@@ -248,7 +241,6 @@ async function loadDataRuntime(baseVersion: string, requested?: number | string)
 		]);
 		const { SharedCell } = cell;
 		const { SharedCounter } = counter;
-		const { Ink } = ink;
 		const { SharedDirectory, SharedMap } = map;
 		const { SharedMatrix } = matrix;
 		const { ConsensusQueue } = orderedCollection;
@@ -265,7 +257,6 @@ async function loadDataRuntime(baseVersion: string, requested?: number | string)
 			dds: {
 				SharedCell,
 				SharedCounter,
-				Ink,
 				SharedDirectory,
 				SharedMap,
 				SharedMatrix,
@@ -280,7 +271,6 @@ async function loadDataRuntime(baseVersion: string, requested?: number | string)
 				cell,
 				counter,
 				matrix,
-				ink,
 				orderedCollection,
 				registerCollection,
 				sequenceDeprecated,

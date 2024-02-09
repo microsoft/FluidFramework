@@ -74,7 +74,6 @@
 	},
 	"dependencies": {
 		"@fluid-experimental/attributor": "workspace:~",
-		"@fluid-experimental/ink": "workspace:~",
 		"@fluid-experimental/sequence-deprecated": "workspace:~",
 		"@fluid-experimental/tree": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",

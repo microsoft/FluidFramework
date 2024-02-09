@@ -60,7 +60,6 @@
 	},
 	"dependencies": {
 		"@fluid-experimental/attributor": "workspace:~",
-		"@fluid-experimental/ink": "workspace:~",
 		"@fluid-experimental/sequence-deprecated": "workspace:~",
 		"@fluid-private/test-drivers": "workspace:~",
 		"@fluid-tools/version-tools": "^0.29.0",

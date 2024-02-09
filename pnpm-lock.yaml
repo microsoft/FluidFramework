@@ -10365,7 +10365,6 @@ importers:
   packages/test/test-end-to-end-tests:
     specifiers:
       '@fluid-experimental/attributor': workspace:~
-      '@fluid-experimental/ink': workspace:~
       '@fluid-experimental/sequence-deprecated': workspace:~
       '@fluid-experimental/tree': workspace:~
       '@fluid-internal/client-utils': workspace:~
@@ -10435,7 +10434,6 @@ importers:
       uuid: ^9.0.0
     dependencies:
       '@fluid-experimental/attributor': link:../../framework/attributor
-      '@fluid-experimental/ink': link:../../dds/ink
       '@fluid-experimental/sequence-deprecated': link:../../../experimental/dds/sequence-deprecated
       '@fluid-experimental/tree': link:../../../experimental/dds/tree
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -10738,7 +10736,6 @@ importers:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
       '@fluid-experimental/attributor': workspace:~
-      '@fluid-experimental/ink': workspace:~
       '@fluid-experimental/sequence-deprecated': workspace:~
       '@fluid-private/test-drivers': workspace:~
       '@fluid-tools/build-cli': ^0.29.0
@@ -10795,7 +10792,6 @@ importers:
       webpack-cli: ^4.9.2
     dependencies:
       '@fluid-experimental/attributor': link:../../framework/attributor
-      '@fluid-experimental/ink': link:../../dds/ink
       '@fluid-experimental/sequence-deprecated': link:../../../experimental/dds/sequence-deprecated
       '@fluid-private/test-drivers': link:../test-drivers
       '@fluid-tools/version-tools': 0.29.0

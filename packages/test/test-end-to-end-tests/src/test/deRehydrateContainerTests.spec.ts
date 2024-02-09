@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 import * as semver from "semver";
-import type { Ink } from "@fluid-experimental/ink";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import {
@@ -128,7 +127,6 @@ describeCompat(
 			SharedCounter,
 			SharedString,
 			SharedCell,
-			Ink,
 			ConsensusQueue,
 			ConsensusRegisterCollection,
 			SparseMatrix,
@@ -184,7 +182,6 @@ describeCompat(
 		const sharedDirectoryId = "sd1Key";
 		const sharedCellId = "scell1Key";
 		const sharedMatrixId = "smatrix1Key";
-		const sharedInkId = "sink1Key";
 		const sparseMatrixId = "sparsematrixKey";
 		const sharedCounterId = "sharedcounterKey";
 
@@ -210,7 +207,6 @@ describeCompat(
 				[crcId, ConsensusRegisterCollection.getFactory()],
 				[sharedDirectoryId, SharedDirectory.getFactory()],
 				[sharedCellId, SharedCell.getFactory()],
-				[sharedInkId, Ink.getFactory()],
 				[sharedMatrixId, SharedMatrix.getFactory()],
 				[cocId, ConsensusQueue.getFactory()],
 				[sparseMatrixId, SparseMatrix.getFactory()],
@@ -421,7 +417,6 @@ describeCompat(
 					);
 				const coc =
 					await defaultDataStore.getSharedObject<ConsensusOrderedCollection>(cocId);
-				const ink = await defaultDataStore.getSharedObject<Ink>(sharedInkId);
 				const sharedMatrix =
 					await defaultDataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
 				const sparseMatrix =
@@ -441,7 +436,6 @@ describeCompat(
 				);
 				assert.strictEqual(crc.id, crcId, "CRC should exist!!");
 				assert.strictEqual(coc.id, cocId, "COC should exist!!");
-				assert.strictEqual(ink.id, sharedInkId, "Shared ink should exist!!");
 				assert.strictEqual(sharedMatrix.id, sharedMatrixId, "Shared matrix should exist!!");
 				assert.strictEqual(sparseMatrix.id, sparseMatrixId, "Sparse matrix should exist!!");
 			});
@@ -475,7 +469,6 @@ describeCompat(
 					);
 				const coc =
 					await defaultDataStore.getSharedObject<ConsensusOrderedCollection>(cocId);
-				const ink = await defaultDataStore.getSharedObject<Ink>(sharedInkId);
 				const sharedMatrix =
 					await defaultDataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
 				const sparseMatrix =
@@ -495,7 +488,6 @@ describeCompat(
 				);
 				assert.strictEqual(crc.id, crcId, "CRC should exist!!");
 				assert.strictEqual(coc.id, cocId, "COC should exist!!");
-				assert.strictEqual(ink.id, sharedInkId, "Shared ink should exist!!");
 				assert.strictEqual(sharedMatrix.id, sharedMatrixId, "Shared matrix should exist!!");
 				assert.strictEqual(sparseMatrix.id, sparseMatrixId, "Sparse matrix should exist!!");
 			});
@@ -528,7 +520,6 @@ describeCompat(
 					);
 				const coc =
 					await defaultDataStore.getSharedObject<ConsensusOrderedCollection>(cocId);
-				const ink = await defaultDataStore.getSharedObject<Ink>(sharedInkId);
 				const sharedMatrix =
 					await defaultDataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
 				const sparseMatrix =
@@ -548,7 +539,6 @@ describeCompat(
 				);
 				assert.strictEqual(crc.id, crcId, "CRC should exist!!");
 				assert.strictEqual(coc.id, cocId, "COC should exist!!");
-				assert.strictEqual(ink.id, sharedInkId, "Shared ink should exist!!");
 				assert.strictEqual(sharedMatrix.id, sharedMatrixId, "Shared matrix should exist!!");
 				assert.strictEqual(sparseMatrix.id, sparseMatrixId, "Sparse matrix should exist!!");
 			});
