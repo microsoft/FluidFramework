@@ -957,16 +957,9 @@ export function mixinStashedClient<
 	const generatorFactory: () => AsyncGenerator<TOperation | StashClient, TState> = () => {
 		const baseGenerator = model.generatorFactory();
 		return async (state): Promise<TOperation | StashClient | typeof done> => {
-			const baseOp = baseGenerator(state);
 			if (!state.isDetached) {
-				if (state.stashedClient === undefined) {
-					return {
-						type: "stashClient",
-						clientId: makeFriendlyClientId(state.random, state.clients.length),
-					};
-				}
 				if (
-					state.stashedClient &&
+					state.stashedClient !== undefined &&
 					state.stashedClient.client.containerRuntime.pendingMessages.length > 0 &&
 					state.random.bool(0.5)
 				) {
@@ -975,13 +968,23 @@ export function mixinStashedClient<
 						clientId: state.stashedClient.client.dataStoreRuntime.clientId,
 					};
 				}
+				if (state.stashedClient === undefined) {
+					return {
+						type: "stashClient",
+						clientId: `stashed-${makeFriendlyClientId(
+							state.random,
+							state.clients.length,
+						)}`,
+					};
+				}
 			}
-			return baseOp;
+			return baseGenerator(state);
 		};
 	};
 
 	const reducer: AsyncReducer<TOperation | StashClient, TState> = async (state, operation) => {
 		if (operation.type === "stashClient") {
+			assert(state.stashedClient === undefined, "only 1 stashed client allowed");
 			const summaries = captureClientSummaries(
 				state.containerRuntimeFactory,
 				state.summarizerClient,
@@ -995,7 +998,7 @@ export function mixinStashedClient<
 			);
 			const savedOps: ISequencedDocumentMessage[] = [];
 			client.dataStoreRuntime.createDeltaConnection().attach({
-				applyStashedOp: () => undefined,
+				applyStashedOp: () => {},
 				process: (msg) => savedOps.push(msg),
 				reSubmit: () => {},
 				setConnectionState: () => {},
@@ -1012,44 +1015,38 @@ export function mixinStashedClient<
 		}
 		if (operation.type === "stashClientDone") {
 			assert(state.stashedClient);
-			const pendingMessages = [
-				...state.stashedClient.client.containerRuntime.pendingMessages,
-			];
-
-			state.containerRuntimeFactory.processSomeMessages(
-				state.random.integer(0, pendingMessages.length - 1),
-			);
-			state.containerRuntimeFactory.clearOutstandingClientMessages(
-				state.stashedClient.client.dataStoreRuntime.clientId,
-			);
-			state.containerRuntimeFactory.processAllMessages();
-
+			state.stashedClient.client.containerRuntime.flush();
+			const pendingMessages =
+				state.stashedClient.client.containerRuntime.pendingMessages.splice(0);
+			state.stashedClient.client.containerRuntime.connected = false;
 			state.containerRuntimeFactory.removeContainerRuntime(
 				state.stashedClient.client.containerRuntime,
 			);
-			const client = await loadClientFromSummaries(
+			const newClient = await loadClientFromSummaries(
 				state.containerRuntimeFactory,
 				state.stashedClient.summaries,
 				model.factory,
 				state.stashedClient.client.dataStoreRuntime.clientId,
 				options,
 			);
-			client.containerRuntime.connected = false;
 
 			for (const savedOp of state.stashedClient.savedOps) {
-				if (savedOp.clientId === client.dataStoreRuntime.clientId) {
-					await client.containerRuntime.applyStashedOp(savedOp.contents);
+				if (savedOp.clientId === newClient.dataStoreRuntime.clientId) {
+					await newClient.containerRuntime.applyStashedOp(savedOp.contents);
 				}
-				client.containerRuntime.process(savedOp);
+				newClient.containerRuntime.process(savedOp);
 
 				while (
 					pendingMessages.length > 0 &&
 					pendingMessages[0].referenceSequenceNumber === savedOp.sequenceNumber
 				) {
-					await client.containerRuntime.applyStashedOp(pendingMessages.shift()?.content);
+					await newClient.containerRuntime.applyStashedOp(
+						pendingMessages.shift()?.content,
+					);
 				}
 			}
-			client.containerRuntime.connected = true;
+			newClient.containerRuntime.connected = false;
+			newClient.containerRuntime.connected = true;
 			return {
 				...state,
 				stashedClient: undefined,
@@ -1059,7 +1056,7 @@ export function mixinStashedClient<
 							c.dataStoreRuntime.clientId !==
 							state.stashedClient?.client.dataStoreRuntime.clientId,
 					),
-					client,
+					newClient,
 				],
 			};
 		}
