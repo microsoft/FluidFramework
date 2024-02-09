@@ -1422,7 +1422,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * When closing a container, hosts have the option to stash this pending local state somewhere to be reapplied
 	 * later (to avoid data loss).
 	 * If a host then loads a container using that stashed state, this function is called for each stashed op, and is expected to:
-	 * 	Update this DDS to reflect that state locally, and submit the op to do that.
+	 * Update this DDS to reflect that state locally, and submit the op to do that.
 	 *
 	 * @param content - op to apply locally.
 	 */
