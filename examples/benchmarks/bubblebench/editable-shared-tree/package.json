@@ -11,8 +11,8 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
-  "type": "module",
-  "main": "dist/index.js",
+	"type": "module",
+	"main": "dist/index.js",
 	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
 	"scripts": {
