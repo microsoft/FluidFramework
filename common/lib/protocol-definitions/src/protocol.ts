@@ -346,7 +346,7 @@ export interface ISignalMessageBase {
 	type?: string;
 
 	/**
-	 * Counts the number of signals sent by the client
+	 * Counts the number of signals sent by the client that submitted the message.
 	 */
 	clientConnectionNumber?: number;
 
@@ -356,7 +356,7 @@ export interface ISignalMessageBase {
 	referenceSequenceNumber?: number;
 
 	/**
-	 * When specified, the signal has only been sent to the provided client id
+	 * The client ID of the sole receiver of the signal message, when specified.
 	 */
 	targetClientId?: string;
 }
@@ -375,7 +375,7 @@ export interface ISignalMessage extends ISignalMessageBase {
 }
 
 /**
- * Interface for signals sent by clients to the server when submit_signals_v2 is enabled.
+ * Interface for signals sent by clients to the server.
  * @internal
  */
 export type ISentSignalMessage = ISignalMessageBase;
