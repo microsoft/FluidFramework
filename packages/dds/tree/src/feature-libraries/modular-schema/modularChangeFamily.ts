@@ -1204,7 +1204,7 @@ function newComposeTable(): ComposeTable {
 
 interface ComposeTable extends CrossFieldTable<FieldChange> {
 	/**
-	 * Maps from an input changeset for a field (from change1 if it has one) to the context for that field.
+	 * Maps from an input changeset for a field (from change1 if it has one, from change2 otherwise) to the context for that field.
 	 */
 	fieldToContext: Map<FieldChange, ComposeFieldContext>;
 
