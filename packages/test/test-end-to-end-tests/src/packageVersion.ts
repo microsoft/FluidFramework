@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluid-private/test-end-to-end-tests";
-export const pkgVersion = "2.0.0-rc.1.0.2";
+export const pkgVersion = "2.0.0-rc.1.0.3";
