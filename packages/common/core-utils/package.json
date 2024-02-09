@@ -11,21 +11,22 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
+	"type": "module",
 	"exports": {
+		"./package.json": "./package.json",
 		".": {
 			"import": {
-				"types": "./lib/index.d.mts",
-				"default": "./lib/index.mjs"
+				"types": "./dist/esm/index.d.ts",
+				"default": "./dist/esm/index.js"
 			},
 			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
+				"types": "./dist/commonjs/index.d.ts",
+				"default": "./dist/commonjs/index.js"
 			}
 		}
 	},
-	"main": "dist/index.js",
-	"module": "lib/index.mjs",
-	"types": "dist/index.d.ts",
+	"main": "./dist/commonjs/index.js",
+	"types": "./dist/commonjs/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --local",
@@ -36,7 +37,7 @@
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
-		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
+		"build:esnext": "tshy",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
@@ -54,7 +55,7 @@
 		"test:coverage": "c8 npm test",
 		"test:mocha": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "tsc",
+		"tsc": "tshy",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
@@ -116,6 +117,12 @@
 				],
 				"script": false
 			}
+		}
+	},
+	"tshy": {
+		"exports": {
+			"./package.json": "./package.json",
+			".": "./src/index.ts"
 		}
 	},
 	"typeValidation": {

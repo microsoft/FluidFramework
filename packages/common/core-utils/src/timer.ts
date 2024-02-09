@@ -190,7 +190,7 @@ export class Timer implements ITimer {
 			timeout: setLongTimeout(
 				() => this.handler(),
 				duration,
-				(timer: number) => {
+				(timer: ReturnType<typeof setTimeout>) => {
 					if (this.runningState !== undefined) {
 						this.runningState.timeout = timer;
 					}
