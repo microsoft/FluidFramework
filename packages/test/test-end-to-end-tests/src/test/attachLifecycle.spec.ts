@@ -6,7 +6,6 @@ import { strict as assert } from "assert";
 
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import {
-	createLoader,
 	ITestFluidObject,
 	timeoutPromise,
 	getContainerEntryPointBackCompat,
@@ -71,16 +70,7 @@ describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider
 
 			// act code block
 			{
-				const initLoader = createLoader(
-					[
-						[
-							provider.defaultCodeDetails,
-							provider.createFluidEntryPoint(containerConfig),
-						],
-					],
-					provider.documentServiceFactory,
-					provider.urlResolver,
-				);
+				const initLoader = provider.makeTestLoader(containerConfig);
 
 				const initContainer = await initLoader.createDetachedContainer(
 					provider.defaultCodeDetails,
@@ -188,16 +178,7 @@ describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider
 
 			// validation code block
 			{
-				const validationLoader = createLoader(
-					[
-						[
-							provider.defaultCodeDetails,
-							provider.createFluidEntryPoint(containerConfig),
-						],
-					],
-					provider.documentServiceFactory,
-					provider.urlResolver,
-				);
+				const validationLoader = provider.makeTestLoader(containerConfig);
 				const validationContainer = await validationLoader.resolve({
 					url: await provider.driver.createContainerUrl(
 						provider.documentId,
