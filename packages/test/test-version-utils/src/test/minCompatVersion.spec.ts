@@ -4,17 +4,13 @@
  */
 
 import { strict as assert } from "assert";
-import { execSync } from "child_process";
 import { CompatKind } from "../../compatOptions.cjs";
 import { isCompatVersionBelowMinVersion } from "../compatConfig.js";
+import { pkgVersion } from "../packageVersion.js";
+import { getRequestedVersion } from "../versionUtils.js";
 
 describe("Minimum Compat Version", () => {
-	const versionFromPackageJson = JSON.parse(
-		execSync(`pnpm flub info --json`, {
-			encoding: "utf-8",
-		}),
-	);
-	const latestVersion = versionFromPackageJson["@fluidframework/container-loader"];
+	const latestVersion = pkgVersion;
 
 	it("bad min compat string", () => {
 		const invalidString = "invalid string";
@@ -45,7 +41,10 @@ describe("Minimum Compat Version", () => {
 					compatVersion: -i,
 				}),
 				true,
-				`N-${i} is not lower than min version`,
+				`N-${i} is not lower than min version: ${getRequestedVersion(
+					latestVersion,
+					latestVersion,
+				)}`,
 			);
 		});
 	}
