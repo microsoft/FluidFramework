@@ -5,17 +5,16 @@
 
 import { AppInsightsCore, type IExtendedConfiguration } from "@microsoft/1ds-core-js";
 import { PostChannel, type IChannelConfiguration, type IXHROverride } from "@microsoft/1ds-post-js";
-import { type ITelemetryBaseLogger, type ITelemetryBaseEvent } from "@fluid-internal/devtools-view";
+import {
+	type ITelemetryBaseLogger,
+	type ITelemetryBaseEvent,
+	TelemetryConfigurationManager,
+} from "@fluid-internal/devtools-view";
 import { type ITaggedTelemetryPropertyType } from "@fluidframework/core-interfaces";
 import { v4 as uuidv4 } from "uuid";
 import { formatDevtoolsScriptMessageForLogging } from "./Logging";
 
 const extensionVersion = chrome.runtime.getManifest().version;
-
-/**
- * Key for the local storage entry that stores the usage telemetry opt-in setting.
- */
-const telemetryOptInKey: string = "fluid:devtools:telemetry:optIn";
 
 const fetchHttpXHROverride: IXHROverride = {
 	sendPOST: (payload, oncomplete, sync) => {
@@ -79,6 +78,7 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 	private sessionID?: string;
 	private continuityID?: string;
 	private readonly CONTINUITY_ID_KEY = "Fluid.Devtools.ContinuityId";
+	private readonly telemetryConfig = new TelemetryConfigurationManager();
 
 	public constructor() {
 		const channelConfig: IChannelConfiguration = {
@@ -136,10 +136,10 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 	 * {@inheritDoc @fluidframework/core-interfaces#ITelemetryBaseLogger.send}
 	 */
 	public send(event: ITelemetryBaseEvent): void {
-		const optIn = localStorage.getItem(telemetryOptInKey);
+		const optIn = this.telemetryConfig.isTelemetryOptedIn();
 
 		// Clear localStorage and reset identifiers if the user opts out
-		if (optIn !== null && optIn !== "true") {
+		if (!optIn) {
 			localStorage.removeItem(this.CONTINUITY_ID_KEY);
 			// Reset identifiers, ensuring any subsequent telemetry will have fresh identifiers if the user opts in again.
 			this.continuityID = uuidv4();
