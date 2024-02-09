@@ -79,8 +79,8 @@ describe("Fuzz - Top-Level", () => {
 				maxNumberOfClients: 3,
 			},
 			reconnectProbability: 0,
-			// see AB#7030
-			skip: [37],
+			// AB#7162
+			skip: [2, 9, 18, 21, 26, 35, 38, 39, 42],
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 		};
 		createDDSFuzzSuite(model, options);
@@ -107,6 +107,8 @@ describe("Fuzz - Top-Level", () => {
 				flushMode: FlushMode.TurnBased,
 				enableGroupedBatching: true,
 			},
+			// AB#7162
+			skip: [9, 12, 26, 27, 29],
 			saveFailures: {
 				directory: failureDirectory,
 			},

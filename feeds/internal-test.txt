@@ -68,7 +68,7 @@ fluid-framework
 @fluidframework/merge-tree
 @fluidframework/matrix
 @fluidframework/map
-@fluidframework/ink
+@fluid-experimental/ink
 @fluidframework/counter
 @fluidframework/cell
 @fluidframework/driver-definitions
