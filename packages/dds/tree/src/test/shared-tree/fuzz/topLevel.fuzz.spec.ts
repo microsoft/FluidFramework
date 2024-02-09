@@ -80,7 +80,7 @@ describe("Fuzz - Top-Level", () => {
 			},
 			reconnectProbability: 0,
 			// AB#7162
-			skip: [2, 9, 11, 18, 19, 23, 26, 35, 38, 39, 42],
+			skip: [2, 9, 18, 21, 26, 35, 38, 39, 42],
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 		};
 		createDDSFuzzSuite(model, options);
@@ -108,7 +108,7 @@ describe("Fuzz - Top-Level", () => {
 				enableGroupedBatching: true,
 			},
 			// AB#7162
-			skip: [9, 12, 21, 26, 27, 29],
+			skip: [9, 12, 26, 27, 29],
 			saveFailures: {
 				directory: failureDirectory,
 			},
