@@ -48,8 +48,6 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.29.0",
 		"@fluidframework/eslint-config-fluid": "^3.3.0",
-		"@fluidframework/test-tools": "^1.0.195075",
-		"@fluidframework/test-utils": "workspace:~",
 		"@types/node": "^18.19.0",
 		"@types/react": "^17.0.44",
 		"@types/react-dom": "^17.0.18",

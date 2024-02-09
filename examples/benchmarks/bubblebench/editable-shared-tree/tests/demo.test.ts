@@ -9,7 +9,7 @@
 // If reporter configuration is deduplicated, then validation of it in every package can be removed, then support for TypeScript config files can be added,
 // then the config ported to TypeScript and expect-error can be removed.
 // @ts-expect-error This is implicitly typed as any due to above issue.
-import { globals } from "../jest.config";
+import { globals } from "../jest.config.cjs";
 
 describe("Bubblebench", () => {
 	/**

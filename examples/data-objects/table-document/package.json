@@ -70,7 +70,6 @@
 		"@fluidframework/eslint-config-fluid": "^3.3.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.39.1",
 		"@types/debug": "^4.1.5",
