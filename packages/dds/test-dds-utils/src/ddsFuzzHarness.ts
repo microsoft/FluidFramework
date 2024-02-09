@@ -322,15 +322,14 @@ export interface DDSFuzzSuiteOptions {
 	/**
 	 * Dictates simulation of edits made to a DDS while that DDS is detached.
 	 *
-	 * When enabled, the fuzz test starts with a single client generating edits. At some point in time (dictated by `attachProbability`),
+	 * When enabled, the fuzz test starts with a single client generating edits. After a certain number of ops (dictated by `numOpsBeforeAttach`),
 	 * an attach op will be generated, at which point:
 	 * - getAttachSummary will be invoked on this client
 	 * - The remaining clients (as dictated by {@link DDSFuzzSuiteOptions.numberOfClients}) will load from this summary and join the session
 	 *
 	 * This setup simulates application code initializing state in a data store before attaching it, e.g. running code to edit a DDS from
 	 * `DataObject.initializingFirstTime`.
-	 * Default: tests are run with this setting enabled, and each op during the warmup phase has a 20% chance to be
-	 * an attach op.
+	 * Default: tests are run with this setting enabled, with 5 ops being generated before an attach op.
 	 */
 	detachedStartOptions: {
 		numOpsBeforeAttach: number;
@@ -658,10 +657,8 @@ export function mixinAttach<
 			};
 			clientA.channel.connect(services);
 
-			// This is necessary to get all IdCreationRanges finalized before connecting further clients.
-			// The production codepath also finalizes ids before attaching. It's difficult for the mocks
-			// to be more direct about this as they don't directly manage any state related to attach
-			// (it's up to the user of the mocks to set them up how they want)
+			// Finalize all id creation ranges before serializing. The production codepath does this
+			// in ContainerRuntime.createSummary.
 			if (clientA.dataStoreRuntime.idCompressor !== undefined) {
 				const range = clientA.containerRuntime.getGeneratedIdRange();
 				if (range !== undefined) {
@@ -698,10 +695,8 @@ export function mixinAttach<
 		} else if (operation.type === "rehydrate") {
 			const clientA = state.clients[0];
 			assert.equal(state.clients.length, 1);
-			// This is necessary to get all IdCreationRanges finalized before connecting further clients.
-			// The production codepath also finalizes ids before attaching. It's difficult for the mocks
-			// to be more direct about this as they don't directly manage any state related to attach
-			// (it's up to the user of the mocks to set them up how they want)
+			// Finalize all id creation ranges before serializing. The production codepath does this
+			// in ContainerRuntime.createSummary.
 			if (clientA.dataStoreRuntime.idCompressor !== undefined) {
 				const range = clientA.containerRuntime.getGeneratedIdRange();
 				if (range !== undefined) {
