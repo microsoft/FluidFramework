@@ -120,6 +120,14 @@ describe("semver", () => {
 		it("v1 is semver, v2 is internal but smaller than v1", () => {
 			assert.throws(() => detectBumpType("2.1.0", "2.0.0-internal.3.0.0"));
 		});
+
+		it("v1 is internal, v2 is rc", () => {
+			assert.equal(detectBumpType("2.0.0-internal.8.0.1", "2.0.0-rc.1.0.0"), "major");
+		});
+
+		it("v1 is rc, v2 is rc", () => {
+			assert.equal(detectBumpType("2.0.0-rc.1.0.0", "2.0.0-rc.1.0.1"), "patch");
+		});
 	});
 
 	describe("internal version scheme ranges", () => {
