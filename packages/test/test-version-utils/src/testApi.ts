@@ -13,6 +13,7 @@ import { Loader } from "@fluidframework/container-loader";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 
 // Data Runtime API
+import * as agentScheduler from "@fluidframework/agent-scheduler";
 import * as cell from "@fluidframework/cell";
 import { SharedCell } from "@fluidframework/cell";
 import * as counter from "@fluidframework/counter";
@@ -67,6 +68,7 @@ const packageList = [
 	"@fluidframework/local-driver",
 	"@fluidframework/odsp-driver",
 	"@fluidframework/routerlicious-driver",
+	"@fluidframework/agent-scheduler",
 ];
 
 /**
@@ -164,6 +166,7 @@ export const DataRuntimeApi = {
 		registerCollection,
 		sequence,
 		sequenceDeprecated,
+		agentScheduler,
 	},
 };
 
@@ -228,6 +231,7 @@ async function loadDataRuntime(baseVersion: string, requested?: number | string)
 			orderedCollection,
 			registerCollection,
 			sequenceDeprecated,
+			agentScheduler,
 		] = await Promise.all([
 			loadPackage(modulePath, "@fluidframework/aqueduct"),
 			loadPackage(modulePath, "@fluidframework/test-utils"),
@@ -245,6 +249,7 @@ async function loadDataRuntime(baseVersion: string, requested?: number | string)
 					? "@fluid-experimental/sequence-deprecated"
 					: "@fluidframework/sequence",
 			),
+			loadPackage(modulePath, "@fluidframework/agent-scheduler"),
 		]);
 		const { SharedCell } = cell;
 		const { SharedCounter } = counter;
@@ -284,6 +289,7 @@ async function loadDataRuntime(baseVersion: string, requested?: number | string)
 				orderedCollection,
 				registerCollection,
 				sequenceDeprecated,
+				agentScheduler,
 			},
 		};
 		dataRuntimeCache.set(version, dataRuntime);
