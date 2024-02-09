@@ -49,6 +49,8 @@ import {
 	idAllocatorFromMaxId,
 	idAllocatorFromState,
 	Mutable,
+	populateNestedMap,
+	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../util/index.js";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
@@ -1006,6 +1008,107 @@ function* relevantRemovedRootsFromFields(
 		};
 		yield* handler.relevantRemovedRoots(tagChange(fieldChange.change, fieldRevision), delegate);
 	}
+}
+
+/**
+ * Adds any builds missing from the provided change that are relevant to the change.
+ * This function enforces that all relevant removed roots have a corresponding build.
+ *
+ * @param change - The change with potentially missing builds. Not mutated by this function.
+ * @param getDetachedNode - The function to retrieve a tree chunk from the corresponding detached node id.
+ * @param removedRoots - The set of removed roots that should be in memory for the given change to be applied.
+ * Can be retrieved by calling {@link relevantRemovedRoots}.
+ */
+export function addMissingBuilds(
+	change: TaggedChange<ModularChangeset>,
+	getDetachedNode: (id: DeltaDetachedNodeId) => TreeChunk | undefined,
+	removedRoots: Iterable<DeltaDetachedNodeId>,
+): ModularChangeset {
+	const builds: ChangeAtomIdMap<TreeChunk> = new Map();
+
+	for (const root of removedRoots) {
+		const node = getDetachedNode(root);
+
+		// if the detached node could not be found, it should exist in the original builds map
+		if (node === undefined) {
+			assert(change.change.builds !== undefined, "detached node should exist");
+			const original = tryGetFromNestedMap(change.change.builds, root.major, root.minor);
+			assert(original !== undefined, "detached node should exist");
+		} else {
+			setInNestedMap(builds, root.major, root.minor, node);
+		}
+	}
+
+	if (builds.size === 0) {
+		return change.change;
+	}
+
+	if (change.change.builds !== undefined) {
+		populateNestedMap(change.change.builds, builds, true);
+	}
+
+	const { fieldChanges, maxId, revisions, constraintViolationCount, destroys } = change.change;
+	return makeModularChangeset(
+		fieldChanges,
+		maxId,
+		revisions,
+		constraintViolationCount,
+		builds,
+		destroys,
+	);
+}
+
+/**
+ * Removes any builds from the provided change that are not relevant to the change.
+ * Calls {@link relevantRemovedRoots} to determine which builds are relevant.
+ *
+ * @param change - The change with potentially superfluous builds. Not mutated by this function.
+ * @param removedRoots - The set of removed roots that should be in memory for the given change to be applied.
+ * Can be retrieved by calling {@link relevantRemovedRoots}.
+ * @returns a {@link ModularChangeset} with only builds relevant to the change.
+ */
+export function filterSuperfluousBuilds(
+	change: TaggedChange<ModularChangeset>,
+	removedRoots: Iterable<DeltaDetachedNodeId>,
+): ModularChangeset {
+	const builds: ChangeAtomIdMap<TreeChunk> = new Map();
+	if (change.change.builds !== undefined) {
+		populateNestedMap(change.change.builds, builds, true);
+	}
+
+	const rootSets = new Map<RevisionTag | undefined, Set<number>>();
+	for (const { major, minor } of removedRoots) {
+		const rootsSet = getOrAddInMap(rootSets, major, new Set());
+		rootsSet.add(minor);
+	}
+
+	for (const [revision, innerMap] of builds.entries()) {
+		const rootSet = rootSets.get(revision);
+		if (rootSet !== undefined) {
+			for (const id of innerMap.keys()) {
+				if (!rootSet.has(id)) {
+					innerMap.delete(id);
+				}
+			}
+
+			if (innerMap.size === 0) {
+				builds.delete(revision);
+			}
+		} else {
+			// if this revision does not exist in the relevant removed roots, delete it from the builds
+			builds.delete(revision);
+		}
+	}
+
+	const { fieldChanges, maxId, revisions, constraintViolationCount, destroys } = change.change;
+	return makeModularChangeset(
+		fieldChanges,
+		maxId,
+		revisions,
+		constraintViolationCount,
+		builds.size > 0 ? builds : undefined,
+		destroys,
+	);
 }
 
 /**
