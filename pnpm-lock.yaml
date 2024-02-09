@@ -10817,6 +10817,7 @@ importers:
       '@fluid-private/test-drivers': workspace:~
       '@fluid-tools/build-cli': ^0.29.0
       '@fluid-tools/version-tools': ^0.29.0
+      '@fluidframework/agent-scheduler': workspace:~
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.29.0
@@ -10873,6 +10874,7 @@ importers:
       '@fluid-experimental/sequence-deprecated': link:../../../experimental/dds/sequence-deprecated
       '@fluid-private/test-drivers': link:../test-drivers
       '@fluid-tools/version-tools': 0.29.0
+      '@fluidframework/agent-scheduler': link:../../framework/agent-scheduler
       '@fluidframework/aqueduct': link:../../framework/aqueduct
       '@fluidframework/cell': link:../../dds/cell
       '@fluidframework/container-definitions': link:../../common/container-definitions
