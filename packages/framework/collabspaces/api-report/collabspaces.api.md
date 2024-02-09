@@ -24,7 +24,7 @@ export type ICollabChannel = IChannel & ICollabChannelCore;
 // @internal
 export interface ICollabChannelCore {
     // (undocumented)
-    readonly value: Serializable<unknown>;
+    readonly value: Exclude<Serializable<unknown>, undefined>;
 }
 
 // @internal (undocumented)
@@ -38,15 +38,15 @@ export interface IEfficientMatrix extends Omit<ISharedMatrix<MatrixExternalType>
     // (undocumented)
     destroyCellChannel(channel: ICollabChannelCore): boolean;
     // (undocumented)
-    getCell(row: number, col: number): MatrixItem<MatrixExternalType>;
+    getCell(row: number, col: number): CollabSpaceCellType;
     // (undocumented)
-    getCellAsync(row: number, col: number): Promise<MatrixItem<MatrixExternalType>>;
+    getCellAsync(row: number, col: number): Promise<CollabSpaceCellType>;
     // (undocumented)
     getCellChannel(row: number, col: number): Promise<ICollabChannelCore>;
     // (undocumented)
     saveChannelState(channel: ICollabChannelCore): any;
     // (undocumented)
-    setCell(rowArg: number, colArg: number, value: MatrixItem<MatrixExternalType>): any;
+    setCell(rowArg: number, colArg: number, value: CollabSpaceCellType): any;
 }
 
 // @internal
@@ -81,7 +81,7 @@ export interface MatrixExternalType {
     // (undocumented)
     type: string;
     // (undocumented)
-    value: Serializable<unknown>;
+    value: Exclude<Serializable<unknown>, undefined>;
 }
 
 // (No @packageDocumentation comment for this package)
