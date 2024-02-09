@@ -1162,9 +1162,8 @@ importers:
       react: ^17.0.1
       react-dom: ^17.0.1
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
-      use-resize-observer: ^7.0.0
+      use-resize-observer: ^9.1.0
     dependencies:
       '@fluid-experimental/tree': link:../../../../experimental/dds/tree
       '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
@@ -1175,7 +1174,7 @@ importers:
       best-random: 1.0.3
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
-      use-resize-observer: 7.1.0_sfoxds7t5ydpegc3knd667wn6m
+      use-resize-observer: 9.1.0_sfoxds7t5ydpegc3knd667wn6m
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.29.0_mhw3tufvtaceew37hrkkevjcli
@@ -1196,7 +1195,6 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
       typescript: 5.1.6
 
   examples/benchmarks/bubblebench/editable-shared-tree:
@@ -43955,12 +43953,11 @@ packages:
       react: 17.0.2
     dev: false
 
-  /use-resize-observer/7.1.0_sfoxds7t5ydpegc3knd667wn6m:
-    resolution: {integrity: sha512-6DGWOnZpjAGP/MtslGg7OunZptyueQduMi0i8DC5nVKXtJ8Bdt0wR/1tSxugFRndzYCi/jtD+SlNs5PK8ijvXQ==}
-    deprecated: This version was an accidental release, which should've been v8. Please see the release notes for possible breaking changes related to the polyfilled version.
+  /use-resize-observer/9.1.0_sfoxds7t5ydpegc3knd667wn6m:
+    resolution: {integrity: sha512-R25VqO9Wb3asSD4eqtcxk8sJalvIOYBqS8MNZlpDSQ4l4xMQxC/J7Id9HoTqPq8FwULIn0PVW+OAqF2dyYbjow==}
     peerDependencies:
-      react: '>=16.8.0 || 17.0.2'
-      react-dom: '>=16.8.0 || 17.0.2'
+      react: 16.8.0 - 18 || 17.0.2
+      react-dom: 16.8.0 - 18 || 17.0.2
     dependencies:
       '@juggle/resize-observer': 3.4.0
       react: 17.0.2
