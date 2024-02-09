@@ -93,7 +93,7 @@ export interface DDSFuzzSuiteOptions {
     defaultTestCount: number;
     detachedStartOptions: {
         numOpsBeforeAttach: number;
-        numRehydrateOps?: 0 | 1;
+        rehydrateDisabled?: true;
     };
     emitter: TypedEventEmitter<DDSFuzzHarnessEvents>;
     idCompressorFactory?: (summary?: SerializedIdCompressorWithNoSession) => IIdCompressor & IIdCompressorCore;
