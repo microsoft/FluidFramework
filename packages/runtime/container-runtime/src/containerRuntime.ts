@@ -3153,7 +3153,7 @@ export class ContainerRuntime
 			) {
 				summaryLogger.sendErrorEvent({
 					eventName: "LatestSummaryRefSeqNumMismatch",
-					...startSummaryResult,
+					details: startSummaryResult,
 				});
 
 				if (shouldValidatePreSummaryState) {
