@@ -79,8 +79,6 @@ describe("Fuzz - Top-Level", () => {
 				maxNumberOfClients: 3,
 			},
 			reconnectProbability: 0,
-			// see AB#7030
-			skip: [37],
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 		};
 		createDDSFuzzSuite(model, options);

@@ -20,7 +20,7 @@ describe("Bubblebench", () => {
 
 		it("The page loads and displays current FPS", async () => {
 			// Validate there is a button that can be clicked
-			await expect(page).toMatch("FPS", { timeout: 0 });
+			await expect(page).toMatchTextContent("FPS", { timeout: 0 });
 		}, 20000);
 	});
 });
