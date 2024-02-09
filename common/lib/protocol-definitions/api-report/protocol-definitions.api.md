@@ -343,7 +343,7 @@ export interface ISignalMessage extends ISignalMessageBase {
     clientId: string | null;
 }
 
-// @internal
+// @public
 export interface ISignalMessageBase {
     clientConnectionNumber?: number;
     content: unknown;

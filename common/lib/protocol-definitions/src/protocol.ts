@@ -332,7 +332,7 @@ export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMe
 
 /**
  * Common interface between incoming and outgoing signals.
- * @internal
+ * @public
  */
 export interface ISignalMessageBase {
 	/**
