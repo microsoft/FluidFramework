@@ -1264,7 +1264,6 @@ describe("ModularChangeFamily", () => {
 		it("tolerates missing relevant builds", () => {
 			const input: ModularChangeset = {
 				fieldChanges: new Map([]),
-				builds: new Map([]),
 			};
 
 			const expected: ModularChangeset = {
