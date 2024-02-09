@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseProperties } from "./index";
+import type { ITelemetryBaseProperties } from "./index";
 
 /**
  * Error types the Fluid Framework may report.

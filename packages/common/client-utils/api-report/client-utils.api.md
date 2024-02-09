@@ -7,7 +7,6 @@
 /// <reference types="node" />
 
 import { EventEmitter } from 'events';
-import { IDisposable } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IEventTransformer } from '@fluidframework/core-interfaces';
@@ -30,21 +29,6 @@ export const bufferToString: (blob: ArrayBufferLike, encoding: "utf8" | "utf-8" 
 export type EventEmitterEventType = EventEmitter extends {
     on(event: infer E, listener: any): any;
 } ? E : never;
-
-// @internal
-export class EventForwarder<TEvent = IEvent> extends TypedEventEmitter<TEvent> implements IDisposable {
-    constructor(source?: EventEmitter | IEventProvider<TEvent & IEvent>);
-    // (undocumented)
-    dispose(): void;
-    // (undocumented)
-    get disposed(): boolean;
-    // (undocumented)
-    protected forwardEvent(source: EventEmitter | IEventProvider<TEvent & IEvent>, ...events: string[]): void;
-    // (undocumented)
-    protected static isEmitterEvent(event: string): boolean;
-    // (undocumented)
-    protected unforwardEvent(source: EventEmitter | IEventProvider<TEvent & IEvent>, ...events: string[]): void;
-}
 
 // @internal
 export const fromBase64ToUtf8: (input: string) => string;
