@@ -78,6 +78,8 @@ export interface IMockContainerRuntimePendingMessage {
     content: any;
     // (undocumented)
     localOpMetadata: unknown;
+    // (undocumented)
+    referenceSequenceNumber: number;
 }
 
 // @internal
@@ -99,6 +101,8 @@ export class MockContainerRuntime {
     } | undefined);
     // (undocumented)
     protected addPendingMessage(content: any, localOpMetadata: unknown, clientSequenceNumber: number): void;
+    // (undocumented)
+    applyStashedOp(content: any): Promise<void>;
     // (undocumented)
     clientId: string;
     // (undocumented)
@@ -123,7 +127,7 @@ export class MockContainerRuntime {
         minimumSequenceNumber?: number | undefined;
     } | undefined;
     // (undocumented)
-    protected readonly pendingMessages: IMockContainerRuntimePendingMessage[];
+    readonly pendingMessages: IMockContainerRuntimePendingMessage[];
     // (undocumented)
     process(message: ISequencedDocumentMessage): void;
     rebase(): void;
@@ -190,6 +194,8 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 // @alpha
 export class MockDeltaConnection implements IDeltaConnection {
     constructor(submitFn: (messageContent: any, localOpMetadata: unknown) => number, dirtyFn: () => void);
+    // (undocumented)
+    applyStashedOp(content: any): unknown;
     // (undocumented)
     attach(handler: IDeltaHandler): void;
     // (undocumented)
@@ -395,7 +401,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // @deprecated (undocumented)
     addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
     // (undocumented)
-    applyStashedOp(content: any): Promise<void>;
+    applyStashedOp(content: any): Promise<unknown>;
     // (undocumented)
     attachGraph(): void;
     // (undocumented)

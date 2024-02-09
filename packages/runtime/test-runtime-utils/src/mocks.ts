@@ -88,6 +88,10 @@ export class MockDeltaConnection implements IDeltaConnection {
 	public reSubmit(content: any, localOpMetadata: unknown) {
 		this.handler?.reSubmit(content, localOpMetadata);
 	}
+
+	public applyStashedOp(content: any): unknown {
+		return this.handler?.applyStashedOp(content);
+	}
 }
 
 // Represents the structure of a pending message stored by the MockContainerRuntime.
@@ -96,6 +100,7 @@ export class MockDeltaConnection implements IDeltaConnection {
  */
 export interface IMockContainerRuntimePendingMessage {
 	content: any;
+	referenceSequenceNumber: number;
 	clientSequenceNumber: number;
 	localOpMetadata: unknown;
 }
@@ -160,7 +165,7 @@ export class MockContainerRuntime {
 	 * @deprecated use the associated datastore to create the delta connection
 	 */
 	protected readonly deltaConnections: MockDeltaConnection[] = [];
-	protected readonly pendingMessages: IMockContainerRuntimePendingMessage[] = [];
+	public readonly pendingMessages: IMockContainerRuntimePendingMessage[] = [];
 	private readonly outbox: IInternalMockRuntimeMessage[] = [];
 	/**
 	 * The runtime options this instance is using. See {@link IMockContainerRuntimeOptions}.
@@ -293,6 +298,16 @@ export class MockContainerRuntime {
 		);
 	}
 
+	public async applyStashedOp(content: any) {
+		const localOpMetadata = await this.dataStoreRuntime.applyStashedOp(content);
+		this.pendingMessages.push({
+			clientSequenceNumber: this.clientSequenceNumber++,
+			content,
+			localOpMetadata,
+			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+		});
+	}
+
 	private submitInternal(message: IInternalMockRuntimeMessage, clientSequenceNumber: number) {
 		// This mimics the runtime behavior of the IdCompressor by generating an IdAllocationOp
 		// and sticking it in front of any op that might rely on that Id. It differs slightly in that
@@ -341,6 +356,7 @@ export class MockContainerRuntime {
 		clientSequenceNumber: number,
 	) {
 		const pendingMessage: IMockContainerRuntimePendingMessage = {
+			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 			content,
 			clientSequenceNumber,
 			localOpMetadata,
@@ -389,7 +405,7 @@ export class MockContainerRuntimeFactory {
 	 * each of the runtimes.
 	 */
 	protected messages: ISequencedDocumentMessage[] = [];
-	protected readonly runtimes: Set<MockContainerRuntime> = new Set<MockContainerRuntime>();
+	protected readonly runtimes: Set<MockContainerRuntime> = new Set();
 
 	/**
 	 * The container runtime options which will be provided to the all runtimes
@@ -900,7 +916,7 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public async applyStashedOp(content: any) {
-		return;
+		return this.deltaConnections.map((dc) => dc.applyStashedOp(content))[0];
 	}
 
 	public rollback?(message: any, localOpMetadata: unknown): void {

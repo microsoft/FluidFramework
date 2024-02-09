@@ -40,6 +40,7 @@ import {
 import { IChannelFactory, IChannelServices } from "@fluidframework/datastore-definitions";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { unreachableCase } from "@fluidframework/core-utils";
+import { ISummaryTree, type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { FuzzTestMinimizer, MinimizationTransform } from "./minification";
 
 /**
@@ -92,6 +93,14 @@ export interface BaseOperation {
 export interface ChangeConnectionState {
 	type: "changeConnectionState";
 	connected: boolean;
+}
+
+/**
+ * @internal
+ */
+export interface StashClient {
+	type: "stashClient" | "stashClientDone";
+	clientId: string;
 }
 
 /**
@@ -924,6 +933,149 @@ export function mixinClientSelection<
 	};
 }
 
+export function mixinStashedClient<
+	TChannelFactory extends IChannelFactory,
+	TOperation extends BaseOperation,
+	TState extends DDSFuzzTestState<TChannelFactory> &
+		Partial<
+			Record<
+				"stashedClient",
+				{
+					client: Client<TChannelFactory>;
+					summaries: {
+						summary: ISummaryTree;
+						idCompressorSummary: SerializedIdCompressorWithNoSession | undefined;
+					};
+					savedOps: ISequencedDocumentMessage[];
+				}
+			>
+		>,
+>(
+	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
+	options: DDSFuzzSuiteOptions,
+): DDSFuzzModel<TChannelFactory, TOperation | StashClient, TState> {
+	const generatorFactory: () => AsyncGenerator<TOperation | StashClient, TState> = () => {
+		const baseGenerator = model.generatorFactory();
+		return async (state): Promise<TOperation | StashClient | typeof done> => {
+			const baseOp = baseGenerator(state);
+			if (!state.isDetached) {
+				if (state.stashedClient === undefined) {
+					return {
+						type: "stashClient",
+						clientId: makeFriendlyClientId(state.random, state.clients.length),
+					};
+				}
+				if (
+					state.stashedClient &&
+					state.stashedClient.client.containerRuntime.pendingMessages.length > 0 &&
+					state.random.bool(0.5)
+				) {
+					return {
+						type: "stashClientDone",
+						clientId: state.stashedClient.client.dataStoreRuntime.clientId,
+					};
+				}
+			}
+			return baseOp;
+		};
+	};
+
+	const reducer: AsyncReducer<TOperation | StashClient, TState> = async (state, operation) => {
+		if (operation.type === "stashClient") {
+			const summaries = captureClientSummaries(
+				state.containerRuntimeFactory,
+				state.summarizerClient,
+			);
+			const client = await loadClientFromSummaries(
+				state.containerRuntimeFactory,
+				summaries,
+				model.factory,
+				(operation as StashClient).clientId,
+				options,
+			);
+			const savedOps: ISequencedDocumentMessage[] = [];
+			client.dataStoreRuntime.createDeltaConnection().attach({
+				applyStashedOp: () => undefined,
+				process: (msg) => savedOps.push(msg),
+				reSubmit: () => {},
+				setConnectionState: () => {},
+			});
+			return {
+				...state,
+				clients: [...state.clients, client],
+				stashedClient: {
+					summaries,
+					client,
+					savedOps,
+				},
+			};
+		}
+		if (operation.type === "stashClientDone") {
+			assert(state.stashedClient);
+			const pendingMessages = [
+				...state.stashedClient.client.containerRuntime.pendingMessages,
+			];
+
+			state.containerRuntimeFactory.processSomeMessages(
+				state.random.integer(0, pendingMessages.length - 1),
+			);
+			state.containerRuntimeFactory.clearOutstandingClientMessages(
+				state.stashedClient.client.dataStoreRuntime.clientId,
+			);
+			state.containerRuntimeFactory.processAllMessages();
+
+			state.containerRuntimeFactory.removeContainerRuntime(
+				state.stashedClient.client.containerRuntime,
+			);
+			const client = await loadClientFromSummaries(
+				state.containerRuntimeFactory,
+				state.stashedClient.summaries,
+				model.factory,
+				state.stashedClient.client.dataStoreRuntime.clientId,
+				options,
+			);
+			client.containerRuntime.connected = false;
+
+			for (const savedOp of state.stashedClient.savedOps) {
+				if (savedOp.clientId === client.dataStoreRuntime.clientId) {
+					await client.containerRuntime.applyStashedOp(savedOp.contents);
+				}
+				client.containerRuntime.process(savedOp);
+
+				while (
+					pendingMessages.length > 0 &&
+					pendingMessages[0].referenceSequenceNumber === savedOp.sequenceNumber
+				) {
+					await client.containerRuntime.applyStashedOp(pendingMessages.shift()?.content);
+				}
+			}
+			client.containerRuntime.connected = true;
+			return {
+				...state,
+				stashedClient: undefined,
+				clients: [
+					...state.clients.filter(
+						(c) =>
+							c.dataStoreRuntime.clientId !==
+							state.stashedClient?.client.dataStoreRuntime.clientId,
+					),
+					client,
+				],
+			};
+		}
+
+		return model.reducer(state, operation as TOperation);
+	};
+	return {
+		...model,
+		generatorFactory,
+		reducer,
+		minimizationTransforms: model.minimizationTransforms as MinimizationTransform<
+			TOperation | StashClient
+		>[],
+	};
+}
+
 /**
  * This modifies the value of "client" while callback is running, then restores it.
  * This is does instead of copying the state since the state object is mutable, and running callback might make changes to state (like add new members) which are lost if state is just copied.
@@ -993,6 +1145,22 @@ async function loadClient<TChannelFactory extends IChannelFactory>(
 	clientId: string,
 	options: Omit<DDSFuzzSuiteOptions, "only" | "skip">,
 ): Promise<Client<TChannelFactory>> {
+	return loadClientFromSummaries(
+		containerRuntimeFactory,
+		captureClientSummaries(containerRuntimeFactory, summarizerClient),
+		factory,
+		clientId,
+		options,
+	);
+}
+
+function captureClientSummaries<TChannelFactory extends IChannelFactory>(
+	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
+	summarizerClient: Client<TChannelFactory>,
+): {
+	summary: ISummaryTree;
+	idCompressorSummary: SerializedIdCompressorWithNoSession | undefined;
+} {
 	containerRuntimeFactory.synchronizeIdCompressors();
 
 	const { summary } = summarizerClient.channel.getAttachSummary();
@@ -1000,20 +1168,32 @@ async function loadClient<TChannelFactory extends IChannelFactory>(
 	if (summarizerClient.dataStoreRuntime.idCompressor !== undefined) {
 		idCompressorSummary = summarizerClient.dataStoreRuntime.idCompressor.serialize(false);
 	}
+	return { summary, idCompressorSummary };
+}
 
+async function loadClientFromSummaries<TChannelFactory extends IChannelFactory>(
+	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
+	summaries: {
+		summary: ISummaryTree;
+		idCompressorSummary: SerializedIdCompressorWithNoSession | undefined;
+	},
+	factory: TChannelFactory,
+	clientId: string,
+	options: Omit<DDSFuzzSuiteOptions, "only" | "skip">,
+): Promise<Client<TChannelFactory>> {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({
 		clientId,
 		idCompressor:
-			options.idCompressorFactory === undefined
+			options.idCompressorFactory === undefined || summaries.idCompressorSummary === undefined
 				? undefined
-				: options.idCompressorFactory(idCompressorSummary),
+				: options.idCompressorFactory(summaries.idCompressorSummary),
 	});
 	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime, {
 		minimumSequenceNumber: containerRuntimeFactory.sequenceNumber,
 	});
 	const services: IChannelServices = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
-		objectStorage: MockStorage.createFromSummary(summary),
+		objectStorage: MockStorage.createFromSummary(summaries.summary),
 	};
 
 	const channel = (await factory.load(
@@ -1276,13 +1456,22 @@ const getFullModel = <TChannelFactory extends IChannelFactory, TOperation extend
 	options: DDSFuzzSuiteOptions,
 ): DDSFuzzModel<
 	TChannelFactory,
-	TOperation | AddClient | Attach | ChangeConnectionState | TriggerRebase | Synchronize
+	| TOperation
+	| AddClient
+	| Attach
+	| ChangeConnectionState
+	| TriggerRebase
+	| Synchronize
+	| StashClient
 > =>
 	mixinAttach(
 		mixinSynchronization(
 			mixinNewClient(
-				mixinClientSelection(
-					mixinReconnect(mixinRebase(ddsModel, options), options),
+				mixinStashedClient(
+					mixinClientSelection(
+						mixinReconnect(mixinRebase(ddsModel, options), options),
+						options,
+					),
 					options,
 				),
 				options,
