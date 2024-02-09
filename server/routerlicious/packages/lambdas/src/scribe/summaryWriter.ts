@@ -24,6 +24,10 @@ import {
 	getQuorumTreeEntries,
 	generateServiceProtocolEntries,
 	mergeAppAndProtocolTree,
+	mergeArrays,
+	dedupeSortedArray,
+	mergeKArrays,
+	convertSortedNumberArrayToRanges,
 } from "@fluidframework/server-services-client";
 import {
 	ICollection,
@@ -216,7 +220,6 @@ export class SummaryWriter implements ISummaryWriter {
 						checkpoint.protocolState.sequenceNumber,
 						op.sequenceNumber + 1,
 						pendingOps,
-						this.lastSummaryMessages,
 					),
 				"writeClientSummary_generateLogtailEntries",
 				this.lumberProperties,
@@ -432,7 +435,6 @@ export class SummaryWriter implements ISummaryWriter {
 						currentProtocolHead,
 						op.sequenceNumber + 1,
 						pendingOps,
-						this.lastSummaryMessages,
 					),
 				"writeServiceSummary_generateLogtailEntries",
 				this.lumberProperties,
@@ -589,7 +591,6 @@ export class SummaryWriter implements ISummaryWriter {
 		gt: number,
 		lt: number,
 		pending: ISequencedOperationMessage[],
-		lastSummaryMessages: ISequencedDocumentMessage[] | undefined,
 	): Promise<ITreeEntry[]> {
 		let to = lt;
 		const from = gt;
@@ -599,100 +600,20 @@ export class SummaryWriter implements ISummaryWriter {
 			Lumberjack.warning(`Limiting logtail length`, this.lumberProperties);
 			to = from + this.maxLogtailLength + 1;
 		}
+
 		const logTail = await this.getLogTail(from, to, pending);
 
-		// Some ops would be missing if we switch cluster during routing.
-		// We need to load these missing ops from the last summary.
-		const missingOps = await this.getMissingOpsFromLastSummaryLogtail(
-			from,
-			to,
-			logTail,
-			lastSummaryMessages,
-		);
-		const fullLogTail = missingOps
-			? missingOps.concat(logTail).sort((op1, op2) => op1.sequenceNumber - op2.sequenceNumber)
-			: logTail;
-
-		// Check the missing operations in the fullLogTail. We would treat
-		// isLogtailEntriesMatch as true when the fullLogTail's length is extact same as the requested range.
-		// As well as the first SN of fullLogTail - 1 is equal to from,
-		// and the last SN of fullLogTail + 1 is equal to to.
-		// For example, from: 2, to: 5, fullLogTail with SN [3, 4] is the true scenario.
-		const isLogtailEntriesMatch =
-			fullLogTail &&
-			fullLogTail.length > 0 &&
-			fullLogTail.length === to - from - 1 &&
-			from === fullLogTail[0].sequenceNumber - 1 &&
-			to === fullLogTail[fullLogTail.length - 1].sequenceNumber + 1;
-		if (!isLogtailEntriesMatch) {
-			const missingOpsSequenceNumbers: number[] = [];
-			const fullLogTailSequenceNumbersSet = new Set();
-			fullLogTail?.map((op) => fullLogTailSequenceNumbersSet.add(op.sequenceNumber));
-			for (let i = from + 1; i < to; i++) {
-				if (!fullLogTailSequenceNumbersSet.has(i)) {
-					missingOpsSequenceNumbers.push(i);
-				}
-			}
-			Lumberjack.info(
-				`FullLogTail missing ops from: ${from} exclusive, to: ${to} exclusive with sequence numbers: ${JSON.stringify(
-					missingOpsSequenceNumbers,
-				)}`,
-				this.lumberProperties,
-			);
-		}
-
-		const logTailEntries: ITreeEntry[] = [
+		return [
 			{
 				mode: FileMode.File,
 				path: "logTail",
 				type: TreeEntry.Blob,
 				value: {
-					contents: JSON.stringify(fullLogTail),
+					contents: JSON.stringify(logTail),
 					encoding: "utf-8",
 				},
 			},
 		];
-
-		if (fullLogTail.length > 0) {
-			Lumberjack.info(
-				`FullLogTail of length ${fullLogTail.length} generated from seq no ${
-					fullLogTail[0].sequenceNumber
-				} to ${fullLogTail[fullLogTail.length - 1].sequenceNumber}`,
-				this.lumberProperties,
-			);
-		}
-
-		return logTailEntries;
-	}
-
-	private async getMissingOpsFromLastSummaryLogtail(
-		gt: number,
-		lt: number,
-		logTail: ISequencedDocumentMessage[],
-		lastSummaryMessages: ISequencedDocumentMessage[] | undefined,
-	): Promise<ISequencedDocumentMessage[] | undefined> {
-		if (lt - gt <= 1) {
-			return undefined;
-		}
-		const logtailSequenceNumbers = new Set();
-		logTail.forEach((ms) => logtailSequenceNumbers.add(ms.sequenceNumber));
-		const missingOps = lastSummaryMessages?.filter(
-			(ms) =>
-				!logtailSequenceNumbers.has(ms.sequenceNumber) &&
-				ms.sequenceNumber > gt &&
-				ms.sequenceNumber < lt,
-		);
-		const missingOpsSN: number[] = [];
-		missingOps?.forEach((op) => missingOpsSN.push(op.sequenceNumber));
-		if (missingOpsSN.length > 0) {
-			Lumberjack.info(
-				`Fetched ops gt: ${gt} exclusive, lt: ${lt} exclusive of last summary logtail: ${JSON.stringify(
-					missingOpsSN,
-				)}`,
-				this.lumberProperties,
-			);
-		}
-		return missingOps;
 	}
 
 	private async getLogTail(
@@ -702,32 +623,105 @@ export class SummaryWriter implements ISummaryWriter {
 	): Promise<ISequencedDocumentMessage[]> {
 		if (lt - gt <= 1) {
 			return [];
-		} else if (pending.length > 0) {
-			// Check for logtail ops in the unprocessed ops currently present in memory
-			const pendingOps = pending
+		}
+
+		// Define these for the finally block, these should be used as const
+		let logTailFromLastSummary: ISequencedDocumentMessage[] = [];
+		let logTailFromPending: ISequencedDocumentMessage[] = [];
+		let logtailFromMemory: ISequencedDocumentMessage[] = [];
+		let logtailGaps: number[][] = [];
+		let retrievedGaps: ISequencedDocumentMessage[][] = [];
+		let finalLogTail: ISequencedDocumentMessage[] = [];
+
+		try {
+			// Read from last summary logtail first, which is in memory
+			logTailFromLastSummary =
+				this.lastSummaryMessages?.filter(
+					(ms) => ms.sequenceNumber > gt && ms.sequenceNumber < lt,
+				) ?? [];
+
+			logTailFromPending = pending
 				.filter(
 					(op) => op.operation.sequenceNumber > gt && op.operation.sequenceNumber < lt,
 				)
 				.map((op) => op.operation);
-			if (
-				pendingOps.length > 0 &&
-				pendingOps[0].sequenceNumber === gt + 1 &&
-				pendingOps[pendingOps.length - 1].sequenceNumber === lt - 1
-			) {
-				Lumberjack.info(
-					`LogTail of length ${pendingOps.length} between ${gt + 1} and ${
-						lt - 1
-					} fetched from pending ops`,
-					this.lumberProperties,
-				);
-				return pendingOps;
+
+			logtailFromMemory = dedupeSortedArray(
+				mergeArrays(logTailFromLastSummary, logTailFromPending, (op) => op.sequenceNumber),
+				(op) => op.sequenceNumber,
+			);
+
+			logtailGaps = this.findMissingGapsInLogtail(logtailFromMemory, gt + 1, lt - 1);
+			if (logtailGaps.length === 0) {
+				return logtailFromMemory;
 			}
+
+			retrievedGaps = await Promise.all(
+				logtailGaps.map(async (gap) => {
+					return this.retrieveOps(gap[0] - 1, gap[1] + 1);
+				}),
+			);
+
+			const nonEmptyRetrievedGaps = retrievedGaps.filter((gap) => gap.length > 0);
+
+			if (nonEmptyRetrievedGaps.length === 0) {
+				return logtailFromMemory;
+			}
+
+			const minHeapComparator = (
+				a: ISequencedDocumentMessage,
+				b: ISequencedDocumentMessage,
+			) => {
+				if (a.sequenceNumber < b.sequenceNumber) {
+					return -1;
+				}
+				if (a.sequenceNumber > b.sequenceNumber) {
+					return 1;
+				}
+				return 0;
+			};
+			finalLogTail = dedupeSortedArray(
+				mergeKArrays<ISequencedDocumentMessage>(
+					[...nonEmptyRetrievedGaps, logtailFromMemory],
+					minHeapComparator,
+				),
+				(op) => op.sequenceNumber,
+			);
+			return finalLogTail;
+		} finally {
+			const logtailRangeFromLastSummary = convertSortedNumberArrayToRanges(
+				logTailFromLastSummary.map((op) => op.sequenceNumber),
+			);
+			const logtailRangeFromPending = convertSortedNumberArrayToRanges(
+				logTailFromPending.map((op) => op.sequenceNumber),
+			);
+			const logtailRangeFromMemory = convertSortedNumberArrayToRanges(
+				logtailFromMemory.map((op) => op.sequenceNumber),
+			);
+			const retrievedGapsRange = retrievedGaps.map((retrievedGap) =>
+				convertSortedNumberArrayToRanges(retrievedGap.map((op) => op.sequenceNumber)),
+			);
+			const finalLogtailRange = convertSortedNumberArrayToRanges(
+				finalLogTail.map((op) => op.sequenceNumber),
+			);
+			Lumberjack.info(
+				`LogTail of length ${finalLogTail.length} fetched from seq no ${gt} to ${lt}`,
+				{
+					...this.lumberProperties,
+					logtailRangeFromLastSummary,
+					logtailRangeFromPending,
+					logtailRangeFromMemory,
+					logtailGaps,
+					retrievedGapsRange,
+					finalLogtailRange,
+				},
+			);
 		}
+	}
 
-		let logTail: ISequencedDocumentMessage[] = [];
-
+	private async retrieveOps(gt: number, lt: number): Promise<ISequencedDocumentMessage[]> {
 		if (this.getDeltasViaAlfred) {
-			logTail = await this.deltaService.getDeltas(
+			return this.deltaService.getDeltas(
 				"",
 				this.tenantId,
 				this.documentId,
@@ -735,46 +729,45 @@ export class SummaryWriter implements ISummaryWriter {
 				lt,
 				"scribe",
 			);
-		} else {
-			const query = {
-				"documentId": this.documentId,
-				"tenantId": this.tenantId,
-				"operation.sequenceNumber": {
-					$gt: gt,
-					$lt: lt,
-				},
-			};
-
-			// Fetching ops from the local db
-			const logTailOpMessage = await this.opStorage.find(query, {
-				"operation.sequenceNumber": 1,
-			});
-			logTail = logTailOpMessage.map((log) => log.operation);
 		}
 
-		Lumberjack.info(
-			`LogTail of length ${logTail.length} fetched from seq no ${gt} to ${lt}`,
-			this.lumberProperties,
+		const query = {
+			"documentId": this.documentId,
+			"tenantId": this.tenantId,
+			"operation.sequenceNumber": {
+				$gt: gt,
+				$lt: lt,
+			},
+		};
+
+		// Fetching ops from the local db
+		const logTailOpMessage = await this.opStorage.find(query, {
+			"operation.sequenceNumber": 1,
+		});
+		return logTailOpMessage.map((log) => log.operation);
+	}
+
+	private findMissingGapsInLogtail(
+		existingTail: ISequencedDocumentMessage[],
+		fromInclusive: number,
+		toInclusive: number,
+	): number[][] {
+		const gaps: number[][] = [];
+		let next = fromInclusive;
+		const existingTailWithInRange = existingTail.filter(
+			(op) => op.sequenceNumber >= fromInclusive && op.sequenceNumber <= toInclusive,
 		);
-
-		// If the db is not updated with all logs yet, get them from checkpoint messages.
-		if (logTail.length !== lt - gt - 1) {
-			const nextSeq =
-				logTail.length === 0 ? gt : logTail[logTail.length - 1].sequenceNumber + 1;
-			for (const message of pending) {
-				if (
-					message.operation.sequenceNumber >= nextSeq &&
-					message.operation.sequenceNumber < lt
-				) {
-					logTail.push(message.operation);
-				}
+		for (const op of existingTailWithInRange) {
+			if (op.sequenceNumber > next) {
+				gaps.push([next, op.sequenceNumber - 1]);
 			}
-			Lumberjack.info(
-				`Populated logtail gaps. nextSeq: ${nextSeq} LogtailLength: ${logTail.length}`,
-				this.lumberProperties,
-			);
+			next = op.sequenceNumber + 1;
 		}
-		return logTail;
+
+		if (next <= toInclusive) {
+			gaps.push([next, toInclusive]);
+		}
+		return gaps;
 	}
 
 	// When 'includesProtocolTree' is set, client uploads two top level nodes: '.app' and '.protocol'.
