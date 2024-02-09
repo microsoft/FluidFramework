@@ -240,24 +240,18 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			expireAfterSeconds: redisConfig2.keyExpireAfterSeconds as number | undefined,
 		};
 
-		const redisClient: Redis.default | Redis.Cluster = redisConfig2.enableClustering
-			? new Redis.Cluster([{ port: redisConfig2.port, host: redisConfig2.host }], {
-					redisOptions: redisOptions2,
-					slotsRefreshTimeout: redisConfig2.slotsRefreshTimeout,
-					dnsLookup: (adr, callback) => callback(null, adr),
-					showFriendlyErrorStack: true,
-			  })
-			: new Redis.default(redisOptions2);
+		const redisClient: Redis.default | Redis.Cluster = utils.getRedisClient(
+			redisOptions2,
+			redisConfig2.slotsRefreshTimeout,
+			redisConfig2.enableClustering,
+		);
 		const clientManager = new services.ClientManager(redisClient, redisParams2);
 
-		const redisClientForJwtCache: Redis.default | Redis.Cluster = redisConfig2.enableClustering
-			? new Redis.Cluster([{ port: redisConfig2.port, host: redisConfig2.host }], {
-					redisOptions: redisOptions2,
-					slotsRefreshTimeout: redisConfig2.slotsRefreshTimeout,
-					dnsLookup: (adr, callback) => callback(null, adr),
-					showFriendlyErrorStack: true,
-			  })
-			: new Redis.default(redisOptions2);
+		const redisClientForJwtCache: Redis.default | Redis.Cluster = utils.getRedisClient(
+			redisOptions2,
+			redisConfig2.slotsRefreshTimeout,
+			redisConfig2.enableClustering,
+		);
 		const redisJwtCache = new services.RedisCache(redisClientForJwtCache);
 
 		// Database connection for global db if enabled
@@ -357,23 +351,11 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 				| undefined,
 		};
 
-		const redisClientForThrottling: Redis.default | Redis.Cluster =
-			redisConfigForThrottling.enableClustering
-				? new Redis.Cluster(
-						[
-							{
-								port: redisConfigForThrottling.port,
-								host: redisConfigForThrottling.host,
-							},
-						],
-						{
-							redisOptions: redisOptionsForThrottling,
-							slotsRefreshTimeout: redisConfigForThrottling.slotsRefreshTimeout,
-							dnsLookup: (adr, callback) => callback(null, adr),
-							showFriendlyErrorStack: true,
-						},
-				  )
-				: new Redis.default(redisOptionsForThrottling);
+		const redisClientForThrottling: Redis.default | Redis.Cluster = utils.getRedisClient(
+			redisOptionsForThrottling,
+			redisConfigForThrottling.slotsRefreshTimeout,
+			redisConfigForThrottling.enableClustering,
+		);
 
 		const redisThrottleAndUsageStorageManager =
 			new services.RedisThrottleAndUsageStorageManager(
@@ -567,16 +549,11 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 				};
 			}
 
-			const redisClientForLogging: Redis.default | Redis.Cluster =
-				redisConfig.enableClustering
-					? new Redis.Cluster([{ port: redisConfig.port, host: redisConfig.host }], {
-							redisOptions,
-							slotsRefreshTimeout: redisConfig.slotsRefreshTimeout,
-							dnsLookup: (adr, callback) => callback(null, adr),
-							showFriendlyErrorStack: true,
-					  })
-					: new Redis.default(redisOptions);
-
+			const redisClientForLogging: Redis.default | Redis.Cluster = utils.getRedisClient(
+				redisOptions,
+				redisConfig.slotsRefreshTimeout,
+				redisConfig.enableClustering,
+			);
 			redisCache = new services.RedisCache(redisClientForLogging);
 		}
 

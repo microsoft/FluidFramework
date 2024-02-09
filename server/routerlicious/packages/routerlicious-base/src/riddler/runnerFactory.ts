@@ -105,14 +105,11 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 				expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
 			};
 
-			const redisClient: Redis.default | Redis.Cluster = redisConfig.enableClustering
-				? new Redis.Cluster([{ port: redisConfig.port, host: redisConfig.host }], {
-						redisOptions,
-						slotsRefreshTimeout: redisConfig.slotsRefreshTimeout,
-						dnsLookup: (adr, callback) => callback(null, adr),
-						showFriendlyErrorStack: true,
-				  })
-				: new Redis.default(redisOptions);
+			const redisClient: Redis.default | Redis.Cluster = utils.getRedisClient(
+				redisOptions,
+				redisConfig.slotsRefreshTimeout,
+				redisConfig.enableClustering,
+			);
 
 			cache = new RedisCache(redisClient, redisParams);
 		}

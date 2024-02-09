@@ -7,7 +7,10 @@ import { EventEmitter } from "events";
 import * as http from "http";
 import * as util from "util";
 import * as core from "@fluidframework/server-services-core";
-import { getRedisClusterRetryStrategy } from "@fluidframework/server-services-utils";
+import {
+	getRedisClusterRetryStrategy,
+	getRedisClient,
+} from "@fluidframework/server-services-utils";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { clone } from "lodash";
 import * as Redis from "ioredis";
@@ -165,22 +168,17 @@ export function create(
 		};
 	}
 
-	const pub: Redis.default | Redis.Cluster = redisConfig.enableClustering
-		? new Redis.Cluster([{ port: redisConfig.port, host: redisConfig.host }], {
-				redisOptions: clone(options),
-				slotsRefreshTimeout: redisConfig.slotsRefreshTimeout,
-				dnsLookup: (adr, callback) => callback(null, adr),
-				showFriendlyErrorStack: true,
-		  })
-		: new Redis.default(clone(options));
-	const sub: Redis.default | Redis.Cluster = redisConfig.enableClustering
-		? new Redis.Cluster([{ port: redisConfig.port, host: redisConfig.host }], {
-				redisOptions: clone(options),
-				slotsRefreshTimeout: redisConfig.slotsRefreshTimeout,
-				dnsLookup: (adr, callback) => callback(null, adr),
-				showFriendlyErrorStack: true,
-		  })
-		: new Redis.default(clone(options));
+	const pub: Redis.default | Redis.Cluster = getRedisClient(
+		clone(options),
+		redisConfig.slotsRefreshTimeout,
+		redisConfig.enableClustering,
+	);
+
+	const sub: Redis.default | Redis.Cluster = getRedisClient(
+		clone(options),
+		redisConfig.slotsRefreshTimeout,
+		redisConfig.enableClustering,
+	);
 
 	pub.on("error", (err) => {
 		winston.error("Error with Redis pub connection: ", err);
