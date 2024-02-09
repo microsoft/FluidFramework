@@ -12,8 +12,10 @@ import {
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import {
+	IOdspResponse,
 	TokenFetchOptionsEx,
 	fetchHelper,
 	getWithRetryForTokenRefresh,
@@ -137,6 +139,34 @@ async function getRequestInformation(
 	return { url, requestInit };
 }
 
+async function fetchWithLocationRedirectionHandling<T>(
+	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
+	odspUrlParts: IOdspUrlParts,
+	logger: ITelemetryLoggerExt,
+	options: TokenFetchOptionsEx,
+	fileItem: FileItemLite,
+): Promise<IOdspResponse<Response>> {
+	for (;;) {
+		const { url, requestInit } = await getRequestInformation(
+			getToken,
+			odspUrlParts,
+			logger,
+			options,
+			fileItem,
+		);
+
+		try {
+			return await fetchHelper(url, requestInit);
+		} catch (error: any) {
+			if (error.errorType !== DriverErrorTypes.locationRedirection) {
+				throw error;
+			}
+
+			odspUrlParts.siteUrl = error.redirectUrl.split("/_api/")[0];
+		}
+	}
+}
+
 async function getFileLinkCore(
 	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
 	odspUrlParts: IOdspUrlParts,
@@ -154,32 +184,13 @@ async function getFileLinkCore(
 			const fileLink = await getWithRetryForTokenRefresh(async (options) => {
 				attempts++;
 
-				const { url, requestInit } = await getRequestInformation(
+				const response = await fetchWithLocationRedirectionHandling(
 					getToken,
 					odspUrlParts,
 					logger,
 					options,
 					fileItem,
 				);
-
-				let response = await fetchHelper(url, requestInit);
-
-				// Handle redirects by requesting new tokens & retrying the API call against the new site URL.
-				if (!response.content.ok && response.content.redirected) {
-					odspUrlParts.siteUrl = response.content.url.split("/_api/")[0];
-
-					const redirectedResponseInformation = await getRequestInformation(
-						getToken,
-						odspUrlParts,
-						logger,
-						options,
-						fileItem,
-					);
-					response = await fetchHelper(
-						redirectedResponseInformation.url,
-						redirectedResponseInformation.requestInit,
-					);
-				}
 
 				additionalProps = response.propsToLog;
 

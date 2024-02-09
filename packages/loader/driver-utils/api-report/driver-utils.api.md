@@ -347,6 +347,17 @@ export function readAndParse<T>(storage: Pick<IDocumentStorageService, "readBlob
 export function requestOps(get: (from: number, to: number, telemetryProps: ITelemetryProperties) => Promise<IDeltasFetchResult>, concurrency: number, fromTotal: number, toTotal: number | undefined, payloadSize: number, logger: ITelemetryLoggerExt, signal?: AbortSignal, scenarioName?: string): IStream<ISequencedDocumentMessage[]>;
 
 // @internal (undocumented)
+export class RequestRedirectionError extends LoggingError {
+    constructor(message: string, redirectUrl: string, props: DriverErrorTelemetryProps);
+    // (undocumented)
+    readonly canRetry = true;
+    // (undocumented)
+    readonly errorType: "locationRedirection";
+    // (undocumented)
+    readonly redirectUrl: string;
+}
+
+// @internal (undocumented)
 export class RetryableError<T extends string> extends NetworkErrorBasic<T> {
     constructor(message: string, errorType: T, props: DriverErrorTelemetryProps);
     // (undocumented)

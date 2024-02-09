@@ -22,6 +22,7 @@ export {
 	getRetryDelaySecondsFromError,
 	isOnline,
 	LocationRedirectionError,
+	RequestRedirectionError,
 	NetworkErrorBasic,
 	NonRetryableError,
 	OnlineStatus,
