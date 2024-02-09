@@ -651,6 +651,7 @@ export function mixinAttach<
 			state.isDetached = false;
 			assert.equal(state.clients.length, 1);
 			const clientA = state.clients[0];
+			clientA.dataStoreRuntime.local = false;
 			const services: IChannelServices = {
 				deltaConnection: clientA.dataStoreRuntime.createDeltaConnection(),
 				objectStorage: new MockStorage(),
@@ -1014,6 +1015,7 @@ function createDetachedClient<TChannelFactory extends IChannelFactory>(
 		idCompressor:
 			options.idCompressorFactory === undefined ? undefined : options.idCompressorFactory(),
 	});
+	dataStoreRuntime.local = true;
 	// Note: we re-use the clientId for the channel id here despite connecting all clients to the same channel:
 	// this isn't how it would work in a real scenario, but the mocks don't use the channel id for any message
 	// routing behavior and making all of the object ids consistent helps with debugging and writing more informative
@@ -1152,6 +1154,7 @@ export async function runTestForSeed<
 		options,
 	);
 	if (!startDetached) {
+		initialClient.dataStoreRuntime.local = false;
 		const services: IChannelServices = {
 			deltaConnection: initialClient.dataStoreRuntime.createDeltaConnection(),
 			objectStorage: new MockStorage(),
