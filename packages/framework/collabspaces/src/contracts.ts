@@ -88,10 +88,10 @@ export interface IEfficientMatrixTest {
 		col: number,
 	): Promise<{ channel?: ICollabChannelCore; channelId: string; rowId: string; colId: string }>;
 
-	getReverseMapsDebugInfo(): {
+	getReverseMapsDebugInfo(): Readonly<{
 		rowMap: { [id: string]: number };
 		colMap: { [id: string]: number };
-	};
+	}>;
 
-	getReverseMapCellDebugInfo(rowId: string, colId: string): { row: number; col: number };
+	getReverseMapCellDebugInfo(rowId: string, colId: string): Promise<{ row: number; col: number }>;
 }

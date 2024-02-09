@@ -59,19 +59,19 @@ export interface IEfficientMatrixTest {
         colId: string;
     }>;
     // (undocumented)
-    getReverseMapCellDebugInfo(rowId: string, colId: string): {
+    getReverseMapCellDebugInfo(rowId: string, colId: string): Promise<{
         row: number;
         col: number;
-    };
+    }>;
     // (undocumented)
-    getReverseMapsDebugInfo(): {
+    getReverseMapsDebugInfo(): Readonly<{
         rowMap: {
             [id: string]: number;
         };
         colMap: {
             [id: string]: number;
         };
-    };
+    }>;
     // (undocumented)
     isAttached: boolean;
 }

@@ -6,11 +6,11 @@
 export type ReverseMapType = "row" | "col";
 
 export interface IReverseMap {
-	getRowId(rowId: string): number | undefined;
-	getColId(colId: string): number | undefined;
+	getRowIndex(rowId: string): number | undefined;
+	getColIndex(colId: string): number | undefined;
 
-	getRowMap(): { [id: string]: number };
-	getColMap(): { [id: string]: number };
+	getRowMap(): Readonly<{ [id: string]: number }>;
+	getColMap(): Readonly<{ [id: string]: number }>;
 
 	removeCellsFromMap(type: ReverseMapType, start: number, count: number): void;
 
@@ -23,19 +23,19 @@ export class ReverseMap implements IReverseMap {
 
 	constructor() {}
 
-	public getRowId(rowId: string): number | undefined {
+	public getRowIndex(rowId: string): number | undefined {
 		return this.rowMap[rowId];
 	}
 
-	public getColId(colId: string): number | undefined {
+	public getColIndex(colId: string): number | undefined {
 		return this.colMap[colId];
 	}
 
-	public getRowMap(): { [id: string]: number } {
+	public getRowMap(): Readonly<{ [id: string]: number }> {
 		return this.rowMap;
 	}
 
-	public getColMap(): { [id: string]: number } {
+	public getColMap(): Readonly<{ [id: string]: number }> {
 		return this.colMap;
 	}
 
@@ -63,7 +63,6 @@ export class ReverseMap implements IReverseMap {
 
 	public addCellToMap(type: ReverseMapType, id: string, index: number): void {
 		const map = type === "row" ? this.rowMap : this.colMap;
-		// if (type === "row") {
 		// this behavior is very specific to the way SharedMatrix does its row insertion signal, in which we first get the row addition
 		// without the unique ids and soon after, the cell changes are triggered and we take opportunity to update the reverse map.
 		if (Object.keys(map).length >= index + 1) {

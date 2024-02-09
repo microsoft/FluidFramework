@@ -330,10 +330,7 @@ describe("Temporal Collab Spaces", () => {
 	});
 
 	describe("Reverse Mapping tests", () => {
-		function compareMaps(
-			map1: { [id: string]: number },
-			map2: { [id: string]: number },
-		): boolean {
+		function compareMaps(map1: { [id: string]: number }, map2: { [id: string]: number }) {
 			assert(Object.keys(map1).length === Object.keys(map2).length, "maps size is different");
 			for (const [id, rowValue] of Object.entries(map1)) {
 				if (id in map2) {
@@ -346,7 +343,6 @@ describe("Temporal Collab Spaces", () => {
 					assert(false, `No matching id found in map2 for ${id}`);
 				}
 			}
-			return true;
 		}
 
 		it("Reverse Mapping: Basic test", async () => {
@@ -356,7 +352,7 @@ describe("Temporal Collab Spaces", () => {
 			const { rowId, colId } = await collabSpace.getCellDebugInfo(row, col);
 
 			const debugMapInfo = collabSpace.getReverseMapsDebugInfo();
-			const reverseCellInfo = collabSpace.getReverseMapCellDebugInfo(rowId, colId);
+			const reverseCellInfo = await collabSpace.getReverseMapCellDebugInfo(rowId, colId);
 			assert(Object.keys(debugMapInfo.rowMap).length === rows, "rowMapSize is incorrect");
 			assert(
 				reverseCellInfo.row === row,
@@ -379,7 +375,7 @@ describe("Temporal Collab Spaces", () => {
 			});
 			const { rowId, colId } = await collabSpace.getCellDebugInfo(row, col);
 			const debugMapInfo = collabSpace.getReverseMapsDebugInfo();
-			const reverseCellInfo = collabSpace.getReverseMapCellDebugInfo(rowId, colId);
+			const reverseCellInfo = await collabSpace.getReverseMapCellDebugInfo(rowId, colId);
 
 			assert(
 				Object.keys(debugMapInfo.rowMap).length === rows + numberOfNewRows,
@@ -413,7 +409,7 @@ describe("Temporal Collab Spaces", () => {
 
 			const debugMapInfo = collabSpace.getReverseMapsDebugInfo();
 
-			const reverseCellInfo = collabSpace.getReverseMapCellDebugInfo(
+			const reverseCellInfo = await collabSpace.getReverseMapCellDebugInfo(
 				debugCellInfo.rowId,
 				debugCellInfo.colId,
 			);
@@ -442,7 +438,7 @@ describe("Temporal Collab Spaces", () => {
 			assert(nextColId === colId, "colId after removal should be the same as nextColId");
 
 			const debugMapInfo = collabSpace.getReverseMapsDebugInfo();
-			const reverseCellInfo = collabSpace.getReverseMapCellDebugInfo(rowId, colId);
+			const reverseCellInfo = await collabSpace.getReverseMapCellDebugInfo(rowId, colId);
 
 			assert(Object.keys(debugMapInfo.rowMap).length === rows, "rowMapSize is incorrect");
 			assert(
