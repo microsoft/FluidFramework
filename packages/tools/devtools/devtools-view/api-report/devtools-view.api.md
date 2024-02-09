@@ -29,6 +29,15 @@ export { ITelemetryBaseEvent }
 export { ITelemetryBaseLogger }
 
 // @internal
+export class TelemetryConfigurationManager {
+    constructor();
+    // (undocumented)
+    isTelemetryOptedIn(): boolean;
+    // (undocumented)
+    setTelemetryOptIn(optedIn: boolean): void;
+}
+
+// @internal
 export class WindowMessageRelay extends TypedEventEmitter<IMessageRelayEvents> implements IMessageRelay {
     constructor(
     messageSource: string);

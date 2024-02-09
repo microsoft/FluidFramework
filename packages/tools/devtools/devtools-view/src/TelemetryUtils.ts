@@ -61,14 +61,15 @@ const telemetryOptInKey: string = "fluid:devtools:telemetry:optIn";
  * Hook for getting and setting the usage telemetry opt-in setting, backed by brower's local storage.
  * @returns A tuple (React state) with the current value and a setter for the value.
  */
-export const useTelemetryOptIn = (): [boolean, React.Dispatch<React.SetStateAction<boolean>>] => {
+export const useTelemetryOptIn = (): [boolean, (optedIn: boolean) => void] => {
 	const [value, setValue] = React.useState(() => {
 		return getStorageValue(telemetryOptInKey);
 	});
 
-	React.useEffect(() => {
-		localStorage.setItem(telemetryOptInKey, value.toString());
-	}, [value]);
+	const setOptIn = (optedIn: boolean): void => {
+		setValue(optedIn);
+		localStorage.setItem(telemetryOptInKey, optedIn.toString());
+	};
 
 	const localStorageChangeHandler = (event: StorageEvent): void => {
 		if (event.storageArea === localStorage && event.key === telemetryOptInKey) {
@@ -82,7 +83,7 @@ export const useTelemetryOptIn = (): [boolean, React.Dispatch<React.SetStateActi
 		};
 	});
 
-	return [value, setValue];
+	return [value, setOptIn];
 };
 
 /**
@@ -105,4 +106,22 @@ function getStorageValue(key: string, defaultValue: boolean = false): boolean {
 		return defaultValue;
 	}
 	return saved === "true";
+}
+
+/**
+ * Manages the configuration of telemetry settings for the application.
+ * @internal
+ */
+export class TelemetryConfigurationManager {
+	private telemetryOptInStatus: boolean = getStorageValue(telemetryOptInKey);
+
+	public constructor() {}
+	public isTelemetryOptedIn(): boolean {
+		return this.telemetryOptInStatus;
+	}
+
+	public setTelemetryOptIn(optedIn: boolean): void {
+		this.telemetryOptInStatus = optedIn;
+		localStorage.setItem(telemetryOptInKey, optedIn.toString());
+	}
 }
