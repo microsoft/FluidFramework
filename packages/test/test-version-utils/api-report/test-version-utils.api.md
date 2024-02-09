@@ -4,6 +4,7 @@
 
 ```ts
 
+import * as agentScheduler from '@fluidframework/agent-scheduler';
 import * as cell from '@fluidframework/cell';
 import { ContainerRuntime } from '@fluidframework/container-runtime';
 import { ContainerRuntimeFactoryWithDefaultDataStore } from '@fluidframework/aqueduct';
@@ -97,6 +98,7 @@ export const DataRuntimeApi: {
         registerCollection: typeof registerCollection;
         sequence: typeof sequence;
         sequenceDeprecated: typeof sequenceDeprecated;
+        agentScheduler: typeof agentScheduler;
     };
 };
 
