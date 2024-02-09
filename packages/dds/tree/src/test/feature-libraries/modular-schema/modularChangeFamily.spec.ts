@@ -1198,6 +1198,7 @@ describe("ModularChangeFamily", () => {
 	describe("filters builds", () => {
 		const aMajor = mintRevisionTag();
 		const bMajor = mintRevisionTag();
+		const a1 = { major: aMajor, minor: 1 };
 		const b1 = { major: bMajor, minor: 1 };
 
 		const node2 = singleJsonCursor(2);
@@ -1209,23 +1210,20 @@ describe("ModularChangeFamily", () => {
 			const input: ModularChangeset = {
 				fieldChanges: new Map([]),
 				builds: new Map([
-					[
-						aMajor,
-						new Map([
-							[brand(1), node1Chunk],
-							[brand(2), node2Chunk],
-						]),
-					],
+					[aMajor, new Map([[brand(1), node1Chunk]])],
 					[bMajor, new Map([[brand(1), node3Chunk]])],
 				]),
 			};
 
 			const expected: ModularChangeset = {
 				fieldChanges: new Map([]),
-				builds: new Map([[bMajor, new Map([[brand(1), node3Chunk]])]]),
+				builds: new Map([
+					[aMajor, new Map([[brand(1), node1Chunk]])],
+					[bMajor, new Map([[brand(1), node3Chunk]])],
+				]),
 			};
 
-			const filtered = filterSuperfluousBuilds(makeAnonChange(input), [b1]);
+			const filtered = filterSuperfluousBuilds(makeAnonChange(input), [a1, b1]);
 			assert.deepEqual(filtered, expected);
 		});
 
@@ -1249,6 +1247,30 @@ describe("ModularChangeFamily", () => {
 			};
 
 			const filtered = filterSuperfluousBuilds(makeAnonChange(input), []);
+			assert.deepEqual(filtered, expected);
+		});
+
+		it("correctly handles both relevant and irrelevant builds that are present in the input", () => {
+			const input: ModularChangeset = {
+				fieldChanges: new Map([]),
+				builds: new Map([
+					[
+						aMajor,
+						new Map([
+							[brand(1), node1Chunk],
+							[brand(2), node2Chunk],
+						]),
+					],
+					[bMajor, new Map([[brand(1), node3Chunk]])],
+				]),
+			};
+
+			const expected: ModularChangeset = {
+				fieldChanges: new Map([]),
+				builds: new Map([[bMajor, new Map([[brand(1), node3Chunk]])]]),
+			};
+
+			const filtered = filterSuperfluousBuilds(makeAnonChange(input), [b1]);
 			assert.deepEqual(filtered, expected);
 		});
 	});
