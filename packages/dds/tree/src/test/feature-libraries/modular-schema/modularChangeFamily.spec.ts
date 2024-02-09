@@ -1151,9 +1151,7 @@ describe("ModularChangeFamily", () => {
 				]),
 			};
 
-			const withBuilds = addMissingBuilds(makeAnonChange(input), getDetachedNode, [
-				a1,
-			]);
+			const withBuilds = addMissingBuilds(makeAnonChange(input), getDetachedNode, [a1]);
 			assert.deepEqual(withBuilds, expected);
 		});
 
@@ -1162,7 +1160,7 @@ describe("ModularChangeFamily", () => {
 				const input: ModularChangeset = {
 					fieldChanges: new Map([]),
 				};
-	
+
 				const expected: ModularChangeset = {
 					fieldChanges: new Map([]),
 					builds: new Map([
@@ -1176,7 +1174,7 @@ describe("ModularChangeFamily", () => {
 						[bMajor, new Map([[brand(1), node3Chunk]])],
 					]),
 				};
-	
+
 				const withBuilds = addMissingBuilds(makeAnonChange(input), getDetachedNode, [
 					a1,
 					a2,
@@ -1189,10 +1187,10 @@ describe("ModularChangeFamily", () => {
 				const input: ModularChangeset = {
 					fieldChanges: new Map([]),
 				};
-	
-				assert.throws(() => addMissingBuilds(makeAnonChange(input), getDetachedNode, [
-					{ minor: 2 },
-				]))
+
+				assert.throws(() =>
+					addMissingBuilds(makeAnonChange(input), getDetachedNode, [{ minor: 2 }]),
+				);
 			});
 		});
 	});
