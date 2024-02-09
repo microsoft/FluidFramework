@@ -1168,6 +1168,10 @@ interface InvertContext {
 }
 
 interface RebaseTable extends CrossFieldTable<FieldChange> {
+	/**
+	 * Maps from the FieldChange key used for the CrossFieldTable (which is the FieldChange being rebased)
+	 * to context for the field.
+	 */
 	fieldToContext: Map<FieldChange, RebaseFieldContext>;
 	/**
 	 * This map caches the output of a prior rebasing computation for a node, keyed on that computation's input.
