@@ -181,6 +181,10 @@ module.exports = {
 				"^packages/utils/.*/package.json",
 				"^packages/loader/container-loader/package.json",
 			],
+			"fluid-build-tasks-tsc": [
+				// These packages use tshy to build both ESM and CJS.
+				"packages/common/core-utils/package.json",
+			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
 				"tools/api-markdown-documenter/src/test/snapshots/.*",
@@ -242,6 +246,9 @@ module.exports = {
 				// case.
 				"packages/dds/migration-shim/package.json",
 				"packages/test/functional-tests/package.json",
+
+				// These packages use tshy to build both ESM and CJS.
+				"packages/common/core-utils/package.json",
 			],
 			// This handler will be rolled out slowly, so excluding most packages here while we roll it out.
 			"npm-package-exports-field": [
