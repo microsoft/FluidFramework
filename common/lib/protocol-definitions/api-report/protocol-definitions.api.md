@@ -273,8 +273,7 @@ export interface IQuorumProposalsEvents {
 }
 
 // @internal
-export interface ISentSignalMessage extends ISignalMessageBase {
-}
+export type ISentSignalMessage = ISignalMessageBase;
 
 // @public
 export interface ISequencedClient {
