@@ -253,7 +253,7 @@ export function isCompatVersionBelowMinVersion(minVersion: string, config: Compa
 				: config.compatVersion;
 	}
 	const compatVersion = getRequestedVersion(testBaseVersion(lowerVersion), lowerVersion);
-	const minReqVersion = getRequestedVersion(testBaseVersion(minVersion), minVersion);
+	const minReqVersion = getRequestedVersion(minVersion, minVersion);
 	return semver.compare(compatVersion, minReqVersion) < 0;
 }
 
