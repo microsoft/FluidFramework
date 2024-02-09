@@ -487,51 +487,36 @@ describe("Temporal Collab Spaces", () => {
 		});
 
 		it("Concurrent operations", async () => {
-			// Cell we will be interrogating
-			const row = 7;
-			const col = 1;
-
 			const collabSpace = await initialize();
 
-			const { rowId: rowId1, colId: colId1 } = await collabSpace.getCellDebugInfo(row, col);
-			const { rowId: rowId2, colId: colId2 } = await collabSpaces[1].getCellDebugInfo(
-				row,
-				col,
-			);
-			assert(rowId2 === rowId1, "rowId should be the same");
-			assert(colId2 === colId1, "colId should be the same");
+			for (let step = 0; step < 10; step++) {
+				// Concurrent changes - clients do not see each other changes yet
+				collabSpace.removeRows(0, 1);
+				collabSpaces[1].insertRows(0, 4);
+				collabSpace.insertCols(0, 1);
+				collabSpaces[1].insertCols(0, 1);
+				await provider.ensureSynchronized();
 
-			// Concurrent changes - clients do not see each other changes yet
-			collabSpace.removeRows(0, 1);
-			collabSpaces[1].insertRows(0, 4);
+				const collabResult1 = collabSpace.getReverseMapsDebugInfo();
+				const collabResult2 = collabSpaces[1].getReverseMapsDebugInfo();
 
-			await provider.ensureSynchronized();
+				compareMaps(collabResult1.rowMap, collabResult2.rowMap);
+				compareMaps(collabResult1.colMap, collabResult2.colMap);
 
-			const collabResult1 = collabSpace.getReverseMapsDebugInfo();
-			const collabResult2 = collabSpaces[1].getReverseMapsDebugInfo();
+				collabSpace.insertRows(0, 1);
+				collabSpaces[1].removeRows(2, 1);
+				collabSpace.removeCols(0, 1);
+				collabSpaces[1].removeCols(0, 1);
 
-			compareMaps(collabResult1.rowMap, collabResult2.rowMap);
-			compareMaps(collabResult1.colMap, collabResult2.colMap);
+				// synchronize - all containers should see exactly same changes
+				await provider.ensureSynchronized();
 
-			collabSpace.insertRows(0, 1);
-			collabSpaces[1].removeRows(2, 1);
+				const collabResult3 = collabSpace.getReverseMapsDebugInfo();
+				const collabResult4 = collabSpaces[1].getReverseMapsDebugInfo();
 
-			// synchronize - all containers should see exactly same changes
-			await provider.ensureSynchronized();
-
-			const collabResult3 = collabSpace.getReverseMapsDebugInfo();
-			const collabResult4 = collabSpaces[1].getReverseMapsDebugInfo();
-
-			compareMaps(collabResult3.rowMap, collabResult4.rowMap);
-			compareMaps(collabResult3.colMap, collabResult4.colMap);
-
-			const { rowId: rowId3, colId: colId3 } = await collabSpace.getCellDebugInfo(row, col);
-			const { rowId: rowId4, colId: colId4 } = await collabSpaces[1].getCellDebugInfo(
-				row,
-				col,
-			);
-			assert(rowId3 === rowId4, "rowId should be the same");
-			assert(colId3 === colId4, "colId should be the same");
+				compareMaps(collabResult3.rowMap, collabResult4.rowMap);
+				compareMaps(collabResult3.colMap, collabResult4.colMap);
+			}
 		});
 	});
 
