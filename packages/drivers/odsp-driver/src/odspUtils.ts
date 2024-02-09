@@ -26,7 +26,7 @@ import {
 	fetchIncorrectResponse,
 	throwOdspNetworkError,
 	getSPOAndGraphRequestIdsFromResponse,
-} from "@fluidframework/odsp-doclib-utils";
+} from "@fluidframework/odsp-doclib-utils/internal";
 import {
 	IOdspResolvedUrl,
 	TokenFetchOptions,

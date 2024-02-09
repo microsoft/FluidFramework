@@ -1,4 +1,4 @@
-# @fluidframework/ink
+# @fluid-experimental/ink
 
 ## 2.0.0-rc.1.0.0
 

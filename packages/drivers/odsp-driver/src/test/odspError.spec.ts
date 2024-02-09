@@ -4,7 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { createOdspNetworkError, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
+import {
+	createOdspNetworkError,
+	throwOdspNetworkError,
+} from "@fluidframework/odsp-doclib-utils/internal";
 import { NonRetryableError } from "@fluidframework/driver-utils";
 import { OdspError, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
 import { IGenericNetworkError, DriverErrorTypes } from "@fluidframework/driver-definitions";

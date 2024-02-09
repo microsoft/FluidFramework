@@ -40,7 +40,7 @@ import {
 	ChangeEncodingContext,
 	RevisionTagCodec,
 } from "../../../core/index.js";
-import { brand, fail } from "../../../util/index.js";
+import { brand } from "../../../util/index.js";
 import { ICodecOptions, makeCodecFamily } from "../../../codec/index.js";
 import {
 	EncodingTestData,
@@ -68,7 +68,6 @@ const singleNodeRebaser: FieldChangeRebaser<NodeChangeset> = {
 	compose: (change1, change2, composeChild) => composeChild(change1.change, change2.change),
 	invert: (change, invertChild) => invertChild(change.change),
 	rebase: (change, base, rebaseChild) => rebaseChild(change, base.change) ?? {},
-	amendCompose: () => fail("Not supported"),
 	prune: (change) => change,
 };
 

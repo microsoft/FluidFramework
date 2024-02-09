@@ -1,9 +1,11 @@
 {
-	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"extends": [
+		"../../../../common/build/build-common/tsconfig.base.json",
+		"../../../../common/build/build-common/tsconfig.esm-only.json",
+	],
 	"compilerOptions": {
 		"allowSyntheticDefaultImports": true,
 		"target": "es6",
-		"module": "esnext",
 		"outDir": "dist",
 		"jsx": "react",
 		"types": ["jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer"],

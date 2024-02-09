@@ -134,6 +134,10 @@ parameters:
 - name: publish
   type: boolean
 
+# Indicates if tests should be run with code coverage analysis.
+- name: testCoverage
+  type: boolean
+
 # The `resources` specify the location and version of the 1ES Pipeline Template.
 resources:
   repositories:
@@ -185,7 +189,7 @@ extends:
           - job: build
             displayName: Build
             ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
-              timeoutInMinutes: 90
+              timeoutInMinutes: 120
             ${{ else }}:
               # CI builds run more aggressive compat configurations which can take longer.
               # See "FullCompat" under packages\test\test-version-utils\README.md for more details.
@@ -195,12 +199,11 @@ extends:
               # AB#6680 is also relevant here, which tracks rethinking how and where we run tests (likely with
               # a focus on e2e tests)
               # Note, This was recently updated to 90 minutes to account for the additional build time added from extending
-              # the Microsoft 1ES template required for corporate security compliance
-              timeoutInMinutes: 90
+              # the Microsoft 1ES template required for corporate security compliance. Updated again to 120 to mitigate a
+              # series of build breaks due to timeouts.
+              timeoutInMinutes: 120
             variables:
               - group: ado-feeds
-              - name: testCoverage
-                value: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
               - name: releaseBuildVar
                 value: '$[variables.releaseBuild]'
               - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
@@ -243,7 +246,7 @@ extends:
                       LintName: ${{ parameters.taskLintName }}
                       PublishDocs=${{ parameters.publishDocs }}
                       Test=${{ convertToJson(parameters.taskTest) }}
-                      TestCoverage=$(testCoverage)
+                      TestCoverage=${{ parameters.testCoverage }}
                       TestResultDirs=${{ convertToJson(parameters.testResultDirs) }}
 
                     Variables:
@@ -348,7 +351,7 @@ extends:
                         parameters:
                           taskTestStep: '${{ taskTestStep }}'
                           buildDirectory: '${{ parameters.buildDirectory }}'
-                          testCoverage: ${{ eq(variables['testCoverage'], true) }}
+                          testCoverage: ${{ parameters.testCoverage }}
 
                   - ${{ if contains(convertToJson(parameters.taskTest), 'tinylicious') }}:
                     # Copy files so all artifacts we publish end up under the same parent folder.
@@ -372,7 +375,7 @@ extends:
                   # Some webpacked file using externals introduce file name with quotes in them
                   # and Istanbul's cobertura reporter doesn't escape them causing parse error when we publish
                   # A quick fix to patch the file with sed. (See https://github.com/bcoe/c8/issues/302)
-                  - ${{ if eq(variables['testCoverage'], true) }}:
+                  - ${{ if parameters.testCoverage }}:
                       - task: Bash@3
                         displayName: Check for nyc/report directory
                         inputs:
@@ -572,7 +575,7 @@ extends:
                       displayName: Publish Artifacts - bundle-analysis
                       condition: and( succeeded(), ne(variables['Build.Reason'], 'PullRequest'), eq(${{ parameters.taskPublishBundleSizeArtifacts }}, true) )
                       targetPath: $(Build.ArtifactStagingDirectory)/bundleAnalysis
-                      artifactname: bundleAnalysis
+                      artifactName: bundleAnalysis
                       sbomEnabled: false
                       publishLocation: pipeline
 

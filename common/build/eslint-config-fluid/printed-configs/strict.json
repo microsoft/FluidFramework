@@ -23,7 +23,6 @@
     "plugins": [
         "eslint-comments",
         "import",
-        "fluid-internal",
         "unused-imports",
         "promise",
         "jsdoc",
@@ -102,12 +101,15 @@
             "error"
         ],
         "@typescript-eslint/consistent-type-exports": [
-            "error"
+            "error",
+            {
+                "fixMixedExportsWithInlineTypeSpecifier": false
+            }
         ],
         "@typescript-eslint/consistent-type-imports": [
             "error",
             {
-                "fixStyle": "inline-type-imports"
+                "fixStyle": "separate-type-imports"
             }
         ],
         "@typescript-eslint/dot-notation": [
@@ -548,9 +550,6 @@
         "flowtype/union-intersection-spacing": [
             "off"
         ],
-        "fluid-internal/no-member-release-tags": [
-            "error"
-        ],
         "for-direction": [
             "error"
         ],
@@ -615,6 +614,7 @@
             "error",
             {
                 "allow": [
+                    "@fluidframework/*/beta",
                     "@fluidframework/*/internal",
                     "*/index.js"
                 ]

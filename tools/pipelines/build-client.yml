@@ -71,7 +71,6 @@ trigger:
     - pnpm-lock.yaml
     - pnpm-workspace.yaml
     - tools/pipelines/build-client.yml
-    - tools/pipelines/build-azure.yml
     - tools/pipelines/templates/1ES/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -105,7 +104,6 @@ pr:
     - pnpm-workspace.yaml
     - fluidBuild.config.cjs
     - tools/pipelines/build-client.yml
-    - tools/pipelines/build-azure.yml
     - tools/pipelines/templates/1ES/build-npm-package.yml
     - tools/pipelines/templates/1ES/include-policy-check.yml
     - tools/pipelines/templates/include-set-package-version.yml
@@ -133,6 +131,7 @@ extends:
     interdependencyRange: ${{ parameters.interdependencyRange }}
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
+    testCoverage: ${{ variables.testCoverage }}
     buildDirectory: .
     tagName: client
     isReleaseGroup: true
