@@ -47,9 +47,9 @@ export class DeferredChannel extends SharedObject implements ICollabChannel {
 		super(id, runtime, attributes, "fluid_collabspace_deferred");
 	}
 
-	public get value() {
+	public get value(): number {
 		assert(false, "should not be called");
-		return undefined;
+		return 0;
 	}
 
 	public static create(runtime: IFluidDataStoreRuntime, id?: string): DeferredChannel {

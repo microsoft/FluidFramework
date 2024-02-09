@@ -512,6 +512,148 @@ describe("Temporal Collab Spaces", () => {
 	it("Channel overwrite without syncronization & summarizer", async () => {
 		await ChannelOverwrite(false, true);
 	});
+
+	it("Stress test", async () => {
+		const rand = (maxIncluded: number) => {
+			return Math.round(Math.random() * maxIncluded);
+		};
+		const randNotInclusive = (maxIncluded: number) => {
+			return Math.floor(Math.random() * maxIncluded);
+		};
+
+		type Op = (cp: IEfficientMatrix) => Promise<void>;
+
+		const operations: [number, Op][] = [
+			// collaborate
+			[
+				100,
+				async (cp: IEfficientMatrix) => {
+					// Cell might be undefined. If so, we can't really collab on it.
+					// Do some number of iterations to find some cell to collab, otherwise bail out.
+					for (let it = 0; it < 5; it++) {
+						const row = randNotInclusive(cp.rowCount);
+						const col = randNotInclusive(cp.colCount);
+						const value = await cp.getCellAsync(row, col);
+						if (value !== undefined) {
+							const channel = (await cp.getCellChannel(row, col)) as ISharedCounter;
+							channel.increment(rand(40));
+							break;
+						}
+					}
+				},
+			],
+			// overwrite cell
+			[
+				20,
+				async (cp: IEfficientMatrix) => {
+					const row = randNotInclusive(cp.rowCount);
+					const col = randNotInclusive(cp.colCount);
+					cp.setCell(row, col, {
+						value: rand(1000),
+						type: CounterFactory.Type,
+					});
+				},
+			],
+			// overwrite cell with undefined
+			[
+				20,
+				async (cp: IEfficientMatrix) => {
+					const row = randNotInclusive(cp.rowCount);
+					const col = randNotInclusive(cp.colCount);
+					cp.setCell(row, col, undefined);
+				},
+			],
+			// add container
+			[
+				10,
+				async (cp: IEfficientMatrix) => {
+					await addContainerInstance();
+				},
+			],
+			// summarize
+			[
+				5,
+				async (cp: IEfficientMatrix) => {
+					await waitForSummary();
+				},
+			],
+			// insert columns
+			[
+				10,
+				async (cp: IEfficientMatrix) => {
+					cp.insertCols(rand(cp.colCount), 1 + rand(3));
+				},
+			],
+			// insert rows
+			[
+				10,
+				async (cp: IEfficientMatrix) => {
+					cp.insertRows(rand(cp.rowCount), 1 + rand(3));
+				},
+			],
+			// delete columns
+			[
+				5,
+				async (cp: IEfficientMatrix) => {
+					const pos = randNotInclusive(cp.colCount);
+					// delete at most 1/3 of the matrix
+					const del = Math.max(
+						randNotInclusive(cp.colCount - pos),
+						Math.round(cp.colCount / 3),
+					);
+					cp.removeCols(pos, del);
+				},
+			],
+			// delete rows
+			[
+				5,
+				async (cp: IEfficientMatrix) => {
+					const pos = randNotInclusive(cp.rowCount);
+					// delete at most 1/3 of the matrix
+					const del = Math.max(
+						randNotInclusive(cp.rowCount - pos),
+						Math.round(cp.rowCount / 3),
+					);
+					cp.removeRows(pos, del);
+				},
+			],
+		];
+
+		await initialize();
+
+		let priorityMax = 0;
+		for (const [pri] of operations) {
+			priorityMax += pri;
+		}
+
+		// Do 1000 operations
+		for (let step = 0; step < 1000; step++) {
+			// Do operations in accordance with their probabilities
+			let opPriority = randNotInclusive(priorityMax);
+			for (let index = 0; ; ) {
+				opPriority -= operations[index][0];
+				if (opPriority < 0) {
+					const op = operations[index][1];
+					const cp = collabSpaces[randNotInclusive(collabSpaces.length)];
+					await op(cp);
+					break;
+				}
+			}
+		}
+
+		await provider.ensureSynchronized();
+		ensureSameSize();
+
+		const cp0 = collabSpaces[0];
+		const rowCount = cp0.rowCount;
+		const colCount = cp0.colCount;
+		for (let row = 0; row < rowCount; row++) {
+			for (let col = 0; col < colCount; col++) {
+				const value = await cp0.getCellAsync(row, col);
+				await ensureSameValues(row, col, value);
+			}
+		}
+	});
 });
 
 /* eslint-enable @typescript-eslint/no-non-null-assertion */

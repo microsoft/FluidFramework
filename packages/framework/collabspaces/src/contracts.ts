@@ -16,7 +16,7 @@ import { ISharedMatrix, MatrixItem } from "@fluidframework/matrix";
  * @internal
  */
 export interface ICollabChannelCore {
-	readonly value: Serializable<unknown>;
+	readonly value: Exclude<Serializable<unknown>, undefined>;
 }
 
 /** @internal */
@@ -29,7 +29,7 @@ export interface ICollabChannelFactory extends IChannelFactory {
 
 /** @internal */
 export interface MatrixExternalType {
-	value: Serializable<unknown>;
+	value: Exclude<Serializable<unknown>, undefined>;
 	type: string;
 }
 
@@ -45,12 +45,12 @@ export interface IEfficientMatrix extends Omit<ISharedMatrix<MatrixExternalType>
 	// non-rooted, i.e. it no longer is accosiated wit the cell. Ops might still come in for such channel
 	// due to races / offline clients.
 	// Old channel could come back to life (become again rooted / associated with cell) through undo!
-	setCell(rowArg: number, colArg: number, value: MatrixItem<MatrixExternalType>);
+	setCell(rowArg: number, colArg: number, value: CollabSpaceCellType);
 
 	// TBD(Pri2) - need to get rid of synchronous version, as I do not think we can deliver it.
 	// Removing it causes a bunch of type issues, so leaving NYI version for now.
-	getCell(row: number, col: number): MatrixItem<MatrixExternalType>;
-	getCellAsync(row: number, col: number): Promise<MatrixItem<MatrixExternalType>>;
+	getCell(row: number, col: number): CollabSpaceCellType;
+	getCellAsync(row: number, col: number): Promise<CollabSpaceCellType>;
 
 	// Returns collab channel that is associated with a cell. Type of the channel depeds on type of cell
 	// If collab channel already exists, it is returned. Otherwise new channel is created.
