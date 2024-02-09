@@ -29,6 +29,7 @@ export {
 	GCDataBuilder,
 	getBlobSize,
 	mergeStats,
+	processAttachMessageGCData,
 	SummaryTreeBuilder,
 	TelemetryContext,
 	utf8ByteLength,

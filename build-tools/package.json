@@ -1,6 +1,6 @@
 {
 	"name": "root",
-	"version": "0.30.0",
+	"version": "0.31.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -113,7 +113,8 @@
 		"overrides": {
 			"json5@<1.0.2": "^1.0.2",
 			"json5@>=2.0.0 <2.2.2": "^2.2.2",
-			"qs": "^6.11.0"
+			"qs": "^6.11.0",
+			"sharp": "^0.33.2"
 		}
 	}
 }

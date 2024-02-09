@@ -59,21 +59,6 @@ export type EventEmitterEventType = EventEmitter extends {
 } ? E : never;
 
 // @internal @deprecated
-export class EventForwarder<TEvent = IEvent> extends TypedEventEmitter<TEvent> implements IDisposable {
-    constructor(source?: EventEmitter | IEventProvider<TEvent & IEvent>);
-    // (undocumented)
-    dispose(): void;
-    // (undocumented)
-    get disposed(): boolean;
-    // (undocumented)
-    protected forwardEvent(source: EventEmitter | IEventProvider<TEvent & IEvent>, ...events: string[]): void;
-    // (undocumented)
-    protected static isEmitterEvent(event: string): boolean;
-    // (undocumented)
-    protected unforwardEvent(source: EventEmitter | IEventProvider<TEvent & IEvent>, ...events: string[]): void;
-}
-
-// @internal @deprecated
 export const fromBase64ToUtf8: (input: string) => string;
 
 // @internal @deprecated

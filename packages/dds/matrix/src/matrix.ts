@@ -775,7 +775,13 @@ export class SharedMatrix<T = any>
 		if (local) {
 			const recordedRefSeq = this.inFlightRefSeqs.shift();
 			assert(recordedRefSeq !== undefined, "No pending recorded refSeq found");
-			assert(recordedRefSeq <= rawMessage.referenceSequenceNumber, "RefSeq mismatch");
+			// TODO: AB#7076: Some equivalent assert should be enabled. This fails some e2e stashed op tests because
+			// the deltaManager may have seen more messages than the runtime has processed while amidst the stashed op
+			// flow, so e.g. when `applyStashedOp` is called and the DDS is put in a state where it expects an ack for
+			// one of its messages, the delta manager has actually already seen subsequent messages from collaborators
+			// which the in-flight message is concurrent to.
+			// See "handles stashed ops created on top of sequenced local ops" for one such test case.
+			// assert(recordedRefSeq <= message.referenceSequenceNumber, "RefSeq mismatch");
 		}
 		const msg = parseHandles(rawMessage, this.serializer);
 

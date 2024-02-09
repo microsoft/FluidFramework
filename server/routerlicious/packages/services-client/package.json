@@ -84,6 +84,7 @@
 		"@types/jsrsasign": "^10.5.12",
 		"@types/mocha": "^10.0.1",
 		"@types/node": "^18.17.1",
+		"@types/uuid": "^9.0.2",
 		"axios-mock-adapter": "^1.19.0",
 		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",

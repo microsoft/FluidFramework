@@ -32,6 +32,7 @@ import {
 	ISummaryCancellationToken,
 	SummaryGeneratorTelemetry,
 	SubmitSummaryFailureData,
+	IRefreshSummaryAckOptions,
 } from "./summarizerTypes";
 import { IClientSummaryWatcher } from "./summaryCollection";
 
@@ -204,6 +205,9 @@ export class SummaryGenerator {
 			options: ISubmitSummaryOptions,
 		) => Promise<SubmitSummaryResult>,
 		private readonly successfulSummaryCallback: () => void,
+		private readonly refreshLatestSummaryCallback: (
+			options: IRefreshSummaryAckOptions,
+		) => Promise<void>,
 		private readonly summaryWatcher: Pick<IClientSummaryWatcher, "watchSummary">,
 		private readonly logger: ITelemetryLoggerExt,
 	) {
@@ -434,6 +438,14 @@ export class SummaryGenerator {
 				summarizeEvent.end({
 					...summarizeTelemetryProps,
 					handle: ackNackOp.contents.handle,
+				});
+				// This processes the summary ack of the successful summary. This is so that the next summary does not
+				// start before the ack of the previous summary is processed.
+				await this.refreshLatestSummaryCallback({
+					proposalHandle: summarizeOp.contents.handle,
+					ackHandle: ackNackOp.contents.handle,
+					summaryRefSeq: summarizeOp.referenceSequenceNumber,
+					summaryLogger,
 				});
 				resultsBuilder.receivedSummaryAckOrNack.resolve({
 					success: true,

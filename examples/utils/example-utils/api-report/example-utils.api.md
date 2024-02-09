@@ -191,7 +191,7 @@ export class MigrationTool extends DataObject implements IMigrationTool {
     // (undocumented)
     protected initializingFirstTime(): Promise<void>;
     // (undocumented)
-    get migrationState(): "collaborating" | "stopping" | "migrating" | "migrated";
+    get migrationState(): MigrationState;
     // (undocumented)
     get newContainerId(): string | undefined;
     // (undocumented)

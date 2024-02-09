@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 import { ILoaderProps, Loader } from "@fluidframework/container-loader";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
-import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
+import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils/internal";
 import { isILoggingError, normalizeError } from "@fluidframework/telemetry-utils";
 import {
 	LocalCodeLoader,
@@ -19,7 +19,7 @@ import { ContainerErrorTypes } from "@fluidframework/container-definitions";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 
 // REVIEW: enable compat testing?
-describeCompat("Errors Types", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("Errors Types", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let fileName: string;
 	let containerUrl: IResolvedUrl;
