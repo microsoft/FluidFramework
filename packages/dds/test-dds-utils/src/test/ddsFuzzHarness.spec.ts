@@ -521,7 +521,7 @@ describe("DDS Fuzz Harness", () => {
 					mixinAttach(
 						{
 							...baseModel,
-							generatorFactory: () => takeAsync(6, baseModel.generatorFactory()),
+							generatorFactory: () => takeAsync(12, baseModel.generatorFactory()),
 						},
 						options,
 					),
@@ -532,7 +532,8 @@ describe("DDS Fuzz Harness", () => {
 					["A", "B", "C"],
 				);
 				assert.equal(finalState.summarizerClient.channel.id, "summarizer");
-				assert.deepEqual(generatedOperations[5], { type: "attach" });
+				assert.deepEqual(generatedOperations[5], { type: "rehydrate" });
+				assert.deepEqual(generatedOperations[11], { type: "attach" });
 				verifyClientsSendOpsToEachOther(finalState);
 			});
 		});
