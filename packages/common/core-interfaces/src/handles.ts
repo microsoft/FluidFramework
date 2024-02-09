@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse } from "./fluidRouter";
-import { IFluidLoadable } from "./fluidLoadable";
-import { FluidObject } from "./provider";
+import type { IRequest, IResponse } from "./fluidRouter";
+import type { IFluidLoadable } from "./fluidLoadable";
+import type { FluidObject } from "./provider";
 
 /**
  * @public

@@ -56,7 +56,6 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.29.0",
 		"@fluidframework/eslint-config-fluid": "^3.3.0",
-		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@testing-library/dom": "^8.2.0",
 		"@testing-library/jest-dom": "^5.16.5",
 		"@testing-library/react": "^12.0.0",
