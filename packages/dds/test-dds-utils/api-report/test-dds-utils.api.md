@@ -24,6 +24,8 @@ export interface AddClient {
     // (undocumented)
     addedClientId: string;
     // (undocumented)
+    canBeStashed: boolean;
+    // (undocumented)
     type: "addClient";
 }
 
@@ -108,6 +110,8 @@ export interface DDSFuzzSuiteOptions {
     };
     skip: Iterable<number>;
     skipMinimization?: boolean;
+    // (undocumented)
+    stashableClientProbability?: number;
     validationStrategy: {
         type: "random";
         probability: number;

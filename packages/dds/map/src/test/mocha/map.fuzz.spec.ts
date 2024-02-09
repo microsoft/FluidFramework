@@ -115,6 +115,7 @@ describe("Map fuzz tests", () => {
 			clientAddProbability: 0.1,
 		},
 		reconnectProbability: 0,
+		stashableClientProbability: 0.2,
 		// Uncomment to replay a particular seed.
 		// replay: 0,
 		saveFailures: { directory: path.join(__dirname, "../../../src/test/mocha/results/map") },

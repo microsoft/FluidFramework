@@ -99,7 +99,7 @@ export interface ChangeConnectionState {
  * @internal
  */
 export interface StashClient {
-	type: "stashClient" | "stashClientDone";
+	type: "stashClient";
 	clientId: string;
 }
 
@@ -130,6 +130,7 @@ export interface TriggerRebase {
 export interface AddClient {
 	type: "addClient";
 	addedClientId: string;
+	canBeStashed: boolean;
 }
 
 /**
@@ -471,6 +472,8 @@ export interface DDSFuzzSuiteOptions {
 	idCompressorFactory?: (
 		summary?: SerializedIdCompressorWithNoSession,
 	) => IIdCompressor & IIdCompressorCore;
+
+	stashableClientProbability?: number;
 }
 
 /**
@@ -521,6 +524,9 @@ export function mixinNewClient<
 				return {
 					type: "addClient",
 					addedClientId: makeFriendlyClientId(random, clients.length),
+					canBeStashed: options.stashableClientProbability
+						? random.bool(options.stashableClientProbability)
+						: false,
 				};
 			}
 			return baseOp;
@@ -539,6 +545,7 @@ export function mixinNewClient<
 				model.factory,
 				op.addedClientId,
 				options,
+				op.canBeStashed,
 			);
 			state.clients.push(newClient);
 			return state;
@@ -683,6 +690,9 @@ export function mixinAttach<
 						model.factory,
 						index === 0 ? "summarizer" : makeFriendlyClientId(state.random, index),
 						options,
+						options.stashableClientProbability
+							? state.random.bool(options.stashableClientProbability)
+							: false,
 					),
 				),
 			);
@@ -978,47 +988,29 @@ export function mixinClientSelection<
 export function mixinStashedClient<
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
-	TState extends DDSFuzzTestState<TChannelFactory> &
-		Partial<
-			Record<
-				"stashedClient",
-				{
-					client: Client<TChannelFactory>;
-					summaries: {
-						summary: ISummaryTree;
-						idCompressorSummary: SerializedIdCompressorWithNoSession | undefined;
-					};
-					savedOps: ISequencedDocumentMessage[];
-				}
-			>
-		>,
+	TState extends DDSFuzzTestState<TChannelFactory>,
 >(
 	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
 	options: DDSFuzzSuiteOptions,
 ): DDSFuzzModel<TChannelFactory, TOperation | StashClient, TState> {
+	if (options.stashableClientProbability === undefined) {
+		return model as DDSFuzzModel<TChannelFactory, TOperation | StashClient, TState>;
+	}
+
 	const generatorFactory: () => AsyncGenerator<TOperation | StashClient, TState> = () => {
 		const baseGenerator = model.generatorFactory();
 		return async (state): Promise<TOperation | StashClient | typeof done> => {
-			if (!state.isDetached) {
-				if (
-					state.stashedClient !== undefined &&
-					state.stashedClient.client.containerRuntime.pendingMessages.length > 0 &&
-					state.random.bool(0.5)
-				) {
-					return {
-						type: "stashClientDone",
-						clientId: state.stashedClient.client.dataStoreRuntime.clientId,
-					};
-				}
-				if (state.stashedClient === undefined) {
-					return {
-						type: "stashClient",
-						clientId: `stashed-${makeFriendlyClientId(
-							state.random,
-							state.clients.length,
-						)}`,
-					};
-				}
+			if (
+				!state.isDetached &&
+				"stashData" in state.client &&
+				state.client.stashData !== undefined &&
+				state.client.containerRuntime.pendingMessages.length > 0 &&
+				state.random.bool(0.5)
+			) {
+				return {
+					type: "stashClient",
+					clientId: state.client.dataStoreRuntime.clientId,
+				};
 			}
 			return baseGenerator(state);
 		};
@@ -1026,53 +1018,21 @@ export function mixinStashedClient<
 
 	const reducer: AsyncReducer<TOperation | StashClient, TState> = async (state, operation) => {
 		if (operation.type === "stashClient") {
-			assert(state.stashedClient === undefined, "only 1 stashed client allowed");
-			const summaries = captureClientSummaries(
-				state.containerRuntimeFactory,
-				state.summarizerClient,
-			);
-			const client = await loadClientFromSummaries(
-				state.containerRuntimeFactory,
-				summaries,
-				model.factory,
-				(operation as StashClient).clientId,
-				options,
-			);
-			const savedOps: ISequencedDocumentMessage[] = [];
-			client.dataStoreRuntime.createDeltaConnection().attach({
-				applyStashedOp: () => {},
-				process: (msg) => savedOps.push(msg),
-				reSubmit: () => {},
-				setConnectionState: () => {},
-			});
-			return {
-				...state,
-				clients: [...state.clients, client],
-				stashedClient: {
-					summaries,
-					client,
-					savedOps,
-				},
-			};
-		}
-		if (operation.type === "stashClientDone") {
-			assert(state.stashedClient);
-			state.stashedClient.client.containerRuntime.flush();
-			const pendingMessages =
-				state.stashedClient.client.containerRuntime.pendingMessages.splice(0);
-			state.stashedClient.client.containerRuntime.connected = false;
-			state.containerRuntimeFactory.removeContainerRuntime(
-				state.stashedClient.client.containerRuntime,
-			);
+			assert("stashData" in state.client);
+			const stashData = state.client.stashData as StashData;
+			state.client.containerRuntime.flush();
+			const pendingMessages = state.client.containerRuntime.pendingMessages.splice(0);
+			state.client.containerRuntime.connected = false;
+			state.containerRuntimeFactory.removeContainerRuntime(state.client.containerRuntime);
 			const newClient = await loadClientFromSummaries(
 				state.containerRuntimeFactory,
-				state.stashedClient.summaries,
+				stashData.summaries,
 				model.factory,
-				state.stashedClient.client.dataStoreRuntime.clientId,
+				state.client.dataStoreRuntime.clientId,
 				options,
 			);
 
-			for (const savedOp of state.stashedClient.savedOps) {
+			for (const savedOp of stashData.savedOps) {
 				if (savedOp.clientId === newClient.dataStoreRuntime.clientId) {
 					await newClient.containerRuntime.applyStashedOp(savedOp.contents);
 				}
@@ -1091,12 +1051,11 @@ export function mixinStashedClient<
 			newClient.containerRuntime.connected = true;
 			return {
 				...state,
-				stashedClient: undefined,
+				client: newClient,
 				clients: [
 					...state.clients.filter(
 						(c) =>
-							c.dataStoreRuntime.clientId !==
-							state.stashedClient?.client.dataStoreRuntime.clientId,
+							c.dataStoreRuntime.clientId !== state.client.dataStoreRuntime.clientId,
 					),
 					newClient,
 				],
@@ -1178,49 +1137,54 @@ function createDetachedClient<TChannelFactory extends IChannelFactory>(
 	return newClient;
 }
 
+interface StashData {
+	summaries: {
+		summary: ISummaryTree;
+		idCompressorSummary: SerializedIdCompressorWithNoSession | undefined;
+	};
+	savedOps: ISequencedDocumentMessage[];
+}
+
 async function loadClient<TChannelFactory extends IChannelFactory>(
 	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
 	summarizerClient: Client<TChannelFactory>,
 	factory: TChannelFactory,
 	clientId: string,
 	options: Omit<DDSFuzzSuiteOptions, "only" | "skip">,
-): Promise<Client<TChannelFactory>> {
+	supportStashing: boolean = false,
+): Promise<
+	Client<TChannelFactory> & {
+		stashData?: StashData;
+	}
+> {
+	containerRuntimeFactory.synchronizeIdCompressors();
+
+	const summaries: StashData["summaries"] = {
+		summary: summarizerClient.channel.getAttachSummary().summary,
+		idCompressorSummary: summarizerClient.dataStoreRuntime.idCompressor?.serialize(false),
+	};
 	return loadClientFromSummaries(
 		containerRuntimeFactory,
-		captureClientSummaries(containerRuntimeFactory, summarizerClient),
+		summaries,
 		factory,
 		clientId,
 		options,
+		supportStashing,
 	);
-}
-
-function captureClientSummaries<TChannelFactory extends IChannelFactory>(
-	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
-	summarizerClient: Client<TChannelFactory>,
-): {
-	summary: ISummaryTree;
-	idCompressorSummary: SerializedIdCompressorWithNoSession | undefined;
-} {
-	containerRuntimeFactory.synchronizeIdCompressors();
-
-	const { summary } = summarizerClient.channel.getAttachSummary();
-	let idCompressorSummary: SerializedIdCompressorWithNoSession | undefined;
-	if (summarizerClient.dataStoreRuntime.idCompressor !== undefined) {
-		idCompressorSummary = summarizerClient.dataStoreRuntime.idCompressor.serialize(false);
-	}
-	return { summary, idCompressorSummary };
 }
 
 async function loadClientFromSummaries<TChannelFactory extends IChannelFactory>(
 	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
-	summaries: {
-		summary: ISummaryTree;
-		idCompressorSummary: SerializedIdCompressorWithNoSession | undefined;
-	},
+	summaries: StashData["summaries"],
 	factory: TChannelFactory,
 	clientId: string,
 	options: Omit<DDSFuzzSuiteOptions, "only" | "skip">,
-): Promise<Client<TChannelFactory>> {
+	supportStashing: boolean = false,
+): Promise<
+	Client<TChannelFactory> & {
+		stashData?: StashData;
+	}
+> {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({
 		clientId,
 		idCompressor:
@@ -1243,12 +1207,27 @@ async function loadClientFromSummaries<TChannelFactory extends IChannelFactory>(
 		factory.attributes,
 	)) as ReturnType<TChannelFactory["create"]>;
 	channel.connect(services);
-	const newClient: Client<TChannelFactory> = {
+
+	const newClient: Client<TChannelFactory> & {
+		stashData?: StashData;
+	} = {
 		channel,
 		containerRuntime,
 		dataStoreRuntime,
 	};
-	options.emitter.emit("clientCreate", newClient);
+	if (supportStashing) {
+		const savedOps: ISequencedDocumentMessage[] = [];
+		dataStoreRuntime.createDeltaConnection().attach({
+			applyStashedOp: () => {},
+			process: (msg) => savedOps.push(msg),
+			reSubmit: () => {},
+			setConnectionState: () => {},
+		});
+		newClient.stashData = {
+			summaries,
+			savedOps,
+		};
+	}
 	return newClient;
 }
 
@@ -1344,6 +1323,9 @@ export async function runTestForSeed<
 						model.factory,
 						makeFriendlyClientId(random, i),
 						options,
+						options.stashableClientProbability
+							? random.bool(options.stashableClientProbability)
+							: false,
 					),
 				),
 		  );
@@ -1547,8 +1529,8 @@ const getFullModel = <TChannelFactory extends IChannelFactory, TOperation extend
 	mixinAttach(
 		mixinSynchronization(
 			mixinNewClient(
-				mixinStashedClient(
-					mixinClientSelection(
+				mixinClientSelection(
+					mixinStashedClient(
 						mixinReconnect(mixinRebase(ddsModel, options), options),
 						options,
 					),
