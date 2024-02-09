@@ -41,6 +41,7 @@ export function vueRenderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivElement
 			},
 		},
 		mounted() {
+			// eslint-disable-next-line @typescript-eslint/unbound-method
 			diceRoller.on("diceRolled", this.updateDiceValue);
 		},
 	});
