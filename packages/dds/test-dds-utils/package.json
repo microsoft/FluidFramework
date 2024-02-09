@@ -35,6 +35,7 @@
 		"test:coverage": "c8 npm test",
 		"test:mocha": "npm run test:mocha:base -- \"dist/test/**/*.spec.*js\"",
 		"test:mocha:base": "mocha --ignore \"dist/test/types/*\" -r node_modules/@fluidframework/mocha-test-setup",
+		"test:mocha:suite": "npm run test:mocha:base -- \"dist/test/ddsSuiteCases/*js\"",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc"
 	},
