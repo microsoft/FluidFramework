@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils";
+
 export type ReverseMapType = "row" | "col";
 
 export interface IReverseMap {
@@ -41,6 +43,7 @@ export class ReverseMap implements IReverseMap {
 
 	private insertCellIntoMap(type: ReverseMapType, index: number, key: string, value: number) {
 		const map = type === "row" ? this.rowMap : this.colMap;
+		assert(index >= 0, "index must be non-negative");
 		// Convert the map to an array of key-value
 		// Notice we use Object.entries to keep the order from the map
 		const entries = Object.entries(map); // we can also try sort((a, b) => a[1] - b[1]);
@@ -81,6 +84,7 @@ export class ReverseMap implements IReverseMap {
 	// remove the tracking information as well as update the indexes in the map.
 	public removeCellsFromMap(type: ReverseMapType, start: number, count: number) {
 		const map = type === "row" ? this.rowMap : this.colMap;
+		assert(start >= 0, "start must be non-negative");
 		if (count > 0) {
 			// Convert the map to an array of key-value pairs
 			// Notice we use Object.entries to keep the order from the map
@@ -88,8 +92,7 @@ export class ReverseMap implements IReverseMap {
 
 			// Remove the specified range of items from the array
 			// Note the index from the reverse mapping is off by 1 as the matrix has a row and col tracking IDs
-			// and the map indexes are 0 based
-			entries.splice(start - 1, count);
+			entries.splice(start, count);
 
 			// Clear the original map
 			Object.keys(map).forEach((key) => {

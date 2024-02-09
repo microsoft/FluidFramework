@@ -435,12 +435,14 @@ export class CollabSpacesRuntime
 			rowsChanged: (rowStart: number, removedCount: number, insertedCount: number) => {
 				// For the reverse mapping purposes, we can only process rows/columns deletion.
 				// We can't process rows/columns insertion as we don't have the information about the cells yet.
-				this.reverseMap.removeCellsFromMap("row", rowStart, removedCount);
+				// Note: the row/column callbacks from the collabSpace returns with an index + 1, as the first row/column is used to track the internal IDs
+				this.reverseMap.removeCellsFromMap("row", rowStart - 1, removedCount);
 			},
 			colsChanged: (colStart: number, removedCount: number, insertedCount: number) => {
 				// For the reverse mapping purposes, we can only process rows/columns deletion.
 				// We can't process rows/columns insertion as we don't have the information about the cells yet.
-				this.reverseMap.removeCellsFromMap("col", colStart, removedCount);
+				// Note: the row/column callbacks from the collabSpace returns with an index + 1, as the first row/column is used to track the internal IDs
+				this.reverseMap.removeCellsFromMap("col", colStart - 1, removedCount);
 			},
 			cellsChanged: (
 				rowStart: number,
@@ -451,9 +453,8 @@ export class CollabSpacesRuntime
 				for (let row = rowStart; row < rowStart + rowCount; row++) {
 					for (let col = colStart; col < colStart + colCount; col++) {
 						if (row === 0 || col === 0) {
-							// <Pri1>
-							// Today we will raise "column added" event before we have an ID, and thus exposing incorrect state of matrix to consumers.
-							// It's better if we do something like that (as a separate PR):
+							// TBD(Pri1) : Today we will raise "column added" event before we have an ID, and thus exposing incorrect state of matrix to consumers.
+							// It's better if we do something like that:
 							// - suppress col/row addition events
 							// - raise them here, when we learn about new ID.
 							// It's not that simple, as proposed sequence would only work for a single row/col addition, not for many rows/columns added, but I'm sure we can figure out something.
