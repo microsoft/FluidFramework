@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/runtime-definitions",
-	"version": "2.0.0-rc.1.0.0",
+	"version": "2.0.0-rc.2.0.0",
 	"description": "Fluid Runtime definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -93,6 +93,12 @@
 	},
 	"typeValidation": {
 		"broken": {
+			"InterfaceDeclaration_IFluidDataStoreContext": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IFluidDataStoreContextDetached": {
+				"forwardCompat": false
+			},
 			"RemovedInterfaceDeclaration_IIdCompressorCore": {
 				"forwardCompat": false,
 				"backCompat": false

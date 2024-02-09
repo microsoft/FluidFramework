@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/test-snapshots",
-	"version": "2.0.0-rc.1.0.0",
+	"version": "2.0.0-rc.2.0.0",
 	"private": true,
 	"description": "Comprehensive test of snapshot logic.",
 	"homepage": "https://fluidframework.com",
@@ -56,6 +56,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
+		"@fluid-experimental/ink": "workspace:~",
 		"@fluid-experimental/sequence-deprecated": "workspace:~",
 		"@fluid-internal/replay-tool": "workspace:~",
 		"@fluidframework/cell": "workspace:~",
@@ -67,7 +68,6 @@
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/file-driver": "workspace:~",
-		"@fluidframework/ink": "workspace:~",
 		"@fluidframework/local-driver": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
