@@ -16,7 +16,7 @@ import { Serializable } from '@fluidframework/datastore-definitions';
 export type CollabSpaceCellType = MatrixItem<MatrixExternalType>;
 
 // @internal (undocumented)
-export function createCollabSpace(sharedObjects: Readonly<ICollabChannelFactory[]>): IFluidDataStoreFactory;
+export function createCollabSpaces(sharedObjects: Readonly<ICollabChannelFactory[]>): IFluidDataStoreFactory;
 
 // @internal (undocumented)
 export type ICollabChannel = IChannel & ICollabChannelCore;

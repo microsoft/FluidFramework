@@ -11,7 +11,7 @@ import {
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 
 import { IEfficientMatrix, ICollabChannelFactory } from "./contracts";
-import { TempCollabSpaceRuntime } from "./collabSpaces";
+import { CollabSpacesRuntime } from "./collabSpaces";
 
 /**
  *
@@ -19,8 +19,8 @@ import { TempCollabSpaceRuntime } from "./collabSpaces";
  *
  */
 /** @internal */
-class TempCollabSpaceRuntimeFactory implements IFluidDataStoreFactory {
-	public readonly type = "CollabSpace-DataStore";
+class CollabSpacesRuntimeFactory implements IFluidDataStoreFactory {
+	public readonly type = "CollabSpaces-DataStore";
 	constructor(private readonly sharedObjects: readonly ICollabChannelFactory[]) {}
 
 	public get IFluidDataStoreFactory() {
@@ -31,12 +31,12 @@ class TempCollabSpaceRuntimeFactory implements IFluidDataStoreFactory {
 		context: IFluidDataStoreContext,
 		existing: boolean,
 	): Promise<IFluidDataStoreChannel> {
-		const runtime = new TempCollabSpaceRuntime(
+		const runtime = new CollabSpacesRuntime(
 			context,
 			this.sharedObjects,
 			existing,
 			async (runtimeArg: IFluidDataStoreRuntime) => {
-				return runtimeArg as TempCollabSpaceRuntime as IEfficientMatrix;
+				return runtimeArg as CollabSpacesRuntime as IEfficientMatrix;
 			},
 		);
 
@@ -46,8 +46,8 @@ class TempCollabSpaceRuntimeFactory implements IFluidDataStoreFactory {
 }
 
 /** @internal */
-export function createCollabSpace(
+export function createCollabSpaces(
 	sharedObjects: Readonly<ICollabChannelFactory[]>,
 ): IFluidDataStoreFactory {
-	return new TempCollabSpaceRuntimeFactory(sharedObjects);
+	return new CollabSpacesRuntimeFactory(sharedObjects);
 }
