@@ -25,6 +25,8 @@
 			}
 		}
 	},
+	"main": "./dist/commonjs/index.js",
+	"types": "./dist/commonjs/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --local",
@@ -137,7 +139,5 @@
 	"typeValidation": {
 		"disabled": true,
 		"broken": {}
-	},
-	"main": "./dist/commonjs/index.js",
-	"types": "./dist/commonjs/index.d.ts"
+	}
 }

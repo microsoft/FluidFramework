@@ -4,9 +4,9 @@
 	"mainEntryPointFilePath": "<projectFolder>/dist/esm/index.d.ts",
 	"dtsRollup": {
 		"enabled": true,
-		"alphaTrimmedFilePath": "<projectFolder>/lib/esm/<unscopedPackageName>-alpha.d.ts",
-		"betaTrimmedFilePath": "<projectFolder>/lib/esm/<unscopedPackageName>-beta.d.ts",
-		"publicTrimmedFilePath": "<projectFolder>/lib/esm/<unscopedPackageName>-public.d.ts",
-		"untrimmedFilePath": "<projectFolder>/lib/esm/<unscopedPackageName>-untrimmed.d.ts"
+		"alphaTrimmedFilePath": "<projectFolder>/dist/esm/<unscopedPackageName>-alpha.d.ts",
+		"betaTrimmedFilePath": "<projectFolder>/dist/esm/<unscopedPackageName>-beta.d.ts",
+		"publicTrimmedFilePath": "<projectFolder>/dist/esm/<unscopedPackageName>-public.d.ts",
+		"untrimmedFilePath": "<projectFolder>/dist/esm/<unscopedPackageName>-untrimmed.d.ts"
 	}
 }
