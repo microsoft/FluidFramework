@@ -16,7 +16,7 @@ import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import * as ink from '@fluidframework/ink';
+import * as ink from '@fluid-experimental/ink';
 import { ISharedDirectory } from '@fluidframework/map';
 import { ITelemetryGenericEvent } from '@fluidframework/core-interfaces';
 import { ITestContainerConfig } from '@fluidframework/test-utils';

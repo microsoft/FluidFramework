@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import * as semver from "semver";
+import type { Ink } from "@fluid-experimental/ink";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import {
@@ -27,7 +28,6 @@ import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import type { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import type { SequenceInterval, SharedString } from "@fluidframework/sequence";
 import type { SharedCell } from "@fluidframework/cell";
-import type { Ink } from "@fluidframework/ink";
 import type { SharedMatrix } from "@fluidframework/matrix";
 import type { ConsensusOrderedCollection } from "@fluidframework/ordered-collection";
 import type { SharedCounter } from "@fluidframework/counter";

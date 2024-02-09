@@ -41,9 +41,9 @@
 	},
 	"dependencies": {
 		"@fluid-example/example-utils": "workspace:~",
+		"@fluid-experimental/ink": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/ink": "workspace:~",
 		"react": "^17.0.1"
 	},
 	"devDependencies": {

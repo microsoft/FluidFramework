@@ -20,7 +20,7 @@ module.exports = {
 				paths: [
 					"@fluidframework/cell",
 					"@fluidframework/counter",
-					"@fluidframework/ink",
+					"@fluid-experimental/ink",
 					"@fluidframework/map",
 					"@fluidframework/matrix",
 					"@fluidframework/ordered-collection",

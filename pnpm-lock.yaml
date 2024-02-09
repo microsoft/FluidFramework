@@ -1666,13 +1666,13 @@ importers:
   examples/data-objects/canvas:
     specifiers:
       '@fluid-example/example-utils': workspace:~
+      '@fluid-experimental/ink': workspace:~
       '@fluid-tools/webpack-fluid-loader': workspace:~
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.29.0
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.3.0
-      '@fluidframework/ink': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 5.0.6
@@ -1703,9 +1703,9 @@ importers:
       webpack-merge: ^5.8.0
     dependencies:
       '@fluid-example/example-utils': link:../../utils/example-utils
+      '@fluid-experimental/ink': link:../../../packages/dds/ink
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
-      '@fluidframework/ink': link:../../../packages/dds/ink
       react: 17.0.2
     devDependencies:
       '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
@@ -6282,7 +6282,6 @@ importers:
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.3.0
-      '@fluidframework/ink-previous': npm:@fluidframework/ink@2.0.0-internal.8.0.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.2.0-231454
       '@fluidframework/runtime-definitions': workspace:~
@@ -6319,7 +6318,6 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0
       '@fluidframework/eslint-config-fluid': 3.3.0_loebgezstcsvd2poh2d55fifke
-      '@fluidframework/ink-previous': /@fluidframework/ink/2.0.0-internal.8.0.0
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i
@@ -10091,6 +10089,7 @@ importers:
 
   packages/test/snapshots:
     specifiers:
+      '@fluid-experimental/ink': workspace:~
       '@fluid-experimental/sequence-deprecated': workspace:~
       '@fluid-internal/replay-tool': workspace:~
       '@fluid-tools/build-cli': ^0.29.0
@@ -10106,7 +10105,6 @@ importers:
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.3.0
       '@fluidframework/file-driver': workspace:~
-      '@fluidframework/ink': workspace:~
       '@fluidframework/local-driver': workspace:~
       '@fluidframework/map': workspace:~
       '@fluidframework/matrix': workspace:~
@@ -10131,6 +10129,7 @@ importers:
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
+      '@fluid-experimental/ink': link:../../dds/ink
       '@fluid-experimental/sequence-deprecated': link:../../../experimental/dds/sequence-deprecated
       '@fluid-internal/replay-tool': link:../../tools/replay-tool
       '@fluidframework/cell': link:../../dds/cell
@@ -10142,7 +10141,6 @@ importers:
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/file-driver': link:../../drivers/file-driver
-      '@fluidframework/ink': link:../../dds/ink
       '@fluidframework/local-driver': link:../../drivers/local-driver
       '@fluidframework/map': link:../../dds/map
       '@fluidframework/matrix': link:../../dds/matrix
@@ -10367,6 +10365,7 @@ importers:
   packages/test/test-end-to-end-tests:
     specifiers:
       '@fluid-experimental/attributor': workspace:~
+      '@fluid-experimental/ink': workspace:~
       '@fluid-experimental/sequence-deprecated': workspace:~
       '@fluid-experimental/tree': workspace:~
       '@fluid-internal/client-utils': workspace:~
@@ -10393,7 +10392,6 @@ importers:
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.3.0
       '@fluidframework/id-compressor': workspace:~
-      '@fluidframework/ink': workspace:~
       '@fluidframework/map': workspace:~
       '@fluidframework/matrix': workspace:~
       '@fluidframework/merge-tree': workspace:~
@@ -10437,6 +10435,7 @@ importers:
       uuid: ^9.0.0
     dependencies:
       '@fluid-experimental/attributor': link:../../framework/attributor
+      '@fluid-experimental/ink': link:../../dds/ink
       '@fluid-experimental/sequence-deprecated': link:../../../experimental/dds/sequence-deprecated
       '@fluid-experimental/tree': link:../../../experimental/dds/tree
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -10459,7 +10458,6 @@ importers:
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/id-compressor': link:../../runtime/id-compressor
-      '@fluidframework/ink': link:../../dds/ink
       '@fluidframework/map': link:../../dds/map
       '@fluidframework/matrix': link:../../dds/matrix
       '@fluidframework/merge-tree': link:../../dds/merge-tree
@@ -10740,6 +10738,7 @@ importers:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
       '@fluid-experimental/attributor': workspace:~
+      '@fluid-experimental/ink': workspace:~
       '@fluid-experimental/sequence-deprecated': workspace:~
       '@fluid-private/test-drivers': workspace:~
       '@fluid-tools/build-cli': ^0.29.0
@@ -10758,7 +10757,6 @@ importers:
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.3.0
-      '@fluidframework/ink': workspace:~
       '@fluidframework/map': workspace:~
       '@fluidframework/matrix': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
@@ -10797,6 +10795,7 @@ importers:
       webpack-cli: ^4.9.2
     dependencies:
       '@fluid-experimental/attributor': link:../../framework/attributor
+      '@fluid-experimental/ink': link:../../dds/ink
       '@fluid-experimental/sequence-deprecated': link:../../../experimental/dds/sequence-deprecated
       '@fluid-private/test-drivers': link:../test-drivers
       '@fluid-tools/version-tools': 0.29.0
@@ -10811,7 +10810,6 @@ importers:
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/ink': link:../../dds/ink
       '@fluidframework/map': link:../../dds/map
       '@fluidframework/matrix': link:../../dds/matrix
       '@fluidframework/ordered-collection': link:../../dds/ordered-collection
@@ -11554,6 +11552,7 @@ importers:
 
   packages/tools/replay-tool:
     specifiers:
+      '@fluid-experimental/ink': workspace:~
       '@fluid-experimental/sequence-deprecated': workspace:~
       '@fluid-tools/build-cli': ^0.29.0
       '@fluidframework/build-common': ^2.0.3
@@ -11570,7 +11569,6 @@ importers:
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.3.0
       '@fluidframework/file-driver': workspace:~
-      '@fluidframework/ink': workspace:~
       '@fluidframework/map': workspace:~
       '@fluidframework/matrix': workspace:~
       '@fluidframework/ordered-collection': workspace:~
@@ -11595,6 +11593,7 @@ importers:
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
+      '@fluid-experimental/ink': link:../../dds/ink
       '@fluid-experimental/sequence-deprecated': link:../../../experimental/dds/sequence-deprecated
       '@fluidframework/cell': link:../../dds/cell
       '@fluidframework/container-definitions': link:../../common/container-definitions
@@ -11607,7 +11606,6 @@ importers:
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/file-driver': link:../../drivers/file-driver
-      '@fluidframework/ink': link:../../dds/ink
       '@fluidframework/map': link:../../dds/map
       '@fluidframework/matrix': link:../../dds/matrix
       '@fluidframework/ordered-collection': link:../../dds/ordered-collection
@@ -16806,21 +16804,6 @@ packages:
       sorted-btree: 1.8.1
       uuid: 9.0.1
     transitivePeerDependencies:
-      - supports-color
-    dev: true
-
-  /@fluidframework/ink/2.0.0-internal.8.0.0:
-    resolution: {integrity: sha512-+Dp4WE+cXT4k17zDMIHuCj/NV5ODtLCOjwdt3R6nDJr1v3nIu07einrOmNnnqOKDjXT17lI4UkdCFkDza/6GwA==}
-    dependencies:
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/datastore-definitions': 2.0.0-internal.8.0.0
-      '@fluidframework/driver-utils': 2.0.0-internal.8.0.0
-      '@fluidframework/protocol-definitions': 3.1.0
-      '@fluidframework/runtime-definitions': 2.0.0-internal.8.0.0
-      '@fluidframework/shared-object-base': 2.0.0-internal.8.0.0
-      uuid: 9.0.1
-    transitivePeerDependencies:
-      - debug
       - supports-color
     dev: true
 

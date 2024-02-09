@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import type { Ink, IColor } from "@fluid-experimental/ink";
 import type { SharedCell } from "@fluidframework/cell";
 import { Deferred } from "@fluidframework/core-utils";
 import {
@@ -17,7 +18,6 @@ import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { DataStoreMessageType } from "@fluidframework/datastore";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
-import type { Ink, IColor } from "@fluidframework/ink";
 import type { SharedMap, SharedDirectory } from "@fluidframework/map";
 import type { SharedMatrix } from "@fluidframework/matrix";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
