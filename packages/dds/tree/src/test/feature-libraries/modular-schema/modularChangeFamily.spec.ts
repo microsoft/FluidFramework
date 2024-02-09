@@ -1260,6 +1260,20 @@ describe("ModularChangeFamily", () => {
 			const filtered = filterSuperfluousBuilds(makeAnonChange(input), [b1]);
 			assert.deepEqual(filtered, expected);
 		});
+
+		it("tolerates missing relevant builds", () => {
+			const input: ModularChangeset = {
+				fieldChanges: new Map([]),
+				builds: new Map([]),
+			};
+
+			const expected: ModularChangeset = {
+				fieldChanges: new Map([]),
+			};
+
+			const filtered = filterSuperfluousBuilds(makeAnonChange(input), [a1, b1]);
+			assert.deepEqual(filtered, expected);
+		});
 	});
 
 	describe("Encoding", () => {
