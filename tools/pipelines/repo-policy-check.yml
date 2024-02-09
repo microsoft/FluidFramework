@@ -82,7 +82,6 @@ extends:
               echo System.TeamProjectId: $(System.TeamProjectId)
               echo Agent.MachineName: $(Agent.MachineName)
               echo Build.BuildUri: $(Build.BuildUri)
-              echo Just a change
 
         - task: Npm@1
           displayName: Policy Check
