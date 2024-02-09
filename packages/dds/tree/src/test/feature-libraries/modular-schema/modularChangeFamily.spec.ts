@@ -1092,34 +1092,7 @@ describe("ModularChangeFamily", () => {
 			return tryGetFromNestedMap(nodeMap, major, minor);
 		};
 
-		it("with no existing builds", () => {
-			const input: ModularChangeset = {
-				fieldChanges: new Map([]),
-			};
-
-			const expected: ModularChangeset = {
-				fieldChanges: new Map([]),
-				builds: new Map([
-					[
-						aMajor,
-						new Map([
-							[brand(1), node1Chunk],
-							[brand(2), node2Chunk],
-						]),
-					],
-					[bMajor, new Map([[brand(1), node3Chunk]])],
-				]),
-			};
-
-			const withBuilds = addMissingBuilds(makeAnonChange(input), getDetachedNode, [
-				a1,
-				a2,
-				b1,
-			]);
-			assert.deepEqual(withBuilds, expected);
-		});
-
-		it("with existing builds", () => {
+		it("preserves relevant builds that are present in the input", () => {
 			const input: ModularChangeset = {
 				fieldChanges: new Map([]),
 				builds: new Map([
@@ -1152,6 +1125,76 @@ describe("ModularChangeFamily", () => {
 			]);
 			assert.deepEqual(withBuilds, expected);
 		});
+
+		it("preserves irrelevant builds that are present in the input", () => {
+			const input: ModularChangeset = {
+				fieldChanges: new Map([]),
+				builds: new Map([
+					[undefined, new Map([[brand(1), node2Chunk]])],
+					[aMajor, new Map([[brand(2), node2Chunk]])],
+					[cMajor, new Map([[brand(1), node3Chunk]])],
+				]),
+			};
+
+			const expected: ModularChangeset = {
+				fieldChanges: new Map([]),
+				builds: new Map([
+					[undefined, new Map([[brand(1), node2Chunk]])],
+					[
+						aMajor,
+						new Map([
+							[brand(1), node1Chunk],
+							[brand(2), node2Chunk],
+						]),
+					],
+					[cMajor, new Map([[brand(1), node3Chunk]])],
+				]),
+			};
+
+			const withBuilds = addMissingBuilds(makeAnonChange(input), getDetachedNode, [
+				a1,
+			]);
+			assert.deepEqual(withBuilds, expected);
+		});
+
+		describe("attemps to add relevant builds that are missing from the input", () => {
+			it("adds the missing build if the detached node is available", () => {
+				const input: ModularChangeset = {
+					fieldChanges: new Map([]),
+				};
+	
+				const expected: ModularChangeset = {
+					fieldChanges: new Map([]),
+					builds: new Map([
+						[
+							aMajor,
+							new Map([
+								[brand(1), node1Chunk],
+								[brand(2), node2Chunk],
+							]),
+						],
+						[bMajor, new Map([[brand(1), node3Chunk]])],
+					]),
+				};
+	
+				const withBuilds = addMissingBuilds(makeAnonChange(input), getDetachedNode, [
+					a1,
+					a2,
+					b1,
+				]);
+				assert.deepEqual(withBuilds, expected);
+			});
+
+			it("throws if the detached node is not available", () => {
+				const input: ModularChangeset = {
+					fieldChanges: new Map([]),
+				};
+	
+				assert.throws(() => addMissingBuilds(makeAnonChange(input), getDetachedNode, [
+					{ minor: 2 },
+				]))
+			});
+		});
 	});
 
 	describe("filters builds", () => {
@@ -1164,8 +1207,7 @@ describe("ModularChangeFamily", () => {
 		const node3 = singleJsonCursor(3);
 		const node3Chunk = treeChunkFromCursor(node3);
 
-		it("with a valid relevant removed root", () => {
-			const removedRoots = [b1];
+		it("preserves relevant builds that are present in the input", () => {
 			const input: ModularChangeset = {
 				fieldChanges: new Map([]),
 				builds: new Map([
@@ -1185,11 +1227,11 @@ describe("ModularChangeFamily", () => {
 				builds: new Map([[bMajor, new Map([[brand(1), node3Chunk]])]]),
 			};
 
-			const filtered = filterSuperfluousBuilds(makeAnonChange(input), removedRoots);
+			const filtered = filterSuperfluousBuilds(makeAnonChange(input), [b1]);
 			assert.deepEqual(filtered, expected);
 		});
 
-		it("with no relevant removed roots in the changeset", () => {
+		it("removes irrelevant builds that are present in the input", () => {
 			const input: ModularChangeset = {
 				fieldChanges: new Map([]),
 				builds: new Map([
@@ -1209,21 +1251,6 @@ describe("ModularChangeFamily", () => {
 			};
 
 			const filtered = filterSuperfluousBuilds(makeAnonChange(input), []);
-			assert.deepEqual(filtered, expected);
-		});
-
-		it("does not filter out relevant roots", () => {
-			const input: ModularChangeset = {
-				fieldChanges: new Map([]),
-				builds: new Map([[bMajor, new Map([[brand(1), node3Chunk]])]]),
-			};
-
-			const expected: ModularChangeset = {
-				fieldChanges: new Map([]),
-				builds: new Map([[bMajor, new Map([[brand(1), node3Chunk]])]]),
-			};
-
-			const filtered = filterSuperfluousBuilds(makeAnonChange(input), [b1]);
 			assert.deepEqual(filtered, expected);
 		});
 	});
