@@ -73,6 +73,10 @@ describe("Summary Utils", () => {
 						entries: [],
 						unreferenced: true,
 					}),
+					new TreeTreeEntry("groupId", {
+						entries: [],
+						groupId: "group-id",
+					}),
 				],
 				unreferenced: undefined,
 			};
@@ -294,6 +298,31 @@ describe("Summary Utils", () => {
 				true,
 				"The unref subtree should be unreferenced",
 			);
+		});
+
+		it("should convert groupId state correctly", () => {
+			const summaryResults = convertSnapshotTreeToSummaryTree(snapshotTree);
+			const summaryTree = assertSummaryTree(summaryResults.summary);
+			assert.strictEqual(
+				summaryTree.groupId,
+				undefined,
+				"The root summary tree should not have groupId",
+			);
+
+			const subTreeT = assertSummaryTree(summaryTree.tree.t);
+			assert.strictEqual(subTreeT.groupId, undefined, "The t subtree not have groupId");
+			const subTreeTUnrefTree = assertSummaryTree(subTreeT.tree.tu);
+			assert.strictEqual(
+				subTreeTUnrefTree.groupId,
+				true,
+				"The tu subtree of t not have groupId",
+			);
+
+			const subTreeUnref = assertSummaryTree(summaryTree.tree.unref);
+			assert.strictEqual(subTreeUnref.groupId, undefined, "The groupId should not be set");
+
+			const subTreeGroupId = assertSummaryTree(summaryTree.tree.groupId);
+			assert.strictEqual(subTreeGroupId.groupId, "group-id", "The groupId should be set");
 		});
 	});
 

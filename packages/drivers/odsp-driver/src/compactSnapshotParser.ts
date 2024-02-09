@@ -159,6 +159,7 @@ function readTreeSection(node: NodeCore) {
 				slowTreeStructureCount += result.slowTreeStructureCount;
 				assert(treeNode.getBool(3), 0x3db /* Unreferenced if present should be true */);
 				snapshotTree.unreferenced = true;
+				// This is an optimization, do I need to do anything here?
 				continue;
 			}
 		}
@@ -173,6 +174,10 @@ function readTreeSection(node: NodeCore) {
 			assertBoolInstance(records.unreferenced, "Unreferenced flag should be bool");
 			assert(records.unreferenced, 0x281 /* "Unreferenced if present should be true" */);
 			snapshotTree.unreferenced = true;
+		}
+
+		if (records.groupId !== undefined) {
+			snapshotTree.groupId = getStringInstance(records.groupId, "GroupId should be string");
 		}
 
 		const path = getStringInstance(records.name, "Path name should be string");
