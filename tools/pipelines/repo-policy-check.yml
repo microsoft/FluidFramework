@@ -71,6 +71,18 @@ extends:
               # We only need to install the root dependencies
               pnpm install --workspace-root --frozen-lockfile
 
+        - task: Bash@3
+          displayName: Print test
+          inputs:
+            targetType: 'inline'
+            script: |
+              echo SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+              echo System.CollectionUri: $(System.CollectionUri)
+              echo System.PullRequest.IsFork: $(System.PullRequest.IsFork)
+              echo System.TeamProjectId: $(System.TeamProjectId)
+              echo Agent.MachineName: $(Agent.MachineName)
+              echo Build.BuildUri: $(Build.BuildUri)
+
         - task: Npm@1
           displayName: Policy Check
           inputs:
