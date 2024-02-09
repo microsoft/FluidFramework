@@ -154,6 +154,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
     // (undocumented)
     protected createNonRootInstanceCore(containerRuntime: IContainerRuntimeBase, packagePath: Readonly<string[]>, initialState?: I["InitialState"]): Promise<TObj>;
     createPeerInstance(peerContext: IFluidDataStoreContext, initialState?: I["InitialState"]): Promise<TObj>;
+    // @deprecated
     createRootInstance(rootDataStoreId: string, runtime: IContainerRuntime, initialState?: I["InitialState"]): Promise<TObj>;
     // (undocumented)
     get IFluidDataStoreFactory(): this;

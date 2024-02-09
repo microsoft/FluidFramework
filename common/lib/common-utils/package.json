@@ -152,6 +152,11 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedClassDeclaration_EventForwarder": {
+				"backCompat": false,
+				"forwardCompat": false
+			}
+		}
 	}
 }
