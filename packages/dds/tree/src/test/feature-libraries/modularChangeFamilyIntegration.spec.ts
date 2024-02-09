@@ -260,7 +260,9 @@ describe("ModularChangeFamily integration", () => {
 				revisionMetadataSourceFromInfo([{ revision: baseTag }]),
 			);
 
-			const rebasedDelta = intoDelta(makeAnonChange(rebased), family.fieldKinds);
+			const rebasedDelta = normalizeDelta(
+				intoDelta(makeAnonChange(rebased), family.fieldKinds),
+			);
 			const expectedDelta = normalizeDelta(
 				intoDelta(makeAnonChange(expected), family.fieldKinds),
 			);
