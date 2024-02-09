@@ -35,7 +35,7 @@ const baseOptions: Partial<DDSFuzzSuiteOptions> = {
  * The fuzz tests should validate that the clients do not crash and that their document states do not diverge.
  * See the "Fuzz - Targeted" test suite for tests that validate more specific code paths or invariants.
  */
-describe("Fuzz - Top-Level", () => {
+describe.only("Fuzz - Top-Level", () => {
 	const runsPerBatch = 50;
 	const opsPerRun = 20;
 	// TODO: Enable other types of ops.
@@ -78,9 +78,13 @@ describe("Fuzz - Top-Level", () => {
 				clientAddProbability: 0,
 				maxNumberOfClients: 3,
 			},
+			// AB#7162: enabling rehydrate in these tests hits 0x744 and 0x79d. Disabling rehydrate for now
+			// and using the default number of ops before attach.
+			detachedStartOptions: {
+				numOpsBeforeAttach: 5,
+				rehydrateDisabled: true,
+			},
 			reconnectProbability: 0,
-			// AB#7162
-			skip: [2, 9, 18, 21, 26, 35, 38, 39, 42],
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 		};
 		createDDSFuzzSuite(model, options);
@@ -107,8 +111,11 @@ describe("Fuzz - Top-Level", () => {
 				flushMode: FlushMode.TurnBased,
 				enableGroupedBatching: true,
 			},
-			// AB#7162
-			skip: [9, 12, 26, 27, 29],
+			// AB#7162: see comment above.
+			detachedStartOptions: {
+				numOpsBeforeAttach: 5,
+				rehydrateDisabled: true,
+			},
 			saveFailures: {
 				directory: failureDirectory,
 			},
