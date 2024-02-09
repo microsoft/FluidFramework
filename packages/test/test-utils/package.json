@@ -81,7 +81,6 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/test-driver-definitions": "workspace:~",
-		"@fluidframework/test-runtime-utils": "workspace:~",
 		"best-random": "^1.0.0",
 		"debug": "^4.3.4",
 		"uuid": "^9.0.0"

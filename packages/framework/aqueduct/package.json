@@ -133,8 +133,7 @@
 		"@fluidframework/request-handler": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/synthesize": "workspace:~",
-		"@fluidframework/view-interfaces": "workspace:~"
+		"@fluidframework/synthesize": "workspace:~"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",

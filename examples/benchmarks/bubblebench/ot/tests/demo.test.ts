@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { globals } from "../jest.config";
+import { globals } from "../jest.config.cjs";
 
 describe("Bubblebench", () => {
 	describe("SharedOT", () => {

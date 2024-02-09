@@ -5,8 +5,8 @@
 
 // False positive: this is an import from the `events` package, not from Node.
 // eslint-disable-next-line unicorn/prefer-node-protocol
-import { EventEmitter } from "events";
-import { IClient } from "@fluidframework/protocol-definitions";
+import type { EventEmitter } from "events";
+import type { IClient } from "@fluidframework/protocol-definitions";
 
 /**
  * Manages the state and the members for {@link IAudience}

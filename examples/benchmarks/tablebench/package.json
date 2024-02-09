@@ -63,7 +63,6 @@
 		"@fluidframework/eslint-config-fluid": "^3.5.0",
 		"@fluidframework/id-compressor": "workspace:~",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@fluidframework/test-tools": "^1.0.195075",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
 		"cross-env": "^7.0.3",

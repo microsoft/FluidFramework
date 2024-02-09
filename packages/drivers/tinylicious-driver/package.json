@@ -109,7 +109,6 @@
 		"@fluidframework/build-tools": "^0.29.0",
 		"@fluidframework/eslint-config-fluid": "^3.5.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@fluidframework/test-tools": "^1.0.195075",
 		"@fluidframework/tinylicious-driver-previous": "npm:@fluidframework/tinylicious-driver@2.0.0-internal.8.0.0",
 		"@microsoft/api-extractor": "^7.39.1",
 		"@types/jsrsasign": "^10.5.12",

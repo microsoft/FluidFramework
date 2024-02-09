@@ -130,7 +130,6 @@
 		"@fluidframework/eslint-config-fluid": "^3.5.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/request-handler-previous": "npm:@fluidframework/request-handler@2.0.0-internal.8.0.0",
-		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.39.1",
 		"@types/diff": "^3.5.1",
 		"@types/mocha": "^9.1.1",

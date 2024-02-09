@@ -69,7 +69,6 @@
 		"@fluidframework/eslint-config-fluid": "^3.5.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/test-driver-definitions": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@fluidframework/undo-redo": "workspace:~",
