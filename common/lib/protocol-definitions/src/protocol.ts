@@ -356,7 +356,7 @@ export interface ISignalMessageBase {
 	referenceSequenceNumber?: number;
 
 	/**
-	 * When specified, the signal has been targeted to the recieving client.
+	 * When specified, the signal is being targeted to the recieving client.
 	 */
 	targetClientId?: string;
 }
