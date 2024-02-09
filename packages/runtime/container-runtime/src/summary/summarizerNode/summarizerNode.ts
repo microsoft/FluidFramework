@@ -97,6 +97,17 @@ export class SummarizerNode implements IRootSummarizerNode {
 		});
 	}
 
+	/**
+	 * In order to produce a summary with a summarizer node, the summarizer node system must be notified a summary has
+	 * started. This is done by calling startSummary. This will track the reference sequence number of the summary and
+	 * run some validation checks to ensure the summary is correct.
+	 * @param referenceSequenceNumber - the number of ops processed up to this point
+	 * @param summaryLogger - the logger to use for the summary
+	 * @param latestSummaryRefSeqNum - the reference sequence number of the latest summary. Another way to think about
+	 * it is the reference sequence number of the previous summary.
+	 * @returns the number of nodes in the tree, the number of nodes that are invalid, and the different types of
+	 * sequence number mismatches
+	 */
 	public startSummary(
 		referenceSequenceNumber: number,
 		summaryLogger: ITelemetryBaseLogger,
@@ -144,7 +155,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 		return {
 			nodes,
 			invalidNodes,
-			mismatchNumbers: Array.from(sequenceNumberMismatchKeySet),
+			mismatchNumbers: sequenceNumberMismatchKeySet,
 		};
 	}
 

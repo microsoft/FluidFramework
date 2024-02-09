@@ -3149,14 +3149,17 @@ export class ContainerRuntime
 
 			if (
 				startSummaryResult.invalidNodes > 0 ||
-				startSummaryResult.mismatchNumbers.length > 0
+				startSummaryResult.mismatchNumbers.size > 0
 			) {
 				summaryLogger.sendErrorEvent({
 					eventName: "LatestSummaryRefSeqNumMismatch",
-					details: startSummaryResult,
+					details: {
+						...startSummaryResult,
+						mismatchNumbers: Array.from(startSummaryResult.mismatchNumbers),
+					},
 				});
 
-				if (shouldValidatePreSummaryState) {
+				if (shouldValidatePreSummaryState && !finalAttempt) {
 					return {
 						stage: "base",
 						referenceSequenceNumber: summaryRefSeqNum,
