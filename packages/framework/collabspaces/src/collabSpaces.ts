@@ -187,7 +187,7 @@ function isChannelDeffered(type?: string) {
 */
 
 /** @internal */
-export class TempCollabSpaceRuntime
+export class CollabSpacesRuntime
 	extends FluidDataStoreRuntime<ISharedMatrixEvents<MatrixExternalType>>
 	implements IEfficientMatrix
 {

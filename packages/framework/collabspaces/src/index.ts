@@ -12,4 +12,4 @@ export {
 	ICollabChannel,
 	CollabSpaceCellType,
 } from "./contracts";
-export { createCollabSpace } from "./factory";
+export { createCollabSpaces } from "./factory";

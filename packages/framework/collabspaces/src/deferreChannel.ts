@@ -31,7 +31,7 @@ const snapshotFileName = "header";
  */
 export class DeferredChannel extends SharedObject implements ICollabChannel {
 	readonly type = DeferredChannel.Type;
-	static readonly Type = "CollabSpacedDeferredChannelType";
+	static readonly Type = "CollabSpaceDeferredChannelType";
 
 	private ops: ISequencedDocumentMessage[] = [];
 
@@ -44,7 +44,7 @@ export class DeferredChannel extends SharedObject implements ICollabChannel {
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
 	) {
-		super(id, runtime, attributes, "fluid_collabspaces_deferred");
+		super(id, runtime, attributes, "fluid_collabspace_deferred");
 	}
 
 	public get value() {
