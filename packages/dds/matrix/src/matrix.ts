@@ -450,12 +450,18 @@ export class SharedMatrix<T = any>
 	}
 
 	public insertCols(colStart: number, count: number) {
+		if (count === 0) {
+			return;
+		}
 		this.protectAgainstReentrancy(() =>
 			this.submitColMessage(this.cols.insert(colStart, count)),
 		);
 	}
 
 	public removeCols(colStart: number, count: number) {
+		if (count === 0) {
+			return;
+		}
 		this.protectAgainstReentrancy(() =>
 			this.submitColMessage(this.cols.remove(colStart, count)),
 		);
@@ -466,12 +472,18 @@ export class SharedMatrix<T = any>
 	}
 
 	public insertRows(rowStart: number, count: number) {
+		if (count === 0) {
+			return;
+		}
 		this.protectAgainstReentrancy(() =>
 			this.submitRowMessage(this.rows.insert(rowStart, count)),
 		);
 	}
 
 	public removeRows(rowStart: number, count: number) {
+		if (count === 0) {
+			return;
+		}
 		this.protectAgainstReentrancy(() =>
 			this.submitRowMessage(this.rows.remove(rowStart, count)),
 		);

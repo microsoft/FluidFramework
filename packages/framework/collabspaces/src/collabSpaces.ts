@@ -232,20 +232,28 @@ export class CollabSpacesRuntime
 			// We might not be able to create a channel IF this channel is not rooted in a cell.
 			// We will need to hold on to all the ops, when if/when (through undo) channel becomes
 			// active again, recreated it!
-			const { row, col, iteration } = this.mapChannelToCell(address);
-			const currValue = this.matrix.getCell(row, col);
-			if (currValue === undefined || String(currValue.iteration) !== iteration) {
+			let deferredChannel = true;
+			const mapping = this.mapChannelToCell(address);
+			if (mapping !== undefined) {
+				const { row, col, iteration } = mapping;
+				const currValue = this.matrix.getCell(row, col);
+				if (currValue !== undefined && String(currValue.iteration) === iteration) {
+					// TBD(Pri2): It would be useful to put a factory type on every op, such that we can
+					// cross-reference it against currValue.type
+					this.createCollabChannel(currValue, address);
+					deferredChannel = false;
+				}
+			}
+			if (deferredChannel) {
 				this.createCollabChannel(
 					{
-						value: undefined,
+						// That's the only place where we allow undefined as a value
+						// All other places should not allow that.
+						value: undefined as unknown as string,
 						type: DeferredChannel.Type,
 					},
 					address,
 				);
-			} else {
-				// TBD(Pri2): It would be useful to put a factory type on every op, such that we can
-				// cross-reference it against currValue.type
-				this.createCollabChannel(currValue, address);
 			}
 		}
 
@@ -595,7 +603,9 @@ export class CollabSpacesRuntime
 				break;
 			}
 		}
-		assert(row !== rowCount, "channel not found");
+		if (row === rowCount) {
+			return undefined;
+		}
 
 		let col;
 		for (col = 1; col < colCount; col++) {
@@ -603,7 +613,9 @@ export class CollabSpacesRuntime
 				break;
 			}
 		}
-		assert(col !== colCount, "channel not found");
+		if (col === colCount) {
+			return undefined;
+		}
 
 		return { row, col, iteration };
 	}
@@ -645,8 +657,14 @@ export class CollabSpacesRuntime
 		const refSeq = attached ? this.deltaManager.lastSequenceNumber : -1;
 		assert(channelnfo.seq <= refSeq, "invalid seq number");
 
-		const { row, col, iteration } = this.mapChannelToCell(channelId);
+		const mapping = this.mapChannelToCell(channelId);
 
+		if (mapping === undefined) {
+			// Channel is not rooted. Nothing we can do about it!
+			return { saved: false, destroyd: false };
+		}
+
+		const { row, col, iteration } = mapping;
 		let savedValue = this.matrix.getCell(row, col);
 
 		// If channel is no longer associated with a cell, can't do much!
@@ -732,7 +750,7 @@ export class CollabSpacesRuntime
 	public async getCellAsync(row: number, col: number): Promise<CollabSpaceCellType> {
 		const { value, channel } = this.getCellInfo(row, col);
 		if (value === undefined) {
-			return { value: undefined, type: "undefined" };
+			return undefined;
 		}
 		let val = value.value;
 		if (channel !== undefined) {
