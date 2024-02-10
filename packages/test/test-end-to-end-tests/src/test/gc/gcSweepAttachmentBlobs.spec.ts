@@ -20,7 +20,8 @@ import { delay } from "@fluidframework/core-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 // eslint-disable-next-line import/no-internal-modules
 import { blobsTreeName } from "@fluidframework/container-runtime/dist/summary/index.js";
-import { disableDatastoreSweepKey, ISweepMessage } from "@fluidframework/container-runtime/test/gc";
+// eslint-disable-next-line import/no-internal-modules
+import { disableDatastoreSweepKey } from "@fluidframework/container-runtime/dist/gc/index.js";
 import {
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
@@ -1091,12 +1092,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 				// Summarize again so that the sweep ready blobs are now deleted from the GC data.
 				const summary3 = await summarizeNow(summarizer);
 				// Validate that the deleted blob's state is correct in the summary.
-				validateBlobStateInSummary(
-					summary3.summaryTree,
-					blob1NodePath,
-					true /* expectDelete */,
-					false /* expectGCStateHandle */,
-				);
+				validateBlobStateInSummary(summary3.summaryTree, blob1NodePath);
 			}),
 		);
 	});
