@@ -150,6 +150,8 @@ module.exports = {
 	// `flub check policy` config. It applies to the whole repo.
 	policy: {
 		exclusions: [
+			"common/build/build-common/src/cjs/package.json",
+			"common/build/build-common/src/esm/package.json",
 			"docs/layouts/",
 			"docs/themes/thxvscode/assets/",
 			"docs/themes/thxvscode/layouts/",
@@ -180,6 +182,9 @@ module.exports = {
 				"^packages/service-clients/.*/package.json",
 				"^packages/utils/.*/package.json",
 				"^packages/loader/container-loader/package.json",
+			],
+			"fluid-build-tasks-tsc": [
+				"packages/dds/tree/package.json", // Builds CommonJS with custom tsconfig
 			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
@@ -238,6 +243,7 @@ module.exports = {
 				"^tools/getkeys",
 			],
 			"npm-package-json-esm": [
+				"packages/dds/tree/package.json", // Policy is incorrect about "module" in package.json
 				// These are ESM-only packages and use tsc to build the ESM output. The policy handler doesn't understand this
 				// case.
 				"packages/dds/migration-shim/package.json",
