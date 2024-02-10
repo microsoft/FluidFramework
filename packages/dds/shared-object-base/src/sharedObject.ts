@@ -213,9 +213,11 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 		// Only listen to these events if not attached.
 		if (!this.isAttached()) {
 			this.runtime.once("attaching", () => {
-				// Calling this will let the dds to do any custom processing based on attached
-				// like starting generating ops.
-				this.didAttach();
+				if (this._isBoundToContext) {
+					// Calling this will let the dds to do any custom processing based on attached
+					// like starting generating ops.
+					this.didAttach();
+				}
 			});
 		}
 	}
@@ -226,13 +228,8 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 * @param services - Services used by the shared object
 	 */
 	public async load(services: IChannelServices): Promise<void> {
-		if (this.runtime.attachState !== AttachState.Detached) {
-			this.services = services;
-		}
 		await this.loadCore(services.objectStorage);
-		if (this.runtime.attachState !== AttachState.Detached) {
-			this.attachDeltaHandler();
-		}
+		this.attachDeltaHandler(services);
 	}
 
 	/**
@@ -247,28 +244,32 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 * {@inheritDoc (ISharedObject:interface).bindToContext}
 	 */
 	public bindToContext(): void {
-		if (this._isBoundToContext) {
-			return;
+		// ensure the method only runs once by removing the implementation
+		// without this the method suffers from re-entrancy issues
+		this.bindToContext = () => {};
+		if (!this._isBoundToContext) {
+			this.runtime.bindChannel(this);
+			// must set after bind channel so isAttached doesn't report true
+			// before binding is complete
+			this._isBoundToContext = true;
+			if (this.isAttached()) {
+				this.didAttach();
+			}
 		}
-
-		this._isBoundToContext = true;
-
-		this.runtime.bindChannel(this);
 	}
 
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).connect}
 	 */
 	public connect(services: IChannelServices) {
-		this.services = services;
-		this.attachDeltaHandler();
+		this.attachDeltaHandler(services);
 	}
 
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).isAttached}
 	 */
 	public isAttached(): boolean {
-		return this.services !== undefined && this.runtime.attachState !== AttachState.Detached;
+		return this._isBoundToContext && this.runtime.attachState !== AttachState.Detached;
 	}
 
 	/**
@@ -425,15 +426,19 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 		});
 	}
 
-	private attachDeltaHandler() {
-		// Services should already be there in case we are attaching delta handler.
-		assert(
-			this.services !== undefined,
-			0x07a /* "Services should be there to attach delta handler" */,
-		);
-		this._isBoundToContext = true;
-		// Allows objects to do any custom processing if it is attached.
-		this.didAttach();
+	private attachDeltaHandler(services: IChannelServices) {
+		if (this.services !== undefined) {
+			return;
+		}
+		this.services = services;
+
+		if (!this._isBoundToContext) {
+			this._isBoundToContext = true;
+			if (this.isAttached()) {
+				// Allows objects to do any custom processing if it is attached.
+				this.didAttach();
+			}
+		}
 
 		// attachDeltaHandler is only called after services is assigned
 		this.services.deltaConnection.attach({
