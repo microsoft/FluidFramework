@@ -451,7 +451,7 @@ export class CollabSpacesRuntime
 				for (let row = rowStart; row < rowStart + rowCount; row++) {
 					for (let col = colStart; col < colStart + colCount; col++) {
 						if (row === 0 || col === 0) {
-							// <Pri1>
+							// TBD(Pri1)
 							// Today we will raise "column added" event before we have an ID, and thus exposing incorrect state of matrix to consumers.
 							// It's better if we do something like that (as a separate PR):
 							// - suppress col/row addition events
@@ -491,30 +491,23 @@ export class CollabSpacesRuntime
 	private cellChanged(row: number, col: number) {
 		const info = this.getCellInfo(row, col);
 
-		if (info.value !== undefined) {
-			if (isChannelDeffered(info.channelInfo?.type)) {
-				const channelId = info.channelId;
-				// Need to update channel and convert it to real thing.
-				const deferredChannel = this.deferredChannels.get(channelId);
-				assert(deferredChannel !== undefined, "deferred channel not found");
-				this.deferredChannels.delete(channelId);
+		if (info.value !== undefined && isChannelDeffered(info.channelInfo?.type)) {
+			const channelId = info.channelId;
+			// Need to update channel and convert it to real thing.
+			const deferredChannel = this.deferredChannels.get(channelId);
+			assert(deferredChannel !== undefined, "deferred channel not found");
+			this.deferredChannels.delete(channelId);
 
-				this.destroyChannelCore(channelId);
+			this.destroyChannelCore(channelId);
 
-				assert(
-					info.channelInfo?.pendingChangeCount === 0,
-					"no pending changes for deferred channel",
-				);
-				this.channelInfo[channelId] = undefined;
-				this.createCollabChannel(info.value, channelId);
-				for (const op of deferredChannel.getOps()) {
-					this.processChannelOp(
-						channelId,
-						op,
-						false /* local */,
-						undefined /* metadata */,
-					);
-				}
+			assert(
+				info.channelInfo?.pendingChangeCount === 0,
+				"no pending changes for deferred channel",
+			);
+			this.channelInfo[channelId] = undefined;
+			this.createCollabChannel(info.value, channelId);
+			for (const op of deferredChannel.getOps()) {
+				this.processChannelOp(channelId, op, false /* local */, undefined /* metadata */);
 			}
 		}
 	}
