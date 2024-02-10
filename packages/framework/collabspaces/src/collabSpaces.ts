@@ -492,30 +492,23 @@ export class CollabSpacesRuntime
 	private cellChanged(row: number, col: number) {
 		const info = this.getCellInfo(row, col);
 
-		if (info.value !== undefined) {
-			if (isChannelDeffered(info.channelInfo?.type)) {
-				const channelId = info.channelId;
-				// Need to update channel and convert it to real thing.
-				const deferredChannel = this.deferredChannels.get(channelId);
-				assert(deferredChannel !== undefined, "deferred channel not found");
-				this.deferredChannels.delete(channelId);
+		if (info.value !== undefined && isChannelDeffered(info.channelInfo?.type)) {
+			const channelId = info.channelId;
+			// Need to update channel and convert it to real thing.
+			const deferredChannel = this.deferredChannels.get(channelId);
+			assert(deferredChannel !== undefined, "deferred channel not found");
+			this.deferredChannels.delete(channelId);
 
-				this.destroyChannelCore(channelId);
+			this.destroyChannelCore(channelId);
 
-				assert(
-					info.channelInfo?.pendingChangeCount === 0,
-					"no pending changes for deferred channel",
-				);
-				this.channelInfo[channelId] = undefined;
-				this.createCollabChannel(info.value, channelId);
-				for (const op of deferredChannel.getOps()) {
-					this.processChannelOp(
-						channelId,
-						op,
-						false /* local */,
-						undefined /* metadata */,
-					);
-				}
+			assert(
+				info.channelInfo?.pendingChangeCount === 0,
+				"no pending changes for deferred channel",
+			);
+			this.channelInfo[channelId] = undefined;
+			this.createCollabChannel(info.value, channelId);
+			for (const op of deferredChannel.getOps()) {
+				this.processChannelOp(channelId, op, false /* local */, undefined /* metadata */);
 			}
 		}
 	}
@@ -676,23 +669,21 @@ export class CollabSpacesRuntime
 		const row = this.reverseMap.getRowIndex(rowId);
 		const col = this.reverseMap.getColIndex(colId);
 
-		if (row !== undefined) {
-			assert(
-				this.areEqualUuid(this.matrix.getCell(row, 0) as unknown as uuidType, rowId),
-				"channel's rowId mismatch",
-			);
-		} else {
+		if (row === undefined) {
 			return undefined;
 		}
+		assert(
+			this.areEqualUuid(this.matrix.getCell(row, 0) as unknown as uuidType, rowId),
+			"channel's rowId mismatch",
+		);
 
-		if (col !== undefined) {
-			assert(
-				this.areEqualUuid(this.matrix.getCell(0, col) as unknown as uuidType, colId),
-				"channel's colId mismatch",
-			);
-		} else {
+		if (col === undefined) {
 			return undefined;
 		}
+		assert(
+			this.areEqualUuid(this.matrix.getCell(0, col) as unknown as uuidType, colId),
+			"channel's colId mismatch",
+		);
 		return { row, col, iteration };
 	}
 
@@ -741,7 +732,6 @@ export class CollabSpacesRuntime
 		}
 
 		const { row, col, iteration } = mapping;
-
 		let savedValue = this.matrix.getCell(row, col);
 
 		// If channel is no longer associated with a cell, can't do much!

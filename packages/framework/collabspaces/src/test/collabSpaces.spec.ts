@@ -740,7 +740,9 @@ describe("Temporal Collab Spaces", () => {
 		it("Channel overwrite without syncronization & summarizer", async () => {
 			await ChannelOverwrite(false, true);
 		});
+	});
 
+	describe("Stress tests", () => {
 		type Op = (cp: IEfficientMatrix) => Promise<unknown>;
 
 		// collaborate on a cell through collab channel
@@ -776,7 +778,7 @@ describe("Temporal Collab Spaces", () => {
 			cp.setCell(row, col, undefined);
 		};
 
-		// Synchronize containers and validate they all have exactly same state
+		// Syncronize containers and validate they all have exactly same state
 		const synchronizeAndValidateContainerFn = async () => {
 			await provider.ensureSynchronized();
 			ensureSameSize();
