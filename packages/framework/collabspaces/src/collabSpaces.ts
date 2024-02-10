@@ -428,6 +428,21 @@ export class CollabSpacesRuntime
 					this.deferredChannels.set(channelId, channel as DeferredChannel);
 				}
 			}
+
+			for (let row = 1; row < this.matrixInternal.rowCount; row++) {
+				this.reverseMap.addCellToMap(
+					"row",
+					this.matrixInternal.getCell(row, 0) as unknown as string,
+					row - 1,
+				);
+			}
+			for (let col = 1; col < this.matrixInternal.colCount; col++) {
+				this.reverseMap.addCellToMap(
+					"col",
+					this.matrixInternal.getCell(0, col) as unknown as string,
+					col - 1,
+				);
+			}
 		}
 		this.matrix.switchSetCellPolicy();
 
