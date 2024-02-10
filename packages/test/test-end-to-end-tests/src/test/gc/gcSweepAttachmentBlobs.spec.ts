@@ -1099,7 +1099,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 
 		[true, undefined].forEach((disableDatastoreSweep) =>
 			it(`updates deleted blob state in the summary [disableDatastoreSweep=${disableDatastoreSweep}]`, async () => {
-				configProvider.set(disableDatastoreSweepKey, disableDatastoreSweep);
+				settings[disableDatastoreSweepKey] = disableDatastoreSweep;
 
 				const { dataStore: mainDataStore, summarizer } =
 					await createDataStoreAndSummarizer();

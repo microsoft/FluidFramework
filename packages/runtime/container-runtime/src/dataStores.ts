@@ -61,8 +61,8 @@ import {
 	LocalDetachedFluidDataStoreContext,
 } from "./dataStoreContext";
 import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs";
-import { GCNodeType, detectOutboundRoutesViaDDSKey, disableDatastoreSweepKey } from "./gc";
-import { IDataStoreAliasMessage, channelToDataStore, isDataStoreAliasMessage } from "./dataStore";
+import { GCNodeType, detectOutboundRoutesViaDDSKey } from "./gc";
+import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summary";
 
 type PendingAliasResolve = (success: boolean) => void;
