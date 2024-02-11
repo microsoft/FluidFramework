@@ -11,7 +11,6 @@ import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	IFluidDataStoreContext,
-	VisibilityState,
 	IAttachMessage,
 } from "@fluidframework/runtime-definitions";
 import {
@@ -39,6 +38,7 @@ import {
 	IEfficientMatrix,
 	ICollabChannelFactory,
 	CollabSpaceCellType,
+	SaveResult,
 } from "./contracts";
 import { DeferredChannel, DeferredChannelFactory } from "./deferreChannel";
 
@@ -120,6 +120,7 @@ import { DeferredChannel, DeferredChannelFactory } from "./deferreChannel";
  */
 
 const matrixId = "matrix";
+const debugChannelId = "debug";
 const channelSummaryBlobName = "channelInfo";
 
 type uuidType = number | string;
@@ -127,9 +128,9 @@ type uuidType = number | string;
 interface MatrixInternalType extends MatrixExternalType {
 	// This is channel ID modifier.
 	// Each cell could have only one active channel, but many passive channels associated with it.
-	// Every time a cell is overwritten, iteration number is bumped, creating new channel.
+	// Every time a cell is overwritten, iteration number is changed, creating new channel.
 	// Old channel might be still around and could be returned through undo.
-	iteration: number;
+	iteration: uuidType;
 
 	// Every time channel saves its state in the cell, it records a sequence number when such change
 	// was valid. The value in the cell is the truth only if there are no other changes in the channel
@@ -140,8 +141,8 @@ interface MatrixInternalType extends MatrixExternalType {
 type ICellInfo =
 	| {
 			value: undefined;
-			channel: undefined;
-			channelId: undefined;
+			channel?: undefined;
+			channelId?: undefined;
 	  }
 	| {
 			value: Exclude<MatrixItem<MatrixInternalType>, undefined>;
@@ -149,6 +150,11 @@ type ICellInfo =
 			channelId: string;
 			channelInfo: IChannelTrackingInfo | undefined;
 	  };
+
+const ChannelInfoCreatedDetachedSeq = -2;
+const ChannelInfoCreatedAttachedSeq = -1;
+const valueCreatedDetachedSeq = -1;
+const valueCreatedAttachedSeq = -2;
 
 interface IChannelTrackingInfo {
 	// Sequence number of the last message for this channel.
@@ -193,6 +199,8 @@ export class CollabSpacesRuntime
 	private matrixInternal?: SharedMatrix<MatrixInternalType>;
 	private channelInfo: Record<string, IChannelTrackingInfo | undefined> = {};
 	private deferredChannels: Map<string, DeferredChannel> = new Map();
+	private matrixPendingChangeCount = 0;
+	private debugChannel?: DeferredChannel = undefined;
 
 	constructor(
 		dataStoreContext: IFluidDataStoreContext,
@@ -215,11 +223,20 @@ export class CollabSpacesRuntime
 		throw error;
 	}
 
+	private isCollabChannel(channelId) {
+		return matrixId !== channelId && debugChannelId !== channelId;
+	}
+
 	// Called on various paths, like op processing, where channel should exists.
 	private updatePendingCoutner(address: string, diff: number, allowImplicitCreation: boolean) {
-		if (address === matrixId) {
+		if (!this.isCollabChannel(address)) {
+			if (address === matrixId) {
+				this.matrixPendingChangeCount += diff;
+				assert(this.matrixPendingChangeCount >= 0, "counter should be non-negative!");
+			}
 			return;
 		}
+
 		const channel = this.contexts.get(address);
 		if (channel === undefined) {
 			if (!allowImplicitCreation) {
@@ -235,14 +252,10 @@ export class CollabSpacesRuntime
 			let deferredChannel = true;
 			const mapping = this.mapChannelToCell(address);
 			if (mapping !== undefined) {
-				const { row, col, iteration } = mapping;
-				const currValue = this.matrix.getCell(row, col);
-				if (currValue !== undefined && String(currValue.iteration) === iteration) {
-					// TBD(Pri2): It would be useful to put a factory type on every op, such that we can
-					// cross-reference it against currValue.type
-					this.createCollabChannel(currValue, address);
-					deferredChannel = false;
-				}
+				// TBD(Pri2): It would be useful to put a factory type on every op, such that we can
+				// cross-reference it against currValue.type
+				this.createCollabChannel(mapping.value, address);
+				deferredChannel = false;
 			}
 			if (deferredChannel) {
 				this.createCollabChannel(
@@ -322,7 +335,7 @@ export class CollabSpacesRuntime
 		// TBD(Pri3): review later
 		// Sending op is optional (and whole system has to work correctly without such ops)
 		// That said, sending it is useful for validation purposes (to validate we start with same state)
-		if (channel.id === matrixId) {
+		if (this.isCollabChannel(channel.id)) {
 			super.sendAttachChannelOp(channel);
 		}
 	}
@@ -350,16 +363,18 @@ export class CollabSpacesRuntime
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummaryTreeWithStats> {
+		assert(this.matrixPendingChangeCount === 0, "there should be no changes by summarizer!");
+
 		// Do some garbage collection for channels that we do not need.
 		for (const [channelId, channel] of this.contexts) {
-			if (channelId !== matrixId) {
+			if (this.isCollabChannel(channelId)) {
 				const info = this.saveOrDestroyChannel(
 					(await channel.getChannel()) as ICollabChannel,
 					false /* allowSave */,
 					true /* allowDestroy */,
 				);
 				assert(
-					!info.destroyd || !this.deferredChannels.has(channelId),
+					!info.destroyed || !this.deferredChannels.has(channelId),
 					"Deferred channels could not be destroyed - this cases daa loss!",
 				);
 			}
@@ -377,7 +392,7 @@ export class CollabSpacesRuntime
 	) {
 		if (!this.contexts.has(id)) {
 			super.attachRemoteChannel(id, sequenceNumber, attachMessage);
-			if (id !== matrixId) {
+			if (this.isCollabChannel(id)) {
 				// This should never happen, but if it does - this points to an issue of
 				// not tracking it properly in this.deferredChannels
 				assert(!isChannelDeffered(attachMessage.type), "deferred channels tracking");
@@ -393,8 +408,13 @@ export class CollabSpacesRuntime
 	 * Public API
 	 */
 
+	public sendSomeDebugOp() {
+		// TBD(Pri0): remove case by refactoring
+		(this.debugChannel as any).submitLocalMessage("foo");
+	}
+
 	// Should be called by data store runtime factory
-	public async initialize(existing: boolean) {
+	public async initialize(existing: boolean, createDebugChannel: boolean) {
 		if (!existing) {
 			this.matrixInternal = this.createChannel(
 				matrixId,
@@ -407,6 +427,14 @@ export class CollabSpacesRuntime
 
 			// Ensure it will attach when this data store attaches
 			this.matrixInternal.bindToContext();
+
+			if (createDebugChannel) {
+				this.debugChannel = this.createChannel(
+					debugChannelId,
+					DeferredChannel.Type,
+				) as DeferredChannel;
+				this.debugChannel.bindToContext();
+			}
 		} else {
 			this.matrixInternal = (await this.getChannel(matrixId)) as SharedMatrix;
 
@@ -426,6 +454,10 @@ export class CollabSpacesRuntime
 					this.deferredChannels.set(channelId, channel as DeferredChannel);
 				}
 			}
+
+			if (createDebugChannel) {
+				this.debugChannel = (await this.getChannel(debugChannelId)) as DeferredChannel;
+			}
 		}
 		this.matrix.switchSetCellPolicy();
 
@@ -441,7 +473,9 @@ export class CollabSpacesRuntime
 				for (let row = rowStart; row < rowStart + rowCount; row++) {
 					for (let col = colStart; col < colStart + colCount; col++) {
 						// -1 due to first row & col tracking IDs
-						this.cellChanged(row - 1, col - 1);
+						if (row !== 0 && col !== 0) {
+							this.cellChanged(row - 1, col - 1);
+						}
 					}
 				}
 			},
@@ -479,9 +513,10 @@ export class CollabSpacesRuntime
 	private getCellInfo(rowArg: number, colArg: number): ICellInfo {
 		const row = rowArg + 1;
 		const col = colArg + 1;
+		assert(row > 0 && col > 0, "arguments");
 		const cellValue = this.matrix.getCell(row, col);
 		if (cellValue === undefined) {
-			return { value: undefined, channel: undefined, channelId: undefined };
+			return { value: undefined, channel: undefined };
 		}
 		const rowId = this.matrix.getCell(row, 0) as unknown as uuidType;
 		const colId = this.matrix.getCell(0, col) as unknown as uuidType;
@@ -528,11 +563,7 @@ export class CollabSpacesRuntime
 		assert(this.channelInfo[channelId] === undefined, "channel is in inconsistent state");
 		// New IChannelTrackingInfo is created
 		this.channelInfo[channelId] = {
-			// -1 here is important for couple reasons:
-			// If this object is detached, we have no sequence to operate with, and any future sequences
-			// should be higher than this starting point.
-			// If it's attached, then any sequence below current sequence number is good and has same treatment.
-			seq: -1,
+			seq: this.isAttached ? ChannelInfoCreatedAttachedSeq : ChannelInfoCreatedDetachedSeq,
 			pendingChangeCount: 0,
 			type,
 		};
@@ -581,7 +612,7 @@ export class CollabSpacesRuntime
 		return this.createCollabChannel(value, channelId);
 	}
 
-	private mapChannelToCell(channelId: string) {
+	private mapChannelToCellCore(channelId: string) {
 		const parts = channelId.split(",");
 		assert(parts.length === 3, "wrong channel ID");
 		const rowId = parts[0];
@@ -620,6 +651,19 @@ export class CollabSpacesRuntime
 		return { row, col, iteration };
 	}
 
+	private mapChannelToCell(channelId: string) {
+		const mapping = this.mapChannelToCellCore(channelId);
+		if (mapping === undefined) {
+			return undefined;
+		}
+		const { row, col, iteration } = mapping;
+		const value = this.matrix.getCell(row, col);
+		if (value === undefined || String(value.iteration) !== iteration) {
+			return undefined;
+		}
+		return { ...mapping, value };
+	}
+
 	private destroyChannelCore(channelId: string) {
 		// Force summarizer sub-system to summarize this object and get rid of deleted channel
 		this.setChannelDirty(channelId);
@@ -633,6 +677,9 @@ export class CollabSpacesRuntime
 		// To some extend it's a noop event from GC perspective, and resulting data in the cell
 		// represents same data, but need to double check that it's actually correct and tests
 		// have proper coverage.
+
+		// TBD(Pri0): remove case introducing proper API / workflow
+		(this.dataStoreContext as any).summarizerNode.deleteChild(channelId);
 	}
 
 	// Saves or destoys channel, depending on the arguments
@@ -640,7 +687,7 @@ export class CollabSpacesRuntime
 		channel: ICollabChannelCore,
 		allowSave: boolean,
 		allowDestroy: boolean,
-	) {
+	): { saveResult: SaveResult; destroyed: boolean } {
 		const channelId = (channel as ICollabChannel).id;
 
 		const channelnfo = this.channelInfo[channelId];
@@ -648,24 +695,10 @@ export class CollabSpacesRuntime
 
 		// Can't do anything if there are any local changes.
 		if (channelnfo.pendingChangeCount > 0) {
-			return { saved: false, destroyd: false };
+			return { saveResult: SaveResult.Dirty, destroyed: false };
 		}
-
-		// Are ops flying? If not, we have no clue if channel was saved or not.
-		const attached = this.visibilityState === VisibilityState.GloballyVisible;
-
-		const refSeq = attached ? this.deltaManager.lastSequenceNumber : -1;
-		assert(channelnfo.seq <= refSeq, "invalid seq number");
 
 		const mapping = this.mapChannelToCell(channelId);
-
-		if (mapping === undefined) {
-			// Channel is not rooted. Nothing we can do about it!
-			return { saved: false, destroyd: false };
-		}
-
-		const { row, col, iteration } = mapping;
-		let savedValue = this.matrix.getCell(row, col);
 
 		// If channel is no longer associated with a cell, can't do much!
 		// We are dealing with non-rooted channel. It could be returned back to life through undo
@@ -673,22 +706,82 @@ export class CollabSpacesRuntime
 		// concurrently changed type of a column - one offline, one not, and thus either of them can run
 		// undo and return it back to life).
 		// In the worst case, this channel will be collected by GC (though need to validate that!)
-		if (savedValue === undefined || String(savedValue.iteration) !== iteration) {
-			return { saved: false, destroyd: false };
+		if (mapping === undefined) {
+			return { saveResult: SaveResult.NotRooted, destroyed: false };
+		}
+		const { row, col, value } = mapping;
+
+		assert(channelnfo.type === value.type, "Types differ!");
+		assert(!isChannelDeffered(channelnfo.type), "channel should not be deferred");
+		assert(this.deferredChannels[channelId] === undefined, "Rooted channel can't be deferred!");
+
+		let refSeq: number;
+		let saved: boolean;
+		let destroyed: boolean;
+
+		// Are ops flying? If not, we have no clue if channel was saved or not.
+		if (!this.isAttached) {
+			refSeq = valueCreatedDetachedSeq;
+			assert(value.seq === valueCreatedDetachedSeq, "starting seq in detached state");
+			saved = allowSave;
+			destroyed = allowDestroy && saved;
+		} else {
+			// TBD(Pri0): Need to figure out how to handle detached -> attaching transitions properly!!!
+			assert(channelnfo.seq !== ChannelInfoCreatedDetachedSeq, "");
+
+			if (channelnfo.seq === ChannelInfoCreatedAttachedSeq) {
+				// channel was created in attached stated and there were no changes sinse then - nothing to do!
+				return { saveResult: SaveResult.NoNeedToSave, destroyed: false };
+			}
+
+			const currSeq = this.deltaManager.lastSequenceNumber;
+			assert(channelnfo.seq <= currSeq, "invalid seq number");
+			assert(value.seq <= channelnfo.seq, "invalid seq number");
+
+			if (currSeq === channelnfo.seq) {
+				// We do not know yet if we processed all the ops in latest batch - maybe we are still processing it.
+				// For that reason we can't say for sure if all changes are accounted yet.
+				// TBD(Pri2): should we expose info that batch is being processing, such that code like that could
+				// take it into account and be smarter / more efficient?
+				return { saveResult: SaveResult.CantSave, destroyed: false };
+			}
+
+			// TBD(Pri1)
+			// There is value in sending save ops if they can't get through - we would keep accumulating
+			// such ops infinitely (in offline). Better workflow would be
+			// 1. Always track any pending save op for channel and not send any new ops until previous acks.
+			// 2. (Optional) Have more nuanced rebase policy for such ops not to send garbage once we reconnect.
+			if (
+				!this.connected ||
+				this.clientId === undefined ||
+				this.getQuorum().getMember(this.clientId) === undefined
+			) {
+				return { saveResult: SaveResult.CantSave, destroyed: false };
+			}
+
+			// We will record the last seq number that had any changes for a channel.
+			// That said, we can use any number in the range of [channelnfo.seq ... currSeq).
+			refSeq = channelnfo.seq;
+
+			// See note above on op grouping and sequence numbers. Need to ensure that
+			saved = allowSave && value.seq < channelnfo.seq;
+			destroyed =
+				allowDestroy &&
+				// 1. We have more recent data saved.
+				channelnfo.seq <= value.seq &&
+				// 2. There is no need for a channel to preserve extra historic state to be able apply future ops that
+				//    might have reference sequence number in the past (in between MSN and current sequence number)
+				channelnfo.seq <= this.deltaManager.minimumSequenceNumber &&
+				// 3. Previous saves acked or were rejected (hit "conflict"), i.e. we do not rely on a local lie that
+				//    had no chance to resolve yet.
+				//    TBD(Pri1): Can we make it more efficient, by not blocking channel deletion on unrelated changes?
+				//    This would require tracking each individual cell save.
+				this.matrixPendingChangeCount === 0;
+
+			assert(!(saved && destroyed), "can save and destroy in one go");
 		}
 
-		assert(savedValue.seq <= refSeq, "invalid seq number");
-		assert(this.channelInfo[channelId]?.type === savedValue.type, "Types differ!");
-
-		// Note on op grouping and equal sequence numbers: There will be cases (due to reentrancy when
-		// processing op batches) where ligic below could be optimized to require less saves, because
-		// we would do unnessasary saves. While true, this would also requrie tracking more state in cells.
-		// Given that chances of that are low, and code is correct, it's better to rely on extra saves
-		// then inefficiency of managing more state.
-
-		const saved = allowSave && (!attached || savedValue.seq <= channelnfo.seq);
-		const destroyd = allowDestroy && (attached ? savedValue.seq > channelnfo.seq : saved);
-
+		let savedValue = value;
 		if (saved) {
 			savedValue = {
 				...savedValue, // value, iteration, type
@@ -696,28 +789,82 @@ export class CollabSpacesRuntime
 				seq: refSeq,
 			};
 			this.matrix.setCell(row, col, savedValue);
+			if (this.isAttached) {
+				assert(this.matrixPendingChangeCount > 0, "should produce matrix op");
+			} else {
+				assert(this.matrixPendingChangeCount === 0, "should not produce matrix op");
+			}
 		}
 
-		if (destroyd) {
+		if (destroyed) {
 			// Validate that actually values match!
 			assert(channel.value === savedValue.value, "values are not matching!!!!");
 			this.destroyChannelCore(channelId);
 		}
 
-		return { saved, destroyd };
+		return {
+			saveResult: saved ? SaveResult.Saved : SaveResult.NoNeedToSave,
+			destroyed,
+		};
 	}
 
 	public saveChannelState(channel: ICollabChannelCore) {
-		this.saveOrDestroyChannel(channel, true /* allowSave */, false /* allowDestroy */);
+		return this.saveOrDestroyChannel(channel, true /* allowSave */, false /* allowDestroy */)
+			.saveResult;
 	}
 
 	public destroyCellChannel(channel: ICollabChannelCore) {
 		const res = this.saveOrDestroyChannel(
 			channel,
-			true /* allowSave */,
+			// If channel is detached, we can only do save & destroy - neither save nor destroy
+			// could be performed inddependently.
+			// For attached states we need to receive an ack for save before we could destroy channel,
+			// so these two operations are decoupled in such case.
+			!this.isAttached /* allowSave */,
 			true /* allowDestroy */,
 		);
-		return res.destroyd;
+		return res.destroyed;
+	}
+
+	public async getAllChannels() {
+		const channelsNotRootedP: Promise<IChannel>[] = [];
+		const channelsRootedP: Promise<IChannel>[] = [];
+
+		for (const [id, context] of this.contexts) {
+			if (this.isCollabChannel(id)) {
+				assert(this.channelInfo[id] !== undefined, "channel not found");
+				const mapping = this.mapChannelToCell(id);
+				if (mapping !== undefined) {
+					channelsRootedP.push(context.getChannel());
+				} else {
+					channelsNotRootedP.push(context.getChannel());
+				}
+			}
+		}
+
+		// Valdate that we do not have "extra" channels
+		for (const [channelId, info] of Object.entries(this.channelInfo)) {
+			if (info !== undefined) {
+				assert(this.contexts.get(channelId) !== undefined, "deferred channel not found");
+			}
+		}
+
+		// Valdate that we do not have "extra" deferred channels
+		for (const [channelId] of this.deferredChannels) {
+			assert(this.contexts.get(channelId) !== undefined, "deferred channel not found");
+			assert(
+				isChannelDeffered(this.channelInfo[channelId]?.type),
+				"deferred channel should have proper type",
+			);
+
+			const mapping = this.mapChannelToCell(channelId);
+			assert(mapping === undefined, "deffered channel can't be rooted");
+		}
+
+		const rooted = (await Promise.all(channelsRootedP)) as ICollabChannel[];
+		const notRooted = (await Promise.all(channelsNotRootedP)) as ICollabChannel[];
+
+		return { rooted, notRooted };
 	}
 
 	// #region IMatrixProducer
@@ -773,6 +920,7 @@ export class CollabSpacesRuntime
 	public setCell(rowArg: number, colArg: number, value: CollabSpaceCellType) {
 		const row = rowArg + 1;
 		const col = colArg + 1;
+		assert(row > 0 && col > 0, "arguments");
 		if (value === undefined) {
 			this.matrix.setCell(row, col, value);
 		} else {
@@ -784,10 +932,8 @@ export class CollabSpacesRuntime
 				throw new UsageError("Matrix: Unknown value type");
 			}
 
-			const currentValue = this.matrix.getCell(row, col);
-			const iteration = currentValue ? currentValue.iteration + 1 : 1;
-			const attached = this.visibilityState === VisibilityState.GloballyVisible;
-			const seq = attached ? this.deltaManager.lastSequenceNumber : -1;
+			const iteration = this.uuid();
+			const seq = this.isAttached ? valueCreatedAttachedSeq : valueCreatedDetachedSeq;
 			const valueInternal = { ...value, iteration, seq };
 			this.matrix.setCell(row, col, valueInternal);
 		}

@@ -16,7 +16,7 @@ import { Serializable } from '@fluidframework/datastore-definitions';
 export type CollabSpaceCellType = MatrixItem<MatrixExternalType>;
 
 // @internal (undocumented)
-export function createCollabSpaces(sharedObjects: Readonly<ICollabChannelFactory[]>): IFluidDataStoreFactory;
+export function createCollabSpaces(sharedObjects: Readonly<ICollabChannelFactory[]>, createDebugChannel: boolean): IFluidDataStoreFactory;
 
 // @internal (undocumented)
 export type ICollabChannel = IChannel & ICollabChannelCore;
@@ -38,25 +38,20 @@ export interface IEfficientMatrix extends Omit<ISharedMatrix<MatrixExternalType>
     // (undocumented)
     destroyCellChannel(channel: ICollabChannelCore): boolean;
     // (undocumented)
+    getAllChannels(): Promise<{
+        rooted: ICollabChannelCore[];
+        notRooted: ICollabChannelCore[];
+    }>;
+    // (undocumented)
     getCell(row: number, col: number): CollabSpaceCellType;
     // (undocumented)
     getCellAsync(row: number, col: number): Promise<CollabSpaceCellType>;
     // (undocumented)
     getCellChannel(row: number, col: number): Promise<ICollabChannelCore>;
     // (undocumented)
-    saveChannelState(channel: ICollabChannelCore): any;
+    saveChannelState(channel: ICollabChannelCore): SaveResult;
     // (undocumented)
     setCell(rowArg: number, colArg: number, value: CollabSpaceCellType): any;
-}
-
-// @internal
-export interface IEfficientMatrixTest {
-    // (undocumented)
-    getCellDebugInfo(row: number, col: number): Promise<{
-        channel?: ICollabChannelCore;
-    }>;
-    // (undocumented)
-    isAttached: boolean;
 }
 
 // @internal (undocumented)
@@ -65,6 +60,20 @@ export interface MatrixExternalType {
     type: string;
     // (undocumented)
     value: Exclude<Serializable<unknown>, undefined>;
+}
+
+// @internal (undocumented)
+export enum SaveResult {
+    // (undocumented)
+    CantSave = 2,
+    // (undocumented)
+    Dirty = 0,
+    // (undocumented)
+    NoNeedToSave = 3,
+    // (undocumented)
+    NotRooted = 1,
+    // (undocumented)
+    Saved = 4
 }
 
 // (No @packageDocumentation comment for this package)
