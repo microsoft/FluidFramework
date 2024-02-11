@@ -272,6 +272,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 	protected initializeFromSnapshot(
 		odspSnapshotCacheValue: ISnapshot,
 		cacheOps: boolean = true,
+		cacheSnapshot: boolean = true,
 	): string | undefined {
 		this._snapshotSequenceNumber = odspSnapshotCacheValue.sequenceNumber;
 		const { snapshotTree, blobContents, ops } = odspSnapshotCacheValue;
@@ -281,10 +282,12 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 		if (snapshotTree) {
 			id = snapshotTree.id;
 			assert(id !== undefined, 0x221 /* "Root tree should contain the id" */);
-			this.setRootTree(id, snapshotTree);
+			if (cacheSnapshot) {
+				this.setRootTree(id, snapshotTree);
+			}
 		}
 
-		if (blobContents) {
+		if (blobContents !== undefined && cacheSnapshot) {
 			this.initBlobsCache(blobContents);
 		}
 

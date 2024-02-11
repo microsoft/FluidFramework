@@ -509,4 +509,17 @@ export interface ISnapshotFetchOptions {
 	 * container, so specifying version is not necessary for storage services.
 	 */
 	versionId?: string;
+
+	/**
+	 * List of groupId of datastores for which the snapshot needs to be fetched. If not provided, entire snapshot
+	 * will be requested from the service. It is upto the service, to include snapshot for datastores with groupIds
+	 * or not.
+	 */
+	groupIds?: string[];
+
+	/**
+	 * Specify if you want default behavior of the driver to fetch the snapshot like lets say simultaneously fetch from
+	 * network and cache or specify FetchSource.noCache to just fetch from network.
+	 */
+	fetchSource?: FetchSource;
 }

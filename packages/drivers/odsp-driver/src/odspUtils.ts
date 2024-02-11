@@ -485,3 +485,8 @@ export function isInstanceOfISnapshot(
 ): obj is ISnapshot {
 	return obj !== undefined && "snapshotFormatV" in obj && obj.snapshotFormatV === 1;
 }
+
+/**
+ * Default GroupId to ask for snapshot fetch when no groupId is specified.
+ */
+export const defaultGroupIdForSnapshot = "default";

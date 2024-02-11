@@ -274,6 +274,8 @@ export interface ISnapshot {
 // @alpha
 export interface ISnapshotFetchOptions {
     cacheSnapshot?: boolean;
+    fetchSource?: FetchSource;
+    groupIds?: string[];
     scenarioName?: string;
     versionId?: string;
 }

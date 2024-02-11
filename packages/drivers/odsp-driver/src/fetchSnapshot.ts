@@ -119,11 +119,14 @@ export async function fetchSnapshotWithRedeem(
 	snapshotDownloader: (
 		finalOdspResolvedUrl: IOdspResolvedUrl,
 		storageToken: string,
+		groupIds: string[],
 		snapshotOptions: ISnapshotOptions | undefined,
 		controller?: AbortController,
 	) => Promise<ISnapshotRequestAndResponseOptions>,
 	putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
 	removeEntries: () => Promise<void>,
+	groupIds: string[],
+	fetchSnapshotForInitialLoad: boolean,
 	enableRedeemFallback?: boolean,
 ): Promise<ISnapshot> {
 	// back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
@@ -139,6 +142,8 @@ export async function fetchSnapshotWithRedeem(
 		logger,
 		snapshotDownloader,
 		putInCache,
+		groupIds,
+		fetchSnapshotForInitialLoad,
 		enableRedeemFallback,
 	)
 		.catch(async (error) => {
@@ -178,6 +183,8 @@ export async function fetchSnapshotWithRedeem(
 					logger,
 					snapshotDownloader,
 					putInCache,
+					groupIds,
+					fetchSnapshotForInitialLoad,
 				);
 			} else {
 				throw error;
@@ -243,10 +250,13 @@ async function fetchLatestSnapshotCore(
 	snapshotDownloader: (
 		finalOdspResolvedUrl: IOdspResolvedUrl,
 		storageToken: string,
+		groupIds: string[],
 		snapshotOptions: ISnapshotOptions | undefined,
 		controller?: AbortController,
 	) => Promise<ISnapshotRequestAndResponseOptions>,
 	putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
+	groupIds: string[],
+	fetchSnapshotForInitialLoad?: boolean,
 	enableRedeemFallback?: boolean,
 ): Promise<ISnapshot> {
 	return getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
@@ -277,7 +287,13 @@ async function fetchLatestSnapshotCore(
 			}
 
 			const [response, fetchTime] = await measureP(async () =>
-				snapshotDownloader(odspResolvedUrl, storageToken, snapshotOptions, controller),
+				snapshotDownloader(
+					odspResolvedUrl,
+					storageToken,
+					groupIds,
+					snapshotOptions,
+					controller,
+				),
 			).finally(() => {
 				// Clear the fetchTimeout once the response is fetched.
 				if (fetchTimeout !== undefined) {
@@ -456,6 +472,7 @@ async function fetchLatestSnapshotCore(
 				encodedBlobsSize,
 				sequenceNumber,
 				ops: snapshot.ops?.length ?? 0,
+				fetchSnapshotForInitialLoad,
 				userOps: snapshot.ops?.filter((op) => isRuntimeMessage(op)).length ?? 0,
 				headers: Object.keys(response.requestHeaders).length !== 0 ? true : undefined,
 				// Measures time to make fetch call. Should be similar to
@@ -570,7 +587,7 @@ function countTreesInSnapshotTree(snapshotTree: ISnapshotTree): number {
  * @param odspResolvedUrl - resolved odsp url.
  * @param storageToken - token to do the auth for network request.
  * @param snapshotOptions - Options used to specify how and what to fetch in the snapshot.
- * @param logger - logger
+ * @param groupIds - groupIds for which snapshot needs to be downloaded.
  * @param snapshotFormatFetchType - Snapshot format to fetch.
  * @param controller - abort controller if caller needs to abort the network call.
  * @param epochTracker - epoch tracker used to add/validate epoch in the network call.
@@ -579,7 +596,7 @@ function countTreesInSnapshotTree(snapshotTree: ISnapshotTree): number {
 export async function downloadSnapshot(
 	odspResolvedUrl: IOdspResolvedUrl,
 	storageToken: string,
-	logger: ITelemetryLoggerExt,
+	groupIds: string[],
 	snapshotOptions: ISnapshotOptions | undefined,
 	snapshotFormatFetchType?: SnapshotFormatSupportType,
 	controller?: AbortController,
@@ -603,6 +620,10 @@ export async function downloadSnapshot(
 			}
 		});
 	}
+	if (groupIds.length > 0) {
+		// eslint-disable-next-line @typescript-eslint/dot-notation
+		queryParams["groupId"] = Array.from(groupIds).join(",");
+	}
 
 	const queryString = getQueryString(queryParams);
 	const url = `${snapshotUrl}/trees/latest${queryString}`;
@@ -625,7 +646,7 @@ export async function downloadSnapshot(
 			break;
 		default:
 			// By default ask both versions and let the server decide the format.
-			headers.accept = `application/json, application/ms-fluid; v=${currentReadVersion}`;
+			headers.accept = `application/json, application/ms-fluid; v=${currentReadVersion}, application/to-be-decided`;
 	}
 
 	const odspResponse = await (epochTracker?.fetch(

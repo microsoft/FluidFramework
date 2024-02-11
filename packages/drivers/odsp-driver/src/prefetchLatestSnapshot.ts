@@ -16,10 +16,11 @@ import {
 	IOdspUrlParts,
 	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
-import { createChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { createChildMonitoringContext, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
 	createCacheSnapshotKey,
 	createOdspLogger,
+	defaultGroupIdForSnapshot,
 	getOdspResolvedUrl,
 	toInstrumentedOdspTokenFetcher,
 } from "./odspUtils";
@@ -66,8 +67,10 @@ export async function prefetchLatestSnapshot(
 	snapshotFormatFetchType?: SnapshotFormatSupportType,
 	odspDocumentServiceFactory?: OdspDocumentServiceFactory,
 ): Promise<boolean> {
-	const odspLogger = createOdspLogger(
-		createChildLogger({ logger, namespace: "PrefetchSnapshot" }),
+	const mc = createChildMonitoringContext({ logger, namespace: "PrefetchSnapshot" });
+	const odspLogger = createOdspLogger(mc.logger);
+	const useGroupIdsForSnapshotFetch = mc.config.getBoolean(
+		"Fluid.Container.FetchSnapshotUsingGetSnapshotApi",
 	);
 	const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
 
@@ -86,13 +89,14 @@ export async function prefetchLatestSnapshot(
 	const snapshotDownloader = async (
 		finalOdspResolvedUrl: IOdspResolvedUrl,
 		storageToken: string,
+		groupId: string[],
 		snapshotOptions: ISnapshotOptions | undefined,
 		controller?: AbortController,
 	) => {
 		return downloadSnapshot(
 			finalOdspResolvedUrl,
 			storageToken,
-			odspLogger,
+			groupId,
 			snapshotOptions,
 			undefined,
 			controller,
@@ -106,6 +110,7 @@ export async function prefetchLatestSnapshot(
 		cacheP = persistedCache.put(snapshotKey, valueWithEpoch);
 		return cacheP;
 	};
+	const groupIds = useGroupIdsForSnapshotFetch ? [defaultGroupIdForSnapshot] : [];
 	const removeEntries = async () => persistedCache.removeEntries(snapshotKey.file);
 	return PerformanceEvent.timedExecAsync(
 		odspLogger,
@@ -130,6 +135,8 @@ export async function prefetchLatestSnapshot(
 				snapshotDownloader,
 				putInCache,
 				removeEntries,
+				groupIds,
+				true, // fetchSnapshotForInitialLoad
 				enableRedeemFallback,
 			)
 				.then(async (value) => {
