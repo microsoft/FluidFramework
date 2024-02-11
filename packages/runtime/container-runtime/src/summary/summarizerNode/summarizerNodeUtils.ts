@@ -162,12 +162,7 @@ export interface ISubtreeInfo<T extends ISnapshotTree | SummaryObject> {
 export function parseSummaryForSubtrees(baseSummary: ISnapshotTree): ISubtreeInfo<ISnapshotTree> {
 	// New versions of snapshots have child nodes isolated in .channels subtree
 	const channelsSubtree = baseSummary.trees[channelsTreeName];
-	// If there is ".channels" subtree or there is a groupId with no trees, then that means we use
-	// the format where we store trees inside the ".channels".
-	if (
-		channelsSubtree !== undefined ||
-		(baseSummary.groupId !== undefined && Object.keys(baseSummary.trees).length === 0)
-	) {
+	if (channelsSubtree !== undefined) {
 		return {
 			childrenTree: channelsSubtree,
 			childrenPathPart: channelsTreeName,
