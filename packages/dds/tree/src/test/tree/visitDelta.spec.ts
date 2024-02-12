@@ -605,6 +605,36 @@ describe("visitDelta", () => {
 		assert.equal(index.entries().next().done, true);
 	});
 
+	it("replace nodes", () => {
+		const buildId = { minor: 0 };
+
+		const replace: DeltaMark = {
+			count: 2,
+			detach: { minor: 2 },
+			attach: buildId,
+		};
+
+		const rootChanges: DeltaFieldChanges = { local: [replace] };
+		const delta: DeltaRoot = {
+			build: [{ id: buildId, trees: [content, content] }],
+			fields: new Map([[rootKey, rootChanges]]),
+		};
+
+		const expected: VisitScript = [
+			["create", [content], field0],
+			["create", [content], field1],
+			["enterField", rootKey],
+			["exitField", rootKey],
+			["enterField", rootKey],
+			["replace", field0, { start: 0, end: 1 }, field2],
+			["replace", field1, { start: 1, end: 2 }, field3],
+			["exitField", rootKey],
+		];
+
+		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
+		testVisit(delta, expected, index);
+	});
+
 	it("changes under replaced node", () => {
 		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 		const moveId1 = { minor: 1 };
@@ -651,6 +681,7 @@ describe("visitDelta", () => {
 		testTreeVisit(delta, expected, index);
 		assert.deepEqual(Array.from(index.entries()), [{ id: { minor: 42 }, root: 2 }]);
 	});
+
 	it("changes under replacement node", () => {
 		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 		const moveId1 = { minor: 1 };
