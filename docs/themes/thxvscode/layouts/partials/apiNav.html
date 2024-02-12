@@ -396,7 +396,7 @@
                     {{- range (where $packagePages "Params.package" .) -}}
                         {{ $targetPage := . }}
                         {{ $targetPageApiVersion := index (split (trim $targetPage.RelPermalink "/" ) "/") 2 }}
-                        {{ if eq $targetPageApiVersion $selectedApiVersion}}
+                        {{ if eq $targetPageApiVersion $selectedApiVersion }}
                             {{ $versionData := index $.Site.Data $selectedApiVersion }}
                             {{ $packageNameToDisplayName := index $versionData "packageNameToDisplayName"}}
                             {{ $packageKey := index $packageNameToDisplayName $targetPage.Params.package }}
@@ -405,8 +405,8 @@
 
                             {{ $isCurrentPage := in (trim $current.RelPermalink " ") (trim $targetPage.RelPermalink " ") }}
                             <option value="{{ $targetPage.RelPermalink }}" {{ if $isCurrentPage }}selected{{ end }}>&nbsp;&nbsp;&nbsp;&nbsp;{{ (path.Base $targetPage.RelPermalink) | humanize | title }}</option>
-                                {{ range $category := $possibleAPICategories }}
-                                    {{ if isset $apiDetails $category }}
+                            {{ range $category := $possibleAPICategories }}
+                                {{ if isset $apiDetails $category }}
                                     {{ $categoryLower := lower $category }}
                                     {{ $isCategoryActive := in $currentTrimmedLink $categoryLower }}
                                     {{ $categoryPlural := index $plurals $category }}
