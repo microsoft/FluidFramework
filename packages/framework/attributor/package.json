@@ -136,7 +136,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.29.0",
 		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^3.3.0",
+		"@fluidframework/eslint-config-fluid": "^3.5.0",
 		"@fluidframework/merge-tree": "workspace:~",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",

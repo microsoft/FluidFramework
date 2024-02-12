@@ -20,7 +20,7 @@ import {
 	FlexMapNodeSchema,
 	LeafNodeSchema,
 	FlexFieldNodeSchema,
-} from "@fluidframework/tree";
+} from "@fluidframework/tree/internal";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 import {
 	convertPropertyToSharedTreeSchema as convertSchema,
