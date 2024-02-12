@@ -29,9 +29,8 @@ module.exports = {
 	// See: https://stackoverflow.com/questions/73203367/jest-syntaxerror-unexpected-token-export-with-uuid-library
 	moduleNameMapper: {
 		"^uuid$": "uuid",
-		// Jest (v29) default module resolution has trouble resolving files ESM modules with a '*.js' extension.
-		// The popular workaround is to remove the *.js or *.jsx extension for imports that begin with "./*" and "../*".
+		// Remove explicit .js from local paths to allow jest to find the .ts* files.
 		// (See: https://github.com/kulshekhar/ts-jest/issues/1057)
-		"^(\\.\\.?\\/.+)\\.jsx?$": "$1",
+		"^(\\.{1,2}/.*)\\.js$": "$1",
 	},
 };
