@@ -144,7 +144,7 @@ describe("SharedObject attaching binding and connecting", () => {
 			const { overrides, sharedObject } = createTestSharedObject({
 				runtime: {
 					...(runtimeEvents as any as Overridable<IFluidDataStoreRuntime>),
-					attachState: AttachState.Detached as AttachState,
+					attachState: AttachState.Detached,
 				},
 			});
 
@@ -175,6 +175,11 @@ describe("SharedObject attaching binding and connecting", () => {
 						connected,
 					},
 					loadCore: async () => {
+						assert.strictEqual(
+							sharedObject.isAttached(),
+							attachState !== AttachState.Detached,
+							"loadCore isAttached",
+						);
 						loaded = true;
 					},
 				});
@@ -222,10 +227,16 @@ describe("SharedObject attaching binding and connecting", () => {
 			const { overrides, sharedObject } = createTestSharedObject({
 				runtime: {
 					...(runtimeEvents as any as Overridable<IFluidDataStoreRuntime>),
-					attachState: AttachState.Detached as AttachState,
+					attachState: AttachState.Detached,
 					connected: true,
 				},
-				loadCore: async () => {},
+				loadCore: async () => {
+					assert.strictEqual(
+						sharedObject.isAttached(),
+						overrides.runtime?.attachState !== AttachState.Detached,
+						"loadCore isAttached",
+					);
+				},
 			});
 
 			await sharedObject.load(
@@ -300,7 +311,7 @@ describe("SharedObject attaching binding and connecting", () => {
 			const { overrides, sharedObject } = createTestSharedObject({
 				runtime: {
 					...(runtimeEvents as any as Overridable<IFluidDataStoreRuntime>),
-					attachState: AttachState.Detached as AttachState,
+					attachState: AttachState.Detached,
 					connected: true,
 				},
 			});
@@ -428,7 +439,7 @@ describe("SharedObject attaching binding and connecting", () => {
 			const { overrides, sharedObject } = createTestSharedObject({
 				runtime: {
 					...(runtimeEvents as any as Overridable<IFluidDataStoreRuntime>),
-					attachState: AttachState.Detached as AttachState,
+					attachState: AttachState.Detached,
 					connected: true,
 				},
 				loadCore: async () => {},

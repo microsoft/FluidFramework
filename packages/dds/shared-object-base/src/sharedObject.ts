@@ -432,7 +432,11 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	}
 
 	private attachDeltaHandler() {
-		assert(this.services !== undefined, "asdsad");
+		// Services should already be there in case we are attaching delta handler.
+		assert(
+			this.services !== undefined,
+			0x07a /* "Services should be there to attach delta handler" */,
+		);
 		// attachDeltaHandler is only called after services is assigned
 		this.services.deltaConnection.attach({
 			process: (
