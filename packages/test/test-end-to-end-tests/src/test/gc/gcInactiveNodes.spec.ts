@@ -68,12 +68,8 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 	let provider: ITestObjectProvider;
 	let mockLogger: MockLogger;
 
-	/** Waits for the inactive timeout to expire. */
-	async function waitForInactiveTimeout(): Promise<void> {
-		await new Promise<void>((resolve) => {
-			setTimeout(resolve, inactiveTimeoutMs + 10);
-		});
-	}
+	/** Waits for the inactive timeout to expire (plus some margin) */
+	const waitForInactiveTimeout = async () => delay(inactiveTimeoutMs + 10);
 
 	/** Validates that none of the inactive events have been logged since the last run. */
 	function validateNoInactiveEvents() {
@@ -804,7 +800,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 			const defaultDataObject3 = (await container3.getEntryPoint()) as ITestDataObject;
 
 			// Wait the Inactive Timeout. Timers will fire
-			await delay(inactiveTimeoutMs);
+			await waitForInactiveTimeout();
 
 			// Load A in container2 and ensure InactiveObject_Loaded is logged
 			const handleA_2 = manufactureHandle<ITestDataObject>(
@@ -914,7 +910,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 						(await container3.getEntryPoint()) as ITestDataObject;
 
 					// Wait the Inactive Timeout. Timers will fire
-					await delay(inactiveTimeoutMs);
+					await waitForInactiveTimeout();
 
 					// Load A in container2 and ensure InactiveObject_Loaded is logged
 					const handleA_2 = manufactureHandle<ITestDataObject>(
