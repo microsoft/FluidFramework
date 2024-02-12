@@ -57,7 +57,6 @@
 {{ $FluidFramework := index $packages "FluidFramework" }}
 {{ $DDSes := index $FluidFramework "DDSes" }}
 {{ $serviceClients := index (index $.Site.Data.packages $selectedApiVersion) "serviceClients" }}
-<p>{{ $serviceClients }}</p>
 {{ $resultArray := slice "fluid-framework" }}
 {{ $activeCategory := "" }}
 {{ $activeSubCategory := "" }}
