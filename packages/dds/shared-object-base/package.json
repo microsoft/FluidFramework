@@ -140,6 +140,7 @@
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/shared-object-base-previous": "npm:@fluidframework/shared-object-base@2.0.0-internal.8.0.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
+		"@fluid-private/test-pairwise-generator": "workspace:~",
 		"@microsoft/api-extractor": "^7.39.1",
 		"@types/benchmark": "^2.1.0",
 		"@types/mocha": "^9.1.1",

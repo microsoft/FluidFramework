@@ -214,6 +214,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 		if (!this.isAttached()) {
 			this.runtime.once("attaching", () => {
 				if (this._isBoundToContext) {
+					this.setConnectionState(this.runtime.connected);
 					// Calling this will let the dds to do any custom processing based on attached
 					// like starting generating ops.
 					this.didAttach();
@@ -253,6 +254,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 			// before binding is complete
 			this._isBoundToContext = true;
 			if (this.isAttached()) {
+				this.setConnectionState(this.runtime.connected);
 				this.didAttach();
 			}
 		}
