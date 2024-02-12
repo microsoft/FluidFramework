@@ -21,7 +21,10 @@ import { CollabSpacesRuntime } from "./collabSpaces";
 /** @internal */
 class CollabSpacesRuntimeFactory implements IFluidDataStoreFactory {
 	public readonly type = "CollabSpaces-DataStore";
-	constructor(private readonly sharedObjects: readonly ICollabChannelFactory[]) {}
+	constructor(
+		private readonly sharedObjects: readonly ICollabChannelFactory[],
+		private readonly createDebugChannel: boolean,
+	) {}
 
 	public get IFluidDataStoreFactory() {
 		return this;
@@ -40,7 +43,7 @@ class CollabSpacesRuntimeFactory implements IFluidDataStoreFactory {
 			},
 		);
 
-		await runtime.initialize(existing);
+		await runtime.initialize(existing, this.createDebugChannel);
 		return runtime;
 	}
 }
@@ -48,6 +51,7 @@ class CollabSpacesRuntimeFactory implements IFluidDataStoreFactory {
 /** @internal */
 export function createCollabSpaces(
 	sharedObjects: Readonly<ICollabChannelFactory[]>,
+	createDebugChannel: boolean,
 ): IFluidDataStoreFactory {
-	return new CollabSpacesRuntimeFactory(sharedObjects);
+	return new CollabSpacesRuntimeFactory(sharedObjects, createDebugChannel);
 }
