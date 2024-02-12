@@ -17,7 +17,6 @@ import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import * as ink from '@fluidframework/ink';
 import { ISharedDirectory } from '@fluidframework/map';
 import { ITelemetryGenericEvent } from '@fluidframework/core-interfaces';
 import { ITestContainerConfig } from '@fluidframework/test-utils';
@@ -79,7 +78,6 @@ export const DataRuntimeApi: {
     dds: {
         SharedCell: typeof cell.SharedCell;
         SharedCounter: typeof counter.SharedCounter;
-        Ink: typeof ink.Ink;
         SharedDirectory: typeof map.SharedDirectory;
         SharedMap: typeof map.SharedMap;
         SharedMatrix: typeof matrix.SharedMatrix;
@@ -91,7 +89,6 @@ export const DataRuntimeApi: {
     packages: {
         cell: typeof cell;
         counter: typeof counter;
-        ink: typeof ink;
         map: typeof map;
         matrix: typeof matrix;
         orderedCollection: typeof orderedCollection;
