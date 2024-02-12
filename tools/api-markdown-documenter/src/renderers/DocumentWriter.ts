@@ -245,7 +245,7 @@ class _DocumentWriter implements DocumentWriter {
 	 * {@inheritDoc (DocumentWriter:interface).peekLastCharacter}
 	 */
 	public peekLastCharacter(): string {
-		return this._latestChunk?.slice(-1, 0) ?? "";
+		return this._latestChunk?.slice(-1) ?? "";
 	}
 
 	/**
@@ -254,10 +254,10 @@ class _DocumentWriter implements DocumentWriter {
 	public peekSecondLastCharacter(): string {
 		if (this._latestChunk !== undefined) {
 			if (this._latestChunk.length > 1) {
-				return this._latestChunk.slice(-2, 1);
+				return this._latestChunk.slice(-2, -1);
 			}
 			if (this._previousChunk !== undefined) {
-				return this._previousChunk.slice(-1, 0);
+				return this._previousChunk.slice(-1);
 			}
 		}
 		return "";
