@@ -96,7 +96,8 @@ the overall performance of container load. However, providing same `dataStoreGro
 to put some data stores in same group which application thinks that it will delay load at around same time, would
 improve performance for their loading as compared to providing a different group Id to each of these datastores as then
 1 network call will be required to fetch snapshot for that group of datastores rather than 1 network call for each
-datastore.
+datastore. So, the datastores which can get fairly big in size and which are not required to be loaded on boot, can
+be put under a non-default groupId.
 
 ## Trademark
 
