@@ -2541,19 +2541,14 @@ export class ContainerRuntime
 
 	public createDetachedDataStore(
 		pkg: Readonly<string[]>,
-		dataStoreGroupIdForSnapshotFetch?: string,
+		loadingGroupId?: string,
 	): IFluidDataStoreContextDetached {
-		return this.dataStores.createDetachedDataStoreCore(
-			pkg,
-			false,
-			undefined,
-			dataStoreGroupIdForSnapshotFetch,
-		);
+		return this.dataStores.createDetachedDataStoreCore(pkg, false, undefined, loadingGroupId);
 	}
 
 	public async createDataStore(
 		pkg: string | string[],
-		dataStoreGroupIdForSnapshotFetch?: string,
+		loadingGroupId?: string,
 	): Promise<IDataStore> {
 		const id = uuid();
 		return channelToDataStore(
@@ -2562,7 +2557,7 @@ export class ContainerRuntime
 					Array.isArray(pkg) ? pkg : [pkg],
 					id,
 					undefined,
-					dataStoreGroupIdForSnapshotFetch,
+					loadingGroupId,
 				)
 				.realize(),
 			id,

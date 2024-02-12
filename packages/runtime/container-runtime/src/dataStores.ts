@@ -399,7 +399,7 @@ export class DataStores implements IDisposable {
 		pkg: Readonly<string[]>,
 		isRoot: boolean,
 		id = uuid(),
-		dataStoreGroupIdForSnapshotFetch?: string,
+		loadingGroupId?: string,
 	): IFluidDataStoreContextDetached {
 		assert(!id.includes("/"), 0x30c /* Id cannot contain slashes */);
 
@@ -415,7 +415,7 @@ export class DataStores implements IDisposable {
 			makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
 			snapshotTree: undefined,
 			isRootDataStore: isRoot,
-			groupId: dataStoreGroupIdForSnapshotFetch,
+			groupId: loadingGroupId,
 			channelToDataStoreFn: (channel: IFluidDataStoreChannel, channelId: string) =>
 				channelToDataStore(channel, channelId, this.runtime, this, this.runtime.logger),
 		});
@@ -427,7 +427,7 @@ export class DataStores implements IDisposable {
 		pkg: string[],
 		id: string,
 		props?: any,
-		dataStoreGroupIdForSnapshotFetch?: string,
+		loadingGroupId?: string,
 	) {
 		assert(!id.includes("/"), 0x30d /* Id cannot contain slashes */);
 		const context = new LocalFluidDataStoreContext({
@@ -443,7 +443,7 @@ export class DataStores implements IDisposable {
 			snapshotTree: undefined,
 			isRootDataStore: false,
 			createProps: props,
-			groupId: dataStoreGroupIdForSnapshotFetch,
+			groupId: loadingGroupId,
 		});
 		this.contexts.addUnbound(context);
 		return context;

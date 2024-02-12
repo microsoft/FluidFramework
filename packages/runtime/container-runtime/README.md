@@ -51,22 +51,23 @@ issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feat
 
 Thank you!
 
-## Data Virtualization For DataStores
+## Data Virtualization For DataStores (Work in Progress)
 
-This is the ability of container to delay load datastores at any point in time by asking for the datastore snapshot at
-anytime, not caring about from where it is coming and then using that to load that datastore and return it to the app.
+It's a capability to exclude some content from initial snapshot (used when loading container) and thus improve boot
+performance of a container. Excluded content could be loaded at a later time when it's required.
 
-### How Current System Works
+### Motivation for Data Virtualization
 
-Fluid (through its APIs) does expose some levels of data virtualization. But under covers, there is almost none. The
-whole content of the file is downloaded in one go. Due to limitation of data virtualization, FF holds ALL blobs in
-snapshot as those might be required in the future. Any delayed loading (through FF APIs) results in loading state of
-DDSs at a sequence number of snapshot we booted from, and application of all the ops up till current sequence number.
-While application may choose not to load some data stores immediately on boot (and realize some saving in time and
-memory by not allocating appropriate app state for such datastores), FF still pays the costs for such content.
-It also continues to pay the cost for all such content indefinitely, even if those datastores were loaded (this could
-theoretically be optimized, but now there is no good way for driver to learn what blobs are safe to discard due to
-limitations in interface and lack of appropriate semantics at driver API layer).
+This section talks about how the system used to work before Data virtualization. Fluid (through its APIs) does expose
+some levels of data virtualization. But under covers, there is almost none. The whole content of the file is downloaded
+in one go. Due to limitation of data virtualization, FF holds ALL blobs in snapshot as those might be required in the
+future. Any delayed loading (through FF APIs) results in loading state of DDSs at a sequence number of snapshot we
+booted from, and application of all the ops up till current sequence number. While application may choose not to load
+some data stores immediately on boot (and realize some saving in time and memory by not allocating appropriate app
+state for such datastores), FF still pays the costs for such content. It also continues to pay the cost for all such
+content indefinitely, even if those datastores were loaded (this could theoretically be optimized, but now there is
+no good way for driver to learn what blobs are safe to discard due to limitations in interface and lack of appropriate
+semantics at driver API layer).
 
 ### Improvement with Data Virtualization
 
@@ -74,30 +75,27 @@ With this, we will provide a capability to:
 
 - Exclude some sub-trees from snapshot payload, thus allowing faster transfer times / boot times and smaller initial
 memory footprint.
-- Ability to safely (in current system, i.e., without introducing any new breaking behaviors) to delay-load data
-stores later.
+- Ability to delay-load data stores later.
 
 Container Runtime Apis like IContainerRuntimeBase.createDataStore and IContainerRuntimeBase.createDetachedDataStore
-provides an argument `dataStoreGroupIdForSnapshotFetch` which allows apps to put a datastore in group at time of
-creation currently. This represents the group of the datastore within a container or its snapshot. When not specified
-the datastore will belong to a `default` group. When a container is loaded initially, only datastores which belongs to
-`default` group are fetched from service and can be loaded on demand when requested by user. This decreases the amount
-of data which needs to be fetched during load and hence provides faster boot times for the container. Snapshot for all
-datastores within a non-default datastore groupId will be fetched from service when any of the datastores within a
-group is requested by application, then snapshot for that particular group will be fetched using a network call at that
-time. So, 1 network will be required to fetch snapshot for a group when a datastore from a group is requested by an
-application. This allows applications to put a datastore in a group, when it thinks that, that particular datastore
-will not be requested on boot and will be loaded later on like on some user action like a button click. This will
-improve the boot perf. Also, if application thinks that on that particular user action more than 1 datastore will be
-loaded, then all those datastores can be provided same `dataStoreGroupIdForSnapshotFetch` on creation, so that snapshot
-for all those datastores will be fetched in 1 network call. Data virtualization or providing the
-`dataStoreGroupIdForSnapshotFetch` will however decrease the performance of loading of those datastores while improving
-the overall performance of container load. However, providing same `dataStoreGroupIdForSnapshotFetch`
-to put some data stores in same group which application thinks that it will delay load at around same time, would
-improve performance for their loading as compared to providing a different group Id to each of these datastores as then
-1 network call will be required to fetch snapshot for that group of datastores rather than 1 network call for each
-datastore. So, the datastores which can get fairly big in size and which are not required to be loaded on boot, can
-be put under a non-default groupId.
+provides an argument `loadingGroupId` which allows apps to mark a datastore at time of creation currently. Every data
+store is assigned a groupID. Not providing groupID (on API) means that default ID is used. This groupId represents the
+group of the datastore within a container or its snapshot. When a container is loaded initially, only datastores which
+belongs to `default` group are fetched from service and can be loaded on demand when requested by user. This decreases
+the amount of data which needs to be fetched during load and hence provides faster boot times for the container.
+Attempting to load any datastore within a non-default group results in fetching all content/datastores marked with same
+groupId and thus helps faster realization/loading of other datastores within that group faster.
+So, one network will be required to fetch content for a group when a datastore from a group is requested by an
+application.
+So to summarize, when datastore is assigned to a group, content of such data store will not be loaded with initial load
+of container. It will be loaded only when any datastore with such groupID is realized.
+This will improve the boot perf. Data virtualization or providing the `loadingGroupId` will however decrease the
+performance of loading of those datastores while improving the overall performance of container load. However,
+providing same `loadingGroupId` to put some data stores in same group, would improve performance for their loading as
+compared to providing a different group Id to each of these datastores as then one network call will be required to
+fetch snapshot for that group of datastores rather than one network call for each datastore. So, the datastores which
+can get fairly big in size content wise and which are not required to be loaded on boot, can be put under a non-default
+groupId.
 
 ## Trademark
 
