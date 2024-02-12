@@ -71,7 +71,7 @@ type SharedObjCallback = (
 
 // Introduced in 0.37
 // REVIEW: enable compat testing
-describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("stashed ops", "2.0.0-internal.8.0.0", (getTestObjectProvider, apis) => {
 	const { SharedMap, SharedDirectory, SharedCounter, SharedString, SharedCell } = apis.dds;
 	const { getTextAndMarkers } = apis.dataRuntime.packages.sequence;
 
