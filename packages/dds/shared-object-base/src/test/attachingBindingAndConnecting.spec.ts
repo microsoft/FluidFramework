@@ -25,7 +25,7 @@ import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator"
 import { IFluidSerializer } from "../serializer";
 import { SharedObject } from "../sharedObject";
 
-type Overridable<T> = T extends ((...args: any) => any) | string | number | undefined | null | []
+type Overridable<T> = T extends ((...args: any) => any) | string | number | undefined | []
 	? T
 	: {
 			-readonly [P in keyof T]?: Overridable<T[P]>;
