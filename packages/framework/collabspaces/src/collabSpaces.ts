@@ -123,7 +123,7 @@ import { ReverseMap, ReverseMapType } from "./reverseMap";
 const matrixId = "matrix";
 const channelSummaryBlobName = "channelInfo";
 
-type uuidType = number | string;
+export type uuidType = number | string;
 
 interface MatrixInternalType extends MatrixExternalType {
 	// This is channel ID modifier.
@@ -432,14 +432,14 @@ export class CollabSpacesRuntime
 			for (let row = 1; row < this.matrixInternal.rowCount; row++) {
 				this.reverseMap.addCellToMap(
 					"row",
-					this.matrixInternal.getCell(row, 0) as unknown as string,
+					this.matrixInternal.getCell(row, 0) as unknown as uuidType,
 					row - 1,
 				);
 			}
 			for (let col = 1; col < this.matrixInternal.colCount; col++) {
 				this.reverseMap.addCellToMap(
 					"col",
-					this.matrixInternal.getCell(0, col) as unknown as string,
+					this.matrixInternal.getCell(0, col) as unknown as uuidType,
 					col - 1,
 				);
 			}

@@ -4,44 +4,45 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+import { uuidType } from "./collabSpaces";
 
 export type ReverseMapType = "row" | "col";
 
 export interface IReverseMap {
-	getRowIndex(rowId: string): number | undefined;
-	getColIndex(colId: string): number | undefined;
+	getRowIndex(rowId: uuidType): number | undefined;
+	getColIndex(colId: uuidType): number | undefined;
 
-	getRowMap(): Readonly<{ [id: string]: number }>;
-	getColMap(): Readonly<{ [id: string]: number }>;
+	getRowMap(): Readonly<{ [id: uuidType]: number }>;
+	getColMap(): Readonly<{ [id: uuidType]: number }>;
 
 	removeCellsFromMap(type: ReverseMapType, start: number, count: number): void;
 
-	addCellToMap(type: ReverseMapType, id: string, index: number): void;
+	addCellToMap(type: ReverseMapType, id: uuidType, index: number): void;
 }
 
 export class ReverseMap implements IReverseMap {
-	private readonly rowMap: { [id: string]: number } = {};
-	private readonly colMap: { [id: string]: number } = {};
+	private readonly rowMap: { [id: uuidType]: number } = {};
+	private readonly colMap: { [id: uuidType]: number } = {};
 
 	constructor() {}
 
-	public getRowIndex(rowId: string): number | undefined {
+	public getRowIndex(rowId: uuidType): number | undefined {
 		return this.rowMap[rowId];
 	}
 
-	public getColIndex(colId: string): number | undefined {
+	public getColIndex(colId: uuidType): number | undefined {
 		return this.colMap[colId];
 	}
 
-	public getRowMap(): Readonly<{ [id: string]: number }> {
+	public getRowMap(): Readonly<{ [id: uuidType]: number }> {
 		return this.rowMap;
 	}
 
-	public getColMap(): Readonly<{ [id: string]: number }> {
+	public getColMap(): Readonly<{ [id: uuidType]: number }> {
 		return this.colMap;
 	}
 
-	private insertCellIntoMap(type: ReverseMapType, index: number, key: string, value: number) {
+	private insertCellIntoMap(type: ReverseMapType, index: number, key: uuidType, value: number) {
 		const map = type === "row" ? this.rowMap : this.colMap;
 		assert(index >= 0, "index must be non-negative");
 		// Convert the map to an array of key-value
@@ -49,7 +50,7 @@ export class ReverseMap implements IReverseMap {
 		const entries = Object.entries(map); // we can also try sort((a, b) => a[1] - b[1]);
 
 		// Insert the new key-value pair at the specified index
-		entries.splice(index, 0, [key, value]);
+		entries.splice(index, 0, [key.toString(), value]);
 
 		// Clear the original map
 		Object.keys(map).forEach((tempKey) => {
@@ -64,7 +65,7 @@ export class ReverseMap implements IReverseMap {
 		});
 	}
 
-	public addCellToMap(type: ReverseMapType, id: string, index: number): void {
+	public addCellToMap(type: ReverseMapType, id: uuidType, index: number): void {
 		const map = type === "row" ? this.rowMap : this.colMap;
 		// this behavior is very specific to the way SharedMatrix does its row insertion signal, in which we first get the row addition
 		// without the unique ids and soon after, the cell changes are triggered and we take opportunity to update the reverse map.
