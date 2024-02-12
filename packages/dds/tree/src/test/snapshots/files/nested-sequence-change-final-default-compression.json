@@ -134,6 +134,8 @@
                                 "shapes": [
                                   {
                                     "c": {
+                                      "type": "has-sequence-map.SeqMap",
+                                      "value": false,
                                       "extraFields": 1
                                     }
                                   },
@@ -143,20 +145,12 @@
                                 ],
                                 "data": [
                                   [
-                                    1,
-                                    [
-                                      "has-sequence-map.SeqMap",
-                                      false,
-                                      []
-                                    ]
+                                    0,
+                                    []
                                   ],
                                   [
-                                    1,
-                                    [
-                                      "has-sequence-map.SeqMap",
-                                      false,
-                                      []
-                                    ]
+                                    0,
+                                    []
                                   ]
                                 ]
                               }

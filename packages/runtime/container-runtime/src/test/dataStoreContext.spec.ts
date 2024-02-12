@@ -33,7 +33,7 @@ import {
 	channelsTreeName,
 	IFluidDataStoreChannel,
 } from "@fluidframework/runtime-definitions";
-import { GCDataBuilder } from "@fluidframework/runtime-utils";
+import { GCDataBuilder, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import {
 	isFluidError,
 	MockLogger,
@@ -113,7 +113,7 @@ describe("Data Store Context Tests", () => {
 				0,
 				0,
 			);
-			summarizerNode.startSummary(0, createChildLogger());
+			summarizerNode.startSummary(0, createChildLogger(), 0);
 
 			createSummarizerNodeFn = (
 				summarizeInternal: SummarizeInternalFn,
@@ -207,9 +207,13 @@ describe("Data Store Context Tests", () => {
 				});
 
 				await localDataStoreContext.realize();
-				const attachMessage = localDataStoreContext.generateAttachMessage();
+				const {
+					attachSummary: { summary },
+					type,
+				} = localDataStoreContext.getAttachData(/* includeGCData: */ false);
+				const snapshot = convertSummaryTreeToITree(summary);
 
-				const attributesEntry = attachMessage.snapshot.entries.find(
+				const attributesEntry = snapshot.entries.find(
 					(e) => e.path === dataStoreAttributesBlobName,
 				);
 				assert(
@@ -241,11 +245,7 @@ describe("Data Store Context Tests", () => {
 					dataStoreAttributes.isRootDataStore,
 					"Local DataStore root state does not match",
 				);
-				assert.strictEqual(
-					attachMessage.type,
-					"TestDataStore1",
-					"Attach message type does not match.",
-				);
+				assert.strictEqual(type, "TestDataStore1", "Attach message type does not match.");
 			});
 
 			it("should generate exception when incorrectly created with array of packages", async () => {
@@ -298,8 +298,12 @@ describe("Data Store Context Tests", () => {
 
 				await localDataStoreContext.realize();
 
-				const attachMessage = localDataStoreContext.generateAttachMessage();
-				const attributesEntry = attachMessage.snapshot.entries.find(
+				const {
+					attachSummary: { summary },
+					type,
+				} = localDataStoreContext.getAttachData(/* includeGCData: */ false);
+				const snapshot = convertSummaryTreeToITree(summary);
+				const attributesEntry = snapshot.entries.find(
 					(e) => e.path === dataStoreAttributesBlobName,
 				);
 				assert(
@@ -330,11 +334,7 @@ describe("Data Store Context Tests", () => {
 					dataStoreAttributes.isRootDataStore,
 					"Local DataStore root state does not match",
 				);
-				assert.strictEqual(
-					attachMessage.type,
-					"SubComp",
-					"Attach message type does not match.",
-				);
+				assert.strictEqual(type, "SubComp", "Attach message type does not match.");
 			});
 
 			it("can correctly initialize root context", async () => {
@@ -612,7 +612,7 @@ describe("Data Store Context Tests", () => {
 					0,
 					0,
 				);
-				summarizerNode.startSummary(0, createChildLogger());
+				summarizerNode.startSummary(0, createChildLogger(), 0);
 
 				createSummarizerNodeFn = (
 					summarizeInternal: SummarizeInternalFn,
@@ -760,7 +760,7 @@ describe("Data Store Context Tests", () => {
 					undefined,
 					getRootBaseGCDetails,
 				);
-				summarizerNode.startSummary(0, createChildLogger());
+				summarizerNode.startSummary(0, createChildLogger(), 0);
 
 				createSummarizerNodeFn = (
 					summarizeInternal: SummarizeInternalFn,
@@ -1072,7 +1072,7 @@ describe("Data Store Context Tests", () => {
 				0,
 				0,
 			);
-			summarizerNode.startSummary(0, createChildLogger());
+			summarizerNode.startSummary(0, createChildLogger(), 0);
 
 			createSummarizerNodeFn = (
 				summarizeInternal: SummarizeInternalFn,

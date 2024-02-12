@@ -3,8 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, FluidObject, IEvent, IEventProvider } from "@fluidframework/core-interfaces";
-import {
+import type {
+	IRequest,
+	FluidObject,
+	IEvent,
+	IEventProvider,
+} from "@fluidframework/core-interfaces";
+import type {
+	IClient,
 	IClientDetails,
 	IDocumentMessage,
 	IQuorumClients,
@@ -12,13 +18,17 @@ import {
 	ISequencedProposal,
 	ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
-import { IAudience } from "./audience";
-import { IDeltaManager, ReadOnlyInfo } from "./deltas";
-import { ICriticalContainerError, ContainerWarning } from "./error";
-import { IFluidModule } from "./fluidModule";
-import { AttachState } from "./runtime";
-import { IFluidCodeDetails, IFluidPackage, IProvideFluidCodeDetailsComparer } from "./fluidPackage";
+import type { IResolvedUrl } from "@fluidframework/driver-definitions";
+import type { IAudience } from "./audience";
+import type { IDeltaManager, ReadOnlyInfo } from "./deltas";
+import type { ICriticalContainerError, ContainerWarning } from "./error";
+import type { IFluidModule } from "./fluidModule";
+import type { AttachState } from "./runtime";
+import type {
+	IFluidCodeDetails,
+	IFluidPackage,
+	IProvideFluidCodeDetailsComparer,
+} from "./fluidPackage";
 
 /**
  * Encapsulates a module entry point with corresponding code details.
@@ -303,7 +313,6 @@ export type ConnectionState =
  * The Host's view of a Container and its connection to storage
  * @alpha
  */
-// eslint-disable-next-line import/no-deprecated
 export interface IContainer extends IEventProvider<IContainerEvents> {
 	/**
 	 * The Delta Manager supporting the op stream for this Container
@@ -531,12 +540,11 @@ export interface IHostLoader extends ILoader {
 }
 
 /**
- * @public
+ * Options to configure various behaviors of the ILoader.
+ * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type ILoaderOptions = {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	[key in string | number]: any;
-} & {
 	/**
 	 * @deprecated This option has been deprecated and will be removed in a future release
 	 * Set caching behavior for the loader. If true, we will load a container from cache if one
@@ -547,6 +555,16 @@ export type ILoaderOptions = {
 	 * Defaults to false.
 	 */
 	cache?: boolean;
+
+	/**
+	 * @deprecated Do not use.
+	 */
+	client?: IClient;
+
+	/**
+	 * @deprecated Do not use.
+	 */
+	enableOfflineLoad?: boolean;
 
 	/**
 	 * Provide the current Loader through the scope object when creating Containers. It is added

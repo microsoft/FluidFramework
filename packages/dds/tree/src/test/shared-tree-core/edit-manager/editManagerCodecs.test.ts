@@ -8,7 +8,7 @@ import { makeCodecFamily, withDefaultBinaryEncoding } from "../../../codec/index
 import { typeboxValidator } from "../../../external-utilities/index.js";
 import { TestChange } from "../../testChange.js";
 import { brand } from "../../../util/index.js";
-import { RevisionTagCodec } from "../../../core/index.js";
+import { ChangeEncodingContext, RevisionTagCodec } from "../../../core/index.js";
 import { SummaryData, makeEditManagerCodec } from "../../../shared-tree-core/index.js";
 import {
 	EncodingTestData,
@@ -40,15 +40,18 @@ const trunkCommits: SummaryData<TestChange>["trunk"] = [
 	},
 ];
 
-const testCases: EncodingTestData<SummaryData<TestChange>, unknown> = {
+// Dummy context object created to pass through the codec.
+const dummyContext = { originatorId: "dummySessionID" as SessionId };
+const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodingContext> = {
 	successes: [
-		["empty", { trunk: [], branches: new Map() }],
+		["empty", { trunk: [], branches: new Map() }, dummyContext],
 		[
 			"single commit",
 			{
 				trunk: trunkCommits.slice(0, 1),
 				branches: new Map(),
 			},
+			dummyContext,
 		],
 		[
 			"multiple commits",
@@ -56,6 +59,7 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown> = {
 				trunk: trunkCommits,
 				branches: new Map(),
 			},
+			dummyContext,
 		],
 		[
 			"empty branch",
@@ -71,6 +75,7 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown> = {
 					],
 				]),
 			},
+			dummyContext,
 		],
 		[
 			"non-empty branch",
@@ -92,6 +97,7 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown> = {
 					],
 				]),
 			},
+			dummyContext,
 		],
 		[
 			"multiple branches",
@@ -120,6 +126,7 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown> = {
 					],
 				]),
 			},
+			dummyContext,
 		],
 	],
 	failures: {
@@ -130,6 +137,7 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown> = {
 					base: tags[0],
 					commits: [{ sessionId: "4", change: TestChange.mint([0], 1) }],
 				},
+				dummyContext,
 			],
 			[
 				"missing sessionId",
@@ -137,14 +145,16 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown> = {
 					base: tags[0],
 					commits: [{ change: TestChange.mint([0], 1), revision: mintRevisionTag() }],
 				},
+				dummyContext,
 			],
-			["non-object", ""],
+			["non-object", "", dummyContext],
 			[
 				"commit with parent field",
 				{
 					trunk: trunkCommits.slice(0, 1).map((commit) => ({ ...commit, parent: 0 })),
 					branches: [],
 				},
+				dummyContext,
 			],
 		],
 	},

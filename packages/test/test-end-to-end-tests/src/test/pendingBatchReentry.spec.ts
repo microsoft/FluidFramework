@@ -14,10 +14,10 @@ import {
 	ITestObjectProvider,
 } from "@fluidframework/test-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { SharedString } from "@fluidframework/sequence";
+import type { SharedString } from "@fluidframework/sequence";
 import { IContainer } from "@fluidframework/container-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { SharedCell } from "@fluidframework/cell";
+import type { SharedCell } from "@fluidframework/cell";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import type { SharedCounter } from "@fluidframework/counter";
 import type { SharedMatrix } from "@fluidframework/matrix";
@@ -26,7 +26,14 @@ describeCompat(
 	"Op reentry and rebasing during pending batches",
 	"NoCompat",
 	(getTestObjectProvider, apis) => {
-		const { SharedMap, SharedDirectory, SharedMatrix, SharedCounter } = apis.dds;
+		const {
+			SharedMap,
+			SharedDirectory,
+			SharedMatrix,
+			SharedCounter,
+			SharedString,
+			SharedCell,
+		} = apis.dds;
 		const registry: ChannelFactoryRegistry = [
 			["map", SharedMap.getFactory()],
 			["sharedString", SharedString.getFactory()],

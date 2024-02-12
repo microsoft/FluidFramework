@@ -33,7 +33,6 @@ import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IGetPendingLocalStateProps } from '@fluidframework/container-definitions';
 import type { IIdCompressor } from '@fluidframework/id-compressor';
 import type { IIdCompressorCore } from '@fluidframework/id-compressor';
-import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IProvideFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
@@ -101,7 +100,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     protected constructor(context: IContainerContext, registry: IFluidDataStoreRegistry, metadata: IContainerRuntimeMetadata | undefined, electedSummarizerData: ISerializedElection | undefined, chunks: [string, string[]][], dataStoreAliasMap: [string, string][], runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>, containerScope: FluidObject, logger: ITelemetryLoggerExt, existing: boolean, blobManagerSnapshot: IBlobManagerLoadInfo, _storage: IDocumentStorageService, idCompressor: (IIdCompressor & IIdCompressorCore) | undefined, provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>, requestHandler?: ((request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>) | undefined, summaryConfiguration?: ISummaryConfiguration);
     // (undocumented)
     protected addContainerStateToSummary(summaryTree: ISummaryTreeWithStats, fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext): void;
-    addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
+    addedGCOutboundReference(srcHandle: {
+        absolutePath: string;
+    }, outboundHandle: {
+        absolutePath: string;
+    }): void;
     // (undocumented)
     get attachState(): AttachState;
     // (undocumented)
@@ -155,7 +158,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     getGCNodePackagePath(nodePath: string): Promise<readonly string[] | undefined>;
     getNodeType(nodePath: string): GCNodeType;
     // (undocumented)
-    getPendingLocalState(props?: IGetPendingLocalStateProps): Promise<unknown>;
+    getPendingLocalState(props?: IGetPendingLocalStateProps): unknown;
     // (undocumented)
     getQuorum(): IQuorumClients;
     // (undocumented)
@@ -180,7 +183,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     notifyOpReplay(message: ISequencedDocumentMessage): Promise<void>;
     // (undocumented)
-    readonly options: ILoaderOptions;
+    readonly options: Record<string | number, any>;
     // (undocumented)
     orderSequentially<T>(callback: () => T): T;
     // (undocumented)
@@ -533,6 +536,7 @@ export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stag
 export interface ISubmitSummaryOptions extends ISummarizeOptions {
     readonly cancellationToken: ISummaryCancellationToken;
     readonly finalAttempt?: boolean;
+    readonly latestSummaryRefSeqNum: number;
     readonly summaryLogger: ITelemetryLoggerExt;
 }
 

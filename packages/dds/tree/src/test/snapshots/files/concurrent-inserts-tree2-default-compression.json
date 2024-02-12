@@ -134,22 +134,15 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1
+                                      "type": "com.fluidframework.leaf.string",
+                                      "value": true
                                     }
-                                  },
-                                  {
-                                    "a": 0
                                   }
                                 ],
                                 "data": [
                                   [
-                                    1,
-                                    [
-                                      "com.fluidframework.leaf.string",
-                                      true,
-                                      "y",
-                                      []
-                                    ]
+                                    0,
+                                    "y"
                                   ]
                                 ]
                               }
@@ -202,22 +195,15 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1
+                                      "type": "com.fluidframework.leaf.string",
+                                      "value": true
                                     }
-                                  },
-                                  {
-                                    "a": 0
                                   }
                                 ],
                                 "data": [
                                   [
-                                    1,
-                                    [
-                                      "com.fluidframework.leaf.string",
-                                      true,
-                                      "x",
-                                      []
-                                    ]
+                                    0,
+                                    "x"
                                   ]
                                 ]
                               }
@@ -273,25 +259,25 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1
+                                      "type": "com.fluidframework.leaf.string",
+                                      "value": true
                                     }
                                   },
                                   {
-                                    "a": 0
+                                    "a": 2
+                                  },
+                                  {
+                                    "d": 0
                                   }
                                 ],
                                 "data": [
                                   [
                                     1,
                                     [
-                                      "com.fluidframework.leaf.string",
-                                      true,
+                                      0,
                                       "a",
-                                      [],
-                                      "com.fluidframework.leaf.string",
-                                      true,
-                                      "c",
-                                      []
+                                      0,
+                                      "c"
                                     ]
                                   ]
                                 ]
@@ -348,22 +334,15 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1
+                                      "type": "com.fluidframework.leaf.string",
+                                      "value": true
                                     }
-                                  },
-                                  {
-                                    "a": 0
                                   }
                                 ],
                                 "data": [
                                   [
-                                    1,
-                                    [
-                                      "com.fluidframework.leaf.string",
-                                      true,
-                                      "b",
-                                      []
-                                    ]
+                                    0,
+                                    "b"
                                   ]
                                 ]
                               }

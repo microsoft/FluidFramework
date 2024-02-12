@@ -44,5 +44,12 @@
 		// using this file to develop in a local container.
 		// "azure-cli": "latest",  // DO NOT UNCOMMENT
 		// "github-cli": "latest", // DO NOT UNCOMMENT
+	},
+
+	// Setting this so Codespaces default settings use it. It's not really *required*, but a clean build
+	// can be lengthy enough that it's convenient.
+	"hostRequirements": {
+		"cpus": 16,
+		"memory": "64gb"
 	}
 }

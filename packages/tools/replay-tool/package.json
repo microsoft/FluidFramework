@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/replay-tool",
-	"version": "2.0.0-rc.1.0.0",
+	"version": "2.0.0-rc.2.0.0",
 	"private": true,
 	"description": "A tool that lets the user to replay ops.",
 	"homepage": "https://fluidframework.com",
@@ -35,6 +35,7 @@
 		"tsc": "tsc"
 	},
 	"dependencies": {
+		"@fluid-experimental/ink": "workspace:~",
 		"@fluid-experimental/sequence-deprecated": "workspace:~",
 		"@fluidframework/cell": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
@@ -47,7 +48,6 @@
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/file-driver": "workspace:~",
-		"@fluidframework/ink": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
 		"@fluidframework/ordered-collection": "workspace:~",
@@ -68,7 +68,7 @@
 		"@fluid-tools/build-cli": "^0.29.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.29.0",
-		"@fluidframework/eslint-config-fluid": "^3.3.0",
+		"@fluidframework/eslint-config-fluid": "^3.5.0",
 		"@microsoft/api-extractor": "^7.39.1",
 		"@types/json-stable-stringify": "^1.0.32",
 		"@types/node": "^18.19.0",

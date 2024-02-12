@@ -26,7 +26,10 @@ import {
 	isRuntimeMessage,
 	NonRetryableError,
 } from "@fluidframework/driver-utils";
-import { fetchIncorrectResponse, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
+import {
+	fetchIncorrectResponse,
+	throwOdspNetworkError,
+} from "@fluidframework/odsp-doclib-utils/internal";
 import {
 	IOdspSnapshot,
 	ISnapshotCachedEntry2,

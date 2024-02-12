@@ -1,4 +1,4 @@
-# @fluidframework/ink
+# @fluid-experimental/ink
 
 Contains a [Distributed Data Structure](https://fluidframework.com/docs/build/dds/) (DDS) for representing digital ink strokes.
 
@@ -23,12 +23,12 @@ library consumers should always prefer `^`.
 To get started, install the package by running the following command:
 
 ```bash
-npm i @fluidframework/ink
+npm i @fluid-experimental/ink
 ```
 
 ## API Documentation
 
-API documentation for **@fluidframework/ink** is available at <https://fluidframework.com/docs/apis/ink>.
+API documentation for **@fluid-experimental/ink** is available at <https://fluidframework.com/docs/apis/ink>.
 
 ## Contribution Guidelines
 

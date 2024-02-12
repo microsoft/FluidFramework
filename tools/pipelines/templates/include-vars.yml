@@ -97,3 +97,9 @@ variables:
 # basic ANSI color support though, so force that in the pipeline
 - name: FORCE_COLOR
   value: 1
+
+# Indicates if tests should be run with code coverage analysis.
+# We don't do it for PRs to make those runs faster.
+- name: testCoverage
+  value: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
+  readonly: true

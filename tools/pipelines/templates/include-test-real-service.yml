@@ -276,8 +276,10 @@ jobs:
             targetType: 'inline'
             script: |
               mkdir ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
+              mkdir ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/src/test
               tar -xvf $(Pipeline.Workspace)/test-files/${{ parameters.testFileTarName }}.test-files.tar -C $(Pipeline.Workspace)/test-files
               mv $(Pipeline.Workspace)/test-files/dist/test/* ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
+              mv $(Pipeline.Workspace)/test-files/src/test/* ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/src/test
 
         - task: Bash@3
           displayName: Copy devDependencies

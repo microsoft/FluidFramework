@@ -125,6 +125,11 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 		return summarizeChannelAsync(channel, fullTree, trackState, telemetryContext);
 	}
 
+	/**
+	 * For crafting the DataStore attach op. Only to be called when the channel is loaded (if applicable).
+	 *
+	 * Synchronously generates the channel's attach summary to be joined with the same from the DataStore's other channels
+	 */
 	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummarizeResult {
 		assert(
 			this._channel !== undefined,
@@ -136,6 +141,19 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 			false /* trackState */,
 			telemetryContext,
 		);
+	}
+
+	/**
+	 * For crafting the DataStore attach op. Only to be called when the channel is loaded (if applicable).
+	 *
+	 * Synchronously generates the channel's attach GC data (set of outbound routes in the initial state)
+	 * to be joined with the same from the DataStore's other channels
+	 */
+	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
+		assert(this._channel !== undefined, "Local Channel should be loaded before being attached");
+
+		// We need the GC Data to detect references added in this attach op
+		return this._channel.getGCData(/* fullGC: */ true);
 	}
 
 	public makeVisible(): void {

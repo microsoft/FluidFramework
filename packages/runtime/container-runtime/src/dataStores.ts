@@ -17,6 +17,7 @@ import {
 	CreateChildSummarizerNodeFn,
 	CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
+	gcDataBlobKey,
 	IAttachMessage,
 	IEnvelope,
 	IFluidDataStoreChannel,
@@ -29,12 +30,14 @@ import {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import {
+	addBlobToSummary,
 	convertSnapshotTreeToSummaryTree,
-	convertToSummaryTree,
+	convertSummaryTreeToITree,
 	create404Response,
 	createResponseError,
 	GCDataBuilder,
 	isSerializedHandle,
+	processAttachMessageGCData,
 	responseToException,
 	SummaryTreeBuilder,
 	unpackChildNodesUsedRoutes,
@@ -63,7 +66,7 @@ import {
 } from "./dataStoreContext";
 import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs";
 import { IDataStoreAliasMessage, channelToDataStore, isDataStoreAliasMessage } from "./dataStore";
-import { GCNodeType, detectOutboundRoutesViaDDSKey, disableDatastoreSweepKey } from "./gc";
+import { GCNodeType, detectOutboundRoutesViaDDSKey } from "./gc";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summary";
 
 type PendingAliasResolve = (success: boolean) => void;
@@ -196,10 +199,39 @@ export class DataStores implements IDisposable {
 		return pendingAliasPromise ?? "Success";
 	}
 
+	/** For sampling. Only log once per container */
+	private shouldSendAttachLog = true;
+
 	public processAttachMessage(message: ISequencedDocumentMessage, local: boolean) {
 		const attachMessage = message.contents as InboundAttachMessage;
 
 		this.dataStoresSinceLastGC.push(attachMessage.id);
+
+		// We need to process the GC Data for both local and remote attach messages
+		const foundGCData = processAttachMessageGCData(attachMessage.snapshot, (nodeId, toPath) => {
+			// nodeId is the relative path under the node being attached. Always starts with "/", but no trailing "/" after an id
+			const fromPath = `/${attachMessage.id}${nodeId === "/" ? "" : nodeId}`;
+			this.runtime.addedGCOutboundReference(
+				{ absolutePath: fromPath },
+				{ absolutePath: toPath },
+			);
+		});
+
+		// Only log once per container to avoid noise/cost.
+		// Allows longitudinal tracking of various state (e.g. foundGCData), and some sampled details
+		if (this.shouldSendAttachLog) {
+			this.shouldSendAttachLog = false;
+			this.mc.logger.sendTelemetryEvent({
+				eventName: "dataStoreAttachMessage_sampled",
+				...tagCodeArtifacts({ id: attachMessage.id, pkg: attachMessage.type }),
+				details: {
+					local,
+					snapshot: !!attachMessage.snapshot,
+					foundGCData,
+				},
+				...extractSafePropertiesFromMessage(message),
+			});
+		}
 
 		// The local object has already been attached
 		if (local) {
@@ -241,7 +273,7 @@ export class DataStores implements IDisposable {
 			runtime: this.runtime,
 			storage: new StorageServiceWithAttachBlobs(this.runtime.storage, flatAttachBlobs),
 			scope: this.runtime.scope,
-			groupId: snapshotTree?.groupId,
+			groupId: attachMessage.snapshot?.groupId,
 			createSummarizerNodeFn: this.getCreateChildSummarizerNodeFn(attachMessage.id, {
 				type: CreateSummarizerNodeSource.FromAttach,
 				sequenceNumber: message.sequenceNumber,
@@ -317,9 +349,29 @@ export class DataStores implements IDisposable {
 		return this.aliasMap.get(id) !== undefined || this.contexts.get(id) !== undefined;
 	}
 
+	/** Package up the context's attach summary etc into an IAttachMessage */
+	private generateAttachMessage(localContext: LocalFluidDataStoreContext): IAttachMessage {
+		const { attachSummary, type, gcData } = localContext.getAttachData(
+			/* includeGCData: */ true,
+		);
+
+		if (gcData !== undefined) {
+			addBlobToSummary(attachSummary, gcDataBlobKey, JSON.stringify(gcData));
+		}
+
+		// Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
+		const snapshot = convertSummaryTreeToITree(attachSummary.summary);
+
+		return {
+			id: localContext.id,
+			snapshot,
+			type,
+		} satisfies IAttachMessage;
+	}
+
 	/**
-	 * Make the data stores locally visible in the container graph by moving the data store context from unbound to
-	 * bound list. This data store can now be reached from the root.
+	 * Make the data store locally visible in the container graph by moving the data store context from unbound to
+	 * bound list and submitting the attach message. This data store can now be reached from the root.
 	 * @param id - The id of the data store context to make visible.
 	 */
 	private makeDataStoreLocallyVisible(id: string): void {
@@ -333,7 +385,7 @@ export class DataStores implements IDisposable {
 		 */
 		if (this.runtime.attachState !== AttachState.Detached) {
 			localContext.emit("attaching");
-			const message = localContext.generateAttachMessage();
+			const message = this.generateAttachMessage(localContext);
 
 			this.pendingAttach.set(id, message);
 			this.submitAttachFn(message);
@@ -689,6 +741,9 @@ export class DataStores implements IDisposable {
 		return summaryBuilder.getSummaryTree();
 	}
 
+	/**
+	 * Create a summary. Used when attaching or serializing a detached container.
+	 */
 	public createSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
 		const builder = new SummaryTreeBuilder();
 		// Attaching graph of some stores can cause other stores to get bound too.
@@ -713,8 +768,10 @@ export class DataStores implements IDisposable {
 				.map(([key, value]) => {
 					let dataStoreSummary: ISummarizeResult;
 					if (value.isLoaded) {
-						const snapshot = value.generateAttachMessage().snapshot;
-						dataStoreSummary = convertToSummaryTree(snapshot, true);
+						dataStoreSummary = value.getAttachData(
+							/* includeGCCData: */ false,
+							telemetryContext,
+						).attachSummary;
 					} else {
 						// If this data store is not yet loaded, then there should be no changes in the snapshot from
 						// which it was created as it is detached container. So just use the previous snapshot.
@@ -847,16 +904,13 @@ export class DataStores implements IDisposable {
 	 * @returns The routes of data stores and its objects that were deleted.
 	 */
 	public deleteSweepReadyNodes(sweepReadyDataStoreRoutes: readonly string[]): readonly string[] {
-		// If sweep for data stores is not enabled, return empty list indicating nothing is deleted.
-		if (this.mc.config.getBoolean(disableDatastoreSweepKey) === true) {
-			return [];
-		}
 		for (const route of sweepReadyDataStoreRoutes) {
 			const pathParts = route.split("/");
 			const dataStoreId = pathParts[1];
 
 			// Ignore sub-data store routes because a data store and its sub-routes are deleted together, so, we only
 			// need to delete the data store.
+			// These routes will still be returned below as among the deleted routes
 			if (pathParts.length > 2) {
 				continue;
 			}
