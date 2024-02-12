@@ -23,14 +23,12 @@ import { PopupView } from "./PopupView";
 //   If not, we may want to display an error message with a link to docs explaining how to
 //   use them.
 
-// TODO: double check that tab selection can't change while popup is being displayed.
 browser.tabs.query({ active: true, currentWindow: true }, (tabs) => {
 	if (tabs.length === 0) {
 		console.debug("No active tab.");
 		return;
 	}
-
-	// TODO: verify this
+	// Very unlikely edge case but still worth keeping to prevent unexpected errors.
 	if (tabs.length > 1) {
 		console.error("More than one active tab found. This is not expected.");
 		return;
@@ -68,7 +66,5 @@ export async function initializePopupView(target: HTMLElement, tabId: number): P
 		tabId,
 	});
 
-	ReactDOM.render(React.createElement(PopupView, { backgroundServiceConnection }), target, () => {
-		console.log("Rendered Popup view!");
-	});
+	ReactDOM.render(React.createElement(PopupView, { backgroundServiceConnection }), target);
 }

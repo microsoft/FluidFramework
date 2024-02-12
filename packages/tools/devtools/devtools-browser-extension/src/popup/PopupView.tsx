@@ -13,7 +13,9 @@ import {
 } from "@fluidframework/devtools-core";
 import { type BackgroundConnection } from "../BackgroundConnection";
 
-const queryTimeoutInMilliseconds = 2000; // 2 seconds
+// The recipient of the sent message is running on the same machine, just in a different process.
+// We aren't waiting on network requests or anything, so 2s wait time is sufficient.
+const queryTimeoutInMilliseconds = 2000;
 
 const loggingContext = "FLUID_DEVTOOLS(Popup)";
 
@@ -87,7 +89,7 @@ export function PopupView(props: PopupViewProps): React.ReactElement {
 			)}
 			{foundDevtools === true && (
 				<div>
-					Devtools found! Open the browser`&apos;`s devtools panel to view the Fluid
+					Fluid Devtools found! Open the browser`&apos;`s devtools panel to view the Fluid
 					Devtools extension.
 				</div>
 			)}
