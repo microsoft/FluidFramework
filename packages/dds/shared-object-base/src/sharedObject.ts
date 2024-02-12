@@ -430,14 +430,6 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 		if (this.services === undefined) {
 			this.services = services;
 
-			if (!this._isBoundToContext) {
-				this._isBoundToContext = true;
-				if (this.isAttached()) {
-					// Allows objects to do any custom processing if it is attached.
-					this.didAttach();
-				}
-			}
-
 			// attachDeltaHandler is only called after services is assigned
 			this.services.deltaConnection.attach({
 				process: (
@@ -462,6 +454,19 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 			});
 		}
 
+		// this function is only called from load, and connect
+		// which means it is only called on a pre-existing shared object.
+		// the runtime could be detached or attached, but since
+		// we are loading or connecting it must be bound to connext,
+		// as only newly created shared objects can be unbound
+		if (!this._isBoundToContext) {
+			this._isBoundToContext = true;
+			if (this.isAttached()) {
+				// Allows objects to do any custom processing if it is attached.
+				this.didAttach();
+			}
+		}
+
 		// Trigger initial state
 		// attachDeltaHandler is only called after services is assigned
 		this.setConnectionState(this.services.deltaConnection.connected);
@@ -472,6 +477,9 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 * @param connected - true if connected, false otherwise.
 	 */
 	private setConnectionState(connected: boolean) {
+		// only an attached shared object can transition its
+		// connected state. This is defensive, as some
+		// of our test harnesses don't handle this correctly
 		if (!this.isAttached() || this._connected === connected) {
 			// Not changing state, nothing the same.
 			return;
