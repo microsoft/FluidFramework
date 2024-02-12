@@ -34,6 +34,15 @@ export interface MatrixExternalType {
 }
 
 /** @internal */
+export enum SaveResult {
+	Dirty, // Channel is dirty, not saved
+	NotRooted, // Channel is not rooted, not saved
+	CantSave, // Can't save as need to process more ops
+	NoNeedToSave, // channel is already saved, no need to save
+	Saved, // channel was saved
+}
+
+/** @internal */
 export type CollabSpaceCellType = MatrixItem<MatrixExternalType>;
 
 /** @internal */
@@ -58,14 +67,16 @@ export interface IEfficientMatrix extends Omit<ISharedMatrix<MatrixExternalType>
 	// return channel value while channel exists.
 	getCellChannel(row: number, col: number): Promise<ICollabChannelCore>;
 
-	// Save content from channel to cell
-	// Operation could fail for multiple reasons:
-	//  - due to FWW merge policy used, and another client either doing save or overwriting cell.
+	// Save content from channel to cell.
+	// Operation could fail (return false) for multiple reasons:
+	//  - if channel is detached (saves are not performed unless channel is being destroyed)
+	//  - if chanel is dirty (has non-acked changes, only applicable to attached states)
 	//  - if channel is no longer "rooted" in a cell.
-	// In general, this operation does not change how system should evaluate cell value - all clients
-	// should continue to treat channel content as a source of truth unless/untill it's safe to destroy channel
-	// But it's a prerequisite to ability of clients to destroy channel.
-	saveChannelState(channel: ICollabChannelCore);
+	// Operation could fail (returns true, but save does not happen)
+	//  - due to FWW merge policy used, and another client either doing save or overwriting cell.
+	// This operation does not change visible characteristics of the system. It only prepares channel
+	// for future possibility to be destroyed.
+	saveChannelState(channel: ICollabChannelCore): SaveResult;
 
 	// Experimental! It can be called only when condirions are right:
 	// - data has been saved to cell in non-conflicting matter.
@@ -73,6 +84,8 @@ export interface IEfficientMatrix extends Omit<ISharedMatrix<MatrixExternalType>
 	// - no records on undo stack
 	// Returns true if channel was actually destroyed.
 	destroyCellChannel(channel: ICollabChannelCore): boolean;
+
+	getAllChannels(): Promise<{ rooted: ICollabChannelCore[]; notRooted: ICollabChannelCore[] }>;
 }
 
 /**
@@ -94,4 +107,7 @@ export interface IEfficientMatrixTest {
 	}>;
 
 	getReverseMapCellDebugInfo(rowId: string, colId: string): Promise<{ row: number; col: number }>;
+
+	// Only works if there is debug channel created.
+	sendSomeDebugOp(): void;
 }

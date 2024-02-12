@@ -20,92 +20,118 @@ export interface IReverseMap {
 	addCellToMap(type: ReverseMapType, id: uuidType, index: number): void;
 }
 
-export class ReverseMap implements IReverseMap {
-	private readonly rowMap: { [id: uuidType]: number } = {};
-	private readonly colMap: { [id: uuidType]: number } = {};
+class Entry {
+	index: number;
+	uniqueIdentifier: uuidType;
 
-	constructor() {}
+	constructor(uniqueIdentifier: uuidType, index: number) {
+		this.uniqueIdentifier = uniqueIdentifier;
+		this.index = index;
+	}
+}
+
+export class ReverseMap implements IReverseMap {
+	private readonly rowMap: Entry[];
+	private readonly colMap: Entry[];
+
+	constructor() {
+		this.rowMap = [];
+		this.colMap = [];
+	}
+
+	private appendEntry(type: ReverseMapType, index: number, uniqueIdentifier: uuidType): void {
+		const map = type === "row" ? this.rowMap : this.colMap;
+		assert(map !== undefined, "map should not be undefined");
+		const entry = new Entry(uniqueIdentifier, index);
+		map.push(entry);
+	}
+
+	private insertEntry(type: ReverseMapType, index: number, uniqueIdentifier: uuidType): void {
+		const map = type === "row" ? this.rowMap : this.colMap;
+		assert(map !== undefined, "map should not be undefined");
+		const newEntry = new Entry(uniqueIdentifier, index);
+		map.splice(index, 0, newEntry);
+		for (let i = map[index].index; i < map.length; i++) {
+			map[i].index = i + 1;
+		}
+	}
+
+	private deleteEntryRange(type: ReverseMapType, index: number, count: number): void {
+		const map = type === "row" ? this.rowMap : this.colMap;
+		assert(map !== undefined, "map should not be undefined");
+		// The idea is that we might not need the following lines as the index should be unique and we can use it to find the entry.
+		// const index = map.findIndex((entry) => {
+		// 	const numId = typeof entry.uniqueIdentifier === "number" ? Number(index) : index;
+		// 	return entry.index === numId;
+		// });
+		if (index !== -1) {
+			map.splice(index, count);
+			for (let i = index; i < map.length; i++) {
+				map[i].index = i + 1;
+			}
+		}
+	}
+
+	private findById(type: ReverseMapType, uniqueIdentifier: uuidType): Entry | undefined {
+		const map = type === "row" ? this.rowMap : this.colMap;
+		assert(map !== undefined, "map should not be undefined");
+
+		return map.find((entry) => {
+			const numId =
+				typeof entry.uniqueIdentifier === "number"
+					? Number(uniqueIdentifier)
+					: uniqueIdentifier;
+			return entry.uniqueIdentifier === numId;
+		});
+	}
 
 	public getRowIndex(rowId: uuidType): number | undefined {
-		return this.rowMap[rowId];
+		return this.findById("row", rowId)?.index;
 	}
 
 	public getColIndex(colId: uuidType): number | undefined {
-		return this.colMap[colId];
+		return this.findById("col", colId)?.index;
 	}
 
-	public getRowMap(): Readonly<{ [id: uuidType]: number }> {
-		return this.rowMap;
-	}
-
-	public getColMap(): Readonly<{ [id: uuidType]: number }> {
-		return this.colMap;
-	}
-
-	private insertCellIntoMap(type: ReverseMapType, index: number, key: uuidType, value: number) {
-		const map = type === "row" ? this.rowMap : this.colMap;
-		assert(index >= 0, "index must be non-negative");
-		// Convert the map to an array of key-value
-		// Notice we use Object.entries to keep the order from the map
-		const entries = Object.entries(map); // we can also try sort((a, b) => a[1] - b[1]);
-
-		// Insert the new key-value pair at the specified index
-		entries.splice(index, 0, [key.toString(), value]);
-
-		// Clear the original map
-		Object.keys(map).forEach((tempKey) => {
-			if (Object.prototype.hasOwnProperty.call(map, tempKey)) {
-				Reflect.deleteProperty(map, tempKey);
-			}
+	public getRowMap(): Readonly<{ [uniqueIdentifier: uuidType]: number }> {
+		const rowMapArray: { [uniqueIdentifier: uuidType]: number } = {};
+		this.rowMap.forEach((entry) => {
+			rowMapArray[entry.uniqueIdentifier] = entry.index;
 		});
-
-		// Re-populate the map with the updated items from the array
-		entries.forEach(([localKey], newIndex) => {
-			map[localKey] = newIndex + 1;
-		});
+		return rowMapArray;
 	}
 
-	public addCellToMap(type: ReverseMapType, id: uuidType, index: number): void {
+	public getColMap(): Readonly<{ [uniqueIdentifier: uuidType]: number }> {
+		const colMapArray: { [uniqueIdentifier: uuidType]: number } = {};
+		this.colMap.forEach((entry) => {
+			colMapArray[entry.uniqueIdentifier] = entry.index;
+		});
+		return colMapArray;
+	}
+
+	public addCellToMap(type: ReverseMapType, uniqueIdentifier: uuidType, index: number): void {
 		const map = type === "row" ? this.rowMap : this.colMap;
 		// this behavior is very specific to the way SharedMatrix does its row insertion signal, in which we first get the row addition
 		// without the unique ids and soon after, the cell changes are triggered and we take opportunity to update the reverse map.
-		if (Object.keys(map).length >= index + 1) {
+		if (map.length >= index + 1) {
 			// In case of insertion or rows within existing boundaries of the matrix, we will need to manually update
 			// the map to reflect and shift existing indexes. For example, if we insert a new row at index 2,
 			// the existing row at index 2 will be shifted to index 3 and so on.
 			// Note this only applies for insertion within existing rows but removal as
 			//  rowsChanged and columnsChanged methods are responsible for processing it.
-			this.insertCellIntoMap(type, index, id, index + 1);
+			// this.insertCellIntoMap(type, index, uniqueIdentifier, index + 1);
+			this.insertEntry(type, index, uniqueIdentifier);
 		} else {
-			map[id] = index + 1;
+			this.appendEntry(type, index + 1, uniqueIdentifier);
 		}
 	}
 
 	// We need to ensure that we are tracking all the cells and when removing cells, we need to
 	// remove the tracking information as well as update the indexes in the map.
 	public removeCellsFromMap(type: ReverseMapType, start: number, count: number) {
-		const map = type === "row" ? this.rowMap : this.colMap;
 		assert(start >= 0, "start must be non-negative");
 		if (count > 0) {
-			// Convert the map to an array of key-value pairs
-			// Notice we use Object.entries to keep the order from the map
-			const entries = Object.entries(map);
-
-			// Remove the specified range of items from the array
-			// Note the index from the reverse mapping is off by 1 as the matrix has a row and col tracking IDs
-			entries.splice(start, count);
-
-			// Clear the original map
-			Object.keys(map).forEach((key) => {
-				if (Object.prototype.hasOwnProperty.call(map, key)) {
-					Reflect.deleteProperty(map, key);
-				}
-			});
-
-			// Re-populate the map with the remaining items from the array
-			entries.forEach(([key, value], index) => {
-				map[key] = index + 1;
-			});
+			this.deleteEntryRange(type, start, count);
 		}
 	}
 }
