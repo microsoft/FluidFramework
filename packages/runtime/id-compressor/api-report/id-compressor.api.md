@@ -44,6 +44,7 @@ export interface IdCreationRange {
 export interface IIdCompressor {
     decompress(id: SessionSpaceCompressedId): StableId;
     generateCompressedId(): SessionSpaceCompressedId;
+    generateDocumentUniqueId(): (SessionSpaceCompressedId & OpSpaceCompressedId) | StableId;
     localSessionId: SessionId;
     normalizeToOpSpace(id: SessionSpaceCompressedId): OpSpaceCompressedId;
     normalizeToSessionSpace(id: OpSpaceCompressedId, originSessionId: SessionId): SessionSpaceCompressedId;
