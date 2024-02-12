@@ -766,10 +766,6 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Revived",
 					clientType: "noninteractive/summarizer",
 				},
-				{
-					eventName: "fluid:telemetry:Summarizer:Running:TombstoneReadyObject_Revived",
-					clientType: "noninteractive/summarizer",
-				},
 			],
 			async () => {
 				const { unreferencedId, summarizingContainer, summarizer } =
@@ -1040,14 +1036,6 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				{
 					eventName:
 						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Revived",
-					clientType: "noninteractive/summarizer",
-				},
-				{
-					eventName: "fluid:telemetry:Summarizer:Running:TombstoneReadyObject_Revived",
-					clientType: "noninteractive/summarizer",
-				},
-				{
-					eventName: "fluid:telemetry:Summarizer:Running:TombstoneReadyObject_Revived",
 					clientType: "noninteractive/summarizer",
 				},
 			],
@@ -1393,14 +1381,6 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 					clientType: "interactive",
 				},
 				{
-					eventName: "fluid:telemetry:Summarizer:Running:TombstoneReadyObject_Changed",
-					clientType: "noninteractive/summarizer",
-				},
-				{
-					eventName: "fluid:telemetry:Summarizer:Running:TombstoneReadyObject_Loaded",
-					clientType: "noninteractive/summarizer",
-				},
-				{
 					eventName:
 						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
 					clientType: "interactive",
@@ -1527,14 +1507,6 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 					eventName:
 						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
 					clientType: "interactive",
-				},
-				{
-					eventName: "fluid:telemetry:Summarizer:Running:TombstoneReadyObject_Changed",
-					clientType: "noninteractive/summarizer",
-				},
-				{
-					eventName: "fluid:telemetry:Summarizer:Running:TombstoneReadyObject_Loaded",
-					clientType: "noninteractive/summarizer",
 				},
 			],
 			async () => {

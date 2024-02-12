@@ -11,8 +11,8 @@ import {
 	ISummarizer,
 	TombstoneResponseHeaderKey,
 } from "@fluidframework/container-runtime";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { channelsTreeName } from "@fluidframework/runtime-definitions";
+import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions";
 import {
 	ITestObjectProvider,
 	createSummarizer,
@@ -30,7 +30,11 @@ import {
 import { delay } from "@fluidframework/core-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IErrorBase, IFluidHandle } from "@fluidframework/core-interfaces";
-import { getGCDeletedStateFromSummary, getGCStateFromSummary } from "./gcTestSummaryUtils.js";
+import {
+	getGCDeletedStateFromSummary,
+	getGCStateFromSummary,
+	getGCTombstoneStateFromSummary,
+} from "./gcTestSummaryUtils.js";
 
 /**
  * These tests validate that SweepReady data stores are correctly swept. Swept datastores should be
@@ -73,8 +77,11 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 		settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
 	});
 
-	async function loadContainer(summaryVersion: string) {
-		return provider.loadTestContainer(testContainerConfig, {
+	async function loadContainer(
+		summaryVersion: string,
+		config: ITestContainerConfig = testContainerConfig,
+	) {
+		return provider.loadTestContainer(config, {
 			[LoaderHeader.version]: summaryVersion,
 		});
 	}
@@ -174,10 +181,6 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 			"Send ops fails for swept datastores in summarizing container loaded before sweep timeout",
 			[
 				{
-					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Loaded",
-					clientType: "noninteractive/summarizer",
-				},
-				{
 					eventName: "fluid:telemetry:FluidDataStoreContext:GC_Deleted_DataStore_Changed",
 					clientType: "noninteractive/summarizer",
 					callSite: "submitMessage",
@@ -210,10 +213,6 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 			"Send signals fails for swept datastores in summarizing container loaded before sweep timeout",
 			[
 				{
-					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Loaded",
-					clientType: "noninteractive/summarizer",
-				},
-				{
 					eventName: "fluid:telemetry:FluidDataStoreContext:GC_Deleted_DataStore_Changed",
 					clientType: "noninteractive/summarizer",
 					callSite: "submitSignal",
@@ -245,10 +244,6 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 		itExpects(
 			"Requesting swept datastores not allowed",
 			[
-				{
-					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Loaded",
-					clientType: "noninteractive/summarizer",
-				},
 				{
 					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
 					clientType: "interactive",
@@ -319,10 +314,6 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 			"Ops for swept data stores is ignored but logs an error",
 			[
 				{
-					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Loaded",
-					clientType: "noninteractive/summarizer",
-				},
-				{
 					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Changed",
 					clientType: "noninteractive/summarizer",
 					callSite: "processFluidDataStoreOp",
@@ -390,10 +381,6 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 		itExpects(
 			"Signals for swept datastores are ignored but logs an error",
 			[
-				{
-					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Loaded",
-					clientType: "noninteractive/summarizer",
-				},
 				{
 					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Changed",
 					clientType: "noninteractive/summarizer",
@@ -467,18 +454,18 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 
 	describe("Deleted data stores in summary", () => {
 		/**
-		 * Validates that the given data store state is correct in the summary.
-		 * e.g. if expectDelete is true::
-		 * - It should be deleted from the data store summary tree.
-		 * - It should not be present in the GC state in GC summary tree.
-		 * - It should be present in the deleted nodes in GC summary tree.
-		 *
-		 * And the opposite results if false.
+		 * Validates that the given data store state is correct in the summary based on expectDelete and expectGCStateHandle.
+		 * - The data store should or should not be present in the data store summary tree as per expectDelete.
+		 * - If expectGCStateHandle is true, the GC summary tree should be handle. Otherwise, the data store should or should
+		 * not be present in the GC summary tree as per expectDelete.
+		 * - The data store should or should not be present in the deleted nodes in GC summary tree as per expectDelete.
 		 */
 		function validateDataStoreStateInSummary(
 			summaryTree: ISummaryTree,
 			dataStoreNodePath: string,
-			expectDelete: boolean = true,
+			expectDelete: boolean,
+			expectGCStateHandle: boolean,
+			expectTombstoned?: true,
 		) {
 			const shouldShouldNot = expectDelete ? "should" : "should not";
 
@@ -491,14 +478,39 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 				`Data store ${deletedDataStoreId} ${shouldShouldNot} have been deleted from the summary`,
 			);
 
+			if (expectGCStateHandle) {
+				assert.equal(
+					summaryTree.tree[gcTreeKey].type,
+					SummaryType.Handle,
+					"Expecting the GC tree to be handle",
+				);
+				return;
+			}
+
 			// Validate that the GC state does not contain an entry for the deleted data store.
 			const gcState = getGCStateFromSummary(summaryTree);
-			assert(gcState !== undefined, "GC tree is not available in the summary");
+			assert(
+				gcState !== undefined,
+				"PRECONDITION: GC tree should be available in the summary",
+			);
 			assert.notEqual(
 				Object.keys(gcState.gcNodes).includes(dataStoreNodePath),
 				expectDelete,
 				`Data store ${dataStoreNodePath} ${shouldShouldNot} have been removed from GC state`,
 			);
+
+			if (expectTombstoned) {
+				// Validate that the GC state does contain the Tombstone if expected
+				const tombstones = getGCTombstoneStateFromSummary(summaryTree);
+				assert(
+					tombstones !== undefined,
+					"PRECONDITION: GC Tombstones list should be available in the summary",
+				);
+				assert(
+					tombstones.includes(dataStoreNodePath),
+					`Data store ${dataStoreNodePath} should have been tombstoned`,
+				);
+			}
 
 			// Validate that the deleted nodes in the GC data has the deleted data store.
 			const deletedNodesState = getGCDeletedStateFromSummary(summaryTree);
@@ -509,69 +521,57 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 			);
 		}
 
-		itExpects(
-			"updates deleted data store state in the summary",
-			[
-				{
-					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Loaded",
-					clientType: "noninteractive/summarizer",
-				},
-			],
-			async () => {
-				const { unreferencedId, summarizer } =
-					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
-				const sweepReadyDataStoreNodePath = `/${unreferencedId}`;
-				await sendOpToUpdateSummaryTimestampToNow(summarizer);
+		it("updates deleted data store state in the summary", async () => {
+			const { unreferencedId, summarizer } =
+				await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+			const sweepReadyDataStoreNodePath = `/${unreferencedId}`;
+			await sendOpToUpdateSummaryTimestampToNow(summarizer);
 
-				// Summarize. In this summary, the gc op will be sent with the deleted data store id. The data store
-				// will be removed in the subsequent summary.
-				await summarizeNow(summarizer);
+			// Summarize. In this summary, the gc op will be sent with the deleted data store id. The data store
+			// will be removed in the subsequent summary.
+			await summarizeNow(summarizer);
 
-				// Summarize again so that the sweep ready blobs are now deleted from the GC data.
-				const summary3 = await summarizeNow(summarizer);
+			// Summarize again so that the sweep ready blobs are now deleted from the GC data.
+			const summary3 = await summarizeNow(summarizer);
 
-				// Validate that the deleted data store's state is correct in the summary.
-				validateDataStoreStateInSummary(summary3.summaryTree, sweepReadyDataStoreNodePath);
-			},
-		);
+			// Validate that the deleted data store's state is correct in the summary.
+			validateDataStoreStateInSummary(
+				summary3.summaryTree,
+				sweepReadyDataStoreNodePath,
+				true /* expectDelete */,
+				false /* expectGCStateHandle */,
+			);
+		});
 
-		itExpects(
-			"disableDatastoreSweep true - DOES NOT update deleted data store state in the summary",
-			[
-				{
-					// Since we do full tree summary, everything is loaded including the sweepReady node
-					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Loaded",
-					clientType: "noninteractive/summarizer",
-				},
-			],
-			async () => {
-				settings["Fluid.GarbageCollection.DisableDataStoreSweep"] = true;
+		it("disableDatastoreSweep true - Tombstones the SweepReady data store state in the summary", async () => {
+			settings["Fluid.GarbageCollection.DisableDataStoreSweep"] = true;
 
-				const { unreferencedId, summarizer } =
-					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
-				const sweepReadyDataStoreNodePath = `/${unreferencedId}`;
-				await sendOpToUpdateSummaryTimestampToNow(summarizer);
+			const { unreferencedId, summarizer } =
+				await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+			const sweepReadyDataStoreNodePath = `/${unreferencedId}`;
+			await sendOpToUpdateSummaryTimestampToNow(summarizer);
 
-				// Summarize. If sweep was enabled, the gc op will be sent with the deleted data store id. The data store
-				// will be removed in the subsequent summary.
-				await summarizeNow(summarizer);
+			// Summarize. If sweep was enabled, the gc op will be sent with the deleted data store id. The data store
+			// will be removed in the subsequent summary.
+			await summarizeNow(summarizer);
 
-				// The datastore should NOT be swept here. If sweep was enabled, it would be deleted in this summary.
-				// We need to do fullTree because the GC data won't change (since it's not swept).
-				// But the validation depends on the GC subtree being present (not a handle).
-				const summary3 = await summarize(summarizer, {
-					reason: "end-to-end test",
-					fullTree: true,
-				});
+			// The datastore should NOT be swept here. If sweep was enabled, it would be deleted in this summary.
+			// We need to do fullTree because the GC data won't change (since it's not swept).
+			// But the validation depends on the GC subtree being present (not a handle).
+			const summary3 = await summarize(summarizer, {
+				reason: "end-to-end test",
+				fullTree: true,
+			});
 
-				// Validate that the data store's state is correct in the summary - it shouldn't have been deleted.
-				validateDataStoreStateInSummary(
-					summary3.summaryTree,
-					sweepReadyDataStoreNodePath,
-					false /* expectDelete */,
-				);
-			},
-		);
+			// Validate that the data store's state is correct in the summary - it should have been tombstoned not deleted.
+			validateDataStoreStateInSummary(
+				summary3.summaryTree,
+				sweepReadyDataStoreNodePath,
+				false /* expectDelete */,
+				false /* expectGCStateHandle */,
+				true /* expectTombstoned */,
+			);
+		});
 	});
 
 	describe("Sweep with ValidateSummaryBeforeUpload enabled", () => {
@@ -579,33 +579,24 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 			settings["Fluid.Summarizer.ValidateSummaryBeforeUpload"] = true;
 		});
 
-		itExpects(
-			"can run sweep without failing summaries due to local changes",
-			[
-				{
-					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Loaded",
-					clientType: "noninteractive/summarizer",
-				},
-			],
-			async () => {
-				const { summarizer } =
-					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
-				await sendOpToUpdateSummaryTimestampToNow(summarizer);
+		it("can run sweep without failing summaries due to local changes", async () => {
+			const { summarizer } =
+				await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+			await sendOpToUpdateSummaryTimestampToNow(summarizer);
 
-				// Summarize. In this summary, the gc op will be sent with the deleted data store id. Validate that
-				// the GC op does not fail summary due to local changes.
-				await assert.doesNotReject(
-					async () => summarizeNow(summarizer),
-					"Summary and GC should succeed in presence of GC op",
-				);
+			// Summarize. In this summary, the gc op will be sent with the deleted data store id. Validate that
+			// the GC op does not fail summary due to local changes.
+			await assert.doesNotReject(
+				async () => summarizeNow(summarizer),
+				"Summary and GC should succeed in presence of GC op",
+			);
 
-				// Summarize again so that the sweep ready blobs are now deleted from the GC data. Validate that
-				// summarize and GC succeed.
-				await assert.doesNotReject(
-					async () => summarizeNow(summarizer),
-					"Summary and GC should succeed with deleted data store",
-				);
-			},
-		);
+			// Summarize again so that the sweep ready blobs are now deleted from the GC data. Validate that
+			// summarize and GC succeed.
+			await assert.doesNotReject(
+				async () => summarizeNow(summarizer),
+				"Summary and GC should succeed with deleted data store",
+			);
+		});
 	});
 });
