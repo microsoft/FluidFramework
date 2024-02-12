@@ -581,6 +581,8 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 					...options,
 					summaryLogger,
 					cancellationToken: this.cancellationToken,
+					latestSummaryRefSeqNum:
+						this.heuristicData.lastSuccessfulSummary.refSequenceNumber,
 				};
 				const summarizeResult = this.generator.summarize(summaryOptions, resultsBuilder);
 				// ensure we wait till the end of the process
@@ -676,6 +678,7 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 				...summarizeOptions,
 				summaryLogger,
 				cancellationToken: this.cancellationToken,
+				latestSummaryRefSeqNum: this.heuristicData.lastSuccessfulSummary.refSequenceNumber,
 			};
 
 			// Note: no need to account for cancellationToken.waitCancelled here, as
@@ -747,6 +750,7 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 				summaryLogger,
 				cancellationToken: this.cancellationToken,
 				finalAttempt,
+				latestSummaryRefSeqNum: this.heuristicData.lastSuccessfulSummary.refSequenceNumber,
 			};
 			const summarizeResult = this.generator.summarize(summaryOptions);
 			return { summarizeProps, summarizeResult };
