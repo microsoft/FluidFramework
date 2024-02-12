@@ -75,9 +75,6 @@ function writeTreeSectionCore(treesNode: NodeCore, snapshotTree: ISnapshotTree) 
 		if (snapshotTree.unreferenced) {
 			addBoolProperty(treeNode, "unreferenced", snapshotTree.unreferenced);
 		}
-		if (snapshotTree.groupId !== undefined) {
-			addStringProperty(treeNode, "groupId", snapshotTree.groupId);
-		}
 		// Only write children prop if either blobs or trees are present.
 		if (Object.keys(value.blobs).length > 0 || Object.keys(value.trees).length > 0) {
 			treeNode.addDictionaryString("children");

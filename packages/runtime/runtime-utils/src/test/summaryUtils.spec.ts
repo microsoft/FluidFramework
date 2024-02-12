@@ -60,9 +60,14 @@ describe("Summary Utils", () => {
 						entries: [
 							new BlobTreeEntry("bu8", "test-u8"),
 							new BlobTreeEntry("b64", base64Content, "base64"),
-							new TreeTreeEntry("tu", { entries: [], unreferenced: true }),
+							new TreeTreeEntry("tu", {
+								entries: [],
+								unreferenced: true,
+								groupId: undefined,
+							}),
 						],
 						unreferenced: undefined,
+						groupId: undefined,
 					}),
 					new BlobTreeEntry("b", "test-blob"),
 					new TreeTreeEntry("h", {
@@ -72,13 +77,16 @@ describe("Summary Utils", () => {
 					new TreeTreeEntry("unref", {
 						entries: [],
 						unreferenced: true,
+						groupId: undefined,
 					}),
 					new TreeTreeEntry("groupId", {
 						entries: [],
+						unreferenced: undefined,
 						groupId: "group-id",
 					}),
 				],
 				unreferenced: undefined,
+				groupId: undefined,
 			};
 		});
 
@@ -141,7 +149,7 @@ describe("Summary Utils", () => {
 			// nodes should count
 			assert.strictEqual(summaryResults.stats.blobNodeCount, 3);
 			assert.strictEqual(summaryResults.stats.handleNodeCount, 1);
-			assert.strictEqual(summaryResults.stats.treeNodeCount, 4);
+			assert.strictEqual(summaryResults.stats.treeNodeCount, 5);
 
 			const bufferLength =
 				IsoBuffer.from("test-b64").byteLength +
@@ -187,6 +195,7 @@ describe("Summary Utils", () => {
 					return treeEntry.path !== "h";
 				}),
 				unreferenced: undefined,
+				groupId: undefined,
 			};
 			const summaryResults = convertToSummaryTree(treeWithoutHandles);
 			const summaryTree = assertSummaryTree(summaryResults.summary);
@@ -223,6 +232,7 @@ describe("Summary Utils", () => {
 								blobs: {},
 								trees: {},
 								unreferenced: true,
+								groupId: undefined,
 							},
 						},
 					},
@@ -230,6 +240,13 @@ describe("Summary Utils", () => {
 						blobs: {},
 						trees: {},
 						unreferenced: true,
+						groupId: undefined,
+					},
+					groupId: {
+						blobs: {},
+						trees: {},
+						unreferenced: true,
+						groupId: "group-id",
 					},
 				},
 			};
@@ -261,7 +278,7 @@ describe("Summary Utils", () => {
 			// nodes should count
 			assert.strictEqual(summaryResults.stats.blobNodeCount, 3);
 			assert.strictEqual(summaryResults.stats.handleNodeCount, 0);
-			assert.strictEqual(summaryResults.stats.treeNodeCount, 4);
+			assert.strictEqual(summaryResults.stats.treeNodeCount, 5);
 
 			const bufferLength =
 				IsoBuffer.from("test-b64").byteLength +
@@ -314,7 +331,7 @@ describe("Summary Utils", () => {
 			const subTreeTUnrefTree = assertSummaryTree(subTreeT.tree.tu);
 			assert.strictEqual(
 				subTreeTUnrefTree.groupId,
-				true,
+				undefined,
 				"The tu subtree of t not have groupId",
 			);
 

@@ -84,7 +84,6 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			dataObjectFactory,
 		);
 		const { summaryTree } = await summarizeNow(summarizer);
-		console.log(summaryTree);
 
 		const channelsTree = summaryTree.tree[".channels"];
 		assert(channelsTree.type === SummaryType.Tree, "channels should be a tree");
