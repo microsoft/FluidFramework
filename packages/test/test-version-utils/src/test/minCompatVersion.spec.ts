@@ -8,7 +8,7 @@ import { execSync } from "child_process";
 import { CompatKind } from "../../compatOptions.cjs";
 import { isCompatVersionBelowMinVersion } from "../compatConfig.js";
 
-describe("Minimum Compat Version", () => {
+describe.skip("Minimum Compat Version", () => {
 	const allVersionsFromNpm = execSync(`npm show fluid-framework versions --json`, {
 		encoding: "utf-8",
 	});

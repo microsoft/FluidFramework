@@ -1,5 +1,5 @@
 doc
 node_modules
 dist
-jest.config.js
+jest.config.cjs
 src/index.d.ts

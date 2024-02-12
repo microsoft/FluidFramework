@@ -15,12 +15,7 @@ import {
 	IRequest,
 	IResponse,
 } from "@fluidframework/core-interfaces";
-import {
-	IAudience,
-	ILoader,
-	AttachState,
-	ILoaderOptions,
-} from "@fluidframework/container-definitions";
+import { IAudience, ILoader, AttachState } from "@fluidframework/container-definitions";
 
 import {
 	IQuorumClients,
@@ -394,7 +389,7 @@ export class MockContainerRuntimeFactory {
 	 * each of the runtimes.
 	 */
 	protected messages: ISequencedDocumentMessage[] = [];
-	protected readonly runtimes: MockContainerRuntime[] = [];
+	protected readonly runtimes: Set<MockContainerRuntime> = new Set<MockContainerRuntime>();
 
 	/**
 	 * The container runtime options which will be provided to the all runtimes
@@ -444,8 +439,12 @@ export class MockContainerRuntimeFactory {
 			this,
 			this.runtimeOptions,
 		);
-		this.runtimes.push(containerRuntime);
+		this.runtimes.add(containerRuntime);
 		return containerRuntime;
+	}
+
+	public removeContainerRuntime(containerRuntime: MockContainerRuntime) {
+		this.runtimes.delete(containerRuntime);
 	}
 
 	public synchronizeIdCompressors() {
@@ -480,7 +479,6 @@ export class MockContainerRuntimeFactory {
 		) as ISequencedDocumentMessage;
 
 		// TODO: Determine if this needs to be adapted for handling server-generated messages (which have null clientId and referenceSequenceNumber of -1).
-		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 		this.minSeq.set(message.clientId as string, message.referenceSequenceNumber);
 		if (
 			this.runtimeOptions.flushMode === FlushMode.Immediate ||
@@ -676,7 +674,7 @@ export class MockFluidDataStoreRuntime
 	public readonly documentId: string = undefined as any;
 	public readonly id: string;
 	public readonly existing: boolean = undefined as any;
-	public options: ILoaderOptions = {};
+	public options: Record<string | number, any> = {};
 	public clientId: string;
 	public readonly path = "";
 	public readonly connected = true;
@@ -921,7 +919,6 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
 
 	public submit(messageContent: any): number {
 		assert(false, "Throw submit error on mock empty delta connection");
-		return 0;
 	}
 
 	public dirty(): void {}

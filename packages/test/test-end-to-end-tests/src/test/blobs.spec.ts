@@ -17,8 +17,9 @@ import {
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import { ReferenceType } from "@fluidframework/merge-tree";
-import { SharedString } from "@fluidframework/sequence";
+import type { SharedString } from "@fluidframework/sequence";
 import {
+	ChannelFactoryRegistry,
 	ITestContainerConfig,
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
@@ -40,25 +41,28 @@ import {
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
 });
-const testContainerConfig: ITestContainerConfig = {
-	runtimeOptions: {
-		summaryOptions: {
-			initialSummarizerDelayMs: 20, // Previous Containers had this property under SummaryOptions.
-			summaryConfigOverrides: {
-				...DefaultSummaryConfiguration,
-				...{
-					minIdleTime: 5000,
-					maxIdleTime: 5000,
-					maxTime: 5000 * 12,
-					maxAckWaitTime: 120000,
-					maxOps: 1,
-					initialSummarizerDelayMs: 20,
+
+function makeTestContainerConfig(registry: ChannelFactoryRegistry): ITestContainerConfig {
+	return {
+		runtimeOptions: {
+			summaryOptions: {
+				initialSummarizerDelayMs: 20, // Previous Containers had this property under SummaryOptions.
+				summaryConfigOverrides: {
+					...DefaultSummaryConfiguration,
+					...{
+						minIdleTime: 5000,
+						maxIdleTime: 5000,
+						maxTime: 5000 * 12,
+						maxAckWaitTime: 120000,
+						maxOps: 1,
+						initialSummarizerDelayMs: 20,
+					},
 				},
 			},
 		},
-	},
-	registry: [["sharedString", SharedString.getFactory()]],
-};
+		registry,
+	};
+}
 
 const usageErrorMessage = "Empty file summary creation isn't supported in this driver.";
 
@@ -70,7 +74,12 @@ const ContainerCloseUsageError: ExpectedEvents = {
 	tinylicious: containerCloseAndDisposeUsageErrors,
 };
 
-describeCompat("blobs", "FullCompat", (getTestObjectProvider) => {
+describeCompat("blobs", "FullCompat", (getTestObjectProvider, apis) => {
+	const { SharedString } = apis.dds;
+	const testContainerConfig = makeTestContainerConfig([
+		["sharedString", SharedString.getFactory()],
+	]);
+
 	let provider: ITestObjectProvider;
 	beforeEach("getTestObjectProvider", async function () {
 		provider = getTestObjectProvider();
@@ -254,7 +263,12 @@ describeCompat("blobs", "FullCompat", (getTestObjectProvider) => {
 
 // this functionality was added in 0.47 and can be added to the compat-enabled
 // tests above when the LTS version is bumped > 0.47
-describeCompat("blobs", "NoCompat", (getTestObjectProvider) => {
+describeCompat("blobs", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedString } = apis.dds;
+	const testContainerConfig = makeTestContainerConfig([
+		["sharedString", SharedString.getFactory()],
+	]);
+
 	let provider: ITestObjectProvider;
 	beforeEach("getTestObjectProvider", async function () {
 		provider = getTestObjectProvider();

@@ -147,8 +147,14 @@
 		}
 	},
 	"pnpm": {
+		"commentsOverrides": [
+			"sharp <0.32.6 has a vulnerability that Component Governance flags (https://github.com/advisories/GHSA-54xq-cgqr-rpm3). It's a transitive dependency through jssm-viz-cli, which hasn't updated to a version with the fix"
+		],
 		"patchedDependencies": {
 			"@microsoft/api-extractor@7.39.1": "../../../patches/@microsoft__api-extractor@7.39.1.patch"
+		},
+		"overrides": {
+			"sharp": "^0.33.2"
 		}
 	},
 	"typeValidation": {

@@ -592,6 +592,7 @@ export class Container
 	private readonly connectionTransitionTimes: number[] = [];
 	private _loadedFromVersion: IVersion | undefined;
 	private _dirtyContainer = false;
+	private readonly offlineLoadEnabled: boolean;
 	private readonly savedOps: ISequencedDocumentMessage[] = [];
 	private attachmentData: AttachmentData = { state: AttachState.Detached };
 	private readonly _containerId: string;
@@ -676,12 +677,8 @@ export class Container
 		return this._clientId;
 	}
 
-	private get offlineLoadEnabled(): boolean {
-		const enabled =
-			this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ??
-			this.options?.enableOfflineLoad === true;
-		// summarizer will not have any pending state we want to save
-		return enabled && this.deltaManager.clientDetails.capabilities.interactive;
+	private get isInteractiveClient(): boolean {
+		return this.deltaManager.clientDetails.capabilities.interactive;
 	}
 
 	/**
@@ -825,7 +822,7 @@ export class Container
 
 		this.client = Container.setupClient(
 			this._containerId,
-			this.options,
+			options.client,
 			this.clientDetailsOverride,
 		);
 
@@ -941,6 +938,10 @@ export class Container
 			this.deltaManager,
 			pendingLocalState?.clientId,
 		);
+
+		this.offlineLoadEnabled =
+			this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ??
+			options.enableOfflineLoad === true;
 
 		this.on(savedContainerEvent, () => {
 			this.connectionStateHandler.containerSaved();
@@ -1616,7 +1617,8 @@ export class Container
 			};
 		} else {
 			assert(snapshotTree !== undefined, 0x237 /* "Snapshot should exist" */);
-			if (this.offlineLoadEnabled) {
+			// non-interactive clients will not have any pending state we want to save
+			if (this.offlineLoadEnabled && this.isInteractiveClient) {
 				const blobs = await getBlobContentsFromTree(snapshotTree, this.storageAdapter);
 				this.attachmentData = {
 					state: AttachState.Attached,
@@ -2022,13 +2024,12 @@ export class Container
 
 	private static setupClient(
 		containerId: string,
-		options?: ILoaderOptions,
+		loaderOptionsClient?: IClient,
 		clientDetailsOverride?: IClientDetails,
 	): IClient {
-		const loaderOptionsClient = structuredClone(options?.client);
 		const client: IClient =
 			loaderOptionsClient !== undefined
-				? (loaderOptionsClient as IClient)
+				? structuredClone(loaderOptionsClient)
 				: {
 						details: {
 							capabilities: { interactive: true },
@@ -2106,10 +2107,10 @@ export class Container
 			this.connectionStateHandler.cancelEstablishingConnection(reason);
 		});
 
-		deltaManager.on("disconnect", (reason: IConnectionStateChangeReason) => {
+		deltaManager.on("disconnect", (text, error) => {
 			this.noopHeuristic?.notifyDisconnect();
 			if (!this.closed) {
-				this.connectionStateHandler.receivedDisconnectEvent(reason);
+				this.connectionStateHandler.receivedDisconnectEvent({ text, error });
 			}
 		});
 
@@ -2333,7 +2334,8 @@ export class Container
 	}
 
 	private processRemoteMessage(message: ISequencedDocumentMessage) {
-		if (this.offlineLoadEnabled) {
+		// non-interactive clients will not have any pending state we want to save
+		if (this.offlineLoadEnabled && this.isInteractiveClient) {
 			this.savedOps.push(message);
 		}
 		const local = this.clientId === message.clientId;

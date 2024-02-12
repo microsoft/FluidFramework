@@ -62,7 +62,7 @@ export class DetachedFieldIndex {
 			this.revisionTagCodec,
 			this.options,
 		);
-		populateNestedMap(this.detachedNodeToField, clone.detachedNodeToField);
+		populateNestedMap(this.detachedNodeToField, clone.detachedNodeToField, true);
 		return clone;
 	}
 

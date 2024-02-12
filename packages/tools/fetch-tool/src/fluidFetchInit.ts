@@ -6,7 +6,7 @@
 import { URL } from "url";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
-import { IClientConfig, IOdspAuthRequestInfo } from "@fluidframework/odsp-doclib-utils";
+import { IClientConfig, IOdspAuthRequestInfo } from "@fluidframework/odsp-doclib-utils/internal";
 import * as odsp from "@fluidframework/odsp-driver";
 import {
 	IOdspResolvedUrl,

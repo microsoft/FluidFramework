@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { describeStress } from "@fluid-private/stochastic-test-utils";
 import { CrossFieldManager, NodeChangeset } from "../../../feature-libraries/index.js";
 import {
 	ChangesetLocalId,
@@ -491,15 +492,15 @@ export function testRebaserAxioms() {
 			runSingleEditRebaseAxiomSuite({ content: "A" });
 		});
 
-		describe("Exhaustive", () => {
+		describeStress("Exhaustive", ({ isStress }) => {
 			runExhaustiveComposeRebaseSuite(
 				[{ content: undefined }, { content: "A" }],
 				generateChildStates,
 				{ rebase, rebaseComposed, compose, invert, assertEqual, createEmpty },
 				{
 					numberOfEditsToRebase: 3,
-					numberOfEditsToRebaseOver: 3,
-					numberOfEditsToVerifyAssociativity: 4,
+					numberOfEditsToRebaseOver: isStress ? 5 : 3,
+					numberOfEditsToVerifyAssociativity: isStress ? 6 : 4,
 				},
 			);
 		});

@@ -14,6 +14,11 @@ import { MergeTree } from "../mergeTree";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk";
 import { UnassignedSequenceNumber } from "../constants";
 import { LocalReferenceCollection } from "../localReference";
+import {
+	PartialSequenceLengths,
+	verifyExpectedPartialLengths,
+	verifyPartialLengths,
+} from "../partialLengths";
 import { loadText } from "./text";
 
 export function loadTextFromFile(filename: string, mergeTree: MergeTree, segLimit = 0) {
@@ -266,4 +271,23 @@ export function validateRefCount(collection?: LocalReferenceCollection) {
 
 	// eslint-disable-next-line @typescript-eslint/dot-notation
 	assert.equal(collection["refCount"], expectedLength);
+}
+
+/**
+ * Enable stricter partial length assertions inside tests
+ *
+ * Note that these assertions can be expensive, and so should not be enabled in
+ * production code or tests that run through thousands of ops (e.g. the SharedString
+ * fuzz tests).
+ */
+export function useStrictPartialLengthChecks() {
+	beforeEach(() => {
+		PartialSequenceLengths.options.verifier = verifyPartialLengths;
+		PartialSequenceLengths.options.verifyExpected = verifyExpectedPartialLengths;
+	});
+
+	afterEach(() => {
+		PartialSequenceLengths.options.verifier = undefined;
+		PartialSequenceLengths.options.verifyExpected = undefined;
+	});
 }

@@ -89,6 +89,7 @@ extends:
     tagName: eslint-config-fluid
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
+    testCoverage: ${{ variables.testCoverage }}
     taskBuild: build
     taskBuildDocs: false
     taskLint: false
