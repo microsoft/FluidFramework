@@ -88,6 +88,7 @@
 		"sessionStickinessDurationMs": 3600000,
 		"enableConnectionCountLogging": false,
 		"ignoreEphemeralFlag": true,
+		"enableClientIPLogging": false,
 		"throttling": {
 			"restCallsPerTenant": {
 				"generalRestCall": "disabled",

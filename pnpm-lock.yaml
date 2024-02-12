@@ -3056,7 +3056,6 @@ importers:
       '@fluidframework/build-tools': ^0.29.0
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
-      '@fluidframework/data-object-base': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.5.0
       '@fluidframework/map': workspace:~
       '@fluidframework/merge-tree': workspace:~
@@ -3107,7 +3106,6 @@ importers:
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
       '@fluidframework/core-utils': link:../../../packages/common/core-utils
-      '@fluidframework/data-object-base': link:../../../packages/framework/data-object-base
       '@fluidframework/map': link:../../../packages/dds/map
       '@fluidframework/merge-tree': link:../../../packages/dds/merge-tree
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
@@ -4321,7 +4319,6 @@ importers:
       '@fluidframework/container-runtime-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
-      '@fluidframework/data-object-base': workspace:~
       '@fluidframework/datastore': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-definitions': workspace:~
@@ -4383,7 +4380,6 @@ importers:
       '@fluidframework/container-runtime-definitions': link:../../../../packages/runtime/container-runtime-definitions
       '@fluidframework/core-interfaces': link:../../../../packages/common/core-interfaces
       '@fluidframework/core-utils': link:../../../../packages/common/core-utils
-      '@fluidframework/data-object-base': link:../../../../packages/framework/data-object-base
       '@fluidframework/datastore': link:../../../../packages/runtime/datastore
       '@fluidframework/datastore-definitions': link:../../../../packages/runtime/datastore-definitions
       '@fluidframework/driver-definitions': link:../../../../packages/common/driver-definitions
@@ -4451,7 +4447,6 @@ importers:
       '@fluidframework/container-runtime': workspace:~
       '@fluidframework/container-runtime-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/data-object-base': workspace:~
       '@fluidframework/datastore': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/map': workspace:~
@@ -4516,7 +4511,6 @@ importers:
       '@fluidframework/container-runtime': link:../../../../packages/runtime/container-runtime
       '@fluidframework/container-runtime-definitions': link:../../../../packages/runtime/container-runtime-definitions
       '@fluidframework/core-interfaces': link:../../../../packages/common/core-interfaces
-      '@fluidframework/data-object-base': link:../../../../packages/framework/data-object-base
       '@fluidframework/datastore': link:../../../../packages/runtime/datastore
       '@fluidframework/datastore-definitions': link:../../../../packages/runtime/datastore-definitions
       '@fluidframework/map': link:../../../../packages/dds/map
@@ -8364,7 +8358,6 @@ importers:
       '@fluidframework/container-runtime-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
-      '@fluidframework/data-object-base-previous': npm:@fluidframework/data-object-base@2.0.0-internal.8.0.0
       '@fluidframework/datastore': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.5.0
@@ -8398,7 +8391,6 @@ importers:
       '@fluid-tools/build-cli': 0.29.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.29.0_@types+node@18.19.1
-      '@fluidframework/data-object-base-previous': /@fluidframework/data-object-base/2.0.0-internal.8.0.0
       '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
       '@types/node': 18.19.1
@@ -16514,26 +16506,6 @@ packages:
       '@fluidframework/driver-utils': 2.0.0-internal.8.0.0
       '@fluidframework/protocol-definitions': 3.1.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.8.0.0
-      '@fluidframework/shared-object-base': 2.0.0-internal.8.0.0
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-    dev: true
-
-  /@fluidframework/data-object-base/2.0.0-internal.8.0.0:
-    resolution: {integrity: sha512-DQgqVzd2oYynphDeaFFYBuzBQvPUU2JF+Bddar2hH02aH4XElBUZcOk2Cso1Gs9/+oX+UayQed4LlTX222rxtw==}
-    dependencies:
-      '@fluid-internal/client-utils': 2.0.0-internal.8.0.0
-      '@fluidframework/container-definitions': 2.0.0-internal.8.0.0
-      '@fluidframework/container-runtime': 2.0.0-internal.8.0.0
-      '@fluidframework/container-runtime-definitions': 2.0.0-internal.8.0.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
-      '@fluidframework/datastore': 2.0.0-internal.8.0.0
-      '@fluidframework/datastore-definitions': 2.0.0-internal.8.0.0
-      '@fluidframework/request-handler': 2.0.0-internal.8.0.0
-      '@fluidframework/runtime-definitions': 2.0.0-internal.8.0.0
-      '@fluidframework/runtime-utils': 2.0.0-internal.8.0.0
       '@fluidframework/shared-object-base': 2.0.0-internal.8.0.0
     transitivePeerDependencies:
       - debug
