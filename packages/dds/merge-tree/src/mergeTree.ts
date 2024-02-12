@@ -102,11 +102,11 @@ function markSegmentMoved(seg: ISegment, moveInfo: IMoveInfo): void {
 	seg.wasMovedOnInsert = moveInfo.wasMovedOnInsert;
 }
 
-function isMoved(segment: ISegment): boolean {
+function isMoved(segment: ISegment): segment is ISegment & IMoveInfo {
 	return toMoveInfo(segment) !== undefined;
 }
 
-function isRemoved(segment: ISegment): boolean {
+function isRemoved(segment: ISegment): segment is ISegment & IRemovalInfo {
 	return toRemovalInfo(segment) !== undefined;
 }
 
@@ -115,7 +115,7 @@ function isRemovedAndAcked(segment: ISegment): segment is ISegment & IRemovalInf
 	return removalInfo !== undefined && removalInfo.removedSeq !== UnassignedSequenceNumber;
 }
 
-function isMovedAndAcked(segment: ISegment): boolean {
+function isMovedAndAcked(segment: ISegment): segment is ISegment & IMoveInfo {
 	const moveInfo = toMoveInfo(segment);
 	return moveInfo !== undefined && moveInfo.movedSeq !== UnassignedSequenceNumber;
 }
@@ -1270,7 +1270,12 @@ export class MergeTree {
 
 	// TODO: error checking
 	public getMarkerFromId(id: string): Marker | undefined {
-		return this.idToMarker.get(id);
+		const marker = this.idToMarker.get(id);
+		return marker === undefined ||
+			isRemoved(marker) ||
+			(isMoved(marker) && marker.moveDst === undefined)
+			? undefined
+			: marker;
 	}
 
 	/**

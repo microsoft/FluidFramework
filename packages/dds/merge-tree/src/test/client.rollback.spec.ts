@@ -46,7 +46,7 @@ describe("client.rollback", () => {
 
 		assert.equal(client.getText(), "abc");
 		const marker = client.getMarkerFromId("markerId");
-		assert.notEqual(marker?.removedSeq, undefined);
+		assert.equal(marker, undefined);
 	});
 	it("Should rollback insert and validate the partial lengths", () => {
 		client.insertTextLocal(0, "ghi");
