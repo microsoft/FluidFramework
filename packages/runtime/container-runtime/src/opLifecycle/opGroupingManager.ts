@@ -100,8 +100,8 @@ export class OpGroupingManager {
 		let fakeCsn = 1;
 		if (!isGroupContents(op.contents)) {
 			// Align the worlds of what clientSequenceNumber represents when grouped batching is enabled
+			// If lastSeenSeqNum is a match, we know we already processed this op
 			if (this.config.groupedBatchingEnabled && op.sequenceNumber !== this.lastSeenSeqNum) {
-				// If lastSeenSeqNum is a match, we know we already processed this op
 				this.lastSeenSeqNum = op.sequenceNumber;
 				return [
 					{

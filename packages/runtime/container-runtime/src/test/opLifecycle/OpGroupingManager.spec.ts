@@ -285,6 +285,6 @@ describe("OpGroupingManager", () => {
 				},
 			},
 		];
-		assert.deepStrictEqual(result, expected, "unexpected processing of groupedBatch");
+		assert.deepStrictEqual(result, expected, "ungrouping should work as expected");
 	});
 });
