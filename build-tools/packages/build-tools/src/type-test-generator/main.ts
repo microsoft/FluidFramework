@@ -4,16 +4,17 @@
  */
 
 import { readJsonSync } from "fs-extra";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync, rmSync } from "node:fs";
 import path from "node:path";
 import { typeOnly } from "./compatibility";
 import {
 	ensureDevDependencyExists,
+	getPreviousPackageJsonPath,
 	getTypeRollupPathFromExtractorConfig,
 	getTypeDefinitionFilePath,
 	typeDataFromFile,
 	generateCompatibilityTestCases,
-	prepareAndSkipTestGenerationIfDisabled,
+	prepareFilepathForTests,
 	initializeProjectsAndLoadFiles,
 } from "./typeTestUtils";
 import { PackageJson } from "../common/npmPackage";
@@ -26,7 +27,15 @@ const previousPackageName = `${packageObject.name}-previous`;
 const previousBasePath = path.join("node_modules", previousPackageName);
 
 ensureDevDependencyExists(packageObject, previousPackageName);
+getPreviousPackageJsonPath(previousBasePath);
 
+const filePath = prepareFilepathForTests(packageObject);
+if (packageObject.typeValidation?.disabled) {
+	console.log("skipping type test generation because they are disabled in package.json");
+	// force means to ignore the error if the file does not exist.
+	rmSync(filePath, { force: true });
+	process.exit(0);
+}
 const typeRollupPaths = getTypeRollupPathFromExtractorConfig("alpha", previousBasePath);
 
 let typeDefinitionFilePath: string;
@@ -37,8 +46,6 @@ if (typeRollupPaths) {
 } else {
 	typeDefinitionFilePath = getTypeDefinitionFilePath(previousBasePath);
 }
-
-const filePath = prepareAndSkipTestGenerationIfDisabled(packageObject);
 
 const { currentFile, previousFile } = initializeProjectsAndLoadFiles(
 	typeDefinitionFilePath,

@@ -6,7 +6,7 @@
 import { readJsonSync } from "fs-extra";
 import path from "node:path";
 import { ExtractorConfig } from "@microsoft/api-extractor";
-import { existsSync, rmSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { Project, SourceFile } from "ts-morph";
 import { BrokenCompatTypes } from "../common/fluidRepo";
 import { buildTestCase, TestCaseTypeData } from "../typeValidator/testGeneration";
@@ -28,11 +28,11 @@ export function ensureDevDependencyExists(
 
 /**
  * Fetches the path of the previous package.json or throws an error if not found.
- * @param previousBasePath - A string representing the previous package.json path
+ * @param previousBasePath - A string representing the path to the root of a package
  * @returns
  */
 export function getPreviousPackageJsonPath(previousBasePath: string): string {
-	const previousPackageJsonPath = `${previousBasePath}/package.json`;
+	const previousPackageJsonPath = path.join(previousBasePath, "package.json");
 	if (!existsSync(previousPackageJsonPath)) {
 		throw new Error(`${previousPackageJsonPath} not found.`);
 	}
@@ -54,26 +54,24 @@ export function getTypeRollupPathFromExtractorConfig(
 		const extractorConfigOptions = ExtractorConfig.tryLoadForFolder({
 			startingFolder: previousBasePath,
 		});
-		if (!extractorConfigOptions || !extractorConfigOptions.configObjectFullPath) {
+		if (!extractorConfigOptions || !extractorConfigOptions.configObject) {
 			console.warn(
 				"API Extractor configuration not found. Falling back to default behavior.",
 			);
 			return undefined;
 		}
-		const apiExtractorConfigPath = extractorConfigOptions.configObjectFullPath;
-		const apiExtractorConfig = readJsonSync(extractorConfigOptions.configObjectFullPath);
-		// Resolve the api-extractor-base file path
-		const baseConfigPath = path.resolve(
-			path.dirname(apiExtractorConfigPath),
-			apiExtractorConfig.extends,
-		);
-		const baseConfig = readJsonSync(baseConfigPath);
-		const rollupPath = baseConfig.dtsRollup[`${rollupType}TrimmedFilePath`];
-		if (!rollupPath) {
-			console.warn(`Rollup path for "${rollupType}" not found.`);
+		const apiExtractorConfig = extractorConfigOptions.configObject;
+		if (apiExtractorConfig.dtsRollup) {
+			const rollupPath = apiExtractorConfig.dtsRollup[`${rollupType}TrimmedFilePath`];
+			if (!rollupPath) {
+				console.warn(`Rollup path for "${rollupType}" not found.`);
+				return undefined;
+			}
+			return rollupPath;
+		} else {
+			console.warn(`dtsRollup configuration not found in the API Extractor configuration.`);
 			return undefined;
 		}
-		return rollupPath;
 	} catch (error) {
 		console.error(`Error loading API Extractor configuration: ${error}`);
 		throw error;
@@ -87,10 +85,7 @@ export function getTypeRollupPathFromExtractorConfig(
  * @param previousPackageJson
  * @returns string - A type definition filepath based on the appropriate export.
  */
-export function getTypePathFromExport(
-	previousPackageJson: PackageJson,
-	previousBasePath: string,
-): string {
+function getTypePathFromExport(previousPackageJson: PackageJson, previousBasePath: string): string {
 	if (!previousPackageJson.exports) {
 		throw new Error("The 'exports' field is missing in the package.json.");
 	}
@@ -118,20 +113,18 @@ export function getTypePathFromExport(
  * Checks the package.json's exports entries and types field for a type definition filepath
  * @returns string representing type definition file path
  */
-export function getTypeDefinitionFilePath(previousBasePath: string): string {
-	const previousPackageJson: PackageJson = readJsonSync(
-		getPreviousPackageJsonPath(previousBasePath),
-	);
+export function getTypeDefinitionFilePath(packageBasePath: string): string {
+	const previousPackageJsonPath = getPreviousPackageJsonPath(packageBasePath);
+	const packageJson: PackageJson = readJsonSync(previousPackageJsonPath);
 	// Check the exports entries
-	if (previousPackageJson.exports) {
-		return getTypePathFromExport(previousPackageJson, previousBasePath);
+	if (packageJson.exports) {
+		return getTypePathFromExport(packageJson, packageBasePath);
 		// Check the types field from the previous package.json as a fallback
-	} else if (previousPackageJson.types) {
-		return path.join(previousBasePath, previousPackageJson.types);
+	} else if (packageJson.types) {
+		return path.join(packageBasePath, packageJson.types);
 	} else {
 		throw new Error(
-			`Type definition file path could not be determined from '${getPreviousPackageJsonPath(
-				previousBasePath,
+			`Type definition file path could not be determined from '${previousPackageJsonPath},
 			)}'. No 'exports' nor 'type' fields found.`,
 		);
 	}
@@ -269,7 +262,7 @@ export function generateCompatibilityTestCases(
  * @param packageObject - the package.json object
  * @returns type validation file path
  */
-export function prepareAndSkipTestGenerationIfDisabled(packageObject): string {
+export function prepareFilepathForTests(packageObject): string {
 	const testPath = `./src/test/types`;
 	// remove scope if it exists
 	const unscopedName = path.basename(packageObject.name);
@@ -279,11 +272,5 @@ export function prepareAndSkipTestGenerationIfDisabled(packageObject): string {
 		.map((p) => p[0].toUpperCase() + p.substring(1))
 		.join("");
 	const filePath = `${testPath}/validate${fileBaseName}Previous.generated.ts`;
-	if (packageObject.typeValidation?.disabled) {
-		console.log("skipping type test generation because they are disabled in package.json");
-		// force means to ignore the error if the file does not exist.
-		rmSync(filePath, { force: true });
-		process.exit(0);
-	}
 	return filePath;
 }
