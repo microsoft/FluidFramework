@@ -57,6 +57,7 @@
 {{ $FluidFramework := index $packages "FluidFramework" }}
 {{ $DDSes := index $FluidFramework "DDSes" }}
 {{ $serviceClients := index (index $.Site.Data.packages $selectedApiVersion) "serviceClients" }}
+<p>{{ $serviceClients }}</p>
 {{ $resultArray := slice "fluid-framework" }}
 {{ $activeCategory := "" }}
 {{ $activeSubCategory := "" }}
@@ -393,16 +394,15 @@
             <optgroup label="Service Clients">
                 {{ range $names := $serviceClients }}
                     {{- range (where $packagePages "Params.package" .) -}}
-                        {{if eq $currentApiVersion $selectedApiVersion}}
-                            {{ $targetPage := . }}
-                            {{ $versionData := index $.Site.Data $selectedApiVersion }}
-                            {{ $packageNameToDisplayName := index $versionData "packageNameToDisplayName"}}
-                            {{ $packageKey := index $packageNameToDisplayName $targetPage.Params.package }}
+                        {{ $targetPage := . }}
+                        {{ $versionData := index $.Site.Data $selectedApiVersion }}
+                        {{ $packageNameToDisplayName := index $versionData "packageNameToDisplayName"}}
+                        {{ $packageKey := index $packageNameToDisplayName $targetPage.Params.package }}
 
-                            {{ $apiDetails := index (index $versionData "allAPIs") $packageKey }}
+                        {{ $apiDetails := index (index $versionData "allAPIs") $packageKey }}
 
-                            {{ $isCurrentPage := in (trim $current.RelPermalink " ") (trim $targetPage.RelPermalink " ") }}
-                            <option value="{{ $targetPage.RelPermalink }}" {{ if $isCurrentPage }}selected{{ end }}>&nbsp;&nbsp;&nbsp;&nbsp;{{ (path.Base $targetPage.RelPermalink) | humanize | title }}</option>
+                        {{ $isCurrentPage := in (trim $current.RelPermalink " ") (trim $targetPage.RelPermalink " ") }}
+                        <option value="{{ $targetPage.RelPermalink }}" {{ if $isCurrentPage }}selected{{ end }}>&nbsp;&nbsp;&nbsp;&nbsp;{{ (path.Base $targetPage.RelPermalink) | humanize | title }}</option>
                             {{ range $category := $possibleAPICategories }}
                                 {{ if isset $apiDetails $category }}
                                 {{ $categoryLower := lower $category }}
@@ -414,7 +414,6 @@
                                     {{ $isActiveAPI := in $currentTrimmedLink (trim (print (lower $api) "-" $categoryLower "/") " ") }}
                                     <option value="{{ $apiLink }}" {{ if $isActiveAPI }}selected{{ end }}>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ $api }}</option>
                                 {{ end }}
-                            {{ end }}
                             {{ end }}
                         {{ end }}
                     {{- end }}
