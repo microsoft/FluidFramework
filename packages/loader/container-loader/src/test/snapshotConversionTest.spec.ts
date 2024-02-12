@@ -48,6 +48,11 @@ describe("Dehydrate Container", () => {
 						tree: {},
 						unreferenced: true,
 					},
+					"groupId": {
+						type: SummaryType.Tree,
+						tree: {},
+						groupId: "group",
+					},
 				},
 			},
 		},
@@ -94,6 +99,20 @@ describe("Dehydrate Container", () => {
 			tree.trees.default.trees.unref.unreferenced,
 			true,
 			"The unref sub-tree should be marked as unreferenced",
+		);
+
+		// Validate "groupId" sub-tree.
+		assert.strictEqual(
+			tree.trees.default.trees.groupId.groupId,
+			"group",
+			"The groupId sub-tree should have a groupId",
+		);
+
+		// Validate "groupId" sub-tree.
+		assert.strictEqual(
+			tree.trees.default.trees.groupId.groupId,
+			"group",
+			"The groupId sub-tree should have a groupId",
 		);
 	});
 });

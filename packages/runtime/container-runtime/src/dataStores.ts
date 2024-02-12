@@ -273,7 +273,7 @@ export class DataStores implements IDisposable {
 			runtime: this.runtime,
 			storage: new StorageServiceWithAttachBlobs(this.runtime.storage, flatAttachBlobs),
 			scope: this.runtime.scope,
-			groupId: snapshotTree?.groupId,
+			groupId: attachMessage.snapshot?.groupId,
 			createSummarizerNodeFn: this.getCreateChildSummarizerNodeFn(attachMessage.id, {
 				type: CreateSummarizerNodeSource.FromAttach,
 				sequenceNumber: message.sequenceNumber,

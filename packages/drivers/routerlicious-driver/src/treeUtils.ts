@@ -21,6 +21,7 @@ export interface ISummaryTreeAssemblerProps {
 	 * Indicates that this tree is unreferenced. If this is not present, the tree is considered referenced.
 	 */
 	unreferenced?: true;
+	groupId?: string;
 }
 
 /**
@@ -40,6 +41,7 @@ export class SummaryTreeAssembler {
 			type: SummaryType.Tree,
 			tree: { ...this.summaryTree },
 			unreferenced: this.props?.unreferenced,
+			groupId: this.props?.groupId,
 		};
 	}
 
@@ -95,6 +97,7 @@ export function convertSnapshotAndBlobsToSummaryTree(
 ): ISummaryTree {
 	const assembler = new SummaryTreeAssembler({
 		unreferenced: snapshot.unreferenced,
+		groupId: snapshot.groupId,
 	});
 	for (const [path, id] of Object.entries(snapshot.blobs)) {
 		const blob = blobs.get(id);
