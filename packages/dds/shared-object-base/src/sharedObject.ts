@@ -427,41 +427,40 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	}
 
 	private attachDeltaHandler(services: IChannelServices) {
-		if (this.services !== undefined) {
-			return;
-		}
-		this.services = services;
+		if (this.services === undefined) {
+			this.services = services;
 
-		if (!this._isBoundToContext) {
-			this._isBoundToContext = true;
-			if (this.isAttached()) {
-				// Allows objects to do any custom processing if it is attached.
-				this.didAttach();
+			if (!this._isBoundToContext) {
+				this._isBoundToContext = true;
+				if (this.isAttached()) {
+					// Allows objects to do any custom processing if it is attached.
+					this.didAttach();
+				}
 			}
-		}
 
-		// attachDeltaHandler is only called after services is assigned
-		this.services.deltaConnection.attach({
-			process: (
-				message: ISequencedDocumentMessage,
-				local: boolean,
-				localOpMetadata: unknown,
-			) => {
-				this.process(message, local, localOpMetadata);
-			},
-			setConnectionState: (connected: boolean) => {
-				this.setConnectionState(connected);
-			},
-			reSubmit: (content: any, localOpMetadata: unknown) => {
-				this.reSubmit(content, localOpMetadata);
-			},
-			applyStashedOp: (content: any): unknown => {
-				return this.applyStashedOp(content);
-			},
-			rollback: (content: any, localOpMetadata: unknown) => {
-				this.rollback(content, localOpMetadata);
-			},
-		});
+			// attachDeltaHandler is only called after services is assigned
+			this.services.deltaConnection.attach({
+				process: (
+					message: ISequencedDocumentMessage,
+					local: boolean,
+					localOpMetadata: unknown,
+				) => {
+					this.process(message, local, localOpMetadata);
+				},
+				setConnectionState: (connected: boolean) => {
+					this.setConnectionState(connected);
+				},
+				reSubmit: (content: any, localOpMetadata: unknown) => {
+					this.reSubmit(content, localOpMetadata);
+				},
+				applyStashedOp: (content: any): unknown => {
+					return this.applyStashedOp(content);
+				},
+				rollback: (content: any, localOpMetadata: unknown) => {
+					this.rollback(content, localOpMetadata);
+				},
+			});
+		}
 
 		// Trigger initial state
 		// attachDeltaHandler is only called after services is assigned
@@ -473,7 +472,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 * @param connected - true if connected, false otherwise.
 	 */
 	private setConnectionState(connected: boolean) {
-		if (this._connected === connected) {
+		if (!this.isAttached() || this._connected === connected) {
 			// Not changing state, nothing the same.
 			return;
 		}
