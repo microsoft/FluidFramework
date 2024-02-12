@@ -148,20 +148,6 @@ function readTreeSection(node: NodeCore) {
 					}
 
 					// "name": <node name>
-					// "children": <blob id>
-					// groupId: <group name>
-					if (
-						treeNode.getMaybeString(2) === "children" &&
-						treeNode.getMaybeString(4) === "groupId"
-					) {
-						const result = readTreeSection(treeNode.getNode(3));
-						trees[treeNode.getString(1)] = result.snapshotTree;
-						slowTreeStructureCount += result.slowTreeStructureCount;
-						snapshotTree.groupId = treeNode.getMaybeString(5);
-						continue;
-					}
-
-					// "name": <node name>
 					// "unreferenced": true
 					// "children": <blob id>
 					if (
@@ -176,6 +162,20 @@ function readTreeSection(node: NodeCore) {
 							0x3db /* Unreferenced if present should be true */,
 						);
 						snapshotTree.unreferenced = true;
+						continue;
+					}
+
+					// "name": <node name>
+					// "children": <blob id>
+					// groupId: <group name>
+					if (
+						treeNode.getMaybeString(2) === "children" &&
+						treeNode.getMaybeString(4) === "groupId"
+					) {
+						const result = readTreeSection(treeNode.getNode(3));
+						trees[treeNode.getString(1)] = result.snapshotTree;
+						slowTreeStructureCount += result.slowTreeStructureCount;
+						snapshotTree.groupId = treeNode.getMaybeString(5);
 						continue;
 					}
 					break;
