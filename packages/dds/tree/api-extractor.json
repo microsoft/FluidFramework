@@ -3,11 +3,11 @@
 	"extends": "../../../common/build/build-common/api-extractor-base.json",
 	"mainEntryPointFilePath": "./lib/index.d.ts",
 	"compiler": {
+		// api-extractor has trouble with Node16 moduleResolution, but Bundler looks okay
 		"overrideTsconfig": {
 			"$schema": "http://json.schemastore.org/tsconfig",
-			"extends": "./tsconfig.esnext.json",
+			"extends": "./tsconfig.json",
 			"compilerOptions": {
-				"module": "esnext",
 				"moduleResolution": "Bundler"
 			}
 		}

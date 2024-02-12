@@ -7267,6 +7267,7 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       ts2esm: ^1.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -7324,6 +7325,7 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       ts2esm: 1.4.0
+      tsc-multi: 1.1.0_q5ibvj6eidy7fm7vxuvdusmy5i_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/debugger:
