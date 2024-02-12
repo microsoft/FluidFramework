@@ -153,8 +153,8 @@ type ICellInfo =
 
 const ChannelInfoCreatedDetachedSeq = -2;
 const ChannelInfoCreatedAttachedSeq = -1;
-const valueCreatedDetachedSeq = -1;
-const valueCreatedAttachedSeq = -2;
+const valueCreatedDetachedSeq = -2;
+const valueCreatedAttachedSeq = -1;
 
 interface IChannelTrackingInfo {
 	// Sequence number of the last message for this channel.
@@ -353,6 +353,30 @@ export class CollabSpacesRuntime
 	}
 
 	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
+		/*
+		TBD(Pri2): This is not required, but ideal to implement - collapse all channels
+		It's not required, as saveOrDestroyChannel() coveres properly the case if channels are not
+		collabpsed
+		Two problems with implementing this flow here:
+		1. channel.getChannel() is async, while this function is synchronous.
+		2. We should destroy channels in terms of them appearing in summary, but users
+		   might hold to runtime objects and keep using them - need to make sure it works correctly.
+
+		// This is important, as we want the following flow not to generate ops!
+		assert(this.isAttached, "not attached yet");
+
+		for (const [channelId, channel] of this.contexts) {
+			if (this.isCollabChannel(channelId)) {
+				const info = this.saveOrDestroyChannel(
+					(await channel.getChannel()) as ICollabChannel,
+					true, // allowSave
+					true, // allowDestroy
+				);
+				assert(!info.destroyed, "channel should be destroyed");
+			}
+		}
+		*/
+
 		const summary = super.getAttachSummary(telemetryContext);
 		addBlobToSummary(summary, channelSummaryBlobName, JSON.stringify(this.channelInfo));
 		return summary;
@@ -375,7 +399,7 @@ export class CollabSpacesRuntime
 				);
 				assert(
 					!info.destroyed || !this.deferredChannels.has(channelId),
-					"Deferred channels could not be destroyed - this cases daa loss!",
+					"Deferred channels could not be destroyed - this cases data loss!",
 				);
 			}
 		}
@@ -409,7 +433,7 @@ export class CollabSpacesRuntime
 	 */
 
 	public sendSomeDebugOp() {
-		// TBD(Pri0): remove case by refactoring
+		// TBD(Pri0): remove cast by refactoring
 		(this.debugChannel as any).submitLocalMessage("foo");
 	}
 
@@ -678,7 +702,7 @@ export class CollabSpacesRuntime
 		// represents same data, but need to double check that it's actually correct and tests
 		// have proper coverage.
 
-		// TBD(Pri0): remove case introducing proper API / workflow
+		// TBD(Pri0): remove cast by introducing proper API / workflow
 		(this.dataStoreContext as any).summarizerNode.deleteChild(channelId);
 	}
 
@@ -695,6 +719,7 @@ export class CollabSpacesRuntime
 
 		// Can't do anything if there are any local changes.
 		if (channelnfo.pendingChangeCount > 0) {
+			assert(this.isAttached, "not dirty in detached state");
 			return { saveResult: SaveResult.Dirty, destroyed: false };
 		}
 
@@ -721,19 +746,32 @@ export class CollabSpacesRuntime
 
 		// Are ops flying? If not, we have no clue if channel was saved or not.
 		if (!this.isAttached) {
+			assert(this.matrixPendingChangeCount === 0, "no pending changes in detached state");
 			refSeq = valueCreatedDetachedSeq;
-			assert(value.seq === valueCreatedDetachedSeq, "starting seq in detached state");
+			assert(value.seq === refSeq, "starting seq in detached state");
 			saved = allowSave;
-			destroyed = allowDestroy && saved;
-		} else {
-			// TBD(Pri0): Need to figure out how to handle detached -> attaching transitions properly!!!
-			assert(channelnfo.seq !== ChannelInfoCreatedDetachedSeq, "");
-
-			if (channelnfo.seq === ChannelInfoCreatedAttachedSeq) {
-				// channel was created in attached stated and there were no changes sinse then - nothing to do!
-				return { saveResult: SaveResult.NoNeedToSave, destroyed: false };
+			destroyed = saved;
+		} else if (channelnfo.seq === ChannelInfoCreatedAttachedSeq) {
+			// channel was created in attached stated and there were no changes sinse then - nothing to do!
+			saved = false;
+			destroyed = true;
+			refSeq = valueCreatedAttachedSeq;
+		} else if (channelnfo.seq === ChannelInfoCreatedDetachedSeq) {
+			refSeq = valueCreatedAttachedSeq;
+			if (value.seq !== refSeq) {
+				// Never saved - attempt to save
+				assert(
+					value.seq === valueCreatedDetachedSeq,
+					"Value should also be created detached",
+				);
+				saved = allowSave;
+				destroyed = false;
+			} else {
+				// already was saved - nothing to do.
+				saved = false;
+				destroyed = true;
 			}
-
+		} else {
 			const currSeq = this.deltaManager.lastSequenceNumber;
 			assert(channelnfo.seq <= currSeq, "invalid seq number");
 			assert(value.seq <= channelnfo.seq, "invalid seq number");
@@ -766,20 +804,23 @@ export class CollabSpacesRuntime
 			// See note above on op grouping and sequence numbers. Need to ensure that
 			saved = allowSave && value.seq < channelnfo.seq;
 			destroyed =
-				allowDestroy &&
 				// 1. We have more recent data saved.
 				channelnfo.seq <= value.seq &&
 				// 2. There is no need for a channel to preserve extra historic state to be able apply future ops that
 				//    might have reference sequence number in the past (in between MSN and current sequence number)
-				channelnfo.seq <= this.deltaManager.minimumSequenceNumber &&
-				// 3. Previous saves acked or were rejected (hit "conflict"), i.e. we do not rely on a local lie that
-				//    had no chance to resolve yet.
-				//    TBD(Pri1): Can we make it more efficient, by not blocking channel deletion on unrelated changes?
-				//    This would require tracking each individual cell save.
-				this.matrixPendingChangeCount === 0;
-
-			assert(!(saved && destroyed), "can save and destroy in one go");
+				channelnfo.seq <= this.deltaManager.minimumSequenceNumber;
 		}
+
+		assert(
+			!this.isAttached || !(saved && destroyed),
+			"can't save and destroy in one go (unless detached)",
+		);
+
+		// Need to ensure that previous saves were acked or were rejected (hit "conflict"),
+		// i.e. we do not rely on a local lie that had no chance to resolve yet.
+		// TBD(Pri1): Can we make it more efficient, by not blocking channel deletion on unrelated changes?
+		// This would require tracking each individual cell save.
+		destroyed = destroyed && allowDestroy && this.matrixPendingChangeCount === 0;
 
 		let savedValue = value;
 		if (saved) {
@@ -944,7 +985,9 @@ export class CollabSpacesRuntime
 	private uuid(): uuidType {
 		const compressor = this.dataStoreContext.idCompressor;
 		if (compressor !== undefined) {
-			return compressor.generateCompressedId();
+			const id = compressor.generateCompressedId();
+			// TBD(Pri2): Need to replace negative test with proper function exposed by compressor
+			return id < 0 ? compressor.decompress(id) : id;
 		}
 		return uuid();
 	}
