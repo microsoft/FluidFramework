@@ -229,8 +229,10 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 * @param services - Services used by the shared object
 	 */
 	public async load(services: IChannelServices): Promise<void> {
+		this.services = services;
+		this._isBoundToContext = true;
 		await this.loadCore(services.objectStorage);
-		this.attachDeltaHandler(services);
+		this.attachDeltaHandler();
 	}
 
 	/**
@@ -264,7 +266,8 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).connect}
 	 */
 	public connect(services: IChannelServices) {
-		this.attachDeltaHandler(services);
+		this.services ??= services;
+		this.attachDeltaHandler();
 	}
 
 	/**
@@ -428,33 +431,30 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 		});
 	}
 
-	private attachDeltaHandler(services: IChannelServices) {
-		if (this.services === undefined) {
-			this.services = services;
-
-			// attachDeltaHandler is only called after services is assigned
-			this.services.deltaConnection.attach({
-				process: (
-					message: ISequencedDocumentMessage,
-					local: boolean,
-					localOpMetadata: unknown,
-				) => {
-					this.process(message, local, localOpMetadata);
-				},
-				setConnectionState: (connected: boolean) => {
-					this.setConnectionState(connected);
-				},
-				reSubmit: (content: any, localOpMetadata: unknown) => {
-					this.reSubmit(content, localOpMetadata);
-				},
-				applyStashedOp: (content: any): unknown => {
-					return this.applyStashedOp(content);
-				},
-				rollback: (content: any, localOpMetadata: unknown) => {
-					this.rollback(content, localOpMetadata);
-				},
-			});
-		}
+	private attachDeltaHandler() {
+		assert(this.services !== undefined, "asdsad");
+		// attachDeltaHandler is only called after services is assigned
+		this.services.deltaConnection.attach({
+			process: (
+				message: ISequencedDocumentMessage,
+				local: boolean,
+				localOpMetadata: unknown,
+			) => {
+				this.process(message, local, localOpMetadata);
+			},
+			setConnectionState: (connected: boolean) => {
+				this.setConnectionState(connected);
+			},
+			reSubmit: (content: any, localOpMetadata: unknown) => {
+				this.reSubmit(content, localOpMetadata);
+			},
+			applyStashedOp: (content: any): unknown => {
+				return this.applyStashedOp(content);
+			},
+			rollback: (content: any, localOpMetadata: unknown) => {
+				this.rollback(content, localOpMetadata);
+			},
+		});
 
 		// this function is only called from load, and connect
 		// which means it is only called on a pre-existing shared object.

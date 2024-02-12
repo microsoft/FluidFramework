@@ -198,10 +198,16 @@ describe("SharedObject attaching binding and connecting", () => {
 				assert.strictEqual(loaded, true, "loaded");
 				assert.strictEqual(attachCalled, true, "attachCalled");
 
-				const isDetached = attachState === AttachState.Detached;
-
-				assert.strictEqual(sharedObject.isAttached(), !isDetached, "isAttached");
-				assert.strictEqual(sharedObject.connected, connected && !isDetached, "connected");
+				assert.strictEqual(
+					sharedObject.isAttached(),
+					attachState !== AttachState.Detached,
+					"isAttached",
+				);
+				assert.strictEqual(
+					sharedObject.connected,
+					connected && sharedObject.isAttached(),
+					"connected",
+				);
 			}),
 		);
 
@@ -336,6 +342,11 @@ describe("SharedObject attaching binding and connecting", () => {
 						connected,
 					},
 					loadCore: async () => {
+						assert.strictEqual(
+							sharedObject.isAttached(),
+							attachState !== AttachState.Detached,
+							"loadCore isAttached",
+						);
 						loaded = true;
 					},
 				});
@@ -361,10 +372,16 @@ describe("SharedObject attaching binding and connecting", () => {
 				assert.strictEqual(loaded, true, "loaded");
 				assert.strictEqual(attachCalled, true, "attachCalled");
 
-				const isDetached = attachState === AttachState.Detached;
-
-				assert.strictEqual(sharedObject.isAttached(), !isDetached, "isAttached");
-				assert.strictEqual(sharedObject.connected, connected && !isDetached, "connected");
+				assert.strictEqual(
+					sharedObject.isAttached(),
+					attachState !== AttachState.Detached,
+					"isAttached",
+				);
+				assert.strictEqual(
+					sharedObject.connected,
+					connected && sharedObject.isAttached(),
+					"connected",
+				);
 			}),
 		);
 	});
