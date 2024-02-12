@@ -65,10 +65,6 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 		const mainObject = (await container.getEntryPoint()) as TestDataObject;
 		const containerRuntime = mainObject.containerRuntime;
 
-		containerRuntime.on("op", (op) => {
-			console.log(op);
-		});
-
 		const dataStore = await containerRuntime.createDataStore(testDataObjectType, groupId);
 		const dataStore2 = await containerRuntime.createDataStore(testDataObjectType, groupId);
 		const dataObject = (await dataStore.entryPoint.get()) as TestDataObject;
