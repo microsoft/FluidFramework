@@ -44,3 +44,8 @@ When doing development on the Devtools browser extension, usage telemetry can be
 6. After using the extension, go to the Office Fluid Test database in Kusto and query the `office_fluid_devtools_generic` table.
 
 You should now see the Devtools usage telemetry events appear!
+
+## Publishing
+
+Note: The browser extensions may only be published by Microsoft employees.
+For details on the steps required, see [here](https://eng.ms/docs/experiences-devices/opg/office-shared/fluid-framework/fluid-framework-internal/fluid-framework/docs/infrastructure/devtools/publishing-the-browser-extension) (Microsoft only).
