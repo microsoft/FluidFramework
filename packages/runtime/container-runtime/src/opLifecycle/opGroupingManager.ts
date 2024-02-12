@@ -95,11 +95,14 @@ export class OpGroupingManager {
 		return groupedBatch;
 	}
 
+	private lastSeenSeqNum = -1;
 	public ungroupOp(op: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
 		let fakeCsn = 1;
 		if (!isGroupContents(op.contents)) {
 			// Align the worlds of what clientSequenceNumber represents when grouped batching is enabled
-			if (this.config.groupedBatchingEnabled) {
+			if (this.config.groupedBatchingEnabled && op.sequenceNumber !== this.lastSeenSeqNum) {
+				// If lastSeenSeqNum is a match, we know we already processed this op
+				this.lastSeenSeqNum = op.sequenceNumber;
 				return [
 					{
 						...op,
