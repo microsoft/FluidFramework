@@ -20,7 +20,7 @@ import {
 // This is the same approach used in sequenceChangeRebaser.spec.ts, but it requires casting in this file
 // since OptionalChangeset is not generic over the child changeset type.
 // Search this file for "as any" and "as NodeChangeset"
-import { TestChange } from "../../testChange.js";
+import { TestChange, isEmpty } from "../../testChange.js";
 import {
 	deepFreeze,
 	defaultRevInfosFromChanges,
@@ -145,9 +145,7 @@ function rebase(
 
 	const metadata =
 		metadataArg ??
-		rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([base, makeAnonChange(change)]), [
-			base.revision,
-		]);
+		rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([base]), [base.revision]);
 	const moveEffects = failCrossFieldManager;
 	const idAllocator = idAllocatorFromMaxId(getMaxId(change, base.change));
 	return optionalChangeRebaser.rebase(
@@ -208,6 +206,16 @@ function compose(
 		moveEffects,
 		metadata ?? defaultRevisionMetadataFromChanges(changes),
 	);
+}
+
+// This is only valid for optional changesets for childchanges of type TestChange
+function isChangeEmpty(change: OptionalChangeset): boolean {
+	for (const childChange of change.childChanges) {
+		if (!isEmpty(childChange[1] as TestChange)) {
+			return false;
+		}
+	}
+	return change.moves.length === 0;
 }
 
 type OptionalFieldTestState = FieldStateTree<string | undefined, OptionalChangeset>;
@@ -467,7 +475,7 @@ export function testRebaserAxioms() {
 			runExhaustiveComposeRebaseSuite(
 				[{ content: undefined }, { content: "A" }],
 				generateChildStates,
-				{ rebase, rebaseComposed, compose, invert, assertEqual },
+				{ rebase, rebaseComposed, compose, invert, assertEqual, isChangeEmpty },
 				{
 					numberOfEditsToRebase: 3,
 					numberOfEditsToRebaseOver: 3,

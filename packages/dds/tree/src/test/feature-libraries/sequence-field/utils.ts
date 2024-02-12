@@ -227,10 +227,9 @@ export function rebase(
 
 	const metadata =
 		revisionMetadata ??
-		rebaseRevisionMetadataFromInfo(
-			defaultRevInfosFromChanges([cleanBase, makeAnonChange(cleanChange)]),
-			[cleanBase.revision],
-		);
+		rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([cleanBase]), [
+			cleanBase.revision,
+		]);
 
 	const moveEffects = SF.newCrossFieldTable();
 	const idAllocator = idAllocatorFromMaxId(getMaxId(cleanChange, cleanBase.change));

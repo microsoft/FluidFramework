@@ -665,6 +665,22 @@ const fieldRebaser: BoundFieldChangeRebaser<TestChangeset> = {
 
 		return assertChangesetsEqual(withoutLineage(pruned1), withoutLineage(pruned2));
 	},
+	isChangeEmpty: (change: TestChangeset): boolean => {
+		return withoutTombstones(prune(change)).length === 0;
+	},
+	compareWithoutTombstones: (change1, change2) => {
+		if (change1 === undefined && change2 === undefined) {
+			return true;
+		}
+
+		if (change1 === undefined || change2 === undefined) {
+			return false;
+		}
+
+		const pruned1 = prune(change1);
+		const pruned2 = prune(change2);
+		return assertChangesetsEqual(withoutTombstones(pruned1), withoutTombstones(pruned2));
+	},
 };
 
 export function testStateBasedRebaserAxioms() {

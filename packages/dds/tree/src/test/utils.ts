@@ -970,16 +970,15 @@ export function defaultRevInfosFromChanges(
 	const revisions = new Set<RevisionTag>();
 	const rolledBackRevisions: RevisionTag[] = [];
 	for (const change of changes) {
-		if (change.revision !== undefined) {
-			revInfos.push({
-				revision: change.revision,
-				rollbackOf: change.rollbackOf,
-			});
+		assert(change.revision !== undefined);
+		revInfos.push({
+			revision: change.revision,
+			rollbackOf: change.rollbackOf,
+		});
 
-			revisions.add(change.revision);
-			if (change.rollbackOf !== undefined) {
-				rolledBackRevisions.push(change.rollbackOf);
-			}
+		revisions.add(change.revision);
+		if (change.rollbackOf !== undefined) {
+			rolledBackRevisions.push(change.rollbackOf);
 		}
 	}
 
