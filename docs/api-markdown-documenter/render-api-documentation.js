@@ -9,6 +9,7 @@ const {
 	getApiItemTransformationConfigurationWithDefaults,
 	loadModel,
 	MarkdownRenderer,
+	ReleaseTag,
 	transformApiModel,
 } = require("@fluid-tools/api-markdown-documenter");
 const { PackageName } = require("@rushstack/node-core-library");
@@ -89,8 +90,7 @@ async function renderApiDocumentation(inputDir, outputDir, uriRootDir, apiVersio
 		},
 		frontMatter: (apiItem) =>
 			createHugoFrontMatter(apiItem, config, customRenderers, apiVersionNum),
-		// TODO: enable the following once we have finished gettings the repo's release tags sorted out for 2.0.
-		// minimumReleaseLevel: ReleaseTag.Beta, // Don't include `@alpha` or `@internal` items in docs published to the public website.
+		minimumReleaseLevel: ReleaseTag.Beta, // Don't include `@alpha` or `@internal` items in docs published to the public website.
 	});
 
 	logProgress("Generating API documentation...");
