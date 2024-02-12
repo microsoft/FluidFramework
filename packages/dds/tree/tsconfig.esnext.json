@@ -1,7 +1,10 @@
 {
-	"extends": "./tsconfig.json",
+	"extends": "./tsconfig.base.json",
 	"compilerOptions": {
 		"outDir": "./lib",
-		"module": "esnext",
+		// Node16 and ESNext is effectively the same for transpile so long as package.json has
+		// "type": "module", which is required to activate full ESM Mode within tsc.
+		"module": "Node16",
+		"moduleResolution": "Node16",
 	},
 }

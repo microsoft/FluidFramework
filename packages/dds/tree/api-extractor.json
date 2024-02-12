@@ -1,4 +1,15 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-	"extends": "../../../common/build/build-common/api-extractor-base.json"
+	"extends": "../../../common/build/build-common/api-extractor-base.json",
+	"mainEntryPointFilePath": "./lib/index.d.ts",
+	"compiler": {
+		"overrideTsconfig": {
+			"$schema": "http://json.schemastore.org/tsconfig",
+			"extends": "./tsconfig.esnext.json",
+			"compilerOptions": {
+				"module": "esnext",
+				"moduleResolution": "Bundler"
+			}
+		}
+	}
 }

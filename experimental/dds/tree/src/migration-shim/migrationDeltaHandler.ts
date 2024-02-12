@@ -119,16 +119,18 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 		return this.treeDeltaHandler.reSubmit(contents, localOpMetadata);
 	}
 
-	public applyStashedOp(contents: unknown): unknown {
+	public applyStashedOp(contents: unknown): void {
 		const opContents = contents as IOpContents;
 		if (this.isInV1StateAndIsBarrierOp(opContents)) {
-			return undefined;
+			this.submitLocalMessage(opContents);
+			return;
 		}
 
 		if (this.shouldDropOp(opContents)) {
-			return undefined;
+			this.submitLocalMessage(opContents);
+			return;
 		}
-		return this.treeDeltaHandler.applyStashedOp(contents);
+		this.treeDeltaHandler.applyStashedOp(contents);
 	}
 
 	public rollback?(contents: unknown, localOpMetadata: unknown): void {

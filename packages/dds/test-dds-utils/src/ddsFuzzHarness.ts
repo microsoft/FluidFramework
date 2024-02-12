@@ -339,10 +339,12 @@ export interface DDSFuzzSuiteOptions {
 	 *
 	 * This setup simulates application code initializing state in a data store before attaching it, e.g. running code to edit a DDS from
 	 * `DataObject.initializingFirstTime`.
-	 * Default: tests are run with this setting enabled, with 5 ops being generated before an attach op.
+	 * Default: tests are run with this setting enabled, with 5 ops being generated before an attach op. A new client is also rehydrated from
+	 * summary. To disable the generation of rehydrate ops, set `rehydrateDisabled` to `true`.
 	 */
 	detachedStartOptions: {
 		numOpsBeforeAttach: number;
+		rehydrateDisabled?: true;
 	};
 
 	/**
@@ -632,7 +634,7 @@ export function mixinAttach<
 	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
 	options: DDSFuzzSuiteOptions,
 ): DDSFuzzModel<TChannelFactory, TOperation | Attach | Rehydrate, TState> {
-	const { numOpsBeforeAttach } = options.detachedStartOptions;
+	const { numOpsBeforeAttach, rehydrateDisabled } = options.detachedStartOptions;
 	if (numOpsBeforeAttach === 0) {
 		// not wrapping the reducer/generator in this case makes stepping through the harness slightly less painful.
 		return model as DDSFuzzModel<TChannelFactory, TOperation | Attach | Rehydrate, TState>;
@@ -645,9 +647,11 @@ export function mixinAttach<
 	};
 	const generatorFactory: () => AsyncGenerator<TOperation | Attach | Rehydrate, TState> = () => {
 		const baseGenerator = model.generatorFactory();
+		const rehydrates = rehydrateDisabled
+			? []
+			: [takeAsync(numOpsBeforeAttach, baseGenerator), takeAsync(1, rehydrateOp)];
 		return chainAsync(
-			takeAsync(numOpsBeforeAttach, baseGenerator),
-			takeAsync(1, rehydrateOp),
+			...rehydrates,
 			takeAsync(numOpsBeforeAttach, baseGenerator),
 			takeAsync(1, attachOp),
 			baseGenerator,
