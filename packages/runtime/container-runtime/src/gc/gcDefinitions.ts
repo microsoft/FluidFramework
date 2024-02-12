@@ -41,6 +41,12 @@ export const nextGCVersion: GCVersion = 4;
 export const gcDisableThrowOnTombstoneLoadOptionName = "gcDisableThrowOnTombstoneLoad";
 
 /**
+ * This undocumented GC Option (on ContainerRuntime Options) allows an app to enable Sweep for blobs only.
+ * Only applies if enableGCSweep option is set to true.
+ */
+export const gcDisableDataStoreSweepOptionName = "disableDataStoreSweep";
+
+/**
  * This undocumented GC Option (on ContainerRuntime Options) allows configuring which documents can have Sweep enabled.
  * This provides a way to disable both Tombstone Enforcement and Sweep.
  *
@@ -70,10 +76,8 @@ export const throwOnTombstoneLoadOverrideKey =
 export const throwOnTombstoneUsageKey = "Fluid.GarbageCollection.ThrowOnTombstoneUsage";
 /** Config key to enable GC version upgrade. */
 export const gcVersionUpgradeToV4Key = "Fluid.GarbageCollection.GCVersionUpgradeToV4";
-/** Config key to disable GC sweep for datastores. */
+/** Config key to disable GC sweep for datastores. They'll merely be Tombstoned. */
 export const disableDatastoreSweepKey = "Fluid.GarbageCollection.DisableDataStoreSweep";
-/** Config key to disable GC sweep for attachment blobs. */
-export const disableAttachmentBlobSweepKey = "Fluid.GarbageCollection.DisableAttachmentBlobSweep";
 /** Config key to revert new paradigm of detecting outbound routes in ContainerRuntime layer (use true) */
 export const detectOutboundRoutesViaDDSKey = "Fluid.GarbageCollection.DetectOutboundRoutesViaDDS";
 
@@ -449,7 +453,7 @@ export interface IGarbageCollectorConfigs {
 	 */
 	readonly gcEnabled: boolean;
 	/**
-	 * Tracks if sweep phase is enabled for this document. This is specified during document creation and doesn't change
+	 * Tracks if sweep phase is allowed for this document. This is specified during document creation and doesn't change
 	 * throughout its lifetime.
 	 */
 	readonly sweepEnabled: boolean;
@@ -459,10 +463,11 @@ export interface IGarbageCollectorConfigs {
 	 */
 	readonly shouldRunGC: boolean;
 	/**
-	 * Tracks if sweep phase should run or not. Even if the sweep phase is enabled for a document (see sweepEnabled), it
-	 * can be explicitly disabled via feature flags. It also won't run if session expiry is not enabled.
+	 * Tracks if sweep phase should run or not, or if it should run only for attachment blobs.
+	 * Even if the sweep phase is allowed for a document (see sweepEnabled), it may be disabled or partially enabled
+	 * for the session, depending on a variety of other configurations present.
 	 */
-	readonly shouldRunSweep: boolean;
+	readonly shouldRunSweep: "YES" | "ONLY_BLOBS" | "NO";
 	/**
 	 * If true, bypass optimizations and generate GC data for all nodes irrespective of whether a node changed or not.
 	 */
