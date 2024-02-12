@@ -154,7 +154,7 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 			return;
 		}
 
-		if ((!this.sessionID || this.continuityID) && optIn) {
+		if ((this.sessionID === undefined || this.continuityID === undefined) && optIn) {
 			this.generateIdentifiers();
 		}
 
