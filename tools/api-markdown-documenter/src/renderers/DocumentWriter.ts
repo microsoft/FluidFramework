@@ -102,9 +102,9 @@ export interface DocumentWriter {
 export namespace DocumentWriter {
 	/**
 	 * The text characters used to create one level of indentation.
-	 * Default: a single tab character.
+	 * Default: 2 spaces.
 	 */
-	export const defaultIndentPrefix: string = "  "; // TODO: tab
+	const defaultIndentPrefix: string = "  "; // TODO: consider using a tab instead.
 
 	/**
 	 * Creates a new {@link (DocumentWriter:interface)} instance.
