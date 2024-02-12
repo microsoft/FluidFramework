@@ -252,7 +252,7 @@ export class SharedCell<T = any>
 	private applyInnerOp(content: ICellOperation): Serializable<T> | undefined {
 		switch (content.type) {
 			case "setCell": {
-				return this.setCore(this.decode(content.value));
+				return this.setCore(content.value.value as Serializable<T>);
 			}
 
 			case "deleteCell": {
@@ -324,10 +324,6 @@ export class SharedCell<T = any>
 		return previousLocalValue;
 	}
 
-	private decode(cellValue: ICellValue): Serializable<T> {
-		return cellValue.value as Serializable<T>;
-	}
-
 	private createLocalOpMetadata(
 		op: ICellOperation,
 		previousValue?: Serializable<T>,
@@ -352,7 +348,7 @@ export class SharedCell<T = any>
 				break;
 			}
 			case "setCell": {
-				this.set(this.decode(cellContent.value));
+				this.set(cellContent.value.value as Serializable<T>);
 				break;
 			}
 			default: {
