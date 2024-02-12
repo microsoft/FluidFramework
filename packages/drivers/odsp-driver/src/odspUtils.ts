@@ -122,7 +122,6 @@ export async function fetchHelper(
 					{ driverVersion },
 				);
 			}
-
 			if (!response.ok || response.status < 200 || response.status >= 300) {
 				throwOdspNetworkError(
 					// pre-0.58 error message prefix: odspFetchError
