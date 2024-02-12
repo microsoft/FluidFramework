@@ -20,6 +20,8 @@ import { delay } from "@fluidframework/core-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 // eslint-disable-next-line import/no-internal-modules
 import { blobsTreeName } from "@fluidframework/container-runtime/dist/summary/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { disableDatastoreSweepKey } from "@fluidframework/container-runtime/dist/gc/index.js";
 import {
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
@@ -57,8 +59,11 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 
 	let provider: ITestObjectProvider;
 
-	async function loadContainer(summaryVersion: string) {
-		return provider.loadTestContainer(testContainerConfig, {
+	async function loadContainer(
+		summaryVersion: string,
+		config: ITestContainerConfig = testContainerConfig,
+	) {
+		return provider.loadTestContainer(config, {
 			[LoaderHeader.version]: summaryVersion,
 		});
 	}
@@ -1051,39 +1056,44 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 			}
 		});
 
-		it("updates deleted blob state in the summary", async () => {
-			const { dataStore: mainDataStore, summarizer } = await createDataStoreAndSummarizer();
+		[true, undefined].forEach((disableDatastoreSweep) =>
+			it(`updates deleted blob state in the summary [disableDatastoreSweep=${disableDatastoreSweep}]`, async () => {
+				settings[disableDatastoreSweepKey] = disableDatastoreSweep;
 
-			// Upload an attachment blob.
-			const blob1Contents = "Blob contents 1";
-			const blob1Handle = await mainDataStore._runtime.uploadBlob(
-				stringToBuffer(blob1Contents, "utf-8"),
-			);
-			const blob1NodePath = blob1Handle.absolutePath;
+				const { dataStore: mainDataStore, summarizer } =
+					await createDataStoreAndSummarizer();
 
-			// Reference and then unreference the blob so that it's unreferenced in the next summary.
-			mainDataStore._root.set("blob1", blob1Handle);
-			mainDataStore._root.delete("blob1");
+				// Upload an attachment blob.
+				const blob1Contents = "Blob contents 1";
+				const blob1Handle = await mainDataStore._runtime.uploadBlob(
+					stringToBuffer(blob1Contents, "utf-8"),
+				);
+				const blob1NodePath = blob1Handle.absolutePath;
 
-			// Summarize so that blob is marked unreferenced.
-			await provider.ensureSynchronized();
-			await summarizeNow(summarizer);
+				// Reference and then unreference the blob so that it's unreferenced in the next summary.
+				mainDataStore._root.set("blob1", blob1Handle);
+				mainDataStore._root.delete("blob1");
 
-			// Wait for sweep timeout so that blob is ready to be deleted.
-			await delay(sweepTimeoutMs + 10);
+				// Summarize so that blob is marked unreferenced.
+				await provider.ensureSynchronized();
+				await summarizeNow(summarizer);
 
-			// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
-			mainDataStore._root.set("key", "value");
-			await provider.ensureSynchronized();
+				// Wait for sweep full timeout so that blob is ready to be deleted.
+				await delay(sweepTimeoutMs + 10);
 
-			// Summarize. In this summary, the gc op will be sent with the deleted blob ids. The blobs will be
-			// removed in the subsequent summary.
-			await summarizeNow(summarizer);
+				// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
+				mainDataStore._root.set("key", "value");
+				await provider.ensureSynchronized();
 
-			// Summarize again so that the sweep ready blobs are now deleted from the GC data.
-			const summary3 = await summarizeNow(summarizer);
-			// Validate that the deleted blob's state is correct in the summary.
-			validateBlobStateInSummary(summary3.summaryTree, blob1NodePath);
-		});
+				// Summarize. In this summary, the gc op will be sent with the deleted blob ids. The blobs will be
+				// removed in the subsequent summary.
+				await summarizeNow(summarizer);
+
+				// Summarize again so that the sweep ready blobs are now deleted from the GC data.
+				const summary3 = await summarizeNow(summarizer);
+				// Validate that the deleted blob's state is correct in the summary.
+				validateBlobStateInSummary(summary3.summaryTree, blob1NodePath);
+			}),
+		);
 	});
 });
