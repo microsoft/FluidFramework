@@ -356,7 +356,8 @@ export interface ISignalMessageBase {
 	referenceSequenceNumber?: number;
 
 	/**
-	 * When specified, the signal is being targeted to the recieving client.
+	 * Client ID of the singular client the signal is being (or has been) sent to.
+	 * May only be specified when IConnect.supportedFeatures['submit_signals_v2'] is true, will throw otherwise.
 	 */
 	targetClientId?: string;
 }
