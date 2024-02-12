@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	type IChannelAttributes,
@@ -344,10 +344,21 @@ export class SharedCell<T = any>
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 */
-	protected applyStashedOp(content: unknown): unknown {
+	protected applyStashedOp(content: unknown): void {
 		const cellContent = content as ICellOperation;
-		const previousValue = this.applyInnerOp(cellContent);
-		return this.createLocalOpMetadata(cellContent, previousValue);
+		switch (cellContent.type) {
+			case "deleteCell": {
+				this.delete();
+				break;
+			}
+			case "setCell": {
+				this.set(this.decode(cellContent.value));
+				break;
+			}
+			default: {
+				unreachableCase(cellContent);
+			}
+		}
 	}
 
 	/**
