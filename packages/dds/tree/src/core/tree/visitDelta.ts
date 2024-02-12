@@ -451,6 +451,7 @@ function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 							config.detachedFieldIndex.toFieldKey(rootDestination);
 						visitor.replace(
 							sourceField,
+							// BUG: These indices should be offset
 							{ start: index, end: index + 1 },
 							destinationField,
 						);
@@ -466,7 +467,7 @@ function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 					const fields = config.attachPassRoots.get(sourceRoot);
 					if (fields !== undefined) {
 						config.attachPassRoots.delete(sourceRoot);
-						visitNode(index, fields, visitor, config);
+						visitNode(index + i, fields, visitor, config);
 					}
 				}
 			} else if (!isDetachMark(mark) && mark.fields !== undefined) {
