@@ -197,6 +197,8 @@ export class SnapshotLegacy {
 			seq: this.mergeTree.collabWindow.minSeq,
 		};
 
+		let originalSegments = 0;
+
 		const segs: ISegment[] = [];
 		let prev: ISegment | undefined;
 		const extractSegment = (
@@ -214,6 +216,7 @@ export class SnapshotLegacy {
 					segment.removedSeq === UnassignedSequenceNumber ||
 					segment.removedSeq > this.seq!)
 			) {
+				originalSegments += 1;
 				if (
 					prev?.canAppend(segment) &&
 					matchProperties(prev.properties, segment.properties)
@@ -245,6 +248,18 @@ export class SnapshotLegacy {
 			}
 			this.segments!.push(segment);
 		});
+
+		// if there are more than 500 segments removed by snapshot-time zamboni,
+		// log it .5% of the time (1/200). At around 50MM total summary events
+		// per month, this gives us an upper bound of 250,000 events per month
+		if (Math.abs(originalSegments - segs.length) > 500 && Math.random() > 0.005) {
+			this.logger.sendTelemetryEvent({
+				eventName: "MergeTreeLegacySummarizeSegmentCount",
+				originalSegments,
+				segmentsAfterCombine: segs.length,
+				segmentsLen: this.segments.length,
+			});
+		}
 
 		// We observed this.header.segmentsTotalLength < totalLength to happen in some cases
 		// When this condition happens, we might not write out all segments in getSeqLengthSegs()
