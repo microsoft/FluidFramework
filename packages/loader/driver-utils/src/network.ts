@@ -145,23 +145,6 @@ export class LocationRedirectionError
 /**
  * @internal
  */
-export class RequestRedirectionError extends LoggingError {
-	readonly errorType = DriverErrorTypes.locationRedirection;
-	readonly canRetry = true;
-
-	constructor(
-		message: string,
-		readonly redirectUrl: string,
-		props: DriverErrorTelemetryProps,
-	) {
-		super(message, props, new Set(["redirectUrl"]));
-		this.redirectUrl = redirectUrl;
-	}
-}
-
-/**
- * @internal
- */
 export class NetworkErrorBasic<T extends string> extends LoggingError implements IFluidErrorBase {
 	constructor(
 		message: string,

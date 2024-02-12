@@ -227,9 +227,12 @@ export function createOdspNetworkError(
 			break;
 		case 401:
 		case 403:
-			// The server throws 403 status code with innerMostError code as "serviceReadOnly" for cases where the
-			// database on server becomes readonly. The driver retries for such cases with exponential backup logic.
-			if (innerMostErrorCode === OdspServiceReadOnlyErrorCode) {
+			// After a redirect due to a domain change, auth headers are not sent by the browser and can trigger a 403.
+			if (response?.redirected) {
+				error = new OdspRedirectError(errorMessage, response.url, driverProps);
+			} else if (innerMostErrorCode === OdspServiceReadOnlyErrorCode) {
+				// The server throws 403 status code with innerMostError code as "serviceReadOnly" for cases where the
+				// database on server becomes readonly. The driver retries for such cases with exponential backup logic.
 				error = new RetryableError(
 					errorMessage,
 					OdspErrorTypes.serviceReadOnly,

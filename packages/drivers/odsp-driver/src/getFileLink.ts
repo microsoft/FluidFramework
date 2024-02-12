@@ -158,11 +158,14 @@ async function fetchWithLocationRedirectionHandling<T>(
 		try {
 			return await fetchHelper(url, requestInit);
 		} catch (error: any) {
-			if (error.errorType !== DriverErrorTypes.locationRedirection) {
+			if (
+				error.errorType !== DriverErrorTypes.fileNotFoundOrAccessDeniedError ||
+				!error.redirectLocation
+			) {
 				throw error;
 			}
 
-			const newSiteDomain = new URL(error.redirectUrl).origin;
+			const newSiteDomain = new URL(error.redirectLocation).origin;
 			const oldSiteDomain = new URL(odspUrlParts.siteUrl).origin;
 
 			odspUrlParts.siteUrl = odspUrlParts.siteUrl.replace(oldSiteDomain, newSiteDomain);

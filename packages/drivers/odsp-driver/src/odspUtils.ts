@@ -11,7 +11,6 @@ import {
 	RetryableError,
 	NonRetryableError,
 	NetworkErrorBasic,
-	RequestRedirectionError,
 } from "@fluidframework/driver-utils";
 import { performance } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
@@ -122,12 +121,6 @@ export async function fetchHelper(
 					OdspErrorTypes.incorrectServerResponse,
 					{ driverVersion },
 				);
-			}
-
-			if (!response.ok && response.redirected) {
-				throw new RequestRedirectionError("ODSP fetch error: Redirection", response.url, {
-					driverVersion,
-				});
 			}
 
 			if (!response.ok || response.status < 200 || response.status >= 300) {
