@@ -77,7 +77,7 @@ class RuntimeFactoryWithProps extends BaseContainerRuntimeFactory {
 	}
 }
 
-describeCompat("HotSwap", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("HotSwap", "NoCompat", (getTestObjectProvider) => {
 	// Registry -----------------------------------------
 	const childDataObjectFactory = new DataObjectFactory("Child", TestDataObject, [], {});
 	const dataObjectFactory = new DataObjectFactory("Test", TestDataObject, [], {}, [

@@ -91,4 +91,5 @@ extends:
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
     tagName: protocol-definitions
+    testCoverage: false
     taskTest: [] # no tests

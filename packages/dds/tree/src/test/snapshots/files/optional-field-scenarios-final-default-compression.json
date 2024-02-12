@@ -66,22 +66,15 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1
+                                      "type": "com.fluidframework.leaf.number",
+                                      "value": true
                                     }
-                                  },
-                                  {
-                                    "a": 0
                                   }
                                 ],
                                 "data": [
                                   [
-                                    1,
-                                    [
-                                      "com.fluidframework.leaf.number",
-                                      true,
-                                      40,
-                                      []
-                                    ]
+                                    0,
+                                    40
                                   ]
                                 ]
                               }
@@ -135,27 +128,32 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1
+                                      "type": "optional-field.TestNode",
+                                      "value": false,
+                                      "extraFields": 2
                                     }
                                   },
                                   {
-                                    "a": 0
+                                    "c": {
+                                      "type": "com.fluidframework.leaf.number",
+                                      "value": true
+                                    }
+                                  },
+                                  {
+                                    "a": 3
+                                  },
+                                  {
+                                    "d": 0
                                   }
                                 ],
                                 "data": [
                                   [
-                                    1,
+                                    0,
                                     [
-                                      "optional-field.TestNode",
-                                      false,
+                                      "root 2 child",
                                       [
-                                        "root 2 child",
-                                        [
-                                          "com.fluidframework.leaf.number",
-                                          true,
-                                          41,
-                                          []
-                                        ]
+                                        1,
+                                        41
                                       ]
                                     ]
                                   ]
@@ -270,39 +268,36 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1
+                                      "type": "com.fluidframework.leaf.number",
+                                      "value": true
                                     }
                                   },
                                   {
-                                    "a": 0
+                                    "c": {
+                                      "type": "optional-field.TestNode",
+                                      "value": false,
+                                      "extraFields": 2
+                                    }
+                                  },
+                                  {
+                                    "a": 3
+                                  },
+                                  {
+                                    "d": 0
                                   }
                                 ],
                                 "data": [
                                   [
-                                    1,
-                                    [
-                                      "com.fluidframework.leaf.number",
-                                      true,
-                                      42,
-                                      []
-                                    ]
+                                    0,
+                                    42
                                   ],
                                   [
                                     1,
-                                    [
-                                      "optional-field.TestNode",
-                                      false,
-                                      []
-                                    ]
+                                    []
                                   ],
                                   [
-                                    1,
-                                    [
-                                      "com.fluidframework.leaf.number",
-                                      true,
-                                      43,
-                                      []
-                                    ]
+                                    0,
+                                    43
                                   ]
                                 ]
                               }
@@ -371,22 +366,15 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1
+                                      "type": "com.fluidframework.leaf.number",
+                                      "value": true
                                     }
-                                  },
-                                  {
-                                    "a": 0
                                   }
                                 ],
                                 "data": [
                                   [
-                                    1,
-                                    [
-                                      "com.fluidframework.leaf.number",
-                                      true,
-                                      44,
-                                      []
-                                    ]
+                                    0,
+                                    44
                                   ]
                                 ]
                               }

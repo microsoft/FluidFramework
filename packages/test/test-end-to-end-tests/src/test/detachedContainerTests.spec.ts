@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { SharedCell } from "@fluidframework/cell";
+import type { SharedCell } from "@fluidframework/cell";
 import { Deferred } from "@fluidframework/core-utils";
 import {
 	AttachState,
@@ -17,15 +17,15 @@ import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { DataStoreMessageType } from "@fluidframework/datastore";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
-import { Ink, IColor } from "@fluidframework/ink";
+import type { Ink, IColor } from "@fluidframework/ink";
 import type { SharedMap, SharedDirectory } from "@fluidframework/map";
 import type { SharedMatrix } from "@fluidframework/matrix";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
-import { ConsensusQueue } from "@fluidframework/ordered-collection";
-import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
+import type { ConsensusQueue } from "@fluidframework/ordered-collection";
+import type { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
-import { SharedString } from "@fluidframework/sequence";
-import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
+import type { SharedString } from "@fluidframework/sequence";
+import type { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 import { createChildLogger, isFluidError } from "@fluidframework/telemetry-utils";
 import {
 	ITestContainerConfig,
@@ -61,7 +61,17 @@ const createFluidObject = async (dataStoreContext: IFluidDataStoreContext, type:
 };
 
 describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis) => {
-	const { SharedMap, SharedDirectory, SharedMatrix } = apis.dds;
+	const {
+		SharedString,
+		SharedMap,
+		ConsensusRegisterCollection,
+		SharedDirectory,
+		SharedCell,
+		Ink,
+		SharedMatrix,
+		ConsensusQueue,
+		SparseMatrix,
+	} = apis.dds;
 
 	const registry: ChannelFactoryRegistry = [
 		[sharedStringId, SharedString.getFactory()],
@@ -894,7 +904,17 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 
 // Review: Run with Full Compat?
 describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) => {
-	const { SharedMap, SharedDirectory, SharedMatrix } = apis.dds;
+	const {
+		SharedString,
+		SharedMap,
+		ConsensusRegisterCollection,
+		SharedDirectory,
+		SharedCell,
+		Ink,
+		SharedMatrix,
+		ConsensusQueue,
+		SparseMatrix,
+	} = apis.dds;
 
 	const registry: ChannelFactoryRegistry = [
 		[sharedStringId, SharedString.getFactory()],

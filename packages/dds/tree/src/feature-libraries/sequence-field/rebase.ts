@@ -121,14 +121,7 @@ function rebaseMarkList<TNodeChange>(
 	nodeExistenceState: NodeExistenceState,
 ): MarkList<TNodeChange> {
 	const rebasedMarks: Mark<TNodeChange>[] = [];
-	const queue = new RebaseQueue(
-		baseRevision,
-		baseMarkList,
-		currMarkList,
-		metadata,
-		genId,
-		moveEffects,
-	);
+	const queue = new RebaseQueue(baseRevision, baseMarkList, currMarkList, metadata, moveEffects);
 
 	// Each mark with empty input cells in `currMarkList` should have a lineage event added for all adjacent detaches in the base changeset.
 	// At the time we process an attach we don't know about detaches of later nodes,
@@ -268,11 +261,10 @@ class RebaseQueue<T> {
 		baseMarks: Changeset<T>,
 		newMarks: Changeset<T>,
 		private readonly metadata: RevisionMetadataSource,
-		genId: IdAllocator,
 		private readonly moveEffects: MoveEffectTable<T>,
 	) {
-		this.baseMarks = new MarkQueue(baseMarks, baseRevision, moveEffects, false, genId);
-		this.newMarks = new MarkQueue(newMarks, undefined, moveEffects, false, genId);
+		this.baseMarks = new MarkQueue(baseMarks, baseRevision, moveEffects);
+		this.newMarks = new MarkQueue(newMarks, undefined, moveEffects);
 		this.baseMarksCellSources = cellSourcesFromMarks(
 			baseMarks,
 			baseRevision,

@@ -18,9 +18,15 @@ module.exports = {
 			"error",
 			{
 				paths: [
+					"@fluidframework/cell",
+					"@fluidframework/counter",
+					"@fluidframework/ink",
 					"@fluidframework/map",
 					"@fluidframework/matrix",
-					"@fluidframework/counter",
+					"@fluidframework/ordered-collection",
+					"@fluidframework/register-collection",
+					"@fluidframework/sequence",
+					"@fluid-experimental/sequence-deprecated",
 				].map((importName) => ({
 					name: importName,
 					message:

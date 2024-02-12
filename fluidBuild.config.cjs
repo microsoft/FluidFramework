@@ -194,6 +194,10 @@ module.exports = {
 			"package-lockfiles-npm-version": [
 				"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
 			],
+			"no-js-file-extensions": [
+				// PropertyDDS uses .js files which should be renamed eventually.
+				".*/PropertyDDS/.*",
+			],
 			"npm-package-json-scripts-args": [
 				// server/routerlicious and server/routerlicious/packages/routerlicious use
 				// linux only scripts that would require extra logic to validate properly.

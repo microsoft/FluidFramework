@@ -1095,12 +1095,20 @@ export async function runTestForSeed<
 
 	options.emitter.emit("testStart", initialState);
 
+	let operationCount = 0;
 	const finalState = await performFuzzActionsAsync(
 		model.generatorFactory(),
-		model.reducer,
+		async (state, operation) => {
+			operationCount++;
+			return model.reducer(state, operation);
+		},
 		initialState,
 		saveInfo,
 	);
+
+	// Sanity-check that the generator produced at least one operation. If it failed to do so,
+	// this usually indicates an error on the part of the test author.
+	assert(operationCount > 0, "Generator should have produced at least one operation.");
 
 	options.emitter.emit("testEnd", finalState);
 
@@ -1123,8 +1131,9 @@ function runTest<TChannelFactory extends IChannelFactory, TOperation extends Bas
 		// the actual error
 		//
 		// it should be noted that if a timeout occurs during minimization, the
-		// intermediate results are not lost and will still be written to the file
-		this.timeout(shouldMinimize ? 10_000 : 2000);
+		// intermediate results are not lost and will still be written to the file.
+		const noMinimizationTimeout = Math.max(2000, this.timeout());
+		this.timeout(shouldMinimize ? 5 * noMinimizationTimeout : noMinimizationTimeout);
 
 		try {
 			// don't write to files in CI

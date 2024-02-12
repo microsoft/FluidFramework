@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/app-integration-external-controller",
-	"version": "2.0.0-rc.1.0.0",
+	"version": "2.0.0-rc.2.0.0",
 	"private": true,
 	"description": "Minimal Fluid Container & Data Object sample to implement a collaborative dice roller as a standalone app.",
 	"homepage": "https://fluidframework.com",
@@ -30,7 +30,7 @@
 		"start": "npm run start:tinylicious",
 		"start:azure": "webpack serve --env FLUID_CLIENT=azure",
 		"start:client": "webpack serve",
-		"start:client:test": "webpack serve --config webpack.test.js",
+		"start:client:test": "webpack serve --config webpack.test.cjs",
 		"start:tinylicious": "start-server-and-test tinylicious 7070 start:client",
 		"start:tinylicious:test": "start-server-and-test tinylicious 7070 start:client:test",
 		"test": "npm run test:jest",

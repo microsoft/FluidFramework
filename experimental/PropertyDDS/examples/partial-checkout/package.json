@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/partial-checkout",
-	"version": "2.0.0-rc.1.0.0",
+	"version": "2.0.0-rc.2.0.0",
 	"private": true,
 	"description": "A sample using property-dds and property-binder to create a reactive application.",
 	"homepage": "https://fluidframework.com",
@@ -27,7 +27,7 @@
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
 		"start": "webpack serve --open",
 		"start:server": "tinylicious",
-		"start:test": "webpack serve --config webpack.test.js",
+		"start:test": "webpack serve --config webpack.test.cjs",
 		"start:tinylicious": "concurrently npm:start:server npm:start",
 		"test": "npm run test:jest",
 		"test:jest": "jest",

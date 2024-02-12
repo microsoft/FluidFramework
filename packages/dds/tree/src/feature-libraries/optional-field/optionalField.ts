@@ -14,7 +14,7 @@ import {
 	DeltaDetachedNodeId,
 	DeltaDetachedNodeChanges,
 } from "../../core/index.js";
-import { fail, Mutable, IdAllocator, SizedNestedMap } from "../../util/index.js";
+import { Mutable, IdAllocator, SizedNestedMap } from "../../util/index.js";
 import {
 	ToDelta,
 	FieldChangeRebaser,
@@ -217,8 +217,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		return composed;
 	},
-
-	amendCompose: () => fail("Not implemented"),
 
 	invert: (
 		{ revision, change }: TaggedChange<OptionalChangeset>,

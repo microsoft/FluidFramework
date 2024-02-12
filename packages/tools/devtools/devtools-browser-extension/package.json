@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/devtools-browser-extension",
-	"version": "2.0.0-rc.1.0.0",
+	"version": "2.0.0-rc.2.0.0",
 	"private": true,
 	"description": "A browser extension for visualizing Fluid Framework stats and operations",
 	"homepage": "https://fluidframework.com",
@@ -30,7 +30,7 @@
 		"prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
 		"rebuild": "npm run clean && npm run build",
-		"start:client:test": "webpack serve --config webpack.test.js",
+		"start:client:test": "webpack serve --config webpack.test.cjs",
 		"test": "concurrently npm:test:mocha npm:test:jest",
 		"test:coverage": "c8 npm test",
 		"test:end-to-end": "npm run test:jest",
@@ -75,9 +75,11 @@
 		"@fluidframework/devtools-core": "workspace:~",
 		"@microsoft/1ds-core-js": "^3.2.13",
 		"@microsoft/1ds-post-js": "^3.2.13",
+		"@types/uuid": "^9.0.2",
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1",
-		"tslib": "^1.10.0"
+		"tslib": "^1.10.0",
+		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
 		"@fluid-example/example-utils": "workspace:~",
