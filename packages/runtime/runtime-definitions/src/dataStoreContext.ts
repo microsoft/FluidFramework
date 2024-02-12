@@ -175,8 +175,9 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * Submits a container runtime level signal to be sent to other clients.
 	 * @param type - Type of the signal.
 	 * @param content - Content of the signal.
+	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	submitSignal(type: string, content: any): void;
+	submitSignal(type: string, content: any, targetClientId?: string): void;
 
 	/**
 	 * @deprecated 0.16 Issue #1537, #3631

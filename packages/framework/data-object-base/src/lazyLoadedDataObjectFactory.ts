@@ -22,11 +22,14 @@ import {
 	type IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import { type ISharedObject } from "@fluidframework/shared-object-base";
+// eslint-disable-next-line import/no-deprecated
 import { type LazyLoadedDataObject } from "./lazyLoadedDataObject";
 
 /**
  * @internal
+ * @deprecated Not recommended for use.  For lazy loading of data objects, prefer to defer dereferencing their handles.
  */
+// eslint-disable-next-line import/no-deprecated
 export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject>
 	implements IFluidDataStoreFactory
 {

@@ -255,7 +255,9 @@ function createCompatDescribe(): DescribeCompat {
 			case "NoCompat":
 				return createCompatSuite(tests, [CompatKind.None]);
 			default:
-				return createCompatSuite(tests, undefined, compatVersion);
+				throw new Error(`compatVersion ${compatVersion} not supported`);
+			// TODO: https://dev.azure.com/fluidframework/internal/_workitems/edit/7089
+			// return createCompatSuite(tests, undefined, compatVersion);
 		}
 	};
 	const d: DescribeCompat = (name: string, compatVersion: string, tests) =>

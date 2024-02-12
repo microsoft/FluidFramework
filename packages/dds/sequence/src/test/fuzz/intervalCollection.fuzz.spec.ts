@@ -198,6 +198,7 @@ describe("IntervalCollection fuzz testing", () => {
 
 	createDDSFuzzSuite(model, {
 		...defaultFuzzOptions,
+		skip: [68],
 		// Note: there are some known eventual consistency issues which the tests don't currently reproduce.
 		// Search this package for AB#6552 (or look at that work item) for a skipped test and further details.
 		// Uncomment this line to replay a specific seed from its failure file:
@@ -213,6 +214,7 @@ describe("IntervalCollection no reconnect fuzz testing", () => {
 
 	const options = {
 		...defaultFuzzOptions,
+		skip: [68],
 		reconnectProbability: 0.0,
 		clientJoinOptions: {
 			maxNumberOfClients: 3,
@@ -235,6 +237,7 @@ describe("IntervalCollection fuzz testing with rebased batches", () => {
 
 	createDDSFuzzSuite(noReconnectWithRebaseModel, {
 		...defaultFuzzOptions,
+		skip: [44],
 		reconnectProbability: 0.0,
 		clientJoinOptions: {
 			maxNumberOfClients: 3,

@@ -199,6 +199,7 @@ declare function get_old_InterfaceDeclaration_IFluidDataStoreRuntime():
 declare function use_current_InterfaceDeclaration_IFluidDataStoreRuntime(
     use: TypeOnly<current.IFluidDataStoreRuntime>): void;
 use_current_InterfaceDeclaration_IFluidDataStoreRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidDataStoreRuntime());
 
 /*

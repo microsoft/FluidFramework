@@ -166,6 +166,11 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		}
 	}
 
+	public generateDocumentUniqueId(): (SessionSpaceCompressedId & OpSpaceCompressedId) | StableId {
+		const id = this.generateCompressedId();
+		return isFinalId(id) ? id : this.decompress(id);
+	}
+
 	/**
 	 * {@inheritdoc IIdCompressorCore.beginGhostSession}
 	 */

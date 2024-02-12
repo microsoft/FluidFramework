@@ -231,8 +231,7 @@ function composePair<T>(
 
 	if (moveEffects.isInvalidated) {
 		resetCrossFieldTable(moveEffects);
-		composed = SF.amendCompose(composed, composer, idAllocator, moveEffects);
-		assert(!moveEffects.isInvalidated, "Compose should not need more than one amend pass");
+		composed = SF.compose(change1, change2, composer, idAllocator, moveEffects, metadata);
 	}
 	return composed;
 }
