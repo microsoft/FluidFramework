@@ -662,6 +662,10 @@ describe("Temporal Collab Spaces", () => {
 	describe("Stress tests", () => {
 		type Op = (cp: IMatrix) => Promise<unknown>;
 
+		beforeEach(() => {
+			seed = 1; // Every test is independent from another test!
+		});
+
 		// collaborate on a cell through collab channel
 		const collabFn: Op = async (cp: IMatrix) => {
 			// Cell might be undefined. If so, we can't really collab on it.

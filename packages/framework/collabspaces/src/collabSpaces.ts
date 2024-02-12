@@ -995,7 +995,7 @@ export class CollabSpacesRuntime
 	private areEqualUuid(u1: uuidType, u2: string) {
 		// u1 could be a number (if ID compressor is On)
 		// u2 is a string.
-		// Can't use === comparison, "-5" & -5 are equal from POV of this comparison.
+		// Can't use === comparison, "5" & 5 are equal from POV of this comparison.
 		// Coerse it to string to do proper comparison
 		return String(u1) === u2;
 	}
