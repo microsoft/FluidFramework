@@ -256,12 +256,19 @@ describe("Runtime", () => {
 
 				it("Should fail startSummary when missing refresh", async () => {
 					createRoot();
+					// Need one latest summary
 					rootNode.startSummary(11, logger, 0);
+					await rootNode.summarize(false);
+					rootNode.completeSummary("test-handle", true /* validateSummary */);
+					await rootNode.refreshLatestSummary("test-handle", 11);
+
+					// Summary with missing refresh
+					rootNode.startSummary(12, logger, 11);
 					await rootNode.summarize(false);
 					rootNode.completeSummary("test-handle", true /* validateSummary */);
 
 					// Failing to refresh the root node should generate failing summaries
-					const result = rootNode.startSummary(12, logger, 11);
+					const result = rootNode.startSummary(21, logger, 12);
 					assert.strictEqual(
 						result.invalidNodes,
 						1,
@@ -269,8 +276,8 @@ describe("Runtime", () => {
 					);
 					assert.deepEqual(
 						result.mismatchNumbers,
-						new Set(["11-0"]),
-						"startSummary have succeeded",
+						new Set(["12-11"]),
+						"startSummary should have mismatched numbers",
 					);
 				});
 
