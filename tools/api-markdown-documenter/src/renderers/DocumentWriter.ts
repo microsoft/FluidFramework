@@ -48,7 +48,7 @@ export interface DocumentWriter {
 	 *
 	 * @param indentPrefix - The character(s) to append to the line indentation.
 	 * For example, the prefix could be "// " to indent and comment simultaneously.
-	 * Default: {@link (DocumentWriter:namespace).defaultIndentPrefix}.
+	 * Default: 2 spaces.
 	 *
 	 * @remarks Each call to `increaseIndent` must be followed by a corresponding call to {@link (DocumentWriter:interface).decreaseIndent}.
 	 */
@@ -101,18 +101,18 @@ export interface DocumentWriter {
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace DocumentWriter {
 	/**
-	 * The text characters used to create one level of indentation.
-	 * Default: 2 spaces.
-	 */
-	const defaultIndentPrefix: string = "  "; // TODO: consider using a tab instead.
-
-	/**
 	 * Creates a new {@link (DocumentWriter:interface)} instance.
 	 */
 	export function create(): DocumentWriter {
 		return new _DocumentWriter();
 	}
 }
+
+/**
+ * The text characters used to create one level of indentation.
+ * Default: 2 spaces.
+ */
+const defaultIndentPrefix: string = "  "; // TODO: consider using a tab instead.
 
 /**
  * Private {@link DocumentWriter} implementation.
@@ -159,7 +159,7 @@ class _DocumentWriter implements DocumentWriter {
 	 * {@inheritDoc (DocumentWriter:interface).increaseIndent}
 	 */
 	public increaseIndent(indentPrefix?: string): void {
-		this._indentStack.push(indentPrefix ?? DocumentWriter.defaultIndentPrefix);
+		this._indentStack.push(indentPrefix ?? defaultIndentPrefix);
 		this._updateIndentText();
 	}
 

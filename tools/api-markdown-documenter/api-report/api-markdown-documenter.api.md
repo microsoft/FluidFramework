@@ -303,7 +303,6 @@ export interface DocumentWriter {
 
 // @public
 export namespace DocumentWriter {
-    const defaultIndentPrefix: string;
     export function create(): DocumentWriter;
 }
 
