@@ -179,6 +179,9 @@
 			},
 			"ClassDeclaration_PureDataObjectFactory": {
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IDataObjectProps": {
+				"forwardCompat": false
 			}
 		}
 	}

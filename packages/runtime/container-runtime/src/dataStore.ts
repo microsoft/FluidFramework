@@ -14,6 +14,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { ContainerRuntime } from "./containerRuntime";
 import { DataStores } from "./dataStores";
+import { ContainerMessageType } from "./messageTypes";
 
 /**
  * Interface for an op to be used for assigning an
@@ -113,6 +114,7 @@ class DataStore implements IDataStore {
 			internalId: this.internalId,
 			alias,
 		};
+		assert(isDataStoreAliasMessage(message), "validate we can recognize it");
 
 		this.fluidDataStoreChannel.makeVisibleAndAttachGraph();
 
@@ -125,7 +127,7 @@ class DataStore implements IDataStore {
 		}
 
 		const aliased = await this.ackBasedPromise<boolean>((resolve) => {
-			this.runtime.submitDataStoreAliasOp(message, resolve);
+			this.runtime.submitMessage(ContainerMessageType.Alias, message, resolve);
 		})
 			.catch((error) => {
 				this.logger.sendErrorEvent(

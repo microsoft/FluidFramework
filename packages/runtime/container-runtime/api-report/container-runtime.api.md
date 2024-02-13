@@ -121,6 +121,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     get connected(): boolean;
     // (undocumented)
+    get containerRuntime(): this;
+    // (undocumented)
     createDataStore(pkg: string | string[], loadingGroupId?: string): Promise<IDataStore>;
     // @deprecated (undocumented)
     _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string): Promise<IDataStore>;
@@ -201,10 +203,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     get storage(): IDocumentStorageService;
     // (undocumented)
-    submitDataStoreAliasOp(contents: any, localOpMetadata: unknown): void;
-    // (undocumented)
-    submitDataStoreOp(id: string, contents: any, localOpMetadata?: unknown): void;
-    submitDataStoreSignal(address: string, type: string, content: any, targetClientId?: string): void;
+    submitMessage(type: ContainerMessageType, contents: any, localOpMetadata?: unknown): void;
     submitSignal(type: string, content: any, targetClientId?: string): void;
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
     summarize(options: {

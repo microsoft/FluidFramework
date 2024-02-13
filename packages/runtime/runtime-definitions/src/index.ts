@@ -20,6 +20,7 @@ export {
 	IDataStore,
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
+	IFluidParentContext,
 	IFluidDataStoreContextDetached,
 	IFluidDataStoreContextEvents,
 	VisibilityState,

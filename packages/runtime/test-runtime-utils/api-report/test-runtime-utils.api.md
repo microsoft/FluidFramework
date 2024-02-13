@@ -346,6 +346,10 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     readonly existing: boolean;
     // (undocumented)
+    readonly gcThrowOnTombstoneUsage = false;
+    // (undocumented)
+    readonly gcTombstoneEnforcementAllowed = false;
+    // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     // (undocumented)
     getAudience(): IAudience;

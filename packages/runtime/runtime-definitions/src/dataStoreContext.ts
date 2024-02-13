@@ -242,21 +242,6 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
  * @alpha
  */
 export interface IFluidDataStoreChannel extends IDisposable {
-	readonly id: string;
-
-	/**
-	 * Indicates the attachment state of the channel to a host service.
-	 */
-	readonly attachState: AttachState;
-
-	readonly visibilityState: VisibilityState;
-
-	/**
-	 * Runs through the graph and attaches the bound handles. Then binds this runtime to the container.
-	 * @deprecated This will be removed in favor of {@link IFluidDataStoreChannel.makeVisibleAndAttachGraph}.
-	 */
-	attachGraph(): void;
-
 	/**
 	 * Makes the data store channel visible in the container. Also, runs through its graph and attaches all
 	 * bound handles that represent its dependencies in the container's graph.
@@ -276,12 +261,17 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	/**
 	 * Processes the op.
 	 */
-	process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+	process(
+		message: ISequencedDocumentMessage,
+		local: boolean,
+		localOpMetadata: unknown,
+		addedOutboundReference?: (fromNodePath: string, toNodePath: string) => void,
+	): void;
 
 	/**
 	 * Processes the signal.
 	 */
-	processSignal(message: any, local: boolean): void;
+	processSignal(message: IInboundSignalMessage, local: boolean): void;
 
 	/**
 	 * Generates a summary for the channel.
@@ -364,35 +354,19 @@ export interface IFluidDataStoreContextEvents extends IEvent {
 }
 
 /**
- * Represents the context for the data store. It is used by the data store runtime to
- * get information and call functionality to the container.
+ * Represents the context for the data store like objects. It is used by the data store runtime to
+ * get information and call functionality to its parent.
  * @alpha
  */
-export interface IFluidDataStoreContext
-	extends IEventProvider<IFluidDataStoreContextEvents>,
-		Partial<IProvideFluidDataStoreRegistry>,
-		IProvideFluidHandleContext {
-	readonly id: string;
-	/**
-	 * A data store created by a client, is a local data store for that client. Also, when a detached container loads
-	 * from a snapshot, all the data stores are treated as local data stores because at that stage the container
-	 * still doesn't exists in storage and so the data store couldn't have been created by any other client.
-	 * Value of this never changes even after the data store is attached.
-	 * As implementer of data store runtime, you can use this property to check that this data store belongs to this
-	 * client and hence implement any scenario based on that.
-	 */
-	readonly isLocalDataStore: boolean;
-	/**
-	 * The package path of the data store as per the package factory.
-	 */
-	readonly packagePath: readonly string[];
+export interface IFluidParentContext
+	extends IProvideFluidHandleContext,
+		Partial<IProvideFluidDataStoreRegistry> {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	readonly options: Record<string | number, any>;
 	readonly clientId: string | undefined;
 	readonly connected: boolean;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	readonly storage: IDocumentStorageService;
-	readonly baseSnapshot: ISnapshotTree | undefined;
 	readonly logger: ITelemetryBaseLogger;
 	readonly clientDetails: IClientDetails;
 	readonly idCompressor?: IIdCompressor;
@@ -409,14 +383,21 @@ export interface IFluidDataStoreContext
 	readonly containerRuntime: IContainerRuntimeBase;
 
 	/**
-	 * @deprecated 0.16 Issue #1635, #3631
-	 */
-	readonly createProps?: any;
-
-	/**
 	 * Ambient services provided with the context
 	 */
 	readonly scope: FluidObject;
+
+	// IFluidDataStoreRegistry: IFluidDataStoreRegistry;
+
+	readonly gcThrowOnTombstoneUsage: boolean;
+	readonly gcTombstoneEnforcementAllowed: boolean;
+
+	/**
+	 * Get an absolute url to the container based on the provided relativeUrl.
+	 * Returns undefined if the container or data store isn't attached to storage.
+	 * @param relativeUrl - A relative request within the container
+	 */
+	getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 
 	/**
 	 * Returns the current quorum.
@@ -456,6 +437,54 @@ export interface IFluidDataStoreContext
 	 */
 	submitSignal(type: string, content: any, targetClientId?: string): void;
 
+	uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
+
+	/**
+	 * @deprecated There is no replacement for this, its functionality is no longer needed at this layer.
+	 * It will be removed in a future release, sometime after 2.0.0-internal.8.0.0
+	 *
+	 * Similar capability is exposed with from/to string paths instead of handles via @see addedGCOutboundRoute
+	 *
+	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
+	 * all references added in the system.
+	 * @param srcHandle - The handle of the node that added the reference.
+	 * @param outboundHandle - The handle of the outbound node that is referenced.
+	 */
+	addedGCOutboundReference?(
+		srcHandle: { absolutePath: string },
+		outboundHandle: { absolutePath: string },
+	): void;
+}
+
+/**
+ * Represents the context for the data store. It is used by the data store runtime to
+ * get information and call functionality to the container.
+ * @alpha
+ */
+export interface IFluidDataStoreContext
+	extends IEventProvider<IFluidDataStoreContextEvents>,
+		IFluidParentContext {
+	readonly id: string;
+	/**
+	 * A data store created by a client, is a local data store for that client. Also, when a detached container loads
+	 * from a snapshot, all the data stores are treated as local data stores because at that stage the container
+	 * still doesn't exists in storage and so the data store couldn't have been created by any other client.
+	 * Value of this never changes even after the data store is attached.
+	 * As implementer of data store runtime, you can use this property to check that this data store belongs to this
+	 * client and hence implement any scenario based on that.
+	 */
+	readonly isLocalDataStore: boolean;
+	/**
+	 * The package path of the data store as per the package factory.
+	 */
+	readonly packagePath: readonly string[];
+	readonly baseSnapshot: ISnapshotTree | undefined;
+
+	/**
+	 * @deprecated 0.16 Issue #1635, #3631
+	 */
+	readonly createProps?: any;
+
 	/**
 	 * Called to make the data store locally visible in the container. This happens automatically for root data stores
 	 * when they are marked as root. For non-root data stores, this happens when their handle is added to a visible DDS.
@@ -467,13 +496,6 @@ export interface IFluidDataStoreContext
 	 * @param address - The address of the channel that is dirty.
 	 */
 	setChannelDirty(address: string): void;
-
-	/**
-	 * Get an absolute url to the container based on the provided relativeUrl.
-	 * Returns undefined if the container or data store isn't attached to storage.
-	 * @param relativeUrl - A relative request within the container
-	 */
-	getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
 
 	getCreateChildSummarizerNodeFn(
 		/**
@@ -489,8 +511,6 @@ export interface IFluidDataStoreContext
 		createParam: CreateChildSummarizerNodeParam,
 	): CreateChildSummarizerNodeFn;
 
-	uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
-
 	/**
 	 * @deprecated The functionality to get base GC details has been moved to summarizer node.
 	 *
@@ -498,19 +518,6 @@ export interface IFluidDataStoreContext
 	 * and its children with the GC details from the previous summary.
 	 */
 	getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
-
-	/**
-	 * @deprecated There is no replacement for this, its functionality is no longer needed at this layer.
-	 * It will be removed in a future release, sometime after 2.0.0-internal.8.0.0
-	 *
-	 * Similar capability is exposed with from/to string paths instead of handles via @see addedGCOutboundRoute
-	 *
-	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
-	 * all references added in the system.
-	 * @param srcHandle - The handle of the node that added the reference.
-	 * @param outboundHandle - The handle of the outbound node that is referenced.
-	 */
-	addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
 
 	/**
 	 * (Same as @see addedGCOutboundReference, but with string paths instead of handles)
