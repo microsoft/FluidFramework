@@ -40,8 +40,8 @@ export function zamboniSegments(
 		}
 		segmentToScour = mergeTree.segmentsToScour.get()!;
 		// Only skip scouring if needs scour is explicitly false, not true or undefined
-		if (segmentToScour.segment!.parent && segmentToScour.segment!.parent.needsScour !== false) {
-			const block = segmentToScour.segment!.parent;
+		if (segmentToScour?.segment?.parent && segmentToScour.segment.parent.needsScour !== false) {
+			const block = segmentToScour.segment.parent;
 			const childrenCopy: IMergeNode[] = [];
 			scourNode(block, childrenCopy, mergeTree);
 			// This will avoid the cost of re-scouring nodes

@@ -1,25 +1,30 @@
-# @fluidframework/cell
+# fluid-framework
 
-The `SharedCell` Distributed Data Structure (DDS) stores a single, shared value that can be edited or deleted.
+The `fluid-framework` package bundles a collection of Fluid Framework client libraries for easy use when paired with a corresponding service client package (e.g. `@fluidframework/azure-client`, `@fluidframework/tinylicious-client`, or `@fluid-experimental/osdp-client (BETA)`).
 
-<!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:includeHeading=TRUE) -->
+## Contents
 
-<!-- prettier-ignore-start -->
-<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+The `fluid-framework` package consists primarily of two portions: the `IFluidContainer` and a selection of distributed data structures (DDSes).
 
-## Installation
+### IFluidContainer
 
-To get started, install the package by running the following command:
+The **[IFluidContainer][]** interface is one of the types returned by calls to `createContainer()` and `getContainer()` on the service clients such as `AzureClient`.
+It includes functionality to retrieve the Fluid data contained within, as well as to inspect the state of the collaboration session connection.
 
-```bash
-npm i fluid-framework
-```
+### DDS packages
 
-<!-- prettier-ignore-end -->
+You'll use one or more DDS data structures in your container to model your collaborative data.
+The `fluid-framework` package offers the following data structures:
 
-<!-- AUTO-GENERATED-CONTENT:END -->
+1. **[SharedTree][]**
+1. **[SharedMap][]**, a map-like data structure for storing key/value pair data
+    - Note: as of version 2.0, `SharedMap` is deprecated. Please use `SharedTree` instead.
 
-<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+## Tutorial
+
+Check out the [Hello World tutorial](https://fluidframework.com/docs/start/tutorial/) using `fluid-framework`.
+
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README:scripts=FALSE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -30,34 +35,17 @@ When taking a dependency on a Fluid Framework library, we recommend using a `^` 
 While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
 library consumers should always prefer `^`.
 
-Note that when depending on a library version of the form `2.0.0-internal.x.y.z`, called the Fluid internal version scheme,
-you must use a `>= <` dependency range (such as `>=2.0.0-internal.x.y.z <2.0.0-internal.w.0.0` where `w` is `x+1`).
-Standard `^` and `~` ranges will not work as expected.
-See the [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/version-tools/README.md)
-package for more information including tools to convert between version schemes.
+## Installation
 
-<!-- prettier-ignore-end -->
+To get started, install the package by running the following command:
 
-<!-- AUTO-GENERATED-CONTENT:END -->
-
-<!-- AUTO-GENERATED-CONTENT:START (README_API_DOCS_SECTION:includeHeading=TRUE) -->
-
-<!-- prettier-ignore-start -->
-
-<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
+```bash
+npm i fluid-framework
+```
 
 ## API Documentation
 
-API documentation for **@fluidframework/cell** is available at <https://fluidframework.com/docs/api/v1/cell>.
-
-<!-- prettier-ignore-end -->
-
-<!-- AUTO-GENERATED-CONTENT:END -->
-
-<!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
-
-<!-- prettier-ignore-start -->
-<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+API documentation for **fluid-framework** is available at <https://fluidframework.com/docs/apis/fluid-framework>.
 
 ## Contribution Guidelines
 
@@ -77,15 +65,6 @@ This project may contain Microsoft trademarks or logos for Microsoft projects, p
 Use of these trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks).
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
-<!-- prettier-ignore-end -->
-
-<!-- AUTO-GENERATED-CONTENT:END -->
-
-<!-- AUTO-GENERATED-CONTENT:START (README_HELP_SECTION:includeHeading=TRUE) -->
-
-<!-- prettier-ignore-start -->
-<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
 ## Help
 
 Not finding what you're looking for in this README? Check out our [GitHub
@@ -95,15 +74,6 @@ Still not finding what you're looking for? Please [file an
 issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
 
 Thank you!
-
-<!-- prettier-ignore-end -->
-
-<!-- AUTO-GENERATED-CONTENT:END -->
-
-<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
-
-<!-- prettier-ignore-start -->
-<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Trademark
 
@@ -116,3 +86,9 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
+
+<!-- Links -->
+
+[ifluidcontainer]: https://fluidframework.com/docs/api/v2/fluid-framework/ifluidcontainer-interface
+[sharedmap]: https://fluidframework.com/docs/data-structures/map/
+[sharedtree]: https://fluidframework.com/docs/data-structures/tree/

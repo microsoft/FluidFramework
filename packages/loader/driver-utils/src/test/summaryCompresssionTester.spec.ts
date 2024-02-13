@@ -6,6 +6,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/dot-notation */
 import { strict as assert } from "assert";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	IClient,
 	ICreateBlobResponse,
@@ -21,6 +22,7 @@ import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
 	IDocumentService,
+	IDocumentServiceEvents,
 	IDocumentServiceFactory,
 	IDocumentServicePolicies,
 	IDocumentStorageService,
@@ -37,6 +39,7 @@ import {
 } from "../adapters";
 import { DocumentStorageServiceProxy } from "../documentStorageServiceProxy";
 import { snapshotTree, summaryTemplate } from "./summaryCompressionData";
+
 /**
  * This function clones the imported summary and returns a new summary with the same content.
  */
@@ -151,8 +154,13 @@ function isOriginalStorage(storage: IDocumentStorageService): boolean {
 	return (storage as InternalTestStorage).thisIsReallyOriginalStorage === "yes";
 }
 
-class InternalTestDocumentService implements IDocumentService {
-	constructor() {}
+class InternalTestDocumentService
+	extends TypedEventEmitter<IDocumentServiceEvents>
+	implements IDocumentService
+{
+	constructor() {
+		super();
+	}
 	resolvedUrl: IResolvedUrl = {} as any;
 	policies?: IDocumentServicePolicies | undefined;
 	storage: IDocumentStorageService = new InternalTestStorage();

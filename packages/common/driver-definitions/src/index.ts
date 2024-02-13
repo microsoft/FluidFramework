@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-export {
+export type {
 	DriverError,
-	DriverErrorType,
-	DriverErrorTypes,
 	IAnyDriverError,
 	IAuthorizationError,
 	IDriverErrorBase,
@@ -15,8 +13,8 @@ export {
 	ILocationRedirectionError,
 	IThrottlingWarning,
 } from "./driverError";
-export {
-	FetchSource,
+export { DriverErrorTypes } from "./driverError";
+export type {
 	FiveDaysMs,
 	IDeltasFetchResult,
 	IDeltaStorageService,
@@ -24,20 +22,23 @@ export {
 	IDocumentDeltaConnectionEvents,
 	IDocumentDeltaStorageService,
 	IDocumentService,
+	IDocumentServiceEvents,
 	IDocumentServiceFactory,
 	IDocumentServicePolicies,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
+	ISnapshot,
+	ISnapshotFetchOptions,
 	IStream,
 	IStreamResult,
 	ISummaryContext,
-	LoaderCachingPolicy,
 } from "./storage";
-export {
+export { FetchSource, LoaderCachingPolicy } from "./storage";
+export type {
 	DriverPreCheckInfo,
-	DriverHeader,
 	IContainerPackageInfo,
 	IDriverHeader,
 	IResolvedUrl,
 	IUrlResolver,
 } from "./urlResolver";
+export { DriverHeader } from "./urlResolver";

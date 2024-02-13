@@ -4,11 +4,13 @@
  */
 
 import { strict as assert } from "assert";
+import { IDocumentStorageServicePolicies } from "@fluidframework/driver-definitions";
 import {
-	DriverErrorType,
-	IDocumentStorageServicePolicies,
-} from "@fluidframework/driver-definitions";
-import { IOdspResolvedUrl, ICacheEntry, IEntry } from "@fluidframework/odsp-driver-definitions";
+	OdspErrorTypes,
+	IOdspResolvedUrl,
+	ICacheEntry,
+	IEntry,
+} from "@fluidframework/odsp-driver-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { defaultCacheExpiryTimeoutMs, EpochTracker } from "../epochTracker";
 import { LocalPersistentCache } from "../odspCache";
@@ -158,7 +160,7 @@ describe("Tests for Epoch Tracker", () => {
 			success = false;
 			assert.strictEqual(
 				error.errorType,
-				DriverErrorType.fileOverwrittenInStorage,
+				OdspErrorTypes.fileOverwrittenInStorage,
 				"Error should be epoch error",
 			);
 		}
@@ -189,7 +191,7 @@ describe("Tests for Epoch Tracker", () => {
 			success = false;
 			assert.strictEqual(
 				error.errorType,
-				DriverErrorType.fileOverwrittenInStorage,
+				OdspErrorTypes.fileOverwrittenInStorage,
 				"Error should be epoch error",
 			);
 		}
@@ -312,7 +314,7 @@ describe("Tests for Epoch Tracker", () => {
 			success = false;
 			assert.strictEqual(
 				error.errorType,
-				DriverErrorType.throttlingError,
+				OdspErrorTypes.throttlingError,
 				"Error should be throttling error",
 			);
 		}
@@ -343,7 +345,7 @@ describe("Tests for Epoch Tracker", () => {
 			success = false;
 			assert.strictEqual(
 				error.errorType,
-				DriverErrorType.fileOverwrittenInStorage,
+				OdspErrorTypes.fileOverwrittenInStorage,
 				"Error should be epoch error",
 			);
 		}
@@ -376,7 +378,7 @@ describe("Tests for Epoch Tracker", () => {
 			success = false;
 			assert.strictEqual(
 				error.errorType,
-				DriverErrorType.locationRedirection,
+				OdspErrorTypes.locationRedirection,
 				"Error should be locationRedirection error",
 			);
 			const newResolvedUrl: IOdspResolvedUrl = error.redirectUrl;

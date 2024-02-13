@@ -32,9 +32,10 @@ import { ICodecOptions } from "../../../codec/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
 
 const codecOptions: ICodecOptions = { jsonValidator: typeboxValidator };
-const fieldBatchCodec = makeFieldBatchCodec(codecOptions, {
+const fieldBatchCodec = makeFieldBatchCodec(codecOptions);
+const context = {
 	encodeType: TreeCompressionStrategy.Uncompressed,
-});
+};
 
 const codec = makeForestSummarizerCodec(codecOptions, fieldBatchCodec);
 
@@ -59,7 +60,7 @@ const validData: [string, FieldSet, Format | undefined][] = [
 		{
 			version,
 			keys: [],
-			fields: fieldBatchCodec.encode([]),
+			fields: fieldBatchCodec.encode([], context),
 		},
 	],
 	[
@@ -68,7 +69,7 @@ const validData: [string, FieldSet, Format | undefined][] = [
 		{
 			version,
 			keys: [rootFieldKey],
-			fields: fieldBatchCodec.encode([testFieldChunk.cursor()]),
+			fields: fieldBatchCodec.encode([testFieldChunk.cursor()], context),
 		},
 	],
 	[
@@ -85,12 +86,12 @@ describe("ForestSummarizerCodec", () => {
 	describe("encodes and decodes valid data.", () => {
 		for (const [name, data, expected] of validData) {
 			it(name, () => {
-				const encodedData = codec.encode(data);
+				const encodedData = codec.encode(data, context);
 				if (expected !== undefined) {
 					assert.deepEqual(encodedData, expected);
 				}
 
-				const decodedData = codec.decode(encodedData);
+				const decodedData = codec.decode(encodedData, context);
 				assert.deepEqual(decodedData, data);
 			});
 		}
@@ -99,7 +100,10 @@ describe("ForestSummarizerCodec", () => {
 	describe("throws on receiving malformed data during encode.", () => {
 		for (const [name, data] of malformedData) {
 			it(name, () => {
-				assert.throws(() => codec.encode(data as unknown as FieldSet), "malformed data");
+				assert.throws(
+					() => codec.encode(data as unknown as FieldSet, context),
+					"malformed data",
+				);
 			});
 		}
 	});
@@ -108,11 +112,14 @@ describe("ForestSummarizerCodec", () => {
 		it("invalid version", () => {
 			assert.throws(
 				() =>
-					codec.decode({
-						version: 2.0 as number as 1.0,
-						fields: { version: 1 },
-						keys: [],
-					}),
+					codec.decode(
+						{
+							version: 2.0 as number as 1.0,
+							fields: { version: 1 },
+							keys: [],
+						},
+						context,
+					),
 				(e: Error) => validateAssertionError(e, "version being decoded is not supported"),
 			);
 		});
@@ -120,11 +127,14 @@ describe("ForestSummarizerCodec", () => {
 		it("invalid nested version", () => {
 			assert.throws(
 				() =>
-					codec.decode({
-						version: 1.0,
-						fields: { version: 2 },
-						keys: [],
-					}),
+					codec.decode(
+						{
+							version: 1.0,
+							fields: { version: 2 },
+							keys: [],
+						},
+						context,
+					),
 				(e: Error) => validateAssertionError(e, "version being decoded is not supported"),
 			);
 		});
@@ -132,10 +142,13 @@ describe("ForestSummarizerCodec", () => {
 		it("missing fields", () => {
 			assert.throws(
 				() =>
-					codec.decode({
-						version: 1.0,
-						keys: [],
-					} as unknown as Format),
+					codec.decode(
+						{
+							version: 1.0,
+							keys: [],
+						} as unknown as Format,
+						context,
+					),
 				(e: Error) => validateAssertionError(e, "Encoded schema should validate"),
 			);
 		});
@@ -143,12 +156,15 @@ describe("ForestSummarizerCodec", () => {
 		it("extra field", () => {
 			assert.throws(
 				() =>
-					codec.decode({
-						version: 1.0,
-						fields: { version: 1 },
-						keys: [],
-						wrong: 5,
-					} as unknown as Format),
+					codec.decode(
+						{
+							version: 1.0,
+							fields: { version: 1 },
+							keys: [],
+							wrong: 5,
+						} as unknown as Format,
+						context,
+					),
 				(e: Error) => validateAssertionError(e, "Encoded schema should validate"),
 			);
 		});

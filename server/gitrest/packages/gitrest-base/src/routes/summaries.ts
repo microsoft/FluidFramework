@@ -50,6 +50,7 @@ async function getSummary(
 	repoManagerParams: IRepoManagerParams,
 	externalWriterConfig?: IExternalWriterConfig,
 	persistLatestFullSummary = false,
+	persistLatestFullEphemeralSummary = false,
 	enforceStrictPersistedFullSummaryReads = false,
 ): Promise<IWholeFlatSummary> {
 	const lumberjackProperties = {
@@ -57,7 +58,10 @@ async function getSummary(
 		[BaseGitRestTelemetryProperties.sha]: sha,
 	};
 
-	if (persistLatestFullSummary && sha === latestSummarySha) {
+	const enablePersistLatestFullSummary = repoManagerParams.isEphemeralContainer
+		? persistLatestFullEphemeralSummary
+		: persistLatestFullSummary;
+	if (enablePersistLatestFullSummary && sha === latestSummarySha) {
 		try {
 			const latestFullSummaryFromStorage = await retrieveLatestFullSummaryFromStorage(
 				fileSystemManager,
@@ -104,7 +108,7 @@ async function getSummary(
 
 	// Now that we computed the summary from scratch, we can persist it to storage if
 	// the following conditions are met.
-	if (persistLatestFullSummary && sha === latestSummarySha && fullSummary) {
+	if (enablePersistLatestFullSummary && sha === latestSummarySha && fullSummary) {
 		// We persist the full summary in a fire-and-forget way because we don't want it
 		// to impact getSummary latency. So upon computing the full summary above, we should
 		// return as soon as possible. Also, we don't care about failures much, since the
@@ -134,6 +138,7 @@ async function createSummary(
 	externalWriterConfig?: IExternalWriterConfig,
 	isInitialSummary?: boolean,
 	persistLatestFullSummary = false,
+	persistLatestFullEphemeralSummary = false,
 	enableLowIoWrite: "initial" | boolean = false,
 	optimizeForInitialSummary: boolean = false,
 ): Promise<IWriteSummaryResponse | IWholeFlatSummary> {
@@ -177,7 +182,10 @@ async function createSummary(
 					return undefined;
 			  });
 		if (latestFullSummary) {
-			if (persistLatestFullSummary) {
+			const enablePersistLatestFullSummary = repoManagerParams.isEphemeralContainer
+				? persistLatestFullEphemeralSummary
+				: persistLatestFullSummary;
+			if (enablePersistLatestFullSummary) {
 				// Send latest full summary to storage for faster read access.
 				const persistP = persistLatestFullSummaryInStorage(
 					fileSystemManager,
@@ -271,6 +279,8 @@ export function create(
 ): Router {
 	const router: Router = Router();
 	const persistLatestFullSummary: boolean = store.get("git:persistLatestFullSummary") ?? false;
+	const persistLatestFullEphemeralSummary: boolean =
+		store.get("git:persistLatestFullEphemeralSummary") ?? false;
 	const enableLowIoWrite: "initial" | boolean = store.get("git:enableLowIoWrite") ?? false;
 	const enableOptimizedInitialSummary: boolean =
 		store.get("git:enableOptimizedInitialSummary") ?? false;
@@ -304,9 +314,10 @@ export function create(
 						fileSystemManagerFactories,
 						repoManagerParams.isEphemeralContainer,
 					);
-					const fsManager = fileSystemManagerFactory.create(
-						repoManagerParams.fileSystemManagerParams,
-					);
+					const fsManager = fileSystemManagerFactory.create({
+						...repoManagerParams.fileSystemManagerParams,
+						rootDir: repoManager.path,
+					});
 					await checkSoftDeleted(
 						fsManager,
 						repoManager.path,
@@ -320,6 +331,7 @@ export function create(
 						repoManagerParams,
 						getExternalWriterParams(request.query?.config as string | undefined),
 						persistLatestFullSummary,
+						persistLatestFullEphemeralSummary,
 						enforceStrictPersistedFullSummaryReads,
 					);
 				})
@@ -379,9 +391,10 @@ export function create(
 					fileSystemManagerFactories,
 					repoManagerParams.isEphemeralContainer,
 				);
-				const fsManager = fileSystemManagerFactory.create(
-					repoManagerParams.fileSystemManagerParams,
-				);
+				const fsManager = fileSystemManagerFactory.create({
+					...repoManagerParams.fileSystemManagerParams,
+					rootDir: repoManager.path,
+				});
 				// A new document cannot already be soft-deleted.
 				if (!optimizeForInitialSummary) {
 					await checkSoftDeleted(
@@ -399,6 +412,7 @@ export function create(
 					getExternalWriterParams(request.query?.config as string | undefined),
 					isInitialSummary,
 					persistLatestFullSummary,
+					persistLatestFullEphemeralSummary,
 					enableLowIoWrite,
 					optimizeForInitialSummary,
 				);
@@ -434,9 +448,10 @@ export function create(
 						fileSystemManagerFactories,
 						repoManagerParams.isEphemeralContainer,
 					);
-					const fsManager = fileSystemManagerFactory.create(
-						repoManagerParams.fileSystemManagerParams,
-					);
+					const fsManager = fileSystemManagerFactory.create({
+						...repoManagerParams.fileSystemManagerParams,
+						rootDir: repoManager.path,
+					});
 					return deleteSummary(
 						repoManager,
 						fsManager,

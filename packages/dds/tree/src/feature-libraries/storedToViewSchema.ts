@@ -16,14 +16,14 @@ import { fail } from "../util/index.js";
 import { defaultSchemaPolicy } from "./default-schema/index.js";
 import {
 	FlexTreeSchema,
-	TreeNodeSchema,
-	MapFieldSchema,
-	TreeFieldSchema,
-	AllowedTypes,
+	FlexTreeNodeSchema,
+	FlexMapFieldSchema,
+	FlexFieldSchema,
+	FlexAllowedTypes,
 	Any,
 	LeafNodeSchema,
-	MapNodeSchema,
-	ObjectNodeSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
 } from "./typed-schema/index.js";
 
 /**
@@ -36,7 +36,7 @@ import {
  * @internal
  */
 export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): FlexTreeSchema {
-	const map: Map<TreeNodeSchemaIdentifier, TreeNodeSchema> = new Map();
+	const map: Map<TreeNodeSchemaIdentifier, FlexTreeNodeSchema> = new Map();
 	for (const [identifier, innerSchema] of schema.nodeSchema) {
 		if (innerSchema instanceof LeafNodeStoredSchema) {
 			map.set(
@@ -50,22 +50,25 @@ export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): FlexTreeSc
 		} else if (innerSchema instanceof MapNodeStoredSchema) {
 			map.set(
 				identifier,
-				MapNodeSchema.create(
+				FlexMapNodeSchema.create(
 					{ name: "intoTypedSchema" },
 					identifier,
-					fieldSchemaFromStoredSchema(innerSchema.mapFields, map) as MapFieldSchema,
+					fieldSchemaFromStoredSchema(innerSchema.mapFields, map) as FlexMapFieldSchema,
 				),
 			);
 		} else {
-			assert(innerSchema instanceof ObjectNodeStoredSchema, "unsupported node kind");
-			const fields = new Map<string, TreeFieldSchema>();
+			assert(
+				innerSchema instanceof ObjectNodeStoredSchema,
+				0x882 /* unsupported node kind */,
+			);
+			const fields = new Map<string, FlexFieldSchema>();
 			for (const [key, field] of innerSchema.objectNodeFields) {
 				fields.set(key, fieldSchemaFromStoredSchema(field, map));
 			}
 			const fieldsObject = mapToObject(fields);
 			map.set(
 				identifier,
-				ObjectNodeSchema.create({ name: "intoTypedSchema" }, identifier, fieldsObject),
+				FlexObjectNodeSchema.create({ name: "intoTypedSchema" }, identifier, fieldsObject),
 			);
 		}
 	}
@@ -93,13 +96,13 @@ function mapToObject<MapValue>(map: Map<string, MapValue>): Record<string, MapVa
 
 export function fieldSchemaFromStoredSchema(
 	schema: TreeFieldStoredSchema,
-	map: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeSchema>,
-): TreeFieldSchema {
+	map: ReadonlyMap<TreeNodeSchemaIdentifier, FlexTreeNodeSchema>,
+): FlexFieldSchema {
 	const kind =
 		defaultSchemaPolicy.fieldKinds.get(schema.kind.identifier) ?? fail("missing field kind");
-	const types: AllowedTypes =
+	const types: FlexAllowedTypes =
 		schema.types === undefined
 			? [Any]
 			: Array.from(schema.types, (v) => () => map.get(v) ?? fail("missing schema"));
-	return TreeFieldSchema.create(kind, types);
+	return FlexFieldSchema.create(kind, types);
 }

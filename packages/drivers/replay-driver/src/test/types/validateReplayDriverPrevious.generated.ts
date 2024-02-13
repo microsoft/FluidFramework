@@ -151,6 +151,7 @@ declare function get_old_ClassDeclaration_ReplayDocumentService():
 declare function use_current_ClassDeclaration_ReplayDocumentService(
     use: TypeOnly<current.ReplayDocumentService>): void;
 use_current_ClassDeclaration_ReplayDocumentService(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_ReplayDocumentService());
 
 /*

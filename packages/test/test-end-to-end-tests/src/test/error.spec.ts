@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 import { ILoaderProps, Loader } from "@fluidframework/container-loader";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
-import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
+import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils/internal";
 import { isILoggingError, normalizeError } from "@fluidframework/telemetry-utils";
 import {
 	LocalCodeLoader,
@@ -15,8 +15,8 @@ import {
 	ITestObjectProvider,
 	TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
+import { ContainerErrorTypes } from "@fluidframework/container-definitions";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { ContainerErrorType } from "@fluidframework/container-definitions";
 
 // REVIEW: enable compat testing?
 describeCompat("Errors Types", "NoCompat", (getTestObjectProvider) => {
@@ -28,7 +28,7 @@ describeCompat("Errors Types", "NoCompat", (getTestObjectProvider) => {
 		provider = getTestObjectProvider();
 	});
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		const loader = new Loader({
 			logger: provider.logger,
 			urlResolver: provider.urlResolver,
@@ -72,7 +72,7 @@ describeCompat("Errors Types", "NoCompat", (getTestObjectProvider) => {
 		[
 			{
 				eventName: "fluid:telemetry:Container:ContainerClose",
-				errorType: ContainerErrorType.genericError,
+				errorType: ContainerErrorTypes.genericError,
 				error: "Injected error",
 				fatalConnectError: true,
 			},
@@ -92,7 +92,7 @@ describeCompat("Errors Types", "NoCompat", (getTestObjectProvider) => {
 				};
 				await loadContainer({ documentServiceFactory: mockFactory });
 			} catch (e: any) {
-				assert(e.errorType === ContainerErrorType.genericError);
+				assert(e.errorType === ContainerErrorTypes.genericError);
 				assert(e.message === "Injected error");
 				assert(e.fatalConnectError);
 			}
@@ -129,7 +129,7 @@ describeCompat("Errors Types", "NoCompat", (getTestObjectProvider) => {
 			};
 			await loadContainer({ documentServiceFactory: mockFactory });
 		} catch (e: any) {
-			assert(e.errorType === ContainerErrorType.genericError);
+			assert(e.errorType === ContainerErrorTypes.genericError);
 			assert(e.message === "Injected error");
 		}
 		assert(

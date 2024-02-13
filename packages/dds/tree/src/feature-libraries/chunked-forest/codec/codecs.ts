@@ -15,7 +15,7 @@ import { schemaCompressedEncode } from "./schemaBasedEncoding.js";
 import { FieldBatch } from "./fieldBatch.js";
 import { uncompressedEncode } from "./uncompressedEncode.js";
 
-export interface Context {
+export interface FieldBatchEncodingContext {
 	readonly encodeType: TreeCompressionStrategy;
 	readonly schema?: SchemaAndPolicy;
 }
@@ -25,23 +25,25 @@ export interface SchemaAndPolicy {
 	readonly policy: FullSchemaPolicy;
 }
 
-export type FieldBatchCodec = IJsonCodec<FieldBatch, EncodedFieldBatch, JsonCompatibleReadOnly>;
+export type FieldBatchCodec = IJsonCodec<
+	FieldBatch,
+	EncodedFieldBatch,
+	JsonCompatibleReadOnly,
+	FieldBatchEncodingContext
+>;
 
-export function makeFieldBatchCodec(options: ICodecOptions, context: Context): FieldBatchCodec {
+export function makeFieldBatchCodec(options: ICodecOptions): FieldBatchCodec {
 	// Note: it's important that the decode function is schema-agnostic for this strategy/layering to work, since
 	// the schema that an op was encoded in doesn't necessarily match the current schema for the document (e.g. if
 	// decode is being run on a client that just submitted a schema change, but the op is from another client who has
-	// yet to receive that change)
-	// Once the layering around schema/edit-manager/SharedTreeCore is sorted out, it would be preferable
-	// for this codec to receive the current schema as part of its context rather than retain a reference
-	// to the current schema (which can mutate between calls).
+	// yet to receive that change).
 
 	return makeVersionedValidatedCodec(options, validVersions, EncodedFieldBatch, {
-		encode: (data: FieldBatch): EncodedFieldBatch => {
+		encode: (data: FieldBatch, context: FieldBatchEncodingContext): EncodedFieldBatch => {
 			for (const cursor of data) {
 				assert(
 					cursor.mode === CursorLocationType.Fields,
-					"FieldBatch expects fields cursors",
+					0x8a3 /* FieldBatch expects fields cursors */,
 				);
 			}
 			let encoded: EncodedFieldBatch;

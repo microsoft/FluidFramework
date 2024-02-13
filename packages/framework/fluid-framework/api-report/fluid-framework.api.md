@@ -4,43 +4,28 @@
 
 ```ts
 
-import { AttachState } from '@fluidframework/container-definitions';
-import { ConnectionState } from '@fluidframework/container-loader';
-import { ContainerErrorType } from '@fluidframework/container-definitions';
-import { ContainerSchema } from '@fluidframework/fluid-static';
-import { DataObjectClass } from '@fluidframework/fluid-static';
-import { DriverErrorType } from '@fluidframework/driver-definitions';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
-import { IConnection } from '@fluidframework/fluid-static';
-import { ICriticalContainerError } from '@fluidframework/container-definitions';
+import type { IErrorBase } from '@fluidframework/core-interfaces';
+import { IEvent } from '@fluidframework/core-interfaces';
+import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions';
-import { IFluidContainer } from '@fluidframework/fluid-static';
-import { IFluidContainerEvents } from '@fluidframework/fluid-static';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
-import { IMember } from '@fluidframework/fluid-static';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { IServiceAudience } from '@fluidframework/fluid-static';
-import { IServiceAudienceEvents } from '@fluidframework/fluid-static';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
-import { LoadableObjectClass } from '@fluidframework/fluid-static';
-import { LoadableObjectClassRecord } from '@fluidframework/fluid-static';
-import { LoadableObjectCtor } from '@fluidframework/fluid-static';
-import { MemberChangedListener } from '@fluidframework/fluid-static';
 import { SharedObject } from '@fluidframework/shared-object-base';
-import { SharedObjectClass } from '@fluidframework/fluid-static';
 
 // @public
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
@@ -51,35 +36,88 @@ export type ApplyKind<T, Kind extends FieldKind> = Kind extends FieldKind.Requir
 // @public
 export type ArrayToUnion<T extends readonly unknown[]> = T extends readonly (infer TValue)[] ? TValue : never;
 
-export { AttachState }
-
 // @public
-export interface CheckoutEvents {
-    afterBatch(): void;
-    revertible(revertible: Revertible): void;
+export enum AttachState {
+    Attached = "Attached",
+    Attaching = "Attaching",
+    Detached = "Detached"
 }
 
-export { ConnectionState }
-
-export { ContainerErrorType }
-
-export { ContainerSchema }
-
-// @public
-export const create: unique symbol;
-
-export { DataObjectClass }
-
-// @public
-export enum DiscardResult {
-    Failure = 1,
-    Success = 0
+// @public (undocumented)
+export enum ConnectionState {
+    CatchingUp = 1,
+    Connected = 2,
+    Disconnected = 0,
+    EstablishingConnection = 3
 }
+
+// @public
+export namespace ConnectionStateType {
+    export type CatchingUp = 1;
+    export type Connected = 2;
+    export type Disconnected = 0;
+    export type EstablishingConnection = 3;
+}
+
+// @public
+export type ConnectionStateType = ConnectionStateType.Disconnected | ConnectionStateType.EstablishingConnection | ConnectionStateType.CatchingUp | ConnectionStateType.Connected;
+
+// @public
+export type ContainerAttachProps<T = unknown> = T;
+
+// @alpha
+export const ContainerErrorTypes: {
+    readonly clientSessionExpiredError: "clientSessionExpiredError";
+    readonly genericError: "genericError";
+    readonly throttlingError: "throttlingError";
+    readonly dataCorruptionError: "dataCorruptionError";
+    readonly dataProcessingError: "dataProcessingError";
+    readonly usageError: "usageError";
+};
+
+// @alpha (undocumented)
+export type ContainerErrorTypes = (typeof ContainerErrorTypes)[keyof typeof ContainerErrorTypes];
+
+// @public
+export interface ContainerSchema {
+    dynamicObjectTypes?: LoadableObjectClass<any>[];
+    initialObjects: LoadableObjectClassRecord;
+}
+
+// @public
+export type DataObjectClass<T extends IFluidLoadable> = {
+    readonly factory: {
+        IFluidDataStoreFactory: DataObjectClass<T>["factory"];
+    };
+} & LoadableObjectCtor<T>;
 
 // @public
 export const disposeSymbol: unique symbol;
 
-export { DriverErrorType }
+// @public
+export const DriverErrorTypes: {
+    readonly genericNetworkError: "genericNetworkError";
+    readonly authorizationError: "authorizationError";
+    readonly fileNotFoundOrAccessDeniedError: "fileNotFoundOrAccessDeniedError";
+    readonly offlineError: "offlineError";
+    readonly unsupportedClientProtocolVersion: "unsupportedClientProtocolVersion";
+    readonly writeError: "writeError";
+    readonly fetchFailure: "fetchFailure";
+    readonly fetchTokenError: "fetchTokenError";
+    readonly incorrectServerResponse: "incorrectServerResponse";
+    readonly fileOverwrittenInStorage: "fileOverwrittenInStorage";
+    readonly deltaStreamConnectionForbidden: "deltaStreamConnectionForbidden";
+    readonly locationRedirection: "locationRedirection";
+    readonly fluidInvalidSchema: "fluidInvalidSchema";
+    readonly fileIsLocked: "fileIsLocked";
+    readonly outOfStorageError: "outOfStorageError";
+    readonly genericError: "genericError";
+    readonly throttlingError: "throttlingError";
+    readonly usageError: "usageError";
+};
+
+// @public (undocumented)
+export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErrorTypes];
 
 // @public
 export type Events<E> = {
@@ -111,26 +149,59 @@ export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 // @public
 export type FlexListToUnion<TList extends FlexList> = ExtractItemType<ArrayToUnion<TList>>;
 
-export { IConnection }
+// @public
+export interface IConnection {
+    id: string;
+    mode: "write" | "read";
+}
 
-export { ICriticalContainerError }
+// @public
+export type ICriticalContainerError = IErrorBase;
 
 // @public
 export interface IDisposable {
     [disposeSymbol](): void;
 }
 
-export { IFluidContainer }
+// @public @sealed
+export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> extends IEventProvider<IFluidContainerEvents> {
+    attach(props?: ContainerAttachProps): Promise<string>;
+    readonly attachState: AttachState;
+    connect(): void;
+    readonly connectionState: ConnectionStateType;
+    create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
+    disconnect(): void;
+    dispose(): void;
+    readonly disposed: boolean;
+    readonly initialObjects: InitialObjects<TContainerSchema>;
+    readonly isDirty: boolean;
+}
 
-export { IFluidContainerEvents }
+// @public @sealed
+export interface IFluidContainerEvents extends IEvent {
+    (event: "connected", listener: () => void): void;
+    (event: "disconnected", listener: () => void): void;
+    (event: "saved", listener: () => void): void;
+    (event: "dirty", listener: () => void): void;
+    (event: "disposed", listener: (error?: ICriticalContainerError) => void): any;
+}
 
-export { IMember }
+// @public
+export interface IMember {
+    connections: IConnection[];
+    userId: string;
+}
 
 // @public
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
 
 // @public
 export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
+
+// @public
+export type InitialObjects<T extends ContainerSchema> = {
+    [K in keyof T["initialObjects"]]: T["initialObjects"][K] extends LoadableObjectClass<infer TChannel> ? TChannel : never;
+};
 
 // @public
 export type InsertableObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> = {
@@ -148,9 +219,21 @@ export type InsertableTypedNode<T extends TreeNodeSchema> = (T extends {
     implicitlyConstructable: true;
 } ? NodeBuilderData<T> : never) | Unhydrated<NodeFromSchema<T>>;
 
-export { IServiceAudience }
+// @public
+export interface IServiceAudience<M extends IMember> extends IEventProvider<IServiceAudienceEvents<M>> {
+    getMembers(): Map<string, M>;
+    getMyself(): Myself<M> | undefined;
+}
 
-export { IServiceAudienceEvents }
+// @public
+export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
+    // @eventProperty
+    (event: "membersChanged", listener: () => void): void;
+    // @eventProperty
+    (event: "memberAdded", listener: MemberChangedListener<M>): void;
+    // @eventProperty
+    (event: "memberRemoved", listener: MemberChangedListener<M>): void;
+}
 
 // @public
 export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : false;
@@ -173,8 +256,7 @@ export interface ISubscribable<E extends Events<E>> {
 }
 
 // @public
-export class IterableTreeListContent<T> implements Iterable<T> {
-    static [create]<T>(content: Iterable<T>): IterableTreeListContent<T>;
+export class IterableTreeArrayContent<T> implements Iterable<T> {
     [Symbol.iterator](): Iterator<T>;
 }
 
@@ -192,17 +274,26 @@ export interface IValueChanged {
 // @public
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
-export { LoadableObjectClass }
+// @public
+export type LoadableObjectClass<T extends IFluidLoadable> = DataObjectClass<T> | SharedObjectClass<T>;
 
-export { LoadableObjectClassRecord }
+// @public
+export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>;
 
-export { LoadableObjectCtor }
+// @public
+export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) => T;
 
 // @public
 export interface MakeNominal {
 }
 
-export { MemberChangedListener }
+// @public
+export type MemberChangedListener<M extends IMember> = (clientId: string, member: M) => void;
+
+// @public
+export type Myself<M extends IMember = IMember> = M & {
+    currentConnection: string;
+};
 
 // @public
 export type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema<string, NodeKind, unknown, infer TBuild> ? TBuild : never;
@@ -227,30 +318,6 @@ export type ObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, I
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
     readonly [P in symbol | string]: P extends K ? T : never;
 };
-
-// @public
-export interface Revertible {
-    discard(): DiscardResult;
-    readonly kind: RevertibleKind;
-    readonly origin: {
-        readonly isLocal: boolean;
-    };
-    revert(): RevertResult;
-}
-
-// @public
-export enum RevertibleKind {
-    Default = 0,
-    Rebase = 3,
-    Redo = 2,
-    Undo = 1
-}
-
-// @public
-export enum RevertResult {
-    Failure = 1,
-    Success = 0
-}
 
 // @public @sealed
 export class SchemaFactory<TScope extends string = string, TName extends number | string = string> {
@@ -306,7 +373,10 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     values(): IterableIterator<any>;
 }
 
-export { SharedObjectClass }
+// @public
+export type SharedObjectClass<T extends IFluidLoadable> = {
+    readonly getFactory: () => IChannelFactory;
+} & LoadableObjectCtor<T>;
 
 // @public
 export class SharedTree implements ITree {
@@ -348,19 +418,19 @@ export interface TreeApi {
 }
 
 // @public
-export interface TreeArrayNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends TreeNode, TreeArrayNodeBase<TreeNodeFromImplicitAllowedTypes<T>, InsertableTreeNodeFromImplicitAllowedTypes<T>, TreeArrayNode> {
+export interface TreeArrayNode<TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends TreeNode, TreeArrayNodeBase<TreeNodeFromImplicitAllowedTypes<TAllowedTypes>, InsertableTreeNodeFromImplicitAllowedTypes<TAllowedTypes>, TreeArrayNode> {
 }
 
 // @public
 export const TreeArrayNode: {
-    inline: <T>(content: Iterable<T>) => IterableTreeListContent<T>;
+    spread: <T>(content: Iterable<T>) => IterableTreeArrayContent<T>;
 };
 
 // @public
 export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom> extends ReadonlyArray<T>, TreeNode {
-    insertAt(index: number, ...value: (TNew | IterableTreeListContent<TNew>)[]): void;
-    insertAtEnd(...value: (TNew | IterableTreeListContent<TNew>)[]): void;
-    insertAtStart(...value: (TNew | IterableTreeListContent<TNew>)[]): void;
+    insertAt(index: number, ...value: (TNew | IterableTreeArrayContent<TNew>)[]): void;
+    insertAtEnd(...value: (TNew | IterableTreeArrayContent<TNew>)[]): void;
+    insertAtStart(...value: (TNew | IterableTreeArrayContent<TNew>)[]): void;
     moveRangeToEnd(sourceStart: number, sourceEnd: number): void;
     moveRangeToEnd(sourceStart: number, sourceEnd: number, source: TMoveFrom): void;
     moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number): void;
@@ -393,13 +463,9 @@ export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = Fie
 export type TreeLeafValue = number | string | boolean | IFluidHandle | null;
 
 // @public
-export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends TreeMapNodeBase<TreeNodeFromImplicitAllowedTypes<T>, InsertableTreeNodeFromImplicitAllowedTypes<T>> {
-}
-
-// @public
-export interface TreeMapNodeBase<TOut, TIn = TOut> extends ReadonlyMap<string, TOut>, TreeNode {
+export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>, TreeNode {
     delete(key: string): void;
-    set(key: string, value: TIn | undefined): void;
+    set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T> | undefined): void;
 }
 
 // @public
@@ -450,8 +516,13 @@ export enum TreeStatus {
 
 // @public
 export interface TreeView<in out TRoot> extends IDisposable {
-    readonly events: ISubscribable<CheckoutEvents>;
+    readonly events: ISubscribable<TreeViewEvents>;
     readonly root: TRoot;
+}
+
+// @public
+export interface TreeViewEvents {
+    afterBatch(): void;
 }
 
 // @public

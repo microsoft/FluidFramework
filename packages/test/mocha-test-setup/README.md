@@ -2,13 +2,13 @@
 
 This package has a few main purposes:
 
--   Expose/generate a default `.mocharc.js` configuration for running [mocha](https://mochajs.org) tests, which other
+-   Expose/generate a default `.mocharc.cjs` configuration for running [mocha](https://mochajs.org) tests, which other
     packages can extend.
 -   Map paths for required packages/modules to account for [Lerna](https://lerna.js.org/)'s dependency hoisting.
 -   Add mocha `beforeAll`, `beforeEach` and `afterEach` [root hook plugins](https://mochajs.org/#root-hook-plugins) to add
     some special behavior when we run tests.
 
-## Base `mocharc.js` configuration
+## Base `mocharc.cjs` configuration
 
 To leverage the base mocha configuration exposed by this package, first add it as a `devDependency` to your `package.json`
 (the rest of the file has been omitted):
@@ -21,7 +21,7 @@ To leverage the base mocha configuration exposed by this package, first add it a
 }
 ```
 
-Then put this in a `.mocharc.js` file at the root of your package:
+Then put this in a `.mocharc.cjs` file at the root of your package:
 
 ```javascript
 "use strict";

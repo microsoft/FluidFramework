@@ -24,7 +24,7 @@ describe("Fluid audience", () => {
 	let client: AzureClient;
 	let schema: ContainerSchema;
 
-	beforeEach(() => {
+	beforeEach("createAzureClient", () => {
 		client = createAzureClient("test-user-id-1", "test-user-name-1");
 		schema = {
 			initialObjects: {

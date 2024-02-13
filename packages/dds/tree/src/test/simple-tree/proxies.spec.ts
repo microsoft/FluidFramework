@@ -5,8 +5,7 @@
 
 import { strict as assert } from "assert";
 import { MockHandle } from "@fluidframework/test-runtime-utils";
-import { NodeFromSchema, SchemaFactory, Tree } from "../../class-tree/index.js";
-import { TreeArrayNode } from "../../simple-tree/index.js";
+import { TreeArrayNode, NodeFromSchema, SchemaFactory } from "../../simple-tree/index.js";
 import { getRoot, pretty } from "./utils.js";
 
 describe("SharedTree proxies", () => {
@@ -118,39 +117,6 @@ describe("SharedTreeObject", () => {
 		assert.equal(root.polyChild.content, "42");
 	});
 
-	it("can narrow polymorphic value fields", () => {
-		const root = getRoot(schema, initialTree);
-		if (typeof root.polyValue === "number") {
-			assert.equal(root.polyChild.content, 42);
-		} else {
-			assert.equal(root.polyChild.content, "42");
-		}
-	});
-
-	it("can narrow polymorphic struct fields", () => {
-		const root = getRoot(schema, initialTree);
-		if (Tree.is(root.polyChild, numberChild)) {
-			assert.equal(root.polyChild.content, 42);
-		} else {
-			assert.equal(root.polyChild.content, "42");
-		}
-	});
-
-	it("can narrow polymorphic combinations of value and struct fields", () => {
-		const root = getRoot(schema, initialTree);
-		if (Tree.is(root.polyValueChild, numberChild)) {
-			assert.equal(root.polyValueChild.content, 42);
-		} else {
-			assert.equal(root.polyValueChild, 42);
-		}
-
-		if (typeof root.polyValueChild === "number") {
-			assert.equal(root.polyValueChild, 42);
-		} else {
-			assert.equal(root.polyValueChild.content, 42);
-		}
-	});
-
 	// TODO:#6133: Make this properly async and check that the value of the handle is correct
 	it("can read and write handles", () => {
 		const root = getRoot(schema, initialTree);
@@ -247,37 +213,37 @@ describe("SharedTreeList", () => {
 
 		it("insertAtStart()", () => {
 			const list = getRoot(schema, () => []);
-			list.insertAtStart(TreeArrayNode.inline([0, 1]));
+			list.insertAtStart(TreeArrayNode.spread([0, 1]));
 			assert.deepEqual(list, [0, 1]);
 			list.removeRange();
-			list.insertAtStart(0, TreeArrayNode.inline([1]), 2);
+			list.insertAtStart(0, TreeArrayNode.spread([1]), 2);
 			assert.deepEqual(list, [0, 1, 2]);
 			list.removeRange();
-			list.insertAtStart(0, 1, TreeArrayNode.inline([2, 3]), 4, TreeArrayNode.inline([5, 6]));
+			list.insertAtStart(0, 1, TreeArrayNode.spread([2, 3]), 4, TreeArrayNode.spread([5, 6]));
 			assert.deepEqual(list, [0, 1, 2, 3, 4, 5, 6]);
 		});
 
 		it("insertAtEnd()", () => {
 			const list = getRoot(schema, () => []);
-			list.insertAtEnd(TreeArrayNode.inline([0, 1]));
+			list.insertAtEnd(TreeArrayNode.spread([0, 1]));
 			assert.deepEqual(list, [0, 1]);
 			list.removeRange();
-			list.insertAtEnd(0, TreeArrayNode.inline([1]), 2);
+			list.insertAtEnd(0, TreeArrayNode.spread([1]), 2);
 			assert.deepEqual(list, [0, 1, 2]);
 			list.removeRange();
-			list.insertAtEnd(0, 1, TreeArrayNode.inline([2, 3]), 4, TreeArrayNode.inline([5, 6]));
+			list.insertAtEnd(0, 1, TreeArrayNode.spread([2, 3]), 4, TreeArrayNode.spread([5, 6]));
 			assert.deepEqual(list, [0, 1, 2, 3, 4, 5, 6]);
 		});
 
 		it("insertAt()", () => {
 			const list = getRoot(schema, () => []);
-			list.insertAt(0, TreeArrayNode.inline([0, 1]));
+			list.insertAt(0, TreeArrayNode.spread([0, 1]));
 			assert.deepEqual(list, [0, 1]);
 			list.removeRange();
-			list.insertAt(0, 0, TreeArrayNode.inline([1]), 2);
+			list.insertAt(0, 0, TreeArrayNode.spread([1]), 2);
 			assert.deepEqual(list, [0, 1, 2]);
 			list.removeRange();
-			list.insertAt(0, 0, 1, TreeArrayNode.inline([2, 3]), 4, TreeArrayNode.inline([5, 6]));
+			list.insertAt(0, 0, 1, TreeArrayNode.spread([2, 3]), 4, TreeArrayNode.spread([5, 6]));
 			assert.deepEqual(list, [0, 1, 2, 3, 4, 5, 6]);
 		});
 	});

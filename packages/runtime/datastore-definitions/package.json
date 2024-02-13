@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/datastore-definitions",
-	"version": "2.0.0-rc.1.0.0",
+	"version": "2.0.0-rc.2.0.0",
 	"description": "Fluid data store definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -62,17 +62,17 @@
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/id-compressor": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.1.0-223007",
+		"@fluidframework/protocol-definitions": "^3.2.0-231454",
 		"@fluidframework/runtime-definitions": "workspace:~"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
-		"@fluid-tools/build-cli": "0.29.0-225750",
+		"@fluid-tools/build-cli": "^0.29.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.29.0-225750",
+		"@fluidframework/build-tools": "^0.29.0",
 		"@fluidframework/datastore-definitions-previous": "npm:@fluidframework/datastore-definitions@2.0.0-internal.8.0.0",
-		"@fluidframework/eslint-config-fluid": "^3.2.0",
-		"@microsoft/api-extractor": "^7.38.3",
+		"@fluidframework/eslint-config-fluid": "^3.5.0",
+		"@microsoft/api-extractor": "^7.39.1",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.50.0",
 		"prettier": "~3.0.3",
@@ -91,6 +91,10 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IFluidDataStoreRuntime": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

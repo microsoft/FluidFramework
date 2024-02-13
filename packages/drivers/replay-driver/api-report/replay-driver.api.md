@@ -18,6 +18,7 @@ import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
+import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @internal (undocumented)
 export class FileSnapshotReader extends ReadDocumentStorageServiceBase implements IDocumentStorageService {
@@ -94,7 +95,7 @@ export abstract class ReplayController extends ReadDocumentStorageServiceBase {
 }
 
 // @internal
-export class ReplayDocumentService implements api_2.IDocumentService {
+export class ReplayDocumentService extends TypedEventEmitter<api_2.IDocumentServiceEvents> implements api_2.IDocumentService {
     constructor(controller: api_2.IDocumentStorageService, deltaStorage: api_2.IDocumentDeltaConnection);
     connectToDeltaStorage(): Promise<api_2.IDocumentDeltaStorageService>;
     connectToDeltaStream(client: IClient): Promise<api_2.IDocumentDeltaConnection>;

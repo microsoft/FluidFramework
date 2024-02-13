@@ -7,7 +7,7 @@
  * Exports for `id-compressor`
  */
 
-export { createIdCompressor, deserializeIdCompressor, IdCompressor } from "./idCompressor";
+export { createIdCompressor, deserializeIdCompressor } from "./idCompressor";
 export { createSessionId, assertIsStableId, generateStableId, isStableId } from "./utilities";
 export {
 	IIdCompressorCore,

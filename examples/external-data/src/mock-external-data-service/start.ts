@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { externalDataServicePort } from "../mock-external-data-service-interface";
-import { ITaskData } from "../model-interface";
-import { ExternalDataSource } from "./externalDataSource";
-import { initializeExternalDataService } from "./service";
-import { MockWebhook } from "./webhook";
+import { externalDataServicePort } from "../mock-external-data-service-interface/index.js";
+import { ITaskData } from "../model-interface/index.js";
+import { ExternalDataSource } from "./externalDataSource.js";
+import { initializeExternalDataService } from "./service.js";
+import { MockWebhook } from "./webhook.js";
 
 /**
  * Initializes the mock external data service on its {@link externalDataServicePort | default port}.

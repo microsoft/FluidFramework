@@ -59,7 +59,7 @@ describeCompat("GC incremental summaries", "NoCompat", (getTestObjectProvider) =
 		return summaryResult.summaryVersion;
 	}
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		mainContainer = await provider.makeTestContainer(defaultGCConfig);
 		dataStoreA = (await mainContainer.getEntryPoint()) as ITestDataObject;
@@ -222,6 +222,10 @@ describeCompat("GC incremental summaries", "NoCompat", (getTestObjectProvider) =
 		[
 			{
 				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
+				error: "Upload summary failed in test",
+			},
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed",
 				error: "Upload summary failed in test",
 			},
 		],

@@ -4,9 +4,9 @@
  */
 
 import React, { useEffect, useRef } from "react";
-import { GridView } from "./grid";
+import { GridView } from "./grid.js";
 import * as styles from "./index.css";
-import { TableModel } from "./tableModel";
+import { TableModel } from "./tableModel.js";
 
 interface ITableViewProps {
 	model: TableModel;

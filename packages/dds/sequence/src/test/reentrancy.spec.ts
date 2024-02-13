@@ -122,12 +122,8 @@ describe("SharedString op-reentrancy", () => {
 			sharedString.insertText(0, "abcX");
 			const { segment } = sharedString.getContainingSegment(0);
 			assert(segment);
-			segment.localRefs ??= new LocalReferenceCollection(segment);
-			const localRef = segment.localRefs.createLocalRef(
-				0,
-				ReferenceType.SlideOnRemove,
-				undefined,
-			);
+			const localRefs = LocalReferenceCollection.setOrGet(segment);
+			const localRef = localRefs.createLocalRef(0, ReferenceType.SlideOnRemove, undefined);
 
 			assert.notEqual(localRef.getSegment(), undefined);
 
@@ -163,8 +159,8 @@ describe("SharedString op-reentrancy", () => {
 			sharedString.insertText(0, "abcX");
 			const { segment } = sharedString.getContainingSegment(0);
 			assert(segment);
-			segment.localRefs ??= new LocalReferenceCollection(segment);
-			const localRef = segment.localRefs.createLocalRef(0, ReferenceType.Simple, undefined);
+			const localRefs = LocalReferenceCollection.setOrGet(segment);
+			const localRef = localRefs.createLocalRef(0, ReferenceType.Simple, undefined);
 
 			assert.notEqual(localRef.getSegment(), undefined);
 

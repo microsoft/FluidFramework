@@ -55,7 +55,7 @@ export interface FuzzTestState extends DDSFuzzTestState<SharedTreeFactory> {
 	 * SharedTrees undergoing a transaction will have a forked view in {@link transactionViews} instead,
 	 * which should be used in place of this view until the transaction is complete.
 	 */
-	view2?: Map<ISharedTree, FlexTreeView<typeof fuzzSchema.rootFieldSchema>>;
+	view?: Map<ISharedTree, FlexTreeView<typeof fuzzSchema.rootFieldSchema>>;
 	/**
 	 * Schematized view of clients undergoing transactions.
 	 * Edits to this view are not visible to other clients until the transaction is closed.
@@ -71,10 +71,10 @@ export function viewFromState(
 	client: Client<SharedTreeFactory> = state.client,
 	initialTree: TreeContent<typeof fuzzSchema.rootFieldSchema>["initialTree"] = undefined,
 ): FlexTreeView<typeof fuzzSchema.rootFieldSchema> {
-	state.view2 ??= new Map();
+	state.view ??= new Map();
 	return (
 		state.transactionViews?.get(client.channel) ??
-		getOrCreate(state.view2, client.channel, (tree) =>
+		getOrCreate(state.view, client.channel, (tree) =>
 			tree.schematizeInternal({
 				initialTree,
 				schema: fuzzSchema,
@@ -593,7 +593,7 @@ function trySelectTreeField(
 	weights: Omit<FieldSelectionWeights, "filter">,
 	filter: FieldFilter = () => true,
 ): FuzzField | "no-valid-fields" {
-	const editable = tree.editableTree;
+	const editable = tree.flexTree;
 	const options =
 		weights.optional === 0
 			? ["recurse"]

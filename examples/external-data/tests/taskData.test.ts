@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assertValidTaskData, ITaskData } from "../src/model-interface";
+import { assertValidTaskData, ITaskData } from "../src/model-interface/index.js";
 
 /**
  * {@link ITaskData} unit tests.

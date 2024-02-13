@@ -14,6 +14,7 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { SharedTreeChangeFamily } from "../../shared-tree/sharedTreeChangeFamily.js";
 import {
+	RevisionTagCodec,
 	TreeStoredSchema,
 	makeAnonChange,
 	revisionMetadataSourceFromInfo,
@@ -24,11 +25,12 @@ import { leaf } from "../../domains/index.js";
 import { SharedTreeChange } from "../../shared-tree/sharedTreeChangeTypes.js";
 // eslint-disable-next-line import/no-internal-modules
 import { forbidden } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
-import { MockIdCompressor } from "../utils.js";
+import { MockIdCompressor, testRevisionTagCodec } from "../utils.js";
 import { ICodecOptions } from "../../codec/index.js";
 import { ajvValidator } from "../codec/index.js";
 
 const idCompressor = new MockIdCompressor();
+const revisionTagCodec = new RevisionTagCodec(idCompressor);
 const dataChanges: ModularChangeset[] = [];
 const codecOptions: ICodecOptions = { jsonValidator: ajvValidator };
 const fieldBatchCodec = {
@@ -38,7 +40,7 @@ const fieldBatchCodec = {
 
 const modularFamily = new ModularChangeFamily(
 	fieldKinds,
-	idCompressor,
+	testRevisionTagCodec,
 	fieldBatchCodec,
 	codecOptions,
 );
@@ -76,7 +78,11 @@ const stEmptyChange: SharedTreeChange = {
 	changes: [],
 };
 
-const sharedTreeFamily = new SharedTreeChangeFamily(idCompressor, fieldBatchCodec, codecOptions);
+const sharedTreeFamily = new SharedTreeChangeFamily(
+	revisionTagCodec,
+	fieldBatchCodec,
+	codecOptions,
+);
 
 describe("SharedTreeChangeFamily", () => {
 	it("composition composes runs of data changes", () => {

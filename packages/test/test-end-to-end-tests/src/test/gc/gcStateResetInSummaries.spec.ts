@@ -15,8 +15,8 @@ import {
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
+	createTestConfigProvider,
 	createSummarizer,
-	mockConfigProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import {
@@ -37,9 +37,10 @@ import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 describeCompat("GC state reset in summaries", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let mainContainer: IContainer;
-	const settings = {
-		"Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs": 10,
-	};
+
+	const configProvider = createTestConfigProvider();
+	configProvider.set("Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs", 10);
+	configProvider.set("Fluid.ContainerRuntime.SubmitSummary.shouldValidatePreSummaryState", true);
 
 	/** Creates a new container with the GC enabled / disabled as per gcAllowed param. */
 	const createContainer = async (gcAllowed: boolean): Promise<IContainer> => {
@@ -51,7 +52,7 @@ describeCompat("GC state reset in summaries", "NoCompat", (getTestObjectProvider
 					gcAllowed,
 				},
 			},
-			loaderProps: { configProvider: mockConfigProvider(settings) },
+			loaderProps: { configProvider },
 		};
 		return provider.makeTestContainer(testContainerConfig);
 	};
@@ -174,7 +175,7 @@ describeCompat("GC state reset in summaries", "NoCompat", (getTestObjectProvider
 		await waitForContainerConnection(container);
 	}
 
-	beforeEach(async function () {
+	beforeEach("getTestObjectProvider", async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		// These tests validate the end-to-end behavior of summaries when GC is enabled / disabled. This behavior
 		// is not affected by the service. So, it doesn't need to run against real services.
@@ -303,87 +304,6 @@ describeCompat("GC state reset in summaries", "NoCompat", (getTestObjectProvider
 			summarizer3,
 			false /* shouldGCRun */,
 			true /* shouldRegenerateSummary */,
-		);
-	});
-
-	/**
-	 * This test validates that the GC state is regenerated if needed when state is refreshed from a snapshot. If GC is
-	 * enabled and state is refreshed from a snapshot that had GC disabled, the GC state needs to be reset and a full
-	 * tree summary should happen.
-	 */
-	it("regenerates GC state on refreshing from snapshot that has GC disabled", async () => {
-		// Create a document with GC allowed. It has to be allowed on creation because this setting cannot be changed
-		// throughout the lifetime of the document.
-		mainContainer = await createContainer(true /* gcAllowed */);
-		const mainDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
-		await waitForContainerConnection(mainContainer);
-
-		// Create a data store and mark it as unreferenced by storing and the removing its handle in a referenced DDS.
-		const newDataStore = await createNewDataStore(mainDataStore._context.containerRuntime);
-		mainDataStore._root.set("newDataStore", newDataStore.handle);
-		mainDataStore._root.delete("newDataStore");
-
-		// Create a summarizer with GC enabled and summarize.
-		const { summarizer: summarizerGCEnabled } = await createSummarizer(provider, mainContainer);
-
-		// Summarize with GC enabled and validate that GC ran.
-		let summaryVersion = await summarizeAndValidateGCState(
-			summarizerGCEnabled,
-			true /* shouldGCRun */,
-			true /* shouldRegenerateSummary */,
-			[newDataStore._context.id],
-		);
-
-		// Create a summarizer with GC disabled and another one with GC enabled from the above summary where GC was
-		// enabled.
-		const { container: containerGCDisabled, summarizer: summarizerGCDisabled } =
-			await createSummarizer(
-				provider,
-				mainContainer,
-				{
-					runtimeOptions: { gcOptions: { disableGC: true } },
-					loaderProps: { configProvider: mockConfigProvider(settings) },
-				},
-				summaryVersion,
-			);
-		const { container: containerGCEnabled2, summarizer: summarizerGCEnabled2 } =
-			await createSummarizer(
-				provider,
-				mainContainer,
-				{
-					loaderProps: { configProvider: mockConfigProvider(settings) },
-				},
-				summaryVersion,
-			);
-
-		// Close the previous summarizer such that the summarizer with GC disabled is chosen as the current summarizer.
-		summarizerGCEnabled.close();
-		await reconnectSummarizerToBeElected(containerGCDisabled);
-
-		// Send an op so the next summary generated is newer than the previous one.
-		mainDataStore._root.set("key", "value");
-
-		// Summarize via the summarizer that has GC disabled. Since it loaded from a snapshot that had GC enabled, this
-		// should result in summary regeneration.
-		summaryVersion = await summarizeAndValidateGCState(
-			summarizerGCDisabled,
-			false /* shouldGCRun */,
-			true /* shouldRegenerateSummary */,
-		);
-
-		// Close the previous summarizer such that the summarizer with GC enabled is chosen as the current summarizer.
-		summarizerGCDisabled.close();
-		await reconnectSummarizerToBeElected(containerGCEnabled2);
-
-		// Now, this summarizer has GC enabled and was loaded from a snapshot that had GC enabled. So, summary need not
-		// be regenerated from that point. However, it will receive an ack for the summary from the summarizer with GC
-		// disabled and it will close.
-		await summarizerGCEnabled2.summarizeOnDemand({ reason: "gcStateResetTest" })
-			.summarySubmitted;
-
-		assert(
-			containerGCEnabled2.disposed === true,
-			"Container disposed when loaded from an older summary",
 		);
 	});
 

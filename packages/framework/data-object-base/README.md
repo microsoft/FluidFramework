@@ -1,4 +1,4 @@
-# @fluidframework/data-object-base
+# @fluid-experimental/data-object-base
 
 This is an experimental project that explores synchronous Fluid data object loading.
 
@@ -7,29 +7,28 @@ This is an experimental project that explores synchronous Fluid data object load
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
+**IMPORTANT: This package is experimental.**
+**Its APIs may change without notice.**
+
+**Do not use in production scenarios.**
+
 ## Using Fluid Framework libraries
 
 When taking a dependency on a Fluid Framework library, we recommend using a `^` (caret) version range, such as `^1.3.4`.
 While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
 library consumers should always prefer `^`.
 
-Note that when depending on a library version of the form `2.0.0-internal.x.y.z`, called the Fluid internal version scheme,
-you must use a `>= <` dependency range (such as `>=2.0.0-internal.x.y.z <2.0.0-internal.w.0.0` where `w` is `x+1`).
-Standard `^` and `~` ranges will not work as expected.
-See the [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/version-tools/README.md)
-package for more information including tools to convert between version schemes.
-
 ## Installation
 
 To get started, install the package by running the following command:
 
 ```bash
-npm i @fluidframework/data-object-base
+npm i @fluid-experimental/data-object-base
 ```
 
 ## API Documentation
 
-API documentation for **@fluidframework/data-object-base** is available at <https://fluidframework.com/docs/api/v1/data-object-base>.
+API documentation for **@fluid-experimental/data-object-base** is available at <https://fluidframework.com/docs/apis/data-object-base>.
 
 ## Contribution Guidelines
 

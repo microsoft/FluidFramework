@@ -7,7 +7,7 @@ import { SessionId } from "@fluidframework/id-compressor";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { Changeset } from "../../../feature-libraries/sequence-field/index.js";
-import { RevisionTagCodec } from "../../../core/index.js";
+import { ChangeEncodingContext, RevisionTagCodec } from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import {
@@ -20,10 +20,10 @@ import {
 import { generatePopulatedMarks } from "./populatedMarks.js";
 import { ChangeMaker as Change, cases } from "./testEdits.js";
 
-type TestCase = [string, Changeset<TestChange>, SessionId];
+type TestCase = [string, Changeset<TestChange>, ChangeEncodingContext];
 
-const sessionId = "session1" as SessionId;
-const encodingTestData: EncodingTestData<Changeset<TestChange>, unknown, SessionId> = {
+const sessionId = { originatorId: "session1" as SessionId };
+const encodingTestData: EncodingTestData<Changeset<TestChange>, unknown, ChangeEncodingContext> = {
 	successes: [
 		["with child change", Change.modify(1, TestChange.mint([], 1)), sessionId],
 		["without child change", Change.remove(2, 2), sessionId],

@@ -24,7 +24,7 @@ import {
 	CollaborationWindow,
 	compareStrings,
 	IMoveInfo,
-	IMergeLeaf,
+	ISegmentLeaf,
 	ISegment,
 	ISegmentAction,
 	Marker,
@@ -130,11 +130,26 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	private readonly clientNameToIds = new RedBlackTree<string, number>(compareStrings);
 	private readonly shortClientIdMap: string[] = [];
 
+	/**
+	 * @param specToSegment - Rehydrates a segment from its JSON representation
+	 * @param logger - Telemetry logger for diagnostics
+	 * @param options - Options for this client. See {@link IMergeTreeOptions} for details.
+	 * @param getMinInFlightRefSeq - Upon applying a message (see {@link Client.applyMsg}), client purges collab-window information which
+	 * is no longer necessary based on that message's minimum sequence number.
+	 * However, if the user of this client has in-flight messages which refer to positions in this Client,
+	 * they may wish to preserve additional merge information.
+	 * The effective minimum sequence number will be the minimum of the message's minimumSequenceNumber and the result of this function.
+	 * If this function returns undefined, the message's minimumSequenceNumber will be used.
+	 *
+	 * @privateRemarks
+	 * - Passing specToSegment would be unnecessary if Client were merged with SharedSegmentSequence
+	 * - AB#6866 tracks a more unified approach to collab window min seq handling.
+	 */
 	constructor(
-		// Passing this callback would be unnecessary if Client were merged with SharedSegmentSequence
 		public readonly specToSegment: (spec: IJSONSegment) => ISegment,
 		public readonly logger: ITelemetryLoggerExt,
 		options?: IMergeTreeOptions & PropertySet,
+		private readonly getMinInFlightRefSeq: () => number | undefined = () => undefined,
 	) {
 		super();
 		this._mergeTree = new MergeTree(options);
@@ -163,6 +178,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * It is used to get the segment group(s) for the previous operations.
 	 * @param count - The number segment groups to get peek from the tail of the queue. Default 1.
 	 */
+	// eslint-disable-next-line import/no-deprecated
+	public peekPendingSegmentGroups(): SegmentGroup | undefined;
+	// eslint-disable-next-line import/no-deprecated
+	public peekPendingSegmentGroups(count: number): SegmentGroup | SegmentGroup[] | undefined;
 	// eslint-disable-next-line import/no-deprecated
 	public peekPendingSegmentGroups(count: number = 1): SegmentGroup | SegmentGroup[] | undefined {
 		const pending = this._mergeTree.pendingSegments;
@@ -360,7 +379,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param segment - The segment to get the position of
 	 */
 	public getPosition(segment: ISegment | undefined, localSeq?: number): number {
-		const mergeSegment: IMergeLeaf | undefined = segment;
+		const mergeSegment: ISegmentLeaf | undefined = segment;
 		if (mergeSegment?.parent === undefined) {
 			return -1;
 		}
@@ -746,10 +765,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		for (const segment of segmentGroup.segments.sort((a, b) =>
 			a.ordinal < b.ordinal ? -1 : 1,
 		)) {
-			const segmentSegGroup = segment.segmentGroups.dequeue();
 			assert(
-				segmentGroup === segmentSegGroup,
-				0x035 /* "Segment group not at head of segment pending queue" */,
+				segment.segmentGroups.remove?.(segmentGroup) === true,
+				0x035 /* "Segment group not in segment pending queue" */,
 			);
 			assert(
 				segmentGroup.localSeq !== undefined,
@@ -950,7 +968,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			}
 		}
 
-		this.updateSeqNumbers(msg.minimumSequenceNumber, msg.sequenceNumber);
+		const min = Math.min(
+			this.getMinInFlightRefSeq() ?? Number.POSITIVE_INFINITY,
+			msg.minimumSequenceNumber,
+		);
+		this.updateSeqNumbers(min, msg.sequenceNumber);
 	}
 
 	private updateSeqNumbers(min: number, seq: number) {

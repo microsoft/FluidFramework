@@ -4,12 +4,12 @@
  */
 
 import { ITreeSubscriptionCursor, inCursorNode } from "../../core/index.js";
-import { FieldKind } from "../modular-schema/index.js";
+import { FlexFieldKind } from "../modular-schema/index.js";
 import { FieldKinds } from "../default-schema/index.js";
 import {
-	AllowedTypes,
-	TreeFieldSchema,
-	TreeNodeSchema,
+	FlexAllowedTypes,
+	FlexFieldSchema,
+	FlexTreeNodeSchema,
 	schemaIsLeaf,
 } from "../typed-schema/index.js";
 import { Context } from "./context.js";
@@ -25,7 +25,7 @@ import { makeField } from "./lazyField.js";
 /**
  * See {@link FlexTreeUnboxNode} for documentation on what unwrapping this performs.
  */
-export function unboxedTree<TSchema extends TreeNodeSchema>(
+export function unboxedTree<TSchema extends FlexTreeNodeSchema>(
 	context: Context,
 	schema: TSchema,
 	cursor: ITreeSubscriptionCursor,
@@ -40,9 +40,9 @@ export function unboxedTree<TSchema extends TreeNodeSchema>(
 /**
  * See {@link FlexTreeUnboxNodeUnion} for documentation on what unwrapping this performs.
  */
-export function unboxedUnion<TTypes extends AllowedTypes>(
+export function unboxedUnion<TTypes extends FlexAllowedTypes>(
 	context: Context,
-	schema: TreeFieldSchema<FieldKind, TTypes>,
+	schema: FlexFieldSchema<FlexFieldKind, TTypes>,
 	cursor: ITreeSubscriptionCursor,
 ): FlexTreeUnboxNodeUnion<TTypes> {
 	const type = schema.monomorphicChildType;
@@ -57,7 +57,7 @@ export function unboxedUnion<TTypes extends AllowedTypes>(
  * @param schema - the TreeFieldStoredSchema of the field.
  * @param cursor - the cursor, which must point to the field being proxified.
  */
-export function unboxedField<TSchema extends TreeFieldSchema>(
+export function unboxedField<TSchema extends FlexFieldSchema>(
 	context: Context,
 	schema: TSchema,
 	cursor: ITreeSubscriptionCursor,

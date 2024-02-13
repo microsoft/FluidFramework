@@ -8,7 +8,7 @@ import {
 	OpSpaceCompressedId,
 	SessionId,
 	SessionSpaceCompressedId,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/id-compressor";
 import {
 	Brand,
 	NestedMap,

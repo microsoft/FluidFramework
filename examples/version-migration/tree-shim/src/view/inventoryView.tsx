@@ -4,7 +4,7 @@
  */
 
 import React, { FC, useEffect, useRef, useState } from "react";
-import { IInventoryList, IInventoryItem, IMigrateBackingData } from "../modelInterfaces";
+import { IInventoryList, IInventoryItem, IMigrateBackingData } from "../modelInterfaces.js";
 
 export interface IInventoryItemViewProps {
 	inventoryItem: IInventoryItem;

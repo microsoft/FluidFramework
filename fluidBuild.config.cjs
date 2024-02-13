@@ -3,10 +3,13 @@
  * Licensed under the MIT License.
  */
 
-const tscDependsOn = ["^tsc", "^api", "build:genver"];
+const tscDependsOn = ["^tsc", "^api", "build:genver", "ts2esm"];
 /**
  * The settings in this file configure the Fluid build tools, such as fluid-build and flub. Some settings apply to the
  * whole repo, while others apply only to the client release group.
+ *
+ * See https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-tools/src/common/fluidTaskDefinitions.ts
+ * for details on the task and dependency definition format.
  */
 module.exports = {
 	tasks: {
@@ -45,6 +48,7 @@ module.exports = {
 		"build:copy": [],
 		"build:genver": [],
 		"typetests:gen": ["^tsc", "build:genver"], // we may reexport type from dependent packages, needs to build them first.
+		"ts2esm": [],
 		"tsc": tscDependsOn,
 		"build:esnext": [...tscDependsOn, "^build:esnext"],
 		"build:test": [
@@ -146,6 +150,8 @@ module.exports = {
 	// `flub check policy` config. It applies to the whole repo.
 	policy: {
 		exclusions: [
+			"common/build/build-common/src/cjs/package.json",
+			"common/build/build-common/src/esm/package.json",
 			"docs/layouts/",
 			"docs/themes/thxvscode/assets/",
 			"docs/themes/thxvscode/layouts/",
@@ -177,6 +183,9 @@ module.exports = {
 				"^packages/utils/.*/package.json",
 				"^packages/loader/container-loader/package.json",
 			],
+			"fluid-build-tasks-tsc": [
+				"packages/dds/tree/package.json", // Builds CommonJS with custom tsconfig
+			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
 				"tools/api-markdown-documenter/src/test/snapshots/.*",
@@ -189,6 +198,10 @@ module.exports = {
 			],
 			"package-lockfiles-npm-version": [
 				"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
+			],
+			"no-js-file-extensions": [
+				// PropertyDDS uses .js files which should be renamed eventually.
+				".*/PropertyDDS/.*",
 			],
 			"npm-package-json-scripts-args": [
 				// server/routerlicious and server/routerlicious/packages/routerlicious use
@@ -230,6 +243,7 @@ module.exports = {
 				"^tools/getkeys",
 			],
 			"npm-package-json-esm": [
+				"packages/dds/tree/package.json", // Policy is incorrect about "module" in package.json
 				// These are ESM-only packages and use tsc to build the ESM output. The policy handler doesn't understand this
 				// case.
 				"packages/dds/migration-shim/package.json",
@@ -269,6 +283,35 @@ module.exports = {
 				"package.json",
 			],
 			"npm-package-json-script-dep": ["^build-tools/"],
+			"npm-public-package-requirements": [
+				// Test packages published only for the purpose of running tests in CI.
+				"^azure/packages/test/",
+				"^packages/service-clients/end-to-end-tests/",
+				"^packages/test/test-app-insights-logger/",
+				"^packages/test/test-service-load/",
+				"^packages/test/test-end-to-end-tests/",
+
+				// JS packages, which do not use api-extractor
+				"^common/build/",
+
+				// PropertyDDS packages, which are not production
+				"^experimental/PropertyDDS/",
+
+				// Tools packages that are not library packages
+				"^packages/tools/fetch-tool/",
+				"^tools/test-tools/",
+
+				// TODO: add api-extractor infra and remove these overrides
+				"^build-tools/packages/",
+				"^tools/bundle-size-tools/",
+				"^server/historian/",
+				"^server/gitrest/",
+				"^server/routerlicious/",
+				"^examples/data-objects/table-document/",
+				"^experimental/framework/data-objects/",
+				"^tools/telemetry-generator/",
+				"^packages/tools/webpack-fluid-loader/",
+			],
 		},
 		packageNames: {
 			// The allowed package scopes for the repo.
@@ -330,6 +373,7 @@ module.exports = {
 				["copyfiles", "copyfiles"],
 				["oclif", "oclif"],
 				["renamer", "renamer"],
+				["ts2esm", "ts2esm"],
 				["tsc-multi", "tsc-multi"],
 				["attw", "@arethetypeswrong/cli"],
 			],
@@ -355,6 +399,31 @@ module.exports = {
 			tsc: {
 				ignoreDevDependencies: ["@fluid-tools/webpack-fluid-loader"],
 			},
+		},
+		// Requirements applied to all `public` packages.
+		publicPackageRequirements: {
+			// The following scripts are all currently required to ensure api-extractor is run correctly in local builds and pipelines
+			requiredScripts: [
+				// TODO: Add as a requirement once all packages have been updated to produce dual esm/commonjs builds
+				// {
+				// 	name: "api",
+				// 	body: "fluid-build . --task api",
+				// },
+				{
+					name: "build:docs",
+					body: "fluid-build . --task api",
+				},
+				{
+					name: "ci:build:docs",
+					body: "api-extractor run",
+				},
+				{
+					name: "check:release-tags",
+					body: "api-extractor run --local --config ./api-extractor-lint.json",
+				},
+			],
+			// All of our public packages should be using api-extractor
+			requiredDevDependencies: ["@microsoft/api-extractor"],
 		},
 	},
 

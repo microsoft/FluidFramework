@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/app-insights-logger",
-	"version": "2.0.0-rc.1.0.0",
+	"version": "2.0.0-rc.2.0.0",
 	"description": "Contains a Fluid logging client that sends telemetry events to Azure App Insights",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -91,22 +91,28 @@
 		"test": "npm run test:mocha",
 		"test:mocha": "mocha --recursive \"dist/test/**/*.spec.*js\" -r node_modules/@fluidframework/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "tsc"
+		"tsc": "tsc",
+		"typetests:gen": "fluid-type-test-generator",
+		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"@microsoft/applicationinsights-web": "^2.8.11"
+		"@microsoft/applicationinsights-web": "^2.8.11",
+		"@ungap/structured-clone": "^1.2.0"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
+		"@fluid-tools/build-cli": "^0.29.0",
+		"@fluidframework/app-insights-logger-previous": "npm:@fluidframework/app-insights-logger@2.0.0-rc.1.0.1",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.29.0-225750",
+		"@fluidframework/build-tools": "^0.29.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@microsoft/api-extractor": "^7.38.3",
+		"@microsoft/api-extractor": "^7.39.1",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
 		"@types/sinon": "^7.0.13",
+		"@types/ungap__structured-clone": "^1.2.0",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.50.0",
@@ -141,11 +147,14 @@
 					"api-extractor:esnext"
 				],
 				"script": false
-			}
+			},
+			"tsc": [
+				"...",
+				"typetests:gen"
+			]
 		}
 	},
 	"typeValidation": {
-		"disabled": true,
 		"broken": {}
 	}
 }

@@ -216,4 +216,4 @@ export interface IBaseDocument extends IEventProvider<IBaseDocumentEvents> {
 	readonly setLeader: (newLeader: string) => void;
 }
 
-export { assertValidTaskData, ITaskListData, ITaskData } from "./TaskData";
+export { assertValidTaskData, ITaskListData, ITaskData } from "./TaskData.js";

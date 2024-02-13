@@ -204,7 +204,7 @@ function invertMark<TNodeChange>(
 		}
 		case "MoveIn": {
 			const inputId = getInputCellId(mark, revision, revisionMetadata);
-			assert(inputId !== undefined, "Active move-ins should target empty cells");
+			assert(inputId !== undefined, 0x89e /* Active move-ins should target empty cells */);
 			const invertedMark: Mutable<CellMark<MoveOut, TNodeChange>> = {
 				type: "MoveOut",
 				id: mark.id,

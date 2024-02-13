@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { CoordinateContainerRuntimeFactory } from "./container";
+import { CoordinateContainerRuntimeFactory } from "./container.js";
 
 /**
  * @internal

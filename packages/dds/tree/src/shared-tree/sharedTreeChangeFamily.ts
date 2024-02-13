@@ -4,13 +4,13 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { IIdCompressor } from "@fluidframework/id-compressor";
 import { ICodecFamily, ICodecOptions } from "../codec/index.js";
 import {
 	ChangeEncodingContext,
 	ChangeFamily,
 	ChangeRebaser,
 	RevisionMetadataSource,
+	RevisionTagCodec,
 	TaggedChange,
 	mapTaggedChange,
 } from "../core/index.js";
@@ -19,6 +19,7 @@ import {
 	ModularChangeFamily,
 	ModularChangeset,
 	FieldBatchCodec,
+	TreeCompressionStrategy,
 } from "../feature-libraries/index.js";
 import { Mutable, fail } from "../util/index.js";
 import { makeSharedTreeChangeCodecFamily } from "./sharedTreeChangeCodecs.js";
@@ -43,15 +44,17 @@ export class SharedTreeChangeFamily
 	private readonly modularChangeFamily: ModularChangeFamily;
 
 	public constructor(
-		idCompressor: IIdCompressor,
+		revisionTagCodec: RevisionTagCodec,
 		fieldBatchCodec: FieldBatchCodec,
 		codecOptions: ICodecOptions,
+		chunkCompressionStrategy?: TreeCompressionStrategy,
 	) {
 		this.modularChangeFamily = new ModularChangeFamily(
 			fieldKinds,
-			idCompressor,
+			revisionTagCodec,
 			fieldBatchCodec,
 			codecOptions,
+			chunkCompressionStrategy,
 		);
 		this.codecs = makeSharedTreeChangeCodecFamily(
 			this.modularChangeFamily.latestCodec,
@@ -147,14 +150,14 @@ export class SharedTreeChangeFamily
 		}
 		assert(
 			change.changes.length === 1 && over.change.changes.length === 1,
-			"SharedTreeChange should have exactly one inner change if no schema change is present.",
+			0x884 /* SharedTreeChange should have exactly one inner change if no schema change is present. */,
 		);
 
 		const dataChangeIntention = change.changes[0];
 		const dataChangeOver = over.change.changes[0];
 		assert(
 			dataChangeIntention.type === "data" && dataChangeOver.type === "data",
-			"Data change should be present.",
+			0x885 /* Data change should be present. */,
 		);
 
 		return {

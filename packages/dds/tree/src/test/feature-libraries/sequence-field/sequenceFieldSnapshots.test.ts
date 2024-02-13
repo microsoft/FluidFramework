@@ -7,7 +7,8 @@ import { createIdCompressor } from "@fluidframework/id-compressor";
 import { RevisionTagCodec } from "../../../core/index.js";
 import { SequenceField } from "../../../feature-libraries/index.js";
 import { TestChange } from "../../testChange.js";
-import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/snapshotTools.js";
+import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
+// eslint-disable-next-line import/no-internal-modules
 import { sessionId } from "../../snapshots/testTrees.js";
 import { generatePopulatedMarks } from "./populatedMarks.js";
 
@@ -27,7 +28,9 @@ export function testSnapshots() {
 				marks.forEach((mark, index) => {
 					it(`${index} - ${"type" in mark ? mark.type : "NoOp"}`, () => {
 						const changeset = [mark];
-						const encoded = codec.json.encode(changeset, idCompressor.localSessionId);
+						const encoded = codec.json.encode(changeset, {
+							originatorId: idCompressor.localSessionId,
+						});
 						takeJsonSnapshot(encoded);
 					});
 				});

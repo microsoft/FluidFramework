@@ -8,7 +8,7 @@ import { IUrlResolver, IResolvedUrl } from "@fluidframework/driver-definitions";
 import {
 	IOdspAuthRequestInfo,
 	getDriveItemByRootFileName,
-} from "@fluidframework/odsp-doclib-utils";
+} from "@fluidframework/odsp-doclib-utils/internal";
 import {
 	OdspDriverUrlResolver,
 	createOdspUrl,

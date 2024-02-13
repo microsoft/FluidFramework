@@ -11,8 +11,8 @@ import {
 } from "@fluidframework/tree";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { AppState } from "./appState";
-import { appSchemaData, rootAppStateSchema } from "./schema";
+import { AppState } from "./appState.js";
+import { appSchemaData, rootAppStateSchema } from "./schema.js";
 
 // Key used to store/retrieve the SharedTree instance within the root SharedMap.
 const treeKey = "treeKey";
@@ -45,7 +45,7 @@ export class Bubblebench extends DataObject {
 
 	protected async hasInitialized() {
 		this._appState = new AppState(
-			this.tree.editableTree,
+			this.tree.flexTree,
 			/* stageWidth: */ 640,
 			/* stageHeight: */ 480,
 			/* numBubbles: */ 1,

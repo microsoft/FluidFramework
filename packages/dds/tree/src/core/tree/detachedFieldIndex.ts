@@ -4,7 +4,6 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	Brand,
 	IdAllocator,
@@ -19,6 +18,7 @@ import {
 } from "../../util/index.js";
 import { FieldKey } from "../schema-stored/index.js";
 import { ICodecOptions, IJsonCodec, noopValidator } from "../../codec/index.js";
+import { RevisionTagCodec } from "../rebase/index.js";
 import * as Delta from "./delta.js";
 import { DetachedFieldSummaryData, Major, Minor } from "./detachedFieldIndexTypes.js";
 import { makeDetachedNodeToFieldCodec } from "./detachedFieldIndexCodec.js";
@@ -48,21 +48,21 @@ export class DetachedFieldIndex {
 	public constructor(
 		private readonly name: string,
 		private rootIdAllocator: IdAllocator<ForestRootId>,
-		private readonly idCompressor: IIdCompressor,
+		private readonly revisionTagCodec: RevisionTagCodec,
 		options?: ICodecOptions,
 	) {
 		this.options = options ?? { jsonValidator: noopValidator };
-		this.codec = makeDetachedNodeToFieldCodec(idCompressor, this.options);
+		this.codec = makeDetachedNodeToFieldCodec(revisionTagCodec, this.options);
 	}
 
 	public clone(): DetachedFieldIndex {
 		const clone = new DetachedFieldIndex(
 			this.name,
-			idAllocatorFromMaxId(this.rootIdAllocator.getNextId()) as IdAllocator<ForestRootId>,
-			this.idCompressor,
+			idAllocatorFromMaxId(this.rootIdAllocator.getMaxId()) as IdAllocator<ForestRootId>,
+			this.revisionTagCodec,
 			this.options,
 		);
-		populateNestedMap(this.detachedNodeToField, clone.detachedNodeToField);
+		populateNestedMap(this.detachedNodeToField, clone.detachedNodeToField, true);
 		return clone;
 	}
 
@@ -78,6 +78,13 @@ export class DetachedFieldIndex {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Removes all entries from the index.
+	 */
+	public purge() {
+		this.detachedNodeToField.clear();
 	}
 
 	public updateMajor(current: Major, updated: Major) {
@@ -154,7 +161,7 @@ export class DetachedFieldIndex {
 	public encode(): JsonCompatibleReadOnly {
 		return this.codec.encode({
 			data: this.detachedNodeToField,
-			maxId: this.rootIdAllocator.getNextId(),
+			maxId: this.rootIdAllocator.getMaxId(),
 		}) as JsonCompatibleReadOnly;
 	}
 

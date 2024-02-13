@@ -13,6 +13,12 @@ footer {
 	background-color: #404049;
 }
 
+.availableServices {
+	font-size: 2rem;
+	text-align: center;
+	background-color: #f3f5f7;
+}
+
 .row-cta {
 	display: flex;
 	flex-wrap: wrap;
@@ -24,10 +30,9 @@ footer {
 }
 
 .cta {
-	padding: 2rem 0;
-	width: 100%;
+	width: fit-content;
 	height: 100%;
-	display: flex;
+	display: inline-block;
 	flex-flow: column;
 	color: #f3f5f7;
 	transition: 0.1s ease-in;

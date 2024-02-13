@@ -4,10 +4,12 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
 	IDocumentService,
+	IDocumentServiceEvents,
 	IDocumentServiceFactory,
 	IDocumentStorageService,
 	IResolvedUrl,
@@ -158,11 +160,16 @@ export class OpStorage extends ReadDocumentStorageServiceBase {
 	}
 }
 
-export class StaticStorageDocumentService implements IDocumentService {
+export class StaticStorageDocumentService
+	extends TypedEventEmitter<IDocumentServiceEvents>
+	implements IDocumentService
+{
 	constructor(
 		public readonly resolvedUrl: IResolvedUrl,
 		private readonly storage: IDocumentStorageService,
-	) {}
+	) {
+		super();
+	}
 
 	public dispose() {}
 

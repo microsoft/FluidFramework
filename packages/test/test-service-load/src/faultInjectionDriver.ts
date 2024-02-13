@@ -12,9 +12,11 @@ import {
 	IDocumentDeltaConnectionEvents,
 	IDocumentDeltaStorageService,
 	IDocumentService,
+	IDocumentServiceEvents,
 	IDocumentServiceFactory,
 	IDocumentStorageService,
 	IResolvedUrl,
+	ISnapshotFetchOptions,
 } from "@fluidframework/driver-definitions";
 import {
 	IClient,
@@ -23,7 +25,7 @@ import {
 	INack,
 	NackErrorType,
 } from "@fluidframework/protocol-definitions";
-import { LoggingError, wrapError } from "@fluidframework/telemetry-utils";
+import { LoggingError, UsageError, wrapError } from "@fluidframework/telemetry-utils";
 
 export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFactory {
 	private readonly _documentServices = new Map<IResolvedUrl, FaultInjectionDocumentService>();
@@ -64,7 +66,10 @@ export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFac
 	}
 }
 
-export class FaultInjectionDocumentService implements IDocumentService {
+export class FaultInjectionDocumentService
+	extends TypedEventEmitter<IDocumentServiceEvents>
+	implements IDocumentService
+{
 	private _currentDeltaStream?: FaultInjectionDocumentDeltaConnection;
 	private _currentDeltaStorage?: FaultInjectionDocumentDeltaStorageService;
 	private _currentStorage?: FaultInjectionDocumentStorageService;
@@ -95,6 +100,7 @@ export class FaultInjectionDocumentService implements IDocumentService {
 	}
 
 	constructor(private readonly internal: IDocumentService) {
+		super();
 		this.onlineP.resolve();
 	}
 
@@ -345,6 +351,14 @@ export class FaultInjectionDocumentStorageService implements IDocumentStorageSer
 	public async getSnapshotTree(version, scenarioName?: string) {
 		this.throwIfOffline();
 		return this.internal.getSnapshotTree(version, scenarioName);
+	}
+
+	public async getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions) {
+		this.throwIfOffline();
+		if (this.internal.getSnapshot !== undefined) {
+			return this.internal.getSnapshot(snapshotFetchOptions);
+		}
+		throw new UsageError("GetSnapshotApi not present");
 	}
 
 	public async getVersions(versionId, count, scenarioName, fetchSource) {

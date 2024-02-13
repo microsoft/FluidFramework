@@ -58,6 +58,7 @@ export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory 
 		// and add our default view request handler.
 		super({
 			registryEntries: new Map([[dataStoreFactory.type, Promise.resolve(dataStoreFactory)]]),
+			runtimeOptions: { enableRuntimeIdCompressor: true },
 			provideEntryPoint: async (
 				containerRuntime: IContainerRuntime,
 			): Promise<IFluidMountableViewEntryPoint> => {

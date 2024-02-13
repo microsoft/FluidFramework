@@ -88,6 +88,7 @@
 		"sessionStickinessDurationMs": 3600000,
 		"enableConnectionCountLogging": false,
 		"ignoreEphemeralFlag": true,
+		"enableClientIPLogging": false,
 		"throttling": {
 			"restCallsPerTenant": {
 				"generalRestCall": "disabled",
@@ -205,7 +206,8 @@
 			"maxTime": 60000,
 			"maxMessages": 500
 		},
-		"restartOnCheckpointFailure": true
+		"restartOnCheckpointFailure": true,
+		"enableEphemeralContainerSummaryCleanup": true
 	},
 	"scribe": {
 		"kafkaClientId": "scribe",
@@ -384,6 +386,9 @@
 		}
 	],
 	"tokenRevocation": {
-		"enable": true
+		"enable": false
+	},
+	"clusterDraining": {
+		"enable": false
 	}
 }

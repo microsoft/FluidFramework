@@ -42,26 +42,6 @@ For schema aware code, usually the unboxed version provide everything that's nee
 
 This could could be split up to separate reading and editing APIs.
 
-### JavaScript object focused use
-
-This includes use-cases like passing the tree to generic javascript object processing libraries like `JSON.stringify`, node's `assert.deepEqual`, some structural clone implementations, [JMESPath](https://jmespath.org/) and many others.
-
-> **_NOTE:_** This use-case is being de-prioritized.
-> It is currently undecided if this use-case will continue to be supported at this API level at all, or it will only be supported in the proxy based API.
-> If support for this use-case is removed, major changes and simplifications to will be made.
-
-Since this is an open ended set of preexisting third party libraries, compatibility is on a best effort basis.
-However, a few things are taken into account:
-
--   The content visited by recursively walking over all the enumerable own properties should fully and uniquely describe the tree assuming the view schema is available (see "Javascript Object API: `enumerable` and `own` properties" below for details).
-    This requires some extra properties to prevent MapNodes and sequences from blocking the traversal, and provides guidance for which properties should be enumerable own properties.
--   Adapters can be provided to (lazily) view any subtree in a more JavaScript object like form, with different options to pick different trad-offs like boxed vs. unboxed and including getters (as non-enumerable properties) back to the editable view. (TODO: actually implement this):
-
-Like with the generic tree readers above, this case intentionally does not provide editing.
-Also like the generic tree readers case, it provides an easy way for code which does understand the schema to get back to the Schema Aware API for editing if needed.
-(TODO: Add APIs for doing such casts safely.
-Possible way to do instance of checks or symbols to recover which objects are nodes and fields)
-
 ### Subscribing to changes.
 
 This includes cases like updating the user interface to reflect changes.

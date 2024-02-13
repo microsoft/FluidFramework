@@ -6,9 +6,9 @@
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert } from "@fluidframework/core-utils";
 import { NonRetryableError, runWithRetry } from "@fluidframework/driver-utils";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
 import {
 	IOdspUrlParts,
+	OdspErrorTypes,
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
@@ -150,7 +150,7 @@ async function getFileLinkCore(
 					// This will retry once in getWithRetryForTokenRefresh
 					throw new NonRetryableError(
 						"Malformed GetSharingInformation response",
-						DriverErrorType.incorrectServerResponse,
+						OdspErrorTypes.incorrectServerResponse,
 						{ driverVersion },
 					);
 				}
@@ -229,7 +229,7 @@ async function getFileItemLite(
 					// This will retry once in getWithRetryForTokenRefresh
 					throw new NonRetryableError(
 						"Malformed getFileItemLite response",
-						DriverErrorType.incorrectServerResponse,
+						OdspErrorTypes.incorrectServerResponse,
 						{ driverVersion },
 					);
 				}

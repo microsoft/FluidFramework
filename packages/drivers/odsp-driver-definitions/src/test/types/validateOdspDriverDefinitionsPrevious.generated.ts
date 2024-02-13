@@ -528,26 +528,14 @@ use_old_TypeAliasDeclaration_OdspError(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "EnumDeclaration_OdspErrorType": {"forwardCompat": false}
+* "RemovedEnumDeclaration_OdspErrorType": {"forwardCompat": false}
 */
-declare function get_old_EnumDeclaration_OdspErrorType():
-    TypeOnly<old.OdspErrorType>;
-declare function use_current_EnumDeclaration_OdspErrorType(
-    use: TypeOnly<current.OdspErrorType>): void;
-use_current_EnumDeclaration_OdspErrorType(
-    get_old_EnumDeclaration_OdspErrorType());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "EnumDeclaration_OdspErrorType": {"backCompat": false}
+* "RemovedEnumDeclaration_OdspErrorType": {"backCompat": false}
 */
-declare function get_current_EnumDeclaration_OdspErrorType():
-    TypeOnly<current.OdspErrorType>;
-declare function use_old_EnumDeclaration_OdspErrorType(
-    use: TypeOnly<old.OdspErrorType>): void;
-use_old_EnumDeclaration_OdspErrorType(
-    get_current_EnumDeclaration_OdspErrorType());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -648,26 +636,14 @@ use_old_InterfaceDeclaration_ShareLinkInfoType(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "EnumDeclaration_ShareLinkTypes": {"forwardCompat": false}
+* "RemovedEnumDeclaration_ShareLinkTypes": {"forwardCompat": false}
 */
-declare function get_old_EnumDeclaration_ShareLinkTypes():
-    TypeOnly<old.ShareLinkTypes>;
-declare function use_current_EnumDeclaration_ShareLinkTypes(
-    use: TypeOnly<current.ShareLinkTypes>): void;
-use_current_EnumDeclaration_ShareLinkTypes(
-    get_old_EnumDeclaration_ShareLinkTypes());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "EnumDeclaration_ShareLinkTypes": {"backCompat": false}
+* "RemovedEnumDeclaration_ShareLinkTypes": {"backCompat": false}
 */
-declare function get_current_EnumDeclaration_ShareLinkTypes():
-    TypeOnly<current.ShareLinkTypes>;
-declare function use_old_EnumDeclaration_ShareLinkTypes(
-    use: TypeOnly<old.ShareLinkTypes>): void;
-use_old_EnumDeclaration_ShareLinkTypes(
-    get_current_EnumDeclaration_ShareLinkTypes());
 
 /*
 * Validate forward compat by using old type in place of current type

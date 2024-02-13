@@ -1,6 +1,6 @@
 # @fluid-tools/webpack-fluid-loader
 
-This folder contains the webpack-fluid-loader. This package is meant to be used with the `webpack --serve` and is used by yo Fluid as the default `start` option.
+This folder contains the webpack-fluid-loader. This package is meant to be used with the `webpack --serve` and is used by Fluid as the default `start` option.
 
 This loader is intended for development purposes only and should not be used in production.
 

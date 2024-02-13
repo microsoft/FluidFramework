@@ -15,7 +15,7 @@
     <meta itemprop="datePublished" content="{{ now.Format "2006-01-02" }}">
 
     <!-- sections.meta -->
-    {{ $summary := .Params.summary | plainify | truncate 140 }}
+    {{ $summary := .Params.summary | plainify | truncate 180 }}
     {{ if eq $summary ""}}
     {{ $summary = .Title }}
     {{ end }}

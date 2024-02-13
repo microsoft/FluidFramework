@@ -20,7 +20,7 @@ const {
  */
 const generateApiDocsLinkSection = (packageName, includeHeading) => {
 	const shortName = PackageName.getUnscopedName(packageName);
-	const sectionBody = `API documentation for **${packageName}** is available at <https://fluidframework.com/docs/api/v1/${shortName}>.`;
+	const sectionBody = `API documentation for **${packageName}** is available at <https://fluidframework.com/docs/apis/${shortName}>.`;
 	return formattedSectionText(sectionBody, includeHeading ? "API Documentation" : undefined);
 };
 

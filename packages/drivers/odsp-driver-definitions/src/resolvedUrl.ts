@@ -15,15 +15,6 @@ export interface IOdspUrlParts {
 }
 
 /**
- * @deprecated Use ISharingLinkKind type instead.
- * Type of shareLink requested/created when creating the file for the first time.
- * @alpha
- */
-export enum ShareLinkTypes {
-	csl = "csl",
-}
-
-/**
  * Sharing scope of the share links created for a file.
  * @alpha
  */
@@ -81,17 +72,9 @@ export interface ShareLinkInfoType {
 	 */
 	createLink?: {
 		/**
-		 * @deprecated
-		 * Type of shareLink requested/created when creating the file for the first time. The 'type' property here
-		 * represents the type of sharing link requested.
-		 * Will be deprecated soon. Type of sharing link will be present in the link:ISharingLink property below.
-		 */
-		type?: ShareLinkTypes | ISharingLinkKind;
-
-		/**
 		 * Share link created when the file is created for the first time with /snapshot api call.
 		 */
-		link?: string | ISharingLink;
+		link?: ISharingLink;
 
 		/**
 		 * Error message if creation of sharing link fails with /snapshot api call

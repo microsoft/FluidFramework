@@ -13,7 +13,7 @@ import sortPackageJson from "sort-package-json";
 import { PackageJson, updatePackageJsonFile } from "../../common/npmPackage";
 import { getFluidBuildConfig } from "../../common/fluidUtils";
 import { Handler, readFile, writeFile } from "../common";
-import { PackageNamePolicyConfig } from "../../common/fluidRepo";
+import { PackageNamePolicyConfig, ScriptRequirement } from "../../common/fluidRepo";
 
 const licenseId = "MIT";
 const author = "Microsoft and contributors";
@@ -1412,6 +1412,129 @@ export const handlers: Handler[] = [
 					} catch (error: unknown) {
 						result.resolved = false;
 						result.message = (error as Error).message;
+					}
+				}
+			});
+
+			return result;
+		},
+	},
+	{
+		/**
+		 * Handler for {@link PolicyConfig.publicPackageRequirements}
+		 */
+		name: "npm-public-package-requirements",
+		match,
+		handler: async (packageJsonFilePath, rootDirectoryPath) => {
+			let packageJson: PackageJson;
+			try {
+				packageJson = JSON.parse(readFile(packageJsonFilePath));
+			} catch (err) {
+				return "Error parsing JSON file: " + packageJsonFilePath;
+			}
+
+			if (packageJson.private) {
+				// If the package is private, we have nothing to validate.
+				return;
+			}
+
+			const requirements =
+				getFluidBuildConfig(rootDirectoryPath).policy?.publicPackageRequirements;
+			if (requirements === undefined) {
+				// If no requirements have been specified, we have nothing to validate.
+				return;
+			}
+
+			const errors: string[] = [];
+
+			// Ensure the package has all required dev dependencies specified in the config.
+			if (requirements.requiredDevDependencies !== undefined) {
+				const devDependencies = Object.keys(packageJson.devDependencies ?? {});
+				for (const requiredDevDependency of requirements.requiredDevDependencies) {
+					if (!devDependencies.includes(requiredDevDependency)) {
+						errors.push(`Missing dev dependency: "${requiredDevDependency}"`);
+					}
+				}
+			}
+
+			// Ensure the package has all required scripts specified in the config.
+			if (requirements.requiredScripts !== undefined) {
+				const scriptNames = Object.keys(packageJson.scripts ?? {});
+				for (const requiredScript of requirements.requiredScripts) {
+					if (!scriptNames.includes(requiredScript.name)) {
+						// Enforce the script is present
+						errors.push(`Missing script: "${requiredScript.name}"`);
+					} else if (
+						requiredScript.bodyMustMatch === true &&
+						packageJson.scripts[requiredScript.name] !== requiredScript.body
+					) {
+						// Enforce that script body matches policy
+						errors.push(
+							`Expected body of script "${requiredScript.name}" to be "${
+								requiredScript.body
+							}". Found "${packageJson.scripts[requiredScript.name]}".`,
+						);
+					}
+				}
+			}
+
+			if (errors.length > 0) {
+				return [
+					`Policy violations for public package "${packageJson.name}":`,
+					...errors,
+				].join(`${newline}* `);
+			}
+		},
+		resolver: (packageJsonFilePath, rootDirectoryPath) => {
+			const result: { resolved: boolean; message?: string } = { resolved: true };
+			updatePackageJsonFile(path.dirname(packageJsonFilePath), (packageJson) => {
+				// If the package is private, there is nothing to fix.
+				if (packageJson.private === true) {
+					return result;
+				}
+
+				const requirements =
+					getFluidBuildConfig(rootDirectoryPath).policy?.publicPackageRequirements;
+				if (requirements === undefined) {
+					// If no requirements have been specified, we have nothing to validate.
+					return;
+				}
+
+				/**
+				 * Updates the package.json contents to ensure the requirements of the specified script are met.
+				 */
+				function applyScriptCorrection(script: ScriptRequirement): void {
+					// If the script is missing, or if it exists but its body doesn't satisfy the requirement,
+					// apply the correct script configuration.
+					if (
+						packageJson.scripts[script.name] === undefined ||
+						script.bodyMustMatch === true
+					) {
+						packageJson.scripts[script.name] = script.body;
+					}
+				}
+
+				if (requirements.requiredScripts !== undefined) {
+					// Ensure scripts body exists
+					if (packageJson.scripts === undefined) {
+						packageJson.scripts = {};
+					}
+
+					// Applies script corrections as needed for all script requirements
+					requirements.requiredScripts.forEach(applyScriptCorrection);
+				}
+
+				// If there are any missing required dev dependencies, report that the issues were not resolved (and
+				// the dependencies need to be added manually).
+				// TODO: In the future, we could consider having this code actually run the pnpm commands to install
+				// the missing deps.
+				if (requirements.requiredDevDependencies !== undefined) {
+					const devDependencies = Object.keys(packageJson.devDependencies ?? {});
+					for (const requiredDevDependency of requirements.requiredDevDependencies) {
+						if (!devDependencies.includes(requiredDevDependency)) {
+							result.resolved = false;
+							break;
+						}
 					}
 				}
 			});

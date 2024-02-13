@@ -21,9 +21,9 @@ import {
 	waitForContainerConnection,
 	summarizeNow,
 	createSummarizerFromFactory,
-	mockConfigProvider,
 	timeoutAwait,
 	createSummarizer,
+	createTestConfigProvider,
 } from "@fluidframework/test-utils";
 import { ITestDataObject, describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
@@ -173,7 +173,7 @@ const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 	[dataStoreFactory3.type, Promise.resolve(dataStoreFactory3)],
 ]);
 
-let settings = {};
+const configProvider = createTestConfigProvider();
 
 /** Creates a container with Summary Options overridden to ensure Summarization happens promptly (unless disabled) */
 const createContainer = async (
@@ -208,7 +208,7 @@ const createContainer = async (
 	});
 	return provider.createContainer(runtimeFactory, {
 		logger,
-		configProvider: mockConfigProvider(settings),
+		configProvider,
 	});
 };
 
@@ -225,17 +225,21 @@ async function waitForSummaryOp(container: IContainer): Promise<boolean> {
 describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 
-	beforeEach(async function () {
+	beforeEach("setup", async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 
 		// These tests validate client logic. Testing against multiple services won't make a difference.
 		if (provider.driver.type !== "local") {
 			this.skip();
 		}
-		settings = {};
-		settings["Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs"] = 0;
-		settings["Fluid.Summarizer.ValidateSummaryBeforeUpload"] = true;
-		settings["Fluid.Summarizer.PendingOpsRetryDelayMs"] = 5;
+
+		configProvider.set("Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs", 0);
+		configProvider.set("Fluid.Summarizer.ValidateSummaryBeforeUpload", true);
+		configProvider.set("Fluid.Summarizer.PendingOpsRetryDelayMs", 5);
+	});
+
+	afterEach(() => {
+		configProvider.clear();
 	});
 
 	itExpects(
@@ -243,6 +247,11 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 		[
 			{
 				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
+				clientType: "noninteractive/summarizer",
+				error: "NodeDidNotRunGC",
+			},
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed",
 				clientType: "noninteractive/summarizer",
 				error: "NodeDidNotRunGC",
 			},
@@ -263,7 +272,7 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 				undefined /* containerRuntimeFactoryType */,
 				registryStoreEntries,
 				undefined /* logger */,
-				mockConfigProvider(settings),
+				configProvider,
 			);
 			await provider.ensureSynchronized();
 
@@ -293,9 +302,14 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 				clientType: "noninteractive/summarizer",
 				error: "NodeDidNotRunGC",
 			},
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed",
+				clientType: "noninteractive/summarizer",
+				error: "NodeDidNotRunGC",
+			},
 		],
 		async () => {
-			settings["Fluid.Summarizer.ValidateSummaryBeforeUpload"] = false;
+			configProvider.set("Fluid.Summarizer.ValidateSummaryBeforeUpload", false);
 			const container = await createContainer(provider);
 			await waitForContainerConnection(container);
 			const rootDataObject = (await container.getEntryPoint()) as RootTestDataObject;
@@ -311,7 +325,7 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 				undefined /* containerRuntimeFactoryType */,
 				registryStoreEntries,
 				undefined /* logger */,
-				mockConfigProvider(settings),
+				configProvider,
 			);
 			await provider.ensureSynchronized();
 
@@ -339,17 +353,22 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 				error: "PendingOpsWhileSummarizing",
 				beforeGenerate: true,
 			},
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed",
+				clientType: "noninteractive/summarizer",
+				error: "PendingOpsWhileSummarizing",
+			},
 		],
 		async () => {
 			// Wait for 100 ms for pending ops to be saved.
 			const pendingOpsTimeoutMs = 100;
-			settings["Fluid.Summarizer.waitForPendingOpsTimeoutMs"] = pendingOpsTimeoutMs;
+			configProvider.set("Fluid.Summarizer.waitForPendingOpsTimeoutMs", pendingOpsTimeoutMs);
 			const mockLogger = new MockLogger();
 			const container1 = await provider.makeTestContainer();
 			const { summarizer, container: summarizerContainer } = await createSummarizer(
 				provider,
 				container1,
-				{ loaderProps: { configProvider: mockConfigProvider(settings) } },
+				{ loaderProps: { configProvider } },
 				undefined /* summaryVersion */,
 				mockLogger,
 			);
@@ -406,6 +425,11 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 				error: "PendingOpsWhileSummarizing",
 				beforeGenerate: false,
 			},
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed",
+				clientType: "noninteractive/summarizer",
+				error: "PendingOpsWhileSummarizing",
+			},
 		],
 		async () => {
 			const mockLogger = new MockLogger();
@@ -430,7 +454,7 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 				undefined /* containerRuntimeFactoryType */,
 				registryStoreEntries,
 				mockLogger,
-				mockConfigProvider(settings),
+				configProvider,
 			);
 			await provider.ensureSynchronized();
 
@@ -463,7 +487,7 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 				},
 			],
 			async () => {
-				settings["Fluid.Summarizer.UseDynamicRetries"] = tryDynamicRetry;
+				configProvider.set("Fluid.Summarizer.UseDynamicRetries", tryDynamicRetry);
 				const logger = new MockLogger();
 				const mainContainer = await createContainer(
 					provider,
@@ -570,9 +594,14 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 				finalAttempt: true,
 				error: "PendingOpsWhileSummarizing",
 			},
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed",
+				clientType: "noninteractive/summarizer",
+				error: "PendingOpsWhileSummarizing",
+			},
 		],
 		async () => {
-			settings["Fluid.Summarizer.UseDynamicRetries"] = true;
+			configProvider.set("Fluid.Summarizer.UseDynamicRetries", true);
 			const container = await createContainer(provider, false /* disableSummary */);
 			await waitForContainerConnection(container);
 
@@ -654,9 +683,9 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 			},
 		],
 		async () => {
-			settings["Fluid.Summarizer.UseDynamicRetries"] = true;
-			settings["Fluid.Summarizer.SkipFailingIncorrectSummary"] = true;
-			settings["Fluid.Summarizer.PendingOpsRetryDelayMs"] = 5;
+			configProvider.set("Fluid.Summarizer.UseDynamicRetries", true);
+			configProvider.set("Fluid.Summarizer.SkipFailingIncorrectSummary", true);
+			configProvider.set("Fluid.Summarizer.PendingOpsRetryDelayMs", 5);
 			const container = await createContainer(provider, false /* disableSummary */);
 			await waitForContainerConnection(container);
 
@@ -712,10 +741,15 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 				error: "Mixed-in summary handler threw!",
 				errorType: "dataProcessingError",
 			},
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed",
+				clientType: "noninteractive/summarizer",
+				error: "Mixed-in summary handler threw!",
+			},
 		],
 		async () => {
 			// The "summarize" event is only emitted when this setting is enabled
-			settings["Fluid.Summarizer.UseDynamicRetries"] = true;
+			configProvider.set("Fluid.Summarizer.UseDynamicRetries", true);
 
 			const container = await createContainer(provider, false /* disableSummary */);
 			await waitForContainerConnection(container);

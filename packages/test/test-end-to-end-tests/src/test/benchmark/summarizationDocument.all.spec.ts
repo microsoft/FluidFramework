@@ -47,7 +47,7 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 		summaryVersion = lastSummarizeClient.summaryVersion;
 	});
 
-	beforeEach(async function () {
+	beforeEach("conditionalSkip", async function () {
 		const docData = getDocumentInfo();
 		if (
 			docData.supportedEndpoints &&

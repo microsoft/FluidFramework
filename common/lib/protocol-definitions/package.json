@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/protocol-definitions",
-	"version": "3.1.0",
+	"version": "3.2.0",
 	"description": "Fluid protocol definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -59,13 +59,12 @@
 		"@fluidframework/build-tools": "^0.26.1",
 		"@fluidframework/eslint-config-fluid": "^3.2.0",
 		"@fluidframework/protocol-definitions-previous": "npm:@fluidframework/protocol-definitions@2.0.0",
-		"@microsoft/api-extractor": "^7.38.3",
+		"@microsoft/api-extractor": "^7.39.1",
 		"concurrently": "^6.2.0",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.55.0",
 		"eslint-config-prettier": "~9.0.0",
 		"prettier": "~3.0.3",
-		"renamer": "^4.0.0",
 		"rimraf": "^2.6.2",
 		"tsc-multi": "^1.1.0",
 		"typescript": "~5.1.6"
@@ -79,8 +78,11 @@
 		}
 	},
 	"pnpm": {
+		"commentsOverrides": [
+			"sharp <0.32.6 has a vulnerability that Component Governance flags (https://github.com/advisories/GHSA-54xq-cgqr-rpm3). It's a transitive dependency through jssm-viz-cli, which hasn't updated to a version with the fix"
+		],
 		"patchedDependencies": {
-			"@microsoft/api-extractor@7.38.3": "../../../patches/@microsoft__api-extractor@7.38.3.patch",
+			"@microsoft/api-extractor@7.39.1": "../../../patches/@microsoft__api-extractor@7.39.1.patch",
 			"tsc-multi@1.1.0": "../../../patches/tsc-multi@1.1.0.patch"
 		},
 		"peerDependencyComments": [
@@ -90,6 +92,9 @@
 			"ignoreMissing": [
 				"@types/node"
 			]
+		},
+		"overrides": {
+			"sharp": "^0.33.2"
 		}
 	},
 	"typeValidation": {

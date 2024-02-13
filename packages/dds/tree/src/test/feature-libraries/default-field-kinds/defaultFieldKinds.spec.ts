@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert, fail } from "assert";
 import {
 	FieldChangeHandler,
 	NodeChangeset,
@@ -17,7 +17,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/default-schema/defaultFieldKinds.js";
 import { makeAnonChange, TaggedChange, tagChange } from "../../../core/index.js";
-import { brand, fakeIdAllocator } from "../../../util/index.js";
+import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util/index.js";
 import { defaultRevisionMetadataFromChanges, mintRevisionTag } from "../../utils.js";
 // eslint-disable-next-line import/no-internal-modules
 import { OptionalChangeset } from "../../../feature-libraries/optional-field/index.js";
@@ -41,12 +41,13 @@ const failCrossFieldManager: CrossFieldManager = {
 	set: () => assert.fail("Should not modify CrossFieldManager"),
 };
 
-const childComposer1_2 = (changes: TaggedChange<NodeChangeset>[]): NodeChangeset => {
-	assert(changes.length === 2);
-	assert.deepEqual(
-		changes.map((c) => c.change),
-		[nodeChange1, nodeChange2],
-	);
+const childComposer1_2 = (
+	change1: NodeChangeset | undefined,
+	change2: NodeChangeset | undefined,
+): NodeChangeset => {
+	assert(change1 !== undefined && change2 !== undefined);
+	assert.deepEqual(change1, nodeChange1);
+	assert.deepEqual(change2, nodeChange2);
 	return arbitraryChildChange;
 };
 
@@ -123,15 +124,19 @@ describe("defaultFieldKinds", () => {
 			childChanges: [],
 		});
 
-		const simpleChildComposer = (changes: TaggedChange<NodeChangeset>[]) => {
-			assert.equal(changes.length, 1);
-			return changes[0].change;
+		const simpleChildComposer = (
+			a: NodeChangeset | undefined,
+			b: NodeChangeset | undefined,
+		) => {
+			assert(a === undefined || b === undefined);
+			return a ?? b ?? fail("Expected a defined node changeset");
 		};
 
 		describe("correctly composes", () => {
 			it("two field changes", () => {
 				const composed = fieldHandler.rebaser.compose(
-					[change1, change2],
+					change1,
+					change2,
 					simpleChildComposer,
 					fakeIdAllocator,
 					failCrossFieldManager,
@@ -161,7 +166,8 @@ describe("defaultFieldKinds", () => {
 					],
 				};
 				const actual = fieldHandler.rebaser.compose(
-					[change1, taggedChildChange1],
+					change1,
+					taggedChildChange1,
 					simpleChildComposer,
 					fakeIdAllocator,
 					failCrossFieldManager,
@@ -172,7 +178,8 @@ describe("defaultFieldKinds", () => {
 
 			it("a child change and a field change", () => {
 				const actual = fieldHandler.rebaser.compose(
-					[makeAnonChange(childChange1), change1],
+					makeAnonChange(childChange1),
+					change1,
 					simpleChildComposer,
 					fakeIdAllocator,
 					failCrossFieldManager,
@@ -200,7 +207,8 @@ describe("defaultFieldKinds", () => {
 				assertEqual(
 					makeAnonChange(
 						fieldHandler.rebaser.compose(
-							[makeAnonChange(childChange1), makeAnonChange(childChange2)],
+							makeAnonChange(childChange1),
+							makeAnonChange(childChange2),
 							childComposer1_2,
 							fakeIdAllocator,
 							failCrossFieldManager,
@@ -222,7 +230,7 @@ describe("defaultFieldKinds", () => {
 			const inverted = fieldHandler.rebaser.invert(
 				taggedChange,
 				childInverter,
-				fakeIdAllocator,
+				idAllocatorFromMaxId(),
 				failCrossFieldManager,
 				defaultRevisionMetadataFromChanges([taggedChange]),
 			);

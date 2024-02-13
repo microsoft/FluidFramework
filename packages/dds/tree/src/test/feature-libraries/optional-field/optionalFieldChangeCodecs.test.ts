@@ -14,15 +14,20 @@ import {
 	optionalFieldEditor,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
-import { SessionAwareCodec } from "../../../codec/index.js";
-import { RevisionTagCodec } from "../../../core/index.js";
+import { IJsonCodec } from "../../../codec/index.js";
+import { ChangeEncodingContext, RevisionTagCodec } from "../../../core/index.js";
 import { changesetForChild } from "../fieldKindTestUtils.js";
 
 const nodeChange1 = changesetForChild("nodeChange1");
 
 const encodedChild = "encoded child";
 
-const childCodec1: SessionAwareCodec<NodeChangeset> = {
+const childCodec1: IJsonCodec<
+	NodeChangeset,
+	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnly,
+	ChangeEncodingContext
+> = {
 	encode: (change: NodeChangeset) => {
 		assert.deepEqual(change, nodeChange1);
 		return encodedChild;
@@ -64,8 +69,12 @@ const change1WithChildChange: OptionalChangeset = {
 
 export function testCodecs() {
 	describe("Codecs", () => {
-		const sessionId = "session1" as SessionId;
-		const encodingTestData: EncodingTestData<OptionalChangeset, unknown, SessionId> = {
+		const sessionId = { originatorId: "session1" as SessionId };
+		const encodingTestData: EncodingTestData<
+			OptionalChangeset,
+			unknown,
+			ChangeEncodingContext
+		> = {
 			successes: [
 				["set from empty", change1, sessionId],
 				["set from non-empty", change2, sessionId],

@@ -4,30 +4,35 @@
  */
 
 /**
- * The **fluid-framework** package bundles a collection of Fluid Framework client libraries for easy use
- * when paired with a corresponding service client library (for example,
- * `\@fluidframework/azure-client` or `\@fluidframework/tinylicious-client`).
+ * Bundles a collection of Fluid Framework client libraries for easy use when paired with a corresponding service client
+ * package (e.g. `@fluidframework/azure-client`, `@fluidframework/tinylicious-client`, or `@fluid-experimental/osdp-client (BETA)`).
  *
  * @packageDocumentation
  */
 
-export type { ICriticalContainerError } from "@fluidframework/container-definitions";
-export { AttachState, ContainerErrorType } from "@fluidframework/container-definitions";
-export { DriverErrorType } from "@fluidframework/driver-definitions";
+export type {
+	ConnectionState as ConnectionStateType, // TODO: deduplicate ConnectionState types
+	ICriticalContainerError,
+} from "@fluidframework/container-definitions";
+export { AttachState, ContainerErrorTypes } from "@fluidframework/container-definitions";
+export { DriverErrorTypes } from "@fluidframework/driver-definitions";
 export { ConnectionState } from "@fluidframework/container-loader";
 export type {
+	ContainerAttachProps,
 	ContainerSchema,
 	DataObjectClass,
 	IConnection,
 	IFluidContainer,
 	IFluidContainerEvents,
 	IMember,
+	InitialObjects,
 	IServiceAudience,
 	IServiceAudienceEvents,
 	LoadableObjectClass,
 	LoadableObjectClassRecord,
 	LoadableObjectCtor,
 	MemberChangedListener,
+	Myself,
 	SharedObjectClass,
 } from "@fluidframework/fluid-static";
 export type { ISharedMap, ISharedMapEvents, IValueChanged } from "@fluidframework/map";
@@ -37,7 +42,6 @@ export type {
 	AllowedTypes,
 	ApplyKind,
 	ArrayToUnion,
-	CheckoutEvents,
 	Events,
 	ExtractItemType,
 	FlexList,
@@ -58,13 +62,11 @@ export type {
 	NodeFromSchema,
 	ObjectFromSchemaRecord,
 	RestrictiveReadonlyRecord,
-	Revertible,
 	TreeApi,
 	TreeArrayNodeBase,
 	TreeFieldFromImplicitField,
 	TreeLeafValue,
 	TreeMapNode,
-	TreeMapNodeBase,
 	TreeNodeEvents,
 	TreeNodeFromImplicitAllowedTypes,
 	TreeNodeSchema,
@@ -72,19 +74,16 @@ export type {
 	TreeNodeSchemaCore,
 	TreeNodeSchemaNonClass,
 	TreeView,
+	TreeViewEvents,
 	Unhydrated,
 	WithType,
 } from "@fluidframework/tree";
 export {
-	create,
-	DiscardResult,
 	disposeSymbol,
 	FieldKind,
 	FieldSchema,
-	IterableTreeListContent,
+	IterableTreeArrayContent,
 	NodeKind,
-	RevertibleKind,
-	RevertResult,
 	SchemaFactory,
 	SharedTree,
 	Tree,

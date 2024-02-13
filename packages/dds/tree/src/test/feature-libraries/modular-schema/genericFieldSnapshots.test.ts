@@ -7,7 +7,8 @@ import { GenericChangeset } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeGenericChangeCodec } from "../../../feature-libraries/modular-schema/genericFieldKindCodecs.js";
 import { TestChange } from "../../testChange.js";
-import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/snapshotTools.js";
+import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
+// eslint-disable-next-line import/no-internal-modules
 import { sessionId } from "../../snapshots/testTrees.js";
 
 const nodeChange = TestChange.mint([], 1);
@@ -39,7 +40,7 @@ export function testSnapshots() {
 				const codec = family.resolve(version);
 				for (const { name, change } of testChangesets) {
 					it(name, () => {
-						const encoded = codec.json.encode(change, sessionId);
+						const encoded = codec.json.encode(change, { originatorId: sessionId });
 						takeJsonSnapshot(encoded);
 					});
 				}

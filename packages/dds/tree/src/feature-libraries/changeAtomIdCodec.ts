@@ -3,32 +3,34 @@
  * Licensed under the MIT License.
  */
 
-import { SessionId } from "@fluidframework/id-compressor";
-import { SessionAwareCodec } from "../codec/index.js";
 import {
 	RevisionTag,
 	EncodedRevisionTag,
 	ChangeAtomId,
 	EncodedChangeAtomId,
+	ChangeEncodingContext,
 } from "../core/index.js";
+import { IJsonCodec } from "../codec/index.js";
 
 export function makeChangeAtomIdCodec(
-	revisionTagCodec: SessionAwareCodec<RevisionTag, EncodedRevisionTag>,
-): SessionAwareCodec<ChangeAtomId, EncodedChangeAtomId> {
+	revisionTagCodec: IJsonCodec<
+		RevisionTag,
+		EncodedRevisionTag,
+		EncodedRevisionTag,
+		ChangeEncodingContext
+	>,
+): IJsonCodec<ChangeAtomId, EncodedChangeAtomId, EncodedChangeAtomId, ChangeEncodingContext> {
 	return {
-		encode(changeAtomId: ChangeAtomId, originatorId: SessionId): EncodedChangeAtomId {
+		encode(changeAtomId: ChangeAtomId, context: ChangeEncodingContext): EncodedChangeAtomId {
 			return changeAtomId.revision === undefined
 				? changeAtomId.localId
-				: [
-						changeAtomId.localId,
-						revisionTagCodec.encode(changeAtomId.revision, originatorId),
-				  ];
+				: [changeAtomId.localId, revisionTagCodec.encode(changeAtomId.revision, context)];
 		},
-		decode(changeAtomId: EncodedChangeAtomId, originatorId: SessionId): ChangeAtomId {
+		decode(changeAtomId: EncodedChangeAtomId, context: ChangeEncodingContext): ChangeAtomId {
 			return Array.isArray(changeAtomId)
 				? {
 						localId: changeAtomId[0],
-						revision: revisionTagCodec.decode(changeAtomId[1], originatorId),
+						revision: revisionTagCodec.decode(changeAtomId[1], context),
 				  }
 				: { localId: changeAtomId };
 		},

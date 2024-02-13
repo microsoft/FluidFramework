@@ -52,9 +52,6 @@ export {
 export { bindTimeoutContext } from "./timeoutContext";
 export { IThrottleConfig, ISimpleThrottleConfig, getThrottleConfig } from "./throttlerConfigs";
 export { IThrottleMiddlewareOptions, throttle } from "./throttlerMiddleware";
-export {
-	WebSocketTracker,
-	DummyTokenRevocationManager,
-	DummyRevokedTokenChecker,
-} from "./tokenRevocationManager";
+export { DummyTokenRevocationManager, DummyRevokedTokenChecker } from "./tokenRevocationManager";
 export { WinstonLumberjackEngine } from "./winstonLumberjackEngine";
+export { WebSocketTracker } from "./webSocketTracker";

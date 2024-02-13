@@ -12,7 +12,8 @@ import {
 } from "../../../feature-libraries/optional-field/index.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
-import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/snapshotTools.js";
+import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
+// eslint-disable-next-line import/no-internal-modules
 import { sessionId } from "../../snapshots/testTrees.js";
 
 function generateTestChangesets(
@@ -86,7 +87,7 @@ export function testSnapshots() {
 				const codec = family.resolve(version);
 				for (const { name, change } of changesets) {
 					it(name, () => {
-						const encoded = codec.json.encode(change, idCompressor.localSessionId);
+						const encoded = codec.json.encode(change, { originatorId: sessionId });
 						takeJsonSnapshot(encoded);
 					});
 				}

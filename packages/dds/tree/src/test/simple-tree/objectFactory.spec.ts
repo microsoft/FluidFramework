@@ -10,7 +10,7 @@ import {
 	SchemaFactory,
 	Tree,
 	InsertableTreeFieldFromImplicitField,
-} from "../../class-tree/index.js";
+} from "../../simple-tree/index.js";
 
 // eslint-disable-next-line import/no-internal-modules
 import { getFlexNode } from "../../simple-tree/flexNode.js";

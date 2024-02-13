@@ -16,6 +16,7 @@ export async function getHashedDocumentId(driveId: string, itemId: string): Prom
 
 /**
  * @alpha
+ * @deprecated - This is deprecated.
  */
 export interface ISnapshotContents {
 	snapshotTree: ISnapshotTree;

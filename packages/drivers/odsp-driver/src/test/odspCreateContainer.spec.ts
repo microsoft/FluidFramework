@@ -4,11 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import { DriverErrorType, IDocumentService } from "@fluidframework/driver-definitions";
+import { IDocumentService } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
+import { OdspErrorTypes, IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
 import { getOdspResolvedUrl } from "../odspUtils";
@@ -138,7 +138,7 @@ describe("Odsp Create Container Test", () => {
 			await mockFetchMultiple(
 				async () => createService(summary, resolved),
 				[
-					// Due to retry logic in getWithRetryForTokenRefresh() for DriverErrorType.incorrectServerResponse
+					// Due to retry logic in getWithRetryForTokenRefresh() for OdspErrorTypes.incorrectServerResponse
 					// Need to mock two calls
 					async () => okResponse({}, {}),
 					async () => okResponse({}, {}),
@@ -148,7 +148,7 @@ describe("Odsp Create Container Test", () => {
 			assert.strictEqual(error.statusCode, undefined, "Wrong error code");
 			assert.strictEqual(
 				error.errorType,
-				DriverErrorType.incorrectServerResponse,
+				OdspErrorTypes.incorrectServerResponse,
 				"Error type should be correct",
 			);
 			assert.strictEqual(

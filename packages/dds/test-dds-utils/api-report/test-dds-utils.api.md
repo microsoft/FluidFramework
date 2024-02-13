@@ -92,8 +92,8 @@ export interface DDSFuzzSuiteOptions {
     containerRuntimeOptions?: IMockContainerRuntimeOptions;
     defaultTestCount: number;
     detachedStartOptions: {
-        attachProbability: number;
-        enabled: boolean;
+        numOpsBeforeAttach: number;
+        rehydrateDisabled?: true;
     };
     emitter: TypedEventEmitter<DDSFuzzHarnessEvents>;
     idCompressorFactory?: (summary?: SerializedIdCompressorWithNoSession) => IIdCompressor & IIdCompressorCore;

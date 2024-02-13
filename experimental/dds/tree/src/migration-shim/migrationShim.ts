@@ -15,14 +15,13 @@ import {
 	type IGarbageCollectionData,
 	type ITelemetryContext,
 	type ISummaryTreeWithStats,
-	IIdCompressorCore,
-	SessionId,
 } from '@fluidframework/runtime-definitions';
 import { type ITree } from '@fluidframework/tree';
 import { assert } from '@fluidframework/core-utils';
 import { MessageType, type ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { type EventEmitterEventType } from '@fluid-internal/client-utils';
 import { DataProcessingError, EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
+import type { SessionId, IIdCompressorCore } from '@fluidframework/id-compressor';
 import { type SharedTreeFactory as LegacySharedTreeFactory, type SharedTree as LegacySharedTree } from '../SharedTree';
 import { type IShimChannelServices, NoDeltasChannelServices } from './shimChannelServices.js';
 import { MigrationShimDeltaHandler } from './migrationDeltaHandler.js';

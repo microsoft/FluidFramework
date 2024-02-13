@@ -56,6 +56,34 @@
         "kind": "Sequence"
       }
     },
+    "test.escapedFieldProperties": {
+      "object": {
+        "field": {
+          "kind": "Optional",
+          "types": [
+            "com.fluidframework.leaf.number"
+          ]
+        },
+        "set": {
+          "kind": "Optional",
+          "types": [
+            "com.fluidframework.leaf.number"
+          ]
+        },
+        "setValue": {
+          "kind": "Optional",
+          "types": [
+            "com.fluidframework.leaf.number"
+          ]
+        },
+        "value": {
+          "kind": "Optional",
+          "types": [
+            "com.fluidframework.leaf.number"
+          ]
+        }
+      }
+    },
     "test.hasAnyValueField": {
       "object": {
         "field": {

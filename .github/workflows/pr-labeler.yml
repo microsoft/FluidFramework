@@ -1,13 +1,16 @@
 name: "Pull Request Labeler"
 on:
   pull_request_target:
-    types: [ opened, synchronize, reopened, labeled, unlabeled ]
-    branches: [ main, next, release/* ]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+    branches: [main, next, release/*]
+
+permissions:
+  pull-requests: write
 
 jobs:
-  paths_label:
+  areas_label:
     runs-on: ubuntu-latest
-    name: Label based on file paths
+    name: Label areas
     # Skip labeling main-next merge PRs. The area labels are noisy and distracting for main-next PRs because they can
     # contain many commits, and thus touch nearly the whole repo in a single commit. Skipping these labels makes it
     # easier to focus on the more relevant main-next labels.
@@ -18,9 +21,20 @@ jobs:
       - uses: actions/labeler@5c7539237e04b714afd8ad9b4aed733815b9fab4 # ratchet:actions/labeler@v4.0.2
         if: "github.event.pull_request.title != 'Automation: main-next integrate'"
         with:
-          configuration-path: ".github/actions-labeler.yml"
+          configuration-path: ".github/labeler-areas.yml"
           repo-token: "${{ github.token }}"
           sync-labels: true # add/remove labels as modified paths in the PR change
+  # Changes to some paths should automatically add the changeset-required label. This label is often added manually, so
+  # this CI job calls the labeler action wuth sync-labels=false, so the label won't be removed automatically.
+  changesets_label:
+    runs-on: ubuntu-latest
+    name: Label changeset-required
+    steps:
+      - uses: actions/labeler@5c7539237e04b714afd8ad9b4aed733815b9fab4 # ratchet:actions/labeler@v4.0.2
+        with:
+          configuration-path: ".github/labeler-changesets.yml"
+          repo-token: "${{ github.token }}"
+          sync-labels: false # The changeset-required label is often added manually, so don't remove it.
   branches_label:
     runs-on: ubuntu-latest
     name: Label base branches and external contributors

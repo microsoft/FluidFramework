@@ -9,6 +9,7 @@ export {
 	mixinMonitoringContext,
 	IConfigProvider,
 	loggerToMonitoringContext,
+	wrapConfigProviderWithDefaults,
 } from "./config";
 export {
 	DataCorruptionError,

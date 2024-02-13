@@ -31,6 +31,7 @@ declare function get_old_ClassDeclaration_AlfredResources():
 declare function use_current_ClassDeclaration_AlfredResources(
     use: TypeOnly<current.AlfredResources>): void;
 use_current_ClassDeclaration_AlfredResources(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_AlfredResources());
 
 /*
@@ -199,6 +200,7 @@ declare function get_old_InterfaceDeclaration_IAlfredResourcesCustomizations():
 declare function use_current_InterfaceDeclaration_IAlfredResourcesCustomizations(
     use: TypeOnly<current.IAlfredResourcesCustomizations>): void;
 use_current_InterfaceDeclaration_IAlfredResourcesCustomizations(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IAlfredResourcesCustomizations());
 
 /*

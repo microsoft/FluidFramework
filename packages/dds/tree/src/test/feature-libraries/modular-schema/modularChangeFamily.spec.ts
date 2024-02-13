@@ -22,7 +22,6 @@ import {
 	cursorForJsonableTreeField,
 	chunkFieldSingle,
 	makeFieldBatchCodec,
-	TreeCompressionStrategy,
 } from "../../../feature-libraries/index.js";
 import {
 	makeAnonChange,
@@ -33,15 +32,15 @@ import {
 	FieldKindIdentifier,
 	FieldKey,
 	UpPath,
-	deltaForSet,
 	revisionMetadataSourceFromInfo,
 	ITreeCursorSynchronous,
 	DeltaFieldChanges,
 	DeltaRoot,
 	DeltaDetachedNodeId,
 	ChangeEncodingContext,
+	RevisionTagCodec,
 } from "../../../core/index.js";
-import { brand, fail } from "../../../util/index.js";
+import { brand, nestedMapFromFlatList, tryGetFromNestedMap } from "../../../util/index.js";
 import { ICodecOptions, makeCodecFamily } from "../../../codec/index.js";
 import {
 	EncodingTestData,
@@ -56,6 +55,8 @@ import {
 	ModularChangeFamily,
 	relevantRemovedRoots as relevantDetachedTreesImplementation,
 	intoDelta,
+	addMissingBuilds,
+	filterSuperfluousBuilds,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import { jsonObject, singleJsonCursor } from "../../../domains/index.js";
@@ -66,10 +67,9 @@ import { ajvValidator } from "../../codec/index.js";
 import { ValueChangeset, valueField } from "./basicRebasers.js";
 
 const singleNodeRebaser: FieldChangeRebaser<NodeChangeset> = {
-	compose: (changes, composeChild) => composeChild(changes),
+	compose: (change1, change2, composeChild) => composeChild(change1.change, change2.change),
 	invert: (change, invertChild) => invertChild(change.change),
 	rebase: (change, base, rebaseChild) => rebaseChild(change, base.change) ?? {},
-	amendCompose: () => fail("Not supported"),
 	prune: (change) => change,
 };
 
@@ -90,6 +90,7 @@ const singleNodeHandler: FieldChangeHandler<NodeChangeset> = {
 	relevantRemovedRoots: (change, relevantRemovedRootsFromChild) =>
 		relevantRemovedRootsFromChild(change.change),
 	isEmpty: (change) => change.fieldChanges === undefined,
+	createEmpty: () => ({}),
 };
 
 const singleNodeField = new FieldKindWithEditor(
@@ -107,10 +108,11 @@ const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Ma
 const codecOptions: ICodecOptions = {
 	jsonValidator: ajvValidator,
 };
+const revisionTagCodec = new RevisionTagCodec(new MockIdCompressor());
 const family = new ModularChangeFamily(
 	fieldKinds,
-	new MockIdCompressor(),
-	makeFieldBatchCodec(codecOptions, { encodeType: TreeCompressionStrategy.Uncompressed }),
+	revisionTagCodec,
+	makeFieldBatchCodec(codecOptions),
 	codecOptions,
 );
 
@@ -820,7 +822,16 @@ describe("ModularChangeFamily", () => {
 				local: [
 					{
 						count: 1,
-						fields: new Map([[fieldA, deltaForSet(node1, buildId, detachId)]]),
+						fields: new Map([
+							[
+								fieldA,
+								{
+									local: [
+										{ count: 1, detach: { minor: 0 }, attach: { minor: 1 } },
+									],
+								},
+							],
+						]),
 					},
 				],
 			};
@@ -828,7 +839,7 @@ describe("ModularChangeFamily", () => {
 			const expectedDelta: DeltaRoot = {
 				fields: new Map([
 					[fieldA, nodeDelta],
-					[fieldB, deltaForSet(singleJsonCursor(2), buildId, detachId)],
+					[fieldB, { local: [{ count: 1, detach: { minor: 1 }, attach: { minor: 2 } }] }],
 				]),
 			};
 
@@ -1025,8 +1036,22 @@ describe("ModularChangeFamily", () => {
 			};
 			const input: ModularChangeset = {
 				fieldChanges: new Map([
-					[brand("fA"), { fieldKind, change: brand(changeA), revision: majorAB }],
-					[brand("fC"), { fieldKind, change: brand(changeC), revision: majorC }],
+					[
+						brand("fA"),
+						{
+							fieldKind,
+							change: brand(changeA),
+							revision: majorAB,
+						},
+					],
+					[
+						brand("fC"),
+						{
+							fieldKind,
+							change: brand(changeC),
+							revision: majorC,
+						},
+					],
 				]),
 			};
 
@@ -1036,6 +1061,217 @@ describe("ModularChangeFamily", () => {
 				{ major: majorAB, minor: 2 },
 				{ major: majorC, minor: 1 },
 			]);
+		});
+	});
+
+	describe("adds missing builds", () => {
+		const aMajor = mintRevisionTag();
+		const a1 = { major: aMajor, minor: 1 };
+		const a2 = { major: aMajor, minor: 2 };
+		const bMajor = mintRevisionTag();
+		const b1 = { major: bMajor, minor: 1 };
+		const cMajor = mintRevisionTag();
+		const c1 = { major: cMajor, minor: 1 };
+		const u1 = { minor: 1 };
+
+		const node2 = singleJsonCursor(2);
+		const node2Chunk = treeChunkFromCursor(node2);
+		const node3 = singleJsonCursor(3);
+		const node3Chunk = treeChunkFromCursor(node3);
+
+		const nodesArray: [DeltaDetachedNodeId, TreeChunk][] = [
+			[a1, node1Chunk],
+			[a2, node2Chunk],
+			[b1, node3Chunk],
+		];
+		const nodeMap = nestedMapFromFlatList(
+			nodesArray.map(([{ major, minor }, chunk]) => [major, minor, chunk]),
+		);
+
+		const getDetachedNode = ({ major, minor }: DeltaDetachedNodeId) => {
+			return tryGetFromNestedMap(nodeMap, major, minor);
+		};
+
+		it("preserves relevant builds that are present in the input", () => {
+			const input: ModularChangeset = {
+				fieldChanges: new Map([]),
+				builds: new Map([
+					[undefined, new Map([[brand(1), node2Chunk]])],
+					[aMajor, new Map([[brand(2), node2Chunk]])],
+					[cMajor, new Map([[brand(1), node3Chunk]])],
+				]),
+			};
+
+			const expected: ModularChangeset = {
+				fieldChanges: new Map([]),
+				builds: new Map([
+					[undefined, new Map([[brand(1), node2Chunk]])],
+					[aMajor, new Map([[brand(2), node2Chunk]])],
+					[cMajor, new Map([[brand(1), node3Chunk]])],
+				]),
+			};
+
+			const withBuilds = addMissingBuilds(makeAnonChange(input), getDetachedNode, [
+				u1,
+				a2,
+				c1,
+			]);
+			assert.deepEqual(withBuilds, expected);
+		});
+
+		it("preserves irrelevant builds that are present in the input", () => {
+			const input: ModularChangeset = {
+				fieldChanges: new Map([]),
+				builds: new Map([
+					[undefined, new Map([[brand(1), node2Chunk]])],
+					[aMajor, new Map([[brand(2), node2Chunk]])],
+					[cMajor, new Map([[brand(1), node3Chunk]])],
+				]),
+			};
+
+			const expected: ModularChangeset = {
+				fieldChanges: new Map([]),
+				builds: new Map([
+					[undefined, new Map([[brand(1), node2Chunk]])],
+					[aMajor, new Map([[brand(2), node2Chunk]])],
+					[cMajor, new Map([[brand(1), node3Chunk]])],
+				]),
+			};
+
+			const withBuilds = addMissingBuilds(makeAnonChange(input), getDetachedNode, []);
+			assert.deepEqual(withBuilds, expected);
+		});
+
+		describe("attempts to add relevant builds that are missing from the input", () => {
+			it("adds the missing build if the detached node is available", () => {
+				const input: ModularChangeset = {
+					fieldChanges: new Map([]),
+				};
+
+				const expected: ModularChangeset = {
+					fieldChanges: new Map([]),
+					builds: new Map([
+						[
+							aMajor,
+							new Map([
+								[brand(1), node1Chunk],
+								[brand(2), node2Chunk],
+							]),
+						],
+						[bMajor, new Map([[brand(1), node3Chunk]])],
+					]),
+				};
+
+				const withBuilds = addMissingBuilds(makeAnonChange(input), getDetachedNode, [
+					a1,
+					a2,
+					b1,
+				]);
+				assert.deepEqual(withBuilds, expected);
+			});
+
+			it("throws if the detached node is not available", () => {
+				const input: ModularChangeset = {
+					fieldChanges: new Map([]),
+				};
+
+				assert.throws(() =>
+					addMissingBuilds(makeAnonChange(input), getDetachedNode, [{ minor: 2 }]),
+				);
+			});
+		});
+	});
+
+	describe("filters builds", () => {
+		const aMajor = mintRevisionTag();
+		const bMajor = mintRevisionTag();
+		const a1 = { major: aMajor, minor: 1 };
+		const b1 = { major: bMajor, minor: 1 };
+
+		const node2 = singleJsonCursor(2);
+		const node2Chunk = treeChunkFromCursor(node2);
+		const node3 = singleJsonCursor(3);
+		const node3Chunk = treeChunkFromCursor(node3);
+
+		it("preserves relevant builds that are present in the input", () => {
+			const input: ModularChangeset = {
+				fieldChanges: new Map([]),
+				builds: new Map([
+					[aMajor, new Map([[brand(1), node1Chunk]])],
+					[bMajor, new Map([[brand(1), node3Chunk]])],
+				]),
+			};
+
+			const expected: ModularChangeset = {
+				fieldChanges: new Map([]),
+				builds: new Map([
+					[aMajor, new Map([[brand(1), node1Chunk]])],
+					[bMajor, new Map([[brand(1), node3Chunk]])],
+				]),
+			};
+
+			const filtered = filterSuperfluousBuilds(makeAnonChange(input), [a1, b1]);
+			assert.deepEqual(filtered, expected);
+		});
+
+		it("removes irrelevant builds that are present in the input", () => {
+			const input: ModularChangeset = {
+				fieldChanges: new Map([]),
+				builds: new Map([
+					[
+						aMajor,
+						new Map([
+							[brand(1), node1Chunk],
+							[brand(2), node2Chunk],
+						]),
+					],
+					[bMajor, new Map([[brand(1), node3Chunk]])],
+				]),
+			};
+
+			const expected: ModularChangeset = {
+				fieldChanges: new Map([]),
+			};
+
+			const filtered = filterSuperfluousBuilds(makeAnonChange(input), []);
+			assert.deepEqual(filtered, expected);
+		});
+
+		it("correctly handles both relevant and irrelevant builds that are present in the input", () => {
+			const input: ModularChangeset = {
+				fieldChanges: new Map([]),
+				builds: new Map([
+					[
+						aMajor,
+						new Map([
+							[brand(1), node1Chunk],
+							[brand(2), node2Chunk],
+						]),
+					],
+					[bMajor, new Map([[brand(1), node3Chunk]])],
+				]),
+			};
+
+			const expected: ModularChangeset = {
+				fieldChanges: new Map([]),
+				builds: new Map([[bMajor, new Map([[brand(1), node3Chunk]])]]),
+			};
+
+			const filtered = filterSuperfluousBuilds(makeAnonChange(input), [b1]);
+			assert.deepEqual(filtered, expected);
+		});
+
+		it("tolerates missing relevant builds", () => {
+			const input: ModularChangeset = {
+				fieldChanges: new Map([]),
+			};
+
+			const expected: ModularChangeset = {
+				fieldChanges: new Map([]),
+			};
+
+			const filtered = filterSuperfluousBuilds(makeAnonChange(input), [a1, b1]);
+			assert.deepEqual(filtered, expected);
 		});
 	});
 

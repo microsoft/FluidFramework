@@ -21,7 +21,12 @@ data:
         },
         "config": {
             "configDumpEnabled": {{ .Values.config.configDumpEnabled }},
-            "secretNamesToRedactInConfigDump": {{ .Values.config.secretNamesToRedactInConfigDump }}
+            "secretNamesToRedactInConfigDump": [
+                {{- $lastIndex := sub (len .Values.config.secretNamesToRedactInConfigDump) 1}}
+                {{- range $i, $secret := .Values.config.secretNamesToRedactInConfigDump }}
+                {{ toJson . }}{{- if ne $i $lastIndex -}}, {{ end }}
+                {{- end }}
+            ]
         },
         "lumberjack": {
             "options": {
@@ -151,7 +156,8 @@ data:
             "groupId": "{{ template "deli.fullname" . }}",
             "checkpointBatchSize": 10,
             "checkpointTimeIntervalMsec": 1000,
-            "restartOnCheckpointFailure": {{ .Values.deli.restartOnCheckpointFailure }}
+            "restartOnCheckpointFailure": {{ .Values.deli.restartOnCheckpointFailure }},
+            "enableEphemeralContainerSummaryCleanup": {{ .Values.deli.enableEphemeralContainerSummaryCleanup }}
         },
         "scribe": {
             "kafkaClientId": "{{ template "scribe.fullname" . }}",

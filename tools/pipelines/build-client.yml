@@ -65,18 +65,18 @@ trigger:
     - azure
     - examples
     - experimental
+    - common/build/build-common
     - lerna.json
     - package.json
     - pnpm-lock.yaml
     - pnpm-workspace.yaml
     - tools/pipelines/build-client.yml
-    - tools/pipelines/build-azure.yml
-    - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/1ES/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
-    - tools/pipelines/templates/include-publish-npm-package.yml
-    - tools/pipelines/templates/include-publish-npm-package-deployment.yml
+    - tools/pipelines/templates/1ES/include-publish-npm-package.yml
+    - tools/pipelines/templates/1ES/include-publish-npm-package-deployment.yml
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
     - tools/pipelines/templates/include-git-tag-steps.yml
     - tools/pipelines/templates/include-use-node-version.yml
@@ -97,15 +97,15 @@ pr:
     - azure
     - examples
     - experimental
+    - common/build/build-common
     - lerna.json
     - package.json
     - pnpm-lock.yaml
     - pnpm-workspace.yaml
     - fluidBuild.config.cjs
     - tools/pipelines/build-client.yml
-    - tools/pipelines/build-azure.yml
-    - tools/pipelines/templates/build-npm-package.yml
-    - tools/pipelines/templates/include-policy-check.yml
+    - tools/pipelines/templates/1ES/build-npm-package.yml
+    - tools/pipelines/templates/1ES/include-policy-check.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
@@ -113,9 +113,17 @@ pr:
     - tools/pipelines/templates/include-process-test-results.yml
     - scripts/*
 
+variables:
+  - template: /tools/pipelines/templates/include-vars.yml@self
+    parameters:
+      publishOverride: '${{ parameters.publishOverride }}'
+      releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
+      buildNumberInPatch: ''
+
 extends:
-  template: templates/build-npm-package.yml
+  template: /tools/pipelines/templates/1ES/build-npm-package.yml@self
   parameters:
+    publish: ${{ variables.publish }}
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     packageTypesOverride: ${{ parameters.packageTypesOverride }}
@@ -123,10 +131,11 @@ extends:
     interdependencyRange: ${{ parameters.interdependencyRange }}
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
+    testCoverage: ${{ variables.testCoverage }}
     buildDirectory: .
     tagName: client
     isReleaseGroup: true
-    poolBuild: NewLarge
+    poolBuild: NewLarge-linux-1ES
     checkoutSubmodules: true
     taskBundleAnalysis: true
     taskLint: false # Linting is captured by `ci:build` via fluid-build
@@ -152,7 +161,6 @@ extends:
     - ci:test:stress:tinylicious
     - test:copyresults
     testResultDirs:
-    - nyc/azure
     - nyc/examples
     - nyc/experimental
     - nyc/packages
@@ -174,7 +182,7 @@ extends:
         workingDir: ./packages/tools/devtools/devtools-browser-extension/
         customCommand: 'run webpack'
 
-    - task: PublishPipelineArtifact@1
+    - task: 1ES.PublishPipelineArtifact@1
       displayName: Publish Artifact - Devtools Browser Extension
       inputs:
         targetPath: './packages/tools/devtools/devtools-browser-extension/dist/bundle/'

@@ -158,7 +158,7 @@ function navigateToNode(
 	tree: FlexTreeView<typeof fuzzSchema.rootFieldSchema>,
 	path: DownPath | undefined,
 ): FlexTreeNode | undefined {
-	const rootField = tree.editableTree;
+	const rootField = tree.flexTree;
 	if (path === undefined) {
 		return undefined;
 	}
@@ -201,7 +201,7 @@ function applyOptionalFieldEdit(
 ): void {
 	switch (change.type) {
 		case "set": {
-			const rootField = tree.editableTree;
+			const rootField = tree.flexTree;
 			if (change.parent === undefined) {
 				rootField.content = cursorForJsonableTreeNode(change.value) as any;
 			} else {

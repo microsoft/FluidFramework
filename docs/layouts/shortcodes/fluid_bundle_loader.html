@@ -1,7 +1,7 @@
 {{ $idPrefix := .Get "idPrefix" }}
 {{ $bundleName := .Get "bundleName" }}
 
-<div id="content" style="min-height: 200px; display: flex;">
+<div id="content" style="min-height: 200px;">
     <div class="browser-window-wrapper">
         <div aria-hidden="true" class="browser-window">
             <div class="browser-window-nav">
@@ -47,7 +47,7 @@
 
     .browser-window-wrapper {
         flex-grow: 1;
-        width: 50%;
+        width: 100%;
         border: 1px solid lightgray;
         box-sizing: border-box;
         position: relative;

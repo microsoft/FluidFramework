@@ -12,17 +12,19 @@ import {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
-import { ICodecOptions, IJsonCodec, SessionAwareCodec } from "../codec/index.js";
+import { ICodecOptions, IJsonCodec } from "../codec/index.js";
 import {
+	ChangeEncodingContext,
 	ChangeFamily,
 	ChangeFamilyEditor,
 	EncodedRevisionTag,
 	RevisionTag,
 } from "../core/index.js";
 import { JsonCompatibleReadOnly } from "../util/index.js";
+import { SchemaAndPolicy } from "../feature-libraries/index.js";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "./sharedTreeCore.js";
 import { EditManager, SummaryData } from "./editManager.js";
-import { makeEditManagerCodec } from "./editManagerCodecs.js";
+import { EditManagerEncodingContext, makeEditManagerCodec } from "./editManagerCodecs.js";
 
 const stringKey = "String";
 
@@ -39,15 +41,26 @@ export class EditManagerSummarizer<TChangeset> implements Summarizable {
 	// (the one for the current persisted configuration) and resolve codecs for different versions
 	// as necessary (e.g. an upgrade op came in, or the configuration changed within the collab window
 	// and an op needs to be interpreted which isn't written with the current configuration).
-	private readonly codec: IJsonCodec<SummaryData<TChangeset>>;
+	private readonly codec: IJsonCodec<
+		SummaryData<TChangeset>,
+		JsonCompatibleReadOnly,
+		JsonCompatibleReadOnly,
+		EditManagerEncodingContext
+	>;
 	public constructor(
 		private readonly editManager: EditManager<
 			ChangeFamilyEditor,
 			TChangeset,
 			ChangeFamily<ChangeFamilyEditor, TChangeset>
 		>,
-		revisionTagCodec: SessionAwareCodec<RevisionTag, EncodedRevisionTag>,
+		revisionTagCodec: IJsonCodec<
+			RevisionTag,
+			EncodedRevisionTag,
+			EncodedRevisionTag,
+			ChangeEncodingContext
+		>,
 		options: ICodecOptions,
+		private readonly schemaAndPolicy?: SchemaAndPolicy,
 	) {
 		const changesetCodec = this.editManager.changeFamily.codecs.resolve(formatVersion);
 		this.codec = makeEditManagerCodec(changesetCodec, revisionTagCodec, options);
@@ -72,7 +85,9 @@ export class EditManagerSummarizer<TChangeset> implements Summarizable {
 	}
 
 	private summarizeCore(stringify: SummaryElementStringifier): ISummaryTreeWithStats {
-		const jsonCompatible = this.codec.encode(this.editManager.getSummaryData());
+		const context: EditManagerEncodingContext =
+			this.schemaAndPolicy !== undefined ? { schema: this.schemaAndPolicy } : {};
+		const jsonCompatible = this.codec.encode(this.editManager.getSummaryData(), context);
 		const dataString = stringify(jsonCompatible);
 		return createSingleBlobSummary(stringKey, dataString);
 	}
@@ -102,7 +117,7 @@ export class EditManagerSummarizer<TChangeset> implements Summarizable {
 		);
 
 		const summary = parse(bufferToString(schemaBuffer, "utf-8")) as JsonCompatibleReadOnly;
-		const data = this.codec.decode(summary);
+		const data = this.codec.decode(summary, {});
 		this.editManager.loadSummaryData(data);
 	}
 }

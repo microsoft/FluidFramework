@@ -4,13 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { compare } from "semver";
-import { bufferToString } from "@fluid-internal/client-utils";
-import {
-	IContainer,
-	IFluidCodeDetails,
-	ISnapshotTreeWithBlobContents,
-} from "@fluidframework/container-definitions";
+import * as semver from "semver";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import {
 	LocalCodeLoader,
@@ -24,24 +19,20 @@ import {
 import type { SharedMap, SharedDirectory } from "@fluidframework/map";
 import {
 	IDocumentAttributes,
+	ISnapshotTree,
 	ISummaryTree,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import { SequenceInterval, SharedString } from "@fluidframework/sequence";
-import { SharedCell } from "@fluidframework/cell";
-import { Ink } from "@fluidframework/ink";
-import { SharedMatrix } from "@fluidframework/matrix";
-import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/ordered-collection";
-import { SharedCounter } from "@fluidframework/counter";
+import type { ConsensusRegisterCollection } from "@fluidframework/register-collection";
+import type { SequenceInterval, SharedString } from "@fluidframework/sequence";
+import type { SharedCell } from "@fluidframework/cell";
+import type { SharedMatrix } from "@fluidframework/matrix";
+import type { ConsensusOrderedCollection } from "@fluidframework/ordered-collection";
+import type { SharedCounter } from "@fluidframework/counter";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import {
-	getSnapshotTreeFromSerializedContainer,
-	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/container-loader/test/utils";
-import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
+import type { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -121,31 +112,36 @@ function buildSummaryTree(attr, quorumVal, summarizer): ISummaryTree {
 	};
 }
 
+interface ISerializableBlobContents {
+	[id: string]: string;
+}
+
 describeCompat(
 	`Dehydrate Rehydrate Container Test`,
 	"FullCompat",
 	(getTestObjectProvider, apis) => {
-		const { SharedMap, SharedDirectory } = apis.dds;
-		function assertSubtree(
-			tree: ISnapshotTreeWithBlobContents,
-			key: string,
-			msg?: string,
-		): ISnapshotTreeWithBlobContents {
+		const {
+			SharedMap,
+			SharedDirectory,
+			SharedMatrix,
+			SharedCounter,
+			SharedString,
+			SharedCell,
+			ConsensusQueue,
+			ConsensusRegisterCollection,
+			SparseMatrix,
+		} = apis.dds;
+		function assertSubtree(tree: ISnapshotTree, key: string, msg?: string): ISnapshotTree {
 			const subTree = tree.trees[key];
 			assert(subTree, msg ?? `${key} subtree not present`);
 			return subTree;
 		}
 
-		const assertChannelsTree = (rootOrDatastore: ISnapshotTreeWithBlobContents) =>
+		const assertChannelsTree = (rootOrDatastore: ISnapshotTree) =>
 			assertSubtree(rootOrDatastore, ".channels");
-		const assertProtocolTree = (root: ISnapshotTreeWithBlobContents) =>
-			assertSubtree(root, ".protocol");
+		const assertProtocolTree = (root: ISnapshotTree) => assertSubtree(root, ".protocol");
 
-		function assertChannelTree(
-			rootOrDatastore: ISnapshotTreeWithBlobContents,
-			key: string,
-			msg?: string,
-		) {
+		function assertChannelTree(rootOrDatastore: ISnapshotTree, key: string, msg?: string) {
 			const channelsTree = assertChannelsTree(rootOrDatastore);
 			return {
 				channelsTree,
@@ -156,22 +152,24 @@ describeCompat(
 				),
 			};
 		}
-		const assertDatastoreTree = (
-			root: ISnapshotTreeWithBlobContents,
-			key: string,
-			msg?: string,
-		) => assertChannelTree(root, key, `${key} datastore not present`);
+		const assertDatastoreTree = (root: ISnapshotTree, key: string, msg?: string) =>
+			assertChannelTree(root, key, `${key} datastore not present`);
 
-		function assertBlobContents<T>(subtree: ISnapshotTreeWithBlobContents, key: string): T {
+		function assertBlobContents<T>(
+			subtree: ISnapshotTree,
+			blobs: ISerializableBlobContents,
+			key: string,
+		): T {
 			const id = subtree.blobs[key];
 			assert(id, `blob id for ${key} missing`);
-			const contents = subtree.blobsContents?.[id];
+			const contents = blobs[id];
+
 			assert(contents, `blob contents for ${key} missing`);
-			return JSON.parse(bufferToString(contents, "utf8")) as T;
+			return JSON.parse(contents) as T;
 		}
 
-		const assertProtocolAttributes = (s: ISnapshotTreeWithBlobContents) =>
-			assertBlobContents<IDocumentAttributes>(assertProtocolTree(s), "attributes");
+		const assertProtocolAttributes = (s: ISnapshotTree, b: ISerializableBlobContents) =>
+			assertBlobContents<IDocumentAttributes>(assertProtocolTree(s), b, "attributes");
 
 		const codeDetails: IFluidCodeDetails = {
 			package: "detachedContainerTestPackage1",
@@ -184,7 +182,6 @@ describeCompat(
 		const sharedDirectoryId = "sd1Key";
 		const sharedCellId = "scell1Key";
 		const sharedMatrixId = "smatrix1Key";
-		const sharedInkId = "sink1Key";
 		const sparseMatrixId = "sparsematrixKey";
 		const sharedCounterId = "sharedcounterKey";
 
@@ -210,7 +207,6 @@ describeCompat(
 				[crcId, ConsensusRegisterCollection.getFactory()],
 				[sharedDirectoryId, SharedDirectory.getFactory()],
 				[sharedCellId, SharedCell.getFactory()],
-				[sharedInkId, Ink.getFactory()],
 				[sharedMatrixId, SharedMatrix.getFactory()],
 				[cocId, ConsensusQueue.getFactory()],
 				[sparseMatrixId, SparseMatrix.getFactory()],
@@ -243,15 +239,21 @@ describeCompat(
 			return handle.get();
 		}
 
-		const getSnapshotTreeFromSerializedSnapshot = (container: IContainer) => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-			return getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()));
-		};
+		function getSnapshotInfoFromSerializedContainer(
+			container: IContainer,
+		): [ISnapshotTree, ISerializableBlobContents] {
+			const snapshot = container.serialize();
+			const deserializedSummary = JSON.parse(snapshot);
+			return [
+				deserializedSummary.baseSnapshot as ISnapshotTree,
+				deserializedSummary.snapshotBlobs as ISerializableBlobContents,
+			];
+		}
 
-		beforeEach(async function () {
+		beforeEach("createLoader", async function () {
 			provider = getTestObjectProvider();
 			if (
-				compare(provider.driver.version, "0.46.0") === -1 &&
+				semver.compare(provider.driver.version, "0.46.0") === -1 &&
 				(provider.driver.type === "routerlicious" || provider.driver.type === "tinylicious")
 			) {
 				this.skip();
@@ -261,7 +263,7 @@ describeCompat(
 			loader = createTestLoader();
 		});
 
-		afterEach(() => {
+		afterEach("resetLoaderContainerTracker", () => {
 			loaderContainerTracker.reset();
 		});
 
@@ -269,7 +271,8 @@ describeCompat(
 			it("Dehydrated container snapshot", async () => {
 				const { container, defaultDataStore } =
 					await createDetachedContainerAndGetEntryPoint();
-				const snapshotTree = getSnapshotTreeFromSerializedSnapshot(container);
+				const [snapshotTree, snapshotBlobs] =
+					getSnapshotInfoFromSerializedContainer(container);
 
 				// Check for protocol attributes
 				const protocolTree = assertProtocolTree(snapshotTree);
@@ -279,7 +282,7 @@ describeCompat(
 					"4 protocol blobs should be there.",
 				);
 
-				const protocolAttributes = assertProtocolAttributes(snapshotTree);
+				const protocolAttributes = assertProtocolAttributes(snapshotTree, snapshotBlobs);
 				assert.strictEqual(
 					protocolAttributes.sequenceNumber,
 					detachedContainerRefSeqNumber,
@@ -293,10 +296,10 @@ describeCompat(
 				// Check blobs contents for protocolAttributes
 				const protocolAttributesBlobId = snapshotTree.trees[".protocol"].blobs.attributes;
 				assert(
-					snapshotTree.trees[".protocol"].blobsContents?.[protocolAttributesBlobId] !==
-						undefined,
+					snapshotBlobs[protocolAttributesBlobId] !== undefined,
 					"Blobs should contain attributes blob",
 				);
+
 				// Check for default dataStore
 				const { datastoreTree: snapshotDefaultDataStore } = assertDatastoreTree(
 					snapshotTree,
@@ -304,6 +307,7 @@ describeCompat(
 				);
 				const datastoreAttributes = assertBlobContents<{ pkg: string }>(
 					snapshotDefaultDataStore,
+					snapshotBlobs,
 					".component",
 				);
 				assert.strictEqual(
@@ -316,14 +320,16 @@ describeCompat(
 			it("Dehydrated container snapshot 2 times with changes in between", async () => {
 				const { container, defaultDataStore } =
 					await createDetachedContainerAndGetEntryPoint();
-				const snapshotTree1 = getSnapshotTreeFromSerializedSnapshot(container);
+				const [snapshotTree1, snapshotBlobs1] =
+					getSnapshotInfoFromSerializedContainer(container);
 				// Create a channel
 				const channel = defaultDataStore.runtime.createChannel(
 					"test1",
 					"https://graph.microsoft.com/types/map",
 				) as SharedMap;
 				channel.bindToContext();
-				const snapshotTree2 = getSnapshotTreeFromSerializedSnapshot(container);
+				const [snapshotTree2, snapshotBlobs2] =
+					getSnapshotInfoFromSerializedContainer(container);
 
 				assert.strictEqual(
 					JSON.stringify(Object.keys(snapshotTree1.trees)),
@@ -332,8 +338,8 @@ describeCompat(
 				);
 
 				// Check for protocol attributes
-				const protocolAttributes1 = assertProtocolAttributes(snapshotTree1);
-				const protocolAttributes2 = assertProtocolAttributes(snapshotTree2);
+				const protocolAttributes1 = assertProtocolAttributes(snapshotTree1, snapshotBlobs1);
+				const protocolAttributes2 = assertProtocolAttributes(snapshotTree2, snapshotBlobs2);
 				assert.strictEqual(
 					JSON.stringify(protocolAttributes1),
 					JSON.stringify(protocolAttributes2),
@@ -370,7 +376,8 @@ describeCompat(
 					await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
 				rootOfDataStore1.set("dataStore2", dataStore2.handle);
 
-				const snapshotTree = getSnapshotTreeFromSerializedSnapshot(container);
+				const [snapshotTree, snapshotBlobs] =
+					getSnapshotInfoFromSerializedContainer(container);
 
 				assertProtocolTree(snapshotTree);
 				assertDatastoreTree(snapshotTree, defaultDataStore.runtime.id);
@@ -410,7 +417,6 @@ describeCompat(
 					);
 				const coc =
 					await defaultDataStore.getSharedObject<ConsensusOrderedCollection>(cocId);
-				const ink = await defaultDataStore.getSharedObject<Ink>(sharedInkId);
 				const sharedMatrix =
 					await defaultDataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
 				const sparseMatrix =
@@ -430,7 +436,6 @@ describeCompat(
 				);
 				assert.strictEqual(crc.id, crcId, "CRC should exist!!");
 				assert.strictEqual(coc.id, cocId, "COC should exist!!");
-				assert.strictEqual(ink.id, sharedInkId, "Shared ink should exist!!");
 				assert.strictEqual(sharedMatrix.id, sharedMatrixId, "Shared matrix should exist!!");
 				assert.strictEqual(sparseMatrix.id, sparseMatrixId, "Sparse matrix should exist!!");
 			});
@@ -464,7 +469,6 @@ describeCompat(
 					);
 				const coc =
 					await defaultDataStore.getSharedObject<ConsensusOrderedCollection>(cocId);
-				const ink = await defaultDataStore.getSharedObject<Ink>(sharedInkId);
 				const sharedMatrix =
 					await defaultDataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
 				const sparseMatrix =
@@ -484,7 +488,6 @@ describeCompat(
 				);
 				assert.strictEqual(crc.id, crcId, "CRC should exist!!");
 				assert.strictEqual(coc.id, cocId, "COC should exist!!");
-				assert.strictEqual(ink.id, sharedInkId, "Shared ink should exist!!");
 				assert.strictEqual(sharedMatrix.id, sharedMatrixId, "Shared matrix should exist!!");
 				assert.strictEqual(sparseMatrix.id, sparseMatrixId, "Sparse matrix should exist!!");
 			});
@@ -517,7 +520,6 @@ describeCompat(
 					);
 				const coc =
 					await defaultDataStore.getSharedObject<ConsensusOrderedCollection>(cocId);
-				const ink = await defaultDataStore.getSharedObject<Ink>(sharedInkId);
 				const sharedMatrix =
 					await defaultDataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
 				const sparseMatrix =
@@ -537,7 +539,6 @@ describeCompat(
 				);
 				assert.strictEqual(crc.id, crcId, "CRC should exist!!");
 				assert.strictEqual(coc.id, cocId, "COC should exist!!");
-				assert.strictEqual(ink.id, sharedInkId, "Shared ink should exist!!");
 				assert.strictEqual(sharedMatrix.id, sharedMatrixId, "Shared matrix should exist!!");
 				assert.strictEqual(sparseMatrix.id, sparseMatrixId, "Sparse matrix should exist!!");
 			});
@@ -585,14 +586,46 @@ describeCompat(
 					await defaultDataStoreBefore.getSharedObject<SharedString>(sharedStringId);
 				const intervalsBefore = sharedStringBefore.getIntervalCollection("intervals");
 				sharedStringBefore.insertText(0, "Hello");
-				let interval0: SequenceInterval | undefined = intervalsBefore.add({
-					start: 0,
-					end: 0,
-				});
-				let interval1: SequenceInterval | undefined = intervalsBefore.add({
-					start: 0,
-					end: 1,
-				});
+				let interval0: SequenceInterval | undefined;
+				let interval1: SequenceInterval | undefined;
+
+				// The interval collection API was changed to uniformize `change`/`changeProperties` and addition of intervals.
+				interface OldIntervalCollection {
+					add(start: number, end: number, intervalType: number): SequenceInterval;
+					change(id: string, start: number, end: number): SequenceInterval | undefined;
+				}
+
+				// Note: "dev" prereleases have to be special-cased since semver orders prerelease tags alphabetically,
+				// so dev builds (i.e. -dev or -dev-rc) sort as before official internal releases.
+				const isCurrentApi =
+					apis.dataRuntime.version.includes("dev") ||
+					semver.gte(apis.dataRuntime.version, "2.0.0-internal.8.0.0");
+
+				if (!isCurrentApi) {
+					// Versions of @fluidframework/sequence before this version had a different `add` API.
+					// See https://github.com/microsoft/FluidFramework/commit/e5b463cc8b24a411581c3e48f62ce1eea68dd639
+					// for the removal of that API.
+					const slideOnRemove = 0x2;
+					interval0 = (intervalsBefore as unknown as OldIntervalCollection).add(
+						0,
+						0,
+						slideOnRemove,
+					);
+					interval1 = (intervalsBefore as unknown as OldIntervalCollection).add(
+						0,
+						1,
+						slideOnRemove,
+					);
+				} else {
+					interval0 = intervalsBefore.add({
+						start: 0,
+						end: 0,
+					});
+					interval1 = intervalsBefore.add({
+						start: 0,
+						end: 1,
+					});
+				}
 				let id0;
 				let id1;
 
@@ -601,8 +634,15 @@ describeCompat(
 					id1 = interval1.getIntervalId();
 					assert.strictEqual(typeof id0, "string");
 					assert.strictEqual(typeof id1, "string");
-					intervalsBefore.change(id0, { start: 2, end: 3 });
-					intervalsBefore.change(id1, { start: 0, end: 3 });
+					if (!isCurrentApi) {
+						// Versions of @fluidframework/sequence before this version had a different `change` API.
+						// See https://github.com/microsoft/FluidFramework/commit/12c83d26962a1d76db6eb0ccad31fd6a7976a1af
+						(intervalsBefore as unknown as OldIntervalCollection).change(id0, 2, 3);
+						(intervalsBefore as unknown as OldIntervalCollection).change(id1, 0, 3);
+					} else {
+						intervalsBefore.change(id0, { start: 2, end: 3 });
+						intervalsBefore.change(id1, { start: 0, end: 3 });
+					}
 				}
 
 				const snapshotTree = container.serialize();
@@ -1014,34 +1054,35 @@ describeCompat(
 				// Create another not bounded dataStore
 				await createPeerDataStore(defaultDataStore.context.containerRuntime);
 
-				const snapshotTree = getSnapshotTreeFromSerializedSnapshot(container);
+				const [snapshotTree, snapshotBlobs] =
+					getSnapshotInfoFromSerializedContainer(container);
 
 				assertProtocolTree(snapshotTree);
 				assertDatastoreTree(snapshotTree, defaultDataStore.runtime.id);
 			});
-
-			it("can rehydrate from arbitrary summary that is not generated from serialized container", async () => {
-				const summaryTree = buildSummaryTree(baseAttributes, baseQuorum, baseSummarizer);
-				const summaryString = JSON.stringify(summaryTree);
-
-				await assert.doesNotReject(
-					loader.rehydrateDetachedContainerFromSnapshot(summaryString),
-				);
-			});
-
-			it("can rehydrate from summary that does not start with seq. #0", async () => {
-				const attr = {
-					...baseAttributes,
-					sequenceNumber: 5,
-				};
-				const summaryTree = buildSummaryTree(attr, baseQuorum, baseSummarizer);
-				const summaryString = JSON.stringify(summaryTree);
-
-				await assert.doesNotReject(
-					loader.rehydrateDetachedContainerFromSnapshot(summaryString),
-				);
-			});
 		};
+
+		it("can rehydrate from arbitrary summary that is not generated from serialized container", async () => {
+			const summaryTree = buildSummaryTree(baseAttributes, baseQuorum, baseSummarizer);
+			const summaryString = JSON.stringify(summaryTree);
+
+			await assert.doesNotReject(
+				loader.rehydrateDetachedContainerFromSnapshot(summaryString),
+			);
+		});
+
+		it("can rehydrate from summary that does not start with seq. #0", async () => {
+			const attr = {
+				...baseAttributes,
+				sequenceNumber: 5,
+			};
+			const summaryTree = buildSummaryTree(attr, baseQuorum, baseSummarizer);
+			const summaryString = JSON.stringify(summaryTree);
+
+			await assert.doesNotReject(
+				loader.rehydrateDetachedContainerFromSnapshot(summaryString),
+			);
+		});
 
 		// Run once with isolated channels
 		tests();

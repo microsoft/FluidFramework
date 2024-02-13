@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IDisposable,
 	IEventProvider,
 	IErrorEvent,
 	ITelemetryBaseLogger,
+	IEvent,
 } from "@fluidframework/core-interfaces";
-import {
+import type {
 	ConnectionMode,
 	IClient,
 	IClientConfiguration,
@@ -25,8 +26,8 @@ import {
 	ITokenClaims,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { IAnyDriverError } from "./driverError";
-import { IResolvedUrl } from "./urlResolver";
+import type { IAnyDriverError } from "./driverError";
+import type { IResolvedUrl } from "./urlResolver";
 
 /**
  * @internal
@@ -161,6 +162,14 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
 	getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
 
 	/**
+	 * Returns the snapshot which can contain other artifacts too like blob contents, ops etc. It is different from
+	 * `getSnapshotTree` api in that, that API only returns the snapshot tree from the snapshot.
+	 * @param snapshotFetchOptions - Options specified by the caller to specify and want certain behavior from the
+	 * driver when fetching the snapshot.
+	 */
+	getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
+
+	/**
 	 * Retrieves all versions of the document starting at the specified versionId - or null if from the head
 	 * @param versionId - Version id of the requested version.
 	 * @param count - Number of the versions to be fetched.
@@ -203,6 +212,18 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
 	 * server has deleted it this call may result in a broken promise.
 	 */
 	downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
+}
+
+/**
+ * Events emitted by {@link IDocumentService}.
+ * @alpha
+ */
+export interface IDocumentServiceEvents extends IEvent {
+	/**
+	 * This event is used to communicate any metadata related to the container. We might have received metadata from the service.
+	 * Read more info on this event from here `IContainer.containerMetadata`.
+	 */
+	(event: "metadataUpdate", listener: (metadata: Record<string, string>) => void);
 }
 
 /**
@@ -328,12 +349,19 @@ export interface IDocumentServicePolicies {
 	 * Summarizer uploads the protocol tree too when summarizing.
 	 */
 	readonly summarizeProtocolTree?: boolean;
+
+	/**
+	 * Whether the driver supports the new getSnapshot api which returns snapshot which
+	 * contains all contents along with the snapshot tree. Enable this by default when the
+	 * driver can fully support the api.
+	 */
+	readonly supportGetSnapshotApi?: boolean;
 }
 
 /**
  * @alpha
  */
-export interface IDocumentService {
+export interface IDocumentService extends IEventProvider<IDocumentServiceEvents> {
 	resolvedUrl: IResolvedUrl;
 
 	/**
@@ -436,4 +464,49 @@ export interface ISummaryContext {
 export enum FetchSource {
 	default = "default",
 	noCache = "noCache",
+}
+
+/**
+ * @alpha
+ */
+export interface ISnapshot {
+	snapshotTree: ISnapshotTree;
+	blobContents: Map<string, ArrayBuffer>;
+	ops: ISequencedDocumentMessage[];
+
+	/**
+	 * Sequence number of the snapshot
+	 */
+	sequenceNumber: number | undefined;
+
+	/**
+	 * Sequence number for the latest op/snapshot for the file in ODSP
+	 */
+	latestSequenceNumber: number | undefined;
+
+	snapshotFormatV: 1;
+}
+
+/**
+ * Snapshot fetch options which are used to communicate different things to the driver
+ * when fetching the snapshot.
+ * @alpha
+ */
+export interface ISnapshotFetchOptions {
+	/**
+	 * Indicates scenario in which the snapshot is fetched. It is a free form string  mostly
+	 * used for telemetry purposes.
+	 */
+	scenarioName?: string;
+	/**
+	 * Tell driver to cache the fetched snapshot. Driver is supposed to cache the fetched snapshot if this is
+	 * set to true. If undefined, then it is upto the driver, to cache it or not.
+	 */
+	cacheSnapshot?: boolean;
+
+	/**
+	 * Version of the snapshot to be fetched. Certain storage services just keep 1 snapshot for the
+	 * container, so specifying version is not necessary for storage services.
+	 */
+	versionId?: string;
 }

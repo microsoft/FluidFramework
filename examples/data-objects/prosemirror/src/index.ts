@@ -17,8 +17,8 @@ import { FluidObject } from "@fluidframework/core-interfaces";
 
 import React from "react";
 
-import { ProseMirror, ProseMirrorFactory, ProseMirrorReactView } from "./prosemirror";
-export { ProseMirror, ProseMirrorFactory, ProseMirrorReactView } from "./prosemirror";
+import { ProseMirror, ProseMirrorFactory, ProseMirrorReactView } from "./prosemirror.js";
+export { ProseMirror, ProseMirrorFactory, ProseMirrorReactView } from "./prosemirror.js";
 
 const defaultComponentId = "default";
 

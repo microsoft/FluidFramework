@@ -14,23 +14,25 @@ import {
 } from "../../../feature-libraries/index.js";
 import {
 	makeAnonChange,
-	tagChange,
-	TaggedChange,
 	FieldKey,
-	deltaForSet,
 	DeltaFieldMap,
 	DeltaFieldChanges,
 	RevisionTagCodec,
+	ChangeEncodingContext,
 } from "../../../core/index.js";
-import { fakeIdAllocator, brand } from "../../../util/index.js";
+import {
+	fakeIdAllocator,
+	brand,
+	JsonCompatibleReadOnly,
+	idAllocatorFromMaxId,
+} from "../../../util/index.js";
 import {
 	EncodingTestData,
 	MockIdCompressor,
 	defaultRevisionMetadataFromChanges,
 	makeEncodingTestSuite,
 } from "../../utils.js";
-import { SessionAwareCodec } from "../../../codec/index.js";
-import { singleJsonCursor } from "../../../domains/index.js";
+import { IJsonCodec } from "../../../codec/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
 import { ValueChangeset, valueField, valueHandler } from "./basicRebasers.js";
@@ -80,12 +82,20 @@ const revisionMetadata: RebaseRevisionMetadata = {
 	hasRollback: () => assert.fail("Unexpected revision info query"),
 };
 
-const childComposer = (nodeChanges: TaggedChange<NodeChangeset>[]): NodeChangeset => {
-	const valueChanges = nodeChanges.map((c) =>
-		tagChange(valueChangeFromNodeChange(c.change), c.revision),
-	);
+const childComposer = (
+	nodeChange1: NodeChangeset | undefined,
+	nodeChange2: NodeChangeset | undefined,
+): NodeChangeset => {
+	if (nodeChange1 === undefined) {
+		assert(nodeChange2 !== undefined, "Should not compose two undefined changesets");
+		return nodeChange2;
+	} else if (nodeChange2 === undefined) {
+		return nodeChange1;
+	}
+
 	const valueChange = valueHandler.rebaser.compose(
-		valueChanges,
+		makeAnonChange(valueChangeFromNodeChange(nodeChange1 ?? {})),
+		makeAnonChange(valueChangeFromNodeChange(nodeChange2 ?? {})),
 		unexpectedDelegate,
 		fakeIdAllocator,
 		crossFieldManager,
@@ -100,7 +110,7 @@ const childInverter = (nodeChange: NodeChangeset): NodeChangeset => {
 	const inverse = valueHandler.rebaser.invert(
 		taggedChange,
 		unexpectedDelegate,
-		fakeIdAllocator,
+		idAllocatorFromMaxId(),
 		crossFieldManager,
 		defaultRevisionMetadataFromChanges([taggedChange]),
 	);
@@ -132,17 +142,14 @@ const childRebaser = (
 	return nodeChangeFromValueChange(rebased);
 };
 
-const detachId = { minor: 42 };
-const buildId = { minor: 42 };
-
 const childToDelta = (nodeChange: NodeChangeset): DeltaFieldMap => {
 	const valueChange = valueChangeFromNodeChange(nodeChange);
 	assert(typeof valueChange !== "number");
-	return deltaForValueChange(valueChange.new);
+	return deltaForValueChange(valueChange);
 };
 
-function deltaForValueChange(newValue: number): DeltaFieldMap {
-	return new Map([[valueFieldKey, deltaForSet(singleJsonCursor(newValue), buildId, detachId)]]);
+function deltaForValueChange(valueChange: ValueChangeset): DeltaFieldMap {
+	return new Map([[valueFieldKey, valueHandler.intoDelta(makeAnonChange(valueChange))]]);
 }
 
 const crossFieldManager: CrossFieldManager = {
@@ -154,17 +161,6 @@ describe("GenericField", () => {
 	testSnapshots();
 
 	describe("compose", () => {
-		it("empty list", () => {
-			const actual = genericFieldKind.changeHandler.rebaser.compose(
-				[],
-				childComposer,
-				fakeIdAllocator,
-				crossFieldManager,
-				revisionMetadata,
-			);
-			assert.deepEqual(actual, []);
-		});
-
 		it("Highest index on earlier change", () => {
 			const changeA: GenericChangeset = [
 				{
@@ -201,7 +197,8 @@ describe("GenericField", () => {
 				},
 			];
 			const actual = genericFieldKind.changeHandler.rebaser.compose(
-				[makeAnonChange(changeA), makeAnonChange(changeB)],
+				makeAnonChange(changeA),
+				makeAnonChange(changeB),
 				childComposer,
 				fakeIdAllocator,
 				crossFieldManager,
@@ -246,7 +243,8 @@ describe("GenericField", () => {
 				},
 			];
 			const actual = genericFieldKind.changeHandler.rebaser.compose(
-				[makeAnonChange(changeA), makeAnonChange(changeB)],
+				makeAnonChange(changeA),
+				makeAnonChange(changeB),
 				childComposer,
 				fakeIdAllocator,
 				crossFieldManager,
@@ -367,7 +365,7 @@ describe("GenericField", () => {
 		const actual = genericFieldKind.changeHandler.rebaser.invert(
 			taggedChange,
 			childInverter,
-			fakeIdAllocator,
+			idAllocatorFromMaxId(),
 			crossFieldManager,
 			defaultRevisionMetadataFromChanges([taggedChange]),
 		);
@@ -388,9 +386,9 @@ describe("GenericField", () => {
 
 		const expected: DeltaFieldChanges = {
 			local: [
-				{ count: 1, fields: deltaForValueChange(1) },
+				{ count: 1, fields: deltaForValueChange(valueChange0To1) },
 				{ count: 1 },
-				{ count: 1, fields: deltaForValueChange(2) },
+				{ count: 1, fields: deltaForValueChange(valueChange1To2) },
 			],
 		};
 
@@ -403,37 +401,36 @@ describe("GenericField", () => {
 	});
 
 	describe("Encoding", () => {
-		const encodingTestData: EncodingTestData<GenericChangeset, unknown, SessionId> = {
-			successes: [
-				[
-					"Misc",
+		const encodingTestData: EncodingTestData<GenericChangeset, unknown, ChangeEncodingContext> =
+			{
+				successes: [
 					[
-						{
-							index: 0,
-							nodeChange: nodeChange0To1,
-						},
-						{
-							index: 2,
-							nodeChange: nodeChange1To2,
-						},
+						"Misc",
+						[
+							{
+								index: 0,
+								nodeChange: nodeChange0To1,
+							},
+							{
+								index: 2,
+								nodeChange: nodeChange1To2,
+							},
+						],
+						{ originatorId: "session1" as SessionId },
 					],
-					"session1" as SessionId,
 				],
-			],
-		};
+			};
 
-		const throwCodec: SessionAwareCodec<any> = {
-			encode: unexpectedDelegate,
-			decode: unexpectedDelegate,
-		};
-
-		const leafCodec = valueHandler
-			.codecsFactory(throwCodec, new RevisionTagCodec(new MockIdCompressor()))
-			.resolve(0).json;
-		const childCodec: SessionAwareCodec<NodeChangeset> = {
-			encode: (nodeChange, originatorId) => {
+		const leafCodec = valueHandler.codecsFactory().resolve(0).json;
+		const childCodec: IJsonCodec<
+			NodeChangeset,
+			JsonCompatibleReadOnly,
+			JsonCompatibleReadOnly,
+			ChangeEncodingContext
+		> = {
+			encode: (nodeChange, context) => {
 				const valueChange = valueChangeFromNodeChange(nodeChange);
-				return leafCodec.encode(valueChange, originatorId);
+				return leafCodec.encode(valueChange, context);
 			},
 			decode: (nodeChange, originatorId) => {
 				const valueChange = leafCodec.decode(nodeChange, originatorId);

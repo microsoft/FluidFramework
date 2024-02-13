@@ -124,6 +124,8 @@ export class AlfredResources implements core.IResources {
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
 		public collaborationSessionEvents?: TypedEventEmitter<ICollaborationSessionEvents>,
 		public serviceMessageResourceManager?: core.IServiceMessageResourceManager,
+		public clusterDrainingChecker?: core.IClusterDrainingChecker,
+		public enableClientIPLogging?: boolean,
 	) {
 		const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
@@ -496,6 +498,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		// Therefore, default clients will ignore server's 16kb message size limit.
 		const verifyMaxMessageSize = config.get("alfred:verifyMaxMessageSize") ?? false;
 
+		const enableClientIPLogging = config.get("alfred:enableClientIPLogging") ?? false;
+
 		// This cache will be used to store connection counts for logging connectionCount metrics.
 		let redisCache: core.ICache;
 		if (config.get("alfred:enableConnectionCountLogging")) {
@@ -629,6 +633,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			revokedTokenChecker,
 			collaborationSessionEvents,
 			serviceMessageResourceManager,
+			customizations?.clusterDrainingChecker,
+			enableClientIPLogging,
 		);
 	}
 }
@@ -666,6 +672,8 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
 			resources.tokenRevocationManager,
 			resources.revokedTokenChecker,
 			resources.collaborationSessionEvents,
+			resources.clusterDrainingChecker,
+			resources.enableClientIPLogging,
 		);
 	}
 }

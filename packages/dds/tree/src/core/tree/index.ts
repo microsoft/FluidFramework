@@ -103,7 +103,6 @@ export { SparseNode, getDescendant } from "./sparseTree.js";
 
 export {
 	deltaForRootInitialization,
-	deltaForSet,
 	emptyFieldChanges,
 	isEmptyFieldChanges,
 	makeDetachedNodeId,

@@ -4,8 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { TreeNode } from "../../simple-tree/index.js";
-import { NodeFromSchema, SchemaFactory, Tree } from "../../class-tree/index.js";
+import { TreeNode, NodeFromSchema, SchemaFactory, Tree } from "../../simple-tree/index.js";
 import { getRoot } from "./utils.js";
 
 // TODO: migrate remaining tests to src/test/class-tree/treeApi.spec.ts

@@ -56,8 +56,3 @@ export interface IdCreationRange {
 		readonly requestedClusterSize: number;
 	};
 }
-
-/**
- * The size of the cluster to create when initializing a new ghost session.
- */
-export const ghostClusterInitialSize = 512;

@@ -99,7 +99,7 @@ describeCompat(
 			}
 		}
 
-		beforeEach(async function () {
+		beforeEach("setup", async function () {
 			provider = getTestObjectProvider({ syncSummarizer: true });
 			// Currently, only ODSP returns back the "unreferenced" flag in the snapshot. Once we add this to other
 			// servers, we should enable these tests for them too.

@@ -154,7 +154,6 @@ export { TokenGenerator } from "./token";
 export { clientConnectivityStorageId, IUsageData, signalUsageStorageId } from "./usageData";
 export { IZookeeperClient, ZookeeperClientConstructor } from "./zookeeper";
 export {
-	IWebSocketTracker,
 	ITokenRevocationManager,
 	IRevokedTokenChecker,
 	ITokenRevocationResponse,
@@ -164,3 +163,5 @@ export {
 	createCompositeTokenId,
 } from "./tokenRevocationManager";
 export { IServiceMessageResourceManager } from "./serviceMessage";
+export { IClusterDrainingChecker } from "./clusterDraining";
+export { IWebSocketTracker } from "./webSocketTracker";

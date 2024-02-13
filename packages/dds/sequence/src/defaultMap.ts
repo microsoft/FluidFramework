@@ -421,7 +421,10 @@ export class DefaultMap<T> {
 			},
 			getStashedOpLocalMetadata: (op: IMapValueTypeOperation): IMapMessageLocalMetadata => {
 				const localValue = this.data.get(op.key) ?? this.createCore(op.key, true);
-				assert(localValue !== undefined, "Local value expected on applying stashed op");
+				assert(
+					localValue !== undefined,
+					0x879 /* Local value expected on applying stashed op */,
+				);
 				const handler = localValue.getOpHandler(op.value.opName);
 				return handler.applyStashedOp(localValue.value, op.value);
 			},

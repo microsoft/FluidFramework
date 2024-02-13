@@ -16,9 +16,9 @@ import { SharedTree, ITree } from "@fluidframework/tree";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 
-import type { IInventoryItem, IInventoryList, IMigrateBackingData } from "../modelInterfaces";
-import { LegacyTreeInventoryListController } from "./legacyTreeInventoryListController";
-import { NewTreeInventoryListController } from "./newTreeInventoryListController";
+import type { IInventoryItem, IInventoryList, IMigrateBackingData } from "../modelInterfaces.js";
+import { LegacyTreeInventoryListController } from "./legacyTreeInventoryListController.js";
+import { NewTreeInventoryListController } from "./newTreeInventoryListController.js";
 
 const isMigratedKey = "isMigrated";
 const treeKey = "tree";

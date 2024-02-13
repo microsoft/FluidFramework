@@ -138,12 +138,14 @@ module.exports = {
 				"JavaScript",
 				"JSON",
 				"Microsoft",
+				"microsoft.com",
 				"npm",
 				"Routerlicious",
 				"Tinylicious",
 				// Without the following entries, markdownlint incorrectly flags various correct usages of tinylicious.
 				"tinylicious.md",
 				"tinylicious-client",
+				'{{< packageref "tinylicious" >}}',
 			],
 		},
 		"reference-links-images": false, // MD052
@@ -152,5 +154,11 @@ module.exports = {
 			indent: 4,
 		},
 	},
-	globs: ["content/**/*.md", "!content/docs/apis", "!node_modules"],
+	globs: [
+		"content/**/*.md",
+		"!content/_index.md", // Markdown-lint doesn't like our use of Hugo's "highlight" shortcode for code blocks
+		"!content/docs/apis",
+		"!content/docs/api",
+		"!node_modules",
+	],
 };
