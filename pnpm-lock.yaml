@@ -15,7 +15,7 @@ patchedDependencies:
     hash: 5jttfhtxwdhxb7mhu7m3cyak6i
     path: patches/@microsoft__api-extractor@7.39.1.patch
   tsc-multi@1.1.0:
-    hash: bwju7gmfuwum2ryv7w6vqpkpiy
+    hash: 5xd7hc4kfbl2wvrh6bkfmqiu64
     path: patches/tsc-multi@1.1.0.patch
 
 importers:
@@ -161,7 +161,7 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       start-server-and-test: 1.15.5
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
       uuid: 9.0.1
 
@@ -236,7 +236,7 @@ importers:
       eslint-config-prettier: 9.0.0_eslint@8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   azure/packages/test/end-to-end-tests:
@@ -3394,7 +3394,7 @@ importers:
       tinylicious: 3.1.0-231702
       ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
       webpack-cli: 4.10.0_o3vqr5s7sd4b3hfy35jxofofzu
@@ -3591,7 +3591,7 @@ importers:
       '@fluidframework/tinylicious-driver': link:../../../packages/drivers/tinylicious-driver
       '@fluidframework/view-adapters': link:../../../packages/framework/view-adapters
       '@fluidframework/view-interfaces': link:../../../packages/framework/view-interfaces
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       uuid: 9.0.1
     devDependencies:
       '@fluid-tools/build-cli': 0.29.0_mhw3tufvtaceew37hrkkevjcli
@@ -4665,7 +4665,7 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       source-map-loader: 2.0.2_webpack@5.89.0
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typedoc: 0.12.0
       typescript: 5.1.6
       webpack: 5.89.0
@@ -4907,7 +4907,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   experimental/PropertyDDS/packages/property-inspector-table:
@@ -5515,7 +5515,7 @@ importers:
       prettier: 3.0.3
       quill-delta: 4.2.2
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   experimental/dds/ot/sharejs/json1:
@@ -5578,7 +5578,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   experimental/dds/sequence-deprecated:
@@ -5643,7 +5643,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   experimental/dds/tree:
@@ -5964,7 +5964,7 @@ importers:
       sinon: 7.5.0
       ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
       ts-node: 10.9.1_ggysxzqxruqvydtrq6zb2nxvwm
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/common/container-definitions:
@@ -6007,7 +6007,7 @@ importers:
       eslint-plugin-deprecation: 2.0.0_loebgezstcsvd2poh2d55fifke
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/common/core-interfaces:
@@ -6039,7 +6039,7 @@ importers:
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/common/core-utils:
@@ -6093,7 +6093,7 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/common/driver-definitions:
@@ -6128,7 +6128,7 @@ importers:
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/cell:
@@ -6197,7 +6197,7 @@ importers:
       prettier: 3.0.3
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/counter:
@@ -6264,7 +6264,7 @@ importers:
       prettier: 3.0.3
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/ink:
@@ -6329,7 +6329,7 @@ importers:
       prettier: 3.0.3
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/map:
@@ -6414,7 +6414,7 @@ importers:
       prettier: 3.0.3
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/matrix:
@@ -6513,7 +6513,7 @@ importers:
       replace-in-file: 6.3.5
       rimraf: 4.4.1
       ts-node: 10.9.1_ggysxzqxruqvydtrq6zb2nxvwm
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/merge-tree:
@@ -6596,7 +6596,7 @@ importers:
       prettier: 3.0.3
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/ordered-collection:
@@ -6671,7 +6671,7 @@ importers:
       prettier: 3.0.3
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/pact-map:
@@ -6742,7 +6742,7 @@ importers:
       prettier: 3.0.3
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/register-collection:
@@ -6813,7 +6813,7 @@ importers:
       prettier: 3.0.3
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/sequence:
@@ -6906,7 +6906,7 @@ importers:
       random-js: 2.1.0
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/shared-object-base:
@@ -6993,7 +6993,7 @@ importers:
       replace-in-file: 6.3.5
       rimraf: 4.4.1
       ts-node: 10.9.1_ggysxzqxruqvydtrq6zb2nxvwm
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/shared-summary-block:
@@ -7062,7 +7062,7 @@ importers:
       prettier: 3.0.3
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/task-manager:
@@ -7141,7 +7141,7 @@ importers:
       prettier: 3.0.3
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/test-dds-utils:
@@ -7206,7 +7206,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/tree:
@@ -7263,6 +7263,7 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       ts2esm: ^1.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -7320,6 +7321,7 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       ts2esm: 1.4.0
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/debugger:
@@ -7364,7 +7366,7 @@ importers:
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/driver-base:
@@ -7429,7 +7431,7 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       socket.io-client: 4.7.4
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/driver-web-cache:
@@ -7478,7 +7480,7 @@ importers:
       jest: 29.7.0_@types+node@18.19.1
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/file-driver:
@@ -7614,7 +7616,7 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       socket.io-client: 4.7.4
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/odsp-driver:
@@ -7699,7 +7701,7 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/odsp-driver-definitions:
@@ -7736,7 +7738,7 @@ importers:
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/odsp-urlResolver:
@@ -7795,7 +7797,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/replay-driver:
@@ -7846,7 +7848,7 @@ importers:
       nock: 13.4.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/routerlicious-driver:
@@ -7941,7 +7943,7 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/routerlicious-urlResolver:
@@ -8004,7 +8006,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/tinylicious-driver:
@@ -8063,7 +8065,7 @@ importers:
       mocha: 10.2.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/agent-scheduler:
@@ -8122,7 +8124,7 @@ importers:
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/aqueduct:
@@ -8199,7 +8201,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/attributor:
@@ -8280,7 +8282,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/client-logger/app-insights-logger:
@@ -8342,7 +8344,7 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       tslib: 1.14.1
       typescript: 5.1.6
 
@@ -8398,7 +8400,7 @@ importers:
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/dds-interceptions:
@@ -8463,7 +8465,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/fluid-framework:
@@ -8508,7 +8510,7 @@ importers:
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/fluid-static:
@@ -8585,7 +8587,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/oldest-client-observer:
@@ -8630,7 +8632,7 @@ importers:
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/request-handler:
@@ -8693,7 +8695,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/synthesize:
@@ -8748,7 +8750,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/tinylicious-client:
@@ -8823,7 +8825,7 @@ importers:
       rimraf: 4.4.1
       start-server-and-test: 1.15.5
       tinylicious: 3.1.0-231702
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/undo-redo:
@@ -8890,7 +8892,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/view-adapters:
@@ -8933,7 +8935,7 @@ importers:
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/view-interfaces:
@@ -8970,7 +8972,7 @@ importers:
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/loader/container-loader:
@@ -9065,7 +9067,7 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/loader/driver-utils:
@@ -9144,7 +9146,7 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/loader/test-loader-utils:
@@ -9280,7 +9282,7 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/runtime/container-runtime-definitions:
@@ -9402,7 +9404,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/runtime/datastore-definitions:
@@ -9506,7 +9508,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/runtime/runtime-definitions:
@@ -9620,7 +9622,7 @@ importers:
       rimraf: 4.4.1
       sinon: 7.5.0
       ts-node: 10.9.1_ggysxzqxruqvydtrq6zb2nxvwm
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/runtime/test-runtime-utils:
@@ -9847,7 +9849,7 @@ importers:
       mocha: 10.2.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/test/functional-tests:
@@ -9920,7 +9922,7 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
       webpack-cli: 4.10.0_webpack@5.89.0
@@ -11152,7 +11154,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/tools/devtools/devtools-example:
@@ -11744,7 +11746,7 @@ importers:
       rimraf: 4.4.1
       source-map-loader: 2.0.2_webpack@5.89.0
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
       webpack-cli: 4.10.0_o3vqr5s7sd4b3hfy35jxofofzu
@@ -11813,7 +11815,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   packages/utils/telemetry-utils:
@@ -11949,7 +11951,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
 packages:
@@ -42914,7 +42916,7 @@ packages:
       typescript: 5.3.3
     dev: true
 
-  /tsc-multi/1.1.0_bwju7gmfuwum2ryv7w6vqpkpiy_typescript@5.1.6:
+  /tsc-multi/1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6:
     resolution: {integrity: sha512-THE6X+sse7EZ2qMhqXvBhd2HMTvXyWwYnx+2T/ijqdp/6Rf7rUc2uPRzPdrrljZCNcYDeL0qP2P7tqm2IwayTg==}
     engines: {node: '>=14'}
     hasBin: true
