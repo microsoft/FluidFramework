@@ -234,10 +234,7 @@ export class MockContainerRuntime {
 
 			case FlushMode.TurnBased: {
 				// Id allocation messages are directly submitted during the resubmit path
-				if (
-					(message.content as IMockContainerRuntimeSequencedIdAllocationMessage).contents
-						?.type === "idAllocation"
-				) {
+				if (this.isAllocationMessage(message.content)) {
 					this.idAllocationOutbox.push(message);
 				} else {
 					this.outbox.push(message);
@@ -250,6 +247,15 @@ export class MockContainerRuntime {
 		}
 
 		return clientSequenceNumber;
+	}
+
+	private isAllocationMessage(
+		message: any,
+	): message is IMockContainerRuntimeSequencedIdAllocationMessage {
+		return (
+			(message as IMockContainerRuntimeSequencedIdAllocationMessage).contents?.type ===
+			"idAllocation"
+		);
 	}
 
 	public dirty(): void {}
@@ -372,11 +378,8 @@ export class MockContainerRuntime {
 		this.deltaManager.minimumSequenceNumber = message.minimumSequenceNumber;
 		const [local, localOpMetadata] = this.processInternal(message);
 
-		if (
-			(message as IMockContainerRuntimeSequencedIdAllocationMessage).contents.type ===
-			"idAllocation"
-		) {
-			this.finalizeIdRange((message as any).contents.contents as IdCreationRange);
+		if (this.isAllocationMessage(message)) {
+			this.finalizeIdRange(message.contents.contents);
 		} else {
 			this.dataStoreRuntime.process(message, local, localOpMetadata);
 		}
