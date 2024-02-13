@@ -16,7 +16,7 @@ import {
 	FlexMapNodeSchema,
 	FlexFieldNodeSchema,
 } from "@fluidframework/tree/internal";
-import { convertPropertyToSharedTreeSchema as convertSchema } from "../schemaConverter.js";
+import { convertPropertyToSharedTreeSchema as convertSchema } from "../schemaConverter";
 
 const tableTypeName: TreeNodeSchemaIdentifier = brand("Test:Table-1.0.0");
 
