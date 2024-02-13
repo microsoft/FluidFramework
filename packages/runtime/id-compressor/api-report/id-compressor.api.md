@@ -11,6 +11,12 @@ import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 export function assertIsStableId(stableId: string): StableId;
 
 // @alpha
+export function createAlwaysFinalizedIdCompressor(logger?: ITelemetryBaseLogger): IIdCompressor & IIdCompressorCore;
+
+// @alpha
+export function createAlwaysFinalizedIdCompressor(sessionId: SessionId, logger?: ITelemetryBaseLogger): IIdCompressor & IIdCompressorCore;
+
+// @alpha
 export function createIdCompressor(logger?: ITelemetryBaseLogger): IIdCompressor & IIdCompressorCore;
 
 // @alpha
