@@ -100,11 +100,13 @@ export interface IMockContainerRuntimePendingMessage {
 	localOpMetadata: unknown;
 }
 
+interface IMockContainerRuntimeSequencedIdAllocationMessage {
+	contents: IMockContainerRuntimeIdAllocationMessage;
+}
+
 interface IMockContainerRuntimeIdAllocationMessage {
-	contents: {
-		type: "idAllocation";
-		contents: IdCreationRange;
-	};
+	type: "idAllocation";
+	contents: IdCreationRange;
 }
 
 /**
@@ -162,10 +164,11 @@ export class MockContainerRuntime {
 	protected readonly deltaConnections: MockDeltaConnection[] = [];
 	protected readonly pendingMessages: IMockContainerRuntimePendingMessage[] = [];
 	private readonly outbox: IInternalMockRuntimeMessage[] = [];
+	private readonly idAllocationOutbox: IInternalMockRuntimeMessage[] = [];
 	/**
 	 * The runtime options this instance is using. See {@link IMockContainerRuntimeOptions}.
 	 */
-	protected runtimeOptions: Required<IMockContainerRuntimeOptions>;
+	private readonly runtimeOptions: Required<IMockContainerRuntimeOptions>;
 
 	constructor(
 		protected readonly dataStoreRuntime: MockFluidDataStoreRuntime,
@@ -203,11 +206,6 @@ export class MockContainerRuntime {
 		return deltaConnection;
 	}
 
-	public getGeneratedIdRange(): IdCreationRange | undefined {
-		const range = this.dataStoreRuntime.idCompressor?.takeNextCreationRange();
-		return range?.ids === undefined ? undefined : range;
-	}
-
 	public finalizeIdRange(range: IdCreationRange) {
 		assert(
 			this.dataStoreRuntime.idCompressor !== undefined,
@@ -226,12 +224,24 @@ export class MockContainerRuntime {
 		this.clientSequenceNumber++;
 		switch (this.runtimeOptions.flushMode) {
 			case FlushMode.Immediate: {
+				const idAllocationOp = this.generateIdAllocationOp();
+				if (idAllocationOp !== undefined) {
+					this.submitInternal(idAllocationOp, clientSequenceNumber);
+				}
 				this.submitInternal(message, clientSequenceNumber);
 				break;
 			}
 
 			case FlushMode.TurnBased: {
-				this.outbox.push(message);
+				// Id allocation messages are directly submitted during the resubmit path
+				if (
+					(message.content as IMockContainerRuntimeSequencedIdAllocationMessage).contents
+						?.type === "idAllocation"
+				) {
+					this.idAllocationOutbox.push(message);
+				} else {
+					this.outbox.push(message);
+				}
 				break;
 			}
 
@@ -253,11 +263,23 @@ export class MockContainerRuntime {
 			return;
 		}
 
+		// This mimics the runtime behavior of the IdCompressor by generating an IdAllocationOp
+		// and sticking it in front of any op that might rely on that id. It differs slightly in that
+		// in the actual runtime it would get put in its own separate batch
+		const idAllocationOp = this.generateIdAllocationOp();
+		if (idAllocationOp !== undefined) {
+			this.idAllocationOutbox.push(idAllocationOp);
+		}
+
+		// As with the runtime behavior, we need to send the idAllocationOps first
+		const messagesToSubmit = this.idAllocationOutbox.concat(this.outbox);
+		this.idAllocationOutbox.length = 0;
+		this.outbox.length = 0;
+
 		let fakeClientSequenceNumber = 1;
-		while (this.outbox.length > 0) {
+		messagesToSubmit.forEach((message) => {
 			this.submitInternal(
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				this.outbox.shift()!,
+				message,
 				// When grouped batching is used, the ops within the same grouped batch will have
 				// fake sequence numbers when they're ungrouped. The submit function will still
 				// return the clientSequenceNumber but this will ensure that the readers will always
@@ -266,7 +288,7 @@ export class MockContainerRuntime {
 					? fakeClientSequenceNumber++
 					: this.clientSequenceNumber,
 			);
-		}
+		});
 	}
 
 	/**
@@ -285,31 +307,55 @@ export class MockContainerRuntime {
 			"Rebasing is not supported when group batching is disabled",
 		);
 
+		// Only outbox needs to be rebased. The idAllocationOutbox is not rebased, as that
+		// is a no-op (though resubmitting the other ops may generate new IDs)
 		const messagesToRebase = this.outbox.slice();
 		this.outbox.length = 0;
 
-		messagesToRebase.forEach((message) =>
-			this.dataStoreRuntime.reSubmit(message.content, message.localOpMetadata),
-		);
+		this.reSubmitMessages(messagesToRebase);
+	}
+
+	protected reSubmitMessages(
+		messagesToResubmit: { content: any; localOpMetadata: unknown }[],
+	): void {
+		// Sort the messages so that idAllocation messages are submitted first
+		// When resubmitting non-idAllocation messages, they may generate new IDs.
+		// This sort ensures that all ID ranges are finalized before they are
+		// needed (i.e. before the messages that rely on them are processed)
+		// and in the order they were allocated
+		const orderedMessages = messagesToResubmit
+			.filter((message) => message.content.type === "idAllocation")
+			.concat(
+				messagesToResubmit.filter((message) => message.content.type !== "idAllocation"),
+			);
+		orderedMessages.forEach((pendingMessage) => {
+			if (pendingMessage.content.type === "idAllocation") {
+				this.submit(pendingMessage.content, pendingMessage.localOpMetadata);
+			} else {
+				this.dataStoreRuntime.reSubmit(
+					pendingMessage.content,
+					pendingMessage.localOpMetadata,
+				);
+			}
+		});
+	}
+
+	private generateIdAllocationOp(): IInternalMockRuntimeMessage | undefined {
+		const idRange = this.dataStoreRuntime.idCompressor?.takeNextCreationRange();
+		if (idRange?.ids !== undefined) {
+			const allocationOp: IMockContainerRuntimeIdAllocationMessage = {
+				type: "idAllocation",
+				contents: idRange,
+			};
+			return {
+				content: allocationOp,
+				localOpMetadata: undefined,
+			};
+		}
+		return undefined;
 	}
 
 	private submitInternal(message: IInternalMockRuntimeMessage, clientSequenceNumber: number) {
-		// This mimics the runtime behavior of the IdCompressor by generating an IdAllocationOp
-		// and sticking it in front of any op that might rely on that Id. It differs slightly in that
-		// in the actual runtime it would get put in its own separate batch
-		const idRange = this.getGeneratedIdRange();
-		if (idRange !== undefined) {
-			const idAllocationMessage = { type: "idAllocation", contents: idRange };
-			this.factory.pushMessage({
-				clientId: this.clientId,
-				clientSequenceNumber,
-				contents: idAllocationMessage,
-				referenceSequenceNumber: this.referenceSequenceNumber,
-				type: MessageType.Operation,
-			});
-			this.addPendingMessage(idAllocationMessage, undefined, clientSequenceNumber);
-		}
-
 		this.factory.pushMessage({
 			clientId: this.clientId,
 			clientSequenceNumber,
@@ -327,7 +373,8 @@ export class MockContainerRuntime {
 		const [local, localOpMetadata] = this.processInternal(message);
 
 		if (
-			(message as IMockContainerRuntimeIdAllocationMessage).contents.type === "idAllocation"
+			(message as IMockContainerRuntimeSequencedIdAllocationMessage).contents.type ===
+			"idAllocation"
 		) {
 			this.finalizeIdRange((message as any).contents.contents as IdCreationRange);
 		} else {
@@ -445,17 +492,6 @@ export class MockContainerRuntimeFactory {
 
 	public removeContainerRuntime(containerRuntime: MockContainerRuntime) {
 		this.runtimes.delete(containerRuntime);
-	}
-
-	public synchronizeIdCompressors() {
-		for (const runtime of this.runtimes) {
-			const range = runtime.getGeneratedIdRange();
-			if (range !== undefined) {
-				for (const nestedRuntime of this.runtimes) {
-					nestedRuntime.finalizeIdRange(range);
-				}
-			}
-		}
 	}
 
 	public pushMessage(msg: Partial<ISequencedDocumentMessage>) {
