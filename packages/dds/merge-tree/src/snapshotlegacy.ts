@@ -249,10 +249,9 @@ export class SnapshotLegacy {
 			this.segments!.push(segment);
 		});
 
-		// if there are more than 500 segments removed by snapshot-time zamboni,
-		// log it .5% of the time (1/200). At around 50MM total summary events
-		// per month, this gives us an upper bound of 250,000 events per month
-		if (Math.abs(originalSegments - segs.length) > 500 && Math.random() > 0.005) {
+		// To reduce potential spam from this telemetry, we sample only a small
+		// percentage of summaries
+		if (Math.abs(originalSegments - segs.length) > 500 && Math.random() < 0.005) {
 			this.logger.sendTelemetryEvent({
 				eventName: "MergeTreeLegacySummarizeSegmentCount",
 				originalSegments,

@@ -342,10 +342,9 @@ export class SnapshotV1 {
 		// If the last segment in the walk was coalescable, push it now.
 		pushSeg(prev);
 
-		// if there are more than 500 segments removed by snapshot-time zamboni,
-		// log it .5% of the time (1/200). At around 50MM total summary events
-		// per month, this gives us an upper bound of 250,000 events per month
-		if (Math.abs(originalSegments - segmentsAfterCombine) > 500 && Math.random() > 0.005) {
+		// To reduce potential spam from this telemetry, we sample only a small
+		// percentage of summaries
+		if (Math.abs(originalSegments - segmentsAfterCombine) > 500 && Math.random() < 0.005) {
 			this.logger.sendTelemetryEvent({
 				eventName: "MergeTreeV1SummarizeSegmentCount",
 				originalSegments,
