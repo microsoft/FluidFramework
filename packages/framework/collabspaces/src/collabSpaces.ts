@@ -229,6 +229,19 @@ export class CollabSpacesRuntime
 		return matrixId !== channelId && debugChannelId !== channelId;
 	}
 
+	private channelExists(id) {
+		return this.contexts.has(id);
+	}
+
+	private enumerateCollabChannels() {
+		return Array.from(this.contexts)
+			.filter(([channelId, _]) => this.isCollabChannel(channelId))
+			.map(
+				([channelId, context]) =>
+					[channelId, context.getChannel()] as [string, Promise<IChannel>],
+			);
+	}
+
 	// Called on various paths, like op processing, where channel should exists.
 	private updatePendingCounter(address: string, diff: number, allowImplicitCreation: boolean) {
 		if (!this.isCollabChannel(address)) {
@@ -239,8 +252,7 @@ export class CollabSpacesRuntime
 			return;
 		}
 
-		const channel = this.contexts.get(address);
-		if (channel === undefined) {
+		if (!this.channelExists(address)) {
 			if (!allowImplicitCreation) {
 				// Channel has to be there, the fact that it's not here is a integrity violation!
 				this.criticalError(new Error("collabSpaces: integrity violation"));
@@ -367,15 +379,13 @@ export class CollabSpacesRuntime
 		// This is important, as we want the following flow not to generate ops!
 		assert(this.isAttached, "not attached yet");
 
-		for (const [channelId, channel] of this.contexts) {
-			if (this.isCollabChannel(channelId)) {
-				const info = this.saveOrDestroyChannel(
-					(await channel.getChannel()) as ICollabChannel,
-					true, // allowSave
-					true, // allowDestroy
-				);
-				assert(!info.destroyed, "channel should be destroyed");
-			}
+		for (const [channelId, channel] of this.enumerateCollabChannels()) {
+			const info = this.saveOrDestroyChannel(
+				(await channel) as ICollabChannel,
+				true, // allowSave
+				true, // allowDestroy
+			);
+			assert(!info.destroyed, "channel should be destroyed");
 		}
 		*/
 
@@ -392,18 +402,16 @@ export class CollabSpacesRuntime
 		assert(this.matrixPendingChangeCount === 0, "there should be no changes by summarizer!");
 
 		// Do some garbage collection for channels that we do not need.
-		for (const [channelId, channel] of this.contexts) {
-			if (this.isCollabChannel(channelId)) {
-				const info = this.saveOrDestroyChannel(
-					(await channel.getChannel()) as ICollabChannel,
-					false /* allowSave */,
-					true /* allowDestroy */,
-				);
-				assert(
-					!info.destroyed || !this.deferredChannels.has(channelId),
-					"Deferred channels could not be destroyed - this cases data loss!",
-				);
-			}
+		for (const [channelId, channel] of this.enumerateCollabChannels()) {
+			const info = this.saveOrDestroyChannel(
+				(await channel) as ICollabChannel,
+				false /* allowSave */,
+				true /* allowDestroy */,
+			);
+			assert(
+				!info.destroyed || !this.deferredChannels.has(channelId),
+				"Deferred channels could not be destroyed - this cases data loss!",
+			);
 		}
 
 		const summary = await super.summarize(fullTree, trackState, telemetryContext);
@@ -416,7 +424,7 @@ export class CollabSpacesRuntime
 		sequenceNumber: number,
 		attachMessage: IAttachMessage,
 	) {
-		if (!this.contexts.has(id)) {
+		if (!this.channelExists(id)) {
 			super.attachRemoteChannel(id, sequenceNumber, attachMessage);
 			if (this.isCollabChannel(id)) {
 				// This should never happen, but if it does - this points to an issue of
@@ -999,28 +1007,26 @@ export class CollabSpacesRuntime
 		const channelsNotRootedP: Promise<IChannel>[] = [];
 		const channelsRootedP: Promise<IChannel>[] = [];
 
-		for (const [id, context] of this.contexts) {
-			if (this.isCollabChannel(id)) {
-				assert(this.channelInfo[id] !== undefined, "channel not found");
-				const mapping = this.mapChannelToCell(id);
-				if (mapping !== undefined) {
-					channelsRootedP.push(context.getChannel());
-				} else {
-					channelsNotRootedP.push(context.getChannel());
-				}
+		for (const [id, channel] of this.enumerateCollabChannels()) {
+			assert(this.channelInfo[id] !== undefined, "channel not found");
+			const mapping = this.mapChannelToCell(id);
+			if (mapping !== undefined) {
+				channelsRootedP.push(channel);
+			} else {
+				channelsNotRootedP.push(channel);
 			}
 		}
 
 		// Valdate that we do not have "extra" channels
 		for (const [channelId, info] of Object.entries(this.channelInfo)) {
 			if (info !== undefined) {
-				assert(this.contexts.get(channelId) !== undefined, "deferred channel not found");
+				assert(this.channelExists(channelId), "deferred channel not found");
 			}
 		}
 
 		// Valdate that we do not have "extra" deferred channels
 		for (const [channelId] of this.deferredChannels) {
-			assert(this.contexts.get(channelId) !== undefined, "deferred channel not found");
+			assert(this.channelExists(channelId), "deferred channel not found");
 			assert(
 				isChannelDeferred(this.channelInfo[channelId]?.type),
 				"deferred channel should have proper type",
