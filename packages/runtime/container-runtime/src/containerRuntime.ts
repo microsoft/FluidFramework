@@ -3049,7 +3049,13 @@ export class ContainerRuntime
 	 * @param options - options controlling how the summary is generated or submitted
 	 */
 	public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
-		const { fullTree = false, finalAttempt = false, refreshLatestAck, summaryLogger } = options;
+		const {
+			fullTree = false,
+			finalAttempt = false,
+			refreshLatestAck,
+			summaryLogger,
+			latestSummaryRefSeqNum,
+		} = options;
 		// The summary number for this summary. This will be updated during the summary process, so get it now and
 		// use it for all events logged during this summary.
 		const summaryNumber = this.nextSummaryNumber;
@@ -3120,6 +3126,10 @@ export class ContainerRuntime
 			this.mc.config.getBoolean(
 				"Fluid.ContainerRuntime.SubmitSummary.disableInboundSignalPause",
 			) !== true;
+		const shouldValidatePreSummaryState =
+			this.mc.config.getBoolean(
+				"Fluid.ContainerRuntime.SubmitSummary.shouldValidatePreSummaryState",
+			) === true;
 
 		let summaryRefSeqNum: number | undefined;
 
@@ -3134,7 +3144,33 @@ export class ContainerRuntime
 			const message = `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
 			const lastAck = this.summaryCollection.latestAck;
 
-			this.summarizerNode.startSummary(summaryRefSeqNum, summaryNumberLogger);
+			const startSummaryResult = this.summarizerNode.startSummary(
+				summaryRefSeqNum,
+				summaryNumberLogger,
+				latestSummaryRefSeqNum,
+			);
+
+			if (
+				startSummaryResult.invalidNodes > 0 ||
+				startSummaryResult.mismatchNumbers.size > 0
+			) {
+				summaryLogger.sendErrorEvent({
+					eventName: "LatestSummaryRefSeqNumMismatch",
+					details: {
+						...startSummaryResult,
+						mismatchNumbers: Array.from(startSummaryResult.mismatchNumbers),
+					},
+				});
+
+				if (shouldValidatePreSummaryState && !finalAttempt) {
+					return {
+						stage: "base",
+						referenceSequenceNumber: summaryRefSeqNum,
+						minimumSequenceNumber,
+						error: `Summarizer node state inconsistent with summarizer state.`,
+					};
+				}
+			}
 
 			// Helper function to check whether we should still continue between each async step.
 			const checkContinue = (): { continue: true } | { continue: false; error: string } => {

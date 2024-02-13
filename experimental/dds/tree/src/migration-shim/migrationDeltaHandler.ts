@@ -82,10 +82,7 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 	public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
 		// This allows us to process the migrate op and prevent the shared object from processing the wrong ops
 		assert(!this.isPreAttachState(), 0x82c /* Can't process ops before attaching tree handler */);
-		if (
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-			message.type !== MessageType.Operation
-		) {
+		if (message.type !== MessageType.Operation) {
 			return;
 		}
 
@@ -126,10 +123,10 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 			return;
 		}
 
-		if (this.shouldDropOp(opContents)) {
-			this.submitLocalMessage(opContents);
-			return;
-		}
+		assert(
+			!this.shouldDropOp(opContents),
+			"MigrationShim should not be able to apply v1 ops as they shouldn't have been created locally."
+		);
 		this.treeDeltaHandler.applyStashedOp(contents);
 	}
 

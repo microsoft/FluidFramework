@@ -536,6 +536,7 @@ export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stag
 export interface ISubmitSummaryOptions extends ISummarizeOptions {
     readonly cancellationToken: ISummaryCancellationToken;
     readonly finalAttempt?: boolean;
+    readonly latestSummaryRefSeqNum: number;
     readonly summaryLogger: ITelemetryLoggerExt;
 }
 

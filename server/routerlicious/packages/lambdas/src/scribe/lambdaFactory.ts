@@ -138,7 +138,7 @@ export class ScribeLambdaFactory
 				Lumberjack.error(errorMessage, lumberProperties);
 				return new NoOpLambda(context);
 			}
-			if (JSON.parse(document.scribe)?.isCorrupt) {
+			if (document.scribe && JSON.parse(document.scribe)?.isCorrupt) {
 				Lumberjack.info(
 					`Received attempt to connect to a corrupted document.`,
 					lumberProperties,

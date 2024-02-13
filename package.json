@@ -53,7 +53,7 @@
 		"ci:test:stress:tinylicious": "pnpm run -r --no-sort --stream --no-bail test:stress:tinylicious:report ",
 		"ci:test:stress:tinylicious:coverage": "c8 --no-clean pnpm run -r --no-sort --stream --no-bail test:stress:tinylicious:report ",
 		"clean": "fluid-build --task clean",
-		"clean:docs": "rimraf --glob \"**/_api-extractor-temp*\" \"docs/api/*/**\"",
+		"clean:docs": "rimraf --glob \"**/_api-extractor-temp*\"",
 		"clean:nyc": "rimraf --glob \"nyc/**\"",
 		"clean:r11s": "fluid-build -g server --task clean",
 		"clean:root": "rimraf --glob \"*.done.build.log\"",

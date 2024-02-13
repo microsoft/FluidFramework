@@ -245,6 +245,9 @@
 		"broken": {
 			"ClassDeclaration_ContainerRuntime": {
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ISubmitSummaryOptions": {
+				"forwardCompat": false
 			}
 		}
 	}
