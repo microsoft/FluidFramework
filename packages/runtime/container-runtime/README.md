@@ -58,16 +58,13 @@ performance of a container. Excluded content could be loaded at a later time whe
 
 ### Motivation for Data Virtualization
 
-This section talks about how the system used to work before Data virtualization. Fluid (through its APIs) does expose
-some levels of data virtualization. But under covers, there is almost none. The whole content of the file is downloaded
-in one go. Due to limitation of data virtualization, FF holds ALL blobs in snapshot as those might be required in the
-future. Any delayed loading (through FF APIs) results in loading state of DDSs at a sequence number of snapshot we
-booted from, and application of all the ops up till current sequence number. While application may choose not to load
-some data stores immediately on boot (and realize some saving in time and memory by not allocating appropriate app
-state for such datastores), FF still pays the costs for such content. It also continues to pay the cost for all such
-content indefinitely, even if those datastores were loaded (this could theoretically be optimized, but now there is
-no good way for driver to learn what blobs are safe to discard due to limitations in interface and lack of appropriate
-semantics at driver API layer).
+This section talks about how the system used to work before Data virtualization. Currently, the content of whole file
+is downloaded in one go. Due to limitation of data virtualization, FF holds all blobs in snapshot as those might be
+required in the future. Any delayed loading (through FF APIs) results in loading state of datastores at a sequence
+number of snapshot we booted from, up until the current sequence number by applying the pending ops for that datastore.
+While application may choose not to load some data stores immediately on boot (and realize some saving in time and
+memory by not allocating appropriate app state for such datastores), FF still pays the costs for such content. It also
+continues to pay the cost for all such content indefinitely, even if those datastores were loaded.
 
 ### Improvement with Data Virtualization
 
@@ -84,13 +81,15 @@ group of the datastore within a container or its snapshot. When a container is l
 belongs to `default` group are fetched from service and can be loaded on demand when requested by user. This decreases
 the amount of data which needs to be fetched during load and hence provides faster boot times for the container.
 Attempting to load any datastore within a non-default group results in fetching all content/datastores marked with same
-groupId and thus helps faster realization/loading of other datastores within that group faster.
-So, one network will be required to fetch content for a group when a datastore from a group is requested by an
+groupId. So, one network will be required to fetch content for a group when a datastore from a group is requested by an
 application.
+In advanced app scenarios, app would want to make datastores with a specific group Id, based on how it wants to load a
+certain group at once, and not load the datastores that aren't part of the group. By effectively using groupID, app
+will be able to improve boot times by not fetching unnecessary groups at load.
 So to summarize, when datastore is assigned to a group, content of such data store will not be loaded with initial load
 of container. It will be loaded only when any datastore with such groupID is realized.
 This will improve the boot perf. Data virtualization or providing the `loadingGroupId` will however decrease the
-performance of loading of those datastores while improving the overall performance of container load. However,
+performance of loading of those datastores as one network call would be required before loading. However,
 providing same `loadingGroupId` to put some data stores in same group, would improve performance for their loading as
 compared to providing a different group Id to each of these datastores as then one network call will be required to
 fetch snapshot for that group of datastores rather than one network call for each datastore. So, the datastores which
