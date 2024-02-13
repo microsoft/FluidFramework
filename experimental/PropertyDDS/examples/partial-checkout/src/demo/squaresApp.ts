@@ -10,13 +10,13 @@ import { DataBinder } from "@fluid-experimental/property-binder";
 import _ from "lodash";
 import { SQUARES_DEMO_SCHEMAS } from "@fluid-example/schemas";
 import { assert } from "@fluidframework/core-utils";
-import { IPropertyTree } from "../dataObject";
-import { renderMoveButton } from "../view";
-import { SquaresBoard } from "./views/squaresBoard";
-import { IPoint2D, Square } from "./views/square";
+import { IPropertyTree } from "../dataObject.js";
+import { renderMoveButton } from "../view.js";
+import { SquaresBoard } from "./views/squaresBoard.js";
+import { IPoint2D, Square } from "./views/square.js";
 
-import { ColoredSquareBinding } from "./bindings/coloredSquareBinding";
-import { SquaresBoardBinding } from "./bindings/squaresBoardBinding";
+import { ColoredSquareBinding } from "./bindings/coloredSquareBinding.js";
+import { SquaresBoardBinding } from "./bindings/squaresBoardBinding.js";
 
 export function moveSquares(propertyNode: any, guid: string) {
 	const board = propertyNode.get(guid);

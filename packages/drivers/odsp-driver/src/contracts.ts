@@ -86,6 +86,7 @@ export interface IOdspSummaryTreeValueEntry extends IOdspSummaryTreeBaseEntry {
 	value: OdspSummaryTreeValue;
 	// Indicates that this tree entry is unreferenced. If this is not present, the tree entry is considered referenced.
 	unreferenced?: true;
+	groupId?: string;
 }
 
 export interface IOdspSummaryTreeHandleEntry extends IOdspSummaryTreeBaseEntry {
@@ -116,6 +117,7 @@ export interface IOdspSnapshotTreeEntryTree {
 	type: "tree";
 	// Indicates that this tree entry is unreferenced. If this is not present, the tree entry is considered referenced.
 	unreferenced?: true;
+	groupId?: string;
 }
 
 export interface IOdspSnapshotTreeEntryCommit {

@@ -57,8 +57,6 @@ module.exports = {
 		"unused-imports",
 		// Plugin documentation: https://www.npmjs.com/package/eslint-plugin-unicorn
 		"unicorn",
-		// Custom ESLint rules
-		"fluid-internal",
 	],
 	reportUnusedDisableDirectives: true,
 	ignorePatterns: [
@@ -66,11 +64,6 @@ module.exports = {
 		"**/packageVersion.ts",
 	],
 	rules: {
-		/**
-		 * Restrict including release tags inside the member class / interface.
-		 */
-		"fluid-internal/no-member-release-tags": "error",
-
 		/**
 		 * The @rushstack rules are documented in the package README:
 		 * {@link https://www.npmjs.com/package/@rushstack/eslint-plugin}

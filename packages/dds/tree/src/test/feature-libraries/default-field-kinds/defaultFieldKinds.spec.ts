@@ -17,7 +17,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/default-schema/defaultFieldKinds.js";
 import { makeAnonChange, TaggedChange, tagChange } from "../../../core/index.js";
-import { brand, fakeIdAllocator } from "../../../util/index.js";
+import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util/index.js";
 import { defaultRevisionMetadataFromChanges, mintRevisionTag } from "../../utils.js";
 // eslint-disable-next-line import/no-internal-modules
 import { OptionalChangeset } from "../../../feature-libraries/optional-field/index.js";
@@ -230,7 +230,7 @@ describe("defaultFieldKinds", () => {
 			const inverted = fieldHandler.rebaser.invert(
 				taggedChange,
 				childInverter,
-				fakeIdAllocator,
+				idAllocatorFromMaxId(),
 				failCrossFieldManager,
 				defaultRevisionMetadataFromChanges([taggedChange]),
 			);

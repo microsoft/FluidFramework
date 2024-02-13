@@ -35,6 +35,11 @@ module.exports = (env) => {
 				{
 					test: /\.m?js$/,
 					use: ["source-map-loader"],
+					resolve: {
+						// Required until all transitive dependencies are fully ESM.
+						// https://webpack.js.org/configuration/module/#resolvefullyspecified
+						fullySpecified: false,
+					},
 				},
 			],
 		},

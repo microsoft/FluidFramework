@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { SquaresBoard } from "./squaresBoard";
+import { SquaresBoard } from "./squaresBoard.js";
 
 export interface IPoint2D {
 	x: number;

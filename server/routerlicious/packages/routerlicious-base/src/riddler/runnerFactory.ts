@@ -82,10 +82,17 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 				enableReadyCheck: true,
 				maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
 				enableOfflineQueue: redisConfig.enableOfflineQueue,
+<<<<<<< HEAD
 				retryStrategy(times) {
 					const delay = Math.min(times * 50, 2000);
 					return delay;
 				},
+=======
+				retryStrategy: utils.getRedisClusterRetryStrategy({
+					delayPerAttemptMs: 50,
+					maxDelayMs: 2000,
+				}),
+>>>>>>> 462edccc8e09b87ac2356a2e080727c17b96bed2
 			};
 			if (redisConfig.enableAutoPipelining) {
 				/**
@@ -105,6 +112,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 				expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
 			};
 
+<<<<<<< HEAD
 			const redisClient: Redis.default | Redis.Cluster = redisConfig.enableClustering
 				? new Redis.Cluster([{ port: redisConfig.port, host: redisConfig.host }], {
 						redisOptions,
@@ -113,6 +121,13 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 						showFriendlyErrorStack: true,
 				  })
 				: new Redis.default(redisOptions);
+=======
+			const redisClient: Redis.default | Redis.Cluster = utils.getRedisClient(
+				redisOptions,
+				redisConfig.slotsRefreshTimeout,
+				redisConfig.enableClustering,
+			);
+>>>>>>> 462edccc8e09b87ac2356a2e080727c17b96bed2
 
 			cache = new RedisCache(redisClient, redisParams);
 		}
