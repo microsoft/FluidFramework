@@ -116,7 +116,7 @@ see [Fluid handles]({{< relref "handles.md" >}}).
 
 {{< callout note >}}
 
-If you are considering storing a DDS within another DDS in order to give your app's data a hierarchical structure, consider using a [SharedTree][] DDS instead.
+If you are considering storing a DDS within another DDS in order to give your app's data a hierarchical structure, consider using a [SharedTree]({{< relref "/docs/data-structures/tree.md" >}}) DDS instead.
 
 {{</callout >}}
 
