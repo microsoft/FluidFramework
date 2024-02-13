@@ -31,8 +31,8 @@ import {
 	IEventSampler,
 } from '@fluidframework/telemetry-utils';
 import { ISummaryTreeWithStats, ITelemetryContext } from '@fluidframework/runtime-definitions';
-import { fail, copyPropertyIfDefined, RestOrArray, unwrapRestOrArray } from './Common';
-import { EditHandle, EditLog, OrderedEditSet } from './EditLog';
+import { fail, copyPropertyIfDefined, RestOrArray, unwrapRestOrArray } from './Common.js';
+import { EditHandle, EditLog, OrderedEditSet } from './EditLog.js';
 import {
 	EditId,
 	NodeId,
@@ -42,8 +42,8 @@ import {
 	isDetachedSequenceId,
 	AttributionId,
 	SessionId,
-} from './Identifiers';
-import { initialTree } from './InitialTree';
+} from './Identifiers.js';
+import { initialTree } from './InitialTree.js';
 import {
 	CachingLogViewer,
 	EditCacheEntry,
@@ -51,9 +51,9 @@ import {
 	LogViewer,
 	SequencedEditResult,
 	SequencedEditResultCallback,
-} from './LogViewer';
-import { deserialize, getSummaryStatistics } from './SummaryBackCompatibility';
-import { ReconciliationPath } from './ReconciliationPath';
+} from './LogViewer.js';
+import { deserialize, getSummaryStatistics } from './SummaryBackCompatibility.js';
+import { ReconciliationPath } from './ReconciliationPath.js';
 import {
 	BuildNodeInternal,
 	ChangeInternal,
@@ -78,8 +78,8 @@ import {
 	WriteFormat,
 	TreeNodeSequence,
 	InternalizedChange,
-} from './persisted-types';
-import { serialize, SummaryContents } from './Summary';
+} from './persisted-types/index.js';
+import { serialize, SummaryContents } from './Summary.js';
 import {
 	areRevisionViewsSemanticallyEqual,
 	convertTreeNodes,
@@ -88,18 +88,18 @@ import {
 	internalizeBuildNode,
 	newEditId,
 	walkTree,
-} from './EditUtilities';
-import { getNodeIdContext, NodeIdContext, NodeIdNormalizer } from './NodeIdUtilities';
-import { SharedTreeDiagnosticEvent, SharedTreeEvent } from './EventTypes';
-import { RevisionView } from './RevisionView';
-import { SharedTreeEncoder_0_0_2, SharedTreeEncoder_0_1_1 } from './SharedTreeEncoder';
-import { revert } from './HistoryEditFactory';
-import { BuildNode, BuildTreeNode, Change, ChangeType } from './ChangeTypes';
-import { TransactionInternal } from './TransactionInternal';
-import { IdCompressor, createSessionId } from './id-compressor';
-import { convertEditIds } from './IdConversion';
-import { MutableStringInterner } from './StringInterner';
-import { nilUuid } from './UuidUtilities';
+} from './EditUtilities.js';
+import { getNodeIdContext, NodeIdContext, NodeIdNormalizer } from './NodeIdUtilities.js';
+import { SharedTreeDiagnosticEvent, SharedTreeEvent } from './EventTypes.js';
+import { RevisionView } from './RevisionView.js';
+import { SharedTreeEncoder_0_0_2, SharedTreeEncoder_0_1_1 } from './SharedTreeEncoder.js';
+import { revert } from './HistoryEditFactory.js';
+import { BuildNode, BuildTreeNode, Change, ChangeType } from './ChangeTypes.js';
+import { TransactionInternal } from './TransactionInternal.js';
+import { IdCompressor, createSessionId } from './id-compressor/index.js';
+import { convertEditIds } from './IdConversion.js';
+import { MutableStringInterner } from './StringInterner.js';
+import { nilUuid } from './UuidUtilities.js';
 
 /**
  * The write format and associated options used to construct a `SharedTree`
