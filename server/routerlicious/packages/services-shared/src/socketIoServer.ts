@@ -151,14 +151,7 @@ export function create(
 		enableReadyCheck: true,
 		maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
 		enableOfflineQueue: redisConfig.enableOfflineQueue,
-<<<<<<< HEAD
-		retryStrategy(times) {
-			const delay = Math.min(times * 50, 2000);
-			return delay;
-		},
-=======
 		retryStrategy: getRedisClusterRetryStrategy({ delayPerAttemptMs: 50, maxDelayMs: 2000 }),
->>>>>>> 462edccc8e09b87ac2356a2e080727c17b96bed2
 	};
 	if (redisConfig.enableAutoPipelining) {
 		/**
@@ -175,24 +168,6 @@ export function create(
 		};
 	}
 
-<<<<<<< HEAD
-	const pub: Redis.default | Redis.Cluster = redisConfig.enableClustering
-		? new Redis.Cluster([{ port: redisConfig.port, host: redisConfig.host }], {
-				redisOptions: clone(options),
-				slotsRefreshTimeout: 50000,
-				dnsLookup: (adr, callback) => callback(null, adr),
-				showFriendlyErrorStack: true,
-		  })
-		: new Redis.default(clone(options));
-	const sub: Redis.default | Redis.Cluster = redisConfig.enableClustering
-		? new Redis.Cluster([{ port: redisConfig.port, host: redisConfig.host }], {
-				redisOptions: clone(options),
-				slotsRefreshTimeout: 50000,
-				dnsLookup: (adr, callback) => callback(null, adr),
-				showFriendlyErrorStack: true,
-		  })
-		: new Redis.default(clone(options));
-=======
 	const pub: Redis.default | Redis.Cluster = getRedisClient(
 		clone(options),
 		redisConfig.slotsRefreshTimeout,
@@ -204,7 +179,6 @@ export function create(
 		redisConfig.slotsRefreshTimeout,
 		redisConfig.enableClustering,
 	);
->>>>>>> 462edccc8e09b87ac2356a2e080727c17b96bed2
 
 	pub.on("error", (err) => {
 		winston.error("Error with Redis pub connection: ", err);

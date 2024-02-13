@@ -217,17 +217,10 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			enableReadyCheck: true,
 			maxRetriesPerRequest: redisConfig2.maxRetriesPerRequest,
 			enableOfflineQueue: redisConfig2.enableOfflineQueue,
-<<<<<<< HEAD
-			retryStrategy(times) {
-				const delay = Math.min(times * 50, 2000);
-				return delay;
-			},
-=======
 			retryStrategy: utils.getRedisClusterRetryStrategy({
 				delayPerAttemptMs: 50,
 				maxDelayMs: 2000,
 			}),
->>>>>>> 462edccc8e09b87ac2356a2e080727c17b96bed2
 		};
 		if (redisConfig2.enableAutoPipelining) {
 			/**
@@ -248,26 +241,6 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			expireAfterSeconds: redisConfig2.keyExpireAfterSeconds as number | undefined,
 		};
 
-<<<<<<< HEAD
-		const redisClient: Redis.default | Redis.Cluster = redisConfig2.enableClustering
-			? new Redis.Cluster([{ port: redisConfig2.port, host: redisConfig2.host }], {
-					redisOptions: redisOptions2,
-					slotsRefreshTimeout: 50000,
-					dnsLookup: (adr, callback) => callback(null, adr),
-					showFriendlyErrorStack: true,
-			  })
-			: new Redis.default(redisOptions2);
-		const clientManager = new services.ClientManager(redisClient, redisParams2);
-
-		const redisClientForJwtCache: Redis.default | Redis.Cluster = redisConfig2.enableClustering
-			? new Redis.Cluster([{ port: redisConfig2.port, host: redisConfig2.host }], {
-					redisOptions: redisOptions2,
-					slotsRefreshTimeout: 50000,
-					dnsLookup: (adr, callback) => callback(null, adr),
-					showFriendlyErrorStack: true,
-			  })
-			: new Redis.default(redisOptions2);
-=======
 		const redisClient: Redis.default | Redis.Cluster = utils.getRedisClient(
 			redisOptions2,
 			redisConfig2.slotsRefreshTimeout,
@@ -280,7 +253,6 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			redisConfig2.slotsRefreshTimeout,
 			redisConfig2.enableClustering,
 		);
->>>>>>> 462edccc8e09b87ac2356a2e080727c17b96bed2
 		const redisJwtCache = new services.RedisCache(redisClientForJwtCache);
 
 		// Database connection for global db if enabled
@@ -355,17 +327,10 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			enableReadyCheck: true,
 			maxRetriesPerRequest: redisConfigForThrottling.maxRetriesPerRequest,
 			enableOfflineQueue: redisConfigForThrottling.enableOfflineQueue,
-<<<<<<< HEAD
-			retryStrategy(times) {
-				const delay = Math.min(times * 50, 2000);
-				return delay;
-			},
-=======
 			retryStrategy: utils.getRedisClusterRetryStrategy({
 				delayPerAttemptMs: 50,
 				maxDelayMs: 2000,
 			}),
->>>>>>> 462edccc8e09b87ac2356a2e080727c17b96bed2
 		};
 		if (redisConfigForThrottling.enableAutoPipelining) {
 			/**
@@ -387,31 +352,11 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 				| undefined,
 		};
 
-<<<<<<< HEAD
-		const redisClientForThrottling: Redis.default | Redis.Cluster =
-			redisConfigForThrottling.enableClustering
-				? new Redis.Cluster(
-						[
-							{
-								port: redisConfigForThrottling.port,
-								host: redisConfigForThrottling.host,
-							},
-						],
-						{
-							redisOptions: redisOptionsForThrottling,
-							slotsRefreshTimeout: 50000,
-							dnsLookup: (adr, callback) => callback(null, adr),
-							showFriendlyErrorStack: true,
-						},
-				  )
-				: new Redis.default(redisOptionsForThrottling);
-=======
 		const redisClientForThrottling: Redis.default | Redis.Cluster = utils.getRedisClient(
 			redisOptionsForThrottling,
 			redisConfigForThrottling.slotsRefreshTimeout,
 			redisConfigForThrottling.enableClustering,
 		);
->>>>>>> 462edccc8e09b87ac2356a2e080727c17b96bed2
 
 		const redisThrottleAndUsageStorageManager =
 			new services.RedisThrottleAndUsageStorageManager(
@@ -587,17 +532,10 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 				enableReadyCheck: true,
 				maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
 				enableOfflineQueue: redisConfig.enableOfflineQueue,
-<<<<<<< HEAD
-				retryStrategy(times) {
-					const delay = Math.min(times * 50, 2000);
-					return delay;
-				},
-=======
 				retryStrategy: utils.getRedisClusterRetryStrategy({
 					delayPerAttemptMs: 50,
 					maxDelayMs: 2000,
 				}),
->>>>>>> 462edccc8e09b87ac2356a2e080727c17b96bed2
 			};
 			if (redisConfig.enableAutoPipelining) {
 				/**
@@ -614,24 +552,11 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 				};
 			}
 
-<<<<<<< HEAD
-			const redisClientForLogging: Redis.default | Redis.Cluster =
-				redisConfig.enableClustering
-					? new Redis.Cluster([{ port: redisConfig.port, host: redisConfig.host }], {
-							redisOptions,
-							slotsRefreshTimeout: 50000,
-							dnsLookup: (adr, callback) => callback(null, adr),
-							showFriendlyErrorStack: true,
-					  })
-					: new Redis.default(redisOptions);
-
-=======
 			const redisClientForLogging: Redis.default | Redis.Cluster = utils.getRedisClient(
 				redisOptions,
 				redisConfig.slotsRefreshTimeout,
 				redisConfig.enableClustering,
 			);
->>>>>>> 462edccc8e09b87ac2356a2e080727c17b96bed2
 			redisCache = new services.RedisCache(redisClientForLogging);
 		}
 

@@ -46,16 +46,10 @@ export class RedisCache implements ICache {
 	public async get(key: string): Promise<string> {
 		try {
 			return this.client.get(this.getKey(key));
-<<<<<<< HEAD
-		} catch (error) {
-			Lumberjack.error(`Error getting ${key} from cache.`, undefined, error);
-			return undefined;
-=======
 		} catch (error: any) {
 			Lumberjack.error(`Error getting ${key.substring(0, 20)} from cache.`, undefined, error);
 			const newError: Error = { name: error?.name, message: error?.message };
 			throw newError;
->>>>>>> 462edccc8e09b87ac2356a2e080727c17b96bed2
 		}
 	}
 
@@ -70,16 +64,10 @@ export class RedisCache implements ICache {
 			if (result !== "OK") {
 				throw new Error(result);
 			}
-<<<<<<< HEAD
-		} catch (error) {
-			Lumberjack.error(`Error setting ${key} in cache.`, undefined, error);
-			return undefined;
-=======
 		} catch (error: any) {
 			Lumberjack.error(`Error setting ${key.substring(0, 20)} in cache.`, undefined, error);
 			const newError: Error = { name: error?.name, message: error?.message };
 			throw newError;
->>>>>>> 462edccc8e09b87ac2356a2e080727c17b96bed2
 		}
 	}
 
