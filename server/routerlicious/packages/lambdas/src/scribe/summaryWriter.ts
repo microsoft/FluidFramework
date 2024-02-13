@@ -653,7 +653,8 @@ export class SummaryWriter implements ISummaryWriter {
 
 			logtailGaps = this.findMissingGapsInLogtail(logtailFromMemory, gt + 1, lt - 1);
 			if (logtailGaps.length === 0) {
-				return logtailFromMemory;
+				finalLogTail = logtailFromMemory;
+				return finalLogTail;
 			}
 
 			retrievedGaps = await Promise.all(
@@ -665,7 +666,8 @@ export class SummaryWriter implements ISummaryWriter {
 			const nonEmptyRetrievedGaps = retrievedGaps.filter((gap) => gap.length > 0);
 
 			if (nonEmptyRetrievedGaps.length === 0) {
-				return logtailFromMemory;
+				finalLogTail = logtailFromMemory;
+				return finalLogTail;
 			}
 
 			const minHeapComparator = (
@@ -680,6 +682,7 @@ export class SummaryWriter implements ISummaryWriter {
 				}
 				return 0;
 			};
+
 			finalLogTail = dedupeSortedArray(
 				mergeKArrays<ISequencedDocumentMessage>(
 					[...nonEmptyRetrievedGaps, logtailFromMemory],

@@ -86,7 +86,7 @@ describe("mergeArrays", ()=>{
 });
 
 describe("mergeKArray", () => {
-	it("Should return an merged sorted array from sorted arrays", () => {
+	it("Should return an merged sorted array from sorted arrays asc", () => {
 		const input = [
 			[1, 3],
 			[2, 4, 6],
@@ -98,6 +98,20 @@ describe("mergeKArray", () => {
 		const ascComparator = (a: number, b: number) => a - b < 0 ? -1 : a === b ? 0 : 1;
 		const result = mergeKArrays(input, ascComparator);
 		assert.strictEqual(JSON.stringify(result), JSON.stringify([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]));
+	});
+
+	it("Should return an merged sorted array from sorted arrays desc", () => {
+		const input = [
+			[3, 1],
+			[6, 4, 2],
+			[9, 0],
+			[8, 7],
+			[5],
+			[],
+		];
+		const descComparator = (a: number, b: number) => a - b > 0 ? -1 : a === b ? 0 : 1;
+		const result = mergeKArrays(input, descComparator);
+		assert.strictEqual(JSON.stringify(result), JSON.stringify([9, 8, 7, 6, 5, 4, 3, 2, 1, 0]));
 	});
 });
 
