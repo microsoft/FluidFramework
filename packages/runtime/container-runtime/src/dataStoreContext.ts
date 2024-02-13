@@ -147,7 +147,6 @@ export abstract class FluidDataStoreContext
 		return this.pkg;
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public get options(): Record<string | number, any> {
 		return this._containerRuntime.options;
 	}
@@ -584,6 +583,11 @@ export abstract class FluidDataStoreContext
 		if (!this.summarizerNode.isReferenced()) {
 			summarizeResult.summary.unreferenced = true;
 			summarizeResult.stats.unreferencedBlobSize = summarizeResult.stats.totalBlobSize;
+		}
+
+		// Add groupId to the summary
+		if (this.groupId !== undefined) {
+			summarizeResult.summary.groupId = this.groupId;
 		}
 
 		return {
@@ -1151,6 +1155,11 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		// Add data store's attributes to the summary.
 		const attributes = createAttributes(this.pkg, this.isInMemoryRoot());
 		addBlobToSummary(attachSummary, dataStoreAttributesBlobName, JSON.stringify(attributes));
+
+		// Add groupId to the summary
+		if (this.groupId !== undefined) {
+			attachSummary.summary.groupId = this.groupId;
+		}
 
 		return {
 			attachSummary,

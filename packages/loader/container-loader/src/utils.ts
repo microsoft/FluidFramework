@@ -117,6 +117,7 @@ function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): {
 		trees: {},
 		id: uuid(),
 		unreferenced: summary.unreferenced,
+		groupId: summary.groupId,
 	};
 	const keys = Object.keys(summary.tree);
 	for (const key of keys) {
