@@ -174,7 +174,6 @@ describe("SharedObject attaching binding and connecting", () => {
 				attachState,
 			})}`, async () => {
 				let loaded = false;
-
 				let didAttach = 0;
 				const { sharedObject } = createTestSharedObject({
 					runtime: {
@@ -210,7 +209,7 @@ describe("SharedObject attaching binding and connecting", () => {
 
 				assert.strictEqual(loaded, true, "loaded");
 				assert.strictEqual(attachCalled, true, "attachCalled");
-				assert.strictEqual(didAttach, sharedObject.isAttached() ? 1 : 0);
+				assert.strictEqual(didAttach, sharedObject.isAttached() ? 1 : 0, "didAttach");
 
 				assert.strictEqual(
 					sharedObject.isAttached(),
@@ -307,7 +306,7 @@ describe("SharedObject attaching binding and connecting", () => {
 				);
 
 				assert.strictEqual(attachCalled, true, "attachCalled");
-				assert.strictEqual(didAttach, sharedObject.isAttached() ? 1 : 0);
+				assert.strictEqual(didAttach, sharedObject.isAttached() ? 1 : 0, "didAttach");
 
 				assert.strictEqual(
 					sharedObject.isAttached(),
@@ -351,7 +350,7 @@ describe("SharedObject attaching binding and connecting", () => {
 			);
 
 			assert.strictEqual(attachingEventRegistered, true, "attachingEventRegistered");
-			assert.strictEqual(didAttach, 0);
+			assert.strictEqual(didAttach, 0, "!didAttach");
 
 			assert.strictEqual(sharedObject.isAttached(), false, "!isAttached");
 
@@ -361,7 +360,7 @@ describe("SharedObject attaching binding and connecting", () => {
 			overrides.runtime.attachState = AttachState.Attached;
 
 			assert.strictEqual(sharedObject.isAttached(), true, "isAttached");
-			assert.strictEqual(didAttach, 1);
+			assert.strictEqual(didAttach, 1, "didAttach");
 		});
 	});
 
@@ -407,7 +406,7 @@ describe("SharedObject attaching binding and connecting", () => {
 
 				assert.strictEqual(loaded, true, "loaded");
 				assert.strictEqual(attachCalled, true, "attachCalled");
-				assert.strictEqual(didAttach, sharedObject.isAttached() ? 1 : 0);
+				assert.strictEqual(didAttach, sharedObject.isAttached() ? 1 : 0, "didAttach");
 
 				sharedObject.connect(createOverridableProxy<IChannelServices>("services"));
 
@@ -460,7 +459,7 @@ describe("SharedObject attaching binding and connecting", () => {
 				});
 
 				sharedObject.bindToContext();
-				assert.strictEqual(didAttach, sharedObject.isAttached() ? 1 : 0);
+				assert.strictEqual(didAttach, sharedObject.isAttached() ? 1 : 0, "didAttach");
 				assert.strictEqual(attachCalled, true, "attachCalled");
 
 				assert.strictEqual(
