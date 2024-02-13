@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IDisposable,
 	IEventProvider,
 	IEvent,
 	IErrorEvent,
 	IErrorBase,
 } from "@fluidframework/core-interfaces";
-import { IAnyDriverError } from "@fluidframework/driver-definitions";
-import {
+import type { IAnyDriverError } from "@fluidframework/driver-definitions";
+import type {
 	IClientConfiguration,
 	IClientDetails,
 	IDocumentMessage,

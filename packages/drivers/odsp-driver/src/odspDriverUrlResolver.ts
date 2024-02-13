@@ -95,7 +95,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- false positive
 			if (!(fileName && siteURL && driveID && filePath !== null && filePath !== undefined)) {
 				throw new NonRetryableError(
-					"Proper new file params should be there!!",
+					"Proper new file params should be there",
 					OdspErrorTypes.genericError,
 					{ driverVersion: pkgVersion },
 				);

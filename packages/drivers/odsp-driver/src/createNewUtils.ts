@@ -64,6 +64,7 @@ function convertCreateNewSummaryTreeToTreeAndBlobsCore(
 		blobs: {},
 		trees: {},
 		unreferenced: summary.unreferenced,
+		groupId: summary.groupId,
 	};
 	const keys = Object.keys(summary.tree);
 	for (const key of keys) {
@@ -146,11 +147,13 @@ function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree): IOdspS
 		// property is not present, the tree entry is considered referenced. If the property is present and is true,
 		// the tree entry is considered unreferenced.
 		let unreferenced: true | undefined;
+		let groupId: string | undefined;
 
 		switch (summaryObject.type) {
 			case SummaryType.Tree: {
 				value = convertSummaryToSnapshotTreeForCreateNew(summaryObject);
 				unreferenced = summaryObject.unreferenced;
+				groupId = summaryObject.groupId;
 				break;
 			}
 			case SummaryType.Blob: {
@@ -180,6 +183,7 @@ function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree): IOdspS
 			type: getGitType(summaryObject),
 			value,
 			unreferenced,
+			groupId,
 		};
 		snapshotTree.entries?.push(entry);
 	}

@@ -158,7 +158,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     getGCNodePackagePath(nodePath: string): Promise<readonly string[] | undefined>;
     getNodeType(nodePath: string): GCNodeType;
     // (undocumented)
-    getPendingLocalState(props?: IGetPendingLocalStateProps): Promise<unknown>;
+    getPendingLocalState(props?: IGetPendingLocalStateProps): unknown;
     // (undocumented)
     getQuorum(): IQuorumClients;
     // (undocumented)
@@ -536,6 +536,7 @@ export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stag
 export interface ISubmitSummaryOptions extends ISummarizeOptions {
     readonly cancellationToken: ISummaryCancellationToken;
     readonly finalAttempt?: boolean;
+    readonly latestSummaryRefSeqNum: number;
     readonly summaryLogger: ITelemetryLoggerExt;
 }
 

@@ -46,7 +46,7 @@
 {{ $packagePages := where .Site.RegularPages "Params.kind" "Package"}}
 {{ $selectedApiVersion = index (split (trim $current.RelPermalink "/" ) "/") 2 }}
 {{ $isNotSelectApiVersion := (not (in $allVersions $selectedApiVersion)) }}
-{{ if $isNotSelectApiVersion}}
+{{ if $isNotSelectApiVersion }}
     {{ $selectedApiVersion = $.Site.Data.versions.params.currentVersion }}
 {{ end }}
 {{ $versionLink := printf "/docs/api/%s" $selectedApiVersion }}
@@ -269,8 +269,9 @@
             <ul id="service-clients-articles" class="collapse {{if $isCurrentArea}}in{{end}}">
                 {{ range $names := $serviceClients }}
                     {{- range (where $packagePages "Params.package" .) -}}
-                        {{if eq $currentApiVersion $selectedApiVersion}} 
-                            {{ $targetPage := . }}
+                        {{ $targetPage := . }}
+                        {{ $targetPageApiVersion := index (split (trim $targetPage.RelPermalink "/" ) "/") 2 }}
+                        {{ if eq $targetPageApiVersion $selectedApiVersion }} 
                             {{ $versionData := index $.Site.Data $selectedApiVersion }}
                             
                             {{ $packageNameToDisplayName := index $versionData "packageNameToDisplayName"}}
@@ -393,8 +394,9 @@
             <optgroup label="Service Clients">
                 {{ range $names := $serviceClients }}
                     {{- range (where $packagePages "Params.package" .) -}}
-                        {{if eq $currentApiVersion $selectedApiVersion}}
-                            {{ $targetPage := . }}
+                        {{ $targetPage := . }}
+                        {{ $targetPageApiVersion := index (split (trim $targetPage.RelPermalink "/" ) "/") 2 }}
+                        {{ if eq $targetPageApiVersion $selectedApiVersion }}
                             {{ $versionData := index $.Site.Data $selectedApiVersion }}
                             {{ $packageNameToDisplayName := index $versionData "packageNameToDisplayName"}}
                             {{ $packageKey := index $packageNameToDisplayName $targetPage.Params.package }}
@@ -405,16 +407,16 @@
                             <option value="{{ $targetPage.RelPermalink }}" {{ if $isCurrentPage }}selected{{ end }}>&nbsp;&nbsp;&nbsp;&nbsp;{{ (path.Base $targetPage.RelPermalink) | humanize | title }}</option>
                             {{ range $category := $possibleAPICategories }}
                                 {{ if isset $apiDetails $category }}
-                                {{ $categoryLower := lower $category }}
-                                {{ $isCategoryActive := in $currentTrimmedLink $categoryLower }}
-                                {{ $categoryPlural := index $plurals $category }}
-                                <option disabled>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ $categoryPlural }}</option>
-                                {{ range $api := index $apiDetails $category }}
-                                    {{ $apiLink := print $apiOverviewPage "/" $packageKey "/" (lower $api) "-" $categoryLower }}
-                                    {{ $isActiveAPI := in $currentTrimmedLink (trim (print (lower $api) "-" $categoryLower "/") " ") }}
-                                    <option value="{{ $apiLink }}" {{ if $isActiveAPI }}selected{{ end }}>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ $api }}</option>
+                                    {{ $categoryLower := lower $category }}
+                                    {{ $isCategoryActive := in $currentTrimmedLink $categoryLower }}
+                                    {{ $categoryPlural := index $plurals $category }}
+                                    <option disabled>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ $categoryPlural }}</option>
+                                    {{ range $api := index $apiDetails $category }}
+                                        {{ $apiLink := print $apiOverviewPage "/" $packageKey "/" (lower $api) "-" $categoryLower }}
+                                        {{ $isActiveAPI := in $currentTrimmedLink (trim (print (lower $api) "-" $categoryLower "/") " ") }}
+                                        <option value="{{ $apiLink }}" {{ if $isActiveAPI }}selected{{ end }}>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ $api }}</option>
+                                    {{ end }}
                                 {{ end }}
-                            {{ end }}
                             {{ end }}
                         {{ end }}
                     {{- end }}
