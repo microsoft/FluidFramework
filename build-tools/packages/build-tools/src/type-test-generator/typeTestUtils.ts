@@ -62,7 +62,12 @@ export function getTypeRollupPathFromExtractorConfig(
 		}
 		const apiExtractorConfig = extractorConfigOptions.configObject;
 		if (apiExtractorConfig.dtsRollup) {
-			const rollupPath = apiExtractorConfig.dtsRollup[`${rollupType}TrimmedFilePath`];
+			let rollupPath: string | undefined;
+			if (rollupType === "untrimmed") {
+				rollupPath = apiExtractorConfig.dtsRollup.untrimmedFilePath;
+			} else {
+				rollupPath = apiExtractorConfig.dtsRollup[`${rollupType}TrimmedFilePath`];
+			}
 			if (!rollupPath) {
 				console.warn(`Rollup path for "${rollupType}" not found.`);
 				return undefined;
