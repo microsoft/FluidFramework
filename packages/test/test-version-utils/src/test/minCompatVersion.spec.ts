@@ -23,16 +23,8 @@ function transformVersion(version: string): string {
 }
 
 describe("Minimum Compat Version", () => {
-	// const allVersionsFromNpm = execSync(`npm show fluid-framework versions --json`, {
-	// 	encoding: "utf-8",
-	// });
-	// const allVersions: string[] = JSON.parse(allVersionsFromNpm);
-	// // filter out all versions that don't end with 0 (patches). This is done because N-0 version
-	// // is pkgVersion and this variable only updates in minor releases. So it could be the case that latest
-	// // version is a patch and our N-0 version is behind it.
-	// const noPatchVersions = allVersions.filter((version) => /\.\d*0$/.test(version));
 	const minTestVersion = transformVersion(pkgVersion);
-
+	const numCompatVersions = 9;
 	it("bad min compat string", () => {
 		const invalidString = "invalid string";
 		assert.throws(
@@ -53,7 +45,7 @@ describe("Minimum Compat Version", () => {
 		);
 	});
 
-	for (let i = 1; i < 9; i++) {
+	for (let i = 1; i < numCompatVersions; i++) {
 		it(`compatVersion N-${i} < ${minTestVersion}`, () => {
 			assert.strictEqual(
 				isCompatVersionBelowMinVersion(minTestVersion, {
