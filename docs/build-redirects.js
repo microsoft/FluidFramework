@@ -43,7 +43,7 @@ module.exports = async (context, { headers }) => {
 `;
 	const versionPath = path.resolve(__dirname, "api", "fallback", "index.js");
 	await fs.writeFile(versionPath, content);
-}
+};
 
 buildRedirects().then(
 	() => {
