@@ -176,7 +176,7 @@ describe("OpGroupingManager", () => {
 
 			assert.deepStrictEqual(result, [
 				{
-					clientSequenceNumber: 1,
+					clientSequenceNumber: 10,
 					contents: "1",
 				},
 			]);
