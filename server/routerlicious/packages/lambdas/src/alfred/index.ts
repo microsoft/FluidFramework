@@ -376,7 +376,7 @@ export function configureWebSocketServices(
 				// Subscribe to channels.
 				await Promise.all([
 					socket.join(getRoomId(room)),
-					socket.join(`client#${clientId}`),
+					socket.join(getClientRoomId(clientId)),
 				]);
 			} catch (err) {
 				const errMsg = `Could not subscribe to channels. Error: ${safeStringify(
