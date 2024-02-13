@@ -19,7 +19,7 @@ import {
 	DeltaFieldChanges,
 	DeltaFieldMap,
 } from "../../../core/index.js";
-import { brand, fakeIdAllocator } from "../../../util/index.js";
+import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util/index.js";
 import {
 	optionalChangeHandler,
 	optionalChangeRebaser,
@@ -238,7 +238,7 @@ describe("optionalField", () => {
 				optionalChangeRebaser.invert(
 					change1,
 					childInverter,
-					fakeIdAllocator,
+					idAllocatorFromMaxId(),
 					failCrossFieldManager,
 					defaultRevisionMetadataFromChanges([change1]),
 				),
@@ -313,7 +313,7 @@ describe("optionalField", () => {
 					optionalChangeRebaser.invert(
 						deletion,
 						() => assert.fail("Should not need to invert children"),
-						fakeIdAllocator,
+						idAllocatorFromMaxId(),
 						failCrossFieldManager,
 						defaultRevisionMetadataFromChanges([deletion]),
 					),
@@ -558,7 +558,7 @@ describe("optionalField", () => {
 					optionalChangeRebaser.invert(
 						clear,
 						() => assert.fail("Should not need to invert children"),
-						fakeIdAllocator,
+						idAllocatorFromMaxId(),
 						failCrossFieldManager,
 						defaultRevisionMetadataFromChanges([clear]),
 					),
@@ -634,7 +634,7 @@ describe("optionalField", () => {
 					optionalChangeRebaser.invert(
 						clear,
 						() => assert.fail("Should not need to invert children"),
-						fakeIdAllocator,
+						idAllocatorFromMaxId(),
 						failCrossFieldManager,
 						defaultRevisionMetadataFromChanges([clear]),
 					),

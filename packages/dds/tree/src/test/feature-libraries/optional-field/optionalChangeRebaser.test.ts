@@ -28,7 +28,7 @@ import {
 	defaultRevisionMetadataFromChanges,
 	isDeltaVisible,
 } from "../../utils.js";
-import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util/index.js";
+import { brand, idAllocatorFromMaxId } from "../../../util/index.js";
 import {
 	optionalChangeRebaser,
 	optionalFieldEditor,
@@ -129,8 +129,7 @@ function invert(change: TaggedChange<OptionalChangeset>): OptionalChangeset {
 	return optionalChangeRebaser.invert(
 		change,
 		TestChange.invert as any,
-		// Optional fields should not generate IDs during invert
-		fakeIdAllocator,
+		idAllocatorFromMaxId(),
 		failCrossFieldManager,
 		defaultRevisionMetadataFromChanges([change]),
 	);
@@ -375,8 +374,7 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 		const inverseChangeset = optionalChangeRebaser.invert(
 			state.mostRecentEdit.changeset,
 			invertTestChangeViaNewIntention as any,
-			// Optional fields should not generate IDs during invert
-			fakeIdAllocator,
+			idAllocatorFromMaxId(),
 			failCrossFieldManager,
 			defaultRevisionMetadataFromChanges([state.mostRecentEdit.changeset]),
 		);
