@@ -122,6 +122,8 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 		this.mc = loggerToMonitoringContext(this.logger);
 
 		[this.opProcessingHelper, this.callbacksHelper] = this.setUpSampledTelemetryHelpers();
+
+		this.attachListeners();
 	}
 
 	/**
@@ -207,6 +209,20 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 		throw error;
 	}
 
+	private attachListeners() {
+		// Only listen to these events if not attached.
+		if (!this.isAttached()) {
+			this.runtime.once("attaching", () => {
+				if (this._isBoundToContext) {
+					// Calling this will let the dds to do any custom processing based on attached
+					// like starting generating ops.
+					this.didAttach();
+					this.setConnectionState(this.runtime.connected);
+				}
+			});
+		}
+	}
+
 	/**
 	 * A shared object, after construction, can either be loaded in the case that it is already part of
 	 * a shared document. Or later attached if it is being newly added.
@@ -217,6 +233,13 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 		this._isBoundToContext = true;
 		await this.loadCore(services.objectStorage);
 		this.attachDeltaHandler();
+		if (this.isAttached()) {
+			// Allows objects to do any custom processing if it is attached.
+			this.didAttach();
+			// Trigger initial state
+			// attachDeltaHandler is only called after services is assigned
+			this.setConnectionState(this.services.deltaConnection.connected);
+		}
 	}
 
 	/**
@@ -239,6 +262,10 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 			// must set after bind channel so isAttached doesn't report true
 			// before binding is complete
 			this._isBoundToContext = true;
+			if (this.isAttached()) {
+				this.didAttach();
+				this.setConnectionState(this.runtime.connected);
+			}
 		}
 	}
 
@@ -248,8 +275,16 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	public connect(services: IChannelServices) {
 		if (this.services === undefined) {
 			this.services = services;
-			this._isBoundToContext = true;
 			this.attachDeltaHandler();
+		}
+		this._isBoundToContext = true;
+
+		if (this.isAttached()) {
+			// Allows objects to do any custom processing if it is attached.
+			this.didAttach();
+			// Trigger initial state
+			// attachDeltaHandler is only called after services is assigned
+			this.setConnectionState(this.services.deltaConnection.connected);
 		}
 	}
 
@@ -442,27 +477,6 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 				this.rollback(content, localOpMetadata);
 			},
 		});
-
-		// this is only called from load and connect, and both
-		// mean we are already bound to context, since only bound
-		// shared objects can be loaded or connected, so either
-		// call did attach if attach is complete, or
-		// schedule a call to attach once the runtime attaches
-		if (this.isAttached()) {
-			// Allows objects to do any custom processing if it is attached.
-			this.didAttach();
-			// Trigger initial state
-			// attachDeltaHandler is only called after services is assigned
-			this.setConnectionState(this.services.deltaConnection.connected);
-		} else {
-			this.runtime.once("attaching", () => {
-				assert(this.isAttached(), "must be attached");
-				// Calling this will let the dds to do any custom processing based on attached
-				// like starting generating ops.
-				this.didAttach();
-				this.setConnectionState(this.runtime.connected);
-			});
-		}
 	}
 
 	/**
