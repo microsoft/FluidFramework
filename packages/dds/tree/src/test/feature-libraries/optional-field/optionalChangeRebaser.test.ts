@@ -128,8 +128,7 @@ function invert(change: TaggedChange<OptionalChangeset>): OptionalChangeset {
 	return optionalChangeRebaser.invert(
 		change,
 		TestChange.invert as any,
-		// Optional fields should not generate IDs during invert
-		fakeIdAllocator,
+		idAllocatorFromMaxId(),
 		failCrossFieldManager,
 		defaultRevisionMetadataFromChanges([change]),
 	);
@@ -374,8 +373,7 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 		const inverseChangeset = optionalChangeRebaser.invert(
 			state.mostRecentEdit.changeset,
 			invertTestChangeViaNewIntention as any,
-			// Optional fields should not generate IDs during invert
-			fakeIdAllocator,
+			idAllocatorFromMaxId(),
 			failCrossFieldManager,
 			defaultRevisionMetadataFromChanges([state.mostRecentEdit.changeset]),
 		);

@@ -20,7 +20,12 @@ import {
 	RevisionTagCodec,
 	ChangeEncodingContext,
 } from "../../../core/index.js";
-import { fakeIdAllocator, brand, JsonCompatibleReadOnly } from "../../../util/index.js";
+import {
+	fakeIdAllocator,
+	brand,
+	JsonCompatibleReadOnly,
+	idAllocatorFromMaxId,
+} from "../../../util/index.js";
 import {
 	EncodingTestData,
 	MockIdCompressor,
@@ -105,7 +110,7 @@ const childInverter = (nodeChange: NodeChangeset): NodeChangeset => {
 	const inverse = valueHandler.rebaser.invert(
 		taggedChange,
 		unexpectedDelegate,
-		fakeIdAllocator,
+		idAllocatorFromMaxId(),
 		crossFieldManager,
 		defaultRevisionMetadataFromChanges([taggedChange]),
 	);
@@ -360,7 +365,7 @@ describe("GenericField", () => {
 		const actual = genericFieldKind.changeHandler.rebaser.invert(
 			taggedChange,
 			childInverter,
-			fakeIdAllocator,
+			idAllocatorFromMaxId(),
 			crossFieldManager,
 			defaultRevisionMetadataFromChanges([taggedChange]),
 		);

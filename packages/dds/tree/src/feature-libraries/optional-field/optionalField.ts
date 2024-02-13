@@ -286,7 +286,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		const inverseEmptiesSelf = changeFillsSelf;
 		const inverseFillsSelf = changeEmptiesSelf;
 		if (inverseFillsSelf && !inverseEmptiesSelf) {
-			inverted.reservedDetachId = { localId: genId.getNextId() };
+			inverted.reservedDetachId = { localId: genId.allocate() };
 		}
 		return inverted;
 	},
