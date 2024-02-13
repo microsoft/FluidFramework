@@ -585,9 +585,9 @@ export abstract class FluidDataStoreContext
 			summarizeResult.stats.unreferencedBlobSize = summarizeResult.stats.totalBlobSize;
 		}
 
-		// Add groupId to the summary
-		if (this.groupId !== undefined) {
-			summarizeResult.summary.groupId = this.groupId;
+		// Add loadingGroupId to the summary
+		if (this.loadingGroupId !== undefined) {
+			summarizeResult.summary.groupId = this.loadingGroupId;
 		}
 
 		return {
@@ -1156,9 +1156,9 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		const attributes = createAttributes(this.pkg, this.isInMemoryRoot());
 		addBlobToSummary(attachSummary, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
-		// Add groupId to the summary
-		if (this.groupId !== undefined) {
-			attachSummary.summary.groupId = this.groupId;
+		// Add loadingGroupId to the summary
+		if (this.loadingGroupId !== undefined) {
+			attachSummary.summary.groupId = this.loadingGroupId;
 		}
 
 		return {
