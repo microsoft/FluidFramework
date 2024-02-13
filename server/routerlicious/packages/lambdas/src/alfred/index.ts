@@ -248,6 +248,8 @@ export function configureWebSocketServices(
 		const scopeMap = new Map<string, string[]>();
 		// Map from client Ids to connection time.
 		const connectionTimeMap = new Map<string, number>();
+        // Map from client Ids to supportedFeatures
+        const supportedFeaturesMap = new Map<string, Record<string, unknown>>();
 
 		let connectDocumentComplete: boolean = false;
 		let connectDocumentP: Promise<void> | undefined;
@@ -455,6 +457,9 @@ export function configureWebSocketServices(
 
 			// Join the room to receive signals.
 			roomMap.set(clientId, room);
+
+            // Store the supported features for the client
+            supportedFeaturesMap.set(clientId, message.supportedFeatures? message.supportedFeatures : {});
 
 			// increment connection count after the client is added to the room.
 			// excluding summarizer for total client count.
@@ -1111,15 +1116,18 @@ export function configureWebSocketServices(
 							let signalMessage: ISignalMessage;
 							let roomId: string;
 
-							if (typeof content === "object" && "targetClientId" in content) {
-								signalMessage = {
+                            // eslint-disable-next-line @typescript-eslint/dot-notation
+                            if (supportedFeaturesMap.get(clientId)?.clientSupportedFeatures?.["submit_signals_v2"]) {
+                                signalMessage = {
 									clientId,
 									content: content.content,
+                                    targetClientId: content.targetClientId,
 								};
-								roomId = content.targetClientId
-									? getClientRoomId(content.targetClientId)
-									: getRoomId(room);
-							} else {
+
+                                roomId = content.targetClientId
+                                    ? getClientRoomId(content.targetClientId)
+                                    : getRoomId(room);
+                            } else {
 								signalMessage = {
 									clientId,
 									content,
