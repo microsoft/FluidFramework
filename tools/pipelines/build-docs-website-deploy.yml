@@ -13,7 +13,14 @@ schedules:
         - main
     always: true
 
-trigger: none
+trigger:   
+  branches:
+    include:
+    - main
+  paths:
+    include:
+    - docs
+    - "**/api-report"
 pr: none
 
 parameters:
