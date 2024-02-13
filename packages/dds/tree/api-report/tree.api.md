@@ -895,7 +895,7 @@ export interface ICodecOptions {
 export interface IdAllocator<TId = number> {
     allocate: (count?: number) => TId;
     // (undocumented)
-    getNextId: () => TId;
+    getMaxId: () => TId;
 }
 
 // @internal
