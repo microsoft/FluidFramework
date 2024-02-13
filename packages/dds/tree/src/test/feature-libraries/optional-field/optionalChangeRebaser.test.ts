@@ -27,7 +27,7 @@ import {
 	defaultRevisionMetadataFromChanges,
 	isDeltaVisible,
 } from "../../utils.js";
-import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util/index.js";
+import { brand, idAllocatorFromMaxId } from "../../../util/index.js";
 import {
 	optionalChangeRebaser,
 	optionalFieldEditor,
