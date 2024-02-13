@@ -37,7 +37,7 @@ export class RedisCache implements ICache {
 		try {
 			await this.client.del(this.getKey(key));
 			return true;
-		} catch (error) {
+		} catch (error: any) {
 			Lumberjack.error(`Error deleting from cache.`, undefined, error);
 			return false;
 		}
@@ -46,9 +46,10 @@ export class RedisCache implements ICache {
 	public async get(key: string): Promise<string> {
 		try {
 			return this.client.get(this.getKey(key));
-		} catch (error) {
+		} catch (error: any) {
 			Lumberjack.error(`Error getting ${key.substring(0, 20)} from cache.`, undefined, error);
-			throw {name: (error as Error)?.name, message: (error as Error)?.message};
+			const newError: Error = { name: error?.name, message: error?.message };
+			throw newError;
 		}
 	}
 
@@ -63,35 +64,38 @@ export class RedisCache implements ICache {
 			if (result !== "OK") {
 				throw new Error(result);
 			}
-		} catch (error) {
+		} catch (error: any) {
 			Lumberjack.error(`Error setting ${key.substring(0, 20)} in cache.`, undefined, error);
-			throw {name: (error as Error)?.name, message: (error as Error)?.message};
+			const newError: Error = { name: error?.name, message: error?.message };
+			throw newError;
 		}
 	}
 
 	public async incr(key: string): Promise<number> {
 		try {
 			return this.client.incr(key);
-		} catch (error) {
+		} catch (error: any) {
 			Lumberjack.error(
-				`Error while incrementing counter for ${key} in redis.`,
+				`Error while incrementing counter for ${key.substring(0, 20)} in redis.`,
 				undefined,
 				error,
 			);
-			throw {name: (error as Error)?.name, message: (error as Error)?.message};
+			const newError: Error = { name: error?.name, message: error?.message };
+			throw newError;
 		}
 	}
 
 	public async decr(key: string): Promise<number> {
 		try {
 			return this.client.decr(key);
-		} catch (error) {
+		} catch (error: any) {
 			Lumberjack.error(
-				`Error while decrementing counter for ${key} in redis.`,
+				`Error while decrementing counter for ${key.substring(0, 20)} in redis.`,
 				undefined,
 				error,
 			);
-			throw {name: (error as Error)?.name, message: (error as Error)?.message};
+			const newError: Error = { name: error?.name, message: error?.message };
+			throw newError;
 		}
 	}
 
