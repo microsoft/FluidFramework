@@ -78,7 +78,7 @@ export class RedisCache implements ICache {
 				undefined,
 				error,
 			);
-			throw error;
+			throw {name: (error as Error)?.name, message: (error as Error)?.message};
 		}
 	}
 
@@ -91,7 +91,7 @@ export class RedisCache implements ICache {
 				undefined,
 				error,
 			);
-			throw error;
+			throw {name: (error as Error)?.name, message: (error as Error)?.message};
 		}
 	}
 
