@@ -196,10 +196,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * store being attached to storage.
 	 * @param pkg - Package name of the data store factory
 	 * @param loadingGroupId - This represents the group of the datastore within a container or its snapshot.
-	 * When not specified the datastore will belong to a `default` group. When a container is loaded initially, only datastores
-	 * which belongs to `default` group are fetched from service and can be loaded on demand when requested by user. Snapshot for
-	 * all datastores within a non-default groupId will be fetched from service when any of the datastores within a group is requested
-	 * by user, then snapshot for that particular group will be fetched using a network call at that time. Read more about it in this
+	 * When not specified the datastore will belong to a `default` group. Read more about it in this
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}
 	 */
 	createDataStore(pkg: string | string[], loadingGroupId?: string): Promise<IDataStore>;
@@ -209,10 +206,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * data store initialization is considered complete.
 	 * @param pkg - Package name of the data store factory
 	 * @param loadingGroupId - This represents the group of the datastore within a container or its snapshot.
-	 * When not specified the datastore will belong to a `default` group. When a container is loaded initially, only datastores
-	 * which belongs to `default` group are fetched from service and can be loaded on demand when requested by user. Snapshot for
-	 * all datastores within a non-default groupId will be fetched from service when any of the datastores within a group is requested
-	 * by user, then snapshot for that particular group will be fetched using a network call at that time. Read more about it in this
+	 * When not specified the datastore will belong to a `default` group. Read more about it in this
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}.
 	 */
 	createDetachedDataStore(
