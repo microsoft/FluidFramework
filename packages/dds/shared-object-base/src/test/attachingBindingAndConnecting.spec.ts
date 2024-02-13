@@ -66,14 +66,17 @@ function createTestSharedObject(
 		) => void;
 		onDisconnect: (this: SharedObject) => void;
 		applyStashedOp: (this: SharedObject, content: any) => unknown;
+		didAttach: () => void;
 	}>,
 ) {
-	class TestSharedObjects extends SharedObject {
+	class TestSharedObject extends SharedObject {
 		protected summarizeCore = overrides?.summarizeCore?.bind(this);
 		protected loadCore = overrides?.loadCore?.bind(this);
 		protected processCore = overrides?.processCore?.bind(this);
 		protected onDisconnect = overrides?.onDisconnect?.bind(this);
 		protected applyStashedOp = overrides?.applyStashedOp?.bind(this);
+		protected didAttach =
+			overrides.didAttach?.bind(this) ?? (() => assert.fail("didAttach not set"));
 	}
 
 	const runtime = overrides?.runtime ?? {};
@@ -96,7 +99,7 @@ function createTestSharedObject(
 
 	return {
 		overrides,
-		sharedObject: new TestSharedObjects(
+		sharedObject: new TestSharedObject(
 			overrides?.id ?? Date.now().toString(),
 			createOverridableProxy<IFluidDataStoreRuntime>(
 				"runtime",
@@ -141,15 +144,17 @@ describe("SharedObject attaching binding and connecting", () => {
 				attachingEventRegistered ||= event === "attaching";
 			});
 
+			let didAttach = 0;
 			const { overrides, sharedObject } = createTestSharedObject({
 				runtime: {
 					...(runtimeEvents as any as Overridable<IFluidDataStoreRuntime>),
 					attachState: AttachState.Detached,
 				},
+				didAttach: () => didAttach++,
 			});
 
-			assert.strictEqual(attachingEventRegistered, true, "attachingEventRegistered");
-
+			assert.strictEqual(attachingEventRegistered, false, "attachingEventRegistered");
+			assert.strictEqual(didAttach, 0, "!didAttach");
 			assert.strictEqual(sharedObject.isAttached(), false, "!isAttached");
 
 			assert(overrides.runtime);
@@ -158,6 +163,7 @@ describe("SharedObject attaching binding and connecting", () => {
 			overrides.runtime.attachState = AttachState.Attached;
 
 			assert.strictEqual(sharedObject.isAttached(), false, "!isAttached");
+			assert.strictEqual(didAttach, 0, "!didAttach");
 		});
 	});
 
@@ -169,6 +175,7 @@ describe("SharedObject attaching binding and connecting", () => {
 			})}`, async () => {
 				let loaded = false;
 
+				let didAttach = 0;
 				const { sharedObject } = createTestSharedObject({
 					runtime: {
 						attachState,
@@ -182,6 +189,7 @@ describe("SharedObject attaching binding and connecting", () => {
 						);
 						loaded = true;
 					},
+					didAttach: () => didAttach++,
 				});
 
 				let attachCalled = false;
@@ -202,6 +210,7 @@ describe("SharedObject attaching binding and connecting", () => {
 
 				assert.strictEqual(loaded, true, "loaded");
 				assert.strictEqual(attachCalled, true, "attachCalled");
+				assert.strictEqual(didAttach, sharedObject.isAttached() ? 1 : 0);
 
 				assert.strictEqual(
 					sharedObject.isAttached(),
@@ -224,12 +233,15 @@ describe("SharedObject attaching binding and connecting", () => {
 				attachingEventRegistered ||= event === "attaching";
 			});
 
+			let didAttach = 0;
+
 			const { overrides, sharedObject } = createTestSharedObject({
 				runtime: {
 					...(runtimeEvents as any as Overridable<IFluidDataStoreRuntime>),
 					attachState: AttachState.Detached,
 					connected: true,
 				},
+				didAttach: () => didAttach++,
 				loadCore: async () => {
 					assert.strictEqual(
 						sharedObject.isAttached(),
@@ -250,7 +262,7 @@ describe("SharedObject attaching binding and connecting", () => {
 			);
 
 			assert.strictEqual(attachingEventRegistered, true, "attachingEventRegistered");
-
+			assert.strictEqual(didAttach, 0, "!didAttach");
 			assert.strictEqual(sharedObject.isAttached(), false, "!isAttached");
 
 			assert(overrides.runtime);
@@ -259,6 +271,7 @@ describe("SharedObject attaching binding and connecting", () => {
 			overrides.runtime.attachState = AttachState.Attached;
 
 			assert.strictEqual(sharedObject.isAttached(), true, "isAttached");
+			assert.strictEqual(didAttach, 1, "didAttach");
 		});
 	});
 
@@ -268,11 +281,13 @@ describe("SharedObject attaching binding and connecting", () => {
 				connected,
 				attachState,
 			})}`, async () => {
+				let didAttach = 0;
 				const { sharedObject } = createTestSharedObject({
 					runtime: {
 						attachState,
 						connected,
 					},
+					didAttach: () => didAttach++,
 				});
 
 				let attachCalled = false;
@@ -292,11 +307,18 @@ describe("SharedObject attaching binding and connecting", () => {
 				);
 
 				assert.strictEqual(attachCalled, true, "attachCalled");
+				assert.strictEqual(didAttach, sharedObject.isAttached() ? 1 : 0);
 
-				const isDetached = attachState === AttachState.Detached;
-
-				assert.strictEqual(sharedObject.isAttached(), !isDetached, "isAttached");
-				assert.strictEqual(sharedObject.connected, connected && !isDetached, "connected");
+				assert.strictEqual(
+					sharedObject.isAttached(),
+					attachState !== AttachState.Detached,
+					"isAttached",
+				);
+				assert.strictEqual(
+					sharedObject.connected,
+					connected && sharedObject.isAttached(),
+					"connected",
+				);
 			}),
 		);
 
@@ -308,12 +330,14 @@ describe("SharedObject attaching binding and connecting", () => {
 				attachingEventRegistered ||= event === "attaching";
 			});
 
+			let didAttach = 0;
 			const { overrides, sharedObject } = createTestSharedObject({
 				runtime: {
 					...(runtimeEvents as any as Overridable<IFluidDataStoreRuntime>),
 					attachState: AttachState.Detached,
 					connected: true,
 				},
+				didAttach: () => didAttach++,
 			});
 
 			sharedObject.connect(
@@ -327,6 +351,7 @@ describe("SharedObject attaching binding and connecting", () => {
 			);
 
 			assert.strictEqual(attachingEventRegistered, true, "attachingEventRegistered");
+			assert.strictEqual(didAttach, 0);
 
 			assert.strictEqual(sharedObject.isAttached(), false, "!isAttached");
 
@@ -336,6 +361,7 @@ describe("SharedObject attaching binding and connecting", () => {
 			overrides.runtime.attachState = AttachState.Attached;
 
 			assert.strictEqual(sharedObject.isAttached(), true, "isAttached");
+			assert.strictEqual(didAttach, 1);
 		});
 	});
 
@@ -346,12 +372,13 @@ describe("SharedObject attaching binding and connecting", () => {
 				attachState,
 			})}`, async () => {
 				let loaded = false;
-
+				let didAttach = 0;
 				const { sharedObject } = createTestSharedObject({
 					runtime: {
 						attachState,
 						connected,
 					},
+					didAttach: () => didAttach++,
 					loadCore: async () => {
 						assert.strictEqual(
 							sharedObject.isAttached(),
@@ -378,10 +405,11 @@ describe("SharedObject attaching binding and connecting", () => {
 					}),
 				);
 
-				sharedObject.connect(createOverridableProxy<IChannelServices>("services"));
-
 				assert.strictEqual(loaded, true, "loaded");
 				assert.strictEqual(attachCalled, true, "attachCalled");
+				assert.strictEqual(didAttach, sharedObject.isAttached() ? 1 : 0);
+
+				sharedObject.connect(createOverridableProxy<IChannelServices>("services"));
 
 				assert.strictEqual(
 					sharedObject.isAttached(),
@@ -403,17 +431,37 @@ describe("SharedObject attaching binding and connecting", () => {
 				connected,
 				attachState,
 			})}`, async () => {
+				let didAttach = 0;
+				let attachCalled = false;
 				const { sharedObject } = createTestSharedObject({
 					runtime: {
 						attachState,
 						connected,
 						bindChannel: (channel) => {
 							assert.strictEqual(channel, sharedObject, "channel");
+							// real bind to context calls connect, so simulate here
+							sharedObject.connect(
+								createOverridableProxy<IChannelServices>("services", {
+									objectStorage: createOverridableProxy("objectStorage"),
+									deltaConnection: createOverridableProxy<IDeltaConnection>(
+										"deltaConnection",
+										{
+											attach(handler) {
+												attachCalled = true;
+											},
+											connected,
+										},
+									),
+								}),
+							);
 						},
 					},
+					didAttach: () => didAttach++,
 				});
 
 				sharedObject.bindToContext();
+				assert.strictEqual(didAttach, sharedObject.isAttached() ? 1 : 0);
+				assert.strictEqual(attachCalled, true, "attachCalled");
 
 				assert.strictEqual(
 					sharedObject.isAttached(),
@@ -436,24 +484,39 @@ describe("SharedObject attaching binding and connecting", () => {
 				attachingEventRegistered ||= event === "attaching";
 			});
 
+			let didAttach = 0;
+			let attachCalled = false;
 			const { overrides, sharedObject } = createTestSharedObject({
 				runtime: {
-					...(runtimeEvents as any as Overridable<IFluidDataStoreRuntime>),
+					...(runtimeEvents as any),
 					attachState: AttachState.Detached,
-					connected: true,
+					connected: false,
+					bindChannel: (channel) => {
+						assert.strictEqual(channel, sharedObject, "channel");
+						// real bind to context calls connect, so simulate here
+						sharedObject.connect(
+							createOverridableProxy<IChannelServices>("services", {
+								objectStorage: createOverridableProxy("objectStorage"),
+								deltaConnection: createOverridableProxy<IDeltaConnection>(
+									"deltaConnection",
+									{
+										attach(handler) {
+											attachCalled = true;
+										},
+										connected: false,
+									},
+								),
+							}),
+						);
+					},
 				},
-				loadCore: async () => {},
+				didAttach: () => didAttach++,
 			});
 
-			await sharedObject.load(
-				createOverridableProxy<IChannelServices>("services", {
-					objectStorage: createOverridableProxy("objectStorage"),
-					deltaConnection: createOverridableProxy<IDeltaConnection>("deltaConnection", {
-						attach(handler) {},
-						connected: overrides.runtime?.connected ?? false,
-					}),
-				}),
-			);
+			sharedObject.bindToContext();
+
+			assert.strictEqual(didAttach, 0, "!didAttach");
+			assert.strictEqual(attachCalled, true, "attachCalled");
 
 			assert.strictEqual(attachingEventRegistered, true, "attachingEventRegistered");
 
@@ -464,6 +527,7 @@ describe("SharedObject attaching binding and connecting", () => {
 			runtimeEvents.emit("attaching");
 			overrides.runtime.attachState = AttachState.Attached;
 
+			assert.strictEqual(didAttach, 1, "didAttach");
 			assert.strictEqual(sharedObject.isAttached(), true, "isAttached");
 		});
 	});
