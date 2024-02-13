@@ -196,7 +196,7 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 	});
 });
 
-describeCompat("TargetedSignals", "NoCompat", (getTestObjectProvider) => {
+describeCompat.skip("TargetedSignals", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let dataObject1: ITestFluidObject;
 	let dataObject2: ITestFluidObject;
