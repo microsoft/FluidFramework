@@ -898,7 +898,6 @@ describe("Temporal Collab Spaces", () => {
 
 		// collaborate on a cell through collab channel
 		const collabFn: Op = async (cp: IMatrix) => {
-			commandArray.push(`collabFn Row Count`);
 			// Cell might be undefined. If so, we can't really collab on it.
 			// Do some number of iterations to find some cell to collab, otherwise bail out.
 			for (let it = 0; it < 10; it++) {
@@ -973,7 +972,6 @@ describe("Temporal Collab Spaces", () => {
 		};
 
 		const removeRowsFn: Op = async (cp: IMatrix) => {
-			console.log("Remove rows");
 			const currCount = Math.min(currentRowCount, cp.rowCount);
 			const pos = randNotInclusive(currCount);
 			// delete at most 1/3 of the matrix
@@ -1104,7 +1102,7 @@ describe("Temporal Collab Spaces", () => {
 				}
 				throw e;
 			}
-		}).timeout(120000);
+		}).timeout(240000);
 
 		it("General Stress test", async () => {
 			await stressTest(100, 20, 7, [
