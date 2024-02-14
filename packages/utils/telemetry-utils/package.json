@@ -125,6 +125,10 @@
 			"RemovedTypeAliasDeclaration_ConfigTypes": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"RemovedFunctionDeclaration_logIfFalse": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}

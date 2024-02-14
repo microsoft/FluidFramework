@@ -94,10 +94,12 @@
 	"typeValidation": {
 		"broken": {
 			"InterfaceDeclaration_IFluidDataStoreContext": {
-				"forwardCompat": false
+				"forwardCompat": false,
+				"backCompat": false
 			},
 			"InterfaceDeclaration_IFluidDataStoreContextDetached": {
-				"forwardCompat": false
+				"forwardCompat": false,
+				"backCompat": false
 			},
 			"RemovedInterfaceDeclaration_IIdCompressorCore": {
 				"forwardCompat": false,

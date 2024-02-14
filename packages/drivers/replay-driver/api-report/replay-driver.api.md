@@ -80,8 +80,6 @@ export abstract class ReadDocumentStorageServiceBase implements IDocumentStorage
     // (undocumented)
     abstract readBlob(blobId: string): Promise<ArrayBufferLike>;
     // (undocumented)
-    get repositoryUrl(): string;
-    // (undocumented)
     uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string>;
 }
 

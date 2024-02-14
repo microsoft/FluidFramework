@@ -416,6 +416,7 @@ declare function get_current_InterfaceDeclaration_IContainerContext():
 declare function use_old_InterfaceDeclaration_IContainerContext(
     use: TypeOnly<old.IContainerContext>): void;
 use_old_InterfaceDeclaration_IContainerContext(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerContext());
 
 /*

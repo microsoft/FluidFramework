@@ -84,7 +84,7 @@ describe("Fuzz - Top-Level", () => {
 				numOpsBeforeAttach: 5,
 				rehydrateDisabled: true,
 			},
-			reconnectProbability: 0,
+			reconnectProbability: 0.1,
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 		};
 		createDDSFuzzSuite(model, options);

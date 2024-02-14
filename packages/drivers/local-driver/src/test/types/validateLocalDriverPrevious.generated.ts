@@ -140,6 +140,7 @@ declare function get_current_ClassDeclaration_LocalDocumentStorageService():
 declare function use_old_ClassDeclaration_LocalDocumentStorageService(
     use: TypeOnly<old.LocalDocumentStorageService>): void;
 use_old_ClassDeclaration_LocalDocumentStorageService(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_LocalDocumentStorageService());
 
 /*

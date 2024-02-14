@@ -172,10 +172,19 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	}
 
 	/**
+	 * Starts a ghost session. Only exposed for test purposes (this class is not exported from the package).
+	 * @param ghostSessionId - The session ID to start the ghost session with.
+	 */
+	public startGhostSession(ghostSessionId: SessionId): void {
+		assert(!this.ongoingGhostSession, "Ghost session already in progress.");
+		this.ongoingGhostSession = { ghostSessionId };
+	}
+
+	/**
 	 * {@inheritdoc IIdCompressorCore.beginGhostSession}
 	 */
 	public beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void) {
-		this.ongoingGhostSession = { ghostSessionId };
+		this.startGhostSession(ghostSessionId);
 		try {
 			ghostSessionCallback();
 		} finally {

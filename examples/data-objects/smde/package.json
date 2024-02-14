@@ -52,7 +52,6 @@
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
-		"@fluidframework/view-adapters": "workspace:~",
 		"events": "^3.1.0",
 		"react": "^17.0.1",
 		"simplemde": "^1.11.2"
