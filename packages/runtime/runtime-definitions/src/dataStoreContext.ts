@@ -396,8 +396,11 @@ export interface IFluidDataStoreContext
 	readonly logger: ITelemetryBaseLogger;
 	readonly clientDetails: IClientDetails;
 	readonly idCompressor?: IIdCompressor;
-	// Represents the group to which the data store belongs too.
-	readonly groupId?: string;
+	/**
+	 * Represents the group to which the data store belongs too. Please refer to this readme for more context.
+	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}
+	 */
+	readonly loadingGroupId?: string;
 	/**
 	 * Indicates the attachment state of the data store to a host service.
 	 */

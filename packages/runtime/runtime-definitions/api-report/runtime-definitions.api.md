@@ -224,12 +224,11 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     createParam: CreateChildSummarizerNodeParam): CreateChildSummarizerNodeFn;
     getQuorum(): IQuorumClients;
     // (undocumented)
-    readonly groupId?: string;
-    // (undocumented)
     readonly id: string;
     // (undocumented)
     readonly idCompressor?: IIdCompressor;
     readonly isLocalDataStore: boolean;
+    readonly loadingGroupId?: string;
     // (undocumented)
     readonly logger: ITelemetryBaseLogger;
     makeLocallyVisible(): void;
