@@ -266,7 +266,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 			public constructor(input: InsertableObjectFromSchemaRecord<T>) {
 				super(input);
 
-				// Differentiate between when this class is being constructor vs. a subclass
+				// Differentiate between when this class is being constructed vs. a subclass
 				// of this class is being constructed:
 				//
 				// Case 1: Direct construction (POJO)
