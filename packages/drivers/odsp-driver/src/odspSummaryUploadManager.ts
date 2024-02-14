@@ -181,6 +181,7 @@ export class OdspSummaryUploadManager {
 			// property is not present, the tree entry is considered referenced. If the property is present and is
 			// true (which is the only value it can have), the tree entry is considered unreferenced.
 			let unreferenced: true | undefined;
+			let groupId: string | undefined;
 			switch (summaryObject.type) {
 				case api.SummaryType.Tree: {
 					const result = await this.convertSummaryToSnapshotTree(
@@ -190,6 +191,7 @@ export class OdspSummaryUploadManager {
 					);
 					value = result.snapshotTree;
 					unreferenced = markUnreferencedNodes ? summaryObject.unreferenced : undefined;
+					groupId = summaryObject.groupId;
 					blobs += result.blobs;
 					break;
 				}
@@ -246,6 +248,7 @@ export class OdspSummaryUploadManager {
 					value,
 					...baseEntry,
 					unreferenced,
+					groupId,
 				};
 			} else if (id) {
 				entry = {

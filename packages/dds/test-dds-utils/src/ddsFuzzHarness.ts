@@ -104,6 +104,13 @@ export interface Attach {
 /**
  * @internal
  */
+export interface Rehydrate {
+	type: "rehydrate";
+}
+
+/**
+ * @internal
+ */
 export interface TriggerRebase {
 	type: "rebase";
 }
@@ -315,18 +322,19 @@ export interface DDSFuzzSuiteOptions {
 	/**
 	 * Dictates simulation of edits made to a DDS while that DDS is detached.
 	 *
-	 * When enabled, the fuzz test starts with a single client generating edits. At some point in time (dictated by `attachProbability`),
+	 * When enabled, the fuzz test starts with a single client generating edits. After a certain number of ops (dictated by `numOpsBeforeAttach`),
 	 * an attach op will be generated, at which point:
 	 * - getAttachSummary will be invoked on this client
 	 * - The remaining clients (as dictated by {@link DDSFuzzSuiteOptions.numberOfClients}) will load from this summary and join the session
 	 *
 	 * This setup simulates application code initializing state in a data store before attaching it, e.g. running code to edit a DDS from
 	 * `DataObject.initializingFirstTime`.
-	 * Default: tests are run with this setting enabled, and each op during the warmup phase has a 20% chance to be
-	 * an attach op.
+	 * Default: tests are run with this setting enabled, with 5 ops being generated before an attach op. A new client is also rehydrated from
+	 * summary. To disable the generation of rehydrate ops, set `rehydrateDisabled` to `true`.
 	 */
 	detachedStartOptions: {
 		numOpsBeforeAttach: number;
+		rehydrateDisabled?: true;
 	};
 
 	/**
@@ -597,6 +605,15 @@ export function mixinReconnect<
 	};
 }
 
+function finalizeAllocatedIds(compressor: IIdCompressorCore | undefined): void {
+	if (compressor !== undefined) {
+		const range = compressor.takeNextCreationRange();
+		if (range.ids !== undefined) {
+			compressor.finalizeCreationRange(range);
+		}
+	}
+}
+
 /**
  * Mixes in functionality to generate an 'attach' op, which
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
@@ -609,41 +626,53 @@ export function mixinAttach<
 >(
 	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
 	options: DDSFuzzSuiteOptions,
-): DDSFuzzModel<TChannelFactory, TOperation | Attach, TState> {
-	const { numOpsBeforeAttach } = options.detachedStartOptions;
+): DDSFuzzModel<TChannelFactory, TOperation | Attach | Rehydrate, TState> {
+	const { numOpsBeforeAttach, rehydrateDisabled } = options.detachedStartOptions;
 	if (numOpsBeforeAttach === 0) {
 		// not wrapping the reducer/generator in this case makes stepping through the harness slightly less painful.
-		return model as DDSFuzzModel<TChannelFactory, TOperation | Attach, TState>;
+		return model as DDSFuzzModel<TChannelFactory, TOperation | Attach | Rehydrate, TState>;
 	}
-	const attachOp = async (): Promise<TOperation | Attach> => {
+	const attachOp = async (): Promise<TOperation | Attach | Rehydrate> => {
 		return { type: "attach" };
 	};
-	const generatorFactory: () => AsyncGenerator<TOperation | Attach, TState> = () => {
+	const rehydrateOp = async (): Promise<TOperation | Attach | Rehydrate> => {
+		return { type: "rehydrate" };
+	};
+	const generatorFactory: () => AsyncGenerator<TOperation | Attach | Rehydrate, TState> = () => {
 		const baseGenerator = model.generatorFactory();
-		const opsBeforeAttach = takeAsync(numOpsBeforeAttach, baseGenerator);
-		return chainAsync(opsBeforeAttach, takeAsync(1, attachOp), baseGenerator);
+		const rehydrates = rehydrateDisabled
+			? []
+			: [takeAsync(numOpsBeforeAttach, baseGenerator), takeAsync(1, rehydrateOp)];
+		return chainAsync(
+			...rehydrates,
+			takeAsync(numOpsBeforeAttach, baseGenerator),
+			takeAsync(1, attachOp),
+			baseGenerator,
+		);
 	};
 
 	const minimizationTransforms = model.minimizationTransforms as
-		| MinimizationTransform<TOperation | Attach>[]
+		| MinimizationTransform<TOperation | Attach | Rehydrate>[]
 		| undefined;
 
-	const reducer: AsyncReducer<TOperation | Attach, TState> = async (state, operation) => {
+	const reducer: AsyncReducer<TOperation | Attach | Rehydrate, TState> = async (
+		state,
+		operation,
+	) => {
 		if (operation.type === "attach") {
 			state.isDetached = false;
 			assert.equal(state.clients.length, 1);
 			const clientA = state.clients[0];
+			clientA.dataStoreRuntime.local = false;
 			const services: IChannelServices = {
 				deltaConnection: clientA.dataStoreRuntime.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 			clientA.channel.connect(services);
 
-			// This is necessary to get all IdCreationRanges finalized before connecting further clients.
-			// The production codepath also finalizes ids before attaching. It's difficult for the mocks
-			// to be more direct about this as they don't directly manage any state related to attach
-			// (it's up to the user of the mocks to set them up how they want)
-			state.containerRuntimeFactory.processAllMessages();
+			// Finalize all id creation ranges before serializing. The production codepath does this
+			// in ContainerRuntime.createSummary.
+			finalizeAllocatedIds(clientA.dataStoreRuntime.idCompressor);
 
 			const clients = await Promise.all(
 				Array.from({ length: options.numberOfClients }, async (_, index) =>
@@ -671,8 +700,29 @@ export function mixinAttach<
 				clients,
 				summarizerClient,
 			};
-		}
+		} else if (operation.type === "rehydrate") {
+			const clientA = state.clients[0];
+			assert.equal(state.clients.length, 1);
+			// Finalize all id creation ranges before serializing. The production codepath does this
+			// in ContainerRuntime.createSummary.
+			finalizeAllocatedIds(clientA.dataStoreRuntime.idCompressor);
+			state.containerRuntimeFactory.removeContainerRuntime(clientA.containerRuntime);
 
+			const summarizerClient = await loadDetached(
+				state.containerRuntimeFactory,
+				clientA,
+				model.factory,
+				makeFriendlyClientId(state.random, 0),
+				options,
+			);
+
+			return {
+				...state,
+				isDetached: true,
+				clients: [summarizerClient],
+				summarizerClient,
+			};
+		}
 		return model.reducer(state, operation as TOperation);
 	};
 	return {
@@ -963,6 +1013,7 @@ function createDetachedClient<TChannelFactory extends IChannelFactory>(
 		idCompressor:
 			options.idCompressorFactory === undefined ? undefined : options.idCompressorFactory(),
 	});
+	dataStoreRuntime.local = true;
 	// Note: we re-use the clientId for the channel id here despite connecting all clients to the same channel:
 	// this isn't how it would work in a real scenario, but the mocks don't use the channel id for any message
 	// routing behavior and making all of the object ids consistent helps with debugging and writing more informative
@@ -988,8 +1039,6 @@ async function loadClient<TChannelFactory extends IChannelFactory>(
 	clientId: string,
 	options: Omit<DDSFuzzSuiteOptions, "only" | "skip">,
 ): Promise<Client<TChannelFactory>> {
-	containerRuntimeFactory.synchronizeIdCompressors();
-
 	const { summary } = summarizerClient.channel.getAttachSummary();
 	let idCompressorSummary: SerializedIdCompressorWithNoSession | undefined;
 	if (summarizerClient.dataStoreRuntime.idCompressor !== undefined) {
@@ -1018,6 +1067,42 @@ async function loadClient<TChannelFactory extends IChannelFactory>(
 		factory.attributes,
 	)) as ReturnType<TChannelFactory["create"]>;
 	channel.connect(services);
+	const newClient: Client<TChannelFactory> = {
+		channel,
+		containerRuntime,
+		dataStoreRuntime,
+	};
+	options.emitter.emit("clientCreate", newClient);
+	return newClient;
+}
+
+async function loadDetached<TChannelFactory extends IChannelFactory>(
+	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
+	summarizerClient: Client<TChannelFactory>,
+	factory: TChannelFactory,
+	clientId: string,
+	options: Omit<DDSFuzzSuiteOptions, "only" | "skip">,
+): Promise<Client<TChannelFactory>> {
+	const { summary } = await summarizerClient.channel.summarize();
+	const idCompressorSummary = summarizerClient.dataStoreRuntime.idCompressor?.serialize(false);
+
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({
+		clientId,
+		idCompressor: options.idCompressorFactory?.(idCompressorSummary),
+	});
+	dataStoreRuntime.local = true;
+	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	const services: IChannelServices = {
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
+		objectStorage: MockStorage.createFromSummary(summary),
+	};
+
+	const channel = (await factory.load(
+		dataStoreRuntime,
+		clientId,
+		services,
+		factory.attributes,
+	)) as ReturnType<TChannelFactory["create"]>;
 	const newClient: Client<TChannelFactory> = {
 		channel,
 		containerRuntime,
@@ -1063,6 +1148,7 @@ export async function runTestForSeed<
 		options,
 	);
 	if (!startDetached) {
+		initialClient.dataStoreRuntime.local = false;
 		const services: IChannelServices = {
 			deltaConnection: initialClient.dataStoreRuntime.createDeltaConnection(),
 			objectStorage: new MockStorage(),
@@ -1271,7 +1357,13 @@ const getFullModel = <TChannelFactory extends IChannelFactory, TOperation extend
 	options: DDSFuzzSuiteOptions,
 ): DDSFuzzModel<
 	TChannelFactory,
-	TOperation | AddClient | Attach | ChangeConnectionState | TriggerRebase | Synchronize
+	| TOperation
+	| AddClient
+	| Attach
+	| Rehydrate
+	| ChangeConnectionState
+	| TriggerRebase
+	| Synchronize
 > =>
 	mixinAttach(
 		mixinSynchronization(

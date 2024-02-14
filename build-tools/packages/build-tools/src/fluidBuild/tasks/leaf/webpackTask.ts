@@ -85,8 +85,8 @@ export class WebpackTask extends LeafWithDoneFileTask {
 				}
 			}
 		}
-		// return webpack.config.js if nothing exist
-		return path.join(this.package.directory, "webpack.config.js");
+		// return webpack.config.cjs if nothing exist
+		return path.join(this.package.directory, "webpack.config.cjs");
 	}
 
 	private getEnvArguments() {

@@ -1041,6 +1041,7 @@ declare function get_old_InterfaceDeclaration_ISubmitSummaryOptions():
 declare function use_current_InterfaceDeclaration_ISubmitSummaryOptions(
     use: TypeOnly<current.ISubmitSummaryOptions>): void;
 use_current_InterfaceDeclaration_ISubmitSummaryOptions(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISubmitSummaryOptions());
 
 /*

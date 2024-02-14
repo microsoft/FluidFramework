@@ -13,10 +13,11 @@
 	"author": "Microsoft and contributors",
 	"scripts": {
 		"build": "concurrently npm:build:api npm:build:md-magic && npm run hugo",
-		"build:api": "npm run download:api && npm run build:api-documentation",
+		"build:api": "npm run download:api && npm run build:api-documentation && npm run build:redirects",
 		"build:api-documentation": "node ./api-markdown-documenter/index.js",
 		"build:md-magic": "markdown-magic",
 		"build:md-magic:code": "markdown-magic --files \"**/*.md\" !docs --workingDirectory ..",
+		"build:redirects": "node ./build-redirects.js",
 		"build:repo-docs": "npm run build:md-magic:code",
 		"ci:build": "npm run build",
 		"ci:linkcheck": "start-server-and-test ci:start http://localhost:1313 linkcheck:full",

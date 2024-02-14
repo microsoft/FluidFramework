@@ -25,7 +25,7 @@
 		"ci:test": "npm run test:report;t1=$?;npm run test:copyresults; exit $t1",
 		"ci:test:coverage": "npm run test:coverage;t1=$?;npm run test:copyresults; exit $t1",
 		"clean": "pnpm run -r --no-sort --stream clean && npm run clean:docs && npm run clean:nyc",
-		"clean:docs": "rimraf --glob \"**/_api-extractor-temp\" \"docs/api/*/**\"",
+		"clean:docs": "rimraf --glob \"**/_api-extractor-temp\"",
 		"clean:nyc": "rimraf --glob \"nyc/**\"",
 		"docker-build": "docker compose build",
 		"docker-clean": "docker compose down --rmi local -v",

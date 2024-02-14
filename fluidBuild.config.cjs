@@ -150,6 +150,8 @@ module.exports = {
 	// `flub check policy` config. It applies to the whole repo.
 	policy: {
 		exclusions: [
+			"common/build/build-common/src/cjs/package.json",
+			"common/build/build-common/src/esm/package.json",
 			"docs/layouts/",
 			"docs/themes/thxvscode/assets/",
 			"docs/themes/thxvscode/layouts/",
@@ -181,6 +183,9 @@ module.exports = {
 				"^packages/utils/.*/package.json",
 				"^packages/loader/container-loader/package.json",
 			],
+			"fluid-build-tasks-tsc": [
+				"packages/dds/tree/package.json", // Builds CommonJS with custom tsconfig
+			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
 				"tools/api-markdown-documenter/src/test/snapshots/.*",
@@ -193,6 +198,10 @@ module.exports = {
 			],
 			"package-lockfiles-npm-version": [
 				"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
+			],
+			"no-js-file-extensions": [
+				// PropertyDDS uses .js files which should be renamed eventually.
+				".*/PropertyDDS/.*",
 			],
 			"npm-package-json-scripts-args": [
 				// server/routerlicious and server/routerlicious/packages/routerlicious use
@@ -234,6 +243,9 @@ module.exports = {
 				"^tools/getkeys",
 			],
 			"npm-package-json-esm": [
+				// Policy is incorrect about "module" in package.json
+				"experimental/PropertyDDS/packages/property-shared-tree-interop/package.json",
+				"packages/dds/tree/package.json",
 				// These are ESM-only packages and use tsc to build the ESM output. The policy handler doesn't understand this
 				// case.
 				"packages/dds/migration-shim/package.json",
