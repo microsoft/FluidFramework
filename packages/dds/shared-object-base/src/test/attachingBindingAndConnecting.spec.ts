@@ -100,7 +100,7 @@ function createTestSharedObject(
 	return {
 		overrides,
 		sharedObject: new TestSharedObject(
-			overrides?.id ?? Date.now().toString(),
+			overrides?.id ?? "testSharedObject",
 			createOverridableProxy<IFluidDataStoreRuntime>(
 				"runtime",
 				runtime,
