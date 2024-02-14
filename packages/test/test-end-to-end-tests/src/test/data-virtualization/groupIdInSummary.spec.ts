@@ -29,7 +29,7 @@ class TestDataObject extends DataObject {
 	}
 
 	public get groupId() {
-		return this.context.groupId;
+		return this.context.loadingGroupId;
 	}
 }
 
