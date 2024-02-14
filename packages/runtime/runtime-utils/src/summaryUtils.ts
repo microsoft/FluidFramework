@@ -265,6 +265,7 @@ export function convertToSummaryTreeWithStats(
 
 	const summaryTree = builder.getSummaryTree();
 	summaryTree.summary.unreferenced = snapshot.unreferenced;
+	summaryTree.summary.groupId = snapshot.groupId;
 	return summaryTree;
 }
 
@@ -326,6 +327,7 @@ export function convertSnapshotTreeToSummaryTree(
 
 	const summaryTree = builder.getSummaryTree();
 	summaryTree.summary.unreferenced = snapshot.unreferenced;
+	summaryTree.summary.groupId = snapshot.groupId;
 	return summaryTree;
 }
 
@@ -372,6 +374,7 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
 	return {
 		entries,
 		unreferenced: summaryTree.unreferenced,
+		groupId: summaryTree.groupId,
 	};
 }
 

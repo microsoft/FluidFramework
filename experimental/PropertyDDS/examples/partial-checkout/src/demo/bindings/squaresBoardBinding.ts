@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 import { DataBinding } from "@fluid-experimental/property-binder";
-import { SquaresBoard } from "../views/squaresBoard";
-import { Square } from "../views/square";
+import { SquaresBoard } from "../views/squaresBoard.js";
+import { Square } from "../views/square.js";
 
 export class SquaresBoardBinding extends DataBinding {
 	public board: SquaresBoard;

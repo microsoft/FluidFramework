@@ -157,7 +157,7 @@ export class DataStores implements IDisposable {
 					createSummarizerNodeFn: this.getCreateChildSummarizerNodeFn(key, {
 						type: CreateSummarizerNodeSource.FromSummary,
 					}),
-					groupId: value.groupId,
+					loadingGroupId: value.groupId,
 				});
 			} else {
 				if (typeof value !== "object") {
@@ -273,7 +273,7 @@ export class DataStores implements IDisposable {
 			runtime: this.runtime,
 			storage: new StorageServiceWithAttachBlobs(this.runtime.storage, flatAttachBlobs),
 			scope: this.runtime.scope,
-			groupId: snapshotTree?.groupId,
+			loadingGroupId: attachMessage.snapshot?.groupId,
 			createSummarizerNodeFn: this.getCreateChildSummarizerNodeFn(attachMessage.id, {
 				type: CreateSummarizerNodeSource.FromAttach,
 				sequenceNumber: message.sequenceNumber,
@@ -399,7 +399,7 @@ export class DataStores implements IDisposable {
 		pkg: Readonly<string[]>,
 		isRoot: boolean,
 		id = uuid(),
-		groupId?: string,
+		loadingGroupId?: string,
 	): IFluidDataStoreContextDetached {
 		assert(!id.includes("/"), 0x30c /* Id cannot contain slashes */);
 
@@ -415,7 +415,7 @@ export class DataStores implements IDisposable {
 			makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
 			snapshotTree: undefined,
 			isRootDataStore: isRoot,
-			groupId,
+			loadingGroupId,
 			channelToDataStoreFn: (channel: IFluidDataStoreChannel, channelId: string) =>
 				channelToDataStore(channel, channelId, this.runtime, this, this.runtime.logger),
 		});
@@ -423,7 +423,12 @@ export class DataStores implements IDisposable {
 		return context;
 	}
 
-	public _createFluidDataStoreContext(pkg: string[], id: string, props?: any, groupId?: string) {
+	public _createFluidDataStoreContext(
+		pkg: string[],
+		id: string,
+		props?: any,
+		loadingGroupId?: string,
+	) {
 		assert(!id.includes("/"), 0x30d /* Id cannot contain slashes */);
 		const context = new LocalFluidDataStoreContext({
 			id,
@@ -438,7 +443,7 @@ export class DataStores implements IDisposable {
 			snapshotTree: undefined,
 			isRootDataStore: false,
 			createProps: props,
-			groupId,
+			loadingGroupId,
 		});
 		this.contexts.addUnbound(context);
 		return context;

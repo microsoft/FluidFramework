@@ -117,8 +117,6 @@ export class MockContainerRuntime {
     finalizeIdRange(range: IdCreationRange): void;
     flush(): void;
     // (undocumented)
-    getGeneratedIdRange(): IdCreationRange | undefined;
-    // (undocumented)
     protected readonly overrides?: {
         minimumSequenceNumber?: number | undefined;
     } | undefined;
@@ -128,7 +126,11 @@ export class MockContainerRuntime {
     process(message: ISequencedDocumentMessage): void;
     rebase(): void;
     protected get referenceSequenceNumber(): number;
-    protected runtimeOptions: Required<IMockContainerRuntimeOptions>;
+    // (undocumented)
+    protected reSubmitMessages(messagesToResubmit: {
+        content: any;
+        localOpMetadata: unknown;
+    }[]): void;
     // (undocumented)
     submit(messageContent: any, localOpMetadata: unknown): number;
 }
@@ -159,8 +161,6 @@ export class MockContainerRuntimeFactory {
     protected readonly runtimes: Set<MockContainerRuntime>;
     // (undocumented)
     sequenceNumber: number;
-    // (undocumented)
-    synchronizeIdCompressors(): void;
 }
 
 // @alpha

@@ -120,9 +120,11 @@
 	"typeValidation": {
 		"broken": {
 			"ClassDeclaration_DocumentStorageServiceProxy": {
+				"backCompat": false,
 				"forwardCompat": false
 			},
 			"ClassDeclaration_PrefetchDocumentStorageService": {
+				"backCompat": false,
 				"forwardCompat": false
 			}
 		}

@@ -96,21 +96,12 @@ export class OpGroupingManager {
 	}
 
 	public ungroupOp(op: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
-		let fakeCsn = 1;
 		if (!isGroupContents(op.contents)) {
-			// Align the worlds of what clientSequenceNumber represents when grouped batching is enabled
-			if (this.config.groupedBatchingEnabled) {
-				return [
-					{
-						...op,
-						clientSequenceNumber: fakeCsn,
-					},
-				];
-			}
 			return [op];
 		}
 
 		const messages = op.contents.contents;
+		let fakeCsn = 1;
 		return messages.map((subMessage) => ({
 			...op,
 			clientSequenceNumber: fakeCsn++,
