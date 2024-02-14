@@ -5,13 +5,13 @@
 
 import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { MountableView } from "@fluidframework/view-adapters";
 import { Constellation } from "@fluid-example/multiview-constellation-model";
 import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
 import { Coordinate } from "@fluid-example/multiview-coordinate-model";
 import {
-	IFluidMountableViewEntryPoint,
 	getDataStoreEntryPoint,
+	IFluidMountableViewEntryPoint,
+	MountableView,
 } from "@fluid-example/example-utils";
 import { FluidObject } from "@fluidframework/core-interfaces";
 

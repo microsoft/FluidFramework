@@ -1835,7 +1835,6 @@ importers:
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
-      '@fluidframework/view-adapters': workspace:~
       '@types/codemirror': 5.60.7
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
@@ -1868,7 +1867,6 @@ importers:
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/sequence': link:../../../packages/dds/sequence
-      '@fluidframework/view-adapters': link:../../../packages/framework/view-adapters
       codemirror: 5.65.16
       events: 3.3.0
       react: 17.0.2
@@ -2253,7 +2251,6 @@ importers:
       '@fluidframework/request-handler': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
-      '@fluidframework/view-adapters': workspace:~
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 'workspace:'
       '@types/node': ^18.19.0
@@ -2295,7 +2292,6 @@ importers:
       '@fluidframework/core-interfaces': link:../../../../packages/common/core-interfaces
       '@fluidframework/request-handler': link:../../../../packages/framework/request-handler
       '@fluidframework/runtime-utils': link:../../../../packages/runtime/runtime-utils
-      '@fluidframework/view-adapters': link:../../../../packages/framework/view-adapters
       react: 17.0.2
     devDependencies:
       '@fluid-tools/webpack-fluid-loader': link:../../../../packages/tools/webpack-fluid-loader
@@ -2658,7 +2654,6 @@ importers:
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
-      '@fluidframework/view-adapters': workspace:~
       '@types/node': ^18.19.0
       '@types/orderedmap': ^1.0.0
       '@types/prosemirror-model': ^1.17.0
@@ -2705,7 +2700,6 @@ importers:
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/sequence': link:../../../packages/dds/sequence
-      '@fluidframework/view-adapters': link:../../../packages/framework/view-adapters
       events: 3.3.0
       orderedmap: 2.1.1
       prosemirror-example-setup: 1.2.2
@@ -2762,7 +2756,6 @@ importers:
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
-      '@fluidframework/view-adapters': workspace:~
       '@types/events': ^3.0.0
       '@types/react': ^17.0.44
       '@types/simplemde': ^1.11.7
@@ -2795,7 +2788,6 @@ importers:
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/sequence': link:../../../packages/dds/sequence
-      '@fluidframework/view-adapters': link:../../../packages/framework/view-adapters
       events: 3.3.0
       react: 17.0.2
       simplemde: 1.11.2
@@ -2971,7 +2963,6 @@ importers:
       '@fluidframework/sequence': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/test-utils': workspace:~
-      '@fluidframework/view-adapters': workspace:~
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 'workspace:'
       '@types/node': ^18.19.0
@@ -3009,7 +3000,6 @@ importers:
       '@fluidframework/map': link:../../../packages/dds/map
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/sequence': link:../../../packages/dds/sequence
-      '@fluidframework/view-adapters': link:../../../packages/framework/view-adapters
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       uuid: 9.0.1
@@ -3556,13 +3546,16 @@ importers:
       '@fluidframework/server-local-server': ^3.1.0-231702
       '@fluidframework/task-manager': workspace:~
       '@fluidframework/tinylicious-driver': workspace:~
-      '@fluidframework/view-adapters': workspace:~
       '@fluidframework/view-interfaces': workspace:~
       '@microsoft/api-extractor': ^7.39.1
       '@types/node': ^18.19.0
+      '@types/react': ^17.0.44
+      '@types/react-dom': ^17.0.18
       '@types/uuid': ^9.0.2
       eslint: ~8.50.0
       prettier: ~3.0.3
+      react: ^17.0.1
+      react-dom: ^17.0.1
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -3589,8 +3582,9 @@ importers:
       '@fluidframework/server-local-server': 3.1.0-231702
       '@fluidframework/task-manager': link:../../../packages/dds/task-manager
       '@fluidframework/tinylicious-driver': link:../../../packages/drivers/tinylicious-driver
-      '@fluidframework/view-adapters': link:../../../packages/framework/view-adapters
       '@fluidframework/view-interfaces': link:../../../packages/framework/view-interfaces
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
       tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       uuid: 9.0.1
     devDependencies:
@@ -3600,6 +3594,8 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
       '@types/node': 18.19.1
+      '@types/react': 17.0.71
+      '@types/react-dom': 17.0.25
       '@types/uuid': 9.0.7
       eslint: 8.50.0
       prettier: 3.0.3
@@ -4067,7 +4063,6 @@ importers:
       '@fluidframework/map': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
-      '@fluidframework/view-adapters': workspace:~
       '@fluidframework/view-interfaces': workspace:~
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 'workspace:'
@@ -4104,7 +4099,6 @@ importers:
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
       '@fluidframework/map': link:../../../packages/dds/map
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
-      '@fluidframework/view-adapters': link:../../../packages/framework/view-adapters
       '@fluidframework/view-interfaces': link:../../../packages/framework/view-interfaces
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
@@ -8890,49 +8884,6 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 3.0.3
-      rimraf: 4.4.1
-      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
-      typescript: 5.1.6
-
-  packages/framework/view-adapters:
-    specifiers:
-      '@arethetypeswrong/cli': ^0.13.3
-      '@fluid-tools/build-cli': ^0.29.0
-      '@fluidframework/build-common': ^2.0.3
-      '@fluidframework/build-tools': ^0.29.0
-      '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/eslint-config-fluid': ^3.5.0
-      '@fluidframework/view-adapters-previous': npm:@fluidframework/view-adapters@2.0.0-internal.8.0.0
-      '@fluidframework/view-interfaces': workspace:~
-      '@microsoft/api-extractor': ^7.39.1
-      '@types/react': ^17.0.44
-      '@types/react-dom': ^17.0.18
-      copyfiles: ^2.4.1
-      eslint: ~8.50.0
-      prettier: ~3.0.3
-      react: ^17.0.1
-      react-dom: ^17.0.1
-      rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
-      typescript: ~5.1.6
-    dependencies:
-      '@fluidframework/core-interfaces': link:../../common/core-interfaces
-      '@fluidframework/view-interfaces': link:../view-interfaces
-      react: 17.0.2
-      react-dom: 17.0.2_react@17.0.2
-    devDependencies:
-      '@arethetypeswrong/cli': 0.13.3
-      '@fluid-tools/build-cli': 0.29.0_loebgezstcsvd2poh2d55fifke
-      '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.29.0
-      '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
-      '@fluidframework/view-adapters-previous': /@fluidframework/view-adapters/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i
-      '@types/react': 17.0.71
-      '@types/react-dom': 17.0.25
-      copyfiles: 2.4.1
-      eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
       tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
@@ -17944,15 +17895,6 @@ packages:
     transitivePeerDependencies:
       - debug
       - supports-color
-    dev: true
-
-  /@fluidframework/view-adapters/2.0.0-internal.8.0.0:
-    resolution: {integrity: sha512-J3K1s46x68RiSKDB77aBlosV3qX7Lp9LU5uCq7/Ha9PEBI/YICqnfEX1zWuwFpabtKiOZynLPGynQHsUo7zywQ==}
-    dependencies:
-      '@fluidframework/core-interfaces': 2.0.0-internal.8.0.0
-      '@fluidframework/view-interfaces': 2.0.0-internal.8.0.0
-      react: 17.0.2
-      react-dom: 17.0.2_react@17.0.2
     dev: true
 
   /@fluidframework/view-interfaces/2.0.0-internal.8.0.0:

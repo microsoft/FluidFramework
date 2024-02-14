@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { MountableView } from "./mountableView";
+export { MountableView } from "./mountableView.js";
