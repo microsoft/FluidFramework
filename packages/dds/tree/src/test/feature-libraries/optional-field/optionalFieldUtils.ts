@@ -21,7 +21,16 @@ function asRegister(input: RegisterId | ChangesetLocalId): RegisterId {
 }
 
 export const Change = {
+	/**
+	 * @returns An empty changeset
+	 */
 	empty: (): OptionalChangeset<never> => ({ moves: [], childChanges: [] }),
+	/**
+	 * @param src - The register to move a node from. The register must be full in the input context of the changeset.
+	 * @param dst - The register to move that node to.
+	 * The register must be empty in the input context of the changeset, or emptied as part of the changeset.
+	 * @returns A changeset that moves a node from src to dst.
+	 */
 	move: (
 		src: RegisterId | ChangesetLocalId,
 		dst: RegisterId | ChangesetLocalId,
@@ -29,28 +38,56 @@ export const Change = {
 		moves: [[asRegister(src), asRegister(dst), "nodeTargeting"]],
 		childChanges: [],
 	}),
+	/**
+	 * @param target - The register remove a node from. The register must be full in the input context of the changeset.
+	 * @param dst - The register to move the contents of the target register to.
+	 * The register must be empty in the input context of the changeset, or emptied as part of the changeset.
+	 * @returns A changeset that clears a register and moves the contents to another register.
+	 */
 	clear: (
-		src: RegisterId | ChangesetLocalId,
+		target: RegisterId | ChangesetLocalId,
 		dst: RegisterId | ChangesetLocalId,
 	): OptionalChangeset<never> => ({
-		moves: [[asRegister(src), asRegister(dst), "cellTargeting"]],
+		moves: [[asRegister(target), asRegister(dst), "cellTargeting"]],
 		childChanges: [],
 	}),
+	/**
+	 * @param target - The register to reserve. The register must NOT be full in the input context of the changeset.
+	 * @param dst - The register that the contents of the target register should be moved to should it become populated.
+	 * The register must be empty in the input context of the changeset, or emptied as part of the changeset.
+	 * @returns A changeset that reserves an register.
+	 */
 	reserve: (
-		src: RegisterId | ChangesetLocalId,
+		target: RegisterId | ChangesetLocalId,
 		dst: RegisterId | ChangesetLocalId,
 	): OptionalChangeset<never> => {
-		assert(src === "self", "Reserve cell only supports self as source");
+		assert(target === "self", "Reserve cell only supports self as source");
 		return { moves: [], childChanges: [], reservedDetachId: asRegister(dst) };
 	},
+	/**
+	 * @param location - The register that contains the child node to be changed.
+	 * That register must be full in the input context of the changeset.
+	 * @param change - A change to apply to a child node.
+	 * @returns A changeset that applies the given change to the child node in the given register.
+	 */
 	childAt: <TChild>(
-		at: RegisterId | ChangesetLocalId,
+		location: RegisterId | ChangesetLocalId,
 		change: TChild,
 	): OptionalChangeset<TChild> => ({
 		moves: [],
-		childChanges: [[asRegister(at), change]],
+		childChanges: [[asRegister(location), change]],
 	}),
+	/**
+	 * @param change - A change to apply to a child node in the "self" register.
+	 * @returns A changeset that applies the given change to the child node in the "self" register.
+	 * The "self" register must be full in the input context of the changeset.
+	 */
 	child: <TChild>(change: TChild): OptionalChangeset<TChild> => Change.childAt("self", change),
+	/**
+	 * Combines multiple changesets for the same input context into a single changeset.
+	 * @param changes - The change to apply as part of the changeset. Interpreted as applying to the same input context.
+	 * @returns A single changeset that applies all of the given changes.
+	 */
 	atOnce: <TChild>(...changes: OptionalChangeset<TChild>[]): OptionalChangeset<TChild> => {
 		const moves: Move[] = [];
 		const childChanges: [RegisterId, TChild][] = [];
