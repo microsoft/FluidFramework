@@ -10,7 +10,7 @@ import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-de
 import { IClient } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt, MockLogger, isFluidError } from "@fluidframework/telemetry-utils";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
-import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
+import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils/internal";
 import { Socket } from "socket.io-client";
 import { EpochTracker } from "../../epochTracker";
 import { LocalPersistentCache } from "../../odspCache";

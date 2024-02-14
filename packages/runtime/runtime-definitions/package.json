@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/runtime-definitions",
-	"version": "2.0.0-rc.1.0.0",
+	"version": "2.0.0-rc.2.0.0",
 	"description": "Fluid Runtime definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -70,7 +70,7 @@
 		"@fluid-tools/build-cli": "^0.29.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.29.0",
-		"@fluidframework/eslint-config-fluid": "^3.3.0",
+		"@fluidframework/eslint-config-fluid": "^3.5.0",
 		"@fluidframework/runtime-definitions-previous": "npm:@fluidframework/runtime-definitions@2.0.0-internal.8.0.0",
 		"@microsoft/api-extractor": "^7.39.1",
 		"copyfiles": "^2.4.1",
@@ -93,6 +93,14 @@
 	},
 	"typeValidation": {
 		"broken": {
+			"InterfaceDeclaration_IFluidDataStoreContext": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IFluidDataStoreContextDetached": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
 			"RemovedInterfaceDeclaration_IIdCompressorCore": {
 				"forwardCompat": false,
 				"backCompat": false

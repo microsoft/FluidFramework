@@ -158,8 +158,6 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 		return this._snapshotSequenceNumber;
 	}
 
-	public readonly repositoryUrl = "";
-
 	public abstract createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse>;
 
 	private async readBlobCore(blobId: string): Promise<ArrayBuffer> {

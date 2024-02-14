@@ -45,6 +45,19 @@ describe("IdCompressor", () => {
 			assert.equal(id, compressor.recompress(uuid));
 		});
 
+		it("can generate document unique IDs", () => {
+			const compressor = CompressorFactory.createCompressor(Client.Client1, 2);
+			let id = compressor.generateDocumentUniqueId();
+			assert(typeof id === "string");
+			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+			id = compressor.generateDocumentUniqueId();
+			assert(typeof id === "number" && isFinalId(id));
+			id = compressor.generateDocumentUniqueId();
+			assert(typeof id === "number" && isFinalId(id));
+			id = compressor.generateDocumentUniqueId();
+			assert(typeof id === "string");
+		});
+
 		describe("Eager final ID allocation", () => {
 			it("eagerly allocates final IDs when cluster creation has been finalized", () => {
 				const compressor = CompressorFactory.createCompressor(Client.Client1, 3);

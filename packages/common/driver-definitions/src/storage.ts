@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IDisposable,
 	IEventProvider,
 	IErrorEvent,
 	ITelemetryBaseLogger,
 	IEvent,
 } from "@fluidframework/core-interfaces";
-import {
+import type {
 	ConnectionMode,
 	IClient,
 	IClientConfiguration,
@@ -26,8 +26,8 @@ import {
 	ITokenClaims,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { IAnyDriverError } from "./driverError";
-import { IResolvedUrl } from "./urlResolver";
+import type { IAnyDriverError } from "./driverError";
+import type { IResolvedUrl } from "./urlResolver";
 
 /**
  * @internal
@@ -144,8 +144,6 @@ export interface IDocumentStorageServicePolicies {
  * @alpha
  */
 export interface IDocumentStorageService extends Partial<IDisposable> {
-	repositoryUrl: string;
-
 	/**
 	 * Policies implemented/instructed by driver.
 	 */

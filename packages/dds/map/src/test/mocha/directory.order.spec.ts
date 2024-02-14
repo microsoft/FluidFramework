@@ -37,8 +37,16 @@ function createConnectedDirectory(
 }
 
 class TestSharedDirectory extends SharedDirectory {
-	public testApplyStashedOp(content: IDirectoryOperation): DirectoryLocalOpMetadata {
-		return this.applyStashedOp(content) as DirectoryLocalOpMetadata;
+	private lastMetadata?: DirectoryLocalOpMetadata;
+	public testApplyStashedOp(content: IDirectoryOperation): DirectoryLocalOpMetadata | undefined {
+		this.lastMetadata = undefined;
+		this.applyStashedOp(content);
+		return this.lastMetadata;
+	}
+
+	public submitLocalMessage(op: IDirectoryOperation, localOpMetadata: unknown): void {
+		this.lastMetadata = localOpMetadata as DirectoryLocalOpMetadata;
+		super.submitLocalMessage(op, localOpMetadata);
 	}
 }
 

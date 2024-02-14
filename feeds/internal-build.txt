@@ -24,7 +24,6 @@
 @fluidframework/driver-utils
 @fluidframework/container-loader
 @fluidframework/view-interfaces
-@fluidframework/view-adapters
 @fluidframework/undo-redo
 @fluidframework/tinylicious-client
 @fluidframework/synthesize
@@ -33,7 +32,7 @@
 @fluidframework/fluid-static
 fluid-framework
 @fluidframework/dds-interceptions
-@fluidframework/data-object-base
+@fluid-experimental/data-object-base
 @fluidframework/app-insights-logger
 @fluid-experimental/attributor
 @fluidframework/aqueduct
@@ -61,7 +60,7 @@ fluid-framework
 @fluidframework/merge-tree
 @fluidframework/matrix
 @fluidframework/map
-@fluidframework/ink
+@fluid-experimental/ink
 @fluidframework/counter
 @fluidframework/cell
 @fluidframework/driver-definitions

@@ -24,6 +24,7 @@ import {
 	intoStoredSchema,
 	SchemaBuilderBase,
 	FlexTreeTypedField,
+	TreeCompressionStrategy,
 } from "../../feature-libraries/index.js";
 import {
 	ChunkedForest,
@@ -59,6 +60,7 @@ import {
 	SharedTree,
 	SharedTreeFactory,
 	CheckoutFlexTreeView,
+	runSynchronous,
 } from "../../shared-tree/index.js";
 import {
 	compareUpPaths,
@@ -71,6 +73,7 @@ import {
 	Revertible,
 	RevertibleKind,
 	RevertibleResult,
+	JsonableTree,
 } from "../../core/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import { EditManager } from "../../shared-tree-core/index.js";
@@ -255,7 +258,15 @@ describe("SharedTree", () => {
 	});
 
 	it("handle in op", async () => {
-		const provider = await TestTreeProvider.create(2);
+		// TODO: ADO#7111 schema should be specified to enable compressed encoding.
+		const provider = await TestTreeProvider.create(
+			2,
+			SummarizeType.disabled,
+			new SharedTreeFactory({
+				jsonValidator: typeboxValidator,
+				treeEncodeType: TreeCompressionStrategy.Uncompressed,
+			}),
+		);
 		assert(provider.trees[0].isAttached());
 		assert(provider.trees[1].isAttached());
 
@@ -1726,6 +1737,130 @@ describe("SharedTree", () => {
 				}),
 			);
 			assert.equal(trees[0].checkout.forest instanceof ChunkedForest, true);
+		});
+	});
+	describe("Schema based op encoding", () => {
+		it("uses the correct schema for subsequent edits after schema change.", async () => {
+			const factory = new SharedTreeFactory({
+				jsonValidator: typeboxValidator,
+				treeEncodeType: TreeCompressionStrategy.Compressed,
+			});
+			const provider = new TestTreeProviderLite(2, factory);
+			const tree = provider.trees[0].checkout;
+
+			// Initial schema which allows sequence of strings under field "foo".
+			const schemaBuilder = new SchemaBuilder({ scope: "op-encoding-test-schema-1" });
+			const nodeSchema = schemaBuilder.object("Node", {
+				foo: SchemaBuilder.sequence(leaf.string),
+			});
+			const rootFieldSchema = SchemaBuilder.required(nodeSchema);
+			const schema = schemaBuilder.intoSchema(rootFieldSchema);
+
+			// Updated schema which allows all primitives under field "foo".
+			const schemaBuilder2 = new SchemaBuilder({ scope: "op-encoding-test-schema-2" });
+			const nodeSchema2 = schemaBuilder2.object("Node", {
+				foo: SchemaBuilder.sequence(leaf.primitives),
+			});
+			const rootFieldSchema2 = SchemaBuilder.required(nodeSchema2);
+			const schema2 = schemaBuilder2.intoSchema(rootFieldSchema2);
+
+			const initialState: JsonableTree = {
+				type: nodeSchema.name,
+				fields: {
+					foo: [{ type: leaf.string.name, value: "a" }],
+				},
+			};
+
+			tree.transaction.start();
+			runSynchronous(tree, () => {
+				tree.updateSchema(intoStoredSchema(schema));
+				const fieldEditor = tree.editor.sequenceField({
+					field: rootFieldKey,
+					parent: undefined,
+				});
+				fieldEditor.insert(0, cursorForJsonableTreeNode(initialState));
+
+				const rootPath = {
+					parent: undefined,
+					parentField: rootFieldKey,
+					parentIndex: 0,
+				};
+
+				const field = tree.editor.sequenceField({ parent: rootPath, field: brand("foo") });
+				field.insert(0, cursorForJsonableTreeNode({ type: leaf.string.name, value: "b" }));
+
+				// Update schema which now allows all primitives under field "foo".
+				tree.updateSchema(intoStoredSchema(schema2));
+				field.insert(0, cursorForJsonableTreeNode({ type: leaf.number.name, value: 1 }));
+			});
+			tree.transaction.commit();
+			provider.processMessages();
+		});
+
+		it("properly encodes ops using specified compression strategy", async () => {
+			// Check that ops are using uncompressed encoding with "Uncompressed" treeEncodeType
+			const factory = new SharedTreeFactory({
+				jsonValidator: typeboxValidator,
+				treeEncodeType: TreeCompressionStrategy.Uncompressed,
+			});
+			const provider = await TestTreeProvider.create(1, SummarizeType.onDemand, factory);
+			provider.trees[0].schematizeInternal({
+				schema: stringSequenceRootSchema,
+				allowedSchemaModifications: AllowedUpdateType.None,
+				initialTree: ["A", "B", "C"],
+			});
+
+			await provider.ensureSynchronized();
+			const summary = (await provider.trees[0].summarize()).summary;
+			const indexesSummary = summary.tree.indexes;
+			assert(indexesSummary.type === SummaryType.Tree);
+			const editManagerSummary = indexesSummary.tree.EditManager;
+			assert(editManagerSummary.type === SummaryType.Tree);
+			const editManagerSummaryBlob = editManagerSummary.tree.String;
+			assert(editManagerSummaryBlob.type === SummaryType.Blob);
+			const changesSummary = JSON.parse(editManagerSummaryBlob.content as string);
+			const encodedTreeData = changesSummary.trunk[0].change[1].data.builds.trees;
+			const expectedUncompressedTreeData = [
+				"com.fluidframework.leaf.string",
+				true,
+				"A",
+				[],
+				"com.fluidframework.leaf.string",
+				true,
+				"B",
+				[],
+				"com.fluidframework.leaf.string",
+				true,
+				"C",
+				[],
+			];
+			assert.deepEqual(encodedTreeData.data[0][1], expectedUncompressedTreeData);
+
+			// Check that ops are encoded using schema based compression with "Compressed" treeEncodeType
+			const factory2 = new SharedTreeFactory({
+				jsonValidator: typeboxValidator,
+				treeEncodeType: TreeCompressionStrategy.Compressed,
+			});
+			const provider2 = await TestTreeProvider.create(1, SummarizeType.onDemand, factory2);
+
+			provider2.trees[0].schematizeInternal({
+				schema: stringSequenceRootSchema,
+				allowedSchemaModifications: AllowedUpdateType.None,
+				initialTree: ["A", "B", "C"],
+			});
+
+			await provider2.ensureSynchronized();
+			const summary2 = (await provider2.trees[0].summarize()).summary;
+			const indexesSummary2 = summary2.tree.indexes;
+			assert(indexesSummary2.type === SummaryType.Tree);
+			const editManagerSummary2 = indexesSummary2.tree.EditManager;
+			assert(editManagerSummary2.type === SummaryType.Tree);
+			const editManagerSummaryBlob2 = editManagerSummary2.tree.String;
+			assert(editManagerSummaryBlob2.type === SummaryType.Blob);
+			const changesSummary2 = JSON.parse(editManagerSummaryBlob2.content as string);
+			const encodedTreeData2 = changesSummary2.trunk[0].change[1].data.builds.trees;
+			const expectedCompressedTreeData = [0, "A", 0, "B", 0, "C"];
+			assert.deepEqual(encodedTreeData2.data[0][1], expectedCompressedTreeData);
 		});
 	});
 });

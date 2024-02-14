@@ -26,7 +26,7 @@ export class AttributableMap extends SharedObject<ISharedMapEvents> implements I
     readonly [Symbol.toStringTag]: string;
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // (undocumented)
-    protected applyStashedOp(content: unknown): unknown;
+    protected applyStashedOp(content: unknown): void;
     clear(): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): AttributableMap;
     delete(key: string): boolean;

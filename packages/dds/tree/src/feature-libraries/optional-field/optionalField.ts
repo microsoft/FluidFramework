@@ -14,7 +14,7 @@ import {
 	DeltaDetachedNodeId,
 	DeltaDetachedNodeChanges,
 } from "../../core/index.js";
-import { fail, Mutable, IdAllocator, SizedNestedMap } from "../../util/index.js";
+import { Mutable, IdAllocator, SizedNestedMap } from "../../util/index.js";
 import {
 	ToDelta,
 	FieldChangeRebaser,
@@ -218,8 +218,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		return composed;
 	},
 
-	amendCompose: () => fail("Not implemented"),
-
 	invert: (
 		{ revision, change }: TaggedChange<OptionalChangeset>,
 		invertChild: NodeChangeInverter,
@@ -286,7 +284,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		const inverseEmptiesSelf = changeFillsSelf;
 		const inverseFillsSelf = changeEmptiesSelf;
 		if (inverseFillsSelf && !inverseEmptiesSelf) {
-			inverted.reservedDetachId = { localId: genId.getNextId() };
+			inverted.reservedDetachId = { localId: genId.allocate() };
 		}
 		return inverted;
 	},
