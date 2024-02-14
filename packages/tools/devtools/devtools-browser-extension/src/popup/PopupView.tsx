@@ -83,13 +83,13 @@ export function PopupView(props: PopupViewProps): React.ReactElement {
 	// TODO: spinner for loading
 	// TODO: retry button on not found.
 	return (
-		<div>
+		<div style={{ width: "200px" }}>
 			{foundDevtools === undefined && (
 				<div>Searching for Fluid Devtools in the current tab...</div>
 			)}
 			{foundDevtools === true && (
 				<div>
-					Fluid Devtools found! Open the browser`&apos;`s devtools panel to view the Fluid
+					Fluid Devtools found! Open the browser`s devtools panel to view the Fluid
 					Devtools extension.
 				</div>
 			)}
