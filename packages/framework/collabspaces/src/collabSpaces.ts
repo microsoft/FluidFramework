@@ -199,7 +199,7 @@ export class CollabSpacesRuntime
 {
 	private matrixInternal?: SharedMatrix<MatrixInternalType>;
 	private channelInfo: Record<string, IChannelTrackingInfo | undefined> = {};
-	private readonly useReverseMapping = false;
+	private readonly useReverseMapping = true;
 	private readonly reverseMap: ReverseMap = new ReverseMap();
 	private deferredChannels: Map<string, DeferredChannel> = new Map();
 	private matrixPendingChangeCount = 0;
