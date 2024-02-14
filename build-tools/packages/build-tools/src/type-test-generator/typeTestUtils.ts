@@ -13,9 +13,14 @@ import { buildTestCase, TestCaseTypeData } from "../typeValidator/testGeneration
 import { getFullTypeName, getNodeTypeData, TypeData } from "../typeValidator/typeData";
 import { PackageJson } from "../common/npmPackage";
 
-// Information about the previous package from the package.json is not needed,
-// but error if it's missing since it's nice to separate errors for the dep missing here vs not installed.
-// This ensures that a critical dependency (the previous package version) is correctly declared in the project's package.json.
+/**
+ * Checks the package object to verify that the specified dependency exists
+ * @param packageObject - package.json object
+ * @param dependencyName - the dependency to check for in the package object
+ * @remarks Information about the previous package from the package.json is not needed,
+ * but error if it's missing since it's nice to separate errors for the dep missing here vs not installed.
+ * This ensures that a critical dependency (the previous package version) is correctly declared in the project's package.json.
+ */
 export function ensureDevDependencyExists(
 	packageObject: PackageJson,
 	dependencyName: string,
@@ -29,7 +34,6 @@ export function ensureDevDependencyExists(
 /**
  * Fetches the path of the previous package.json or throws an error if not found.
  * @param previousBasePath - A string representing the path to the root of a package
- * @returns
  */
 export function getPreviousPackageJsonPath(previousBasePath: string): string {
 	const previousPackageJsonPath = path.join(previousBasePath, "package.json");
@@ -41,9 +45,10 @@ export function getPreviousPackageJsonPath(previousBasePath: string): string {
 
 /**
  * Attempts to retrieve  a specified type of rollup file path for type definitions from the API Extractor configuration.
- * @param {string} rollupType - The type of rollup file path to retrieve (ex: "alpha", "beta", "public").
- * @returns {string} The path to the type definitions file for the specified rollupType, or undefined it cannot be found.
- * @throws {Error} If api-extractor config cannot be loaded.
+ * @param rollupType - The type of rollup file path to retrieve (ex: "alpha", "beta", "public").
+ * @param previousBasePath - The previous base path to load api-extractor through
+ * @returns The path to the type definitions file for the specified rollupType, or undefined if it cannot be found.
+ * @throws If api-extractor config cannot be loaded.
  */
 export function getTypeRollupPathFromExtractorConfig(
 	rollupType: "alpha" | "beta" | "public" | "untrimmed",
@@ -55,12 +60,12 @@ export function getTypeRollupPathFromExtractorConfig(
 			startingFolder: previousBasePath,
 		});
 		if (!extractorConfigOptions || !extractorConfigOptions.configObject) {
-			console.warn(
-				"API Extractor configuration not found. Falling back to default behavior.",
-			);
+			console.log("API Extractor configuration not found. Falling back to default behavior.");
 			return undefined;
 		}
 		const apiExtractorConfig = extractorConfigOptions.configObject;
+		// Get rollupPath based on release tag
+		// https://api-extractor.com/pages/setup/configure_rollup/#trimming-based-on-release-tags
 		if (apiExtractorConfig.dtsRollup) {
 			let rollupPath: string | undefined;
 			if (rollupType === "untrimmed") {
@@ -78,7 +83,7 @@ export function getTypeRollupPathFromExtractorConfig(
 			return undefined;
 		}
 	} catch (error) {
-		console.error(`Error loading API Extractor configuration: ${error}`);
+		console.error("Error loading API Extractor configuration:", error);
 		throw error;
 	}
 }
@@ -87,12 +92,17 @@ export function getTypeRollupPathFromExtractorConfig(
  * Attempts to extract the type definition file path from the 'exports' field of a given package.json.
  * Checks both 'import' and 'require' resolution methods to find the appropriate path.
  * If the path is found, it is returned. Otherwise, an error is thrown.
- * @param previousPackageJson
- * @returns string - A type definition filepath based on the appropriate export.
+ * @param previousPackageJson - An object representing the previous package json
+ * @param previousBasePath - A string representing the path to the root of a package
+ * @returns A type definition filepath based on the appropriate export, or undefined if it cannot be found.
  */
-function getTypePathFromExport(previousPackageJson: PackageJson, previousBasePath: string): string {
+function getTypePathFromExport(
+	previousPackageJson: PackageJson,
+	previousBasePath: string,
+): string | undefined {
 	if (!previousPackageJson.exports) {
-		throw new Error("The 'exports' field is missing in the package.json.");
+		console.warn("The 'exports' field is missing in the package.json.");
+		return undefined;
 	}
 
 	const extractTypesPath = (exportEntry: any): string | undefined => {
@@ -118,7 +128,7 @@ function getTypePathFromExport(previousPackageJson: PackageJson, previousBasePat
  * Checks the package.json's exports entries and types field for a type definition filepath
  * @returns string representing type definition file path
  */
-export function getTypeDefinitionFilePath(packageBasePath: string): string {
+export function getTypeDefinitionFilePath(packageBasePath: string): string | undefined {
 	const previousPackageJsonPath = getPreviousPackageJsonPath(packageBasePath);
 	const packageJson: PackageJson = readJsonSync(previousPackageJsonPath);
 	// Check the exports entries
@@ -161,7 +171,7 @@ export function typeDataFromFile(file: SourceFile): Map<string, TypeData> {
 
 /**
  * Initializes TypeScript projects for the current and previous package versions and loads specific source files.
- * @param {string} typeDefinitionFilePath - The path to the type definition file for the previous version.
+ * @param typeDefinitionFilePath - The path to the type definition file for the previous version.
  * @returns {{ currentFile: SourceFile, previousFile: SourceFile }} - The loaded source files for the current and previous versions.
  */
 export function initializeProjectsAndLoadFiles(

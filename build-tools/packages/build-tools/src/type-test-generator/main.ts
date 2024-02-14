@@ -22,6 +22,7 @@ import { PackageJson } from "../common/npmPackage";
 // Do not check that file exists before opening:
 // Doing so is a time of use vs time of check issue so opening the file could fail anyway.
 // Do not catch error from opening file since the default behavior is fine (exits process with error showing useful message)
+
 const packageObject: PackageJson = readJsonSync("package.json");
 const previousPackageName = `${packageObject.name}-previous`;
 const previousBasePath = path.join("node_modules", previousPackageName);
@@ -38,7 +39,7 @@ if (packageObject.typeValidation?.disabled) {
 }
 const typeRollupPaths = getTypeRollupPathFromExtractorConfig("alpha", previousBasePath);
 
-let typeDefinitionFilePath: string;
+let typeDefinitionFilePath: string | undefined;
 
 // Check if a specified typeRollupFile exists
 if (typeRollupPaths) {
@@ -46,6 +47,8 @@ if (typeRollupPaths) {
 } else {
 	typeDefinitionFilePath = getTypeDefinitionFilePath(previousBasePath);
 }
+
+// Check if typeDefinitionFilePath undefined??
 
 const { currentFile, previousFile } = initializeProjectsAndLoadFiles(
 	typeDefinitionFilePath,
