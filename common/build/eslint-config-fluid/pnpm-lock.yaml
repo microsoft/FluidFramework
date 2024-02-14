@@ -17,7 +17,6 @@ importers:
       eslint-config-prettier: ~9.0.0
       eslint-import-resolver-typescript: ~3.6.1
       eslint-plugin-eslint-comments: ~3.2.0
-      eslint-plugin-fluid-internal: file:./src/fluid-internal
       eslint-plugin-import: npm:eslint-plugin-i@~2.29.0
       eslint-plugin-jsdoc: ~46.8.1
       eslint-plugin-promise: ~6.1.1
@@ -44,7 +43,6 @@ importers:
       eslint-config-prettier: 9.0.0_eslint@8.50.0
       eslint-import-resolver-typescript: 3.6.1_rbtwlvmm73necqcmpouk5xyapu
       eslint-plugin-eslint-comments: 3.2.0_eslint@8.50.0
-      eslint-plugin-fluid-internal: file:src/fluid-internal
       eslint-plugin-import: /eslint-plugin-i/2.29.0_2ye4nrpnt7yfkizftepuryz34u
       eslint-plugin-jsdoc: 46.8.1_eslint@8.50.0
       eslint-plugin-promise: 6.1.1_eslint@8.50.0
@@ -3720,9 +3718,3 @@ packages:
       - markdown-magic
       - supports-color
     dev: true
-
-  file:src/fluid-internal:
-    resolution: {directory: src/fluid-internal, type: directory}
-    name: eslint-plugin-fluid-internal
-    version: 0.1.0
-    dev: false
