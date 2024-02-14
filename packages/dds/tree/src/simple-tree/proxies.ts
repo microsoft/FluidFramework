@@ -50,6 +50,7 @@ import { RawTreeNode, createRawNode, extractRawNodeContent } from "./rawNode.js"
 /**
  * Internal type guard that detects if the given 'candidate' is a hydrated TreeNode.
  *
+ * @remarks
  * Because the common usage is to check if a value being inserted/set is a TreeNode,
  * this function permits calling with primitives as well as object.
  *
