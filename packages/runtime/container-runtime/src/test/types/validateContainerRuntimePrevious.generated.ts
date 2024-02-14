@@ -164,6 +164,7 @@ declare function get_current_ClassDeclaration_ContainerRuntime():
 declare function use_old_ClassDeclaration_ContainerRuntime(
     use: TypeOnly<old.ContainerRuntime>): void;
 use_old_ClassDeclaration_ContainerRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ContainerRuntime());
 
 /*
@@ -1040,6 +1041,7 @@ declare function get_old_InterfaceDeclaration_ISubmitSummaryOptions():
 declare function use_current_InterfaceDeclaration_ISubmitSummaryOptions(
     use: TypeOnly<current.ISubmitSummaryOptions>): void;
 use_current_InterfaceDeclaration_ISubmitSummaryOptions(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISubmitSummaryOptions());
 
 /*

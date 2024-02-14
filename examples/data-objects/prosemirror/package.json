@@ -54,7 +54,6 @@
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
-		"@fluidframework/view-adapters": "workspace:~",
 		"events": "^3.1.0",
 		"orderedmap": "^2.1.0",
 		"prosemirror-example-setup": "^1.2.1",

@@ -130,6 +130,10 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_DebugReplayController": {
+				"backCompat": false
+			}
+		}
 	}
 }

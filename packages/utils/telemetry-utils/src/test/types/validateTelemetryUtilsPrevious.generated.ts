@@ -1320,26 +1320,14 @@ use_old_FunctionDeclaration_isValidLegacyError(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_logIfFalse": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_logIfFalse": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_logIfFalse():
-    TypeOnly<typeof old.logIfFalse>;
-declare function use_current_FunctionDeclaration_logIfFalse(
-    use: TypeOnly<typeof current.logIfFalse>): void;
-use_current_FunctionDeclaration_logIfFalse(
-    get_old_FunctionDeclaration_logIfFalse());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_logIfFalse": {"backCompat": false}
+* "RemovedFunctionDeclaration_logIfFalse": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_logIfFalse():
-    TypeOnly<typeof current.logIfFalse>;
-declare function use_old_FunctionDeclaration_logIfFalse(
-    use: TypeOnly<typeof old.logIfFalse>): void;
-use_old_FunctionDeclaration_logIfFalse(
-    get_current_FunctionDeclaration_logIfFalse());
 
 /*
 * Validate forward compat by using old type in place of current type

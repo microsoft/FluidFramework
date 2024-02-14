@@ -91,6 +91,13 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IContainerRuntime": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IContainerRuntimeWithResolveHandle_Deprecated": {
+				"backCompat": false
+			}
+		}
 	}
 }
