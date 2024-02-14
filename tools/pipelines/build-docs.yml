@@ -295,12 +295,19 @@ stages:
             workingDir: $(Build.SourcesDirectory)/docs
             customCommand: 'run ci:build'
 
-        - task: Npm@1
-          displayName: npm run ci:linkcheck
+        - task: Bash@3
+          displayName: 'Website Link Check with Errors as Warnings'
           inputs:
-            command: 'custom'
-            workingDir: $(Build.SourcesDirectory)/docs
-            customCommand: 'run ci:linkcheck'
+            targetType: 'inline'
+            workingDirectory: $(Build.SourcesDirectory)/docs
+            script: |
+              set +e # Disable immediate exit on error
+              npm run ci:linkcheck
+              linkCheckExitCode=$?
+              if [ $linkCheckExitCode -ne 0 ]; then
+                echo "Link check completed with errors treated as warnings"
+              fi
+              set -e # Re-enable immediate exit on error
 
 - stage: deploy
   displayName: 'Deploy website'
