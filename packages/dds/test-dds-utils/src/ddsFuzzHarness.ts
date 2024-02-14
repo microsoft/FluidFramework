@@ -535,9 +535,17 @@ export function mixinNewClient<
 		};
 	};
 
-	const minimizationTransforms = model.minimizationTransforms as
-		| MinimizationTransform<TOperation | AddClient>[]
-		| undefined;
+	const minimizationTransforms: MinimizationTransform<TOperation | AddClient>[] =
+		(model.minimizationTransforms as
+			| MinimizationTransform<TOperation | AddClient>[]
+			| undefined) ?? [];
+
+	minimizationTransforms.push((op: TOperation | AddClient): void => {
+		if (op.type === "AddClient") {
+			const transform = op as unknown as AddClient;
+			transform.canBeStashed = false;
+		}
+	});
 
 	const reducer: AsyncReducer<TOperation | AddClient, TState> = async (state, op) => {
 		if (isClientAddOp(op)) {
