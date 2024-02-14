@@ -244,6 +244,7 @@
 	"typeValidation": {
 		"broken": {
 			"ClassDeclaration_ContainerRuntime": {
+				"backCompat": false,
 				"forwardCompat": false
 			},
 			"InterfaceDeclaration_ISubmitSummaryOptions": {

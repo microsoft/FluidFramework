@@ -180,6 +180,9 @@
 		"broken": {
 			"ClassDeclaration_LocalDocumentService": {
 				"forwardCompat": false
+			},
+			"ClassDeclaration_LocalDocumentStorageService": {
+				"backCompat": false
 			}
 		}
 	}

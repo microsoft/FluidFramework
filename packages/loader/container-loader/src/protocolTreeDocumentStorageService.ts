@@ -19,9 +19,6 @@ export class ProtocolTreeStorageService implements IDocumentStorageService, IDis
 	public get policies() {
 		return this.internalStorageService.policies;
 	}
-	public get repositoryUrl() {
-		return this.internalStorageService.repositoryUrl;
-	}
 	public get disposed() {
 		return this.internalStorageService.disposed;
 	}
