@@ -1431,7 +1431,6 @@ importers:
       '@fluidframework/server-services-telemetry': link:../services-telemetry
       '@fluidframework/server-services-utils': link:../services-utils
       '@fluidframework/server-test-utils': link:../test-utils
-      '@types/socket.io': 3.0.2
       agentkeepalive: 4.3.0
       axios: 1.6.2
       body-parser: 1.20.2
@@ -1470,6 +1469,7 @@ importers:
       '@types/nconf': 0.10.4
       '@types/node': 18.18.4
       '@types/rimraf': 3.0.2
+      '@types/socket.io': 3.0.2
       '@types/split': 0.3.28
       '@types/uuid': 9.0.2
       copyfiles: 2.4.1
@@ -7772,7 +7772,7 @@ packages:
       - bufferutil
       - supports-color
       - utf-8-validate
-    dev: false
+    dev: true
 
   /@types/split/0.3.28:
     resolution: {integrity: sha512-t6JWsgzXTobVH6dgfYGedS8Y0ZRc20jtzHCWYx+Q/w9WfpwUkPY8FTa+5y8KPztQne3NmI4+/s0zbCMMkuk1tQ==}
@@ -10809,6 +10809,7 @@ packages:
   /engine.io-parser/5.2.1:
     resolution: {integrity: sha512-9JktcM3u18nU9N2Lz3bWeBgxVgOKpw7yhRaoxQA3FUDZzzw+9WlA6p4G4u0RixNkg14fH7EfEc/RhpurtiROTQ==}
     engines: {node: '>=10.0.0'}
+    dev: true
 
   /engine.io/6.4.2:
     resolution: {integrity: sha512-FKn/3oMiJjrOEOeUub2WCox6JhxBXq/Zn3fZOMCBxKnNYtsdKjxhl7yR3fZhM9PV+rdE75SU5SYMc+2PGzo+Tg==}
@@ -10848,6 +10849,7 @@ packages:
       - bufferutil
       - supports-color
       - utf-8-validate
+    dev: true
 
   /enhanced-resolve/5.15.0:
     resolution: {integrity: sha512-LXYT42KJ7lpIKECr2mAXIaMldcNCh/7E0KBKOu4KSfkHmP+mZmSs+8V5gBAqisWBy0OO4W5Oyys0GO1Y8KtdKg==}
@@ -18108,6 +18110,7 @@ packages:
       - bufferutil
       - supports-color
       - utf-8-validate
+    dev: true
 
   /socks-proxy-agent/6.2.1:
     resolution: {integrity: sha512-a6KW9G+6B3nWZ1yB8G7pJwL3ggLy1uTzKAgCb7ttblwqdz9fMGJUuTy3uFzEP48FAs9FLILlmzDlE2JJhVQaXQ==}
