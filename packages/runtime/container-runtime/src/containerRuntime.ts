@@ -2534,12 +2534,15 @@ export class ContainerRuntime
 
 	public createDetachedDataStore(
 		pkg: Readonly<string[]>,
-		groupId?: string,
+		loadingGroupId?: string,
 	): IFluidDataStoreContextDetached {
-		return this.dataStores.createDetachedDataStoreCore(pkg, false, undefined, groupId);
+		return this.dataStores.createDetachedDataStoreCore(pkg, false, undefined, loadingGroupId);
 	}
 
-	public async createDataStore(pkg: string | string[], groupId?: string): Promise<IDataStore> {
+	public async createDataStore(
+		pkg: string | string[],
+		loadingGroupId?: string,
+	): Promise<IDataStore> {
 		const id = uuid();
 		return channelToDataStore(
 			await this.dataStores
@@ -2547,7 +2550,7 @@ export class ContainerRuntime
 					Array.isArray(pkg) ? pkg : [pkg],
 					id,
 					undefined,
-					groupId,
+					loadingGroupId,
 				)
 				.realize(),
 			id,
