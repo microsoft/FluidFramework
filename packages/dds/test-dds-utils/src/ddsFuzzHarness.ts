@@ -1024,9 +1024,18 @@ export function mixinStashedClient<
 			assert("stashData" in state.client);
 			const stashData = state.client.stashData as StashData;
 			state.client.containerRuntime.flush();
-			const pendingMessages = state.client.containerRuntime.pendingMessages.splice(0);
 			state.client.containerRuntime.connected = false;
 			state.containerRuntimeFactory.removeContainerRuntime(state.client.containerRuntime);
+			const pendingMessages = state.client.containerRuntime.pendingMessages.splice(0);
+			const savedOps = stashData.savedOps.splice(0);
+			// ensure no ops are sent to, or produced by the old client
+			// this can help find bugs in the the harness
+			Object.freeze(stashData.savedOps);
+			Object.freeze(state.client.containerRuntime.pendingMessages);
+
+			state.containerRuntimeFactory.clearOutstandingClientMessages(
+				state.client.containerRuntime.clientId,
+			);
 			const newClient = await loadClientFromSummaries(
 				state.containerRuntimeFactory,
 				stashData.summaries,
@@ -1035,7 +1044,7 @@ export function mixinStashedClient<
 				options,
 			);
 
-			for (const savedOp of stashData.savedOps) {
+			for (const savedOp of savedOps) {
 				if (savedOp.clientId === newClient.dataStoreRuntime.clientId) {
 					await newClient.containerRuntime.applyStashedOp(savedOp.contents);
 				}
@@ -1067,6 +1076,7 @@ export function mixinStashedClient<
 
 		return model.reducer(state, operation as TOperation);
 	};
+
 	return {
 		...model,
 		generatorFactory,
@@ -1088,14 +1098,13 @@ async function runInStateWithClient<TState extends DDSFuzzTestState<IChannelFact
 	client: TState["client"],
 	callback: (state: TState) => Promise<Result>,
 ): Promise<Result> {
-	const oldClient = state.client;
+	// const oldClient = state.client;
 	state.client = client;
 	try {
 		return await callback(state);
 	} finally {
-		// This code is explicitly trying to "update" to the old value.
-		// eslint-disable-next-line require-atomic-updates
-		state.client = oldClient;
+		// This code is explicitly trying to "update" to the old value. eslint-disable-next-line require-atomic-updates
+		// state.client = oldClient;
 	}
 }
 
@@ -1528,8 +1537,8 @@ const getFullModel = <TChannelFactory extends IChannelFactory, TOperation extend
 	mixinAttach(
 		mixinSynchronization(
 			mixinNewClient(
-				mixinClientSelection(
-					mixinStashedClient(
+				mixinStashedClient(
+					mixinClientSelection(
 						mixinReconnect(mixinRebase(ddsModel, options), options),
 						options,
 					),
