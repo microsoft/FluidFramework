@@ -1,0 +1,15 @@
+{
+	"name": "eslint-plugin-fluid-internal",
+	"version": "0.1.0",
+	"private": true,
+	"description": "Custom ESLint rules for the Fluid Framework",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "common/build/eslint-config-fluid/src/fluid-internal"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"main": "index.js"
+}
