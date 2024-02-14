@@ -506,7 +506,7 @@ describe("optionalField", () => {
 			it("a tree that remains untouched", () => {
 				const actual = Array.from(
 					optionalChangeHandler.relevantRemovedRoots(
-						makeAnonChange({ moves: [], childChanges: [] }),
+						makeAnonChange(Change.empty()),
 						noTreesDelegate,
 					),
 				);
