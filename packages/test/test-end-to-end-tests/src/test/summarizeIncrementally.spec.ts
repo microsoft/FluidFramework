@@ -96,7 +96,7 @@ function validateDDSStateInSummary(
  * These tests validate that data stores and DDSes do incremental summaries correctly, i.e., if the data
  * in it does not change, it summaries using a SummaryHandle and not a SummaryTree.
  */
-describeCompat(
+describeCompat.only(
 	"Incremental summaries for data store and DDS",
 	"1.3.7" /** equivalent to FullCompat. Currently used for testing purposes on ADO pipelines */,
 	(getTestObjectProvider, apis) => {
@@ -126,7 +126,15 @@ describeCompat(
 				this.skip();
 			}
 			const dataStore2 = await containerRuntime.createDataStore(TestDataObjectType);
-			const dataObject2 = (await dataStore2.entryPoint.get()) as ITestDataObject;
+			const dataObject2 =
+				((await dataStore2.entryPoint?.get()) as ITestDataObject) ??
+				// Added to support back compat where entryPoint is not available.
+				// Can be removed when we no longer support `^2.0.0-internal.7.0.0`
+				((
+					await (containerRuntime as any).request({
+						url: "/",
+					})
+				).value as ITestDataObject);
 			dataObject1._root.set("dataObject2", dataStore2.entryPoint);
 
 			await provider.ensureSynchronized();
