@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import { createIdCompressor } from "@fluidframework/id-compressor";
 import { unreachableCase } from "@fluidframework/core-utils";
 import { MockFluidDataStoreRuntime, MockHandle } from "@fluidframework/test-runtime-utils";
-import { TreeNode, Tree, TreeConfiguration, TreeView } from "../../simple-tree/index.js";
+import { Tree, TreeConfiguration, TreeView } from "../../simple-tree/index.js";
 import {
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
@@ -25,6 +25,8 @@ import {
 } from "../../simple-tree/schemaFactory.js";
 import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util/index.js";
 import { TreeFactory } from "../../treeFactory.js";
+// eslint-disable-next-line import/no-internal-modules
+import { isTreeNode } from "../../simple-tree/proxies.js";
 
 {
 	const schema = new SchemaFactory("Blah");
@@ -180,7 +182,7 @@ describe("schemaFactory", () => {
 			});
 
 			assert(root instanceof Point);
-			assert(root instanceof TreeNode);
+			assert(isTreeNode(root));
 			assert(Reflect.has(root, "selected"));
 			assert.equal(root.selected, false);
 			// Ensure modification works
@@ -349,7 +351,7 @@ describe("schemaFactory", () => {
 
 			const listNode = view.root.child;
 			assert(listNode instanceof NamedList);
-			assert(listNode instanceof TreeNode);
+			assert(isTreeNode(listNode));
 			assert(Reflect.has(listNode, "testProperty"));
 			assert.equal(listNode.testProperty, false);
 			listNode.testProperty = true;
@@ -407,7 +409,7 @@ describe("schemaFactory", () => {
 
 			const mapNode = view.root.child;
 			assert(mapNode instanceof NamedMap);
-			assert(mapNode instanceof TreeNode);
+			assert(isTreeNode(mapNode));
 			assert(Reflect.has(mapNode, "testProperty"));
 			assert.equal(mapNode.testProperty, false);
 			mapNode.testProperty = true;

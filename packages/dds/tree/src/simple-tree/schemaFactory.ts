@@ -25,6 +25,7 @@ import {
 	getSequenceField,
 	arrayNodePrototypeProperties,
 	mapStaticDispatchMap,
+	isTreeNode,
 } from "./proxies.js";
 import { getFlexSchema, setFlexSchemaFromClassSchema } from "./toFlexSchema.js";
 import {
@@ -217,7 +218,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 		TImplicitlyConstructable
 	> {
 		const identifier = this.scoped(name);
-		class schema extends TreeNode implements WithType<`${TScope}.${Name}`> {
+		class NodeSchema implements TreeNode, WithType<`${TScope}.${Name}`> {
 			public static readonly identifier = identifier;
 			public static readonly kind = kind;
 			public static readonly info = t;
@@ -228,7 +229,6 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 			 * It is up to the derived type to actually do something with this value.
 			 */
 			public constructor(input: FlexTreeNode | unknown) {
-				super();
 				// Currently this just does validation. All other logic is in the subclass.
 				if (isFlexTreeNode(input)) {
 					assert(
@@ -238,7 +238,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 				}
 				// TODO: make this a better user facing error, and explain how to copy explicitly.
 				assert(
-					!(input instanceof TreeNode),
+					!isTreeNode(input),
 					0x83c /* Existing nodes cannot be used as new content to insert. They must either be moved or explicitly copied */,
 				);
 			}
@@ -248,8 +248,8 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 			}
 		}
 		// Class objects are functions (callable), so we need a strong way to distinguish between `schema` and `() => schema` when used as a `LazyItem`.
-		markEager(schema);
-		return schema;
+		markEager(NodeSchema);
+		return NodeSchema;
 	}
 
 	/**
@@ -265,15 +265,36 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 		class schema extends this.nodeSchema(name, NodeKind.Object, t, true) {
 			public constructor(input: InsertableObjectFromSchemaRecord<T>) {
 				super(input);
+
+				// Differentiate between when this class is being constructor vs. a subclass
+				// of this class is being constructed:
+				//
+				// Case 1: Direct construction (POJO)
+				//
+				//     const Foo = _.object("Foo", {bar: _.number});
+				//     assert.deepEqual(new Foo({ bar: 42 }), { bar: 42 },
+				//		   "Prototype chain equivalent to POJO.");
+				//
+				// Case 2: Subclass construction (Domain Object)
+				//
+				// 	   class Foo extends _.object("Foo", {bar: _.number}) {}
+				// 	   assert.notDeepEqual(new Foo({ bar: 42 }), { bar: 42 },
+				// 	       "Subclass prototype chain differs from POJO.");
+				//
+				// In Case 1 (POJO), the prototype chain should be equivalent to '{}' (proxyTarget = undefined)
+				// In Case 2 (Domain Object), the prototype chain include the user's subclass (proxyTarget = this)
+				const customizable = this.constructor !== schema;
+				const proxyTarget = customizable ? this : undefined;
+
 				if (isFlexTreeNode(input)) {
-					return createNodeProxy(input, allowAdditionalProperties, this) as schema;
+					return createNodeProxy(input, allowAdditionalProperties, proxyTarget) as schema;
 				} else {
 					const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
 					return createRawNodeProxy(
 						flexSchema as FlexObjectNodeSchema,
 						input,
 						allowAdditionalProperties,
-						this,
+						proxyTarget,
 					) as unknown as schema;
 				}
 			}
@@ -409,19 +430,18 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 				input: ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 			) {
 				super(input);
+
+				const proxyTarget = customizable ? this : undefined;
+
 				if (isFlexTreeNode(input)) {
-					return createNodeProxy(
-						input,
-						customizable,
-						customizable ? this : undefined,
-					) as schema;
+					return createNodeProxy(input, customizable, proxyTarget) as schema;
 				} else {
 					const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
 					return createRawNodeProxy(
 						flexSchema as FlexMapNodeSchema,
 						input,
 						customizable,
-						customizable ? this : undefined,
+						proxyTarget,
 					) as unknown as schema;
 				}
 			}
@@ -566,19 +586,18 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 			}
 			public constructor(input: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>) {
 				super(input);
+
+				const proxyTarget = customizable ? this : undefined;
+
 				if (isFlexTreeNode(input)) {
-					return createNodeProxy(
-						input,
-						customizable,
-						customizable ? this : undefined,
-					) as schema;
+					return createNodeProxy(input, customizable, proxyTarget) as schema;
 				} else {
 					const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
 					return createRawNodeProxy(
 						flexSchema as FlexFieldNodeSchema,
 						[...input],
 						customizable,
-						customizable ? this : undefined,
+						proxyTarget,
 					) as unknown as schema;
 				}
 			}

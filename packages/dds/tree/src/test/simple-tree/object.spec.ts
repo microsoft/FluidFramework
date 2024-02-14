@@ -42,9 +42,7 @@ export function testObjectPrototype(proxy: object, prototype: object) {
 
 function testObjectLike(testCases: TestCase[]) {
 	describe("Object-like", () => {
-		// TODO: Fix prototype for objects declared using 'class-schema'.
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-		describe.skip("satisfies 'deepEqual'", () => {
+		describe("satisfies 'deepEqual'", () => {
 			for (const { schema, initialTree } of testCases) {
 				const proxy = getRoot(schema, () => initialTree);
 				const real = initialTree;
@@ -55,9 +53,7 @@ function testObjectLike(testCases: TestCase[]) {
 			}
 		});
 
-		// TODO: Fix prototype for objects declared using 'class-schema'.
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-		describe.skip("inherits from Object.prototype", () => {
+		describe("inherits from Object.prototype", () => {
 			function findObjectPrototype(o: unknown) {
 				return Object.getPrototypeOf(
 					// If 'root' is an array, the immediate prototype is Array.prototype.  We need to go
@@ -142,16 +138,12 @@ function testObjectLike(testCases: TestCase[]) {
 			test1((subject) => Object.keys(subject));
 		});
 
-		// TODO: Make 'class-schema' property values match original object.
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-		describe.skip("Object.values", () => {
+		describe("Object.values", () => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			test1((subject) => Object.values(subject));
 		});
 
-		// TODO: Make 'class-schema' property values match original object.
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-		describe.skip("Object.entries", () => {
+		describe("Object.entries", () => {
 			test1((subject) => Object.entries(subject));
 		});
 
@@ -166,16 +158,12 @@ function testObjectLike(testCases: TestCase[]) {
 		});
 
 		// 'deepEqual' requires that objects have the same prototype to be considered equal.
-		// TODO: Fix prototype for objects declared using 'class-schema'.
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-		describe.skip("Object.getPrototypeOf", () => {
+		describe("Object.getPrototypeOf", () => {
 			test1((subject) => Object.getPrototypeOf(subject) as unknown);
 		});
 
 		// 'deepEqual' enumerates and compares the own properties of objects.
-		// TODO: Fix prototype for objects declared using 'class-schema'.
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-		describe.skip("Object.getOwnPropertyDescriptors", () => {
+		describe("Object.getOwnPropertyDescriptors", () => {
 			test1((subject) => {
 				return Object.getOwnPropertyDescriptors(subject);
 			});
@@ -323,8 +311,8 @@ const factory = new SchemaFactory("test");
 
 describe("Object-like", () => {
 	describe("setting an invalid field", () => {
-		// TODO: Restore original behavior for bare '_.object()'?
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
+		// TODO: Disallow setting out-of-schema properties?
+		// https://dev.azure.com/fluidframework/internal/_workitems/edit/7177
 		it.skip("throws TypeError in strict mode", () => {
 			const root = getRoot(schemaFactory.object("no fields", {}), () => ({}));
 			assert.throws(() => {

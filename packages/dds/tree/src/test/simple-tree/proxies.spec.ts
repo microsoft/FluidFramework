@@ -151,9 +151,7 @@ describe("SharedTreeList", () => {
 		const obj = _.object("Obj", { id: _.string });
 		const schema = _.array(obj);
 
-		// TODO: Fix prototype for objects declared using 'class-schema'.
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-		it.skip("insertAtStart()", () => {
+		it("insertAtStart()", () => {
 			const root = getRoot(schema, () => [{ id: "B" }]);
 			assert.deepEqual(root, [{ id: "B" }]);
 			const newItem = new obj({ id: "A" });
@@ -163,9 +161,7 @@ describe("SharedTreeList", () => {
 			assert.deepEqual(root, [newItem, { id: "B" }]);
 		});
 
-		// TODO: Fix prototype for objects declared using 'class-schema'.
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-		it.skip("insertAtEnd()", () => {
+		it("insertAtEnd()", () => {
 			const root = getRoot(schema, () => [{ id: "A" }]);
 			assert.deepEqual(root, [{ id: "A" }]);
 			const newItem = new obj({ id: "B" });
@@ -175,9 +171,7 @@ describe("SharedTreeList", () => {
 			assert.deepEqual(root, [{ id: "A" }, newItem]);
 		});
 
-		// TODO: Fix prototype for objects declared using 'class-schema'.
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-		it.skip("insertAt()", () => {
+		it("insertAt()", () => {
 			const root = getRoot(schema, () => [{ id: "A" }, { id: "C" }]);
 			assert.deepEqual(root, [{ id: "A" }, { id: "C" }]);
 			const newItem = new obj({ id: "B" });
@@ -187,9 +181,7 @@ describe("SharedTreeList", () => {
 			assert.deepEqual(root, [{ id: "A" }, newItem, { id: "C" }]);
 		});
 
-		// TODO: Fix prototype for objects declared using 'class-schema'.
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-		it.skip("at()", () => {
+		it("at()", () => {
 			const root = getRoot(schema, () => [{ id: "B" }]);
 			assert.equal(root.at(0), root[0]);
 			assert.deepEqual(root, [{ id: "B" }]);
