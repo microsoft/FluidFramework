@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { StringBuilder } from "@microsoft/tsdoc";
 
 import type { DocumentationNode } from "../../../documentation-domain";
 import { DocumentWriter } from "../../DocumentWriter";
@@ -17,7 +16,7 @@ export function testRender(
 	partialContext?: Partial<RenderContext>,
 ): string {
 	const context = getContextWithDefaults(partialContext);
-	const writer = new DocumentWriter(new StringBuilder());
+	const writer = DocumentWriter.create();
 
 	renderNode(node, writer, context);
 
