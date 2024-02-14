@@ -249,7 +249,7 @@ export function configureWebSocketServices(
 		// Map from client Ids to connection time.
 		const connectionTimeMap = new Map<string, number>();
 		// Map from client Ids to supportedFeatures
-		const supportedFeaturesMap = new Map<string, Record<string, unknown>>();
+		const supportedFeaturesMap = new Map<string, Record<string, any>>();
 
 		let connectDocumentComplete: boolean = false;
 		let connectDocumentP: Promise<void> | undefined;
