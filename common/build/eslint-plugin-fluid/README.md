@@ -19,7 +19,7 @@ See [ESLint: Name a Plugin](https://eslint.org/docs/latest/extend/plugins#name-a
 Currently there are two custom rules within the package:
 
 -   `no-restricted-tags-imports`: Restrict imports of `@internal` tagged items.
--   `no-member-release-tags`: Restrict inclusion of any release tags inside the member of the class, function, interface, type, and enums.
+-   `no-member-release-tags`: Prevent use of release tags on member properties of classes and interfaces, where they are not valid.
 
 ## Applying the Custom Rules
 
