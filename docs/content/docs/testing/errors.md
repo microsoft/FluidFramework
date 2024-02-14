@@ -11,13 +11,13 @@ This article lists the most common errors Fluid developers will encounter. The f
 
 **Steps to take** : Investigate the root cause in your application. It’s likely that there is a high-level catch statement around the container operations and the underlying problem is in those operations.  
 
-### **`0x26d`** 
+### **`0x26d`**
 
 The ops fetched from service do not start from the requested first op. 
 
 **Steps to take**: If the issue persists, report this issue to the Fluid team by filing a [GitHub issue](https://github.com/microsoft/FluidFramework/issues). 
 
-### **`0x26f` **
+### **`0x26f`**
 
 The ops fetched from the service are either out of order or duplicated. 
 
@@ -145,7 +145,7 @@ The call to fetch ops has failed in the driver layer. This is likely an authenti
 
 **Steps to take**: Investigate your authentication layer for storage communication issues.  
 
-### **fluid:telemetry:Summarizer:Running:GarbageCollection_cancel** 
+### **fluid:telemetry:Summarizer:Running:GarbageCollection_cancel**
 
 Garbage collection was cancelled for an unexpected reason. This leads to a subsequent fluid:telemetry:Summarizer:Running:Summarize_cancel event. The document will not be summarized in the respective summary operation. This is a problem if there are subsequent failures on a single document where the summarizer repeatedly signals. sum 
 
