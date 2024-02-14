@@ -303,7 +303,7 @@ describe("Temporal Collab Spaces", () => {
 		await provider.ensureSynchronized();
 		const seq = containers[0].deltaManager.lastSequenceNumber;
 
-		// every container to communicate their refeerence sequence number, allow MSN to move forward
+		// every container to communicate their reference sequence number, allow MSN to move forward
 		for (const cp of [...collabSpaces, summarizerCollabSpace]) {
 			// summarizerCollabSpace is undefined in detached tests
 			if (cp !== undefined) {
@@ -330,7 +330,7 @@ describe("Temporal Collab Spaces", () => {
 		ensureSameSize();
 	}
 
-	// Syncronize containers and validate they all have exactly same state
+	// Synchronize containers and validate they all have exactly same state
 	const synchronizeAndValidateContainerFn = async () => {
 		await provider.ensureSynchronized();
 		ensureSameSize();
@@ -886,18 +886,24 @@ describe("Temporal Collab Spaces", () => {
 
 	describe("Stress tests", () => {
 		type Op = (cp: IMatrix) => Promise<unknown>;
-
+		let commandArray: string[] = [];
+		let currentRowCount: number = 0;
+		let currentColCount: number = 0;
 		beforeEach(() => {
+			commandArray = [];
 			seed = 1; // Every test is independent from another test!
+			currentRowCount = 0;
+			currentColCount = 0;
 		});
 
 		// collaborate on a cell through collab channel
 		const collabFn: Op = async (cp: IMatrix) => {
+			commandArray.push(`collabFn Row Count`);
 			// Cell might be undefined. If so, we can't really collab on it.
 			// Do some number of iterations to find some cell to collab, otherwise bail out.
 			for (let it = 0; it < 10; it++) {
-				const row = randNotInclusive(cp.rowCount);
-				const col = randNotInclusive(cp.colCount);
+				const row = randNotInclusive(Math.min(currentRowCount, cp.rowCount));
+				const col = randNotInclusive(Math.min(currentColCount, cp.colCount));
 				const value = await cp.getCellAsync(row, col);
 				if (value !== undefined) {
 					const channel = (await cp.getCellChannel(row, col)) as ISharedCounter;
@@ -909,18 +915,23 @@ describe("Temporal Collab Spaces", () => {
 
 		// Overwrite cell value
 		const overwriteCellFn: Op = async (cp: IMatrix) => {
-			const row = randNotInclusive(cp.rowCount);
-			const col = randNotInclusive(cp.colCount);
+			const row = randNotInclusive(Math.min(currentRowCount, cp.rowCount));
+			const col = randNotInclusive(Math.min(currentColCount, cp.colCount));
+			const value = rand(100);
+			commandArray.push(`overwriteCell Row Count ${row} ${col} ${value}`);
 			cp.setCell(row, col, {
-				value: rand(1000),
+				value,
 				type: CounterFactory.Type,
 			});
 		};
 
 		// write undefined into cell
 		const overwriteCellUndefinedFn: Op = async (cp: IMatrix) => {
-			const row = randNotInclusive(cp.rowCount);
-			const col = randNotInclusive(cp.colCount);
+			commandArray.push(
+				`overwriteCellUndefined Row Count ${currentRowCount} ${currentColCount}`,
+			);
+			const row = randNotInclusive(Math.min(currentRowCount, cp.rowCount));
+			const col = randNotInclusive(Math.min(currentColCount, cp.colCount));
 			cp.setCell(row, col, undefined);
 		};
 
@@ -930,25 +941,48 @@ describe("Temporal Collab Spaces", () => {
 		};
 
 		const insertColsFn: Op = async (cp: IMatrix) => {
-			cp.insertCols(rand(cp.colCount), 1 + rand(3));
+			const pos = rand(Math.min(currentColCount, cp.colCount));
+			const count = 1 + rand(3);
+			cp.insertCols(pos, count);
+			currentColCount += count;
+			commandArray.push(
+				`insertColsFn post pos ${pos}, count ${count}, cp.colCount ${cp.colCount}  RowCount ${currentRowCount}, ColCount ${currentColCount}`,
+			);
 		};
 
 		const insertRowsFn: Op = async (cp: IMatrix) => {
-			cp.insertRows(rand(cp.rowCount), 1 + rand(3));
+			const pos = rand(Math.min(currentRowCount, cp.colCount));
+			const count = 1 + rand(3);
+			cp.insertRows(pos, count);
+			currentRowCount += count;
+			commandArray.push(
+				`insertRowsFn post pos ${pos}, count ${count}, cp.RowCount ${cp.rowCount} ,RowCount ${currentRowCount}, ColCount ${currentColCount}`,
+			);
 		};
 
 		const removeColsFn: Op = async (cp: IMatrix) => {
-			const pos = randNotInclusive(cp.colCount);
+			const currCount = Math.min(currentColCount, cp.colCount);
+			const pos = randNotInclusive(currCount);
 			// delete at most 1/3 of the matrix
-			const del = Math.max(randNotInclusive(cp.colCount - pos), Math.round(cp.colCount / 3));
+			const del = Math.max(randNotInclusive(currCount - pos), Math.round(currCount / 3));
 			cp.removeCols(pos, del);
+			currentColCount -= del;
+			commandArray.push(
+				`removeColsFn post pos ${pos}, del ${del}, cp.ColCount ${cp.colCount}, RowCount ${currentRowCount}, ColCount ${currentColCount}`,
+			);
 		};
 
 		const removeRowsFn: Op = async (cp: IMatrix) => {
-			const pos = randNotInclusive(cp.rowCount);
+			console.log("Remove rows");
+			const currCount = Math.min(currentRowCount, cp.rowCount);
+			const pos = randNotInclusive(currCount);
 			// delete at most 1/3 of the matrix
-			const del = Math.max(randNotInclusive(cp.rowCount - pos), Math.round(cp.rowCount / 3));
+			const del = Math.max(randNotInclusive(currCount - pos), Math.round(currCount / 3));
 			cp.removeRows(pos, del);
+			currentRowCount -= del;
+			commandArray.push(
+				`removeRowsFn post pos ${pos}, del ${del}, cp.RowCount ${cp.rowCount}, RowCount ${currentRowCount}, ColCount ${currentColCount}`,
+			);
 		};
 
 		// collaborate on a cell through collab channel
@@ -956,8 +990,8 @@ describe("Temporal Collab Spaces", () => {
 			// Cell might be undefined. If so, we can't really collab on it.
 			// Do some number of iterations to find some cell to collab, otherwise bail out.
 			for (let it = 0; it < 10; it++) {
-				const row = randNotInclusive(cp.rowCount);
-				const col = randNotInclusive(cp.colCount);
+				const row = randNotInclusive(Math.min(currentRowCount, cp.rowCount));
+				const col = randNotInclusive(Math.min(currentColCount, cp.colCount));
 				const value = await cp.getCellDebugInfo(row, col);
 				if (value.channel !== undefined) {
 					return value.channel;
@@ -968,6 +1002,7 @@ describe("Temporal Collab Spaces", () => {
 
 		const saveChannelFn: Op = async (cp: IMatrix) => {
 			const channel = await findSomeChannelFn(cp);
+			commandArray.push(`saveChannelFn  ${channel?.value}`);
 			if (channel !== undefined) {
 				cp.saveChannelState(channel);
 			}
@@ -975,6 +1010,7 @@ describe("Temporal Collab Spaces", () => {
 
 		const destroyChannelFn: Op = async (cp: IMatrix) => {
 			const channel = await findSomeChannelFn(cp);
+			commandArray.push(`destroyChannelFn  ${channel?.value}`);
 			if (channel !== undefined) {
 				cp.destroyCellChannel(channel);
 			}
@@ -986,6 +1022,8 @@ describe("Temporal Collab Spaces", () => {
 			cols: number,
 			operations: [number, Op][],
 		) {
+			currentColCount = cols;
+			currentRowCount = rows;
 			await initialize(rows, cols);
 
 			let priorityMax = 0;
@@ -1023,34 +1061,50 @@ describe("Temporal Collab Spaces", () => {
 		}).timeout(20000);
 
 		it("Structure stress test", async () => {
-			await stressTest(100, 20, 7, [
-				[20, collabFn],
-				[10, overwriteCellFn],
-				[10, overwriteCellUndefinedFn],
-				[20, insertColsFn],
-				[20, insertRowsFn],
-				[10, removeColsFn],
-				[10, removeRowsFn],
-				[10, saveChannelFn],
-				[5, addContainerInstanceFn],
-			]);
-		}).timeout(60000);
+			try {
+				await stressTest(100, 20, 7, [
+					[100, collabFn],
+					[20, overwriteCellFn],
+					[10, overwriteCellUndefinedFn],
+					[20, insertColsFn],
+					[20, insertRowsFn],
+					[10, removeColsFn],
+					[10, removeRowsFn],
+					[10, saveChannelFn],
+					[5, addContainerInstanceFn],
+				]);
+			} catch (e) {
+				console.log("Error in stress test", e);
+				for (const item of commandArray) {
+					console.log(item);
+				}
+				throw e;
+			}
+		}).timeout(120000);
 
 		// TBD(Pri0): This test does not pass
 		// It tails on 229th step - one of the containers has a wrong value
-		it.skip("Structure stress test 229", async () => {
-			await stressTest(229, 20, 7, [
-				[20, collabFn],
-				[10, overwriteCellFn],
-				[10, overwriteCellUndefinedFn],
-				[20, insertColsFn],
-				[20, insertRowsFn],
-				[10, removeColsFn],
-				[10, removeRowsFn],
-				[10, saveChannelFn],
-				[5, addContainerInstanceFn],
-			]);
-		}).timeout(10000);
+		it("Structure stress test 229", async () => {
+			try {
+				await stressTest(229, 20, 7, [
+					[20, collabFn],
+					[10, overwriteCellFn],
+					[10, overwriteCellUndefinedFn],
+					[20, insertColsFn],
+					[20, insertRowsFn],
+					[10, removeColsFn],
+					[10, removeRowsFn],
+					[10, saveChannelFn],
+					[5, addContainerInstanceFn],
+				]);
+			} catch (e) {
+				console.log("Structure in stress test", e);
+				for (const item of commandArray) {
+					console.log(item);
+				}
+				throw e;
+			}
+		}).timeout(120000);
 
 		it("General Stress test", async () => {
 			await stressTest(100, 20, 7, [
