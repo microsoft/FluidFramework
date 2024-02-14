@@ -8,7 +8,7 @@ patchedDependencies:
     hash: 5jttfhtxwdhxb7mhu7m3cyak6i
     path: ../../../patches/@microsoft__api-extractor@7.39.1.patch
   tsc-multi@1.1.0:
-    hash: 5xd7hc4kfbl2wvrh6bkfmqiu64
+    hash: 5vqev4kbz4ggrzgqvobqxx6cgq
     path: ../../../patches/tsc-multi@1.1.0.patch
 
 importers:
@@ -44,7 +44,7 @@ importers:
       eslint-config-prettier: 9.0.0_eslint@8.55.0
       prettier: 3.0.3
       rimraf: 2.7.1
-      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
+      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
 packages:
@@ -8805,7 +8805,7 @@ packages:
       yn: 3.1.1
     dev: true
 
-  /tsc-multi/1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6:
+  /tsc-multi/1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6:
     resolution: {integrity: sha512-THE6X+sse7EZ2qMhqXvBhd2HMTvXyWwYnx+2T/ijqdp/6Rf7rUc2uPRzPdrrljZCNcYDeL0qP2P7tqm2IwayTg==}
     engines: {node: '>=14'}
     hasBin: true
