@@ -565,19 +565,9 @@ export const handlers: Handler[] = [
 							// Check the dependencies
 							const error = checkTaskDeps(root, json, script, checkDeps);
 							if (error) {
-								// eslint-disable-next-line no-debugger
-								debugger;
-								checkTaskDeps(root, json, script, checkDeps);
 								errors.push(error);
 							}
 						} catch (e: any) {
-							// eslint-disable-next-line no-debugger
-							debugger;
-							try {
-								getTscCommandDependencies(packageDir, json, script, command, deps);
-							} catch (_) {
-								console.error(_);
-							}
 							return e.message;
 						}
 					}

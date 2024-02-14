@@ -474,12 +474,11 @@ interface TscMultiConfig {
 	projects: string[];
 }
 
-// This function is taken from tsc-multi.
+// This function is mimiced from tsc-multi.
 function configKeyForPackageOverrides(overrides: Record<string, unknown> | undefined) {
 	if (overrides === undefined) return "";
 
 	const str = JSON.stringify(overrides);
-	if (str.length === 0) return "";
 
 	// An implementation of DJB2 string hashing algorithm
 	let hash = 5381;
