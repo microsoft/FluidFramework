@@ -749,9 +749,6 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public set local(local: boolean) {
-		if (this._local === true && !local) {
-			this.emit("attaching");
-		}
 		this._local = local;
 	}
 
