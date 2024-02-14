@@ -5228,6 +5228,7 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       ts-jest: ^29.1.1
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-experimental/property-changeset': link:../property-changeset
@@ -5247,6 +5248,7 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      tsc-multi: 1.1.0_5xd7hc4kfbl2wvrh6bkfmqiu64_typescript@5.1.6
       typescript: 5.1.6
 
   experimental/PropertyDDS/services/property-query-service:
