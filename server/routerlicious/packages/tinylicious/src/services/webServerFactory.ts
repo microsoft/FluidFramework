@@ -73,6 +73,13 @@ class SocketIoServer extends EventEmitter implements IWebSocketServer {
 	public async close(): Promise<void> {
 		await new Promise<void>((resolve) => this.io.close(() => resolve()));
 	}
+
+	/**
+	 * @returns A set of socket id's that have joined a given socket.io room ID or undefined if the room doesn't exist OR has no members.
+	 */
+	public getRoomMembers(roomId: string): Set<string> | undefined {
+		return this.io.sockets.adapter.rooms.get(roomId);
+	}
 }
 
 export class WebServerFactory implements IWebServerFactory {

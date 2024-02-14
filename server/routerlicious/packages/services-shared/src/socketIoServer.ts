@@ -130,6 +130,10 @@ class SocketIoServer implements core.IWebSocketServer {
 		const ioClosedP = util.promisify(((callback) => this.io.close(callback)) as any)();
 		await Promise.all([pubClosedP, subClosedP, ioClosedP]);
 	}
+
+	public getRoomMembers(roomId: string): Set<string> | undefined {
+		return this.io.sockets.adapter.rooms.get(roomId);
+	}
 }
 
 export function create(

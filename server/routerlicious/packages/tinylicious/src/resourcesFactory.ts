@@ -27,6 +27,7 @@ import {
 	WebServerFactory,
 	StorageNameAllocator,
 } from "./services";
+import { WebhookManager } from "./services/webhookManager";
 
 const defaultTinyliciousPort = 7070;
 
@@ -100,6 +101,8 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 			// eslint-disable-next-line import/no-deprecated
 			new TypedEventEmitter<ICollaborationSessionEvents>();
 
+		const webhookManager = new WebhookManager();
+
 		return new TinyliciousResources(
 			config,
 			orderManager,
@@ -109,6 +112,7 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 			port,
 			webServerFactory,
 			collaborationSessionEventEmitter,
+			webhookManager,
 		);
 	}
 }

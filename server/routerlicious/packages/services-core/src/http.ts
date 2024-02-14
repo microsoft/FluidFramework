@@ -64,6 +64,12 @@ export interface IWebSocketServer {
 	on(event: string, listener: (...args: any[]) => void);
 
 	close(): Promise<void>;
+
+	/**
+	 * Get the list of socket ID's connected to a room
+	 * @remarks This can be useful for checking how many clients are connected to a given document.
+	 */
+	getRoomMembers(roomId: string): Set<string> | undefined;
 }
 
 /**

@@ -233,6 +233,7 @@ export function configureWebSocketServices(
 	revokedTokenChecker?: core.IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	clusterDrainingChecker?: core.IClusterDrainingChecker,
+	webhookManager?: core.IWebhookManager,
 ) {
 	webSocketServer.on("connection", (socket: core.IWebSocket) => {
 		// Map from client IDs on this connection to the object ID and user info.
@@ -368,11 +369,43 @@ export function configureWebSocketServices(
 			};
 
 			try {
+				const roomMembers = webSocketServer.getRoomMembers(getRoomId(room));
+				console.warn(
+					`@@@@@ connecting to room ID: ${getRoomId(room)} for document ID: ${
+						claims.documentId
+					}`,
+				);
+
+				if (roomMembers === undefined) {
+					console.warn(
+						"@@@@@ unexpectedly got undefined from getRoomMembers, maybe a new room is always undefined.",
+					);
+				} else if (roomMembers.size === 0) {
+					console.warn(
+						`@@@@@ member is joining a new room! This may be the start of a session for document ID: ${claims.documentId}`,
+					);
+				}
+
 				// Subscribe to channels.
 				await Promise.all([
 					socket.join(getRoomId(room)),
 					socket.join(`client#${clientId}`),
 				]);
+
+				const roomMembersAfterJoining = webSocketServer.getRoomMembers(getRoomId(room));
+				if (roomMembersAfterJoining !== undefined) {
+					console.warn(
+						`@@@@@ SUCCESSFULLY connected to room ID: ${getRoomId(
+							room,
+						)} for document ID: ${claims.documentId}, new member count: ${
+							roomMembersAfterJoining.size
+						}`,
+					);
+				} else {
+					console.warn(
+						"@@@@@ unexpectedly got undefined from getRoomMembers after joining the room.",
+					);
+				}
 			} catch (err) {
 				const errMsg = `Could not subscribe to channels. Error: ${safeStringify(
 					err,
@@ -751,6 +784,12 @@ export function configureWebSocketServices(
 			}
 			// Send notification messages for all client IDs in the room map
 			for (const [clientId, room] of roomMap) {
+				console.warn(
+					`@@@ attempting to disconnect form room id ${getRoomId(
+						room,
+					)}, current member count: ${webSocketServer.getRoomMembers(getRoomId(room))
+						?.size} `,
+				);
 				if (clientIdClientsDisconnected.has(clientId)) {
 					// We already removed this clientId once. Skip it.
 					continue;
@@ -786,7 +825,29 @@ export function configureWebSocketServices(
 							error,
 						);
 					});
+
+				const roomMembersAfterLeaving = webSocketServer.getRoomMembers(getRoomId(room));
+				if (roomMembersAfterLeaving !== undefined) {
+					console.warn(
+						`@@@@@ SUCCESSFULLY DISCONNECTED from room ID: ${getRoomId(
+							room,
+						)} for document ID: ${room.documentId}, new member count: ${
+							roomMembersAfterLeaving.size
+						}`,
+					);
+				} else {
+					console.warn(
+						"@@@@@ unexpectedly got undefined from getRoomMembers after LEAVING the room.",
+					);
+
+					webhookManager?.handleEvent(core.CollabSessionWebhookEvent.SESSION_END, {
+						eventName: core.CollabSessionWebhookEvent.SESSION_END,
+						documentId: room.documentId,
+						tenantId: room.tenantId,
+					});
+				}
 			}
+
 			// Clear socket tracker upon disconnection
 			if (socketTracker) {
 				socketTracker.removeSocket(socket.id);
