@@ -199,11 +199,11 @@ export class CollabSpacesRuntime
 {
 	private matrixInternal?: SharedMatrix<MatrixInternalType>;
 	private channelInfo: Record<string, IChannelTrackingInfo | undefined> = {};
+	private readonly useReverseMapping = false;
 	private readonly reverseMap: ReverseMap = new ReverseMap();
 	private deferredChannels: Map<string, DeferredChannel> = new Map();
 	private matrixPendingChangeCount = 0;
 	private debugChannel?: DeferredChannel = undefined;
-
 	constructor(
 		dataStoreContext: IFluidDataStoreContext,
 		sharedObjects: Readonly<ICollabChannelFactory[]>,
@@ -547,14 +547,15 @@ export class CollabSpacesRuntime
 	}
 
 	private updateReverseMap(row: number, col: number) {
+		assert(row === -1 || col === -1, "row or col should be equal to -1");
 		// the first row and column are used to track the internal IDs
-		const info = this.getCellInfo(row, col);
-		if (info.value !== undefined) {
+		const cellValue = this.matrix.getCell(row + 1, col + 1);
+		if (cellValue !== undefined) {
 			const mapInfo: { type: ReverseMapType; index: number } =
 				col === -1 ? { type: "row", index: row } : { type: "col", index: col };
 			this.reverseMap.addCellToMap(
 				mapInfo.type,
-				info.value as unknown as string,
+				cellValue as unknown as string,
 				mapInfo.index,
 			);
 		}
@@ -587,7 +588,7 @@ export class CollabSpacesRuntime
 	private getCellInfo(rowArg: number, colArg: number): ICellInfo {
 		const row = rowArg + 1;
 		const col = colArg + 1;
-		assert(row >= 0 && col >= 0, "arguments");
+		assert(row > 0 && col > 0, "arguments");
 		const cellValue = this.matrix.getCell(row, col);
 		if (cellValue === undefined) {
 			return { value: undefined, channel: undefined };
@@ -626,10 +627,9 @@ export class CollabSpacesRuntime
 		colId?: string;
 	}> {
 		const result = this.getCellInfo(row, col);
-		const { rowId = undefined, colId = undefined } =
-			result.channelId !== undefined ? this.parseChannelId(result.channelId) : {};
+		const info = result.channelId !== undefined ? this.parseChannelId(result.channelId) : {};
 		const channel = await result.channel;
-		return { channel, channelId: result.channelId, rowId, colId };
+		return { channel, channelId: result.channelId, ...info };
 	}
 
 	public async getReverseMapCellDebugInfo(
@@ -732,17 +732,17 @@ export class CollabSpacesRuntime
 		return { rowId, colId, iteration };
 	}
 
-	private mapChannelToCellCore(channelId: string) {
-		const { rowId, colId, iteration } = this.parseChannelId(channelId);
+	private getMatrixCellRowColUsingReverseMapping(rowId: string, colId: string) {
 		const row = this.reverseMap.getRowIndex(rowId);
 		const col = this.reverseMap.getColIndex(colId);
 
 		if (row === undefined) {
 			return undefined;
 		}
+
 		assert(
 			this.areEqualUuid(this.matrix.getCell(row, 0) as unknown as uuidType, rowId),
-			`channel's rowId mismatch ${rowId} ${this.matrix.getCell(row, 0)}`,
+			`channel's rowId mismatch ${row} ${rowId} ${this.matrix.getCell(row, 0)}`,
 		);
 
 		if (col === undefined) {
@@ -750,9 +750,47 @@ export class CollabSpacesRuntime
 		}
 		assert(
 			this.areEqualUuid(this.matrix.getCell(0, col) as unknown as uuidType, colId),
-			`channel's colId mismatch ${colId} ${this.matrix.getCell(0, col)}`,
+			`channel's colId mismatch ${col} ${colId} ${this.matrix.getCell(0, col)}`,
 		);
-		return { row, col, iteration };
+		return { row, col };
+	}
+
+	private getMatrixCellRowCol(rowId: string, colId: string) {
+		const rowCount = this.matrix.rowCount;
+		const colCount = this.matrix.colCount;
+
+		let row;
+		for (row = 1; row < rowCount; row++) {
+			if (this.areEqualUuid(this.matrix.getCell(row, 0) as unknown as uuidType, rowId)) {
+				break;
+			}
+		}
+		if (row === rowCount) {
+			return undefined;
+		}
+
+		let col;
+		for (col = 1; col < colCount; col++) {
+			if (this.areEqualUuid(this.matrix.getCell(0, col) as unknown as uuidType, colId)) {
+				break;
+			}
+		}
+		if (col === colCount) {
+			return undefined;
+		}
+
+		return { row, col };
+	}
+
+	private mapChannelToCellCore(channelId: string) {
+		const { rowId, colId, iteration } = this.parseChannelId(channelId);
+		if (this.useReverseMapping) {
+			const result = this.getMatrixCellRowColUsingReverseMapping(rowId, colId);
+			return { row: result?.row, col: result?.col, iteration };
+		} else {
+			const result = this.getMatrixCellRowCol(rowId, colId);
+			return { row: result?.row, col: result?.col, iteration };
+		}
 	}
 
 	private mapChannelToCell(channelId: string) {
@@ -1089,7 +1127,15 @@ export class CollabSpacesRuntime
 		// generate new ID for a columns
 		while (count > 0) {
 			count--;
-			this.matrix.setCell(0, col, this.uuid() as unknown as MatrixInternalType);
+			const uuidLocal = this.uuid();
+			this.matrix.setCell(0, col, uuidLocal as unknown as MatrixInternalType);
+			assert(
+				this.areEqualUuid(
+					this.matrix.getCell(0, col) as unknown as uuidType,
+					String(uuidLocal),
+				),
+				"uuid invalid",
+			);
 			col++;
 		}
 	}
