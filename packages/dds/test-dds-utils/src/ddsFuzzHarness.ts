@@ -327,6 +327,10 @@ export interface DDSFuzzSuiteOptions {
 		 * If the current number of clients has reached the maximum, this probability is ignored.
 		 */
 		clientAddProbability: number;
+		/**
+		 * The probability for an added client to also be stashable which simulates
+		 * getting the pending state, closing the container, and re-opening with the state.
+		 */
 		stashableClientProbability?: number;
 	};
 
@@ -542,7 +546,7 @@ export function mixinNewClient<
 	minimizationTransforms.push((op: TOperation | AddClient): void => {
 		if (op.type === "AddClient") {
 			const transform = op as unknown as AddClient;
-			transform.canBeStashed = false;
+			transform.canBeStashed = !transform.canBeStashed;
 		}
 	});
 
@@ -1035,19 +1039,27 @@ export function mixinStashedClient<
 			if (stashData === undefined) {
 				return state;
 			}
+
+			// shutdown the existing client
 			state.client.containerRuntime.flush();
 			state.client.containerRuntime.connected = false;
 			state.containerRuntimeFactory.removeContainerRuntime(state.client.containerRuntime);
+
+			// get the saved ops seen by the client, and its pending ops
 			const pendingMessages = state.client.containerRuntime.pendingMessages.splice(0);
 			const savedOps = stashData.savedOps.splice(0);
+
 			// ensure no ops are sent to, or produced by the old client
 			// this can help find bugs in the the harness
 			Object.freeze(stashData.savedOps);
 			Object.freeze(state.client.containerRuntime.pendingMessages);
 
+			// clear any unprocessed ops for this client
 			state.containerRuntimeFactory.clearOutstandingClientMessages(
 				state.client.containerRuntime.clientId,
 			);
+
+			// load a new client from the same state as the original client
 			const newClient = await loadClientFromSummaries(
 				state.containerRuntimeFactory,
 				stashData.summaries,
@@ -1056,6 +1068,7 @@ export function mixinStashedClient<
 				options,
 			);
 
+			// apply the saved and pending ops
 			for (const savedOp of savedOps) {
 				if (savedOp.clientId === newClient.dataStoreRuntime.clientId) {
 					await newClient.containerRuntime.applyStashedOp(savedOp.contents);
@@ -1071,8 +1084,11 @@ export function mixinStashedClient<
 					);
 				}
 			}
+			// issue a reconnect to rebase pending ops
 			newClient.containerRuntime.connected = false;
 			newClient.containerRuntime.connected = true;
+
+			// replace the old client with the new client
 			return {
 				...state,
 				client: newClient,
@@ -1110,13 +1126,14 @@ async function runInStateWithClient<TState extends DDSFuzzTestState<IChannelFact
 	client: TState["client"],
 	callback: (state: TState) => Promise<Result>,
 ): Promise<Result> {
-	// const oldClient = state.client;
+	const oldClient = state.client;
 	state.client = client;
 	try {
 		return await callback(state);
 	} finally {
 		// This code is explicitly trying to "update" to the old value. eslint-disable-next-line require-atomic-updates
-		// state.client = oldClient;
+		// eslint-disable-next-line require-atomic-updates
+		state.client = oldClient;
 	}
 }
 
