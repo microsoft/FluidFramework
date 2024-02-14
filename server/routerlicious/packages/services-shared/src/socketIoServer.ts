@@ -7,6 +7,10 @@ import { EventEmitter } from "events";
 import * as http from "http";
 import * as util from "util";
 import * as core from "@fluidframework/server-services-core";
+import {
+	getRedisClusterRetryStrategy,
+	getRedisClient,
+} from "@fluidframework/server-services-utils";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { clone } from "lodash";
 import * as Redis from "ioredis";
@@ -71,8 +75,8 @@ class SocketIoServer implements core.IWebSocketServer {
 
 	constructor(
 		private readonly io: Server,
-		private readonly pub: Redis.Redis,
-		private readonly sub: Redis.Redis,
+		private readonly pub: Redis.Redis | Redis.Cluster,
+		private readonly sub: Redis.Redis | Redis.Cluster,
 	) {
 		this.io.on("connection", (socket: Socket) => {
 			const webSocket = new SocketIoSocket(socket);
@@ -147,6 +151,7 @@ export function create(
 		enableReadyCheck: true,
 		maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
 		enableOfflineQueue: redisConfig.enableOfflineQueue,
+		retryStrategy: getRedisClusterRetryStrategy({ delayPerAttemptMs: 50, maxDelayMs: 2000 }),
 	};
 	if (redisConfig.enableAutoPipelining) {
 		/**
@@ -163,8 +168,17 @@ export function create(
 		};
 	}
 
-	const pub = new Redis.default(clone(options));
-	const sub = new Redis.default(clone(options));
+	const pub: Redis.default | Redis.Cluster = getRedisClient(
+		clone(options),
+		redisConfig.slotsRefreshTimeout,
+		redisConfig.enableClustering,
+	);
+
+	const sub: Redis.default | Redis.Cluster = getRedisClient(
+		clone(options),
+		redisConfig.slotsRefreshTimeout,
+		redisConfig.enableClustering,
+	);
 
 	pub.on("error", (err) => {
 		winston.error("Error with Redis pub connection: ", err);

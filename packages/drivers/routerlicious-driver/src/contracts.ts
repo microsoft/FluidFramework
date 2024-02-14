@@ -16,6 +16,7 @@ export interface IWholeFlatSnapshotTreeEntryTree {
 	type: "tree";
 	// Indicates that this tree entry is unreferenced. If this is not present, the tree entry is considered referenced.
 	unreferenced?: true;
+	groupId?: string;
 }
 
 export interface IWholeFlatSnapshotTreeEntryBlob {

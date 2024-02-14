@@ -164,6 +164,7 @@ declare function get_current_ClassDeclaration_DocumentStorageServiceProxy():
 declare function use_old_ClassDeclaration_DocumentStorageServiceProxy(
     use: TypeOnly<old.DocumentStorageServiceProxy>): void;
 use_old_ClassDeclaration_DocumentStorageServiceProxy(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_DocumentStorageServiceProxy());
 
 /*
@@ -477,6 +478,7 @@ declare function get_current_ClassDeclaration_PrefetchDocumentStorageService():
 declare function use_old_ClassDeclaration_PrefetchDocumentStorageService(
     use: TypeOnly<old.PrefetchDocumentStorageService>): void;
 use_old_ClassDeclaration_PrefetchDocumentStorageService(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_PrefetchDocumentStorageService());
 
 /*
