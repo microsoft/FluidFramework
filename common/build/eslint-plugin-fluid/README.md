@@ -1,4 +1,4 @@
-# eslint-plugin-fluid
+# @fluid-internal/eslint-plugin-fluid
 
 This package contains custom ESLint rules specific for Fluid Framework. It is consumed by the `@fluidframework/eslint-config-fluid` package as a custom plugin (check `minimal.js`'s `plugins` array).
 
@@ -8,7 +8,7 @@ See [ESLint: Name a Plugin](https://eslint.org/docs/latest/extend/plugins) for m
 
 ## Background
 
-The `eslint-plugin-fluid` is directly consumed by the `@fluidframework/eslint-config-fluid` package. Although, it is a best practice to avoid multiple packages which serve similar purpose, this decision was inevitably induced by the `ESLint`'s requirements which enforce:
+The `@fluid-internal/eslint-plugin-fluid` is directly consumed by the `@fluidframework/eslint-config-fluid` package. Although, it is a best practice to avoid multiple packages which serve similar purpose, this decision was inevitably induced by the `ESLint`'s requirements which enforce:
 
 -   Each plugin to be an npm module with a name in the format of `eslint-plugin-foo` or `@scope/eslint-plugin-foo`.
 
@@ -25,4 +25,4 @@ Currently there are two custom rules within the package:
 
 To begin enforcing a new custom rule, make sure to include it in the `rules` field of the appropriate config module (`minimal.js`, `recommended.js`, or `strict.js`).
 
-Since `eslint-plugin-fluid` is a dependency of `@fluidframework/eslint-config-fluid` package, any package using `@fluidframework/eslint-config-fluid` as its `devDependencies` will be able to apply the custom rules.
+Since `@fluid-internal/eslint-plugin-fluid` is a dependency of `@fluidframework/eslint-config-fluid` package, any package using `@fluidframework/eslint-config-fluid` as its `devDependencies` will be able to apply the custom rules.
