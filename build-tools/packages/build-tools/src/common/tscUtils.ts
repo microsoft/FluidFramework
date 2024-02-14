@@ -183,6 +183,9 @@ function createTscUtil(tsLib: typeof ts) {
 		parseCommandLine: (command: string) => {
 			// TODO: parse the command line for real, split space for now.
 			const args = command.split(" ");
+			if (command.includes("&&")) {
+				console.warn("Warning: '&&' is not supported in tsc command.");
+			}
 
 			const parsedCommand = tsLib.parseCommandLine(args.slice(1));
 			if (parsedCommand.errors.length) {
