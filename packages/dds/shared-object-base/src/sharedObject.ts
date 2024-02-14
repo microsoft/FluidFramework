@@ -232,6 +232,8 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 */
 	public async load(services: IChannelServices): Promise<void> {
 		this.services = services;
+		// set this before load so that isAttached is true
+		// for attached runtimes when load core is running
 		this._isBoundToContext = true;
 		await this.loadCore(services.objectStorage);
 		this.attachDeltaHandler();
@@ -265,6 +267,8 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).connect}
 	 */
 	public connect(services: IChannelServices) {
+		// handle the case where load is called
+		// before connect; loading detached data stores
 		if (this.services === undefined) {
 			this.services = services;
 			this.attachDeltaHandler();
