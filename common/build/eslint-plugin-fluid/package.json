@@ -20,7 +20,7 @@
 		"format": "npm run prettier:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
-		"test": "mocha test"
+		"test": "mocha src/test"
 	},
 	"dependencies": {
 		"@microsoft/tsdoc": "^0.14.2",
