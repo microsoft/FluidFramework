@@ -22,39 +22,39 @@ steps:
 - template: download-api-extractor-artifact.yml
   parameters:
     pipelineName: Build - common-definitions
-    branchName: 'refs/heads/main'
+    branchName: ${{ variables['Build.SourceBranch'] }}
 - template: download-api-extractor-artifact.yml
   parameters:
     pipelineName: Build - common-utils
-    branchName: 'refs/heads/main'
+    branchName: ${{ variables['Build.SourceBranch'] }}
 - template: download-api-extractor-artifact.yml
   parameters:
     pipelineName: Build - container-definitions
-    branchName: 'refs/heads/main'
+    branchName: ${{ variables['Build.SourceBranch'] }}
 - template: download-api-extractor-artifact.yml
   parameters:
     pipelineName: Build - core-interfaces
-    branchName: 'refs/heads/main'
+    branchName: ${{ variables['Build.SourceBranch'] }}
 - template: download-api-extractor-artifact.yml
   parameters:
     pipelineName: Build - driver-definitions
-    branchName: 'refs/heads/main'
+    branchName: ${{ variables['Build.SourceBranch'] }}
 - template: download-api-extractor-artifact.yml
   parameters:
     pipelineName: Build - protocol-definitions
-    branchName: 'refs/heads/main'
+    branchName: ${{ variables['Build.SourceBranch'] }}
 - template: download-api-extractor-artifact.yml
   parameters:
     pipelineName: Build - azure
-    branchName: 'refs/heads/main'
+    branchName: ${{ variables['Build.SourceBranch'] }}
 - template: download-api-extractor-artifact.yml
   parameters:
     pipelineName: Build - client packages
-    branchName: 'refs/heads/main'
+    branchName: ${{ variables['Build.SourceBranch'] }}
 - template: download-api-extractor-artifact.yml
   parameters:
     pipelineName: server-routerlicious
-    branchName: 'refs/heads/main'
+    branchName: ${{ variables['Build.SourceBranch'] }}
 
 # Copy and merge the api-extractor outputs to a central location
 - task: CopyFiles@2
