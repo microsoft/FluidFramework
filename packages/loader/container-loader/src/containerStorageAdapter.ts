@@ -118,10 +118,6 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 		return undefined;
 	}
 
-	public get repositoryUrl(): string {
-		return this._storageService.repositoryUrl;
-	}
-
 	public async getSnapshotTree(
 		version?: IVersion,
 		scenarioName?: string,
@@ -201,10 +197,6 @@ class BlobOnlyStorage implements IDocumentStorageService {
 	}
 
 	public get policies(): IDocumentStorageServicePolicies | undefined {
-		return this.notCalled();
-	}
-
-	public get repositoryUrl(): string {
 		return this.notCalled();
 	}
 
