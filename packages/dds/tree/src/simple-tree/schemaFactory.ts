@@ -218,7 +218,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 		TImplicitlyConstructable
 	> {
 		const identifier = this.scoped(name);
-		class NodeSchema implements TreeNode, WithType<`${TScope}.${Name}`> {
+		class schema implements TreeNode, WithType<`${TScope}.${Name}`> {
 			public static readonly identifier = identifier;
 			public static readonly kind = kind;
 			public static readonly info = t;
@@ -248,8 +248,8 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 			}
 		}
 		// Class objects are functions (callable), so we need a strong way to distinguish between `schema` and `() => schema` when used as a `LazyItem`.
-		markEager(NodeSchema);
-		return NodeSchema;
+		markEager(schema);
+		return schema;
 	}
 
 	/**
@@ -266,22 +266,23 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 			public constructor(input: InsertableObjectFromSchemaRecord<T>) {
 				super(input);
 
-				// Differentiate between when this class is being constructor vs. a subclass
-				// of this class is being constructed:
+				// Differentiate between the following cases:
 				//
-				// Case 1: Direct construction (POJO)
+				// Case 1: Direct construction (POJO compatible)
 				//
 				//     const Foo = _.object("Foo", {bar: _.number});
+				//
 				//     assert.deepEqual(new Foo({ bar: 42 }), { bar: 42 },
 				//		   "Prototype chain equivalent to POJO.");
 				//
 				// Case 2: Subclass construction (Domain Object)
 				//
 				// 	   class Foo extends _.object("Foo", {bar: _.number}) {}
+				//
 				// 	   assert.notDeepEqual(new Foo({ bar: 42 }), { bar: 42 },
 				// 	       "Subclass prototype chain differs from POJO.");
 				//
-				// In Case 1 (POJO), the prototype chain should be equivalent to '{}' (proxyTarget = undefined)
+				// In Case 1 (POJO), the prototype chain match '{}' (proxyTarget = undefined)
 				// In Case 2 (Domain Object), the prototype chain include the user's subclass (proxyTarget = this)
 				const customizable = this.constructor !== schema;
 				const proxyTarget = customizable ? this : undefined;
