@@ -6,10 +6,8 @@
 /* eslint-disable no-bitwise */
 import { assert } from "@fluidframework/core-utils";
 import { v4 } from "uuid";
-import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { SessionId, StableId, type IIdCompressorCore, type IIdCompressor } from "./types";
+import { SessionId, StableId } from "./types";
 import { LocalCompressedId, NumericUuid } from "./identifiers";
-import { createIdCompressor, type IdCompressor } from "./idCompressor";
 
 const hexadecimalCharCodes = Array.from("09afAF").map((c) => c.charCodeAt(0)) as [
 	zero: number,
@@ -190,36 +188,4 @@ export function subtractNumericUuids(a: NumericUuid, b: NumericUuid): NumericUui
 export function addNumericUuids(a: NumericUuid, b: NumericUuid): NumericUuid {
 	// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
 	return (a + b) as NumericUuid;
-}
-
-/**
- * Creates a compressor that only produces final IDs.
- * It should only be used for testing purposes.
- * @alpha
- */
-export function createAlwaysFinalizedIdCompressor(
-	logger?: ITelemetryBaseLogger,
-): IIdCompressor & IIdCompressorCore;
-/**
- * Creates a compressor that only produces final IDs.
- * It should only be used for testing purposes.
- * @alpha
- */
-export function createAlwaysFinalizedIdCompressor(
-	sessionId: SessionId,
-	logger?: ITelemetryBaseLogger,
-): IIdCompressor & IIdCompressorCore;
-export function createAlwaysFinalizedIdCompressor(
-	sessionIdOrLogger?: SessionId | ITelemetryBaseLogger,
-	loggerOrUndefined?: ITelemetryBaseLogger,
-): IIdCompressor & IIdCompressorCore {
-	const compressor =
-		sessionIdOrLogger === undefined
-			? createIdCompressor()
-			: typeof sessionIdOrLogger === "string"
-			? createIdCompressor(sessionIdOrLogger, loggerOrUndefined)
-			: createIdCompressor(sessionIdOrLogger);
-	// Permanently put the compressor in a ghost session
-	(compressor as IdCompressor).startGhostSession(createSessionId());
-	return compressor;
 }
