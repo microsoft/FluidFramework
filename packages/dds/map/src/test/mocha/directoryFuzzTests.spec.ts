@@ -396,7 +396,6 @@ describe("SharedDirectory fuzz", () => {
 			clientAddProbability: 0.08,
 		},
 		defaultTestCount: 25,
-		stashableClientProbability: 0.2,
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
 		saveFailures: { directory: dirPath.join(__dirname, "../../../src/test/mocha/results/2") },

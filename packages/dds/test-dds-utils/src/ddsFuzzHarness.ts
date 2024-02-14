@@ -327,6 +327,7 @@ export interface DDSFuzzSuiteOptions {
 		 * If the current number of clients has reached the maximum, this probability is ignored.
 		 */
 		clientAddProbability: number;
+		stashableClientProbability?: number;
 	};
 
 	/**
@@ -474,8 +475,6 @@ export interface DDSFuzzSuiteOptions {
 	idCompressorFactory?: (
 		summary?: SerializedIdCompressorWithNoSession,
 	) => IIdCompressor & IIdCompressorCore;
-
-	stashableClientProbability?: number;
 }
 
 /**
@@ -526,8 +525,8 @@ export function mixinNewClient<
 				return {
 					type: "addClient",
 					addedClientId: makeFriendlyClientId(random, clients.length),
-					canBeStashed: options.stashableClientProbability
-						? random.bool(options.stashableClientProbability)
+					canBeStashed: options.clientJoinOptions?.stashableClientProbability
+						? random.bool(options.clientJoinOptions.stashableClientProbability)
 						: false,
 				};
 			}
@@ -706,8 +705,10 @@ export function mixinAttach<
 						model.factory,
 						index === 0 ? "summarizer" : makeFriendlyClientId(state.random, index),
 						options,
-						options.stashableClientProbability
-							? state.random.bool(options.stashableClientProbability)
+						options.clientJoinOptions?.stashableClientProbability
+							? state.random.bool(
+									options.clientJoinOptions.stashableClientProbability,
+							  )
 							: false,
 					),
 				),
@@ -1004,7 +1005,7 @@ export function mixinStashedClient<
 	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
 	options: DDSFuzzSuiteOptions,
 ): DDSFuzzModel<TChannelFactory, TOperation | StashClient, TState> {
-	if (options.stashableClientProbability === undefined) {
+	if (options.clientJoinOptions?.stashableClientProbability === undefined) {
 		return model as DDSFuzzModel<TChannelFactory, TOperation | StashClient, TState>;
 	}
 
@@ -1029,8 +1030,11 @@ export function mixinStashedClient<
 
 	const reducer: AsyncReducer<TOperation | StashClient, TState> = async (state, operation) => {
 		if (operation.type === "stashClient") {
-			assert("stashData" in state.client);
-			const stashData = state.client.stashData as StashData;
+			const stashData =
+				"stashData" in state.client ? (state.client.stashData as StashData) : undefined;
+			if (stashData === undefined) {
+				return state;
+			}
 			state.client.containerRuntime.flush();
 			state.client.containerRuntime.connected = false;
 			state.containerRuntimeFactory.removeContainerRuntime(state.client.containerRuntime);
@@ -1339,8 +1343,8 @@ export async function runTestForSeed<
 						model.factory,
 						makeFriendlyClientId(random, i),
 						options,
-						options.stashableClientProbability
-							? random.bool(options.stashableClientProbability)
+						options.clientJoinOptions?.stashableClientProbability
+							? random.bool(options.clientJoinOptions.stashableClientProbability)
 							: false,
 					),
 				),

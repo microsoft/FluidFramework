@@ -90,6 +90,7 @@ export interface DDSFuzzSuiteOptions {
     clientJoinOptions?: {
         maxNumberOfClients: number;
         clientAddProbability: number;
+        stashableClientProbability?: number;
     };
     containerRuntimeOptions?: IMockContainerRuntimeOptions;
     defaultTestCount: number;
@@ -111,8 +112,6 @@ export interface DDSFuzzSuiteOptions {
     };
     skip: Iterable<number>;
     skipMinimization?: boolean;
-    // (undocumented)
-    stashableClientProbability?: number;
     validationStrategy: {
         type: "random";
         probability: number;
