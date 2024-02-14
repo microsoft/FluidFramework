@@ -48,7 +48,9 @@ if (typeRollupPaths) {
 	typeDefinitionFilePath = getTypeDefinitionFilePath(previousBasePath);
 }
 
-// Check if typeDefinitionFilePath undefined??
+if(typeDefinitionFilePath === undefined){
+	throw Error("Could not determine the type definition file path from API Extractor config or package.json")
+}
 
 const { currentFile, previousFile } = initializeProjectsAndLoadFiles(
 	typeDefinitionFilePath,
