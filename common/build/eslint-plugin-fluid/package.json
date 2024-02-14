@@ -7,13 +7,13 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "common/build/eslint-config-fluid/src/fluid-internal"
+		"directory": "common/build/eslint-pluig-fluid/"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"main": "index.js",
 	"scripts": {
-		"build": "npm run build:readme && npm run prettier",
+		"build": "npm run build:readme",
 		"build:readme": "markdown-magic --files \"**/*.md\"",
 		"clean": "rimraf --glob nyc",
 		"cleanup-printed-configs": "node ./scripts/cleanup-printed-configs.js ./printed-configs",
@@ -54,5 +54,6 @@
 		"rimraf": "^4.4.0",
 		"sort-json": "^2.0.1",
 		"typescript": "~5.1.6"
-	}
+	},
+	"packageManager": "pnpm@7.33.6+sha512.90e27fd38047f18583f3342f784cc3f187f4d4caac89ebc1fffae18dcd7b2dde7678a0bf237481bcb8f7e8e66135fa34803856e4eb2c442ce082ffab5d9d241f"
 }
