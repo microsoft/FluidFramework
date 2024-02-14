@@ -110,7 +110,7 @@ export interface IFluidDataStoreContextProps {
 	readonly scope: FluidObject;
 	readonly createSummarizerNodeFn: CreateChildSummarizerNodeFn;
 	readonly pkg?: Readonly<string[]>;
-	readonly groupId?: string;
+	readonly loadingGroupId?: string;
 }
 
 /** Properties necessary for creating a local FluidDataStoreContext */
@@ -274,7 +274,7 @@ export abstract class FluidDataStoreContext
 	public readonly storage: IDocumentStorageService;
 	public readonly scope: FluidObject;
 	// Represents the group to which the data store belongs too.
-	public readonly groupId: string | undefined;
+	public readonly loadingGroupId: string | undefined;
 	protected pkg?: readonly string[];
 
 	constructor(
@@ -290,7 +290,7 @@ export abstract class FluidDataStoreContext
 		this.storage = props.storage;
 		this.scope = props.scope;
 		this.pkg = props.pkg;
-		this.groupId = props.groupId;
+		this.loadingGroupId = props.loadingGroupId;
 
 		// URIs use slashes as delimiters. Handles use URIs.
 		// Thus having slashes in types almost guarantees trouble down the road!
@@ -585,9 +585,9 @@ export abstract class FluidDataStoreContext
 			summarizeResult.stats.unreferencedBlobSize = summarizeResult.stats.totalBlobSize;
 		}
 
-		// Add groupId to the summary
-		if (this.groupId !== undefined) {
-			summarizeResult.summary.groupId = this.groupId;
+		// Add loadingGroupId to the summary
+		if (this.loadingGroupId !== undefined) {
+			summarizeResult.summary.groupId = this.loadingGroupId;
 		}
 
 		return {
@@ -1156,9 +1156,9 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		const attributes = createAttributes(this.pkg, this.isInMemoryRoot());
 		addBlobToSummary(attachSummary, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
-		// Add groupId to the summary
-		if (this.groupId !== undefined) {
-			attachSummary.summary.groupId = this.groupId;
+		// Add loadingGroupId to the summary
+		if (this.loadingGroupId !== undefined) {
+			attachSummary.summary.groupId = this.loadingGroupId;
 		}
 
 		return {

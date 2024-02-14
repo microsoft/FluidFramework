@@ -28,8 +28,8 @@ class TestDataObject extends DataObject {
 		return this.context.containerRuntime;
 	}
 
-	public get groupId() {
-		return this.context.groupId;
+	public get loadingGroupId() {
+		return this.context.loadingGroupId;
 	}
 }
 
@@ -59,14 +59,20 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 		provider = getTestObjectProvider();
 	});
 
-	const groupId = "groupId";
-	it("Can create groupId", async () => {
+	const loadingGroupId = "loadingGroupId";
+	it("Can create loadingGroupId", async () => {
 		const container = await provider.createContainer(runtimeFactory);
 		const mainObject = (await container.getEntryPoint()) as TestDataObject;
 		const containerRuntime = mainObject.containerRuntime;
 
-		const dataStore = await containerRuntime.createDataStore(testDataObjectType, groupId);
-		const dataStore2 = await containerRuntime.createDataStore(testDataObjectType, groupId);
+		const dataStore = await containerRuntime.createDataStore(
+			testDataObjectType,
+			loadingGroupId,
+		);
+		const dataStore2 = await containerRuntime.createDataStore(
+			testDataObjectType,
+			loadingGroupId,
+		);
 		const dataObject = (await dataStore.entryPoint.get()) as TestDataObject;
 		const dataObject2 = (await dataStore2.entryPoint.get()) as TestDataObject;
 		mainObject._root.set("dataObject", dataObject.handle);
@@ -86,7 +92,7 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 		const dataObjectTree = channelsTree.tree[dataObject.id];
 		assert(dataObjectTree !== undefined, "dataObjectTree should exist");
 		assert(dataObjectTree.type === SummaryType.Tree, "dataObjectTree should be a tree");
-		assert(dataObjectTree.groupId === groupId, "GroupId should be on the summary tree");
+		assert(dataObjectTree.groupId === loadingGroupId, "GroupId should be on the summary tree");
 
 		// TODO: Enable this portion of the test once we have the ability to load the summary with the group id
 		// Likely requires local server to support summary trees.
