@@ -1,0 +1,58 @@
+{
+	"name": "eslint-plugin-fluid-internal",
+	"version": "0.1.0",
+	"private": true,
+	"description": "Custom ESLint rules for the Fluid Framework",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "common/build/eslint-config-fluid/src/fluid-internal"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"main": "index.js",
+	"scripts": {
+		"build": "npm run build:readme && npm run prettier",
+		"build:readme": "markdown-magic --files \"**/*.md\"",
+		"clean": "rimraf --glob nyc",
+		"cleanup-printed-configs": "node ./scripts/cleanup-printed-configs.js ./printed-configs",
+		"format": "npm run prettier:fix",
+		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
+		"test": "mocha test"
+	},
+	"dependencies": {
+		"@microsoft/tsdoc": "^0.14.2",
+		"@rushstack/eslint-patch": "~1.4.0",
+		"@rushstack/eslint-plugin": "~0.13.0",
+		"@rushstack/eslint-plugin-security": "~0.7.0",
+		"@typescript-eslint/eslint-plugin": "~6.7.2",
+		"@typescript-eslint/parser": "~6.7.2",
+		"eslint-config-prettier": "~9.0.0",
+		"eslint-import-resolver-typescript": "~3.6.1",
+		"eslint-plugin-eslint-comments": "~3.2.0",
+		"eslint-plugin-import": "npm:eslint-plugin-i@~2.29.0",
+		"eslint-plugin-jsdoc": "~46.8.1",
+		"eslint-plugin-promise": "~6.1.1",
+		"eslint-plugin-react": "~7.33.2",
+		"eslint-plugin-react-hooks": "~4.6.0",
+		"eslint-plugin-tsdoc": "~0.2.17",
+		"eslint-plugin-unicorn": "~48.0.1",
+		"eslint-plugin-unused-imports": "~3.0.0",
+		"ts-morph": "^20.0.0"
+	},
+	"devDependencies": {
+		"@fluid-tools/markdown-magic": "file:../../../tools/markdown-magic",
+		"@fluidframework/build-common": "^2.0.3",
+		"concurrently": "^8.2.1",
+		"eslint": "~8.50.0",
+		"mocha": "^10.2.0",
+		"mocha-json-output-reporter": "^2.1.0",
+		"mocha-multi-reporters": "^1.5.1",
+		"prettier": "~3.0.3",
+		"rimraf": "^4.4.0",
+		"sort-json": "^2.0.1",
+		"typescript": "~5.1.6"
+	}
+}

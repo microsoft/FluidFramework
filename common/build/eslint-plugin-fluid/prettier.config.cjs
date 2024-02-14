@@ -3,4 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// This file is used only to run `eslint --print-config`. See the README for this project for more information.
+module.exports = {
+	...require("@fluidframework/build-common/prettier.config.cjs"),
+};

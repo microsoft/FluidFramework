@@ -11,7 +11,7 @@ describe("ESLint Rule Tests", function () {
 		return new ESLint({
 			useEslintrc: false,
 			overrideConfig: config,
-			rulePaths: [path.join(__dirname, "../../fluid-internal/rules")],
+			rulePaths: [path.join(__dirname, "../../rules")],
 		});
 	}
 
@@ -74,6 +74,7 @@ describe("ESLint Rule Tests", function () {
 
 		assert.strictEqual(result.errorCount, 0, "Should have no errors");
 	});
+
 	it("Should report an error for tsconfig provided config", async function () {
 		const eslint = createESLintInstance({
 			rules: {
