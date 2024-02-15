@@ -40,7 +40,7 @@ import {
 import { IChannelFactory, IChannelServices } from "@fluidframework/datastore-definitions";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { unreachableCase } from "@fluidframework/core-utils";
-import { ISummaryTree, type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { FuzzTestMinimizer, MinimizationTransform } from "./minification";
 
 /**
@@ -1024,7 +1024,7 @@ export function mixinStashedClient<
 		const baseGenerator = model.generatorFactory();
 		return async (state): Promise<TOperation | StashClient | typeof done> => {
 			const stashable = state.clients.filter(
-				(c) => hasStashData(c) && c.containerRuntime.pendingMessages.length > 0,
+				(c) => hasStashData(c) && c.containerRuntime.isDirty,
 			);
 
 			if (!state.isDetached && stashable.length > 0 && state.random.bool(0.5)) {
@@ -1046,25 +1046,6 @@ export function mixinStashedClient<
 			}
 			const stashData = client.stashData;
 
-			// shutdown the existing client
-			client.containerRuntime.flush();
-			client.containerRuntime.connected = false;
-			containerRuntimeFactory.removeContainerRuntime(client.containerRuntime);
-
-			// get the saved ops seen by the client, and its pending ops
-			const pendingMessages = client.containerRuntime.pendingMessages.splice(0);
-			const savedOps = stashData.savedOps.splice(0);
-
-			// ensure no ops are sent to, or produced by the old client
-			// this can help find bugs in the the harness
-			Object.freeze(stashData.savedOps);
-			Object.freeze(client.containerRuntime.pendingMessages);
-
-			// clear any unprocessed ops for this client
-			containerRuntimeFactory.clearOutstandingClientMessages(
-				client.containerRuntime.clientId,
-			);
-
 			// load a new client from the same state as the original client
 			const newClient = await loadClientFromSummaries(
 				containerRuntimeFactory,
@@ -1074,7 +1055,7 @@ export function mixinStashedClient<
 				options,
 			);
 
-			await newClient.containerRuntime.initializeWithStashedOps(pendingMessages, savedOps);
+			await newClient.containerRuntime.initializeWithStashedOps(client.containerRuntime);
 
 			// replace the old client with the new client
 			return {
@@ -1169,7 +1150,6 @@ interface StashData {
 		summary: ISummaryTree;
 		idCompressorSummary: SerializedIdCompressorWithNoSession | undefined;
 	};
-	savedOps: ISequencedDocumentMessage[];
 }
 
 async function loadClient<TChannelFactory extends IChannelFactory>(
@@ -1219,6 +1199,7 @@ async function loadClientFromSummaries<TChannelFactory extends IChannelFactory>(
 	});
 	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime, {
 		minimumSequenceNumber: containerRuntimeFactory.sequenceNumber,
+		trackRemoteOps: supportStashing,
 	});
 	const services: IChannelServices = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
@@ -1241,16 +1222,8 @@ async function loadClientFromSummaries<TChannelFactory extends IChannelFactory>(
 		dataStoreRuntime,
 	};
 	if (supportStashing) {
-		const savedOps: ISequencedDocumentMessage[] = [];
-		dataStoreRuntime.createDeltaConnection().attach({
-			applyStashedOp: () => {},
-			process: (msg) => savedOps.push(msg),
-			reSubmit: () => {},
-			setConnectionState: () => {},
-		});
 		newClient.stashData = {
 			summaries,
-			savedOps,
 		};
 	}
 	options.emitter.emit("clientCreate", newClient);

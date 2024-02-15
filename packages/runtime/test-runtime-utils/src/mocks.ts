@@ -167,7 +167,7 @@ export class MockContainerRuntime {
 	 * @deprecated use the associated datastore to create the delta connection
 	 */
 	protected readonly deltaConnections: MockDeltaConnection[] = [];
-	public readonly pendingMessages: IMockContainerRuntimePendingMessage[] = [];
+	protected readonly pendingMessages: IMockContainerRuntimePendingMessage[] = [];
 	private readonly outbox: IInternalMockRuntimeMessage[] = [];
 	private readonly idAllocationOutbox: IInternalMockRuntimeMessage[] = [];
 	/**
@@ -264,6 +264,9 @@ export class MockContainerRuntime {
 	}
 
 	public dirty(): void {}
+	public get isDirty() {
+		return this.pendingMessages.length > 0;
+	}
 
 	/**
 	 * If flush mode is set to FlushMode.TurnBased, it will send all messages queued since the last time

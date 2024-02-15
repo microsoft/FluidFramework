@@ -119,11 +119,13 @@ export class MockContainerRuntime {
     finalizeIdRange(range: IdCreationRange): void;
     flush(): void;
     // (undocumented)
+    get isDirty(): boolean;
+    // (undocumented)
     protected readonly overrides?: {
         minimumSequenceNumber?: number | undefined;
     } | undefined;
     // (undocumented)
-    readonly pendingMessages: IMockContainerRuntimePendingMessage[];
+    protected readonly pendingMessages: IMockContainerRuntimePendingMessage[];
     // (undocumented)
     process(message: ISequencedDocumentMessage): void;
     rebase(): void;
@@ -172,6 +174,7 @@ export class MockContainerRuntimeFactoryForReconnection extends MockContainerRun
     // (undocumented)
     createContainerRuntime(dataStoreRuntime: MockFluidDataStoreRuntime, overrides?: {
         minimumSequenceNumber?: number;
+        trackRemoteOps?: boolean;
     }): MockContainerRuntimeForReconnection;
 }
 
@@ -179,12 +182,15 @@ export class MockContainerRuntimeFactoryForReconnection extends MockContainerRun
 export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
     constructor(dataStoreRuntime: MockFluidDataStoreRuntime, factory: MockContainerRuntimeFactoryForReconnection, runtimeOptions?: IMockContainerRuntimeOptions, overrides?: {
         minimumSequenceNumber?: number;
+        trackRemoteOps?: boolean;
     });
     // (undocumented)
     get connected(): boolean;
     set connected(connected: boolean);
     // (undocumented)
-    initializeWithStashedOps(pendingMessages: IMockContainerRuntimePendingMessage[], savedOps: ISequencedDocumentMessage[]): Promise<void>;
+    protected readonly factory: MockContainerRuntimeFactoryForReconnection;
+    // (undocumented)
+    initializeWithStashedOps(containerRuntime: MockContainerRuntimeForReconnection): Promise<void>;
     // (undocumented)
     process(message: ISequencedDocumentMessage): void;
     // (undocumented)
