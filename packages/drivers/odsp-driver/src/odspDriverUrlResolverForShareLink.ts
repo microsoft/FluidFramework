@@ -214,13 +214,13 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 
 		const shareLink = await this.getShareLinkPromise(odspResolvedUrl);
 
-		return this.appendLocatorParams(shareLink, resolvedUrl, dataStorePath, packageInfoSource)
+		return this.appendLocatorParams(shareLink, resolvedUrl, dataStorePath, packageInfoSource);
 	}
 
 	/**
-	 * Appends the store locator properties to the provided base URL. This function is useful for scenarios where an application 
+	 * Appends the store locator properties to the provided base URL. This function is useful for scenarios where an application
 	 * has a base URL (for example a sharing link) of the Fluid file, but does not have the locator information that would be used by Fluid
-	 * to load the file later. 
+	 * to load the file later.
 	 * @param baseUrl - The input URL on which the locator params will be appended.
 	 * @param resolvedUrl - odsp-driver's resolvedURL object.
 	 * @param dataStorePath - The relative data store path URL.
@@ -228,12 +228,17 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 	 * will be extracted from the resolved url if present.
 	 * @returns The provided base URL appended with odsp-specific locator information
 	 */
-	public async appendLocatorParams(baseUrl: string, resolvedUrl: IResolvedUrl, dataStorePath: string, packageInfoSource?: IContainerPackageInfo) {
+	public async appendLocatorParams(
+		baseUrl: string,
+		resolvedUrl: IResolvedUrl,
+		dataStorePath: string,
+		packageInfoSource?: IContainerPackageInfo,
+	) {
 		const url = new URL(baseUrl);
 		const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
 
 		// If the user has passed an empty dataStorePath, then extract it from the resolved url.
-		const actualDataStorePath = dataStorePath || odspResolvedUrl.dataStorePath || '';
+		const actualDataStorePath = dataStorePath || odspResolvedUrl.dataStorePath || "";
 
 		// back-compat: GitHub #9653
 		const isFluidPackage = (pkg: any) =>
