@@ -73,27 +73,14 @@ use_old_InterfaceDeclaration_IFileSnapshot(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_OpStorage": {"forwardCompat": false}
+* "RemovedClassDeclaration_OpStorage": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_OpStorage():
-    TypeOnly<old.OpStorage>;
-declare function use_current_ClassDeclaration_OpStorage(
-    use: TypeOnly<current.OpStorage>): void;
-use_current_ClassDeclaration_OpStorage(
-    get_old_ClassDeclaration_OpStorage());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_OpStorage": {"backCompat": false}
+* "RemovedClassDeclaration_OpStorage": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_OpStorage():
-    TypeOnly<current.OpStorage>;
-declare function use_old_ClassDeclaration_OpStorage(
-    use: TypeOnly<old.OpStorage>): void;
-use_old_ClassDeclaration_OpStorage(
-    // @ts-expect-error compatibility expected to be broken
-    get_current_ClassDeclaration_OpStorage());
 
 /*
 * Validate forward compat by using old type in place of current type

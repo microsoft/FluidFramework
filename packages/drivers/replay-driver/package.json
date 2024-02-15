@@ -151,6 +151,10 @@
 			},
 			"ClassDeclaration_SnapshotStorage": {
 				"backCompat": false
+			},
+			"RemovedClassDeclaration_OpStorage": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}
