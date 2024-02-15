@@ -202,6 +202,8 @@ module.exports = {
 			"no-js-file-extensions": [
 				// PropertyDDS uses .js files which should be renamed eventually.
 				".*/PropertyDDS/.*",
+				// eslint-plugin-fluid uses .js files for custome ESLinter rules.
+				".*/eslint-plugin-fluid/.*",
 			],
 			"npm-package-json-scripts-args": [
 				// server/routerlicious and server/routerlicious/packages/routerlicious use
