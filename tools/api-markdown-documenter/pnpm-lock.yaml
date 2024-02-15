@@ -8,7 +8,7 @@ importers:
   .:
     specifiers:
       '@fluid-tools/markdown-magic': file:../markdown-magic
-      '@fluidframework/build-common': ^2.0.3
+      '@fluidframework/build-common': file:../../common/build/build-common
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/eslint-config-fluid': file:../../common/build/eslint-config-fluid
       '@fluidframework/mocha-test-setup': ~2.0.0-internal.6.2.0
@@ -47,7 +47,7 @@ importers:
       chalk: 4.1.2
     devDependencies:
       '@fluid-tools/markdown-magic': file:../markdown-magic_@types+node@18.15.11
-      '@fluidframework/build-common': 2.0.3
+      '@fluidframework/build-common': file:../../common/build/build-common
       '@fluidframework/build-tools': 0.26.1_@types+node@18.15.11
       '@fluidframework/eslint-config-fluid': file:../../common/build/eslint-config-fluid_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/mocha-test-setup': 2.0.0-internal.6.2.0
@@ -194,11 +194,6 @@ packages:
       - '@types/node'
       - supports-color
       - typescript
-    dev: true
-
-  /@fluidframework/build-common/2.0.3:
-    resolution: {integrity: sha512-1LU/2uyCeMxf63z5rhFOFEBvFyBogZ7ZXwzXLxyBhSgq/fGiq8PLjBW7uX++r0LcVCdaWyopf7w060eJpANYdg==}
-    hasBin: true
     dev: true
 
   /@fluidframework/build-tools/0.26.1_@types+node@18.15.11:
@@ -6535,11 +6530,18 @@ packages:
     resolution: {integrity: sha512-V50KMwwzqJV0NpZIZFwfOD5/lyny3WlSzRiXgA0G7VUnRlqttta1L6UQIHzd6EuBY/cHGfwTIck7w1yH6Q5zUw==}
     dev: true
 
+  file:../../common/build/build-common:
+    resolution: {directory: ../../common/build/build-common, type: directory}
+    name: '@fluidframework/build-common'
+    version: 3.0.0
+    hasBin: true
+    dev: true
+
   file:../../common/build/eslint-config-fluid_bpztyfltmpuv6lhsgzfwtmxhte:
     resolution: {directory: ../../common/build/eslint-config-fluid, type: directory}
     id: file:../../common/build/eslint-config-fluid
     name: '@fluidframework/eslint-config-fluid'
-    version: 3.3.0
+    version: 3.5.0
     dependencies:
       '@microsoft/tsdoc': 0.14.2
       '@rushstack/eslint-patch': 1.4.0
@@ -6574,7 +6576,7 @@ packages:
     version: 0.1.0
     hasBin: true
     dependencies:
-      '@rushstack/node-core-library': 3.61.0_@types+node@18.15.11
+      '@rushstack/node-core-library': 3.63.0_@types+node@18.15.11
       '@tylerbu/markdown-magic': 2.4.0-tylerbu-1
       chalk: 4.1.2
       markdown-magic-package-scripts: 1.2.2

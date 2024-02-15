@@ -4,7 +4,7 @@ importers:
 
   .:
     specifiers:
-      '@fluidframework/build-common': ^2.0.3
+      '@fluidframework/build-common': file:../../common/build/build-common
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@types/mocha': ^10.0.0
@@ -19,7 +19,7 @@ importers:
       rimraf: ^2.6.2
       typescript: ~5.1.6
     devDependencies:
-      '@fluidframework/build-common': 2.0.3
+      '@fluidframework/build-common': file:../../common/build/build-common
       '@fluidframework/build-tools': 0.26.1_@types+node@14.18.0
       '@fluidframework/eslint-config-fluid': 2.0.0_qvtltsyn3reahc7lgycismcfiq
       '@types/mocha': 10.0.1
@@ -140,11 +140,6 @@ packages:
       - '@types/node'
       - supports-color
       - typescript
-    dev: true
-
-  /@fluidframework/build-common/2.0.3:
-    resolution: {integrity: sha512-1LU/2uyCeMxf63z5rhFOFEBvFyBogZ7ZXwzXLxyBhSgq/fGiq8PLjBW7uX++r0LcVCdaWyopf7w060eJpANYdg==}
-    hasBin: true
     dev: true
 
   /@fluidframework/build-tools/0.26.1_@types+node@14.18.0:
@@ -5285,4 +5280,11 @@ packages:
       validator: 13.9.0
     optionalDependencies:
       commander: 9.5.0
+    dev: true
+
+  file:../../common/build/build-common:
+    resolution: {directory: ../../common/build/build-common, type: directory}
+    name: '@fluidframework/build-common'
+    version: 3.0.0
+    hasBin: true
     dev: true
