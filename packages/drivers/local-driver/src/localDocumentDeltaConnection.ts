@@ -18,6 +18,7 @@ import type { Socket } from "socket.io-client";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 
 const testProtocolVersions = ["^0.3.0", "^0.2.0", "^0.1.0"];
+const feature_submit_signals_v2 = "submit_signals_v2";
 
 /**
  * Represents a connection to a stream of delta updates
@@ -59,6 +60,11 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 			token, // Token is going to indicate tenant level information, etc...
 			versions: testProtocolVersions,
 		};
+
+		connectMessage.supportedFeatures = {
+			[feature_submit_signals_v2]: true,
+		};
+
 		await deltaConnection.initialize(connectMessage, timeoutMs);
 		return deltaConnection;
 	}
@@ -84,9 +90,10 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 	 * @param content - Content of the signal.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	public submitSignal(content: unknown): void {
+	public submitSignal(content: unknown, targetClientId?: string): void {
 		const message: ISentSignalMessage = {
 			content,
+			targetClientId,
 		};
 		this.emitMessages("submitSignal", [message]);
 	}
