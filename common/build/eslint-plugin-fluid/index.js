@@ -5,7 +5,7 @@
 
 module.exports = {
 	rules: {
-		"no-member-release-tags": require("./rules/no-member-release-tags"),
-		"no-restricted-tags-imports": require("./rules/no-restricted-tags-imports"),
+		"no-member-release-tags": require("./src/rules/no-member-release-tags"),
+		"no-restricted-tags-imports": require("./src/rules/no-restricted-tags-imports"),
 	},
 };

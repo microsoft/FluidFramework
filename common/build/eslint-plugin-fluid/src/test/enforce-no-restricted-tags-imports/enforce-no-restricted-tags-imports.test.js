@@ -11,7 +11,7 @@ describe("ESLint Rule Tests", function () {
 		return new ESLint({
 			useEslintrc: false,
 			overrideConfig: config,
-			rulePaths: [path.join(__dirname, "../../../rules")],
+			rulePaths: [path.join(__dirname, "../../rules")],
 		});
 	}
 
