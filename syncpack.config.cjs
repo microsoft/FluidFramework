@@ -134,6 +134,16 @@ module.exports = {
 			range: "~",
 		},
 
+		// Testing file: dependencies for build-common across the repo.
+		// I wanted to at least guarantee that a file: dependency was being used, but syncpack doesn't seem to support that
+		// without the file path being the same everywhere, which doesn't work in our repo.
+		{
+			label: "build-common should be a file: dependency",
+			dependencies: ["@fluidframework/build-common"],
+			packages: ["**"],
+			isIgnored: true,
+		},
+
 		// All deps should use caret ranges unless previously overridden
 		{
 			label: "Dependencies should use caret dependency ranges",
@@ -173,7 +183,6 @@ module.exports = {
 		{
 			label: "Versions of common Fluid packages should all match",
 			dependencies: [
-				"@fluidframework/build-common",
 				"@fluidframework/common-utils",
 				"@fluidframework/eslint-config-fluid",
 				"@fluidframework/build-tools",

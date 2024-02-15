@@ -105,7 +105,7 @@
 		"@arethetypeswrong/cli": "^0.13.3",
 		"@fluid-tools/build-cli": "^0.29.0",
 		"@fluidframework/app-insights-logger-previous": "npm:@fluidframework/app-insights-logger@2.0.0-rc.1.0.1",
-		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-common": "file:../../../../common/build/build-common",
 		"@fluidframework/build-tools": "^0.29.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@microsoft/api-extractor": "^7.39.1",

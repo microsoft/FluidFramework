@@ -29,7 +29,7 @@
 		"tsc": "tsc"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-common": "file:../../../../common/build/build-common",
 		"@fluidframework/build-tools": "^0.29.0",
 		"eslint": "~8.50.0",
 		"prettier": "~3.0.3",

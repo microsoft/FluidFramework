@@ -71,7 +71,7 @@
 	},
 	"devDependencies": {
 		"@fluid-tools/markdown-magic": "file:../markdown-magic",
-		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-common": "file:../../common/build/build-common",
 		"@fluidframework/build-tools": "^0.26.1",
 		"@fluidframework/eslint-config-fluid": "file:../../common/build/eslint-config-fluid",
 		"@fluidframework/mocha-test-setup": "~2.0.0-internal.6.2.0",

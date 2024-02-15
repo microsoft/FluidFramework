@@ -31,7 +31,7 @@
 		"tsc": "tsc"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-common": "file:../../common/build/build-common",
 		"@fluidframework/build-tools": "^0.26.1",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@types/mocha": "^10.0.0",

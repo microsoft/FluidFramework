@@ -76,7 +76,7 @@
 		"react-virtualized-auto-sizer": "^1.0.6"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-common": "file:../../../../common/build/build-common",
 		"@fluidframework/build-tools": "^0.29.0",
 		"@types/jest": "29.5.3",
 		"@types/jest-environment-puppeteer": "workspace:",

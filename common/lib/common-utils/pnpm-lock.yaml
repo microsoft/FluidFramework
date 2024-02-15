@@ -13,7 +13,7 @@ importers:
   .:
     specifiers:
       '@fluid-tools/build-cli': ^0.26.1
-      '@fluidframework/build-common': ^2.0.3
+      '@fluidframework/build-common': file:../../build/build-common
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/common-definitions': ^1.1.0
       '@fluidframework/common-utils-previous': npm:@fluidframework/common-utils@1.0.0
@@ -65,7 +65,7 @@ importers:
       sha.js: 2.4.11
     devDependencies:
       '@fluid-tools/build-cli': 0.26.1_k7sla5vheyw5nos66xltzmmhke
-      '@fluidframework/build-common': 2.0.3
+      '@fluidframework/build-common': file:../../build/build-common
       '@fluidframework/build-tools': 0.26.1_@types+node@16.18.38
       '@fluidframework/common-utils-previous': /@fluidframework/common-utils/1.0.0
       '@fluidframework/eslint-config-fluid': 2.1.0_kufnqfq7tb5rpdawkdb6g5smma
@@ -652,11 +652,6 @@ packages:
       - '@types/node'
       - supports-color
       - typescript
-    dev: true
-
-  /@fluidframework/build-common/2.0.3:
-    resolution: {integrity: sha512-1LU/2uyCeMxf63z5rhFOFEBvFyBogZ7ZXwzXLxyBhSgq/fGiq8PLjBW7uX++r0LcVCdaWyopf7w060eJpANYdg==}
-    hasBin: true
     dev: true
 
   /@fluidframework/build-tools/0.26.1_@types+node@16.18.38:
@@ -13258,4 +13253,11 @@ packages:
       validator: 13.9.0
     optionalDependencies:
       commander: 9.5.0
+    dev: true
+
+  file:../../build/build-common:
+    resolution: {directory: ../../build/build-common, type: directory}
+    name: '@fluidframework/build-common'
+    version: 3.0.0
+    hasBin: true
     dev: true

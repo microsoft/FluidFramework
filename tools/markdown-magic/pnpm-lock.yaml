@@ -4,7 +4,7 @@ importers:
 
   .:
     specifiers:
-      '@fluidframework/build-common': ^2.0.3
+      '@fluidframework/build-common': file:../../common/build/build-common
       '@fluidframework/eslint-config-fluid': ^3.2.0
       '@rushstack/node-core-library': ^3.61.0
       '@tylerbu/markdown-magic': 2.4.0-tylerbu-1
@@ -21,7 +21,7 @@ importers:
       markdown-magic-template: 1.0.1
       yargs: 17.7.2
     devDependencies:
-      '@fluidframework/build-common': 2.0.3
+      '@fluidframework/build-common': file:../../common/build/build-common
       '@fluidframework/eslint-config-fluid': 3.2.0
       prettier: 3.1.0
 
@@ -70,11 +70,6 @@ packages:
   /@eslint-community/regexpp/4.10.0:
     resolution: {integrity: sha512-Cu96Sd2By9mCNTx2iyKOmq10v22jUVQv0lQnlGNy16oE9589yE+QADPbrMGCkA51cKZSg3Pu/aTJVTGfL/qjUA==}
     engines: {node: ^12.0.0 || ^14.0.0 || >=16.0.0}
-    dev: true
-
-  /@fluidframework/build-common/2.0.3:
-    resolution: {integrity: sha512-1LU/2uyCeMxf63z5rhFOFEBvFyBogZ7ZXwzXLxyBhSgq/fGiq8PLjBW7uX++r0LcVCdaWyopf7w060eJpANYdg==}
-    hasBin: true
     dev: true
 
   /@fluidframework/eslint-config-fluid/3.2.0:
@@ -3032,3 +3027,10 @@ packages:
   /zwitch/1.0.5:
     resolution: {integrity: sha512-V50KMwwzqJV0NpZIZFwfOD5/lyny3WlSzRiXgA0G7VUnRlqttta1L6UQIHzd6EuBY/cHGfwTIck7w1yH6Q5zUw==}
     dev: false
+
+  file:../../common/build/build-common:
+    resolution: {directory: ../../common/build/build-common, type: directory}
+    name: '@fluidframework/build-common'
+    version: 3.0.0
+    hasBin: true
+    dev: true

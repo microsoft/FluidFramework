@@ -50,7 +50,7 @@
 		"@fluidframework/tree": "workspace:~"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-common": "file:../../../../common/build/build-common",
 		"@fluidframework/build-tools": "^0.29.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@types/jest": "29.5.3",

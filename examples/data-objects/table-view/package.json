@@ -55,7 +55,7 @@
 	},
 	"devDependencies": {
 		"@fluid-tools/webpack-fluid-loader": "workspace:~",
-		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-common": "file:../../../common/build/build-common",
 		"@fluidframework/build-tools": "^0.29.0",
 		"@fluidframework/eslint-config-fluid": "^3.5.0",
 		"@types/node": "^18.19.0",

@@ -9,7 +9,7 @@ importers:
     specifiers:
       '@fluid-tools/api-markdown-documenter': ^0.11.3
       '@fluid-tools/markdown-magic': file:../tools/markdown-magic
-      '@fluidframework/build-common': ^2.0.0
+      '@fluidframework/build-common': file:../common/build/build-common
       '@rushstack/node-core-library': ^3.59.4
       '@tylerbu/dl-cli': 1.1.2-tylerbu-0
       '@vscode/codicons': 0.0.33
@@ -39,7 +39,7 @@ importers:
     dependencies:
       '@fluid-tools/api-markdown-documenter': 0.11.3
       '@fluid-tools/markdown-magic': file:../tools/markdown-magic_bfrwj6ys6wock6p526xv5vf35u
-      '@fluidframework/build-common': 2.0.0
+      '@fluidframework/build-common': file:../common/build/build-common
       '@rushstack/node-core-library': 3.59.4
       '@tylerbu/dl-cli': 1.1.2-tylerbu-0
       '@vscode/codicons': 0.0.33
@@ -156,11 +156,6 @@ packages:
       chalk: 4.1.2
     transitivePeerDependencies:
       - '@types/node'
-    dev: false
-
-  /@fluidframework/build-common/2.0.0:
-    resolution: {integrity: sha512-oJsAczo32UpnM+/8LeE2KKOhr1KBxA48Y4umq/t9QfIFRiX0YtgyrLHRAtnGV6l/+4LX/Urmv6bbckeTFaPw7g==}
-    hasBin: true
     dev: false
 
   /@fluidframework/build-common/2.0.3:
@@ -5507,6 +5502,13 @@ packages:
 
   /zwitch/1.0.5:
     resolution: {integrity: sha512-V50KMwwzqJV0NpZIZFwfOD5/lyny3WlSzRiXgA0G7VUnRlqttta1L6UQIHzd6EuBY/cHGfwTIck7w1yH6Q5zUw==}
+    dev: false
+
+  file:../common/build/build-common:
+    resolution: {directory: ../common/build/build-common, type: directory}
+    name: '@fluidframework/build-common'
+    version: 3.0.0
+    hasBin: true
     dev: false
 
   file:../tools/markdown-magic_bfrwj6ys6wock6p526xv5vf35u:

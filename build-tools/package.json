@@ -71,7 +71,7 @@
 		"@commitlint/config-conventional": "^17.6.6",
 		"@commitlint/cz-commitlint": "^17.5.0",
 		"@fluid-tools/build-cli": "~0.26.2",
-		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-common": "file:../common/build/build-common",
 		"@fluidframework/build-tools": "~0.26.2",
 		"@microsoft/api-documenter": "^7.22.24",
 		"@microsoft/api-extractor": "^7.39.1",

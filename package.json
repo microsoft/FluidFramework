@@ -157,7 +157,7 @@
 		"@fluid-private/changelog-generator-wrapper": "file:tools/changelog-generator-wrapper",
 		"@fluid-tools/build-cli": "^0.29.0",
 		"@fluid-tools/markdown-magic": "file:tools/markdown-magic",
-		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-common": "file:common/build/build-common",
 		"@fluidframework/build-tools": "^0.29.0",
 		"@fluidframework/eslint-config-fluid": "^3.5.0",
 		"@fluidframework/test-tools": "^1.0.195075",
