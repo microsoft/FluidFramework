@@ -132,8 +132,6 @@ describe("Table", () => {
 
 			// After each test, print the summary size information to the console.
 			afterEach(() => {
-				const ratio = summaryBytes / colMajorJsonBytes;
-
 				// When using a logger, Mocha suppresses 'console.log()' by default.
 				// Writing directly to 'process.stdout' bypasses this suppression.
 				process.stdout.write(`          Summary: ${summaryBytes} bytes\n`);
