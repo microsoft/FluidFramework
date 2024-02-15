@@ -8,36 +8,11 @@ import {
 	ConfigTypes,
 	IConfigProviderBase,
 	ITelemetryBaseEvent,
-	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { IEventSampler, createSampledLogger, logIfFalse } from "../utils";
+import { IEventSampler, createSampledLogger } from "../utils";
 import { TelemetryDataTag, tagCodeArtifacts, tagData } from "../logger";
 import { mixinMonitoringContext } from "../config";
 import { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "../telemetryTypes";
-
-class TestLogger implements ITelemetryBaseLogger {
-	send(event: ITelemetryBaseEvent): void {
-		this.events.push(event);
-	}
-	public readonly events: ITelemetryBaseEvent[] = [];
-}
-
-describe("logIfFalse", () => {
-	it("logIfFalse undefined value is not undefined", () => {
-		const logger = new TestLogger();
-		const something: number | undefined = undefined;
-		const val = logIfFalse(something !== undefined, logger, "it's undefined");
-		assert.strictEqual(val, false);
-		assert.strictEqual(logger.events.length, 1);
-	});
-	it("logIfFalse value is not undefined", () => {
-		const logger = new TestLogger();
-		const something: number | undefined = 1;
-		const val = logIfFalse(something !== undefined, logger, "it's undefined");
-		assert.strictEqual(val, true);
-		assert.strictEqual(logger.events.length, 0);
-	});
-});
 
 describe("tagData", () => {
 	it("tagData with data", () => {

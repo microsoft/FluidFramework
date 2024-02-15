@@ -5,9 +5,7 @@
 
 import { v4 as uuid } from "uuid";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { assert } from "@fluidframework/core-utils";
 import {
-	IMockContainerRuntimePendingMessage,
 	MockContainerRuntime,
 	MockContainerRuntimeFactory,
 	IMockContainerRuntimeOptions,
@@ -47,7 +45,9 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 			this.dataStoreRuntime.clientId = this.clientId;
 			this.factory.quorum.addMember(this.clientId, {});
 			// On reconnection, ask the DDSes to resubmit pending messages.
-			this.reSubmitMessages();
+			const messagesToResubmit = this.pendingMessages.slice();
+			this.pendingMessages.length = 0;
+			this.reSubmitMessages(messagesToResubmit);
 		} else {
 			const factory = this.factory as MockContainerRuntimeFactoryForReconnection;
 			// On disconnection, clear any outstanding messages for this client because it will be resent.
@@ -87,20 +87,6 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 		this.addPendingMessage(messageContent, localOpMetadata, -1);
 		return -1;
 	}
-
-	private reSubmitMessages() {
-		let messageCount = this.pendingMessages.length;
-		while (messageCount > 0) {
-			const pendingMessage: IMockContainerRuntimePendingMessage | undefined =
-				this.pendingMessages.shift();
-			assert(
-				pendingMessage !== undefined,
-				"this is impossible due to the above length check",
-			);
-			this.dataStoreRuntime.reSubmit(pendingMessage.content, pendingMessage.localOpMetadata);
-			messageCount--;
-		}
-	}
 }
 
 /**
@@ -118,7 +104,7 @@ export class MockContainerRuntimeFactoryForReconnection extends MockContainerRun
 			this.runtimeOptions,
 			overrides,
 		);
-		this.runtimes.push(containerRuntime);
+		this.runtimes.add(containerRuntime);
 		return containerRuntime;
 	}
 

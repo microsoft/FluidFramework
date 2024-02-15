@@ -1128,11 +1128,6 @@ export class ContainerRuntime
 		return this.summaryConfiguration.state === "disabled";
 	}
 
-	private readonly heuristicsDisabled: boolean;
-	private isHeuristicsDisabled(): boolean {
-		return this.summaryConfiguration.state === "disableHeuristics";
-	}
-
 	private readonly maxOpsSinceLastSummary: number;
 	private getMaxOpsSinceLastSummary(): number {
 		return this.summaryConfiguration.state !== "disabled"
@@ -1372,7 +1367,6 @@ export class ContainerRuntime
 			disableOpReentryCheck !== true;
 
 		this.summariesDisabled = this.isSummariesDisabled();
-		this.heuristicsDisabled = this.isHeuristicsDisabled();
 		this.maxOpsSinceLastSummary = this.getMaxOpsSinceLastSummary();
 		this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();
 
@@ -1662,7 +1656,6 @@ export class ContainerRuntime
 					{
 						initialDelayMs: this.initialSummarizerDelayMs,
 					},
-					this.heuristicsDisabled,
 				);
 				this.summaryManager.on("summarize", (eventProps) => {
 					this.emit("summarize", eventProps);
@@ -2541,12 +2534,15 @@ export class ContainerRuntime
 
 	public createDetachedDataStore(
 		pkg: Readonly<string[]>,
-		groupId?: string,
+		loadingGroupId?: string,
 	): IFluidDataStoreContextDetached {
-		return this.dataStores.createDetachedDataStoreCore(pkg, false, undefined, groupId);
+		return this.dataStores.createDetachedDataStoreCore(pkg, false, undefined, loadingGroupId);
 	}
 
-	public async createDataStore(pkg: string | string[], groupId?: string): Promise<IDataStore> {
+	public async createDataStore(
+		pkg: string | string[],
+		loadingGroupId?: string,
+	): Promise<IDataStore> {
 		const id = uuid();
 		return channelToDataStore(
 			await this.dataStores
@@ -2554,7 +2550,7 @@ export class ContainerRuntime
 					Array.isArray(pkg) ? pkg : [pkg],
 					id,
 					undefined,
-					groupId,
+					loadingGroupId,
 				)
 				.realize(),
 			id,
@@ -3046,7 +3042,13 @@ export class ContainerRuntime
 	 * @param options - options controlling how the summary is generated or submitted
 	 */
 	public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
-		const { fullTree = false, finalAttempt = false, refreshLatestAck, summaryLogger } = options;
+		const {
+			fullTree = false,
+			finalAttempt = false,
+			refreshLatestAck,
+			summaryLogger,
+			latestSummaryRefSeqNum,
+		} = options;
 		// The summary number for this summary. This will be updated during the summary process, so get it now and
 		// use it for all events logged during this summary.
 		const summaryNumber = this.nextSummaryNumber;
@@ -3117,6 +3119,10 @@ export class ContainerRuntime
 			this.mc.config.getBoolean(
 				"Fluid.ContainerRuntime.SubmitSummary.disableInboundSignalPause",
 			) !== true;
+		const shouldValidatePreSummaryState =
+			this.mc.config.getBoolean(
+				"Fluid.ContainerRuntime.SubmitSummary.shouldValidatePreSummaryState",
+			) === true;
 
 		let summaryRefSeqNum: number | undefined;
 
@@ -3131,7 +3137,33 @@ export class ContainerRuntime
 			const message = `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
 			const lastAck = this.summaryCollection.latestAck;
 
-			this.summarizerNode.startSummary(summaryRefSeqNum, summaryNumberLogger);
+			const startSummaryResult = this.summarizerNode.startSummary(
+				summaryRefSeqNum,
+				summaryNumberLogger,
+				latestSummaryRefSeqNum,
+			);
+
+			if (
+				startSummaryResult.invalidNodes > 0 ||
+				startSummaryResult.mismatchNumbers.size > 0
+			) {
+				summaryLogger.sendErrorEvent({
+					eventName: "LatestSummaryRefSeqNumMismatch",
+					details: {
+						...startSummaryResult,
+						mismatchNumbers: Array.from(startSummaryResult.mismatchNumbers),
+					},
+				});
+
+				if (shouldValidatePreSummaryState && !finalAttempt) {
+					return {
+						stage: "base",
+						referenceSequenceNumber: summaryRefSeqNum,
+						minimumSequenceNumber,
+						error: `Summarizer node state inconsistent with summarizer state.`,
+					};
+				}
+			}
 
 			// Helper function to check whether we should still continue between each async step.
 			const checkContinue = (): { continue: true } | { continue: false; error: string } => {
@@ -3930,51 +3962,65 @@ export class ContainerRuntime
 		);
 	}
 
-	public async getPendingLocalState(props?: IGetPendingLocalStateProps): Promise<unknown> {
-		return PerformanceEvent.timedExecAsync(
-			this.mc.logger,
-			{
-				eventName: "getPendingLocalState",
-				notifyImminentClosure: props?.notifyImminentClosure,
-			},
-			async (event) => {
-				this.verifyNotClosed();
-				// in case imminentClosure is set to true by future code, we don't
-				// try to change its value
-				if (!this.imminentClosure) {
-					this.imminentClosure = props?.notifyImminentClosure ?? this.imminentClosure;
-				}
-				const stopBlobAttachingSignal = props?.stopBlobAttachingSignal;
-				if (this._orderSequentiallyCalls !== 0) {
-					throw new UsageError("can't get state during orderSequentially");
-				}
-				// Flush pending batch.
-				// getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
-				// to close current batch.
-				this.flush();
-				const pendingAttachmentBlobs = this.imminentClosure
-					? await this.blobManager.attachAndGetPendingBlobs(stopBlobAttachingSignal)
-					: undefined;
-				const pending = this.pendingStateManager.getLocalState();
-				if (!pendingAttachmentBlobs && !this.hasPendingMessages()) {
-					return; // no pending state to save
-				}
+	public getPendingLocalState(props?: IGetPendingLocalStateProps): unknown {
+		this.verifyNotClosed();
 
-				const pendingIdCompressorState = this.idCompressor?.serialize(true);
+		if (this._orderSequentiallyCalls !== 0) {
+			throw new UsageError("can't get state during orderSequentially");
+		}
+		this.imminentClosure ||= props?.notifyImminentClosure ?? false;
 
-				const pendingState: IPendingRuntimeState = {
-					pending,
-					pendingAttachmentBlobs,
-					pendingIdCompressorState,
-					sessionExpiryTimerStarted: this.garbageCollector.sessionExpiryTimerStarted,
-				};
-				event.end({
-					attachmentBlobsSize: Object.keys(pendingAttachmentBlobs ?? {}).length,
-					pendingOpsSize: pending?.pendingStates.length,
-				});
-				return pendingState;
-			},
-		);
+		const getSyncState = (
+			pendingAttachmentBlobs?: IPendingBlobs,
+		): IPendingRuntimeState | undefined => {
+			const pending = this.pendingStateManager.getLocalState();
+			if (pendingAttachmentBlobs === undefined && !this.hasPendingMessages()) {
+				return; // no pending state to save
+			}
+
+			const pendingIdCompressorState = this.idCompressor?.serialize(true);
+
+			return {
+				pending,
+				pendingIdCompressorState,
+				pendingAttachmentBlobs,
+				sessionExpiryTimerStarted: this.garbageCollector.sessionExpiryTimerStarted,
+			};
+		};
+		const perfEvent = {
+			eventName: "getPendingLocalState",
+			notifyImminentClosure: props?.notifyImminentClosure,
+		};
+		const logAndReturnPendingState = (
+			event: PerformanceEvent,
+			pendingState?: IPendingRuntimeState,
+		) => {
+			event.end({
+				attachmentBlobsSize: Object.keys(pendingState?.pendingAttachmentBlobs ?? {}).length,
+				pendingOpsSize: pendingState?.pending?.pendingStates.length,
+			});
+			return pendingState;
+		};
+
+		// Flush pending batch.
+		// getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
+		// to close current batch.
+		this.flush();
+
+		return props?.notifyImminentClosure === true
+			? PerformanceEvent.timedExecAsync(this.mc.logger, perfEvent, async (event) =>
+					logAndReturnPendingState(
+						event,
+						getSyncState(
+							await this.blobManager.attachAndGetPendingBlobs(
+								props?.stopBlobAttachingSignal,
+							),
+						),
+					),
+			  )
+			: PerformanceEvent.timedExec(this.mc.logger, perfEvent, (event) =>
+					logAndReturnPendingState(event, getSyncState()),
+			  );
 	}
 
 	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {

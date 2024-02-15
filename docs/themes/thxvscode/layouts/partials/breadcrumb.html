@@ -62,7 +62,7 @@
   {{ if $packageDisplayName }}
     <p>
       {{ $apiLink := print "/docs/api/" $selectedApiVersion "/" }}
-      <a href=$apiLink onclick="return false;">{{ humanize $concept | title }}</a> <!-- TODO: remove onclick and create proper link to new concept readme -->
+      <a href="{{ $apiLink }}" onclick="return false;">{{ humanize $concept | title }}</a> <!-- TODO: remove onclick and create proper link to new concept readme -->
         {{ $packageLink := print $apiLink $packageName "/" }}
         &gt; <a href="{{ $packageLink }}">{{ $packageDisplayName }}</a>
       {{ if $leafNodeFound }}
