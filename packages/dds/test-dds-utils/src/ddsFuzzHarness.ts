@@ -544,9 +544,8 @@ export function mixinNewClient<
 			| undefined) ?? [];
 
 	minimizationTransforms.push((op: TOperation | AddClient): void => {
-		if (op.type === "AddClient") {
-			const transform = op as unknown as AddClient;
-			transform.canBeStashed = !transform.canBeStashed;
+		if (isClientAddOp(op)) {
+			op.canBeStashed = !op.canBeStashed;
 		}
 	});
 
@@ -709,7 +708,7 @@ export function mixinAttach<
 						model.factory,
 						index === 0 ? "summarizer" : makeFriendlyClientId(state.random, index),
 						options,
-						options.clientJoinOptions?.stashableClientProbability
+						index !== 0 && options.clientJoinOptions?.stashableClientProbability
 							? state.random.bool(
 									options.clientJoinOptions.stashableClientProbability,
 							  )
@@ -1267,6 +1266,7 @@ async function loadClientFromSummaries<TChannelFactory extends IChannelFactory>(
 			savedOps,
 		};
 	}
+	options.emitter.emit("clientCreate", newClient);
 	return newClient;
 }
 

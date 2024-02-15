@@ -477,6 +477,30 @@ describe("DDS Fuzz Harness", () => {
 			assert.equal(finalState.clients.length, 4);
 			assert(finalState.clients[3].channel.methodCalls.includes("loadCore"));
 		});
+
+		it("can add new stashable clients to the fuzz test", async () => {
+			const options = {
+				...defaultOptions,
+				numberOfClients: 3,
+				clientJoinOptions: {
+					maxNumberOfClients: 4,
+					clientAddProbability: 0.25,
+					stashableClientProbability: 1,
+				},
+			};
+			const model = mixinNewClient(
+				{
+					...baseModel,
+					generatorFactory: () => takeAsync(30, baseModel.generatorFactory()),
+				},
+				options,
+			);
+			const finalState = await runTestForSeed(model, options, 0);
+			assert.equal(finalState.clients.length, 4);
+			assert(finalState.clients.every((c) => "stashData" in c));
+			assert(!("stashData" in finalState.summarizerClient));
+			assert(finalState.clients[3].channel.methodCalls.includes("loadCore"));
+		});
 	});
 
 	describe("mixinAttach", () => {
@@ -574,6 +598,8 @@ describe("DDS Fuzz Harness", () => {
 			});
 		});
 	});
+
+	describe("mixinStashClient", () => {});
 
 	describe("events", () => {
 		describe("clientCreate", () => {
