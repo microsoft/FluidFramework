@@ -546,7 +546,7 @@ export function mixinNewClient<
 
 	minimizationTransforms.push((op: TOperation | AddClient): void => {
 		if (isClientAddOp(op)) {
-			op.canBeStashed = !op.canBeStashed;
+			op.canBeStashed = false;
 		}
 	});
 
