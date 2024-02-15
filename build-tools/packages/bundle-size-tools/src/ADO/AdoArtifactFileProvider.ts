@@ -28,12 +28,6 @@ export function getBundlePathsFromZipObject(jsZip: JSZip): BundleFileData[] {
  * Downloads an Azure Devops artifacts and parses it with the jszip library.
  * @param adoConnection - A connection to the ADO api.
  * @param buildNumber - The ADO build number that contains the artifact we wish to fetch
- *
- * @remarks
- * This function doesn't work with artifacts created by the new PublishPipelineArtifact task, but works for the
- * old PublishBuildArtifacts task.
- * See https://github.com/microsoft/azure-devops-node-api/issues/432 for details and a potential workaround that we
- * could implement at some point.
  */
 export async function getZipObjectFromArtifact(
 	adoConnection: WebApi,
@@ -43,11 +37,21 @@ export async function getZipObjectFromArtifact(
 ): Promise<JSZip> {
 	const buildApi = await adoConnection.getBuildApi();
 
+	// IMPORTANT
+	// azure-devops-node-api has a known (and seemingly ignored) issue that makes it not work if we need to download
+	// artifacts created by the new PublishPipelineArtifact task (it worked for the old PublishBuildArtifacts task).
+	// The move to 1ES pipeline templates forced our hand to use the new task (through an 1ES-provided task template).
+	// The workaround is to override the createAcceptHeader function when making the request to download the artifact.
+	// See https://github.com/microsoft/azure-devops-node-api/issues/432 for more details
+	const originalCreateAcceptHeader = buildApi.createAcceptHeader;
+	buildApi.createAcceptHeader = (type: string): string => type;
 	const artifactStream = await buildApi.getArtifactContentZip(
 		projectName,
 		buildNumber,
 		bundleAnalysisArtifactName,
 	);
+	// Undo hack from above
+	buildApi.createAcceptHeader = originalCreateAcceptHeader;
 
 	// We want our relative paths to be clean, so navigating JsZip into the top level folder
 	const result = (await unzipStream(artifactStream)).folder(bundleAnalysisArtifactName);
