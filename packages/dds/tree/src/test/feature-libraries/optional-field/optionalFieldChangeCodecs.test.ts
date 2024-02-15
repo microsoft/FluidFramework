@@ -17,6 +17,7 @@ import {
 import { IJsonCodec } from "../../../codec/index.js";
 import { ChangeEncodingContext } from "../../../core/index.js";
 import { changesetForChild } from "../fieldKindTestUtils.js";
+import { Change } from "./optionalFieldUtils.js";
 
 const nodeChange1 = changesetForChild("nodeChange1");
 
@@ -38,34 +39,25 @@ const childCodec1: IJsonCodec<
 	},
 };
 
-const change1: OptionalChangeset = {
-	moves: [[{ localId: brand(41) }, "self", "nodeTargeting"]],
-	childChanges: [],
-	reservedDetachId: { localId: brand(1) },
-};
+const change1 = Change.atOnce(Change.reserve("self", brand(1)), Change.move(brand(41), "self"));
 
 const change2: OptionalChangeset = optionalFieldEditor.set(false, {
 	fill: brand(42),
 	detach: brand(2),
 });
 
-const change2Inverted: OptionalChangeset = {
-	moves: [
-		[{ localId: brand(2) }, "self", "nodeTargeting"],
-		["self", { localId: brand(42) }, "cellTargeting"],
-	],
-	childChanges: [],
-};
+const change2Inverted = Change.atOnce(
+	Change.clear("self", brand(42)),
+	Change.move(brand(2), "self"),
+);
 
 const changeWithChildChange = optionalFieldEditor.buildChildChange(0, nodeChange1);
 
-const change1WithChildChange: OptionalChangeset = {
-	moves: [
-		[{ localId: brand(41) }, "self", "nodeTargeting"],
-		["self", { localId: brand(1) }, "cellTargeting"],
-	],
-	childChanges: [["self", nodeChange1]],
-};
+const change1WithChildChange = Change.atOnce(
+	Change.clear("self", brand(1)),
+	Change.move(brand(41), "self"),
+	Change.child(nodeChange1),
+);
 
 export function testCodecs() {
 	describe("Codecs", () => {

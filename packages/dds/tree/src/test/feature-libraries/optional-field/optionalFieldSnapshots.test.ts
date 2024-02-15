@@ -15,6 +15,7 @@ import { TestChange } from "../../testChange.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { createSnapshotCompressor } from "../../snapshots/testTrees.js";
+import { Change } from "./optionalFieldUtils.js";
 
 function generateTestChangesets(
 	idCompressor: IIdCompressor,
@@ -25,48 +26,31 @@ function generateTestChangesets(
 	return [
 		{
 			name: "empty",
-			change: {
-				moves: [],
-				childChanges: [],
-			},
+			change: Change.empty(),
 		},
 		{
 			name: "change with moves",
-			change: {
-				moves: [
-					[{ revision, localId }, "self", "nodeTargeting"],
-					["self", { revision, localId }, "cellTargeting"],
-					[{ localId }, { localId }, "nodeTargeting"],
-				],
-				childChanges: [],
-			},
+			change: Change.atOnce(
+				Change.move({ revision, localId }, "self"),
+				Change.clear("self", { revision, localId }),
+				Change.move(localId, localId),
+			),
 		},
 		{
 			name: "with child change",
-			change: {
-				moves: [],
-				childChanges: [
-					[{ revision, localId }, childChange],
-					[{ localId }, childChange],
-					["self", childChange],
-				],
-			},
+			change: Change.atOnce(
+				Change.childAt({ revision, localId }, childChange),
+				Change.childAt(localId, childChange),
+				Change.child(childChange),
+			),
 		},
 		{
 			name: "with reserved detach on self",
-			change: {
-				moves: [],
-				childChanges: [],
-				reservedDetachId: "self",
-			},
+			change: Change.reserve("self", "self"),
 		},
 		{
 			name: "with reserved detach not on self",
-			change: {
-				moves: [],
-				childChanges: [],
-				reservedDetachId: { revision, localId },
-			},
+			change: Change.reserve("self", { revision, localId }),
 		},
 	];
 }
