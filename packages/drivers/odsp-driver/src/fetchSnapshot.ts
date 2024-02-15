@@ -429,7 +429,7 @@ async function fetchLatestSnapshotCore(
 			const { trees, numBlobs, encodedBlobsSize } = evalBlobsAndTrees(snapshot);
 
 			// There are some scenarios in ODSP where we cannot cache, trees/latest will explicitly tell us when we
-			// cannot cache using an HTTP response header. Only cache the full snapshot request.
+			// cannot cache using an HTTP response header. Only cache snapshot if it is not for a loading group.
 			const canCache =
 				odspResponse.headers.get("disablebrowsercachingofusercontent") !== "true" &&
 				!fetchSnapshotForLoadingGroup;
