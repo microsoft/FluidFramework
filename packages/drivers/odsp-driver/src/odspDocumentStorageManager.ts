@@ -215,23 +215,25 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 
 	public async getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot> {
 		// Fetch full snapshot in case group is not specified in request.
-		let fetchFullSnapshot = true;
+		let fetchFullSnapshotContents = true;
 		if (
 			snapshotFetchOptions?.loadingGroupIds !== undefined &&
 			snapshotFetchOptions.loadingGroupIds.length > 0
 		) {
-			fetchFullSnapshot = false;
+			fetchFullSnapshotContents = false;
 		}
 		// Don't consult cache if request is not for full snapshot.
 		const { snapshot } = await this.fetchSnapshot(
 			{
 				...snapshotFetchOptions,
-				fetchSource: fetchFullSnapshot
+				fetchSource: fetchFullSnapshotContents
 					? snapshotFetchOptions?.fetchSource
 					: FetchSource.noCache,
-				loadingGroupIds: fetchFullSnapshot ? [] : snapshotFetchOptions?.loadingGroupIds,
+				loadingGroupIds: fetchFullSnapshotContents
+					? []
+					: snapshotFetchOptions?.loadingGroupIds,
 			},
-			fetchFullSnapshot,
+			fetchFullSnapshotContents,
 		);
 
 		snapshot.snapshotTree = this.combineProtocolAndAppSnapshotTree(snapshot.snapshotTree);
@@ -240,13 +242,13 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 
 	private async fetchSnapshot(
 		snapshotFetchOptions: ISnapshotFetchOptions,
-		fetchFullSnapshot: boolean,
+		fetchFullSnapshotContents: boolean,
 	): Promise<{ snapshot: ISnapshot; id: string | undefined }> {
 		const hostSnapshotOptions = this.hostPolicy.snapshotOptions;
 		const odspSnapshotCacheValue: ISnapshot = await PerformanceEvent.timedExecAsync(
 			this.logger,
 			{
-				eventName: fetchFullSnapshot ? "ObtainSnapshot" : "ObtainSnapshotForGroup",
+				eventName: fetchFullSnapshotContents ? "ObtainSnapshot" : "ObtainSnapshotForGroup",
 				fetchSource: snapshotFetchOptions?.fetchSource,
 			},
 			async (event: PerformanceEvent) => {
@@ -259,7 +261,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				if (snapshotFetchOptions.fetchSource === FetchSource.noCache) {
 					retrievedSnapshot = await this.fetchSnapshotFromNetwork(
 						hostSnapshotOptions,
-						fetchFullSnapshot,
+						fetchFullSnapshotContents,
 						snapshotFetchOptions.loadingGroupIds,
 						snapshotFetchOptions.scenarioName,
 					);
@@ -326,7 +328,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					) {
 						const networkSnapshotP = this.fetchSnapshotFromNetwork(
 							hostSnapshotOptions,
-							fetchFullSnapshot,
+							fetchFullSnapshotContents,
 							snapshotFetchOptions.loadingGroupIds,
 							snapshotFetchOptions.scenarioName,
 						);
@@ -384,7 +386,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 							prefetchWaitStartTime = performance.now();
 							retrievedSnapshot = await this.fetchSnapshotFromNetwork(
 								hostSnapshotOptions,
-								fetchFullSnapshot,
+								fetchFullSnapshotContents,
 								snapshotFetchOptions.loadingGroupIds,
 								snapshotFetchOptions.scenarioName,
 							);
@@ -404,7 +406,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					...props,
 					method,
 					fetchSnapshotForInitialLoad: this.firstSnapshotFetchCall,
-					fetchFullSnapshot,
+					fetchFullSnapshot: fetchFullSnapshotContents,
 					avoidPrefetchSnapshotCache: this.hostPolicy.avoidPrefetchSnapshotCache,
 					...evalBlobsAndTrees(retrievedSnapshot),
 					cacheLookupTimeInSerialFetch,
@@ -472,7 +474,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					versionId: blobid ?? undefined,
 					fetchSource,
 				},
-				true /* fetchFullSnapshot */,
+				true /* fetchFullSnapshotContents */,
 			);
 			return id ? [{ id, treeId: undefined! }] : [];
 		}
@@ -527,13 +529,13 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 
 	private async fetchSnapshotFromNetwork(
 		hostSnapshotOptions: ISnapshotOptions | undefined,
-		fetchFullSnapshot: boolean,
+		fetchFullSnapshotContents: boolean,
 		loadingGroupIds: string[] | undefined,
 		scenarioName?: string,
 	) {
 		return this.fetchSnapshotFromNetworkCore(
 			hostSnapshotOptions,
-			fetchFullSnapshot,
+			fetchFullSnapshotContents,
 			loadingGroupIds,
 			scenarioName,
 		).catch((error) => {
@@ -551,7 +553,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 
 	private async fetchSnapshotFromNetworkCore(
 		hostSnapshotOptions: ISnapshotOptions | undefined,
-		fetchFullSnapshot: boolean,
+		fetchFullSnapshotContents: boolean,
 		loadingGroupIds: string[] | undefined,
 		scenarioName?: string,
 	): Promise<ISnapshot | IPrefetchSnapshotContents> {
@@ -638,7 +640,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				snapshotDownloader,
 				putInCache,
 				removeEntries,
-				fetchFullSnapshot,
+				fetchFullSnapshotContents,
 				loadingGroupIds,
 				this.hostPolicy.enableRedeemFallback,
 			);
@@ -678,7 +680,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					snapshotDownloader,
 					putInCache,
 					removeEntries,
-					fetchFullSnapshot,
+					fetchFullSnapshotContents,
 					loadingGroupIds,
 					this.hostPolicy.enableRedeemFallback,
 				);
