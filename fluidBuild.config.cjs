@@ -198,7 +198,6 @@ module.exports = {
 			],
 			"no-js-file-extensions": [
 				// PropertyDDS uses .js files which should be renamed eventually.
-				".*/PropertyDDS/.*",
 				"experimental/PropertyDDS/.*",
 				"build-tools/packages/build-cli/bin/dev.js",
 				"build-tools/packages/build-cli/bin/run.js",
