@@ -102,6 +102,7 @@ export interface StashClient {
 	type: "stashClient";
 	clientId: string;
 }
+const isStashClient = (op: BaseOperation): op is StashClient => op.type === "stashClient";
 
 /**
  * @internal
@@ -1015,16 +1016,17 @@ export function mixinStashedClient<
 	const generatorFactory: () => AsyncGenerator<TOperation | StashClient, TState> = () => {
 		const baseGenerator = model.generatorFactory();
 		return async (state): Promise<TOperation | StashClient | typeof done> => {
-			if (
-				!state.isDetached &&
-				"stashData" in state.client &&
-				state.client.stashData !== undefined &&
-				state.client.containerRuntime.pendingMessages.length > 0 &&
-				state.random.bool(0.5)
-			) {
+			const stashable = state.clients.filter(
+				(c) =>
+					"stashData" in c &&
+					c.stashData !== undefined &&
+					c.containerRuntime.pendingMessages.length > 0,
+			);
+
+			if (!state.isDetached && stashable.length > 0 && state.random.bool(0.5)) {
 				return {
 					type: "stashClient",
-					clientId: state.client.dataStoreRuntime.clientId,
+					clientId: state.random.pick(stashable).containerRuntime.clientId,
 				};
 			}
 			return baseGenerator(state);
@@ -1032,38 +1034,40 @@ export function mixinStashedClient<
 	};
 
 	const reducer: AsyncReducer<TOperation | StashClient, TState> = async (state, operation) => {
-		if (operation.type === "stashClient") {
+		const { clients, containerRuntimeFactory } = state;
+		if (isStashClient(operation)) {
+			const client = clients.find((c) => c.containerRuntime.clientId === operation.clientId);
 			const stashData =
-				"stashData" in state.client ? (state.client.stashData as StashData) : undefined;
-			if (stashData === undefined) {
+				client && "stashData" in client ? (client.stashData as StashData) : undefined;
+			if (client === undefined || stashData === undefined) {
 				return state;
 			}
 
 			// shutdown the existing client
-			state.client.containerRuntime.flush();
-			state.client.containerRuntime.connected = false;
-			state.containerRuntimeFactory.removeContainerRuntime(state.client.containerRuntime);
+			client.containerRuntime.flush();
+			client.containerRuntime.connected = false;
+			containerRuntimeFactory.removeContainerRuntime(client.containerRuntime);
 
 			// get the saved ops seen by the client, and its pending ops
-			const pendingMessages = state.client.containerRuntime.pendingMessages.splice(0);
+			const pendingMessages = client.containerRuntime.pendingMessages.splice(0);
 			const savedOps = stashData.savedOps.splice(0);
 
 			// ensure no ops are sent to, or produced by the old client
 			// this can help find bugs in the the harness
 			Object.freeze(stashData.savedOps);
-			Object.freeze(state.client.containerRuntime.pendingMessages);
+			Object.freeze(client.containerRuntime.pendingMessages);
 
 			// clear any unprocessed ops for this client
-			state.containerRuntimeFactory.clearOutstandingClientMessages(
-				state.client.containerRuntime.clientId,
+			containerRuntimeFactory.clearOutstandingClientMessages(
+				client.containerRuntime.clientId,
 			);
 
 			// load a new client from the same state as the original client
 			const newClient = await loadClientFromSummaries(
-				state.containerRuntimeFactory,
+				containerRuntimeFactory,
 				stashData.summaries,
 				model.factory,
-				state.client.dataStoreRuntime.clientId,
+				client.containerRuntime.clientId,
 				options,
 			);
 
@@ -1083,6 +1087,9 @@ export function mixinStashedClient<
 					);
 				}
 			}
+			while (pendingMessages.length > 0) {
+				await newClient.containerRuntime.applyStashedOp(pendingMessages.shift()?.content);
+			}
 			// issue a reconnect to rebase pending ops
 			newClient.containerRuntime.connected = false;
 			newClient.containerRuntime.connected = true;
@@ -1090,18 +1097,16 @@ export function mixinStashedClient<
 			// replace the old client with the new client
 			return {
 				...state,
-				client: newClient,
 				clients: [
-					...state.clients.filter(
-						(c) =>
-							c.dataStoreRuntime.clientId !== state.client.dataStoreRuntime.clientId,
+					...clients.filter(
+						(c) => c.containerRuntime.clientId !== client.containerRuntime.clientId,
 					),
 					newClient,
 				],
 			};
 		}
 
-		return model.reducer(state, operation as TOperation);
+		return model.reducer(state, operation);
 	};
 
 	return {

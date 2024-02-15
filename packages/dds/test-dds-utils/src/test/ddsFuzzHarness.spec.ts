@@ -34,8 +34,10 @@ import {
 	mixinRebase,
 	TriggerRebase,
 	mixinAttach,
+	mixinStashedClient,
+	type Client,
 } from "../ddsFuzzHarness";
-import { Operation, SharedNothingFactory, baseModel } from "./sharedNothing";
+import { Operation, SharedNothingFactory, baseModel, isNoopOp } from "./sharedNothing";
 
 type Model = DDSFuzzModel<SharedNothingFactory, Operation | ChangeConnectionState>;
 
@@ -201,7 +203,7 @@ describe("DDS Fuzz Harness", () => {
 				const noValidateModel: Model = {
 					...baseModel,
 					reducer: async ({ clients }, operation) => {
-						assert(operation.type === "noop");
+						assert(isNoopOp(operation));
 						clients[0].channel.noop();
 					},
 					generatorFactory: () => takeAsync(4, baseModel.generatorFactory()),
@@ -500,6 +502,50 @@ describe("DDS Fuzz Harness", () => {
 			assert(finalState.clients.every((c) => "stashData" in c));
 			assert(!("stashData" in finalState.summarizerClient));
 			assert(finalState.clients[3].channel.methodCalls.includes("loadCore"));
+		});
+	});
+
+	describe("mixinStashClient", () => {
+		it("stashable clients changes can be restored on new client", async () => {
+			const options = {
+				...defaultOptions,
+				numberOfClients: 1,
+				clientJoinOptions: {
+					maxNumberOfClients: 1,
+					clientAddProbability: 0.25,
+					stashableClientProbability: 1,
+				},
+				emitter: new TypedEventEmitter<DDSFuzzHarnessEvents>(),
+			};
+
+			const clientCreates: Client<SharedNothingFactory>[] = [];
+			options.emitter.on("clientCreate", (c) => clientCreates.push(c));
+
+			const model = mixinStashedClient(
+				{
+					...baseModel,
+					reducer: async ({ clients }, operation) => {
+						if (isNoopOp(operation)) {
+							clients[0].channel.noop();
+						}
+					},
+					generatorFactory: () => takeAsync(5, baseModel.generatorFactory()),
+				},
+				options,
+			);
+			const finalState = await runTestForSeed(model, options, 0);
+			assert.equal(finalState.clients.length, 1);
+			assert.strictEqual(clientCreates.length, 3);
+
+			assert.strictEqual(clientCreates[0].containerRuntime.clientId, "summarizer");
+
+			// original client
+			assert.strictEqual(clientCreates[1].channel.applyStashedOpCalls, 0);
+			assert.strictEqual(clientCreates[1].channel.noopCalls, 5);
+
+			// client loaded from stash
+			assert.strictEqual(clientCreates[2].channel.applyStashedOpCalls, 5);
+			assert.strictEqual(clientCreates[2].channel.noopCalls, 5);
 		});
 	});
 
