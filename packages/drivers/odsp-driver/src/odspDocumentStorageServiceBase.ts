@@ -245,11 +245,14 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 			},
 			trees: {
 				...hierarchicalAppTree.trees,
-				// the app tree could have a .protocol
-				// in that case we want to server protocol to override it
-				".protocol": hierarchicalProtocolTree,
 			},
 		};
+
+		// The app tree could have a .protocol in that case we want to server protocol to override it.
+		// Snapshot which are for a loading GroupId, will not have a protocol tree.
+		if (hierarchicalProtocolTree !== undefined) {
+			summarySnapshotTree.trees[".protocol"] = hierarchicalProtocolTree;
+		}
 
 		return summarySnapshotTree;
 	}
