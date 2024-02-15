@@ -71,6 +71,9 @@ export async function prefetchLatestSnapshot(
 	const useGroupIdsForSnapshotFetch = mc.config.getBoolean(
 		"Fluid.Container.UseLoadingGroupIdForSnapshotFetch",
 	);
+	// For prefetch, we just want to fetch the ungrouped data and want to use the new API if the
+	// feature gate is set, so provide an empty array.
+	const loadingGroupIds = useGroupIdsForSnapshotFetch ? [] : undefined;
 	const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
 
 	const resolvedUrlData: IOdspUrlParts = {
@@ -134,7 +137,7 @@ export async function prefetchLatestSnapshot(
 				snapshotDownloader,
 				putInCache,
 				removeEntries,
-				useGroupIdsForSnapshotFetch ? [] : undefined, // loadingGroupIds
+				loadingGroupIds,
 				enableRedeemFallback,
 			)
 				.then(async (value) => {
