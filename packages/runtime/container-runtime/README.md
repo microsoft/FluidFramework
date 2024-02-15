@@ -19,9 +19,9 @@ continues to pay the cost for all such content indefinitely, even if those datas
 
 With this, we will provide a capability to:
 
-- Exclude some sub-trees from snapshot payload, thus allowing faster transfer times / boot times and smaller initial
+-   Exclude some sub-trees from snapshot payload, thus allowing faster transfer times / boot times and smaller initial
     memory footprint.
-- Ability to delay-load data stores later.
+-   Ability to delay-load data stores later.
 
 Container Runtime Apis like IContainerRuntimeBase.createDataStore and IContainerRuntimeBase.createDetachedDataStore
 provides an argument `loadingGroupId` which allows apps to mark a datastore at time of creation currently. Every data
