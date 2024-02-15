@@ -113,7 +113,6 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 
 		// ensure no ops are sent to, or produced by the old client
 		// this can help find bugs in the the harness
-		// Object.freeze(stashData.savedOps);
 		Object.freeze(containerRuntime.pendingMessages);
 		Object.freeze(containerRuntime.pendingRemoteMessages);
 		Object.freeze(containerRuntime.processedOps);
