@@ -105,6 +105,10 @@ function sanitizeMessage(message: any): IDocumentMessage {
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 
+const serverSupportedFeatures: Record<string, any> = {
+	submit_signals_v2: true,
+};
+
 function selectProtocolVersion(connectVersions: string[]): string | undefined {
 	for (const connectVersion of connectVersions) {
 		for (const protocolVersion of protocolVersions) {
@@ -626,6 +630,7 @@ export function configureWebSocketServices(
 					initialMessages: [],
 					initialSignals: [],
 					supportedVersions: protocolVersions,
+					supportedFeatures: serverSupportedFeatures,
 					version,
 				};
 			} else {
@@ -643,6 +648,7 @@ export function configureWebSocketServices(
 					initialMessages: [],
 					initialSignals: [],
 					supportedVersions: protocolVersions,
+					supportedFeatures: serverSupportedFeatures,
 					version,
 				};
 			}
@@ -1123,7 +1129,9 @@ export function configureWebSocketServices(
 							if (
 								supportedFeaturesMap.get(clientId)?.clientSupportedFeatures?.[
 									feature_submit_signals_v2
-								]
+								] &&
+								typeof content === "object" &&
+								"targetClientId" in content
 							) {
 								signalMessage = {
 									clientId,
