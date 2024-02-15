@@ -72,7 +72,7 @@
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.26.1",
-		"@fluidframework/build-common": "file:../../../../common/build/build-common",
+		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.28.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/server-local-server-previous": "npm:@fluidframework/server-local-server@2.0.0",

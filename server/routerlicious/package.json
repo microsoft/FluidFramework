@@ -81,7 +81,7 @@
 		"@changesets/cli": "^2.26.1",
 		"@fluid-private/changelog-generator-wrapper": "file:../../tools/changelog-generator-wrapper",
 		"@fluid-tools/build-cli": "^0.26.1",
-		"@fluidframework/build-common": "file:../../common/build/build-common",
+		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.28.0",
 		"@microsoft/api-documenter": "^7.21.6",
 		"@microsoft/api-extractor": "^7.34.4",
