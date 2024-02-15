@@ -70,7 +70,7 @@
 		"traverse": "0.6.6"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-common": "file:../../../../common/build/build-common",
 		"@fluidframework/build-tools": "^0.29.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@types/lodash": "^4.14.118",

@@ -64,7 +64,7 @@
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
-		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-common": "file:../../../common/build/build-common",
 		"@fluidframework/build-tools": "^0.29.0",
 		"@fluidframework/eslint-config-fluid": "^3.5.0",
 		"@microsoft/api-extractor": "^7.39.1",

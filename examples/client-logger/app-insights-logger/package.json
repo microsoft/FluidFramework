@@ -53,7 +53,7 @@
 		"react-dom": "^17.0.1"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-common": "file:../../../common/build/build-common",
 		"@fluidframework/build-tools": "^0.29.0",
 		"@fluidframework/eslint-config-fluid": "^3.5.0",
 		"@testing-library/dom": "^8.2.0",

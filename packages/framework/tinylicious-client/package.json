@@ -115,7 +115,7 @@
 		"@arethetypeswrong/cli": "^0.13.3",
 		"@fluid-tools/build-cli": "^0.29.0",
 		"@fluidframework/aqueduct": "workspace:~",
-		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-common": "file:../../../common/build/build-common",
 		"@fluidframework/build-tools": "^0.29.0",
 		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
