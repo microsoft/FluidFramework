@@ -908,6 +908,12 @@ describe("Temporal Collab Spaces", () => {
 				commandArray.push(command);
 			}
 		};
+
+		const noopFn2: Op = async (cp: IMatrix) => {
+			random();
+			random();
+		};
+
 		// collaborate on a cell through collab channel
 		const collabFn: Op = async (cp: IMatrix) => {
 			// Cell might be undefined. If so, we can't really collab on it.
@@ -1086,6 +1092,21 @@ describe("Temporal Collab Spaces", () => {
 				throw e;
 			}
 		}).timeout(120000);
+
+		// TBD(Pri0): This test does not pass
+		// It tails on 41st step - one of the containers has a wrong value
+		it.skip("Structure stress test Fail 41", async () => {
+			await stressTest(41, 20, 7, [
+				[30, overwriteCellFn],
+				[10, noopFn2],
+				[20, insertColsFn],
+				[20, insertRowsFn],
+				[1, noopFn2],
+				[1, removeRowsFn],
+				[10, noopFn2],
+				[5, addContainerInstanceFn],
+			]);
+		}).timeout(10000);
 
 		// TBD(Pri0): This test does not pass
 		// It tails on 229th step - one of the containers has a wrong value
