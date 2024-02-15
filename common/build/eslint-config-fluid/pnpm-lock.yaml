@@ -5,7 +5,7 @@ importers:
   .:
     specifiers:
       '@fluid-tools/markdown-magic': file:../../../tools/markdown-magic
-      '@fluidframework/build-common': ^2.0.3
+      '@fluidframework/build-common': file:../build-common
       '@microsoft/tsdoc': ^0.14.2
       '@rushstack/eslint-patch': ~1.4.0
       '@rushstack/eslint-plugin': ~0.13.0
@@ -54,7 +54,7 @@ importers:
       ts-morph: 20.0.0
     devDependencies:
       '@fluid-tools/markdown-magic': file:../../../tools/markdown-magic
-      '@fluidframework/build-common': 2.0.3
+      '@fluidframework/build-common': file:../build-common
       concurrently: 8.2.1
       eslint: 8.50.0
       mocha: 10.2.0
@@ -141,11 +141,6 @@ packages:
   /@eslint/js/8.50.0:
     resolution: {integrity: sha512-NCC3zz2+nvYd+Ckfh87rA47zfu2QsQpvc6k1yzTk+b9KzRj0wkGa8LSoGOXN6Zv4lRf/EIoZ80biDh9HOI+RNQ==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
-
-  /@fluidframework/build-common/2.0.3:
-    resolution: {integrity: sha512-1LU/2uyCeMxf63z5rhFOFEBvFyBogZ7ZXwzXLxyBhSgq/fGiq8PLjBW7uX++r0LcVCdaWyopf7w060eJpANYdg==}
-    hasBin: true
-    dev: true
 
   /@humanwhocodes/config-array/0.11.11:
     resolution: {integrity: sha512-N2brEuAadi0CcdeMXUkhbZB84eskAc8MEX1By6qEchoVywSgXPIjou4rYsl0V3Hj0ZnuGycGCjdNgockbzeWNA==}
@@ -3717,4 +3712,11 @@ packages:
       - '@types/node'
       - markdown-magic
       - supports-color
+    dev: true
+
+  file:../build-common:
+    resolution: {directory: ../build-common, type: directory}
+    name: '@fluidframework/build-common'
+    version: 3.0.0
+    hasBin: true
     dev: true
