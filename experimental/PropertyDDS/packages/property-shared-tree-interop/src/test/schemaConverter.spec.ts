@@ -26,8 +26,8 @@ import {
 	convertPropertyToSharedTreeSchema as convertSchema,
 	nodePropertyField,
 	nodePropertySchema,
-} from "../schemaConverter";
-import mockPropertyDDSSchemas from "./mockPropertyDDSSchemas";
+} from "../schemaConverter.js";
+import mockPropertyDDSSchemas from "./mockPropertyDDSSchemas.js";
 
 describe("schema converter", () => {
 	describe("with built-in schemas only", () => {

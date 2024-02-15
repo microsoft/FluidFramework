@@ -605,6 +605,15 @@ export function mixinReconnect<
 	};
 }
 
+function finalizeAllocatedIds(compressor: IIdCompressorCore | undefined): void {
+	if (compressor !== undefined) {
+		const range = compressor.takeNextCreationRange();
+		if (range.ids !== undefined) {
+			compressor.finalizeCreationRange(range);
+		}
+	}
+}
+
 /**
  * Mixes in functionality to generate an 'attach' op, which
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
@@ -663,12 +672,7 @@ export function mixinAttach<
 
 			// Finalize all id creation ranges before serializing. The production codepath does this
 			// in ContainerRuntime.createSummary.
-			if (clientA.dataStoreRuntime.idCompressor !== undefined) {
-				const range = clientA.containerRuntime.getGeneratedIdRange();
-				if (range !== undefined) {
-					clientA.dataStoreRuntime.idCompressor?.finalizeCreationRange(range);
-				}
-			}
+			finalizeAllocatedIds(clientA.dataStoreRuntime.idCompressor);
 
 			const clients = await Promise.all(
 				Array.from({ length: options.numberOfClients }, async (_, index) =>
@@ -701,12 +705,7 @@ export function mixinAttach<
 			assert.equal(state.clients.length, 1);
 			// Finalize all id creation ranges before serializing. The production codepath does this
 			// in ContainerRuntime.createSummary.
-			if (clientA.dataStoreRuntime.idCompressor !== undefined) {
-				const range = clientA.containerRuntime.getGeneratedIdRange();
-				if (range !== undefined) {
-					clientA.dataStoreRuntime.idCompressor?.finalizeCreationRange(range);
-				}
-			}
+			finalizeAllocatedIds(clientA.dataStoreRuntime.idCompressor);
 			state.containerRuntimeFactory.removeContainerRuntime(clientA.containerRuntime);
 
 			const summarizerClient = await loadDetached(
@@ -1040,8 +1039,6 @@ async function loadClient<TChannelFactory extends IChannelFactory>(
 	clientId: string,
 	options: Omit<DDSFuzzSuiteOptions, "only" | "skip">,
 ): Promise<Client<TChannelFactory>> {
-	containerRuntimeFactory.synchronizeIdCompressors();
-
 	const { summary } = summarizerClient.channel.getAttachSummary();
 	let idCompressorSummary: SerializedIdCompressorWithNoSession | undefined;
 	if (summarizerClient.dataStoreRuntime.idCompressor !== undefined) {
@@ -1086,8 +1083,6 @@ async function loadDetached<TChannelFactory extends IChannelFactory>(
 	clientId: string,
 	options: Omit<DDSFuzzSuiteOptions, "only" | "skip">,
 ): Promise<Client<TChannelFactory>> {
-	containerRuntimeFactory.synchronizeIdCompressors();
-
 	const { summary } = await summarizerClient.channel.summarize();
 	const idCompressorSummary = summarizerClient.dataStoreRuntime.idCompressor?.serialize(false);
 

@@ -1128,11 +1128,6 @@ export class ContainerRuntime
 		return this.summaryConfiguration.state === "disabled";
 	}
 
-	private readonly heuristicsDisabled: boolean;
-	private isHeuristicsDisabled(): boolean {
-		return this.summaryConfiguration.state === "disableHeuristics";
-	}
-
 	private readonly maxOpsSinceLastSummary: number;
 	private getMaxOpsSinceLastSummary(): number {
 		return this.summaryConfiguration.state !== "disabled"
@@ -1372,7 +1367,6 @@ export class ContainerRuntime
 			disableOpReentryCheck !== true;
 
 		this.summariesDisabled = this.isSummariesDisabled();
-		this.heuristicsDisabled = this.isHeuristicsDisabled();
 		this.maxOpsSinceLastSummary = this.getMaxOpsSinceLastSummary();
 		this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();
 
@@ -1662,7 +1656,6 @@ export class ContainerRuntime
 					{
 						initialDelayMs: this.initialSummarizerDelayMs,
 					},
-					this.heuristicsDisabled,
 				);
 				this.summaryManager.on("summarize", (eventProps) => {
 					this.emit("summarize", eventProps);
@@ -2541,12 +2534,15 @@ export class ContainerRuntime
 
 	public createDetachedDataStore(
 		pkg: Readonly<string[]>,
-		groupId?: string,
+		loadingGroupId?: string,
 	): IFluidDataStoreContextDetached {
-		return this.dataStores.createDetachedDataStoreCore(pkg, false, undefined, groupId);
+		return this.dataStores.createDetachedDataStoreCore(pkg, false, undefined, loadingGroupId);
 	}
 
-	public async createDataStore(pkg: string | string[], groupId?: string): Promise<IDataStore> {
+	public async createDataStore(
+		pkg: string | string[],
+		loadingGroupId?: string,
+	): Promise<IDataStore> {
 		const id = uuid();
 		return channelToDataStore(
 			await this.dataStores
@@ -2554,7 +2550,7 @@ export class ContainerRuntime
 					Array.isArray(pkg) ? pkg : [pkg],
 					id,
 					undefined,
-					groupId,
+					loadingGroupId,
 				)
 				.realize(),
 			id,

@@ -1058,6 +1058,7 @@ importers:
       '@fluidframework/server-services-core': workspace:~
       '@fluidframework/server-services-shared-previous': npm:@fluidframework/server-services-shared@2.0.0
       '@fluidframework/server-services-telemetry': workspace:~
+      '@fluidframework/server-services-utils': workspace:~
       '@socket.io/redis-adapter': ^7.2.0
       '@socket.io/sticky': ^1.0.4
       '@types/body-parser': ^1.19.2
@@ -1101,6 +1102,7 @@ importers:
       '@fluidframework/server-services-client': link:../services-client
       '@fluidframework/server-services-core': link:../services-core
       '@fluidframework/server-services-telemetry': link:../services-telemetry
+      '@fluidframework/server-services-utils': link:../services-utils
       '@socket.io/redis-adapter': 7.2.0
       '@socket.io/sticky': 1.0.4
       body-parser: 1.20.2

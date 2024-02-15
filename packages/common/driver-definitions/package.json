@@ -96,6 +96,9 @@
 			},
 			"InterfaceDeclaration_IDocumentService": {
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IDocumentStorageService": {
+				"backCompat": false
 			}
 		}
 	}
