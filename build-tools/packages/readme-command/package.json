@@ -48,7 +48,7 @@
 		"semver": "^7.5.4"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-common": "file:../../../common/build/build-common",
 		"@fluidframework/eslint-config-fluid": "^3.2.0",
 		"@oclif/test": "~2.3.33",
 		"@types/chai": "^4.3.5",

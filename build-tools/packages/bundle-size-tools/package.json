@@ -47,7 +47,7 @@
 		"webpack": "^5.88.1"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-common": "file:../../../common/build/build-common",
 		"@fluidframework/eslint-config-fluid": "^3.2.0",
 		"@microsoft/api-extractor": "^7.39.1",
 		"@types/msgpack-lite": "^0.1.8",
