@@ -180,8 +180,8 @@ module.exports = {
 				"^packages/loader/.*/package.json",
 				"^packages/runtime/.*/package.json",
 				"^packages/service-clients/.*/package.json",
-				"^packages/test/test-utils/package.json",
 				"^packages/utils/.*/package.json",
+				"^packages/loader/container-loader/package.json",
 			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
