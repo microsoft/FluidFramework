@@ -51,6 +51,7 @@ import {
 	getWithRetryForTokenRefresh,
 	isInstanceOfISnapshot,
 	isSnapshotFetchForLoadingGroup,
+	useLegacyFlowWithoutGroupsForSnapshotFetch,
 } from "./odspUtils";
 import { EpochTracker } from "./epochTracker";
 import type { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
@@ -399,6 +400,9 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					...props,
 					method,
 					fetchSnapshotForInitialLoad: this.firstSnapshotFetchCall,
+					useLegacyFlowWithoutGroups: useLegacyFlowWithoutGroupsForSnapshotFetch(
+						snapshotFetchOptions.loadingGroupIds,
+					),
 					avoidPrefetchSnapshotCache: this.hostPolicy.avoidPrefetchSnapshotCache,
 					...evalBlobsAndTrees(retrievedSnapshot),
 					cacheLookupTimeInSerialFetch,

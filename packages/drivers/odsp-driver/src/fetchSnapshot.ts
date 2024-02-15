@@ -47,6 +47,7 @@ import {
 	isSnapshotFetchForLoadingGroup,
 	measure,
 	measureP,
+	useLegacyFlowWithoutGroupsForSnapshotFetch,
 } from "./odspUtils";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "./odspSnapshotParser";
 import {
@@ -476,6 +477,8 @@ async function fetchLatestSnapshotCore(
 				sequenceNumber,
 				ops: snapshot.ops?.length ?? 0,
 				fetchSnapshotForLoadingGroup,
+				useLegacyFlowWithoutGroups:
+					useLegacyFlowWithoutGroupsForSnapshotFetch(loadingGroupIds),
 				userOps: snapshot.ops?.filter((op) => isRuntimeMessage(op)).length ?? 0,
 				headers: Object.keys(response.requestHeaders).length !== 0 ? true : undefined,
 				// Measures time to make fetch call. Should be similar to

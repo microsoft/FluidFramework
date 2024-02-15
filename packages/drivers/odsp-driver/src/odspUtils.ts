@@ -488,8 +488,16 @@ export function isInstanceOfISnapshot(
 
 /**
  * This tells whether request if for a specific loading group or not. The snapshot which
- * we fetch on initial load, fetched ungrouped content.
+ * we fetch on initial load, fetches all ungrouped content.
  */
 export function isSnapshotFetchForLoadingGroup(loadingGroupIds: string[] | undefined) {
 	return loadingGroupIds !== undefined && loadingGroupIds.length > 0;
+}
+
+/*
+ * This tells whether we are using legacy flow for fetching snapshot where we don't use
+ * groupId query param in the trees latest network call.
+ */
+export function useLegacyFlowWithoutGroupsForSnapshotFetch(loadingGroupIds: string[] | undefined) {
+	return loadingGroupIds === undefined;
 }

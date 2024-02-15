@@ -326,6 +326,7 @@ describe("Tests1 for snapshot fetch", () => {
 					eventName: "ObtainSnapshotForGroup_end",
 					method: "networkOnly",
 					fetchSource: "noCache",
+					useLegacyFlowWithoutGroups: false,
 				},
 			]),
 			"unexpected events",
@@ -445,11 +446,13 @@ describe("Tests1 for snapshot fetch", () => {
 				{
 					eventName: "ObtainSnapshot_end",
 					method: "network",
+					useLegacyFlowWithoutGroups: false,
 				},
 				{
 					eventName: "ObtainSnapshotForGroup_end",
 					method: "networkOnly",
 					fetchSource: "noCache",
+					useLegacyFlowWithoutGroups: false,
 				},
 			]),
 			"unexpected events",
