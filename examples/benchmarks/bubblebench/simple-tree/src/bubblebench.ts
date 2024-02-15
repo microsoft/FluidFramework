@@ -28,7 +28,6 @@ export class Bubblebench extends DataObject {
 		) as ISharedTree;
 
 		this.initializeTree(tree);
-
 		this.root.set(treeKey, tree.handle);
 	}
 
@@ -71,12 +70,6 @@ export class Bubblebench extends DataObject {
 	 */
 	initializeTree(tree: ISharedTree) {
 		this.view = tree.schematize(appTreeConfiguration);
-		/*
-		this.view = tree.schematizeInternal({
-			allowedSchemaModifications: AllowedUpdateType.None,
-			initialTree: [],
-			schema: appSchemaData,
-		}); */
 	}
 
 	/**

@@ -18,7 +18,7 @@ export class Bubble
 	})
 	implements IBubble
 {
-	constructor(public readonly bubble: Bubble) {
+	constructor(public readonly bubble: IBubble) {
 		super(bubble);
 	}
 
@@ -62,7 +62,7 @@ export class Client
 	extends sf.object("Client", {
 		clientId: sf.string,
 		color: sf.string,
-		bubbles: sf.array(Bubble),
+		bubbles: sf.array("Bubbles", Bubble),
 	})
 	implements IClient
 {
