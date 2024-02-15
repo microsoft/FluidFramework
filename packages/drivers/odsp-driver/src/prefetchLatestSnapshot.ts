@@ -69,7 +69,7 @@ export async function prefetchLatestSnapshot(
 	const mc = createChildMonitoringContext({ logger, namespace: "PrefetchSnapshot" });
 	const odspLogger = createOdspLogger(mc.logger);
 	const useGroupIdsForSnapshotFetch = mc.config.getBoolean(
-		"Fluid.Container.FetchSnapshotUsingGetSnapshotApi",
+		"Fluid.Container.UseLoadingGroupIdForSnapshotFetch",
 	);
 	const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
 
@@ -88,7 +88,6 @@ export async function prefetchLatestSnapshot(
 	const snapshotDownloader = async (
 		finalOdspResolvedUrl: IOdspResolvedUrl,
 		storageToken: string,
-		fetchFullSnapshot: boolean,
 		loadingGroupId: string[] | undefined,
 		snapshotOptions: ISnapshotOptions | undefined,
 		controller?: AbortController,
@@ -96,7 +95,6 @@ export async function prefetchLatestSnapshot(
 		return downloadSnapshot(
 			finalOdspResolvedUrl,
 			storageToken,
-			fetchFullSnapshot,
 			loadingGroupId,
 			snapshotOptions,
 			undefined,
@@ -136,7 +134,6 @@ export async function prefetchLatestSnapshot(
 				snapshotDownloader,
 				putInCache,
 				removeEntries,
-				true, // fetchFullSnapshot
 				useGroupIdsForSnapshotFetch ? [] : undefined, // loadingGroupIds
 				enableRedeemFallback,
 			)

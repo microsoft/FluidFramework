@@ -487,6 +487,9 @@ export function isInstanceOfISnapshot(
 }
 
 /**
- * Default GroupId to ask for snapshot fetch when no groupId is specified.
+ * This tells whether request if for a specific loading group or not. The snapshot which
+ * we fetch on initial load, fetched ungrouped content.
  */
-export const defaultGroupIdForSnapshot = "default";
+export function isSnapshotFetchForLoadingGroup(loadingGroupIds: string[] | undefined) {
+	return loadingGroupIds !== undefined && loadingGroupIds.length > 0;
+}

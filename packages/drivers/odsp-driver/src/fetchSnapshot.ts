@@ -39,12 +39,12 @@ import {
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import {
-	defaultGroupIdForSnapshot,
 	fetchAndParseAsJSONHelper,
 	fetchHelper,
 	getWithRetryForTokenRefresh,
 	getWithRetryForTokenRefreshRepeat,
 	IOdspResponse,
+	isSnapshotFetchForLoadingGroup,
 	measure,
 	measureP,
 } from "./odspUtils";
@@ -123,14 +123,12 @@ export async function fetchSnapshotWithRedeem(
 	snapshotDownloader: (
 		finalOdspResolvedUrl: IOdspResolvedUrl,
 		storageToken: string,
-		fetchFullSnapshot: boolean,
 		loadingGroupIds: string[] | undefined,
 		snapshotOptions: ISnapshotOptions | undefined,
 		controller?: AbortController,
 	) => Promise<ISnapshotRequestAndResponseOptions>,
 	putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
 	removeEntries: () => Promise<void>,
-	fetchFullSnapshot: boolean,
 	loadingGroupIds: string[] | undefined,
 	enableRedeemFallback?: boolean,
 ): Promise<ISnapshot> {
@@ -147,7 +145,6 @@ export async function fetchSnapshotWithRedeem(
 		logger,
 		snapshotDownloader,
 		putInCache,
-		fetchFullSnapshot,
 		loadingGroupIds,
 		enableRedeemFallback,
 	)
@@ -188,7 +185,6 @@ export async function fetchSnapshotWithRedeem(
 					logger,
 					snapshotDownloader,
 					putInCache,
-					fetchFullSnapshot,
 					loadingGroupIds,
 				);
 			} else {
@@ -255,22 +251,22 @@ async function fetchLatestSnapshotCore(
 	snapshotDownloader: (
 		finalOdspResolvedUrl: IOdspResolvedUrl,
 		storageToken: string,
-		fetchFullSnapshot: boolean,
 		loadingGroupIds: string[] | undefined,
 		snapshotOptions: ISnapshotOptions | undefined,
 		controller?: AbortController,
 	) => Promise<ISnapshotRequestAndResponseOptions>,
 	putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
-	fetchFullSnapshot: boolean,
 	loadingGroupIds: string[] | undefined,
 	enableRedeemFallback?: boolean,
 ): Promise<ISnapshot> {
 	return getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
-		const storageToken = await storageTokenFetcher(tokenFetchOptions, "TreesLatest", true);
+		const fetchSnapshotForLoadingGroup = isSnapshotFetchForLoadingGroup(loadingGroupIds);
+		const eventName = fetchSnapshotForLoadingGroup ? "TreesLatestForGroup" : "TreesLatest";
+		const storageToken = await storageTokenFetcher(tokenFetchOptions, eventName, true);
 		assert(storageToken !== null, 0x1e5 /* "Storage token should not be null" */);
 
 		const perfEvent = {
-			eventName: fetchFullSnapshot ? "TreesLatest" : "TreesLatestForGroup",
+			eventName,
 			attempts: tokenFetchOptions.refresh ? 2 : 1,
 			shareLinkPresent: odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem !== undefined,
 			isSummarizer: odspResolvedUrl.summarizer,
@@ -296,7 +292,6 @@ async function fetchLatestSnapshotCore(
 				snapshotDownloader(
 					odspResolvedUrl,
 					storageToken,
-					fetchFullSnapshot,
 					loadingGroupIds,
 					snapshotOptions,
 					controller,
@@ -437,7 +432,7 @@ async function fetchLatestSnapshotCore(
 			// cannot cache using an HTTP response header. Only cache the full snapshot request.
 			const canCache =
 				odspResponse.headers.get("disablebrowsercachingofusercontent") !== "true" &&
-				fetchFullSnapshot;
+				!fetchSnapshotForLoadingGroup;
 			const sequenceNumber: number = snapshot.sequenceNumber ?? 0;
 			const seqNumberFromOps =
 				snapshot.ops && snapshot.ops.length > 0
@@ -480,7 +475,7 @@ async function fetchLatestSnapshotCore(
 				encodedBlobsSize,
 				sequenceNumber,
 				ops: snapshot.ops?.length ?? 0,
-				fetchFullSnapshot,
+				fetchSnapshotForLoadingGroup,
 				userOps: snapshot.ops?.filter((op) => isRuntimeMessage(op)).length ?? 0,
 				headers: Object.keys(response.requestHeaders).length !== 0 ? true : undefined,
 				// Measures time to make fetch call. Should be similar to
@@ -595,7 +590,6 @@ function countTreesInSnapshotTree(snapshotTree: ISnapshotTree): number {
  * @param odspResolvedUrl - resolved odsp url.
  * @param storageToken - token to do the auth for network request.
  * @param snapshotOptions - Options used to specify how and what to fetch in the snapshot.
- * @param fetchFullSnapshot - whether to fetch full snapshot or not.
  * @param loadingGroupIds - loadingGroupIds for which snapshot needs to be downloaded.
  * @param snapshotFormatFetchType - Snapshot format to fetch.
  * @param controller - abort controller if caller needs to abort the network call.
@@ -605,7 +599,6 @@ function countTreesInSnapshotTree(snapshotTree: ISnapshotTree): number {
 export async function downloadSnapshot(
 	odspResolvedUrl: IOdspResolvedUrl,
 	storageToken: string,
-	fetchFullSnapshot: boolean,
 	loadingGroupIds: string[] | undefined,
 	snapshotOptions: ISnapshotOptions | undefined,
 	snapshotFormatFetchType?: SnapshotFormatSupportType,
@@ -632,15 +625,6 @@ export async function downloadSnapshot(
 	}
 
 	if (loadingGroupIds !== undefined) {
-		// If we need to fetch snapshot using group Ids but no ids are specified, then fetch
-		// full snapshot using "default" groupId.
-		if (fetchFullSnapshot) {
-			assert(
-				loadingGroupIds.length === 0,
-				"No loading GroupId should be specified for full snapshot",
-			);
-			loadingGroupIds.push(defaultGroupIdForSnapshot);
-		}
 		// eslint-disable-next-line @typescript-eslint/dot-notation
 		queryParams["groupId"] = Array.from(loadingGroupIds).join(",");
 	}

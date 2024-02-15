@@ -133,7 +133,7 @@ describe("Tests1 for snapshot fetch", () => {
 				return await callback();
 			} finally {
 				assert(
-					getDownloadSnapshotStub.args[0][4]?.mds === undefined,
+					getDownloadSnapshotStub.args[0][3]?.mds === undefined,
 					"mds should be undefined",
 				);
 				success = true;
@@ -217,7 +217,7 @@ describe("Tests1 for snapshot fetch", () => {
 			} finally {
 				getDownloadSnapshotStub.restore();
 				assert(
-					getDownloadSnapshotStub.args[0][3]?.length === 0,
+					getDownloadSnapshotStub.args[0][2]?.length === 0,
 					"should ask for default groupId",
 				);
 				defaultGroupId = true;
@@ -277,7 +277,7 @@ describe("Tests1 for snapshot fetch", () => {
 			} finally {
 				getDownloadSnapshotStub.restore();
 				assert(
-					getDownloadSnapshotStub.args[0][3]?.[0] === "g1",
+					getDownloadSnapshotStub.args[0][2]?.[0] === "g1",
 					"should ask for g1 groupId",
 				);
 				success = true;
@@ -314,6 +314,7 @@ describe("Tests1 for snapshot fetch", () => {
 				service.getSnapshot({ loadingGroupIds: ["g1"] }),
 			);
 		} catch (error: any) {
+			console.log("err ", error);
 			assert.fail("the getSnapshot request should succeed");
 		}
 		assert(success, "should have asked for g1 group id");
@@ -325,7 +326,6 @@ describe("Tests1 for snapshot fetch", () => {
 					eventName: "ObtainSnapshotForGroup_end",
 					method: "networkOnly",
 					fetchSource: "noCache",
-					fetchFullSnapshot: false,
 				},
 			]),
 			"unexpected events",
@@ -445,13 +445,11 @@ describe("Tests1 for snapshot fetch", () => {
 				{
 					eventName: "ObtainSnapshot_end",
 					method: "network",
-					fetchFullSnapshot: true,
 				},
 				{
 					eventName: "ObtainSnapshotForGroup_end",
 					method: "networkOnly",
 					fetchSource: "noCache",
-					fetchFullSnapshot: false,
 				},
 			]),
 			"unexpected events",
