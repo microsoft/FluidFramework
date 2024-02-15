@@ -21,7 +21,7 @@ import {
 	NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
-import { tagCodeArtifacts, UsageError } from "@fluidframework/telemetry-utils";
+import { createChildLogger, tagCodeArtifacts, UsageError } from "@fluidframework/telemetry-utils";
 import { IAgentScheduler, IAgentSchedulerEvents } from "./agent";
 
 // Note: making sure this ID is unique and does not collide with storage provided clientID
@@ -423,7 +423,10 @@ export class AgentScheduler
 	}
 
 	private sendErrorEvent(eventName: string, error: any, key?: string) {
-		this.runtime.logger.sendErrorEvent({ eventName, key }, error);
+		const logger = createChildLogger({
+			logger: this.runtime.logger,
+		});
+		logger.sendErrorEvent({ eventName, key }, error);
 	}
 }
 

@@ -141,7 +141,8 @@
 				"forwardCompat": false
 			},
 			"ClassDeclaration_MockFluidDataStoreRuntime": {
-				"forwardCompat": false
+				"forwardCompat": false,
+				"backCompat": false
 			},
 			"ClassDeclaration_MockContainerRuntime": {
 				"forwardCompat": false

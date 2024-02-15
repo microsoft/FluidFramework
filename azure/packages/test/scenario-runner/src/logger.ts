@@ -5,10 +5,10 @@
 import crypto from "crypto";
 import fs from "fs";
 
-import { IEvent, ITelemetryBaseEvent, ITelemetryLogger } from "@fluidframework/core-interfaces";
+import { IEvent, ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert, LazyPromise } from "@fluidframework/core-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 
 import { pkgName, pkgVersion } from "./packageVersion";
@@ -144,7 +144,7 @@ export async function getLogger(
 	config: LoggerConfig,
 	events?: string[],
 	transformEvents?: Map<ScenarioRunnerTelemetryEventNames, string>,
-): Promise<ITelemetryLogger> {
+): Promise<ITelemetryLoggerExt> {
 	const baseLogger = await loggerP;
 	if (events) {
 		baseLogger.registerExpectedEvent(events);

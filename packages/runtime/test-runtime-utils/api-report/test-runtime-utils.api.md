@@ -47,6 +47,7 @@ import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { ITokenProvider } from '@fluidframework/routerlicious-driver';
 import { ITokenResponse } from '@fluidframework/routerlicious-driver';
@@ -387,7 +388,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
         clientId?: string;
         entryPoint?: IFluidHandle<FluidObject>;
         id?: string;
-        logger?: ITelemetryLoggerExt;
+        logger?: ITelemetryBaseLogger;
         idCompressor?: IIdCompressor & IIdCompressorCore;
     });
     // (undocumented)
@@ -460,7 +461,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     get local(): boolean;
     set local(local: boolean);
     // (undocumented)
-    readonly logger: ITelemetryLoggerExt;
+    readonly logger: ITelemetryBaseLogger;
     // (undocumented)
     makeVisibleAndAttachGraph(): void;
     // (undocumented)

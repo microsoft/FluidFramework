@@ -14,6 +14,7 @@ import {
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { v4 as uuid } from "uuid";
 import {
 	ConsensusCallback,
@@ -237,7 +238,10 @@ export class ConsensusOrderedCollection<T = any>
 				opName: "release",
 				acquireId,
 			}).catch((error) => {
-				this.runtime.logger.sendErrorEvent({ eventName: "ConsensusQueue_release" }, error);
+				const logger = createChildLogger({
+					logger: this.runtime.logger,
+				});
+				logger.sendErrorEvent({ eventName: "ConsensusQueue_release" }, error);
 			});
 		}
 	}
