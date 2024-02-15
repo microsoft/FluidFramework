@@ -166,23 +166,6 @@ module.exports = {
 			"extraneous-lockfiles": [
 				"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
 			],
-			"fluid-build-tasks-eslint": [
-				// Can be removed once the policy handler is updated to support tsc-multi as equivalent to tsc.
-				"^azure/packages/azure-client/package.json",
-				"^azure/packages/azure-service-utils/package.json",
-				"^experimental/dds/tree2/package.json",
-				"^experimental/dds/sequence-deprecated/package.json",
-				"^experimental/framework/tree-react-api/package.json",
-				"^packages/common/.*/package.json",
-				"^packages/dds/.*/package.json",
-				"^packages/drivers/.*/package.json",
-				"^packages/framework/.*/package.json",
-				"^packages/loader/.*/package.json",
-				"^packages/runtime/.*/package.json",
-				"^packages/service-clients/.*/package.json",
-				"^packages/utils/.*/package.json",
-				"^packages/loader/container-loader/package.json",
-			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
 				"tools/api-markdown-documenter/src/test/snapshots/.*",
