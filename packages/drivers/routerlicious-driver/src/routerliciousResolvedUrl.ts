@@ -31,7 +31,7 @@ export interface IRouterliciousResolvedUrl extends IResolvedUrl {
 
 /**
  * Type guard to detect if an IResolvedUrl is an IRouterliciousResolvedUrl.
- * @alpha
+ * @internal
  */
 export const isRouterliciousResolvedUrl = (
 	resolvedUrl: IResolvedUrl,
