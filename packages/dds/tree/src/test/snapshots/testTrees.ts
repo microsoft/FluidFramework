@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
+import { SessionId } from "@fluidframework/id-compressor";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+// eslint-disable-next-line import/no-internal-modules
+import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/dist/test/idCompressorTestUtilities.js";
 import { brand } from "../../util/index.js";
 import {
 	ISharedTree,
@@ -46,6 +48,16 @@ import { leaf, SchemaBuilder } from "../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { defaultSharedTreeOptions } from "../../shared-tree/sharedTree.js";
 
+// Session ids used for the created trees' IdCompressors must be deterministic.
+// TestTreeProviderLite does this by default.
+// Test trees which manually create their data store runtime must set up their trees'
+// session ids explicitly.
+export const snapshotSessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
+
+export function createSnapshotCompressor() {
+	return createAlwaysFinalizedIdCompressor(snapshotSessionId);
+}
+
 const rootField: FieldUpPath = { parent: undefined, field: rootFieldKey };
 const rootNode: UpPath = {
 	parent: undefined,
@@ -63,12 +75,11 @@ function generateCompleteTree(
 	nodesPerField: number,
 	factory: SharedTreeFactory,
 ): ISharedTree {
-	const idCompressor = createIdCompressor(sessionId);
 	const tree = factory.create(
 		new MockFluidDataStoreRuntime({
 			clientId: "test-client",
 			id: "test",
-			idCompressor,
+			idCompressor: createSnapshotCompressor(),
 		}),
 		"test",
 	);
@@ -78,7 +89,6 @@ function generateCompleteTree(
 		initialTree: [],
 	}).checkout;
 	generateTreeRecursively(view, undefined, fields, height, nodesPerField, { value: 1 });
-	idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
 	return tree;
 }
 
@@ -127,15 +137,6 @@ function generateTreeRecursively(
 		}
 	}
 }
-
-// Session ids used for the created trees' IdCompressors must be deterministic.
-// TestTreeProviderLite does this by default.
-// Test trees which manually create their data store runtime must set up their trees'
-// session ids explicitly.
-// Note: trees which simulate attach scenarios using the mocks should finalize ids created
-// while detached. This is only relevant for attach scenarios as the mocks set up appropriate
-// finalization when messages are processed.
-export const sessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
 
 // TODO: The generated test trees should eventually be updated to use the chunked-forest.
 export function generateTestTrees(useUncompressedEncode?: boolean) {
@@ -335,11 +336,10 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 		{
 			name: "concurrent-inserts",
 			runScenario: async (takeSnapshot) => {
-				const idCompressor = createIdCompressor(sessionId);
 				const runtime = new MockFluidDataStoreRuntime({
 					clientId: "test-client",
 					id: "test",
-					idCompressor,
+					idCompressor: createSnapshotCompressor(),
 				});
 				const baseTree = factory.create(runtime, "test");
 
@@ -359,7 +359,6 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 				tree2.rebaseOnto(tree1);
 				tree1.merge(tree2);
 
-				idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
 				await takeSnapshot(baseTree, `tree2-${testEncodeType}`);
 
 				const expected = ["x", "y", "a", "b", "c"];
@@ -372,7 +371,6 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 				tree3.rebaseOnto(tree1);
 				tree1.merge(tree3);
 
-				idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
 				await takeSnapshot(baseTree, `tree3-${testEncodeType}`);
 			},
 		},
@@ -402,12 +400,11 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 					schema: docSchema,
 					initialTree: undefined,
 				};
-				const idCompressor = createIdCompressor(sessionId);
 				const tree = factory.create(
 					new MockFluidDataStoreRuntime({
 						clientId: "test-client",
 						id: "test",
-						idCompressor,
+						idCompressor: createSnapshotCompressor(),
 					}),
 					"test",
 				);
@@ -422,7 +419,6 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 					true,
 				);
 
-				idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
 				await takeSnapshot(tree, `final-${testEncodeType}`);
 			},
 		},
@@ -444,12 +440,11 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 					initialTree: [],
 				};
 
-				const idCompressor = createIdCompressor(sessionId);
 				const tree = factory.create(
 					new MockFluidDataStoreRuntime({
 						clientId: "test-client",
 						id: "test",
-						idCompressor,
+						idCompressor: createSnapshotCompressor(),
 					}),
 					`test-${testEncodeType}`,
 				);
@@ -475,7 +470,6 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 					})
 					.insert(0, cursorForJsonableTreeNode({ type: seqMapSchema.name }));
 				view.transaction.commit();
-				idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
 				await takeSnapshot(tree, `final-${testEncodeType}`);
 			},
 		},

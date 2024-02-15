@@ -50,7 +50,7 @@
 				"deps": ["Protocol-Utils", "Driver-Definitions", "Telemetry-Utils", "Core-Utils"]
 			},
 			"Framework-Utils": {
-				"packages": ["@fluidframework/view-adapters", "@fluidframework/view-interfaces"],
+				"packages": ["@fluidframework/view-interfaces"],
 				"deps": ["Core-Interfaces"]
 			},
 			"Other-Utils": {

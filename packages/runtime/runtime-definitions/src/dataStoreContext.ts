@@ -195,21 +195,23 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * already attached DDS (or non-attached DDS that will eventually get attached to storage) will result in this
 	 * store being attached to storage.
 	 * @param pkg - Package name of the data store factory
-	 * @param groupId - group to which this data stores belongs to. This is also known at service side and can be used to
-	 * fetch snapshot contents like snapshot tree, blobs using this id from the storage.
+	 * @param loadingGroupId - This represents the group of the datastore within a container or its snapshot.
+	 * When not specified the datastore will belong to a `default` group. Read more about it in this
+	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}
 	 */
-	createDataStore(pkg: string | string[], groupId?: string): Promise<IDataStore>;
+	createDataStore(pkg: string | string[], loadingGroupId?: string): Promise<IDataStore>;
 
 	/**
 	 * Creates detached data store context. Only after context.attachRuntime() is called,
 	 * data store initialization is considered complete.
 	 * @param pkg - Package name of the data store factory
-	 * @param groupId - group to which this data stores belongs to. This is also known at service side and can be used to
-	 * fetch snapshot contents like snapshot tree, blobs using this id from the storage.
+	 * @param loadingGroupId - This represents the group of the datastore within a container or its snapshot.
+	 * When not specified the datastore will belong to a `default` group. Read more about it in this
+	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}.
 	 */
 	createDetachedDataStore(
 		pkg: Readonly<string[]>,
-		groupId?: string,
+		loadingGroupId?: string,
 	): IFluidDataStoreContextDetached;
 
 	/**
@@ -394,8 +396,11 @@ export interface IFluidDataStoreContext
 	readonly logger: ITelemetryBaseLogger;
 	readonly clientDetails: IClientDetails;
 	readonly idCompressor?: IIdCompressor;
-	// Represents the group to which the data store belongs too.
-	readonly groupId?: string;
+	/**
+	 * Represents the loading group to which the data store belongs to. Please refer to this readme for more context.
+	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}
+	 */
+	readonly loadingGroupId?: string;
 	/**
 	 * Indicates the attachment state of the data store to a host service.
 	 */
