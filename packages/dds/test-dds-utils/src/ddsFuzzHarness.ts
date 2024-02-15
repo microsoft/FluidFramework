@@ -1130,7 +1130,7 @@ async function runInStateWithClient<TState extends DDSFuzzTestState<IChannelFact
 	try {
 		return await callback(state);
 	} finally {
-		// This code is explicitly trying to "update" to the old value. eslint-disable-next-line require-atomic-updates
+		// This code is explicitly trying to "update" to the old value.
 		// eslint-disable-next-line require-atomic-updates
 		state.client = oldClient;
 	}
