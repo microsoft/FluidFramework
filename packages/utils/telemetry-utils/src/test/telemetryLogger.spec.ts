@@ -10,8 +10,8 @@ import {
 	ITelemetryLoggerPropertyBag,
 	TelemetryLogger,
 	convertToBasePropertyType,
-} from "../logger";
-import { ITaggedTelemetryPropertyTypeExt, TelemetryEventPropertyTypeExt } from "../telemetryTypes";
+} from "../logger.js";
+import { ITaggedTelemetryPropertyTypeExt, TelemetryEventPropertyTypeExt } from "../telemetryTypes.js";
 
 class TestTelemetryLogger extends TelemetryLogger {
 	public events: ITelemetryBaseEvent[] = [];
