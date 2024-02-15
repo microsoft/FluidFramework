@@ -211,7 +211,7 @@ module.exports = {
 				"common/build/eslint-config-fluid/.*",
 				"common/lib/common-utils/jest-puppeteer.config.js",
 				"common/lib/common-utils/jest.config.js",
-        "common/build/eslint-plugin-fluid/.*",
+				"common/build/eslint-plugin-fluid/.*",
 				"docs/api-markdown-documenter/.*",
 				"docs/api/fallback/index.js",
 				"docs/build-redirects.js",
