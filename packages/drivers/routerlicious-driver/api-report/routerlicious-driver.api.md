@@ -31,6 +31,12 @@ export class DocumentPostCreateError extends Error {
     get stack(): string | undefined;
 }
 
+// @alpha
+export interface IAzureResolvedUrl extends IResolvedUrl {
+    azureResolvedUrl: true;
+    createAsEphemeral?: boolean;
+}
+
 // @internal (undocumented)
 export interface IRouterliciousDriverPolicies {
     enableDiscovery: boolean;
@@ -39,7 +45,6 @@ export interface IRouterliciousDriverPolicies {
     enablePrefetch: boolean;
     enableRestLess: boolean;
     enableWholeSummaryUpload: boolean;
-    isEphemeralContainer: boolean;
     maxConcurrentOrdererRequests: number;
     maxConcurrentStorageRequests: number;
 }

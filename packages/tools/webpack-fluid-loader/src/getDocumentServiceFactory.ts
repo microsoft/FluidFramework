@@ -63,10 +63,6 @@ export function getDocumentServiceFactory(
 						? options.enableWholeSummaryUpload
 						: undefined,
 				enableDiscovery: options.mode === "r11s" && options.discoveryEndpoint !== undefined,
-				isEphemeralContainer:
-					options.mode === "r11s" || options.mode === "docker"
-						? options.isEphemeralContainer
-						: false,
 			});
 
 		case "spo":

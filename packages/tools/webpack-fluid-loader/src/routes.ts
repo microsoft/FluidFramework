@@ -120,14 +120,6 @@ export const after = (
 				options.enableWholeSummaryUpload = options.enableWholeSummaryUpload === "true";
 			}
 
-			options.isEphemeralContainer =
-				options.isEphemeralContainer ??
-				config.get("fluid:webpack:isEphemeralContainer") ??
-				false;
-			if (typeof options.isEphemeralContainer === "string") {
-				options.isEphemeralContainer = options.isEphemeralContainer === "true";
-			}
-
 			options.tenantSecret =
 				options.mode === "docker"
 					? options.tenantSecret ??
