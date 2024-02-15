@@ -593,7 +593,10 @@ function countTreesInSnapshotTree(snapshotTree: ISnapshotTree): number {
  * @param odspResolvedUrl - resolved odsp url.
  * @param storageToken - token to do the auth for network request.
  * @param snapshotOptions - Options used to specify how and what to fetch in the snapshot.
- * @param loadingGroupIds - loadingGroupIds for which snapshot needs to be downloaded.
+ * @param loadingGroupIds - loadingGroupIds for which snapshot needs to be downloaded. Note:
+ * 1.) If undefined, then legacy trees latest call will be used where no groupId query param would be specified.
+ * 2.) If [] is passed, then snapshot with all ungrouped data will be fetched.
+ * 3.) If any groupId is specified like ["g1"], then snapshot for g1 group will be fetched.
  * @param snapshotFormatFetchType - Snapshot format to fetch.
  * @param controller - abort controller if caller needs to abort the network call.
  * @param epochTracker - epoch tracker used to add/validate epoch in the network call.
