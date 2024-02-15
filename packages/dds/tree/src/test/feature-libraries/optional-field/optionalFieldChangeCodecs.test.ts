@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { SessionId } from "@fluidframework/id-compressor";
 import { NodeChangeset } from "../../../feature-libraries/index.js";
 import { JsonCompatibleReadOnly, brand } from "../../../util/index.js";
-import { EncodingTestData, MockIdCompressor, makeEncodingTestSuite } from "../../utils.js";
+import { EncodingTestData, makeEncodingTestSuite, testRevisionTagCodec } from "../../utils.js";
 import {
 	OptionalChangeset,
 	makeOptionalFieldCodecFamily,
@@ -15,7 +15,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
 import { IJsonCodec } from "../../../codec/index.js";
-import { ChangeEncodingContext, RevisionTagCodec } from "../../../core/index.js";
+import { ChangeEncodingContext } from "../../../core/index.js";
 import { changesetForChild } from "../fieldKindTestUtils.js";
 import { Change } from "./optionalFieldUtils.js";
 
@@ -77,7 +77,7 @@ export function testCodecs() {
 		};
 
 		makeEncodingTestSuite(
-			makeOptionalFieldCodecFamily(childCodec1, new RevisionTagCodec(new MockIdCompressor())),
+			makeOptionalFieldCodecFamily(childCodec1, testRevisionTagCodec),
 			encodingTestData,
 		);
 	});

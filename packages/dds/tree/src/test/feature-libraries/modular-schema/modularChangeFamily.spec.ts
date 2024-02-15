@@ -38,18 +38,17 @@ import {
 	DeltaRoot,
 	DeltaDetachedNodeId,
 	ChangeEncodingContext,
-	RevisionTagCodec,
 } from "../../../core/index.js";
 import { brand, nestedMapFromFlatList, tryGetFromNestedMap } from "../../../util/index.js";
 import { ICodecOptions, makeCodecFamily } from "../../../codec/index.js";
 import {
 	EncodingTestData,
-	MockIdCompressor,
 	assertDeltaEqual,
 	deepFreeze,
 	makeEncodingTestSuite,
 	mintRevisionTag,
 	testChangeReceiver,
+	testRevisionTagCodec,
 } from "../../utils.js";
 import {
 	ModularChangeFamily,
@@ -108,10 +107,9 @@ const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Ma
 const codecOptions: ICodecOptions = {
 	jsonValidator: ajvValidator,
 };
-const revisionTagCodec = new RevisionTagCodec(new MockIdCompressor());
 const family = new ModularChangeFamily(
 	fieldKinds,
-	revisionTagCodec,
+	testRevisionTagCodec,
 	makeFieldBatchCodec(codecOptions),
 	codecOptions,
 );
@@ -122,9 +120,6 @@ const tag3: RevisionTag = mintRevisionTag();
 
 const fieldA: FieldKey = brand("a");
 const fieldB: FieldKey = brand("b");
-
-const detachId = { minor: 424242 };
-const buildId = { minor: 424243 };
 
 const valueChange1a: ValueChangeset = { old: 0, new: 1 };
 const valueChange1b: ValueChangeset = { old: 0, new: 2 };
