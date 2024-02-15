@@ -44,8 +44,8 @@ import {
 	createSessionMetric,
 	logCommonSessionEndMetrics,
 	CheckpointReason,
-	ICheckpoint,
 	IServerMetadata,
+	DocumentCheckpointManager,
 } from "../utils";
 import { ICheckpointManager, IPendingMessageReader, ISummaryWriter } from "./interfaces";
 import { getClientIds, initializeProtocol, sendToDeli } from "./utils";
@@ -89,13 +89,9 @@ export class ScribeLambda implements IPartitionLambda {
 	private closed: boolean = false;
 
 	// Used to control checkpoint logic
-	private readonly checkpointInfo: ICheckpoint = {
-		lastCheckpointTime: Date.now(),
-		rawMessagesSinceCheckpoint: 0,
-	};
+	private readonly documentCheckpointManager: DocumentCheckpointManager =
+		new DocumentCheckpointManager();
 
-	// Used to checkpoint if no active clients
-	private noActiveClients: boolean = false;
 	private globalCheckpointOnly: boolean;
 
 	constructor(
@@ -136,7 +132,7 @@ export class ScribeLambda implements IPartitionLambda {
 				databaseLastOffset: this.lastOffset,
 			});
 
-			this.updateCheckpointMessages(message);
+			this.documentCheckpointManager.updateCheckpointMessages(message);
 			try {
 				if (this.kafkaCheckpointOnReprocessingOp) {
 					this.context.checkpoint(message, this.restartOnCheckpointFailure);
@@ -351,7 +347,8 @@ export class ScribeLambda implements IPartitionLambda {
 						value.operation.minimumSequenceNumber === value.operation.sequenceNumber,
 						`${value.operation.minimumSequenceNumber} != ${value.operation.sequenceNumber}`,
 					);
-					this.noActiveClients = true;
+
+					this.documentCheckpointManager.setNoActiveClients(true);
 					this.globalCheckpointOnly = true;
 					const enableServiceSummaryForTenant =
 						this.disableTransientTenantFiltering ||
@@ -450,22 +447,26 @@ export class ScribeLambda implements IPartitionLambda {
 		}
 
 		// Create the checkpoint
-		this.updateCheckpointMessages(message);
-		this.checkpointInfo.rawMessagesSinceCheckpoint++;
+		this.documentCheckpointManager.updateCheckpointMessages(message);
+		this.documentCheckpointManager.incrementRawMessageCounter();
 
-		if (this.noActiveClients) {
+		if (this.documentCheckpointManager.getNoActiveClients()) {
 			if (this.localCheckpointEnabled) {
 				this.globalCheckpointOnly = true;
 			}
 			this.prepareCheckpoint(message, CheckpointReason.NoClients);
-			this.noActiveClients = false;
+			this.documentCheckpointManager.setNoActiveClients(false);
 		} else {
 			const checkpointReason = this.getCheckpointReason();
 			if (checkpointReason !== undefined) {
 				// checkpoint the current up-to-date state
 				this.prepareCheckpoint(message, checkpointReason);
 			} else {
-				this.updateCheckpointIdleTimer();
+				this.documentCheckpointManager.updateCheckpointIdleTimer(
+					this.serviceConfiguration.scribe.checkpointHeuristics.idleTime,
+					this.idleTimeCheckpoint,
+					this.isDocumentCorrupt,
+				);
 			}
 		}
 	}
@@ -477,22 +478,23 @@ export class ScribeLambda implements IPartitionLambda {
 	) {
 		// Get checkpoint context
 		const checkpoint = this.generateScribeCheckpoint(message.offset);
-		this.updateCheckpointMessages(message);
+		this.documentCheckpointManager.updateCheckpointMessages(message);
 
 		// write the checkpoint with the current up-to-date state
-		this.checkpoint(checkpointReason);
+		this.documentCheckpointManager.resetCheckpointTimer();
 		this.checkpointCore(checkpoint, message, this.clearCache, skipKafkaCheckpoint);
 		this.lastOffset = message.offset;
 		const reason = CheckpointReason[checkpointReason];
 		const checkpointResult = `Writing checkpoint. Reason: ${reason}`;
+		const checkpointProperties = this.documentCheckpointManager.getCheckpointInfo();
 		const lumberjackProperties = {
 			...getLumberBaseProperties(this.documentId, this.tenantId),
 			checkpointReason: reason,
 			lastOffset: this.lastOffset,
-			scribeCheckpointOffset: this.checkpointInfo.currentCheckpointMessage?.offset,
-			scribeCheckpointPartition: this.checkpointInfo.currentCheckpointMessage?.partition,
-			kafkaCheckpointOffset: this.checkpointInfo.currentKafkaCheckpointMessage?.offset,
-			kafkaCheckpointPartition: this.checkpointInfo.currentKafkaCheckpointMessage?.partition,
+			scribeCheckpointOffset: checkpointProperties.currentCheckpointMessage?.offset,
+			scribeCheckpointPartition: checkpointProperties.currentCheckpointMessage?.partition,
+			kafkaCheckpointOffset: checkpointProperties.currentKafkaCheckpointMessage?.offset,
+			kafkaCheckpointPartition: checkpointProperties.currentKafkaCheckpointMessage?.partition,
 			clientCount: checkpoint.protocolState.members.length,
 			clients: getClientIds(checkpoint.protocolState, 5),
 			localCheckpointEnabled: this.localCheckpointEnabled,
@@ -682,7 +684,7 @@ export class ScribeLambda implements IPartitionLambda {
 			checkpoint,
 			this.protocolHead,
 			inserts,
-			this.noActiveClients,
+			this.documentCheckpointManager.getNoActiveClients(),
 			this.globalCheckpointOnly,
 			this.isDocumentCorrupt,
 		);
@@ -795,21 +797,6 @@ export class ScribeLambda implements IPartitionLambda {
 		this.isDocumentCorrupt = scribe.isCorrupt;
 	}
 
-	private updateCheckpointMessages(message: IQueuedMessage) {
-		// updates scribe checkpoint message
-		this.checkpointInfo.currentCheckpointMessage = message;
-
-		if (this.noActiveClients) {
-			this.checkpointInfo.nextKafkaCheckpointMessage = undefined;
-			this.checkpointInfo.currentKafkaCheckpointMessage = message;
-		} else {
-			// Keeps Kafka checkpoint behind by 1 message (is this necessary?)
-			const kafkaCheckpointMessage = this.checkpointInfo.nextKafkaCheckpointMessage;
-			this.checkpointInfo.nextKafkaCheckpointMessage = message;
-			this.checkpointInfo.currentKafkaCheckpointMessage = kafkaCheckpointMessage;
-		}
-	}
-
 	// Determines checkpoint reason based on some Heuristics
 
 	private getCheckpointReason(): CheckpointReason | undefined {
@@ -820,12 +807,14 @@ export class ScribeLambda implements IPartitionLambda {
 			return CheckpointReason.EveryMessage;
 		}
 
-		if (this.checkpointInfo.rawMessagesSinceCheckpoint >= checkpointHeuristics.maxMessages) {
+		const checkpointInfo = this.documentCheckpointManager.getCheckpointInfo();
+
+		if (checkpointInfo.rawMessagesSinceCheckpoint >= checkpointHeuristics.maxMessages) {
 			// exceeded max messages since last checkpoint
 			return CheckpointReason.MaxMessages;
 		}
 
-		if (Date.now() - this.checkpointInfo.lastCheckpointTime >= checkpointHeuristics.maxTime) {
+		if (Date.now() - checkpointInfo.lastCheckpointTime >= checkpointHeuristics.maxTime) {
 			// exceeded max time since last checkpoint
 			return CheckpointReason.MaxTime;
 		}
@@ -833,65 +822,27 @@ export class ScribeLambda implements IPartitionLambda {
 		return undefined;
 	}
 
-	private clearCheckpointIdleTimer() {
-		if (this.checkpointInfo.idleTimer !== undefined) {
-			clearTimeout(this.checkpointInfo.idleTimer);
-			this.checkpointInfo.idleTimer = undefined;
+	private readonly idleTimeCheckpoint = (initialScribeCheckpointMessage: IQueuedMessage) => {
+		if (initialScribeCheckpointMessage) {
+			const checkpoint = this.generateScribeCheckpoint(initialScribeCheckpointMessage.offset);
+			this.checkpointCore(checkpoint, initialScribeCheckpointMessage, this.clearCache);
+			const checkpointResult = `Writing checkpoint. Reason: IdleTime`;
+			const checkpointInfo = this.documentCheckpointManager.getCheckpointInfo();
+			const lumberjackProperties = {
+				...getLumberBaseProperties(this.documentId, this.tenantId),
+				checkpointReason: "IdleTime",
+				lastOffset: initialScribeCheckpointMessage.offset,
+				scribeCheckpointOffset: checkpointInfo.currentCheckpointMessage?.offset,
+				scribeCheckpointPartition: checkpointInfo.currentCheckpointMessage?.partition,
+				kafkaCheckpointOffset: checkpointInfo.currentKafkaCheckpointMessage?.offset,
+				kafkaCheckpointPartition: checkpointInfo.currentKafkaCheckpointMessage?.partition,
+				clientCount: checkpoint.protocolState.members.length,
+				clients: getClientIds(checkpoint.protocolState, 5),
+				localCheckpointEnabled: this.localCheckpointEnabled,
+				globalCheckpointOnly: this.globalCheckpointOnly,
+				localCheckpoint: this.localCheckpointEnabled && !this.globalCheckpointOnly,
+			};
+			Lumberjack.info(checkpointResult, lumberjackProperties);
 		}
-	}
-
-	private checkpoint(reason: CheckpointReason) {
-		this.clearCheckpointIdleTimer();
-		this.checkpointInfo.lastCheckpointTime = Date.now();
-		this.checkpointInfo.rawMessagesSinceCheckpoint = 0;
-	}
-
-	private updateCheckpointIdleTimer() {
-		this.clearCheckpointIdleTimer();
-
-		const initialScribeCheckpointMessage = this.checkpointInfo.currentCheckpointMessage;
-
-		this.checkpointInfo.idleTimer = setTimeout(() => {
-			this.checkpointInfo.idleTimer = undefined;
-
-			// verify that the current scribe message matches the message that started this timer
-			// same implementation as in Deli
-			if (
-				initialScribeCheckpointMessage === this.checkpointInfo.currentCheckpointMessage &&
-				!this.isDocumentCorrupt
-			) {
-				this.checkpoint(CheckpointReason.IdleTime);
-				if (initialScribeCheckpointMessage) {
-					const checkpoint = this.generateScribeCheckpoint(
-						initialScribeCheckpointMessage.offset,
-					);
-					this.checkpointCore(
-						checkpoint,
-						initialScribeCheckpointMessage,
-						this.clearCache,
-					);
-					const checkpointResult = `Writing checkpoint. Reason: IdleTime`;
-					const lumberjackProperties = {
-						...getLumberBaseProperties(this.documentId, this.tenantId),
-						checkpointReason: "IdleTime",
-						lastOffset: initialScribeCheckpointMessage.offset,
-						scribeCheckpointOffset:
-							this.checkpointInfo.currentCheckpointMessage?.offset,
-						scribeCheckpointPartition:
-							this.checkpointInfo.currentCheckpointMessage?.partition,
-						kafkaCheckpointOffset:
-							this.checkpointInfo.currentKafkaCheckpointMessage?.offset,
-						kafkaCheckpointPartition:
-							this.checkpointInfo.currentKafkaCheckpointMessage?.partition,
-						clientCount: checkpoint.protocolState.members.length,
-						clients: getClientIds(checkpoint.protocolState, 5),
-						localCheckpointEnabled: this.localCheckpointEnabled,
-						globalCheckpointOnly: this.globalCheckpointOnly,
-						localCheckpoint: this.localCheckpointEnabled && !this.globalCheckpointOnly,
-					};
-					Lumberjack.info(checkpointResult, lumberjackProperties);
-				}
-			}
-		}, this.serviceConfiguration.scribe.checkpointHeuristics.idleTime);
-	}
+	};
 }

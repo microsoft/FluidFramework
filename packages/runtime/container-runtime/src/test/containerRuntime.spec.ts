@@ -13,23 +13,33 @@ import {
 } from "@fluidframework/container-definitions";
 import {
 	ISequencedDocumentMessage,
+	ISnapshotTree,
 	ISummaryTree,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
 import {
+	FluidDataStoreRegistryEntry,
 	FlushMode,
 	FlushModeExperimental,
+	IFluidDataStoreContext,
+	IFluidDataStoreFactory,
+	IFluidDataStoreRegistry,
 	ISummaryTreeWithStats,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import {
 	createChildLogger,
+	IFluidErrorBase,
 	isFluidError,
 	isILoggingError,
 	mixinMonitoringContext,
 	MockLogger,
 } from "@fluidframework/telemetry-utils";
-import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
+import {
+	MockDeltaManager,
+	MockFluidDataStoreRuntime,
+	MockQuorumClients,
+} from "@fluidframework/test-runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
 	IErrorBase,
@@ -37,8 +47,14 @@ import {
 	FluidObject,
 	ConfigTypes,
 	IConfigProviderBase,
+	FluidErrorTypes,
 } from "@fluidframework/core-interfaces";
-import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
+import {
+	IDocumentStorageService,
+	ISnapshot,
+	ISummaryContext,
+} from "@fluidframework/driver-definitions";
+import { stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	CompressionAlgorithms,
 	ContainerRuntime,
@@ -1717,6 +1733,7 @@ describe("Runtime", () => {
 				const summarizeResult = await containerRuntime.submitSummary({
 					summaryLogger: createChildLogger(),
 					cancellationToken: neverCancelledSummaryToken,
+					latestSummaryRefSeqNum: 0,
 				});
 				assert(summarizeResult.stage === "submit", "Summary did not succeed");
 			});
@@ -1729,6 +1746,7 @@ describe("Runtime", () => {
 				const summarizeResult = await containerRuntime.submitSummary({
 					summaryLogger: createChildLogger(),
 					cancellationToken: cancelledSummaryToken,
+					latestSummaryRefSeqNum: 0,
 				});
 				assert(summarizeResult.stage === "base", "Summary did not fail");
 				assert.strictEqual(
@@ -1746,6 +1764,7 @@ describe("Runtime", () => {
 				const summarizeResultP = containerRuntime.submitSummary({
 					summaryLogger: createChildLogger(),
 					cancellationToken: neverCancelledSummaryToken,
+					latestSummaryRefSeqNum: 0,
 				});
 
 				// Advance the clock by the time that container runtime would wait for pending ops to be processed.
@@ -1781,6 +1800,7 @@ describe("Runtime", () => {
 				const summarizeResult = await containerRuntime.submitSummary({
 					summaryLogger: createChildLogger(),
 					cancellationToken: neverCancelledSummaryToken,
+					latestSummaryRefSeqNum: 0,
 				});
 				assert(summarizeResult.stage === "base", "Summary did not fail");
 				assert.strictEqual(
@@ -1825,6 +1845,7 @@ describe("Runtime", () => {
 				const summarizeResultP = containerRuntime.submitSummary({
 					summaryLogger,
 					cancellationToken: neverCancelledSummaryToken,
+					latestSummaryRefSeqNum: 0,
 				});
 
 				// Advance the clock by 1 ms less than the time waited for pending ops to be processed. This will allow
@@ -1978,6 +1999,253 @@ describe("Runtime", () => {
 				const state = await stateP;
 				assert.strictEqual(typeof state, "object");
 				assert.strictEqual(state.pending?.pendingStates, pendingStates);
+			});
+		});
+
+		describe("Load Partial Snapshot with datastores with GroupId", () => {
+			let snapshotWithContents: ISnapshot;
+			let blobContents: Map<string, ArrayBuffer>;
+			beforeEach(() => {
+				const snapshotTree: ISnapshotTree = {
+					id: "SnapshotId",
+					blobs: { ".metadata": "bARD4RKvW4LL1KmaUKp6hUMSp" },
+					trees: {
+						".protocol": {
+							blobs: {
+								attributes: "bARADgIe4qmDjJl2l2zz12IM3",
+								quorumMembers: "bARBkx1nses1pHL1vKnmFUfIC",
+								quorumProposals: "bARBkx1nses1pHL1vKnmFUfIC",
+							},
+							trees: {},
+						},
+						".channels": {
+							blobs: {},
+							trees: {
+								default: {
+									blobs: {
+										".component": "bARC6dCXlcrPxQHw3PeROtmKc",
+										"gc": "bARDNMoBed+nKrsf04id52iUA",
+									},
+									trees: {
+										".channels": {
+											blobs: {},
+											trees: {
+												root: { blobs: {}, trees: {} },
+											},
+										},
+									},
+								},
+								missingDataStore: {
+									blobs: {},
+									trees: {},
+									groupId: "G1",
+								},
+							},
+							unreferenced: true,
+						},
+						".blobs": { blobs: {}, trees: {} },
+						"gc": {
+							id: "e8ed0760ac37fd8042020559779ce80b1d88f266",
+							blobs: {
+								__gc_root: "018d97818f8b519f99c418cb3c33ce5cc4e38e3f",
+							},
+							trees: {},
+						},
+					},
+				};
+
+				blobContents = new Map<string, ArrayBuffer>([
+					[
+						"bARADgIe4qmDjJl2l2zz12IM3",
+						stringToBuffer(
+							JSON.stringify({
+								branch: "",
+								minimumSequenceNumber: 0,
+								sequenceNumber: 0,
+								term: 1,
+							}),
+							"utf8",
+						),
+					],
+					["bARBkx1nses1pHL1vKnmFUfIC", stringToBuffer(JSON.stringify([]), "utf8")],
+					[
+						"bARD4RKvW4LL1KmaUKp6hUMSp",
+						stringToBuffer(
+							JSON.stringify({ summaryFormatVersion: 1, gcFeature: 3 }),
+							"utf8",
+						),
+					],
+					[
+						"bARC6dCXlcrPxQHw3PeROtmKc",
+						stringToBuffer(
+							JSON.stringify({
+								pkg: '["@fluid-example/smde"]',
+								summaryFormatVersion: 2,
+								isRootDataStore: true,
+							}),
+							"utf8",
+						),
+					],
+					[
+						"bARDNMoBed+nKrsf04id52iUA",
+						stringToBuffer(
+							JSON.stringify({
+								usedRoutes: [""],
+								gcData: {
+									gcNodes: {
+										"/root": [
+											"/default/01b197a2-0432-413b-b2c9-83a992b804c4",
+											"/default",
+										],
+										"/01b197a2-0432-413b-b2c9-83a992b804c4": ["/default"],
+										"/": [
+											"/default/root",
+											"/default/01b197a2-0432-413b-b2c9-83a992b804c4",
+										],
+									},
+								},
+							}),
+							"utf8",
+						),
+					],
+					[
+						"018d97818f8b519f99c418cb3c33ce5cc4e38e3f",
+						stringToBuffer(
+							JSON.parse(
+								JSON.stringify(
+									'{"gcNodes":{"/":{"outboundRoutes":["/rootDOId"]},"/rootDOId":{"outboundRoutes":["/rootDOId/de68ca53-be31-479e-8d34-a267958997e4","/rootDOId/root"]},"/rootDOId/de68ca53-be31-479e-8d34-a267958997e4":{"outboundRoutes":["/rootDOId"]},"/rootDOId/root":{"outboundRoutes":["/rootDOId","/rootDOId/de68ca53-be31-479e-8d34-a267958997e4"]}}}',
+								),
+							),
+							"utf8",
+						),
+					],
+				]);
+
+				const ops: ISequencedDocumentMessage[] = [
+					{
+						clientId: "X",
+						clientSequenceNumber: -1,
+						contents: null,
+						minimumSequenceNumber: 0,
+						referenceSequenceNumber: -1,
+						sequenceNumber: 1,
+						timestamp: 1623883807452,
+						type: "join",
+					},
+					{
+						clientId: "Y",
+						clientSequenceNumber: -1,
+						contents: null,
+						minimumSequenceNumber: 0,
+						referenceSequenceNumber: -1,
+						sequenceNumber: 2,
+						timestamp: 1623883811928,
+						type: "join",
+					},
+				];
+				snapshotWithContents = {
+					blobContents,
+					ops,
+					snapshotTree,
+					sequenceNumber: 0,
+					snapshotFormatV: 1,
+					latestSequenceNumber: 2,
+				};
+			});
+
+			// Helper function that creates a FluidDataStoreRegistryEntry with the registry entries
+			// provided to it.
+			function createDataStoreRegistryEntry(
+				entries: NamedFluidDataStoreRegistryEntries,
+			): FluidDataStoreRegistryEntry {
+				const registryEntries = new Map(entries);
+				const factory: IFluidDataStoreFactory = {
+					type: "store-type",
+					get IFluidDataStoreFactory() {
+						return factory;
+					},
+					instantiateDataStore: async (context: IFluidDataStoreContext) =>
+						new MockFluidDataStoreRuntime(),
+				};
+				const registry: IFluidDataStoreRegistry = {
+					get IFluidDataStoreRegistry() {
+						return registry;
+					},
+					// Returns the registry entry as per the entries provided in the param.
+					get: async (pkg) => registryEntries.get(pkg),
+				};
+
+				const entry: FluidDataStoreRegistryEntry = {
+					get IFluidDataStoreFactory() {
+						return factory;
+					},
+					get IFluidDataStoreRegistry() {
+						return registry;
+					},
+				};
+				return entry;
+			}
+
+			it("load snapshot with missing snapshot contents for datastores", async () => {
+				// In this test we will try to load the container runtime with a snapshot which has 2 datastores. However,
+				// snapshot for datastore "missingDataStore" does not contains trees/blobs and we will check that the
+				// container runtime loads fine but the "missingDataStore" is requested, it fails to load individually due
+				// to missing snapshot contents.
+				const logger = new MockLogger();
+				const containerContext = getMockContext({}, logger) as IContainerContext;
+				(containerContext as any).snapshotWithContents = snapshotWithContents;
+				(containerContext as any).baseSnapshot = snapshotWithContents.snapshotTree;
+				containerContext.storage.readBlob = async (id: string) => {
+					return blobContents.get(id) as ArrayBuffer;
+				};
+				const entryA = createDataStoreRegistryEntry([]);
+				const entryB = createDataStoreRegistryEntry([]);
+				const entryDefault = createDataStoreRegistryEntry([
+					["default", Promise.resolve(entryA)],
+					["missingDataStore", Promise.resolve(entryB)],
+				]);
+				const containerRuntime = await ContainerRuntime.loadRuntime({
+					context: containerContext,
+					registryEntries: [["@fluid-example/smde", Promise.resolve(entryDefault)]],
+					existing: true,
+					runtimeOptions: {
+						flushMode: FlushMode.TurnBased,
+						enableRuntimeIdCompressor: true,
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				logger.clear();
+				const defaultDataStore =
+					await containerRuntime.getAliasedDataStoreEntryPoint("default");
+				assert(defaultDataStore !== undefined, "data store should load and is attached");
+				await assert.rejects(
+					async () => {
+						await containerRuntime.getAliasedDataStoreEntryPoint("missingDataStore");
+					},
+					(err: IFluidErrorBase) => {
+						assert(
+							err !== undefined,
+							"error should occur on realization of `missingDataStore`",
+						);
+						assert(
+							err.errorType === FluidErrorTypes.dataProcessingError,
+							"error should be data processing error",
+						);
+						assert(
+							err.getTelemetryProperties().dataProcessingCodepath ===
+								"realizeFluidDataStoreContext",
+							"error path should be correct",
+						);
+						assert(
+							// eslint-disable-next-line @typescript-eslint/dot-notation
+							(err.getTelemetryProperties().fluidDataStoreId as any)["value"] ===
+								"missingDataStore",
+							"correct datastore name should be there",
+						);
+						return true;
+					},
+				);
 			});
 		});
 	});
