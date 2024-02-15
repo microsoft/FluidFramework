@@ -11,7 +11,7 @@ importers:
   .:
     specifiers:
       '@fluid-tools/build-cli': ^0.26.1
-      '@fluidframework/build-common': file:../../common/build/build-common
+      '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.28.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@types/async': ^3.2.9
@@ -39,7 +39,7 @@ importers:
       typescript: ~4.5.5
     devDependencies:
       '@fluid-tools/build-cli': 0.26.1_bkxvyo6swyyjbzntcteneey2uq
-      '@fluidframework/build-common': file:../../common/build/build-common
+      '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0_@types+node@18.17.7
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@types/async': 3.2.16
@@ -68,7 +68,7 @@ importers:
 
   packages/gitrest:
     specifiers:
-      '@fluidframework/build-common': file:../../../../common/build/build-common
+      '@fluidframework/build-common': ^2.0.3
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitrest-base': workspace:~
       '@fluidframework/server-services-shared': ^3.0.0
@@ -115,7 +115,7 @@ importers:
       uuid: 3.4.0
       winston: 3.8.2
     devDependencies:
-      '@fluidframework/build-common': file:../../common/build/build-common
+      '@fluidframework/build-common': 2.0.3
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@types/async': 3.2.16
       '@types/cors': 2.8.13
@@ -137,7 +137,7 @@ importers:
 
   packages/gitrest-base:
     specifiers:
-      '@fluidframework/build-common': file:../../../../common/build/build-common
+      '@fluidframework/build-common': ^2.0.3
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': ^3.0.0
@@ -220,7 +220,7 @@ importers:
       uuid: 3.4.0
       winston: 3.8.2
     devDependencies:
-      '@fluidframework/build-common': file:../../common/build/build-common
+      '@fluidframework/build-common': 2.0.3
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@types/async': 3.2.16
       '@types/cors': 2.8.13
@@ -495,6 +495,11 @@ packages:
       - '@types/node'
       - supports-color
       - typescript
+    dev: true
+
+  /@fluidframework/build-common/2.0.3:
+    resolution: {integrity: sha512-1LU/2uyCeMxf63z5rhFOFEBvFyBogZ7ZXwzXLxyBhSgq/fGiq8PLjBW7uX++r0LcVCdaWyopf7w060eJpANYdg==}
+    hasBin: true
     dev: true
 
   /@fluidframework/build-tools/0.26.2_@types+node@18.17.7:
@@ -13783,11 +13788,4 @@ packages:
       validator: 13.11.0
     optionalDependencies:
       commander: 9.5.0
-    dev: true
-
-  file:../../common/build/build-common:
-    resolution: {directory: ../../common/build/build-common, type: directory}
-    name: '@fluidframework/build-common'
-    version: 3.0.0
-    hasBin: true
     dev: true
