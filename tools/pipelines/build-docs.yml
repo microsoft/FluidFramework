@@ -187,22 +187,6 @@ stages:
             targetPath: '$(Build.SourcesDirectory)/docs/public'
             artifactName: 'fluidframework-docs'
             publishLocation: 'pipeline'
-        
-        - script: |
-            mkdir $(Build.SourcesDirectory)\docs-temp\api
-            mkdir $(Build.SourcesDirectory)\docs-temp\public
-            mkdir $(Build.SourcesDirectory)\docs-temp\data
-
-            xcopy /E $(Build.SourcesDirectory)\docs\public $(Build.SourcesDirectory)\docs-temp\public
-            xcopy /E $(Build.SourcesDirectory)\docs\api $(Build.SourcesDirectory)\docs-temp\api
-            xcopy /E $(Build.SourcesDirectory)\docs\data $(Build.SourcesDirectory)\docs-temp\data
-
-        - task: PublishPipelineArtifact@1
-          displayName: 'Publish docs-temp artifact'
-          inputs:
-            targetPath: '$(Build.SourcesDirectory)/docs-temp'
-            artifactName: 'fluidframework-docs-temp'
-            publishLocation: 'pipeline'
 
   # BEGIN Secure development tasks
 - stage: guardian
