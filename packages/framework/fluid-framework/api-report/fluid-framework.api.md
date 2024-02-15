@@ -469,8 +469,8 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
 }
 
 // @public
-export abstract class TreeNode implements WithType {
-    abstract get [type](): string;
+export interface TreeNode extends WithType {
+    get [type](): string;
 }
 
 // @public
