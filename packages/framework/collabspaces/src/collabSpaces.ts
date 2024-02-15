@@ -41,6 +41,7 @@ import {
 	SaveResult,
 } from "./contracts";
 import { DeferredChannel, DeferredChannelFactory } from "./deferreChannel";
+import { ReverseMap, ReverseMapType } from "./reverseMap";
 
 /*
  * This is a prototype, an implementation of sparse matrix that natively supports collaboration.
@@ -51,12 +52,12 @@ import { DeferredChannel, DeferredChannelFactory } from "./deferreChannel";
  * 2. There are two ways to change data:
  *    - Overwriting data in a cell. FWW (First writer wins) merge policy is used (more on implications later)
  *    - Collaborating on data.
- * 3. When collaboration is required, a collaboration "channel" is created. Channel is accosiated with a cell, and acts
+ * 3. When collaboration is required, a collaboration "channel" is created. Channel is associated with a cell, and acts
  *    and behaves as a DDSs, with couple key exceptions:
- *    - When channel is creted, it does not result in attach op being sent. System assumes that this is not required,
+ *    - When channel is created, it does not result in attach op being sent. System assumes that this is not required,
  *      as conversion from serialized format to collab format is functional, i.e. all clients will do exactly same
- *      convesion and will arrive to exactly same (initial) representation
- *    - When it's safe to destroy collaboraton channel, it's destroed without any ops, after latest serialized
+ *      conversion and will arrive to exactly same (initial) representation
+ *    - When it's safe to destroy collaboration channel, it's destroyed without any ops, after latest serialized
  *      representation of channel has been stored back in matrix.
  *  4. The key assumption of the system - there are relatively few collaboration channels at any moment.
  *  5. While this is not part of initial prototype, eventually we want to allow storing handles to components, and thus
@@ -68,9 +69,9 @@ import { DeferredChannel, DeferredChannelFactory } from "./deferreChannel";
  *    back associated with cell, and all such changes that happened in the past (even when channel was no longer
  *    associated with cell) will show up.
  *    - That said, this makes it much harder to do GC of channels. Essentially any channel that is hanging in the air
- *      like that could be collected by GC, only after 30 days (GC policy). That migth be too much garbage to collect.
- *    - At the same time, column type change & immidiate undo done by offline client should not wipe any chances
- *      when client goes online! It migth if we are not careful (for example, current matrix implementation does exaclty
+ *      like that could be collected by GC, only after 30 days (GC policy). That might be too much garbage to collect.
+ *    - At the same time, column type change & immediate undo done by offline client should not wipe any chances
+ *      when client goes online! It might if we are not careful (for example, current matrix implementation does exactly
  *      that - it stored old value and overwrites cell with old value, which is incorrect as old value represents only
  *      what was known to this client at the time it did change cell, and does not account any changes by other clients
  *      that might have sequenced before either of those two operations)
@@ -83,10 +84,10 @@ import { DeferredChannel, DeferredChannelFactory } from "./deferreChannel";
  *          creation! And thus we might need to delay that process up until channel is rooted again (through undo op).
  *     2. We could send attach ops, but when processing one, ignore it if channel is already created.
  *        - This can not be required step (but can be optional). That's because other client could have destroyed channel,
- *          and would need to figure out initial state when it sees an op comming for non-existing channel. A client with
+ *          and would need to figure out initial state when it sees an op coming for non-existing channel. A client with
  *          undo records is likely to keep channels much longer (in memory) then other clients, and thus may send ops (undo)
  *          when all other clients already destroyed such channel.
- *        - Thus, sending attach ops is more like corener case of #3 below.
+ *        - Thus, sending attach ops is more like corner case of #3 below.
  *        - That said, we should delay sending attach op until there are any changes in the channel. User could be scrolling
  *          through table and that might create channels in anticipation of user typing (rich components are created and they
  *          need channel to initialize and render), but user might not edit anything. And thus we better move to #3.
@@ -103,8 +104,8 @@ import { DeferredChannel, DeferredChannelFactory } from "./deferreChannel";
  *          with any cell. But undo can still bring it back. Such client (at least in today's system) has no place to get
  *          initial state for a channel (Matrix does not behave like Sequence DDS - it does not store all states of all
  *          clients within collab window, it only stores latest state)
- *        - Leaving possible performance / bandwith issues aside, it will be hard to accomplish that design, unless we push
- *          that responsibility to channels. Consider op rebasing case - Matrix (or code around it) can't reconstuct the
+ *        - Leaving possible performance / bandwidth issues aside, it will be hard to accomplish that design, unless we push
+ *          that responsibility to channels. Consider op rebasing case - Matrix (or code around it) can't reconstruct the
  *          state of the cell before such op - we simply do not have enough data to do so. That said, most DDSs do not have
  *          that data either, as they use LWW (Last Writer Wins) policy and simply do not track such state.
  * 2. We need to map channel names to cells (when receiving channel op while channel is not created yet). There are a
@@ -123,7 +124,7 @@ const matrixId = "matrix";
 const debugChannelId = "debug";
 const channelSummaryBlobName = "channelInfo";
 
-type uuidType = number | string;
+export type uuidType = number | string;
 
 interface MatrixInternalType extends MatrixExternalType {
 	// This is channel ID modifier.
@@ -158,7 +159,7 @@ const valueCreatedAttachedSeq = -1;
 
 interface IChannelTrackingInfo {
 	// Sequence number of the last message for this channel.
-	// Only evaluated for acked messages. I.e. if there are any local pending messages, this propertly
+	// Only evaluated for acked messages. I.e. if there are any local pending messages, this property
 	// is not reflecting such messages.
 	seq: number;
 
@@ -198,10 +199,11 @@ export class CollabSpacesRuntime
 {
 	private matrixInternal?: SharedMatrix<MatrixInternalType>;
 	private channelInfo: Record<string, IChannelTrackingInfo | undefined> = {};
+	private readonly useReverseMapping = true;
+	private readonly reverseMap: ReverseMap = new ReverseMap();
 	private deferredChannels: Map<string, DeferredChannel> = new Map();
 	private matrixPendingChangeCount = 0;
 	private debugChannel?: DeferredChannel = undefined;
-
 	constructor(
 		dataStoreContext: IFluidDataStoreContext,
 		sharedObjects: Readonly<ICollabChannelFactory[]>,
@@ -228,7 +230,7 @@ export class CollabSpacesRuntime
 	}
 
 	// Called on various paths, like op processing, where channel should exists.
-	private updatePendingCoutner(address: string, diff: number, allowImplicitCreation: boolean) {
+	private updatePendingCounter(address: string, diff: number, allowImplicitCreation: boolean) {
 		if (!this.isCollabChannel(address)) {
 			if (address === matrixId) {
 				this.matrixPendingChangeCount += diff;
@@ -241,11 +243,11 @@ export class CollabSpacesRuntime
 		if (channel === undefined) {
 			if (!allowImplicitCreation) {
 				// Channel has to be there, the fact that it's not here is a integrity violation!
-				this.criticalError(new Error("collabSpaces: intergity violation"));
+				this.criticalError(new Error("collabSpaces: integrity violation"));
 			}
 
 			// Here are two considerations:
-			// This is syncronous function, while creation of the channel is async
+			// This is synchronous function, while creation of the channel is async
 			// We might not be able to create a channel IF this channel is not rooted in a cell.
 			// We will need to hold on to all the ops, when if/when (through undo) channel becomes
 			// active again, recreated it!
@@ -284,7 +286,7 @@ export class CollabSpacesRuntime
 	protected setChannelDirty(address: string): void {
 		// TBD(Pri2): Need to review the structure here, and ensure that we do not
 		// support channel calling this API, as we have no mechanism to take that into account.
-		// Currently it is used to force summmary for a channel, but such channels
+		// Currently it is used to force summary for a channel, but such channels
 		// likely can't be used for temp collab spaces, as we could destroy them prematurely.
 		// We could likely take it into account, but not clear if it's needed yet.
 		super.setChannelDirty(address);
@@ -292,9 +294,9 @@ export class CollabSpacesRuntime
 
 	protected async applyStashedChannelChannelOp(address: string, contents: any) {
 		// This operation does not change counter, at least not directly.
-		// It will result in channel sending op, and that's how it will be accoutned for.
+		// It will result in channel sending op, and that's how it will be accounted for.
 		// That said, need to ensure we have a channel allocated for it.
-		this.updatePendingCoutner(address, 0, true /* allowImplicitCreation */);
+		this.updatePendingCounter(address, 0, true /* allowImplicitCreation */);
 		return super.applyStashedChannelChannelOp(address, contents);
 	}
 
@@ -305,7 +307,7 @@ export class CollabSpacesRuntime
 		localOpMetadata: unknown,
 	) {
 		// offset increase by submitChannelOp()
-		const record = this.updatePendingCoutner(
+		const record = this.updatePendingCounter(
 			address,
 			local ? -1 : 0,
 			true /* allowImplicitCreation */,
@@ -322,12 +324,12 @@ export class CollabSpacesRuntime
 		// Message was not sent, so our +1 in submitChannelOp() needs to be offset
 		// DDS may chose to send any number of ops (including zero) as part of resubmit flow
 		// All such ops would be properly accounted on submitChannelOp() path.
-		this.updatePendingCoutner(address, -1, false /* allowImplicitCreation */);
+		this.updatePendingCounter(address, -1, false /* allowImplicitCreation */);
 		super.reSubmitChannelOp(address, contents, localOpMetadata);
 	}
 
 	protected submitChannelOp(address: string, contents: any, localOpMetadata: unknown) {
-		this.updatePendingCoutner(address, 1, false /* allowImplicitCreation */);
+		this.updatePendingCounter(address, 1, false /* allowImplicitCreation */);
 		super.submitChannelOp(address, contents, localOpMetadata);
 	}
 
@@ -482,12 +484,37 @@ export class CollabSpacesRuntime
 			if (createDebugChannel) {
 				this.debugChannel = (await this.getChannel(debugChannelId)) as DeferredChannel;
 			}
+
+			for (let row = 1; row < this.matrixInternal.rowCount; row++) {
+				this.reverseMap.addCellToMap(
+					"row",
+					this.matrixInternal.getCell(row, 0) as unknown as uuidType,
+					row - 1,
+				);
+			}
+			for (let col = 1; col < this.matrixInternal.colCount; col++) {
+				this.reverseMap.addCellToMap(
+					"col",
+					this.matrixInternal.getCell(0, col) as unknown as uuidType,
+					col - 1,
+				);
+			}
 		}
 		this.matrix.switchSetCellPolicy();
 
 		this.matrix.openMatrix({
-			rowsChanged: (rowStart: number, removedCount: number, insertedCount: number) => {},
-			colsChanged: (colStart: number, removedCount: number, insertedCount: number) => {},
+			rowsChanged: (rowStart: number, removedCount: number, insertedCount: number) => {
+				// For the reverse mapping purposes, we can only process rows/columns deletion.
+				// We can't process rows/columns insertion as we don't have the information about the cells yet.
+				// Note: the row/column callbacks from the collabSpace returns with an index + 1, as the first row/column is used to track the internal IDs
+				this.reverseMap.removeCellsFromMap("row", rowStart - 1, removedCount);
+			},
+			colsChanged: (colStart: number, removedCount: number, insertedCount: number) => {
+				// For the reverse mapping purposes, we can only process rows/columns deletion.
+				// We can't process rows/columns insertion as we don't have the information about the cells yet.
+				// Note: the row/column callbacks from the collabSpace returns with an index + 1, as the first row/column is used to track the internal IDs
+				this.reverseMap.removeCellsFromMap("col", colStart - 1, removedCount);
+			},
 			cellsChanged: (
 				rowStart: number,
 				colStart: number,
@@ -496,8 +523,16 @@ export class CollabSpacesRuntime
 			) => {
 				for (let row = rowStart; row < rowStart + rowCount; row++) {
 					for (let col = colStart; col < colStart + colCount; col++) {
-						// -1 due to first row & col tracking IDs
-						if (row !== 0 && col !== 0) {
+						if (row === 0 || col === 0) {
+							// TBD(Pri1) : Today we will raise "column added" event before we have an ID, and thus exposing incorrect state of matrix to consumers.
+							// It's better if we do something like that:
+							// - suppress col/row addition events
+							// - raise them here, when we learn about new ID.
+							// It's not that simple, as proposed sequence would only work for a single row/col addition, not for many rows/columns added, but I'm sure we can figure out something.
+							// Alternatively, we need better APIs from matrix...
+							this.updateReverseMap(row - 1, col - 1);
+						} else {
+							// -1 due to first row & col tracking IDs
 							this.cellChanged(row - 1, col - 1);
 						}
 					}
@@ -511,8 +546,24 @@ export class CollabSpacesRuntime
 		return this.matrixInternal;
 	}
 
+	private updateReverseMap(row: number, col: number) {
+		assert(row === -1 || col === -1, "row or col should be equal to -1");
+		// the first row and column are used to track the internal IDs
+		const cellValue = this.matrix.getCell(row + 1, col + 1);
+		if (cellValue !== undefined) {
+			const mapInfo: { type: ReverseMapType; index: number } =
+				col === -1 ? { type: "row", index: row } : { type: "col", index: col };
+			this.reverseMap.addCellToMap(
+				mapInfo.type,
+				cellValue as unknown as string,
+				mapInfo.index,
+			);
+		}
+	}
+
 	private cellChanged(row: number, col: number) {
 		const info = this.getCellInfo(row, col);
+
 		if (info.value !== undefined && isChannelDeffered(info.channelInfo?.type)) {
 			const channelId = info.channelId;
 			// Need to update channel and convert it to real thing.
@@ -569,9 +620,45 @@ export class CollabSpacesRuntime
 	public async getCellDebugInfo(
 		row: number,
 		col: number,
-	): Promise<{ channel?: ICollabChannelCore }> {
+	): Promise<{
+		channel?: ICollabChannelCore;
+		channelId?: string;
+		rowId?: string;
+		colId?: string;
+	}> {
 		const result = this.getCellInfo(row, col);
-		return { channel: await result.channel };
+		const info = result.channelId !== undefined ? this.parseChannelId(result.channelId) : {};
+		const channel = await result.channel;
+		return { channel, channelId: result.channelId, ...info };
+	}
+
+	public async getReverseMapCellDebugInfo(
+		rowId: string,
+		colId: string,
+	): Promise<{ row: number; col: number }> {
+		const row = this.reverseMap.getRowIndex(rowId);
+		const col = this.reverseMap.getColIndex(colId);
+		assert(row !== undefined, "rowIndex is missing");
+		assert(col !== undefined, "colIndex is missing");
+		const cellInfo = await this.getCellDebugInfo(row - 1, col - 1);
+		assert(cellInfo.rowId === rowId, "rowId mismatch");
+		assert(cellInfo.colId === colId, "colId mismatch");
+		return {
+			row: row - 1,
+			col: col - 1,
+		};
+	}
+
+	// For test purposes only!
+	// Returns the Reverse Map size and the actual indexes from matrix stored on the reverse mapping matrixes.
+	public getReverseMapsDebugInfo(): Readonly<{
+		rowMap: { [id: string]: number };
+		colMap: { [id: string]: number };
+	}> {
+		return {
+			rowMap: this.reverseMap.getRowMap(),
+			colMap: this.reverseMap.getColMap(),
+		};
 	}
 
 	private getFactoryForValueType(type: string, onlyCollaborativeTypes: boolean) {
@@ -636,19 +723,39 @@ export class CollabSpacesRuntime
 		return this.createCollabChannel(value, channelId);
 	}
 
-	private mapChannelToCellCore(channelId: string) {
+	private parseChannelId(channelId: string): { rowId: string; colId: string; iteration: string } {
 		const parts = channelId.split(",");
-		assert(parts.length === 3, "wrong channel ID");
+		assert(parts.length === 3, "Invalid channel Id");
 		const rowId = parts[0];
 		const colId = parts[1];
 		const iteration = parts[2];
+		return { rowId, colId, iteration };
+	}
 
-		// TBD(Pri0)
-		// This needs to be way more efficient by building a reverse mapping and maintaining it through all operations!
-		// Need to reconcile which layer does such mapping. At the moment, this is done outside of matrix - in Tablero
-		// component. We should either move it here (and ideally - in compatible way, i.e. not changing document schema),
-		// or move most of the channel logic to the layer that implements row/col stable IDs.
+	private getMatrixCellRowColUsingReverseMapping(rowId: string, colId: string) {
+		const row = this.reverseMap.getRowIndex(rowId);
+		const col = this.reverseMap.getColIndex(colId);
 
+		if (row === undefined) {
+			return undefined;
+		}
+
+		assert(
+			this.areEqualUuid(this.matrix.getCell(row, 0) as unknown as uuidType, rowId),
+			`channel's rowId mismatch ${row} ${rowId} ${this.matrix.getCell(row, 0)}`,
+		);
+
+		if (col === undefined) {
+			return undefined;
+		}
+		assert(
+			this.areEqualUuid(this.matrix.getCell(0, col) as unknown as uuidType, colId),
+			`channel's colId mismatch ${col} ${colId} ${this.matrix.getCell(0, col)}`,
+		);
+		return { row, col };
+	}
+
+	private getMatrixCellRowCol(rowId: string, colId: string) {
 		const rowCount = this.matrix.rowCount;
 		const colCount = this.matrix.colCount;
 
@@ -672,7 +779,18 @@ export class CollabSpacesRuntime
 			return undefined;
 		}
 
-		return { row, col, iteration };
+		return { row, col };
+	}
+
+	private mapChannelToCellCore(channelId: string) {
+		const { rowId, colId, iteration } = this.parseChannelId(channelId);
+		if (this.useReverseMapping) {
+			const result = this.getMatrixCellRowColUsingReverseMapping(rowId, colId);
+			return { row: result?.row, col: result?.col, iteration };
+		} else {
+			const result = this.getMatrixCellRowCol(rowId, colId);
+			return { row: result?.row, col: result?.col, iteration };
+		}
 	}
 
 	private mapChannelToCell(channelId: string) {
@@ -706,7 +824,7 @@ export class CollabSpacesRuntime
 		(this.dataStoreContext as any).summarizerNode.deleteChild(channelId);
 	}
 
-	// Saves or destoys channel, depending on the arguments
+	// Saves or destroys channel, depending on the arguments
 	private saveOrDestroyChannel(
 		channel: ICollabChannelCore,
 		allowSave: boolean,
@@ -1009,7 +1127,15 @@ export class CollabSpacesRuntime
 		// generate new ID for a columns
 		while (count > 0) {
 			count--;
-			this.matrix.setCell(0, col, this.uuid() as unknown as MatrixInternalType);
+			const uuidLocal = this.uuid();
+			this.matrix.setCell(0, col, uuidLocal as unknown as MatrixInternalType);
+			assert(
+				this.areEqualUuid(
+					this.matrix.getCell(0, col) as unknown as uuidType,
+					String(uuidLocal),
+				),
+				"uuid invalid",
+			);
 			col++;
 		}
 	}

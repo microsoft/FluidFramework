@@ -139,7 +139,7 @@ describe("Temporal Collab Spaces", () => {
 		loader = undefined;
 	});
 
-	async function waitForSummary() {
+	async function waitForSummary(): Promise<string> {
 		// ensure that all changes made it through
 		await provider.ensureSynchronized();
 
@@ -149,8 +149,11 @@ describe("Temporal Collab Spaces", () => {
 		const wait = summaryCollection.waitSummaryAck(
 			containers[0].deltaManager.lastSequenceNumber,
 		);
-		await summarizeNow(summarizer!);
-		return wait;
+		const summaryResult = await summarizeNow(summarizer!);
+		assert(summaryResult.summaryVersion !== undefined, "summary result");
+		const ackedSummary = await wait;
+		assert(ackedSummary.summaryAck.contents.handle !== undefined, "summary acked");
+		return summaryResult.summaryVersion;
 	}
 
 	/**
@@ -174,7 +177,8 @@ describe("Temporal Collab Spaces", () => {
 
 		// +700Mb, but only +200Mb if accounting GC after that.
 		collabSpace.insertCols(0, cols);
-		collabSpace.insertRows(0, rows - 1);
+		// the first row is already there
+		collabSpace.insertRows(1, rows - 1);
 
 		// Roughly how many cells were changed due to row/col ID tracking
 		let cells = cols + rows;
@@ -184,10 +188,10 @@ describe("Temporal Collab Spaces", () => {
 		}
 
 		// 100K rows test numbers:
-		// +550Mb with GC step after that having almost no impact
-		// Though if GC did not run in a step above, this number is much higher (+1GB),
+		// +550Mb with GC  after that having almost no impact
+		// Though if GC did not run in a  above, this number is much higher (+1GB),
 		// suggesting that actual memory growth is 1GB, but 500Mb offset could be coming
-		// from the fact that GC did not had a chance to run and cleanup after previous step.
+		// from the fact that GC did not had a chance to run and cleanup after previous .
 		for (let c = 0; c < cols; c++) {
 			// Batches are becoming too large. When testing 40 x 100K.
 			// Thus flush ops sooner in smaller chunks. It mostly ensures we do not run out of memory.
@@ -230,7 +234,7 @@ describe("Temporal Collab Spaces", () => {
 		// data store is aliased (and thus attached) in test container
 		assert(collabSpace.isAttached, "data store is not attached");
 
-		// Have a secont container that follows passivley the first one
+		// Have a second container that follows passivley the first one
 		await addContainerInstance();
 
 		const start = performance.now();
@@ -299,7 +303,7 @@ describe("Temporal Collab Spaces", () => {
 		await provider.ensureSynchronized();
 		const seq = containers[0].deltaManager.lastSequenceNumber;
 
-		// every container to communicate their refeerence sequence number, allow MSN to move forward
+		// every container to communicate their reference sequence number, allow MSN to move forward
 		for (const cp of [...collabSpaces, summarizerCollabSpace]) {
 			// summarizerCollabSpace is undefined in detached tests
 			if (cp !== undefined) {
@@ -326,7 +330,7 @@ describe("Temporal Collab Spaces", () => {
 		ensureSameSize();
 	}
 
-	// Syncronize containers and validate they all have exactly same state
+	// Synchronize containers and validate they all have exactly same state
 	const synchronizeAndValidateContainerFn = async () => {
 		await provider.ensureSynchronized();
 		ensureSameSize();
@@ -454,7 +458,7 @@ describe("Temporal Collab Spaces", () => {
 			const request = provider.driver.createCreateNewRequest(provider.documentId);
 			await container.attach(request);
 
-			// Have a secont container that follows passivley the first one
+			// Have a second container that follows passivley the first one
 			await addContainerInstance();
 			await provider.ensureSynchronized();
 
@@ -468,12 +472,226 @@ describe("Temporal Collab Spaces", () => {
 		});
 	});
 
+	describe("Reverse Mapping tests", () => {
+		function compareMaps(map1: { [id: string]: number }, map2: { [id: string]: number }) {
+			assert(Object.keys(map1).length === Object.keys(map2).length, "maps size is different");
+			for (const [id, rowValue] of Object.entries(map1)) {
+				if (id in map2) {
+					const colValue = map2[id];
+					assert(
+						rowValue === colValue,
+						`Values for id ${id} do not match: row = ${rowValue}, col = ${colValue}`,
+					);
+				} else {
+					assert(false, `No matching id found in map2 for ${id}`);
+				}
+			}
+		}
+
+		it("Reverse Mapping: Basic test", async () => {
+			const rows = 20;
+			const cols = 7;
+			const row = 5;
+			const col = 3;
+			const collabSpace = await initialize(rows, cols);
+			const { rowId, colId } = await collabSpace.getCellDebugInfo(row, col);
+
+			const debugMapInfo = collabSpace.getReverseMapsDebugInfo();
+			const reverseCellInfo = await collabSpace.getReverseMapCellDebugInfo(rowId, colId);
+			assert(Object.keys(debugMapInfo.rowMap).length === rows, "rowMapSize is incorrect");
+			assert(
+				reverseCellInfo.row === row,
+				"rowIndex from the actual matrix has to be offset by 1",
+			);
+			assert(Object.keys(debugMapInfo.colMap).length === cols, "colMapSize is incorrect");
+			assert(reverseCellInfo.col === col, "colIndex is correct");
+		});
+
+		it("Reverse Mapping: Basic row adding test", async () => {
+			const rows = 20;
+			const cols = 7;
+			const row = 5;
+			const col = 3;
+			const collabSpace = await initialize(rows, cols);
+			const numberOfNewRows = 2;
+			// Insert rows to validate the reverse mappings are updated correctly
+			collabSpace.insertRows(1, numberOfNewRows);
+			collabSpace.setCell(row, col, {
+				value: 5,
+				type: CounterFactory.Type,
+			});
+			const { rowId, colId } = await collabSpace.getCellDebugInfo(row, col);
+			const debugMapInfo = collabSpace.getReverseMapsDebugInfo();
+			const reverseCellInfo = await collabSpace.getReverseMapCellDebugInfo(rowId, colId);
+
+			assert(
+				Object.keys(debugMapInfo.rowMap).length === rows + numberOfNewRows,
+				"rowMapSize is incorrect",
+			);
+			assert(
+				reverseCellInfo.row === row,
+				"rowIndex from the actual matrix has to be offset by 1",
+			);
+			assert(Object.keys(debugMapInfo.colMap).length === cols, "colMapSize is incorrect");
+			assert(reverseCellInfo.col === col, "colIndex is correct");
+		});
+
+		it("Reverse Mapping: Basic row removing test", async () => {
+			const rows = 20;
+			const cols = 7;
+			const row = 1;
+			const col = 3;
+			const collabSpace = await initialize(rows, cols);
+			let initialRowNumber = rows;
+			for (let it = 0; it < 3; it++) {
+				const numberOfRowsToBeRemoved = 2;
+				const { rowId: nextRowId, colId: nextColId } = await collabSpace.getCellDebugInfo(
+					row + numberOfRowsToBeRemoved,
+					col,
+				);
+				collabSpace.removeRows(row, numberOfRowsToBeRemoved);
+
+				const debugCellInfo = await collabSpace.getCellDebugInfo(row, col);
+				assert(
+					nextRowId === debugCellInfo.rowId,
+					"rowId after removal should be the same as nextRowId",
+				);
+				assert(
+					nextColId === debugCellInfo.colId,
+					"colId after removal should be different",
+				);
+
+				const debugMapInfo = collabSpace.getReverseMapsDebugInfo();
+
+				const reverseCellInfo = await collabSpace.getReverseMapCellDebugInfo(
+					debugCellInfo.rowId,
+					debugCellInfo.colId,
+				);
+
+				assert(
+					Object.keys(debugMapInfo.rowMap).length ===
+						initialRowNumber - numberOfRowsToBeRemoved,
+					"rowMapSize is incorrect",
+				);
+				assert(
+					reverseCellInfo.row === row,
+					"rowIndex from the actual matrix has to be offset by 1",
+				);
+				assert(Object.keys(debugMapInfo.colMap).length === cols, "colMapSize is incorrect");
+				assert(reverseCellInfo.col === col, "colIndex is correct");
+				initialRowNumber -= numberOfRowsToBeRemoved;
+			}
+		});
+
+		it("Reverse Mapping: Basic col removing test", async () => {
+			const rows = 20;
+			const cols = 7;
+			const row = 1;
+			const col = 3;
+			const collabSpace = await initialize(rows, cols);
+			const columnsToBeRemoved = 2;
+			const { colId: nextColId } = await collabSpace.getCellDebugInfo(
+				row,
+				col + columnsToBeRemoved,
+			);
+			collabSpace.removeCols(col, columnsToBeRemoved);
+			const { rowId, colId } = await collabSpace.getCellDebugInfo(row, col);
+
+			assert(nextColId === colId, "colId after removal should be the same as nextColId");
+
+			const debugMapInfo = collabSpace.getReverseMapsDebugInfo();
+			const reverseCellInfo = await collabSpace.getReverseMapCellDebugInfo(rowId, colId);
+
+			assert(Object.keys(debugMapInfo.rowMap).length === rows, "rowMapSize is incorrect");
+			assert(
+				reverseCellInfo.row === row,
+				"rowIndex from the actual matrix has to be offset by 1",
+			);
+			assert(
+				Object.keys(debugMapInfo.colMap).length === cols - columnsToBeRemoved,
+				"colMapSize is incorrect",
+			);
+			assert(reverseCellInfo.col === col, "colIndex is correct");
+		});
+
+		it("Concurrent insertions", async () => {
+			// Cell we will be interrogating
+			const row = 5;
+			const col = 1;
+			const rows = 20;
+			const cols = 7;
+			const collabSpace = await initialize(rows, cols);
+
+			const { rowId: rowId1, colId: colId1 } = await collabSpace.getCellDebugInfo(row, col);
+			const { rowId: rowId2, colId: colId2 } = await collabSpaces[1].getCellDebugInfo(
+				row,
+				col,
+			);
+			assert(rowId2 === rowId1, "rowId should be the same");
+			assert(colId2 === colId1, "colId should be the same");
+
+			// Concurrent changes - clients do not see each other changes yet
+			collabSpace.insertRows(0, 11);
+			collabSpaces[1].insertRows(0, 4);
+
+			await provider.ensureSynchronized();
+
+			collabSpace.insertRows(0, 1);
+			collabSpaces[1].insertRows(0, 2);
+
+			// synchronize - all containers should see exactly same changes
+			await provider.ensureSynchronized();
+
+			const firstCollabResult = collabSpace.getReverseMapsDebugInfo();
+			const secondCollabResult = collabSpaces[1].getReverseMapsDebugInfo();
+
+			compareMaps(firstCollabResult.rowMap, secondCollabResult.rowMap);
+			compareMaps(firstCollabResult.colMap, secondCollabResult.colMap);
+		});
+
+		it("Concurrent operations", async () => {
+			const rows = 20;
+			const cols = 7;
+			const collabSpace = await initialize(rows, cols);
+
+			for (let it = 0; it < 5; it++) {
+				// Concurrent changes - clients do not see each other changes yet
+				collabSpace.removeRows(1, 1);
+				collabSpaces[1].insertRows(1, 4);
+				collabSpace.insertCols(1, 1);
+				collabSpaces[1].insertCols(1, 1);
+				await provider.ensureSynchronized();
+
+				const collabResult1 = collabSpace.getReverseMapsDebugInfo();
+				const collabResult2 = collabSpaces[1].getReverseMapsDebugInfo();
+
+				compareMaps(collabResult1.rowMap, collabResult2.rowMap);
+				compareMaps(collabResult1.colMap, collabResult2.colMap);
+
+				collabSpace.insertRows(1, 1);
+				collabSpaces[1].removeRows(2, 1);
+				collabSpace.removeCols(1, 1);
+				collabSpaces[1].removeCols(1, 1);
+
+				// synchronize - all containers should see exactly same changes
+				await provider.ensureSynchronized();
+
+				const collabResult3 = collabSpace.getReverseMapsDebugInfo();
+				const collabResult4 = collabSpaces[1].getReverseMapsDebugInfo();
+
+				compareMaps(collabResult3.rowMap, collabResult4.rowMap);
+				compareMaps(collabResult3.colMap, collabResult4.colMap);
+			}
+		});
+	});
+
 	it("Basic test", async () => {
 		// Cell we will be interrogating
+		const rows = 20;
+		const cols = 7;
 		const row = 5;
 		const col = 3;
-
-		const collabSpace = await initialize(20, 7);
+		const collabSpace = await initialize(rows, cols);
 
 		let initialValue = (await collabSpace.getCellAsync(row, col))?.value as number;
 
@@ -504,7 +722,14 @@ describe("Temporal Collab Spaces", () => {
 		// and validate it can follow
 		await addContainerInstance();
 
-		// Also let's grap channel in second container for later manipulations
+		// implementation detail: due to op grouping and issue with same sequence numbers, we need
+		// one more batch to ensure channel could be safely destroyed below (and test to validate it).
+		// Make some arbitrary change, but also test insertion flow.
+		collabSpace.insertRows(rows, 1);
+		await provider.ensureSynchronized();
+		ensureSameSize();
+
+		// Also let's grab channel in second container for later manipulations
 		channel2 = (await collabSpaces[2].getCellChannel(row, col)) as ISharedCounter;
 
 		await saveAndDestroyChannel(channel, collabSpace, row, col, initialValue);
@@ -553,7 +778,7 @@ describe("Temporal Collab Spaces", () => {
 			"test infra should not process all ops synchronously",
 		);
 
-		// syncrhonize - all containers should see exactly same changes
+		// synchronize - all containers should see exactly same changes
 		await provider.ensureSynchronized();
 		await ensureSameValues(row, col, initialValue + 30, [channel2a, channel2b]);
 
@@ -661,11 +886,18 @@ describe("Temporal Collab Spaces", () => {
 
 	describe("Stress tests", () => {
 		type Op = (cp: IMatrix) => Promise<unknown>;
-
+		let commandArray: string[] = [];
+		const debugCommandArray = false;
 		beforeEach(() => {
+			commandArray = [];
 			seed = 1; // Every test is independent from another test!
 		});
 
+		const addCommandToArray = (command: string) => {
+			if (debugCommandArray) {
+				commandArray.push(command);
+			}
+		};
 		// collaborate on a cell through collab channel
 		const collabFn: Op = async (cp: IMatrix) => {
 			// Cell might be undefined. If so, we can't really collab on it.
@@ -686,14 +918,17 @@ describe("Temporal Collab Spaces", () => {
 		const overwriteCellFn: Op = async (cp: IMatrix) => {
 			const row = randNotInclusive(cp.rowCount);
 			const col = randNotInclusive(cp.colCount);
+			const value = rand(100);
+			addCommandToArray(`overwriteCell Row Count ${row} ${col} ${value}`);
 			cp.setCell(row, col, {
-				value: rand(1000),
+				value,
 				type: CounterFactory.Type,
 			});
 		};
 
 		// write undefined into cell
 		const overwriteCellUndefinedFn: Op = async (cp: IMatrix) => {
+			addCommandToArray(`overwriteCellUndefined Row Count ${cp.rowCount} ${cp.colCount}`);
 			const row = randNotInclusive(cp.rowCount);
 			const col = randNotInclusive(cp.colCount);
 			cp.setCell(row, col, undefined);
@@ -705,25 +940,43 @@ describe("Temporal Collab Spaces", () => {
 		};
 
 		const insertColsFn: Op = async (cp: IMatrix) => {
-			cp.insertCols(rand(cp.colCount), 1 + rand(3));
+			const pos = rand(cp.colCount);
+			const count = 1 + rand(3);
+			cp.insertCols(pos, count);
+			addCommandToArray(
+				`insertColsFn post pos ${pos}, count ${count}, cp.colCount ${cp.colCount}`,
+			);
 		};
 
 		const insertRowsFn: Op = async (cp: IMatrix) => {
-			cp.insertRows(rand(cp.rowCount), 1 + rand(3));
+			const pos = rand(cp.rowCount);
+			const count = 1 + rand(3);
+			cp.insertRows(pos, count);
+			addCommandToArray(
+				`insertRowsFn post pos ${pos}, count ${count}, cp.RowCount ${cp.rowCount}, cp.ColCount ${cp.colCount}`,
+			);
 		};
 
 		const removeColsFn: Op = async (cp: IMatrix) => {
-			const pos = randNotInclusive(cp.colCount);
+			const currCount = cp.colCount;
+			const pos = randNotInclusive(currCount);
 			// delete at most 1/3 of the matrix
-			const del = Math.max(randNotInclusive(cp.colCount - pos), Math.round(cp.colCount / 3));
+			const del = Math.max(randNotInclusive(currCount - pos), Math.round(currCount / 3));
 			cp.removeCols(pos, del);
+			addCommandToArray(
+				`removeColsFn post pos ${pos}, del ${del}, cp.RowCount ${cp.rowCount}, cp.ColCount ${cp.colCount}`,
+			);
 		};
 
 		const removeRowsFn: Op = async (cp: IMatrix) => {
-			const pos = randNotInclusive(cp.rowCount);
+			const currCount = cp.rowCount;
+			const pos = randNotInclusive(currCount);
 			// delete at most 1/3 of the matrix
-			const del = Math.max(randNotInclusive(cp.rowCount - pos), Math.round(cp.rowCount / 3));
+			const del = Math.max(randNotInclusive(currCount - pos), Math.round(currCount / 3));
 			cp.removeRows(pos, del);
+			addCommandToArray(
+				`removeRowsFn post pos ${pos}, del ${del}, cp.RowCount ${cp.rowCount}, cp.ColCount ${cp.colCount}`,
+			);
 		};
 
 		// collaborate on a cell through collab channel
@@ -743,6 +996,7 @@ describe("Temporal Collab Spaces", () => {
 
 		const saveChannelFn: Op = async (cp: IMatrix) => {
 			const channel = await findSomeChannelFn(cp);
+			addCommandToArray(`saveChannelFn  ${channel?.value}`);
 			if (channel !== undefined) {
 				cp.saveChannelState(channel);
 			}
@@ -750,6 +1004,7 @@ describe("Temporal Collab Spaces", () => {
 
 		const destroyChannelFn: Op = async (cp: IMatrix) => {
 			const channel = await findSomeChannelFn(cp);
+			addCommandToArray(`destroyChannelFn  ${channel?.value}`);
 			if (channel !== undefined) {
 				cp.destroyCellChannel(channel);
 			}
@@ -795,37 +1050,53 @@ describe("Temporal Collab Spaces", () => {
 				[5, addContainerInstanceFn],
 				[5, destroyChannelFn],
 			]);
-		}).timeout(10000);
+		}).timeout(20000);
 
 		it("Structure stress test", async () => {
-			await stressTest(100, 20, 7, [
-				[20, collabFn],
-				[10, overwriteCellFn],
-				[10, overwriteCellUndefinedFn],
-				[20, insertColsFn],
-				[20, insertRowsFn],
-				[10, removeColsFn],
-				[10, removeRowsFn],
-				[10, saveChannelFn],
-				[5, addContainerInstanceFn],
-			]);
-		}).timeout(10000);
+			try {
+				await stressTest(100, 20, 7, [
+					[100, collabFn],
+					[20, overwriteCellFn],
+					[10, overwriteCellUndefinedFn],
+					[20, insertColsFn],
+					[20, insertRowsFn],
+					[10, removeColsFn],
+					[10, removeRowsFn],
+					[10, saveChannelFn],
+					[5, addContainerInstanceFn],
+				]);
+			} catch (e) {
+				console.log("Error in stress test", e);
+				for (const item of commandArray) {
+					console.log(item);
+				}
+				throw e;
+			}
+		}).timeout(120000);
 
 		// TBD(Pri0): This test does not pass
 		// It tails on 229th step - one of the containers has a wrong value
 		it.skip("Structure stress test 229", async () => {
-			await stressTest(229, 20, 7, [
-				[20, collabFn],
-				[10, overwriteCellFn],
-				[10, overwriteCellUndefinedFn],
-				[20, insertColsFn],
-				[20, insertRowsFn],
-				[10, removeColsFn],
-				[10, removeRowsFn],
-				[10, saveChannelFn],
-				[5, addContainerInstanceFn],
-			]);
-		}).timeout(10000);
+			try {
+				await stressTest(229, 20, 7, [
+					[20, collabFn],
+					[10, overwriteCellFn],
+					[10, overwriteCellUndefinedFn],
+					[20, insertColsFn],
+					[20, insertRowsFn],
+					[10, removeColsFn],
+					[10, removeRowsFn],
+					[10, saveChannelFn],
+					[5, addContainerInstanceFn],
+				]);
+			} catch (e) {
+				console.log("Structure in stress test", e);
+				for (const item of commandArray) {
+					console.log(item);
+				}
+				throw e;
+			}
+		}).timeout(240000);
 
 		it("General Stress test", async () => {
 			await stressTest(100, 20, 7, [

@@ -96,7 +96,17 @@ export interface IEfficientMatrixTest {
 	isAttached: boolean;
 
 	// Returns a structure with various debug info about the cell
-	getCellDebugInfo(row: number, col: number): Promise<{ channel?: ICollabChannelCore }>;
+	getCellDebugInfo(
+		row: number,
+		col: number,
+	): Promise<{ channel?: ICollabChannelCore; channelId: string; rowId: string; colId: string }>;
+
+	getReverseMapsDebugInfo(): Readonly<{
+		rowMap: { [id: string]: number };
+		colMap: { [id: string]: number };
+	}>;
+
+	getReverseMapCellDebugInfo(rowId: string, colId: string): Promise<{ row: number; col: number }>;
 
 	// Only works if there is debug channel created.
 	sendSomeDebugOp(): void;
