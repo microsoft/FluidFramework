@@ -366,18 +366,6 @@ export class MockContainerRuntime {
 		return undefined;
 	}
 
-	public async applyStashedOp(content: any) {
-		const localOpMetadata = await this.dataStoreRuntime.applyStashedOp(content);
-		if (localOpMetadata !== undefined) {
-			this.pendingMessages.push({
-				clientSequenceNumber: this.clientSequenceNumber++,
-				content,
-				localOpMetadata,
-				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-			});
-		}
-	}
-
 	private submitInternal(message: IInternalMockRuntimeMessage, clientSequenceNumber: number) {
 		this.factory.pushMessage({
 			clientId: this.clientId,

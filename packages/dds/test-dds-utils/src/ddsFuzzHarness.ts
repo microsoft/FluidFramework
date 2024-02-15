@@ -102,7 +102,14 @@ export interface StashClient {
 	type: "stashClient";
 	clientId: string;
 }
-const isStashClient = (op: BaseOperation): op is StashClient => op.type === "stashClient";
+const isStashClientOp = (op: BaseOperation): op is StashClient => op.type === "stashClient";
+export const hasStashData = <TChannelFactory extends IChannelFactory>(
+	client?: Client<TChannelFactory>,
+): client is Client<TChannelFactory> & Record<"stashData", StashData> =>
+	client !== undefined &&
+	"stashData" in client &&
+	client.stashData !== null &&
+	typeof client.stashData == "object";
 
 /**
  * @internal
@@ -1017,10 +1024,7 @@ export function mixinStashedClient<
 		const baseGenerator = model.generatorFactory();
 		return async (state): Promise<TOperation | StashClient | typeof done> => {
 			const stashable = state.clients.filter(
-				(c) =>
-					"stashData" in c &&
-					c.stashData !== undefined &&
-					c.containerRuntime.pendingMessages.length > 0,
+				(c) => hasStashData(c) && c.containerRuntime.pendingMessages.length > 0,
 			);
 
 			if (!state.isDetached && stashable.length > 0 && state.random.bool(0.5)) {
@@ -1035,13 +1039,12 @@ export function mixinStashedClient<
 
 	const reducer: AsyncReducer<TOperation | StashClient, TState> = async (state, operation) => {
 		const { clients, containerRuntimeFactory } = state;
-		if (isStashClient(operation)) {
+		if (isStashClientOp(operation)) {
 			const client = clients.find((c) => c.containerRuntime.clientId === operation.clientId);
-			const stashData =
-				client && "stashData" in client ? (client.stashData as StashData) : undefined;
-			if (client === undefined || stashData === undefined) {
+			if (!hasStashData(client)) {
 				return state;
 			}
+			const stashData = client.stashData;
 
 			// shutdown the existing client
 			client.containerRuntime.flush();
@@ -1071,28 +1074,7 @@ export function mixinStashedClient<
 				options,
 			);
 
-			// apply the saved and pending ops
-			for (const savedOp of savedOps) {
-				if (savedOp.clientId === newClient.dataStoreRuntime.clientId) {
-					await newClient.containerRuntime.applyStashedOp(savedOp.contents);
-				}
-				newClient.containerRuntime.process(savedOp);
-
-				while (
-					pendingMessages.length > 0 &&
-					pendingMessages[0].referenceSequenceNumber === savedOp.sequenceNumber
-				) {
-					await newClient.containerRuntime.applyStashedOp(
-						pendingMessages.shift()?.content,
-					);
-				}
-			}
-			while (pendingMessages.length > 0) {
-				await newClient.containerRuntime.applyStashedOp(pendingMessages.shift()?.content);
-			}
-			// issue a reconnect to rebase pending ops
-			newClient.containerRuntime.connected = false;
-			newClient.containerRuntime.connected = true;
+			await newClient.containerRuntime.initializeWithStashedOps(pendingMessages, savedOps);
 
 			// replace the old client with the new client
 			return {

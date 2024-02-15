@@ -10,6 +10,7 @@ import {
 	MockContainerRuntimeFactory,
 	IMockContainerRuntimeOptions,
 	MockFluidDataStoreRuntime,
+	type IMockContainerRuntimePendingMessage,
 } from "./mocks";
 
 /**
@@ -86,6 +87,54 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 
 		this.addPendingMessage(messageContent, localOpMetadata, -1);
 		return -1;
+	}
+
+	public async initializeWithStashedOps(
+		pendingMessages: IMockContainerRuntimePendingMessage[],
+		savedOps: ISequencedDocumentMessage[],
+	) {
+		if (this.pendingMessages.length !== 0 || this.clientSequenceNumber !== 0) {
+			throw new Error("applyStashedOps must be called first, and once.");
+		}
+
+		let refSeq = Math.min(
+			savedOps[0]?.referenceSequenceNumber ?? Number.MAX_SAFE_INTEGER,
+			pendingMessages[0]?.referenceSequenceNumber ?? Number.MAX_SAFE_INTEGER,
+		);
+		if (refSeq === Number.MAX_SAFE_INTEGER) {
+			refSeq = 0;
+		}
+		this.dataStoreRuntime.deltaManager.lastSequenceNumber = refSeq;
+		this.dataStoreRuntime.deltaManager.minimumSequenceNumber = refSeq;
+
+		// handle pending messages before first saved op
+		while (
+			pendingMessages.length > 0 &&
+			pendingMessages[0].referenceSequenceNumber <=
+				this.dataStoreRuntime.deltaManager.lastSequenceNumber
+		) {
+			await this.dataStoreRuntime.applyStashedOp(pendingMessages.shift()?.content);
+		}
+		// apply the saved and pending ops
+		for (const savedOp of savedOps) {
+			if (savedOp.clientId === this.clientId) {
+				await this.dataStoreRuntime.applyStashedOp(savedOp.contents);
+			}
+			this.process(savedOp);
+
+			while (
+				pendingMessages.length > 0 &&
+				pendingMessages[0].referenceSequenceNumber === savedOp.sequenceNumber
+			) {
+				await this.dataStoreRuntime.applyStashedOp(pendingMessages.shift()?.content);
+			}
+		}
+		if (pendingMessages.length !== 0) {
+			throw new Error("There should be no pending message after saved ops are processed");
+		}
+		// issue a reconnect to rebase pending ops
+		this.connected = false;
+		this.connected = true;
 	}
 }
 

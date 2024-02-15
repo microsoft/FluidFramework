@@ -102,8 +102,6 @@ export class MockContainerRuntime {
     // (undocumented)
     protected addPendingMessage(content: any, localOpMetadata: unknown, clientSequenceNumber: number): void;
     // (undocumented)
-    applyStashedOp(content: any): Promise<void>;
-    // (undocumented)
     clientId: string;
     // (undocumented)
     protected clientSequenceNumber: number;
@@ -185,6 +183,8 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
     // (undocumented)
     get connected(): boolean;
     set connected(connected: boolean);
+    // (undocumented)
+    initializeWithStashedOps(pendingMessages: IMockContainerRuntimePendingMessage[], savedOps: ISequencedDocumentMessage[]): Promise<void>;
     // (undocumented)
     process(message: ISequencedDocumentMessage): void;
     // (undocumented)
