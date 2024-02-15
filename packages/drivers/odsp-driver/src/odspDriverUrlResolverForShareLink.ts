@@ -19,7 +19,6 @@ import {
 import {
 	getLocatorFromOdspUrl,
 	storeLocatorInOdspUrl,
-	encodeOdspFluidDataStoreLocator,
 	locatorQueryParamName,
 } from "./odspFluidFileLink";
 import { OdspFluidDataStoreLocator, SharingLinkHeader } from "./contractsPublic";
@@ -264,13 +263,5 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 		storeLocatorInOdspUrl(url, driverInfo);
 
 		return url.href;
-	}
-
-	/**
-	 * Crafts a supported data store nav param
-	 * @deprecated encodeOdspFluidDataStoreLocator should be used instead
-	 */
-	public static createNavParam(locator: OdspFluidDataStoreLocator) {
-		return encodeOdspFluidDataStoreLocator(locator);
 	}
 }
