@@ -42,7 +42,7 @@
 		"winston": "^3.6.0"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-common": "file:../../../../common/build/build-common",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@types/async": "^3.2.9",
 		"@types/cors": "^2.8.4",
