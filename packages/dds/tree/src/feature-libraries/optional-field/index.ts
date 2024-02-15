@@ -4,10 +4,13 @@
  */
 
 export { noChangeCodecFamily, makeOptionalFieldCodecFamily } from "./optionalFieldCodecs.js";
-export { OptionalChangeset, RegisterId } from "./optionalFieldChangeTypes.js";
+export { Move, OptionalChangeset, RegisterId } from "./optionalFieldChangeTypes.js";
 export {
+	IRegisterMap,
+	RegisterMap,
 	optionalChangeHandler,
 	optionalFieldEditor,
 	optionalChangeRebaser,
 	optionalFieldIntoDelta,
+	withRevision,
 } from "./optionalField.js";

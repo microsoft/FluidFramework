@@ -37,7 +37,7 @@ export interface OptionalChangeset<TChildChange = NodeChangeset> {
 	 *
 	 * Rebasing logic should only generate moves whose `src` is an occupied register.
 	 */
-	moves: (readonly [src: RegisterId, dst: RegisterId, kind: "nodeTargeting" | "cellTargeting"])[];
+	moves: Move[];
 
 	/**
 	 * Nested changes to nodes that occupy registers.
@@ -57,3 +57,9 @@ export interface OptionalChangeset<TChildChange = NodeChangeset> {
 	 */
 	reservedDetachId?: RegisterId;
 }
+
+export type Move = readonly [
+	src: RegisterId,
+	dst: RegisterId,
+	kind: "nodeTargeting" | "cellTargeting",
+];

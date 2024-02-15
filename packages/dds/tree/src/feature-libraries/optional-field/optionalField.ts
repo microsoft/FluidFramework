@@ -32,7 +32,7 @@ import { nodeIdFromChangeAtom } from "../deltaUtils.js";
 import { RegisterId, OptionalChangeset } from "./optionalFieldChangeTypes.js";
 import { makeOptionalFieldCodecFamily } from "./optionalFieldCodecs.js";
 
-interface IRegisterMap<T> {
+export interface IRegisterMap<T> {
 	set(id: RegisterId, childChange: T): void;
 	get(id: RegisterId): T | undefined;
 	delete(id: RegisterId): boolean;
@@ -42,7 +42,7 @@ interface IRegisterMap<T> {
 	readonly size: number;
 }
 
-class RegisterMap<T> implements IRegisterMap<T> {
+export class RegisterMap<T> implements IRegisterMap<T> {
 	private readonly nestedMapData = new SizedNestedMap<
 		ChangesetLocalId | "self",
 		RevisionTag | undefined,
@@ -436,7 +436,7 @@ function withRevisionOrUndefined(
 	return id !== undefined ? withRevision(id, revision) : undefined;
 }
 
-function withRevision(id: RegisterId, revision: RevisionTag | undefined): RegisterId {
+export function withRevision(id: RegisterId, revision: RevisionTag | undefined): RegisterId {
 	if (id === "self") {
 		return id;
 	}

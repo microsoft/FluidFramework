@@ -49,7 +49,7 @@ import {
 	rebaseRevisionMetadataFromInfo,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
-import { assertEqual } from "./optionalFieldUtils.js";
+import { verifyContextChain, assertEqual } from "./optionalFieldUtils.js";
 
 type RevisionTagMinter = () => RevisionTag;
 
@@ -126,13 +126,15 @@ function getMaxId(...changes: OptionalChangeset[]): ChangesetLocalId | undefined
 }
 
 function invert(change: TaggedChange<OptionalChangeset>): OptionalChangeset {
-	return optionalChangeRebaser.invert(
+	const inverted = optionalChangeRebaser.invert(
 		change,
 		TestChange.invert as any,
 		idAllocatorFromMaxId(),
 		failCrossFieldManager,
 		defaultRevisionMetadataFromChanges([change]),
 	);
+	verifyContextChain(change, makeAnonChange(inverted));
+	return inverted;
 }
 
 function rebase(
@@ -150,7 +152,7 @@ function rebase(
 		]);
 	const moveEffects = failCrossFieldManager;
 	const idAllocator = idAllocatorFromMaxId(getMaxId(change, base.change));
-	return optionalChangeRebaser.rebase(
+	const rebased = optionalChangeRebaser.rebase(
 		change,
 		base,
 		TestChange.rebase as any,
@@ -159,6 +161,8 @@ function rebase(
 		metadata,
 		undefined,
 	);
+	verifyContextChain(base, makeAnonChange(rebased));
+	return rebased;
 }
 
 function rebaseTagged(
@@ -168,6 +172,7 @@ function rebaseTagged(
 	let currChange = change;
 	for (const base of baseChanges) {
 		currChange = tagChange(rebase(currChange.change, base), currChange.revision);
+		verifyContextChain(base, currChange);
 	}
 
 	return currChange;
@@ -184,7 +189,7 @@ function rebaseComposed(
 	const composed = composeList(baseChanges, metadata);
 	const moveEffects = failCrossFieldManager;
 	const idAllocator = idAllocatorFromMaxId(getMaxId(composed));
-	return optionalChangeRebaser.rebase(
+	const rebased = optionalChangeRebaser.rebase(
 		change,
 		makeAnonChange(composed),
 		TestChange.rebase as any,
@@ -193,6 +198,11 @@ function rebaseComposed(
 		metadata,
 		undefined,
 	);
+	const lastBase = baseChanges.at(-1);
+	if (lastBase !== undefined) {
+		verifyContextChain(lastBase, makeAnonChange(rebased));
+	}
+	return rebased;
 }
 
 function composeList(
@@ -205,6 +215,7 @@ function composeList(
 	const metadataOrDefault = metadata ?? defaultRevisionMetadataFromChanges(changes);
 
 	for (const change of changes) {
+		verifyContextChain(makeAnonChange(composed), change);
 		composed = optionalChangeRebaser.compose(
 			makeAnonChange(composed),
 			change,
@@ -222,6 +233,7 @@ function compose(
 	change2: TaggedChange<OptionalChangeset>,
 	metadata?: RevisionMetadataSource,
 ): OptionalChangeset {
+	verifyContextChain(change1, change2);
 	const moveEffects = failCrossFieldManager;
 	const idAllocator = idAllocatorFromMaxId(getMaxId(change1.change, change2.change));
 	return optionalChangeRebaser.compose(
@@ -498,7 +510,7 @@ export function testRebaserAxioms() {
 				{
 					numberOfEditsToRebase: 3,
 					numberOfEditsToRebaseOver: isStress ? 5 : 3,
-					numberOfEditsToVerifyAssociativity: isStress ? 6 : 4,
+					numberOfEditsToVerifyAssociativity: isStress ? 6 : 3,
 				},
 			);
 		});

@@ -56,6 +56,8 @@ const failCrossFieldManager: CrossFieldManager = {
 	set: () => assert.fail("Should modify CrossFieldManager"),
 };
 
+const failingDelegate = (): never => assert.fail("Should not be called");
+
 const deltaFromChild1 = ({ change, revision }: TaggedChange<NodeChangeset>): DeltaFieldMap => {
 	assert.deepEqual(change, nodeChange1);
 	const buildId = makeDetachedNodeId(revision, 1);
@@ -248,15 +250,11 @@ describe("optionalField", () => {
 
 		describe("Rebasing", () => {
 			it("can be rebased", () => {
-				const childRebaser = (
-					_change: NodeChangeset | undefined,
-					_base: NodeChangeset | undefined,
-				) => assert.fail("Should not be called");
 				assert.deepEqual(
 					optionalChangeRebaser.rebase(
 						change2PreChange1.change,
 						change1,
-						childRebaser,
+						failingDelegate,
 						fakeIdAllocator,
 						failCrossFieldManager,
 						rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([change1]), [
@@ -405,6 +403,22 @@ describe("optionalField", () => {
 				assert.deepEqual(actual, expected);
 			});
 		});
+
+		it("preserves ", () => {
+			assert.deepEqual(
+				optionalChangeRebaser.rebase(
+					change2PreChange1.change,
+					change1,
+					failingDelegate,
+					fakeIdAllocator,
+					failCrossFieldManager,
+					rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([change1]), [
+						change1.revision,
+					]),
+				),
+				change2.change,
+			);
+		});
 	});
 
 	describe("IntoDelta", () => {
@@ -499,8 +513,6 @@ describe("optionalField", () => {
 			mintRevisionTag(),
 		);
 		const relevantNestedTree = { minor: 4242 };
-		const failingDelegate: RelevantRemovedRootsFromChild = (): never =>
-			assert.fail("Should not be called");
 		const noTreesDelegate: RelevantRemovedRootsFromChild = () => [];
 		const oneTreeDelegate: RelevantRemovedRootsFromChild = (child) => {
 			assert.deepEqual(child, nodeChange1);
