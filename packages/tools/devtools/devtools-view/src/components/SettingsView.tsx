@@ -16,7 +16,7 @@ import {
 } from "@fluentui/react-components";
 
 import { ThemeOption, useThemeContext } from "../ThemeHelper";
-import { TelemetryConfigurationManager } from "../TelemetryUtils";
+import { useTelemetryOptIn } from "../TelemetryUtils";
 
 const useStyles = makeStyles({
 	root: {
@@ -62,15 +62,9 @@ const useStyles = makeStyles({
  */
 export function SettingsView(): React.ReactElement {
 	const { themeInfo, setTheme } = useThemeContext();
-	const telemetryConfig = new TelemetryConfigurationManager();
-	const styles = useStyles();
-	const [optedIn, setOptedIn] = React.useState(telemetryConfig.isTelemetryOptedIn());
 
-	function handleTelemetryToggle(ev: React.ChangeEvent<HTMLInputElement>): void {
-		const checked = ev.target.checked;
-		setOptedIn(checked);
-		telemetryConfig.setTelemetryOptIn(checked);
-	}
+	const styles = useStyles();
+	const [optedIn, setOptedIn] = useTelemetryOptIn();
 
 	function handleThemeChange(
 		_event,
@@ -139,7 +133,7 @@ export function SettingsView(): React.ReactElement {
 				<Switch
 					label="Send usage telemetry to Microsoft"
 					checked={optedIn}
-					onChange={handleTelemetryToggle}
+					onChange={(ev, data): void => setOptedIn(data.checked)}
 				/>
 			</div>
 		</div>

@@ -58,18 +58,24 @@ export class ConsoleVerboseLogger implements ITelemetryBaseLogger {
 const telemetryOptInKey: string = "fluid:devtools:telemetry:optIn";
 
 /**
+ * Callback function used to check opt in status
+ * @returns boolean representing whether telemetry collection is enabled
+ * @internal
+ */
+export const isTelemetryOptInEnabled = (): boolean => getStorageValue(telemetryOptInKey);
+
+/**
  * Hook for getting and setting the usage telemetry opt-in setting, backed by brower's local storage.
  * @returns A tuple (React state) with the current value and a setter for the value.
  */
-export const useTelemetryOptIn = (): [boolean, (optedIn: boolean) => void] => {
+export const useTelemetryOptIn = (): [boolean, React.Dispatch<React.SetStateAction<boolean>>] => {
 	const [value, setValue] = React.useState(() => {
 		return getStorageValue(telemetryOptInKey);
 	});
 
-	const setOptIn = (optedIn: boolean): void => {
-		setValue(optedIn);
-		localStorage.setItem(telemetryOptInKey, optedIn.toString());
-	};
+	React.useEffect(() => {
+		localStorage.setItem(telemetryOptInKey, value.toString());
+	}, [value]);
 
 	const localStorageChangeHandler = (event: StorageEvent): void => {
 		if (event.storageArea === localStorage && event.key === telemetryOptInKey) {
@@ -83,7 +89,7 @@ export const useTelemetryOptIn = (): [boolean, (optedIn: boolean) => void] => {
 		};
 	});
 
-	return [value, setOptIn];
+	return [value, setValue];
 };
 
 /**
@@ -106,22 +112,4 @@ function getStorageValue(key: string, defaultValue: boolean = false): boolean {
 		return defaultValue;
 	}
 	return saved === "true";
-}
-
-/**
- * Manages the configuration of telemetry settings for the application.
- * @internal
- */
-export class TelemetryConfigurationManager {
-	private telemetryOptInStatus: boolean = getStorageValue(telemetryOptInKey);
-
-	public constructor() {}
-	public isTelemetryOptedIn(): boolean {
-		return this.telemetryOptInStatus;
-	}
-
-	public setTelemetryOptIn(optedIn: boolean): void {
-		this.telemetryOptInStatus = optedIn;
-		localStorage.setItem(telemetryOptInKey, optedIn.toString());
-	}
 }

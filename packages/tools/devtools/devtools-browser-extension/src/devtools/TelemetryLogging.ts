@@ -8,7 +8,7 @@ import { PostChannel, type IChannelConfiguration, type IXHROverride } from "@mic
 import {
 	type ITelemetryBaseLogger,
 	type ITelemetryBaseEvent,
-	TelemetryConfigurationManager,
+	isTelemetryOptInEnabled,
 } from "@fluid-internal/devtools-view";
 import { type ITaggedTelemetryPropertyType } from "@fluidframework/core-interfaces";
 import { v4 as uuidv4 } from "uuid";
@@ -74,11 +74,13 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 	 * requests during local development or other scenarios where a key is not passed in.
 	 */
 	private readonly enabled: boolean = false;
-
+	// We expect the following usage identifiers to be mutated when the user opts in/out.
+	// Identifier that's generated on each session
 	private sessionID?: string;
+	// This identifies a specific browser instance and is reused in subsequent sessions.
 	private continuityID?: string;
+
 	private readonly CONTINUITY_ID_KEY = "Fluid.Devtools.ContinuityId";
-	private readonly telemetryConfig = new TelemetryConfigurationManager();
 
 	public constructor() {
 		const channelConfig: IChannelConfiguration = {
@@ -139,7 +141,7 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 	 * {@inheritDoc @fluidframework/core-interfaces#ITelemetryBaseLogger.send}
 	 */
 	public send(event: ITelemetryBaseEvent): void {
-		const optIn = this.telemetryConfig.isTelemetryOptedIn();
+		const optIn = isTelemetryOptInEnabled();
 
 		// Clear localStorage and reset identifiers if the user opts out
 		if (!optIn) {
