@@ -205,7 +205,7 @@ describe("Tests1 for snapshot fetch", () => {
 	});
 
 	it("GetSnapshot() should work in normal flow", async () => {
-		let defaultGroupId = false;
+		let ungroupedData = false;
 		async function mockDownloadSnapshot<T>(
 			_response: Promise<any>,
 			callback: () => Promise<T>,
@@ -218,9 +218,9 @@ describe("Tests1 for snapshot fetch", () => {
 				getDownloadSnapshotStub.restore();
 				assert(
 					getDownloadSnapshotStub.args[0][2]?.length === 0,
-					"should ask for default groupId",
+					"should ask for ungroupedData",
 				);
-				defaultGroupId = true;
+				ungroupedData = true;
 			}
 		}
 		const snapshot: ISnapshot = {
@@ -256,7 +256,7 @@ describe("Tests1 for snapshot fetch", () => {
 		} catch (error: any) {
 			assert.fail("the getSnapshot request should succeed");
 		}
-		assert(defaultGroupId, "should have asked for default group id");
+		assert(ungroupedData, "should have asked for ungroupedData");
 		const cachedValue = (await epochTracker.get(createCacheSnapshotKey(resolved))) as ISnapshot;
 		assert(cachedValue.snapshotTree.id === "SnapshotId", "snapshot should have been cached");
 		assert(service["blobCache"].value.size !== 0, "blobs should be cached locally");
