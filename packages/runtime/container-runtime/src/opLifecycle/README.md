@@ -73,7 +73,7 @@ See [below](#how-grouped-batching-works) for an example.
 
 ### Risks
 
-This option should **ONLY** be enabled after observing that 99.9% of your application sessions contains these changes (runtime version "2.0.0-internal.4.1.0" or later). Containers created with this option may not open in future versions of the framework.
+This option should **ONLY** be enabled after observing that 99.9% of your application sessions contains these changes (runtime version "2.0.0-internal.7.0.0" or later). Containers created with this option may not open in future versions of the framework.
 
 This option will change a couple of expectations around message structure and runtime layer expectations. Only enable this option after testing
 and verifying that the following expectation changes won't have any effects:
