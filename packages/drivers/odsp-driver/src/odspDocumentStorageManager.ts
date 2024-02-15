@@ -236,8 +236,10 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			fetchFullSnapshotContents,
 		);
 
-		snapshot.snapshotTree = this.combineProtocolAndAppSnapshotTree(snapshot.snapshotTree);
-		return snapshot;
+		return {
+			...snapshot,
+			snapshotTree: this.combineProtocolAndAppSnapshotTree(snapshot.snapshotTree),
+		};
 	}
 
 	private async fetchSnapshot(
