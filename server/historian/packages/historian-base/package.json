@@ -76,7 +76,7 @@
 		"winston": "^3.6.0"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-common": "file:../../../../common/build/build-common",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/server-test-utils": "^3.0.0",
 		"@types/compression": "0.0.36",

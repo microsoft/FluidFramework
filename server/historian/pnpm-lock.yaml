@@ -12,7 +12,7 @@ importers:
   .:
     specifiers:
       '@fluid-tools/build-cli': ^0.26.1
-      '@fluidframework/build-common': ^2.0.3
+      '@fluidframework/build-common': file:../../common/build/build-common
       '@fluidframework/build-tools': ^0.28.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@types/compression': 0.0.36
@@ -34,7 +34,7 @@ importers:
       typescript: ~4.5.5
     devDependencies:
       '@fluid-tools/build-cli': 0.26.1_4rqwsplhh2ekz63wktwk7d7ht4
-      '@fluidframework/build-common': 2.0.3
+      '@fluidframework/build-common': file:../../common/build/build-common
       '@fluidframework/build-tools': 0.28.0
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@types/compression': 0.0.36
@@ -124,7 +124,7 @@ importers:
 
   packages/historian-base:
     specifiers:
-      '@fluidframework/build-common': ^2.0.3
+      '@fluidframework/build-common': file:../../../../common/build/build-common
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': ^3.0.0
@@ -195,7 +195,7 @@ importers:
       uuid: 3.4.0
       winston: 3.8.2
     devDependencies:
-      '@fluidframework/build-common': 2.0.3
+      '@fluidframework/build-common': file:../../common/build/build-common
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-test-utils': 3.0.0
       '@types/compression': 0.0.36
@@ -1033,11 +1033,6 @@ packages:
       - '@types/node'
       - supports-color
       - typescript
-    dev: true
-
-  /@fluidframework/build-common/2.0.3:
-    resolution: {integrity: sha512-1LU/2uyCeMxf63z5rhFOFEBvFyBogZ7ZXwzXLxyBhSgq/fGiq8PLjBW7uX++r0LcVCdaWyopf7w060eJpANYdg==}
-    hasBin: true
     dev: true
 
   /@fluidframework/build-tools/0.26.2:
@@ -15380,3 +15375,10 @@ packages:
       node-gyp-build: 4.6.0
       shelljs: 0.8.5
     dev: false
+
+  file:../../common/build/build-common:
+    resolution: {directory: ../../common/build/build-common, type: directory}
+    name: '@fluidframework/build-common'
+    version: 3.0.0
+    hasBin: true
+    dev: true
