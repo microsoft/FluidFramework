@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 # build-docs pipeline
-# This pipeline builds the main branch docs as well as previous major release branch docs each time the client packages are built.
+# This pipeline builds the main branch docs as well as previous major release branch docs each time changes are made to docs and api-generated reports.
 # Note that the method for getting the api json for main differs from previous versions. For main, the pipeline bundles
 # the published artifacts from other pipeline resources and publishes an artifact to the pipeline which can be later downloaded.
 # However, for previous version branches (in this case: 1.0) cannot run on the pipeline to generate resources. Thus, api-extractor
@@ -10,6 +10,7 @@
 # the AzureCLI@2 task. 
 # For now, the only previous version which is manually uploaded is lts. However, for any previous versions which cannot run on the
 # pipeline, we assume that the api json content would be uploaded to the azure storage in the format: latest-${{version}}.tar.gz
+# This pipeline generates the fluidframework-docs website artifact to be consumed and deployed on the build-docs-website-deploy pipeline.
 
 name: $(Build.BuildId)
 
@@ -76,16 +77,16 @@ variables:
   - name: pnpmStorePath
     value: $(Pipeline.Workspace)/.pnpm-store
 
-# TODO: Move trigger to pipeline designated for artifact model generation. Currently, 
-# the website docs builds and deploys on each commit. However, inconsistencies between 
-# the release branches and main is causing the website to change unexpectedly we can 
-# move the release/* trigger after separating the deploy step to another pipeline
-# no PR triggers
+# Branch triggers on changes to docs or generated api-reports
 trigger:
   branches:
     include:
-    # - release/*
+    - release/*
     - main
+  paths:
+    include:
+    - docs
+    - "**/api-report"
 pr: none
 
 stages:

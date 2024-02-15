@@ -2,6 +2,10 @@
 # Licensed under the MIT License.
 
 # build-docs-website-deploy pipeline
+# This pipeline triggers on the completion of the build-docs pipeline (main branch run).
+# After the build-docs pipeline completes, this pipeline downloads the generated fluidframework-docs
+# artifacts and deploys the content using AzureStaticWebApp.
+# This pipeline also has a scheduled trigger which runs every 4 hours.
 
 name: $(Build.BuildId)
 
@@ -12,15 +16,6 @@ schedules:
       include:
         - main
     always: true
-
-trigger:   
-  branches:
-    include:
-    - main
-  paths:
-    include:
-    - docs
-    - "**/api-report"
 pr: none
 
 parameters:
@@ -52,6 +47,18 @@ variables:
     value: "$(FLUID_WEBSITE_TORUS_API_TOKEN)"
   ${{ if eq( parameters['deployEnvironment'], 'old') }}:
     value: "$(AZURE_STATIC_WEB_APPS_API_TOKEN)"
+
+# We are setting up a pipeline resource that references the build-docs
+# pipeline and setting up a pipeline completion trigger so that our build-docs-website-deploy
+# pipeline runs when a run of the build-docs pipeline completes
+resources:
+  pipelines:
+  - pipeline: build-docs # Name of the pipeline resource.
+    source: build-docs # The name of the pipeline referenced by this pipeline resource.
+    trigger: 
+      branches:
+        include: 
+        - main # Run pipeline when build-docs main branch pipeline completes
 
 stages:
 - stage: deploy
