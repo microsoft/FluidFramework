@@ -39,7 +39,7 @@
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
-		"build:esnext": "tsc",
+		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"bump-version": "npm version minor --no-push --no-git-tag-version && npm run build:genver",
 		"check:are-the-types-wrong": "attw --pack",
