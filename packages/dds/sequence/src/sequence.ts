@@ -6,7 +6,11 @@
 import Deque from "double-ended-queue";
 import { assert, Deferred } from "@fluidframework/core-utils";
 import { bufferToString } from "@fluid-internal/client-utils";
-import { LoggingError, createChildLogger } from "@fluidframework/telemetry-utils";
+import {
+	LoggingError,
+	createChildLogger,
+	type ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	IChannelAttributes,
@@ -260,6 +264,13 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 	private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
 	private readonly intervalCollections: DefaultMap<IntervalCollection<SequenceInterval>>;
+
+	/**
+	 * Wrapper over {@link @fluidframework/shared-object-base#SharedObjectCore.logger}, so we can leverage the extended
+	 * interface internally.
+	 */
+	private readonly loggerExt: ITelemetryLoggerExt;
+
 	constructor(
 		private readonly dataStoreRuntime: IFluidDataStoreRuntime,
 		public id: string,
@@ -267,6 +278,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		public readonly segmentFromSpec: (spec: IJSONSegment) => ISegment,
 	) {
 		super(id, dataStoreRuntime, attributes, "fluid_sequence_");
+		this.loggerExt = createChildLogger({ logger: this.logger });
 
 		const getMinInFlightRefSeq = () => this.inFlightRefSeqs.get(0);
 		this.guardReentrancy =
@@ -275,7 +287,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				: createReentrancyDetector((depth) => {
 						if (totalReentrancyLogs > 0) {
 							totalReentrancyLogs--;
-							this.logger.sendTelemetryEvent(
+							this.loggerExt.sendTelemetryEvent(
 								{ eventName: "LocalOpReentry", depth },
 								new LoggingError(reentrancyErrorMessage),
 							);
@@ -283,7 +295,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				  });
 
 		this.loadedDeferred.promise.catch((error) => {
-			this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
+			this.loggerExt.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
 		});
 
 		// eslint-disable-next-line import/no-deprecated

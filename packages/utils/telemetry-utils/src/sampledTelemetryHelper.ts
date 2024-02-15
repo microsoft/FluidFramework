@@ -8,9 +8,11 @@ import {
 	ITelemetryPerformanceEvent,
 	ITelemetryProperties,
 	IDisposable,
+	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { performance } from "@fluid-internal/client-utils";
 import { ITelemetryLoggerExt } from "./telemetryTypes";
+import { createChildLogger } from "./logger";
 
 /**
  * @privateRemarks
@@ -61,6 +63,7 @@ export class SampledTelemetryHelper implements IDisposable {
 	disposed: boolean = false;
 
 	private readonly measurementsMap = new Map<string, Measurements>();
+	private readonly logger: ITelemetryLoggerExt;
 
 	/**
 	 * @param eventBase -
@@ -82,11 +85,13 @@ export class SampledTelemetryHelper implements IDisposable {
 	 */
 	public constructor(
 		private readonly eventBase: ITelemetryGenericEvent,
-		private readonly logger: ITelemetryLoggerExt,
+		logger: ITelemetryBaseLogger,
 		private readonly sampleThreshold: number,
 		private readonly includeAggregateMetrics: boolean = false,
 		private readonly perBucketProperties = new Map<string, ITelemetryProperties>(),
-	) {}
+	) {
+		this.logger = createChildLogger({ logger });
+	}
 
 	/**
 	 * Executes the specified code and keeps track of execution time statistics.

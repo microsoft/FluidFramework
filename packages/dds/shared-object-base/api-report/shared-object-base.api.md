@@ -20,8 +20,8 @@ import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 
 // @internal
 export function createSingleBlobSummary(key: string, content: string | Uint8Array): ISummaryTreeWithStats;
@@ -117,7 +117,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     isAttached(): boolean;
     load(services: IChannelServices): Promise<void>;
     protected abstract loadCore(services: IChannelStorageService): Promise<void>;
-    protected readonly logger: ITelemetryLoggerExt;
+    protected readonly logger: ITelemetryBaseLogger;
     protected newAckBasedPromise<T>(executor: (resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void): Promise<T>;
     protected onConnect(): void;
     protected abstract onDisconnect(): any;

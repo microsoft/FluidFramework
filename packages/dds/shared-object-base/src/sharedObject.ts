@@ -4,9 +4,12 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { IFluidHandle, ITelemetryProperties } from "@fluidframework/core-interfaces";
 import {
-	ITelemetryLoggerExt,
+	IFluidHandle,
+	ITelemetryProperties,
+	type ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
+import {
 	createChildLogger,
 	DataProcessingError,
 	EventEmitterWithErrorHandling,
@@ -59,9 +62,15 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	public readonly handle: IFluidHandle;
 
 	/**
-	 * Telemetry logger for the shared object
+	 * Telemetry logger for the shared object.
+	 *
+	 * @privateremarks
+	 * Fluid Framework classes that extend {@link SharedObjectCore} might want to wrap this with
+	 * {@link @fluidframework/telemetry-utils#createChildLogger} and store the result in a private field,
+	 * to get access to our internal "extended" logging interfaces (e.g.
+	 * {@link @fluidframework/telemetry-utils#ITelemetryLoggerExt}).
 	 */
-	protected readonly logger: ITelemetryLoggerExt;
+	protected readonly logger: ITelemetryBaseLogger;
 	private readonly mc: MonitoringContext;
 
 	/**
@@ -108,7 +117,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 
 		this.handle = new SharedObjectHandle(this, id, runtime.IFluidHandleContext);
 
-		this.logger = createChildLogger({
+		const childLogger = createChildLogger({
 			logger: runtime.logger,
 			properties: {
 				all: {
@@ -119,7 +128,8 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 				},
 			},
 		});
-		this.mc = loggerToMonitoringContext(this.logger);
+		this.logger = childLogger;
+		this.mc = loggerToMonitoringContext(childLogger);
 
 		[this.opProcessingHelper, this.callbacksHelper] = this.setUpSampledTelemetryHelpers();
 

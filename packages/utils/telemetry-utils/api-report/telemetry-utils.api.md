@@ -222,7 +222,7 @@ export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
     eventName: string;
 }
 
-// @public
+// @alpha
 export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
     sendErrorEvent(event: ITelemetryErrorEventExt, error?: unknown): void;
     sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: unknown, logLevel?: typeof LogLevel.verbose | typeof LogLevel.default): void;
@@ -348,7 +348,7 @@ export function safeRaiseEvent(emitter: EventEmitter, logger: ITelemetryLoggerEx
 
 // @internal
 export class SampledTelemetryHelper implements IDisposable {
-    constructor(eventBase: ITelemetryGenericEvent, logger: ITelemetryLoggerExt, sampleThreshold: number, includeAggregateMetrics?: boolean, perBucketProperties?: Map<string, ITelemetryProperties>);
+    constructor(eventBase: ITelemetryGenericEvent, logger: ITelemetryBaseLogger, sampleThreshold: number, includeAggregateMetrics?: boolean, perBucketProperties?: Map<string, ITelemetryProperties>);
     // (undocumented)
     dispose(error?: Error | undefined): void;
     // (undocumented)

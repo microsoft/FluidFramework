@@ -31,6 +31,7 @@ import {
 	Client,
 	IJSONSegment,
 } from "@fluidframework/merge-tree";
+import { createChildLogger, type ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { MatrixOp } from "./ops";
 import { PermutationVector, reinsertSegmentIntoVector } from "./permutationvector";
 import { SparseArray2D } from "./sparsearray2d";
@@ -167,6 +168,12 @@ export class SharedMatrix<T = any>
 	private reentrantCount: number = 0;
 
 	/**
+	 * Wrapper over {@link @fluidframework/shared-object-base#SharedObjectCore.logger}, so we can leverage the extended
+	 * interface internally.
+	 */
+	private readonly loggerExt: ITelemetryLoggerExt;
+
+	/**
 	 * Constructor for the Shared Matrix
 	 * @param runtime - DataStore runtime.
 	 * @param id - id of the dds
@@ -181,6 +188,7 @@ export class SharedMatrix<T = any>
 		_isSetCellConflictResolutionPolicyFWW?: boolean,
 	) {
 		super(id, runtime, attributes, "fluid_matrix_");
+		this.loggerExt = createChildLogger({ logger: this.logger });
 
 		this.setCellLwwToFwwPolicySwitchOpSeqNumber =
 			_isSetCellConflictResolutionPolicyFWW === true ? 0 : -1;
@@ -739,7 +747,7 @@ export class SharedMatrix<T = any>
 				this.cellLastWriteTracker = SparseArray2D.load(cellLastWriteTracker);
 			}
 		} catch (error) {
-			this.logger.sendErrorEvent({ eventName: "MatrixLoadFailed" }, error);
+			this.loggerExt.sendErrorEvent({ eventName: "MatrixLoadFailed" }, error);
 		}
 	}
 
