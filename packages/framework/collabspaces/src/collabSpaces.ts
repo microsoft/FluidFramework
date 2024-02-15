@@ -178,7 +178,7 @@ interface IChannelTrackingInfo {
 // for future use. If it becomes rooted at any future point in time (through undo/redo), it would need to transition
 // into non-deferred state by being replaced with real channel (by loading base state and applying all
 // accumulated ops)
-function isChannelDeffered(type?: string) {
+function isChannelDeferred(type?: string) {
 	return type === DeferredChannel.Type;
 }
 
@@ -199,7 +199,7 @@ export class CollabSpacesRuntime
 {
 	private matrixInternal?: SharedMatrix<MatrixInternalType>;
 	private channelInfo: Record<string, IChannelTrackingInfo | undefined> = {};
-	private readonly useReverseMapping = true;
+	private readonly useReverseMapping = false;
 	private readonly reverseMap: ReverseMap = new ReverseMap();
 	private deferredChannels: Map<string, DeferredChannel> = new Map();
 	private matrixPendingChangeCount = 0;
@@ -421,7 +421,7 @@ export class CollabSpacesRuntime
 			if (this.isCollabChannel(id)) {
 				// This should never happen, but if it does - this points to an issue of
 				// not tracking it properly in this.deferredChannels
-				assert(!isChannelDeffered(attachMessage.type), "deferred channels tracking");
+				assert(!isChannelDeferred(attachMessage.type), "deferred channels tracking");
 				this.channelCreated(id, attachMessage.type);
 			}
 		} else {
@@ -472,10 +472,10 @@ export class CollabSpacesRuntime
 				blobId,
 			);
 
-			// Rebuild defered channels
+			// Rebuild deferred channels
 			this.deferredChannels = new Map();
 			for (const [channelId, info] of Object.entries(this.channelInfo)) {
-				if (isChannelDeffered(info?.type)) {
+				if (isChannelDeferred(info?.type)) {
 					const channel = await this.getChannel(channelId);
 					this.deferredChannels.set(channelId, channel as DeferredChannel);
 				}
@@ -564,7 +564,7 @@ export class CollabSpacesRuntime
 	private cellChanged(row: number, col: number) {
 		const info = this.getCellInfo(row, col);
 
-		if (info.value !== undefined && isChannelDeffered(info.channelInfo?.type)) {
+		if (info.value !== undefined && isChannelDeferred(info.channelInfo?.type)) {
 			const channelId = info.channelId;
 			// Need to update channel and convert it to real thing.
 			const deferredChannel = this.deferredChannels.get(channelId);
@@ -590,18 +590,21 @@ export class CollabSpacesRuntime
 		const col = colArg + 1;
 		assert(row > 0 && col > 0, "arguments");
 		const cellValue = this.matrix.getCell(row, col);
+		const rowId = this.matrix.getCell(row, 0) as unknown as uuidType;
+		const colId = this.matrix.getCell(0, col) as unknown as uuidType;
 		if (cellValue === undefined) {
 			return { value: undefined, channel: undefined };
 		}
-		const rowId = this.matrix.getCell(row, 0) as unknown as uuidType;
-		const colId = this.matrix.getCell(0, col) as unknown as uuidType;
+		if (rowId === undefined || colId === undefined) {
+			throw new Error(`rowId or colId is undefined for row: ${row}, col: ${col}`);
+		}
 		const channelId = `${rowId},${colId},${cellValue.iteration}`;
 		const channel = this.contexts.get(channelId)?.getChannel();
 
 		const channelInfo = this.channelInfo[channelId];
 		if (channel !== undefined) {
 			assert(
-				isChannelDeffered(channelInfo?.type) || channelInfo?.type === cellValue.type,
+				isChannelDeferred(channelInfo?.type) || channelInfo?.type === cellValue.type,
 				"Types do not match",
 			);
 		} else {
@@ -704,7 +707,7 @@ export class CollabSpacesRuntime
 
 		this.channelCreated(channelId, value.type);
 		assert(!this.deferredChannels.has(channelId), "overwriting deferred channel");
-		if (isChannelDeffered(value.type)) {
+		if (isChannelDeferred(value.type)) {
 			this.deferredChannels.set(channelId, newChannel as DeferredChannel);
 		}
 
@@ -761,7 +764,11 @@ export class CollabSpacesRuntime
 
 		let row;
 		for (row = 1; row < rowCount; row++) {
-			if (this.areEqualUuid(this.matrix.getCell(row, 0) as unknown as uuidType, rowId)) {
+			const uuidTypeVal = this.matrix.getCell(row, 0) as unknown as uuidType;
+			if (uuidTypeVal === undefined) {
+				throw new Error(`uuidTypeVal is undefined for row ${row}`);
+			}
+			if (this.areEqualUuid(uuidTypeVal, rowId)) {
 				break;
 			}
 		}
@@ -771,7 +778,11 @@ export class CollabSpacesRuntime
 
 		let col;
 		for (col = 1; col < colCount; col++) {
-			if (this.areEqualUuid(this.matrix.getCell(0, col) as unknown as uuidType, colId)) {
+			const uuidTypeVal = this.matrix.getCell(0, col) as unknown as uuidType;
+			if (uuidTypeVal === undefined) {
+				throw new Error(`uuidTypeVal is undefined for col ${col}`);
+			}
+			if (this.areEqualUuid(uuidTypeVal, colId)) {
 				break;
 			}
 		}
@@ -855,7 +866,7 @@ export class CollabSpacesRuntime
 		const { row, col, value } = mapping;
 
 		assert(channelnfo.type === value.type, "Types differ!");
-		assert(!isChannelDeffered(channelnfo.type), "channel should not be deferred");
+		assert(!isChannelDeferred(channelnfo.type), "channel should not be deferred");
 		assert(this.deferredChannels[channelId] === undefined, "Rooted channel can't be deferred!");
 
 		let refSeq: number;
@@ -1012,7 +1023,7 @@ export class CollabSpacesRuntime
 		for (const [channelId] of this.deferredChannels) {
 			assert(this.contexts.get(channelId) !== undefined, "deferred channel not found");
 			assert(
-				isChannelDeffered(this.channelInfo[channelId]?.type),
+				isChannelDeferred(this.channelInfo[channelId]?.type),
 				"deferred channel should have proper type",
 			);
 

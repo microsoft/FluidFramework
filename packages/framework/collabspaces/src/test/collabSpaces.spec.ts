@@ -17,6 +17,7 @@ import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
 import {
 	IContainerRuntimeOptions,
 	ISummarizer,
+	ISummaryRuntimeOptions,
 	SummaryCollection,
 } from "@fluidframework/container-runtime";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
@@ -60,11 +61,20 @@ describe("Temporal Collab Spaces", () => {
 	let loader: IHostLoader | undefined;
 	let seed: number;
 
+	const summaryOptionsToDisableHeuristics: ISummaryRuntimeOptions = {
+		summaryConfigOverrides: {
+			state: "disableHeuristics",
+			maxAckWaitTime: 20000,
+			maxOpsSinceLastSummary: 7000,
+			initialSummarizerDelayMs: 0,
+		},
+	};
 	const runtimeOptions: IContainerRuntimeOptions = {
 		enableGroupedBatching: true,
 		chunkSizeInBytes: 950000,
 		maxBatchSizeInBytes: 990000,
 		enableRuntimeIdCompressor: true,
+		summaryOptions: summaryOptionsToDisableHeuristics, // Force summarizer heuristics to be disabled so we can control when to summarize.
 	};
 	const defaultFactory = sampleFactory();
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
@@ -887,7 +897,7 @@ describe("Temporal Collab Spaces", () => {
 	describe("Stress tests", () => {
 		type Op = (cp: IMatrix) => Promise<unknown>;
 		let commandArray: string[] = [];
-		const debugCommandArray = false;
+		const debugCommandArray = true;
 		beforeEach(() => {
 			commandArray = [];
 			seed = 1; // Every test is independent from another test!
@@ -906,6 +916,7 @@ describe("Temporal Collab Spaces", () => {
 				const row = randNotInclusive(cp.rowCount);
 				const col = randNotInclusive(cp.colCount);
 				const value = await cp.getCellAsync(row, col);
+				addCommandToArray(`collabFn iter ${it} row ${row} col ${col} value ${value}`);
 				if (value !== undefined) {
 					const channel = (await cp.getCellChannel(row, col)) as ISharedCounter;
 					channel.increment(rand(40));
@@ -928,9 +939,11 @@ describe("Temporal Collab Spaces", () => {
 
 		// write undefined into cell
 		const overwriteCellUndefinedFn: Op = async (cp: IMatrix) => {
-			addCommandToArray(`overwriteCellUndefined Row Count ${cp.rowCount} ${cp.colCount}`);
 			const row = randNotInclusive(cp.rowCount);
 			const col = randNotInclusive(cp.colCount);
+			addCommandToArray(
+				`overwriteCellUndefined row ${row} col ${col} rowCount ${cp.rowCount} colCount ${cp.colCount}`,
+			);
 			cp.setCell(row, col, undefined);
 		};
 
@@ -944,7 +957,7 @@ describe("Temporal Collab Spaces", () => {
 			const count = 1 + rand(3);
 			cp.insertCols(pos, count);
 			addCommandToArray(
-				`insertColsFn post pos ${pos}, count ${count}, cp.colCount ${cp.colCount}`,
+				`insertColsFn post pos ${pos}, count ${count}, cp.rowCount ${cp.rowCount}, cp.colCount ${cp.colCount}`,
 			);
 		};
 
@@ -961,7 +974,7 @@ describe("Temporal Collab Spaces", () => {
 			const currCount = cp.colCount;
 			const pos = randNotInclusive(currCount);
 			// delete at most 1/3 of the matrix
-			const del = Math.max(randNotInclusive(currCount - pos), Math.round(currCount / 3));
+			const del = Math.min(randNotInclusive(currCount - pos), Math.round(currCount / 3));
 			cp.removeCols(pos, del);
 			addCommandToArray(
 				`removeColsFn post pos ${pos}, del ${del}, cp.RowCount ${cp.rowCount}, cp.ColCount ${cp.colCount}`,
@@ -972,7 +985,7 @@ describe("Temporal Collab Spaces", () => {
 			const currCount = cp.rowCount;
 			const pos = randNotInclusive(currCount);
 			// delete at most 1/3 of the matrix
-			const del = Math.max(randNotInclusive(currCount - pos), Math.round(currCount / 3));
+			const del = Math.min(randNotInclusive(currCount - pos), Math.round(currCount / 3));
 			cp.removeRows(pos, del);
 			addCommandToArray(
 				`removeRowsFn post pos ${pos}, del ${del}, cp.RowCount ${cp.rowCount}, cp.ColCount ${cp.colCount}`,
