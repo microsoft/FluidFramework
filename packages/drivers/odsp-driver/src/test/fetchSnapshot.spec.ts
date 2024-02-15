@@ -9,19 +9,18 @@ import { strict as assert } from "assert";
 import { stub } from "sinon";
 import { ISnapshot } from "@fluidframework/driver-definitions";
 import { OdspErrorTypes, IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import {
+	createChildLogger,
+	MockLogger,
+	type ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { EpochTracker } from "../epochTracker";
 import { HostStoragePolicyInternal } from "../contracts";
 import * as fetchSnapshotImport from "../fetchSnapshot";
 import { LocalPersistentCache, NonPersistentCache } from "../odspCache";
-import {
-	INewFileInfo,
-	IOdspResponse,
-	createCacheSnapshotKey,
-	defaultGroupIdForSnapshot,
-} from "../odspUtils";
+import { INewFileInfo, IOdspResponse, createCacheSnapshotKey } from "../odspUtils";
 import { createOdspUrl } from "../createOdspUrl";
 import { getHashedDocumentId } from "../odspPublicUtils";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
@@ -66,7 +65,8 @@ describe("Tests1 for snapshot fetch", () => {
 
 	const resolver = new OdspDriverUrlResolver();
 	const nonPersistentCache = new NonPersistentCache();
-	const logger = createChildLogger();
+	let logger: ITelemetryLoggerExt;
+	let mockLogger: MockLogger;
 	const odspUrl = createOdspUrl({ ...newFileParams, itemId, dataStorePath: "/" });
 
 	const content: ISnapshot = {
@@ -89,6 +89,8 @@ describe("Tests1 for snapshot fetch", () => {
 
 	beforeEach(async () => {
 		localCache = createUtLocalCache();
+		mockLogger = new MockLogger();
+		logger = createChildLogger({ logger: mockLogger });
 		// use null logger here as we expect errors
 		epochTracker = new EpochTracker(
 			localCache,
@@ -131,7 +133,7 @@ describe("Tests1 for snapshot fetch", () => {
 				return await callback();
 			} finally {
 				assert(
-					getDownloadSnapshotStub.args[0][3]?.mds === undefined,
+					getDownloadSnapshotStub.args[0][4]?.mds === undefined,
 					"mds should be undefined",
 				);
 				success = true;
@@ -213,12 +215,12 @@ describe("Tests1 for snapshot fetch", () => {
 			try {
 				return await callback();
 			} finally {
+				getDownloadSnapshotStub.restore();
 				assert(
-					getDownloadSnapshotStub.args[0][2][0] === defaultGroupIdForSnapshot,
+					getDownloadSnapshotStub.args[0][3]?.length === 0,
 					"should ask for default groupId",
 				);
 				defaultGroupId = true;
-				getDownloadSnapshotStub.restore();
 			}
 		}
 		const snapshot: ISnapshot = {
@@ -249,7 +251,7 @@ describe("Tests1 for snapshot fetch", () => {
 		};
 		try {
 			await mockDownloadSnapshot(Promise.resolve(response), async () =>
-				service.getSnapshot({ groupIds: [] }),
+				service.getSnapshot({ loadingGroupIds: [] }),
 			);
 		} catch (error: any) {
 			assert.fail("the getSnapshot request should succeed");
@@ -263,7 +265,7 @@ describe("Tests1 for snapshot fetch", () => {
 
 	it("GetSnapshot() should work but snapshot should not be cached locally if asked for custom groupId", async () => {
 		let success = false;
-		service["firstVersionCall"] = false;
+		service["firstSnapshotFetchCall"] = false;
 		async function mockDownloadSnapshot<T>(
 			_response: Promise<any>,
 			callback: () => Promise<T>,
@@ -273,9 +275,12 @@ describe("Tests1 for snapshot fetch", () => {
 			try {
 				return await callback();
 			} finally {
-				assert(getDownloadSnapshotStub.args[0][2][0] === "g1", "should ask for g1 groupId");
-				success = true;
 				getDownloadSnapshotStub.restore();
+				assert(
+					getDownloadSnapshotStub.args[0][3]?.[0] === "g1",
+					"should ask for g1 groupId",
+				);
+				success = true;
 			}
 		}
 		const snapshot: ISnapshot = {
@@ -306,7 +311,7 @@ describe("Tests1 for snapshot fetch", () => {
 		};
 		try {
 			await mockDownloadSnapshot(Promise.resolve(response), async () =>
-				service.getSnapshot({ groupIds: ["g1"] }),
+				service.getSnapshot({ loadingGroupIds: ["g1"] }),
 			);
 		} catch (error: any) {
 			assert.fail("the getSnapshot request should succeed");
@@ -314,6 +319,17 @@ describe("Tests1 for snapshot fetch", () => {
 		assert(success, "should have asked for g1 group id");
 		assert(service["blobCache"].value.size === 0, "no blobs should be cached locally");
 		assert(service["commitCache"].size === 0, "no trees should be cached");
+		assert(
+			mockLogger.matchEvents([
+				{
+					eventName: "ObtainSnapshotForGroup_end",
+					method: "networkOnly",
+					fetchSource: "noCache",
+					fetchFullSnapshot: false,
+				},
+			]),
+			"unexpected events",
+		);
 	});
 
 	it("GetSnapshot() should not cache locally when specified in options", async () => {
@@ -357,7 +373,7 @@ describe("Tests1 for snapshot fetch", () => {
 		};
 		try {
 			await mockDownloadSnapshot(Promise.resolve(response), async () =>
-				service.getSnapshot({ groupIds: [], cacheSnapshot: false }),
+				service.getSnapshot({ loadingGroupIds: [], cacheSnapshot: false }),
 			);
 		} catch (error: any) {
 			assert.fail("the getSnapshot request should succeed");
@@ -366,6 +382,80 @@ describe("Tests1 for snapshot fetch", () => {
 		assert(cachedValue.snapshotTree.id === "SnapshotId", "snapshot should have been cached");
 		assert(service["blobCache"].value.size === 0, "no blobs should be cached locally");
 		assert(service["commitCache"].size === 0, "no trees should be cached");
+	});
+
+	it("GetSnapshot() should not consult cache when request is for a loading group", async () => {
+		async function mockDownloadSnapshot<T>(
+			_response: Promise<any>,
+			callback: () => Promise<T>,
+		): Promise<T> {
+			const getDownloadSnapshotStub = stub(fetchSnapshotImport, "downloadSnapshot");
+			getDownloadSnapshotStub.returns(_response);
+			try {
+				return await callback();
+			} finally {
+				getDownloadSnapshotStub.restore();
+			}
+		}
+		const snapshot: ISnapshot = {
+			blobContents,
+			snapshotTree: snapshotTreeWithGroupId,
+			ops: [],
+			latestSequenceNumber: 0,
+			sequenceNumber: 0,
+			snapshotFormatV: 1,
+		};
+		const odspResponse: IOdspResponse<Response> = {
+			content: (await createResponse(
+				{},
+				convertToCompactSnapshot(snapshot),
+				200,
+			)) as unknown as Response,
+			duration: 10,
+			headers: new Map([
+				["x-fluid-epoch", "epoch1"],
+				["content-type", "application/ms-fluid"],
+			]),
+			propsToLog: {},
+		};
+		const response: ISnapshotRequestAndResponseOptions = {
+			odspResponse,
+			requestHeaders: {},
+			requestUrl: siteUrl,
+		};
+		try {
+			await mockDownloadSnapshot(Promise.resolve(response), async () =>
+				service.getSnapshot({ loadingGroupIds: [], cacheSnapshot: false }),
+			);
+		} catch (error: any) {
+			assert.fail("the getSnapshot request should succeed");
+		}
+
+		// Fetch again for a groupId
+		try {
+			await mockDownloadSnapshot(Promise.resolve(response), async () =>
+				service.getSnapshot({ loadingGroupIds: ["g1"], cacheSnapshot: false }),
+			);
+		} catch (error: any) {
+			assert.fail("the getSnapshot request should succeed");
+		}
+		// Cache should not be consulted.
+		assert(
+			mockLogger.matchEvents([
+				{
+					eventName: "ObtainSnapshot_end",
+					method: "network",
+					fetchFullSnapshot: true,
+				},
+				{
+					eventName: "ObtainSnapshotForGroup_end",
+					method: "networkOnly",
+					fetchSource: "noCache",
+					fetchFullSnapshot: false,
+				},
+			]),
+			"unexpected events",
+		);
 	});
 });
 

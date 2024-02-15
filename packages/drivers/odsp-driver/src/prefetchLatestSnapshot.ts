@@ -20,7 +20,6 @@ import { createChildMonitoringContext, PerformanceEvent } from "@fluidframework/
 import {
 	createCacheSnapshotKey,
 	createOdspLogger,
-	defaultGroupIdForSnapshot,
 	getOdspResolvedUrl,
 	toInstrumentedOdspTokenFetcher,
 } from "./odspUtils";
@@ -89,14 +88,16 @@ export async function prefetchLatestSnapshot(
 	const snapshotDownloader = async (
 		finalOdspResolvedUrl: IOdspResolvedUrl,
 		storageToken: string,
-		groupId: string[],
+		fetchFullSnapshot: boolean,
+		loadingGroupId: string[] | undefined,
 		snapshotOptions: ISnapshotOptions | undefined,
 		controller?: AbortController,
 	) => {
 		return downloadSnapshot(
 			finalOdspResolvedUrl,
 			storageToken,
-			groupId,
+			fetchFullSnapshot,
+			loadingGroupId,
 			snapshotOptions,
 			undefined,
 			controller,
@@ -110,7 +111,7 @@ export async function prefetchLatestSnapshot(
 		cacheP = persistedCache.put(snapshotKey, valueWithEpoch);
 		return cacheP;
 	};
-	const groupIds = useGroupIdsForSnapshotFetch ? [defaultGroupIdForSnapshot] : [];
+
 	const removeEntries = async () => persistedCache.removeEntries(snapshotKey.file);
 	return PerformanceEvent.timedExecAsync(
 		odspLogger,
@@ -135,8 +136,8 @@ export async function prefetchLatestSnapshot(
 				snapshotDownloader,
 				putInCache,
 				removeEntries,
-				groupIds,
-				true, // fetchSnapshotForInitialLoad
+				true, // fetchFullSnapshot
+				useGroupIdsForSnapshotFetch ? [] : undefined, // loadingGroupIds
 				enableRedeemFallback,
 			)
 				.then(async (value) => {

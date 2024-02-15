@@ -137,8 +137,6 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 	}
 	protected readonly commitCache: Map<string, api.ISnapshotTree> = new Map();
 
-	private readonly attributesBlobHandles: Set<string> = new Set();
-
 	private _ops: api.ISequencedDocumentMessage[] | undefined;
 
 	private _snapshotSequenceNumber: number | undefined;
@@ -192,19 +190,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 			return null;
 		}
 
-		if (snapshotTree.blobs) {
-			const attributesBlob = snapshotTree.blobs.attributes;
-			if (attributesBlob) {
-				this.attributesBlobHandles.add(attributesBlob);
-			}
-		}
-
-		// When we upload the container snapshot, we upload appTree in ".app" and protocol tree in ".protocol"
-		// So when we request the snapshot we get ".app" as tree and not as commit node as in the case just above.
-		const appTree = snapshotTree.trees[".app"];
-		const protocolTree = snapshotTree.trees[".protocol"];
-
-		return this.combineProtocolAndAppSnapshotTree(appTree, protocolTree);
+		return this.combineProtocolAndAppSnapshotTree(snapshotTree);
 	}
 
 	public abstract getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
@@ -248,10 +234,11 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 		scenarioName?: string,
 	): Promise<api.ISnapshotTree | undefined>;
 
-	private combineProtocolAndAppSnapshotTree(
-		hierarchicalAppTree: api.ISnapshotTree,
-		hierarchicalProtocolTree: api.ISnapshotTree,
-	) {
+	protected combineProtocolAndAppSnapshotTree(snapshotTree: api.ISnapshotTree) {
+		// When we upload the container snapshot, we upload appTree in ".app" and protocol tree in ".protocol"
+		// So when we request the snapshot we get ".app" as tree and not as commit node as in the case just above.
+		const hierarchicalAppTree = snapshotTree.trees[".app"];
+		const hierarchicalProtocolTree = snapshotTree.trees[".protocol"];
 		const summarySnapshotTree: api.ISnapshotTree = {
 			blobs: {
 				...hierarchicalAppTree.blobs,

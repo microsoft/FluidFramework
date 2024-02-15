@@ -273,7 +273,7 @@ export interface ISnapshot {
 export interface ISnapshotFetchOptions {
     cacheSnapshot?: boolean;
     fetchSource?: FetchSource;
-    groupIds?: string[];
+    loadingGroupIds?: string[];
     scenarioName?: string;
     versionId?: string;
 }

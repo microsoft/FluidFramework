@@ -48,7 +48,6 @@ import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { IOdspCache, IPrefetchSnapshotContents } from "./odspCache";
 import {
 	createCacheSnapshotKey,
-	defaultGroupIdForSnapshot,
 	getWithRetryForTokenRefresh,
 	isInstanceOfISnapshot,
 } from "./odspUtils";
@@ -70,7 +69,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	private summaryModuleP: Promise<OdspSummaryUploadManager> | undefined;
 	private odspSummaryUploadManager: OdspSummaryUploadManager | undefined;
 
-	private firstVersionCall = true;
+	private firstSnapshotFetchCall = true;
 	private _isFirstSnapshotFromNetwork: boolean | undefined;
 	private readonly documentId: string;
 	private readonly snapshotUrl: string | undefined;
@@ -215,23 +214,41 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	}
 
 	public async getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot> {
-		// If no groupId is specified, then fetch the snapshot with "default" groupId.
-		const groupIds = snapshotFetchOptions?.groupIds ?? [];
-		if (groupIds.length === 0) {
-			groupIds.push(defaultGroupIdForSnapshot);
+		// Fetch full snapshot in case group is not specified in request.
+		let fetchFullSnapshot = true;
+		if (
+			snapshotFetchOptions?.loadingGroupIds !== undefined &&
+			snapshotFetchOptions.loadingGroupIds.length > 0
+		) {
+			fetchFullSnapshot = false;
 		}
-		const { snapshot } = await this.startSnapshotFetch({ ...snapshotFetchOptions, groupIds });
+		// Don't consult cache if request is not for full snapshot.
+		const { snapshot } = await this.fetchSnapshot(
+			{
+				...snapshotFetchOptions,
+				fetchSource: fetchFullSnapshot
+					? snapshotFetchOptions?.fetchSource
+					: FetchSource.noCache,
+				loadingGroupIds: fetchFullSnapshot ? [] : snapshotFetchOptions?.loadingGroupIds,
+			},
+			fetchFullSnapshot,
+		);
+
+		snapshot.snapshotTree = this.combineProtocolAndAppSnapshotTree(snapshot.snapshotTree);
 		return snapshot;
 	}
 
-	private async startSnapshotFetch(
+	private async fetchSnapshot(
 		snapshotFetchOptions: ISnapshotFetchOptions,
+		fetchFullSnapshot: boolean,
 	): Promise<{ snapshot: ISnapshot; id: string | undefined }> {
 		const hostSnapshotOptions = this.hostPolicy.snapshotOptions;
-		const groupIds = snapshotFetchOptions.groupIds ?? [];
 		const odspSnapshotCacheValue: ISnapshot = await PerformanceEvent.timedExecAsync(
 			this.logger,
-			{ eventName: "ObtainSnapshot", fetchSource: snapshotFetchOptions?.fetchSource },
+			{
+				eventName: fetchFullSnapshot ? "ObtainSnapshot" : "ObtainSnapshotForGroup",
+				fetchSource: snapshotFetchOptions?.fetchSource,
+			},
 			async (event: PerformanceEvent) => {
 				const props: GetVersionsTelemetryProps = {};
 				let cacheLookupTimeInSerialFetch = 0;
@@ -239,10 +256,11 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 
 				let method: string;
 				let prefetchWaitStartTime: number = performance.now();
-				if (snapshotFetchOptions?.fetchSource === FetchSource.noCache) {
-					retrievedSnapshot = await this.fetchSnapshot(
+				if (snapshotFetchOptions.fetchSource === FetchSource.noCache) {
+					retrievedSnapshot = await this.fetchSnapshotFromNetwork(
 						hostSnapshotOptions,
-						groupIds,
+						fetchFullSnapshot,
+						snapshotFetchOptions.loadingGroupIds,
 						snapshotFetchOptions.scenarioName,
 					);
 					method = "networkOnly";
@@ -299,16 +317,17 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					// Either retrieve both the network and cache snapshots concurrently and pick the first to return,
 					// or grab the cache value and then the network value if the cache value returns undefined.
 					// For summarizer which could call this during refreshing of summary parent, always use the cache
-					// first. Also for other clients, if it is not critical path which is determined by firstVersionCall,
+					// first. Also for other clients, if it is not critical path which is determined by firstSnapshotFetchCall,
 					// then also check the cache first.
 					if (
-						this.firstVersionCall &&
+						this.firstSnapshotFetchCall &&
 						this.hostPolicy.concurrentSnapshotFetch &&
 						!this.hostPolicy.summarizerClient
 					) {
-						const networkSnapshotP = this.fetchSnapshot(
+						const networkSnapshotP = this.fetchSnapshotFromNetwork(
 							hostSnapshotOptions,
-							groupIds,
+							fetchFullSnapshot,
+							snapshotFetchOptions.loadingGroupIds,
 							snapshotFetchOptions.scenarioName,
 						);
 
@@ -363,9 +382,10 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 
 						if (retrievedSnapshot === undefined) {
 							prefetchWaitStartTime = performance.now();
-							retrievedSnapshot = await this.fetchSnapshot(
+							retrievedSnapshot = await this.fetchSnapshotFromNetwork(
 								hostSnapshotOptions,
-								groupIds,
+								fetchFullSnapshot,
+								snapshotFetchOptions.loadingGroupIds,
 								snapshotFetchOptions.scenarioName,
 							);
 						}
@@ -374,7 +394,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				if (method === "network") {
 					props.cacheEntryAge = undefined;
 				}
-				if (this.firstVersionCall) {
+				if (this.firstSnapshotFetchCall) {
 					this._isFirstSnapshotFromNetwork = method === "cache" ? false : true;
 				}
 				const prefetchStartTime: number | undefined = (
@@ -383,7 +403,8 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				event.end({
 					...props,
 					method,
-					fetchSnapshotForInitialLoad: this.firstVersionCall,
+					fetchSnapshotForInitialLoad: this.firstSnapshotFetchCall,
+					fetchFullSnapshot,
 					avoidPrefetchSnapshotCache: this.hostPolicy.avoidPrefetchSnapshotCache,
 					...evalBlobsAndTrees(retrievedSnapshot),
 					cacheLookupTimeInSerialFetch,
@@ -400,8 +421,8 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		// Don't override ops which were fetched during initial load, since we could still need them.
 		const id = this.initializeFromSnapshot(
 			odspSnapshotCacheValue,
-			this.firstVersionCall,
-			snapshotFetchOptions?.cacheSnapshot ?? this.firstVersionCall,
+			this.firstSnapshotFetchCall,
+			snapshotFetchOptions?.cacheSnapshot ?? this.firstSnapshotFetchCall,
 		);
 		this.logger.sendTelemetryEvent(
 			{
@@ -411,7 +432,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			undefined,
 			LogLevel.verbose,
 		);
-		this.firstVersionCall = false;
+		this.firstSnapshotFetchCall = false;
 
 		return { snapshot: odspSnapshotCacheValue, id };
 	}
@@ -444,12 +465,15 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 
 		// If count is one, we can use the trees/latest API, which returns the latest version and trees in a single request for better performance
 		if (count === 1 && (blobid === null || blobid === this.documentId)) {
-			const { id } = await this.startSnapshotFetch({
-				cacheSnapshot: true,
-				scenarioName,
-				versionId: blobid ?? undefined,
-				fetchSource,
-			});
+			const { id } = await this.fetchSnapshot(
+				{
+					cacheSnapshot: true,
+					scenarioName,
+					versionId: blobid ?? undefined,
+					fetchSource,
+				},
+				true /* fetchFullSnapshot */,
+			);
 			return id ? [{ id, treeId: undefined! }] : [];
 		}
 
@@ -501,34 +525,39 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		});
 	}
 
-	private async fetchSnapshot(
+	private async fetchSnapshotFromNetwork(
 		hostSnapshotOptions: ISnapshotOptions | undefined,
-		groupIds: string[],
+		fetchFullSnapshot: boolean,
+		loadingGroupIds: string[] | undefined,
 		scenarioName?: string,
 	) {
-		return this.fetchSnapshotCore(hostSnapshotOptions, groupIds, scenarioName).catch(
-			(error) => {
-				// Issue #5895:
-				// If we are offline, this error is retryable. But that means that RetriableDocumentStorageService
-				// will run in circles calling getSnapshotTree, which would result in OdspDocumentStorageService class
-				// going getVersions / individual blob download path. This path is very slow, and will not work with
-				// delay-loaded data stores and ODSP storage deleting old snapshots and blobs.
-				if (typeof error === "object" && error !== null) {
-					error.canRetry = false;
-				}
-				throw error;
-			},
-		);
+		return this.fetchSnapshotFromNetworkCore(
+			hostSnapshotOptions,
+			fetchFullSnapshot,
+			loadingGroupIds,
+			scenarioName,
+		).catch((error) => {
+			// Issue #5895:
+			// If we are offline, this error is retryable. But that means that RetriableDocumentStorageService
+			// will run in circles calling getSnapshotTree, which would result in OdspDocumentStorageService class
+			// going getVersions / individual blob download path. This path is very slow, and will not work with
+			// delay-loaded data stores and ODSP storage deleting old snapshots and blobs.
+			if (typeof error === "object" && error !== null) {
+				error.canRetry = false;
+			}
+			throw error;
+		});
 	}
 
-	private async fetchSnapshotCore(
+	private async fetchSnapshotFromNetworkCore(
 		hostSnapshotOptions: ISnapshotOptions | undefined,
-		groupIds: string[],
+		fetchFullSnapshot: boolean,
+		loadingGroupIds: string[] | undefined,
 		scenarioName?: string,
 	): Promise<ISnapshot | IPrefetchSnapshotContents> {
 		// Don't look into cache, if the host specifically tells us so. Also, if request is
 		// for initial snapshot, don't consult the prefetch cache.
-		if (!this.hostPolicy.avoidPrefetchSnapshotCache && this.firstVersionCall) {
+		if (!this.hostPolicy.avoidPrefetchSnapshotCache && this.firstSnapshotFetchCall) {
 			const prefetchCacheKey = getKeyForCacheEntry(
 				createCacheSnapshotKey(this.odspResolvedUrl),
 			);
@@ -574,14 +603,16 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		const snapshotDownloader = async (
 			finalOdspResolvedUrl: IOdspResolvedUrl,
 			storageToken: string,
-			groupId: string[],
+			fetchFullSnapshot: boolean,
+			loadingGroupId: string[] | undefined,
 			options: ISnapshotOptions | undefined,
 			controller?: AbortController,
 		) => {
 			return downloadSnapshot(
 				finalOdspResolvedUrl,
 				storageToken,
-				groupId,
+				fetchFullSnapshot,
+				loadingGroupId,
 				options,
 				this.snapshotFormatFetchType,
 				controller,
@@ -607,8 +638,8 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				snapshotDownloader,
 				putInCache,
 				removeEntries,
-				groupIds,
-				this.firstVersionCall,
+				fetchFullSnapshot,
+				loadingGroupIds,
 				this.hostPolicy.enableRedeemFallback,
 			);
 			return odspSnapshot;
@@ -647,8 +678,8 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					snapshotDownloader,
 					putInCache,
 					removeEntries,
-					groupIds,
-					this.firstVersionCall,
+					fetchFullSnapshot,
+					loadingGroupIds,
 					this.hostPolicy.enableRedeemFallback,
 				);
 				return odspSnapshot;

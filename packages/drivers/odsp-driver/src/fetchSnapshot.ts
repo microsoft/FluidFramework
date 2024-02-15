@@ -39,6 +39,7 @@ import {
 import { getQueryString } from "./getQueryString";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import {
+	defaultGroupIdForSnapshot,
 	fetchAndParseAsJSONHelper,
 	fetchHelper,
 	getWithRetryForTokenRefresh,
@@ -122,14 +123,15 @@ export async function fetchSnapshotWithRedeem(
 	snapshotDownloader: (
 		finalOdspResolvedUrl: IOdspResolvedUrl,
 		storageToken: string,
-		groupIds: string[],
+		fetchFullSnapshot: boolean,
+		loadingGroupIds: string[] | undefined,
 		snapshotOptions: ISnapshotOptions | undefined,
 		controller?: AbortController,
 	) => Promise<ISnapshotRequestAndResponseOptions>,
 	putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
 	removeEntries: () => Promise<void>,
-	groupIds: string[],
-	fetchSnapshotForInitialLoad: boolean,
+	fetchFullSnapshot: boolean,
+	loadingGroupIds: string[] | undefined,
 	enableRedeemFallback?: boolean,
 ): Promise<ISnapshot> {
 	// back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
@@ -145,8 +147,8 @@ export async function fetchSnapshotWithRedeem(
 		logger,
 		snapshotDownloader,
 		putInCache,
-		groupIds,
-		fetchSnapshotForInitialLoad,
+		fetchFullSnapshot,
+		loadingGroupIds,
 		enableRedeemFallback,
 	)
 		.catch(async (error) => {
@@ -186,8 +188,8 @@ export async function fetchSnapshotWithRedeem(
 					logger,
 					snapshotDownloader,
 					putInCache,
-					groupIds,
-					fetchSnapshotForInitialLoad,
+					fetchFullSnapshot,
+					loadingGroupIds,
 				);
 			} else {
 				throw error;
@@ -253,13 +255,14 @@ async function fetchLatestSnapshotCore(
 	snapshotDownloader: (
 		finalOdspResolvedUrl: IOdspResolvedUrl,
 		storageToken: string,
-		groupIds: string[],
+		fetchFullSnapshot: boolean,
+		loadingGroupIds: string[] | undefined,
 		snapshotOptions: ISnapshotOptions | undefined,
 		controller?: AbortController,
 	) => Promise<ISnapshotRequestAndResponseOptions>,
 	putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
-	groupIds: string[],
-	fetchSnapshotForInitialLoad?: boolean,
+	fetchFullSnapshot: boolean,
+	loadingGroupIds: string[] | undefined,
 	enableRedeemFallback?: boolean,
 ): Promise<ISnapshot> {
 	return getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
@@ -267,7 +270,7 @@ async function fetchLatestSnapshotCore(
 		assert(storageToken !== null, 0x1e5 /* "Storage token should not be null" */);
 
 		const perfEvent = {
-			eventName: "TreesLatest",
+			eventName: fetchFullSnapshot ? "TreesLatest" : "TreesLatestForGroup",
 			attempts: tokenFetchOptions.refresh ? 2 : 1,
 			shareLinkPresent: odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem !== undefined,
 			isSummarizer: odspResolvedUrl.summarizer,
@@ -293,7 +296,8 @@ async function fetchLatestSnapshotCore(
 				snapshotDownloader(
 					odspResolvedUrl,
 					storageToken,
-					groupIds,
+					fetchFullSnapshot,
+					loadingGroupIds,
 					snapshotOptions,
 					controller,
 				),
@@ -430,9 +434,10 @@ async function fetchLatestSnapshotCore(
 			const { trees, numBlobs, encodedBlobsSize } = evalBlobsAndTrees(snapshot);
 
 			// There are some scenarios in ODSP where we cannot cache, trees/latest will explicitly tell us when we
-			// cannot cache using an HTTP response header.
+			// cannot cache using an HTTP response header. Only cache the full snapshot request.
 			const canCache =
-				odspResponse.headers.get("disablebrowsercachingofusercontent") !== "true";
+				odspResponse.headers.get("disablebrowsercachingofusercontent") !== "true" &&
+				fetchFullSnapshot;
 			const sequenceNumber: number = snapshot.sequenceNumber ?? 0;
 			const seqNumberFromOps =
 				snapshot.ops && snapshot.ops.length > 0
@@ -475,7 +480,7 @@ async function fetchLatestSnapshotCore(
 				encodedBlobsSize,
 				sequenceNumber,
 				ops: snapshot.ops?.length ?? 0,
-				fetchSnapshotForInitialLoad,
+				fetchFullSnapshot,
 				userOps: snapshot.ops?.filter((op) => isRuntimeMessage(op)).length ?? 0,
 				headers: Object.keys(response.requestHeaders).length !== 0 ? true : undefined,
 				// Measures time to make fetch call. Should be similar to
@@ -590,7 +595,8 @@ function countTreesInSnapshotTree(snapshotTree: ISnapshotTree): number {
  * @param odspResolvedUrl - resolved odsp url.
  * @param storageToken - token to do the auth for network request.
  * @param snapshotOptions - Options used to specify how and what to fetch in the snapshot.
- * @param groupIds - groupIds for which snapshot needs to be downloaded.
+ * @param fetchFullSnapshot - whether to fetch full snapshot or not.
+ * @param loadingGroupIds - loadingGroupIds for which snapshot needs to be downloaded.
  * @param snapshotFormatFetchType - Snapshot format to fetch.
  * @param controller - abort controller if caller needs to abort the network call.
  * @param epochTracker - epoch tracker used to add/validate epoch in the network call.
@@ -599,7 +605,8 @@ function countTreesInSnapshotTree(snapshotTree: ISnapshotTree): number {
 export async function downloadSnapshot(
 	odspResolvedUrl: IOdspResolvedUrl,
 	storageToken: string,
-	groupIds: string[],
+	fetchFullSnapshot: boolean,
+	loadingGroupIds: string[] | undefined,
 	snapshotOptions: ISnapshotOptions | undefined,
 	snapshotFormatFetchType?: SnapshotFormatSupportType,
 	controller?: AbortController,
@@ -623,9 +630,19 @@ export async function downloadSnapshot(
 			}
 		});
 	}
-	if (groupIds.length > 0) {
+
+	if (loadingGroupIds !== undefined) {
+		// If we need to fetch snapshot using group Ids but no ids are specified, then fetch
+		// full snapshot using "default" groupId.
+		if (fetchFullSnapshot) {
+			assert(
+				loadingGroupIds.length === 0,
+				"No loading GroupId should be specified for full snapshot",
+			);
+			loadingGroupIds.push(defaultGroupIdForSnapshot);
+		}
 		// eslint-disable-next-line @typescript-eslint/dot-notation
-		queryParams["groupId"] = Array.from(groupIds).join(",");
+		queryParams["groupId"] = Array.from(loadingGroupIds).join(",");
 	}
 
 	const queryString = getQueryString(queryParams);
@@ -649,7 +666,7 @@ export async function downloadSnapshot(
 			break;
 		default:
 			// By default ask both versions and let the server decide the format.
-			headers.accept = `application/json, application/ms-fluid; v=${currentReadVersion}, application/to-be-decided`;
+			headers.accept = `application/json, application/ms-fluid; v=${currentReadVersion}`;
 	}
 
 	const odspResponse = await (epochTracker?.fetch(

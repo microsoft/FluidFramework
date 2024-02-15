@@ -509,11 +509,11 @@ export interface ISnapshotFetchOptions {
 	versionId?: string;
 
 	/**
-	 * List of groupId of datastores for which the snapshot needs to be fetched. If not provided, entire snapshot
-	 * will be requested from the service. It is upto the service, to include snapshot for datastores with groupIds
-	 * or not.
+	 * List of loading groupId of datastores for which the snapshot needs to be fetched. If not provided, content with
+	 * default/missing groupIDs will be requested from the service. It is upto the service, to include snapshot for
+	 * content with groupIds or not. Don't provide anything here for fetching content for initial container boot.
 	 */
-	groupIds?: string[];
+	loadingGroupIds?: string[];
 
 	/**
 	 * Specify if you want default behavior of the driver to fetch the snapshot like lets say simultaneously fetch from
