@@ -38,11 +38,11 @@ export async function getZipObjectFromArtifact(
 	const buildApi = await adoConnection.getBuildApi();
 
 	// IMPORTANT
-	// azure-devops-node-api has a known (and seemingly ignored) issue that makes it not work if we need to download
-	// artifacts created by the new PublishPipelineArtifact task (it worked for the old PublishBuildArtifacts task).
-	// The move to 1ES pipeline templates forced our hand to use the new task (through an 1ES-provided task template).
-	// The workaround is to override the createAcceptHeader function when making the request to download the artifact.
-	// See https://github.com/microsoft/azure-devops-node-api/issues/432 for more details
+	// getArtifactContentZip() in the azure-devops-node-api package tries to download pipeline artifacts using an
+	// API version (in the http request's accept header) that isn't supported by the artifact download endpoint.
+	// One way of getting around that is by temporarily removing the API version that the package adds, to force
+	// it to use a supported one.
+	// See https://github.com/microsoft/azure-devops-node-api/issues/432 for more details.
 	const originalCreateAcceptHeader = buildApi.createAcceptHeader;
 	buildApi.createAcceptHeader = (type: string): string => type;
 	const artifactStream = await buildApi.getArtifactContentZip(
