@@ -157,8 +157,7 @@ describe("DDS Handle Encoding", () => {
 			(dds) => {
 				dds.add(handle).catch(() => {});
 			},
-			// todo: AB#7149 this DDS does not currently support storing handles
-			[] /* expectedHandles */,
+			[handle.absolutePath] /* expectedHandles */,
 		),
 		createTestCase(
 			new CellFactory(),
@@ -170,7 +169,7 @@ describe("DDS Handle Encoding", () => {
 	];
 
 	testCases.forEach((testCase) => {
-		const shouldOrShouldNot = testCase.expectedHandles.length > 0 ? "should" : "should not";
+		const shouldOrShouldNot = testCase.expectedHandles.length > 0 ? "should not" : "should";
 		it(`${shouldOrShouldNot} obscure handles in ${testCase.name} message contents`, async () => {
 			testCase.addHandleToDDS();
 

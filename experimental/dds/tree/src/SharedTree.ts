@@ -1380,13 +1380,13 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		if (this.isAttached()) {
 			switch (this.writeFormat) {
 				case WriteFormat.v0_0_2:
-					this.submitOp(this.encoder_0_0_2.encodeEditOp(edit, this.serializeEdit.bind(this), this));
+					this.submitOp(this.encoder_0_0_2.encodeEditOp(edit, (x) => x, this));
 					break;
 				case WriteFormat.v0_1_1:
 					this.submitOp(
 						this.encoder_0_1_1.encodeEditOp(
 							edit,
-							this.serializeEdit.bind(this),
+							(x) => x,
 							this.idCompressor.takeNextCreationRange(),
 							this.idNormalizer,
 							this.interner
@@ -1397,10 +1397,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 					fail('Unknown version');
 			}
 		}
-	}
-
-	private serializeEdit<TChange>(preparedEdit: Edit<TChange>): Edit<TChange> {
-		return preparedEdit;
 	}
 
 	/** A type-safe `submitLocalMessage` wrapper to enforce op format */

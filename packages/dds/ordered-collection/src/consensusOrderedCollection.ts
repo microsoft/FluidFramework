@@ -41,7 +41,8 @@ interface IConsensusOrderedCollectionValue<T> {
 interface IConsensusOrderedCollectionAddOperation<T> {
 	opName: "add";
 	// serialized value
-	value: string | { version: "2"; value: T };
+	value: string;
+	deserializedValue?: T;
 }
 
 interface IConsensusOrderedCollectionAcquireOperation {
@@ -140,6 +141,7 @@ export class ConsensusOrderedCollection<T = any>
 		await this.submit<IConsensusOrderedCollectionAddOperation<T>>({
 			opName: "add",
 			value: valueSer,
+			deserializedValue: value,
 		});
 	}
 
@@ -293,10 +295,10 @@ export class ConsensusOrderedCollection<T = any>
 			let value: IConsensusOrderedCollectionValue<T> | undefined;
 			switch (op.opName) {
 				case "add":
-					if (typeof op.value === "string") {
-						this.addCore(this.deserializeValue(op.value, this.serializer) as T);
+					if (op.deserializedValue !== undefined) {
+						this.addCore(op.deserializedValue);
 					} else {
-						this.addCore(op.value.value);
+						this.addCore(this.deserializeValue(op.value, this.serializer) as T);
 					}
 					break;
 

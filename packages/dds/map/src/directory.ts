@@ -1072,7 +1072,7 @@ export class SharedDirectory
 			case "set": {
 				dir?.set(
 					directoryOp.key,
-					this.localValueMaker.fromSerializable(directoryOp.value).value,
+					this.localValueMaker.fromSerializable(directoryOp.value, this.serializer, this.handle).value,
 				);
 				break;
 			}
