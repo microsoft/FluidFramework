@@ -147,6 +147,7 @@ export class OdspDocumentService
 		});
 
 		this.hostPolicy = hostPolicy;
+		this.hostPolicy.supportGetSnapshotApi = this._policies.supportGetSnapshotApi;
 		if (this.clientIsSummarizer) {
 			this.hostPolicy = { ...this.hostPolicy, summarizerClient: true };
 		}

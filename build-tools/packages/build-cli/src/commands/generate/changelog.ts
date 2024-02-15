@@ -13,7 +13,7 @@ import { CleanOptions } from "simple-git";
 
 import { BaseCommand } from "../../base";
 import { releaseGroupFlag } from "../../flags";
-import { Repository } from "../../lib";
+import { Repository } from "../../library";
 import { isReleaseGroup } from "../../releaseGroups";
 
 async function replaceInFile(search: string, replace: string, path: string): Promise<void> {

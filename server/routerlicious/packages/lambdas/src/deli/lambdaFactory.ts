@@ -235,14 +235,19 @@ export class DeliLambdaFactory
 					closeType === LambdaCloseType.Error
 				) {
 					if (document?.isEphemeralContainer) {
-						// Call to historian to delete summaries
-						await requestWithRetry(
-							async () => gitManager.deleteSummary(false),
-							"deliLambda_onClose" /* callName */,
-							getLumberBaseProperties(documentId, tenantId) /* telemetryProperties */,
-							(error) => true /* shouldRetry */,
-							3 /* maxRetries */,
-						);
+						if (this.serviceConfiguration.deli.enableEphemeralContainerSummaryCleanup) {
+							// Call to historian to delete summaries
+							await requestWithRetry(
+								async () => gitManager.deleteSummary(false),
+								"deliLambda_onClose" /* callName */,
+								getLumberBaseProperties(
+									documentId,
+									tenantId,
+								) /* telemetryProperties */,
+								(error) => true /* shouldRetry */,
+								3 /* maxRetries */,
+							);
+						}
 
 						// Delete the document metadata
 						await runWithRetry(

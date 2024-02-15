@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import { stub } from "sinon";
+import { ISnapshot } from "@fluidframework/driver-definitions";
 import { OdspErrorTypes, IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { EpochTracker } from "../epochTracker";
@@ -13,7 +14,7 @@ import * as fetchSnapshotImport from "../fetchSnapshot";
 import { LocalPersistentCache, NonPersistentCache } from "../odspCache";
 import { INewFileInfo, IOdspResponse } from "../odspUtils";
 import { createOdspUrl } from "../createOdspUrl";
-import { getHashedDocumentId, ISnapshotContents } from "../odspPublicUtils";
+import { getHashedDocumentId } from "../odspPublicUtils";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { ISnapshotRequestAndResponseOptions } from "../fetchSnapshot";
 import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
@@ -58,16 +59,17 @@ describe("Tests for snapshot fetch", () => {
 	const logger = createChildLogger();
 	const odspUrl = createOdspUrl({ ...newFileParams, itemId, dataStorePath: "/" });
 
-	const content: ISnapshotContents = {
+	const content: ISnapshot = {
 		snapshotTree: {
 			id: "id",
 			blobs: {},
 			trees: {},
 		},
-		blobs: new Map(),
+		blobContents: new Map(),
 		ops: [],
 		sequenceNumber: 0,
 		latestSequenceNumber: 0,
+		snapshotFormatV: 1,
 	};
 	before(async () => {
 		hashedDocumentId = await getHashedDocumentId(driveId, itemId);

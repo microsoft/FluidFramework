@@ -6,7 +6,7 @@
 import { parse } from "url";
 import { v4 as uuid } from "uuid";
 import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, compareArrays, unreachableCase } from "@fluidframework/core-utils";
 import { ISummaryTree, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { LoggingError, UsageError } from "@fluidframework/telemetry-utils";
 import {
@@ -107,15 +107,17 @@ export function combineAppAndProtocolSummary(
  * to align detached container format with IPendingContainerState
  * @param summary - ISummaryTree
  */
-function convertSummaryToSnapshotAndBlobs(
-	summary: ISummaryTree,
-): [ISnapshotTree, ISerializableBlobContents] {
+function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): {
+	tree: ISnapshotTree;
+	blobs: ISerializableBlobContents;
+} {
 	let blobContents: ISerializableBlobContents = {};
 	const treeNode: ISnapshotTree = {
 		blobs: {},
 		trees: {},
 		id: uuid(),
 		unreferenced: summary.unreferenced,
+		groupId: summary.groupId,
 	};
 	const keys = Object.keys(summary.tree);
 	for (const key of keys) {
@@ -123,8 +125,8 @@ function convertSummaryToSnapshotAndBlobs(
 
 		switch (summaryObject.type) {
 			case SummaryType.Tree: {
-				let blobs: ISerializableBlobContents | undefined;
-				[treeNode.trees[key], blobs] = convertSummaryToSnapshotAndBlobs(summaryObject);
+				const { tree, blobs } = convertSummaryToSnapshotAndBlobs(summaryObject);
+				treeNode.trees[key] = tree;
 				blobContents = { ...blobContents, ...blobs };
 				break;
 			}
@@ -151,7 +153,7 @@ function convertSummaryToSnapshotAndBlobs(
 			}
 		}
 	}
-	return [treeNode, blobContents];
+	return { tree: treeNode, blobs: blobContents };
 }
 
 /**
@@ -162,7 +164,7 @@ function convertSummaryToSnapshotAndBlobs(
 function convertProtocolAndAppSummaryToSnapshotAndBlobs(
 	protocolSummaryTree: ISummaryTree,
 	appSummaryTree: ISummaryTree,
-): [ISnapshotTree, ISerializableBlobContents] {
+): { tree: ISnapshotTree; blobs: ISerializableBlobContents } {
 	const combinedSummary: ISummaryTree = {
 		type: SummaryType.Tree,
 		tree: { ...appSummaryTree.tree },
@@ -175,7 +177,7 @@ function convertProtocolAndAppSummaryToSnapshotAndBlobs(
 
 export const getSnapshotTreeAndBlobsFromSerializedContainer = (
 	detachedContainerSnapshot: ISummaryTree,
-): [ISnapshotTree, ISerializableBlobContents] => {
+): { tree: ISnapshotTree; blobs: ISerializableBlobContents } => {
 	assert(
 		isCombinedAppAndProtocolSummary(detachedContainerSnapshot),
 		"Protocol and App summary trees should be present",
@@ -258,12 +260,12 @@ export function getDetachedContainerStateFromSerializedContainer(
 	if (isPendingDetachedContainerState(parsedContainerState)) {
 		return parsedContainerState;
 	} else if (isCombinedAppAndProtocolSummary(parsedContainerState)) {
-		const [baseSnapshot, snapshotBlobs] =
+		const { tree, blobs } =
 			getSnapshotTreeAndBlobsFromSerializedContainer(parsedContainerState);
 		const detachedContainerState: IPendingDetachedContainerState = {
 			attached: false,
-			baseSnapshot,
-			snapshotBlobs,
+			baseSnapshot: tree,
+			snapshotBlobs: blobs,
 			hasAttachmentBlobs: parsedContainerState.tree[hasBlobsSummaryTree] !== undefined,
 		};
 		return detachedContainerState;
@@ -271,3 +273,31 @@ export function getDetachedContainerStateFromSerializedContainer(
 		throw new UsageError("Cannot rehydrate detached container. Incorrect format");
 	}
 }
+
+/**
+ * Ensures only a single instance of the provided async function is running.
+ * If there are multiple calls they will all get the same promise to wait on.
+ */
+export const runSingle = <A extends any[], R>(func: (...args: A) => Promise<R>) => {
+	let running:
+		| {
+				args: A;
+				result: Promise<R>;
+		  }
+		| undefined;
+	// don't mark this function async, so we return the same promise,
+	// rather than one that is wrapped due to async
+	// eslint-disable-next-line @typescript-eslint/promise-function-async
+	return (...args: A) => {
+		if (running !== undefined) {
+			if (!compareArrays(running.args, args)) {
+				return Promise.reject(
+					new UsageError("Subsequent calls cannot use different arguments."),
+				);
+			}
+			return running.result;
+		}
+		running = { args, result: func(...args).finally(() => (running = undefined)) };
+		return running.result;
+	};
+};

@@ -39,6 +39,8 @@ stages:
   displayName: Publish to internal build feed
   # This condition should match the condition for publish_npm_internal_dev
   condition: and(succeeded(), eq(variables['testBuild'], false))
+  variables:
+  - group: ado-feeds
   jobs:
   - template: /tools/pipelines/templates/1ES/include-publish-npm-package-deployment.yml@self
     parameters:
@@ -56,6 +58,8 @@ stages:
     displayName: Publish to internal dev feed
     # This condition should match the condition for publish_npm_internal_build
     condition: and(succeeded(), eq(variables['testBuild'], false))
+    variables:
+    - group: ado-feeds
     jobs:
     - template: /tools/pipelines/templates/1ES/include-publish-npm-package-deployment.yml@self
       parameters:
@@ -69,6 +73,8 @@ stages:
   dependsOn: build
   displayName: Publish to public npmjs.org
   condition: and(succeeded(), or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')))
+  variables:
+  - group: ado-feeds
   jobs:
   - template: /tools/pipelines/templates/1ES/include-publish-npm-package-deployment.yml@self
     parameters:

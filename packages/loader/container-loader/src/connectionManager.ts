@@ -654,8 +654,12 @@ export class ConnectionManager implements IConnectionManager {
 				if (retryDelayFromError !== undefined || globalThis.navigator?.onLine !== false) {
 					delayMs = calculateMaxWaitTime(delayMs, origError);
 				}
-				// Raise event in case the delay was there.
-				this.props.reconnectionDelayHandler(delayMs, origError);
+
+				// Raise event in case the delay was there from the error.
+				if (retryDelayFromError !== undefined) {
+					this.props.reconnectionDelayHandler(delayMs, origError);
+				}
+
 				await new Promise<void>((resolve) => {
 					setTimeout(resolve, delayMs);
 				});

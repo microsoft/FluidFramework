@@ -29,7 +29,7 @@ import { waitForContainerWriteModeConnectionWrite } from "./gcTestSummaryUtils.j
  * These tests validate that SweepReady attachment blobs are correctly marked as tombstones. Tombstones should be added
  * to the summary and changing them (sending / receiving ops, loading, etc.) is not allowed.
  */
-describeCompat("GC attachment blob tombstone tests", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectProvider) => {
 	const tombstoneTimeoutMs = 200;
 	const configProvider = createTestConfigProvider();
 	const gcOptions: IGCRuntimeOptions = {

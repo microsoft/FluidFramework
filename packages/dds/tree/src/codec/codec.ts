@@ -7,6 +7,7 @@ import { bufferToString, IsoBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
 import { fail, JsonCompatibleReadOnly } from "../util/index.js";
+import { ChangeEncodingContext } from "../core/index.js";
 
 /**
  * Translates decoded data to encoded data.
@@ -291,7 +292,7 @@ export function withSchemaValidation<
 	EncodedSchema extends TSchema,
 	TEncodedFormat = JsonCompatibleReadOnly,
 	TValidate = TEncodedFormat,
-	TContext = void,
+	TContext = ChangeEncodingContext,
 >(
 	schema: EncodedSchema,
 	codec: IJsonCodec<TInMemoryFormat, TEncodedFormat, TValidate, TContext>,

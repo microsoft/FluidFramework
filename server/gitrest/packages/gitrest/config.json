@@ -44,6 +44,7 @@
 			"name": "redisFs"
 		},
 		"persistLatestFullSummary": false,
+		"persistLatestFullEphemeralSummary": false,
 		"repoPerDocEnabled": false,
 		"enableRepositoryManagerMetrics": false,
 		"apiMetricsSamplingPeriod": 100,
@@ -52,6 +53,7 @@
 		"enableSlimGitInit": false,
 		"enableRedisFsMetrics": true,
 		"enableHashmapRedisFs": false,
+		"enableRedisFsOptimizedStat": false,
 		"redisApiMetricsSamplingPeriod": 0,
 		"enforceStrictPersistedFullSummaryReads": false
 	},

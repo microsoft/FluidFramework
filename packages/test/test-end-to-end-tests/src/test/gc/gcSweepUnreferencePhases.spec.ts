@@ -31,11 +31,11 @@ import {
 /**
  * Validates that an unreferenced datastore goes through all the GC phases without overlapping.
  */
-describeCompat("GC unreference phases", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 	// Since these tests depend on these timing windows, they should not be run against drivers talking over the network
 	// (see this.skip() call below)
 	const tombstoneTimeoutMs = 200; // Tombstone at 200ms
-	const sweepGracePeriodMs = 100; // Sweep at 300ms
+	const sweepGracePeriodMs = 200; // Sweep at 400ms
 
 	const configProvider = createTestConfigProvider();
 	const gcOptions: IGCRuntimeOptions = {
@@ -85,7 +85,6 @@ describeCompat("GC unreference phases", "2.0.0-rc.1.0.0", (getTestObjectProvider
 			this.skip();
 		}
 
-		configProvider.set("Fluid.GarbageCollection.DisableAttachmentBlobSweep", true); // Only sweep DataStores
 		configProvider.set("Fluid.GarbageCollection.ThrowOnTombstoneUsage", true);
 		configProvider.set(
 			"Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs",

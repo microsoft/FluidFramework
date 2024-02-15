@@ -643,14 +643,12 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	private _documentCreated = false;
 
 	/**
-	 * `_loadCount` is used to alternate which version we load the next container with.
-	 * loadCount is even then we will load with the "create" version, and if odd we load with the "load" version.
-	 * After each test we will reset loadCount to 0 to ensure we always create the first container with the create version.
+	 * Used to determine which APIs to use when creating a loader.
 	 *
-	 * Note: This will only affect tests that load a container more than two times.
+	 * The first load will always use the create APIs, and then useCreateApi will be set to false to ensure all
+	 * subsequent loads use the load APIs.
 	 */
-
-	private _loadCount: number = 0;
+	private useCreateApi: boolean = true;
 
 	constructor(
 		private readonly LoaderConstructorForCreating: typeof Loader,
@@ -726,7 +724,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	 * {@inheritDoc ITestObjectProvider.driver}
 	 */
 	public get driver(): ITestDriver {
-		return this.nextLoaderShouldCreate() ? this.driverForCreating : this.driverForLoading;
+		return this.useCreateApi ? this.driverForCreating : this.driverForLoading;
 	}
 
 	/**
@@ -735,7 +733,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	public get createFluidEntryPoint(): (
 		testContainerConfig?: ITestContainerConfig,
 	) => fluidEntryPoint {
-		return this.nextLoaderShouldCreate()
+		return this.useCreateApi
 			? this.createFluidEntryPointForCreating
 			: this.createFluidEntryPointForLoading;
 	}
@@ -789,9 +787,12 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
 		loaderProps?: Partial<ILoaderProps>,
 	) {
-		return this.nextLoaderShouldCreate(/** increment */ true)
-			? this.createLoaderForCreating(packageEntries, loaderProps)
-			: this.createLoaderForLoading(packageEntries, loaderProps);
+		if (this.useCreateApi) {
+			// After we create the first loader, we can set this.useCreateApi to false.
+			this.useCreateApi = false;
+			return this.createLoaderForCreating(packageEntries, loaderProps);
+		}
+		return this.createLoaderForLoading(packageEntries, loaderProps);
 	}
 
 	/**
@@ -824,9 +825,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		loaderProps?: Partial<ILoaderProps>,
 		requestHeader?: IRequestHeader,
 	): Promise<IContainer> {
-		const driver = this.nextLoaderShouldCreate()
-			? this.driverForCreating
-			: this.driverForLoading;
+		const driver = this.useCreateApi ? this.driverForCreating : this.driverForLoading;
 		const loader = this.createLoader([[defaultCodeDetails, entryPoint]], loaderProps);
 		return this.resolveContainer(loader, requestHeader, driver);
 	}
@@ -888,9 +887,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		requestHeader?: IRequestHeader,
 	): Promise<IContainer> {
 		// Keep track of which Loader we are about to use so we can pass the correct driver through
-		const driver = this.nextLoaderShouldCreate()
-			? this.driverForCreating
-			: this.driverForLoading;
+		const driver = this.useCreateApi ? this.driverForCreating : this.driverForLoading;
 		const loader = this.makeTestLoader(testContainerConfig);
 		const container = await this.resolveContainer(loader, requestHeader, driver);
 		await this.waitContainerToCatchUp(container);
@@ -902,7 +899,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	 * {@inheritDoc ITestObjectProvider.reset}
 	 */
 	public reset() {
-		this._loadCount = 0;
+		this.useCreateApi = true;
 		this._loaderContainerTracker.reset();
 		this._logger = undefined;
 		this._documentServiceFactory = undefined;
@@ -947,14 +944,6 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	public resetLoaderContainerTracker(syncSummarizerClients: boolean = false) {
 		this._loaderContainerTracker.reset();
 		this._loaderContainerTracker = new LoaderContainerTracker(syncSummarizerClients);
-	}
-
-	private nextLoaderShouldCreate(increment: boolean = false): boolean {
-		const shouldCreate = this._loadCount % 2 === 0;
-		if (increment) {
-			this._loadCount++;
-		}
-		return shouldCreate;
 	}
 }
 

@@ -6,7 +6,7 @@
 import { strict as assert } from 'assert';
 import { expect } from 'chai';
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ISequencedDocumentMessage, SummaryType } from '@fluidframework/protocol-definitions';
 import {
 	MockContainerRuntime,
 	MockContainerRuntimeFactory,
@@ -830,11 +830,17 @@ export function runSharedTreeOperationsTests(
 
 					const newNode = testTree.buildLeaf();
 					sharedTree.applyEdit(...Change.insertTree(newNode, StablePlace.before(testTree.left)));
-					if (!hasLocalEdits) {
+					let serialized: string;
+					if (hasLocalEdits) {
+						const { summary } = sharedTree.getAttachSummary();
+						assert.equal(summary.type, SummaryType.Tree, 'Summary type should be Tree');
+						assert.equal(summary.tree.header.type, SummaryType.Blob, 'Summary should contain header blob');
+						serialized = summary.tree.header.content as string;
+					} else {
 						containerRuntimeFactory.processAllMessages();
+						serialized = serialize(sharedTree.saveSummary(), testSerializer, testHandle);
 					}
 
-					const serialized = serialize(sharedTree.saveSummary(), testSerializer, testHandle);
 					const treeContent: SharedTreeSummaryBase = JSON.parse(serialized);
 					const parsedTree: SummaryContents =
 						writeFormat === WriteFormat.v0_1_1
@@ -941,11 +947,14 @@ export function runSharedTreeOperationsTests(
 					getChangeNodeFromView(sharedTree.currentView),
 					(node) => convertNodeDataIds(node, (id) => sharedTree.convertToStableNodeId(id))
 				);
-				const summary = sharedTree.saveSummary();
+				const { summary } = sharedTree.getAttachSummary();
+				assert.equal(summary.type, SummaryType.Tree, 'Summary type should be Tree');
+				assert.equal(summary.tree.header.type, SummaryType.Blob, 'Summary should contain header blob');
+				const treeContent: SharedTreeSummaryBase = JSON.parse(summary.tree.header.content as string);
 
 				const { tree: sharedTree2 } = setUpTestSharedTree();
 
-				sharedTree2.loadSummary(summary);
+				sharedTree2.loadSummary(treeContent);
 				const treeAfter = convertTreeNodes<ChangeNode, ChangeNode_0_0_2>(
 					getChangeNodeFromView(sharedTree2.currentView),
 					(node) => convertNodeDataIds(node, (id) => sharedTree2.convertToStableNodeId(id))

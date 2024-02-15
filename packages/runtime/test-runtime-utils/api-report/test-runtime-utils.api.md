@@ -38,7 +38,6 @@ import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitio
 import { IIdCompressor } from '@fluidframework/id-compressor';
 import { IIdCompressorCore } from '@fluidframework/id-compressor';
 import { ILoader } from '@fluidframework/container-definitions';
-import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
@@ -118,8 +117,6 @@ export class MockContainerRuntime {
     finalizeIdRange(range: IdCreationRange): void;
     flush(): void;
     // (undocumented)
-    getGeneratedIdRange(): IdCreationRange | undefined;
-    // (undocumented)
     protected readonly overrides?: {
         minimumSequenceNumber?: number | undefined;
     } | undefined;
@@ -129,7 +126,11 @@ export class MockContainerRuntime {
     process(message: ISequencedDocumentMessage): void;
     rebase(): void;
     protected get referenceSequenceNumber(): number;
-    protected runtimeOptions: Required<IMockContainerRuntimeOptions>;
+    // (undocumented)
+    protected reSubmitMessages(messagesToResubmit: {
+        content: any;
+        localOpMetadata: unknown;
+    }[]): void;
     // (undocumented)
     submit(messageContent: any, localOpMetadata: unknown): number;
 }
@@ -153,13 +154,13 @@ export class MockContainerRuntimeFactory {
     pushMessage(msg: Partial<ISequencedDocumentMessage>): void;
     // (undocumented)
     readonly quorum: MockQuorumClients;
+    // (undocumented)
+    removeContainerRuntime(containerRuntime: MockContainerRuntime): void;
     protected readonly runtimeOptions: Required<IMockContainerRuntimeOptions>;
     // (undocumented)
-    protected readonly runtimes: MockContainerRuntime[];
+    protected readonly runtimes: Set<MockContainerRuntime>;
     // (undocumented)
     sequenceNumber: number;
-    // (undocumented)
-    synchronizeIdCompressors(): void;
 }
 
 // @alpha
@@ -363,7 +364,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     once(event: string | symbol, listener: (...args: any[]) => void): this;
     // (undocumented)
-    options: ILoaderOptions;
+    options: Record<string | number, any>;
     // (undocumented)
     packagePath: readonly string[];
     // (undocumented)
@@ -465,7 +466,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     get objectsRoutingContext(): IFluidHandleContext;
     // (undocumented)
-    options: ILoaderOptions;
+    options: Record<string | number, any>;
     // (undocumented)
     readonly path = "";
     // (undocumented)

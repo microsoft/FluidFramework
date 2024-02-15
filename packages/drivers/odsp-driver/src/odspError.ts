@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
+import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils/internal";
 import { NonRetryableError } from "@fluidframework/driver-utils";
 import { OdspError, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
 import { getCircularReplacer, IFluidErrorBase } from "@fluidframework/telemetry-utils";

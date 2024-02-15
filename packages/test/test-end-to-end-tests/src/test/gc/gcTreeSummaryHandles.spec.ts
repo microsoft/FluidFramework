@@ -114,6 +114,7 @@ async function submitFailingSummary(
 	summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection },
 	logger: ITelemetryLoggerExt,
 	failingStage: FailingSubmitSummaryStage,
+	latestSummaryRefSeqNum: number,
 	fullTree: boolean = false,
 ) {
 	await provider.ensureSynchronized();
@@ -123,6 +124,7 @@ async function submitFailingSummary(
 		refreshLatestAck: false,
 		summaryLogger: logger,
 		cancellationToken: new ControlledCancellationToken(failingStage),
+		latestSummaryRefSeqNum,
 	});
 
 	const stageMap = new Map<FailingSubmitSummaryStage, string>();
@@ -145,6 +147,7 @@ async function submitAndAckSummary(
 	provider: ITestObjectProvider,
 	summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection },
 	logger: ITelemetryLoggerExt,
+	latestSummaryRefSeqNum: number,
 	fullTree: boolean = false,
 	cancellationToken: ISummaryCancellationToken = neverCancelledSummaryToken,
 ) {
@@ -157,6 +160,7 @@ async function submitAndAckSummary(
 		refreshLatestAck: false,
 		summaryLogger: logger,
 		cancellationToken,
+		latestSummaryRefSeqNum,
 	});
 	assert(result.stage === "submit", "The summary was not submitted");
 	// Wait for the above summary to be ack'd.
@@ -178,7 +182,7 @@ async function submitAndAckSummary(
  */
 describeCompat(
 	"GC Tree stored as a handle in summaries",
-	"2.0.0-rc.1.0.0",
+	"NoCompat",
 	(getTestObjectProvider, apis) => {
 		const {
 			containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
@@ -265,10 +269,13 @@ describeCompat(
 			},
 			isHandle: boolean,
 		): Promise<string> {
+			const latestSummaryRefSeqNum =
+				latestAckedSummary?.summaryOp.referenceSequenceNumber ?? 0;
 			const summaryResult = await submitAndAckSummary(
 				provider,
 				summarizerClient,
 				logger,
+				latestSummaryRefSeqNum,
 				false, // fullTree
 			);
 			latestAckedSummary = summaryResult.ackedSummary;
@@ -398,6 +405,7 @@ describeCompat(
 					summarizerClient1,
 					logger,
 					FailingSubmitSummaryStage.Generate,
+					latestAckedSummary?.summaryOp.referenceSequenceNumber ?? 0,
 				);
 
 				// GC blob handle expected
@@ -415,6 +423,7 @@ describeCompat(
 					summarizerClient1,
 					logger,
 					FailingSubmitSummaryStage.Upload,
+					latestAckedSummary?.summaryOp.referenceSequenceNumber ?? 0,
 				);
 
 				// GC blob expected as the summary had changed
@@ -434,6 +443,7 @@ describeCompat(
 					summarizerClient1,
 					logger,
 					FailingSubmitSummaryStage.Generate,
+					latestAckedSummary?.summaryOp.referenceSequenceNumber ?? 0,
 				);
 
 				// GC blob expected as the summary had changed

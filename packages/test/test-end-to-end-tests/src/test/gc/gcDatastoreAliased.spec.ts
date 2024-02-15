@@ -95,7 +95,7 @@ describeCompat("GC Data Store Aliased Full Compat", "FullCompat", (getTestObject
 	});
 });
 
-describeCompat("GC Data Store Aliased No Compat", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("GC Data Store Aliased No Compat", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 
 	beforeEach("getTestObjectProvider", async () => {
