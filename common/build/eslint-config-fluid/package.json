@@ -45,19 +45,16 @@
 		"eslint-plugin-react-hooks": "~4.6.0",
 		"eslint-plugin-tsdoc": "~0.2.17",
 		"eslint-plugin-unicorn": "~48.0.1",
-		"eslint-plugin-unused-imports": "~3.0.0",
-		"ts-morph": "^20.0.0"
+		"eslint-plugin-unused-imports": "~3.0.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/markdown-magic": "file:../../../tools/markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.50.0",
-		"mocha": "^10.2.0",
 		"mocha-json-output-reporter": "^2.1.0",
 		"mocha-multi-reporters": "^1.5.1",
 		"prettier": "~3.0.3",
-		"rimraf": "^4.4.0",
 		"sort-json": "^2.0.1",
 		"typescript": "~5.1.6"
 	},

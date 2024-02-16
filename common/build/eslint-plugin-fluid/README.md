@@ -16,13 +16,4 @@ See [ESLint: Name a Plugin](https://eslint.org/docs/latest/extend/plugins#name-a
 
 ## Rules
 
-Currently there are two custom rules within the package:
-
--   `no-restricted-tags-imports`: Restrict imports of `@internal` tagged items.
--   `no-member-release-tags`: Prevent use of release tags on member properties of classes and interfaces, where they are not valid.
-
-## Applying the Custom Rules
-
-To begin enforcing a new custom rule, make sure to include it in the `rules` field of the appropriate config module (`minimal.js`, `recommended.js`, or `strict.js`).
-
-Since `@fluid-internal/eslint-plugin-fluid` is a dependency of `@fluidframework/eslint-config-fluid` package, any package using `@fluidframework/eslint-config-fluid` as its `devDependencies` will be able to apply the custom rules.
+Browser `src/rules` to check more information on the individual rules.

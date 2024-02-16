@@ -38,6 +38,7 @@ trigger:
     include:
     - .prettierignore
     - common/build/eslint-plugin-fluid
+    - tools/markdown-magic
     - tools/pipelines/build-eslint-plugin-fluid.yml
     - tools/pipelines/templates/1ES/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
@@ -62,6 +63,7 @@ pr:
     include:
     - .prettierignore
     - common/build/eslint-plugin-fluid
+    - tools/markdown-magic
     - tools/pipelines/build-eslint-plugin-fluid.yml
     - tools/pipelines/templates/1ES/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml

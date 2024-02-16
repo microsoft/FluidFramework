@@ -1,7 +1,6 @@
 {
 	"name": "@fluid-internal/eslint-plugin-fluid",
 	"version": "0.1.0",
-	"private": true,
 	"description": "Custom ESLint rules for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
