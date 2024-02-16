@@ -44,7 +44,7 @@ describe("OdspDocumentDeltaConnection tests", () => {
 		driveId,
 		itemId,
 		odspResolvedUrl: true,
-	} as any as IOdspResolvedUrl;
+	} as unknown as IOdspResolvedUrl;
 	let socket: ClientSocketMock | undefined;
 
 	before(async () => {
@@ -66,7 +66,7 @@ describe("OdspDocumentDeltaConnection tests", () => {
 		);
 	});
 
-	const checkListenerCount = (_socket: ClientSocketMock) => {
+	const checkListenerCount = (_socket: ClientSocketMock): void => {
 		assert(
 			_socket.listenerCount("connect_error") === 0,
 			"no connect_error listener should exiist",
