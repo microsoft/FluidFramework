@@ -49,9 +49,8 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 			this.pendingMessages.length = 0;
 			this.reSubmitMessages(messagesToResubmit);
 		} else {
-			const factory = this.factory as MockContainerRuntimeFactoryForReconnection;
 			// On disconnection, clear any outstanding messages for this client because it will be resent.
-			factory.clearOutstandingClientMessages(this.clientId);
+			this.factory.clearOutstandingClientMessages(this.clientId);
 			this.factory.quorum.removeMember(this.clientId);
 		}
 
@@ -60,18 +59,22 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 	}
 
 	private _connected = true;
-
+	private readonly processedOps?: ISequencedDocumentMessage[];
 	constructor(
 		dataStoreRuntime: MockFluidDataStoreRuntime,
-		factory: MockContainerRuntimeFactoryForReconnection,
+		protected override readonly factory: MockContainerRuntimeFactoryForReconnection,
 		runtimeOptions: IMockContainerRuntimeOptions = {},
-		overrides?: { minimumSequenceNumber?: number },
+		overrides?: { minimumSequenceNumber?: number; trackRemoteOps?: boolean },
 	) {
 		super(dataStoreRuntime, factory, runtimeOptions, overrides);
+		if (overrides?.trackRemoteOps === true) {
+			this.processedOps = [];
+		}
 	}
 
 	override process(message: ISequencedDocumentMessage) {
 		if (this.connected) {
+			this.processedOps?.push(message);
 			super.process(message);
 		} else {
 			this.pendingRemoteMessages.push(message);
@@ -87,6 +90,75 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 		this.addPendingMessage(messageContent, localOpMetadata, -1);
 		return -1;
 	}
+
+	public async initializeWithStashedOps(containerRuntime: MockContainerRuntimeForReconnection) {
+		if (this.pendingMessages.length !== 0 || this.clientSequenceNumber !== 0) {
+			throw new Error("applyStashedOps must be called first, and once.");
+		}
+
+		const { processedOps, pendingRemoteMessages } = containerRuntime;
+
+		if (processedOps === undefined) {
+			throw new Error("containerRuntime must have trackRemoteOps true");
+		}
+
+		// shutdown the existing client
+		containerRuntime.flush();
+		containerRuntime.connected = false;
+		this.factory.removeContainerRuntime(containerRuntime);
+
+		// get the saved ops seen by the client, and its pending ops
+		const pendingMessages = containerRuntime.pendingMessages.splice(0);
+		const savedOps = [...processedOps.splice(0), ...pendingRemoteMessages.splice(0)];
+
+		// ensure no ops are sent to, or produced by the old client
+		// this can help find bugs in the the harness
+		Object.freeze(containerRuntime.pendingMessages);
+		Object.freeze(containerRuntime.pendingRemoteMessages);
+		Object.freeze(containerRuntime.processedOps);
+
+		// clear any unprocessed ops for this client
+		this.factory.clearOutstandingClientMessages(containerRuntime.clientId);
+
+		let refSeq = Math.min(
+			savedOps[0]?.referenceSequenceNumber ?? Number.MAX_SAFE_INTEGER,
+			pendingMessages[0]?.referenceSequenceNumber ?? Number.MAX_SAFE_INTEGER,
+		);
+		if (refSeq === Number.MAX_SAFE_INTEGER) {
+			refSeq = 0;
+		}
+		this.dataStoreRuntime.deltaManager.lastSequenceNumber = refSeq;
+		this.dataStoreRuntime.deltaManager.minimumSequenceNumber = refSeq;
+
+		// handle pending messages before first saved op
+		while (
+			pendingMessages.length > 0 &&
+			pendingMessages[0].referenceSequenceNumber <=
+				this.dataStoreRuntime.deltaManager.lastSequenceNumber
+		) {
+			await this.dataStoreRuntime.applyStashedOp(pendingMessages.shift()?.content);
+		}
+		// apply the saved and pending ops
+		for (const savedOp of savedOps) {
+			if (savedOp.clientId === this.clientId) {
+				await this.dataStoreRuntime.applyStashedOp(savedOp.contents);
+			}
+			this.process(savedOp);
+
+			while (
+				pendingMessages.length > 0 &&
+				pendingMessages[0].referenceSequenceNumber === savedOp.sequenceNumber
+			) {
+				await this.dataStoreRuntime.applyStashedOp(pendingMessages.shift()?.content);
+			}
+		}
+		if (pendingMessages.length !== 0) {
+			throw new Error("There should be no pending message after saved ops are processed");
+		}
+		// issue a reconnect to rebase pending ops
+		this.connected = false;
+		this.connected = true;
+	}
 }
 
 /**
@@ -96,7 +168,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 export class MockContainerRuntimeFactoryForReconnection extends MockContainerRuntimeFactory {
 	override createContainerRuntime(
 		dataStoreRuntime: MockFluidDataStoreRuntime,
-		overrides?: { minimumSequenceNumber?: number },
+		overrides?: { minimumSequenceNumber?: number; trackRemoteOps?: boolean },
 	): MockContainerRuntimeForReconnection {
 		const containerRuntime = new MockContainerRuntimeForReconnection(
 			dataStoreRuntime,
