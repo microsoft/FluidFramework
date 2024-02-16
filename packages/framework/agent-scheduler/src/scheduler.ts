@@ -89,6 +89,10 @@ export class AgentScheduler
 		return this;
 	}
 
+	private get logger() {
+		return createChildLogger({ logger: this.runtime.logger });
+	}
+
 	private get clientId(): string {
 		if (this.runtime.attachState === AttachState.Detached) {
 			return UnattachedClientId;
@@ -423,10 +427,7 @@ export class AgentScheduler
 	}
 
 	private sendErrorEvent(eventName: string, error: any, key?: string) {
-		const logger = createChildLogger({
-			logger: this.runtime.logger,
-		});
-		logger.sendErrorEvent({ eventName, key }, error);
+		this.logger.sendErrorEvent({ eventName, key }, error);
 	}
 }
 

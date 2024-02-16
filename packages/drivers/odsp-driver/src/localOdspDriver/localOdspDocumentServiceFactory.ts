@@ -19,8 +19,6 @@ import { LocalOdspDocumentService } from "./localOdspDocumentService";
  * content directly.
  */
 export class LocalOdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
-	private logger: ITelemetryLoggerExt | undefined;
-
 	constructor(private readonly localSnapshot: Uint8Array | string) {
 		super(
 			(_options) => this.throwUnsupportedUsageError("Getting storage token"),
@@ -32,7 +30,7 @@ export class LocalOdspDocumentServiceFactory extends OdspDocumentServiceFactoryC
 		const toThrow = new UsageError(
 			`${unsupportedFuncName} is not supported by LocalOdspDocumentServiceFactory`,
 		);
-		this.logger?.sendErrorEvent({ eventName: "UnsupportedUsage" }, toThrow);
+		createOdspLogger().sendErrorEvent({ eventName: "UnsupportedUsage" }, toThrow);
 		throw toThrow;
 	}
 
@@ -61,7 +59,6 @@ export class LocalOdspDocumentServiceFactory extends OdspDocumentServiceFactoryC
 		if (_clientIsSummarizer) {
 			throw new UsageError('Invalid usage. "_clientIsSummarizer" should not be provided');
 		}
-		this.logger = odspLogger;
 		return new LocalOdspDocumentService(
 			getOdspResolvedUrl(resolvedUrl),
 			odspLogger,

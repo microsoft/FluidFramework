@@ -11,7 +11,11 @@ import {
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils";
 import {
 	getDocAttributesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
@@ -62,6 +66,7 @@ export class OdspDocumentServiceFactoryCore
 {
 	private readonly nonPersistentCache: INonPersistentCache = new NonPersistentCache();
 	private readonly socketReferenceKeyPrefix?: string;
+	private logger: ITelemetryLoggerExt = createChildLogger();
 
 	public get snapshotPrefetchResultCache(): PromiseCache<string, IPrefetchSnapshotContents> {
 		return this.nonPersistentCache.snapshotPrefetchResultCache;
@@ -273,16 +278,13 @@ export class OdspDocumentServiceFactoryCore
 		cacheAndTrackerArg?: ICacheAndTracker,
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
+		this.logger = createChildLogger({ logger: odspLogger });
 		const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
 		const resolvedUrlData: IOdspUrlParts = {
 			siteUrl: odspResolvedUrl.siteUrl,
 			driveId: odspResolvedUrl.driveId,
 			itemId: odspResolvedUrl.itemId,
 		};
-		const logger = createChildLogger({
-			logger: odspLogger,
-			namespace: "fluid:DocumentServiceCore",
-		});
 
 		const cacheAndTracker =
 			cacheAndTrackerArg ??
@@ -290,12 +292,12 @@ export class OdspDocumentServiceFactoryCore
 				this.persistedCache,
 				this.nonPersistentCache,
 				{ resolvedUrl: odspResolvedUrl, docId: odspResolvedUrl.hashedDocumentId },
-				logger,
+				this.logger,
 				clientIsSummarizer,
 			);
 
 		const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
-			logger,
+			this.logger,
 			resolvedUrlData,
 			this.getStorageToken,
 			true /* throwOnNullToken */,
@@ -306,7 +308,7 @@ export class OdspDocumentServiceFactoryCore
 				? undefined
 				: async (options: TokenFetchOptions) =>
 						toInstrumentedOdspTokenFetcher(
-							logger,
+							this.logger,
 							resolvedUrlData,
 							this.getWebsocketToken!,
 							false /* throwOnNullToken */,
@@ -316,7 +318,7 @@ export class OdspDocumentServiceFactoryCore
 			resolvedUrl,
 			storageTokenFetcher,
 			webSocketTokenFetcher,
-			logger,
+			this.logger,
 			cacheAndTracker.cache,
 			this.hostPolicy,
 			cacheAndTracker.epochTracker,

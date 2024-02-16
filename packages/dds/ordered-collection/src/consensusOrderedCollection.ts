@@ -101,6 +101,10 @@ export class ConsensusOrderedCollection<T = any>
 	 * The set of values that have been acquired but not yet completed or released
 	 */
 	private jobTracking: JobTrackingInfo<T> = new Map();
+	private get orderedCollectionLogger() {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+		return createChildLogger({ logger: this.runtime.logger });
+	}
 
 	/**
 	 * Constructs a new consensus collection. If the object is non-local an id and service interfaces will
@@ -238,10 +242,10 @@ export class ConsensusOrderedCollection<T = any>
 				opName: "release",
 				acquireId,
 			}).catch((error) => {
-				const logger = createChildLogger({
-					logger: this.runtime.logger,
-				});
-				logger.sendErrorEvent({ eventName: "ConsensusQueue_release" }, error);
+				this.orderedCollectionLogger.sendErrorEvent(
+					{ eventName: "ConsensusQueue_release" },
+					error,
+				);
 			});
 		}
 	}
