@@ -1,6 +1,7 @@
 {
-	"name": "@fluid-tools/webpack-fluid-loader",
+	"name": "@fluid-example/webpack-fluid-loader",
 	"version": "2.0.0-rc.2.0.0",
+	"private": true,
 	"description": "Fluid object loader for webpack-dev-server",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -105,7 +106,6 @@
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
 		"@fluid-tools/build-cli": "^0.33.0",
-		"@fluid-tools/webpack-fluid-loader-previous": "npm:@fluid-tools/webpack-fluid-loader@2.0.0-internal.8.0.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.33.0",
 		"@fluidframework/eslint-config-fluid": "^3.5.0",
@@ -144,6 +144,7 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {},
+		"disabled": true
 	}
 }
