@@ -68,6 +68,7 @@ const snapshotTree: IOdspSnapshot = {
 			op: {
 				clientId: "38777331-8149-4d15-b734-cd8110295ab6",
 				clientSequenceNumber: 2,
+				// eslint-disable-next-line unicorn/no-null
 				contents: null,
 				metadata: {},
 				minimumSequenceNumber: 136505,
@@ -82,6 +83,7 @@ const snapshotTree: IOdspSnapshot = {
 			op: {
 				clientId: "38777331-8149-4d15-b734-cd8110295ab6",
 				clientSequenceNumber: -1,
+				// eslint-disable-next-line unicorn/no-null
 				contents: null,
 				minimumSequenceNumber: 136505,
 				referenceSequenceNumber: -1,
