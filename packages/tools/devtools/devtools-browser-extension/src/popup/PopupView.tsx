@@ -95,14 +95,14 @@ export function PopupView(props: PopupViewProps): React.ReactElement {
 			)}
 			{foundDevtools === false && (
 				<div>
-					Devtools not found. Visit the documentation{" "}
+					Fluid Devtools not found running in the current tab. For instructions on how to enable this, visit the documentation{" "}
 					<a
 						href="https://github.com/microsoft/FluidFramework/blob/main/packages/tools/devtools/devtools/README.md"
 						target="_blank"
 						rel="noreferrer"
 					>
 						here
-					</a>
+					</a>.
 				</div>
 			)}
 		</div>
