@@ -45,3 +45,4 @@ export {
 	TinyliciousModelLoader,
 	IModelContainerRuntimeEntryPoint,
 } from "./modelLoader/index.js";
+export { MountableView } from "./mountableView/index.js";

@@ -7,6 +7,7 @@ import { AppInsightsCore, type IExtendedConfiguration } from "@microsoft/1ds-cor
 import { PostChannel, type IChannelConfiguration, type IXHROverride } from "@microsoft/1ds-post-js";
 import { type ITelemetryBaseLogger, type ITelemetryBaseEvent } from "@fluid-internal/devtools-view";
 import { type ITaggedTelemetryPropertyType } from "@fluidframework/core-interfaces";
+import { v4 as uuidv4 } from "uuid";
 import { formatDevtoolsScriptMessageForLogging } from "./Logging";
 
 const extensionVersion = chrome.runtime.getManifest().version;
@@ -70,11 +71,18 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 	 */
 	private readonly enabled: boolean = false;
 
+	private readonly sessionID?: string;
+	private readonly continuityID?: string;
+	private readonly CONTINUITY_ID_KEY = "Fluid.Devtools.ContinuityId";
+
 	public constructor() {
 		const channelConfig: IChannelConfiguration = {
 			alwaysUseXhrOverride: true,
 			httpXHROverride: fetchHttpXHROverride,
 		};
+
+		this.sessionID = uuidv4();
+		this.continuityID = this.getOrCreateContinuityID();
 
 		// NOTE: this doesn't really use environment variables at runtime.
 		// The dotenv-webpack plugin for webpack does a search-and-replace for `process.env.<variable-name>`
@@ -105,6 +113,21 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 	}
 
 	/**
+	 * Generates/fetches a unique ID that's created the first time the Devtools extension is used in a browser.
+	 * @returns string for continuityID
+	 */
+	private getOrCreateContinuityID(): string {
+		let continuityID = localStorage.getItem(this.CONTINUITY_ID_KEY);
+
+		if (continuityID === null || continuityID === "") {
+			continuityID = uuidv4();
+			localStorage.setItem(this.CONTINUITY_ID_KEY, continuityID);
+		}
+
+		return continuityID;
+	}
+
+	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#ITelemetryBaseLogger.send}
 	 */
 	public send(event: ITelemetryBaseEvent): void {
@@ -126,6 +149,8 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 				["Event.Time"]: new Date(),
 				["Event.Name"]: eventType, // Same as 'name' but is an actual column in Kusto; useful for cross-table queries
 				["Data.extensionVersion"]: extensionVersion,
+				["Data.sessionID"]: this.sessionID,
+				["Data.continuityID"]: this.continuityID,
 			},
 		};
 

@@ -7,8 +7,8 @@ import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { MountableView } from "@fluidframework/view-adapters";
 import { IFluidMountableView } from "@fluidframework/view-interfaces";
+import { MountableView } from "./mountableView/index.js";
 
 const dataStoreId = "modelDataStore";
 

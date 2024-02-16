@@ -2,7 +2,7 @@
 #
 # Please read and understand all of this documentation before modifying this file.
 #
-# Ownership via this file will block PR until an owner approves. 
+# Ownership via this file will block PR until an owner approves.
 # Taking ownership requires a commitment to review all PRs for the selected files.
 #
 # Lines starting with '#' are comments.
@@ -16,11 +16,15 @@
 # ORDER MATTERS! The last matching pattern has the most precedence.
 # Be careful not to break existing ownership patterns.
 #
-# Do not assign ownership to indviduals. Use a Team: https://github.com/orgs/microsoft/teams/fluid-cr/teams
+# Do not assign ownership to indviduals. Use a Team: https://github.com/orgs/microsoft/teams/fluid-cr/teams .
 # Using individuals can break processing of this file if they are not contributors, or lose contributors status
-# which can and does happen. 
+# which can and does happen. Use "function/area-based" teams rather than "organization-based" teams and add
+# individuals to each one; we use fluid-cr and its child teams (by convention named fluid-cr-<some-specifier>)
+# for this. One reason is that teams in Github cannot have multiple parents, i.e. they cannot be members of more
+# than one other team, so trying to reuse org-based teams to have the same people be reviewers of different areas
+# doesn't work.
 #
-# Team maintainers can control how PRs are assigned to their team members. 
+# Team maintainers can control how PRs are assigned to their team members.
 # This can be modified under the settings for the team which is only visiable to maintainer.
 #
 # If you create a new team its parent should be set to fluid-cr, as teams are microsoft wide,
@@ -28,5 +32,18 @@
 #
 # ------------------------------------------------------------------------
 
+# ID compressor source
+/packages/runtime/id-compressor/src            @microsoft/fluid-cr-id-compressor
 
+# merge tree and merge tree related dds source
+/packages/dds/merge-tree/src                   @microsoft/fluid-cr-merge-tree
+/packages/dds/matrix/src                       @microsoft/fluid-cr-merge-tree
+/packages/dds/sequence/src                     @microsoft/fluid-cr-merge-tree
+/experimental/dds/sequence-deprecated/src      @microsoft/fluid-cr-merge-tree
 
+# shared tree and tree related dds source
+/packages/dds/tree/src                         @microsoft/fluid-cr-tree
+/experimental/dds/tree/src                     @microsoft/fluid-cr-tree
+
+# Fluid Devtools source
+/packages/tools/devtools/**/src                   @microsoft/fluid-cr-devtools

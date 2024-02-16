@@ -4,7 +4,7 @@
  */
 
 import type { DocumentNode, DocumentationNode } from "../../documentation-domain";
-import { type DocumentWriter, createDocumentWriter } from "../DocumentWriter";
+import { DocumentWriter } from "../DocumentWriter";
 import { type RenderConfiguration, defaultRenderers } from "./configuration";
 import { type RenderContext, getContextWithDefaults } from "./RenderContext";
 
@@ -19,7 +19,7 @@ import { type RenderContext, getContextWithDefaults } from "./RenderContext";
 export function renderDocument(document: DocumentNode, config: RenderConfiguration): string {
 	const { customRenderers, language, startingHeadingLevel } = config;
 
-	const writer = createDocumentWriter();
+	const writer = DocumentWriter.create();
 	const renderContext = getContextWithDefaults({
 		headingLevel: startingHeadingLevel,
 		customRenderers,

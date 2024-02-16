@@ -246,6 +246,19 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 }
 
 // @internal
+export class MountableView implements IFluidMountableView {
+    constructor(view: FluidObject);
+    // (undocumented)
+    static canMount(view: FluidObject): boolean;
+    // (undocumented)
+    get IFluidMountableView(): MountableView;
+    // (undocumented)
+    mount(container: HTMLElement): void;
+    // (undocumented)
+    unmount(): void;
+}
+
+// @internal
 export type SameContainerMigrationState = "collaborating" | "proposingMigration" | "stoppingCollaboration" | "proposingV2Code" | "waitingForV2ProposalCompletion" | "readyForMigration" | "uploadingV2Summary" | "submittingV2Summary" | "migrated";
 
 // @internal (undocumented)
