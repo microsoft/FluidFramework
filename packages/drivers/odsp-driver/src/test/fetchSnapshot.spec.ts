@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/dot-notation */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { stub } from "sinon";
 import { ISnapshot } from "@fluidframework/driver-definitions";
 import { OdspErrorTypes, IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
@@ -158,7 +158,9 @@ describe("Tests1 for snapshot fetch", () => {
 			await mockDownloadSnapshot(Promise.resolve(response), async () =>
 				service.getVersions(null, 1),
 			);
-		} catch (error) {}
+		} catch {
+			// Drop error
+		}
 		assert(success, "mds limit should not be set!!");
 	});
 
@@ -253,14 +255,14 @@ describe("Tests1 for snapshot fetch", () => {
 			await mockDownloadSnapshot(Promise.resolve(response), async () =>
 				service.getSnapshot({ loadingGroupIds: [] }),
 			);
-		} catch (error: any) {
+		} catch {
 			assert.fail("the getSnapshot request should succeed");
 		}
 		assert(ungroupedData, "should have asked for ungroupedData");
 		const cachedValue = (await epochTracker.get(createCacheSnapshotKey(resolved))) as ISnapshot;
 		assert(cachedValue.snapshotTree.id === "SnapshotId", "snapshot should have been cached");
-		assert(service["blobCache"].value.size !== 0, "blobs should be cached locally");
-		assert(service["commitCache"].size !== 0, "no trees should be cached");
+		assert(service["blobCache"].value.size > 0, "blobs should be cached locally");
+		assert(service["commitCache"].size > 0, "no trees should be cached");
 	});
 
 	it("GetSnapshot() should work but snapshot should not be cached locally if asked for custom groupId", async () => {
@@ -313,8 +315,8 @@ describe("Tests1 for snapshot fetch", () => {
 			await mockDownloadSnapshot(Promise.resolve(response), async () =>
 				service.getSnapshot({ loadingGroupIds: ["g1"] }),
 			);
-		} catch (error: any) {
-			console.log("err ", error);
+		} catch (error: unknown) {
+			console.log("error", error);
 			assert.fail("the getSnapshot request should succeed");
 		}
 		assert(success, "should have asked for g1 group id");
@@ -376,7 +378,7 @@ describe("Tests1 for snapshot fetch", () => {
 			await mockDownloadSnapshot(Promise.resolve(response), async () =>
 				service.getSnapshot({ loadingGroupIds: [], cacheSnapshot: false }),
 			);
-		} catch (error: any) {
+		} catch {
 			assert.fail("the getSnapshot request should succeed");
 		}
 		const cachedValue = (await epochTracker.get(createCacheSnapshotKey(resolved))) as ISnapshot;
@@ -428,7 +430,7 @@ describe("Tests1 for snapshot fetch", () => {
 			await mockDownloadSnapshot(Promise.resolve(response), async () =>
 				service.getSnapshot({ loadingGroupIds: [], cacheSnapshot: false }),
 			);
-		} catch (error: any) {
+		} catch {
 			assert.fail("the getSnapshot request should succeed");
 		}
 
@@ -437,7 +439,7 @@ describe("Tests1 for snapshot fetch", () => {
 			await mockDownloadSnapshot(Promise.resolve(response), async () =>
 				service.getSnapshot({ loadingGroupIds: ["g1"], cacheSnapshot: false }),
 			);
-		} catch (error: any) {
+		} catch {
 			assert.fail("the getSnapshot request should succeed");
 		}
 		// Cache should not be consulted.

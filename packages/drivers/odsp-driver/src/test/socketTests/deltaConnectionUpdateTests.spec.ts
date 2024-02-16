@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { stub, useFakeTimers, SinonFakeTimers } from "sinon";
 import { ISocketStorageDiscovery } from "@fluidframework/odsp-driver-definitions";
 import { IClient, ISignalMessage } from "@fluidframework/protocol-definitions";

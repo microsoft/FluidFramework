@@ -103,7 +103,7 @@ export class ClientSocketMock extends TypedEventEmitter<SocketMockEvents> {
 				const connectMessage = args[0] as IConnect;
 				switch (this.mockSocketConnectResponse.connect_document.eventToEmit) {
 					case "connect_document_error":
-					case "connect_error":
+					case "connect_error": {
 						{
 							const errorToThrow =
 								this.mockSocketConnectResponse.connect_document.errorToThrow ??
@@ -118,7 +118,8 @@ export class ClientSocketMock extends TypedEventEmitter<SocketMockEvents> {
 							);
 						}
 						break;
-					case "connect_document_success":
+					}
+					case "connect_document_success": {
 						{
 							const iConnected: IConnected = this.mockSocketConnectResponse
 								.connect_document.connectMessage ?? {
@@ -150,18 +151,21 @@ export class ClientSocketMock extends TypedEventEmitter<SocketMockEvents> {
 							this.emit("connect_document_success", iConnected);
 						}
 						break;
-					case "connect_timeout":
+					}
+					case "connect_timeout": {
 						{
 							this.emit("connect_timeout");
 						}
 						break;
+					}
 					default:
 				}
 				return true;
 			}
-			default:
+			default: {
 				super.emit(eventName, ...args);
 				return true;
+			}
 		}
 	}
 }

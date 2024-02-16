@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import {
 	createOdspNetworkError,
 	throwOdspNetworkError,
@@ -71,9 +71,7 @@ describe("Odsp Error", () => {
 
 	it("throwOdspNetworkError first-class properties", async () => {
 		const networkError = createOdspNetworkErrorWithResponse("some message", 400);
-		if (networkError.errorType !== OdspErrorTypes.genericNetworkError) {
-			assert.fail("networkError should be a genericNetworkError");
-		} else {
+		if (networkError.errorType === OdspErrorTypes.genericNetworkError) {
 			assert(
 				networkError.message.includes("some message"),
 				"message should contain original message",
@@ -83,6 +81,8 @@ describe("Odsp Error", () => {
 				"message should contain Response.type",
 			);
 			assert.equal(false, networkError.canRetry, "canRetry should be false");
+		} else {
+			assert.fail("networkError should be a genericNetworkError");
 		}
 	});
 
@@ -104,9 +104,7 @@ describe("Odsp Error", () => {
 			code: 400,
 		};
 		const networkError = errorObjectFromSocketError(socketError, "disconnect");
-		if (!isIGenericNetworkError(networkError)) {
-			assert.fail("networkError should be a genericNetworkError");
-		} else {
+		if (isIGenericNetworkError(networkError)) {
 			assert(
 				networkError.message.includes("disconnect"),
 				"error message should include handler name",
@@ -117,6 +115,8 @@ describe("Odsp Error", () => {
 			);
 			assert.equal(networkError.canRetry, false);
 			assert.equal(networkError.statusCode, 400);
+		} else {
+			assert.fail("networkError should be a genericNetworkError");
 		}
 	});
 
@@ -126,9 +126,7 @@ describe("Odsp Error", () => {
 			code: 400,
 		};
 		const networkError = errorObjectFromSocketError(socketError, "error");
-		if (!isIGenericNetworkError(networkError)) {
-			assert.fail("networkError should be a genericNetworkError");
-		} else {
+		if (isIGenericNetworkError(networkError)) {
 			assert(
 				networkError.message.includes("error"),
 				"error message should include handler name",
@@ -139,6 +137,8 @@ describe("Odsp Error", () => {
 			);
 			assert.equal(networkError.canRetry, false);
 			assert.equal(networkError.statusCode, 400);
+		} else {
+			assert.fail("networkError should be a genericNetworkError");
 		}
 	});
 
@@ -158,9 +158,7 @@ describe("Odsp Error", () => {
 			},
 		};
 		const networkError = errorObjectFromSocketError(socketError, "error");
-		if (!isIGenericNetworkError(networkError)) {
-			assert.fail("networkError should be a genericNetworkError");
-		} else {
+		if (isIGenericNetworkError(networkError)) {
 			assert(
 				networkError.message.includes("error"),
 				"error message should include handler name",
@@ -177,6 +175,8 @@ describe("Odsp Error", () => {
 				"Innermost error code should be correct",
 			);
 			assert.equal(networkError.facetCodes?.length, 3, "3 facet codes should be there");
+		} else {
+			assert.fail("networkError should be a genericNetworkError");
 		}
 	});
 
@@ -187,9 +187,7 @@ describe("Odsp Error", () => {
 			retryAfter: 10,
 		};
 		const networkError = errorObjectFromSocketError(socketError, "handler");
-		if (!isIThrottlingWarning(networkError)) {
-			assert.fail("networkError should be a throttlingError");
-		} else {
+		if (isIThrottlingWarning(networkError)) {
 			assert(
 				networkError.message.includes("handler"),
 				"error message should include handler name",
@@ -199,6 +197,8 @@ describe("Odsp Error", () => {
 				"error message should include socket error message",
 			);
 			assert.equal(networkError.retryAfterSeconds, 10);
+		} else {
+			assert.fail("networkError should be a throttlingError");
 		}
 	});
 

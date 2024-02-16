@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import fs from "fs";
-import { strict as assert } from "assert";
+import fs from "node:fs";
+import { strict as assert } from "node:assert";
 import { DriverError, IStream } from "@fluidframework/driver-definitions";
 import { OdspErrorTypes, IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import {

@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/dot-notation */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { stub } from "sinon";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";

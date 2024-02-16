@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IStream } from "@fluidframework/driver-definitions";

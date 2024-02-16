@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { ISnapshot } from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl, ICacheEntry } from "@fluidframework/odsp-driver-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils";

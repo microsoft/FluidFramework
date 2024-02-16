@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { ISocketStorageDiscovery } from "@fluidframework/odsp-driver-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";

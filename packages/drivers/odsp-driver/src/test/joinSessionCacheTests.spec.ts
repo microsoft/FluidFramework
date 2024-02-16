@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
+import type { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl, ISocketStorageDiscovery } from "@fluidframework/odsp-driver-definitions";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
 import { getJoinSessionCacheKey } from "../odspUtils";
@@ -18,7 +19,7 @@ describe("expose joinSessionInfo Tests", () => {
 		driveId,
 		itemId,
 		odspResolvedUrl: true,
-	} as any as IOdspResolvedUrl;
+	} as unknown as IOdspResolvedUrl;
 
 	const joinSessionResponse: ISocketStorageDiscovery = {
 		deltaStorageUrl: "https://fake/deltaStorageUrl",
@@ -56,8 +57,8 @@ describe("expose joinSessionInfo Tests", () => {
 			await odspDocumentServiceFactory.getRelayServiceSessionInfo({
 				...resolvedUrl,
 				odspResolvedUrl: false,
-			} as any);
-		} catch (error) {
+			} as unknown as IResolvedUrl);
+		} catch {
 			failed = true;
 		}
 		assert(failed, "resolved url not correct");

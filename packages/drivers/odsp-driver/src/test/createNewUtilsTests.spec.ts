@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { ISnapshot } from "@fluidframework/driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";
 import { bufferToString } from "@fluid-internal/client-utils";

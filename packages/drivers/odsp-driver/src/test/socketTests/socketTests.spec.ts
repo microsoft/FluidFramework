@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { stub } from "sinon";
 import { v4 as uuid } from "uuid";
 import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
@@ -166,12 +166,12 @@ describe("OdspDocumentDeltaConnection tests", () => {
 					socketReferenceKeyPrefix,
 				),
 			);
-		} catch (err) {
+		} catch (error) {
 			errorhappened = true;
-			assert(isFluidError(err), "should be a Fluid error");
-			assert(err.message.includes("TestSocketError"), "error message should match");
+			assert(isFluidError(error), "should be a Fluid error");
+			assert(error.message.includes("TestSocketError"), "error message should match");
 			assert(
-				err.errorType === OdspErrorTypes.genericNetworkError,
+				error.errorType === OdspErrorTypes.genericNetworkError,
 				"errortype should be correct",
 			);
 		}
@@ -199,12 +199,12 @@ describe("OdspDocumentDeltaConnection tests", () => {
 					socketReferenceKeyPrefix,
 				),
 			);
-		} catch (err) {
+		} catch (error) {
 			errorhappened = true;
-			assert(isFluidError(err), "should be a Fluid error");
-			assert(err.message.includes("TestSocketError"), "error message should match");
+			assert(isFluidError(error), "should be a Fluid error");
+			assert(error.message.includes("TestSocketError"), "error message should match");
 			assert(
-				err.errorType === OdspErrorTypes.genericNetworkError,
+				error.errorType === OdspErrorTypes.genericNetworkError,
 				"errortype should be correct",
 			);
 		}
@@ -230,12 +230,12 @@ describe("OdspDocumentDeltaConnection tests", () => {
 					socketReferenceKeyPrefix,
 				),
 			);
-		} catch (err) {
+		} catch (error) {
 			errorhappened = true;
-			assert(isFluidError(err), "should be a Fluid error");
-			assert(err.message.includes("connect_timeout"), "error message should match");
+			assert(isFluidError(error), "should be a Fluid error");
+			assert(error.message.includes("connect_timeout"), "error message should match");
 			assert(
-				err.errorType === OdspErrorTypes.genericNetworkError,
+				error.errorType === OdspErrorTypes.genericNetworkError,
 				"errortype should be correct",
 			);
 		}

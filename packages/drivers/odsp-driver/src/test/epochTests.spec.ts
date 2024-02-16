@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { IDocumentStorageServicePolicies } from "@fluidframework/driver-definitions";
 import {
 	OdspErrorTypes,
@@ -257,7 +257,7 @@ describe("Tests for Epoch Tracker", () => {
 		await epochTracker.get(cacheEntry1);
 		try {
 			await mockFetchOk(async () => epochTracker.fetchArray("fetchUrl", {}, "test"));
-		} catch (error) {
+		} catch {
 			success = false;
 		}
 		assert.strictEqual(success, true, "Fetching should succeed!!");
@@ -284,7 +284,7 @@ describe("Tests for Epoch Tracker", () => {
 				{},
 				{ "x-fluid-epoch": "epoch1" },
 			);
-		} catch (error) {
+		} catch {
 			success = false;
 		}
 		assert.strictEqual(success, true, "Fetching should succeed!!");

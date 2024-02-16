@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";

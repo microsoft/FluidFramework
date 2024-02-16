@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { IDocumentService } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { MockLogger } from "@fluidframework/telemetry-utils";

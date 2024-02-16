@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ReadBuffer } from "../ReadBufferUtils";
@@ -198,7 +198,7 @@ describe("Tree Representation tests", () => {
 		const nonBlobNode: NodeTypes = 5;
 		try {
 			assertBlobCoreInstance(nonBlobNode, "should be a blob");
-		} catch (err) {
+		} catch {
 			success = false;
 		}
 		assert(!success, "Error should have occured");
@@ -212,7 +212,7 @@ describe("Tree Representation tests", () => {
 		const nonNode: NodeTypes = new BlobShallowCopy(new Uint8Array(), 0, 0);
 		try {
 			assertNodeCoreInstance(nonNode, "should be a node");
-		} catch (err) {
+		} catch {
 			success = false;
 		}
 		assert(!success, "Error should have occured");
@@ -226,7 +226,7 @@ describe("Tree Representation tests", () => {
 		const nonNumberNode: NodeTypes = new BlobShallowCopy(new Uint8Array(), 0, 0);
 		try {
 			assertNumberInstance(nonNumberNode, "should be a number");
-		} catch (err) {
+		} catch {
 			success = false;
 		}
 		assert(!success, "Error should have occured");
@@ -240,7 +240,7 @@ describe("Tree Representation tests", () => {
 		const nonBoolNode: NodeTypes = 0;
 		try {
 			assertBoolInstance(nonBoolNode, "should be a bool");
-		} catch (err) {
+		} catch {
 			success = false;
 		}
 		assert(!success, "Error should have occured");
