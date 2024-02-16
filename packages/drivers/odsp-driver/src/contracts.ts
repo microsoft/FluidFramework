@@ -34,7 +34,7 @@ export interface IOdspSocketError {
 	 * Any error supplied by the socket containing codes and inner errors with further
 	 * details about the error.
 	 */
-	error?: any;
+	error?: unknown;
 }
 
 /**
