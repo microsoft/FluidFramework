@@ -66,7 +66,10 @@ export class ClientSocketMock extends TypedEventEmitter<SocketMockEvents> {
 		this.disconnected = true;
 	}
 
-	public get io() {
+	public get io(): {
+		reconnection: () => boolean;
+		reconnectionAttempts: () => number;
+	} {
 		return {
 			reconnection: () => false,
 			reconnectionAttempts: () => 0,
