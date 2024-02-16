@@ -1128,11 +1128,6 @@ export class ContainerRuntime
 		return this.summaryConfiguration.state === "disabled";
 	}
 
-	private readonly heuristicsDisabled: boolean;
-	private isHeuristicsDisabled(): boolean {
-		return this.summaryConfiguration.state === "disableHeuristics";
-	}
-
 	private readonly maxOpsSinceLastSummary: number;
 	private getMaxOpsSinceLastSummary(): number {
 		return this.summaryConfiguration.state !== "disabled"
@@ -1372,7 +1367,6 @@ export class ContainerRuntime
 			disableOpReentryCheck !== true;
 
 		this.summariesDisabled = this.isSummariesDisabled();
-		this.heuristicsDisabled = this.isHeuristicsDisabled();
 		this.maxOpsSinceLastSummary = this.getMaxOpsSinceLastSummary();
 		this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();
 
@@ -1662,7 +1656,6 @@ export class ContainerRuntime
 					{
 						initialDelayMs: this.initialSummarizerDelayMs,
 					},
-					this.heuristicsDisabled,
 				);
 				this.summaryManager.on("summarize", (eventProps) => {
 					this.emit("summarize", eventProps);
@@ -2541,12 +2534,15 @@ export class ContainerRuntime
 
 	public createDetachedDataStore(
 		pkg: Readonly<string[]>,
-		groupId?: string,
+		loadingGroupId?: string,
 	): IFluidDataStoreContextDetached {
-		return this.dataStores.createDetachedDataStoreCore(pkg, false, undefined, groupId);
+		return this.dataStores.createDetachedDataStoreCore(pkg, false, undefined, loadingGroupId);
 	}
 
-	public async createDataStore(pkg: string | string[], groupId?: string): Promise<IDataStore> {
+	public async createDataStore(
+		pkg: string | string[],
+		loadingGroupId?: string,
+	): Promise<IDataStore> {
 		const id = uuid();
 		return channelToDataStore(
 			await this.dataStores
@@ -2554,7 +2550,7 @@ export class ContainerRuntime
 					Array.isArray(pkg) ? pkg : [pkg],
 					id,
 					undefined,
-					groupId,
+					loadingGroupId,
 				)
 				.realize(),
 			id,
@@ -3046,7 +3042,13 @@ export class ContainerRuntime
 	 * @param options - options controlling how the summary is generated or submitted
 	 */
 	public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
-		const { fullTree = false, finalAttempt = false, refreshLatestAck, summaryLogger } = options;
+		const {
+			fullTree = false,
+			finalAttempt = false,
+			refreshLatestAck,
+			summaryLogger,
+			latestSummaryRefSeqNum,
+		} = options;
 		// The summary number for this summary. This will be updated during the summary process, so get it now and
 		// use it for all events logged during this summary.
 		const summaryNumber = this.nextSummaryNumber;
@@ -3117,6 +3119,10 @@ export class ContainerRuntime
 			this.mc.config.getBoolean(
 				"Fluid.ContainerRuntime.SubmitSummary.disableInboundSignalPause",
 			) !== true;
+		const shouldValidatePreSummaryState =
+			this.mc.config.getBoolean(
+				"Fluid.ContainerRuntime.SubmitSummary.shouldValidatePreSummaryState",
+			) === true;
 
 		let summaryRefSeqNum: number | undefined;
 
@@ -3131,7 +3137,33 @@ export class ContainerRuntime
 			const message = `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
 			const lastAck = this.summaryCollection.latestAck;
 
-			this.summarizerNode.startSummary(summaryRefSeqNum, summaryNumberLogger);
+			const startSummaryResult = this.summarizerNode.startSummary(
+				summaryRefSeqNum,
+				summaryNumberLogger,
+				latestSummaryRefSeqNum,
+			);
+
+			if (
+				startSummaryResult.invalidNodes > 0 ||
+				startSummaryResult.mismatchNumbers.size > 0
+			) {
+				summaryLogger.sendErrorEvent({
+					eventName: "LatestSummaryRefSeqNumMismatch",
+					details: {
+						...startSummaryResult,
+						mismatchNumbers: Array.from(startSummaryResult.mismatchNumbers),
+					},
+				});
+
+				if (shouldValidatePreSummaryState && !finalAttempt) {
+					return {
+						stage: "base",
+						referenceSequenceNumber: summaryRefSeqNum,
+						minimumSequenceNumber,
+						error: `Summarizer node state inconsistent with summarizer state.`,
+					};
+				}
+			}
 
 			// Helper function to check whether we should still continue between each async step.
 			const checkContinue = (): { continue: true } | { continue: false; error: string } => {

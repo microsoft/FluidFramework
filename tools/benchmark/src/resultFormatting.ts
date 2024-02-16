@@ -16,13 +16,13 @@ import chalk from "chalk";
  */
 export interface ExpectedCell {
 	key: string;
-	cell(table: Table, data: Record<string, unknown>);
+	cell(table: Table, data: Record<string, unknown>): void;
 }
 
-export function numberCell(key: string, title: string, f: (v: number) => string) {
+export function numberCell(key: string, title: string, f: (v: number) => string): ExpectedCell {
 	return {
 		key,
-		cell: (table, data) => {
+		cell: (table, data): void => {
 			const field = data[key];
 			const content =
 				typeof field === "number" ? f(field) : chalk.red(`Expected number got "${field}"`);
@@ -31,10 +31,10 @@ export function numberCell(key: string, title: string, f: (v: number) => string)
 	};
 }
 
-export function stringCell(key: string, title: string, f: (s: string) => string) {
+export function stringCell(key: string, title: string, f: (s: string) => string): ExpectedCell {
 	return {
 		key,
-		cell: (table, data) => {
+		cell: (table, data): void => {
 			const field = data[key];
 			const content =
 				typeof field === "string" ? f(field) : chalk.red(`Expected string got "${field}"`);
@@ -43,10 +43,10 @@ export function stringCell(key: string, title: string, f: (s: string) => string)
 	};
 }
 
-export function arrayCell(key: string, title: string, f: (a: unknown[]) => string) {
+export function arrayCell(key: string, title: string, f: (a: unknown[]) => string): ExpectedCell {
 	return {
 		key,
-		cell: (table, data) => {
+		cell: (table, data): void => {
 			const field = data[key];
 			const content = Array.isArray(field)
 				? f(field)
@@ -56,20 +56,22 @@ export function arrayCell(key: string, title: string, f: (a: unknown[]) => strin
 	};
 }
 
-export function objectCell(key: string, title: string, f: (a: object) => string) {
+export function objectCell(key: string, title: string, f: (a: object) => string): ExpectedCell {
 	return {
 		key,
-		cell: (table, data) => {
+		cell: (table, data): void => {
 			const field = data[key];
 			const content =
-				typeof field === "object" ? f(field) : chalk.red(`Expected object got "${field}"`);
+				typeof field === "object" && field !== null
+					? f(field)
+					: chalk.red(`Expected object got "${field}"`);
 			table.cell(title, content);
 		},
 	};
 }
 
-export function skipCell(key: string) {
-	return { key, cell: () => {} };
+export function skipCell(key: string): ExpectedCell {
+	return { key, cell: (): void => {} };
 }
 
 export function addCells(

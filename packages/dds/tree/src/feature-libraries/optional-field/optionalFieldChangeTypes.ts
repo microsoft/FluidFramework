@@ -15,6 +15,12 @@ import { NodeChangeset } from "../modular-schema/index.js";
  */
 export type RegisterId = ChangeAtomId | "self";
 
+export type Move = readonly [
+	src: RegisterId,
+	dst: RegisterId,
+	kind: "nodeTargeting" | "cellTargeting",
+];
+
 /**
  * Changes to an optional field.
  *
@@ -37,7 +43,7 @@ export interface OptionalChangeset<TChildChange = NodeChangeset> {
 	 *
 	 * Rebasing logic should only generate moves whose `src` is an occupied register.
 	 */
-	moves: (readonly [src: RegisterId, dst: RegisterId, kind: "nodeTargeting" | "cellTargeting"])[];
+	moves: readonly Move[];
 
 	/**
 	 * Nested changes to nodes that occupy registers.

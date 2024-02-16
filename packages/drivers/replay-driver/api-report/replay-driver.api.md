@@ -57,16 +57,6 @@ export interface IFileSnapshot {
     tree: ITree;
 }
 
-// @internal (undocumented)
-export class OpStorage extends ReadDocumentStorageServiceBase {
-    // (undocumented)
-    getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;
-    // (undocumented)
-    getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
-    // (undocumented)
-    readBlob(blobId: string): Promise<ArrayBufferLike>;
-}
-
 // @internal
 export abstract class ReadDocumentStorageServiceBase implements IDocumentStorageService {
     // (undocumented)
@@ -79,8 +69,6 @@ export abstract class ReadDocumentStorageServiceBase implements IDocumentStorage
     abstract getVersions(versionId: string | null, count: number): Promise<api.IVersion[]>;
     // (undocumented)
     abstract readBlob(blobId: string): Promise<ArrayBufferLike>;
-    // (undocumented)
-    get repositoryUrl(): string;
     // (undocumented)
     uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string>;
 }
