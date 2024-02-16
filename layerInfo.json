@@ -99,17 +99,6 @@
 				],
 				"deps": ["Framework-Utils", "Loader", "Runtime", "Client-Utils"]
 			},
-			"TinyliciousClient": {
-				"packages": ["@fluidframework/tinylicious-client"],
-				"deps": [
-					"Framework",
-					"Loader",
-					"Routerlicious-Driver",
-					"Server-Libs",
-					"Server-Shared-Utils",
-					"Test-Utils"
-				]
-			},
 			"Examples": {
 				"dot": false,
 				"dev": true,
@@ -152,14 +141,17 @@
 				]
 			},
 			"ServiceClients": {
-				"dirs": ["packages/service-clients/"],
+				"dirs": ["packages/service-clients/", "@fluidframework/tinylicious-client"],
 				"deps": [
 					"Container-Definitions",
 					"Driver",
 					"Framework",
 					"Runtime",
 					"Routerlicious-Driver",
-					"Server-Shared-Utils"
+					"Server-Shared-Utils",
+					"Loader",
+					"Server-Libs",
+					"Test-Utils"
 				]
 			},
 			"AzureClient": {
@@ -186,7 +178,7 @@
 			},
 			"Azure-Examples": {
 				"packages": ["@fluid-example/app-integration-external-controller"],
-				"deps": ["UberPackage", "ServiceClients", "TinyliciousClient"]
+				"deps": ["UberPackage", "ServiceClients"]
 			}
 		}
 	},

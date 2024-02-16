@@ -740,7 +740,7 @@ importers:
       '@fluidframework/fluid-static': link:../../../packages/framework/fluid-static
       '@fluidframework/protocol-definitions': 3.2.0-231454
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
-      '@fluidframework/tinylicious-client': link:../../../packages/framework/tinylicious-client
+      '@fluidframework/tinylicious-client': link:../../../packages/service-clients/tinylicious-client
       fluid-framework: link:../../../packages/framework/fluid-framework
       process: 0.11.10
     devDependencies:
@@ -1540,7 +1540,7 @@ importers:
       '@fluidframework/fluid-static': link:../../../packages/framework/fluid-static
       '@fluidframework/map': link:../../../packages/dds/map
       '@fluidframework/sequence': link:../../../packages/dds/sequence
-      '@fluidframework/tinylicious-client': link:../../../packages/framework/tinylicious-client
+      '@fluidframework/tinylicious-client': link:../../../packages/service-clients/tinylicious-client
       '@microsoft/applicationinsights-web': 2.8.16_tslib@1.14.1
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
@@ -8668,81 +8668,6 @@ importers:
       tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
-  packages/framework/tinylicious-client:
-    specifiers:
-      '@arethetypeswrong/cli': ^0.13.3
-      '@fluid-tools/build-cli': ^0.33.0
-      '@fluidframework/aqueduct': workspace:~
-      '@fluidframework/build-common': ^2.0.3
-      '@fluidframework/build-tools': ^0.33.0
-      '@fluidframework/container-definitions': workspace:~
-      '@fluidframework/container-loader': workspace:~
-      '@fluidframework/container-runtime': workspace:~
-      '@fluidframework/container-runtime-definitions': workspace:~
-      '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/core-utils': workspace:~
-      '@fluidframework/driver-definitions': workspace:~
-      '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ^3.5.0
-      '@fluidframework/fluid-static': workspace:~
-      '@fluidframework/map': workspace:~
-      '@fluidframework/protocol-definitions': ^3.2.0-231454
-      '@fluidframework/routerlicious-driver': workspace:~
-      '@fluidframework/runtime-utils': workspace:~
-      '@fluidframework/telemetry-utils': workspace:~
-      '@fluidframework/test-utils': workspace:~
-      '@fluidframework/tinylicious-client-previous': npm:@fluidframework/tinylicious-client@2.0.0-internal.8.0.0
-      '@fluidframework/tinylicious-driver': workspace:~
-      '@microsoft/api-extractor': ^7.39.1
-      '@types/mocha': ^9.1.1
-      '@types/node': ^18.19.0
-      copyfiles: ^2.4.1
-      eslint: ~8.50.0
-      mocha: ^10.2.0
-      prettier: ~3.0.3
-      rimraf: ^4.4.0
-      start-server-and-test: ^1.11.7
-      tinylicious: ^3.1.0-231702
-      tsc-multi: ^1.1.0
-      typescript: ~5.1.6
-    dependencies:
-      '@fluidframework/container-definitions': link:../../common/container-definitions
-      '@fluidframework/container-loader': link:../../loader/container-loader
-      '@fluidframework/core-interfaces': link:../../common/core-interfaces
-      '@fluidframework/core-utils': link:../../common/core-utils
-      '@fluidframework/driver-definitions': link:../../common/driver-definitions
-      '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/fluid-static': link:../fluid-static
-      '@fluidframework/map': link:../../dds/map
-      '@fluidframework/protocol-definitions': 3.2.0-231454
-      '@fluidframework/routerlicious-driver': link:../../drivers/routerlicious-driver
-      '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
-      '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
-      '@fluidframework/tinylicious-driver': link:../../drivers/tinylicious-driver
-    devDependencies:
-      '@arethetypeswrong/cli': 0.13.3
-      '@fluid-tools/build-cli': 0.33.0_mhw3tufvtaceew37hrkkevjcli
-      '@fluidframework/aqueduct': link:../aqueduct
-      '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.33.0_@types+node@18.19.1
-      '@fluidframework/container-runtime': link:../../runtime/container-runtime
-      '@fluidframework/container-runtime-definitions': link:../../runtime/container-runtime-definitions
-      '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
-      '@fluidframework/test-utils': link:../../test/test-utils
-      '@fluidframework/tinylicious-client-previous': /@fluidframework/tinylicious-client/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
-      '@types/mocha': 9.1.1
-      '@types/node': 18.19.1
-      copyfiles: 2.4.1
-      eslint: 8.50.0
-      mocha: 10.2.0
-      prettier: 3.0.3
-      rimraf: 4.4.1
-      start-server-and-test: 1.15.5
-      tinylicious: 3.1.0-231702
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
-      typescript: 5.1.6
-
   packages/framework/undo-redo:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
@@ -9806,6 +9731,81 @@ importers:
       mocha: 10.2.0
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
+      typescript: 5.1.6
+
+  packages/service-clients/tinylicious-client:
+    specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
+      '@fluid-tools/build-cli': ^0.33.0
+      '@fluidframework/aqueduct': workspace:~
+      '@fluidframework/build-common': ^2.0.3
+      '@fluidframework/build-tools': ^0.33.0
+      '@fluidframework/container-definitions': workspace:~
+      '@fluidframework/container-loader': workspace:~
+      '@fluidframework/container-runtime': workspace:~
+      '@fluidframework/container-runtime-definitions': workspace:~
+      '@fluidframework/core-interfaces': workspace:~
+      '@fluidframework/core-utils': workspace:~
+      '@fluidframework/driver-definitions': workspace:~
+      '@fluidframework/driver-utils': workspace:~
+      '@fluidframework/eslint-config-fluid': ^3.5.0
+      '@fluidframework/fluid-static': workspace:~
+      '@fluidframework/map': workspace:~
+      '@fluidframework/protocol-definitions': ^3.2.0-231454
+      '@fluidframework/routerlicious-driver': workspace:~
+      '@fluidframework/runtime-utils': workspace:~
+      '@fluidframework/telemetry-utils': workspace:~
+      '@fluidframework/test-utils': workspace:~
+      '@fluidframework/tinylicious-client-previous': npm:@fluidframework/tinylicious-client@2.0.0-internal.8.0.0
+      '@fluidframework/tinylicious-driver': workspace:~
+      '@microsoft/api-extractor': ^7.39.1
+      '@types/mocha': ^9.1.1
+      '@types/node': ^18.19.0
+      copyfiles: ^2.4.1
+      eslint: ~8.50.0
+      mocha: ^10.2.0
+      prettier: ~3.0.3
+      rimraf: ^4.4.0
+      start-server-and-test: ^1.11.7
+      tinylicious: ^3.1.0-231702
+      tsc-multi: ^1.1.0
+      typescript: ~5.1.6
+    dependencies:
+      '@fluidframework/container-definitions': link:../../common/container-definitions
+      '@fluidframework/container-loader': link:../../loader/container-loader
+      '@fluidframework/core-interfaces': link:../../common/core-interfaces
+      '@fluidframework/core-utils': link:../../common/core-utils
+      '@fluidframework/driver-definitions': link:../../common/driver-definitions
+      '@fluidframework/driver-utils': link:../../loader/driver-utils
+      '@fluidframework/fluid-static': link:../../framework/fluid-static
+      '@fluidframework/map': link:../../dds/map
+      '@fluidframework/protocol-definitions': 3.2.0-231454
+      '@fluidframework/routerlicious-driver': link:../../drivers/routerlicious-driver
+      '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
+      '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
+      '@fluidframework/tinylicious-driver': link:../../drivers/tinylicious-driver
+    devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
+      '@fluid-tools/build-cli': 0.33.0_mhw3tufvtaceew37hrkkevjcli
+      '@fluidframework/aqueduct': link:../../framework/aqueduct
+      '@fluidframework/build-common': 2.0.3
+      '@fluidframework/build-tools': 0.33.0_@types+node@18.19.1
+      '@fluidframework/container-runtime': link:../../runtime/container-runtime
+      '@fluidframework/container-runtime-definitions': link:../../runtime/container-runtime-definitions
+      '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
+      '@fluidframework/test-utils': link:../../test/test-utils
+      '@fluidframework/tinylicious-client-previous': /@fluidframework/tinylicious-client/2.0.0-internal.8.0.0
+      '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
+      '@types/mocha': 9.1.1
+      '@types/node': 18.19.1
+      copyfiles: 2.4.1
+      eslint: 8.50.0
+      mocha: 10.2.0
+      prettier: 3.0.3
+      rimraf: 4.4.1
+      start-server-and-test: 1.15.5
+      tinylicious: 3.1.0-231702
       tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
