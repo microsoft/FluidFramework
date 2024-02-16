@@ -294,7 +294,7 @@ export class SharedMatrix<T = any>
 	// #endregion IMatrixReader
 
 	public setCell(row: number, col: number, value: MatrixItem<T>) {
-		if (!(0 <= row && row < this.rowCount && 0 <= col && col < this.colCount)) {
+		if (row < 0 || row >= this.rowCount || col < 0 || col >= this.colCount) {
 			throw new UsageError("Trying to set out-of-bounds cell.");
 		}
 
