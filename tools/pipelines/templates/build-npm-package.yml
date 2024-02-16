@@ -361,15 +361,14 @@ extends:
                     # Source is wherever the tinylicious log ends up in, after executing tests above.
                     # CopyFiles@2 failed with OOM for some reason so doing it "by hand".
                     - task: Bash@3
-                      displayName: Copy tinylicious.log to artifact staging directory
+                      displayName: Upload tinylicious log to pipeline run logs
                       condition: succeededOrFailed()
                       continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
                       inputs:
                         targetType: inline
                         workingDirectory: '${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests'
                         script: |
-                          mkdir -p $(Build.ArtifactStagingDirectory)/tinyliciousLog
-                          cp tinylicious.log $(Build.ArtifactStagingDirectory)/tinyliciousLog/tinylicious.log
+                          ##vso[task.uploadfile]tinylicious.log
 
                     # At this point we want to publish the tinylicious.log artifact, but as part of 1ES migration
                     # that is now part of templateContext.outputs below.
@@ -549,16 +548,6 @@ extends:
             templateContext:
               outputParentDirectory: $(Build.ArtifactStagingDirectory)
               outputs:
-                - ${{ if and(ne(convertToJson(parameters.taskTest), '[]'), contains(convertToJson(parameters.taskTest), 'tinylicious')) }}:
-                    - output: pipelineArtifact
-                      displayName: Publish Artifact - Tinylicious Log
-                      condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
-                      targetPath: '$(Build.ArtifactStagingDirectory)/tinyliciousLog/tinylicious.log'
-                      artifactName: tinyliciousLog_attempt-$(System.JobAttempt)
-                      sbomEnabled: false
-                      publishLocation: pipeline
-                      continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
-
                 - ${{ if ne(parameters.taskPack, false) }}:
                     - output: pipelineArtifact
                       displayName: Publish Artifact - pack
