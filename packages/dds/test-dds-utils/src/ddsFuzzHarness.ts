@@ -292,6 +292,11 @@ export interface DDSFuzzHarnessEvents {
 	 * Raised after all fuzzActions have been completed.
 	 */
 	(event: "testEnd", listener: (finalState: DDSFuzzTestState<IChannelFactory>) => void);
+
+	/**
+	 * Raised before each generated operation is run by its reducer.
+	 */
+	(event: "operationStart", listener: (operation: BaseOperation) => void);
 }
 
 /**
@@ -1044,7 +1049,7 @@ export function mixinStashedClient<
 		if (isStashClientOp(operation)) {
 			const client = clients.find((c) => c.containerRuntime.clientId === operation.clientId);
 			if (!hasStashData(client)) {
-				throw new PreconditionError("client not stashable");
+				throw new ReducerPreconditionError("client not stashable");
 			}
 			const stashData = client.stashData;
 
@@ -1338,6 +1343,7 @@ export async function runTestForSeed<
 	const finalState = await performFuzzActionsAsync(
 		model.generatorFactory(),
 		async (state, operation) => {
+			options.emitter.emit("operation", operation);
 			operationCount++;
 			return model.reducer(state, operation);
 		},
@@ -1412,9 +1418,14 @@ function isInternalOptions(options: DDSFuzzSuiteOptions): options is InternalOpt
 }
 
 /**
+ * Some reducers require preconditions be met which are validated by their generator.
+ * The validation can be lost if the generator is not run.
+ * The primary case where this happens is during minimization. If a reducer detects this
+ * problem, they can throw this error type, and minimization will consider the current
+ * test invalid, rather than continuing to test invalid scenarios.
  * @internal
  */
-export class PreconditionError extends Error {}
+export class ReducerPreconditionError extends Error {}
 
 /**
  * Performs the test again to verify if the DDS still fails with the same error message.
