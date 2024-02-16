@@ -109,6 +109,8 @@ const serverSupportedFeatures: Exclude<IConnected["supportedFeatures"], undefine
 	submit_signals_v2: true,
 };
 
+const feature_submit_signals_v2 = "submit_signals_v2";
+
 function selectProtocolVersion(connectVersions: string[]): string | undefined {
 	for (const connectVersion of connectVersions) {
 		for (const protocolVersion of protocolVersions) {
@@ -1124,14 +1126,12 @@ export function configureWebSocketServices(
 						for (const content of contents) {
 							let signalMessage: ISignalMessage;
 							let roomId: string;
-							const feature_submit_signals_v2 = "submit_signals_v2";
 
+							// Check if the client supports v2/targeted signals
 							if (
 								supportedFeaturesMap.get(clientId)?.clientSupportedFeatures?.[
 									feature_submit_signals_v2
-								] &&
-								typeof content === "object" &&
-								"targetClientId" in content
+								]
 							) {
 								signalMessage = {
 									clientId,
