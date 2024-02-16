@@ -246,7 +246,6 @@ module.exports = {
 				"^server/",
 				"^build-tools/",
 				"^common/lib/common-utils/package.json",
-				"^common/build/eslint-config-fluid/package.json",
 			],
 			"npm-package-json-test-scripts": [
 				"common/build/eslint-config-fluid/package.json",
