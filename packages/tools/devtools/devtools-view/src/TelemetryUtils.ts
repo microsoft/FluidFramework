@@ -58,7 +58,7 @@ export class ConsoleVerboseLogger implements ITelemetryBaseLogger {
 const telemetryOptInKey: string = "fluid:devtools:telemetry:optIn";
 
 /**
- * Callback function used to check opt in status
+ * Callback function that indicates if the user has opted in to report telemetry
  * @returns boolean representing whether telemetry collection is enabled
  * @internal
  */

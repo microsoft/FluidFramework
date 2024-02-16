@@ -74,10 +74,15 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 	 * requests during local development or other scenarios where a key is not passed in.
 	 */
 	private readonly enabled: boolean = false;
-	// We expect the following usage identifiers to be mutated when the user opts in/out.
-	// Identifier that's generated on each session
+	// We expect the following usage identifiers to be mutated when the user opts in/out of reporting telemetry.
+	/**
+	 * Identifier that's generated on each Fluid Devtools session
+	 * @remarks
+	 */
 	private sessionID?: string;
-	// This identifies a specific browser instance and is reused in subsequent sessions.
+	/** 
+	 * This identifies a specific browser instance and is reused in subsequent sessions.
+	 */
 	private continuityID?: string;
 
 	private readonly CONTINUITY_ID_KEY = "Fluid.Devtools.ContinuityId";
