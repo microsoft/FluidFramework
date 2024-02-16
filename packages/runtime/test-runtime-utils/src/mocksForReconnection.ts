@@ -91,68 +91,82 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 		return -1;
 	}
 
-	public async initializeWithStashedOps(containerRuntime: MockContainerRuntimeForReconnection) {
+	public async initializeWithStashedOps(
+		fromContainerRuntime: MockContainerRuntimeForReconnection,
+	) {
 		if (this.pendingMessages.length !== 0 || this.clientSequenceNumber !== 0) {
 			throw new Error("applyStashedOps must be called first, and once.");
 		}
 
-		const { processedOps, pendingRemoteMessages } = containerRuntime;
-
-		if (processedOps === undefined) {
+		if (fromContainerRuntime.processedOps === undefined) {
 			throw new Error("containerRuntime must have trackRemoteOps true");
 		}
 
 		// shutdown the existing client
-		containerRuntime.flush();
-		containerRuntime.connected = false;
-		this.factory.removeContainerRuntime(containerRuntime);
+		fromContainerRuntime.connected = false;
+		fromContainerRuntime.flush();
+		this.factory.removeContainerRuntime(fromContainerRuntime);
+		// clear any unprocessed ops for this client
+		this.factory.clearOutstandingClientMessages(fromContainerRuntime.clientId);
 
 		// get the saved ops seen by the client, and its pending ops
-		const pendingMessages = containerRuntime.pendingMessages.splice(0);
-		const savedOps = [...processedOps.splice(0), ...pendingRemoteMessages.splice(0)];
+		const pendingMessages = fromContainerRuntime.pendingMessages.splice(0);
+		const remoteOps = [
+			...fromContainerRuntime.processedOps.splice(0),
+			...fromContainerRuntime.pendingRemoteMessages.splice(0),
+		];
 
 		// ensure no ops are sent to, or produced by the old client
 		// this can help find bugs in the the harness
-		Object.freeze(containerRuntime.pendingMessages);
-		Object.freeze(containerRuntime.pendingRemoteMessages);
-		Object.freeze(containerRuntime.processedOps);
-
-		// clear any unprocessed ops for this client
-		this.factory.clearOutstandingClientMessages(containerRuntime.clientId);
+		Object.freeze(fromContainerRuntime.pendingMessages);
+		Object.freeze(fromContainerRuntime.pendingRemoteMessages);
+		Object.freeze(fromContainerRuntime.processedOps);
 
 		let refSeq = Math.min(
-			savedOps[0]?.referenceSequenceNumber ?? Number.MAX_SAFE_INTEGER,
+			remoteOps[0]?.referenceSequenceNumber ?? Number.MAX_SAFE_INTEGER,
 			pendingMessages[0]?.referenceSequenceNumber ?? Number.MAX_SAFE_INTEGER,
 		);
 		if (refSeq === Number.MAX_SAFE_INTEGER) {
 			refSeq = 0;
 		}
-		this.dataStoreRuntime.deltaManager.lastSequenceNumber = refSeq;
-		this.dataStoreRuntime.deltaManager.minimumSequenceNumber = refSeq;
-
-		// handle pending messages before first saved op
-		while (
-			pendingMessages.length > 0 &&
-			pendingMessages[0].referenceSequenceNumber <=
-				this.dataStoreRuntime.deltaManager.lastSequenceNumber
+		if (
+			this.dataStoreRuntime.deltaManager.lastSequenceNumber !== refSeq ||
+			this.dataStoreRuntime.deltaManager.minimumSequenceNumber !== refSeq
 		) {
-			await this.dataStoreRuntime.applyStashedOp(pendingMessages.shift()?.content);
+			throw new Error(
+				"computed min and ref seq don't match the loaded values; this indicates a bad load, or missing messages",
+			);
 		}
-		// apply the saved and pending ops
-		for (const savedOp of savedOps) {
-			if (savedOp.clientId === this.clientId) {
-				await this.dataStoreRuntime.applyStashedOp(savedOp.contents);
-			}
-			this.process(savedOp);
 
-			while (
-				pendingMessages.length > 0 &&
-				pendingMessages[0].referenceSequenceNumber === savedOp.sequenceNumber
-			) {
-				await this.dataStoreRuntime.applyStashedOp(pendingMessages.shift()?.content);
+		const stashedOps = new Map<number, any>();
+
+		remoteOps.forEach((op) => {
+			if (op.clientId === this.clientId) {
+				const ops = stashedOps.get(op.referenceSequenceNumber) ?? [];
+				ops.push(op.contents);
+				stashedOps.set(op.referenceSequenceNumber, ops);
 			}
+		});
+		pendingMessages.forEach((op) => {
+			const ops = stashedOps.get(op.referenceSequenceNumber) ?? [];
+			ops.push(op.content);
+			stashedOps.set(op.referenceSequenceNumber, ops);
+		});
+
+		const applyStashedOpsAtSeq = async (seq: number) => {
+			const pendingAtSeq = stashedOps.get(seq);
+			for (const message of pendingAtSeq ?? []) {
+				await this.dataStoreRuntime.applyStashedOp(message);
+			}
+			stashedOps.delete(seq);
+		};
+		await applyStashedOpsAtSeq(this.dataStoreRuntime.deltaManager.lastSequenceNumber);
+		// apply the saved and pending ops
+		for (const savedOp of remoteOps) {
+			this.process(savedOp);
+			await applyStashedOpsAtSeq(this.dataStoreRuntime.deltaManager.lastSequenceNumber);
 		}
-		if (pendingMessages.length !== 0) {
+		if (stashedOps.size !== 0) {
 			throw new Error("There should be no pending message after saved ops are processed");
 		}
 		// issue a reconnect to rebase pending ops

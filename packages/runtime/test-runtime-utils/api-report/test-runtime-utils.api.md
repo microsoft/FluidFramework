@@ -190,7 +190,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
     // (undocumented)
     protected readonly factory: MockContainerRuntimeFactoryForReconnection;
     // (undocumented)
-    initializeWithStashedOps(containerRuntime: MockContainerRuntimeForReconnection): Promise<void>;
+    initializeWithStashedOps(fromContainerRuntime: MockContainerRuntimeForReconnection): Promise<void>;
     // (undocumented)
     process(message: ISequencedDocumentMessage): void;
     // (undocumented)
