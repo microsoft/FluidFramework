@@ -120,7 +120,6 @@ export class SummaryManager extends TypedEventEmitter<ISummarizerEvents> impleme
 			initialDelayMs = defaultInitialDelayMs,
 			opsToBypassInitialDelay = defaultOpsToBypassInitialDelay,
 		}: Readonly<Partial<ISummaryManagerConfig>> = {},
-		private readonly disableHeuristics?: boolean,
 	) {
 		super();
 
@@ -295,7 +294,7 @@ export class SummaryManager extends TypedEventEmitter<ISummarizerEvents> impleme
 				return PerformanceEvent.timedExecAsync(
 					this.logger,
 					{ eventName: "RunningSummarizer", attempt: this.startThrottler.numAttempts },
-					async () => summarizer.run(clientId, this.disableHeuristics),
+					async () => summarizer.run(clientId),
 				);
 			})
 			.then((reason: string) => {

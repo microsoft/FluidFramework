@@ -8,13 +8,13 @@ import { makeCodecFamily, withDefaultBinaryEncoding } from "../../../codec/index
 import { typeboxValidator } from "../../../external-utilities/index.js";
 import { TestChange } from "../../testChange.js";
 import { brand } from "../../../util/index.js";
-import { ChangeEncodingContext, RevisionTagCodec } from "../../../core/index.js";
+import { ChangeEncodingContext } from "../../../core/index.js";
 import { SummaryData, makeEditManagerCodec } from "../../../shared-tree-core/index.js";
 import {
 	EncodingTestData,
-	MockIdCompressor,
 	makeEncodingTestSuite,
 	mintRevisionTag,
+	testRevisionTagCodec,
 } from "../../utils.js";
 
 const tags = Array.from({ length: 3 }, mintRevisionTag);
@@ -164,7 +164,7 @@ export function testCodec() {
 	describe("Codec", () => {
 		const codec = makeEditManagerCodec(
 			withDefaultBinaryEncoding(TestChange.codec),
-			new RevisionTagCodec(new MockIdCompressor()),
+			testRevisionTagCodec,
 			{
 				jsonValidator: typeboxValidator,
 			},

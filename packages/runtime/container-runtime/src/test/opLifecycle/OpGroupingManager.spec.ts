@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import { MockLogger } from "@fluidframework/telemetry-utils";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ContainerMessageType } from "../..";
 import { BatchMessage, IBatch, OpGroupingManager } from "../../opLifecycle";
 
@@ -175,7 +176,7 @@ describe("OpGroupingManager", () => {
 
 			assert.deepStrictEqual(result, [
 				{
-					clientSequenceNumber: 1,
+					clientSequenceNumber: 10,
 					contents: "1",
 				},
 			]);
@@ -205,5 +206,85 @@ describe("OpGroupingManager", () => {
 				},
 			]);
 		});
+	});
+
+	it("Ungrouping multiple times does not mess up groupedBatch messages", () => {
+		const groupedBatch = {
+			type: "op",
+			sequenceNumber: 10,
+			clientSequenceNumber: 12,
+			contents: {
+				type: OpGroupingManager.groupedBatchOp,
+				contents: [
+					{
+						contents: {
+							type: ContainerMessageType.FluidDataStoreOp,
+							contents: {
+								contents: "a",
+							},
+						},
+					},
+					{
+						contents: {
+							type: ContainerMessageType.FluidDataStoreOp,
+							contents: {
+								contents: "b",
+							},
+						},
+					},
+				],
+			},
+		} as any;
+		const opGroupingManager = new OpGroupingManager(
+			{
+				groupedBatchingEnabled: false,
+				opCountThreshold: 2,
+				reentrantBatchGroupingEnabled: true,
+			},
+			mockLogger,
+		);
+
+		// Run the groupedBatch through a couple times to ensure it cannot get messed up
+		let messagesToUngroup: ISequencedDocumentMessage[] = [groupedBatch];
+		let result: ISequencedDocumentMessage[] = [];
+		for (let i = 0; i < 4; i++) {
+			result = [];
+			for (const message of messagesToUngroup) {
+				for (const ungroupedOp of opGroupingManager.ungroupOp(message)) {
+					result.push(ungroupedOp);
+				}
+			}
+			messagesToUngroup = [...result];
+		}
+
+		const expected = [
+			{
+				type: "op",
+				sequenceNumber: 10,
+				clientSequenceNumber: 1,
+				metadata: undefined,
+				compression: undefined,
+				contents: {
+					type: ContainerMessageType.FluidDataStoreOp,
+					contents: {
+						contents: "a",
+					},
+				},
+			},
+			{
+				type: "op",
+				sequenceNumber: 10,
+				clientSequenceNumber: 2,
+				metadata: undefined,
+				compression: undefined,
+				contents: {
+					type: ContainerMessageType.FluidDataStoreOp,
+					contents: {
+						contents: "b",
+					},
+				},
+			},
+		];
+		assert.deepStrictEqual(result, expected, "ungrouping should work as expected");
 	});
 });

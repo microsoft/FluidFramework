@@ -275,7 +275,9 @@
 		"enableTelemetry": true,
 		"shouldLogInitialSuccessVerbose": false,
 		"maxDbBatchSize": 1000,
-		"restartOnCheckpointFailure": true
+		"restartOnCheckpointFailure": true,
+		"logSavedOpsTimeIntervalMs": 60000,
+		"opsCountTelemetryEnabled": true
 	},
 	"copier": {
 		"topic": "rawdeltas",
@@ -289,36 +291,44 @@
 		"port": 6379,
 		"tls": false,
 		"connectTimeout": 10000,
+		"slotsRefreshTimeout": 50000,
 		"maxRetriesPerRequest": 20,
 		"enableAutoPipelining": false,
-		"enableOfflineQueue": true
+		"enableOfflineQueue": true,
+		"enableClustering": false
 	},
 	"redisForTenantCache": {
 		"host": "redis",
 		"port": 6379,
 		"tls": false,
 		"connectTimeout": 10000,
+		"slotsRefreshTimeout": 50000,
 		"maxRetriesPerRequest": 20,
 		"enableAutoPipelining": false,
-		"enableOfflineQueue": true
+		"enableOfflineQueue": true,
+		"enableClustering": false
 	},
 	"redis2": {
 		"host": "redis",
 		"port": 6379,
 		"tls": false,
 		"connectTimeout": 10000,
+		"slotsRefreshTimeout": 50000,
 		"maxRetriesPerRequest": 20,
 		"enableAutoPipelining": false,
-		"enableOfflineQueue": true
+		"enableOfflineQueue": true,
+		"enableClustering": false
 	},
 	"redisForThrottling": {
 		"host": "redis",
 		"port": 6379,
 		"tls": false,
 		"connectTimeout": 10000,
+		"slotsRefreshTimeout": 50000,
 		"maxRetriesPerRequest": 20,
 		"enableAutoPipelining": false,
-		"enableOfflineQueue": true
+		"enableOfflineQueue": true,
+		"enableClustering": false
 	},
 	"error": {
 		"track": false,
