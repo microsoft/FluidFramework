@@ -20,7 +20,9 @@ describe("tokenFromResponse", () => {
 	});
 
 	it("returns null when token value is passed as null", async () => {
+		// eslint-disable-next-line unicorn/no-null
 		const result = tokenFromResponse(null);
+		// eslint-disable-next-line unicorn/no-null
 		assert.equal(result, null);
 	});
 });
@@ -39,6 +41,7 @@ describe("isTokenFromCache", () => {
 	});
 
 	it("returns undefined when token value is passed as null", async () => {
+		// eslint-disable-next-line unicorn/no-null
 		const result = isTokenFromCache(null);
 		assert.equal(result, undefined);
 	});
