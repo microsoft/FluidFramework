@@ -133,6 +133,7 @@ export class OdspDocumentService
 			// load in storage-only mode if a file version is specified
 			storageOnly: odspResolvedUrl.fileVersion !== undefined,
 			summarizeProtocolTree: true,
+			supportGetSnapshotApi: true,
 		};
 
 		this.mc = createChildMonitoringContext({

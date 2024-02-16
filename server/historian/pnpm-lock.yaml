@@ -164,7 +164,6 @@ importers:
       mocha: ^10.1.0
       nconf: ^0.11.4
       prettier: ~3.0.3
-      querystring: ^0.2.0
       rimraf: ^3.0.2
       sinon: ^9.2.3
       supertest: ^3.3.0
@@ -191,7 +190,6 @@ importers:
       json-stringify-safe: 5.0.1
       jsonwebtoken: 9.0.0
       nconf: 0.11.4
-      querystring: 0.2.1
       uuid: 3.4.0
       winston: 3.8.2
     devDependencies:
