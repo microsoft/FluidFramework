@@ -49,7 +49,7 @@ import {
 	rebaseRevisionMetadataFromInfo,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
-import { assertEqual } from "./optionalFieldUtils.js";
+import { Change, assertTaggedEqual } from "./optionalFieldUtils.js";
 
 type RevisionTagMinter = () => RevisionTag;
 
@@ -201,7 +201,7 @@ function composeList(
 ): OptionalChangeset {
 	const moveEffects = failCrossFieldManager;
 	const idAllocator = idAllocatorFromMaxId(getMaxId(...changes.map((c) => c.change)));
-	let composed: OptionalChangeset = createEmpty();
+	let composed: OptionalChangeset = Change.empty();
 	const metadataOrDefault = metadata ?? defaultRevisionMetadataFromChanges(changes);
 
 	for (const change of changes) {
@@ -232,10 +232,6 @@ function compose(
 		moveEffects,
 		metadata ?? defaultRevisionMetadataFromChanges([change1, change2]),
 	);
-}
-
-function createEmpty(): OptionalChangeset {
-	return { moves: [], childChanges: [] };
 }
 
 type OptionalFieldTestState = FieldStateTree<string | undefined, OptionalChangeset>;
@@ -494,7 +490,14 @@ export function testRebaserAxioms() {
 			runExhaustiveComposeRebaseSuite(
 				[{ content: undefined }, { content: "A" }],
 				generateChildStates,
-				{ rebase, rebaseComposed, compose, invert, assertEqual, createEmpty },
+				{
+					rebase,
+					rebaseComposed,
+					compose,
+					invert,
+					assertEqual: assertTaggedEqual,
+					createEmpty: Change.empty,
+				},
 				{
 					numberOfEditsToRebase: 3,
 					numberOfEditsToRebaseOver: isStress ? 5 : 3,

@@ -9,7 +9,6 @@ export { ReplayDocumentServiceFactory } from "./replayDocumentServiceFactory";
 export {
 	FileSnapshotReader,
 	IFileSnapshot,
-	OpStorage,
 	SnapshotStorage,
 	StaticStorageDocumentServiceFactory,
 } from "./storageImplementations";
