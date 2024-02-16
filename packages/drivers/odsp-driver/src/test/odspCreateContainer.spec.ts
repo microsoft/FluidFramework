@@ -27,7 +27,7 @@ describe("Odsp Create Container Test", () => {
 	let request: IRequest;
 
 	const itemId = "fakeItemId";
-	const expectedResponse: any = {
+	const expectedResponse = {
 		context: "http://sp.devinstall/_api/v2.1/$metadata#",
 		sequenceNumber: 1,
 		sha: "shaxxshaxx",
