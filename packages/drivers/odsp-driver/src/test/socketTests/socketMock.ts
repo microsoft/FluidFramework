@@ -58,11 +58,11 @@ export class ClientSocketMock extends TypedEventEmitter<SocketMockEvents> {
 		return !this.disconnected;
 	}
 
-	public close() {
+	public close(): void {
 		this.disconnect();
 	}
 
-	public disconnect() {
+	public disconnect(): void {
 		this.disconnected = true;
 	}
 
@@ -76,21 +76,21 @@ export class ClientSocketMock extends TypedEventEmitter<SocketMockEvents> {
 	public sendDisconnectEvent(
 		reason?: IAnyDriverError,
 		details?: { context: { type?: string; code?: number } },
-	) {
+	): void {
 		const error =
 			reason ??
 			createGenericNetworkError("TestError", { canRetry: false }, { driverVersion });
 		this.emit("disconnect", error, details);
 	}
 
-	public sendErrorEvent(error?: IAnyDriverError) {
+	public sendErrorEvent(error?: IAnyDriverError): void {
 		this.emit(
 			"error",
 			error ?? createGenericNetworkError("TestError", { canRetry: false }, { driverVersion }),
 		);
 	}
 
-	public sendServerDisconnectEvent(socketError: IOdspSocketError, clientId?: string) {
+	public sendServerDisconnectEvent(socketError: IOdspSocketError, clientId?: string): void {
 		if (clientId === undefined) {
 			this.disconnect();
 		}
