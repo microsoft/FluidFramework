@@ -186,5 +186,5 @@ extends:
       displayName: Publish Artifact - Devtools Browser Extension
       inputs:
         targetPath: './packages/tools/devtools/devtools-browser-extension/dist/bundle/'
-        artifactName: 'devtools-extension-bundle'
+        artifactName: 'devtools-extension-bundle_attempt-$(System.JobAttempt)'
         publishLocation: 'pipeline'

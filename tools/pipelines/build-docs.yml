@@ -265,6 +265,7 @@ stages:
 - stage: link_check
   displayName: 'Website Link Check'
   dependsOn: [] # run in parallel
+  pool: Large
   jobs:
     - job: link_check
       displayName: 'Website Link Check'

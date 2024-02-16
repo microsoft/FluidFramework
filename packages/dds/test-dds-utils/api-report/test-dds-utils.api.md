@@ -24,6 +24,8 @@ export interface AddClient {
     // (undocumented)
     addedClientId: string;
     // (undocumented)
+    canBeStashed: boolean;
+    // (undocumented)
     type: "addClient";
 }
 
@@ -88,6 +90,7 @@ export interface DDSFuzzSuiteOptions {
     clientJoinOptions?: {
         maxNumberOfClients: number;
         clientAddProbability: number;
+        stashableClientProbability?: number;
     };
     containerRuntimeOptions?: IMockContainerRuntimeOptions;
     defaultTestCount: number;
