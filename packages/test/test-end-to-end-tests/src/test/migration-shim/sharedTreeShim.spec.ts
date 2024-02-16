@@ -94,7 +94,7 @@ describeCompat("SharedTreeShim", "NoCompat", (getTestObjectProvider) => {
 		provider = getTestObjectProvider();
 	});
 
-	it.skip("Can create and retrieve tree", async () => {
+	it("Can create and retrieve tree", async () => {
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
 		const container1 = await provider.createContainer(runtimeFactory);
 		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
@@ -106,6 +106,7 @@ describeCompat("SharedTreeShim", "NoCompat", (getTestObjectProvider) => {
 
 		const container2 = await provider.loadContainer(runtimeFactory);
 		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
+		await provider.ensureSynchronized();
 		// This is a silent check that we can get the tree after storing the handle
 		const shim2 = await testObj2.getTree();
 
@@ -115,8 +116,8 @@ describeCompat("SharedTreeShim", "NoCompat", (getTestObjectProvider) => {
 
 		// Schematize our tree, this sends an op since we are a live container
 		const view1 = getNewTreeView(tree1);
-		const view2 = getNewTreeView(tree2);
 		await provider.ensureSynchronized();
+		const view2 = getNewTreeView(tree2);
 
 		// This does some typing and gives us the root node.
 		const rootNode1: RootType = view1.root;
@@ -143,6 +144,7 @@ describeCompat("SharedTreeShim", "NoCompat", (getTestObjectProvider) => {
 
 		// Get the root node loaded from the new summary
 		const testObj3 = (await container3.getEntryPoint()) as TestDataObject;
+		await provider.ensureSynchronized();
 		const shim3 = await testObj3.getTree();
 		const tree3 = shim3.currentTree;
 		const view3 = getNewTreeView(tree3);

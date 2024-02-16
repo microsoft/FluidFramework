@@ -811,7 +811,6 @@ importers:
       jwt-decode: ^4.0.0
       mocha: ^10.2.0
       prettier: ~3.0.3
-      querystring: ^0.2.0
       rimraf: ^4.4.0
       sillyname: ^0.1.0
       typescript: ~4.5.5
@@ -827,7 +826,6 @@ importers:
       json-stringify-safe: 5.0.1
       jsrsasign: 11.0.0
       jwt-decode: 4.0.0
-      querystring: 0.2.1
       sillyname: 0.1.0
       uuid: 9.0.0
     devDependencies:
@@ -1086,7 +1084,6 @@ importers:
       nconf: ^0.12.0
       notepack.io: ^2.3.0
       prettier: ~3.0.3
-      querystring: ^0.2.0
       rimraf: ^4.4.0
       serialize-error: ^8.1.0
       socket.io: ^4.6.2
@@ -1115,7 +1112,6 @@ importers:
       lodash: 4.17.21
       nconf: 0.12.0
       notepack.io: 2.3.0
-      querystring: 0.2.1
       serialize-error: 8.1.0
       socket.io: 4.6.2
       socket.io-adapter: 2.5.2
@@ -17108,6 +17104,7 @@ packages:
     resolution: {integrity: sha512-wkvS7mL/JMugcup3/rMitHmd9ecIGd2lhFhK9N3UUQ450h66d1r3Y9nvXzQAW1Lq+wyx61k/1pfKS5KuKiyEbg==}
     engines: {node: '>=0.4.x'}
     deprecated: The querystring API is considered Legacy. new code should use the URLSearchParams API instead.
+    dev: true
 
   /querystringify/2.2.0:
     resolution: {integrity: sha512-FIqgj2EUvTa7R50u0rGsyTftzjYmv/a3hO345bZNrqabNqjtgiDMgmo4mkUjd+nzU5oF3dClKqFIPUKybUyqoQ==}

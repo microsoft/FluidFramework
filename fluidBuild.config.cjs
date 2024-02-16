@@ -183,9 +183,6 @@ module.exports = {
 				"^packages/utils/.*/package.json",
 				"^packages/loader/container-loader/package.json",
 			],
-			"fluid-build-tasks-tsc": [
-				"packages/dds/tree/package.json", // Builds CommonJS with custom tsconfig
-			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
 				"tools/api-markdown-documenter/src/test/snapshots/.*",
@@ -201,7 +198,34 @@ module.exports = {
 			],
 			"no-js-file-extensions": [
 				// PropertyDDS uses .js files which should be renamed eventually.
-				".*/PropertyDDS/.*",
+				"experimental/PropertyDDS/.*",
+				"build-tools/packages/build-cli/bin/dev.js",
+				"build-tools/packages/build-cli/bin/run.js",
+				"build-tools/packages/build-cli/test/helpers/init.js",
+				"build-tools/packages/readme-command/bin/dev.js",
+				"build-tools/packages/readme-command/bin/run.js",
+				"build-tools/packages/version-tools/bin/dev.js",
+				"build-tools/packages/version-tools/bin/run.js",
+				"common/build/build-common/gen_version.js",
+				"common/build/eslint-config-fluid/.*",
+				"common/lib/common-utils/jest-puppeteer.config.js",
+				"common/lib/common-utils/jest.config.js",
+				"docs/api-markdown-documenter/.*",
+				"docs/api/fallback/index.js",
+				"docs/build-redirects.js",
+				"docs/download-apis.js",
+				"docs/static/js/add-code-copy-button.js",
+				"examples/data-objects/monaco/loaders/blobUrl.js",
+				"examples/data-objects/monaco/loaders/compile.js",
+				"examples/service-clients/odsp-client/shared-tree-demo/tailwind.config.js",
+				"packages/test/mocha-test-setup/mocharc-common.js",
+				"packages/test/test-service-load/scripts/usePrereleaseDeps.js",
+				"packages/tools/devtools/devtools-browser-extension/test-setup.js",
+				"scripts/report-parser.js",
+				"tools/changelog-generator-wrapper/src/getDependencyReleaseLine.js",
+				"tools/changelog-generator-wrapper/src/getReleaseLine.js",
+				"tools/changelog-generator-wrapper/src/index.js",
+				"tools/getkeys/index.js",
 			],
 			"npm-package-json-scripts-args": [
 				// server/routerlicious and server/routerlicious/packages/routerlicious use
@@ -241,13 +265,6 @@ module.exports = {
 				"^tools/markdown-magic",
 				// getKeys has a fake tsconfig.json to make ./eslintrc.cjs work, but we don't need clean script
 				"^tools/getkeys",
-			],
-			"npm-package-json-esm": [
-				"packages/dds/tree/package.json", // Policy is incorrect about "module" in package.json
-				// These are ESM-only packages and use tsc to build the ESM output. The policy handler doesn't understand this
-				// case.
-				"packages/dds/migration-shim/package.json",
-				"packages/test/functional-tests/package.json",
 			],
 			// This handler will be rolled out slowly, so excluding most packages here while we roll it out.
 			"npm-package-exports-field": [
@@ -398,6 +415,10 @@ module.exports = {
 		fluidBuildTasks: {
 			tsc: {
 				ignoreDevDependencies: ["@fluid-tools/webpack-fluid-loader"],
+				ignoreTasks: [
+					// Outside of normal build and packages/dd/matrix version includes tsc
+					"bench:profile",
+				],
 			},
 		},
 		// Requirements applied to all `public` packages.

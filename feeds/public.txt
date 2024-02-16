@@ -22,7 +22,6 @@
 @fluidframework/driver-utils
 @fluidframework/container-loader
 @fluidframework/view-interfaces
-@fluidframework/view-adapters
 @fluidframework/undo-redo
 @fluidframework/tinylicious-client
 @fluidframework/synthesize

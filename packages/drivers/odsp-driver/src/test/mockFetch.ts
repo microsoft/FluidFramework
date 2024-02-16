@@ -16,7 +16,7 @@ export const createResponse = async (
 		ok: response !== undefined,
 		status,
 		text: async () => Promise.resolve(JSON.stringify(response)),
-		arrayBuffer: async () => Promise.resolve({ byteLength: 10 }),
+		arrayBuffer: async () => Promise.resolve(response),
 		headers: headers ? new fetchModule.Headers(headers) : new fetchModule.Headers(),
 		json: async () => Promise.resolve(response),
 	});
