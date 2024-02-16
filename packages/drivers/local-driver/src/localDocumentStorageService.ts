@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { stringToBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
+import { bufferToString, stringToBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
 import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
@@ -73,7 +73,21 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 
 		const rawTree = await this.manager.getTree(requestVersion.treeId);
 		const tree = buildGitTreeHierarchy(rawTree, this.blobsShaCache, true);
+		await this.populateGroupId(tree);
 		return tree;
+	}
+
+	private async populateGroupId(tree: ISnapshotTreeEx): Promise<void> {
+		const groupIdBlobId = tree.blobs[".groupId"];
+		const groupIdBuffer = await this.readBlob(groupIdBlobId);
+		const groupId = bufferToString(groupIdBuffer, "utf8");
+		tree.groupId = groupId;
+		delete tree.blobs[".groupId"];
+		await Promise.all(
+			Object.values(tree.trees).map(async (childTree) => {
+				await this.populateGroupId(childTree);
+			}),
+		);
 	}
 
 	public async readBlob(blobId: string): Promise<ArrayBufferLike> {
