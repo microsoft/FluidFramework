@@ -4,10 +4,10 @@
  */
 import {
 	IAppState,
-	IClient,
 	makeBubble,
 	randomColor,
 	type IBubble,
+	type ITreeClient,
 } from "@fluid-example/bubblebench-common";
 import { Client, type Bubble, type Clients } from "./schema.js";
 
@@ -20,7 +20,7 @@ export class AppState implements IAppState {
 		public height: number,
 		numBubbles: number,
 	) {
-		clientsSequence.insertAtEnd(this.createInitialClientNode(numBubbles) as Client);
+		clientsSequence.insertAtEnd(this.createInitialClientNode(numBubbles) as unknown as Client);
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const lastClient = clientsSequence.at(clientsSequence.length - 1)!;
 
@@ -33,7 +33,7 @@ export class AppState implements IAppState {
 
 	public applyEdits() {}
 
-	createInitialClientNode(numBubbles: number): IClient {
+	createInitialClientNode(numBubbles: number): ITreeClient {
 		const bubbles: IBubble[] = [];
 		// create and add initial bubbles to initial client json tree
 		for (let i = 0; i < numBubbles; i++) {
@@ -41,7 +41,7 @@ export class AppState implements IAppState {
 			bubbles.push(bubble);
 		}
 
-		const client: IClient = {
+		const client: ITreeClient = {
 			clientId: `${Math.random()}`,
 			color: randomColor(),
 			bubbles,

@@ -25,6 +25,7 @@ export const StageView: React.FC<IStageProps> = ({ app }: IStageProps) => {
 		groups.push(
 			<g key={client.color} fill={color} stroke={color}>
 				{client.bubbles.map(({ x, y, r }, index) => {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 					return <BubbleView key={index} x={x} y={y} r={r}></BubbleView>;
 				})}
 			</g>,
