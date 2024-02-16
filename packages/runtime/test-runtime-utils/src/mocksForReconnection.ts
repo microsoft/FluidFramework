@@ -155,8 +155,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 
 		const applyStashedOpsAtSeq = async (seq: number) => {
 			const pendingAtSeq = stashedOps.get(seq);
-			while (pendingAtSeq && pendingAtSeq.length > 0) {
-				const message = pendingAtSeq.shift();
+			for (const message of pendingAtSeq ?? []) {
 				await this.dataStoreRuntime.applyStashedOp(message);
 			}
 			stashedOps.delete(seq);
