@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { ISocketStorageDiscovery } from "@fluidframework/odsp-driver-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { stub, useFakeTimers, SinonFakeTimers } from "sinon";
+import { stub, useFakeTimers, SinonFakeTimers, type SinonStub } from "sinon";
 import * as odspDocumentDeltaConnection from "../odspDocumentDeltaConnection";
 import * as joinSession from "../vroom";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
@@ -54,14 +54,14 @@ describe("joinSessions Tests", () => {
 		});
 	}
 
-	async function tickClock(tickValue: number) {
+	async function tickClock(tickValue: number): Promise<void> {
 		clock.tick(tickValue);
 
 		// Yield the event loop because the outbound op will be processed asynchronously.
 		await yieldEventLoop();
 	}
 
-	function addJoinSessionStub(time: number) {
+	function addJoinSessionStub(time: number): SinonStub {
 		joinSessionResponse.refreshSessionDurationSeconds = time;
 		const joinSessionStub = stub(joinSession, "fetchJoinSession").callsFake(
 			async () => joinSessionResponse,
@@ -119,12 +119,12 @@ describe("joinSessions Tests", () => {
 					maxTime: 10,
 				},
 			},
-			dispose: (error) => {},
+			dispose: (): void => {},
 			disposed: false,
-			submit: (message) => {},
-			submitSignal: (message) => {},
-			on: (op: any, func?: any) => {},
-			once: (op: any, func?: any) => {},
+			submit: (): void => {},
+			submitSignal: (): void => {},
+			on: (): void => {},
+			once: (): void => {},
 		};
 	});
 
