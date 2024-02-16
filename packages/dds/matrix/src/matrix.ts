@@ -30,6 +30,7 @@ import {
 	Client,
 	IJSONSegment,
 } from "@fluidframework/merge-tree";
+import { UsageError } from "@fluidframework/telemetry-utils";
 
 import { MatrixOp, SnapshotPath, IMatrixMsg, MatrixItem, ISetOp } from "./ops";
 import { PermutationVector, reinsertSegmentIntoVector } from "./permutationvector";
@@ -453,6 +454,9 @@ export class SharedMatrix<T = any>
 		if (count === 0) {
 			return;
 		}
+		if (colStart > this.colCount) {
+			throw new UsageError("insertCols: out of bounds");
+		}
 		this.protectAgainstReentrancy(() =>
 			this.submitColMessage(this.cols.insert(colStart, count)),
 		);
@@ -461,6 +465,9 @@ export class SharedMatrix<T = any>
 	public removeCols(colStart: number, count: number) {
 		if (count === 0) {
 			return;
+		}
+		if (colStart > this.colCount) {
+			throw new UsageError("removeCols: out of bounds");
 		}
 		this.protectAgainstReentrancy(() =>
 			this.submitColMessage(this.cols.remove(colStart, count)),
@@ -475,6 +482,9 @@ export class SharedMatrix<T = any>
 		if (count === 0) {
 			return;
 		}
+		if (rowStart > this.rowCount) {
+			throw new UsageError("insertRows: out of bounds");
+		}
 		this.protectAgainstReentrancy(() =>
 			this.submitRowMessage(this.rows.insert(rowStart, count)),
 		);
@@ -483,6 +493,9 @@ export class SharedMatrix<T = any>
 	public removeRows(rowStart: number, count: number) {
 		if (count === 0) {
 			return;
+		}
+		if (rowStart > this.rowCount) {
+			throw new UsageError("removeRows: out of bounds");
 		}
 		this.protectAgainstReentrancy(() =>
 			this.submitRowMessage(this.rows.remove(rowStart, count)),
@@ -647,6 +660,12 @@ export class SharedMatrix<T = any>
 		if (segment === undefined || offset === undefined) {
 			return;
 		}
+
+		/*
+		if (segment.removedSeq !== undefined && segment.removedSeq > referenceSequenceNumber) {
+			return undefined;
+		}
+		*/
 
 		return client.findReconnectionPosition(segment, localSeq) + offset;
 	}
