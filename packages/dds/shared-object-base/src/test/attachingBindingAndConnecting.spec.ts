@@ -112,14 +112,27 @@ function createTestSharedObject(
 	};
 }
 
-const attachStateAndConnectedMatrix = generatePairwiseOptions({
-	connected: [true, false],
-	attachState: [AttachState.Detached, AttachState.Attaching, AttachState.Attached],
-});
-
+/**
+ * The attach state of a shared object is determined by two facts:
+ *
+ * * Is it bound to a context which means its handle is stored in an already bound dds
+ * * Is the runtime attached
+ *
+ * If both of these are true, then the dds should be considered attached.
+ *
+ * Beyond attach, there is also the connected state, and the didAttach method.
+ * The connected state should always be false while detached, and didAttach should only be called once when the dds transitions.
+ *
+ * These tests valid these properties across all the functions that can cause attach state transitions
+ */
 describe("SharedObject attaching binding and connecting", () => {
+	const runtimeAttachStateAndConnectedMatrix = generatePairwiseOptions({
+		connected: [true, false],
+		attachState: [AttachState.Detached, AttachState.Attaching, AttachState.Attached],
+	});
+
 	describe("shared object after creation", () => {
-		attachStateAndConnectedMatrix.forEach(({ connected, attachState }) =>
+		runtimeAttachStateAndConnectedMatrix.forEach(({ connected, attachState }) =>
 			it(`!isAttached and !connected with runtime ${JSON.stringify({
 				connected,
 				attachState,
@@ -162,7 +175,7 @@ describe("SharedObject attaching binding and connecting", () => {
 	});
 
 	describe("shared object after load", () => {
-		attachStateAndConnectedMatrix.forEach(({ connected, attachState }) =>
+		runtimeAttachStateAndConnectedMatrix.forEach(({ connected, attachState }) =>
 			it(`With runtime ${JSON.stringify({
 				connected,
 				attachState,
@@ -255,7 +268,7 @@ describe("SharedObject attaching binding and connecting", () => {
 	});
 
 	describe("shared object after connect", () => {
-		attachStateAndConnectedMatrix.forEach(({ connected, attachState }) =>
+		runtimeAttachStateAndConnectedMatrix.forEach(({ connected, attachState }) =>
 			it(`With runtime ${JSON.stringify({
 				connected,
 				attachState,
@@ -339,7 +352,7 @@ describe("SharedObject attaching binding and connecting", () => {
 	});
 
 	describe("shared object after load and connect", () => {
-		attachStateAndConnectedMatrix.forEach(({ connected, attachState }) =>
+		runtimeAttachStateAndConnectedMatrix.forEach(({ connected, attachState }) =>
 			it(`With runtime ${JSON.stringify({
 				connected,
 				attachState,
@@ -394,7 +407,7 @@ describe("SharedObject attaching binding and connecting", () => {
 	});
 
 	describe("shared object after bindToContext", () => {
-		attachStateAndConnectedMatrix.forEach(({ connected, attachState }) =>
+		runtimeAttachStateAndConnectedMatrix.forEach(({ connected, attachState }) =>
 			it(`With runtime ${JSON.stringify({
 				connected,
 				attachState,
