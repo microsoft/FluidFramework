@@ -29,11 +29,11 @@ export {
 	SetValue,
 	StablePlace,
 	StableRange,
-} from './ChangeTypes';
-export { Checkout, CheckoutEvent, ICheckoutEvents, EditValidationResult } from './Checkout';
-export { isSharedTreeEvent, sharedTreeAssertionErrorType, Result } from './Common';
-export { EagerCheckout } from './EagerCheckout';
-export type { OrderedEditSet, EditHandle } from './EditLog';
+} from './ChangeTypes.js';
+export { Checkout, CheckoutEvent, ICheckoutEvents, EditValidationResult } from './Checkout.js';
+export { isSharedTreeEvent, sharedTreeAssertionErrorType, Result } from './Common.js';
+export { EagerCheckout } from './EagerCheckout.js';
+export type { OrderedEditSet, EditHandle } from './EditLog.js';
 export {
 	setTrait,
 	areRevisionViewsSemanticallyEqual,
@@ -42,9 +42,9 @@ export {
 	PlaceValidationResult,
 	RangeValidationResult,
 	RangeValidationResultKind,
-} from './EditUtilities';
-export { SharedTreeDiagnosticEvent, SharedTreeEvent } from './EventTypes';
-export { Delta, Forest, ForestNode, ParentData } from './Forest';
+} from './EditUtilities.js';
+export { SharedTreeDiagnosticEvent, SharedTreeEvent } from './EventTypes.js';
+export { Delta, Forest, ForestNode, ParentData } from './Forest.js';
 export type {
 	CompressedId,
 	Definition,
@@ -61,18 +61,18 @@ export type {
 	TraitLabel,
 	UuidString,
 	AttributionId,
-} from './Identifiers';
-export { isDetachedSequenceId } from './Identifiers';
-export { initialTree } from './InitialTree';
-export { LazyCheckout } from './LazyCheckout';
-export { LogViewer } from './LogViewer';
-export { NodeIdContext, NodeIdGenerator, NodeIdConverter } from './NodeIdUtilities';
+} from './Identifiers.js';
+export { isDetachedSequenceId } from './Identifiers.js';
+export { initialTree } from './InitialTree.js';
+export { LazyCheckout } from './LazyCheckout.js';
+export { LogViewer } from './LogViewer.js';
+export { NodeIdContext, NodeIdGenerator, NodeIdConverter } from './NodeIdUtilities.js';
 export {
 	MergeHealthStats,
 	SharedTreeMergeHealthTelemetryHeartbeat,
 	useFailedSequencedEditTelemetry,
-} from './MergeHealth';
-export { comparePayloads } from './PayloadUtilities';
+} from './MergeHealth.js';
+export { comparePayloads } from './PayloadUtilities.js';
 export {
 	Side,
 	EditStatus,
@@ -114,12 +114,12 @@ export {
 	DetachInternal_0_0_2,
 	SetValueInternal_0_0_2,
 	TraitLocationInternal,
-} from './persisted-types';
-export { ReconciliationChange, ReconciliationEdit, ReconciliationPath } from './ReconciliationPath';
-export { Revision } from './RevisionValueCache';
-export { RevisionView, TransactionView } from './RevisionView';
-export { TreeNodeHandle } from './TreeNodeHandle';
-export { getTraitLocationOfRange, placeFromStablePlace, rangeFromStableRange } from './TreeViewUtilities';
+} from './persisted-types/index.js';
+export { ReconciliationChange, ReconciliationEdit, ReconciliationPath } from './ReconciliationPath.js';
+export { Revision } from './RevisionValueCache.js';
+export { RevisionView, TransactionView } from './RevisionView.js';
+export { TreeNodeHandle } from './TreeNodeHandle.js';
+export { getTraitLocationOfRange, placeFromStablePlace, rangeFromStableRange } from './TreeViewUtilities.js';
 export {
 	SharedTreeArgs,
 	SharedTreeOptions,
@@ -135,8 +135,8 @@ export {
 	EditApplicationOutcome,
 	ISharedTreeEvents,
 	StashedLocalOpMetadata,
-} from './SharedTree';
-export { StringInterner } from './StringInterner';
+} from './SharedTree.js';
+export { StringInterner } from './StringInterner.js';
 
 /**
  * TODO:#61413: Publish test utilities from a separate test package
@@ -144,9 +144,9 @@ export { StringInterner } from './StringInterner';
 export {
 	getSerializedUploadedEditChunkContents as getUploadedEditChunkContents,
 	getSerializedUploadedEditChunkContents,
-} from './SummaryTestUtilities';
+} from './SummaryTestUtilities.js';
 
-export { Transaction, TransactionEvent, TransactionEvents } from './Transaction';
+export { Transaction, TransactionEvent, TransactionEvents } from './Transaction.js';
 export {
 	TransactionInternal,
 	GenericTransaction,
@@ -160,7 +160,7 @@ export {
 	SucceedingTransactionState,
 	FailingTransactionState,
 	ChangeResult,
-} from './TransactionInternal';
+} from './TransactionInternal.js';
 export {
 	NodeInTrait,
 	PlaceIndex,
@@ -170,7 +170,7 @@ export {
 	TreeViewPlace,
 	TreeViewRange,
 	TraitLocation,
-} from './TreeView';
+} from './TreeView.js';
 
 export {
 	type IMigrationEvent,
@@ -179,4 +179,4 @@ export {
 	MigrationShimFactory,
 	SharedTreeShim,
 	SharedTreeShimFactory,
-} from './migration-shim';
+} from './migration-shim/index.js';
