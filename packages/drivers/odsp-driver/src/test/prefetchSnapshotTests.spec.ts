@@ -305,9 +305,9 @@ describe("Tests for prefetching snapshot", () => {
 					.length === 1,
 				"1 Obtain snapshot event should be there",
 			);
-			const method = mockLogger.events.filter((event) =>
+			const method = mockLogger.events.find((event) =>
 				event.eventName.includes("ObtainSnapshot_end"),
-			)[0].method as string;
+			)?.method;
 			assert(method === "cache" || method === "network", "Source should be cache or network");
 		});
 
@@ -349,9 +349,9 @@ describe("Tests for prefetching snapshot", () => {
 					.length === 1,
 				"1 Obtain snapshot event should be there",
 			);
-			const method = mockLogger.events.filter((event) =>
+			const method = mockLogger.events.find((event) =>
 				event.eventName.includes("ObtainSnapshot_end"),
-			)[0].method as string;
+			)?.method;
 			assert(
 				method === "cache" || method === "prefetched",
 				"Source should be cache or prefetched",
@@ -360,7 +360,7 @@ describe("Tests for prefetching snapshot", () => {
 
 		it("prefetching snapshot should result in epoch error if different from what is already present", async () => {
 			// overwriting get() to make cache fetch throw
-			localCache.get = async () => {
+			localCache.get = async (): Promise<void> => {
 				throw new Error("testing");
 			};
 			// Set epoch first
@@ -703,7 +703,7 @@ describe("Tests for prefetching snapshot", () => {
 
 		it("prefetching snapshot should result in snapshot source as network if both cache and prefetch throws", async () => {
 			// overwriting get() to make cache fetch throw
-			localCache.get = async () => {
+			localCache.get = async (): Promise<void> => {
 				throw new Error("testing");
 			};
 
@@ -796,9 +796,9 @@ describe("Tests for prefetching snapshot", () => {
 					.length === 1,
 				"1 Obtain snapshot event should be there",
 			);
-			const method = mockLogger.events.filter((event) =>
+			const method = mockLogger.events.find((event) =>
 				event.eventName.includes("ObtainSnapshot_end"),
-			)[0].method as string;
+			)?.method;
 			assert(method === "cache" || method === "network", "Source should be cache or network");
 		});
 
@@ -844,9 +844,9 @@ describe("Tests for prefetching snapshot", () => {
 					.length === 1,
 				"1 Obtain snapshot event should be there",
 			);
-			const method = mockLogger.events.filter((event) =>
+			const method = mockLogger.events.find((event) =>
 				event.eventName.includes("ObtainSnapshot_end"),
-			)[0].method as string;
+			)?.method;
 			assert(
 				method === "cache" || method === "prefetched",
 				"Source should be cache or prefetched",
