@@ -5,7 +5,15 @@
 
 import { SaveInfo, makeRandom } from "@fluid-private/stochastic-test-utils";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
-import { BaseOperation, DDSFuzzModel, DDSFuzzSuiteOptions, replayTest } from "./ddsFuzzHarness";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import {
+	BaseOperation,
+	DDSFuzzHarnessEvents,
+	DDSFuzzModel,
+	DDSFuzzSuiteOptions,
+	ReducerPreconditionError,
+	replayTest,
+} from "./ddsFuzzHarness";
 
 /**
  * A function which takes in an operation and modifies it by reference to be more
@@ -40,7 +48,7 @@ export class FuzzTestMinimizer<
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
 > {
-	private initialErrorMessage: string | undefined;
+	private initialError?: { message: string; op: BaseOperation };
 	private readonly transforms: MinimizationTransform<TOperation>[];
 	private readonly random = makeRandom();
 
@@ -186,6 +194,14 @@ export class FuzzTestMinimizer<
 	 * to avoid dealing with transforms that would result in invalid ops
 	 */
 	private async assertFails(): Promise<boolean> {
+		const emitter = (this.providedOptions.emitter ??=
+			new TypedEventEmitter<DDSFuzzHarnessEvents>());
+
+		let lastOp: BaseOperation = { type: "___none___" };
+		const lastOpTracker = (op: BaseOperation): void => {
+			lastOp = op;
+		};
+		emitter.on("operationStart", lastOpTracker);
 		try {
 			await replayTest(
 				this.ddsModel,
@@ -199,7 +215,7 @@ export class FuzzTestMinimizer<
 			);
 			return false;
 		} catch (error: unknown) {
-			if (!error || !(error instanceof Error)) {
+			if (!error || !(error instanceof Error) || error instanceof ReducerPreconditionError) {
 				return false;
 			}
 
@@ -209,12 +225,17 @@ export class FuzzTestMinimizer<
 				.map((s) => s.trim())
 				.find((s) => s.startsWith("at"));
 
-			if (this.initialErrorMessage === undefined) {
-				this.initialErrorMessage = message;
+			if (this.initialError === undefined && message !== undefined) {
+				this.initialError = { message, op: lastOp };
 				return true;
 			}
 
-			return message === this.initialErrorMessage;
+			return (
+				message === this.initialError?.message &&
+				this.initialError?.op?.type === lastOp.type
+			);
+		} finally {
+			emitter.off("operation", lastOpTracker);
 		}
 	}
 }

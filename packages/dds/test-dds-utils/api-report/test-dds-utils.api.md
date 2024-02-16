@@ -73,6 +73,7 @@ export interface DDSFuzzHarnessEvents {
     (event: "clientCreate", listener: (client: Client<IChannelFactory>) => void): any;
     (event: "testStart", listener: (initialState: DDSFuzzTestState<IChannelFactory>) => void): any;
     (event: "testEnd", listener: (finalState: DDSFuzzTestState<IChannelFactory>) => void): any;
+    (event: "operationStart", listener: (operation: BaseOperation) => void): any;
 }
 
 // @internal
