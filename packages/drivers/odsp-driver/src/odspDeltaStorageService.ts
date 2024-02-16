@@ -13,6 +13,7 @@ import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-def
 import {
 	IDeltasFetchResult,
 	IDocumentDeltaStorageService,
+	type IStream,
 } from "@fluidframework/driver-definitions";
 import { requestOps, streamObserver } from "@fluidframework/driver-utils";
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts";
@@ -69,6 +70,7 @@ export class OdspDeltaStorageService {
 
 					postBody += `_post: 1\r\n`;
 					postBody += `\r\n--${formBoundary}--`;
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					const headers: { [index: string]: any } = {
 						"Content-Type": `multipart/form-data;boundary=${formBoundary}`,
 					};
@@ -118,7 +120,7 @@ export class OdspDeltaStorageService {
 		});
 	}
 
-	public buildUrl(from: number, to: number) {
+	public buildUrl(from: number, to: number): string {
 		const filter = encodeURIComponent(
 			`sequenceNumber ge ${from} and sequenceNumber le ${to - 1}`,
 		);
@@ -156,7 +158,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 		abortSignal?: AbortSignal,
 		cachedOnly?: boolean,
 		fetchReason?: string,
-	) {
+	): IStream<ISequencedDocumentMessage[]> {
 		// We do not control what's in the cache. Current API assumes that fetchMessages() keeps banging on
 		// storage / cache until it gets ops it needs. This would result in deadlock if fixed range is asked from
 		// cache and it's not there.
@@ -175,7 +177,8 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 			from: number,
 			to: number,
 			telemetryProps: ITelemetryProperties,
-		) => {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		): Promise<any> => {
 			if (this.snapshotOps !== undefined && this.snapshotOps.length > 0) {
 				const messages = this.snapshotOps.filter(
 					(op) => op.sequenceNumber >= from && op.sequenceNumber < to,
@@ -222,9 +225,12 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 
 		const stream = requestOps(
 			async (from: number, to: number, telemetryProps: ITelemetryProperties) => {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				const result = await requestCallback(from, to, telemetryProps);
 				// Catch all case, just in case
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
 				validateMessages("catch all", result.messages, from, this.logger);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 				return result;
 			},
 			// Staging: starting with no concurrency, listening for feedback first.

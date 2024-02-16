@@ -15,7 +15,7 @@ describe("getUrlAndHeadersWithAuth", () => {
 	const maxTokenLength = 2048 - "access_token=".length - 1;
 	const shortToken = generateToken(10);
 
-	function generateToken(length: number) {
+	function generateToken(length: number): string {
 		return "a".repeat(length);
 	}
 

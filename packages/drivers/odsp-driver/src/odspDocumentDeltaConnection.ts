@@ -114,7 +114,7 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
 		}
 	}
 
-	public get socket() {
+	public get socket(): Socket {
 		if (!this._socket) {
 			throw new Error(`Invalid socket for key "${this.key}`);
 		}
@@ -319,6 +319,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		try {
 			await deltaConnection.initialize(connectMessage, timeoutMs);
 			await epochTracker.validateEpoch(deltaConnection.details.epoch, "push");
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} catch (error: any) {
 			if (error !== null && typeof error === "object") {
 				// We have to special-case error types here in terms of what is re-triable.
@@ -334,8 +335,9 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 				//    401/403: Code will retry once with new token either way, then it becomes fatal - on this path
 				//         and on join Session path.
 				//    501: (Fluid not enabled): this is fine either way, as joinSession is gatekeeper
-				// eslint-disable-next-line unicorn/no-lonely-if
+				// eslint-disable-next-line unicorn/no-lonely-if, @typescript-eslint/no-unsafe-member-access
 				if (error.statusCode === 400 || error.statusCode === 404) {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 					error.canRetry = true;
 				}
 			}
@@ -358,10 +360,12 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	/**
 	 * Error raising for socket.io issues
 	 */
+	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
 	protected createErrorObject(handler: string, error?: any, canRetry = true): IAnyDriverError {
 		// Note: we suspect the incoming error object is either:
 		// - a socketError: add it to the OdspError object for driver to be able to parse it and reason over it.
 		// - anything else: let base class handle it
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		return canRetry && Number.isInteger(error?.code) && typeof error?.message === "string"
 			? errorObjectFromSocketError(error as IOdspSocketError, handler)
 			: super.createErrorObject(handler, error, canRetry);
@@ -379,6 +383,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		documentId: string,
 		logger: ITelemetryLoggerExt,
 	): SocketReference {
+		// eslint-disable-next-line unicorn/no-array-callback-reference, unicorn/no-array-method-this-argument
 		const existingSocketReference = SocketReference.find(key, logger);
 		if (existingSocketReference) {
 			return existingSocketReference;
@@ -431,6 +436,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
 		// PUSH may disable this functionality
 		// back-compat: remove cast to any once latest version of IConnected is consumed
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 		if ((this.details as any).supportedFeatures?.[feature_get_ops] !== true) {
 			return;
 		}
@@ -482,6 +488,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		assert(!this.socketReference?.disconnected, 0x414 /* non-active socket */);
 
 		// back-compat: remove cast to any once latest version of IConnected is consumed
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 		if ((this.details as any).supportedFeatures?.[feature_flush_ops] !== true) {
 			// Once single-commit summary is enabled end-to-end, flush support is a must!
 			// The only alternative is change in design where SPO fetches ops from PUSH OR
