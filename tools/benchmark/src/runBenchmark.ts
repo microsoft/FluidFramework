@@ -82,6 +82,7 @@ export type JsonCompatible =
 export type Results = { readonly [P in string]: JsonCompatible | undefined };
 
 /**
+ * Provides type narrowing when the provided result is a {@link BenchmarkError}.
  * @public
  */
 export function isResultError(result: BenchmarkResult): result is BenchmarkError {
@@ -97,6 +98,7 @@ export interface BenchmarkError {
 }
 
 /**
+ * Runs the benchmark.
  * @public
  */
 export async function runBenchmark(args: BenchmarkRunningOptions): Promise<BenchmarkData> {
@@ -119,7 +121,7 @@ export async function runBenchmark(args: BenchmarkRunningOptions): Promise<Bench
 	if (isAsync) {
 		data = await runBenchmarkAsync({
 			...options,
-			benchmarkFnAsync: argsBenchmarkFn as any,
+			benchmarkFnAsync: argsBenchmarkFn,
 		});
 	} else {
 		data = runBenchmarkSync({ ...options, benchmarkFn: argsBenchmarkFn });
@@ -254,7 +256,9 @@ export function runBenchmarkSync(args: BenchmarkRunningOptionsSync): BenchmarkDa
 	const state = new BenchmarkState(timer, args);
 	while (
 		state.recordBatch(doBatch(state.iterationsPerBatch, args.benchmarkFn, args.beforeEachBatch))
-	) {}
+	) {
+		// No-op
+	}
 	return state.computeData();
 }
 
@@ -274,7 +278,9 @@ export async function runBenchmarkAsync(
 				args.beforeEachBatch,
 			),
 		)
-	) {}
+	) {
+		// No-op
+	}
 	return state.computeData();
 }
 

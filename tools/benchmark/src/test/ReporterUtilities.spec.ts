@@ -4,6 +4,7 @@
  */
 
 /* eslint-disable @typescript-eslint/no-unused-expressions */
+
 import { expect } from "chai";
 import { getArrayStatistics } from "../ReporterUtilities";
 
@@ -162,4 +163,4 @@ describe("getArrayStatistics() function", () => {
 	});
 });
 
-const mean = (array: number[]) => array.reduce((a, b) => a + b, 0) / array.length;
+const mean = (array: number[]): number => array.reduce((a, b) => a + b, 0) / array.length;
