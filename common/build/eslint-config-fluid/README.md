@@ -75,6 +75,7 @@ a diff to review as part of a PR -- just like we do with API reports for code ch
 | `print-config:recommended` | `eslint --config ./recommended.js --print-config ./src/file.ts > ./printed-configs/recommended.json` |
 | `print-config:strict` | `eslint --config ./strict.js --print-config ./src/file.ts > ./printed-configs/strict.json` |
 | `print-config:test` | Print the eslint config for test files (`eslint --config index.js --print-config src/test/file.ts`). |
+| `test` | `echo TODO: add tests in @fluidframework/eslint-config-fluid` |
 
 <!-- prettier-ignore-end -->
 

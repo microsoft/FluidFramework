@@ -95,3 +95,5 @@ extends:
     taskBuild: build
     taskBuildDocs: false
     taskLint: false
+    taskTest:
+      - test
