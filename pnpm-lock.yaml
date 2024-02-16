@@ -1101,7 +1101,7 @@ importers:
       '@fluidframework/map': link:../../../../packages/dds/map
       react: 17.0.2
     devDependencies:
-      '@fluid-tools/webpack-fluid-loader': link:../../../../packages/tools/webpack-fluid-loader
+      '@fluid-tools/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.33.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
@@ -1244,7 +1244,7 @@ importers:
       '@fluidframework/tree': link:../../../../packages/dds/tree
       react: 17.0.2
     devDependencies:
-      '@fluid-tools/webpack-fluid-loader': link:../../../../packages/tools/webpack-fluid-loader
+      '@fluid-tools/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.33.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
@@ -1324,7 +1324,7 @@ importers:
       ot-json1: 1.0.2
       react: 17.0.2
     devDependencies:
-      '@fluid-tools/webpack-fluid-loader': link:../../../../packages/tools/webpack-fluid-loader
+      '@fluid-tools/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.33.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
@@ -1401,7 +1401,7 @@ importers:
       '@fluidframework/map': link:../../../../packages/dds/map
       react: 17.0.2
     devDependencies:
-      '@fluid-tools/webpack-fluid-loader': link:../../../../packages/tools/webpack-fluid-loader
+      '@fluid-tools/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.33.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
@@ -1709,7 +1709,7 @@ importers:
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
       react: 17.0.2
     devDependencies:
-      '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
+      '@fluid-tools/webpack-fluid-loader': link:../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.33.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
@@ -1787,7 +1787,7 @@ importers:
       '@fluidframework/task-manager': link:../../../packages/dds/task-manager
       react: 17.0.2
     devDependencies:
-      '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
+      '@fluid-tools/webpack-fluid-loader': link:../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.33.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
@@ -1871,7 +1871,7 @@ importers:
       events: 3.3.0
       react: 17.0.2
     devDependencies:
-      '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
+      '@fluid-tools/webpack-fluid-loader': link:../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.33.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
@@ -1930,7 +1930,7 @@ importers:
       '@fluidframework/map': link:../../../packages/dds/map
       react: 17.0.2
     devDependencies:
-      '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
+      '@fluid-tools/webpack-fluid-loader': link:../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.33.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
@@ -2002,7 +2002,7 @@ importers:
       '@fluidframework/tree': link:../../../packages/dds/tree
       react: 17.0.2
     devDependencies:
-      '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
+      '@fluid-tools/webpack-fluid-loader': link:../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.33.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
@@ -2074,7 +2074,7 @@ importers:
       monaco-editor: 0.30.1
       react: 17.0.2
     devDependencies:
-      '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
+      '@fluid-tools/webpack-fluid-loader': link:../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.33.0_webpack-cli@4.10.0
       '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
@@ -2136,7 +2136,7 @@ importers:
       '@fluidframework/core-interfaces': link:../../../../packages/common/core-interfaces
       '@fluidframework/map': link:../../../../packages/dds/map
     devDependencies:
-      '@fluid-tools/webpack-fluid-loader': link:../../../../packages/tools/webpack-fluid-loader
+      '@fluid-tools/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.33.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
@@ -2200,7 +2200,7 @@ importers:
       '@fluid-example/multiview-slider-coordinate-view': link:../slider-coordinate-view
       react: 17.0.2
     devDependencies:
-      '@fluid-tools/webpack-fluid-loader': link:../../../../packages/tools/webpack-fluid-loader
+      '@fluid-tools/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.33.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
@@ -2294,7 +2294,7 @@ importers:
       '@fluidframework/runtime-utils': link:../../../../packages/runtime/runtime-utils
       react: 17.0.2
     devDependencies:
-      '@fluid-tools/webpack-fluid-loader': link:../../../../packages/tools/webpack-fluid-loader
+      '@fluid-tools/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.33.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
@@ -2360,7 +2360,7 @@ importers:
       '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
       '@fluidframework/map': link:../../../../packages/dds/map
     devDependencies:
-      '@fluid-tools/webpack-fluid-loader': link:../../../../packages/tools/webpack-fluid-loader
+      '@fluid-tools/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.33.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
@@ -2464,7 +2464,7 @@ importers:
       '@fluid-example/multiview-coordinate-interface': link:../interface
       react: 17.0.2
     devDependencies:
-      '@fluid-tools/webpack-fluid-loader': link:../../../../packages/tools/webpack-fluid-loader
+      '@fluid-tools/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.33.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
@@ -2533,7 +2533,7 @@ importers:
       '@fluid-example/multiview-coordinate-interface': link:../interface
       react: 17.0.2
     devDependencies:
-      '@fluid-tools/webpack-fluid-loader': link:../../../../packages/tools/webpack-fluid-loader
+      '@fluid-tools/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.33.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
@@ -2602,7 +2602,7 @@ importers:
       '@fluid-example/multiview-coordinate-interface': link:../interface
       react: 17.0.2
     devDependencies:
-      '@fluid-tools/webpack-fluid-loader': link:../../../../packages/tools/webpack-fluid-loader
+      '@fluid-tools/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.33.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
@@ -2713,7 +2713,7 @@ importers:
       prosemirror-view: 1.32.4
       react: 17.0.2
     devDependencies:
-      '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
+      '@fluid-tools/webpack-fluid-loader': link:../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.33.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
@@ -2792,7 +2792,7 @@ importers:
       react: 17.0.2
       simplemde: 1.11.2
     devDependencies:
-      '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
+      '@fluid-tools/webpack-fluid-loader': link:../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.33.0_webpack-cli@4.10.0
       '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
@@ -2926,7 +2926,7 @@ importers:
       '@tiny-calc/nano': 0.0.0-alpha.5
       react: 17.0.2
     devDependencies:
-      '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
+      '@fluid-tools/webpack-fluid-loader': link:../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.33.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
@@ -3004,7 +3004,7 @@ importers:
       react-dom: 17.0.2_react@17.0.2
       uuid: 9.0.1
     devDependencies:
-      '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
+      '@fluid-tools/webpack-fluid-loader': link:../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.33.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
@@ -3107,7 +3107,7 @@ importers:
       react-dom: 17.0.2_react@17.0.2
     devDependencies:
       '@fluid-private/test-version-utils': link:../../../packages/test/test-version-utils
-      '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
+      '@fluid-tools/webpack-fluid-loader': link:../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.33.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
@@ -3601,6 +3601,119 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
+
+  examples/utils/webpack-fluid-loader:
+    specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
+      '@fluid-tools/build-cli': ^0.33.0
+      '@fluid-tools/webpack-fluid-loader-previous': npm:@fluid-tools/webpack-fluid-loader@2.0.0-internal.8.0.0
+      '@fluidframework/build-common': ^2.0.3
+      '@fluidframework/build-tools': ^0.33.0
+      '@fluidframework/container-definitions': workspace:~
+      '@fluidframework/container-loader': workspace:~
+      '@fluidframework/core-interfaces': workspace:~
+      '@fluidframework/core-utils': workspace:~
+      '@fluidframework/driver-definitions': workspace:~
+      '@fluidframework/driver-utils': workspace:~
+      '@fluidframework/eslint-config-fluid': ^3.5.0
+      '@fluidframework/local-driver': workspace:~
+      '@fluidframework/mocha-test-setup': workspace:~
+      '@fluidframework/odsp-doclib-utils': workspace:~
+      '@fluidframework/odsp-driver': workspace:~
+      '@fluidframework/odsp-driver-definitions': workspace:~
+      '@fluidframework/protocol-definitions': ^3.2.0-231454
+      '@fluidframework/routerlicious-driver': workspace:~
+      '@fluidframework/runtime-utils': workspace:~
+      '@fluidframework/server-local-server': ^3.1.0-231702
+      '@fluidframework/telemetry-utils': workspace:~
+      '@fluidframework/test-runtime-utils': workspace:~
+      '@fluidframework/tool-utils': workspace:~
+      '@fluidframework/view-interfaces': workspace:~
+      '@types/express': ^4.11.0
+      '@types/fs-extra': ^9.0.11
+      '@types/mocha': ^9.1.1
+      '@types/node': ^18.19.0
+      '@types/uuid': ^9.0.2
+      axios: ^1.6.2
+      buffer: ^6.0.3
+      c8: ^8.0.1
+      cross-env: ^7.0.3
+      eslint: ~8.50.0
+      express: ^4.16.3
+      fs-extra: ^9.1.0
+      isomorphic-fetch: ^3.0.0
+      mocha: ^10.2.0
+      mocha-json-output-reporter: ^2.0.1
+      mocha-multi-reporters: ^1.5.1
+      moment: ^2.21.0
+      nconf: ^0.12.0
+      prettier: ~3.0.3
+      rimraf: ^4.4.0
+      sillyname: ^0.1.0
+      source-map-loader: ^2.0.0
+      ts-loader: ^9.3.0
+      tsc-multi: ^1.1.0
+      typescript: ~5.1.6
+      uuid: ^9.0.0
+      webpack: ^5.82.0
+      webpack-cli: ^4.9.2
+      webpack-dev-server: ~4.6.0
+    dependencies:
+      '@fluidframework/container-definitions': link:../../../packages/common/container-definitions
+      '@fluidframework/container-loader': link:../../../packages/loader/container-loader
+      '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
+      '@fluidframework/core-utils': link:../../../packages/common/core-utils
+      '@fluidframework/driver-definitions': link:../../../packages/common/driver-definitions
+      '@fluidframework/driver-utils': link:../../../packages/loader/driver-utils
+      '@fluidframework/local-driver': link:../../../packages/drivers/local-driver
+      '@fluidframework/odsp-doclib-utils': link:../../../packages/utils/odsp-doclib-utils
+      '@fluidframework/odsp-driver': link:../../../packages/drivers/odsp-driver
+      '@fluidframework/odsp-driver-definitions': link:../../../packages/drivers/odsp-driver-definitions
+      '@fluidframework/protocol-definitions': 3.2.0-231454
+      '@fluidframework/routerlicious-driver': link:../../../packages/drivers/routerlicious-driver
+      '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
+      '@fluidframework/server-local-server': 3.1.0-231702
+      '@fluidframework/telemetry-utils': link:../../../packages/utils/telemetry-utils
+      '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
+      '@fluidframework/tool-utils': link:../../../packages/utils/tool-utils
+      '@fluidframework/view-interfaces': link:../../../packages/framework/view-interfaces
+      axios: 1.6.2
+      buffer: 6.0.3
+      express: 4.18.2
+      isomorphic-fetch: 3.0.0
+      nconf: 0.12.1
+      sillyname: 0.1.0
+      uuid: 9.0.1
+      webpack-dev-server: 4.6.0_wvskkfkvbt5crqa4uyjlq44kiy
+    devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
+      '@fluid-tools/build-cli': 0.33.0_lzbrbjkjqqnlnvbwteayq6k5jm
+      '@fluid-tools/webpack-fluid-loader-previous': /@fluid-tools/webpack-fluid-loader/2.0.0-internal.8.0.0_wvskkfkvbt5crqa4uyjlq44kiy
+      '@fluidframework/build-common': 2.0.3
+      '@fluidframework/build-tools': 0.33.0_h467wi3sy6j67ifywrn7x7qf4m
+      '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
+      '@fluidframework/mocha-test-setup': link:../../../packages/test/mocha-test-setup
+      '@types/express': 4.17.21
+      '@types/fs-extra': 9.0.13
+      '@types/mocha': 9.1.1
+      '@types/node': 18.19.1
+      '@types/uuid': 9.0.7
+      c8: 8.0.1
+      cross-env: 7.0.3
+      eslint: 8.50.0
+      fs-extra: 9.1.0
+      mocha: 10.2.0
+      mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
+      mocha-multi-reporters: 1.5.1_mocha@10.2.0
+      moment: 2.29.4
+      prettier: 3.0.3
+      rimraf: 4.4.1
+      source-map-loader: 2.0.2_webpack@5.89.0
+      ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
+      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
+      typescript: 5.1.6
+      webpack: 5.89.0_webpack-cli@4.10.0
+      webpack-cli: 4.10.0_o3vqr5s7sd4b3hfy35jxofofzu
 
   examples/version-migration/live-schema-upgrade:
     specifiers:
@@ -11588,119 +11701,6 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
-
-  packages/tools/webpack-fluid-loader:
-    specifiers:
-      '@arethetypeswrong/cli': ^0.13.3
-      '@fluid-tools/build-cli': ^0.33.0
-      '@fluid-tools/webpack-fluid-loader-previous': npm:@fluid-tools/webpack-fluid-loader@2.0.0-internal.8.0.0
-      '@fluidframework/build-common': ^2.0.3
-      '@fluidframework/build-tools': ^0.33.0
-      '@fluidframework/container-definitions': workspace:~
-      '@fluidframework/container-loader': workspace:~
-      '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/core-utils': workspace:~
-      '@fluidframework/driver-definitions': workspace:~
-      '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ^3.5.0
-      '@fluidframework/local-driver': workspace:~
-      '@fluidframework/mocha-test-setup': workspace:~
-      '@fluidframework/odsp-doclib-utils': workspace:~
-      '@fluidframework/odsp-driver': workspace:~
-      '@fluidframework/odsp-driver-definitions': workspace:~
-      '@fluidframework/protocol-definitions': ^3.2.0-231454
-      '@fluidframework/routerlicious-driver': workspace:~
-      '@fluidframework/runtime-utils': workspace:~
-      '@fluidframework/server-local-server': ^3.1.0-231702
-      '@fluidframework/telemetry-utils': workspace:~
-      '@fluidframework/test-runtime-utils': workspace:~
-      '@fluidframework/tool-utils': workspace:~
-      '@fluidframework/view-interfaces': workspace:~
-      '@types/express': ^4.11.0
-      '@types/fs-extra': ^9.0.11
-      '@types/mocha': ^9.1.1
-      '@types/node': ^18.19.0
-      '@types/uuid': ^9.0.2
-      axios: ^1.6.2
-      buffer: ^6.0.3
-      c8: ^8.0.1
-      cross-env: ^7.0.3
-      eslint: ~8.50.0
-      express: ^4.16.3
-      fs-extra: ^9.1.0
-      isomorphic-fetch: ^3.0.0
-      mocha: ^10.2.0
-      mocha-json-output-reporter: ^2.0.1
-      mocha-multi-reporters: ^1.5.1
-      moment: ^2.21.0
-      nconf: ^0.12.0
-      prettier: ~3.0.3
-      rimraf: ^4.4.0
-      sillyname: ^0.1.0
-      source-map-loader: ^2.0.0
-      ts-loader: ^9.3.0
-      tsc-multi: ^1.1.0
-      typescript: ~5.1.6
-      uuid: ^9.0.0
-      webpack: ^5.82.0
-      webpack-cli: ^4.9.2
-      webpack-dev-server: ~4.6.0
-    dependencies:
-      '@fluidframework/container-definitions': link:../../common/container-definitions
-      '@fluidframework/container-loader': link:../../loader/container-loader
-      '@fluidframework/core-interfaces': link:../../common/core-interfaces
-      '@fluidframework/core-utils': link:../../common/core-utils
-      '@fluidframework/driver-definitions': link:../../common/driver-definitions
-      '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/local-driver': link:../../drivers/local-driver
-      '@fluidframework/odsp-doclib-utils': link:../../utils/odsp-doclib-utils
-      '@fluidframework/odsp-driver': link:../../drivers/odsp-driver
-      '@fluidframework/odsp-driver-definitions': link:../../drivers/odsp-driver-definitions
-      '@fluidframework/protocol-definitions': 3.2.0-231454
-      '@fluidframework/routerlicious-driver': link:../../drivers/routerlicious-driver
-      '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
-      '@fluidframework/server-local-server': 3.1.0-231702
-      '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
-      '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@fluidframework/tool-utils': link:../../utils/tool-utils
-      '@fluidframework/view-interfaces': link:../../framework/view-interfaces
-      axios: 1.6.2
-      buffer: 6.0.3
-      express: 4.18.2
-      isomorphic-fetch: 3.0.0
-      nconf: 0.12.1
-      sillyname: 0.1.0
-      uuid: 9.0.1
-      webpack-dev-server: 4.6.0_wvskkfkvbt5crqa4uyjlq44kiy
-    devDependencies:
-      '@arethetypeswrong/cli': 0.13.3
-      '@fluid-tools/build-cli': 0.33.0_lzbrbjkjqqnlnvbwteayq6k5jm
-      '@fluid-tools/webpack-fluid-loader-previous': /@fluid-tools/webpack-fluid-loader/2.0.0-internal.8.0.0_wvskkfkvbt5crqa4uyjlq44kiy
-      '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.33.0_h467wi3sy6j67ifywrn7x7qf4m
-      '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
-      '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
-      '@types/express': 4.17.21
-      '@types/fs-extra': 9.0.13
-      '@types/mocha': 9.1.1
-      '@types/node': 18.19.1
-      '@types/uuid': 9.0.7
-      c8: 8.0.1
-      cross-env: 7.0.3
-      eslint: 8.50.0
-      fs-extra: 9.1.0
-      mocha: 10.2.0
-      mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
-      mocha-multi-reporters: 1.5.1_mocha@10.2.0
-      moment: 2.29.4
-      prettier: 3.0.3
-      rimraf: 4.4.1
-      source-map-loader: 2.0.2_webpack@5.89.0
-      ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
-      typescript: 5.1.6
-      webpack: 5.89.0_webpack-cli@4.10.0
-      webpack-cli: 4.10.0_o3vqr5s7sd4b3hfy35jxofofzu
 
   packages/utils/odsp-doclib-utils:
     specifiers:
@@ -33105,7 +33105,7 @@ packages:
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
     dependencies:
       '@jest/types': 29.6.3
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
       chalk: 4.1.2
       ci-info: 3.9.0
       graceful-fs: 4.2.11
