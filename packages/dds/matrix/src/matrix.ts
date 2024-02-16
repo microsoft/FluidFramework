@@ -661,6 +661,12 @@ export class SharedMatrix<T = any>
 			return;
 		}
 
+		/*
+		if (segment.removedSeq !== undefined && segment.removedSeq > referenceSequenceNumber) {
+			return undefined;
+		}
+		*/
+
 		return client.findReconnectionPosition(segment, localSeq) + offset;
 	}
 

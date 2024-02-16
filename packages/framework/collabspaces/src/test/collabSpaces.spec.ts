@@ -896,23 +896,41 @@ describe("Temporal Collab Spaces", () => {
 
 	describe("Stress tests", () => {
 		type Op = (cp: IMatrix) => Promise<unknown>;
+
 		let commandArray: string[] = [];
 		const debugCommandArray = true;
+		let commandPrefix: string | undefined;
+
 		beforeEach(() => {
 			commandArray = [];
 			seed = 1; // Every test is independent from another test!
 		});
 
-		const addCommandToArray = (command: string) => {
-			if (debugCommandArray) {
-				commandArray.push(command);
-			}
+		const noopFn2: Op = async (cp: IMatrix) => {
+			addNoopCommand();
+			random();
+			random();
 		};
 
-		const noopFn2: Op = async (cp: IMatrix) => {
-			random();
-			random();
+		const addNoopCommand = () => {
+			commandPrefix = undefined;
 		};
+
+		const addCommandToArray = (command: string) => {
+			if (debugCommandArray) {
+				if (commandPrefix !== undefined) {
+					commandArray.push(`${commandPrefix}${command}`);
+				} else {
+					commandArray.push(command);
+				}
+			}
+			commandPrefix = undefined;
+		};
+
+		async function collabOnChannel(cp: IMatrix, row: number, col: number, increment: number) {
+			const channel = (await cp.getCellChannel(row, col)) as ISharedCounter;
+			channel.increment(increment);
+		}
 
 		// collaborate on a cell through collab channel
 		const collabFn: Op = async (cp: IMatrix) => {
@@ -922,38 +940,42 @@ describe("Temporal Collab Spaces", () => {
 				const row = randNotInclusive(cp.rowCount);
 				const col = randNotInclusive(cp.colCount);
 				const value = await cp.getCellAsync(row, col);
-				addCommandToArray(`collabFn iter ${it} row ${row} col ${col} value ${value}`);
 				if (value !== undefined) {
-					const channel = (await cp.getCellChannel(row, col)) as ISharedCounter;
-					channel.increment(rand(40));
+					const increase = rand(40);
+					addCommandToArray(` await .collabOnChannel(${row}, ${col}, ${increase});`);
+					await collabOnChannel(cp, row, col, increase);
 					break;
 				}
 			}
+			addNoopCommand();
 		};
+
+		function createValue(value) {
+			return {
+				value,
+				type: CounterFactory.Type,
+			};
+		}
 
 		// Overwrite cell value
 		const overwriteCellFn: Op = async (cp: IMatrix) => {
 			const row = randNotInclusive(cp.rowCount);
 			const col = randNotInclusive(cp.colCount);
 			const value = rand(100);
-			addCommandToArray(`overwriteCell Row Count ${row} ${col} ${value}`);
-			cp.setCell(row, col, {
-				value,
-				type: CounterFactory.Type,
-			});
+			addCommandToArray(`.setCell(${row}, ${col}, createValue(${value}));`);
+			cp.setCell(row, col, createValue(value));
 		};
 
 		// write undefined into cell
 		const overwriteCellUndefinedFn: Op = async (cp: IMatrix) => {
 			const row = randNotInclusive(cp.rowCount);
 			const col = randNotInclusive(cp.colCount);
-			addCommandToArray(
-				`overwriteCellUndefined row ${row} col ${col} rowCount ${cp.rowCount} colCount ${cp.colCount}`,
-			);
+			addCommandToArray(`.setCell(${row}, ${col}, undefined);`);
 			cp.setCell(row, col, undefined);
 		};
 
-		const addContainerInstanceFn: Op = async () => {
+		const addContainerInstanceFn = async () => {
+			addCommandToArray("addContainerInstanceFn();");
 			await waitForSummary();
 			await addContainerInstance();
 		};
@@ -961,41 +983,33 @@ describe("Temporal Collab Spaces", () => {
 		const insertColsFn: Op = async (cp: IMatrix) => {
 			const pos = rand(cp.colCount);
 			const count = 1 + rand(3);
+			addCommandToArray(`.insertCols(${pos}, ${count});`);
 			cp.insertCols(pos, count);
-			addCommandToArray(
-				`insertColsFn post pos ${pos}, count ${count}, cp.rowCount ${cp.rowCount}, cp.colCount ${cp.colCount}`,
-			);
 		};
 
 		const insertRowsFn: Op = async (cp: IMatrix) => {
 			const pos = rand(cp.rowCount);
 			const count = 1 + rand(3);
+			addCommandToArray(`.insertRows(${pos}, ${count});`);
 			cp.insertRows(pos, count);
-			addCommandToArray(
-				`insertRowsFn post pos ${pos}, count ${count}, cp.RowCount ${cp.rowCount}, cp.ColCount ${cp.colCount}`,
-			);
 		};
 
 		const removeColsFn: Op = async (cp: IMatrix) => {
 			const currCount = cp.colCount;
 			const pos = randNotInclusive(currCount);
 			// delete at most 1/3 of the matrix
-			const del = Math.min(randNotInclusive(currCount - pos), Math.round(currCount / 3));
+			const del = Math.min(randNotInclusive(currCount - pos) + 1, Math.round(currCount / 3));
+			addCommandToArray(`.removeCols(${pos}, ${del});`);
 			cp.removeCols(pos, del);
-			addCommandToArray(
-				`removeColsFn post pos ${pos}, del ${del}, cp.RowCount ${cp.rowCount}, cp.ColCount ${cp.colCount}`,
-			);
 		};
 
 		const removeRowsFn: Op = async (cp: IMatrix) => {
 			const currCount = cp.rowCount;
 			const pos = randNotInclusive(currCount);
 			// delete at most 1/3 of the matrix
-			const del = Math.min(randNotInclusive(currCount - pos), Math.round(currCount / 3));
+			const del = Math.min(randNotInclusive(currCount - pos) + 1, Math.round(currCount / 3));
+			addCommandToArray(`.removeRows(${pos}, ${del});`);
 			cp.removeRows(pos, del);
-			addCommandToArray(
-				`removeRowsFn post pos ${pos}, del ${del}, cp.RowCount ${cp.rowCount}, cp.ColCount ${cp.colCount}`,
-			);
 		};
 
 		// collaborate on a cell through collab channel
@@ -1015,17 +1029,21 @@ describe("Temporal Collab Spaces", () => {
 
 		const saveChannelFn: Op = async (cp: IMatrix) => {
 			const channel = await findSomeChannelFn(cp);
-			addCommandToArray(`saveChannelFn  ${channel?.value}`);
 			if (channel !== undefined) {
+				addCommandToArray(`.saveChannel(${channel?.value});`);
 				cp.saveChannelState(channel);
+			} else {
+				addNoopCommand();
 			}
 		};
 
 		const destroyChannelFn: Op = async (cp: IMatrix) => {
 			const channel = await findSomeChannelFn(cp);
-			addCommandToArray(`destroyChannelFn  ${channel?.value}`);
 			if (channel !== undefined) {
+				addCommandToArray(`.destroyChannel(${channel?.value});`);
 				cp.destroyCellChannel(channel);
+			} else {
+				addNoopCommand();
 			}
 		};
 
@@ -1035,6 +1053,26 @@ describe("Temporal Collab Spaces", () => {
 			cols: number,
 			operations: [number, Op][],
 		) {
+			try {
+				await stressTestCore(totalSteps, rows, cols, operations);
+			} catch (e) {
+				addCommandToArray("await doFinalValidation();");
+				console.log("Error in stress test", e);
+				for (const item of commandArray) {
+					console.log(item);
+				}
+				throw e;
+			}
+		}
+
+		async function stressTestCore(
+			totalSteps: number,
+			rows: number,
+			cols: number,
+			operations: [number, Op][],
+		) {
+			addCommandToArray(`await initialize(${rows}, ${cols});`);
+
 			await initialize(rows, cols);
 
 			let priorityMax = 0;
@@ -1049,8 +1087,11 @@ describe("Temporal Collab Spaces", () => {
 					opPriority -= operations[index][0];
 					if (opPriority < 0) {
 						const op = operations[index][1];
-						const cp = collabSpaces[randNotInclusive(collabSpaces.length)];
+						const cpIndex = randNotInclusive(collabSpaces.length);
+						commandPrefix = `collabSpaces[${cpIndex}]`;
+						const cp = collabSpaces[cpIndex];
 						await op(cp);
+						assert(commandPrefix === undefined, "some command does not log anything");
 						break;
 					}
 				}
@@ -1072,31 +1113,22 @@ describe("Temporal Collab Spaces", () => {
 		}).timeout(20000);
 
 		it("Structure stress test", async () => {
-			try {
-				await stressTest(100, 20, 7, [
-					[100, collabFn],
-					[20, overwriteCellFn],
-					[10, overwriteCellUndefinedFn],
-					[20, insertColsFn],
-					[20, insertRowsFn],
-					[10, removeColsFn],
-					[10, removeRowsFn],
-					[10, saveChannelFn],
-					[5, addContainerInstanceFn],
-				]);
-			} catch (e) {
-				console.log("Error in stress test", e);
-				for (const item of commandArray) {
-					console.log(item);
-				}
-				throw e;
-			}
+			await stressTest(100, 20, 7, [
+				[100, collabFn],
+				[20, overwriteCellFn],
+				[10, overwriteCellUndefinedFn],
+				[20, insertColsFn],
+				[20, insertRowsFn],
+				[10, removeColsFn],
+				[10, removeRowsFn],
+				[10, saveChannelFn],
+				[5, addContainerInstanceFn],
+			]);
 		}).timeout(120000);
 
 		// TBD(Pri0): This test does not pass
-		// It tails on 41st step - one of the containers has a wrong value
-		it.skip("Structure stress test Fail 41", async () => {
-			await stressTest(41, 20, 7, [
+		it.skip("Structure stress test Fail #1", async () => {
+			await stressTest(31, 20, 7, [
 				[30, overwriteCellFn],
 				[10, noopFn2],
 				[20, insertColsFn],
@@ -1109,10 +1141,61 @@ describe("Temporal Collab Spaces", () => {
 		}).timeout(10000);
 
 		// TBD(Pri0): This test does not pass
-		// It tails on 229th step - one of the containers has a wrong value
-		it.skip("Structure stress test 229", async () => {
+		it.skip("Structure stress test Fail #2", async () => {
+			const { collabSpace } = await createContainer();
+
+			collabSpace.insertRows(0, 47);
+			collabSpace.insertCols(0, 10);
+
+			await addContainerInstance();
+			await provider.ensureSynchronized();
+
+			// 47x10 -> 32x10
+			collabSpaces[0].removeRows(11, 15);
+
+			// 14th row is being deleted concurrently by another container (above), so this should be noop!
+			collabSpaces[1].setCell(14, 9, {
+				value: 100,
+				type: CounterFactory.Type,
+			});
+
+			await provider.ensureSynchronized();
+
+			const value = await collabSpaces[0].getCellAsync(11, 9);
+			assert(value?.value === undefined, "wrong value!");
+		});
+
+		// TBD(Pri0): This test does not pass
+		it.skip("Structure stress test Fail #3", async () => {
+			const { collabSpace } = await createContainer();
+
+			collabSpace.insertRows(0, 20);
+			collabSpace.insertCols(0, 10);
+
+			await addContainerInstance();
+			await provider.ensureSynchronized();
+
+			collabSpaces[0].removeCols(3, 3);
+			collabSpaces[0].insertCols(3, 1);
+
+			// This operation does not really matter, what matters is that it creates a channel
+			// and we are forced to examine mapping at the end of the test
+			await collabOnChannel(collabSpaces[1], 15, 3, 1);
+
+			// This operation is problematic. It gets rebased. Column insertion is rebased correctly,
+			// but setting col ID operation rebases to void, thus leaving table in broken state.
+			collabSpaces[1].insertCols(6, 1);
+
+			await provider.ensureSynchronized();
+
+			// Column #7 is screwed here!
+			await collabSpaces[0].getAllChannels();
+		});
+
+		// TBD(Pri0): This test does not pass
+		it.skip("Structure stress test Fail #4", async () => {
 			try {
-				await stressTest(229, 20, 7, [
+				await stressTest(14, 20, 7, [
 					[20, collabFn],
 					[10, overwriteCellFn],
 					[10, overwriteCellUndefinedFn],
