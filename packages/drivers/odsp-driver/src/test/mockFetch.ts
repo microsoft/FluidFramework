@@ -11,15 +11,14 @@ export const createResponse = async (
 	headers: { [key: string]: string },
 	response: any | undefined,
 	status: number,
-) =>
-	Promise.resolve({
-		ok: response !== undefined,
-		status,
-		text: async () => Promise.resolve(JSON.stringify(response)),
-		arrayBuffer: async () => Promise.resolve(response),
-		headers: headers ? new fetchModule.Headers(headers) : new fetchModule.Headers(),
-		json: async () => Promise.resolve(response),
-	});
+) => ({
+	ok: response !== undefined,
+	status,
+	text: async () => JSON.stringify(response),
+	arrayBuffer: async () => response,
+	headers: headers ? new fetchModule.Headers(headers) : new fetchModule.Headers(),
+	json: async () => response,
+});
 
 export const okResponse = async (headers: { [key: string]: string }, response: any) =>
 	createResponse(headers, response, 200);

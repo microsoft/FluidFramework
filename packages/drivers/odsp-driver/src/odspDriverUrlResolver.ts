@@ -66,7 +66,7 @@ function getDeltaStorageUrl(
  */
 function removeBeginningSlash(str: string): string {
 	if (str.startsWith("/")) {
-		return str.substr(1);
+		return str.slice(1);
 	}
 
 	return str;
@@ -190,7 +190,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 			dataStorePath = odspResolvedUrl.dataStorePath;
 		}
 		if (dataStorePath.startsWith("/")) {
-			dataStorePath = dataStorePath.substr(1);
+			dataStorePath = dataStorePath.slice(1);
 		}
 
 		// back-compat: GitHub #9653

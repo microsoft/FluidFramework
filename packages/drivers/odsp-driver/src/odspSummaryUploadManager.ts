@@ -122,7 +122,7 @@ export class OdspSummaryUploadManager {
 					attempt: options.refresh ? 2 : 1,
 					hasClaims: !!options.claims,
 					hasTenantId: !!options.tenantId,
-					headers: Object.keys(headers).length !== 0 ? true : undefined,
+					headers: Object.keys(headers).length > 0 ? true : undefined,
 					blobs,
 					size: postBody.length,
 					referenceSequenceNumber,
@@ -213,7 +213,7 @@ export class OdspSummaryUploadManager {
 				}
 				case api.SummaryType.Handle: {
 					if (!parentHandle) {
-						throw Error("Parent summary does not exist to reference by handle.");
+						throw new Error("Parent summary does not exist to reference by handle.");
 					}
 					let handlePath = summaryObject.handle;
 					if (handlePath.length > 0 && !handlePath.startsWith("/")) {

@@ -105,7 +105,7 @@ export class OdspDeltaStorageService {
 							: (deltaStorageResponse.value as ISequencedDocumentMessage[]);
 
 					event.end({
-						headers: Object.keys(headers).length !== 0 ? true : undefined,
+						headers: Object.keys(headers).length > 0 ? true : undefined,
 						length: messages.length,
 						...response.propsToLog,
 					});
@@ -176,7 +176,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 			to: number,
 			telemetryProps: ITelemetryProperties,
 		) => {
-			if (this.snapshotOps !== undefined && this.snapshotOps.length !== 0) {
+			if (this.snapshotOps !== undefined && this.snapshotOps.length > 0) {
 				const messages = this.snapshotOps.filter(
 					(op) => op.sequenceNumber >= from && op.sequenceNumber < to,
 				);
@@ -200,7 +200,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 				// Set the firstCacheMiss as true in case we didn't get all the ops.
 				// This will save an extra cache read on "DocumentOpen" or "PostDocumentOpen".
 				this.useCacheForOps = from + messagesFromCache.length >= to;
-				if (messagesFromCache.length !== 0) {
+				if (messagesFromCache.length > 0) {
 					opsFromCache += messagesFromCache.length;
 					return {
 						messages: messagesFromCache,

@@ -334,6 +334,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 				//    401/403: Code will retry once with new token either way, then it becomes fatal - on this path
 				//         and on join Session path.
 				//    501: (Fluid not enabled): this is fine either way, as joinSession is gatekeeper
+				// eslint-disable-next-line unicorn/no-lonely-if
 				if (error.statusCode === 400 || error.statusCode === 404) {
 					error.canRetry = true;
 				}
@@ -705,6 +706,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	public get disposed(): boolean {
 		if (!(this._disposed || this.socket.connected)) {
 			// Send error event if this connection is not yet disposed after socket is disconnected for 15s.
+			// eslint-disable-next-line unicorn/no-lonely-if
 			if (this.connectionNotYetDisposedTimeout === undefined) {
 				this.connectionNotYetDisposedTimeout = setTimeout(() => {
 					if (!this._disposed) {

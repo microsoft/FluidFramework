@@ -301,10 +301,10 @@ export class OdspDocumentService
 		// (OdspErrorTypes.fileOverwrittenInStorage).
 		// For example, file might have been overwritten in storage without generating new epoch
 		// In such case client cached info is stale and has to be removed.
-		if (error !== undefined) {
-			this.epochTracker.removeEntries().catch(() => {});
-		} else {
+		if (error === undefined) {
 			this._opsCache?.flushOps();
+		} else {
+			this.epochTracker.removeEntries().catch(() => {});
 		}
 		this._opsCache?.dispose();
 		// Only need to dipose this, if it is already loaded.

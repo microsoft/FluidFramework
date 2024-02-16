@@ -165,11 +165,11 @@ export async function prefetchLatestSnapshot(
 						snapshotNonPersistentCache?.remove(nonPersistentCacheKey);
 					}, 5000);
 				})
-				.catch((err) => {
+				.catch((error) => {
 					// Remove it from the non persistent cache if an error occured.
 					snapshotNonPersistentCache?.remove(nonPersistentCacheKey);
-					snapshotContentsWithEpochP.reject(err);
-					throw err;
+					snapshotContentsWithEpochP.reject(error);
+					throw error;
 				});
 			return true;
 		},

@@ -174,7 +174,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					eventName: "readDataBlob",
 					blobId,
 					evicted,
-					headers: Object.keys(headers).length !== 0 ? true : undefined,
+					headers: Object.keys(headers).length > 0 ? true : undefined,
 					waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
 				},
 				async (event) => {
@@ -351,7 +351,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 									retrievedSnapshot = await networkSnapshotP;
 									method = "network";
 								}
-							} catch (err: unknown) {
+							} catch (error: unknown) {
 								// The call stacks of any errors thrown by cached snapshot or network snapshot aren't very useful:
 								// they get truncated at this stack frame due to the promise race and how v8 tracks async stack traces--
 								// see https://v8.dev/docs/stack-trace-api#async-stack-traces and the "zero-cost async stack traces" document
@@ -359,8 +359,8 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 								// Regenerating the stack at this level provides more information for logged errors.
 								// Once FF uses an ES2021 target, we could convert the above promise race to use `Promise.any` + AggregateError and
 								// get similar quality stacks with less hand-crafted code.
-								const innerStack = (err as Error).stack;
-								const normalizedError = normalizeError(err);
+								const innerStack = (error as Error).stack;
+								const normalizedError = normalizeError(error);
 								normalizedError.addTelemetryProperties({ innerStack });
 
 								const newStack = `<<STACK TRUNCATED: see innerStack property>> \n${generateStack()}`;
@@ -375,7 +375,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 						const startTime = performance.now();
 						retrievedSnapshot = await cachedSnapshotP;
 						cacheLookupTimeInSerialFetch = performance.now() - startTime;
-						method = retrievedSnapshot !== undefined ? "cache" : "network";
+						method = retrievedSnapshot === undefined ? "network" : "cache";
 
 						if (retrievedSnapshot === undefined) {
 							prefetchWaitStartTime = performance.now();
@@ -485,7 +485,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				this.logger,
 				{
 					eventName: "getVersions",
-					headers: Object.keys(headers).length !== 0 ? true : undefined,
+					headers: Object.keys(headers).length > 0 ? true : undefined,
 				},
 				async () =>
 					this.epochTracker.fetchAndParseAsJSON<IDocumentStorageGetVersionsResponse>(
@@ -562,13 +562,13 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					await this.epochTracker.validateEpoch(response.fluidEpoch, "treesLatest");
 					return response;
 				})
-				.catch(async (err) => {
+				.catch(async (error) => {
 					this.logger.sendTelemetryEvent(
 						{
 							eventName: "PrefetchSnapshotError",
 							concurrentSnapshotFetch: this.hostPolicy.concurrentSnapshotFetch,
 						},
-						err,
+						error,
 					);
 					return undefined;
 				});

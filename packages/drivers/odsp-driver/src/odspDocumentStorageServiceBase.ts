@@ -48,9 +48,9 @@ class BlobCache {
 	}
 
 	public addBlobs(blobs: Map<string, ArrayBuffer>) {
-		blobs.forEach((value, blobId) => {
+		for (const [blobId, value] of blobs.entries()) {
 			this._blobCache.set(blobId, value);
-		});
+		}
 		// Reset the timer on cache set
 		this.scheduleClearBlobsCache();
 	}
@@ -77,7 +77,8 @@ class BlobCache {
 					// We want to optimize both - memory footprint and number of future requests to storage.
 					// Note that Container can realize data store or DDS on-demand at any point in time, so we do not
 					// control when blobs will be used.
-					this._blobCache.forEach((_, blobId) => this.blobsEvicted.add(blobId));
+					for (const [blobId, _] of this._blobCache.entries())
+						this.blobsEvicted.add(blobId);
 					this._blobCache.clear();
 				}
 			};
@@ -175,18 +176,21 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 		// eslint-disable-next-line @rushstack/no-new-null
 	): Promise<api.ISnapshotTree | null> {
 		let id: string;
-		if (!version?.id) {
+		if (version?.id) {
+			id = version.id;
+		} else {
+			// eslint-disable-next-line unicorn/no-null
 			const versions = await this.getVersions(null, 1, scenarioName);
 			if (!versions || versions.length === 0) {
+				// eslint-disable-next-line unicorn/no-null
 				return null;
 			}
 			id = versions[0].id;
-		} else {
-			id = version.id;
 		}
 
 		const snapshotTree = await this.readTree(id, scenarioName);
 		if (!snapshotTree) {
+			// eslint-disable-next-line unicorn/no-null
 			return null;
 		}
 

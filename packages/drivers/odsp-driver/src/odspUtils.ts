@@ -86,23 +86,27 @@ function headersToMap(headers: Headers) {
 export async function getWithRetryForTokenRefresh<T>(
 	get: (options: TokenFetchOptionsEx) => Promise<T>,
 ) {
-	return get({ refresh: false }).catch(async (e) => {
-		const options: TokenFetchOptionsEx = { refresh: true, previousError: e };
-		switch (e.errorType) {
+	return get({ refresh: false }).catch(async (error) => {
+		const options: TokenFetchOptionsEx = { refresh: true, previousError: error };
+		switch (error.errorType) {
 			// If the error is 401 or 403 refresh the token and try once more.
-			case OdspErrorTypes.authorizationError:
-				return get({ ...options, claims: e.claims, tenantId: e.tenantId });
+			case OdspErrorTypes.authorizationError: {
+				return get({ ...options, claims: error.claims, tenantId: error.tenantId });
+			}
 
 			case OdspErrorTypes.incorrectServerResponse: // some error on the wire, retry once
-			case OdspErrorTypes.fetchTokenError: // If the token was null, then retry once.
+			case OdspErrorTypes.fetchTokenError: {
+				// If the token was null, then retry once.
 				return get(options);
+			}
 
-			default:
+			default: {
 				// Caller may determine that it wants one retry
-				if (e[getWithRetryForTokenRefreshRepeat] === true) {
+				if (error[getWithRetryForTokenRefreshRepeat] === true) {
 					return get(options);
 				}
-				throw e;
+				throw error;
+			}
 		}
 	});
 }
