@@ -77,22 +77,11 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
 		};
 
-		const redisClient: Redis.default | Redis.Cluster = redisConfig.enableClustering
-			? new Redis.Cluster(
-					[
-						{
-							port: redisOptions.port,
-							host: redisOptions.host,
-						},
-					],
-					{
-						redisOptions,
-						slotsRefreshTimeout: 50000,
-						dnsLookup: (adr, callback) => callback(null, adr),
-						showFriendlyErrorStack: true,
-					},
-			  )
-			: new Redis.default(redisOptions);
+		const redisClient: Redis.default | Redis.Cluster =utils.getRedisClient(
+				redisOptions,
+				redisConfig.slotsRefreshTimeout,
+				redisConfig.enableClustering,
+			)
 
 		const disableGitCache = config.get("restGitService:disableGitCache") as boolean | undefined;
 		const gitCache = disableGitCache
@@ -149,7 +138,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 						],
 						{
 							redisOptions: redisOptionsForThrottling,
-							slotsRefreshTimeout: 50000,
+							slotsRefreshTimeout: redisConfigForThrottling.slotsRefreshTimeout,
 							dnsLookup: (adr, callback) => callback(null, adr),
 							showFriendlyErrorStack: true,
 						},
