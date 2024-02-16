@@ -360,23 +360,23 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 	it("appendLocatorParams - Appends the correct nav param", async () => {
 		const testQueryParam = { name: "query1", value: "q1" };
 		const customShareLink = `${sharelink}?${testQueryParam.name}=${testQueryParam.value}`;
-		const dataStorePath = "/testpath";
+		const testDataStorePath = "/testpath";
 		const appName = "AppName1";
 		const contextVal = "Context1";
-		const fileVersion = "123";
+		const testFileVersion = "123";
 		const containerName = "containerA";
 		const urlResolverForShareLink = new OdspDriverUrlResolverForShareLink(
-			undefined /*tokenFetcher*/,
-			undefined /*logger*/,
-			appName /*appName*/,
-			(_resolvedUrl, _dataStorePath) => Promise.resolve(contextVal) /*context*/,
+			undefined /* tokenFetcher */,
+			undefined /* logger */,
+			appName /* appName */,
+			async (_resolvedUrl, _dataStorePath) => Promise.resolve(contextVal) /* context */,
 		);
 		const resolvedUrl = {
 			siteUrl,
 			driveId,
 			itemId,
 			odspResolvedUrl: true,
-			fileVersion,
+			testFileVersion,
 			codeHint: { containerPackageName: containerName },
 		} as any as IOdspResolvedUrl;
 
@@ -384,7 +384,7 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 			await urlResolverForShareLink.appendLocatorParams(
 				customShareLink,
 				resolvedUrl,
-				dataStorePath,
+				testDataStorePath,
 			),
 		);
 
@@ -414,12 +414,12 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 		);
 		assert.strictEqual(
 			decodedLocatorParam?.dataStorePath,
-			dataStorePath,
+			testDataStorePath,
 			"dataStore path should be as provided to the appendLocatorParams",
 		);
 		assert.strictEqual(
 			decodedLocatorParam?.fileVersion,
-			fileVersion,
+			testFileVersion,
 			"fileVersion path should be equal",
 		);
 		assert.strictEqual(

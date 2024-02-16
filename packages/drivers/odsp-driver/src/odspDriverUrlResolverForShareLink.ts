@@ -238,7 +238,9 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 		const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
 
 		// If the user has passed an empty dataStorePath, then extract it from the resolved url.
-		const actualDataStorePath = dataStorePath || odspResolvedUrl.dataStorePath || "";
+		const actualDataStorePath = dataStorePath
+			? dataStorePath
+			: odspResolvedUrl.dataStorePath ?? "";
 
 		// back-compat: GitHub #9653
 		const isFluidPackage = (pkg: any) =>
