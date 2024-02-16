@@ -77,11 +77,11 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
 		};
 
-		const redisClient: Redis.default | Redis.Cluster =utils.getRedisClient(
-				redisOptions,
-				redisConfig.slotsRefreshTimeout,
-				redisConfig.enableClustering,
-			)
+		const redisClient: Redis.default | Redis.Cluster = utils.getRedisClient(
+			redisOptions,
+			redisConfig.slotsRefreshTimeout,
+			redisConfig.enableClustering,
+		);
 
 		const disableGitCache = config.get("restGitService:disableGitCache") as boolean | undefined;
 		const gitCache = disableGitCache
