@@ -48,7 +48,7 @@ describe("Local Odsp driver", () => {
 		{ encoding: "utf8" },
 	);
 
-	async function assertThrowsUsageError(fn: () => Promise<any>) {
+	async function assertThrowsUsageError(fn: () => Promise<unknown>): Promise<void> {
 		await assert.rejects(fn, (e: DriverError) => e.errorType === OdspErrorTypes.usageError);
 	}
 
@@ -91,7 +91,9 @@ describe("Local Odsp driver", () => {
 	});
 
 	describe("Local Odsp document service", () => {
-		async function readAll(stream: IStream<ISequencedDocumentMessage[]>) {
+		async function readAll(
+			stream: IStream<ISequencedDocumentMessage[]>,
+		): Promise<ISequencedDocumentMessage[]> {
 			const ops: ISequencedDocumentMessage[] = [];
 			// eslint-disable-next-line no-constant-condition
 			while (true) {
@@ -134,6 +136,7 @@ describe("Local Odsp driver", () => {
 
 			// Load snapshot
 			const storage = await service.connectToStorage();
+			// eslint-disable-next-line unicorn/no-null
 			await storage.getVersions(null, 1);
 
 			const deltaStorageService = await service.connectToDeltaStorage();
@@ -155,6 +158,7 @@ describe("Local Odsp driver", () => {
 
 			// Load snapshot
 			const storage = await service.connectToStorage();
+			// eslint-disable-next-line unicorn/no-null
 			await storage.getVersions(null, 1);
 
 			const deltaStorageService = await service.connectToDeltaStorage();
@@ -190,6 +194,7 @@ describe("Local Odsp driver", () => {
 				localSnapshot,
 			);
 			assert.doesNotThrow(() => service.dispose());
+			// eslint-disable-next-line unicorn/no-null
 			assert.doesNotThrow(() => service.dispose(null));
 			assert.doesNotThrow(() => service.dispose(undefined));
 			assert.doesNotThrow(() => service.dispose(new Error("I am an error")));
@@ -257,8 +262,11 @@ describe("Local Odsp driver", () => {
 					new MockLogger().toTelemetryLogger(),
 					localSnapshot,
 				);
+				// eslint-disable-next-line unicorn/no-null
 				await assert.rejects(async () => storageService.getVersions(null, -1));
+				// eslint-disable-next-line unicorn/no-null
 				await assert.rejects(async () => storageService.getVersions(null, 0));
+				// eslint-disable-next-line unicorn/no-null
 				await assert.rejects(async () => storageService.getVersions(null, 2));
 			});
 
@@ -267,6 +275,7 @@ describe("Local Odsp driver", () => {
 					new MockLogger().toTelemetryLogger(),
 					localSnapshot,
 				);
+				// eslint-disable-next-line unicorn/no-null
 				assert.deepStrictEqual(await storageService.getVersions(null, 1), snapshotVersion);
 			});
 
@@ -277,6 +286,7 @@ describe("Local Odsp driver", () => {
 				);
 				for (let i = 0; i < 3; i++) {
 					assert.deepStrictEqual(
+						// eslint-disable-next-line unicorn/no-null
 						await storageService.getVersions(null, 1),
 						snapshotVersion,
 					);

@@ -40,7 +40,7 @@ describe("expose joinSessionInfo Tests", () => {
 	});
 
 	it("Response present in join session cache", async () => {
-		// eslint-disable-next-line @typescript-eslint/dot-notation
+		// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 		odspDocumentServiceFactory["nonPersistentCache"].sessionJoinCache.add(
 			getJoinSessionCacheKey(resolvedUrl),
 			async () => {

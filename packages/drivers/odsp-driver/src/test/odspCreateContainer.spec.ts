@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 import { IDocumentService } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger, isFluidError } from "@fluidframework/telemetry-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { OdspErrorTypes, IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
@@ -44,7 +44,7 @@ describe("Odsp Create Container Test", () => {
 		{ snapshotOptions: { timeout: 2000 } },
 	);
 
-	const createSummary = (putAppTree: boolean, putProtocolTree: boolean) => {
+	const createSummary = (putAppTree: boolean, putProtocolTree: boolean): ISummaryTree => {
 		const summary: ISummaryTree = {
 			type: SummaryType.Tree,
 			tree: {},
@@ -140,12 +140,14 @@ describe("Odsp Create Container Test", () => {
 				[
 					// Due to retry logic in getWithRetryForTokenRefresh() for OdspErrorTypes.incorrectServerResponse
 					// Need to mock two calls
-					async () => okResponse({}, {}),
-					async () => okResponse({}, {}),
+					async (): Promise<object> => okResponse({}, {}),
+					async (): Promise<object> => okResponse({}, {}),
 				],
 			);
-		} catch (error: any) {
-			assert.strictEqual(error.statusCode, undefined, "Wrong error code");
+		} catch (error: unknown) {
+			assert(isFluidError(error), "Error should be IFluidError");
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+			assert.strictEqual((error as any).statusCode, undefined, "Wrong error code");
 			assert.strictEqual(
 				error.errorType,
 				OdspErrorTypes.incorrectServerResponse,
