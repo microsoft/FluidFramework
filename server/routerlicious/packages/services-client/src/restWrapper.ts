@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import * as querystring from "querystring";
 import safeStringify from "json-stringify-safe";
 import {
 	default as Axios,
@@ -23,14 +22,14 @@ import { CorrelationIdHeaderName } from "./constants";
 export abstract class RestWrapper {
 	constructor(
 		protected readonly baseurl?: string,
-		protected defaultQueryString: Record<string, unknown> = {},
+		protected defaultQueryString: Record<string, string | number | boolean> = {},
 		protected readonly maxBodyLength = 1000 * 1024 * 1024,
 		protected readonly maxContentLength = 1000 * 1024 * 1024,
 	) {}
 
 	public async get<T>(
 		url: string,
-		queryString?: Record<string, unknown>,
+		queryString?: Record<string, string | number | boolean>,
 		headers?: RawAxiosRequestHeaders,
 		additionalOptions?: Partial<
 			Omit<
@@ -54,7 +53,7 @@ export abstract class RestWrapper {
 	public async post<T>(
 		url: string,
 		requestBody: any,
-		queryString?: Record<string, unknown>,
+		queryString?: Record<string, string | number | boolean>,
 		headers?: RawAxiosRequestHeaders,
 		additionalOptions?: Partial<
 			Omit<
@@ -78,7 +77,7 @@ export abstract class RestWrapper {
 
 	public async delete<T>(
 		url: string,
-		queryString?: Record<string, unknown>,
+		queryString?: Record<string, string | number | boolean>,
 		headers?: RawAxiosRequestHeaders,
 		additionalOptions?: Partial<
 			Omit<
@@ -102,7 +101,7 @@ export abstract class RestWrapper {
 	public async patch<T>(
 		url: string,
 		requestBody: any,
-		queryString?: Record<string, unknown>,
+		queryString?: Record<string, string | number | boolean>,
 		headers?: RawAxiosRequestHeaders,
 		additionalOptions?: Partial<
 			Omit<
@@ -126,11 +125,17 @@ export abstract class RestWrapper {
 
 	protected abstract request<T>(options: AxiosRequestConfig, statusCode: number): Promise<T>;
 
-	protected generateQueryString(queryStringValues: Record<string, unknown>) {
+	protected generateQueryString(queryStringValues: Record<string, string | number | boolean>) {
 		if (this.defaultQueryString || queryStringValues) {
-			const queryStringMap = { ...this.defaultQueryString, ...queryStringValues };
+			const queryStringRecord = { ...this.defaultQueryString, ...queryStringValues };
 
-			const queryString = querystring.stringify(queryStringMap);
+			const stringifiedQueryStringRecord: Record<string, string> = {};
+			for (const key of Object.keys(queryStringRecord)) {
+				stringifiedQueryStringRecord[key] = queryStringRecord[key].toString();
+			}
+
+			const urlSearchParams = new URLSearchParams(stringifiedQueryStringRecord);
+			const queryString = urlSearchParams.toString();
 			if (queryString !== "") {
 				return `?${queryString}`;
 			}
@@ -146,12 +151,15 @@ export abstract class RestWrapper {
 export class BasicRestWrapper extends RestWrapper {
 	constructor(
 		baseurl?: string,
-		defaultQueryString: Record<string, unknown> = {},
+		defaultQueryString: Record<string, string | number | boolean> = {},
 		maxBodyLength = 1000 * 1024 * 1024,
 		maxContentLength = 1000 * 1024 * 1024,
 		private defaultHeaders: RawAxiosRequestHeaders = {},
 		private readonly axios: AxiosInstance = Axios,
-		private readonly refreshDefaultQueryString?: () => Record<string, unknown>,
+		private readonly refreshDefaultQueryString?: () => Record<
+			string,
+			string | number | boolean
+		>,
 		private readonly refreshDefaultHeaders?: () => RawAxiosRequestHeaders,
 		private readonly getCorrelationId?: () => string | undefined,
 	) {

@@ -69,7 +69,6 @@
 		"json-stringify-safe": "^5.0.1",
 		"jsrsasign": "^11.0.0",
 		"jwt-decode": "^4.0.0",
-		"querystring": "^0.2.0",
 		"sillyname": "^0.1.0",
 		"uuid": "^9.0.0"
 	},
