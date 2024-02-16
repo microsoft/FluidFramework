@@ -53,10 +53,10 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			enableReadyCheck: true,
 			maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
 			enableOfflineQueue: redisConfig.enableOfflineQueue,
-			retryStrategy(times) {
-				const delay = Math.min(times * 50, 2000);
-				return delay;
-			},
+			retryStrategy: utils.getRedisClusterRetryStrategy({
+				delayPerAttemptMs: 50,
+				maxDelayMs: 2000,
+			}),
 		};
 		if (redisConfig.enableAutoPipelining) {
 			/**
@@ -119,10 +119,10 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			enableReadyCheck: true,
 			maxRetriesPerRequest: redisConfigForThrottling.maxRetriesPerRequest,
 			enableOfflineQueue: redisConfigForThrottling.enableOfflineQueue,
-			retryStrategy(times) {
-				const delay = Math.min(times * 50, 2000);
-				return delay;
-			},
+			retryStrategy: utils.getRedisClusterRetryStrategy({
+				delayPerAttemptMs: 50,
+				maxDelayMs: 2000,
+			}),
 		};
 		if (redisConfigForThrottling.enableAutoPipelining) {
 			/**

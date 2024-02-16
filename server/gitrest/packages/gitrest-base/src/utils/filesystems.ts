@@ -53,10 +53,7 @@ export class RedisFsManagerFactory implements IFileSystemManagerFactory {
 			enableReadyCheck: true,
 			maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
 			enableOfflineQueue: redisConfig.enableOfflineQueue,
-			retryStrategy(times) {
-				const delay = Math.min(times * 50, 2000);
-				return delay;
-			},
+			retryStrategy: (attempts: number) => Math.min(attempts * 50, 2000);
 		};
 		if (redisConfig.enableAutoPipelining) {
 			/**
