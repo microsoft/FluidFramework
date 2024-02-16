@@ -25,7 +25,6 @@
 		}
 	},
 	"main": "dist/index.js",
-	"module": "lib/index.js",
 	"browser": {
 		"./dist/indexNode.js": "./dist/indexBrowser.js",
 		"./lib/indexNode.js": "./lib/indexBrowser.js"
