@@ -1139,9 +1139,10 @@ export function configureWebSocketServices(
 									targetClientId: content.targetClientId,
 								};
 
-								roomId = content.targetClientId
-									? getClientRoomId(content.targetClientId)
-									: getRoomId(room);
+								roomId =
+									content.targetClientId !== undefined
+										? getClientRoomId(content.targetClientId)
+										: getRoomId(room);
 							} else {
 								signalMessage = {
 									clientId,
