@@ -4,7 +4,7 @@
  */
 
 /* eslint-disable @typescript-eslint/no-floating-promises */
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { PromiseCache } from "@fluidframework/core-utils";
 import {
 	IOdspResolvedUrl,
@@ -32,7 +32,7 @@ import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
 import { convertToCompactSnapshot } from "../compactSnapshotWriter";
 import { mockFetchSingle, notFound, createResponse } from "./mockFetch";
 
-const createUtLocalCache = () => new LocalPersistentCache();
+const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 
 describe("Tests for prefetching snapshot", () => {
 	const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
@@ -199,6 +199,7 @@ describe("Tests for prefetching snapshot", () => {
 					),
 			);
 
+			// eslint-disable-next-line unicorn/no-null
 			const version = await service.getVersions(null, 1);
 
 			assert.deepStrictEqual(version, expectedVersion, "incorrect version");
@@ -239,6 +240,7 @@ describe("Tests for prefetching snapshot", () => {
 			);
 
 			const version = await mockFetchSingle(
+				// eslint-disable-next-line unicorn/no-null
 				async () => service.getVersions(null, 1),
 				async () =>
 					createResponse(
@@ -287,6 +289,7 @@ describe("Tests for prefetching snapshot", () => {
 			);
 
 			const version = await mockFetchSingle(
+				// eslint-disable-next-line unicorn/no-null
 				async () => service.getVersions(null, 1),
 				async () =>
 					createResponse(
