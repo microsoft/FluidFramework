@@ -80,91 +80,6 @@ importers:
       ts2esm: 1.4.0
       typescript: 5.1.6
 
-  azure/packages/azure-client:
-    specifiers:
-      '@arethetypeswrong/cli': ^0.13.3
-      '@fluid-tools/build-cli': ^0.33.0
-      '@fluidframework/aqueduct': workspace:~
-      '@fluidframework/azure-client-previous': npm:@fluidframework/azure-client@2.0.0-internal.8.0.0
-      '@fluidframework/azure-local-service': workspace:~
-      '@fluidframework/build-common': ^2.0.3
-      '@fluidframework/build-tools': ^0.33.0
-      '@fluidframework/container-definitions': workspace:~
-      '@fluidframework/container-loader': workspace:~
-      '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/core-utils': workspace:~
-      '@fluidframework/driver-definitions': workspace:~
-      '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ^3.5.0
-      '@fluidframework/fluid-static': workspace:~
-      '@fluidframework/map': workspace:~
-      '@fluidframework/protocol-definitions': ^3.2.0-231454
-      '@fluidframework/routerlicious-driver': workspace:~
-      '@fluidframework/runtime-utils': workspace:~
-      '@fluidframework/server-services-client': ^3.1.0-231702
-      '@fluidframework/telemetry-utils': workspace:~
-      '@fluidframework/test-runtime-utils': workspace:~
-      '@fluidframework/test-utils': workspace:~
-      '@fluidframework/tree': workspace:~
-      '@microsoft/api-extractor': ^7.39.1
-      '@types/mocha': ^9.1.1
-      '@types/node': ^18.19.0
-      '@types/uuid': ^9.0.2
-      axios: ^1.6.2
-      copyfiles: ^2.4.1
-      cross-env: ^7.0.3
-      eslint: ~8.50.0
-      eslint-config-prettier: ~9.0.0
-      mocha: ^10.2.0
-      prettier: ~3.0.3
-      rimraf: ^4.4.0
-      start-server-and-test: ^1.11.7
-      tsc-multi: ^1.1.0
-      typescript: ~5.1.6
-      uuid: ^9.0.0
-    dependencies:
-      '@fluidframework/container-definitions': link:../../../packages/common/container-definitions
-      '@fluidframework/container-loader': link:../../../packages/loader/container-loader
-      '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
-      '@fluidframework/core-utils': link:../../../packages/common/core-utils
-      '@fluidframework/driver-definitions': link:../../../packages/common/driver-definitions
-      '@fluidframework/driver-utils': link:../../../packages/loader/driver-utils
-      '@fluidframework/fluid-static': link:../../../packages/framework/fluid-static
-      '@fluidframework/map': link:../../../packages/dds/map
-      '@fluidframework/protocol-definitions': 3.2.0-231454
-      '@fluidframework/routerlicious-driver': link:../../../packages/drivers/routerlicious-driver
-      '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
-      '@fluidframework/server-services-client': 3.1.0-231702
-      '@fluidframework/telemetry-utils': link:../../../packages/utils/telemetry-utils
-      axios: 1.6.2
-    devDependencies:
-      '@arethetypeswrong/cli': 0.13.3
-      '@fluid-tools/build-cli': 0.33.0_mhw3tufvtaceew37hrkkevjcli
-      '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
-      '@fluidframework/azure-client-previous': /@fluidframework/azure-client/2.0.0-internal.8.0.0
-      '@fluidframework/azure-local-service': link:../azure-local-service
-      '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.33.0_@types+node@18.19.1
-      '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
-      '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
-      '@fluidframework/test-utils': link:../../../packages/test/test-utils
-      '@fluidframework/tree': link:../../../packages/dds/tree
-      '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
-      '@types/mocha': 9.1.1
-      '@types/node': 18.19.1
-      '@types/uuid': 9.0.7
-      copyfiles: 2.4.1
-      cross-env: 7.0.3
-      eslint: 8.50.0
-      eslint-config-prettier: 9.0.0_eslint@8.50.0
-      mocha: 10.2.0
-      prettier: 3.0.3
-      rimraf: 4.4.1
-      start-server-and-test: 1.15.5
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
-      typescript: 5.1.6
-      uuid: 9.0.1
-
   azure/packages/azure-local-service:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
@@ -279,7 +194,7 @@ importers:
       uuid: ^9.0.0
     dependencies:
       '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
-      '@fluidframework/azure-client': link:../../azure-client
+      '@fluidframework/azure-client': link:../../../../packages/service-clients/azure-client
       '@fluidframework/container-definitions': link:../../../../packages/common/container-definitions
       '@fluidframework/container-loader': link:../../../../packages/loader/container-loader
       '@fluidframework/core-interfaces': link:../../../../packages/common/core-interfaces
@@ -360,7 +275,7 @@ importers:
     dependencies:
       '@fluid-internal/client-utils': link:../../../../packages/common/client-utils
       '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
-      '@fluidframework/azure-client': link:../../azure-client
+      '@fluidframework/azure-client': link:../../../../packages/service-clients/azure-client
       '@fluidframework/container-definitions': link:../../../../packages/common/container-definitions
       '@fluidframework/container-loader': link:../../../../packages/loader/container-loader
       '@fluidframework/core-interfaces': link:../../../../packages/common/core-interfaces
@@ -1537,7 +1452,7 @@ importers:
     dependencies:
       '@fluid-internal/client-utils': link:../../../packages/common/client-utils
       '@fluid-private/stochastic-test-utils': link:../../../packages/test/stochastic-test-utils
-      '@fluidframework/azure-client': link:../../../azure/packages/azure-client
+      '@fluidframework/azure-client': link:../../../packages/service-clients/azure-client
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
       '@fluidframework/matrix': link:../../../packages/dds/matrix
@@ -3343,7 +3258,7 @@ importers:
       webpack-dev-server: ~4.6.0
       webpack-merge: ^5.8.0
     dependencies:
-      '@fluidframework/azure-client': link:../../../../azure/packages/azure-client
+      '@fluidframework/azure-client': link:../../../../packages/service-clients/azure-client
       '@fluidframework/routerlicious-driver': link:../../../../packages/drivers/routerlicious-driver
       '@fluidframework/telemetry-utils': link:../../../../packages/utils/telemetry-utils
       assert: 2.1.0
@@ -4912,7 +4827,6 @@ importers:
       '@fluid-experimental/property-dds': workspace:~
       '@fluid-experimental/property-properties': workspace:~
       '@fluid-experimental/property-proxy': workspace:~
-      '@fluid-tools/webpack-fluid-loader': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.33.0
       '@hig/fonts': ^1.0.2
@@ -4997,7 +4911,6 @@ importers:
       '@fluid-experimental/property-dds': link:../property-dds
       '@fluid-experimental/property-properties': link:../property-properties
       '@fluid-experimental/property-proxy': link:../property-proxy
-      '@fluid-tools/webpack-fluid-loader': link:../../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.33.0_h467wi3sy6j67ifywrn7x7qf4m
       '@storybook/addon-actions': 6.5.16_sfoxds7t5ydpegc3knd667wn6m
@@ -6913,6 +6826,7 @@ importers:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
+      '@fluid-private/test-pairwise-generator': workspace:~
       '@fluid-tools/build-cli': ^0.33.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.33.0
@@ -6966,6 +6880,7 @@ importers:
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@fluid-private/test-pairwise-generator': link:../../test/test-pairwise-generator
       '@fluid-tools/build-cli': 0.33.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.33.0_@types+node@18.19.1
@@ -7155,6 +7070,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^3.5.0
       '@fluidframework/id-compressor': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
+      '@fluidframework/protocol-definitions': ^3.2.0-231454
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/shared-object-base': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
@@ -7180,6 +7096,7 @@ importers:
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/id-compressor': link:../../runtime/id-compressor
+      '@fluidframework/protocol-definitions': 3.2.0-231454
       '@fluidframework/shared-object-base': link:../shared-object-base
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       mocha: 10.2.0
@@ -9660,6 +9577,91 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
+
+  packages/service-clients/azure-client:
+    specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
+      '@fluid-tools/build-cli': ^0.33.0
+      '@fluidframework/aqueduct': workspace:~
+      '@fluidframework/azure-client-previous': npm:@fluidframework/azure-client@2.0.0-internal.8.0.0
+      '@fluidframework/azure-local-service': workspace:~
+      '@fluidframework/build-common': ^2.0.3
+      '@fluidframework/build-tools': ^0.33.0
+      '@fluidframework/container-definitions': workspace:~
+      '@fluidframework/container-loader': workspace:~
+      '@fluidframework/core-interfaces': workspace:~
+      '@fluidframework/core-utils': workspace:~
+      '@fluidframework/driver-definitions': workspace:~
+      '@fluidframework/driver-utils': workspace:~
+      '@fluidframework/eslint-config-fluid': ^3.5.0
+      '@fluidframework/fluid-static': workspace:~
+      '@fluidframework/map': workspace:~
+      '@fluidframework/protocol-definitions': ^3.2.0-231454
+      '@fluidframework/routerlicious-driver': workspace:~
+      '@fluidframework/runtime-utils': workspace:~
+      '@fluidframework/server-services-client': ^3.1.0-231702
+      '@fluidframework/telemetry-utils': workspace:~
+      '@fluidframework/test-runtime-utils': workspace:~
+      '@fluidframework/test-utils': workspace:~
+      '@fluidframework/tree': workspace:~
+      '@microsoft/api-extractor': ^7.39.1
+      '@types/mocha': ^9.1.1
+      '@types/node': ^18.19.0
+      '@types/uuid': ^9.0.2
+      axios: ^1.6.2
+      copyfiles: ^2.4.1
+      cross-env: ^7.0.3
+      eslint: ~8.50.0
+      eslint-config-prettier: ~9.0.0
+      mocha: ^10.2.0
+      prettier: ~3.0.3
+      rimraf: ^4.4.0
+      start-server-and-test: ^1.11.7
+      tsc-multi: ^1.1.0
+      typescript: ~5.1.6
+      uuid: ^9.0.0
+    dependencies:
+      '@fluidframework/container-definitions': link:../../common/container-definitions
+      '@fluidframework/container-loader': link:../../loader/container-loader
+      '@fluidframework/core-interfaces': link:../../common/core-interfaces
+      '@fluidframework/core-utils': link:../../common/core-utils
+      '@fluidframework/driver-definitions': link:../../common/driver-definitions
+      '@fluidframework/driver-utils': link:../../loader/driver-utils
+      '@fluidframework/fluid-static': link:../../framework/fluid-static
+      '@fluidframework/map': link:../../dds/map
+      '@fluidframework/protocol-definitions': 3.2.0-231454
+      '@fluidframework/routerlicious-driver': link:../../drivers/routerlicious-driver
+      '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
+      '@fluidframework/server-services-client': 3.1.0-231702
+      '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
+      axios: 1.6.2
+    devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
+      '@fluid-tools/build-cli': 0.33.0_mhw3tufvtaceew37hrkkevjcli
+      '@fluidframework/aqueduct': link:../../framework/aqueduct
+      '@fluidframework/azure-client-previous': /@fluidframework/azure-client/2.0.0-internal.8.0.0
+      '@fluidframework/azure-local-service': link:../../../azure/packages/azure-local-service
+      '@fluidframework/build-common': 2.0.3
+      '@fluidframework/build-tools': 0.33.0_@types+node@18.19.1
+      '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
+      '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
+      '@fluidframework/test-utils': link:../../test/test-utils
+      '@fluidframework/tree': link:../../dds/tree
+      '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
+      '@types/mocha': 9.1.1
+      '@types/node': 18.19.1
+      '@types/uuid': 9.0.7
+      copyfiles: 2.4.1
+      cross-env: 7.0.3
+      eslint: 8.50.0
+      eslint-config-prettier: 9.0.0_eslint@8.50.0
+      mocha: 10.2.0
+      prettier: 3.0.3
+      rimraf: 4.4.1
+      start-server-and-test: 1.15.5
+      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
+      typescript: 5.1.6
+      uuid: 9.0.1
 
   packages/service-clients/end-to-end-tests/odsp-client:
     specifiers:
@@ -33111,7 +33113,7 @@ packages:
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
     dependencies:
       '@jest/types': 29.6.3
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
       chalk: 4.1.2
       ci-info: 3.9.0
       graceful-fs: 4.2.11

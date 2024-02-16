@@ -155,6 +155,12 @@
 			"ClassDeclaration_MockFluidDataStoreContext": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IMockContainerRuntimePendingMessage": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_MockDeltaConnection": {
+				"forwardCompat": false
 			}
 		}
 	}

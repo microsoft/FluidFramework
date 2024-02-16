@@ -79,6 +79,7 @@ declare function get_old_InterfaceDeclaration_IMockContainerRuntimePendingMessag
 declare function use_current_InterfaceDeclaration_IMockContainerRuntimePendingMessage(
     use: TypeOnly<current.IMockContainerRuntimePendingMessage>): void;
 use_current_InterfaceDeclaration_IMockContainerRuntimePendingMessage(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IMockContainerRuntimePendingMessage());
 
 /*
@@ -227,6 +228,7 @@ declare function get_old_ClassDeclaration_MockDeltaConnection():
 declare function use_current_ClassDeclaration_MockDeltaConnection(
     use: TypeOnly<current.MockDeltaConnection>): void;
 use_current_ClassDeclaration_MockDeltaConnection(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MockDeltaConnection());
 
 /*

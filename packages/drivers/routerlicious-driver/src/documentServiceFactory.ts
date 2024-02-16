@@ -26,20 +26,21 @@ import {
 	ISession,
 	convertSummaryTreeToWholeSummaryTree,
 } from "@fluidframework/server-services-client";
+import { ICache, InMemoryCache, NullCache } from "./cache";
+import { INormalizedWholeSnapshot } from "./contracts";
+import { ISnapshotTreeVersion } from "./definitions";
 import { DocumentService } from "./documentService";
+import { pkgVersion as driverVersion } from "./packageVersion";
 import { IRouterliciousDriverPolicies } from "./policies";
-import { ITokenProvider } from "./tokens";
 import {
 	RouterliciousOrdererRestWrapper,
 	RouterliciousStorageRestWrapper,
 	toInstrumentedR11sOrdererTokenFetcher,
 	toInstrumentedR11sStorageTokenFetcher,
 } from "./restWrapper";
+import { isRouterliciousResolvedUrl } from "./routerliciousResolvedUrl";
+import { ITokenProvider } from "./tokens";
 import { parseFluidUrl, replaceDocumentIdInPath, getDiscoveredFluidResolvedUrl } from "./urlUtils";
-import { ICache, InMemoryCache, NullCache } from "./cache";
-import { pkgVersion as driverVersion } from "./packageVersion";
-import { ISnapshotTreeVersion } from "./definitions";
-import { INormalizedWholeSnapshot } from "./contracts";
 
 const maximumSnapshotCacheDurationMs: FiveDaysMs = 432_000_000; // 5 days in ms
 
@@ -52,7 +53,6 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
 	enableRestLess: true,
 	enableInternalSummaryCaching: true,
 	enableLongPollingDowngrade: true,
-	isEphemeralContainer: false,
 };
 
 /**
@@ -138,6 +138,10 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			resolvedUrl.endpoints.ordererUrl,
 		);
 
+		const createAsEphemeral = isRouterliciousResolvedUrl(resolvedUrl)
+			? resolvedUrl.createAsEphemeral === true
+			: false;
+
 		const res = await PerformanceEvent.timedExecAsync(
 			logger2,
 			{
@@ -145,7 +149,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 				details: JSON.stringify({
 					enableDiscovery: this.driverPolicies.enableDiscovery,
 					sequenceNumber: documentAttributes.sequenceNumber,
-					isEphemeralContainer: this.driverPolicies.isEphemeralContainer,
+					isEphemeralContainer: createAsEphemeral,
 				}),
 			},
 			async (event) => {
@@ -159,7 +163,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 						values: quorumValues,
 						enableDiscovery: this.driverPolicies.enableDiscovery,
 						generateToken: this.tokenProvider.documentPostCreateCallback !== undefined,
-						isEphemeralContainer: this.driverPolicies.isEphemeralContainer,
+						isEphemeralContainer: createAsEphemeral,
 						enableAnyBinaryBlobOnFirstSummary: true,
 					})
 				).content;
