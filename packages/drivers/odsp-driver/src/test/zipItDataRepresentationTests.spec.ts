@@ -21,7 +21,7 @@ import {
 	IStringElement,
 } from "../zipItDataRepresentationUtils";
 
-function compareNodes(node1: NodeTypes, node2: NodeTypes) {
+function compareNodes(node1: NodeTypes, node2: NodeTypes): void {
 	if (node1 instanceof NodeCore) {
 		assert(node2 instanceof NodeCore, "Node 2 should be a NodeCore type");
 		assert.strictEqual(node1.length, node2.length, "Node lengths are not same");
@@ -31,7 +31,7 @@ function compareNodes(node1: NodeTypes, node2: NodeTypes) {
 	} else if (node1 instanceof BlobCore) {
 		assert(node2 instanceof BlobCore, "Node2 should also be a blob");
 		assert(
-			Uint8ArrayToString(node1.buffer, "utf-8") === Uint8ArrayToString(node2.buffer, "utf-8"),
+			Uint8ArrayToString(node1.buffer, "utf8") === Uint8ArrayToString(node2.buffer, "utf8"),
 			"Blob contents not same",
 		);
 	} else if (typeof node1 === "number") {
@@ -49,7 +49,7 @@ function compareNodes(node1: NodeTypes, node2: NodeTypes) {
 	}
 }
 
-function createLongBuffer(length: number) {
+function createLongBuffer(length: number): Uint8Array {
 	const buffer = new Uint8Array(length);
 	for (let i = 0; i < length; i++) {
 		buffer[i] = 30 + (i % 10); // 0-9
@@ -67,7 +67,7 @@ describe("Tree Representation tests", () => {
 		logger.assertMatchNone([{ category: "error" }]);
 	});
 
-	function validate(length = -1) {
+	function validate(length = -1): void {
 		const buffer = builder.serialize();
 		assert.strictEqual(buffer.length, length, "buffer size not equal");
 		const builder2 = TreeBuilder.load(
