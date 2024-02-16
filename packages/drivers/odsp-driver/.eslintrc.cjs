@@ -15,4 +15,14 @@ module.exports = {
 		"@rushstack/no-new-null": "error",
 		"import/no-deprecated": "warn", // This package uses the deprecated ShareLinkTypes type. Once we remove that, we can remove this override. It's set as a warning instead of "off" to serve as a reminder.
 	},
+	overrides: [
+		{
+			// Rules only for test files
+			files: ["*.spec.ts", "src/test/**"],
+			rules: {
+				// Fine for tests to use `__dirname`
+				"unicorn/prefer-module": "off",
+			},
+		},
+	],
 };
