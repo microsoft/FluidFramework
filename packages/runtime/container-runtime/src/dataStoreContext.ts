@@ -989,6 +989,10 @@ export abstract class FluidDataStoreContext
 			);
 	}
 
+	public deleteChildSummarizerNodeFn(id: string) {
+		this.summarizerNode.deleteChild(id);
+	}
+
 	public async uploadBlob(
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,

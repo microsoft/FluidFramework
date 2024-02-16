@@ -831,8 +831,7 @@ export class CollabSpacesRuntime
 		// represents same data, but need to double check that it's actually correct and tests
 		// have proper coverage.
 
-		// TBD(Pri0): remove cast by introducing proper API / workflow
-		(this.dataStoreContext as any).summarizerNode.deleteChild(channelId);
+		this.dataStoreContext.deleteChildSummarizerNodeFn(channelId);
 	}
 
 	// Saves or destroys channel, depending on the arguments

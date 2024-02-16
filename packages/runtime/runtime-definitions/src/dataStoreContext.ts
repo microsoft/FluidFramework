@@ -483,6 +483,8 @@ export interface IFluidDataStoreContext
 		createParam: CreateChildSummarizerNodeParam,
 	): CreateChildSummarizerNodeFn;
 
+	deleteChildSummarizerNodeFn(id: string): void;
+
 	uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 
 	/**
