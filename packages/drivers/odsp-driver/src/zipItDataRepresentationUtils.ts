@@ -555,7 +555,7 @@ export class NodeCore {
 		}
 		assert(length === stringBuffer.length, 0x418 /* properly encoded */);
 
-		const result = Uint8ArrayToString(stringBuffer, "utf8").split(String.fromCharCode(0));
+		const result = Uint8ArrayToString(stringBuffer, "utf8").split(String.fromCodePoint(0));
 		if (result.length === stringsToResolve.length + 1) {
 			// All is good, we expect all the cases to get here
 			for (let i = 0; i < stringsToResolve.length; i++) {
