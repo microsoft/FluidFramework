@@ -147,8 +147,7 @@
 					"@fluid-private/stochastic-test-utils",
 					"@fluid-private/test-dds-utils",
 					"@fluidframework/local-driver",
-					"@fluidframework/test-runtime-utils",
-					"@fluid-tools/webpack-fluid-loader"
+					"@fluidframework/test-runtime-utils"
 				]
 			},
 			"AzureClient": {

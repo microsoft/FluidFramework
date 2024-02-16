@@ -414,7 +414,7 @@ module.exports = {
 		],
 		fluidBuildTasks: {
 			tsc: {
-				ignoreDevDependencies: ["@fluid-tools/webpack-fluid-loader"],
+				ignoreDevDependencies: ["@fluid-example/webpack-fluid-loader"],
 				ignoreTasks: [
 					// Outside of normal build and packages/dd/matrix version includes tsc
 					"bench:profile",
