@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-const fluidRoute = require("@fluid-tools/webpack-fluid-loader");
 const path = require("path");
 const { merge } = require("webpack-merge");
 const webpack = require("webpack");
@@ -82,6 +81,5 @@ module.exports = (env) => {
 			},
 			mode: isProduction ? "production" : "development",
 		},
-		fluidRoute.devServerConfig(__dirname, env),
 	);
 };
