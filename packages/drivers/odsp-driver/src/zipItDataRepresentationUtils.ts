@@ -555,7 +555,7 @@ export class NodeCore {
 		}
 		assert(length === stringBuffer.length, 0x418 /* properly encoded */);
 
-		const result = Uint8ArrayToString(stringBuffer, "utf-8").split(String.fromCharCode(0));
+		const result = Uint8ArrayToString(stringBuffer, "utf8").split(String.fromCharCode(0));
 		if (result.length === stringsToResolve.length + 1) {
 			// All is good, we expect all the cases to get here
 			for (let i = 0; i < stringsToResolve.length; i++) {
@@ -568,7 +568,7 @@ export class NodeCore {
 			for (const el of stringsToResolve) {
 				assert(
 					el.content ===
-						Uint8ArrayToString(input.subarray(el.startPos, el.endPos), "utf-8"),
+						Uint8ArrayToString(input.subarray(el.startPos, el.endPos), "utf8"),
 					0x3ea /* test */,
 				);
 			}
