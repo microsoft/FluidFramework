@@ -127,23 +127,11 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 				servername: redisConfigForThrottling.host,
 			};
 		}
-		const redisClientForThrottling: Redis.default | Redis.Cluster =
-			redisConfigForThrottling.enableClustering
-				? new Redis.Cluster(
-						[
-							{
-								port: redisOptionsForThrottling.port,
-								host: redisOptionsForThrottling.host,
-							},
-						],
-						{
-							redisOptions: redisOptionsForThrottling,
-							slotsRefreshTimeout: redisConfigForThrottling.slotsRefreshTimeout,
-							dnsLookup: (adr, callback) => callback(null, adr),
-							showFriendlyErrorStack: true,
-						},
-				  )
-				: new Redis.default(redisOptionsForThrottling);
+		const redisClientForThrottling: Redis.default | Redis.Cluster = utils.getRedisClient(
+			redisOptionsForThrottling,
+			redisConfigForThrottling.slotsRefreshTimeout,
+			redisConfigForThrottling.enableClustering,
+		);
 		const redisParamsForThrottling = {
 			expireAfterSeconds: redisConfigForThrottling.keyExpireAfterSeconds as
 				| number
