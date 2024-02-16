@@ -3,9 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { ITelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils";
+import {
+	UsageError,
+	type ITelemetryLoggerExt,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
@@ -1289,6 +1294,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	public readonly localCreationSeqTracker: DirectoryCreationTracker;
 
 	/**
+	 * Wrapper over {@link @fluidframework/shared-object-base#SharedObjectCore.logger}, so we can leverage the extended
+	 * interface internally.
+	 */
+	private readonly loggerExt: ITelemetryLoggerExt;
+
+	/**
 	 * Constructor.
 	 * @param sequenceNumber - Message seq number at which this was created.
 	 * @param clientIds - Ids of client which created this directory.
@@ -1304,9 +1315,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		private readonly runtime: IFluidDataStoreRuntime,
 		private readonly serializer: IFluidSerializer,
 		public readonly absolutePath: string,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: ITelemetryBaseLogger,
 	) {
 		super();
+		this.loggerExt = createChildLogger({ logger: this.logger });
 		this.localCreationSeqTracker = new DirectoryCreationTracker();
 		this.ackedCreationSeqTracker = new DirectoryCreationTracker();
 	}
@@ -1514,7 +1526,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			// It's not currently clear how to reach this state, so log some diagnostics to help understand the issue.
 			// This whole block should eventually be replaced by an assert that the two sizes align.
 			if (!hasLoggedDirectoryInconsistency) {
-				this.logger.sendTelemetryEvent({
+				this.loggerExt.sendTelemetryEvent({
 					eventName: "inconsistentSubdirectoryOrdering",
 					localKeyCount: this.localCreationSeqTracker.size,
 					ackedKeyCount: this.ackedCreationSeqTracker.size,
