@@ -80,7 +80,7 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 	 * @remarks
 	 */
 	private sessionID?: string;
-	/** 
+	/**
 	 * This identifies a specific browser instance and is reused in subsequent sessions.
 	 */
 	private continuityID?: string;
