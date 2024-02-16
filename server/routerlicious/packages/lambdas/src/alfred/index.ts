@@ -105,7 +105,7 @@ function sanitizeMessage(message: any): IDocumentMessage {
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 
-const serverSupportedFeatures: Record<string, any> = {
+const serverSupportedFeatures: Exclude<IConnected["supportedFeatures"], undefined> = {
 	submit_signals_v2: true,
 };
 
