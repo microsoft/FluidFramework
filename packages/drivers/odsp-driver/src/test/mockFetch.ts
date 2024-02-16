@@ -9,21 +9,27 @@ import * as fetchModule from "node-fetch";
 
 export const createResponse = async (
 	headers: { [key: string]: string },
-	response: any | undefined,
+	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
+	response: any,
 	status: number,
-) => ({
+): Promise<Partial<fetchModule.Response>> => ({
 	ok: response !== undefined,
 	status,
 	text: async () => JSON.stringify(response),
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 	arrayBuffer: async () => response,
 	headers: headers ? new fetchModule.Headers(headers) : new fetchModule.Headers(),
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 	json: async () => response,
 });
 
-export const okResponse = async (headers: { [key: string]: string }, response: any) =>
-	createResponse(headers, response, 200);
-export const notFound = async (headers: { [key: string]: string } = {}) =>
-	createResponse(headers, undefined, 404);
+export const okResponse = async (
+	headers: { [key: string]: string },
+	response: object,
+): Promise<Partial<fetchModule.Response>> => createResponse(headers, response, 200);
+export const notFound = async (
+	headers: { [key: string]: string } = {},
+): Promise<Partial<fetchModule.Response>> => createResponse(headers, undefined, 404);
 
 export type FetchCallType = "internal" | "external" | "single";
 
@@ -61,7 +67,7 @@ export async function mockFetchSingle<T>(
 
 export async function mockFetchOk<T>(
 	callback: () => Promise<T>,
-	response: object = {},
+	response = {},
 	headers: { [key: string]: string } = {},
 ): Promise<T> {
 	return mockFetchSingle(callback, async () => okResponse(headers, response));
