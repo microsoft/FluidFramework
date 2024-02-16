@@ -10,26 +10,54 @@ import path from "path";
 import {
 	BaseFuzzTestState,
 	createFuzzDescribe,
-	createWeightedGenerator,
+	createWeightedAsyncGenerator,
 	defaultOptions,
-	Generator,
+	AsyncGenerator,
 	SaveInfo,
-	generatorFromArray,
+	asyncGeneratorFromArray,
 	makeRandom,
-	performFuzzActions,
-	Reducer,
-	combineReducers,
+	performFuzzActionsAsync,
+	AsyncReducer,
+	combineReducersAsync,
 } from "@fluid-private/stochastic-test-utils";
 import {
-	IMockContainerRuntimeOptions,
 	MockContainerRuntimeFactoryForReconnection,
+	MockContainerRuntimeForReconnection,
+	type IMockContainerRuntimeOptions,
+	MockFluidDataStoreRuntime,
 } from "@fluidframework/test-runtime-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { ISummarizer } from "../..";
-import { IConnectableRuntime, Summarizer } from "../../summary";
+import {
+	createChildLogger,
+	raiseConnectedEvent,
+	type ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils";
+import { MessageType, type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { type ISummaryConfiguration } from "../..";
+import {
+	IConnectableRuntime,
+	Summarizer,
+	ISummarizerClientElectionEvents,
+	SummaryManager,
+	ISummarizerClientElection,
+	type IConnectedState,
+	type IConnectedEvents,
+	SummaryCollection,
+	type ISummarizerRuntime,
+	type ISummarizerInternalsProvider,
+	type ISubmitSummaryOptions,
+	type SubmitSummaryResult,
+	type IRefreshSummaryAckOptions,
+	RunWhileConnectedCoordinator,
+} from "../../summary";
+import type { IThrottler } from "../../throttler";
 
-interface Disconnect {
-	type: "disconnect";
+interface Reconnect {
+	type: "reconnect";
+}
+
+interface NewSummarizer {
+	type: "newSummarizer";
 }
 
 interface SummaryNack {
@@ -40,40 +68,55 @@ interface SubmitOp {
 	type: "submitOp";
 }
 
-type SummarizerOperation = Disconnect | SummaryNack | SubmitOp;
+type SummarizerOperation = Reconnect | NewSummarizer | SummaryNack | SubmitOp;
 
 export interface SummarizerFuzzTestState extends BaseFuzzTestState {
-	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
-	summarizer: ISummarizer;
+	containerRuntimeFactory: MockContainerRuntimeFactoryForSummarizer;
+	containerRuntime: MockContainerRuntimeForSummarizer;
 }
 
-const defaultConfig = {
+export interface ISummarizerOperationGenerationConfig {
+	weights?: {
+		reconnect: number;
+		newSummarizer: number;
+		summaryNack: number;
+		submitOp: number;
+	};
+}
+
+const defaultConfig: Required<ISummarizerOperationGenerationConfig> = {
 	weights: {
-		disconnect: 1,
+		reconnect: 1,
+		newSummarizer: 1,
 		summaryNack: 1,
 		submitOp: 1,
 	},
 };
 
-export function operationGenerator(
-	options,
-): Generator<SummarizerOperation, SummarizerFuzzTestState> {
-	const disconnect = (_state: SummarizerFuzzTestState): Disconnect => ({
-		type: "disconnect",
+export function summarizerOperationGenerator(
+	options: ISummarizerOperationGenerationConfig,
+): AsyncGenerator<SummarizerOperation, SummarizerFuzzTestState> {
+	const reconnect = async (_state: SummarizerFuzzTestState): Promise<Reconnect> => ({
+		type: "reconnect",
 	});
 
-	const summaryNack = (_state: SummarizerFuzzTestState): SummaryNack => ({
+	const newSummarizer = async (_state: SummarizerFuzzTestState): Promise<NewSummarizer> => ({
+		type: "newSummarizer",
+	});
+
+	const summaryNack = async (_state: SummarizerFuzzTestState): Promise<SummaryNack> => ({
 		type: "summaryNack",
 	});
 
-	const submitOp = (_state: SummarizerFuzzTestState): SubmitOp => ({
+	const submitOp = async (_state: SummarizerFuzzTestState): Promise<SubmitOp> => ({
 		type: "submitOp",
 	});
 
 	const usableWeights = options.weights ?? defaultConfig.weights;
 
-	return createWeightedGenerator<SummarizerOperation, SummarizerFuzzTestState>([
-		[disconnect, usableWeights.disconnect],
+	return createWeightedAsyncGenerator<SummarizerOperation, SummarizerFuzzTestState>([
+		[reconnect, usableWeights.reconnect],
+		[newSummarizer, usableWeights.newSummarizer],
 		[summaryNack, usableWeights.summaryNack],
 		[submitOp, usableWeights.submitOp],
 	]);
@@ -81,8 +124,8 @@ export function operationGenerator(
 
 export interface SummarizerFuzzModel {
 	workloadName: string;
-	generatorFactory: () => Generator<SummarizerOperation, SummarizerFuzzTestState>;
-	reducer: Reducer<SummarizerOperation, SummarizerFuzzTestState>;
+	generatorFactory: () => AsyncGenerator<SummarizerOperation, SummarizerFuzzTestState>;
+	reducer: AsyncReducer<SummarizerOperation, SummarizerFuzzTestState>;
 }
 
 /**
@@ -167,14 +210,7 @@ export interface SummarizerFuzzSuiteOptions {
 	 */
 	saveFailures: false | { directory: string };
 
-	/**
-	 * Options to be provided to the underlying container runtimes {@link @fluidframework/test-runtime-utils#IMockContainerRuntimeOptions}.
-	 * By default nothing will be provided, which means that the runtimes will:
-	 * - use FlushMode.Immediate, which means that all ops will be sent as soon as they are produced,
-	 * therefore all batches have a single op.
-	 * - not use grouped batching.
-	 */
-	containerRuntimeOptions?: IMockContainerRuntimeOptions;
+	containerRuntimeOptions?: IMockContainerRuntimeForSummarizerOptions;
 
 	parseOperations: (serialized: string) => SummarizerOperation[];
 }
@@ -274,8 +310,8 @@ export function createSummarizerFuzzSuite(
 				const replayModel = {
 					...model,
 					// We lose some type safety here because the options interface isn't generic
-					generatorFactory: (): Generator<SummarizerOperation, unknown> =>
-						generatorFromArray(operations),
+					generatorFactory: (): AsyncGenerator<SummarizerOperation, unknown> =>
+						asyncGeneratorFromArray(operations),
 				};
 				runTest(replayModel, options, seed, undefined);
 			});
@@ -288,27 +324,30 @@ export function createSummarizerFuzzSuite(
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
-function runTestForSeed(
+async function runTestForSeed(
 	model: SummarizerFuzzModel,
 	options: Omit<SummarizerFuzzSuiteOptions, "only" | "skip">,
 	seed: number,
 	saveInfo?: SaveInfo,
-): SummarizerFuzzTestState {
+): Promise<SummarizerFuzzTestState> {
 	const random = makeRandom(seed);
-	const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection(
+	const containerRuntimeFactory = new MockContainerRuntimeFactoryForSummarizer(
 		options.containerRuntimeOptions,
+	);
+
+	const containerRuntime = containerRuntimeFactory.createContainerRuntime(
+		new MockFluidDataStoreRuntime(),
 	);
 
 	const initialState: SummarizerFuzzTestState = {
 		containerRuntimeFactory,
 		random,
-		// ! TODO: Properly set up client AB#6951
-		summarizer: createSummarizer(),
+		containerRuntime,
 	};
 
 	options.emitter.emit("testStart", initialState);
 
-	const finalState = performFuzzActions(
+	const finalState = await performFuzzActionsAsync(
 		model.generatorFactory(),
 		model.reducer,
 		initialState,
@@ -327,40 +366,227 @@ function runTest(
 	saveInfo: SaveInfo | undefined,
 ): void {
 	const itFn = options.only.has(seed) ? it.only : options.skip.has(seed) ? it.skip : it;
-	itFn(`seed ${seed}`, () => {
+	itFn(`seed ${seed}`, async () => {
 		const inCi = !!process.env.TF_BUILD;
-		runTestForSeed(model, options, seed, inCi ? undefined : saveInfo);
+		await runTestForSeed(model, options, seed, inCi ? undefined : saveInfo);
 	});
 }
 
-function makeReducer(): Reducer<SummarizerOperation, SummarizerFuzzTestState> {
-	return combineReducers<SummarizerOperation, SummarizerFuzzTestState>({
-		disconnect: (state: SummarizerFuzzTestState, op: SummarizerOperation) => {
-			// ! TODO AB#6951
+function makeReducer(): AsyncReducer<SummarizerOperation, SummarizerFuzzTestState> {
+	const wrapper =
+		<T>(
+			baseReducer: AsyncReducer<T, SummarizerFuzzTestState>,
+		): AsyncReducer<T, SummarizerFuzzTestState> =>
+		async (state, operation) => {
+			await baseReducer(state, operation);
+			state.containerRuntimeFactory.processAllMessages();
+		};
+
+	const reducer = combineReducersAsync<SummarizerOperation, SummarizerFuzzTestState>({
+		reconnect: async (state: SummarizerFuzzTestState, _op: Reconnect) => {
+			// TODO
+			state.containerRuntime.connected = false;
+			state.containerRuntime.connected = true;
 		},
-		summaryNack: (state: SummarizerFuzzTestState, op: SummarizerOperation) => {
-			// ! TODO AB#6951
+		newSummarizer: async (state: SummarizerFuzzTestState, _op: NewSummarizer) => {
+			// TODO
+			state.containerRuntime.disposeFn();
+			state.containerRuntime = state.containerRuntimeFactory.createContainerRuntime(
+				new MockFluidDataStoreRuntime(),
+			);
 		},
-		submitOp: (state: SummarizerFuzzTestState, op: SummarizerOperation) => {
-			// ! TODO AB#6951
+		summaryNack: async (state: SummarizerFuzzTestState, _op: SummaryNack) => {
+			// TODO: not sure if it deadlocks between needing to process the SummaryNack and waiting for it
+			state.containerRuntime.prepareSummaryNack();
+			await state.containerRuntime.summarize();
+		},
+		submitOp: async (state: SummarizerFuzzTestState, _op: SubmitOp) => {
+			// TODO: Need to move things around package-wise since DDS Factories are in different packages
 		},
 	});
+
+	return wrapper(reducer);
 }
 
 export const baseModel: Omit<SummarizerFuzzModel, "workloadName" | "generatorFactory"> = {
 	reducer: makeReducer(),
 };
 
-function createSummarizer(): ISummarizer {
-	const obj = {};
-	return new Summarizer(
-		obj as any /* ISummarizerRuntime */,
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		() => obj as any /* configurationGetter */,
-		obj as any /* ISummarizerInternalsProvider */,
-		obj as any /* handleContext */,
-		obj as any /* summaryCollection */,
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		async (runtime: IConnectableRuntime) => obj as any /* runCoordinatorCreateFn */,
-	);
+class MockContainerRuntimeFactoryForSummarizer extends MockContainerRuntimeFactoryForReconnection {
+	override createContainerRuntime(
+		dataStoreRuntime: MockFluidDataStoreRuntime,
+		overrides?: { minimumSequenceNumber?: number },
+	): MockContainerRuntimeForSummarizer {
+		const containerRuntime = new MockContainerRuntimeForSummarizer(
+			dataStoreRuntime,
+			this,
+			this.runtimeOptions,
+			overrides,
+		);
+		this.runtimes.add(containerRuntime);
+		return containerRuntime;
+	}
+}
+
+interface IMockContainerRuntimeForSummarizerOptions extends IMockContainerRuntimeOptions {
+	summaryConfiguration?: ISummaryConfiguration;
+}
+
+const DefaultSummaryConfiguration: ISummaryConfiguration = {
+	state: "disableHeuristics",
+	maxAckWaitTime: 3 * 60 * 1000, // 3 mins.
+	maxOpsSinceLastSummary: 7000,
+	initialSummarizerDelayMs: 5 * 1000, // 5 secs.
+};
+
+class MockContainerRuntimeForSummarizer
+	extends MockContainerRuntimeForReconnection
+	implements ISummarizerRuntime, ISummarizerInternalsProvider
+{
+	public readonly logger = createChildLogger();
+	public readonly summarizerClientId: string | undefined;
+	public readonly summarizer: Summarizer;
+
+	private readonly summaryManager: SummaryManager;
+	private readonly connectedState: MockConnectedState;
+	private readonly summaryCollection: SummaryCollection;
+	private readonly summarizerClientElection: MockSummarizerClientElection;
+
+	constructor(
+		dataStoreRuntime: MockFluidDataStoreRuntime,
+		factory: MockContainerRuntimeFactoryForSummarizer,
+		runtimeOptions: IMockContainerRuntimeForSummarizerOptions = {},
+		overrides?: { minimumSequenceNumber?: number },
+	) {
+		super(dataStoreRuntime, factory, runtimeOptions, overrides);
+
+		this.deltaManager.on("op", (message: ISequencedDocumentMessage) => {
+			this.emit("op", message);
+		});
+
+		this.summarizerClientElection = new MockSummarizerClientElection(this.clientId);
+		this.connectedState = new MockConnectedState(this.logger, this.clientId);
+		this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
+
+		const summaryConfiguration: ISummaryConfiguration = {
+			...DefaultSummaryConfiguration,
+			...runtimeOptions.summaryConfiguration,
+		};
+
+		// TODO: Maybe this needs to move to inside the SummaryManager create callback?
+		this.summarizer = new Summarizer(
+			this /* summarizerRuntime */,
+			() => summaryConfiguration /* configurationGetter */,
+			this /* ISummarizerInternalsProvider */,
+			{} as any /* handleContext */,
+			this.summaryCollection,
+			async (runtime: IConnectableRuntime) =>
+				RunWhileConnectedCoordinator.create(runtime, () => this.deltaManager.active),
+		);
+
+		this.summaryManager = new SummaryManager(
+			this.summarizerClientElection,
+			this.connectedState,
+			this.summaryCollection,
+			this.logger,
+			async () => this.summarizer,
+			new MockThrottler(),
+		);
+		this.summaryManager.start();
+	}
+
+	/** Prepare a SummaryNack to be sent by the server */
+	public prepareSummaryNack() {
+		// TODO
+		this.deltaManager.prepareInboundResponse(MessageType.SummaryNack, {});
+	}
+
+	/** Call on the Summarizer object to summarize */
+	public async summarize() {
+		const result = this.summarizer.summarizeOnDemand({
+			reason: "fuzzTest",
+			retryOnFailure: false,
+		});
+		return Promise.all([
+			result.summarySubmitted,
+			result.summaryOpBroadcasted,
+			result.receivedSummaryAckOrNack,
+		]);
+	}
+
+	public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
+		// TODO
+		throw new Error("Method not implemented.");
+	}
+
+	public async refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void> {
+		// TODO
+		throw new Error("Method not implemented.");
+	}
+
+	public setConnectedState(value: boolean) {
+		super.setConnectedState(value);
+
+		this.connectedState.setConnectedState(value, this.clientId);
+		this.summarizerClientElection.setClientId(this.clientId);
+	}
+
+	public closeFn() {
+		this.disposeFn();
+	}
+
+	public disposed: boolean = false;
+	public disposeFn() {
+		this.connected = false;
+		this.disposed = true;
+		this.summaryManager.dispose();
+		this.summarizer.dispose();
+		this.deltaManager.dispose();
+	}
+}
+
+class MockSummarizerClientElection
+	extends TypedEventEmitter<ISummarizerClientElectionEvents>
+	implements ISummarizerClientElection
+{
+	public electedClientId: string | undefined;
+	public electedParentId: string | undefined;
+
+	constructor(clientId: string) {
+		super();
+		this.setClientId(clientId);
+	}
+
+	public setClientId(clientId: string) {
+		this.electedClientId = clientId;
+		this.electedParentId = clientId;
+	}
+}
+
+class MockConnectedState extends TypedEventEmitter<IConnectedEvents> implements IConnectedState {
+	public connected: boolean = false;
+
+	constructor(
+		private readonly logger: ITelemetryLoggerExt,
+		public clientId: string,
+	) {
+		super();
+	}
+
+	public setConnectedState(connected: boolean, clientId: string): void {
+		if (this.connected === connected) {
+			return;
+		}
+		this.clientId = clientId;
+
+		raiseConnectedEvent(this.logger, this, connected, clientId);
+	}
+}
+
+class MockThrottler implements IThrottler {
+	public getDelay = () => 0;
+	public numAttempts = 3;
+	public delayWindowMs = 0;
+	public maxDelayMs = 0;
+	public delayFn = () => 0;
 }

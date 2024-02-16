@@ -29,6 +29,10 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 	}
 
 	public set connected(connected: boolean) {
+		this.setConnectedState(connected);
+	}
+
+	protected setConnectedState(connected: boolean): void {
 		if (this._connected === connected) {
 			return;
 		}

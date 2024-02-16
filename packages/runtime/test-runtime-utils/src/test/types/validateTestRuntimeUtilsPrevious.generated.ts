@@ -251,6 +251,7 @@ declare function get_old_ClassDeclaration_MockDeltaManager():
 declare function use_current_ClassDeclaration_MockDeltaManager(
     use: TypeOnly<current.MockDeltaManager>): void;
 use_current_ClassDeclaration_MockDeltaManager(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MockDeltaManager());
 
 /*
