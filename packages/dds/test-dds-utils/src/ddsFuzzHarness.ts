@@ -102,10 +102,12 @@ export interface StashClient {
 	type: "stashClient";
 	clientId: string;
 }
+type ClientWithStashData<TChannelFactory extends IChannelFactory> = Client<TChannelFactory> &
+	Partial<Record<"stashData", ClientLoadData>>;
 const isStashClientOp = (op: BaseOperation): op is StashClient => op.type === "stashClient";
 export const hasStashData = <TChannelFactory extends IChannelFactory>(
 	client?: Client<TChannelFactory>,
-): client is Client<TChannelFactory> & Record<"stashData", StashData> =>
+): client is Required<ClientWithStashData<TChannelFactory>> =>
 	client !== undefined &&
 	"stashData" in client &&
 	client.stashData !== null &&
@@ -1042,14 +1044,14 @@ export function mixinStashedClient<
 		if (isStashClientOp(operation)) {
 			const client = clients.find((c) => c.containerRuntime.clientId === operation.clientId);
 			if (!hasStashData(client)) {
-				return state;
+				throw new PreconditionError("client not stashable");
 			}
 			const stashData = client.stashData;
 
 			// load a new client from the same state as the original client
 			const newClient = await loadClientFromSummaries(
 				containerRuntimeFactory,
-				stashData.summaries,
+				stashData,
 				model.factory,
 				client.containerRuntime.clientId,
 				options,
@@ -1145,7 +1147,8 @@ function createDetachedClient<TChannelFactory extends IChannelFactory>(
 	return newClient;
 }
 
-interface StashData {
+interface ClientLoadData {
+	minimumSequenceNumber: number;
 	summaries: {
 		summary: ISummaryTree;
 		idCompressorSummary: SerializedIdCompressorWithNoSession | undefined;
@@ -1159,18 +1162,17 @@ async function loadClient<TChannelFactory extends IChannelFactory>(
 	clientId: string,
 	options: Omit<DDSFuzzSuiteOptions, "only" | "skip">,
 	supportStashing: boolean = false,
-): Promise<
-	Client<TChannelFactory> & {
-		stashData?: StashData;
-	}
-> {
-	const summaries: StashData["summaries"] = {
-		summary: summarizerClient.channel.getAttachSummary().summary,
-		idCompressorSummary: summarizerClient.dataStoreRuntime.idCompressor?.serialize(false),
+): Promise<ClientWithStashData<TChannelFactory>> {
+	const loadData: ClientLoadData = {
+		minimumSequenceNumber: summarizerClient.dataStoreRuntime.deltaManager.lastSequenceNumber,
+		summaries: {
+			summary: summarizerClient.channel.getAttachSummary().summary,
+			idCompressorSummary: summarizerClient.dataStoreRuntime.idCompressor?.serialize(false),
+		},
 	};
 	return loadClientFromSummaries(
 		containerRuntimeFactory,
-		summaries,
+		loadData,
 		factory,
 		clientId,
 		options,
@@ -1180,16 +1182,15 @@ async function loadClient<TChannelFactory extends IChannelFactory>(
 
 async function loadClientFromSummaries<TChannelFactory extends IChannelFactory>(
 	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
-	summaries: StashData["summaries"],
+	loadData: ClientLoadData,
 	factory: TChannelFactory,
 	clientId: string,
 	options: Omit<DDSFuzzSuiteOptions, "only" | "skip">,
 	supportStashing: boolean = false,
-): Promise<
-	Client<TChannelFactory> & {
-		stashData?: StashData;
-	}
-> {
+): Promise<ClientWithStashData<TChannelFactory>> {
+	const { summaries, minimumSequenceNumber } = loadData;
+	const stashData = supportStashing ? structuredClone(loadData) : undefined;
+
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({
 		clientId,
 		idCompressor:
@@ -1198,7 +1199,7 @@ async function loadClientFromSummaries<TChannelFactory extends IChannelFactory>(
 				: options.idCompressorFactory(summaries.idCompressorSummary),
 	});
 	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime, {
-		minimumSequenceNumber: containerRuntimeFactory.sequenceNumber,
+		minimumSequenceNumber,
 		trackRemoteOps: supportStashing,
 	});
 	const services: IChannelServices = {
@@ -1214,18 +1215,13 @@ async function loadClientFromSummaries<TChannelFactory extends IChannelFactory>(
 	)) as ReturnType<TChannelFactory["create"]>;
 	channel.connect(services);
 
-	const newClient: Client<TChannelFactory> & {
-		stashData?: StashData;
-	} = {
+	const newClient: ClientWithStashData<TChannelFactory> = {
 		channel,
 		containerRuntime,
 		dataStoreRuntime,
+		stashData,
 	};
-	if (supportStashing) {
-		newClient.stashData = {
-			summaries,
-		};
-	}
+
 	options.emitter.emit("clientCreate", newClient);
 	return newClient;
 }
@@ -1414,6 +1410,11 @@ type InternalOptions = Omit<DDSFuzzSuiteOptions, "only" | "skip"> & {
 function isInternalOptions(options: DDSFuzzSuiteOptions): options is InternalOptions {
 	return options.only instanceof Set && options.skip instanceof Set;
 }
+
+/**
+ * @internal
+ */
+export class PreconditionError extends Error {}
 
 /**
  * Performs the test again to verify if the DDS still fails with the same error message.
