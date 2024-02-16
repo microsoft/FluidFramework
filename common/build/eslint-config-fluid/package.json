@@ -14,6 +14,7 @@
 	"scripts": {
 		"build": "npm run print-config && npm run build:readme && npm run prettier",
 		"build:readme": "markdown-magic --files \"**/*.md\"",
+		"clean": "rimraf --glob nyc",
 		"cleanup-printed-configs": "node ./scripts/cleanup-printed-configs.js ./printed-configs",
 		"format": "npm run prettier:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
@@ -54,6 +55,7 @@
 		"mocha-json-output-reporter": "^2.1.0",
 		"mocha-multi-reporters": "^1.5.1",
 		"prettier": "~3.0.3",
+		"rimraf": "^4.4.0",
 		"sort-json": "^2.0.1",
 		"typescript": "~5.1.6"
 	},
