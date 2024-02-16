@@ -67,7 +67,7 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
 	// Map of all existing socket io sockets. [url, tenantId, documentId] -> socket
 	private static readonly socketIoSockets: Map<string, SocketReference> = new Map();
 
-	public static find(key: string, logger: ITelemetryLoggerExt) {
+	public static find(key: string, logger: ITelemetryLoggerExt): SocketReference | undefined {
 		const socketReference = SocketReference.socketIoSockets.get(key);
 
 		// Verify the socket is healthy before reusing it
@@ -90,7 +90,7 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
 	 * Removes a reference for the given key
 	 * Once the ref count hits 0, the socket is disconnected and removed
 	 */
-	public removeSocketIoReference() {
+	public removeSocketIoReference(): void {
 		assert(this.references > 0, 0x09f /* "No more socketIO refs to remove!" */);
 		this.references--;
 
@@ -140,7 +140,7 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
 	private readonly serverDisconnectEventHandler = (
 		socketError: IOdspSocketError,
 		clientId?: string,
-	) => {
+	): void => {
 		// Treat all errors as recoverable, and rely on joinSession / reconnection flow to
 		// filter out retryable vs. non-retryable cases.
 		const error = errorObjectFromSocketError(socketError, "server_disconnect");
@@ -161,14 +161,14 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
 		}
 	};
 
-	private clearTimer() {
+	private clearTimer(): void {
 		if (this.delayDeleteTimeout !== undefined) {
 			clearTimeout(this.delayDeleteTimeout);
 			this.delayDeleteTimeout = undefined;
 		}
 	}
 
-	public closeSocket(error?: IAnyDriverError) {
+	public closeSocket(error?: IAnyDriverError): void {
 		if (!this._socket) {
 			return;
 		}
@@ -211,7 +211,7 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
 		socket.disconnect();
 	}
 
-	public get disconnected() {
+	public get disconnected(): boolean {
 		if (this._socket === undefined) {
 			return true;
 		}
@@ -319,8 +319,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		try {
 			await deltaConnection.initialize(connectMessage, timeoutMs);
 			await epochTracker.validateEpoch(deltaConnection.details.epoch, "push");
-		} catch (errorObject: any) {
-			if (errorObject !== null && typeof errorObject === "object") {
+		} catch (error: any) {
+			if (error !== null && typeof error === "object") {
 				// We have to special-case error types here in terms of what is re-triable.
 				// These errors have to re-retried, we just need new joinSession result to connect to right server:
 				//    400: Invalid tenant or document id. The WebSocket is connected to a different document
@@ -334,11 +334,11 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 				//    401/403: Code will retry once with new token either way, then it becomes fatal - on this path
 				//         and on join Session path.
 				//    501: (Fluid not enabled): this is fine either way, as joinSession is gatekeeper
-				if (errorObject.statusCode === 400 || errorObject.statusCode === 404) {
-					errorObject.canRetry = true;
+				if (error.statusCode === 400 || error.statusCode === 404) {
+					error.canRetry = true;
 				}
 			}
-			throw errorObject;
+			throw error;
 		}
 
 		return deltaConnection;
@@ -422,7 +422,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	 * @param to - exclusive
 	 * @returns ops retrieved
 	 */
-	public requestOps(from: number, to: number) {
+	public requestOps(from: number, to: number): void {
 		assert(!this.socketReference?.disconnected, 0x413 /* non-active socket */);
 
 		// Given that to is exclusive, we should be asking for at least something!
@@ -511,7 +511,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		return this.flushDeferred.promise;
 	}
 
-	protected disconnectHandler = (error: IFluidErrorBase & OdspError, clientId?: string) => {
+	protected disconnectHandler = (error: IFluidErrorBase & OdspError, clientId?: string): void => {
 		if (clientId === undefined || clientId === this.clientId) {
 			this.logger.sendTelemetryEvent(
 				{
@@ -527,7 +527,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		}
 	};
 
-	protected async initialize(connectMessage: IConnect, timeout: number) {
+	protected async initialize(connectMessage: IConnect, timeout: number): Promise<void> {
 		assert(!this.socketReference?.disconnected, 0x415 /* non-active socket */);
 
 		if (this.enableMultiplexing) {
@@ -535,7 +535,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			this.earlyOpHandler = (
 				messageDocumentId: string,
 				msgs: ISequencedDocumentMessage[],
-			) => {
+			): void => {
 				if (this.documentId === messageDocumentId) {
 					this.queuedMessages.push(...msgs);
 				}
@@ -544,7 +544,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			this.earlySignalHandler = (
 				msg: ISignalMessage | ISignalMessage[],
 				messageDocumentId?: string,
-			) => {
+			): void => {
 				if (messageDocumentId === undefined || messageDocumentId === this.documentId) {
 					if (Array.isArray(msg)) {
 						this.queuedSignals.push(...msg);
@@ -599,14 +599,17 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 				if (result.lastPersistedSequenceNumber === undefined || result.code !== 200) {
 					switch (result.code) {
 						case 409:
-						case 429:
+						case 429: {
 							category = "error";
 							break;
-						case 204:
+						}
+						case 204: {
 							break;
-						default:
+						}
+						default: {
 							category = "error";
 							break;
+						}
 					}
 				}
 				this.logger.sendTelemetryEvent({
@@ -629,10 +632,11 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		});
 	}
 
-	protected addTrackedListener(event: string, listener: (...args: any[]) => void) {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	protected addTrackedListener(event: string, listener: (...args: any[]) => void): void {
 		// override some event listeners in order to support multiple documents/clients over the same websocket
 		switch (event) {
-			case "op":
+			case "op": {
 				// per document op handling
 				super.addTrackedListener(
 					event,
@@ -643,8 +647,9 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 					},
 				);
 				break;
+			}
 
-			case "signal":
+			case "signal": {
 				// per document signal handling
 				super.addTrackedListener(
 					event,
@@ -659,8 +664,9 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 					},
 				);
 				break;
+			}
 
-			case "nack":
+			case "nack": {
 				// per client / document nack handling
 				super.addTrackedListener(event, (clientIdOrDocumentId: string, nacks: INack[]) => {
 					const handle =
@@ -687,14 +693,16 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 					}
 				});
 				break;
+			}
 
-			default:
+			default: {
 				super.addTrackedListener(event, listener);
 				break;
+			}
 		}
 	}
 
-	public get disposed() {
+	public get disposed(): boolean {
 		if (!(this._disposed || this.socket.connected)) {
 			// Send error event if this connection is not yet disposed after socket is disconnected for 15s.
 			if (this.connectionNotYetDisposedTimeout === undefined) {
@@ -723,7 +731,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		return !this.disposed && this.socket.connected;
 	}
 
-	protected emitMessages(type: string, messages: IDocumentMessage[][]) {
+	protected emitMessages(type: string, messages: IDocumentMessage[][]): void {
 		// Only submit the op/signals if we are connected.
 		if (this.connected) {
 			this.socket.emit(type, this.clientId, messages);
@@ -751,6 +759,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		};
 
 		// back-compat: the typing for this method and emitMessages is incorrect, will be fixed in a future PR
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
 		this.emitMessages("submitSignal", [signal] as any);
 	}
 
@@ -758,7 +767,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	 * Critical path where we need to also close the socket for an error.
 	 * @param error - Error causing the socket to close.
 	 */
-	protected closeSocketCore(error: IAnyDriverError) {
+	protected closeSocketCore(error: IAnyDriverError): void {
 		const socket = this.socketReference;
 		assert(socket !== undefined, 0x416 /* reentrancy not supported in close socket */);
 		socket.closeSocket(error);
@@ -771,7 +780,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	/**
 	 * Disconnect from the websocket
 	 */
-	protected disconnectCore() {
+	protected disconnectCore(): void {
 		const socket = this.socketReference;
 		assert(socket !== undefined, 0x0a2 /* "reentrancy not supported!" */);
 		this.socketReference = undefined;
