@@ -14,7 +14,6 @@
 	"scripts": {
 		"build": "npm run print-config && npm run build:readme && npm run prettier",
 		"build:readme": "markdown-magic --files \"**/*.md\"",
-		"clean": "rimraf --glob nyc",
 		"cleanup-printed-configs": "node ./scripts/cleanup-printed-configs.js ./printed-configs",
 		"format": "npm run prettier:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
@@ -25,8 +24,7 @@
 		"print-config:react": "eslint --config ./index.js --print-config ./src/file.tsx > ./printed-configs/react.json",
 		"print-config:recommended": "eslint --config ./recommended.js --print-config ./src/file.ts > ./printed-configs/recommended.json",
 		"print-config:strict": "eslint --config ./strict.js --print-config ./src/file.ts > ./printed-configs/strict.json",
-		"print-config:test": "eslint --config ./index.js --print-config ./src/test/file.ts > ./printed-configs/test.json",
-		"test": "mocha src/test"
+		"print-config:test": "eslint --config ./index.js --print-config ./src/test/file.ts > ./printed-configs/test.json"
 	},
 	"dependencies": {
 		"@microsoft/tsdoc": "^0.14.2",
