@@ -9,6 +9,7 @@ importers:
       '@fluidframework/mocha-test-setup': ~2.0.0-internal.6.2.0
       '@microsoft/api-extractor': ^7.39.1
       '@types/benchmark': ^2.1.0
+      '@types/chai': ^4.3.4
       '@types/easy-table': ^0.0.32
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.0
@@ -40,6 +41,7 @@ importers:
       '@fluidframework/mocha-test-setup': 2.0.0-internal.6.2.0
       '@microsoft/api-extractor': 7.39.1_@types+node@14.18.38
       '@types/benchmark': 2.1.2
+      '@types/chai': 4.3.11
       '@types/easy-table': 0.0.32
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
@@ -329,6 +331,10 @@ packages:
 
   /@types/benchmark/2.1.2:
     resolution: {integrity: sha512-EDKtLYNMKrig22jEvhXq8TBFyFgVNSPmDF2b9UzJ7+eylPqdZVo17PCUMkn1jP6/1A/0u78VqYC6VrX6b8pDWA==}
+    dev: true
+
+  /@types/chai/4.3.11:
+    resolution: {integrity: sha512-qQR1dr2rGIHYlJulmr8Ioq3De0Le9E4MJ5AiaeAETJJpndT1uUNHsGFK3L/UIu+rbkQSdj8J/w2bCsBZc/Y5fQ==}
     dev: true
 
   /@types/easy-table/0.0.32:
