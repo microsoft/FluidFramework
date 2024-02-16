@@ -218,7 +218,7 @@ describe("Tests for prefetching snapshot", () => {
 
 		it("prefetching snapshot should result in snapshot source as network if both cache and prefetch throws", async () => {
 			// overwriting get() to make cache fetch throw
-			localCache.get = async () => {
+			localCache.get = async (): Promise<void> => {
 				throw new Error("testing");
 			};
 
@@ -341,6 +341,7 @@ describe("Tests for prefetching snapshot", () => {
 					),
 			);
 
+			// eslint-disable-next-line unicorn/no-null
 			const version = await service.getVersions(null, 1);
 			assert.deepStrictEqual(version, expectedVersion, "incorrect version");
 			assert(
@@ -397,6 +398,7 @@ describe("Tests for prefetching snapshot", () => {
 			);
 
 			await mockFetchSingle(
+				// eslint-disable-next-line unicorn/no-null
 				async () => service.getVersions(null, 1),
 				async () =>
 					createResponse(
@@ -456,6 +458,7 @@ describe("Tests for prefetching snapshot", () => {
 			);
 
 			await mockFetchSingle(
+				// eslint-disable-next-line unicorn/no-null
 				async () => service.getVersions(null, 1, FetchSource.noCache),
 				async () =>
 					createResponse(
@@ -546,6 +549,7 @@ describe("Tests for prefetching snapshot", () => {
 			);
 
 			await mockFetchSingle(
+				// eslint-disable-next-line unicorn/no-null
 				async () => service.getVersions(null, 1, undefined),
 				async () =>
 					createResponse(
@@ -592,6 +596,7 @@ describe("Tests for prefetching snapshot", () => {
 					),
 			);
 
+			// eslint-disable-next-line unicorn/no-null
 			const version = await service.getVersions(null, 1);
 
 			assert.deepStrictEqual(version, expectedVersion, "incorrect version");
