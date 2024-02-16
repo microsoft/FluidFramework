@@ -8,10 +8,12 @@ import {
 	createOdspNetworkError,
 	throwOdspNetworkError,
 } from "@fluidframework/odsp-doclib-utils/internal";
-import { NonRetryableError } from "@fluidframework/driver-utils";
+import { NonRetryableError, type AuthorizationError } from "@fluidframework/driver-utils";
 import { OdspError, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
 import { IGenericNetworkError, DriverErrorTypes } from "@fluidframework/driver-definitions";
 import { IThrottlingWarning, FluidErrorTypes } from "@fluidframework/core-interfaces";
+import { isFluidError, type IFluidErrorBase } from "@fluidframework/telemetry-utils";
+
 import { IOdspSocketError } from "../contracts";
 import { fetchAndParseAsJSONHelper, getWithRetryForTokenRefresh } from "../odspUtils";
 import { errorObjectFromSocketError } from "../odspError";
@@ -29,6 +31,7 @@ describe("Odsp Error", () => {
 				if (name === "sprequestguid") {
 					return "xxx-xxx";
 				}
+				// eslint-disable-next-line unicorn/no-null
 				return null;
 			},
 		},
@@ -60,12 +63,12 @@ describe("Odsp Error", () => {
 		statusCode: number,
 		response?: Response,
 		responseText?: string,
-	) {
+	): IFluidErrorBase & OdspError {
 		try {
 			throwOdspNetworkError(errorMessage, statusCode, response ?? testResponse, responseText);
 			assert.fail("Not reached - throwOdspNetworkError should have thrown");
 		} catch (error) {
-			return error as OdspError;
+			return error as IFluidErrorBase & OdspError;
 		}
 	}
 
@@ -77,6 +80,7 @@ describe("Odsp Error", () => {
 				"message should contain original message",
 			);
 			assert(
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 				(networkError as any).responseType === "default",
 				"message should contain Response.type",
 			);
@@ -87,13 +91,13 @@ describe("Odsp Error", () => {
 	});
 
 	it("throwOdspNetworkError sprequestguid exists", async () => {
-		const error1: any = createOdspNetworkErrorWithResponse("some message", 400);
+		const error1 = createOdspNetworkErrorWithResponse("some message", 400);
 		const errorBag = { ...error1.getTelemetryProperties() };
 		assert.equal("xxx-xxx", errorBag.sprequestguid, "sprequestguid should be 'xxx-xxx'");
 	});
 
 	it("throwOdspNetworkError sprequestguid undefined", async () => {
-		const error1: any = createOdspNetworkError("some message", 400);
+		const error1 = createOdspNetworkError("some message", 400);
 		const errorBag = { ...error1.getTelemetryProperties() };
 		assert.equal(undefined, errorBag.sprequestguid, "sprequestguid should not be defined");
 	});
@@ -251,19 +255,21 @@ describe("Odsp Error", () => {
 				if (name === "www-authenticate") {
 					return 'Bearer realm="6c482541-f706-4168-9e58-8e35a9992f58",client_id="00000003-0000-0ff1-ce00-000000000000",trusted_issuers="00000001-0000-0000-c000-000000000000@*,D3776938-3DBA-481F-A652-4BEDFCAB7CD8@*,https://sts.windows.net/*/,00000003-0000-0ff1-ce00-000000000000@90140122-8516-11e1-8eff-49304924019b",authorization_uri="https://login.windows.net/common/oauth2/authorize",error="insufficient_claims",claims="eyJhY2Nlc3NfdG9rZW4iOnsibmJmIjp7ImVzc2VudGlhbCI6dHJ1ZSwgInZhbHVlIjoiMTU5Nzk1OTA5MCJ9fX0="';
 				}
+				// eslint-disable-next-line unicorn/no-null
 				return null;
 			},
 		},
 	} as Response;
 
-	function throwAuthorizationErrorWithInsufficientClaims(errorMessage: string) {
+	function throwAuthorizationErrorWithInsufficientClaims(errorMessage: string): void {
 		throwOdspNetworkError(errorMessage, 401, testResponseWithInsufficientClaims);
 	}
 
 	it("Authorization error with insufficient claims first-class properties", async () => {
 		try {
 			throwAuthorizationErrorWithInsufficientClaims("TestMessage");
-		} catch (error: any) {
+		} catch (error: unknown) {
+			assert(isFluidError(error), "error should be a IFluidError");
 			assert.equal(
 				error.errorType,
 				OdspErrorTypes.authorizationError,
@@ -273,9 +279,9 @@ describe("Odsp Error", () => {
 				error.message.includes("TestMessage"),
 				"message should contain original message",
 			);
-			assert.equal(error.canRetry, false, "canRetry should be false");
+			assert.equal((error as AuthorizationError).canRetry, false, "canRetry should be false");
 			assert.equal(
-				error.claims,
+				(error as AuthorizationError).claims,
 				'{"access_token":{"nbf":{"essential":true, "value":"1597959090"}}}',
 				"claims should be extracted from response",
 			);
@@ -309,19 +315,21 @@ describe("Odsp Error", () => {
 				if (name === "www-authenticate") {
 					return 'Bearer realm="6c482541-f706-4168-9e58-8e35a9992f58",client_id="00000003-0000-0ff1-ce00-000000000000",trusted_issuers="00000001-0000-0000-c000-000000000000@*,D3776938-3DBA-481F-A652-4BEDFCAB7CD8@*,https://sts.windows.net/*/,00000003-0000-0ff1-ce00-000000000000@90140122-8516-11e1-8eff-49304924019b",authorization_uri="https://login.windows.net/common/oauth2/authorize"';
 				}
+				// eslint-disable-next-line unicorn/no-null
 				return null;
 			},
 		},
 	} as Response;
 
-	function throwAuthorizationErrorWithRealm(errorMessage: string) {
+	function throwAuthorizationErrorWithRealm(errorMessage: string): void {
 		throwOdspNetworkError(errorMessage, 401, testResponseWithRealm);
 	}
 
 	it("Authorization error with realm first-class properties", async () => {
 		try {
 			throwAuthorizationErrorWithRealm("TestMessage");
-		} catch (error: any) {
+		} catch (error: unknown) {
+			assert(isFluidError(error), "error should be a IFluidError");
 			assert.strictEqual(
 				error.errorType,
 				OdspErrorTypes.authorizationError,
@@ -331,9 +339,13 @@ describe("Odsp Error", () => {
 				error.message.includes("TestMessage"),
 				"message should contain original message",
 			);
-			assert.strictEqual(error.canRetry, false, "canRetry should be false");
 			assert.strictEqual(
-				error.tenantId,
+				(error as AuthorizationError).canRetry,
+				false,
+				"canRetry should be false",
+			);
+			assert.strictEqual(
+				(error as AuthorizationError).tenantId,
 				"6c482541-f706-4168-9e58-8e35a9992f58",
 				"realm should be extracted from response",
 			);
@@ -352,7 +364,7 @@ describe("Odsp Error", () => {
 	});
 
 	it("Check Epoch Mismatch error props", async () => {
-		const error: any = createOdspNetworkErrorWithResponse("epochMismatch", 409);
+		const error = createOdspNetworkErrorWithResponse("epochMismatch", 409);
 		assert.strictEqual(
 			error.errorType,
 			OdspErrorTypes.fileOverwrittenInStorage,
@@ -376,7 +388,7 @@ describe("Odsp Error", () => {
 				"innerError": {},
 			},
 		};
-		const error: any = createOdspNetworkErrorWithResponse(
+		const error = createOdspNetworkErrorWithResponse(
 			"The site has been moved to a new location.",
 			404,
 			undefined,
@@ -385,10 +397,14 @@ describe("Odsp Error", () => {
 		assert.strictEqual(
 			error.errorType,
 			OdspErrorTypes.fileNotFoundOrAccessDeniedError,
-			"Error type should be locationRedirection",
+			"Error type should be fileNotFoundOrAccessDeniedError",
 		);
 		assert.strictEqual(error.redirectLocation, redirectLocation, "Site location should match");
-		assert.strictEqual(error.statusCode, 404, "Status code should match");
+		assert.strictEqual(
+			(error as IGenericNetworkError).statusCode,
+			404,
+			"Status code should match",
+		);
 	});
 
 	it("Sharepoint url should be redacted in the error", async () => {
@@ -401,8 +417,10 @@ describe("Odsp Error", () => {
 				),
 			);
 			assert.fail("Fetch should throw an error");
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} catch (error: any) {
 			assert(
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				(error.message as string).includes("REDACTED_URL"),
 				"sharepoint url should get redacted",
 			);
@@ -417,7 +435,9 @@ describe("Odsp Error", () => {
 				new Error("Request to http://f706-4168-9e58-8e35a9992f58.COM failed"),
 			);
 			assert.fail("Fetch should throw an error");
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} catch (error: any) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			assert((error.message as string).includes("REDACTED_URL"), "url should get redacted");
 		}
 	});
