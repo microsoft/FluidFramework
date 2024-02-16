@@ -20,6 +20,9 @@ module.exports = {
 			// Rules only for test files
 			files: ["*.spec.ts", "src/test/**"],
 			rules: {
+				// It's valuable for tests to validate handling of `null` values, regardless of our API policies.
+				"unicorn/no-null": "off",
+
 				// Fine for tests to use `__dirname`
 				"unicorn/prefer-module": "off",
 			},
