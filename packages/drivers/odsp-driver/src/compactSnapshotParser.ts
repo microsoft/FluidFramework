@@ -200,8 +200,9 @@ function readTreeSection(node: NodeCore) {
 					}
 					break;
 				}
-				default:
+				default: {
 					break;
+				}
 			}
 		}
 
@@ -228,13 +229,13 @@ function readTreeSection(node: NodeCore) {
 				records.value,
 				"Blob value should be string",
 			);
-		} else if (records.children !== undefined) {
+		} else if (records.children === undefined) {
+			trees[path] = { blobs: {}, trees: {} };
+		} else {
 			assertNodeCoreInstance(records.children, "Trees should be of type NodeCore");
 			const result = readTreeSection(records.children);
 			trees[path] = result.snapshotTree;
 			slowTreeStructureCount += result.slowTreeStructureCount;
-		} else {
-			trees[path] = { blobs: {}, trees: {} };
 		}
 	}
 	return { snapshotTree, slowTreeStructureCount };
@@ -283,11 +284,11 @@ export function parseCompactSnapshotResponse(
 	}
 
 	assert(
-		parseFloat(snapshotMinReadVersion) >= parseFloat(mrv),
+		Number.parseFloat(snapshotMinReadVersion) >= Number.parseFloat(mrv),
 		0x20f /* "Driver min read version should >= to server minReadVersion" */,
 	);
 	assert(
-		parseFloat(cv) >= parseFloat(snapshotMinReadVersion),
+		Number.parseFloat(cv) >= Number.parseFloat(snapshotMinReadVersion),
 		0x210 /* "Snapshot should be created with minReadVersion or above" */,
 	);
 	assert(
@@ -301,7 +302,7 @@ export function parseCompactSnapshotResponse(
 	return {
 		...snapshot,
 		...blobContents,
-		ops: records.deltas !== undefined ? readOpsSection(records.deltas) : [],
+		ops: records.deltas === undefined ? [] : readOpsSection(records.deltas),
 		latestSequenceNumber: records.lsn,
 		snapshotFormatV: 1,
 		telemetryProps: {

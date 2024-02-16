@@ -95,7 +95,7 @@ export async function fetchSnapshot(
 	let queryParams: ISnapshotOptions = {};
 
 	if (fetchFullSnapshot) {
-		queryParams = versionId !== "latest" ? { blobs: 2 } : { deltas: 1, blobs: 2 };
+		queryParams = versionId === "latest" ? { deltas: 1, blobs: 2 } : { blobs: 2 };
 	}
 
 	const queryString = getQueryString(queryParams);
@@ -108,7 +108,7 @@ export async function fetchSnapshot(
 		logger,
 		{
 			eventName: "fetchSnapshot",
-			headers: Object.keys(headers).length !== 0 ? true : undefined,
+			headers: Object.keys(headers).length > 0 ? true : undefined,
 		},
 		async () => snapshotDownloader(url, { headers }),
 	)) as IOdspResponse<IOdspSnapshot>;
@@ -274,11 +274,11 @@ async function fetchLatestSnapshotCore(
 			redeemFallbackEnabled: enableRedeemFallback,
 		};
 		if (snapshotOptions !== undefined) {
-			Object.entries(snapshotOptions).forEach(([key, value]) => {
+			for (const [key, value] of Object.entries(snapshotOptions)) {
 				if (value !== undefined) {
 					perfEvent[`snapshotOption_${key}`] = value;
 				}
-			});
+			}
 		}
 		// This event measures only successful cases of getLatest call (no tokens, no retries).
 		return PerformanceEvent.timedExecAsync(logger, perfEvent, async (event) => {
@@ -330,7 +330,7 @@ async function fetchLatestSnapshotCore(
 					case "application/json": {
 						let text: string;
 						[text, receiveContentTime] = await measureP(async () =>
-							odspResponse.content.text().catch((err) =>
+							odspResponse.content.text().catch((error) =>
 								// Parsing can fail and message could contain full request URI, including
 								// tokens, etc. So do not log error object itself.
 								throwOdspNetworkError(
@@ -360,7 +360,7 @@ async function fetchLatestSnapshotCore(
 					case "application/ms-fluid": {
 						let content: ArrayBuffer;
 						[content, receiveContentTime] = await measureP(async () =>
-							odspResponse.content.arrayBuffer().catch((err) =>
+							odspResponse.content.arrayBuffer().catch((error) =>
 								// Parsing can fail and message could contain full request URI, including
 								// tokens, etc. So do not log error object itself.
 								throwOdspNetworkError(
@@ -401,12 +401,13 @@ async function fetchLatestSnapshotCore(
 						parsedSnapshotContents = { ...odspResponse, content: snapshotContents };
 						break;
 					}
-					default:
+					default: {
 						throw new NonRetryableError(
 							"Unknown snapshot content type",
 							OdspErrorTypes.incorrectServerResponse,
 							propsToLog,
 						);
+					}
 				}
 			} catch (error) {
 				if (isFluidError(error)) {
@@ -480,7 +481,7 @@ async function fetchLatestSnapshotCore(
 				useLegacyFlowWithoutGroups:
 					useLegacyFlowWithoutGroupsForSnapshotFetch(loadingGroupIds),
 				userOps: snapshot.ops?.filter((op) => isRuntimeMessage(op)).length ?? 0,
-				headers: Object.keys(response.requestHeaders).length !== 0 ? true : undefined,
+				headers: Object.keys(response.requestHeaders).length > 0 ? true : undefined,
 				// Measures time to make fetch call. Should be similar to
 				// fetchStartToResponseEndTime - receiveContentTime, i.e. it looks like it's time till first byte /
 				// end of response headers
@@ -535,22 +536,23 @@ function getFormBodyAndHeaders(
 ) {
 	const formBoundary = uuid();
 	const formParams: string[] = [];
-	formParams.push(`--${formBoundary}`);
-	formParams.push(`Authorization: Bearer ${storageToken}`);
-	formParams.push(`X-HTTP-Method-Override: GET`);
+	formParams.push(
+		`--${formBoundary}`,
+		`Authorization: Bearer ${storageToken}`,
+		`X-HTTP-Method-Override: GET`,
+	);
 
 	if (headers !== undefined) {
-		Object.entries(headers).forEach(([key, value]) => {
+		for (const [key, value] of Object.entries(headers)) {
 			if (value !== undefined) {
 				formParams.push(`${key}: ${value}`);
 			}
-		});
+		}
 	}
 	if (odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem) {
 		formParams.push(`sl: ${odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem}`);
 	}
-	formParams.push(`_post: 1`);
-	formParams.push(`\r\n--${formBoundary}--`);
+	formParams.push(`_post: 1`, `\r\n--${formBoundary}--`);
 	const postBody = formParams.join("\r\n");
 	const header: { [index: string]: any } = {
 		"Content-Type": `multipart/form-data;boundary=${formBoundary}`,
@@ -558,7 +560,11 @@ function getFormBodyAndHeaders(
 	return { body: postBody, headers: header };
 }
 
-export function evalBlobsAndTrees(snapshot: ISnapshot) {
+export function evalBlobsAndTrees(snapshot: ISnapshot): {
+	trees: number;
+	numBlobs: number;
+	encodedBlobsSize: number;
+} {
 	const trees = countTreesInSnapshotTree(snapshot.snapshotTree);
 	const numBlobs = snapshot.blobContents.size;
 	let encodedBlobsSize = 0;
@@ -568,7 +574,7 @@ export function evalBlobsAndTrees(snapshot: ISnapshot) {
 	return { trees, numBlobs, encodedBlobsSize };
 }
 
-export function validateBlobsAndTrees(snapshot: IOdspSnapshot) {
+export function validateBlobsAndTrees(snapshot: IOdspSnapshot): void {
 	assert(
 		snapshot.trees !== undefined,
 		0x200 /* "Returned odsp snapshot is malformed. No trees!" */,
@@ -622,17 +628,17 @@ export async function downloadSnapshot(
 
 	const queryParams = { ump: 1 };
 	if (snapshotOptions !== undefined) {
-		Object.entries(snapshotOptions).forEach(([key, value]) => {
+		for (const [key, value] of Object.entries(snapshotOptions)) {
 			// Exclude "timeout" from query string
 			if (value !== undefined && key !== "timeout") {
 				queryParams[key] = value;
 			}
-		});
+		}
 	}
 
 	if (loadingGroupIds !== undefined) {
 		// eslint-disable-next-line @typescript-eslint/dot-notation
-		queryParams["groupId"] = Array.from(loadingGroupIds).join(",");
+		queryParams["groupId"] = [...loadingGroupIds].join(",");
 	}
 
 	const queryString = getQueryString(queryParams);
@@ -651,12 +657,14 @@ export async function downloadSnapshot(
 	};
 	// Decide what snapshot format to fetch as per the feature gate.
 	switch (snapshotFormatFetchType) {
-		case SnapshotFormatSupportType.Binary:
+		case SnapshotFormatSupportType.Binary: {
 			headers.accept = `application/ms-fluid; v=${currentReadVersion}`;
 			break;
-		default:
+		}
+		default: {
 			// By default ask both versions and let the server decide the format.
 			headers.accept = `application/json, application/ms-fluid; v=${currentReadVersion}`;
+		}
 	}
 
 	const odspResponse = await (epochTracker?.fetch(

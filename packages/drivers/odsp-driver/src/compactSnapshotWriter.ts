@@ -136,9 +136,9 @@ function writeOpsSection(rootNode: NodeCore, ops: ISequencedDocumentMessage[]) {
 		addNumberProperty(opsNode, "firstSequenceNumber", firstSequenceNumber);
 		opsNode.addDictionaryString("deltas");
 		const deltaNode = opsNode.addNode("list");
-		ops.forEach((op) => {
+		for (const op of ops) {
 			deltaNode.addString(JSON.stringify(op));
-		});
+		}
 	}
 }
 

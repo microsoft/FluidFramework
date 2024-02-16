@@ -72,10 +72,10 @@ export async function getFileLink(
 					},
 				},
 			);
-		} catch (err) {
+		} catch (error) {
 			// Delete from the cache to permit retrying later.
 			fileLinkCache.delete(cacheKey);
-			throw err;
+			throw error;
 		}
 
 		// We are guaranteed to run the getFileLinkCore at least once with successful result (which must be a string)

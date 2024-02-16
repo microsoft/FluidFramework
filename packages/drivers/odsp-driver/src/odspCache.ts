@@ -53,7 +53,7 @@ export class LocalPersistentCache implements IPersistedCache {
 
 	private removeDocIdEntriesFromCache(docId: string) {
 		this.removeExpirationEntry(docId);
-		return Array.from(this.cache)
+		return [...this.cache]
 			.filter(([cachekey]) => {
 				const docIdFromKey = cachekey.split("_");
 				if (docIdFromKey[0] === docId) {

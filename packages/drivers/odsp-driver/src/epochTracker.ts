@@ -392,9 +392,9 @@ export class EpochTracker implements IPersistedFileCache {
 		const firstLine = splitBody.shift();
 		assert(firstLine?.startsWith("--") === true, 0x21e /* "improper boundary format" */);
 		const formParams = [firstLine];
-		Object.entries(headers).forEach(([key, value]) => {
+		for (const [key, value] of Object.entries(headers)) {
 			formParams.push(`${key}: ${value}`);
-		});
+		}
 		splitBody.forEach((value: string) => {
 			formParams.push(value);
 		});
@@ -423,10 +423,8 @@ export class EpochTracker implements IPersistedFileCache {
 		if (error !== undefined) {
 			throw error;
 		}
-		if (epochFromResponse !== undefined) {
-			if (this._fluidEpoch === undefined) {
-				this.setEpoch(epochFromResponse, fromCache, fetchType);
-			}
+		if (epochFromResponse !== undefined && this._fluidEpoch === undefined) {
+			this.setEpoch(epochFromResponse, fromCache, fetchType);
 		}
 	}
 

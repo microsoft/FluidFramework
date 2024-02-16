@@ -111,7 +111,9 @@ export class OdspDelayLoadedDeltaStream {
 		return this._relayServiceTenantAndSessionId;
 	}
 
-	/** Annotate the given error indicating which connection step failed */
+	/**
+	 * Annotate the given error indicating which connection step failed
+	 */
 	private annotateConnectionError(
 		error: any,
 		failedConnectionStep: string,
@@ -241,7 +243,7 @@ export class OdspDelayLoadedDeltaStream {
 				let envelope: ISignalEnvelope | undefined;
 				try {
 					envelope = JSON.parse(signal.content as string) as ISignalEnvelope;
-				} catch (err) {}
+				} catch {}
 				if (envelope?.contents?.type === policyLabelsUpdatesSignalType) {
 					this.emitMetaDataUpdateEvent({
 						sensitivityLabelsInfo: JSON.stringify(envelope.contents.content),
@@ -327,16 +329,16 @@ export class OdspDelayLoadedDeltaStream {
 			requestSocketToken,
 			options,
 			isRefreshingJoinSession,
-		).catch((e) => {
-			if (hasFacetCodes(e) && e.facetCodes !== undefined) {
-				for (const code of e.facetCodes) {
+		).catch((error) => {
+			if (hasFacetCodes(error) && error.facetCodes !== undefined) {
+				for (const code of error.facetCodes) {
 					switch (code) {
 						case "sessionForbidden":
 						case "sessionForbiddenOnPreservedFiles":
 						case "sessionForbiddenOnModerationEnabledLibrary":
 						case "sessionForbiddenOnRequireCheckout":
 						case "sessionForbiddenOnCheckoutFile":
-						case "sessionForbiddenOnInvisibleMinorVersion":
+						case "sessionForbiddenOnInvisibleMinorVersion": {
 							// This document can only be opened in storage-only mode.
 							// DeltaManager will recognize this error
 							// and load without a delta stream connection.
@@ -346,12 +348,14 @@ export class OdspDelayLoadedDeltaStream {
 								{ driverVersion },
 								code,
 							);
-						default:
+						}
+						default: {
 							continue;
+						}
 					}
 				}
 			}
-			throw e;
+			throw error;
 		});
 		this._relayServiceTenantAndSessionId = `${response.tenantId}/${response.id}`;
 		return response;
