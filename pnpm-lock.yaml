@@ -4912,7 +4912,6 @@ importers:
       '@fluid-experimental/property-dds': workspace:~
       '@fluid-experimental/property-properties': workspace:~
       '@fluid-experimental/property-proxy': workspace:~
-      '@fluid-tools/webpack-fluid-loader': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.33.0
       '@hig/fonts': ^1.0.2
@@ -4997,7 +4996,6 @@ importers:
       '@fluid-experimental/property-dds': link:../property-dds
       '@fluid-experimental/property-properties': link:../property-properties
       '@fluid-experimental/property-proxy': link:../property-proxy
-      '@fluid-tools/webpack-fluid-loader': link:../../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.33.0_h467wi3sy6j67ifywrn7x7qf4m
       '@storybook/addon-actions': 6.5.16_sfoxds7t5ydpegc3knd667wn6m
