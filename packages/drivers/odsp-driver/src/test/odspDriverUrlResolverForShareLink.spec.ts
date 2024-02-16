@@ -60,11 +60,11 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 		driveId,
 		itemId,
 		odspResolvedUrl: true,
-	} as any as IOdspResolvedUrl;
+	} as unknown as IOdspResolvedUrl;
 
 	beforeEach(() => {
 		urlResolverWithShareLinkFetcher = new OdspDriverUrlResolverForShareLink({
-			tokenFetcher: async () => "SharingLinkToken",
+			tokenFetcher: async (): Promise<string> => "SharingLinkToken",
 			identityType: "Enterprise",
 		});
 		urlResolverWithoutShareLinkFetcher = new OdspDriverUrlResolverForShareLink();
@@ -84,7 +84,7 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 	}
 	for (const urlWithNav of urlsWithNavParams) {
 		it(`resolve - Should resolve nav link correctly, hasVersion: ${urlWithNav.hasVersion}, hasContext: ${urlWithNav.hasContext}`, async () => {
-			const runTest = async (resolver: OdspDriverUrlResolverForShareLink) => {
+			const runTest = async (resolver: OdspDriverUrlResolverForShareLink): Promise<void> => {
 				const resolvedUrl = await resolver.resolve({ url: urlWithNav.url });
 				assert.strictEqual(resolvedUrl.driveId, driveId, "Drive id should be equal");
 				assert.strictEqual(resolvedUrl.siteUrl, siteUrl, "SiteUrl should be equal");
@@ -108,7 +108,7 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 		});
 
 		it(`resolve - Should resolve odsp driver url correctly, hasVersion: ${urlWithNav.hasVersion}, hasContext: ${urlWithNav.hasContext}`, async () => {
-			const runTest = async (resolver: OdspDriverUrlResolverForShareLink) => {
+			const runTest = async (resolver: OdspDriverUrlResolverForShareLink): Promise<void> => {
 				const resolvedUrl1 = await resolver.resolve({ url: urlWithNav.url });
 				const url: string = createOdspUrl({ ...resolvedUrl1, dataStorePath });
 				const resolvedUrl2 = await resolver.resolve({ url });
@@ -193,6 +193,7 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 		await mockGetFileLink(Promise.resolve(sharelink), async () => {
 			return urlResolverWithShareLinkFetcher.resolve({ url });
 		});
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 		const actualShareLink = await urlResolverWithShareLinkFetcher["sharingLinkCache"].get(
 			`${siteUrl},${driveId},${itemId}`,
 		);
@@ -204,6 +205,7 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 		await mockGetFileLink(Promise.resolve(sharelink), async () => {
 			return urlResolverWithoutShareLinkFetcher.resolve({ url });
 		});
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 		const actualShareLink = await urlResolverWithoutShareLinkFetcher["sharingLinkCache"].get(
 			`${siteUrl},${driveId},${itemId}`,
 		);
@@ -216,6 +218,7 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 		});
 
 		assert(absoluteUrl !== undefined, "Absolute url should be defined!!");
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 		const actualShareLink = await urlResolverWithShareLinkFetcher["sharingLinkCache"].get(
 			`${siteUrl},${driveId},${itemId}`,
 		);
@@ -237,11 +240,13 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 				);
 			},
 		).catch((error) => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			assert.strictEqual(error.message, "No Sharelink", "Error should be as expected.");
 			success = false;
 		});
 
 		assert(absoluteUrl === undefined, "Absolute url should be undefined!!");
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 		const actualShareLink = await urlResolverWithShareLinkFetcher["sharingLinkCache"].get(
 			`${siteUrl},${driveId},${itemId}`,
 		);
@@ -261,6 +266,7 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 		});
 
 		assert(absoluteUrl === undefined, "Absolute url should be undefined!!");
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 		const actualShareLink = await urlResolverWithShareLinkFetcher["sharingLinkCache"].get(
 			`${siteUrl},${driveId},${itemId}`,
 		);
@@ -269,7 +275,7 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 	});
 
 	it("Should resolve createNew request", async () => {
-		const runTest = async (resolver: OdspDriverUrlResolverForShareLink) => {
+		const runTest = async (resolver: OdspDriverUrlResolverForShareLink): Promise<void> => {
 			const request: IRequest = createOdspCreateContainerRequest(
 				siteUrl,
 				driveId,
@@ -332,7 +338,10 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 		assert.strictEqual(locator?.dataStorePath, dataStorePath, "DataStore path should be equal");
 		assert.strictEqual(locator?.siteUrl, siteUrl, "SiteUrl should be equal");
 		assert.strictEqual(locator?.context, contextStringified, "Context should be equal");
-		const parsedContext = JSON.parse(locator?.context);
+		const parsedContext = JSON.parse(locator?.context) as Record<
+			string | number | symbol,
+			unknown
+		>;
 		assert.deepStrictEqual(parsedContext, contextObject, "Context should be de-serializable");
 	});
 
