@@ -208,7 +208,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	}
 
 	private setBoundAndHandleAttach() {
-		// Ensure didAttach is only call once, and we only registers a single event
+		// Ensure didAttach is only called once, and we only register a single event
 		// but we still call setConnectionState as our existing mocks don't
 		// always propagate connection state
 		this.setBoundAndHandleAttach = () => this.setConnectionState(this.runtime.connected);
