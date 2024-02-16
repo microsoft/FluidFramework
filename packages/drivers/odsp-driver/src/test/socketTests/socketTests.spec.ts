@@ -257,16 +257,14 @@ describe("OdspDocumentDeltaConnection tests", () => {
 				socketReferenceKeyPrefix,
 			),
 		);
-		let disconnectedEvent = false;
 		const errorToThrow = { message: "OdspSocketError", code: 400 };
-		let errorReceived;
+		let errorReceived: IAnyDriverError | undefined;
 		connection.on("disconnect", (reason: IAnyDriverError) => {
-			disconnectedEvent = true;
 			errorReceived = reason;
 		});
 		socket.sendServerDisconnectEvent(errorToThrow, connection.clientId);
 
-		assert(disconnectedEvent, "disconnect event should happen");
+		assert(errorReceived !== undefined, "disconnect event should happen");
 		assert(
 			errorReceived.message.includes("server_disconnect"),
 			"should container server disconnect event",
@@ -294,16 +292,14 @@ describe("OdspDocumentDeltaConnection tests", () => {
 				socketReferenceKeyPrefix,
 			),
 		);
-		let disconnectedEvent = false;
-		let errorReceived;
+		let errorReceived: IAnyDriverError | undefined;
 		const errorToThrow = { message: "OdspSocketError", code: 400 };
 		connection.on("disconnect", (reason: IAnyDriverError) => {
-			disconnectedEvent = true;
 			errorReceived = reason;
 		});
 		socket.sendServerDisconnectEvent(errorToThrow);
 
-		assert(disconnectedEvent, "disconnect event should happen");
+		assert(errorReceived !== undefined, "disconnect event should happen");
 		assert(
 			errorReceived.message.includes("server_disconnect"),
 			"should container server disconnect event",
@@ -328,24 +324,24 @@ describe("OdspDocumentDeltaConnection tests", () => {
 				socketReferenceKeyPrefix,
 			),
 		);
-		let disconnectedEvent = false;
-		let errorReceived;
+		let errorReceived: IAnyDriverError | undefined;
 		const errorToThrow = createOdspNetworkError("TestSocketError", 400);
 		const details = { context: { code: 400, type: "badError" } };
 		connection.on("disconnect", (reason: IAnyDriverError) => {
-			disconnectedEvent = true;
 			errorReceived = reason;
 		});
 		socket.sendDisconnectEvent(errorToThrow, details);
 
-		assert(disconnectedEvent, "disconnect event should happen");
+		assert(errorReceived !== undefined, "disconnect event should happen");
 		assert(
 			errorReceived.message.includes("socket.io (disconnect): TestSocketError"),
 			"should container disconnect event",
 		);
 		assert(errorReceived.errorType, OdspErrorTypes.genericNetworkError);
-		assert(errorReceived.socketErrorType === details.context.type);
-		assert(errorReceived.socketCode === details.context.code);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+		assert((errorReceived as any).socketErrorType === details.context.type);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+		assert((errorReceived as any).socketCode === details.context.code);
 		assert(socket !== undefined && !socket.connected, "socket should be closed");
 		checkListenerCount(socket);
 	});
@@ -365,15 +361,14 @@ describe("OdspDocumentDeltaConnection tests", () => {
 				socketReferenceKeyPrefix,
 			),
 		);
-		let disconnectedEvent = false;
-		let errorReceived;
+
+		let errorReceived: IAnyDriverError | undefined;
 		const errorToThrow = createOdspNetworkError("TestSocketError", 400);
 		connection.on("disconnect", (reason: IAnyDriverError) => {
-			disconnectedEvent = true;
 			errorReceived = reason;
 		});
 		socket.sendErrorEvent(errorToThrow);
-		assert(disconnectedEvent, "disconnect event should happen");
+		assert(errorReceived !== undefined, "disconnect event should happen");
 		assert(
 			errorReceived.message.includes("socket.io (error): TestSocketError"),
 			"should container disconnect event",
