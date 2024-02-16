@@ -107,13 +107,13 @@ export const codeToBytesMap = {
 	36: 8,
 };
 
-export function getValueSafely(map: { [index: number]: number }, key: number) {
+export function getValueSafely(map: { [index: number]: number }, key: number): number {
 	const val = map[key];
 	assert(val !== undefined, 0x287 /* key must exist in the map */);
 	return val;
 }
 
-export function getNodeProps(node: NodeCore) {
+export function getNodeProps(node: NodeCore): Record<string, NodeTypes> {
 	const res: Record<string, NodeTypes> = {};
 	for (const [keyNode, valueNode] of node.iteratePairs()) {
 		const id = getStringInstance(keyNode, "keynode should be a string");
@@ -122,7 +122,7 @@ export function getNodeProps(node: NodeCore) {
 	return res;
 }
 
-export function iteratePairs<T>(it: IterableIterator<T>) {
+export function iteratePairs<T>(it: IterableIterator<T>): IterableIterator<[T, T]> {
 	const res: IterableIterator<[T, T]> = {
 		next: () => {
 			const a = it.next();
@@ -144,7 +144,9 @@ export function iteratePairs<T>(it: IterableIterator<T>) {
  * Helper function that returns iterator from an object
  * @param obj - object that supports iteration
  */
-export function iterate<T>(obj: { [Symbol.iterator]: () => IterableIterator<T> }) {
+export function iterate<T>(obj: {
+	[Symbol.iterator]: () => IterableIterator<T>;
+}): IterableIterator<T> {
 	return obj[Symbol.iterator]();
 }
 
@@ -177,7 +179,7 @@ class BlobDeepCopy extends BlobCore {
 		super();
 	}
 
-	public get buffer() {
+	public get buffer(): Uint8Array {
 		return this.data;
 	}
 
@@ -214,7 +216,7 @@ export class BlobShallowCopy extends BlobCore {
 		super();
 	}
 
-	public get buffer() {
+	public get buffer(): Uint8Array {
 		return this.data.subarray(this.start, this.end);
 	}
 
@@ -232,19 +234,19 @@ export class BlobShallowCopy extends BlobCore {
 	}
 }
 
-export const addStringProperty = (node: NodeCore, a: string, b: string) => {
+export const addStringProperty = (node: NodeCore, a: string, b: string): void => {
 	node.addDictionaryString(a);
 	node.addString(b);
 };
-export const addDictionaryStringProperty = (node: NodeCore, a: string, b: string) => {
+export const addDictionaryStringProperty = (node: NodeCore, a: string, b: string): void => {
 	node.addDictionaryString(a);
 	node.addString(b);
 };
-export const addNumberProperty = (node: NodeCore, a: string, b: number) => {
+export const addNumberProperty = (node: NodeCore, a: string, b: number): void => {
 	node.addDictionaryString(a);
 	node.addNumber(b);
 };
-export const addBoolProperty = (node: NodeCore, a: string, b: boolean) => {
+export const addBoolProperty = (node: NodeCore, a: string, b: boolean): void => {
 	node.addDictionaryString(a);
 	node.addBool(b);
 };
@@ -278,26 +280,26 @@ export type NodeCoreTypes = "list" | "set";
 export class NodeCore {
 	// It is an array of nodes.
 	private readonly children: NodeTypes[] = [];
-	public get nodes() {
+	public get nodes(): NodeTypes[] {
 		return this.children;
 	}
 
 	constructor(public type: NodeCoreTypes = "set") {}
 
-	public [Symbol.iterator]() {
+	public [Symbol.iterator](): IterableIterator<NodeTypes> {
 		return this.children[Symbol.iterator]();
 	}
 
-	public iteratePairs() {
+	public iteratePairs(): IterableIterator<[NodeTypes, NodeTypes]> {
 		assert(this.length % 2 === 0, 0x22c /* "reading pairs" */);
 		return iteratePairs(iterate(this));
 	}
 
-	public get length() {
+	public get length(): number {
 		return this.children.length;
 	}
 
-	public get(index: number) {
+	public get(index: number): NodeTypes {
 		return this.children[index];
 	}
 
@@ -306,7 +308,7 @@ export class NodeCore {
 		return getStringInstance(node, "getString should return string");
 	}
 
-	public getMaybeString(index: number) {
+	public getMaybeString(index: number): string | undefined {
 		const node = this.children[index];
 		return getMaybeStringInstance(node);
 	}
@@ -341,11 +343,11 @@ export class NodeCore {
 		return node;
 	}
 
-	public addBlob(blob: Uint8Array) {
+	public addBlob(blob: Uint8Array): void {
 		this.children.push(new BlobDeepCopy(blob));
 	}
 
-	public addDictionaryString(payload: string) {
+	public addDictionaryString(payload: string): void {
 		this.children.push({
 			content: payload,
 			dictionary: true,
@@ -353,7 +355,7 @@ export class NodeCore {
 		});
 	}
 
-	public addString(payload: string) {
+	public addString(payload: string): void {
 		this.children.push({
 			content: payload,
 			dictionary: false,
@@ -361,18 +363,22 @@ export class NodeCore {
 		});
 	}
 
-	public addNumber(payload: number | undefined) {
+	public addNumber(payload: number | undefined): void {
 		assert(Number.isInteger(payload), 0x231 /* "Number should be an integer" */);
 		assert(payload !== undefined && payload >= 0, 0x232 /* "Payload should not be negative" */);
 		this.children.push(payload);
 	}
 
-	public addBool(payload: boolean) {
+	public addBool(payload: boolean): void {
 		this.children.push(payload);
 	}
 
 	// Can we do more efficiently here, without extra objects somehow??
-	private static readString(buffer: ReadBuffer, code: number, dictionary: boolean) {
+	private static readString(
+		buffer: ReadBuffer,
+		code: number,
+		dictionary: boolean,
+	): IStringElementInternal & IStringElement {
 		const lengthLen = getValueSafely(codeToBytesMap, code);
 		const length = buffer.read(lengthLen);
 		const startPos = buffer.pos;
@@ -396,7 +402,13 @@ export class NodeCore {
 	 * Load and parse the buffer into a tree.
 	 * @param buffer - buffer to read from.
 	 */
-	protected load(buffer: ReadBuffer, logger: ITelemetryLoggerExt) {
+	protected load(
+		buffer: ReadBuffer,
+		logger: ITelemetryLoggerExt,
+	): {
+		durationStructure: number;
+		durationStrings: number;
+	} {
 		const [stringsToResolve, durationStructure] = measure(() =>
 			this.loadStructure(buffer, logger),
 		);
@@ -410,7 +422,10 @@ export class NodeCore {
 	 * Load and parse the buffer into a tree.
 	 * @param buffer - buffer to read from.
 	 */
-	protected loadStructure(buffer: ReadBuffer, logger: ITelemetryLoggerExt) {
+	protected loadStructure(
+		buffer: ReadBuffer,
+		logger: ITelemetryLoggerExt,
+	): IStringElementInternal[] {
 		const stack: NodeTypes[][] = [];
 		const stringsToResolve: IStringElementInternal[] = [];
 		const dictionary: IStringElement[] = [];
@@ -479,14 +494,16 @@ export class NodeCore {
 					children.push(buffer.read(getValueSafely(codeToBytesMap, code)));
 					continue;
 				}
-				case MarkerCodes.BoolTrue:
+				case MarkerCodes.BoolTrue: {
 					children.push(true);
 					continue;
-				case MarkerCodes.BoolFalse:
+				}
+				case MarkerCodes.BoolFalse: {
 					children.push(false);
 					continue;
+				}
 				case MarkerCodesEnd.list:
-				case MarkerCodesEnd.set:
+				case MarkerCodesEnd.set: {
 					// Note: We are not checking that end marker matches start marker.
 					// I.e. that we do not have a case where we start a 'list' but end with a 'set'
 					// Checking it would require more state tracking that seems not very useful, given
@@ -497,8 +514,10 @@ export class NodeCore {
 					// We will rely on children.push() crashing in case of mismatch, and check below
 					// (outside of the loop)
 					continue;
-				default:
+				}
+				default: {
 					throw new Error(`Invalid code: ${code}`);
+				}
 			}
 		}
 
@@ -512,7 +531,7 @@ export class NodeCore {
 		buffer: ReadBuffer,
 		stringsToResolve: IStringElementInternal[],
 		logger: ITelemetryLoggerExt,
-	) {
+	): void {
 		/**
 		 * Process all the strings at once!
 		 */
@@ -562,7 +581,16 @@ export class NodeCore {
  * Provides loading and serialization capabilities.
  */
 export class TreeBuilder extends NodeCore {
-	static load(buffer: ReadBuffer, logger: ITelemetryLoggerExt) {
+	static load(
+		buffer: ReadBuffer,
+		logger: ITelemetryLoggerExt,
+	): {
+		builder: TreeBuilder;
+		telemetryProps: {
+			durationStructure: number;
+			durationStrings: number;
+		};
+	} {
 		const builder = new TreeBuilder();
 		const telemetryProps = builder.load(buffer, logger);
 		assert(buffer.eof, 0x233 /* "Unexpected data at the end of buffer" */);
