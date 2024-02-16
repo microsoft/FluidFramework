@@ -160,7 +160,7 @@ export class OpsCache {
 						}
 					}
 					messages.push(op);
-				} else if (messages.length !== 0) {
+				} else if (messages.length > 0) {
 					// If there is any gap, return the messages till now.
 					return messages;
 				}

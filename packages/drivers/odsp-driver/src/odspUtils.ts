@@ -47,7 +47,9 @@ import { ISnapshotContents } from "./odspPublicUtils";
 
 export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRepeat";
 
-/** Parse the given url and return the origin (host name) */
+/**
+ * Parse the given url and return the origin (host name)
+ */
 export const getOrigin = (url: string) => new URL(url).origin;
 
 /**
@@ -61,7 +63,9 @@ export interface IOdspResponse<T> {
 }
 
 export interface TokenFetchOptionsEx extends TokenFetchOptions {
-	/** previous error we hit in getWithRetryForTokenRefresh */
+	/**
+	 * previous error we hit in getWithRetryForTokenRefresh
+	 */
 	previousError?: any;
 }
 
@@ -210,7 +214,7 @@ export async function fetchArray(
 	let arrayBuffer: ArrayBuffer;
 	try {
 		arrayBuffer = await content.arrayBuffer();
-	} catch (e) {
+	} catch {
 		// Parsing can fail and message could contain full request URI, including
 		// tokens, etc. So do not log error object itself.
 		throwOdspNetworkError(
@@ -244,7 +248,7 @@ export async function fetchAndParseAsJSONHelper<T>(
 	let text: string | undefined;
 	try {
 		text = await content.text();
-	} catch (e) {
+	} catch {
 		// JSON.parse() can fail and message would container full request URI, including
 		// tokens... It fails for me with "Unexpected end of JSON input" quite often - an attempt to download big file
 		// (many ops) almost always ends up with this error - I'd guess 1% of op request end up here... It always
