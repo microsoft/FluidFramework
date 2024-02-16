@@ -79,10 +79,12 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 
 	private async populateGroupId(tree: ISnapshotTreeEx): Promise<void> {
 		const groupIdBlobId = tree.blobs[".groupId"];
-		const groupIdBuffer = await this.readBlob(groupIdBlobId);
-		const groupId = bufferToString(groupIdBuffer, "utf8");
-		tree.groupId = groupId;
-		delete tree.blobs[".groupId"];
+		if (groupIdBlobId !== undefined) {
+			const groupIdBuffer = await this.readBlob(groupIdBlobId);
+			const groupId = bufferToString(groupIdBuffer, "utf8");
+			tree.groupId = groupId;
+			delete tree.blobs[".groupId"];
+		}
 		await Promise.all(
 			Object.values(tree.trees).map(async (childTree) => {
 				await this.populateGroupId(childTree);
