@@ -165,9 +165,9 @@ class MochaMemoryTestReporter {
 							"------------------------------------------------------",
 							`\n${chalk.red("ERRORS:")}`,
 						);
-						failedTests.forEach(([testName, testData]) => {
+						for (const [testName, testData] of failedTests) {
 							console.log(`\n${chalk.red(testName)}`, "\n", testData.error);
-						});
+						}
 					}
 					this.writeCompletedBenchmarks(suiteName);
 					this.inProgressSuites.delete(suiteName);

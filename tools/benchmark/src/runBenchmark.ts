@@ -213,7 +213,7 @@ class BenchmarkState<T> implements BenchmarkTimer<T> {
 		}
 
 		const stats = getArrayStatistics(this.samples);
-		if (stats.marginOfErrorPercent < 1.0) {
+		if (stats.marginOfErrorPercent < 1) {
 			// Already below 1% margin of error.
 			// Note that this margin of error computation doesn't account for low frequency noise (noise spanning a time scale longer than this test so far)
 			// which can be caused by many factors like CPU frequency changes due to limited boost time or thermals.
@@ -222,7 +222,7 @@ class BenchmarkState<T> implements BenchmarkTimer<T> {
 		}
 
 		// Exit if way too many samples to avoid out of memory.
-		if (this.samples.length > 1000000) {
+		if (this.samples.length > 1_000_000) {
 			// Test failed to converge after many samples.
 			// TODO: produce some warning or error state in this case (and probably the case for hitting max time as well).
 			return false;
