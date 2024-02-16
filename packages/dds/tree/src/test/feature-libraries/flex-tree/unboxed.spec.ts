@@ -15,11 +15,11 @@ import {
 } from "../../../core/index.js";
 import { SchemaBuilder, leaf, leaf as leafDomain } from "../../../domains/index.js";
 import {
-	AllowedTypes,
+	FlexAllowedTypes,
 	Any,
-	FieldKind,
+	FlexFieldKind,
 	FieldKinds,
-	TreeFieldSchema,
+	FlexFieldSchema,
 } from "../../../feature-libraries/index.js";
 import { Context } from "../../../feature-libraries/flex-tree/context.js";
 import {
@@ -47,7 +47,7 @@ function initializeCursor(context: Context, anchor: FieldAnchor): ITreeSubscript
  *
  * @returns The initialized context and cursor.
  */
-function initializeTreeWithContent<Kind extends FieldKind, Types extends AllowedTypes>(
+function initializeTreeWithContent<Kind extends FlexFieldKind, Types extends FlexAllowedTypes>(
 	treeContent: TreeContent,
 ): {
 	context: Context;
@@ -95,7 +95,7 @@ describe("unboxedField", () => {
 		const builder = new SchemaBuilder({ scope: "test" });
 		const objectSchema = builder.objectRecursive("object", {
 			name: SchemaBuilder.required(leafDomain.string),
-			child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => objectSchema]),
+			child: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => objectSchema]),
 		});
 		const fieldSchema = SchemaBuilder.optional(objectSchema);
 		const schema = builder.intoSchema(fieldSchema);
@@ -191,7 +191,7 @@ describe("unboxedTree", () => {
 		const builder = new SchemaBuilder({ scope: "test" });
 		const objectSchema = builder.objectRecursive("object", {
 			name: SchemaBuilder.required(leafDomain.string),
-			child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => objectSchema]),
+			child: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => objectSchema]),
 		});
 		const rootSchema = builder.optional(objectSchema);
 		const schema = builder.intoSchema(rootSchema);

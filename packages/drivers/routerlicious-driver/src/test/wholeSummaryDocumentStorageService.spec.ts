@@ -97,10 +97,12 @@ const expectedSummary: ISummaryTree = {
 							tree: {},
 							type: 1,
 							unreferenced: undefined,
+							groupId: undefined,
 						},
 					},
 					type: 1,
 					unreferenced: undefined,
+					groupId: undefined,
 				},
 				".metadata": {
 					content:
@@ -110,6 +112,7 @@ const expectedSummary: ISummaryTree = {
 			},
 			type: 1,
 			unreferenced: undefined,
+			groupId: undefined,
 		},
 		".protocol": {
 			tree: {
@@ -125,10 +128,12 @@ const expectedSummary: ISummaryTree = {
 			},
 			type: 1,
 			unreferenced: undefined,
+			groupId: undefined,
 		},
 	},
 	type: 1,
 	unreferenced: undefined,
+	groupId: undefined,
 };
 
 class MockGitManager {

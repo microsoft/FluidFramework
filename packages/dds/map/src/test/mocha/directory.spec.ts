@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
+import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { UsageError } from "@fluidframework/telemetry-utils";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
@@ -67,7 +68,7 @@ describe("Directory", () => {
 		let directory: SharedDirectory;
 		let dataStoreRuntime: MockFluidDataStoreRuntime;
 
-		beforeEach(async () => {
+		beforeEach("createDirectory", async () => {
 			dataStoreRuntime = new MockFluidDataStoreRuntime();
 			dataStoreRuntime.local = true;
 			directory = new SharedDirectory(
@@ -176,7 +177,9 @@ describe("Directory", () => {
 					);
 					containedValueChangedExpected = false;
 
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 					assert.equal(changed.key, "dwayne");
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 					assert.equal(changed.previousValue, previousValue);
 
 					assert.equal(
@@ -392,6 +395,7 @@ describe("Directory", () => {
 					directory.set(undefined as unknown as string, "testValue");
 				}, "Should throw for key of undefined");
 				assert.throws(() => {
+					// eslint-disable-next-line unicorn/no-null
 					directory.set(null as unknown as string, "testValue");
 				}, "Should throw for key of null");
 			});
@@ -401,6 +405,7 @@ describe("Directory", () => {
 					directory.createSubDirectory(undefined as unknown as string);
 				}, "Should throw for undefined subDirectory name");
 				assert.throws(() => {
+					// eslint-disable-next-line unicorn/no-null
 					directory.createSubDirectory(null as unknown as string);
 				}, "Should throw for null subDirectory name");
 			});
@@ -928,7 +933,7 @@ describe("Directory", () => {
 		let directory1: SharedDirectory;
 		let directory2: SharedDirectory;
 
-		beforeEach(async () => {
+		beforeEach("createDirectory", async () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
 			// Create the first directory1.
 			directory1 = createConnectedDirectory("directory1", containerRuntimeFactory);
@@ -1800,11 +1805,15 @@ describe("Directory", () => {
 				assert(fooSubDir);
 				const fooSubDirIterator = fooSubDir.entries();
 				const fooSubDirResult1 = fooSubDirIterator.next();
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.equal(fooSubDirResult1.value[0], "testKey");
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.equal(fooSubDirResult1.value[1], "testValue");
 				assert.equal(fooSubDirResult1.done, false);
 				const fooSubDirResult2 = fooSubDirIterator.next();
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.equal(fooSubDirResult2.value[0], "testKey2");
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.equal(fooSubDirResult2.value[1], "testValue2");
 				assert.equal(fooSubDirResult2.done, false);
 				const fooSubDirResult3 = fooSubDirIterator.next();
@@ -1826,11 +1835,15 @@ describe("Directory", () => {
 				assert(fooSubDir2);
 				const fooSubDir2Iterator = fooSubDir2.entries();
 				const fooSubDir2Result1 = fooSubDir2Iterator.next();
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.equal(fooSubDir2Result1.value[0], "testKey");
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.equal(fooSubDir2Result1.value[1], "testValue");
 				assert.equal(fooSubDir2Result1.done, false);
 				const fooSubDir2Result2 = fooSubDir2Iterator.next();
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.equal(fooSubDir2Result2.value[0], "testKey2");
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.equal(fooSubDir2Result2.value[1], "testValue2");
 				assert.equal(fooSubDir2Result2.done, false);
 				const fooSubDir2Result3 = fooSubDir2Iterator.next();
@@ -1963,7 +1976,7 @@ describe("Directory", () => {
 
 				const subMapId = `subMap-${this.subMapCount}`;
 
-				const deletedHandle = fooDirectory.get(subMapId);
+				const deletedHandle = fooDirectory.get(subMapId) as IFluidHandle;
 				assert(deletedHandle, "Route must be added before deleting");
 
 				fooDirectory.delete(subMapId);

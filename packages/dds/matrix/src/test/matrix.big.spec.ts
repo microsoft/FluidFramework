@@ -57,7 +57,7 @@ async function summarize<T>(matrix: SharedMatrix<T>) {
 			let dataStoreRuntime1: MockFluidDataStoreRuntime;
 			let containerRuntimeFactory: MockContainerRuntimeFactory;
 
-			beforeEach(async () => {
+			beforeEach("createMatrices", async () => {
 				containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 				// Create and connect the first SharedMatrix.
@@ -208,7 +208,7 @@ async function summarize<T>(matrix: SharedMatrix<T>) {
 
 			let matrix: SharedMatrix;
 
-			beforeEach(async () => {
+			beforeEach("createMatrix", async () => {
 				// Create a SharedMatrix in local state.
 				const dataStoreRuntime = new MockFluidDataStoreRuntime();
 				dataStoreRuntime.local = true;

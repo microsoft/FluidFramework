@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { OdspClientProps, OdspConnectionConfig } from "@fluid-experimental/odsp-client";
-import { OdspTestTokenProvider } from "./tokenProvider";
+import { OdspTestTokenProvider } from "./tokenProvider.js";
 
 export interface OdspTestCredentials {
 	siteUrl: string;

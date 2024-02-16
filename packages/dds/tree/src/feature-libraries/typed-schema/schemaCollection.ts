@@ -9,14 +9,14 @@ import { fail, requireAssignableTo } from "../../util/index.js";
 import { defaultSchemaPolicy, FieldKinds } from "../default-schema/index.js";
 import { Multiplicity } from "../multiplicity.js";
 import {
-	TreeFieldSchema,
+	FlexFieldSchema,
 	FlexTreeNodeSchema,
 	allowedTypesIsAny,
 	SchemaCollection,
-	MapNodeSchema,
+	FlexMapNodeSchema,
 	LeafNodeSchema,
-	FieldNodeSchema,
-	ObjectNodeSchema,
+	FlexFieldNodeSchema,
+	FlexObjectNodeSchema,
 } from "./typedTreeSchema.js";
 import { normalizeFlexListEager } from "./flexList.js";
 import { Sourced } from "./view.js";
@@ -78,7 +78,7 @@ export function aggregateSchemaLibraries(
 	name: string,
 	lintConfiguration: SchemaLintConfiguration,
 	libraries: Iterable<SchemaLibraryData>,
-	rootFieldSchema?: TreeFieldSchema,
+	rootFieldSchema?: FlexFieldSchema,
 ): SchemaLibraryData {
 	const nodeSchema: Map<TreeNodeSchemaIdentifier, FlexTreeNodeSchema> = new Map();
 	const adapters: SourcedAdapters = { tree: [] };
@@ -145,7 +145,7 @@ export function aggregateSchemaLibraries(
 export function validateSchemaCollection(
 	lintConfiguration: SchemaLintConfiguration,
 	collection: SchemaCollection,
-	rootFieldSchema?: TreeFieldSchema,
+	rootFieldSchema?: FlexFieldSchema,
 ): string[] {
 	const errors: string[] = [];
 
@@ -159,7 +159,7 @@ export function validateSchemaCollection(
 		validateRootField(lintConfiguration, collection, rootFieldSchema, errors);
 	}
 	for (const [identifier, tree] of collection.nodeSchema) {
-		if (tree instanceof MapNodeSchema) {
+		if (tree instanceof FlexMapNodeSchema) {
 			validateField(
 				lintConfiguration,
 				collection,
@@ -174,11 +174,11 @@ export function validateSchemaCollection(
 			}
 		} else if (tree instanceof LeafNodeSchema) {
 			// No validation for now.
-		} else if (tree instanceof FieldNodeSchema) {
+		} else if (tree instanceof FlexFieldNodeSchema) {
 			const description = () =>
 				`Field node field of "${identifier}" schema from library "${tree.builder.name}"`;
 			validateField(lintConfiguration, collection, tree.info, description, errors);
-		} else if (tree instanceof ObjectNodeSchema) {
+		} else if (tree instanceof FlexObjectNodeSchema) {
 			for (const [key, field] of tree.objectNodeFields) {
 				const description = () =>
 					`Object node field "${key}" of "${identifier}" schema from library "${tree.builder.name}"`;
@@ -197,7 +197,7 @@ export function validateSchemaCollection(
 export function validateRootField(
 	lintConfiguration: SchemaLintConfiguration,
 	collection: SchemaCollection,
-	field: TreeFieldSchema,
+	field: FlexFieldSchema,
 	errors: string[],
 ): void {
 	const describeField = () => `Root field schema`;
@@ -207,7 +207,7 @@ export function validateRootField(
 export function validateField(
 	lintConfiguration: SchemaLintConfiguration,
 	collection: SchemaCollection,
-	field: TreeFieldSchema,
+	field: FlexFieldSchema,
 	describeField: () => string,
 	errors: string[],
 ): void {

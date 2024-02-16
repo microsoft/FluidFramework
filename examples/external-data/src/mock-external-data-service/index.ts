@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { ExternalDataSource } from "./externalDataSource";
-export { initializeExternalDataService } from "./service";
-export { MockWebhook } from "./webhook";
+export { ExternalDataSource } from "./externalDataSource.js";
+export { initializeExternalDataService } from "./service.js";
+export { MockWebhook } from "./webhook.js";

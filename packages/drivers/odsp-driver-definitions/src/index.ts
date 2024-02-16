@@ -25,7 +25,6 @@ export {
 	ISharingLink,
 	ISharingLinkKind,
 	ShareLinkInfoType,
-	ShareLinkTypes,
 	SharingLinkRole,
 	SharingLinkScope,
 } from "./resolvedUrl";

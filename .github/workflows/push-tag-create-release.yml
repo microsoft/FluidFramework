@@ -13,6 +13,9 @@ on:
     tags:
       - "*_v*"
 
+permissions:
+  contents: write
+
 jobs:
   create-release:
     name: Create GitHub release

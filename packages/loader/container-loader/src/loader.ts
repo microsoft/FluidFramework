@@ -108,7 +108,7 @@ export interface IFluidModuleWithDetails {
 }
 
 /**
- * @deprecated ICodeDetailsLoader interface is moved to {@link @fluidframework/container-definition#ICodeDetailsLoader}
+ * @deprecated ICodeDetailsLoader interface is moved to {@link @fluidframework/container-definitions#ICodeDetailsLoader}
  * to have code loading modules in one package. #8193
  * Fluid code loader resolves a code module matching the document schema, i.e. code details, such as
  * a package name and package version range.

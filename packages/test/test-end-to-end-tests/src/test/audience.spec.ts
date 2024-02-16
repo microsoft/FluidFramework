@@ -5,8 +5,8 @@
 
 import { strict as assert } from "assert";
 import {
+	ITestContainerConfig,
 	ITestObjectProvider,
-	createContainerRuntimeFactoryWithDefaultDataStore,
 	getContainerEntryPointBackCompat,
 	timeoutPromise,
 	waitForContainerConnection,
@@ -22,29 +22,17 @@ describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, api
 	}
 
 	let provider: ITestObjectProvider;
-	const dataObjectFactory = new apis.dataRuntime.DataObjectFactory(
-		"TestDataObject",
-		TestDataObject,
-		[],
-		[],
-	);
-	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
-		apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore,
-		{
-			defaultFactory: dataObjectFactory,
-			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-			// Disable summaries so the summarizer client doesn't interfere with the audience
-			runtimeOptions: {
-				summaryOptions: {
-					summaryConfigOverrides: { state: "disabled" },
-				},
+	const testContainerConfig: ITestContainerConfig = {
+		runtimeOptions: {
+			summaryOptions: {
+				summaryConfigOverrides: { state: "disabled" },
 			},
 		},
-	);
-
+	};
 	const createContainer = async (): Promise<IContainer> =>
-		provider.createContainer(runtimeFactory);
-	const loadContainer = async (): Promise<IContainer> => provider.loadContainer(runtimeFactory);
+		provider.makeTestContainer(testContainerConfig);
+	const loadContainer = async (): Promise<IContainer> =>
+		provider.loadTestContainer(testContainerConfig);
 
 	/** Function to wait for a client with the given clientId to be added to the audience of the given container. */
 	async function waitForClientAdd(container: IContainer, clientId: string, errorMsg: string) {
@@ -90,7 +78,7 @@ describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, api
 		}
 	}
 
-	beforeEach(async () => {
+	beforeEach("getTestObjectProvider", async () => {
 		provider = getTestObjectProvider();
 	});
 
@@ -140,7 +128,7 @@ describeCompat("Audience correctness", "FullCompat", (getTestObjectProvider, api
 		);
 	});
 
-	it("should add clients in audience as expected in write mode", async () => {
+	it("should add clients in audience as expected in write mode", async function () {
 		// Create a client - client1.
 		const client1Container = await createContainer();
 		const client1DataStore =

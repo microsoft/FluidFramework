@@ -13,7 +13,7 @@ export { LoaderContainerTracker } from "./loaderContainerTracker";
 export { fluidEntryPoint, LocalCodeLoader, SupportedExportInterfaces } from "./localCodeLoader";
 export { createAndAttachContainer, createLoader } from "./localLoader";
 export { retryWithEventualValue } from "./retry";
-export { mockConfigProvider } from "./TestConfigs";
+export { createTestConfigProvider, ITestConfigProvider } from "./TestConfigs";
 export {
 	createTestContainerRuntimeFactory,
 	TestContainerRuntimeFactory,

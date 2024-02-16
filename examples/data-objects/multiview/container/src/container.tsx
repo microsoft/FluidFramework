@@ -5,19 +5,19 @@
 
 import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { MountableView } from "@fluidframework/view-adapters";
 import { Constellation } from "@fluid-example/multiview-constellation-model";
 import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
 import { Coordinate } from "@fluid-example/multiview-coordinate-model";
 import {
-	IFluidMountableViewEntryPoint,
 	getDataStoreEntryPoint,
+	IFluidMountableViewEntryPoint,
+	MountableView,
 } from "@fluid-example/example-utils";
 import { FluidObject } from "@fluidframework/core-interfaces";
 
 import * as React from "react";
 
-import { DefaultView } from "./defaultView";
+import { DefaultView } from "./defaultView.js";
 
 // eslint-disable-next-line import/no-unassigned-import
 import "./style.css";

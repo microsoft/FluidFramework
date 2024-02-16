@@ -9,7 +9,7 @@
 // If reporter configuration is deduplicated, then validation of it in every package can be removed, then support for TypeScript config files can be added,
 // then the config ported to TypeScript and expect-error can be removed.
 // @ts-expect-error This is implicitly typed as any due to above issue.
-import { globals } from "../jest.config";
+import { globals } from "../jest.config.cjs";
 
 describe("Bubblebench", () => {
 	/**
@@ -33,7 +33,7 @@ describe("Bubblebench", () => {
 
 		it("The page loads and displays current FPS", async () => {
 			// Validate there is a button that can be clicked
-			await expect(page).toMatch("FPS", { timeout: 0 });
+			await expect(page).toMatchTextContent("FPS", { timeout: 0 });
 		}, 20000);
 	});
 });

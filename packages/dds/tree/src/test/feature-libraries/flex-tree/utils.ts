@@ -9,8 +9,8 @@ import {
 	FlexTreeSchema,
 	createMockNodeKeyManager,
 	nodeKeyFieldKey,
-	AllowedTypes,
-	FieldKind,
+	FlexAllowedTypes,
+	FlexFieldKind,
 } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { Context, getTreeContext } from "../../../feature-libraries/flex-tree/context.js";
@@ -65,7 +65,7 @@ export const rootFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: rootF
  *
  * @returns The initialized context and cursor.
  */
-export function readonlyTreeWithContent<Kind extends FieldKind, Types extends AllowedTypes>(
+export function readonlyTreeWithContent<Kind extends FlexFieldKind, Types extends FlexAllowedTypes>(
 	treeContent: TreeContent,
 ): {
 	context: Context;

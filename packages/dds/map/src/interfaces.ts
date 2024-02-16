@@ -36,9 +36,9 @@ export interface IValueChanged {
  * @remarks When used as a Map, operates on its keys.
  * @alpha
  */
-// TODO: Use `unknown` instead (breaking change).
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface IDirectory
+	// TODO: Use `unknown` instead (breaking change).
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	extends Map<string, any>,
 		IEventProvider<IDirectoryEvents>,
 		Partial<IDisposable> {

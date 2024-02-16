@@ -15,7 +15,7 @@ import {
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { SharedString } from "@fluidframework/sequence";
+import type { SharedString } from "@fluidframework/sequence";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree";
 import { FlushMode } from "@fluidframework/runtime-definitions";
@@ -25,7 +25,7 @@ describeCompat(
 	"Concurrent op processing via DDS event handlers",
 	"NoCompat",
 	(getTestObjectProvider, apis) => {
-		const { SharedMap, SharedDirectory } = apis.dds;
+		const { SharedMap, SharedDirectory, SharedString } = apis.dds;
 		const mapId = "mapKey";
 		const sharedStringId = "sharedStringKey";
 		const sharedDirectoryId = "sharedDirectoryKey";
@@ -57,7 +57,7 @@ describeCompat(
 		const mapsAreEqual = (a: SharedMap, b: SharedMap) =>
 			a.size === b.size && [...a.entries()].every(([key, value]) => b.get(key) === value);
 
-		beforeEach(async () => {
+		beforeEach("getTestObjectProvider", async () => {
 			provider = getTestObjectProvider();
 		});
 

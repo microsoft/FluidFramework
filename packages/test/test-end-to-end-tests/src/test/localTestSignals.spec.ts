@@ -35,7 +35,7 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 	let dataObject1: ITestFluidObject;
 	let dataObject2: ITestFluidObject;
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		provider = getTestObjectProvider();
 		const container1 = await provider.makeTestContainer(testContainerConfig);
 		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);

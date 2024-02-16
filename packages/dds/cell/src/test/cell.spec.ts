@@ -67,7 +67,7 @@ describe("Cell", () => {
 		 */
 		let cell: ISharedCell;
 
-		beforeEach(() => {
+		beforeEach("createDetachedCell", () => {
 			cell = createDetachedCell("cell");
 		});
 
@@ -212,7 +212,7 @@ describe("Cell", () => {
 		let containerRuntimeFactory: MockContainerRuntimeFactory;
 
 		describe("APIs", () => {
-			beforeEach(() => {
+			beforeEach("createConnectedCells", () => {
 				containerRuntimeFactory = new MockContainerRuntimeFactory();
 				// Connect the first SharedCell.
 				cell1 = createConnectedCell("cell1", containerRuntimeFactory);
@@ -296,7 +296,7 @@ describe("Cell", () => {
 		});
 
 		describe("Attributor", () => {
-			beforeEach(() => {
+			beforeEach("createConnectedCells", () => {
 				const options: ICellOptions = { attribution: { track: true } };
 				containerRuntimeFactory = new MockContainerRuntimeFactory();
 				// Connect the first SharedCell with attribution enabled.
@@ -418,7 +418,7 @@ describe("Cell", () => {
 		let cell1: ISharedCell;
 		let cell2: ISharedCell;
 
-		beforeEach(() => {
+		beforeEach("createCellsForReconnection", () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
 			// Connect the first SharedCell.

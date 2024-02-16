@@ -4,10 +4,9 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { RevisionTag, TaggedChange } from "../../core/index.js";
-import { IdAllocator } from "../../util/index.js";
+import { RevisionTag } from "../../core/index.js";
 import { Mark } from "./types.js";
-import { applyMoveEffectsToMark, MoveEffectTable } from "./moveEffectTable.js";
+import { splitMarkForMoveEffects, MoveEffectTable } from "./moveEffectTable.js";
 import { splitMark } from "./utils.js";
 
 export class MarkQueue<T> {
@@ -18,9 +17,6 @@ export class MarkQueue<T> {
 		private readonly list: readonly Mark<T>[],
 		public readonly revision: RevisionTag | undefined,
 		private readonly moveEffects: MoveEffectTable<T>,
-		private readonly consumeEffects: boolean,
-		private readonly genId: IdAllocator,
-		private readonly composeChanges?: (a: T | undefined, b: TaggedChange<T>) => T | undefined,
 	) {
 		this.list = list;
 	}
@@ -36,37 +32,21 @@ export class MarkQueue<T> {
 	}
 
 	public tryDequeue(): Mark<T> | undefined {
-		if (this.stack.length > 0) {
-			return this.stack.pop();
-		} else if (this.index < this.list.length) {
-			const mark = this.list[this.index++];
-			if (mark === undefined) {
-				return undefined;
-			}
-
-			const splitMarks = applyMoveEffectsToMark(
-				mark,
-				this.revision,
-				this.moveEffects,
-				this.consumeEffects,
-				this.composeChanges,
-			);
-
-			if (splitMarks.length === 0) {
-				return undefined;
-			}
-
-			const result = splitMarks[0];
-			for (let i = splitMarks.length - 1; i > 0; i--) {
-				this.stack.push(splitMarks[i]);
-			}
-			return result;
+		const mark = this.stack.length > 0 ? this.stack.pop() : this.list[this.index++];
+		if (mark === undefined) {
+			return undefined;
 		}
+
+		const splitMarks = splitMarkForMoveEffects(mark, this.revision, this.moveEffects);
+		for (let i = splitMarks.length - 1; i > 0; i--) {
+			this.stack.push(splitMarks[i]);
+		}
+		return splitMarks[0];
 	}
 
 	/**
-	 * Dequeues the first `length` sized portion of the next mark.
-	 * The caller must verify that the next mark (as returned by peek) is longer than this length.
+	 * Dequeues the first `length` sized portion of the next mark,
+	 * or the entire next mark if `length` is longer than the mark's length.
 	 * @param length - The length to dequeue, measured in the input context.
 	 */
 	public dequeueUpTo(length: number): Mark<T> {

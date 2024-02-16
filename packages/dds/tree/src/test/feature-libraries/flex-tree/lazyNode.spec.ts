@@ -21,8 +21,8 @@ import {
 	Any,
 	FlexTreeField,
 	FlexTreeNode,
-	FieldKind,
-	AllowedTypes,
+	FlexFieldKind,
+	FlexAllowedTypes,
 	typeNameSymbol,
 	FlexTreeNodeSchema,
 	createMockNodeKeyManager,
@@ -86,7 +86,7 @@ function initializeCursor(context: Context, anchor: FieldAnchor): ITreeSubscript
  *
  * @returns The initialized context and cursor.
  */
-function initializeTreeWithContent<Kind extends FieldKind, Types extends AllowedTypes>(
+function initializeTreeWithContent<Kind extends FlexFieldKind, Types extends FlexAllowedTypes>(
 	treeContent: TreeContent,
 ): {
 	context: Context;

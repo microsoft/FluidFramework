@@ -6,16 +6,16 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	FlexTreeSchema,
-	TreeFieldSchema as FlexTreeFieldSchema,
-	FieldKind as FlexFieldKind,
+	FlexFieldSchema,
+	FlexFieldKind,
 	FieldKinds,
-	AllowedTypes as FlexAllowedTypes,
-	TreeNodeSchemaBase as FlexTreeNodeSchemaBase,
+	FlexAllowedTypes,
+	TreeNodeSchemaBase,
 	FlexTreeNodeSchema,
 	defaultSchemaPolicy,
-	MapNodeSchema as FlexMapNodeSchema,
-	FieldNodeSchema as FlexFieldNodeSchema,
-	ObjectNodeSchema as FlexObjectNodeSchema,
+	FlexMapNodeSchema,
+	FlexFieldNodeSchema,
+	FlexObjectNodeSchema,
 	schemaIsLeaf,
 } from "../feature-libraries/index.js";
 import { brand, fail, isReadonlyArray, mapIterable } from "../util/index.js";
@@ -128,10 +128,7 @@ export function getFlexSchema(root: TreeNodeSchema): FlexTreeNodeSchema {
 /**
  * Normalizes an {@link ImplicitFieldSchema} into a {@link TreeFieldSchema}.
  */
-export function convertField(
-	schemaMap: SchemaMap,
-	schema: ImplicitFieldSchema,
-): FlexTreeFieldSchema {
+export function convertField(schemaMap: SchemaMap, schema: ImplicitFieldSchema): FlexFieldSchema {
 	let kind: FlexFieldKind;
 	let types: ImplicitAllowedTypes;
 	if (schema instanceof FieldSchema) {
@@ -142,7 +139,7 @@ export function convertField(
 		types = schema;
 	}
 	const allowedTypes = convertAllowedTypes(schemaMap, types);
-	return FlexTreeFieldSchema.create(kind, allowedTypes);
+	return FlexFieldSchema.create(kind, allowedTypes);
 }
 
 const convertFieldKind = new Map<FieldKind, FlexFieldKind>([
@@ -203,7 +200,7 @@ export function convertNodeSchema(
 			}
 			case NodeKind.Map: {
 				const fieldInfo = schema.info as ImplicitAllowedTypes;
-				const field = FlexTreeFieldSchema.create(
+				const field = FlexFieldSchema.create(
 					FieldKinds.optional,
 					convertAllowedTypes(schemaMap, fieldInfo),
 				);
@@ -214,7 +211,7 @@ export function convertNodeSchema(
 			}
 			case NodeKind.Array: {
 				const fieldInfo = schema.info as ImplicitAllowedTypes;
-				const field = FlexTreeFieldSchema.create(
+				const field = FlexFieldSchema.create(
 					FieldKinds.sequence,
 					convertAllowedTypes(schemaMap, fieldInfo),
 				);
@@ -225,7 +222,7 @@ export function convertNodeSchema(
 			}
 			case NodeKind.Object: {
 				const info = schema.info as Record<string, ImplicitFieldSchema>;
-				const fields: Record<string, FlexTreeFieldSchema> = Object.create(null);
+				const fields: Record<string, FlexFieldSchema> = Object.create(null);
 				for (const [key, value] of Object.entries(info)) {
 					// This code has to be careful to avoid assigning to __proto__ or similar built-in fields.
 					Object.defineProperty(fields, key, {
@@ -244,7 +241,7 @@ export function convertNodeSchema(
 			default:
 				unreachableCase(kind);
 		}
-		assert(out instanceof FlexTreeNodeSchemaBase, 0x841 /* invalid schema produced */);
+		assert(out instanceof TreeNodeSchemaBase, 0x841 /* invalid schema produced */);
 		{
 			const cached = cachedFlexSchemaFromClassSchema(schema);
 			if (cached !== undefined) {
@@ -271,13 +268,13 @@ export const flexSchemaSymbol: unique symbol = Symbol(`flexSchema`);
 
 export function cachedFlexSchemaFromClassSchema(
 	schema: TreeNodeSchema,
-): FlexTreeNodeSchemaBase | undefined {
-	return (schema as any)[flexSchemaSymbol] as FlexTreeNodeSchemaBase | undefined;
+): TreeNodeSchemaBase | undefined {
+	return (schema as any)[flexSchemaSymbol] as TreeNodeSchemaBase | undefined;
 }
 
 export function setFlexSchemaFromClassSchema(
 	simple: TreeNodeSchema,
-	flex: FlexTreeNodeSchemaBase,
+	flex: TreeNodeSchemaBase,
 ): void {
 	(simple as any)[flexSchemaSymbol] = flex;
 }

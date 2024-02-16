@@ -8,12 +8,12 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { AttachState, IContainer } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 
-import { parseStringDataVersionTwo, readVersion } from "../dataTransform";
+import { parseStringDataVersionTwo, readVersion } from "../dataTransform.js";
 import type {
 	IInventoryListAppModel,
 	IInventoryListAppModelEvents,
 	IInventoryList,
-} from "../modelInterfaces";
+} from "../modelInterfaces.js";
 
 // This type represents a stronger expectation than just any string - it needs to be in the right format.
 export type InventoryListAppModelExportFormat2 = string;

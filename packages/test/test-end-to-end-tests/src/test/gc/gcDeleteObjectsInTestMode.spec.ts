@@ -201,7 +201,7 @@ describeCompat("GC delete objects in test mode", "FullCompat", (getTestObjectPro
 		let containerRuntime: ContainerRuntime;
 		let mainDataStore: ITestDataObject;
 
-		beforeEach(async function () {
+		beforeEach("setup", async function () {
 			provider = getTestObjectProvider({ syncSummarizer: true });
 			if (provider.driver.type !== "local") {
 				this.skip();
@@ -385,7 +385,7 @@ describeCompat("GC delete attachment blobs in test mode", "NoCompat", (getTestOb
 		let containerRuntime: ContainerRuntime;
 		let mainDataStore: ITestDataObject;
 
-		beforeEach(async function () {
+		beforeEach("setup", async function () {
 			provider = getTestObjectProvider({ syncSummarizer: true });
 			if (provider.driver.type !== "local") {
 				this.skip();

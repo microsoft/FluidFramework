@@ -23,18 +23,18 @@ import {
 } from "../../core/index.js";
 import { brand, capitalize, disposeSymbol, fail, getOrCreate } from "../../util/index.js";
 import {
-	TreeFieldSchema,
+	FlexFieldSchema,
 	FlexTreeNodeSchema,
-	MapNodeSchema,
+	FlexMapNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
 	schemaIsObjectNode,
-	FieldNodeSchema,
+	FlexFieldNodeSchema,
 	LeafNodeSchema,
-	ObjectNodeSchema,
+	FlexObjectNodeSchema,
 	Any,
-	AllowedTypes,
+	FlexAllowedTypes,
 } from "../typed-schema/index.js";
 import { FieldKinds } from "../default-schema/index.js";
 import { LocalNodeKey } from "../node-key/index.js";
@@ -223,7 +223,7 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 
 		cursor.exitNode();
 		assert(key === cursor.getFieldKey(), 0x787 /* mismatched keys */);
-		let fieldSchema: TreeFieldSchema;
+		let fieldSchema: FlexFieldSchema;
 
 		// Check if the current node is in a detached sequence.
 		if (this.#anchorNode.parent === undefined) {
@@ -245,7 +245,7 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 				// Additionally this approach makes it possible for a user to take an EditableTree node, get its parent, check its schema, down cast based on that, then edit that detached field (ex: removing the node in it).
 				// This MIGHT work properly with existing merge resolution logic (it must keep client in sync and be unable to violate schema), but this either needs robust testing or to be explicitly banned (error before s3ending the op).
 				// Issues like replacing a node in the a removed sequenced then undoing the remove could easily violate schema if not everything works exactly right!
-				fieldSchema = TreeFieldSchema.create(FieldKinds.sequence, [Any]);
+				fieldSchema = FlexFieldSchema.create(FieldKinds.sequence, [Any]);
 			}
 		} else {
 			cursor.exitField();
@@ -358,7 +358,7 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 	}
 }
 
-export class LazyMap<TSchema extends MapNodeSchema>
+export class LazyMap<TSchema extends FlexMapNodeSchema>
 	extends LazyTreeNode<TSchema>
 	implements FlexTreeMapNode<TSchema>
 {
@@ -443,7 +443,7 @@ export class LazyMap<TSchema extends MapNodeSchema>
 		const fieldSchema = this.schema.info;
 
 		if (fieldSchema.kind === FieldKinds.optional) {
-			const optionalField = field as FlexTreeOptionalField<AllowedTypes>;
+			const optionalField = field as FlexTreeOptionalField<FlexAllowedTypes>;
 			optionalField.content = content;
 		} else {
 			assert(fieldSchema.kind === FieldKinds.sequence, 0x807 /* Unexpected map field kind */);
@@ -490,7 +490,7 @@ export class LazyLeaf<TSchema extends LeafNodeSchema>
 	}
 }
 
-export class LazyFieldNode<TSchema extends FieldNodeSchema>
+export class LazyFieldNode<TSchema extends FlexFieldNodeSchema>
 	extends LazyTreeNode<TSchema>
 	implements FlexTreeFieldNode<TSchema>
 {
@@ -529,7 +529,7 @@ export function propertyNameFromFieldKey<T extends string>(key: T): PropertyName
 	return key as PropertyNameFromFieldKey<T>;
 }
 
-export abstract class LazyObjectNode<TSchema extends ObjectNodeSchema>
+export abstract class LazyObjectNode<TSchema extends FlexObjectNodeSchema>
 	extends LazyTreeNode<TSchema>
 	implements FlexTreeObjectNode
 {
@@ -548,7 +548,7 @@ export abstract class LazyObjectNode<TSchema extends ObjectNodeSchema>
 		assert(field instanceof LazyNodeKeyField, 0x7b4 /* unexpected node key field */);
 		// TODO: ideally we would do something like this, but that adds dependencies we can't have here:
 		// assert(
-		// 	field.is(TreeFieldSchema.create(FieldKinds.nodeKey, [nodeKeyTreeSchema])),
+		// 	field.is(FlexFieldSchema.create(FieldKinds.nodeKey, [nodeKeyTreeSchema])),
 		// 	"invalid node key field",
 		// );
 
@@ -560,7 +560,7 @@ export abstract class LazyObjectNode<TSchema extends ObjectNodeSchema>
 	}
 }
 
-export function buildLazyObjectNode<TSchema extends ObjectNodeSchema>(
+export function buildLazyObjectNode<TSchema extends FlexObjectNodeSchema>(
 	context: Context,
 	schema: TSchema,
 	cursor: ITreeSubscriptionCursor,
@@ -575,26 +575,26 @@ export function buildLazyObjectNode<TSchema extends ObjectNodeSchema>(
 }
 
 const cachedStructClasses = new WeakMap<
-	ObjectNodeSchema,
+	FlexObjectNodeSchema,
 	new (
 		context: Context,
 		cursor: ITreeSubscriptionCursor,
 		anchorNode: AnchorNode,
 		anchor: Anchor,
-	) => LazyObjectNode<ObjectNodeSchema>
+	) => LazyObjectNode<FlexObjectNodeSchema>
 >();
 
 export function getBoxedField(
 	objectNode: LazyTreeNode,
 	key: FieldKey,
-	fieldSchema: TreeFieldSchema,
+	fieldSchema: FlexFieldSchema,
 ): FlexTreeField {
 	return inCursorField(objectNode[cursorSymbol], key, (cursor) => {
 		return makeField(objectNode.context, fieldSchema, cursor);
 	});
 }
 
-function buildStructClass<TSchema extends ObjectNodeSchema>(
+function buildStructClass<TSchema extends FlexObjectNodeSchema>(
 	schema: TSchema,
 ): new (
 	context: Context,
@@ -606,18 +606,18 @@ function buildStructClass<TSchema extends ObjectNodeSchema>(
 
 	for (const [key, fieldSchema] of schema.objectNodeFields) {
 		const escapedKey = propertyNameFromFieldKey(key);
-		let setter: ((newContent: FlexibleNodeContent<AllowedTypes>) => void) | undefined;
+		let setter: ((newContent: FlexibleNodeContent<FlexAllowedTypes>) => void) | undefined;
 		switch (fieldSchema.kind) {
 			case FieldKinds.optional: {
 				setter = function (
 					this: CustomStruct,
-					newContent: FlexibleNodeContent<AllowedTypes> | undefined,
+					newContent: FlexibleNodeContent<FlexAllowedTypes> | undefined,
 				): void {
 					const field = getBoxedField(
 						this,
 						key,
 						fieldSchema,
-					) as FlexTreeOptionalField<AllowedTypes>;
+					) as FlexTreeOptionalField<FlexAllowedTypes>;
 					field.content = newContent;
 				};
 				break;
@@ -625,13 +625,13 @@ function buildStructClass<TSchema extends ObjectNodeSchema>(
 			case FieldKinds.required: {
 				setter = function (
 					this: CustomStruct,
-					newContent: FlexibleNodeContent<AllowedTypes>,
+					newContent: FlexibleNodeContent<FlexAllowedTypes>,
 				): void {
 					const field = getBoxedField(
 						this,
 						key,
 						fieldSchema,
-					) as FlexTreeRequiredField<AllowedTypes>;
+					) as FlexTreeRequiredField<FlexAllowedTypes>;
 					field.content = newContent;
 				};
 				break;

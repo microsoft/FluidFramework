@@ -7,16 +7,16 @@ import { assert } from "@fluidframework/core-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { brand, fail, isReadonlyArray } from "../util/index.js";
 import {
-	AllowedTypes,
-	TreeFieldSchema,
-	ObjectNodeSchema,
+	FlexAllowedTypes,
+	FlexFieldSchema,
+	FlexObjectNodeSchema,
 	FlexTreeNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
 	schemaIsObjectNode,
-	MapNodeSchema,
-	FieldNodeSchema,
+	FlexMapNodeSchema,
+	FlexFieldNodeSchema,
 	FieldKinds,
 	FlexTreeFieldNode,
 	FlexTreeMapNode,
@@ -54,7 +54,7 @@ export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | u
 	switch (field.schema.kind) {
 		case FieldKinds.required: {
 			const asValue = field as FlexTreeTypedField<
-				TreeFieldSchema<typeof FieldKinds.required>
+				FlexFieldSchema<typeof FieldKinds.required>
 			>;
 
 			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
@@ -64,7 +64,7 @@ export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | u
 		}
 		case FieldKinds.optional: {
 			const asValue = field as FlexTreeTypedField<
-				TreeFieldSchema<typeof FieldKinds.optional>
+				FlexFieldSchema<typeof FieldKinds.optional>
 			>;
 
 			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
@@ -165,7 +165,7 @@ export function createNodeProxy(
  * @param customTargetObject - Target object of the proxy.
  * If not provided `{}` is used for the target.
  */
-export function createObjectProxy<TSchema extends ObjectNodeSchema>(
+export function createObjectProxy<TSchema extends FlexObjectNodeSchema>(
 	schema: TSchema,
 	allowAdditionalProperties: boolean,
 	targetObject: object = {},
@@ -192,7 +192,7 @@ export function createObjectProxy<TSchema extends ObjectNodeSchema>(
 		set(target, key, value: InsertableContent) {
 			const flexNode = getFlexNode(proxy);
 			const flexNodeSchema = flexNode.schema;
-			assert(flexNodeSchema instanceof ObjectNodeSchema, 0x888 /* invalid schema */);
+			assert(flexNodeSchema instanceof FlexObjectNodeSchema, 0x888 /* invalid schema */);
 			const fieldSchema = flexNodeSchema.objectNodeFields.get(key as FieldKey);
 
 			if (fieldSchema === undefined) {
@@ -208,8 +208,8 @@ export function createObjectProxy<TSchema extends ObjectNodeSchema>(
 				case FieldKinds.required:
 				case FieldKinds.optional: {
 					const typedField = field as
-						| FlexTreeRequiredField<AllowedTypes>
-						| FlexTreeOptionalField<AllowedTypes>;
+						| FlexTreeRequiredField<FlexAllowedTypes>
+						| FlexTreeOptionalField<FlexAllowedTypes>;
 
 					const { content, hydrateProxies } = extractFactoryContent(value);
 					const cursor = cursorFromNodeData(
@@ -270,7 +270,7 @@ export function createObjectProxy<TSchema extends ObjectNodeSchema>(
 /**
  * Given a array node proxy, returns its underlying LazySequence field.
  */
-export const getSequenceField = <TTypes extends AllowedTypes>(arrayNode: TreeArrayNode) =>
+export const getSequenceField = <TTypes extends FlexAllowedTypes>(arrayNode: TreeArrayNode) =>
 	getFlexNode(arrayNode).content as FlexTreeSequenceField<TTypes>;
 
 // Used by 'insert*()' APIs to converts new content (expressed as a proxy union) to contextually
@@ -813,16 +813,16 @@ export function createRawNodeProxy(
 	// Shallow copy the content and then add the type name symbol to it.
 	let flexNode: RawTreeNode<FlexTreeNodeSchema, InsertableTypedNode<TreeNodeSchemaClass>>;
 	let proxy: TreeNode;
-	if (schema instanceof ObjectNodeSchema) {
+	if (schema instanceof FlexObjectNodeSchema) {
 		const contentCopy = copyContent(schema.name, content);
 		flexNode = createRawNode(schema, contentCopy);
 		proxy = createObjectProxy(schema, allowAdditionalProperties, target);
-	} else if (schema instanceof FieldNodeSchema) {
+	} else if (schema instanceof FlexFieldNodeSchema) {
 		// simple-tree uses field nodes exclusively to represent array nodes
 		const contentCopy = copyContent(schema.name, content);
 		flexNode = createRawNode(schema, contentCopy);
 		proxy = createArrayNodeProxy(allowAdditionalProperties, target);
-	} else if (schema instanceof MapNodeSchema) {
+	} else if (schema instanceof FlexMapNodeSchema) {
 		const contentCopy = copyContent(schema.name, content);
 		flexNode = createRawNode(schema, contentCopy);
 		proxy = createMapProxy(allowAdditionalProperties, target);
@@ -981,7 +981,7 @@ function extractContentArray(
 			hydrators.forEach(([i, hydrate]) =>
 				hydrate(
 					getArrayNodeChildNode(
-						flexNode as FlexTreeFieldNode<FieldNodeSchema>,
+						flexNode as FlexTreeFieldNode<FlexFieldNodeSchema>,
 						insertedAtIndex + i,
 					),
 				),
@@ -1013,7 +1013,7 @@ function extractContentMap(input: ReadonlyMap<string, FactoryContent>): Extracte
 			);
 			assert(schemaIsMap(flexNode.schema), 0x7f9 /* Expected map node when hydrating map */);
 			hydrators.forEach(([key, hydrate]) =>
-				hydrate(getMapChildNode(flexNode as FlexTreeMapNode<MapNodeSchema>, key)),
+				hydrate(getMapChildNode(flexNode as FlexTreeMapNode<FlexMapNodeSchema>, key)),
 			);
 		},
 	};
@@ -1079,7 +1079,7 @@ export type FactoryContent =
 export type InsertableContent = Unhydrated<TreeNode> | FactoryContent;
 
 function getArrayNodeChildNode(
-	arrayNode: FlexTreeFieldNode<FieldNodeSchema>,
+	arrayNode: FlexTreeFieldNode<FlexFieldNodeSchema>,
 	index: number,
 ): FlexTreeNode | undefined {
 	const field = arrayNode.tryGetField(EmptyKey);
@@ -1087,11 +1087,11 @@ function getArrayNodeChildNode(
 		field?.schema.kind === FieldKinds.sequence,
 		0x7fc /* Expected sequence field when hydrating array node */,
 	);
-	return (field as FlexTreeSequenceField<AllowedTypes>).boxedAt(index);
+	return (field as FlexTreeSequenceField<FlexAllowedTypes>).boxedAt(index);
 }
 
 function getMapChildNode(
-	mapNode: FlexTreeMapNode<MapNodeSchema>,
+	mapNode: FlexTreeMapNode<FlexMapNodeSchema>,
 	key: string,
 ): FlexTreeNode | undefined {
 	const field = mapNode.getBoxed(key);
@@ -1099,7 +1099,7 @@ function getMapChildNode(
 		field.schema.kind === FieldKinds.optional,
 		0x7fd /* Sequence field kind is unsupported as map values */,
 	);
-	return (field as FlexTreeOptionalField<AllowedTypes>).boxedContent;
+	return (field as FlexTreeOptionalField<FlexAllowedTypes>).boxedContent;
 }
 
 function getObjectChildNode(objectNode: FlexTreeObjectNode, key: string): FlexTreeNode | undefined {
@@ -1109,8 +1109,9 @@ function getObjectChildNode(objectNode: FlexTreeObjectNode, key: string): FlexTr
 		field.schema.kind === FieldKinds.required || field.schema.kind === FieldKinds.optional,
 		0x7fe /* Expected required or optional field kind */,
 	);
-	return (field as FlexTreeRequiredField<AllowedTypes> | FlexTreeOptionalField<AllowedTypes>)
-		.boxedContent;
+	return (
+		field as FlexTreeRequiredField<FlexAllowedTypes> | FlexTreeOptionalField<FlexAllowedTypes>
+	).boxedContent;
 }
 
 /**

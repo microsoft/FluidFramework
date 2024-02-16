@@ -109,7 +109,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 	};
 
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 
@@ -195,7 +195,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		let dataObject2BatchMessages: ISequencedDocumentMessage[] = [];
 
 		function testFlushingUsingOrderSequentially(options: IContainerRuntimeOptions) {
-			beforeEach(async () => {
+			beforeEach("setupBatchMessageListeners", async () => {
 				await setupContainers(options);
 				setupBatchMessageListener(dataObject1, dataObject1BatchMessages);
 				setupBatchMessageListener(dataObject2, dataObject2BatchMessages);
@@ -361,7 +361,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		});
 
 		describe("TurnBased flushing of batches", () => {
-			beforeEach(async () => {
+			beforeEach("setupBatchMessageListeners", async () => {
 				await setupContainers({ flushMode: FlushMode.TurnBased });
 				setupBatchMessageListener(dataObject1, dataObject1BatchMessages);
 				setupBatchMessageListener(dataObject2, dataObject2BatchMessages);
@@ -473,7 +473,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		});
 
 		describe("TurnBased flushing of batches with compression", () => {
-			beforeEach(async () => {
+			beforeEach("setupBatchMessageListeners", async () => {
 				await setupContainers({
 					flushMode: FlushMode.TurnBased,
 					compressionOptions: {
@@ -592,7 +592,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		});
 
 		describe("Immediate flushing of ops", () => {
-			beforeEach(async () => {
+			beforeEach("setupBatchMessageListeners", async () => {
 				await setupContainers({ flushMode: FlushMode.Immediate });
 				setupBatchMessageListener(dataObject1, dataObject1BatchMessages);
 				setupBatchMessageListener(dataObject2, dataObject2BatchMessages);
@@ -622,7 +622,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		});
 
 		describe("Immediate flushing of ops with compression", () => {
-			beforeEach(async () => {
+			beforeEach("setupBatchMessageListeners", async () => {
 				await setupContainers({
 					flushMode: FlushMode.Immediate,
 					compressionOptions: {
@@ -671,7 +671,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		}
 
 		function testAutomaticFlushingUsingOrderSequentially(options: IContainerRuntimeOptions) {
-			beforeEach(async () => {
+			beforeEach("setupContainers", async () => {
 				await setupContainers(options);
 			});
 
@@ -770,7 +770,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		});
 
 		describe("TurnBased flushing of batches", () => {
-			beforeEach(async () => {
+			beforeEach("setupContainers", async () => {
 				await setupContainers({ flushMode: FlushMode.TurnBased });
 			});
 

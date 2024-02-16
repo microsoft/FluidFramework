@@ -6,6 +6,8 @@
 import assert from "assert";
 import { v4 as uuid } from "uuid";
 import { SinonSpiedInstance, restore, spy } from "sinon";
+import { Provider } from "nconf";
+import IoRedisMock from "ioredis-mock";
 import { IWholeFlatSummary, LatestSummaryId } from "@fluidframework/server-services-client";
 import { ISummaryTestMode } from "./utils";
 import {
@@ -15,8 +17,11 @@ import {
 	IRepositoryManager,
 	IsomorphicGitManagerFactory,
 	MemFsManagerFactory,
+	RedisFsManagerFactory,
 } from "../utils";
 import { NullExternalStorageManager } from "../externalStorageManager";
+import { ISummaryWriteFeatureFlags } from "../utils/wholeSummary";
+import { RedisFs } from "../utils/redisFs/redisFsManager";
 import {
 	sampleChannelSummaryUpload,
 	sampleContainerSummaryUpload,
@@ -30,7 +35,6 @@ import {
 	checkFullStorageAccessBaselinePerformance,
 	checkInitialWriteStorageAccessBaselinePerformance,
 } from "./storageAccess";
-import { ISummaryWriteFeatureFlags } from "../utils/wholeSummary";
 import {
 	ElaborateFirstChannelPayload,
 	ElaborateFirstChannelResult,
@@ -104,36 +108,81 @@ const testModes = permuteFlags({
 	enableSlimGitInit: false,
 }) as unknown as ISummaryTestMode[];
 
+type GitFileSystem = "memfs" | "redisfs" | "hashmap-redisfs";
+
 const getFsManagerFactory = (
-	fileSystem: string,
+	fileSystem: GitFileSystem,
 ): {
 	fsManagerFactory: IFileSystemManagerFactory;
 	getFsSpy: () => SinonSpiedInstance<IFileSystemPromises>;
-	fsCleanup: () => void;
-	fsCheckSizeBytes: () => number;
+	fsCleanup: () => Promise<void>;
+	fsCheckSizeBytes: () => Promise<number>;
 } => {
 	if (fileSystem === "memfs") {
 		const memfsManagerFactory = new MemFsManagerFactory();
 		return {
 			fsManagerFactory: memfsManagerFactory,
 			getFsSpy: () => spy(memfsManagerFactory.volume as unknown as IFileSystemPromises),
-			fsCheckSizeBytes: () =>
+			fsCheckSizeBytes: async () =>
 				JSON.stringify(Object.values(memfsManagerFactory.volume.toJSON()).join()).length,
-			fsCleanup: () => {
+			fsCleanup: async () => {
 				memfsManagerFactory.volume.reset();
+			},
+		};
+	}
+	if (fileSystem === "redisfs" || fileSystem === "hashmap-redisfs") {
+		const redisConfig = new Provider({}).use("memory").defaults({
+			git: {
+				enableRedisFsMetrics: false,
+				enableHashmapRedisFs: fileSystem === "hashmap-redisfs",
+				redisApiMetricsSamplingPeriod: 0,
+			},
+			redis: {
+				host: "localhost",
+				port: 6379,
+				connectTimeout: 10000,
+				maxRetriesPerRequest: 20,
+				enableAutoPipelining: false,
+				enableOfflineQueue: true,
+				keyExpireAfterSeconds: 60 * 60, // 1 hour
+			},
+		});
+		const redisfsManagerFactory = new RedisFsManagerFactory(
+			redisConfig,
+			(options) => new IoRedisMock(options),
+		);
+		// Internally, this will create a new RedisFs instance that is shared across all `create` calls.
+		const redisFsManager = redisfsManagerFactory.create();
+		// This is the RedisFs instance that is shared across all `create` calls. It is a static instance.
+		const redisFs = redisFsManager.promises;
+		return {
+			fsManagerFactory: redisfsManagerFactory,
+			getFsSpy: () => spy(redisFs),
+			fsCheckSizeBytes: async () => {
+				const redisClient = (redisFs as RedisFs).redisFsClient;
+				const keys = await redisClient.keysByPrefix("");
+				const getPs: Promise<unknown>[] = [];
+				for (const key of keys) {
+					getPs.push(redisClient.get(key).then((value) => JSON.stringify(value)));
+				}
+				return JSON.stringify((await Promise.all(getPs)).join()).length;
+			},
+			fsCleanup: async () => {
+				const redisClient = (redisFs as RedisFs).redisFsClient;
+				await redisClient.delAll("");
 			},
 		};
 	}
 	throw new Error(`Unknown file system ${fileSystem}`);
 };
 
-const testFileSystems = ["memfs"];
+const testFileSystems: GitFileSystem[] = ["memfs", "redisfs", "hashmap-redisfs"];
 testFileSystems.forEach((fileSystem) => {
 	const { fsManagerFactory, fsCleanup, fsCheckSizeBytes, getFsSpy } =
 		getFsManagerFactory(fileSystem);
 	testModes.forEach((testMode) => {
-		describe(`Summaries (${JSON.stringify(testMode)})`, () => {
-			const tenantId = "gitrest-summaries-test";
+		describe(`Summaries (${JSON.stringify({ fileSystem, ...testMode })})`, () => {
+			const tenantId = "gitrest-summaries-test-tenantId";
 			let documentId: string;
 			let repoManager: IRepositoryManager;
 			const getWholeSummaryManager = (
@@ -153,7 +202,9 @@ testFileSystems.forEach((fileSystem) => {
 				);
 			};
 			let fsSpy: SinonSpiedInstance<IFileSystemPromises>;
-			const getCurrentStorageAccessCallCounts = (): StorageAccessCallCounts => ({
+			const getCurrentStorageAccessCallCounts = (): StorageAccessCallCounts & {
+				[fn: string]: number;
+			} => ({
 				readFile: fsSpy.readFile.callCount,
 				writeFile: fsSpy.writeFile.callCount,
 				mkdir: fsSpy.mkdir.callCount,
@@ -184,9 +235,9 @@ testFileSystems.forEach((fileSystem) => {
 				});
 			});
 
-			afterEach(() => {
+			afterEach(async () => {
 				// Reset storage volume after each test.
-				fsCleanup();
+				await fsCleanup();
 				// Reset Sinon spies after each test.
 				restore();
 			});
@@ -289,10 +340,13 @@ testFileSystems.forEach((fileSystem) => {
 					);
 					// Tests run against commit 7620034bac63c5e3c4cb85f666a41c46012e8a49 on Dec 13, 2023
 					// showed that the final storage size was 13kb, or 23kb for low-io mode where summary blobs are not shared.
-					const finalStorageSizeKb = Math.ceil(fsCheckSizeBytes() / 1_024);
+					const finalStorageSizeKb = Math.ceil((await fsCheckSizeBytes()) / 1_024);
 					const expectedMaxStorageSizeKb = testMode.enableLowIoWrite ? 23 : 13;
+					process.stdout.write(
+						`Final storage size: ${finalStorageSizeKb}kb; expected: ${expectedMaxStorageSizeKb}\n`,
+					);
 					assert(
-						Math.ceil(fsCheckSizeBytes() / 1_024) <= expectedMaxStorageSizeKb,
+						finalStorageSizeKb <= expectedMaxStorageSizeKb,
 						`Storage size should be <= ${expectedMaxStorageSizeKb}kb. Got ${finalStorageSizeKb}`,
 					);
 				}

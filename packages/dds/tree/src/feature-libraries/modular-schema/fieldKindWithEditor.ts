@@ -13,7 +13,7 @@ import {
 import { Multiplicity } from "../multiplicity.js";
 import { isNeverField } from "./isNeverTree.js";
 import { FieldChangeHandler, FieldEditor } from "./fieldChangeHandler.js";
-import { FieldKind, FullSchemaPolicy } from "./fieldKind.js";
+import { FlexFieldKind, FullSchemaPolicy } from "./fieldKind.js";
 
 /**
  * Functionality for FieldKinds that is stable,
@@ -32,7 +32,7 @@ export class FieldKindWithEditor<
 	TEditor extends FieldEditor<any> = FieldEditor<any>,
 	TMultiplicity extends Multiplicity = Multiplicity,
 	TName extends string = string,
-> extends FieldKind<TName, TMultiplicity> {
+> extends FlexFieldKind<TName, TMultiplicity> {
 	/**
 	 * @param identifier - Globally scoped identifier.
 	 * @param multiplicity - bound on the number of children that fields of this kind may have.
@@ -93,7 +93,7 @@ export function withEditor<
 	TName extends string = string,
 	TMultiplicity extends Multiplicity = Multiplicity,
 >(
-	kind: FieldKind<TName, TMultiplicity>,
+	kind: FlexFieldKind<TName, TMultiplicity>,
 ): FieldKindWithEditor<FieldEditor<any>, TMultiplicity, TName> {
 	assert(kind instanceof FieldKindWithEditor, 0x7b5 /* kind must be FieldKindWithEditor */);
 	return kind as FieldKindWithEditor<FieldEditor<any>, TMultiplicity, TName>;

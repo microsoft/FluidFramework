@@ -5,8 +5,8 @@
 
 import React, { useState } from "react";
 
-import type { IAppModel } from "../model-interface";
-import { TaskListView } from "./taskListView";
+import type { IAppModel } from "../model-interface/index.js";
+import { TaskListView } from "./taskListView.js";
 
 /**
  * {@link AppView} input props.

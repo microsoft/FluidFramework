@@ -6,9 +6,9 @@
 import { assert } from "@fluidframework/core-utils";
 import { fail } from "../util/index.js";
 import {
-	ObjectNodeSchema,
-	FieldNodeSchema,
-	MapNodeSchema,
+	FlexObjectNodeSchema,
+	FlexFieldNodeSchema,
+	FlexMapNodeSchema,
 	FlexTreeNode,
 	FlexTreeObjectNode,
 	FlexTreeFieldNode,
@@ -39,14 +39,17 @@ const flexNodeMap = new WeakMap<TreeNode, FlexTreeNode>();
  * @remarks Fails if the flex node has not been set.
  */
 export function getFlexNode(
-	target: TypedNode<ObjectNodeSchema>,
+	target: TypedNode<FlexObjectNodeSchema>,
 	allowFreed?: true,
 ): FlexTreeObjectNode;
 export function getFlexNode(
 	target: TreeArrayNode,
 	allowFreed?: true,
-): FlexTreeFieldNode<FieldNodeSchema>;
-export function getFlexNode(target: TreeMapNode, allowFreed?: true): FlexTreeMapNode<MapNodeSchema>;
+): FlexTreeFieldNode<FlexFieldNodeSchema>;
+export function getFlexNode(
+	target: TreeMapNode,
+	allowFreed?: true,
+): FlexTreeMapNode<FlexMapNodeSchema>;
 export function getFlexNode(target: TreeNode, allowFreed?: true): FlexTreeNode;
 export function getFlexNode(target: TreeNode, allowFreed = false): FlexTreeNode {
 	const node = flexNodeMap.get(target) ?? fail("Target is not associated with a flex node");

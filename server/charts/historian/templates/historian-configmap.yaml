@@ -26,9 +26,15 @@ data:
         },
         "config": {
             "configDumpEnabled": {{ .Values.historian.config.configDumpEnabled }},
-            "secretNamesToRedactInConfigDump": {{ .Values.historian.config.secretNamesToRedactInConfigDump }}
+            "secretNamesToRedactInConfigDump": [
+                {{- $lastIndex := sub (len .Values.historian.config.secretNamesToRedactInConfigDump) 1}}
+                {{- range $i, $secret := .Values.historian.config.secretNamesToRedactInConfigDump }}
+                {{ toJson . }}{{- if ne $i $lastIndex -}}, {{ end }}
+                {{- end }}
+            ]
         },
         "requestSizeLimit": "1gb",
+        "enableResponseCloseLatencyMetric": {{ .Values.historian.enableResponseCloseLatencyMetric }},
         "riddler": "{{ .Values.historian.riddler }}",
         "ignoreEphemeralFlag": {{ .Values.historian.ignoreEphemeralFlag }},
         "redis": {

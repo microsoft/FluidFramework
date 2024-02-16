@@ -16,7 +16,7 @@ import {
 	IBatchMessage,
 } from "@fluidframework/container-definitions";
 import { FluidObject } from "@fluidframework/core-interfaces";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { IDocumentStorageService, ISnapshot } from "@fluidframework/driver-definitions";
 import {
 	IClientDetails,
 	IDocumentMessage,
@@ -99,6 +99,7 @@ export class ContainerContext implements IContainerContext {
 		public readonly existing: boolean,
 		public readonly taggedLogger: ITelemetryLoggerExt,
 		public readonly pendingLocalState?: unknown,
+		public readonly snapshotWithContents?: ISnapshot,
 	) {}
 
 	public getLoadedFromVersion(): IVersion | undefined {

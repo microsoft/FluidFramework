@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { ConfigTypes, ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import {
 	MockLogger,
@@ -27,7 +27,6 @@ import {
 } from "../../gc";
 import { pkgVersion } from "../../packageVersion";
 import { BlobManager } from "../../blobManager";
-import { configProvider } from "./gcUnitTestHelpers";
 
 describe("GC Telemetry Tracker", () => {
 	const defaultSnapshotCacheExpiryMs = 5 * 24 * 60 * 60 * 1000;
@@ -42,7 +41,6 @@ describe("GC Telemetry Tracker", () => {
 	// The package data is tagged in the telemetry event.
 	const eventPkg = { value: testPkgPath.join("/"), tag: TelemetryDataTag.CodeArtifact };
 
-	let injectedSettings: Record<string, ConfigTypes> = {};
 	let mockLogger: MockLogger;
 	let mc: MonitoringContext;
 	let clock: SinonFakeTimers;
@@ -75,7 +73,7 @@ describe("GC Telemetry Tracker", () => {
 			gcEnabled: true,
 			sweepEnabled: false,
 			shouldRunGC: true,
-			shouldRunSweep: false,
+			shouldRunSweep: "NO",
 			runFullGC: false,
 			testMode: false,
 			tombstoneMode: false,
@@ -176,7 +174,6 @@ describe("GC Telemetry Tracker", () => {
 		mockLogger = new MockLogger();
 		mc = mixinMonitoringContext(
 			createChildLogger({ logger: mockLogger, namespace: "GarbageCollector" }),
-			configProvider(injectedSettings),
 		);
 		unreferencedNodesState = new Map();
 	});
@@ -184,7 +181,6 @@ describe("GC Telemetry Tracker", () => {
 	afterEach(() => {
 		clock.reset();
 		mockLogger.clear();
-		injectedSettings = {};
 		sweepGracePeriodMs = 1000; // Default case for these tests
 	});
 

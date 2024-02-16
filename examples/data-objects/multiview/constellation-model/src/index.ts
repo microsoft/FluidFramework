@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { Constellation } from "./model";
+export { Constellation } from "./model.js";

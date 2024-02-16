@@ -18,7 +18,7 @@ import {
 	isCursor,
 	ITreeCursorSynchronous,
 } from "../../core/index.js";
-import { FieldKind } from "../modular-schema/index.js";
+import { FlexFieldKind } from "../modular-schema/index.js";
 // TODO: stop depending on contextuallyTyped
 import { applyTypesFromContext, cursorFromContextualData } from "../contextuallyTyped.js";
 import {
@@ -34,7 +34,7 @@ import {
 	disposeSymbol,
 	fail,
 } from "../../util/index.js";
-import { AllowedTypes, TreeFieldSchema } from "../typed-schema/index.js";
+import { FlexAllowedTypes, FlexFieldSchema } from "../typed-schema/index.js";
 import { LocalNodeKey, StableNodeKey, nodeKeyTreeIdentifier } from "../node-key/index.js";
 import { cursorForMapTreeField } from "../mapTreeCursor.js";
 import { Context } from "./context.js";
@@ -92,7 +92,7 @@ function indexForAt(index: number, length: number): number | undefined {
 
 export function makeField(
 	context: Context,
-	schema: TreeFieldSchema,
+	schema: FlexFieldSchema,
 	cursor: ITreeSubscriptionCursor,
 ): FlexTreeField {
 	const fieldAnchor = cursor.buildFieldAnchor();
@@ -121,8 +121,8 @@ export function makeField(
  * A Proxy target, which together with a `fieldProxyHandler` implements a basic access to
  * the nodes of {@link EditableField} by means of the cursors.
  */
-export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedTypes>
-	extends LazyEntity<TreeFieldSchema<TKind, TTypes>, FieldAnchor>
+export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends FlexAllowedTypes>
+	extends LazyEntity<FlexFieldSchema<TKind, TTypes>, FieldAnchor>
 	implements FlexTreeField
 {
 	public get [flexTreeMarker](): FlexTreeEntityKind.Field {
@@ -132,7 +132,7 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 
 	public constructor(
 		context: Context,
-		schema: TreeFieldSchema<TKind, TTypes>,
+		schema: FlexFieldSchema<TKind, TTypes>,
 		cursor: ITreeSubscriptionCursor,
 		fieldAnchor: FieldAnchor,
 	) {
@@ -141,7 +141,7 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 		this.key = cursor.getFieldKey();
 	}
 
-	public is<TSchema extends TreeFieldSchema>(
+	public is<TSchema extends FlexFieldSchema>(
 		schema: TSchema,
 	): this is FlexTreeTypedField<TSchema> {
 		assert(
@@ -263,13 +263,13 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 	}
 }
 
-export class LazySequence<TTypes extends AllowedTypes>
+export class LazySequence<TTypes extends FlexAllowedTypes>
 	extends LazyField<typeof FieldKinds.sequence, TTypes>
 	implements FlexTreeSequenceField<TTypes>
 {
 	public constructor(
 		context: Context,
-		schema: TreeFieldSchema<typeof FieldKinds.sequence, TTypes>,
+		schema: FlexFieldSchema<typeof FieldKinds.sequence, TTypes>,
 		cursor: ITreeSubscriptionCursor,
 		fieldAnchor: FieldAnchor,
 	) {
@@ -334,25 +334,28 @@ export class LazySequence<TTypes extends AllowedTypes>
 	}
 
 	public moveToStart(sourceIndex: number): void;
-	public moveToStart(sourceIndex: number, source: FlexTreeSequenceField<AllowedTypes>): void;
-	public moveToStart(sourceIndex: number, source?: FlexTreeSequenceField<AllowedTypes>): void {
+	public moveToStart(sourceIndex: number, source: FlexTreeSequenceField<FlexAllowedTypes>): void;
+	public moveToStart(
+		sourceIndex: number,
+		source?: FlexTreeSequenceField<FlexAllowedTypes>,
+	): void {
 		this._moveRangeToIndex(0, sourceIndex, sourceIndex + 1, source);
 	}
 	public moveToEnd(sourceIndex: number): void;
-	public moveToEnd(sourceIndex: number, source: FlexTreeSequenceField<AllowedTypes>): void;
-	public moveToEnd(sourceIndex: number, source?: FlexTreeSequenceField<AllowedTypes>): void {
+	public moveToEnd(sourceIndex: number, source: FlexTreeSequenceField<FlexAllowedTypes>): void;
+	public moveToEnd(sourceIndex: number, source?: FlexTreeSequenceField<FlexAllowedTypes>): void {
 		this._moveRangeToIndex(this.length, sourceIndex, sourceIndex + 1, source);
 	}
 	public moveToIndex(index: number, sourceIndex: number): void;
 	public moveToIndex(
 		index: number,
 		sourceIndex: number,
-		source: FlexTreeSequenceField<AllowedTypes>,
+		source: FlexTreeSequenceField<FlexAllowedTypes>,
 	): void;
 	public moveToIndex(
 		index: number,
 		sourceIndex: number,
-		source?: FlexTreeSequenceField<AllowedTypes>,
+		source?: FlexTreeSequenceField<FlexAllowedTypes>,
 	): void {
 		this._moveRangeToIndex(index, sourceIndex, sourceIndex + 1, source);
 	}
@@ -361,12 +364,12 @@ export class LazySequence<TTypes extends AllowedTypes>
 	public moveRangeToStart(
 		sourceStart: number,
 		sourceEnd: number,
-		source: FlexTreeSequenceField<AllowedTypes>,
+		source: FlexTreeSequenceField<FlexAllowedTypes>,
 	): void;
 	public moveRangeToStart(
 		sourceStart: number,
 		sourceEnd: number,
-		source?: FlexTreeSequenceField<AllowedTypes>,
+		source?: FlexTreeSequenceField<FlexAllowedTypes>,
 	): void {
 		this._moveRangeToIndex(0, sourceStart, sourceEnd, source);
 	}
@@ -375,12 +378,12 @@ export class LazySequence<TTypes extends AllowedTypes>
 	public moveRangeToEnd(
 		sourceStart: number,
 		sourceEnd: number,
-		source: FlexTreeSequenceField<AllowedTypes>,
+		source: FlexTreeSequenceField<FlexAllowedTypes>,
 	): void;
 	public moveRangeToEnd(
 		sourceStart: number,
 		sourceEnd: number,
-		source?: FlexTreeSequenceField<AllowedTypes>,
+		source?: FlexTreeSequenceField<FlexAllowedTypes>,
 	): void {
 		this._moveRangeToIndex(this.length, sourceStart, sourceEnd, source);
 	}
@@ -390,13 +393,13 @@ export class LazySequence<TTypes extends AllowedTypes>
 		index: number,
 		sourceStart: number,
 		sourceEnd: number,
-		source: FlexTreeSequenceField<AllowedTypes>,
+		source: FlexTreeSequenceField<FlexAllowedTypes>,
 	): void;
 	public moveRangeToIndex(
 		index: number,
 		sourceStart: number,
 		sourceEnd: number,
-		source?: FlexTreeSequenceField<AllowedTypes>,
+		source?: FlexTreeSequenceField<FlexAllowedTypes>,
 	): void {
 		this._moveRangeToIndex(index, sourceStart, sourceEnd, source);
 	}
@@ -405,7 +408,7 @@ export class LazySequence<TTypes extends AllowedTypes>
 		index: number,
 		sourceStart: number,
 		sourceEnd: number,
-		source?: FlexTreeSequenceField<AllowedTypes>,
+		source?: FlexTreeSequenceField<FlexAllowedTypes>,
 	): void {
 		const sourceField = source !== undefined ? (this.isSameAs(source) ? this : source) : this;
 
@@ -438,13 +441,13 @@ export class LazySequence<TTypes extends AllowedTypes>
 	}
 }
 
-export class LazyValueField<TTypes extends AllowedTypes>
+export class LazyValueField<TTypes extends FlexAllowedTypes>
 	extends LazyField<typeof FieldKinds.required, TTypes>
 	implements FlexTreeRequiredField<TTypes>
 {
 	public constructor(
 		context: Context,
-		schema: TreeFieldSchema<typeof FieldKinds.required, TTypes>,
+		schema: FlexFieldSchema<typeof FieldKinds.required, TTypes>,
 		cursor: ITreeSubscriptionCursor,
 		fieldAnchor: FieldAnchor,
 	) {
@@ -475,13 +478,13 @@ export class LazyValueField<TTypes extends AllowedTypes>
 	}
 }
 
-export class LazyOptionalField<TTypes extends AllowedTypes>
+export class LazyOptionalField<TTypes extends FlexAllowedTypes>
 	extends LazyField<typeof FieldKinds.optional, TTypes>
 	implements FlexTreeOptionalField<TTypes>
 {
 	public constructor(
 		context: Context,
-		schema: TreeFieldSchema<typeof FieldKinds.optional, TTypes>,
+		schema: FlexFieldSchema<typeof FieldKinds.optional, TTypes>,
 		cursor: ITreeSubscriptionCursor,
 		fieldAnchor: FieldAnchor,
 	) {
@@ -518,13 +521,13 @@ export class LazyOptionalField<TTypes extends AllowedTypes>
 	}
 }
 
-export class LazyNodeKeyField<TTypes extends AllowedTypes>
+export class LazyNodeKeyField<TTypes extends FlexAllowedTypes>
 	extends LazyField<typeof FieldKinds.nodeKey, TTypes>
 	implements FlexTreeNodeKeyField
 {
 	public constructor(
 		context: Context,
-		schema: TreeFieldSchema<typeof FieldKinds.nodeKey, TTypes>,
+		schema: FlexFieldSchema<typeof FieldKinds.nodeKey, TTypes>,
 		cursor: ITreeSubscriptionCursor,
 		fieldAnchor: FieldAnchor,
 	) {
@@ -548,19 +551,19 @@ export class LazyNodeKeyField<TTypes extends AllowedTypes>
 	}
 }
 
-export class LazyForbiddenField<TTypes extends AllowedTypes> extends LazyField<
+export class LazyForbiddenField<TTypes extends FlexAllowedTypes> extends LazyField<
 	typeof FieldKinds.forbidden,
 	TTypes
 > {}
 
-type Builder = new <TTypes extends AllowedTypes>(
+type Builder = new <TTypes extends FlexAllowedTypes>(
 	context: Context,
-	schema: TreeFieldSchema<any, TTypes>,
+	schema: FlexFieldSchema<any, TTypes>,
 	cursor: ITreeSubscriptionCursor,
 	fieldAnchor: FieldAnchor,
 ) => LazyField<any, TTypes>;
 
-const builderList: [FieldKind, Builder][] = [
+const builderList: [FlexFieldKind, Builder][] = [
 	[FieldKinds.forbidden, LazyForbiddenField],
 	[FieldKinds.nodeKey, LazyNodeKeyField],
 	[FieldKinds.optional, LazyOptionalField],
@@ -568,7 +571,7 @@ const builderList: [FieldKind, Builder][] = [
 	[FieldKinds.required, LazyValueField],
 ];
 
-const kindToClass: ReadonlyMap<FieldKind, Builder> = new Map(builderList);
+const kindToClass: ReadonlyMap<FlexFieldKind, Builder> = new Map(builderList);
 
 /**
  * Prepare a fields cursor (holding a sequence of nodes) for inserting.

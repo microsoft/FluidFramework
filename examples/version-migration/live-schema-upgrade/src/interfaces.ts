@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IDiceRollerAppModel as IDiceRollerAppModel1 } from "./modelVersion1";
-import { IDiceRollerAppModel as IDiceRollerAppModel2 } from "./modelVersion2";
+import { IDiceRollerAppModel as IDiceRollerAppModel1 } from "./modelVersion1/index.js";
+import { IDiceRollerAppModel as IDiceRollerAppModel2 } from "./modelVersion2/index.js";
 
 /**
  * Interface to represent the two possible app models that can be loaded by the model loader.

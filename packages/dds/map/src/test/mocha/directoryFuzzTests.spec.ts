@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as dirPath from "path";
-import { strict as assert } from "assert";
+import * as dirPath from "node:path";
+import { strict as assert } from "node:assert";
 import {
 	AsyncGenerator,
 	AsyncReducer,
@@ -88,7 +88,7 @@ const defaultOptions: Required<OperationGenerationConfig> = {
 function makeOperationGenerator(
 	optionsParam?: OperationGenerationConfig,
 ): AsyncGenerator<Operation, FuzzTestState> {
-	const options = { ...defaultOptions, ...(optionsParam ?? {}) };
+	const options = { ...defaultOptions, ...optionsParam };
 
 	// All subsequent helper functions are generators; note that they don't actually apply any operations.
 	function pickAbsolutePathForCreateDirectoryOp(state: FuzzTestState): string {
@@ -109,10 +109,10 @@ function makeOperationGenerator(
 				continue;
 			}
 			const subDir = random.pick<IDirectory | undefined>([undefined, ...subDirectories]);
-			if (subDir !== undefined) {
-				dir = subDir;
-			} else {
+			if (subDir === undefined) {
 				break;
+			} else {
+				dir = subDir;
 			}
 		}
 		return dir.absolutePath;
@@ -133,11 +133,11 @@ function makeOperationGenerator(
 				subDirs.push(b);
 			}
 			const subDir = random.pick<IDirectory | undefined>([undefined, ...subDirs]);
-			if (subDir !== undefined) {
+			if (subDir === undefined) {
+				break;
+			} else {
 				parentDir = dirToDelete;
 				dirToDelete = subDir;
-			} else {
-				break;
 			}
 		}
 		return parentDir.absolutePath;
@@ -266,12 +266,10 @@ function makeReducer(loggingInfo?: LoggingInfo): AsyncReducer<Operation, FuzzTes
 	const withLogging =
 		<T>(baseReducer: AsyncReducer<T, FuzzTestState>): AsyncReducer<T, FuzzTestState> =>
 		async (state, operation) => {
-			if (loggingInfo !== undefined) {
-				if (loggingInfo.printConsoleLogs) {
-					logCurrentState(state.clients, loggingInfo);
-					console.log("-".repeat(20));
-					console.log("Next operation:", JSON.stringify(operation, undefined, 4));
-				}
+			if (loggingInfo !== undefined && loggingInfo.printConsoleLogs) {
+				logCurrentState(state.clients, loggingInfo);
+				console.log("-".repeat(20));
+				console.log("Next operation:", JSON.stringify(operation, undefined, 4));
 			}
 			try {
 				await baseReducer(state, operation);
@@ -368,10 +366,7 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 			},
 			defaultTestCount: 200,
 			// The seeds below fail only when rebaseProbability is non-zero ADO:6044
-			skip: [
-				4, 6, 8, 19, 29, 48, 82, 83, 87, 94, 95, 110, 118, 123, 138, 143, 154, 159, 180,
-				181, 188, 190, 195,
-			],
+			skip: [4, 13, 29, 39, 55, 63, 67, 69, 94, 126, 144, 150, 172, 180, 187, 188, 191, 197],
 			// Uncomment this line to replay a specific seed from its failure file:
 			// replay: 21,
 			saveFailures: {
@@ -399,6 +394,7 @@ describe("SharedDirectory fuzz", () => {
 			// was refactored to use the DDS fuzz harness.
 			maxNumberOfClients: Number.MAX_SAFE_INTEGER,
 			clientAddProbability: 0.08,
+			stashableClientProbability: 0.2,
 		},
 		defaultTestCount: 25,
 		// Uncomment this line to replay a specific seed from its failure file:
@@ -428,7 +424,7 @@ describe("SharedDirectory fuzz", () => {
 			},
 			defaultTestCount: 200,
 			// The seeds below fail only when rebaseProbability is non-zero ADO:6044
-			skip: [30, 50, 133, 137, 144, 177, 195, 196],
+			skip: [40, 50, 54, 128, 178, 182],
 			// Uncomment this line to replay a specific seed from its failure file:
 			// replay: 0,
 			saveFailures: {

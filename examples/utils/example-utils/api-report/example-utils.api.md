@@ -191,7 +191,7 @@ export class MigrationTool extends DataObject implements IMigrationTool {
     // (undocumented)
     protected initializingFirstTime(): Promise<void>;
     // (undocumented)
-    get migrationState(): "collaborating" | "stopping" | "migrating" | "migrated";
+    get migrationState(): MigrationState;
     // (undocumented)
     get newContainerId(): string | undefined;
     // (undocumented)
@@ -243,6 +243,19 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
     loadExistingPaused(id: string, sequenceNumber: number): Promise<ModelType>;
     // (undocumented)
     supportsVersion(version: string): Promise<boolean>;
+}
+
+// @internal
+export class MountableView implements IFluidMountableView {
+    constructor(view: FluidObject);
+    // (undocumented)
+    static canMount(view: FluidObject): boolean;
+    // (undocumented)
+    get IFluidMountableView(): MountableView;
+    // (undocumented)
+    mount(container: HTMLElement): void;
+    // (undocumented)
+    unmount(): void;
 }
 
 // @internal

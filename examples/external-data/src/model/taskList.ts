@@ -19,9 +19,9 @@ import type {
 	ITaskList,
 	IBaseDocumentInitialState,
 	IBaseDocument,
-} from "../model-interface";
-import { externalDataServicePort } from "../mock-external-data-service-interface";
-import { customerServicePort } from "../mock-customer-service-interface";
+} from "../model-interface/index.js";
+import { externalDataServicePort } from "../mock-external-data-service-interface/index.js";
+import { customerServicePort } from "../mock-customer-service-interface/index.js";
 
 class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 	public get id(): string {

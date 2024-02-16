@@ -45,7 +45,7 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 		const runtimeOf = (dataObject: ITestFluidObject): ContainerRuntime =>
 			dataObject.context.containerRuntime as ContainerRuntime;
 
-		beforeEach(async () => {
+		beforeEach("createContainer", async () => {
 			provider = getTestObjectProvider();
 			loader = provider.makeTestLoader(testContainerConfig);
 			container = await createAndAttachContainer(
@@ -175,7 +175,7 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 		let text: string;
 		let blobHandle: IFluidHandle<ArrayBufferLike>;
 
-		beforeEach(async function () {
+		beforeEach("createContainer", async function () {
 			provider = getTestObjectProvider();
 			if (!driverSupportsBlobs(provider.driver)) {
 				this.skip();

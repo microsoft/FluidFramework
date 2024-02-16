@@ -3,17 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { ModelContainerRuntimeFactory, getDataStoreEntryPoint } from "@fluid-example/example-utils";
+import {
+	getDataStoreEntryPoint,
+	ModelContainerRuntimeFactory,
+	MountableView,
+} from "@fluid-example/example-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { MountableView } from "@fluidframework/view-adapters";
 import { IFluidMountableView } from "@fluidframework/view-interfaces";
 
 import React from "react";
 
-import { IDiceRoller } from "./interface";
-import { DiceRollerInstantiationFactory } from "./model";
-import { DiceRollerView } from "./view";
+import { IDiceRoller } from "./interface.js";
+import { DiceRollerInstantiationFactory } from "./model.js";
+import { DiceRollerView } from "./view.js";
 
 /**
  * The data model for our application.

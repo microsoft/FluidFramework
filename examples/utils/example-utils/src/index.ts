@@ -8,7 +8,7 @@ export {
 	ViewCallback,
 	getDataStoreEntryPoint,
 	IFluidMountableViewEntryPoint,
-} from "./containerViewRuntimeFactory";
+} from "./containerViewRuntimeFactory.js";
 export type {
 	DataTransformationCallback,
 	IImportExportModel,
@@ -27,14 +27,14 @@ export type {
 	IVersionedModel,
 	MigrationState,
 	SameContainerMigrationState,
-} from "./migrationInterfaces";
+} from "./migrationInterfaces/index.js";
 export {
 	MigrationTool,
 	MigrationToolInstantiationFactory,
 	SameContainerMigrationTool,
 	SameContainerMigrationToolInstantiationFactory,
-} from "./migrationTool";
-export { Migrator, SameContainerMigrator } from "./migrator";
+} from "./migrationTool/index.js";
+export { Migrator, SameContainerMigrator } from "./migrator/index.js";
 export {
 	IDetachedModel,
 	IModelLoader,
@@ -44,4 +44,5 @@ export {
 	StaticCodeLoader,
 	TinyliciousModelLoader,
 	IModelContainerRuntimeEntryPoint,
-} from "./modelLoader";
+} from "./modelLoader/index.js";
+export { MountableView } from "./mountableView/index.js";

@@ -17,13 +17,7 @@ const docVersions = versions.params.previousVersions.concat(versions.params.curr
 
 Promise.all(
 	docVersions.map(async (version) => {
-		const apiReportsDirectoryPath = path.resolve(
-			__dirname,
-			"..",
-			"..",
-			`_api-extractor-temp-${version}`,
-			"doc-models",
-		);
+		const apiReportsDirectoryPath = path.resolve(__dirname, "..", "_doc-models", version);
 
 		const apiDocsDirectoryPath = path.resolve(
 			__dirname,

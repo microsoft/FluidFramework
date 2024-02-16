@@ -9,10 +9,10 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
+	createTestConfigProvider,
 	createSummarizer,
 	ITestContainerConfig,
 	ITestObjectProvider,
-	mockConfigProvider,
 	summarizeNow,
 	timeoutPromise,
 	waitForContainerConnection,
@@ -20,6 +20,7 @@ import {
 import {
 	describeCompat,
 	ITestDataObject,
+	itExpects,
 	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
 import { defaultGCConfig } from "./gcTestConfigs.js";
@@ -35,12 +36,12 @@ describeCompat("GC loading from older summaries", "NoCompat", (getTestObjectProv
 	let containerRuntime: IContainerRuntime;
 	let dataStoreA: ITestDataObject;
 
-	const settings = {
-		"Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs": 10,
-	};
+	const configProvider = createTestConfigProvider();
+	configProvider.set("Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs", 10);
+	configProvider.set("Fluid.ContainerRuntime.SubmitSummary.shouldValidatePreSummaryState", false);
 	const testConfig: ITestContainerConfig = {
 		...defaultGCConfig,
-		loaderProps: { configProvider: mockConfigProvider(settings) },
+		loaderProps: { configProvider },
 	};
 
 	/**
@@ -77,7 +78,7 @@ describeCompat("GC loading from older summaries", "NoCompat", (getTestObjectProv
 		await waitForContainerConnection(container);
 	}
 
-	beforeEach(async function () {
+	beforeEach("setup", async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		mainContainer = await provider.makeTestContainer(testConfig);
 		const defaultDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
@@ -96,69 +97,76 @@ describeCompat("GC loading from older summaries", "NoCompat", (getTestObjectProv
 		await waitForContainerConnection(mainContainer);
 	});
 
-	it("disposes the summarizer when loading from an older summary", async () => {
-		const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer);
+	itExpects(
+		"disposes the summarizer when loading from an older summary",
+		[
+			{ eventName: "fluid:telemetry:Summarizer:Running:LatestSummaryRefSeqNumMismatch" },
+			{ eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed" },
+		],
+		async () => {
+			const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer);
 
-		// Create a data store and mark it unreferenced to begin with.
-		const dataStoreBHandle = (await containerRuntime.createDataStore(TestDataObjectType))
-			.entryPoint as IFluidHandle<ITestDataObject>;
-		assert(dataStoreBHandle !== undefined, "New data store does not have a handle");
-		const dataStoreB = await dataStoreBHandle.get();
-		dataStoreA._root.set("dataStoreB", dataStoreBHandle);
-		dataStoreA._root.delete("dataStoreB");
+			// Create a data store and mark it unreferenced to begin with.
+			const dataStoreBHandle = (await containerRuntime.createDataStore(TestDataObjectType))
+				.entryPoint as IFluidHandle<ITestDataObject>;
+			assert(dataStoreBHandle !== undefined, "New data store does not have a handle");
+			const dataStoreB = await dataStoreBHandle.get();
+			dataStoreA._root.set("dataStoreB", dataStoreBHandle);
+			dataStoreA._root.delete("dataStoreB");
 
-		await provider.ensureSynchronized();
+			await provider.ensureSynchronized();
 
-		// Summarize - summary1. dataStoreB should be unreferenced.
-		const summaryResult1 = await summarizeNow(summarizer1);
-		const referenceState1 = await getReferenceState(summaryResult1.summaryTree);
-		const dsAReferenceState1 = referenceState1.get(dataStoreA._context.id);
-		assert(dsAReferenceState1 === true, `dataStoreA should be referenced`);
-		const dsBReferenceState1 = referenceState1.get(dataStoreB._context.id);
-		assert(dsBReferenceState1 === false, `dataStoreB should be unreferenced`);
+			// Summarize - summary1. dataStoreB should be unreferenced.
+			const summaryResult1 = await summarizeNow(summarizer1);
+			const referenceState1 = await getReferenceState(summaryResult1.summaryTree);
+			const dsAReferenceState1 = referenceState1.get(dataStoreA._context.id);
+			assert(dsAReferenceState1 === true, `dataStoreA should be referenced`);
+			const dsBReferenceState1 = referenceState1.get(dataStoreB._context.id);
+			assert(dsBReferenceState1 === false, `dataStoreB should be unreferenced`);
 
-		// Create a second summarizer with summary1. Note that this is done before posting another summary because
-		// the server may delete this summary when a new one is posted.
-		const { container: container2, summarizer: summarizer2 } = await createSummarizer(
-			provider,
-			mainContainer,
-			{ loaderProps: { configProvider: mockConfigProvider(settings) } },
-			summaryResult1.summaryVersion,
-		);
+			// Create a second summarizer with summary1. Note that this is done before posting another summary because
+			// the server may delete this summary when a new one is posted.
+			const { container: container2, summarizer: summarizer2 } = await createSummarizer(
+				provider,
+				mainContainer,
+				{ loaderProps: { configProvider } },
+				summaryResult1.summaryVersion,
+			);
 
-		// Reference dataStoreB now.
-		dataStoreA._root.set("dataStoreB", dataStoreB.handle);
+			// Reference dataStoreB now.
+			dataStoreA._root.set("dataStoreB", dataStoreB.handle);
 
-		// Summarize - summary2. dataStoreB should now be referenced.
-		await provider.ensureSynchronized();
-		const summaryResult2 = await summarizeNow(summarizer1);
-		const referenceState2 = await getReferenceState(summaryResult2.summaryTree);
-		const dsAReferenceState2 = referenceState2.get(dataStoreA._context.id);
-		assert(dsAReferenceState2 === true, `dataStoreA should still be referenced (1)`);
-		const dsBReferenceState2 = referenceState2.get(dataStoreB._context.id);
-		assert(dsBReferenceState2 === true, `dataStoreB should be referenced now`);
+			// Summarize - summary2. dataStoreB should now be referenced.
+			await provider.ensureSynchronized();
+			const summaryResult2 = await summarizeNow(summarizer1);
+			const referenceState2 = await getReferenceState(summaryResult2.summaryTree);
+			const dsAReferenceState2 = referenceState2.get(dataStoreA._context.id);
+			assert(dsAReferenceState2 === true, `dataStoreA should still be referenced (1)`);
+			const dsBReferenceState2 = referenceState2.get(dataStoreB._context.id);
+			assert(dsBReferenceState2 === true, `dataStoreB should be referenced now`);
 
-		// Close the first summarizer and reconnect the second one. The reconnection is necessary so that it is elected
-		// as the new summarizer.
-		summarizer1.close();
-		await reconnectSummarizerToBeElected(container2);
+			// Close the first summarizer and reconnect the second one. The reconnection is necessary so that it is elected
+			// as the new summarizer.
+			summarizer1.close();
+			await reconnectSummarizerToBeElected(container2);
 
-		// Call summarizeOnDemand. This will trigger the logic that processes summary ack. The ack from the last
-		// summary will cause summarizer2 to dispose because it sees a new ack that is generated by another summarizer.
-		await provider.ensureSynchronized();
-		await summarizer2.summarizeOnDemand({ reason: "test" }).summarySubmitted;
+			// Call summarizeOnDemand. This will trigger the logic that processes summary ack. The ack from the last
+			// summary will cause summarizer2 to dispose because it sees a new ack that is generated by another summarizer.
+			await provider.ensureSynchronized();
+			await summarizer2.summarizeOnDemand({ reason: "test" }).summarySubmitted;
 
-		// Wait for the container for the above summarizer to be disposed.
-		await timeoutPromise((resolve) => {
-			if (container2.disposed) {
-				resolve();
-				return;
-			}
-			container2.on("disposed", () => resolve());
-		});
-		assert(
-			container2.disposed === true,
-			"Container should be closed after summarizing as it loaded from an older summary",
-		);
-	});
+			// Wait for the container for the above summarizer to be disposed.
+			await timeoutPromise((resolve) => {
+				if (container2.disposed) {
+					resolve();
+					return;
+				}
+				container2.on("disposed", () => resolve());
+			});
+			assert(
+				container2.disposed === true,
+				"Container should be closed after summarizing as it loaded from an older summary",
+			);
+		},
+	);
 });

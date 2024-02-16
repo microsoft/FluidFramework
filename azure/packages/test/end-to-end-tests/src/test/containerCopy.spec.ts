@@ -19,7 +19,7 @@ describe("Container copy scenarios", () => {
 	let client: AzureClient;
 	let schema: ContainerSchema;
 
-	beforeEach(() => {
+	beforeEach("createAzureClient", () => {
 		client = createAzureClient();
 		schema = {
 			initialObjects: {
@@ -28,7 +28,7 @@ describe("Container copy scenarios", () => {
 		};
 	});
 
-	beforeEach(async function () {
+	beforeEach("skipForNonAzure", async function () {
 		if (process.env.FLUID_CLIENT !== "azure") {
 			this.skip();
 		}

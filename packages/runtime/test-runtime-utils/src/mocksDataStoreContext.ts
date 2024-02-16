@@ -5,12 +5,7 @@
 
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { IFluidHandle, IFluidHandleContext, FluidObject } from "@fluidframework/core-interfaces";
-import {
-	IAudience,
-	IDeltaManager,
-	AttachState,
-	ILoaderOptions,
-} from "@fluidframework/container-definitions";
+import { IAudience, IDeltaManager, AttachState } from "@fluidframework/container-definitions";
 
 import {
 	IClientDetails,
@@ -37,7 +32,8 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public isLocalDataStore: boolean = true;
 	public packagePath: readonly string[] = undefined as any;
-	public options: ILoaderOptions = undefined as any;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	public options: Record<string | number, any> = {};
 	public clientId: string | undefined = uuid();
 	public clientDetails: IClientDetails = { capabilities: { interactive: this.interactive } };
 	public connected: boolean = true;

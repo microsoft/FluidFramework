@@ -19,7 +19,7 @@ import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { SharedString, ReferenceType, reservedTileLabelsKey } from "@fluidframework/sequence";
 import { create404Response } from "@fluidframework/runtime-utils";
 
-import { PresenceManager } from "./presence";
+import { PresenceManager } from "./presence.js";
 
 /**
  * CodeMirrorComponent builds a Fluid collaborative code editor on top of the open source code editor CodeMirror.

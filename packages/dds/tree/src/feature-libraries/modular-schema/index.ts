@@ -24,7 +24,7 @@ export {
 	EncodedRevisionInfo,
 	EncodedModularChangeset,
 } from "./modularChangeFormat.js";
-export { FieldKind, FullSchemaPolicy } from "./fieldKind.js";
+export { FlexFieldKind, FullSchemaPolicy } from "./fieldKind.js";
 export { FieldKindWithEditor } from "./fieldKindWithEditor.js";
 export {
 	FieldChangeHandler,

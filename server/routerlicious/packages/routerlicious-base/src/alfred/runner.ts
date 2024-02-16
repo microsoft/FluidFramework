@@ -8,6 +8,7 @@ import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	ICache,
 	IClientManager,
+	IClusterDrainingChecker,
 	IDeltaService,
 	IDocumentStorage,
 	IOrdererManager,
@@ -73,6 +74,8 @@ export class AlfredRunner implements IRunner {
 		private readonly tokenRevocationManager?: ITokenRevocationManager,
 		private readonly revokedTokenChecker?: IRevokedTokenChecker,
 		private readonly collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+		private readonly clusterDrainingChecker?: IClusterDrainingChecker,
+		private readonly enableClientIPLogging?: boolean,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -100,6 +103,8 @@ export class AlfredRunner implements IRunner {
 				this.tokenRevocationManager,
 				this.revokedTokenChecker,
 				this.collaborationSessionEventEmitter,
+				this.clusterDrainingChecker,
+				this.enableClientIPLogging,
 			);
 			alfred.set("port", this.port);
 			this.server = this.serverFactory.create(alfred);
@@ -142,6 +147,7 @@ export class AlfredRunner implements IRunner {
 				this.socketTracker,
 				this.revokedTokenChecker,
 				this.collaborationSessionEventEmitter,
+				this.clusterDrainingChecker,
 			);
 
 			if (this.tokenRevocationManager) {

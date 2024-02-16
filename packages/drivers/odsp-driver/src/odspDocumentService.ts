@@ -8,6 +8,7 @@ import {
 	createChildMonitoringContext,
 	MonitoringContext,
 } from "@fluidframework/telemetry-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import {
 	IDocumentDeltaConnection,
@@ -16,6 +17,7 @@ import {
 	IResolvedUrl,
 	IDocumentStorageService,
 	IDocumentServicePolicies,
+	IDocumentServiceEvents,
 } from "@fluidframework/driver-definitions";
 import { IClient, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
@@ -40,7 +42,10 @@ import type { OdspDelayLoadedDeltaStream } from "./odspDelayLoadedDeltaStream";
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
  * clients
  */
-export class OdspDocumentService implements IDocumentService {
+export class OdspDocumentService
+	extends TypedEventEmitter<IDocumentServiceEvents>
+	implements IDocumentService
+{
 	private readonly _policies: IDocumentServicePolicies;
 
 	// Promise to load socket module only once.
@@ -123,10 +128,12 @@ export class OdspDocumentService implements IDocumentService {
 		private readonly socketReferenceKeyPrefix?: string,
 		private readonly clientIsSummarizer?: boolean,
 	) {
+		super();
 		this._policies = {
 			// load in storage-only mode if a file version is specified
 			storageOnly: odspResolvedUrl.fileVersion !== undefined,
 			summarizeProtocolTree: true,
+			supportGetSnapshotApi: true,
 		};
 
 		this.mc = createChildMonitoringContext({
@@ -141,6 +148,7 @@ export class OdspDocumentService implements IDocumentService {
 		});
 
 		this.hostPolicy = hostPolicy;
+		this.hostPolicy.supportGetSnapshotApi = this._policies.supportGetSnapshotApi;
 		if (this.clientIsSummarizer) {
 			this.hostPolicy = { ...this.hostPolicy, summarizerClient: true };
 		}
@@ -282,6 +290,7 @@ export class OdspDocumentService implements IDocumentService {
 			this.hostPolicy,
 			this.epochTracker,
 			(ops: ISequencedDocumentMessage[]) => this.opsReceived(ops),
+			(metadata: Record<string, string>) => this.emit("metadataUpdate", metadata),
 			this.socketReferenceKeyPrefix,
 		);
 		return this.odspDelayLoadedDeltaStream;

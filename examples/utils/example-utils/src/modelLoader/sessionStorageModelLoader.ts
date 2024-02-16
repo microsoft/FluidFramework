@@ -16,8 +16,8 @@ import {
 } from "@fluidframework/server-local-server";
 import { v4 as uuid } from "uuid";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { IDetachedModel, IModelLoader } from "./interfaces";
-import { ModelLoader } from "./modelLoader";
+import { IDetachedModel, IModelLoader } from "./interfaces.js";
+import { ModelLoader } from "./modelLoader.js";
 
 const urlResolver = new LocalResolver();
 

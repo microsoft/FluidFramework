@@ -394,6 +394,16 @@ export const isFluidCodeDetails: (details: unknown) => details is Readonly<IFlui
 // @internal @deprecated
 export const isFluidPackage: (pkg: unknown) => pkg is Readonly<IFluidPackage>;
 
+// @internal (undocumented)
+export interface ISignalEnvelope {
+    address?: string;
+    clientSignalSequenceNumber: number;
+    contents: {
+        type: string;
+        content: any;
+    };
+}
+
 // @internal @deprecated (undocumented)
 export interface ITaggedTelemetryPropertyType {
     // (undocumented)

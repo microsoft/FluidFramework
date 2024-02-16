@@ -7,8 +7,11 @@ import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { CollaborativeTextContainerRuntimeFactory, ICollaborativeTextAppModel } from "./container";
-import { CollaborativeTextView } from "./view";
+import {
+	CollaborativeTextContainerRuntimeFactory,
+	ICollaborativeTextAppModel,
+} from "./container.js";
+import { CollaborativeTextView } from "./view.js";
 
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container

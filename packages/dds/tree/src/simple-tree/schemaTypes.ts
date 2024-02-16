@@ -34,7 +34,8 @@ export type TreeObjectNode<T extends RestrictiveReadonlyRecord<string, ImplicitF
  *
  * 3. Union of 1 and 2.
  *
- * TODO: consider separating these cases into different types.
+ * @privateRemarks TODO: consider separating these cases into different types.
+ *
  * @public
  */
 export type InsertableObjectFromSchemaRecord<

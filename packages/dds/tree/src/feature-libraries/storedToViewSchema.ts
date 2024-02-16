@@ -17,13 +17,13 @@ import { defaultSchemaPolicy } from "./default-schema/index.js";
 import {
 	FlexTreeSchema,
 	FlexTreeNodeSchema,
-	MapFieldSchema,
-	TreeFieldSchema,
-	AllowedTypes,
+	FlexMapFieldSchema,
+	FlexFieldSchema,
+	FlexAllowedTypes,
 	Any,
 	LeafNodeSchema,
-	MapNodeSchema,
-	ObjectNodeSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
 } from "./typed-schema/index.js";
 
 /**
@@ -50,10 +50,10 @@ export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): FlexTreeSc
 		} else if (innerSchema instanceof MapNodeStoredSchema) {
 			map.set(
 				identifier,
-				MapNodeSchema.create(
+				FlexMapNodeSchema.create(
 					{ name: "intoTypedSchema" },
 					identifier,
-					fieldSchemaFromStoredSchema(innerSchema.mapFields, map) as MapFieldSchema,
+					fieldSchemaFromStoredSchema(innerSchema.mapFields, map) as FlexMapFieldSchema,
 				),
 			);
 		} else {
@@ -61,14 +61,14 @@ export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): FlexTreeSc
 				innerSchema instanceof ObjectNodeStoredSchema,
 				0x882 /* unsupported node kind */,
 			);
-			const fields = new Map<string, TreeFieldSchema>();
+			const fields = new Map<string, FlexFieldSchema>();
 			for (const [key, field] of innerSchema.objectNodeFields) {
 				fields.set(key, fieldSchemaFromStoredSchema(field, map));
 			}
 			const fieldsObject = mapToObject(fields);
 			map.set(
 				identifier,
-				ObjectNodeSchema.create({ name: "intoTypedSchema" }, identifier, fieldsObject),
+				FlexObjectNodeSchema.create({ name: "intoTypedSchema" }, identifier, fieldsObject),
 			);
 		}
 	}
@@ -97,12 +97,12 @@ function mapToObject<MapValue>(map: Map<string, MapValue>): Record<string, MapVa
 export function fieldSchemaFromStoredSchema(
 	schema: TreeFieldStoredSchema,
 	map: ReadonlyMap<TreeNodeSchemaIdentifier, FlexTreeNodeSchema>,
-): TreeFieldSchema {
+): FlexFieldSchema {
 	const kind =
 		defaultSchemaPolicy.fieldKinds.get(schema.kind.identifier) ?? fail("missing field kind");
-	const types: AllowedTypes =
+	const types: FlexAllowedTypes =
 		schema.types === undefined
 			? [Any]
 			: Array.from(schema.types, (v) => () => map.get(v) ?? fail("missing schema"));
-	return TreeFieldSchema.create(kind, types);
+	return FlexFieldSchema.create(kind, types);
 }

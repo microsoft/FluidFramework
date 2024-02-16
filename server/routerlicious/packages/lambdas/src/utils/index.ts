@@ -16,3 +16,4 @@ export { isDocumentSessionValid, isDocumentValid } from "./validateDocument";
 export { CheckpointReason, ICheckpoint } from "./checkpointHelper";
 export { ConnectionCountLogger } from "./connectionCountLogger";
 export { IServerMetadata } from "./serverMetadata";
+export { DocumentCheckpointManager } from "./documentLambdaCheckpointManager";

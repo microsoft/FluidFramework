@@ -15,9 +15,9 @@ import { addListNodes } from "prosemirror-schema-list";
 import { EditorState, Plugin, Transaction } from "prosemirror-state";
 
 import { EditorView } from "prosemirror-view";
-import { IProseMirrorNode, ProseMirrorTransactionBuilder, sliceToGroupOps } from "./fluidBridge";
-import { schema } from "./fluidSchema";
-import { create as createSelection } from "./selection";
+import { IProseMirrorNode, ProseMirrorTransactionBuilder, sliceToGroupOps } from "./fluidBridge.js";
+import { schema } from "./fluidSchema.js";
+import { create as createSelection } from "./selection.js";
 export const IRichTextEditor: keyof IProvideRichTextEditor = "IRichTextEditor";
 
 export interface IProvideRichTextEditor {

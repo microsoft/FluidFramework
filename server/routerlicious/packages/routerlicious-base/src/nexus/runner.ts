@@ -7,6 +7,7 @@ import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	ICache,
 	IClientManager,
+	IClusterDrainingChecker,
 	IDocumentStorage,
 	IOrdererManager,
 	IRunner,
@@ -55,6 +56,7 @@ export class NexusRunner implements IRunner {
 		private readonly tokenRevocationManager?: ITokenRevocationManager,
 		private readonly revokedTokenChecker?: IRevokedTokenChecker,
 		private readonly collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+		private readonly clusterDrainingChecker?: IClusterDrainingChecker,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -107,6 +109,7 @@ export class NexusRunner implements IRunner {
 				this.socketTracker,
 				this.revokedTokenChecker,
 				this.collaborationSessionEventEmitter,
+				this.clusterDrainingChecker,
 			);
 
 			if (this.tokenRevocationManager) {
