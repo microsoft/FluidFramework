@@ -93,7 +93,8 @@ export class FuzzTestMinimizer<
 		while (idx > 0) {
 			const deletedOp = this.operations.splice(idx, 1)[0];
 
-			if (!(await this.assertFails())) {
+			// don't remove attach ops, as it creates invalid scenarios
+			if (deletedOp.type === "attach" || !(await this.assertFails())) {
 				this.operations.splice(idx, 0, deletedOp);
 			}
 
