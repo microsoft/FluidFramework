@@ -13,7 +13,7 @@ import { pkgVersion as driverVersion } from "../../packageVersion";
 import { IOdspSocketError } from "../../contracts";
 
 export interface SocketMockEvents extends IEvent {
-	(event: "disconnect", listener: (reason?: IAnyDriverError, details?: any) => void): void;
+	(event: "disconnect", listener: (reason?: IAnyDriverError, details?: unknown) => void): void;
 	(event: "error", listener: (error?: IAnyDriverError) => void): void;
 	(
 		event: "server_disconnect",
@@ -97,7 +97,7 @@ export class ClientSocketMock extends TypedEventEmitter<SocketMockEvents> {
 		this.emit("server_disconnect", socketError, clientId);
 	}
 
-	public emit(eventName: string, ...args: any[]): boolean {
+	public emit(eventName: string, ...args: unknown[]): boolean {
 		switch (eventName) {
 			case "connect_document": {
 				const connectMessage = args[0] as IConnect;
