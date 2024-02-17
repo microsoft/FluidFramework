@@ -649,13 +649,13 @@ function* relevantRemovedRoots(
 		// of this change.
 		if (id !== "self" && !alreadyYielded.has(id)) {
 			alreadyYielded.set(id, true);
-			yield nodeIdFromChangeAtom(id);
+			yield nodeIdFromChangeAtom(id, revision);
 		}
 		yield* relevantRemovedRootsFromChild(childChange);
 	}
 
 	const selfSrc = change.field?.src;
 	if (selfSrc !== undefined && selfSrc !== "self" && !alreadyYielded.has(selfSrc)) {
-		yield nodeIdFromChangeAtom(selfSrc);
+		yield nodeIdFromChangeAtom(selfSrc, revision);
 	}
 }

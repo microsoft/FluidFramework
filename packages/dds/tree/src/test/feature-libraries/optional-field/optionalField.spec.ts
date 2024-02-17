@@ -734,9 +734,9 @@ describe("optionalField", () => {
 			});
 		});
 		it("uses passed down revision", () => {
-			const restore = tagChange(Change.childAt(brand(42), arbitraryChildChange), tag);
+			const restore = tagChange(Change.childAt(brand(42), nodeChange1), tag);
 			const actual = Array.from(
-				optionalChangeHandler.relevantRemovedRoots(restore, failingDelegate),
+				optionalChangeHandler.relevantRemovedRoots(restore, noTreesDelegate),
 			);
 			assert.deepEqual(actual, [{ major: tag, minor: 42 }]);
 		});
