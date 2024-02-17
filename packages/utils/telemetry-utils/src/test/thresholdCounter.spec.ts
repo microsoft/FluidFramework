@@ -10,8 +10,8 @@ import {
 	ITelemetryPerformanceEvent,
 	ITelemetryGenericEvent,
 } from "@fluidframework/core-interfaces";
-import { ThresholdCounter } from "../thresholdCounter";
-import { ITelemetryLoggerExt } from "../telemetryTypes";
+import { ThresholdCounter } from "../thresholdCounter.js";
+import { ITelemetryLoggerExt } from "../telemetryTypes.js";
 
 class FakeTelemetryLogger implements ITelemetryLoggerExt {
 	public events: ITelemetryGenericEvent[] = [];

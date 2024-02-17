@@ -10661,6 +10661,7 @@ importers:
       '@fluidframework/test-driver-definitions': link:../test-driver-definitions
       best-random: 1.0.3
       debug: 4.3.4
+      mocha: 10.2.0
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -10681,7 +10682,6 @@ importers:
       cross-env: 7.0.3
       diff: 3.5.0
       eslint: 8.50.0
-      mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
@@ -11809,6 +11809,7 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^7.4.2
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -11844,6 +11845,7 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
+      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/utils/tool-utils:

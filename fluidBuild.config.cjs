@@ -167,6 +167,8 @@ module.exports = {
 				"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
 			],
 			"fluid-build-tasks-eslint": [
+				// eslint doesn't really depend on build. Doing so just slows down a package build.
+				"^packages/test/test-utils/package.json",
 				// Can be removed once the policy handler is updated to support tsc-multi as equivalent to tsc.
 				"^azure/packages/azure-client/package.json",
 				"^azure/packages/azure-service-utils/package.json",
