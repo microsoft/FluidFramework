@@ -11,14 +11,14 @@ import {
 	ICacheEntry,
 	IEntry,
 } from "@fluidframework/odsp-driver-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger, type IFluidErrorBase } from "@fluidframework/telemetry-utils";
 import { defaultCacheExpiryTimeoutMs, EpochTracker } from "../epochTracker";
 import { LocalPersistentCache } from "../odspCache";
 import { getHashedDocumentId } from "../odspPublicUtils";
 import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "../contracts";
 import { mockFetchOk, mockFetchSingle, createResponse } from "./mockFetch";
 
-const createUtLocalCache = () => new LocalPersistentCache();
+const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 
 describe("Tests for Epoch Tracker", () => {
 	const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
@@ -156,10 +156,10 @@ describe("Tests for Epoch Tracker", () => {
 				{},
 				{ "x-fluid-epoch": "epoch2" },
 			);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			success = false;
 			assert.strictEqual(
-				error.errorType,
+				(error as Partial<IFluidErrorBase>).errorType,
 				OdspErrorTypes.fileOverwrittenInStorage,
 				"Error should be epoch error",
 			);
@@ -187,10 +187,10 @@ describe("Tests for Epoch Tracker", () => {
 				{},
 				{ "x-fluid-epoch": "epoch2" },
 			);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			success = false;
 			assert.strictEqual(
-				error.errorType,
+				(error as Partial<IFluidErrorBase>).errorType,
 				OdspErrorTypes.fileOverwrittenInStorage,
 				"Error should be epoch error",
 			);
@@ -218,8 +218,10 @@ describe("Tests for Epoch Tracker", () => {
 				{},
 				{ "x-fluid-epoch": "epoch2" },
 			);
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} catch (error: any) {
 			success = false;
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			assert(error.XRequestStatsHeader !== undefined, "CorrelationId should be present");
 		}
 		assert.strictEqual(success, false, "Fetching should fail!!");
@@ -262,6 +264,7 @@ describe("Tests for Epoch Tracker", () => {
 		}
 		assert.strictEqual(success, true, "Fetching should succeed!!");
 		assert.strictEqual(
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, unicorn/no-await-expression-member
 			(await epochTracker.get(cacheEntry1)).val,
 			"val1",
 			"Entry in cache should be present",

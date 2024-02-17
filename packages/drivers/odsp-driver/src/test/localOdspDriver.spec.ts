@@ -279,7 +279,6 @@ describe("Local Odsp driver", () => {
 				);
 				for (let i = 0; i < 3; i++) {
 					assert.deepStrictEqual(
-						// eslint-disable-next-line unicorn/no-null
 						await storageService.getVersions(null, 1),
 						snapshotVersion,
 					);
