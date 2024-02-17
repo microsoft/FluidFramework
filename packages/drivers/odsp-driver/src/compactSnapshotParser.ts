@@ -37,7 +37,10 @@ export interface ISnapshotContentsWithProps extends ISnapshot {
  * Recreates blobs section of the tree.
  * @param node - tree node to read blob section from
  */
-function readBlobSection(node: NodeTypes) {
+function readBlobSection(node: NodeTypes): {
+	blobContents: Map<string, ArrayBuffer>;
+	slowBlobStructureCount: number;
+} {
 	assertNodeCoreInstance(node, "TreeBlobs should be of type NodeCore");
 	let slowBlobStructureCount = 0;
 	const blobContents: Map<string, ArrayBuffer> = new Map();
@@ -76,13 +79,14 @@ function readBlobSection(node: NodeTypes) {
  * Recreates ops section of the tree.
  * @param node - tree node to read ops section from
  */
-function readOpsSection(node: NodeTypes) {
+function readOpsSection(node: NodeTypes): ISequencedDocumentMessage[] {
 	assertNodeCoreInstance(node, "Deltas should be of type NodeCore");
 	const ops: ISequencedDocumentMessage[] = [];
 	const records = getNodeProps(node);
 	assertNumberInstance(records.firstSequenceNumber, "Seq number should be a number");
 	assertNodeCoreInstance(records.deltas, "Deltas should be a Node");
 	for (let i = 0; i < records.deltas.length; ++i) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		ops.push(JSON.parse(records.deltas.getString(i)));
 	}
 	// Due to a bug at service side, in an edge case service was serializing deltas even
@@ -99,7 +103,10 @@ function readOpsSection(node: NodeTypes) {
  * Recreates snapshot tree out of tree representation.
  * @param node - tree node to de-serialize from
  */
-function readTreeSection(node: NodeCore) {
+function readTreeSection(node: NodeCore): {
+	snapshotTree: ISnapshotTree;
+	slowTreeStructureCount: number;
+} {
 	let slowTreeStructureCount = 0;
 	const trees = {};
 	const snapshotTree: ISnapshotTree = {
@@ -245,7 +252,11 @@ function readTreeSection(node: NodeCore) {
  * Recreates snapshot tree out of tree representation.
  * @param node - tree node to de-serialize from
  */
-function readSnapshotSection(node: NodeTypes) {
+function readSnapshotSection(node: NodeTypes): {
+	sequenceNumber: number;
+	snapshotTree: ISnapshotTree;
+	slowTreeStructureCount: number;
+} {
 	assertNodeCoreInstance(node, "Snapshot should be of type NodeCore");
 	const records = getNodeProps(node);
 
