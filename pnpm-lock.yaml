@@ -154,166 +154,6 @@ importers:
       tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
-  azure/packages/test/end-to-end-tests:
-    specifiers:
-      '@fluidframework/aqueduct': workspace:~
-      '@fluidframework/azure-client': workspace:~
-      '@fluidframework/build-common': ^2.0.3
-      '@fluidframework/build-tools': ^0.33.0
-      '@fluidframework/container-definitions': workspace:~
-      '@fluidframework/container-loader': workspace:~
-      '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/counter': workspace:~
-      '@fluidframework/eslint-config-fluid': ^3.5.0
-      '@fluidframework/fluid-static': workspace:~
-      '@fluidframework/map': workspace:~
-      '@fluidframework/matrix': workspace:~
-      '@fluidframework/mocha-test-setup': workspace:~
-      '@fluidframework/sequence': workspace:~
-      '@fluidframework/telemetry-utils': workspace:~
-      '@fluidframework/test-runtime-utils': workspace:~
-      '@fluidframework/test-utils': workspace:~
-      '@types/mocha': ^9.1.1
-      '@types/nock': ^9.3.0
-      '@types/node': ^18.19.0
-      '@types/uuid': ^9.0.2
-      c8: ^8.0.1
-      cross-env: ^7.0.3
-      eslint: ~8.50.0
-      mocha: ^10.2.0
-      mocha-json-output-reporter: ^2.0.1
-      mocha-multi-reporters: ^1.5.1
-      moment: ^2.21.0
-      nock: ^13.3.3
-      prettier: ~3.0.3
-      rimraf: ^4.4.0
-      sinon: ^7.4.2
-      start-server-and-test: ^1.11.7
-      tinylicious: ^3.1.0-231702
-      typescript: ~5.1.6
-      uuid: ^9.0.0
-    dependencies:
-      '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
-      '@fluidframework/azure-client': link:../../../../packages/service-clients/azure-client
-      '@fluidframework/container-definitions': link:../../../../packages/common/container-definitions
-      '@fluidframework/container-loader': link:../../../../packages/loader/container-loader
-      '@fluidframework/core-interfaces': link:../../../../packages/common/core-interfaces
-      '@fluidframework/counter': link:../../../../packages/dds/counter
-      '@fluidframework/fluid-static': link:../../../../packages/framework/fluid-static
-      '@fluidframework/map': link:../../../../packages/dds/map
-      '@fluidframework/matrix': link:../../../../packages/dds/matrix
-      '@fluidframework/mocha-test-setup': link:../../../../packages/test/mocha-test-setup
-      '@fluidframework/sequence': link:../../../../packages/dds/sequence
-      '@fluidframework/telemetry-utils': link:../../../../packages/utils/telemetry-utils
-      '@fluidframework/test-runtime-utils': link:../../../../packages/runtime/test-runtime-utils
-      '@fluidframework/test-utils': link:../../../../packages/test/test-utils
-      cross-env: 7.0.3
-      mocha: 10.2.0
-      mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
-      mocha-multi-reporters: 1.5.1_mocha@10.2.0
-      moment: 2.29.4
-      prettier: 3.0.3
-      sinon: 7.5.0
-      start-server-and-test: 1.15.5
-      tinylicious: 3.1.0-231702
-      uuid: 9.0.1
-    devDependencies:
-      '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.33.0_@types+node@18.19.1
-      '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
-      '@types/mocha': 9.1.1
-      '@types/nock': 9.3.1
-      '@types/node': 18.19.1
-      '@types/uuid': 9.0.7
-      c8: 8.0.1
-      eslint: 8.50.0
-      nock: 13.4.0
-      rimraf: 4.4.1
-      typescript: 5.1.6
-
-  azure/packages/test/scenario-runner:
-    specifiers:
-      '@fluid-internal/client-utils': workspace:~
-      '@fluid-tools/build-cli': ^0.33.0
-      '@fluidframework/aqueduct': workspace:~
-      '@fluidframework/azure-client': workspace:~
-      '@fluidframework/build-common': ^2.0.3
-      '@fluidframework/build-tools': ^0.33.0
-      '@fluidframework/container-definitions': workspace:~
-      '@fluidframework/container-loader': workspace:~
-      '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/core-utils': workspace:~
-      '@fluidframework/counter': workspace:~
-      '@fluidframework/eslint-config-fluid': ^3.5.0
-      '@fluidframework/fluid-static': workspace:~
-      '@fluidframework/map': workspace:~
-      '@fluidframework/matrix': workspace:~
-      '@fluidframework/sequence': workspace:~
-      '@fluidframework/telemetry-utils': workspace:~
-      '@fluidframework/test-driver-definitions': workspace:~
-      '@fluidframework/test-runtime-utils': workspace:~
-      '@fluidframework/test-utils': workspace:~
-      '@types/js-yaml': ^4.0.5
-      '@types/mocha': ^9.1.1
-      '@types/nock': ^9.3.0
-      '@types/node': ^18.19.0
-      '@types/uuid': ^9.0.2
-      c8: ^8.0.1
-      commander: ^5.1.0
-      cross-env: ^7.0.3
-      eslint: ~8.50.0
-      js-yaml: ^4.1.0
-      mocha: ^10.2.0
-      nock: ^13.3.3
-      prettier: ~3.0.3
-      rimraf: ^4.4.0
-      sinon: ^7.4.2
-      start-server-and-test: ^1.11.7
-      tinylicious: ^3.1.0-231702
-      typescript: ~5.1.6
-      uuid: ^9.0.0
-    dependencies:
-      '@fluid-internal/client-utils': link:../../../../packages/common/client-utils
-      '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
-      '@fluidframework/azure-client': link:../../../../packages/service-clients/azure-client
-      '@fluidframework/container-definitions': link:../../../../packages/common/container-definitions
-      '@fluidframework/container-loader': link:../../../../packages/loader/container-loader
-      '@fluidframework/core-interfaces': link:../../../../packages/common/core-interfaces
-      '@fluidframework/core-utils': link:../../../../packages/common/core-utils
-      '@fluidframework/counter': link:../../../../packages/dds/counter
-      '@fluidframework/fluid-static': link:../../../../packages/framework/fluid-static
-      '@fluidframework/map': link:../../../../packages/dds/map
-      '@fluidframework/matrix': link:../../../../packages/dds/matrix
-      '@fluidframework/sequence': link:../../../../packages/dds/sequence
-      '@fluidframework/telemetry-utils': link:../../../../packages/utils/telemetry-utils
-      '@fluidframework/test-driver-definitions': link:../../../../packages/test/test-driver-definitions
-      '@fluidframework/test-runtime-utils': link:../../../../packages/runtime/test-runtime-utils
-      '@fluidframework/test-utils': link:../../../../packages/test/test-utils
-      commander: 5.1.0
-      cross-env: 7.0.3
-      js-yaml: 4.1.0
-      mocha: 10.2.0
-      sinon: 7.5.0
-      start-server-and-test: 1.15.5
-      tinylicious: 3.1.0-231702
-      uuid: 9.0.1
-    devDependencies:
-      '@fluid-tools/build-cli': 0.33.0_mhw3tufvtaceew37hrkkevjcli
-      '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.33.0_@types+node@18.19.1
-      '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
-      '@types/js-yaml': 4.0.9
-      '@types/mocha': 9.1.1
-      '@types/nock': 9.3.1
-      '@types/node': 18.19.1
-      '@types/uuid': 9.0.7
-      c8: 8.0.1
-      eslint: 8.50.0
-      nock: 13.4.0
-      prettier: 3.0.3
-      rimraf: 4.4.1
-      typescript: 5.1.6
-
   examples/apps/attributable-map:
     specifiers:
       '@fluid-example/example-utils': workspace:~
@@ -9663,6 +9503,83 @@ importers:
       typescript: 5.1.6
       uuid: 9.0.1
 
+  packages/service-clients/end-to-end-tests/azure-client:
+    specifiers:
+      '@fluidframework/aqueduct': workspace:~
+      '@fluidframework/azure-client': workspace:~
+      '@fluidframework/build-common': ^2.0.3
+      '@fluidframework/build-tools': ^0.33.0
+      '@fluidframework/container-definitions': workspace:~
+      '@fluidframework/container-loader': workspace:~
+      '@fluidframework/core-interfaces': workspace:~
+      '@fluidframework/counter': workspace:~
+      '@fluidframework/eslint-config-fluid': ^3.5.0
+      '@fluidframework/fluid-static': workspace:~
+      '@fluidframework/map': workspace:~
+      '@fluidframework/matrix': workspace:~
+      '@fluidframework/mocha-test-setup': workspace:~
+      '@fluidframework/sequence': workspace:~
+      '@fluidframework/telemetry-utils': workspace:~
+      '@fluidframework/test-runtime-utils': workspace:~
+      '@fluidframework/test-utils': workspace:~
+      '@types/mocha': ^9.1.1
+      '@types/nock': ^9.3.0
+      '@types/node': ^18.19.0
+      '@types/uuid': ^9.0.2
+      c8: ^8.0.1
+      cross-env: ^7.0.3
+      eslint: ~8.50.0
+      mocha: ^10.2.0
+      mocha-json-output-reporter: ^2.0.1
+      mocha-multi-reporters: ^1.5.1
+      moment: ^2.21.0
+      nock: ^13.3.3
+      prettier: ~3.0.3
+      rimraf: ^4.4.0
+      sinon: ^7.4.2
+      start-server-and-test: ^1.11.7
+      tinylicious: ^3.1.0-231702
+      typescript: ~5.1.6
+      uuid: ^9.0.0
+    dependencies:
+      '@fluidframework/aqueduct': link:../../../framework/aqueduct
+      '@fluidframework/azure-client': link:../../azure-client
+      '@fluidframework/container-definitions': link:../../../common/container-definitions
+      '@fluidframework/container-loader': link:../../../loader/container-loader
+      '@fluidframework/core-interfaces': link:../../../common/core-interfaces
+      '@fluidframework/counter': link:../../../dds/counter
+      '@fluidframework/fluid-static': link:../../../framework/fluid-static
+      '@fluidframework/map': link:../../../dds/map
+      '@fluidframework/matrix': link:../../../dds/matrix
+      '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
+      '@fluidframework/sequence': link:../../../dds/sequence
+      '@fluidframework/telemetry-utils': link:../../../utils/telemetry-utils
+      '@fluidframework/test-runtime-utils': link:../../../runtime/test-runtime-utils
+      '@fluidframework/test-utils': link:../../../test/test-utils
+      cross-env: 7.0.3
+      mocha: 10.2.0
+      mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
+      mocha-multi-reporters: 1.5.1_mocha@10.2.0
+      moment: 2.29.4
+      prettier: 3.0.3
+      sinon: 7.5.0
+      start-server-and-test: 1.15.5
+      tinylicious: 3.1.0-231702
+      uuid: 9.0.1
+    devDependencies:
+      '@fluidframework/build-common': 2.0.3
+      '@fluidframework/build-tools': 0.33.0_@types+node@18.19.1
+      '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
+      '@types/mocha': 9.1.1
+      '@types/nock': 9.3.1
+      '@types/node': 18.19.1
+      '@types/uuid': 9.0.7
+      c8: 8.0.1
+      eslint: 8.50.0
+      nock: 13.4.0
+      rimraf: 4.4.1
+      typescript: 5.1.6
+
   packages/service-clients/end-to-end-tests/odsp-client:
     specifiers:
       '@fluid-experimental/odsp-client': workspace:~
@@ -9735,6 +9652,89 @@ importers:
       c8: 8.0.1
       eslint: 8.50.0
       nock: 13.4.0
+      rimraf: 4.4.1
+      typescript: 5.1.6
+
+  packages/service-clients/end-to-end-tests/scenario-runner:
+    specifiers:
+      '@fluid-internal/client-utils': workspace:~
+      '@fluid-tools/build-cli': ^0.33.0
+      '@fluidframework/aqueduct': workspace:~
+      '@fluidframework/azure-client': workspace:~
+      '@fluidframework/build-common': ^2.0.3
+      '@fluidframework/build-tools': ^0.33.0
+      '@fluidframework/container-definitions': workspace:~
+      '@fluidframework/container-loader': workspace:~
+      '@fluidframework/core-interfaces': workspace:~
+      '@fluidframework/core-utils': workspace:~
+      '@fluidframework/counter': workspace:~
+      '@fluidframework/eslint-config-fluid': ^3.5.0
+      '@fluidframework/fluid-static': workspace:~
+      '@fluidframework/map': workspace:~
+      '@fluidframework/matrix': workspace:~
+      '@fluidframework/sequence': workspace:~
+      '@fluidframework/telemetry-utils': workspace:~
+      '@fluidframework/test-driver-definitions': workspace:~
+      '@fluidframework/test-runtime-utils': workspace:~
+      '@fluidframework/test-utils': workspace:~
+      '@types/js-yaml': ^4.0.5
+      '@types/mocha': ^9.1.1
+      '@types/nock': ^9.3.0
+      '@types/node': ^18.19.0
+      '@types/uuid': ^9.0.2
+      c8: ^8.0.1
+      commander: ^5.1.0
+      cross-env: ^7.0.3
+      eslint: ~8.50.0
+      js-yaml: ^4.1.0
+      mocha: ^10.2.0
+      nock: ^13.3.3
+      prettier: ~3.0.3
+      rimraf: ^4.4.0
+      sinon: ^7.4.2
+      start-server-and-test: ^1.11.7
+      tinylicious: ^3.1.0-231702
+      typescript: ~5.1.6
+      uuid: ^9.0.0
+    dependencies:
+      '@fluid-internal/client-utils': link:../../../common/client-utils
+      '@fluidframework/aqueduct': link:../../../framework/aqueduct
+      '@fluidframework/azure-client': link:../../azure-client
+      '@fluidframework/container-definitions': link:../../../common/container-definitions
+      '@fluidframework/container-loader': link:../../../loader/container-loader
+      '@fluidframework/core-interfaces': link:../../../common/core-interfaces
+      '@fluidframework/core-utils': link:../../../common/core-utils
+      '@fluidframework/counter': link:../../../dds/counter
+      '@fluidframework/fluid-static': link:../../../framework/fluid-static
+      '@fluidframework/map': link:../../../dds/map
+      '@fluidframework/matrix': link:../../../dds/matrix
+      '@fluidframework/sequence': link:../../../dds/sequence
+      '@fluidframework/telemetry-utils': link:../../../utils/telemetry-utils
+      '@fluidframework/test-driver-definitions': link:../../../test/test-driver-definitions
+      '@fluidframework/test-runtime-utils': link:../../../runtime/test-runtime-utils
+      '@fluidframework/test-utils': link:../../../test/test-utils
+      commander: 5.1.0
+      cross-env: 7.0.3
+      js-yaml: 4.1.0
+      mocha: 10.2.0
+      sinon: 7.5.0
+      start-server-and-test: 1.15.5
+      tinylicious: 3.1.0-231702
+      uuid: 9.0.1
+    devDependencies:
+      '@fluid-tools/build-cli': 0.33.0_mhw3tufvtaceew37hrkkevjcli
+      '@fluidframework/build-common': 2.0.3
+      '@fluidframework/build-tools': 0.33.0_@types+node@18.19.1
+      '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
+      '@types/js-yaml': 4.0.9
+      '@types/mocha': 9.1.1
+      '@types/nock': 9.3.1
+      '@types/node': 18.19.1
+      '@types/uuid': 9.0.7
+      c8: 8.0.1
+      eslint: 8.50.0
+      nock: 13.4.0
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
