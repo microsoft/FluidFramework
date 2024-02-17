@@ -831,7 +831,7 @@ export class CollabSpacesRuntime
 		// represents same data, but need to double check that it's actually correct and tests
 		// have proper coverage.
 
-		this.dataStoreContext.deleteChildSummarizerNodeFn(channelId);
+		this.dataStoreContext.deleteChildSummarizerNode(channelId);
 	}
 
 	// Saves or destroys channel, depending on the arguments

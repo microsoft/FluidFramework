@@ -989,7 +989,7 @@ export abstract class FluidDataStoreContext
 			);
 	}
 
-	public deleteChildSummarizerNodeFn(id: string) {
+	public deleteChildSummarizerNode(id: string) {
 		this.summarizerNode.deleteChild(id);
 	}
 

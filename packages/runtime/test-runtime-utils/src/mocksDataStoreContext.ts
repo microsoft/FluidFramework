@@ -123,7 +123,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 		throw new Error("Method not implemented.");
 	}
 
-	public deleteChildSummarizerNodeFn(
+	public deleteChildSummarizerNode(
 		id: string,
 	): void {
 		throw new Error("Method not implemented.");

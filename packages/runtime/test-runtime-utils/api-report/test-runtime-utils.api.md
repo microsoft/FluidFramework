@@ -326,7 +326,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // @deprecated (undocumented)
     createProps?: any;
     // (undocumented)
-    deleteChildSummarizerNodeFn(id: string): void;
+    deleteChildSummarizerNode(id: string): void;
     // (undocumented)
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
