@@ -141,14 +141,13 @@
 				]
 			},
 			"ServiceClients": {
-				"dirs": ["packages/service-clients/", "@fluidframework/tinylicious-client"],
+				"dirs": ["packages/service-clients/"],
 				"deps": [
 					"Container-Definitions",
 					"Driver",
 					"Framework",
 					"Runtime",
 					"Routerlicious-Driver",
-					"Server-Shared-Utils",
 					"Loader",
 					"Server-Libs",
 					"Test-Utils"
