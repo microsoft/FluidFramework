@@ -18,7 +18,7 @@ describe("getFileLink", () => {
 	const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
 	const driveId = "driveId";
 	const logger = new MockLogger();
-	const storageTokenFetcher = async () => "StorageToken";
+	const storageTokenFetcher = async (): Promise<string> => "StorageToken";
 	const fileItemResponse = {
 		webDavUrl: "fetchDavUrl",
 		webUrl: "fetchWebUrl",

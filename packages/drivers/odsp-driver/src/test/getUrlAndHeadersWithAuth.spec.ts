@@ -35,7 +35,7 @@ describe("getUrlAndHeadersWithAuth", () => {
 		originalUrl: URL,
 		token: string,
 		result: { url: string; headers: { [index: string]: string } },
-	) => {
+	): void => {
 		const returnedUrl = new URL(result.url);
 		assert.strictEqual(
 			returnedUrl.searchParams.get("access_token"),
@@ -55,7 +55,7 @@ describe("getUrlAndHeadersWithAuth", () => {
 		originalUrl: URL,
 		token: string,
 		result: { url: string; headers: { [index: string]: string } },
-	) => {
+	): void => {
 		const returnedUrl = new URL(result.url);
 		assert.strictEqual(
 			returnedUrl.searchParams.get("access_token"),
