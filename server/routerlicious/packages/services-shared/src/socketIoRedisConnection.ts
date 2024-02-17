@@ -3,28 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import * as Redis from "ioredis";
 import * as winston from "winston";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import {
 	ISocketIoRedisConnection,
 	ISocketIoRedisSubscriptionConnection,
 } from "./redisSocketIoAdapter";
+import { IRedisClientConnectionManager } from "./redisClientConnectionManager";
 
 /**
  * Simple implementation of ISocketIoRedisConnection, which wraps a redis client
  * and only provides Pub functionality
  */
 export class SocketIORedisConnection implements ISocketIoRedisConnection {
-	constructor(protected readonly client: Redis.default) {
-		client.on("error", (err) => {
-			winston.error("Error with Redis:", err);
-			Lumberjack.error("Error with Redis:", undefined, err);
+	constructor(protected readonly redisClienConnectionManager: IRedisClientConnectionManager) {
+		redisClienConnectionManager.getRedisClient().on("error", (err) => {
+			winston.error("[DHRUV DEBUG] Error with Redis:", err);
+			Lumberjack.error("[DHRUV DEBUG] Error with Redis:", undefined, err);
 		});
 	}
 
 	public async publish(channel: string, message: string) {
-		await this.client.publish(channel, message);
+		await this.redisClienConnectionManager.getRedisClient().publish(channel, message);
 	}
 }
 
@@ -42,19 +42,21 @@ export class SocketIoRedisSubscriptionConnection
 	private readonly subscriptions: Map<string, (channel: string, messageBuffer: Buffer) => void> =
 		new Map();
 
-	constructor(client: Redis.default) {
-		super(client);
+	constructor(redisClienConnectionManager: IRedisClientConnectionManager) {
+		super(redisClienConnectionManager);
 
-		client.on("messageBuffer", (channelBuffer: Buffer, messageBuffer: Buffer) => {
-			const channel = channelBuffer.toString();
+		redisClienConnectionManager
+			.getRedisClient()
+			.on("messageBuffer", (channelBuffer: Buffer, messageBuffer: Buffer) => {
+				const channel = channelBuffer.toString();
 
-			const callback = this.subscriptions.get(channel);
-			if (!callback) {
-				return;
-			}
+				const callback = this.subscriptions.get(channel);
+				if (!callback) {
+					return;
+				}
 
-			callback(channel, messageBuffer);
-		});
+				callback(channel, messageBuffer);
+			});
 	}
 
 	public async subscribe(
@@ -72,7 +74,7 @@ export class SocketIoRedisSubscriptionConnection
 			}
 		}
 
-		await this.client.subscribe(...channelsArray);
+		await this.redisClienConnectionManager.getRedisClient().subscribe(...channelsArray);
 
 		for (const channel of channelsArray) {
 			subscriptionsMap.set(channel, callback);
@@ -88,7 +90,7 @@ export class SocketIoRedisSubscriptionConnection
 			return;
 		}
 
-		await this.client.unsubscribe(...channelsArray);
+		await this.redisClienConnectionManager.getRedisClient().unsubscribe(...channelsArray);
 
 		for (const channel of channelsArray) {
 			subscriptionsMap.delete(channel);

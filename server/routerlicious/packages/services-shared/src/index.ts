@@ -35,3 +35,7 @@ export {
 export { WholeSummaryReadGitManager } from "./wholeSummaryReadGitManager";
 export { WholeSummaryWriteGitManager } from "./wholeSummaryWriteGitManager";
 export { ConfigDumper } from "./configDumper";
+export {
+	RedisClientConnectionManager,
+	IRedisClientConnectionManager,
+} from "./redisClientConnectionManager";

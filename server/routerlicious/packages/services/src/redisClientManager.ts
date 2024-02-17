@@ -9,9 +9,9 @@ import {
 	executeRedisMultiWithHmsetExpire,
 	IRedisParameters,
 } from "@fluidframework/server-services-utils";
-import * as Redis from "ioredis";
 import * as winston from "winston";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { IRedisClientConnectionManager } from "@fluidframework/server-services-shared";
 
 // Manages the set of connected clients in redis hashes with an expiry of 'expireAfterSeconds'.
 /**
@@ -22,7 +22,7 @@ export class ClientManager implements IClientManager {
 	private readonly prefix: string = "client";
 
 	constructor(
-		private readonly client: Redis.default,
+		private readonly redisClientConnectionManager: IRedisClientConnectionManager,
 		parameters?: IRedisParameters,
 	) {
 		if (parameters?.expireAfterSeconds) {
@@ -33,9 +33,9 @@ export class ClientManager implements IClientManager {
 			this.prefix = parameters.prefix;
 		}
 
-		client.on("error", (error) => {
-			winston.error("Client Manager Redis Error:", error);
-			Lumberjack.error("Client Manager Redis Error", undefined, error);
+		redisClientConnectionManager.getRedisClient().on("error", (error) => {
+			winston.error("[DHRUV DEBUG] Client Manager Redis Error:", error);
+			Lumberjack.error("[DHRUV DEBUG] Client Manager Redis Error", undefined, error);
 		});
 	}
 
@@ -47,7 +47,12 @@ export class ClientManager implements IClientManager {
 	): Promise<void> {
 		const key = this.getKey(tenantId, documentId);
 		const data: { [key: string]: any } = { [clientId]: JSON.stringify(details) };
-		return executeRedisMultiWithHmsetExpire(this.client, key, data, this.expireAfterSeconds);
+		return executeRedisMultiWithHmsetExpire(
+			this.redisClientConnectionManager.getRedisClient(),
+			key,
+			data,
+			this.expireAfterSeconds,
+		);
 	}
 
 	public async removeClient(
@@ -55,11 +60,15 @@ export class ClientManager implements IClientManager {
 		documentId: string,
 		clientId: string,
 	): Promise<void> {
-		await this.client.hdel(this.getKey(tenantId, documentId), clientId);
+		await this.redisClientConnectionManager
+			.getRedisClient()
+			.hdel(this.getKey(tenantId, documentId), clientId);
 	}
 
 	public async getClients(tenantId: string, documentId: string): Promise<ISignalClient[]> {
-		const dbClients = await this.client.hgetall(this.getKey(tenantId, documentId));
+		const dbClients = await this.redisClientConnectionManager
+			.getRedisClient()
+			.hgetall(this.getKey(tenantId, documentId));
 		const clients: ISignalClient[] = [];
 		if (dbClients) {
 			for (const clientId of Object.keys(dbClients)) {

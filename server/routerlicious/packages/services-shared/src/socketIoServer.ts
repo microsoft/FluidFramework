@@ -8,8 +8,6 @@ import * as http from "http";
 import * as util from "util";
 import * as core from "@fluidframework/server-services-core";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
-import { clone } from "lodash";
-import * as Redis from "ioredis";
 import { Namespace, Server, Socket } from "socket.io";
 import { createAdapter } from "@socket.io/redis-adapter";
 import type { Adapter } from "socket.io-adapter";
@@ -19,6 +17,7 @@ import {
 	SocketIORedisConnection,
 	SocketIoRedisSubscriptionConnection,
 } from "./socketIoRedisConnection";
+import { IRedisClientConnectionManager } from "./redisClientConnectionManager";
 
 class SocketIoSocket implements core.IWebSocket {
 	public get id(): string {
@@ -71,8 +70,8 @@ class SocketIoServer implements core.IWebSocketServer {
 
 	constructor(
 		private readonly io: Server,
-		private readonly pub: Redis.Redis,
-		private readonly sub: Redis.Redis,
+		private readonly redisClientConnectionManagerForPub: IRedisClientConnectionManager,
+		private readonly redisClientConnectionManagerForSub: IRedisClientConnectionManager,
 	) {
 		this.io.on("connection", (socket: Socket) => {
 			const webSocket = new SocketIoSocket(socket);
@@ -124,62 +123,40 @@ class SocketIoServer implements core.IWebSocketServer {
 
 	public async close(): Promise<void> {
 		// eslint-disable-next-line @typescript-eslint/promise-function-async
-		const pubClosedP = util.promisify(((callback) => this.pub.quit(callback)) as any)();
+		const pubClosedP = util.promisify(((callback) =>
+			this.redisClientConnectionManagerForPub.getRedisClient().quit(callback)) as any)();
 		// eslint-disable-next-line @typescript-eslint/promise-function-async
-		const subClosedP = util.promisify(((callback) => this.sub.quit(callback)) as any)();
+		const subClosedP = util.promisify(((callback) =>
+			this.redisClientConnectionManagerForSub.getRedisClient().quit(callback)) as any)();
 		const ioClosedP = util.promisify(((callback) => this.io.close(callback)) as any)();
 		await Promise.all([pubClosedP, subClosedP, ioClosedP]);
 	}
 }
 
 export function create(
-	redisConfig: any,
+	redisClientConnectionManagerForPub: IRedisClientConnectionManager,
+	redisClientConnectionManagerForSub: IRedisClientConnectionManager,
 	server: http.Server,
 	socketIoAdapterConfig?: any,
 	socketIoConfig?: any,
 	ioSetup?: (io: Server) => void,
 ): core.IWebSocketServer {
-	const options: Redis.RedisOptions = {
-		host: redisConfig.host,
-		port: redisConfig.port,
-		password: redisConfig.pass,
-		connectTimeout: redisConfig.connectTimeout,
-		enableReadyCheck: true,
-		maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
-		enableOfflineQueue: redisConfig.enableOfflineQueue,
-	};
-	if (redisConfig.enableAutoPipelining) {
-		/**
-		 * When enabled, all commands issued during an event loop iteration are automatically wrapped in a
-		 * pipeline and sent to the server at the same time. This can improve performance by 30-50%.
-		 * More info: https://github.com/luin/ioredis#autopipelining
-		 */
-		options.enableAutoPipelining = true;
-		options.autoPipeliningIgnoredCommands = ["ping"];
-	}
-	if (redisConfig.tls) {
-		options.tls = {
-			servername: redisConfig.host,
-		};
-	}
-
-	const pub = new Redis.default(clone(options));
-	const sub = new Redis.default(clone(options));
-
-	pub.on("error", (err) => {
-		winston.error("Error with Redis pub connection: ", err);
-		Lumberjack.error("Error with Redis pub connection", undefined, err);
+	redisClientConnectionManagerForPub.getRedisClient().on("error", (err) => {
+		winston.error("[DHRUV DEBUG] Error with Redis pub connection: ", err);
+		Lumberjack.error("[DHRUV DEBUG] Error with Redis pub connection", undefined, err);
 	});
-	sub.on("error", (err) => {
-		winston.error("Error with Redis sub connection: ", err);
-		Lumberjack.error("Error with Redis sub connection", undefined, err);
+	redisClientConnectionManagerForSub.getRedisClient().on("error", (err) => {
+		winston.error("[DHRUV DEBUG] Error with Redis sub connection: ", err);
+		Lumberjack.error("[DHRUV DEBUG] Error with Redis sub connection", undefined, err);
 	});
 
 	let adapter: (nsp: Namespace) => Adapter;
 	if (socketIoAdapterConfig?.enableCustomSocketIoAdapter) {
 		const socketIoRedisOptions: redisSocketIoAdapter.ISocketIoRedisOptions = {
-			pubConnection: new SocketIORedisConnection(pub),
-			subConnection: new SocketIoRedisSubscriptionConnection(sub),
+			pubConnection: new SocketIORedisConnection(redisClientConnectionManagerForPub),
+			subConnection: new SocketIoRedisSubscriptionConnection(
+				redisClientConnectionManagerForSub,
+			),
 		};
 
 		redisSocketIoAdapter.RedisSocketIoAdapter.setup(
@@ -189,7 +166,10 @@ export function create(
 
 		adapter = redisSocketIoAdapter.RedisSocketIoAdapter as any;
 	} else {
-		adapter = createAdapter(pub, sub);
+		adapter = createAdapter(
+			redisClientConnectionManagerForPub.getRedisClient(),
+			redisClientConnectionManagerForSub.getRedisClient(),
+		);
 	}
 
 	// Create and register a socket.io connection on the server
@@ -213,5 +193,9 @@ export function create(
 		ioSetup(io);
 	}
 
-	return new SocketIoServer(io, pub, sub);
+	return new SocketIoServer(
+		io,
+		redisClientConnectionManagerForPub,
+		redisClientConnectionManagerForSub,
+	);
 }

@@ -48,3 +48,4 @@ export {
 	validateBlobContent,
 	validateBlobEncoding,
 } from "./utils";
+export { IGitrestResourcesCustomizations } from "./customizations";

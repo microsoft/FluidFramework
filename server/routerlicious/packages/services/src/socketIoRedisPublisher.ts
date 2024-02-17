@@ -6,8 +6,8 @@
 import { EventEmitter } from "events";
 import * as util from "util";
 import * as core from "@fluidframework/server-services-core";
-import * as Redis from "ioredis";
 import { Emitter as SocketIoEmitter } from "@socket.io/redis-emitter";
+import type { IRedisClientConnectionManager } from "@fluidframework/server-services-shared";
 
 /**
  * @internal
@@ -24,15 +24,15 @@ export class SocketIoRedisTopic implements core.ITopic {
  * @internal
  */
 export class SocketIoRedisPublisher implements core.IPublisher {
-	private readonly redisClient: Redis.Redis;
+	private readonly redisClientConnectionManager: IRedisClientConnectionManager;
 	private readonly io: any;
 	private readonly events = new EventEmitter();
 
-	constructor(options: Redis.RedisOptions) {
-		this.redisClient = new Redis.default(options);
-		this.io = new SocketIoEmitter(this.redisClient);
+	constructor(redisClientConnectionManager: IRedisClientConnectionManager) {
+		this.redisClientConnectionManager = redisClientConnectionManager;
+		this.io = new SocketIoEmitter(this.redisClientConnectionManager.getRedisClient());
 
-		this.redisClient.on("error", (error) => {
+		this.redisClientConnectionManager.getRedisClient().on("error", (error) => {
 			this.events.emit("error", error);
 		});
 	}
@@ -54,6 +54,7 @@ export class SocketIoRedisPublisher implements core.IPublisher {
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
 	public close(): Promise<void> {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/promise-function-async
-		return util.promisify(((callback) => this.redisClient.quit(callback)) as any)();
+		return util.promisify(((callback) =>
+			this.redisClientConnectionManager.getRedisClient().quit(callback)) as any)();
 	}
 }

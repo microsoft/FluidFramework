@@ -12,6 +12,7 @@ import {
 	IWebSocketTracker,
 	IServiceMessageResourceManager,
 } from "@fluidframework/server-services-core";
+import { IRedisClientConnectionManager } from "@fluidframework/server-services-shared";
 
 /**
  * @internal
@@ -24,4 +25,10 @@ export interface INexusResourcesCustomizations {
 	webSocketTracker?: IWebSocketTracker;
 	serviceMessageResourceManager?: IServiceMessageResourceManager;
 	clusterDrainingChecker?: IClusterDrainingChecker;
+	redisClientConnectionManager?: IRedisClientConnectionManager;
+	redisClientConnectionManagerForJwtCache?: IRedisClientConnectionManager;
+	redisClientConnectionManagerForThrottling?: IRedisClientConnectionManager;
+	redisClientConnectionManagerForLogging?: IRedisClientConnectionManager;
+	redisClientConnectionManagerForSub?: IRedisClientConnectionManager;
+	redisClientConnectionManagerForPub?: IRedisClientConnectionManager;
 }
