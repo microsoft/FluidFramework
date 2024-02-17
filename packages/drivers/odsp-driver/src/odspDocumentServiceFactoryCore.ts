@@ -93,7 +93,7 @@ export class OdspDocumentServiceFactoryCore
 		logger?: ITelemetryBaseLogger,
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
-		let odspResolvedUrl = getOdspResolvedUrl(createNewResolvedUrl);
+		const odspResolvedUrl = getOdspResolvedUrl(createNewResolvedUrl);
 		const resolvedUrlData: IOdspUrlParts = {
 			siteUrl: odspResolvedUrl.siteUrl,
 			driveId: odspResolvedUrl.driveId,
