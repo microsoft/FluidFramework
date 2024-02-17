@@ -7,29 +7,37 @@ import assert from "node:assert";
 import { stub } from "sinon";
 import * as fetchModule from "node-fetch";
 
+/**
+ * Mock response returned by {@link createResponse}.
+ */
+export interface MockResponse {
+	ok: boolean;
+	status: number;
+	text: () => Promise<string>;
+	arrayBuffer: () => Promise<unknown>;
+	headers: fetchModule.Headers;
+	json: () => Promise<unknown>;
+}
+
 export const createResponse = async (
 	headers: { [key: string]: string },
-	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
-	response: any,
+	response: unknown,
 	status: number,
-): Promise<Partial<fetchModule.Response>> => ({
+): Promise<MockResponse> => ({
 	ok: response !== undefined,
 	status,
 	text: async () => JSON.stringify(response),
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 	arrayBuffer: async () => response,
 	headers: headers ? new fetchModule.Headers(headers) : new fetchModule.Headers(),
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 	json: async () => response,
 });
 
 export const okResponse = async (
 	headers: { [key: string]: string },
 	response: object,
-): Promise<Partial<fetchModule.Response>> => createResponse(headers, response, 200);
-export const notFound = async (
-	headers: { [key: string]: string } = {},
-): Promise<Partial<fetchModule.Response>> => createResponse(headers, undefined, 404);
+): Promise<MockResponse> => createResponse(headers, response, 200);
+export const notFound = async (headers: { [key: string]: string } = {}): Promise<MockResponse> =>
+	createResponse(headers, undefined, 404);
 
 export type FetchCallType = "internal" | "external" | "single";
 
