@@ -27,8 +27,6 @@ import {
 	MergeTreeDeltaType,
 	IMergeTreeOp,
 	SegmentGroup,
-	// eslint-disable-next-line import/no-deprecated
-	Client,
 	IJSONSegment,
 } from "@fluidframework/merge-tree";
 import { UsageError } from "@fluidframework/telemetry-utils";
@@ -633,21 +631,15 @@ export class SharedMatrix<T = any>
 		this.cols.startOrUpdateCollaboration(this.runtime.clientId as string);
 	}
 
-	private rebasePosition(
-		// eslint-disable-next-line import/no-deprecated
-		client: Client,
-		pos: number,
-		referenceSequenceNumber: number,
+	private rebasePosition( 
+		client: PermutationVector,
 		localSeq: number,
+		handle: number
 	): number | undefined {
-		const { clientId } = client.getCollabWindow();
-		const { segment, offset } = client.getContainingSegment(
-			pos,
-			{ referenceSequenceNumber, clientId: client.getLongClientId(clientId) },
-			localSeq,
-		);
-		if (segment === undefined || offset === undefined) {
-			return;
+		const { segment, offset } = client.handleToSegment(handle);
+		
+		if (segment.removedSeq !== undefined) {
+			return undefined;
 		}
 
 		return client.findReconnectionPosition(segment, localSeq) + offset;
@@ -660,13 +652,13 @@ export class SharedMatrix<T = any>
 
 		if (content.type === MatrixOp.set && content.target === undefined) {
 			const setOp = content;
-			const { rowHandle, colHandle, localSeq, rowsRefSeq, colsRefSeq, referenceSeqNumber } =
+			const { rowHandle, colHandle, localSeq, referenceSeqNumber } =
 				localOpMetadata as ISetOpMetadata;
 
 			// If after rebasing the op, we get a valid row/col number, that means the row/col
 			// handles have not been recycled and we can safely use them.
-			const row = this.rebasePosition(this.rows, setOp.row, rowsRefSeq, localSeq);
-			const col = this.rebasePosition(this.cols, setOp.col, colsRefSeq, localSeq);
+			const row = this.rebasePosition(this.rows, localSeq, rowHandle);
+			const col = this.rebasePosition(this.cols, localSeq, colHandle);
 			if (row !== undefined && col !== undefined && row >= 0 && col >= 0) {
 				const lastCellModificationDetails = this.cellLastWriteTracker.getCell(
 					rowHandle,

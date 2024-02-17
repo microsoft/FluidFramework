@@ -12,7 +12,7 @@ import {
 import {
 	BaseSegment,
 	ISegment,
-	// eslint-disable-next-line import/no-deprecated
+	 
 	Client,
 	IMergeTreeDeltaOpArgs,
 	IMergeTreeDeltaCallbackArgs,
@@ -119,7 +119,7 @@ export class PermutationSegment extends BaseSegment {
 	}
 }
 
-// eslint-disable-next-line import/no-deprecated
+ 
 export class PermutationVector extends Client {
 	private handleTable = new HandleTable<never>(); // Tracks available storage handles for rows.
 	public readonly handleCache = new HandleCache(this);
@@ -208,12 +208,7 @@ export class PermutationVector extends Client {
 		return this.getPosition(segment) + offset!;
 	}
 
-	public handleToPosition(handle: Handle, localSeq = this.getCollabWindow().localSeq) {
-		assert(
-			localSeq <= this.getCollabWindow().localSeq,
-			0x028 /* "'localSeq' for op being resubmitted must be <= the 'localSeq' of the last submitted op." */,
-		);
-
+	public handleToSegment(handle: Handle) {
 		// TODO: In theory, the MergeTree should be able to map the (position, refSeq, localSeq) from
 		//       the original operation to the current position for undo/redo scenarios.  This is probably the
 		//       ideal solution, as we would no longer need to store row/col handles in the op metadata.
@@ -226,7 +221,7 @@ export class PermutationVector extends Client {
 		//       If we find that we frequently need a reverse handle -> position lookup, we could maintain
 		//       one using the Tiny-Calc adjust tree.
 		let containingSegment!: PermutationSegment;
-		let containingOffset: number;
+		let containingOffset!: number;
 
 		this.walkAllSegments((segment) => {
 			const { start, cachedLength } = segment as PermutationSegment;
@@ -247,6 +242,17 @@ export class PermutationVector extends Client {
 			return true;
 		});
 
+		return { segment: containingSegment, offset: containingOffset };
+	}
+
+	public handleToPosition(handle: Handle, localSeq = this.getCollabWindow().localSeq) {
+		assert(
+			localSeq <= this.getCollabWindow().localSeq,
+			0x028 /* "'localSeq' for op being resubmitted must be <= the 'localSeq' of the last submitted op." */,
+		);
+
+		const { segment, offset } = this.handleToSegment(handle);
+
 		// We are guaranteed to find the handle in the PermutationVector, even if the corresponding
 		// row/col has been removed, because handles are not recycled until the containing segment
 		// is unlinked from the MergeTree.
@@ -254,18 +260,15 @@ export class PermutationVector extends Client {
 		// Therefore, either a row/col removal has been ACKed, in which case there will be no pending
 		// ops that reference the stale handle, or the removal is unACKed, in which case the handle
 		// has not yet been recycled.
-
 		assert(
-			isHandleValid(containingSegment.start),
+			isHandleValid(segment.start),
 			0x029 /* "Invalid handle at start of containing segment!" */,
 		);
 
 		// Once we know the current position of the handle, we can use the MergeTree to get the segment
 		// containing this position and use 'findReconnectionPosition' to adjust for the local ops that
 		// have not yet been submitted.
-
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return this.findReconnectionPosition(containingSegment, localSeq) + containingOffset!;
+		return this.findReconnectionPosition(segment, localSeq) + offset;
 	}
 
 	// Constructs an ISummaryTreeWithStats for the cell data.
