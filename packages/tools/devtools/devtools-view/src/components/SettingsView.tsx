@@ -15,8 +15,8 @@ import {
 	webLightTheme,
 } from "@fluentui/react-components";
 
-import { ThemeOption, useThemeContext } from "../ThemeHelper";
-import { useTelemetryOptIn } from "../TelemetryUtils";
+import { ThemeOption, useThemeContext } from "../ThemeHelper.js";
+import { useTelemetryOptIn } from "../TelemetryUtils.js";
 
 const useStyles = makeStyles({
 	root: {

@@ -43,11 +43,15 @@ import {
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 
-import { useLogger } from "../TelemetryUtils";
-import { connectionStateToString } from "../Utilities";
-import { useMessageRelay } from "../MessageRelayContext";
-import { Waiting } from "./Waiting";
-import { clientIdTooltipText, containerStatusTooltipText, userIdTooltipText } from "./TooltipTexts";
+import { useLogger } from "../TelemetryUtils.js";
+import { connectionStateToString } from "../Utilities.js";
+import { useMessageRelay } from "../MessageRelayContext.js";
+import { Waiting } from "./Waiting.js";
+import {
+	clientIdTooltipText,
+	containerStatusTooltipText,
+	userIdTooltipText,
+} from "./TooltipTexts.js";
 
 /**
  * {@link ContainerSummaryView} input props.

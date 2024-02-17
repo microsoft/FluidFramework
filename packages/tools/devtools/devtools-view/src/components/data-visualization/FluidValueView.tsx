@@ -5,12 +5,12 @@
 import React from "react";
 
 import type { FluidObjectValueNode, HasContainerKey } from "@fluidframework/devtools-core";
-import { useContainerFeaturesContext } from "../../ContainerFeatureFlagHelper";
-import { EditableView } from "./EditableView";
+import { useContainerFeaturesContext } from "../../ContainerFeatureFlagHelper.js";
+import { EditableView } from "./EditableView.js";
 
-import type { DataVisualizationTreeProps } from "./CommonInterfaces";
-import { TreeItem } from "./TreeItem";
-import { TreeHeader } from "./TreeHeader";
+import type { DataVisualizationTreeProps } from "./CommonInterfaces.js";
+import { TreeItem } from "./TreeItem.js";
+import { TreeHeader } from "./TreeHeader.js";
 
 /**
  * {@link ValueView} input props.

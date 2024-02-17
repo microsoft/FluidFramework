@@ -11,8 +11,8 @@ import {
 	type ISourcedDevtoolsMessage,
 	TelemetryEvent,
 } from "@fluidframework/devtools-core";
-import { useMessageRelay } from "../MessageRelayContext";
-import { DynamicComposedChart, type GraphDataSet } from "./graphs";
+import { useMessageRelay } from "../MessageRelayContext.js";
+import { DynamicComposedChart, type GraphDataSet } from "./graphs/index.js";
 
 const useStyles = makeStyles({
 	flexColumn: {

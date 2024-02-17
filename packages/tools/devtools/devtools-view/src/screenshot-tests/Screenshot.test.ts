@@ -15,7 +15,7 @@ import { globby } from "globby";
 import { chromium } from "playwright";
 import { simpleGit, pathspec } from "simple-git";
 
-import { ThemeOption } from "../ThemeHelper";
+import { ThemeOption } from "../ThemeHelper.js";
 
 /**
  * Viewport configuration for running a screenshot test.

@@ -1,6 +1,14 @@
 {
-	"extends": "../../tsconfig.json",
+	"extends": "../../../../../../common/build/build-common/tsconfig.test.node16.json",
 	"compilerOptions": {
-		"types": ["jest"],
+		"rootDir": "./",
+		"outDir": "../../lib/test",
+		"types": ["mocha", "node"],
 	},
+	"include": ["./**/*"],
+	"references": [
+		{
+			"path": "../..",
+		},
+	],
 }

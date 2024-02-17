@@ -15,9 +15,9 @@ import {
 	type RootHandleNode,
 } from "@fluidframework/devtools-core";
 
-import { useMessageRelay } from "../MessageRelayContext";
-import { TreeDataView } from "./data-visualization";
-import { Waiting } from "./Waiting";
+import { useMessageRelay } from "../MessageRelayContext.js";
+import { TreeDataView } from "./data-visualization/index.js";
+import { Waiting } from "./Waiting.js";
 
 const loggingContext = "INLINE(VIEW)";
 

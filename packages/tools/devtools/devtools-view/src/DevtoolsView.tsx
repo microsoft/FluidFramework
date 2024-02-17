@@ -40,15 +40,15 @@ import {
 	SettingsView,
 	TelemetryView,
 	Waiting,
-} from "./components";
-import { useMessageRelay } from "./MessageRelayContext";
+} from "./components/index.js";
+import { useMessageRelay } from "./MessageRelayContext.js";
 import {
 	ConsoleVerboseLogger,
 	LoggerContext,
 	TelemetryOptInLogger,
 	useLogger,
-} from "./TelemetryUtils";
-import { getFluentUIThemeToUse, ThemeContext } from "./ThemeHelper";
+} from "./TelemetryUtils.js";
+import { getFluentUIThemeToUse, ThemeContext } from "./ThemeHelper.js";
 
 const loggingContext = "INLINE(DevtoolsView)";
 

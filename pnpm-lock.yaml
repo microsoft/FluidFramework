@@ -11318,6 +11318,7 @@ importers:
       scheduler: ^0.20.0
       simple-git: ^3.19.1
       ts-jest: ^29.1.1
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       vite: ^4.4.3
     dependencies:
@@ -11385,6 +11386,7 @@ importers:
       rimraf: 4.4.1
       simple-git: 3.21.0
       ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
+      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
       vite: 4.5.0_@types+node@18.19.1
 

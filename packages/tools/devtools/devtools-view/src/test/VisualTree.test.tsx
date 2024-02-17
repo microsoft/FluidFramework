@@ -19,9 +19,9 @@ import {
 	type UnknownObjectNode,
 	VisualNodeKind,
 } from "@fluidframework/devtools-core";
-import { UnknownDataView, FluidTreeView, UnknownFluidObjectView } from "../components";
-import { MessageRelayContext } from "../MessageRelayContext";
-import { MockMessageRelay } from "./MockMessageRelay";
+import { UnknownDataView, FluidTreeView, UnknownFluidObjectView } from "../components/index.js";
+import { MessageRelayContext } from "../MessageRelayContext.js";
+import { MockMessageRelay } from "./MockMessageRelay.js";
 
 const testContainerKey = "test-container-key";
 const testFluidObjectId = "test-fluid-object-id";
