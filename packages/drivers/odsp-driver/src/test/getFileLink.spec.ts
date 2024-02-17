@@ -12,6 +12,7 @@ import {
 	okResponse,
 	notFound,
 	createResponse,
+	type MockResponse,
 } from "./mockFetch";
 
 describe("getFileLink", () => {
@@ -38,8 +39,9 @@ describe("getFileLink", () => {
 					logger.toTelemetryLogger(),
 				),
 			[
-				async () => okResponse({}, fileItemResponse),
-				async () => okResponse({}, { d: { directUrl: "sharelink" } }),
+				async (): Promise<MockResponse> => okResponse({}, fileItemResponse),
+				async (): Promise<MockResponse> =>
+					okResponse({}, { d: { directUrl: "sharelink" } }),
 			],
 		);
 		assert.strictEqual(
@@ -59,9 +61,9 @@ describe("getFileLink", () => {
 						logger.toTelemetryLogger(),
 					),
 				[
-					async () => okResponse({}, {}),
+					async (): Promise<MockResponse> => okResponse({}, {}),
 					// We retry once on malformed response from server, so need a second response mocked.
-					async () => okResponse({}, {}),
+					async (): Promise<MockResponse> => okResponse({}, {}),
 				],
 			),
 			"File link should reject for malformed url",
@@ -90,9 +92,11 @@ describe("getFileLink", () => {
 					logger.toTelemetryLogger(),
 				),
 			[
-				async () => createResponse({ "retry-after": "0.001" }, undefined, 900),
-				async () => okResponse({}, fileItemResponse),
-				async () => okResponse({}, { d: { directUrl: "sharelink" } }),
+				async (): Promise<MockResponse> =>
+					createResponse({ "retry-after": "0.001" }, undefined, 900),
+				async (): Promise<MockResponse> => okResponse({}, fileItemResponse),
+				async (): Promise<MockResponse> =>
+					okResponse({}, { d: { directUrl: "sharelink" } }),
 			],
 		);
 		assert.strictEqual(
@@ -123,11 +127,16 @@ describe("getFileLink", () => {
 						logger.toTelemetryLogger(),
 					),
 				[
-					async () => createResponse({ "retry-after": "0.001" }, undefined, 900),
-					async () => createResponse({ "retry-after": "0.001" }, undefined, 900),
-					async () => createResponse({ "retry-after": "0.001" }, undefined, 900),
-					async () => createResponse({ "retry-after": "0.001" }, undefined, 900),
-					async () => createResponse({ "retry-after": "0.001" }, undefined, 900),
+					async (): Promise<MockResponse> =>
+						createResponse({ "retry-after": "0.001" }, undefined, 900),
+					async (): Promise<MockResponse> =>
+						createResponse({ "retry-after": "0.001" }, undefined, 900),
+					async (): Promise<MockResponse> =>
+						createResponse({ "retry-after": "0.001" }, undefined, 900),
+					async (): Promise<MockResponse> =>
+						createResponse({ "retry-after": "0.001" }, undefined, 900),
+					async (): Promise<MockResponse> =>
+						createResponse({ "retry-after": "0.001" }, undefined, 900),
 				],
 			),
 			"did not retries 5 times",
