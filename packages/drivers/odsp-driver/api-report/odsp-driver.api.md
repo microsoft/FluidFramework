@@ -197,7 +197,7 @@ export function isOdcOrigin(origin: string): boolean;
 // @internal
 export function isOdcUrl(url: string | URL): boolean;
 
-// @internal (undocumented)
+// @internal
 export function isOdspResolvedUrl(resolvedUrl: IResolvedUrl): resolvedUrl is IOdspResolvedUrl;
 
 // @internal
