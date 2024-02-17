@@ -199,7 +199,6 @@ describe("Tests for prefetching snapshot", () => {
 					),
 			);
 
-			// eslint-disable-next-line unicorn/no-null
 			const version = await service.getVersions(null, 1);
 
 			assert.deepStrictEqual(version, expectedVersion, "incorrect version");
@@ -339,7 +338,6 @@ describe("Tests for prefetching snapshot", () => {
 					),
 			);
 
-			// eslint-disable-next-line unicorn/no-null
 			const version = await service.getVersions(null, 1);
 			assert.deepStrictEqual(version, expectedVersion, "incorrect version");
 			assert(
@@ -591,7 +589,6 @@ describe("Tests for prefetching snapshot", () => {
 					),
 			);
 
-			// eslint-disable-next-line unicorn/no-null
 			const version = await service.getVersions(null, 1);
 
 			assert.deepStrictEqual(version, expectedVersion, "incorrect version");

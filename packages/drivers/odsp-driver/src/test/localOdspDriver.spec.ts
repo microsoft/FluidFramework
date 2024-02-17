@@ -136,7 +136,6 @@ describe("Local Odsp driver", () => {
 
 			// Load snapshot
 			const storage = await service.connectToStorage();
-			// eslint-disable-next-line unicorn/no-null
 			await storage.getVersions(null, 1);
 
 			const deltaStorageService = await service.connectToDeltaStorage();
@@ -158,7 +157,6 @@ describe("Local Odsp driver", () => {
 
 			// Load snapshot
 			const storage = await service.connectToStorage();
-			// eslint-disable-next-line unicorn/no-null
 			await storage.getVersions(null, 1);
 
 			const deltaStorageService = await service.connectToDeltaStorage();
@@ -194,7 +192,6 @@ describe("Local Odsp driver", () => {
 				localSnapshot,
 			);
 			assert.doesNotThrow(() => service.dispose());
-			// eslint-disable-next-line unicorn/no-null
 			assert.doesNotThrow(() => service.dispose(null));
 			assert.doesNotThrow(() => service.dispose(undefined));
 			assert.doesNotThrow(() => service.dispose(new Error("I am an error")));
