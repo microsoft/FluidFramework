@@ -212,6 +212,8 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     // @deprecated (undocumented)
     readonly createProps?: any;
     // (undocumented)
+    deleteChildSummarizerNode(id: string): void;
+    // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     ensureNoDataModelChanges<T>(callback: () => T): T;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;

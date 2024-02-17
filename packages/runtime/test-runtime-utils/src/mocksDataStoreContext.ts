@@ -123,6 +123,12 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 		throw new Error("Method not implemented.");
 	}
 
+	public deleteChildSummarizerNode(
+		id: string,
+	): void {
+		throw new Error("Method not implemented.");
+	}
+
 	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
 		throw new Error("Method not implemented.");
 	}
