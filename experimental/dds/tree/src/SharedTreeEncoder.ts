@@ -5,11 +5,11 @@
 
 import { assert } from '@fluidframework/core-utils';
 import { IsoBuffer } from '@fluid-internal/client-utils';
-import { assertWithMessage, fail } from './Common';
-import { EditLog } from './EditLog';
-import { convertTreeNodes, newEdit } from './EditUtilities';
-import { AttributionId, DetachedSequenceId, FinalNodeId, OpSpaceNodeId, TraitLabel } from './Identifiers';
-import { initialTree } from './InitialTree';
+import { assertWithMessage, fail } from './Common.js';
+import { EditLog } from './EditLog.js';
+import { convertTreeNodes, newEdit } from './EditUtilities.js';
+import { AttributionId, DetachedSequenceId, FinalNodeId, OpSpaceNodeId, TraitLabel } from './Identifiers.js';
+import { initialTree } from './InitialTree.js';
 import {
 	ContextualizedNodeIdNormalizer,
 	getNodeIdContext,
@@ -19,8 +19,8 @@ import {
 	NodeIdNormalizer,
 	scopeIdNormalizer,
 	sequencedIdNormalizer,
-} from './NodeIdUtilities';
-import { getChangeNodeFromView, getChangeNode_0_0_2FromView } from './SerializationUtilities';
+} from './NodeIdUtilities.js';
+import { getChangeNodeFromView, getChangeNode_0_0_2FromView } from './SerializationUtilities.js';
 import {
 	CompressedChangeInternal,
 	ChangeInternal,
@@ -43,20 +43,20 @@ import {
 	FluidEditHandle,
 	StablePlaceInternal,
 	Side,
-} from './persisted-types';
-import { RevisionView } from './RevisionView';
-import { MutableStringInterner, StringInterner } from './StringInterner';
-import { SummaryContents } from './Summary';
-import { InterningTreeCompressor } from './TreeCompressor';
+} from './persisted-types/index.js';
+import { RevisionView } from './RevisionView.js';
+import { MutableStringInterner, StringInterner } from './StringInterner.js';
+import { SummaryContents } from './Summary.js';
+import { InterningTreeCompressor } from './TreeCompressor.js';
 import {
 	createSessionId,
 	hasOngoingSession,
 	IdCompressor,
 	IdCreationRange,
 	SerializedIdCompressorWithNoSession,
-} from './id-compressor';
-import { ChangeCompressor, compressEdit, decompressEdit } from './ChangeCompression';
-import { convertEditIds, convertNodeDataIds } from './IdConversion';
+} from './id-compressor/index.js';
+import { ChangeCompressor, compressEdit, decompressEdit } from './ChangeCompression.js';
+import { convertEditIds, convertNodeDataIds } from './IdConversion.js';
 
 /**
  * Object capable of converting between the current internal representation for 0.1.1 edits and their wire format.

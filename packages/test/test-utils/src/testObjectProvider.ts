@@ -29,10 +29,10 @@ import {
 import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { v4 as uuid } from "uuid";
 import { createChildLogger, createMultiSinkLogger } from "@fluidframework/telemetry-utils";
-import { LoaderContainerTracker } from "./loaderContainerTracker";
-import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader";
-import { createAndAttachContainer } from "./localLoader";
-import { ChannelFactoryRegistry } from "./testFluidObject";
+import { LoaderContainerTracker } from "./loaderContainerTracker.js";
+import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader.js";
+import { createAndAttachContainer } from "./localLoader.js";
+import { ChannelFactoryRegistry } from "./testFluidObject.js";
 
 const defaultCodeDetails: IFluidCodeDetails = {
 	package: "defaultTestPackage",

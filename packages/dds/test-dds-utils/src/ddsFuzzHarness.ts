@@ -102,10 +102,12 @@ export interface StashClient {
 	type: "stashClient";
 	clientId: string;
 }
+type ClientWithStashData<TChannelFactory extends IChannelFactory> = Client<TChannelFactory> &
+	Partial<Record<"stashData", ClientLoadData>>;
 const isStashClientOp = (op: BaseOperation): op is StashClient => op.type === "stashClient";
 export const hasStashData = <TChannelFactory extends IChannelFactory>(
 	client?: Client<TChannelFactory>,
-): client is Client<TChannelFactory> & Record<"stashData", StashData> =>
+): client is Required<ClientWithStashData<TChannelFactory>> =>
 	client !== undefined &&
 	"stashData" in client &&
 	client.stashData !== null &&
@@ -290,6 +292,11 @@ export interface DDSFuzzHarnessEvents {
 	 * Raised after all fuzzActions have been completed.
 	 */
 	(event: "testEnd", listener: (finalState: DDSFuzzTestState<IChannelFactory>) => void);
+
+	/**
+	 * Raised before each generated operation is run by its reducer.
+	 */
+	(event: "operationStart", listener: (operation: BaseOperation) => void);
 }
 
 /**
@@ -1042,14 +1049,14 @@ export function mixinStashedClient<
 		if (isStashClientOp(operation)) {
 			const client = clients.find((c) => c.containerRuntime.clientId === operation.clientId);
 			if (!hasStashData(client)) {
-				return state;
+				throw new ReducerPreconditionError("client not stashable");
 			}
 			const stashData = client.stashData;
 
 			// load a new client from the same state as the original client
 			const newClient = await loadClientFromSummaries(
 				containerRuntimeFactory,
-				stashData.summaries,
+				stashData,
 				model.factory,
 				client.containerRuntime.clientId,
 				options,
@@ -1145,7 +1152,8 @@ function createDetachedClient<TChannelFactory extends IChannelFactory>(
 	return newClient;
 }
 
-interface StashData {
+interface ClientLoadData {
+	minimumSequenceNumber: number;
 	summaries: {
 		summary: ISummaryTree;
 		idCompressorSummary: SerializedIdCompressorWithNoSession | undefined;
@@ -1159,18 +1167,17 @@ async function loadClient<TChannelFactory extends IChannelFactory>(
 	clientId: string,
 	options: Omit<DDSFuzzSuiteOptions, "only" | "skip">,
 	supportStashing: boolean = false,
-): Promise<
-	Client<TChannelFactory> & {
-		stashData?: StashData;
-	}
-> {
-	const summaries: StashData["summaries"] = {
-		summary: summarizerClient.channel.getAttachSummary().summary,
-		idCompressorSummary: summarizerClient.dataStoreRuntime.idCompressor?.serialize(false),
+): Promise<ClientWithStashData<TChannelFactory>> {
+	const loadData: ClientLoadData = {
+		minimumSequenceNumber: summarizerClient.dataStoreRuntime.deltaManager.lastSequenceNumber,
+		summaries: {
+			summary: summarizerClient.channel.getAttachSummary().summary,
+			idCompressorSummary: summarizerClient.dataStoreRuntime.idCompressor?.serialize(false),
+		},
 	};
 	return loadClientFromSummaries(
 		containerRuntimeFactory,
-		summaries,
+		loadData,
 		factory,
 		clientId,
 		options,
@@ -1180,16 +1187,15 @@ async function loadClient<TChannelFactory extends IChannelFactory>(
 
 async function loadClientFromSummaries<TChannelFactory extends IChannelFactory>(
 	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
-	summaries: StashData["summaries"],
+	loadData: ClientLoadData,
 	factory: TChannelFactory,
 	clientId: string,
 	options: Omit<DDSFuzzSuiteOptions, "only" | "skip">,
 	supportStashing: boolean = false,
-): Promise<
-	Client<TChannelFactory> & {
-		stashData?: StashData;
-	}
-> {
+): Promise<ClientWithStashData<TChannelFactory>> {
+	const { summaries, minimumSequenceNumber } = loadData;
+	const stashData = supportStashing ? structuredClone(loadData) : undefined;
+
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({
 		clientId,
 		idCompressor:
@@ -1198,7 +1204,7 @@ async function loadClientFromSummaries<TChannelFactory extends IChannelFactory>(
 				: options.idCompressorFactory(summaries.idCompressorSummary),
 	});
 	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime, {
-		minimumSequenceNumber: containerRuntimeFactory.sequenceNumber,
+		minimumSequenceNumber,
 		trackRemoteOps: supportStashing,
 	});
 	const services: IChannelServices = {
@@ -1214,18 +1220,13 @@ async function loadClientFromSummaries<TChannelFactory extends IChannelFactory>(
 	)) as ReturnType<TChannelFactory["create"]>;
 	channel.connect(services);
 
-	const newClient: Client<TChannelFactory> & {
-		stashData?: StashData;
-	} = {
+	const newClient: ClientWithStashData<TChannelFactory> = {
 		channel,
 		containerRuntime,
 		dataStoreRuntime,
+		stashData,
 	};
-	if (supportStashing) {
-		newClient.stashData = {
-			summaries,
-		};
-	}
+
 	options.emitter.emit("clientCreate", newClient);
 	return newClient;
 }
@@ -1342,6 +1343,7 @@ export async function runTestForSeed<
 	const finalState = await performFuzzActionsAsync(
 		model.generatorFactory(),
 		async (state, operation) => {
+			options.emitter.emit("operation", operation);
 			operationCount++;
 			return model.reducer(state, operation);
 		},
@@ -1414,6 +1416,16 @@ type InternalOptions = Omit<DDSFuzzSuiteOptions, "only" | "skip"> & {
 function isInternalOptions(options: DDSFuzzSuiteOptions): options is InternalOptions {
 	return options.only instanceof Set && options.skip instanceof Set;
 }
+
+/**
+ * Some reducers require preconditions be met which are validated by their generator.
+ * The validation can be lost if the generator is not run.
+ * The primary case where this happens is during minimization. If a reducer detects this
+ * problem, they can throw this error type, and minimization will consider the current
+ * test invalid, rather than continuing to test invalid scenarios.
+ * @internal
+ */
+export class ReducerPreconditionError extends Error {}
 
 /**
  * Performs the test again to verify if the DDS still fails with the same error message.

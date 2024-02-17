@@ -5,14 +5,14 @@
 
 import { IErrorEvent } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
-import { ChangeInternal, Edit, EditStatus } from './persisted-types';
-import { newEditId } from './EditUtilities';
-import { TreeView } from './TreeView';
-import { Change } from './ChangeTypes';
-import { SharedTree } from './SharedTree';
-import { GenericTransaction, TransactionInternal } from './TransactionInternal';
-import { CachingLogViewer } from './LogViewer';
-import { RestOrArray, unwrapRestOrArray } from './Common';
+import { ChangeInternal, Edit, EditStatus } from './persisted-types/index.js';
+import { newEditId } from './EditUtilities.js';
+import { TreeView } from './TreeView.js';
+import { Change } from './ChangeTypes.js';
+import { SharedTree } from './SharedTree.js';
+import { GenericTransaction, TransactionInternal } from './TransactionInternal.js';
+import { CachingLogViewer } from './LogViewer.js';
+import { RestOrArray, unwrapRestOrArray } from './Common.js';
 
 /**
  * An event emitted by a `Transaction` to indicate a state change. See {@link TransactionEvents} for event argument information.
