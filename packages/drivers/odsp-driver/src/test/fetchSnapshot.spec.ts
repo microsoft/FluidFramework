@@ -13,6 +13,7 @@ import {
 	createChildLogger,
 	MockLogger,
 	type ITelemetryLoggerExt,
+	type IFluidErrorBase,
 } from "@fluidframework/telemetry-utils";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { stringToBuffer } from "@fluid-internal/client-utils";
@@ -29,7 +30,7 @@ import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
 import { convertToCompactSnapshot } from "../compactSnapshotWriter";
 import { createResponse } from "./mockFetch";
 
-const createUtLocalCache = () => new LocalPersistentCache();
+const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 
 describe("Tests1 for snapshot fetch", () => {
 	const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
@@ -124,7 +125,7 @@ describe("Tests1 for snapshot fetch", () => {
 	it("Mds limit check in fetch snapshot", async () => {
 		let success = false;
 		async function mockDownloadSnapshot<T>(
-			_response: Promise<any>,
+			_response: Promise<ISnapshotRequestAndResponseOptions>,
 			callback: () => Promise<T>,
 		): Promise<T> {
 			const getDownloadSnapshotStub = stub(fetchSnapshotImport, "downloadSnapshot");
@@ -166,7 +167,7 @@ describe("Tests1 for snapshot fetch", () => {
 
 	it("Check error in snapshot content type", async () => {
 		async function mockDownloadSnapshot<T>(
-			_response: Promise<any>,
+			_response: Promise<ISnapshotRequestAndResponseOptions>,
 			callback: () => Promise<T>,
 		): Promise<T> {
 			const getDownloadSnapshotStub = stub(fetchSnapshotImport, "downloadSnapshot");
@@ -196,20 +197,25 @@ describe("Tests1 for snapshot fetch", () => {
 				service.getVersions(null, 1),
 			);
 			assert.fail("should throw incorrectServerResponse error");
-		} catch (error: any) {
+		} catch (error: unknown) {
 			assert.strictEqual(
-				error.errorType,
+				(error as Partial<IFluidErrorBase>).errorType,
 				OdspErrorTypes.incorrectServerResponse,
 				"incorrectServerResponse should be received",
 			);
-			assert.strictEqual(error.contentType, "unknown", "content type should be unknown");
+			assert.strictEqual(
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+				(error as any).contentType,
+				"unknown",
+				"content type should be unknown",
+			);
 		}
 	});
 
 	it("GetSnapshot() should work in normal flow", async () => {
 		let ungroupedData = false;
 		async function mockDownloadSnapshot<T>(
-			_response: Promise<any>,
+			_response: Promise<ISnapshotRequestAndResponseOptions>,
 			callback: () => Promise<T>,
 		): Promise<T> {
 			const getDownloadSnapshotStub = stub(fetchSnapshotImport, "downloadSnapshot");
@@ -269,7 +275,7 @@ describe("Tests1 for snapshot fetch", () => {
 		let success = false;
 		service["firstSnapshotFetchCall"] = false;
 		async function mockDownloadSnapshot<T>(
-			_response: Promise<any>,
+			_response: Promise<ISnapshotRequestAndResponseOptions>,
 			callback: () => Promise<T>,
 		): Promise<T> {
 			const getDownloadSnapshotStub = stub(fetchSnapshotImport, "downloadSnapshot");
@@ -337,7 +343,7 @@ describe("Tests1 for snapshot fetch", () => {
 
 	it("GetSnapshot() should not cache locally when specified in options", async () => {
 		async function mockDownloadSnapshot<T>(
-			_response: Promise<any>,
+			_response: Promise<ISnapshotRequestAndResponseOptions>,
 			callback: () => Promise<T>,
 		): Promise<T> {
 			const getDownloadSnapshotStub = stub(fetchSnapshotImport, "downloadSnapshot");
@@ -389,7 +395,7 @@ describe("Tests1 for snapshot fetch", () => {
 
 	it("GetSnapshot() should not consult cache when request is for a loading group", async () => {
 		async function mockDownloadSnapshot<T>(
-			_response: Promise<any>,
+			_response: Promise<ISnapshotRequestAndResponseOptions>,
 			callback: () => Promise<T>,
 		): Promise<T> {
 			const getDownloadSnapshotStub = stub(fetchSnapshotImport, "downloadSnapshot");
