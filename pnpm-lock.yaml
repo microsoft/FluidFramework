@@ -8325,7 +8325,6 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.33.0
       '@fluidframework/core-utils': workspace:~
-      '@fluidframework/dds-interceptions-previous': npm:@fluidframework/dds-interceptions@2.0.0-internal.8.0.0
       '@fluidframework/eslint-config-fluid': ^3.5.0
       '@fluidframework/map': workspace:~
       '@fluidframework/merge-tree': workspace:~
@@ -8361,7 +8360,6 @@ importers:
       '@fluid-tools/build-cli': 0.33.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.33.0_@types+node@18.19.1
-      '@fluidframework/dds-interceptions-previous': /@fluidframework/dds-interceptions/2.0.0-internal.8.0.0
       '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
@@ -16511,19 +16509,6 @@ packages:
       '@fluidframework/telemetry-utils': 2.0.0-internal.8.0.0
       lodash: 4.17.21
       uuid: 9.0.1
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-    dev: true
-
-  /@fluidframework/dds-interceptions/2.0.0-internal.8.0.0:
-    resolution: {integrity: sha512-pGpK+fb0bKCWC5Ti6Woj0eilBB5FI2z81Cww31CyhGYM3phDz5eAAapO0wIKeMcl0I3RRtNgaWkFNTXgHvY7vQ==}
-    dependencies:
-      '@fluidframework/core-utils': 2.0.0-internal.8.0.0
-      '@fluidframework/map': 2.0.0-internal.8.0.0
-      '@fluidframework/merge-tree': 2.0.0-internal.8.0.0
-      '@fluidframework/runtime-definitions': 2.0.0-internal.8.0.0
-      '@fluidframework/sequence': 2.0.0-internal.8.0.0
     transitivePeerDependencies:
       - debug
       - supports-color
