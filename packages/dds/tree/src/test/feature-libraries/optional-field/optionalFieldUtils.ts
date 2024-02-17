@@ -4,22 +4,39 @@
  */
 
 import { strict as assert } from "assert";
-import { ChangesetLocalId, TaggedChange, makeAnonChange } from "../../../core/index.js";
+import {
+	ChangeAtomId,
+	ChangesetLocalId,
+	RevisionTag,
+	TaggedChange,
+	asChangeAtomId,
+	makeAnonChange,
+	makeChangeAtomId,
+} from "../../../core/index.js";
 import {
 	RegisterId,
 	OptionalChangeset,
 	RegisterMap,
-	withRevision,
 	Move,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
 import { Mutable } from "../../../util/index.js";
+import {
+	ChildChange,
+	Replace,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
 
 function asRegister(input: RegisterId | ChangesetLocalId): RegisterId {
 	if (typeof input === "string" || typeof input === "object") {
 		return input;
 	}
 	return { localId: input };
+}
+
+export interface ProtoChange {
+	type: "write";
+	content: RegisterId;
 }
 
 export const Change = {
@@ -36,10 +53,21 @@ export const Change = {
 	move: (
 		src: RegisterId | ChangesetLocalId,
 		dst: RegisterId | ChangesetLocalId,
-	): OptionalChangeset<never> => ({
-		moves: [[asRegister(src), asRegister(dst), "nodeTargeting"]],
-		childChanges: [],
-	}),
+	): OptionalChangeset<never> | ProtoChange => {
+		if (dst === "self") {
+			return {
+				type: "write",
+				content: asRegister(src),
+			};
+		}
+		if (src === "self") {
+			return Change.clear("self", dst);
+		}
+		return {
+			moves: [[asChangeAtomId(src), asChangeAtomId(dst)]],
+			childChanges: [],
+		};
+	},
 	/**
 	 * @param target - The register remove a node from. The register must be full in the input context of the changeset.
 	 * @param dst - The register to move the contents of the target register to.
@@ -48,11 +76,18 @@ export const Change = {
 	 */
 	clear: (
 		target: RegisterId | ChangesetLocalId,
-		dst: RegisterId | ChangesetLocalId,
-	): OptionalChangeset<never> => ({
-		moves: [[asRegister(target), asRegister(dst), "cellTargeting"]],
-		childChanges: [],
-	}),
+		dst: ChangeAtomId | ChangesetLocalId,
+	): OptionalChangeset<never> =>
+		target === "self"
+			? {
+					moves: [],
+					childChanges: [],
+					field: { isEmpty: false, dst: asChangeAtomId(dst) },
+			  }
+			: {
+					moves: [[asChangeAtomId(target), asChangeAtomId(dst)]],
+					childChanges: [],
+			  },
 	/**
 	 * @param target - The register to reserve. The register must NOT be full in the input context of the changeset.
 	 * @param dst - The register that the contents of the target register should be moved to should it become populated.
@@ -61,10 +96,10 @@ export const Change = {
 	 */
 	reserve: (
 		target: RegisterId | ChangesetLocalId,
-		dst: RegisterId | ChangesetLocalId,
+		dst: ChangeAtomId | ChangesetLocalId,
 	): OptionalChangeset<never> => {
 		assert(target === "self", "Reserve cell only supports self as source");
-		return { moves: [], childChanges: [], reservedDetachId: asRegister(dst) };
+		return { moves: [], childChanges: [], field: { isEmpty: true, dst: asChangeAtomId(dst) } };
 	},
 	/**
 	 * @param location - The register that contains the child node to be changed.
@@ -90,23 +125,34 @@ export const Change = {
 	 * @param changes - The change to apply as part of the changeset. Interpreted as applying to the same input context.
 	 * @returns A single changeset that applies all of the given changes.
 	 */
-	atOnce: <TChild>(...changes: OptionalChangeset<TChild>[]): OptionalChangeset<TChild> => {
+	atOnce: <TChild>(
+		...changes: (ProtoChange | OptionalChangeset<TChild>)[]
+	): OptionalChangeset<TChild> => {
 		const moves: Move[] = [];
-		const childChanges: [RegisterId, TChild][] = [];
-		let reservedDetachId: RegisterId | undefined;
+		const childChanges: ChildChange<TChild>[] = [];
+		let replace: Mutable<Replace> | undefined;
 		const changeset: Mutable<OptionalChangeset<TChild>> = { moves, childChanges };
-		for (const change of changes) {
-			// Note: this will stack overflow if there are too many moves.
-			moves.push(...change.moves);
-			// Note: this will stack overflow if there are too many child changes.
-			childChanges.push(...change.childChanges);
-			if (change.reservedDetachId !== undefined) {
-				assert(reservedDetachId === undefined, "Multiple reserved detach ids");
-				reservedDetachId = change.reservedDetachId;
+		for (const changeLike of changes) {
+			if ("type" in changeLike === false) {
+				const change = changeLike as OptionalChangeset<TChild>;
+				// Note: this will stack overflow if there are too many moves.
+				moves.push(...change.moves);
+				// Note: this will stack overflow if there are too many child changes.
+				childChanges.push(...change.childChanges);
+				if (change.field !== undefined) {
+					assert(replace === undefined, "Multiple reserved detach ids");
+					replace = change.field;
+				}
 			}
 		}
-		if (reservedDetachId !== undefined) {
-			changeset.reservedDetachId = reservedDetachId;
+		for (const change of changes) {
+			if ("type" in change) {
+				assert(replace !== undefined, "Invalid write without detach");
+				replace.src = change.content;
+			}
+		}
+		if (replace !== undefined) {
+			changeset.field = replace;
 		}
 		return changeset;
 	},
@@ -135,12 +181,9 @@ export function assertTaggedEqual(
 	aCopy.change.moves.sort(([c], [d]) => compareRegisterIds(c, d));
 	bCopy.change.moves.sort(([c], [d]) => compareRegisterIds(c, d));
 
-	assert.equal(
-		aCopy.change.reservedDetachId !== undefined,
-		bCopy.change.reservedDetachId !== undefined,
-	);
-	delete aCopy.change.reservedDetachId;
-	delete bCopy.change.reservedDetachId;
+	assert.equal(aCopy.change.field !== undefined, bCopy.change.field !== undefined);
+	delete aCopy.change.field;
+	delete bCopy.change.field;
 	assert.deepEqual(aCopy, bCopy);
 }
 
@@ -155,60 +198,78 @@ export function assertEqual(
 	assertTaggedEqual(makeAnonChange(a), makeAnonChange(b));
 }
 
+export function taggedRegister(id: RegisterId, revision: RevisionTag | undefined): RegisterId {
+	if (id === "self") {
+		return id;
+	}
+
+	return taggedAtomId(id, revision);
+}
+
+export function taggedAtomId(id: ChangeAtomId, revision: RevisionTag | undefined): ChangeAtomId {
+	return makeChangeAtomId(id.localId, id.revision ?? revision);
+}
+
+function getTouchedRegisters({ change, revision }: TaggedChange<OptionalChangeset>): {
+	src: RegisterMap<true>;
+	dst: RegisterMap<true>;
+} {
+	const src = new RegisterMap<true>();
+	const dst = new RegisterMap<true>();
+	for (const leg1 of change.moves) {
+		if (!isNoopMove(leg1)) {
+			src.set(taggedRegister(leg1[0], revision), true);
+			dst.set(taggedRegister(leg1[1], revision), true);
+		}
+	}
+
+	if (change.field !== undefined) {
+		if (change.field.isEmpty === false) {
+			src.set(taggedRegister("self", revision), true);
+			dst.set(taggedRegister(change.field.dst, revision), true);
+		}
+		if (change.field.src !== undefined) {
+			src.set(taggedRegister(change.field.src, revision), true);
+			dst.set(taggedRegister("self", revision), true);
+		}
+	}
+	return { src, dst };
+}
+
+function getOutputRegisterStatues(
+	a: TaggedChange<OptionalChangeset>,
+): RegisterMap<"full" | "empty"> {
+	const { src, dst } = getTouchedRegisters(a);
+	const statuses = new RegisterMap<"full" | "empty">();
+	for (const detach of src.keys()) {
+		statuses.set(detach, "empty");
+	}
+	for (const attach of dst.keys()) {
+		statuses.set(attach, "full");
+	}
+	return statuses;
+}
+
 export function verifyContextChain(
 	a: TaggedChange<OptionalChangeset>,
 	b: TaggedChange<OptionalChangeset>,
 ): void {
-	const emptiedByA = new RegisterMap<true>();
-	const emptiedByB = new RegisterMap<true>();
-	const filledByA = new RegisterMap<true>();
-	for (const leg1 of a.change.moves) {
-		if (!isNoopMove(leg1)) {
-			emptiedByA.set(withRevision(leg1[0], a.revision), true);
-			filledByA.set(withRevision(leg1[1], a.revision), true);
-		}
-	}
-	for (const leg2 of b.change.moves) {
-		if (!isNoopMove(leg2)) {
-			emptiedByB.set(withRevision(leg2[0], b.revision), true);
+	const statuses = getOutputRegisterStatues(a);
+	const { src, dst } = getTouchedRegisters(b);
+
+	for (const detach of src.keys()) {
+		const status = statuses.get(detach);
+		if (status !== undefined) {
+			assert.equal(status, "full", "Invalid detach on empty register");
 		}
 	}
 
-	for (const leg2 of b.change.moves) {
-		const src = withRevision(leg2[0], b.revision);
-		const dst = withRevision(leg2[1], b.revision);
-		const emptiesSource = emptiedByA.has(src) && !filledByA.has(src);
-		assert.equal(
-			emptiesSource,
-			false,
-			"The same register is emptied by leg1 but moved from by leg2",
-		);
-		if (!isNoopMove(leg2) && !emptiedByB.has(dst)) {
-			const fillsDestination = filledByA.has(dst);
-			assert.equal(
-				fillsDestination,
-				false,
-				"The same register is filled by leg1 and filled by leg2",
-			);
-		}
-	}
-	if (b.change.reservedDetachId !== undefined) {
-		const dst = withRevision(b.change.reservedDetachId, b.revision);
-		const fillsSource = filledByA.has("self");
-		assert.equal(
-			fillsSource,
-			false,
-			"The self register is filled by leg1 but expected to be empty by leg2",
-		);
-		if (!emptiedByB.has(dst)) {
-			const fillsDestination = filledByA.has(dst);
-			assert.equal(
-				fillsDestination,
-				false,
-				// While changeset b does not actually attempt to fill that register.
-				// it would if rebased over a changeset that fills "self".
-				"The same register is at risk of being filled by leg1 and filled by leg2",
-			);
+	for (const attach of dst.keys()) {
+		if (!src.has(attach)) {
+			const status = statuses.get(attach);
+			if (status !== undefined) {
+				assert.equal(status, "empty", "Invalid attach on full register");
+			}
 		}
 	}
 }

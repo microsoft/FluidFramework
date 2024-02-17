@@ -15,10 +15,11 @@ import { NodeChangeset } from "../modular-schema/index.js";
  */
 export type RegisterId = ChangeAtomId | "self";
 
-export type Move = readonly [
-	src: RegisterId,
-	dst: RegisterId,
-	kind: "nodeTargeting" | "cellTargeting",
+export type Move = readonly [src: ChangeAtomId, dst: ChangeAtomId];
+
+export type ChildChange<TChildChange = NodeChangeset> = readonly [
+	register: RegisterId,
+	childChange: TChildChange,
 ];
 
 /**
@@ -43,14 +44,14 @@ export interface OptionalChangeset<TChildChange = NodeChangeset> {
 	 *
 	 * Rebasing logic should only generate moves whose `src` is an occupied register.
 	 */
-	moves: readonly Move[];
+	readonly moves: readonly Move[];
 
 	/**
 	 * Nested changes to nodes that occupy registers.
 	 *
 	 * Nodes are identified by the register they occupy in the *input* context of the changeset.
 	 */
-	childChanges: [register: RegisterId, childChange: TChildChange][];
+	readonly childChanges: readonly ChildChange<TChildChange>[];
 
 	/**
 	 * Set iff:
@@ -61,5 +62,14 @@ export interface OptionalChangeset<TChildChange = NodeChangeset> {
 	 * However, if this changeset is then rebased over a change which populates `foo`, the rebased changeset must now empty `foo`.
 	 * This reserved id is used as the destination of that emptying move.
 	 */
-	reservedDetachId?: RegisterId;
+	readonly field?: Replace;
+}
+
+export interface Replace {
+	readonly isEmpty: boolean;
+	/**
+	 * Only "self" when representing a node being pinned to the field.
+	 */
+	readonly src?: RegisterId;
+	readonly dst: ChangeAtomId;
 }

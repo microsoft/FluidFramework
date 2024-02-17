@@ -211,27 +211,101 @@ describe("optionalField", () => {
 			);
 		});
 
-		it("can be inverted", () => {
-			const childInverter = (change: NodeChangeset) => {
-				assert.deepEqual(change, nodeChange1);
-				return nodeChange2;
-			};
-
-			const expected = Change.atOnce(
-				Change.clear("self", { localId: brand(41), revision: change1.revision }),
-				Change.child(nodeChange2),
-			);
-
-			assert.deepEqual(
-				optionalChangeRebaser.invert(
-					change1,
-					childInverter,
+		describe("Invert", () => {
+			function undo(
+				change: TaggedChange<OptionalChangeset>,
+				childInverter?: (change: NodeChangeset) => NodeChangeset,
+			): OptionalChangeset {
+				return optionalChangeRebaser.invert(
+					change,
+					childInverter ?? failingDelegate,
+					false,
 					idAllocatorFromMaxId(),
 					failCrossFieldManager,
-					defaultRevisionMetadataFromChanges([change1]),
-				),
-				expected,
-			);
+					defaultRevisionMetadataFromChanges([change]),
+				);
+			}
+			function rollback(
+				change: TaggedChange<OptionalChangeset>,
+				childInverter?: (change: NodeChangeset) => NodeChangeset,
+			): OptionalChangeset {
+				return optionalChangeRebaser.invert(
+					change,
+					childInverter ?? failingDelegate,
+					true,
+					idAllocatorFromMaxId(),
+					failCrossFieldManager,
+					defaultRevisionMetadataFromChanges([change]),
+				);
+			}
+
+			it("clear⁻¹", () => {
+				const clear = Change.clear("self", brand(42));
+				const actual = rollback(tagChange(clear, tag));
+				const expected = Change.atOnce(
+					Change.reserve("self", brand(0)),
+					Change.move({ localId: brand(42), revision: tag }, "self"),
+				);
+				assertEqual(actual, expected);
+			});
+
+			it("undo(clear)", () => {
+				const clear = Change.clear("self", brand(42));
+				const actual = undo(tagChange(clear, tag));
+				const expected = Change.atOnce(
+					Change.reserve("self", brand(0)),
+					Change.move({ localId: brand(42), revision: tag }, "self"),
+				);
+				assertEqual(actual, expected);
+			});
+
+			it("clear⁻²", () => {
+				const clearInv = Change.atOnce(
+					Change.reserve("self", brand(41)),
+					Change.move(brand(42), "self"),
+				);
+				const actual = rollback(tagChange(clearInv, tag));
+				const expected = Change.atOnce(
+					Change.move("self", { localId: brand(42), revision: tag }),
+				);
+				assertEqual(actual, expected);
+			});
+
+			it("undo(clear⁻¹)", () => {
+				const clearInv = Change.atOnce(
+					Change.reserve("self", brand(41)),
+					Change.move(brand(42), "self"),
+				);
+				const actual = undo(tagChange(clearInv, tag));
+				const expected = Change.atOnce(Change.clear("self", brand(0)));
+				assertEqual(actual, expected);
+			});
+
+			it("set+child⁻¹", () => {
+				const childInverter = (change: NodeChangeset) => {
+					assert.deepEqual(change, nodeChange1);
+					return nodeChange2;
+				};
+				const expected = Change.atOnce(
+					Change.child(nodeChange2),
+					Change.move("self", { localId: brand(41), revision: change1.revision }),
+				);
+				const actual = rollback(change1, childInverter);
+				assertEqual(actual, expected);
+			});
+
+			it("undo(set+child)", () => {
+				const childInverter = (change: NodeChangeset) => {
+					assert.deepEqual(change, nodeChange1);
+					return nodeChange2;
+				};
+				const expected = Change.atOnce(
+					Change.child(nodeChange2),
+					Change.move("self", { localId: brand(41), revision: change1.revision }),
+				);
+				const actual = undo(change1, childInverter);
+				assertEqual(actual, expected);
+			});
 		});
 
 		describe("Rebasing", () => {
@@ -288,6 +362,7 @@ describe("optionalField", () => {
 					optionalChangeRebaser.invert(
 						deletion,
 						() => assert.fail("Should not need to invert children"),
+						false,
 						idAllocatorFromMaxId(),
 						failCrossFieldManager,
 						defaultRevisionMetadataFromChanges([deletion]),
@@ -375,22 +450,6 @@ describe("optionalField", () => {
 				);
 				assert.deepEqual(actual, expected);
 			});
-		});
-
-		it("preserves ", () => {
-			assert.deepEqual(
-				optionalChangeRebaser.rebase(
-					change2PreChange1.change,
-					change1,
-					failingDelegate,
-					fakeIdAllocator,
-					failCrossFieldManager,
-					rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([change1]), [
-						change1.revision,
-					]),
-				),
-				change2.change,
-			);
 		});
 	});
 
@@ -543,6 +602,7 @@ describe("optionalField", () => {
 					optionalChangeRebaser.invert(
 						clear,
 						() => assert.fail("Should not need to invert children"),
+						false,
 						idAllocatorFromMaxId(),
 						failCrossFieldManager,
 						defaultRevisionMetadataFromChanges([clear]),
@@ -619,6 +679,7 @@ describe("optionalField", () => {
 					optionalChangeRebaser.invert(
 						clear,
 						() => assert.fail("Should not need to invert children"),
+						false,
 						idAllocatorFromMaxId(),
 						failCrossFieldManager,
 						defaultRevisionMetadataFromChanges([clear]),
@@ -673,7 +734,7 @@ describe("optionalField", () => {
 			});
 		});
 		it("uses passed down revision", () => {
-			const restore = tagChange(Change.move(brand(42), "self"), tag);
+			const restore = tagChange(Change.childAt(brand(42), arbitraryChildChange), tag);
 			const actual = Array.from(
 				optionalChangeHandler.relevantRemovedRoots(restore, failingDelegate),
 			);
@@ -688,7 +749,10 @@ describe("optionalField", () => {
 			assert.equal(actual, true);
 		});
 		it("is false for a change with moves", () => {
-			const change = Change.move(brand(42), "self");
+			const change: OptionalChangeset = {
+				moves: [[{ localId: brand(0) }, { localId: brand(1) }]],
+				childChanges: [],
+			};
 			const actual = optionalChangeHandler.isEmpty(change);
 			assert.equal(actual, false);
 		});

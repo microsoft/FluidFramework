@@ -12,5 +12,4 @@ export {
 	optionalFieldEditor,
 	optionalChangeRebaser,
 	optionalFieldIntoDelta,
-	withRevision,
 } from "./optionalField.js";
