@@ -162,6 +162,10 @@
 				],
 				"script": false
 			},
+			"build:test": [
+				"...",
+				"@fluidframework/id-compressor#build:test"
+			],
 			"check:release-tags": [
 				"build:esnext"
 			],

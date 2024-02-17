@@ -5,10 +5,10 @@
 
 import { BTree } from '@tylerbu/sorted-btree-es6';
 import { assert } from '@fluidframework/core-utils';
-import { fail, copyPropertyIfDefined, compareBtrees, compareFiniteNumbers } from './Common';
-import { NodeId, TraitLabel } from './Identifiers';
-import { comparePayloads } from './PayloadUtilities';
-import { NodeData, Payload } from './persisted-types';
+import { fail, copyPropertyIfDefined, compareBtrees, compareFiniteNumbers } from './Common.js';
+import { NodeId, TraitLabel } from './Identifiers.js';
+import { comparePayloads } from './PayloadUtilities.js';
+import { NodeData, Payload } from './persisted-types/index.js';
 
 /**
  * A node that can be contained within a Forest

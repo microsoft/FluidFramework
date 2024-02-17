@@ -11,7 +11,7 @@ import {
 	SharedTreeShimFactory,
 } from "@fluid-experimental/tree";
 // eslint-disable-next-line import/no-internal-modules
-import { EditLog } from "@fluid-experimental/tree/dist/EditLog";
+import { EditLog } from "@fluid-experimental/tree/test/EditLog";
 import { SharedTree, ITree } from "@fluidframework/tree";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";

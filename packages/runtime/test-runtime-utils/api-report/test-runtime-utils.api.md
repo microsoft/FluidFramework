@@ -78,6 +78,8 @@ export interface IMockContainerRuntimePendingMessage {
     content: any;
     // (undocumented)
     localOpMetadata: unknown;
+    // (undocumented)
+    referenceSequenceNumber: number;
 }
 
 // @internal
@@ -116,6 +118,8 @@ export class MockContainerRuntime {
     // (undocumented)
     finalizeIdRange(range: IdCreationRange): void;
     flush(): void;
+    // (undocumented)
+    get isDirty(): boolean;
     // (undocumented)
     protected readonly overrides?: {
         minimumSequenceNumber?: number | undefined;
@@ -170,6 +174,7 @@ export class MockContainerRuntimeFactoryForReconnection extends MockContainerRun
     // (undocumented)
     createContainerRuntime(dataStoreRuntime: MockFluidDataStoreRuntime, overrides?: {
         minimumSequenceNumber?: number;
+        trackRemoteOps?: boolean;
     }): MockContainerRuntimeForReconnection;
 }
 
@@ -177,10 +182,15 @@ export class MockContainerRuntimeFactoryForReconnection extends MockContainerRun
 export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
     constructor(dataStoreRuntime: MockFluidDataStoreRuntime, factory: MockContainerRuntimeFactoryForReconnection, runtimeOptions?: IMockContainerRuntimeOptions, overrides?: {
         minimumSequenceNumber?: number;
+        trackRemoteOps?: boolean;
     });
     // (undocumented)
     get connected(): boolean;
     set connected(connected: boolean);
+    // (undocumented)
+    protected readonly factory: MockContainerRuntimeFactoryForReconnection;
+    // (undocumented)
+    initializeWithStashedOps(fromContainerRuntime: MockContainerRuntimeForReconnection): Promise<void>;
     // (undocumented)
     process(message: ISequencedDocumentMessage): void;
     // (undocumented)
@@ -190,6 +200,8 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 // @alpha
 export class MockDeltaConnection implements IDeltaConnection {
     constructor(submitFn: (messageContent: any, localOpMetadata: unknown) => number, dirtyFn: () => void);
+    // (undocumented)
+    applyStashedOp(content: any): unknown;
     // (undocumented)
     attach(handler: IDeltaHandler): void;
     // (undocumented)
@@ -395,7 +407,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // @deprecated (undocumented)
     addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
     // (undocumented)
-    applyStashedOp(content: any): Promise<void>;
+    applyStashedOp(content: any): Promise<unknown>;
     // (undocumented)
     attachGraph(): void;
     // (undocumented)

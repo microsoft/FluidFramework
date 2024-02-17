@@ -1,0 +1,17 @@
+{
+	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"compilerOptions": {
+		"rootDir": "./",
+		"outDir": "../../dist/test",
+		"types": ["mocha", "node"],
+		"declaration": false,
+		"declarationMap": false,
+		"skipLibCheck": true,
+	},
+	"include": ["./**/*"],
+	"references": [
+		{
+			"path": "../..",
+		},
+	],
+}
