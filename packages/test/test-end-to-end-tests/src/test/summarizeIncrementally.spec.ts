@@ -10,6 +10,7 @@ import {
 	ITestObjectProvider,
 	createSummarizer,
 	getContainerEntryPointBackCompat,
+	getDataStoreEntryPointBackCompat,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
@@ -121,13 +122,9 @@ describeCompat(
 		});
 
 		it("can do incremental data store summary", async function () {
-			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6978
-			if (provider.type === "TestObjectProviderWithVersionedLoad") {
-				this.skip();
-			}
 			const dataStore2 = await containerRuntime.createDataStore(TestDataObjectType);
-			const dataObject2 = (await dataStore2.entryPoint.get()) as ITestDataObject;
-			dataObject1._root.set("dataObject2", dataStore2.entryPoint);
+			const dataObject2 = await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore2);
+			dataObject1._root.set("dataObject2", dataObject2.handle);
 
 			await provider.ensureSynchronized();
 			let summary = await summarizeNow(summarizer);
