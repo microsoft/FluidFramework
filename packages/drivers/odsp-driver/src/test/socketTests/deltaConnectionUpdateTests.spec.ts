@@ -160,7 +160,6 @@ describe("DeltaConnectionMetadata update tests", () => {
 		content = { labels: "label2" };
 		const signalContent1 = { labels: "label2", timestamp: Date.now() };
 		const signalMessage1: ISignalMessage = {
-			// eslint-disable-next-line unicorn/no-null
 			clientId: null,
 			content: JSON.stringify({
 				contents: {

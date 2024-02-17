@@ -262,11 +262,8 @@ describe("Local Odsp driver", () => {
 					new MockLogger().toTelemetryLogger(),
 					localSnapshot,
 				);
-				// eslint-disable-next-line unicorn/no-null
 				await assert.rejects(async () => storageService.getVersions(null, -1));
-				// eslint-disable-next-line unicorn/no-null
 				await assert.rejects(async () => storageService.getVersions(null, 0));
-				// eslint-disable-next-line unicorn/no-null
 				await assert.rejects(async () => storageService.getVersions(null, 2));
 			});
 
@@ -275,7 +272,6 @@ describe("Local Odsp driver", () => {
 					new MockLogger().toTelemetryLogger(),
 					localSnapshot,
 				);
-				// eslint-disable-next-line unicorn/no-null
 				assert.deepStrictEqual(await storageService.getVersions(null, 1), snapshotVersion);
 			});
 

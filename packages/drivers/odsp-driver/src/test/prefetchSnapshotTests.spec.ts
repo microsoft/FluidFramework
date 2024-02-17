@@ -240,7 +240,6 @@ describe("Tests for prefetching snapshot", () => {
 			);
 
 			const version = await mockFetchSingle(
-				// eslint-disable-next-line unicorn/no-null
 				async () => service.getVersions(null, 1),
 				async () =>
 					createResponse(
@@ -289,7 +288,6 @@ describe("Tests for prefetching snapshot", () => {
 			);
 
 			const version = await mockFetchSingle(
-				// eslint-disable-next-line unicorn/no-null
 				async () => service.getVersions(null, 1),
 				async () =>
 					createResponse(
@@ -398,7 +396,6 @@ describe("Tests for prefetching snapshot", () => {
 			);
 
 			await mockFetchSingle(
-				// eslint-disable-next-line unicorn/no-null
 				async () => service.getVersions(null, 1),
 				async () =>
 					createResponse(
@@ -458,7 +455,6 @@ describe("Tests for prefetching snapshot", () => {
 			);
 
 			await mockFetchSingle(
-				// eslint-disable-next-line unicorn/no-null
 				async () => service.getVersions(null, 1, FetchSource.noCache),
 				async () =>
 					createResponse(
@@ -549,7 +545,6 @@ describe("Tests for prefetching snapshot", () => {
 			);
 
 			await mockFetchSingle(
-				// eslint-disable-next-line unicorn/no-null
 				async () => service.getVersions(null, 1, undefined),
 				async () =>
 					createResponse(

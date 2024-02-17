@@ -99,7 +99,6 @@ const ops: ISequencedDocumentMessage[] = [
 	{
 		clientId: "X",
 		clientSequenceNumber: -1,
-		// eslint-disable-next-line unicorn/no-null
 		contents: null,
 		minimumSequenceNumber: 0,
 		referenceSequenceNumber: -1,
@@ -110,7 +109,6 @@ const ops: ISequencedDocumentMessage[] = [
 	{
 		clientId: "Y",
 		clientSequenceNumber: -1,
-		// eslint-disable-next-line unicorn/no-null
 		contents: null,
 		minimumSequenceNumber: 0,
 		referenceSequenceNumber: -1,
