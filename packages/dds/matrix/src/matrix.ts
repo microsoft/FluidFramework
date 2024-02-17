@@ -631,13 +631,13 @@ export class SharedMatrix<T = any>
 		this.cols.startOrUpdateCollaboration(this.runtime.clientId as string);
 	}
 
-	private rebasePosition( 
+	private rebasePosition(
 		client: PermutationVector,
 		localSeq: number,
-		handle: number
+		handle: number,
 	): number | undefined {
 		const { segment, offset } = client.handleToSegment(handle);
-		
+
 		if (segment.removedSeq !== undefined) {
 			return undefined;
 		}
