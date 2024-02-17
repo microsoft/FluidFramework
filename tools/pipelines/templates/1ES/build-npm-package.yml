@@ -365,7 +365,7 @@ extends:
                         condition: succeededOrFailed()
                         continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
                         script: |
-                          ##vso[task.uploadfile]tinylicious.log
+                          echo "##vso[task.uploadfile]tinylicious.log"
 
                   # Test - Upload coverage results
                   # Some webpacked file using externals introduce file name with quotes in them
