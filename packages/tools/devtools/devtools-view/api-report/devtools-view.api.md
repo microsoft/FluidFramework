@@ -24,6 +24,9 @@ export interface DevtoolsPanelProps {
 
 export { IMessageRelay }
 
+// @internal
+export const isTelemetryOptInEnabled: () => boolean;
+
 export { ITelemetryBaseEvent }
 
 export { ITelemetryBaseLogger }

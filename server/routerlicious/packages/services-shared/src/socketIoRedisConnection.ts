@@ -16,10 +16,10 @@ import { IRedisClientConnectionManager } from "./redisClientConnectionManager";
  * and only provides Pub functionality
  */
 export class SocketIORedisConnection implements ISocketIoRedisConnection {
-	constructor(protected readonly redisClienConnectionManager: IRedisClientConnectionManager) {
-		redisClienConnectionManager.getRedisClient().on("error", (err) => {
-			winston.error("[DHRUV DEBUG] Error with Redis:", err);
-			Lumberjack.error("[DHRUV DEBUG] Error with Redis:", undefined, err);
+	constructor(protected readonly client: Redis.default | Redis.Cluster) {
+		client.on("error", (err) => {
+			winston.error("Error with Redis:", err);
+			Lumberjack.error("Error with Redis:", undefined, err);
 		});
 	}
 
@@ -42,8 +42,8 @@ export class SocketIoRedisSubscriptionConnection
 	private readonly subscriptions: Map<string, (channel: string, messageBuffer: Buffer) => void> =
 		new Map();
 
-	constructor(redisClienConnectionManager: IRedisClientConnectionManager) {
-		super(redisClienConnectionManager);
+	constructor(client: Redis.default | Redis.Cluster) {
+		super(client);
 
 		redisClienConnectionManager
 			.getRedisClient()

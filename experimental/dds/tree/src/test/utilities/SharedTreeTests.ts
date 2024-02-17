@@ -13,17 +13,17 @@ import {
 	MockFluidDataStoreRuntime,
 	validateAssertionError,
 } from '@fluidframework/test-runtime-utils';
-import { assertArrayOfOne, assertNotUndefined, fail, isSharedTreeEvent } from '../../Common';
-import { EditId, NodeId, TraitLabel } from '../../Identifiers';
-import { CachingLogViewer } from '../../LogViewer';
-import { EditLog, OrderedEditSet } from '../../EditLog';
-import { initialTree } from '../../InitialTree';
-import { TreeNodeHandle } from '../../TreeNodeHandle';
-import { deserialize } from '../../SummaryBackCompatibility';
-import { useFailedSequencedEditTelemetry } from '../../MergeHealth';
-import { MutableStringInterner } from '../../StringInterner';
-import { getChangeNodeFromView } from '../../SerializationUtilities';
-import { EditCommittedEventArguments, SequencedEditAppliedEventArguments, SharedTree } from '../../SharedTree';
+import { assertArrayOfOne, assertNotUndefined, fail, isSharedTreeEvent } from '../../Common.js';
+import { EditId, NodeId, TraitLabel } from '../../Identifiers.js';
+import { CachingLogViewer } from '../../LogViewer.js';
+import { EditLog, OrderedEditSet } from '../../EditLog.js';
+import { initialTree } from '../../InitialTree.js';
+import { TreeNodeHandle } from '../../TreeNodeHandle.js';
+import { deserialize } from '../../SummaryBackCompatibility.js';
+import { useFailedSequencedEditTelemetry } from '../../MergeHealth.js';
+import { MutableStringInterner } from '../../StringInterner.js';
+import { getChangeNodeFromView } from '../../SerializationUtilities.js';
+import { EditCommittedEventArguments, SequencedEditAppliedEventArguments, SharedTree } from '../../SharedTree.js';
 import {
 	ChangeInternal,
 	ChangeNode,
@@ -35,19 +35,19 @@ import {
 	SharedTreeSummaryBase,
 	SharedTreeSummary_0_0_2,
 	WriteFormat,
-} from '../../persisted-types';
-import { SharedTreeEvent } from '../../EventTypes';
-import { BuildNode, Change, ChangeType, StablePlace, StableRange } from '../../ChangeTypes';
-import { convertTreeNodes, deepCompareNodes } from '../../EditUtilities';
-import { serialize, SummaryContents } from '../../Summary';
-import { InterningTreeCompressor } from '../../TreeCompressor';
-import { SharedTreeEncoder_0_0_2, SharedTreeEncoder_0_1_1 } from '../../SharedTreeEncoder';
-import { sequencedIdNormalizer } from '../../NodeIdUtilities';
-import { convertNodeDataIds } from '../../IdConversion';
-import { generateStableId, nilUuid } from '../../UuidUtilities';
-import { buildLeaf, SimpleTestTree, TestTree } from './TestNode';
-import { TestFluidHandle, TestFluidSerializer } from './TestSerializer';
-import { runSharedTreeUndoRedoTestSuite } from './UndoRedoTests';
+} from '../../persisted-types/index.js';
+import { SharedTreeEvent } from '../../EventTypes.js';
+import { BuildNode, Change, ChangeType, StablePlace, StableRange } from '../../ChangeTypes.js';
+import { convertTreeNodes, deepCompareNodes } from '../../EditUtilities.js';
+import { serialize, SummaryContents } from '../../Summary.js';
+import { InterningTreeCompressor } from '../../TreeCompressor.js';
+import { SharedTreeEncoder_0_0_2, SharedTreeEncoder_0_1_1 } from '../../SharedTreeEncoder.js';
+import { sequencedIdNormalizer } from '../../NodeIdUtilities.js';
+import { convertNodeDataIds } from '../../IdConversion.js';
+import { generateStableId, nilUuid } from '../../UuidUtilities.js';
+import { buildLeaf, SimpleTestTree, TestTree } from './TestNode.js';
+import { TestFluidHandle, TestFluidSerializer } from './TestSerializer.js';
+import { runSharedTreeUndoRedoTestSuite } from './UndoRedoTests.js';
 import {
 	areNodesEquivalent,
 	assertNoDelta,
@@ -63,7 +63,7 @@ import {
 	normalizeEdit,
 	getIdNormalizerFromSharedTree,
 	getEditLogInternal,
-} from './TestUtilities';
+} from './TestUtilities.js';
 
 function revertEditInTree(tree: SharedTree, edit: EditId): EditId | undefined {
 	return tree.revert(edit);

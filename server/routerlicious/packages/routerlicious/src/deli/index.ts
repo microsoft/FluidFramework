@@ -131,14 +131,10 @@ export async function deliCreate(
 			servername: redisConfig.host,
 		};
 	}
-	const redisClientConnectionManager: IRedisClientConnectionManager =
-		customizations?.redisClientConnectionManager ??
-		new RedisClientConnectionManager(redisOptions, undefined);
-	await redisClientConnectionManager.authenticateAndCreateRedisClient().catch((error) => {
-		winston.error("[DHRUV DEBUG] Error creating Redis client connection:", error);
-		Lumberjack.error("[DHRUV DEBUG] Error creating Redis client connection:", undefined, error);
-	});
-	const publisher = new services.SocketIoRedisPublisher(redisClientConnectionManager);
+	const publisher = new services.SocketIoRedisPublisher(
+		redisOptions,
+		redisConfig.enableClustering,
+	);
 	publisher.on("error", (err) => {
 		winston.error("Error with Redis Publisher:", err);
 		Lumberjack.error("Error with Redis Publisher:", undefined, err);

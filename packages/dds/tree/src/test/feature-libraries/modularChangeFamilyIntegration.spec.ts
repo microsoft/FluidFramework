@@ -224,6 +224,51 @@ describe("ModularChangeFamily integration", () => {
 
 			assert.deepEqual(rebased, expected);
 		});
+
+		it("over change which moves node upward", () => {
+			const [changeReceiver, getChanges] = testChangeReceiver(family);
+			const editor = new DefaultEditBuilder(family, changeReceiver);
+			const nodeAPath: UpPath = { parent: undefined, parentField: fieldA, parentIndex: 0 };
+			const nodeBPath: UpPath = {
+				parent: nodeAPath,
+				parentField: fieldB,
+				parentIndex: 0,
+			};
+
+			editor.move(
+				{ parent: nodeAPath, field: fieldB },
+				0,
+				1,
+				{ parent: undefined, field: fieldA },
+				0,
+			);
+
+			const nodeBPathAfterMove: UpPath = {
+				parent: undefined,
+				parentField: fieldA,
+				parentIndex: 0,
+			};
+
+			editor.sequenceField({ parent: nodeBPath, field: fieldC }).remove(0, 1);
+			editor.sequenceField({ parent: nodeBPathAfterMove, field: fieldC }).remove(0, 1);
+
+			const [move, remove, expected] = getChanges();
+			const baseTag = mintRevisionTag();
+			const rebased = family.rebase(
+				remove,
+				tagChange(move, baseTag),
+				revisionMetadataSourceFromInfo([{ revision: baseTag }]),
+			);
+
+			const rebasedDelta = normalizeDelta(
+				intoDelta(makeAnonChange(rebased), family.fieldKinds),
+			);
+			const expectedDelta = normalizeDelta(
+				intoDelta(makeAnonChange(expected), family.fieldKinds),
+			);
+
+			assertDeltaEqual(rebasedDelta, expectedDelta);
+		});
 	});
 
 	describe("compose", () => {

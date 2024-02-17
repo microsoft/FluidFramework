@@ -17,7 +17,7 @@ export class RedisCache implements ICache {
 	private readonly expireAfterSeconds: number = 60 * 60 * 24;
 	private readonly prefix: string = "page";
 	constructor(
-		private readonly redisClientConnectionManager: IRedisClientConnectionManager,
+		private readonly client: Redis.default | Redis.Cluster,
 		parameters?: IRedisParameters,
 	) {
 		if (parameters?.expireAfterSeconds) {
@@ -37,53 +37,65 @@ export class RedisCache implements ICache {
 		try {
 			await this.redisClientConnectionManager.getRedisClient().del(this.getKey(key));
 			return true;
-		} catch (error) {
-			Lumberjack.error(`[DHRUV DEBUG] Error deleting from cache.`, undefined, error);
+		} catch (error: any) {
+			Lumberjack.error(`Error deleting from cache.`, undefined, error);
 			return false;
 		}
 	}
 
 	public async get(key: string): Promise<string> {
 		try {
-			return this.redisClientConnectionManager.getRedisClient().get(this.getKey(key));
-		} catch (error) {
-			Lumberjack.error(`[DHRUV DEBUG] Error getting from cache.`, undefined, error);
-			throw error;
+			return this.client.get(this.getKey(key));
+		} catch (error: any) {
+			Lumberjack.error(`Error getting ${key.substring(0, 20)} from cache.`, undefined, error);
+			const newError: Error = { name: error?.name, message: error?.message };
+			throw newError;
 		}
 	}
 
 	public async set(key: string, value: string, expireAfterSeconds?: number): Promise<void> {
-		const result = await this.redisClientConnectionManager
-			.getRedisClient()
-			.set(this.getKey(key), value, "EX", expireAfterSeconds ?? this.expireAfterSeconds);
-		if (result !== "OK") {
-			throw new Error(result);
+		try {
+			const result = await this.client.set(
+				this.getKey(key),
+				value,
+				"EX",
+				expireAfterSeconds ?? this.expireAfterSeconds,
+			);
+			if (result !== "OK") {
+				throw new Error(result);
+			}
+		} catch (error: any) {
+			Lumberjack.error(`Error setting ${key.substring(0, 20)} in cache.`, undefined, error);
+			const newError: Error = { name: error?.name, message: error?.message };
+			throw newError;
 		}
 	}
 
 	public async incr(key: string): Promise<number> {
 		try {
-			return this.redisClientConnectionManager.getRedisClient().incr(key);
-		} catch (error) {
+			return this.client.incr(key);
+		} catch (error: any) {
 			Lumberjack.error(
-				`[DHRUV DEBUG] Error while incrementing counter for ${key} in redis.`,
+				`Error while incrementing counter for ${key.substring(0, 20)} in redis.`,
 				undefined,
 				error,
 			);
-			throw error;
+			const newError: Error = { name: error?.name, message: error?.message };
+			throw newError;
 		}
 	}
 
 	public async decr(key: string): Promise<number> {
 		try {
-			return this.redisClientConnectionManager.getRedisClient().decr(key);
-		} catch (error) {
+			return this.client.decr(key);
+		} catch (error: any) {
 			Lumberjack.error(
-				`[DHRUV DEBUG] Error while decrementing counter for ${key} in redis.`,
+				`Error while decrementing counter for ${key.substring(0, 20)} in redis.`,
 				undefined,
 				error,
 			);
-			throw error;
+			const newError: Error = { name: error?.name, message: error?.message };
+			throw newError;
 		}
 	}
 

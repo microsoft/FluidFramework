@@ -8,11 +8,11 @@ import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
-import { MountableView } from "@fluidframework/view-adapters";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import {
-	IFluidMountableViewEntryPoint,
 	getDataStoreEntryPoint,
+	IFluidMountableViewEntryPoint,
+	MountableView,
 } from "@fluid-example/example-utils";
 
 import React from "react";
