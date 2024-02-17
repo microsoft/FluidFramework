@@ -368,7 +368,7 @@ extends:
                         targetType: inline
                         workingDirectory: '${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests'
                         script: |
-                          ##vso[task.uploadfile]tinylicious.log
+                          echo "##vso[task.uploadfile]tinylicious.log"
 
                     # At this point we want to publish the tinylicious.log artifact, but as part of 1ES migration
                     # that is now part of templateContext.outputs below.
