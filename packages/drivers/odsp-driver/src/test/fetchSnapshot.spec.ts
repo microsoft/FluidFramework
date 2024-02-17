@@ -46,7 +46,7 @@ describe("Tests1 for snapshot fetch", () => {
 		driveId,
 		itemId,
 		odspResolvedUrl: true,
-	} as any as IOdspResolvedUrl;
+	} as unknown as IOdspResolvedUrl;
 
 	const newFileParams: INewFileInfo = {
 		type: "New",

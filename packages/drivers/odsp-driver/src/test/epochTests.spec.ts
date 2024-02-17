@@ -32,7 +32,7 @@ describe("Tests for Epoch Tracker", () => {
 		driveId,
 		itemId,
 		odspResolvedUrl: true,
-	} as any as IOdspResolvedUrl;
+	} as unknown as IOdspResolvedUrl;
 
 	before(async () => {
 		hashedDocumentId = await getHashedDocumentId(driveId, itemId);

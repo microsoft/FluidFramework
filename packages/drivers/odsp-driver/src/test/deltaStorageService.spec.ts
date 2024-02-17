@@ -34,7 +34,7 @@ describe("DeltaStorageService", () => {
 		driveId,
 		itemId,
 		odspResolvedUrl: true,
-	} as any as IOdspResolvedUrl;
+	} as unknown as IOdspResolvedUrl;
 	const fileEntry = { docId: "docId", resolvedUrl };
 
 	it("Should build the correct sharepoint delta url with auth", async () => {
@@ -243,7 +243,10 @@ describe("DeltaStorageService", () => {
 				async (from, to) => getCached(from, to),
 				(from, to) => [],
 				(ops) => {},
-				() => ({ isFirstSnapshotFromNetwork: false }) as any as OdspDocumentStorageService,
+				() =>
+					({
+						isFirstSnapshotFromNetwork: false,
+					}) as unknown as OdspDocumentStorageService,
 			);
 
 			const messages = odspDeltaStorageServiceWithCache.fetchMessages(1, undefined);

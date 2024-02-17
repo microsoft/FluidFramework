@@ -67,7 +67,7 @@ describe("Create New Utils Tests", () => {
 		driveId,
 		itemId,
 		odspResolvedUrl: true,
-	} as any as IOdspResolvedUrl;
+	} as unknown as IOdspResolvedUrl;
 	const filePath = "path";
 	let newFileParams: INewFileInfo;
 	let hashedDocumentId: string;

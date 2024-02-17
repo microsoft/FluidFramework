@@ -53,7 +53,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
 			driveId,
 			itemId,
 			odspResolvedUrl: true,
-		} as any as IOdspResolvedUrl;
+		} as unknown as IOdspResolvedUrl;
 		epochTracker = new EpochTrackerWithRedemption(
 			new LocalPersistentCache(),
 			{
