@@ -10661,6 +10661,7 @@ importers:
       '@fluidframework/test-driver-definitions': link:../test-driver-definitions
       best-random: 1.0.3
       debug: 4.3.4
+      mocha: 10.2.0
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -10681,7 +10682,6 @@ importers:
       cross-env: 7.0.3
       diff: 3.5.0
       eslint: 8.50.0
-      mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
