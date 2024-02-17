@@ -16,8 +16,6 @@ import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protoc
 import {
 	AliasResult,
 	channelsTreeName,
-	CreateChildSummarizerNodeFn,
-	CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
 	IAttachMessage,
 	IEnvelope,
@@ -30,6 +28,8 @@ import {
 	ISummarizeResult,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
+	IFluidDataStoreFactory,
+	IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions";
 import {
 	convertSnapshotTreeToSummaryTree,
@@ -59,7 +59,7 @@ import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils";
 import { v4 as uuid } from "uuid";
 import { DataStoreContexts } from "./dataStoreContexts";
-import { ContainerRuntime, defaultRuntimeHeaderData, RuntimeHeaderData } from "./containerRuntime";
+import { defaultRuntimeHeaderData, RuntimeHeaderData } from "./containerRuntime";
 import {
 	FluidDataStoreContext,
 	RemoteFluidDataStoreContext,
@@ -102,61 +102,70 @@ interface FluidDataStoreMessage {
 	type: string;
 }
 
-export function cloneParentContext(parent: IFluidParentContext): IFluidParentContext {
+export function cloneParentContext(parentContext: IFluidParentContext): IFluidParentContext {
 	return {
-		IFluidDataStoreRegistry: parent.IFluidDataStoreRegistry,
-		IFluidHandleContext: parent.IFluidHandleContext,
-		options: parent.options,
+		IFluidDataStoreRegistry: parentContext.IFluidDataStoreRegistry,
+		IFluidHandleContext: parentContext.IFluidHandleContext,
+		options: parentContext.options,
 		get clientId() {
-			return parent.clientId;
+			return parentContext.clientId;
 		},
 		get connected() {
-			return parent.connected;
+			return parentContext.connected;
 		},
-		deltaManager: parent.deltaManager,
-		storage: parent.storage,
-		logger: parent.logger,
+		deltaManager: parentContext.deltaManager,
+		storage: parentContext.storage,
+		logger: parentContext.logger,
 		get clientDetails() {
-			return parent.clientDetails;
+			return parentContext.clientDetails;
 		},
-		idCompressor: parent.idCompressor,
-		loadingGroupId: parent.loadingGroupId,
+		idCompressor: parentContext.idCompressor,
+		loadingGroupId: parentContext.loadingGroupId,
 		get attachState() {
-			return parent.attachState;
+			return parentContext.attachState;
 		},
-		containerRuntime: parent.containerRuntime,
-		scope: parent.scope,
-		gcThrowOnTombstoneUsage: parent.gcThrowOnTombstoneUsage,
-		gcTombstoneEnforcementAllowed: parent.gcTombstoneEnforcementAllowed,
+		containerRuntime: parentContext.containerRuntime,
+		scope: parentContext.scope,
+		gcThrowOnTombstoneUsage: parentContext.gcThrowOnTombstoneUsage,
+		gcTombstoneEnforcementAllowed: parentContext.gcTombstoneEnforcementAllowed,
 		getAbsoluteUrl: async (...args) => {
-			return parent.getAbsoluteUrl(...args);
+			return parentContext.getAbsoluteUrl(...args);
 		},
 		getQuorum: (...args) => {
-			return parent.getQuorum(...args);
+			return parentContext.getQuorum(...args);
 		},
 		getAudience: (...args) => {
-			return parent.getAudience(...args);
+			return parentContext.getAudience(...args);
 		},
 		ensureNoDataModelChanges: (...args) => {
-			return parent.ensureNoDataModelChanges(...args);
+			return parentContext.ensureNoDataModelChanges(...args);
 		},
 		submitMessage: (...args) => {
-			return parent.submitMessage(...args);
+			return parentContext.submitMessage(...args);
 		},
 		submitSignal: (...args) => {
-			return parent.submitSignal(...args);
+			return parentContext.submitSignal(...args);
 		},
 		uploadBlob: async (...args) => {
-			return parent.uploadBlob(...args);
+			return parentContext.uploadBlob(...args);
 		},
 		addedGCOutboundReference: (...args) => {
-			return parent.addedGCOutboundReference?.(...args);
+			return parentContext.addedGCOutboundReference?.(...args);
+		},
+		getCreateChildSummarizerNodeFn: (...args) => {
+			return parentContext.getCreateChildSummarizerNodeFn?.(...args);
+		},
+		deleteChildSummarizerNode: (...args) => {
+			return parentContext.deleteChildSummarizerNode?.(...args);
 		},
 	};
 }
-
-export function createParentContext(id: string, parent: IFluidParentContext): IFluidParentContext {
-	const context = cloneParentContext(parent);
+/** @internal */
+export function createParentContext(
+	id: string,
+	parentContext: IFluidParentContext,
+): IFluidParentContext {
+	const context = cloneParentContext(parentContext);
 
 	context.submitMessage = (type: string, content: any, localOpMetadata: unknown) => {
 		const fluidDataStoreContent: FluidDataStoreMessage = {
@@ -167,7 +176,11 @@ export function createParentContext(id: string, parent: IFluidParentContext): IF
 			address: id,
 			contents: fluidDataStoreContent,
 		};
-		parent.submitMessage(ContainerMessageType.FluidDataStoreOp, envelope, localOpMetadata);
+		parentContext.submitMessage(
+			ContainerMessageType.FluidDataStoreOp,
+			envelope,
+			localOpMetadata,
+		);
 	};
 
 	context.submitSignal = (type: string, contents: any, targetClientId?: string) => {
@@ -175,7 +188,7 @@ export function createParentContext(id: string, parent: IFluidParentContext): IF
 			address: id,
 			contents,
 		};
-		parent.submitSignal(type, envelope, targetClientId);
+		parentContext.submitSignal(type, envelope, targetClientId);
 	};
 
 	return context;
@@ -184,6 +197,7 @@ export function createParentContext(id: string, parent: IFluidParentContext): IF
 /**
  * This class encapsulates data store handling. Currently it is only used by the container runtime,
  * but eventually could be hosted on any channel once we formalize the channel api boundary.
+ * @internal
  */
 export class DataStores implements IFluidDataStoreChannel, IDisposable {
 	// Stores tracked by the Domain
@@ -219,14 +233,7 @@ export class DataStores implements IFluidDataStoreChannel, IDisposable {
 
 	constructor(
 		private readonly baseSnapshot: ISnapshotTree | undefined,
-		private readonly runtime: ContainerRuntime,
-		private readonly parent: IFluidParentContext,
-		private readonly submitAttachFn: (attachContent: IAttachMessage) => void,
-		private readonly getCreateChildSummarizerNodeFn: (
-			id: string,
-			createParam: CreateChildSummarizerNodeParam,
-		) => CreateChildSummarizerNodeFn,
-		private readonly deleteChildSummarizerNodeFn: (id: string) => void,
+		public readonly parentContext: IFluidParentContext,
 		baseLogger: ITelemetryBaseLogger,
 		private readonly gcNodeUpdated: (
 			nodePath: string,
@@ -243,14 +250,14 @@ export class DataStores implements IFluidDataStoreChannel, IDisposable {
 		this.mc = createChildMonitoringContext({ logger: baseLogger });
 		this.contexts = new DataStoreContexts(baseLogger);
 		this.containerRuntimeHandle = new FluidObjectHandle(
-			this.parent,
+			this.parentContext,
 			"/",
-			this.parent.IFluidHandleContext,
+			this.parentContext.IFluidHandleContext,
 		);
 		this.entryPoint = new FluidObjectHandle<FluidObject>(
 			new LazyPromise(async () => provideEntryPoint(this)),
 			"",
-			this.parent.IFluidHandleContext,
+			this.parentContext.IFluidHandleContext,
 		);
 
 		// Extract stores stored inside the snapshot
@@ -271,14 +278,14 @@ export class DataStores implements IFluidDataStoreChannel, IDisposable {
 				unreferencedDataStoreCount++;
 			}
 			// If we have a detached container, then create local data store contexts.
-			if (this.parent.attachState !== AttachState.Detached) {
+			if (this.parentContext.attachState !== AttachState.Detached) {
 				dataStoreContext = new RemoteFluidDataStoreContext({
 					id: key,
 					snapshotTree: value,
-					parent: this.createParentContext(key),
-					storage: this.parent.storage,
-					scope: this.parent.scope,
-					createSummarizerNodeFn: this.getCreateChildSummarizerNodeFn(key, {
+					parentContext: this.createParentContext(key),
+					storage: this.parentContext.storage,
+					scope: this.parentContext.scope,
+					createSummarizerNodeFn: this.parentContext.getCreateChildSummarizerNodeFn(key, {
 						type: CreateSummarizerNodeSource.FromSummary,
 					}),
 					loadingGroupId: value.groupId,
@@ -291,10 +298,10 @@ export class DataStores implements IFluidDataStoreChannel, IDisposable {
 				dataStoreContext = new LocalFluidDataStoreContext({
 					id: key,
 					pkg: undefined,
-					parent: this.createParentContext(key),
-					storage: this.parent.storage,
-					scope: this.parent.scope,
-					createSummarizerNodeFn: this.getCreateChildSummarizerNodeFn(key, {
+					parentContext: this.createParentContext(key),
+					storage: this.parentContext.storage,
+					scope: this.parentContext.scope,
+					createSummarizerNodeFn: this.parentContext.getCreateChildSummarizerNodeFn(key, {
 						type: CreateSummarizerNodeSource.FromSummary,
 					}),
 					makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(key),
@@ -327,7 +334,7 @@ export class DataStores implements IFluidDataStoreChannel, IDisposable {
 	private shouldSendAttachLog = true;
 
 	private createParentContext(id: string): IFluidParentContext {
-		return createParentContext(id, this.parent);
+		return createParentContext(id, this.parentContext);
 	}
 
 	/**
@@ -340,7 +347,7 @@ export class DataStores implements IFluidDataStoreChannel, IDisposable {
 		assert(false, "NYI");
 	}
 
-	public processAttachMessage(message: ISequencedDocumentMessage, local: boolean) {
+	private processAttachMessage(message: ISequencedDocumentMessage, local: boolean) {
 		const attachMessage = message.contents as InboundAttachMessage;
 
 		this.dataStoresSinceLastGC.push(attachMessage.id);
@@ -349,7 +356,7 @@ export class DataStores implements IFluidDataStoreChannel, IDisposable {
 		const foundGCData = processAttachMessageGCData(attachMessage.snapshot, (nodeId, toPath) => {
 			// nodeId is the relative path under the node being attached. Always starts with "/", but no trailing "/" after an id
 			const fromPath = `/${attachMessage.id}${nodeId === "/" ? "" : nodeId}`;
-			this.parent.addedGCOutboundReference?.(
+			this.parentContext.addedGCOutboundReference?.(
 				{ absolutePath: fromPath },
 				{ absolutePath: toPath },
 			);
@@ -408,24 +415,27 @@ export class DataStores implements IFluidDataStoreChannel, IDisposable {
 		const remoteFluidDataStoreContext = new RemoteFluidDataStoreContext({
 			id: attachMessage.id,
 			snapshotTree,
-			parent: this.createParentContext(attachMessage.id),
-			storage: new StorageServiceWithAttachBlobs(this.parent.storage, flatAttachBlobs),
-			scope: this.parent.scope,
-			loadingGroupId: snapshotTree?.groupId,
-			createSummarizerNodeFn: this.getCreateChildSummarizerNodeFn(attachMessage.id, {
-				type: CreateSummarizerNodeSource.FromAttach,
-				sequenceNumber: message.sequenceNumber,
-				snapshot: attachMessage.snapshot ?? {
-					entries: [createAttributesBlob(pkg, true /* isRootDataStore */)],
+			parentContext: this.createParentContext(attachMessage.id),
+			storage: new StorageServiceWithAttachBlobs(this.parentContext.storage, flatAttachBlobs),
+			scope: this.parentContext.scope,
+			loadingGroupId: attachMessage.snapshot?.groupId,
+			createSummarizerNodeFn: this.parentContext.getCreateChildSummarizerNodeFn(
+				attachMessage.id,
+				{
+					type: CreateSummarizerNodeSource.FromAttach,
+					sequenceNumber: message.sequenceNumber,
+					snapshot: attachMessage.snapshot ?? {
+						entries: [createAttributesBlob(pkg, true /* isRootDataStore */)],
+					},
 				},
-			}),
+			),
 			pkg: undefined,
 		});
 
 		this.contexts.addBoundOrRemoted(remoteFluidDataStoreContext);
 	}
 
-	public processAliasMessage(
+	private processAliasMessage(
 		message: ISequencedDocumentMessage,
 		localOpMetadata: unknown,
 		local: boolean,
@@ -474,9 +484,9 @@ export class DataStores implements IFluidDataStoreChannel, IDisposable {
 		const handle = new FluidObjectHandle(
 			context,
 			aliasMessage.internalId,
-			this.parent.IFluidHandleContext,
+			this.parentContext.IFluidHandleContext,
 		);
-		this.parent.addedGCOutboundReference?.(this.containerRuntimeHandle, handle);
+		this.parentContext.addedGCOutboundReference?.(this.containerRuntimeHandle, handle);
 
 		this.aliasMap.set(aliasMessage.alias, context.id);
 		context.setInMemoryRoot();
@@ -516,12 +526,12 @@ export class DataStores implements IFluidDataStoreChannel, IDisposable {
 		 * globally visible. Move it to attaching state and send an "attach" op for it.
 		 * If the container is detached, this data store will be part of the summary that makes the container attached.
 		 */
-		if (this.parent.attachState !== AttachState.Detached) {
+		if (this.parentContext.attachState !== AttachState.Detached) {
 			localContext.emit("attaching");
 			const message = this.generateAttachMessage(localContext);
 
 			this.pendingAttach.set(id, message);
-			this.submitAttachFn(message);
+			this.parentContext.submitMessage(ContainerMessageType.Attach, message, undefined);
 			this.attachOpFiredForDataStore.add(id);
 		}
 
@@ -539,10 +549,10 @@ export class DataStores implements IFluidDataStoreChannel, IDisposable {
 		const context = new LocalDetachedFluidDataStoreContext({
 			id,
 			pkg,
-			parent: this.createParentContext(id),
-			storage: this.parent.storage,
-			scope: this.parent.scope,
-			createSummarizerNodeFn: this.getCreateChildSummarizerNodeFn(id, {
+			parentContext: this.createParentContext(id),
+			storage: this.parentContext.storage,
+			scope: this.parentContext.scope,
+			createSummarizerNodeFn: this.parentContext.getCreateChildSummarizerNodeFn(id, {
 				type: CreateSummarizerNodeSource.Local,
 			}),
 			makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
@@ -553,9 +563,8 @@ export class DataStores implements IFluidDataStoreChannel, IDisposable {
 				channelToDataStore(
 					channel,
 					channelId,
-					this.runtime,
 					this,
-					createChildLogger({ logger: this.parent.logger }),
+					createChildLogger({ logger: this.parentContext.logger }),
 				),
 		});
 		this.contexts.addUnbound(context);
@@ -572,10 +581,10 @@ export class DataStores implements IFluidDataStoreChannel, IDisposable {
 		const context = new LocalFluidDataStoreContext({
 			id,
 			pkg,
-			parent: this.createParentContext(id),
-			storage: this.parent.storage,
-			scope: this.parent.scope,
-			createSummarizerNodeFn: this.getCreateChildSummarizerNodeFn(id, {
+			parentContext: this.createParentContext(id),
+			storage: this.parentContext.storage,
+			scope: this.parentContext.scope,
+			createSummarizerNodeFn: this.parentContext.getCreateChildSummarizerNodeFn(id, {
 				type: CreateSummarizerNodeSource.Local,
 			}),
 			makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
@@ -654,6 +663,19 @@ export class DataStores implements IFluidDataStoreChannel, IDisposable {
 		localMessageMetadata: unknown,
 		addedOutboundReference?: (fromNodePath: string, toNodePath: string) => void,
 	) {
+		switch (message.type) {
+			case ContainerMessageType.Attach:
+				this.processAttachMessage(message, local);
+				return;
+			case ContainerMessageType.Alias:
+				this.processAliasMessage(message, localMessageMetadata, local);
+				return;
+			case ContainerMessageType.FluidDataStoreOp:
+				break;
+			default:
+				assert(false, "unreached");
+		}
+
 		const envelope = message.contents as IEnvelope;
 		const innerContents = envelope.contents as FluidDataStoreMessage;
 		const transformed = {
@@ -843,7 +865,7 @@ export class DataStores implements IFluidDataStoreChannel, IDisposable {
 							fluidDataStoreId,
 						}),
 						details: JSON.stringify({
-							runtimeConnected: this.parent.connected,
+							runtimeConnected: this.parentContext.connected,
 							connected,
 						}),
 					},
@@ -964,8 +986,12 @@ export class DataStores implements IFluidDataStoreChannel, IDisposable {
 			assert(context !== undefined, 0x2b6 /* Missing data store context */);
 			if (await context.isRoot()) {
 				// A root data store is basically a reference from the container runtime to the data store.
-				const handle = new FluidObjectHandle(context, id, this.parent.IFluidHandleContext);
-				this.parent.addedGCOutboundReference?.(this.containerRuntimeHandle, handle);
+				const handle = new FluidObjectHandle(
+					context,
+					id,
+					this.parentContext.IFluidHandleContext,
+				);
+				this.parentContext.addedGCOutboundReference?.(this.containerRuntimeHandle, handle);
 			}
 		}
 		this.dataStoresSinceLastGC = [];
@@ -1056,7 +1082,7 @@ export class DataStores implements IFluidDataStoreChannel, IDisposable {
 			// Delete the contexts of unused data stores.
 			this.contexts.delete(dataStoreId);
 			// Delete the summarizer node of the unused data stores.
-			this.deleteChildSummarizerNodeFn(dataStoreId);
+			this.parentContext.deleteChildSummarizerNode?.(dataStoreId);
 		}
 	}
 
@@ -1098,7 +1124,7 @@ export class DataStores implements IFluidDataStoreChannel, IDisposable {
 			// Delete the contexts of sweep ready data stores.
 			this.contexts.delete(dataStoreId);
 			// Delete the summarizer node of the sweep ready data stores.
-			this.deleteChildSummarizerNodeFn(dataStoreId);
+			this.parentContext.deleteChildSummarizerNode?.(dataStoreId);
 		}
 		return Array.from(sweepReadyDataStoreRoutes);
 	}

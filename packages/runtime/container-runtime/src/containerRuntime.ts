@@ -1444,22 +1444,7 @@ export class ContainerRuntime
 
 		this.dataStores = new DataStores(
 			getSummaryForDatastores(baseSnapshot, metadata),
-			this,
 			parentContext,
-			(attachMsg) => this.submit({ type: ContainerMessageType.Attach, contents: attachMsg }),
-			(id: string, createParam: CreateChildSummarizerNodeParam) =>
-				(
-					summarizeInternal: SummarizeInternalFn,
-					getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-				) =>
-					this.summarizerNode.createChild(
-						summarizeInternal,
-						id,
-						createParam,
-						undefined,
-						getGCDataFn,
-					),
-			(id: string) => this.summarizerNode.deleteChild(id),
 			this.mc.logger,
 			(
 				path: string,
@@ -1716,6 +1701,24 @@ export class ContainerRuntime
 			}
 			return provideEntryPoint(this);
 		});
+	}
+
+	public getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam) {
+		return (
+			summarizeInternal: SummarizeInternalFn,
+			getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
+		) =>
+			this.summarizerNode.createChild(
+				summarizeInternal,
+				id,
+				createParam,
+				undefined,
+				getGCDataFn,
+			);
+	}
+
+	public deleteChildSummarizerNode(id: string) {
+		return this.summarizerNode.deleteChild(id);
 	}
 
 	/**
@@ -2227,15 +2230,7 @@ export class ContainerRuntime
 		const { local } = messageWithContext;
 		switch (messageWithContext.message.type) {
 			case ContainerMessageType.Attach:
-				this.dataStores.processAttachMessage(messageWithContext.message, local);
-				break;
 			case ContainerMessageType.Alias:
-				this.dataStores.processAliasMessage(
-					messageWithContext.message,
-					localOpMetadata,
-					local,
-				);
-				break;
 			case ContainerMessageType.FluidDataStoreOp:
 				this.dataStores.process(
 					messageWithContext.message,
@@ -2514,7 +2509,6 @@ export class ContainerRuntime
 				)
 				.realize(),
 			id,
-			this,
 			this.dataStores,
 			this.mc.logger,
 		);
@@ -2533,7 +2527,6 @@ export class ContainerRuntime
 				._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, props)
 				.realize(),
 			id,
-			this,
 			this.dataStores,
 			this.mc.logger,
 		);
@@ -3433,7 +3426,9 @@ export class ContainerRuntime
 		localOpMetadata: unknown = undefined,
 	): void {
 		assert(
-			type === ContainerMessageType.FluidDataStoreOp || type === ContainerMessageType.Alias,
+			type === ContainerMessageType.FluidDataStoreOp ||
+				type === ContainerMessageType.Alias ||
+				type === ContainerMessageType.Attach,
 			"allowed message type",
 		);
 		this.submit({ type, contents }, localOpMetadata);

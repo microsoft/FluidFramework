@@ -124,6 +124,8 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     // @deprecated (undocumented)
     _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string): Promise<IDataStore>;
     createDetachedDataStore(pkg: Readonly<string[]>, loadingGroupId?: string): IFluidDataStoreContextDetached;
+    // (undocumented)
+    readonly disposed: boolean;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;
     getQuorum(): IQuorumClients;
@@ -145,6 +147,8 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
     (event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): any;
     // (undocumented)
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): any;
+    // (undocumented)
+    (event: "dispose", listener: () => void): any;
 }
 
 // @alpha
@@ -195,10 +199,6 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     readonly createProps?: any;
     // @deprecated (undocumented)
     getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
-    // (undocumented)
-    getCreateChildSummarizerNodeFn(
-    id: string,
-    createParam: CreateChildSummarizerNodeParam): CreateChildSummarizerNodeFn;
     // (undocumented)
     readonly id: string;
     readonly isLocalDataStore: boolean;
@@ -254,6 +254,8 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     // (undocumented)
     readonly containerRuntime: IContainerRuntimeBase;
     // (undocumented)
+    deleteChildSummarizerNode?(id: string): void;
+    // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
@@ -262,6 +264,10 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     readonly gcTombstoneEnforcementAllowed: boolean;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;
+    // (undocumented)
+    getCreateChildSummarizerNodeFn(
+    id: string,
+    createParam: CreateChildSummarizerNodeParam): CreateChildSummarizerNodeFn;
     getQuorum(): IQuorumClients;
     // (undocumented)
     readonly idCompressor?: IIdCompressor;

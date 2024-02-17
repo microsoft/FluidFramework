@@ -32,6 +32,7 @@ import {
 	CreateSummarizerNodeSource,
 	channelsTreeName,
 	IFluidDataStoreChannel,
+	IFluidParentContext,
 } from "@fluidframework/runtime-definitions";
 import { GCDataBuilder, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import {
@@ -140,7 +141,7 @@ describe("Data Store Context Tests", () => {
 					new LocalFluidDataStoreContext({
 						id: invalidId,
 						pkg: ["TestDataStore1"],
-						parent: createRuntimeContext(invalidId, containerRuntime),
+						parentContext: createRuntimeContext(invalidId, containerRuntime),
 						storage,
 						scope,
 						createSummarizerNodeFn,
@@ -159,7 +160,7 @@ describe("Data Store Context Tests", () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
 					pkg: fullPackageName, // This will cause an error when calling `realizeCore`
-					parent: createRuntimeContext(dataStoreId, containerRuntime),
+					parentContext: createRuntimeContext(dataStoreId, containerRuntime),
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -201,7 +202,7 @@ describe("Data Store Context Tests", () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
 					pkg: ["TestDataStore1"],
-					parent: createRuntimeContext(dataStoreId, containerRuntime),
+					parentContext: createRuntimeContext(dataStoreId, containerRuntime),
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -257,7 +258,7 @@ describe("Data Store Context Tests", () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
 					pkg: ["TestComp", "SubComp"],
-					parent: createRuntimeContext(dataStoreId, containerRuntime),
+					parentContext: createRuntimeContext(dataStoreId, containerRuntime),
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -291,7 +292,7 @@ describe("Data Store Context Tests", () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
 					pkg: ["TestComp", "SubComp"],
-					parent: createRuntimeContext(dataStoreId, containerRuntime),
+					parentContext: createRuntimeContext(dataStoreId, containerRuntime),
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -345,7 +346,7 @@ describe("Data Store Context Tests", () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
 					pkg: ["TestDataStore1"],
-					parent: createRuntimeContext(dataStoreId, containerRuntime),
+					parentContext: createRuntimeContext(dataStoreId, containerRuntime),
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -362,7 +363,7 @@ describe("Data Store Context Tests", () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
 					pkg: ["TestDataStore1"],
-					parent: createRuntimeContext(dataStoreId, containerRuntime),
+					parentContext: createRuntimeContext(dataStoreId, containerRuntime),
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -395,7 +396,7 @@ describe("Data Store Context Tests", () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
 					pkg: packageName,
-					parent: createRuntimeContext(dataStoreId, containerRuntime),
+					parentContext: createRuntimeContext(dataStoreId, containerRuntime),
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -428,7 +429,7 @@ describe("Data Store Context Tests", () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
 					pkg: packageName,
-					parent: createRuntimeContext(dataStoreId, containerRuntime),
+					parentContext: createRuntimeContext(dataStoreId, containerRuntime),
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -468,7 +469,7 @@ describe("Data Store Context Tests", () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
 					pkg: packageName,
-					parent: createRuntimeContext(dataStoreId, containerRuntime),
+					parentContext: createRuntimeContext(dataStoreId, containerRuntime),
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -504,7 +505,7 @@ describe("Data Store Context Tests", () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
 					pkg: ["TestDataStore1"],
-					parent: createRuntimeContext(dataStoreId, containerRuntime),
+					parentContext: createRuntimeContext(dataStoreId, containerRuntime),
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -525,7 +526,7 @@ describe("Data Store Context Tests", () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
 					pkg: ["TestComp", "SubComp"],
-					parent: createRuntimeContext(dataStoreId, containerRuntime),
+					parentContext: createRuntimeContext(dataStoreId, containerRuntime),
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -563,7 +564,7 @@ describe("Data Store Context Tests", () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
 					pkg: ["TestComp", "SubComp"],
-					parent: createRuntimeContext(dataStoreId, containerRuntime),
+					parentContext: createRuntimeContext(dataStoreId, containerRuntime),
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -670,7 +671,7 @@ describe("Data Store Context Tests", () => {
 					remoteDataStoreContext = new RemoteFluidDataStoreContext({
 						id: dataStoreId,
 						snapshotTree,
-						parent: createRuntimeContext(dataStoreId, containerRuntime),
+						parentContext: createRuntimeContext(dataStoreId, containerRuntime),
 						storage: new StorageServiceWithAttachBlobs(
 							storage as IDocumentStorageService,
 							attachBlobs,
@@ -719,7 +720,7 @@ describe("Data Store Context Tests", () => {
 					new RemoteFluidDataStoreContext({
 						id: invalidId,
 						pkg: ["TestDataStore1"],
-						parent: createRuntimeContext(invalidId, containerRuntime),
+						parentContext: createRuntimeContext(invalidId, containerRuntime),
 						storage: storage as IDocumentStorageService,
 						scope,
 						createSummarizerNodeFn,
@@ -798,7 +799,7 @@ describe("Data Store Context Tests", () => {
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({
 					id: dataStoreId,
 					snapshotTree,
-					parent: createRuntimeContext(dataStoreId, containerRuntime),
+					parentContext: createRuntimeContext(dataStoreId, containerRuntime),
 					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
 						attachBlobs,
@@ -850,7 +851,7 @@ describe("Data Store Context Tests", () => {
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({
 					id: dataStoreId,
 					snapshotTree,
-					parent: createRuntimeContext(dataStoreId, containerRuntime),
+					parentContext: createRuntimeContext(dataStoreId, containerRuntime),
 					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
 						attachBlobs,
@@ -902,7 +903,7 @@ describe("Data Store Context Tests", () => {
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({
 					id: dataStoreId,
 					snapshotTree,
-					parent: createRuntimeContext(dataStoreId, containerRuntime),
+					parentContext: createRuntimeContext(dataStoreId, containerRuntime),
 					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
 						attachBlobs,
@@ -956,7 +957,7 @@ describe("Data Store Context Tests", () => {
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({
 					id: dataStoreId,
 					snapshotTree,
-					parent: createRuntimeContext(dataStoreId, containerRuntime),
+					parentContext: createRuntimeContext(dataStoreId, containerRuntime),
 					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
 						attachBlobs,
@@ -1031,7 +1032,7 @@ describe("Data Store Context Tests", () => {
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({
 					id: dataStoreId,
 					snapshotTree,
-					parent: createRuntimeContext(dataStoreId, containerRuntime),
+					parentContext: createRuntimeContext(dataStoreId, containerRuntime),
 					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
 						attachBlobs,
@@ -1058,13 +1059,7 @@ describe("Data Store Context Tests", () => {
 		let factory: IFluidDataStoreFactory;
 		const makeLocallyVisibleFn = () => {};
 		const channelToDataStoreFn = (fluidDataStore: IFluidDataStoreChannel, id: string) =>
-			channelToDataStore(
-				fluidDataStore,
-				id,
-				containerRuntime,
-				dataStores,
-				containerRuntime.logger,
-			);
+			channelToDataStore(fluidDataStore, id, dataStores, containerRuntime.logger);
 		let containerRuntime: ContainerRuntime;
 		let dataStores: DataStores;
 		let provideDsRuntimeWithFailingEntrypoint = false;
@@ -1123,7 +1118,9 @@ describe("Data Store Context Tests", () => {
 			} as ContainerRuntime;
 
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-			dataStores = {} as DataStores;
+			dataStores = {
+				parentContext: containerRuntime as IFluidParentContext,
+			} as DataStores;
 		});
 
 		describe("Initialization", () => {
@@ -1133,7 +1130,7 @@ describe("Data Store Context Tests", () => {
 					new LocalDetachedFluidDataStoreContext({
 						id: invalidId,
 						pkg: [factory.type],
-						parent: createRuntimeContext(invalidId, containerRuntime),
+						parentContext: createRuntimeContext(invalidId, containerRuntime),
 						storage,
 						scope,
 						createSummarizerNodeFn,
@@ -1157,7 +1154,7 @@ describe("Data Store Context Tests", () => {
 					localDataStoreContext = new LocalDetachedFluidDataStoreContext({
 						id: dataStoreId,
 						pkg: ["some-datastore-type-not-present-in-registry"],
-						parent: createRuntimeContext(dataStoreId, containerRuntime),
+						parentContext: createRuntimeContext(dataStoreId, containerRuntime),
 						storage,
 						scope,
 						createSummarizerNodeFn,
@@ -1194,7 +1191,7 @@ describe("Data Store Context Tests", () => {
 					localDataStoreContext = new LocalDetachedFluidDataStoreContext({
 						id: dataStoreId,
 						pkg: [factory.type],
-						parent: createRuntimeContext(dataStoreId, containerRuntime),
+						parentContext: createRuntimeContext(dataStoreId, containerRuntime),
 						storage,
 						scope,
 						createSummarizerNodeFn,

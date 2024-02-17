@@ -12,7 +12,6 @@ import {
 	IDataStore,
 	IFluidDataStoreChannel,
 } from "@fluidframework/runtime-definitions";
-import { ContainerRuntime } from "./containerRuntime";
 import { DataStores } from "./dataStores";
 import { ContainerMessageType } from "./messageTypes";
 
@@ -45,10 +44,9 @@ export const isDataStoreAliasMessage = (
 export const channelToDataStore = (
 	fluidDataStoreChannel: IFluidDataStoreChannel,
 	internalId: string,
-	runtime: ContainerRuntime,
 	datastores: DataStores,
 	logger: ITelemetryLoggerExt,
-): IDataStore => new DataStore(fluidDataStoreChannel, internalId, runtime, datastores, logger);
+): IDataStore => new DataStore(fluidDataStoreChannel, internalId, datastores, logger);
 
 enum AliasState {
 	Aliased = "Aliased",
@@ -118,7 +116,7 @@ class DataStore implements IDataStore {
 
 		this.fluidDataStoreChannel.makeVisibleAndAttachGraph();
 
-		if (this.runtime.attachState === AttachState.Detached) {
+		if (this.parentContext.attachState === AttachState.Detached) {
 			const localResult = this.datastores.processAliasMessageCore(message);
 			// Explicitly lock-out future attempts of aliasing,
 			// regardless of result
@@ -127,7 +125,7 @@ class DataStore implements IDataStore {
 		}
 
 		const aliased = await this.ackBasedPromise<boolean>((resolve) => {
-			this.runtime.submitMessage(ContainerMessageType.Alias, message, resolve);
+			this.parentContext.submitMessage(ContainerMessageType.Alias, message, resolve);
 		})
 			.catch((error) => {
 				this.logger.sendErrorEvent(
@@ -172,9 +170,9 @@ class DataStore implements IDataStore {
 	constructor(
 		private readonly fluidDataStoreChannel: IFluidDataStoreChannel,
 		private readonly internalId: string,
-		private readonly runtime: ContainerRuntime,
 		private readonly datastores: DataStores,
 		private readonly logger: ITelemetryLoggerExt,
+		private readonly parentContext = datastores.parentContext,
 	) {
 		this.pendingAliases = datastores.pendingAliases;
 	}
@@ -192,15 +190,15 @@ class DataStore implements IDataStore {
 					new Error("ContainerRuntime disposed while this ack-based Promise was pending"),
 				);
 
-			if (this.runtime.disposed) {
+			if (this.parentContext.containerRuntime.disposed) {
 				rejectBecauseDispose();
 				return;
 			}
 
-			this.runtime.on("dispose", rejectBecauseDispose);
+			this.parentContext.containerRuntime.on("dispose", rejectBecauseDispose);
 			executor(resolve, reject);
 		}).finally(() => {
-			this.runtime.off("dispose", rejectBecauseDispose);
+			this.parentContext.containerRuntime.off("dispose", rejectBecauseDispose);
 		});
 	}
 }

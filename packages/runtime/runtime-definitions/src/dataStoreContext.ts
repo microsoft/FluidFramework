@@ -115,6 +115,7 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
 	(event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void);
 	(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void);
 	(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
+	(event: "dispose", listener: () => void);
 }
 
 /**
@@ -162,6 +163,7 @@ export interface IDataStore {
 export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents> {
 	readonly logger: ITelemetryBaseLogger;
 	readonly clientDetails: IClientDetails;
+	readonly disposed: boolean;
 
 	/**
 	 * Invokes the given callback and guarantees that all operations generated within the callback will be ordered
@@ -454,6 +456,22 @@ export interface IFluidParentContext
 		srcHandle: { absolutePath: string },
 		outboundHandle: { absolutePath: string },
 	): void;
+
+	getCreateChildSummarizerNodeFn(
+		/**
+		 * Initial id or path part of this node
+		 */
+		id: string,
+		/**
+		 * Information needed to create the node.
+		 * If it is from a base summary, it will assert that a summary has been seen.
+		 * Attach information if it is created from an attach op.
+		 * If it is local, it will throw unsupported errors on calls to summarize.
+		 */
+		createParam: CreateChildSummarizerNodeParam,
+	): CreateChildSummarizerNodeFn;
+
+	deleteChildSummarizerNode?(id: string): void;
 }
 
 /**
@@ -496,20 +514,6 @@ export interface IFluidDataStoreContext
 	 * @param address - The address of the channel that is dirty.
 	 */
 	setChannelDirty(address: string): void;
-
-	getCreateChildSummarizerNodeFn(
-		/**
-		 * Initial id or path part of this node
-		 */
-		id: string,
-		/**
-		 * Information needed to create the node.
-		 * If it is from a base summary, it will assert that a summary has been seen.
-		 * Attach information if it is created from an attach op.
-		 * If it is local, it will throw unsupported errors on calls to summarize.
-		 */
-		createParam: CreateChildSummarizerNodeParam,
-	): CreateChildSummarizerNodeFn;
 
 	/**
 	 * @deprecated The functionality to get base GC details has been moved to summarizer node.

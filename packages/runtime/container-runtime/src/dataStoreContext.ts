@@ -98,7 +98,7 @@ interface ISnapshotDetails {
 /** Properties necessary for creating a FluidDataStoreContext */
 export interface IFluidDataStoreContextProps {
 	readonly id: string;
-	readonly parent: IFluidParentContext;
+	readonly parentContext: IFluidParentContext;
 	readonly storage: IDocumentStorageService;
 	readonly scope: FluidObject;
 	readonly createSummarizerNodeFn: CreateChildSummarizerNodeFn;
@@ -141,31 +141,31 @@ export abstract class FluidDataStoreContext
 	}
 
 	public get options(): Record<string | number, any> {
-		return this.parent.options;
+		return this.parentContext.options;
 	}
 
 	public get clientId(): string | undefined {
-		return this.parent.clientId;
+		return this.parentContext.clientId;
 	}
 
 	public get clientDetails(): IClientDetails {
-		return this.parent.clientDetails;
+		return this.parentContext.clientDetails;
 	}
 
 	public get logger() {
-		return this.parent.logger;
+		return this.parentContext.logger;
 	}
 
 	public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
-		return this.parent.deltaManager;
+		return this.parentContext.deltaManager;
 	}
 
 	public get connected(): boolean {
-		return this.parent.connected;
+		return this.parentContext.connected;
 	}
 
 	public get IFluidHandleContext() {
-		return this.parent.IFluidHandleContext;
+		return this.parentContext.IFluidHandleContext;
 	}
 
 	public get containerRuntime(): IContainerRuntimeBase {
@@ -173,7 +173,7 @@ export abstract class FluidDataStoreContext
 	}
 
 	public ensureNoDataModelChanges<T>(callback: () => T): T {
-		return this.parent.ensureNoDataModelChanges(callback);
+		return this.parentContext.ensureNoDataModelChanges(callback);
 	}
 
 	public get isLoaded(): boolean {
@@ -185,7 +185,7 @@ export abstract class FluidDataStoreContext
 	}
 
 	public get idCompressor() {
-		return this.parent.idCompressor;
+		return this.parentContext.idCompressor;
 	}
 
 	private _disposed = false;
@@ -266,7 +266,7 @@ export abstract class FluidDataStoreContext
 
 	public readonly id: string;
 	private readonly _containerRuntime: IContainerRuntimeBase;
-	private readonly parent: IFluidParentContext;
+	private readonly parentContext: IFluidParentContext;
 	public readonly storage: IDocumentStorageService;
 	public readonly scope: FluidObject;
 	// Represents the group to which the data store belongs too.
@@ -281,8 +281,8 @@ export abstract class FluidDataStoreContext
 	) {
 		super();
 
-		this._containerRuntime = props.parent.containerRuntime;
-		this.parent = props.parent;
+		this._containerRuntime = props.parentContext.containerRuntime;
+		this.parentContext = props.parentContext;
 		this.id = props.id;
 		this.storage = props.storage;
 		this.scope = props.scope;
@@ -294,8 +294,8 @@ export abstract class FluidDataStoreContext
 		assert(!this.id.includes("/"), 0x13a /* Data store ID contains slash */);
 
 		this._attachState =
-			this.parent.attachState !== AttachState.Detached && this.existing
-				? this.parent.attachState
+			this.parentContext.attachState !== AttachState.Detached && this.existing
+				? this.parentContext.attachState
 				: AttachState.Detached;
 
 		const thisSummarizeInternal = async (
@@ -326,8 +326,8 @@ export abstract class FluidDataStoreContext
 			this.mc.logger,
 		);
 
-		this.gcThrowOnTombstoneUsage = this.parent.gcThrowOnTombstoneUsage;
-		this.gcTombstoneEnforcementAllowed = this.parent.gcTombstoneEnforcementAllowed;
+		this.gcThrowOnTombstoneUsage = this.parentContext.gcThrowOnTombstoneUsage;
+		this.gcTombstoneEnforcementAllowed = this.parentContext.gcTombstoneEnforcementAllowed;
 
 		// By default, a data store can log maximum 10 local changes telemetry in summarizer.
 		this.localChangesTelemetryCount =
@@ -411,7 +411,8 @@ export abstract class FluidDataStoreContext
 		}
 
 		let entry: FluidDataStoreRegistryEntry | undefined;
-		let registry: IFluidDataStoreRegistry | undefined = this.parent.IFluidDataStoreRegistry;
+		let registry: IFluidDataStoreRegistry | undefined =
+			this.parentContext.IFluidDataStoreRegistry;
 		let lastPkg: string | undefined;
 		for (const pkg of packages) {
 			if (!registry) {
@@ -523,11 +524,11 @@ export abstract class FluidDataStoreContext
 	}
 
 	public getQuorum(): IQuorumClients {
-		return this.parent.getQuorum();
+		return this.parentContext.getQuorum();
 	}
 
 	public getAudience(): IAudience {
-		return this.parent.getAudience();
+		return this.parentContext.getAudience();
 	}
 
 	/**
@@ -663,7 +664,7 @@ export abstract class FluidDataStoreContext
 		// By default, skip this call since the ContainerRuntime will detect the outbound route directly.
 		if (this.mc.config.getBoolean(detectOutboundRoutesViaDDSKey) === true) {
 			// Note: The ContainerRuntime code will check this same setting to avoid double counting.
-			this.parent.addedGCOutboundReference?.(srcHandle, outboundHandle);
+			this.parentContext.addedGCOutboundReference?.(srcHandle, outboundHandle);
 		}
 	}
 
@@ -677,7 +678,7 @@ export abstract class FluidDataStoreContext
 	 * @param toPath - The absolute path of the outbound node that is referenced.
 	 */
 	public addedGCOutboundRoute(fromPath: string, toPath: string) {
-		this.parent.addedGCOutboundReference?.(
+		this.parentContext.addedGCOutboundReference?.(
 			{ absolutePath: fromPath },
 			{ absolutePath: toPath },
 		);
@@ -722,7 +723,7 @@ export abstract class FluidDataStoreContext
 		// Summarizer clients should not submit messages.
 		this.identifyLocalChangeInSummarizer("DataStoreMessageSubmittedInSummarizer", type);
 
-		this.parent.submitMessage(type, content, localOpMetadata);
+		this.parentContext.submitMessage(type, content, localOpMetadata);
 	}
 
 	/**
@@ -759,7 +760,7 @@ export abstract class FluidDataStoreContext
 		this.verifyNotClosed("submitSignal");
 
 		assert(!!this.channel, 0x147 /* "Channel must exist on submitting signal" */);
-		return this.parent.submitSignal(type, content, targetClientId);
+		return this.parentContext.submitSignal(type, content, targetClientId);
 	}
 
 	/**
@@ -829,7 +830,7 @@ export abstract class FluidDataStoreContext
 		if (this.attachState !== AttachState.Attached) {
 			return undefined;
 		}
-		return this.parent.getAbsoluteUrl(relativeUrl);
+		return this.parentContext.getAbsoluteUrl(relativeUrl);
 	}
 
 	/**
@@ -970,11 +971,15 @@ export abstract class FluidDataStoreContext
 			);
 	}
 
+	public deleteChildSummarizerNode(id: string) {
+		this.summarizerNode.deleteChild(id);
+	}
+
 	public async uploadBlob(
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
 	): Promise<IFluidHandle<ArrayBufferLike>> {
-		return this.parent.uploadBlob(blob, signal);
+		return this.parentContext.uploadBlob(blob, signal);
 	}
 }
 
