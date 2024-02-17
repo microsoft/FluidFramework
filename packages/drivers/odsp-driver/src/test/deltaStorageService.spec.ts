@@ -4,19 +4,20 @@
  */
 
 import { strict as assert } from "node:assert";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { IDeltasFetchResult } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
+import { MockLogger, type ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { IOdspResolvedUrl, type IFileEntry } from "@fluidframework/odsp-driver-definitions";
 import { OdspDeltaStorageService, OdspDeltaStorageWithCache } from "../odspDeltaStorageService";
 import { LocalPersistentCache } from "../odspCache";
 import { EpochTracker } from "../epochTracker";
 import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
 import { mockFetchOk } from "./mockFetch";
 
-const createUtLocalCache = () => new LocalPersistentCache(2000);
-const createUtEpochTracker = (fileEntry, logger) =>
-	new EpochTracker(createUtLocalCache(), fileEntry, logger);
+const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache(2000);
+const createUtEpochTracker = (fileEntry: IFileEntry, logger: ITelemetryBaseLogger): EpochTracker =>
+	new EpochTracker(createUtLocalCache(), fileEntry, logger as ITelemetryLoggerExt);
 
 describe("DeltaStorageService", () => {
 	/*
@@ -52,7 +53,7 @@ describe("DeltaStorageService", () => {
 	});
 
 	describe("Get Returns Response With Op Envelope", () => {
-		const expectedDeltaFeedResponse: any = {
+		const expectedDeltaFeedResponse = {
 			value: [
 				{
 					op: {
@@ -131,7 +132,7 @@ describe("DeltaStorageService", () => {
 	});
 
 	describe("Get Returns Response With Op Envelope", () => {
-		const expectedDeltaFeedResponse: any = {
+		const expectedDeltaFeedResponse = {
 			value: [
 				{
 					clientId: "present-place",

@@ -24,7 +24,7 @@ import { INewFileInfo, createCacheSnapshotKey, IExistingFileInfo } from "../odsp
 import { LocalPersistentCache } from "../odspCache";
 import { mockFetchOk } from "./mockFetch";
 
-const createUtLocalCache = () => new LocalPersistentCache();
+const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 
 describe("Create New Utils Tests", () => {
 	const documentAttributes: api.IDocumentAttributes = {
@@ -32,7 +32,7 @@ describe("Create New Utils Tests", () => {
 		sequenceNumber: 0,
 	};
 	const blobContent = "testing";
-	const createSummary = () => {
+	const createSummary = (): api.ISummaryTree => {
 		const summary: api.ISummaryTree = {
 			type: api.SummaryType.Tree,
 			tree: {},
@@ -107,7 +107,7 @@ describe("Create New Utils Tests", () => {
 		await epochTracker.removeEntries().catch(() => {});
 	});
 
-	const test = (snapshot: ISnapshot) => {
+	const test = (snapshot: ISnapshot): void => {
 		const snapshotTree = snapshot.snapshotTree;
 		assert.strictEqual(
 			Object.entries(snapshotTree.trees).length,
@@ -161,7 +161,9 @@ describe("Create New Utils Tests", () => {
 			{ itemId: "itemId1", id: "Summary handle" },
 			{ "x-fluid-epoch": "epoch1" },
 		);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const snapshot = await epochTracker.get(createCacheSnapshotKey(odspResolvedUrl));
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		test(snapshot);
 		await epochTracker.removeEntries().catch(() => {});
 	});
@@ -188,7 +190,9 @@ describe("Create New Utils Tests", () => {
 			{ itemId: "itemId1", id: "Summary handle" },
 			{ "x-fluid-epoch": "epoch1" },
 		);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const snapshot = await epochTracker.get(createCacheSnapshotKey(odspResolvedUrl));
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		test(snapshot);
 		await epochTracker.removeEntries().catch(() => {});
 	});

@@ -292,6 +292,7 @@ describe("Tests for Epoch Tracker", () => {
 		}
 		assert.strictEqual(success, true, "Fetching should succeed!!");
 		assert.strictEqual(
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, unicorn/no-await-expression-member
 			(await epochTracker.get(cacheEntry1)).val,
 			"val1",
 			"Entry in cache should be present",
@@ -313,16 +314,17 @@ describe("Tests for Epoch Tracker", () => {
 				async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "test"),
 				async () => createResponse({ "x-fluid-epoch": "epoch1" }, undefined, 409),
 			);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			success = false;
 			assert.strictEqual(
-				error.errorType,
+				(error as Partial<IFluidErrorBase>).errorType,
 				OdspErrorTypes.throttlingError,
 				"Error should be throttling error",
 			);
 		}
 		assert.strictEqual(success, false, "Fetching should not succeed!!");
 		assert.strictEqual(
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, unicorn/no-await-expression-member
 			(await epochTracker.get(cacheEntry1)).val,
 			"val1",
 			"Entry in cache should be present because it was not epoch 409",
@@ -344,10 +346,10 @@ describe("Tests for Epoch Tracker", () => {
 				async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "test"),
 				async () => createResponse({ "x-fluid-epoch": "epoch2" }, undefined, 409),
 			);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			success = false;
 			assert.strictEqual(
-				error.errorType,
+				(error as Partial<IFluidErrorBase>).errorType,
 				OdspErrorTypes.fileOverwrittenInStorage,
 				"Error should be epoch error",
 			);
@@ -377,14 +379,15 @@ describe("Tests for Epoch Tracker", () => {
 						404,
 					),
 			);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			success = false;
 			assert.strictEqual(
-				error.errorType,
+				(error as Partial<IFluidErrorBase>).errorType,
 				OdspErrorTypes.locationRedirection,
 				"Error should be locationRedirection error",
 			);
-			const newResolvedUrl: IOdspResolvedUrl = error.redirectUrl;
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+			const newResolvedUrl: IOdspResolvedUrl = (error as any).redirectUrl;
 			assert.strictEqual(newResolvedUrl.siteUrl, newSiteUrl, "New site url should match");
 			assert.strictEqual(newResolvedUrl.driveId, driveId, "driveId should remain same");
 		}
