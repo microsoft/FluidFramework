@@ -400,13 +400,13 @@ export function configureWebSocketServices(
 					return response;
 				})
 				.catch(async (err) => {
-					const errMsg = `Failed to get clients. Error: ${safeStringify(
+					const errMsg = `[DHRUV DEBUG] Failed to get clients. Error: ${safeStringify(
 						err,
 						undefined,
 						2,
 					)}`;
 					connectDocumentGetClientsMetric.error(
-						"Failed to get clients during connectDocument",
+						"[DHRUV DEBUG] Failed to get clients during connectDocument",
 						err,
 					);
 					return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
@@ -482,9 +482,13 @@ export function configureWebSocketServices(
 				);
 				connectDocumentAddClientMetric.success("Successfully added client");
 			} catch (err) {
-				const errMsg = `Could not add client. Error: ${safeStringify(err, undefined, 2)}`;
+				const errMsg = `[DHRUV DEBUG] Could not add client. Error: ${safeStringify(
+					err,
+					undefined,
+					2,
+				)}`;
 				connectDocumentAddClientMetric.error(
-					"Error adding client during connectDocument",
+					"[DHRUV DEBUG] Error adding client during connectDocument",
 					err,
 				);
 				return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
@@ -772,6 +776,13 @@ export function configureWebSocketServices(
 							// Keep track of disconnected clientIds so that we don't repeat the disconnect signal
 							// for the same clientId if retrying when connectDocument completes after disconnectDocument.
 							clientIdClientsDisconnected.add(clientId);
+						})
+						.catch((error) => {
+							Lumberjack.error(
+								"[DHRUV DEBUG] Failed to remove client from client manager",
+								undefined,
+								error,
+							);
 						}),
 				);
 				socket

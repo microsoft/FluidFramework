@@ -19,8 +19,8 @@ import {
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import * as Redis from "ioredis";
 import { RedisCache } from "@fluidframework/server-services";
+import { RedisClientConnectionManager } from "@fluidframework/server-services-shared";
 import { RiddlerRunner } from "./runner";
 import { ITenantDocument } from "./tenantManager";
 import { IRiddlerResourcesCustomizations } from "./customizations";
@@ -74,44 +74,29 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 		const redisConfig = config.get("redisForTenantCache");
 		let cache: RedisCache;
 		if (redisConfig) {
-			const redisOptions: Redis.RedisOptions = {
-				host: redisConfig.host,
-				port: redisConfig.port,
-				password: redisConfig.pass,
-				connectTimeout: redisConfig.connectTimeout,
-				enableReadyCheck: true,
-				maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
-				enableOfflineQueue: redisConfig.enableOfflineQueue,
-				retryStrategy: utils.getRedisClusterRetryStrategy({
-					delayPerAttemptMs: 50,
-					maxDelayMs: 2000,
-				}),
-			};
-			if (redisConfig.enableAutoPipelining) {
-				/**
-				 * When enabled, all commands issued during an event loop iteration are automatically wrapped in a
-				 * pipeline and sent to the server at the same time. This can improve performance by 30-50%.
-				 * More info: https://github.com/luin/ioredis#autopipelining
-				 */
-				redisOptions.enableAutoPipelining = true;
-				redisOptions.autoPipeliningIgnoredCommands = ["ping"];
-			}
-			if (redisConfig.tls) {
-				redisOptions.tls = {
-					servername: redisConfig.host,
-				};
-			}
 			const redisParams = {
 				expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
 			};
 
-			const redisClient: Redis.default | Redis.Cluster = utils.getRedisClient(
-				redisOptions,
-				redisConfig.slotsRefreshTimeout,
-				redisConfig.enableClustering,
-			);
-
-			cache = new RedisCache(redisClient, redisParams);
+			const redisClientConnectionManagerForTenantCache =
+				customizations?.redisClientConnectionManagerForTenantCache
+					? customizations.redisClientConnectionManagerForTenantCache
+					: new RedisClientConnectionManager(
+							undefined,
+							redisConfig,
+							redisConfig.enableClustering,
+							redisConfig.slotsRefreshTimeout,
+					  );
+			await redisClientConnectionManagerForTenantCache
+				.authenticateAndCreateRedisClient()
+				.catch((error) => {
+					Lumberjack.error(
+						"[DHRUV DEBUG] Error creating Redis client connection for tenant cache:",
+						undefined,
+						error,
+					);
+				});
+			cache = new RedisCache(redisClientConnectionManagerForTenantCache, redisParams);
 		}
 		// Database connection
 		const factory = await services.getDbFactory(config);

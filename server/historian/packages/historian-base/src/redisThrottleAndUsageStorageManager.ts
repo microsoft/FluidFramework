@@ -19,7 +19,7 @@ import {
 	CommonProperties,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
-import { IRedisClientConnectionManager } from "@fluidframework/server-services-shared";
+import { IRedisClientConnectionManager } from "./redisClientConnectionManager";
 
 /**
  * Manages storage of throttling metrics and usage data in redis.
