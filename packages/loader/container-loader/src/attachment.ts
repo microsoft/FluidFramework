@@ -217,3 +217,11 @@ export const runRetriableAttachProcess = async (props: AttachProcessProps): Prom
 		}),
 	);
 };
+
+export function isAttachedData(obj: any): obj is AttachedData {
+	return (
+		obj.state === AttachState.Attached &&
+		(typeof obj.snapshot === "undefined" ||
+			(typeof obj.snapshot === "object" && "tree" in obj.snapshot && "blobs" in obj.snapshot))
+	);
+}

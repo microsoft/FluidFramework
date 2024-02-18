@@ -128,7 +128,14 @@ import {
 	ProtocolHandlerBuilder,
 	protocolHandlerShouldProcessSignal,
 } from "./protocol";
-import { AttachProcessProps, AttachmentData, runRetriableAttachProcess } from "./attachment";
+import {
+	AttachProcessProps,
+	AttachedData,
+	AttachmentData,
+	isAttachedData,
+	runRetriableAttachProcess,
+} from "./attachment";
+import { containerStateManager } from "./containerStateManager";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -591,8 +598,8 @@ export class Container
 	private _loadedFromVersion: IVersion | undefined;
 	private _dirtyContainer = false;
 	private readonly offlineLoadEnabled: boolean;
-	private readonly savedOps: ISequencedDocumentMessage[] = [];
 	private attachmentData: AttachmentData = { state: AttachState.Detached };
+	private readonly containerStateManager: containerStateManager;
 	private readonly _containerId: string;
 
 	private lastVisible: number | undefined;
@@ -945,6 +952,12 @@ export class Container
 			this.connectionStateHandler.containerSaved();
 		});
 
+		this.containerStateManager = new containerStateManager(
+			this.subLogger,
+			this._clientId,
+			this.offlineLoadEnabled,
+		);
+
 		// We expose our storage publicly, so it's possible others may call uploadSummaryWithContext() with a
 		// non-combined summary tree (in particular, ContainerRuntime.submitSummary).  We'll intercept those calls
 		// using this callback and fix them up.
@@ -1134,6 +1147,11 @@ export class Container
 		// runtime matches pending ops to successful ones by clientId and client seq num, so we need to close the
 		// container at the same time we get pending state, otherwise this container could reconnect and resubmit with
 		// a new clientId and a future container using stale pending state without the new clientId would resubmit them
+		if (this.closed || this._disposed) {
+			throw new UsageError(
+				"Pending state cannot be retried if the container is closed or disposed",
+			);
+		}
 		const pendingState = await this.getPendingLocalStateCore({
 			notifyImminentClosure: true,
 			stopBlobAttachingSignal,
@@ -1143,6 +1161,11 @@ export class Container
 	}
 
 	public async getPendingLocalState(): Promise<string> {
+		if (this.closed || this._disposed) {
+			throw new UsageError(
+				"Pending state cannot be retried if the container is closed or disposed",
+			);
+		}
 		return this.getPendingLocalStateCore({ notifyImminentClosure: false });
 	}
 
@@ -1152,7 +1175,7 @@ export class Container
 			{
 				eventName: "getPendingLocalState",
 				notifyImminentClosure: props.notifyImminentClosure,
-				savedOpsSize: this.savedOps.length,
+				savedOpsSize: this.containerStateManager.getSavedOps().length,
 				clientId: this.clientId,
 			},
 			async () => {
@@ -1174,13 +1197,17 @@ export class Container
 					this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
 					0x0d2 /* "resolved url should be valid Fluid url" */,
 				);
-				assert(this.attachmentData.snapshot !== undefined, 0x5d5 /* no base data */);
+				// assert(this.attachmentData.snapshot !== undefined, 0x5d5 /* no base data */);
+				assert(this.containerStateManager.snapshot !== undefined, 0x5d5 /* no base data */);
+
 				const pendingRuntimeState = await this.runtime.getPendingLocalState(props);
 				const pendingState: IPendingContainerState = {
 					pendingRuntimeState,
-					baseSnapshot: this.attachmentData.snapshot.tree,
-					snapshotBlobs: this.attachmentData.snapshot.blobs,
-					savedOps: this.savedOps,
+					// baseSnapshot: this.attachmentData.snapshot.tree,
+					// snapshotBlobs: this.attachmentData.snapshot.blobs,
+					baseSnapshot: this.containerStateManager.snapshot.tree,
+					snapshotBlobs: this.containerStateManager.snapshot.blobs,
+					savedOps: this.containerStateManager.getSavedOps(),
 					url: this.resolvedUrl.url,
 					// no need to save this if there is no pending runtime state
 					clientId: pendingRuntimeState !== undefined ? this.clientId : undefined,
@@ -1329,6 +1356,15 @@ export class Container
 
 					await attachP;
 
+					assert(
+						isAttachedData(this.attachmentData),
+						"incorrect format in final attachment data",
+					);
+					this.containerStateManager.setLoadedAttributes(
+						(this.attachmentData as AttachedData).snapshot,
+						this.resolvedUrl,
+						this.runtime,
+					);
 					if (!this.closed) {
 						this.handleDeltaConnectionArg(
 							{
@@ -1624,7 +1660,6 @@ export class Container
 				};
 			}
 		}
-
 		const attributes: IDocumentAttributes = await this.getDocumentAttributes(
 			this.storageAdapter,
 			snapshotTree,
@@ -1728,6 +1763,11 @@ export class Container
 			// give runtime a dummy value so it knows we're loading from a stash blob
 			pendingLocalState ? pendingLocalState?.pendingRuntimeState ?? {} : undefined,
 			isInstanceOfISnapshot(snapshot) ? snapshot : undefined,
+		);
+		this.containerStateManager.setLoadedAttributes(
+			this.attachmentData.snapshot,
+			this.resolvedUrl,
+			this.runtime,
 		);
 
 		// replay saved ops
@@ -2334,7 +2374,7 @@ export class Container
 	private processRemoteMessage(message: ISequencedDocumentMessage) {
 		// non-interactive clients will not have any pending state we want to save
 		if (this.offlineLoadEnabled && this.isInteractiveClient) {
-			this.savedOps.push(message);
+			this.containerStateManager.addSavedOp(message);
 		}
 		const local = this.clientId === message.clientId;
 
