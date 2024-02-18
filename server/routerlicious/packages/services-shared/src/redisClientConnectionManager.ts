@@ -4,8 +4,8 @@
  */
 
 import * as Redis from "ioredis";
-import * as winston from "winston";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import * as utils from "@fluidframework/server-services-utils";
 
 /**
  * Represents an interface for managing creation,
@@ -20,26 +20,29 @@ export interface IRedisClientConnectionManager {
 	/**
 	 * @returns The newly created Redis client.
 	 */
-	getRedisClient(): Redis.default;
+	getRedisClient(): Redis.default | Redis.Cluster;
 }
 
 export class RedisClientConnectionManager implements IRedisClientConnectionManager {
-	private client: Redis.default | undefined;
+	private client: Redis.default | Redis.Cluster | undefined;
 	private readonly redisOptions: Redis.RedisOptions;
+	private readonly enableClustering: boolean;
+	private readonly slotsRefreshTimeout: number;
 
-	constructor(redisOptions?: Redis.RedisOptions, redisConfig?: any) {
+	constructor(
+		redisOptions?: Redis.RedisOptions,
+		redisConfig?: any,
+		enableClustering: boolean = false,
+		slotsRefreshTimeout: number = 50000,
+	) {
+		this.enableClustering = enableClustering;
+		this.slotsRefreshTimeout = slotsRefreshTimeout;
 		if (!redisOptions && !redisConfig) {
-			winston.info(
-				"[DHRUV DEBUG] Routerlicious Either redisOptions or redisConfig must be provided",
-			);
 			Lumberjack.info(
 				"[DHRUV DEBUG] Routerlicious Either redisOptions or redisConfig must be provided",
 			);
 			throw new Error("Either redisOptions or redisConfig must be provided");
 		} else if (!redisOptions && redisConfig) {
-			winston.info(
-				"[DHRUV DEBUG] Routerlicious using default redisOptions after reading from config",
-			);
 			Lumberjack.info(
 				"[DHRUV DEBUG] Routerlicious using default redisOptions after reading from config",
 			);
@@ -51,6 +54,10 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 				enableReadyCheck: true,
 				maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
 				enableOfflineQueue: redisConfig.enableOfflineQueue,
+				retryStrategy: utils.getRedisClusterRetryStrategy({
+					delayPerAttemptMs: 50,
+					maxDelayMs: 2000,
+				}),
 			};
 			if (redisConfig.enableAutoPipelining) {
 				/**
@@ -67,13 +74,9 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 				};
 			}
 		} else if (redisOptions && !redisConfig) {
-			winston.info("[DHRUV DEBUG] Routerlicious using the provided redisOptions");
 			Lumberjack.info("[DHRUV DEBUG] Routerlicious using the provided redisOptions");
 			this.redisOptions = redisOptions;
 		} else {
-			winston.error(
-				"[DHRUV DEBUG] Routerlicious Both redisOptions and redisConfig cannot be provided",
-			);
 			Lumberjack.error(
 				"[DHRUV DEBUG] Routerlicious Both redisOptions and redisConfig cannot be provided",
 			);
@@ -82,20 +85,24 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 	}
 
 	public async authenticateAndCreateRedisClient(): Promise<void> {
-		winston.info("[DHRUV DEBUG] Routerlicious Creating redis client");
 		Lumberjack.info("[DHRUV DEBUG] Routerlicious Creating redis client");
-		this.client = new Redis.default(this.redisOptions);
-		winston.info("[DHRUV DEBUG] Routerlicious Redis client created");
+		// this.client = new Redis.default(this.redisOptions);
+		this.client = this.enableClustering
+			? new Redis.Cluster([{ port: this.redisOptions.port, host: this.redisOptions.host }], {
+					redisOptions: this.redisOptions,
+					slotsRefreshTimeout: this.slotsRefreshTimeout,
+					dnsLookup: (adr, callback) => callback(null, adr),
+					showFriendlyErrorStack: true,
+			  })
+			: new Redis.default(this.redisOptions);
 		Lumberjack.info("[DHRUV DEBUG] Routerlicious Redis client created");
 	}
 
-	public getRedisClient(): Redis.default {
+	public getRedisClient(): Redis.default | Redis.Cluster {
 		if (!this.client) {
-			winston.error("[DHRUV DEBUG Routerlicious] Redis client not initialized");
 			Lumberjack.error("[DHRUV DEBUG] Routerlicious Redis client not initialized");
 			throw new Error("Redis client not initialized");
 		}
-		winston.info("[DHRUV DEBUG] Routerlicious Returning latest redis client");
 		Lumberjack.info("[DHRUV DEBUG] Routerlicious Returning latest redis client");
 		return this.client;
 	}

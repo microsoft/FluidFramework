@@ -1293,7 +1293,6 @@ importers:
       '@fluidframework/protocol-definitions': ^3.2.0-231454
       '@fluidframework/server-services-client': workspace:~
       '@fluidframework/server-services-core': workspace:~
-      '@fluidframework/server-services-shared': workspace:~
       '@fluidframework/server-services-telemetry': workspace:~
       '@fluidframework/server-test-utils-previous': npm:@fluidframework/server-test-utils@2.0.0
       '@types/ioredis-mock': ^8.2.1
@@ -1326,7 +1325,6 @@ importers:
       '@fluidframework/protocol-definitions': 3.2.0-231454
       '@fluidframework/server-services-client': link:../services-client
       '@fluidframework/server-services-core': link:../services-core
-      '@fluidframework/server-services-shared': link:../services-shared
       '@fluidframework/server-services-telemetry': link:../services-telemetry
       '@types/ioredis-mock': 8.2.2
       assert: 2.0.0

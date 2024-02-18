@@ -22,7 +22,7 @@ export class ClientManager implements IClientManager {
 	private readonly prefix: string = "client";
 
 	constructor(
-		private readonly client: Redis.default | Redis.Cluster,
+		private readonly redisClientConnectionManager: IRedisClientConnectionManager,
 		parameters?: IRedisParameters,
 	) {
 		if (parameters?.expireAfterSeconds) {

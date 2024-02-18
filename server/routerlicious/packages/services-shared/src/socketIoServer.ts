@@ -7,10 +7,6 @@ import { EventEmitter } from "events";
 import * as http from "http";
 import * as util from "util";
 import * as core from "@fluidframework/server-services-core";
-import {
-	getRedisClusterRetryStrategy,
-	getRedisClient,
-} from "@fluidframework/server-services-utils";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Namespace, Server, Socket } from "socket.io";
 import { createAdapter } from "@socket.io/redis-adapter";
@@ -74,8 +70,8 @@ class SocketIoServer implements core.IWebSocketServer {
 
 	constructor(
 		private readonly io: Server,
-		private readonly pub: Redis.Redis | Redis.Cluster,
-		private readonly sub: Redis.Redis | Redis.Cluster,
+		private readonly redisClientConnectionManagerForPub: IRedisClientConnectionManager,
+		private readonly redisClientConnectionManagerForSub: IRedisClientConnectionManager,
 	) {
 		this.io.on("connection", (socket: Socket) => {
 			const webSocket = new SocketIoSocket(socket);
@@ -145,46 +141,9 @@ export function create(
 	socketIoConfig?: any,
 	ioSetup?: (io: Server) => void,
 ): core.IWebSocketServer {
-	const options: Redis.RedisOptions = {
-		host: redisConfig.host,
-		port: redisConfig.port,
-		password: redisConfig.pass,
-		connectTimeout: redisConfig.connectTimeout,
-		enableReadyCheck: true,
-		maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
-		enableOfflineQueue: redisConfig.enableOfflineQueue,
-		retryStrategy: getRedisClusterRetryStrategy({ delayPerAttemptMs: 50, maxDelayMs: 2000 }),
-	};
-	if (redisConfig.enableAutoPipelining) {
-		/**
-		 * When enabled, all commands issued during an event loop iteration are automatically wrapped in a
-		 * pipeline and sent to the server at the same time. This can improve performance by 30-50%.
-		 * More info: https://github.com/luin/ioredis#autopipelining
-		 */
-		options.enableAutoPipelining = true;
-		options.autoPipeliningIgnoredCommands = ["ping"];
-	}
-	if (redisConfig.tls) {
-		options.tls = {
-			servername: redisConfig.host,
-		};
-	}
-
-	const pub: Redis.default | Redis.Cluster = getRedisClient(
-		clone(options),
-		redisConfig.slotsRefreshTimeout,
-		redisConfig.enableClustering,
-	);
-
-	const sub: Redis.default | Redis.Cluster = getRedisClient(
-		clone(options),
-		redisConfig.slotsRefreshTimeout,
-		redisConfig.enableClustering,
-	);
-
-	pub.on("error", (err) => {
-		winston.error("Error with Redis pub connection: ", err);
-		Lumberjack.error("Error with Redis pub connection", undefined, err);
+	redisClientConnectionManagerForPub.getRedisClient().on("error", (err) => {
+		winston.error("[DHRUV DEBUG] Error with Redis pub connection: ", err);
+		Lumberjack.error("[DHRUV DEBUG] Error with Redis pub connection", undefined, err);
 	});
 	redisClientConnectionManagerForSub.getRedisClient().on("error", (err) => {
 		winston.error("[DHRUV DEBUG] Error with Redis sub connection: ", err);
