@@ -202,7 +202,6 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     // (undocumented)
     readonly id: string;
     readonly isLocalDataStore: boolean;
-    makeLocallyVisible(): void;
     readonly packagePath: readonly string[];
     setChannelDirty(address: string): void;
 }
@@ -274,6 +273,7 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     readonly loadingGroupId?: string;
     // (undocumented)
     readonly logger: ITelemetryBaseLogger;
+    makeLocallyVisible(): void;
     // (undocumented)
     readonly options: Record<string | number, any>;
     readonly scope: FluidObject;

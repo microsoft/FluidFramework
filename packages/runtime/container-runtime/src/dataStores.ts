@@ -71,7 +71,8 @@ import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs";
 import { IDataStoreAliasMessage, channelToDataStore, isDataStoreAliasMessage } from "./dataStore";
 import { GCNodeType, detectOutboundRoutesViaDDSKey } from "./gc";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summary";
-import { ContainerMessageType } from "./messageTypes";
+import { ContainerMessageType, LocalContainerRuntimeMessage } from "./messageTypes"
+import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { trimLeadingAndTrailingSlashes } from "./gc";
 
 /**
@@ -104,7 +105,7 @@ interface FluidDataStoreMessage {
 
 export function cloneParentContext(parentContext: IFluidParentContext): IFluidParentContext {
 	return {
-		IFluidDataStoreRegistry: parentContext.IFluidDataStoreRegistry,
+		get IFluidDataStoreRegistry() { return parentContext.IFluidDataStoreRegistry; },
 		IFluidHandleContext: parentContext.IFluidHandleContext,
 		options: parentContext.options,
 		get clientId() {
@@ -146,6 +147,9 @@ export function cloneParentContext(parentContext: IFluidParentContext): IFluidPa
 		submitSignal: (...args) => {
 			return parentContext.submitSignal(...args);
 		},
+		makeLocallyVisible: (...args) => {
+			return parentContext.makeLocallyVisible(...args);
+		},
 		uploadBlob: async (...args) => {
 			return parentContext.uploadBlob(...args);
 		},
@@ -160,6 +164,7 @@ export function cloneParentContext(parentContext: IFluidParentContext): IFluidPa
 		},
 	};
 }
+
 /** @internal */
 export function createParentContext(
 	id: string,
@@ -341,10 +346,9 @@ export class DataStores implements IFluidDataStoreChannel, IDisposable {
 	 * IFluidDataStoreChannel.makeVisibleAndAttachGraph implementation
 	 * Not clear when it would be called and what it should do.
 	 * Currently this API is called by context only for root data stores.
-	 * In the future, if
 	 */
 	public makeVisibleAndAttachGraph() {
-		assert(false, "NYI");
+		this.parentContext.makeLocallyVisible();
 	}
 
 	private processAttachMessage(message: ISequencedDocumentMessage, local: boolean) {
@@ -603,6 +607,13 @@ export class DataStores implements IFluidDataStoreChannel, IDisposable {
 	public readonly dispose = () => this.disposeOnce.value;
 
 	public reSubmit(type: string, content: any, localOpMetadata: unknown) {
+		switch (type) {
+			case ContainerMessageType.Attach:
+			case ContainerMessageType.Alias:
+				this.parentContext.submitMessage(type, content, localOpMetadata);
+				return;
+		}
+
 		assert(type === ContainerMessageType.FluidDataStoreOp, "type");
 		const envelope = content as IEnvelope;
 		const context = this.contexts.get(envelope.address);
@@ -640,7 +651,16 @@ export class DataStores implements IFluidDataStoreChannel, IDisposable {
 		context.rollback(innerContents.type, innerContents.content, localOpMetadata);
 	}
 
-	public async applyStashedOp(envelope: IEnvelope): Promise<unknown> {
+	public async applyStashedOp(content: unknown): Promise<unknown> {
+		const opContents = content as LocalContainerRuntimeMessage;
+		switch (opContents.type) {
+			case ContainerMessageType.Attach:
+				return this.applyStashedAttachOp(opContents.contents as IAttachMessage);
+			case ContainerMessageType.Alias:
+				return;
+		}
+
+		const envelope = opContents.contents as IEnvelope;
 		const context = this.contexts.get(envelope.address);
 		// If the data store has been deleted, log an error and ignore this message. This helps prevent document
 		// corruption in case the data store that stashed the op is deleted.
@@ -651,7 +671,7 @@ export class DataStores implements IFluidDataStoreChannel, IDisposable {
 		return context.applyStashedOp(envelope.contents);
 	}
 
-	public async applyStashedAttachOp(message: IAttachMessage) {
+	private async applyStashedAttachOp(message: IAttachMessage) {
 		this.pendingAttach.set(message.id, message);
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 		this.processAttachMessage({ contents: message } as ISequencedDocumentMessage, false);

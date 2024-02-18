@@ -193,6 +193,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     readonly logger: ITelemetryLoggerExt;
     // (undocumented)
+    makeLocallyVisible(): void;
+    // (undocumented)
     notifyOpReplay(message: ISequencedDocumentMessage): Promise<void>;
     // (undocumented)
     readonly options: Record<string | number, any>;
@@ -244,9 +246,11 @@ export interface ContainerRuntimeMessage {
 
 // @internal (undocumented)
 export class DataStoresFactory implements IFluidDataStoreFactory {
-    constructor(provideEntryPoint: (runtime: IFluidDataStoreChannel) => Promise<FluidObject>);
+    constructor(registryEntries: NamedFluidDataStoreRegistryEntries, provideEntryPoint: (runtime: IFluidDataStoreChannel) => Promise<FluidObject>);
     // (undocumented)
     get IFluidDataStoreFactory(): this;
+    // (undocumented)
+    IFluidDataStoreRegistry: IFluidDataStoreRegistry;
     // (undocumented)
     instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<IFluidDataStoreChannel>;
     // (undocumented)

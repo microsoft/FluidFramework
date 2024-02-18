@@ -1721,6 +1721,11 @@ export class ContainerRuntime
 		return this.summarizerNode.deleteChild(id);
 	}
 
+	public makeLocallyVisible()
+	{
+		assert(false, "should not be called");
+	}
+
 	/**
 	 * Initializes the state from the base snapshot this container runtime loaded from.
 	 */
@@ -1989,16 +1994,15 @@ export class ContainerRuntime
 		const opContents = this.parseLocalOpContent(serializedOpContent);
 		switch (opContents.type) {
 			case ContainerMessageType.FluidDataStoreOp:
-				return this.dataStores.applyStashedOp(opContents.contents);
 			case ContainerMessageType.Attach:
-				return this.dataStores.applyStashedAttachOp(opContents.contents);
+			case ContainerMessageType.Alias:
+				return this.dataStores.applyStashedOp(opContents);
 			case ContainerMessageType.IdAllocation:
 				assert(
 					this.idCompressor !== undefined,
 					0x67b /* IdCompressor should be defined if enabled */,
 				);
 				return;
-			case ContainerMessageType.Alias:
 			case ContainerMessageType.BlobAttach:
 				return;
 			case ContainerMessageType.ChunkedOp:
@@ -3692,12 +3696,12 @@ export class ContainerRuntime
 		assert(!this.isSummarizerClient, "Summarizer never reconnects so should never resubmit");
 		switch (message.type) {
 			case ContainerMessageType.FluidDataStoreOp:
+			case ContainerMessageType.Attach:
+			case ContainerMessageType.Alias:
 				// For Operations, call resubmitDataStoreOp which will find the right store
 				// and trigger resubmission on it.
 				this.dataStores.reSubmit(message.type, message.contents, localOpMetadata);
 				break;
-			case ContainerMessageType.Attach:
-			case ContainerMessageType.Alias:
 			case ContainerMessageType.IdAllocation: {
 				this.submit(message, localOpMetadata);
 				break;

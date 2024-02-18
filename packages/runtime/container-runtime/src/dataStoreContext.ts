@@ -214,6 +214,7 @@ export abstract class FluidDataStoreContext
 	}
 
 	public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry | undefined {
+		assert(this.channel !== undefined, "registry is populated only when runtime is created");
 		return this.registry;
 	}
 

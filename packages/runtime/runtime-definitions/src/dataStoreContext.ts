@@ -395,13 +395,6 @@ export interface IFluidParentContext
 	readonly gcTombstoneEnforcementAllowed: boolean;
 
 	/**
-	 * Get an absolute url to the container based on the provided relativeUrl.
-	 * Returns undefined if the container or data store isn't attached to storage.
-	 * @param relativeUrl - A relative request within the container
-	 */
-	getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
-
-	/**
 	 * Returns the current quorum.
 	 */
 	getQuorum(): IQuorumClients;
@@ -439,6 +432,35 @@ export interface IFluidParentContext
 	 */
 	submitSignal(type: string, content: any, targetClientId?: string): void;
 
+	/**
+	 * Called to make the data store locally visible in the container. This happens automatically for root data stores
+	 * when they are marked as root. For non-root data stores, this happens when their handle is added to a visible DDS.
+	 */
+	makeLocallyVisible(): void;
+
+	/**
+	 * Get an absolute url to the container based on the provided relativeUrl.
+	 * Returns undefined if the container or data store isn't attached to storage.
+	 * @param relativeUrl - A relative request within the container
+	 */
+	getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
+
+	getCreateChildSummarizerNodeFn(
+		/**
+		 * Initial id or path part of this node
+		 */
+		id: string,
+		/**
+		 * Information needed to create the node.
+		 * If it is from a base summary, it will assert that a summary has been seen.
+		 * Attach information if it is created from an attach op.
+		 * If it is local, it will throw unsupported errors on calls to summarize.
+		 */
+		createParam: CreateChildSummarizerNodeParam,
+	): CreateChildSummarizerNodeFn;
+
+	deleteChildSummarizerNode?(id: string): void;
+
 	uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 
 	/**
@@ -456,22 +478,6 @@ export interface IFluidParentContext
 		srcHandle: { absolutePath: string },
 		outboundHandle: { absolutePath: string },
 	): void;
-
-	getCreateChildSummarizerNodeFn(
-		/**
-		 * Initial id or path part of this node
-		 */
-		id: string,
-		/**
-		 * Information needed to create the node.
-		 * If it is from a base summary, it will assert that a summary has been seen.
-		 * Attach information if it is created from an attach op.
-		 * If it is local, it will throw unsupported errors on calls to summarize.
-		 */
-		createParam: CreateChildSummarizerNodeParam,
-	): CreateChildSummarizerNodeFn;
-
-	deleteChildSummarizerNode?(id: string): void;
 }
 
 /**
@@ -502,12 +508,6 @@ export interface IFluidDataStoreContext
 	 * @deprecated 0.16 Issue #1635, #3631
 	 */
 	readonly createProps?: any;
-
-	/**
-	 * Called to make the data store locally visible in the container. This happens automatically for root data stores
-	 * when they are marked as root. For non-root data stores, this happens when their handle is added to a visible DDS.
-	 */
-	makeLocallyVisible(): void;
 
 	/**
 	 * Call by IFluidDataStoreChannel, indicates that a channel is dirty and needs to be part of the summary.
