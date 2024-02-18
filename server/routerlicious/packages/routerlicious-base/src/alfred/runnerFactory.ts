@@ -212,7 +212,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 
 		const redisClientConnectionManagerForJwtCache =
 			customizations?.redisClientConnectionManagerForJwtCache
-				? customizations.redisClientConnectionManager
+				? customizations.redisClientConnectionManagerForJwtCache
 				: new RedisClientConnectionManager(
 						undefined,
 						redisConfig2,

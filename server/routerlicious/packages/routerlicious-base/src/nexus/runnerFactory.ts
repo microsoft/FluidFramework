@@ -186,7 +186,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 
 		const redisClientConnectionManagerForJwtCache =
 			customizations?.redisClientConnectionManagerForJwtCache
-				? customizations.redisClientConnectionManager
+				? customizations.redisClientConnectionManagerForJwtCache
 				: new RedisClientConnectionManager(
 						undefined,
 						redisConfig2,
