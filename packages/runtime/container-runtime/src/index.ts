@@ -34,6 +34,7 @@ export { FluidDataStoreRegistry } from "./dataStoreRegistry";
 export {
 	detectOutboundReferences,
 	RuntimeHeaders,
+	DataStoresFactory,
 	AllowTombstoneRequestHeaderKey,
 	AllowInactiveRequestHeaderKey,
 } from "./dataStores";

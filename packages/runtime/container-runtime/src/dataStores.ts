@@ -30,6 +30,8 @@ import {
 	ITelemetryContext,
 	IFluidDataStoreFactory,
 	IFluidDataStoreContext,
+	NamedFluidDataStoreRegistryEntries,
+	IFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
 import {
 	convertSnapshotTreeToSummaryTree,
@@ -1349,4 +1351,43 @@ export function detectOutboundReferences(
 	// e.g. this will yield "/dataStoreId/ddsId"
 	const fromPath = ["", envelope.address, ddsAddress].join("/");
 	outboundPaths.forEach((toPath) => addedOutboundReference(fromPath, toPath));
+}
+
+/** @internal */
+export class DataStoresFactory implements IFluidDataStoreFactory {
+	public readonly type = "DataStoresChannel";
+
+	public IFluidDataStoreRegistry: IFluidDataStoreRegistry;
+
+	constructor(
+		registryEntries: NamedFluidDataStoreRegistryEntries,
+		// Will need a better type here
+		private readonly provideEntryPoint: (
+			runtime: IFluidDataStoreChannel,
+		) => Promise<FluidObject>,
+	) {
+		this.IFluidDataStoreRegistry = new FluidDataStoreRegistry(registryEntries);
+	}
+
+	public get IFluidDataStoreFactory() {
+		return this;
+	}
+
+	public async instantiateDataStore(
+		context: IFluidDataStoreContext,
+		existing: boolean,
+	): Promise<IFluidDataStoreChannel> {
+		const runtime = new DataStores(
+			context.baseSnapshot,
+			context, // parentContext
+			context.logger,
+			() => {}, // gcNodeUpdated
+			(nodePath: string) => false, // isDataStoreDeleted
+			new Map(), // aliasMap
+			this.provideEntryPoint,
+		);
+
+		// await runtime.initialize();
+		return runtime;
+	}
 }
