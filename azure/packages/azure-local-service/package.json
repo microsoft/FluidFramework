@@ -14,13 +14,9 @@
 	"exports": {
 		".": {
 			"default": {
-				"types": "./dist/index.d.ts",
+				"types": "./dist/azure-local-service-public.d.ts",
 				"default": "./dist/index.js"
 			}
-		},
-		"./alpha": {
-			"types": "./dist/azure-local-service-alpha.d.ts",
-			"default": "./dist/index.js"
 		},
 		"./beta": {
 			"types": "./dist/azure-local-service-beta.d.ts",
@@ -30,8 +26,8 @@
 			"types": "./dist/index.d.ts",
 			"default": "./dist/index.js"
 		},
-		"./public": {
-			"types": "./dist/azure-local-service-public.d.ts",
+		"./fruit": {
+			"types": "./dist/azure-local-service-alpha.d.ts",
 			"default": "./dist/index.js"
 		}
 	},
