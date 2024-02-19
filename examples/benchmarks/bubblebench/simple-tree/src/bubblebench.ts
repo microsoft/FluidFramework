@@ -17,7 +17,6 @@ const treeKey = "treeKey";
 export class Bubblebench extends DataObject {
 	public static readonly Name = "@fluid-example/bubblebench-sharedtree";
 
-	// private view: FlexTreeView<typeof rootAppStateSchema> | undefined;
 	private view: TreeView<App> | undefined;
 	private _appState: AppState | undefined;
 
@@ -74,7 +73,7 @@ export class Bubblebench extends DataObject {
 
 	/**
 	 * Get the SharedTree.
-	 * Cannot be accessed until after initialization has complected.
+	 * Cannot be accessed until after initialization has completed.
 	 */
 	private get tree(): TreeView<App> {
 		return this.view ?? fail("not initialized");
@@ -82,7 +81,7 @@ export class Bubblebench extends DataObject {
 
 	/**
 	 * Get the AppState.
-	 * Cannot be accessed until after initialization has complected.
+	 * Cannot be accessed until after initialization has completed.
 	 */
 	public get appState(): AppState {
 		return this._appState ?? fail("not initialized");

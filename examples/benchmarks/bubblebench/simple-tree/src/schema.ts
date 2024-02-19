@@ -6,7 +6,7 @@
 import type { IBubble, ITreeClient } from "@fluid-example/bubblebench-common";
 import { SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
 
-const sf = new SchemaFactory("bubble-bench");
+const sf = new SchemaFactory("bubble-bench-simple-tree");
 
 export class Bubble
 	extends sf.object("Bubble", {
@@ -89,6 +89,7 @@ export class Client
 
 export class Clients extends sf.array("Clients", Client) {}
 
+// Root type
 export class App extends sf.object("App", {
 	clients: Clients,
 }) {}
