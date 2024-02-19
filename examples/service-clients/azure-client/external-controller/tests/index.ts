@@ -22,8 +22,8 @@ import {
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 
-import { DiceRollerController } from "../src/controller";
-import { makeAppView } from "../src/view";
+import { DiceRollerController } from "../src/controller.js";
+import { makeAppView } from "../src/view.js";
 import {
 	IFluidContainer,
 	createDOProviderContainerRuntimeFactory,
