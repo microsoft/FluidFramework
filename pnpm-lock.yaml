@@ -971,6 +971,7 @@ importers:
 
   examples/benchmarks/bubblebench/baseline:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-example/bubblebench-common': workspace:~
       '@fluid-example/example-utils': workspace:~
       '@fluid-tools/webpack-fluid-loader': workspace:~
@@ -1001,6 +1002,7 @@ importers:
       rimraf: ^4.4.0
       ts-jest: ^29.1.1
       ts-loader: ^9.3.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       webpack: ^5.82.0
       webpack-cli: ^4.9.2
@@ -1016,6 +1018,7 @@ importers:
       '@fluidframework/map': link:../../../../packages/dds/map
       react: 17.0.2
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/webpack-fluid-loader': link:../../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.33.0_h467wi3sy6j67ifywrn7x7qf4m
@@ -1038,6 +1041,7 @@ importers:
       rimraf: 4.4.1
       ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
+      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
       webpack-cli: 4.10.0_o3vqr5s7sd4b3hfy35jxofofzu
