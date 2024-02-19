@@ -14,21 +14,11 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/index.d.mts",
+				"types": "./lib/azure-service-utils-public.d.mts",
 				"default": "./lib/index.mjs"
 			},
 			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
-		"./alpha": {
-			"import": {
-				"types": "./lib/azure-service-utils-alpha.d.mts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/azure-service-utils-alpha.d.ts",
+				"types": "./dist/azure-service-utils-public.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
@@ -42,6 +32,16 @@
 				"default": "./dist/index.js"
 			}
 		},
+		"./fruit": {
+			"import": {
+				"types": "./lib/azure-service-utils-alpha.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/azure-service-utils-alpha.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
 		"./internal": {
 			"import": {
 				"types": "./lib/index.d.mts",
@@ -51,20 +51,9 @@
 				"types": "./dist/index.d.ts",
 				"default": "./dist/index.js"
 			}
-		},
-		"./public": {
-			"import": {
-				"types": "./lib/azure-service-utils-public.d.mts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/azure-service-utils-public.d.ts",
-				"default": "./dist/index.js"
-			}
 		}
 	},
 	"main": "dist/index.js",
-	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
@@ -129,5 +118,6 @@
 	},
 	"typeValidation": {
 		"broken": {}
-	}
+	},
+	"type": "module"
 }
