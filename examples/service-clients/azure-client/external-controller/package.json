@@ -65,6 +65,7 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.13.3",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.33.0",
 		"@fluidframework/container-definitions": "workspace:~",
