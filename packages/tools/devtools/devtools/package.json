@@ -82,6 +82,7 @@
 		"@fluidframework/fluid-static": "workspace:~"
 	},
 	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.13.3",
 		"@fluid-tools/build-cli": "^0.33.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.33.0",
@@ -104,8 +105,8 @@
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"typescript": "~5.1.6",
-		"tsc-multi": "^1.1.0"
+		"tsc-multi": "^1.1.0",
+		"typescript": "~5.1.6"
 	},
 	"fluidBuild": {
 		"tasks": {
