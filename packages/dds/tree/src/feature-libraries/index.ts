@@ -123,6 +123,8 @@ export {
 	makeV0Codec,
 	RelevantRemovedRootsFromChild,
 	EncodedModularChangeset,
+	addMissingBuilds,
+	filterSuperfluousBuilds,
 } from "./modular-schema/index.js";
 
 export { Multiplicity } from "./multiplicity.js";

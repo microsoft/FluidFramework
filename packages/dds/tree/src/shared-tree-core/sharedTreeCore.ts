@@ -29,6 +29,7 @@ import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
 import { SeqNumber } from "./editManagerFormat.js";
 import { DecodedMessage } from "./messageTypes.js";
 import { MessageEncodingContext, makeMessageCodec } from "./messageCodecs.js";
+import { ChangeEnricherCheckout, CommitEnricher } from "./commitEnricher.js";
 
 // TODO: How should the format version be determined?
 const formatVersion = 0;
@@ -80,6 +81,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 
 	private readonly schemaAndPolicy: SchemaAndPolicy;
 
+	private readonly commitEnricher: CommitEnricher<TChange, ChangeFamily<TEditor, TChange>>;
+
 	/**
 	 * @param summarizables - Summarizers for all indexes used by this tree
 	 * @param changeFamily - The change family
@@ -99,6 +102,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		attributes: IChannelAttributes,
 		telemetryContextPrefix: string,
 		schemaAndPolicy: SchemaAndPolicy,
+		checkoutFactory: () => ChangeEnricherCheckout<TChange>,
 	) {
 		super(id, runtime, attributes, telemetryContextPrefix);
 
@@ -158,6 +162,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			new RevisionTagCodec(runtime.idCompressor),
 			options,
 		);
+
+		this.commitEnricher = new CommitEnricher(changeFamily, mintRevisionTag, checkoutFactory);
 	}
 
 	// TODO: SharedObject's merging of the two summary methods into summarizeCore is not what we want here:
@@ -227,9 +233,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			return;
 		}
 
+		const enrichedCommit = this.commitEnricher.enrichCommit(commit, isResubmit);
 		const message = this.messageCodec.encode(
 			{
-				commit,
+				commit: enrichedCommit,
 				sessionId: this.editManager.localSessionId,
 			},
 			{

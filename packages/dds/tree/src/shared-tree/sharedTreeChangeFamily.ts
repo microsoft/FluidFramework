@@ -9,6 +9,7 @@ import {
 	ChangeEncodingContext,
 	ChangeFamily,
 	ChangeRebaser,
+	DeltaDetachedNodeId,
 	RevisionMetadataSource,
 	RevisionTagCodec,
 	TaggedChange,
@@ -20,6 +21,10 @@ import {
 	ModularChangeset,
 	FieldBatchCodec,
 	TreeCompressionStrategy,
+	addMissingBuilds as modularAddMissingBuilds,
+	filterSuperfluousBuilds as modularFilterSuperfluousBuilds,
+	relevantRemovedRoots as defaultRelevantRemovedRoots,
+	TreeChunk,
 } from "../feature-libraries/index.js";
 import { Mutable, fail } from "../util/index.js";
 import { makeSharedTreeChangeCodecFamily } from "./sharedTreeChangeCodecs.js";
@@ -181,4 +186,88 @@ export class SharedTreeChangeFamily
 
 function hasSchemaChange(change: SharedTreeChange): boolean {
 	return change.changes.some((innerChange) => innerChange.type === "schema");
+}
+
+/**
+ * Returns the set of removed roots that should be in memory for the given change to be applied.
+ * A removed root is relevant if any of the following is true:
+ * - It is being inserted
+ * - It is being restored
+ * - It is being edited
+ * - The ID it is associated with is being changed
+ *
+ * May be conservative by returning more removed roots than strictly necessary.
+ *
+ * Will never return IDs for non-root trees, even if they are removed.
+ *
+ * @param change - The change to be applied.
+ */
+export function* relevantRemovedRoots(
+	taggedChange: TaggedChange<SharedTreeChange>,
+): Iterable<DeltaDetachedNodeId> {
+	for (const innerChange of taggedChange.change.changes) {
+		if (innerChange.type === "data") {
+			yield* defaultRelevantRemovedRoots(
+				mapTaggedChange(taggedChange, innerChange.innerChange),
+			);
+		}
+	}
+}
+
+function mapDataChanges(
+	change: SharedTreeChange,
+	map: (change: ModularChangeset) => ModularChangeset,
+): SharedTreeChange {
+	return {
+		changes: change.changes.map((dataOrSchemaChange) => {
+			if (dataOrSchemaChange.type === "data") {
+				return {
+					type: "data",
+					innerChange: map(dataOrSchemaChange.innerChange),
+				};
+			}
+			return dataOrSchemaChange;
+		}),
+	};
+}
+
+/**
+ * Adds any builds missing from the provided change that are relevant to the change.
+ * This function enforces that all relevant removed roots have a corresponding build.
+ *
+ * @param change - The change with potentially missing builds. Not mutated by this function.
+ * @param getDetachedNode - The function to retrieve a tree chunk from the corresponding detached node id.
+ * @param removedRoots - The set of removed roots that should be in memory for the given change to be applied.
+ * Can be retrieved by calling {@link relevantRemovedRoots}.
+ */
+export function addMissingBuilds(
+	change: TaggedChange<SharedTreeChange>,
+	getDetachedNode: (id: DeltaDetachedNodeId) => TreeChunk | undefined,
+	removedRoots: Iterable<DeltaDetachedNodeId>,
+): SharedTreeChange {
+	return mapDataChanges(change.change, (innerChange) =>
+		modularAddMissingBuilds(
+			mapTaggedChange(change, innerChange),
+			getDetachedNode,
+			removedRoots,
+		),
+	);
+}
+
+/**
+ * Removes any builds from the provided change that are not relevant to the change.
+ * Calls {@link relevantRemovedRoots} to determine which builds are relevant.
+ *
+ * @param change - The change with potentially superfluous builds. Not mutated by this function.
+ * @param removedRoots - The set of removed roots that should be in memory for the given change to be applied.
+ * Can be retrieved by calling {@link relevantRemovedRoots}.
+ * @returns a {@link SharedTreeChange} with only builds relevant to the change.
+ */
+export function filterSuperfluousBuilds(
+	change: TaggedChange<SharedTreeChange>,
+	removedRoots: Iterable<DeltaDetachedNodeId>,
+): SharedTreeChange {
+	return mapDataChanges(change.change, (innerChange) =>
+		modularFilterSuperfluousBuilds(mapTaggedChange(change, innerChange), removedRoots),
+	);
 }

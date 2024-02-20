@@ -4,7 +4,12 @@
  */
 import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { SharedTreeBranch, SharedTreeCore, Summarizable } from "../../shared-tree-core/index.js";
+import {
+	ChangeEnricherCheckout,
+	SharedTreeBranch,
+	SharedTreeCore,
+	Summarizable,
+} from "../../shared-tree-core/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import {
 	DefaultChangeFamily,
@@ -36,6 +41,9 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 		summarizables: readonly Summarizable[] = [],
 		schema: TreeStoredSchemaSubscription = new TreeStoredSchemaRepository(),
 		chunkCompressionStrategy: TreeCompressionStrategy = TreeCompressionStrategy.Uncompressed,
+		checkoutFactory: () => ChangeEnricherCheckout<DefaultChangeset> = () => {
+			throw new Error("Should not be called");
+		},
 	) {
 		const codecOptions: ICodecOptions = { jsonValidator: typeboxValidator };
 		super(
@@ -52,6 +60,7 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 			TestSharedTreeCore.attributes,
 			id,
 			{ policy: defaultSchemaPolicy, schema },
+			checkoutFactory,
 		);
 	}
 

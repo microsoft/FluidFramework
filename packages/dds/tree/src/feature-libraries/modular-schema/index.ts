@@ -65,5 +65,7 @@ export {
 	rebaseRevisionMetadataFromInfo,
 	intoDelta,
 	relevantRemovedRoots,
+	addMissingBuilds,
+	filterSuperfluousBuilds,
 } from "./modularChangeFamily.js";
 export { makeV0Codec } from "./modularChangeCodecs.js";

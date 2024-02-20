@@ -1019,19 +1019,24 @@ function* relevantRemovedRootsFromFields(
  * Can be retrieved by calling {@link relevantRemovedRoots}.
  */
 export function addMissingBuilds(
-	change: TaggedChange<ModularChangeset>,
+	{ change, revision }: TaggedChange<ModularChangeset>,
 	getDetachedNode: (id: DeltaDetachedNodeId) => TreeChunk | undefined,
 	removedRoots: Iterable<DeltaDetachedNodeId>,
 ): ModularChangeset {
 	const builds: ChangeAtomIdMap<TreeChunk> = new Map();
 
 	for (const root of removedRoots) {
+		// TODO: avoid calling getDetachedNode unless the tree is actually needed
 		const node = getDetachedNode(root);
 
 		// if the detached node could not be found, it should exist in the original builds map
 		if (node === undefined) {
-			assert(change.change.builds !== undefined, "detached node should exist");
-			const original = tryGetFromNestedMap(change.change.builds, root.major, root.minor);
+			assert(change.builds !== undefined, "detached node should exist");
+			const original = tryGetFromNestedMap(
+				change.builds,
+				root.major === revision ? undefined : root.major,
+				root.minor,
+			);
 			assert(original !== undefined, "detached node should exist");
 		} else {
 			setInNestedMap(builds, root.major, root.minor, node);
@@ -1039,14 +1044,14 @@ export function addMissingBuilds(
 	}
 
 	if (builds.size === 0) {
-		return change.change;
+		return change;
 	}
 
-	if (change.change.builds !== undefined) {
-		populateNestedMap(change.change.builds, builds, true);
+	if (change.builds !== undefined) {
+		populateNestedMap(change.builds, builds, true);
 	}
 
-	const { fieldChanges, maxId, revisions, constraintViolationCount, destroys } = change.change;
+	const { fieldChanges, maxId, revisions, constraintViolationCount, destroys } = change;
 	return makeModularChangeset(
 		fieldChanges,
 		maxId,

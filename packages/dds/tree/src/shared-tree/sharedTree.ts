@@ -25,6 +25,7 @@ import {
 	rootFieldKey,
 	schemaDataIsEmpty,
 	RevisionTagCodec,
+	AnchorSet,
 } from "../core/index.js";
 import { SharedTreeCore } from "../shared-tree-core/index.js";
 import {
@@ -70,6 +71,7 @@ import { FlexTreeView, CheckoutFlexTreeView } from "./treeView.js";
 import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
+import { SharedTreeChangeEnricher } from "./sharedTreeChangeEnricher.js";
 
 /**
  * Copy of data from an {@link ISharedTree} at some point in time.
@@ -248,6 +250,12 @@ export class SharedTree
 			attributes,
 			telemetryContextPrefix,
 			{ schema, policy: defaultSchemaPolicy },
+			() => {
+				return new SharedTreeChangeEnricher(
+					forest.clone(schema, new AnchorSet()),
+					removedRoots.clone(),
+				);
+			},
 		);
 		this._events = createEmitter<CheckoutEvents>();
 		const localBranch = this.getLocalBranch();

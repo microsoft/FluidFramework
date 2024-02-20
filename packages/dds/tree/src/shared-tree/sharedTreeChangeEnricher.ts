@@ -1,0 +1,80 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import {
+	RevisionTag,
+	IEditableForest,
+	DetachedFieldIndex,
+	tagChange,
+	DeltaDetachedNodeId,
+	visitDelta,
+} from "../core/index.js";
+import { TreeChunk, chunkTree, defaultChunkPolicy, intoDelta } from "../feature-libraries/index.js";
+import { ChangeEnricherCheckout } from "../shared-tree-core/index.js";
+import { fail } from "../util/index.js";
+import {
+	addMissingBuilds,
+	filterSuperfluousBuilds,
+	relevantRemovedRoots,
+} from "./sharedTreeChangeFamily.js";
+import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
+
+export class SharedTreeChangeEnricher implements ChangeEnricherCheckout<SharedTreeChange> {
+	public constructor(
+		private readonly forest: IEditableForest,
+		private readonly removedRoots: DetachedFieldIndex,
+	) {}
+
+	public enrichNewTipChange(change: SharedTreeChange, revision: RevisionTag): SharedTreeChange {
+		return this.updateChangeEnrichments(change, revision, true);
+	}
+
+	public updateChangeEnrichments(
+		change: SharedTreeChange,
+		revision: RevisionTag,
+		skipFiltering: boolean = false,
+	): SharedTreeChange {
+		const taggedChange = tagChange(change, revision);
+		const relevantRoots = relevantRemovedRoots(taggedChange);
+		const filtered = skipFiltering
+			? change
+			: filterSuperfluousBuilds(taggedChange, relevantRoots);
+		return addMissingBuilds(
+			tagChange(filtered, revision),
+			(id: DeltaDetachedNodeId): TreeChunk | undefined => {
+				const root = this.removedRoots.tryGetEntry(id);
+				if (root !== undefined) {
+					const cursor = this.forest.getCursorAboveDetachedFields();
+					const parentField = this.removedRoots.toFieldKey(root);
+					cursor.enterField(parentField);
+					cursor.enterNode(0);
+					return chunkTree(cursor, defaultChunkPolicy);
+				}
+				return undefined;
+			},
+			relevantRoots,
+		);
+	}
+
+	public applyTipChange(change: SharedTreeChange, revision: RevisionTag): void {
+		for (const dataOrSchemaChange of change.changes) {
+			if (dataOrSchemaChange.type === "data") {
+				const delta = intoDelta(tagChange(dataOrSchemaChange.innerChange, revision));
+				const visitor = this.forest.acquireVisitor();
+				visitDelta(delta, visitor, this.removedRoots);
+			} else if (dataOrSchemaChange.type === "schema") {
+				// Do we need any of this?
+				// this.purgeRemovedRoots();
+				// storedSchema.apply(dataOrSchemaChange.innerChange.schema.new);
+			} else {
+				fail("Unknown Shared Tree change type.");
+			}
+		}
+	}
+
+	public dispose(): void {
+		// TODO: how come forest doesn't have a dispose method?
+	}
+}
