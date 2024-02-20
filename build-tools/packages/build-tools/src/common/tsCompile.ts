@@ -5,14 +5,13 @@
 
 import type * as tsTypes from "typescript";
 import path from "path";
+import { defaultLogger } from "./logging.js";
 import { getTscUtils } from "./tscUtils.js";
 
 // Any paths given by typescript will be normalized to forward slashes.
 // Local paths should be normalized to make any comparisons.
-const directorySeparator = "/";
-const backslashRegExp = /\\/g;
 function normalizeSlashes(path: string): string {
-	return path.includes("\\") ? path.replace(backslashRegExp, directorySeparator) : path;
+	return path.replace(/\\/g, "/");
 }
 
 export function tsCompile({
@@ -54,6 +53,7 @@ export function tsCompile({
 			: ts.createCompilerHost(commandLine.options);
 		// When specified overrides current directory's package.json type field so tsc may cleanly
 		// transpile .ts files to CommonJS or ESM using compilerOptions.module Node16 or NodeNext.
+		let packageJsonTypeOverrideUsage = "not read" as "not read" | "already present" | "used";
 		if (packageJsonTypeOverride) {
 			const origReadFile = host.readFile;
 			const packageJsonPath = normalizeSlashes(path.join(cwd, "package.json"));
@@ -62,6 +62,10 @@ export function tsCompile({
 				if (fileName === packageJsonPath && rawFile !== undefined) {
 					// Reading local package.json: override type field
 					const packageJson = JSON.parse(rawFile);
+					packageJsonTypeOverrideUsage =
+						(packageJson.type ?? "commonjs") !== packageJsonTypeOverride
+							? "used"
+							: "already present";
 					return JSON.stringify({ ...packageJson, type: packageJsonTypeOverride });
 				}
 				return rawFile;
@@ -84,6 +88,12 @@ export function tsCompile({
 
 		const emitResult = program.emit();
 		diagnostics.push(...emitResult.diagnostics);
+
+		if (packageJsonTypeOverride && packageJsonTypeOverrideUsage !== "used") {
+			defaultLogger.warning(
+				`package.json type override set to ${packageJsonTypeOverride} but ${packageJsonTypeOverrideUsage}.`,
+			);
+		}
 
 		if (emitResult.emitSkipped && diagnostics.length > 0) {
 			code = ts.ExitStatus.DiagnosticsPresent_OutputsSkipped;
