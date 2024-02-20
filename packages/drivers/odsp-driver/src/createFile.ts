@@ -39,7 +39,7 @@ import { ClpCompliantAppHeader } from "./contractsPublic";
 
 const isInvalidFileName = (fileName: string): boolean => {
 	const invalidCharsRegex = /["*/:<>?\\|]+/g;
-	return !!fileName.match(invalidCharsRegex);
+	return invalidCharsRegex.test(fileName);
 };
 
 /**
