@@ -39,7 +39,7 @@ export function devServerConfig(baseDir: string, env: RouteOptions) {
 			static: {
 				directory: path.join(
 					baseDir,
-					"/node_modules/@fluid-tools/webpack-fluid-loader/dist/",
+					"/node_modules/@fluid-example/webpack-fluid-loader/dist/",
 				),
 				publicPath: "/code",
 			},

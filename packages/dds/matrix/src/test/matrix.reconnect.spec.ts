@@ -14,6 +14,60 @@ import { extract } from "./utils";
 
 describe("SharedMatrix reconnect", () => {
 	// https://dev.azure.com/fluidframework/internal/_workitems/edit/7217
+	it.skip("rebase setCell in inserted column with overlapping remove", () => {
+		const factory = SharedMatrix.getFactory();
+		const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+		const dataRuntime1 = new MockFluidDataStoreRuntime();
+		containerRuntimeFactory.createContainerRuntime(dataRuntime1);
+		const dataRuntime2 = new MockFluidDataStoreRuntime();
+		const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataRuntime2);
+
+		const matrix1 = factory.create(dataRuntime1, "A") as SharedMatrix<number>;
+		matrix1.connect({
+			deltaConnection: dataRuntime1.createDeltaConnection(),
+			objectStorage: new MockStorage(),
+		});
+
+		const matrix2 = factory.create(dataRuntime2, "B") as SharedMatrix<number>;
+		matrix2.connect({
+			deltaConnection: dataRuntime2.createDeltaConnection(),
+			objectStorage: new MockStorage(),
+		});
+
+		// Create a 1x2 matrix
+		matrix1.insertRows(0, 1);
+		matrix1.insertCols(0, 2);
+		containerRuntimeFactory.processAllMessages();
+
+		// Concurrently:
+		//
+		//   A) Remove all columns (of matrix1)
+		//   B) Insert a column and set a cell in the inserted column (of matrix2)
+		//
+		// We do this while matrix2 is disconnected so can force a resubmission that rebases
+		// over the removal of the set cell.
+		containerRuntime2.connected = false;
+		matrix1.removeCols(0, 2);
+		matrix2.insertCols(1, 1);
+		matrix2.setCell(0, 1, 42);
+		containerRuntimeFactory.processAllMessages();
+
+		// Because matrix2 is disconnected, our local states will have temporarily diverged.
+		assert.deepEqual(extract(matrix1), [[]]);
+		assert.deepEqual(extract(matrix2), [[undefined, 42, undefined]]);
+
+		// Reconnect matrix2 and process all messages.  This will cause the 'setCell(0,0)' to
+		// be rebased over the removal of the first column.
+		containerRuntime2.connected = true;
+		containerRuntimeFactory.processAllMessages();
+
+		// The overlapping remove should leave just the cell inserted and set by matrix2.
+		const expected = [[42]];
+		assert.deepEqual(extract(matrix1), expected);
+		assert.deepEqual(extract(matrix2), expected);
+	});
+
+	// https://dev.azure.com/fluidframework/internal/_workitems/edit/7217
 	it.skip("discards setCell in removed column", () => {
 		const factory = SharedMatrix.getFactory();
 		const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
@@ -35,8 +89,8 @@ describe("SharedMatrix reconnect", () => {
 		});
 
 		// Create a 1x2 matrix
-		matrix1.insertCols(0, 2);
 		matrix1.insertRows(0, 1);
+		matrix1.insertCols(0, 2);
 		containerRuntimeFactory.processAllMessages();
 
 		// Concurrently:

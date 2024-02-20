@@ -167,6 +167,8 @@ module.exports = {
 				"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
 			],
 			"fluid-build-tasks-eslint": [
+				// eslint doesn't really depend on build. Doing so just slows down a package build.
+				"^packages/test/test-utils/package.json",
 				// Can be removed once the policy handler is updated to support tsc-multi as equivalent to tsc.
 				"^azure/packages/azure-client/package.json",
 				"^azure/packages/azure-service-utils/package.json",
@@ -210,6 +212,7 @@ module.exports = {
 				"common/build/eslint-config-fluid/.*",
 				"common/lib/common-utils/jest-puppeteer.config.js",
 				"common/lib/common-utils/jest.config.js",
+				"common/build/eslint-plugin-fluid/.*",
 				"docs/api-markdown-documenter/.*",
 				"docs/api/fallback/index.js",
 				"docs/build-redirects.js",
@@ -245,7 +248,6 @@ module.exports = {
 				"^server/",
 				"^build-tools/",
 				"^common/lib/common-utils/package.json",
-				"^common/build/eslint-config-fluid/package.json",
 			],
 			"npm-package-json-test-scripts": [
 				"common/build/eslint-config-fluid/package.json",
@@ -408,13 +410,14 @@ module.exports = {
 			"@fluidframework/common-definitions",
 			"@fluidframework/common-utils",
 			"@fluidframework/eslint-config-fluid",
+			"@fluid-internal/eslint-plugin-fluid",
 			"@fluidframework/protocol-definitions",
 			"@fluidframework/test-tools",
 			"fluidframework-docs",
 		],
 		fluidBuildTasks: {
 			tsc: {
-				ignoreDevDependencies: ["@fluid-tools/webpack-fluid-loader"],
+				ignoreDevDependencies: ["@fluid-example/webpack-fluid-loader"],
 				ignoreTasks: [
 					// Outside of normal build and packages/dd/matrix version includes tsc
 					"bench:profile",
