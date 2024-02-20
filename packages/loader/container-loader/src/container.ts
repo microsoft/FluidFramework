@@ -34,7 +34,6 @@ import {
 	IRuntime,
 	ReadOnlyInfo,
 	isFluidCodeDetails,
-	// IGetPendingLocalStateProps,
 } from "@fluidframework/container-definitions";
 import {
 	IDocumentService,
@@ -1171,51 +1170,6 @@ export class Container
 			notifyImminentClosure: false,
 		});
 	}
-
-	// private async getPendingLocalStateCore(props: IGetPendingLocalStateProps) {
-	// 	return PerformanceEvent.timedExecAsync(
-	// 		this.mc.logger,
-	// 		{
-	// 			eventName: "getPendingLocalState",
-	// 			notifyImminentClosure: props.notifyImminentClosure,
-	// 			savedOpsSize: this.containerStateManager.getSavedOps().length,
-	// 			clientId: this.clientId,
-	// 		},
-	// 		async () => {
-	// 			if (!this.offlineLoadEnabled) {
-	// 				throw new UsageError(
-	// 					"Can't get pending local state unless offline load is enabled",
-	// 				);
-	// 			}
-	// 			if (this.closed || this._disposed) {
-	// 				throw new UsageError(
-	// 					"Pending state cannot be retried if the container is closed or disposed",
-	// 				);
-	// 			}
-	// 			assert(
-	// 				this.attachmentData.state === AttachState.Attached,
-	// 				0x0d1 /* "Container should be attached before close" */,
-	// 			);
-	// 			assert(
-	// 				this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
-	// 				0x0d2 /* "resolved url should be valid Fluid url" */,
-	// 			);
-	// 			assert(this.containerStateManager.snapshot !== undefined, 0x5d5 /* no base data */);
-
-	// 			const pendingRuntimeState = await this.runtime.getPendingLocalState(props);
-	// 			const pendingState: IPendingContainerState = {
-	// 				pendingRuntimeState,
-	// 				baseSnapshot: this.containerStateManager.snapshot.tree,
-	// 				snapshotBlobs: this.containerStateManager.snapshot.blobs,
-	// 				savedOps: this.containerStateManager.getSavedOps(),
-	// 				url: this.resolvedUrl.url,
-	// 				clientId: pendingRuntimeState !== undefined ? this.clientId : undefined,
-	// 			};
-
-	// 			return JSON.stringify(pendingState);
-	// 		},
-	// 	);
-	// }
 
 	public get attachState(): AttachState {
 		return this.attachmentData.state;
