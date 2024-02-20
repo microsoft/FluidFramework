@@ -64,6 +64,10 @@ function getClientRoomId(clientId: string) {
 	return `client#${clientId}`;
 }
 
+function isISentSignalMessage(message: any): message is ISentSignalMessage {
+	return typeof message === "object" && "targetClientId" in message;
+}
+
 const getMessageMetadata = (documentId: string, tenantId: string) => ({
 	documentId,
 	tenantId,
@@ -1131,7 +1135,8 @@ export function configureWebSocketServices(
 							if (
 								supportedFeaturesMap.get(clientId)?.clientSupportedFeatures?.[
 									feature_submit_signals_v2
-								]
+								] &&
+								isISentSignalMessage(content)
 							) {
 								signalMessage = {
 									clientId,
