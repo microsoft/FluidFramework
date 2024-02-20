@@ -46,8 +46,12 @@ interface TestScenario {
 	skip?: boolean;
 	name: string;
 	runScenario: () => SharedDirectory;
-	// Utilized to test the back-compat of snapshots, i.e. ensuring the ability to load and collaborate
-	// in the old format documents even though we no longer write in this format
+	/**
+	 * Whether running the scenario produces a snapshot which matches the saved one.
+	 * This is used to test back-compat of snapshots, i.e. ensuring current code can load older documents.
+	 * @remarks - It may be valuable to confirm clients can collaborate on such documents
+	 * after loading them.
+	 */
 	writeCompatible?: boolean;
 }
 
