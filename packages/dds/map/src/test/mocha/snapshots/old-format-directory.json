@@ -1,0 +1,13 @@
+{
+	"entries": [
+	 {
+	  "path": "header",
+	  "mode": "100644",
+	  "type": "Blob",
+	  "value": {
+	   "contents": "{\"storage\":{\"key1\":{\"type\":\"Plain\",\"value\":\"value1\"},\"key2\":{\"type\":\"Plain\",\"value\":\"value2\"}},\"subdirectories\":{\"a\":{\"storage\":{\"key3\":{\"type\":\"Plain\",\"value\":\"value3\"},\"key4\":{\"type\":\"Plain\",\"value\":\"Value2\"}}},\"b\":{\"storage\":{\"key5\":{\"type\":\"Plain\",\"value\":\"value3\"}}}}}",
+	   "encoding": "utf-8"
+	  }
+	 }
+	]
+   }

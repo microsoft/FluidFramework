@@ -46,6 +46,9 @@ interface TestScenario {
 	skip?: boolean;
 	name: string;
 	runScenario: () => SharedDirectory;
+	// Utilized to test the back-compat of snapshots, i.e. ensuring the ability to load and collaborate
+	// in the old format documents even though we no longer write in this format
+	writeCompatible?: boolean;
 }
 
 function serialize(directory: SharedDirectory): string {
@@ -54,7 +57,7 @@ function serialize(directory: SharedDirectory): string {
 	return JSON.stringify(snapshotTree, undefined, 1);
 }
 
-function takeSnapshot(directory: SharedDirectory): string {
+function takeSnapshot(directory: SharedDirectory, writeCompatible: boolean): string {
 	assert(
 		currentTestName !== undefined,
 		"use `useSnapshotDirectory` to configure the tests containing describe block to take snapshots",
@@ -72,7 +75,9 @@ function takeSnapshot(directory: SharedDirectory): string {
 		writeFileSync(currentTestFile, data);
 	}
 	const pastData = readFileSync(currentTestFile, "utf8");
-	assert.equal(data, pastData, `snapshots are inconsistent on test "${currentTestName}"`);
+	if (writeCompatible) {
+		assert.equal(data, pastData, `snapshots are inconsistent on test "${currentTestName}"`);
+	}
 	return data;
 }
 
@@ -142,6 +147,25 @@ function generateTestScenarios(): TestScenario[] {
 				return testDirectory;
 			},
 		},
+		{
+			name: "old-format-directory",
+			runScenario: (): SharedDirectory => {
+				const testDirectory = new SharedDirectory(
+					"A",
+					dataStoreRuntime,
+					factory.attributes,
+				);
+				const dir1 = testDirectory.createSubDirectory("a");
+				const dir2 = testDirectory.createSubDirectory("b");
+				dir1.set("key3", "value3");
+				dir1.set("key4", "value2");
+				dir2.set("key5", "value3");
+				testDirectory.set("key1", "value1");
+				testDirectory.set("key2", "value2");
+				return testDirectory;
+			},
+			writeCompatible: false,
+		},
 		// Add more test scenarios as needed
 	];
 
@@ -149,11 +173,17 @@ function generateTestScenarios(): TestScenario[] {
 }
 
 function runTestScenarios(testScenarios: TestScenario[]): void {
-	for (const { name, runScenario, only = false, skip = false } of testScenarios) {
+	for (const {
+		name,
+		runScenario,
+		only = false,
+		skip = false,
+		writeCompatible = true,
+	} of testScenarios) {
 		const itFn = only ? it.only : skip ? it.skip : it;
 		itFn(name, async () => {
 			const testDirectory = runScenario();
-			const snapshotData = takeSnapshot(testDirectory);
+			const snapshotData = takeSnapshot(testDirectory, writeCompatible);
 			const secondDirectory = await loadSharedDirectory("B", snapshotData);
 			assertEquivalentDirectories(testDirectory, secondDirectory);
 		});
