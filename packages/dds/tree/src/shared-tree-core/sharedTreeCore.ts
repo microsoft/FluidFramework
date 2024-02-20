@@ -163,7 +163,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			options,
 		);
 
-		this.commitEnricher = new CommitEnricher(changeFamily, mintRevisionTag, checkoutFactory);
+		this.commitEnricher = new CommitEnricher(changeFamily, checkoutFactory);
 	}
 
 	// TODO: SharedObject's merging of the two summary methods into summarizeCore is not what we want here:
@@ -254,6 +254,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		const contents: unknown = this.serializer.decode(message.contents);
 		// Empty context object is passed in, as our decode function is schema-agnostic.
 		const { commit, sessionId } = this.messageCodec.decode(contents, {});
+		this.commitEnricher.commitSequenced(local);
 		this.editManager.addSequencedChange(
 			{ ...commit, sessionId },
 			brand(message.sequenceNumber),

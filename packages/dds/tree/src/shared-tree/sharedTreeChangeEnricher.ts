@@ -58,7 +58,7 @@ export class SharedTreeChangeEnricher implements ChangeEnricherCheckout<SharedTr
 		);
 	}
 
-	public applyTipChange(change: SharedTreeChange, revision: RevisionTag): void {
+	public applyTipChange(change: SharedTreeChange, revision?: RevisionTag): void {
 		for (const dataOrSchemaChange of change.changes) {
 			if (dataOrSchemaChange.type === "data") {
 				const delta = intoDelta(tagChange(dataOrSchemaChange.innerChange, revision));
