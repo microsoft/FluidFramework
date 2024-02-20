@@ -45,4 +45,9 @@ export {
 	TinyliciousModelLoader,
 	IModelContainerRuntimeEntryPoint,
 } from "./modelLoader/index.js";
-export { MountableView } from "./mountableView/index.js";
+export {
+	type IFluidMountableView,
+	type IFluidMountableViewClass,
+	type IProvideFluidMountableView,
+	MountableView,
+} from "./mountableView/index.js";

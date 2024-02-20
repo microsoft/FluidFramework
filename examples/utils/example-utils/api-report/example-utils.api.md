@@ -19,7 +19,6 @@ import type { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidCodeDetails } from '@fluidframework/container-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidModuleWithDetails } from '@fluidframework/container-definitions';
-import { IFluidMountableView } from '@fluidframework/view-interfaces';
 import { ILoaderProps } from '@fluidframework/container-loader';
 import type { IRequest } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions';
@@ -44,6 +43,22 @@ export function getDataStoreEntryPoint<T>(containerRuntime: IContainerRuntime, a
 export interface IDetachedModel<ModelType> {
     attach: () => Promise<string>;
     model: ModelType;
+}
+
+// @internal (undocumented)
+export const IFluidMountableView: keyof IProvideFluidMountableView;
+
+// @internal
+export interface IFluidMountableView extends IProvideFluidMountableView {
+    mount(container: HTMLElement): void;
+    unmount(): void;
+}
+
+// @internal
+export interface IFluidMountableViewClass {
+    // (undocumented)
+    new (view: FluidObject): IFluidMountableView;
+    canMount(view: FluidObject): boolean;
 }
 
 // @internal (undocumented)
@@ -120,6 +135,12 @@ export interface IModelLoader<ModelType> {
     loadExisting(id: string): Promise<ModelType>;
     loadExistingPaused(id: string, sequenceNumber: number): Promise<ModelType>;
     supportsVersion(version: string): Promise<boolean>;
+}
+
+// @internal (undocumented)
+export interface IProvideFluidMountableView {
+    // (undocumented)
+    readonly IFluidMountableView: IFluidMountableView;
 }
 
 // @internal (undocumented)
@@ -248,7 +269,6 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 // @internal
 export class MountableView implements IFluidMountableView {
     constructor(view: FluidObject);
-    // (undocumented)
     static canMount(view: FluidObject): boolean;
     // (undocumented)
     get IFluidMountableView(): MountableView;

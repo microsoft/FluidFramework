@@ -4,9 +4,9 @@
  */
 
 import { FluidObject } from "@fluidframework/core-interfaces";
-import { IFluidMountableView } from "@fluidframework/view-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import { IFluidMountableView } from "./interface";
 
 /**
  * Abstracts mounting of views for usage outside of their bundle.  Supports React elements.
@@ -22,7 +22,7 @@ export class MountableView implements IFluidMountableView {
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/view-interfaces#IFluidMountableViewClass.canMount}
+	 * {@inheritDoc IFluidMountableViewClass.canMount}
 	 */
 	public static canMount(view: FluidObject): boolean {
 		return React.isValidElement(view);
@@ -43,7 +43,7 @@ export class MountableView implements IFluidMountableView {
 	private readonly view: FluidObject;
 
 	/**
-	 * {@inheritDoc @fluidframework/view-interfaces#IFluidMountableViewClass.new}
+	 * {@inheritDoc IFluidMountableViewClass.new}
 	 */
 	constructor(view: FluidObject) {
 		if (!MountableView.canMount(view)) {
@@ -53,7 +53,7 @@ export class MountableView implements IFluidMountableView {
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/view-interfaces#IFluidMountableView.mount}
+	 * {@inheritDoc IFluidMountableView.mount}
 	 */
 	public mount(container: HTMLElement): void {
 		if (this.containerElement !== undefined) {
@@ -77,7 +77,7 @@ export class MountableView implements IFluidMountableView {
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/view-interfaces#IFluidMountableView.unmount}
+	 * {@inheritDoc IFluidMountableView.unmount}
 	 */
 	public unmount(): void {
 		// Do nothing if we are already unmounted.
