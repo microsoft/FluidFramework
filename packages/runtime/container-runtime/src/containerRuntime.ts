@@ -1188,7 +1188,7 @@ export class ContainerRuntime
 	private readonly loadedFromVersionId: string | undefined;
 
 	/**
-	 * It a cache for holding mapping for groupIds with its snapshot from the service.
+	 * It a cache for holding mapping for loading groupIds with its snapshot from the service.
 	 */
 	private readonly snapshotCacheForLoadingGroupIds = new PromiseCache<string, ISnapshot>();
 

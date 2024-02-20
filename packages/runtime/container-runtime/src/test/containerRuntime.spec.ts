@@ -13,7 +13,6 @@ import {
 } from "@fluidframework/container-definitions";
 import {
 	ISequencedDocumentMessage,
-	// ISnapshotTree,
 	ISummaryTree,
 	MessageType,
 	type ISnapshotTree,
