@@ -15,7 +15,7 @@ import { strict as assert } from "node:assert";
 import sinon from "sinon";
 import { v4 as uuid } from "uuid";
 import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/core-interfaces";
-import { TelemetryDataTag, TelemetryLogger, TaggedLoggerAdapter } from "../logger";
+import { TelemetryDataTag, TelemetryLogger, TaggedLoggerAdapter } from "../logger.js";
 import {
 	LoggingError,
 	isTaggedTelemetryPropertyValue,
@@ -25,14 +25,14 @@ import {
 	wrapErrorAndLog,
 	extractLogSafeErrorProperties,
 	isExternalError,
-} from "../errorLogging";
+} from "../errorLogging.js";
 import {
 	hasErrorInstanceId,
 	IFluidErrorBase,
 	isFluidError,
 	isValidLegacyError,
-} from "../fluidErrorBase";
-import { MockLogger } from "../mockLogger";
+} from "../fluidErrorBase.js";
+import { MockLogger } from "../mockLogger.js";
 
 describe("Error Logging", () => {
 	describe("TelemetryLogger.prepareErrorObject", () => {
