@@ -18,7 +18,12 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { assert } from "@fluidframework/core-utils";
 import { IResolvedUrl, ISnapshot } from "@fluidframework/driver-definitions";
-import { ContainerStorageAdapter, ISerializableBlobContents } from "./containerStorageAdapter";
+import { isInstanceOfISnapshot } from "@fluidframework/driver-utils";
+import {
+	ContainerStorageAdapter,
+	ISerializableBlobContents,
+	getBlobContentsFromTree,
+} from "./containerStorageAdapter";
 import { IPendingContainerState } from "./container";
 
 export class containerStateManager {
@@ -35,8 +40,15 @@ export class containerStateManager {
 	private resolvedUrl: IResolvedUrl | undefined;
 	private runtime: IRuntime | undefined;
 	private readonly storageAdapter: ContainerStorageAdapter;
+	private readonly isInteractiveClient: boolean;
 
-	constructor(subLogger: ITelemetryLoggerExt, clientId, offlineLoadEnabled, storageAdapter) {
+	constructor(
+		subLogger: ITelemetryLoggerExt,
+		clientId,
+		offlineLoadEnabled,
+		storageAdapter,
+		isInteractiveClient,
+	) {
 		this.clientId = clientId;
 		this.offlineLoadEnabled = offlineLoadEnabled;
 		this.mc = createChildMonitoringContext({
@@ -44,6 +56,7 @@ export class containerStateManager {
 			namespace: "ContainerStateManager",
 		});
 		this.storageAdapter = storageAdapter;
+		this.isInteractiveClient = isInteractiveClient;
 	}
 
 	public addSavedOp(message: ISequencedDocumentMessage) {
@@ -82,6 +95,34 @@ export class containerStateManager {
 			this.mc.logger.sendErrorEvent({ eventName: "getSnapshotTreeFailed", id: version.id });
 		}
 		return { snapshot, version };
+	}
+
+	public async fetchSnapshotEnhanced(
+		pendingLocalState: IPendingContainerState | undefined,
+		specifiedVersion: string | undefined,
+		supportGetSnapshotApi: boolean | undefined,
+	) {
+		const { snapshot, version } =
+			pendingLocalState === undefined
+				? await this.fetchSnapshot(specifiedVersion, supportGetSnapshotApi)
+				: { snapshot: pendingLocalState.baseSnapshot, version: undefined };
+		const snapshotTree: ISnapshotTree | undefined = isInstanceOfISnapshot(snapshot)
+			? snapshot.snapshotTree
+			: snapshot;
+		if (pendingLocalState) {
+			this.snapshot = {
+				tree: pendingLocalState.baseSnapshot,
+				blobs: pendingLocalState.snapshotBlobs,
+			};
+		} else {
+			assert(snapshotTree !== undefined, "Snapshot should exist");
+			// non-interactive clients will not have any pending state we want to save
+			if (this.offlineLoadEnabled && this.isInteractiveClient) {
+				const blobs = await getBlobContentsFromTree(snapshotTree, this.storageAdapter);
+				this.snapshot = { tree: snapshotTree, blobs };
+			}
+		}
+		return { snapshotTree, version };
 	}
 
 	public async fetchSnapshot(

@@ -979,6 +979,7 @@ export class Container
 			this._clientId,
 			this.offlineLoadEnabled,
 			this.storageAdapter,
+			this.isInteractiveClient,
 		);
 
 		const isDomAvailable =
@@ -1198,19 +1199,15 @@ export class Container
 					this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
 					0x0d2 /* "resolved url should be valid Fluid url" */,
 				);
-				// assert(this.attachmentData.snapshot !== undefined, 0x5d5 /* no base data */);
 				assert(this.containerStateManager.snapshot !== undefined, 0x5d5 /* no base data */);
 
 				const pendingRuntimeState = await this.runtime.getPendingLocalState(props);
 				const pendingState: IPendingContainerState = {
 					pendingRuntimeState,
-					// baseSnapshot: this.attachmentData.snapshot.tree,
-					// snapshotBlobs: this.attachmentData.snapshot.blobs,
 					baseSnapshot: this.containerStateManager.snapshot.tree,
 					snapshotBlobs: this.containerStateManager.snapshot.blobs,
 					savedOps: this.containerStateManager.getSavedOps(),
 					url: this.resolvedUrl.url,
-					// no need to save this if there is no pending runtime state
 					clientId: pendingRuntimeState !== undefined ? this.clientId : undefined,
 				};
 
@@ -1557,11 +1554,6 @@ export class Container
 		return true;
 	}
 
-	// private async getVersion(version: string | null): Promise<IVersion | undefined> {
-	// 	const versions = await this.storageAdapter.getVersions(version, 1);
-	// 	return versions[0];
-	// }
-
 	private connectToDeltaStream(args: IConnectionArgs) {
 		// All agents need "write" access, including summarizer.
 		if (!this._canReconnect || !this.client.details.capabilities.interactive) {
@@ -1767,7 +1759,7 @@ export class Container
 			snapshotTree,
 			// give runtime a dummy value so it knows we're loading from a stash blob
 			pendingLocalState ? pendingLocalState?.pendingRuntimeState ?? {} : undefined,
-			isInstanceOfISnapshot(snapshot) ? snapshot : undefined,
+			isInstanceOfISnapshot(snapshotTree) ? snapshotTree : undefined,
 		);
 
 		// replay saved ops
@@ -2441,60 +2433,6 @@ export class Container
 			this.runtime.processSignal(message, local);
 		}
 	}
-
-	// /**
-	//  * Get the most recent snapshot, or a specific version.
-	//  * @param specifiedVersion - The specific version of the snapshot to retrieve
-	//  * @returns The snapshot requested, or the latest snapshot if no version was specified, plus version ID
-	//  */
-	// private async fetchSnapshotTree(
-	// 	specifiedVersion: string | undefined,
-	// ): Promise<{ snapshot?: ISnapshotTree; versionId?: string }> {
-	// 	const version = await this.getVersion(specifiedVersion ?? null);
-
-	// 	if (version === undefined && specifiedVersion !== undefined) {
-	// 		// We should have a defined version to load from if specified version requested
-	// 		this.mc.logger.sendErrorEvent({
-	// 			eventName: "NoVersionFoundWhenSpecified",
-	// 			id: specifiedVersion,
-	// 		});
-	// 	}
-	// 	this._loadedFromVersion = version;
-	// 	const snapshot = (await this.storageAdapter.getSnapshotTree(version)) ?? undefined;
-
-	// 	if (snapshot === undefined && version !== undefined) {
-	// 		this.mc.logger.sendErrorEvent({ eventName: "getSnapshotTreeFailed", id: version.id });
-	// 	}
-	// 	return { snapshot, versionId: version?.id };
-	// }
-
-	// private async fetchSnapshot(
-	// 	specifiedVersion: string | undefined,
-	// ): Promise<{ snapshot?: ISnapshot | ISnapshotTree; versionId?: string }> {
-	// 	if (
-	// 		this.mc.config.getBoolean("Fluid.Container.FetchSnapshotUsingGetSnapshotApi") ===
-	// 			true &&
-	// 		this.service?.policies?.supportGetSnapshotApi === true
-	// 	) {
-	// 		const snapshot = await this.storageAdapter.getSnapshot({
-	// 			versionId: specifiedVersion,
-	// 		});
-	// 		const version: IVersion = {
-	// 			id: snapshot.snapshotTree.id ?? "",
-	// 			treeId: snapshot.snapshotTree.id ?? "",
-	// 		};
-	// 		this._loadedFromVersion = version;
-
-	// 		if (snapshot === undefined && specifiedVersion !== undefined) {
-	// 			this.mc.logger.sendErrorEvent({
-	// 				eventName: "getSnapshotTreeFailed",
-	// 				id: version.id,
-	// 			});
-	// 		}
-	// 		return { snapshot, versionId: version.id };
-	// 	}
-	// 	return this.fetchSnapshotTree(specifiedVersion);
-	// }
 
 	private async instantiateRuntime(
 		codeDetails: IFluidCodeDetails,
