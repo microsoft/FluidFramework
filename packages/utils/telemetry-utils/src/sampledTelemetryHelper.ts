@@ -10,7 +10,7 @@ import {
 	IDisposable,
 } from "@fluidframework/core-interfaces";
 import { performance } from "@fluid-internal/client-utils";
-import { ITelemetryLoggerExt } from "./telemetryTypes";
+import { ITelemetryLoggerExt } from "./telemetryTypes.js";
 
 /**
  * @privateRemarks

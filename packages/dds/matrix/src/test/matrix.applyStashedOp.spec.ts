@@ -19,11 +19,12 @@ async function createMatrixForReconnection(
 	id: string,
 	runtimeFactory: MockContainerRuntimeFactoryForReconnection,
 	summary?: ISummaryTree,
-	overrides?: { minimumSequenceNumber?: number },
+	overrides?: { minimumSequenceNumber?: number; trackRemoteOps?: true },
 ): Promise<{
 	matrix: SharedMatrix;
 	containerRuntime: MockContainerRuntimeForReconnection;
 	deltaConnection: MockDeltaConnection;
+	dataStoreRuntime: MockFluidDataStoreRuntime;
 }> {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime, overrides);
@@ -39,7 +40,12 @@ async function createMatrixForReconnection(
 	} else {
 		matrix.connect(services);
 	}
-	return { matrix, containerRuntime, deltaConnection: services.deltaConnection };
+	return {
+		matrix,
+		containerRuntime,
+		deltaConnection: services.deltaConnection,
+		dataStoreRuntime,
+	};
 }
 
 function spyOnContainerRuntimeMessages(runtime: MockContainerRuntimeForReconnection): {
@@ -73,16 +79,23 @@ function spyOnContainerRuntimeMessages(runtime: MockContainerRuntimeForReconnect
 describe("Matrix applyStashedOp", () => {
 	it("Can rehydrate a session with stashed ops", async () => {
 		const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
-		const { matrix: matrix1, containerRuntime: containerRuntime1 } =
-			await createMatrixForReconnection("A", containerRuntimeFactory);
+		const {
+			matrix: matrix1,
+			containerRuntime: containerRuntime1,
+			dataStoreRuntime: dataStoreRuntime1,
+		} = await createMatrixForReconnection("A", containerRuntimeFactory, undefined, {
+			trackRemoteOps: true,
+		});
+		const { summary } = await matrix1.summarize();
 		const { matrix: matrix2, containerRuntime: containerRuntime2 } =
-			await createMatrixForReconnection("B", containerRuntimeFactory);
+			await createMatrixForReconnection("B", containerRuntimeFactory, summary, {
+				minimumSequenceNumber: dataStoreRuntime1.deltaManager.minimumSequenceNumber,
+			});
 
 		matrix1.insertRows(0, 2);
 		matrix2.insertCols(0, 2);
 		containerRuntimeFactory.processAllMessages();
-		const { summary } = await matrix2.summarize();
-		const minimumSequenceNumber = containerRuntimeFactory.sequenceNumber;
+		const minimumSequenceNumber = dataStoreRuntime1.deltaManager.minimumSequenceNumber;
 
 		const { submittedContent } = spyOnContainerRuntimeMessages(containerRuntime1);
 		const { processedMessages } = spyOnContainerRuntimeMessages(containerRuntime2);
@@ -93,7 +106,10 @@ describe("Matrix applyStashedOp", () => {
 		matrix2.setCell(1, 0, "Applied via matrix2");
 		containerRuntimeFactory.processAllMessages();
 
-		const { matrix: matrix3, deltaConnection } = await createMatrixForReconnection(
+		assert.equal(submittedContent.length, 1);
+		assert.equal(processedMessages.length, 1);
+
+		const { matrix: matrix3, containerRuntime } = await createMatrixForReconnection(
 			"C",
 			containerRuntimeFactory,
 			summary,
@@ -102,14 +118,7 @@ describe("Matrix applyStashedOp", () => {
 			},
 		);
 
-		assert.equal(submittedContent.length, 1);
-		assert.equal(processedMessages.length, 1);
-
-		const matrix1OpContent = submittedContent[0];
-		// Simulate applyStashedOp flow
-		const localOpMetadata = deltaConnection.handler?.applyStashedOp(matrix1OpContent);
-		deltaConnection.process(processedMessages[0], false, undefined);
-		deltaConnection.reSubmit(matrix1OpContent, localOpMetadata);
+		await containerRuntime.initializeWithStashedOps(containerRuntime1);
 
 		matrix3.setCell(0, 1, "Originally submitted by matrix3, applied via matrix3");
 		containerRuntimeFactory.processAllMessages();

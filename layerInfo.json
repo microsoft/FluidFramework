@@ -99,17 +99,6 @@
 				],
 				"deps": ["Framework-Utils", "Loader", "Runtime", "Client-Utils"]
 			},
-			"ServiceClients": {
-				"packages": ["@fluidframework/tinylicious-client"],
-				"deps": [
-					"Framework",
-					"Loader",
-					"Routerlicious-Driver",
-					"Server-Libs",
-					"Server-Shared-Utils",
-					"Test-Utils"
-				]
-			},
 			"Examples": {
 				"dot": false,
 				"dev": true,
@@ -125,6 +114,7 @@
 				"packages": [
 					"@fluidframework/build-common",
 					"@fluidframework/eslint-config-fluid",
+					"@fluid-internal/eslint-plugin-fluid",
 					"@fluid-tools/benchmark"
 				]
 			},
@@ -147,8 +137,20 @@
 					"@fluid-private/stochastic-test-utils",
 					"@fluid-private/test-dds-utils",
 					"@fluidframework/local-driver",
-					"@fluidframework/test-runtime-utils",
-					"@fluid-tools/webpack-fluid-loader"
+					"@fluidframework/test-runtime-utils"
+				]
+			},
+			"ServiceClients": {
+				"dirs": ["packages/service-clients/"],
+				"deps": [
+					"Container-Definitions",
+					"Driver",
+					"Framework",
+					"Runtime",
+					"Routerlicious-Driver",
+					"Loader",
+					"Server-Libs",
+					"Test-Utils"
 				]
 			},
 			"AzureClient": {
@@ -160,10 +162,6 @@
 					"Routerlicious-Driver",
 					"Server-Shared-Utils"
 				]
-			},
-			"OdspClient": {
-				"dirs": ["packages/service-clients/odsp-client"],
-				"deps": ["Container-Definitions", "Framework", "Driver"]
 			},
 			"UberPackage": {
 				"packages": ["fluid-framework"],
@@ -179,7 +177,7 @@
 			},
 			"Azure-Examples": {
 				"packages": ["@fluid-example/app-integration-external-controller"],
-				"deps": ["UberPackage", "AzureClient", "ServiceClients"]
+				"deps": ["UberPackage", "ServiceClients"]
 			}
 		}
 	},

@@ -1,0 +1,150 @@
+{
+	"name": "@fluid-example/webpack-fluid-loader",
+	"version": "2.0.0-rc.2.0.0",
+	"private": true,
+	"description": "Fluid object loader for webpack-dev-server",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "examples/utils/webpack-fluid-loader"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
+	"main": "dist/index.js",
+	"module": "lib/index.mjs",
+	"browser": {
+		"moniker": "@fluidframework/server-services-client/dist/generateNames.js"
+	},
+	"types": "dist/index.d.ts",
+	"scripts": {
+		"build": "fluid-build . --task build",
+		"build:commonjs": "fluid-build . --task commonjs",
+		"build:compile": "fluid-build . --task compile",
+		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
+		"build:test": "tsc --project ./src/test/tsconfig.json",
+		"build:webpack": "npm run webpack",
+		"check:are-the-types-wrong": "attw --pack",
+		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
+		"eslint": "eslint --format stylish src",
+		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+		"format": "npm run prettier:fix",
+		"lint": "npm run prettier && npm run eslint",
+		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
+		"prepack": "npm run webpack",
+		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
+		"test": "npm run test:mocha",
+		"test:coverage": "c8 npm test",
+		"test:mocha": "mocha --ignore \"dist/test/types/*\" --recursive dist/test --exit -r node_modules/@fluidframework/mocha-test-setup",
+		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
+		"tsc": "tsc",
+		"typetests:gen": "fluid-type-test-generator",
+		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize",
+		"webpack": "webpack --color --config webpack.config.cjs"
+	},
+	"c8": {
+		"all": true,
+		"cache-dir": "nyc/.cache",
+		"exclude": [
+			"src/test/**/*.*ts",
+			"dist/test/**/*.*js"
+		],
+		"exclude-after-remap": false,
+		"include": [
+			"src/**/*.*ts",
+			"dist/**/*.*js"
+		],
+		"report-dir": "nyc/report",
+		"reporter": [
+			"cobertura",
+			"html",
+			"text"
+		],
+		"temp-directory": "nyc/.nyc_output"
+	},
+	"dependencies": {
+		"@fluidframework/container-definitions": "workspace:~",
+		"@fluidframework/container-loader": "workspace:~",
+		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/core-utils": "workspace:~",
+		"@fluidframework/driver-definitions": "workspace:~",
+		"@fluidframework/driver-utils": "workspace:~",
+		"@fluidframework/local-driver": "workspace:~",
+		"@fluidframework/odsp-doclib-utils": "workspace:~",
+		"@fluidframework/odsp-driver": "workspace:~",
+		"@fluidframework/odsp-driver-definitions": "workspace:~",
+		"@fluidframework/protocol-definitions": "^3.2.0-231454",
+		"@fluidframework/routerlicious-driver": "workspace:~",
+		"@fluidframework/runtime-utils": "workspace:~",
+		"@fluidframework/server-local-server": "^3.1.0-231702",
+		"@fluidframework/telemetry-utils": "workspace:~",
+		"@fluidframework/test-runtime-utils": "workspace:~",
+		"@fluidframework/tool-utils": "workspace:~",
+		"@fluidframework/view-interfaces": "workspace:~",
+		"axios": "^1.6.2",
+		"buffer": "^6.0.3",
+		"express": "^4.16.3",
+		"isomorphic-fetch": "^3.0.0",
+		"nconf": "^0.12.0",
+		"sillyname": "^0.1.0",
+		"uuid": "^9.0.0",
+		"webpack-dev-server": "~4.6.0"
+	},
+	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.13.3",
+		"@fluid-tools/build-cli": "^0.33.0",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools": "^0.33.0",
+		"@fluidframework/eslint-config-fluid": "^3.5.0",
+		"@fluidframework/mocha-test-setup": "workspace:~",
+		"@types/express": "^4.11.0",
+		"@types/fs-extra": "^9.0.11",
+		"@types/mocha": "^9.1.1",
+		"@types/node": "^18.19.0",
+		"@types/uuid": "^9.0.2",
+		"c8": "^8.0.1",
+		"cross-env": "^7.0.3",
+		"eslint": "~8.50.0",
+		"fs-extra": "^9.1.0",
+		"mocha": "^10.2.0",
+		"mocha-json-output-reporter": "^2.0.1",
+		"mocha-multi-reporters": "^1.5.1",
+		"moment": "^2.21.0",
+		"prettier": "~3.0.3",
+		"rimraf": "^4.4.0",
+		"source-map-loader": "^2.0.0",
+		"ts-loader": "^9.3.0",
+		"tsc-multi": "^1.1.0",
+		"typescript": "~5.1.6",
+		"webpack": "^5.82.0",
+		"webpack-cli": "^4.9.2"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"compile": {
+				"dependsOn": [
+					"...",
+					"webpack"
+				],
+				"script": false
+			}
+		}
+	},
+	"typeValidation": {
+		"broken": {},
+		"disabled": true
+	}
+}
