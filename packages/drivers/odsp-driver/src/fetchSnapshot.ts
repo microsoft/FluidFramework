@@ -89,9 +89,7 @@ export async function fetchSnapshot(
 	logger: ITelemetryLoggerExt,
 	snapshotDownloader: (
 		url: string,
-		// TODO: use a stronger type
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		fetchOptions: { [index: string]: any },
+		fetchOptions: { [index: string]: unknown },
 	) => Promise<IOdspResponse<unknown>>,
 ): Promise<ISnapshot> {
 	const path = `/trees/${versionId}`;
