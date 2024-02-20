@@ -31,19 +31,9 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import {
-	IIdCompressor,
-	IIdCompressorCore,
-	IdCreationRange,
-	OpSpaceCompressedId,
-	SerializedIdCompressor,
-	SerializedIdCompressorWithNoSession,
-	SerializedIdCompressorWithOngoingSession,
-	SessionId,
-	SessionSpaceCompressedId,
-	StableId,
-	createIdCompressor,
-} from "@fluidframework/id-compressor";
+import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
+// eslint-disable-next-line import/no-internal-modules
+import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/dist/test";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import {
 	ISharedTree,
@@ -1109,55 +1099,9 @@ export function createTestUndoRedoStacks(
 	return { undoStack, redoStack, unsubscribe };
 }
 
-/**
- * Mock IdCompressor for testing that returns an incrementing ID.
- * Should not be used for tests that have multiple clients as doing so will generate
- * duplicate IDs that collide.
- */
-export class MockIdCompressor implements IIdCompressor, IIdCompressorCore {
-	private count = 0;
-	public localSessionId: SessionId = "MockLocalSessionId" as SessionId;
-
-	public serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
-	public serialize(withSession: false): SerializedIdCompressorWithNoSession;
-	public serialize(hasLocalState: boolean): SerializedIdCompressor {
-		throw new Error("Method not implemented.");
-	}
-
-	public takeNextCreationRange(): IdCreationRange {
-		return undefined as unknown as IdCreationRange;
-	}
-	public finalizeCreationRange(range: IdCreationRange): void {
-		throw new Error("Method not implemented.");
-	}
-
-	public generateCompressedId(): SessionSpaceCompressedId {
-		return this.count++ as SessionSpaceCompressedId;
-	}
-	public normalizeToOpSpace(id: SessionSpaceCompressedId): OpSpaceCompressedId {
-		return id as unknown as OpSpaceCompressedId;
-	}
-	public normalizeToSessionSpace(
-		id: OpSpaceCompressedId,
-		originSessionId: SessionId,
-	): SessionSpaceCompressedId {
-		return id as unknown as SessionSpaceCompressedId;
-	}
-	public decompress(id: SessionSpaceCompressedId): StableId {
-		throw new Error("Method not implemented.");
-	}
-	public recompress(uncompressed: StableId): SessionSpaceCompressedId {
-		throw new Error("Method not implemented.");
-	}
-	public tryRecompress(uncompressed: StableId): SessionSpaceCompressedId | undefined {
-		throw new Error("Method not implemented.");
-	}
-	public beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void) {
-		throw new Error("Method not implemented.");
-	}
-}
-
-export const testIdCompressor = createIdCompressor();
+export const testIdCompressor = createAlwaysFinalizedIdCompressor(
+	"00000000-0000-4000-b000-000000000000" as SessionId,
+);
 export function mintRevisionTag(): RevisionTag {
 	return testIdCompressor.generateCompressedId();
 }

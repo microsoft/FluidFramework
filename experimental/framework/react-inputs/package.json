@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/react-inputs",
-	"version": "2.0.0-rc.1.0.0",
+	"version": "2.0.0-rc.2.0.0",
 	"description": "React support for the Aqueduct framework.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -40,10 +40,10 @@
 		"react": "^17.0.1"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.29.0",
+		"@fluid-tools/build-cli": "^0.33.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.29.0",
-		"@fluidframework/eslint-config-fluid": "^3.3.0",
+		"@fluidframework/build-tools": "^0.33.0",
+		"@fluidframework/eslint-config-fluid": "^3.5.0",
 		"@microsoft/api-extractor": "^7.39.1",
 		"@types/node": "^18.19.0",
 		"@types/react": "^17.0.44",

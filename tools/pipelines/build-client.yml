@@ -71,7 +71,6 @@ trigger:
     - pnpm-lock.yaml
     - pnpm-workspace.yaml
     - tools/pipelines/build-client.yml
-    - tools/pipelines/build-azure.yml
     - tools/pipelines/templates/1ES/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -105,7 +104,6 @@ pr:
     - pnpm-workspace.yaml
     - fluidBuild.config.cjs
     - tools/pipelines/build-client.yml
-    - tools/pipelines/build-azure.yml
     - tools/pipelines/templates/1ES/build-npm-package.yml
     - tools/pipelines/templates/1ES/include-policy-check.yml
     - tools/pipelines/templates/include-set-package-version.yml
@@ -188,5 +186,5 @@ extends:
       displayName: Publish Artifact - Devtools Browser Extension
       inputs:
         targetPath: './packages/tools/devtools/devtools-browser-extension/dist/bundle/'
-        artifactName: 'devtools-extension-bundle'
+        artifactName: 'devtools-extension-bundle_attempt-$(System.JobAttempt)'
         publishLocation: 'pipeline'

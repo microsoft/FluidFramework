@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { UsageError } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
@@ -65,8 +65,6 @@ interface IDirectoryMessageHandler {
 	 * @param localOpMetadata - The metadata to be submitted with the message.
 	 */
 	submit(op: IDirectoryOperation, localOpMetadata: unknown): void;
-
-	applyStashedOp(op: IDirectoryOperation): unknown;
 }
 
 /**
@@ -433,6 +431,10 @@ class DirectoryCreationTracker {
 		}, keys);
 		return keys;
 	}
+
+	public get size(): number {
+		return this.keyToIndex.size;
+	}
 }
 
 /**
@@ -498,6 +500,7 @@ export class SharedDirectory
 		this.runtime,
 		this.serializer,
 		posix.sep,
+		this.logger,
 	);
 
 	/**
@@ -810,6 +813,7 @@ export class SharedDirectory
 							this.runtime,
 							this.serializer,
 							posix.join(currentSubDir.absolutePath, subdirName),
+							this.logger,
 						);
 						currentSubDir.populateSubDirectory(subdirName, newSubDir);
 						// Record the newly inserted subdirectory to the creation tracker
@@ -944,12 +948,6 @@ export class SharedDirectory
 					subdir.resubmitClearMessage(op, localOpMetadata);
 				}
 			},
-			applyStashedOp: (op: IDirectoryClearOperation): IClearLocalOpMetadata | undefined => {
-				const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
-				if (subdir) {
-					return subdir.applyStashedClearMessage(op);
-				}
-			},
 		});
 		this.messageHandlers.set("delete", {
 			process: (
@@ -969,14 +967,6 @@ export class SharedDirectory
 				const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
 				if (subdir) {
 					subdir.resubmitKeyMessage(op, localOpMetadata);
-				}
-			},
-			applyStashedOp: (
-				op: IDirectoryDeleteOperation,
-			): IKeyEditLocalOpMetadata | undefined => {
-				const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
-				if (subdir) {
-					return subdir.applyStashedDeleteMessage(op);
 				}
 			},
 		});
@@ -999,13 +989,6 @@ export class SharedDirectory
 				const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
 				if (subdir) {
 					subdir.resubmitKeyMessage(op, localOpMetadata);
-				}
-			},
-			applyStashedOp: (op: IDirectorySetOperation): IKeyEditLocalOpMetadata | undefined => {
-				const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
-				if (subdir) {
-					const context = this.makeLocal(op.key, op.path, op.value);
-					return subdir.applyStashedSetMessage(op, context);
 				}
 			},
 		});
@@ -1031,14 +1014,6 @@ export class SharedDirectory
 					parentSubdir.resubmitSubDirectoryMessage(op, localOpMetadata);
 				}
 			},
-			applyStashedOp: (
-				op: IDirectoryCreateSubDirectoryOperation,
-			): ICreateSubDirLocalOpMetadata | undefined => {
-				const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
-				if (parentSubdir) {
-					return parentSubdir.applyStashedCreateSubDirMessage(op);
-				}
-			},
 		});
 
 		this.messageHandlers.set("deleteSubDirectory", {
@@ -1062,26 +1037,43 @@ export class SharedDirectory
 					parentSubdir.resubmitSubDirectoryMessage(op, localOpMetadata);
 				}
 			},
-			applyStashedOp: (
-				op: IDirectoryDeleteSubDirectoryOperation,
-			): IDeleteSubDirLocalOpMetadata | undefined => {
-				const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
-				if (parentSubdir) {
-					return parentSubdir.applyStashedDeleteSubDirMessage(op);
-				}
-			},
 		});
 	}
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 */
-	protected applyStashedOp(op: unknown): unknown {
-		const handler = this.messageHandlers.get((op as IDirectoryOperation).type);
-		if (handler === undefined) {
-			throw new Error("no apply stashed op handler");
+	protected applyStashedOp(op: unknown): void {
+		const directoryOp = op as IDirectoryOperation;
+		const dir = this.getWorkingDirectory(directoryOp.path);
+		switch (directoryOp.type) {
+			case "clear": {
+				dir?.clear();
+				break;
+			}
+			case "createSubDirectory": {
+				dir?.createSubDirectory(directoryOp.subdirName);
+				break;
+			}
+			case "delete": {
+				dir?.delete(directoryOp.key);
+				break;
+			}
+			case "deleteSubDirectory": {
+				dir?.deleteSubDirectory(directoryOp.subdirName);
+				break;
+			}
+			case "set": {
+				dir?.set(
+					directoryOp.key,
+					this.localValueMaker.fromSerializable(directoryOp.value).value,
+				);
+				break;
+			}
+			default: {
+				unreachableCase(directoryOp);
+			}
 		}
-		return handler.applyStashedOp(op as IDirectoryOperation);
 	}
 
 	private serializeDirectory(
@@ -1220,6 +1212,8 @@ function assertNonNullClientId(clientId: string | null): asserts clientId is str
 	assert(clientId !== null, 0x6af /* client id should never be null */);
 }
 
+let hasLoggedDirectoryInconsistency = false;
+
 /**
  * Node of the directory tree.
  * @sealed
@@ -1310,6 +1304,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		private readonly runtime: IFluidDataStoreRuntime,
 		private readonly serializer: IFluidSerializer,
 		public readonly absolutePath: string,
+		private readonly logger: ITelemetryLoggerExt,
 	) {
 		super();
 		this.localCreationSeqTracker = new DirectoryCreationTracker();
@@ -1513,10 +1508,24 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 		const subdirNames = [...ackedSubdirsInOrder, ...localSubdirsInOrder];
 
-		assert(
-			subdirNames.length === this._subdirectories.size,
-			0x85c /* The count of keys for iteration should be consistent with the size of actual data */,
-		);
+		if (subdirNames.length !== this._subdirectories.size) {
+			// TODO: AB#7022: Hitting this block indicates that the eventual consistency scheme for ordering subdirectories
+			// has failed. Fall back to previous directory behavior, which didn't guarantee ordering.
+			// It's not currently clear how to reach this state, so log some diagnostics to help understand the issue.
+			// This whole block should eventually be replaced by an assert that the two sizes align.
+			if (!hasLoggedDirectoryInconsistency) {
+				this.logger.sendTelemetryEvent({
+					eventName: "inconsistentSubdirectoryOrdering",
+					localKeyCount: this.localCreationSeqTracker.size,
+					ackedKeyCount: this.ackedCreationSeqTracker.size,
+					subdirNamesLength: subdirNames.length,
+					subdirectoriesSize: this._subdirectories.size,
+				});
+				hasLoggedDirectoryInconsistency = true;
+			}
+
+			return this._subdirectories.entries();
+		}
 
 		const entriesIterator = {
 			index: 0,
@@ -1721,25 +1730,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	}
 
 	/**
-	 * Apply clear operation locally and generate metadata
-	 * @param op - Op to apply
-	 * @returns metadata generated for stahed op
-	 */
-	public applyStashedClearMessage(op: IDirectoryClearOperation): IClearLocalOpMetadata {
-		this.throwIfDisposed();
-		const previousValue = new Map<string, ILocalValue>(this._storage);
-		this.clearExceptPendingKeys(true);
-		const pendingMsgId = ++this.pendingMessageId;
-		this.pendingClearMessageIds.push(pendingMsgId);
-		const metadata: IClearLocalOpMetadata = {
-			type: "clear",
-			pendingMessageId: pendingMsgId,
-			previousStorage: previousValue,
-		};
-		return metadata;
-	}
-
-	/**
 	 * Process a delete operation.
 	 * @param msg - The message from the server to apply.
 	 * @param op - The op to process
@@ -1764,23 +1754,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			return;
 		}
 		this.deleteCore(op.key, local);
-	}
-
-	/**
-	 * Apply delete operation locally and generate metadata
-	 * @param op - Op to apply
-	 * @returns metadata generated for stahed op
-	 */
-	public applyStashedDeleteMessage(op: IDirectoryDeleteOperation): IKeyEditLocalOpMetadata {
-		this.throwIfDisposed();
-		const previousValue = this.deleteCore(op.key, true);
-		const pendingMessageId = this.getKeyMessageId(op);
-		const localMetadata: IKeyEditLocalOpMetadata = {
-			type: "edit",
-			pendingMessageId,
-			previousValue,
-		};
-		return localMetadata;
 	}
 
 	/**
@@ -1816,28 +1789,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	}
 
 	/**
-	 * Apply set operation locally and generate metadata
-	 * @param op - Op to apply
-	 * @returns metadata generated for stahed op
-	 */
-	public applyStashedSetMessage(
-		op: IDirectorySetOperation,
-		context: ILocalValue,
-	): IKeyEditLocalOpMetadata {
-		this.throwIfDisposed();
-		// Set the value locally.
-		const previousValue = this.setCore(op.key, context, true);
-
-		// Create metadata
-		const pendingMessageId = this.getKeyMessageId(op);
-		const localMetadata: IKeyEditLocalOpMetadata = {
-			type: "edit",
-			pendingMessageId,
-			previousValue,
-		};
-		return localMetadata;
-	}
-	/**
 	 * Process a create subdirectory operation.
 	 * @param msg - The message from the server to apply.
 	 * @param op - The op to process
@@ -1871,30 +1822,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	}
 
 	/**
-	 * Apply createSubDirectory operation locally and generate metadata
-	 * @param op - Op to apply
-	 * @returns metadata generated for stahed op
-	 */
-	public applyStashedCreateSubDirMessage(
-		op: IDirectoryCreateSubDirectoryOperation,
-	): ICreateSubDirLocalOpMetadata {
-		this.throwIfDisposed();
-		// Create the sub directory locally first.
-		this.createSubDirectoryCore(
-			op.subdirName,
-			true,
-			this.getLocalSeq(),
-			this.runtime.clientId ?? "detached",
-		);
-		this.updatePendingSubDirMessageCount(op);
-
-		const localOpMetadata: ICreateSubDirLocalOpMetadata = {
-			type: "createSubDir",
-		};
-		return localOpMetadata;
-	}
-
-	/**
 	 * Process a delete subdirectory operation.
 	 * @param msg - The message from the server to apply.
 	 * @param op - The op to process
@@ -1919,24 +1846,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			return;
 		}
 		this.deleteSubDirectoryCore(op.subdirName, local);
-	}
-
-	/**
-	 * Apply deleteSubDirectory operation locally and generate metadata
-	 * @param op - Op to apply
-	 * @returns metadata generated for stahed op
-	 */
-	public applyStashedDeleteSubDirMessage(
-		op: IDirectoryDeleteSubDirectoryOperation,
-	): IDeleteSubDirLocalOpMetadata {
-		this.throwIfDisposed();
-		const subDir = this.deleteSubDirectoryCore(op.subdirName, true);
-		this.updatePendingSubDirMessageCount(op);
-		const metadata: IDeleteSubDirLocalOpMetadata = {
-			type: "deleteSubDir",
-			subDirectory: subDir,
-		};
-		return metadata;
 	}
 
 	/**
@@ -2614,6 +2523,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				this.runtime,
 				this.serializer,
 				absolutePath,
+				this.logger,
 			);
 			/**
 			 * Store the sequnce numbers of newly created subdirectory to the proper creation tracker, based

@@ -797,7 +797,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 	private disconnectHandler(reason: IConnectionStateChangeReason) {
 		this.messageBuffer.length = 0;
-		this.emit("disconnect", reason);
+		this.emit("disconnect", reason.text, reason.error);
 	}
 
 	/**

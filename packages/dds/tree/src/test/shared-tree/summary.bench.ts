@@ -15,7 +15,7 @@ import {
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import { SharedTreeFactory, TreeContent } from "../../shared-tree/index.js";
-import { MockIdCompressor, TestTreeProviderLite, schematizeFlexTree } from "../utils.js";
+import { TestTreeProviderLite, schematizeFlexTree, testIdCompressor } from "../utils.js";
 import { AllowedUpdateType } from "../../core/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import { makeDeepContent, makeWideContentWithEndValue } from "../scalableTestTrees.js";
@@ -86,7 +86,7 @@ describe("Summary benchmarks", () => {
 						objectStorage: new MockStorage(summaryTree),
 					};
 					const datastoreRuntime = new MockFluidDataStoreRuntime({
-						idCompressor: new MockIdCompressor(),
+						idCompressor: testIdCompressor,
 					});
 					await factory.load(datastoreRuntime, "test", services, factory.attributes);
 				},
