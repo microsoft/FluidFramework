@@ -99,17 +99,6 @@
 				],
 				"deps": ["Framework-Utils", "Loader", "Runtime", "Client-Utils"]
 			},
-			"TinyliciousClient": {
-				"packages": ["@fluidframework/tinylicious-client"],
-				"deps": [
-					"Framework",
-					"Loader",
-					"Routerlicious-Driver",
-					"Server-Libs",
-					"Server-Shared-Utils",
-					"Test-Utils"
-				]
-			},
 			"Examples": {
 				"dot": false,
 				"dev": true,
@@ -148,8 +137,7 @@
 					"@fluid-private/stochastic-test-utils",
 					"@fluid-private/test-dds-utils",
 					"@fluidframework/local-driver",
-					"@fluidframework/test-runtime-utils",
-					"@fluid-tools/webpack-fluid-loader"
+					"@fluidframework/test-runtime-utils"
 				]
 			},
 			"ServiceClients": {
@@ -160,7 +148,9 @@
 					"Framework",
 					"Runtime",
 					"Routerlicious-Driver",
-					"Server-Shared-Utils"
+					"Loader",
+					"Server-Libs",
+					"Test-Utils"
 				]
 			},
 			"AzureClient": {
@@ -187,7 +177,7 @@
 			},
 			"Azure-Examples": {
 				"packages": ["@fluid-example/app-integration-external-controller"],
-				"deps": ["UberPackage", "ServiceClients", "TinyliciousClient"]
+				"deps": ["UberPackage", "ServiceClients"]
 			}
 		}
 	},
