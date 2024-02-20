@@ -13,9 +13,10 @@ import {
 } from "@fluidframework/container-definitions";
 import {
 	ISequencedDocumentMessage,
-	ISnapshotTree,
+	// ISnapshotTree,
 	ISummaryTree,
 	MessageType,
+	type ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
 import {
 	FluidDataStoreRegistryEntry,
@@ -47,7 +48,6 @@ import {
 	FluidObject,
 	ConfigTypes,
 	IConfigProviderBase,
-	FluidErrorTypes,
 } from "@fluidframework/core-interfaces";
 import {
 	IDocumentStorageService,
@@ -2005,26 +2005,23 @@ describe("Runtime", () => {
 		describe("Load Partial Snapshot with datastores with GroupId", () => {
 			let snapshotWithContents: ISnapshot;
 			let blobContents: Map<string, ArrayBuffer>;
-			beforeEach(() => {
-				const snapshotTree: ISnapshotTree = {
+			let ops: ISequencedDocumentMessage[];
+			let containerRuntime: ContainerRuntime;
+			let containerContext: IContainerContext;
+			let entryDefault: FluidDataStoreRegistryEntry;
+			let snapshotTree: ISnapshotTree;
+			let missingDataStoreRuntime: MockFluidDataStoreRuntime;
+			beforeEach(async () => {
+				snapshotTree = {
 					id: "SnapshotId",
 					blobs: { ".metadata": "bARD4RKvW4LL1KmaUKp6hUMSp" },
 					trees: {
-						".protocol": {
-							blobs: {
-								attributes: "bARADgIe4qmDjJl2l2zz12IM3",
-								quorumMembers: "bARBkx1nses1pHL1vKnmFUfIC",
-								quorumProposals: "bARBkx1nses1pHL1vKnmFUfIC",
-							},
-							trees: {},
-						},
 						".channels": {
 							blobs: {},
 							trees: {
 								default: {
 									blobs: {
 										".component": "bARC6dCXlcrPxQHw3PeROtmKc",
-										"gc": "bARDNMoBed+nKrsf04id52iUA",
 									},
 									trees: {
 										".channels": {
@@ -2034,11 +2031,6 @@ describe("Runtime", () => {
 											},
 										},
 									},
-								},
-								missingDataStore: {
-									blobs: {},
-									trees: {},
-									groupId: "G1",
 								},
 							},
 							unreferenced: true,
@@ -2055,19 +2047,6 @@ describe("Runtime", () => {
 				};
 
 				blobContents = new Map<string, ArrayBuffer>([
-					[
-						"bARADgIe4qmDjJl2l2zz12IM3",
-						stringToBuffer(
-							JSON.stringify({
-								branch: "",
-								minimumSequenceNumber: 0,
-								sequenceNumber: 0,
-								term: 1,
-							}),
-							"utf8",
-						),
-					],
-					["bARBkx1nses1pHL1vKnmFUfIC", stringToBuffer(JSON.stringify([]), "utf8")],
 					[
 						"bARD4RKvW4LL1KmaUKp6hUMSp",
 						stringToBuffer(
@@ -2087,28 +2066,6 @@ describe("Runtime", () => {
 						),
 					],
 					[
-						"bARDNMoBed+nKrsf04id52iUA",
-						stringToBuffer(
-							JSON.stringify({
-								usedRoutes: [""],
-								gcData: {
-									gcNodes: {
-										"/root": [
-											"/default/01b197a2-0432-413b-b2c9-83a992b804c4",
-											"/default",
-										],
-										"/01b197a2-0432-413b-b2c9-83a992b804c4": ["/default"],
-										"/": [
-											"/default/root",
-											"/default/01b197a2-0432-413b-b2c9-83a992b804c4",
-										],
-									},
-								},
-							}),
-							"utf8",
-						),
-					],
-					[
 						"018d97818f8b519f99c418cb3c33ce5cc4e38e3f",
 						stringToBuffer(
 							JSON.parse(
@@ -2121,7 +2078,7 @@ describe("Runtime", () => {
 					],
 				]);
 
-				const ops: ISequencedDocumentMessage[] = [
+				ops = [
 					{
 						clientId: "X",
 						clientSequenceNumber: -1,
@@ -2151,7 +2108,36 @@ describe("Runtime", () => {
 					snapshotFormatV: 1,
 					latestSequenceNumber: 2,
 				};
+
+				const logger = new MockLogger();
+				containerContext = getMockContext({}, logger) as IContainerContext;
+
+				(containerContext as any).snapshotWithContents = snapshotWithContents;
+				(containerContext as any).baseSnapshot = snapshotWithContents.snapshotTree;
+				containerContext.storage.readBlob = async (id: string) => {
+					return blobContents.get(id) as ArrayBuffer;
+				};
+				missingDataStoreRuntime = new MockFluidDataStoreRuntime();
+				const entryA = createDataStoreRegistryEntry([]);
+				const entryB = createDataStoreRegistryEntry([]);
+				entryDefault = createDataStoreRegistryEntry([
+					["default", Promise.resolve(entryA)],
+					["missingDataStore", Promise.resolve(entryB)],
+				]);
+
+				logger.clear();
 			});
+
+			function createSnapshot(addMissindDatasore: boolean, setGroupId: boolean = true) {
+				if (addMissindDatasore) {
+					snapshotTree.trees[".channels"].trees.missingDataStore = {
+						blobs: {},
+						trees: {},
+						groupId: setGroupId ? "G1" : undefined,
+						omitted: true,
+					};
+				}
+			}
 
 			// Helper function that creates a FluidDataStoreRegistryEntry with the registry entries
 			// provided to it.
@@ -2164,8 +2150,12 @@ describe("Runtime", () => {
 					get IFluidDataStoreFactory() {
 						return factory;
 					},
-					instantiateDataStore: async (context: IFluidDataStoreContext) =>
-						new MockFluidDataStoreRuntime(),
+					instantiateDataStore: async (context: IFluidDataStoreContext) => {
+						if (context.id === "missingDataStore") {
+							return missingDataStoreRuntime;
+						}
+						return new MockFluidDataStoreRuntime();
+					},
 				};
 				const registry: IFluidDataStoreRegistry = {
 					get IFluidDataStoreRegistry() {
@@ -2186,25 +2176,16 @@ describe("Runtime", () => {
 				return entry;
 			}
 
-			it("load snapshot with missing snapshot contents for datastores", async () => {
+			it("Load snapshot with missing snapshot contents for datastores should fail when groupId not specified", async () => {
 				// In this test we will try to load the container runtime with a snapshot which has 2 datastores. However,
-				// snapshot for datastore "missingDataStore" does not contains trees/blobs and we will check that the
-				// container runtime loads fine but the "missingDataStore" is requested, it fails to load individually due
-				// to missing snapshot contents.
-				const logger = new MockLogger();
-				const containerContext = getMockContext({}, logger) as IContainerContext;
-				(containerContext as any).snapshotWithContents = snapshotWithContents;
-				(containerContext as any).baseSnapshot = snapshotWithContents.snapshotTree;
-				containerContext.storage.readBlob = async (id: string) => {
-					return blobContents.get(id) as ArrayBuffer;
-				};
-				const entryA = createDataStoreRegistryEntry([]);
-				const entryB = createDataStoreRegistryEntry([]);
-				const entryDefault = createDataStoreRegistryEntry([
-					["default", Promise.resolve(entryA)],
-					["missingDataStore", Promise.resolve(entryB)],
-				]);
-				const containerRuntime = await ContainerRuntime.loadRuntime({
+				// snapshot for datastore "missingDataStore" is omitted and we will check that the container runtime loads fine
+				// but the "missingDataStore" is aliased, it fails if the snapshot for it does not have loadingGroupId to fetch
+				// the omitted snapshot contents.
+				createSnapshot(
+					true /* addMissingDatastore */,
+					false /* Don't set groupId property */,
+				);
+				containerRuntime = await ContainerRuntime.loadRuntime({
 					context: containerContext,
 					registryEntries: [["@fluid-example/smde", Promise.resolve(entryDefault)]],
 					existing: true,
@@ -2214,8 +2195,6 @@ describe("Runtime", () => {
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
-
-				logger.clear();
 				const defaultDataStore =
 					await containerRuntime.getAliasedDataStoreEntryPoint("default");
 				assert(defaultDataStore !== undefined, "data store should load and is attached");
@@ -2225,27 +2204,221 @@ describe("Runtime", () => {
 					},
 					(err: IFluidErrorBase) => {
 						assert(
-							err !== undefined,
-							"error should occur on realization of `missingDataStore`",
-						);
-						assert(
-							err.errorType === FluidErrorTypes.dataProcessingError,
-							"error should be data processing error",
-						);
-						assert(
-							err.getTelemetryProperties().dataProcessingCodepath ===
-								"realizeFluidDataStoreContext",
-							"error path should be correct",
-						);
-						assert(
-							// eslint-disable-next-line @typescript-eslint/dot-notation
-							(err.getTelemetryProperties().fluidDataStoreId as any)["value"] ===
-								"missingDataStore",
-							"correct datastore name should be there",
+							err.message === "groupId should be present to fetch snapshot",
+							"groupId not specified when the snapshot was omitted",
 						);
 						return true;
 					},
 				);
+			});
+
+			it("Load snapshot with missing snapshot contents for datastores should fail for summarizer in case group snapshot is ahead of initial snapshot seq number", async () => {
+				// In this test we will try to load the container runtime with a snapshot which has 2 datastores. However,
+				// snapshot for datastore "missingDataStore" is omitted and we will check that the container runtime loads fine
+				// but the "missingDataStore" is requested/aliased, it fails to because for summarizer the fetched snapshot could
+				// not be ahead of the base snapshot as that means that a snapshot is missing and the summarizer is not up to date.
+				containerContext.storage.getSnapshot = async (snapshotFetchOptions) => {
+					snapshotTree.trees[".channels"].trees.missingDataStore = {
+						blobs: {
+							".component": "bARC6dCXlcrPxQHw3PeROtmKc",
+						},
+						trees: {
+							".channels": {
+								blobs: {},
+								trees: {
+									root: { blobs: {}, trees: {} },
+								},
+							},
+						},
+					};
+					snapshotWithContents.sequenceNumber = 10;
+					return snapshotWithContents;
+				};
+				createSnapshot(true /* addMissingDatastore */);
+				containerContext.clientDetails.type = "summarizer";
+				containerRuntime = await ContainerRuntime.loadRuntime({
+					context: containerContext,
+					registryEntries: [["@fluid-example/smde", Promise.resolve(entryDefault)]],
+					existing: true,
+					runtimeOptions: {
+						flushMode: FlushMode.TurnBased,
+						enableRuntimeIdCompressor: true,
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+				const defaultDataStore =
+					await containerRuntime.getAliasedDataStoreEntryPoint("default");
+				assert(defaultDataStore !== undefined, "data store should load and is attached");
+				await assert.rejects(
+					async () => {
+						await containerRuntime.getAliasedDataStoreEntryPoint("missingDataStore");
+					},
+					(err: IFluidErrorBase) => {
+						assert(
+							err.message ===
+								"Summarizer client behind when loading snapshot with loadingGroupId",
+							"summarizer client is behind",
+						);
+						return true;
+					},
+				);
+			});
+
+			it("Load snapshot with missing snapshot contents for datastores should load properly", async () => {
+				// In this test we will try to load the container runtime with a snapshot which has 2 datastores. However,
+				// snapshot for datastore "missingDataStore" is omitted and we will check that the container runtime loads fine
+				// container runtime loads fine and when the "missingDataStore" is requested/aliased, it does that successfully.
+				containerContext.storage.getSnapshot = async (snapshotFetchOptions) => {
+					snapshotTree.trees[".channels"].trees.missingDataStore = {
+						blobs: {
+							".component": "bARC6dCXlcrPxQHw3PeROtmKc",
+						},
+						trees: {
+							".channels": {
+								blobs: {},
+								trees: {
+									root: { blobs: {}, trees: {} },
+								},
+							},
+						},
+					};
+					return snapshotWithContents;
+				};
+				createSnapshot(true /* addMissingDatastore */);
+				containerRuntime = await ContainerRuntime.loadRuntime({
+					context: containerContext,
+					registryEntries: [["@fluid-example/smde", Promise.resolve(entryDefault)]],
+					existing: true,
+					runtimeOptions: {
+						flushMode: FlushMode.TurnBased,
+						enableRuntimeIdCompressor: true,
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+				const defaultDataStore =
+					await containerRuntime.getAliasedDataStoreEntryPoint("default");
+				assert(defaultDataStore !== undefined, "data store should load and is attached");
+				await assert.doesNotReject(async () => {
+					await containerRuntime.resolveHandle({ url: "/missingDataStore" });
+				}, "resolveHandle should work fine");
+			});
+
+			it("Load snapshot with missing snapshot contents for datastores should work in case group snapshot is ahead of initial snapshot seq number", async () => {
+				// In this test we will try to load the container runtime with a snapshot which has 2 datastores. However,
+				// snapshot for datastore "missingDataStore" is omitted and we will check that the container runtime loads fine
+				// and the container runtime waits for delta manager to reach snapshot seq number before returning the snapshot.
+				containerContext.storage.getSnapshot = async (snapshotFetchOptions) => {
+					snapshotTree.trees[".channels"].trees.missingDataStore = {
+						blobs: {
+							".component": "bARC6dCXlcrPxQHw3PeROtmKc",
+						},
+						trees: {
+							".channels": {
+								blobs: {},
+								trees: {
+									root: { blobs: {}, trees: {} },
+								},
+							},
+						},
+					};
+					snapshotWithContents.sequenceNumber = 5;
+					return snapshotWithContents;
+				};
+				createSnapshot(true /* addMissingDatastore */);
+				containerRuntime = await ContainerRuntime.loadRuntime({
+					context: containerContext,
+					registryEntries: [["@fluid-example/smde", Promise.resolve(entryDefault)]],
+					existing: true,
+					runtimeOptions: {
+						flushMode: FlushMode.TurnBased,
+						enableRuntimeIdCompressor: true,
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+				const defaultDataStore =
+					await containerRuntime.getAliasedDataStoreEntryPoint("default");
+				assert(defaultDataStore !== undefined, "data store should load and is attached");
+				// Set it to seq number of partial fetched snapshot so that it is returned successfully by container runtime.
+				(containerContext.deltaManager as any).lastSequenceNumber = 5;
+
+				await assert.doesNotReject(async () => {
+					await containerRuntime.resolveHandle({ url: "/missingDataStore" });
+				}, "resolveHandle should work fine");
+			});
+
+			it("Load snapshot with missing snapshot contents for datastores should only process ops in datastore context which are after the snapshot seq number", async () => {
+				// In this test we will try to load the container runtime with a snapshot which has 2 datastores. However,
+				// snapshot for datastore "missingDataStore" is omitted and we will check that the container runtime loads fine
+				// and the data store context only process ops which are after the snapshot seq number.
+				containerContext.storage.getSnapshot = async (snapshotFetchOptions) => {
+					snapshotTree.trees[".channels"].trees.missingDataStore = {
+						blobs: {
+							".component": "bARC6dCXlcrPxQHw3PeROtmKc",
+						},
+						trees: {
+							".channels": {
+								blobs: {},
+								trees: {
+									root: { blobs: {}, trees: {} },
+								},
+							},
+						},
+					};
+					snapshotWithContents.sequenceNumber = 2;
+					return snapshotWithContents;
+				};
+				createSnapshot(true /* addMissingDatastore */);
+				containerRuntime = await ContainerRuntime.loadRuntime({
+					context: containerContext,
+					registryEntries: [["@fluid-example/smde", Promise.resolve(entryDefault)]],
+					existing: true,
+					runtimeOptions: {
+						flushMode: FlushMode.TurnBased,
+						enableRuntimeIdCompressor: true,
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+				const defaultDataStore =
+					await containerRuntime.getAliasedDataStoreEntryPoint("default");
+				assert(defaultDataStore !== undefined, "data store should load and is attached");
+				const missingDataStoreContext =
+					// eslint-disable-next-line @typescript-eslint/dot-notation
+					containerRuntime["dataStores"]["contexts"].get("missingDataStore");
+				assert(missingDataStoreContext !== undefined, "context should be there");
+				// Add ops to this context.
+				const messages = [
+					{ sequenceNumber: 1 },
+					{ sequenceNumber: 2 },
+					{ sequenceNumber: 3 },
+					{ sequenceNumber: 4 },
+				];
+				// eslint-disable-next-line @typescript-eslint/dot-notation
+				missingDataStoreContext["pending"] = messages as ISequencedDocumentMessage[];
+
+				// Set it to seq number of partial fetched snapshot so that it is returned successfully by container runtime.
+				(containerContext.deltaManager as any).lastSequenceNumber = 2;
+
+				let opsProcessed = 0;
+				let opsStart: number | undefined;
+				missingDataStoreRuntime.process = (
+					message: ISequencedDocumentMessage,
+					local: boolean,
+					localOpMetadata,
+				) => {
+					if (opsProcessed === 0) {
+						opsStart = message.sequenceNumber;
+					}
+					opsProcessed++;
+				};
+				await assert.doesNotReject(async () => {
+					await containerRuntime.resolveHandle({ url: "/missingDataStore" });
+				}, "resolveHandle should work fine");
+
+				assert(
+					opsProcessed === 2,
+					"only 2 ops should be processed with seq number 3 and 4",
+				);
+				assert(opsStart === 3, "first op processed should have seq number 3");
 			});
 		});
 	});
