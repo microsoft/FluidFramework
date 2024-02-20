@@ -21,7 +21,6 @@ import {
 import {
 	SharedTreeTestFactory,
 	createTestUndoRedoStacks,
-	toJsonableTree,
 	validateTree,
 } from "../../utils.js";
 import {
