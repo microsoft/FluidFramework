@@ -49,7 +49,7 @@ export function isSpoUrl(url: string): boolean {
 
 	// Format: foo.sharepoint.com/_api/v2.1./drives/bar/items/baz and foo.sharepoint-df.com/...
 	const spoRegex = /(.*\.sharepoint(-df)*\.com)\/_api\/v2.1\/drives\/([^/]*)\/items\/([^/]*)/;
-	return !!spoRegex.test(urlLower);
+	return spoRegex.test(urlLower);
 }
 
 /**
