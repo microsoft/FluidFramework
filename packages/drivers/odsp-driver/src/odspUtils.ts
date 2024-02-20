@@ -67,7 +67,7 @@ export interface IOdspResponse<T> {
 
 export interface TokenFetchOptionsEx extends TokenFetchOptions {
 	/**
-	 * previous error we hit in getWithRetryForTokenRefresh
+	 * The previous error we hit in {@link getWithRetryForTokenRefresh}.
 	 */
 	previousError?: unknown;
 }
