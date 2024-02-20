@@ -19,6 +19,7 @@ import {
 	ISnapshotOptions,
 	OdspErrorTypes,
 	InstrumentedStorageTokenFetcher,
+	type IOdspError,
 } from "@fluidframework/odsp-driver-definitions";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
@@ -88,6 +89,8 @@ export async function fetchSnapshot(
 	logger: ITelemetryLoggerExt,
 	snapshotDownloader: (
 		url: string,
+		// TODO: use a stronger type
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		fetchOptions: { [index: string]: any },
 	) => Promise<IOdspResponse<unknown>>,
 ): Promise<ISnapshot> {
@@ -134,8 +137,10 @@ export async function fetchSnapshotWithRedeem(
 	enableRedeemFallback?: boolean,
 ): Promise<ISnapshot> {
 	// back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 	const sharingLinkToRedeem = (odspResolvedUrl as any).sharingLinkToRedeem;
 	if (sharingLinkToRedeem) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		odspResolvedUrl.shareLinkInfo = { ...odspResolvedUrl.shareLinkInfo, sharingLinkToRedeem };
 	}
 
@@ -150,6 +155,7 @@ export async function fetchSnapshotWithRedeem(
 		enableRedeemFallback,
 	)
 		.catch(async (error) => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			if (enableRedeemFallback && isRedeemSharingLinkError(odspResolvedUrl, error)) {
 				// Execute the redeem fallback
 
@@ -174,6 +180,7 @@ export async function fetchSnapshotWithRedeem(
 				logger.sendTelemetryEvent(
 					{
 						eventName: "RedeemFallback",
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 						errorType: error.errorType,
 					},
 					error,
@@ -199,7 +206,9 @@ export async function fetchSnapshotWithRedeem(
 			if (
 				(typeof error === "object" &&
 					error !== null &&
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 					error.errorType === OdspErrorTypes.authorizationError) ||
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				error.errorType === OdspErrorTypes.fileNotFoundOrAccessDeniedError
 			) {
 				await removeEntries();
@@ -213,7 +222,7 @@ async function redeemSharingLink(
 	storageTokenFetcher: InstrumentedStorageTokenFetcher,
 	logger: ITelemetryLoggerExt,
 	forceAccessTokenViaAuthorizationHeader: boolean,
-) {
+): Promise<IOdspResponse<unknown>> {
 	return PerformanceEvent.timedExecAsync(
 		logger,
 		{
@@ -276,6 +285,7 @@ async function fetchLatestSnapshotCore(
 		if (snapshotOptions !== undefined) {
 			for (const [key, value] of Object.entries(snapshotOptions)) {
 				if (value !== undefined) {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 					perfEvent[`snapshotOption_${key}`] = value;
 				}
 			}
@@ -311,6 +321,7 @@ async function fetchLatestSnapshotCore(
 			const propsToLog: DriverErrorTelemetryProps = {
 				...odspResponse.propsToLog,
 				contentType,
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				accept: response.requestHeaders.accept,
 				driverVersion: pkgVersion,
 			};
@@ -513,9 +524,12 @@ async function fetchLatestSnapshotCore(
 			if (
 				typeof error === "object" &&
 				error !== null &&
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				(error.errorType === OdspErrorTypes.fetchFailure ||
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 					error.errorType === OdspErrorTypes.fetchTimeout)
 			) {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				error[getWithRetryForTokenRefreshRepeat] = true;
 			}
 			throw error;
@@ -526,6 +540,8 @@ async function fetchLatestSnapshotCore(
 export interface ISnapshotRequestAndResponseOptions {
 	odspResponse: IOdspResponse<Response>;
 	requestUrl: string;
+	// TODO: use a stronger type
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	requestHeaders: { [index: string]: any };
 }
 
@@ -533,7 +549,14 @@ function getFormBodyAndHeaders(
 	odspResolvedUrl: IOdspResolvedUrl,
 	storageToken: string,
 	headers?: { [index: string]: string },
-) {
+): {
+	body: string;
+	headers: {
+		// TODO: use a stronger type
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		[index: string]: any;
+	};
+} {
 	const formBoundary = uuid();
 	const formParams: string[] = [];
 	formParams.push(
@@ -554,7 +577,7 @@ function getFormBodyAndHeaders(
 	}
 	formParams.push(`_post: 1`, `\r\n--${formBoundary}--`);
 	const postBody = formParams.join("\r\n");
-	const header: { [index: string]: any } = {
+	const header: { [index: string]: string } = {
 		"Content-Type": `multipart/form-data;boundary=${formBoundary}`,
 	};
 	return { body: postBody, headers: header };
@@ -619,8 +642,10 @@ export async function downloadSnapshot(
 	scenarioName?: string,
 ): Promise<ISnapshotRequestAndResponseOptions> {
 	// back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 	const sharingLinkToRedeem = (odspResolvedUrl as any).sharingLinkToRedeem;
 	if (sharingLinkToRedeem) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		odspResolvedUrl.shareLinkInfo = { ...odspResolvedUrl.shareLinkInfo, sharingLinkToRedeem };
 	}
 
@@ -631,6 +656,7 @@ export async function downloadSnapshot(
 		for (const [key, value] of Object.entries(snapshotOptions)) {
 			// Exclude "timeout" from query string
 			if (value !== undefined && key !== "timeout") {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				queryParams[key] = value;
 			}
 		}
@@ -682,7 +708,10 @@ export async function downloadSnapshot(
 	};
 }
 
-function isRedeemSharingLinkError(odspResolvedUrl: IOdspResolvedUrl, error: any) {
+function isRedeemSharingLinkError(
+	odspResolvedUrl: IOdspResolvedUrl,
+	error: Partial<IOdspError>,
+): boolean {
 	if (
 		odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem !== undefined &&
 		typeof error === "object" &&

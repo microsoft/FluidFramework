@@ -180,12 +180,16 @@ export interface ICreateFileResponse {
 	"itemUrl": string;
 	"sequenceNumber": number;
 	// sharing object contains shareId, sharingLink data or error in the response
+	// TODO: use a stronger type
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	"sharing"?: any;
 	"sharingLink"?: string;
 	"sharingLinkErrorReason"?: string;
 }
 
 export interface IVersionedValueWithEpoch {
+	// TODO: use a stronger type
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	value: any;
 	fluidEpoch: string;
 	// This is same as "persistedCacheValueVersion" below. This represents the version of data stored in cache.
