@@ -21,7 +21,12 @@ import {
 	NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
-import { tagCodeArtifacts, UsageError } from "@fluidframework/telemetry-utils";
+import {
+	tagCodeArtifacts,
+	UsageError,
+	type ITelemetryLoggerExt,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils";
 import { IAgentScheduler, IAgentSchedulerEvents } from "./agent";
 
 // Note: making sure this ID is unique and does not collide with storage provided clientID
@@ -115,12 +120,15 @@ export class AgentScheduler
 
 	private readonly _handle: IFluidHandle<this>;
 
+	private readonly logger: ITelemetryLoggerExt;
+
 	constructor(
 		private readonly runtime: IFluidDataStoreRuntime,
 		private readonly context: IFluidDataStoreContext,
 		private readonly consensusRegisterCollection: ConsensusRegisterCollection<string | null>,
 	) {
 		super();
+		this.logger = createChildLogger({ logger: this.runtime.logger });
 		// We are expecting this class to have many listeners, so we suppress noisy "MaxListenersExceededWarning" logging.
 		super.setMaxListeners(0);
 		this._handle = new FluidObjectHandle(this, "", this.runtime.objectsRoutingContext);
@@ -423,7 +431,7 @@ export class AgentScheduler
 	}
 
 	private sendErrorEvent(eventName: string, error: any, key?: string) {
-		this.runtime.logger.sendErrorEvent({ eventName, key }, error);
+		this.logger.sendErrorEvent({ eventName, key }, error);
 	}
 }
 

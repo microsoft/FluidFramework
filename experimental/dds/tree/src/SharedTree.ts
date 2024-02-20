@@ -21,7 +21,7 @@ import {
 	ISharedObjectEvents,
 	SharedObject,
 } from '@fluidframework/shared-object-base';
-import { ITelemetryProperties } from '@fluidframework/core-interfaces';
+import { ITelemetryProperties, type ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import {
 	ITelemetryLoggerExt,
 	createChildLogger,
@@ -311,7 +311,7 @@ export interface SequencedEditAppliedEventArguments {
 	/** The tree the edit was applied to. */
 	readonly tree: SharedTree;
 	/** The telemetry logger associated with sequenced edit application. */
-	readonly logger: ITelemetryLoggerExt;
+	readonly logger: ITelemetryBaseLogger;
 	/** The reconciliation path for the edit. See {@link ReconciliationPath} for details. */
 	readonly reconciliationPath: ReconciliationPath;
 	/** The outcome of the sequenced edit being applied. */
@@ -484,7 +484,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	/**
 	 * logger for SharedTree events.
 	 */
-	public readonly logger: ITelemetryLoggerExt;
+	public readonly logger: ITelemetryBaseLogger;
 	private readonly sequencedEditAppliedLogger: ITelemetryLoggerExt;
 
 	private readonly encoder_0_0_2: SharedTreeEncoder_0_0_2;

@@ -6,7 +6,6 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	DataProcessingError,
-	ITelemetryLoggerExt,
 	generateStack,
 	LoggingError,
 	MonitoringContext,
@@ -14,6 +13,7 @@ import {
 	createChildMonitoringContext,
 	tagCodeArtifacts,
 	UsageError,
+	createChildLogger,
 } from "@fluidframework/telemetry-utils";
 import {
 	FluidObject,
@@ -21,6 +21,7 @@ import {
 	IFluidHandleContext,
 	IRequest,
 	IResponse,
+	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { assert, Deferred, LazyPromise, unreachableCase } from "@fluidframework/core-utils";
 import { IAudience, IDeltaManager, AttachState } from "@fluidframework/container-definitions";
@@ -180,7 +181,7 @@ export class FluidDataStoreRuntime
 	private readonly quorum: IQuorumClients;
 	private readonly audience: IAudience;
 	private readonly mc: MonitoringContext;
-	public get logger(): ITelemetryLoggerExt {
+	public get logger(): ITelemetryBaseLogger {
 		return this.mc.logger;
 	}
 
@@ -265,7 +266,9 @@ export class FluidDataStoreRuntime
 						this,
 						this.dataStoreContext,
 						this.dataStoreContext.storage,
-						this.logger,
+						// this.logger is a getter that potentially returns something different each time.
+						// To ensure we maintain behavior, create a child logger each time.
+						createChildLogger({ logger: this.logger }),
 						(content, localOpMetadata) =>
 							this.submitChannelOp(path, content, localOpMetadata),
 						(address: string) => this.setChannelDirty(address),
@@ -458,7 +461,9 @@ export class FluidDataStoreRuntime
 			this,
 			this.dataStoreContext,
 			this.dataStoreContext.storage,
-			this.logger,
+			// this.logger is a getter that potentially returns something different each time.
+			// To ensure we maintain behavior, create a child logger each time.
+			createChildLogger({ logger: this.logger }),
 			(content, localOpMetadata) =>
 				this.submitChannelOp(channel.id, content, localOpMetadata),
 			(address: string) => this.setChannelDirty(address),
@@ -551,7 +556,10 @@ export class FluidDataStoreRuntime
 			object.setConnectionState(connected, clientId);
 		}
 
-		raiseConnectedEvent(this.logger, this, connected, clientId);
+		// this.logger is a getter that potentially returns something different each time.
+		// To ensure we maintain behavior, create a child logger each time.
+		const childLogger = createChildLogger({ logger: this.logger });
+		raiseConnectedEvent(childLogger, this, connected, clientId);
 	}
 
 	public getQuorum(): IQuorumClients {

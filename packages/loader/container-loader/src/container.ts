@@ -13,6 +13,7 @@ import {
 	FluidObject,
 	LogLevel,
 	IRequest,
+	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import {
 	AttachState,
@@ -211,7 +212,7 @@ export interface IContainerCreateProps {
 	/**
 	 * The logger downstream consumers should construct their loggers from
 	 */
-	readonly subLogger: ITelemetryLoggerExt;
+	readonly subLogger: ITelemetryBaseLogger;
 
 	/**
 	 * Blobs storage for detached containers.

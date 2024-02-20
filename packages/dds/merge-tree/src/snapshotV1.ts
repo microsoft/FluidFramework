@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { assert } from "@fluidframework/core-utils";
 import { bufferToString } from "@fluid-internal/client-utils";
@@ -45,7 +45,7 @@ export class SnapshotV1 {
 
 	constructor(
 		public mergeTree: MergeTree,
-		logger: ITelemetryLoggerExt,
+		logger: ITelemetryBaseLogger,
 		private readonly getLongClientId: (id: number) => string,
 		public filename?: string,
 		public onCompletion?: () => void,

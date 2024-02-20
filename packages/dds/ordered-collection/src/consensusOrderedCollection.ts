@@ -14,6 +14,7 @@ import {
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { createChildLogger, type ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { v4 as uuid } from "uuid";
 import {
 	ConsensusCallback,
@@ -101,6 +102,8 @@ export class ConsensusOrderedCollection<T = any>
 	 */
 	private jobTracking: JobTrackingInfo<T> = new Map();
 
+	private readonly loggerExt: ITelemetryLoggerExt;
+
 	/**
 	 * Constructs a new consensus collection. If the object is non-local an id and service interfaces will
 	 * be provided
@@ -112,6 +115,7 @@ export class ConsensusOrderedCollection<T = any>
 		private readonly data: IOrderedCollection<T>,
 	) {
 		super(id, runtime, attributes, "fluid_consensusOrderedCollection_");
+		this.loggerExt = createChildLogger({ logger: this.runtime.logger });
 
 		// We can't simply call this.removeClient(this.runtime.clientId) in on runtime disconnected,
 		// because other clients may disconnect concurrently.
@@ -237,7 +241,7 @@ export class ConsensusOrderedCollection<T = any>
 				opName: "release",
 				acquireId,
 			}).catch((error) => {
-				this.runtime.logger.sendErrorEvent({ eventName: "ConsensusQueue_release" }, error);
+				this.loggerExt.sendErrorEvent({ eventName: "ConsensusQueue_release" }, error);
 			});
 		}
 	}

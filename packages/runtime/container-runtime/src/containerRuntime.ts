@@ -1185,6 +1185,8 @@ export class ContainerRuntime
 	 */
 	private readonly loadedFromVersionId: string | undefined;
 
+	private readonly loggerExt: ITelemetryLoggerExt;
+
 	/***/
 	protected constructor(
 		context: IContainerContext,
@@ -1195,7 +1197,7 @@ export class ContainerRuntime
 		dataStoreAliasMap: [string, string][],
 		private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
 		private readonly containerScope: FluidObject,
-		public readonly logger: ITelemetryLoggerExt,
+		public readonly logger: ITelemetryBaseLogger,
 		existing: boolean,
 		blobManagerSnapshot: IBlobManagerLoadInfo,
 		private readonly _storage: IDocumentStorageService,
@@ -1213,6 +1215,7 @@ export class ContainerRuntime
 		},
 	) {
 		super();
+		this.loggerExt = createChildLogger({ logger });
 
 		const {
 			options,
@@ -1512,7 +1515,7 @@ export class ContainerRuntime
 				isActiveConnection: () => this.innerDeltaManager.active,
 			},
 			pendingRuntimeState?.pending,
-			this.logger,
+			this.loggerExt,
 		);
 
 		const disableCompression = this.mc.config.getBoolean(
@@ -1570,7 +1573,7 @@ export class ContainerRuntime
 		this.validateSummaryBeforeUpload =
 			this.mc.config.getBoolean("Fluid.Summarizer.ValidateSummaryBeforeUpload") ?? false;
 
-		this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
+		this.summaryCollection = new SummaryCollection(this.deltaManager, this.loggerExt);
 
 		this.dirtyContainer =
 			this.attachState !== AttachState.Attached || this.hasPendingMessages();
@@ -1665,7 +1668,7 @@ export class ContainerRuntime
 		}
 
 		// logging hardware telemetry
-		logger.sendTelemetryEvent({
+		this.loggerExt.sendTelemetryEvent({
 			eventName: "DeviceSpec",
 			...getDeviceSpec(),
 		});
@@ -1692,8 +1695,8 @@ export class ContainerRuntime
 			groupedBatchingEnabled: this.groupedBatchingEnabled,
 		});
 
-		ReportOpPerfTelemetry(this.clientId, this.deltaManager, this, this.logger);
-		BindBatchTracker(this, this.logger);
+		ReportOpPerfTelemetry(this.clientId, this.deltaManager, this, this.loggerExt);
+		BindBatchTracker(this, this.loggerExt);
 
 		this.entryPoint = new LazyPromise(async () => {
 			if (this.isSummarizerClient) {
@@ -2780,7 +2783,7 @@ export class ContainerRuntime
 		/** True to track the state for this summary in the SummarizerNodes; defaults to true */
 		trackState?: boolean;
 		/** Logger to use for correlated summary events */
-		summaryLogger?: ITelemetryLoggerExt;
+		summaryLogger?: ITelemetryBaseLogger;
 		/** True to run garbage collection before summarizing; defaults to true */
 		runGC?: boolean;
 		/** True to generate full GC data */
@@ -3006,7 +3009,7 @@ export class ContainerRuntime
 	public async collectGarbage(
 		options: {
 			/** Logger to use for logging GC events */
-			logger?: ITelemetryLoggerExt;
+			logger?: ITelemetryBaseLogger;
 			/** True to run GC sweep phase after the mark phase */
 			runSweep?: boolean;
 			/** True to generate full GC data */
@@ -3014,7 +3017,10 @@ export class ContainerRuntime
 		},
 		telemetryContext?: ITelemetryContext,
 	): Promise<IGCStats | undefined> {
-		return this.garbageCollector.collectGarbage(options, telemetryContext);
+		return this.garbageCollector.collectGarbage(
+			{ ...options, logger: createChildLogger({ logger: options.logger }) },
+			telemetryContext,
+		);
 	}
 
 	/**
@@ -3792,7 +3798,7 @@ export class ContainerRuntime
 				const compatBehavior = message.compatDetails?.behavior;
 				if (compatBehaviorAllowsMessageType(message.type, compatBehavior)) {
 					// We do not ultimately resubmit it, to be consistent with this version of the code.
-					this.logger.sendTelemetryEvent({
+					this.loggerExt.sendTelemetryEvent({
 						eventName: "resubmitUnrecognizedMessageTypeAllowed",
 						messageDetails: { type: message.type, compatBehavior },
 					});

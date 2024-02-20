@@ -104,10 +104,13 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 	// #endregion
 
+	private readonly logger?: ITelemetryLoggerExt;
+
 	public constructor(
 		localSessionIdOrDeserialized: SessionId | Sessions,
-		private readonly logger?: ITelemetryLoggerExt,
+		logger?: ITelemetryBaseLogger,
 	) {
+		this.logger = createChildLogger({ logger });
 		if (typeof localSessionIdOrDeserialized === "string") {
 			this.localSessionId = localSessionIdOrDeserialized;
 			this.localSession = this.sessions.getOrCreate(localSessionIdOrDeserialized);
@@ -565,19 +568,19 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 	public static deserialize(
 		serialized: SerializedIdCompressorWithOngoingSession,
-		logger?: ITelemetryLoggerExt,
+		logger?: ITelemetryBaseLogger,
 	): IdCompressor;
 	public static deserialize(
 		serialized: SerializedIdCompressorWithNoSession,
 		newSessionId: SessionId,
-		logger?: ITelemetryLoggerExt,
+		logger?: ITelemetryBaseLogger,
 	): IdCompressor;
 	public static deserialize(
 		serialized: SerializedIdCompressor,
-		loggerOrSessionId?: ITelemetryLoggerExt | SessionId,
+		loggerOrSessionId?: ITelemetryBaseLogger | SessionId,
 	): IdCompressor {
 		let sessionId: SessionId | undefined;
-		let logger: ITelemetryLoggerExt | undefined;
+		let logger: ITelemetryBaseLogger | undefined;
 		if (typeof loggerOrSessionId === "string") {
 			sessionId = loggerOrSessionId;
 		} else {
@@ -604,7 +607,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	static deserialize2_0(
 		index: Index,
 		sessionId?: SessionId,
-		logger?: ITelemetryLoggerExt,
+		logger?: ITelemetryBaseLogger,
 	): IdCompressor {
 		const hasLocalState = readBoolean(index);
 		const sessionCount = readNumber(index);
@@ -730,7 +733,7 @@ export function createIdCompressor(
  */
 export function deserializeIdCompressor(
 	serialized: SerializedIdCompressorWithOngoingSession,
-	logger?: ITelemetryLoggerExt,
+	logger?: ITelemetryBaseLogger,
 ): IIdCompressor & IIdCompressorCore;
 /**
  * Deserializes the supplied state into an ID compressor.
@@ -739,12 +742,12 @@ export function deserializeIdCompressor(
 export function deserializeIdCompressor(
 	serialized: SerializedIdCompressorWithNoSession,
 	newSessionId: SessionId,
-	logger?: ITelemetryLoggerExt,
+	logger?: ITelemetryBaseLogger,
 ): IIdCompressor & IIdCompressorCore;
 export function deserializeIdCompressor(
 	serialized: SerializedIdCompressor | SerializedIdCompressorWithNoSession,
-	sessionIdOrLogger?: SessionId | ITelemetryLoggerExt,
-	logger?: ITelemetryLoggerExt | undefined,
+	sessionIdOrLogger?: SessionId | ITelemetryBaseLogger,
+	logger?: ITelemetryBaseLogger | undefined,
 ): IIdCompressor & IIdCompressorCore {
 	if (typeof sessionIdOrLogger === "string") {
 		return IdCompressor.deserialize(

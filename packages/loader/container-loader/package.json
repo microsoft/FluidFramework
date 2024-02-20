@@ -230,8 +230,14 @@
 	},
 	"typeValidation": {
 		"broken": {
+			"ClassDeclaration_Loader": {
+				"backCompat": false
+			},
 			"InterfaceDeclaration_IContainerExperimental": {
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ILoaderServices": {
+				"backCompat": false
 			}
 		}
 	}

@@ -3,8 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
-import { IFluidHandle, IFluidHandleContext, FluidObject } from "@fluidframework/core-interfaces";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
+import {
+	IFluidHandle,
+	IFluidHandleContext,
+	FluidObject,
+	type ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import { IAudience, IDeltaManager, AttachState } from "@fluidframework/container-definitions";
 
 import {
@@ -60,7 +65,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	constructor(
 		public readonly id: string = uuid(),
 		public readonly existing: boolean = false,
-		public readonly logger: ITelemetryLoggerExt = createChildLogger({
+		public readonly logger: ITelemetryBaseLogger = createChildLogger({
 			namespace: "fluid:MockFluidDataStoreContext",
 		}),
 		private readonly interactive: boolean = true,

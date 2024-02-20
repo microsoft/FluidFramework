@@ -4,7 +4,7 @@
  */
 import { strict as assert } from "assert";
 
-import { FluidObject } from "@fluidframework/core-interfaces";
+import { FluidObject, type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
 	IFluidDataStoreContext,
@@ -110,7 +110,7 @@ describe("Data Store Creation Tests", () => {
 			containerRuntime = {
 				IFluidDataStoreRegistry: globalRegistry,
 				on: (event, listener) => {},
-				logger: createChildLogger(),
+				logger: createChildLogger() as ITelemetryBaseLogger,
 				clientDetails: {},
 			} as ContainerRuntime;
 			const summarizerNode = createRootSummarizerNodeWithGC(

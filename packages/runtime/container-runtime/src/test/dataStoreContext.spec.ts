@@ -1059,7 +1059,7 @@ describe("Data Store Context Tests", () => {
 				id,
 				containerRuntime,
 				dataStores,
-				containerRuntime.logger,
+				createChildLogger({ logger: containerRuntime.logger }),
 			);
 		let containerRuntime: ContainerRuntime;
 		let dataStores: DataStores;
@@ -1114,7 +1114,7 @@ describe("Data Store Context Tests", () => {
 			containerRuntime = {
 				IFluidDataStoreRegistry: registry,
 				on: (event, listener) => {},
-				logger: createChildLogger(),
+				logger: createChildLogger() as ITelemetryBaseLogger,
 				clientDetails: {},
 			} as ContainerRuntime;
 

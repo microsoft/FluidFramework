@@ -47,7 +47,7 @@ import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITokenProvider } from '@fluidframework/routerlicious-driver';
 import { ITokenResponse } from '@fluidframework/routerlicious-driver';
 import { ITree } from '@fluidframework/protocol-definitions';
@@ -313,7 +313,7 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
 
 // @alpha (undocumented)
 export class MockFluidDataStoreContext implements IFluidDataStoreContext {
-    constructor(id?: string, existing?: boolean, logger?: ITelemetryLoggerExt, interactive?: boolean);
+    constructor(id?: string, existing?: boolean, logger?: ITelemetryBaseLogger, interactive?: boolean);
     attachState: AttachState;
     // (undocumented)
     baseSnapshot: ISnapshotTree | undefined;
@@ -354,7 +354,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     isLocalDataStore: boolean;
     // (undocumented)
-    readonly logger: ITelemetryLoggerExt;
+    readonly logger: ITelemetryBaseLogger;
     // (undocumented)
     makeLocallyVisible(): void;
     // (undocumented)
@@ -387,7 +387,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
         clientId?: string;
         entryPoint?: IFluidHandle<FluidObject>;
         id?: string;
-        logger?: ITelemetryLoggerExt;
+        logger?: ITelemetryBaseLogger;
         idCompressor?: IIdCompressor & IIdCompressorCore;
     });
     // (undocumented)
@@ -460,7 +460,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     get local(): boolean;
     set local(local: boolean);
     // (undocumented)
-    readonly logger: ITelemetryLoggerExt;
+    readonly logger: ITelemetryBaseLogger;
     // (undocumented)
     makeVisibleAndAttachGraph(): void;
     // (undocumented)

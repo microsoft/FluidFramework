@@ -10,6 +10,7 @@ import {
 	IResponse,
 	IFluidHandle,
 	ITelemetryProperties,
+	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { IAudience, IDeltaManager, AttachState } from "@fluidframework/container-definitions";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
@@ -55,7 +56,6 @@ import {
 	DataProcessingError,
 	extractSafePropertiesFromMessage,
 	generateStack,
-	ITelemetryLoggerExt,
 	LoggingError,
 	MonitoringContext,
 	tagCodeArtifacts,
@@ -159,7 +159,7 @@ export abstract class FluidDataStoreContext
 		return this._containerRuntime.clientDetails;
 	}
 
-	public get logger(): ITelemetryLoggerExt {
+	public get logger(): ITelemetryBaseLogger {
 		return this._containerRuntime.logger;
 	}
 

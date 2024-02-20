@@ -26,8 +26,8 @@ import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 import { VisibilityState } from '@fluidframework/runtime-definitions';
 
@@ -91,7 +91,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     get isAttached(): boolean;
     // (undocumented)
-    get logger(): ITelemetryLoggerExt;
+    get logger(): ITelemetryBaseLogger;
     makeVisibleAndAttachGraph(): void;
     // (undocumented)
     get objectsRoutingContext(): this;

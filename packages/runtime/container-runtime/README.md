@@ -51,51 +51,6 @@ issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feat
 
 Thank you!
 
-## Data Virtualization For DataStores (Work in Progress)
-
-It's a capability to exclude some content from initial snapshot (used when loading container) and thus improve boot
-performance of a container. Excluded content could be loaded at a later time when it's required.
-
-### Motivation for Data Virtualization
-
-This section talks about how the system used to work before Data virtualization. Currently, the content of whole file
-is downloaded in one go. Due to limitation of data virtualization, FF holds all blobs in snapshot as those might be
-required in the future. Any delayed loading (through FF APIs) results in loading state of datastores at a sequence
-number of snapshot we booted from, up until the current sequence number by applying the pending ops for that datastore.
-While application may choose not to load some data stores immediately on boot (and realize some saving in time and
-memory by not allocating appropriate app state for such datastores), FF still pays the costs for such content. It also
-continues to pay the cost for all such content indefinitely, even if those datastores were loaded.
-
-### Improvement with Data Virtualization
-
-With this, we will provide a capability to:
-
-- Exclude some sub-trees from snapshot payload, thus allowing faster transfer times / boot times and smaller initial
-memory footprint.
-- Ability to delay-load data stores later.
-
-Container Runtime Apis like IContainerRuntimeBase.createDataStore and IContainerRuntimeBase.createDetachedDataStore
-provides an argument `loadingGroupId` which allows apps to mark a datastore at time of creation currently. Every data
-store is assigned a groupID. Not providing groupID (on API) means that default ID is used. This groupId represents the
-group of the datastore within a container or its snapshot. When a container is loaded initially, only datastores which
-belongs to `default` group are fetched from service and can be loaded on demand when requested by user. This decreases
-the amount of data which needs to be fetched during load and hence provides faster boot times for the container.
-Attempting to load any datastore within a non-default group results in fetching all content/datastores marked with same
-groupId. So, one network will be required to fetch content for a group when a datastore from a group is requested by an
-application.
-In advanced app scenarios, app would want to make datastores with a specific group Id, based on how it wants to load a
-certain group at once, and not load the datastores that aren't part of the group. By effectively using groupID, app
-will be able to improve boot times by not fetching unnecessary groups at load.
-So to summarize, when datastore is assigned to a group, content of such data store will not be loaded with initial load
-of container. It will be loaded only when any datastore with such groupID is realized.
-This will improve the boot perf. Data virtualization or providing the `loadingGroupId` will however decrease the
-performance of loading of those datastores as one network call would be required before loading. However,
-providing same `loadingGroupId` to put some data stores in same group, would improve performance for their loading as
-compared to providing a different group Id to each of these datastores as then one network call will be required to
-fetch snapshot for that group of datastores rather than one network call for each datastore. So, the datastores which
-can get fairly big in size content wise and which are not required to be loaded on boot, can be put under a non-default
-groupId.
-
 ## Trademark
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.

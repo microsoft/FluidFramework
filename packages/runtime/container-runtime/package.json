@@ -249,6 +249,9 @@
 			},
 			"InterfaceDeclaration_ISubmitSummaryOptions": {
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ISummarizerRuntime": {
+				"backCompat": false
 			}
 		}
 	}

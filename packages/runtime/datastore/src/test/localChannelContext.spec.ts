@@ -11,6 +11,7 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { IChannel } from "@fluidframework/datastore-definitions";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime";
 import { LocalChannelContext, RehydratedLocalChannelContext } from "../localChannelContext";
 
@@ -45,7 +46,7 @@ describe("LocalChannelContext Tests", () => {
 				dataStoreRuntime,
 				dataStoreContext,
 				dataStoreContext.storage,
-				dataStoreContext.logger,
+				createChildLogger({ logger: dataStoreContext.logger }),
 				() => {},
 				(s: string) => {},
 				(s) => {},
@@ -67,7 +68,7 @@ describe("LocalChannelContext Tests", () => {
 				dataStoreRuntime,
 				dataStoreContext,
 				dataStoreContext.storage,
-				dataStoreContext.logger,
+				createChildLogger({ logger: dataStoreContext.logger }),
 				(content, localOpMetadata) => {},
 				(s: string) => {},
 				(s, o) => {},

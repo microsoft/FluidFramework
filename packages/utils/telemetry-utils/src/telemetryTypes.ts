@@ -104,7 +104,7 @@ export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt
  * @remarks
  * This interface is meant to be used internally within the Fluid Framework,
  * and `ITelemetryBaseLogger` should be used when loggers are passed between layers.
- * @alpha
+ * @internal
  */
 export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
 	/**

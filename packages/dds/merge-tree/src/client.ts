@@ -5,7 +5,11 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { IFluidHandle, type IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
+import {
+	IFluidHandle,
+	type IEventThisPlaceHolder,
+	type ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
@@ -15,7 +19,12 @@ import {
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { ITelemetryLoggerExt, LoggingError, UsageError } from "@fluidframework/telemetry-utils";
+import {
+	LoggingError,
+	UsageError,
+	createChildLogger,
+	type ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils";
 import { DoublyLinkedList, RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import { LocalReferencePosition, SlidingPreference } from "./localReference";
@@ -131,6 +140,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	private readonly shortClientIdMap: string[] = [];
 
 	/**
+	 * Wrapper over {@link Client.logger}, so we can leverage the extended interface internally.
+	 */
+	private readonly loggerExt: ITelemetryLoggerExt;
+
+	/**
 	 * @param specToSegment - Rehydrates a segment from its JSON representation
 	 * @param logger - Telemetry logger for diagnostics
 	 * @param options - Options for this client. See {@link IMergeTreeOptions} for details.
@@ -147,11 +161,12 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 */
 	constructor(
 		public readonly specToSegment: (spec: IJSONSegment) => ISegment,
-		public readonly logger: ITelemetryLoggerExt,
+		public readonly logger: ITelemetryBaseLogger,
 		options?: IMergeTreeOptions & PropertySet,
 		private readonly getMinInFlightRefSeq: () => number | undefined = () => undefined,
 	) {
 		super();
+		this.loggerExt = createChildLogger({ logger });
 		this._mergeTree = new MergeTree(options);
 		this._mergeTree.mergeTreeDeltaCallback = (opArgs, deltaArgs) => {
 			this.emit("delta", opArgs, deltaArgs, this);
@@ -360,7 +375,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		});
 
 		if (localInserts > 0 || localRemoves > 0) {
-			this.logger.sendErrorEvent({
+			this.loggerExt.sendErrorEvent({
 				eventName: "LocalEditsInProcessGCData",
 				localInserts,
 				localRemoves,
@@ -1123,13 +1138,13 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				catchUpMsgs === undefined || catchUpMsgs.length === 0,
 				0x03f /* "New format should not emit catchup ops" */,
 			);
-			const snap = new SnapshotV1(this._mergeTree, this.logger, (id) =>
+			const snap = new SnapshotV1(this._mergeTree, this.loggerExt, (id) =>
 				this.getLongClientId(id),
 			);
 			snap.extractSync();
 			return snap.emit(serializer, handle);
 		} else {
-			const snap = new SnapshotLegacy(this._mergeTree, this.logger);
+			const snap = new SnapshotLegacy(this._mergeTree, this.loggerExt);
 			snap.extractSync();
 			return snap.emit(catchUpMsgs, serializer, handle);
 		}
@@ -1140,7 +1155,13 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		storage: IChannelStorageService,
 		serializer: IFluidSerializer,
 	): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]> }> {
-		const loader = new SnapshotLoader(runtime, this, this._mergeTree, this.logger, serializer);
+		const loader = new SnapshotLoader(
+			runtime,
+			this,
+			this._mergeTree,
+			this.loggerExt,
+			serializer,
+		);
 
 		return loader.initialize(storage);
 	}

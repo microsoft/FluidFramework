@@ -23,7 +23,6 @@ import { IQuorumSnapshot } from '@fluidframework/protocol-base';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 
 // @public (undocumented)
@@ -84,7 +83,7 @@ export interface ILoaderServices {
     readonly options: ILoaderOptions;
     readonly protocolHandlerBuilder?: ProtocolHandlerBuilder;
     readonly scope: FluidObject;
-    readonly subLogger: ITelemetryLoggerExt;
+    readonly subLogger: ITelemetryBaseLogger;
     readonly urlResolver: IUrlResolver;
 }
 

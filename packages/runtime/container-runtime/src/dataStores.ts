@@ -43,6 +43,7 @@ import {
 	unpackChildNodesUsedRoutes,
 } from "@fluidframework/runtime-utils";
 import {
+	createChildLogger,
 	createChildMonitoringContext,
 	DataCorruptionError,
 	DataProcessingError,
@@ -417,7 +418,13 @@ export class DataStores implements IDisposable {
 			isRootDataStore: isRoot,
 			loadingGroupId,
 			channelToDataStoreFn: (channel: IFluidDataStoreChannel, channelId: string) =>
-				channelToDataStore(channel, channelId, this.runtime, this, this.runtime.logger),
+				channelToDataStore(
+					channel,
+					channelId,
+					this.runtime,
+					this,
+					createChildLogger({ logger: this.runtime.logger }),
+				),
 		});
 		this.contexts.addUnbound(context);
 		return context;

@@ -12,7 +12,7 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @internal @deprecated (undocumented)
@@ -96,7 +96,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 
 // @alpha @deprecated (undocumented)
 export class Client extends TypedEventEmitter<IClientEvents> {
-    constructor(specToSegment: (spec: IJSONSegment) => ISegment, logger: ITelemetryLoggerExt, options?: IMergeTreeOptions & PropertySet, getMinInFlightRefSeq?: () => number | undefined);
+    constructor(specToSegment: (spec: IJSONSegment) => ISegment, logger: ITelemetryBaseLogger, options?: IMergeTreeOptions & PropertySet, getMinInFlightRefSeq?: () => number | undefined);
     // (undocumented)
     addLongClientId(longClientId: string): void;
     annotateMarker(marker: Marker, props: PropertySet): IMergeTreeAnnotateMsg | undefined;
@@ -154,7 +154,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     // (undocumented)
     localTransaction(groupOp: IMergeTreeGroupMsg): void;
     // (undocumented)
-    readonly logger: ITelemetryLoggerExt;
+    readonly logger: ITelemetryBaseLogger;
     // (undocumented)
     longClientId: string | undefined;
     obliterateRangeLocal(start: number, end: number): IMergeTreeObliterateMsg;

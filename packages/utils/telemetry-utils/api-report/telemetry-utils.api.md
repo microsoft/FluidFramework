@@ -34,7 +34,7 @@ import { TypedEventEmitter } from '@fluid-internal/client-utils';
 // @internal (undocumented)
 export const connectedEventName = "connected";
 
-// @alpha
+// @internal
 export function createChildLogger(props?: {
     logger?: ITelemetryBaseLogger;
     namespace?: string;
@@ -222,7 +222,7 @@ export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
     eventName: string;
 }
 
-// @alpha
+// @internal
 export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
     sendErrorEvent(event: ITelemetryErrorEventExt, error?: unknown): void;
     sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: unknown, logLevel?: typeof LogLevel.verbose | typeof LogLevel.default): void;

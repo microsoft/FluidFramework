@@ -5,7 +5,6 @@
 
 import { v4 as uuid } from "uuid";
 import {
-	ITelemetryLoggerExt,
 	mixinMonitoringContext,
 	MonitoringContext,
 	PerformanceEvent,
@@ -219,7 +218,7 @@ export interface ILoaderServices {
 	/**
 	 * The logger downstream consumers should construct their loggers from
 	 */
-	readonly subLogger: ITelemetryLoggerExt;
+	readonly subLogger: ITelemetryBaseLogger;
 
 	/**
 	 * Blobs storage for detached containers.

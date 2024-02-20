@@ -4,6 +4,7 @@
  */
 
 import { v4 as uuid } from "uuid";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils";
 import {
 	ITelemetryLoggerExt,
@@ -12,6 +13,7 @@ import {
 	normalizeError,
 	loggerToMonitoringContext,
 	wrapError,
+	createChildLogger,
 } from "@fluidframework/telemetry-utils";
 import {
 	ThrottlingError,
@@ -93,12 +95,20 @@ export class EpochTracker implements IPersistedFileCache {
 	private readonly driverId = uuid();
 	// This tracks the request number made by the driver instance.
 	private networkCallNumber = 1;
+
+	/**
+	 * Wrapper over {@link EpochTracker.logger}, so we can leverage the extended interface internally.
+	 */
+	private readonly loggerExt: ITelemetryLoggerExt;
+
 	constructor(
 		protected readonly cache: IPersistedCache,
 		protected readonly fileEntry: IFileEntry,
-		protected readonly logger: ITelemetryLoggerExt,
+		protected readonly logger: ITelemetryBaseLogger,
 		protected readonly clientIsSummarizer?: boolean,
 	) {
+		this.loggerExt = createChildLogger({ logger });
+
 		// Limits the max number of concurrent requests to 24.
 		this.rateLimiter = new RateLimiter(24);
 
@@ -115,7 +125,7 @@ export class EpochTracker implements IPersistedFileCache {
 		assert(this._fluidEpoch === undefined, 0x1db /* "epoch exists" */);
 		this._fluidEpoch = epoch;
 
-		this.logger.sendTelemetryEvent({
+		this.loggerExt.sendTelemetryEvent({
 			eventName: "EpochLearnedFirstTime",
 			epoch,
 			fetchType,
@@ -151,7 +161,7 @@ export class EpochTracker implements IPersistedFileCache {
 					cacheTime === undefined ||
 					currentTime - cacheTime >= this.snapshotCacheExpiryTimeoutMs
 				) {
-					this.logger.sendTelemetryEvent({
+					this.loggerExt.sendTelemetryEvent({
 						eventName: "odspVersionsCacheExpired",
 						duration: currentTime - cacheTime,
 						maxCacheAgeMs: this.snapshotCacheExpiryTimeoutMs,
@@ -163,7 +173,10 @@ export class EpochTracker implements IPersistedFileCache {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return value.value;
 		} catch (error) {
-			this.logger.sendErrorEvent({ eventName: "cacheFetchError", type: entry.type }, error);
+			this.loggerExt.sendErrorEvent(
+				{ eventName: "cacheFetchError", type: entry.type },
+				error,
+			);
 			return undefined;
 		}
 	}
@@ -181,7 +194,7 @@ export class EpochTracker implements IPersistedFileCache {
 			fluidEpoch: this._fluidEpoch,
 		};
 		return this.cache.put(this.fileEntryFromEntry(entry), data).catch((error) => {
-			this.logger.sendErrorEvent({ eventName: "cachePutError", type: entry.type }, error);
+			this.loggerExt.sendErrorEvent({ eventName: "cachePutError", type: entry.type }, error);
 			throw error;
 		});
 	}
@@ -190,7 +203,7 @@ export class EpochTracker implements IPersistedFileCache {
 		try {
 			return await this.cache.removeEntries(this.fileEntry);
 		} catch (error) {
-			this.logger.sendErrorEvent({ eventName: "removeCacheEntries" }, error);
+			this.loggerExt.sendErrorEvent({ eventName: "removeCacheEntries" }, error);
 		}
 	}
 
@@ -443,7 +456,10 @@ export class EpochTracker implements IPersistedFileCache {
 					fromCache,
 					fetchType,
 				});
-				this.logger.sendErrorEvent({ eventName: "fileOverwrittenInStorage" }, epochError);
+				this.loggerExt.sendErrorEvent(
+					{ eventName: "fileOverwrittenInStorage" },
+					epochError,
+				);
 				// If the epoch mismatches, then clear all entries for such file entry from cache.
 				await this.removeEntries();
 				throw epochError;
