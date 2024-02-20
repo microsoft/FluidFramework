@@ -28,8 +28,8 @@
 	},
 	"dependencies": {
 		"@fluidframework/gitrest-base": "workspace:~",
-		"@fluidframework/server-services-shared": "^3.0.0",
-		"@fluidframework/server-services-utils": "^3.0.0",
+		"@fluidframework/server-services-shared": "^3.1.0-236733",
+		"@fluidframework/server-services-utils": "^3.1.0-236733",
 		"body-parser": "^1.17.2",
 		"compression": "^1.7.3",
 		"cors": "^2.8.5",

@@ -71,8 +71,8 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitrest-base': workspace:~
-      '@fluidframework/server-services-shared': ^3.0.0
-      '@fluidframework/server-services-utils': ^3.0.0
+      '@fluidframework/server-services-shared': ^3.1.0-236733
+      '@fluidframework/server-services-utils': ^3.1.0-236733
       '@types/async': ^3.2.9
       '@types/cors': ^2.8.4
       '@types/debug': ^4.1.5
@@ -102,8 +102,8 @@ importers:
       winston: ^3.6.0
     dependencies:
       '@fluidframework/gitrest-base': link:../gitrest-base
-      '@fluidframework/server-services-shared': 3.0.0
-      '@fluidframework/server-services-utils': 3.0.0
+      '@fluidframework/server-services-shared': 3.1.0-237980
+      '@fluidframework/server-services-utils': 3.1.0-237980
       body-parser: 1.20.1
       compression: 1.7.4
       cors: 2.8.5
@@ -143,11 +143,11 @@ importers:
       '@fluidframework/gitresources': ^3.0.0
       '@fluidframework/protocol-base': ^3.0.0
       '@fluidframework/protocol-definitions': ^1.1.0
-      '@fluidframework/server-services-client': ^3.0.0
-      '@fluidframework/server-services-core': ^3.0.0
-      '@fluidframework/server-services-shared': ^3.0.0
-      '@fluidframework/server-services-telemetry': ^3.0.0
-      '@fluidframework/server-services-utils': ^3.0.0
+      '@fluidframework/server-services-client': ^3.1.0-236733
+      '@fluidframework/server-services-core': ^3.1.0-236733
+      '@fluidframework/server-services-shared': ^3.1.0-236733
+      '@fluidframework/server-services-telemetry': ^3.1.0-236733
+      '@fluidframework/server-services-utils': ^3.1.0-236733
       '@types/async': ^3.2.9
       '@types/cors': ^2.8.4
       '@types/debug': ^4.1.5
@@ -197,11 +197,11 @@ importers:
       '@fluidframework/gitresources': 3.0.0
       '@fluidframework/protocol-base': 3.0.0
       '@fluidframework/protocol-definitions': 1.1.0
-      '@fluidframework/server-services-client': 3.0.0
-      '@fluidframework/server-services-core': 3.0.0
-      '@fluidframework/server-services-shared': 3.0.0
-      '@fluidframework/server-services-telemetry': 3.0.0
-      '@fluidframework/server-services-utils': 3.0.0
+      '@fluidframework/server-services-client': 3.1.0-237980
+      '@fluidframework/server-services-core': 3.1.0-237980
+      '@fluidframework/server-services-shared': 3.1.0-237980
+      '@fluidframework/server-services-telemetry': 3.1.0-237980
+      '@fluidframework/server-services-utils': 3.1.0-237980
       async-mutex: 0.3.2
       axios: 1.6.2_debug@4.3.4
       body-parser: 1.20.1
@@ -700,12 +700,25 @@ packages:
     resolution: {integrity: sha512-kpbONpwCIE7q2G+Q+KTfBHUz+VneL/7tPWlYFZ96uP0dpeBVdSJdf9dgd0ILIzs6rpO6XRpceI2D503LRU6j9g==}
     dev: false
 
+  /@fluidframework/gitresources/3.1.0-237980:
+    resolution: {integrity: sha512-kUunbvjzzzbpAIR8aRfOh0CAjifC+TVfM9hOqwYVr/orB3UNW+tO/m9ZGJBPWULRmW19YVlHs44Ko4fIax40LQ==}
+    dev: false
+
   /@fluidframework/protocol-base/3.0.0:
     resolution: {integrity: sha512-csvei49LHDZhD+gQ3brUZEeekQmvk/ndsBNhYnqxJeoAOlBi5MtIqyb5vA96pKd0o23cwGE5PWEfrxJcsqEmTQ==}
     dependencies:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/gitresources': 3.0.0
       '@fluidframework/protocol-definitions': 3.1.0
+      events: 3.3.0
+    dev: false
+
+  /@fluidframework/protocol-base/3.1.0-237980:
+    resolution: {integrity: sha512-x40aMdE/WfepjY1cFnQARQfpJyM2BMl6ABBWAHSzVgPHh9n6MDQxIXwHdD9QC3Kzcm3WUyoD0Of4xDlqISg6cA==}
+    dependencies:
+      '@fluidframework/common-utils': 3.1.0
+      '@fluidframework/gitresources': 3.1.0-237980
+      '@fluidframework/protocol-definitions': 3.2.0-237840
       events: 3.3.0
     dev: false
 
@@ -719,34 +732,37 @@ packages:
     resolution: {integrity: sha512-BgGF82z4sk5M4torMR38NGjHjFG9t6Y653UcGOlXiIaGQMDZpRfrxiIuq53Gb12OTfUgbNtvBJL1W46JfLvzQw==}
     dev: false
 
-  /@fluidframework/server-services-client/3.0.0:
-    resolution: {integrity: sha512-obsH2oYOkmvQoOSuluwEwiViOuZe3wNBNBWxuUHkGKmfeg1xU5Ko2Sj5/0Ku45f5EY8puRenlApCTS/2mKhSaw==}
+  /@fluidframework/protocol-definitions/3.2.0-237840:
+    resolution: {integrity: sha512-NlAZT7WjESOzQYiFRIXiWi58ISlubc69zrC2bObHuDE/hMdIEA0mVnJS8x8A/WHaikNEjZ1cyryJsRscSjg5WA==}
+    dev: false
+
+  /@fluidframework/server-services-client/3.1.0-237980:
+    resolution: {integrity: sha512-QpVU8ff5ZMdmFWYyu8ENj2VNWOT4Mz8jOAs2vfdXLQF2z8Ly00j9XGijTRC/FYtdc4WTRRpnFntLG3Dnm6PcqQ==}
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/gitresources': 3.0.0
-      '@fluidframework/protocol-base': 3.0.0
-      '@fluidframework/protocol-definitions': 3.1.0
+      '@fluidframework/gitresources': 3.1.0-237980
+      '@fluidframework/protocol-base': 3.1.0-237980
+      '@fluidframework/protocol-definitions': 3.2.0-237840
       axios: 1.6.2_debug@4.3.4
       crc-32: 1.2.0
       debug: 4.3.4
       json-stringify-safe: 5.0.1
-      jsrsasign: 10.6.1
+      jsrsasign: 11.1.0
       jwt-decode: 4.0.0
-      querystring: 0.2.1
       sillyname: 0.1.0
       uuid: 9.0.1
     transitivePeerDependencies:
       - supports-color
     dev: false
 
-  /@fluidframework/server-services-core/3.0.0:
-    resolution: {integrity: sha512-MyZnArgoNWHldCONx0oEhC7kzNY9hfemHdKH07ESFjpj9d2AqzDNfM/lZfb6uK5oiTs7G2sbR8VTdWWJZdzz8g==}
+  /@fluidframework/server-services-core/3.1.0-237980:
+    resolution: {integrity: sha512-woFow0q7TBhPsfC3iTE/Z0Hk2zg7Hj43/Ph09HZB9ceZmCTJLQG1VzXjiJ35W+BrMkB7w5epVf6sSX05ffyVug==}
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/gitresources': 3.0.0
-      '@fluidframework/protocol-definitions': 3.1.0
-      '@fluidframework/server-services-client': 3.0.0
-      '@fluidframework/server-services-telemetry': 3.0.0
+      '@fluidframework/gitresources': 3.1.0-237980
+      '@fluidframework/protocol-definitions': 3.2.0-237840
+      '@fluidframework/server-services-client': 3.1.0-237980
+      '@fluidframework/server-services-telemetry': 3.1.0-237980
       '@types/nconf': 0.10.3
       '@types/node': 18.17.7
       debug: 4.3.4
@@ -756,16 +772,17 @@ packages:
       - supports-color
     dev: false
 
-  /@fluidframework/server-services-shared/3.0.0:
-    resolution: {integrity: sha512-NLJL9GXO3jWgmh6l8AyZV7R/gB9hgXjXP6Pax4U0oy6ssx6Tdtsn1Z/QMvr9dr6iVKPUrREGKSwWyMk6honpMQ==}
+  /@fluidframework/server-services-shared/3.1.0-237980:
+    resolution: {integrity: sha512-VXvqhGE0AwZz6rz10U5llAP+yEVzKyhkeq4xMf8k04c9w1PxoX+M5HipYc9he8Lf0Jd1D6GVk6f2Kmw8pSRp2Q==}
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/gitresources': 3.0.0
-      '@fluidframework/protocol-base': 3.0.0
-      '@fluidframework/protocol-definitions': 3.1.0
-      '@fluidframework/server-services-client': 3.0.0
-      '@fluidframework/server-services-core': 3.0.0
-      '@fluidframework/server-services-telemetry': 3.0.0
+      '@fluidframework/gitresources': 3.1.0-237980
+      '@fluidframework/protocol-base': 3.1.0-237980
+      '@fluidframework/protocol-definitions': 3.2.0-237840
+      '@fluidframework/server-services-client': 3.1.0-237980
+      '@fluidframework/server-services-core': 3.1.0-237980
+      '@fluidframework/server-services-telemetry': 3.1.0-237980
+      '@fluidframework/server-services-utils': 3.1.0-237980
       '@socket.io/redis-adapter': 7.2.0
       '@socket.io/sticky': 1.0.4
       body-parser: 1.20.1
@@ -776,7 +793,6 @@ packages:
       lodash: 4.17.21
       nconf: 0.12.0
       notepack.io: 2.3.0
-      querystring: 0.2.1
       serialize-error: 8.1.0
       socket.io: 4.7.2
       socket.io-adapter: 2.5.2
@@ -789,8 +805,8 @@ packages:
       - utf-8-validate
     dev: false
 
-  /@fluidframework/server-services-telemetry/3.0.0:
-    resolution: {integrity: sha512-6t8aapyGgoCefgkHhU6CAdZEqPf43nHOulht5ghEBuyhrxqY+BEJYtNq9/5O4E7kpph1d1M/tYPIZD1adjgCIQ==}
+  /@fluidframework/server-services-telemetry/3.1.0-237980:
+    resolution: {integrity: sha512-TtBPCG4YyhSzxiuQomPhzdiWsSdDSJb/O2qfXJ6hbrasG71Lk0lcKyqAb5cfz7Xk0L7Nv4//sHXwnF040O0Kow==}
     dependencies:
       '@fluidframework/common-utils': 3.1.0
       json-stringify-safe: 5.0.1
@@ -799,13 +815,13 @@ packages:
       uuid: 9.0.1
     dev: false
 
-  /@fluidframework/server-services-utils/3.0.0:
-    resolution: {integrity: sha512-1dCOZWYS28QC4xN+b3qzOA46/O2VTBBMOWnxzydaWjsuTnmAsqwJmM53mweQbI848mohM/4gpyXtlQnqizF5Uw==}
+  /@fluidframework/server-services-utils/3.1.0-237980:
+    resolution: {integrity: sha512-ZWIfMKcoC+Fl4aDM0RSafFD72s/840PIkKtFtTLHN+3nK9V/mHqXit+WIlKZ6MWxroQmj3YxhbIE9pDgpH9OqQ==}
     dependencies:
-      '@fluidframework/protocol-definitions': 3.1.0
-      '@fluidframework/server-services-client': 3.0.0
-      '@fluidframework/server-services-core': 3.0.0
-      '@fluidframework/server-services-telemetry': 3.0.0
+      '@fluidframework/protocol-definitions': 3.2.0-237840
+      '@fluidframework/server-services-client': 3.1.0-237980
+      '@fluidframework/server-services-core': 3.1.0-237980
+      '@fluidframework/server-services-telemetry': 3.1.0-237980
       debug: 4.3.4
       express: 4.18.2
       ioredis: 5.3.2
@@ -8567,8 +8583,8 @@ packages:
       ms: 2.1.3
       semver: 7.5.4
 
-  /jsrsasign/10.6.1:
-    resolution: {integrity: sha512-emiQ05haY9CRj1Ho/LiuCqr/+8RgJuWdiHYNglIg2Qjfz0n+pnUq9I2QHplXuOMO2EnAW1oCGC1++aU5VoWSlw==}
+  /jsrsasign/11.1.0:
+    resolution: {integrity: sha512-Ov74K9GihaK9/9WncTe1mPmvrO7Py665TUfUKvraXBpu+xcTWitrtuOwcjf4KMU9maPaYn0OuaWy0HOzy/GBXg==}
     dev: false
 
   /jssm-viz-cli/5.89.2:
@@ -11150,12 +11166,6 @@ packages:
     engines: {node: '>=0.4.x'}
     deprecated: The querystring API is considered Legacy. new code should use the URLSearchParams API instead.
     dev: true
-
-  /querystring/0.2.1:
-    resolution: {integrity: sha512-wkvS7mL/JMugcup3/rMitHmd9ecIGd2lhFhK9N3UUQ450h66d1r3Y9nvXzQAW1Lq+wyx61k/1pfKS5KuKiyEbg==}
-    engines: {node: '>=0.4.x'}
-    deprecated: The querystring API is considered Legacy. new code should use the URLSearchParams API instead.
-    dev: false
 
   /queue-microtask/1.2.3:
     resolution: {integrity: sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==}
