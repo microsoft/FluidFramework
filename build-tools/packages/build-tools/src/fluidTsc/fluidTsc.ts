@@ -11,9 +11,15 @@ const { log, errorLog: error } = defaultLogger;
 function printUsage() {
 	log(
 		`
+Runs tsc using arguments given in an environment where local package.json "type" property is overridden. This enables single package to support both CommonJS and ESM.
+
+Warning: Use this dual build approach carefully as consumers must be careful not to depend on both CommonJS and ESM versions of the same package.
+
 Usage: fluid-tsc [commonjs|module] [<tsc args>...]
     [commonjs|module] value for package.json "type" property
     [<tsc args>...] arguments passed to Typescript compiler (see tsc -?)
+
+Example: fluid-tsc commonjs --project tsconfig.cjs.json
 `,
 	);
 }
