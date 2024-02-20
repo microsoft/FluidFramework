@@ -55,7 +55,7 @@ export class Redis implements IRedis {
 	private readonly prefix: string = "fs";
 
 	constructor(
-		private readonly client: IoRedis.default,
+		private readonly client: IoRedis.default | IoRedis.Cluster,
 		private readonly parameters?: RedisParams,
 	) {
 		if (parameters?.expireAfterSeconds) {
@@ -163,7 +163,7 @@ export class HashMapRedis implements IRedis {
 		 * Key that points to the HashMap in Redis.
 		 */
 		private readonly hashMapKey: string,
-		private readonly client: IoRedis.default,
+		private readonly client: IoRedis.default | IoRedis.Cluster,
 		private readonly parameters?: RedisParams,
 	) {
 		if (parameters?.expireAfterSeconds) {

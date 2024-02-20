@@ -6,7 +6,7 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "azure/packages/azure-client"
+		"directory": "packages/service-clients/azure-client"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
@@ -106,10 +106,10 @@
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/map": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0-231454",
+		"@fluidframework/protocol-definitions": "^3.2.0-237840",
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/server-services-client": "^3.1.0-231702",
+		"@fluidframework/server-services-client": "^3.1.0-237980",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"axios": "^1.6.2"
 	},
