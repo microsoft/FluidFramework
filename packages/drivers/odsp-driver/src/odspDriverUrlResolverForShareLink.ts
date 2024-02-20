@@ -225,7 +225,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 			actualDataStorePath = odspResolvedUrl.dataStorePath;
 		}
 
-		let containerPackageName;
+		let containerPackageName: string | undefined;
 		if (packageInfoSource && "name" in packageInfoSource) {
 			containerPackageName = packageInfoSource.name;
 			// packageInfoSource is cast to any as it is typed to IContainerPackageInfo instead of IFluidCodeDetails
@@ -241,7 +241,6 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 			containerPackageName = (packageInfoSource as any)?.package;
 		}
 		// TODO: use a stronger type
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		containerPackageName =
 			containerPackageName ?? odspResolvedUrl.codeHint?.containerPackageName;
 
@@ -253,7 +252,6 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 			itemId: odspResolvedUrl.itemId,
 			dataStorePath: actualDataStorePath,
 			appName: this.appName,
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			containerPackageName,
 			fileVersion: odspResolvedUrl.fileVersion,
 			context,
