@@ -89,10 +89,7 @@ describe("SharedString fuzz testing with rebased batches", () => {
 			...defaultFuzzOptions,
 			reconnectProbability: 0.0,
 			numberOfClients: 3,
-			clientJoinOptions: {
-				maxNumberOfClients: 3,
-				clientAddProbability: 0.0,
-			},
+			clientJoinOptions: undefined,
 			rebaseProbability: 0.2,
 			containerRuntimeOptions: {
 				flushMode: FlushMode.TurnBased,
@@ -118,10 +115,7 @@ describe.skip("SharedString fuzz testing with rebased batches and reconnect", ()
 			...defaultFuzzOptions,
 			reconnectProbability: 0.3,
 			numberOfClients: 3,
-			clientJoinOptions: {
-				maxNumberOfClients: 3,
-				clientAddProbability: 0.0,
-			},
+			clientJoinOptions: undefined,
 			rebaseProbability: 0.2,
 			containerRuntimeOptions: {
 				flushMode: FlushMode.TurnBased,

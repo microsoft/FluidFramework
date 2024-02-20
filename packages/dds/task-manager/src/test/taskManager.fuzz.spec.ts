@@ -240,7 +240,11 @@ describe("TaskManager fuzz testing", () => {
 		// Leaving the tests enabled without reconnect on mimics previous behavior (and provides more coverage
 		// than skipping them)
 		reconnectProbability: 0,
-		clientJoinOptions: { maxNumberOfClients: 6, clientAddProbability: 0.05 },
+		clientJoinOptions: {
+			maxNumberOfClients: 6,
+			clientAddProbability: 0.05,
+			stashableClientProbability: 0.2,
+		},
 		defaultTestCount: defaultOptions.testCount,
 		saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
 		// Uncomment this line to replay a specific seed:
@@ -270,7 +274,11 @@ describe("TaskManager fuzz testing with rebasing", () => {
 			flushMode: FlushMode.TurnBased,
 			enableGroupedBatching: true,
 		},
-		clientJoinOptions: { maxNumberOfClients: 6, clientAddProbability: 0.05 },
+		clientJoinOptions: {
+			maxNumberOfClients: 6,
+			clientAddProbability: 0.05,
+			stashableClientProbability: 0.2,
+		},
 		defaultTestCount: defaultOptions.testCount,
 		saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
 		// AB#5341: enabling 'start from detached' within the fuzz harness demonstrates eventual consistency failures.

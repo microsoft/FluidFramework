@@ -80,7 +80,7 @@ export interface IDeltaConnection {
 
 // @public
 export interface IDeltaHandler {
-    applyStashedOp(message: any): unknown;
+    applyStashedOp(message: any): void;
     process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) => void;
     reSubmit(message: any, localOpMetadata: unknown): void;
     rollback?(message: any, localOpMetadata: unknown): void;

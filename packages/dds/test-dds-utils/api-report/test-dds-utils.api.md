@@ -91,7 +91,7 @@ export interface DDSFuzzSuiteOptions {
     clientJoinOptions?: {
         maxNumberOfClients: number;
         clientAddProbability: number;
-        stashableClientProbability?: number;
+        stashableClientProbability: number | undefined;
     };
     containerRuntimeOptions?: IMockContainerRuntimeOptions;
     defaultTestCount: number;

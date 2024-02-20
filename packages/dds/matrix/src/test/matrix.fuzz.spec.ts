@@ -227,6 +227,7 @@ describe("Matrix fuzz tests", function () {
 		clientJoinOptions: {
 			maxNumberOfClients: 6,
 			clientAddProbability: 0.1,
+			stashableClientProbability: 0.2,
 		},
 		reconnectProbability: 0,
 		saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
@@ -249,10 +250,7 @@ describe("Matrix fuzz tests", function () {
 	createDDSFuzzSuite(nameModel("with reconnect"), {
 		...baseOptions,
 		defaultTestCount: 100,
-		clientJoinOptions: {
-			maxNumberOfClients: 3,
-			clientAddProbability: 0,
-		},
+		clientJoinOptions: undefined,
 		reconnectProbability: 0.1,
 		// Seeds needing investigation, tracked by AB#7088.
 		skip: [23, 24, 69],

@@ -467,6 +467,7 @@ describe("DDS Fuzz Harness", () => {
 				clientJoinOptions: {
 					maxNumberOfClients: 4,
 					clientAddProbability: 0.25,
+					stashableClientProbability: 0.2,
 				},
 			};
 			const model = mixinNewClient(
@@ -740,6 +741,7 @@ describe("DDS Fuzz Harness", () => {
 					clientJoinOptions: {
 						maxNumberOfClients: 4,
 						clientAddProbability: 0.25,
+						stashableClientProbability: 0.2,
 					},
 					emitter,
 				};

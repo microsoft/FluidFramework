@@ -404,6 +404,7 @@ export const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
 	clientJoinOptions: {
 		maxNumberOfClients: 6,
 		clientAddProbability: 0.1,
+		stashableClientProbability: 0.2,
 	},
 	defaultTestCount: 100,
 	saveFailures: { directory: path.join(__dirname, "../../../src/test/fuzz/results") },
