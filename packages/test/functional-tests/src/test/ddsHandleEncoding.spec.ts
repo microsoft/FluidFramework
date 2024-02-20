@@ -13,7 +13,7 @@ import {
 import { CellFactory } from "@fluidframework/cell";
 import { DirectoryFactory, IDirectory, MapFactory } from "@fluidframework/map";
 import { SharedMatrixFactory, SharedMatrix } from "@fluidframework/matrix";
-import { TreeFactory, SchemaFactory, ITree, TreeConfiguration } from "@fluidframework/tree";
+import { SharedTree, SchemaFactory, ITree, TreeConfiguration } from "@fluidframework/tree";
 import { ConsensusQueueFactory } from "@fluidframework/ordered-collection";
 import { ReferenceType, SharedStringFactory } from "@fluidframework/sequence";
 import { IChannel, IChannelFactory } from "@fluidframework/datastore-definitions";
@@ -128,7 +128,7 @@ describe("DDS Handle Encoding", () => {
 			[handle.absolutePath] /* expectedHandles */,
 		),
 		createTestCase(
-			new TreeFactory({}),
+			SharedTree.getFactory() as any,
 			(dds: ITree) => {
 				const builder = new SchemaFactory("test");
 				class Bar extends builder.object("bar", {
