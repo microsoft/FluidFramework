@@ -32,8 +32,8 @@
 		"start:tinylicious": "tinylicious",
 		"test": "npm run test:jest",
 		"test:coverage": "npm run test:jest:coverage",
-		"test:jest": "jest --detectOpenHandles",
-		"test:jest:coverage": "jest --detectOpenHandles --coverage --ci",
+		"test:jest": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --detectOpenHandles",
+		"test:jest:coverage": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --detectOpenHandles --coverage --ci",
 		"tsc": "tsc",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
