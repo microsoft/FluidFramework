@@ -51,7 +51,7 @@ export class LocalOdspDocumentStorageService extends OdspDocumentStorageServiceB
 		let snapshotContents: ISnapshot;
 
 		if (typeof this.localSnapshot === "string") {
-			const content: IOdspSnapshot = JSON.parse(this.localSnapshot);
+			const content = JSON.parse(this.localSnapshot) as IOdspSnapshot;
 			snapshotContents = convertOdspSnapshotToSnapshotTreeAndBlobs(content);
 		} else {
 			snapshotContents = parseCompactSnapshotResponse(this.localSnapshot, this.logger);
