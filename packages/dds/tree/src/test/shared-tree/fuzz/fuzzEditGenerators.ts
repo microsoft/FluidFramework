@@ -46,7 +46,7 @@ import {
 	UndoOp,
 	UndoRedo,
 } from "./operationTypes.js";
-import { FuzzNode, fuzzSchema } from "./fuzzUtils.js";
+import { FuzzNode, FuzzNodeSchema, fuzzNode, fuzzSchema } from "./fuzzUtils.js";
 
 export interface FuzzTestState extends DDSFuzzTestState<SharedTreeFactory> {
 	/**
@@ -64,6 +64,7 @@ export interface FuzzTestState extends DDSFuzzTestState<SharedTreeFactory> {
 	 * and the fuzz testing model only simulates async transactions.
 	 */
 	transactionViews?: Map<ISharedTree, ITreeViewFork<typeof fuzzSchema.rootFieldSchema>>;
+	nodeSchemas?: Map<ISharedTree, FuzzNodeSchema>;
 }
 
 export function viewFromState(
@@ -72,6 +73,13 @@ export function viewFromState(
 	initialTree: TreeContent<typeof fuzzSchema.rootFieldSchema>["initialTree"] = undefined,
 ): FlexTreeView<typeof fuzzSchema.rootFieldSchema> {
 	state.view ??= new Map();
+
+	// Initializes nodeSchema in FuzzTestState for clients that are not in the nodeSchema map.
+	state.nodeSchemas ??= new Map();
+	if (state.nodeSchemas.get(client.channel) === undefined) {
+		state.nodeSchemas.set(client.channel, fuzzNode);
+	}
+
 	return (
 		state.transactionViews?.get(client.channel) ??
 		getOrCreate(state.view, client.channel, (tree) =>
@@ -202,6 +210,7 @@ export const makeEditGenerator = (
 			state.random,
 			weights.fieldSelection,
 			weights.fieldSelection.filter,
+			state,
 		);
 		switch (fieldInfo.type) {
 			case "optional":
@@ -248,6 +257,7 @@ export const makeEditGenerator = (
 			state.random,
 			weights.fieldSelection,
 			deletableFieldFilter,
+			state,
 		);
 		switch (fieldInfo.type) {
 			case "optional": {
@@ -304,6 +314,7 @@ export const makeEditGenerator = (
 			state.random,
 			weights.fieldSelection,
 			(f) => f.type === "sequence" && f.content.length > 0,
+			state,
 		);
 		assert(fieldInfo.type === "sequence", "Move should only be performed on sequence fields");
 		const { content: field } = fieldInfo;
@@ -336,6 +347,7 @@ export const makeEditGenerator = (
 					state.random,
 					weights.fieldSelection,
 					weights.fieldSelection.filter,
+					state,
 				) !== "no-valid-fields",
 		],
 		[
@@ -347,6 +359,7 @@ export const makeEditGenerator = (
 					state.random,
 					weights.fieldSelection,
 					deletableFieldFilter,
+					state,
 				) !== "no-valid-fields",
 		],
 		[
@@ -358,6 +371,7 @@ export const makeEditGenerator = (
 					state.random,
 					weights.fieldSelection,
 					(f) => f.type === "sequence" && f.content.length > 0,
+					state,
 				) !== "no-valid-fields",
 		],
 	]);
@@ -541,15 +555,13 @@ function selectField(
 	random: IRandom,
 	weights: Omit<FieldSelectionWeights, "filter">,
 	filter: FieldFilter = () => true,
+	nodeSchema: FuzzNodeSchema,
 ): FuzzField | "no-valid-selections" {
 	const optional: FuzzField = { type: "optional", content: node.boxedOptionalChild } as const;
 
 	const value: FuzzField = { type: "required", content: node.boxedRequiredChild } as const;
 
 	const sequence: FuzzField = { type: "sequence", content: node.boxedSequenceChildren } as const;
-
-	const nodeSchema = node.context.schema.nodeSchema.get(brand("tree2fuzz.node"));
-	assert(nodeSchema !== undefined);
 
 	const recurse = (state: { random: IRandom }): FuzzField | "no-valid-selections" => {
 		const childNodes: FuzzNode[] = [];
@@ -570,7 +582,7 @@ function selectField(
 		});
 		state.random.shuffle(childNodes);
 		for (const child of childNodes) {
-			const childResult = selectField(child, random, weights, filter);
+			const childResult = selectField(child, random, weights, filter, nodeSchema);
 			if (childResult !== "no-valid-selections") {
 				return childResult;
 			}
@@ -595,6 +607,7 @@ function trySelectTreeField(
 	random: IRandom,
 	weights: Omit<FieldSelectionWeights, "filter">,
 	filter: FieldFilter = () => true,
+	state: FuzzTestState,
 ): FuzzField | "no-valid-fields" {
 	const editable = tree.flexTree;
 	const options =
@@ -605,7 +618,7 @@ function trySelectTreeField(
 			: random.bool(weights.optional / (weights.optional + weights.recurse))
 			? ["optional", "recurse"]
 			: ["recurse", "optional"];
-	const nodeSchema = tree.context.schema.nodeSchema.get(brand("tree2fuzz.node"));
+	const nodeSchema = state.nodeSchemas?.get(state.client.channel);
 	assert(nodeSchema !== undefined);
 	for (const option of options) {
 		switch (option) {
@@ -621,7 +634,13 @@ function trySelectTreeField(
 				// to the .is typeguard.
 				// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 				if (editable.content?.is(nodeSchema)) {
-					const result = selectField((editable as any).content, random, weights, filter);
+					const result = selectField(
+						(editable as any).content,
+						random,
+						weights,
+						filter,
+						nodeSchema,
+					);
 					if (result !== "no-valid-selections") {
 						return result;
 					}
@@ -642,8 +661,9 @@ function selectTreeField(
 	random: IRandom,
 	weights: Omit<FieldSelectionWeights, "filter">,
 	filter: FieldFilter = () => true,
+	state: FuzzTestState,
 ): FuzzField {
-	const result = trySelectTreeField(tree, random, weights, filter);
+	const result = trySelectTreeField(tree, random, weights, filter, state);
 	assert(result !== "no-valid-fields", "No valid fields found");
 	return result;
 }

@@ -46,7 +46,7 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, Branched
 			case "fieldEdit": {
 				const tree = state.branch;
 				assert(tree !== undefined);
-				applyFieldEdit(tree, contents);
+				applyFieldEdit(tree, contents, state);
 				break;
 			}
 			default:
