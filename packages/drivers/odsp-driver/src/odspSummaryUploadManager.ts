@@ -48,7 +48,10 @@ export class OdspSummaryUploadManager {
 		this.mc = loggerToMonitoringContext(logger);
 	}
 
-	public async writeSummaryTree(tree: api.ISummaryTree, context: ISummaryContext) {
+	public async writeSummaryTree(
+		tree: api.ISummaryTree,
+		context: ISummaryContext,
+	): Promise<string> {
 		// If the last proposed handle is not the proposed handle of the acked summary(could happen when the last summary get nacked),
 		// then re-initialize the caches with the previous ones else just update the previous caches with the caches from acked summary.
 		// Don't bother logging if lastSummaryProposalHandle hasn't been set before; only log on a positive mismatch.
@@ -163,7 +166,10 @@ export class OdspSummaryUploadManager {
 		markUnreferencedNodes: boolean = this.mc.config.getBoolean(
 			"Fluid.Driver.Odsp.MarkUnreferencedNodes",
 		) ?? true,
-	) {
+	): Promise<{
+		snapshotTree: IOdspSummaryTree;
+		blobs: number;
+	}> {
 		const snapshotTree: IOdspSummaryTree = {
 			type: "tree",
 			entries: [] as OdspSummaryTreeEntry[],
@@ -228,7 +234,10 @@ export class OdspSummaryUploadManager {
 					break;
 				}
 				default: {
-					unreachableCase(summaryObject, `Unknown type: ${(summaryObject as any).type}`);
+					unreachableCase(
+						summaryObject,
+						`Unknown type: ${(summaryObject as api.SummaryObject).type}`,
+					);
 				}
 			}
 
