@@ -338,9 +338,13 @@ describe("Garbage Collection Stats", () => {
 			clock.tick(sweepTimeoutMs + 1);
 
 			// There shouldn't be any nodes whose reference state updated.
-			// Note that the nodes won't be deleted yet. They will be deleted once the GC op is processed.
 			expectedStats.updatedNodeCount = 0;
 			expectedStats.updatedDataStoreCount = 0;
+
+			// Note that the 2 sweep-ready nodes won't actually be deleted yet (until the GC op is processed)
+			// but we account for them in the deleted stats now.
+			expectedStats.deletedNodeCount += 2;
+			expectedStats.deletedDataStoreCount += 2;
 
 			gcStats = await garbageCollector.collectGarbage({});
 			assert.deepStrictEqual(gcStats, expectedStats, "Incorrect GC stats 1");
@@ -353,10 +357,8 @@ describe("Garbage Collection Stats", () => {
 			// Process the GC message so that the sweep ready nodes are deleted.
 			processLastGCMessage();
 
-			// The 2 sweep ready nodes / data stores should now be deleted.
+			// The 2 sweep ready nodes / data stores should now be truly deleted.
 			// They should be removed from the total node and unreferenced counts.
-			expectedStats.deletedNodeCount += 2;
-			expectedStats.deletedDataStoreCount += 2;
 			expectedStats.nodeCount -= 2;
 			expectedStats.dataStoreCount -= 2;
 			expectedStats.unrefNodeCount -= 2;
@@ -389,9 +391,13 @@ describe("Garbage Collection Stats", () => {
 			clock.tick(sweepTimeoutMs + 1);
 
 			// There shouldn't be any nodes whose reference state updated.
-			// Note that the nodes won't be deleted yet. They will be deleted once the GC op is processed.
 			expectedStats.updatedNodeCount = 0;
 			expectedStats.updatedDataStoreCount = 0;
+
+			// Note that the 2 sweep-ready nodes won't actually be deleted yet (until the GC op is processed)
+			// but we account for them in the deleted stats now.
+			expectedStats.deletedNodeCount += 2;
+			expectedStats.deletedDataStoreCount += 2;
 
 			gcStats = await garbageCollector.collectGarbage({});
 
@@ -403,13 +409,11 @@ describe("Garbage Collection Stats", () => {
 			// Process the GC message so that the sweep ready nodes are deleted.
 			processLastGCMessage();
 
-			// Unreference another data store node.
+			// Unreference one more data store node (nodes[1])
 			defaultGCData.gcNodes[nodes[0]] = [];
 
 			// The 2 sweep ready nodes / data stores should now be deleted.
 			// They should be removed from the total node and unreferenced counts.
-			expectedStats.deletedNodeCount += 2;
-			expectedStats.deletedDataStoreCount += 2;
 			expectedStats.nodeCount -= 2;
 			expectedStats.dataStoreCount -= 2;
 			expectedStats.unrefNodeCount -= 2;
@@ -427,9 +431,13 @@ describe("Garbage Collection Stats", () => {
 			clock.tick(sweepTimeoutMs + 1);
 
 			// No nodes are updated since the last run.
-			// Note that the nodes won't be deleted yet. They will be deleted once the GC op is processed.
 			expectedStats.updatedNodeCount = 0;
 			expectedStats.updatedDataStoreCount = 0;
+
+			// Note that the new sweep-ready node won't actually be deleted yet (until the GC op is processed)
+			// but we account for it in the deleted stats now.
+			expectedStats.deletedNodeCount += 1;
+			expectedStats.deletedDataStoreCount += 1;
 
 			gcStats = await garbageCollector.collectGarbage({});
 			assert.deepStrictEqual(gcStats, expectedStats, "Incorrect GC stats 3");
@@ -442,10 +450,8 @@ describe("Garbage Collection Stats", () => {
 			// Process the GC message so that the sweep ready node is deleted.
 			processLastGCMessage();
 
-			// The sweep ready node / data store should now be deleted.
+			// The sweep ready node / data store should now be truly deleted.
 			// It should be removed from the total node and unreferenced counts.
-			expectedStats.deletedNodeCount++;
-			expectedStats.deletedDataStoreCount++;
 			expectedStats.nodeCount--;
 			expectedStats.dataStoreCount--;
 			expectedStats.unrefNodeCount--;

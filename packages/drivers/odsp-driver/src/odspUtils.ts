@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryProperties, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
+import { IResolvedUrl, ISnapshot } from "@fluidframework/driver-definitions";
 import {
 	isOnline,
 	OnlineStatus,
@@ -25,7 +25,7 @@ import {
 	fetchIncorrectResponse,
 	throwOdspNetworkError,
 	getSPOAndGraphRequestIdsFromResponse,
-} from "@fluidframework/odsp-doclib-utils";
+} from "@fluidframework/odsp-doclib-utils/internal";
 import {
 	IOdspResolvedUrl,
 	TokenFetchOptions,
@@ -43,6 +43,7 @@ import {
 import { fetch } from "./fetch";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { IOdspSnapshot } from "./contracts";
+import { ISnapshotContents } from "./odspPublicUtils";
 
 export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRepeat";
 
@@ -472,4 +473,31 @@ export async function measureP<T>(callback: () => Promise<T>): Promise<[T, numbe
 
 export function getJoinSessionCacheKey(odspResolvedUrl: IOdspResolvedUrl) {
 	return `${odspResolvedUrl.hashedDocumentId}/joinsession`;
+}
+
+/**
+ * Utility API to check if the type of snapshot contents is `ISnapshot`.
+ * @internal
+ * @param obj - obj whose type needs to be identified.
+ */
+export function isInstanceOfISnapshot(
+	obj: ISnapshotContents | ISnapshot | undefined,
+): obj is ISnapshot {
+	return obj !== undefined && "snapshotFormatV" in obj && obj.snapshotFormatV === 1;
+}
+
+/**
+ * This tells whether request if for a specific loading group or not. The snapshot which
+ * we fetch on initial load, fetches all ungrouped content.
+ */
+export function isSnapshotFetchForLoadingGroup(loadingGroupIds: string[] | undefined) {
+	return loadingGroupIds !== undefined && loadingGroupIds.length > 0;
+}
+
+/*
+ * This tells whether we are using legacy flow for fetching snapshot where we don't use
+ * groupId query param in the trees latest network call.
+ */
+export function useLegacyFlowWithoutGroupsForSnapshotFetch(loadingGroupIds: string[] | undefined) {
+	return loadingGroupIds === undefined;
 }

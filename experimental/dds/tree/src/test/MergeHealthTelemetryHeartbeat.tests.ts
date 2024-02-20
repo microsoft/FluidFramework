@@ -6,14 +6,14 @@
 import { expect } from 'chai';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils';
-import { SharedTreeMergeHealthTelemetryHeartbeat } from '../MergeHealth';
-import { SequencedEditAppliedEventArguments, SharedTree } from '../SharedTree';
-import { RevisionView } from '../RevisionView';
-import { Change, ChangeType, StablePlace, StableRange } from '../ChangeTypes';
-import { ConstraintEffect, EditStatus } from '../persisted-types';
-import { TransactionInternal } from '../TransactionInternal';
-import { buildLeaf, TestTree } from './utilities/TestNode';
-import { setUpTestSharedTree, setUpTestTree } from './utilities/TestUtilities';
+import { SharedTreeMergeHealthTelemetryHeartbeat } from '../MergeHealth.js';
+import { SequencedEditAppliedEventArguments, SharedTree } from '../SharedTree.js';
+import { RevisionView } from '../RevisionView.js';
+import { Change, ChangeType, StablePlace, StableRange } from '../ChangeTypes.js';
+import { ConstraintEffect, EditStatus } from '../persisted-types/index.js';
+import { TransactionInternal } from '../TransactionInternal.js';
+import { buildLeaf, TestTree } from './utilities/TestNode.js';
+import { setUpTestSharedTree, setUpTestTree } from './utilities/TestUtilities.js';
 
 async function setupHeartbeat() {
 	const events: ITelemetryBaseEvent[] = [];

@@ -34,7 +34,7 @@ type IContainerRuntimeWithPrivates = IContainerRuntime & {
  * Validates that when the runtime GC version changes, we reset GC state and regenerate summary. Basically, when we
  * update the GC version due to bugs, newer versions re-run GC and older versions stop running GC.
  */
-describeCompat("GC version update", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) => {
+describeCompat("GC version update", "NoCompat", (getTestObjectProvider, apis) => {
 	const {
 		containerRuntime: { ContainerRuntimeFactoryWithDefaultDataStore },
 	} = apis;

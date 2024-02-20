@@ -352,6 +352,9 @@ export interface ITelemetryContext {
 
 	/**
 	 * Get the telemetry data being tracked
+	 *
+	 * @deprecated This interface should only be used for instrumenting, not for attempting to read already-set telemetry data.
+	 *
 	 * @param prefix - unique prefix for this data (ex: "fluid:map:")
 	 * @param property - property name of the telemetry data being tracked (ex: "DirectoryCount")
 	 * @returns undefined if item not found
@@ -361,6 +364,9 @@ export interface ITelemetryContext {
 	/**
 	 * Returns a serialized version of all the telemetry data.
 	 * Should be used when logging in telemetry events.
+	 *
+	 * @deprecated This interface should only be used for instrumenting. A concrete implementation will likely have a serialize function
+	 * but this functionality should not be used by other code being given an ITelemetryContext.
 	 */
 	serialize(): string;
 }

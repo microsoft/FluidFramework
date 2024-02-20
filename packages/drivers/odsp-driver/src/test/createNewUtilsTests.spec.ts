@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { ISnapshot } from "@fluidframework/driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";
 import { bufferToString } from "@fluid-internal/client-utils";
 import {
@@ -18,7 +19,7 @@ import { convertCreateNewSummaryTreeToTreeAndBlobs } from "../createNewUtils";
 import { createNewFluidFile } from "../createFile";
 import { createNewContainerOnExistingFile } from "../createNewContainerOnExistingFile";
 import { EpochTracker } from "../epochTracker";
-import { getHashedDocumentId, ISnapshotContents } from "../odspPublicUtils";
+import { getHashedDocumentId } from "../odspPublicUtils";
 import { INewFileInfo, createCacheSnapshotKey, IExistingFileInfo } from "../odspUtils";
 import { LocalPersistentCache } from "../odspCache";
 import { mockFetchOk } from "./mockFetch";
@@ -106,14 +107,14 @@ describe("Create New Utils Tests", () => {
 		await epochTracker.removeEntries().catch(() => {});
 	});
 
-	const test = (snapshot: ISnapshotContents) => {
+	const test = (snapshot: ISnapshot) => {
 		const snapshotTree = snapshot.snapshotTree;
 		assert.strictEqual(
 			Object.entries(snapshotTree.trees).length,
 			2,
 			"app and protocol should be there",
 		);
-		assert.strictEqual(snapshot.blobs.size, 2, "2 blobs should be there");
+		assert.strictEqual(snapshot.blobContents.size, 2, "2 blobs should be there");
 
 		const appTree = snapshotTree.trees[".app"];
 		const protocolTree = snapshotTree.trees[".protocol"];
@@ -121,13 +122,13 @@ describe("Create New Utils Tests", () => {
 		assert(protocolTree !== undefined, "Protocol tree should be there");
 
 		const appTreeBlobId = appTree.blobs.attributes;
-		const appTreeBlobValBuffer = snapshot.blobs.get(appTreeBlobId);
+		const appTreeBlobValBuffer = snapshot.blobContents.get(appTreeBlobId);
 		assert(appTreeBlobValBuffer !== undefined, "app blob value should exist");
 		const appTreeBlobVal = bufferToString(appTreeBlobValBuffer, "utf8");
 		assert(appTreeBlobVal === blobContent, "Blob content should match");
 
 		const docAttributesBlobId = protocolTree.blobs.attributes;
-		const docAttributesBuffer = snapshot.blobs.get(docAttributesBlobId);
+		const docAttributesBuffer = snapshot.blobContents.get(docAttributesBlobId);
 		assert(docAttributesBuffer !== undefined, "protocol attributes blob value should exist");
 		const docAttributesBlobValue = bufferToString(docAttributesBuffer, "utf8");
 		assert(

@@ -10,7 +10,7 @@ import {
 	enableOnNewFileKey,
 	IRuntimeAttributor,
 } from "@fluid-experimental/attributor";
-import { SharedString } from "@fluidframework/sequence";
+import type { SharedString } from "@fluidframework/sequence";
 import {
 	ITestObjectProvider,
 	ITestContainerConfig,
@@ -25,11 +25,6 @@ import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 
 const stringId = "sharedStringKey";
-const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
-const testContainerConfig: ITestContainerConfig = {
-	fluidDataObjectType: DataObjectFactoryType.Test,
-	registry,
-};
 
 function assertAttributionMatches(
 	sharedString: SharedString,
@@ -90,7 +85,14 @@ function assertAttributionMatches(
 
 // TODO: Expand the e2e tests in this suite to cover interesting combinations of configuration and versioning that aren't covered by mixinAttributor
 // unit tests.
-describeCompat("Attributor", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("Attributor", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedString } = apis.dds;
+	const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+	};
+
 	let provider: ITestObjectProvider;
 	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
@@ -113,12 +115,14 @@ describeCompat("Attributor", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 			configProvider: configProvider({
 				[enableOnNewFileKey]: runtimeAttributor !== undefined,
 			}),
+			// TODO this option shouldn't live here - this options object is global to the container
+			// and not specific to the individual dataStoreRuntime.
 			options: {
 				attribution: {
 					track: runtimeAttributor !== undefined,
 					policyFactory: createInsertOnlyAttributionPolicy,
 				},
-			},
+			} as any,
 		},
 	});
 

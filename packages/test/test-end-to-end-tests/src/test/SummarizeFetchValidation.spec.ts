@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
 import {
 	ContainerRuntime,
@@ -22,17 +21,12 @@ import {
 	createSummarizerFromFactory,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/test-utils";
-import {
-	describeCompat,
-	getContainerRuntimeApi,
-	itExpects,
-} from "@fluid-private/test-version-utils";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
-import { SharedMatrix } from "@fluidframework/matrix";
+import type { SharedMatrix } from "@fluidframework/matrix";
 import { ISnapshotTree, ISummaryTree, IVersion } from "@fluidframework/protocol-definitions";
-import { pkgVersion } from "../packageVersion.js";
 
 // Note GC needs to be disabled.
 const runtimeOptions: IContainerRuntimeOptions = {
@@ -43,79 +37,80 @@ const runtimeOptions: IContainerRuntimeOptions = {
 };
 export const TestDataObjectType1 = "@fluid-example/test-dataStore1";
 
-class TestDataObject1 extends DataObject {
-	public get _root() {
-		return this.root;
-	}
-
-	public get _context() {
-		return this.context;
-	}
-
-	private readonly matrixKey = "SharedMatrix";
-	public matrix!: SharedMatrix;
-
-	protected async initializingFirstTime() {
-		const sharedMatrix = SharedMatrix.create(this.runtime, this.matrixKey);
-		this.root.set(this.matrixKey, sharedMatrix.handle);
-		sharedMatrix.insertRows(0, 3);
-		sharedMatrix.insertCols(0, 3);
-	}
-
-	protected async hasInitialized() {
-		const matrixHandle = this.root.get<IFluidHandle<SharedMatrix>>(this.matrixKey);
-		assert(matrixHandle !== undefined, "SharedMatrix not found");
-		this.matrix = await matrixHandle.get();
-	}
-}
-
-const dataStoreFactory1 = new DataObjectFactory(
-	TestDataObjectType1,
-	TestDataObject1,
-	[SharedMatrix.getFactory()],
-	[],
-	[],
-);
-
-const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
-	[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
-]);
-
-const containerRuntimeFactoryWithDefaultDataStore =
-	getContainerRuntimeApi(pkgVersion).ContainerRuntimeFactoryWithDefaultDataStore;
-
-const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
-	containerRuntimeFactoryWithDefaultDataStore,
-	{
-		defaultFactory: dataStoreFactory1,
-		registryEntries: registryStoreEntries,
-		runtimeOptions,
-	},
-);
-
-async function createSummarizer(
-	provider: ITestObjectProvider,
-	container: IContainer,
-	summaryVersion?: string,
-): Promise<ISummarizer> {
-	const createSummarizerResult = await createSummarizerFromFactory(
-		provider,
-		container,
-		dataStoreFactory1,
-		summaryVersion,
-		containerRuntimeFactoryWithDefaultDataStore,
-		registryStoreEntries,
-	);
-	return createSummarizerResult.summarizer;
-}
-
 /**
  * Validates the scenario in which we always retrieve the latest snapshot.
  */
 describeCompat(
 	"Summarizer fetches expected number of times",
-	"2.0.0-rc.1.0.0",
-	(getTestObjectProvider) => {
+	"NoCompat",
+	(getTestObjectProvider, apis) => {
+		const { SharedMatrix } = apis.dds;
+		const { DataObject, DataObjectFactory } = apis.dataRuntime;
+		const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
+
+		class TestDataObject1 extends DataObject {
+			public get _root() {
+				return this.root;
+			}
+
+			public get _context() {
+				return this.context;
+			}
+
+			private readonly matrixKey = "SharedMatrix";
+			public matrix!: SharedMatrix;
+
+			protected async initializingFirstTime() {
+				const sharedMatrix = SharedMatrix.create(this.runtime, this.matrixKey);
+				this.root.set(this.matrixKey, sharedMatrix.handle);
+				sharedMatrix.insertRows(0, 3);
+				sharedMatrix.insertCols(0, 3);
+			}
+
+			protected async hasInitialized() {
+				const matrixHandle = this.root.get<IFluidHandle<SharedMatrix>>(this.matrixKey);
+				assert(matrixHandle !== undefined, "SharedMatrix not found");
+				this.matrix = await matrixHandle.get();
+			}
+		}
+
+		const dataStoreFactory1 = new DataObjectFactory(
+			TestDataObjectType1,
+			TestDataObject1,
+			[SharedMatrix.getFactory()],
+			[],
+			[],
+		);
+
+		const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
+			[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
+		]);
+
+		const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
+			ContainerRuntimeFactoryWithDefaultDataStore,
+			{
+				defaultFactory: dataStoreFactory1,
+				registryEntries: registryStoreEntries,
+				runtimeOptions,
+			},
+		);
+
+		async function createSummarizer(
+			testObjectProvider: ITestObjectProvider,
+			container: IContainer,
+			summaryVersion?: string,
+		): Promise<ISummarizer> {
+			const createSummarizerResult = await createSummarizerFromFactory(
+				testObjectProvider,
+				container,
+				dataStoreFactory1,
+				summaryVersion,
+				ContainerRuntimeFactoryWithDefaultDataStore,
+				registryStoreEntries,
+			);
+			return createSummarizerResult.summarizer;
+		}
+
 		let provider: ITestObjectProvider;
 		let mainContainer: IContainer;
 		let mainDataStore: TestDataObject1;

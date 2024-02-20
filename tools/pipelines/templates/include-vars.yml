@@ -91,3 +91,15 @@ variables:
 - ${{ if ne(parameters.releaseBuildOverride, 'none') }}:
   - name: release
     value: ${{ parameters.releaseBuildOverride }}
+
+# We use 'chalk' to colorize output, which auto-detects color support in the
+# running terminal.  The log output shown in Azure DevOps job runs only has
+# basic ANSI color support though, so force that in the pipeline
+- name: FORCE_COLOR
+  value: 1
+
+# Indicates if tests should be run with code coverage analysis.
+# We don't do it for PRs to make those runs faster.
+- name: testCoverage
+  value: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
+  readonly: true

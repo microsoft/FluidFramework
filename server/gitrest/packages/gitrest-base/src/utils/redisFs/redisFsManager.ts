@@ -20,7 +20,7 @@ import type {
 import { FileHandle } from "fs/promises";
 import { Stream } from "stream";
 import { Abortable } from "events";
-import { Redis as IoRedis, RedisOptions as IoRedisOptions } from "ioredis";
+import { Redis as IoRedis, RedisOptions as IoRedisOptions, Cluster } from "ioredis";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { IFileSystemManager, IFileSystemManagerParams, IFileSystemPromises } from "../definitions";
 import { getStats, packedRefsFileName, SystemErrors } from "../fileSystemHelper";
@@ -35,6 +35,7 @@ import {
 export interface RedisFsConfig {
 	enableRedisFsMetrics: boolean;
 	redisApiMetricsSamplingPeriod: number;
+	enableOptimizedStat: boolean;
 }
 
 export class RedisFsManager implements IFileSystemManager {
@@ -49,7 +50,8 @@ export class RedisFsManager implements IFileSystemManager {
 		redisOptions: IoRedisOptions,
 		redisFsConfig: RedisFsConfig,
 		fsManagerParams?: IFileSystemManagerParams,
-		createRedisClient?: (options: IoRedisOptions) => IoRedis,
+		createRedisClient?: (options: IoRedisOptions) => IoRedis | Cluster,
+		enableClustering: boolean = false,
 	) {
 		this.promises = RedisFs.getInstance(
 			redisParam,
@@ -57,12 +59,13 @@ export class RedisFsManager implements IFileSystemManager {
 			redisFsConfig,
 			fsManagerParams,
 			createRedisClient,
+			enableClustering,
 		);
 	}
 }
 
 export class RedisFs implements IFileSystemPromises {
-	private static redisClientInstance: IoRedis;
+	private static redisClientInstance: IoRedis | Cluster;
 	public readonly redisFsClient: IRedis;
 
 	constructor(
@@ -70,7 +73,9 @@ export class RedisFs implements IFileSystemPromises {
 		redisOptions: IoRedisOptions,
 		private readonly redisFsConfig: RedisFsConfig,
 		fsManagerParams?: IFileSystemManagerParams,
-		createRedisClient: (options: IoRedisOptions) => IoRedis = (opts) => new IoRedis(opts),
+		createRedisClient: (options: IoRedisOptions) => IoRedis | Cluster = (opts) =>
+			new IoRedis(opts),
+		enableClustering: boolean = false,
 	) {
 		if (!RedisFs.redisClientInstance) {
 			RedisFs.redisClientInstance = createRedisClient(redisOptions);
@@ -90,7 +95,8 @@ export class RedisFs implements IFileSystemPromises {
 		redisOptions: IoRedisOptions,
 		redisFsConfig: RedisFsConfig,
 		fsManagerParams?: IFileSystemManagerParams,
-		createRedisClient?: (options: IoRedisOptions) => IoRedis,
+		createRedisClient?: (options: IoRedisOptions) => IoRedis | Cluster,
+		enableClustering: boolean = false,
 	): RedisFs {
 		return new RedisFs(
 			redisParams,
@@ -98,6 +104,7 @@ export class RedisFs implements IFileSystemPromises {
 			redisFsConfig,
 			fsManagerParams,
 			createRedisClient,
+			enableClustering,
 		);
 	}
 
@@ -362,8 +369,17 @@ export class RedisFs implements IFileSystemPromises {
 	public async stat(filepath: PathLike, options?: StatOptions): Promise<Stats | BigIntStats>;
 	public async stat(filepath: PathLike, options?: any): Promise<Stats | BigIntStats> {
 		const filepathString = filepath.toString();
-		const data = await executeRedisFsApiWithMetric(
-			async () => this.redisFsClient.get<string | Buffer>(filepathString),
+		const dataLength = await executeRedisFsApiWithMetric(
+			async () => {
+				if (this.redisFsConfig.enableOptimizedStat) {
+					return this.redisFsClient.peek(filepathString);
+				}
+				const data = await this.redisFsClient.get<string | Buffer>(filepathString);
+				if (data === null) {
+					return -1;
+				}
+				return data.length;
+			},
 			RedisFsApis.Stat,
 			this.redisFsConfig.enableRedisFsMetrics,
 			this.redisFsConfig.redisApiMetricsSamplingPeriod,
@@ -373,11 +389,11 @@ export class RedisFs implements IFileSystemPromises {
 			true,
 		);
 
-		if (data === null) {
+		if (dataLength === -1) {
 			throw new RedisFsError(SystemErrors.ENOENT, filepath.toString());
 		}
 
-		const fsEntityType = data === "" ? RedisFSConstants.directory : RedisFSConstants.file;
+		const fsEntityType = dataLength === 0 ? RedisFSConstants.directory : RedisFSConstants.file;
 
 		return getStats(fsEntityType);
 	}

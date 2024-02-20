@@ -7,7 +7,7 @@ import chalk from "chalk";
 
 import { MonoRepoKind } from "@fluidframework/build-tools";
 
-import { indentString } from "./lib";
+import { indentString } from "./library";
 import { CommandLogger } from "./logging";
 import { ReleaseGroup, ReleasePackage } from "./releaseGroups";
 

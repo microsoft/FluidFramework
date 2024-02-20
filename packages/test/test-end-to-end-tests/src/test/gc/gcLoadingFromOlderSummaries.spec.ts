@@ -30,7 +30,7 @@ import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
  * Validates that when a summarizer loads from an older summary and gets an ack for a newer summary, it disposes
  * rather than trying to update its state from the new summary.
  */
-describeCompat("GC loading from older summaries", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("GC loading from older summaries", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let mainContainer: IContainer;
 	let containerRuntime: IContainerRuntime;
@@ -38,6 +38,7 @@ describeCompat("GC loading from older summaries", "2.0.0-rc.1.0.0", (getTestObje
 
 	const configProvider = createTestConfigProvider();
 	configProvider.set("Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs", 10);
+	configProvider.set("Fluid.ContainerRuntime.SubmitSummary.shouldValidatePreSummaryState", false);
 	const testConfig: ITestContainerConfig = {
 		...defaultGCConfig,
 		loaderProps: { configProvider },
@@ -98,7 +99,10 @@ describeCompat("GC loading from older summaries", "2.0.0-rc.1.0.0", (getTestObje
 
 	itExpects(
 		"disposes the summarizer when loading from an older summary",
-		[{ eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed" }],
+		[
+			{ eventName: "fluid:telemetry:Summarizer:Running:LatestSummaryRefSeqNumMismatch" },
+			{ eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed" },
+		],
 		async () => {
 			const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer);
 

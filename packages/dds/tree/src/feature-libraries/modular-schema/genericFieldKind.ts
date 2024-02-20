@@ -9,7 +9,6 @@ import {
 	DeltaMark,
 	makeAnonChange,
 	RevisionMetadataSource,
-	tagChange,
 	TaggedChange,
 } from "../../core/index.js";
 import { fail, IdAllocator } from "../../util/index.js";
@@ -35,45 +34,44 @@ import { NodeChangeset } from "./modularChangeTypes.js";
 export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 	rebaser: {
 		compose: (
-			changes: TaggedChange<GenericChangeset>[],
+			change1: TaggedChange<GenericChangeset>,
+			change2: TaggedChange<GenericChangeset>,
 			composeChildren: NodeChangeComposer,
 		): GenericChangeset => {
-			if (changes.length === 0) {
-				return [];
-			}
 			const composed: GenericChangeset = [];
-			for (const change of changes) {
-				let listIndex = 0;
-				for (const { index, nodeChange } of change.change) {
-					const taggedChange = tagChange(nodeChange, change.revision);
-					while (listIndex < composed.length && composed[listIndex].index < index) {
-						listIndex += 1;
-					}
-					const match: GenericChange | undefined = composed[listIndex];
-					if (match === undefined) {
-						composed.push({ index, nodeChange: composeChildren([taggedChange]) });
-					} else if (match.index > index) {
-						composed.splice(listIndex, 0, {
-							index,
-							nodeChange: composeChildren([taggedChange]),
-						});
-					} else {
-						composed.splice(listIndex, 1, {
-							index,
-							nodeChange: composeChildren([
-								// `match.nodeChange` was the result of a call to `composeChildren`,
-								// so it does not need a revision tag.
-								// See the contract of `FieldChangeHandler.compose`.
-								makeAnonChange(match.nodeChange),
-								taggedChange,
-							]),
-						});
-					}
+
+			let listIndex1 = 0;
+			let listIndex2 = 0;
+
+			while (listIndex1 < change1.change.length || listIndex2 < change2.change.length) {
+				const next1 = change1.change[listIndex1];
+				const next2 = change2.change[listIndex2];
+				const nodeIndex1 = next1?.index ?? Infinity;
+				const nodeIndex2 = next2?.index ?? Infinity;
+				if (nodeIndex1 < nodeIndex2) {
+					composed.push({
+						index: nodeIndex1,
+						nodeChange: composeChildren(next1.nodeChange, undefined),
+					});
+					listIndex1 += 1;
+				} else if (nodeIndex2 < nodeIndex1) {
+					composed.push({
+						index: nodeIndex2,
+						nodeChange: composeChildren(undefined, next2.nodeChange),
+					});
+					listIndex2 += 1;
+				} else {
+					// Both nodes are at the same position.
+					composed.push({
+						index: nodeIndex1,
+						nodeChange: composeChildren(next1.nodeChange, next2.nodeChange),
+					});
+					listIndex1 += 1;
+					listIndex2 += 1;
 				}
 			}
 			return composed;
 		},
-		amendCompose: () => fail("Not implemented"),
 		invert: (
 			{ change }: TaggedChange<GenericChangeset>,
 			invertChild: NodeChangeInverter,
@@ -113,6 +111,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 	},
 	relevantRemovedRoots,
 	isEmpty: (change: GenericChangeset): boolean => change.length === 0,
+	createEmpty: (): GenericChangeset => [],
 };
 
 function rebaseGenericChange(
@@ -202,13 +201,22 @@ export function convertGenericChange<TChange>(
 		makeAnonChange(target.editor.buildChildChange(index, nodeChange)),
 	);
 
-	return target.rebaser.compose(
-		perIndex,
-		composeChild,
-		genId,
-		invalidCrossFieldManager,
-		revisionMetadata,
-	);
+	if (perIndex.length === 0) {
+		return target.createEmpty();
+	}
+
+	return perIndex.reduce((a, b) =>
+		makeAnonChange(
+			target.rebaser.compose(
+				a,
+				b,
+				composeChild,
+				genId,
+				invalidCrossFieldManager,
+				revisionMetadata,
+			),
+		),
+	).change;
 }
 
 const invalidFunc = () => fail("Should not be called when converting generic changes");

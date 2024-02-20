@@ -17,7 +17,7 @@ export class RedisCache implements ICache {
 	private readonly expireAfterSeconds: number = 60 * 60 * 24;
 	private readonly prefix: string = "page";
 	constructor(
-		private readonly client: Redis.default,
+		private readonly client: Redis.default | Redis.Cluster,
 		parameters?: IRedisParameters,
 	) {
 		if (parameters?.expireAfterSeconds) {
@@ -37,51 +37,65 @@ export class RedisCache implements ICache {
 		try {
 			await this.client.del(this.getKey(key));
 			return true;
-		} catch (error) {
+		} catch (error: any) {
 			Lumberjack.error(`Error deleting from cache.`, undefined, error);
 			return false;
 		}
 	}
 
 	public async get(key: string): Promise<string> {
-		return this.client.get(this.getKey(key));
+		try {
+			return this.client.get(this.getKey(key));
+		} catch (error: any) {
+			Lumberjack.error(`Error getting ${key.substring(0, 20)} from cache.`, undefined, error);
+			const newError: Error = { name: error?.name, message: error?.message };
+			throw newError;
+		}
 	}
 
 	public async set(key: string, value: string, expireAfterSeconds?: number): Promise<void> {
-		const result = await this.client.set(
-			this.getKey(key),
-			value,
-			"EX",
-			expireAfterSeconds ?? this.expireAfterSeconds,
-		);
-		if (result !== "OK") {
-			throw new Error(result);
+		try {
+			const result = await this.client.set(
+				this.getKey(key),
+				value,
+				"EX",
+				expireAfterSeconds ?? this.expireAfterSeconds,
+			);
+			if (result !== "OK") {
+				throw new Error(result);
+			}
+		} catch (error: any) {
+			Lumberjack.error(`Error setting ${key.substring(0, 20)} in cache.`, undefined, error);
+			const newError: Error = { name: error?.name, message: error?.message };
+			throw newError;
 		}
 	}
 
 	public async incr(key: string): Promise<number> {
 		try {
 			return this.client.incr(key);
-		} catch (error) {
+		} catch (error: any) {
 			Lumberjack.error(
-				`Error while incrementing counter for ${key} in redis.`,
+				`Error while incrementing counter for ${key.substring(0, 20)} in redis.`,
 				undefined,
 				error,
 			);
-			throw error;
+			const newError: Error = { name: error?.name, message: error?.message };
+			throw newError;
 		}
 	}
 
 	public async decr(key: string): Promise<number> {
 		try {
 			return this.client.decr(key);
-		} catch (error) {
+		} catch (error: any) {
 			Lumberjack.error(
-				`Error while decrementing counter for ${key} in redis.`,
+				`Error while decrementing counter for ${key.substring(0, 20)} in redis.`,
 				undefined,
 				error,
 			);
-			throw error;
+			const newError: Error = { name: error?.name, message: error?.message };
+			throw newError;
 		}
 	}
 

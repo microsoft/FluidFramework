@@ -14,6 +14,7 @@ import {
 	ShareLinkInfoType,
 	IFileEntry,
 } from "@fluidframework/odsp-driver-definitions";
+import { ISnapshot } from "@fluidframework/driver-definitions";
 import { ICreateFileResponse } from "./contracts";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import {
@@ -23,7 +24,6 @@ import {
 	INewFileInfo,
 	getOrigin,
 } from "./odspUtils";
-import { ISnapshotContents } from "./odspPublicUtils";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";
@@ -108,7 +108,7 @@ export async function createNewFluidFile(
 	if (createNewSummary !== undefined && createNewCaching) {
 		assert(summaryHandle !== undefined, 0x203 /* "Summary handle is undefined" */);
 		// converting summary and getting sequence number
-		const snapshot: ISnapshotContents = convertCreateNewSummaryTreeToTreeAndBlobs(
+		const snapshot: ISnapshot = convertCreateNewSummaryTreeToTreeAndBlobs(
 			createNewSummary,
 			summaryHandle,
 		);
