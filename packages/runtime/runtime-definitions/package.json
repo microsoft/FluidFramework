@@ -94,9 +94,6 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"InterfaceDeclaration_ITelemetryContext": {
-				"forwardCompat": false
-			},
 			"InterfaceDeclaration_IFluidDataStoreContext": {
 				"forwardCompat": false,
 				"backCompat": false

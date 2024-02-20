@@ -971,7 +971,6 @@ declare function get_old_InterfaceDeclaration_ITelemetryContext():
 declare function use_current_InterfaceDeclaration_ITelemetryContext(
     use: TypeOnly<current.ITelemetryContext>): void;
 use_current_InterfaceDeclaration_ITelemetryContext(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ITelemetryContext());
 
 /*

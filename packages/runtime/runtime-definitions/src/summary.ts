@@ -10,6 +10,7 @@ import {
 	ISnapshotTree,
 	ITree,
 } from "@fluidframework/protocol-definitions";
+import type { TelemetryBaseEventPropertyType } from "@fluidframework/core-interfaces";
 import { TelemetryEventPropertyTypeExt } from "@fluidframework/telemetry-utils";
 import { IGarbageCollectionData, IGarbageCollectionDetailsBase } from "./garbageCollection";
 
@@ -336,7 +337,7 @@ export interface ITelemetryContext {
 	 * @param value - value to attribute to this summary telemetry data. It should be array which
 	 * would be added to previously added items.
 	 */
-	push(prefix: string, property: string, value: TelemetryEventPropertyTypeExt): void;
+	push?(prefix: string, property: string, value: TelemetryEventPropertyTypeExt): void;
 
 	/**
 	 * Sets multiple values for telemetry data being tracked.
@@ -359,7 +360,7 @@ export interface ITelemetryContext {
 	 * @param property - property name of the telemetry data being tracked (ex: "DirectoryCount")
 	 * @returns undefined if item not found
 	 */
-	get(prefix: string, property: string): TelemetryEventPropertyTypeExt;
+	get(prefix: string, property: string): TelemetryBaseEventPropertyType;
 
 	/**
 	 * Returns a serialized version of all the telemetry data.
