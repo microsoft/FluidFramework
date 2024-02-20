@@ -429,7 +429,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		assert.strictEqual(directory2.get(testKey), testValue);
 	});
 
-	it.only("doesn't resend successful op", async function () {
+	it("doesn't resend successful op", async function () {
 		const pendingOps = await getPendingOps(provider, true, async (c, d) => {
 			const map = await d.getSharedObject<SharedMap>(mapId);
 			map.set(testKey, "something unimportant");

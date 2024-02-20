@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import {
+	ISequencedDocumentMessage,
+	ISnapshotTree,
+	IVersion,
+} from "@fluidframework/protocol-definitions";
 import { IGetPendingLocalStateProps, IRuntime } from "@fluidframework/container-definitions";
 import {
 	ITelemetryLoggerExt,
@@ -13,8 +17,8 @@ import {
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import { assert } from "@fluidframework/core-utils";
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
-import { ISerializableBlobContents } from "./containerStorageAdapter";
+import { IResolvedUrl, ISnapshot } from "@fluidframework/driver-definitions";
+import { ContainerStorageAdapter, ISerializableBlobContents } from "./containerStorageAdapter";
 import { IPendingContainerState } from "./container";
 
 export class containerStateManager {
@@ -30,14 +34,16 @@ export class containerStateManager {
 	private readonly offlineLoadEnabled: boolean;
 	private resolvedUrl: IResolvedUrl | undefined;
 	private runtime: IRuntime | undefined;
+	private readonly storageAdapter: ContainerStorageAdapter;
 
-	constructor(subLogger: ITelemetryLoggerExt, clientId, offlineLoadEnabled) {
+	constructor(subLogger: ITelemetryLoggerExt, clientId, offlineLoadEnabled, storageAdapter) {
 		this.clientId = clientId;
 		this.offlineLoadEnabled = offlineLoadEnabled;
 		this.mc = createChildMonitoringContext({
 			logger: subLogger,
 			namespace: "ContainerStateManager",
 		});
+		this.storageAdapter = storageAdapter;
 	}
 
 	public addSavedOp(message: ISequencedDocumentMessage) {
@@ -46,6 +52,64 @@ export class containerStateManager {
 
 	public getSavedOps() {
 		return this.savedOps;
+	}
+
+	private async getVersion(version: string | null): Promise<IVersion | undefined> {
+		const versions = await this.storageAdapter.getVersions(version, 1);
+		return versions[0];
+	}
+
+	/**
+	 * Get the most recent snapshot, or a specific version.
+	 * @param specifiedVersion - The specific version of the snapshot to retrieve
+	 * @returns The snapshot requested, or the latest snapshot if no version was specified, plus version ID
+	 */
+	private async fetchSnapshotTree(
+		specifiedVersion: string | undefined,
+	): Promise<{ snapshot?: ISnapshotTree; version?: IVersion | undefined }> {
+		const version = await this.getVersion(specifiedVersion ?? null);
+
+		if (version === undefined && specifiedVersion !== undefined) {
+			// We should have a defined version to load from if specified version requested
+			this.mc.logger.sendErrorEvent({
+				eventName: "NoVersionFoundWhenSpecified",
+				id: specifiedVersion,
+			});
+		}
+		const snapshot = (await this.storageAdapter.getSnapshotTree(version)) ?? undefined;
+
+		if (snapshot === undefined && version !== undefined) {
+			this.mc.logger.sendErrorEvent({ eventName: "getSnapshotTreeFailed", id: version.id });
+		}
+		return { snapshot, version };
+	}
+
+	public async fetchSnapshot(
+		specifiedVersion: string | undefined,
+		supportGetSnapshotApi: boolean | undefined,
+	): Promise<{ snapshot?: ISnapshot | ISnapshotTree; version?: IVersion }> {
+		if (
+			this.mc.config.getBoolean("Fluid.Container.FetchSnapshotUsingGetSnapshotApi") ===
+				true &&
+			supportGetSnapshotApi === true
+		) {
+			const snapshot = await this.storageAdapter.getSnapshot({
+				versionId: specifiedVersion,
+			});
+			const version: IVersion = {
+				id: snapshot.snapshotTree.id ?? "",
+				treeId: snapshot.snapshotTree.id ?? "",
+			};
+
+			if (snapshot === undefined && specifiedVersion !== undefined) {
+				this.mc.logger.sendErrorEvent({
+					eventName: "getSnapshotTreeFailed",
+					id: version.id,
+				});
+			}
+			return { snapshot, version };
+		}
+		return this.fetchSnapshotTree(specifiedVersion);
 	}
 
 	public setLoadedAttributes(
@@ -80,9 +144,9 @@ export class containerStateManager {
 				}
 				assert(
 					this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
-					0x0d2 /* "resolved url should be valid Fluid url" */,
+					"resolved url should be valid Fluid url",
 				);
-				assert(this.snapshot !== undefined, 0x5d5 /* no base data */);
+				assert(this.snapshot !== undefined, "no base data");
 				const pendingRuntimeState = await this.runtime?.getPendingLocalState(props);
 				const pendingState: IPendingContainerState = {
 					pendingRuntimeState,
