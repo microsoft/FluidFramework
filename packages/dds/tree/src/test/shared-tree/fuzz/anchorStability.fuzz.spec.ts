@@ -18,7 +18,12 @@ import {
 	jsonableTreeFromFieldCursor,
 	typeNameSymbol,
 } from "../../../feature-libraries/index.js";
-import { SharedTreeTestFactory, createTestUndoRedoStacks, validateTree } from "../../utils.js";
+import {
+	SharedTreeTestFactory,
+	createTestUndoRedoStacks,
+	toJsonableTree,
+	validateTree,
+} from "../../utils.js";
 import {
 	makeOpGenerator,
 	EditGeneratorOpWeights,
@@ -117,6 +122,7 @@ describe("Fuzz - anchor stability", () => {
 
 			// aborts any transactions that may still be in progress
 			const tree = viewFromState(finalState, finalState.clients[0]).checkout;
+			const test = toJsonableTree(tree);
 			tree.transaction.abort();
 			validateTree(tree, initialTreeJson);
 			validateAnchors(tree, anchors[0], true);
@@ -193,6 +199,8 @@ describe("Fuzz - anchor stability", () => {
 
 		emitter.on("testEnd", (finalState: AnchorFuzzTestState) => {
 			const anchors = finalState.anchors ?? assert.fail("Anchors should be defined");
+			const tree = viewFromState(finalState, finalState.clients[0]).checkout;
+			const test = toJsonableTree(tree);
 			for (const [i, client] of finalState.clients.entries()) {
 				validateAnchors(viewFromState(finalState, client).checkout, anchors[i], false);
 			}

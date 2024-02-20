@@ -46,7 +46,7 @@ import {
 	UndoOp,
 	UndoRedo,
 } from "./operationTypes.js";
-import { FuzzNode, fuzzNode, fuzzSchema } from "./fuzzUtils.js";
+import { FuzzNode, fuzzSchema } from "./fuzzUtils.js";
 
 export interface FuzzTestState extends DDSFuzzTestState<SharedTreeFactory> {
 	/**
@@ -548,21 +548,24 @@ function selectField(
 
 	const sequence: FuzzField = { type: "sequence", content: node.boxedSequenceChildren } as const;
 
+	const nodeSchema = node.context.schema.nodeSchema.get(brand("tree2fuzz.node"));
+	assert(nodeSchema !== undefined);
+
 	const recurse = (state: { random: IRandom }): FuzzField | "no-valid-selections" => {
 		const childNodes: FuzzNode[] = [];
 		// Checking "=== true" causes tsc to fail to typecheck, as it is no longer able to narrow according
 		// to the .is typeguard.
 		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-		if (node.optionalChild?.is(fuzzNode)) {
-			childNodes.push(node.optionalChild);
+		if (node.optionalChild?.is(nodeSchema)) {
+			childNodes.push((node as any).optionalChild);
 		}
 
-		if (node.requiredChild?.is(fuzzNode)) {
-			childNodes.push(node.requiredChild);
+		if (node.requiredChild?.is(nodeSchema)) {
+			childNodes.push((node as any).requiredChild);
 		}
 		node.sequenceChildren.map((child) => {
-			if (child.is(fuzzNode)) {
-				childNodes.push(child);
+			if (child.is(nodeSchema)) {
+				childNodes.push(child as any);
 			}
 		});
 		state.random.shuffle(childNodes);
@@ -602,7 +605,8 @@ function trySelectTreeField(
 			: random.bool(weights.optional / (weights.optional + weights.recurse))
 			? ["optional", "recurse"]
 			: ["recurse", "optional"];
-
+	const nodeSchema = tree.context.schema.nodeSchema.get(brand("tree2fuzz.node"));
+	assert(nodeSchema !== undefined);
 	for (const option of options) {
 		switch (option) {
 			case "optional": {
@@ -616,8 +620,8 @@ function trySelectTreeField(
 				// Checking "=== true" causes tsc to fail to typecheck, as it is no longer able to narrow according
 				// to the .is typeguard.
 				// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-				if (editable.content?.is(fuzzNode)) {
-					const result = selectField(editable.content, random, weights, filter);
+				if (editable.content?.is(nodeSchema)) {
+					const result = selectField((editable as any).content, random, weights, filter);
 					if (result !== "no-valid-selections") {
 						return result;
 					}
