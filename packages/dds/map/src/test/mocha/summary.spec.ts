@@ -41,6 +41,11 @@ function useSnapshotDirectory(dirPath: string = "/"): void {
 	});
 }
 
+/**
+ * @remarks - This test suite isn't set up to be easily augmented when map's document format changes.
+ * `writeCompatible` may want to be changed to enable storing all snapshots over time for a given scenario.
+ * See e.g. SharedString tests.
+ */
 interface TestScenario {
 	only?: boolean;
 	skip?: boolean;
