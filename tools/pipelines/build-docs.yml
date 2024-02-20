@@ -187,6 +187,15 @@ stages:
             targetPath: '$(Build.SourcesDirectory)/docs/public'
             artifactName: 'fluidframework-docs'
             publishLocation: 'pipeline'
+        
+        # Publishing a separate artifact for docs/api so that the deploy pipeline
+        # has access to this directory with checking out the repo
+        - task: PublishPipelineArtifact@1
+          displayName: 'Publish docs api artifact'
+          inputs:
+            targetPath: '$(Build.SourcesDirectory)/docs/api'
+            artifactName: 'fluidframework-docs-api'
+            publishLocation: 'pipeline'
 
   # BEGIN Secure development tasks
 - stage: guardian

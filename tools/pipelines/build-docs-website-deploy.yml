@@ -77,7 +77,20 @@ stages:
             branchName: main
             buildVersionToDownload: latestFromBranch
             artifact: fluidframework-docs
-            path: '$(Build.SourcesDirectory)'
+            path: '$(Build.SourcesDirectory)/docs/public'
+
+        # Note: Downloading a separate published artifact for docs/api since this pipeline does
+        # not checkout the repo. However, the directory for docs/api is needed in the deploy step
+        - task: DownloadPipelineArtifact@2
+          displayName: 'Copy fluidframework-docs-api to api folder'
+          inputs:
+            source: specific
+            project: internal
+            pipeline: build-docs
+            branchName: main
+            buildVersionToDownload: latestFromBranch
+            artifact: fluidframework-docs-api
+            path: '$(Build.SourcesDirectory)/docs/api'
 
         - task: AzureStaticWebApp@0
           displayName: 'Deploy website to ASWA'
@@ -86,7 +99,7 @@ stages:
             skip_app_build: true # site was built in previous stage
             skip_api_build: true # api is written in js, no build needed
             cwd: $(Build.SourcesDirectory)
-            app_location: 'docs-temp/public'
-            api_location: 'docs-temp/api'
+            app_location: 'docs/public'
+            api_location: 'docs/api'
             output_location: ''
             azure_static_web_apps_api_token: '${{ variables.deploymentToken }}'
