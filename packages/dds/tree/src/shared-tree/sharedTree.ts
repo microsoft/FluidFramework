@@ -72,6 +72,7 @@ import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { SharedTreeChangeEnricher } from "./sharedTreeChangeEnricher.js";
+import { DefaultCommitEnricher } from "./defaultCommitEnricher.js";
 
 /**
  * Copy of data from an {@link ISharedTree} at some point in time.
@@ -250,12 +251,12 @@ export class SharedTree
 			attributes,
 			telemetryContextPrefix,
 			{ schema, policy: defaultSchemaPolicy },
-			() => {
+			new DefaultCommitEnricher(changeFamily, () => {
 				return new SharedTreeChangeEnricher(
 					forest.clone(schema, new AnchorSet()),
 					removedRoots.clone(),
 				);
-			},
+			}),
 		);
 		this._events = createEmitter<CheckoutEvents>();
 		const localBranch = this.getLocalBranch();

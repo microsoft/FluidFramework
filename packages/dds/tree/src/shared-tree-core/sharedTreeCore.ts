@@ -29,7 +29,7 @@ import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
 import { SeqNumber } from "./editManagerFormat.js";
 import { DecodedMessage } from "./messageTypes.js";
 import { MessageEncodingContext, makeMessageCodec } from "./messageCodecs.js";
-import { ChangeEnricherCheckout, CommitEnricher } from "./commitEnricher.js";
+import { ICommitEnricher } from "./commitEnricher.js";
 
 // TODO: How should the format version be determined?
 const formatVersion = 0;
@@ -81,7 +81,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 
 	private readonly schemaAndPolicy: SchemaAndPolicy;
 
-	private readonly commitEnricher: CommitEnricher<TChange, ChangeFamily<TEditor, TChange>>;
+	private readonly commitEnricher?: ICommitEnricher<TChange>;
 
 	/**
 	 * @param summarizables - Summarizers for all indexes used by this tree
@@ -102,7 +102,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		attributes: IChannelAttributes,
 		telemetryContextPrefix: string,
 		schemaAndPolicy: SchemaAndPolicy,
-		checkoutFactory: () => ChangeEnricherCheckout<TChange>,
+		enricher?: ICommitEnricher<TChange>,
 	) {
 		super(id, runtime, attributes, telemetryContextPrefix);
 
@@ -163,7 +163,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			options,
 		);
 
-		this.commitEnricher = new CommitEnricher(changeFamily, checkoutFactory);
+		this.commitEnricher = enricher;
 	}
 
 	// TODO: SharedObject's merging of the two summary methods into summarizeCore is not what we want here:
@@ -233,7 +233,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			return;
 		}
 
-		const enrichedCommit = this.commitEnricher.enrichCommit(commit, isResubmit);
+		const enrichedCommit = this.commitEnricher?.enrichCommit(commit, isResubmit) ?? commit;
 		const message = this.messageCodec.encode(
 			{
 				commit: enrichedCommit,
@@ -254,7 +254,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		const contents: unknown = this.serializer.decode(message.contents);
 		// Empty context object is passed in, as our decode function is schema-agnostic.
 		const { commit, sessionId } = this.messageCodec.decode(contents, {});
-		this.commitEnricher.commitSequenced(local);
+		this.commitEnricher?.commitSequenced(local);
 		this.editManager.addSequencedChange(
 			{ ...commit, sessionId },
 			brand(message.sequenceNumber),

@@ -12,8 +12,8 @@ import {
 	visitDelta,
 } from "../core/index.js";
 import { TreeChunk, chunkTree, defaultChunkPolicy, intoDelta } from "../feature-libraries/index.js";
-import { ChangeEnricherCheckout } from "../shared-tree-core/index.js";
 import { fail } from "../util/index.js";
+import { ChangeEnricherCheckout } from "./defaultCommitEnricher.js";
 import {
 	addMissingBuilds,
 	filterSuperfluousBuilds,
