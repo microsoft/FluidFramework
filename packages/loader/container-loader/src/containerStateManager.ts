@@ -97,14 +97,14 @@ export class containerStateManager {
 		return { snapshot, version };
 	}
 
-	public async fetchSnapshotEnhanced(
+	public async fetchSnapshot(
 		pendingLocalState: IPendingContainerState | undefined,
 		specifiedVersion: string | undefined,
 		supportGetSnapshotApi: boolean | undefined,
 	) {
 		const { snapshot, version } =
 			pendingLocalState === undefined
-				? await this.fetchSnapshot(specifiedVersion, supportGetSnapshotApi)
+				? await this.fetchSnapshotCore(specifiedVersion, supportGetSnapshotApi)
 				: { snapshot: pendingLocalState.baseSnapshot, version: undefined };
 		const snapshotTree: ISnapshotTree | undefined = isInstanceOfISnapshot(snapshot)
 			? snapshot.snapshotTree
@@ -125,7 +125,7 @@ export class containerStateManager {
 		return { snapshotTree, version };
 	}
 
-	public async fetchSnapshot(
+	private async fetchSnapshotCore(
 		specifiedVersion: string | undefined,
 		supportGetSnapshotApi: boolean | undefined,
 	): Promise<{ snapshot?: ISnapshot | ISnapshotTree; version?: IVersion }> {
@@ -154,18 +154,20 @@ export class containerStateManager {
 	}
 
 	public setLoadedAttributes(
-		snapshot:
+		resolvedUrl: IResolvedUrl | undefined,
+		runtime: IRuntime | undefined,
+		snapshot?:
 			| {
 					tree: ISnapshotTree;
 					blobs: ISerializableBlobContents;
 			  }
 			| undefined,
-		resolvedUrl,
-		runtime,
 	) {
-		this.snapshot = snapshot;
 		this.resolvedUrl = resolvedUrl;
 		this.runtime = runtime;
+		if (snapshot) {
+			this.snapshot = snapshot;
+		}
 	}
 
 	public async getPendingLocalStateCore(props: IGetPendingLocalStateProps) {

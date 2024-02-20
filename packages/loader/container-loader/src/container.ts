@@ -103,11 +103,7 @@ import {
 import { DeltaManager, IConnectionArgs } from "./deltaManager";
 import { IDetachedBlobStorage, ILoaderOptions, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
-import {
-	ContainerStorageAdapter,
-	getBlobContentsFromTree,
-	ISerializableBlobContents,
-} from "./containerStorageAdapter";
+import { ContainerStorageAdapter, ISerializableBlobContents } from "./containerStorageAdapter";
 import { IConnectionStateHandler, createConnectionStateHandler } from "./connectionStateHandler";
 import {
 	ISnapshotTreeWithBlobContents,
@@ -1359,9 +1355,9 @@ export class Container
 						"incorrect format in final attachment data",
 					);
 					this.containerStateManager.setLoadedAttributes(
-						(this.attachmentData as AttachedData).snapshot,
 						this.resolvedUrl,
 						this.runtime,
+						(this.attachmentData as AttachedData).snapshot,
 					);
 					if (!this.closed) {
 						this.handleDeltaConnectionArg(
@@ -1626,37 +1622,12 @@ export class Container
 
 		timings.phase2 = performance.now();
 		// Fetch specified snapshot.
-		const { snapshot, version } =
-			pendingLocalState === undefined
-				? await this.containerStateManager.fetchSnapshot(
-						specifiedVersion,
-						this.service?.policies?.supportGetSnapshotApi,
-				  )
-				: { snapshot: pendingLocalState.baseSnapshot, version: undefined };
-
+		const { snapshotTree, version } = await this.containerStateManager.fetchSnapshot(
+			pendingLocalState,
+			specifiedVersion,
+			this.service?.policies?.supportGetSnapshotApi,
+		);
 		this._loadedFromVersion = version;
-		const snapshotTree: ISnapshotTree | undefined = isInstanceOfISnapshot(snapshot)
-			? snapshot.snapshotTree
-			: snapshot;
-		if (pendingLocalState) {
-			this.attachmentData = {
-				state: AttachState.Attached,
-				snapshot: {
-					tree: pendingLocalState.baseSnapshot,
-					blobs: pendingLocalState.snapshotBlobs,
-				},
-			};
-		} else {
-			assert(snapshotTree !== undefined, 0x237 /* "Snapshot should exist" */);
-			// non-interactive clients will not have any pending state we want to save
-			if (this.offlineLoadEnabled && this.isInteractiveClient) {
-				const blobs = await getBlobContentsFromTree(snapshotTree, this.storageAdapter);
-				this.attachmentData = {
-					state: AttachState.Attached,
-					snapshot: { tree: snapshotTree, blobs },
-				};
-			}
-		}
 		const attributes: IDocumentAttributes = await this.getDocumentAttributes(
 			this.storageAdapter,
 			snapshotTree,
@@ -1776,11 +1747,7 @@ export class Container
 			pendingLocalState.savedOps = [];
 		}
 
-		this.containerStateManager.setLoadedAttributes(
-			this.attachmentData.snapshot,
-			this.resolvedUrl,
-			this.runtime,
-		);
+		this.containerStateManager.setLoadedAttributes(this.resolvedUrl, this.runtime);
 
 		// We might have hit some failure that did not manifest itself in exception in this flow,
 		// do not start op processing in such case - static version of Container.load() will handle it correctly.
