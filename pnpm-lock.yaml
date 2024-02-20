@@ -1461,6 +1461,7 @@ importers:
       puppeteer: ^22.0.0
       react: ^17.0.1
       rimraf: ^4.4.0
+      source-map-loader: ^2.0.0
       ts-jest: ^29.1.1
       ts-loader: ^9.3.0
       typescript: ~5.1.6
@@ -1501,6 +1502,7 @@ importers:
       prettier: 3.0.3
       puppeteer: 22.0.0_typescript@5.1.6
       rimraf: 4.4.1
+      source-map-loader: 2.0.2_webpack@5.89.0
       ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
@@ -24656,12 +24658,6 @@ packages:
 
   /balanced-match/1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
-
-  /bare-events/2.2.0:
-    resolution: {integrity: sha512-Yyyqff4PIFfSuthCZqLlPISTWHmnQxoPuAvkmgzsJEmG3CesdIv6Xweayl0JkCZJSB2yYIdJyEz97tpxNhgjbg==}
-    requiresBuild: true
-    dev: true
-    optional: true
 
   /base/0.11.2:
     resolution: {integrity: sha512-5T6P4xPgpp0YDFvSWwEZ4NoE3aM4QBQXDzmVbraCkFj8zHM+mba8SyqB5DbZWyR7mYHo6Y7BdQo3MoA4m0TeQg==}

@@ -6,10 +6,6 @@
 		"lib": ["ESNext", "DOM"],
 		"outDir": "dist",
 		"jsx": "react",
-		"noImplicitAny": true,
-		"resolveJsonModule": true,
-		// jest-dev-server/dist/index.d.ts:2:31 - error TS7016: Could not find a declaration file for module 'wait-on'.
-		"skipLibCheck": true,
 		"types": [
 			"react",
 			"react-dom",

@@ -28,6 +28,11 @@ module.exports = (env) => {
 						test: /\.tsx?$/,
 						loader: "ts-loader",
 					},
+					{
+						test: /\.m?js$/,
+						use: [require.resolve("source-map-loader")],
+						enforce: "pre",
+					},
 				],
 			},
 			output: {
