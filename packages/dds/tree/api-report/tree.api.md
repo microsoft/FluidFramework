@@ -9,14 +9,10 @@ import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
-import { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { SessionSpaceCompressedId } from '@fluidframework/id-compressor';
 import { StableId } from '@fluidframework/id-compressor';
 import type { Static } from '@sinclair/typebox';
@@ -1575,30 +1571,9 @@ export interface SequenceFieldEditBuilder {
 }
 
 // @public
-export class SharedTree implements ITree {
-    // (undocumented)
-    get attributes(): IChannelAttributes;
-    // (undocumented)
-    connect(services: IChannelServices): void;
-    // (undocumented)
-    getAttachSummary(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined): ISummaryTreeWithStats;
-    // (undocumented)
-    static getFactory(): IChannelFactory;
-    // (undocumented)
-    getGCData(fullGC?: boolean | undefined): IGarbageCollectionData;
-    // (undocumented)
-    get handle(): IFluidHandle;
-    // (undocumented)
-    get id(): string;
-    // (undocumented)
-    get IFluidLoadable(): IFluidLoadable;
-    // (undocumented)
-    isAttached(): boolean;
-    // (undocumented)
-    schematize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TreeFieldFromImplicitField<TRoot>>;
-    // (undocumented)
-    summarize(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined): Promise<ISummaryTreeWithStats>;
-}
+export const SharedTree: {
+    getFactory(): IChannelFactory<ITree>;
+};
 
 // @internal
 export interface SharedTreeContentSnapshot {
@@ -1750,7 +1725,7 @@ export interface TreeEvent {
 }
 
 // @internal
-export class TreeFactory implements IChannelFactory {
+export class TreeFactory implements IChannelFactory<ITree> {
     constructor(options: SharedTreeOptions);
     // (undocumented)
     readonly attributes: IChannelAttributes;

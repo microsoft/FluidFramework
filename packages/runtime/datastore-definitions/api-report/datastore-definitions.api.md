@@ -45,10 +45,10 @@ export interface IChannelAttributes {
 }
 
 // @public
-export interface IChannelFactory {
+export interface IChannelFactory<out TChannel extends IChannel = IChannel> {
     readonly attributes: IChannelAttributes;
-    create(runtime: IFluidDataStoreRuntime, id: string): IChannel;
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, channelAttributes: Readonly<IChannelAttributes>): Promise<IChannel>;
+    create(runtime: IFluidDataStoreRuntime, id: string): TChannel;
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, channelAttributes: Readonly<IChannelAttributes>): Promise<TChannel>;
     readonly type: string;
 }
 

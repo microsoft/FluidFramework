@@ -6,7 +6,7 @@
 import { EventEmitter } from "events";
 import { v4 as uuid } from "uuid";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { SharedMap } from "@fluidframework/map";
+import { SharedMap, type ISharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 
 import type { IInventoryItem, IInventoryList } from "../modelInterfaces.js";
@@ -57,7 +57,7 @@ export class InventoryList extends DataObject implements IInventoryList {
 	public readonly addItem = (name: string, quantity: number) => {
 		const nameString = SharedString.create(this.runtime);
 		nameString.insertText(0, name);
-		const quantityMap: SharedMap = SharedMap.create(this.runtime);
+		const quantityMap: ISharedMap = SharedMap.create(this.runtime);
 		quantityMap.set(quantityKey, quantity);
 		const id = uuid();
 		this.root.set(id, { name: nameString.handle, quantity: quantityMap.handle });

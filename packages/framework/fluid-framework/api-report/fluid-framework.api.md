@@ -8,18 +8,15 @@ import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
-import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import type { IErrorBase } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
-import { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
-import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
@@ -200,7 +197,7 @@ export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
 
 // @public
 export type InitialObjects<T extends ContainerSchema> = {
-    [K in keyof T["initialObjects"]]: T["initialObjects"][K] extends LoadableObjectClass<infer TChannel> ? TChannel : never;
+    [K in keyof T["initialObjects"]]: T["initialObjects"][K] extends SharedObjectClass<infer TChannel> ? TChannel : T["initialObjects"][K] extends DataObjectClass<infer TChannel> ? TChannel : unknown;
 };
 
 // @public
@@ -348,12 +345,12 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     // (undocumented)
     protected applyStashedOp(content: unknown): unknown;
     clear(): void;
-    static create(runtime: IFluidDataStoreRuntime, id?: string): SharedMap;
+    static create(runtime: IFluidDataStoreRuntime, id?: string): ISharedMap;
     delete(key: string): boolean;
     entries(): IterableIterator<[string, any]>;
     forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void;
     get<T = any>(key: string): T | undefined;
-    static getFactory(): IChannelFactory;
+    static getFactory(): IChannelFactory<ISharedMap>;
     has(key: string): boolean;
     keys(): IterableIterator<string>;
     // (undocumented)
@@ -374,35 +371,15 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 }
 
 // @public
-export type SharedObjectClass<T extends IFluidLoadable> = {
-    readonly getFactory: () => IChannelFactory;
-} & LoadableObjectCtor<T>;
+export interface SharedObjectClass<T extends IFluidLoadable> {
+    // (undocumented)
+    readonly getFactory: () => IChannelFactory<T & IChannel>;
+}
 
 // @public
-export class SharedTree implements ITree {
-    // (undocumented)
-    get attributes(): IChannelAttributes;
-    // (undocumented)
-    connect(services: IChannelServices): void;
-    // (undocumented)
-    getAttachSummary(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined): ISummaryTreeWithStats;
-    // (undocumented)
-    static getFactory(): IChannelFactory;
-    // (undocumented)
-    getGCData(fullGC?: boolean | undefined): IGarbageCollectionData;
-    // (undocumented)
-    get handle(): IFluidHandle;
-    // (undocumented)
-    get id(): string;
-    // (undocumented)
-    get IFluidLoadable(): IFluidLoadable;
-    // (undocumented)
-    isAttached(): boolean;
-    // (undocumented)
-    schematize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TreeFieldFromImplicitField<TRoot>>;
-    // (undocumented)
-    summarize(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined): Promise<ISummaryTreeWithStats>;
-}
+export const SharedTree: {
+    getFactory(): IChannelFactory<ITree>;
+};
 
 // @public
 export const Tree: TreeApi;

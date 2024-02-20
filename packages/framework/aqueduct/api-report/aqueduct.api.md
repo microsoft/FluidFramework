@@ -9,6 +9,7 @@ import { ContainerRuntime } from '@fluidframework/container-runtime';
 import { FluidDataStoreRuntime } from '@fluidframework/datastore';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { FluidObjectSymbolProvider } from '@fluidframework/synthesize';
+import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IContainerContext } from '@fluidframework/container-definitions';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
@@ -94,7 +95,7 @@ export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> ex
 
 // @alpha
 export class DataObjectFactory<TObj extends DataObject<I>, I extends DataObjectTypes = DataObjectTypes> extends PureDataObjectFactory<TObj, I> {
-    constructor(type: string, ctor: new (props: IDataObjectProps<I>) => TObj, sharedObjects: readonly IChannelFactory[] | undefined, optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>, registryEntries?: NamedFluidDataStoreRegistryEntries, runtimeFactory?: typeof FluidDataStoreRuntime);
+    constructor(type: string, ctor: new (props: IDataObjectProps<I>) => TObj, sharedObjects: readonly IChannelFactory<IChannel>[] | undefined, optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>, registryEntries?: NamedFluidDataStoreRegistryEntries, runtimeFactory?: typeof FluidDataStoreRuntime);
 }
 
 // @alpha

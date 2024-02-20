@@ -6,6 +6,7 @@
 
 import { AttachState } from '@fluidframework/container-definitions';
 import { ConnectionState } from '@fluidframework/container-definitions';
+import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
@@ -85,7 +86,7 @@ export interface IMember {
 
 // @public
 export type InitialObjects<T extends ContainerSchema> = {
-    [K in keyof T["initialObjects"]]: T["initialObjects"][K] extends LoadableObjectClass<infer TChannel> ? TChannel : never;
+    [K in keyof T["initialObjects"]]: T["initialObjects"][K] extends SharedObjectClass<infer TChannel> ? TChannel : T["initialObjects"][K] extends DataObjectClass<infer TChannel> ? TChannel : unknown;
 };
 
 // @internal (undocumented)
@@ -137,8 +138,9 @@ export type Myself<M extends IMember = IMember> = M & {
 };
 
 // @public
-export type SharedObjectClass<T extends IFluidLoadable> = {
-    readonly getFactory: () => IChannelFactory;
-} & LoadableObjectCtor<T>;
+export interface SharedObjectClass<T extends IFluidLoadable> {
+    // (undocumented)
+    readonly getFactory: () => IChannelFactory<T & IChannel>;
+}
 
 ```

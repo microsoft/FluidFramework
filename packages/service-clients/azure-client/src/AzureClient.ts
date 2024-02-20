@@ -103,7 +103,7 @@ export class AzureClient {
 	 * @param containerSchema - Container schema for the new container.
 	 * @returns New detached container instance along with associated services.
 	 */
-	public async createContainer<TContainerSchema extends ContainerSchema>(
+	public async createContainer<const TContainerSchema extends ContainerSchema>(
 		containerSchema: TContainerSchema,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;

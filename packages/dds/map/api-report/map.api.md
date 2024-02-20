@@ -197,7 +197,7 @@ export class LocalValueMaker {
 }
 
 // @alpha @sealed
-export class MapFactory implements IChannelFactory {
+export class MapFactory implements IChannelFactory<ISharedMap> {
     // (undocumented)
     static readonly Attributes: IChannelAttributes;
     // (undocumented)
@@ -269,12 +269,12 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     // (undocumented)
     protected applyStashedOp(content: unknown): unknown;
     clear(): void;
-    static create(runtime: IFluidDataStoreRuntime, id?: string): SharedMap;
+    static create(runtime: IFluidDataStoreRuntime, id?: string): ISharedMap;
     delete(key: string): boolean;
     entries(): IterableIterator<[string, any]>;
     forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void;
     get<T = any>(key: string): T | undefined;
-    static getFactory(): IChannelFactory;
+    static getFactory(): IChannelFactory<ISharedMap>;
     has(key: string): boolean;
     keys(): IterableIterator<string>;
     // (undocumented)

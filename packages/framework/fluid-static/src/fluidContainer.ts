@@ -19,6 +19,8 @@ import type {
 	ContainerAttachProps,
 	IRootDataObject,
 	LoadableObjectClass,
+	SharedObjectClass,
+	DataObjectClass,
 } from "./types";
 
 /**
@@ -29,13 +31,16 @@ export type InitialObjects<T extends ContainerSchema> = {
 	// Construct a LoadableObjectRecord type by enumerating the keys of
 	// 'ContainerSchema.initialObjects' and infering the value type of each key.
 	//
-	// The '? TChannel : never' is required because infer can only be used in
+	// The '? TChannel : unknown' is required because infer can only be used in
 	// a conditional 'extends' expression.
-	[K in keyof T["initialObjects"]]: T["initialObjects"][K] extends LoadableObjectClass<
+	// infer doesn't distribute over the union LoadableObjectClass correctly here, so check both cases:
+	[K in keyof T["initialObjects"]]: T["initialObjects"][K] extends SharedObjectClass<
 		infer TChannel
 	>
 		? TChannel
-		: never;
+		: T["initialObjects"][K] extends DataObjectClass<infer TChannel>
+		? TChannel
+		: unknown;
 };
 
 /**

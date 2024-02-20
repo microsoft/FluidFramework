@@ -262,7 +262,7 @@ export interface IChannelServices {
  * the collaborating clients will need to have access to a factory that can produce the `SharedMap` object.
  * @public
  */
-export interface IChannelFactory {
+export interface IChannelFactory<out TChannel extends IChannel = IChannel> {
 	/**
 	 * String representing the type of the factory.
 	 */
@@ -293,7 +293,7 @@ export interface IChannelFactory {
 		id: string,
 		services: IChannelServices,
 		channelAttributes: Readonly<IChannelAttributes>,
-	): Promise<IChannel>;
+	): Promise<TChannel>;
 
 	/**
 	 * Creates a local version of the channel.
@@ -306,5 +306,5 @@ export interface IChannelFactory {
 	 * NOTE here - When we attach we need to submit all the pending ops prior to actually doing the attach
 	 * for consistency.
 	 */
-	create(runtime: IFluidDataStoreRuntime, id: string): IChannel;
+	create(runtime: IFluidDataStoreRuntime, id: string): TChannel;
 }

@@ -6,7 +6,12 @@ import { strict as assert } from "node:assert";
 
 import { SchemaFactory, SharedTree } from "@fluidframework/tree";
 import { AttachState } from "@fluidframework/container-definitions";
-import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
+import {
+	type ContainerSchema,
+	type IFluidContainer,
+	type LoadableObjectClass,
+	type SharedObjectClass,
+} from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { type ConnectionMode, ScopeType } from "@fluidframework/protocol-definitions";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
