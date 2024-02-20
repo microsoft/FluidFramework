@@ -70,8 +70,7 @@ export class OdspDeltaStorageService {
 
 					postBody += `_post: 1\r\n`;
 					postBody += `\r\n--${formBoundary}--`;
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					const headers: { [index: string]: any } = {
+					const headers: { [index: string]: string } = {
 						"Content-Type": `multipart/form-data;boundary=${formBoundary}`,
 					};
 
@@ -177,8 +176,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 			from: number,
 			to: number,
 			telemetryProps: ITelemetryProperties,
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		): Promise<any> => {
+		): Promise<IDeltasFetchResult> => {
 			if (this.snapshotOps !== undefined && this.snapshotOps.length > 0) {
 				const messages = this.snapshotOps.filter(
 					(op) => op.sequenceNumber >= from && op.sequenceNumber < to,
@@ -225,12 +223,9 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 
 		const stream = requestOps(
 			async (from: number, to: number, telemetryProps: ITelemetryProperties) => {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				const result = await requestCallback(from, to, telemetryProps);
 				// Catch all case, just in case
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
 				validateMessages("catch all", result.messages, from, this.logger);
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 				return result;
 			},
 			// Staging: starting with no concurrency, listening for feedback first.
