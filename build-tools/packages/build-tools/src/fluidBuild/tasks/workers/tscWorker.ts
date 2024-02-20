@@ -12,11 +12,11 @@ export async function compile(msg: WorkerMessage): Promise<WorkerExecResult> {
 }
 
 export async function fluidCompile(msg: WorkerMessage): Promise<WorkerExecResult> {
-	const commandMatch = fluidTscRegEx.exec(msg.command);
+	const commandMatch = msg.command.match(fluidTscRegEx);
 	if (!commandMatch) {
 		throw new Error(`worker command not recognized: ${msg.command}`);
 	}
-	const command = `tsc${msg.command.slice(fluidTscRegEx.lastIndex)}`;
+	const command = msg.command.replace(commandMatch[0], "tsc");
 	const packageJsonTypeOverride = commandMatch[1] as "commonjs" | "module";
 	return { code: tsCompile({ command, cwd: msg.cwd, packageJsonTypeOverride }) };
 }
