@@ -45,9 +45,6 @@ export interface IDetachedModel<ModelType> {
     model: ModelType;
 }
 
-// @internal (undocumented)
-export const IFluidMountableView: keyof IProvideFluidMountableView;
-
 // @internal
 export interface IFluidMountableView extends IProvideFluidMountableView {
     mount(container: HTMLElement): void;
@@ -130,9 +127,8 @@ export interface IModelLoader<ModelType> {
     supportsVersion(version: string): Promise<boolean>;
 }
 
-// @internal (undocumented)
+// @internal
 export interface IProvideFluidMountableView {
-    // (undocumented)
     readonly IFluidMountableView: IFluidMountableView;
 }
 
@@ -263,7 +259,6 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 export class MountableView implements IFluidMountableView {
     constructor(view: FluidObject);
     static canMount(view: FluidObject): boolean;
-    // (undocumented)
     get IFluidMountableView(): MountableView;
     mount(container: HTMLElement): void;
     unmount(): void;

@@ -17,6 +17,9 @@ import { IFluidMountableView } from "./interface";
  * @internal
  */
 export class MountableView implements IFluidMountableView {
+	/**
+	 * {@inheritDoc IProvideFluidMountableView.IFluidMountableView}
+	 */
 	public get IFluidMountableView(): MountableView {
 		return this;
 	}
@@ -54,7 +57,7 @@ export class MountableView implements IFluidMountableView {
 	}
 
 	/**
-	 * {@inheritDoc (IFluidMountableView:interface).mount}
+	 * {@inheritDoc IFluidMountableView.mount}
 	 */
 	public mount(container: HTMLElement): void {
 		if (this.containerElement !== undefined) {
@@ -78,7 +81,7 @@ export class MountableView implements IFluidMountableView {
 	}
 
 	/**
-	 * {@inheritDoc (IFluidMountableView:interface).unmount}
+	 * {@inheritDoc IFluidMountableView.unmount}
 	 */
 	public unmount(): void {
 		// Do nothing if we are already unmounted.

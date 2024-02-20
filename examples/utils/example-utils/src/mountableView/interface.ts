@@ -4,14 +4,13 @@
  */
 
 /**
- * @internal
- */
-export const IFluidMountableView: keyof IProvideFluidMountableView = "IFluidMountableView";
-
-/**
+ * Provider for a mountable view for use with the FluidObject pattern.
  * @internal
  */
 export interface IProvideFluidMountableView {
+	/**
+	 * The provided mountable view.
+	 */
 	readonly IFluidMountableView: IFluidMountableView;
 }
 
