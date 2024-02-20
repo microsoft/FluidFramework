@@ -573,15 +573,15 @@ function selectField(
 		// to the .is typeguard.
 		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 		if (node.optionalChild?.is(nodeSchema)) {
-			childNodes.push((node as any).optionalChild);
+			childNodes.push(node.optionalChild);
 		}
 
 		if (node.requiredChild?.is(nodeSchema)) {
-			childNodes.push((node as any).requiredChild);
+			childNodes.push(node.requiredChild);
 		}
 		node.sequenceChildren.map((child) => {
 			if (child.is(nodeSchema)) {
-				childNodes.push(child as any);
+				childNodes.push(child);
 			}
 		});
 		state.random.shuffle(childNodes);
@@ -639,7 +639,7 @@ function trySelectTreeField(
 				// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 				if (editable.content?.is(nodeSchema)) {
 					const result = selectField(
-						(editable as any).content,
+						editable.content,
 						random,
 						weights,
 						filter,
