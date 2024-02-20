@@ -239,7 +239,7 @@ export class OdspDelayLoadedDeltaStream {
 
 	private readonly signalHandler = (signalsArg: ISignalMessage | ISignalMessage[]): void => {
 		const signals = Array.isArray(signalsArg) ? signalsArg : [signalsArg];
-		signals.forEach((signal: ISignalMessage) => {
+		for (const signal of signals) {
 			// Make sure it is not for a specific client as `PolicyLabelsUpdate` is meant for all clients.
 			if (signal.clientId === null) {
 				// We could have some issues/irregularities in parsing signals, so put it in try/catch block
@@ -247,14 +247,16 @@ export class OdspDelayLoadedDeltaStream {
 				let envelope: ISignalEnvelope | undefined;
 				try {
 					envelope = JSON.parse(signal.content as string) as ISignalEnvelope;
-				} catch {}
+				} catch {
+					// Drop error
+				}
 				if (envelope?.contents?.type === policyLabelsUpdatesSignalType) {
 					this.emitMetaDataUpdateEvent({
 						sensitivityLabelsInfo: JSON.stringify(envelope.contents.content),
 					});
 				}
 			}
-		});
+		}
 	};
 
 	private clearJoinSessionTimer(): void {
