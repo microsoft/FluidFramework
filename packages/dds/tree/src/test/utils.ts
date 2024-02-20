@@ -1139,7 +1139,7 @@ export function schematizeFlexTree<TRoot extends FlexFieldSchema>(
 // Note: trees which simulate attach scenarios using the mocks should finalize ids created
 // while detached. This is only relevant for attach scenarios as the mocks set up appropriate
 // finalization when messages are processed.
-export const testSessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
+const testSessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
 
 /**
  * Simple non-factory based wrapper around `new SharedTree` with test appropriate defaults.

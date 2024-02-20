@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
+import { SessionId } from "@fluidframework/id-compressor";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 // eslint-disable-next-line import/no-internal-modules
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/dist/test/idCompressorTestUtilities.js";
@@ -35,7 +35,6 @@ import {
 	jsonSequenceRootSchema,
 	remove,
 	schematizeFlexTree,
-	testSessionId,
 	treeTestFactory,
 } from "../utils.js";
 import {
@@ -78,12 +77,11 @@ function generateCompleteTree(
 	nodesPerField: number,
 	options: SharedTreeOptions,
 ): ISharedTree {
-	const idCompressor = createIdCompressor(testSessionId);
 	const tree = treeTestFactory({
 		runtime: new MockFluidDataStoreRuntime({
 			clientId: "test-client",
 			id: "test",
-			idCompressor,
+			idCompressor: createSnapshotCompressor(),
 		}),
 		options,
 	});
@@ -343,12 +341,11 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 		{
 			name: "concurrent-inserts",
 			runScenario: async (takeSnapshot) => {
-				const idCompressor = createIdCompressor(testSessionId);
 				const baseTree = treeTestFactory({
 					runtime: new MockFluidDataStoreRuntime({
 						clientId: "test-client",
 						id: "test",
-						idCompressor,
+						idCompressor: createSnapshotCompressor(),
 					}),
 					options: factoryOptions,
 				});
@@ -410,7 +407,6 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 					schema: docSchema,
 					initialTree: undefined,
 				};
-				const idCompressor = createIdCompressor(testSessionId);
 				const tree = treeTestFactory({
 					runtime: new MockFluidDataStoreRuntime({
 						clientId: "test-client",
@@ -451,7 +447,6 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 					initialTree: [],
 				};
 
-				const idCompressor = createIdCompressor(testSessionId);
 				const tree = treeTestFactory({
 					id: `test-${testEncodeType}`,
 					runtime: new MockFluidDataStoreRuntime({
