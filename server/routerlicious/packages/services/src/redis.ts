@@ -49,7 +49,11 @@ export class RedisCache implements ICache {
 			return this.client.get(this.getKey(key));
 		} catch (error: any) {
 			const newError: Error = { name: error?.name, message: error?.message };
-			Lumberjack.error(`Error getting ${key.substring(0, 20)} from cache.`, undefined, newError);
+			Lumberjack.error(
+				`Error getting ${key.substring(0, 20)} from cache.`,
+				undefined,
+				newError,
+			);
 			throw newError;
 		}
 	}
@@ -67,7 +71,11 @@ export class RedisCache implements ICache {
 			}
 		} catch (error: any) {
 			const newError: Error = { name: error?.name, message: error?.message };
-			Lumberjack.error(`Error setting ${key.substring(0, 20)} in cache.`, undefined, newError);
+			Lumberjack.error(
+				`Error setting ${key.substring(0, 20)} in cache.`,
+				undefined,
+				newError,
+			);
 			throw newError;
 		}
 	}
