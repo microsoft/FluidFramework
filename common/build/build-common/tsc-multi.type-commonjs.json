@@ -1,0 +1,3 @@
+{
+	"targets": [{ "packageOverrides": { "package.json": { "type": "commonjs" } } }]
+}

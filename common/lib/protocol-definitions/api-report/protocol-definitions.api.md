@@ -361,6 +361,7 @@ export interface ISnapshotTree {
     groupId?: string;
     // (undocumented)
     id?: string;
+    omitted?: boolean;
     // (undocumented)
     trees: {
         [path: string]: ISnapshotTree;

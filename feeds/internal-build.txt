@@ -1,7 +1,6 @@
 @fluidframework/tool-utils
 @fluidframework/telemetry-utils
 @fluidframework/odsp-doclib-utils
-@fluid-tools/webpack-fluid-loader
 @fluidframework/fluid-runner
 @fluid-tools/fetch-tool
 @fluidframework/devtools-core
@@ -11,8 +10,10 @@
 @fluidframework/test-driver-definitions
 @fluid-internal/test-app-insights-logger
 @fluidframework/mocha-test-setup
+@fluidframework/tinylicious-client
 @fluid-experimental/odsp-client
 @fluid-experimental/odsp-end-to-end-tests
+@fluidframework/azure-client
 @fluidframework/test-runtime-utils
 @fluidframework/runtime-utils
 @fluidframework/runtime-definitions
@@ -25,13 +26,12 @@
 @fluidframework/container-loader
 @fluidframework/view-interfaces
 @fluidframework/undo-redo
-@fluidframework/tinylicious-client
 @fluidframework/synthesize
 @fluidframework/request-handler
 @fluid-experimental/oldest-client-observer
 @fluidframework/fluid-static
 fluid-framework
-@fluidframework/dds-interceptions
+@fluid-experimental/dds-interceptions
 @fluid-experimental/data-object-base
 @fluidframework/app-insights-logger
 @fluid-experimental/attributor
@@ -90,4 +90,3 @@ fluid-framework
 @fluidframework/azure-end-to-end-tests
 @fluidframework/azure-service-utils
 @fluidframework/azure-local-service
-@fluidframework/azure-client
