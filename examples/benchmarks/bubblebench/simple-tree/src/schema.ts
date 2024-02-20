@@ -66,10 +66,6 @@ export class Client
 	})
 	implements ITreeClient
 {
-	constructor(public readonly client: Client) {
-		super(client);
-	}
-
 	public get clientId() {
 		return this.clientId;
 	}

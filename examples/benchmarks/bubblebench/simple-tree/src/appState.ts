@@ -23,8 +23,7 @@ export class AppState implements IAppState {
 		clientsSequence.insertAtEnd(this.createInitialClientNode(numBubbles) as unknown as Client);
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const lastClient = clientsSequence.at(clientsSequence.length - 1)!;
-
-		this.localClient = new Client(lastClient);
+		this.localClient = lastClient;
 
 		console.log(
 			`created client with id ${this.localClient.clientId} and color ${this.localClient.color}`,
@@ -51,7 +50,7 @@ export class AppState implements IAppState {
 	}
 
 	public get clients() {
-		return Array.from(this.clientsSequence, (client) => new Client(client));
+		return [...this.clientsSequence];
 	}
 
 	public setSize(width?: number, height?: number) {
