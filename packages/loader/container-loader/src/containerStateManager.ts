@@ -35,7 +35,7 @@ export class containerStateManager {
 		  }
 		| undefined;
 	private readonly mc: MonitoringContext;
-	private readonly offlineLoadEnabled: boolean;
+	private readonly _offlineLoadEnabled: boolean;
 	private readonly storageAdapter: ContainerStorageAdapter;
 	private readonly isInteractiveClient: boolean;
 	private readonly pendingLocalState: IPendingContainerState | undefined;
@@ -46,22 +46,28 @@ export class containerStateManager {
 		private readonly getClientId: () => string | undefined,
 		private readonly getResolvedUrl: () => IResolvedUrl | undefined,
 		private readonly getRuntime: () => IRuntime | undefined,
-		offlineLoadEnabled,
 		storageAdapter,
 		isInteractiveClient,
 	) {
 		this.pendingLocalState = pendingLocalState;
-		this.offlineLoadEnabled = offlineLoadEnabled;
 		this.mc = createChildMonitoringContext({
 			logger: subLogger,
 			namespace: "ContainerStateManager",
 		});
 		this.storageAdapter = storageAdapter;
 		this.isInteractiveClient = isInteractiveClient;
+		this._offlineLoadEnabled =
+			this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ?? false;
+	}
+
+	public get offlineLoadEnabled(): boolean {
+		return this._offlineLoadEnabled;
 	}
 
 	public addSavedOp(message: ISequencedDocumentMessage) {
-		this.savedOps.push(message);
+		if (this.offlineLoadEnabled) {
+			this.savedOps.push(message);
+		}
 	}
 
 	public getSavedOps() {

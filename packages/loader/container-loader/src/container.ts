@@ -592,7 +592,6 @@ export class Container
 	private readonly connectionTransitionTimes: number[] = [];
 	private _loadedFromVersion: IVersion | undefined;
 	private _dirtyContainer = false;
-	private readonly offlineLoadEnabled: boolean;
 	private attachmentData: AttachmentData = { state: AttachState.Detached };
 	private readonly containerStateManager: containerStateManager;
 	private readonly _containerId: string;
@@ -939,10 +938,6 @@ export class Container
 			pendingLocalState?.clientId,
 		);
 
-		this.offlineLoadEnabled =
-			this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ??
-			options.enableOfflineLoad === true;
-
 		this.on(savedContainerEvent, () => {
 			this.connectionStateHandler.containerSaved();
 		});
@@ -975,7 +970,6 @@ export class Container
 			() => this.clientId,
 			() => this.resolvedUrl,
 			() => this.runtime,
-			this.offlineLoadEnabled,
 			this.storageAdapter,
 			this.isInteractiveClient,
 		);
@@ -1291,7 +1285,7 @@ export class Container
 
 					let attachP = runRetriableAttachProcess({
 						initialAttachmentData: this.attachmentData,
-						offlineLoadEnabled: this.offlineLoadEnabled,
+						offlineLoadEnabled: this.containerStateManager.offlineLoadEnabled,
 						detachedBlobStorage: this.detachedBlobStorage,
 						setAttachmentData,
 						createAttachmentSummary,
@@ -2292,7 +2286,7 @@ export class Container
 
 	private processRemoteMessage(message: ISequencedDocumentMessage) {
 		// non-interactive clients will not have any pending state we want to save
-		if (this.offlineLoadEnabled && this.isInteractiveClient) {
+		if (this.isInteractiveClient) {
 			this.containerStateManager.addSavedOp(message);
 		}
 		const local = this.clientId === message.clientId;
