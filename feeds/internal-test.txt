@@ -16,6 +16,7 @@
 @fluid-internal/test-app-insights-logger
 @fluid-private/stochastic-test-utils
 @fluidframework/mocha-test-setup
+@fluidframework/tinylicious-client
 @fluid-experimental/odsp-client
 @fluid-experimental/odsp-end-to-end-tests
 @fluidframework/azure-client
@@ -32,7 +33,6 @@
 @fluidframework/container-loader
 @fluidframework/view-interfaces
 @fluidframework/undo-redo
-@fluidframework/tinylicious-client
 @fluidframework/synthesize
 @fluidframework/request-handler
 @fluid-experimental/oldest-client-observer
