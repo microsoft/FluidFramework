@@ -130,7 +130,7 @@ export class containerStateManager {
 		supportGetSnapshotApi: boolean | undefined,
 	): Promise<{ snapshot?: ISnapshot | ISnapshotTree; version?: IVersion }> {
 		if (
-			this.mc.config.getBoolean("Fluid.Container.FetchSnapshotUsingGetSnapshotApi") ===
+			this.mc.config.getBoolean("Fluid.Container.UseLoadingGroupIdForSnapshotFetch") ===
 				true &&
 			supportGetSnapshotApi === true
 		) {
