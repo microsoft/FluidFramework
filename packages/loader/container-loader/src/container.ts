@@ -34,7 +34,7 @@ import {
 	IRuntime,
 	ReadOnlyInfo,
 	isFluidCodeDetails,
-	IGetPendingLocalStateProps,
+	// IGetPendingLocalStateProps,
 } from "@fluidframework/container-definitions";
 import {
 	IDocumentService,
@@ -971,8 +971,11 @@ export class Container
 		);
 
 		this.containerStateManager = new containerStateManager(
+			pendingLocalState,
 			this.subLogger,
-			this._clientId,
+			() => this.clientId,
+			() => this.resolvedUrl,
+			() => this.runtime,
 			this.offlineLoadEnabled,
 			this.storageAdapter,
 			this.isInteractiveClient,
@@ -1150,7 +1153,7 @@ export class Container
 				"Pending state cannot be retried if the container is closed or disposed",
 			);
 		}
-		const pendingState = await this.getPendingLocalStateCore({
+		const pendingState = await this.containerStateManager.getPendingLocalStateCore({
 			notifyImminentClosure: true,
 			stopBlobAttachingSignal,
 		});
@@ -1164,53 +1167,55 @@ export class Container
 				"Pending state cannot be retried if the container is closed or disposed",
 			);
 		}
-		return this.getPendingLocalStateCore({ notifyImminentClosure: false });
+		return this.containerStateManager.getPendingLocalStateCore({
+			notifyImminentClosure: false,
+		});
 	}
 
-	private async getPendingLocalStateCore(props: IGetPendingLocalStateProps) {
-		return PerformanceEvent.timedExecAsync(
-			this.mc.logger,
-			{
-				eventName: "getPendingLocalState",
-				notifyImminentClosure: props.notifyImminentClosure,
-				savedOpsSize: this.containerStateManager.getSavedOps().length,
-				clientId: this.clientId,
-			},
-			async () => {
-				if (!this.offlineLoadEnabled) {
-					throw new UsageError(
-						"Can't get pending local state unless offline load is enabled",
-					);
-				}
-				if (this.closed || this._disposed) {
-					throw new UsageError(
-						"Pending state cannot be retried if the container is closed or disposed",
-					);
-				}
-				assert(
-					this.attachmentData.state === AttachState.Attached,
-					0x0d1 /* "Container should be attached before close" */,
-				);
-				assert(
-					this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
-					0x0d2 /* "resolved url should be valid Fluid url" */,
-				);
-				assert(this.containerStateManager.snapshot !== undefined, 0x5d5 /* no base data */);
+	// private async getPendingLocalStateCore(props: IGetPendingLocalStateProps) {
+	// 	return PerformanceEvent.timedExecAsync(
+	// 		this.mc.logger,
+	// 		{
+	// 			eventName: "getPendingLocalState",
+	// 			notifyImminentClosure: props.notifyImminentClosure,
+	// 			savedOpsSize: this.containerStateManager.getSavedOps().length,
+	// 			clientId: this.clientId,
+	// 		},
+	// 		async () => {
+	// 			if (!this.offlineLoadEnabled) {
+	// 				throw new UsageError(
+	// 					"Can't get pending local state unless offline load is enabled",
+	// 				);
+	// 			}
+	// 			if (this.closed || this._disposed) {
+	// 				throw new UsageError(
+	// 					"Pending state cannot be retried if the container is closed or disposed",
+	// 				);
+	// 			}
+	// 			assert(
+	// 				this.attachmentData.state === AttachState.Attached,
+	// 				0x0d1 /* "Container should be attached before close" */,
+	// 			);
+	// 			assert(
+	// 				this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
+	// 				0x0d2 /* "resolved url should be valid Fluid url" */,
+	// 			);
+	// 			assert(this.containerStateManager.snapshot !== undefined, 0x5d5 /* no base data */);
 
-				const pendingRuntimeState = await this.runtime.getPendingLocalState(props);
-				const pendingState: IPendingContainerState = {
-					pendingRuntimeState,
-					baseSnapshot: this.containerStateManager.snapshot.tree,
-					snapshotBlobs: this.containerStateManager.snapshot.blobs,
-					savedOps: this.containerStateManager.getSavedOps(),
-					url: this.resolvedUrl.url,
-					clientId: pendingRuntimeState !== undefined ? this.clientId : undefined,
-				};
+	// 			const pendingRuntimeState = await this.runtime.getPendingLocalState(props);
+	// 			const pendingState: IPendingContainerState = {
+	// 				pendingRuntimeState,
+	// 				baseSnapshot: this.containerStateManager.snapshot.tree,
+	// 				snapshotBlobs: this.containerStateManager.snapshot.blobs,
+	// 				savedOps: this.containerStateManager.getSavedOps(),
+	// 				url: this.resolvedUrl.url,
+	// 				clientId: pendingRuntimeState !== undefined ? this.clientId : undefined,
+	// 			};
 
-				return JSON.stringify(pendingState);
-			},
-		);
-	}
+	// 			return JSON.stringify(pendingState);
+	// 		},
+	// 	);
+	// }
 
 	public get attachState(): AttachState {
 		return this.attachmentData.state;
@@ -1354,9 +1359,7 @@ export class Container
 						isAttachedData(this.attachmentData),
 						"incorrect format in final attachment data",
 					);
-					this.containerStateManager.setLoadedAttributes(
-						this.resolvedUrl,
-						this.runtime,
+					this.containerStateManager.setSnapshot(
 						(this.attachmentData as AttachedData).snapshot,
 					);
 					if (!this.closed) {
@@ -1623,7 +1626,6 @@ export class Container
 		timings.phase2 = performance.now();
 		// Fetch specified snapshot.
 		const { snapshotTree, version } = await this.containerStateManager.fetchSnapshot(
-			pendingLocalState,
 			specifiedVersion,
 			this.service?.policies?.supportGetSnapshotApi,
 		);
@@ -1746,8 +1748,6 @@ export class Container
 			}
 			pendingLocalState.savedOps = [];
 		}
-
-		this.containerStateManager.setLoadedAttributes(this.resolvedUrl, this.runtime);
 
 		// We might have hit some failure that did not manifest itself in exception in this flow,
 		// do not start op processing in such case - static version of Container.load() will handle it correctly.

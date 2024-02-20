@@ -35,21 +35,22 @@ export class containerStateManager {
 		  }
 		| undefined;
 	private readonly mc: MonitoringContext;
-	private readonly clientId: string | undefined;
 	private readonly offlineLoadEnabled: boolean;
-	private resolvedUrl: IResolvedUrl | undefined;
-	private runtime: IRuntime | undefined;
 	private readonly storageAdapter: ContainerStorageAdapter;
 	private readonly isInteractiveClient: boolean;
+	private readonly pendingLocalState: IPendingContainerState | undefined;
 
 	constructor(
+		pendingLocalState: IPendingContainerState | undefined,
 		subLogger: ITelemetryLoggerExt,
-		clientId,
+		private readonly getClientId: () => string | undefined,
+		private readonly getResolvedUrl: () => IResolvedUrl | undefined,
+		private readonly getRuntime: () => IRuntime | undefined,
 		offlineLoadEnabled,
 		storageAdapter,
 		isInteractiveClient,
 	) {
-		this.clientId = clientId;
+		this.pendingLocalState = pendingLocalState;
 		this.offlineLoadEnabled = offlineLoadEnabled;
 		this.mc = createChildMonitoringContext({
 			logger: subLogger,
@@ -98,21 +99,20 @@ export class containerStateManager {
 	}
 
 	public async fetchSnapshot(
-		pendingLocalState: IPendingContainerState | undefined,
 		specifiedVersion: string | undefined,
 		supportGetSnapshotApi: boolean | undefined,
 	) {
 		const { snapshot, version } =
-			pendingLocalState === undefined
+			this.pendingLocalState === undefined
 				? await this.fetchSnapshotCore(specifiedVersion, supportGetSnapshotApi)
-				: { snapshot: pendingLocalState.baseSnapshot, version: undefined };
+				: { snapshot: this.pendingLocalState.baseSnapshot, version: undefined };
 		const snapshotTree: ISnapshotTree | undefined = isInstanceOfISnapshot(snapshot)
 			? snapshot.snapshotTree
 			: snapshot;
-		if (pendingLocalState) {
+		if (this.pendingLocalState) {
 			this.snapshot = {
-				tree: pendingLocalState.baseSnapshot,
-				blobs: pendingLocalState.snapshotBlobs,
+				tree: this.pendingLocalState.baseSnapshot,
+				blobs: this.pendingLocalState.snapshotBlobs,
 			};
 		} else {
 			assert(snapshotTree !== undefined, "Snapshot should exist");
@@ -153,21 +153,15 @@ export class containerStateManager {
 		return this.fetchSnapshotTree(specifiedVersion);
 	}
 
-	public setLoadedAttributes(
-		resolvedUrl: IResolvedUrl | undefined,
-		runtime: IRuntime | undefined,
-		snapshot?:
+	public setSnapshot(
+		snapshot:
 			| {
 					tree: ISnapshotTree;
 					blobs: ISerializableBlobContents;
 			  }
 			| undefined,
 	) {
-		this.resolvedUrl = resolvedUrl;
-		this.runtime = runtime;
-		if (snapshot) {
-			this.snapshot = snapshot;
-		}
+		this.snapshot = snapshot;
 	}
 
 	public async getPendingLocalStateCore(props: IGetPendingLocalStateProps) {
@@ -177,7 +171,7 @@ export class containerStateManager {
 				eventName: "getPendingLocalState",
 				notifyImminentClosure: props.notifyImminentClosure,
 				savedOpsSize: this.getSavedOps().length,
-				clientId: this.clientId,
+				clientId: this.getClientId(),
 			},
 			async () => {
 				if (!this.offlineLoadEnabled) {
@@ -185,20 +179,21 @@ export class containerStateManager {
 						"Can't get pending local state unless offline load is enabled",
 					);
 				}
+				const resolvedUrl = this.getResolvedUrl();
 				assert(
-					this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
+					resolvedUrl !== undefined && resolvedUrl.type === "fluid",
 					"resolved url should be valid Fluid url",
 				);
 				assert(this.snapshot !== undefined, "no base data");
-				const pendingRuntimeState = await this.runtime?.getPendingLocalState(props);
+				const pendingRuntimeState = await this.getRuntime()?.getPendingLocalState(props);
 				const pendingState: IPendingContainerState = {
 					pendingRuntimeState,
 					baseSnapshot: this.snapshot.tree,
 					snapshotBlobs: this.snapshot.blobs,
 					savedOps: this.getSavedOps(),
-					url: this.resolvedUrl.url,
+					url: resolvedUrl.url,
 					// no need to save this if there is no pending runtime state
-					clientId: pendingRuntimeState !== undefined ? this.clientId : undefined,
+					clientId: pendingRuntimeState !== undefined ? this.getClientId() : undefined,
 				};
 
 				return JSON.stringify(pendingState);
