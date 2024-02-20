@@ -43,11 +43,11 @@ class BlobCache {
 	// So for now, purging is disabled.
 	private readonly purgeEnabled = false;
 
-	public get value() {
+	public get value(): Map<string, ArrayBuffer> {
 		return this._blobCache;
 	}
 
-	public addBlobs(blobs: Map<string, ArrayBuffer>) {
+	public addBlobs(blobs: Map<string, ArrayBuffer>): void {
 		for (const [blobId, value] of blobs.entries()) {
 			this._blobCache.set(blobId, value);
 		}
@@ -58,7 +58,7 @@ class BlobCache {
 	/**
 	 * Schedule a timer for clearing the blob cache or defer the current one.
 	 */
-	private scheduleClearBlobsCache() {
+	private scheduleClearBlobsCache(): void {
 		if (this.blobCacheTimeout !== undefined) {
 			// If we already have an outstanding timer, just signal that we should defer the clear
 			this.deferBlobCacheClear = true;
@@ -89,7 +89,10 @@ class BlobCache {
 		}
 	}
 
-	public getBlob(blobId: string) {
+	public getBlob(blobId: string): {
+		blobContent: ArrayBuffer | undefined;
+		evicted: boolean;
+	} {
 		// Reset the timer on attempted cache read
 		this.scheduleClearBlobsCache();
 		const blobContent = this._blobCache.get(blobId);
@@ -97,7 +100,7 @@ class BlobCache {
 		return { blobContent, evicted };
 	}
 
-	public setBlob(blobId: string, blob: ArrayBuffer) {
+	public setBlob(blobId: string, blob: ArrayBuffer): Map<string, ArrayBuffer> | undefined {
 		// This API is called as result of cache miss and reading blob from storage.
 		// Runtime never reads same blob twice.
 		// The only reason we may get read request for same blob is blob de-duping in summaries.
@@ -153,7 +156,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 		return this._ops;
 	}
 
-	public get snapshotSequenceNumber() {
+	public get snapshotSequenceNumber(): number | undefined {
 		return this._snapshotSequenceNumber;
 	}
 
@@ -216,11 +219,11 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 		throw new Error("Not implemented yet");
 	}
 
-	protected setRootTree(id: string, tree: api.ISnapshotTree) {
+	protected setRootTree(id: string, tree: api.ISnapshotTree): void {
 		this.commitCache.set(id, tree);
 	}
 
-	protected initBlobsCache(blobs: Map<string, ArrayBuffer>) {
+	protected initBlobsCache(blobs: Map<string, ArrayBuffer>): void {
 		this.blobCache.addBlobs(blobs);
 	}
 
@@ -230,6 +233,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 			tree = await this.fetchTreeFromSnapshot(id, scenarioName);
 		}
 
+		// eslint-disable-next-line unicorn/no-null
 		return tree ?? null;
 	}
 
@@ -238,7 +242,9 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 		scenarioName?: string,
 	): Promise<api.ISnapshotTree | undefined>;
 
-	protected combineProtocolAndAppSnapshotTree(snapshotTree: api.ISnapshotTree) {
+	protected combineProtocolAndAppSnapshotTree(
+		snapshotTree: api.ISnapshotTree,
+	): api.ISnapshotTree {
 		// When we upload the container snapshot, we upload appTree in ".app" and protocol tree in ".protocol"
 		// So when we request the snapshot we get ".app" as tree and not as commit node as in the case just above.
 		const hierarchicalAppTree = snapshotTree.trees[".app"];
