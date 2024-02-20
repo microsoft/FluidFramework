@@ -47,7 +47,6 @@ export {
 } from "./modelLoader/index.js";
 export {
 	type IFluidMountableView,
-	type IFluidMountableViewClass,
 	type IProvideFluidMountableView,
 	MountableView,
 } from "./mountableView/index.js";

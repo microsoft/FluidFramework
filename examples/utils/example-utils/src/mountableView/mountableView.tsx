@@ -22,7 +22,8 @@ export class MountableView implements IFluidMountableView {
 	}
 
 	/**
-	 * {@inheritDoc IFluidMountableViewClass.canMount}
+	 * Test whether the given view can be successfully mounted by a MountableView.
+	 * @param view - the view to test if it can be mounted.
 	 */
 	public static canMount(view: FluidObject): boolean {
 		return React.isValidElement(view);
@@ -43,7 +44,7 @@ export class MountableView implements IFluidMountableView {
 	private readonly view: FluidObject;
 
 	/**
-	 * {@inheritDoc IFluidMountableViewClass.new}
+	 * @param view - The view to make mountable
 	 */
 	constructor(view: FluidObject) {
 		if (!MountableView.canMount(view)) {
@@ -53,7 +54,7 @@ export class MountableView implements IFluidMountableView {
 	}
 
 	/**
-	 * {@inheritDoc IFluidMountableView.mount}
+	 * {@inheritDoc (IFluidMountableView:interface).mount}
 	 */
 	public mount(container: HTMLElement): void {
 		if (this.containerElement !== undefined) {
@@ -77,7 +78,7 @@ export class MountableView implements IFluidMountableView {
 	}
 
 	/**
-	 * {@inheritDoc IFluidMountableView.unmount}
+	 * {@inheritDoc (IFluidMountableView:interface).unmount}
 	 */
 	public unmount(): void {
 		// Do nothing if we are already unmounted.

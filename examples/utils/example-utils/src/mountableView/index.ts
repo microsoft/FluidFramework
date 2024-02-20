@@ -3,9 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export {
-	type IFluidMountableView,
-	type IFluidMountableViewClass,
-	type IProvideFluidMountableView,
-} from "./interface.js";
+export type { IFluidMountableView, IProvideFluidMountableView } from "./interface.js";
 export { MountableView } from "./mountableView.js";

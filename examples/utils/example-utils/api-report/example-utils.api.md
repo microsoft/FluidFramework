@@ -54,13 +54,6 @@ export interface IFluidMountableView extends IProvideFluidMountableView {
     unmount(): void;
 }
 
-// @internal
-export interface IFluidMountableViewClass {
-    // (undocumented)
-    new (view: FluidObject): IFluidMountableView;
-    canMount(view: FluidObject): boolean;
-}
-
 // @internal (undocumented)
 export interface IFluidMountableViewEntryPoint {
     // (undocumented)
@@ -272,9 +265,7 @@ export class MountableView implements IFluidMountableView {
     static canMount(view: FluidObject): boolean;
     // (undocumented)
     get IFluidMountableView(): MountableView;
-    // (undocumented)
     mount(container: HTMLElement): void;
-    // (undocumented)
     unmount(): void;
 }
 
