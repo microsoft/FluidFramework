@@ -1,114 +1,118 @@
-/*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
+// alias c='node /workspaces/f0/temp-tools/convert.mjs'
 
-const JSON5 = require("json5");
-const path = require("path");
-const fs = require("fs");
+import { repoRoot } from "./git.mjs";
+import JSON5 from "json5";
+import path from "path";
+import fs from "fs";
+import { ts2esm } from "./ts2esm.mjs";
+import { format } from "./format.mjs";
 
 // Assume current working directory is the package root.
 const packageRoot = process.cwd();
 
+// Get root of Git repo.
+const repoRootPath = repoRoot();
+
 // From the package root, compute how many repetitions of '../' get us to the repo root.
 const workspaceRoot = (() => {
-  	let relativePath = "../".repeat(packageRoot.split(path.sep).length - 3);
+	const gitRootLength = repoRootPath.split(path.sep).length;
+  	let relativePath = "../".repeat(packageRoot.split(path.sep).length - gitRootLength);
   	return relativePath.slice(0, relativePath.length - 1);
 })();
 
 // Load 'package.json'
-const packagePath = path.join(packageRoot, "package.json");
-const package = JSON5.parse(fs.readFileSync(packagePath, "utf8"));
+const pkgPath = path.join(packageRoot, "package.json");
+const pkg = JSON5.parse(fs.readFileSync(pkgPath, "utf8"));
 
 // Set package type to ESM
-package.type = "module";
+pkg.type = "module";
 
 // Add exports
 //
 // Note: 'exports.js' does this better (merges with existing exports rather than clobbering all exports.)
-const shortName = package.name.split("/")[1];
-package.exports = {
+const shortName = pkg.name.split("/")[1];
+pkg.exports = {
 	".": {
-		"import": {
-			"types": "./lib/index.d.ts",
-			"default": "./lib/index.js"
+		import: {
+			types: "./lib/index.d.ts",
+			default: "./lib/index.js",
 		},
-		"require": {
-			"types": "./dist/index.d.ts",
-			"default": "./dist/index.js"
-		}
-	},
-	"./beta": {
-		"import": {
-			"types": `./lib/${shortName}-beta.d.ts`,
-			"default": "./lib/index.js"
+		require: {
+			types: "./dist/index.d.ts",
+			default: "./dist/index.js",
 		},
-		"require": {
-			"types": `./dist/${shortName}-beta.d.ts`,
-			"default": "./dist/index.js"
-		}
-	},
-	"./alpha": {
-		"import": {
-			"types": `./lib/${shortName}-alpha.d.ts`,
-			"default": "./lib/index.js"
-		},
-		"require": {
-			"types": `./dist/${shortName}-alpha.d.ts`,
-			"default": "./dist/index.js"
-		}
-	},
-	"./internal": {
-		"import": {
-			"types": "./lib/index.d.ts",
-			"default": "./lib/index.js"
-		},
-		"require": {
-			"types": "./dist/index.d.ts",
-			"default": "./dist/index.js"
-		}
 	},
 	"./public": {
-		"import": {
-			"types": `./lib/${shortName}-public.d.ts`,
-			"default": "./lib/index.js"
+		import: {
+			types: `./lib/${shortName}-public.d.ts`,
+			default: "./lib/index.js",
 		},
-		"require": {
-			"types": `./dist/${shortName}-public.d.ts`,
-			"default": "./dist/index.js"
-		}
+		require: {
+			types: `./dist/${shortName}-public.d.ts`,
+			default: "./dist/index.js",
+		},
+	},
+	"./beta": {
+		import: {
+			types: `./lib/${shortName}-beta.d.ts`,
+			default: "./lib/index.js",
+		},
+		require: {
+			types: `./dist/${shortName}-beta.d.ts`,
+			default: "./dist/index.js",
+		},
+	},
+	"./fruit": {
+		import: {
+			types: `./lib/${shortName}-alpha.d.ts`,
+			default: "./lib/index.js",
+		},
+		require: {
+			types: `./dist/${shortName}-alpha.d.ts`,
+			default: "./dist/index.js",
+		},
+	},
+	"./internal": {
+		import: {
+			types: "./lib/index.d.ts",
+			default: "./lib/index.js",
+		},
+		require: {
+			types: "./dist/index.d.ts",
+			default: "./dist/index.js",
+		},
 	},
 };
 
 // Delete 'module' key if any.
-delete package.module;
+delete pkg.module;
 
 // Overwrite API extractor scripts with new pattern (TODO: make conditional)
-package.scripts["api-extractor:commonjs"] = "api-extractor run --config ./api-extractor-cjs.json";
-package.scripts["api-extractor:esnext"] = "api-extractor run --local";
+pkg.scripts["api-extractor:commonjs"] = "api-extractor run --config ./api-extractor-cjs.json";
+pkg.scripts["api-extractor:esnext"] = "api-extractor run --local";
 
 // Add ATTW check
-package.scripts["check:are-the-types-wrong"] = "attw --pack . --entrypoints .";
-package.devDependencies["@arethetypeswrong/cli"] = "^0.13.3";
+pkg.scripts["check:are-the-types-wrong"] = "attw --pack . --entrypoints .";
+pkg.devDependencies["@arethetypeswrong/cli"] = "^0.13.3";
 
 // Rewrite build scripts
-package.scripts["build:esnext"] = "tsc --project ./tsconfig.json";
+pkg.scripts["build:esnext"] = "tsc --project ./tsconfig.json";
 
-if (package.scripts["build:test"]) {
-	package.scripts["build:test"] = "tsc --project ./src/test/tsconfig.json && tsc --project ./src/test/tsconfig.cjs.json";
+if (pkg.scripts["build:test"]) {
+	pkg.scripts["build:test"] = "tsc --project ./src/test/tsconfig.json && tsc --project ./src/test/tsconfig.cjs.json";
 }
 
-if (package.scripts["test:mocha"]) {
-	package.scripts["test:mocha"] = "npm run test:mocha:cjs && npm run test:mocha:esm";
-	package.scripts["test:mocha:cjs"] = "mocha  --recursive \"dist/test/*.spec.*js\" --exit --project src/test/tsconfig.cjs.json -r node_modules/@fluidframework/mocha-test-setup";
-	package.scripts["test:mocha:esm"] = "mocha  --recursive \"lib/test/*.spec.*js\" --exit --project src/test/tsconfig.json -r node_modules/@fluidframework/mocha-test-setup";
+if (pkg.scripts["test:mocha"]) {
+	pkg.scripts["test:mocha"] = "npm run test:mocha:cjs && npm run test:mocha:esm";
+	pkg.scripts["test:mocha:cjs"] = "mocha  --recursive \"dist/test/*.spec.*js\" --exit --project src/test/tsconfig.cjs.json -r node_modules/@fluidframework/mocha-test-setup";
+	pkg.scripts["test:mocha:esm"] = "mocha  --recursive \"lib/test/*.spec.*js\" --exit --project src/test/tsconfig.json -r node_modules/@fluidframework/mocha-test-setup";
 }
 
-package.scripts["tsc"] = `tsc-multi --config ${workspaceRoot}/common/build/build-common/tsc-multi.node16.cjs.json && copyfiles -f ${workspaceRoot}/common/build/build-common/src/cjs/package.json ./dist`;
-package.devDependencies["tsc-multi"] = "^1.1.0";
-package.devDependencies["copyfiles"] = "^2.4.1";
+pkg.scripts["tsc"] = `tsc-multi --config ${workspaceRoot}/common/build/build-common/tsc-multi.node16.cjs.json && copyfiles -f ${workspaceRoot}/common/build/build-common/src/cjs/package.json ./dist`;
+pkg.devDependencies["tsc-multi"] = "^1.1.0";
+pkg.devDependencies["copyfiles"] = "^2.4.1";
 
-fs.writeFileSync(packagePath, JSON.stringify(package, null, 4));
+fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 4));
 
 // Update API extractor config if it exists
 const apiExtractorEsmPath = path.join(packageRoot, "api-extractor.json");
@@ -134,6 +138,7 @@ if (fs.existsSync(apiExtractorEsmPath)) {
 
 // Update tsconfig
 const tsconfigPath = path.join(packageRoot, "tsconfig.json");
+const tsconfigPaths = [tsconfigPath];
 const tsconfig = JSON5.parse(fs.readFileSync(tsconfigPath, "utf8"));
 tsconfig.extends = `${workspaceRoot}/common/build/build-common/tsconfig.node16.json`;
 const compilerOptions = tsconfig.compilerOptions;
@@ -176,6 +181,8 @@ fs.writeFileSync(tsconfigCjsPath, tsconfigCjs);
 // Create/overwrite test tsconfig files
 const testTsconfigPath = path.join(packageRoot, "src/test/tsconfig.json");
 if (fs.existsSync(testTsconfigPath)) {
+	tsconfigPaths.push(testTsconfigPath);
+
 	const testTsconfig = `{
 		"extends": "${workspaceRoot}/../../common/build/build-common/tsconfig.test.node16.json",
 		"compilerOptions": {
@@ -209,3 +216,6 @@ if (fs.existsSync(testTsconfigPath)) {
 	`;
 	fs.writeFileSync(testTsconfigCjsPath, testTsconfigCjs);
 }
+
+ts2esm(tsconfigPaths);
+format();
