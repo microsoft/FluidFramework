@@ -2426,7 +2426,7 @@ export class Container
 		specifiedVersion: string | undefined,
 	): Promise<{ snapshot?: ISnapshot | ISnapshotTree; versionId?: string }> {
 		if (
-			this.mc.config.getBoolean("Fluid.Container.FetchSnapshotUsingGetSnapshotApi") ===
+			this.mc.config.getBoolean("Fluid.Container.UseLoadingGroupIdForSnapshotFetch") ===
 				true &&
 			this.service?.policies?.supportGetSnapshotApi === true
 		) {

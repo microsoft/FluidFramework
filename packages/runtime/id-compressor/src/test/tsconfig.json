@@ -10,5 +10,11 @@
 		"rootDir": "./",
 		"outDir": "../../dist/test",
 		"types": ["mocha"],
+
+		// The package exports utilities for test code from the test folder, so we need to build types for test files, which we typically
+		// don't do.
+		"declaration": true,
+		"declarationMap": true,
+		"noImplicitAny": false,
 	},
 }

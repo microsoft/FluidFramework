@@ -11,7 +11,7 @@ import {
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { ChangeConnectionState, DDSFuzzModel } from "../ddsFuzzHarness";
+import { ChangeConnectionState, DDSFuzzModel, type BaseOperation } from "../ddsFuzzHarness";
 
 /**
  * Mock DDS which holds no data.
@@ -44,6 +44,7 @@ class SharedNothing extends SharedObject {
 	}
 	protected onDisconnect(): void {}
 	protected applyStashedOp(): void {
+		this.noop();
 		this.applyStashedOpCalls++;
 		this.methodCalls.push("applyStashedOp");
 	}
@@ -108,6 +109,8 @@ export interface Operation {
 }
 
 const noopGenerator = async () => ({ type: "noop" }) as const;
+
+export const isNoopOp = (op: BaseOperation): op is Operation => op.type === "noop";
 
 export const baseModel: DDSFuzzModel<SharedNothingFactory, Operation | ChangeConnectionState> = {
 	workloadName: "test",

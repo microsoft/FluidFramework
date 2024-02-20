@@ -8,18 +8,18 @@ import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { LoaderHeader } from '@fluidframework/container-definitions';
 import { MockFluidDataStoreRuntime, validateAssertionError } from '@fluidframework/test-runtime-utils';
 import { expect } from 'chai';
-import { StableRange, StablePlace, BuildNode, Change } from '../../ChangeTypes';
-import { Mutable } from '../../Common';
-import { EditLog } from '../../EditLog';
-import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities';
-import { SharedTreeDiagnosticEvent } from '../../EventTypes';
-import { NodeId, StableNodeId, TraitLabel } from '../../Identifiers';
-import { SharedTreeOpType, SharedTreeUpdateOp, TreeNodeSequence, WriteFormat } from '../../persisted-types';
-import { SharedTree } from '../../SharedTree';
-import { TreeNodeHandle } from '../../TreeNodeHandle';
-import { nilUuid } from '../../UuidUtilities';
-import { applyTestEdits } from '../Summary.tests';
-import { buildLeaf } from './TestNode';
+import { StableRange, StablePlace, BuildNode, Change } from '../../ChangeTypes.js';
+import { Mutable } from '../../Common.js';
+import { EditLog } from '../../EditLog.js';
+import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities.js';
+import { SharedTreeDiagnosticEvent } from '../../EventTypes.js';
+import { NodeId, StableNodeId, TraitLabel } from '../../Identifiers.js';
+import { SharedTreeOpType, SharedTreeUpdateOp, TreeNodeSequence, WriteFormat } from '../../persisted-types/index.js';
+import { SharedTree } from '../../SharedTree.js';
+import { TreeNodeHandle } from '../../TreeNodeHandle.js';
+import { nilUuid } from '../../UuidUtilities.js';
+import { applyTestEdits } from '../Summary.tests.js';
+import { buildLeaf } from './TestNode.js';
 import {
 	applyNoop,
 	setUpLocalServerTestSharedTree,
@@ -29,7 +29,7 @@ import {
 	spyOnSubmittedOps,
 	testTrait,
 	waitForSummary,
-} from './TestUtilities';
+} from './TestUtilities.js';
 
 function spyOnVersionChanges(tree: SharedTree): WriteFormat[] {
 	const versions: WriteFormat[] = [];

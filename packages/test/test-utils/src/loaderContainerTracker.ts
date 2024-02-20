@@ -15,11 +15,11 @@ import {
 	IContainerCreateProps,
 	IContainerLoadProps,
 	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/container-loader/dist/container";
-import { waitForContainerConnection } from "./containerUtils";
-import { debug } from "./debug";
-import { IOpProcessingController } from "./testObjectProvider";
-import { timeoutAwait, timeoutPromise } from "./timeoutUtils";
+} from "@fluidframework/container-loader/test/container";
+import { waitForContainerConnection } from "./containerUtils.js";
+import { debug } from "./debug.js";
+import { IOpProcessingController } from "./testObjectProvider.js";
+import { timeoutAwait, timeoutPromise } from "./timeoutUtils.js";
 
 const debugOp = debug.extend("ops");
 const debugWait = debug.extend("wait");
