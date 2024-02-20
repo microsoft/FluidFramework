@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { strict as assert } from "assert";
 import { createIdCompressor, createSessionId } from "@fluidframework/id-compressor";
 import { RevisionTag, RevisionTagCodec } from "../../core/index.js";
@@ -13,7 +18,9 @@ describe("RevisionTagCodec", () => {
 		const decoded = codec.decode(encoded, { originatorId: localCompressor.localSessionId });
 		assert.deepEqual(decoded, rootRevisionTag);
 		const remoteEncoded = new RevisionTagCodec(remoteCompressor).encode(rootRevisionTag);
-		const decodedFromRemote = codec.decode(remoteEncoded, { originatorId: remoteCompressor.localSessionId });
+		const decodedFromRemote = codec.decode(remoteEncoded, {
+			originatorId: remoteCompressor.localSessionId,
+		});
 		assert.deepEqual(decodedFromRemote, rootRevisionTag);
 	});
 
@@ -44,7 +51,7 @@ describe("RevisionTagCodec", () => {
 		localEncoded = localCodec.encode(localId);
 		const remoteDecoded = remoteCodec.decode(localEncoded, { originatorId: localSession });
 		const remoteEncoded = remoteCodec.encode(remoteDecoded);
-		
+
 		assert.notDeepEqual(localId, localEncoded);
 		assert.deepEqual(localEncoded, remoteDecoded);
 		assert.deepEqual(remoteEncoded, remoteDecoded);
