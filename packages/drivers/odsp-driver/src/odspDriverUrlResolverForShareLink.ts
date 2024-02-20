@@ -42,6 +42,10 @@ export interface ShareLinkFetcherProps {
 	identityType: IdentityType;
 }
 
+// back-compat: GitHub #9653
+const isFluidPackage = (pkg: Record<string, unknown>): boolean =>
+	typeof pkg === "object" && typeof pkg?.name === "string" && typeof pkg?.fluid === "object";
+
 /**
  * Resolver to resolve urls like the ones created by createOdspUrl which is driver inner
  * url format and the ones which have things like driveId, siteId, itemId etc encoded in nav param.
@@ -221,20 +225,23 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 			actualDataStorePath = odspResolvedUrl.dataStorePath;
 		}
 
-		// back-compat: GitHub #9653
-		const isFluidPackage = (pkg: any) =>
-			typeof pkg === "object" &&
-			typeof pkg?.name === "string" &&
-			typeof pkg?.fluid === "object";
 		let containerPackageName;
 		if (packageInfoSource && "name" in packageInfoSource) {
 			containerPackageName = packageInfoSource.name;
 			// packageInfoSource is cast to any as it is typed to IContainerPackageInfo instead of IFluidCodeDetails
+			// TODO: use a stronger type
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 		} else if (isFluidPackage((packageInfoSource as any)?.package)) {
+			// TODO: use a stronger type
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 			containerPackageName = (packageInfoSource as any)?.package.name;
 		} else {
+			// TODO: use a stronger type
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 			containerPackageName = (packageInfoSource as any)?.package;
 		}
+		// TODO: use a stronger type
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		containerPackageName =
 			containerPackageName ?? odspResolvedUrl.codeHint?.containerPackageName;
 
@@ -246,6 +253,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 			itemId: odspResolvedUrl.itemId,
 			dataStorePath: actualDataStorePath,
 			appName: this.appName,
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			containerPackageName,
 			fileVersion: odspResolvedUrl.fileVersion,
 			context,
@@ -257,7 +265,10 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 	/**
 	 * Crafts a supported document/driver URL
 	 */
-	public static createDocumentUrl(baseUrl: string, driverInfo: OdspFluidDataStoreLocator) {
+	public static createDocumentUrl(
+		baseUrl: string,
+		driverInfo: OdspFluidDataStoreLocator,
+	): string {
 		const url = new URL(baseUrl);
 
 		storeLocatorInOdspUrl(url, driverInfo);
