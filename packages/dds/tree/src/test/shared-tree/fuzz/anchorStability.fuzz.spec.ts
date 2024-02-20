@@ -18,11 +18,7 @@ import {
 	jsonableTreeFromFieldCursor,
 	typeNameSymbol,
 } from "../../../feature-libraries/index.js";
-import {
-	SharedTreeTestFactory,
-	createTestUndoRedoStacks,
-	validateTree,
-} from "../../utils.js";
+import { SharedTreeTestFactory, createTestUndoRedoStacks, validateTree } from "../../utils.js";
 import {
 	makeOpGenerator,
 	EditGeneratorOpWeights,
