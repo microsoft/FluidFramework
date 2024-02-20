@@ -88,3 +88,45 @@ stages:
           odsp__client__login__password: $(odsp-client-login-password)
           odsp__client2__login__username: $(odsp-client2-login-username)
           odsp__client2__login__password: $(odsp-client2-login-password)
+
+  # Capture pipeline stage results
+  - ${{ if eq(parameters.telemetry, true) }}:
+    - stage: upload_run_telemetry
+      displayName: Upload pipeline run telemetry to Kusto
+      condition: succeededOrFailed()
+      dependsOn:
+        - e2e - azure client with frs
+        - e2e - azure client with azure local service
+        - e2e - odsp client with odsp service
+      jobs:
+        - job: upload_run_telemetry
+          displayName: Upload pipeline run telemetry to Kusto
+          pool: Small
+          variables:
+          - group: ado-feeds
+    
+          steps:
+          - template: templates/include-telemetry-setup.yml
+            parameters:
+              devFeedUrl: $(ado-feeds-dev)
+              officeFeedUrl: $(ado-feeds-office)
+              isCheckoutNeeded: true
+          - task: Bash@3
+            displayName: Retrieve buildId results
+            inputs:
+              targetType: 'inline'
+              workingDirectory: $(absolutePathToTelemetryGenerator)
+              script: |
+                echo "creating output folder"
+                mkdir -p ${{ variables.testWorkspace }}/timingOutput
+                echo "Retrieving pipeline run timeline data command ..."
+                echo 'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline"'
+                curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline\?api-version\=6.0-preview.1" > ${{ variables.testWorkspace }}/timingOutput/output.json
+                pwd;
+                ls -laR ${{ variables.testWorkspace }}/timingOutput/output.json;
+                cat ${{ variables.testWorkspace }}/timingOutput/output.json;
+                node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js --dir '${{ variables.testWorkspace }}/timingOutput/';
+            env:
+              BUILD_ID: $(Build.BuildId)
+              ADO_API_TOKEN: $(System.AccessToken)
+              PIPELINE: ServiceClientsEndToEndTests
