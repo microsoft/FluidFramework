@@ -170,6 +170,10 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_TaskManager": {
+				"backCompat": false
+			}
+		}
 	}
 }
