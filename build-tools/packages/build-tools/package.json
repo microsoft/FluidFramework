@@ -15,6 +15,7 @@
 	"bin": {
 		"fluid-build": "bin/fluid-build",
 		"fluid-doc-stats": "bin/fluid-doc-stats",
+		"fluid-tsc": "dist/fluidTsc/fluidTsc.js",
 		"fluid-type-test-generator": "bin/fluid-type-test-generator"
 	},
 	"scripts": {
