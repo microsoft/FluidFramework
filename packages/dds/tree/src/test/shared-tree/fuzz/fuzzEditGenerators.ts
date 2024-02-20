@@ -64,6 +64,10 @@ export interface FuzzTestState extends DDSFuzzTestState<SharedTreeFactory> {
 	 * and the fuzz testing model only simulates async transactions.
 	 */
 	transactionViews?: Map<ISharedTree, ITreeViewFork<typeof fuzzSchema.rootFieldSchema>>;
+	/**
+	 * NodeSchema of clients used to typecheck schema during edit generation/reducing.
+	 * TODO: The NodeSchema for each client should be properly updated if "afterSchemaChange" occurs for the client's schema when schemaOps are supported.
+	 */
 	nodeSchemas?: Map<ISharedTree, FuzzNodeSchema>;
 }
 
