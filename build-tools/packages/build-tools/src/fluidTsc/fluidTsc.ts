@@ -45,4 +45,5 @@ async function main() {
 main().catch((e) => {
 	error(`Unexpected error. ${e.message}`);
 	error(e.stack);
+	process.exit(1);
 });
