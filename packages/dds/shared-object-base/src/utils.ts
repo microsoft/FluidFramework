@@ -60,7 +60,7 @@ export function makeHandlesSerializable(
  */
 export function parseHandles(value: any, serializer: IFluidSerializer) {
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-	return value !== undefined ? serializer.parse(JSON.stringify(value)) : value;
+	return serializer.decode(value);
 }
 
 /**
