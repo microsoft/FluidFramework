@@ -123,6 +123,7 @@ export class EpochTracker implements IPersistedFileCache {
 		});
 	}
 
+	// TODO: return a stronger type
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public async get(entry: IEntry): Promise<any> {
 		try {
@@ -171,6 +172,7 @@ export class EpochTracker implements IPersistedFileCache {
 		}
 	}
 
+	// TODO: take a stronger type or `unknown`
 	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
 	public async put(entry: IEntry, value: any): Promise<void> {
 		assert(this._fluidEpoch !== undefined, 0x1dd /* "no epoch" */);
@@ -515,6 +517,7 @@ export class EpochTrackerWithRedemption extends EpochTracker {
 		this.treesLatestDeferral.resolve();
 	}
 
+	// TODO: return a stronger type
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public async get(entry: IEntry): Promise<any> {
 		let result = super.get(entry);
