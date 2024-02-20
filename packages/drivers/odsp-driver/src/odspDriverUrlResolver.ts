@@ -19,13 +19,23 @@ import { getHashedDocumentId } from "./odspPublicUtils";
 import { ClpCompliantAppHeader } from "./contractsPublic";
 import { pkgVersion } from "./packageVersion";
 
-function getUrlBase(siteUrl: string, driveId: string, itemId: string, fileVersion?: string) {
+function getUrlBase(
+	siteUrl: string,
+	driveId: string,
+	itemId: string,
+	fileVersion?: string,
+): string {
 	const siteOrigin = new URL(siteUrl).origin;
 	const version = fileVersion ? `versions/${fileVersion}/` : "";
 	return `${getApiRoot(siteOrigin)}/drives/${driveId}/items/${itemId}/${version}`;
 }
 
-function getSnapshotUrl(siteUrl: string, driveId: string, itemId: string, fileVersion?: string) {
+function getSnapshotUrl(
+	siteUrl: string,
+	driveId: string,
+	itemId: string,
+	fileVersion?: string,
+): string {
 	const urlBase = getUrlBase(siteUrl, driveId, itemId, fileVersion);
 	return `${urlBase}opStream/snapshots`;
 }
@@ -35,7 +45,7 @@ function getAttachmentPOSTUrl(
 	driveId: string,
 	itemId: string,
 	fileVersion?: string,
-) {
+): string {
 	const urlBase = getUrlBase(siteUrl, driveId, itemId, fileVersion);
 	return `${urlBase}opStream/attachment`;
 }
@@ -45,7 +55,7 @@ function getAttachmentGETUrl(
 	driveId: string,
 	itemId: string,
 	fileVersion?: string,
-) {
+): string {
 	const urlBase = getUrlBase(siteUrl, driveId, itemId, fileVersion);
 	return `${urlBase}opStream/attachments`;
 }
@@ -55,7 +65,7 @@ function getDeltaStorageUrl(
 	driveId: string,
 	itemId: string,
 	fileVersion?: string,
-) {
+): string {
 	const urlBase = getUrlBase(siteUrl, driveId, itemId, fileVersion);
 	return `${urlBase}opStream`;
 }
@@ -72,6 +82,10 @@ function removeBeginningSlash(str: string): string {
 	return str;
 }
 
+// back-compat: GitHub #9653
+const isFluidPackage = (pkg: Record<string, unknown>): boolean =>
+	typeof pkg === "object" && typeof pkg?.name === "string" && typeof pkg?.fluid === "object";
+
 /**
  * Resolver to resolve urls like the ones created by createOdspUrl which is driver inner
  * url format. Ex: `${siteUrl}?driveId=${driveId}&itemId=${itemId}&path=${path}`
@@ -81,6 +95,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 	constructor() {}
 
 	/**
+	 * {@inheritDoc @fluidframework/driver-definitions#IUrlResolver.resolve}
 	 * @alpha
 	 */
 	public async resolve(request: IRequest): Promise<IOdspResolvedUrl> {
@@ -88,7 +103,8 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 			const [siteURL, queryString] = request.url.split("?");
 
 			const searchParams = new URLSearchParams(queryString);
-			const fileName = request.headers[DriverHeader.createNew].fileName;
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+			const fileName: string = request.headers[DriverHeader.createNew].fileName;
 			const driveID = searchParams.get("driveId");
 			const filePath = searchParams.get("path");
 			const packageName = searchParams.get("containerPackageName");
@@ -193,18 +209,17 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 			dataStorePath = dataStorePath.slice(1);
 		}
 
-		// back-compat: GitHub #9653
-		const isFluidPackage = (pkg: any) =>
-			typeof pkg === "object" &&
-			typeof pkg?.name === "string" &&
-			typeof pkg?.fluid === "object";
-		let containerPackageName;
+		let containerPackageName: string | undefined;
 		if (packageInfoSource && "name" in packageInfoSource) {
 			containerPackageName = packageInfoSource.name;
 			// packageInfoSource is cast to any as it is typed to IContainerPackageInfo instead of IFluidCodeDetails
+			// TODO: use stronger type
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 		} else if (isFluidPackage((packageInfoSource as any)?.package)) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 			containerPackageName = (packageInfoSource as any)?.package.name;
 		} else {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 			containerPackageName = (packageInfoSource as any)?.package;
 		}
 		containerPackageName =
