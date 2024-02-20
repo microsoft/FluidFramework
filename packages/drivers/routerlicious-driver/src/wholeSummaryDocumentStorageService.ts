@@ -44,8 +44,6 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 	private readonly mc: MonitoringContext;
 	private firstVersionsCall: boolean = true;
 
-	public readonly repositoryUrl = "";
-
 	private async getSummaryUploadManager(): Promise<ISummaryUploadManager> {
 		const manager = await this.getStorageManager();
 		return new WholeSummaryUploadManager(manager);

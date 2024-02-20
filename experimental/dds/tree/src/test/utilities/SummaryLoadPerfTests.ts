@@ -7,13 +7,13 @@ import { join } from 'path';
 import * as fs from 'fs';
 import { takeAsync } from '@fluid-private/stochastic-test-utils';
 import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
-import { SharedTree } from '../../SharedTree';
-import { WriteFormat } from '../../persisted-types';
-import { performFuzzActions } from '../fuzz/SharedTreeFuzzTests';
-import { makeOpGenerator } from '../fuzz/Generators';
-import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities';
-import { setUpLocalServerTestSharedTree, setUpTestSharedTree, testDocumentsPathBase } from './TestUtilities';
-import { expectAssert } from './TestCommon';
+import { SharedTree } from '../../SharedTree.js';
+import { WriteFormat } from '../../persisted-types/index.js';
+import { performFuzzActions } from '../fuzz/SharedTreeFuzzTests.js';
+import { makeOpGenerator } from '../fuzz/Generators.js';
+import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities.js';
+import { setUpLocalServerTestSharedTree, setUpTestSharedTree, testDocumentsPathBase } from './TestUtilities.js';
+import { expectAssert } from './TestCommon.js';
 
 const directory = join(testDocumentsPathBase, 'summary-load-perf-tests');
 

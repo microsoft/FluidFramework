@@ -1,0 +1,4 @@
+{
+	"targets": [{ "packageOverrides": { "package.json": { "type": "commonjs" } }, "outDir": "dist" }],
+	"projects": ["tsconfig.json"]
+}

@@ -318,9 +318,7 @@ export async function waitContainerToCatchUp(container: IContainer) {
 	});
 }
 
-const getCodeProposal =
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-	(quorum: IQuorumProposals) => quorum.get("code") ?? quorum.get("code2");
+const getCodeProposal = (quorum: IQuorumProposals) => quorum.get("code") ?? quorum.get("code2");
 
 /**
  * Helper function to report to telemetry cases where operation takes longer than expected (200ms)
@@ -2428,7 +2426,7 @@ export class Container
 		specifiedVersion: string | undefined,
 	): Promise<{ snapshot?: ISnapshot | ISnapshotTree; versionId?: string }> {
 		if (
-			this.mc.config.getBoolean("Fluid.Container.FetchSnapshotUsingGetSnapshotApi") ===
+			this.mc.config.getBoolean("Fluid.Container.UseLoadingGroupIdForSnapshotFetch") ===
 				true &&
 			this.service?.policies?.supportGetSnapshotApi === true
 		) {

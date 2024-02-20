@@ -61,5 +61,6 @@ export function convertSummaryTreeToSnapshotITree(summaryTree: ISummaryTree): IT
 	return {
 		entries,
 		unreferenced: summaryTree.unreferenced,
+		groupId: summaryTree.groupId,
 	};
 }

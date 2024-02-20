@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { copyPropertyIfDefined, memoizeGetter } from './Common';
-import { NodeId, TraitLabel } from './Identifiers';
-import { NodeIdConverter } from './NodeIdUtilities';
-import { ChangeNode, ChangeNode_0_0_2, TraitMap } from './persisted-types';
-import { TreeView } from './TreeView';
+import { copyPropertyIfDefined, memoizeGetter } from './Common.js';
+import { NodeId, TraitLabel } from './Identifiers.js';
+import { NodeIdConverter } from './NodeIdUtilities.js';
+import { ChangeNode, ChangeNode_0_0_2, TraitMap } from './persisted-types/index.js';
+import { TreeView } from './TreeView.js';
 
 /**
  * Converts this tree view to an equivalent `ChangeNode`.

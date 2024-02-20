@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
+	type IDisposable,
 	type IEvent,
 	type IFluidHandle,
 	type IFluidLoadable,
@@ -15,7 +17,6 @@ import { type IFluidDataStoreContext } from "@fluidframework/runtime-definitions
 import { type IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { FluidObjectHandle } from "@fluidframework/datastore";
 import { type ISharedObject } from "@fluidframework/shared-object-base";
-import { EventForwarder } from "@fluid-internal/client-utils";
 import { create404Response } from "@fluidframework/runtime-utils";
 
 /**
@@ -26,8 +27,8 @@ export abstract class LazyLoadedDataObject<
 		TRoot extends ISharedObject = ISharedObject,
 		TEvents extends IEvent = IEvent,
 	>
-	extends EventForwarder<TEvents>
-	implements IFluidLoadable, IProvideFluidHandle
+	extends TypedEventEmitter<TEvents>
+	implements IFluidLoadable, IProvideFluidHandle, IDisposable
 {
 	private _handle?: IFluidHandle<this>;
 
@@ -49,6 +50,14 @@ export abstract class LazyLoadedDataObject<
 		return this;
 	}
 
+	/**
+	 * {@inheritDoc @fluidframework/core-interfaces#IDisposable.disposed}
+	 */
+	public get disposed(): boolean {
+		return this.isDisposed;
+	}
+	private isDisposed: boolean = false;
+
 	protected readonly root: TRoot;
 
 	public constructor(
@@ -58,6 +67,13 @@ export abstract class LazyLoadedDataObject<
 	) {
 		super();
 		this.root = root as TRoot;
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/core-interfaces#IDisposable.dispose}
+	 */
+	public dispose(): void {
+		this.isDisposed = true;
 	}
 
 	public async request(r: IRequest): Promise<IResponse> {
