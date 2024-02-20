@@ -16,7 +16,7 @@ import {
 	IOdspUrlParts,
 	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
-import { createChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { createChildMonitoringContext, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
 	createCacheSnapshotKey,
 	createOdspLogger,
@@ -66,9 +66,14 @@ export async function prefetchLatestSnapshot(
 	snapshotFormatFetchType?: SnapshotFormatSupportType,
 	odspDocumentServiceFactory?: OdspDocumentServiceFactory,
 ): Promise<boolean> {
-	const odspLogger = createOdspLogger(
-		createChildLogger({ logger, namespace: "PrefetchSnapshot" }),
+	const mc = createChildMonitoringContext({ logger, namespace: "PrefetchSnapshot" });
+	const odspLogger = createOdspLogger(mc.logger);
+	const useGroupIdsForSnapshotFetch = mc.config.getBoolean(
+		"Fluid.Container.UseLoadingGroupIdForSnapshotFetch",
 	);
+	// For prefetch, we just want to fetch the ungrouped data and want to use the new API if the
+	// feature gate is set, so provide an empty array.
+	const loadingGroupIds = useGroupIdsForSnapshotFetch ? [] : undefined;
 	const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
 
 	const resolvedUrlData: IOdspUrlParts = {
@@ -86,13 +91,14 @@ export async function prefetchLatestSnapshot(
 	const snapshotDownloader = async (
 		finalOdspResolvedUrl: IOdspResolvedUrl,
 		storageToken: string,
+		loadingGroupId: string[] | undefined,
 		snapshotOptions: ISnapshotOptions | undefined,
 		controller?: AbortController,
 	) => {
 		return downloadSnapshot(
 			finalOdspResolvedUrl,
 			storageToken,
-			odspLogger,
+			loadingGroupId,
 			snapshotOptions,
 			undefined,
 			controller,
@@ -106,6 +112,7 @@ export async function prefetchLatestSnapshot(
 		cacheP = persistedCache.put(snapshotKey, valueWithEpoch);
 		return cacheP;
 	};
+
 	const removeEntries = async () => persistedCache.removeEntries(snapshotKey.file);
 	return PerformanceEvent.timedExecAsync(
 		odspLogger,
@@ -130,6 +137,7 @@ export async function prefetchLatestSnapshot(
 				snapshotDownloader,
 				putInCache,
 				removeEntries,
+				loadingGroupIds,
 				enableRedeemFallback,
 			)
 				.then(async (value) => {

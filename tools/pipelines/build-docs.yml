@@ -250,3 +250,45 @@ stages:
             targetPath: '$(Build.ArtifactStagingDirectory)/.gdnbaselines'
             artifactName: .gdn
 # END Secure development tasks
+
+- stage: link_check
+  displayName: 'Website Link Check'
+  dependsOn: [] # run in parallel
+  pool: Large
+  jobs:
+    - job: link_check
+      displayName: 'Website Link Check'
+      continueOnError: true
+      steps:
+        - checkout: self
+          submodules: false
+          clean: true
+
+        - template: templates/include-use-node-version.yml
+
+        - template: templates/include-install-pnpm.yml
+          parameters:
+            buildDirectory: $(Build.SourcesDirectory)/docs
+
+        - task: Bash@3
+          displayName: Install dependencies
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Build.SourcesDirectory)/docs
+            script: |
+              pnpm i --frozen-lockfile
+
+        - task: Npm@1
+          displayName: npm run build
+          inputs:
+            command: 'custom'
+            workingDir: $(Build.SourcesDirectory)/docs
+            customCommand: 'run ci:build'
+
+        - task: Npm@1
+          displayName: npm run ci:linkcheck
+          inputs:
+            command: 'custom'
+            workingDir: $(Build.SourcesDirectory)/docs
+            customCommand: 'run ci:linkcheck'
+

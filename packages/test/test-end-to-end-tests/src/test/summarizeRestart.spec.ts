@@ -158,8 +158,6 @@ describeCompat(
 						summaryVersion1,
 					);
 
-				await provider.ensureSynchronized();
-
 				// This tells the summarizer to process the latest summary ack
 				// This is because the second summarizer is not the elected summarizer and thus the summaryManager does not
 				// tell the summarizer to process acks.

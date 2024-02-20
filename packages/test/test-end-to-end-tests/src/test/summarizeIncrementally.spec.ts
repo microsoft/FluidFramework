@@ -98,7 +98,7 @@ function validateDDSStateInSummary(
  */
 describeCompat(
 	"Incremental summaries for data store and DDS",
-	"FullCompat",
+	"1.3.7" /** equivalent to FullCompat. Currently used for testing purposes on ADO pipelines */,
 	(getTestObjectProvider, apis) => {
 		const { SharedDirectory } = apis.dds;
 		let provider: ITestObjectProvider;
