@@ -1,7 +1,6 @@
 @fluidframework/tool-utils
 @fluidframework/telemetry-utils
 @fluidframework/odsp-doclib-utils
-@fluid-tools/webpack-fluid-loader
 @fluidframework/fluid-runner
 @fluid-tools/fetch-tool
 @fluidframework/devtools-core
