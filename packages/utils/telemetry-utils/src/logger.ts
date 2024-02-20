@@ -16,13 +16,17 @@ import {
 	TelemetryBaseEventPropertyType,
 } from "@fluidframework/core-interfaces";
 import { IsomorphicPerformance, performance } from "@fluid-internal/client-utils";
-import { CachedConfigProvider, loggerIsMonitoringContext, mixinMonitoringContext } from "./config";
+import {
+	CachedConfigProvider,
+	loggerIsMonitoringContext,
+	mixinMonitoringContext,
+} from "./config.js";
 import {
 	isILoggingError,
 	extractLogSafeErrorProperties,
 	generateStack,
 	isTaggedTelemetryPropertyValue,
-} from "./errorLogging";
+} from "./errorLogging.js";
 import {
 	ITelemetryEventExt,
 	ITelemetryGenericEventExt,
@@ -31,7 +35,7 @@ import {
 	TelemetryEventPropertyTypeExt,
 	TelemetryEventCategory,
 	ITelemetryPropertiesExt,
-} from "./telemetryTypes";
+} from "./telemetryTypes.js";
 
 export interface Memory {
 	usedJSHeapSize: number;

@@ -22,7 +22,10 @@ import { MessageType, type ISequencedDocumentMessage } from '@fluidframework/pro
 import { type EventEmitterEventType } from '@fluid-internal/client-utils';
 import { DataProcessingError, EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import type { SessionId, IIdCompressorCore } from '@fluidframework/id-compressor';
-import { type SharedTreeFactory as LegacySharedTreeFactory, type SharedTree as LegacySharedTree } from '../SharedTree';
+import {
+	type SharedTreeFactory as LegacySharedTreeFactory,
+	type SharedTree as LegacySharedTree,
+} from '../SharedTree.js';
 import { type IShimChannelServices, NoDeltasChannelServices } from './shimChannelServices.js';
 import { MigrationShimDeltaHandler } from './migrationDeltaHandler.js';
 import { PreMigrationDeltaConnection, StampDeltaConnection } from './shimDeltaConnection.js';

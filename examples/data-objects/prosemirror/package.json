@@ -68,7 +68,7 @@
 		"react": "^17.0.1"
 	},
 	"devDependencies": {
-		"@fluid-tools/webpack-fluid-loader": "workspace:~",
+		"@fluid-example/webpack-fluid-loader": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.33.0",
 		"@fluidframework/eslint-config-fluid": "^3.5.0",

@@ -12,8 +12,8 @@ import {
 	ITelemetryProperties,
 } from "@fluidframework/core-interfaces";
 
-import { SampledTelemetryHelper } from "../sampledTelemetryHelper";
-import { ITelemetryLoggerExt } from "../telemetryTypes";
+import { SampledTelemetryHelper } from "../sampledTelemetryHelper.js";
+import { ITelemetryLoggerExt } from "../telemetryTypes.js";
 
 /**
  * Test logger with only the necessary functionality used by the SampledTelemetryHelper

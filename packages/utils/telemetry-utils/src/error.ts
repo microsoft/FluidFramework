@@ -18,8 +18,8 @@ import {
 	isExternalError,
 	normalizeError,
 	wrapError,
-} from "./errorLogging";
-import { IFluidErrorBase } from "./fluidErrorBase";
+} from "./errorLogging.js";
+import { IFluidErrorBase } from "./fluidErrorBase.js";
 
 /**
  * Throws a UsageError with the given message if the condition is not met.
