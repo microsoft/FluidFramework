@@ -45,6 +45,7 @@ import {
 import { fetch } from "./fetch";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { IOdspSnapshot } from "./contracts";
+// eslint-disable-next-line import/no-deprecated
 import { ISnapshotContents } from "./odspPublicUtils";
 
 export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRepeat";
@@ -504,6 +505,7 @@ export function getJoinSessionCacheKey(odspResolvedUrl: IOdspResolvedUrl): strin
  * @param obj - obj whose type needs to be identified.
  */
 export function isInstanceOfISnapshot(
+	// eslint-disable-next-line import/no-deprecated
 	obj: ISnapshotContents | ISnapshot | undefined,
 ): obj is ISnapshot {
 	return obj !== undefined && "snapshotFormatV" in obj && obj.snapshotFormatV === 1;

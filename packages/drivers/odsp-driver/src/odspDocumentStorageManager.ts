@@ -34,6 +34,7 @@ import {
 	IDocumentStorageGetVersionsResponse,
 	HostStoragePolicyInternal,
 	IVersionedValueWithEpoch,
+	// eslint-disable-next-line import/no-deprecated
 	ISnapshotCachedEntry,
 	ISnapshotCachedEntry2,
 } from "./contracts";
@@ -272,6 +273,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 						.get(createCacheSnapshotKey(this.odspResolvedUrl))
 						.then(
 							async (
+								// eslint-disable-next-line import/no-deprecated
 								snapshotCachedEntry: ISnapshotCachedEntry | ISnapshotCachedEntry2,
 							) => {
 								if (snapshotCachedEntry !== undefined) {
