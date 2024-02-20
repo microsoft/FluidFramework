@@ -65,7 +65,7 @@ class BlobCache {
 		} else if (this.purgeEnabled) {
 			// If we don't have an outstanding timer, set a timer
 			// When the timer runs out, we'll decide whether to proceed with the cache clear or reset the timer
-			const clearCacheOrDefer = () => {
+			const clearCacheOrDefer = (): void => {
 				this.blobCacheTimeout = undefined;
 				if (this.deferBlobCacheClear) {
 					this.deferBlobCacheClear = false;
