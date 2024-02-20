@@ -359,11 +359,11 @@ extends:
                     # CopyFiles@2 failed with OOM for some reason so doing it "by hand".
                     - task: Bash@3
                       displayName: Upload tinylicious log to pipeline run logs
+                      condition: succeededOrFailed()
+                      continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
                       inputs:
                         targetType: inline
                         workingDirectory: '${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests'
-                        condition: succeededOrFailed()
-                        continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
                         script: |
                           echo "##vso[task.uploadfile]tinylicious.log"
 
