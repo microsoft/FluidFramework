@@ -3535,10 +3535,10 @@ importers:
       '@fluidframework/odsp-doclib-utils': workspace:~
       '@fluidframework/odsp-driver': workspace:~
       '@fluidframework/odsp-driver-definitions': workspace:~
-      '@fluidframework/protocol-definitions': ^3.2.0-231454
+      '@fluidframework/protocol-definitions': ^3.2.0-237840
       '@fluidframework/routerlicious-driver': workspace:~
       '@fluidframework/runtime-utils': workspace:~
-      '@fluidframework/server-local-server': ^3.1.0-231702
+      '@fluidframework/server-local-server': ^3.1.0-237980
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
       '@fluidframework/tool-utils': workspace:~
@@ -3583,10 +3583,10 @@ importers:
       '@fluidframework/odsp-doclib-utils': link:../../../packages/utils/odsp-doclib-utils
       '@fluidframework/odsp-driver': link:../../../packages/drivers/odsp-driver
       '@fluidframework/odsp-driver-definitions': link:../../../packages/drivers/odsp-driver-definitions
-      '@fluidframework/protocol-definitions': 3.2.0-231454
+      '@fluidframework/protocol-definitions': 3.2.0-237840
       '@fluidframework/routerlicious-driver': link:../../../packages/drivers/routerlicious-driver
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
-      '@fluidframework/server-local-server': 3.1.0-231702
+      '@fluidframework/server-local-server': 3.1.0-237980
       '@fluidframework/telemetry-utils': link:../../../packages/utils/telemetry-utils
       '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
       '@fluidframework/tool-utils': link:../../../packages/utils/tool-utils
@@ -9865,7 +9865,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^3.5.0
       '@fluidframework/fluid-static': workspace:~
       '@fluidframework/map': workspace:~
-      '@fluidframework/protocol-definitions': ^3.2.0-231454
+      '@fluidframework/protocol-definitions': ^3.2.0-237840
       '@fluidframework/routerlicious-driver': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
@@ -9881,7 +9881,7 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       start-server-and-test: ^1.11.7
-      tinylicious: ^3.1.0-231702
+      tinylicious: ^3.1.0-237980
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
@@ -9893,7 +9893,7 @@ importers:
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/fluid-static': link:../../framework/fluid-static
       '@fluidframework/map': link:../../dds/map
-      '@fluidframework/protocol-definitions': 3.2.0-231454
+      '@fluidframework/protocol-definitions': 3.2.0-237840
       '@fluidframework/routerlicious-driver': link:../../drivers/routerlicious-driver
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
@@ -9918,7 +9918,7 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       start-server-and-test: 1.15.5
-      tinylicious: 3.1.0-231702
+      tinylicious: 3.1.0-237980
       tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
