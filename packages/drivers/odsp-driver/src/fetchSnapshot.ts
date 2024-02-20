@@ -522,10 +522,8 @@ async function fetchLatestSnapshotCore(
 			if (
 				typeof error === "object" &&
 				error !== null &&
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				(error.errorType === OdspErrorTypes.fetchFailure ||
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-					error.errorType === OdspErrorTypes.fetchTimeout)
+				((error as Partial<IOdspError>).errorType === OdspErrorTypes.fetchFailure ||
+					(error as Partial<IOdspError>).errorType === OdspErrorTypes.fetchTimeout)
 			) {
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				error[getWithRetryForTokenRefreshRepeat] = true;
@@ -550,9 +548,7 @@ function getFormBodyAndHeaders(
 ): {
 	body: string;
 	headers: {
-		// TODO: use a stronger type
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		[index: string]: any;
+		[index: string]: string;
 	};
 } {
 	const formBoundary = uuid();
