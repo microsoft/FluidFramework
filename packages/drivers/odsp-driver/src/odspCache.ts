@@ -19,7 +19,11 @@ import { ISnapshot } from "@fluidframework/driver-definitions";
  * @alpha
  */
 export interface IPersistedFileCache {
+	// TODO: use a stronger type
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	get(entry: IEntry): Promise<any>;
+	// TODO: use a stronger type
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	put(entry: IEntry, value: any): Promise<void>;
 	removeEntries(): Promise<void>;
 }
@@ -29,19 +33,18 @@ export interface IPersistedFileCache {
  * used if no persisted cache is provided by the host
  */
 export class LocalPersistentCache implements IPersistedCache {
-	private readonly cache = new Map<string, any>();
+	private readonly cache = new Map<string, unknown>();
 	// For every document id there will be a single expiration entry inspite of the number of cache entries.
 	private readonly docIdExpirationMap = new Map<string, ReturnType<typeof setTimeout>>();
 
 	public constructor(private readonly snapshotExpiryPolicy = 3600 * 1000) {}
 
-	async get(entry: ICacheEntry): Promise<any> {
+	async get(entry: ICacheEntry): Promise<unknown> {
 		const key = getKeyForCacheEntry(entry);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return this.cache.get(key);
 	}
 
-	async put(entry: ICacheEntry, value: any) {
+	async put(entry: ICacheEntry, value: unknown): Promise<void> {
 		const key = getKeyForCacheEntry(entry);
 		this.cache.set(key, value);
 		this.updateExpirationEntry(entry.file.docId);
@@ -51,7 +54,7 @@ export class LocalPersistentCache implements IPersistedCache {
 		this.removeDocIdEntriesFromCache(file.docId);
 	}
 
-	private removeDocIdEntriesFromCache(docId: string) {
+	private removeDocIdEntriesFromCache(docId: string): void[] {
 		this.removeExpirationEntry(docId);
 		return [...this.cache]
 			.filter(([cachekey]) => {
@@ -65,7 +68,7 @@ export class LocalPersistentCache implements IPersistedCache {
 			});
 	}
 
-	private removeExpirationEntry(docId: string) {
+	private removeExpirationEntry(docId: string): void {
 		const timeout = this.docIdExpirationMap.get(docId);
 		if (timeout !== undefined) {
 			clearTimeout(timeout);
@@ -73,7 +76,7 @@ export class LocalPersistentCache implements IPersistedCache {
 		}
 	}
 
-	private updateExpirationEntry(docId: string) {
+	private updateExpirationEntry(docId: string): void {
 		this.removeExpirationEntry(docId);
 		this.docIdExpirationMap.set(
 			docId,
@@ -84,7 +87,7 @@ export class LocalPersistentCache implements IPersistedCache {
 	}
 }
 export class PromiseCacheWithOneHourSlidingExpiry<T> extends PromiseCache<string, T> {
-	constructor(removeOnError?: (e: any) => boolean) {
+	constructor(removeOnError?: (error: unknown) => boolean) {
 		super({ expiry: { policy: "sliding", durationMs: 3600000 }, removeOnError });
 	}
 }
