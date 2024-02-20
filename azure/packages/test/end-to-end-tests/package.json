@@ -76,7 +76,7 @@
 		"prettier": "~3.0.3",
 		"sinon": "^7.4.2",
 		"start-server-and-test": "^1.11.7",
-		"tinylicious": "^3.1.0-231702",
+		"tinylicious": "^3.1.0-237980",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {

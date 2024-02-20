@@ -9,6 +9,7 @@ import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	getContainerEntryPointBackCompat,
+	getDataStoreEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import { describeCompat, ITestDataObject } from "@fluid-private/test-version-utils";
 
@@ -65,7 +66,9 @@ describeCompat(
 				const innerDataStore = await this._context.containerRuntime.createDataStore(
 					innerDataObjectFactory.type,
 				);
-				const innerDataObject = (await innerDataStore.entryPoint?.get()) as ITestDataObject;
+				const innerDataObject =
+					await getDataStoreEntryPointBackCompat<ITestDataObject>(innerDataStore);
+
 				this.root.set(this.innerDataStoreKey, innerDataObject.handle);
 			}
 
@@ -92,10 +95,6 @@ describeCompat(
 		});
 
 		it("Requesting data store before outer data store completes initialization", async function () {
-			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6978
-			if (provider.type === "TestObjectProviderWithVersionedLoad") {
-				this.skip();
-			}
 			const containerRuntimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 				ContainerRuntimeFactoryWithDefaultDataStore,
 				{
@@ -121,10 +120,6 @@ describeCompat(
 		});
 
 		it("Requesting data store before outer data store (non-root) completes initialization", async function () {
-			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6978
-			if (provider.type === "TestObjectProviderWithVersionedLoad") {
-				this.skip();
-			}
 			const containerRuntimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 				ContainerRuntimeFactoryWithDefaultDataStore,
 				{
