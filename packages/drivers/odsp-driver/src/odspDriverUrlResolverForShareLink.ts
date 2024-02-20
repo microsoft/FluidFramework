@@ -101,9 +101,9 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 		// Determine if the caller is passing a query parameter or path since processing will be different.
 		if (pathToAppend.startsWith("/?") || pathToAppend.startsWith("?")) {
 			const queryParams = new URLSearchParams(pathToAppend);
-			queryParams.forEach((value: string, key: string) => {
+			for (const [key, value] of queryParams.entries()) {
 				parsingUrl.searchParams.append(key, value);
-			});
+			}
 			fluidInfo.dataStorePath = `${parsingUrl.pathname}${parsingUrl.search}`;
 		} else {
 			fluidInfo.dataStorePath = `${parsingUrl.pathname}${

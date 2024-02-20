@@ -6,6 +6,8 @@
 import { hashFile, IsoBuffer } from "@fluid-internal/client-utils";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 
+// TODO: add documentation
+// eslint-disable-next-line jsdoc/require-description
 /**
  * @alpha
  */
