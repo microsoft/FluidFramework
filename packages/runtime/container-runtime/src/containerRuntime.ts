@@ -91,7 +91,6 @@ import type {
 	SerializedIdCompressorWithNoSession,
 	IIdCompressor,
 	IIdCompressorCore,
-	IdCreationRange,
 	SerializedIdCompressorWithOngoingSession,
 } from "@fluidframework/id-compressor";
 import {
@@ -3515,40 +3514,6 @@ export class ContainerRuntime
 		return this.blobManager.createBlob(blob, signal);
 	}
 
-	private maybeSubmitIdAllocationOp(type: ContainerMessageType) {
-		if (type !== ContainerMessageType.IdAllocation) {
-			let idAllocationBatchMessage: BatchMessage | undefined;
-			let idRange: IdCreationRange | undefined;
-			if (this.idCompressorEnabled) {
-				assert(
-					this.idCompressor !== undefined,
-					0x67d /* IdCompressor should be defined if enabled */,
-				);
-				idRange = this.idCompressor.takeNextCreationRange();
-				// Don't include the idRange if there weren't any Ids allocated
-				idRange = idRange?.ids !== undefined ? idRange : undefined;
-			}
-
-			if (idRange !== undefined) {
-				const idAllocationMessage: ContainerRuntimeIdAllocationMessage = {
-					type: ContainerMessageType.IdAllocation,
-					contents: idRange,
-				};
-				idAllocationBatchMessage = {
-					contents: JSON.stringify(idAllocationMessage),
-					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-					metadata: undefined,
-					localOpMetadata: undefined,
-					type: ContainerMessageType.IdAllocation,
-				};
-			}
-
-			if (idAllocationBatchMessage !== undefined) {
-				this.outbox.submitIdAllocation(idAllocationBatchMessage);
-			}
-		}
-	}
-
 	private submit(
 		containerRuntimeMessage: OutboundContainerRuntimeMessage,
 		localOpMetadata: unknown = undefined,
@@ -3584,43 +3549,68 @@ export class ContainerRuntime
 		};
 
 		try {
-			// Submit an IdAllocation op if any Ids have been generated since
-			// the last op was submitted. Don't submit another if it's an IdAllocation
-			// op as that means we're in resubmission flow and we don't want to send
-			// IdRanges out of order.
-			this.maybeSubmitIdAllocationOp(type);
-
-			// If this is attach message for new data store, and we are in a batch, send this op out of order
-			// Is it safe:
-			//    Yes, this should be safe reordering. Newly created data stores are not visible through API surface.
-			//    They become visible only when aliased, or handle to some sub-element of newly created datastore
-			//    is stored in some DDS, i.e. only after some other op.
-			// Why:
-			//    Attach ops are large, and expensive to process. Plus there are scenarios where a lot of new data
-			//    stores are created, causing issues like relay service throttling (too many ops) and catastrophic
-			//    failure (batch is too large). Pushing them earlier and outside of main batch should alleviate
-			//    these issues.
-			// Cons:
-			//    1. With large batches, relay service may throttle clients. Clients may disconnect while throttled.
-			//    This change creates new possibility of a lot of newly created data stores never being referenced
-			//    because client died before it had a change to submit the rest of the ops. This will create more
-			//    garbage that needs to be collected leveraging GC (Garbage Collection) feature.
-			//    2. Sending ops out of order means they are excluded from rollback functionality. This is not an issue
-			//    today as rollback can't undo creation of data store. To some extent not sending them is a bigger
-			//    issue than sending.
-			// Please note that this does not change file format, so it can be disabled in the future if this
-			// optimization no longer makes sense (for example, batch compression may make it less appealing).
-			if (
-				this.currentlyBatching() &&
-				type === ContainerMessageType.Attach &&
-				this.disableAttachReorder !== true
-			) {
-				this.outbox.submitAttach(message);
-			} else if (type === ContainerMessageType.BlobAttach) {
-				// BlobAttach ops must have their metadata visible and cannot be grouped (see opGroupingManager.ts)
-				this.outbox.submitBlobAttach(message);
+			// If `message` is an allocation op, then we are in the resubmit path and we must redirect the allocation
+			// op into the correct batch to avoid ranges being finalized out of order.
+			// Otherwise, submit an IdAllocation op if any IDs have been generated since the last op was submitted, as
+			// any of the other op types may contain those IDs and thus depend on the allocation op being sent first.
+			if (type === ContainerMessageType.IdAllocation) {
+				this.outbox.submitIdAllocation(message);
 			} else {
-				this.outbox.submit(message);
+				if (this.idCompressorEnabled) {
+					assert(
+						this.idCompressor !== undefined,
+						0x67d /* IdCompressor should be defined if enabled */,
+					);
+					const idRange = this.idCompressor.takeNextCreationRange();
+					// Don't include the idRange if there weren't any Ids allocated
+					if (idRange?.ids !== undefined) {
+						const idAllocationMessage: ContainerRuntimeIdAllocationMessage = {
+							type: ContainerMessageType.IdAllocation,
+							contents: idRange,
+						};
+						const idAllocationBatchMessage: BatchMessage = {
+							contents: JSON.stringify(idAllocationMessage),
+							referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+							metadata: undefined,
+							localOpMetadata: undefined,
+							type: ContainerMessageType.IdAllocation,
+						};
+						this.outbox.submitIdAllocation(idAllocationBatchMessage);
+					}
+				}
+
+				// If this is attach message for new data store, and we are in a batch, send this op out of order
+				// Is it safe:
+				//    Yes, this should be safe reordering. Newly created data stores are not visible through API surface.
+				//    They become visible only when aliased, or handle to some sub-element of newly created datastore
+				//    is stored in some DDS, i.e. only after some other op.
+				// Why:
+				//    Attach ops are large, and expensive to process. Plus there are scenarios where a lot of new data
+				//    stores are created, causing issues like relay service throttling (too many ops) and catastrophic
+				//    failure (batch is too large). Pushing them earlier and outside of main batch should alleviate
+				//    these issues.
+				// Cons:
+				//    1. With large batches, relay service may throttle clients. Clients may disconnect while throttled.
+				//    This change creates new possibility of a lot of newly created data stores never being referenced
+				//    because client died before it had a change to submit the rest of the ops. This will create more
+				//    garbage that needs to be collected leveraging GC (Garbage Collection) feature.
+				//    2. Sending ops out of order means they are excluded from rollback functionality. This is not an issue
+				//    today as rollback can't undo creation of data store. To some extent not sending them is a bigger
+				//    issue than sending.
+				// Please note that this does not change file format, so it can be disabled in the future if this
+				// optimization no longer makes sense (for example, batch compression may make it less appealing).
+				if (
+					this.currentlyBatching() &&
+					type === ContainerMessageType.Attach &&
+					this.disableAttachReorder !== true
+				) {
+					this.outbox.submitAttach(message);
+				} else if (type === ContainerMessageType.BlobAttach) {
+					// BlobAttach ops must have their metadata visible and cannot be grouped (see opGroupingManager.ts)
+					this.outbox.submitBlobAttach(message);
+				} else {
+					this.outbox.submit(message);
+				}
 			}
 
 			if (!this.currentlyBatching()) {
