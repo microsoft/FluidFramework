@@ -18,15 +18,15 @@ import {
 	BaseFuzzTestState,
 } from '@fluid-private/stochastic-test-utils';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { assertNotUndefined, ClosedMap, fail, getOrCreate } from '../../Common';
-import { IdCompressor, isLocalId } from '../../id-compressor/IdCompressor';
+import { assertNotUndefined, ClosedMap, fail, getOrCreate } from '../../Common.js';
+import { IdCompressor, isLocalId } from '../../id-compressor/IdCompressor.js';
 import {
 	createSessionId,
 	ensureSessionUuid,
 	NumericUuid,
 	numericUuidFromStableId,
 	stableIdFromNumericUuid,
-} from '../../id-compressor/NumericUuid';
+} from '../../id-compressor/NumericUuid.js';
 import {
 	FinalCompressedId,
 	SessionId,
@@ -34,15 +34,15 @@ import {
 	SessionSpaceCompressedId,
 	AttributionId,
 	OpSpaceCompressedId,
-} from '../../Identifiers';
-import { getIds } from '../../id-compressor/IdRange';
+} from '../../Identifiers.js';
+import { getIds } from '../../id-compressor/IdRange.js';
 import type {
 	IdCreationRange,
 	SerializedIdCompressorWithOngoingSession,
 	SerializedIdCompressorWithNoSession,
-} from '../../id-compressor';
-import { assertIsStableId, assertIsUuidString } from '../../UuidUtilities';
-import { expectDefined } from './TestCommon';
+} from '../../id-compressor/index.js';
+import { assertIsStableId, assertIsUuidString } from '../../UuidUtilities.js';
+import { expectDefined } from './TestCommon.js';
 
 /** Identifies a compressor in a network */
 export enum Client {

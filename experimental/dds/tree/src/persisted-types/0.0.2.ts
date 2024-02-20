@@ -11,7 +11,7 @@ import type {
 	TraitLabel,
 	DetachedSequenceId,
 	UuidString,
-} from '../Identifiers';
+} from '../Identifiers.js';
 
 /**
  * Defines a place relative to sibling.

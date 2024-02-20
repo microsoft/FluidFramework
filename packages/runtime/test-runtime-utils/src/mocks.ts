@@ -88,6 +88,10 @@ export class MockDeltaConnection implements IDeltaConnection {
 	public reSubmit(content: any, localOpMetadata: unknown) {
 		this.handler?.reSubmit(content, localOpMetadata);
 	}
+
+	public applyStashedOp(content: any): unknown {
+		return this.handler?.applyStashedOp(content);
+	}
 }
 
 // Represents the structure of a pending message stored by the MockContainerRuntime.
@@ -96,6 +100,7 @@ export class MockDeltaConnection implements IDeltaConnection {
  */
 export interface IMockContainerRuntimePendingMessage {
 	content: any;
+	referenceSequenceNumber: number;
 	clientSequenceNumber: number;
 	localOpMetadata: unknown;
 }
@@ -259,6 +264,9 @@ export class MockContainerRuntime {
 	}
 
 	public dirty(): void {}
+	public get isDirty() {
+		return this.pendingMessages.length > 0;
+	}
 
 	/**
 	 * If flush mode is set to FlushMode.TurnBased, it will send all messages queued since the last time
@@ -391,6 +399,7 @@ export class MockContainerRuntime {
 		clientSequenceNumber: number,
 	) {
 		const pendingMessage: IMockContainerRuntimePendingMessage = {
+			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 			content,
 			clientSequenceNumber,
 			localOpMetadata,
@@ -439,7 +448,7 @@ export class MockContainerRuntimeFactory {
 	 * each of the runtimes.
 	 */
 	protected messages: ISequencedDocumentMessage[] = [];
-	protected readonly runtimes: Set<MockContainerRuntime> = new Set<MockContainerRuntime>();
+	protected readonly runtimes: Set<MockContainerRuntime> = new Set();
 
 	/**
 	 * The container runtime options which will be provided to the all runtimes
@@ -939,7 +948,7 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public async applyStashedOp(content: any) {
-		return;
+		return this.deltaConnections.map((dc) => dc.applyStashedOp(content))[0];
 	}
 
 	public rollback?(message: any, localOpMetadata: unknown): void {

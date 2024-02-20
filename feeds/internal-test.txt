@@ -18,6 +18,7 @@
 @fluidframework/mocha-test-setup
 @fluid-experimental/odsp-client
 @fluid-experimental/odsp-end-to-end-tests
+@fluidframework/azure-client
 @fluidframework/test-runtime-utils
 @fluidframework/runtime-utils
 @fluidframework/runtime-definitions
@@ -97,4 +98,3 @@ fluid-framework
 @fluidframework/azure-end-to-end-tests
 @fluidframework/azure-service-utils
 @fluidframework/azure-local-service
-@fluidframework/azure-client
