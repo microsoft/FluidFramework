@@ -66,7 +66,7 @@ export interface FuzzTestState extends DDSFuzzTestState<SharedTreeFactory> {
 	transactionViews?: Map<ISharedTree, ITreeViewFork<typeof fuzzSchema.rootFieldSchema>>;
 	/**
 	 * NodeSchema of clients used to typecheck schema during edit generation/reducing.
-	 * If nodeSchema of a client is not present, {@link fuzzNode}, the default/initial nodeSchema is used for typechecking.
+	 * If nodeSchema of a client is not present, it is set to {@link fuzzNode}, the default/initial nodeSchema is used for typechecking. This is initialized in {@link viewFromState}.
 	 * @privateRemarks TODO: The NodeSchema for each client should be properly updated if "afterSchemaChange" occurs for the client's schema when schemaOps are supported.
 	 */
 	nodeSchemas?: Map<ISharedTree, FuzzNodeSchema>;
