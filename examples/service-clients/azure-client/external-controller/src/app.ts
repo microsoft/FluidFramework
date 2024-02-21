@@ -16,9 +16,9 @@ import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 
 import { v4 as uuid } from "uuid";
 
-import { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider";
-import { DiceRollerController, DiceRollerControllerProps } from "./controller";
-import { makeAppView } from "./view";
+import { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider.js";
+import { DiceRollerController, DiceRollerControllerProps } from "./controller.js";
+import { makeAppView } from "./view.js";
 
 export interface ICustomUserDetails {
 	gender: string;

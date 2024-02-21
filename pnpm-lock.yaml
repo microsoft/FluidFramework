@@ -3250,7 +3250,6 @@ importers:
       tinylicious: ^3.1.0-237980
       ts-jest: ^29.1.1
       ts-loader: ^9.3.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
       webpack: ^5.82.0
@@ -3299,7 +3298,6 @@ importers:
       tinylicious: 3.1.0-237980
       ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
       webpack-cli: 4.10.0_o3vqr5s7sd4b3hfy35jxofofzu
