@@ -49,7 +49,7 @@
 		"test": "npm run test:jest",
 		"test:jest": "jest",
 		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
-		"tsc": "tsc-multi --config ../../../../common/build/build-common/tsc-multi.node16.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},
