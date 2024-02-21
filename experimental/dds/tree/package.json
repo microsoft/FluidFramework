@@ -61,7 +61,7 @@
 		"test:mocha": "mocha \"dist/**/*.tests.js\" --exit -r node_modules/@fluidframework/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:stress": "cross-env FUZZ_TEST_COUNT=10 FUZZ_STRESS_RUN=true mocha \"dist/**/*.fuzz.tests.js\" --exit -r @fluidframework/mocha-test-setup",
-		"tsc": "tsc-multi --config ../../../common/build/build-common/tsc-multi.node16.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"dependencies": {
 		"@fluid-internal/client-utils": "workspace:~",
@@ -70,7 +70,7 @@
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/id-compressor": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0-231454",
+		"@fluidframework/protocol-definitions": "^3.2.0-237840",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
@@ -87,7 +87,7 @@
 		"@fluid-private/test-drivers": "workspace:~",
 		"@fluid-tools/benchmark": "^0.48.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.33.0",
+		"@fluidframework/build-tools": "^0.34.0",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^3.5.0",
@@ -115,7 +115,6 @@
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"tsc-multi": "^1.1.0",
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
