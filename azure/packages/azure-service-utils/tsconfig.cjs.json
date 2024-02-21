@@ -1,0 +1,7 @@
+{
+	// This config must be used in a "type": "commonjs" environment. (Use tsc-mult.)
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"outDir": "./dist",
+	},
+}
