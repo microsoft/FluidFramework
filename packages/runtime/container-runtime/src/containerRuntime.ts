@@ -1188,9 +1188,12 @@ export class ContainerRuntime
 	private readonly loadedFromVersionId: string | undefined;
 
 	/**
-	 * It a cache for holding mapping for loading groupIds with its snapshot from the service.
+	 * It a cache for holding mapping for loading groupIds with its snapshot from the service. Add expiry policy of 1 minute.
+	 * Starting with 1 min and based on recorded usage we can tweak it later on.
 	 */
-	private readonly snapshotCacheForLoadingGroupIds = new PromiseCache<string, ISnapshot>();
+	private readonly snapshotCacheForLoadingGroupIds = new PromiseCache<string, ISnapshot>({
+		expiry: { policy: "absolute", durationMs: 60000 },
+	});
 
 	/***/
 	protected constructor(
@@ -1760,6 +1763,7 @@ export class ContainerRuntime
 	): Promise<{ snapshotTree: ISnapshotTree; sequenceNumber: number }> {
 		const sortedLoadingGroupIds = loadingGroupIds.sort();
 		assert(this.storage.getSnapshot !== undefined, "getSnapshot api should be defined if used");
+		let loadedFromCache = true;
 		// Lookup up in the cache, if not present then make the network call as multiple datastores could
 		// be in same loading group. So, once we have fetched the snapshot for that loading group on
 		// any request, then cache that as same group could be requested in future too.
@@ -1770,6 +1774,7 @@ export class ContainerRuntime
 					this.storage.getSnapshot !== undefined,
 					"getSnapshot api should be defined if used",
 				);
+				loadedFromCache = false;
 				return this.storage.getSnapshot({
 					cacheSnapshot: false,
 					scenarioName: "snapshotForLoadingGroupId",
@@ -1778,6 +1783,10 @@ export class ContainerRuntime
 			},
 		);
 
+		this.logger.sendTelemetryEvent({
+			eventName: "GroupedSnapshotFetched",
+			details: JSON.stringify({ fromCache: loadedFromCache, count: loadingGroupIds.length }),
+		});
 		// Find the snapshotTree inside the returned snapshot based on the path as given in the request.
 		const hasIsolatedChannels = rootHasIsolatedChannels(this.metadata);
 		const snapshotTreeForPath = this.getSnapshotTreeForPath(
