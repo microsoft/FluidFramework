@@ -19,6 +19,8 @@ import { LocalOdspDocumentService } from "./localOdspDocumentService";
  * content directly.
  */
 export class LocalOdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
+	private readonly logger: ITelemetryLoggerExt = createOdspLogger();
+
 	constructor(private readonly localSnapshot: Uint8Array | string) {
 		super(
 			(_options) => this.throwUnsupportedUsageError("Getting storage token"),
@@ -30,7 +32,7 @@ export class LocalOdspDocumentServiceFactory extends OdspDocumentServiceFactoryC
 		const toThrow = new UsageError(
 			`${unsupportedFuncName} is not supported by LocalOdspDocumentServiceFactory`,
 		);
-		createOdspLogger().sendErrorEvent({ eventName: "UnsupportedUsage" }, toThrow);
+		this.logger.sendErrorEvent({ eventName: "UnsupportedUsage" }, toThrow);
 		throw toThrow;
 	}
 
@@ -43,7 +45,7 @@ export class LocalOdspDocumentServiceFactory extends OdspDocumentServiceFactoryC
 		const toThrow = new UsageError(
 			'"createContainer" is not supported by LocalOdspDocumentServiceFactory',
 		);
-		createOdspLogger(logger).sendErrorEvent({ eventName: "UnsupportedUsage" }, toThrow);
+		this.logger.sendErrorEvent({ eventName: "UnsupportedUsage" }, toThrow);
 		throw toThrow;
 	}
 
