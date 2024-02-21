@@ -14,6 +14,7 @@ import { IBatchMessage, ICriticalContainerError } from "@fluidframework/containe
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { ICompressionRuntimeOptions } from "../containerRuntime";
 import { IPendingBatchMessage, PendingStateManager } from "../pendingStateManager";
+import { ContainerMessageType } from "../messageTypes";
 import {
 	BatchManager,
 	BatchSequenceNumbers,
@@ -136,10 +137,12 @@ export class Outbox {
 		const mainBatchSeqNums = this.mainBatch.sequenceNumbers;
 		const attachFlowBatchSeqNums = this.attachFlowBatch.sequenceNumbers;
 		const blobAttachSeqNums = this.blobAttachBatch.sequenceNumbers;
+		const idAllocSeqNums = this.idAllocationBatch.sequenceNumbers;
 		assert(
 			this.params.config.disablePartialFlush ||
 				(sequenceNumbersMatch(mainBatchSeqNums, attachFlowBatchSeqNums) &&
-					sequenceNumbersMatch(mainBatchSeqNums, blobAttachSeqNums)),
+					sequenceNumbersMatch(mainBatchSeqNums, blobAttachSeqNums) &&
+					sequenceNumbersMatch(mainBatchSeqNums, idAllocSeqNums)),
 			0x58d /* Reference sequence numbers from both batches must be in sync */,
 		);
 
@@ -148,7 +151,8 @@ export class Outbox {
 		if (
 			sequenceNumbersMatch(mainBatchSeqNums, currentSequenceNumbers) &&
 			sequenceNumbersMatch(attachFlowBatchSeqNums, currentSequenceNumbers) &&
-			sequenceNumbersMatch(blobAttachSeqNums, currentSequenceNumbers)
+			sequenceNumbersMatch(blobAttachSeqNums, currentSequenceNumbers) &&
+			sequenceNumbersMatch(idAllocSeqNums, currentSequenceNumbers)
 		) {
 			// The reference sequence numbers are stable, there is nothing to do
 			return;
@@ -178,12 +182,20 @@ export class Outbox {
 	}
 
 	public submit(message: BatchMessage) {
+		assert(
+			message.type !== ContainerMessageType.IdAllocation,
+			"Allocation message submitted to mainBatch.",
+		);
 		this.maybeFlushPartialBatch();
 
 		this.addMessageToBatchManager(this.mainBatch, message);
 	}
 
 	public submitAttach(message: BatchMessage) {
+		assert(
+			message.type === ContainerMessageType.Attach,
+			"Non attach message submitted to attachFlowBatch.",
+		);
 		this.maybeFlushPartialBatch();
 
 		if (
@@ -215,6 +227,10 @@ export class Outbox {
 	}
 
 	public submitBlobAttach(message: BatchMessage) {
+		assert(
+			message.type === ContainerMessageType.BlobAttach,
+			"Non blobAttach message submitted to blobAttachBatch.",
+		);
 		this.maybeFlushPartialBatch();
 
 		this.addMessageToBatchManager(this.blobAttachBatch, message);
@@ -233,6 +249,10 @@ export class Outbox {
 	}
 
 	public submitIdAllocation(message: BatchMessage) {
+		assert(
+			message.type === ContainerMessageType.IdAllocation,
+			"Non allocation message submitted to idAllocationBatch.",
+		);
 		this.maybeFlushPartialBatch();
 
 		if (
