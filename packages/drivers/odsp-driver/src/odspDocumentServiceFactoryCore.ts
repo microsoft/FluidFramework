@@ -67,6 +67,7 @@ export class OdspDocumentServiceFactoryCore
 		return this.nonPersistentCache.snapshotPrefetchResultCache;
 	}
 
+	// TODO: return `IRelaySessionAwareDriverFactory` instead of `this` (breaking change)
 	public get IRelaySessionAwareDriverFactory(): this {
 		return this;
 	}
