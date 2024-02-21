@@ -1056,50 +1056,26 @@ use_old_TypeAliasDeclaration_ITelemetryBaseProperties(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ITelemetryErrorEvent": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_ITelemetryErrorEvent": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_ITelemetryErrorEvent():
-    TypeOnly<old.ITelemetryErrorEvent>;
-declare function use_current_InterfaceDeclaration_ITelemetryErrorEvent(
-    use: TypeOnly<current.ITelemetryErrorEvent>): void;
-use_current_InterfaceDeclaration_ITelemetryErrorEvent(
-    get_old_InterfaceDeclaration_ITelemetryErrorEvent());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ITelemetryErrorEvent": {"backCompat": false}
+* "RemovedInterfaceDeclaration_ITelemetryErrorEvent": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_ITelemetryErrorEvent():
-    TypeOnly<current.ITelemetryErrorEvent>;
-declare function use_old_InterfaceDeclaration_ITelemetryErrorEvent(
-    use: TypeOnly<old.ITelemetryErrorEvent>): void;
-use_old_InterfaceDeclaration_ITelemetryErrorEvent(
-    get_current_InterfaceDeclaration_ITelemetryErrorEvent());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ITelemetryGenericEvent": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_ITelemetryGenericEvent": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_ITelemetryGenericEvent():
-    TypeOnly<old.ITelemetryGenericEvent>;
-declare function use_current_InterfaceDeclaration_ITelemetryGenericEvent(
-    use: TypeOnly<current.ITelemetryGenericEvent>): void;
-use_current_InterfaceDeclaration_ITelemetryGenericEvent(
-    get_old_InterfaceDeclaration_ITelemetryGenericEvent());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ITelemetryGenericEvent": {"backCompat": false}
+* "RemovedInterfaceDeclaration_ITelemetryGenericEvent": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_ITelemetryGenericEvent():
-    TypeOnly<current.ITelemetryGenericEvent>;
-declare function use_old_InterfaceDeclaration_ITelemetryGenericEvent(
-    use: TypeOnly<old.ITelemetryGenericEvent>): void;
-use_old_InterfaceDeclaration_ITelemetryGenericEvent(
-    get_current_InterfaceDeclaration_ITelemetryGenericEvent());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1116,26 +1092,14 @@ use_old_InterfaceDeclaration_ITelemetryGenericEvent(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ITelemetryPerformanceEvent": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_ITelemetryPerformanceEvent": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_ITelemetryPerformanceEvent():
-    TypeOnly<old.ITelemetryPerformanceEvent>;
-declare function use_current_InterfaceDeclaration_ITelemetryPerformanceEvent(
-    use: TypeOnly<current.ITelemetryPerformanceEvent>): void;
-use_current_InterfaceDeclaration_ITelemetryPerformanceEvent(
-    get_old_InterfaceDeclaration_ITelemetryPerformanceEvent());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ITelemetryPerformanceEvent": {"backCompat": false}
+* "RemovedInterfaceDeclaration_ITelemetryPerformanceEvent": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_ITelemetryPerformanceEvent():
-    TypeOnly<current.ITelemetryPerformanceEvent>;
-declare function use_old_InterfaceDeclaration_ITelemetryPerformanceEvent(
-    use: TypeOnly<old.ITelemetryPerformanceEvent>): void;
-use_old_InterfaceDeclaration_ITelemetryPerformanceEvent(
-    get_current_InterfaceDeclaration_ITelemetryPerformanceEvent());
 
 /*
 * Validate forward compat by using old type in place of current type

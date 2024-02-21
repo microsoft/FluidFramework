@@ -4,7 +4,6 @@
  */
 import {
 	ITelemetryBaseLogger,
-	ITelemetryGenericEvent,
 	FluidObject,
 	IFluidHandle,
 	IFluidHandleContext,
@@ -48,6 +47,7 @@ import {
 	LoggingError,
 	createSampledLogger,
 	IEventSampler,
+	type ITelemetryGenericEventExt,
 } from "@fluidframework/telemetry-utils";
 import {
 	DriverHeader,
@@ -3905,7 +3905,7 @@ export class ContainerRuntime
 	 */
 	private async fetchLatestSnapshotFromStorage(
 		logger: ITelemetryLoggerExt,
-		event: ITelemetryGenericEvent,
+		event: ITelemetryGenericEventExt,
 		readAndParseBlob: ReadAndParseBlob,
 	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
 		return PerformanceEvent.timedExecAsync(

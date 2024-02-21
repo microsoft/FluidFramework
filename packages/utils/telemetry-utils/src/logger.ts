@@ -6,9 +6,6 @@
 import {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
-	ITelemetryErrorEvent,
-	ITelemetryGenericEvent,
-	ITelemetryPerformanceEvent,
 	TelemetryBaseEventPropertyType as TelemetryEventPropertyType,
 	LogLevel,
 	Tagged,
@@ -35,6 +32,7 @@ import {
 	TelemetryEventPropertyTypeExt,
 	TelemetryEventCategory,
 	ITelemetryPropertiesExt,
+	type ITelemetryErrorEventExt,
 } from "./telemetryTypes.js";
 
 export interface Memory {
@@ -234,7 +232,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	 * @param event - the event to send
 	 * @param error - optional error object to log
 	 */
-	public sendErrorEvent(event: ITelemetryErrorEvent, error?: unknown): void {
+	public sendErrorEvent(event: ITelemetryErrorEventExt, error?: unknown): void {
 		this.sendTelemetryEventCore(
 			{
 				// ensure the error field has some value,
@@ -864,9 +862,9 @@ export class PerformanceEvent {
  */
 export class TelemetryNullLogger implements ITelemetryLoggerExt {
 	public send(event: ITelemetryBaseEvent): void {}
-	public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: unknown): void {}
-	public sendErrorEvent(event: ITelemetryErrorEvent, error?: unknown): void {}
-	public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: unknown): void {}
+	public sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: unknown): void {}
+	public sendErrorEvent(event: ITelemetryErrorEventExt, error?: unknown): void {}
+	public sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: unknown): void {}
 }
 
 /**

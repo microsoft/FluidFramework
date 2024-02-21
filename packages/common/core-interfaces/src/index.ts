@@ -45,9 +45,6 @@ export type {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 	ITelemetryBaseProperties,
-	ITelemetryErrorEvent, // deprecated
-	ITelemetryGenericEvent, // deprecated
-	ITelemetryPerformanceEvent, // deprecated
 	ITelemetryProperties, // deprecated
 	Tagged,
 	TelemetryEventCategory, // deprecated

@@ -109,19 +109,6 @@ export interface ITelemetryBaseLogger {
 }
 
 /**
- * Informational (non-error) telemetry event
- * Maps to category = "generic"
- *
- * @deprecated For internal use within FluidFramework, use ITelemetryGenericEventExt in \@fluidframework/telemetry-utils.
- * No replacement intended for FluidFramework consumers.
- * @public
- */
-export interface ITelemetryGenericEvent extends ITelemetryProperties {
-	eventName: string;
-	category?: TelemetryEventCategory;
-}
-
-/**
  * Error telemetry event.
  * Maps to category = "error"
  *
@@ -131,18 +118,6 @@ export interface ITelemetryGenericEvent extends ITelemetryProperties {
  */
 export interface ITelemetryErrorEvent extends ITelemetryProperties {
 	eventName: string;
-}
-
-/**
- * Performance telemetry event.
- * Maps to category = "performance"
- *
- * @deprecated For internal use within FluidFramework, use ITelemetryPerformanceEventExt in \@fluidframework/telemetry-utils.
- * No replacement intended for FluidFramework consumers.
- * @public
- */
-export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
-	duration?: number; // Duration of event (optional)
 }
 
 /**

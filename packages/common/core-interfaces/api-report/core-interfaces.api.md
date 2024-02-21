@@ -432,26 +432,6 @@ export interface ITelemetryBaseLogger {
 export type ITelemetryBaseProperties = ITelemetryProperties;
 
 // @public @deprecated
-export interface ITelemetryErrorEvent extends ITelemetryProperties {
-    // (undocumented)
-    eventName: string;
-}
-
-// @public @deprecated
-export interface ITelemetryGenericEvent extends ITelemetryProperties {
-    // (undocumented)
-    category?: TelemetryEventCategory;
-    // (undocumented)
-    eventName: string;
-}
-
-// @public @deprecated
-export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
-    // (undocumented)
-    duration?: number;
-}
-
-// @public @deprecated
 export interface ITelemetryProperties {
     // (undocumented)
     [index: string]: TelemetryEventPropertyType | Tagged<TelemetryEventPropertyType>;
