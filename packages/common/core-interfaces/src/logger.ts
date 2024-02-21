@@ -4,14 +4,6 @@
  */
 
 /**
- * Examples of known categories, however category can be any string for extensibility.
- *
- * @deprecated Moved to \@fluidframework/telemetry-utils package
- * @public
- */
-export type TelemetryEventCategory = "generic" | "error" | "performance";
-
-/**
  * Property types that can be logged.
  *
  * @remarks Logging entire objects is considered extremely dangerous from a telemetry point of view because people can

@@ -9,7 +9,6 @@ import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
 import {
 	IEvent,
 	ITelemetryBaseProperties,
-	TelemetryEventCategory,
 	FluidObject,
 	LogLevel,
 	IRequest,
@@ -89,6 +88,7 @@ import {
 	GenericError,
 	UsageError,
 	IFluidErrorBase,
+	type TelemetryEventCategory,
 } from "@fluidframework/telemetry-utils";
 import structuredClone from "@ungap/structured-clone";
 import { Audience } from "./audience";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseProperties, TelemetryEventCategory } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert, Timer } from "@fluidframework/core-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { ISequencedClient, IClient } from "@fluidframework/protocol-definitions";
@@ -11,6 +11,7 @@ import {
 	ITelemetryLoggerExt,
 	PerformanceEvent,
 	loggerToMonitoringContext,
+	type TelemetryEventCategory,
 } from "@fluidframework/telemetry-utils";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import { CatchUpMonitor, ICatchUpMonitor } from "./catchUpMonitor";

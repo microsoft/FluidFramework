@@ -104,6 +104,10 @@
 			"RemovedInterfaceDeclaration_ITelemetryProperties": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_TelemetryEventCategory": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}

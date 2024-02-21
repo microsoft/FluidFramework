@@ -46,7 +46,6 @@ export type {
 	ITelemetryBaseLogger,
 	ITelemetryBaseProperties,
 	Tagged,
-	TelemetryEventCategory, // deprecated
 	TelemetryBaseEventPropertyType,
 	TelemetryEventPropertyType, // deprecated
 } from "./logger";

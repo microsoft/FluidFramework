@@ -473,9 +473,6 @@ export interface Tagged<V, T extends string = string> {
 export type TelemetryBaseEventPropertyType = TelemetryEventPropertyType;
 
 // @public @deprecated
-export type TelemetryEventCategory = "generic" | "error" | "performance";
-
-// @public @deprecated
 export type TelemetryEventPropertyType = string | number | boolean | undefined;
 
 // @public
