@@ -66,7 +66,7 @@ export class EpochTracker implements IPersistedFileCache {
     fetch(url: string, fetchOptions: RequestInit, fetchType: FetchType, addInBody?: boolean, fetchReason?: string): Promise<IOdspResponse<Response>>;
     fetchAndParseAsJSON<T>(url: string, fetchOptions: RequestInit, fetchType: FetchType, addInBody?: boolean, fetchReason?: string): Promise<IOdspResponse<T>>;
     fetchArray(url: string, fetchOptions: {
-        [index: string]: any;
+        [index: string]: RequestInit;
     }, fetchType: FetchType, addInBody?: boolean, fetchReason?: string): Promise<IOdspResponse<ArrayBuffer>>;
     // (undocumented)
     protected readonly fileEntry: IFileEntry;

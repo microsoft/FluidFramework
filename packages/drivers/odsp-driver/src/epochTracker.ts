@@ -339,8 +339,7 @@ export class EpochTracker implements IPersistedFileCache {
 	 */
 	public async fetchArray(
 		url: string,
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		fetchOptions: { [index: string]: any },
+		fetchOptions: { [index: string]: RequestInit },
 		fetchType: FetchType,
 		addInBody: boolean = false,
 		fetchReason?: string,
@@ -544,7 +543,7 @@ export class EpochTrackerWithRedemption extends EpochTracker {
 
 	public async fetchAndParseAsJSON<T>(
 		url: string,
-		fetchOptions: { [index: string]: unknown },
+		fetchOptions: { [index: string]: RequestInit },
 		fetchType: FetchType,
 		addInBody: boolean = false,
 		fetchReason?: string,
