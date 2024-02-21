@@ -13,7 +13,6 @@ import {
 	DefaultMetricClient,
 	IRunner,
 	IWebhookManager,
-	CollabSessionWebhookEvent,
 } from "@fluidframework/server-services-core";
 // eslint-disable-next-line import/no-deprecated
 import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
@@ -26,7 +25,6 @@ import {
 import { TestClientManager } from "@fluidframework/server-test-utils";
 import detect from "detect-port";
 import * as app from "./app";
-import { WebhookManager } from "./services/webhookManager";
 
 export class TinyliciousRunner implements IRunner {
 	private server?: IWebServer;

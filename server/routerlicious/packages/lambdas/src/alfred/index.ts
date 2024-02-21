@@ -369,21 +369,34 @@ export function configureWebSocketServices(
 			};
 
 			try {
-				const roomMembers = webSocketServer.getRoomMembers(getRoomId(room));
-				console.warn(
-					`@@@@@ connecting to room ID: ${getRoomId(room)} for document ID: ${
-						claims.documentId
-					}`,
-				);
+				if (webSocketServer.getRoomMembers) {
+					const roomMembers = webSocketServer.getRoomMembers(getRoomId(room));
+					console.info(
+						`@@@@@ client ID: ${clientId} connecting to document ID: ${
+							claims.documentId
+						} and room ID: ${getRoomId(room)}`,
+					);
 
-				if (roomMembers === undefined) {
-					console.warn(
-						"@@@@@ unexpectedly got undefined from getRoomMembers, maybe a new room is always undefined.",
-					);
-				} else if (roomMembers.size === 0) {
-					console.warn(
-						`@@@@@ member is joining a new room! This may be the start of a session for document ID: ${claims.documentId}`,
-					);
+					if (roomMembers === undefined) {
+						// console.warn(
+						// 	"@@@@@ unexpectedly got undefined from getRoomMembers, maybe a new room is always undefined.",
+						// );
+						console.info(
+							`@@@@@ A NEW ROOM (SESSION) with room ID: ${getRoomId(
+								room,
+							)} has started for document ID: ${claims.documentId}`,
+						);
+					} else if (roomMembers.size === 0) {
+						console.warn(
+							`@@@@@ member is joining a new room! This may be the start of a session for document ID: ${claims.documentId}`,
+						);
+					} else if (roomMembers.size > 0) {
+						console.info(
+							`@@@@@ client ID: ${clientId} is joining an existing session with room ID: ${getRoomId(
+								room,
+							)} for document ID: ${claims.documentId}`,
+						);
+					}
 				}
 
 				// Subscribe to channels.
@@ -392,19 +405,21 @@ export function configureWebSocketServices(
 					socket.join(`client#${clientId}`),
 				]);
 
-				const roomMembersAfterJoining = webSocketServer.getRoomMembers(getRoomId(room));
-				if (roomMembersAfterJoining !== undefined) {
-					console.warn(
-						`@@@@@ SUCCESSFULLY connected to room ID: ${getRoomId(
-							room,
-						)} for document ID: ${claims.documentId}, new member count: ${
-							roomMembersAfterJoining.size
-						}`,
-					);
-				} else {
-					console.warn(
-						"@@@@@ unexpectedly got undefined from getRoomMembers after joining the room.",
-					);
+				if (webSocketServer.getRoomMembers) {
+					const roomMembersAfterJoining = webSocketServer.getRoomMembers(getRoomId(room));
+					if (roomMembersAfterJoining !== undefined) {
+						console.info(
+							`@@@@@ SUCCESSFULLY connected client ID: ${clientId} to document ID: ${
+								claims.documentId
+							} and room (session) ID: ${getRoomId(room)}, new member count: ${
+								roomMembersAfterJoining.size
+							}`,
+						);
+					} else {
+						console.error(
+							"@@@@@ unexpectedly got undefined from getRoomMembers after joining the room.",
+						);
+					}
 				}
 			} catch (err) {
 				const errMsg = `Could not subscribe to channels. Error: ${safeStringify(
@@ -784,12 +799,15 @@ export function configureWebSocketServices(
 			}
 			// Send notification messages for all client IDs in the room map
 			for (const [clientId, room] of roomMap) {
-				console.warn(
-					`@@@ attempting to disconnect form room id ${getRoomId(
-						room,
-					)}, current member count: ${webSocketServer.getRoomMembers(getRoomId(room))
-						?.size} `,
-				);
+				if (webSocketServer.getRoomMembers) {
+					console.warn(
+						`@@@## attempting to disconnect client ID ${clientId} from room id ${getRoomId(
+							room,
+						)}, current member count: ${webSocketServer.getRoomMembers(getRoomId(room))
+							?.size} `,
+					);
+				}
+
 				if (clientIdClientsDisconnected.has(clientId)) {
 					// We already removed this clientId once. Skip it.
 					continue;
@@ -825,26 +843,35 @@ export function configureWebSocketServices(
 							error,
 						);
 					});
+				if (webSocketServer.getRoomMembers) {
+					const roomMembersAfterLeaving = webSocketServer.getRoomMembers(getRoomId(room));
+					if (roomMembersAfterLeaving !== undefined) {
+						console.info(
+							`@@@@@ SUCCESSFULLY DISCONNECTED clientId: ${clientId} from room ID: ${getRoomId(
+								room,
+							)} for document ID: ${
+								room.documentId
+							}, The session is ongoing and the new member count is: ${roomMembersAfterLeaving?.size}`,
+						);
+					} else {
+						// console.warn(
+						// 	"@@@@@ unexpectedly got undefined from getRoomMembers after LEAVING the room.",
+						// );
 
-				const roomMembersAfterLeaving = webSocketServer.getRoomMembers(getRoomId(room));
-				if (roomMembersAfterLeaving !== undefined) {
-					console.warn(
-						`@@@@@ SUCCESSFULLY DISCONNECTED from room ID: ${getRoomId(
-							room,
-						)} for document ID: ${room.documentId}, new member count: ${
-							roomMembersAfterLeaving.size
-						}`,
-					);
-				} else {
-					console.warn(
-						"@@@@@ unexpectedly got undefined from getRoomMembers after LEAVING the room.",
-					);
+						console.info(
+							`@@@@@ SUCCESSFULLY DISCONNECTED clientId: ${clientId} from room ID: ${getRoomId(
+								room,
+							)} for document ID: ${
+								room.documentId
+							}, there are no more active clients and THE SESSION HAS ENDED.`,
+						);
 
-					webhookManager?.handleEvent(core.CollabSessionWebhookEvent.SESSION_END, {
-						eventName: core.CollabSessionWebhookEvent.SESSION_END,
-						documentId: room.documentId,
-						tenantId: room.tenantId,
-					});
+						webhookManager?.handleEvent(core.CollabSessionWebhookEvent.SESSION_END, {
+							eventName: core.CollabSessionWebhookEvent.SESSION_END,
+							documentId: room.documentId,
+							tenantId: room.tenantId,
+						});
+					}
 				}
 			}
 

@@ -97,15 +97,6 @@
 			},
 			"InterfaceDeclaration_IWebSocketTracker": {
 				"forwardCompat": false
-			},
-			"InterfaceDeclaration_IWebServer": {
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_IWebSocketServer": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_WebServer": {
-				"forwardCompat": false
 			}
 		}
 	}
