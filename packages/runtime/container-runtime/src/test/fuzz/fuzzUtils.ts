@@ -32,7 +32,15 @@ import {
 	raiseConnectedEvent,
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils";
-import { MessageType, type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import {
+	MessageType,
+	type ISequencedDocumentMessage,
+	type ISummaryContent,
+	SummaryType,
+	type ISummaryNack,
+	type IDocumentMessage,
+} from "@fluidframework/protocol-definitions";
+import { mergeStats } from "@fluidframework/runtime-utils";
 import { type ISummaryConfiguration } from "../..";
 import {
 	IConnectableRuntime,
@@ -49,6 +57,7 @@ import {
 	type SubmitSummaryResult,
 	type IRefreshSummaryAckOptions,
 	RunWhileConnectedCoordinator,
+	type IGeneratedSummaryStats,
 } from "../../summary";
 import type { IThrottler } from "../../throttler";
 
@@ -354,6 +363,8 @@ async function runTestForSeed(
 		saveInfo,
 	);
 
+	// TODO: Validate we can summarize
+
 	options.emitter.emit("testEnd", finalState);
 
 	return finalState;
@@ -473,7 +484,6 @@ class MockContainerRuntimeForSummarizer
 			...runtimeOptions.summaryConfiguration,
 		};
 
-		// TODO: Maybe this needs to move to inside the SummaryManager create callback?
 		this.summarizer = new Summarizer(
 			this /* summarizerRuntime */,
 			() => summaryConfiguration /* configurationGetter */,
@@ -497,8 +507,12 @@ class MockContainerRuntimeForSummarizer
 
 	/** Prepare a SummaryNack to be sent by the server */
 	public prepareSummaryNack() {
-		// TODO
-		this.deltaManager.prepareInboundResponse(MessageType.SummaryNack, {});
+		const contents: ISummaryNack = {
+			summaryProposal: {
+				summarySequenceNumber: this.deltaManager.lastSequenceNumber,
+			},
+		};
+		this.deltaManager.prepareInboundResponse(MessageType.SummaryNack, contents);
 	}
 
 	/** Call on the Summarizer object to summarize */
@@ -515,13 +529,56 @@ class MockContainerRuntimeForSummarizer
 	}
 
 	public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
-		// TODO
-		throw new Error("Method not implemented.");
+		const summaryMessage: ISummaryContent = {
+			handle: "",
+			head: "",
+			message: "",
+			parents: [],
+		};
+		const referenceSequenceNumber = this.deltaManager.lastSequenceNumber;
+
+		const summarizeMessage: IDocumentMessage = {
+			type: MessageType.Summarize,
+			clientSequenceNumber: 0,
+			referenceSequenceNumber,
+			contents: summaryMessage,
+		};
+		this.deltaManager.inbound.push({
+			...summarizeMessage,
+			clientId: this.clientId,
+			sequenceNumber: 0,
+			minimumSequenceNumber: 0,
+			timestamp: 0,
+		});
+		this.deltaManager.outbound.push([summarizeMessage]);
+
+		const summaryStats: IGeneratedSummaryStats = {
+			...mergeStats(),
+			dataStoreCount: 1,
+			summarizedDataStoreCount: 1,
+			summaryNumber: 1,
+		};
+
+		return {
+			stage: "submit",
+			handle: "",
+			clientSequenceNumber: -1,
+			referenceSequenceNumber,
+			minimumSequenceNumber: -1,
+			submitOpDuration: 0,
+			uploadDuration: 0,
+			generateDuration: 0,
+			forcedFullTree: false,
+			summaryTree: {
+				type: SummaryType.Tree,
+				tree: {},
+			},
+			summaryStats,
+		};
 	}
 
 	public async refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void> {
-		// TODO
-		throw new Error("Method not implemented.");
+		// Do nothing
 	}
 
 	public setConnectedState(value: boolean) {
