@@ -109,6 +109,7 @@ export function viewFromState(
 				schema: fuzzSchema,
 				allowedSchemaModifications: AllowedUpdateType.None,
 			}) as FuzzView;
+			assert.equal(fuzzView.currentSchema, undefined);
 			fuzzView.currentSchema = fuzzNode;
 			return fuzzView;
 		})
