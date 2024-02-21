@@ -1152,8 +1152,12 @@ export class Container
 			);
 		}
 		assert(
+			this.attachmentData.state === AttachState.Attached,
+			0x0d1 /* "Container should be attached before close" */,
+		);
+		assert(
 			this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
-			"resolved url should be valid Fluid url",
+			0x0d2 /* "resolved url should be valid Fluid url" */,
 		);
 		const pendingState = await this.containerStateManager.getPendingLocalStateCore(
 			props,

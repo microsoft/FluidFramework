@@ -173,7 +173,7 @@ export class ContainerStateManager {
 	public async getPendingLocalStateCore(
 		props: IGetPendingLocalStateProps,
 		clientId: string | undefined,
-		runtime: IRuntime,
+		runtime: Pick<IRuntime, "getPendingLocalState">,
 		resolvedUrl: IResolvedUrl,
 	) {
 		return PerformanceEvent.timedExecAsync(
