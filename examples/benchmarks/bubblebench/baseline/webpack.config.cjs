@@ -6,6 +6,7 @@
 const fluidRoute = require("@fluid-example/webpack-fluid-loader");
 const path = require("path");
 const { merge } = require("webpack-merge");
+const webpack = require("webpack");
 
 module.exports = (env) => {
 	const isProduction = env?.production;
