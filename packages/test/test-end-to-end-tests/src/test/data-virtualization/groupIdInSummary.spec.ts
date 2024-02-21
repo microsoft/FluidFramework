@@ -95,15 +95,16 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 		assert(dataObjectTree.groupId === loadingGroupId, "GroupId should be on the summary tree");
 
 		// TODO: Enable this portion in tinylicious
-		// Likely requires local server to support summary trees.
-		const container2 = await provider.loadContainer(runtimeFactory, undefined, {
-			[LoaderHeader.version]: summaryVersion,
-		});
+		if (provider.driver.type !== "local") {
+			const container2 = await provider.loadContainer(runtimeFactory, undefined, {
+				[LoaderHeader.version]: summaryVersion,
+			});
 
-		const mainObject2 = (await container2.getEntryPoint()) as TestDataObject;
-		const handle2 = await mainObject2._root.get("dataObject");
-		assert(handle2 !== undefined, "handle2 should not be undefined");
-		const testObject2 = (await handle2.get()) as TestDataObject;
-		assert.equal(testObject2.loadingGroupId, loadingGroupId, "groupId should be the same");
+			const mainObject2 = (await container2.getEntryPoint()) as TestDataObject;
+			const handle2 = await mainObject2._root.get("dataObject");
+			assert(handle2 !== undefined, "handle2 should not be undefined");
+			const testObject2 = (await handle2.get()) as TestDataObject;
+			assert.equal(testObject2.loadingGroupId, loadingGroupId, "groupId should be the same");
+		}
 	});
 });
