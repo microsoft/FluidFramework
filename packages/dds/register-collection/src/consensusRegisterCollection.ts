@@ -76,10 +76,16 @@ interface IRegisterOperationSerialized {
 interface IRegisterOperationPlain<T> {
 	key: string;
 	type: "write";
+
 	value: {
 		type: "Plain";
 		value: T;
 	};
+
+	// back-compat: for clients prior to 2.0.0-rc.2.0.0, we must also pass in
+	// the serialized value for them to parse handles correctly. we do not have
+	// to pay the cost of deserializing this value in newer clients
+	serializedValue: string;
 
 	// back-compat: files at rest written with runtime <= 0.13 do not have refSeq
 	refSeq: number | undefined;
@@ -89,8 +95,7 @@ interface IRegisterOperationPlain<T> {
 type IIncomingRegisterOperation<T> = IRegisterOperationSerialized | IRegisterOperationPlain<T>;
 
 /** Distinguish between incoming op formats so we know which type it is */
-const incomingOpMatchesSerializedFormat = (op): op is IRegisterOperationSerialized =>
-	"serializedValue" in op;
+const incomingOpMatchesPlainFormat = <T>(op): op is IRegisterOperationPlain<T> => "value" in op;
 
 /** The type of the resolve function to call after the local operation is ack'd */
 type PendingResolve = (winner: boolean) => void;
@@ -157,6 +162,7 @@ export class ConsensusRegisterCollection<T>
 		const message: IRegisterOperationPlain<T> = {
 			key,
 			type: "write",
+			serializedValue: this.stringify(value, this.serializer),
 			value: {
 				type: "Plain",
 				value,
@@ -252,9 +258,9 @@ export class ConsensusRegisterCollection<T>
 						0x06e /* "Message's reference sequence number < op's reference sequence number!" */,
 					);
 
-					const value = incomingOpMatchesSerializedFormat(op)
-						? (this.parse(op.serializedValue, this.serializer) as T)
-						: op.value.value;
+					const value = incomingOpMatchesPlainFormat<T>(op)
+						? op.value.value
+						: (this.parse(op.serializedValue, this.serializer) as T);
 					const winner = this.processInboundWrite(
 						op.key,
 						value,
