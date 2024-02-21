@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { TelemetryEventPropertyType } from "@fluidframework/core-interfaces";
 import {
 	bufferToString,
 	fromBase64ToUtf8,
@@ -29,6 +28,7 @@ import {
 	IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
 import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
+import { TelemetryEventPropertyTypeExt } from "@fluidframework/telemetry-utils";
 
 /**
  * Combines summary stats by adding their totals together.
@@ -421,13 +421,27 @@ export function processAttachMessageGCData(
  * @internal
  */
 export class TelemetryContext implements ITelemetryContext {
-	private readonly telemetry = new Map<string, TelemetryEventPropertyType>();
+	private readonly telemetry = new Map<string, TelemetryEventPropertyTypeExt>();
 
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.set}
 	 */
-	set(prefix: string, property: string, value: TelemetryEventPropertyType): void {
+	set(prefix: string, property: string, value: TelemetryEventPropertyTypeExt): void {
 		this.telemetry.set(`${prefix}${property}`, value);
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.push}
+	 */
+	push(prefix: string, property: string, value: TelemetryEventPropertyTypeExt): void {
+		const prevValue = this.telemetry.get(`${prefix}${property}`);
+		if (prevValue === undefined) {
+			this.telemetry.set(`${prefix}${property}`, [value] as any);
+		} else if (Array.isArray(prevValue)) {
+			prevValue.push(value as any);
+		} else {
+			this.telemetry.set(`${prefix}${property}`, [prevValue as any, value as any]);
+		}
 	}
 
 	/**
@@ -436,7 +450,7 @@ export class TelemetryContext implements ITelemetryContext {
 	setMultiple(
 		prefix: string,
 		property: string,
-		values: Record<string, TelemetryEventPropertyType>,
+		values: Record<string, TelemetryEventPropertyTypeExt>,
 	): void {
 		// Set the values individually so that they are logged as a flat list along with other properties.
 		for (const key of Object.keys(values)) {
@@ -447,7 +461,7 @@ export class TelemetryContext implements ITelemetryContext {
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.get}
 	 */
-	get(prefix: string, property: string): TelemetryEventPropertyType {
+	get(prefix: string, property: string): TelemetryEventPropertyTypeExt {
 		return this.telemetry.get(`${prefix}${property}`);
 	}
 

@@ -20,7 +20,7 @@ import {
 	parseHandles,
 	SharedObject,
 } from "@fluidframework/shared-object-base";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { IMatrixProducer, IMatrixConsumer, IMatrixReader, IMatrixWriter } from "@tiny-calc/nano";
 import {
@@ -537,7 +537,10 @@ export class SharedMatrix<T = any>
 		}
 	}
 
-	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
+	protected summarizeCore(
+		serializer: IFluidSerializer,
+		telemetryContext?: ITelemetryContext,
+	): ISummaryTreeWithStats {
 		const builder = new SummaryTreeBuilder();
 		builder.addWithStats(
 			SnapshotPath.rows,
@@ -547,20 +550,29 @@ export class SharedMatrix<T = any>
 			SnapshotPath.cols,
 			this.cols.summarize(this.runtime, this.handle, serializer),
 		);
+		const cellsSnapshot = this.cells.snapshot();
+		const props: Record<string, number> = {
+			csSize: cellsSnapshot.length, // cellsSnapshotSize
+			rc: this.rowCount, // rowCount
+			cc: this.colCount, // colCount
+		};
 		const artifactsToSummarize = [
-			this.cells.snapshot(),
+			cellsSnapshot,
 			this.pending.snapshot(),
 			this.setCellLwwToFwwPolicySwitchOpSeqNumber,
 		];
 
 		// Only need to store it in the snapshot if we have switched the policy already.
 		if (this.setCellLwwToFwwPolicySwitchOpSeqNumber > -1) {
-			artifactsToSummarize.push(this.cellLastWriteTracker.snapshot());
+			const trackerMatrixSnapshot = this.cellLastWriteTracker.snapshot();
+			artifactsToSummarize.push(trackerMatrixSnapshot);
+			props.tmsSize = trackerMatrixSnapshot.length; // trackerMatrixSnapshotSize
 		}
 		builder.addBlob(
 			SnapshotPath.cells,
 			serializer.stringify(artifactsToSummarize, this.handle),
 		);
+		telemetryContext?.push?.("fluid:SharedMatrix", "details", props);
 		return builder.getSummaryTree();
 	}
 

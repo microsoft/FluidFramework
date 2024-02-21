@@ -199,6 +199,7 @@ declare function get_old_ClassDeclaration_TelemetryContext():
 declare function use_current_ClassDeclaration_TelemetryContext(
     use: TypeOnly<current.TelemetryContext>): void;
 use_current_ClassDeclaration_TelemetryContext(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_TelemetryContext());
 
 /*

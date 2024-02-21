@@ -166,6 +166,10 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_TelemetryContext": {
+				"forwardCompat": false
+			}
+		}
 	}
 }
