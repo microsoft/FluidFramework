@@ -16,6 +16,7 @@ import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
+// TODO: IFluidHandle should be encapsulated, and identified in a more robust way, (ex: via prototype or symbol instead of magic but collision prone field name). https://dev.azure.com/fluidframework/internal/_workitems/edit/1507
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
@@ -31,9 +32,12 @@ import { SharedObject } from '@fluidframework/shared-object-base';
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 
 // @public
+// TODO: Confusing specific API with general looking name
+// TODO: Type manuliplication we don't really want to expose/stabilize.
 export type ApplyKind<T, Kind extends FieldKind> = Kind extends FieldKind.Required ? T : undefined | T;
 
 // @public
+// TODO: Type manuliplication we don't really want to expose/stabilize.
 export type ArrayToUnion<T extends readonly unknown[]> = T extends readonly (infer TValue)[] ? TValue : never;
 
 // @public
@@ -44,6 +48,7 @@ export enum AttachState {
 }
 
 // @public (undocumented)
+// TODO: undocumented
 export enum ConnectionState {
     CatchingUp = 1,
     Connected = 2,
@@ -79,6 +84,8 @@ export const ContainerErrorTypes: {
 export type ContainerErrorTypes = (typeof ContainerErrorTypes)[keyof typeof ContainerErrorTypes];
 
 // @public
+// TODO: use of any is bad.
+// TODO: this being mutable seems bad.
 export interface ContainerSchema {
     dynamicObjectTypes?: LoadableObjectClass<any>[];
     initialObjects: LoadableObjectClassRecord;
@@ -92,6 +99,7 @@ export type DataObjectClass<T extends IFluidLoadable> = {
 } & LoadableObjectCtor<T>;
 
 // @public
+// TODO: If we target TS 5.3 and new enough library we can remove this.
 export const disposeSymbol: unique symbol;
 
 // @public
@@ -117,14 +125,18 @@ export const DriverErrorTypes: {
 };
 
 // @public (undocumented)
+// TODO: undocumented
 export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErrorTypes];
 
 // @public
+// TODO: we have two public event systems which should be unified.
 export type Events<E> = {
     [P in (string | symbol) & keyof E as IsEvent<E[P]> extends true ? P : never]: E[P];
 };
 
 // @public
+// TODO: Confusing specific API with general looking name
+// TODO: Type manuliplication we don't really want to expose/stabilize.
 export type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
 
 // @public
@@ -144,18 +156,23 @@ export class FieldSchema<out Kind extends FieldKind = FieldKind, out Types exten
 }
 
 // @public
+// TODO: Confusing specific API with general looking name
 export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 
 // @public
+// TODO: Confusing specific API with general looking name
+// TODO: Type manuliplication we don't really want to expose/stabilize.
 export type FlexListToUnion<TList extends FlexList> = ExtractItemType<ArrayToUnion<TList>>;
 
 // @public
+// TODO: this being mutable seems bad.
 export interface IConnection {
     id: string;
     mode: "write" | "read";
 }
 
 // @public
+// THis makes all Errors critical? Seems questionable
 export type ICriticalContainerError = IErrorBase;
 
 // @public
@@ -164,6 +181,7 @@ export interface IDisposable {
 }
 
 // @public @sealed
+// Does not align with IDisposable
 export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> extends IEventProvider<IFluidContainerEvents> {
     attach(props?: ContainerAttachProps): Promise<string>;
     readonly attachState: AttachState;
@@ -178,6 +196,7 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 }
 
 // @public @sealed
+// TODO: use of any is bad.
 export interface IFluidContainerEvents extends IEvent {
     (event: "connected", listener: () => void): void;
     (event: "disconnected", listener: () => void): void;
@@ -187,18 +206,22 @@ export interface IFluidContainerEvents extends IEvent {
 }
 
 // @public
+// TODO: this being mutable seems bad.
 export interface IMember {
     connections: IConnection[];
     userId: string;
 }
 
 // @public
+// TODO: Confusing specific API with general looking name
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
 
 // @public
+// TODO: Confusing specific API with general looking name
 export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
 
 // @public
+// TODO: Confusing specific API with general looking name
 export type InitialObjects<T extends ContainerSchema> = {
     [K in keyof T["initialObjects"]]: T["initialObjects"][K] extends LoadableObjectClass<infer TChannel> ? TChannel : never;
 };
@@ -220,6 +243,7 @@ export type InsertableTypedNode<T extends TreeNodeSchema> = (T extends {
 } ? NodeBuilderData<T> : never) | Unhydrated<NodeFromSchema<T>>;
 
 // @public
+// TODO: Is returned map being mutable intended?
 export interface IServiceAudience<M extends IMember> extends IEventProvider<IServiceAudienceEvents<M>> {
     getMembers(): Map<string, M>;
     getMyself(): Myself<M> | undefined;
@@ -239,12 +263,14 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
 export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : false;
 
 // @public @sealed
+// TODO: use of any is bad.
 export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
     get<T = any>(key: string): T | undefined;
     set<T = unknown>(key: string, value: T): this;
 }
 
 // @public @sealed
+// TODO: use of any is bad.
 export interface ISharedMapEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
@@ -266,6 +292,8 @@ export interface ITree extends IChannel {
 }
 
 // @public @sealed
+// TODO: use of any is bad.
+// TODO: this being mutable seems bad.
 export interface IValueChanged {
     key: string;
     previousValue: any;
@@ -278,6 +306,7 @@ export type LazyItem<Item = unknown> = Item | (() => Item);
 export type LoadableObjectClass<T extends IFluidLoadable> = DataObjectClass<T> | SharedObjectClass<T>;
 
 // @public
+// TODO: use of any is bad.
 export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>;
 
 // @public
@@ -291,6 +320,7 @@ export interface MakeNominal {
 export type MemberChangedListener<M extends IMember> = (clientId: string, member: M) => void;
 
 // @public
+// TODO: this being mutable seems bad.
 export type Myself<M extends IMember = IMember> = M & {
     currentConnection: string;
 };
@@ -341,6 +371,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 }
 
 // @public @deprecated
+// TODO: DDS classes shouldn't need to be public. https://dev.azure.com/fluidframework/internal/_workitems/edit/6458
 export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
     [Symbol.iterator](): IterableIterator<[string, any]>;
     readonly [Symbol.toStringTag]: string;
@@ -374,11 +405,13 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 }
 
 // @public
+// TODO: DDS classes shouldn't need to be public: this should not be required to be LoadableObjectCtor. https://dev.azure.com/fluidframework/internal/_workitems/edit/6458
 export type SharedObjectClass<T extends IFluidLoadable> = {
     readonly getFactory: () => IChannelFactory;
 } & LoadableObjectCtor<T>;
 
 // @public
+// TODO: DDS classes public workaround shouldn't need to exist, and is confusing. https://dev.azure.com/fluidframework/internal/_workitems/edit/6458
 export class SharedTree implements ITree {
     // (undocumented)
     get attributes(): IChannelAttributes;
@@ -427,6 +460,7 @@ export const TreeArrayNode: {
 };
 
 // @public
+// TODO: should be merged with TreeArrayNode
 export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom> extends ReadonlyArray<T>, TreeNode {
     insertAt(index: number, ...value: (TNew | IterableTreeArrayContent<TNew>)[]): void;
     insertAtEnd(...value: (TNew | IterableTreeArrayContent<TNew>)[]): void;
