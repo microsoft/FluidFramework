@@ -11,7 +11,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
-import { useSnapshotDirectory, TestScenario, takeSnapshot } from "@fluid-private/test-dds-utils";
+import { createSnapshotSuite } from "@fluid-private/test-dds-utils";
 import { DirectoryFactory, SharedDirectory } from "../..";
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils";
 
@@ -36,6 +36,20 @@ async function loadSharedDirectory(
 	const sharedDirectory = new SharedDirectory(id, dataStoreRuntime, DirectoryFactory.Attributes);
 	await sharedDirectory.load(services);
 	return sharedDirectory;
+}
+
+interface TestScenario {
+	only?: boolean;
+	skip?: boolean;
+	name: string;
+	runScenario: () => unknown;
+	/**
+	 * Whether running the scenario produces a snapshot which matches the saved one.
+	 * This is used to test back-compat of snapshots, i.e. ensuring current code can load older documents.
+	 * @remarks - It may be valuable to confirm clients can collaborate on such documents
+	 * after loading them.
+	 */
+	writeCompatible?: boolean;
 }
 
 function generateTestScenarios(): TestScenario[] {
@@ -117,7 +131,15 @@ function generateTestScenarios(): TestScenario[] {
 	return testScenarios;
 }
 
-function runTestScenarios(testScenarios: TestScenario[]): void {
+describe("SharedDirectory Snapshot Tests", () => {
+	// Set up the directory path for reading/writing snapshots and generate tests
+	assert(__dirname.match(/dist[/\\]test[/\\]mocha$/));
+	const testScenarios = generateTestScenarios();
+	const { useSnapshotDirectory, takeSnapshot } = createSnapshotSuite(
+		path.resolve(__dirname, `../../../src/test/mocha/snapshots/directory/`),
+	);
+	useSnapshotDirectory();
+
 	for (const {
 		name,
 		runScenario,
@@ -133,12 +155,4 @@ function runTestScenarios(testScenarios: TestScenario[]): void {
 			assertEquivalentDirectories(testDirectory, secondDirectory);
 		});
 	}
-}
-
-describe("SharedDirectory Snapshot Tests", () => {
-	assert(__dirname.match(/dist[/\\]test[/\\]mocha$/));
-	const snapshotsFolder = path.join(__dirname, `../../../src/test/mocha/snapshots`);
-	const testScenarios = generateTestScenarios();
-	useSnapshotDirectory(snapshotsFolder, "./directory");
-	runTestScenarios(testScenarios);
 });

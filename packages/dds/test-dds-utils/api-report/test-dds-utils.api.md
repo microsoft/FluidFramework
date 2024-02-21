@@ -66,6 +66,9 @@ export namespace createDDSFuzzSuite {
     const skip: (...seeds: number[]) => <TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(ddsModel: DDSFuzzModel<TChannelFactory, TOperation, DDSFuzzTestState<TChannelFactory>>, providedOptions?: Partial<DDSFuzzSuiteOptions>) => void;
 }
 
+// @internal
+export function createSnapshotSuite(snapshotFolderPath: string): ISnapshotSuite;
+
 // @internal (undocumented)
 export interface DDSFuzzHarnessEvents {
     (event: "clientCreate", listener: (client: Client<IChannelFactory>) => void): any;
@@ -146,6 +149,12 @@ export interface IGCTestProvider {
     readonly sharedObject: ISharedObject;
 }
 
+// @internal (undocumented)
+export interface ISnapshotSuite {
+    takeSnapshot: (data: string, writeCompatible?: boolean) => string;
+    useSnapshotDirectory: () => void;
+}
+
 // @internal
 export type MinimizationTransform<TOperation extends BaseOperation> = (op: TOperation) => void;
 
@@ -162,25 +171,6 @@ export interface Synchronize {
     // (undocumented)
     type: "synchronize";
 }
-
-// @internal
-export function takeSnapshot(data: string, writeCompatible?: boolean): string;
-
-// @internal (undocumented)
-export interface TestScenario {
-    // (undocumented)
-    name: string;
-    // (undocumented)
-    only?: boolean;
-    // (undocumented)
-    runScenario: () => unknown;
-    // (undocumented)
-    skip?: boolean;
-    writeCompatible?: boolean;
-}
-
-// @internal
-export function useSnapshotDirectory(snapshotsFolder: string, dirPath?: string): void;
 
 // (No @packageDocumentation comment for this package)
 
