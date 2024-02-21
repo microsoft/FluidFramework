@@ -16,27 +16,24 @@ import {
 } from "@fluid-private/test-dds-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils.js";
-import { ITreeViewFork, FlexTreeView } from "../../../shared-tree/index.js";
 import {
 	makeOpGenerator,
 	EditGeneratorOpWeights,
 	FuzzTestState,
 	viewFromState,
+	FuzzView,
+	FuzzTransactionView,
 } from "./fuzzEditGenerators.js";
 import { applyFieldEdit, applySynchronizationOp, applyUndoRedoEdit } from "./fuzzEditReducers.js";
-import {
-	deterministicIdCompressorFactory,
-	fuzzSchema,
-	isRevertibleSharedTreeView,
-} from "./fuzzUtils.js";
+import { deterministicIdCompressorFactory, isRevertibleSharedTreeView } from "./fuzzUtils.js";
 import { Operation } from "./operationTypes.js";
 
 /**
  * This interface is meant to be used for tests that require you to store a branch of a tree
  */
 interface BranchedTreeFuzzTestState extends FuzzTestState {
-	main?: FlexTreeView<typeof fuzzSchema.rootFieldSchema>;
-	branch?: ITreeViewFork<typeof fuzzSchema.rootFieldSchema>;
+	main?: FuzzView;
+	branch?: FuzzTransactionView;
 }
 
 const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, BranchedTreeFuzzTestState>({
@@ -46,7 +43,7 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, Branched
 			case "fieldEdit": {
 				const tree = state.branch;
 				assert(tree !== undefined);
-				applyFieldEdit(tree, contents, state);
+				applyFieldEdit(tree, contents);
 				break;
 			}
 			default:
@@ -61,9 +58,9 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, Branched
 	},
 	undoRedo: async (state, operation) => {
 		const { contents } = operation;
-		const tree = state.main ?? assert.fail();
-		assert(isRevertibleSharedTreeView(tree.checkout));
-		applyUndoRedoEdit(tree.checkout.undoStack, tree.checkout.redoStack, contents);
+		const view = state.main ?? assert.fail();
+		assert(isRevertibleSharedTreeView(view.tree.checkout));
+		applyUndoRedoEdit(view.tree.checkout.undoStack, view.tree.checkout.redoStack, contents);
 		return state;
 	},
 	synchronizeTrees: async (state) => {
@@ -116,16 +113,19 @@ describe("Fuzz - composed vs individual changes", () => {
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: BranchedTreeFuzzTestState) => {
 			initialState.main = viewFromState(initialState, initialState.clients[0]);
-			initialState.branch = initialState.main.fork();
-			initialState.branch.checkout.transaction.start();
+			initialState.branch = {
+				tree: initialState.main.tree.fork(),
+				currentSchema: initialState.main.currentSchema,
+			};
+			initialState.branch.tree.checkout.transaction.start();
 		});
 		emitter.on("testEnd", (finalState: BranchedTreeFuzzTestState) => {
 			assert(finalState.branch !== undefined);
-			const childTreeView = toJsonableTree(finalState.branch.checkout);
-			finalState.branch.checkout.transaction.commit();
-			const tree = finalState.main ?? assert.fail();
-			tree.checkout.merge(finalState.branch.checkout);
-			validateTree(tree.checkout, childTreeView);
+			const childTreeView = toJsonableTree(finalState.branch.tree.checkout);
+			finalState.branch.tree.checkout.transaction.commit();
+			const view = finalState.main ?? assert.fail();
+			view.tree.checkout.merge(finalState.branch.tree.checkout);
+			validateTree(view.tree.checkout, childTreeView);
 		});
 		createDDSFuzzSuite(model, {
 			defaultTestCount: runsPerBatch,

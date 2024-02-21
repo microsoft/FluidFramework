@@ -102,11 +102,8 @@ describe("Fuzz - anchor stability", () => {
 
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: AnchorFuzzTestState) => {
-			const tree = viewFromState(
-				initialState,
-				initialState.clients[0],
-				config.initialTree,
-			).checkout;
+			const tree = viewFromState(initialState, initialState.clients[0], config.initialTree)
+				.tree.checkout;
 			tree.transaction.start();
 			// These tests are hard coded to a single client, so this is fine.
 			initialState.anchors = [createAnchors(tree)];
@@ -116,7 +113,7 @@ describe("Fuzz - anchor stability", () => {
 			const anchors = finalState.anchors ?? assert.fail("Anchors should be defined");
 
 			// aborts any transactions that may still be in progress
-			const tree = viewFromState(finalState, finalState.clients[0]).checkout;
+			const tree = viewFromState(finalState, finalState.clients[0]).tree.checkout;
 			tree.transaction.abort();
 			validateTree(tree, initialTreeJson);
 			validateAnchors(tree, anchors[0], true);
@@ -175,13 +172,13 @@ describe("Fuzz - anchor stability", () => {
 				for (const client of initialState.clients) {
 					// This is a kludge to force the invocation of schematize for each client.
 					// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-					viewFromState(initialState, client, config.initialTree).checkout;
+					viewFromState(initialState, client, config.initialTree).tree.checkout;
 				}
 				initialState.containerRuntimeFactory.processAllMessages();
 			}
 			initialState.anchors = [];
 			for (const client of initialState.clients) {
-				const view = viewFromState(initialState, client, config.initialTree)
+				const view = viewFromState(initialState, client, config.initialTree).tree
 					.checkout as RevertibleSharedTreeView;
 				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
 				view.undoStack = undoStack;
@@ -194,7 +191,7 @@ describe("Fuzz - anchor stability", () => {
 		emitter.on("testEnd", (finalState: AnchorFuzzTestState) => {
 			const anchors = finalState.anchors ?? assert.fail("Anchors should be defined");
 			for (const [i, client] of finalState.clients.entries()) {
-				validateAnchors(viewFromState(finalState, client).checkout, anchors[i], false);
+				validateAnchors(viewFromState(finalState, client).tree.checkout, anchors[i], false);
 			}
 		});
 

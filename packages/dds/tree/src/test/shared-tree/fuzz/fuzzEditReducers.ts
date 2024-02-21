@@ -15,7 +15,7 @@ import {
 } from "../../../feature-libraries/index.js";
 import { fail } from "../../../util/index.js";
 import { validateTreeConsistency } from "../../utils.js";
-import { ISharedTree, FlexTreeView, SharedTreeFactory } from "../../../shared-tree/index.js";
+import { ISharedTree, SharedTreeFactory } from "../../../shared-tree/index.js";
 import { Revertible } from "../../../core/index.js";
 import {
 	FieldEdit,
@@ -26,15 +26,15 @@ import {
 	FuzzUndoRedoType,
 	Operation,
 } from "./operationTypes.js";
-import { FuzzNodeSchema, fuzzSchema, isRevertibleSharedTreeView } from "./fuzzUtils.js";
-import { FuzzTestState, viewFromState } from "./fuzzEditGenerators.js";
+import { isRevertibleSharedTreeView } from "./fuzzUtils.js";
+import { FuzzTestState, FuzzView, viewFromState } from "./fuzzEditGenerators.js";
 
 const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFactory>>({
 	edit: (state, operation) => {
 		const { contents } = operation;
 		switch (contents.type) {
 			case "fieldEdit": {
-				applyFieldEdit(viewFromState(state), contents, state);
+				applyFieldEdit(viewFromState(state), contents);
 				break;
 			}
 			default:
@@ -45,7 +45,7 @@ const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFa
 		applyTransactionEdit(state, operation.contents);
 	},
 	undoRedo: (state, operation) => {
-		const view = viewFromState(state).checkout;
+		const view = viewFromState(state).tree.checkout;
 		assert(isRevertibleSharedTreeView(view));
 		applyUndoRedoEdit(view.undoStack, view.redoStack, operation.contents);
 	},
@@ -79,38 +79,29 @@ export function applySynchronizationOp(state: DDSFuzzTestState<SharedTreeFactory
  * Assumes tree is using the fuzzSchema.
  * TODO: Maybe take in a schema aware strongly typed Tree node or field.
  */
-export function applyFieldEdit(
-	tree: FlexTreeView<typeof fuzzSchema.rootFieldSchema>,
-	fieldEdit: FieldEdit,
-	state: FuzzTestState,
-): void {
-	const nodeSchema = state.nodeSchemas?.get(state.client.channel);
-	assert(nodeSchema !== undefined);
+export function applyFieldEdit(tree: FuzzView, fieldEdit: FieldEdit): void {
 	switch (fieldEdit.change.type) {
 		case "sequence":
-			applySequenceFieldEdit(tree, fieldEdit.change.edit, nodeSchema);
+			applySequenceFieldEdit(tree, fieldEdit.change.edit);
 			break;
 		case "required":
-			applyValueFieldEdit(tree, fieldEdit.change.edit, nodeSchema);
+			applyValueFieldEdit(tree, fieldEdit.change.edit);
 			break;
 		case "optional":
-			applyOptionalFieldEdit(tree, fieldEdit.change.edit, nodeSchema);
+			applyOptionalFieldEdit(tree, fieldEdit.change.edit);
 			break;
 		default:
 			break;
 	}
 }
 
-function applySequenceFieldEdit(
-	tree: FlexTreeView<typeof fuzzSchema.rootFieldSchema>,
-	change: FuzzFieldChange,
-	nodeSchema: FuzzNodeSchema,
-): void {
+function applySequenceFieldEdit(tree: FuzzView, change: FuzzFieldChange): void {
+	const nodeSchema = tree.currentSchema;
 	switch (change.type) {
 		case "insert": {
 			assert(change.parent !== undefined, "Sequence change should not occur at the root.");
 
-			const parent = navigateToNode(tree, change.parent, nodeSchema);
+			const parent = navigateToNode(tree, change.parent);
 			assert(parent?.is(nodeSchema), "Defined down-path should point to a valid parent");
 			const field = parent.boxedSequenceChildren;
 			assert(field !== undefined);
@@ -118,7 +109,7 @@ function applySequenceFieldEdit(
 			break;
 		}
 		case "remove": {
-			const firstNode = navigateToNode(tree, change.firstNode, nodeSchema);
+			const firstNode = navigateToNode(tree, change.firstNode);
 			assert(firstNode !== undefined, "Down-path should point to a valid firstNode");
 			const { parent: field, index } = firstNode.parentField;
 			assert(
@@ -129,7 +120,7 @@ function applySequenceFieldEdit(
 			break;
 		}
 		case "move": {
-			const firstNode = navigateToNode(tree, change.firstNode, nodeSchema);
+			const firstNode = navigateToNode(tree, change.firstNode);
 			assert(firstNode !== undefined, "Down-path should point to a valid firstNode");
 			const { parent: field, index } = firstNode.parentField;
 			assert(
@@ -144,13 +135,10 @@ function applySequenceFieldEdit(
 	}
 }
 
-function applyValueFieldEdit(
-	tree: FlexTreeView<typeof fuzzSchema.rootFieldSchema>,
-	change: FuzzSet,
-	nodeSchema: FuzzNodeSchema,
-): void {
+function applyValueFieldEdit(view: FuzzView, change: FuzzSet): void {
+	const nodeSchema = view.currentSchema;
 	assert(change.parent !== undefined, "Value change should not occur at the root.");
-	const parent = navigateToNode(tree, change.parent, nodeSchema);
+	const parent = navigateToNode(view, change.parent);
 	assert(parent?.is(nodeSchema), "Defined down-path should point to a valid parent");
 	const field = parent.tryGetField(change.key);
 	assert(
@@ -160,12 +148,9 @@ function applyValueFieldEdit(
 	field.content = cursorForJsonableTreeNode(change.value) as any;
 }
 
-function navigateToNode(
-	tree: FlexTreeView<typeof fuzzSchema.rootFieldSchema>,
-	path: DownPath | undefined,
-	nodeSchema: FuzzNodeSchema,
-): FlexTreeNode | undefined {
-	const rootField = tree.flexTree;
+function navigateToNode(view: FuzzView, path: DownPath | undefined): FlexTreeNode | undefined {
+	const nodeSchema = view.currentSchema;
+	const rootField = view.tree.flexTree;
 	if (path === undefined) {
 		return undefined;
 	}
@@ -201,25 +186,22 @@ function navigateToNode(
 	return finalLocation.containedNode;
 }
 
-function applyOptionalFieldEdit(
-	tree: FlexTreeView<typeof fuzzSchema.rootFieldSchema>,
-	change: FuzzSet | FuzzRemove,
-	nodeSchema: FuzzNodeSchema,
-): void {
+function applyOptionalFieldEdit(view: FuzzView, change: FuzzSet | FuzzRemove): void {
+	const nodeSchema = view.currentSchema;
 	switch (change.type) {
 		case "set": {
-			const rootField = tree.flexTree;
+			const rootField = view.tree.flexTree;
 			if (change.parent === undefined) {
 				rootField.content = cursorForJsonableTreeNode(change.value) as any;
 			} else {
-				const parent = navigateToNode(tree, change.parent, nodeSchema);
+				const parent = navigateToNode(view, change.parent);
 				assert(parent?.is(nodeSchema), "Defined down-path should point to a valid parent");
 				parent.boxedOptionalChild.content = cursorForJsonableTreeNode(change.value) as any;
 			}
 			break;
 		}
 		case "remove": {
-			const field = navigateToNode(tree, change.firstNode, nodeSchema)?.parentField.parent;
+			const field = navigateToNode(view, change.firstNode)?.parentField.parent;
 			assert(field?.is(nodeSchema.objectNodeFieldsObject.optionalChild));
 			field.content = undefined;
 			break;
@@ -237,11 +219,15 @@ export function applyTransactionEdit(state: FuzzTestState, contents: FuzzTransac
 			contents.fuzzType === "transactionStart",
 			"Forked view should be present in the fuzz state unless a (non-nested) transaction is being started.",
 		);
-		view = viewFromState(state).fork();
+		const treeView = viewFromState(state);
+		view = {
+			tree: treeView.tree.fork(),
+			currentSchema: treeView.currentSchema,
+		};
 		state.transactionViews.set(state.client.channel, view);
 	}
 
-	const { checkout } = view;
+	const { checkout } = view.tree;
 	switch (contents.fuzzType) {
 		case "transactionStart": {
 			checkout.transaction.start();
@@ -263,7 +249,7 @@ export function applyTransactionEdit(state: FuzzTestState, contents: FuzzTransac
 		// Transaction is complete, so merge the changes into the root view and clean up the fork from the state.
 		state.transactionViews.delete(state.client.channel);
 		const rootView = viewFromState(state);
-		rootView.checkout.merge(checkout);
+		rootView.tree.checkout.merge(checkout);
 	}
 }
 

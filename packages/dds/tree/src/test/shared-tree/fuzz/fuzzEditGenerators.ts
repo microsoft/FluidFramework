@@ -48,52 +48,73 @@ import {
 } from "./operationTypes.js";
 import { FuzzNode, FuzzNodeSchema, fuzzNode, fuzzSchema } from "./fuzzUtils.js";
 
+export interface FuzzView {
+	tree: FlexTreeView<typeof fuzzSchema.rootFieldSchema>;
+	/**
+	 * This client's current stored schema, which dictates allowable edits that the client may perform.
+	 * @remarks - The type of this field isn't totally correct, since the supported schema for fuzz nodes changes
+	 * at runtime to support different primitives (this allows fuzz testing of schema changes).
+	 * However, fuzz schemas always have the same field names, so schema-dependent
+	 * APIs such as the tree reading API will work correctly anyway.
+	 *
+	 * TODO: The schema for each client should be properly updated if "afterSchemaChange" (or equivalent event) occurs
+	 * once schema ops are supported.
+	 */
+	currentSchema: FuzzNodeSchema;
+}
+
+export interface FuzzTransactionView {
+	tree: ITreeViewFork<typeof fuzzSchema.rootFieldSchema>;
+	/**
+	 * This client's current stored schema, which dictates allowable edits that the client may perform.
+	 * @remarks - The type of this field isn't totally correct, since the supported schema for fuzz nodes changes
+	 * at runtime to support different primitives (this allows fuzz testing of schema changes).
+	 * However, fuzz schemas always have the same field names, so schema-dependent
+	 * APIs such as the tree reading API will work correctly anyway.
+	 *
+	 * TODO: The schema for each client should be properly updated if "afterSchemaChange" (or equivalent event) occurs
+	 * once schema ops are supported.
+	 */
+	currentSchema: FuzzNodeSchema;
+}
+
 export interface FuzzTestState extends DDSFuzzTestState<SharedTreeFactory> {
 	/**
-	 * Schematized view of clients. Created lazily by viewFromState.
+	 * Schematized view of clients and their nodeSchemas. Created lazily by viewFromState.
 	 *
 	 * SharedTrees undergoing a transaction will have a forked view in {@link transactionViews} instead,
 	 * which should be used in place of this view until the transaction is complete.
 	 */
-	view?: Map<ISharedTree, FlexTreeView<typeof fuzzSchema.rootFieldSchema>>;
+	view?: Map<ISharedTree, FuzzView>;
 	/**
-	 * Schematized view of clients undergoing transactions.
+	 * Schematized view of clients undergoing transactions with their nodeSchemas.
 	 * Edits to this view are not visible to other clients until the transaction is closed.
 	 *
 	 * Maintaining a separate view here is necessary since async transactions are not supported on the root checkout,
 	 * and the fuzz testing model only simulates async transactions.
 	 */
-	transactionViews?: Map<ISharedTree, ITreeViewFork<typeof fuzzSchema.rootFieldSchema>>;
-	/**
-	 * NodeSchema of clients used to typecheck schema during edit generation/reducing.
-	 * If nodeSchema of a client is not present, it is set to {@link fuzzNode}, the default/initial nodeSchema is used for typechecking. This is initialized in {@link viewFromState}.
-	 * @privateRemarks TODO: The NodeSchema for each client should be properly updated if "afterSchemaChange" occurs for the client's schema when schemaOps are supported.
-	 */
-	nodeSchemas?: Map<ISharedTree, FuzzNodeSchema>;
+	transactionViews?: Map<ISharedTree, FuzzTransactionView>;
 }
 
 export function viewFromState(
 	state: FuzzTestState,
 	client: Client<SharedTreeFactory> = state.client,
 	initialTree: TreeContent<typeof fuzzSchema.rootFieldSchema>["initialTree"] = undefined,
-): FlexTreeView<typeof fuzzSchema.rootFieldSchema> {
+): FuzzView {
 	state.view ??= new Map();
-
-	// Initializes nodeSchema in FuzzTestState for clients that are not in the nodeSchema map.
-	state.nodeSchemas ??= new Map();
-	if (state.nodeSchemas.get(client.channel) === undefined) {
-		state.nodeSchemas.set(client.channel, fuzzNode);
-	}
 
 	return (
 		state.transactionViews?.get(client.channel) ??
-		getOrCreate(state.view, client.channel, (tree) =>
-			tree.schematizeInternal({
-				initialTree,
-				schema: fuzzSchema,
-				allowedSchemaModifications: AllowedUpdateType.None,
-			}),
-		)
+		getOrCreate(state.view, client.channel, (tree) => {
+			return {
+				tree: tree.schematizeInternal({
+					initialTree,
+					schema: fuzzSchema,
+					allowedSchemaModifications: AllowedUpdateType.None,
+				}),
+				currentSchema: fuzzNode,
+			};
+		})
 	);
 }
 
@@ -215,7 +236,6 @@ export const makeEditGenerator = (
 			state.random,
 			weights.fieldSelection,
 			weights.fieldSelection.filter,
-			state,
 		);
 		switch (fieldInfo.type) {
 			case "optional":
@@ -262,7 +282,6 @@ export const makeEditGenerator = (
 			state.random,
 			weights.fieldSelection,
 			deletableFieldFilter,
-			state,
 		);
 		switch (fieldInfo.type) {
 			case "optional": {
@@ -319,7 +338,6 @@ export const makeEditGenerator = (
 			state.random,
 			weights.fieldSelection,
 			(f) => f.type === "sequence" && f.content.length > 0,
-			state,
 		);
 		assert(fieldInfo.type === "sequence", "Move should only be performed on sequence fields");
 		const { content: field } = fieldInfo;
@@ -352,7 +370,6 @@ export const makeEditGenerator = (
 					state.random,
 					weights.fieldSelection,
 					weights.fieldSelection.filter,
-					state,
 				) !== "no-valid-fields",
 		],
 		[
@@ -364,7 +381,6 @@ export const makeEditGenerator = (
 					state.random,
 					weights.fieldSelection,
 					deletableFieldFilter,
-					state,
 				) !== "no-valid-fields",
 		],
 		[
@@ -376,7 +392,6 @@ export const makeEditGenerator = (
 					state.random,
 					weights.fieldSelection,
 					(f) => f.type === "sequence" && f.content.length > 0,
-					state,
 				) !== "no-valid-fields",
 		],
 	]);
@@ -419,12 +434,12 @@ export const makeTransactionEditGenerator = (
 		[
 			commit,
 			passedOpWeights.commit,
-			(state) => viewFromState(state).checkout.transaction.inProgress(),
+			(state) => viewFromState(state).tree.checkout.transaction.inProgress(),
 		],
 		[
 			abort,
 			passedOpWeights.abort,
-			(state) => viewFromState(state).checkout.transaction.inProgress(),
+			(state) => viewFromState(state).tree.checkout.transaction.inProgress(),
 		],
 	]);
 
@@ -608,13 +623,12 @@ function selectField(
 }
 
 function trySelectTreeField(
-	tree: FlexTreeView<typeof fuzzSchema.rootFieldSchema>,
+	tree: FuzzView,
 	random: IRandom,
 	weights: Omit<FieldSelectionWeights, "filter">,
 	filter: FieldFilter = () => true,
-	state: FuzzTestState,
 ): FuzzField | "no-valid-fields" {
-	const editable = tree.flexTree;
+	const editable = tree.tree.flexTree;
 	const options =
 		weights.optional === 0
 			? ["recurse"]
@@ -623,8 +637,7 @@ function trySelectTreeField(
 			: random.bool(weights.optional / (weights.optional + weights.recurse))
 			? ["optional", "recurse"]
 			: ["recurse", "optional"];
-	const nodeSchema = state.nodeSchemas?.get(state.client.channel);
-	assert(nodeSchema !== undefined);
+	const nodeSchema = tree.currentSchema;
 	for (const option of options) {
 		switch (option) {
 			case "optional": {
@@ -662,13 +675,12 @@ function trySelectTreeField(
 }
 
 function selectTreeField(
-	tree: FlexTreeView<typeof fuzzSchema.rootFieldSchema>,
+	tree: FuzzView,
 	random: IRandom,
 	weights: Omit<FieldSelectionWeights, "filter">,
 	filter: FieldFilter = () => true,
-	state: FuzzTestState,
 ): FuzzField {
-	const result = trySelectTreeField(tree, random, weights, filter, state);
+	const result = trySelectTreeField(tree, random, weights, filter);
 	assert(result !== "no-valid-fields", "No valid fields found");
 	return result;
 }
