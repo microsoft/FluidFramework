@@ -5,12 +5,12 @@
 
 import {
 	getDataStoreEntryPoint,
+	type IFluidMountableView,
 	ModelContainerRuntimeFactory,
 	MountableView,
 } from "@fluid-example/example-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IFluidMountableView } from "@fluidframework/view-interfaces";
 
 import React from "react";
 
