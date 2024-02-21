@@ -536,9 +536,7 @@ async function fetchLatestSnapshotCore(
 export interface ISnapshotRequestAndResponseOptions {
 	odspResponse: IOdspResponse<Response>;
 	requestUrl: string;
-	// TODO: use a stronger type
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	requestHeaders: { [index: string]: any };
+	requestHeaders: { [index: string]: string };
 }
 
 function getFormBodyAndHeaders(
