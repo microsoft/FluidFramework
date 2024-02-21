@@ -3232,7 +3232,6 @@ importers:
       assert: ^2.0.0
       axios: ^1.6.2
       clean-webpack-plugin: ^4.0.0
-      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       events: ^3.1.0
@@ -3283,7 +3282,6 @@ importers:
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
       clean-webpack-plugin: 4.0.0_webpack@5.89.0
-      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       expect-puppeteer: 9.0.2
