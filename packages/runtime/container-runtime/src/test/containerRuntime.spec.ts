@@ -2267,7 +2267,9 @@ describe("Runtime", () => {
 				// In this test we will try to load the container runtime with a snapshot which has 2 datastores. However,
 				// snapshot for datastore "missingDataStore" is omitted and we will check that the container runtime loads fine
 				// container runtime loads fine and when the "missingDataStore" is requested/aliased, it does that successfully.
+				let getSnapshotCalledTimes = 0;
 				containerContext.storage.getSnapshot = async (snapshotFetchOptions) => {
+					getSnapshotCalledTimes++;
 					snapshotTree.trees[".channels"].trees.missingDataStore = {
 						blobs: {
 							".component": "bARC6dCXlcrPxQHw3PeROtmKc",
@@ -2297,6 +2299,25 @@ describe("Runtime", () => {
 				const defaultDataStore =
 					await containerRuntime.getAliasedDataStoreEntryPoint("default");
 				assert(defaultDataStore !== undefined, "data store should load and is attached");
+				await assert.doesNotReject(async () => {
+					await containerRuntime.resolveHandle({ url: "/missingDataStore" });
+				}, "resolveHandle should work fine");
+
+				// Now try to get snapshot for missing data store again from container runtime. It should be returned
+				// from cache.
+				const snapshot = await containerRuntime.getSnapshotForLoadingGroupId(
+					["G1"],
+					["missingDataStore"],
+				);
+				assert.deepEqual(
+					snapshotTree.trees[".channels"].trees.missingDataStore,
+					snapshot.snapshotTree,
+					"snapshot should be equal",
+				);
+				assert(getSnapshotCalledTimes === 1, "second time should be from cache");
+
+				// Set api to undefined to see that it should not be called again.
+				containerContext.storage.getSnapshot = undefined;
 				await assert.doesNotReject(async () => {
 					await containerRuntime.resolveHandle({ url: "/missingDataStore" });
 				}, "resolveHandle should work fine");
