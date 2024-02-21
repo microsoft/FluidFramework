@@ -1012,7 +1012,7 @@ export abstract class FluidDataStoreContext
 export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	private initSnapshotValue: ISnapshotTree | undefined;
 	// Tells whether we need to fetch the snapshot before use. This is to support Data Virtualization.
-	private readonly snapshotFetchRequired: boolean;
+	private snapshotFetchRequired: boolean;
 	private readonly runtime: ContainerRuntime;
 
 	constructor(props: IRemoteFluidDataStoreContextProps) {
@@ -1042,6 +1042,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 			);
 			this.initSnapshotValue = snapshot.snapshotTree;
 			sequenceNumber = snapshot.sequenceNumber;
+			this.snapshotFetchRequired = false;
 		}
 		let tree = this.initSnapshotValue;
 		let isRootDataStore = true;
