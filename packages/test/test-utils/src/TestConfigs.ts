@@ -6,12 +6,34 @@
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 
 /**
+ * Extension of IConfigProviderBase that supports setting a config value and clearing all
+ * config values for testing.
+ *
  * @internal
  */
-export const mockConfigProvider = (
-	settings: Record<string, ConfigTypes> = {},
-): IConfigProviderBase => {
+export interface ITestConfigProvider extends IConfigProviderBase {
+	/** Set a config value */
+	set: (key: string, value: ConfigTypes) => void;
+	/** Clear all config values */
+	clear: () => void;
+}
+
+/**
+ * Creates a test config provider with the ability to set configs values and clear all config values.
+ * @internal
+ */
+export const createTestConfigProvider = (): ITestConfigProvider => {
+	const settings: Record<string, ConfigTypes> = {};
 	return {
 		getRawConfig: (name: string): ConfigTypes => settings[name],
+		set: (key: string, value: ConfigTypes) => {
+			settings[key] = value;
+		},
+		clear: () => {
+			Object.keys(settings).forEach((key) => {
+				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+				delete settings[key];
+			});
+		},
 	};
 };

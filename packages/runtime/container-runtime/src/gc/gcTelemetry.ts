@@ -190,8 +190,6 @@ export class GCTelemetryTracker {
 		};
 
 		// If the node that is used is tombstoned, log a tombstone telemetry.
-		// Note that this is done before checking if "nodeStateTracker" is undefined below because unreferenced
-		// tracking may not have yet been enabled. That happens only after the client transitions to write mode.
 		if (nodeUsageProps.isTombstoned) {
 			this.logTombstoneUsageTelemetry(nodeUsageProps, unrefEventProps, nodeType, usageType);
 		}
@@ -345,7 +343,9 @@ export class GCTelemetryTracker {
 			}
 
 			if (missingExplicitRoutes.length > 0) {
-				logger.sendErrorEvent({
+				// Send as Generic not Error since there are known corner cases where this will fire.
+				// E.g. If an old client re-references a node via an attach op (that doesn't include GC Data)
+				logger.sendTelemetryEvent({
 					eventName: "gcUnknownOutboundReferences",
 					...tagCodeArtifacts({
 						id: nodeId,

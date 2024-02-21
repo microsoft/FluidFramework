@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ISnapshotContents } from "./odspPublicUtils";
+import { ISnapshot } from "@fluidframework/driver-definitions";
 import { ReadBuffer } from "./ReadBufferUtils";
 import {
 	assertBlobCoreInstance,
@@ -29,7 +29,7 @@ export const currentReadVersion = "1.0";
  * represents how many times slower parsing path is executed. This will be then logged into telemetry.
  * @internal
  */
-export interface ISnapshotContentsWithProps extends ISnapshotContents {
+export interface ISnapshotContentsWithProps extends ISnapshot {
 	telemetryProps: Record<string, number>;
 }
 
@@ -40,7 +40,7 @@ export interface ISnapshotContentsWithProps extends ISnapshotContents {
 function readBlobSection(node: NodeTypes) {
 	assertNodeCoreInstance(node, "TreeBlobs should be of type NodeCore");
 	let slowBlobStructureCount = 0;
-	const blobs: Map<string, ArrayBuffer> = new Map();
+	const blobContents: Map<string, ArrayBuffer> = new Map();
 	for (const blob of node) {
 		assertNodeCoreInstance(blob, "blob should be node");
 
@@ -56,7 +56,7 @@ function readBlobSection(node: NodeTypes) {
 		) {
 			// "id": <node name>
 			// "data": <blob>
-			blobs.set(blob.getString(1), blob.getBlob(3).arrayBuffer);
+			blobContents.set(blob.getString(1), blob.getBlob(3).arrayBuffer);
 			continue;
 		}
 
@@ -67,9 +67,9 @@ function readBlobSection(node: NodeTypes) {
 		const records = getNodeProps(blob);
 		assertBlobCoreInstance(records.data, "data should be of BlobCore type");
 		const id = getStringInstance(records.id, "blob id should be string");
-		blobs.set(id, records.data.arrayBuffer);
+		blobContents.set(id, records.data.arrayBuffer);
 	}
-	return { blobs, slowBlobStructureCount };
+	return { blobContents, slowBlobStructureCount };
 }
 
 /**
@@ -116,50 +116,58 @@ function readTreeSection(node: NodeCore) {
 		 */
 		const length = treeNode.length;
 		if (length > 0 && treeNode.getMaybeString(0) === "name") {
-			if (length === 4) {
-				const content = treeNode.getMaybeString(2);
-				// "name": <node name>
-				// "children": <blob id>
-				if (content === "children") {
-					const result = readTreeSection(treeNode.getNode(3));
-					trees[treeNode.getString(1)] = result.snapshotTree;
-					slowTreeStructureCount += result.slowTreeStructureCount;
-					continue;
+			switch (length) {
+				case 4: {
+					const content = treeNode.getMaybeString(2);
+					// "name": <node name>
+					// "children": <blob id>
+					if (content === "children") {
+						const result = readTreeSection(treeNode.getNode(3));
+						trees[treeNode.getString(1)] = result.snapshotTree;
+						slowTreeStructureCount += result.slowTreeStructureCount;
+						continue;
+					}
+					// "name": <node name>
+					// "value": <blob id>
+					if (content === "value") {
+						snapshotTree.blobs[treeNode.getString(1)] = treeNode.getString(3);
+						continue;
+					}
+					break;
 				}
-				// "name": <node name>
-				// "value": <blob id>
-				if (content === "value") {
-					snapshotTree.blobs[treeNode.getString(1)] = treeNode.getString(3);
-					continue;
+				case 6: {
+					// "name": <node name>
+					// "nodeType": 3
+					// "value": <blob id>
+					if (
+						treeNode.getMaybeString(2) === "nodeType" &&
+						treeNode.getMaybeString(4) === "value"
+					) {
+						snapshotTree.blobs[treeNode.getString(1)] = treeNode.getString(5);
+						continue;
+					}
+
+					// "name": <node name>
+					// "unreferenced": true
+					// "children": <blob id>
+					if (
+						treeNode.getMaybeString(2) === "unreferenced" &&
+						treeNode.getMaybeString(4) === "children"
+					) {
+						const result = readTreeSection(treeNode.getNode(5));
+						trees[treeNode.getString(1)] = result.snapshotTree;
+						slowTreeStructureCount += result.slowTreeStructureCount;
+						assert(
+							treeNode.getBool(3),
+							0x3db /* Unreferenced if present should be true */,
+						);
+						snapshotTree.unreferenced = true;
+						continue;
+					}
+					break;
 				}
-			}
-
-			// "name": <node name>
-			// "nodeType": 3
-			// "value": <blob id>
-			if (
-				length === 6 &&
-				treeNode.getMaybeString(2) === "nodeType" &&
-				treeNode.getMaybeString(4) === "value"
-			) {
-				snapshotTree.blobs[treeNode.getString(1)] = treeNode.getString(5);
-				continue;
-			}
-
-			// "name": <node name>
-			// "unreferenced": true
-			// "children": <blob id>
-			if (
-				length === 6 &&
-				treeNode.getMaybeString(2) === "unreferenced" &&
-				treeNode.getMaybeString(4) === "children"
-			) {
-				const result = readTreeSection(treeNode.getNode(5));
-				trees[treeNode.getString(1)] = result.snapshotTree;
-				slowTreeStructureCount += result.slowTreeStructureCount;
-				assert(treeNode.getBool(3), 0x3db /* Unreferenced if present should be true */);
-				snapshotTree.unreferenced = true;
-				continue;
+				default:
+					break;
 			}
 		}
 
@@ -173,6 +181,20 @@ function readTreeSection(node: NodeCore) {
 			assertBoolInstance(records.unreferenced, "Unreferenced flag should be bool");
 			assert(records.unreferenced, 0x281 /* "Unreferenced if present should be true" */);
 			snapshotTree.unreferenced = true;
+		}
+
+		if (records.groupId !== undefined) {
+			const groupId = getStringInstance(records.groupId, "groupId should be a string");
+			snapshotTree.groupId = groupId;
+		}
+
+		if (records.omitted !== undefined) {
+			assertBoolInstance(records.omitted, "omitted should be a boolean");
+			assert(
+				!records.omitted || snapshotTree.groupId !== undefined,
+				"GroupId absent but omitted is true",
+			);
+			snapshotTree.omitted = records.omitted;
 		}
 
 		const path = getStringInstance(records.name, "Path name should be string");
@@ -249,19 +271,20 @@ export function parseCompactSnapshotResponse(
 	);
 
 	const [snapshot, durationSnapshotTree] = measure(() => readSnapshotSection(records.snapshot));
-	const [blobs, durationBlobs] = measure(() => readBlobSection(records.blobs));
+	const [blobContents, durationBlobs] = measure(() => readBlobSection(records.blobs));
 
 	return {
 		...snapshot,
-		...blobs,
+		...blobContents,
 		ops: records.deltas !== undefined ? readOpsSection(records.deltas) : [],
 		latestSequenceNumber: records.lsn,
+		snapshotFormatV: 1,
 		telemetryProps: {
 			...telemetryProps,
 			durationSnapshotTree,
 			durationBlobs,
 			slowTreeStructureCount: snapshot.slowTreeStructureCount,
-			slowBlobStructureCount: blobs.slowBlobStructureCount,
+			slowBlobStructureCount: blobContents.slowBlobStructureCount,
 		},
 	};
 }

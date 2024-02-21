@@ -4,9 +4,9 @@
  */
 
 import { assert } from '@fluidframework/core-utils';
-import { assertWithMessage, copyPropertyIfDefined, fail, Result } from './Common';
-import { NodeId, DetachedSequenceId, TraitLabel, isDetachedSequenceId } from './Identifiers';
-import { rangeFromStableRange } from './TreeViewUtilities';
+import { assertWithMessage, copyPropertyIfDefined, fail, Result } from './Common.js';
+import { NodeId, DetachedSequenceId, TraitLabel, isDetachedSequenceId } from './Identifiers.js';
+import { rangeFromStableRange } from './TreeViewUtilities.js';
 import {
 	BuildInternal,
 	BuildNodeInternal,
@@ -20,7 +20,7 @@ import {
 	SetValueInternal,
 	StablePlaceInternal,
 	StableRangeInternal,
-} from './persisted-types';
+} from './persisted-types/index.js';
 import {
 	detachRange,
 	insertIntoTrait,
@@ -30,10 +30,10 @@ import {
 	BadRangeValidationResult,
 	PlaceValidationResult,
 	RangeValidationResultKind,
-} from './EditUtilities';
-import { RevisionView, TransactionView } from './RevisionView';
-import { ReconciliationChange, ReconciliationPath } from './ReconciliationPath';
-import { TreeViewNode } from './TreeView';
+} from './EditUtilities.js';
+import { RevisionView, TransactionView } from './RevisionView.js';
+import { ReconciliationChange, ReconciliationPath } from './ReconciliationPath.js';
+import { TreeViewNode } from './TreeView.js';
 
 /**
  * Result of applying a transaction.

@@ -5,7 +5,7 @@
 
 import { FluidErrorTypes } from "@fluidframework/core-interfaces";
 
-import { IResolvedUrl } from "./urlResolver";
+import type { IResolvedUrl } from "./urlResolver";
 
 // Omit `dataCorruptionError` and `dataProcessingError` from the list of values inherited from FluidErrorTypes
 const { dataCorruptionError, dataProcessingError, ...FluidErrorTypesExceptDataTypes } =

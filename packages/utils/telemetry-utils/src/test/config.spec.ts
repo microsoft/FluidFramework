@@ -5,9 +5,13 @@
 
 import { strict as assert } from "node:assert";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { CachedConfigProvider, inMemoryConfigProvider } from "../config";
-import { TelemetryDataTag } from "../logger";
-import { MockLogger } from "../mockLogger";
+import {
+	CachedConfigProvider,
+	inMemoryConfigProvider,
+	wrapConfigProviderWithDefaults,
+} from "../config.js";
+import { TelemetryDataTag } from "../logger.js";
+import { MockLogger } from "../mockLogger.js";
 
 const getMockStore = (settings: Record<string, string>): Storage => {
 	const ops: string[] = [];
@@ -279,4 +283,30 @@ describe("Config", () => {
 	});
 
 	// #endregion SettingsProvider
+});
+
+describe("wrappedConfigProvider", () => {
+	const configProvider = (featureGates: Record<string, ConfigTypes>): IConfigProviderBase => ({
+		getRawConfig: (name: string): ConfigTypes => featureGates[name],
+	});
+
+	it("When there is no original config provider", () => {
+		const config = wrapConfigProviderWithDefaults(undefined, { "Fluid.Feature.Gate": true });
+		assert.strictEqual(config.getRawConfig("Fluid.Feature.Gate"), true);
+	});
+
+	it("When the original config provider does not specify the required key", () => {
+		const config = wrapConfigProviderWithDefaults(configProvider({}), {
+			"Fluid.Feature.Gate": true,
+		});
+		assert.strictEqual(config.getRawConfig("Fluid.Feature.Gate"), true);
+	});
+
+	it("When the original config provider specifies the required key", () => {
+		const config = wrapConfigProviderWithDefaults(
+			configProvider({ "Fluid.Feature.Gate": false }),
+			{ "Fluid.Feature.Gate": true },
+		);
+		assert.strictEqual(config.getRawConfig("Fluid.Feature.Gate"), false);
+	});
 });

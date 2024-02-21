@@ -5,7 +5,7 @@
 import { strict as assert, fail } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { ITreeCheckout, TreeContent } from "../../shared-tree/index.js";
-import { leaf, SchemaBuilder } from "../../domains/index.js";
+import { leaf } from "../../domains/index.js";
 import {
 	TestTreeProviderLite,
 	createTestUndoRedoStacks,
@@ -14,7 +14,6 @@ import {
 	jsonSequenceRootSchema,
 	flexTreeViewWithContent,
 	checkoutWithContent,
-	requiredBooleanRootSchema,
 	validateTreeContent,
 	numberSequenceRootSchema,
 } from "../utils.js";
@@ -33,6 +32,8 @@ import {
 import {
 	ContextuallyTypedNodeData,
 	FieldKinds,
+	FlexFieldSchema,
+	SchemaBuilderBase,
 	cursorForJsonableTreeField,
 	intoStoredSchema,
 } from "../../feature-libraries/index.js";
@@ -44,11 +45,16 @@ const rootField: FieldUpPath = {
 
 describe("sharedTreeView", () => {
 	describe("Events", () => {
-		const builder = new SchemaBuilder({ scope: "Events test schema" });
-		const rootTreeNodeSchema = builder.object("root", {
-			x: builder.number,
+		const builder = new SchemaBuilderBase(FieldKinds.required, {
+			scope: "Events test schema",
+			libraries: [leaf.library],
 		});
-		const schema = builder.intoSchema(builder.optional(rootTreeNodeSchema));
+		const rootTreeNodeSchema = builder.object("root", {
+			x: leaf.number,
+		});
+		const schema = builder.intoSchema(
+			FlexFieldSchema.create(FieldKinds.optional, [rootTreeNodeSchema]),
+		);
 
 		it("triggers events for local and subtree changes", () => {
 			const view = flexTreeViewWithContent({
@@ -367,7 +373,13 @@ describe("sharedTreeView", () => {
 				assert.equal(getSchema(parent), "schemaA");
 				assert.equal(getSchema(child), "schemaB");
 			},
-			{ schema: requiredBooleanRootSchema, initialTree: true },
+			{
+				schema: new SchemaBuilderBase(FieldKinds.required, {
+					scope: "test",
+					libraries: [leaf.library],
+				}).intoSchema(leaf.boolean),
+				initialTree: true,
+			},
 		);
 
 		it("submit edits to Fluid when merging into the root view", () => {

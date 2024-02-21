@@ -18,6 +18,7 @@ export { AttachState, ContainerErrorTypes } from "@fluidframework/container-defi
 export { DriverErrorTypes } from "@fluidframework/driver-definitions";
 export { ConnectionState } from "@fluidframework/container-loader";
 export type {
+	ContainerAttachProps,
 	ContainerSchema,
 	DataObjectClass,
 	IConnection,

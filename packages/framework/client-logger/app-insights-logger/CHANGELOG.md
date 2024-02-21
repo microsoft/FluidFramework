@@ -1,5 +1,13 @@
 # @fluid-internal/app-insights-logger
 
+## 2.0.0-rc.1.0.0
+
+### Major Changes
+
+-   @fluid-experimental/app-insights-logger package renamed ([#18817](https://github.com/microsoft/FluidFramework/issues/18817)) [d1f584108b](https://github.com/microsoft/FluidFramework/commits/d1f584108bb93e73c355456d414d444c3641b7ab)
+
+    The package is now `@fluidframework/app-insights-logger`.
+
 ## 2.0.0-internal.8.0.0
 
 Dependency updates only.

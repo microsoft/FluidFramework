@@ -4,26 +4,26 @@
 
 ```ts
 
-import { ConnectionMode } from '@fluidframework/protocol-definitions';
-import { IClient } from '@fluidframework/protocol-definitions';
-import { IClientConfiguration } from '@fluidframework/protocol-definitions';
-import { ICreateBlobResponse } from '@fluidframework/protocol-definitions';
-import { IDisposable } from '@fluidframework/core-interfaces';
-import { IDocumentMessage } from '@fluidframework/protocol-definitions';
-import { IErrorEvent } from '@fluidframework/core-interfaces';
-import { IEvent } from '@fluidframework/core-interfaces';
-import { IEventProvider } from '@fluidframework/core-interfaces';
-import { INack } from '@fluidframework/protocol-definitions';
-import { IRequest } from '@fluidframework/core-interfaces';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISignalClient } from '@fluidframework/protocol-definitions';
-import { ISignalMessage } from '@fluidframework/protocol-definitions';
-import { ISnapshotTree } from '@fluidframework/protocol-definitions';
-import { ISummaryHandle } from '@fluidframework/protocol-definitions';
-import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { ITokenClaims } from '@fluidframework/protocol-definitions';
-import { IVersion } from '@fluidframework/protocol-definitions';
+import type { ConnectionMode } from '@fluidframework/protocol-definitions';
+import type { IClient } from '@fluidframework/protocol-definitions';
+import type { IClientConfiguration } from '@fluidframework/protocol-definitions';
+import type { ICreateBlobResponse } from '@fluidframework/protocol-definitions';
+import type { IDisposable } from '@fluidframework/core-interfaces';
+import type { IDocumentMessage } from '@fluidframework/protocol-definitions';
+import type { IErrorEvent } from '@fluidframework/core-interfaces';
+import type { IEvent } from '@fluidframework/core-interfaces';
+import type { IEventProvider } from '@fluidframework/core-interfaces';
+import type { INack } from '@fluidframework/protocol-definitions';
+import type { IRequest } from '@fluidframework/core-interfaces';
+import type { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import type { ISignalClient } from '@fluidframework/protocol-definitions';
+import type { ISignalMessage } from '@fluidframework/protocol-definitions';
+import type { ISnapshotTree } from '@fluidframework/protocol-definitions';
+import type { ISummaryHandle } from '@fluidframework/protocol-definitions';
+import type { ISummaryTree } from '@fluidframework/protocol-definitions';
+import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import type { ITokenClaims } from '@fluidframework/protocol-definitions';
+import type { IVersion } from '@fluidframework/protocol-definitions';
 
 // @alpha (undocumented)
 export type DriverError = IThrottlingWarning | IGenericNetworkError | IAuthorizationError | ILocationRedirectionError | IDriverBasicError;
@@ -176,18 +176,18 @@ export interface IDocumentServiceFactory {
 export interface IDocumentServicePolicies {
     readonly storageOnly?: boolean;
     readonly summarizeProtocolTree?: boolean;
+    readonly supportGetSnapshotApi?: boolean;
 }
 
 // @alpha
 export interface IDocumentStorageService extends Partial<IDisposable> {
     createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
     downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
+    getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
     getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
     getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion[]>;
     readonly policies?: IDocumentStorageServicePolicies;
     readBlob(id: string): Promise<ArrayBufferLike>;
-    // (undocumented)
-    repositoryUrl: string;
     uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
 }
 
@@ -253,6 +253,29 @@ export interface IResolvedUrl {
     type: "fluid";
     // (undocumented)
     url: string;
+}
+
+// @alpha (undocumented)
+export interface ISnapshot {
+    // (undocumented)
+    blobContents: Map<string, ArrayBuffer>;
+    latestSequenceNumber: number | undefined;
+    // (undocumented)
+    ops: ISequencedDocumentMessage[];
+    sequenceNumber: number | undefined;
+    // (undocumented)
+    snapshotFormatV: 1;
+    // (undocumented)
+    snapshotTree: ISnapshotTree;
+}
+
+// @alpha
+export interface ISnapshotFetchOptions {
+    cacheSnapshot?: boolean;
+    fetchSource?: FetchSource;
+    loadingGroupIds?: string[];
+    scenarioName?: string;
+    versionId?: string;
 }
 
 // @alpha

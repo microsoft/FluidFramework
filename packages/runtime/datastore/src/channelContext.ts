@@ -97,6 +97,7 @@ export function createChannelServiceEndpoints(
 	};
 }
 
+/** Used to get the channel's summary for the DDS or DataStore attach op */
 export function summarizeChannel(
 	channel: IChannel,
 	fullTree: boolean = false,

@@ -38,7 +38,6 @@ import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitio
 import { IIdCompressor } from '@fluidframework/id-compressor';
 import { IIdCompressorCore } from '@fluidframework/id-compressor';
 import { ILoader } from '@fluidframework/container-definitions';
-import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
@@ -79,6 +78,8 @@ export interface IMockContainerRuntimePendingMessage {
     content: any;
     // (undocumented)
     localOpMetadata: unknown;
+    // (undocumented)
+    referenceSequenceNumber: number;
 }
 
 // @internal
@@ -118,7 +119,7 @@ export class MockContainerRuntime {
     finalizeIdRange(range: IdCreationRange): void;
     flush(): void;
     // (undocumented)
-    getGeneratedIdRange(): IdCreationRange | undefined;
+    get isDirty(): boolean;
     // (undocumented)
     protected readonly overrides?: {
         minimumSequenceNumber?: number | undefined;
@@ -129,7 +130,11 @@ export class MockContainerRuntime {
     process(message: ISequencedDocumentMessage): void;
     rebase(): void;
     protected get referenceSequenceNumber(): number;
-    protected runtimeOptions: Required<IMockContainerRuntimeOptions>;
+    // (undocumented)
+    protected reSubmitMessages(messagesToResubmit: {
+        content: any;
+        localOpMetadata: unknown;
+    }[]): void;
     // (undocumented)
     submit(messageContent: any, localOpMetadata: unknown): number;
 }
@@ -153,13 +158,13 @@ export class MockContainerRuntimeFactory {
     pushMessage(msg: Partial<ISequencedDocumentMessage>): void;
     // (undocumented)
     readonly quorum: MockQuorumClients;
+    // (undocumented)
+    removeContainerRuntime(containerRuntime: MockContainerRuntime): void;
     protected readonly runtimeOptions: Required<IMockContainerRuntimeOptions>;
     // (undocumented)
-    protected readonly runtimes: MockContainerRuntime[];
+    protected readonly runtimes: Set<MockContainerRuntime>;
     // (undocumented)
     sequenceNumber: number;
-    // (undocumented)
-    synchronizeIdCompressors(): void;
 }
 
 // @alpha
@@ -169,6 +174,7 @@ export class MockContainerRuntimeFactoryForReconnection extends MockContainerRun
     // (undocumented)
     createContainerRuntime(dataStoreRuntime: MockFluidDataStoreRuntime, overrides?: {
         minimumSequenceNumber?: number;
+        trackRemoteOps?: boolean;
     }): MockContainerRuntimeForReconnection;
 }
 
@@ -176,10 +182,15 @@ export class MockContainerRuntimeFactoryForReconnection extends MockContainerRun
 export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
     constructor(dataStoreRuntime: MockFluidDataStoreRuntime, factory: MockContainerRuntimeFactoryForReconnection, runtimeOptions?: IMockContainerRuntimeOptions, overrides?: {
         minimumSequenceNumber?: number;
+        trackRemoteOps?: boolean;
     });
     // (undocumented)
     get connected(): boolean;
     set connected(connected: boolean);
+    // (undocumented)
+    protected readonly factory: MockContainerRuntimeFactoryForReconnection;
+    // (undocumented)
+    initializeWithStashedOps(fromContainerRuntime: MockContainerRuntimeForReconnection): Promise<void>;
     // (undocumented)
     process(message: ISequencedDocumentMessage): void;
     // (undocumented)
@@ -189,6 +200,8 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 // @alpha
 export class MockDeltaConnection implements IDeltaConnection {
     constructor(submitFn: (messageContent: any, localOpMetadata: unknown) => number, dirtyFn: () => void);
+    // (undocumented)
+    applyStashedOp(content: any): unknown;
     // (undocumented)
     attach(handler: IDeltaHandler): void;
     // (undocumented)
@@ -363,7 +376,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     once(event: string | symbol, listener: (...args: any[]) => void): this;
     // (undocumented)
-    options: ILoaderOptions;
+    options: Record<string | number, any>;
     // (undocumented)
     packagePath: readonly string[];
     // (undocumented)
@@ -394,7 +407,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // @deprecated (undocumented)
     addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
     // (undocumented)
-    applyStashedOp(content: any): Promise<void>;
+    applyStashedOp(content: any): Promise<unknown>;
     // (undocumented)
     attachGraph(): void;
     // (undocumented)
@@ -465,7 +478,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     get objectsRoutingContext(): IFluidHandleContext;
     // (undocumented)
-    options: ILoaderOptions;
+    options: Record<string | number, any>;
     // (undocumented)
     readonly path = "";
     // (undocumented)

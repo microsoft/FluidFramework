@@ -22,12 +22,13 @@ import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-ba
 import { ICodecOptions, IJsonCodec } from "../codec/index.js";
 import { ChangeFamily, ChangeFamilyEditor, GraphCommit, RevisionTagCodec } from "../core/index.js";
 import { brand, JsonCompatibleReadOnly } from "../util/index.js";
+import { SchemaAndPolicy } from "../feature-libraries/index.js";
 import { SharedTreeBranch, getChangeReplaceType } from "./branch.js";
 import { EditManagerSummarizer } from "./editManagerSummarizer.js";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
 import { SeqNumber } from "./editManagerFormat.js";
 import { DecodedMessage } from "./messageTypes.js";
-import { makeMessageCodec } from "./messageCodecs.js";
+import { MessageEncodingContext, makeMessageCodec } from "./messageCodecs.js";
 
 // TODO: How should the format version be determined?
 const formatVersion = 0;
@@ -43,9 +44,6 @@ const summarizablesTreeKey = "indexes";
 export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends SharedObject {
 	private readonly editManager: EditManager<TEditor, TChange, ChangeFamily<TEditor, TChange>>;
 	private readonly summarizables: readonly Summarizable[];
-
-	/** Iff false, calls to `submitOp` will have no effect */
-	private submitOps = true;
 
 	/**
 	 * The sequence number that this instance is at.
@@ -71,9 +69,16 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * as necessary (e.g. an upgrade op came in, or the configuration changed within the collab window
 	 * and an op needs to be interpreted which isn't written with the current configuration).
 	 */
-	private readonly messageCodec: IJsonCodec<DecodedMessage<TChange>, unknown>;
+	private readonly messageCodec: IJsonCodec<
+		DecodedMessage<TChange>,
+		unknown,
+		unknown,
+		MessageEncodingContext
+	>;
 
 	private readonly idCompressor: IIdCompressor;
+
+	private readonly schemaAndPolicy: SchemaAndPolicy;
 
 	/**
 	 * @param summarizables - Summarizers for all indexes used by this tree
@@ -93,8 +98,11 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
 		telemetryContextPrefix: string,
+		schemaAndPolicy: SchemaAndPolicy,
 	) {
 		super(id, runtime, attributes, telemetryContextPrefix);
+
+		this.schemaAndPolicy = schemaAndPolicy;
 
 		assert(
 			runtime.idCompressor !== undefined,
@@ -132,7 +140,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 
 		const revisionTagCodec = new RevisionTagCodec(runtime.idCompressor);
 		this.summarizables = [
-			new EditManagerSummarizer(this.editManager, revisionTagCodec, options),
+			new EditManagerSummarizer(
+				this.editManager,
+				revisionTagCodec,
+				options,
+				this.schemaAndPolicy,
+			),
 			...summarizables,
 		];
 		assert(
@@ -190,10 +203,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * @param commit - the commit to submit
 	 */
 	private submitCommit(commit: GraphCommit<TChange>, isResubmit = false): void {
-		if (!this.submitOps) {
-			return;
-		}
-
 		// Edits should not be submitted until all transactions finish
 		assert(
 			!this.getLocalBranch().isTransacting() || isResubmit,
@@ -212,10 +221,21 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 				this.detachedRevision,
 			);
 		}
-		const message = this.messageCodec.encode({
-			commit,
-			sessionId: this.editManager.localSessionId,
-		});
+
+		// Don't submit the op if it is not attached
+		if (!this.isAttached()) {
+			return;
+		}
+
+		const message = this.messageCodec.encode(
+			{
+				commit,
+				sessionId: this.editManager.localSessionId,
+			},
+			{
+				schema: this.schemaAndPolicy ?? undefined,
+			},
+		);
 		this.submitLocalMessage(this.serializer.encode(message, this.handle));
 	}
 
@@ -225,7 +245,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		localOpMetadata: unknown,
 	) {
 		const contents: unknown = this.serializer.decode(message.contents);
-		const { commit, sessionId } = this.messageCodec.decode(contents);
+		// Empty context object is passed in, as our decode function is schema-agnostic.
+		const { commit, sessionId } = this.messageCodec.decode(contents, {});
 		this.editManager.addSequencedChange(
 			{ ...commit, sessionId },
 			brand(message.sequenceNumber),
@@ -251,25 +272,24 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	}
 
 	protected override reSubmitCore(content: JsonCompatibleReadOnly, localOpMetadata: unknown) {
+		// Empty context object is passed in, as our decode function is schema-agnostic.
 		const {
 			commit: { revision },
-		} = this.messageCodec.decode(content);
+		} = this.messageCodec.decode(content, {});
 		const [commit] = this.editManager.findLocalCommit(revision);
 		this.submitCommit(commit, true);
 	}
 
-	protected applyStashedOp(content: JsonCompatibleReadOnly): undefined {
+	protected applyStashedOp(content: JsonCompatibleReadOnly): void {
 		assert(
 			!this.getLocalBranch().isTransacting(),
 			0x674 /* Unexpected transaction is open while applying stashed ops */,
 		);
+		// Empty context object is passed in, as our decode function is schema-agnostic.
 		const {
 			commit: { revision, change },
-		} = this.messageCodec.decode(content);
-		this.submitOps = false;
+		} = this.messageCodec.decode(content, {});
 		this.editManager.localBranch.apply(change, revision);
-		this.submitOps = true;
-		return;
 	}
 
 	public override getGCData(fullGC?: boolean): IGarbageCollectionData {

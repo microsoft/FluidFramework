@@ -63,7 +63,12 @@ export interface BoundFieldChangeRebaser<TChangeset> {
 		change: TChangeset,
 		...baseChanges: TaggedChange<TChangeset>[]
 	): TChangeset;
-	compose(changes: TaggedChange<TChangeset>[], metadata?: RevisionMetadataSource): TChangeset;
+	compose(
+		change1: TaggedChange<TChangeset>,
+		change2: TaggedChange<TChangeset>,
+		metadata?: RevisionMetadataSource,
+	): TChangeset;
+	createEmpty(): TChangeset;
 	assertEqual?(
 		change1: TaggedChange<TChangeset> | undefined,
 		change2: TaggedChange<TChangeset> | undefined,

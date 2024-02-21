@@ -15,8 +15,8 @@ import {
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
+	createTestConfigProvider,
 	createSummarizer,
-	mockConfigProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import {
@@ -37,9 +37,10 @@ import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 describeCompat("GC state reset in summaries", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let mainContainer: IContainer;
-	const settings = {
-		"Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs": 10,
-	};
+
+	const configProvider = createTestConfigProvider();
+	configProvider.set("Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs", 10);
+	configProvider.set("Fluid.ContainerRuntime.SubmitSummary.shouldValidatePreSummaryState", true);
 
 	/** Creates a new container with the GC enabled / disabled as per gcAllowed param. */
 	const createContainer = async (gcAllowed: boolean): Promise<IContainer> => {
@@ -51,7 +52,7 @@ describeCompat("GC state reset in summaries", "NoCompat", (getTestObjectProvider
 					gcAllowed,
 				},
 			},
-			loaderProps: { configProvider: mockConfigProvider(settings) },
+			loaderProps: { configProvider },
 		};
 		return provider.makeTestContainer(testContainerConfig);
 	};

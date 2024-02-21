@@ -6,28 +6,29 @@ import * as fs from 'fs';
 import { join } from 'path';
 import { expect, assert } from 'chai';
 import { v5 } from 'uuid';
-import { Change, StablePlace, StableRange } from '../ChangeTypes';
-import { fail, RecursiveMutable } from '../Common';
-import { areRevisionViewsSemanticallyEqual } from '../EditUtilities';
-import { EditId, NodeId, SessionId, StableId, TraitLabel } from '../Identifiers';
-import { initialTree } from '../InitialTree';
-import { reservedIdCount, SharedTreeSummary, SharedTreeSummary_0_0_2, WriteFormat } from '../persisted-types';
-import { getChangeNodeFromView } from '../SerializationUtilities';
-import { SharedTree } from '../SharedTree';
-import { deserialize, getSummaryStatistics, SummaryStatistics } from '../SummaryBackCompatibility';
-import { IdCompressor } from '../id-compressor';
-import { convertEditIds } from '../IdConversion';
-import { MutableStringInterner } from '../StringInterner';
-import { sequencedIdNormalizer } from '../NodeIdUtilities';
-import { expectDefined } from './utilities/TestCommon';
-import { TestFluidSerializer } from './utilities/TestSerializer';
+import { ISummaryBlob, SummaryType } from '@fluidframework/protocol-definitions';
+import { Change, StablePlace, StableRange } from '../ChangeTypes.js';
+import { fail, RecursiveMutable } from '../Common.js';
+import { areRevisionViewsSemanticallyEqual } from '../EditUtilities.js';
+import { EditId, NodeId, SessionId, StableId, TraitLabel } from '../Identifiers.js';
+import { initialTree } from '../InitialTree.js';
+import { reservedIdCount, SharedTreeSummary, SharedTreeSummary_0_0_2, WriteFormat } from '../persisted-types/index.js';
+import { getChangeNodeFromView } from '../SerializationUtilities.js';
+import { SharedTree } from '../SharedTree.js';
+import { deserialize, getSummaryStatistics, SummaryStatistics } from '../SummaryBackCompatibility.js';
+import { IdCompressor } from '../id-compressor/index.js';
+import { convertEditIds } from '../IdConversion.js';
+import { MutableStringInterner } from '../StringInterner.js';
+import { sequencedIdNormalizer } from '../NodeIdUtilities.js';
+import { expectDefined } from './utilities/TestCommon.js';
+import { TestFluidSerializer } from './utilities/TestSerializer.js';
 import {
 	getEditLogInternal,
 	getIdNormalizerFromSharedTree,
 	makeNodeIdContext,
 	setUpLocalServerTestSharedTree,
 	testDocumentsPathBase,
-} from './utilities/TestUtilities';
+} from './utilities/TestUtilities.js';
 
 const directory = join(testDocumentsPathBase, 'summary-tests');
 
@@ -196,7 +197,13 @@ export function runSummaryTests(title: string): void {
 
 			it('writes 0.0.2 files without history', async () => {
 				const tree = await setUp002SummaryTestTree(false);
-				const summary: RecursiveMutable<SharedTreeSummary_0_0_2> = JSON.parse(tree.saveSerializedSummary());
+
+				const { summary: attachSummary } = tree.getAttachSummary();
+				expect(attachSummary.type).to.equal(SummaryType.Tree, 'Summary type should be Tree');
+				expect(attachSummary.tree.header.type).to.equal(SummaryType.Blob, 'Summary should contain header blob');
+				const serializedSummary = (attachSummary.tree.header as ISummaryBlob).content as string;
+
+				const summary: RecursiveMutable<SharedTreeSummary_0_0_2> = JSON.parse(serializedSummary);
 				const expectedSummary: SharedTreeSummary_0_0_2 = JSON.parse(summaryFileNoHistory_0_0_2);
 				// The edit ID of the single "no history edit" is generated randomly. Replace it with the baseline edit for the sake of this test.
 				summary.sequencedEdits[0].id = expectedSummary.sequencedEdits[0].id;

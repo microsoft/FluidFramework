@@ -848,21 +848,9 @@ describe("SharedString interval collections", () => {
 		});
 
 		it("propagates delete op to second runtime", async () => {
-			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
-
-			// Connect the first SharedString.
-			const containerRuntime1 =
-				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
-			const services1: IChannelServices = {
-				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
-				objectStorage: new MockStorage(),
-			};
-			sharedString.initializeLocal();
-			sharedString.connect(services1);
-
 			// Create and connect a second SharedString.
 			const runtime2 = new MockFluidDataStoreRuntime();
-			const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(runtime2);
+			containerRuntimeFactory.createContainerRuntime(runtime2);
 			sharedString2 = new SharedString(
 				runtime2,
 				"shared-string-2",

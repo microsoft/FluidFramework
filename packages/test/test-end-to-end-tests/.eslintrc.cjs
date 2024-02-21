@@ -17,7 +17,16 @@ module.exports = {
 		"@typescript-eslint/no-restricted-imports": [
 			"error",
 			{
-				paths: ["@fluidframework/map"].map((importName) => ({
+				paths: [
+					"@fluidframework/cell",
+					"@fluidframework/counter",
+					"@fluidframework/map",
+					"@fluidframework/matrix",
+					"@fluidframework/ordered-collection",
+					"@fluidframework/register-collection",
+					"@fluidframework/sequence",
+					"@fluid-experimental/sequence-deprecated",
+				].map((importName) => ({
 					name: importName,
 					message:
 						"Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See \"How-to\" in the README for more information.",

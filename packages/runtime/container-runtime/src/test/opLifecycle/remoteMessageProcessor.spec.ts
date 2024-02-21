@@ -54,7 +54,7 @@ describe("RemoteMessageProcessor", () => {
 			mockDecompressor as OpDecompressor,
 			new OpGroupingManager(
 				{
-					groupedBatchingEnabled: false,
+					groupedBatchingEnabled: true,
 					opCountThreshold: Infinity,
 					reentrantBatchGroupingEnabled: false,
 				},
@@ -176,5 +176,64 @@ describe("RemoteMessageProcessor", () => {
 
 		assert.deepStrictEqual(result.contents, message.contents);
 		assert.deepStrictEqual(result.type, message.type);
+	});
+
+	it("Processing groupedBatch works as expected", () => {
+		const groupedBatch = {
+			type: MessageType.Operation,
+			sequenceNumber: 10,
+			clientSequenceNumber: 12,
+			contents: {
+				type: OpGroupingManager.groupedBatchOp,
+				contents: [
+					{
+						contents: {
+							type: ContainerMessageType.FluidDataStoreOp,
+							contents: {
+								contents: "a",
+							},
+						},
+					},
+					{
+						contents: {
+							type: ContainerMessageType.FluidDataStoreOp,
+							contents: {
+								contents: "b",
+							},
+						},
+					},
+				],
+			},
+		};
+		const messageProcessor = getMessageProcessor();
+		const result = messageProcessor.process(groupedBatch as ISequencedDocumentMessage);
+
+		const expected = [
+			{
+				type: ContainerMessageType.FluidDataStoreOp,
+				sequenceNumber: 10,
+				clientSequenceNumber: 1,
+				compression: undefined,
+				metadata: {
+					history: ["decompress", "reconstruct"],
+				},
+				contents: {
+					contents: "a",
+				},
+			},
+			{
+				type: ContainerMessageType.FluidDataStoreOp,
+				sequenceNumber: 10,
+				clientSequenceNumber: 2,
+				compression: undefined,
+				metadata: {
+					history: ["decompress", "reconstruct"],
+				},
+				contents: {
+					contents: "b",
+				},
+			},
+		];
+		assert.deepStrictEqual(result, expected, "unexpected processing of groupedBatch");
 	});
 });

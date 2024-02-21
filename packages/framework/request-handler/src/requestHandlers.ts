@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IResponse } from "@fluidframework/core-interfaces";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { RequestParser } from "@fluidframework/runtime-utils";
+import { type IResponse } from "@fluidframework/core-interfaces";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { type RequestParser } from "@fluidframework/runtime-utils";
 
 /**
  * A request handler for the container runtime. Each handler should handle a specific request, and return undefined

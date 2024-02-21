@@ -18,10 +18,10 @@ import {
 	makeRandom,
 } from '@fluid-private/stochastic-test-utils';
 import { validateAssertionError } from '@fluidframework/test-runtime-utils';
-import { fail } from '../Common';
-import { isFinalId, isLocalId } from '../id-compressor';
-import { SessionIdNormalizer } from '../id-compressor/SessionIdNormalizer';
-import { FinalCompressedId, LocalCompressedId, SessionSpaceCompressedId } from '../Identifiers';
+import { fail } from '../Common.js';
+import { isFinalId, isLocalId } from '../id-compressor/index.js';
+import { SessionIdNormalizer } from '../id-compressor/SessionIdNormalizer.js';
+import { FinalCompressedId, LocalCompressedId, SessionSpaceCompressedId } from '../Identifiers.js';
 
 describe('SessionIdNormalizer', () => {
 	it('fails when adding finals with no corresponding locals', () => {

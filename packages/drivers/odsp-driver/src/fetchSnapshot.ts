@@ -13,6 +13,7 @@ import {
 import { fromUtf8ToBase64 } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import { getW3CData } from "@fluidframework/driver-base";
+import { ISnapshot } from "@fluidframework/driver-definitions";
 import {
 	IOdspResolvedUrl,
 	ISnapshotOptions,
@@ -25,10 +26,13 @@ import {
 	isRuntimeMessage,
 	NonRetryableError,
 } from "@fluidframework/driver-utils";
-import { fetchIncorrectResponse, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
+import {
+	fetchIncorrectResponse,
+	throwOdspNetworkError,
+} from "@fluidframework/odsp-doclib-utils/internal";
 import {
 	IOdspSnapshot,
-	ISnapshotCachedEntry,
+	ISnapshotCachedEntry2,
 	IVersionedValueWithEpoch,
 	persistedCacheValueVersion,
 } from "./contracts";
@@ -40,10 +44,11 @@ import {
 	getWithRetryForTokenRefresh,
 	getWithRetryForTokenRefreshRepeat,
 	IOdspResponse,
+	isSnapshotFetchForLoadingGroup,
 	measure,
 	measureP,
+	useLegacyFlowWithoutGroupsForSnapshotFetch,
 } from "./odspUtils";
-import { ISnapshotContents } from "./odspPublicUtils";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "./odspSnapshotParser";
 import {
 	currentReadVersion,
@@ -85,7 +90,7 @@ export async function fetchSnapshot(
 		url: string,
 		fetchOptions: { [index: string]: any },
 	) => Promise<IOdspResponse<unknown>>,
-): Promise<ISnapshotContents> {
+): Promise<ISnapshot> {
 	const path = `/trees/${versionId}`;
 	let queryParams: ISnapshotOptions = {};
 
@@ -119,13 +124,15 @@ export async function fetchSnapshotWithRedeem(
 	snapshotDownloader: (
 		finalOdspResolvedUrl: IOdspResolvedUrl,
 		storageToken: string,
+		loadingGroupIds: string[] | undefined,
 		snapshotOptions: ISnapshotOptions | undefined,
 		controller?: AbortController,
 	) => Promise<ISnapshotRequestAndResponseOptions>,
 	putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
 	removeEntries: () => Promise<void>,
+	loadingGroupIds: string[] | undefined,
 	enableRedeemFallback?: boolean,
-): Promise<ISnapshotContents> {
+): Promise<ISnapshot> {
 	// back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
 	const sharingLinkToRedeem = (odspResolvedUrl as any).sharingLinkToRedeem;
 	if (sharingLinkToRedeem) {
@@ -139,6 +146,7 @@ export async function fetchSnapshotWithRedeem(
 		logger,
 		snapshotDownloader,
 		putInCache,
+		loadingGroupIds,
 		enableRedeemFallback,
 	)
 		.catch(async (error) => {
@@ -178,6 +186,7 @@ export async function fetchSnapshotWithRedeem(
 					logger,
 					snapshotDownloader,
 					putInCache,
+					loadingGroupIds,
 				);
 			} else {
 				throw error;
@@ -243,18 +252,22 @@ async function fetchLatestSnapshotCore(
 	snapshotDownloader: (
 		finalOdspResolvedUrl: IOdspResolvedUrl,
 		storageToken: string,
+		loadingGroupIds: string[] | undefined,
 		snapshotOptions: ISnapshotOptions | undefined,
 		controller?: AbortController,
 	) => Promise<ISnapshotRequestAndResponseOptions>,
 	putInCache: (valueWithEpoch: IVersionedValueWithEpoch) => Promise<void>,
+	loadingGroupIds: string[] | undefined,
 	enableRedeemFallback?: boolean,
-): Promise<ISnapshotContents> {
+): Promise<ISnapshot> {
 	return getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
-		const storageToken = await storageTokenFetcher(tokenFetchOptions, "TreesLatest", true);
+		const fetchSnapshotForLoadingGroup = isSnapshotFetchForLoadingGroup(loadingGroupIds);
+		const eventName = fetchSnapshotForLoadingGroup ? "TreesLatestForGroup" : "TreesLatest";
+		const storageToken = await storageTokenFetcher(tokenFetchOptions, eventName, true);
 		assert(storageToken !== null, 0x1e5 /* "Storage token should not be null" */);
 
 		const perfEvent = {
-			eventName: "TreesLatest",
+			eventName,
 			attempts: tokenFetchOptions.refresh ? 2 : 1,
 			shareLinkPresent: odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem !== undefined,
 			isSummarizer: odspResolvedUrl.summarizer,
@@ -277,7 +290,13 @@ async function fetchLatestSnapshotCore(
 			}
 
 			const [response, fetchTime] = await measureP(async () =>
-				snapshotDownloader(odspResolvedUrl, storageToken, snapshotOptions, controller),
+				snapshotDownloader(
+					odspResolvedUrl,
+					storageToken,
+					loadingGroupIds,
+					snapshotOptions,
+					controller,
+				),
 			).finally(() => {
 				// Clear the fetchTimeout once the response is fetched.
 				if (fetchTimeout !== undefined) {
@@ -327,7 +346,7 @@ async function fetchLatestSnapshotCore(
 						let content: IOdspSnapshot;
 						[content, parseTime] = measure(() => JSON.parse(text) as IOdspSnapshot);
 						validateBlobsAndTrees(content);
-						const snapshotContents: ISnapshotContents =
+						const snapshotContents: ISnapshot =
 							convertOdspSnapshotToSnapshotTreeAndBlobs(content);
 						parsedSnapshotContents = {
 							...odspResponse,
@@ -411,9 +430,10 @@ async function fetchLatestSnapshotCore(
 			const { trees, numBlobs, encodedBlobsSize } = evalBlobsAndTrees(snapshot);
 
 			// There are some scenarios in ODSP where we cannot cache, trees/latest will explicitly tell us when we
-			// cannot cache using an HTTP response header.
+			// cannot cache using an HTTP response header. Only cache snapshot if it is not for a loading group.
 			const canCache =
-				odspResponse.headers.get("disablebrowsercachingofusercontent") !== "true";
+				odspResponse.headers.get("disablebrowsercachingofusercontent") !== "true" &&
+				!fetchSnapshotForLoadingGroup;
 			const sequenceNumber: number = snapshot.sequenceNumber ?? 0;
 			const seqNumberFromOps =
 				snapshot.ops && snapshot.ops.length > 0
@@ -436,7 +456,7 @@ async function fetchLatestSnapshotCore(
 					fluidEpoch !== undefined,
 					0x1e6 /* "Epoch  should be present in response" */,
 				);
-				const value: ISnapshotCachedEntry = {
+				const value: ISnapshotCachedEntry2 = {
 					...snapshot,
 					cacheEntryTime: Date.now(),
 				};
@@ -451,11 +471,14 @@ async function fetchLatestSnapshotCore(
 
 			event.end({
 				trees,
-				blobs: snapshot.blobs?.size ?? 0,
+				blobs: snapshot.blobContents?.size ?? 0,
 				leafNodes: numBlobs,
 				encodedBlobsSize,
 				sequenceNumber,
 				ops: snapshot.ops?.length ?? 0,
+				fetchSnapshotForLoadingGroup,
+				useLegacyFlowWithoutGroups:
+					useLegacyFlowWithoutGroupsForSnapshotFetch(loadingGroupIds),
 				userOps: snapshot.ops?.filter((op) => isRuntimeMessage(op)).length ?? 0,
 				headers: Object.keys(response.requestHeaders).length !== 0 ? true : undefined,
 				// Measures time to make fetch call. Should be similar to
@@ -535,11 +558,11 @@ function getFormBodyAndHeaders(
 	return { body: postBody, headers: header };
 }
 
-export function evalBlobsAndTrees(snapshot: ISnapshotContents) {
+export function evalBlobsAndTrees(snapshot: ISnapshot) {
 	const trees = countTreesInSnapshotTree(snapshot.snapshotTree);
-	const numBlobs = snapshot.blobs.size;
+	const numBlobs = snapshot.blobContents.size;
 	let encodedBlobsSize = 0;
-	for (const [_, blobContent] of snapshot.blobs) {
+	for (const [_, blobContent] of snapshot.blobContents) {
 		encodedBlobsSize += blobContent.byteLength;
 	}
 	return { trees, numBlobs, encodedBlobsSize };
@@ -570,7 +593,10 @@ function countTreesInSnapshotTree(snapshotTree: ISnapshotTree): number {
  * @param odspResolvedUrl - resolved odsp url.
  * @param storageToken - token to do the auth for network request.
  * @param snapshotOptions - Options used to specify how and what to fetch in the snapshot.
- * @param logger - logger
+ * @param loadingGroupIds - loadingGroupIds for which snapshot needs to be downloaded. Note:
+ * 1.) If undefined, then legacy trees latest call will be used where no groupId query param would be specified.
+ * 2.) If [] is passed, then snapshot with all ungrouped data will be fetched.
+ * 3.) If any groupId is specified like ["g1"], then snapshot for g1 group will be fetched.
  * @param snapshotFormatFetchType - Snapshot format to fetch.
  * @param controller - abort controller if caller needs to abort the network call.
  * @param epochTracker - epoch tracker used to add/validate epoch in the network call.
@@ -579,7 +605,7 @@ function countTreesInSnapshotTree(snapshotTree: ISnapshotTree): number {
 export async function downloadSnapshot(
 	odspResolvedUrl: IOdspResolvedUrl,
 	storageToken: string,
-	logger: ITelemetryLoggerExt,
+	loadingGroupIds: string[] | undefined,
 	snapshotOptions: ISnapshotOptions | undefined,
 	snapshotFormatFetchType?: SnapshotFormatSupportType,
 	controller?: AbortController,
@@ -602,6 +628,11 @@ export async function downloadSnapshot(
 				queryParams[key] = value;
 			}
 		});
+	}
+
+	if (loadingGroupIds !== undefined) {
+		// eslint-disable-next-line @typescript-eslint/dot-notation
+		queryParams["groupId"] = Array.from(loadingGroupIds).join(",");
 	}
 
 	const queryString = getQueryString(queryParams);

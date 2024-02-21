@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/server-memory-orderer";
-export const pkgVersion = "3.0.0";
+export const pkgVersion = "3.1.0";

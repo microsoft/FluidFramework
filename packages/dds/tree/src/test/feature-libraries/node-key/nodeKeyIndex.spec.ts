@@ -265,7 +265,7 @@ describe("Node Key Index", () => {
 			libraries: [nodeKeySchema],
 		});
 		const nodeSchemaNoKey = builder2.objectRecursive("node", {
-			child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => nodeSchemaNoKey]),
+			child: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => nodeSchemaNoKey]),
 		});
 		const nodeSchemaDataNoKey = builder2.intoSchema(
 			SchemaBuilder.optional(nodeSchemaNoKey),

@@ -4,7 +4,7 @@
  */
 
 module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"],
+	extends: [require.resolve("@fluidframework/eslint-config-fluid"), "prettier"],
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
@@ -15,4 +15,13 @@ module.exports = {
 		// TODO: consider re-enabling once we have addressed how this rule conflicts with our error codes.
 		"unicorn/numeric-separators-style": "off",
 	},
+	overrides: [
+		{
+			files: ["src/test/**"],
+			rules: {
+				// Allow tests (which only run in Node.js) use `__dirname`
+				"unicorn/prefer-module": "off",
+			},
+		},
+	],
 };

@@ -3,10 +3,13 @@
  * Licensed under the MIT License.
  */
 import { assert } from "@fluidframework/core-utils";
-import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { AttributionInfo } from "@fluidframework/runtime-definitions";
+import {
+	type IDocumentMessage,
+	type ISequencedDocumentMessage,
+} from "@fluidframework/protocol-definitions";
+import { type AttributionInfo } from "@fluidframework/runtime-definitions";
 import { UsageError } from "@fluidframework/telemetry-utils";
-import { IAudience, IDeltaManager } from "@fluidframework/container-definitions";
+import { type IAudience, type IDeltaManager } from "@fluidframework/container-definitions";
 
 /**
  * Provides lookup between attribution keys and their associated attribution information.
@@ -45,7 +48,7 @@ export class Attributor implements IAttributor {
 	/**
 	 * @param initialEntries - Any entries which should be populated on instantiation.
 	 */
-	constructor(initialEntries?: Iterable<[number, AttributionInfo]>) {
+	public constructor(initialEntries?: Iterable<[number, AttributionInfo]>) {
 		this.keyToInfo = new Map(initialEntries ?? []);
 	}
 
@@ -81,7 +84,7 @@ export class Attributor implements IAttributor {
  * @internal
  */
 export class OpStreamAttributor extends Attributor implements IAttributor {
-	constructor(
+	public constructor(
 		deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		audience: IAudience,
 		initialEntries?: Iterable<[number, AttributionInfo]>,
@@ -89,7 +92,6 @@ export class OpStreamAttributor extends Attributor implements IAttributor {
 		super(initialEntries);
 		deltaManager.on("op", (message: ISequencedDocumentMessage) => {
 			// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
-			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 			const client = audience.getMember(message.clientId as string);
 			if (message.type === "op") {
 				// TODO: This case may be legitimate, and if so we need to figure out how to handle it.

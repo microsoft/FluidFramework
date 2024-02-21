@@ -334,6 +334,13 @@
 				"${fileDirname}/../../dist/**/*.js",
 				"${fileDirname}/../../../dist/**/*.js",
 				"${fileDirname}/../../../../dist/**/*.js",
+				// e2e tests load ESM modules since test-end-to-end-tests specifies "type": "module" in its package.json.
+				// This ensures that source maps are loaded for those files as well (e.g. so putting a breakpoint in
+				// containerRuntime.ts while debugging a test in test-end-to-end-tests works)
+				"${workspaceFolder}/**/lib/**/!(*.spec,*.test,*.tests).mjs",
+				"${fileDirname}/../../lib/**/*.mjs",
+				"${fileDirname}/../../../lib/**/*.mjs",
+				"${fileDirname}/../../../../lib/**/*.mjs",
 			],
 			"preLaunchTask": "Build Current Tests",
 			"internalConsoleOptions": "openOnSessionStart",

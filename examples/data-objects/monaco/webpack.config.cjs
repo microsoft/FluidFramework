@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-const fluidRoute = require("@fluid-tools/webpack-fluid-loader");
+const fluidRoute = require("@fluid-example/webpack-fluid-loader");
 const path = require("path");
 const { merge } = require("webpack-merge");
 const MonacoWebpackPlugin = require("monaco-editor-webpack-plugin");
@@ -36,7 +36,7 @@ module.exports = (env) => {
 					// This example currently has missing sourcemap issues.
 					// Disabling source mapping allows it to be runnable with these issues.
 					// {
-					//     test: /\.js$/,
+					//     test: /\.m?js$/,
 					//     use: [require.resolve("source-map-loader")],
 					//     enforce: "pre"
 					// },
@@ -70,7 +70,7 @@ module.exports = (env) => {
 			},
 			resolve: {
 				extensionAlias: {
-					".js": [".ts", ".tsx", ".js"],
+					".js": [".ts", ".tsx", ".js", ".cjs", ".mjs"],
 				},
 				extensions: [".tsx", ".ts", ".js"],
 			},
