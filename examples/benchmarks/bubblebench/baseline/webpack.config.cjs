@@ -45,6 +45,11 @@ module.exports = (env) => {
 			watchOptions: {
 				ignored: "**/node_modules/**",
 			},
+			plugins: [
+				new webpack.ProvidePlugin({
+					process: "process/browser",
+				}),
+			],
 		},
 		isProduction ? require("./webpack.prod.cjs") : require("./webpack.dev.cjs"),
 		fluidRoute.devServerConfig(__dirname, env),

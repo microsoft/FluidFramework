@@ -2,7 +2,7 @@
 	"extends": "../../../../common/build/build-common/tsconfig.node16.json",
 	"exclude": ["dist", "node_modules"],
 	"compilerOptions": {
-		"lib": ["ESNext", "DOM"],
+		"rootDir": "./src",
 		"outDir": "dist",
 		"types": [
 			"react",

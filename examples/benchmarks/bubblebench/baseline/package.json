@@ -15,12 +15,12 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
+				"types": "./dist/src/index.d.ts",
+				"default": "./dist/src/index.js"
 			},
 			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
+				"types": "./dist/src/index.d.ts",
+				"default": "./dist/src/index.js"
 			}
 		}
 	},
