@@ -82,7 +82,7 @@
 		"@fluidframework/local-driver": "workspace:~",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/server-local-server": "^3.1.0-237980",
+		"@fluidframework/server-local-server": "^3.1.0-238497",
 		"@fluidframework/test-utils": "workspace:~",
 		"aws-sdk": "2.547.0",
 		"c8": "^8.0.1",
