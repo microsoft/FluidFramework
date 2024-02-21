@@ -204,7 +204,9 @@ export interface ITestFluidObject extends IProvideTestFluidObject, IFluidLoadabl
 
 // @internal (undocumented)
 export interface ITestObjectProvider {
+    attachDetachedContainer(container: IContainer): Promise<void>;
     createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>): Promise<IContainer>;
+    createDetachedContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>): Promise<IContainer>;
     createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint;
     createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, loaderProps?: Partial<ILoaderProps>): IHostLoader;
     defaultCodeDetails: IFluidCodeDetails;
@@ -315,7 +317,9 @@ export class TestObjectProvider implements ITestObjectProvider {
     constructor(LoaderConstructor: typeof Loader,
     driver: ITestDriver,
     createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint);
+    attachDetachedContainer(container: IContainer): Promise<void>;
     createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>): Promise<IContainer>;
+    createDetachedContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps> | undefined): Promise<IContainer>;
     readonly createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint;
     createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, loaderProps?: Partial<ILoaderProps>): Loader;
     get defaultCodeDetails(): IFluidCodeDetails;
@@ -339,7 +343,9 @@ export class TestObjectProvider implements ITestObjectProvider {
 // @internal
 export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider {
     constructor(LoaderConstructorForCreating: typeof Loader, LoaderConstructorForLoading: typeof Loader, driverForCreating: ITestDriver, driverForLoading: ITestDriver, createFluidEntryPointForCreating: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint, createFluidEntryPointForLoading: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint);
+    attachDetachedContainer(container: IContainer): Promise<void>;
     createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>): Promise<IContainer>;
+    createDetachedContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps> | undefined): Promise<IContainer>;
     get createFluidEntryPoint(): (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint;
     createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, loaderProps?: Partial<ILoaderProps>): Loader;
     get defaultCodeDetails(): IFluidCodeDetails;
