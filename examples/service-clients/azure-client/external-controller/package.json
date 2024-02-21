@@ -65,6 +65,7 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.13.3",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",
 		"@fluidframework/container-definitions": "workspace:~",
@@ -81,6 +82,7 @@
 		"@types/node": "^18.19.0",
 		"@types/uuid": "^9.0.2",
 		"clean-webpack-plugin": "^4.0.0",
+		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.50.0",
 		"expect-puppeteer": "^9.0.2",
@@ -101,9 +103,7 @@
 		"webpack": "^5.82.0",
 		"webpack-cli": "^4.9.2",
 		"webpack-dev-server": "~4.6.0",
-		"webpack-merge": "^5.8.0",
-		"@arethetypeswrong/cli": "^0.13.3",
-		"copyfiles": "^2.4.1"
+		"webpack-merge": "^5.8.0"
 	},
 	"fluid": {
 		"browser": {
