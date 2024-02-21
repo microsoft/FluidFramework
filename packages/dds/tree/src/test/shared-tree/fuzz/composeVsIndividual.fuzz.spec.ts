@@ -58,9 +58,9 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, Branched
 	},
 	undoRedo: async (state, operation) => {
 		const { contents } = operation;
-		const view = state.main ?? assert.fail();
-		assert(isRevertibleSharedTreeView(view.tree.checkout));
-		applyUndoRedoEdit(view.tree.checkout.undoStack, view.tree.checkout.redoStack, contents);
+		const tree = state.main ?? assert.fail();
+		assert(isRevertibleSharedTreeView(tree.checkout));
+		applyUndoRedoEdit(tree.checkout.undoStack, tree.checkout.redoStack, contents);
 		return state;
 	},
 	synchronizeTrees: async (state) => {
@@ -113,19 +113,17 @@ describe("Fuzz - composed vs individual changes", () => {
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: BranchedTreeFuzzTestState) => {
 			initialState.main = viewFromState(initialState, initialState.clients[0]);
-			initialState.branch = {
-				tree: initialState.main.tree.fork(),
-				currentSchema: initialState.main.currentSchema,
-			};
-			initialState.branch.tree.checkout.transaction.start();
+			initialState.branch = initialState.main.fork() as FuzzTransactionView;
+			initialState.branch.currentSchema = initialState.main.currentSchema;
+			initialState.branch.checkout.transaction.start();
 		});
 		emitter.on("testEnd", (finalState: BranchedTreeFuzzTestState) => {
 			assert(finalState.branch !== undefined);
-			const childTreeView = toJsonableTree(finalState.branch.tree.checkout);
-			finalState.branch.tree.checkout.transaction.commit();
-			const view = finalState.main ?? assert.fail();
-			view.tree.checkout.merge(finalState.branch.tree.checkout);
-			validateTree(view.tree.checkout, childTreeView);
+			const childTreeView = toJsonableTree(finalState.branch.checkout);
+			finalState.branch.checkout.transaction.commit();
+			const tree = finalState.main ?? assert.fail();
+			tree.checkout.merge(finalState.branch.checkout);
+			validateTree(tree.checkout, childTreeView);
 		});
 		createDDSFuzzSuite(model, {
 			defaultTestCount: runsPerBatch,

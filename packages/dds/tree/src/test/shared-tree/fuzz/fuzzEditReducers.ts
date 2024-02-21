@@ -27,7 +27,12 @@ import {
 	Operation,
 } from "./operationTypes.js";
 import { isRevertibleSharedTreeView } from "./fuzzUtils.js";
-import { FuzzTestState, FuzzView, viewFromState } from "./fuzzEditGenerators.js";
+import {
+	FuzzTestState,
+	FuzzTransactionView,
+	FuzzView,
+	viewFromState,
+} from "./fuzzEditGenerators.js";
 
 const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFactory>>({
 	edit: (state, operation) => {
@@ -45,9 +50,9 @@ const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFa
 		applyTransactionEdit(state, operation.contents);
 	},
 	undoRedo: (state, operation) => {
-		const view = viewFromState(state).tree.checkout;
-		assert(isRevertibleSharedTreeView(view));
-		applyUndoRedoEdit(view.undoStack, view.redoStack, operation.contents);
+		const tree = viewFromState(state).checkout;
+		assert(isRevertibleSharedTreeView(tree));
+		applyUndoRedoEdit(tree.undoStack, tree.redoStack, operation.contents);
 	},
 	synchronizeTrees: (state) => {
 		applySynchronizationOp(state);
@@ -135,10 +140,10 @@ function applySequenceFieldEdit(tree: FuzzView, change: FuzzFieldChange): void {
 	}
 }
 
-function applyValueFieldEdit(view: FuzzView, change: FuzzSet): void {
-	const nodeSchema = view.currentSchema;
+function applyValueFieldEdit(tree: FuzzView, change: FuzzSet): void {
+	const nodeSchema = tree.currentSchema;
 	assert(change.parent !== undefined, "Value change should not occur at the root.");
-	const parent = navigateToNode(view, change.parent);
+	const parent = navigateToNode(tree, change.parent);
 	assert(parent?.is(nodeSchema), "Defined down-path should point to a valid parent");
 	const field = parent.tryGetField(change.key);
 	assert(
@@ -148,9 +153,9 @@ function applyValueFieldEdit(view: FuzzView, change: FuzzSet): void {
 	field.content = cursorForJsonableTreeNode(change.value) as any;
 }
 
-function navigateToNode(view: FuzzView, path: DownPath | undefined): FlexTreeNode | undefined {
-	const nodeSchema = view.currentSchema;
-	const rootField = view.tree.flexTree;
+function navigateToNode(tree: FuzzView, path: DownPath | undefined): FlexTreeNode | undefined {
+	const nodeSchema = tree.currentSchema;
+	const rootField = tree.flexTree;
 	if (path === undefined) {
 		return undefined;
 	}
@@ -186,22 +191,22 @@ function navigateToNode(view: FuzzView, path: DownPath | undefined): FlexTreeNod
 	return finalLocation.containedNode;
 }
 
-function applyOptionalFieldEdit(view: FuzzView, change: FuzzSet | FuzzRemove): void {
-	const nodeSchema = view.currentSchema;
+function applyOptionalFieldEdit(tree: FuzzView, change: FuzzSet | FuzzRemove): void {
+	const nodeSchema = tree.currentSchema;
 	switch (change.type) {
 		case "set": {
-			const rootField = view.tree.flexTree;
+			const rootField = tree.flexTree;
 			if (change.parent === undefined) {
 				rootField.content = cursorForJsonableTreeNode(change.value) as any;
 			} else {
-				const parent = navigateToNode(view, change.parent);
+				const parent = navigateToNode(tree, change.parent);
 				assert(parent?.is(nodeSchema), "Defined down-path should point to a valid parent");
 				parent.boxedOptionalChild.content = cursorForJsonableTreeNode(change.value) as any;
 			}
 			break;
 		}
 		case "remove": {
-			const field = navigateToNode(view, change.firstNode)?.parentField.parent;
+			const field = navigateToNode(tree, change.firstNode)?.parentField.parent;
 			assert(field?.is(nodeSchema.objectNodeFieldsObject.optionalChild));
 			field.content = undefined;
 			break;
@@ -220,14 +225,12 @@ export function applyTransactionEdit(state: FuzzTestState, contents: FuzzTransac
 			"Forked view should be present in the fuzz state unless a (non-nested) transaction is being started.",
 		);
 		const treeView = viewFromState(state);
-		view = {
-			tree: treeView.tree.fork(),
-			currentSchema: treeView.currentSchema,
-		};
+		view = treeView.fork() as FuzzTransactionView;
+		view.currentSchema = treeView.currentSchema;
 		state.transactionViews.set(state.client.channel, view);
 	}
 
-	const { checkout } = view.tree;
+	const { checkout } = view;
 	switch (contents.fuzzType) {
 		case "transactionStart": {
 			checkout.transaction.start();
@@ -249,7 +252,7 @@ export function applyTransactionEdit(state: FuzzTestState, contents: FuzzTransac
 		// Transaction is complete, so merge the changes into the root view and clean up the fork from the state.
 		state.transactionViews.delete(state.client.channel);
 		const rootView = viewFromState(state);
-		rootView.tree.checkout.merge(checkout);
+		rootView.checkout.merge(checkout);
 	}
 }
 

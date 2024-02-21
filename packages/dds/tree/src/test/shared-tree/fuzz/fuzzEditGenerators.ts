@@ -48,8 +48,7 @@ import {
 } from "./operationTypes.js";
 import { FuzzNode, FuzzNodeSchema, fuzzNode, fuzzSchema } from "./fuzzUtils.js";
 
-export interface FuzzView {
-	tree: FlexTreeView<typeof fuzzSchema.rootFieldSchema>;
+export type FuzzView = FlexTreeView<typeof fuzzSchema.rootFieldSchema> & {
 	/**
 	 * This client's current stored schema, which dictates allowable edits that the client may perform.
 	 * @remarks - The type of this field isn't totally correct, since the supported schema for fuzz nodes changes
@@ -61,10 +60,9 @@ export interface FuzzView {
 	 * once schema ops are supported.
 	 */
 	currentSchema: FuzzNodeSchema;
-}
+};
 
-export interface FuzzTransactionView {
-	tree: ITreeViewFork<typeof fuzzSchema.rootFieldSchema>;
+export type FuzzTransactionView = ITreeViewFork<typeof fuzzSchema.rootFieldSchema> & {
 	/**
 	 * This client's current stored schema, which dictates allowable edits that the client may perform.
 	 * @remarks - The type of this field isn't totally correct, since the supported schema for fuzz nodes changes
@@ -76,7 +74,7 @@ export interface FuzzTransactionView {
 	 * once schema ops are supported.
 	 */
 	currentSchema: FuzzNodeSchema;
-}
+};
 
 export interface FuzzTestState extends DDSFuzzTestState<SharedTreeFactory> {
 	/**
@@ -106,14 +104,13 @@ export function viewFromState(
 	return (
 		state.transactionViews?.get(client.channel) ??
 		getOrCreate(state.view, client.channel, (tree) => {
-			return {
-				tree: tree.schematizeInternal({
-					initialTree,
-					schema: fuzzSchema,
-					allowedSchemaModifications: AllowedUpdateType.None,
-				}),
-				currentSchema: fuzzNode,
-			};
+			const fuzzView = tree.schematizeInternal({
+				initialTree,
+				schema: fuzzSchema,
+				allowedSchemaModifications: AllowedUpdateType.None,
+			}) as FuzzView;
+			fuzzView.currentSchema = fuzzNode;
+			return fuzzView;
 		})
 	);
 }
@@ -434,12 +431,12 @@ export const makeTransactionEditGenerator = (
 		[
 			commit,
 			passedOpWeights.commit,
-			(state) => viewFromState(state).tree.checkout.transaction.inProgress(),
+			(state) => viewFromState(state).checkout.transaction.inProgress(),
 		],
 		[
 			abort,
 			passedOpWeights.abort,
-			(state) => viewFromState(state).tree.checkout.transaction.inProgress(),
+			(state) => viewFromState(state).checkout.transaction.inProgress(),
 		],
 	]);
 
@@ -628,7 +625,7 @@ function trySelectTreeField(
 	weights: Omit<FieldSelectionWeights, "filter">,
 	filter: FieldFilter = () => true,
 ): FuzzField | "no-valid-fields" {
-	const editable = tree.tree.flexTree;
+	const editable = tree.flexTree;
 	const options =
 		weights.optional === 0
 			? ["recurse"]
