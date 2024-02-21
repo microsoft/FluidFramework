@@ -77,8 +77,9 @@ class BlobCache {
 					// We want to optimize both - memory footprint and number of future requests to storage.
 					// Note that Container can realize data store or DDS on-demand at any point in time, so we do not
 					// control when blobs will be used.
-					for (const blobId of this._blobCache.keys())
+					for (const blobId of this._blobCache.keys()) {
 						this.blobsEvicted.add(blobId);
+					}
 					this._blobCache.clear();
 				}
 			};
