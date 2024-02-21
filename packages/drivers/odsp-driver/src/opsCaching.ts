@@ -145,7 +145,7 @@ export class OpsCache {
 			if (res === undefined) {
 				return messages;
 			}
-			const result = JSON.parse(res) as CacheEntry;
+			const result: CacheEntry = JSON.parse(res) as CacheEntry;
 			const prevMessagesLength = messages.length;
 			for (const op of result) {
 				// Note that we write out undefined, but due to JSON.stringify, it turns into null!
