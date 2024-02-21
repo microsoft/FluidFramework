@@ -19,6 +19,7 @@ import {
 	type DevToolsInitMessage,
 	devToolsInitMessageType,
 	extensionMessageSource,
+	extensionPopupMessageSource,
 	type TypedPortConnection,
 } from "./messaging";
 
@@ -140,8 +141,12 @@ export class BackgroundConnection
 
 		// Ignore messages from unexpected sources.
 		// We receive at least one message directly from the Background script so we need to include
-		// extensionMessageSource as a valid source.
-		if (message.source !== extensionMessageSource && message.source !== devtoolsMessageSource) {
+		// extensionMessageSource and extensionPopupMessageSource as valid sources.
+		if (
+			message.source !== extensionMessageSource &&
+			message.source !== devtoolsMessageSource &&
+			message.source !== extensionPopupMessageSource
+		) {
 			return false;
 		}
 

@@ -16,6 +16,7 @@ import {
 	type DevToolsInitMessage,
 	devToolsInitMessageType,
 	extensionMessageSource,
+	extensionPopupMessageSource,
 	postMessageToPort,
 	relayMessageToPort,
 } from "../messaging";
@@ -170,7 +171,10 @@ browser.runtime.onConnect.addListener((devtoolsPort: Port): void => {
 					message,
 				);
 			} else {
-				if (message.source === extensionMessageSource) {
+				if (
+					message.source === extensionMessageSource ||
+					message.source === extensionPopupMessageSource
+				) {
 					// Only relay known messages from the extension
 					relayMessageToPort(
 						message,

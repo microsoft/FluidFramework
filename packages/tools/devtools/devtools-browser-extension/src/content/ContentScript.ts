@@ -10,7 +10,11 @@ import {
 } from "@fluidframework/devtools-core";
 
 import { browser, window } from "../Globals";
-import { extensionMessageSource, relayMessageToPort } from "../messaging";
+import {
+	extensionMessageSource,
+	extensionPopupMessageSource,
+	relayMessageToPort,
+} from "../messaging";
 import {
 	contentScriptMessageLoggingOptions,
 	formatContentScriptMessageForLogging,
@@ -72,7 +76,10 @@ browser.runtime.onConnect.addListener((backgroundPort: Port) => {
 	backgroundPort.onMessage.addListener((message: Partial<ISourcedDevtoolsMessage>) => {
 		// Only relay message if it is one of ours, and if the source is the extension
 		// (and not the window).
-		if (isDevtoolsMessage(message) && message.source === extensionMessageSource) {
+		if (
+			(isDevtoolsMessage(message) && message.source === extensionMessageSource) ||
+			message.source === extensionPopupMessageSource
+		) {
 			console.debug(
 				formatContentScriptMessageForLogging(
 					`Relaying message from Background Script to the window:`,

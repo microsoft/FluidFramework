@@ -6,7 +6,7 @@ import React from "react";
 import ReactDOM from "react-dom";
 import { browser } from "../Globals";
 import { BackgroundConnection } from "../BackgroundConnection";
-import { extensionMessageSource } from "../messaging";
+import { extensionPopupMessageSource } from "../messaging";
 import { PopupView } from "./PopupView";
 
 /**
@@ -18,12 +18,8 @@ import { PopupView } from "./PopupView";
  * To inform them of this, we simply display a disclaimer pointing them to the Devtools panel.
  */
 
-// TODOs:
-// - Check page (via messages) to see if the Devtools have been initialized.
-//   If not, we may want to display an error message with a link to docs explaining how to
-//   use them.
-
 browser.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+	// Note: The tab selection (active tab) cannot change while the popup is being displayed.
 	if (tabs.length === 0) {
 		console.debug("No active tab.");
 		return;
@@ -62,7 +58,7 @@ browser.tabs.query({ active: true, currentWindow: true }, (tabs) => {
 export async function initializePopupView(target: HTMLElement, tabId: number): Promise<void> {
 	const backgroundServiceConnection = await BackgroundConnection.Initialize({
 		// TODO: devtools-panel-specific source
-		messageSource: extensionMessageSource,
+		messageSource: extensionPopupMessageSource,
 		tabId,
 	});
 
