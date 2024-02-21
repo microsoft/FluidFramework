@@ -5,6 +5,13 @@
 
 import { strict as assert } from "assert";
 import {
+	type BuildNode,
+	Change,
+	SharedTree as LegacySharedTree,
+	StablePlace,
+	type TraitLabel,
+} from "@fluid-experimental/tree";
+import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 	MockDeltaConnection,
@@ -67,9 +74,10 @@ describe("DDS Handle Encoding", () => {
 		factory: IChannelFactoryWithCreatedType<T>,
 		addHandleToDDS: (dds: T) => void,
 		expectedHandles: string[],
+		nameOverride?: string,
 	): ITestCase {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const name = factory.type.split("/").pop()!;
+		const name = nameOverride ?? factory.type.split("/").pop()!;
 
 		const dataStoreRuntime = new MockFluidDataStoreRuntime({
 			idCompressor: createIdCompressor("173cb232-53a2-4327-b690-afa954397989" as SessionId),
@@ -144,6 +152,40 @@ describe("DDS Handle Encoding", () => {
 				treeView.root.h = handle;
 			},
 			[handle.absolutePath] /* expectedHandles */,
+			"tree2",
+		),
+		createTestCase(
+			LegacySharedTree.getFactory(),
+			(tree) => {
+				const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
+
+				const handleNode: BuildNode = {
+					definition: legacyNodeId,
+					traits: {
+						handle: {
+							definition: "handle",
+							payload: 0,
+						},
+					},
+				};
+				tree.applyEdit(
+					Change.insertTree(
+						handleNode,
+						StablePlace.atStartOf({
+							parent: tree.currentView.root,
+							label: legacyNodeId,
+						}),
+					),
+				);
+
+				const rootNode = tree.currentView.getViewNode(tree.currentView.root);
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const nodeId = rootNode.traits.get(legacyNodeId)![0];
+				const change: Change = Change.setPayload(nodeId, handle);
+				tree.applyEdit(change);
+			},
+			[handle.absolutePath] /* expectedHandles */,
+			"legacy-shared-tree",
 		),
 		createTestCase(
 			new ConsensusRegisterCollectionFactory(),
