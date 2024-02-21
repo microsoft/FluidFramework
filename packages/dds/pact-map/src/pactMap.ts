@@ -511,7 +511,7 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
 		}
 	}
 
-	public applyStashedOp(): void {
+	protected applyStashedOp(): void {
 		throw new Error("not implemented");
 	}
 }
