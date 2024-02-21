@@ -26,7 +26,7 @@ import {
 } from "./containerStorageAdapter";
 import { IPendingContainerState } from "./container";
 
-export class containerStateManager {
+export class ContainerStateManager {
 	private readonly savedOps: ISequencedDocumentMessage[] = [];
 	public snapshot:
 		| {
@@ -37,17 +37,13 @@ export class containerStateManager {
 	private readonly mc: MonitoringContext;
 	private readonly _offlineLoadEnabled: boolean;
 	private readonly storageAdapter: ContainerStorageAdapter;
-	private readonly isInteractiveClient: boolean;
 	private readonly pendingLocalState: IPendingContainerState | undefined;
 
 	constructor(
 		pendingLocalState: IPendingContainerState | undefined,
 		subLogger: ITelemetryLoggerExt,
-		private readonly getClientId: () => string | undefined,
-		private readonly getResolvedUrl: () => IResolvedUrl | undefined,
-		private readonly getRuntime: () => IRuntime | undefined,
 		storageAdapter,
-		isInteractiveClient,
+		isInteractiveClient: boolean,
 	) {
 		this.pendingLocalState = pendingLocalState;
 		this.mc = createChildMonitoringContext({
@@ -55,9 +51,10 @@ export class containerStateManager {
 			namespace: "ContainerStateManager",
 		});
 		this.storageAdapter = storageAdapter;
-		this.isInteractiveClient = isInteractiveClient;
 		this._offlineLoadEnabled =
-			this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ?? false;
+			(isInteractiveClient &&
+				this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad")) ??
+			false;
 	}
 
 	public get offlineLoadEnabled(): boolean {
@@ -68,10 +65,6 @@ export class containerStateManager {
 		if (this.offlineLoadEnabled) {
 			this.savedOps.push(message);
 		}
-	}
-
-	public getSavedOps() {
-		return this.savedOps;
 	}
 
 	private async getVersion(version: string | null): Promise<IVersion | undefined> {
@@ -123,7 +116,7 @@ export class containerStateManager {
 		} else {
 			assert(snapshotTree !== undefined, "Snapshot should exist");
 			// non-interactive clients will not have any pending state we want to save
-			if (this.offlineLoadEnabled && this.isInteractiveClient) {
+			if (this.offlineLoadEnabled) {
 				const blobs = await getBlobContentsFromTree(snapshotTree, this.storageAdapter);
 				this.snapshot = { tree: snapshotTree, blobs };
 			}
@@ -170,14 +163,19 @@ export class containerStateManager {
 		this.snapshot = snapshot;
 	}
 
-	public async getPendingLocalStateCore(props: IGetPendingLocalStateProps) {
+	public async getPendingLocalStateCore(
+		props: IGetPendingLocalStateProps,
+		clientId: string | undefined,
+		runtime: IRuntime,
+		resolvedUrl: IResolvedUrl,
+	) {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
 			{
 				eventName: "getPendingLocalState",
 				notifyImminentClosure: props.notifyImminentClosure,
-				savedOpsSize: this.getSavedOps().length,
-				clientId: this.getClientId(),
+				savedOpsSize: this.savedOps.length,
+				clientId,
 			},
 			async () => {
 				if (!this.offlineLoadEnabled) {
@@ -185,21 +183,16 @@ export class containerStateManager {
 						"Can't get pending local state unless offline load is enabled",
 					);
 				}
-				const resolvedUrl = this.getResolvedUrl();
-				assert(
-					resolvedUrl !== undefined && resolvedUrl.type === "fluid",
-					"resolved url should be valid Fluid url",
-				);
 				assert(this.snapshot !== undefined, "no base data");
-				const pendingRuntimeState = await this.getRuntime()?.getPendingLocalState(props);
+				const pendingRuntimeState = await runtime.getPendingLocalState(props);
 				const pendingState: IPendingContainerState = {
 					pendingRuntimeState,
 					baseSnapshot: this.snapshot.tree,
 					snapshotBlobs: this.snapshot.blobs,
-					savedOps: this.getSavedOps(),
+					savedOps: this.savedOps,
 					url: resolvedUrl.url,
 					// no need to save this if there is no pending runtime state
-					clientId: pendingRuntimeState !== undefined ? this.getClientId() : undefined,
+					clientId: pendingRuntimeState !== undefined ? clientId : undefined,
 				};
 
 				return JSON.stringify(pendingState);
