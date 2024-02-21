@@ -1,4 +1,4 @@
-# @fluid-tools/webpack-fluid-loader
+# @fluid-example/webpack-fluid-loader
 
 This folder contains the webpack-fluid-loader. This package is meant to be used with the `webpack --serve` and is used by Fluid as the default `start` option.
 
