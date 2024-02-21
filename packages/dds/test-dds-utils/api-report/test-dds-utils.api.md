@@ -163,6 +163,25 @@ export interface Synchronize {
     type: "synchronize";
 }
 
+// @internal
+export function takeSnapshot(data: string, writeCompatible?: boolean): string;
+
+// @internal (undocumented)
+export interface TestScenario {
+    // (undocumented)
+    name: string;
+    // (undocumented)
+    only?: boolean;
+    // (undocumented)
+    runScenario: () => unknown;
+    // (undocumented)
+    skip?: boolean;
+    writeCompatible?: boolean;
+}
+
+// @internal
+export function useSnapshotDirectory(snapshotsFolder: string, dirPath?: string): void;
+
 // (No @packageDocumentation comment for this package)
 
 ```

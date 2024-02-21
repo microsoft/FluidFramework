@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "node:assert";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import {
 	MockContainerRuntimeFactory,
@@ -12,82 +11,14 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
+import { useSnapshotDirectory, TestScenario, takeSnapshot } from "@fluid-private/test-dds-utils";
 import { DirectoryFactory, SharedDirectory } from "../..";
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils";
-
-// Simple filter to avoid tests with a name that would accidentally be parsed as directory traversal or other confusing things.
-const nameCheck = new RegExp(/^[^"/\\]+$/);
-
-assert(__dirname.match(/dist[/\\]test[/\\]mocha$/));
-const snapshotsFolder = path.join(__dirname, `../../../src/test/mocha/snapshots`);
-assert(existsSync(snapshotsFolder));
-
-let currentTestName: string | undefined;
-let currentTestFile: string | undefined;
-
-function useSnapshotDirectory(dirPath: string = "/"): void {
-	const normalizedDir = path.join(snapshotsFolder, dirPath);
-	// Basic sanity check to avoid bugs like accidentally recursively deleting everything under `/` if something went wrong (like dirPath navigated up directories a lot).
-	assert(normalizedDir.startsWith(snapshotsFolder));
-
-	beforeEach(function (): void {
-		currentTestName = this.currentTest?.title ?? assert.fail();
-		currentTestFile = path.join(normalizedDir, `${currentTestName}.json`);
-	});
-
-	afterEach(() => {
-		currentTestFile = undefined;
-		currentTestName = undefined;
-	});
-}
-
-/**
- * @remarks - This test suite isn't set up to be easily augmented when map's document format changes.
- * `writeCompatible` may want to be changed to enable storing all snapshots over time for a given scenario.
- * See e.g. SharedString tests.
- */
-interface TestScenario {
-	only?: boolean;
-	skip?: boolean;
-	name: string;
-	runScenario: () => SharedDirectory;
-	/**
-	 * Whether running the scenario produces a snapshot which matches the saved one.
-	 * This is used to test back-compat of snapshots, i.e. ensuring current code can load older documents.
-	 * @remarks - It may be valuable to confirm clients can collaborate on such documents
-	 * after loading them.
-	 */
-	writeCompatible?: boolean;
-}
 
 function serialize(directory: SharedDirectory): string {
 	const summaryTree = directory.getAttachSummary().summary;
 	const snapshotTree = convertSummaryTreeToITree(summaryTree);
 	return JSON.stringify(snapshotTree, undefined, 1);
-}
-
-function takeSnapshot(directory: SharedDirectory, writeCompatible: boolean): string {
-	assert(
-		currentTestName !== undefined,
-		"use `useSnapshotDirectory` to configure the tests containing describe block to take snapshots",
-	);
-	assert(currentTestFile !== undefined);
-
-	// Ensure test name doesn't accidentally navigate up directories or things like that.
-	// Done here instead of in beforeEach so errors surface better.
-	if (nameCheck.test(currentTestName) === false) {
-		assert.fail(`Expected test name to pass sanitization: "${currentTestName}"`);
-	}
-
-	const data = serialize(directory);
-	if (!existsSync(currentTestFile)) {
-		writeFileSync(currentTestFile, data);
-	}
-	const pastData = readFileSync(currentTestFile, "utf8");
-	if (writeCompatible) {
-		assert.equal(data, pastData, `snapshots are inconsistent on test "${currentTestName}"`);
-	}
-	return data;
 }
 
 async function loadSharedDirectory(
@@ -113,6 +44,11 @@ function generateTestScenarios(): TestScenario[] {
 	runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const factory = SharedDirectory.getFactory();
 
+	/**
+	 * @remarks - This test suite isn't set up to be easily augmented when map's document format changes.
+	 * `writeCompatible` may want to be changed to enable storing all snapshots over time for a given scenario.
+	 * See e.g. SharedString tests.
+	 */
 	const testScenarios: TestScenario[] = [
 		{
 			name: "random-create-delete",
@@ -191,8 +127,8 @@ function runTestScenarios(testScenarios: TestScenario[]): void {
 	} of testScenarios) {
 		const itFn = only ? it.only : skip ? it.skip : it;
 		itFn(name, async () => {
-			const testDirectory = runScenario();
-			const snapshotData = takeSnapshot(testDirectory, writeCompatible);
+			const testDirectory = runScenario() as SharedDirectory;
+			const snapshotData = takeSnapshot(serialize(testDirectory), writeCompatible);
 			const secondDirectory = await loadSharedDirectory("B", snapshotData);
 			assertEquivalentDirectories(testDirectory, secondDirectory);
 		});
@@ -200,7 +136,9 @@ function runTestScenarios(testScenarios: TestScenario[]): void {
 }
 
 describe("SharedDirectory Snapshot Tests", () => {
+	assert(__dirname.match(/dist[/\\]test[/\\]mocha$/));
+	const snapshotsFolder = path.join(__dirname, `../../../src/test/mocha/snapshots`);
 	const testScenarios = generateTestScenarios();
-	useSnapshotDirectory();
+	useSnapshotDirectory(snapshotsFolder, "./directory");
 	runTestScenarios(testScenarios);
 });
