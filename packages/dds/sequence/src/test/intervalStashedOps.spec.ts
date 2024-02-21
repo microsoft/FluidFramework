@@ -105,7 +105,7 @@ describe("Interval Stashed Ops on client ", () => {
 				},
 			};
 
-			const metadata = sharedString["applyStashedOp"](opArgs);
+			sharedString["applyStashedOp"](opArgs);
 			assertIntervals(sharedString, collection, [
 				{ start: 0, end: 5 },
 				{ start: 5, end: 10 },
