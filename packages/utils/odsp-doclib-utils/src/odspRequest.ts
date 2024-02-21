@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { fetch } from "./fetch";
-import { IOdspAuthRequestInfo, authRequestWithRetry } from "./odspAuth";
+import { fetch } from "./fetch.js";
+import { IOdspAuthRequestInfo, authRequestWithRetry } from "./odspAuth.js";
 
 /**
  * @internal
