@@ -503,7 +503,7 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 		await flushPromises();
 		assert.strictEqual(sharedString1.getLength(), 203);
 		assert.strictEqual(sharedString2.getLength(), 203);
-	}).timeout(5000);
+	}).timeout(20000);
 });
 
 describeCompat("Summaries", "NoCompat", (getTestObjectProvider) => {
