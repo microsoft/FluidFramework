@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { stringToBuffer } from "@fluid-internal/client-utils";
+import { TypedEventEmitter, stringToBuffer } from "@fluid-internal/client-utils";
 import { IIdCompressor, IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor";
 import { assert } from "@fluidframework/core-utils";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
@@ -43,6 +43,7 @@ import {
 	ISummaryTreeWithStats,
 	VisibilityState,
 } from "@fluidframework/runtime-definitions";
+import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas";
 import { MockHandle } from "./mockHandle";
@@ -160,10 +161,10 @@ interface IInternalMockRuntimeMessage {
  * at MockContainerRuntimeForReconnection.
  * @alpha
  */
-export class MockContainerRuntime {
+export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents> {
 	public clientId: string;
 	protected clientSequenceNumber: number = 0;
-	private readonly deltaManager: MockDeltaManager;
+	public readonly deltaManager: MockDeltaManager;
 	/**
 	 * @deprecated use the associated datastore to create the delta connection
 	 */
@@ -182,6 +183,7 @@ export class MockContainerRuntime {
 		mockContainerRuntimeOptions: IMockContainerRuntimeOptions = defaultMockContainerRuntimeOptions,
 		protected readonly overrides?: { minimumSequenceNumber?: number },
 	) {
+		super();
 		this.deltaManager = new MockDeltaManager();
 		const msn = overrides?.minimumSequenceNumber;
 		if (msn !== undefined) {
