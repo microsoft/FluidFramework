@@ -62,6 +62,16 @@ pkg.exports = {
 			default: "./dist/index.js",
 		},
 	},
+	"./alpha": {
+		import: {
+			types: `./lib/${shortName}-alpha.d.ts`,
+			default: "./lib/index.js",
+		},
+		require: {
+			types: `./dist/${shortName}-alpha.d.ts`,
+			default: "./dist/index.js",
+		},
+	},
 	"./fruit": {
 		import: {
 			types: `./lib/${shortName}-alpha.d.ts`,
@@ -99,7 +109,9 @@ pkg.devDependencies["@arethetypeswrong/cli"] = "^0.13.3";
 pkg.scripts["build:esnext"] = "tsc --project ./tsconfig.json";
 
 if (pkg.scripts["build:test"]) {
-	pkg.scripts["build:test"] = "tsc --project ./src/test/tsconfig.json && tsc --project ./src/test/tsconfig.cjs.json";
+	pkg.scripts["build:test"] = "npm run build:test:cjs && npm run build:test:esm";
+	pkg.scripts["build:test:cjs"] = "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json";
+	pkg.scripts["build:test:esm"] = "tsc --project ./src/test/tsconfig.json";
 }
 
 if (pkg.scripts["test:mocha"]) {
@@ -108,8 +120,8 @@ if (pkg.scripts["test:mocha"]) {
 	pkg.scripts["test:mocha:esm"] = "mocha  --recursive \"lib/test/*.spec.*js\" --exit --project src/test/tsconfig.json -r node_modules/@fluidframework/mocha-test-setup";
 }
 
-pkg.scripts["tsc"] = `tsc-multi --config ${workspaceRoot}/common/build/build-common/tsc-multi.node16.cjs.json && copyfiles -f ${workspaceRoot}/common/build/build-common/src/cjs/package.json ./dist`;
-pkg.devDependencies["tsc-multi"] = "^1.1.0";
+pkg.scripts["tsc"] = `fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ${workspaceRoot}/common/build/build-common/src/cjs/package.json ./dist`;
+delete pkg.devDependencies["tsc-multi"];
 pkg.devDependencies["copyfiles"] = "^2.4.1";
 
 fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 4));
