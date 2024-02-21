@@ -162,7 +162,7 @@
 			},
 			"build:test": [
 				"...",
-				"@fluidframework/container-runtime#build:test"
+				"^build:esnext"
 			]
 		}
 	},
