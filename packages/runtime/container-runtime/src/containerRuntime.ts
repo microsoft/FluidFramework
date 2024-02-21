@@ -3514,6 +3514,31 @@ export class ContainerRuntime
 		return this.blobManager.createBlob(blob, signal);
 	}
 
+	private submitIdAllocationOpIfNeeded(): void {
+		if (this.idCompressorEnabled) {
+			assert(
+				this.idCompressor !== undefined,
+				0x67d /* IdCompressor should be defined if enabled */,
+			);
+			const idRange = this.idCompressor.takeNextCreationRange();
+			// Don't include the idRange if there weren't any Ids allocated
+			if (idRange?.ids !== undefined) {
+				const idAllocationMessage: ContainerRuntimeIdAllocationMessage = {
+					type: ContainerMessageType.IdAllocation,
+					contents: idRange,
+				};
+				const idAllocationBatchMessage: BatchMessage = {
+					contents: JSON.stringify(idAllocationMessage),
+					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+					metadata: undefined,
+					localOpMetadata: undefined,
+					type: ContainerMessageType.IdAllocation,
+				};
+				this.outbox.submitIdAllocation(idAllocationBatchMessage);
+			}
+		}
+	}
+
 	private submit(
 		containerRuntimeMessage: OutboundContainerRuntimeMessage,
 		localOpMetadata: unknown = undefined,
@@ -3556,28 +3581,7 @@ export class ContainerRuntime
 			if (type === ContainerMessageType.IdAllocation) {
 				this.outbox.submitIdAllocation(message);
 			} else {
-				if (this.idCompressorEnabled) {
-					assert(
-						this.idCompressor !== undefined,
-						0x67d /* IdCompressor should be defined if enabled */,
-					);
-					const idRange = this.idCompressor.takeNextCreationRange();
-					// Don't include the idRange if there weren't any Ids allocated
-					if (idRange?.ids !== undefined) {
-						const idAllocationMessage: ContainerRuntimeIdAllocationMessage = {
-							type: ContainerMessageType.IdAllocation,
-							contents: idRange,
-						};
-						const idAllocationBatchMessage: BatchMessage = {
-							contents: JSON.stringify(idAllocationMessage),
-							referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-							metadata: undefined,
-							localOpMetadata: undefined,
-							type: ContainerMessageType.IdAllocation,
-						};
-						this.outbox.submitIdAllocation(idAllocationBatchMessage);
-					}
-				}
+				this.submitIdAllocationOpIfNeeded();
 
 				// If this is attach message for new data store, and we are in a batch, send this op out of order
 				// Is it safe:
