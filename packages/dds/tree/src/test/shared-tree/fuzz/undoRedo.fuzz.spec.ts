@@ -119,12 +119,12 @@ describe("Fuzz - undo/redo", () => {
 
 			// redo all of the undone changes and validate against the finalTreeState for each tree
 			for (const [i, client] of finalState.clients.entries()) {
-				const view = viewFromState(finalState, client).checkout;
-				assert(isRevertibleSharedTreeView(view));
+				const tree = viewFromState(finalState, client).checkout;
+				assert(isRevertibleSharedTreeView(tree));
 				for (let j = 0; j < opsPerRun; j++) {
-					view.redoStack.pop()?.revert();
+					tree.redoStack.pop()?.revert();
 				}
-				validateTree(view, finalTreeStates[i]);
+				validateTree(tree, finalTreeStates[i]);
 			}
 
 			for (const client of finalState.clients) {
@@ -270,8 +270,8 @@ describe("Fuzz - undo/redo", () => {
 			finalState.containerRuntimeFactory.processAllMessages();
 			const expectedTree = finalState.summarizerClient.channel.contentSnapshot().tree;
 			for (const client of finalState.clients) {
-				const tree = viewFromState(finalState, client).checkout;
-				validateTree(tree, expectedTree);
+				const view = viewFromState(finalState, client).checkout;
+				validateTree(view, expectedTree);
 			}
 		});
 		createDDSFuzzSuite(model, {
