@@ -24,7 +24,7 @@ import {
 	normalizeNewFieldContent,
 } from "../feature-libraries/index.js";
 import { fail } from "../util/index.js";
-import { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
+import { ITreeCheckout } from "./treeCheckout.js";
 
 /**
  * Modify `storedSchema` and invoke `setInitialTree` when it's time to set the tree content.
@@ -117,7 +117,7 @@ export enum UpdateType {
 export function evaluateUpdate(
 	viewSchema: ViewSchema,
 	allowedSchemaModifications: AllowedUpdateType,
-	checkout: TreeCheckout,
+	checkout: ITreeCheckout,
 ): UpdateType {
 	const compatibility = viewSchema.checkCompatibility(checkout.storedSchema);
 
@@ -148,13 +148,13 @@ export function evaluateUpdate(
 		: UpdateType.Incompatible;
 }
 
-export function canInitialize(checkout: TreeCheckout): boolean {
+export function canInitialize(checkout: ITreeCheckout): boolean {
 	// Check for empty.
 	return checkout.forest.isEmpty && schemaDataIsEmpty(checkout.storedSchema);
 }
 
 /**
- * Ensure a {@link TreeCheckout} can be used with a given {@link ViewSchema}.
+ * Ensure a {@link ITreeCheckout} can be used with a given {@link ViewSchema}.
  *
  * @remarks
  * It is up to the caller to ensure that compatibility is reevaluated if the checkout's stored schema is edited in the future.
@@ -168,7 +168,7 @@ export function canInitialize(checkout: TreeCheckout): boolean {
 export function ensureSchema(
 	viewSchema: ViewSchema,
 	allowedSchemaModifications: AllowedUpdateType,
-	checkout: TreeCheckout,
+	checkout: ITreeCheckout,
 	treeContent: TreeContent | undefined,
 ): boolean {
 	let possibleModifications = allowedSchemaModifications;

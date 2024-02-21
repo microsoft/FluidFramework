@@ -123,7 +123,7 @@ import { makeSchemaCodec } from "../feature-libraries/schema-index/codec.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SharedTreeOptions } from "../shared-tree/sharedTree.js";
 // eslint-disable-next-line import/no-internal-modules
-import { ensureSchema } from "../shared-tree/schematizedTree.js";
+import { ensureSchema } from "../shared-tree/schematizeTree.js";
 // eslint-disable-next-line import/no-internal-modules
 import { requireSchema } from "../shared-tree/schematizingTreeView.js";
 

@@ -48,7 +48,7 @@ import {
 	TreeFieldFromImplicitField,
 	TreeView,
 } from "../simple-tree/index.js";
-import { InitializeAndSchematizeConfiguration, ensureSchema } from "./schematizedTree.js";
+import { InitializeAndSchematizeConfiguration, ensureSchema } from "./schematizeTree.js";
 import { TreeCheckout, CheckoutEvents, createTreeCheckout } from "./treeCheckout.js";
 import { CheckoutFlexTreeView, FlexTreeView } from "./treeView.js";
 import { SharedTreeChange } from "./sharedTreeChangeTypes.js";

@@ -23,7 +23,7 @@ import {
 	getProxyForField,
 	SchemaIncompatible,
 } from "../simple-tree/index.js";
-import { TreeContent, UpdateType, ensureSchema, evaluateUpdate } from "./schematizedTree.js";
+import { TreeContent, UpdateType, ensureSchema, evaluateUpdate } from "./schematizeTree.js";
 import { TreeCheckout } from "./treeCheckout.js";
 import { CheckoutFlexTreeView } from "./treeView.js";
 
