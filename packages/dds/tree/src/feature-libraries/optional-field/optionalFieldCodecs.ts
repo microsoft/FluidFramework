@@ -10,7 +10,7 @@ import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../../co
 import { JsonCompatibleReadOnly, Mutable } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import type { NodeChangeset } from "../modular-schema/index.js";
-import type { Move, OptionalChangeset, RegisterId, Replace } from "./optionalFieldChangeTypes.js";
+import type { Move, OptionalChangeset, RegisterId } from "./optionalFieldChangeTypes.js";
 import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChangeFormat.js";
 
 export const noChangeCodecFamily: ICodecFamily<0, ChangeEncodingContext> = makeCodecFamily<
@@ -129,7 +129,9 @@ function makeOptionalFieldCodec<TChildChange = NodeChangeset>(
 		},
 
 		decode: (encoded: EncodedOptionalChangeset<TAnySchema>, context: ChangeEncodingContext) => {
+			// The register that the node in the optional field is moved to upon detach
 			let detached: RegisterId | undefined;
+			// The register that the node is moved from to upon attaching that node in the optional field
 			let attached: RegisterId | undefined;
 			const moves: Move[] = [];
 			if (encoded.m !== undefined) {
@@ -169,15 +171,38 @@ function makeOptionalFieldCodec<TChildChange = NodeChangeset>(
 					assert(reserved !== "self", "Invalid reserved detach ID");
 					decoded.field = { isEmpty: false, dst: reserved, src: "self" };
 				} else {
-					const replace: Mutable<Replace> = {
-						isEmpty: encoded.d !== undefined || detached === undefined,
+					assert(
+						encoded.d === undefined,
+						"Invalid change: unexpected reserved detach ID on a change that detaches a node from the field",
+					);
+					decoded.field = {
+						isEmpty: false,
 						dst: detached,
+						src: attached,
 					};
-					if (attached !== undefined) {
-						replace.src = attached;
-					}
-					decoded.field = replace;
 				}
+			} else if (attached !== undefined) {
+				assert(
+					encoded.d !== undefined,
+					"Invalid change: attach must have a reserved detach ID",
+				);
+				const reserved = registerIdCodec.decode(encoded.d, context);
+				assert(reserved !== "self", "Invalid reserved detach ID");
+				decoded.field = {
+					isEmpty: true,
+					dst: reserved,
+					src: attached,
+				};
+			} else if (detached !== undefined) {
+				assert(
+					encoded.d === undefined,
+					"Invalid change: unexpected reserved detach ID on a change that detaches a node from the field",
+				);
+				assert(detached !== "self", "Invalid detach ID");
+				decoded.field = {
+					isEmpty: false,
+					dst: detached,
+				};
 			}
 			return decoded;
 		},
