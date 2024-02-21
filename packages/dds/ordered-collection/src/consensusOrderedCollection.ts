@@ -14,7 +14,6 @@ import {
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { v4 as uuid } from "uuid";
 import {
 	ConsensusCallback,
@@ -101,10 +100,6 @@ export class ConsensusOrderedCollection<T = any>
 	 * The set of values that have been acquired but not yet completed or released
 	 */
 	private jobTracking: JobTrackingInfo<T> = new Map();
-	private get orderedCollectionLogger() {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		return createChildLogger({ logger: this.runtime.logger });
-	}
 
 	/**
 	 * Constructs a new consensus collection. If the object is non-local an id and service interfaces will
@@ -242,10 +237,7 @@ export class ConsensusOrderedCollection<T = any>
 				opName: "release",
 				acquireId,
 			}).catch((error) => {
-				this.orderedCollectionLogger.sendErrorEvent(
-					{ eventName: "ConsensusQueue_release" },
-					error,
-				);
+				this.logger.sendErrorEvent({ eventName: "ConsensusQueue_release" }, error);
 			});
 		}
 	}
