@@ -107,61 +107,55 @@ export class ClientSocketMock extends TypedEventEmitter<SocketMockEvents> {
 				switch (this.mockSocketConnectResponse.connect_document.eventToEmit) {
 					case "connect_document_error":
 					case "connect_error": {
-						{
-							const errorToThrow =
-								this.mockSocketConnectResponse.connect_document.errorToThrow ??
-								createGenericNetworkError(
-									"TestError",
-									{ canRetry: false },
-									{ driverVersion },
-								);
-							this.emit(
-								this.mockSocketConnectResponse.connect_document.eventToEmit,
-								errorToThrow,
+						const errorToThrow =
+							this.mockSocketConnectResponse.connect_document.errorToThrow ??
+							createGenericNetworkError(
+								"TestError",
+								{ canRetry: false },
+								{ driverVersion },
 							);
-						}
+						this.emit(
+							this.mockSocketConnectResponse.connect_document.eventToEmit,
+							errorToThrow,
+						);
 						break;
 					}
 					case "connect_document_success": {
-						{
-							const iConnected: IConnected = this.mockSocketConnectResponse
-								.connect_document.connectMessage ?? {
-								clientId: uuid(),
-								existing: true,
-								initialClients: [],
-								initialMessages: [],
-								initialSignals: [],
-								maxMessageSize: 1000,
-								mode: connectMessage.mode,
-								version: connectMessage.versions[0],
-								serviceConfiguration: { maxMessageSize: 1000, blockSize: 1000 },
-								claims: {
-									documentId: connectMessage.id,
-									scopes: [
-										ScopeType.DocWrite,
-										ScopeType.DocRead,
-										ScopeType.SummaryWrite,
-									],
-									tenantId: connectMessage.tenantId,
-									ver: "1.0.0",
-									iat: 10,
-									exp: 10,
-									user: connectMessage.client.user,
-								},
-								supportedVersions: connectMessage.versions,
-								epoch: "testEpoch",
-							};
-							this.emit("connect_document_success", iConnected);
-						}
+						const iConnected: IConnected = this.mockSocketConnectResponse
+							.connect_document.connectMessage ?? {
+							clientId: uuid(),
+							existing: true,
+							initialClients: [],
+							initialMessages: [],
+							initialSignals: [],
+							maxMessageSize: 1000,
+							mode: connectMessage.mode,
+							version: connectMessage.versions[0],
+							serviceConfiguration: { maxMessageSize: 1000, blockSize: 1000 },
+							claims: {
+								documentId: connectMessage.id,
+								scopes: [
+									ScopeType.DocWrite,
+									ScopeType.DocRead,
+									ScopeType.SummaryWrite,
+								],
+								tenantId: connectMessage.tenantId,
+								ver: "1.0.0",
+								iat: 10,
+								exp: 10,
+								user: connectMessage.client.user,
+							},
+							supportedVersions: connectMessage.versions,
+							epoch: "testEpoch",
+						};
+						this.emit("connect_document_success", iConnected);
 						break;
 					}
 					case "connect_timeout": {
-						{
-							this.emit("connect_timeout");
-						}
+						this.emit("connect_timeout");
 						break;
 					}
-					default:
+					default: // No-op
 				}
 				return true;
 			}
