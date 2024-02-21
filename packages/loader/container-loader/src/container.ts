@@ -124,13 +124,7 @@ import {
 	ProtocolHandlerBuilder,
 	protocolHandlerShouldProcessSignal,
 } from "./protocol";
-import {
-	AttachProcessProps,
-	AttachedData,
-	AttachmentData,
-	isAttachedData,
-	runRetriableAttachProcess,
-} from "./attachment";
+import { AttachProcessProps, AttachmentData, runRetriableAttachProcess } from "./attachment";
 import { ContainerStateManager } from "./containerStateManager";
 
 const detachedContainerRefSeqNumber = 0;
@@ -1306,15 +1300,7 @@ export class Container
 						});
 					}
 
-					await attachP;
-
-					assert(
-						isAttachedData(this.attachmentData),
-						"incorrect format in final attachment data",
-					);
-					this.containerStateManager.setSnapshot(
-						(this.attachmentData as AttachedData).snapshot,
-					);
+					this.containerStateManager.setSnapshot(await attachP);
 					if (!this.closed) {
 						this.handleDeltaConnectionArg(
 							{

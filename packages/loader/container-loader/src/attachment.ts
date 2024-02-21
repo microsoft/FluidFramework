@@ -65,10 +65,6 @@ export interface AttachingDataWithoutBlobs {
  */
 export interface AttachedData {
 	readonly state: AttachState.Attached;
-	readonly snapshot?: {
-		tree: ISnapshotTree;
-		blobs: ISerializableBlobContents;
-	};
 }
 
 /**
@@ -136,7 +132,9 @@ export interface AttachProcessProps {
  *
  * @param props - The data and services necessary to run the attachment process
  */
-export const runRetriableAttachProcess = async (props: AttachProcessProps): Promise<void> => {
+export const runRetriableAttachProcess = async (
+	props: AttachProcessProps,
+): Promise<{ tree: ISnapshotTree; blobs: ISerializableBlobContents } | undefined> => {
 	const {
 		detachedBlobStorage,
 		createOrGetStorageService,
@@ -208,20 +206,14 @@ export const runRetriableAttachProcess = async (props: AttachProcessProps): Prom
 		});
 	}
 
+	const snapshot = offlineLoadEnabled
+		? getSnapshotTreeAndBlobsFromSerializedContainer(currentData.summary)
+		: undefined;
+
 	setAttachmentData(
 		(currentData = {
 			state: AttachState.Attached,
-			snapshot: offlineLoadEnabled
-				? getSnapshotTreeAndBlobsFromSerializedContainer(currentData.summary)
-				: undefined,
 		}),
 	);
+	return snapshot;
 };
-
-export function isAttachedData(obj: any): obj is AttachedData {
-	return (
-		obj.state === AttachState.Attached &&
-		(typeof obj.snapshot === "undefined" ||
-			(typeof obj.snapshot === "object" && "tree" in obj.snapshot && "blobs" in obj.snapshot))
-	);
-}

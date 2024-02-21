@@ -17,18 +17,18 @@ import {
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import { assert } from "@fluidframework/core-utils";
-import { IResolvedUrl, ISnapshot } from "@fluidframework/driver-definitions";
-import { isInstanceOfISnapshot } from "@fluidframework/driver-utils";
 import {
-	ContainerStorageAdapter,
-	ISerializableBlobContents,
-	getBlobContentsFromTree,
-} from "./containerStorageAdapter";
+	IDocumentStorageService,
+	IResolvedUrl,
+	ISnapshot,
+} from "@fluidframework/driver-definitions";
+import { isInstanceOfISnapshot } from "@fluidframework/driver-utils";
+import { ISerializableBlobContents, getBlobContentsFromTree } from "./containerStorageAdapter";
 import { IPendingContainerState } from "./container";
 
 export class ContainerStateManager {
 	private readonly savedOps: ISequencedDocumentMessage[] = [];
-	public snapshot:
+	private snapshot:
 		| {
 				tree: ISnapshotTree;
 				blobs: ISerializableBlobContents;
@@ -36,13 +36,19 @@ export class ContainerStateManager {
 		| undefined;
 	private readonly mc: MonitoringContext;
 	private readonly _offlineLoadEnabled: boolean;
-	private readonly storageAdapter: ContainerStorageAdapter;
+	private readonly storageAdapter: Pick<
+		IDocumentStorageService,
+		"readBlob" | "getSnapshot" | "getSnapshotTree" | "getVersions"
+	>;
 	private readonly pendingLocalState: IPendingContainerState | undefined;
 
 	constructor(
 		pendingLocalState: IPendingContainerState | undefined,
 		subLogger: ITelemetryLoggerExt,
-		storageAdapter,
+		storageAdapter: Pick<
+			IDocumentStorageService,
+			"readBlob" | "getSnapshotTree" | "getSnapshot" | "getVersions"
+		>,
 		isInteractiveClient: boolean,
 	) {
 		this.pendingLocalState = pendingLocalState;
@@ -70,31 +76,6 @@ export class ContainerStateManager {
 	private async getVersion(version: string | null): Promise<IVersion | undefined> {
 		const versions = await this.storageAdapter.getVersions(version, 1);
 		return versions[0];
-	}
-
-	/**
-	 * Get the most recent snapshot, or a specific version.
-	 * @param specifiedVersion - The specific version of the snapshot to retrieve
-	 * @returns The snapshot requested, or the latest snapshot if no version was specified, plus version ID
-	 */
-	private async fetchSnapshotTree(
-		specifiedVersion: string | undefined,
-	): Promise<{ snapshot?: ISnapshotTree; version?: IVersion | undefined }> {
-		const version = await this.getVersion(specifiedVersion ?? null);
-
-		if (version === undefined && specifiedVersion !== undefined) {
-			// We should have a defined version to load from if specified version requested
-			this.mc.logger.sendErrorEvent({
-				eventName: "NoVersionFoundWhenSpecified",
-				id: specifiedVersion,
-			});
-		}
-		const snapshot = (await this.storageAdapter.getSnapshotTree(version)) ?? undefined;
-
-		if (snapshot === undefined && version !== undefined) {
-			this.mc.logger.sendErrorEvent({ eventName: "getSnapshotTreeFailed", id: version.id });
-		}
-		return { snapshot, version };
 	}
 
 	public async fetchSnapshot(
@@ -133,12 +114,13 @@ export class ContainerStateManager {
 				true &&
 			supportGetSnapshotApi === true
 		) {
-			const snapshot = await this.storageAdapter.getSnapshot({
-				versionId: specifiedVersion,
-			});
+			const snapshot =
+				(await this.storageAdapter.getSnapshot?.({
+					versionId: specifiedVersion,
+				})) ?? undefined;
 			const version: IVersion = {
-				id: snapshot.snapshotTree.id ?? "",
-				treeId: snapshot.snapshotTree.id ?? "",
+				id: snapshot?.snapshotTree.id ?? "",
+				treeId: snapshot?.snapshotTree.id ?? "",
 			};
 
 			if (snapshot === undefined && specifiedVersion !== undefined) {
@@ -150,6 +132,31 @@ export class ContainerStateManager {
 			return { snapshot, version };
 		}
 		return this.fetchSnapshotTree(specifiedVersion);
+	}
+
+	/**
+	 * Get the most recent snapshot, or a specific version.
+	 * @param specifiedVersion - The specific version of the snapshot to retrieve
+	 * @returns The snapshot requested, or the latest snapshot if no version was specified, plus version ID
+	 */
+	private async fetchSnapshotTree(
+		specifiedVersion: string | undefined,
+	): Promise<{ snapshot?: ISnapshotTree; version?: IVersion | undefined }> {
+		const version = await this.getVersion(specifiedVersion ?? null);
+
+		if (version === undefined && specifiedVersion !== undefined) {
+			// We should have a defined version to load from if specified version requested
+			this.mc.logger.sendErrorEvent({
+				eventName: "NoVersionFoundWhenSpecified",
+				id: specifiedVersion,
+			});
+		}
+		const snapshot = (await this.storageAdapter.getSnapshotTree(version)) ?? undefined;
+
+		if (snapshot === undefined && version !== undefined) {
+			this.mc.logger.sendErrorEvent({ eventName: "getSnapshotTreeFailed", id: version.id });
+		}
+		return { snapshot, version };
 	}
 
 	public setSnapshot(
