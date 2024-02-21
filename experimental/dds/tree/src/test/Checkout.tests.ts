@@ -20,9 +20,9 @@ import {
 	Change,
 	Side,
 	areRevisionViewsSemanticallyEqual,
-} from '../index';
-import { TestTree } from './utilities/TestNode';
-import { setUpTestSharedTree, SharedTreeTestingOptions, setUpTestTree } from './utilities/TestUtilities';
+} from '../index.js';
+import { TestTree } from './utilities/TestNode.js';
+import { setUpTestSharedTree, SharedTreeTestingOptions, setUpTestTree } from './utilities/TestUtilities.js';
 
 /**
  * Checkout test suite

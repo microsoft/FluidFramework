@@ -4,7 +4,6 @@
  */
 
 import type { IncomingMessage, ServerResponse } from "http";
-import qs from "querystring";
 import { NetworkError, RestLessFieldNames } from "@fluidframework/server-services-client";
 import { urlencoded } from "body-parser";
 
@@ -138,7 +137,8 @@ export class RestLessServer {
 				}
 			} else if (contentType?.includes("application/x-www-form-urlencoded")) {
 				try {
-					request.body = qs.parse(request.body);
+					const searchParamsParsedBody = new URLSearchParams(request.body);
+					request.body = Object.fromEntries(searchParamsParsedBody.entries());
 				} catch (e) {
 					throw new NetworkError(400, "Failed to parse urlencoded body");
 				}

@@ -5,7 +5,7 @@
 
 import { describeFuzz, makeRandom } from "@fluid-private/stochastic-test-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IMergeTreeOp } from "../ops";
+import { IMergeTreeOp, MergeTreeDeltaType } from "../ops";
 import { SegmentGroup } from "../mergeTreeNodes";
 import {
 	generateClientNames,
@@ -37,10 +37,16 @@ function applyMessagesWithReconnect(
 			const index = clients
 				.map((c) => c.longClientId)
 				.indexOf(messageData[0].clientId as string);
-			const localMetadata = stashClients[index].applyStashedOp(
-				messageData[0].contents as IMergeTreeOp,
-			);
-			stashedOps.push([messageData[0].contents as IMergeTreeOp, localMetadata, index]);
+			const op = messageData[0].contents as IMergeTreeOp;
+			stashClients[index].applyStashedOp(op);
+			stashedOps.push([
+				op,
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				stashClients[index].peekPendingSegmentGroups(
+					op.type === MergeTreeDeltaType.GROUP ? op.ops.length : 1,
+				)!,
+				index,
+			]);
 		}
 	}
 	// this should put all stash clients (except #1) in the same state as the
@@ -92,8 +98,15 @@ function applyMessagesWithReconnect(
 	// apply regenerated ops as stashed ops for client #1
 	const stashedRegeneratedOps: [IMergeTreeOp, SegmentGroup | SegmentGroup[]][] =
 		reconnectMsgs.map((message) => {
-			const localMetadata = stashClients[1].applyStashedOp(message.contents as IMergeTreeOp);
-			return [message.contents as IMergeTreeOp, localMetadata];
+			const op = message.contents as IMergeTreeOp;
+			stashClients[1].applyStashedOp(op);
+			return [
+				op,
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				stashClients[1].peekPendingSegmentGroups(
+					op.type === MergeTreeDeltaType.GROUP ? op.ops.length : 1,
+				)!,
+			];
 		});
 	// now both clients at index 1 should be the same
 	TestClientLogger.validate([clients[1], stashClients[1]]);

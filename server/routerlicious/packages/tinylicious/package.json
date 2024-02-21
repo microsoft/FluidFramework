@@ -39,7 +39,7 @@
 		"@fluidframework/common-utils": "^3.1.0",
 		"@fluidframework/gitresources": "workspace:~",
 		"@fluidframework/protocol-base": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0-231454",
+		"@fluidframework/protocol-definitions": "^3.2.0-237840",
 		"@fluidframework/server-lambdas": "workspace:~",
 		"@fluidframework/server-local-server": "workspace:~",
 		"@fluidframework/server-memory-orderer": "workspace:~",

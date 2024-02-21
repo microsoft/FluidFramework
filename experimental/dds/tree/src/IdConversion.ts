@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { copyPropertyIfDefined, fail, Mutable, ReplaceRecursive } from './Common';
-import { convertTreeNodes } from './EditUtilities';
-import { DetachedSequenceId, isDetachedSequenceId, NodeId } from './Identifiers';
+import { copyPropertyIfDefined, fail, Mutable, ReplaceRecursive } from './Common.js';
+import { convertTreeNodes } from './EditUtilities.js';
+import { DetachedSequenceId, isDetachedSequenceId, NodeId } from './Identifiers.js';
 import {
 	BuildNodeInternal,
 	ChangeInternal,
@@ -17,7 +17,7 @@ import {
 	StablePlaceInternal,
 	StableRangeInternal,
 	TreeNode,
-} from './persisted-types';
+} from './persisted-types/index.js';
 
 export function convertEditIds<IdFrom, IdTo>(
 	edit: ReplaceRecursive<Edit<ChangeInternal>, NodeId, IdFrom>,

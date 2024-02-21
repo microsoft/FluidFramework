@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IDisposable,
 	IEventProvider,
 	IEvent,
 	IErrorEvent,
 	IErrorBase,
 } from "@fluidframework/core-interfaces";
-import { IAnyDriverError } from "@fluidframework/driver-definitions";
-import {
+import type { IAnyDriverError } from "@fluidframework/driver-definitions";
+import type {
 	IClientConfiguration,
 	IClientDetails,
 	IDocumentMessage,
@@ -149,11 +149,15 @@ export interface IDeltaManagerEvents extends IEvent {
 export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender {
 	/**
 	 * The queue of inbound delta messages
+	 * @deprecated Do not use, for internal use only. There are a lot of complications in core pieces of the runtime
+	 * may break if this is used directly. For example summarization and op processing.
 	 */
 	readonly inbound: IDeltaQueue<T>;
 
 	/**
 	 * The queue of outbound delta messages
+	 * @deprecated Do not use, for internal use only. There are a lot of complications in core pieces of the runtime
+	 * may break if this is used directly. For example op submission
 	 */
 	readonly outbound: IDeltaQueue<U[]>;
 

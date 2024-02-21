@@ -36,6 +36,7 @@ function buildHierarchy(flatTree: IOdspSnapshotCommit): api.ISnapshotTree {
 				blobs: {},
 				trees: {},
 				unreferenced: entry.unreferenced,
+				groupId: entry.groupId,
 			};
 			node.trees[decodeURIComponent(entryPathBase)] = newTree;
 			lookup[entry.path] = newTree;

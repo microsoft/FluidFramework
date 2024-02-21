@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { PromiseCache } from "@fluidframework/core-utils";
 import {
 	IDocumentService,
@@ -11,7 +11,7 @@ import {
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	getDocAttributesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
@@ -269,28 +269,30 @@ export class OdspDocumentServiceFactoryCore
 
 	protected async createDocumentServiceCore(
 		resolvedUrl: IResolvedUrl,
-		odspLogger: ITelemetryLogger,
+		odspLogger: ITelemetryBaseLogger,
 		cacheAndTrackerArg?: ICacheAndTracker,
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
+		const extLogger = createChildLogger({ logger: odspLogger });
 		const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
 		const resolvedUrlData: IOdspUrlParts = {
 			siteUrl: odspResolvedUrl.siteUrl,
 			driveId: odspResolvedUrl.driveId,
 			itemId: odspResolvedUrl.itemId,
 		};
+
 		const cacheAndTracker =
 			cacheAndTrackerArg ??
 			createOdspCacheAndTracker(
 				this.persistedCache,
 				this.nonPersistentCache,
 				{ resolvedUrl: odspResolvedUrl, docId: odspResolvedUrl.hashedDocumentId },
-				odspLogger,
+				extLogger,
 				clientIsSummarizer,
 			);
 
 		const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
-			odspLogger,
+			extLogger,
 			resolvedUrlData,
 			this.getStorageToken,
 			true /* throwOnNullToken */,
@@ -301,7 +303,7 @@ export class OdspDocumentServiceFactoryCore
 				? undefined
 				: async (options: TokenFetchOptions) =>
 						toInstrumentedOdspTokenFetcher(
-							odspLogger,
+							extLogger,
 							resolvedUrlData,
 							this.getWebsocketToken!,
 							false /* throwOnNullToken */,
@@ -311,7 +313,7 @@ export class OdspDocumentServiceFactoryCore
 			resolvedUrl,
 			storageTokenFetcher,
 			webSocketTokenFetcher,
-			odspLogger,
+			extLogger,
 			cacheAndTracker.cache,
 			this.hostPolicy,
 			cacheAndTracker.epochTracker,
