@@ -30,6 +30,7 @@ import {
 	IOdspErrorAugmentations,
 	IOdspResolvedUrl,
 	maximumCacheDurationMs,
+	type HostStoragePolicy,
 } from "@fluidframework/odsp-driver-definitions";
 import {
 	fetchAndParseAsJSONHelper,
@@ -96,6 +97,7 @@ export class EpochTracker implements IPersistedFileCache {
 		protected readonly fileEntry: IFileEntry,
 		protected readonly logger: ITelemetryLoggerExt,
 		protected readonly clientIsSummarizer?: boolean,
+		protected readonly hostPolicy?: HostStoragePolicy,
 	) {
 		// Limits the max number of concurrent requests to 24.
 		this.rateLimiter = new RateLimiter(24);
@@ -296,27 +298,48 @@ export class EpochTracker implements IPersistedFileCache {
 			.catch((error) => {
 				// If the error is about location redirection, then we need to generate new resolved url with correct
 				// location info.
-				if (
-					isFluidError(error) &&
-					error.errorType === OdspErrorTypes.fileNotFoundOrAccessDeniedError
-				) {
-					const redirectLocation = (error as IOdspErrorAugmentations).redirectLocation;
-					if (redirectLocation !== undefined) {
-						const redirectUrl: IOdspResolvedUrl = patchOdspResolvedUrl(
-							this.fileEntry.resolvedUrl,
-							redirectLocation,
-						);
-						const locationRedirectionError = new LocationRedirectionError(
+				if (isFluidError(error)) {
+					if (error.errorType === OdspErrorTypes.fileNotFoundOrAccessDeniedError) {
+						const redirectLocation = (error as IOdspErrorAugmentations)
+							.redirectLocation;
+						if (redirectLocation !== undefined) {
+							const redirectUrl: IOdspResolvedUrl = patchOdspResolvedUrl(
+								this.fileEntry.resolvedUrl,
+								redirectLocation,
+							);
+							const locationRedirectionError = new LocationRedirectionError(
+								error.message,
+								redirectUrl,
+								{ driverVersion, redirectLocation },
+							);
+							locationRedirectionError.addTelemetryProperties(
+								error.getTelemetryProperties(),
+							);
+							throw locationRedirectionError;
+						}
+					} else if (
+						error.errorType == OdspErrorTypes.throttlingError &&
+						this.hostPolicy?.disableRetriesOnStorageThrottlingError
+					) {
+						const nonRetriableThrottlingError = new NonRetryableError(
 							error.message,
-							redirectUrl,
-							{ driverVersion, redirectLocation },
+							OdspErrorTypes.throttlingError,
+							// retryAfterMs is still provided so that client app can can still use it.
+							{
+								retryAfterMs:
+									(error as ThrottlingError).retryAfterSeconds !== undefined
+										? (error as ThrottlingError).retryAfterSeconds * 1000
+										: undefined,
+								driverVersion,
+							},
 						);
-						locationRedirectionError.addTelemetryProperties(
+						nonRetriableThrottlingError.addTelemetryProperties(
 							error.getTelemetryProperties(),
 						);
-						throw locationRedirectionError;
+						throw nonRetriableThrottlingError;
 					}
 				}
+
 				throw error;
 			})
 			.catch((error) => {
@@ -495,8 +518,9 @@ export class EpochTrackerWithRedemption extends EpochTracker {
 		protected readonly fileEntry: IFileEntry,
 		protected readonly logger: ITelemetryLoggerExt,
 		protected readonly clientIsSummarizer?: boolean,
+		protected readonly hostPolicy?: HostStoragePolicy,
 	) {
-		super(cache, fileEntry, logger, clientIsSummarizer);
+		super(cache, fileEntry, logger, clientIsSummarizer, hostPolicy);
 		// Handles the rejected promise within treesLatestDeferral.
 		this.treesLatestDeferral.promise.catch(() => {});
 	}
@@ -627,12 +651,14 @@ export function createOdspCacheAndTracker(
 	fileEntry: IFileEntry,
 	logger: ITelemetryLoggerExt,
 	clientIsSummarizer?: boolean,
+	hostPolicy?: HostStoragePolicy,
 ): ICacheAndTracker {
 	const epochTracker = new EpochTrackerWithRedemption(
 		persistedCacheArg,
 		fileEntry,
 		logger,
 		clientIsSummarizer,
+		hostPolicy,
 	);
 	return {
 		cache: {
