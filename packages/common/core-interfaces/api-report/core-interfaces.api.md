@@ -446,14 +446,6 @@ export interface ITelemetryGenericEvent extends ITelemetryProperties {
 }
 
 // @public @deprecated
-export interface ITelemetryLogger extends ITelemetryBaseLogger {
-    send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
-    sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
-    sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any, logLevel?: typeof LogLevel.verbose | typeof LogLevel.default): void;
-    sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any, logLevel?: typeof LogLevel.verbose | typeof LogLevel.default): void;
-}
-
-// @public @deprecated
 export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
     // (undocumented)
     duration?: number;

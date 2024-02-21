@@ -47,7 +47,6 @@ export type {
 	ITelemetryBaseProperties,
 	ITelemetryErrorEvent, // deprecated
 	ITelemetryGenericEvent, // deprecated
-	ITelemetryLogger, // deprecated
 	ITelemetryPerformanceEvent, // deprecated
 	ITelemetryProperties, // deprecated
 	Tagged,

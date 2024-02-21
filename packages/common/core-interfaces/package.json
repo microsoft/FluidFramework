@@ -84,6 +84,11 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedInterfaceDeclaration_ITelemetryLogger": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }
