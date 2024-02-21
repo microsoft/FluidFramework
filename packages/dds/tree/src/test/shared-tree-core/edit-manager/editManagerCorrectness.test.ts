@@ -661,9 +661,12 @@ export function testCorrectness() {
 		 * - They help diagnose issues with the more complicated exhaustive test (e.g., if one of the above tests fails,
 		 * but this one doesn't, then there might be something wrong with this test).
 		 */
-		describeStress("Combinatorial exhaustive", ({ isStress }) => {
+		describeStress("Combinatorial exhaustive", function ({ isStress }) {
 			const NUM_STEPS = isStress ? 5 : 4;
-			const NUM_PEERS = 2;
+			const NUM_PEERS = isStress ? 3 : 2;
+			if (isStress) {
+				this.timeout(60_000);
+			}
 
 			const peers: SessionId[] = makeArray(NUM_PEERS, (i) => String(i + 1) as SessionId);
 			const meta = {
