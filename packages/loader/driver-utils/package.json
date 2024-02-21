@@ -70,7 +70,7 @@
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/gitresources": "^3.1.0-237980",
-		"@fluidframework/protocol-base": "^3.1.0-237980",
+		"@fluidframework/protocol-base": "^3.1.0-238497",
 		"@fluidframework/protocol-definitions": "^3.2.0-237840",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"axios": "^1.6.2",

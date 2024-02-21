@@ -60,7 +60,7 @@
 		"@fluidframework/eslint-config-fluid": "^3.5.0",
 		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/local-driver": "workspace:~",
-		"@fluidframework/server-local-server": "^3.1.0-237980",
+		"@fluidframework/server-local-server": "^3.1.0-238497",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@types/jest": "29.5.3",
