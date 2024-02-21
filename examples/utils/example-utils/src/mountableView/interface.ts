@@ -3,34 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { FluidObject } from "@fluidframework/core-interfaces";
-
 /**
- * @internal
- */
-export const IFluidMountableView: keyof IProvideFluidMountableView = "IFluidMountableView";
-
-/**
+ * Provider for a mountable view for use with the FluidObject pattern.
  * @internal
  */
 export interface IProvideFluidMountableView {
+	/**
+	 * The provided mountable view.
+	 */
 	readonly IFluidMountableView: IFluidMountableView;
-}
-
-/**
- * IFluidMountableViewClass defines the statics on our class implementing IFluidMountableView.
- * @internal
- */
-export interface IFluidMountableViewClass {
-	/**
-	 * @param view - The view to make mountable
-	 */
-	new (view: FluidObject): IFluidMountableView;
-	/**
-	 * Test whether the given view can be successfully mounted by a MountableView.
-	 * @param view - the view to test if it can be mounted.
-	 */
-	canMount(view: FluidObject): boolean;
 }
 
 /**

@@ -5,6 +5,7 @@
 
 import sillyname from "sillyname";
 import { v4 as uuid } from "uuid";
+import { IFluidMountableView } from "@fluid-example/example-utils";
 import { assert, Deferred } from "@fluidframework/core-utils";
 import {
 	AttachState,
@@ -22,7 +23,6 @@ import { Loader } from "@fluidframework/container-loader";
 import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
 import { HostStoragePolicy, IPersistedCache } from "@fluidframework/odsp-driver-definitions";
 import { IUser } from "@fluidframework/protocol-definitions";
-import { IFluidMountableView } from "@fluidframework/view-interfaces";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
