@@ -157,7 +157,14 @@ const tsconfigPath = path.join(packageRoot, "tsconfig.json");
 const tsconfigPaths = [tsconfigPath];
 const tsconfig = JSON5.parse(fs.readFileSync(tsconfigPath, "utf8"));
 tsconfig.extends = `${workspaceRoot}/common/build/build-common/tsconfig.node16.json`;
-tsconfig.excludes = ["lib", "dist", "node_modules"];
+
+// TODO: Exclude lib, dist, etc if rootDir = '.'
+// Ensure tsconfig excludes 'lib', 'dist', and 'node-modules'.
+// for (const excluded of ["lib", "dist", "node_modules"]) {
+// 	if (!tsconfig.exclude.includes(excluded)) {
+// 		tsconfig.exclude.push(excluded);
+// 	}
+// }
 
 const compilerOptions = tsconfig.compilerOptions;
 
