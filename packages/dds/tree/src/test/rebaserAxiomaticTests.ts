@@ -647,9 +647,10 @@ function verifyComposeWithInverseEqualsEmpty<TChangeset>(
 	const metadata = defaultRevisionMetadataFromChanges(edits);
 
 	for (const edit of edits) {
-		const change = tagChange(fieldRebaser.compose([edit]), edit.revision);
+		const change = tagChange(edit.change, edit.revision);
 		const changeset = fieldRebaser.compose(
-			[change, tagChange(fieldRebaser.invert(change), change.revision)],
+			change,
+			tagChange(fieldRebaser.invert(change), change.revision),
 			metadata,
 		);
 		const actualChange = makeAnonChange(changeset);
@@ -665,10 +666,14 @@ function verifyComposeWithEmptyIsNoOp<TChangeset>(
 	const metadata = defaultRevisionMetadataFromChanges(edits);
 	const assertDeepEqual = getDefaultedEqualityAssert(fieldRebaser);
 	for (const edit of edits) {
-		const noOp = makeAnonChange(fieldRebaser.compose([], metadata));
-		const changeset = fieldRebaser.compose([edit, noOp], metadata);
+		const emptyChange = tagChange(
+			// fieldRebaser.compose([]),
+			fieldRebaser.createEmpty(),
+			"test" as unknown as SessionSpaceCompressedId,
+		);
+		const changeset = fieldRebaser.compose(edit, emptyChange, metadata);
 		const actualChange = makeAnonChange(changeset);
-		assertDeepEqual(actualChange, makeAnonChange(fieldRebaser.compose([edit], metadata)));
+		assertDeepEqual(actualChange, makeAnonChange(edit.change));
 	}
 }
 
@@ -708,12 +713,16 @@ function verifyRebaseRightDistributivity<TChangeset>(
 	const metadata = defaultRevisionMetadataFromChanges([editToRebaseOver]);
 	const editA = edits[0];
 	const editB = edits[1];
-	const editC = makeAnonChange(fieldRebaser.compose([editToRebaseOver], metadata));
+	const editC = {
+		change: editToRebaseOver.change,
+		revision: namedEditToRebaseOver.changeset.revision,
+		metadata,
+	};
 
 	// (A ○ B) ↷ C
 	const actualChange = rebaseTagged(
 		fieldRebaser.rebase,
-		makeAnonChange(fieldRebaser.compose([editA, editB])),
+		makeAnonChange(fieldRebaser.compose(editA, editB)),
 		[editC],
 	);
 
@@ -721,12 +730,17 @@ function verifyRebaseRightDistributivity<TChangeset>(
 	const invertedEdit = tagRollbackInverse(fieldRebaser.invert(editA), undefined, editA.revision);
 	// (A ↷ C) ○ (B ↷ (A⁻¹ ○ C ○ (A ↷ C)))
 	const expectedChange = makeAnonChange(
-		fieldRebaser.compose([
+		fieldRebaser.compose(
 			editRebasedOverC,
 			rebaseTagged(fieldRebaser.rebase, editB, [
-				makeAnonChange(fieldRebaser.compose([invertedEdit, editC, editRebasedOverC])),
+				makeAnonChange(
+					fieldRebaser.compose(
+						makeAnonChange(fieldRebaser.compose(invertedEdit, editC)),
+						editRebasedOverC,
+					),
+				),
 			]),
-		]),
+		),
 	);
 
 	assertDeepEqual(actualChange, expectedChange);
@@ -740,10 +754,11 @@ function verifyRebaseOverUndoRedoPair<TChangeset>(
 	const assertDeepEqual = getDefaultedEqualityAssert(fieldRebaser);
 	assert(namedEditsToRebaseOver.length === 1, "expected just 1 edit");
 	const editsToRebaseOver = namedEditsToRebaseOver.map(({ changeset }) => changeset);
-	const editB = tagChange(
-		fieldRebaser.compose([editsToRebaseOver[0]]),
-		editsToRebaseOver[0].revision,
-	);
+	// const editB = tagChange(
+	// 	fieldRebaser.compose([editsToRebaseOver[0]]),
+	// 	editsToRebaseOver[0].revision,
+	// );
+	const editB = { change: editsToRebaseOver[0].change, revision: editsToRebaseOver[0].revision };
 
 	const inverseEditB = fieldRebaser.invert(editB);
 
@@ -771,10 +786,8 @@ function verifyRebaseOverDoUndoPairIsNoOp<TChangeset>(
 	const assertDeepEqual = getDefaultedEqualityAssert(fieldRebaser);
 	assert(namedEditsToRebaseOver.length === 1, "expected just 1 edit");
 	const editsToRebaseOver = namedEditsToRebaseOver.map(({ changeset }) => changeset);
-	const editB = tagChange(
-		fieldRebaser.compose([editsToRebaseOver[0]]),
-		editsToRebaseOver[0].revision,
-	);
+
+	const editB = { change: editsToRebaseOver[0].change, revision: editsToRebaseOver[0].revision };
 
 	const invertedEditB = fieldRebaser.invert(editB);
 	// (A ↷ B) ↷ B⁻¹
@@ -798,7 +811,8 @@ function verifyRebaseOverEmpty<TChangeset>(
 	fieldRebaser: BoundFieldChangeRebaser<TChangeset>,
 ) {
 	const emptyChange = tagChange(
-		fieldRebaser.compose([]),
+		// fieldRebaser.compose([]),
+		fieldRebaser.createEmpty(),
 		"test" as unknown as SessionSpaceCompressedId,
 	);
 
@@ -812,7 +826,7 @@ function verifyRebaseEmpty<TChangeset>(
 	fieldRebaser: BoundFieldChangeRebaser<TChangeset>,
 ) {
 	const emptyChange = tagChange(
-		fieldRebaser.compose([]),
+		fieldRebaser.createEmpty(),
 		"test" as unknown as SessionSpaceCompressedId,
 	);
 
