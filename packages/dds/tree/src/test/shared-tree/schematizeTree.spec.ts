@@ -27,12 +27,13 @@ import {
 	TreeStoredSchema,
 	TreeStoredSchemaRepository,
 } from "../../core/index.js";
-import { jsonSequenceRootSchema } from "../utils.js";
+import { checkoutWithContent, jsonSequenceRootSchema, validateViewConsistency } from "../utils.js";
 
 import {
 	TreeContent,
 	UpdateType,
 	canInitialize,
+	ensureSchema,
 	evaluateUpdate,
 	initializeContent,
 	// eslint-disable-next-line import/no-internal-modules
@@ -256,9 +257,202 @@ describe("schematizeTree", () => {
 	});
 
 	describe("ensureSchema", () => {
-		describe("UpdateType.None", () => {
-			// TODO
+		it("compatible empty schema", () => {
+			const checkout = checkoutWithContent({
+				schema: emptySchema,
+				initialTree: undefined,
+			});
+			const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, emptySchema);
+			assert(ensureSchema(viewSchema, AllowedUpdateType.None, checkout, undefined));
 		});
-		// TODO
+
+		it("initialize optional root", () => {
+			const emptyContent = {
+				schema: emptySchema,
+				initialTree: undefined,
+			};
+			const emptyCheckout = checkoutWithContent(emptyContent);
+			const content: TreeContent<typeof schemaGeneralized.rootFieldSchema> = {
+				schema: schemaGeneralized,
+				initialTree: 5,
+			};
+			const initializedCheckout = checkoutWithContent(content);
+			// Schema upgraded, but content not initialized
+			const upgradedCheckout = checkoutWithContent({
+				schema: schemaGeneralized,
+				initialTree: undefined,
+			});
+			const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, content.schema);
+
+			// Non updating cases
+			{
+				const checkout = checkoutWithContent(emptyContent);
+				assert(!ensureSchema(viewSchema, AllowedUpdateType.None, checkout, undefined));
+				validateViewConsistency(checkout, emptyCheckout);
+			}
+			{
+				const checkout = checkoutWithContent(emptyContent);
+				assert(!ensureSchema(viewSchema, AllowedUpdateType.None, checkout, content));
+				validateViewConsistency(checkout, emptyCheckout);
+			}
+			{
+				const checkout = checkoutWithContent(emptyContent);
+				assert(
+					!ensureSchema(viewSchema, AllowedUpdateType.Initialize, checkout, undefined),
+				);
+				validateViewConsistency(checkout, emptyCheckout);
+			}
+
+			// Initialize
+			{
+				const checkout = checkoutWithContent(emptyContent);
+				assert(ensureSchema(viewSchema, AllowedUpdateType.Initialize, checkout, content));
+				validateViewConsistency(checkout, initializedCheckout);
+			}
+
+			// Schema upgrade but not initialize
+			{
+				const checkout = checkoutWithContent(emptyContent);
+				assert(
+					ensureSchema(viewSchema, AllowedUpdateType.SchemaCompatible, checkout, content),
+				);
+				validateViewConsistency(checkout, upgradedCheckout);
+			}
+
+			// Prefer initialize over schema upgrade when both are allowed
+			{
+				const checkout = checkoutWithContent(emptyContent);
+				assert(
+					ensureSchema(
+						viewSchema,
+						// eslint-disable-next-line no-bitwise
+						AllowedUpdateType.SchemaCompatible | AllowedUpdateType.Initialize,
+						checkout,
+						content,
+					),
+				);
+				validateViewConsistency(checkout, initializedCheckout);
+			}
+
+			//  Schema upgrade when no content is provided
+			{
+				const checkout = checkoutWithContent(emptyContent);
+				assert(
+					ensureSchema(
+						viewSchema,
+						// eslint-disable-next-line no-bitwise
+						AllowedUpdateType.SchemaCompatible | AllowedUpdateType.Initialize,
+						checkout,
+						undefined,
+					),
+				);
+				validateViewConsistency(checkout, upgradedCheckout);
+			}
+		});
+
+		it("initialize required root", () => {
+			const emptyContent = {
+				schema: emptySchema,
+				initialTree: undefined,
+			};
+			const emptyCheckout = checkoutWithContent(emptyContent);
+			const content: TreeContent<typeof schemaValueRoot.rootFieldSchema> = {
+				schema: schemaValueRoot,
+				initialTree: 5,
+			};
+			const initializedCheckout = checkoutWithContent(content);
+
+			const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, content.schema);
+
+			// Non updating cases
+			{
+				const checkout = checkoutWithContent(emptyContent);
+				assert(!ensureSchema(viewSchema, AllowedUpdateType.None, checkout, undefined));
+				validateViewConsistency(checkout, emptyCheckout);
+			}
+			{
+				const checkout = checkoutWithContent(emptyContent);
+				assert(!ensureSchema(viewSchema, AllowedUpdateType.None, checkout, content));
+				validateViewConsistency(checkout, emptyCheckout);
+			}
+			{
+				const checkout = checkoutWithContent(emptyContent);
+				assert(
+					!ensureSchema(viewSchema, AllowedUpdateType.Initialize, checkout, undefined),
+				);
+				validateViewConsistency(checkout, emptyCheckout);
+			}
+			// Cases which don't update due to root being required
+			{
+				const checkout = checkoutWithContent(emptyContent);
+				assert(
+					!ensureSchema(
+						viewSchema,
+						// eslint-disable-next-line no-bitwise
+						AllowedUpdateType.SchemaCompatible | AllowedUpdateType.Initialize,
+						checkout,
+						undefined,
+					),
+				);
+				validateViewConsistency(checkout, emptyCheckout);
+			}
+			{
+				const checkout = checkoutWithContent(emptyContent);
+				assert(
+					!ensureSchema(
+						viewSchema,
+						AllowedUpdateType.SchemaCompatible,
+						checkout,
+						content,
+					),
+				);
+				validateViewConsistency(checkout, emptyCheckout);
+			}
+
+			// Initialize
+			{
+				const checkout = checkoutWithContent(emptyContent);
+				assert(ensureSchema(viewSchema, AllowedUpdateType.Initialize, checkout, content));
+				validateViewConsistency(checkout, initializedCheckout);
+			}
+		});
+
+		it("update non-empty", () => {
+			const initialContent = {
+				schema,
+				initialTree: 5,
+			};
+			const initialCheckout = checkoutWithContent(initialContent);
+			const content: TreeContent<typeof schemaGeneralized.rootFieldSchema> = {
+				schema: schemaGeneralized,
+				initialTree: "Should not be used",
+			};
+			const updatedCheckout = checkoutWithContent({
+				schema: schemaGeneralized,
+				initialTree: initialContent.initialTree,
+			});
+
+			const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, content.schema);
+
+			// Non updating case
+			{
+				const checkout = checkoutWithContent(initialContent);
+				assert(!ensureSchema(viewSchema, AllowedUpdateType.Initialize, checkout, content));
+				validateViewConsistency(checkout, initialCheckout);
+			}
+			// Updating case
+			{
+				const checkout = checkoutWithContent(initialContent);
+				assert(
+					ensureSchema(
+						viewSchema,
+						AllowedUpdateType.SchemaCompatible,
+						checkout,
+						undefined,
+					),
+				);
+				validateViewConsistency(checkout, updatedCheckout);
+			}
+		});
 	});
 });
