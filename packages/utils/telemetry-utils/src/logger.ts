@@ -851,23 +851,6 @@ export class PerformanceEvent {
 }
 
 /**
- * Null logger that no-ops for all telemetry events passed to it.
- *
- * @deprecated This will be removed in a future release.
- * For internal use within the FluidFramework codebase, use {@link createChildLogger} with no arguments instead.
- * For external consumers we recommend writing a trivial implementation of {@link @fluidframework/core-interfaces#ITelemetryBaseLogger}
- * where the send() method does nothing and using that.
- *
- * @internal
- */
-export class TelemetryNullLogger implements ITelemetryLoggerExt {
-	public send(event: ITelemetryBaseEvent): void {}
-	public sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: unknown): void {}
-	public sendErrorEvent(event: ITelemetryErrorEventExt, error?: unknown): void {}
-	public sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: unknown): void {}
-}
-
-/**
  * Takes in an event object, and converts all of its values to a basePropertyType.
  * In the case of an invalid property type, the value will be converted to an error string.
  * @param event - Event with fields you want to stringify.

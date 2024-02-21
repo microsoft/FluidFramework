@@ -399,18 +399,6 @@ export type TelemetryEventPropertyTypeExt = string | number | boolean | undefine
 // @alpha (undocumented)
 export type TelemetryEventPropertyTypes = ITelemetryBaseProperties[string];
 
-// @internal @deprecated
-export class TelemetryNullLogger implements ITelemetryLoggerExt {
-    // (undocumented)
-    send(event: ITelemetryBaseEvent): void;
-    // (undocumented)
-    sendErrorEvent(event: ITelemetryErrorEventExt, error?: unknown): void;
-    // (undocumented)
-    sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: unknown): void;
-    // (undocumented)
-    sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: unknown): void;
-}
-
 // @internal
 export class ThresholdCounter {
     constructor(threshold: number, logger: ITelemetryLoggerExt, thresholdMultiple?: number);
