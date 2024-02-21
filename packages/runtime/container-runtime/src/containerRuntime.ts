@@ -1194,7 +1194,7 @@ export class ContainerRuntime
 
 	/***/
 	protected constructor(
-		private readonly context: IContainerContext,
+		context: IContainerContext,
 		private readonly registry: IFluidDataStoreRegistry,
 		private readonly metadata: IContainerRuntimeMetadata | undefined,
 		electedSummarizerData: ISerializedElection | undefined,
@@ -1791,7 +1791,7 @@ export class ContainerRuntime
 
 		// If the snapshot is ahead of the last seq number of the delta manager, then catch up before
 		// returning the snapshot.
-		if (snapshotSeqNumber > this.context.deltaManager.lastSequenceNumber) {
+		if (snapshotSeqNumber > this.deltaManager.lastSequenceNumber) {
 			// If this is a summarizer client, which is trying to load a group and it finds that there is
 			// another snapshot from which the summarizer loaded and it is behind, then just give up as
 			// the summarizer state is not up to date.
@@ -1802,11 +1802,11 @@ export class ContainerRuntime
 			}
 			// If the inbound deltas queue is paused, then unpause it for now as we need
 			// to catch up to the snapshot sequence number.
-			if (this.context.deltaManager.inbound.paused) {
+			if (this.deltaManager.inbound.paused) {
 				throw new Error("Could not catch up as inbound queue is paused");
 			}
 			const defP = new Deferred<boolean>();
-			this.context.deltaManager.on("op", (message: ISequencedDocumentMessage) => {
+			this.deltaManager.on("op", (message: ISequencedDocumentMessage) => {
 				if (message.sequenceNumber >= snapshotSeqNumber) {
 					defP.resolve(true);
 				}
