@@ -33,17 +33,30 @@ export function convertSortedNumberArrayToRanges(numberArray: number[]): number[
 	return ranges;
 }
 
-export function mergeArrays<T, TComp>(arr1: T[], arr2: T[], selector: (item: T) => TComp): T[] {
+/**
+ * Merge two already sorted array into one sorted array. Please make sure the comparator is consistent with the array sorting order.
+ * Which means if the arrays were sorted in ascending order, the comparator should return a negative number if a &gt; b, 0 if a === b, and a positive number if a &lt; b.
+ * While if the arrays were sorted in descending order, the comparator should return a positive number if a &lt; b, 0 if a === b, and a negative number if a &gt b.
+ * @param arr1 - Sorted array 1
+ * @param arr2 - Sorted array 2
+ * @param comparator - comparator function, need to be consistent with the arrays sorting order
+ * @returns merged sorted array based on the sorting order
+ * @internal
+ */
+export function mergeSortedArrays<T>(
+	arr1: T[],
+	arr2: T[],
+	comparator: (item1: T, item2: T) => number,
+): T[] {
 	const mergedResult: T[] = [];
 	let index1 = 0;
 	let index2 = 0;
 	while (index1 < arr1.length && index2 < arr2.length) {
-		const value1 = selector(arr1[index1]);
-		const value2 = selector(arr2[index2]);
-		if (value1 <= value2) {
+		const compareResult = comparator(arr1[index1], arr2[index2]);
+		if (compareResult <= 0) {
 			mergedResult.push(arr1[index1]);
 			index1++;
-		} else if (value1 > value2) {
+		} else {
 			mergedResult.push(arr2[index2]);
 			index2++;
 		}
@@ -67,6 +80,13 @@ class HeapNode<T> {
 	) {}
 }
 
+/**
+ * Merge K sorted arrays into one sorted array. Please make sure the comparator is consistent with the array sorting order.
+ * @param arrays - array of sorted arrays
+ * @param comparator - comparator function, need to be consistent with the arrays sorting order
+ * @returns merged sorted array based on the sorting order
+ * @internal
+ */
 export function mergeKArrays<T>(arrays: T[][], comparator: (a: T, b: T) => number): T[] {
 	const heapComparator = {
 		compareFn: (a: HeapNode<T>, b: HeapNode<T>) => comparator(a.value, b.value),
@@ -89,6 +109,13 @@ export function mergeKArrays<T>(arrays: T[][], comparator: (a: T, b: T) => numbe
 	return mergedResult;
 }
 
+/**
+ * Dedupe the sorted array based on the selector. The array should be sorted based on the selector.
+ * @param array - array to dedupe
+ * @param selector - selector function
+ * @returns deduped sorted array based on the selector
+ * @internal
+ */
 export function dedupeSortedArray<T, TSelector>(array: T[], selector: (item: T) => TSelector): T[] {
 	const result: T[] = [];
 	let pre: any;

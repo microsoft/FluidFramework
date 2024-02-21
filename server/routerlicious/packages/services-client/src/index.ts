@@ -12,8 +12,8 @@ export {
 export {
 	convertSortedNumberArrayToRanges,
 	dedupeSortedArray,
-	mergeArrays,
 	mergeKArrays,
+	mergeSortedArrays,
 } from "./array";
 export { CorrelationIdHeaderName, DriverVersionHeaderName, LatestSummaryId } from "./constants";
 export {

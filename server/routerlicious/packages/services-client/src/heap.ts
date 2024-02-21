@@ -3,10 +3,18 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * compareFn for the heap.
+ * @internal
+ */
 export interface IHeapComparator<T> {
 	compareFn(a: T, b: T): number;
 }
 
+/**
+ * Ordered {@link https://en.wikipedia.org/wiki/Heap_(data_structure) | Heap} data structure implementation.
+ * @internal
+ */
 export class Heap<T> {
 	private readonly heap: T[] = [];
 	constructor(private readonly comparator: IHeapComparator<T>) {}

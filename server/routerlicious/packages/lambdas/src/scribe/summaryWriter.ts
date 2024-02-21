@@ -24,7 +24,7 @@ import {
 	getQuorumTreeEntries,
 	generateServiceProtocolEntries,
 	mergeAppAndProtocolTree,
-	mergeArrays,
+	mergeSortedArrays,
 	dedupeSortedArray,
 	mergeKArrays,
 	convertSortedNumberArrayToRanges,
@@ -647,7 +647,11 @@ export class SummaryWriter implements ISummaryWriter {
 				.map((op) => op.operation);
 
 			logtailFromMemory = dedupeSortedArray(
-				mergeArrays(logTailFromLastSummary, logTailFromPending, (op) => op.sequenceNumber),
+				mergeSortedArrays(
+					logTailFromLastSummary,
+					logTailFromPending,
+					(opS, opP) => opS.sequenceNumber - opP.sequenceNumber,
+				),
 				(op) => op.sequenceNumber,
 			);
 
@@ -658,8 +662,8 @@ export class SummaryWriter implements ISummaryWriter {
 			}
 
 			retrievedGaps = await Promise.all(
-				logtailGaps.map(async (gap) => {
-					return this.retrieveOps(gap[0] - 1, gap[1] + 1);
+				logtailGaps.map(async ([gapBeginInclusive, gapEndInclusive]) => {
+					return this.retrieveOps(gapBeginInclusive - 1, gapEndInclusive + 1);
 				}),
 			);
 
