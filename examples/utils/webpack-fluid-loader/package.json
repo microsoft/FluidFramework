@@ -90,7 +90,7 @@
 		"@fluidframework/protocol-definitions": "^3.2.0-237840",
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/server-local-server": "^3.1.0-237980",
+		"@fluidframework/server-local-server": "^3.1.0-238497",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/tool-utils": "workspace:~",
