@@ -396,7 +396,7 @@ describe("SharedDirectory fuzz", () => {
 			// was refactored to use the DDS fuzz harness.
 			maxNumberOfClients: Number.MAX_SAFE_INTEGER,
 			clientAddProbability: 0.08,
-			stashableClientProbability: undefined,
+			stashableClientProbability: 0.2,
 		},
 		defaultTestCount: 25,
 		// Uncomment this line to replay a specific seed from its failure file:
