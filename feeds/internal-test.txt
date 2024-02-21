@@ -30,7 +30,6 @@
 @fluid-private/test-loader-utils
 @fluidframework/driver-utils
 @fluidframework/container-loader
-@fluidframework/view-interfaces
 @fluidframework/undo-redo
 @fluidframework/synthesize
 @fluidframework/request-handler

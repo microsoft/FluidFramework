@@ -489,7 +489,7 @@ export class RestGitService {
 	private async post<T>(
 		url: string,
 		requestBody: any,
-		query?: Record<string, unknown>,
+		query?: Record<string, string | number | boolean>,
 	): Promise<T> {
 		return this.restWrapper
 			.post<T>(url, requestBody, query, {

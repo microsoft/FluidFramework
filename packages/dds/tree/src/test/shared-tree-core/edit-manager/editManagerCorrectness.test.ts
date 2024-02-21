@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SessionId } from "@fluidframework/id-compressor";
+import { describeStress } from "@fluid-private/stochastic-test-utils";
 import { ChangeFamily, ChangeFamilyEditor, GraphCommit } from "../../../core/index.js";
 import { brand, makeArray } from "../../../util/index.js";
 import { Commit, EditManager } from "../../../shared-tree-core/index.js";
@@ -16,11 +17,6 @@ import { buildScenario, runUnitTestScenario } from "./editManagerScenario.js";
 const localSessionId: SessionId = "0" as SessionId;
 const peer1: SessionId = "1" as SessionId;
 const peer2: SessionId = "2" as SessionId;
-
-// TODO:#4557: Change the number of steps back to 5 once the way these tests are run changes
-const NUM_STEPS = 4;
-const NUM_PEERS = 2;
-const peers: SessionId[] = makeArray(NUM_PEERS, (i) => String(i + 1) as SessionId);
 
 export function testCorrectness() {
 	describe("Correctness", () => {
@@ -665,28 +661,37 @@ export function testCorrectness() {
 		 * - They help diagnose issues with the more complicated exhaustive test (e.g., if one of the above tests fails,
 		 * but this one doesn't, then there might be something wrong with this test).
 		 */
-		it("Combinatorial test", () => {
+		describeStress("Combinatorial exhaustive", function ({ isStress }) {
+			const NUM_STEPS = isStress ? 5 : 4;
+			const NUM_PEERS = isStress ? 3 : 2;
+			if (isStress) {
+				this.timeout(60_000);
+			}
+
+			const peers: SessionId[] = makeArray(NUM_PEERS, (i) => String(i + 1) as SessionId);
 			const meta = {
 				peerRefs: makeArray(NUM_PEERS, () => 0),
 				seq: 0,
 				inFlight: 0,
 			};
-			for (const scenario of buildScenario([], meta, peers, NUM_STEPS)) {
-				// Uncomment the code below to log the titles of generated scenarios.
-				// This is helpful for creating a unit test out of a generated scenario that fails.
-				// const title = scenario
-				// 	.map((s) => {
-				// 		if (s.type === "Pull") {
-				// 			return `Pull(${s.seq}) from:${s.from} ref:${s.ref}`;
-				// 		} else if (s.type === "Ack") {
-				// 			return `Ack(${s.seq})`;
-				// 		}
-				// 		return `Push(${s.seq})`;
-				// 	})
-				// 	.join("|");
-				// console.debug(title);
-				runUnitTestScenario(undefined, scenario);
-			}
+			it(`for ${NUM_PEERS} peers and ${NUM_STEPS} steps`, () => {
+				for (const scenario of buildScenario([], meta, peers, NUM_STEPS)) {
+					// Uncomment the code below to log the titles of generated scenarios.
+					// This is helpful for creating a unit test out of a generated scenario that fails.
+					// const title = scenario
+					// 	.map((s) => {
+					// 		if (s.type === "Pull") {
+					// 			return `Pull(${s.seq}) from:${s.from} ref:${s.ref}`;
+					// 		} else if (s.type === "Ack") {
+					// 			return `Ack(${s.seq})`;
+					// 		}
+					// 		return `Push(${s.seq})`;
+					// 	})
+					// 	.join("|");
+					// console.debug(title);
+					runUnitTestScenario(undefined, scenario);
+				}
+			});
 		});
 	});
 }

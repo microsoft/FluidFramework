@@ -24,7 +24,6 @@
 @fluidframework/container-runtime
 @fluidframework/driver-utils
 @fluidframework/container-loader
-@fluidframework/view-interfaces
 @fluidframework/undo-redo
 @fluidframework/synthesize
 @fluidframework/request-handler

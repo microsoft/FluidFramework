@@ -563,7 +563,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     constructor(dataStoreRuntime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, segmentFromSpec: (spec: IJSONSegment) => ISegment);
     annotateRange(start: number, end: number, props: PropertySet): void;
     // (undocumented)
-    protected applyStashedOp(content: any): unknown;
+    protected applyStashedOp(content: any): void;
     // (undocumented)
     protected client: Client;
     createLocalReferencePosition(segment: T, offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
