@@ -13,10 +13,8 @@ import {
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { assert } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/telemetry-utils";
-import { SequencePlace } from "../intervalCollection";
+import { SequencePlace, reservedIntervalIdKey } from "../intervalCollection";
 import { IIntervalHelpers, ISerializableInterval, ISerializedInterval } from "./intervalUtils";
-
-const reservedIntervalIdKey = "intervalId";
 
 /**
  * Serializable interval whose endpoints are plain-old numbers.
