@@ -236,13 +236,14 @@ function readTreeSection(node: NodeCore): {
 				records.value,
 				"Blob value should be string",
 			);
-		} else if (records.children === undefined) {
-			trees[path] = { blobs: {}, trees: {} };
-		} else {
+			// eslint-disable-next-line unicorn/no-negated-condition
+		} else if (records.children !== undefined) {
 			assertNodeCoreInstance(records.children, "Trees should be of type NodeCore");
 			const result = readTreeSection(records.children);
 			trees[path] = result.snapshotTree;
 			slowTreeStructureCount += result.slowTreeStructureCount;
+		} else {
+			trees[path] = { blobs: {}, trees: {} };
 		}
 	}
 	return { snapshotTree, slowTreeStructureCount };
