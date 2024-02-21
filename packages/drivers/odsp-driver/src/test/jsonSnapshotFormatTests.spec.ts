@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { IOdspSnapshot } from "../contracts";
-import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "../odspSnapshotParser";
+import { IOdspSnapshot } from "../contracts.js";
+import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "../odspSnapshotParser.js";
 
 const snapshotTree: IOdspSnapshot = {
 	id: "bBzkVAgAHAAAA",

@@ -15,27 +15,27 @@ import {
 	IFileEntry,
 } from "@fluidframework/odsp-driver-definitions";
 import { ISnapshot } from "@fluidframework/driver-definitions";
-import { ICreateFileResponse } from "./contracts";
-import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
+import { ICreateFileResponse } from "./contracts.js";
+import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 import {
 	buildOdspShareLinkReqParams,
 	createCacheSnapshotKey,
 	getWithRetryForTokenRefresh,
 	INewFileInfo,
 	getOrigin,
-} from "./odspUtils";
-import { createOdspUrl } from "./createOdspUrl";
-import { getApiRoot } from "./odspUrlHelper";
-import { EpochTracker } from "./epochTracker";
-import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
+} from "./odspUtils.js";
+import { createOdspUrl } from "./createOdspUrl.js";
+import { getApiRoot } from "./odspUrlHelper.js";
+import { EpochTracker } from "./epochTracker.js";
+import { OdspDriverUrlResolver } from "./odspDriverUrlResolver.js";
 import {
 	convertCreateNewSummaryTreeToTreeAndBlobs,
 	convertSummaryIntoContainerSnapshot,
 	createNewFluidContainerCore,
-} from "./createNewUtils";
-import { runWithRetry } from "./retryUtils";
-import { pkgVersion as driverVersion } from "./packageVersion";
-import { ClpCompliantAppHeader } from "./contractsPublic";
+} from "./createNewUtils.js";
+import { runWithRetry } from "./retryUtils.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { ClpCompliantAppHeader } from "./contractsPublic.js";
 
 const isInvalidFileName = (fileName: string): boolean => {
 	const invalidCharsRegex = /["*/:<>?\\|]+/g;

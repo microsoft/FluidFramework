@@ -36,9 +36,9 @@ import {
 	IPrefetchSnapshotContents,
 	LocalPersistentCache,
 	NonPersistentCache,
-} from "./odspCache";
-import { createOdspCacheAndTracker, ICacheAndTracker } from "./epochTracker";
-import { OdspDocumentService } from "./odspDocumentService";
+} from "./odspCache.js";
+import { createOdspCacheAndTracker, ICacheAndTracker } from "./epochTracker.js";
+import { OdspDocumentService } from "./odspDocumentService.js";
 import {
 	INewFileInfo,
 	getOdspResolvedUrl,
@@ -47,7 +47,7 @@ import {
 	IExistingFileInfo,
 	isNewFileInfo,
 	getJoinSessionCacheKey,
-} from "./odspUtils";
+} from "./odspUtils.js";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to

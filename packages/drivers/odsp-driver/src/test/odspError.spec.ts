@@ -12,11 +12,11 @@ import { NonRetryableError } from "@fluidframework/driver-utils";
 import { OdspError, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
 import { IGenericNetworkError, DriverErrorTypes } from "@fluidframework/driver-definitions";
 import { IThrottlingWarning, FluidErrorTypes } from "@fluidframework/core-interfaces";
-import { IOdspSocketError } from "../contracts";
-import { fetchAndParseAsJSONHelper, getWithRetryForTokenRefresh } from "../odspUtils";
-import { errorObjectFromSocketError } from "../odspError";
-import { pkgVersion } from "../packageVersion";
-import { mockFetchError } from "./mockFetch";
+import { IOdspSocketError } from "../contracts.js";
+import { fetchAndParseAsJSONHelper, getWithRetryForTokenRefresh } from "../odspUtils.js";
+import { errorObjectFromSocketError } from "../odspError.js";
+import { pkgVersion } from "../packageVersion.js";
+import { mockFetchError } from "./mockFetch.js";
 
 describe("Odsp Error", () => {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions

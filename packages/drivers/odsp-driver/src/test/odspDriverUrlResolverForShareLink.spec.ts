@@ -9,13 +9,13 @@ import { strict as assert } from "assert";
 import { stub } from "sinon";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
-import { OdspDriverUrlResolverForShareLink } from "../odspDriverUrlResolverForShareLink";
-import { getHashedDocumentId } from "../odspPublicUtils";
-import { createOdspUrl } from "../createOdspUrl";
-import * as fileLinkImport from "../getFileLink";
-import { getLocatorFromOdspUrl, storeLocatorInOdspUrl } from "../odspFluidFileLink";
-import { SharingLinkHeader } from "../contractsPublic";
-import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest";
+import { OdspDriverUrlResolverForShareLink } from "../odspDriverUrlResolverForShareLink.js";
+import { getHashedDocumentId } from "../odspPublicUtils.js";
+import { createOdspUrl } from "../createOdspUrl.js";
+import * as fileLinkImport from "../getFileLink.js";
+import { getLocatorFromOdspUrl, storeLocatorInOdspUrl } from "../odspFluidFileLink.js";
+import { SharingLinkHeader } from "../contractsPublic.js";
+import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest.js";
 
 describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 	const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";

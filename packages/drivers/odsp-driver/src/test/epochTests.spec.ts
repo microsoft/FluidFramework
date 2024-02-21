@@ -12,11 +12,11 @@ import {
 	IEntry,
 } from "@fluidframework/odsp-driver-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { defaultCacheExpiryTimeoutMs, EpochTracker } from "../epochTracker";
-import { LocalPersistentCache } from "../odspCache";
-import { getHashedDocumentId } from "../odspPublicUtils";
-import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "../contracts";
-import { mockFetchOk, mockFetchSingle, createResponse } from "./mockFetch";
+import { defaultCacheExpiryTimeoutMs, EpochTracker } from "../epochTracker.js";
+import { LocalPersistentCache } from "../odspCache.js";
+import { getHashedDocumentId } from "../odspPublicUtils.js";
+import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "../contracts.js";
+import { mockFetchOk, mockFetchSingle, createResponse } from "./mockFetch.js";
 
 const createUtLocalCache = () => new LocalPersistentCache();
 

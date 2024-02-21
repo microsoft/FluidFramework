@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { getUrlAndHeadersWithAuth } from "../getUrlAndHeadersWithAuth";
+import { getUrlAndHeadersWithAuth } from "../getUrlAndHeadersWithAuth.js";
 
 describe("getUrlAndHeadersWithAuth", () => {
 	const baseUrl = "https://contoso.sharepoint.com/_api/v2.1/drives/driveId/items/itemId/opstream";

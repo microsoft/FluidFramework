@@ -7,9 +7,9 @@ import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IStream } from "@fluidframework/driver-definitions";
 import { delay } from "@fluidframework/core-utils";
-import { OdspDeltaStorageWithCache } from "../odspDeltaStorageService";
-import { OpsCache, ICache, IMessage, CacheEntry } from "../opsCaching";
-import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
+import { OdspDeltaStorageWithCache } from "../odspDeltaStorageService.js";
+import { OpsCache, ICache, IMessage, CacheEntry } from "../opsCaching.js";
+import { OdspDocumentStorageService } from "../odspDocumentStorageManager.js";
 
 export type MyDataInput = IMessage & { data: string };
 

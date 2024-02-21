@@ -8,11 +8,11 @@ import { IDeltasFetchResult } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
-import { OdspDeltaStorageService, OdspDeltaStorageWithCache } from "../odspDeltaStorageService";
-import { LocalPersistentCache } from "../odspCache";
-import { EpochTracker } from "../epochTracker";
-import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
-import { mockFetchOk } from "./mockFetch";
+import { OdspDeltaStorageService, OdspDeltaStorageWithCache } from "../odspDeltaStorageService.js";
+import { LocalPersistentCache } from "../odspCache.js";
+import { EpochTracker } from "../epochTracker.js";
+import { OdspDocumentStorageService } from "../odspDocumentStorageManager.js";
+import { mockFetchOk } from "./mockFetch.js";
 
 const createUtLocalCache = () => new LocalPersistentCache(2000);
 const createUtEpochTracker = (fileEntry, logger) =>

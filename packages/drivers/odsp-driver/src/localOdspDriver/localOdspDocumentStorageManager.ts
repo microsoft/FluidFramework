@@ -12,10 +12,10 @@ import {
 } from "@fluidframework/driver-definitions";
 import { UsageError } from "@fluidframework/driver-utils";
 import * as api from "@fluidframework/protocol-definitions";
-import { OdspDocumentStorageServiceBase } from "../odspDocumentStorageServiceBase";
-import { IOdspSnapshot } from "../contracts";
-import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "../odspSnapshotParser";
-import { parseCompactSnapshotResponse } from "../compactSnapshotParser";
+import { OdspDocumentStorageServiceBase } from "../odspDocumentStorageServiceBase.js";
+import { IOdspSnapshot } from "../contracts.js";
+import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "../odspSnapshotParser.js";
+import { parseCompactSnapshotResponse } from "../compactSnapshotParser.js";
 
 /**
  * ODSP document storage service that works on a provided snapshot for all its processing.

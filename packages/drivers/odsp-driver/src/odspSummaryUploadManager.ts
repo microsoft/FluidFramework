@@ -23,10 +23,10 @@ import {
 	IOdspSummaryTreeBaseEntry,
 	OdspSummaryTreeEntry,
 	OdspSummaryTreeValue,
-} from "./contracts";
-import { EpochTracker } from "./epochTracker";
-import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { getWithRetryForTokenRefresh } from "./odspUtils";
+} from "./contracts.js";
+import { EpochTracker } from "./epochTracker.js";
+import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
+import { getWithRetryForTokenRefresh } from "./odspUtils.js";
 
 /**
  * This class manages a summary upload. When it receives a call to upload summary, it converts the summary tree into

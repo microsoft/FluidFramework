@@ -13,9 +13,9 @@ import { assert } from "@fluidframework/core-utils";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { NonRetryableError } from "@fluidframework/driver-utils";
 import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
-import { ReadBuffer } from "./ReadBufferUtils";
-import { pkgVersion as driverVersion } from "./packageVersion";
-import { measure } from "./odspUtils";
+import { ReadBuffer } from "./ReadBufferUtils.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { measure } from "./odspUtils.js";
 
 // https://onedrive.visualstudio.com/SharePoint%20Online/_git/SPO?path=/cobalt/Base/Property/BinaryEncodedPropertyReader.cs&version=GBmaster&_a=contents
 /**

@@ -5,14 +5,14 @@
 
 import { strict as assert } from "assert";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { getFileLink } from "../getFileLink";
+import { getFileLink } from "../getFileLink.js";
 import {
 	mockFetchSingle,
 	mockFetchMultiple,
 	okResponse,
 	notFound,
 	createResponse,
-} from "./mockFetch";
+} from "./mockFetch.js";
 
 describe("getFileLink", () => {
 	const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";

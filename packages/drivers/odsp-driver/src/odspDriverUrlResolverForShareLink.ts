@@ -20,12 +20,12 @@ import {
 	getLocatorFromOdspUrl,
 	storeLocatorInOdspUrl,
 	locatorQueryParamName,
-} from "./odspFluidFileLink";
-import { OdspFluidDataStoreLocator, SharingLinkHeader } from "./contractsPublic";
-import { createOdspUrl } from "./createOdspUrl";
-import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
-import { getOdspResolvedUrl, createOdspLogger } from "./odspUtils";
-import { getFileLink } from "./getFileLink";
+} from "./odspFluidFileLink.js";
+import { OdspFluidDataStoreLocator, SharingLinkHeader } from "./contractsPublic.js";
+import { createOdspUrl } from "./createOdspUrl.js";
+import { OdspDriverUrlResolver } from "./odspDriverUrlResolver.js";
+import { getOdspResolvedUrl, createOdspLogger } from "./odspUtils.js";
+import { getFileLink } from "./getFileLink.js";
 
 /**
  * Properties passed to the code responsible for fetching share link for a file.
