@@ -1,4 +1,5 @@
 // alias c='node /workspaces/f0/temp-tools/convert.mjs'
+// flub exec "node /workspaces/f0/temp-tools/convert.mjs" -g client
 
 import { repoRoot } from "./git.mjs";
 import JSON5 from "json5";
@@ -22,7 +23,12 @@ const workspaceRoot = (() => {
 
 // Load 'package.json'
 const pkgPath = path.join(packageRoot, "package.json");
-const pkg = JSON5.parse(fs.readFileSync(pkgPath, "utf8"));
+
+// Hack to only process packages containing tsc-multi
+const pkgSrc = fs.readFileSync(pkgPath, "utf8");
+if (pkgSrc.indexOf("tsc-multi") === -1) throw new Error();
+
+const pkg = JSON5.parse(pkgSrc);
 
 // Set package type to ESM
 pkg.type = "module";
@@ -97,10 +103,6 @@ pkg.exports = {
 // Delete 'module' key if any.
 delete pkg.module;
 
-// Overwrite API extractor scripts with new pattern (TODO: make conditional)
-pkg.scripts["api-extractor:commonjs"] = "api-extractor run --config ./api-extractor-cjs.json";
-pkg.scripts["api-extractor:esnext"] = "api-extractor run --local";
-
 // Add ATTW check
 pkg.scripts["check:are-the-types-wrong"] = "attw --pack . --entrypoints .";
 pkg.devDependencies["@arethetypeswrong/cli"] = "^0.13.3";
@@ -124,11 +126,13 @@ pkg.scripts["tsc"] = `fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfi
 delete pkg.devDependencies["tsc-multi"];
 pkg.devDependencies["copyfiles"] = "^2.4.1";
 
-fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 4));
-
 // Update API extractor config if it exists
 const apiExtractorEsmPath = path.join(packageRoot, "api-extractor.json");
 if (fs.existsSync(apiExtractorEsmPath)) {
+	// Overwrite API extractor scripts with new pattern
+	pkg.scripts["api-extractor:commonjs"] = "api-extractor run --config ./api-extractor-cjs.json";
+	pkg.scripts["api-extractor:esnext"] = "api-extractor run --local";
+
 	const apiExtractorEsm = `{
 		"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
 		"extends": "${workspaceRoot}/common/build/build-common/api-extractor-base.esm.primary.json"
@@ -153,6 +157,8 @@ const tsconfigPath = path.join(packageRoot, "tsconfig.json");
 const tsconfigPaths = [tsconfigPath];
 const tsconfig = JSON5.parse(fs.readFileSync(tsconfigPath, "utf8"));
 tsconfig.extends = `${workspaceRoot}/common/build/build-common/tsconfig.node16.json`;
+tsconfig.excludes = ["lib", "dist", "node_modules"];
+
 const compilerOptions = tsconfig.compilerOptions;
 
 // Delete compilerOptions that are same as default
@@ -228,6 +234,9 @@ if (fs.existsSync(testTsconfigPath)) {
 	`;
 	fs.writeFileSync(testTsconfigCjsPath, testTsconfigCjs);
 }
+
+// Write package.json
+fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 4));
 
 ts2esm(tsconfigPaths);
 format();
