@@ -73,20 +73,19 @@ describe("Odsp Error", () => {
 
 	it("throwOdspNetworkError first-class properties", async () => {
 		const networkError = createOdspNetworkErrorWithResponse("some message", 400);
-		if (networkError.errorType === OdspErrorTypes.genericNetworkError) {
-			assert(
-				networkError.message.includes("some message"),
-				"message should contain original message",
-			);
-			assert(
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-				(networkError as any).responseType === "default",
-				"message should contain Response.type",
-			);
-			assert.equal(false, networkError.canRetry, "canRetry should be false");
-		} else {
+		if (networkError.errorType !== OdspErrorTypes.genericNetworkError) {
 			assert.fail("networkError should be a genericNetworkError");
 		}
+		assert(
+			networkError.message.includes("some message"),
+			"message should contain original message",
+		);
+		assert(
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+			(networkError as any).responseType === "default",
+			"message should contain Response.type",
+		);
+		assert.equal(false, networkError.canRetry, "canRetry should be false");
 	});
 
 	it("throwOdspNetworkError sprequestguid exists", async () => {
@@ -107,20 +106,19 @@ describe("Odsp Error", () => {
 			code: 400,
 		};
 		const networkError = errorObjectFromSocketError(socketError, "disconnect");
-		if (isIGenericNetworkError(networkError)) {
-			assert(
-				networkError.message.includes("disconnect"),
-				"error message should include handler name",
-			);
-			assert(
-				networkError.message.includes("testMessage"),
-				"error message should include socket error message",
-			);
-			assert.equal(networkError.canRetry, false);
-			assert.equal(networkError.statusCode, 400);
-		} else {
+		if (!isIGenericNetworkError(networkError)) {
 			assert.fail("networkError should be a genericNetworkError");
 		}
+		assert(
+			networkError.message.includes("disconnect"),
+			"error message should include handler name",
+		);
+		assert(
+			networkError.message.includes("testMessage"),
+			"error message should include socket error message",
+		);
+		assert.equal(networkError.canRetry, false);
+		assert.equal(networkError.statusCode, 400);
 	});
 
 	it("errorObjectFromSocketError with retryFilter", async () => {
@@ -129,20 +127,16 @@ describe("Odsp Error", () => {
 			code: 400,
 		};
 		const networkError = errorObjectFromSocketError(socketError, "error");
-		if (isIGenericNetworkError(networkError)) {
-			assert(
-				networkError.message.includes("error"),
-				"error message should include handler name",
-			);
-			assert(
-				networkError.message.includes("testMessage"),
-				"error message should include socket error message",
-			);
-			assert.equal(networkError.canRetry, false);
-			assert.equal(networkError.statusCode, 400);
-		} else {
+		if (!isIGenericNetworkError(networkError)) {
 			assert.fail("networkError should be a genericNetworkError");
 		}
+		assert(networkError.message.includes("error"), "error message should include handler name");
+		assert(
+			networkError.message.includes("testMessage"),
+			"error message should include socket error message",
+		);
+		assert.equal(networkError.canRetry, false);
+		assert.equal(networkError.statusCode, 400);
 	});
 
 	it("errorObjectFromSocketError with inner errors", async () => {
@@ -161,26 +155,22 @@ describe("Odsp Error", () => {
 			},
 		};
 		const networkError = errorObjectFromSocketError(socketError, "error");
-		if (isIGenericNetworkError(networkError)) {
-			assert(
-				networkError.message.includes("error"),
-				"error message should include handler name",
-			);
-			assert(
-				networkError.message.includes("testMessage"),
-				"error message should include socket error message",
-			);
-			assert.equal(networkError.canRetry, false);
-			assert.equal(networkError.statusCode, 400);
-			assert.equal(
-				networkError.getTelemetryProperties().innerMostErrorCode,
-				"SurelyBlocked",
-				"Innermost error code should be correct",
-			);
-			assert.equal(networkError.facetCodes?.length, 3, "3 facet codes should be there");
-		} else {
+		if (!isIGenericNetworkError(networkError)) {
 			assert.fail("networkError should be a genericNetworkError");
 		}
+		assert(networkError.message.includes("error"), "error message should include handler name");
+		assert(
+			networkError.message.includes("testMessage"),
+			"error message should include socket error message",
+		);
+		assert.equal(networkError.canRetry, false);
+		assert.equal(networkError.statusCode, 400);
+		assert.equal(
+			networkError.getTelemetryProperties().innerMostErrorCode,
+			"SurelyBlocked",
+			"Innermost error code should be correct",
+		);
+		assert.equal(networkError.facetCodes?.length, 3, "3 facet codes should be there");
 	});
 
 	it("errorObjectFromSocketError with retryAfter", async () => {
@@ -190,19 +180,18 @@ describe("Odsp Error", () => {
 			retryAfter: 10,
 		};
 		const networkError = errorObjectFromSocketError(socketError, "handler");
-		if (isIThrottlingWarning(networkError)) {
-			assert(
-				networkError.message.includes("handler"),
-				"error message should include handler name",
-			);
-			assert(
-				networkError.message.includes("testMessage"),
-				"error message should include socket error message",
-			);
-			assert.equal(networkError.retryAfterSeconds, 10);
-		} else {
+		if (!isIThrottlingWarning(networkError)) {
 			assert.fail("networkError should be a throttlingError");
 		}
+		assert(
+			networkError.message.includes("handler"),
+			"error message should include handler name",
+		);
+		assert(
+			networkError.message.includes("testMessage"),
+			"error message should include socket error message",
+		);
+		assert.equal(networkError.retryAfterSeconds, 10);
 	});
 
 	it("Access Denied retries", async () => {
