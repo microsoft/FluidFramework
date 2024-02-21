@@ -1066,26 +1066,12 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		// TODO:Type Safety: Improve type safety around op sending/parsing (e.g. discriminated union over version field somehow)
 		switch (op.version) {
 			case WriteFormat.v0_0_2:
-				return this.encoder_0_0_2.decodeEditOp(op, this.encodeSemiSerializedEdit.bind(this), this);
+				return this.encoder_0_0_2.decodeEditOp(op, (x) => x, this);
 			case WriteFormat.v0_1_1:
-				return this.encoder_0_1_1.decodeEditOp(
-					op,
-					this.encodeSemiSerializedEdit.bind(this),
-					this.idNormalizer,
-					this.interner
-				);
+				return this.encoder_0_1_1.decodeEditOp(op, (x) => x, this.idNormalizer, this.interner);
 			default:
 				fail('Unknown op version');
 		}
-	}
-
-	private encodeSemiSerializedEdit<T>(semiSerializedEdit: Edit<T>): Edit<T> {
-		// semiSerializedEdit may have handles which have been replaced by `serializer.encode`.
-		// Since there is no API to un-replace them except via parse, re-stringify the edit, then parse it.
-		// Stringify using JSON, not IFluidSerializer since OPs use JSON directly.
-		// TODO:Performance:#48025: Avoid this serialization round trip.
-		const encodedEdit: Edit<T> = this.serializer.parse(JSON.stringify(semiSerializedEdit));
-		return encodedEdit;
 	}
 
 	private processSequencedEdit(edit: Edit<ChangeInternal>, message: ISequencedDocumentMessage): void {
@@ -1486,7 +1472,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 
 								stashedEdit = this.encoder_0_1_1.decodeEditOp(
 									sharedTreeOp,
-									this.encodeSemiSerializedEdit.bind(this),
+									(x) => x,
 									normalizer,
 									this.interner
 								);

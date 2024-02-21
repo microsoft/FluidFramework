@@ -10,6 +10,7 @@ import {
 	SharedTree as LegacySharedTree,
 	StablePlace,
 	type TraitLabel,
+	MigrationShimFactory,
 } from "@fluid-experimental/tree";
 import {
 	MockFluidDataStoreRuntime,
@@ -207,6 +208,46 @@ describe("DDS Handle Encoding", () => {
 				dds.set(handle);
 			},
 			[handle.absolutePath] /* expectedHandles */,
+		),
+		createTestCase(
+			new MigrationShimFactory(
+				LegacySharedTree.getFactory(),
+				SharedTree.getFactory(),
+				(legacyTree, newTree) => {
+					throw new Error("unreachable");
+				},
+			),
+			(shim) => {
+				const tree = shim.currentTree as LegacySharedTree;
+				const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
+
+				const handleNode: BuildNode = {
+					definition: legacyNodeId,
+					traits: {
+						handle: {
+							definition: "handle",
+							payload: 0,
+						},
+					},
+				};
+				tree.applyEdit(
+					Change.insertTree(
+						handleNode,
+						StablePlace.atStartOf({
+							parent: tree.currentView.root,
+							label: legacyNodeId,
+						}),
+					),
+				);
+
+				const rootNode = tree.currentView.getViewNode(tree.currentView.root);
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const nodeId = rootNode.traits.get(legacyNodeId)![0];
+				const change: Change = Change.setPayload(nodeId, { handle });
+				tree.applyEdit(change);
+			},
+			[handle.absolutePath] /* expectedHandles */,
+			"migration-shim",
 		),
 	];
 
