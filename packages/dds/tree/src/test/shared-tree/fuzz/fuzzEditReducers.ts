@@ -50,9 +50,9 @@ const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFa
 		applyTransactionEdit(state, operation.contents);
 	},
 	undoRedo: (state, operation) => {
-		const tree = viewFromState(state).checkout;
-		assert(isRevertibleSharedTreeView(tree));
-		applyUndoRedoEdit(tree.undoStack, tree.redoStack, operation.contents);
+		const view = viewFromState(state).checkout;
+		assert(isRevertibleSharedTreeView(view));
+		applyUndoRedoEdit(view.undoStack, view.redoStack, operation.contents);
 	},
 	synchronizeTrees: (state) => {
 		applySynchronizationOp(state);
