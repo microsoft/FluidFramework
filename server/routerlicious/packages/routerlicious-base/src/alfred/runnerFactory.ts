@@ -143,17 +143,6 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			};
 		}
 
-		const redisParams2 = {
-			expireAfterSeconds: redisConfig2.keyExpireAfterSeconds as number | undefined,
-		};
-
-		const redisClient: Redis.default | Redis.Cluster = utils.getRedisClient(
-			redisOptions2,
-			redisConfig2.slotsRefreshTimeout,
-			redisConfig2.enableClustering,
-		);
-		const clientManager = new services.ClientManager(redisClient, redisParams2);
-
 		const redisClientForJwtCache: Redis.default | Redis.Cluster = utils.getRedisClient(
 			redisOptions2,
 			redisConfig2.slotsRefreshTimeout,
@@ -369,6 +358,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			opsCollection,
 			storageNameAllocator,
 		);
+
+		const enableClientIPLogging = config.get("alfred:enableClientIPLogging") ?? false;
 
 		// Tenants attached to the apps this service exposes
 		const appTenants = config.get("alfred:tenants") as { id: string; key: string }[];
