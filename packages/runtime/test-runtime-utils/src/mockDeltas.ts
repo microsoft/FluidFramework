@@ -188,10 +188,10 @@ export class MockDeltaManager
 		super();
 
 		this._inbound = new MockDeltaQueue<ISequencedDocumentMessage>();
+		this._inbound.processCallback = (message: ISequencedDocumentMessage) => {
+			this.emit("op", message);
+		};
 		this._outbound = new MockDeltaQueue<IDocumentMessage[]>();
 		this._inboundSignal = new MockDeltaQueue<ISignalMessage>();
-		this._inbound.on("push", (message: ISequencedDocumentMessage) => {
-			this.emit("op", message);
-		});
 	}
 }
