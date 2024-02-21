@@ -1,6 +1,6 @@
 {
 	"extends": "../../../../common/build/build-common/tsconfig.node16.json",
-	"exclude": ["lib", "node_modules"],
+	"exclude": ["dist", "lib", "node_modules"],
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./lib",

@@ -989,6 +989,7 @@ importers:
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       expect-puppeteer: ^9.0.2
@@ -1028,6 +1029,7 @@ importers:
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       expect-puppeteer: 9.0.2
