@@ -1032,26 +1032,26 @@ use_old_InterfaceDeclaration_ITelemetryBaseLogger(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_ITelemetryBaseProperties": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_ITelemetryBaseProperties": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_ITelemetryBaseProperties():
     TypeOnly<old.ITelemetryBaseProperties>;
-declare function use_current_TypeAliasDeclaration_ITelemetryBaseProperties(
+declare function use_current_RemovedTypeAliasDeclaration_ITelemetryBaseProperties(
     use: TypeOnly<current.ITelemetryBaseProperties>): void;
-use_current_TypeAliasDeclaration_ITelemetryBaseProperties(
+use_current_RemovedTypeAliasDeclaration_ITelemetryBaseProperties(
     get_old_TypeAliasDeclaration_ITelemetryBaseProperties());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_ITelemetryBaseProperties": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_ITelemetryBaseProperties": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_ITelemetryBaseProperties():
+declare function get_current_RemovedTypeAliasDeclaration_ITelemetryBaseProperties():
     TypeOnly<current.ITelemetryBaseProperties>;
 declare function use_old_TypeAliasDeclaration_ITelemetryBaseProperties(
     use: TypeOnly<old.ITelemetryBaseProperties>): void;
 use_old_TypeAliasDeclaration_ITelemetryBaseProperties(
-    get_current_TypeAliasDeclaration_ITelemetryBaseProperties());
+    get_current_RemovedTypeAliasDeclaration_ITelemetryBaseProperties());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1104,26 +1104,14 @@ use_old_TypeAliasDeclaration_ITelemetryBaseProperties(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ITelemetryProperties": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_ITelemetryProperties": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_ITelemetryProperties():
-    TypeOnly<old.ITelemetryProperties>;
-declare function use_current_InterfaceDeclaration_ITelemetryProperties(
-    use: TypeOnly<current.ITelemetryProperties>): void;
-use_current_InterfaceDeclaration_ITelemetryProperties(
-    get_old_InterfaceDeclaration_ITelemetryProperties());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ITelemetryProperties": {"backCompat": false}
+* "RemovedInterfaceDeclaration_ITelemetryProperties": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_ITelemetryProperties():
-    TypeOnly<current.ITelemetryProperties>;
-declare function use_old_InterfaceDeclaration_ITelemetryProperties(
-    use: TypeOnly<old.ITelemetryProperties>): void;
-use_old_InterfaceDeclaration_ITelemetryProperties(
-    get_current_InterfaceDeclaration_ITelemetryProperties());
 
 /*
 * Validate forward compat by using old type in place of current type

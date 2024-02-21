@@ -100,6 +100,10 @@
 			"RemovedInterfaceDeclaration_ITelemetryErrorEvent": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_ITelemetryProperties": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}

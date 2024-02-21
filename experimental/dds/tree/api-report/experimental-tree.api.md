@@ -22,9 +22,9 @@ import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
-import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { ITree } from '@fluidframework/tree';
 import { SharedObject } from '@fluidframework/shared-object-base';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
@@ -920,7 +920,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
     internalizeChange(change: Change): ChangeInternal;
     // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
-    loadSerializedSummary(blobData: string): ITelemetryProperties;
+    loadSerializedSummary(blobData: string): ITelemetryBaseProperties;
     loadSummary(summary: SharedTreeSummaryBase): void;
     readonly logger: ITelemetryLoggerExt;
     get logViewer(): LogViewer;

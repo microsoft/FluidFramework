@@ -57,15 +57,7 @@ export interface ITaggedTelemetryPropertyType {
  * JSON-serializable properties, which will be logged with telemetry.
  * @public
  */
-export type ITelemetryBaseProperties = ITelemetryProperties;
-
-/**
- * {@inheritDoc ITelemetryBaseProperties}
- *
- * @deprecated Renamed to {@link ITelemetryBaseProperties}
- * @public
- */
-export interface ITelemetryProperties {
+export interface ITelemetryBaseProperties {
 	[index: string]: TelemetryEventPropertyType | Tagged<TelemetryEventPropertyType>;
 }
 
@@ -116,7 +108,7 @@ export interface ITelemetryBaseLogger {
  * No replacement intended for FluidFramework consumers.
  * @public
  */
-export interface ITelemetryErrorEvent extends ITelemetryProperties {
+export interface ITelemetryErrorEvent extends ITelemetryBaseProperties {
 	eventName: string;
 }
 

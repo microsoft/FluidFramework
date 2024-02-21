@@ -19,7 +19,6 @@ import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions'
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
-import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { IUsageError } from '@fluidframework/core-interfaces';
 import { Lazy } from '@fluidframework/core-utils';
 import { LogLevel } from '@fluidframework/core-interfaces';
@@ -150,10 +149,10 @@ export interface IFluidErrorAnnotations {
 
 // @internal
 export interface IFluidErrorBase extends Error {
-    addTelemetryProperties: (props: ITelemetryProperties) => void;
+    addTelemetryProperties: (props: ITelemetryBaseProperties) => void;
     readonly errorInstanceId: string;
     readonly errorType: string;
-    getTelemetryProperties(): ITelemetryProperties;
+    getTelemetryProperties(): ITelemetryBaseProperties;
     readonly message: string;
     readonly name: string;
     readonly stack?: string;
@@ -345,7 +344,7 @@ export function safeRaiseEvent(emitter: EventEmitter, logger: ITelemetryLoggerEx
 
 // @internal
 export class SampledTelemetryHelper implements IDisposable {
-    constructor(eventBase: ITelemetryGenericEventExt, logger: ITelemetryLoggerExt, sampleThreshold: number, includeAggregateMetrics?: boolean, perBucketProperties?: Map<string, ITelemetryProperties>);
+    constructor(eventBase: ITelemetryGenericEventExt, logger: ITelemetryLoggerExt, sampleThreshold: number, includeAggregateMetrics?: boolean, perBucketProperties?: Map<string, ITelemetryBaseProperties>);
     // (undocumented)
     dispose(error?: Error | undefined): void;
     // (undocumented)

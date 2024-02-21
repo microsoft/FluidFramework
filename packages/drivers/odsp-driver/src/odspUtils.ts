@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseProperties, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, ISnapshot } from "@fluidframework/driver-definitions";
 import {
 	isOnline,
@@ -56,7 +56,7 @@ export const getOrigin = (url: string) => new URL(url).origin;
 export interface IOdspResponse<T> {
 	content: T;
 	headers: Map<string, string>;
-	propsToLog: ITelemetryProperties;
+	propsToLog: ITelemetryBaseProperties;
 	duration: number;
 }
 

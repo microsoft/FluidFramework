@@ -4,7 +4,7 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { IFluidHandle, ITelemetryProperties } from "@fluidframework/core-interfaces";
+import { IFluidHandle, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
 	ITelemetryLoggerExt,
 	createChildLogger,
@@ -143,7 +143,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 			this.logger,
 			this.mc.config.getNumber("Fluid.SharedObject.OpProcessingTelemetrySampling") ?? 1000,
 			true,
-			new Map<string, ITelemetryProperties>([
+			new Map<string, ITelemetryBaseProperties>([
 				["local", { localOp: true }],
 				["remote", { localOp: false }],
 			]),
