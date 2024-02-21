@@ -656,7 +656,7 @@ export async function downloadSnapshot(
 
 	if (loadingGroupIds !== undefined) {
 		// eslint-disable-next-line @typescript-eslint/dot-notation
-		queryParams["groupId"] = [...loadingGroupIds].join(",");
+		queryParams["groupId"] = loadingGroupIds.join(",");
 	}
 
 	const queryString = getQueryString(queryParams);
