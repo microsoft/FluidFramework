@@ -1,12 +1,8 @@
 {
-	"extends": [
-		"../../../../common/build/build-common/tsconfig.base.json",
-		"../../../../common/build/build-common/tsconfig.cjs.json",
-	],
+	"extends": "../../../../common/build/build-common/tsconfig.node16.json",
 	"exclude": ["dist", "node_modules"],
 	"compilerOptions": {
-		"module": "esnext",
-		"outDir": "dist",
+		"outDir": "./lib",
 		"types": ["jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer"],
 	},
 	"include": ["src/**/*", "tests/**/*"],
