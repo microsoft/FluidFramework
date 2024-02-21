@@ -95,7 +95,7 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 		assert(dataObjectTree.groupId === loadingGroupId, "GroupId should be on the summary tree");
 
 		// TODO: Enable this portion in tinylicious
-		if (provider.driver.type !== "local") {
+		if (provider.driver.type === "local") {
 			const container2 = await provider.loadContainer(runtimeFactory, undefined, {
 				[LoaderHeader.version]: summaryVersion,
 			});
