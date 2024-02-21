@@ -6,9 +6,10 @@
 import { hashFile, IsoBuffer } from "@fluid-internal/client-utils";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 
-// TODO: add documentation
-// eslint-disable-next-line jsdoc/require-description
 /**
+ * Creates a unique and stable id for a document stored in ODSP which doesn't expose the driveId and itemId of
+ * said document.
+ *
  * @alpha
  */
 export async function getHashedDocumentId(driveId: string, itemId: string): Promise<string> {

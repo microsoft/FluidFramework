@@ -99,7 +99,7 @@ export type FetchTypeInternal = FetchType | "cache";
 // @internal
 export function getApiRoot(origin: string): string;
 
-// @alpha (undocumented)
+// @alpha
 export function getHashedDocumentId(driveId: string, itemId: string): Promise<string>;
 
 // @alpha
