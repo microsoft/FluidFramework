@@ -65,7 +65,6 @@
 		"@types/node": "^18.19.0",
 		"@types/uuid": "^9.0.2",
 		"clean-webpack-plugin": "^4.0.0",
-		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.50.0",
 		"expect-puppeteer": "^9.0.2",
