@@ -161,7 +161,6 @@ module.exports = {
 			"docs/tutorials/.*\\.tsx?",
 			"server/gitrest/package.json",
 			"server/historian/package.json",
-			"temp-tools/.*",
 			"tools/markdown-magic/test/package.json",
 		],
 		// Exclusion per handler
