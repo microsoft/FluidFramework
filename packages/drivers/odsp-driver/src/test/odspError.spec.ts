@@ -10,9 +10,9 @@ import {
 } from "@fluidframework/odsp-doclib-utils/internal";
 import { NonRetryableError, type AuthorizationError } from "@fluidframework/driver-utils";
 import { OdspError, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
-import { IGenericNetworkError, DriverErrorTypes } from "@fluidframework/driver-definitions";
-import { IThrottlingWarning, FluidErrorTypes } from "@fluidframework/core-interfaces";
-import { isFluidError, type IFluidErrorBase } from "@fluidframework/telemetry-utils";
+import { IGenericNetworkError, type IAuthorizationError } from "@fluidframework/driver-definitions";
+import { IThrottlingWarning } from "@fluidframework/core-interfaces";
+import { type IFluidErrorBase } from "@fluidframework/telemetry-utils";
 
 import { IOdspSocketError } from "../contracts";
 import { fetchAndParseAsJSONHelper, getWithRetryForTokenRefresh } from "../odspUtils";
@@ -41,9 +41,8 @@ describe("Odsp Error", () => {
 	 */
 	function isIGenericNetworkError(input: unknown): input is IGenericNetworkError {
 		return (
-			input !== undefined &&
-			(input as Partial<IGenericNetworkError>).errorType ===
-				DriverErrorTypes.genericNetworkError
+			(input as Partial<IGenericNetworkError>)?.errorType ===
+			OdspErrorTypes.genericNetworkError
 		);
 	}
 
@@ -51,9 +50,15 @@ describe("Odsp Error", () => {
 	 * Checks if the input is an {@link IThrottlingWarning}.
 	 */
 	function isIThrottlingWarning(input: unknown): input is IThrottlingWarning {
+		return (input as Partial<IThrottlingWarning>)?.errorType === OdspErrorTypes.throttlingError;
+	}
+
+	/**
+	 * Checks if the input is an {@link IThrottlingWarning}.
+	 */
+	function isIAuthorizationError(input: unknown): input is IAuthorizationError {
 		return (
-			input !== undefined &&
-			(input as Partial<IThrottlingWarning>).errorType === FluidErrorTypes.throttlingError
+			(input as Partial<IAuthorizationError>)?.errorType === OdspErrorTypes.authorizationError
 		);
 	}
 
@@ -106,9 +111,10 @@ describe("Odsp Error", () => {
 			code: 400,
 		};
 		const networkError = errorObjectFromSocketError(socketError, "disconnect");
-		if (!isIGenericNetworkError(networkError)) {
-			assert.fail("networkError should be a genericNetworkError");
-		}
+		assert(
+			isIGenericNetworkError(networkError),
+			"networkError should be a genericNetworkError",
+		);
 		assert(
 			networkError.message.includes("disconnect"),
 			"error message should include handler name",
@@ -127,9 +133,10 @@ describe("Odsp Error", () => {
 			code: 400,
 		};
 		const networkError = errorObjectFromSocketError(socketError, "error");
-		if (!isIGenericNetworkError(networkError)) {
-			assert.fail("networkError should be a genericNetworkError");
-		}
+		assert(
+			isIGenericNetworkError(networkError),
+			"networkError should be a genericNetworkError",
+		);
 		assert(networkError.message.includes("error"), "error message should include handler name");
 		assert(
 			networkError.message.includes("testMessage"),
@@ -155,9 +162,10 @@ describe("Odsp Error", () => {
 			},
 		};
 		const networkError = errorObjectFromSocketError(socketError, "error");
-		if (!isIGenericNetworkError(networkError)) {
-			assert.fail("networkError should be a genericNetworkError");
-		}
+		assert(
+			isIGenericNetworkError(networkError),
+			"networkError should be a genericNetworkError",
+		);
 		assert(networkError.message.includes("error"), "error message should include handler name");
 		assert(
 			networkError.message.includes("testMessage"),
@@ -180,9 +188,7 @@ describe("Odsp Error", () => {
 			retryAfter: 10,
 		};
 		const networkError = errorObjectFromSocketError(socketError, "handler");
-		if (!isIThrottlingWarning(networkError)) {
-			assert.fail("networkError should be a throttlingError");
-		}
+		assert(isIThrottlingWarning(networkError), "networkError should be a throttlingError");
 		assert(
 			networkError.message.includes("handler"),
 			"error message should include handler name",
@@ -256,12 +262,7 @@ describe("Odsp Error", () => {
 		try {
 			throwAuthorizationErrorWithInsufficientClaims("TestMessage");
 		} catch (error: unknown) {
-			assert(isFluidError(error), "error should be a IFluidError");
-			assert.equal(
-				error.errorType,
-				OdspErrorTypes.authorizationError,
-				"errorType should be authorizationError",
-			);
+			assert(isIAuthorizationError(error), "error should be a IAuthorizationError");
 			assert(
 				error.message.includes("TestMessage"),
 				"message should contain original message",
@@ -315,12 +316,7 @@ describe("Odsp Error", () => {
 		try {
 			throwAuthorizationErrorWithRealm("TestMessage");
 		} catch (error: unknown) {
-			assert(isFluidError(error), "error should be a IFluidError");
-			assert.strictEqual(
-				error.errorType,
-				OdspErrorTypes.authorizationError,
-				"errorType should be authorizationError",
-			);
+			assert(isIAuthorizationError(error), "error should be a IAuthorizationError");
 			assert(
 				error.message.includes("TestMessage"),
 				"message should contain original message",
