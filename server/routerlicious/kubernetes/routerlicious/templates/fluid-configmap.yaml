@@ -230,7 +230,9 @@ data:
             "groupId": "{{ template "scriptorium.fullname" . }}",
             "checkpointBatchSize": 1,
             "checkpointTimeIntervalMsec": 1000,
-            "restartOnCheckpointFailure": {{ .Values.scriptorium.restartOnCheckpointFailure }}
+            "restartOnCheckpointFailure": {{ .Values.scriptorium.restartOnCheckpointFailure }},
+            "logSavedOpsTimeIntervalMs": {{ .Values.scriptorium.logSavedOpsTimeIntervalMs }},
+            "opsCountTelemetryEnabled": {{ .Values.scriptorium.opsCountTelemetryEnabled }}
         },
         "riddler": {
             "port": 5000

@@ -39,6 +39,7 @@ function buildHierarchy(
 				blobs: {},
 				trees: {},
 				unreferenced: entry.unreferenced,
+				groupId: entry.groupId,
 			};
 			node.trees[decodeURIComponent(entryPathBase)] = newTree;
 			lookup[entryPath] = newTree;

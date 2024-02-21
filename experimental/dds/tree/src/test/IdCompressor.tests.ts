@@ -15,7 +15,7 @@ import {
 	isLocalId,
 	hasOngoingSession,
 	legacySharedTreeInitialTreeId,
-} from '../id-compressor/IdCompressor';
+} from '../id-compressor/IdCompressor.js';
 import {
 	LocalCompressedId,
 	FinalCompressedId,
@@ -23,17 +23,17 @@ import {
 	OpSpaceCompressedId,
 	SessionId,
 	StableId,
-} from '../Identifiers';
-import { assertNotUndefined, fail } from '../Common';
+} from '../Identifiers.js';
+import { assertNotUndefined, fail } from '../Common.js';
 import {
 	createSessionId,
 	incrementUuid,
 	numericUuidFromStableId,
 	stableIdFromNumericUuid,
-} from '../id-compressor/NumericUuid';
-import { getIds } from '../id-compressor/IdRange';
-import type { IdCreationRange, UnackedLocalId } from '../id-compressor';
-import { assertIsStableId, generateStableId, isStableId } from '../UuidUtilities';
+} from '../id-compressor/NumericUuid.js';
+import { getIds } from '../id-compressor/IdRange.js';
+import type { IdCreationRange, UnackedLocalId } from '../id-compressor/index.js';
+import { assertIsStableId, generateStableId, isStableId } from '../UuidUtilities.js';
 import {
 	createCompressor,
 	performFuzzActions,
@@ -48,8 +48,8 @@ import {
 	makeOpGenerator,
 	attributionIds,
 	generateCompressedIds,
-} from './utilities/IdCompressorTestUtilities';
-import { expectDefined, expectAssert } from './utilities/TestCommon';
+} from './utilities/IdCompressorTestUtilities.js';
+import { expectDefined, expectAssert } from './utilities/TestCommon.js';
 
 describe('IdCompressor', () => {
 	it('detects invalid cluster sizes', () => {

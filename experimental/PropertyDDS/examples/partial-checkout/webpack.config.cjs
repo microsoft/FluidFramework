@@ -22,6 +22,14 @@ module.exports = (env) => {
 					test: /\.tsx?$/,
 					loader: "ts-loader",
 				},
+				{
+					// Required until all transitive dependencies are fully ESM.
+					// https://webpack.js.org/configuration/module/#resolvefullyspecified
+					test: /\.m?js/,
+					resolve: {
+						fullySpecified: false,
+					},
+				},
 			],
 		},
 		output: {

@@ -56,6 +56,7 @@ export class AlfredRunner implements IRunner {
 		private readonly revokedTokenChecker?: IRevokedTokenChecker,
 		private readonly collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 		private readonly clusterDrainingChecker?: IClusterDrainingChecker,
+		private readonly enableClientIPLogging?: boolean,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -84,6 +85,7 @@ export class AlfredRunner implements IRunner {
 				this.revokedTokenChecker,
 				this.collaborationSessionEventEmitter,
 				this.clusterDrainingChecker,
+				this.enableClientIPLogging,
 			);
 			alfred.set("port", this.port);
 			this.server = this.serverFactory.create(alfred);

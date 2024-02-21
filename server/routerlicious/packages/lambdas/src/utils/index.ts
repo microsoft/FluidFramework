@@ -15,3 +15,4 @@ export { createSessionMetric, logCommonSessionEndMetrics } from "./telemetryHelp
 export { isDocumentSessionValid, isDocumentValid } from "./validateDocument";
 export { CheckpointReason, ICheckpoint } from "./checkpointHelper";
 export { IServerMetadata } from "./serverMetadata";
+export { DocumentCheckpointManager } from "./documentLambdaCheckpointManager";

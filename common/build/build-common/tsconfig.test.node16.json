@@ -1,0 +1,10 @@
+{
+	"extends": ["./tsconfig.base.json", "./tsconfig.node16.json"],
+	"compilerOptions": {
+		"composite": false,
+		"types": ["node"],
+		"declaration": false,
+		"declarationMap": false,
+		"skipLibCheck": true,
+	},
+}

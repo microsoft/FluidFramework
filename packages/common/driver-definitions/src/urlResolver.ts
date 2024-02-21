@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IRequest } from "@fluidframework/core-interfaces";
+import type { IRequest } from "@fluidframework/core-interfaces";
 
 /**
  * @alpha
@@ -92,6 +92,7 @@ export interface IDriverHeader {
 }
 
 declare module "@fluidframework/core-interfaces" {
-	// eslint-disable-next-line @typescript-eslint/no-empty-interface
+	// TODO: This interface should be documented. AB#7164
+	// eslint-disable-next-line @typescript-eslint/no-empty-interface, jsdoc/require-jsdoc
 	export interface IRequestHeader extends Partial<IDriverHeader> {}
 }

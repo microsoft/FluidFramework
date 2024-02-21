@@ -4,10 +4,10 @@
  */
 
 import { assert } from '@fluidframework/core-utils';
-import { copyPropertyIfDefined, fail } from './Common';
-import { NodeId, TraitLabel } from './Identifiers';
-import { Delta, Forest, isParentedForestNode } from './Forest';
-import { NodeData, Side } from './persisted-types';
+import { copyPropertyIfDefined, fail } from './Common.js';
+import { NodeId, TraitLabel } from './Identifiers.js';
+import { Delta, Forest, isParentedForestNode } from './Forest.js';
+import { NodeData, Side } from './persisted-types/index.js';
 
 /**
  * Specifies the location of a trait (a labeled sequence of nodes) within the tree.

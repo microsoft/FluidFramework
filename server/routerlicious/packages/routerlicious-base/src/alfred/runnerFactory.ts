@@ -46,6 +46,7 @@ export class AlfredResources implements core.IResources {
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
 		public serviceMessageResourceManager?: core.IServiceMessageResourceManager,
 		public clusterDrainingChecker?: core.IClusterDrainingChecker,
+		public enableClientIPLogging?: boolean,
 	) {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
 		const nodeClusterConfig: Partial<services.INodeClusterConfig> | undefined = config.get(
@@ -122,6 +123,10 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			enableReadyCheck: true,
 			maxRetriesPerRequest: redisConfig2.maxRetriesPerRequest,
 			enableOfflineQueue: redisConfig2.enableOfflineQueue,
+			retryStrategy: utils.getRedisClusterRetryStrategy({
+				delayPerAttemptMs: 50,
+				maxDelayMs: 2000,
+			}),
 		};
 		if (redisConfig2.enableAutoPipelining) {
 			/**
@@ -138,7 +143,22 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			};
 		}
 
-		const redisClientForJwtCache = new Redis.default(redisOptions2);
+		const redisParams2 = {
+			expireAfterSeconds: redisConfig2.keyExpireAfterSeconds as number | undefined,
+		};
+
+		const redisClient: Redis.default | Redis.Cluster = utils.getRedisClient(
+			redisOptions2,
+			redisConfig2.slotsRefreshTimeout,
+			redisConfig2.enableClustering,
+		);
+		const clientManager = new services.ClientManager(redisClient, redisParams2);
+
+		const redisClientForJwtCache: Redis.default | Redis.Cluster = utils.getRedisClient(
+			redisOptions2,
+			redisConfig2.slotsRefreshTimeout,
+			redisConfig2.enableClustering,
+		);
 		const redisJwtCache = new services.RedisCache(redisClientForJwtCache);
 
 		// Database connection for global db if enabled
@@ -208,6 +228,10 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			enableReadyCheck: true,
 			maxRetriesPerRequest: redisConfigForThrottling.maxRetriesPerRequest,
 			enableOfflineQueue: redisConfigForThrottling.enableOfflineQueue,
+			retryStrategy: utils.getRedisClusterRetryStrategy({
+				delayPerAttemptMs: 50,
+				maxDelayMs: 2000,
+			}),
 		};
 		if (redisConfigForThrottling.enableAutoPipelining) {
 			/**
@@ -229,7 +253,12 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 				| undefined,
 		};
 
-		const redisClientForThrottling = new Redis.default(redisOptionsForThrottling);
+		const redisClientForThrottling: Redis.default | Redis.Cluster = utils.getRedisClient(
+			redisOptionsForThrottling,
+			redisConfigForThrottling.slotsRefreshTimeout,
+			redisConfigForThrottling.enableClustering,
+		);
+
 		const redisThrottleAndUsageStorageManager =
 			new services.RedisThrottleAndUsageStorageManager(
 				redisClientForThrottling,
@@ -395,6 +424,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			revokedTokenChecker,
 			serviceMessageResourceManager,
 			customizations?.clusterDrainingChecker,
+			enableClientIPLogging,
 		);
 	}
 }
@@ -422,6 +452,7 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
 			resources.revokedTokenChecker,
 			null,
 			resources.clusterDrainingChecker,
+			resources.enableClientIPLogging,
 		);
 	}
 }

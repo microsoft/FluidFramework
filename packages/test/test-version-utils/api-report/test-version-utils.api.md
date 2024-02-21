@@ -4,6 +4,7 @@
 
 ```ts
 
+import * as agentScheduler from '@fluidframework/agent-scheduler';
 import * as cell from '@fluidframework/cell';
 import { ContainerRuntime } from '@fluidframework/container-runtime';
 import { ContainerRuntimeFactoryWithDefaultDataStore } from '@fluidframework/aqueduct';
@@ -16,7 +17,6 @@ import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import * as ink from '@fluidframework/ink';
 import { ISharedDirectory } from '@fluidframework/map';
 import { ITelemetryGenericEvent } from '@fluidframework/core-interfaces';
 import { ITestContainerConfig } from '@fluidframework/test-utils';
@@ -78,7 +78,6 @@ export const DataRuntimeApi: {
     dds: {
         SharedCell: typeof cell.SharedCell;
         SharedCounter: typeof counter.SharedCounter;
-        Ink: typeof ink.Ink;
         SharedDirectory: typeof map.SharedDirectory;
         SharedMap: typeof map.SharedMap;
         SharedMatrix: typeof matrix.SharedMatrix;
@@ -90,13 +89,13 @@ export const DataRuntimeApi: {
     packages: {
         cell: typeof cell;
         counter: typeof counter;
-        ink: typeof ink;
         map: typeof map;
         matrix: typeof matrix;
         orderedCollection: typeof orderedCollection;
         registerCollection: typeof registerCollection;
         sequence: typeof sequence;
         sequenceDeprecated: typeof sequenceDeprecated;
+        agentScheduler: typeof agentScheduler;
     };
 };
 

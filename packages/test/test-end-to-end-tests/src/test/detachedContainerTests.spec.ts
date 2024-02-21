@@ -17,7 +17,6 @@ import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { DataStoreMessageType } from "@fluidframework/datastore";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
-import type { Ink, IColor } from "@fluidframework/ink";
 import type { SharedMap, SharedDirectory } from "@fluidframework/map";
 import type { SharedMatrix } from "@fluidframework/matrix";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
@@ -52,7 +51,6 @@ const cocId = "coc1Key";
 const sharedDirectoryId = "sd1Key";
 const sharedCellId = "scell1Key";
 const sharedMatrixId = "smatrix1Key";
-const sharedInkId = "sink1Key";
 const sparseMatrixId = "sparsematrixKey";
 
 const createFluidObject = async (dataStoreContext: IFluidDataStoreContext, type: string) => {
@@ -67,7 +65,6 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 		ConsensusRegisterCollection,
 		SharedDirectory,
 		SharedCell,
-		Ink,
 		SharedMatrix,
 		ConsensusQueue,
 		SparseMatrix,
@@ -79,7 +76,6 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 		[crcId, ConsensusRegisterCollection.getFactory()],
 		[sharedDirectoryId, SharedDirectory.getFactory()],
 		[sharedCellId, SharedCell.getFactory()],
-		[sharedInkId, Ink.getFactory()],
 		[sharedMatrixId, SharedMatrix.getFactory()],
 		[cocId, ConsensusQueue.getFactory()],
 		[sparseMatrixId, SparseMatrix.getFactory()],
@@ -675,77 +671,6 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 		await defPromise.promise;
 	});
 
-	it("Fire ops during container attach for shared ink", async () => {
-		const defPromise = new Deferred<void>();
-		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-
-		// Get the root dataStore from the detached container.
-		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
-		const testChannel1 = await dataStore.getSharedObject<Ink>(sharedInkId);
-
-		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
-			if (runtimeMessage === false) {
-				return;
-			}
-			assert.strictEqual(
-				(
-					((message.contents as { contents: unknown }).contents as { content: unknown })
-						.content as { address?: unknown }
-				).address,
-				sharedInkId,
-				"Address should be ink",
-			);
-			assert.strictEqual(
-				(
-					(
-						(
-							(message.contents as { contents: unknown }).contents as {
-								content: unknown;
-							}
-						).content as { contents: unknown }
-					).contents as { type?: unknown }
-				).type,
-				"createStroke",
-				"Op type should be same",
-			);
-			assert.strictEqual(
-				(
-					(
-						(
-							(
-								(message.contents as { contents: unknown }).contents as {
-									content: unknown;
-								}
-							).content as { contents: unknown }
-						).contents as { pen: unknown }
-					).pen as { thickness?: unknown }
-				).thickness,
-				20,
-				"Thickness should be same",
-			);
-			defPromise.resolve();
-			return 0;
-		});
-
-		// Fire op before attaching the container
-		const color: IColor = {
-			a: 2,
-			r: 127,
-			b: 127,
-			g: 127,
-		};
-		testChannel1.createStroke({ color, thickness: 10 });
-		const containerP = container.attach(request);
-		if (container.attachState === AttachState.Detached) {
-			await timeoutPromise((resolve) => container.once("attaching", resolve));
-		}
-
-		// Fire op after the summary is taken and before it is attached.
-		testChannel1.createStroke({ color, thickness: 20 });
-		await containerP;
-		await defPromise.promise;
-	});
-
 	it("Fire ops during container attach for consensus ordered collection", async () => {
 		const op = { opName: "add", value: JSON.stringify("s") };
 		const defPromise = new Deferred<void>();
@@ -910,7 +835,6 @@ describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) =
 		ConsensusRegisterCollection,
 		SharedDirectory,
 		SharedCell,
-		Ink,
 		SharedMatrix,
 		ConsensusQueue,
 		SparseMatrix,
@@ -922,7 +846,6 @@ describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) =
 		[crcId, ConsensusRegisterCollection.getFactory()],
 		[sharedDirectoryId, SharedDirectory.getFactory()],
 		[sharedCellId, SharedCell.getFactory()],
-		[sharedInkId, Ink.getFactory()],
 		[sharedMatrixId, SharedMatrix.getFactory()],
 		[cocId, ConsensusQueue.getFactory()],
 		[sparseMatrixId, SparseMatrix.getFactory()],
