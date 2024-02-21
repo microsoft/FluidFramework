@@ -334,6 +334,10 @@
 				"${fileDirname}/../../dist/**/*.js",
 				"${fileDirname}/../../../dist/**/*.js",
 				"${fileDirname}/../../../../dist/**/*.js",
+				"${workspaceFolder}/**/lib/**/!(*.spec,*.test,*.tests).js",
+				"${fileDirname}/../../lib/**/*.js",
+				"${fileDirname}/../../../lib/**/*.js",
+				"${fileDirname}/../../../../lib/**/*.js",
 				// e2e tests load ESM modules since test-end-to-end-tests specifies "type": "module" in its package.json.
 				// This ensures that source maps are loaded for those files as well (e.g. so putting a breakpoint in
 				// containerRuntime.ts while debugging a test in test-end-to-end-tests works)
@@ -363,9 +367,15 @@
 				"../../dist/test/${fileBasenameNoExtension}.js",
 				"../../../dist/test/**/${fileBasenameNoExtension}.js",
 				"../../../../dist/test/**/${fileBasenameNoExtension}.js",
+				"../../lib/test/${fileBasenameNoExtension}.js",
+				"../../../lib/test/**/${fileBasenameNoExtension}.js",
+				"../../../../lib/test/**/${fileBasenameNoExtension}.js",
 			],
 			"cwd": "${fileDirname}",
 			"outFiles": [
+				"${fileDirname}/../../lib/**/*.js",
+				"${fileDirname}/../../../lib/**/*.js",
+				"${fileDirname}/../../../../lib/**/*.js",
 				"${fileDirname}/../../dist/**/*.js",
 				"${fileDirname}/../../../dist/**/*.js",
 				"${fileDirname}/../../../../dist/**/*.js",
