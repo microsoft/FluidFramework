@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable unused-imports/no-unused-imports */
 import { strict as assert } from "assert";
 import {
 	Any,
