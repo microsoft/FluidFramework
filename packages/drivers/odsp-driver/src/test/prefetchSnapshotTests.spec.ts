@@ -253,13 +253,12 @@ describe("Tests for prefetching snapshot", () => {
 					.length === 1,
 				"1 Obtain snapshot event should be there",
 			);
-			// No longer able to check the logger that have been created locally
-			// assert(
-			// 	mockLogger.matchEvents([
-			// 		{ eventName: "OdspDriver:ObtainSnapshot_end", method: "network" },
-			// 	]),
-			// 	"Source should be network",
-			// );
+			assert(
+				mockLogger.matchEvents([
+					{ eventName: "OdspDriver:ObtainSnapshot_end", method: "network" },
+				]),
+				"Source should be network",
+			);
 		});
 
 		it("prefetching snapshot should result in snapshot source as cache or network if prefetch throws and cache contains the response", async () => {
@@ -594,13 +593,12 @@ describe("Tests for prefetching snapshot", () => {
 
 			assert.deepStrictEqual(version, expectedVersion, "incorrect version");
 			// Should be from cache as prefetch will store in cache
-			// No longer able to check the logger that have been created locally
-			// assert(
-			// 	mockLogger.matchEvents([
-			// 		{ eventName: "OdspDriver:ObtainSnapshot_end", method: "cache" },
-			// 	]),
-			// 	"unexpected events",
-			// );
+			assert(
+				mockLogger.matchEvents([
+					{ eventName: "OdspDriver:ObtainSnapshot_end", method: "cache" },
+				]),
+				"unexpected events",
+			);
 		});
 	});
 
