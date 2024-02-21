@@ -99,11 +99,6 @@ export interface IMergeTreeDeltaOpArgs {
 	 * Delta op args are for an unacked local change
 	 */
 	readonly sequencedMessage?: ISequencedDocumentMessage;
-
-	/**
-	 * If the operation is being applied as a stashed op, which means it may have been previously submitted, and therefore should not be resubmitted
-	 */
-	readonly stashed?: boolean;
 }
 
 /**

@@ -6,13 +6,15 @@
 		"noUnusedLocals": false,
 		"noImplicitOverride": true,
 		"rootDir": "./",
-		"outDir": "../../dist/test",
+		"outDir": "../../lib/test",
+		"module": "Node16",
+		"moduleResolution": "Node16",
 		"types": ["node", "mocha"],
 	},
 	"include": ["./**/*"],
 	"references": [
 		{
-			"path": "../..",
+			"path": "../../tsconfig.json",
 		},
 	],
 }

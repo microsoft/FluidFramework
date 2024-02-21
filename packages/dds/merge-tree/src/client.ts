@@ -915,41 +915,26 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 	}
 
-	// eslint-disable-next-line import/no-deprecated
-	public applyStashedOp(op: IMergeTreeDeltaOp): SegmentGroup;
-	// eslint-disable-next-line import/no-deprecated
-	public applyStashedOp(op: IMergeTreeGroupMsg): SegmentGroup[];
-	// eslint-disable-next-line import/no-deprecated
-	public applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
-	// eslint-disable-next-line import/no-deprecated
-	public applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[] {
-		// eslint-disable-next-line import/no-deprecated
-		let metadata: SegmentGroup | SegmentGroup[] | undefined;
-		const stashed = true;
+	public applyStashedOp(op: IMergeTreeOp): void {
 		switch (op.type) {
 			case MergeTreeDeltaType.INSERT:
-				this.applyInsertOp({ op, stashed });
-				metadata = this.peekPendingSegmentGroups();
+				this.applyInsertOp({ op });
 				break;
 			case MergeTreeDeltaType.REMOVE:
-				this.applyRemoveRangeOp({ op, stashed });
-				metadata = this.peekPendingSegmentGroups();
+				this.applyRemoveRangeOp({ op });
 				break;
 			case MergeTreeDeltaType.ANNOTATE:
-				this.applyAnnotateRangeOp({ op, stashed });
-				metadata = this.peekPendingSegmentGroups();
+				this.applyAnnotateRangeOp({ op });
 				break;
 			case MergeTreeDeltaType.OBLITERATE:
 				this.applyObliterateRangeOp({ op });
-				metadata = this.peekPendingSegmentGroups();
 				break;
 			case MergeTreeDeltaType.GROUP:
-				return op.ops.map((o) => this.applyStashedOp(o));
+				op.ops.map((o) => this.applyStashedOp(o));
+				break;
 			default:
 				unreachableCase(op, "unrecognized op type");
 		}
-		assert(!!metadata, 0x2db /* "Applying op must generate a pending segment" */);
-		return metadata;
 	}
 
 	public applyMsg(msg: ISequencedDocumentMessage, local: boolean = false) {

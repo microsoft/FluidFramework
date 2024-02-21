@@ -145,6 +145,7 @@ const snapshotTreeWithGroupId: ISnapshotTree = {
 					},
 					unreferenced: true,
 					groupId: "G2",
+					omitted: false,
 				},
 				".blobs": { blobs: {}, trees: {} },
 			},
