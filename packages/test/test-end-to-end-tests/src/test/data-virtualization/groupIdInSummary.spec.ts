@@ -17,6 +17,7 @@ import {
 	type ITestObjectProvider,
 } from "@fluidframework/test-utils";
 import { SummaryType } from "@fluidframework/protocol-definitions";
+import { LoaderHeader } from "@fluidframework/container-definitions";
 
 // A Test Data Object that exposes some basic functionality.
 class TestDataObject extends DataObject {
@@ -85,8 +86,7 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			container,
 			dataObjectFactory,
 		);
-		const { summaryTree } = await summarizeNow(summarizer);
-
+		const { summaryVersion, summaryTree } = await summarizeNow(summarizer);
 		const channelsTree = summaryTree.tree[".channels"];
 		assert(channelsTree.type === SummaryType.Tree, "channels should be a tree");
 		const dataObjectTree = channelsTree.tree[dataObject.id];
@@ -94,16 +94,17 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 		assert(dataObjectTree.type === SummaryType.Tree, "dataObjectTree should be a tree");
 		assert(dataObjectTree.groupId === loadingGroupId, "GroupId should be on the summary tree");
 
-		// TODO: Enable this portion of the test once we have the ability to load the summary with the group id
-		// Likely requires local server to support summary trees.
-		// const container2 = await provider.loadContainer(runtimeFactory, undefined, {
-		// 	[LoaderHeader.version]: summaryVersion,
-		// });
+		// TODO: Enable this portion in tinylicious
+		if (provider.driver.type === "local") {
+			const container2 = await provider.loadContainer(runtimeFactory, undefined, {
+				[LoaderHeader.version]: summaryVersion,
+			});
 
-		// const mainObject2 = (await container2.getEntryPoint()) as TestDataObject;
-		// const handle2 = await mainObject2._root.get("dataObject");
-		// assert(handle2 !== undefined, "handle2 should not be undefined");
-		// const testObject2 = (await handle2.get()) as TestDataObject;
-		// assert.equal(testObject2.groupId, groupId, "groupId should be the same");
+			const mainObject2 = (await container2.getEntryPoint()) as TestDataObject;
+			const handle2 = await mainObject2._root.get("dataObject");
+			assert(handle2 !== undefined, "handle2 should not be undefined");
+			const testObject2 = (await handle2.get()) as TestDataObject;
+			assert.equal(testObject2.loadingGroupId, loadingGroupId, "groupId should be the same");
+		}
 	});
 });

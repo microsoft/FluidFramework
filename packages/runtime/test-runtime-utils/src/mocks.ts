@@ -7,13 +7,14 @@ import { EventEmitter } from "events";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { IIdCompressor, IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor";
 import { assert } from "@fluidframework/core-utils";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	FluidObject,
 	IFluidHandle,
 	IFluidHandleContext,
 	IRequest,
 	IResponse,
+	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { IAudience, ILoader, AttachState } from "@fluidframework/container-definitions";
 
@@ -690,7 +691,7 @@ export class MockFluidDataStoreRuntime
 		clientId?: string;
 		entryPoint?: IFluidHandle<FluidObject>;
 		id?: string;
-		logger?: ITelemetryLoggerExt;
+		logger?: ITelemetryBaseLogger;
 		idCompressor?: IIdCompressor & IIdCompressorCore;
 	}) {
 		super();
@@ -728,7 +729,7 @@ export class MockFluidDataStoreRuntime
 	public readonly connected = true;
 	public deltaManager = new MockDeltaManager();
 	public readonly loader: ILoader = undefined as any;
-	public readonly logger: ITelemetryLoggerExt;
+	public readonly logger: ITelemetryBaseLogger;
 	public quorum = new MockQuorumClients();
 	public containerRuntime?: MockContainerRuntime;
 	public idCompressor?: IIdCompressor & IIdCompressorCore;

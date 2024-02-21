@@ -237,7 +237,7 @@ export class ConsensusOrderedCollection<T = any>
 				opName: "release",
 				acquireId,
 			}).catch((error) => {
-				this.runtime.logger.sendErrorEvent({ eventName: "ConsensusQueue_release" }, error);
+				this.logger.sendErrorEvent({ eventName: "ConsensusQueue_release" }, error);
 			});
 		}
 	}
