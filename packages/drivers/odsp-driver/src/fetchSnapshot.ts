@@ -643,20 +643,18 @@ export async function downloadSnapshot(
 
 	const snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
 
-	const queryParams = { ump: 1 };
+	const queryParams: Record<string, unknown> = { ump: 1 };
 	if (snapshotOptions !== undefined) {
 		for (const [key, value] of Object.entries(snapshotOptions)) {
 			// Exclude "timeout" from query string
 			if (value !== undefined && key !== "timeout") {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				queryParams[key] = value;
 			}
 		}
 	}
 
 	if (loadingGroupIds !== undefined) {
-		// eslint-disable-next-line @typescript-eslint/dot-notation
-		queryParams["groupId"] = loadingGroupIds.join(",");
+		queryParams.groupId = loadingGroupIds.join(",");
 	}
 
 	const queryString = getQueryString(queryParams);
@@ -664,7 +662,7 @@ export async function downloadSnapshot(
 	// The location of file can move on Spo in which case server returns 308(Permanent Redirect) error.
 	// Adding below header will make VROOM API return 404 instead of 308 and browser can intercept it.
 	// This error thrown by server will contain the new redirect location. Look at the 404 error parsing
-	// for futher reference here: \packages\utils\odsp-doclib-utils\src\odspErrorUtils.ts
+	// for further reference here: \packages\utils\odsp-doclib-utils\src\odspErrorUtils.ts
 	const header = { prefer: "manualredirect" };
 	const { body, headers } = getFormBodyAndHeaders(odspResolvedUrl, storageToken, header);
 	const fetchOptions = {
