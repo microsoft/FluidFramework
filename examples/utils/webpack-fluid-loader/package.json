@@ -76,6 +76,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
+		"@fluid-example/example-utils": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
@@ -93,7 +94,6 @@
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/tool-utils": "workspace:~",
-		"@fluidframework/view-interfaces": "workspace:~",
 		"axios": "^1.6.2",
 		"buffer": "^6.0.3",
 		"express": "^4.16.3",
