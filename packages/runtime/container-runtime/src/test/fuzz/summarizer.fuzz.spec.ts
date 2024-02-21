@@ -4,7 +4,8 @@
  */
 
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
-import { createSummarizerFuzzSuite, summarizerOperationGenerator, baseModel } from "./fuzzUtils";
+import { summarizerOperationGenerator, baseModel } from "./fuzzUtils";
+import { createSummarizerFuzzSuite } from "./summarizerFuzzSuite";
 
 /**
  * Summarizer fuzz test should test that we eventually recover and send a summary successfully.
