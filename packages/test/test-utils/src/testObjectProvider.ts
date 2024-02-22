@@ -16,7 +16,6 @@ import {
 } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import {
-	ITelemetryGenericEvent,
 	ITelemetryBaseLogger,
 	ITelemetryBaseEvent,
 	IRequestHeader,
@@ -28,7 +27,11 @@ import {
 } from "@fluidframework/driver-definitions";
 import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { v4 as uuid } from "uuid";
-import { createChildLogger, createMultiSinkLogger } from "@fluidframework/telemetry-utils";
+import {
+	createChildLogger,
+	createMultiSinkLogger,
+	type ITelemetryGenericEventExt,
+} from "@fluidframework/telemetry-utils";
 import { LoaderContainerTracker } from "./loaderContainerTracker.js";
 import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader.js";
 import { createAndAttachContainer } from "./localLoader.js";
@@ -301,12 +304,12 @@ export class EventAndErrorTrackingLogger implements ITelemetryBaseLogger {
 	constructor(private readonly baseLogger: ITelemetryBaseLogger) {}
 
 	private readonly expectedEvents: (
-		| { index: number; event: ITelemetryGenericEvent | undefined }
+		| { index: number; event: ITelemetryGenericEventExt | undefined }
 		| undefined
 	)[] = [];
 	private readonly unexpectedErrors: ITelemetryBaseEvent[] = [];
 
-	public registerExpectedEvent(...orderedExpectedEvents: ITelemetryGenericEvent[]) {
+	public registerExpectedEvent(...orderedExpectedEvents: ITelemetryGenericEventExt[]) {
 		if (this.expectedEvents.length !== 0) {
 			// we don't have to error here. just no reason not to. given the events must be
 			// ordered it could be tricky to figure out problems around multiple registrations.
