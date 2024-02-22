@@ -26,7 +26,7 @@ import { isInstanceOfISnapshot } from "@fluidframework/driver-utils";
 import { ISerializableBlobContents, getBlobContentsFromTree } from "./containerStorageAdapter";
 import { IPendingContainerState } from "./container";
 
-export class ContainerStateManager {
+export class SerializedStateManager {
 	private readonly savedOps: ISequencedDocumentMessage[] = [];
 	private snapshot:
 		| {
@@ -35,32 +35,20 @@ export class ContainerStateManager {
 		  }
 		| undefined;
 	private readonly mc: MonitoringContext;
-	private readonly _offlineLoadEnabled: boolean;
-	private readonly storageAdapter: Pick<
-		IDocumentStorageService,
-		"readBlob" | "getSnapshot" | "getSnapshotTree" | "getVersions"
-	>;
-	private readonly pendingLocalState: IPendingContainerState | undefined;
 
 	constructor(
-		pendingLocalState: IPendingContainerState | undefined,
+		private readonly pendingLocalState: IPendingContainerState | undefined,
 		subLogger: ITelemetryLoggerExt,
-		storageAdapter: Pick<
+		private readonly storageAdapter: Pick<
 			IDocumentStorageService,
 			"readBlob" | "getSnapshotTree" | "getSnapshot" | "getVersions"
 		>,
-		isInteractiveClient: boolean,
+		private readonly _offlineLoadEnabled: boolean,
 	) {
-		this.pendingLocalState = pendingLocalState;
 		this.mc = createChildMonitoringContext({
 			logger: subLogger,
-			namespace: "ContainerStateManager",
+			namespace: "serializedStateManager",
 		});
-		this.storageAdapter = storageAdapter;
-		this._offlineLoadEnabled =
-			(isInteractiveClient &&
-				this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad")) ??
-			false;
 	}
 
 	public get offlineLoadEnabled(): boolean {

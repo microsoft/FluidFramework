@@ -125,7 +125,7 @@ import {
 	protocolHandlerShouldProcessSignal,
 } from "./protocol";
 import { AttachProcessProps, AttachmentData, runRetriableAttachProcess } from "./attachment";
-import { ContainerStateManager } from "./containerStateManager";
+import { SerializedStateManager } from "./serializedStateManager";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -588,7 +588,7 @@ export class Container
 	private _loadedFromVersion: IVersion | undefined;
 	private _dirtyContainer = false;
 	private attachmentData: AttachmentData = { state: AttachState.Detached };
-	private readonly containerStateManager: ContainerStateManager;
+	private readonly serializedStateManager: SerializedStateManager;
 	private readonly _containerId: string;
 
 	private lastVisible: number | undefined;
@@ -959,11 +959,15 @@ export class Container
 			forceEnableSummarizeProtocolTree,
 		);
 
-		this.containerStateManager = new ContainerStateManager(
+		const offlineLoadEnabled =
+			(this.isInteractiveClient &&
+				this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad")) ??
+			false;
+		this.serializedStateManager = new SerializedStateManager(
 			pendingLocalState,
 			this.subLogger,
 			this.storageAdapter,
-			this.isInteractiveClient,
+			offlineLoadEnabled,
 		);
 
 		const isDomAvailable =
@@ -1159,7 +1163,7 @@ export class Container
 			this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
 			0x0d2 /* "resolved url should be valid Fluid url" */,
 		);
-		const pendingState = await this.containerStateManager.getPendingLocalStateCore(
+		const pendingState = await this.serializedStateManager.getPendingLocalStateCore(
 			props,
 			this.clientId,
 			this.runtime,
@@ -1288,7 +1292,7 @@ export class Container
 
 					let attachP = runRetriableAttachProcess({
 						initialAttachmentData: this.attachmentData,
-						offlineLoadEnabled: this.containerStateManager.offlineLoadEnabled,
+						offlineLoadEnabled: this.serializedStateManager.offlineLoadEnabled,
 						detachedBlobStorage: this.detachedBlobStorage,
 						setAttachmentData,
 						createAttachmentSummary,
@@ -1304,7 +1308,7 @@ export class Container
 						});
 					}
 
-					this.containerStateManager.setSnapshot(await attachP);
+					this.serializedStateManager.setSnapshot(await attachP);
 					if (!this.closed) {
 						this.handleDeltaConnectionArg(
 							{
@@ -1568,7 +1572,7 @@ export class Container
 
 		timings.phase2 = performance.now();
 		// Fetch specified snapshot.
-		const { snapshotTree, version } = await this.containerStateManager.fetchSnapshot(
+		const { snapshotTree, version } = await this.serializedStateManager.fetchSnapshot(
 			specifiedVersion,
 			this.service?.policies?.supportGetSnapshotApi,
 		);
@@ -2287,7 +2291,7 @@ export class Container
 
 		// Forward messages to the loaded runtime for processing
 		this.runtime.process(message, local);
-		this.containerStateManager.addSavedOp(message);
+		this.serializedStateManager.addSavedOp(message);
 		// Inactive (not in quorum or not writers) clients don't take part in the minimum sequence number calculation.
 		if (this.activeConnection()) {
 			if (this.noopHeuristic === undefined) {
