@@ -31,6 +31,7 @@ const executableToLeafTask: {
 } = {
 	"ts2esm": Ts2EsmTask,
 	"tsc": TscTask,
+	"fluid-tsc": TscTask,
 	"tsc-multi": TscMultiTask,
 	"tslint": TsLintTask,
 	"eslint": EsLintTask,
