@@ -11,14 +11,14 @@ export function loadDocsJavascript() {
 
 	// Set a local storage variable when the mobile nav dropdown has been changed
 	$("#small-nav-dropdown").change(function () {
-		localStorage.setItem('mobileNavChanged', 'true');
+		localStorage.setItem("mobileNavChanged", "true");
 	});
 
 	// If the mobile nav changed variable has been set, restore focus to the mobile nav and remove the variable
-	if (localStorage.getItem('mobileNavChanged') === 'true') {
-        $('#small-nav-dropdown').focus();
-        localStorage.removeItem('mobileNavChanged');
-    }
+	if (localStorage.getItem("mobileNavChanged") === "true") {
+		$("#small-nav-dropdown").focus();
+		localStorage.removeItem("mobileNavChanged");
+	}
 
 	$("#docs-subnavbar").affix({
 		offset: {
