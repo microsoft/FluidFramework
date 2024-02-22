@@ -143,6 +143,10 @@
 			"RemovedFunctionDeclaration_logIfFalse": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"RemovedClassDeclaration_TelemetryNullLogger": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}
