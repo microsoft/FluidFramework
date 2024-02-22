@@ -17,4 +17,7 @@ export interface IWebhookManager {
  */
 export const CollabSessionWebhookEvent = {
 	SESSION_END: "SESSION_END",
+	SESSION_START: "SESSION_START",
+	SESSION_CLIENT_JOIN: "SESSION_CLIENT_JOIN",
+	SESSION_CLIENT_LEAVE: "SESSION_CLIENT_LEAVE",
 } as const;

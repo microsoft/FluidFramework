@@ -371,28 +371,23 @@ export function configureWebSocketServices(
 			try {
 				if (webSocketServer.getRoomMembers) {
 					const roomMembers = webSocketServer.getRoomMembers(getRoomId(room));
-					console.info(
-						`@@@@@ client ID: ${clientId} connecting to document ID: ${
-							claims.documentId
-						} and room ID: ${getRoomId(room)}`,
-					);
-
 					if (roomMembers === undefined) {
-						// console.warn(
-						// 	"@@@@@ unexpectedly got undefined from getRoomMembers, maybe a new room is always undefined.",
-						// );
 						console.info(
 							`@@@@@ A NEW ROOM (SESSION) with room ID: ${getRoomId(
 								room,
-							)} has started for document ID: ${claims.documentId}`,
+							)} has started for document ID: ${
+								claims.documentId
+							} with initial client with client ID: ${clientId}`,
 						);
-					} else if (roomMembers.size === 0) {
-						console.warn(
-							`@@@@@ member is joining a new room! This may be the start of a session for document ID: ${claims.documentId}`,
-						);
+						webhookManager?.handleEvent(core.CollabSessionWebhookEvent.SESSION_START, {
+							eventName: core.CollabSessionWebhookEvent.SESSION_START,
+							documentId: room.documentId,
+							tenantId: room.tenantId,
+							clientId,
+						});
 					} else if (roomMembers.size > 0) {
 						console.info(
-							`@@@@@ client ID: ${clientId} is joining an existing session with room ID: ${getRoomId(
+							`@@@@@ client ID: ${clientId} is attempting to join an EXISTING session with room ID: ${getRoomId(
 								room,
 							)} for document ID: ${claims.documentId}`,
 						);
@@ -414,6 +409,16 @@ export function configureWebSocketServices(
 							} and room (session) ID: ${getRoomId(room)}, new member count: ${
 								roomMembersAfterJoining.size
 							}`,
+						);
+						webhookManager?.handleEvent(
+							core.CollabSessionWebhookEvent.SESSION_CLIENT_JOIN,
+							{
+								eventName: core.CollabSessionWebhookEvent.SESSION_CLIENT_JOIN,
+								documentId: room.documentId,
+								tenantId: room.tenantId,
+								clientId,
+								sessionActiveClientCount: roomMembersAfterJoining.size,
+							},
 						);
 					} else {
 						console.error(
@@ -799,15 +804,6 @@ export function configureWebSocketServices(
 			}
 			// Send notification messages for all client IDs in the room map
 			for (const [clientId, room] of roomMap) {
-				if (webSocketServer.getRoomMembers) {
-					console.warn(
-						`@@@## attempting to disconnect client ID ${clientId} from room id ${getRoomId(
-							room,
-						)}, current member count: ${webSocketServer.getRoomMembers(getRoomId(room))
-							?.size} `,
-					);
-				}
-
 				if (clientIdClientsDisconnected.has(clientId)) {
 					// We already removed this clientId once. Skip it.
 					continue;
@@ -843,6 +839,7 @@ export function configureWebSocketServices(
 							error,
 						);
 					});
+
 				if (webSocketServer.getRoomMembers) {
 					const roomMembersAfterLeaving = webSocketServer.getRoomMembers(getRoomId(room));
 					if (roomMembersAfterLeaving !== undefined) {
@@ -853,11 +850,17 @@ export function configureWebSocketServices(
 								room.documentId
 							}, The session is ongoing and the new member count is: ${roomMembersAfterLeaving?.size}`,
 						);
+						webhookManager?.handleEvent(
+							core.CollabSessionWebhookEvent.SESSION_CLIENT_LEAVE,
+							{
+								eventName: core.CollabSessionWebhookEvent.SESSION_CLIENT_LEAVE,
+								documentId: room.documentId,
+								tenantId: room.tenantId,
+								clientId,
+								sessionActiveClientCount: roomMembersAfterLeaving?.size,
+							},
+						);
 					} else {
-						// console.warn(
-						// 	"@@@@@ unexpectedly got undefined from getRoomMembers after LEAVING the room.",
-						// );
-
 						console.info(
 							`@@@@@ SUCCESSFULLY DISCONNECTED clientId: ${clientId} from room ID: ${getRoomId(
 								room,
@@ -870,6 +873,7 @@ export function configureWebSocketServices(
 							eventName: core.CollabSessionWebhookEvent.SESSION_END,
 							documentId: room.documentId,
 							tenantId: room.tenantId,
+							lastActiveClientId: clientId,
 						});
 					}
 				}
