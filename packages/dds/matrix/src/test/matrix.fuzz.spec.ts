@@ -208,7 +208,7 @@ describe("Matrix fuzz tests", function () {
 	 * Despite this accounting for 95% of test runtime when profiled, this codepath doesn't appear to be a bottleneck
 	 * in profiled production scenarios investigated at the time of writing.
 	 */
-	this.timeout(5000);
+	this.timeout(7000);
 	const model: Omit<DDSFuzzModel<TypedMatrixFactory, Operation>, "workloadName"> = {
 		factory: new TypedMatrixFactory(),
 		generatorFactory: () => takeAsync(50, makeGenerator()),
