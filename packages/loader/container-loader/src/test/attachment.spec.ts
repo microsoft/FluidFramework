@@ -17,8 +17,8 @@ import {
 	DetachedDefaultData,
 	AttachmentData,
 	AttachingDataWithoutBlobs,
-} from "../attachment";
-import { combineAppAndProtocolSummary } from "../utils";
+} from "../attachment.js";
+import { combineAppAndProtocolSummary } from "../utils.js";
 
 const emptySummary = combineAppAndProtocolSummary(
 	{ tree: {}, type: SummaryType.Tree },
