@@ -11,20 +11,70 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
+	"type": "module",
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/indexNode.d.mts",
-				"default": "./lib/indexNode.mjs"
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/indexNode.d.ts",
-				"default": "./dist/indexNode.js"
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./public": {
+			"import": {
+				"types": "./lib/client-utils-public.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/client-utils-public.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./beta": {
+			"import": {
+				"types": "./lib/client-utils-beta.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/client-utils-beta.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./alpha": {
+			"import": {
+				"types": "./lib/client-utils-alpha.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/client-utils-alpha.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./fruit": {
+			"import": {
+				"types": "./lib/client-utils-alpha.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/client-utils-alpha.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./internal": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
 			}
 		}
 	},
 	"main": "dist/indexNode.js",
-	"module": "lib/indexNode.mjs",
 	"browser": {
 		"./dist/indexNode.js": "./dist/indexBrowser.js",
 		"./dist/indexNode.d.ts": "./dist/indexBrowser.d.ts",
@@ -34,18 +84,24 @@
 	"types": "dist/indexNode.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "api-extractor run --local",
-		"api-extractor:esnext": "api-extractor run --config ./api-extractor-esm.json",
+		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
+		"api-extractor:esnext": "api-extractor run --local",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
-		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
+		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:test": "concurrently npm:build:test:mocha npm:build:test:jest npm:build:test:types",
-		"build:test:jest": "tsc --project ./src/test/jest/tsconfig.json",
-		"build:test:mocha": "tsc --project ./src/test/mocha/tsconfig.json",
-		"build:test:types": "tsc --project ./src/test/types/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack",
+		"build:test:jest:cjs": "fluid-tsc commonjs --project ./src/test/jest/tsconfig.cjs.json",
+		"build:test:jest:esm": "tsc --project ./src/test/jest/tsconfig.json",
+		"build:test:mocha:cjs": "fluid-tsc commonjs --project ./src/test/mocha/tsconfig.cjs.json",
+		"build:test:mocha:esm": "tsc --project ./src/test/mocha/tsconfig.json",
+		"build:test:types:cjs": "fluid-tsc commonjs --project ./src/test/types/tsconfig.cjs.json",
+		"build:test:types:esm": "tsc --project ./src/test/types/tsconfig.json",
+		"build:test:jest": "concurrently npm:build:test:jest:esm npm:build:test:jest:cjs",
+		"build:test:mocha": "concurrently npm:build:test:mocha:esm npm:build:test:mocha:cjs",
+		"build:test:types": "concurrently npm:build:test:types:esm npm:build:test:types:cjs",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob _api-extractor-temp dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
@@ -59,8 +115,10 @@
 		"test": "npm run test:mocha && npm run test:jest",
 		"test:coverage": "c8 npm test",
 		"test:jest": "jest",
-		"test:mocha": "mocha  --recursive \"dist/test/mocha/**/*.spec.*js\" --exit --project test/tsconfig.json",
-		"tsc": "tsc",
+		"test:mocha": "npm run test:mocha:cjs && npm run test:mocha:esm",
+		"test:mocha:cjs": "mocha  --recursive \"dist/test/mocha/*.spec.*js\" --exit --project src/test/mocha/tsconfig.cjs.json -r node_modules/@fluidframework/mocha-test-setup",
+		"test:mocha:esm": "mocha  --recursive \"lib/test/mocha/*.spec.*js\" --exit --project src/test/mocha/tsconfig.json -r node_modules/@fluidframework/mocha-test-setup",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
@@ -132,7 +190,6 @@
 		"sinon": "^7.4.2",
 		"ts-jest": "^29.1.1",
 		"ts-node": "^10.9.1",
-		"tsc-multi": "^1.1.0",
 		"typescript": "~5.1.6"
 	},
 	"fluidBuild": {
