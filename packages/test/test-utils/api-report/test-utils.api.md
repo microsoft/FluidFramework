@@ -48,7 +48,7 @@ import { ISummaryContext } from '@fluidframework/driver-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { ITelemetryGenericEvent } from '@fluidframework/core-interfaces';
+import { ITelemetryGenericEventExt } from '@fluidframework/telemetry-utils';
 import { ITestDriver } from '@fluidframework/test-driver-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { Loader } from '@fluidframework/container-loader';
@@ -123,12 +123,12 @@ export const defaultTimeoutDurationMs = 250;
 export class EventAndErrorTrackingLogger implements ITelemetryBaseLogger {
     constructor(baseLogger: ITelemetryBaseLogger);
     // (undocumented)
-    registerExpectedEvent(...orderedExpectedEvents: ITelemetryGenericEvent[]): void;
+    registerExpectedEvent(...orderedExpectedEvents: ITelemetryGenericEventExt[]): void;
     // (undocumented)
     reportAndClearTrackedEvents(): {
         expectedNotFound: ({
             index: number;
-            event: ITelemetryGenericEvent | undefined;
+            event: ITelemetryGenericEventExt | undefined;
         } | undefined)[];
         unexpectedErrors: ITelemetryBaseEvent[];
     };
