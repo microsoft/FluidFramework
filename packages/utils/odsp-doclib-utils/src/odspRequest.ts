@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { customFetch } from "./fetch.js";
+// eslint-disable-next-line import/no-extraneous-dependencies
+import fetch from "isomorphic-fetch";
 import { IOdspAuthRequestInfo, authRequestWithRetry } from "./odspAuth.js";
 
 /**
@@ -13,7 +14,10 @@ export async function getAsync(
 	url: string,
 	authRequestInfo: IOdspAuthRequestInfo,
 ): Promise<Response> {
-	return authRequest(authRequestInfo, async (config: RequestInit) => customFetch(url, config));
+	return authRequest(
+		authRequestInfo,
+		async (config: RequestInit) => fetch(url, config) as unknown as Response,
+	);
 }
 
 /**
@@ -28,7 +32,7 @@ export async function putAsync(
 			...config,
 			method: "PUT",
 		};
-		return fetch(url, putConfig);
+		return fetch(url, putConfig) as unknown as Response;
 	});
 }
 
@@ -46,7 +50,7 @@ export async function postAsync(
 			body,
 			method: "POST",
 		};
-		return fetch(url, postConfig);
+		return fetch(url, postConfig) as unknown as Response;
 	});
 }
 
@@ -55,7 +59,7 @@ export async function postAsync(
  */
 export async function unauthPostAsync(url: string, body: any): Promise<Response> {
 	return safeRequestCore(async () => {
-		return fetch(url, { body, method: "POST" });
+		return fetch(url, { body, method: "POST" }) as unknown as Response;
 	});
 }
 

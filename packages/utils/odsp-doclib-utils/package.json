@@ -138,6 +138,7 @@
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/odsp-driver-definitions": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
+		"isomorphic-fetch": "^3.0.0",
 		"node-fetch": "^2.6.9"
 	},
 	"devDependencies": {
@@ -149,7 +150,6 @@
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/odsp-doclib-utils-previous": "npm:@fluidframework/odsp-doclib-utils@2.0.0-internal.8.0.0",
 		"@microsoft/api-extractor": "^7.39.1",
-		"@types/isomorphic-fetch": "^0.0.39",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
 		"@types/node-fetch": "^2.5.10",
@@ -157,7 +157,6 @@
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.50.0",
-		"isomorphic-fetch": "^3.0.0",
 		"mocha": "^10.2.0",
 		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",

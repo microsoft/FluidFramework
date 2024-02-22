@@ -11676,7 +11676,6 @@ importers:
       '@fluidframework/odsp-driver-definitions': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
       '@microsoft/api-extractor': ^7.39.1
-      '@types/isomorphic-fetch': ^0.0.39
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/node-fetch': ^2.5.10
@@ -11701,6 +11700,7 @@ importers:
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/odsp-driver-definitions': link:../../drivers/odsp-driver-definitions
       '@fluidframework/telemetry-utils': link:../telemetry-utils
+      isomorphic-fetch: 3.0.0
       node-fetch: 2.7.0
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -11711,7 +11711,6 @@ importers:
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/odsp-doclib-utils-previous': /@fluidframework/odsp-doclib-utils/2.0.0-internal.8.0.0
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
-      '@types/isomorphic-fetch': 0.0.39
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/node-fetch': 2.6.9
@@ -11719,7 +11718,6 @@ importers:
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
-      isomorphic-fetch: 3.0.0
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
@@ -22106,10 +22104,6 @@ packages:
     resolution: {integrity: sha512-/CLhCW79JUeLKznI6mbVieGbl4QU5Hfn+6udw1YHZoofASjbQ5zaP5LzAUZYDpRYEjS4/P+DhEgyJ/PQmGGTWw==}
     dev: true
 
-  /@types/isomorphic-fetch/0.0.39:
-    resolution: {integrity: sha512-I0gou/ZdA1vMG7t7gMzL7VYu2xAKU78rW9U1l10MI0nn77pEHq3tQqHQ8hMmXdMpBlkxZOorjI4sO594Z3kKJw==}
-    dev: true
-
   /@types/istanbul-lib-coverage/2.0.6:
     resolution: {integrity: sha512-2QF/t/auWm0lsy8XtKVPG19v3sSOQlJe/YHZgfjb/KBBHOGSV+J2q/S671rcq9uTBrLAXmZpqJiaQbMT+zNU1w==}
     dev: true
@@ -32196,6 +32190,7 @@ packages:
       whatwg-fetch: 3.6.19
     transitivePeerDependencies:
       - encoding
+    dev: false
 
   /isomorphic-git/1.25.0:
     resolution: {integrity: sha512-F8X7z74gL+jN4bd6qB6a3Z0QQzonWPkiQ3nK/oFWlrc2pIwVM9Uksl3YMFh99ltswsqoCoOthgasybX08/fiGg==}
@@ -44192,6 +44187,7 @@ packages:
 
   /whatwg-fetch/3.6.19:
     resolution: {integrity: sha512-d67JP4dHSbm2TrpFj8AbO8DnL1JXL5J9u0Kq2xW6d0TFDbCA3Muhdt8orXC22utleTVj7Prqt82baN6RBvnEgw==}
+    dev: false
 
   /whatwg-mimetype/2.3.0:
     resolution: {integrity: sha512-M4yMwr6mAnQz76TbJm914+gPpB/nCwvZbJU28cUD6dR004SAxDLOOSUaB1JDRqLtaOV/vi0IC5lEAGFgrjGv/g==}
