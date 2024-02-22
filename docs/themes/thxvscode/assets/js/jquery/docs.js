@@ -7,8 +7,6 @@ export function loadDocsJavascript() {
 	 */
 	$("body").scrollspy({ target: "#docs-subnavbar" });
 
-	const affixPaddingTop = 70;
-
 	// Set a local storage variable when the mobile nav dropdown has been changed
 	$("#small-nav-dropdown").change(function () {
 		localStorage.setItem("mobileNavChanged", "true");
@@ -20,6 +18,7 @@ export function loadDocsJavascript() {
 		localStorage.removeItem("mobileNavChanged");
 	}
 
+	const affixPaddingTop = 70;
 	$("#docs-subnavbar").affix({
 		offset: {
 			top: function () {
