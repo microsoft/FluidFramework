@@ -1,6 +1,11 @@
 # @fluid-internal/mocha-test-setup
 
-<!-- AUTO-GENERATED-CONTENT:START (README_PACKAGE_SCOPE_NOTICE:packageJsonPath=./package.json) --><!-- AUTO-GENERATED-CONTENT:END -->
+<!-- AUTO-GENERATED-CONTENT:START (README_PACKAGE_SCOPE_NOTICE:packageJsonPath=./package.json) -->
+
+**IMPORTANT: This package is intended strictly as an implementation detail of the Fluid Framework and is not intended for public consumption.**
+**We make no stability guarantees regarding its APIs.**
+
+<!-- AUTO-GENERATED-CONTENT:END -->
 
 This package has a few main purposes:
 
