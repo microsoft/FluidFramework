@@ -14,11 +14,7 @@ import {
 import { TreeChunk, chunkTree, defaultChunkPolicy, intoDelta } from "../feature-libraries/index.js";
 import { fail } from "../util/index.js";
 import { ChangeEnricherCheckout } from "./defaultCommitEnricher.js";
-import {
-	addMissingBuilds,
-	filterSuperfluousBuilds,
-	relevantRemovedRoots,
-} from "./sharedTreeChangeFamily.js";
+import { updateRefreshers } from "./sharedTreeChangeFamily.js";
 import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 
 export class SharedTreeChangeEnricher implements ChangeEnricherCheckout<SharedTreeChange> {
@@ -27,34 +23,22 @@ export class SharedTreeChangeEnricher implements ChangeEnricherCheckout<SharedTr
 		private readonly removedRoots: DetachedFieldIndex,
 	) {}
 
-	public enrichNewTipChange(change: SharedTreeChange, revision: RevisionTag): SharedTreeChange {
-		return this.updateChangeEnrichments(change, revision, true);
-	}
-
 	public updateChangeEnrichments(
 		change: SharedTreeChange,
 		revision: RevisionTag,
-		skipFiltering: boolean = false,
 	): SharedTreeChange {
 		const taggedChange = tagChange(change, revision);
-		const relevantRoots = relevantRemovedRoots(taggedChange);
-		const filtered = skipFiltering
-			? change
-			: filterSuperfluousBuilds(taggedChange, relevantRoots);
-		return addMissingBuilds(
-			tagChange(filtered, revision),
-			(id: DeltaDetachedNodeId): TreeChunk | undefined => {
-				const root = this.removedRoots.tryGetEntry(id);
-				if (root !== undefined) {
-					const cursor = this.forest.getCursorAboveDetachedFields();
-					const parentField = this.removedRoots.toFieldKey(root);
-					cursor.enterField(parentField);
-					cursor.enterNode(0);
-					return chunkTree(cursor, defaultChunkPolicy);
-				}
-				return undefined;
-			},
-		);
+		return updateRefreshers(taggedChange, (id: DeltaDetachedNodeId): TreeChunk | undefined => {
+			const root = this.removedRoots.tryGetEntry(id);
+			if (root !== undefined) {
+				const cursor = this.forest.getCursorAboveDetachedFields();
+				const parentField = this.removedRoots.toFieldKey(root);
+				cursor.enterField(parentField);
+				cursor.enterNode(0);
+				return chunkTree(cursor, defaultChunkPolicy);
+			}
+			return undefined;
+		});
 	}
 
 	public applyTipChange(change: SharedTreeChange, revision?: RevisionTag): void {

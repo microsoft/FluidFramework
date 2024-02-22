@@ -1096,7 +1096,8 @@ export function filterSuperfluousBuilds(
 		rootsSet.add(minor);
 	}
 
-	for (const [revision, innerMap] of builds.entries()) {
+	for (const [revisionOpt, innerMap] of builds.entries()) {
+		const revision = revisionOpt ?? change.revision;
 		const rootSet = rootSets.get(revision);
 		if (rootSet !== undefined) {
 			for (const id of innerMap.keys()) {

@@ -233,13 +233,13 @@ function mapDataChanges(
 }
 
 /**
- * Adds any builds missing from the provided change that are relevant to the change.
- * This function enforces that all relevant removed roots have a corresponding build.
- *
- * @param change - The change with potentially missing builds. Not mutated by this function.
- * @param getDetachedNode - The function to retrieve a tree chunk from the corresponding detached node id.
+ * Produces an equivalent change with an updated set of appropriate refreshers.
+ * @param change - The change to compute refreshers for.
+ * @param getDetachedNode - retrieves a tree chunk for the corresponding detached node id.
+ * Is expected to read from a forest in a state that corresponds to the input context of the given change.
+ * @returns An equivalent change with an updated set of appropriate refreshers.
  */
-export function addMissingBuilds(
+export function updateRefreshers(
 	change: TaggedChange<SharedTreeChange>,
 	getDetachedNode: (id: DeltaDetachedNodeId) => TreeChunk | undefined,
 ): SharedTreeChange {
@@ -268,39 +268,16 @@ export function addMissingBuilds(
 	return mapDataChanges(change.change, (innerChange) => {
 		const taggedInnerChange = mapTaggedChange(change, innerChange);
 		const removedRoots = defaultRelevantRemovedRoots(taggedInnerChange);
+		// TODO: remove this filtering stage once modularAddMissingBuilds removes old refreshers
+		const filtered = mapTaggedChange(
+			change,
+			modularFilterSuperfluousBuilds(taggedInnerChange, removedRoots),
+		);
 		if (isFirstDataChange) {
 			isFirstDataChange = false;
-			return modularAddMissingBuilds(
-				taggedInnerChange,
-				monitoredDetachedNodes,
-				removedRoots,
-				false,
-			);
+			return modularAddMissingBuilds(filtered, monitoredDetachedNodes, removedRoots, false);
 		} else {
-			return modularAddMissingBuilds(
-				taggedInnerChange,
-				filteredDetachedNodes,
-				removedRoots,
-				true,
-			);
+			return modularAddMissingBuilds(filtered, filteredDetachedNodes, removedRoots, true);
 		}
 	});
-}
-
-/**
- * Removes any builds from the provided change that are not relevant to the change.
- * Calls {@link relevantRemovedRoots} to determine which builds are relevant.
- *
- * @param change - The change with potentially superfluous builds. Not mutated by this function.
- * @param removedRoots - The set of removed roots that should be in memory for the given change to be applied.
- * Can be retrieved by calling {@link relevantRemovedRoots}.
- * @returns a {@link SharedTreeChange} with only builds relevant to the change.
- */
-export function filterSuperfluousBuilds(
-	change: TaggedChange<SharedTreeChange>,
-	removedRoots: Iterable<DeltaDetachedNodeId>,
-): SharedTreeChange {
-	return mapDataChanges(change.change, (innerChange) =>
-		modularFilterSuperfluousBuilds(mapTaggedChange(change, innerChange), removedRoots),
-	);
 }

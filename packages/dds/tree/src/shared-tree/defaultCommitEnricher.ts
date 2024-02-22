@@ -12,16 +12,6 @@ import { ICommitEnricher } from "../shared-tree-core/index.js";
  */
 export interface ChangeEnricherCheckout<TChange> {
 	/**
-	 * Enriches a change with adequate refreshers.
-	 * @param change - the change to enrich.
-	 * This change must but be applicable to, but have been applied to, the tip state.
-	 * @param revision - the revision associated with the change.
-	 * @returns the enriched change. Possibly the same as the one passed in.
-	 */
-
-	enrichNewTipChange(change: TChange, revision: RevisionTag): TChange;
-
-	/**
 	 * Updates the set of refreshers on a change.
 	 * @param change - the change to enrich.
 	 * This change must have already been passed to `enrichNewTipChange`.
@@ -110,7 +100,7 @@ export class DefaultCommitEnricher<TChange, TChangeFamily extends ChangeFamily<a
 			this.latestInFlightCommitWithStaleEnrichments = -1;
 			return this.inFlight[0];
 		} else {
-			const enriched = this.checkout.enrichNewTipChange(commit.change, commit.revision);
+			const enriched = this.checkout.updateChangeEnrichments(commit.change, commit.revision);
 			const enrichedCommit = { ...commit, change: enriched };
 			this.inFlight.push(enrichedCommit);
 			this.checkout.dispose();
