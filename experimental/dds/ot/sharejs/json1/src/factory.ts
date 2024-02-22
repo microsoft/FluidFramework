@@ -10,8 +10,8 @@ import {
 	IChannel,
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
-import { pkgVersion } from "./packageVersion";
-import { SharedJson1 } from "./json1";
+import { pkgVersion } from "./packageVersion.js";
+import { SharedJson1 } from "./json1.js";
 
 /**
  * @internal
