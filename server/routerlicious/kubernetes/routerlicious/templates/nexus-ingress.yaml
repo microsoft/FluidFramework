@@ -1,16 +1,16 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ template "alfred.fullname" . }}
+  name: {{ template "nexus.fullname" . }}
   labels:
     app: {{ template "routerlicious.name" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    component: "{{ .Values.alfred.name }}"
+    component: "{{ .Values.nexus.name }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.org/websocket-services: {{ template "alfred.fullname" . }}
+    nginx.org/websocket-services: {{ template "nexus.fullname" . }}
     nginx.org/proxy-send-timeout: "7200s"
     nginx.org/proxy-read-timeout: "7200s"
     nginx.org/client-max-body-size: "100m"
@@ -19,23 +19,16 @@ spec:
   ingressClassName: {{ .Values.ingress.class }}
   tls:
   - hosts:
-    - {{ .Values.alfred.host }}
-    secretName: {{ .Values.alfred.cert }}
+    - {{ .Values.nexus.host }}
+    secretName: {{ .Values.nexus.cert }}
   rules:
-  - host: {{ .Values.alfred.host }}
+  - host: {{ .Values.nexus.host }}
     http:
       paths:
-      - pathType: Prefix
-        path: /socket.io
-        backend:
-          service:
-            name: {{ template "nexus.fullname" . }}
-            port:
-              number: 80
       - path: /
         pathType: ImplementationSpecific
         backend:
           service:
-            name: {{ template "alfred.fullname" . }}
+            name: {{ template "nexus.fullname" . }}
             port:
               number: 80
