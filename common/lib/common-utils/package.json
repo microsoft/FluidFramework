@@ -162,6 +162,14 @@
 			"RemovedClassDeclaration_EventForwarder": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"RemovedClassDeclaration_TelemetryNullLogger": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedClassDeclaration_BaseTelemetryNullLogger": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}

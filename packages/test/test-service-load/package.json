@@ -101,7 +101,7 @@
 		"commander": "^5.1.0",
 		"ps-node": "^0.1.6",
 		"start-server-and-test": "^1.11.7",
-		"tinylicious": "^3.1.0-237980"
+		"tinylicious": "^3.1.0-238497"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.34.0",

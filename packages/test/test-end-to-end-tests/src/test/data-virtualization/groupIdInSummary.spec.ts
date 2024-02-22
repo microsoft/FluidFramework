@@ -17,6 +17,7 @@ import {
 	type ITestObjectProvider,
 } from "@fluidframework/test-utils";
 import { SummaryType } from "@fluidframework/protocol-definitions";
+import { LoaderHeader } from "@fluidframework/container-definitions";
 
 // A Test Data Object that exposes some basic functionality.
 class TestDataObject extends DataObject {
@@ -79,14 +80,13 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 		mainObject._root.set("dataObject2", dataObject2.handle);
 		mainObject._root.delete("dataObject2");
 
-		await provider.ensureSynchronized();
 		const { summarizer } = await createSummarizerFromFactory(
 			provider,
 			container,
 			dataObjectFactory,
 		);
-		const { summaryTree } = await summarizeNow(summarizer);
-
+		await provider.ensureSynchronized();
+		const { summaryVersion, summaryTree } = await summarizeNow(summarizer);
 		const channelsTree = summaryTree.tree[".channels"];
 		assert(channelsTree.type === SummaryType.Tree, "channels should be a tree");
 		const dataObjectTree = channelsTree.tree[dataObject.id];
@@ -94,16 +94,51 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 		assert(dataObjectTree.type === SummaryType.Tree, "dataObjectTree should be a tree");
 		assert(dataObjectTree.groupId === loadingGroupId, "GroupId should be on the summary tree");
 
-		// TODO: Enable this portion of the test once we have the ability to load the summary with the group id
-		// Likely requires local server to support summary trees.
-		// const container2 = await provider.loadContainer(runtimeFactory, undefined, {
-		// 	[LoaderHeader.version]: summaryVersion,
-		// });
+		// TODO: Enable this portion in tinylicious
+		if (provider.driver.type === "local") {
+			const container2 = await provider.loadContainer(runtimeFactory, undefined, {
+				[LoaderHeader.version]: summaryVersion,
+			});
 
-		// const mainObject2 = (await container2.getEntryPoint()) as TestDataObject;
-		// const handle2 = await mainObject2._root.get("dataObject");
-		// assert(handle2 !== undefined, "handle2 should not be undefined");
-		// const testObject2 = (await handle2.get()) as TestDataObject;
-		// assert.equal(testObject2.groupId, groupId, "groupId should be the same");
+			const mainObject2 = (await container2.getEntryPoint()) as TestDataObject;
+			const handle2 = await mainObject2._root.get("dataObject");
+			assert(handle2 !== undefined, "handle2 should not be undefined");
+			const testObject2 = (await handle2.get()) as TestDataObject;
+			assert.equal(testObject2.loadingGroupId, loadingGroupId, "groupId should be the same");
+		}
+	});
+
+	// TODO: enable this test, because it fails for local server.
+	it.skip("Can create loadingGroupId via detached flow", async () => {
+		const container = await provider.createDetachedContainer(runtimeFactory);
+		const mainObject = (await container.getEntryPoint()) as TestDataObject;
+		const containerRuntime = mainObject.containerRuntime;
+
+		const dataStore = await containerRuntime.createDataStore(
+			testDataObjectType,
+			loadingGroupId,
+		);
+		const dataStore2 = await containerRuntime.createDataStore(
+			testDataObjectType,
+			loadingGroupId,
+		);
+		const dataObject = (await dataStore.entryPoint.get()) as TestDataObject;
+		const dataObject2 = (await dataStore2.entryPoint.get()) as TestDataObject;
+		mainObject._root.set("dataObject", dataObject.handle);
+		mainObject._root.set("dataObject2", dataObject2.handle);
+		mainObject._root.delete("dataObject2");
+
+		await provider.attachDetachedContainer(container);
+		// TODO: Enable this portion in tinylicious
+		if (provider.driver.type === "local") {
+			const container2 = await provider.loadContainer(runtimeFactory);
+			await provider.ensureSynchronized();
+
+			const mainObject2 = (await container2.getEntryPoint()) as TestDataObject;
+			const handle2 = await mainObject2._root.get("dataObject");
+			assert(handle2 !== undefined, "handle2 should not be undefined");
+			const testObject2 = (await handle2.get()) as TestDataObject;
+			assert.equal(testObject2.loadingGroupId, loadingGroupId, "groupId should be the same");
+		}
 	});
 });

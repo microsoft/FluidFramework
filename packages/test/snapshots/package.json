@@ -76,7 +76,7 @@
 		"@fluidframework/register-collection": "workspace:~",
 		"@fluidframework/replay-driver": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
-		"@fluidframework/server-local-server": "^3.1.0-237980",
+		"@fluidframework/server-local-server": "^3.1.0-238497",
 		"@fluidframework/test-utils": "workspace:~",
 		"mocha": "^10.2.0"
 	},
