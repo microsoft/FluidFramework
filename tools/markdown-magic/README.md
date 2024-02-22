@@ -84,6 +84,7 @@ Arguments:
 
 -   `packageJsonPath`: Relative file path to the library package's `package.json` file.
     Used for generation of package metadata.
+    -   Default: `./package.json`.
 -   `installation`: Whether or not to include the package "Installation" section.
     -   Default: `true`.
     -   See [README_INSTALLATION_SECTION](#readme_installation_section).
@@ -122,6 +123,7 @@ Arguments:
 
 -   `packageJsonPath`: Relative file path to the library package's `package.json` file.
     Used for generation of package metadata.
+    -   Default: `./package.json`.
 -   `gettingStarted`: Whether or not to include a simple "getting started" usage section.
     -   Default: `true`.
     -   See [README_EXAMPLE_GETTING_STARTED_SECTION](#readme_example_getting_started_section).
@@ -149,6 +151,7 @@ Arguments:
 
 -   `packageJsonPath`: Relative file path to the library package's `package.json` file.
     Used for generation of package metadata.
+    -   Default: `./package.json`.
 -   `usesTinylicious`: Whether or not running the example app requires running [Tinylicious][] from another terminal.
     -   Default: `true`.
 -   `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
@@ -164,6 +167,7 @@ Arguments:
 
 -   `packageJsonPath`: Relative file path to the library package's `package.json` file.
     Used for generation of package metadata.
+    -   Default: `./package.json`.
 -   `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
     -   Default: `true`.
 
@@ -177,6 +181,7 @@ Arguments:
 
 -   `packageJsonPath`: Relative file path to the library package's `package.json` file.
     Used for generation of package metadata.
+    -   Default: `./package.json`.
 -   `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
     -   Default: `true`.
 
@@ -221,6 +226,7 @@ Arguments:
 
 -   `packageJsonPath`: Relative file path to the library package's `package.json` file.
     Used for generation of package metadata.
+    -   Default: `./package.json`.
 -   `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
     -   Default: `true`.
 
@@ -233,6 +239,7 @@ Arguments:
 
 -   `packageJsonPath`: : Relative file path to the library package's `package.json` file.
     Used to read the package name's scope (when the `scopeKind` argument is not provided).
+    -   Default: `./package.json`.
 -   `scopeKind`: (optional) Override the automatic scope detection behavior with an explicit scope kind: `EXPERIMENTAL`, `INTERNAL`, or `PRIVATE`.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
