@@ -203,7 +203,7 @@ export function makeV0Codec(
 	}
 
 	function encodeDetachedNodes(
-		detachedNodes: ChangeAtomIdMap<TreeChunk>,
+		detachedNodes: ChangeAtomIdMap<TreeChunk> | undefined,
 		context: ChangeEncodingContext,
 	): EncodedBuilds | undefined {
 		if (detachedNodes === undefined) {
@@ -239,20 +239,6 @@ export function makeV0Codec(
 			  };
 	}
 
-	function encodeBuilds(
-		builds: ModularChangeset["builds"],
-		context: ChangeEncodingContext,
-	): EncodedBuilds | undefined {
-		return builds !== undefined ? encodeDetachedNodes(builds, context) : undefined;
-	}
-
-	function encodeRefreshers(
-		refreshers: ModularChangeset["refreshers"],
-		context: ChangeEncodingContext,
-	): EncodedBuilds | undefined {
-		return refreshers !== undefined ? encodeDetachedNodes(refreshers, context) : undefined;
-	}
-
 	function decodeDetachedNodes(
 		encoded: EncodedBuilds | undefined,
 		context: ChangeEncodingContext,
@@ -278,20 +264,6 @@ export function makeV0Codec(
 		});
 
 		return map;
-	}
-
-	function decodeBuilds(
-		encoded: EncodedBuilds | undefined,
-		context: ChangeEncodingContext,
-	): ModularChangeset["builds"] {
-		return decodeDetachedNodes(encoded, context);
-	}
-
-	function decodeRefreshers(
-		encoded: EncodedBuilds | undefined,
-		context: ChangeEncodingContext,
-	): ModularChangeset["refreshers"] {
-		return decodeDetachedNodes(encoded, context);
 	}
 
 	function encodeRevisionInfos(
@@ -346,8 +318,8 @@ export function makeV0Codec(
 						? change.revisions
 						: encodeRevisionInfos(change.revisions, context),
 				changes: encodeFieldChangesForJson(change.fieldChanges, context),
-				builds: encodeBuilds(change.builds, context),
-				refreshers: encodeRefreshers(change.refreshers, context),
+				builds: encodeDetachedNodes(change.builds, context),
+				refreshers: encodeDetachedNodes(change.refreshers, context),
 			};
 		},
 		decode: (change, context) => {
@@ -356,10 +328,10 @@ export function makeV0Codec(
 				fieldChanges: decodeFieldChangesFromJson(encodedChange.changes, context),
 			};
 			if (encodedChange.builds !== undefined) {
-				decoded.builds = decodeBuilds(encodedChange.builds, context);
+				decoded.builds = decodeDetachedNodes(encodedChange.builds, context);
 			}
 			if (encodedChange.refreshers !== undefined) {
-				decoded.refreshers = decodeRefreshers(encodedChange.builds, context);
+				decoded.refreshers = decodeDetachedNodes(encodedChange.builds, context);
 			}
 			if (encodedChange.revisions !== undefined) {
 				decoded.revisions = decodeRevisionInfos(encodedChange.revisions, context);
