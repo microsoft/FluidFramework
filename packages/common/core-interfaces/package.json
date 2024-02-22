@@ -84,6 +84,23 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedInterfaceDeclaration_ITelemetryLogger": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_ITelemetryPerformanceEvent": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_ITelemetryGenericEvent": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_ITelemetryErrorEvent": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }
