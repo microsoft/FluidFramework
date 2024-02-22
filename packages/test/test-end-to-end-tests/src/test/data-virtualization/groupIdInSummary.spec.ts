@@ -80,12 +80,12 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 		mainObject._root.set("dataObject2", dataObject2.handle);
 		mainObject._root.delete("dataObject2");
 
-		await provider.ensureSynchronized();
 		const { summarizer } = await createSummarizerFromFactory(
 			provider,
 			container,
 			dataObjectFactory,
 		);
+		await provider.ensureSynchronized();
 		const { summaryVersion, summaryTree } = await summarizeNow(summarizer);
 		const channelsTree = summaryTree.tree[".channels"];
 		assert(channelsTree.type === SummaryType.Tree, "channels should be a tree");
@@ -99,6 +99,40 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			const container2 = await provider.loadContainer(runtimeFactory, undefined, {
 				[LoaderHeader.version]: summaryVersion,
 			});
+
+			const mainObject2 = (await container2.getEntryPoint()) as TestDataObject;
+			const handle2 = await mainObject2._root.get("dataObject");
+			assert(handle2 !== undefined, "handle2 should not be undefined");
+			const testObject2 = (await handle2.get()) as TestDataObject;
+			assert.equal(testObject2.loadingGroupId, loadingGroupId, "groupId should be the same");
+		}
+	});
+
+	// TODO: enable this test, because it fails for local server.
+	it.skip("Can create loadingGroupId via detached flow", async () => {
+		const container = await provider.createDetachedContainer(runtimeFactory);
+		const mainObject = (await container.getEntryPoint()) as TestDataObject;
+		const containerRuntime = mainObject.containerRuntime;
+
+		const dataStore = await containerRuntime.createDataStore(
+			testDataObjectType,
+			loadingGroupId,
+		);
+		const dataStore2 = await containerRuntime.createDataStore(
+			testDataObjectType,
+			loadingGroupId,
+		);
+		const dataObject = (await dataStore.entryPoint.get()) as TestDataObject;
+		const dataObject2 = (await dataStore2.entryPoint.get()) as TestDataObject;
+		mainObject._root.set("dataObject", dataObject.handle);
+		mainObject._root.set("dataObject2", dataObject2.handle);
+		mainObject._root.delete("dataObject2");
+
+		await provider.attachDetachedContainer(container);
+		// TODO: Enable this portion in tinylicious
+		if (provider.driver.type === "local") {
+			const container2 = await provider.loadContainer(runtimeFactory);
+			await provider.ensureSynchronized();
 
 			const mainObject2 = (await container2.getEntryPoint()) as TestDataObject;
 			const handle2 = await mainObject2._root.get("dataObject");
