@@ -301,7 +301,7 @@ export class SnapshotLoader {
 	/**
 	 * If loading from a snapshot, get the catchup messages.
 	 * @param rawMessages - The messages in original encoding
-	 * @returns The decoded messages, but handles aren't parsed.  Matches the format that will be passed in
+	 * @returns The decoded messages with parsed+hydrated handles.  Matches the format that will be passed in
 	 * SharedObject.processCore.
 	 */
 	private async loadCatchupOps(
