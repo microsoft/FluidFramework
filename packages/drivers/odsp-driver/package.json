@@ -73,8 +73,8 @@
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/odsp-doclib-utils": "workspace:~",
 		"@fluidframework/odsp-driver-definitions": "workspace:~",
-		"@fluidframework/protocol-base": "^3.1.0-231702",
-		"@fluidframework/protocol-definitions": "^3.2.0-231454",
+		"@fluidframework/protocol-base": "^3.1.0-238497",
+		"@fluidframework/protocol-definitions": "^3.2.0-237840",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"node-fetch": "^2.6.9",
 		"socket.io-client": "^4.7.3",
@@ -82,9 +82,9 @@
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
-		"@fluid-tools/build-cli": "^0.33.0",
+		"@fluid-tools/build-cli": "^0.34.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.33.0",
+		"@fluidframework/build-tools": "^0.34.0",
 		"@fluidframework/eslint-config-fluid": "^3.5.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/odsp-driver-previous": "npm:@fluidframework/odsp-driver@2.0.0-internal.8.0.0",
@@ -128,6 +128,9 @@
 			},
 			"InterfaceDeclaration_IPrefetchSnapshotContents": {
 				"backCompat": false,
+				"forwardCompat": false
+			},
+			"ClassDeclaration_OdspDriverUrlResolverForShareLink": {
 				"forwardCompat": false
 			}
 		}

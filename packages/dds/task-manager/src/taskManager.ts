@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 
-import { assert } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	IChannelAttributes,
@@ -770,7 +770,23 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 		}
 	}
 
-	public applyStashedOp() {
-		// do nothing...
+	protected applyStashedOp(content: any): void {
+		const taskOp: ITaskManagerOperation = content;
+		switch (taskOp.type) {
+			case "abandon": {
+				this.abandon(taskOp.taskId);
+				break;
+			}
+			case "complete": {
+				this.complete(taskOp.taskId);
+				break;
+			}
+			case "volunteer": {
+				this.subscribeToTask(taskOp.taskId);
+				break;
+			}
+			default:
+				unreachableCase(taskOp);
+		}
 	}
 }

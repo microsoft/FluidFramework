@@ -109,19 +109,6 @@ export interface ITelemetryBaseLogger {
 }
 
 /**
- * Informational (non-error) telemetry event
- * Maps to category = "generic"
- *
- * @deprecated For internal use within FluidFramework, use ITelemetryGenericEventExt in \@fluidframework/telemetry-utils.
- * No replacement intended for FluidFramework consumers.
- * @public
- */
-export interface ITelemetryGenericEvent extends ITelemetryProperties {
-	eventName: string;
-	category?: TelemetryEventCategory;
-}
-
-/**
  * Error telemetry event.
  * Maps to category = "error"
  *
@@ -134,18 +121,6 @@ export interface ITelemetryErrorEvent extends ITelemetryProperties {
 }
 
 /**
- * Performance telemetry event.
- * Maps to category = "performance"
- *
- * @deprecated For internal use within FluidFramework, use ITelemetryPerformanceEventExt in \@fluidframework/telemetry-utils.
- * No replacement intended for FluidFramework consumers.
- * @public
- */
-export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
-	duration?: number; // Duration of event (optional)
-}
-
-/**
  * An error object that supports exporting its properties to be logged to telemetry
  * @internal
  */
@@ -154,59 +129,4 @@ export interface ILoggingError extends Error {
 	 * Return all properties from this object that should be logged to telemetry
 	 */
 	getTelemetryProperties(): ITelemetryBaseProperties;
-}
-
-/**
- * ITelemetryLogger interface contains various helper telemetry methods,
- * encoding in one place schemas for various types of Fluid telemetry events.
- * Creates sub-logger that appends properties to all events
- *
- * @deprecated For internal use within FluidFramework, use ITelemetryLoggerExt in \@fluidframework/telemetry-utils.
- * No replacement intended for FluidFramework consumers.
- * @public
- */
-export interface ITelemetryLogger extends ITelemetryBaseLogger {
-	/**
-	 * Actual implementation that sends telemetry event
-	 * Implemented by derived classes
-	 * @param event - Telemetry event to send over
-	 * @param logLevel - optional level of the log.
-	 */
-	send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
-
-	/**
-	 * Send information telemetry event
-	 * @param event - Event to send
-	 * @param error - optional error object to log
-	 * @param logLevel - optional level of the log.
-	 */
-	sendTelemetryEvent(
-		event: ITelemetryGenericEvent,
-		// TODO: Use `unknown` instead (API-Breaking)
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		error?: any,
-		logLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
-	): void;
-
-	/**
-	 * Send error telemetry event
-	 * @param event - Event to send
-	 * @param error - optional error object to log
-	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
-
-	/**
-	 * Send performance telemetry event
-	 * @param event - Event to send
-	 * @param error - optional error object to log
-	 * @param logLevel - optional level of the log.
-	 */
-	sendPerformanceEvent(
-		event: ITelemetryPerformanceEvent,
-		// TODO: Use `unknown` instead (API-Breaking)
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		error?: any,
-		logLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
-	): void;
 }
