@@ -9,6 +9,17 @@ export function loadDocsJavascript() {
 
 	const affixPaddingTop = 70;
 
+	// Save the focus state to localStorage
+	$("#small-nav-dropdown").change(function () {
+		localStorage.setItem('mobileNavChanged', 'true');
+	});
+
+	// If restore focus to the select element and reset the state
+	if (localStorage.getItem('mobileNavChanged') === 'true') {
+        $('#small-nav-dropdown').focus();
+        localStorage.removeItem('mobileNavChanged');
+    }
+
 	$("#docs-subnavbar").affix({
 		offset: {
 			top: function () {
