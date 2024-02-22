@@ -1022,21 +1022,32 @@ export function addMissingBuilds(
 	{ change, revision }: TaggedChange<ModularChangeset>,
 	getDetachedNode: (id: DeltaDetachedNodeId) => TreeChunk | undefined,
 	removedRoots: Iterable<DeltaDetachedNodeId>,
+	allowMissingRefreshers: boolean = false,
 ): ModularChangeset {
 	const builds: ChangeAtomIdMap<TreeChunk> = new Map();
+
+	// This is a sad hack to circumvent bug AD#7241
+	const existingBuilds = new Set<string>();
+	if (change.builds !== undefined) {
+		forEachInNestedMap(change.builds, (chunk, major, minor) => {
+			for (let i = 0; i < chunk.topLevelLength; i++) {
+				existingBuilds.add(`${major},${minor + i}`);
+			}
+			existingBuilds.add(`${major},${minor}`);
+		});
+	}
 
 	for (const root of removedRoots) {
 		const node = getDetachedNode(root);
 
 		// if the detached node could not be found, it should exist in the original builds map
 		if (node === undefined) {
-			assert(change.builds !== undefined, "detached node should exist");
-			const original = tryGetFromNestedMap(
-				change.builds,
-				root.major === revision ? undefined : root.major,
-				root.minor,
-			);
-			assert(original !== undefined, "detached node should exist");
+			if (!allowMissingRefreshers) {
+				const alreadyPresent = existingBuilds.has(
+					`${root.major === revision ? undefined : root.major},${root.minor}`,
+				);
+				assert(alreadyPresent, "detached node should exist");
+			}
 		} else {
 			setInNestedMap(builds, root.major, root.minor, node);
 		}

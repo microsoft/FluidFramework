@@ -126,6 +126,8 @@ export class DefaultCommitEnricher<TChange, TChangeFamily extends ChangeFamily<a
 		} else {
 			// A peer commit has been sequenced
 			this.latestInFlightCommitWithStaleEnrichments = this.inFlight.length - 1;
+			this.checkout.dispose();
+			this.checkout = this.checkoutFactory();
 		}
 	}
 }

@@ -54,7 +54,6 @@ export class SharedTreeChangeEnricher implements ChangeEnricherCheckout<SharedTr
 				}
 				return undefined;
 			},
-			relevantRoots,
 		);
 	}
 
@@ -67,14 +66,14 @@ export class SharedTreeChangeEnricher implements ChangeEnricherCheckout<SharedTr
 				visitor.free();
 			} else if (dataOrSchemaChange.type === "schema") {
 				// TODO: does SharedTreeChangeEnricher need to maintain a schema?
-				const visitor = this.forest.acquireVisitor();
-				for (const { root } of this.removedRoots.entries()) {
-					const field = this.removedRoots.toFieldKey(root);
-					// TODO:AD5509 Handle arbitrary-length fields once the storage of removed roots is no longer atomized.
-					visitor.destroy(field, 1);
-				}
-				visitor.free();
-				this.removedRoots.purge();
+				// const visitor = this.forest.acquireVisitor();
+				// for (const { root } of this.removedRoots.entries()) {
+				// 	const field = this.removedRoots.toFieldKey(root);
+				// 	// TODO:AD5509 Handle arbitrary-length fields once the storage of removed roots is no longer atomized.
+				// 	visitor.destroy(field, 1);
+				// }
+				// visitor.free();
+				// this.removedRoots.purge();
 			} else {
 				fail("Unknown Shared Tree change type.");
 			}

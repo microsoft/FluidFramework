@@ -254,12 +254,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		const contents: unknown = this.serializer.decode(message.contents);
 		// Empty context object is passed in, as our decode function is schema-agnostic.
 		const { commit, sessionId } = this.messageCodec.decode(contents, {});
-		this.commitEnricher?.commitSequenced(local);
 		this.editManager.addSequencedChange(
 			{ ...commit, sessionId },
 			brand(message.sequenceNumber),
 			brand(message.referenceSequenceNumber),
 		);
+		this.commitEnricher?.commitSequenced(local);
 
 		this.editManager.advanceMinimumSequenceNumber(brand(message.minimumSequenceNumber));
 	}

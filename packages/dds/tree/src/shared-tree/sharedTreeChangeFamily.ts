@@ -11,6 +11,7 @@ import {
 	ChangeRebaser,
 	DeltaDetachedNodeId,
 	RevisionMetadataSource,
+	RevisionTag,
 	RevisionTagCodec,
 	TaggedChange,
 	mapTaggedChange,
@@ -26,7 +27,7 @@ import {
 	relevantRemovedRoots as defaultRelevantRemovedRoots,
 	TreeChunk,
 } from "../feature-libraries/index.js";
-import { Mutable, fail } from "../util/index.js";
+import { Mutable, NestedSet, addToNestedSet, fail, nestedSetContains } from "../util/index.js";
 import { makeSharedTreeChangeCodecFamily } from "./sharedTreeChangeCodecs.js";
 import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
@@ -243,15 +244,39 @@ function mapDataChanges(
 export function addMissingBuilds(
 	change: TaggedChange<SharedTreeChange>,
 	getDetachedNode: (id: DeltaDetachedNodeId) => TreeChunk | undefined,
-	removedRoots: Iterable<DeltaDetachedNodeId>,
 ): SharedTreeChange {
-	return mapDataChanges(change.change, (innerChange) =>
-		modularAddMissingBuilds(
-			mapTaggedChange(change, innerChange),
-			getDetachedNode,
-			removedRoots,
-		),
-	);
+	const includedRoots: NestedSet<RevisionTag | undefined, number> = new Map();
+	const monitoredDetachedNodes = (id: DeltaDetachedNodeId): TreeChunk | undefined => {
+		addToNestedSet(includedRoots, id.major, id.minor);
+		return getDetachedNode(id);
+	};
+	const filteredDetachedNodes = (id: DeltaDetachedNodeId): TreeChunk | undefined => {
+		if (nestedSetContains(includedRoots, id.major, id.minor)) {
+			return undefined;
+		}
+		return monitoredDetachedNodes(id);
+	};
+	let isFirstDataChange = true;
+	return mapDataChanges(change.change, (innerChange) => {
+		const taggedInnerChange = mapTaggedChange(change, innerChange);
+		const removedRoots = defaultRelevantRemovedRoots(taggedInnerChange);
+		if (isFirstDataChange) {
+			isFirstDataChange = false;
+			return modularAddMissingBuilds(
+				taggedInnerChange,
+				monitoredDetachedNodes,
+				removedRoots,
+				false,
+			);
+		} else {
+			return modularAddMissingBuilds(
+				taggedInnerChange,
+				filteredDetachedNodes,
+				removedRoots,
+				true,
+			);
+		}
+	});
 }
 
 /**
