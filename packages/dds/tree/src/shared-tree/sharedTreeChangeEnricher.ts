@@ -64,10 +64,17 @@ export class SharedTreeChangeEnricher implements ChangeEnricherCheckout<SharedTr
 				const delta = intoDelta(tagChange(dataOrSchemaChange.innerChange, revision));
 				const visitor = this.forest.acquireVisitor();
 				visitDelta(delta, visitor, this.removedRoots);
+				visitor.free();
 			} else if (dataOrSchemaChange.type === "schema") {
-				// Do we need any of this?
-				// this.purgeRemovedRoots();
-				// storedSchema.apply(dataOrSchemaChange.innerChange.schema.new);
+				// TODO: does SharedTreeChangeEnricher need to maintain a schema?
+				const visitor = this.forest.acquireVisitor();
+				for (const { root } of this.removedRoots.entries()) {
+					const field = this.removedRoots.toFieldKey(root);
+					// TODO:AD5509 Handle arbitrary-length fields once the storage of removed roots is no longer atomized.
+					visitor.destroy(field, 1);
+				}
+				visitor.free();
+				this.removedRoots.purge();
 			} else {
 				fail("Unknown Shared Tree change type.");
 			}

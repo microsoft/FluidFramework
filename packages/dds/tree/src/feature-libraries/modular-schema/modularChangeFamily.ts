@@ -1026,7 +1026,6 @@ export function addMissingBuilds(
 	const builds: ChangeAtomIdMap<TreeChunk> = new Map();
 
 	for (const root of removedRoots) {
-		// TODO: avoid calling getDetachedNode unless the tree is actually needed
 		const node = getDetachedNode(root);
 
 		// if the detached node could not be found, it should exist in the original builds map

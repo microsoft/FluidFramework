@@ -91,6 +91,9 @@ export class DefaultCommitEnricher<TChange, TChangeFamily extends ChangeFamily<a
 			const fork = this.checkoutFactory();
 			for (let iCommit = this.inFlight.length - 1; iCommit >= 0; iCommit -= 1) {
 				const priorCommit = this.inFlight[iCommit];
+				// WARNING: it's not currently possible to roll back past a schema change (see AB#7265).
+				// Either we have to make it possible to do so, or this logic will have to change to work
+				// forwards from an earlier fork instead of backwards.
 				fork.applyTipChange(this.changeFamily.rebaser.invert(priorCommit, true));
 				if (iCommit <= this.latestInFlightCommitWithStaleEnrichments) {
 					const refreshed = fork.enrichNewTipChange(
@@ -107,10 +110,10 @@ export class DefaultCommitEnricher<TChange, TChangeFamily extends ChangeFamily<a
 			return this.inFlight[0];
 		} else {
 			const enriched = this.checkout.enrichNewTipChange(commit.change, commit.revision);
-			this.checkout.dispose();
-			this.checkout = this.checkoutFactory();
 			const enrichedCommit = { ...commit, change: enriched };
 			this.inFlight.push(enrichedCommit);
+			this.checkout.dispose();
+			this.checkout = this.checkoutFactory();
 			return enrichedCommit;
 		}
 	}
