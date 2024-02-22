@@ -50,7 +50,7 @@
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
 		"rebuild": "npm run clean && npm run build",
 		"test": "echo TODO: add tests",
-		"tsc": "tsc-multi --config ../../../../common/build/build-common/tsc-multi.node16.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist",
+		"tsc1": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"tsc:watch": "tsc --watch",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
