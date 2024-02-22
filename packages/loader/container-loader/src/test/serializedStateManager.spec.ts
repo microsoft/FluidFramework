@@ -166,8 +166,8 @@ describe("serializedStateManager", () => {
 	}
 
 	beforeEach(async () => {
-		// seq = 1;
-		// clientSeqNumber = 0;
+		seq = 1;
+		clientSeqNumber = 0;
 		logger = createChildLogger({ namespace: "fluid:testSerializedStateManager" });
 	});
 
