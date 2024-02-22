@@ -66,7 +66,7 @@ import {
 } from "./dataStoreContext";
 import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs";
 import { IDataStoreAliasMessage, channelToDataStore, isDataStoreAliasMessage } from "./dataStore";
-import { GCNodeType, detectOutboundRoutesViaDDSKey, disableDatastoreSweepKey } from "./gc";
+import { GCNodeType, detectOutboundRoutesViaDDSKey } from "./gc";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summary";
 
 type PendingAliasResolve = (success: boolean) => void;
@@ -157,7 +157,7 @@ export class DataStores implements IDisposable {
 					createSummarizerNodeFn: this.getCreateChildSummarizerNodeFn(key, {
 						type: CreateSummarizerNodeSource.FromSummary,
 					}),
-					groupId: value.groupId,
+					loadingGroupId: value.groupId,
 				});
 			} else {
 				if (typeof value !== "object") {
@@ -273,7 +273,7 @@ export class DataStores implements IDisposable {
 			runtime: this.runtime,
 			storage: new StorageServiceWithAttachBlobs(this.runtime.storage, flatAttachBlobs),
 			scope: this.runtime.scope,
-			groupId: snapshotTree?.groupId,
+			loadingGroupId: attachMessage.snapshot?.groupId,
 			createSummarizerNodeFn: this.getCreateChildSummarizerNodeFn(attachMessage.id, {
 				type: CreateSummarizerNodeSource.FromAttach,
 				sequenceNumber: message.sequenceNumber,
@@ -399,7 +399,7 @@ export class DataStores implements IDisposable {
 		pkg: Readonly<string[]>,
 		isRoot: boolean,
 		id = uuid(),
-		groupId?: string,
+		loadingGroupId?: string,
 	): IFluidDataStoreContextDetached {
 		assert(!id.includes("/"), 0x30c /* Id cannot contain slashes */);
 
@@ -415,7 +415,7 @@ export class DataStores implements IDisposable {
 			makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
 			snapshotTree: undefined,
 			isRootDataStore: isRoot,
-			groupId,
+			loadingGroupId,
 			channelToDataStoreFn: (channel: IFluidDataStoreChannel, channelId: string) =>
 				channelToDataStore(channel, channelId, this.runtime, this, this.runtime.logger),
 		});
@@ -423,7 +423,12 @@ export class DataStores implements IDisposable {
 		return context;
 	}
 
-	public _createFluidDataStoreContext(pkg: string[], id: string, props?: any, groupId?: string) {
+	public _createFluidDataStoreContext(
+		pkg: string[],
+		id: string,
+		props?: any,
+		loadingGroupId?: string,
+	) {
 		assert(!id.includes("/"), 0x30d /* Id cannot contain slashes */);
 		const context = new LocalFluidDataStoreContext({
 			id,
@@ -438,7 +443,7 @@ export class DataStores implements IDisposable {
 			snapshotTree: undefined,
 			isRootDataStore: false,
 			createProps: props,
-			groupId,
+			loadingGroupId,
 		});
 		this.contexts.addUnbound(context);
 		return context;
@@ -904,16 +909,13 @@ export class DataStores implements IDisposable {
 	 * @returns The routes of data stores and its objects that were deleted.
 	 */
 	public deleteSweepReadyNodes(sweepReadyDataStoreRoutes: readonly string[]): readonly string[] {
-		// If sweep for data stores is not enabled, return empty list indicating nothing is deleted.
-		if (this.mc.config.getBoolean(disableDatastoreSweepKey) === true) {
-			return [];
-		}
 		for (const route of sweepReadyDataStoreRoutes) {
 			const pathParts = route.split("/");
 			const dataStoreId = pathParts[1];
 
 			// Ignore sub-data store routes because a data store and its sub-routes are deleted together, so, we only
 			// need to delete the data store.
+			// These routes will still be returned below as among the deleted routes
 			if (pathParts.length > 2) {
 				continue;
 			}

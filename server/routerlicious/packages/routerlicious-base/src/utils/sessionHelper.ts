@@ -193,7 +193,9 @@ async function updateExistingSession(
 			},
 		);
 		Lumberjack.info(
-			`The original document in updateExistingSession: ${JSON.stringify(result)}`,
+			`The original document session in updateExistingSession: ${JSON.stringify(
+				result?.value?.session,
+			)}`,
 			lumberjackProperties,
 		);
 		// There is no document with isSessionAlive as false. It means this session has been discovered by
