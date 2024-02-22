@@ -47,7 +47,6 @@ import {
 	IFluidSerializer,
 	SharedObject,
 	ISharedObjectEvents,
-	parseHandles,
 } from "@fluidframework/shared-object-base";
 import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
