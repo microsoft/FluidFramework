@@ -404,14 +404,6 @@ export interface ISignalEnvelope {
     };
 }
 
-// @internal @deprecated (undocumented)
-export interface ITaggedTelemetryPropertyType {
-    // (undocumented)
-    tag: string;
-    // (undocumented)
-    value: TelemetryBaseEventPropertyType;
-}
-
 // @public
 export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
     // (undocumented)

@@ -960,26 +960,14 @@ use_old_InterfaceDeclaration_IResponse(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ITaggedTelemetryPropertyType": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_ITaggedTelemetryPropertyType": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_ITaggedTelemetryPropertyType():
-    TypeOnly<old.ITaggedTelemetryPropertyType>;
-declare function use_current_InterfaceDeclaration_ITaggedTelemetryPropertyType(
-    use: TypeOnly<current.ITaggedTelemetryPropertyType>): void;
-use_current_InterfaceDeclaration_ITaggedTelemetryPropertyType(
-    get_old_InterfaceDeclaration_ITaggedTelemetryPropertyType());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ITaggedTelemetryPropertyType": {"backCompat": false}
+* "RemovedInterfaceDeclaration_ITaggedTelemetryPropertyType": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_ITaggedTelemetryPropertyType():
-    TypeOnly<current.ITaggedTelemetryPropertyType>;
-declare function use_old_InterfaceDeclaration_ITaggedTelemetryPropertyType(
-    use: TypeOnly<old.ITaggedTelemetryPropertyType>): void;
-use_old_InterfaceDeclaration_ITaggedTelemetryPropertyType(
-    get_current_InterfaceDeclaration_ITaggedTelemetryPropertyType());
 
 /*
 * Validate forward compat by using old type in place of current type

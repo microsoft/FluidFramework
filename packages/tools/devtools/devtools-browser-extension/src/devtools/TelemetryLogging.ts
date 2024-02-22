@@ -10,7 +10,7 @@ import {
 	type ITelemetryBaseEvent,
 	isTelemetryOptInEnabled,
 } from "@fluid-internal/devtools-view";
-import { type ITaggedTelemetryPropertyType } from "@fluidframework/core-interfaces";
+import type { Tagged, TelemetryBaseEventPropertyType } from "@fluidframework/core-interfaces";
 import { v4 as uuidv4 } from "uuid";
 import { formatDevtoolsScriptMessageForLogging } from "./Logging";
 
@@ -190,7 +190,7 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 			if (value === undefined) {
 				continue;
 			}
-			if ((value as ITaggedTelemetryPropertyType).value !== undefined) {
+			if ((value as Tagged<TelemetryBaseEventPropertyType>).value !== undefined) {
 				// In Fluid Devtools we don't currently plan to log tagged properties because we don't intend to capture any
 				// user-identifiable or user-generated information. If we do later, we'll need to add support for this.
 				throw new Error(`Tagged properties not supported by telemetry logger`);

@@ -41,7 +41,6 @@ export { IFluidHandleContext, IFluidHandle } from "./handles";
 
 export type {
 	ILoggingError,
-	ITaggedTelemetryPropertyType, // deprecated
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 	ITelemetryBaseProperties,

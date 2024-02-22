@@ -27,17 +27,6 @@ export interface Tagged<V, T extends string = string> {
 }
 
 /**
- * @see {@link Tagged} for info on tagging
- *
- * @deprecated Use Tagged\<TelemetryBaseEventPropertyType\>
- * @internal
- */
-export interface ITaggedTelemetryPropertyType {
-	value: TelemetryBaseEventPropertyType;
-	tag: string;
-}
-
-/**
  * JSON-serializable properties, which will be logged with telemetry.
  * @public
  */

@@ -112,6 +112,10 @@
 			"RemovedTypeAliasDeclaration_TelemetryEventPropertyType": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_ITaggedTelemetryPropertyType": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}
