@@ -127,6 +127,19 @@ export interface ITestObjectProvider {
 	): Promise<IContainer>;
 
 	/**
+	 * Create a detached container much like createContainer, but without attaching it to the document service.
+	 */
+	createDetachedContainer(
+		entryPoint: fluidEntryPoint,
+		loaderProps?: Partial<ILoaderProps>,
+	): Promise<IContainer>;
+
+	/**
+	 * Attaches a detached container to the document service.
+	 */
+	attachDetachedContainer(container: IContainer): Promise<void>;
+
+	/**
 	 * Loads a container using the default document id
 	 */
 	loadContainer(
@@ -506,6 +519,36 @@ export class TestObjectProvider implements ITestObjectProvider {
 	}
 
 	/**
+	 * {@inheritdoc ITestObjectProvider.createDetachedContainer}
+	 */
+	public async createDetachedContainer(
+		entryPoint: fluidEntryPoint,
+		loaderProps?: Partial<ILoaderProps> | undefined,
+	): Promise<IContainer> {
+		if (this._documentCreated) {
+			throw new Error(
+				"Only one container/document can be created. To load the container/document use loadContainer",
+			);
+		}
+		const loader = this.createLoader([[defaultCodeDetails, entryPoint]], loaderProps);
+		return loader.createDetachedContainer(defaultCodeDetails);
+	}
+
+	/**
+	 * {@inheritdoc ITestObjectProvider.attachDetachedContainer}
+	 */
+	public async attachDetachedContainer(container: IContainer): Promise<void> {
+		if (this._documentCreated) {
+			throw new Error(
+				"Only one container/document can be created. To load the container/document use loadContainer",
+			);
+		}
+		await container.attach(this.driver.createCreateNewRequest(this.documentId));
+		this._documentCreated = true;
+		this._documentIdStrategy.update(container.resolvedUrl);
+	}
+
+	/**
 	 * {@inheritDoc ITestObjectProvider.loadContainer}
 	 */
 	public async loadContainer(
@@ -815,6 +858,36 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		// update the document ID with the actual ID of the attached container.
 		this._documentIdStrategy.update(container.resolvedUrl);
 		return container;
+	}
+
+	/**
+	 * {@inheritdoc ITestObjectProvider.createDetachedContainer}
+	 */
+	public async createDetachedContainer(
+		entryPoint: fluidEntryPoint,
+		loaderProps?: Partial<ILoaderProps> | undefined,
+	): Promise<IContainer> {
+		if (this._documentCreated) {
+			throw new Error(
+				"Only one container/document can be created. To load the container/document use loadContainer",
+			);
+		}
+		const loader = this.createLoader([[defaultCodeDetails, entryPoint]], loaderProps);
+		return loader.createDetachedContainer(defaultCodeDetails);
+	}
+
+	/**
+	 * {@inheritdoc ITestObjectProvider.attachDetachedContainer}
+	 */
+	public async attachDetachedContainer(container: IContainer): Promise<void> {
+		if (this._documentCreated) {
+			throw new Error(
+				"Only one container/document can be created. To load the container/document use loadContainer",
+			);
+		}
+		await container.attach(this.driver.createCreateNewRequest(this.documentId));
+		this._documentCreated = true;
+		this._documentIdStrategy.update(container.resolvedUrl);
 	}
 
 	/**
