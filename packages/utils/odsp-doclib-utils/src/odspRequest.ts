@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fetch } from "./fetch.js";
+import { customFetch } from "./fetch.js";
 import { IOdspAuthRequestInfo, authRequestWithRetry } from "./odspAuth.js";
 
 /**
@@ -13,7 +13,7 @@ export async function getAsync(
 	url: string,
 	authRequestInfo: IOdspAuthRequestInfo,
 ): Promise<Response> {
-	return authRequest(authRequestInfo, async (config: RequestInit) => fetch(url, config));
+	return authRequest(authRequestInfo, async (config: RequestInit) => customFetch(url, config));
 }
 
 /**
