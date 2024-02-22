@@ -224,6 +224,17 @@ Arguments:
 -   `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
     -   Default: `true`.
 
+#### `README_PACKAGE_SCOPE_NOTICE`
+
+Generates a user-facing notice about target audience and support characteristics of the package based on its scope.
+By default, it generates the appropriate notice based on the package name's scope (if it's one the system recognizes), but this can be overridden by specifying `scopeKind`.
+
+Arguments:
+
+-   `packageJsonPath`: : Relative file path to the library package's `package.json` file.
+    Used to read the package name's scope (when the `scopeKind` argument is not provided).
+-   `scopeKind`: (optional) Override the automatic scope detection behavior with an explicit scope kind: `EXPERIMENTAL`, `INTERNAL`, or `PRIVATE`.
+
 <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
 
 <!-- prettier-ignore-start -->
