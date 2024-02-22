@@ -151,7 +151,7 @@ export class OdspDocumentServiceFactoryCore
 			fileEntry,
 			odspLogger,
 			clientIsSummarizer,
-			this.hostPolicy
+			this.hostPolicy,
 		);
 
 		return PerformanceEvent.timedExecAsync(
@@ -291,7 +291,7 @@ export class OdspDocumentServiceFactoryCore
 				{ resolvedUrl: odspResolvedUrl, docId: odspResolvedUrl.hashedDocumentId },
 				extLogger,
 				clientIsSummarizer,
-				this.hostPolicy
+				this.hostPolicy,
 			);
 
 		const storageTokenFetcher = toInstrumentedOdspTokenFetcher(

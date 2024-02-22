@@ -12,12 +12,15 @@ import {
 	IEntry,
 	maximumCacheDurationMs,
 } from "@fluidframework/odsp-driver-definitions";
-import { IFluidErrorBase, createChildLogger } from "@fluidframework/telemetry-utils";
 import { EpochTracker } from "../epochTracker.js";
 import { LocalPersistentCache } from "../odspCache.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
 import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "../contracts.js";
 import { mockFetchOk, mockFetchSingle, createResponse } from "./mockFetch.js";
+import { createChildLogger, type IFluidErrorBase } from "@fluidframework/telemetry-utils";
+import { ThrottlingError, type NonRetryableError } from "@fluidframework/driver-utils";
+import { stub } from "sinon";
+import * as odspUtils from "../odspUtils.js";
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 
@@ -390,5 +393,70 @@ describe("Tests for Epoch Tracker", () => {
 			assert.strictEqual(newResolvedUrl.driveId, driveId, "driveId should remain same");
 		}
 		assert.strictEqual(success, false, "Fetching should not succeed!!");
+	});
+
+	it("Checks throttling errors non-retriable when disableRetriesOnStorageThrottlingError=true", async () => {
+		let fetchStub;
+		const epochTrackerWithHostPolicy = new EpochTracker(
+			localCache,
+			{
+				docId: hashedDocumentId,
+				resolvedUrl,
+			},
+			createChildLogger(),
+			undefined,
+			{ disableRetriesOnStorageThrottlingError: true } /* hostPolicy */,
+		);
+		try {
+			// fetchHelper is used by epochTracker's fetch method, which we stub here to emulate throttling error
+			fetchStub = stub(odspUtils, "fetchHelper");
+			fetchStub.callsFake(async () =>
+				Promise.reject(
+					new ThrottlingError("Server is throttled", 1000, {
+						testProp: "testProp",
+						driverVersion: "123",
+					}),
+				),
+			);
+			await epochTrackerWithHostPolicy.fetch("fetchUrl", {}, "test");
+		} catch (error) {
+			// retoring the fetchHelper function to avoid causing errors in other tests
+			fetchStub.restore();
+			assert(
+				(error as NonRetryableError<string>).canRetry === false,
+				"Error should be marked as non-retriable",
+			);
+		}
+	});
+
+	it("Checks throttling errors retriable when disableRetriesOnStorageThrottlingError=false", async () => {
+		let fetchStub;
+		const epochTrackerWithHostPolicy = new EpochTracker(
+			localCache,
+			{
+				docId: hashedDocumentId,
+				resolvedUrl,
+			},
+			createChildLogger(),
+			undefined,
+			{ disableRetriesOnStorageThrottlingError: false } /* hostPolicy */,
+		);
+		try {
+			// fetchHelper is used by epochTracker's fetch method, which we stub here to emulate throttling error
+			fetchStub = stub(odspUtils, "fetchHelper");
+			fetchStub.callsFake(async () =>
+				Promise.reject(
+					new ThrottlingError("Server is throttled", 1000, {
+						testProp: "testProp",
+						driverVersion: "123",
+					}),
+				),
+			);
+			await epochTrackerWithHostPolicy.fetch("fetchUrl", {}, "test");
+		} catch (error) {
+			// retoring the fetchHelper function to avoid causing errors in other tests
+			fetchStub.restore();
+			assert((error as ThrottlingError).canRetry === true, "Error should be retriable");
+		}
 	});
 });

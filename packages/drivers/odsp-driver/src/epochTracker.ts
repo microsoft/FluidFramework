@@ -318,7 +318,7 @@ export class EpochTracker implements IPersistedFileCache {
 							throw locationRedirectionError;
 						}
 					} else if (
-						error.errorType == OdspErrorTypes.throttlingError &&
+						error.errorType === OdspErrorTypes.throttlingError &&
 						this.hostPolicy?.disableRetriesOnStorageThrottlingError
 					) {
 						const nonRetriableThrottlingError = new NonRetryableError(
