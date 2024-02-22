@@ -9,12 +9,12 @@ export function loadDocsJavascript() {
 
 	const affixPaddingTop = 70;
 
-	// Save the focus state to localStorage
+	// Set a local storage variable when the mobile nav dropdown has been changed
 	$("#small-nav-dropdown").change(function () {
 		localStorage.setItem('mobileNavChanged', 'true');
 	});
 
-	// If mobile nav changed, restore focus to it and reset the state
+	// If the mobile nav changed variable has been set, restore focus to the mobile nav and remove the variable
 	if (localStorage.getItem('mobileNavChanged') === 'true') {
         $('#small-nav-dropdown').focus();
         localStorage.removeItem('mobileNavChanged');
