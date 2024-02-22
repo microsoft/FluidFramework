@@ -9,13 +9,6 @@
 
 name: $(Build.BuildId)
 
-schedules:
-  - cron: "0 */4 * * *"
-    displayName: Website deploy with 4 hour increments
-    branches:
-      include:
-        - main
-    always: true
 pr: none
 
 parameters:
@@ -58,7 +51,8 @@ resources:
     trigger: 
       branches:
         include: 
-        - main # Run pipeline when build-docs main branch pipeline completes
+        - main # Runs this deploy pipeline when build-docs main or release branch pipeline completes
+        - release/*
 
 stages:
 - stage: deploy
