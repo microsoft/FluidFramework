@@ -37,7 +37,7 @@ export interface ChangeEnricherCheckout<TChange> {
 export class DefaultCommitEnricher<TChange, TChangeFamily extends ChangeFamily<any, TChange>>
 	implements ICommitEnricher<TChange>
 {
-	private checkout: ChangeEnricherCheckout<TChange>;
+	private tip: ChangeEnricherCheckout<TChange>;
 	/**
 	 * The list of commits (from oldest to most recent) that are have been submitted but not sequenced.
 	 */
@@ -57,7 +57,7 @@ export class DefaultCommitEnricher<TChange, TChangeFamily extends ChangeFamily<a
 		private readonly changeFamily: TChangeFamily,
 		private readonly checkoutFactory: () => ChangeEnricherCheckout<TChange>,
 	) {
-		this.checkout = this.checkoutFactory();
+		this.tip = this.checkoutFactory();
 	}
 
 	public enrichCommit(commit: GraphCommit<TChange>, isResubmit: boolean): GraphCommit<TChange> {
@@ -100,11 +100,11 @@ export class DefaultCommitEnricher<TChange, TChangeFamily extends ChangeFamily<a
 			this.latestInFlightCommitWithStaleEnrichments = -1;
 			return this.inFlight[0];
 		} else {
-			const enriched = this.checkout.updateChangeEnrichments(commit.change, commit.revision);
+			const enriched = this.tip.updateChangeEnrichments(commit.change, commit.revision);
 			const enrichedCommit = { ...commit, change: enriched };
 			this.inFlight.push(enrichedCommit);
-			this.checkout.dispose();
-			this.checkout = this.checkoutFactory();
+			this.tip.dispose();
+			this.tip = this.checkoutFactory();
 			return enrichedCommit;
 		}
 	}
@@ -112,13 +112,16 @@ export class DefaultCommitEnricher<TChange, TChangeFamily extends ChangeFamily<a
 	public commitSequenced(isLocal: boolean): void {
 		if (isLocal) {
 			// The oldest in-flight commit has been sequenced
+			assert(this.inFlight.length > 0, "Sequencing of unknown local commit");
 			this.inFlight.shift();
-			this.latestInFlightCommitWithStaleEnrichments -= 1;
+			if (this.latestInFlightCommitWithStaleEnrichments >= 0) {
+				this.latestInFlightCommitWithStaleEnrichments -= 1;
+			}
 		} else {
 			// A peer commit has been sequenced
 			this.latestInFlightCommitWithStaleEnrichments = this.inFlight.length - 1;
-			this.checkout.dispose();
-			this.checkout = this.checkoutFactory();
+			this.tip.dispose();
+			this.tip = this.checkoutFactory();
 		}
 	}
 }
