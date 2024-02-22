@@ -129,6 +129,9 @@
 			"InterfaceDeclaration_IPrefetchSnapshotContents": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"ClassDeclaration_OdspDriverUrlResolverForShareLink": {
+				"forwardCompat": false
 			}
 		}
 	}
