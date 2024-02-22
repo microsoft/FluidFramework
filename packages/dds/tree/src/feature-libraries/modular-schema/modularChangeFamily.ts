@@ -1059,7 +1059,6 @@ export function addMissingRefreshers(
 
 /**
  * Removes any refreshers from the provided change that are not relevant to the change.
- * Calls {@link relevantRemovedRoots} to determine which refreshers are relevant.
  *
  * @param change - The change with potentially superfluous refreshers. Not mutated by this function.
  * @param removedRoots - The set of removed roots that should be in memory for the given change to be applied.
