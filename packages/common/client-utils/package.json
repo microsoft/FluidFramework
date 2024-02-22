@@ -92,15 +92,15 @@
 		"build:docs": "fluid-build . --task api",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:test": "concurrently npm:build:test:mocha npm:build:test:jest npm:build:test:types",
+		"build:test:jest": "concurrently npm:build:test:jest:esm npm:build:test:jest:cjs",
 		"build:test:jest:cjs": "fluid-tsc commonjs --project ./src/test/jest/tsconfig.cjs.json",
 		"build:test:jest:esm": "tsc --project ./src/test/jest/tsconfig.json",
+		"build:test:mocha": "concurrently npm:build:test:mocha:esm npm:build:test:mocha:cjs",
 		"build:test:mocha:cjs": "fluid-tsc commonjs --project ./src/test/mocha/tsconfig.cjs.json",
 		"build:test:mocha:esm": "tsc --project ./src/test/mocha/tsconfig.json",
+		"build:test:types": "concurrently npm:build:test:types:esm npm:build:test:types:cjs",
 		"build:test:types:cjs": "fluid-tsc commonjs --project ./src/test/types/tsconfig.cjs.json",
 		"build:test:types:esm": "tsc --project ./src/test/types/tsconfig.json",
-		"build:test:jest": "concurrently npm:build:test:jest:esm npm:build:test:jest:cjs",
-		"build:test:mocha": "concurrently npm:build:test:mocha:esm npm:build:test:mocha:cjs",
-		"build:test:types": "concurrently npm:build:test:types:esm npm:build:test:types:cjs",
 		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
@@ -209,12 +209,33 @@
 				"script": false
 			},
 			"build:test:jest": [
-				"tsc"
+				"build:test:jest:esm",
+				"build:test:jest:cjs"
 			],
 			"build:test:mocha": [
-				"tsc"
+				"build:test:mocha:esm",
+				"build:test:mocha:cjs"
 			],
 			"build:test:types": [
+				"build:test:types:esm",
+				"build:test:types:cjs"
+			],
+			"build:test:jest:esm": [
+				"build:esnext"
+			],
+			"build:test:jest:cjs": [
+				"tsc"
+			],
+			"build:test:mocha:esm": [
+				"build:esnext"
+			],
+			"build:test:mocha:cjs": [
+				"tsc"
+			],
+			"build:test:types:esm": [
+				"build:esnext"
+			],
+			"build:test:types:cjs": [
 				"tsc"
 			]
 		}
