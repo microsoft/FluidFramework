@@ -18,7 +18,6 @@ export class TinyliciousRunnerFactory implements core.IRunnerFactory<Tinylicious
 			resources.storage,
 			resources.mongoManager,
 			resources.collaborationSessionEventEmitter,
-			resources.webhookManager,
 		);
 	}
 }

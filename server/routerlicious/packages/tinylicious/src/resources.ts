@@ -21,7 +21,6 @@ export class TinyliciousResources implements core.IResources {
 		public webServerFactory: core.IWebServerFactory,
 		// eslint-disable-next-line import/no-deprecated
 		public collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
-		public webhookManager?: core.IWebhookManager,
 	) {}
 
 	public async dispose(): Promise<void> {

@@ -12,7 +12,7 @@ import {
 	MongoManager,
 	DefaultMetricClient,
 	IRunner,
-	IWebhookManager,
+	CollabSessionWebhookEvent,
 } from "@fluidframework/server-services-core";
 // eslint-disable-next-line import/no-deprecated
 import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
@@ -25,6 +25,7 @@ import {
 import { TestClientManager } from "@fluidframework/server-test-utils";
 import detect from "detect-port";
 import * as app from "./app";
+import { WebhookManager } from "./services";
 
 export class TinyliciousRunner implements IRunner {
 	private server?: IWebServer;
@@ -42,7 +43,6 @@ export class TinyliciousRunner implements IRunner {
 		private readonly mongoManager: MongoManager,
 		// eslint-disable-next-line import/no-deprecated
 		private readonly collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
-		private readonly webhookManager?: IWebhookManager,
 	) {}
 
 	public async start(): Promise<void> {
@@ -74,6 +74,14 @@ export class TinyliciousRunner implements IRunner {
 		this.server = this.serverFactory.create(alfred);
 		const httpServer = this.server.httpServer;
 
+		const webhookManager = new WebhookManager();
+		const testWebhookURL =
+			"https://typedwebhook.tools/webhook/1cf7c7a2-6636-48f0-b6ad-c2eeaeddf790";
+		webhookManager.subscribe(testWebhookURL, CollabSessionWebhookEvent.SESSION_END);
+		webhookManager.subscribe(testWebhookURL, CollabSessionWebhookEvent.SESSION_START);
+		webhookManager.subscribe(testWebhookURL, CollabSessionWebhookEvent.SESSION_CLIENT_JOIN);
+		webhookManager.subscribe(testWebhookURL, CollabSessionWebhookEvent.SESSION_CLIENT_LEAVE);
+
 		configureWebSocketServices(
 			this.server.webSocketServer /* webSocketServer */,
 			this.orderManager /* orderManager */,
@@ -99,7 +107,7 @@ export class TinyliciousRunner implements IRunner {
 			undefined /* revokedTokenChecker */,
 			this.collaborationSessionEventEmitter /* collaborationSessionEventEmitter  */,
 			undefined /* clusterDrainingChecker */,
-			this.webhookManager,
+			webhookManager,
 		);
 
 		// Listen on provided port, on all network interfaces.

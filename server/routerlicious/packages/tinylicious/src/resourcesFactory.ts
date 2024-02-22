@@ -13,7 +13,6 @@ import {
 	MongoManager,
 	IResourcesFactory,
 	MongoDocumentRepository,
-	CollabSessionWebhookEvent,
 } from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
@@ -27,7 +26,6 @@ import {
 	getDbFactory,
 	WebServerFactory,
 	StorageNameAllocator,
-	WebhookManager,
 } from "./services";
 
 const defaultTinyliciousPort = 7070;
@@ -102,14 +100,6 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 			// eslint-disable-next-line import/no-deprecated
 			new TypedEventEmitter<ICollaborationSessionEvents>();
 
-		const webhookManager = new WebhookManager();
-		const testWebhookURL =
-			"https://typedwebhook.tools/webhook/1cf7c7a2-6636-48f0-b6ad-c2eeaeddf790";
-		webhookManager.subscribe(testWebhookURL, CollabSessionWebhookEvent.SESSION_END);
-		webhookManager.subscribe(testWebhookURL, CollabSessionWebhookEvent.SESSION_START);
-		webhookManager.subscribe(testWebhookURL, CollabSessionWebhookEvent.SESSION_CLIENT_JOIN);
-		webhookManager.subscribe(testWebhookURL, CollabSessionWebhookEvent.SESSION_CLIENT_LEAVE);
-
 		return new TinyliciousResources(
 			config,
 			orderManager,
@@ -119,7 +109,6 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 			port,
 			webServerFactory,
 			collaborationSessionEventEmitter,
-			webhookManager,
 		);
 	}
 }
