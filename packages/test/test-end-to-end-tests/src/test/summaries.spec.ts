@@ -412,21 +412,21 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 		await summaryCollection.waitSummaryAck(container.deltaManager.lastSequenceNumber);
 	});
 
-	function isUnsummarizedOpsNack(error) {
-		assert.strictEqual(error?.statusCode, 429);
-		assert.strictEqual(
-			error?.message,
-			"Nack (ThrottlingError): Submit a summary before inserting additional operations",
-		);
-	}
-
 	async function getNackProm(container: IContainer) {
-		return new Promise<void>((resolve) => {
-			const callback = (reason) => {
-				const obj = reason;
-				isUnsummarizedOpsNack(obj.error);
-				resolve();
-				container.deltaManager.off("disconnect", callback);
+		return new Promise<void>((resolve, reject) => {
+			const callback = (_reason, error) => {
+				try {
+					assert.strictEqual(error?.statusCode, 429);
+					assert.strictEqual(
+						error?.message,
+						"Nack (ThrottlingError): Submit a summary before inserting additional operations",
+					);
+					resolve();
+				} catch (err) {
+					reject(err);
+				} finally {
+					container.deltaManager.off("disconnect", callback);
+				}
 			};
 			container.deltaManager.on("disconnect", callback);
 		});
@@ -503,7 +503,7 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 		await flushPromises();
 		assert.strictEqual(sharedString1.getLength(), 203);
 		assert.strictEqual(sharedString2.getLength(), 203);
-	}).timeout(20000);
+	});
 });
 
 describeCompat("Summaries", "NoCompat", (getTestObjectProvider) => {
