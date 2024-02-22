@@ -1382,6 +1382,7 @@ importers:
       '@types/nconf': ^0.10.0
       '@types/node': ^18.17.1
       '@types/rimraf': ^3.0.0
+      '@types/socket.io': ^3.0.2
       '@types/split': ^0.3.28
       '@types/uuid': ^9.0.2
       agentkeepalive: ^4.2.1
@@ -1468,6 +1469,7 @@ importers:
       '@types/nconf': 0.10.4
       '@types/node': 18.18.4
       '@types/rimraf': 3.0.2
+      '@types/socket.io': 3.0.2
       '@types/split': 0.3.28
       '@types/uuid': 9.0.2
       copyfiles: 2.4.1
@@ -7759,6 +7761,17 @@ packages:
 
   /@types/sinonjs__fake-timers/8.1.2:
     resolution: {integrity: sha512-9GcLXF0/v3t80caGs5p2rRfkB+a8VBGLJZVih6CNFkx8IZ994wiKKLSRs9nuFwk1HevWs/1mnUmkApGrSGsShA==}
+    dev: true
+
+  /@types/socket.io/3.0.2:
+    resolution: {integrity: sha512-pu0sN9m5VjCxBZVK8hW37ZcMe8rjn4HHggBN5CbaRTvFwv5jOmuIRZEuddsBPa9Th0ts0SIo3Niukq+95cMBbQ==}
+    deprecated: This is a stub types definition. socket.io provides its own type definitions, so you do not need this installed.
+    dependencies:
+      socket.io: 4.7.2
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
     dev: true
 
   /@types/split/0.3.28:

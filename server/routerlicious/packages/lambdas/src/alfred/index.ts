@@ -233,6 +233,7 @@ export function configureWebSocketServices(
 	revokedTokenChecker?: core.IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	clusterDrainingChecker?: core.IClusterDrainingChecker,
+	webhookManager?: core.IWebhookManager,
 ) {
 	webSocketServer.on("connection", (socket: core.IWebSocket) => {
 		// Map from client IDs on this connection to the object ID and user info.
@@ -368,11 +369,63 @@ export function configureWebSocketServices(
 			};
 
 			try {
+				if (webSocketServer.getRoomMembers) {
+					const roomMembers = webSocketServer.getRoomMembers(getRoomId(room));
+					if (roomMembers === undefined) {
+						console.info(
+							`@@@@@ A NEW ROOM (SESSION) with room ID: ${getRoomId(
+								room,
+							)} has started for document ID: ${
+								claims.documentId
+							} with initial client with client ID: ${clientId}`,
+						);
+						webhookManager?.handleEvent(core.CollabSessionWebhookEvent.SESSION_START, {
+							eventName: core.CollabSessionWebhookEvent.SESSION_START,
+							documentId: room.documentId,
+							tenantId: room.tenantId,
+							clientId,
+						});
+					} else if (roomMembers.size > 0) {
+						console.info(
+							`@@@@@ client ID: ${clientId} is attempting to join an EXISTING session with room ID: ${getRoomId(
+								room,
+							)} for document ID: ${claims.documentId}`,
+						);
+					}
+				}
+
 				// Subscribe to channels.
 				await Promise.all([
 					socket.join(getRoomId(room)),
 					socket.join(`client#${clientId}`),
 				]);
+
+				if (webSocketServer.getRoomMembers) {
+					const roomMembersAfterJoining = webSocketServer.getRoomMembers(getRoomId(room));
+					if (roomMembersAfterJoining !== undefined) {
+						console.info(
+							`@@@@@ SUCCESSFULLY connected client ID: ${clientId} to document ID: ${
+								claims.documentId
+							} and room (session) ID: ${getRoomId(room)}, new member count: ${
+								roomMembersAfterJoining.size
+							}`,
+						);
+						webhookManager?.handleEvent(
+							core.CollabSessionWebhookEvent.SESSION_CLIENT_JOIN,
+							{
+								eventName: core.CollabSessionWebhookEvent.SESSION_CLIENT_JOIN,
+								documentId: room.documentId,
+								tenantId: room.tenantId,
+								clientId,
+								sessionActiveClientCount: roomMembersAfterJoining.size,
+							},
+						);
+					} else {
+						console.error(
+							"@@@@@ unexpectedly got undefined from getRoomMembers after joining the room.",
+						);
+					}
+				}
 			} catch (err) {
 				const errMsg = `Could not subscribe to channels. Error: ${safeStringify(
 					err,
@@ -786,7 +839,46 @@ export function configureWebSocketServices(
 							error,
 						);
 					});
+
+				if (webSocketServer.getRoomMembers) {
+					const roomMembersAfterLeaving = webSocketServer.getRoomMembers(getRoomId(room));
+					if (roomMembersAfterLeaving !== undefined) {
+						console.info(
+							`@@@@@ SUCCESSFULLY DISCONNECTED clientId: ${clientId} from room ID: ${getRoomId(
+								room,
+							)} for document ID: ${
+								room.documentId
+							}, The session is ongoing and the new member count is: ${roomMembersAfterLeaving?.size}`,
+						);
+						webhookManager?.handleEvent(
+							core.CollabSessionWebhookEvent.SESSION_CLIENT_LEAVE,
+							{
+								eventName: core.CollabSessionWebhookEvent.SESSION_CLIENT_LEAVE,
+								documentId: room.documentId,
+								tenantId: room.tenantId,
+								clientId,
+								sessionActiveClientCount: roomMembersAfterLeaving?.size,
+							},
+						);
+					} else {
+						console.info(
+							`@@@@@ SUCCESSFULLY DISCONNECTED clientId: ${clientId} from room ID: ${getRoomId(
+								room,
+							)} for document ID: ${
+								room.documentId
+							}, there are no more active clients and THE SESSION HAS ENDED.`,
+						);
+
+						webhookManager?.handleEvent(core.CollabSessionWebhookEvent.SESSION_END, {
+							eventName: core.CollabSessionWebhookEvent.SESSION_END,
+							documentId: room.documentId,
+							tenantId: room.tenantId,
+							lastActiveClientId: clientId,
+						});
+					}
+				}
 			}
+
 			// Clear socket tracker upon disconnection
 			if (socketTracker) {
 				socketTracker.removeSocket(socket.id);

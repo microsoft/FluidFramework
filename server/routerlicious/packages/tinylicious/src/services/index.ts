@@ -9,3 +9,4 @@ export { StorageNameAllocator } from "./storageNameAllocator";
 export { TaskMessageSender } from "./taskMessageSender";
 export { TenantManager, TinyliciousTenant } from "./tenantManager";
 export { WebServerFactory } from "./webServerFactory";
+export { WebhookManager } from "./webhookManager";

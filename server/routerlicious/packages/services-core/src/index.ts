@@ -165,3 +165,4 @@ export {
 export { IServiceMessageResourceManager } from "./serviceMessage";
 export { IClusterDrainingChecker } from "./clusterDraining";
 export { IWebSocketTracker } from "./webSocketTracker";
+export { IWebhookManager, CollabSessionWebhookEvent } from "./webhookManager";
