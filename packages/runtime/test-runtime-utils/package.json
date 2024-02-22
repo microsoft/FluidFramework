@@ -85,6 +85,7 @@
 	"dependencies": {
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
+		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
@@ -141,7 +142,8 @@
 				"forwardCompat": false
 			},
 			"ClassDeclaration_MockFluidDataStoreRuntime": {
-				"forwardCompat": false
+				"forwardCompat": false,
+				"backCompat": false
 			},
 			"ClassDeclaration_MockContainerRuntime": {
 				"forwardCompat": false
@@ -160,6 +162,9 @@
 				"forwardCompat": false
 			},
 			"ClassDeclaration_MockDeltaConnection": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_MockDeltaManager": {
 				"forwardCompat": false
 			}
 		}

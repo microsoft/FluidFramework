@@ -17,6 +17,7 @@ import {
 	validateTreeContent,
 	numberSequenceRootSchema,
 	schematizeFlexTree,
+	stringSequenceRootSchema,
 } from "../utils.js";
 import {
 	AllowedUpdateType,
@@ -637,6 +638,94 @@ describe("sharedTreeView", () => {
 
 		checkout1Revertibles.unsubscribe();
 		checkout2Revertibles.unsubscribe();
+	});
+
+	describe("branches with schema edits can be rebased", () => {
+		it("over non-schema changes", () => {
+			const provider = new TestTreeProviderLite(1);
+			const checkout1 = provider.trees[0].checkout;
+
+			checkout1.updateSchema(intoStoredSchema(jsonSequenceRootSchema));
+			checkout1.editor.sequenceField(rootField).insert(
+				0,
+				cursorForJsonableTreeField([
+					{ type: leaf.string.name, value: "A" },
+					{ type: leaf.string.name, value: "B" },
+					{ type: leaf.string.name, value: "C" },
+				]),
+			);
+
+			const branch = checkout1.fork();
+
+			// Remove "A" on the parent branch
+			checkout1.editor.sequenceField(rootField).remove(0, 1);
+
+			// Remove "B" on the child branch
+			branch.editor.sequenceField(rootField).remove(1, 1);
+			branch.updateSchema(intoStoredSchema(stringSequenceRootSchema));
+			// Remove "C" on the child branch
+			branch.editor.sequenceField(rootField).remove(1, 1);
+			validateTreeContent(branch, {
+				schema: stringSequenceRootSchema,
+				initialTree: ["A"],
+			});
+
+			branch.rebaseOnto(checkout1);
+
+			// The schema change and any changes after that should be dropped,
+			// but the changes before the schema change should be preserved
+			validateTreeContent(branch, {
+				schema: jsonSequenceRootSchema,
+				initialTree: ["C"],
+			});
+		});
+
+		// AB#7256: This test fails because purging repair data upon application of schema changes makes it impossible
+		// to roll back the changes that were before that schema change on the branch being rebased.
+		// This is not a problem when the changes before the schema change are applied once rebased (because the
+		// rollback and reapplication cancel out). This is the scenario covered in the test above.
+		// It is a problem here because the rebased change does not apply due to the presence of a schema change on
+		// the destination branch. Note that the presence of a schema change on the destination branch is not strictly
+		// necessary for the problem to occur. For example, if the rebased change had a constraint, and the rebasing
+		// caused that constraint to become violated, then the same issue would occur.
+		it.skip("over schema changes", () => {
+			const provider = new TestTreeProviderLite(1);
+			const checkout1 = provider.trees[0].checkout;
+
+			checkout1.updateSchema(intoStoredSchema(jsonSequenceRootSchema));
+			checkout1.editor.sequenceField(rootField).insert(
+				0,
+				cursorForJsonableTreeField([
+					{ type: leaf.string.name, value: "A" },
+					{ type: leaf.string.name, value: "B" },
+					{ type: leaf.string.name, value: "C" },
+				]),
+			);
+
+			const branch = checkout1.fork();
+
+			// Remove "A" and change the schema on the parent branch
+			checkout1.editor.sequenceField(rootField).remove(0, 1);
+			checkout1.updateSchema(intoStoredSchema(stringSequenceRootSchema));
+
+			// Remove "B" on the child branch
+			branch.editor.sequenceField(rootField).remove(1, 1);
+			branch.updateSchema(intoStoredSchema(stringSequenceRootSchema));
+			// Remove "C" on the child branch
+			branch.editor.sequenceField(rootField).remove(1, 1);
+			validateTreeContent(branch, {
+				schema: stringSequenceRootSchema,
+				initialTree: ["A"],
+			});
+
+			branch.rebaseOnto(checkout1);
+
+			// All changes on the branch should be dropped
+			validateTreeContent(branch, {
+				schema: jsonSequenceRootSchema,
+				initialTree: ["B", "C"],
+			});
+		});
 	});
 });
 
