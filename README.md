@@ -164,7 +164,7 @@ There are a few different areas in which we generate documentation content as a 
     - We leverage a local tool ([markdown-magic](./tools/markdown-magic/README.md)) to generate / embed contents in our various package-level READMEs.
       This is done as a part of a full build, but it can also be executed in isolation by running `npm run build:readme` from the repo root.
 3. API reports
-    - We leverage [API-Extractor] to generate summaries of our package APIs.
+    - We leverage [API-Extractor](https://api-extractor.com/) to generate summaries of our package APIs.
       This is done as a part of a full build, but it can also be executed in isolation by running `npm run build:api` from the repo root.
 
 ## Testing
