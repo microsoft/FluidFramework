@@ -376,7 +376,7 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 			driveId,
 			itemId,
 			odspResolvedUrl: true,
-			testFileVersion,
+			fileVersion: testFileVersion,
 			codeHint: { containerPackageName: containerName },
 		} as any as IOdspResolvedUrl;
 
@@ -420,7 +420,7 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 		assert.strictEqual(
 			decodedLocatorParam?.fileVersion,
 			testFileVersion,
-			"fileVersion path should be equal",
+			"fileVersion should be equal",
 		);
 		assert.strictEqual(
 			decodedLocatorParam?.context,
