@@ -714,8 +714,6 @@ export function mixinAttach<
 			// Finalize all id creation ranges before serializing. The production codepath does this
 			// in ContainerRuntime.createSummary.
 			finalizeAllocatedIds(clientA.dataStoreRuntime.idCompressor);
-			clientA.dataStoreRuntime.emit("attaching");
-			clientA.dataStoreRuntime.emit("attached");
 
 			const clients = await Promise.all(
 				Array.from({ length: options.numberOfClients }, async (_, index) =>

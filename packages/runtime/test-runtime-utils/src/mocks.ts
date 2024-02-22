@@ -762,6 +762,8 @@ export class MockFluidDataStoreRuntime
 
 	public set local(local: boolean) {
 		this._local = local;
+		this.emit("attaching");
+		this.emit("attached");
 	}
 
 	private _disposed = false;
