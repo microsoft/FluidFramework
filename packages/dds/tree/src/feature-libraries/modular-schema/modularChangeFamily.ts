@@ -1011,7 +1011,7 @@ function* relevantRemovedRootsFromFields(
 
 /**
  * Adds any refreshers missing from the provided change that are relevant to the change.
- * This function enforces that all relevant removed roots have a corresponding build.
+ * This function enforces that all relevant removed roots have a corresponding build or refresher.
  *
  * @param change - The change with potentially missing builds. Not mutated by this function.
  * @param getDetachedNode - The function to retrieve a tree chunk from the corresponding detached node id.
