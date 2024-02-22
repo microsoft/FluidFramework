@@ -1,4 +1,4 @@
-# @fluidframework/mocha-test-setup
+# @fluid-internal/mocha-test-setup
 
 ## 2.0.0-rc.1.0.0
 
