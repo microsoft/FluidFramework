@@ -1829,7 +1829,8 @@ export class ContainerRuntime
 	 * Api to find a snapshot tree inside a bigger snapshot tree based on the path in the pathParts array.
 	 * @param snapshotTree - snapshot tree to look into.
 	 * @param pathParts - Part of the path, which we want to extract from the snapshot tree.
-	 * @param hasIsolatedChannels - whether the channels are present inside ".channels" subtree.
+	 * @param hasIsolatedChannels - whether the channels are present inside ".channels" subtree. Older
+	 * snapshots will not have trees inside ".channels", so check that.
 	 * @returns - requested snapshot tree based on the path parts.
 	 */
 	private getSnapshotTreeForPath(
