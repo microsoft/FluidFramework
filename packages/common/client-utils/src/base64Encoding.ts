@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IsoBuffer } from "./indexNode.js";
+import { IsoBuffer } from "./indexNode";
 
 /**
  * Converts the provided {@link https://en.wikipedia.org/wiki/Base64 | base64}-encoded string
