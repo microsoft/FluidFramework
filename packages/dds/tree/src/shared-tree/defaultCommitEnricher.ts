@@ -94,9 +94,10 @@ export class DefaultCommitEnricher<TChange, TChangeFamily extends ChangeFamily<a
 				// WARNING: it's not currently possible to roll back past a schema change (see AB#7265).
 				// Either we have to make it possible to do so, or this logic will have to change to work
 				// forwards from an earlier fork instead of backwards.
-				fork.applyTipChange(this.changeFamily.rebaser.invert(priorCommit, true));
+				const rollback = this.changeFamily.rebaser.invert(priorCommit, true);
+				fork.applyTipChange(rollback);
 				if (iCommit <= this.latestInFlightCommitWithStaleEnrichments) {
-					const refreshed = fork.enrichNewTipChange(
+					const refreshed = fork.updateChangeEnrichments(
 						priorCommit.change,
 						priorCommit.revision,
 					);

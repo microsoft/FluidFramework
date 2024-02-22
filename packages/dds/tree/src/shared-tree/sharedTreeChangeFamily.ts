@@ -238,24 +238,32 @@ function mapDataChanges(
  *
  * @param change - The change with potentially missing builds. Not mutated by this function.
  * @param getDetachedNode - The function to retrieve a tree chunk from the corresponding detached node id.
- * @param removedRoots - The set of removed roots that should be in memory for the given change to be applied.
- * Can be retrieved by calling {@link relevantRemovedRoots}.
  */
 export function addMissingBuilds(
 	change: TaggedChange<SharedTreeChange>,
 	getDetachedNode: (id: DeltaDetachedNodeId) => TreeChunk | undefined,
 ): SharedTreeChange {
+	// Adding refreshers to a SharedTreeChange is not as simple as adding refreshers to each of its data changes.
+	// This is because earlier data changes affect the state of the forest in ways that can influence the refreshers
+	// needed for later data changes. This can happen in two ways:
+	// 1. By removing a tree that is a relevant root to a later data change.
+	// 2. By changing the contents of a tree that is a relevant root to a later data change.
+	// (Note that these two cases can compound)
+	// Thankfully, in both of these cases, refreshers can be omitted from the later data changes because the forest
+	// applying those data changes is guaranteed to still have have the relevant trees in memory.
+	// This means that for the first data change, all required refreshers should be added (and none should be missing).
+	// While for later data changes, we should not include refreshers that either:
+	// - were already included in the earlier data changes
+	// - correspond to trees that were removed by earlier data changes
 	const includedRoots: NestedSet<RevisionTag | undefined, number> = new Map();
 	const monitoredDetachedNodes = (id: DeltaDetachedNodeId): TreeChunk | undefined => {
 		addToNestedSet(includedRoots, id.major, id.minor);
 		return getDetachedNode(id);
 	};
-	const filteredDetachedNodes = (id: DeltaDetachedNodeId): TreeChunk | undefined => {
-		if (nestedSetContains(includedRoots, id.major, id.minor)) {
-			return undefined;
-		}
-		return monitoredDetachedNodes(id);
-	};
+	const filteredDetachedNodes = (id: DeltaDetachedNodeId): TreeChunk | undefined =>
+		nestedSetContains(includedRoots, id.major, id.minor)
+			? undefined
+			: monitoredDetachedNodes(id);
 	let isFirstDataChange = true;
 	return mapDataChanges(change.change, (innerChange) => {
 		const taggedInnerChange = mapTaggedChange(change, innerChange);
