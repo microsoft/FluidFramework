@@ -148,7 +148,7 @@ export interface IFluidErrorAnnotations {
 
 // @internal
 export interface IFluidErrorBase extends Error {
-    addTelemetryProperties: (props: ITelemetryBaseProperties) => void;
+    addTelemetryProperties: (props: ITelemetryPropertiesExt) => void;
     readonly errorInstanceId: string;
     readonly errorType: string;
     getTelemetryProperties(): ITelemetryBaseProperties;
@@ -256,7 +256,7 @@ export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITele
 // @internal
 export class LoggingError extends Error implements ILoggingError, Omit<IFluidErrorBase, "errorType"> {
     constructor(message: string, props?: ITelemetryBaseProperties, omitPropsFromLogging?: Set<string>);
-    addTelemetryProperties(props: ITelemetryBaseProperties): void;
+    addTelemetryProperties(props: ITelemetryPropertiesExt): void;
     // (undocumented)
     get errorInstanceId(): string;
     getTelemetryProperties(): ITelemetryBaseProperties;
