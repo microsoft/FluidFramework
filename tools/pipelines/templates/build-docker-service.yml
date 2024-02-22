@@ -306,7 +306,7 @@ stages:
           displayName: Pack
           inputs:
             action: 'Run a Docker command'
-            customCommand: 'run -v $(Build.ArtifactStagingDirectory)/pack/scoped:/usr/src/pack -t $(baseContainerTag) pnpm lerna exec --no-private -- mv `npm pack` /usr/src/pack'
+            customCommand: 'run -v $(Build.ArtifactStagingDirectory)/pack/scoped:/usr/src/pack -t $(baseContainerTag) pnpm -r exec mv `npm pack` /usr/src/pack'
 
         # Generating package lists manually because using scripts/pack-packages.sh (like build-npm-package.yml does)
         # inside the Docker container is proving problematic.
