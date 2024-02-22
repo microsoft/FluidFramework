@@ -1109,7 +1109,7 @@ export function filterSuperfluousRefreshers(
 		constraintViolationCount,
 		builds,
 		destroys,
-		refreshers.size > 0 ? refreshers : undefined,
+		refreshers,
 	);
 }
 
