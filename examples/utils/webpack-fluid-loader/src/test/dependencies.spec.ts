@@ -9,7 +9,8 @@ import fs from "fs-extra";
 
 describe("Check Dependencies", () => {
 	it("verify no @fluid-internal packages in dependencies", async () => {
-		await verifyNoFluidPackages(path.join(__dirname, "/../../node_modules"));
+		const { _dirname } = await import("./dirname.mjs");
+		await verifyNoFluidPackages(path.join(_dirname, "/../../node_modules"));
 	});
 });
 
