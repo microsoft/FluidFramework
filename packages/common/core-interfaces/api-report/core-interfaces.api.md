@@ -409,7 +409,7 @@ export interface ITaggedTelemetryPropertyType {
     // (undocumented)
     tag: string;
     // (undocumented)
-    value: TelemetryEventPropertyType;
+    value: TelemetryBaseEventPropertyType;
 }
 
 // @public
@@ -431,7 +431,7 @@ export interface ITelemetryBaseLogger {
 // @public
 export interface ITelemetryBaseProperties {
     // (undocumented)
-    [index: string]: TelemetryEventPropertyType | Tagged<TelemetryEventPropertyType>;
+    [index: string]: TelemetryBaseEventPropertyType | Tagged<TelemetryBaseEventPropertyType>;
 }
 
 // @alpha
@@ -469,11 +469,8 @@ export interface Tagged<V, T extends string = string> {
     value: V;
 }
 
-// @alpha
-export type TelemetryBaseEventPropertyType = TelemetryEventPropertyType;
-
-// @public @deprecated
-export type TelemetryEventPropertyType = string | number | boolean | undefined;
+// @public
+export type TelemetryBaseEventPropertyType = string | number | boolean | undefined;
 
 // @public
 export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;

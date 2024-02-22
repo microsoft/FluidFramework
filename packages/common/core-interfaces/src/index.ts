@@ -47,7 +47,6 @@ export type {
 	ITelemetryBaseProperties,
 	Tagged,
 	TelemetryBaseEventPropertyType,
-	TelemetryEventPropertyType, // deprecated
 } from "./logger";
 export { LogLevel } from "./logger";
 export type { FluidObjectProviderKeys, FluidObject, FluidObjectKeys } from "./provider";

@@ -108,6 +108,10 @@
 			"RemovedTypeAliasDeclaration_TelemetryEventCategory": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"RemovedTypeAliasDeclaration_TelemetryEventPropertyType": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}

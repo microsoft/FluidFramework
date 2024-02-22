@@ -1296,26 +1296,14 @@ use_old_TypeAliasDeclaration_TelemetryBaseEventPropertyType(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_TelemetryEventPropertyType": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_TelemetryEventPropertyType": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_TelemetryEventPropertyType():
-    TypeOnly<old.TelemetryEventPropertyType>;
-declare function use_current_TypeAliasDeclaration_TelemetryEventPropertyType(
-    use: TypeOnly<current.TelemetryEventPropertyType>): void;
-use_current_TypeAliasDeclaration_TelemetryEventPropertyType(
-    get_old_TypeAliasDeclaration_TelemetryEventPropertyType());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_TelemetryEventPropertyType": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_TelemetryEventPropertyType": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_TelemetryEventPropertyType():
-    TypeOnly<current.TelemetryEventPropertyType>;
-declare function use_old_TypeAliasDeclaration_TelemetryEventPropertyType(
-    use: TypeOnly<old.TelemetryEventPropertyType>): void;
-use_old_TypeAliasDeclaration_TelemetryEventPropertyType(
-    get_current_TypeAliasDeclaration_TelemetryEventPropertyType());
 
 /*
 * Validate forward compat by using old type in place of current type

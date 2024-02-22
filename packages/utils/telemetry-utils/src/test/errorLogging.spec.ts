@@ -59,7 +59,7 @@ describe("Error Logging", () => {
 			TelemetryLogger.prepareErrorObject(event, undefined, false);
 			assert.strictEqual(event.error, "undefined", "undefined should work");
 
-			// Technically this violates TelemetryEventPropertyType's type constraint but it's actually supported
+			// Technically this violates TelemetryBaseEventPropertyType's type constraint but it's actually supported
 			event = freshEvent();
 			TelemetryLogger.prepareErrorObject(event, null, false);
 			assert.strictEqual(event.error, "null", "null should work");

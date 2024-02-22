@@ -9,17 +9,9 @@
  * @remarks Logging entire objects is considered extremely dangerous from a telemetry point of view because people can
  * easily add fields to objects that shouldn't be logged and not realize it's going to be logged.
  * General best practice is to explicitly log the fields you care about from objects.
- * @alpha
- */
-export type TelemetryBaseEventPropertyType = TelemetryEventPropertyType;
-
-/**
- * {@inheritDoc TelemetryBaseEventPropertyType}
- *
- * @deprecated Renamed to {@link TelemetryBaseEventPropertyType}
  * @public
  */
-export type TelemetryEventPropertyType = string | number | boolean | undefined;
+export type TelemetryBaseEventPropertyType = string | number | boolean | undefined;
 
 /**
  * A property to be logged to telemetry may require a tag indicating the value may contain sensitive data.
@@ -41,7 +33,7 @@ export interface Tagged<V, T extends string = string> {
  * @internal
  */
 export interface ITaggedTelemetryPropertyType {
-	value: TelemetryEventPropertyType;
+	value: TelemetryBaseEventPropertyType;
 	tag: string;
 }
 
@@ -50,7 +42,7 @@ export interface ITaggedTelemetryPropertyType {
  * @public
  */
 export interface ITelemetryBaseProperties {
-	[index: string]: TelemetryEventPropertyType | Tagged<TelemetryEventPropertyType>;
+	[index: string]: TelemetryBaseEventPropertyType | Tagged<TelemetryBaseEventPropertyType>;
 }
 
 /**
