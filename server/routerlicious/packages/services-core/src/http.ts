@@ -72,23 +72,6 @@ export interface IWebSocketServer {
 	getRoomMembers?(roomId: string): Set<string> | undefined;
 }
 
-// /**
-//  * An Extended version of the {@link IWebSocketServer} interface that has more complex websocket related implementation requirements
-//  * and functionality.
-//  * @alpha
-//  */
-// export interface IWebSocketServerExt extends IWebSocketServer {
-// 	on(event: string, listener: (...args: any[]) => void);
-
-// 	close(): Promise<void>;
-
-// 	/**
-// 	 * Get the list of socket ID's connected to a room
-// 	 * @remarks This can be useful for checking how many clients are connected to a given document.
-// 	 */
-// 	getRoomMembers(roomId: string): Set<string> | undefined;
-// }
-
 /**
  * @internal
  */
