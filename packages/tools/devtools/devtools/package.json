@@ -50,7 +50,7 @@
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
 		"rebuild": "npm run clean && npm run build",
 		"test": "echo TODO: add tests",
-		"tsc1": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"tsc:watch": "tsc --watch",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
@@ -105,7 +105,6 @@
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"tsc-multi": "^1.1.0",
 		"typescript": "~5.1.6"
 	},
 	"fluidBuild": {
