@@ -14,7 +14,7 @@ export function loadDocsJavascript() {
 		localStorage.setItem('mobileNavChanged', 'true');
 	});
 
-	// If restore focus to the select element and reset the state
+	// If mobile nav changed, restore focus to it and reset the state
 	if (localStorage.getItem('mobileNavChanged') === 'true') {
         $('#small-nav-dropdown').focus();
         localStorage.removeItem('mobileNavChanged');
