@@ -7,7 +7,6 @@
 @fluidframework/devtools
 @fluidframework/test-utils
 @fluidframework/test-driver-definitions
-@fluidframework/mocha-test-setup
 @fluidframework/tinylicious-client
 @fluid-experimental/odsp-client
 @fluid-experimental/odsp-end-to-end-tests

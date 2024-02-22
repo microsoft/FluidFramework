@@ -1,4 +1,4 @@
-# @fluidframework/mocha-test-setup
+# @fluid-internal/mocha-test-setup
 
 This package has a few main purposes:
 
@@ -16,7 +16,7 @@ To leverage the base mocha configuration exposed by this package, first add it a
 ```json
 {
 	"devDependencies": {
-		"@fluidframework/mocha-test-setup": "version-that-matches-the-rest-of-the-release-group"
+		"@fluid-internal/mocha-test-setup": "version-that-matches-the-rest-of-the-release-group"
 	}
 }
 ```
@@ -26,7 +26,7 @@ Then put this in a `.mocharc.cjs` file at the root of your package:
 ```javascript
 "use strict";
 
-const getFluidTestMochaConfig = require("@fluidframework/mocha-test-setup/mocharc-common");
+const getFluidTestMochaConfig = require("@fluid-internal/mocha-test-setup/mocharc-common");
 
 const packageDir = __dirname;
 const config = getFluidTestMochaConfig(packageDir);
@@ -101,7 +101,7 @@ required packages that you can pass to `getFluidTestMochaConfig()`.
 For example, the path to a reporter file:
 
 ```console
-mocha --require @fluidframework/mocha-test-setup --reporter @fluid-tools/benchmark/dist/MochaMemoryTestReporter.js
+mocha --require @fluid-internal/mocha-test-setup --reporter @fluid-tools/benchmark/dist/MochaMemoryTestReporter.js
 ```
 
 Depending on where that file is coming from, you'll need to be careful with how that path is specified.

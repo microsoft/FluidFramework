@@ -54,6 +54,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
+		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/azure-client": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
@@ -63,7 +64,6 @@
 		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
-		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
