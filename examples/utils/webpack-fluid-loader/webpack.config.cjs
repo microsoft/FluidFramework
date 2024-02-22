@@ -32,6 +32,9 @@ module.exports = {
 	node: false,
 	resolve: {
 		extensions: [".tsx", ".ts", ".js"],
+		extensionAlias: {
+			".js": [".ts", ".tsx", ".js", ".cjs", ".mjs"],
+		},
 		fallback: {
 			url: require.resolve("url"),
 			buffer: require.resolve("buffer/"), // note: the trailing slash is important!
