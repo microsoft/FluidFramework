@@ -474,10 +474,6 @@ export class AttributableMapKernel {
 		}
 	}
 
-	public populate(json: string): void {
-		this.populateFromSerializable(JSON.parse(json) as IMapDataObjectSerializable);
-	}
-
 	/**
 	 * Submit the given op if a handler is registered.
 	 * @param op - The operation to attempt to submit

@@ -83,7 +83,7 @@ export class SnapshotLoader {
 			// TODO: The 'Snapshot.catchupOps' tree entry is purely for backwards compatibility.
 			//       (See https://github.com/microsoft/FluidFramework/issues/84)
 
-			return this.loadCatchupOps(services.readBlob(blobs[0]));
+			return this.loadCatchupOps(services.readBlob(blobs[0]), this.serializer);
 		} else if (blobs.length !== headerChunk.headerMetadata!.orderedChunkMetadata.length) {
 			throw new Error("Unexpected blobs in snapshot");
 		}
@@ -306,7 +306,10 @@ export class SnapshotLoader {
 	 */
 	private async loadCatchupOps(
 		rawMessages: Promise<ArrayBufferLike>,
+		serializer: IFluidSerializer,
 	): Promise<ISequencedDocumentMessage[]> {
-		return JSON.parse(bufferToString(await rawMessages, "utf8")) as ISequencedDocumentMessage[];
+		return serializer.parse(
+			bufferToString(await rawMessages, "utf8"),
+		) as ISequencedDocumentMessage[];
 	}
 }

@@ -257,9 +257,12 @@ export class DefaultMap<T extends IntervalCollection<any> = IntervalCollection<a
 
 	/**
 	 * Populate the kernel with the given map data.
-	 * @param data - A JSON string containing serialized map data
+	 *
+	 * @param serialized - A JSON string containing serialized map data
 	 */
-	public populateFromSerializable(json: IMapDataObjectSerializable): void {
+	public populate(serialized: string): void {
+		const json = this.serializer.parse(serialized) as IMapDataObjectSerializable;
+
 		for (const [key, serializable] of Object.entries(json)) {
 			// Back-compat: legacy documents may have handles to an intervalCollection map kernel.
 			// These collections should be empty, and ValueTypes are no longer supported.
@@ -283,10 +286,6 @@ export class DefaultMap<T extends IntervalCollection<any> = IntervalCollection<a
 
 			this.data.set(localValue.key, localValue.value);
 		}
-	}
-
-	public populate(json: string): void {
-		this.populateFromSerializable(this.serializer.parse(json) as IMapDataObjectSerializable);
 	}
 
 	/**

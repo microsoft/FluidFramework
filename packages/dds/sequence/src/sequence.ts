@@ -708,7 +708,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 								})}`,
 							);
 						}
-						this.processMergeTreeMsg(parseHandles(m, this.serializer));
+						this.processMergeTreeMsg(m);
 					});
 					this.loadFinished();
 				})
@@ -819,6 +819,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		);
 	}
 
+	/**
+	 *
+	 * @param message - Message with decoded and hydrated handles
+	 */
 	private processMergeTreeMsg(message: ISequencedDocumentMessage, local?: boolean) {
 		const ops: IMergeTreeDeltaOp[] = [];
 		function transformOps(event: SequenceDeltaEvent) {

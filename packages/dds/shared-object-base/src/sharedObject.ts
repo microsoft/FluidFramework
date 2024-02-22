@@ -461,7 +461,11 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 				local: boolean,
 				localOpMetadata: unknown,
 			) => {
-				this.process(parseHandles(message, this.serializer), local, localOpMetadata);
+				this.process(
+					{ ...message, contents: parseHandles(message.contents, this.serializer) },
+					local,
+					localOpMetadata,
+				);
 			},
 			setConnectionState: (connected: boolean) => {
 				this.setConnectionState(connected);
