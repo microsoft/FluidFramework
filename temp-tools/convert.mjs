@@ -23,10 +23,10 @@ const workspaceRoot = (() => {
 
 // Load 'package.json'
 const pkgPath = path.join(packageRoot, "package.json");
+const pkgSrc = fs.readFileSync(pkgPath, "utf8");
 
 // Hack to only process packages containing tsc-multi
-const pkgSrc = fs.readFileSync(pkgPath, "utf8");
-if (pkgSrc.indexOf("tsc-multi") === -1) throw new Error();
+//if (pkgSrc.indexOf("tsc-multi") === -1) throw new Error();
 
 const pkg = JSON5.parse(pkgSrc);
 
@@ -194,7 +194,7 @@ fs.writeFileSync(tsconfigPath, JSON.stringify(tsconfig, null, 4));
 // Create a tsconfig.cjs.json
 const tsconfigCjsPath = path.join(packageRoot, "tsconfig.cjs.json");
 const tsconfigCjs = `{
-	// This config must be used in a "type": "commonjs" environment. (Use tsc-mult.)
+	// This config must be used in a "type": "commonjs" environment. (Use fluid-tsc commonjs.)
 	"extends": "./tsconfig.json",
 	"compilerOptions": {
 		"outDir": "./dist",
@@ -227,7 +227,7 @@ if (fs.existsSync(testTsconfigPath)) {
 
 	const testTsconfigCjsPath = path.join(packageRoot, "src/test/tsconfig.cjs.json");
 	const testTsconfigCjs = `{
-		// This config must be used in a "type": "commonjs" environment. (Use tsc-mult.)
+		// This config must be used in a "type": "commonjs" environment. (Use fluid-tsc commonjs.)
 		"extends": "./tsconfig.json",
 		"compilerOptions": {
 			"outDir": "../../dist/test",
