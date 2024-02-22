@@ -14,6 +14,7 @@ import {
 	ITreeCursorSynchronous,
 	RevisionInfo,
 	RevisionTag,
+	ChangeAtomIdMap,
 } from "../../core/index.js";
 import { brand, fail, JsonCompatibleReadOnly, Mutable } from "../../util/index.js";
 import {
@@ -201,16 +202,16 @@ export function makeV0Codec(
 		return decodedChange;
 	}
 
-	function encodeBuilds(
-		builds: ModularChangeset["builds"],
+	function encodeDetachedNodes(
+		detachedNodes: ChangeAtomIdMap<TreeChunk>,
 		context: ChangeEncodingContext,
 	): EncodedBuilds | undefined {
-		if (builds === undefined) {
+		if (detachedNodes === undefined) {
 			return undefined;
 		}
 
 		const treesToEncode: ITreeCursorSynchronous[] = [];
-		const buildsArray: EncodedBuildsArray = Array.from(builds.entries()).map(
+		const buildsArray: EncodedBuildsArray = Array.from(detachedNodes.entries()).map(
 			([r, commitBuilds]) => {
 				const commitBuildsEncoded: [ChangesetLocalId, number][] = Array.from(
 					commitBuilds.entries(),
@@ -238,10 +239,24 @@ export function makeV0Codec(
 			  };
 	}
 
-	function decodeBuilds(
+	function encodeBuilds(
+		builds: ModularChangeset["builds"],
+		context: ChangeEncodingContext,
+	): EncodedBuilds | undefined {
+		return builds !== undefined ? encodeDetachedNodes(builds, context) : undefined;
+	}
+
+	function encodeRefreshers(
+		refreshers: ModularChangeset["refreshers"],
+		context: ChangeEncodingContext,
+	): EncodedBuilds | undefined {
+		return refreshers !== undefined ? encodeDetachedNodes(refreshers, context) : undefined;
+	}
+
+	function decodeDetachedNodes(
 		encoded: EncodedBuilds | undefined,
 		context: ChangeEncodingContext,
-	): ModularChangeset["builds"] {
+	): ChangeAtomIdMap<TreeChunk> | undefined {
 		if (encoded === undefined || encoded.builds.length === 0) {
 			return undefined;
 		}
@@ -263,6 +278,20 @@ export function makeV0Codec(
 		});
 
 		return map;
+	}
+
+	function decodeBuilds(
+		encoded: EncodedBuilds | undefined,
+		context: ChangeEncodingContext,
+	): ModularChangeset["builds"] {
+		return decodeDetachedNodes(encoded, context);
+	}
+
+	function decodeRefreshers(
+		encoded: EncodedBuilds | undefined,
+		context: ChangeEncodingContext,
+	): ModularChangeset["refreshers"] {
+		return decodeDetachedNodes(encoded, context);
 	}
 
 	function encodeRevisionInfos(
@@ -318,6 +347,7 @@ export function makeV0Codec(
 						: encodeRevisionInfos(change.revisions, context),
 				changes: encodeFieldChangesForJson(change.fieldChanges, context),
 				builds: encodeBuilds(change.builds, context),
+				refreshers: encodeRefreshers(change.refreshers, context),
 			};
 		},
 		decode: (change, context) => {
@@ -327,6 +357,9 @@ export function makeV0Codec(
 			};
 			if (encodedChange.builds !== undefined) {
 				decoded.builds = decodeBuilds(encodedChange.builds, context);
+			}
+			if (encodedChange.refreshers !== undefined) {
+				decoded.refreshers = decodeRefreshers(encodedChange.builds, context);
 			}
 			if (encodedChange.revisions !== undefined) {
 				decoded.revisions = decodeRevisionInfos(encodedChange.revisions, context);

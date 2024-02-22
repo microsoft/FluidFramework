@@ -54,8 +54,8 @@ import {
 	ModularChangeFamily,
 	relevantRemovedRoots as relevantDetachedTreesImplementation,
 	intoDelta,
-	addMissingBuilds,
-	filterSuperfluousBuilds,
+	addMissingRefreshers,
+	filterSuperfluousRefreshers,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import { jsonObject, singleJsonCursor } from "../../../domains/index.js";
@@ -1059,7 +1059,7 @@ describe("ModularChangeFamily", () => {
 		});
 	});
 
-	describe("adds missing builds", () => {
+	describe("adds missing refreshers", () => {
 		const aMajor = mintRevisionTag();
 		const a1 = { major: aMajor, minor: 1 };
 		const a2 = { major: aMajor, minor: 2 };
@@ -1087,10 +1087,25 @@ describe("ModularChangeFamily", () => {
 			return tryGetFromNestedMap(nodeMap, major, minor);
 		};
 
-		it("preserves relevant builds that are present in the input", () => {
+		it("preserves relevant refreshers that are present in the input", () => {
 			const input: ModularChangeset = {
 				fieldChanges: new Map([]),
-				builds: new Map([
+				refreshers: new Map([[aMajor, new Map([[brand(2), node2Chunk]])]]),
+			};
+
+			const expected: ModularChangeset = {
+				fieldChanges: new Map([]),
+				refreshers: new Map([[aMajor, new Map([[brand(2), node2Chunk]])]]),
+			};
+
+			const withBuilds = addMissingRefreshers(makeAnonChange(input), getDetachedNode, [a2]);
+			assert.deepEqual(withBuilds, expected);
+		});
+
+		it("preserves irrelevant refreshers that are present in the input", () => {
+			const input: ModularChangeset = {
+				fieldChanges: new Map([]),
+				refreshers: new Map([
 					[undefined, new Map([[brand(1), node2Chunk]])],
 					[aMajor, new Map([[brand(2), node2Chunk]])],
 					[cMajor, new Map([[brand(1), node3Chunk]])],
@@ -1099,48 +1114,58 @@ describe("ModularChangeFamily", () => {
 
 			const expected: ModularChangeset = {
 				fieldChanges: new Map([]),
-				builds: new Map([
+				refreshers: new Map([
 					[undefined, new Map([[brand(1), node2Chunk]])],
 					[aMajor, new Map([[brand(2), node2Chunk]])],
 					[cMajor, new Map([[brand(1), node3Chunk]])],
 				]),
 			};
 
-			const withBuilds = addMissingBuilds(makeAnonChange(input), getDetachedNode, [
-				u1,
-				a2,
-				c1,
-			]);
+			const withBuilds = addMissingRefreshers(makeAnonChange(input), getDetachedNode, []);
 			assert.deepEqual(withBuilds, expected);
 		});
 
-		it("preserves irrelevant builds that are present in the input", () => {
-			const input: ModularChangeset = {
-				fieldChanges: new Map([]),
-				builds: new Map([
-					[undefined, new Map([[brand(1), node2Chunk]])],
-					[aMajor, new Map([[brand(2), node2Chunk]])],
-					[cMajor, new Map([[brand(1), node3Chunk]])],
-				]),
-			};
-
-			const expected: ModularChangeset = {
-				fieldChanges: new Map([]),
-				builds: new Map([
-					[undefined, new Map([[brand(1), node2Chunk]])],
-					[aMajor, new Map([[brand(2), node2Chunk]])],
-					[cMajor, new Map([[brand(1), node3Chunk]])],
-				]),
-			};
-
-			const withBuilds = addMissingBuilds(makeAnonChange(input), getDetachedNode, []);
-			assert.deepEqual(withBuilds, expected);
-		});
-
-		describe("attempts to add relevant builds that are missing from the input", () => {
-			it("adds the missing build if the detached node is available", () => {
+		describe("attempts to add relevant refreshers that are missing from the input", () => {
+			it("adds the missing refresher if the detached node is available", () => {
 				const input: ModularChangeset = {
 					fieldChanges: new Map([]),
+				};
+
+				const expected: ModularChangeset = {
+					fieldChanges: new Map([]),
+					refreshers: new Map([
+						[
+							aMajor,
+							new Map([
+								[brand(1), node1Chunk],
+								[brand(2), node2Chunk],
+							]),
+						],
+						[bMajor, new Map([[brand(1), node3Chunk]])],
+					]),
+				};
+
+				const withBuilds = addMissingRefreshers(makeAnonChange(input), getDetachedNode, [
+					a1,
+					a2,
+					b1,
+				]);
+				assert.deepEqual(withBuilds, expected);
+			});
+
+			it("does not add a refresher that is present in the builds", () => {
+				const input: ModularChangeset = {
+					fieldChanges: new Map([]),
+					builds: new Map([
+						[
+							aMajor,
+							new Map([
+								[brand(1), node1Chunk],
+								[brand(2), node2Chunk],
+							]),
+						],
+						[bMajor, new Map([[brand(1), node3Chunk]])],
+					]),
 				};
 
 				const expected: ModularChangeset = {
@@ -1157,7 +1182,7 @@ describe("ModularChangeFamily", () => {
 					]),
 				};
 
-				const withBuilds = addMissingBuilds(makeAnonChange(input), getDetachedNode, [
+				const withBuilds = addMissingRefreshers(makeAnonChange(input), getDetachedNode, [
 					a1,
 					a2,
 					b1,
@@ -1171,13 +1196,13 @@ describe("ModularChangeFamily", () => {
 				};
 
 				assert.throws(() =>
-					addMissingBuilds(makeAnonChange(input), getDetachedNode, [{ minor: 2 }]),
+					addMissingRefreshers(makeAnonChange(input), getDetachedNode, [{ minor: 2 }]),
 				);
 			});
 		});
 	});
 
-	describe("filters builds", () => {
+	describe("filters superfluous refreshers", () => {
 		const aMajor = mintRevisionTag();
 		const bMajor = mintRevisionTag();
 		const a1 = { major: aMajor, minor: 1 };
@@ -1188,7 +1213,28 @@ describe("ModularChangeFamily", () => {
 		const node3 = singleJsonCursor(3);
 		const node3Chunk = treeChunkFromCursor(node3);
 
-		it("preserves relevant builds that are present in the input", () => {
+		it("preserves relevant refreshers that are present in the input", () => {
+			const input: ModularChangeset = {
+				fieldChanges: new Map([]),
+				refreshers: new Map([
+					[aMajor, new Map([[brand(1), node1Chunk]])],
+					[bMajor, new Map([[brand(1), node3Chunk]])],
+				]),
+			};
+
+			const expected: ModularChangeset = {
+				fieldChanges: new Map([]),
+				refreshers: new Map([
+					[aMajor, new Map([[brand(1), node1Chunk]])],
+					[bMajor, new Map([[brand(1), node3Chunk]])],
+				]),
+			};
+
+			const filtered = filterSuperfluousRefreshers(makeAnonChange(input), [a1, b1]);
+			assert.deepEqual(filtered, expected);
+		});
+
+		it("preserves irrelevant builds that are present in the input", () => {
 			const input: ModularChangeset = {
 				fieldChanges: new Map([]),
 				builds: new Map([
@@ -1205,14 +1251,14 @@ describe("ModularChangeFamily", () => {
 				]),
 			};
 
-			const filtered = filterSuperfluousBuilds(makeAnonChange(input), [a1, b1]);
+			const filtered = filterSuperfluousRefreshers(makeAnonChange(input), []);
 			assert.deepEqual(filtered, expected);
 		});
 
-		it("removes irrelevant builds that are present in the input", () => {
+		it("removes irrelevant refreshers that are present in the input", () => {
 			const input: ModularChangeset = {
 				fieldChanges: new Map([]),
-				builds: new Map([
+				refreshers: new Map([
 					[
 						aMajor,
 						new Map([
@@ -1228,14 +1274,14 @@ describe("ModularChangeFamily", () => {
 				fieldChanges: new Map([]),
 			};
 
-			const filtered = filterSuperfluousBuilds(makeAnonChange(input), []);
+			const filtered = filterSuperfluousRefreshers(makeAnonChange(input), []);
 			assert.deepEqual(filtered, expected);
 		});
 
-		it("correctly handles both relevant and irrelevant builds that are present in the input", () => {
+		it("correctly handles both relevant and irrelevant refreshers that are present in the input", () => {
 			const input: ModularChangeset = {
 				fieldChanges: new Map([]),
-				builds: new Map([
+				refreshers: new Map([
 					[
 						aMajor,
 						new Map([
@@ -1249,14 +1295,14 @@ describe("ModularChangeFamily", () => {
 
 			const expected: ModularChangeset = {
 				fieldChanges: new Map([]),
-				builds: new Map([[bMajor, new Map([[brand(1), node3Chunk]])]]),
+				refreshers: new Map([[bMajor, new Map([[brand(1), node3Chunk]])]]),
 			};
 
-			const filtered = filterSuperfluousBuilds(makeAnonChange(input), [b1]);
+			const filtered = filterSuperfluousRefreshers(makeAnonChange(input), [b1]);
 			assert.deepEqual(filtered, expected);
 		});
 
-		it("tolerates missing relevant builds", () => {
+		it("tolerates missing relevant refreshers", () => {
 			const input: ModularChangeset = {
 				fieldChanges: new Map([]),
 			};
@@ -1265,7 +1311,7 @@ describe("ModularChangeFamily", () => {
 				fieldChanges: new Map([]),
 			};
 
-			const filtered = filterSuperfluousBuilds(makeAnonChange(input), [a1, b1]);
+			const filtered = filterSuperfluousRefreshers(makeAnonChange(input), [a1, b1]);
 			assert.deepEqual(filtered, expected);
 		});
 	});
