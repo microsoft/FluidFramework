@@ -4,35 +4,34 @@
  */
 
 import assert from "node:assert";
-import {
-	ITelemetryBaseEvent,
-	ITelemetryErrorEvent,
-	ITelemetryGenericEvent,
-	ITelemetryPerformanceEvent,
-	ITelemetryProperties,
-} from "@fluidframework/core-interfaces";
+import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/core-interfaces";
 
 import { SampledTelemetryHelper } from "../sampledTelemetryHelper.js";
-import { ITelemetryLoggerExt } from "../telemetryTypes.js";
+import {
+	ITelemetryLoggerExt,
+	type ITelemetryErrorEventExt,
+	type ITelemetryPerformanceEventExt,
+	type ITelemetryGenericEventExt,
+} from "../telemetryTypes.js";
 
 /**
  * Test logger with only the necessary functionality used by the SampledTelemetryHelper
  * so we can test it.
  */
 class TestLogger implements ITelemetryLoggerExt {
-	public events: ITelemetryPerformanceEvent[] = [];
+	public events: ITelemetryPerformanceEventExt[] = [];
 
-	sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: unknown): void {
+	sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: unknown): void {
 		this.events.push(event);
 	}
 
 	send(event: ITelemetryBaseEvent): void {
 		throw new Error("Method not implemented.");
 	}
-	sendTelemetryEvent(event: ITelemetryGenericEvent, error?: unknown): void {
+	sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: unknown): void {
 		throw new Error("Method not implemented.");
 	}
-	sendErrorEvent(event: ITelemetryErrorEvent, error?: unknown): void {
+	sendErrorEvent(event: ITelemetryErrorEventExt, error?: unknown): void {
 		throw new Error("Method not implemented.");
 	}
 	supportsTags?: true | undefined;
@@ -233,7 +232,7 @@ describe("SampledTelemetryHelper", () => {
 });
 
 function ensurePropertiesExist(
-	object: ITelemetryPerformanceEvent,
+	object: ITelemetryPerformanceEventExt,
 	propNames: string[],
 	noExtraProperties: boolean = false,
 ): void {
