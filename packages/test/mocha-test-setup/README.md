@@ -1,5 +1,7 @@
 # @fluid-internal/mocha-test-setup
 
+<!-- AUTO-GENERATED-CONTENT:START (README_PACKAGE_SCOPE_NOTICE:packageJsonPath=./package.json) --><!-- AUTO-GENERATED-CONTENT:END -->
+
 This package has a few main purposes:
 
 -   Expose/generate a default `.mocharc.cjs` configuration for running [mocha](https://mochajs.org) tests, which other
