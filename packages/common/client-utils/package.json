@@ -126,7 +126,7 @@
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
-		"puppeteer": "^22.0.0",
+		"puppeteer": "^22.2.0",
 		"rewire": "^5.0.0",
 		"rimraf": "^4.4.0",
 		"sinon": "^7.4.2",
