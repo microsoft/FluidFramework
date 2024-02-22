@@ -39,7 +39,7 @@
 		"build:test": "tsc --project ./src/test/tsconfig.json && tsc --project ./src/test/tsconfig.cjs.json",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob _api-extractor-temp coverage dist nyc \"**/*.tsbuildinfo\" \"**/*.build.log\"",
+		"clean": "rimraf --glob _api-extractor-temp coverage dist lib nyc \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
 		"format": "npm run prettier:fix",
@@ -60,7 +60,7 @@
 		"test:mocha:fail": "mocha dist/screenshot-tests/Screenshot.test.js --delay",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:screenshots": "npm run test:mocha",
-		"tsc": "tsc-multi --config ../../../../common/build/build-common/tsc-multi.node16.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"tsc:watch": "tsc --watch"
 	},
 	"dependencies": {
@@ -131,7 +131,6 @@
 		"rimraf": "^4.4.0",
 		"simple-git": "^3.19.1",
 		"ts-jest": "^29.1.1",
-		"tsc-multi": "^1.1.0",
 		"typescript": "~5.1.6",
 		"vite": "^4.4.3"
 	},
