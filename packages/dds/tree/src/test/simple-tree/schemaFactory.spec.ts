@@ -16,6 +16,7 @@ import {
 	TreeFieldFromImplicitField,
 	TreeNodeFromImplicitAllowedTypes,
 	TreeNodeSchema,
+	type TreeNodeSchemaClass,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaTypes.js";
 import {
@@ -325,6 +326,18 @@ describe("schemaFactory", () => {
 			}
 
 			assert.equal(MyList.identifier, `test.Array<["${factory.number.identifier}"]>`);
+		});
+
+		it("Scoped", () => {
+			const factory = new SchemaFactory("test-scope");
+			// We specified a scope in the factory, so it should be part of the type signature of the created object
+			const foo: TreeNodeSchemaClass<"test-scope.foo"> = factory.object("foo", {});
+		});
+
+		it("Unscoped", () => {
+			const factory = new SchemaFactory(undefined);
+			// We did not specify a scope in the factory, so one should not be part of the type signature of the created object
+			const foo: TreeNodeSchemaClass<"foo"> = factory.object("foo", {});
 		});
 
 		it("Named", () => {

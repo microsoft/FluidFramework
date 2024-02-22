@@ -46,7 +46,7 @@ export function singletonSchema<TScope extends string, TName extends string | nu
 	// This is avoided by doing this type conversion.
 	// The conversion is done via assignment instead of `as` to get stronger type safety.
 	const toReturn: TreeNodeSchemaClass<
-		`${TScope}.${TName}`,
+		TScope extends undefined ? `${TName}` : `${TScope}.${TName}`,
 		NodeKind.Object,
 		NodeType,
 		object & InsertableObjectFromSchemaRecord<EmptyObject>,
