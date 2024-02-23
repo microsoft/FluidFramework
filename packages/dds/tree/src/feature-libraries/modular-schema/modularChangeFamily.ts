@@ -1062,10 +1062,6 @@ export function addMissingRefreshers(
 		setInNestedMap(refreshers, root.major, root.minor, node);
 	}
 
-	if (refreshers.size === 0) {
-		return change;
-	}
-
 	const { fieldChanges, maxId, revisions, constraintViolationCount, builds, destroys } = change;
 	return makeModularChangeset(
 		fieldChanges,
