@@ -175,7 +175,7 @@
 		"mocha": "^10.2.0",
 		"prettier": "~3.0.3",
 		"pretty-quick": "^4.0.0",
-		"puppeteer": "^22.0.0",
+		"puppeteer": "^22.2.0",
 		"rimraf": "^4.4.0",
 		"run-script-os": "^1.1.6",
 		"syncpack": "^9.8.4",

@@ -6,7 +6,8 @@
 import { IDocumentService, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { UsageError } from "@fluidframework/driver-utils";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { createOdspLogger, getOdspResolvedUrl } from "../odspUtils";
 import { ICacheAndTracker } from "../epochTracker";
 import { OdspDocumentServiceFactoryCore } from "../odspDocumentServiceFactoryCore";
@@ -19,7 +20,7 @@ import { LocalOdspDocumentService } from "./localOdspDocumentService";
  * content directly.
  */
 export class LocalOdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
-	private logger: ITelemetryLogger | undefined;
+	private readonly logger: ITelemetryLoggerExt = createOdspLogger();
 
 	constructor(private readonly localSnapshot: Uint8Array | string) {
 		super(
@@ -32,7 +33,7 @@ export class LocalOdspDocumentServiceFactory extends OdspDocumentServiceFactoryC
 		const toThrow = new UsageError(
 			`${unsupportedFuncName} is not supported by LocalOdspDocumentServiceFactory`,
 		);
-		this.logger?.sendErrorEvent({ eventName: "UnsupportedUsage" }, toThrow);
+		this.logger.sendErrorEvent({ eventName: "UnsupportedUsage" }, toThrow);
 		throw toThrow;
 	}
 
@@ -45,13 +46,13 @@ export class LocalOdspDocumentServiceFactory extends OdspDocumentServiceFactoryC
 		const toThrow = new UsageError(
 			'"createContainer" is not supported by LocalOdspDocumentServiceFactory',
 		);
-		createOdspLogger(logger).sendErrorEvent({ eventName: "UnsupportedUsage" }, toThrow);
+		this.logger.sendErrorEvent({ eventName: "UnsupportedUsage" }, toThrow);
 		throw toThrow;
 	}
 
 	protected async createDocumentServiceCore(
 		resolvedUrl: IResolvedUrl,
-		odspLogger: ITelemetryLogger,
+		odspLogger: ITelemetryLoggerExt,
 		_cacheAndTrackerArg?: ICacheAndTracker,
 		_clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
@@ -61,7 +62,6 @@ export class LocalOdspDocumentServiceFactory extends OdspDocumentServiceFactoryC
 		if (_clientIsSummarizer) {
 			throw new UsageError('Invalid usage. "_clientIsSummarizer" should not be provided');
 		}
-		this.logger = odspLogger;
 		return new LocalOdspDocumentService(
 			getOdspResolvedUrl(resolvedUrl),
 			odspLogger,

@@ -4,16 +4,17 @@
  */
 
 import { EventEmitter } from "events";
-import { stringToBuffer } from "@fluid-internal/client-utils";
+import { TypedEventEmitter, stringToBuffer } from "@fluid-internal/client-utils";
 import { IIdCompressor, IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor";
 import { assert } from "@fluidframework/core-utils";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	FluidObject,
 	IFluidHandle,
 	IFluidHandleContext,
 	IRequest,
 	IResponse,
+	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { IAudience, ILoader, AttachState } from "@fluidframework/container-definitions";
 
@@ -42,6 +43,7 @@ import {
 	ISummaryTreeWithStats,
 	VisibilityState,
 } from "@fluidframework/runtime-definitions";
+import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas";
 import { MockHandle } from "./mockHandle";
@@ -159,10 +161,10 @@ interface IInternalMockRuntimeMessage {
  * at MockContainerRuntimeForReconnection.
  * @alpha
  */
-export class MockContainerRuntime {
+export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents> {
 	public clientId: string;
 	protected clientSequenceNumber: number = 0;
-	private readonly deltaManager: MockDeltaManager;
+	public readonly deltaManager: MockDeltaManager;
 	/**
 	 * @deprecated use the associated datastore to create the delta connection
 	 */
@@ -181,6 +183,7 @@ export class MockContainerRuntime {
 		mockContainerRuntimeOptions: IMockContainerRuntimeOptions = defaultMockContainerRuntimeOptions,
 		protected readonly overrides?: { minimumSequenceNumber?: number },
 	) {
+		super();
 		this.deltaManager = new MockDeltaManager();
 		const msn = overrides?.minimumSequenceNumber;
 		if (msn !== undefined) {
@@ -690,7 +693,7 @@ export class MockFluidDataStoreRuntime
 		clientId?: string;
 		entryPoint?: IFluidHandle<FluidObject>;
 		id?: string;
-		logger?: ITelemetryLoggerExt;
+		logger?: ITelemetryBaseLogger;
 		idCompressor?: IIdCompressor & IIdCompressorCore;
 	}) {
 		super();
@@ -728,7 +731,7 @@ export class MockFluidDataStoreRuntime
 	public readonly connected = true;
 	public deltaManager = new MockDeltaManager();
 	public readonly loader: ILoader = undefined as any;
-	public readonly logger: ITelemetryLoggerExt;
+	public readonly logger: ITelemetryBaseLogger;
 	public quorum = new MockQuorumClients();
 	public containerRuntime?: MockContainerRuntime;
 	public idCompressor?: IIdCompressor & IIdCompressorCore;

@@ -326,7 +326,7 @@ describe("Tests1 for snapshot fetch", () => {
 			assert.fail("the getSnapshot request should succeed");
 		}
 		assert(success, "should have asked for g1 group id");
-		assert(service["blobCache"].value.size === 0, "no blobs should be cached locally");
+		assert(service["blobCache"].value.size !== 0, "blobs should still be cached locally");
 		assert(service["commitCache"].size === 0, "no trees should be cached");
 		assert(
 			mockLogger.matchEvents([
@@ -389,7 +389,7 @@ describe("Tests1 for snapshot fetch", () => {
 		}
 		const cachedValue = (await epochTracker.get(createCacheSnapshotKey(resolved))) as ISnapshot;
 		assert(cachedValue.snapshotTree.id === "SnapshotId", "snapshot should have been cached");
-		assert(service["blobCache"].value.size === 0, "no blobs should be cached locally");
+		assert(service["blobCache"].value.size !== 0, "blobs should still be cached locally");
 		assert(service["commitCache"].size === 0, "no trees should be cached");
 	});
 

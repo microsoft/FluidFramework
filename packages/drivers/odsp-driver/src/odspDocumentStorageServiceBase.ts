@@ -286,7 +286,8 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 			}
 		}
 
-		if (blobContents !== undefined && cacheSnapshot) {
+		// Currently always cache blobs as container runtime is not caching them.
+		if (blobContents !== undefined) {
 			this.initBlobsCache(blobContents);
 		}
 
