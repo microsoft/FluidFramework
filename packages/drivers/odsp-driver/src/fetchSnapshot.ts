@@ -319,7 +319,6 @@ async function fetchLatestSnapshotCore(
 			const propsToLog: DriverErrorTelemetryProps = {
 				...odspResponse.propsToLog,
 				contentType,
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				accept: response.requestHeaders.accept,
 				driverVersion: pkgVersion,
 			};

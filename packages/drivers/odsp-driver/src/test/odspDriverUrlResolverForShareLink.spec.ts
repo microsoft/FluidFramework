@@ -378,7 +378,7 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 			undefined /* tokenFetcher */,
 			undefined /* logger */,
 			appName /* appName */,
-			async (_resolvedUrl, _dataStorePath) => Promise.resolve(contextVal) /* context */,
+			async (_resolvedUrl, _dataStorePath) => contextVal /* context */,
 		);
 		const resolvedUrl = {
 			siteUrl,
@@ -387,7 +387,7 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 			odspResolvedUrl: true,
 			fileVersion: testFileVersion,
 			codeHint: { containerPackageName: containerName },
-		} as any as IOdspResolvedUrl;
+		} as unknown as IOdspResolvedUrl;
 
 		const resultUrl = new URL(
 			await urlResolverForShareLink.appendLocatorParams(
