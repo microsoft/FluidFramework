@@ -43,7 +43,7 @@ export enum ClpCompliantAppHeader {
     isClpCompliantApp = "X-CLP-Compliant-App"
 }
 
-// @alpha (undocumented)
+// @alpha
 export function createLocalOdspDocumentServiceFactory(localSnapshot: Uint8Array | string): IDocumentServiceFactory;
 
 // @alpha
@@ -65,7 +65,7 @@ export class EpochTracker implements IPersistedFileCache {
     fetch(url: string, fetchOptions: RequestInit, fetchType: FetchType, addInBody?: boolean, fetchReason?: string): Promise<IOdspResponse<Response>>;
     fetchAndParseAsJSON<T>(url: string, fetchOptions: RequestInit, fetchType: FetchType, addInBody?: boolean, fetchReason?: string): Promise<IOdspResponse<T>>;
     fetchArray(url: string, fetchOptions: {
-        [index: string]: any;
+        [index: string]: RequestInit;
     }, fetchType: FetchType, addInBody?: boolean, fetchReason?: string): Promise<IOdspResponse<ArrayBuffer>>;
     // (undocumented)
     protected readonly fileEntry: IFileEntry;
@@ -98,7 +98,7 @@ export type FetchTypeInternal = FetchType | "cache";
 // @internal
 export function getApiRoot(origin: string): string;
 
-// @alpha (undocumented)
+// @alpha
 export function getHashedDocumentId(driveId: string, itemId: string): Promise<string>;
 
 // @alpha
@@ -196,7 +196,7 @@ export function isOdcOrigin(origin: string): boolean;
 // @internal
 export function isOdcUrl(url: string | URL): boolean;
 
-// @internal (undocumented)
+// @internal
 export function isOdspResolvedUrl(resolvedUrl: IResolvedUrl): resolvedUrl is IOdspResolvedUrl;
 
 // @internal
