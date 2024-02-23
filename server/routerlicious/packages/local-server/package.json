@@ -64,14 +64,14 @@
     "@fluidframework/server-services-telemetry": "^0.1036.5002",
     "@fluidframework/server-test-utils": "^0.1036.5002",
     "debug": "^4.1.1",
-    "jsrsasign": "^10.2.0",
+    "jsrsasign": "^11.1.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@rushstack/eslint-config": "^2.5.1",
-    "@types/jsrsasign": "^8.0.8",
+    "@types/jsrsasign": "^10.5.12",
     "@types/mocha": "^9.1.1",
     "@types/nock": "^9.3.0",
     "@types/node": "^14.18.0",

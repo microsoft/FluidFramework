@@ -61,7 +61,7 @@
     "@fluidframework/server-services-utils": "^0.1036.5002",
     "@socket.io/redis-emitter": "^4.1.0",
     "amqplib": "^0.8.0",
-    "axios": "^0.26.0",
+    "axios": "^0.28.0",
     "debug": "^4.1.1",
     "ioredis": "^4.24.2",
     "lru-cache": "^6.0.0",
