@@ -1058,7 +1058,7 @@ export function addMissingRefreshers(
 		}
 
 		const node = getDetachedNode(root);
-		assert(node !== undefined, "detached node should exist");
+		assert(allowMissingRefreshers || node !== undefined, "detached node should exist");
 		setInNestedMap(refreshers, root.major, root.minor, node);
 	}
 
