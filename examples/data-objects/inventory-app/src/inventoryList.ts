@@ -5,12 +5,14 @@
 
 import { DataObjectFactory } from "@fluidframework/aqueduct";
 import { TreeDataObject, factory } from "./reactSharedTreeView.js";
+import { treeConfiguration, type Inventory } from "./schema.js";
 
 /**
  * @internal
  */
-export class InventoryList extends TreeDataObject {
+export class InventoryList extends TreeDataObject<typeof Inventory> {
 	public readonly key = "tree";
+	public readonly config = treeConfiguration;
 }
 
 /**
