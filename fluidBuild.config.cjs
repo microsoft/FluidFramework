@@ -60,6 +60,8 @@ module.exports = {
 			"api-extractor:commonjs",
 			"api-extractor:esnext",
 		],
+		"build:test:cjs": ["typetests:gen", "tsc", "api-extractor:commonjs"],
+		"build:test:esm": ["typetests:gen", "build:esnext", "api-extractor:esnext"],
 		"api": {
 			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
 			script: false,
@@ -272,6 +274,7 @@ module.exports = {
 			"npm-package-exports-field": [
 				// We deliberately improperly import from deep in the package tree while we migrate everything into other
 				// packages. This is temporary and can be fixed once the build-tools/build-cli pigration is complete.
+				"^azure/",
 				"^build-tools/packages/build-tools/package.json",
 				"^common/",
 				"^examples/",
@@ -417,7 +420,7 @@ module.exports = {
 		],
 		fluidBuildTasks: {
 			tsc: {
-				ignoreDevDependencies: ["@fluid-tools/webpack-fluid-loader"],
+				ignoreDevDependencies: ["@fluid-example/webpack-fluid-loader"],
 				ignoreTasks: [
 					// Outside of normal build and packages/dd/matrix version includes tsc
 					"bench:profile",

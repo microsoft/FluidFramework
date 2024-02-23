@@ -36,7 +36,7 @@
 		"start": "node server.js",
 		"test:coverage": "c8 npm test",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"test:mocha": "mocha --exit -r node_modules/@fluidframework/mocha-test-setup",
+		"test:mocha": "mocha --exit -r node_modules/@fluid-internal/mocha-test-setup",
 		"test": "npm run test:mocha"
 	},
 	"c8": {
@@ -78,11 +78,11 @@
 	"devDependencies": {
 		"@fluid-experimental/property-dds": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
+		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/local-driver": "workspace:~",
-		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/server-local-server": "^3.1.0-231702",
+		"@fluidframework/server-local-server": "^3.1.0-238497",
 		"@fluidframework/test-utils": "workspace:~",
 		"aws-sdk": "2.547.0",
 		"c8": "^8.0.1",

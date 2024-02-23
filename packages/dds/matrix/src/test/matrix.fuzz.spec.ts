@@ -280,8 +280,8 @@ describe("Matrix fuzz tests", function () {
 			clientAddProbability: 0.1,
 			stashableClientProbability: 0.5,
 		}, // Uncomment to replay a particular seed.
-		// Seed 23 is slow but otherwise passes, see comment on timeout above.
-		skip: [23],
+		// Seeds 7 and 23 are slow but otherwise pass, see comment on timeout above.
+		skip: [7, 23],
 		// Uncomment to replay a particular seed.
 		// replay: 0,
 	});

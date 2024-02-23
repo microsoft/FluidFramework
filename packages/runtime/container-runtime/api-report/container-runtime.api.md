@@ -40,6 +40,7 @@ import { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
+import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { isStableId } from '@fluidframework/id-compressor';
 import { ISummaryAck } from '@fluidframework/protocol-definitions';
 import { ISummaryContent } from '@fluidframework/protocol-definitions';
@@ -161,6 +162,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     getPendingLocalState(props?: IGetPendingLocalStateProps): unknown;
     // (undocumented)
     getQuorum(): IQuorumClients;
+    getSnapshotForLoadingGroupId(loadingGroupIds: string[], pathParts: string[]): Promise<{
+        snapshotTree: ISnapshotTree;
+        sequenceNumber: number;
+    }>;
     // (undocumented)
     idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
     // (undocumented)

@@ -48,7 +48,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 
 	/**
 	 * The sequence number that this instance is at.
-	 * This is number is artificial in that it is made up by this instance as opposed to being provided by the runtime.
+	 * This number is artificial in that it is made up by this instance as opposed to being provided by the runtime.
 	 * Is `undefined` after (and only after) this instance is attached.
 	 */
 	private detachedRevision: SeqNumber | undefined = minimumPossibleSequenceNumber;

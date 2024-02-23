@@ -22,10 +22,10 @@ import {
 	ModularChangeset,
 	FieldBatchCodec,
 	TreeCompressionStrategy,
-	addMissingBuilds as modularAddMissingBuilds,
-	filterSuperfluousBuilds as modularFilterSuperfluousBuilds,
+	addMissingRefreshers,
 	relevantRemovedRoots as defaultRelevantRemovedRoots,
 	TreeChunk,
+	filterSuperfluousRefreshers,
 } from "../feature-libraries/index.js";
 import { Mutable, NestedSet, addToNestedSet, fail, nestedSetContains } from "../util/index.js";
 import { makeSharedTreeChangeCodecFamily } from "./sharedTreeChangeCodecs.js";
@@ -268,16 +268,16 @@ export function updateRefreshers(
 	return mapDataChanges(change.change, (innerChange) => {
 		const taggedInnerChange = mapTaggedChange(change, innerChange);
 		const removedRoots = defaultRelevantRemovedRoots(taggedInnerChange);
-		// TODO: remove this filtering stage once modularAddMissingBuilds removes old refreshers
+		// TODO: remove this filtering stage once modularAddMissingRefreshers removes old refreshers
 		const filtered = mapTaggedChange(
 			change,
-			modularFilterSuperfluousBuilds(taggedInnerChange, removedRoots),
+			filterSuperfluousRefreshers(taggedInnerChange, removedRoots),
 		);
 		if (isFirstDataChange) {
 			isFirstDataChange = false;
-			return modularAddMissingBuilds(filtered, monitoredDetachedNodes, removedRoots, false);
+			return addMissingRefreshers(filtered, monitoredDetachedNodes, removedRoots, false);
 		} else {
-			return modularAddMissingBuilds(filtered, filteredDetachedNodes, removedRoots, true);
+			return addMissingRefreshers(filtered, filteredDetachedNodes, removedRoots, true);
 		}
 	});
 }

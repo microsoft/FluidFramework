@@ -164,40 +164,6 @@ function readTreeSection(node: NodeCore) {
 						snapshotTree.unreferenced = true;
 						continue;
 					}
-
-					// "name": <node name>
-					// "children": <blob id>
-					// groupId: <group name>
-					if (
-						treeNode.getMaybeString(2) === "children" &&
-						treeNode.getMaybeString(4) === "groupId"
-					) {
-						const result = readTreeSection(treeNode.getNode(3));
-						trees[treeNode.getString(1)] = result.snapshotTree;
-						slowTreeStructureCount += result.slowTreeStructureCount;
-						snapshotTree.groupId = treeNode.getMaybeString(5);
-						continue;
-					}
-					break;
-				}
-				case 8: {
-					// "name": <node name>
-					// "unreferenced": true
-					// "children": <blob id>
-					// groupId: <group name>
-					if (
-						treeNode.getMaybeString(2) === "unreferenced" &&
-						treeNode.getMaybeString(4) === "children" &&
-						treeNode.getMaybeString(6) === "groupId"
-					) {
-						const result = readTreeSection(treeNode.getNode(5));
-						trees[treeNode.getString(1)] = result.snapshotTree;
-						slowTreeStructureCount += result.slowTreeStructureCount;
-						assert(treeNode.getBool(3), "Unreferenced if present should be true");
-						snapshotTree.unreferenced = true;
-						snapshotTree.groupId = treeNode.getMaybeString(7);
-						continue;
-					}
 					break;
 				}
 				default:
@@ -220,6 +186,15 @@ function readTreeSection(node: NodeCore) {
 		if (records.groupId !== undefined) {
 			const groupId = getStringInstance(records.groupId, "groupId should be a string");
 			snapshotTree.groupId = groupId;
+		}
+
+		if (records.omitted !== undefined) {
+			assertBoolInstance(records.omitted, "omitted should be a boolean");
+			assert(
+				!records.omitted || snapshotTree.groupId !== undefined,
+				"GroupId absent but omitted is true",
+			);
+			snapshotTree.omitted = records.omitted;
 		}
 
 		const path = getStringInstance(records.name, "Path name should be string");
