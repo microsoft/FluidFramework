@@ -55,16 +55,10 @@ module.exports = function handler(fileData, logger) {
 			continue;
 		}
 
-		// Transfer the event StageTiming (associated with the stress, e2e and tests performance) to the
-		// table suffixed with performance_tests. For telemetry related to the build or other events, retain
-		// them in the original table.
-		const category =
-			job.stageName.includes("tests") || job.stageName.includes("e2e")
-				? "performance_tests"
-				: "performance";
-
+		// Transfer the telemetry associated with pipeline status to namespace "FFEngineering".
 		logger.send({
-			category,
+			namespace: "FFEngineering",
+			category: "performance",
 			eventName: "StageTiming",
 			benchmarkType: "PipelineInfo",
 			stageName: job.stageName,

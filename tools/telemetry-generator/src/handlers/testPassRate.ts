@@ -28,9 +28,10 @@ module.exports = function handler(fileData, logger) {
 	const totalTests = passedTests + failedTests;
 	const passRate = totalTests !== 0 ? passedTests / totalTests : 0;
 	console.log(passRate);
-	// Transfer the event testPassRate to the table suffixed with performance_tests
+	// Transfer the telemetry associated with performance test measurements to namespace "FFEngineering"
 	logger.send({
-		category: "performance_tests",
+		namespace: "FFEngineering",
+		category: "performance",
 		eventName: "TestPassRate",
 		benchmarkType: "PipelineInfo",
 		stageName: fileData.currentContext.stageReference.stageName,
