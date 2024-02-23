@@ -37,7 +37,7 @@
 @fluid-experimental/oldest-client-observer
 @fluidframework/fluid-static
 fluid-framework
-@fluidframework/dds-interceptions
+@fluid-experimental/dds-interceptions
 @fluid-experimental/data-object-base
 @fluidframework/app-insights-logger
 @fluid-experimental/attributor
