@@ -327,9 +327,9 @@ export class EpochTracker implements IPersistedFileCache {
 							// retryAfterMs is still provided so that client app can can still use it.
 							{
 								retryAfterMs:
-									(error as ThrottlingError).retryAfterSeconds !== undefined
-										? (error as ThrottlingError).retryAfterSeconds * 1000
-										: undefined,
+									(error as ThrottlingError).retryAfterSeconds === undefined
+										? undefined
+										: (error as ThrottlingError).retryAfterSeconds * 1000,
 								driverVersion,
 							},
 						);

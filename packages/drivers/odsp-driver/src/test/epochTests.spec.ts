@@ -20,7 +20,7 @@ import { mockFetchOk, mockFetchSingle, createResponse } from "./mockFetch.js";
 import { createChildLogger, type IFluidErrorBase } from "@fluidframework/telemetry-utils";
 import { ThrottlingError, type NonRetryableError } from "@fluidframework/driver-utils";
 import { stub } from "sinon";
-import * as odspUtils from "../odspUtils.js";
+import * as odspUtilsModule from "../odspUtils";
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 
@@ -409,18 +409,18 @@ describe("Tests for Epoch Tracker", () => {
 		);
 		try {
 			// fetchHelper is used by epochTracker's fetch method, which we stub here to emulate throttling error
-			fetchStub = stub(odspUtils, "fetchHelper");
-			fetchStub.callsFake(async () =>
-				Promise.reject(
-					new ThrottlingError("Server is throttled", 1000, {
-						testProp: "testProp",
-						driverVersion: "1",
-					}),
-				),
-			);
+			fetchStub = stub(odspUtilsModule, "fetchHelper");
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+			fetchStub.callsFake(async () => {
+				throw new ThrottlingError("Server is throttled", 1000, {
+					testProp: "testProp",
+					driverVersion: "1",
+				});
+			});
 			await epochTrackerWithHostPolicy.fetch("fetchUrl", {}, "test");
 		} catch (error) {
 			// retoring the fetchHelper function to avoid causing errors in other tests
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
 			fetchStub.restore();
 			assert(
 				(error as NonRetryableError<string>).canRetry === false,
@@ -443,18 +443,18 @@ describe("Tests for Epoch Tracker", () => {
 		);
 		try {
 			// fetchHelper is used by epochTracker's fetch method, which we stub here to emulate throttling error
-			fetchStub = stub(odspUtils, "fetchHelper");
-			fetchStub.callsFake(async () =>
-				Promise.reject(
-					new ThrottlingError("Server is throttled", 1000, {
-						testProp: "testProp",
-						driverVersion: "1",
-					}),
-				),
-			);
+			fetchStub = stub(odspUtilsModule, "fetchHelper");
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+			fetchStub.callsFake(async () => {
+				throw new ThrottlingError("Server is throttled", 1000, {
+					testProp: "testProp",
+					driverVersion: "1",
+				});
+			});
 			await epochTrackerWithHostPolicy.fetch("fetchUrl", {}, "test");
 		} catch (error) {
 			// retoring the fetchHelper function to avoid causing errors in other tests
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
 			fetchStub.restore();
 			assert((error as ThrottlingError).canRetry === true, "Error should be retriable");
 		}

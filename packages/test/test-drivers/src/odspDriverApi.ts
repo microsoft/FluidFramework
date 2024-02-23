@@ -76,7 +76,7 @@ export const generateOdspHostStoragePolicy = (seed: number) => {
 		enableShareLinkWithCreate: [false],
 		enableSingleRequestForShareLinkWithCreate: [false],
 		avoidPrefetchSnapshotCache: booleanCases,
-		disableRetriesOnStorageThrottlingError: [false],
+		disableRetriesOnStorageThrottlingError: booleanCases,
 	};
 	return generatePairwiseOptions<HostStoragePolicy>(odspHostPolicyMatrix, seed);
 };
