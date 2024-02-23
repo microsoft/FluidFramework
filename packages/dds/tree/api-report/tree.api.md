@@ -366,6 +366,7 @@ export interface DeltaRoot<TTree = DeltaProtoNode> {
     readonly build?: readonly DeltaDetachedNodeBuild<TTree>[];
     readonly destroy?: readonly DeltaDetachedNodeDestruction[];
     readonly fields?: DeltaFieldMap;
+    readonly refreshers?: readonly DeltaDetachedNodeBuild<TTree>[];
 }
 
 // @internal

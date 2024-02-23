@@ -32,9 +32,9 @@
 		"prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
 		"test": "npm run test:mocha",
-		"test:mocha": "mocha \"dist/**/*.spec.js\" --exit -r node_modules/@fluidframework/mocha-test-setup",
-		"test:mocha-ts": "cross-env FLUID_TEST_VERBOSE=1 TS_NODE_PROJECT=./src/test/tsconfig.json mocha --require ts-node/register --extensions ts,tsx  \"src/test/**/*.spec.ts\" --exit -r node_modules/@fluidframework/mocha-test-setup --timeout 1500000",
-		"test:mocha-ts-inspect": "cross-env FLUID_TEST_VERBOSE=1 TS_NODE_PROJECT=./src/test/tsconfig.json mocha --inspect-brk --require ts-node/register --extensions ts,tsx  \"src/test/**/*.spec.ts\" --exit -r node_modules/@fluidframework/mocha-test-setup --timeout 1500000",
+		"test:mocha": "mocha \"dist/**/*.spec.js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
+		"test:mocha-ts": "cross-env FLUID_TEST_VERBOSE=1 TS_NODE_PROJECT=./src/test/tsconfig.json mocha --require ts-node/register --extensions ts,tsx  \"src/test/**/*.spec.ts\" --exit -r node_modules/@fluid-internal/mocha-test-setup --timeout 1500000",
+		"test:mocha-ts-inspect": "cross-env FLUID_TEST_VERBOSE=1 TS_NODE_PROJECT=./src/test/tsconfig.json mocha --inspect-brk --require ts-node/register --extensions ts,tsx  \"src/test/**/*.spec.ts\" --exit -r node_modules/@fluid-internal/mocha-test-setup --timeout 1500000",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc"
 	},
@@ -61,6 +61,7 @@
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
 		"@fluid-experimental/property-common": "workspace:~",
+		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/test-drivers": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",
@@ -69,7 +70,6 @@
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^3.5.0",
 		"@fluidframework/local-driver": "workspace:~",
-		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/server-local-server": "^3.1.0-238497",
 		"@fluidframework/test-runtime-utils": "workspace:~",

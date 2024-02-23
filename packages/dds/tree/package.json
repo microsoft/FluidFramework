@@ -73,7 +73,7 @@
 		"test:mocha:esm": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:snapshots:regen": "npm run test:mocha -- --snapshot",
-		"test:stress": "cross-env FUZZ_TEST_COUNT=20 FUZZ_STRESS_RUN=true mocha --ignore \"dist/test/memory/**/*\" --recursive \"dist/test/**/*.spec.js\" -r @fluidframework/mocha-test-setup",
+		"test:stress": "cross-env FUZZ_TEST_COUNT=20 FUZZ_STRESS_RUN=true mocha --ignore \"dist/test/memory/**/*\" --recursive \"dist/test/**/*.spec.js\" -r @fluid-internal/mocha-test-setup",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
@@ -117,6 +117,7 @@
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
+		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluid-private/test-dds-utils": "workspace:~",
 		"@fluid-private/test-drivers": "workspace:~",
@@ -127,7 +128,6 @@
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^3.5.0",
-		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.39.1",

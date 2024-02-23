@@ -19,9 +19,6 @@ import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions'
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
-import { ITelemetryErrorEvent } from '@fluidframework/core-interfaces';
-import { ITelemetryGenericEvent } from '@fluidframework/core-interfaces';
-import { ITelemetryPerformanceEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { IUsageError } from '@fluidframework/core-interfaces';
 import { Lazy } from '@fluidframework/core-utils';
@@ -348,7 +345,7 @@ export function safeRaiseEvent(emitter: EventEmitter, logger: ITelemetryLoggerEx
 
 // @internal
 export class SampledTelemetryHelper implements IDisposable {
-    constructor(eventBase: ITelemetryGenericEvent, logger: ITelemetryLoggerExt, sampleThreshold: number, includeAggregateMetrics?: boolean, perBucketProperties?: Map<string, ITelemetryProperties>);
+    constructor(eventBase: ITelemetryGenericEventExt, logger: ITelemetryLoggerExt, sampleThreshold: number, includeAggregateMetrics?: boolean, perBucketProperties?: Map<string, ITelemetryProperties>);
     // (undocumented)
     dispose(error?: Error | undefined): void;
     // (undocumented)
@@ -401,18 +398,6 @@ export type TelemetryEventPropertyTypeExt = string | number | boolean | undefine
 
 // @alpha (undocumented)
 export type TelemetryEventPropertyTypes = ITelemetryBaseProperties[string];
-
-// @internal @deprecated
-export class TelemetryNullLogger implements ITelemetryLoggerExt {
-    // (undocumented)
-    send(event: ITelemetryBaseEvent): void;
-    // (undocumented)
-    sendErrorEvent(event: ITelemetryErrorEvent, error?: unknown): void;
-    // (undocumented)
-    sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: unknown): void;
-    // (undocumented)
-    sendTelemetryEvent(event: ITelemetryGenericEvent, error?: unknown): void;
-}
 
 // @internal
 export class ThresholdCounter {
