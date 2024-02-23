@@ -1,17 +1,14 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
 import Path from "node:path";
-
-import { decodeComponentId, type RPCs } from "@previewjs/api";
-import { createChromelessWorkspace } from "@previewjs/chromeless";
-import reactPlugin from "@previewjs/plugin-react";
+import { type RPCs } from "@previewjs/api";
 import { expect } from "chai";
 import chalk from "chalk";
 import { run } from "mocha";
-import { globby } from "globby";
 import { chromium } from "playwright";
 import { simpleGit, pathspec } from "simple-git";
 
@@ -131,18 +128,23 @@ async function generateTestSuite(): Promise<void> {
 
 	// Initialize chromium browser instance for test suite
 	const browser = await chromium.launch();
+	const createChromelessWorkspace = await import("@previewjs/chromeless");
 
-	const workspace = await createChromelessWorkspace({
-		frameworkPlugins: [reactPlugin],
+	const reactPlugin = await import("@previewjs/plugin-react");
+
+	const workspace = await createChromelessWorkspace.createChromelessWorkspace({
+		frameworkPlugins: [reactPlugin.default],
 		rootDirPath: workingDirectory,
 	});
 
-	const storyModules = await globby(storiesPathPatterns, {
-		gitignore: false,
-		ignore: ["**/node_modules/**"],
-		cwd: workingDirectory,
-		followSymbolicLinks: false,
-	});
+	const storyModules = await import("globby").then(async ({ globby }) =>
+		globby(storiesPathPatterns, {
+			gitignore: false,
+			ignore: ["**/node_modules/**"],
+			cwd: workingDirectory,
+			followSymbolicLinks: false,
+		}),
+	);
 
 	// `describe` blocks cannot be async, so before we start building out the test suites, we will asynchronously
 	// create a mapping of story modules to all of the story components they contain.
@@ -171,69 +173,94 @@ async function generateTestSuite(): Promise<void> {
 			// Story module sub-suite
 			// eslint-disable-next-line jest/valid-title
 			describe(storyFileName, () => {
+				// eslint-disable-next-line unicorn/import-style
+				// const chalk = await import("chalk");
 				// Create sub-suite for each component
 				for (const component of components) {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 					const { componentId } = component;
-					const { name: storyName } = decodeComponentId(componentId);
+					// const { name: storyName } = decodeComponentId(componentId);
 
-					// Story (component) sub-suite
-					// eslint-disable-next-line jest/valid-title
-					describe(storyName, () => {
-						// We expect this to succeed. If not, let the test blow up.
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						const storyModuleName = storyFileName.match(/(.*)\.stories\.tsx/)![1];
+					import("@previewjs/api")
+						.then((module) => {
+							const { decodeComponentId } = module;
 
-						// Generate an individual test for each theme / viewport combination.
-						for (const theme of allThemes) {
-							for (const viewport of defaultViewports) {
-								const testName = getScreenshotTestName(storyName, theme, viewport);
+							const { name: storyName } = decodeComponentId(componentId);
 
-								// eslint-disable-next-line jest/valid-title
-								it(testName, async (): Promise<void> => {
-									const screenshotFilePath = getScreenshotTestPath(
-										testName,
-										storyModuleName,
-										screenshotsDirectory,
-									);
+							// Story (component) sub-suite
+							// eslint-disable-next-line jest/valid-title
+							describe(storyName, () => {
+								// We expect this to succeed. If not, let the test blow up.
+								const storyModuleName =
+									// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+									storyFileName.match(/(.*)\.stories\.tsx/)![1];
 
-									const page = await browser.newPage({
-										viewport,
-
-										// Dark mode vs light mode setting
-										// docs: https://playwright.dev/docs/api/class-page#page-emulate-media
-										colorScheme: colorSchemeFromTheme(theme),
-
-										// High contrast setting
-										// docs: https://playwright.dev/docs/api/class-page#page-emulate-media
-										forcedColors: forcedColorsFromTheme(theme),
-									});
-									const preview = await workspace.preview.start(page);
-
-									try {
-										await preview.show(componentId);
-										await preview.iframe.takeScreenshot(screenshotFilePath);
-									} catch (error) {
-										console.error(
-											chalk.red(
-												`Failed to generate ${testName} screenshot due to an error:`,
-											),
-											error,
+								// Generate an individual test for each theme / viewport combination.
+								for (const theme of allThemes) {
+									for (const viewport of defaultViewports) {
+										const testName = getScreenshotTestName(
+											storyName,
+											theme,
+											viewport,
 										);
-										throw error;
-									}
 
-									const screenshotDiff =
-										await checkScreenshotDiff(screenshotFilePath);
+										// eslint-disable-next-line jest/valid-title
+										it(testName, async (): Promise<void> => {
+											const screenshotFilePath = getScreenshotTestPath(
+												testName,
+												storyModuleName,
+												screenshotsDirectory,
+											);
 
-									if (screenshotDiff) {
-										expect.fail(
-											"Git detected a screenshot diff. Please check the visual diff and commit the changes if appropriate.",
-										);
+											const page = await browser.newPage({
+												viewport,
+
+												// Dark mode vs light mode setting
+												// docs: https://playwright.dev/docs/api/class-page#page-emulate-media
+												colorScheme: colorSchemeFromTheme(theme),
+
+												// High contrast setting
+												// docs: https://playwright.dev/docs/api/class-page#page-emulate-media
+												forcedColors: forcedColorsFromTheme(theme),
+											});
+											const preview = await workspace.preview.start(page);
+
+											try {
+												await preview.show(componentId);
+												await preview.iframe.takeScreenshot(
+													screenshotFilePath,
+												);
+											} catch (error) {
+												console.error(
+													// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+													chalk.red(
+														`Failed to generate ${testName} screenshot due to an error:`,
+													),
+													error,
+												);
+												throw error;
+											}
+
+											const screenshotDiff =
+												await checkScreenshotDiff(screenshotFilePath);
+
+											if (screenshotDiff) {
+												expect.fail(
+													"Git detected a screenshot diff. Please check the visual diff and commit the changes if appropriate.",
+												);
+											}
+										});
 									}
-								});
-							}
-						}
-					});
+								}
+							});
+						})
+						.catch((error) => {
+							// Handle any errors that occur during the import
+							console.error(
+								"An error occurred while dynamically importing @previewjs/api:",
+								error,
+							);
+						});
 				}
 			});
 		}
@@ -250,6 +277,7 @@ generateTestSuite().then(
 		run();
 	},
 	(error: Error) => {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		console.error(chalk.red(`Test suite generation failed due to an error:`, error.message));
 		throw error;
 	},
