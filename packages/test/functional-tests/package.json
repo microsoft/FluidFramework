@@ -27,7 +27,7 @@
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "mocha --ignore \"dist/test/types/*\" --recursive dist/test --exit -r node_modules/@fluidframework/mocha-test-setup",
+		"test:mocha": "mocha --ignore \"dist/test/types/*\" --recursive dist/test --exit -r node_modules/@fluid-internal/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc"
 	},
@@ -56,6 +56,7 @@
 	},
 	"devDependencies": {
 		"@fluid-experimental/tree": "workspace:~",
+		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/test-dds-utils": "workspace:~",
 		"@fluid-private/test-loader-utils": "workspace:~",
 		"@fluid-tools/build-cli": "^0.34.0",
@@ -70,7 +71,6 @@
 		"@fluidframework/id-compressor": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
-		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/ordered-collection": "workspace:~",
 		"@fluidframework/protocol-definitions": "^3.2.0-237840",
 		"@fluidframework/register-collection": "workspace:~",
