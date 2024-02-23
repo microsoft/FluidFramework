@@ -340,6 +340,9 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     readonly string: TreeNodeSchema<"com.fluidframework.leaf.string", NodeKind.Leaf, string, string>;
 }
 
+// @public
+export type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = `${TScope extends undefined ? "" : `${TScope}.`}${TName}`;
+
 // @public @deprecated
 export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
     [Symbol.iterator](): IterableIterator<[string, any]>;
