@@ -9,7 +9,6 @@ import {
 	ITree,
 	TreeFieldFromImplicitField,
 	TreeView,
-	disposeSymbol,
 	SchemaIncompatible,
 	SharedTree,
 	type ImplicitFieldSchema,
@@ -64,6 +63,20 @@ export abstract class TreeDataObject<
 	}
 
 	public abstract key: string;
+
+	/**
+	 * TreeConfiguration used to initialize new documents, as well as to interpret (schematize) existing ones.
+	 *
+	 * @remarks
+	 * The fact that a single view schema is provided here (on the data object) makes it impossible to try and apply multiple different schema.
+	 * Since the view schema currently does not provide any adapters for handling differences between view and stored schema,
+	 * its also impossible for this single view schema to handle multiple different stored schema.
+	 * Therefor, with this current API, two different applications (or different versions of the same application)
+	 * with differing stored schema requirements (as implied by their view schema) can not collaborate on the same tree.
+	 * The only schema evolution thats currently possible is upgrading the schema to one that supports a superset of what the old schema allowed,
+	 * and collaborating between clients which have view schema that exactly correspond to that stored schema.
+	 * Future work on tree as well as these utilities should address this limitation.
+	 */
 	public abstract config: TreeConfiguration<TSchema>;
 
 	/**
@@ -93,67 +106,49 @@ export abstract class TreeDataObject<
 function TreeViewComponent<TSchema extends ImplicitFieldSchema>({
 	tree,
 	viewComponent,
+	errorComponent,
 }: {
 	tree: TreeDataObject<TSchema>;
 	viewComponent: React.FC<{ root: TreeFieldFromImplicitField<TSchema> }>;
+	errorComponent?: React.FC<{
+		error: SchemaIncompatible;
+		upgradeSchema: () => void;
+	}>;
 }) {
-	const [view, setView] = React.useState<null | TreeView<TreeFieldFromImplicitField<TSchema>>>(
-		null,
-	);
+	const view = tree.tree;
 
 	const [error, setError] = React.useState<null | SchemaIncompatible>(null);
-
 	const [root, setRoot] = React.useState<null | TreeFieldFromImplicitField<TSchema>>(null);
 
 	React.useEffect(() => {
 		let ignore = false;
-		const innerView = tree.tree;
-		// TODO: how to invalidate if schema goes from incompatible -> compatible?
 
 		const update = () => {
 			if (!ignore) {
-				if (tree.tree.error !== undefined) {
-					setError(tree.tree.error);
+				if (view.error !== undefined) {
+					setError(view.error);
 					setRoot(null);
 				} else {
 					setError(null);
-					setRoot(tree.tree.root);
+					setRoot(view.root);
 				}
 			}
 		};
 
 		update();
-		innerView.events.on("rootChanged", update);
-		setView(tree.tree);
+		view.events.on("rootChanged", update);
 
 		return () => {
 			ignore = true;
-			tree.tree?.[disposeSymbol]();
+			// View is owned by tree so its not disposed here.
 		};
-	}, [tree]);
+	}, [view]);
 
 	if (error !== null) {
-		// eslint-disable-next-line unicorn/prefer-ternary
-		if (error.canUpgrade) {
-			return (
-				<div>
-					<div>
-						Document is incompatible with current version of the application, but the
-						document format can be updated. This may prevent other versions of the
-						application from opening this document.
-					</div>
-					<button onClick={() => view?.upgradeSchema()}>Upgrade</button>;
-				</div>
-			);
-		} else {
-			return (
-				<div>
-					Document is incompatible with current version of the application, and the
-					document format cannot be updated. The document is likely from a newer or
-					otherwise incompatible version of the application, or a different application.
-				</div>
-			);
-		}
+		return React.createElement(errorComponent ?? TreeErrorComponent, {
+			error,
+			upgradeSchema: () => view.upgradeSchema(),
+		});
 	}
 
 	if (root === null) {
@@ -161,4 +156,37 @@ function TreeViewComponent<TSchema extends ImplicitFieldSchema>({
 	}
 
 	return React.createElement(viewComponent, { root });
+}
+
+/**
+ * React component which displays schema errors and allows upgrading schema when possible.
+ */
+function TreeErrorComponent({
+	error,
+	upgradeSchema,
+}: {
+	error: SchemaIncompatible;
+	upgradeSchema: () => void;
+}) {
+	// eslint-disable-next-line unicorn/prefer-ternary
+	if (error.canUpgrade) {
+		return (
+			<div>
+				<div>
+					Document is incompatible with current version of the application, but the
+					document format can be updated. This may prevent other versions of the
+					application from opening this document.
+				</div>
+				<button onClick={() => upgradeSchema()}>Upgrade</button>;
+			</div>
+		);
+	} else {
+		return (
+			<div>
+				Document is incompatible with current version of the application, and the document
+				format cannot be updated. The document is likely from a newer or otherwise
+				incompatible version of the application, or a different application.
+			</div>
+		);
+	}
 }
