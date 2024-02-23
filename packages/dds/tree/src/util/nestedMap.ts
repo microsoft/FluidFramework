@@ -41,7 +41,6 @@ export function tryAddToNestedMap<Key1, Key2, Value>(
 
 /**
  * Copies over all entries from the source map into the destination map.
- * By default, does not override any existing values.
  *
  * @internal
  */

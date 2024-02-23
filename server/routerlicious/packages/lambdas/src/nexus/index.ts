@@ -39,7 +39,6 @@ import {
 	getLumberBaseProperties,
 } from "@fluidframework/server-services-telemetry";
 import {
-	ConnectionCountLogger,
 	createRoomJoinMessage,
 	createNackMessage,
 	createRoomLeaveMessage,
@@ -270,8 +269,6 @@ export function configureWebSocketServices(
 		// Timer to check token expiry for this socket connection
 		let expirationTimer: NodeJS.Timer | undefined;
 
-		const connectionCountLogger = new ConnectionCountLogger(process.env.NODE_NAME, cache);
-
 		const hasWriteAccess = (scopes: string[]) => canWrite(scopes) || canSummarize(scopes);
 
 		function isWriter(scopes: string[], mode: ConnectionMode): boolean {
@@ -468,6 +465,7 @@ export function configureWebSocketServices(
 			// Join the room to receive signals.
 			roomMap.set(clientId, room);
 
+<<<<<<< HEAD
 			// Store the supported features for the client
 			supportedFeaturesMap.set(
 				clientId,
@@ -480,6 +478,8 @@ export function configureWebSocketServices(
 				connectionCountLogger.incrementConnectionCount();
 			}
 
+=======
+>>>>>>> main
 			// Iterate over the version ranges provided by the client and select the best one that works
 			const connectVersions = message.versions ? message.versions : ["^0.1.0"];
 			const version = selectProtocolVersion(connectVersions);
@@ -781,10 +781,7 @@ export function configureWebSocketServices(
 					continue;
 				}
 				const messageMetaData = getMessageMetadata(room.documentId, room.tenantId);
-				// excluding summarizer for total client count.
-				if (connectionTimeMap.has(clientId)) {
-					connectionCountLogger.decrementConnectionCount();
-				}
+
 				logger.info(`Disconnect of ${clientId} from room`, { messageMetaData });
 				Lumberjack.info(
 					`Disconnect of ${clientId} from room`,
@@ -1051,7 +1048,7 @@ export function configureWebSocketServices(
 								}
 
 								const sanitizedMessage: IDocumentMessage = sanitizeMessage(message);
-								const sanitizedMessageWithTrace = addAlfredTrace(
+								const sanitizedMessageWithTrace = addNexusMessageTrace(
 									sanitizedMessage,
 									numberOfMessagesPerTrace,
 									connection.clientId,
@@ -1203,7 +1200,7 @@ export function configureWebSocketServices(
 	});
 }
 
-function addAlfredTrace(
+function addNexusMessageTrace(
 	message: IDocumentMessage,
 	numberOfMessagesPerTrace: number,
 	clientId: string,
@@ -1220,7 +1217,7 @@ function addAlfredTrace(
 		}
 		message.traces.push({
 			action: "start",
-			service: "alfred",
+			service: "nexus",
 			timestamp: Date.now(),
 		});
 
@@ -1232,7 +1229,7 @@ function addAlfredTrace(
 			traces: message.traces,
 			opType: message.type,
 		};
-		Lumberjack.info(`Message received by Alfred.`, lumberjackProperties);
+		Lumberjack.info(`Message received by Nexus.`, lumberjackProperties);
 	}
 
 	return message;

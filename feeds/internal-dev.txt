@@ -3,5 +3,6 @@
 @fluid-private/test-end-to-end-tests
 @fluid-private/test-drivers
 @fluid-private/stochastic-test-utils
+@fluid-internal/mocha-test-setup
 @fluid-private/test-loader-utils
 @fluid-private/test-dds-utils

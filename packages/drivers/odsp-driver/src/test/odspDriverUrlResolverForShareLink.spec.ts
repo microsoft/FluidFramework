@@ -13,7 +13,11 @@ import { OdspDriverUrlResolverForShareLink } from "../odspDriverUrlResolverForSh
 import { getHashedDocumentId } from "../odspPublicUtils";
 import { createOdspUrl } from "../createOdspUrl";
 import * as fileLinkImport from "../getFileLink";
-import { getLocatorFromOdspUrl, storeLocatorInOdspUrl } from "../odspFluidFileLink";
+import {
+	getLocatorFromOdspUrl,
+	locatorQueryParamName,
+	storeLocatorInOdspUrl,
+} from "../odspFluidFileLink";
 import { SharingLinkHeader } from "../contractsPublic";
 import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest";
 
@@ -350,6 +354,78 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 			resolvedUrl.shareLinkInfo?.sharingLinkToRedeem,
 			customShareLink,
 			"Nav param should not exist on sharelink",
+		);
+	});
+
+	it("appendLocatorParams - Appends the correct nav param", async () => {
+		const testQueryParam = { name: "query1", value: "q1" };
+		const customShareLink = `${sharelink}?${testQueryParam.name}=${testQueryParam.value}`;
+		const testDataStorePath = "/testpath";
+		const appName = "AppName1";
+		const contextVal = "Context1";
+		const testFileVersion = "123";
+		const containerName = "containerA";
+		const urlResolverForShareLink = new OdspDriverUrlResolverForShareLink(
+			undefined /* tokenFetcher */,
+			undefined /* logger */,
+			appName /* appName */,
+			async (_resolvedUrl, _dataStorePath) => Promise.resolve(contextVal) /* context */,
+		);
+		const resolvedUrl = {
+			siteUrl,
+			driveId,
+			itemId,
+			odspResolvedUrl: true,
+			fileVersion: testFileVersion,
+			codeHint: { containerPackageName: containerName },
+		} as any as IOdspResolvedUrl;
+
+		const resultUrl = new URL(
+			await urlResolverForShareLink.appendLocatorParams(
+				customShareLink,
+				resolvedUrl,
+				testDataStorePath,
+			),
+		);
+
+		const testQueryParamValue = resultUrl.searchParams.get(testQueryParam.name);
+		assert.strictEqual(
+			testQueryParamValue,
+			testQueryParam.value,
+			"original url's query params should be preserved",
+		);
+
+		const locatorParamValue = resultUrl.searchParams.get(locatorQueryParamName);
+		assert(locatorParamValue != null, "locator parameter should exist is the resulting url");
+
+		const decodedLocatorParam = getLocatorFromOdspUrl(resultUrl);
+		assert.strictEqual(decodedLocatorParam?.driveId, driveId, "driveId should be equal");
+		assert.strictEqual(decodedLocatorParam?.itemId, itemId, "itemId should be equal");
+		assert.strictEqual(decodedLocatorParam?.siteUrl, siteUrl, "siteUrl should be equal");
+		assert.strictEqual(
+			decodedLocatorParam?.containerPackageName,
+			containerName,
+			"containerPackageName should be equal",
+		);
+		assert.strictEqual(
+			decodedLocatorParam?.appName,
+			appName,
+			"appName should be as provided to the OdspDriverUrlResolverForShareLink constructor",
+		);
+		assert.strictEqual(
+			decodedLocatorParam?.dataStorePath,
+			testDataStorePath,
+			"dataStore path should be as provided to the appendLocatorParams",
+		);
+		assert.strictEqual(
+			decodedLocatorParam?.fileVersion,
+			testFileVersion,
+			"fileVersion should be equal",
+		);
+		assert.strictEqual(
+			decodedLocatorParam?.context,
+			contextVal,
+			"context value should be as provided to the OdspDriverUrlResolverForShareLink constructor",
 		);
 	});
 });
