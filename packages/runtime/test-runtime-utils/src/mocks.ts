@@ -763,7 +763,7 @@ export class MockFluidDataStoreRuntime
 	}
 
 	/**
-	 * @deprecated - Usage attachState instead
+	 * @deprecated Use `attachState` instead
 	 *
 	 * @privateRemarks Also remove the setter when this is removed. setters don't get their own doc tags.
 	 */
