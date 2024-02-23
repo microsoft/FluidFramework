@@ -365,6 +365,11 @@ describe("SharedTreeCore", () => {
 				return enriched;
 			}
 
+			public isInResubmitPhase: boolean = false;
+			public startResubmitPhase(toResubmit: Iterable<GraphCommit<DefaultChangeset>>): void {
+				throw new Error("Method not implemented.");
+			}
+
 			public readonly sequencingLog: boolean[] = [];
 
 			public commitSequenced(isLocal: boolean): void {

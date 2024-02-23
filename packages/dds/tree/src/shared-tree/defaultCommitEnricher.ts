@@ -68,13 +68,7 @@ export class DefaultCommitEnricher<TChange, TChangeFamily extends ChangeFamily<a
 
 	public enrichCommit(commit: GraphCommit<TChange>, isResubmit: boolean): GraphCommit<TChange> {
 		if (isResubmit) {
-			if (this.resubmitPhase === undefined) {
-				this.resubmitPhase = new ResubmitPhaseStateMachine(
-					this.changeFamily,
-					this.checkoutFactory(),
-					this.inFlight,
-				);
-			}
+			assert(this.resubmitPhase !== undefined, "Invalid resubmit outside of resubmit phase");
 			const updatedCommit = this.resubmitPhase.updateCommit(commit);
 			if (this.resubmitPhase.isComplete) {
 				this.resubmitPhase.dispose();
@@ -93,6 +87,22 @@ export class DefaultCommitEnricher<TChange, TChangeFamily extends ChangeFamily<a
 			this.tip = this.checkoutFactory();
 			return updatedCommit;
 		}
+	}
+
+	public startResubmitPhase(rebased: Iterable<GraphCommit<TChange>>): void {
+		assert(
+			!this.isInResubmitPhase,
+			"Invalid resubmit phase start during incomplete resubmit phase",
+		);
+		this.resubmitPhase = new ResubmitPhaseStateMachine(
+			this.changeFamily,
+			this.checkoutFactory(),
+			rebased,
+		);
+	}
+
+	public get isInResubmitPhase(): boolean {
+		return this.resubmitPhase !== undefined;
 	}
 
 	public commitSequenced(isLocal: boolean): void {
@@ -119,7 +129,7 @@ class ResubmitPhaseStateMachine<TChange, TChangeFamily extends ChangeFamily<any,
 	/**
 	 * The list of commits (from newest to oldest) that need to be resubmitted.
 	 */
-	private readonly queue: GraphCommit<TChange>[] = [];
+	private readonly stack: GraphCommit<TChange>[];
 
 	/**
 	 * The state before the next commit to be updated.
@@ -129,40 +139,40 @@ class ResubmitPhaseStateMachine<TChange, TChangeFamily extends ChangeFamily<any,
 	/**
 	 * @param changeFamily - the change family to associated with the change type.
 	 * @param checkout - a checkout in the local tip state. Owned (and mutated) by this state machine.
-	 * @param commits - the commits that are being resubmitted. Safe to mutate after this constructor terminates.
+	 * @param toResubmit - the commits that are being resubmitted (oldest to newest).
+	 * This must be the most rebased version of these commits (i.e., rebased over all known concurrent edits)
+	 * as opposed to the version which was last submitted.
 	 */
 	public constructor(
 		changeFamily: TChangeFamily,
 		checkout: ChangeEnricherCheckout<TChange>,
-		commits: readonly GraphCommit<TChange>[],
+		toResubmit: Iterable<GraphCommit<TChange>>,
 	) {
-		for (let iCommit = commits.length - 1; iCommit >= 0; iCommit -= 1) {
-			const priorCommit = commits[iCommit];
+		this.stack = Array.from(toResubmit).reverse();
+		for (const commit of this.stack) {
 			// WARNING: it's not currently possible to roll back past a schema change (see AB#7265).
 			// Either we have to make it possible to do so, or this logic will have to change to work
 			// forwards from an earlier fork instead of backwards.
-			const rollback = changeFamily.rebaser.invert(priorCommit, true);
+			const rollback = changeFamily.rebaser.invert(commit, true);
 			checkout.applyTipChange(rollback);
-			this.queue.push(priorCommit);
 		}
 		this.checkout = checkout;
 	}
 
 	public get isComplete(): boolean {
-		return this.queue.length === 0;
+		return this.stack.length === 0;
 	}
 
 	public updateCommit(commit: GraphCommit<TChange>): GraphCommit<TChange> {
-		const oldCommit = this.queue.pop();
+		const oldCommit = this.stack.pop();
 		assert(
 			oldCommit !== undefined,
 			"Invalid call to updateCommit after resubmit phase completion",
 		);
 		assert(
-			commit.revision === oldCommit.revision,
-			"Mismatch between resubmitted commit and original commit",
+			commit === oldCommit,
+			"Mismatch between resubmitted commit and commit passed when starting the resubmit phase",
 		);
-		// Note that we must take care to enrich the new commit since it may be different from the old commit
 		const enriched = this.checkout.updateChangeEnrichments(commit.change, commit.revision);
 		this.checkout.applyTipChange(enriched, commit.revision);
 		return { ...commit, change: enriched };

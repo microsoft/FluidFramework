@@ -287,7 +287,18 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		const {
 			commit: { revision },
 		} = this.messageCodec.decode(content, {});
+
 		const [commit] = this.editManager.findLocalCommit(revision);
+		if (this.commitEnricher !== undefined) {
+			if (!this.commitEnricher.isInResubmitPhase) {
+				const toResubmit = this.editManager.getLocalCommits();
+				assert(
+					commit === toResubmit[0],
+					"Resubmit phase should start with the oldest local commit",
+				);
+				this.commitEnricher.startResubmitPhase(toResubmit);
+			}
+		}
 		this.submitCommit(commit, true);
 	}
 

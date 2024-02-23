@@ -14,9 +14,23 @@ export interface ICommitEnricher<TChange> {
 	 * Assumes that the commit will be submitted.
 	 * @param commit - the commit to enrich.
 	 * @param isResubmit - whether the commit is a resubmission of a previously submitted commit.
+	 * Must be true if and only if `isInResubmitPhase` is true.
 	 * @returns the enriched commit. Possibly the same as the one passed in.
 	 */
 	enrichCommit(commit: GraphCommit<TChange>, isResubmit: boolean): GraphCommit<TChange>;
+
+	/**
+	 * Must be called at the start of a resubmission phase before calling `enrichCommit`.
+	 * @param toResubmit - the commits that will be resubmitted (from oldest to newest).
+	 * This must be the most rebased version of these commits (i.e., rebased over all known concurrent edits)
+	 * as opposed to the version which was last submitted.
+	 */
+	startResubmitPhase(toResubmit: Iterable<GraphCommit<TChange>>): void;
+
+	/**
+	 * Is true iff the commit enricher is currently in a resubmit phase.
+	 */
+	isInResubmitPhase: boolean;
 
 	/**
 	 * Must be called after a sequenced commit is applied.
