@@ -16,7 +16,6 @@ import {
 	TreeFieldFromImplicitField,
 	TreeNodeFromImplicitAllowedTypes,
 	TreeNodeSchema,
-	type TreeNodeSchemaClass,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaTypes.js";
 import {

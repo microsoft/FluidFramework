@@ -146,11 +146,10 @@ export class SchemaFactory<
 
 	private scoped<Name extends TName | string>(
 		name: Name,
-	): TScope extends undefined ? `${Name}` : `${TScope}.${Name}` {
-		// TODO: is this cast really necessary?
+	): `${TScope extends undefined ? "" : `${TScope}.`}${Name}` {
 		return (
 			this.scope === undefined ? `${name}` : `${this.scope}.${name}`
-		) as TScope extends undefined ? `${Name}` : `${TScope}.${Name}`;
+		) as `${TScope extends undefined ? "" : `${TScope}.`}${Name}`;
 	}
 
 	/**
@@ -219,16 +218,16 @@ export class SchemaFactory<
 		t: T,
 		implicitlyConstructable: TImplicitlyConstructable,
 	): TreeNodeSchemaClass<
-		TScope extends undefined ? `${Name}` : `${TScope}.${Name}`,
+		`${TScope extends undefined ? "" : `${TScope}.`}${Name}`,
 		TKind,
-		TreeNode & WithType<TScope extends undefined ? `${Name}` : `${TScope}.${Name}`>,
+		TreeNode & WithType<`${TScope extends undefined ? "" : `${TScope}.`}${Name}`>,
 		FlexTreeNode | unknown,
 		TImplicitlyConstructable
 	> {
 		const identifier = this.scoped(name);
 		class schema
 			extends TreeNode
-			implements WithType<TScope extends undefined ? `${Name}` : `${TScope}.${Name}`>
+			implements WithType<`${TScope extends undefined ? "" : `${TScope}.`}${Name}`>
 		{
 			public static readonly identifier = identifier;
 			public static readonly kind = kind;
@@ -255,7 +254,7 @@ export class SchemaFactory<
 				);
 			}
 
-			public get [type](): TScope extends undefined ? `${Name}` : `${TScope}.${Name}` {
+			public get [type](): `${TScope extends undefined ? "" : `${TScope}.`}${Name}` {
 				return identifier;
 			}
 		}
@@ -292,12 +291,12 @@ export class SchemaFactory<
 		}
 
 		return schema as TreeNodeSchemaClass<
-			TScope extends undefined ? `${Name}` : `${TScope}.${Name}`,
+			`${TScope extends undefined ? "" : `${TScope}.`}${Name}`,
 			NodeKind.Object,
 			object &
 				TreeNode &
 				ObjectFromSchemaRecord<T> &
-				WithType<TScope extends undefined ? `${Name}` : `${TScope}.${Name}`>,
+				WithType<`${TScope extends undefined ? "" : `${TScope}.`}${Name}`>,
 			object & InsertableObjectFromSchemaRecord<T>,
 			true
 		>;
@@ -350,9 +349,9 @@ export class SchemaFactory<
 		name: Name,
 		allowedTypes: T,
 	): TreeNodeSchemaClass<
-		TScope extends undefined ? `${Name}` : `${TScope}.${Name}`,
+		`${TScope extends undefined ? "" : `${TScope}.`}${Name}`,
 		NodeKind.Map,
-		TreeMapNode<T> & WithType<TScope extends undefined ? `${Name}` : `${TScope}.${Name}`>,
+		TreeMapNode<T> & WithType<`${TScope extends undefined ? "" : `${TScope}.`}${Name}`>,
 		ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		true
 	>;
@@ -408,9 +407,9 @@ export class SchemaFactory<
 		customizable: boolean,
 		implicitlyConstructable: ImplicitlyConstructable,
 	): TreeNodeSchemaClass<
-		TScope extends undefined ? `${Name}` : `${TScope}.${Name}`,
+		`${TScope extends undefined ? "" : `${TScope}.`}${Name}`,
 		NodeKind.Map,
-		TreeMapNode<T> & WithType<TScope extends undefined ? `${Name}` : `${TScope}.${Name}`>,
+		TreeMapNode<T> & WithType<`${TScope extends undefined ? "" : `${TScope}.`}${Name}`>,
 		ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		ImplicitlyConstructable
 	> {
@@ -446,9 +445,9 @@ export class SchemaFactory<
 		Object.defineProperties(schema.prototype, mapStaticDispatchMap);
 
 		return schema as unknown as TreeNodeSchemaClass<
-			TScope extends undefined ? `${Name}` : `${TScope}.${Name}`,
+			`${TScope extends undefined ? "" : `${TScope}.`}${Name}`,
 			NodeKind.Map,
-			TreeMapNode<T> & WithType<TScope extends undefined ? `${Name}` : `${TScope}.${Name}`>,
+			TreeMapNode<T> & WithType<`${TScope extends undefined ? "" : `${TScope}.`}${Name}`>,
 			ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 			ImplicitlyConstructable
 		>;
@@ -509,9 +508,9 @@ export class SchemaFactory<
 		name: Name,
 		allowedTypes: T,
 	): TreeNodeSchemaClass<
-		TScope extends undefined ? `${Name}` : `${TScope}.${Name}`,
+		`${TScope extends undefined ? "" : `${TScope}.`}${Name}`,
 		NodeKind.Array,
-		TreeArrayNode<T> & WithType<TScope extends undefined ? `${Name}` : `${TScope}.${Name}`>,
+		TreeArrayNode<T> & WithType<`${TScope extends undefined ? "" : `${TScope}.`}${Name}`>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		true
 	>;
@@ -603,7 +602,7 @@ export class SchemaFactory<
 		Object.defineProperties(schema.prototype, arrayNodePrototypeProperties);
 
 		return schema as unknown as TreeNodeSchemaClass<
-			TScope extends undefined ? `${Name}` : `${TScope}.${Name}`,
+			`${TScope extends undefined ? "" : `${TScope}.`}${Name}`,
 			NodeKind.Array,
 			TreeArrayNode<T> & WithType<`${TScope}.${string}`>,
 			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,

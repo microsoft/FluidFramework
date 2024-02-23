@@ -44,10 +44,10 @@ export class SchemaFactoryRecursive<
 		name: Name,
 		t: T,
 	): TreeNodeSchemaClass<
-		TScope extends undefined ? `${Name}` : `${TScope}.${Name}`,
+		`${TScope extends undefined ? "" : `${TScope}.`}${Name}`,
 		NodeKind.Object,
 		ObjectFromSchemaRecord<T> &
-			WithType<TScope extends undefined ? `${Name}` : `${TScope}.${Name}`>,
+			WithType<`${TScope extends undefined ? "" : `${TScope}.`}${Name}`>,
 		InsertableObjectFromSchemaRecord<T>,
 		true
 	> {
