@@ -33,36 +33,6 @@
 				"default": "./dist/index.js"
 			}
 		},
-		"./beta": {
-			"import": {
-				"types": "./lib/sequence-deprecated-beta.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/sequence-deprecated-beta.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
-		"./alpha": {
-			"import": {
-				"types": "./lib/sequence-deprecated-alpha.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/sequence-deprecated-alpha.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
-		"./fruit": {
-			"import": {
-				"types": "./lib/sequence-deprecated-alpha.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/sequence-deprecated-alpha.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
 		"./internal": {
 			"import": {
 				"types": "./lib/index.d.ts",
@@ -82,7 +52,7 @@
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "api-extractor run --local",
+		"build:docs": "fluid-build . --task api",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:genver": "gen-version",
 		"build:test": "npm run build:test:cjs && npm run build:test:esm",
