@@ -465,21 +465,12 @@ export function configureWebSocketServices(
 			// Join the room to receive signals.
 			roomMap.set(clientId, room);
 
-<<<<<<< HEAD
 			// Store the supported features for the client
 			supportedFeaturesMap.set(
 				clientId,
 				message.supportedFeatures ? message.supportedFeatures : {},
 			);
 
-			// increment connection count after the client is added to the room.
-			// excluding summarizer for total client count.
-			if (!isSummarizer) {
-				connectionCountLogger.incrementConnectionCount();
-			}
-
-=======
->>>>>>> main
 			// Iterate over the version ranges provided by the client and select the best one that works
 			const connectVersions = message.versions ? message.versions : ["^0.1.0"];
 			const version = selectProtocolVersion(connectVersions);
