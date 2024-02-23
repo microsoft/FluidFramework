@@ -53,6 +53,12 @@ export class DefaultCommitEnricher<TChange, TChangeFamily extends ChangeFamily<a
 	 */
 	private latestInFlightCommitWithStaleEnrichments: number = -1;
 
+	/**
+	 * When defined, the session is going through a resubmit phase.
+	 * Used to manage the enrichment of resubmitted commits.
+	 */
+	private resubmitPhase?: ResubmitPhaseStateMachine<TChange, TChangeFamily>;
+
 	public constructor(
 		private readonly changeFamily: TChangeFamily,
 		private readonly checkoutFactory: () => ChangeEnricherCheckout<TChange>,
@@ -62,50 +68,30 @@ export class DefaultCommitEnricher<TChange, TChangeFamily extends ChangeFamily<a
 
 	public enrichCommit(commit: GraphCommit<TChange>, isResubmit: boolean): GraphCommit<TChange> {
 		if (isResubmit) {
-			const firstRefresheeIndex = this.inFlight.findIndex(
-				(c) => c.revision === commit.revision,
-			);
-			assert(firstRefresheeIndex !== -1, "Expected resubmitted commit to be in flight");
-			const firstRefreshee = this.inFlight[firstRefresheeIndex];
-
-			// None of the commits on the in-flight commits have stale enrichments
-			if (this.latestInFlightCommitWithStaleEnrichments === -1) {
-				return firstRefreshee;
+			if (this.resubmitPhase === undefined) {
+				this.resubmitPhase = new ResubmitPhaseStateMachine(
+					this.changeFamily,
+					this.checkoutFactory(),
+					this.inFlight,
+				);
 			}
-
-			// In the resubmit case, we update the refreshers on all stale in-flight commits.
-			// This means that when there are commits with stale enrichments in a resubmit case,
-			// we should always be asked to update the refreshers on the oldest in-flight commit.
-			assert(firstRefresheeIndex === 0, "Unexpected ordering of enrichment calls");
-
-			const fork = this.checkoutFactory();
-			for (let iCommit = this.inFlight.length - 1; iCommit >= 0; iCommit -= 1) {
-				const priorCommit = this.inFlight[iCommit];
-				// WARNING: it's not currently possible to roll back past a schema change (see AB#7265).
-				// Either we have to make it possible to do so, or this logic will have to change to work
-				// forwards from an earlier fork instead of backwards.
-				const rollback = this.changeFamily.rebaser.invert(priorCommit, true);
-				fork.applyTipChange(rollback);
-				if (iCommit <= this.latestInFlightCommitWithStaleEnrichments) {
-					const refreshed = fork.updateChangeEnrichments(
-						priorCommit.change,
-						priorCommit.revision,
-					);
-					this.inFlight[iCommit] = { ...priorCommit, change: refreshed };
-				}
+			const updatedCommit = this.resubmitPhase.updateCommit(commit);
+			if (this.resubmitPhase.isComplete) {
+				this.resubmitPhase.dispose();
+				delete this.resubmitPhase;
 			}
-			fork.dispose();
-
-			// All rebased in-flight commits have now been refreshed
-			this.latestInFlightCommitWithStaleEnrichments = -1;
-			return this.inFlight[0];
+			return updatedCommit;
 		} else {
-			const enriched = this.tip.updateChangeEnrichments(commit.change, commit.revision);
-			const enrichedCommit = { ...commit, change: enriched };
-			this.inFlight.push(enrichedCommit);
+			assert(
+				this.resubmitPhase === undefined,
+				"Invalid enrichment call during incomplete resubmit phase",
+			);
+			const updatedChange = this.tip.updateChangeEnrichments(commit.change, commit.revision);
+			const updatedCommit = { ...commit, change: updatedChange };
+			this.inFlight.push(updatedCommit);
 			this.tip.dispose();
 			this.tip = this.checkoutFactory();
-			return enrichedCommit;
+			return updatedCommit;
 		}
 	}
 
@@ -123,5 +109,66 @@ export class DefaultCommitEnricher<TChange, TChangeFamily extends ChangeFamily<a
 			this.tip.dispose();
 			this.tip = this.checkoutFactory();
 		}
+	}
+}
+
+/**
+ * A helper class that keeps track of the progression of a resubmit phase.
+ */
+class ResubmitPhaseStateMachine<TChange, TChangeFamily extends ChangeFamily<any, TChange>> {
+	/**
+	 * The list of commits (from newest to oldest) that need to be resubmitted.
+	 */
+	private readonly queue: GraphCommit<TChange>[] = [];
+
+	/**
+	 * The state before the next commit to be updated.
+	 */
+	private readonly checkout: ChangeEnricherCheckout<TChange>;
+
+	/**
+	 * @param changeFamily - the change family to associated with the change type.
+	 * @param checkout - a checkout in the local tip state. Owned (and mutated) by this state machine.
+	 * @param commits - the commits that are being resubmitted. Safe to mutate after this constructor terminates.
+	 */
+	public constructor(
+		changeFamily: TChangeFamily,
+		checkout: ChangeEnricherCheckout<TChange>,
+		commits: readonly GraphCommit<TChange>[],
+	) {
+		for (let iCommit = commits.length - 1; iCommit >= 0; iCommit -= 1) {
+			const priorCommit = commits[iCommit];
+			// WARNING: it's not currently possible to roll back past a schema change (see AB#7265).
+			// Either we have to make it possible to do so, or this logic will have to change to work
+			// forwards from an earlier fork instead of backwards.
+			const rollback = changeFamily.rebaser.invert(priorCommit, true);
+			checkout.applyTipChange(rollback);
+			this.queue.push(priorCommit);
+		}
+		this.checkout = checkout;
+	}
+
+	public get isComplete(): boolean {
+		return this.queue.length === 0;
+	}
+
+	public updateCommit(commit: GraphCommit<TChange>): GraphCommit<TChange> {
+		const oldCommit = this.queue.pop();
+		assert(
+			oldCommit !== undefined,
+			"Invalid call to updateCommit after resubmit phase completion",
+		);
+		assert(
+			commit.revision === oldCommit.revision,
+			"Mismatch between resubmitted commit and original commit",
+		);
+		// Note that we must take care to enrich the new commit since it may be different from the old commit
+		const enriched = this.checkout.updateChangeEnrichments(commit.change, commit.revision);
+		this.checkout.applyTipChange(enriched, commit.revision);
+		return { ...commit, change: enriched };
+	}
+
+	public dispose(): void {
+		this.checkout.dispose();
 	}
 }
