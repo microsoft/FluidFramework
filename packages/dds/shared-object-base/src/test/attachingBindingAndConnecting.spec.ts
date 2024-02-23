@@ -5,465 +5,502 @@
 
 import { strict as assert } from "assert";
 import {
-	MockFluidDataStoreRuntime,
-	MockContainerRuntimeFactory,
-	MockContainerRuntimeFactoryForReconnection,
-	MockContainerRuntimeForReconnection,
-	MockSharedObjectServices,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+	IChannelStorageService,
+	type IChannelAttributes,
+	type IFluidDataStoreRuntime,
+	type IFluidDataStoreRuntimeEvents,
+	IChannelServices,
+	IDeltaConnection,
+} from "@fluidframework/datastore-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import {
+	ISummaryTreeWithStats,
+	type IExperimentalIncrementalSummaryContext,
+	type ITelemetryContext,
+} from "@fluidframework/runtime-definitions";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { Ink } from "../ink";
-import { InkFactory } from "../inkFactory";
-import { IPen } from "../interfaces";
+import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
+import { IFluidSerializer } from "../serializer";
+import { SharedObject } from "../sharedObject";
 
-describe("Ink", () => {
-	let ink: Ink;
-	let dataStoreRuntime: MockFluidDataStoreRuntime;
-	let pen: IPen;
+type Overridable<T> = T extends ((...args: any) => any) | string | number | undefined | []
+	? T
+	: {
+			-readonly [P in keyof T]?: Overridable<T[P]>;
+	  };
 
-	beforeEach("createInk", async () => {
-		dataStoreRuntime = new MockFluidDataStoreRuntime();
-		ink = new Ink(dataStoreRuntime, "ink", InkFactory.Attributes);
+function createOverridableProxy<T extends object>(name: string, ...overrides: Overridable<T>[]) {
+	return new Proxy<T>({} as any as T, {
+		get: (_, p, r) => {
+			for (const override of overrides) {
+				if (p in override) {
+					return Reflect.get(override, p, r);
+				}
+			}
+			assert.fail(`No override for ${name}.${p.toString()}`);
+		},
+	});
+}
+
+function createTestSharedObject(
+	overrides: Overridable<{
+		id: string;
+		runtime: IFluidDataStoreRuntime;
+		attributes: IChannelAttributes;
+		telemetryConfigPrefix: string;
+		summarizeCore: (
+			this: SharedObject,
+			serializer: IFluidSerializer,
+			telemetryContext?: ITelemetryContext | undefined,
+			incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
+		) => ISummaryTreeWithStats;
+		loadCore: (this: SharedObject, services: IChannelStorageService) => Promise<void>;
+		processCore: (
+			this: SharedObject,
+
+			message: ISequencedDocumentMessage,
+			local: boolean,
+			localOpMetadata: unknown,
+		) => void;
+		onDisconnect: (this: SharedObject) => void;
+		applyStashedOp: (this: SharedObject, content: any) => unknown;
+		didAttach: () => void;
+	}>,
+) {
+	class TestSharedObject extends SharedObject {
+		protected summarizeCore = overrides?.summarizeCore?.bind(this);
+		protected loadCore = overrides?.loadCore?.bind(this);
+		protected processCore = overrides?.processCore?.bind(this);
+		protected onDisconnect = overrides?.onDisconnect?.bind(this);
+		protected applyStashedOp = overrides?.applyStashedOp?.bind(this);
+		protected didAttach =
+			overrides.didAttach?.bind(this) ?? (() => assert.fail("didAttach not set"));
+	}
+
+	const runtime = overrides?.runtime ?? {};
+	runtime.channelsRoutingContext ??= {
+		absolutePath: "/",
+		attachGraph: () => {},
+		get IFluidHandleContext() {
+			return this;
+		},
+		isAttached: false,
+		resolveHandle: async () => ({ status: 500, mimeType: "error", value: "error" }),
+	};
+	runtime.IFluidHandleContext ??= runtime.channelsRoutingContext;
+
+	runtime.logger ??= createChildLogger();
+
+	const attributes = overrides?.attributes ?? {};
+
+	attributes.type ??= "TestSharedObject";
+
+	return {
+		overrides,
+		sharedObject: new TestSharedObject(
+			overrides?.id ?? "testSharedObject",
+			createOverridableProxy<IFluidDataStoreRuntime>(
+				"runtime",
+				runtime,
+				new TypedEventEmitter<IFluidDataStoreRuntimeEvents>() as any as Overridable<IFluidDataStoreRuntime>,
+			),
+			createOverridableProxy<IChannelAttributes>("attributes", attributes),
+			overrides?.telemetryConfigPrefix ?? "testSharedObject",
+		),
+	};
+}
+
+/**
+ * The attach state of a shared object is determined by two facts:
+ *
+ * * Is it bound to a context which means its handle is stored in an already bound dds
+ * * Is the runtime attached
+ *
+ * If both of these are true, then the dds should be considered attached.
+ *
+ * Beyond attach, there is also the connected state, and the didAttach method.
+ * The connected state should always be false while detached, and didAttach should only be called once when the dds transitions.
+ *
+ * These tests valid these properties across all the functions that can cause attach state transitions
+ */
+describe("SharedObject attaching binding and connecting", () => {
+	const runtimeAttachStateAndConnectedMatrix = generatePairwiseOptions({
+		connected: [true, false],
+		attachState: [AttachState.Detached, AttachState.Attaching, AttachState.Attached],
 	});
 
-	describe("Ink in local state", () => {
-		beforeEach("setupInkInLocalState", async () => {
-			dataStoreRuntime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
-			ink = new Ink(dataStoreRuntime, "ink", InkFactory.Attributes);
-			pen = {
-				color: { r: 0, g: 161 / 255, b: 241 / 255, a: 0 },
-				thickness: 7,
-			};
-		});
+	describe("shared object after creation", () => {
+		runtimeAttachStateAndConnectedMatrix.forEach(({ connected, attachState }) =>
+			it(`!isAttached and !connected with runtime ${JSON.stringify({
+				connected,
+				attachState,
+			})}`, () => {
+				const { sharedObject } = createTestSharedObject({
+					runtime: {
+						attachState,
+						connected,
+					},
+				});
 
-		it("Can create Ink", () => {
-			assert.ok(ink, "Could not create ink");
-		});
+				assert.strictEqual(sharedObject.isAttached(), false, "!isAttached");
+				assert.strictEqual(sharedObject.connected, false, "!connected");
+			}),
+		);
 
-		it("Can create / get a stroke", () => {
-			const strokeId = ink.createStroke(pen).id;
+		it("!isAttached with detached transition to attach runtime", () => {
+			const runtimeEvents = new TypedEventEmitter<IFluidDataStoreRuntimeEvents>();
 
-			const stroke = ink.getStroke(strokeId);
-			assert.ok(stroke, "Could not retrieve the stroke");
-			assert.equal(stroke.id, strokeId, "The stroke's id is incorrect");
-			assert.deepEqual(stroke.pen, pen, "The stroke's pen is incorrect");
-		});
-
-		it("Can create / get multiple strokes", () => {
-			const strokeId1 = ink.createStroke(pen).id;
-			const strokeId2 = ink.createStroke(pen).id;
-
-			const strokes = ink.getStrokes();
-			assert.equal(strokes.length, 2, "There should be two strokes");
-			assert.deepEqual(strokes[0].id, strokeId1, "The first stroke's id is incorrect");
-			assert.deepEqual(strokes[0].pen, pen, "The first stroke's pen is incorrect");
-			assert.deepEqual(strokes[1].id, strokeId2, "The second stroke's id is incorrect");
-			assert.deepEqual(strokes[1].pen, pen, "The second stroke's pen is incorrect");
-		});
-
-		it("Can append a point to a stroke", () => {
-			const strokeId = ink.createStroke(pen).id;
-			// Append a point to the stroke.
-			const inkPoint = {
-				x: 10,
-				y: 10,
-				time: Date.now(),
-				pressure: 10,
-			};
-			ink.appendPointToStroke(inkPoint, strokeId);
-
-			// Get the stroked and verify it has the correct point.
-			const stroke = ink.getStroke(strokeId);
-			assert.equal(stroke.points.length, 1, "There should be only one point in the stroke");
-			assert.deepEqual(stroke.points[0], inkPoint, "The ink point is incorrect");
-		});
-
-		it("Can clear a stroke", () => {
-			const strokeId = ink.createStroke(pen).id;
-			assert.ok(ink.getStroke(strokeId), "Could not retrieve the stroke");
-
-			// Clear the stroke.
-			ink.clear();
-			assert.equal(ink.getStroke(strokeId), undefined, "The stroke should have been cleared");
-		});
-
-		it("can load an Ink from snapshot", async () => {
-			const strokeId = ink.createStroke(pen).id;
-			// Append a point to the stroke.
-			const inkPoint = {
-				x: 10,
-				y: 10,
-				time: Date.now(),
-				pressure: 10,
-			};
-			ink.appendPointToStroke(inkPoint, strokeId);
-
-			// Load a new Ink from the snapshot of the first one.
-			const services = MockSharedObjectServices.createFromSummary(
-				ink.getAttachSummary().summary,
-			);
-			const ink2 = new Ink(dataStoreRuntime, "ink2", InkFactory.Attributes);
-			await ink2.load(services);
-
-			// Verify that the new Ink has the stroke and the point.
-			const stroke = ink2.getStroke(strokeId);
-			assert.equal(stroke.points.length, 1, "There should be only one point in the stroke");
-			assert.deepEqual(stroke.points[0], inkPoint, "The ink point is incorrect");
-		});
-
-		describe("Ink op processing in local state", () => {
-			it("should correctly process operations sent in local state", async () => {
-				// Create a stroke in local state.
-				const strokeId = ink.createStroke(pen).id;
-
-				// Load a new Ink in connected state from the snapshot of the first one.
-				const containerRuntimeFactory = new MockContainerRuntimeFactory();
-				const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-				const services2 = MockSharedObjectServices.createFromSummary(
-					ink.getAttachSummary().summary,
-				);
-				services2.deltaConnection = dataStoreRuntime2.createDeltaConnection();
-
-				const ink2 = new Ink(dataStoreRuntime2, "ink2", InkFactory.Attributes);
-				await ink2.load(services2);
-
-				// Now connect the first Ink
-				dataStoreRuntime.setAttachState(AttachState.Attached);
-				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-				const services1 = {
-					deltaConnection: dataStoreRuntime.createDeltaConnection(),
-					objectStorage: new MockStorage(undefined),
-				};
-				ink.connect(services1);
-
-				// Verify that both the inks have the stroke.
-				assert.ok(ink.getStroke(strokeId), "The first ink does not have the stroke");
-				assert.ok(ink2.getStroke(strokeId), "The second ink does not have the stroke");
-
-				// Add a point to the stroke in the second ink.
-				const inkPoint = {
-					x: 10,
-					y: 10,
-					time: Date.now(),
-					pressure: 10,
-				};
-				ink2.appendPointToStroke(inkPoint, strokeId);
-
-				// Process the message.
-				containerRuntimeFactory.processAllMessages();
-
-				// Verify that both the inks have the added point.
-				const points1 = ink.getStroke(strokeId).points;
-				assert.equal(points1.length, 1, "There should be only one point in the stroke");
-				assert.deepEqual(points1[0], inkPoint, "The ink point is incorrect");
-
-				const points2 = ink2.getStroke(strokeId).points;
-				assert.equal(
-					points2.length,
-					1,
-					"There should be only one point in the stroke in remote client",
-				);
-				assert.deepEqual(
-					points2[0],
-					inkPoint,
-					"The ink point is incorrect in remote client",
-				);
+			let didAttach = 0;
+			const { overrides, sharedObject } = createTestSharedObject({
+				runtime: {
+					...(runtimeEvents as any as Overridable<IFluidDataStoreRuntime>),
+					attachState: AttachState.Detached,
+				},
+				didAttach: () => didAttach++,
 			});
+
+			assert.strictEqual(didAttach, 0, "!didAttach");
+			assert.strictEqual(sharedObject.isAttached(), false, "!isAttached");
+
+			assert(overrides.runtime);
+			overrides.runtime.attachState = AttachState.Attaching;
+			runtimeEvents.emit("attaching");
+			overrides.runtime.attachState = AttachState.Attached;
+
+			assert.strictEqual(sharedObject.isAttached(), false, "!isAttached");
+			assert.strictEqual(didAttach, 0, "!didAttach");
 		});
 	});
 
-	describe("Ink in connected state with a remote Ink", () => {
-		let ink2: Ink;
-		let containerRuntimeFactory: MockContainerRuntimeFactory;
+	describe("shared object after load", () => {
+		runtimeAttachStateAndConnectedMatrix.forEach(({ connected, attachState }) =>
+			it(`With runtime ${JSON.stringify({
+				connected,
+				attachState,
+			})}`, async () => {
+				let loaded = false;
+				let didAttach = 0;
+				const { sharedObject } = createTestSharedObject({
+					runtime: {
+						attachState,
+						connected,
+					},
+					loadCore: async () => {
+						loaded = true;
+					},
+					didAttach: () => didAttach++,
+				});
 
-		beforeEach("createConnectedInks", () => {
-			containerRuntimeFactory = new MockContainerRuntimeFactory();
+				let attachCalled = false;
+				await sharedObject.load(
+					createOverridableProxy<IChannelServices>("services", {
+						objectStorage: createOverridableProxy("objectStorage"),
+						deltaConnection: createOverridableProxy<IDeltaConnection>(
+							"deltaConnection",
+							{
+								attach(handler) {
+									attachCalled = true;
+								},
+								connected,
+							},
+						),
+					}),
+				);
 
-			// Connect the first Ink.
-			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-			const services1 = {
-				deltaConnection: dataStoreRuntime.createDeltaConnection(),
-				objectStorage: new MockStorage(),
-			};
-			ink.connect(services1);
+				assert.strictEqual(loaded, true, "loaded");
+				assert.strictEqual(attachCalled, true, "attachCalled");
+				assert.strictEqual(didAttach, sharedObject.isAttached() ? 1 : 0, "didAttach");
 
-			// Create and connect a second Ink.
-			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-			const services2 = {
-				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
-				objectStorage: new MockStorage(),
-			};
+				assert.strictEqual(
+					sharedObject.isAttached(),
+					attachState !== AttachState.Detached,
+					"isAttached",
+				);
+				assert.strictEqual(
+					sharedObject.connected,
+					connected && sharedObject.isAttached(),
+					"connected",
+				);
+			}),
+		);
 
-			ink2 = new Ink(dataStoreRuntime2, "ink2", InkFactory.Attributes);
-			ink2.connect(services2);
-		});
+		it("isAttached with detached transition to attach runtime", async () => {
+			const runtimeEvents = new TypedEventEmitter<IFluidDataStoreRuntimeEvents>();
 
-		it("Can create / get a stroke", () => {
-			// Create a stroke in the first ink.
-			const strokeId = ink.createStroke(pen).id;
+			let didAttach = 0;
+			let loaded = false;
+			const { overrides, sharedObject } = createTestSharedObject({
+				runtime: {
+					...(runtimeEvents as any as Overridable<IFluidDataStoreRuntime>),
+					attachState: AttachState.Detached,
+					connected: true,
+				},
+				didAttach: () => didAttach++,
+				loadCore: async () => {
+					loaded = true;
+				},
+			});
 
-			// Process the messages.
-			containerRuntimeFactory.processAllMessages();
-
-			// Verify that the first ink has the correct stroke.
-			const stroke1 = ink.getStroke(strokeId);
-			assert.ok(stroke1, "Could not retrieve the stroke");
-			assert.equal(stroke1.id, strokeId, "The stroke's id is incorrect");
-			assert.deepEqual(stroke1.pen, pen, "The stroke's pen is incorrect");
-
-			// Verify that the remote ink has the correct stroke.
-			const stroke2 = ink2.getStroke(strokeId);
-			assert.ok(stroke2, "Could not retrieve the stroke in remote client");
-			assert.equal(stroke2.id, strokeId, "The stroke's id is incorrect in remote client");
-			assert.deepEqual(stroke2.pen, pen, "The stroke's pen is incorrect in remote client");
-		});
-
-		it("Can create / get multiple strokes", () => {
-			// Create multiple stroked in the first ink.
-			const stroke1Id = ink.createStroke(pen).id;
-			const stroke2Id = ink.createStroke(pen).id;
-
-			// Process the messages.
-			containerRuntimeFactory.processAllMessages();
-
-			// Verify that the first ink has the correct strokes.
-			const strokes1 = ink.getStrokes();
-			assert.equal(strokes1.length, 2, "There should be two strokes");
-			assert.deepEqual(strokes1[0].id, stroke1Id, "The first stroke's id is incorrect");
-			assert.deepEqual(strokes1[0].pen, pen, "The first stroke's pen is incorrect");
-			assert.deepEqual(strokes1[1].id, stroke2Id, "The second stroke's id is incorrect");
-			assert.deepEqual(strokes1[1].pen, pen, "The second stroke's pen is incorrect");
-
-			// Verify that the remote ink has the correct strokes.
-			const strokes2 = ink2.getStrokes();
-			assert.equal(strokes2.length, 2, "There should be two strokes in remote client");
-			assert.deepEqual(
-				strokes2[0].id,
-				stroke1Id,
-				"The first stroke's id is incorrect in remote client",
+			await sharedObject.load(
+				createOverridableProxy<IChannelServices>("services", {
+					objectStorage: createOverridableProxy("objectStorage"),
+					deltaConnection: createOverridableProxy<IDeltaConnection>("deltaConnection", {
+						attach(handler) {},
+						connected: overrides.runtime?.connected ?? false,
+					}),
+				}),
 			);
-			assert.deepEqual(
-				strokes2[0].pen,
-				pen,
-				"The first stroke's pen is incorrect in remote client",
-			);
-			assert.deepEqual(
-				strokes2[1].id,
-				stroke2Id,
-				"The second stroke's id is incorrect in remote client",
-			);
-			assert.deepEqual(
-				strokes2[1].pen,
-				pen,
-				"The second stroke's pen is incorrect in remote client",
-			);
-		});
 
-		it("Can append multiple points to a stroke", () => {
-			// Create a stroke and append couple of points in the first ink.
-			const strokeId = ink.createStroke(pen).id;
-			const inkPoint1 = {
-				x: 10,
-				y: 10,
-				time: Date.now(),
-				pressure: 10,
-			};
-			const inkPoint2 = {
-				x: 20,
-				y: 20,
-				time: Date.now(),
-				pressure: 20,
-			};
-			ink.appendPointToStroke(inkPoint1, strokeId);
-			ink.appendPointToStroke(inkPoint2, strokeId);
+			assert.strictEqual(didAttach, 0, "!didAttach");
+			assert.strictEqual(loaded, true, "loaded");
+			assert.strictEqual(sharedObject.isAttached(), false, "!isAttached");
 
-			// Process the messages.
-			containerRuntimeFactory.processAllMessages();
+			assert(overrides.runtime);
+			overrides.runtime.attachState = AttachState.Attaching;
+			runtimeEvents.emit("attaching");
+			overrides.runtime.attachState = AttachState.Attached;
 
-			// Verify that the first ink has the correct stroke with both the points.
-			const stroke1 = ink.getStroke(strokeId);
-			assert.equal(stroke1.points.length, 2, "There should be two points in the stroke");
-			assert.deepEqual(stroke1.points[0], inkPoint1, "The first ink point is incorrect");
-			assert.deepEqual(stroke1.points[1], inkPoint2, "The second ink point is incorrect");
-
-			// Verify that the remote ink has the correct stroke with both the points.
-			const stroke2 = ink2.getStroke(strokeId);
-			assert.equal(
-				stroke2.points.length,
-				2,
-				"There should be two points in the stroke in remote client",
-			);
-			assert.deepEqual(
-				stroke2.points[0],
-				inkPoint1,
-				"The first ink point is incorrect in remote client",
-			);
-			assert.deepEqual(
-				stroke2.points[0],
-				inkPoint1,
-				"The second ink point is incorrect in remote client",
-			);
-		});
-
-		it("Can clear a stroke", () => {
-			// Create a stroke in the first ink.
-			const strokeId = ink.createStroke(pen).id;
-
-			// Process the messages.
-			containerRuntimeFactory.processAllMessages();
-
-			// Verify that both the inks have the stroke.
-			assert.ok(ink.getStroke(strokeId), "Could not retrieve the stroke");
-			assert.ok(ink2.getStroke(strokeId), "Could not retrieve the stroke in remote client");
-
-			// Clear the stroke.
-			ink.clear();
-
-			// Process the messages.
-			containerRuntimeFactory.processAllMessages();
-
-			// Verify that the stroke is cleared from both the inks.
-			assert.equal(ink.getStroke(strokeId), undefined, "The stroke should have been cleared");
-			assert.equal(
-				ink2.getStroke(strokeId),
-				undefined,
-				"The stroke should have been cleared in remote client",
-			);
+			assert.strictEqual(sharedObject.isAttached(), true, "isAttached");
+			assert.strictEqual(didAttach, 1, "didAttach");
 		});
 	});
 
-	describe("Ink reconnection flow", () => {
-		let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
-		let containerRuntime1: MockContainerRuntimeForReconnection;
-		let containerRuntime2: MockContainerRuntimeForReconnection;
-		let ink2: Ink;
+	describe("shared object after connect", () => {
+		runtimeAttachStateAndConnectedMatrix.forEach(({ connected, attachState }) =>
+			it(`With runtime ${JSON.stringify({
+				connected,
+				attachState,
+			})}`, async () => {
+				let didAttach = 0;
+				const { sharedObject } = createTestSharedObject({
+					runtime: {
+						attachState,
+						connected,
+					},
+					didAttach: () => didAttach++,
+				});
 
-		beforeEach("createConnectedInks", () => {
-			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+				let attachCalled = false;
+				sharedObject.connect(
+					createOverridableProxy<IChannelServices>("services", {
+						objectStorage: createOverridableProxy("objectStorage"),
+						deltaConnection: createOverridableProxy<IDeltaConnection>(
+							"deltaConnection",
+							{
+								attach(handler) {
+									attachCalled = true;
+								},
+								connected,
+							},
+						),
+					}),
+				);
 
-			// Connect the first Ink.
-			containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-			const services1 = {
-				deltaConnection: dataStoreRuntime.createDeltaConnection(),
-				objectStorage: new MockStorage(),
-			};
-			ink.connect(services1);
+				assert.strictEqual(attachCalled, true, "attachCalled");
+				assert.strictEqual(didAttach, sharedObject.isAttached() ? 1 : 0, "didAttach");
 
-			// Create and connect a second Ink.
-			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-			containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-			const services2 = {
-				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
-				objectStorage: new MockStorage(),
-			};
+				assert.strictEqual(
+					sharedObject.isAttached(),
+					attachState !== AttachState.Detached,
+					"isAttached",
+				);
+				assert.strictEqual(
+					sharedObject.connected,
+					connected && sharedObject.isAttached(),
+					"connected",
+				);
+			}),
+		);
 
-			ink2 = new Ink(dataStoreRuntime2, "ink2", InkFactory.Attributes);
-			ink2.connect(services2);
+		it("isAttached with detached transition to attach runtime", async () => {
+			const runtimeEvents = new TypedEventEmitter<IFluidDataStoreRuntimeEvents>();
+
+			let didAttach = 0;
+			const { overrides, sharedObject } = createTestSharedObject({
+				runtime: {
+					...(runtimeEvents as any as Overridable<IFluidDataStoreRuntime>),
+					attachState: AttachState.Detached,
+					connected: true,
+				},
+				didAttach: () => didAttach++,
+			});
+
+			sharedObject.connect(
+				createOverridableProxy<IChannelServices>("services", {
+					objectStorage: createOverridableProxy("objectStorage"),
+					deltaConnection: createOverridableProxy<IDeltaConnection>("deltaConnection", {
+						attach(handler) {},
+						connected: overrides.runtime?.connected ?? false,
+					}),
+				}),
+			);
+
+			assert.strictEqual(didAttach, 0, "!didAttach");
+
+			assert.strictEqual(sharedObject.isAttached(), false, "!isAttached");
+
+			assert(overrides.runtime);
+			overrides.runtime.attachState = AttachState.Attaching;
+			runtimeEvents.emit("attaching");
+			overrides.runtime.attachState = AttachState.Attached;
+
+			assert.strictEqual(sharedObject.isAttached(), true, "isAttached");
+			assert.strictEqual(didAttach, 1, "didAttach");
 		});
+	});
 
-		it("can resend unacked ops on reconnection", async () => {
-			// Create a stroke in the first ink.
-			const strokeId = ink.createStroke(pen).id;
+	describe("shared object after load and connect", () => {
+		runtimeAttachStateAndConnectedMatrix.forEach(({ connected, attachState }) =>
+			it(`With runtime ${JSON.stringify({
+				connected,
+				attachState,
+			})}`, async () => {
+				let loaded = false;
+				let didAttach = 0;
+				const { sharedObject } = createTestSharedObject({
+					runtime: {
+						attachState,
+						connected,
+					},
+					didAttach: () => didAttach++,
+					loadCore: async () => {
+						loaded = true;
+					},
+				});
 
-			// Disconnect and reconnect the first client.
-			containerRuntime1.connected = false;
-			containerRuntime1.connected = true;
+				let attachCalled = false;
+				await sharedObject.load(
+					createOverridableProxy<IChannelServices>("services", {
+						objectStorage: createOverridableProxy("objectStorage"),
+						deltaConnection: createOverridableProxy<IDeltaConnection>(
+							"deltaConnection",
+							{
+								attach(handler) {
+									attachCalled = true;
+								},
+								connected,
+							},
+						),
+					}),
+				);
 
-			// Process the messages.
-			containerRuntimeFactory.processAllMessages();
+				assert.strictEqual(loaded, true, "loaded");
+				assert.strictEqual(attachCalled, true, "attachCalled");
+				assert.strictEqual(didAttach, sharedObject.isAttached() ? 1 : 0, "didAttach");
 
-			// Verify that the stroke is present in both the client.
-			assert.ok(ink.getStroke(strokeId), "The local client does not have the stroke");
-			assert.ok(ink2.getStroke(strokeId), "The remote client does not have the stroke");
+				sharedObject.connect(createOverridableProxy<IChannelServices>("services"));
 
-			// Add a point to the stroke in the second ink.
-			const inkPoint = {
-				x: 10,
-				y: 10,
-				time: Date.now(),
-				pressure: 10,
-			};
-			ink2.appendPointToStroke(inkPoint, strokeId);
+				assert.strictEqual(
+					sharedObject.isAttached(),
+					attachState !== AttachState.Detached,
+					"isAttached",
+				);
+				assert.strictEqual(
+					sharedObject.connected,
+					connected && sharedObject.isAttached(),
+					"connected",
+				);
+			}),
+		);
+	});
 
-			// Disconnect and reconnect the second client.
-			containerRuntime2.connected = false;
-			containerRuntime2.connected = true;
+	describe("shared object after bindToContext", () => {
+		runtimeAttachStateAndConnectedMatrix.forEach(({ connected, attachState }) =>
+			it(`With runtime ${JSON.stringify({
+				connected,
+				attachState,
+			})}`, async () => {
+				let didAttach = 0;
+				let attachCalled = false;
+				const { sharedObject } = createTestSharedObject({
+					runtime: {
+						attachState,
+						connected,
+						bindChannel: (channel) => {
+							assert.strictEqual(channel, sharedObject, "channel");
+							// real bind to context calls connect, so simulate here
+							sharedObject.connect(
+								createOverridableProxy<IChannelServices>("services", {
+									objectStorage: createOverridableProxy("objectStorage"),
+									deltaConnection: createOverridableProxy<IDeltaConnection>(
+										"deltaConnection",
+										{
+											attach(handler) {
+												attachCalled = true;
+											},
+											connected,
+										},
+									),
+								}),
+							);
+						},
+					},
+					didAttach: () => didAttach++,
+				});
 
-			// Process the messages.
-			containerRuntimeFactory.processAllMessages();
+				sharedObject.bindToContext();
+				assert.strictEqual(didAttach, sharedObject.isAttached() ? 1 : 0, "didAttach");
+				assert.strictEqual(attachCalled, true, "attachCalled");
 
-			// Verify that both the inks have the added point.
-			const points1 = ink.getStroke(strokeId).points;
-			assert.equal(
-				points1.length,
-				1,
-				"There should be only one point in the stroke in first client",
-			);
-			assert.deepEqual(points1[0], inkPoint, "The ink point is incorrect in first client");
+				assert.strictEqual(
+					sharedObject.isAttached(),
+					attachState !== AttachState.Detached,
+					"isAttached",
+				);
+				assert.strictEqual(
+					sharedObject.connected,
+					connected && sharedObject.isAttached(),
+					"connected",
+				);
+			}),
+		);
 
-			const points2 = ink2.getStroke(strokeId).points;
-			assert.equal(
-				points2.length,
-				1,
-				"There should be only one point in the stroke in second client",
-			);
-			assert.deepEqual(points2[0], inkPoint, "The ink point is incorrect in second client");
-		});
+		it("isAttached with detached transition to attach runtime", async () => {
+			const runtimeEvents = new TypedEventEmitter<IFluidDataStoreRuntimeEvents>();
+			let didAttach = 0;
+			let attachCalled = false;
+			const { overrides, sharedObject } = createTestSharedObject({
+				runtime: {
+					...(runtimeEvents as any),
+					attachState: AttachState.Detached,
+					connected: false,
+					bindChannel: (channel) => {
+						assert.strictEqual(channel, sharedObject, "channel");
+						// real bind to context calls connect, so simulate here
+						sharedObject.connect(
+							createOverridableProxy<IChannelServices>("services", {
+								objectStorage: createOverridableProxy("objectStorage"),
+								deltaConnection: createOverridableProxy<IDeltaConnection>(
+									"deltaConnection",
+									{
+										attach(handler) {
+											attachCalled = true;
+										},
+										connected: false,
+									},
+								),
+							}),
+						);
+					},
+				},
+				didAttach: () => didAttach++,
+			});
 
-		it("can store ops in disconnected state and resend them on reconnection", async () => {
-			// Disconnect the first client.
-			containerRuntime1.connected = false;
+			sharedObject.bindToContext();
 
-			// Create a stroke in the first ink.
-			const strokeId = ink.createStroke(pen).id;
+			assert.strictEqual(didAttach, 0, "!didAttach");
+			assert.strictEqual(attachCalled, true, "attachCalled");
+			assert.strictEqual(sharedObject.isAttached(), false, "!isAttached");
 
-			// Reconnect the first client.
-			containerRuntime1.connected = true;
+			assert(overrides.runtime);
+			overrides.runtime.attachState = AttachState.Attaching;
+			runtimeEvents.emit("attaching");
+			overrides.runtime.attachState = AttachState.Attached;
 
-			// Process the messages.
-			containerRuntimeFactory.processAllMessages();
-
-			// Verify that the stroke is present in both the client.
-			assert.ok(ink.getStroke(strokeId), "The local client does not have the stroke");
-			assert.ok(ink2.getStroke(strokeId), "The remote client does not have the stroke");
-
-			// Disconnect the second client.
-			containerRuntime2.connected = false;
-
-			// Add a point to the stroke in the second ink.
-			const inkPoint = {
-				x: 10,
-				y: 10,
-				time: Date.now(),
-				pressure: 10,
-			};
-			ink2.appendPointToStroke(inkPoint, strokeId);
-
-			// Reconnect the second client.
-			containerRuntime2.connected = true;
-
-			// Process the messages.
-			containerRuntimeFactory.processAllMessages();
-
-			// Verify that both the inks have the added point.
-			const points1 = ink.getStroke(strokeId).points;
-			assert.equal(
-				points1.length,
-				1,
-				"There should be only one point in the stroke in first client",
-			);
-			assert.deepEqual(points1[0], inkPoint, "The ink point is incorrect in first client");
-
-			const points2 = ink2.getStroke(strokeId).points;
-			assert.equal(
-				points2.length,
-				1,
-				"There should be only one point in the stroke in second client",
-			);
-			assert.deepEqual(points2[0], inkPoint, "The ink point is incorrect in second client");
+			assert.strictEqual(didAttach, 1, "didAttach");
+			assert.strictEqual(sharedObject.isAttached(), true, "isAttached");
 		});
 	});
 });

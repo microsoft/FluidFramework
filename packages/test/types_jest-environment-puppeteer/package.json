@@ -13,6 +13,7 @@
 	"author": "Microsoft and contributors",
 	"main": "",
 	"types": "index.d.ts",
+	"scripts": {},
 	"devDependencies": {
 		"jest-environment-puppeteer": "^9.0.2"
 	}

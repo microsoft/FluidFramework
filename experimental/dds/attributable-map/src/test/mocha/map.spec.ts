@@ -390,6 +390,7 @@ describe("Map", () => {
 				await map2.load(services2);
 
 				// Now connect the first SharedMap
+				dataStoreRuntime1.local = false;
 				const containerRuntime1 =
 					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 				const services1 = {

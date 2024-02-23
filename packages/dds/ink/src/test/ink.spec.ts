@@ -12,7 +12,6 @@ import {
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { AttachState } from "@fluidframework/container-definitions";
 import { Ink } from "../ink";
 import { InkFactory } from "../inkFactory";
 import { IPen } from "../interfaces";
@@ -28,9 +27,8 @@ describe("Ink", () => {
 	});
 
 	describe("Ink in local state", () => {
-		beforeEach("setupInkInLocalState", async () => {
-			dataStoreRuntime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
-			ink = new Ink(dataStoreRuntime, "ink", InkFactory.Attributes);
+		beforeEach("setupInkInLocalState", () => {
+			dataStoreRuntime.local = true;
 			pen = {
 				color: { r: 0, g: 161 / 255, b: 241 / 255, a: 0 },
 				thickness: 7,
@@ -111,66 +109,65 @@ describe("Ink", () => {
 			assert.equal(stroke.points.length, 1, "There should be only one point in the stroke");
 			assert.deepEqual(stroke.points[0], inkPoint, "The ink point is incorrect");
 		});
+	});
 
-		describe("Ink op processing in local state", () => {
-			it("should correctly process operations sent in local state", async () => {
-				// Create a stroke in local state.
-				const strokeId = ink.createStroke(pen).id;
+	describe("Ink op processing in local state", () => {
+		it("should correctly process operations sent in local state", async () => {
+			// Set the data store runtime to local.
+			dataStoreRuntime.local = true;
 
-				// Load a new Ink in connected state from the snapshot of the first one.
-				const containerRuntimeFactory = new MockContainerRuntimeFactory();
-				const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-				const services2 = MockSharedObjectServices.createFromSummary(
-					ink.getAttachSummary().summary,
-				);
-				services2.deltaConnection = dataStoreRuntime2.createDeltaConnection();
+			// Create a stroke in local state.
+			const strokeId = ink.createStroke(pen).id;
 
-				const ink2 = new Ink(dataStoreRuntime2, "ink2", InkFactory.Attributes);
-				await ink2.load(services2);
+			// Load a new Ink in connected state from the snapshot of the first one.
+			const containerRuntimeFactory = new MockContainerRuntimeFactory();
+			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+			const services2 = MockSharedObjectServices.createFromSummary(
+				ink.getAttachSummary().summary,
+			);
+			services2.deltaConnection = dataStoreRuntime2.createDeltaConnection();
 
-				// Now connect the first Ink
-				dataStoreRuntime.setAttachState(AttachState.Attached);
-				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-				const services1 = {
-					deltaConnection: dataStoreRuntime.createDeltaConnection(),
-					objectStorage: new MockStorage(undefined),
-				};
-				ink.connect(services1);
+			const ink2 = new Ink(dataStoreRuntime2, "ink2", InkFactory.Attributes);
+			await ink2.load(services2);
 
-				// Verify that both the inks have the stroke.
-				assert.ok(ink.getStroke(strokeId), "The first ink does not have the stroke");
-				assert.ok(ink2.getStroke(strokeId), "The second ink does not have the stroke");
+			// Now connect the first Ink
+			dataStoreRuntime.local = false;
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+			const services1 = {
+				deltaConnection: dataStoreRuntime.createDeltaConnection(),
+				objectStorage: new MockStorage(undefined),
+			};
+			ink.connect(services1);
 
-				// Add a point to the stroke in the second ink.
-				const inkPoint = {
-					x: 10,
-					y: 10,
-					time: Date.now(),
-					pressure: 10,
-				};
-				ink2.appendPointToStroke(inkPoint, strokeId);
+			// Verify that both the inks have the stroke.
+			assert.ok(ink.getStroke(strokeId), "The first ink does not have the stroke");
+			assert.ok(ink2.getStroke(strokeId), "The second ink does not have the stroke");
 
-				// Process the message.
-				containerRuntimeFactory.processAllMessages();
+			// Add a point to the stroke in the second ink.
+			const inkPoint = {
+				x: 10,
+				y: 10,
+				time: Date.now(),
+				pressure: 10,
+			};
+			ink2.appendPointToStroke(inkPoint, strokeId);
 
-				// Verify that both the inks have the added point.
-				const points1 = ink.getStroke(strokeId).points;
-				assert.equal(points1.length, 1, "There should be only one point in the stroke");
-				assert.deepEqual(points1[0], inkPoint, "The ink point is incorrect");
+			// Process the message.
+			containerRuntimeFactory.processAllMessages();
 
-				const points2 = ink2.getStroke(strokeId).points;
-				assert.equal(
-					points2.length,
-					1,
-					"There should be only one point in the stroke in remote client",
-				);
-				assert.deepEqual(
-					points2[0],
-					inkPoint,
-					"The ink point is incorrect in remote client",
-				);
-			});
+			// Verify that both the inks have the added point.
+			const points1 = ink.getStroke(strokeId).points;
+			assert.equal(points1.length, 1, "There should be only one point in the stroke");
+			assert.deepEqual(points1[0], inkPoint, "The ink point is incorrect");
+
+			const points2 = ink2.getStroke(strokeId).points;
+			assert.equal(
+				points2.length,
+				1,
+				"There should be only one point in the stroke in remote client",
+			);
+			assert.deepEqual(points2[0], inkPoint, "The ink point is incorrect in remote client");
 		});
 	});
 
@@ -182,6 +179,7 @@ describe("Ink", () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 			// Connect the first Ink.
+			dataStoreRuntime.local = false;
 			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 			const services1 = {
 				deltaConnection: dataStoreRuntime.createDeltaConnection(),
@@ -345,6 +343,7 @@ describe("Ink", () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
 			// Connect the first Ink.
+			dataStoreRuntime.local = false;
 			containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 			const services1 = {
 				deltaConnection: dataStoreRuntime.createDeltaConnection(),
