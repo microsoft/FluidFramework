@@ -31,6 +31,10 @@ export interface Tagged<V, T extends string = string> {
  * @public
  */
 export interface ITelemetryBaseProperties {
+	/**
+	 * Properties of a telemetry event. They are string-indexed, and their values restricted to a known set of
+	 * types (optionally "wrapped" with {@link Tagged}).
+	 */
 	[index: string]: TelemetryBaseEventPropertyType | Tagged<TelemetryBaseEventPropertyType>;
 }
 

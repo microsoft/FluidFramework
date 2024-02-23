@@ -422,7 +422,6 @@ export interface ITelemetryBaseLogger {
 
 // @public
 export interface ITelemetryBaseProperties {
-    // (undocumented)
     [index: string]: TelemetryBaseEventPropertyType | Tagged<TelemetryBaseEventPropertyType>;
 }
 
