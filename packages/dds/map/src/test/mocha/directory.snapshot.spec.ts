@@ -135,10 +135,10 @@ describe("SharedDirectory Snapshot Tests", () => {
 	// Set up the directory path for reading/writing snapshots and generate tests
 	assert(__dirname.match(/dist[/\\]test[/\\]mocha$/));
 	const testScenarios = generateTestScenarios();
-	const { useSnapshotDirectory, takeSnapshot } = createSnapshotSuite(
-		path.resolve(__dirname, `../../../src/test/mocha/snapshots/directory/`),
+	const { useSnapshotSubdirectory, takeSnapshot } = createSnapshotSuite(
+		path.resolve(__dirname, `../../../src/test/mocha/snapshots/`),
 	);
-	useSnapshotDirectory();
+	useSnapshotSubdirectory("directory");
 
 	for (const {
 		name,
