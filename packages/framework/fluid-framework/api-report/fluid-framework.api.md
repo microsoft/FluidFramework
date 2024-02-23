@@ -346,7 +346,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     readonly [Symbol.toStringTag]: string;
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // (undocumented)
-    protected applyStashedOp(content: unknown): unknown;
+    protected applyStashedOp(content: unknown): void;
     clear(): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedMap;
     delete(key: string): boolean;

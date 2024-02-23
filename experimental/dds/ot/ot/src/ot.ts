@@ -169,7 +169,7 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
 		return this.local;
 	}
 
-	protected applyStashedOp() {
+	protected applyStashedOp(): void {
 		throw new Error("not implemented");
 	}
 }
