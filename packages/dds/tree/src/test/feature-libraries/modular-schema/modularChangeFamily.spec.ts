@@ -692,6 +692,86 @@ describe("ModularChangeFamily", () => {
 
 			assert.deepEqual(composed, expected);
 		});
+
+		it("refreshers", () => {
+			const change1: TaggedChange<ModularChangeset> = tagChange(
+				{
+					fieldChanges: new Map([]),
+					refreshers: new Map([
+						[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])],
+					]),
+				},
+				tag1,
+			);
+
+			const change2: TaggedChange<ModularChangeset> = tagChange(
+				{
+					fieldChanges: new Map([]),
+					refreshers: new Map([
+						[undefined, new Map([[brand(2), treeChunkFromCursor(node1)]])],
+						[tag3, new Map([[brand(2), treeChunkFromCursor(node1)]])],
+					]),
+					revisions: [{ revision: tag2 }],
+				},
+				undefined,
+			);
+
+			deepFreeze(change1);
+			deepFreeze(change2);
+			const composed = family.compose([change1, change2]);
+
+			const expected: ModularChangeset = {
+				fieldChanges: new Map(),
+				refreshers: new Map([
+					[undefined, new Map([[brand(2), treeChunkFromCursor(node1)]])],
+					[
+						tag3,
+						new Map([
+							[brand(0), treeChunkFromCursor(node1)],
+							[brand(2), treeChunkFromCursor(node1)],
+						]),
+					],
+				]),
+				revisions: [{ revision: tag1 }, { revision: tag2 }],
+			};
+
+			assert.deepEqual(composed, expected);
+		});
+
+		it("refreshers with the same detached node id", () => {
+			const change1: TaggedChange<ModularChangeset> = tagChange(
+				{
+					fieldChanges: new Map([]),
+					refreshers: new Map([
+						[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])],
+					]),
+				},
+				tag1,
+			);
+
+			const change2: TaggedChange<ModularChangeset> = tagChange(
+				{
+					fieldChanges: new Map([]),
+					refreshers: new Map([
+						[tag3, new Map([[brand(0), treeChunkFromCursor(objectNode)]])],
+					]),
+					revisions: [{ revision: tag2 }],
+				},
+				undefined,
+			);
+
+			deepFreeze(change1);
+			deepFreeze(change2);
+			const composed = family.compose([change1, change2]);
+
+			const expected: ModularChangeset = {
+				fieldChanges: new Map(),
+				refreshers: new Map([[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])]]),
+				revisions: [{ revision: tag1 }, { revision: tag2 }],
+			};
+
+			assert.deepEqual(composed, expected);
+		});
 	});
 
 	describe("invert", () => {

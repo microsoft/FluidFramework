@@ -284,7 +284,10 @@ export class ModularChangeFamily
 			}
 		}
 
-		const { allBuilds, allDestroys } = composeBuildsAndDestroys([change1, change2]);
+		const { allBuilds, allDestroys, allRefreshers } = composeBuildsDestroysAndRefreshers([
+			change1,
+			change2,
+		]);
 
 		return makeModularChangeset(
 			this.pruneFieldMap(composedFields),
@@ -293,6 +296,7 @@ export class ModularChangeFamily
 			undefined,
 			allBuilds,
 			allDestroys,
+			allRefreshers,
 		);
 	}
 
@@ -652,6 +656,7 @@ export class ModularChangeFamily
 			constraintState.violationCount,
 			change.builds,
 			change.destroys,
+			change.refreshers,
 		);
 	}
 
@@ -876,9 +881,10 @@ export class ModularChangeFamily
 	}
 }
 
-function composeBuildsAndDestroys(changes: TaggedChange<ModularChangeset>[]) {
+function composeBuildsDestroysAndRefreshers(changes: TaggedChange<ModularChangeset>[]) {
 	const allBuilds: ChangeAtomIdMap<TreeChunk> = new Map();
 	const allDestroys: ChangeAtomIdMap<number> = new Map();
+	const allRefreshers: ChangeAtomIdMap<TreeChunk> = new Map();
 	for (const taggedChange of changes) {
 		const revision = revisionFromTaggedChange(taggedChange);
 		const change = taggedChange.change;
@@ -947,8 +953,12 @@ function composeBuildsAndDestroys(changes: TaggedChange<ModularChangeset>[]) {
 				}
 			}
 		}
+		// add all refreshers while preferring earlier ones
+		if (change.refreshers) {
+			populateNestedMap(change.refreshers, allRefreshers, false);
+		}
 	}
-	return { allBuilds, allDestroys };
+	return { allBuilds, allDestroys, allRefreshers };
 }
 
 function invertBuilds(
