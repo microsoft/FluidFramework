@@ -421,7 +421,6 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     attachGraph(): void;
     // (undocumented)
     get attachState(): AttachState;
-    set attachState(value: AttachState);
     // (undocumented)
     bind(handle: IFluidHandle): void;
     // (undocumented)

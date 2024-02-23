@@ -675,7 +675,7 @@ describe("Directory", () => {
 				await directory2.load(services2);
 
 				// Now connect the first SharedDirectory
-				dataStoreRuntime.attachState = AttachState.Attached;
+				dataStoreRuntime.setAttachState(AttachState.Attached);
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 				const services1 = {
 					deltaConnection: dataStoreRuntime.createDeltaConnection(),
@@ -818,7 +818,7 @@ describe("Directory", () => {
 				await directory2.load(services2);
 
 				// Now connect the first SharedDirectory
-				dataStoreRuntime.attachState = AttachState.Attached;
+				dataStoreRuntime.setAttachState(AttachState.Attached);
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 				const services1 = {
 					deltaConnection: dataStoreRuntime.createDeltaConnection(),
@@ -881,7 +881,7 @@ describe("Directory", () => {
 				await directory2.load(services2);
 
 				// Now connect the first SharedDirectory
-				dataStoreRuntime.attachState = AttachState.Attached;
+				dataStoreRuntime.setAttachState(AttachState.Attached);
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 				const services1 = {
 					deltaConnection: dataStoreRuntime.createDeltaConnection(),

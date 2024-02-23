@@ -373,7 +373,7 @@ describe("Map", () => {
 				await map2.load(services2);
 
 				// Now connect the first SharedMap
-				dataStoreRuntime1.attachState = AttachState.Attached;
+				dataStoreRuntime1.setAttachState(AttachState.Attached);
 				const containerRuntime1 =
 					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 				const services1 = {

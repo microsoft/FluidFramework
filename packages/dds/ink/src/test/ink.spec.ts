@@ -130,7 +130,7 @@ describe("Ink", () => {
 				await ink2.load(services2);
 
 				// Now connect the first Ink
-				dataStoreRuntime.attachState = AttachState.Attached;
+				dataStoreRuntime.setAttachState(AttachState.Attached);
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 				const services1 = {
 					deltaConnection: dataStoreRuntime.createDeltaConnection(),

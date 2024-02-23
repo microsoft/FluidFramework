@@ -768,7 +768,7 @@ export class MockFluidDataStoreRuntime
 	 * @privateRemarks Also remove the setter when this is removed. setters don't get their own doc tags.
 	 */
 	public get local(): boolean {
-		return this.isAttached;
+		return !this.isAttached;
 	}
 	public set local(local: boolean) {
 		// this does not validate attach state orders, or fire events to maintain
@@ -802,34 +802,9 @@ export class MockFluidDataStoreRuntime
 	public get attachState(): AttachState {
 		return this._attachState;
 	}
-	public set attachState(value: AttachState) {
-		if (value !== this._attachState) {
-			const valueState = attachStatesToComparableNumbers[value];
-			const currentState = attachStatesToComparableNumbers[this._attachState];
-			if (valueState < currentState) {
-				throw new Error(`cannot transition back to ${value} from ${this.attachState}`);
-			}
-
-			if (
-				currentState < attachStatesToComparableNumbers[AttachState.Attaching] &&
-				valueState >= attachStatesToComparableNumbers[AttachState.Attaching]
-			) {
-				this._attachState = AttachState.Attaching;
-				this.emit("attaching");
-			}
-
-			if (
-				currentState < attachStatesToComparableNumbers[AttachState.Attached] &&
-				valueState >= attachStatesToComparableNumbers[AttachState.Attached]
-			) {
-				this._attachState = AttachState.Attached;
-				this.emit("attached");
-			}
-		}
-	}
 
 	public get visibilityState(): VisibilityState {
-		return this.isAttached ? VisibilityState.NotVisible : VisibilityState.GloballyVisible;
+		return this.isAttached ? VisibilityState.GloballyVisible : VisibilityState.NotVisible;
 	}
 
 	public bindChannel(channel: IChannel): void {
@@ -972,7 +947,31 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
-		return;
+		if (attachState !== this._attachState) {
+			const proposedState = attachStatesToComparableNumbers[attachState];
+			const currentState = attachStatesToComparableNumbers[this._attachState];
+			if (proposedState < currentState) {
+				throw new Error(
+					`cannot transition back to ${attachState} from ${this.attachState}`,
+				);
+			}
+
+			if (
+				currentState < attachStatesToComparableNumbers[AttachState.Attaching] &&
+				proposedState >= attachStatesToComparableNumbers[AttachState.Attaching]
+			) {
+				this._attachState = AttachState.Attaching;
+				this.emit("attaching");
+			}
+
+			if (
+				currentState < attachStatesToComparableNumbers[AttachState.Attached] &&
+				proposedState >= attachStatesToComparableNumbers[AttachState.Attached]
+			) {
+				this._attachState = AttachState.Attached;
+				this.emit("attached");
+			}
+		}
 	}
 
 	public async waitAttached(): Promise<void> {

@@ -9,1143 +9,461 @@ import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
+	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { AttachState, ReadOnlyInfo } from "@fluidframework/container-definitions";
-import { TaskManager } from "../taskManager";
-import { TaskManagerFactory } from "../taskManagerFactory";
-import { ITaskManager } from "../interfaces";
+import { AttachState } from "@fluidframework/container-definitions";
+import { Ink } from "../ink";
+import { InkFactory } from "../inkFactory";
+import { IPen } from "../interfaces";
 
-function createConnectedTaskManager(id: string, runtimeFactory: MockContainerRuntimeFactory) {
-	// Create and connect a TaskManager.
-	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	runtimeFactory.createContainerRuntime(dataStoreRuntime);
-	const services = {
-		deltaConnection: dataStoreRuntime.createDeltaConnection(),
-		objectStorage: new MockStorage(),
-	};
+describe("Ink", () => {
+	let ink: Ink;
+	let dataStoreRuntime: MockFluidDataStoreRuntime;
+	let pen: IPen;
 
-	const taskManager = new TaskManager(id, dataStoreRuntime, TaskManagerFactory.Attributes);
-	taskManager.connect(services);
-	return taskManager;
-}
+	beforeEach("createInk", async () => {
+		dataStoreRuntime = new MockFluidDataStoreRuntime();
+		ink = new Ink(dataStoreRuntime, "ink", InkFactory.Attributes);
+	});
 
-function createDetachedTaskManager(
-	id: string,
-	runtimeFactory: MockContainerRuntimeFactory,
-): { taskManager: TaskManager; attach: () => Promise<void> } {
-	// Create a detached TaskManager.
-	const dataStoreRuntime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
-	runtimeFactory.createContainerRuntime(dataStoreRuntime);
-	const clientId = dataStoreRuntime.clientId;
-
-	const taskManager = new TaskManager(id, dataStoreRuntime, TaskManagerFactory.Attributes);
-	const attach = async () => {
-		const services = {
-			deltaConnection: dataStoreRuntime.createDeltaConnection(),
-			objectStorage: new MockStorage(),
-		};
-
-		// Manually trigger a summarize (should be done automatically when attaching normally)
-		await taskManager.summarize();
-
-		dataStoreRuntime.attachState = AttachState.Attached;
-		taskManager.connect(services);
-
-		// Ensure clientId is set after attach (might be forced undefined in some tests)
-		dataStoreRuntime.clientId = clientId;
-
-		dataStoreRuntime.emit("attaching");
-		dataStoreRuntime.emit("attached");
-	};
-
-	return { taskManager, attach };
-}
-
-describe("TaskManager", () => {
-	describe("Connected state", () => {
-		let taskManager1: ITaskManager;
-		let taskManager2: ITaskManager;
-		let containerRuntimeFactory: MockContainerRuntimeFactory;
-
-		beforeEach(() => {
-			containerRuntimeFactory = new MockContainerRuntimeFactory();
-			taskManager1 = createConnectedTaskManager("taskManager1", containerRuntimeFactory);
-			taskManager2 = createConnectedTaskManager("taskManager2", containerRuntimeFactory);
+	describe("Ink in local state", () => {
+		beforeEach("setupInkInLocalState", async () => {
+			dataStoreRuntime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
+			ink = new Ink(dataStoreRuntime, "ink", InkFactory.Attributes);
+			pen = {
+				color: { r: 0, g: 161 / 255, b: 241 / 255, a: 0 },
+				thickness: 7,
+			};
 		});
 
-		it("Can create a connected TaskManager", () => {
-			assert.ok(taskManager1, "Could not create a task manager");
-			assert.ok(taskManager1.isAttached(), "TaskManager should be attached");
-			assert.ok((taskManager1 as TaskManager).connected, "TaskManager should be connected");
+		it("Can create Ink", () => {
+			assert.ok(ink, "Could not create ink");
 		});
 
-		describe("Volunteering for a task", () => {
-			it("Can volunteer for a task", async () => {
-				const taskId = "taskId";
-				const volunteerTaskP = taskManager1.volunteerForTask(taskId);
-				assert.ok(taskManager1.queued(taskId), "Should be queued");
-				assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
-				containerRuntimeFactory.processAllMessages();
-				const isAssigned = await volunteerTaskP;
-				assert.ok(isAssigned, "Should resolve true");
-				assert.ok(taskManager1.queued(taskId), "Should be queued");
-				assert.ok(taskManager1.assigned(taskId), "Should be assigned");
-			});
+		it("Can create / get a stroke", () => {
+			const strokeId = ink.createStroke(pen).id;
 
-			it("Can wait for a task", async () => {
-				const taskId = "taskId";
-				const volunteerTaskP1 = taskManager1.volunteerForTask(taskId);
-				const volunteerTaskP2 = taskManager2.volunteerForTask(taskId);
-
-				assert.ok(taskManager1.queued(taskId), "Task manager 1 should be queued");
-				assert.ok(!taskManager1.assigned(taskId), "Task manager 1 should not be assigned");
-				assert.ok(taskManager2.queued(taskId), "Task manager 2 should be queued");
-				assert.ok(!taskManager2.assigned(taskId), "Task manager 2 should not be assigned");
-
-				containerRuntimeFactory.processAllMessages();
-				const isAssigned1 = await volunteerTaskP1;
-				assert.ok(isAssigned1, "Should resolve true");
-
-				assert.ok(taskManager1.queued(taskId), "Task manager 1 should be queued");
-				assert.ok(taskManager1.assigned(taskId), "Task manager 1 should be assigned");
-				assert.ok(taskManager2.queued(taskId), "Task manager 2 should be queued");
-				assert.ok(!taskManager2.assigned(taskId), "Task manager 2 should not be assigned");
-
-				taskManager1.abandon(taskId);
-				containerRuntimeFactory.processAllMessages();
-				const isAssigned2 = await volunteerTaskP2;
-				assert.ok(isAssigned2, "Should resolve true");
-
-				assert.ok(!taskManager1.queued(taskId), "Task manager 1 should be queued");
-				assert.ok(!taskManager1.assigned(taskId), "Task manager 1 should not be assigned");
-				assert.ok(taskManager2.queued(taskId), "Task manager 2 should be queued");
-				assert.ok(taskManager2.assigned(taskId), "Task manager 2 should not be assigned");
-			});
-
-			it("Rejects the promise if abandon before ack", async () => {
-				const taskId = "taskId";
-				const volunteerTaskP = taskManager1.volunteerForTask(taskId);
-				taskManager1.abandon(taskId);
-				// Will reject due to exiting the queue without first acquiring task
-				// Promise should be settled already prior to processing messages
-				await assert.rejects(volunteerTaskP);
-				containerRuntimeFactory.processAllMessages();
-				assert.ok(!taskManager1.queued(taskId), "Should not be queued");
-				assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
-			});
-
-			it("Rejects the promise if abandon after ack but before acquire", async () => {
-				const taskId = "taskId";
-				const volunteerTaskP1 = taskManager1.volunteerForTask(taskId);
-				const volunteerTaskP2 = taskManager2.volunteerForTask(taskId);
-
-				assert.ok(taskManager1.queued(taskId), "Task manager 1 should be queued");
-				assert.ok(!taskManager1.assigned(taskId), "Task manager 1 should not be assigned");
-				assert.ok(taskManager2.queued(taskId), "Task manager 2 should be queued");
-				assert.ok(!taskManager2.assigned(taskId), "Task manager 2 should not be assigned");
-
-				containerRuntimeFactory.processAllMessages();
-				const isAssigned = await volunteerTaskP1;
-				assert.ok(isAssigned, "Should resolve true");
-
-				assert.ok(taskManager1.queued(taskId), "Task manager 1 should be queued");
-				assert.ok(taskManager1.assigned(taskId), "Task manager 1 should be assigned");
-				assert.ok(taskManager2.queued(taskId), "Task manager 2 should be queued");
-				assert.ok(!taskManager2.assigned(taskId), "Task manager 2 should not be assigned");
-
-				taskManager2.abandon(taskId);
-				// Will reject due to exiting the queue without first acquiring task
-				// Promise should be settled already prior to processing messages
-				await assert.rejects(volunteerTaskP2);
-				containerRuntimeFactory.processAllMessages();
-				assert.ok(!taskManager2.queued(taskId), "Should not be queued");
-				assert.ok(!taskManager2.assigned(taskId), "Should not be assigned");
-			});
-
-			it("Can abandon and immediately attempt to reacquire a task", async () => {
-				const taskId = "taskId";
-				const volunteerTaskP = taskManager1.volunteerForTask(taskId);
-				assert.ok(taskManager1.queued(taskId), "Should be queued");
-				assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
-				containerRuntimeFactory.processAllMessages();
-				const isAssigned = await volunteerTaskP;
-				assert.ok(isAssigned, "Should resolve true");
-				assert.ok(taskManager1.queued(taskId), "Should be queued");
-				assert.ok(taskManager1.assigned(taskId), "Should be assigned");
-
-				taskManager1.abandon(taskId);
-				assert.ok(!taskManager1.queued(taskId), "Should not be queued");
-				assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
-				const revolunteerTaskP = taskManager1.volunteerForTask(taskId);
-				assert.ok(taskManager1.queued(taskId), "Should be queued");
-				assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
-				containerRuntimeFactory.processAllMessages();
-				const isAssigned2 = await revolunteerTaskP;
-				assert.ok(isAssigned2, "Should resolve true");
-				assert.ok(taskManager1.queued(taskId), "Should be queued");
-				assert.ok(taskManager1.assigned(taskId), "Should be assigned");
-			});
-
-			it("Can attempt to volunteer for task twice and abandon twice (after ack)", async () => {
-				const taskId = "taskId";
-				const volunteerTaskP1 = taskManager1.volunteerForTask(taskId);
-				assert.ok(taskManager1.queued(taskId), "Should be queued");
-				assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
-				containerRuntimeFactory.processAllMessages();
-				const isAssigned1 = await volunteerTaskP1;
-				assert.ok(isAssigned1, "Should resolve true");
-				assert.ok(taskManager1.queued(taskId), "Should be queued");
-				assert.ok(taskManager1.assigned(taskId), "Should be assigned");
-
-				const volunteerTaskP2 = taskManager1.volunteerForTask(taskId);
-				assert.ok(taskManager1.queued(taskId), "Should be queued");
-				assert.ok(taskManager1.assigned(taskId), "Should be assigned");
-				containerRuntimeFactory.processAllMessages();
-				const isAssigned2 = await volunteerTaskP2;
-				assert.ok(isAssigned2, "Should resolve true");
-				assert.ok(taskManager1.queued(taskId), "Should be queued");
-				assert.ok(taskManager1.assigned(taskId), "Should be assigned");
-
-				taskManager1.abandon(taskId);
-				assert.ok(!taskManager1.queued(taskId), "Should not be queued");
-				assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
-				containerRuntimeFactory.processAllMessages();
-				assert.ok(!taskManager1.queued(taskId), "Should not be queued");
-				assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
-
-				taskManager1.abandon(taskId);
-				assert.ok(!taskManager1.queued(taskId), "Should not be queued");
-				assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
-				containerRuntimeFactory.processAllMessages();
-				assert.ok(!taskManager1.queued(taskId), "Should not be queued");
-				assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
-			});
-
-			it("Can attempt to lock task twice and abandon twice (before ack)", async () => {
-				const taskId = "taskId";
-				const volunteerTaskP1 = taskManager1.volunteerForTask(taskId);
-				assert.ok(taskManager1.queued(taskId), "Should be queued");
-				assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
-
-				const volunteerTaskP2 = taskManager1.volunteerForTask(taskId);
-				assert.ok(taskManager1.queued(taskId), "Should be queued");
-				assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
-				containerRuntimeFactory.processAllMessages();
-				const isAssigned1 = await volunteerTaskP1;
-				assert.ok(isAssigned1, "Should resolve true");
-				const isAssigned2 = await volunteerTaskP2;
-				assert.ok(isAssigned2, "Should resolve true");
-				assert.ok(taskManager1.queued(taskId), "Should be queued");
-				assert.ok(taskManager1.assigned(taskId), "Should be assigned");
-
-				taskManager1.abandon(taskId);
-				assert.ok(!taskManager1.queued(taskId), "Should not be queued");
-				assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
-				taskManager1.abandon(taskId);
-				assert.ok(!taskManager1.queued(taskId), "Should not be queued");
-				assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
-				containerRuntimeFactory.processAllMessages();
-				assert.ok(!taskManager1.queued(taskId), "Should not be queued");
-				assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
-			});
-
-			it("Can volunteer for a task immediately after it was completed", async () => {
-				const taskId = "taskId";
-				const volunteerTaskP = taskManager1.volunteerForTask(taskId);
-				containerRuntimeFactory.processAllMessages();
-				await volunteerTaskP;
-
-				taskManager2.subscribeToTask(taskId);
-				taskManager1.complete(taskId);
-				const volunteerTaskP2 = taskManager1.volunteerForTask(taskId);
-				containerRuntimeFactory.processAllMessages();
-				await volunteerTaskP2;
-				assert.ok(taskManager1.assigned(taskId), "taskManager1 should be assigned");
-				assert.ok(!taskManager2.queued(taskId), "taskManager 2 should not be assigned");
-			});
+			const stroke = ink.getStroke(strokeId);
+			assert.ok(stroke, "Could not retrieve the stroke");
+			assert.equal(stroke.id, strokeId, "The stroke's id is incorrect");
+			assert.deepEqual(stroke.pen, pen, "The stroke's pen is incorrect");
 		});
 
-		describe("Subscribing to a task", () => {
-			it("Can subscribe to a task", async () => {
-				const taskId = "taskId";
-				taskManager1.subscribeToTask(taskId);
+		it("Can create / get multiple strokes", () => {
+			const strokeId1 = ink.createStroke(pen).id;
+			const strokeId2 = ink.createStroke(pen).id;
 
-				assert.ok(taskManager1.queued(taskId), "Task manager 1 should be queued");
-				assert.ok(!taskManager1.assigned(taskId), "Task manager 1 should not be assigned");
-				assert.ok(taskManager1.subscribed(taskId), "Task manager 1 should be subscribed");
-
-				containerRuntimeFactory.processAllMessages();
-
-				assert.ok(taskManager1.queued(taskId), "Task manager 1 should be queued");
-				assert.ok(taskManager1.assigned(taskId), "Task manager 1 should be assigned");
-				assert.ok(taskManager1.subscribed(taskId), "Task manager 1 should be subscribed");
-			});
-
-			it("Can abandon a subscribed task", async () => {
-				const taskId = "taskId";
-				taskManager1.subscribeToTask(taskId);
-				containerRuntimeFactory.processAllMessages();
-
-				taskManager1.abandon(taskId);
-				containerRuntimeFactory.processAllMessages();
-
-				assert.ok(!taskManager1.queued(taskId), "Task manager 1 should not be queued");
-				assert.ok(!taskManager1.assigned(taskId), "Task manager 1 should not be assigned");
-				assert.ok(
-					!taskManager1.subscribed(taskId),
-					"Task manager 1 should not be subscribed",
-				);
-			});
-
-			it("Can subscribe and wait for a task", async () => {
-				const taskId = "taskId";
-				taskManager1.subscribeToTask(taskId);
-				taskManager2.subscribeToTask(taskId);
-
-				assert.ok(taskManager1.queued(taskId), "Task manager 1 should be queued");
-				assert.ok(!taskManager1.assigned(taskId), "Task manager 1 should not be assigned");
-				assert.ok(taskManager2.queued(taskId), "Task manager 2 should be queued");
-				assert.ok(!taskManager2.assigned(taskId), "Task manager 2 should not be assigned");
-
-				containerRuntimeFactory.processAllMessages();
-
-				assert.ok(taskManager1.queued(taskId), "Task manager 1 should be queued");
-				assert.ok(taskManager1.assigned(taskId), "Task manager 1 should be assigned");
-				assert.ok(taskManager2.queued(taskId), "Task manager 2 should be queued");
-				assert.ok(!taskManager2.assigned(taskId), "Task manager 2 should not be assigned");
-
-				taskManager1.abandon(taskId);
-				containerRuntimeFactory.processAllMessages();
-				assert.ok(taskManager2.assigned(taskId), "Task manager 2 should be assigned");
-			});
+			const strokes = ink.getStrokes();
+			assert.equal(strokes.length, 2, "There should be two strokes");
+			assert.deepEqual(strokes[0].id, strokeId1, "The first stroke's id is incorrect");
+			assert.deepEqual(strokes[0].pen, pen, "The first stroke's pen is incorrect");
+			assert.deepEqual(strokes[1].id, strokeId2, "The second stroke's id is incorrect");
+			assert.deepEqual(strokes[1].pen, pen, "The second stroke's pen is incorrect");
 		});
 
-		describe("Completing tasks", () => {
-			it("Can complete a task", async () => {
-				const taskId = "taskId";
-				const volunteerTaskP = taskManager1.volunteerForTask(taskId);
-				containerRuntimeFactory.processAllMessages();
-				await volunteerTaskP;
-				assert.ok(taskManager1.assigned(taskId), "Should be assigned");
+		it("Can append a point to a stroke", () => {
+			const strokeId = ink.createStroke(pen).id;
+			// Append a point to the stroke.
+			const inkPoint = {
+				x: 10,
+				y: 10,
+				time: Date.now(),
+				pressure: 10,
+			};
+			ink.appendPointToStroke(inkPoint, strokeId);
 
-				taskManager1.complete(taskId);
-				containerRuntimeFactory.processAllMessages();
-				assert.ok(!taskManager1.queued(taskId), "Should not be queued");
-				assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
-			});
+			// Get the stroked and verify it has the correct point.
+			const stroke = ink.getStroke(strokeId);
+			assert.equal(stroke.points.length, 1, "There should be only one point in the stroke");
+			assert.deepEqual(stroke.points[0], inkPoint, "The ink point is incorrect");
+		});
 
-			it("Rejects the promise if you try to complete without being assigned", async () => {
-				const taskId = "taskId";
-				const volunteerTaskP1 = taskManager1.volunteerForTask(taskId);
-				void taskManager2.volunteerForTask(taskId);
+		it("Can clear a stroke", () => {
+			const strokeId = ink.createStroke(pen).id;
+			assert.ok(ink.getStroke(strokeId), "Could not retrieve the stroke");
 
-				containerRuntimeFactory.processAllMessages();
-				await volunteerTaskP1;
+			// Clear the stroke.
+			ink.clear();
+			assert.equal(ink.getStroke(strokeId), undefined, "The stroke should have been cleared");
+		});
 
-				assert.ok(taskManager1.assigned(taskId), "Task manager 1 should be assigned");
-				assert.ok(taskManager2.queued(taskId), "Task manager 2 should be queued");
-				assert.ok(!taskManager2.assigned(taskId), "Task manager 2 should not be assigned");
+		it("can load an Ink from snapshot", async () => {
+			const strokeId = ink.createStroke(pen).id;
+			// Append a point to the stroke.
+			const inkPoint = {
+				x: 10,
+				y: 10,
+				time: Date.now(),
+				pressure: 10,
+			};
+			ink.appendPointToStroke(inkPoint, strokeId);
 
-				assert.throws(() => {
-					taskManager2.complete(taskId);
-				}, "Should throw error");
-				containerRuntimeFactory.processAllMessages();
-				assert.ok(taskManager1.assigned(taskId), "Task manager 1 should be assigned");
-			});
+			// Load a new Ink from the snapshot of the first one.
+			const services = MockSharedObjectServices.createFromSummary(
+				ink.getAttachSummary().summary,
+			);
+			const ink2 = new Ink(dataStoreRuntime, "ink2", InkFactory.Attributes);
+			await ink2.load(services);
 
-			it("Can complete a task and remove other clients from queue", async () => {
-				const taskId = "taskId";
-				const volunteerTaskP1 = taskManager1.volunteerForTask(taskId);
-				const volunteerTaskP2 = taskManager2.volunteerForTask(taskId);
+			// Verify that the new Ink has the stroke and the point.
+			const stroke = ink2.getStroke(strokeId);
+			assert.equal(stroke.points.length, 1, "There should be only one point in the stroke");
+			assert.deepEqual(stroke.points[0], inkPoint, "The ink point is incorrect");
+		});
 
-				containerRuntimeFactory.processAllMessages();
-				const isAssigned1 = await volunteerTaskP1;
-				assert.ok(isAssigned1, "Should resolve true");
+		describe("Ink op processing in local state", () => {
+			it("should correctly process operations sent in local state", async () => {
+				// Create a stroke in local state.
+				const strokeId = ink.createStroke(pen).id;
 
-				assert.ok(taskManager1.assigned(taskId), "Task manager 1 should be assigned");
-				assert.ok(taskManager2.queued(taskId), "Task manager 2 should be queued");
-				assert.ok(!taskManager2.assigned(taskId), "Task manager 2 should not be assigned");
-
-				taskManager1.complete(taskId);
-				containerRuntimeFactory.processAllMessages();
-				const isAssigned2 = await volunteerTaskP2;
-				assert.ok(!isAssigned2, "Should resolve false");
-
-				assert.ok(!taskManager1.queued(taskId), "Task manager 1 should not be queued");
-				assert.ok(!taskManager2.queued(taskId), "Task manager 2 should not be queued");
-			});
-
-			it("Can complete a task and remove other subscribed clients from queue", async () => {
-				const taskId = "taskId";
-				taskManager1.subscribeToTask(taskId);
-				taskManager2.subscribeToTask(taskId);
-				containerRuntimeFactory.processAllMessages();
-
-				assert.ok(taskManager1.assigned(taskId), "Task manager 1 should be assigned");
-				assert.ok(taskManager2.queued(taskId), "Task manager 2 should be queued");
-				assert.ok(!taskManager2.assigned(taskId), "Task manager 2 should not be assigned");
-
-				taskManager1.complete(taskId);
-				containerRuntimeFactory.processAllMessages();
-
-				assert.ok(!taskManager1.queued(taskId), "Task manager 1 should not be queued");
-				assert.ok(!taskManager2.queued(taskId), "Task manager 2 should not be queued");
-			});
-
-			it("Can emit completed event", async () => {
-				const taskId = "taskId";
-				const volunteerTaskP1 = taskManager1.volunteerForTask(taskId);
-				taskManager2.subscribeToTask(taskId);
-
-				containerRuntimeFactory.processAllMessages();
-				await volunteerTaskP1;
-
-				let taskManager1EventFired = false;
-				let taskManager2EventFired = false;
-				taskManager1.on("completed", (completedTaskId: string) => {
-					assert.ok(completedTaskId === taskId, "taskId should match");
-					assert.ok(
-						!taskManager1EventFired,
-						"Should only fire completed event once on taskManager1",
-					);
-					taskManager1EventFired = true;
-				});
-				taskManager2.on("completed", (completedTaskId: string) => {
-					assert.ok(completedTaskId === taskId, "taskId should match");
-					assert.ok(
-						!taskManager2EventFired,
-						"Should only fire completed event once on taskManager2",
-					);
-					taskManager2EventFired = true;
-				});
-				taskManager1.complete(taskId);
-				containerRuntimeFactory.processAllMessages();
-				assert.ok(
-					taskManager1EventFired,
-					"Should have raised completed event on taskManager1",
+				// Load a new Ink in connected state from the snapshot of the first one.
+				const containerRuntimeFactory = new MockContainerRuntimeFactory();
+				const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+				const services2 = MockSharedObjectServices.createFromSummary(
+					ink.getAttachSummary().summary,
 				);
-				assert.ok(
-					taskManager2EventFired,
-					"Should have raised completed event on taskManager2",
-				);
-			});
+				services2.deltaConnection = dataStoreRuntime2.createDeltaConnection();
 
-			it("Can complete a task with a pending volunteer op", async () => {
-				const taskId = "taskId";
-				const volunteerTaskP1 = taskManager1.volunteerForTask(taskId);
+				const ink2 = new Ink(dataStoreRuntime2, "ink2", InkFactory.Attributes);
+				await ink2.load(services2);
 
+				// Now connect the first Ink
+				dataStoreRuntime.setAttachState(AttachState.Attached);
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+				const services1 = {
+					deltaConnection: dataStoreRuntime.createDeltaConnection(),
+					objectStorage: new MockStorage(undefined),
+				};
+				ink.connect(services1);
+
+				// Verify that both the inks have the stroke.
+				assert.ok(ink.getStroke(strokeId), "The first ink does not have the stroke");
+				assert.ok(ink2.getStroke(strokeId), "The second ink does not have the stroke");
+
+				// Add a point to the stroke in the second ink.
+				const inkPoint = {
+					x: 10,
+					y: 10,
+					time: Date.now(),
+					pressure: 10,
+				};
+				ink2.appendPointToStroke(inkPoint, strokeId);
+
+				// Process the message.
 				containerRuntimeFactory.processAllMessages();
-				await volunteerTaskP1;
 
-				let taskManager1EventFired = false;
-				let taskManager2EventFired = false;
-				taskManager1.on("completed", (completedTaskId: string) => {
-					assert.ok(completedTaskId === taskId, "taskId should match");
-					assert.ok(
-						!taskManager1EventFired,
-						"Should only fire completed event once on taskManager1",
-					);
-					taskManager1EventFired = true;
-				});
-				taskManager2.on("completed", (completedTaskId: string) => {
-					assert.ok(completedTaskId === taskId, "taskId should match");
-					assert.ok(
-						!taskManager2EventFired,
-						"Should only fire completed event once on taskManager2",
-					);
-					taskManager2EventFired = true;
-				});
+				// Verify that both the inks have the added point.
+				const points1 = ink.getStroke(strokeId).points;
+				assert.equal(points1.length, 1, "There should be only one point in the stroke");
+				assert.deepEqual(points1[0], inkPoint, "The ink point is incorrect");
 
-				const volunteerTaskP2 = taskManager2.volunteerForTask(taskId);
-				taskManager1.complete(taskId);
-				containerRuntimeFactory.processAllMessages();
-				await volunteerTaskP2;
-
-				assert.ok(
-					taskManager1EventFired,
-					"Should have raised completed event on taskManager1",
+				const points2 = ink2.getStroke(strokeId).points;
+				assert.equal(
+					points2.length,
+					1,
+					"There should be only one point in the stroke in remote client",
 				);
-				assert.ok(
-					taskManager2EventFired,
-					"Should have raised completed event on taskManager2",
+				assert.deepEqual(
+					points2[0],
+					inkPoint,
+					"The ink point is incorrect in remote client",
 				);
-				assert.ok(!taskManager1.queued(taskId), "Task manager 1 should not be queued");
-				assert.ok(!taskManager2.queued(taskId), "Task manager 2 should not be queued");
 			});
 		});
 	});
 
-	// Note: Since read/write modes are not yet implemented in mocks, tests are limited to simulate these scenarios.
-	describe("Read/Write Mode", () => {
-		let taskManager1: ITaskManager;
-		let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
-		let containerRuntime1: MockContainerRuntimeForReconnection;
+	describe("Ink in connected state with a remote Ink", () => {
+		let ink2: Ink;
+		let containerRuntimeFactory: MockContainerRuntimeFactory;
 
-		const setReadOnlyInfo = (readOnlyInfo: ReadOnlyInfo) => {
-			(taskManager1 as any).runtime.deltaManager.readOnlyInfo = readOnlyInfo;
-			// Force connection to simulate read mode (TaskManager considered the client disconnected in read mode)
-			containerRuntime1.connected = readOnlyInfo.readonly === false;
-		};
+		beforeEach("createConnectedInks", () => {
+			containerRuntimeFactory = new MockContainerRuntimeFactory();
 
-		beforeEach(() => {
-			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
-			const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-			containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+			// Connect the first Ink.
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 			const services1 = {
-				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
-			taskManager1 = new TaskManager(
-				"task-manager-1",
-				dataStoreRuntime1,
-				TaskManagerFactory.Attributes,
+			ink.connect(services1);
+
+			// Create and connect a second Ink.
+			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+			const services2 = {
+				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
+				objectStorage: new MockStorage(),
+			};
+
+			ink2 = new Ink(dataStoreRuntime2, "ink2", InkFactory.Attributes);
+			ink2.connect(services2);
+		});
+
+		it("Can create / get a stroke", () => {
+			// Create a stroke in the first ink.
+			const strokeId = ink.createStroke(pen).id;
+
+			// Process the messages.
+			containerRuntimeFactory.processAllMessages();
+
+			// Verify that the first ink has the correct stroke.
+			const stroke1 = ink.getStroke(strokeId);
+			assert.ok(stroke1, "Could not retrieve the stroke");
+			assert.equal(stroke1.id, strokeId, "The stroke's id is incorrect");
+			assert.deepEqual(stroke1.pen, pen, "The stroke's pen is incorrect");
+
+			// Verify that the remote ink has the correct stroke.
+			const stroke2 = ink2.getStroke(strokeId);
+			assert.ok(stroke2, "Could not retrieve the stroke in remote client");
+			assert.equal(stroke2.id, strokeId, "The stroke's id is incorrect in remote client");
+			assert.deepEqual(stroke2.pen, pen, "The stroke's pen is incorrect in remote client");
+		});
+
+		it("Can create / get multiple strokes", () => {
+			// Create multiple stroked in the first ink.
+			const stroke1Id = ink.createStroke(pen).id;
+			const stroke2Id = ink.createStroke(pen).id;
+
+			// Process the messages.
+			containerRuntimeFactory.processAllMessages();
+
+			// Verify that the first ink has the correct strokes.
+			const strokes1 = ink.getStrokes();
+			assert.equal(strokes1.length, 2, "There should be two strokes");
+			assert.deepEqual(strokes1[0].id, stroke1Id, "The first stroke's id is incorrect");
+			assert.deepEqual(strokes1[0].pen, pen, "The first stroke's pen is incorrect");
+			assert.deepEqual(strokes1[1].id, stroke2Id, "The second stroke's id is incorrect");
+			assert.deepEqual(strokes1[1].pen, pen, "The second stroke's pen is incorrect");
+
+			// Verify that the remote ink has the correct strokes.
+			const strokes2 = ink2.getStrokes();
+			assert.equal(strokes2.length, 2, "There should be two strokes in remote client");
+			assert.deepEqual(
+				strokes2[0].id,
+				stroke1Id,
+				"The first stroke's id is incorrect in remote client",
 			);
-			taskManager1.connect(services1);
+			assert.deepEqual(
+				strokes2[0].pen,
+				pen,
+				"The first stroke's pen is incorrect in remote client",
+			);
+			assert.deepEqual(
+				strokes2[1].id,
+				stroke2Id,
+				"The second stroke's id is incorrect in remote client",
+			);
+			assert.deepEqual(
+				strokes2[1].pen,
+				pen,
+				"The second stroke's pen is incorrect in remote client",
+			);
 		});
 
-		it("Immediately rejects attempts to volunteer in read mode", async () => {
-			const taskId = "taskId";
-			setReadOnlyInfo({
-				readonly: true,
-				permissions: false,
-				forced: false,
-				storageOnly: false,
-			});
+		it("Can append multiple points to a stroke", () => {
+			// Create a stroke and append couple of points in the first ink.
+			const strokeId = ink.createStroke(pen).id;
+			const inkPoint1 = {
+				x: 10,
+				y: 10,
+				time: Date.now(),
+				pressure: 10,
+			};
+			const inkPoint2 = {
+				x: 20,
+				y: 20,
+				time: Date.now(),
+				pressure: 20,
+			};
+			ink.appendPointToStroke(inkPoint1, strokeId);
+			ink.appendPointToStroke(inkPoint2, strokeId);
 
-			const volunteerTaskP = taskManager1.volunteerForTask(taskId);
-			assert.ok(!taskManager1.queued(taskId), "Should not be queued");
-			assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
-			await assert.rejects(volunteerTaskP);
+			// Process the messages.
 			containerRuntimeFactory.processAllMessages();
-			assert.ok(!taskManager1.queued(taskId), "Should not be queued");
-			assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
+
+			// Verify that the first ink has the correct stroke with both the points.
+			const stroke1 = ink.getStroke(strokeId);
+			assert.equal(stroke1.points.length, 2, "There should be two points in the stroke");
+			assert.deepEqual(stroke1.points[0], inkPoint1, "The first ink point is incorrect");
+			assert.deepEqual(stroke1.points[1], inkPoint2, "The second ink point is incorrect");
+
+			// Verify that the remote ink has the correct stroke with both the points.
+			const stroke2 = ink2.getStroke(strokeId);
+			assert.equal(
+				stroke2.points.length,
+				2,
+				"There should be two points in the stroke in remote client",
+			);
+			assert.deepEqual(
+				stroke2.points[0],
+				inkPoint1,
+				"The first ink point is incorrect in remote client",
+			);
+			assert.deepEqual(
+				stroke2.points[0],
+				inkPoint1,
+				"The second ink point is incorrect in remote client",
+			);
 		});
 
-		it("Immediately rejects attempts to volunteer with read-only permissions", async () => {
-			const taskId = "taskId";
-			setReadOnlyInfo({
-				readonly: true,
-				permissions: true,
-				forced: false,
-				storageOnly: false,
-			});
+		it("Can clear a stroke", () => {
+			// Create a stroke in the first ink.
+			const strokeId = ink.createStroke(pen).id;
 
-			const volunteerTaskP = taskManager1.volunteerForTask(taskId);
-			assert.ok(!taskManager1.queued(taskId), "Should not be queued");
-			assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
-			await assert.rejects(volunteerTaskP);
-			containerRuntimeFactory.processAllMessages();
-			assert.ok(!taskManager1.queued(taskId), "Should not be queued");
-			assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
-		});
-
-		it("Can subscribe while in read mode", async () => {
-			const taskId = "taskId";
-			setReadOnlyInfo({
-				readonly: true,
-				permissions: false,
-				forced: false,
-				storageOnly: false,
-			});
-
-			taskManager1.subscribeToTask(taskId);
+			// Process the messages.
 			containerRuntimeFactory.processAllMessages();
 
-			assert.ok(!taskManager1.queued(taskId), "Should not be queued");
-			assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
-			assert.ok(taskManager1.subscribed(taskId), "Should be subscribed");
+			// Verify that both the inks have the stroke.
+			assert.ok(ink.getStroke(strokeId), "Could not retrieve the stroke");
+			assert.ok(ink2.getStroke(strokeId), "Could not retrieve the stroke in remote client");
 
-			setReadOnlyInfo({ readonly: false });
+			// Clear the stroke.
+			ink.clear();
+
+			// Process the messages.
 			containerRuntimeFactory.processAllMessages();
 
-			assert.ok(taskManager1.queued(taskId), "Should be queued");
-			assert.ok(taskManager1.assigned(taskId), "Should be assigned");
-			assert.ok(taskManager1.subscribed(taskId), "Should be subscribed");
-		});
-
-		it("Immediately rejects attempts to subscribe with read-only permissions", async () => {
-			const taskId = "taskId";
-			setReadOnlyInfo({
-				readonly: true,
-				permissions: true,
-				forced: false,
-				storageOnly: false,
-			});
-
-			assert.throws(() => {
-				taskManager1.subscribeToTask(taskId);
-			}, "Should throw error if subscribing with read-only permissions");
-			containerRuntimeFactory.processAllMessages();
-
-			assert.ok(!taskManager1.queued(taskId), "Should not be queued");
-			assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
-			assert.ok(!taskManager1.subscribed(taskId), "Should not be subscribed");
+			// Verify that the stroke is cleared from both the inks.
+			assert.equal(ink.getStroke(strokeId), undefined, "The stroke should have been cleared");
+			assert.equal(
+				ink2.getStroke(strokeId),
+				undefined,
+				"The stroke should have been cleared in remote client",
+			);
 		});
 	});
 
-	describe("Detached/Attach", () => {
-		let taskManager1: TaskManager;
-		let attachTaskManager1: () => Promise<void>;
-		// let taskManager2: ITaskManager;
-		// let attachTaskManager2: () => void;
-		let containerRuntimeFactory: MockContainerRuntimeFactory;
-		const placeholderClientId = "placeholder";
-
-		beforeEach(() => {
-			containerRuntimeFactory = new MockContainerRuntimeFactory();
-			const createResponse1 = createDetachedTaskManager(
-				"taskManager1",
-				containerRuntimeFactory,
-			);
-			taskManager1 = createResponse1.taskManager;
-			attachTaskManager1 = createResponse1.attach;
-		});
-
-		it("Can create a detached TaskManager and attach later", async () => {
-			assert.ok(!taskManager1.isAttached(), "taskManager1 should be detached");
-			await attachTaskManager1();
-			assert.ok(taskManager1.isAttached(), "taskManager1 should be attached");
-		});
-
-		describe("Behavior before attach", () => {
-			describe("Volunteering for a task", () => {
-				it("Can volunteer for a task before attach", async () => {
-					const taskId = "taskId";
-					const volunteerTaskP = taskManager1.volunteerForTask(taskId);
-					containerRuntimeFactory.processAllMessages();
-					await volunteerTaskP;
-					assert.ok(taskManager1.queued(taskId), "Should be queued");
-					assert.ok(taskManager1.assigned(taskId), "Should be assigned");
-				});
-
-				it("Can volunteer and abandon a task before attach", async () => {
-					const taskId = "taskId";
-					const volunteerTaskP = taskManager1.volunteerForTask(taskId);
-					containerRuntimeFactory.processAllMessages();
-					await volunteerTaskP;
-					assert.ok(taskManager1.queued(taskId), "Should be queued");
-					assert.ok(taskManager1.assigned(taskId), "Should be assigned");
-					taskManager1.abandon(taskId);
-					assert.ok(!taskManager1.queued(taskId), "Should not be queued");
-					assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
-				});
-			});
-
-			describe("Subscribing to a task", () => {
-				it("Can subscribe to a task before attach", async () => {
-					const taskId = "taskId";
-					taskManager1.subscribeToTask(taskId);
-					containerRuntimeFactory.processAllMessages();
-					assert.ok(taskManager1.queued(taskId), "Task manager 1 should be queued");
-					assert.ok(taskManager1.assigned(taskId), "Task manager 1 should be assigned");
-					assert.ok(
-						taskManager1.subscribed(taskId),
-						"Task manager 1 should be subscribed",
-					);
-				});
-
-				it("Can abandon a subscribed task before attach", async () => {
-					const taskId = "taskId";
-					taskManager1.subscribeToTask(taskId);
-					containerRuntimeFactory.processAllMessages();
-
-					taskManager1.abandon(taskId);
-					containerRuntimeFactory.processAllMessages();
-
-					assert.ok(!taskManager1.queued(taskId), "Task manager 1 should not be queued");
-					assert.ok(
-						!taskManager1.assigned(taskId),
-						"Task manager 1 should not be assigned",
-					);
-					assert.ok(
-						!taskManager1.subscribed(taskId),
-						"Task manager 1 should not be subscribed",
-					);
-				});
-			});
-
-			describe("Completing tasks", () => {
-				it("Can complete a task before attach", async () => {
-					const taskId = "taskId";
-					const volunteerTaskP = taskManager1.volunteerForTask(taskId);
-					containerRuntimeFactory.processAllMessages();
-					await volunteerTaskP;
-					assert.ok(taskManager1.assigned(taskId), "Should be assigned");
-
-					taskManager1.complete(taskId);
-					containerRuntimeFactory.processAllMessages();
-					assert.ok(!taskManager1.queued(taskId), "Should not be queued");
-					assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
-				});
-
-				it("Can emit completed event before attach", async () => {
-					const taskId = "taskId";
-					const volunteerTaskP1 = taskManager1.volunteerForTask(taskId);
-
-					containerRuntimeFactory.processAllMessages();
-					await volunteerTaskP1;
-
-					let taskManager1EventFired = false;
-					taskManager1.once("completed", (completedTaskId: string) => {
-						assert.ok(completedTaskId === taskId, "taskId should match");
-						assert.ok(
-							!taskManager1EventFired,
-							"Should only fire completed event once on taskManager1",
-						);
-						taskManager1EventFired = true;
-					});
-					taskManager1.complete(taskId);
-					containerRuntimeFactory.processAllMessages();
-					assert.ok(
-						taskManager1EventFired,
-						"Should have raised completed event on taskManager1",
-					);
-				});
-			});
-		});
-
-		describe("Behavior after attaching", () => {
-			describe("Volunteering for a task", () => {
-				it("Will keep task assignment after attaching if clientId is defined", async () => {
-					const taskId = "taskId";
-					const volunteerTaskP = taskManager1.volunteerForTask(taskId);
-					containerRuntimeFactory.processAllMessages();
-					await volunteerTaskP;
-					await attachTaskManager1();
-					assert.ok(taskManager1.queued(taskId), "Should be queued");
-					assert.ok(taskManager1.assigned(taskId), "Should be assigned");
-				});
-
-				it("Will lose task assignment after attaching if clientId is undefined", async () => {
-					(taskManager1 as any).runtime.clientId = undefined;
-					const taskId = "taskId";
-					const volunteerTaskP = taskManager1.volunteerForTask(taskId);
-					containerRuntimeFactory.processAllMessages();
-					await volunteerTaskP;
-					assert.ok(taskManager1.queued(taskId), "Should be queued");
-					assert.ok(taskManager1.assigned(taskId), "Should be assigned");
-					assert.strictEqual(
-						(taskManager1 as any).taskQueues.get(taskId)?.[0],
-						placeholderClientId,
-						"taskQueue should have placeholder clientId",
-					);
-
-					let taskManager1EventFired = false;
-					taskManager1.on("lost", (completedTaskId: string) => {
-						assert.ok(completedTaskId === taskId, "taskId should match");
-						assert.ok(
-							!taskManager1EventFired,
-							"Should only fire lost event once on taskManager1",
-						);
-						taskManager1EventFired = true;
-					});
-					await attachTaskManager1();
-
-					assert.ok(!taskManager1.queued(taskId), "Should not be queued");
-					assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
-					assert.ok(
-						taskManager1EventFired,
-						"Should have raised lost event on taskManager1",
-					);
-					assert.ok(
-						(taskManager1 as any).taskQueues.size === 0,
-						"taskQueue should be empty",
-					);
-				});
-			});
-
-			describe("Subscribing to a task", () => {
-				it("Can subscribe to a task and stay assigned/subscribed after attach", async () => {
-					const taskId = "taskId";
-					taskManager1.subscribeToTask(taskId);
-					containerRuntimeFactory.processAllMessages();
-					await attachTaskManager1();
-					containerRuntimeFactory.processAllMessages();
-					assert.ok(taskManager1.queued(taskId), "Task manager 1 should be queued");
-					assert.ok(taskManager1.assigned(taskId), "Task manager 1 should be assigned");
-					assert.ok(
-						taskManager1.subscribed(taskId),
-						"Task manager 1 should be subscribed",
-					);
-				});
-
-				it("Can subscribe to a task and stay subscribed after attach if clientId was undefined", async () => {
-					(taskManager1 as any).runtime.clientId = undefined;
-					const taskId = "taskId";
-					taskManager1.subscribeToTask(taskId);
-					containerRuntimeFactory.processAllMessages();
-					let taskManager1EventFired = false;
-					taskManager1.on("lost", (completedTaskId: string) => {
-						assert.ok(completedTaskId === taskId, "taskId should match");
-						assert.ok(
-							!taskManager1EventFired,
-							"Should only fire lost event once on taskManager1",
-						);
-						taskManager1EventFired = true;
-					});
-
-					await attachTaskManager1();
-					assert.ok(
-						!taskManager1.assigned(taskId),
-						"Task manager 1 should not be assigned",
-					);
-
-					containerRuntimeFactory.processAllMessages();
-					assert.ok(
-						taskManager1EventFired,
-						"Should have raised lost event on taskManager1",
-					);
-					assert.ok(taskManager1.queued(taskId), "Task manager 1 should be queued");
-					assert.ok(taskManager1.assigned(taskId), "Task manager 1 should be assigned");
-					assert.ok(
-						taskManager1.subscribed(taskId),
-						"Task manager 1 should be subscribed",
-					);
-
-					assert.ok(
-						(taskManager1 as any).taskQueues.get(taskId)?.length !== 0,
-						"taskQueue should not be empty",
-					);
-					assert.notStrictEqual(
-						(taskManager1 as any).taskQueues.get(taskId)?.[0],
-						placeholderClientId,
-						"taskQueue should not have placeholder clientId",
-					);
-				});
-
-				// Todo AB#7310
-				it.skip("Can abandon a subscribed task after attach", async () => {
-					const taskId = "taskId";
-					taskManager1.subscribeToTask(taskId);
-					containerRuntimeFactory.processAllMessages();
-					await attachTaskManager1();
-					taskManager1.abandon(taskId);
-					containerRuntimeFactory.processAllMessages();
-					assert.ok(!taskManager1.queued(taskId), "Task manager 1 should not be queued");
-					assert.ok(
-						!taskManager1.assigned(taskId),
-						"Task manager 1 should not be assigned",
-					);
-					assert.ok(
-						!taskManager1.subscribed(taskId),
-						"Task manager 1 should not be subscribed",
-					);
-				});
-			});
-
-			describe("Completing tasks", () => {
-				it("Can complete a task after attach", async () => {
-					const taskId = "taskId";
-					const volunteerTaskP = taskManager1.volunteerForTask(taskId);
-					containerRuntimeFactory.processAllMessages();
-					await volunteerTaskP;
-					assert.ok(taskManager1.assigned(taskId), "Should be assigned");
-					await attachTaskManager1();
-					taskManager1.complete(taskId);
-					containerRuntimeFactory.processAllMessages();
-					assert.ok(!taskManager1.queued(taskId), "Should not be queued");
-					assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
-				});
-
-				it("Can emit completed event after attach", async () => {
-					const taskId = "taskId";
-					const volunteerTaskP1 = taskManager1.volunteerForTask(taskId);
-					containerRuntimeFactory.processAllMessages();
-					await volunteerTaskP1;
-					await attachTaskManager1();
-					let taskManager1EventFired = false;
-					taskManager1.on("completed", (completedTaskId: string) => {
-						assert.ok(completedTaskId === taskId, "taskId should match");
-						assert.ok(
-							!taskManager1EventFired,
-							"Should only fire completed event once on taskManager1",
-						);
-						taskManager1EventFired = true;
-					});
-					taskManager1.complete(taskId);
-					containerRuntimeFactory.processAllMessages();
-					assert.ok(
-						taskManager1EventFired,
-						"Should have raised completed event on taskManager1",
-					);
-				});
-			});
-		});
-	});
-
-	describe("Disconnect/Reconnect", () => {
+	describe("Ink reconnection flow", () => {
 		let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
 		let containerRuntime1: MockContainerRuntimeForReconnection;
 		let containerRuntime2: MockContainerRuntimeForReconnection;
-		let taskManager1: TaskManager;
-		let taskManager2: TaskManager;
+		let ink2: Ink;
 
-		beforeEach(async () => {
+		beforeEach("createConnectedInks", () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
-			// Create the first TaskManager.
-			const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-			containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+			// Connect the first Ink.
+			containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 			const services1 = {
-				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
-			taskManager1 = new TaskManager(
-				"task-manager-1",
-				dataStoreRuntime1,
-				TaskManagerFactory.Attributes,
-			);
-			taskManager1.connect(services1);
+			ink.connect(services1);
 
-			// Create the second TaskManager.
+			// Create and connect a second Ink.
 			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
 			containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 			const services2 = {
 				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
-			taskManager2 = new TaskManager(
-				"task-manager-2",
-				dataStoreRuntime2,
-				TaskManagerFactory.Attributes,
-			);
-			taskManager2.connect(services2);
+
+			ink2 = new Ink(dataStoreRuntime2, "ink2", InkFactory.Attributes);
+			ink2.connect(services2);
 		});
 
-		it("Can create a TaskManager while disconnected", () => {
+		it("can resend unacked ops on reconnection", async () => {
+			// Create a stroke in the first ink.
+			const strokeId = ink.createStroke(pen).id;
+
+			// Disconnect and reconnect the first client.
 			containerRuntime1.connected = false;
-			assert.ok(taskManager1, "Could not create a task manager");
-			assert.ok(taskManager1.isAttached(), "TaskManager should be attached");
-			assert.ok(!taskManager1.connected, "TaskManager should be disconnected");
+			containerRuntime1.connected = true;
+
+			// Process the messages.
+			containerRuntimeFactory.processAllMessages();
+
+			// Verify that the stroke is present in both the client.
+			assert.ok(ink.getStroke(strokeId), "The local client does not have the stroke");
+			assert.ok(ink2.getStroke(strokeId), "The remote client does not have the stroke");
+
+			// Add a point to the stroke in the second ink.
+			const inkPoint = {
+				x: 10,
+				y: 10,
+				time: Date.now(),
+				pressure: 10,
+			};
+			ink2.appendPointToStroke(inkPoint, strokeId);
+
+			// Disconnect and reconnect the second client.
+			containerRuntime2.connected = false;
+			containerRuntime2.connected = true;
+
+			// Process the messages.
+			containerRuntimeFactory.processAllMessages();
+
+			// Verify that both the inks have the added point.
+			const points1 = ink.getStroke(strokeId).points;
+			assert.equal(
+				points1.length,
+				1,
+				"There should be only one point in the stroke in first client",
+			);
+			assert.deepEqual(points1[0], inkPoint, "The ink point is incorrect in first client");
+
+			const points2 = ink2.getStroke(strokeId).points;
+			assert.equal(
+				points2.length,
+				1,
+				"There should be only one point in the stroke in second client",
+			);
+			assert.deepEqual(points2[0], inkPoint, "The ink point is incorrect in second client");
 		});
 
-		describe("Behavior transitioning to disconnect", () => {
-			describe("Volunteering for a task", () => {
-				it("Disconnect while assigned: Raises a lost event and loses the task assignment", async () => {
-					const taskId = "taskId";
-					const volunteerTaskP = taskManager1.volunteerForTask(taskId);
-					containerRuntimeFactory.processAllMessages();
-					const isAssigned = await volunteerTaskP;
-					assert.ok(isAssigned, "Should resolve true");
-					assert.ok(taskManager1.assigned(taskId), "Should be assigned");
+		it("can store ops in disconnected state and resend them on reconnection", async () => {
+			// Disconnect the first client.
+			containerRuntime1.connected = false;
 
-					let lostRaised = false;
-					taskManager1.once("lost", () => {
-						lostRaised = true;
-					});
+			// Create a stroke in the first ink.
+			const strokeId = ink.createStroke(pen).id;
 
-					containerRuntime1.connected = false;
-					containerRuntimeFactory.processAllMessages();
-					assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
-					assert.ok(lostRaised, "Should have raised a lost event");
-				});
+			// Reconnect the first client.
+			containerRuntime1.connected = true;
 
-				it("Disconnect while queued: Rejects the volunteerForTask promise and exits the queue", async () => {
-					const taskId = "taskId";
-					const volunteerTaskP1 = taskManager1.volunteerForTask(taskId);
-					const volunteerTaskP2 = taskManager2.volunteerForTask(taskId);
-					containerRuntimeFactory.processAllMessages();
-					const isAssigned = await volunteerTaskP1;
-					assert.ok(isAssigned, "Should resolve true");
-					assert.ok(taskManager1.assigned(taskId), "Task manager 1 Should be assigned");
-					assert.ok(taskManager2.queued(taskId), "Task manager 2 should be queued");
-					assert.ok(
-						!taskManager2.assigned(taskId),
-						"Task manager 2 should not be assigned",
-					);
+			// Process the messages.
+			containerRuntimeFactory.processAllMessages();
 
-					containerRuntime2.connected = false;
-					containerRuntimeFactory.processAllMessages();
-					await assert.rejects(volunteerTaskP2, "Should have rejected the P2 promise");
-					assert.ok(!taskManager2.queued(taskId), "Task manager 2 should not be queued");
-					assert.ok(
-						!taskManager2.assigned(taskId),
-						"Task manager 2 should not be assigned",
-					);
-				});
+			// Verify that the stroke is present in both the client.
+			assert.ok(ink.getStroke(strokeId), "The local client does not have the stroke");
+			assert.ok(ink2.getStroke(strokeId), "The remote client does not have the stroke");
 
-				it("Disconnect while queued: Removed from the queue for other clients", async () => {
-					const taskId = "taskId";
-					const volunteerTaskP1 = taskManager1.volunteerForTask(taskId);
-					taskManager2.subscribeToTask(taskId);
-					containerRuntimeFactory.processAllMessages();
-					await volunteerTaskP1;
-					const clientId1 = containerRuntime1.clientId;
-					const clientId2 = containerRuntime2.clientId;
+			// Disconnect the second client.
+			containerRuntime2.connected = false;
 
-					assert.deepEqual(
-						(taskManager1 as any).taskQueues.get(taskId),
-						[clientId1, clientId2],
-						"Task queue should have both clients",
-					);
+			// Add a point to the stroke in the second ink.
+			const inkPoint = {
+				x: 10,
+				y: 10,
+				time: Date.now(),
+				pressure: 10,
+			};
+			ink2.appendPointToStroke(inkPoint, strokeId);
 
-					containerRuntime2.connected = false;
-					containerRuntimeFactory.processAllMessages();
+			// Reconnect the second client.
+			containerRuntime2.connected = true;
 
-					assert.deepEqual(
-						(taskManager1 as any).taskQueues.get(taskId),
-						[clientId1],
-						"Task queue should only have client 1",
-					);
-				});
+			// Process the messages.
+			containerRuntimeFactory.processAllMessages();
 
-				it("Disconnect while pending: Rejects the volunteerForTask promise", async () => {
-					const taskId = "taskId";
-					const volunteerTaskP = taskManager1.volunteerForTask(taskId);
-					containerRuntime1.connected = false;
-					containerRuntimeFactory.processAllMessages();
-					await assert.rejects(volunteerTaskP, "Should have rejected the promise");
-					assert.ok(!taskManager1.queued(taskId), "Should not be queued");
-					assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
-				});
-			});
+			// Verify that both the inks have the added point.
+			const points1 = ink.getStroke(strokeId).points;
+			assert.equal(
+				points1.length,
+				1,
+				"There should be only one point in the stroke in first client",
+			);
+			assert.deepEqual(points1[0], inkPoint, "The ink point is incorrect in first client");
 
-			describe("Subscribing to a task", () => {});
-
-			describe("Completing tasks", () => {});
-		});
-
-		describe("Behavior while disconnected", () => {
-			describe("Volunteering for a task", () => {
-				it("Immediately rejects attempts to lock task and throws on abandon", async () => {
-					const taskId = "taskId";
-					containerRuntime1.connected = false;
-					containerRuntimeFactory.processAllMessages();
-
-					const volunteerTaskP = taskManager1.volunteerForTask(taskId);
-					assert.ok(!taskManager1.queued(taskId), "Should not be queued");
-					assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
-					await assert.rejects(volunteerTaskP);
-					containerRuntimeFactory.processAllMessages();
-					assert.ok(!taskManager1.queued(taskId), "Should not be queued");
-					assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
-				});
-			});
-
-			describe("Subscribing to a task", () => {
-				it("Can subscribe while disconnected", async () => {
-					const taskId = "taskId";
-					containerRuntime1.connected = false;
-					containerRuntimeFactory.processAllMessages();
-
-					taskManager1.subscribeToTask(taskId);
-					assert.ok(!taskManager1.queued(taskId), "Should not be queued");
-					assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
-					assert.ok(
-						taskManager1.subscribed(taskId),
-						"Task manager 1 should be subscribed",
-					);
-
-					containerRuntimeFactory.processAllMessages();
-					assert.ok(!taskManager1.queued(taskId), "Should not be queued");
-					assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
-					assert.ok(
-						taskManager1.subscribed(taskId),
-						"Task manager 1 should be subscribed",
-					);
-
-					containerRuntime1.connected = true;
-					containerRuntimeFactory.processAllMessages();
-					assert.ok(taskManager1.queued(taskId), "Should be queued");
-					assert.ok(taskManager1.assigned(taskId), "Should be assigned");
-					assert.ok(
-						taskManager1.subscribed(taskId),
-						"Task manager 1 should be subscribed",
-					);
-				});
-
-				it("Can abandon subscription while disconnected", async () => {
-					const taskId = "taskId";
-					containerRuntime1.connected = false;
-					containerRuntimeFactory.processAllMessages();
-
-					taskManager1.subscribeToTask(taskId);
-					taskManager1.abandon(taskId);
-					containerRuntimeFactory.processAllMessages();
-
-					containerRuntime1.connected = true;
-					containerRuntimeFactory.processAllMessages();
-					assert.ok(!taskManager1.queued(taskId), "Should not be queued");
-					assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
-					assert.ok(
-						!taskManager1.subscribed(taskId),
-						"Task manager 1 should not be subscribed",
-					);
-				});
-			});
-
-			describe("Completing tasks", () => {
-				it("Immediately throws on attempt to complete task", async () => {
-					const taskId = "taskId";
-					containerRuntime1.connected = false;
-					containerRuntimeFactory.processAllMessages();
-
-					assert.throws(() => {
-						taskManager1.complete(taskId);
-					}, "Should throw error");
-					containerRuntimeFactory.processAllMessages();
-				});
-			});
-		});
-
-		describe("Behavior transitioning to connected", () => {
-			describe("Volunteering for a task", () => {
-				it("Does not re-attempt to enter the queue for un-ack'd ops", async () => {
-					const taskId = "taskId";
-					const volunteerTaskP = taskManager1.volunteerForTask(taskId);
-					containerRuntime1.connected = false;
-					containerRuntimeFactory.processAllMessages();
-					await assert.rejects(volunteerTaskP, "Should have rejected the promise");
-					containerRuntime1.connected = true;
-					containerRuntimeFactory.processAllMessages();
-					assert.ok(!taskManager1.queued(taskId), "Should not be queued");
-					assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
-				});
-			});
-
-			describe("Subscribing to a task", () => {
-				it("Does re-attempt to enter the queue when subscribed", async () => {
-					const taskId = "taskId";
-					taskManager1.subscribeToTask(taskId);
-					containerRuntimeFactory.processAllMessages();
-
-					containerRuntime1.connected = false;
-
-					assert.ok(!taskManager1.queued(taskId), "Task manager 1 should not be queued");
-					assert.ok(
-						!taskManager1.assigned(taskId),
-						"Task manager 1 should not be assigned",
-					);
-					assert.ok(
-						taskManager1.subscribed(taskId),
-						"Task manager 1 should be subscribed",
-					);
-
-					containerRuntime1.connected = true;
-
-					assert.ok(taskManager1.queued(taskId), "Task manager 1 should be queued");
-					assert.ok(
-						!taskManager1.assigned(taskId),
-						"Task manager 1 should not be assigned",
-					);
-					assert.ok(
-						taskManager1.subscribed(taskId),
-						"Task manager 1 should be subscribed",
-					);
-
-					containerRuntimeFactory.processAllMessages();
-
-					assert.ok(taskManager1.queued(taskId), "Task manager 1 should be queued");
-					assert.ok(taskManager1.assigned(taskId), "Task manager 1 should be assigned");
-					assert.ok(
-						taskManager1.subscribed(taskId),
-						"Task manager 1 should be subscribed",
-					);
-				});
-			});
-
-			describe("Completing tasks", () => {});
+			const points2 = ink2.getStroke(strokeId).points;
+			assert.equal(
+				points2.length,
+				1,
+				"There should be only one point in the stroke in second client",
+			);
+			assert.deepEqual(points2[0], inkPoint, "The ink point is incorrect in second client");
 		});
 	});
 });
