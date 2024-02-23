@@ -34,6 +34,7 @@ import {
 	ITestFluidObject,
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
+	timeoutPromise,
 } from "@fluidframework/test-utils";
 import {
 	describeCompat,
@@ -412,8 +413,8 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 		await summaryCollection.waitSummaryAck(container.deltaManager.lastSequenceNumber);
 	});
 
-	async function getNackProm(container: IContainer) {
-		return new Promise<void>((resolve, reject) => {
+	async function getNackPromise(container: IContainer) {
+		return timeoutPromise((resolve, reject) => {
 			const callback = (_reason, error) => {
 				try {
 					assert.strictEqual(error?.statusCode, 429);
@@ -423,6 +424,7 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 					);
 					resolve();
 				} catch (err) {
+					// Assert errors will be caught here and reject the Promise
 					reject(err);
 				} finally {
 					container.deltaManager.off("disconnect", callback);
@@ -476,13 +478,13 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 		await provider.ensureSynchronized();
 		{
 			// op 201 will get nacked
-			const prom = getNackProm(container1);
+			const prom = getNackPromise(container1);
 			sharedString1.insertText(0, "a");
 			await prom;
 		}
 		{
 			// op 202 will get nacked
-			const prom = getNackProm(container1);
+			const prom = getNackPromise(container1);
 			sharedString1.insertText(0, "a");
 			await prom;
 		}
