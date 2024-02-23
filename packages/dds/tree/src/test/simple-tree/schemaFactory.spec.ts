@@ -331,13 +331,17 @@ describe("schemaFactory", () => {
 		it("Scoped", () => {
 			const factory = new SchemaFactory("test-scope");
 			// We specified a scope in the factory, so it should be part of the type signature of the created object
-			const foo: TreeNodeSchemaClass<"test-scope.foo"> = factory.object("foo", {});
+			const foo = factory.object("foo", {}).identifier;
+			type _check = requireTrue<areSafelyAssignable<"test-scope.foo", typeof foo>>;
+			assert.equal(foo, "test-scope.foo");
 		});
 
 		it("Unscoped", () => {
 			const factory = new SchemaFactory(undefined);
 			// We did not specify a scope in the factory, so one should not be part of the type signature of the created object
-			const foo: TreeNodeSchemaClass<"foo"> = factory.object("foo", {});
+			const foo = factory.object("foo", {}).identifier;
+			type _check = requireTrue<areSafelyAssignable<"foo", typeof foo>>;
+			assert.equal(foo, "foo");
 		});
 
 		it("Named", () => {
