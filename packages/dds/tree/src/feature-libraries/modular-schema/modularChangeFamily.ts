@@ -1145,19 +1145,7 @@ export function intoDelta(
 		rootDelta.fields = fieldDeltas;
 	}
 	if (change.builds && change.builds.size > 0) {
-		const builds: DeltaDetachedNodeBuild[] = [];
-		forEachInNestedMap(change.builds, (chunk, major, minor) => {
-			if (chunk.topLevelLength > 0) {
-				const trees = mapCursorField(chunk.cursor(), (c) =>
-					cursorForMapTreeNode(mapTreeFromCursor(c)),
-				);
-				builds.push({
-					id: makeDetachedNodeId(major ?? revision, minor),
-					trees,
-				});
-			}
-		});
-		rootDelta.build = builds;
+		rootDelta.build = copyDetachedNodes(change.builds, revision);
 	}
 	if (change.destroys !== undefined && change.destroys.size > 0) {
 		const destroys: DeltaDetachedNodeDestruction[] = [];
@@ -1169,7 +1157,26 @@ export function intoDelta(
 		});
 		rootDelta.destroy = destroys;
 	}
+	if (change.refreshers && change.refreshers.size > 0) {
+		rootDelta.refreshers = copyDetachedNodes(change.refreshers, revision);
+	}
 	return rootDelta;
+}
+
+function copyDetachedNodes(detachedNodes: ChangeAtomIdMap<TreeChunk>, revision?: RevisionTag) {
+	const copiedDetachedNodes: DeltaDetachedNodeBuild[] = [];
+	forEachInNestedMap(detachedNodes, (chunk, major, minor) => {
+		if (chunk.topLevelLength > 0) {
+			const trees = mapCursorField(chunk.cursor(), (c) =>
+				cursorForMapTreeNode(mapTreeFromCursor(c)),
+			);
+			copiedDetachedNodes.push({
+				id: makeDetachedNodeId(major ?? revision, minor),
+				trees,
+			});
+		}
+	});
+	return copiedDetachedNodes.length > 0 ? copiedDetachedNodes : undefined;
 }
 
 /**
