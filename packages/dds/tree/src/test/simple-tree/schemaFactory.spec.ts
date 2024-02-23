@@ -136,6 +136,18 @@ describe("schemaFactory", () => {
 		assert.equal(foo, "foo");
 	});
 
+	// Regression test to ensure generic type variations of the factory are assignable to its default typing.
+	it("Typed factories are assignable to default typing", () => {
+		type _check1 = requireTrue<requireAssignableTo<SchemaFactory<"Foo", "Bar">, SchemaFactory>>;
+		type _check2 = requireTrue<requireAssignableTo<SchemaFactory<"Foo", 42>, SchemaFactory>>;
+		type _check3 = requireTrue<
+			requireAssignableTo<SchemaFactory<undefined, "Bar">, SchemaFactory>
+		>;
+		type _check4 = requireTrue<
+			requireAssignableTo<SchemaFactory<undefined, 42>, SchemaFactory>
+		>;
+	});
+
 	describe("object", () => {
 		it("simple end to end", () => {
 			const schema = new SchemaFactory("com.example");
