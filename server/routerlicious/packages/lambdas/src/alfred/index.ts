@@ -1133,7 +1133,9 @@ export function configureWebSocketServices(
 
 							// Check if the client supports v2/targeted signals
 							if (
-								supportedFeaturesMap.get(clientId)?.[feature_submit_signals_v2] &&
+								supportedFeaturesMap.get(clientId)?.clientSupportedFeatures?.[
+									feature_submit_signals_v2
+								] &&
 								isISentSignalMessage(content)
 							) {
 								signalMessage = {
