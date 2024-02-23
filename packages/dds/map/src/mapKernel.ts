@@ -387,7 +387,9 @@ export class MapKernel {
 	 * @param data - A JSON string containing serialized map data
 	 */
 	public populateFromSerializable(json: IMapDataObjectSerializable): void {
-		for (const [key, serializable] of Object.entries(this.serializer.decode(json) as IMapDataObjectSerializable)) {
+		for (const [key, serializable] of Object.entries(
+			this.serializer.decode(json) as IMapDataObjectSerializable,
+		)) {
 			const localValue = {
 				key,
 				value: this.makeLocal(key, serializable),
