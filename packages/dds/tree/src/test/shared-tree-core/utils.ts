@@ -4,7 +4,12 @@
  */
 import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { SharedTreeBranch, SharedTreeCore, Summarizable } from "../../shared-tree-core/index.js";
+import {
+	ICommitEnricher,
+	SharedTreeBranch,
+	SharedTreeCore,
+	Summarizable,
+} from "../../shared-tree-core/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import {
 	DefaultChangeFamily,
@@ -16,7 +21,11 @@ import {
 } from "../../feature-libraries/index.js";
 import { testRevisionTagCodec } from "../utils.js";
 import { ICodecOptions } from "../../codec/index.js";
-import { TreeStoredSchemaRepository, TreeStoredSchemaSubscription } from "../../core/index.js";
+import {
+	GraphCommit,
+	TreeStoredSchemaRepository,
+	TreeStoredSchemaSubscription,
+} from "../../core/index.js";
 
 /**
  * A `SharedTreeCore` with
@@ -36,6 +45,7 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 		summarizables: readonly Summarizable[] = [],
 		schema: TreeStoredSchemaSubscription = new TreeStoredSchemaRepository(),
 		chunkCompressionStrategy: TreeCompressionStrategy = TreeCompressionStrategy.Uncompressed,
+		enricher?: ICommitEnricher<DefaultChangeset>,
 	) {
 		const codecOptions: ICodecOptions = { jsonValidator: typeboxValidator };
 		super(
@@ -52,10 +62,20 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 			TestSharedTreeCore.attributes,
 			id,
 			{ policy: defaultSchemaPolicy, schema },
+			enricher,
 		);
 	}
 
 	public override getLocalBranch(): SharedTreeBranch<DefaultEditBuilder, DefaultChangeset> {
 		return super.getLocalBranch();
+	}
+
+	public readonly submitted: GraphCommit<DefaultChangeset>[] = [];
+
+	protected override onCommitSubmitted(
+		commit: GraphCommit<DefaultChangeset>,
+		isResubmit: boolean,
+	): void {
+		this.submitted.push(commit);
 	}
 }

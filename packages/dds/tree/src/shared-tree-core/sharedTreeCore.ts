@@ -244,7 +244,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			},
 		);
 		this.submitLocalMessage(this.serializer.encode(message, this.handle));
+		this.onCommitSubmitted(enrichedCommit, isResubmit);
 	}
+
+	protected onCommitSubmitted(commit: GraphCommit<TChange>, isResubmit: boolean): void {}
 
 	protected processCore(
 		message: ISequencedDocumentMessage,

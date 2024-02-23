@@ -22,6 +22,7 @@ import {
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
 import {
 	EditManager,
+	ICommitEnricher,
 	SharedTreeCore,
 	Summarizable,
 	SummaryElementParser,
@@ -31,9 +32,11 @@ import {
 	AllowedUpdateType,
 	ChangeFamily,
 	ChangeFamilyEditor,
+	GraphCommit,
 	rootFieldKey,
 } from "../../core/index.js";
 import {
+	DefaultChangeset,
 	DefaultEditBuilder,
 	FieldKinds,
 	FlexFieldSchema,
@@ -343,17 +346,68 @@ describe("SharedTreeCore", () => {
 		]);
 	});
 
+	describe("commit enrichment", () => {
+		interface Enrichment {
+			readonly input: GraphCommit<DefaultChangeset>;
+			readonly isResubmit: boolean;
+			readonly output: GraphCommit<DefaultChangeset>;
+		}
+
+		class MockCommitEnricher implements ICommitEnricher<DefaultChangeset> {
+			public readonly enrichmentLog: Enrichment[] = [];
+
+			public enrichCommit(
+				commit: GraphCommit<DefaultChangeset>,
+				isResubmit: boolean,
+			): GraphCommit<DefaultChangeset> {
+				const enriched = { ...commit };
+				this.enrichmentLog.push({ input: commit, isResubmit, output: enriched });
+				return enriched;
+			}
+
+			public readonly sequencingLog: boolean[] = [];
+
+			public commitSequenced(isLocal: boolean): void {
+				this.sequencingLog.push(isLocal);
+			}
+		}
+
+		it("enriches changes", () => {
+			const enricher = new MockCommitEnricher();
+			const tree = createTree([], enricher);
+			const containerRuntimeFactory = new MockContainerRuntimeFactory();
+			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
+				idCompressor: createIdCompressor(),
+			});
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+			tree.connect({
+				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
+				objectStorage: new MockStorage(),
+			});
+			assert.equal(enricher.enrichmentLog.length, 0);
+			changeTree(tree);
+			assert.equal(enricher.enrichmentLog.length, 1);
+			assert.equal(enricher.enrichmentLog[0].input, tree.getLocalBranch().getHead());
+			assert.equal(enricher.enrichmentLog[0].isResubmit, false);
+			assert.equal(enricher.enrichmentLog[0].output, tree.submitted[0]);
+		});
+	});
+
 	function isSummaryTree(summaryObject: SummaryObject): summaryObject is ISummaryTree {
 		return summaryObject.type === SummaryType.Tree;
 	}
 
 	function createTree<TIndexes extends readonly Summarizable[]>(
 		indexes: TIndexes,
+		enricher?: ICommitEnricher<DefaultChangeset>,
 	): TestSharedTreeCore {
 		return new TestSharedTreeCore(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			undefined,
 			indexes,
+			undefined,
+			undefined,
+			enricher,
 		);
 	}
 
