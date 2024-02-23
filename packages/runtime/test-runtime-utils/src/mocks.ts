@@ -814,6 +814,7 @@ export class MockFluidDataStoreRuntime
 				currentState < attachStatesToComparableNumbers[AttachState.Attaching] &&
 				valueState >= attachStatesToComparableNumbers[AttachState.Attaching]
 			) {
+				this._attachState = AttachState.Attaching;
 				this.emit("attaching");
 			}
 
@@ -821,9 +822,9 @@ export class MockFluidDataStoreRuntime
 				currentState < attachStatesToComparableNumbers[AttachState.Attached] &&
 				valueState >= attachStatesToComparableNumbers[AttachState.Attached]
 			) {
+				this._attachState = AttachState.Attached;
 				this.emit("attached");
 			}
-			this._attachState = value;
 		}
 	}
 
