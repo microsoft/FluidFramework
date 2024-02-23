@@ -70,52 +70,43 @@ footer {
 }
 
 .cta-icon {
-	background-repeat: no-repeat;
-	background-position: center;
-	background-size: 48px 48px;
-	width: 15rem;
-	height: 10rem;
-	margin-left: auto;
-	margin-right: auto;
-	margin-bottom: 1rem;
+    background-repeat: no-repeat;
+    background-position: center;
+    width: 15rem;
+    height: 10rem;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 1rem;
 }
 
-.cta-icon.get-started {
-	background-image: url("/codicons/play-circle.svg");
-	background-size: 64px 64px;
-	filter: invert(99%) sepia(4%) saturate(1700%) hue-rotate(269deg) brightness(114%) contrast(80%);
-}
-
-.cta-icon.learn-more {
-	background-image: url("/codicons/book.svg");
-	background-size: 64px 64px;
-	filter: invert(99%) sepia(4%) saturate(1700%) hue-rotate(269deg) brightness(114%) contrast(80%);
-}
-
-.cta-icon.play {
-	background-image: url("/codicons/beaker.svg");
-	background-size: 64px 64px;
-	filter: invert(99%) sepia(4%) saturate(1700%) hue-rotate(269deg) brightness(114%) contrast(80%);
-}
-
-.cta-icon.issue {
-	background-image: url("/codicons/bug.svg");
-	background-size: 64px 64px;
-	filter: invert(99%) sepia(4%) saturate(1700%) hue-rotate(269deg) brightness(114%) contrast(80%);
-}
-
-.cta-icon.github {
-	background-image: url("/codicons/github.svg");
-	background-size: 64px 64px;
-	filter: invert(99%) sepia(4%) saturate(1700%) hue-rotate(269deg) brightness(114%) contrast(80%);
-}
-
+.cta-icon.get-started,
+.cta-icon.learn-more,
+.cta-icon.play,
+.cta-icon.issue,
+.cta-icon.github,
 .cta-icon.gh-discussions {
-	background-image: url("/codicons/comment-discussion.svg");
-	background-size: 64px 64px;
-	/* helpful codepen for recoloring SVGs: https://codepen.io/sosuke/pen/Pjoqqp */
-	filter: invert(99%) sepia(4%) saturate(1700%) hue-rotate(269deg) brightness(114%) contrast(80%);
+    background-size: 64px 64px;
+    filter: invert(99%) sepia(4%) saturate(1700%) hue-rotate(269deg) brightness(114%) contrast(80%);
 }
+
+.cta-icon.get-started { background-image: url("/codicons/play-circle.svg"); }
+.cta-icon.learn-more { background-image: url("/codicons/book.svg"); }
+.cta-icon.play { background-image: url("/codicons/beaker.svg"); }
+.cta-icon.issue { background-image: url("/codicons/bug.svg"); }
+.cta-icon.github { background-image: url("/codicons/github.svg"); }
+.cta-icon.gh-discussions { background-image: url("/codicons/comment-discussion.svg"); }
+
+@media screen and (-ms-high-contrast: black-on-white) {
+    .cta-icon.get-started,
+    .cta-icon.learn-more,
+    .cta-icon.play,
+    .cta-icon.issue,
+    .cta-icon.github,
+    .cta-icon.gh-discussions {
+        filter: invert(99%) sepia(4%) saturate(1700%) hue-rotate(269deg) brightness(114%) contrast(0%);
+    }
+}
+
 
 .omt {
 	font-size: 16px;
