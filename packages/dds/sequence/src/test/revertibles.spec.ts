@@ -36,7 +36,6 @@ describe("Sequence.Revertibles with Local Edits", () => {
 		containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 		dataStoreRuntime1 = new MockFluidDataStoreRuntime({ clientId: "1" });
-		dataStoreRuntime1.local = false;
 		sharedString = stringFactory.create(dataStoreRuntime1, "shared-string-1");
 
 		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
@@ -304,7 +303,6 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 		containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 		// Connect the first SharedString.
-		dataStoreRuntime1.local = false;
 		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 		const services1 = {
 			deltaConnection: dataStoreRuntime1.createDeltaConnection(),
@@ -647,7 +645,6 @@ describe("Undo/redo for string remove containing intervals", () => {
 		containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 		// Connect the first SharedString.
-		dataStoreRuntime1.local = false;
 		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 		const services1 = {
 			deltaConnection: dataStoreRuntime1.createDeltaConnection(),
@@ -1147,7 +1144,6 @@ describe("Sequence.Revertibles with stickiness", () => {
 		containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 		dataStoreRuntime1 = new MockFluidDataStoreRuntime({ clientId: "1" });
-		dataStoreRuntime1.local = false;
 		dataStoreRuntime1.options = {
 			intervalStickinessEnabled: true,
 			mergeTreeReferencesCanSlideToEndpoint: true,

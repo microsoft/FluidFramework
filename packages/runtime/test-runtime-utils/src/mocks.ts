@@ -681,6 +681,12 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
 	}
 }
 
+const attachStatesToComparableNumbers = {
+	[AttachState.Detached]: 0,
+	[AttachState.Attaching]: 1,
+	[AttachState.Attached]: 2,
+} as const;
+
 /**
  * Mock implementation of IRuntime for testing that does nothing
  * @alpha
@@ -695,6 +701,7 @@ export class MockFluidDataStoreRuntime
 		id?: string;
 		logger?: ITelemetryBaseLogger;
 		idCompressor?: IIdCompressor & IIdCompressorCore;
+		attachState?: AttachState;
 	}) {
 		super();
 		this.clientId = overrides?.clientId ?? uuid();
@@ -705,6 +712,7 @@ export class MockFluidDataStoreRuntime
 			namespace: "fluid:MockFluidDataStoreRuntime",
 		});
 		this.idCompressor = overrides?.idCompressor;
+		this._attachState = overrides?.attachState ?? AttachState.Attached;
 	}
 
 	public readonly entryPoint: IFluidHandle<FluidObject>;
@@ -754,14 +762,19 @@ export class MockFluidDataStoreRuntime
 		return `/${this.id}`;
 	}
 
-	private _local = false;
-
+	/**
+	 * @deprecated - Usage attachState instead
+	 *
+	 * @privateRemarks Also remove the setter when this is removed. setters don't get their own doc tags.
+	 */
 	public get local(): boolean {
-		return this._local;
+		return this.isAttached;
 	}
-
 	public set local(local: boolean) {
-		this._local = local;
+		// this does not validate attach state orders, or fire events to maintain
+		// the existing behavior. due to this, this method is deprecated and will
+		// be removed
+		this._attachState = local ? AttachState.Detached : AttachState.Attached;
 	}
 
 	private _disposed = false;
@@ -782,15 +795,40 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public get isAttached(): boolean {
-		return !this.local;
+		return this.attachState !== AttachState.Detached;
 	}
 
+	private _attachState: AttachState;
 	public get attachState(): AttachState {
-		return this.local ? AttachState.Detached : AttachState.Attached;
+		return this._attachState;
+	}
+	public set attachState(value: AttachState) {
+		if (value !== this._attachState) {
+			const valueState = attachStatesToComparableNumbers[value];
+			const currentState = attachStatesToComparableNumbers[this._attachState];
+			if (valueState < currentState) {
+				throw new Error(`cannot transition back to ${value} from ${this.attachState}`);
+			}
+
+			if (
+				currentState < attachStatesToComparableNumbers[AttachState.Attaching] &&
+				valueState >= attachStatesToComparableNumbers[AttachState.Attaching]
+			) {
+				this.emit("attaching");
+			}
+
+			if (
+				currentState < attachStatesToComparableNumbers[AttachState.Attached] &&
+				valueState >= attachStatesToComparableNumbers[AttachState.Attached]
+			) {
+				this.emit("attached");
+			}
+			this._attachState = value;
+		}
 	}
 
 	public get visibilityState(): VisibilityState {
-		return this.local ? VisibilityState.NotVisible : VisibilityState.GloballyVisible;
+		return this.isAttached ? VisibilityState.NotVisible : VisibilityState.GloballyVisible;
 	}
 
 	public bindChannel(channel: IChannel): void {

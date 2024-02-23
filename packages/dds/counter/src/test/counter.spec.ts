@@ -127,8 +127,6 @@ describe("SharedCounter", () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 			// Connect the first SharedCounter.
-			dataStoreRuntime.local = false;
-
 			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 			const services1 = {
 				deltaConnection: dataStoreRuntime.createDeltaConnection(),
@@ -213,7 +211,6 @@ describe("SharedCounter", () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
 			// Connect the first SharedCounter.
-			dataStoreRuntime.local = false;
 			containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 			const services1 = {
 				deltaConnection: dataStoreRuntime.createDeltaConnection(),

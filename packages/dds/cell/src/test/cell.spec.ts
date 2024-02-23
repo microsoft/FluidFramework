@@ -143,8 +143,6 @@ describe("Cell", () => {
 				await cell2.load(services2);
 
 				// Now connect the first SharedCell
-				dataStoreRuntime1.local = false;
-
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 				const services1 = {
 					deltaConnection: dataStoreRuntime1.createDeltaConnection(),

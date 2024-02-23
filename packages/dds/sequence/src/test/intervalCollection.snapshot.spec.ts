@@ -37,7 +37,6 @@ async function loadSharedString(
 async function getSingleIntervalSummary(): Promise<{ summary: ISummaryTree; seq: number }> {
 	const containerRuntimeFactory = new MockContainerRuntimeFactory();
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	dataStoreRuntime.local = false;
 	dataStoreRuntime.options = {
 		intervalStickinessEnabled: true,
 	};

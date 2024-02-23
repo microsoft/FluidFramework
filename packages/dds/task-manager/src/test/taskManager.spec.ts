@@ -11,7 +11,7 @@ import {
 	MockContainerRuntimeForReconnection,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { ReadOnlyInfo } from "@fluidframework/container-definitions";
+import { AttachState, ReadOnlyInfo } from "@fluidframework/container-definitions";
 import { TaskManager } from "../taskManager";
 import { TaskManagerFactory } from "../taskManagerFactory";
 import { ITaskManager } from "../interfaces";
@@ -35,9 +35,8 @@ function createDetachedTaskManager(
 	runtimeFactory: MockContainerRuntimeFactory,
 ): { taskManager: TaskManager; attach: () => Promise<void> } {
 	// Create a detached TaskManager.
-	const dataStoreRuntime = new MockFluidDataStoreRuntime();
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
 	runtimeFactory.createContainerRuntime(dataStoreRuntime);
-	dataStoreRuntime.local = true;
 	const clientId = dataStoreRuntime.clientId;
 
 	const taskManager = new TaskManager(id, dataStoreRuntime, TaskManagerFactory.Attributes);
@@ -50,7 +49,7 @@ function createDetachedTaskManager(
 		// Manually trigger a summarize (should be done automatically when attaching normally)
 		await taskManager.summarize();
 
-		dataStoreRuntime.local = false;
+		dataStoreRuntime.attachState = AttachState.Attached;
 		taskManager.connect(services);
 
 		// Ensure clientId is set after attach (might be forced undefined in some tests)

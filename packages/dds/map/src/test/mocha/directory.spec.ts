@@ -16,6 +16,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 
+import { AttachState } from "@fluidframework/container-definitions";
 import { MapFactory } from "../../map";
 import { DirectoryFactory, IDirectoryNewStorageFormat, SharedDirectory } from "../../directory";
 import { IDirectory, IDirectoryValueChanged, ISharedMap } from "../../interfaces";
@@ -69,8 +70,7 @@ describe("Directory", () => {
 		let dataStoreRuntime: MockFluidDataStoreRuntime;
 
 		beforeEach("createDirectory", async () => {
-			dataStoreRuntime = new MockFluidDataStoreRuntime();
-			dataStoreRuntime.local = true;
+			dataStoreRuntime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
 			directory = new SharedDirectory(
 				"directory",
 				dataStoreRuntime,
@@ -675,7 +675,7 @@ describe("Directory", () => {
 				await directory2.load(services2);
 
 				// Now connect the first SharedDirectory
-				dataStoreRuntime.local = false;
+				dataStoreRuntime.attachState = AttachState.Attached;
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 				const services1 = {
 					deltaConnection: dataStoreRuntime.createDeltaConnection(),
@@ -818,7 +818,7 @@ describe("Directory", () => {
 				await directory2.load(services2);
 
 				// Now connect the first SharedDirectory
-				dataStoreRuntime.local = false;
+				dataStoreRuntime.attachState = AttachState.Attached;
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 				const services1 = {
 					deltaConnection: dataStoreRuntime.createDeltaConnection(),
@@ -859,9 +859,6 @@ describe("Directory", () => {
 			});
 
 			it("should correctly process subDirectory operations sent in local state", async () => {
-				// Set the data store runtime to local.
-				dataStoreRuntime.local = true;
-
 				// Create a sub directory in local state.
 				const subDirName = "testSubDir";
 				directory.createSubDirectory(subDirName);
@@ -884,7 +881,7 @@ describe("Directory", () => {
 				await directory2.load(services2);
 
 				// Now connect the first SharedDirectory
-				dataStoreRuntime.local = false;
+				dataStoreRuntime.attachState = AttachState.Attached;
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 				const services1 = {
 					deltaConnection: dataStoreRuntime.createDeltaConnection(),

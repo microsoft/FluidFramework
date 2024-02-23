@@ -42,7 +42,6 @@ import { SharedStringFactory } from "../sequenceFactory";
 			factory: MockContainerRuntimeFactory,
 		): Promise<[SharedString, MockContainerRuntime]> => {
 			const dataStoreRuntime = new MockFluidDataStoreRuntime();
-			dataStoreRuntime.local = false;
 			const containerRuntime = factory.createContainerRuntime(dataStoreRuntime);
 			const services = {
 				deltaConnection: dataStoreRuntime.createDeltaConnection(),

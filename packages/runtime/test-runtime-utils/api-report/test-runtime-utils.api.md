@@ -409,6 +409,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
         id?: string;
         logger?: ITelemetryBaseLogger;
         idCompressor?: IIdCompressor & IIdCompressorCore;
+        attachState?: AttachState;
     });
     // (undocumented)
     get absolutePath(): string;
@@ -420,6 +421,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     attachGraph(): void;
     // (undocumented)
     get attachState(): AttachState;
+    set attachState(value: AttachState);
     // (undocumented)
     bind(handle: IFluidHandle): void;
     // (undocumented)
@@ -476,7 +478,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     get isAttached(): boolean;
     // (undocumented)
     readonly loader: ILoader;
-    // (undocumented)
+    // @deprecated (undocumented)
     get local(): boolean;
     set local(local: boolean);
     // (undocumented)
