@@ -130,7 +130,8 @@ type UnbrandedName<T extends FlexLeafNodeSchema> = T["name"] extends TreeNodeSch
 export type ScopedSchemaName<
 	TScope extends string | undefined,
 	TName extends number | string,
-> = `${TScope extends undefined ? "" : `${TScope}.`}${TName}`;
+> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
+// > = `${TScope extends undefined ? "" : `${TScope}.`}${TName}`;
 
 /**
  * Builds schema libraries, and the schema within them.
@@ -155,7 +156,7 @@ export class SchemaFactory<
 	public constructor(public readonly scope: TScope) {}
 
 	private scoped<Name extends TName | string>(name: Name): ScopedSchemaName<TScope, Name> {
-		return `${this.scope === undefined ? "" : `${this.scope}.`}${name}` as ScopedSchemaName<
+		return (this.scope === undefined ? `${name}` : `${this.scope}.${name}`) as ScopedSchemaName<
 			TScope,
 			Name
 		>;
