@@ -120,6 +120,22 @@ describe("schemaFactory", () => {
 		const b: A = new B({});
 	});
 
+	it("Scoped", () => {
+		const factory = new SchemaFactory("test-scope");
+		// We specified a scope in the factory, so it should be part of the type signature of the created object
+		const foo = factory.object("foo", {}).identifier;
+		type _check = requireTrue<areSafelyAssignable<"test-scope.foo", typeof foo>>;
+		assert.equal(foo, "test-scope.foo");
+	});
+
+	it("Unscoped", () => {
+		const factory = new SchemaFactory(undefined);
+		// We did not specify a scope in the factory, so one should not be part of the type signature of the created object
+		const foo = factory.object("foo", {}).identifier;
+		type _check = requireTrue<areSafelyAssignable<"foo", typeof foo>>;
+		assert.equal(foo, "foo");
+	});
+
 	describe("object", () => {
 		it("simple end to end", () => {
 			const schema = new SchemaFactory("com.example");
@@ -326,22 +342,6 @@ describe("schemaFactory", () => {
 			}
 
 			assert.equal(MyList.identifier, `test.Array<["${factory.number.identifier}"]>`);
-		});
-
-		it("Scoped", () => {
-			const factory = new SchemaFactory("test-scope");
-			// We specified a scope in the factory, so it should be part of the type signature of the created object
-			const foo = factory.object("foo", {}).identifier;
-			type _check = requireTrue<areSafelyAssignable<"test-scope.foo", typeof foo>>;
-			assert.equal(foo, "test-scope.foo");
-		});
-
-		it("Unscoped", () => {
-			const factory = new SchemaFactory(undefined);
-			// We did not specify a scope in the factory, so one should not be part of the type signature of the created object
-			const foo = factory.object("foo", {}).identifier;
-			type _check = requireTrue<areSafelyAssignable<"foo", typeof foo>>;
-			assert.equal(foo, "foo");
 		});
 
 		it("Named", () => {
