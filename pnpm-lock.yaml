@@ -4854,6 +4854,7 @@ importers:
       axios: ^1.6.2
       buffer: ^6.0.3
       chai: ^4.2.0
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       easy-table: ^1.1.1
       env-cmd: ^10.1.0
@@ -4869,7 +4870,6 @@ importers:
       pako: ^2.0.4
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -4913,6 +4913,7 @@ importers:
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
       chai: 4.3.10
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       easy-table: 1.2.0
       env-cmd: 10.1.0
@@ -4923,7 +4924,6 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   experimental/PropertyDDS/packages/property-inspector-table:

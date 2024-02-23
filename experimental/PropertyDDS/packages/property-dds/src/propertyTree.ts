@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-internal-modules */
-import isEmpty from "lodash/isEmpty";
-import findIndex from "lodash/findIndex";
-import find from "lodash/find";
-import isEqual from "lodash/isEqual";
-import range from "lodash/range";
+import lodash from "lodash";
+
+// eslint-disable-next-line @typescript-eslint/unbound-method
+const { isEmpty, findIndex, find, isEqual, range } = lodash;
+
 import { copy as cloneDeep } from "fastest-json-copy";
 import { Packr } from "msgpackr";
 

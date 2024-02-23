@@ -141,11 +141,7 @@ describe("PropertyDDS summarizer", () => {
 
 		await objProvider.ensureSynchronized();
 
-		const {
-			client: u2,
-			dataObject: dataObject2,
-			container: container2,
-		} = await getClient(false, true);
+		const { dataObject: dataObject2, container: container2 } = await getClient(false, true);
 		await objProvider.ensureSynchronized();
 
 		// We do two changes to a different DDS (the root map), to make sure, that
@@ -205,11 +201,7 @@ describe("PropertyDDS summarizer", () => {
 
 		await objProvider.ensureSynchronized();
 
-		const {
-			client: u2,
-			dataObject: dataObject2,
-			container: container2,
-		} = await getClient(false, true);
+		const { dataObject: dataObject2, container: container2 } = await getClient(false, true);
 		await objProvider.ensureSynchronized();
 
 		// We do two changes to a different DDS (the root map), to make sure, that
@@ -312,7 +304,7 @@ describe("PropertyTree", () => {
 	describe("LZ4PropertyTree", () => {
 		executePerPropertyTreeType(
 			codeDetails,
-			factory1,
+			factory3,
 			documentId,
 			documentLoadUrl,
 			propertyDdsId,
@@ -378,8 +370,6 @@ function executePerPropertyTreeType(
 	}
 
 	describe("Local state", () => {
-		let propertyTree;
-
 		beforeEach(async () => {
 			opProcessingController = new LoaderContainerTracker();
 			deltaConnectionServer = LocalDeltaConnectionServer.create();

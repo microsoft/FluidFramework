@@ -145,7 +145,7 @@ describe("PropertyDDS", () => {
 				try {
 					const numOperations = random.irandom(maxOperations);
 					const maxCount = operationCumSums[operationCumSums.length - 1];
-					for (const j of _.range(numOperations)) {
+					for (const _j of _.range(numOperations)) {
 						const operationId = 1 + random.irandom(maxCount);
 						const selectedOperation = _.sortedIndex(operationCumSums, operationId);
 
@@ -474,7 +474,7 @@ describe("PropertyDDS", () => {
 						let testString = "";
 
 						const numOperations = random.irandom(30);
-						for (const j of _.range(numOperations)) {
+						for (const _j of _.range(numOperations)) {
 							const operation = random.irandom(6);
 							switch (operation) {
 								case 0:
