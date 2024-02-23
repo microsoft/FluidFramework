@@ -18162,7 +18162,7 @@ packages:
     dependencies:
       '@jest/fake-timers': 29.7.0
       '@jest/types': 29.6.3
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
       jest-mock: 29.7.0
     dev: true
 
@@ -18189,7 +18189,7 @@ packages:
     dependencies:
       '@jest/types': 29.6.3
       '@sinonjs/fake-timers': 10.3.0
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
       jest-message-util: 29.7.0
       jest-mock: 29.7.0
       jest-util: 29.7.0
@@ -32735,7 +32735,7 @@ packages:
       '@jest/environment': 29.7.0
       '@jest/fake-timers': 29.7.0
       '@jest/types': 29.6.3
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
       jest-mock: 29.7.0
       jest-util: 29.7.0
     dev: true
@@ -32871,7 +32871,7 @@ packages:
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
     dependencies:
       '@jest/types': 29.6.3
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
       jest-util: 29.7.0
     dev: true
 
@@ -33053,7 +33053,7 @@ packages:
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
     dependencies:
       '@jest/types': 29.6.3
-      '@types/node': 20.10.5
+      '@types/node': 18.19.1
       chalk: 4.1.2
       ci-info: 3.9.0
       graceful-fs: 4.2.11
