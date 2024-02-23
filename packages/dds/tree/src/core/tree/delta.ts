@@ -94,7 +94,7 @@ export interface Root<TTree = ProtoNode> {
 	 */
 	readonly destroy?: readonly DetachedNodeDestruction[];
 	/**
-	 * Refresher detached nodes to be constructed.
+	 * Refreshers for detached nodes that may need to be recreated.
 	 * The ordering has no significance.
 	 */
 	readonly refreshers?: readonly DetachedNodeBuild<TTree>[];
