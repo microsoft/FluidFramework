@@ -33,6 +33,7 @@ export interface ModularChangeset extends HasFieldChanges {
 	constraintViolationCount?: number;
 	readonly builds?: ChangeAtomIdMap<TreeChunk>;
 	readonly destroys?: ChangeAtomIdMap<number>;
+	readonly refreshers?: ChangeAtomIdMap<TreeChunk>;
 }
 
 /**

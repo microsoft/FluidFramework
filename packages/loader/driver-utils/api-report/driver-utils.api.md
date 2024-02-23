@@ -30,7 +30,7 @@ import { IStreamResult } from '@fluidframework/driver-definitions';
 import { ISummaryContext } from '@fluidframework/driver-definitions';
 import { ISummaryHandle } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ITelemetryErrorEvent } from '@fluidframework/core-interfaces';
+import { ITelemetryErrorEventExt } from '@fluidframework/telemetry-utils';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { IThrottlingWarning } from '@fluidframework/driver-definitions';
@@ -206,7 +206,7 @@ export interface ICompressionStorageConfig {
 
 // @internal
 export class InsecureUrlResolver implements IUrlResolver {
-    constructor(hostUrl: string, ordererUrl: string, storageUrl: string, tenantId: string, bearer: string, isForNodeTest?: boolean);
+    constructor(hostUrl: string, ordererUrl: string, storageUrl: string, deltaStreamUrl: string, tenantId: string, bearer: string, isForNodeTest?: boolean);
     // (undocumented)
     createCreateNewRequest(fileName?: string): IRequest;
     // (undocumented)
@@ -247,7 +247,7 @@ export class LocationRedirectionError extends LoggingError implements ILocationR
 }
 
 // @internal (undocumented)
-export function logNetworkFailure(logger: ITelemetryLoggerExt, event: ITelemetryErrorEvent, error?: any): void;
+export function logNetworkFailure(logger: ITelemetryLoggerExt, event: ITelemetryErrorEventExt, error?: any): void;
 
 // @internal (undocumented)
 export enum MessageType2 {
