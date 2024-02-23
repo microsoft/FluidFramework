@@ -33,27 +33,7 @@
 				"default": "./dist/index.js"
 			}
 		},
-		"./beta": {
-			"import": {
-				"types": "./lib/odsp-doclib-utils-beta.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/odsp-doclib-utils-beta.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
 		"./alpha": {
-			"import": {
-				"types": "./lib/odsp-doclib-utils-alpha.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/odsp-doclib-utils-alpha.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
-		"./fruit": {
 			"import": {
 				"types": "./lib/odsp-doclib-utils-alpha.d.ts",
 				"default": "./lib/index.js"
