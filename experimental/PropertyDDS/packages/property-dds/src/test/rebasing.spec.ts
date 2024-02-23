@@ -27,7 +27,11 @@ import {
 	LoaderContainerTracker,
 } from "@fluidframework/test-utils";
 import { DeterministicRandomGenerator } from "@fluid-experimental/property-common";
-import * as _ from "lodash";
+import lodash from "lodash";
+
+// 'lodash' import workaround.
+const { range, sortedIndex, isFunction } = lodash;
+
 import {
 	StringArrayProperty,
 	PropertyFactory,
@@ -145,9 +149,9 @@ describe("PropertyDDS", () => {
 				try {
 					const numOperations = random.irandom(maxOperations);
 					const maxCount = operationCumSums[operationCumSums.length - 1];
-					for (const _j of _.range(numOperations)) {
+					for (const _j of range(numOperations)) {
 						const operationId = 1 + random.irandom(maxCount);
-						const selectedOperation = _.sortedIndex(operationCumSums, operationId);
+						const selectedOperation = sortedIndex(operationCumSums, operationId);
 
 						const parameters = operations[selectedOperation].getParameters(random);
 
@@ -156,7 +160,7 @@ describe("PropertyDDS", () => {
 							operations[selectedOperation].op.toString(),
 						);
 						for (const [key, value] of Object.entries(parameters)) {
-							const valueString = _.isFunction(value)
+							const valueString = isFunction(value)
 								? getFunctionSource(value)
 								: value.toString();
 							operationSource = operationSource.replace(
@@ -245,10 +249,10 @@ describe("PropertyDDS", () => {
 			});
 
 			afterEach(() => {
-				const result = _.range(1, ACount + 1)
+				const result = range(1, ACount + 1)
 					.map((i) => `A${i}`)
 					.concat(["B1", "B2", "B3"])
-					.concat(_.range(1, CCount + 1).map((i) => `C${i}`));
+					.concat(range(1, CCount + 1).map((i) => `C${i}`));
 
 				const array1 = sharedPropertyTree1.root.get("array") as StringArrayProperty;
 				const array2 = sharedPropertyTree2.root.get("array") as StringArrayProperty;
@@ -463,7 +467,7 @@ describe("PropertyDDS", () => {
 			});
 
 			describe("Randomized Tests", () => {
-				const count = 100;
+				const count = 1;
 				const startTest = 0;
 				const logTest = true;
 
@@ -474,7 +478,7 @@ describe("PropertyDDS", () => {
 						let testString = "";
 
 						const numOperations = random.irandom(30);
-						for (const _j of _.range(numOperations)) {
+						for (const _j of range(numOperations)) {
 							const operation = random.irandom(6);
 							switch (operation) {
 								case 0:

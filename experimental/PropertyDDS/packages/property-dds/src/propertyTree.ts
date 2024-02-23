@@ -5,7 +5,7 @@
 
 import lodash from "lodash";
 
-// eslint-disable-next-line @typescript-eslint/unbound-method
+// eslint-disable-next-line @typescript-eslint/unbound-method -- 'lodash' import workaround.
 const { isEmpty, findIndex, find, isEqual, range } = lodash;
 
 import { copy as cloneDeep } from "fastest-json-copy";
