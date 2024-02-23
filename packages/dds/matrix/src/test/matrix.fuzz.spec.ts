@@ -208,7 +208,7 @@ describe("Matrix fuzz tests", function () {
 	 * Despite this accounting for 95% of test runtime when profiled, this codepath doesn't appear to be a bottleneck
 	 * in profiled production scenarios investigated at the time of writing.
 	 */
-	this.timeout(7000);
+	this.timeout(5000);
 	const model: Omit<DDSFuzzModel<TypedMatrixFactory, Operation>, "workloadName"> = {
 		factory: new TypedMatrixFactory(),
 		generatorFactory: () => takeAsync(50, makeGenerator()),
@@ -227,7 +227,6 @@ describe("Matrix fuzz tests", function () {
 		clientJoinOptions: {
 			maxNumberOfClients: 6,
 			clientAddProbability: 0.1,
-			stashableClientProbability: 0.2,
 		},
 		reconnectProbability: 0,
 		saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
@@ -241,8 +240,8 @@ describe("Matrix fuzz tests", function () {
 	createDDSFuzzSuite(nameModel("default"), {
 		...baseOptions,
 		reconnectProbability: 0,
-		// Seeds 7 and 11 are slow but otherwise pass, see comment on timeout above.
-		skip: [7, 11],
+		// Seeds 62 and 80 are slow but otherwise pass, see comment on timeout above.
+		skip: [62, 80],
 		// Uncomment to replay a particular seed.
 		// replay: 0,
 	});
@@ -250,7 +249,10 @@ describe("Matrix fuzz tests", function () {
 	createDDSFuzzSuite(nameModel("with reconnect"), {
 		...baseOptions,
 		defaultTestCount: 100,
-		clientJoinOptions: undefined,
+		clientJoinOptions: {
+			maxNumberOfClients: 3,
+			clientAddProbability: 0,
+		},
 		reconnectProbability: 0.1,
 		// Seeds needing investigation, tracked by AB#7088.
 		skip: [23, 24, 69],

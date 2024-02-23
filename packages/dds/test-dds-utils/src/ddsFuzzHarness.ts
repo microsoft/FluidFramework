@@ -346,7 +346,7 @@ export interface DDSFuzzSuiteOptions {
 		 * The probability for an added client to also be stashable which simulates
 		 * getting the pending state, closing the container, and re-opening with the state.
 		 */
-		stashableClientProbability: number | undefined;
+		stashableClientProbability?: number;
 	};
 
 	/**

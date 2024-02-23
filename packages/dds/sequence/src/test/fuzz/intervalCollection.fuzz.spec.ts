@@ -236,7 +236,10 @@ describe("IntervalCollection no reconnect fuzz testing", () => {
 		...defaultFuzzOptions,
 		skip: [68],
 		reconnectProbability: 0.0,
-		clientJoinOptions: undefined,
+		clientJoinOptions: {
+			maxNumberOfClients: 3,
+			clientAddProbability: 0.0,
+		},
 	};
 
 	createDDSFuzzSuite(noReconnectModel, {
@@ -256,7 +259,10 @@ describe("IntervalCollection fuzz testing with rebased batches", () => {
 		...defaultFuzzOptions,
 		skip: [44],
 		reconnectProbability: 0.0,
-		clientJoinOptions: undefined,
+		clientJoinOptions: {
+			maxNumberOfClients: 3,
+			clientAddProbability: 0.0,
+		},
 		rebaseProbability: 0.2,
 		containerRuntimeOptions: {
 			flushMode: FlushMode.TurnBased,

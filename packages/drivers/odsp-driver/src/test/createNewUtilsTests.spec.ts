@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { ISnapshot } from "@fluidframework/driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";
 import { bufferToString } from "@fluid-internal/client-utils";
@@ -24,7 +24,7 @@ import { INewFileInfo, createCacheSnapshotKey, IExistingFileInfo } from "../odsp
 import { LocalPersistentCache } from "../odspCache";
 import { mockFetchOk } from "./mockFetch";
 
-const createUtLocalCache = () => new LocalPersistentCache();
+const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 
 describe("Create New Utils Tests", () => {
 	const documentAttributes: api.IDocumentAttributes = {
@@ -32,7 +32,7 @@ describe("Create New Utils Tests", () => {
 		sequenceNumber: 0,
 	};
 	const blobContent = "testing";
-	const createSummary = () => {
+	const createSummary = (): api.ISummaryTree => {
 		const summary: api.ISummaryTree = {
 			type: api.SummaryType.Tree,
 			tree: {},
@@ -67,7 +67,7 @@ describe("Create New Utils Tests", () => {
 		driveId,
 		itemId,
 		odspResolvedUrl: true,
-	} as any as IOdspResolvedUrl;
+	} as unknown as IOdspResolvedUrl;
 	const filePath = "path";
 	let newFileParams: INewFileInfo;
 	let hashedDocumentId: string;
@@ -107,7 +107,7 @@ describe("Create New Utils Tests", () => {
 		await epochTracker.removeEntries().catch(() => {});
 	});
 
-	const test = (snapshot: ISnapshot) => {
+	const test = (snapshot: ISnapshot): void => {
 		const snapshotTree = snapshot.snapshotTree;
 		assert.strictEqual(
 			Object.entries(snapshotTree.trees).length,
@@ -161,7 +161,9 @@ describe("Create New Utils Tests", () => {
 			{ itemId: "itemId1", id: "Summary handle" },
 			{ "x-fluid-epoch": "epoch1" },
 		);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const snapshot = await epochTracker.get(createCacheSnapshotKey(odspResolvedUrl));
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		test(snapshot);
 		await epochTracker.removeEntries().catch(() => {});
 	});
@@ -188,7 +190,9 @@ describe("Create New Utils Tests", () => {
 			{ itemId: "itemId1", id: "Summary handle" },
 			{ "x-fluid-epoch": "epoch1" },
 		);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const snapshot = await epochTracker.get(createCacheSnapshotKey(odspResolvedUrl));
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		test(snapshot);
 		await epochTracker.removeEntries().catch(() => {});
 	});

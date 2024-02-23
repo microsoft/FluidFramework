@@ -21,7 +21,6 @@ const baseOptions: Partial<DDSFuzzSuiteOptions> = {
 	clientJoinOptions: {
 		maxNumberOfClients: 6,
 		clientAddProbability: 0.1,
-		stashableClientProbability: 0.2,
 	},
 	reconnectProbability: 0.5,
 };
@@ -75,7 +74,10 @@ describe("Fuzz - Top-Level", () => {
 			saveFailures: {
 				directory: failureDirectory,
 			},
-			clientJoinOptions: undefined,
+			clientJoinOptions: {
+				clientAddProbability: 0,
+				maxNumberOfClients: 3,
+			},
 			// AB#7162: enabling rehydrate in these tests hits 0x744 and 0x79d. Disabling rehydrate for now
 			// and using the default number of ops before attach.
 			detachedStartOptions: {

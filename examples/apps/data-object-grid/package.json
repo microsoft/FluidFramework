@@ -89,7 +89,7 @@
 		"jest-puppeteer": "^9.0.2",
 		"prettier": "~3.0.3",
 		"process": "^0.11.10",
-		"puppeteer": "^22.0.0",
+		"puppeteer": "^22.2.0",
 		"rimraf": "^4.4.0",
 		"sass-loader": "^7.1.0",
 		"source-map-loader": "^2.0.0",

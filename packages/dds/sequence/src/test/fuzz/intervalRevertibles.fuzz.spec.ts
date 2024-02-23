@@ -88,7 +88,10 @@ emitter.on("clientCreate", (client) => {
 const defaultRevertiblesFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
 	...defaultFuzzOptions,
 	reconnectProbability: 0,
-	clientJoinOptions: undefined,
+	clientJoinOptions: {
+		maxNumberOfClients: 6,
+		clientAddProbability: 0,
+	},
 };
 
 const optionsWithEmitter: Partial<DDSFuzzSuiteOptions> = {

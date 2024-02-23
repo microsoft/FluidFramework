@@ -43,6 +43,9 @@ import {
 export enum FlushMode {
 	/**
 	 * In Immediate flush mode the runtime will immediately send all operations to the driver layer.
+	 *
+	 * @deprecated This option will be removed in the next major version and should not be used. Use {@link FlushMode.TurnBased} instead, which is the default.
+	 * See https://github.com/microsoft/FluidFramework/tree/main/packages/runtime/container-runtime/src/opLifecycle#how-batching-works
 	 */
 	Immediate,
 
