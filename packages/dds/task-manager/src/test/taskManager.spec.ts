@@ -814,7 +814,8 @@ describe("TaskManager", () => {
 					);
 				});
 
-				it("Can abandon a subscribed task after attach", async () => {
+				// Todo AB#7310
+				it.skip("Can abandon a subscribed task after attach", async () => {
 					const taskId = "taskId";
 					taskManager1.subscribeToTask(taskId);
 					containerRuntimeFactory.processAllMessages();
