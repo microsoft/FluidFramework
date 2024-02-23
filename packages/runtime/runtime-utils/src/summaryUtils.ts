@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TelemetryBaseEventPropertyType } from "@fluidframework/core-interfaces";
+import type { TelemetryBaseEventPropertyType } from "@fluidframework/core-interfaces";
 import {
 	bufferToString,
 	fromBase64ToUtf8,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseProperties, IDisposable } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseProperties, IDisposable } from "@fluidframework/core-interfaces";
 import { performance } from "@fluid-internal/client-utils";
 import {
 	ITelemetryLoggerExt,

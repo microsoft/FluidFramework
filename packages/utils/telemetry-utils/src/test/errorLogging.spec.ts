@@ -14,7 +14,7 @@
 import { strict as assert } from "node:assert";
 import sinon from "sinon";
 import { v4 as uuid } from "uuid";
-import { ITelemetryBaseEvent, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseEvent, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { TelemetryDataTag, TelemetryLogger, TaggedLoggerAdapter } from "../logger.js";
 import {
 	LoggingError,
