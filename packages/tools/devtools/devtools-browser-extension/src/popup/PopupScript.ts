@@ -57,7 +57,6 @@ browser.tabs.query({ active: true, currentWindow: true }, (tabs) => {
  */
 export async function initializePopupView(target: HTMLElement, tabId: number): Promise<void> {
 	const backgroundServiceConnection = await BackgroundConnection.Initialize({
-		// TODO: devtools-panel-specific source
 		messageSource: extensionPopupMessageSource,
 		tabId,
 	});

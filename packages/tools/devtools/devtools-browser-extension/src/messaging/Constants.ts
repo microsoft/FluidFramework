@@ -7,7 +7,7 @@
  * The message {@link ISourcedDevtoolsMessage.source} for all messages posted by the Devtools extension.
  * @internal
  */
-export const extensionMessageSource: string = "fluid-devtools-extension";
+export const extensionViewMessageSource: string = "fluid-devtools-extension";
 
 /**
  * The message {@link ISourcedDevtoolsMessage.source} for all messages posted specifically by the Devtools extension popup window.

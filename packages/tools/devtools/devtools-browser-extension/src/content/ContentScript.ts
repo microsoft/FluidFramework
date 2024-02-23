@@ -11,7 +11,7 @@ import {
 
 import { browser, window } from "../Globals";
 import {
-	extensionMessageSource,
+	extensionViewMessageSource,
 	extensionPopupMessageSource,
 	relayMessageToPort,
 } from "../messaging";
@@ -48,7 +48,10 @@ if (window === undefined) {
 // Only establish messaging when activated by the Background Worker.
 browser.runtime.onConnect.addListener((backgroundPort: Port) => {
 	console.log(formatContentScriptMessageForLogging("Connection added from Background Worker."));
-
+	const allowedMessageSources = new Set([
+		extensionViewMessageSource,
+		extensionPopupMessageSource,
+	]);
 	/**
 	 * Relay messages if they conform to our expected format.
 	 */
@@ -76,10 +79,7 @@ browser.runtime.onConnect.addListener((backgroundPort: Port) => {
 	backgroundPort.onMessage.addListener((message: Partial<ISourcedDevtoolsMessage>) => {
 		// Only relay message if it is one of ours, and if the source is the extension
 		// (and not the window).
-		if (
-			(isDevtoolsMessage(message) && message.source === extensionMessageSource) ||
-			message.source === extensionPopupMessageSource
-		) {
+		if (isDevtoolsMessage(message) && allowedMessageSources.has(message.source)) {
 			console.debug(
 				formatContentScriptMessageForLogging(
 					`Relaying message from Background Script to the window:`,

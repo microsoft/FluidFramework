@@ -18,7 +18,7 @@ import {
 	devToolsInitAcknowledgementType,
 	type DevToolsInitMessage,
 	devToolsInitMessageType,
-	extensionMessageSource,
+	extensionViewMessageSource,
 	extensionPopupMessageSource,
 	type TypedPortConnection,
 } from "./messaging";
@@ -138,15 +138,15 @@ export class BackgroundConnection
 		if (!isDevtoolsMessage(message)) {
 			return false;
 		}
-
+		const allowedMessageSources = [
+			extensionViewMessageSource,
+			extensionPopupMessageSource,
+			devtoolsMessageSource,
+		];
 		// Ignore messages from unexpected sources.
 		// We receive at least one message directly from the Background script so we need to include
 		// extensionMessageSource and extensionPopupMessageSource as valid sources.
-		if (
-			message.source !== extensionMessageSource &&
-			message.source !== devtoolsMessageSource &&
-			message.source !== extensionPopupMessageSource
-		) {
+		if (!allowedMessageSources.includes(message.source)) {
 			return false;
 		}
 
