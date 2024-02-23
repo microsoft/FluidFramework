@@ -28,7 +28,7 @@ module.exports = function handler(fileData, logger) {
 	const totalTests = passedTests + failedTests;
 	const passRate = totalTests !== 0 ? passedTests / totalTests : 0;
 	console.log(passRate);
-	// Transfer the telemetry associated with performance test measurements to namespace "FFEngineering"
+	// Transfer the telemetry associated with test passsing rate to namespace "FFEngineering"
 	logger.send({
 		namespace: "FFEngineering",
 		category: "performance",
