@@ -42,9 +42,9 @@ import {
 import { Loader as ContainerLoader } from "@fluidframework/container-loader";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { DeflatedPropertyTree, LZ4PropertyTree } from "../propertyTreeExt";
-import { SharedPropertyTree } from "../propertyTree";
-import { PropertyTreeFactory } from "../propertyTreeFactory";
+import { DeflatedPropertyTree, LZ4PropertyTree } from "../propertyTreeExt.js";
+import { SharedPropertyTree } from "../propertyTree.js";
+import { PropertyTreeFactory } from "../propertyTreeFactory.js";
 
 interface Result {
 	container: IContainer;

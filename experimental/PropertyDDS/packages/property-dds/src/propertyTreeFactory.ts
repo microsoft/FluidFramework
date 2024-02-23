@@ -9,7 +9,7 @@ import {
 	IChannelServices,
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
-import { SharedPropertyTree, SharedPropertyTreeOptions } from "./propertyTree";
+import { SharedPropertyTree, SharedPropertyTreeOptions } from "./propertyTree.js";
 
 /**
  * The factory that defines the map

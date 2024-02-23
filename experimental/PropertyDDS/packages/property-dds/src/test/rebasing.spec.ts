@@ -37,7 +37,7 @@ import {
 	StringProperty,
 	Float64Property,
 } from "@fluid-experimental/property-properties";
-import { SharedPropertyTree } from "../propertyTree";
+import { SharedPropertyTree } from "../propertyTree.js";
 
 // a "namespace" uuid to generate uuidv5 in fuzz tests
 const namespaceGuid: string = "b6abf2df-d86d-413b-8fd1-359d4aa341f2";
