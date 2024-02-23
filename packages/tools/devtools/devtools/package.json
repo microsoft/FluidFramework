@@ -22,6 +22,36 @@
 				"types": "./dist/index.d.ts",
 				"default": "./dist/index.js"
 			}
+		},
+		"./public": {
+			"import": {
+				"types": "./lib/devtools-public.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/devtools-public.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./alpha": {
+			"import": {
+				"types": "./lib/devtools-alpha.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/devtools-alpha.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./internal": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
 		}
 	},
 	"main": "dist/index.js",
@@ -35,7 +65,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
 		"build:esnext": "tsc --project ./tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack . entrypoints .",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob _api-extractor-temp nyc dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
@@ -50,7 +80,7 @@
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
 		"rebuild": "npm run clean && npm run build",
 		"test": "echo TODO: add tests",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist",
 		"tsc:watch": "tsc --watch",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
