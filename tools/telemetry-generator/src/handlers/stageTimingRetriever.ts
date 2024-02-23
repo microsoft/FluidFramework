@@ -55,9 +55,8 @@ module.exports = function handler(fileData, logger) {
 			continue;
 		}
 
-		// Transfer the telemetry associated with pipeline status to namespace "FFEngineering".
 		logger.send({
-			namespace: "FFEngineering",
+			namespace: "FFEngineering", // Transfer the telemetry associated with pipeline status to namespace "FFEngineering".
 			category: "performance",
 			eventName: "StageTiming",
 			benchmarkType: "PipelineInfo",

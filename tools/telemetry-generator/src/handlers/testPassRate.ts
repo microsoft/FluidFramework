@@ -28,9 +28,9 @@ module.exports = function handler(fileData, logger) {
 	const totalTests = passedTests + failedTests;
 	const passRate = totalTests !== 0 ? passedTests / totalTests : 0;
 	console.log(passRate);
-	// Transfer the telemetry associated with test passsing rate to namespace "FFEngineering"
+
 	logger.send({
-		namespace: "FFEngineering",
+		namespace: "FFEngineering", // Transfer the telemetry associated with test passing rate to namespace "FFEngineering"
 		category: "performance",
 		eventName: "TestPassRate",
 		benchmarkType: "PipelineInfo",
