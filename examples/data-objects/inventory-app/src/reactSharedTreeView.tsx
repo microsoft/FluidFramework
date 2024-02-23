@@ -122,11 +122,13 @@ export function TreeViewComponent<TSchema extends TreeNodeSchema>({
 				</div>
 			);
 		} else {
-			<div>
-				Document is incompatible with current version of the application, and the document
-				format cannot be updated. The document is likely from a newer or otherwise
-				incompatible version of the application, or a different application.
-			</div>;
+			return (
+				<div>
+					Document is incompatible with current version of the application, and the document
+					format cannot be updated. The document is likely from a newer or otherwise
+					incompatible version of the application, or a different application.
+				</div>
+			);
 		}
 	}
 
