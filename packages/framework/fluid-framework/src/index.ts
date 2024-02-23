@@ -4,9 +4,8 @@
  */
 
 /**
- * The **fluid-framework** package bundles a collection of Fluid Framework client libraries for easy use
- * when paired with a corresponding service client library (for example,
- * `\@fluidframework/azure-client` or `\@fluidframework/tinylicious-client`).
+ * Bundles a collection of Fluid Framework client libraries for easy use when paired with a corresponding service client
+ * package (e.g. `@fluidframework/azure-client`, `@fluidframework/tinylicious-client`, or `@fluid-experimental/osdp-client (BETA)`).
  *
  * @packageDocumentation
  */
@@ -19,6 +18,7 @@ export { AttachState, ContainerErrorTypes } from "@fluidframework/container-defi
 export { DriverErrorTypes } from "@fluidframework/driver-definitions";
 export { ConnectionState } from "@fluidframework/container-loader";
 export type {
+	ContainerAttachProps,
 	ContainerSchema,
 	DataObjectClass,
 	IConnection,

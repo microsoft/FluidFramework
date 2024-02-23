@@ -12,7 +12,7 @@ import {
 	ISocketStorageDiscovery,
 	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
-import { ISnapshotContents } from "./odspPublicUtils";
+import { ISnapshot } from "@fluidframework/driver-definitions";
 
 /**
  * Similar to IPersistedCache, but exposes cache interface for single file
@@ -142,7 +142,7 @@ export class NonPersistentCache implements INonPersistentCache {
 /**
  * @alpha
  */
-export interface IPrefetchSnapshotContents extends ISnapshotContents {
+export interface IPrefetchSnapshotContents extends ISnapshot {
 	fluidEpoch: string;
 	prefetchStartTime: number;
 }

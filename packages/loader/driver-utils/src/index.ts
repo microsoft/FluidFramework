@@ -54,3 +54,4 @@ export {
 	SummaryCompressionAlgorithm,
 	blobHeadersBlobName,
 } from "./adapters";
+export { isInstanceOfISnapshot } from "./storageUtils";

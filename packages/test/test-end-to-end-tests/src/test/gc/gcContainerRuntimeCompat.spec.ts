@@ -12,7 +12,6 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	TestFluidObjectFactory,
-	mockConfigProvider,
 	createSummarizerFromFactory,
 	waitForContainerConnection,
 	summarizeNow,
@@ -50,7 +49,7 @@ describeCompat.skip("GC summary compatibility tests", "FullCompat", (getTestObje
 			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
 			runtimeOptions,
 		});
-		return provider.createContainer(runtimeFactory, { configProvider: mockConfigProvider() });
+		return provider.createContainer(runtimeFactory);
 	}
 
 	beforeEach("setupContainer", async () => {

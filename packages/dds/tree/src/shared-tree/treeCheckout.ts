@@ -33,6 +33,7 @@ import {
 	FieldBatchCodec,
 	jsonableTreeFromCursor,
 	makeFieldBatchCodec,
+	TreeCompressionStrategy,
 } from "../feature-libraries/index.js";
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core/index.js";
 import { TransactionResult, fail } from "../util/index.js";
@@ -195,6 +196,7 @@ export function createTreeCheckout(
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 		removedRoots?: DetachedFieldIndex;
+		chunkCompressionStrategy?: TreeCompressionStrategy;
 	},
 ): TreeCheckout {
 	const forest = args?.forest ?? buildForest();
@@ -206,6 +208,7 @@ export function createTreeCheckout(
 			revisionTagCodec,
 			args?.fieldBatchCodec ?? makeFieldBatchCodec(defaultCodecOptions),
 			{ jsonValidator: noopValidator },
+			args?.chunkCompressionStrategy,
 		);
 	const branch =
 		args?.branch ??

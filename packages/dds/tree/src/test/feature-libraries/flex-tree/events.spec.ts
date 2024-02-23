@@ -4,16 +4,13 @@
  */
 import { strict as assert } from "assert";
 
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { createIdCompressor } from "@fluidframework/id-compressor";
 import { FieldKinds, ITreeEvent } from "../../../feature-libraries/index.js";
 import { ForestType, SharedTreeFactory } from "../../../shared-tree/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
 import { SchemaBuilder, leaf } from "../../../domains/index.js";
-import { flexTreeViewWithContent } from "../../utils.js";
+import { flexTreeWithContent } from "../../utils.js";
 // eslint-disable-next-line import/no-internal-modules
 import { onNextChange } from "../../../feature-libraries/flex-tree/flexTreeTypes.js";
-import { AllowedUpdateType } from "../../../core/index.js";
 
 describe("beforeChange/afterChange events", () => {
 	const builder = new SchemaBuilder({
@@ -36,11 +33,7 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("fire the expected number of times", () => {
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"the tree",
-		);
-		const root = tree.schematizeInternal({
+		const root = flexTreeWithContent({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -48,8 +41,7 @@ describe("beforeChange/afterChange events", () => {
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
-			allowedSchemaModifications: AllowedUpdateType.None,
-		}).flexTree.content;
+		}).content;
 
 		let rootBeforeChangeCount = 0;
 		let rootAfterChangeCount = 0;
@@ -147,11 +139,7 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("fire in the expected order and always together", () => {
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"the tree",
-		);
-		const root = tree.schematizeInternal({
+		const root = flexTreeWithContent({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -159,8 +147,7 @@ describe("beforeChange/afterChange events", () => {
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
-			allowedSchemaModifications: AllowedUpdateType.None,
-		}).flexTree.content;
+		}).content;
 
 		let beforeCounter = 0;
 		let afterCounter = 0;
@@ -206,11 +193,7 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("event argument contains the expected node", () => {
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"the tree",
-		);
-		const root = tree.schematizeInternal({
+		const root = flexTreeWithContent({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -218,8 +201,7 @@ describe("beforeChange/afterChange events", () => {
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
-			allowedSchemaModifications: AllowedUpdateType.None,
-		}).flexTree.content;
+		}).content;
 
 		let rootBeforeCounter = 0;
 		let rootAfterCounter = 0;
@@ -282,11 +264,7 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("listeners can be removed successfully", () => {
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"the tree",
-		);
-		const root = tree.schematizeInternal({
+		const root = flexTreeWithContent({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -294,8 +272,7 @@ describe("beforeChange/afterChange events", () => {
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
-			allowedSchemaModifications: AllowedUpdateType.None,
-		}).flexTree.content;
+		}).content;
 
 		let beforeHasFired = false;
 		let afterHasFired = false;
@@ -334,11 +311,7 @@ describe("beforeChange/afterChange events", () => {
 
 	it("tree is in correct state when events fire - primitive node deletions", () => {
 		const initialNumber = 20;
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"the tree",
-		);
-		const root = tree.schematizeInternal({
+		const root = flexTreeWithContent({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: initialNumber,
@@ -346,8 +319,7 @@ describe("beforeChange/afterChange events", () => {
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
-			allowedSchemaModifications: AllowedUpdateType.None,
-		}).flexTree.content;
+		}).content;
 
 		let totalListenerCalls = 0;
 
@@ -365,11 +337,7 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("tree is in correct state when events fire - primitive node additions", () => {
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"the tree",
-		);
-		const root = tree.schematizeInternal({
+		const root = flexTreeWithContent({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -377,8 +345,7 @@ describe("beforeChange/afterChange events", () => {
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
-			allowedSchemaModifications: AllowedUpdateType.None,
-		}).flexTree.content;
+		}).content;
 
 		const newNumber = 20;
 
@@ -398,11 +365,7 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("tree is in correct state when events fire - primitive node replacements", () => {
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"the tree",
-		);
-		const root = tree.schematizeInternal({
+		const root = flexTreeWithContent({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -410,8 +373,7 @@ describe("beforeChange/afterChange events", () => {
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
-			allowedSchemaModifications: AllowedUpdateType.None,
-		}).flexTree.content;
+		}).content;
 		let totalListenerCalls = 0;
 		const newString = "John";
 
@@ -429,11 +391,7 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("tree is in correct state when events fire - node inserts to sequence fields", () => {
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"the tree",
-		);
-		const root = tree.schematizeInternal({
+		const root = flexTreeWithContent({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -441,8 +399,7 @@ describe("beforeChange/afterChange events", () => {
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
-			allowedSchemaModifications: AllowedUpdateType.None,
-		}).flexTree.content;
+		}).content;
 
 		let totalListenerCalls = 0;
 
@@ -494,11 +451,7 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("tree is in correct state when events fire - node removals from sequence fields", () => {
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"the tree",
-		);
-		const root = tree.schematizeInternal({
+		const root = flexTreeWithContent({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -506,8 +459,7 @@ describe("beforeChange/afterChange events", () => {
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
-			allowedSchemaModifications: AllowedUpdateType.None,
-		}).flexTree.content;
+		}).content;
 
 		let totalListenerCalls = 0;
 
@@ -537,11 +489,7 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("tree is in correct state when events fire - node moves in sequence fields", () => {
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"the tree",
-		);
-		const root = tree.schematizeInternal({
+		const root = flexTreeWithContent({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -549,8 +497,7 @@ describe("beforeChange/afterChange events", () => {
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
-			allowedSchemaModifications: AllowedUpdateType.None,
-		}).flexTree.content;
+		}).content;
 
 		let totalListenerCalls = 0;
 
@@ -612,11 +559,7 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("not emitted by nodes when they are replaced", () => {
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"the tree",
-		);
-		const root = tree.schematizeInternal({
+		const root = flexTreeWithContent({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -624,8 +567,7 @@ describe("beforeChange/afterChange events", () => {
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
-			allowedSchemaModifications: AllowedUpdateType.None,
-		}).flexTree.content;
+		}).content;
 
 		let beforeCounter = 0;
 		let afterCounter = 0;
@@ -645,11 +587,7 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("bubble up from the affected node to the root", () => {
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"the tree",
-		);
-		const root = tree.schematizeInternal({
+		const root = flexTreeWithContent({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -657,8 +595,7 @@ describe("beforeChange/afterChange events", () => {
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
-			allowedSchemaModifications: AllowedUpdateType.None,
-		}).flexTree.content;
+		}).content;
 
 		let rootBeforeCounter = 0;
 		let rootAfterCounter = 0;
@@ -695,11 +632,7 @@ describe("beforeChange/afterChange events", () => {
 	});
 
 	it("stopPropagation works", () => {
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"the tree",
-		);
-		const root = tree.schematizeInternal({
+		const root = flexTreeWithContent({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -707,8 +640,7 @@ describe("beforeChange/afterChange events", () => {
 				child: { myInnerString: "initial string in child" },
 			},
 			schema,
-			allowedSchemaModifications: AllowedUpdateType.None,
-		}).flexTree.content;
+		}).content;
 
 		let rootBeforeChangeFired = false;
 		let rootAfterChangeFired = false;
@@ -754,8 +686,7 @@ describe("onNextChange event", () => {
 	const initialTree = { content: 3 };
 
 	it("fires exactly once after a change", () => {
-		const view = flexTreeViewWithContent({ schema, initialTree });
-		const editNode = view.flexTree.content;
+		const editNode = flexTreeWithContent({ schema, initialTree }).content;
 		let onNextChangeCount = 0;
 		editNode[onNextChange](() => (onNextChangeCount += 1));
 		assert(editNode.is(object));
@@ -766,16 +697,14 @@ describe("onNextChange event", () => {
 	});
 
 	it("can have at most one listener at a time", () => {
-		const view = flexTreeViewWithContent({ schema, initialTree });
-		const editNode = view.flexTree.content;
+		const editNode = flexTreeWithContent({ schema, initialTree }).content;
 		let onNextChangeEventCount = 0;
 		editNode[onNextChange](() => (onNextChangeEventCount += 1));
 		assert.throws(() => editNode[onNextChange](() => (onNextChangeEventCount += 1)));
 	});
 
 	it("can be subscribed to again after throwing and catching an error", () => {
-		const view = flexTreeViewWithContent({ schema, initialTree });
-		const editNode = view.flexTree.content;
+		const editNode = flexTreeWithContent({ schema, initialTree }).content;
 		assert(editNode.is(object));
 		editNode[onNextChange](() => {
 			throw new Error();
@@ -785,8 +714,7 @@ describe("onNextChange event", () => {
 	});
 
 	it("can be unsubscribed from", () => {
-		const view = flexTreeViewWithContent({ schema, initialTree });
-		const editNode = view.flexTree.content;
+		const editNode = flexTreeWithContent({ schema, initialTree }).content;
 		assert(editNode.is(object));
 		let onNextChangeEventFired = false;
 		const off = editNode[onNextChange](() => {
@@ -798,8 +726,7 @@ describe("onNextChange event", () => {
 	});
 
 	it("unsubscription has no effect if the event has already fired", () => {
-		const view = flexTreeViewWithContent({ schema, initialTree });
-		const editNode = view.flexTree.content;
+		const editNode = flexTreeWithContent({ schema, initialTree }).content;
 		assert(editNode.is(object));
 		const off = editNode[onNextChange](() => {});
 		editNode.content = 7;

@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryProperties, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
+import { IResolvedUrl, ISnapshot } from "@fluidframework/driver-definitions";
 import {
 	isOnline,
 	OnlineStatus,
@@ -25,7 +25,7 @@ import {
 	fetchIncorrectResponse,
 	throwOdspNetworkError,
 	getSPOAndGraphRequestIdsFromResponse,
-} from "@fluidframework/odsp-doclib-utils";
+} from "@fluidframework/odsp-doclib-utils/internal";
 import {
 	IOdspResolvedUrl,
 	TokenFetchOptions,
@@ -33,7 +33,6 @@ import {
 	tokenFromResponse,
 	isTokenFromCache,
 	OdspResourceTokenFetchOptions,
-	ShareLinkTypes,
 	ISharingLinkKind,
 	TokenFetcher,
 	ICacheEntry,
@@ -44,6 +43,7 @@ import {
 import { fetch } from "./fetch";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { IOdspSnapshot } from "./contracts";
+import { ISnapshotContents } from "./odspPublicUtils";
 
 export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRepeat";
 
@@ -283,11 +283,8 @@ export interface INewFileInfo extends IFileInfoBase {
 	/**
 	 * application can request creation of a share link along with the creation of a new file
 	 * by passing in an optional param to specify the kind of sharing link
-	 * (at the time of adding this comment Sept/2021), odsp only supports csl
-	 * ShareLinkTypes will deprecated in future. Use ISharingLinkKind instead which specifies both
-	 * share link type and the role type.
 	 */
-	createLinkType?: ShareLinkTypes | ISharingLinkKind;
+	createLinkType?: ISharingLinkKind;
 }
 
 export interface IExistingFileInfo extends IFileInfoBase {
@@ -447,19 +444,13 @@ export const maxUmpPostBodySize = 79872;
  * @param shareLinkType - Kind of sharing link requested
  * @returns A string of request parameters that can be concatenated with the base URI
  */
-export function buildOdspShareLinkReqParams(
-	shareLinkType: ShareLinkTypes | ISharingLinkKind | undefined,
-) {
+export function buildOdspShareLinkReqParams(shareLinkType: ISharingLinkKind | undefined) {
 	if (!shareLinkType) {
 		return;
 	}
-	const scope = (shareLinkType as ISharingLinkKind).scope;
-	if (!scope) {
-		// eslint-disable-next-line @typescript-eslint/no-base-to-string
-		return `createLinkType=${shareLinkType}`;
-	}
+	const scope = shareLinkType.scope;
 	let shareLinkRequestParams = `createLinkScope=${scope}`;
-	const role = (shareLinkType as ISharingLinkKind).role;
+	const role = shareLinkType.role;
 	shareLinkRequestParams = role
 		? `${shareLinkRequestParams}&createLinkRole=${role}`
 		: shareLinkRequestParams;
@@ -482,4 +473,31 @@ export async function measureP<T>(callback: () => Promise<T>): Promise<[T, numbe
 
 export function getJoinSessionCacheKey(odspResolvedUrl: IOdspResolvedUrl) {
 	return `${odspResolvedUrl.hashedDocumentId}/joinsession`;
+}
+
+/**
+ * Utility API to check if the type of snapshot contents is `ISnapshot`.
+ * @internal
+ * @param obj - obj whose type needs to be identified.
+ */
+export function isInstanceOfISnapshot(
+	obj: ISnapshotContents | ISnapshot | undefined,
+): obj is ISnapshot {
+	return obj !== undefined && "snapshotFormatV" in obj && obj.snapshotFormatV === 1;
+}
+
+/**
+ * This tells whether request if for a specific loading group or not. The snapshot which
+ * we fetch on initial load, fetches all ungrouped content.
+ */
+export function isSnapshotFetchForLoadingGroup(loadingGroupIds: string[] | undefined) {
+	return loadingGroupIds !== undefined && loadingGroupIds.length > 0;
+}
+
+/*
+ * This tells whether we are using legacy flow for fetching snapshot where we don't use
+ * groupId query param in the trees latest network call.
+ */
+export function useLegacyFlowWithoutGroupsForSnapshotFetch(loadingGroupIds: string[] | undefined) {
+	return loadingGroupIds === undefined;
 }

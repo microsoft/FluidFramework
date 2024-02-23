@@ -130,11 +130,26 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	private readonly clientNameToIds = new RedBlackTree<string, number>(compareStrings);
 	private readonly shortClientIdMap: string[] = [];
 
+	/**
+	 * @param specToSegment - Rehydrates a segment from its JSON representation
+	 * @param logger - Telemetry logger for diagnostics
+	 * @param options - Options for this client. See {@link IMergeTreeOptions} for details.
+	 * @param getMinInFlightRefSeq - Upon applying a message (see {@link Client.applyMsg}), client purges collab-window information which
+	 * is no longer necessary based on that message's minimum sequence number.
+	 * However, if the user of this client has in-flight messages which refer to positions in this Client,
+	 * they may wish to preserve additional merge information.
+	 * The effective minimum sequence number will be the minimum of the message's minimumSequenceNumber and the result of this function.
+	 * If this function returns undefined, the message's minimumSequenceNumber will be used.
+	 *
+	 * @privateRemarks
+	 * - Passing specToSegment would be unnecessary if Client were merged with SharedSegmentSequence
+	 * - AB#6866 tracks a more unified approach to collab window min seq handling.
+	 */
 	constructor(
-		// Passing this callback would be unnecessary if Client were merged with SharedSegmentSequence
 		public readonly specToSegment: (spec: IJSONSegment) => ISegment,
 		public readonly logger: ITelemetryLoggerExt,
 		options?: IMergeTreeOptions & PropertySet,
+		private readonly getMinInFlightRefSeq: () => number | undefined = () => undefined,
 	) {
 		super();
 		this._mergeTree = new MergeTree(options);
@@ -900,41 +915,26 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 	}
 
-	// eslint-disable-next-line import/no-deprecated
-	public applyStashedOp(op: IMergeTreeDeltaOp): SegmentGroup;
-	// eslint-disable-next-line import/no-deprecated
-	public applyStashedOp(op: IMergeTreeGroupMsg): SegmentGroup[];
-	// eslint-disable-next-line import/no-deprecated
-	public applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
-	// eslint-disable-next-line import/no-deprecated
-	public applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[] {
-		// eslint-disable-next-line import/no-deprecated
-		let metadata: SegmentGroup | SegmentGroup[] | undefined;
-		const stashed = true;
+	public applyStashedOp(op: IMergeTreeOp): void {
 		switch (op.type) {
 			case MergeTreeDeltaType.INSERT:
-				this.applyInsertOp({ op, stashed });
-				metadata = this.peekPendingSegmentGroups();
+				this.applyInsertOp({ op });
 				break;
 			case MergeTreeDeltaType.REMOVE:
-				this.applyRemoveRangeOp({ op, stashed });
-				metadata = this.peekPendingSegmentGroups();
+				this.applyRemoveRangeOp({ op });
 				break;
 			case MergeTreeDeltaType.ANNOTATE:
-				this.applyAnnotateRangeOp({ op, stashed });
-				metadata = this.peekPendingSegmentGroups();
+				this.applyAnnotateRangeOp({ op });
 				break;
 			case MergeTreeDeltaType.OBLITERATE:
 				this.applyObliterateRangeOp({ op });
-				metadata = this.peekPendingSegmentGroups();
 				break;
 			case MergeTreeDeltaType.GROUP:
-				return op.ops.map((o) => this.applyStashedOp(o));
+				op.ops.map((o) => this.applyStashedOp(o));
+				break;
 			default:
 				unreachableCase(op, "unrecognized op type");
 		}
-		assert(!!metadata, 0x2db /* "Applying op must generate a pending segment" */);
-		return metadata;
 	}
 
 	public applyMsg(msg: ISequencedDocumentMessage, local: boolean = false) {
@@ -953,7 +953,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			}
 		}
 
-		this.updateSeqNumbers(msg.minimumSequenceNumber, msg.sequenceNumber);
+		const min = Math.min(
+			this.getMinInFlightRefSeq() ?? Number.POSITIVE_INFINITY,
+			msg.minimumSequenceNumber,
+		);
+		this.updateSeqNumbers(min, msg.sequenceNumber);
 	}
 
 	private updateSeqNumbers(min: number, seq: number) {

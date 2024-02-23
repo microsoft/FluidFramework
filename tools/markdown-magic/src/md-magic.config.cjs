@@ -468,7 +468,7 @@ function readmeInstallationSectionTransform(content, options, config) {
 }
 
 /**
- * TODO
+ * Generates simple Markdown contents indicating implications of the specified kind of package scope.
  *
  * @param {object} content - The original document file contents.
  * @param {object} options - Transform options.

@@ -4,8 +4,8 @@
  */
 
 import { expect } from 'chai';
-import { DetachedSequenceId, OpSpaceNodeId } from '../Identifiers';
-import { MutableStringInterner, StringInterner } from '../StringInterner';
+import { DetachedSequenceId, OpSpaceNodeId } from '../Identifiers.js';
+import { MutableStringInterner, StringInterner } from '../StringInterner.js';
 import {
 	BuildInternal,
 	ChangeInternal,
@@ -19,14 +19,14 @@ import {
 	Edit,
 	PlaceholderTree,
 	SetValueInternal,
-} from '../persisted-types';
-import { ChangeCompressor, compressEdit, decompressEdit } from '../ChangeCompression';
-import { StablePlace, StableRange } from '../ChangeTypes';
-import { newEdit, newEditId } from '../EditUtilities';
-import { TreeCompressor, InterningTreeCompressor } from '../TreeCompressor';
-import { ContextualizedNodeIdNormalizer, scopeIdNormalizer } from '../NodeIdUtilities';
-import { convertStableRangeIds } from '../IdConversion';
-import { makeNodeIdContext, setUpTestTree } from './utilities/TestUtilities';
+} from '../persisted-types/index.js';
+import { ChangeCompressor, compressEdit, decompressEdit } from '../ChangeCompression.js';
+import { StablePlace, StableRange } from '../ChangeTypes.js';
+import { newEdit, newEditId } from '../EditUtilities.js';
+import { TreeCompressor, InterningTreeCompressor } from '../TreeCompressor.js';
+import { ContextualizedNodeIdNormalizer, scopeIdNormalizer } from '../NodeIdUtilities.js';
+import { convertStableRangeIds } from '../IdConversion.js';
+import { makeNodeIdContext, setUpTestTree } from './utilities/TestUtilities.js';
 
 // CompressedChange type for this test suite. It aligns with CompressedChangeInternal but doesn't actually compress trees.
 type TestCompressedChange = CompressedChangeInternal<OpSpaceNodeId>;

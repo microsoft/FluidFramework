@@ -14,7 +14,7 @@ import {
 	SessionSpaceCompressedId,
 	StableId,
 } from "../";
-import { IdCompressor, deserializeIdCompressor } from "../idCompressor";
+import { IdCompressor, createIdCompressor, deserializeIdCompressor } from "../idCompressor";
 import { createSessionId } from "../utilities";
 import {
 	performFuzzActions,
@@ -43,6 +43,19 @@ describe("IdCompressor", () => {
 			const id = compressor.generateCompressedId();
 			const uuid = compressor.decompress(id);
 			assert.equal(id, compressor.recompress(uuid));
+		});
+
+		it("can generate document unique IDs", () => {
+			const compressor = CompressorFactory.createCompressor(Client.Client1, 2);
+			let id = compressor.generateDocumentUniqueId();
+			assert(typeof id === "string");
+			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+			id = compressor.generateDocumentUniqueId();
+			assert(typeof id === "number" && isFinalId(id));
+			id = compressor.generateDocumentUniqueId();
+			assert(typeof id === "number" && isFinalId(id));
+			id = compressor.generateDocumentUniqueId();
+			assert(typeof id === "string");
 		});
 
 		describe("Eager final ID allocation", () => {
@@ -770,6 +783,18 @@ describe("IdCompressor", () => {
 					size: 72,
 					clusterCount: 1,
 					sessionCount: 1,
+				},
+			]);
+		});
+
+		it("correctly passes logger when no session specified", () => {
+			const mockLogger = new MockLogger();
+			const compressor = createIdCompressor(mockLogger);
+			compressor.generateCompressedId();
+			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+			mockLogger.assertMatchAny([
+				{
+					eventName: "RuntimeIdCompressor:FirstCluster",
 				},
 			]);
 		});

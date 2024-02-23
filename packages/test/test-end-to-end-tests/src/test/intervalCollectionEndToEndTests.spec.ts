@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { SharedString, IIntervalCollection, SequenceInterval } from "@fluidframework/sequence";
+import type { SharedString, IIntervalCollection, SequenceInterval } from "@fluidframework/sequence";
 import {
 	ITestObjectProvider,
 	ITestContainerConfig,
@@ -22,35 +22,6 @@ import { IHostLoader } from "@fluidframework/container-definitions";
 
 const stringId = "sharedStringKey";
 const collectionId = "collectionKey";
-
-const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
-const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
-	getRawConfig: (name: string): ConfigTypes => settings[name],
-});
-
-const testContainerConfig: ITestContainerConfig = {
-	fluidDataObjectType: DataObjectFactoryType.Test,
-	registry,
-	runtimeOptions: {
-		summaryOptions: {
-			summaryConfigOverrides: {
-				...DefaultSummaryConfiguration,
-				...{
-					maxTime: 5000 * 12,
-					maxAckWaitTime: 120000,
-					maxOps: 1,
-					initialSummarizerDelayMs: 20,
-				},
-			},
-		},
-		enableRuntimeIdCompressor: true,
-	},
-	loaderProps: {
-		configProvider: configProvider({
-			"Fluid.Container.enableOfflineLoad": true,
-		}),
-	},
-};
 
 const assertIntervals = (
 	sharedString: SharedString,
@@ -81,7 +52,38 @@ const assertIntervals = (
 	assert.deepEqual(actualPos, expected, "intervals are not as expected");
 };
 
-describeCompat("IntervalCollection with stashed ops", "NoCompat", (getTestObjectProvider) => {
+describeCompat("IntervalCollection with stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedString } = apis.dds;
+
+	const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
+	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+		getRawConfig: (name: string): ConfigTypes => settings[name],
+	});
+
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+		runtimeOptions: {
+			summaryOptions: {
+				summaryConfigOverrides: {
+					...DefaultSummaryConfiguration,
+					...{
+						maxTime: 5000 * 12,
+						maxAckWaitTime: 120000,
+						maxOps: 1,
+						initialSummarizerDelayMs: 20,
+					},
+				},
+			},
+			enableRuntimeIdCompressor: true,
+		},
+		loaderProps: {
+			configProvider: configProvider({
+				"Fluid.Container.enableOfflineLoad": true,
+			}),
+		},
+	};
+
 	let provider: ITestObjectProvider;
 	let container1: IContainerExperimental;
 	let sharedString1: SharedString;
@@ -104,7 +106,8 @@ describeCompat("IntervalCollection with stashed ops", "NoCompat", (getTestObject
 		url = await container1.getAbsoluteUrl("");
 	});
 
-	it("doesn't resend successful op", async () => {
+	// todo re-enable after AB#7145
+	it.skip("doesn't resend successful op", async () => {
 		// add an interval
 		const id = collection1.add({ start: 4, end: 7 }).getIntervalId();
 

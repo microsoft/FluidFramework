@@ -197,6 +197,10 @@ export interface HasListeners<E extends Events<E>> {
  * ```
  */
 export class EventEmitter<E extends Events<E>> implements ISubscribable<E>, HasListeners<E> {
+	// TODO: because the inner data-structure here is a set, adding the same callback twice does not error,
+	// but only calls it once, and unsubscribing will stop calling it all together.
+	// This is surprising since it makes subscribing and unsubscribing not inverses (but instead both idempotent).
+	// This might be desired, but if so the documentation should indicate it.
 	private readonly listeners = new Map<keyof E, Set<(...args: unknown[]) => any>>();
 
 	// Because this is protected and not public, calling this externally (not from a subclass) makes sending events to the constructed instance impossible.
@@ -207,8 +211,12 @@ export class EventEmitter<E extends Events<E>> implements ISubscribable<E>, HasL
 		const listeners = this.listeners.get(eventName);
 		if (listeners !== undefined) {
 			const argArray: unknown[] = args; // TODO: Current TS (4.5.5) cannot spread `args` into `listener()`, but future versions (e.g. 4.8.4) can.
-			for (const listener of listeners.values()) {
-				listener(...argArray);
+			// This explicitly copies listeners so that new listeners added during this call to emit will not receive this event.
+			for (const listener of [...listeners]) {
+				// If listener has been unsubscribed while invoking other listeners, skip it.
+				if (listeners.has(listener)) {
+					listener(...argArray);
+				}
 			}
 		}
 	}
@@ -235,6 +243,10 @@ export class EventEmitter<E extends Events<E>> implements ISubscribable<E>, HasL
 	 * @param listener - the handler to run when the event is fired by the emitter
 	 * @returns a function which will deregister the listener when run.
 	 * This function will error if called more than once.
+	 * @privateRemarks
+	 * TODO:
+	 * invoking the returned callback can error even if its only called once if the same listener was provided to two calls to "on".
+	 * This behavior is not documented and its unclear if its a bug or not: see note on listeners.
 	 */
 	public on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void {
 		getOrCreate(this.listeners, eventName, () => new Set()).add(listener);
@@ -244,6 +256,7 @@ export class EventEmitter<E extends Events<E>> implements ISubscribable<E>, HasL
 	private off<K extends keyof Events<E>>(eventName: K, listener: E[K]): void {
 		const listeners =
 			this.listeners.get(eventName) ??
+			// TODO: consider making this (and assert below) a usage error since it can be triggered by users of the public API: maybe separate those use cases somehow?
 			fail(
 				"Event has no listeners. Event deregistration functions may only be invoked once.",
 			);

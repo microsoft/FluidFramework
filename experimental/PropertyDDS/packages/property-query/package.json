@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-query",
-	"version": "2.0.0-rc.1.0.0",
+	"version": "2.0.0-rc.2.0.0",
 	"description": "QueryService implementation",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -23,7 +23,7 @@
 		"test": "npm run test:mocha",
 		"test:changeset": "cd ../property-changeset && mocha",
 		"test:common": "cd ../property-common && mocha",
-		"test:mocha": "mocha --exit -r node_modules/@fluidframework/mocha-test-setup",
+		"test:mocha": "mocha --exit -r node_modules/@fluid-internal/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
 	},
 	"dependencies": {
@@ -42,7 +42,7 @@
 	},
 	"devDependencies": {
 		"@fluid-experimental/property-properties": "workspace:~",
-		"@fluidframework/mocha-test-setup": "workspace:~",
+		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"chai": "^4.2.0",
 		"cross-env": "^7.0.3",
 		"mocha": "^10.2.0",

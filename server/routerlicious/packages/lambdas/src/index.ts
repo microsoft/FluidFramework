@@ -8,7 +8,7 @@ export {
 	IBroadcastSignalEventPayload,
 	ICollaborationSessionEvents,
 	IRoom,
-} from "./alfred";
+} from "./nexus";
 export { BroadcasterLambda, BroadcasterLambdaFactory } from "./broadcaster";
 export { CopierLambda, CopierLambdaFactory } from "./copier";
 export {
@@ -46,4 +46,5 @@ export {
 	IRuntimeSignalEnvelope,
 	logCommonSessionEndMetrics,
 	NoOpLambda,
+	DocumentCheckpointManager,
 } from "./utils";

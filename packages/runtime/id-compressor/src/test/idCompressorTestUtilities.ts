@@ -25,6 +25,8 @@ import {
 	SessionId,
 	SessionSpaceCompressedId,
 	StableId,
+	type IIdCompressor,
+	type IIdCompressorCore,
 } from "../";
 import { IdCompressor } from "../idCompressor";
 import { assertIsSessionId, createSessionId } from "../utilities";
@@ -886,4 +888,34 @@ export function generateCompressedIds(
 		ids.push(compressor.generateCompressedId());
 	}
 	return ids;
+}
+
+/**
+ * Creates a compressor that only produces final IDs.
+ * It should only be used for testing purposes.
+ */
+export function createAlwaysFinalizedIdCompressor(
+	logger?: ITelemetryBaseLogger,
+): IIdCompressor & IIdCompressorCore;
+/**
+ * Creates a compressor that only produces final IDs.
+ * It should only be used for testing purposes.
+ */
+export function createAlwaysFinalizedIdCompressor(
+	sessionId: SessionId,
+	logger?: ITelemetryBaseLogger,
+): IIdCompressor & IIdCompressorCore;
+export function createAlwaysFinalizedIdCompressor(
+	sessionIdOrLogger?: SessionId | ITelemetryBaseLogger,
+	loggerOrUndefined?: ITelemetryBaseLogger,
+): IIdCompressor & IIdCompressorCore {
+	const compressor =
+		sessionIdOrLogger === undefined
+			? createIdCompressor()
+			: typeof sessionIdOrLogger === "string"
+			? createIdCompressor(sessionIdOrLogger, loggerOrUndefined)
+			: createIdCompressor(sessionIdOrLogger);
+	// Permanently put the compressor in a ghost session
+	(compressor as IdCompressor).startGhostSession(createSessionId());
+	return compressor;
 }

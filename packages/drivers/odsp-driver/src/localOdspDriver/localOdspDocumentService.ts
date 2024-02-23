@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	IDocumentDeltaStorageService,
 	IDocumentService,
+	IDocumentServiceEvents,
 	IDocumentStorageService,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions";
@@ -19,7 +21,10 @@ import { LocalOdspDocumentStorageService } from "./localOdspDocumentStorageManag
 /**
  * IDocumentService implementation that provides explicit snapshot to the document storage service.
  */
-export class LocalOdspDocumentService implements IDocumentService {
+export class LocalOdspDocumentService
+	extends TypedEventEmitter<IDocumentServiceEvents>
+	implements IDocumentService
+{
 	public policies = { storageOnly: true };
 	private storageManager?: LocalOdspDocumentStorageService;
 
@@ -27,7 +32,9 @@ export class LocalOdspDocumentService implements IDocumentService {
 		private readonly odspResolvedUrl: IOdspResolvedUrl,
 		private readonly logger: ITelemetryLoggerExt,
 		private readonly localSnapshot: Uint8Array | string,
-	) {}
+	) {
+		super();
+	}
 
 	public get resolvedUrl(): IResolvedUrl {
 		return this.odspResolvedUrl;

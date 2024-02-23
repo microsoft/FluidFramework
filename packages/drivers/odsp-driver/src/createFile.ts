@@ -12,10 +12,9 @@ import {
 	IOdspResolvedUrl,
 	OdspErrorTypes,
 	ShareLinkInfoType,
-	ISharingLinkKind,
-	ShareLinkTypes,
 	IFileEntry,
 } from "@fluidframework/odsp-driver-definitions";
+import { ISnapshot } from "@fluidframework/driver-definitions";
 import { ICreateFileResponse } from "./contracts";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import {
@@ -25,7 +24,6 @@ import {
 	INewFileInfo,
 	getOrigin,
 } from "./odspUtils";
-import { ISnapshotContents } from "./odspPublicUtils";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";
@@ -59,7 +57,6 @@ export async function createNewFluidFile(
 	forceAccessTokenViaAuthorizationHeader: boolean,
 	isClpCompliantApp?: boolean,
 	enableSingleRequestForShareLinkWithCreate?: boolean,
-	enableShareLinkWithCreate?: boolean,
 ): Promise<IOdspResolvedUrl> {
 	// Check for valid filename before the request to create file is actually made.
 	if (isInvalidFileName(newFileInfo.filename)) {
@@ -94,12 +91,7 @@ export async function createNewFluidFile(
 		itemId = content.itemId;
 		summaryHandle = content.id;
 
-		shareLinkInfo = extractShareLinkData(
-			newFileInfo.createLinkType,
-			content,
-			enableSingleRequestForShareLinkWithCreate,
-			enableShareLinkWithCreate,
-		);
+		shareLinkInfo = extractShareLinkData(content, enableSingleRequestForShareLinkWithCreate);
 	}
 
 	const odspUrl = createOdspUrl({ ...newFileInfo, itemId, dataStorePath: "/" });
@@ -116,7 +108,7 @@ export async function createNewFluidFile(
 	if (createNewSummary !== undefined && createNewCaching) {
 		assert(summaryHandle !== undefined, 0x203 /* "Summary handle is undefined" */);
 		// converting summary and getting sequence number
-		const snapshot: ISnapshotContents = convertCreateNewSummaryTreeToTreeAndBlobs(
+		const snapshot: ISnapshot = convertCreateNewSummaryTreeToTreeAndBlobs(
 			createNewSummary,
 			summaryHandle,
 		);
@@ -127,9 +119,9 @@ export async function createNewFluidFile(
 }
 
 /**
- * If user requested creation of a sharing link along with the creation of the file by providing either
- * createLinkType (now deprecated) or createLinkScope in the request parameters, extract and save
- * sharing link information from the response if it is available.
+ * If user requested creation of a sharing link along with the creation of the file by providing
+ * createLinkScope in the request parameters then extract and save the sharing link information from
+ * the response if it is available.
  * In case there was an error in creation of the sharing link, error is provided back in the response,
  * and does not impact the creation of file in ODSP.
  * @param requestedSharingLinkKind - Kind of sharing link requested to be created along with the creation of file.
@@ -137,14 +129,9 @@ export async function createNewFluidFile(
  * @returns Sharing link information received in the response from a successful creation of a file.
  */
 function extractShareLinkData(
-	requestedSharingLinkKind: ShareLinkTypes | ISharingLinkKind | undefined,
 	response: ICreateFileResponse,
 	enableSingleRequestForShareLinkWithCreate?: boolean,
-	enableShareLinkWithCreate?: boolean,
 ): ShareLinkInfoType | undefined {
-	if (!requestedSharingLinkKind) {
-		return;
-	}
 	let shareLinkInfo: ShareLinkInfoType | undefined;
 	if (enableSingleRequestForShareLinkWithCreate) {
 		const { sharing } = response;
@@ -153,7 +140,6 @@ function extractShareLinkData(
 		}
 		shareLinkInfo = {
 			createLink: {
-				type: requestedSharingLinkKind,
 				link: sharing.sharingLink
 					? {
 							scope: sharing.sharingLink.scope,
@@ -164,19 +150,6 @@ function extractShareLinkData(
 					: undefined,
 				error: sharing.error,
 				shareId: sharing.shareId,
-			},
-		};
-	} else if (enableShareLinkWithCreate) {
-		const { sharing, sharingLink, sharingLinkErrorReason } = response;
-		if (!sharingLink && !sharingLinkErrorReason) {
-			return;
-		}
-		shareLinkInfo = {
-			createLink: {
-				type: requestedSharingLinkKind,
-				link: sharingLink,
-				error: sharingLinkErrorReason,
-				shareId: sharing?.shareId,
 			},
 		};
 	}

@@ -30,7 +30,7 @@ export class RedisThrottleAndUsageStorageManager implements IThrottleAndUsageSto
 	private readonly prefix: string = "throttle";
 
 	constructor(
-		private readonly client: Redis.default,
+		private readonly client: Redis.default | Redis.Cluster,
 		parameters?: IRedisParameters,
 	) {
 		if (parameters?.expireAfterSeconds) {

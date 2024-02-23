@@ -11,10 +11,11 @@ import {
 	LoaderCachingPolicy,
 	FiveDaysMs,
 	FetchSource,
+	ISnapshot,
+	ISnapshotFetchOptions,
 } from "@fluidframework/driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";
 import { IConfigProvider } from "@fluidframework/telemetry-utils";
-import { ISnapshotContents } from "./odspPublicUtils";
 
 const maximumCacheDurationMs: FiveDaysMs = 432000000; // 5 * 24 * 60 * 60 * 1000 = 5 days in ms
 
@@ -136,8 +137,6 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 	}
 	protected readonly commitCache: Map<string, api.ISnapshotTree> = new Map();
 
-	private readonly attributesBlobHandles: Set<string> = new Set();
-
 	private _ops: api.ISequencedDocumentMessage[] | undefined;
 
 	private _snapshotSequenceNumber: number | undefined;
@@ -156,8 +155,6 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 	public get snapshotSequenceNumber() {
 		return this._snapshotSequenceNumber;
 	}
-
-	public readonly repositoryUrl = "";
 
 	public abstract createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse>;
 
@@ -193,20 +190,10 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 			return null;
 		}
 
-		if (snapshotTree.blobs) {
-			const attributesBlob = snapshotTree.blobs.attributes;
-			if (attributesBlob) {
-				this.attributesBlobHandles.add(attributesBlob);
-			}
-		}
-
-		// When we upload the container snapshot, we upload appTree in ".app" and protocol tree in ".protocol"
-		// So when we request the snapshot we get ".app" as tree and not as commit node as in the case just above.
-		const appTree = snapshotTree.trees[".app"];
-		const protocolTree = snapshotTree.trees[".protocol"];
-
-		return this.combineProtocolAndAppSnapshotTree(appTree, protocolTree);
+		return this.combineProtocolAndAppSnapshotTree(snapshotTree);
 	}
+
+	public abstract getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
 
 	public abstract getVersions(
 		// eslint-disable-next-line @rushstack/no-new-null
@@ -247,42 +234,50 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 		scenarioName?: string,
 	): Promise<api.ISnapshotTree | undefined>;
 
-	private combineProtocolAndAppSnapshotTree(
-		hierarchicalAppTree: api.ISnapshotTree,
-		hierarchicalProtocolTree: api.ISnapshotTree,
-	) {
+	protected combineProtocolAndAppSnapshotTree(snapshotTree: api.ISnapshotTree) {
+		// When we upload the container snapshot, we upload appTree in ".app" and protocol tree in ".protocol"
+		// So when we request the snapshot we get ".app" as tree and not as commit node as in the case just above.
+		const hierarchicalAppTree = snapshotTree.trees[".app"];
+		const hierarchicalProtocolTree = snapshotTree.trees[".protocol"];
 		const summarySnapshotTree: api.ISnapshotTree = {
 			blobs: {
 				...hierarchicalAppTree.blobs,
 			},
 			trees: {
 				...hierarchicalAppTree.trees,
-				// the app tree could have a .protocol
-				// in that case we want to server protocol to override it
-				".protocol": hierarchicalProtocolTree,
 			},
 		};
+
+		// The app tree could have a .protocol in that case we want to server protocol to override it.
+		// Snapshot which are for a loading GroupId, will not have a protocol tree.
+		if (hierarchicalProtocolTree !== undefined) {
+			summarySnapshotTree.trees[".protocol"] = hierarchicalProtocolTree;
+		}
 
 		return summarySnapshotTree;
 	}
 
 	protected initializeFromSnapshot(
-		odspSnapshotCacheValue: ISnapshotContents,
+		odspSnapshotCacheValue: ISnapshot,
 		cacheOps: boolean = true,
+		cacheSnapshot: boolean = true,
 	): string | undefined {
 		this._snapshotSequenceNumber = odspSnapshotCacheValue.sequenceNumber;
-		const { snapshotTree, blobs, ops } = odspSnapshotCacheValue;
+		const { snapshotTree, blobContents, ops } = odspSnapshotCacheValue;
 
 		// id should be undefined in case of just ops in snapshot.
 		let id: string | undefined;
 		if (snapshotTree) {
 			id = snapshotTree.id;
 			assert(id !== undefined, 0x221 /* "Root tree should contain the id" */);
-			this.setRootTree(id, snapshotTree);
+			if (cacheSnapshot) {
+				this.setRootTree(id, snapshotTree);
+			}
 		}
 
-		if (blobs) {
-			this.initBlobsCache(blobs);
+		// Currently always cache blobs as container runtime is not caching them.
+		if (blobContents !== undefined) {
+			this.initBlobsCache(blobContents);
 		}
 
 		if (cacheOps) {

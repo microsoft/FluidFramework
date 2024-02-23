@@ -14,20 +14,22 @@ import {
 } from "../../../feature-libraries/index.js";
 import {
 	makeAnonChange,
-	tagChange,
-	TaggedChange,
 	FieldKey,
 	DeltaFieldMap,
 	DeltaFieldChanges,
-	RevisionTagCodec,
 	ChangeEncodingContext,
 } from "../../../core/index.js";
-import { fakeIdAllocator, brand, JsonCompatibleReadOnly } from "../../../util/index.js";
+import {
+	fakeIdAllocator,
+	brand,
+	JsonCompatibleReadOnly,
+	idAllocatorFromMaxId,
+} from "../../../util/index.js";
 import {
 	EncodingTestData,
-	MockIdCompressor,
 	defaultRevisionMetadataFromChanges,
 	makeEncodingTestSuite,
+	testRevisionTagCodec,
 } from "../../utils.js";
 import { IJsonCodec } from "../../../codec/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -79,12 +81,20 @@ const revisionMetadata: RebaseRevisionMetadata = {
 	hasRollback: () => assert.fail("Unexpected revision info query"),
 };
 
-const childComposer = (nodeChanges: TaggedChange<NodeChangeset>[]): NodeChangeset => {
-	const valueChanges = nodeChanges.map((c) =>
-		tagChange(valueChangeFromNodeChange(c.change), c.revision),
-	);
+const childComposer = (
+	nodeChange1: NodeChangeset | undefined,
+	nodeChange2: NodeChangeset | undefined,
+): NodeChangeset => {
+	if (nodeChange1 === undefined) {
+		assert(nodeChange2 !== undefined, "Should not compose two undefined changesets");
+		return nodeChange2;
+	} else if (nodeChange2 === undefined) {
+		return nodeChange1;
+	}
+
 	const valueChange = valueHandler.rebaser.compose(
-		valueChanges,
+		makeAnonChange(valueChangeFromNodeChange(nodeChange1 ?? {})),
+		makeAnonChange(valueChangeFromNodeChange(nodeChange2 ?? {})),
 		unexpectedDelegate,
 		fakeIdAllocator,
 		crossFieldManager,
@@ -99,7 +109,7 @@ const childInverter = (nodeChange: NodeChangeset): NodeChangeset => {
 	const inverse = valueHandler.rebaser.invert(
 		taggedChange,
 		unexpectedDelegate,
-		fakeIdAllocator,
+		idAllocatorFromMaxId(),
 		crossFieldManager,
 		defaultRevisionMetadataFromChanges([taggedChange]),
 	);
@@ -150,17 +160,6 @@ describe("GenericField", () => {
 	testSnapshots();
 
 	describe("compose", () => {
-		it("empty list", () => {
-			const actual = genericFieldKind.changeHandler.rebaser.compose(
-				[],
-				childComposer,
-				fakeIdAllocator,
-				crossFieldManager,
-				revisionMetadata,
-			);
-			assert.deepEqual(actual, []);
-		});
-
 		it("Highest index on earlier change", () => {
 			const changeA: GenericChangeset = [
 				{
@@ -197,7 +196,8 @@ describe("GenericField", () => {
 				},
 			];
 			const actual = genericFieldKind.changeHandler.rebaser.compose(
-				[makeAnonChange(changeA), makeAnonChange(changeB)],
+				makeAnonChange(changeA),
+				makeAnonChange(changeB),
 				childComposer,
 				fakeIdAllocator,
 				crossFieldManager,
@@ -242,7 +242,8 @@ describe("GenericField", () => {
 				},
 			];
 			const actual = genericFieldKind.changeHandler.rebaser.compose(
-				[makeAnonChange(changeA), makeAnonChange(changeB)],
+				makeAnonChange(changeA),
+				makeAnonChange(changeB),
 				childComposer,
 				fakeIdAllocator,
 				crossFieldManager,
@@ -363,7 +364,7 @@ describe("GenericField", () => {
 		const actual = genericFieldKind.changeHandler.rebaser.invert(
 			taggedChange,
 			childInverter,
-			fakeIdAllocator,
+			idAllocatorFromMaxId(),
 			crossFieldManager,
 			defaultRevisionMetadataFromChanges([taggedChange]),
 		);
@@ -437,10 +438,7 @@ describe("GenericField", () => {
 		};
 
 		makeEncodingTestSuite(
-			genericFieldKind.changeHandler.codecsFactory(
-				childCodec,
-				new RevisionTagCodec(new MockIdCompressor()),
-			),
+			genericFieldKind.changeHandler.codecsFactory(childCodec, testRevisionTagCodec),
 			encodingTestData,
 		);
 	});

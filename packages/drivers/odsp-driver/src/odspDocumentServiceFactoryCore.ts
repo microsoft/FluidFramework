@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { PromiseCache } from "@fluidframework/core-utils";
 import {
 	IDocumentService,
@@ -11,7 +11,7 @@ import {
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	getDocAttributesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
@@ -26,7 +26,6 @@ import {
 	IOdspUrlParts,
 	SharingLinkScope,
 	SharingLinkRole,
-	ShareLinkTypes,
 	ISharingLinkKind,
 	ISocketStorageDiscovery,
 	IRelaySessionAwareDriverFactory,
@@ -102,7 +101,7 @@ export class OdspDocumentServiceFactoryCore
 		};
 
 		let fileInfo: INewFileInfo | IExistingFileInfo;
-		let createShareLinkParam: ShareLinkTypes | ISharingLinkKind | undefined;
+		let createShareLinkParam: ISharingLinkKind | undefined;
 		if (odspResolvedUrl.itemId) {
 			fileInfo = {
 				type: "Existing",
@@ -161,7 +160,6 @@ export class OdspDocumentServiceFactoryCore
 				createShareLinkParam: createShareLinkParam
 					? JSON.stringify(createShareLinkParam)
 					: undefined,
-				enableShareLinkWithCreate: this.hostPolicy.enableShareLinkWithCreate,
 				enableSingleRequestForShareLinkWithCreate:
 					this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
 			},
@@ -202,7 +200,6 @@ export class OdspDocumentServiceFactoryCore
 								?.forceAccessTokenViaAuthorizationHeader,
 							odspResolvedUrl.isClpCompliantApp,
 							this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
-							this.hostPolicy.enableShareLinkWithCreate,
 					  )
 					: await module.createNewContainerOnExistingFile(
 							getStorageToken,
@@ -272,28 +269,30 @@ export class OdspDocumentServiceFactoryCore
 
 	protected async createDocumentServiceCore(
 		resolvedUrl: IResolvedUrl,
-		odspLogger: ITelemetryLogger,
+		odspLogger: ITelemetryBaseLogger,
 		cacheAndTrackerArg?: ICacheAndTracker,
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
+		const extLogger = createChildLogger({ logger: odspLogger });
 		const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
 		const resolvedUrlData: IOdspUrlParts = {
 			siteUrl: odspResolvedUrl.siteUrl,
 			driveId: odspResolvedUrl.driveId,
 			itemId: odspResolvedUrl.itemId,
 		};
+
 		const cacheAndTracker =
 			cacheAndTrackerArg ??
 			createOdspCacheAndTracker(
 				this.persistedCache,
 				this.nonPersistentCache,
 				{ resolvedUrl: odspResolvedUrl, docId: odspResolvedUrl.hashedDocumentId },
-				odspLogger,
+				extLogger,
 				clientIsSummarizer,
 			);
 
 		const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
-			odspLogger,
+			extLogger,
 			resolvedUrlData,
 			this.getStorageToken,
 			true /* throwOnNullToken */,
@@ -304,7 +303,7 @@ export class OdspDocumentServiceFactoryCore
 				? undefined
 				: async (options: TokenFetchOptions) =>
 						toInstrumentedOdspTokenFetcher(
-							odspLogger,
+							extLogger,
 							resolvedUrlData,
 							this.getWebsocketToken!,
 							false /* throwOnNullToken */,
@@ -314,7 +313,7 @@ export class OdspDocumentServiceFactoryCore
 			resolvedUrl,
 			storageTokenFetcher,
 			webSocketTokenFetcher,
-			odspLogger,
+			extLogger,
 			cacheAndTracker.cache,
 			this.hostPolicy,
 			cacheAndTracker.epochTracker,
@@ -330,9 +329,9 @@ export class OdspDocumentServiceFactoryCore
 function getSharingLinkParams(
 	hostPolicy: HostStoragePolicy,
 	searchParams: URLSearchParams,
-): ShareLinkTypes | ISharingLinkKind | undefined {
+): ISharingLinkKind | undefined {
 	// extract request parameters for creation of sharing link (if provided) if the feature is enabled
-	let createShareLinkParam: ShareLinkTypes | ISharingLinkKind | undefined;
+	let createShareLinkParam: ISharingLinkKind | undefined;
 	if (hostPolicy.enableSingleRequestForShareLinkWithCreate) {
 		const createLinkScope = searchParams.get("createLinkScope");
 		const createLinkRole = searchParams.get("createLinkRole");
@@ -343,11 +342,6 @@ function getSharingLinkParams(
 					? { role: SharingLinkRole[createLinkRole] }
 					: {}),
 			};
-		}
-	} else if (hostPolicy.enableShareLinkWithCreate) {
-		const createLinkType = searchParams.get("createLinkType");
-		if (createLinkType && ShareLinkTypes[createLinkType]) {
-			createShareLinkParam = ShareLinkTypes[createLinkType || ""];
 		}
 	}
 	return createShareLinkParam;
