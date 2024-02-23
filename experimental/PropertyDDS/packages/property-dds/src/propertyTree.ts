@@ -40,7 +40,7 @@ import {
 
 import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
-import { PropertyTreeFactory } from "./propertyTreeFactory";
+import { PropertyTreeFactory } from "./propertyTreeFactory.js";
 
 /**
  * @internal
