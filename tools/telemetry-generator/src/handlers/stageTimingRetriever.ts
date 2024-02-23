@@ -54,8 +54,17 @@ module.exports = function handler(fileData, logger) {
 		if (job.stageName === "runAfterAll") {
 			continue;
 		}
+
+		// Transfer the event StageTiming (associated with the stress, e2e and tests performance) to the
+		// table suffixed with performance_tests. For telemetry related to the build or other events, retain
+		// them in the original table.
+		const category =
+			job.stageName.includes("tests") || job.stageName.includes("e2e")
+				? "performance_tests"
+				: "performance";
+
 		logger.send({
-			category: "performance",
+			category,
 			eventName: "StageTiming",
 			benchmarkType: "PipelineInfo",
 			stageName: job.stageName,

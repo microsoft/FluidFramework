@@ -28,8 +28,9 @@ module.exports = function handler(fileData, logger) {
 	const totalTests = passedTests + failedTests;
 	const passRate = totalTests !== 0 ? passedTests / totalTests : 0;
 	console.log(passRate);
+	// Transfer the event testPassRate to the table suffixed with performance_tests
 	logger.send({
-		category: "performance",
+		category: "performance_tests",
 		eventName: "TestPassRate",
 		benchmarkType: "PipelineInfo",
 		stageName: fileData.currentContext.stageReference.stageName,
