@@ -520,6 +520,17 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		// Trigger Id submission
 		sharedMapContainer1.set("key", "value");
 
+		const superResubmit = (sharedMapContainer1 as any).reSubmitCore.bind(sharedMapContainer1);
+		(sharedMapContainer1 as any).reSubmitCore = (
+			content: unknown,
+			localOpMetadata: unknown,
+		) => {
+			// Simulate a DDS that generates IDs as part of the resubmit path (e.g. SharedTree)
+			// This will test that ID allocation ops are correctly sorted into a separate batch in the outbox
+			getIdCompressor(sharedMapContainer1).generateCompressedId();
+			superResubmit(content, localOpMetadata);
+		};
+
 		// Generate ids in a connected container but don't send them yet
 		const id2 = getIdCompressor(sharedMapContainer2).generateCompressedId();
 		const id3 = getIdCompressor(sharedMapContainer2).generateCompressedId();

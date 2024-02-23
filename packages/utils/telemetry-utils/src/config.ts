@@ -8,8 +8,8 @@ import {
 	ConfigTypes,
 } from "@fluidframework/core-interfaces";
 import { Lazy } from "@fluidframework/core-utils";
-import { createChildLogger, tagCodeArtifacts } from "./logger";
-import { ITelemetryLoggerExt } from "./telemetryTypes";
+import { createChildLogger, tagCodeArtifacts } from "./logger.js";
+import { ITelemetryLoggerExt } from "./telemetryTypes.js";
 
 /**
  * Explicitly typed interface for reading configurations.

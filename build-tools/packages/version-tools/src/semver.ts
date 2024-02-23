@@ -99,16 +99,32 @@ export function detectBumpType(
 
 	const v1IsInternal = isInternalVersionScheme(v1, true, true);
 	const v2IsInternal = isInternalVersionScheme(v2, true, true);
+	let v1PrereleaseId: string = "";
+	let v2PrereleaseId: string = "";
 
 	if (v1IsInternal) {
-		const [, internalVer] = fromInternalScheme(v1, true);
+		const [, internalVer, prereleaseId] = fromInternalScheme(v1, true);
 		v1Parsed = internalVer;
+		v1PrereleaseId = prereleaseId;
 	}
 
 	// Only convert if the versions are the same scheme.
 	if (v2IsInternal && v1IsInternal) {
-		const [, internalVer] = fromInternalScheme(v2, true);
+		const [, internalVer, prereleaseId] = fromInternalScheme(v2, true);
 		v2Parsed = internalVer;
+		v2PrereleaseId = prereleaseId;
+	}
+
+	if (v1PrereleaseId === "internal" && v2PrereleaseId === "rc") {
+		// This is a special case for RC and internal builds. RC builds are always a
+		// major bump compared to an internal build.
+		return "major";
+	}
+
+	if (v1PrereleaseId !== v2PrereleaseId) {
+		throw new Error(
+			`v1 prerelease ID: ${v1PrereleaseId} cannot be compared to v2 prerelease ID: ${v2PrereleaseId}`,
+		);
 	}
 
 	if (semver.compareBuild(v1Parsed, v2Parsed) >= 0) {

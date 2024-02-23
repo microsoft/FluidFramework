@@ -60,13 +60,13 @@
 		"tsc": "tsc"
 	},
 	"dependencies": {
-		"tinylicious": "^3.1.0-231702"
+		"tinylicious": "^3.1.0-238497"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.29.0",
-		"@fluidframework/eslint-config-fluid": "^3.3.0",
+		"@fluidframework/build-tools": "^0.34.0",
+		"@fluidframework/eslint-config-fluid": "^3.5.0",
 		"@microsoft/api-extractor": "^7.39.1",
 		"eslint": "~8.50.0",
 		"eslint-config-prettier": "~9.0.0",

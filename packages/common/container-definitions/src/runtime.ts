@@ -3,10 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, IDisposable, FluidObject } from "@fluidframework/core-interfaces";
+import type {
+	ITelemetryBaseLogger,
+	IDisposable,
+	FluidObject,
+} from "@fluidframework/core-interfaces";
 
-import { IDocumentStorageService, ISnapshot } from "@fluidframework/driver-definitions";
-import {
+import type { IDocumentStorageService, ISnapshot } from "@fluidframework/driver-definitions";
+import type {
 	IClientDetails,
 	ISequencedDocumentMessage,
 	ISnapshotTree,
@@ -17,11 +21,11 @@ import {
 	IQuorumClients,
 	ISummaryContent,
 } from "@fluidframework/protocol-definitions";
-import { IAudience } from "./audience";
-import { IDeltaManager } from "./deltas";
-import { ICriticalContainerError } from "./error";
-import { ILoader } from "./loader";
-import { IFluidCodeDetails } from "./fluidPackage";
+import type { IAudience } from "./audience";
+import type { IDeltaManager } from "./deltas";
+import type { ICriticalContainerError } from "./error";
+import type { ILoader } from "./loader";
+import type { IFluidCodeDetails } from "./fluidPackage";
 
 /**
  * The attachment state of some Fluid data (e.g. a container or data store), denoting whether it is uploaded to the

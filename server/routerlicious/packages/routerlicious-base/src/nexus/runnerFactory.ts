@@ -43,6 +43,9 @@ class NodeWebSocketServer implements core.IWebSocketServer {
 	}
 }
 
+/**
+ * @internal
+ */
 export class OrdererManager implements core.IOrdererManager {
 	constructor(
 		private readonly globalDbEnabled: boolean,
@@ -190,6 +193,10 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			enableReadyCheck: true,
 			maxRetriesPerRequest: redisConfig2.maxRetriesPerRequest,
 			enableOfflineQueue: redisConfig2.enableOfflineQueue,
+			retryStrategy: utils.getRedisClusterRetryStrategy({
+				delayPerAttemptMs: 50,
+				maxDelayMs: 2000,
+			}),
 		};
 		if (redisConfig2.enableAutoPipelining) {
 			/**
@@ -210,10 +217,19 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			expireAfterSeconds: redisConfig2.keyExpireAfterSeconds as number | undefined,
 		};
 
-		const redisClient = new Redis.default(redisOptions2);
+		const redisClient: Redis.default | Redis.Cluster = utils.getRedisClient(
+			redisOptions2,
+			redisConfig2.slotsRefreshTimeout,
+			redisConfig2.enableClustering,
+		);
 		const clientManager = new services.ClientManager(redisClient, redisParams2);
 
-		const redisClientForJwtCache = new Redis.default(redisOptions2);
+		const redisClientForJwtCache: Redis.default | Redis.Cluster = utils.getRedisClient(
+			redisOptions2,
+			redisConfig2.slotsRefreshTimeout,
+			redisConfig2.enableClustering,
+		);
+
 		const redisJwtCache = new services.RedisCache(redisClientForJwtCache);
 
 		// Database connection for global db if enabled
@@ -289,6 +305,10 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			enableReadyCheck: true,
 			maxRetriesPerRequest: redisConfigForThrottling.maxRetriesPerRequest,
 			enableOfflineQueue: redisConfigForThrottling.enableOfflineQueue,
+			retryStrategy: utils.getRedisClusterRetryStrategy({
+				delayPerAttemptMs: 50,
+				maxDelayMs: 2000,
+			}),
 		};
 		if (redisConfigForThrottling.enableAutoPipelining) {
 			/**
@@ -310,7 +330,11 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 				| undefined,
 		};
 
-		const redisClientForThrottling = new Redis.default(redisOptionsForThrottling);
+		const redisClientForThrottling: Redis.default | Redis.Cluster = utils.getRedisClient(
+			redisOptionsForThrottling,
+			redisConfigForThrottling.slotsRefreshTimeout,
+			redisConfigForThrottling.enableClustering,
+		);
 		const redisThrottleAndUsageStorageManager =
 			new services.RedisThrottleAndUsageStorageManager(
 				redisClientForThrottling,
@@ -426,6 +450,10 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 				enableReadyCheck: true,
 				maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
 				enableOfflineQueue: redisConfig.enableOfflineQueue,
+				retryStrategy: utils.getRedisClusterRetryStrategy({
+					delayPerAttemptMs: 50,
+					maxDelayMs: 2000,
+				}),
 			};
 			if (redisConfig.enableAutoPipelining) {
 				/**
@@ -441,7 +469,13 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 					servername: redisConfig.host,
 				};
 			}
-			const redisClientForLogging = new Redis.default(redisOptions);
+
+			const redisClientForLogging: Redis.default | Redis.Cluster = utils.getRedisClient(
+				redisOptions,
+				redisConfig.slotsRefreshTimeout,
+				redisConfig.enableClustering,
+			);
+
 			redisCache = new services.RedisCache(redisClientForLogging);
 		}
 

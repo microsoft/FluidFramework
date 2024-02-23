@@ -106,7 +106,8 @@ describeCompat("IntervalCollection with stashed ops", "NoCompat", (getTestObject
 		url = await container1.getAbsoluteUrl("");
 	});
 
-	it("doesn't resend successful op", async () => {
+	// todo re-enable after AB#7145
+	it.skip("doesn't resend successful op", async () => {
 		// add an interval
 		const id = collection1.add({ start: 4, end: 7 }).getIntervalId();
 

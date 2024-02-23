@@ -4,7 +4,6 @@
  */
 import {
 	ITelemetryBaseLogger,
-	ITelemetryGenericEvent,
 	FluidObject,
 	IFluidHandle,
 	IFluidHandleContext,
@@ -29,7 +28,7 @@ import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions";
-import { assert, delay, LazyPromise } from "@fluidframework/core-utils";
+import { assert, Deferred, delay, LazyPromise, PromiseCache } from "@fluidframework/core-utils";
 import { Trace, TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	createChildLogger,
@@ -48,11 +47,13 @@ import {
 	LoggingError,
 	createSampledLogger,
 	IEventSampler,
+	type ITelemetryGenericEventExt,
 } from "@fluidframework/telemetry-utils";
 import {
 	DriverHeader,
 	FetchSource,
 	IDocumentStorageService,
+	type ISnapshot,
 } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
@@ -91,7 +92,6 @@ import type {
 	SerializedIdCompressorWithNoSession,
 	IIdCompressor,
 	IIdCompressorCore,
-	IdCreationRange,
 	SerializedIdCompressorWithOngoingSession,
 } from "@fluidframework/id-compressor";
 import {
@@ -159,6 +159,7 @@ import {
 	ISummarizerEvents,
 	IBaseSummarizeResult,
 	ISummarizer,
+	rootHasIsolatedChannels,
 } from "./summary";
 import { formExponentialFn, Throttler } from "./throttler";
 import {
@@ -1128,11 +1129,6 @@ export class ContainerRuntime
 		return this.summaryConfiguration.state === "disabled";
 	}
 
-	private readonly heuristicsDisabled: boolean;
-	private isHeuristicsDisabled(): boolean {
-		return this.summaryConfiguration.state === "disableHeuristics";
-	}
-
 	private readonly maxOpsSinceLastSummary: number;
 	private getMaxOpsSinceLastSummary(): number {
 		return this.summaryConfiguration.state !== "disabled"
@@ -1190,11 +1186,19 @@ export class ContainerRuntime
 	 */
 	private readonly loadedFromVersionId: string | undefined;
 
+	/**
+	 * It a cache for holding mapping for loading groupIds with its snapshot from the service. Add expiry policy of 1 minute.
+	 * Starting with 1 min and based on recorded usage we can tweak it later on.
+	 */
+	private readonly snapshotCacheForLoadingGroupIds = new PromiseCache<string, ISnapshot>({
+		expiry: { policy: "absolute", durationMs: 60000 },
+	});
+
 	/***/
 	protected constructor(
 		context: IContainerContext,
 		private readonly registry: IFluidDataStoreRegistry,
-		metadata: IContainerRuntimeMetadata | undefined,
+		private readonly metadata: IContainerRuntimeMetadata | undefined,
 		electedSummarizerData: ISerializedElection | undefined,
 		chunks: [string, string[]][],
 		dataStoreAliasMap: [string, string][],
@@ -1372,7 +1376,6 @@ export class ContainerRuntime
 			disableOpReentryCheck !== true;
 
 		this.summariesDisabled = this.isSummariesDisabled();
-		this.heuristicsDisabled = this.isHeuristicsDisabled();
 		this.maxOpsSinceLastSummary = this.getMaxOpsSinceLastSummary();
 		this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();
 
@@ -1662,7 +1665,6 @@ export class ContainerRuntime
 					{
 						initialDelayMs: this.initialSummarizerDelayMs,
 					},
-					this.heuristicsDisabled,
 				);
 				this.summaryManager.on("summarize", (eventProps) => {
 					this.emit("summarize", eventProps);
@@ -1746,6 +1748,103 @@ export class ContainerRuntime
 		this.pendingStateManager.dispose();
 		this.emit("dispose");
 		this.removeAllListeners();
+	}
+
+	/**
+	 * Api to fetch the snapshot from the service for a loadingGroupIds.
+	 * @param loadingGroupIds - LoadingGroupId for which the snapshot is asked for.
+	 * @param pathParts - Parts of the path, which we want to extract from the snapshot tree.
+	 * @returns - snapshotTree and the sequence number of the snapshot.
+	 */
+	public async getSnapshotForLoadingGroupId(
+		loadingGroupIds: string[],
+		pathParts: string[],
+	): Promise<{ snapshotTree: ISnapshotTree; sequenceNumber: number }> {
+		const sortedLoadingGroupIds = loadingGroupIds.sort();
+		assert(this.storage.getSnapshot !== undefined, "getSnapshot api should be defined if used");
+		let loadedFromCache = true;
+		// Lookup up in the cache, if not present then make the network call as multiple datastores could
+		// be in same loading group. So, once we have fetched the snapshot for that loading group on
+		// any request, then cache that as same group could be requested in future too.
+		const snapshot = await this.snapshotCacheForLoadingGroupIds.addOrGet(
+			sortedLoadingGroupIds.join(),
+			async () => {
+				assert(
+					this.storage.getSnapshot !== undefined,
+					"getSnapshot api should be defined if used",
+				);
+				loadedFromCache = false;
+				return this.storage.getSnapshot({
+					cacheSnapshot: false,
+					scenarioName: "snapshotForLoadingGroupId",
+					loadingGroupIds: sortedLoadingGroupIds,
+				});
+			},
+		);
+
+		this.logger.sendTelemetryEvent({
+			eventName: "GroupedSnapshotFetched",
+			details: JSON.stringify({ fromCache: loadedFromCache, count: loadingGroupIds.length }),
+		});
+		// Find the snapshotTree inside the returned snapshot based on the path as given in the request.
+		const hasIsolatedChannels = rootHasIsolatedChannels(this.metadata);
+		const snapshotTreeForPath = this.getSnapshotTreeForPath(
+			snapshot.snapshotTree,
+			pathParts,
+			hasIsolatedChannels,
+		);
+		assert(snapshotTreeForPath !== undefined, "no snapshotTree for the path");
+		const snapshotSeqNumber = snapshot.sequenceNumber;
+		assert(snapshotSeqNumber !== undefined, "snapshotSeqNumber should be present");
+
+		// If the snapshot is ahead of the last seq number of the delta manager, then catch up before
+		// returning the snapshot.
+		if (snapshotSeqNumber > this.deltaManager.lastSequenceNumber) {
+			// If this is a summarizer client, which is trying to load a group and it finds that there is
+			// another snapshot from which the summarizer loaded and it is behind, then just give up as
+			// the summarizer state is not up to date.
+			if (this.isSummarizerClient) {
+				throw new Error(
+					"Summarizer client behind when loading snapshot with loadingGroupId",
+				);
+			}
+			// If the inbound deltas queue is paused, then unpause it for now as we need
+			// to catch up to the snapshot sequence number.
+			if (this.deltaManager.inbound.paused) {
+				throw new Error("Could not catch up as inbound queue is paused");
+			}
+			const defP = new Deferred<boolean>();
+			this.deltaManager.on("op", (message: ISequencedDocumentMessage) => {
+				if (message.sequenceNumber >= snapshotSeqNumber) {
+					defP.resolve(true);
+				}
+			});
+			await defP.promise;
+		}
+		return { snapshotTree: snapshotTreeForPath, sequenceNumber: snapshotSeqNumber };
+	}
+
+	/**
+	 * Api to find a snapshot tree inside a bigger snapshot tree based on the path in the pathParts array.
+	 * @param snapshotTree - snapshot tree to look into.
+	 * @param pathParts - Part of the path, which we want to extract from the snapshot tree.
+	 * @param hasIsolatedChannels - whether the channels are present inside ".channels" subtree. Older
+	 * snapshots will not have trees inside ".channels", so check that.
+	 * @returns - requested snapshot tree based on the path parts.
+	 */
+	private getSnapshotTreeForPath(
+		snapshotTree: ISnapshotTree,
+		pathParts: string[],
+		hasIsolatedChannels: boolean,
+	): ISnapshotTree | undefined {
+		let childTree = snapshotTree;
+		for (const part of pathParts) {
+			if (hasIsolatedChannels) {
+				childTree = childTree?.trees[channelsTreeName];
+			}
+			childTree = childTree?.trees[part];
+		}
+		return childTree;
 	}
 
 	/**
@@ -2541,12 +2640,15 @@ export class ContainerRuntime
 
 	public createDetachedDataStore(
 		pkg: Readonly<string[]>,
-		groupId?: string,
+		loadingGroupId?: string,
 	): IFluidDataStoreContextDetached {
-		return this.dataStores.createDetachedDataStoreCore(pkg, false, undefined, groupId);
+		return this.dataStores.createDetachedDataStoreCore(pkg, false, undefined, loadingGroupId);
 	}
 
-	public async createDataStore(pkg: string | string[], groupId?: string): Promise<IDataStore> {
+	public async createDataStore(
+		pkg: string | string[],
+		loadingGroupId?: string,
+	): Promise<IDataStore> {
 		const id = uuid();
 		return channelToDataStore(
 			await this.dataStores
@@ -2554,7 +2656,7 @@ export class ContainerRuntime
 					Array.isArray(pkg) ? pkg : [pkg],
 					id,
 					undefined,
-					groupId,
+					loadingGroupId,
 				)
 				.realize(),
 			id,
@@ -3046,7 +3148,13 @@ export class ContainerRuntime
 	 * @param options - options controlling how the summary is generated or submitted
 	 */
 	public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
-		const { fullTree = false, finalAttempt = false, refreshLatestAck, summaryLogger } = options;
+		const {
+			fullTree = false,
+			finalAttempt = false,
+			refreshLatestAck,
+			summaryLogger,
+			latestSummaryRefSeqNum,
+		} = options;
 		// The summary number for this summary. This will be updated during the summary process, so get it now and
 		// use it for all events logged during this summary.
 		const summaryNumber = this.nextSummaryNumber;
@@ -3117,6 +3225,10 @@ export class ContainerRuntime
 			this.mc.config.getBoolean(
 				"Fluid.ContainerRuntime.SubmitSummary.disableInboundSignalPause",
 			) !== true;
+		const shouldValidatePreSummaryState =
+			this.mc.config.getBoolean(
+				"Fluid.ContainerRuntime.SubmitSummary.shouldValidatePreSummaryState",
+			) === true;
 
 		let summaryRefSeqNum: number | undefined;
 
@@ -3131,7 +3243,33 @@ export class ContainerRuntime
 			const message = `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
 			const lastAck = this.summaryCollection.latestAck;
 
-			this.summarizerNode.startSummary(summaryRefSeqNum, summaryNumberLogger);
+			const startSummaryResult = this.summarizerNode.startSummary(
+				summaryRefSeqNum,
+				summaryNumberLogger,
+				latestSummaryRefSeqNum,
+			);
+
+			if (
+				startSummaryResult.invalidNodes > 0 ||
+				startSummaryResult.mismatchNumbers.size > 0
+			) {
+				summaryLogger.sendErrorEvent({
+					eventName: "LatestSummaryRefSeqNumMismatch",
+					details: {
+						...startSummaryResult,
+						mismatchNumbers: Array.from(startSummaryResult.mismatchNumbers),
+					},
+				});
+
+				if (shouldValidatePreSummaryState && !finalAttempt) {
+					return {
+						stage: "base",
+						referenceSequenceNumber: summaryRefSeqNum,
+						minimumSequenceNumber,
+						error: `Summarizer node state inconsistent with summarizer state.`,
+					};
+				}
+			}
 
 			// Helper function to check whether we should still continue between each async step.
 			const checkContinue = (): { continue: true } | { continue: false; error: string } => {
@@ -3483,35 +3621,26 @@ export class ContainerRuntime
 		return this.blobManager.createBlob(blob, signal);
 	}
 
-	private maybeSubmitIdAllocationOp(type: ContainerMessageType) {
-		if (type !== ContainerMessageType.IdAllocation) {
-			let idAllocationBatchMessage: BatchMessage | undefined;
-			let idRange: IdCreationRange | undefined;
-			if (this.idCompressorEnabled) {
-				assert(
-					this.idCompressor !== undefined,
-					0x67d /* IdCompressor should be defined if enabled */,
-				);
-				idRange = this.idCompressor.takeNextCreationRange();
-				// Don't include the idRange if there weren't any Ids allocated
-				idRange = idRange?.ids !== undefined ? idRange : undefined;
-			}
-
-			if (idRange !== undefined) {
+	private submitIdAllocationOpIfNeeded(): void {
+		if (this.idCompressorEnabled) {
+			assert(
+				this.idCompressor !== undefined,
+				0x67d /* IdCompressor should be defined if enabled */,
+			);
+			const idRange = this.idCompressor.takeNextCreationRange();
+			// Don't include the idRange if there weren't any Ids allocated
+			if (idRange?.ids !== undefined) {
 				const idAllocationMessage: ContainerRuntimeIdAllocationMessage = {
 					type: ContainerMessageType.IdAllocation,
 					contents: idRange,
 				};
-				idAllocationBatchMessage = {
+				const idAllocationBatchMessage: BatchMessage = {
 					contents: JSON.stringify(idAllocationMessage),
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 					metadata: undefined,
 					localOpMetadata: undefined,
 					type: ContainerMessageType.IdAllocation,
 				};
-			}
-
-			if (idAllocationBatchMessage !== undefined) {
 				this.outbox.submitIdAllocation(idAllocationBatchMessage);
 			}
 		}
@@ -3552,43 +3681,47 @@ export class ContainerRuntime
 		};
 
 		try {
-			// Submit an IdAllocation op if any Ids have been generated since
-			// the last op was submitted. Don't submit another if it's an IdAllocation
-			// op as that means we're in resubmission flow and we don't want to send
-			// IdRanges out of order.
-			this.maybeSubmitIdAllocationOp(type);
-
-			// If this is attach message for new data store, and we are in a batch, send this op out of order
-			// Is it safe:
-			//    Yes, this should be safe reordering. Newly created data stores are not visible through API surface.
-			//    They become visible only when aliased, or handle to some sub-element of newly created datastore
-			//    is stored in some DDS, i.e. only after some other op.
-			// Why:
-			//    Attach ops are large, and expensive to process. Plus there are scenarios where a lot of new data
-			//    stores are created, causing issues like relay service throttling (too many ops) and catastrophic
-			//    failure (batch is too large). Pushing them earlier and outside of main batch should alleviate
-			//    these issues.
-			// Cons:
-			//    1. With large batches, relay service may throttle clients. Clients may disconnect while throttled.
-			//    This change creates new possibility of a lot of newly created data stores never being referenced
-			//    because client died before it had a change to submit the rest of the ops. This will create more
-			//    garbage that needs to be collected leveraging GC (Garbage Collection) feature.
-			//    2. Sending ops out of order means they are excluded from rollback functionality. This is not an issue
-			//    today as rollback can't undo creation of data store. To some extent not sending them is a bigger
-			//    issue than sending.
-			// Please note that this does not change file format, so it can be disabled in the future if this
-			// optimization no longer makes sense (for example, batch compression may make it less appealing).
-			if (
-				this.currentlyBatching() &&
-				type === ContainerMessageType.Attach &&
-				this.disableAttachReorder !== true
-			) {
-				this.outbox.submitAttach(message);
-			} else if (type === ContainerMessageType.BlobAttach) {
-				// BlobAttach ops must have their metadata visible and cannot be grouped (see opGroupingManager.ts)
-				this.outbox.submitBlobAttach(message);
+			// If `message` is an allocation op, then we are in the resubmit path and we must redirect the allocation
+			// op into the correct batch to avoid ranges being finalized out of order.
+			// Otherwise, submit an IdAllocation op if any IDs have been generated since the last op was submitted, as
+			// any of the other op types may contain those IDs and thus depend on the allocation op being sent first.
+			if (type === ContainerMessageType.IdAllocation) {
+				this.outbox.submitIdAllocation(message);
 			} else {
-				this.outbox.submit(message);
+				this.submitIdAllocationOpIfNeeded();
+
+				// If this is attach message for new data store, and we are in a batch, send this op out of order
+				// Is it safe:
+				//    Yes, this should be safe reordering. Newly created data stores are not visible through API surface.
+				//    They become visible only when aliased, or handle to some sub-element of newly created datastore
+				//    is stored in some DDS, i.e. only after some other op.
+				// Why:
+				//    Attach ops are large, and expensive to process. Plus there are scenarios where a lot of new data
+				//    stores are created, causing issues like relay service throttling (too many ops) and catastrophic
+				//    failure (batch is too large). Pushing them earlier and outside of main batch should alleviate
+				//    these issues.
+				// Cons:
+				//    1. With large batches, relay service may throttle clients. Clients may disconnect while throttled.
+				//    This change creates new possibility of a lot of newly created data stores never being referenced
+				//    because client died before it had a change to submit the rest of the ops. This will create more
+				//    garbage that needs to be collected leveraging GC (Garbage Collection) feature.
+				//    2. Sending ops out of order means they are excluded from rollback functionality. This is not an issue
+				//    today as rollback can't undo creation of data store. To some extent not sending them is a bigger
+				//    issue than sending.
+				// Please note that this does not change file format, so it can be disabled in the future if this
+				// optimization no longer makes sense (for example, batch compression may make it less appealing).
+				if (
+					this.currentlyBatching() &&
+					type === ContainerMessageType.Attach &&
+					this.disableAttachReorder !== true
+				) {
+					this.outbox.submitAttach(message);
+				} else if (type === ContainerMessageType.BlobAttach) {
+					// BlobAttach ops must have their metadata visible and cannot be grouped (see opGroupingManager.ts)
+					this.outbox.submitBlobAttach(message);
+				} else {
+					this.outbox.submit(message);
+				}
 			}
 
 			if (!this.currentlyBatching()) {
@@ -3879,7 +4012,7 @@ export class ContainerRuntime
 	 */
 	private async fetchLatestSnapshotFromStorage(
 		logger: ITelemetryLoggerExt,
-		event: ITelemetryGenericEvent,
+		event: ITelemetryGenericEventExt,
 		readAndParseBlob: ReadAndParseBlob,
 	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
 		return PerformanceEvent.timedExecAsync(

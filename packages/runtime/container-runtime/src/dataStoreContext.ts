@@ -95,6 +95,7 @@ interface ISnapshotDetails {
 	pkg: readonly string[];
 	isRootDataStore: boolean;
 	snapshot?: ISnapshotTree;
+	sequenceNumber?: number;
 }
 
 interface FluidDataStoreMessage {
@@ -110,7 +111,7 @@ export interface IFluidDataStoreContextProps {
 	readonly scope: FluidObject;
 	readonly createSummarizerNodeFn: CreateChildSummarizerNodeFn;
 	readonly pkg?: Readonly<string[]>;
-	readonly groupId?: string;
+	readonly loadingGroupId?: string;
 }
 
 /** Properties necessary for creating a local FluidDataStoreContext */
@@ -147,7 +148,6 @@ export abstract class FluidDataStoreContext
 		return this.pkg;
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public get options(): Record<string | number, any> {
 		return this._containerRuntime.options;
 	}
@@ -223,6 +223,8 @@ export abstract class FluidDataStoreContext
 		return this.registry;
 	}
 
+	private baseSnapshotSequenceNumber: number | undefined;
+
 	/**
 	 * A datastore is considered as root if it
 	 * 1. is root in memory - see isInMemoryRoot
@@ -275,7 +277,7 @@ export abstract class FluidDataStoreContext
 	public readonly storage: IDocumentStorageService;
 	public readonly scope: FluidObject;
 	// Represents the group to which the data store belongs too.
-	public readonly groupId: string | undefined;
+	public readonly loadingGroupId: string | undefined;
 	protected pkg?: readonly string[];
 
 	constructor(
@@ -291,7 +293,7 @@ export abstract class FluidDataStoreContext
 		this.storage = props.storage;
 		this.scope = props.scope;
 		this.pkg = props.pkg;
-		this.groupId = props.groupId;
+		this.loadingGroupId = props.loadingGroupId;
 
 		// URIs use slashes as delimiters. Handles use URIs.
 		// Thus having slashes in types almost guarantees trouble down the road!
@@ -446,6 +448,7 @@ export abstract class FluidDataStoreContext
 		// It is important that this be in sync with the pending ops, and also
 		// that it is set here, before bindRuntime is called.
 		this._baseSnapshot = details.snapshot;
+		this.baseSnapshotSequenceNumber = details.sequenceNumber;
 		const packages = details.pkg;
 
 		const { factory, registry } = await this.factoryFromPackagePath(packages);
@@ -584,6 +587,11 @@ export abstract class FluidDataStoreContext
 		if (!this.summarizerNode.isReferenced()) {
 			summarizeResult.summary.unreferenced = true;
 			summarizeResult.stats.unreferencedBlobSize = summarizeResult.stats.totalBlobSize;
+		}
+
+		// Add loadingGroupId to the summary
+		if (this.loadingGroupId !== undefined) {
+			summarizeResult.summary.groupId = this.loadingGroupId;
 		}
 
 		return {
@@ -804,7 +812,11 @@ export abstract class FluidDataStoreContext
 
 			// Apply all pending ops
 			for (const op of pending) {
-				channel.process(op, false, undefined /* localOpMetadata */);
+				// Only process ops whose seq number is greater than snapshot sequence number from which it loaded.
+				const seqNumber = this.baseSnapshotSequenceNumber ?? -1;
+				if (op.sequenceNumber > seqNumber) {
+					channel.process(op, false, undefined /* localOpMetadata */);
+				}
 			}
 
 			this.thresholdOpsCounter.send("ProcessPendingOps", pending.length);
@@ -998,7 +1010,10 @@ export abstract class FluidDataStoreContext
 }
 
 export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
-	private readonly initSnapshotValue: ISnapshotTree | undefined;
+	private initSnapshotValue: ISnapshotTree | undefined;
+	// Tells whether we need to fetch the snapshot before use. This is to support Data Virtualization.
+	private snapshotFetchRequired: boolean;
+	private readonly runtime: ContainerRuntime;
 
 	constructor(props: IRemoteFluidDataStoreContextProps) {
 		super(props, true /* existing */, false /* isLocalDataStore */, () => {
@@ -1006,13 +1021,29 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 		});
 
 		this.initSnapshotValue = props.snapshotTree;
-
+		this.snapshotFetchRequired = !!props.snapshotTree?.omitted;
+		this.runtime = props.runtime;
 		if (props.snapshotTree !== undefined) {
 			this.summarizerNode.updateBaseSummaryState(props.snapshotTree);
 		}
 	}
 
 	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
+		// Sequence number of the snapshot.
+		let sequenceNumber: number | undefined;
+		if (this.snapshotFetchRequired) {
+			assert(
+				this.loadingGroupId !== undefined,
+				"groupId should be present to fetch snapshot",
+			);
+			const snapshot = await this.runtime.getSnapshotForLoadingGroupId(
+				[this.loadingGroupId],
+				[this.id],
+			);
+			this.initSnapshotValue = snapshot.snapshotTree;
+			sequenceNumber = snapshot.sequenceNumber;
+			this.snapshotFetchRequired = false;
+		}
 		let tree = this.initSnapshotValue;
 		let isRootDataStore = true;
 
@@ -1058,6 +1089,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 			pkg: this.pkg!,
 			isRootDataStore,
 			snapshot: tree,
+			sequenceNumber,
 		};
 	});
 
@@ -1151,6 +1183,11 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		// Add data store's attributes to the summary.
 		const attributes = createAttributes(this.pkg, this.isInMemoryRoot());
 		addBlobToSummary(attachSummary, dataStoreAttributesBlobName, JSON.stringify(attributes));
+
+		// Add loadingGroupId to the summary
+		if (this.loadingGroupId !== undefined) {
+			attachSummary.summary.groupId = this.loadingGroupId;
+		}
 
 		return {
 			attachSummary,

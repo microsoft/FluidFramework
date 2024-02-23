@@ -366,6 +366,7 @@ export interface DeltaRoot<TTree = DeltaProtoNode> {
     readonly build?: readonly DeltaDetachedNodeBuild<TTree>[];
     readonly destroy?: readonly DeltaDetachedNodeDestruction[];
     readonly fields?: DeltaFieldMap;
+    readonly refreshers?: readonly DeltaDetachedNodeBuild<TTree>[];
 }
 
 // @internal
@@ -895,7 +896,7 @@ export interface ICodecOptions {
 export interface IdAllocator<TId = number> {
     allocate: (count?: number) => TId;
     // (undocumented)
-    getNextId: () => TId;
+    getMaxId: () => TId;
 }
 
 // @internal
