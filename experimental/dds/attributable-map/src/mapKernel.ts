@@ -504,7 +504,11 @@ export class AttributableMapKernel {
 				break;
 			}
 			case "set": {
-				this.set(op.key, this.localValueMaker.fromSerializable(op.value).value);
+				this.set(
+					op.key,
+					this.localValueMaker.fromSerializable(op.value, this.serializer, this.handle)
+						.value,
+				);
 				break;
 			}
 			default:
@@ -667,7 +671,11 @@ export class AttributableMapKernel {
 			serializable.type === ValueType[ValueType.Plain] ||
 			serializable.type === ValueType[ValueType.Shared]
 		) {
-			return this.localValueMaker.fromSerializable(serializable);
+			return this.localValueMaker.fromSerializable(
+				serializable,
+				this.serializer,
+				this.handle,
+			);
 		} else {
 			throw new Error("Unknown local value type");
 		}

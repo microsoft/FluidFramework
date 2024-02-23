@@ -4,7 +4,12 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidSerializer, serializeHandles, ValueType } from "@fluidframework/shared-object-base";
+import {
+	IFluidSerializer,
+	parseHandles,
+	serializeHandles,
+	ValueType,
+} from "@fluidframework/shared-object-base";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
 import { ISerializedHandle } from "@fluidframework/runtime-utils";
 // eslint-disable-next-line import/no-deprecated
@@ -116,8 +121,12 @@ export class LocalValueMaker {
 	 * Create a new local value from an incoming serialized value.
 	 * @param serializable - The serializable value to make local
 	 */
-	// eslint-disable-next-line import/no-deprecated
-	public fromSerializable(serializable: ISerializableValue): ILocalValue {
+	public fromSerializable(
+		// eslint-disable-next-line import/no-deprecated
+		serializable: ISerializableValue,
+		serializer: IFluidSerializer,
+		bind: IFluidHandle,
+	): ILocalValue {
 		// Migrate from old shared value to handles
 		if (serializable.type === ValueType[ValueType.Shared]) {
 			serializable.type = ValueType[ValueType.Plain];
@@ -125,7 +134,11 @@ export class LocalValueMaker {
 				type: "__fluid_handle__",
 				url: serializable.value as string,
 			};
-			serializable.value = handle;
+
+			// NOTE: here we require the use of `parseHandles` because the roundtrip
+			// through a string is necessary to resolve the absolute path of
+			// legacy handles (`ValueType.Shared`)
+			serializable.value = serializer.encode(parseHandles(handle, serializer), bind);
 		}
 
 		return new PlainLocalValue(serializable.value);
