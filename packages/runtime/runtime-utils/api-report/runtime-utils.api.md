@@ -28,7 +28,7 @@ import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { SummaryObject } from '@fluidframework/protocol-definitions';
 import { SummaryType } from '@fluidframework/protocol-definitions';
-import { TelemetryBaseEventPropertyType } from '@fluidframework/core-interfaces';
+import type { TelemetryBaseEventPropertyType } from '@fluidframework/core-interfaces';
 
 // @internal (undocumented)
 export function addBlobToSummary(summary: ISummaryTreeWithStats, key: string, content: string | Uint8Array): void;
