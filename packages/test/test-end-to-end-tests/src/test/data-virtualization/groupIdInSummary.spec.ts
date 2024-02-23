@@ -20,9 +20,28 @@ import {
 	type ITestObjectProvider,
 	createTestConfigProvider,
 } from "@fluidframework/test-utils";
-import { SummaryType } from "@fluidframework/protocol-definitions";
+import { SummaryType, type ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { LoaderHeader } from "@fluidframework/container-definitions";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { ISnapshot } from "@fluidframework/driver-definitions";
+import { Deferred } from "@fluidframework/core-utils";
+
+import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+
+const interceptResult = <T>(
+	parent: any,
+	fn: (...args: any[]) => Promise<T>,
+	intercept: (result: T) => void,
+) => {
+	const interceptFn = async (...args: any[]) => {
+		const val = await fn.apply(parent, args);
+		intercept(val);
+		return val as T;
+	};
+	parent[fn.name] = interceptFn;
+	interceptFn.bind(parent);
+	return fn;
+};
 
 // A Test Data Object that exposes some basic functionality.
 class TestDataObject extends DataObject {
@@ -60,6 +79,34 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 	});
 
 	let provider: ITestObjectProvider;
+
+	const assertOmittedGroupIdTree = (snapshotTree: ISnapshotTree, message: string) => {
+		assert(snapshotTree.omitted, message);
+		assert(snapshotTree.groupId === loadingGroupId, message);
+		assert(Object.entries(snapshotTree.trees).length === 0, message);
+		assert(Object.entries(snapshotTree.blobs).length === 0, message);
+	};
+
+	const assertPopulatedRegularTree = (snapshotTree: ISnapshotTree, message: string) => {
+		assert(snapshotTree.omitted === undefined, message);
+		assert(snapshotTree.groupId === undefined, message);
+		assert(Object.entries(snapshotTree.trees).length > 0, message);
+		assert(Object.entries(snapshotTree.blobs).length > 0, message);
+	};
+
+	const assertOmittedRegularTree = (snapshotTree: ISnapshotTree, message: string) => {
+		assert(snapshotTree.omitted, message);
+		assert(snapshotTree.groupId === undefined, message);
+		assert(Object.entries(snapshotTree.trees).length === 0, message);
+		assert(Object.entries(snapshotTree.blobs).length === 0, message);
+	};
+
+	const assertPopulatedGroupIdTree = (snapshotTree: ISnapshotTree, message: string) => {
+		assert(snapshotTree.omitted === undefined, message);
+		assert(snapshotTree.groupId === loadingGroupId, message);
+		assert(Object.entries(snapshotTree.trees).length > 0, message);
+		assert(Object.entries(snapshotTree.blobs).length > 0, message);
+	};
 
 	beforeEach("setup", async () => {
 		provider = getTestObjectProvider();
@@ -206,6 +253,22 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 		);
 		const { summaryVersion } = await summarizeNow(summarizer);
 
+		// Intercept the first snapshot call via the creation of the driver
+		const documentServiceFactory = provider.documentServiceFactory;
+		const deferredSnapshot: Deferred<ISnapshot> = new Deferred();
+		interceptResult(
+			documentServiceFactory,
+			documentServiceFactory.createDocumentService,
+			(documentService) => {
+				interceptResult(documentService, documentService.connectToStorage, (storage) => {
+					assert(storage.getSnapshot !== undefined, "Test can't run without getSnapshot");
+					interceptResult(storage, storage.getSnapshot, (snapshot) => {
+						deferredSnapshot.resolve(snapshot);
+					});
+				});
+			},
+		);
+
 		// Load from the summary
 		const configProvider = createTestConfigProvider();
 		configProvider.set("Fluid.Container.UseLoadingGroupIdForSnapshotFetch", true);
@@ -217,66 +280,71 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			},
 		);
 
-		// Regular load path should work
+		// Get the snapshot and runtime we just loaded from
+		const loadingSnapshot3 = await deferredSnapshot.promise;
+
+		// Testing the get snapshot call
 		const mainObject3 = (await container3.getEntryPoint()) as TestDataObject;
+		const runtime3 = mainObject3.containerRuntime;
+		assert(runtime3.storage.getSnapshot !== undefined, "getSnapshot should be defined");
+		const snapshot3 = await runtime3.storage.getSnapshot();
+		assert.deepEqual(snapshot3, loadingSnapshot3, "Mismatched initial snapshots");
+
+		// Snapshot validation (a snapshot call with NO loadingGroupIds)
+		const channelsTree = loadingSnapshot3.snapshotTree.trees[".channels"];
+		const mainObjectTree = channelsTree.trees[mainObject.id];
+		const dataObjectATree = channelsTree.trees[dataObjectA.id];
+		const dataObjectBTree = channelsTree.trees[dataObjectB.id];
+
+		assertPopulatedRegularTree(mainObjectTree, "mainObject should be regular and populated");
+		assertOmittedGroupIdTree(dataObjectATree, "Incorrect tree for A");
+		assertOmittedGroupIdTree(dataObjectBTree, "Incorrect tree for B");
+
+		// intercept loadingGroupId snapshot
+		const groupIdSnapshot: Deferred<ISnapshot> = new Deferred();
+		interceptResult(runtime3.storage, runtime3.storage.getSnapshot, (snapshot) => {
+			groupIdSnapshot.resolve(snapshot);
+		});
+
 		// Try to load the data stores with groupIds
 		const handleA3 = mainObject3._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
 		const handleB3 = mainObject3._root.get<IFluidHandle<TestDataObject>>("dataObjectB");
 		assert(handleA3 !== undefined, "handleA3 should not be undefined");
 		assert(handleB3 !== undefined, "handleB3 should not be undefined");
 
+		// Prep context snapshot intercept
+		// Hack to inspect the runtime's dataStores
+		const stores = (runtime3 as any).dataStores;
+		const contextA = (await stores.getDataStore(dataObjectA.id, {})) as IFluidDataStoreContext;
+		const contextB = (await stores.getDataStore(dataObjectB.id, {})) as IFluidDataStoreContext;
+		assert(contextA.baseSnapshot !== undefined, "contextA should have a baseSnapshot");
+		assert(contextB.baseSnapshot !== undefined, "contextB should have a baseSnapshot");
+		assertOmittedGroupIdTree(contextA.baseSnapshot, "contextA tree should be omitted");
+		assertOmittedGroupIdTree(contextB.baseSnapshot, "contextB tree should be omitted");
+
+		// loading group call
 		const dataObjectA3 = await handleA3.get();
 		const dataObjectB3 = await handleB3.get();
 		assert.equal(dataObjectA3._root.get("A"), "A", "A should be set");
 		assert.equal(dataObjectB3._root.get("B"), "B", "B should be set");
-
-		// Testing the get snapshot call
-		const runtime3 = mainObject.containerRuntime;
-		assert(runtime3.storage.getSnapshot !== undefined, "getSnapshot should be defined");
-		const snapshot = await runtime3.storage.getSnapshot();
-		const channelsTree = snapshot.snapshotTree.trees[".channels"];
-		const mainObjectTree = channelsTree.trees[mainObject.id];
-		const dataObjectATree = channelsTree.trees[dataObjectA.id];
-		const dataObjectBTree = channelsTree.trees[dataObjectB.id];
-
-		assert(mainObjectTree.omitted === undefined, "mainObject should not be omitted");
-		assert(mainObjectTree.groupId === undefined, "mainObject should not have a groupId");
-		assert(Object.entries(mainObjectTree.trees).length > 0, "mainObject missing trees");
-		assert(Object.entries(mainObjectTree.blobs).length > 0, "mainObject missing blobs");
-
-		assert(dataObjectATree.omitted, "dataObjectA should be omitted");
-		assert(dataObjectATree.groupId === loadingGroupId, "dataObjectA should have a groupId");
-		assert(Object.entries(dataObjectATree.trees).length === 0, "dataObjectA has trees!");
-		assert(Object.entries(dataObjectATree.blobs).length === 0, "dataObjectA has blobs!");
-
-		assert(dataObjectBTree.omitted, "dataObjectB should be omitted");
-		assert(dataObjectBTree.groupId === loadingGroupId, "dataObjectB should have a groupId");
-		assert(Object.entries(dataObjectBTree.trees).length === 0, "dataObjectB has trees!");
-		assert(Object.entries(dataObjectBTree.blobs).length === 0, "dataObjectB has blobs!");
 
 		// Testing the get snapshot call with loadingGroupId
 		const loadingGroupIdSnapshot = await runtime3.storage.getSnapshot({
 			loadingGroupIds: [loadingGroupId],
 			versionId: summaryVersion,
 		});
-		const channelsTree2 = loadingGroupIdSnapshot.snapshotTree.trees[".channels"];
+
+		const groupSnapshot = await groupIdSnapshot.promise;
+		assert.deepEqual(groupSnapshot, loadingGroupIdSnapshot, "Should be groupId snapshot");
+
+		// Snapshot validation (a snapshot call for loadingGroupIds = [loadingGroupId])
+		const channelsTree2 = groupSnapshot.snapshotTree.trees[".channels"];
 		const mainObjectTree2 = channelsTree2.trees[mainObject.id];
 		const dataObjectATree2 = channelsTree2.trees[dataObjectA.id];
 		const dataObjectBTree2 = channelsTree2.trees[dataObjectB.id];
 
-		assert(mainObjectTree2.omitted, "mainObject should be omitted");
-		assert(mainObjectTree2.groupId === undefined, "mainObject should not have a groupId");
-		assert(Object.entries(mainObjectTree2.trees).length === 0, "mainObject has trees!");
-		assert(Object.entries(mainObjectTree2.blobs).length === 0, "mainObject has blobs!");
-
-		assert(dataObjectATree2.omitted === undefined, "dataObjectA should not be omitted");
-		assert(dataObjectATree2.groupId === loadingGroupId, "dataObjectA should have a groupId");
-		assert(Object.entries(dataObjectATree2.trees).length > 0, "dataObjectA missing trees");
-		assert(Object.entries(dataObjectATree2.blobs).length > 0, "dataObjectA missing blobs");
-
-		assert(dataObjectBTree2.omitted === undefined, "dataObjectB should not be omitted");
-		assert(dataObjectBTree2.groupId === loadingGroupId, "dataObjectB should have a groupId");
-		assert(Object.entries(dataObjectBTree2.trees).length > 0, "dataObjectB missing trees");
-		assert(Object.entries(dataObjectBTree2.blobs).length > 0, "dataObjectB missing blobs");
+		assertOmittedRegularTree(mainObjectTree2, "mainObject should be regular and omitted");
+		assertPopulatedGroupIdTree(dataObjectATree2, "Incorrect tree for A2");
+		assertPopulatedGroupIdTree(dataObjectBTree2, "Incorrect tree for B2");
 	});
 });
