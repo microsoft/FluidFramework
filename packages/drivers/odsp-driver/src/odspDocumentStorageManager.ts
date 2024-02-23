@@ -34,6 +34,7 @@ import {
 	IDocumentStorageGetVersionsResponse,
 	HostStoragePolicyInternal,
 	IVersionedValueWithEpoch,
+	// eslint-disable-next-line import/no-deprecated
 	ISnapshotCachedEntry,
 	ISnapshotCachedEntry2,
 } from "./contracts";
@@ -43,6 +44,7 @@ import {
 	fetchSnapshot,
 	fetchSnapshotWithRedeem,
 	SnapshotFormatSupportType,
+	type ISnapshotRequestAndResponseOptions,
 } from "./fetchSnapshot";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { IOdspCache, IPrefetchSnapshotContents } from "./odspCache";
@@ -52,6 +54,7 @@ import {
 	isInstanceOfISnapshot,
 	isSnapshotFetchForLoadingGroup,
 	useLegacyFlowWithoutGroupsForSnapshotFetch,
+	type IOdspResponse,
 } from "./odspUtils";
 import { EpochTracker } from "./epochTracker";
 import type { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
@@ -109,7 +112,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		this.attachmentGETUrl = this.odspResolvedUrl.endpoints.attachmentGETStorageUrl;
 	}
 
-	public get isFirstSnapshotFromNetwork() {
+	public get isFirstSnapshotFromNetwork(): boolean | undefined {
 		return this._isFirstSnapshotFromNetwork;
 	}
 
@@ -174,7 +177,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					eventName: "readDataBlob",
 					blobId,
 					evicted,
-					headers: Object.keys(headers).length !== 0 ? true : undefined,
+					headers: Object.keys(headers).length > 0 ? true : undefined,
 					waitQueueLength: this.epochTracker.rateLimiter.waitQueueLength,
 				},
 				async (event) => {
@@ -210,6 +213,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		// eslint-disable-next-line @rushstack/no-new-null
 	): Promise<api.ISnapshotTree | null> {
 		if (!this.snapshotUrl) {
+			// eslint-disable-next-line unicorn/no-null
 			return null;
 		}
 		return super.getSnapshotTree(version, scenarioName);
@@ -269,6 +273,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 						.get(createCacheSnapshotKey(this.odspResolvedUrl))
 						.then(
 							async (
+								// eslint-disable-next-line import/no-deprecated
 								snapshotCachedEntry: ISnapshotCachedEntry | ISnapshotCachedEntry2,
 							) => {
 								if (snapshotCachedEntry !== undefined) {
@@ -351,7 +356,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 									retrievedSnapshot = await networkSnapshotP;
 									method = "network";
 								}
-							} catch (err: unknown) {
+							} catch (error: unknown) {
 								// The call stacks of any errors thrown by cached snapshot or network snapshot aren't very useful:
 								// they get truncated at this stack frame due to the promise race and how v8 tracks async stack traces--
 								// see https://v8.dev/docs/stack-trace-api#async-stack-traces and the "zero-cost async stack traces" document
@@ -359,8 +364,8 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 								// Regenerating the stack at this level provides more information for logged errors.
 								// Once FF uses an ES2021 target, we could convert the above promise race to use `Promise.any` + AggregateError and
 								// get similar quality stacks with less hand-crafted code.
-								const innerStack = (err as Error).stack;
-								const normalizedError = normalizeError(err);
+								const innerStack = (error as Error).stack;
+								const normalizedError = normalizeError(error);
 								normalizedError.addTelemetryProperties({ innerStack });
 
 								const newStack = `<<STACK TRUNCATED: see innerStack property>> \n${generateStack()}`;
@@ -375,7 +380,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 						const startTime = performance.now();
 						retrievedSnapshot = await cachedSnapshotP;
 						cacheLookupTimeInSerialFetch = performance.now() - startTime;
-						method = retrievedSnapshot !== undefined ? "cache" : "network";
+						method = retrievedSnapshot === undefined ? "network" : "cache";
 
 						if (retrievedSnapshot === undefined) {
 							prefetchWaitStartTime = performance.now();
@@ -485,7 +490,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				this.logger,
 				{
 					eventName: "getVersions",
-					headers: Object.keys(headers).length !== 0 ? true : undefined,
+					headers: Object.keys(headers).length > 0 ? true : undefined,
 				},
 				async () =>
 					this.epochTracker.fetchAndParseAsJSON<IDocumentStorageGetVersionsResponse>(
@@ -524,7 +529,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		hostSnapshotOptions: ISnapshotOptions | undefined,
 		loadingGroupIds: string[] | undefined,
 		scenarioName?: string,
-	) {
+	): Promise<ISnapshot | IPrefetchSnapshotContents> {
 		return this.fetchSnapshotFromNetworkCore(
 			hostSnapshotOptions,
 			loadingGroupIds,
@@ -536,6 +541,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			// going getVersions / individual blob download path. This path is very slow, and will not work with
 			// delay-loaded data stores and ODSP storage deleting old snapshots and blobs.
 			if (typeof error === "object" && error !== null) {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				error.canRetry = false;
 			}
 			throw error;
@@ -562,13 +568,13 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					await this.epochTracker.validateEpoch(response.fluidEpoch, "treesLatest");
 					return response;
 				})
-				.catch(async (err) => {
+				.catch(async (error) => {
 					this.logger.sendTelemetryEvent(
 						{
 							eventName: "PrefetchSnapshotError",
 							concurrentSnapshotFetch: this.hostPolicy.concurrentSnapshotFetch,
 						},
-						err,
+						error,
 					);
 					return undefined;
 				});
@@ -598,7 +604,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			loadingGroupId: string[] | undefined,
 			options: ISnapshotOptions | undefined,
 			controller?: AbortController,
-		) => {
+		): Promise<ISnapshotRequestAndResponseOptions> => {
 			return downloadSnapshot(
 				finalOdspResolvedUrl,
 				storageToken,
@@ -610,14 +616,14 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				scenarioName,
 			);
 		};
-		const putInCache = async (valueWithEpoch: IVersionedValueWithEpoch) => {
+		const putInCache = async (valueWithEpoch: IVersionedValueWithEpoch): Promise<void> => {
 			return this.cache.persistedCache.put(
 				createCacheSnapshotKey(this.odspResolvedUrl),
 				// Epoch tracker will add the epoch and version to the value here. So just send value to cache.
 				valueWithEpoch.value,
 			);
 		};
-		const removeEntries = async () => this.cache.persistedCache.removeEntries();
+		const removeEntries = async (): Promise<void> => this.cache.persistedCache.removeEntries();
 		try {
 			const odspSnapshot = await fetchSnapshotWithRedeem(
 				this.odspResolvedUrl,
@@ -632,7 +638,9 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				this.hostPolicy.enableRedeemFallback,
 			);
 			return odspSnapshot;
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} catch (error: any) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 			const errorType = error.errorType;
 			// If the snapshot size is too big and the host specified the size limitation(specified in hostSnapshotOptions), then don't try to fetch the snapshot again.
 			if (
@@ -650,6 +658,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			) {
 				this.logger.sendErrorEvent({
 					eventName: "TreeLatest_SecondCall",
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 					errorType,
 				});
 				const snapshotOptionsWithoutBlobs: ISnapshotOptions = {
@@ -739,7 +748,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		return id;
 	}
 
-	private async getDelayLoadedSummaryManager() {
+	private async getDelayLoadedSummaryManager(): Promise<OdspSummaryUploadManager> {
 		assert(this.odspSummaryModuleLoaded === false, 0x56f /* Should be loaded only once */);
 		const module = await import(
 			/* webpackChunkName: "summaryModule" */ "./odspSummaryUploadManager.js"
@@ -763,7 +772,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		return this.odspSummaryUploadManager;
 	}
 
-	private checkSnapshotUrl() {
+	private checkSnapshotUrl(): void {
 		if (!this.snapshotUrl) {
 			throw new NonRetryableError(
 				"Method failed because no snapshot url was available",
@@ -773,7 +782,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		}
 	}
 
-	private checkAttachmentPOSTUrl() {
+	private checkAttachmentPOSTUrl(): void {
 		if (!this.attachmentPOSTUrl) {
 			throw new NonRetryableError(
 				"Method failed because no attachment POST url was available",
@@ -783,7 +792,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		}
 	}
 
-	private checkAttachmentGETUrl() {
+	private checkAttachmentGETUrl(): void {
 		if (!this.attachmentGETUrl) {
 			throw new NonRetryableError(
 				"Method failed because no attachment GET url was available",
@@ -801,8 +810,9 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			const storageToken = await this.getStorageToken(options, "ReadCommit");
 			const snapshotDownloader = async (
 				url: string,
-				fetchOptions: { [index: string]: any },
-			) => {
+				fetchOptions: RequestInit,
+				// eslint-disable-next-line unicorn/consistent-function-scoping
+			): Promise<IOdspResponse<unknown>> => {
 				return this.epochTracker.fetchAndParseAsJSON(
 					url,
 					fetchOptions,

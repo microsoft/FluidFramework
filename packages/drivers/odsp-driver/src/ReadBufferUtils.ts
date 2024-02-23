@@ -12,7 +12,7 @@ import { assert } from "@fluidframework/core-utils";
 export class ReadBuffer {
 	protected index = 0;
 
-	public get buffer() {
+	public get buffer(): Uint8Array {
 		return this.data;
 	}
 
@@ -23,21 +23,21 @@ export class ReadBuffer {
 		Object.freeze(data.buffer);
 	}
 
-	public get eof() {
+	public get eof(): boolean {
 		return this.index === this.data.length;
 	}
-	public get pos() {
+	public get pos(): number {
 		return this.index;
 	}
-	public get length() {
+	public get length(): number {
 		return this.data.length;
 	}
 
-	public slice(start: number, end: number) {
+	public slice(start: number, end: number): Uint8Array {
 		return this.data.slice(start, end);
 	}
 
-	public reset() {
+	public reset(): void {
 		this.index = 0;
 	}
 
@@ -55,7 +55,7 @@ export class ReadBuffer {
 		return res;
 	}
 
-	public skip(length: number) {
+	public skip(length: number): void {
 		assert(length >= 0, 0x224 /* "Skip length should be positive" */);
 		this.index += length;
 		assert(this.index <= this.data.length, 0x3dc /* skipping past size of buffer */);
