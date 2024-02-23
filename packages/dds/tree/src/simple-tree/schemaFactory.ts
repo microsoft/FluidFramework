@@ -144,7 +144,6 @@ export class SchemaFactory<
 	 */
 	public constructor(public readonly scope: TScope) {}
 
-	// TODO: is `| string` needed here?
 	private scoped<Name extends TName | string>(
 		name: Name,
 	): TScope extends undefined ? `${Name}` : `${TScope}.${Name}` {
