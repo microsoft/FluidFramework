@@ -763,6 +763,8 @@ export class DocumentDeltaConnection
 				details: JSON.stringify({
 					...this.getConnectionDetailsProps(),
 				}),
+				// connect_document_error
+				isSocketIOError: handler === "connect_document_error" ? false : true
 			},
 		);
 	}
