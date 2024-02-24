@@ -53,16 +53,6 @@
 				"default": "./dist/index.js"
 			}
 		},
-		"./fruit": {
-			"import": {
-				"types": "./lib/ot-alpha.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/ot-alpha.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
 		"./internal": {
 			"import": {
 				"types": "./lib/index.d.ts",
@@ -77,10 +67,13 @@
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
+		"api": "fluid-build . --task api",
+		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
+		"api-extractor:esnext": "api-extractor run --local",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "api-extractor run --local",
+		"build:docs": "fluid-build . --task api",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:genver": "gen-version",
 		"build:test": "npm run build:test:cjs && npm run build:test:esm",
@@ -100,8 +93,8 @@
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
 		"test:mocha": "npm run test:mocha:cjs && npm run test:mocha:esm",
-		"test:mocha:cjs": "mocha  --recursive \"dist/test/*.spec.*js\" --exit --project src/test/tsconfig.cjs.json -r node_modules/@fluid-internal/mocha-test-setup",
-		"test:mocha:esm": "mocha  --recursive \"lib/test/*.spec.*js\" --exit --project src/test/tsconfig.json -r node_modules/@fluid-internal/mocha-test-setup",
+		"test:mocha:cjs": "mocha  --recursive \"dist/test/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
+		"test:mocha:esm": "mocha  --recursive \"lib/test/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
@@ -158,6 +151,18 @@
 		"quill-delta": "^4.2.2",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.1.6"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"build:docs": {
+				"dependsOn": [
+					"...",
+					"api-extractor:commonjs",
+					"api-extractor:esnext"
+				],
+				"script": false
+			}
+		}
 	},
 	"typeValidation": {
 		"disabled": true,
