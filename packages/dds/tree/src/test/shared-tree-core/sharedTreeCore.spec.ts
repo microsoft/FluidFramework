@@ -383,7 +383,7 @@ describe("SharedTreeCore", () => {
 			}
 		}
 
-		it("notifies the enricher of sequenced commits", async () => {
+		it("notifies the enricher of sequenced commits", () => {
 			const enricher = new MockCommitEnricher();
 			const tree1 = createTree([], enricher);
 			const containerRuntimeFactory = new MockContainerRuntimeFactory();
