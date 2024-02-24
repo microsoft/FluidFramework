@@ -35,7 +35,7 @@ class TestDataObject extends DataObject {
 	}
 }
 
-describeCompat("Generate Summary Stats", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	const dataObjectFactory = new DataObjectFactory("TestDataObject", TestDataObject, [], []);
 

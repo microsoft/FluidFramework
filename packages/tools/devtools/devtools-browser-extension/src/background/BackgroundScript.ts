@@ -15,7 +15,8 @@ import {
 	devToolsInitAcknowledgementType,
 	type DevToolsInitMessage,
 	devToolsInitMessageType,
-	extensionMessageSource,
+	extensionViewMessageSource,
+	extensionPopupMessageSource,
 	postMessageToPort,
 	relayMessageToPort,
 } from "../messaging";
@@ -47,6 +48,10 @@ console.log(formatBackgroundScriptMessageForLogging("Initializing Background Wor
 browser.runtime.onConnect.addListener((devtoolsPort: Port): void => {
 	// Note: this is captured by the devtoolsMessageListener lambda below.
 	let tabConnection: Port | undefined;
+	const allowedMessageSources = new Set([
+		extensionViewMessageSource,
+		extensionPopupMessageSource,
+	]);
 
 	/**
 	 * Listen for init messages from the Devtools Script, and instantiate tab (Content Script)
@@ -133,7 +138,7 @@ browser.runtime.onConnect.addListener((devtoolsPort: Port): void => {
 
 					// Send acknowledgement to Devtools Script
 					const ackMessage: DevToolsInitAcknowledgement = {
-						source: extensionMessageSource,
+						source: extensionViewMessageSource,
 						type: devToolsInitAcknowledgementType,
 						data: undefined,
 					};
@@ -170,7 +175,7 @@ browser.runtime.onConnect.addListener((devtoolsPort: Port): void => {
 					message,
 				);
 			} else {
-				if (message.source === extensionMessageSource) {
+				if (allowedMessageSources.has(message.source)) {
 					// Only relay known messages from the extension
 					relayMessageToPort(
 						message,

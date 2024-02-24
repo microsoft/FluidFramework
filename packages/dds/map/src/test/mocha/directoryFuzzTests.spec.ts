@@ -339,6 +339,7 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 		clientJoinOptions: {
 			maxNumberOfClients: 3,
 			clientAddProbability: 0.08,
+			stashableClientProbability: 0.2,
 		},
 		defaultTestCount: 25,
 		// Uncomment this line to replay a specific seed from its failure file:
@@ -363,13 +364,11 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 			clientJoinOptions: {
 				maxNumberOfClients: 3,
 				clientAddProbability: 0.08,
+				stashableClientProbability: undefined,
 			},
 			defaultTestCount: 200,
 			// The seeds below fail only when rebaseProbability is non-zero ADO:6044
-			skip: [
-				1, 5, 6, 12, 21, 42, 43, 56, 62, 66, 74, 77, 89, 92, 140, 150, 156, 173, 176, 181,
-				191, 195, 196, 198,
-			],
+			skip: [4, 13, 29, 39, 55, 63, 67, 69, 94, 126, 144, 150, 172, 180, 187, 188, 191, 197],
 			// Uncomment this line to replay a specific seed from its failure file:
 			// replay: 21,
 			saveFailures: {
@@ -397,6 +396,7 @@ describe("SharedDirectory fuzz", () => {
 			// was refactored to use the DDS fuzz harness.
 			maxNumberOfClients: Number.MAX_SAFE_INTEGER,
 			clientAddProbability: 0.08,
+			stashableClientProbability: 0.2,
 		},
 		defaultTestCount: 25,
 		// Uncomment this line to replay a specific seed from its failure file:
@@ -423,10 +423,11 @@ describe("SharedDirectory fuzz", () => {
 				// was refactored to use the DDS fuzz harness.
 				maxNumberOfClients: Number.MAX_SAFE_INTEGER,
 				clientAddProbability: 0.08,
+				stashableClientProbability: undefined,
 			},
 			defaultTestCount: 200,
 			// The seeds below fail only when rebaseProbability is non-zero ADO:6044
-			skip: [63, 173, 190],
+			skip: [40, 50, 54, 128, 178, 182],
 			// Uncomment this line to replay a specific seed from its failure file:
 			// replay: 0,
 			saveFailures: {

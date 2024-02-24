@@ -252,6 +252,8 @@ function createCompatDescribe(): DescribeCompat {
 				return createCompatSuite(tests, undefined);
 			case "LoaderCompat":
 				return createCompatSuite(tests, [CompatKind.None, CompatKind.Loader]);
+			case "NoCompat":
+				return createCompatSuite(tests, [CompatKind.None]);
 			default:
 				return createCompatSuite(tests, undefined, compatVersion);
 		}

@@ -112,25 +112,18 @@
                                 "shapes": [
                                   {
                                     "c": {
-                                      "extraFields": 1
+                                      "type": "com.fluidframework.leaf.handle",
+                                      "value": true
                                     }
-                                  },
-                                  {
-                                    "a": 0
                                   }
                                 ],
                                 "data": [
                                   [
-                                    1,
-                                    [
-                                      "com.fluidframework.leaf.handle",
-                                      true,
-                                      {
-                                        "type": "__fluid_handle__",
-                                        "url": "/test/test"
-                                      },
-                                      []
-                                    ]
+                                    0,
+                                    {
+                                      "type": "__fluid_handle__",
+                                      "url": "/test/test"
+                                    }
                                   ]
                                 ]
                               }

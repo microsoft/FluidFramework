@@ -24,26 +24,14 @@ type TypeOnly<T> = T extends number
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_BaseTelemetryNullLogger": {"forwardCompat": false}
+* "RemovedClassDeclaration_BaseTelemetryNullLogger": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_BaseTelemetryNullLogger():
-    TypeOnly<old.BaseTelemetryNullLogger>;
-declare function use_current_ClassDeclaration_BaseTelemetryNullLogger(
-    use: TypeOnly<current.BaseTelemetryNullLogger>);
-use_current_ClassDeclaration_BaseTelemetryNullLogger(
-    get_old_ClassDeclaration_BaseTelemetryNullLogger());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_BaseTelemetryNullLogger": {"backCompat": false}
+* "RemovedClassDeclaration_BaseTelemetryNullLogger": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_BaseTelemetryNullLogger():
-    TypeOnly<current.BaseTelemetryNullLogger>;
-declare function use_old_ClassDeclaration_BaseTelemetryNullLogger(
-    use: TypeOnly<old.BaseTelemetryNullLogger>);
-use_old_ClassDeclaration_BaseTelemetryNullLogger(
-    get_current_ClassDeclaration_BaseTelemetryNullLogger());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -120,26 +108,14 @@ use_old_TypeAliasDeclaration_EventEmitterEventType(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_EventForwarder": {"forwardCompat": false}
+* "RemovedClassDeclaration_EventForwarder": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_EventForwarder():
-    TypeOnly<old.EventForwarder>;
-declare function use_current_ClassDeclaration_EventForwarder(
-    use: TypeOnly<current.EventForwarder>);
-use_current_ClassDeclaration_EventForwarder(
-    get_old_ClassDeclaration_EventForwarder());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_EventForwarder": {"backCompat": false}
+* "RemovedClassDeclaration_EventForwarder": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_EventForwarder():
-    TypeOnly<current.EventForwarder>;
-declare function use_old_ClassDeclaration_EventForwarder(
-    use: TypeOnly<old.EventForwarder>);
-use_old_ClassDeclaration_EventForwarder(
-    get_current_ClassDeclaration_EventForwarder());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -648,26 +624,14 @@ use_old_ClassDeclaration_RateLimiter(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_TelemetryNullLogger": {"forwardCompat": false}
+* "RemovedClassDeclaration_TelemetryNullLogger": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_TelemetryNullLogger():
-    TypeOnly<old.TelemetryNullLogger>;
-declare function use_current_ClassDeclaration_TelemetryNullLogger(
-    use: TypeOnly<current.TelemetryNullLogger>);
-use_current_ClassDeclaration_TelemetryNullLogger(
-    get_old_ClassDeclaration_TelemetryNullLogger());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_TelemetryNullLogger": {"backCompat": false}
+* "RemovedClassDeclaration_TelemetryNullLogger": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_TelemetryNullLogger():
-    TypeOnly<current.TelemetryNullLogger>;
-declare function use_old_ClassDeclaration_TelemetryNullLogger(
-    use: TypeOnly<old.TelemetryNullLogger>);
-use_old_ClassDeclaration_TelemetryNullLogger(
-    get_current_ClassDeclaration_TelemetryNullLogger());
 
 /*
 * Validate forward compat by using old type in place of current type

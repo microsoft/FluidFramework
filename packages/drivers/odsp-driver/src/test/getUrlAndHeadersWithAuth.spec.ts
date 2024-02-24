@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { getUrlAndHeadersWithAuth } from "../getUrlAndHeadersWithAuth";
 
 describe("getUrlAndHeadersWithAuth", () => {
@@ -15,7 +15,7 @@ describe("getUrlAndHeadersWithAuth", () => {
 	const maxTokenLength = 2048 - "access_token=".length - 1;
 	const shortToken = generateToken(10);
 
-	function generateToken(length: number) {
+	function generateToken(length: number): string {
 		return "a".repeat(length);
 	}
 
@@ -35,7 +35,7 @@ describe("getUrlAndHeadersWithAuth", () => {
 		originalUrl: URL,
 		token: string,
 		result: { url: string; headers: { [index: string]: string } },
-	) => {
+	): void => {
 		const returnedUrl = new URL(result.url);
 		assert.strictEqual(
 			returnedUrl.searchParams.get("access_token"),
@@ -55,7 +55,7 @@ describe("getUrlAndHeadersWithAuth", () => {
 		originalUrl: URL,
 		token: string,
 		result: { url: string; headers: { [index: string]: string } },
-	) => {
+	): void => {
 		const returnedUrl = new URL(result.url);
 		assert.strictEqual(
 			returnedUrl.searchParams.get("access_token"),

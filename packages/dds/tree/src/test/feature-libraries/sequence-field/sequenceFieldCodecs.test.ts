@@ -7,15 +7,15 @@ import { SessionId } from "@fluidframework/id-compressor";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { Changeset } from "../../../feature-libraries/sequence-field/index.js";
-import { ChangeEncodingContext, RevisionTagCodec } from "../../../core/index.js";
+import { ChangeEncodingContext } from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import {
 	EncodingTestData,
 	makeEncodingTestSuite,
 	mintRevisionTag,
-	MockIdCompressor,
 	testIdCompressor,
+	testRevisionTagCodec,
 } from "../../utils.js";
 import { generatePopulatedMarks } from "./populatedMarks.js";
 import { ChangeMaker as Change, cases } from "./testEdits.js";
@@ -44,10 +44,7 @@ const encodingTestData: EncodingTestData<Changeset<TestChange>, unknown, ChangeE
 export function testCodecs() {
 	describe("Codecs", () => {
 		makeEncodingTestSuite(
-			SF.sequenceFieldChangeCodecFactory(
-				TestChange.codec,
-				new RevisionTagCodec(new MockIdCompressor()),
-			),
+			SF.sequenceFieldChangeCodecFactory(TestChange.codec, testRevisionTagCodec),
 			encodingTestData,
 		);
 	});

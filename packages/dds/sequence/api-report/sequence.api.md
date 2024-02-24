@@ -50,19 +50,19 @@ import { TextSegment } from '@fluidframework/merge-tree';
 import { TrackingGroup } from '@fluidframework/merge-tree';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
-// @internal
+// @alpha
 export function appendAddIntervalToRevertibles(interval: SequenceInterval, revertibles: SharedStringRevertible[]): SharedStringRevertible[];
 
-// @internal
+// @alpha
 export function appendChangeIntervalToRevertibles(string: SharedString, newInterval: SequenceInterval, previousInterval: SequenceInterval, revertibles: SharedStringRevertible[]): SharedStringRevertible[];
 
-// @internal
+// @alpha
 export function appendDeleteIntervalToRevertibles(string: SharedString, interval: SequenceInterval, revertibles: SharedStringRevertible[]): SharedStringRevertible[];
 
-// @internal
+// @alpha
 export function appendIntervalPropertyChangedToRevertibles(interval: SequenceInterval, deltas: PropertySet, revertibles: SharedStringRevertible[]): SharedStringRevertible[];
 
-// @internal
+// @alpha
 export function appendSharedStringDeltaToRevertibles(string: SharedString, delta: SequenceDeltaEvent, revertibles: SharedStringRevertible[]): void;
 
 export { BaseSegment }
@@ -76,7 +76,7 @@ export function createEndpointInRangeIndex(sharedString: SharedString): IEndpoin
 // @internal (undocumented)
 export function createIdIntervalIndex<TInterval extends ISerializableInterval>(): IIdIntervalIndex<TInterval>;
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export function createOverlappingIntervalsIndex(sharedString: SharedString): IOverlappingIntervalsIndex<SequenceInterval>;
 
 // @internal (undocumented)
@@ -88,7 +88,7 @@ export function createStartpointInRangeIndex(sharedString: SharedString): IStart
 // @alpha (undocumented)
 export type DeserializeCallback = (properties: PropertySet) => void;
 
-// @internal
+// @alpha
 export function discardSharedStringRevertibles(sharedString: SharedString, revertibles: SharedStringRevertible[]): void;
 
 // @internal
@@ -255,7 +255,7 @@ export interface IntervalLocator {
 // @internal
 export function intervalLocatorFromEndpoint(potentialEndpoint: LocalReferencePosition): IntervalLocator | undefined;
 
-// @internal
+// @alpha
 export const IntervalOpType: {
     readonly PROPERTY_CHANGED: "propertyChanged";
     readonly POSITION_REMOVE: "positionRemove";
@@ -264,10 +264,10 @@ export const IntervalOpType: {
     readonly CHANGE: "change";
 };
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export type IntervalOpType = (typeof IntervalOpType)[keyof typeof IntervalOpType];
 
-// @internal
+// @alpha
 export type IntervalRevertible = {
     event: typeof IntervalOpType.CHANGE;
     interval: SequenceInterval;
@@ -321,7 +321,7 @@ export enum IntervalType {
     Transient = 4
 }
 
-// @internal (undocumented)
+// @alpha (undocumented)
 export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInterval> extends IntervalIndex<TInterval> {
     // (undocumented)
     findOverlappingIntervals(start: SequencePlace, end: SequencePlace): TInterval[];
@@ -419,7 +419,7 @@ export { reservedRangeLabelsKey }
 
 export { reservedTileLabelsKey }
 
-// @internal
+// @alpha
 export function revertSharedStringRevertibles(sharedString: SharedString, revertibles: SharedStringRevertible[]): void;
 
 // @alpha
@@ -563,7 +563,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     constructor(dataStoreRuntime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, segmentFromSpec: (spec: IJSONSegment) => ISegment);
     annotateRange(start: number, end: number, props: PropertySet): void;
     // (undocumented)
-    protected applyStashedOp(content: any): unknown;
+    protected applyStashedOp(content: any): void;
     // (undocumented)
     protected client: Client;
     createLocalReferencePosition(segment: T, offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
@@ -681,7 +681,7 @@ export class SharedStringFactory implements IChannelFactory {
     get type(): string;
 }
 
-// @internal
+// @alpha
 export type SharedStringRevertible = MergeTreeDeltaRevertible | IntervalRevertible;
 
 // @alpha (undocumented)

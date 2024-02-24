@@ -8,12 +8,11 @@ import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { ISharedMap, SharedMap } from "@fluidframework/map";
 import { DetachedReferencePosition, PropertySet } from "@fluidframework/merge-tree";
 import { ISummaryBlob } from "@fluidframework/protocol-definitions";
-import {
+import type {
 	IIntervalCollection,
 	IOverlappingIntervalsIndex,
 	SequenceInterval,
 	SharedString,
-	createOverlappingIntervalsIndex,
 } from "@fluidframework/sequence";
 // This is not in sequence's public API, but an e2e test in this file sniffs the summary.
 // eslint-disable-next-line import/no-internal-modules
@@ -247,8 +246,9 @@ function testIntervalOperations(intervalCollection: IIntervalCollection<Sequence
 		intervalCollection.removeIntervalById(id);
 	}
 }
-describeCompat("SharedInterval", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) => {
-	const { SharedMap } = apis.dds;
+describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap, SharedString } = apis.dds;
+	const { createOverlappingIntervalsIndex } = apis.dataRuntime.packages.sequence;
 	let provider: ITestObjectProvider;
 	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
@@ -371,8 +371,8 @@ describeCompat("SharedInterval", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis)
 			intervals.add({ start: 0, end: 2 });
 			assertIntervals([{ start: 0, end: 2 }]);
 
-			for (let j = 0; j < 10; j++) {
-				for (let i = 0; i < 10; i++) {
+			for (let j = 0; j < 3; j++) {
+				for (let i = 0; i < 5; i++) {
 					sharedString.replaceText(0, 1, `x`);
 					assertIntervals([{ start: 0, end: 2 }]);
 

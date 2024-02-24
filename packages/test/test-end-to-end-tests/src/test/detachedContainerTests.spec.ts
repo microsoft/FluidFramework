@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { SharedCell } from "@fluidframework/cell";
+import type { SharedCell } from "@fluidframework/cell";
 import { Deferred } from "@fluidframework/core-utils";
 import {
 	AttachState,
@@ -17,15 +17,14 @@ import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { DataStoreMessageType } from "@fluidframework/datastore";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
-import { Ink, IColor } from "@fluidframework/ink";
 import type { SharedMap, SharedDirectory } from "@fluidframework/map";
 import type { SharedMatrix } from "@fluidframework/matrix";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
-import { ConsensusQueue } from "@fluidframework/ordered-collection";
-import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
+import type { ConsensusQueue } from "@fluidframework/ordered-collection";
+import type { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
-import { SharedString } from "@fluidframework/sequence";
-import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
+import type { SharedString } from "@fluidframework/sequence";
+import type { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 import { createChildLogger, isFluidError } from "@fluidframework/telemetry-utils";
 import {
 	ITestContainerConfig,
@@ -52,7 +51,6 @@ const cocId = "coc1Key";
 const sharedDirectoryId = "sd1Key";
 const sharedCellId = "scell1Key";
 const sharedMatrixId = "smatrix1Key";
-const sharedInkId = "sink1Key";
 const sparseMatrixId = "sparsematrixKey";
 
 const createFluidObject = async (dataStoreContext: IFluidDataStoreContext, type: string) => {
@@ -61,7 +59,16 @@ const createFluidObject = async (dataStoreContext: IFluidDataStoreContext, type:
 };
 
 describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis) => {
-	const { SharedMap, SharedDirectory, SharedMatrix } = apis.dds;
+	const {
+		SharedString,
+		SharedMap,
+		ConsensusRegisterCollection,
+		SharedDirectory,
+		SharedCell,
+		SharedMatrix,
+		ConsensusQueue,
+		SparseMatrix,
+	} = apis.dds;
 
 	const registry: ChannelFactoryRegistry = [
 		[sharedStringId, SharedString.getFactory()],
@@ -69,7 +76,6 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 		[crcId, ConsensusRegisterCollection.getFactory()],
 		[sharedDirectoryId, SharedDirectory.getFactory()],
 		[sharedCellId, SharedCell.getFactory()],
-		[sharedInkId, Ink.getFactory()],
 		[sharedMatrixId, SharedMatrix.getFactory()],
 		[cocId, ConsensusQueue.getFactory()],
 		[sparseMatrixId, SparseMatrix.getFactory()],
@@ -665,77 +671,6 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 		await defPromise.promise;
 	});
 
-	it("Fire ops during container attach for shared ink", async () => {
-		const defPromise = new Deferred<void>();
-		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-
-		// Get the root dataStore from the detached container.
-		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
-		const testChannel1 = await dataStore.getSharedObject<Ink>(sharedInkId);
-
-		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
-			if (runtimeMessage === false) {
-				return;
-			}
-			assert.strictEqual(
-				(
-					((message.contents as { contents: unknown }).contents as { content: unknown })
-						.content as { address?: unknown }
-				).address,
-				sharedInkId,
-				"Address should be ink",
-			);
-			assert.strictEqual(
-				(
-					(
-						(
-							(message.contents as { contents: unknown }).contents as {
-								content: unknown;
-							}
-						).content as { contents: unknown }
-					).contents as { type?: unknown }
-				).type,
-				"createStroke",
-				"Op type should be same",
-			);
-			assert.strictEqual(
-				(
-					(
-						(
-							(
-								(message.contents as { contents: unknown }).contents as {
-									content: unknown;
-								}
-							).content as { contents: unknown }
-						).contents as { pen: unknown }
-					).pen as { thickness?: unknown }
-				).thickness,
-				20,
-				"Thickness should be same",
-			);
-			defPromise.resolve();
-			return 0;
-		});
-
-		// Fire op before attaching the container
-		const color: IColor = {
-			a: 2,
-			r: 127,
-			b: 127,
-			g: 127,
-		};
-		testChannel1.createStroke({ color, thickness: 10 });
-		const containerP = container.attach(request);
-		if (container.attachState === AttachState.Detached) {
-			await timeoutPromise((resolve) => container.once("attaching", resolve));
-		}
-
-		// Fire op after the summary is taken and before it is attached.
-		testChannel1.createStroke({ color, thickness: 20 });
-		await containerP;
-		await defPromise.promise;
-	});
-
 	it("Fire ops during container attach for consensus ordered collection", async () => {
 		const op = { opName: "add", value: JSON.stringify("s") };
 		const defPromise = new Deferred<void>();
@@ -890,6 +825,166 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 		await containerP;
 		await defPromise.promise;
 	});
+});
+
+// Review: Run with Full Compat?
+describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) => {
+	const {
+		SharedString,
+		SharedMap,
+		ConsensusRegisterCollection,
+		SharedDirectory,
+		SharedCell,
+		SharedMatrix,
+		ConsensusQueue,
+		SparseMatrix,
+	} = apis.dds;
+
+	const registry: ChannelFactoryRegistry = [
+		[sharedStringId, SharedString.getFactory()],
+		[sharedMapId, SharedMap.getFactory()],
+		[crcId, ConsensusRegisterCollection.getFactory()],
+		[sharedDirectoryId, SharedDirectory.getFactory()],
+		[sharedCellId, SharedCell.getFactory()],
+		[sharedMatrixId, SharedMatrix.getFactory()],
+		[cocId, ConsensusQueue.getFactory()],
+		[sparseMatrixId, SparseMatrix.getFactory()],
+	];
+
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+	};
+
+	let provider: ITestObjectProvider;
+	let request: IRequest;
+	let loader: Loader;
+
+	beforeEach("setup", () => {
+		provider = getTestObjectProvider();
+		request = provider.driver.createCreateNewRequest(provider.documentId);
+		loader = provider.makeTestLoader(testContainerConfig) as Loader;
+	});
+
+	it("Retry attaching detached container", async () => {
+		let retryTimes = 1;
+		const documentServiceFactory: IDocumentServiceFactory = {
+			...provider.documentServiceFactory,
+			createContainer: async (createNewSummary, createNewResolvedUrl, logger) => {
+				if (retryTimes > 0) {
+					retryTimes -= 1;
+					const error = new Error("Test Error");
+					(error as any).canRetry = true;
+					throw error;
+				}
+				return provider.documentServiceFactory.createContainer(
+					createNewSummary,
+					createNewResolvedUrl,
+					logger,
+				);
+			},
+		};
+
+		const fluidExport: SupportedExportInterfaces = {
+			IFluidDataStoreFactory: new TestFluidObjectFactory(registry),
+		};
+		const codeLoader = new LocalCodeLoader([[provider.defaultCodeDetails, fluidExport]]);
+		const mockLoader = new Loader({
+			urlResolver: provider.urlResolver,
+			documentServiceFactory,
+			codeLoader,
+			logger: createChildLogger(),
+		});
+
+		const container = await mockLoader.createDetachedContainer(provider.defaultCodeDetails);
+		await container.attach(request);
+		assert.strictEqual(
+			container.attachState,
+			AttachState.Attached,
+			"Container should be attached",
+		);
+		assert.strictEqual(container.closed, false, "Container should be open");
+		assert.strictEqual(
+			container.deltaManager.inbound.length,
+			0,
+			"Inbound queue should be empty",
+		);
+		const containerId = (container.resolvedUrl as IResolvedUrl).id;
+		assert.ok(containerId, "No container ID");
+		if (provider.driver.type === "local") {
+			assert.strictEqual(containerId, provider.documentId, "Doc id is not matching!!");
+		}
+		assert.strictEqual(retryTimes, 0, "Should not succeed at first time");
+	}).timeout(5000);
+
+	itExpects(
+		"Container should not be closed on network failure during attach and succeed on retry",
+		[],
+		async () => {
+			const loaderWithConfig = provider.createLoader(
+				[[provider.defaultCodeDetails, provider.createFluidEntryPoint()]],
+				{
+					configProvider: {
+						getRawConfig: (name) =>
+							name === "Fluid.Container.RetryOnAttachFailure" ? true : undefined,
+					},
+				},
+			);
+
+			const container = await loaderWithConfig.createDetachedContainer(
+				provider.defaultCodeDetails,
+			);
+
+			const oldFunc = provider.documentServiceFactory.createContainer;
+			provider.documentServiceFactory.createContainer = (a, b, c) => {
+				throw new Error("Test Error");
+			};
+			try {
+				await container.attach(request);
+				assert.fail("expected attach to fail!");
+			} catch (e) {
+				provider.documentServiceFactory.createContainer = oldFunc;
+			}
+			assert.strictEqual(container.closed, false, "Container should not be closed");
+
+			await container.attach(request);
+
+			assert.strictEqual(container.closed, false, "Container should not be closed");
+		},
+	);
+
+	itExpects("Attach can be called multiple times with the same parameters", [], async () => {
+		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+
+		const attaches: [Promise<void>, Promise<void>] = [
+			container.attach(request),
+			container.attach(request),
+		];
+
+		assert.strictEqual(attaches[0], attaches[1], "promises should match for parallel calls");
+
+		await Promise.all(attaches);
+		assert.strictEqual(container.closed, false, "Container should not be closed");
+	});
+
+	itExpects("Attach can't be called multiple times with different parameters", [], async () => {
+		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+
+		const attachP = container.attach(request);
+
+		// the second should fail, as the arguments don't match
+		try {
+			await container.attach({ ...request });
+			assert.fail("should fail");
+		} catch (e) {
+			assert(isFluidError(e), "should be a Fluid error");
+			assert.equal(e.message, "Subsequent calls cannot use different arguments.");
+		}
+
+		await attachP;
+
+		assert.strictEqual(container.closed, false, "Container should not be closed");
+	});
 	itExpects(
 		"Container should be closed when runtime.createSummary fails during attach",
 		[
@@ -1031,156 +1126,4 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 			assert.strictEqual(container.closed, true, "Container should be closed");
 		},
 	);
-});
-
-// Review: Run with Full Compat?
-describeCompat("Detached Container", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) => {
-	const { SharedMap, SharedDirectory, SharedMatrix } = apis.dds;
-
-	const registry: ChannelFactoryRegistry = [
-		[sharedStringId, SharedString.getFactory()],
-		[sharedMapId, SharedMap.getFactory()],
-		[crcId, ConsensusRegisterCollection.getFactory()],
-		[sharedDirectoryId, SharedDirectory.getFactory()],
-		[sharedCellId, SharedCell.getFactory()],
-		[sharedInkId, Ink.getFactory()],
-		[sharedMatrixId, SharedMatrix.getFactory()],
-		[cocId, ConsensusQueue.getFactory()],
-		[sparseMatrixId, SparseMatrix.getFactory()],
-	];
-
-	const testContainerConfig: ITestContainerConfig = {
-		fluidDataObjectType: DataObjectFactoryType.Test,
-		registry,
-	};
-
-	let provider: ITestObjectProvider;
-	let request: IRequest;
-	let loader: Loader;
-
-	beforeEach("setup", () => {
-		provider = getTestObjectProvider();
-		request = provider.driver.createCreateNewRequest(provider.documentId);
-		loader = provider.makeTestLoader(testContainerConfig) as Loader;
-	});
-
-	it("Retry attaching detached container", async () => {
-		let retryTimes = 1;
-		const documentServiceFactory: IDocumentServiceFactory = {
-			...provider.documentServiceFactory,
-			createContainer: async (createNewSummary, createNewResolvedUrl, logger) => {
-				if (retryTimes > 0) {
-					retryTimes -= 1;
-					const error = new Error("Test Error");
-					(error as any).canRetry = true;
-					throw error;
-				}
-				return provider.documentServiceFactory.createContainer(
-					createNewSummary,
-					createNewResolvedUrl,
-					logger,
-				);
-			},
-		};
-
-		const fluidExport: SupportedExportInterfaces = {
-			IFluidDataStoreFactory: new TestFluidObjectFactory(registry),
-		};
-		const codeLoader = new LocalCodeLoader([[provider.defaultCodeDetails, fluidExport]]);
-		const mockLoader = new Loader({
-			urlResolver: provider.urlResolver,
-			documentServiceFactory,
-			codeLoader,
-			logger: createChildLogger(),
-		});
-
-		const container = await mockLoader.createDetachedContainer(provider.defaultCodeDetails);
-		await container.attach(request);
-		assert.strictEqual(
-			container.attachState,
-			AttachState.Attached,
-			"Container should be attached",
-		);
-		assert.strictEqual(container.closed, false, "Container should be open");
-		assert.strictEqual(
-			container.deltaManager.inbound.length,
-			0,
-			"Inbound queue should be empty",
-		);
-		const containerId = (container.resolvedUrl as IResolvedUrl).id;
-		assert.ok(containerId, "No container ID");
-		if (provider.driver.type === "local") {
-			assert.strictEqual(containerId, provider.documentId, "Doc id is not matching!!");
-		}
-		assert.strictEqual(retryTimes, 0, "Should not succeed at first time");
-	}).timeout(5000);
-
-	itExpects(
-		"Container should not be closed on network failure during attach and succeed on retry",
-		[],
-		async () => {
-			const loaderWithConfig = provider.createLoader(
-				[[provider.defaultCodeDetails, provider.createFluidEntryPoint()]],
-				{
-					configProvider: {
-						getRawConfig: (name) =>
-							name === "Fluid.Container.RetryOnAttachFailure" ? true : undefined,
-					},
-				},
-			);
-
-			const container = await loaderWithConfig.createDetachedContainer(
-				provider.defaultCodeDetails,
-			);
-
-			const oldFunc = provider.documentServiceFactory.createContainer;
-			provider.documentServiceFactory.createContainer = (a, b, c) => {
-				throw new Error("Test Error");
-			};
-			try {
-				await container.attach(request);
-				assert.fail("expected attach to fail!");
-			} catch (e) {
-				provider.documentServiceFactory.createContainer = oldFunc;
-			}
-			assert.strictEqual(container.closed, false, "Container should not be closed");
-
-			await container.attach(request);
-
-			assert.strictEqual(container.closed, false, "Container should not be closed");
-		},
-	);
-
-	itExpects("Attach can be called multiple times with the same parameters", [], async () => {
-		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-
-		const attaches: [Promise<void>, Promise<void>] = [
-			container.attach(request),
-			container.attach(request),
-		];
-
-		assert.strictEqual(attaches[0], attaches[1], "promises should match for parallel calls");
-
-		await Promise.all(attaches);
-		assert.strictEqual(container.closed, false, "Container should not be closed");
-	});
-
-	itExpects("Attach can't be called multiple times with different parameters", [], async () => {
-		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-
-		const attachP = container.attach(request);
-
-		// the second should fail, as the arguments don't match
-		try {
-			await container.attach({ ...request });
-			assert.fail("should fail");
-		} catch (e) {
-			assert(isFluidError(e), "should be a Fluid error");
-			assert.equal(e.message, "Subsequent calls cannot use different arguments.");
-		}
-
-		await attachP;
-
-		assert.strictEqual(container.closed, false, "Container should not be closed");
-	});
 });

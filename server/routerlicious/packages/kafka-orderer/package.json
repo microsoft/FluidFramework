@@ -28,7 +28,7 @@
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
-		"@fluidframework/protocol-definitions": "^3.2.0-231454",
+		"@fluidframework/protocol-definitions": "^3.2.0-237840",
 		"@fluidframework/server-services-core": "workspace:~"
 	},
 	"devDependencies": {

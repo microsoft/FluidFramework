@@ -4,35 +4,36 @@
 
 ```ts
 
-import { EventEmitter } from 'events';
-import { FluidObject } from '@fluidframework/core-interfaces';
-import { IAnyDriverError } from '@fluidframework/driver-definitions';
-import { IClient } from '@fluidframework/protocol-definitions';
-import { IClientConfiguration } from '@fluidframework/protocol-definitions';
-import { IClientDetails } from '@fluidframework/protocol-definitions';
-import { IDisposable } from '@fluidframework/core-interfaces';
-import { IDocumentMessage } from '@fluidframework/protocol-definitions';
-import { IDocumentStorageService } from '@fluidframework/driver-definitions';
+import type { EventEmitter } from 'events';
+import type { FluidObject } from '@fluidframework/core-interfaces';
+import type { IAnyDriverError } from '@fluidframework/driver-definitions';
+import type { IClient } from '@fluidframework/protocol-definitions';
+import type { IClientConfiguration } from '@fluidframework/protocol-definitions';
+import type { IClientDetails } from '@fluidframework/protocol-definitions';
+import type { IDisposable } from '@fluidframework/core-interfaces';
+import type { IDocumentMessage } from '@fluidframework/protocol-definitions';
+import type { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IErrorBase } from '@fluidframework/core-interfaces';
-import { IErrorEvent } from '@fluidframework/core-interfaces';
-import { IEvent } from '@fluidframework/core-interfaces';
-import { IEventProvider } from '@fluidframework/core-interfaces';
+import type { IErrorEvent } from '@fluidframework/core-interfaces';
+import type { IEvent } from '@fluidframework/core-interfaces';
+import type { IEventProvider } from '@fluidframework/core-interfaces';
 import { IGenericError } from '@fluidframework/core-interfaces';
-import { IQuorumClients } from '@fluidframework/protocol-definitions';
-import { IRequest } from '@fluidframework/core-interfaces';
-import { IResolvedUrl } from '@fluidframework/driver-definitions';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISequencedProposal } from '@fluidframework/protocol-definitions';
-import { ISignalMessage } from '@fluidframework/protocol-definitions';
-import { ISnapshotTree } from '@fluidframework/protocol-definitions';
-import { ISummaryContent } from '@fluidframework/protocol-definitions';
-import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import type { IQuorumClients } from '@fluidframework/protocol-definitions';
+import type { IRequest } from '@fluidframework/core-interfaces';
+import type { IResolvedUrl } from '@fluidframework/driver-definitions';
+import type { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import type { ISequencedProposal } from '@fluidframework/protocol-definitions';
+import type { ISignalMessage } from '@fluidframework/protocol-definitions';
+import type { ISnapshot } from '@fluidframework/driver-definitions';
+import type { ISnapshotTree } from '@fluidframework/protocol-definitions';
+import type { ISummaryContent } from '@fluidframework/protocol-definitions';
+import type { ISummaryTree } from '@fluidframework/protocol-definitions';
+import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { IThrottlingWarning } from '@fluidframework/core-interfaces';
-import { ITokenClaims } from '@fluidframework/protocol-definitions';
+import type { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { IUsageError } from '@fluidframework/core-interfaces';
-import { IVersion } from '@fluidframework/protocol-definitions';
-import { MessageType } from '@fluidframework/protocol-definitions';
+import type { IVersion } from '@fluidframework/protocol-definitions';
+import type { MessageType } from '@fluidframework/protocol-definitions';
 
 // @public
 export enum AttachState {
@@ -105,7 +106,6 @@ export interface IConnectionDetails {
     checkpointSequenceNumber: number | undefined;
     // (undocumented)
     claims: ITokenClaims;
-    // (undocumented)
     clientId: string;
     // (undocumented)
     serviceConfiguration: IClientConfiguration;
@@ -169,13 +169,13 @@ export interface IContainerContext {
     readonly id: string;
     // (undocumented)
     readonly loader: ILoader;
-    // (undocumented)
-    readonly options: ILoaderOptions;
+    readonly options: Record<string | number, any>;
     // (undocumented)
     pendingLocalState?: unknown;
     // (undocumented)
     readonly quorum: IQuorumClients;
     readonly scope: FluidObject;
+    readonly snapshotWithContents?: ISnapshot;
     // (undocumented)
     readonly storage: IDocumentStorageService;
     // (undocumented)
@@ -228,6 +228,7 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
     readonly active: boolean;
     readonly clientDetails: IClientDetails;
     readonly hasCheckpointSequenceNumber: boolean;
+    // @deprecated
     readonly inbound: IDeltaQueue<T>;
     readonly inboundSignal: IDeltaQueue<ISignalMessage>;
     readonly initialSequenceNumber: number;
@@ -236,6 +237,7 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
     readonly lastSequenceNumber: number;
     readonly maxMessageSize: number;
     readonly minimumSequenceNumber: number;
+    // @deprecated
     readonly outbound: IDeltaQueue<U[]>;
     // (undocumented)
     readonly readOnlyInfo: ReadOnlyInfo;
@@ -401,11 +403,11 @@ export interface ILoaderHeader {
     [LoaderHeader.version]: string | undefined;
 }
 
-// @public (undocumented)
+// @alpha
 export type ILoaderOptions = {
-    [key in string | number]: any;
-} & {
     cache?: boolean;
+    client?: IClient;
+    enableOfflineLoad?: boolean;
     provideScopeLoader?: boolean;
     maxClientLeaveWaitTime?: number;
 };

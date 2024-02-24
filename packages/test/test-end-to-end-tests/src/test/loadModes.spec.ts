@@ -28,7 +28,7 @@ import type { SharedMap } from "@fluidframework/map";
 const counterKey = "count";
 
 // REVIEW: enable compat testing?
-describeCompat("LoadModes", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) => {
+describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedCounter } = apis.dds;
 	const { DataObject, DataObjectFactory } = apis.dataRuntime;
 	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;

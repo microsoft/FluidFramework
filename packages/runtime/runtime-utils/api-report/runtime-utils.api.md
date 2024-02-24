@@ -126,6 +126,9 @@ export class ObjectStoragePartition implements IChannelStorageService {
 }
 
 // @internal
+export function processAttachMessageGCData(snapshot: ITree | null, addedGCOutboundRoute: (fromNodeId: string, toPath: string) => void): boolean;
+
+// @internal
 export type ReadAndParseBlob = <T>(id: string) => Promise<T>;
 
 // @alpha

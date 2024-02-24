@@ -31,6 +31,7 @@ import {
 	Side,
 	computeStickinessFromSide,
 	endpointPosAndSide,
+	reservedIntervalIdKey,
 	sidesFromStickiness,
 } from "../intervalCollection";
 import {
@@ -42,8 +43,6 @@ import {
 	endReferenceSlidingPreference,
 	startReferenceSlidingPreference,
 } from "./intervalUtils";
-
-const reservedIntervalIdKey = "intervalId";
 
 function compareSides(sideA: Side, sideB: Side): number {
 	if (sideA === sideB) {

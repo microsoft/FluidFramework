@@ -4,13 +4,13 @@
  */
 
 import { assert } from '@fluidframework/core-utils';
-import { assertNotUndefined, ReplaceRecursive } from '../Common';
+import { assertNotUndefined, ReplaceRecursive } from '../Common.js';
 // These are re-exported from a persisted-types file.
 import type {
 	IdCreationRange,
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
-} from '../id-compressor';
+} from '../id-compressor/index.js';
 import type {
 	Definition,
 	DetachedSequenceId,
@@ -22,7 +22,7 @@ import type {
 	SessionId,
 	TraitLabel,
 	UuidString,
-} from '../Identifiers';
+} from '../Identifiers.js';
 import {
 	BuildInternal_0_0_2,
 	ChangeTypeInternal,
@@ -46,7 +46,7 @@ import {
 	TreeNodeSequence,
 	VersionedOp,
 	WriteFormat,
-} from './0.0.2';
+} from './0.0.2.js';
 
 /**
  * Specifies the location of a trait (a labeled sequence of nodes) within the tree.

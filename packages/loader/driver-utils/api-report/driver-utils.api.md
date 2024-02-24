@@ -22,13 +22,15 @@ import { ILocationRedirectionError } from '@fluidframework/driver-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ISnapshot } from '@fluidframework/driver-definitions';
+import { ISnapshotFetchOptions } from '@fluidframework/driver-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { IStream } from '@fluidframework/driver-definitions';
 import { IStreamResult } from '@fluidframework/driver-definitions';
 import { ISummaryContext } from '@fluidframework/driver-definitions';
 import { ISummaryHandle } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ITelemetryErrorEvent } from '@fluidframework/core-interfaces';
+import { ITelemetryErrorEventExt } from '@fluidframework/telemetry-utils';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { IThrottlingWarning } from '@fluidframework/driver-definitions';
@@ -140,6 +142,8 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
     // (undocumented)
     downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
     // (undocumented)
+    getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
+    // (undocumented)
     getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
     // (undocumented)
     getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion[]>;
@@ -150,8 +154,6 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
     get policies(): IDocumentStorageServicePolicies | undefined;
     // (undocumented)
     readBlob(blobId: string): Promise<ArrayBufferLike>;
-    // (undocumented)
-    get repositoryUrl(): string;
     // (undocumented)
     uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
 }
@@ -204,7 +206,7 @@ export interface ICompressionStorageConfig {
 
 // @internal
 export class InsecureUrlResolver implements IUrlResolver {
-    constructor(hostUrl: string, ordererUrl: string, storageUrl: string, tenantId: string, bearer: string, isForNodeTest?: boolean);
+    constructor(hostUrl: string, ordererUrl: string, storageUrl: string, deltaStreamUrl: string, tenantId: string, bearer: string, isForNodeTest?: boolean);
     // (undocumented)
     createCreateNewRequest(fileName?: string): IRequest;
     // (undocumented)
@@ -221,6 +223,9 @@ export interface IProgress {
 
 // @internal
 export function isCombinedAppAndProtocolSummary(summary: ISummaryTree | undefined, ...optionalRootTrees: string[]): summary is CombinedAppAndProtocolSummary;
+
+// @internal
+export function isInstanceOfISnapshot(obj: ISnapshotTree | ISnapshot | undefined): obj is ISnapshot;
 
 // @internal
 export function isOnline(): OnlineStatus;
@@ -242,7 +247,7 @@ export class LocationRedirectionError extends LoggingError implements ILocationR
 }
 
 // @internal (undocumented)
-export function logNetworkFailure(logger: ITelemetryLoggerExt, event: ITelemetryErrorEvent, error?: any): void;
+export function logNetworkFailure(logger: ITelemetryLoggerExt, event: ITelemetryErrorEventExt, error?: any): void;
 
 // @internal (undocumented)
 export enum MessageType2 {

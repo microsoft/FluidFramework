@@ -5,11 +5,14 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { ITelemetryLoggerExt, loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
-import { ISummaryContext } from "@fluidframework/driver-definitions";
+import {
+	ISnapshot,
+	ISnapshotFetchOptions,
+	ISummaryContext,
+} from "@fluidframework/driver-definitions";
 import { UsageError } from "@fluidframework/driver-utils";
 import * as api from "@fluidframework/protocol-definitions";
 import { OdspDocumentStorageServiceBase } from "../odspDocumentStorageServiceBase";
-import { ISnapshotContents } from "../odspPublicUtils";
 import { IOdspSnapshot } from "../contracts";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "../odspSnapshotParser";
 import { parseCompactSnapshotResponse } from "../compactSnapshotParser";
@@ -45,10 +48,10 @@ export class LocalOdspDocumentStorageService extends OdspDocumentStorageServiceB
 		}
 		this.calledGetVersions = true;
 
-		let snapshotContents: ISnapshotContents;
+		let snapshotContents: ISnapshot;
 
 		if (typeof this.localSnapshot === "string") {
-			const content: IOdspSnapshot = JSON.parse(this.localSnapshot);
+			const content: IOdspSnapshot = JSON.parse(this.localSnapshot) as IOdspSnapshot;
 			snapshotContents = convertOdspSnapshotToSnapshotTreeAndBlobs(content);
 		} else {
 			snapshotContents = parseCompactSnapshotResponse(this.localSnapshot, this.logger);
@@ -56,6 +59,10 @@ export class LocalOdspDocumentStorageService extends OdspDocumentStorageServiceB
 
 		this.snapshotTreeId = this.initializeFromSnapshot(snapshotContents);
 		return this.getSnapshotVersion();
+	}
+
+	public async getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot> {
+		this.throwUsageError("getSnapshot");
 	}
 
 	private getSnapshotVersion(): api.IVersion[] {

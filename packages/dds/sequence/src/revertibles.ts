@@ -30,7 +30,7 @@ import { ISequenceDeltaRange, SequenceDeltaEvent } from "./sequenceDeltaEvent";
 
 /**
  * Data for undoing edits on SharedStrings and Intervals.
- * @internal
+ * @alpha
  */
 export type SharedStringRevertible = MergeTreeDeltaRevertible | IntervalRevertible;
 
@@ -38,7 +38,7 @@ const idMap = new Map<string, string>();
 
 /**
  * Data for undoing edits affecting Intervals.
- * @internal
+ * @alpha
  */
 export type IntervalRevertible =
 	| {
@@ -92,7 +92,7 @@ function getUpdatedId(intervalId: string): string {
 
 /**
  * Create revertibles for adding an interval
- * @internal
+ * @alpha
  */
 export function appendAddIntervalToRevertibles(
 	interval: SequenceInterval,
@@ -108,7 +108,7 @@ export function appendAddIntervalToRevertibles(
 
 /**
  * Create revertibles for deleting an interval
- * @internal
+ * @alpha
  */
 export function appendDeleteIntervalToRevertibles(
 	string: SharedString,
@@ -160,7 +160,7 @@ export function appendDeleteIntervalToRevertibles(
 
 /**
  * Create revertibles for moving endpoints of an interval
- * @internal
+ * @alpha
  */
 export function appendChangeIntervalToRevertibles(
 	string: SharedString,
@@ -210,7 +210,7 @@ export function appendChangeIntervalToRevertibles(
 
 /**
  * Create revertibles for changing properties of an interval
- * @internal
+ * @alpha
  */
 export function appendIntervalPropertyChangedToRevertibles(
 	interval: SequenceInterval,
@@ -270,7 +270,7 @@ function addIfRevertibleRef(
 /**
  * Create revertibles for SharedStringDeltas, handling indirectly modified intervals
  * (e.g. reverting remove of a range that contains an interval will move the interval back)
- * @internal
+ * @alpha
  */
 export function appendSharedStringDeltaToRevertibles(
 	string: SharedString,
@@ -363,7 +363,7 @@ export function appendSharedStringDeltaToRevertibles(
 
 /**
  * Clean up resources held by revertibles that are no longer needed.
- * @internal
+ * @alpha
  */
 export function discardSharedStringRevertibles(
 	sharedString: SharedString,
@@ -654,7 +654,7 @@ function revertLocalSequenceRemove(
 
 /**
  * Invoke revertibles to reverse prior edits
- * @internal
+ * @alpha
  */
 export function revertSharedStringRevertibles(
 	sharedString: SharedString,

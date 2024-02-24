@@ -58,11 +58,11 @@ export class DetachedFieldIndex {
 	public clone(): DetachedFieldIndex {
 		const clone = new DetachedFieldIndex(
 			this.name,
-			idAllocatorFromMaxId(this.rootIdAllocator.getNextId()) as IdAllocator<ForestRootId>,
+			idAllocatorFromMaxId(this.rootIdAllocator.getMaxId()) as IdAllocator<ForestRootId>,
 			this.revisionTagCodec,
 			this.options,
 		);
-		populateNestedMap(this.detachedNodeToField, clone.detachedNodeToField);
+		populateNestedMap(this.detachedNodeToField, clone.detachedNodeToField, true);
 		return clone;
 	}
 
@@ -161,7 +161,7 @@ export class DetachedFieldIndex {
 	public encode(): JsonCompatibleReadOnly {
 		return this.codec.encode({
 			data: this.detachedNodeToField,
-			maxId: this.rootIdAllocator.getNextId(),
+			maxId: this.rootIdAllocator.getMaxId(),
 		}) as JsonCompatibleReadOnly;
 	}
 

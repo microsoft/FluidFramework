@@ -254,12 +254,20 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 			}
 		});
 
+		const immediatelyRefreshLatestSummaryAck =
+			this.mc.config.getBoolean("Fluid.Summarizer.immediatelyRefreshLatestSummaryAck") ??
+			true;
 		this.generator = new SummaryGenerator(
 			this.pendingAckTimer,
 			this.heuristicData,
 			this.submitSummaryCallback,
 			() => {
 				this.totalSuccessfulAttempts++;
+			},
+			async (options: IRefreshSummaryAckOptions) => {
+				if (immediatelyRefreshLatestSummaryAck) {
+					await this.refreshLatestSummaryAckAndHandleError(options);
+				}
 			},
 			this.summaryWatcher,
 			this.mc.logger,
@@ -303,39 +311,47 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 		// https://dev.azure.com/fluidframework/internal/_workitems/edit/779
 		await this.lockedSummaryAction(
 			() => {},
-			async () =>
-				this.refreshLatestSummaryAckCallback({
+			async () => {
+				const options: IRefreshSummaryAckOptions = {
 					proposalHandle: summaryOpHandle,
 					ackHandle: summaryAckHandle,
 					summaryRefSeq: refSequenceNumber,
 					summaryLogger,
-				}).catch(async (error) => {
-					// If the error is 404, so maybe the fetched version no longer exists on server. We just
-					// ignore this error in that case, as that means we will have another summaryAck for the
-					// latest version with which we will refresh the state. However in case of single commit
-					// summary, we might me missing a summary ack, so in that case we are still fine as the
-					// code in `submitSummary` function in container runtime, will refresh the latest state
-					// by calling `prefetchLatestSummaryThenClose`. We will load the next summarizer from the
-					// updated state and be fine.
-					const isIgnoredError =
-						isFluidError(error) &&
-						error.errorType === DriverErrorTypes.fileNotFoundOrAccessDeniedError;
-
-					summaryLogger.sendTelemetryEvent(
-						{
-							eventName: isIgnoredError
-								? "HandleSummaryAckErrorIgnored"
-								: "HandleLastSummaryAckError",
-							referenceSequenceNumber: refSequenceNumber,
-							proposalHandle: summaryOpHandle,
-							ackHandle: summaryAckHandle,
-						},
-						error,
-					);
-				}),
+				};
+				await this.refreshLatestSummaryAckAndHandleError(options);
+			},
 			() => {},
 		);
 	}
+
+	private readonly refreshLatestSummaryAckAndHandleError = async (
+		options: IRefreshSummaryAckOptions,
+	) => {
+		return this.refreshLatestSummaryAckCallback(options).catch(async (error) => {
+			// If the error is 404, so maybe the fetched version no longer exists on server. We just
+			// ignore this error in that case, as that means we will have another summaryAck for the
+			// latest version with which we will refresh the state. However in case of single commit
+			// summary, we might be missing a summary ack, so in that case we are still fine as the
+			// code in `submitSummary` function in container runtime, will refresh the latest state
+			// by calling `prefetchLatestSummaryThenClose`. We will load the next summarizer from the
+			// updated state and be fine.
+			const isIgnoredError =
+				isFluidError(error) &&
+				error.errorType === DriverErrorTypes.fileNotFoundOrAccessDeniedError;
+
+			options.summaryLogger.sendTelemetryEvent(
+				{
+					eventName: isIgnoredError
+						? "HandleSummaryAckErrorIgnored"
+						: "HandleLastSummaryAckError",
+					referenceSequenceNumber: options.summaryRefSeq,
+					proposalHandle: options.proposalHandle,
+					ackHandle: options.ackHandle,
+				},
+				error,
+			);
+		});
+	};
 
 	/**
 	 * Responsible for receiving and processing all the summary acks.
@@ -565,6 +581,8 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 					...options,
 					summaryLogger,
 					cancellationToken: this.cancellationToken,
+					latestSummaryRefSeqNum:
+						this.heuristicData.lastSuccessfulSummary.refSequenceNumber,
 				};
 				const summarizeResult = this.generator.summarize(summaryOptions, resultsBuilder);
 				// ensure we wait till the end of the process
@@ -660,6 +678,7 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 				...summarizeOptions,
 				summaryLogger,
 				cancellationToken: this.cancellationToken,
+				latestSummaryRefSeqNum: this.heuristicData.lastSuccessfulSummary.refSequenceNumber,
 			};
 
 			// Note: no need to account for cancellationToken.waitCancelled here, as
@@ -731,6 +750,7 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 				summaryLogger,
 				cancellationToken: this.cancellationToken,
 				finalAttempt,
+				latestSummaryRefSeqNum: this.heuristicData.lastSuccessfulSummary.refSequenceNumber,
 			};
 			const summarizeResult = this.generator.summarize(summaryOptions);
 			return { summarizeProps, summarizeResult };

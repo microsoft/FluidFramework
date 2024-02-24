@@ -492,10 +492,8 @@ function internalSchema(
 		throw new Error(err as string);
 	}
 
-	// We treat internal and rc as valid; other values should be coerced to "internal"
-	const idToUse = ["internal", "rc"].includes(prereleaseIdentifier)
-		? prereleaseIdentifier
-		: "internal";
+	// Convert any pre/dev release indicators to internal or rc; default to "internal"
+	const idToUse = prereleaseIdentifier.includes("rc") ? "rc" : "internal";
 	return `>=${publicVersion}-${idToUse}.${
 		parsedVersion.major - 1
 	}.0.0 <${publicVersion}-${idToUse}.${parsedVersion.major}.0.0`;

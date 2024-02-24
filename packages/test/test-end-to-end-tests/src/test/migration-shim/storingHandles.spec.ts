@@ -17,7 +17,7 @@ import {
 	type TraitLabel,
 } from "@fluid-experimental/tree";
 // eslint-disable-next-line import/no-internal-modules
-import { type EditLog } from "@fluid-experimental/tree/dist/EditLog.js";
+import { type EditLog } from "@fluid-experimental/tree/test/EditLog";
 import {
 	type ITree,
 	type TreeView,
@@ -146,7 +146,7 @@ function getNewTreeView(tree: ITree): TreeView<HandleType> {
 	);
 }
 
-describeCompat("Storing handles", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("Storing handles", "NoCompat", (getTestObjectProvider) => {
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {
