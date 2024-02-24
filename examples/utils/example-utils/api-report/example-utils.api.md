@@ -281,7 +281,7 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
     // (undocumented)
     protected initializingFirstTime(): Promise<void>;
     // (undocumented)
-    get migrationState(): "collaborating" | "migrated" | "proposingMigration" | "stoppingCollaboration" | "proposingV2Code" | "waitingForV2ProposalCompletion" | "readyForMigration";
+    get migrationState(): "collaborating" | "proposingMigration" | "stoppingCollaboration" | "proposingV2Code" | "waitingForV2ProposalCompletion" | "readyForMigration" | "migrated";
     // (undocumented)
     get proposedVersion(): string | undefined;
     // (undocumented)
