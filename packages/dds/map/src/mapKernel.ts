@@ -4,7 +4,7 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidSerializer, ValueType } from "@fluidframework/shared-object-base";
+import { IFluidSerializer, ValueType, bindHandles } from "@fluidframework/shared-object-base";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 // eslint-disable-next-line import/no-deprecated
@@ -293,20 +293,20 @@ export class MapKernel {
 
 		// Create a local value and serialize it.
 		const localValue = this.localValueMaker.fromInMemory(value);
-		const serializableValue = makeSerializable(localValue, this.serializer, this.handle);
 
 		// Set the value locally.
 		const previousValue = this.setCore(key, localValue, true);
 
 		// If we are not attached, don't submit the op.
 		if (!this.isAttached()) {
+			bindHandles(localValue.value, this.serializer, this.handle);
 			return;
 		}
 
 		const op: IMapSetOperation = {
 			key,
 			type: "set",
-			value: serializableValue,
+			value: { type: localValue.type, value: localValue.value as unknown },
 		};
 		this.submitMapKeyMessage(op, previousValue);
 	}
