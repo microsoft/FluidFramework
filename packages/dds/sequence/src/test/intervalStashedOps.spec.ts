@@ -11,6 +11,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { IntervalType } from "@fluidframework/sequence-previous";
+import { AttachState } from "@fluidframework/container-definitions";
 import { IntervalOpType, SequenceInterval } from "../intervals";
 import { IIntervalCollection } from "../intervalCollection";
 import { SharedString } from "../sharedString";
@@ -61,6 +62,7 @@ describe("Interval Stashed Ops on client ", () => {
 		containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 		// Connect the first SharedString.
+		dataStoreRuntime1.setAttachState(AttachState.Attached);
 		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 		const services1 = {
 			deltaConnection: dataStoreRuntime1.createDeltaConnection(),

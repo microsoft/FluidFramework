@@ -45,14 +45,7 @@ describe("SharedString", () => {
 
 	describe("SharedString in local state", () => {
 		beforeEach(() => {
-			dataStoreRuntime1 = new MockFluidDataStoreRuntime({
-				attachState: AttachState.Detached,
-			});
-			sharedString = new SharedString(
-				dataStoreRuntime1,
-				"shared-string-1",
-				SharedStringFactory.Attributes,
-			);
+			dataStoreRuntime1.local = true;
 		});
 
 		// Creates a new SharedString and loads it from the passed snapshot tree.
@@ -373,74 +366,78 @@ describe("SharedString", () => {
 			// Load a new SharedString from the snapshot and verify it is loaded correctly.
 			await CreateStringAndCompare(summaryTree);
 		});
+	});
 
-		describe("SharedString op processing in local state", () => {
-			it("should correctly process operations sent in local state", async () => {
-				// Initialize the shared string so that it is completely loaded before we take a snapshot.
-				sharedString.initializeLocal();
+	describe("SharedString op processing in local state", () => {
+		it("should correctly process operations sent in local state", async () => {
+			// Set the data store runtime to local.
+			dataStoreRuntime1.local = true;
 
-				// Insert and replace text in first shared string.
-				sharedString.insertText(0, "hello world");
-				sharedString.replaceText(6, 11, "there");
+			// Initialize the shared string so that it is completely loaded before we take a snapshot.
+			sharedString.initializeLocal();
 
-				// Load a new Ink in connected state from the snapshot of the first one.
-				const containerRuntimeFactory = new MockContainerRuntimeFactory();
-				const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-				const containerRuntime2 =
-					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-				const services2: IChannelServices = {
-					deltaConnection: dataStoreRuntime2.createDeltaConnection(),
-					objectStorage: MockStorage.createFromSummary(
-						sharedString.getAttachSummary().summary,
-					),
-				};
+			// Insert and replace text in first shared string.
+			sharedString.insertText(0, "hello world");
+			sharedString.replaceText(6, 11, "there");
 
-				const sharedString2 = new SharedString(
-					dataStoreRuntime2,
-					"shared-string-2",
-					SharedStringFactory.Attributes,
-				);
-				await sharedString2.load(services2);
+			// Load a new Ink in connected state from the snapshot of the first one.
+			const containerRuntimeFactory = new MockContainerRuntimeFactory();
+			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+			const containerRuntime2 =
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+			const services2: IChannelServices = {
+				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
+				objectStorage: MockStorage.createFromSummary(
+					sharedString.getAttachSummary().summary,
+				),
+			};
 
-				// Now connect the first Ink
-				const containerRuntime1 =
-					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
-				const services1 = {
-					deltaConnection: dataStoreRuntime1.createDeltaConnection(),
-					objectStorage: new MockStorage(undefined),
-				};
-				sharedString.connect(services1);
+			const sharedString2 = new SharedString(
+				dataStoreRuntime2,
+				"shared-string-2",
+				SharedStringFactory.Attributes,
+			);
+			await sharedString2.load(services2);
 
-				// Verify that both the shared strings have the text.
-				assert.equal(
-					sharedString.getText(),
-					"hello there",
-					"The first string does not have the text",
-				);
-				assert.equal(
-					sharedString2.getText(),
-					"hello there",
-					"The second string does not have the text",
-				);
+			// Now connect the first Ink
+			dataStoreRuntime1.setAttachState(AttachState.Attached);
+			const containerRuntime1 =
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+			const services1 = {
+				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
+				objectStorage: new MockStorage(undefined),
+			};
+			sharedString.connect(services1);
 
-				// Insert and replace text in second shared string.
-				sharedString2.insertText(0, "well ");
+			// Verify that both the shared strings have the text.
+			assert.equal(
+				sharedString.getText(),
+				"hello there",
+				"The first string does not have the text",
+			);
+			assert.equal(
+				sharedString2.getText(),
+				"hello there",
+				"The second string does not have the text",
+			);
 
-				// Process the message.
-				containerRuntimeFactory.processAllMessages();
+			// Insert and replace text in second shared string.
+			sharedString2.insertText(0, "well ");
 
-				// Verify that both the shared strings have the new text.
-				assert.equal(
-					sharedString.getText(),
-					"well hello there",
-					"The first string does not have the text",
-				);
-				assert.equal(
-					sharedString2.getText(),
-					"well hello there",
-					"The second string does not have the text",
-				);
-			});
+			// Process the message.
+			containerRuntimeFactory.processAllMessages();
+
+			// Verify that both the shared strings have the new text.
+			assert.equal(
+				sharedString.getText(),
+				"well hello there",
+				"The first string does not have the text",
+			);
+			assert.equal(
+				sharedString2.getText(),
+				"well hello there",
+				"The second string does not have the text",
+			);
 		});
 	});
 
@@ -452,6 +449,7 @@ describe("SharedString", () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 			// Connect the first SharedString.
+			dataStoreRuntime1.setAttachState(AttachState.Attached);
 			const containerRuntime1 =
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1 = {

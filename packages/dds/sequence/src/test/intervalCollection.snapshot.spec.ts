@@ -10,6 +10,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 import { IIntervalCollection, intervalLocatorFromEndpoint, Side } from "../intervalCollection";
@@ -37,6 +38,7 @@ async function loadSharedString(
 async function getSingleIntervalSummary(): Promise<{ summary: ISummaryTree; seq: number }> {
 	const containerRuntimeFactory = new MockContainerRuntimeFactory();
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
+	dataStoreRuntime.setAttachState(AttachState.Attached);
 	dataStoreRuntime.options = {
 		intervalStickinessEnabled: true,
 	};

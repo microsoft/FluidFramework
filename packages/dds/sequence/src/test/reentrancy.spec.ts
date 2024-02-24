@@ -76,6 +76,7 @@ describe("SharedString op-reentrancy", () => {
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
 				logger: logger.toTelemetryLogger(),
 			});
+			dataStoreRuntime1.setAttachState(AttachState.Attached);
 			dataStoreRuntime1.options = { sharedStringPreventReentrancy: false };
 			sharedString = factory.create(dataStoreRuntime1, "A");
 
@@ -89,6 +90,7 @@ describe("SharedString op-reentrancy", () => {
 
 			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
 			dataStoreRuntime2.options = { sharedStringPreventReentrancy: false };
+			dataStoreRuntime2.setAttachState(AttachState.Attached);
 			const containerRuntime2 =
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 			const services2 = {

@@ -859,6 +859,9 @@ describe("Directory", () => {
 			});
 
 			it("should correctly process subDirectory operations sent in local state", async () => {
+				// Set the data store runtime to local.
+				dataStoreRuntime.local = true;
+
 				// Create a sub directory in local state.
 				const subDirName = "testSubDir";
 				directory.createSubDirectory(subDirName);

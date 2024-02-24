@@ -12,6 +12,7 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree";
 import { FlushMode } from "@fluidframework/runtime-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 
@@ -42,6 +43,7 @@ import { SharedStringFactory } from "../sequenceFactory";
 			factory: MockContainerRuntimeFactory,
 		): Promise<[SharedString, MockContainerRuntime]> => {
 			const dataStoreRuntime = new MockFluidDataStoreRuntime();
+			dataStoreRuntime.setAttachState(AttachState.Attached);
 			const containerRuntime = factory.createContainerRuntime(dataStoreRuntime);
 			const services = {
 				deltaConnection: dataStoreRuntime.createDeltaConnection(),
