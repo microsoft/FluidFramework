@@ -208,18 +208,6 @@
 				],
 				"script": false
 			},
-			"build:test:jest": [
-				"build:test:jest:esm",
-				"build:test:jest:cjs"
-			],
-			"build:test:mocha": [
-				"build:test:mocha:esm",
-				"build:test:mocha:cjs"
-			],
-			"build:test:types": [
-				"build:test:types:esm",
-				"build:test:types:cjs"
-			],
 			"build:test:jest:esm": [
 				"build:esnext"
 			],
