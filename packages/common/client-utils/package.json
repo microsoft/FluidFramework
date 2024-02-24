@@ -59,7 +59,7 @@
 		"test": "npm run test:mocha && npm run test:jest",
 		"test:coverage": "c8 npm test",
 		"test:jest": "jest",
-		"test:mocha": "mocha  --recursive \"dist/test/mocha/**/*.spec.*js\" --exit --project test/tsconfig.json",
+		"test:mocha": "mocha  --recursive \"dist/test/mocha/**/*.spec.*js\" --exit",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
