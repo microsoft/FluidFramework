@@ -68,7 +68,7 @@
 		"less": "~3.9.0",
 		"less-loader": "^4.1.0",
 		"prettier": "~3.0.3",
-		"puppeteer": "^22.0.0",
+		"puppeteer": "^22.2.0",
 		"rimraf": "^4.4.0",
 		"style-loader": "^1.0.0",
 		"ts-loader": "^9.3.0",

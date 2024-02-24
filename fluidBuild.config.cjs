@@ -84,7 +84,9 @@ module.exports = {
 		"depcruise": [],
 		"check:release-tags": ["tsc"],
 		"check:are-the-types-wrong": ["build"],
-		"eslint": [...tscDependsOn, "commonjs"],
+		// ADO #7297: Review why the direct dependency on 'build:esm:test' is necessary.
+		//            Should 'compile' be enough?  compile -> build:test -> build:test:esm
+		"eslint": ["compile", "build:test:esm"],
 		"good-fences": [],
 		"prettier": [],
 		"prettier:fix": [],

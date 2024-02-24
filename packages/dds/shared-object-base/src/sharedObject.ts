@@ -459,8 +459,8 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 			reSubmit: (content: any, localOpMetadata: unknown) => {
 				this.reSubmit(content, localOpMetadata);
 			},
-			applyStashedOp: (content: any): unknown => {
-				return this.applyStashedOp(content);
+			applyStashedOp: (content: any): void => {
+				this.applyStashedOp(content);
 			},
 			rollback: (content: any, localOpMetadata: unknown) => {
 				this.rollback(content, localOpMetadata);
@@ -537,21 +537,23 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	}
 
 	/**
-	 * Apply changes from an op just as if a local client has made the change,
+	 * Apply changes from the provided op content just as if a local client has made the change,
 	 * including submitting the op. Used when rehydrating an attached container
-	 * with pending changes. This prepares the SharedObject for seeing an ACK
-	 * for the op or resubmitting the op upon reconnection.
-	 * @param content - Contents of a stashed op.
-	 * @returns Should return void.
+	 * with pending changes. The rehydration process replays all remote ops
+	 * and applies stashed ops after the remote op with a sequence number
+	 * that matches that of the stashed op is applied. This ensures
+	 * stashed ops are applied at the same state they were originally created.
 	 *
-	 * @privateRemarks
-	 * This interface is undergoing changes. Right now it support both the old
-	 * flow, where just local metadata is returned, and a more ergonomic flow
-	 * where operations are applied just like local edits, including
-	 * submission of the op if attached. Soon the old flow will be removed
-	 * and only the new flow will be supported.
+	 * It is possible that stashed ops have been sent in the past, and will be found when
+	 * the shared object catches up with remotes ops.
+	 * So this prepares the SharedObject for seeing potentially seeing the ACK.
+	 * If no matching remote op is found, all the applied stashed ops will go
+	 * through the normal resubmit flow upon reconnection, which allows the dds
+	 * to rebase them to the latest state, and then resubmit them.
+	 *
+	 * @param content - Contents of a stashed op.
 	 */
-	protected abstract applyStashedOp(content: any): unknown;
+	protected abstract applyStashedOp(content: any): void;
 
 	/**
 	 * Emit an event. This function is only intended for use by DDS classes that extend SharedObject/SharedObjectCore,
