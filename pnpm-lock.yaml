@@ -721,6 +721,8 @@ importers:
       process: ^0.11.10
       puppeteer: ^22.2.0
       rimraf: ^4.4.0
+      source-map-loader: ^2.0.0
+      tinylicious: ^3.1.0-238497
       ts-jest: ^29.1.1
       ts-loader: ^9.3.0
       typescript: ~5.1.6
@@ -761,6 +763,8 @@ importers:
       prettier: 3.0.3
       puppeteer: 22.2.0_typescript@5.1.6
       rimraf: 4.4.1
+      source-map-loader: 2.0.2_webpack@5.89.0
+      tinylicious: 3.1.0-238497
       ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
