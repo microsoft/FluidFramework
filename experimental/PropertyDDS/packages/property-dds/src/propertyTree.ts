@@ -974,7 +974,7 @@ export class SharedPropertyTree extends SharedObject {
 		}
 	}
 
-	protected applyStashedOp() {
+	protected applyStashedOp(): void {
 		throw new Error("not implemented");
 	}
 }
