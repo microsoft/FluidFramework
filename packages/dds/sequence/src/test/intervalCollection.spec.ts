@@ -1994,5 +1994,53 @@ describe("SharedString interval collections", () => {
 			assert.equal(interval1.start.slidingPreference, SlidingPreference.BACKWARD);
 			assert.equal(interval1.end.slidingPreference, SlidingPreference.FORWARD);
 		});
+
+		it("slides backward reference to correct position when remove is unacked", () => {
+			sharedString.insertText(0, "ABC");
+
+			// (AB]C
+
+			containerRuntimeFactory.processAllMessages();
+
+			const start = { pos: 0, side: Side.After };
+			const end = { pos: 1, side: Side.After };
+
+			const collection = sharedString.getIntervalCollection("test");
+			collection.add({ end, start });
+
+			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 1 }]);
+
+			sharedString.removeText(1, 2);
+
+			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
+
+			containerRuntimeFactory.processAllMessages();
+
+			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
+		});
+
+		it.skip("slides forward reference to correct position when remove of end of string is unacked", () => {
+			sharedString.insertText(0, "ABC");
+
+			// (ABC]
+
+			containerRuntimeFactory.processAllMessages();
+
+			const start = { pos: 0, side: Side.After };
+			const end = { pos: 2, side: Side.After };
+
+			const collection = sharedString.getIntervalCollection("test");
+			collection.add({ end, start });
+
+			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 2 }]);
+
+			sharedString.removeText(1, 3);
+
+			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
+
+			containerRuntimeFactory.processAllMessages();
+
+			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
+		});
 	});
 });

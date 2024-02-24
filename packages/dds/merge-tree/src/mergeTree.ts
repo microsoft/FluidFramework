@@ -1065,6 +1065,29 @@ export class MergeTree {
 			return this.getPosition(refPos, refSeq, clientId);
 		}
 		if (refTypeIncludesFlag(refPos, ReferenceType.Transient) || seg.localRefs?.has(refPos)) {
+			if (
+				(isRemoved(seg) || isMoved(seg)) &&
+				refPos.slidingPreference === SlidingPreference.BACKWARD
+			) {
+				let slidToSegment: ISegment | undefined;
+
+				backwardExcursion(seg, (segment) => {
+					if (!isRemoved(segment) && !isMoved(segment)) {
+						slidToSegment = segment;
+						return false;
+					}
+					return true;
+				});
+
+				if (slidToSegment) {
+					const off =
+						slidToSegment.ordinal < seg.ordinal ? slidToSegment.cachedLength - 1 : 0;
+					return off + this.getPosition(slidToSegment, refSeq, clientId);
+				}
+
+				return 0;
+			}
+
 			const offset = isRemoved(seg) || isMoved(seg) ? 0 : refPos.getOffset();
 			return offset + this.getPosition(seg, refSeq, clientId);
 		}

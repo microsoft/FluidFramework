@@ -995,7 +995,7 @@ export type SortedSegmentSetItem = ISegment | LocalReferencePosition | {
     readonly segment: ISegment;
 };
 
-// @internal @deprecated (undocumented)
+// @internal (undocumented)
 export abstract class SortedSet<T, U extends string | number> {
     // (undocumented)
     addOrUpdate(newItem: T, update?: (existingItem: T, newItem: T) => void): void;

@@ -4,7 +4,6 @@
  */
 
 /**
- * @deprecated This functionality was not meant to be exported and will be removed in a future release
  * @internal
  */
 export abstract class SortedSet<T, U extends string | number> {
