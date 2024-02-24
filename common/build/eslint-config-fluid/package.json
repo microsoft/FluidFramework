@@ -20,7 +20,7 @@
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"print-config": "concurrently \"npm:print-config:*\" && npm run cleanup-printed-configs",
 		"print-config:default": "eslint --config ./index.js --print-config ./src/file.ts > ./printed-configs/default.json",
-		"print-config:minimal": "eslint --config ./minimal.js --print-config ./src/file.ts > ./printed-configs/minimal.json",
+		"print-config:minimal": "eslint --config ./minimal-deprecated.js --print-config ./src/file.ts > ./printed-configs/minimal.json",
 		"print-config:react": "eslint --config ./index.js --print-config ./src/file.tsx > ./printed-configs/react.json",
 		"print-config:recommended": "eslint --config ./recommended.js --print-config ./src/file.ts > ./printed-configs/recommended.json",
 		"print-config:strict": "eslint --config ./strict.js --print-config ./src/file.ts > ./printed-configs/strict.json",
