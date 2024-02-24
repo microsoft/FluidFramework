@@ -5635,7 +5635,6 @@ importers:
       '@fluidframework/core-utils': link:../../../packages/common/core-utils
       '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
       '@fluidframework/merge-tree': link:../../../packages/dds/merge-tree
-      '@fluidframework/mocha-test-setup': 1.3.7
       '@fluidframework/sequence': link:../../../packages/dds/sequence
       '@fluidframework/shared-object-base': link:../../../packages/dds/shared-object-base
     devDependencies:
@@ -5646,6 +5645,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
+      '@fluidframework/mocha-test-setup': 1.3.7
       '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
       '@types/diff': 3.5.8
@@ -16238,7 +16238,7 @@ packages:
 
   /@fluidframework/common-definitions/0.20.1:
     resolution: {integrity: sha512-KaoQ7w2MDH5OeRKVatL5yVOCFg+9wD6bLSLFh1/TV1EZM46l49iBqO7UVjUtPE6BIm0jvvOzJXULGVSpzokX3g==}
-    dev: false
+    dev: true
 
   /@fluidframework/common-definitions/1.1.0:
     resolution: {integrity: sha512-WQYtG9tkx2j7i1JSXPvwLnQsqCOZAghMj0aGciqjZVNppUly/XBpAjb4V6FEUCEjxCScPKhyE+1rhV1ep52NgA==}
@@ -16350,7 +16350,7 @@ packages:
 
   /@fluidframework/core-interfaces/1.3.7:
     resolution: {integrity: sha512-Rzsb1xK4h5imIddai+BW+XNWnpM1FEZR9UBWSKb+vMr0PCVBJwe4BTi6vxA7+o8OgdzVMOmOZhqnivKNUrGYKw==}
-    dev: false
+    dev: true
 
   /@fluidframework/core-interfaces/2.0.0-internal.8.0.0:
     resolution: {integrity: sha512-4GkmxbeekjHf2R442GZ+ohJ6l/JB6l10/GfhzzrVqBduH2dff8M4ipqm+BFbVkF8ODglIvuSc/8/VBrUWzcE2Q==}
@@ -16487,7 +16487,7 @@ packages:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/core-interfaces': 1.3.7
       '@fluidframework/protocol-definitions': 0.1028.2000
-    dev: false
+    dev: true
 
   /@fluidframework/driver-definitions/2.0.0-internal.8.0.0:
     resolution: {integrity: sha512-Z9g4aHScCbxjA238LkPmzXFsImznGcObV21Mhf1jI1S9epcpZeDlQupvF+lO51EK9S3A4ttb1Xa0hCLvYcwGAQ==}
@@ -16816,7 +16816,7 @@ packages:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/test-driver-definitions': 1.3.7
       mocha: 10.2.0
-    dev: false
+    dev: true
 
   /@fluidframework/odsp-doclib-utils/2.0.0-internal.8.0.0:
     resolution: {integrity: sha512-B+qWR7YwM03q0CPpSA2DTYkQQMgvCCYs8+GYVqGt19bSF/sNR+YNkgHgiM+gFJSA81FyzM/u8BgESbjYUlgoKQ==}
@@ -16936,7 +16936,7 @@ packages:
     resolution: {integrity: sha512-ZUPCmPFcK7UAK4RkfVWfzQPAWFvYNm6ywP51V42YC38gCGye+Epvyr3beA+FSaHPIZGxm5+Uw52+ykTvmDb2UA==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-    dev: false
+    dev: true
 
   /@fluidframework/protocol-definitions/3.1.0:
     resolution: {integrity: sha512-BgGF82z4sk5M4torMR38NGjHjFG9t6Y653UcGOlXiIaGQMDZpRfrxiIuq53Gb12OTfUgbNtvBJL1W46JfLvzQw==}
@@ -17651,7 +17651,7 @@ packages:
       '@fluidframework/driver-definitions': 1.3.7
       '@fluidframework/protocol-definitions': 0.1028.2000
       uuid: 8.3.2
-    dev: false
+    dev: true
 
   /@fluidframework/test-driver-definitions/2.0.0-internal.8.0.0:
     resolution: {integrity: sha512-CW5vuLphrcF572Pr/qgXf+Zt2pWWVZqcY/ofm50h+Zzs/OP/Q2c6z41X2R7UfRSpgi0HZqOKGFJiCVcjfRqMWA==}
