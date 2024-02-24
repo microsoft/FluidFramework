@@ -15,6 +15,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import {
 	MockContainerRuntimeFactory,
+	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
@@ -366,8 +367,13 @@ describe("SharedTreeCore", () => {
 			}
 
 			public isInResubmitPhase: boolean = false;
+			public toResubmit?: GraphCommit<DefaultChangeset>[];
+
 			public startResubmitPhase(toResubmit: Iterable<GraphCommit<DefaultChangeset>>): void {
-				throw new Error("Method not implemented.");
+				assert.equal(this.toResubmit, undefined);
+				this.toResubmit = Array.from(toResubmit);
+				assert.equal(this.toResubmit.length, this.enrichmentLog.length);
+				this.isInResubmitPhase = true;
 			}
 
 			public readonly sequencingLog: boolean[] = [];
@@ -377,7 +383,26 @@ describe("SharedTreeCore", () => {
 			}
 		}
 
-		it("enriches changes", () => {
+		it("notifies the enricher of sequenced commits", async () => {
+			const enricher = new MockCommitEnricher();
+			const tree1 = createTree([], enricher);
+			const containerRuntimeFactory = new MockContainerRuntimeFactory();
+			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
+				idCompressor: createIdCompressor(),
+			});
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+			tree1.connect({
+				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
+				objectStorage: new MockStorage(),
+			});
+
+			assert.equal(enricher.sequencingLog.length, 0);
+			changeTree(tree1);
+			containerRuntimeFactory.processAllMessages();
+			assert.deepEqual(enricher.sequencingLog, [true]);
+		});
+
+		it("enriches commits on first submit", () => {
 			const enricher = new MockCommitEnricher();
 			const tree = createTree([], enricher);
 			const containerRuntimeFactory = new MockContainerRuntimeFactory();
@@ -395,6 +420,37 @@ describe("SharedTreeCore", () => {
 			assert.equal(enricher.enrichmentLog[0].input, tree.getLocalBranch().getHead());
 			assert.equal(enricher.enrichmentLog[0].isResubmit, false);
 			assert.equal(enricher.enrichmentLog[0].output, tree.submitted[0]);
+		});
+
+		it("enriches commits on re-submit", () => {
+			const enricher = new MockCommitEnricher();
+			const tree = createTree([], enricher);
+			const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
+				idCompressor: createIdCompressor(),
+			});
+			const runtime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+			tree.connect({
+				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
+				objectStorage: new MockStorage(),
+			});
+			runtime.connected = false;
+			assert.equal(enricher.enrichmentLog.length, 0);
+			changeTree(tree);
+			changeTree(tree);
+			assert.equal(enricher.enrichmentLog.length, 2);
+			assert.equal(enricher.toResubmit === undefined, true);
+			runtime.connected = true;
+			assert.equal(enricher.toResubmit?.length, 2);
+			assert.equal(enricher.enrichmentLog.length, 4);
+			assert.equal(enricher.toResubmit[0], enricher.enrichmentLog[0].input);
+			assert.equal(enricher.toResubmit[0], enricher.enrichmentLog[2].input);
+			assert.equal(enricher.toResubmit[1], enricher.enrichmentLog[1].input);
+			assert.equal(enricher.toResubmit[1], enricher.enrichmentLog[3].input);
+			assert.equal(enricher.enrichmentLog[2].isResubmit, true);
+			assert.equal(enricher.enrichmentLog[3].isResubmit, true);
+			assert.equal(enricher.enrichmentLog[2].output, tree.submitted[2]);
+			assert.equal(enricher.enrichmentLog[3].output, tree.submitted[3]);
 		});
 	});
 
