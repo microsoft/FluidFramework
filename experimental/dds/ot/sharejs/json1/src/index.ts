@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export { SharedJson1 } from "./json1";
-export { Json1Factory } from "./factory";
+export { SharedJson1 } from "./json1.js";
+export { Json1Factory } from "./factory.js";

@@ -57,7 +57,7 @@ export class LocalOdspDocumentService
 		throw toThrow;
 	}
 
-	public dispose(_error?: any): void {
+	public dispose(error?: unknown): void {
 		// Do nothing
 	}
 }

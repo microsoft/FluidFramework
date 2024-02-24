@@ -42,6 +42,10 @@ export interface ShareLinkFetcherProps {
 	identityType: IdentityType;
 }
 
+// back-compat: GitHub #9653
+const isFluidPackage = (pkg: Record<string, unknown>): boolean =>
+	typeof pkg === "object" && typeof pkg?.name === "string" && typeof pkg?.fluid === "object";
+
 /**
  * Resolver to resolve urls like the ones created by createOdspUrl which is driver inner
  * url format and the ones which have things like driveId, siteId, itemId etc encoded in nav param.
@@ -101,9 +105,9 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 		// Determine if the caller is passing a query parameter or path since processing will be different.
 		if (pathToAppend.startsWith("/?") || pathToAppend.startsWith("?")) {
 			const queryParams = new URLSearchParams(pathToAppend);
-			queryParams.forEach((value: string, key: string) => {
+			for (const [key, value] of queryParams.entries()) {
 				parsingUrl.searchParams.append(key, value);
-			});
+			}
 			fluidInfo.dataStorePath = `${parsingUrl.pathname}${parsingUrl.search}`;
 		} else {
 			fluidInfo.dataStorePath = `${parsingUrl.pathname}${
@@ -233,29 +237,29 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 		resolvedUrl: IResolvedUrl,
 		dataStorePath: string,
 		packageInfoSource?: IContainerPackageInfo,
-	) {
+	): Promise<string> {
 		const url = new URL(baseUrl);
 		const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
 
 		// If the user has passed an empty dataStorePath, then extract it from the resolved url.
-		const actualDataStorePath = dataStorePath
-			? dataStorePath
-			: odspResolvedUrl.dataStorePath ?? "";
+		const actualDataStorePath = dataStorePath || (odspResolvedUrl.dataStorePath ?? "");
 
-		// back-compat: GitHub #9653
-		const isFluidPackage = (pkg: any) =>
-			typeof pkg === "object" &&
-			typeof pkg?.name === "string" &&
-			typeof pkg?.fluid === "object";
-		let containerPackageName;
+		let containerPackageName: string | undefined;
 		if (packageInfoSource && "name" in packageInfoSource) {
 			containerPackageName = packageInfoSource.name;
 			// packageInfoSource is cast to any as it is typed to IContainerPackageInfo instead of IFluidCodeDetails
+			// TODO: use a stronger type
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 		} else if (isFluidPackage((packageInfoSource as any)?.package)) {
+			// TODO: use a stronger type
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 			containerPackageName = (packageInfoSource as any)?.package.name;
 		} else {
+			// TODO: use a stronger type
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 			containerPackageName = (packageInfoSource as any)?.package;
 		}
+		// TODO: use a stronger type
 		containerPackageName =
 			containerPackageName ?? odspResolvedUrl.codeHint?.containerPackageName;
 
@@ -278,7 +282,10 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 	/**
 	 * Crafts a supported document/driver URL
 	 */
-	public static createDocumentUrl(baseUrl: string, driverInfo: OdspFluidDataStoreLocator) {
+	public static createDocumentUrl(
+		baseUrl: string,
+		driverInfo: OdspFluidDataStoreLocator,
+	): string {
 		const url = new URL(baseUrl);
 
 		storeLocatorInOdspUrl(url, driverInfo);

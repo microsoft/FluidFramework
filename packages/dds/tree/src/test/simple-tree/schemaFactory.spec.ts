@@ -119,6 +119,34 @@ describe("schemaFactory", () => {
 		const b: A = new B({});
 	});
 
+	it("Scoped", () => {
+		const factory = new SchemaFactory("test-scope");
+		// We specified a scope in the factory, so it should be part of the type signature of the created object
+		const foo = factory.object("foo", {}).identifier;
+		type _check = requireTrue<areSafelyAssignable<"test-scope.foo", typeof foo>>;
+		assert.equal(foo, "test-scope.foo");
+	});
+
+	it("Unscoped", () => {
+		const factory = new SchemaFactory(undefined);
+		// We did not specify a scope in the factory, so one should not be part of the type signature of the created object
+		const foo = factory.object("foo", {}).identifier;
+		type _check = requireTrue<areSafelyAssignable<"foo", typeof foo>>;
+		assert.equal(foo, "foo");
+	});
+
+	// Regression test to ensure generic type variations of the factory are assignable to its default typing.
+	it("Typed factories are assignable to default typing", () => {
+		type _check1 = requireTrue<requireAssignableTo<SchemaFactory<"Foo", "Bar">, SchemaFactory>>;
+		type _check2 = requireTrue<requireAssignableTo<SchemaFactory<"Foo", 42>, SchemaFactory>>;
+		type _check3 = requireTrue<
+			requireAssignableTo<SchemaFactory<undefined, "Bar">, SchemaFactory>
+		>;
+		type _check4 = requireTrue<
+			requireAssignableTo<SchemaFactory<undefined, 42>, SchemaFactory>
+		>;
+	});
+
 	describe("object", () => {
 		it("simple end to end", () => {
 			const schema = new SchemaFactory("com.example");

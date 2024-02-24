@@ -339,6 +339,7 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 		clientJoinOptions: {
 			maxNumberOfClients: 3,
 			clientAddProbability: 0.08,
+			stashableClientProbability: 0.2,
 		},
 		defaultTestCount: 25,
 		// Uncomment this line to replay a specific seed from its failure file:
@@ -363,6 +364,7 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 			clientJoinOptions: {
 				maxNumberOfClients: 3,
 				clientAddProbability: 0.08,
+				stashableClientProbability: undefined,
 			},
 			defaultTestCount: 200,
 			// The seeds below fail only when rebaseProbability is non-zero ADO:6044
@@ -421,6 +423,7 @@ describe("SharedDirectory fuzz", () => {
 				// was refactored to use the DDS fuzz harness.
 				maxNumberOfClients: Number.MAX_SAFE_INTEGER,
 				clientAddProbability: 0.08,
+				stashableClientProbability: undefined,
 			},
 			defaultTestCount: 200,
 			// The seeds below fail only when rebaseProbability is non-zero ADO:6044
