@@ -22,8 +22,8 @@
 	},
 	"dependencies": {
 		"@microsoft/tsdoc": "^0.14.2",
-		"ts-morph": "^20.0.0",
-		"@typescript-eslint/parser": "^6.7.2"
+		"@typescript-eslint/parser": "^6.7.2",
+		"ts-morph": "^20.0.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/markdown-magic": "file:../../../tools/markdown-magic",
