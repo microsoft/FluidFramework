@@ -12,8 +12,8 @@ export type {
 	IGenericNetworkError,
 	ILocationRedirectionError,
 	IThrottlingWarning,
-} from "./driverError";
-export { DriverErrorTypes } from "./driverError";
+} from "./driverError.js";
+export { DriverErrorTypes } from "./driverError.js";
 export type {
 	FiveDaysMs,
 	IDeltasFetchResult,
@@ -32,13 +32,13 @@ export type {
 	IStream,
 	IStreamResult,
 	ISummaryContext,
-} from "./storage";
-export { FetchSource, LoaderCachingPolicy } from "./storage";
+} from "./storage.js";
+export { FetchSource, LoaderCachingPolicy } from "./storage.js";
 export type {
 	DriverPreCheckInfo,
 	IContainerPackageInfo,
 	IDriverHeader,
 	IResolvedUrl,
 	IUrlResolver,
-} from "./urlResolver";
-export { DriverHeader } from "./urlResolver";
+} from "./urlResolver.js";
+export { DriverHeader } from "./urlResolver.js";
