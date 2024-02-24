@@ -15,7 +15,7 @@ export async function getAsync(
 ): Promise<Response> {
 	return authRequest(
 		authRequestInfo,
-		async (config: RequestInit) => fetch(url, config) as unknown as Response,
+		async (config: RequestInit) => fetch(url, config) as Response,
 	);
 }
 
