@@ -33,27 +33,7 @@
 				"default": "./dist/index.js"
 			}
 		},
-		"./beta": {
-			"import": {
-				"types": "./lib/client-utils-beta.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/client-utils-beta.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
 		"./alpha": {
-			"import": {
-				"types": "./lib/client-utils-alpha.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/client-utils-alpha.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
-		"./fruit": {
 			"import": {
 				"types": "./lib/client-utils-alpha.d.ts",
 				"default": "./lib/index.js"
@@ -116,8 +96,8 @@
 		"test:coverage": "c8 npm test",
 		"test:jest": "jest",
 		"test:mocha": "npm run test:mocha:cjs && npm run test:mocha:esm",
-		"test:mocha:cjs": "mocha  --recursive \"dist/test/mocha/*.spec.*js\" --exit --project src/test/mocha/tsconfig.cjs.json -r node_modules/@fluidframework/mocha-test-setup",
-		"test:mocha:esm": "mocha  --recursive \"lib/test/mocha/*.spec.*js\" --exit --project src/test/mocha/tsconfig.json -r node_modules/@fluidframework/mocha-test-setup",
+		"test:mocha:cjs": "mocha  --recursive \"dist/test/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
+		"test:mocha:esm": "mocha  --recursive \"lib/test/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
