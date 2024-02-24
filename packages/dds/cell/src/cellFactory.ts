@@ -9,9 +9,9 @@ import {
 	type IChannelServices,
 	type IChannelFactory,
 } from "@fluidframework/datastore-definitions";
-import { SharedCell } from "./cell";
-import { type ISharedCell } from "./interfaces";
-import { pkgVersion } from "./packageVersion";
+import { SharedCell } from "./cell.js";
+import { type ISharedCell } from "./interfaces.js";
+import { pkgVersion } from "./packageVersion.js";
 
 /**
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link ISharedCell}.
