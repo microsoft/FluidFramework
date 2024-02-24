@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-extraneous-dependencies
 import fetch from "isomorphic-fetch";
 import { IOdspAuthRequestInfo, authRequestWithRetry } from "./odspAuth.js";
 
