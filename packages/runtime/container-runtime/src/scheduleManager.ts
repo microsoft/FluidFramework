@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { EventEmitter } from "events";
+import { EventEmitter } from "events_pkg";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {

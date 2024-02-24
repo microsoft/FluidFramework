@@ -4,12 +4,10 @@
 
 ```ts
 
-/// <reference types="node" />
-
 import { AttachState } from '@fluidframework/container-definitions';
 import { CreateChildSummarizerNodeFn } from '@fluidframework/runtime-definitions';
 import { CreateChildSummarizerNodeParam } from '@fluidframework/runtime-definitions';
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'events_pkg';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { FlushMode } from '@fluidframework/runtime-definitions';
 import { IAudience } from '@fluidframework/container-definitions';
@@ -55,6 +53,7 @@ import { ITokenResponse } from '@fluidframework/routerlicious-driver';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { ITreeEntry } from '@fluidframework/protocol-definitions';
 import { IUser } from '@fluidframework/protocol-definitions';
+import { Listener } from 'events_pkg';
 import { MessageType } from '@fluidframework/protocol-definitions';
 import { ReadOnlyInfo } from '@fluidframework/container-definitions';
 import { ScopeType } from '@fluidframework/protocol-definitions';
@@ -570,7 +569,7 @@ export class MockObjectStorageService implements IChannelStorageService {
 export class MockQuorumClients implements IQuorumClients, EventEmitter {
     constructor(...members: [string, Partial<ISequencedClient>][]);
     // (undocumented)
-    addListener(event: string | symbol, listener: (...args: any[]) => void): this;
+    addListener(event: string | number, listener: (...args: any[]) => void): this;
     // (undocumented)
     addMember(id: string, client: Partial<ISequencedClient>): void;
     // (undocumented)
@@ -578,9 +577,9 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
     // (undocumented)
     disposed: boolean;
     // (undocumented)
-    emit(event: string | symbol, ...args: any[]): boolean;
+    emit(event: string | number, ...args: any[]): boolean;
     // (undocumented)
-    eventNames(): (string | symbol)[];
+    eventNames(): (string | number)[];
     // (undocumented)
     getMaxListeners(): number;
     // (undocumented)
@@ -588,25 +587,25 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
     // (undocumented)
     getMembers(): Map<string, ISequencedClient>;
     // (undocumented)
-    listenerCount(type: string | symbol): number;
+    listenerCount(type: string | number): number;
     // (undocumented)
-    listeners(event: string | symbol): Function[];
+    listeners(event: string | number): Listener[];
     // (undocumented)
-    off(event: string | symbol, listener: (...args: any[]) => void): this;
+    off(event: string | number, listener: (...args: any[]) => void): this;
     // (undocumented)
-    on(event: string | symbol, listener: (...args: any[]) => void): this;
+    on(event: string | number, listener: (...args: any[]) => void): this;
     // (undocumented)
-    once(event: string | symbol, listener: (...args: any[]) => void): this;
+    once(event: string | number, listener: (...args: any[]) => void): this;
     // (undocumented)
-    prependListener(event: string | symbol, listener: (...args: any[]) => void): this;
+    prependListener(event: string | number, listener: (...args: any[]) => void): this;
     // (undocumented)
-    prependOnceListener(event: string | symbol, listener: (...args: any[]) => void): this;
+    prependOnceListener(event: string | number, listener: (...args: any[]) => void): this;
     // (undocumented)
-    rawListeners(event: string | symbol): Function[];
+    rawListeners(event: string | number): Listener[];
     // (undocumented)
-    removeAllListeners(event?: string | symbol | undefined): this;
+    removeAllListeners(event?: string | number | undefined): this;
     // (undocumented)
-    removeListener(event: string | symbol, listener: (...args: any[]) => void): this;
+    removeListener(event: string | number, listener: (...args: any[]) => void): this;
     // (undocumented)
     removeMember(id: string): void;
     // (undocumented)

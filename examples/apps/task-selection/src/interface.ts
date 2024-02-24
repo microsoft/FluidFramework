@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
+import type { EventEmitter } from "events_pkg";
 
 /**
  * IDiceRoller describes the public API surface for our dice roller data object.

@@ -53,6 +53,7 @@
 		"@fluidframework/build-tools": "^0.34.0",
 		"@fluidframework/eslint-config-fluid": "^4.0.0",
 		"@fluidframework/test-tools": "^1.0.195075",
+		"@types/events_pkg": "npm:@types/events@^3.0.0",
 		"@types/jest": "29.5.3",
 		"@types/jest-environment-puppeteer": "workspace:",
 		"@types/node": "^18.19.0",

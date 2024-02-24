@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "node:events";
+import { EventEmitter } from "events_pkg";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type {

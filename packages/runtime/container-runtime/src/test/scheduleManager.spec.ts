@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { EventEmitter } from "events";
+import { EventEmitter } from "events_pkg";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
 import { createChildLogger } from "@fluidframework/telemetry-utils";

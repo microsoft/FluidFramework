@@ -4,7 +4,7 @@
 
 ```ts
 
-import type { EventEmitter } from 'events';
+import type { EventEmitter } from 'events_pkg';
 import type { FluidObject } from '@fluidframework/core-interfaces';
 import type { IAnyDriverError } from '@fluidframework/driver-definitions';
 import type { IClient } from '@fluidframework/protocol-definitions';

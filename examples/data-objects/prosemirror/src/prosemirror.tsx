@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { EventEmitter } from "events";
+import { EventEmitter } from "events_pkg";
 import { IFluidLoadable, IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import {
 	FluidDataStoreRuntime,

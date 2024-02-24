@@ -126,7 +126,7 @@
 		"@fluidframework/server-services-core": "^3.1.0-240326",
 		"@fluidframework/server-test-utils": "^3.1.0-240326",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"events": "^3.1.0",
+		"events_pkg": "npm:events@^3.1.0",
 		"jsrsasign": "^11.0.0",
 		"url": "^0.11.0",
 		"uuid": "^9.0.0"
@@ -140,6 +140,7 @@
 		"@fluidframework/eslint-config-fluid": "^4.0.0",
 		"@fluidframework/local-driver-previous": "npm:@fluidframework/local-driver@2.0.0-internal.8.0.0",
 		"@microsoft/api-extractor": "^7.39.1",
+		"@types/events_pkg": "npm:@types/events@^3.0.0",
 		"@types/jsrsasign": "^10.5.12",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",

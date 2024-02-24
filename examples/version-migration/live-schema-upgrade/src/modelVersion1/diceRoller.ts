@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
+import type { EventEmitter } from "events_pkg";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 
 /**

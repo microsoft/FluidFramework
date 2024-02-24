@@ -30,6 +30,9 @@
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},
+	"dependencies": {
+		"@types/events_pkg": "npm:@types/events@^3.0.0"
+	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.34.0",
 		"@fluidframework/build-common": "^2.0.3",
