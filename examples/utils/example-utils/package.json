@@ -115,5 +115,17 @@
 	"typeValidation": {
 		"disabled": true,
 		"broken": {}
+	},
+	"fluidBuild": {
+		"tasks": {
+			"build:docs": {
+				"dependsOn": [
+					"...",
+					"api-extractor:commonjs",
+					"api-extractor:esnext"
+				],
+				"script": false
+			}
+		}
 	}
 }
