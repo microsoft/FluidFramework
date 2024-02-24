@@ -12,6 +12,7 @@ import {
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
+import { AttachState } from "@fluidframework/container-definitions";
 import { ISerializableValue, IValueChanged } from "../../interfaces";
 import {
 	IMapSetOperation,

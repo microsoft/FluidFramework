@@ -9,6 +9,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 } from "@fluidframework/test-runtime-utils";
+import { AttachState } from "@fluidframework/container-definitions";
 import { ISharedSummaryBlock } from "../interfaces";
 import { SharedSummaryBlockFactory } from "../sharedSummaryBlockFactory";
 
