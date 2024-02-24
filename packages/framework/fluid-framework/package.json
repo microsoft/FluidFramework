@@ -14,11 +14,11 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/index.d.mts",
+				"types": "./lib/fluid-framework-public.d.mts",
 				"default": "./lib/index.mjs"
 			},
 			"require": {
-				"types": "./dist/index.d.ts",
+				"types": "./dist/fluid-framework-public.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
@@ -49,16 +49,6 @@
 			},
 			"require": {
 				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
-		"./public": {
-			"import": {
-				"types": "./lib/fluid-framework-public.d.mts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/fluid-framework-public.d.ts",
 				"default": "./dist/index.js"
 			}
 		}
