@@ -40,7 +40,7 @@ export interface IPactMapEvents extends ISharedObjectEvents {
 export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implements IPactMap<T> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // (undocumented)
-    applyStashedOp(): void;
+    protected applyStashedOp(): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): PactMap;
     delete(key: string): void;
     get(key: string): T | undefined;

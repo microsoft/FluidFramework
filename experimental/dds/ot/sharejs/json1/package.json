@@ -11,18 +11,54 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
+	"type": "module",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./public": {
+			"import": {
+				"types": "./lib/sharejs-json1-public.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/sharejs-json1-public.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./internal": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
 	"main": "dist/index.js",
-	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
 	"scripts": {
+		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
+		"api-extractor:esnext": "api-extractor run --local",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
-		"build:esnext": "tsc-multi --config ../../../../../common/build/build-common/tsc-multi.esm.json",
+		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:genver": "gen-version",
-		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack",
+		"build:test": "npm run build:test:cjs && npm run build:test:esm",
+		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
+		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
@@ -36,9 +72,11 @@
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "mocha --recursive dist/test -r node_modules/@fluid-internal/mocha-test-setup",
+		"test:mocha": "npm run test:mocha:cjs && npm run test:mocha:esm",
+		"test:mocha:cjs": "mocha  --recursive \"dist/test/*.spec.*js\" --exit --project src/test/tsconfig.cjs.json -r node_modules/@fluid-internal/mocha-test-setup",
+		"test:mocha:esm": "mocha  --recursive \"lib/test/*.spec.*js\" --exit --project src/test/tsconfig.json -r node_modules/@fluid-internal/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "tsc"
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"c8": {
 		"all": true,
@@ -82,6 +120,7 @@
 		"best-random": "^1.0.0",
 		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",
+		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.50.0",
 		"mocha": "^10.2.0",
@@ -90,7 +129,6 @@
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"tsc-multi": "^1.1.0",
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
