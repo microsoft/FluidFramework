@@ -31,7 +31,7 @@ export async function putAsync(
 			...config,
 			method: "PUT",
 		};
-		return fetch(url, putConfig) as unknown as Response;
+		return fetch(url, putConfig) as Response;
 	});
 }
 
@@ -49,7 +49,7 @@ export async function postAsync(
 			body,
 			method: "POST",
 		};
-		return fetch(url, postConfig) as unknown as Response;
+		return fetch(url, postConfig) as Response;
 	});
 }
 
@@ -58,7 +58,7 @@ export async function postAsync(
  */
 export async function unauthPostAsync(url: string, body: any): Promise<Response> {
 	return safeRequestCore(async () => {
-		return fetch(url, { body, method: "POST" }) as unknown as Response;
+		return fetch(url, { body, method: "POST" }) as Response;
 	});
 }
 
