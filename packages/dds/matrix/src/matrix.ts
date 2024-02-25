@@ -32,15 +32,15 @@ import {
 	IJSONSegment,
 } from "@fluidframework/merge-tree";
 import { UsageError } from "@fluidframework/telemetry-utils";
-import { MatrixOp } from "./ops";
-import { PermutationVector, reinsertSegmentIntoVector } from "./permutationvector";
-import { SparseArray2D } from "./sparsearray2d";
-import { SharedMatrixFactory } from "./runtime";
-import { Handle, isHandleValid } from "./handletable";
-import { deserializeBlob } from "./serialization";
-import { ensureRange } from "./range";
-import { IUndoConsumer } from "./types";
-import { MatrixUndoProvider } from "./undoprovider";
+import { MatrixOp } from "./ops.js";
+import { PermutationVector, reinsertSegmentIntoVector } from "./permutationvector.js";
+import { SparseArray2D } from "./sparsearray2d.js";
+import { SharedMatrixFactory } from "./runtime.js";
+import { Handle, isHandleValid } from "./handletable.js";
+import { deserializeBlob } from "./serialization.js";
+import { ensureRange } from "./range.js";
+import { IUndoConsumer } from "./types.js";
+import { MatrixUndoProvider } from "./undoprovider.js";
 
 const enum SnapshotPath {
 	rows = "rows",

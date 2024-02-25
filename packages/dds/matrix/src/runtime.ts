@@ -10,8 +10,8 @@ import {
 	IChannel,
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
-import { pkgVersion } from "./packageVersion";
-import { SharedMatrix } from "./matrix";
+import { pkgVersion } from "./packageVersion.js";
+import { SharedMatrix } from "./matrix.js";
 
 /**
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link SharedMatrix}.
