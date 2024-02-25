@@ -6304,6 +6304,7 @@ importers:
       '@fluidframework/test-runtime-utils': workspace:~
       '@microsoft/api-extractor': ^7.39.1
       '@types/mocha': ^9.1.1
+      '@types/node': ^18.19.0
       '@types/uuid': ^9.0.2
       c8: ^8.0.1
       copyfiles: ^2.4.1
@@ -6316,7 +6317,6 @@ importers:
       prettier: ~3.0.3
       replace-in-file: ^6.3.5
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -6330,13 +6330,14 @@ importers:
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
       '@fluid-internal/mocha-test-setup': link:../../test/mocha-test-setup
-      '@fluid-tools/build-cli': 0.34.0_loebgezstcsvd2poh2d55fifke
+      '@fluid-tools/build-cli': 0.34.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.34.0
+      '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i
+      '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
       '@types/mocha': 9.1.1
+      '@types/node': 18.19.1
       '@types/uuid': 9.0.7
       c8: 8.0.1
       copyfiles: 2.4.1
@@ -6349,7 +6350,6 @@ importers:
       prettier: 3.0.3
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/map:
