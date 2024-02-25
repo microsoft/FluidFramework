@@ -61,7 +61,7 @@
 		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
 		"api-extractor:esnext": "api-extractor run --local",
 		"bench": "cd bench && node --expose-gc -r ts-node/register src/index.ts",
-		"bench:profile": "cd bench && tsc && node -r ts-node/register --prof --logfile=profile.log --no-logfile-per-isolate src/index.ts --runInBand && node --prof-process profile.log > profile.txt && rimraf profile.log && echo See results in bench/profile.txt",
+		"bench:profile": "cd bench && node -r ts-node/register --prof --logfile=profile.log --no-logfile-per-isolate src/index.ts --runInBand && node --prof-process profile.log > profile.txt && rimraf profile.log && echo See results in bench/profile.txt",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
