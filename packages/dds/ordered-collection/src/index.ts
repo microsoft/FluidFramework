@@ -11,7 +11,7 @@ export {
 	IConsensusOrderedCollectionFactory,
 	IOrderedCollection,
 	ISnapshotable,
-} from "./interfaces";
-export { ConsensusOrderedCollection } from "./consensusOrderedCollection";
-export { ConsensusQueue } from "./consensusQueue";
-export { acquireAndComplete, waitAcquireAndComplete } from "./testUtils";
+} from "./interfaces.js";
+export { ConsensusOrderedCollection } from "./consensusOrderedCollection.js";
+export { ConsensusQueue } from "./consensusQueue.js";
+export { acquireAndComplete, waitAcquireAndComplete } from "./testUtils.js";
