@@ -11355,7 +11355,7 @@ importers:
       '@types/recharts': ^1.8.24
       '@types/testing-library__jest-dom': ^5.14.5
       chai: ^4.2.0
-      chalk: ^2.4.2
+      chalk: ^4.1.2
       concurrently: ^8.2.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
@@ -11427,7 +11427,7 @@ importers:
       '@types/recharts': 1.8.28
       '@types/testing-library__jest-dom': 5.14.9
       chai: 4.3.10
-      chalk: 2.4.2
+      chalk: 4.1.2
       concurrently: 8.2.2
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -22798,7 +22798,7 @@ packages:
       '@typescript-eslint/typescript-estree': 5.62.0_typescript@5.1.6
       eslint: 8.50.0
       eslint-scope: 5.1.1
-      semver: 7.5.4
+      semver: 7.6.0
     transitivePeerDependencies:
       - supports-color
       - typescript

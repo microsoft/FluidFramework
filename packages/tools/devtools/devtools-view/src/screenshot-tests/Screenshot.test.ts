@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import Path from "node:path";
 import { type RPCs } from "@previewjs/api";
 import { expect } from "chai";
@@ -172,13 +171,10 @@ async function generateTestSuite(): Promise<void> {
 			// Story module sub-suite
 			// eslint-disable-next-line jest/valid-title
 			describe(storyFileName, () => {
-				// eslint-disable-next-line unicorn/import-style
 				// const chalk = await import("chalk");
 				// Create sub-suite for each component
 				for (const component of components) {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 					const { componentId } = component;
-					// const { name: storyName } = decodeComponentId(componentId);
 
 					import("@previewjs/api")
 						.then((module) => {
@@ -231,7 +227,6 @@ async function generateTestSuite(): Promise<void> {
 												);
 											} catch (error) {
 												console.error(
-													// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 													chalk.red(
 														`Failed to generate ${testName} screenshot due to an error:`,
 													),
@@ -276,7 +271,6 @@ generateTestSuite().then(
 		run();
 	},
 	(error: Error) => {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		console.error(chalk.red(`Test suite generation failed due to an error:`, error.message));
 		throw error;
 	},
