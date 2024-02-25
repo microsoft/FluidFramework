@@ -7,9 +7,9 @@ import { CombinedAppAndProtocolSummary } from "@fluidframework/driver-utils";
 import { ISnapshotTree, ISummaryTree } from "@fluidframework/protocol-definitions";
 import { assert } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { getSnapshotTreeAndBlobsFromSerializedContainer } from "./utils";
-import { ISerializableBlobContents } from "./containerStorageAdapter";
-import { IDetachedBlobStorage } from ".";
+import { getSnapshotTreeAndBlobsFromSerializedContainer } from "./utils.js";
+import { ISerializableBlobContents } from "./containerStorageAdapter.js";
+import { IDetachedBlobStorage } from "./index.js";
 
 /**
  * The default state a newly created detached container will have.

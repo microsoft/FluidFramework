@@ -57,10 +57,10 @@ import {
 	IConnectionManagerFactoryArgs,
 	IConnectionDetailsInternal,
 	IConnectionStateChangeReason,
-} from "./contracts";
-import { DeltaQueue } from "./deltaQueue";
-import { SignalType } from "./protocol";
-import { isDeltaStreamConnectionForbiddenError } from "./utils";
+} from "./contracts.js";
+import { DeltaQueue } from "./deltaQueue.js";
+import { SignalType } from "./protocol.js";
+import { isDeltaStreamConnectionForbiddenError } from "./utils.js";
 
 // We double this value in first try in when we calculate time to wait for in "calculateMaxWaitTime" function.
 const InitialReconnectDelayInMs = 500;
