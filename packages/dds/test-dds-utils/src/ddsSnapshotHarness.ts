@@ -35,7 +35,9 @@ export interface ISnapshotSuite {
 
 /**
  * Creates a suite of functions for managing snapshots in tests.
- * @param snapshotsFolder - The folder where snapshots will be stored.
+ * @param snapshotsFolder - An absolute path where snapshots will be stored.
+ * Typical tests will want to resolve this using `__dirname`, e.g.
+ * `path.resolve(__dirname, "../../../src/test/snapshots")`.
  * @returns An object containing functions for managing snapshots.
  * @internal
  */
