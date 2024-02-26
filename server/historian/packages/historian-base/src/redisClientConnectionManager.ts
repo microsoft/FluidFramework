@@ -4,7 +4,6 @@
  */
 
 import * as Redis from "ioredis";
-import * as winston from "winston";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 /**
@@ -12,11 +11,6 @@ import { Lumberjack } from "@fluidframework/server-services-telemetry";
  * and authentication with a Redis client.
  */
 export interface IRedisClientConnectionManager {
-	/**
-	 * Creates a new Redis client.
-	 * @returns The newly created Redis client.
-	 */
-	authenticateAndCreateRedisClient(): Promise<void>;
 	/**
 	 * @returns The newly created Redis client.
 	 */
@@ -29,17 +23,11 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 
 	constructor(redisOptions?: Redis.RedisOptions, redisConfig?: any) {
 		if (!redisOptions && !redisConfig) {
-			winston.info(
-				"[DHRUV DEBUG] Historian Either redisOptions or redisConfig must be provided",
-			);
 			Lumberjack.info(
 				"[DHRUV DEBUG] Historian Either redisOptions or redisConfig must be provided",
 			);
 			throw new Error("Either redisOptions or redisConfig must be provided");
 		} else if (!redisOptions && redisConfig) {
-			winston.info(
-				"[DHRUV DEBUG] Historian using default redisOptions after reading from config",
-			);
 			Lumberjack.info(
 				"[DHRUV DEBUG] Historian using default redisOptions after reading from config",
 			);
@@ -67,35 +55,28 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 				};
 			}
 		} else if (redisOptions && !redisConfig) {
-			winston.info("[DHRUV DEBUG] Historian using the provided redisOptions");
 			Lumberjack.info("[DHRUV DEBUG] Historian using the provided redisOptions");
 			this.redisOptions = redisOptions;
 		} else {
-			winston.error(
-				"[DHRUV DEBUG] Historian Both redisOptions and redisConfig cannot be provided",
-			);
 			Lumberjack.error(
 				"[DHRUV DEBUG] Historian Both redisOptions and redisConfig cannot be provided",
 			);
 			throw new Error("Both redisOptions and redisConfig cannot be provided");
 		}
+		this.authenticateAndCreateRedisClient();
 	}
 
-	public async authenticateAndCreateRedisClient(): Promise<void> {
-		winston.info("[DHRUV DEBUG] Historian Creating redis client");
+	private authenticateAndCreateRedisClient(): void {
 		Lumberjack.info("[DHRUV DEBUG] Historian Creating redis client");
 		this.client = new Redis.default(this.redisOptions);
-		winston.info("[DHRUV DEBUG] Historian Redis client created");
 		Lumberjack.info("[DHRUV DEBUG] Historian Redis client created");
 	}
 
 	public getRedisClient(): Redis.default {
 		if (!this.client) {
-			winston.error("[DHRUV DEBUG] Historian Redis client not initialized");
 			Lumberjack.error("[DHRUV DEBUG] Historian Redis client not initialized");
 			throw new Error("Redis client not initialized");
 		}
-		winston.info("[DHRUV DEBUG] Historian Returning latest redis client");
 		Lumberjack.info("[DHRUV DEBUG] Historian Returning latest redis client");
 		return this.client;
 	}

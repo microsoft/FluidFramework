@@ -13,11 +13,6 @@ import { Lumberjack } from "@fluidframework/server-services-telemetry";
  */
 export interface IRedisClientConnectionManager {
 	/**
-	 * Creates a new Redis client.
-	 * @returns The newly created Redis client.
-	 */
-	authenticateAndCreateRedisClient(): Promise<void>;
-	/**
 	 * @returns The newly created Redis client.
 	 */
 	getRedisClient(): Redis.default;
@@ -79,9 +74,10 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 			);
 			throw new Error("Both redisOptions and redisConfig cannot be provided");
 		}
+		this.authenticateAndCreateRedisClient();
 	}
 
-	public async authenticateAndCreateRedisClient(): Promise<void> {
+	private authenticateAndCreateRedisClient(): void {
 		winston.info("[DHRUV DEBUG] Gitrest Creating redis client");
 		Lumberjack.info("[DHRUV DEBUG] Gitrest Creating redis client");
 		this.client = new Redis.default(this.redisOptions);

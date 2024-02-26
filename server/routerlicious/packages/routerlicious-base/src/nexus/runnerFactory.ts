@@ -172,13 +172,6 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 					redisConfig2.enableClustering,
 					redisConfig2.slotsRefreshTimeout,
 			  );
-		await redisClientConnectionManager.authenticateAndCreateRedisClient().catch((error) => {
-			Lumberjack.error(
-				"[DHRUV DEBUG] Error creating Redis client connection:",
-				undefined,
-				error,
-			);
-		});
 		const clientManager = new services.ClientManager(
 			redisClientConnectionManager,
 			redisParams2,
@@ -193,15 +186,6 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 						redisConfig2.enableClustering,
 						redisConfig2.slotsRefreshTimeout,
 				  );
-		await redisClientConnectionManagerForJwtCache
-			.authenticateAndCreateRedisClient()
-			.catch((error) => {
-				Lumberjack.error(
-					"[DHRUV DEBUG] Error creating Redis client connection for JWT cache:",
-					undefined,
-					error,
-				);
-			});
 		const redisJwtCache = new services.RedisCache(redisClientConnectionManagerForJwtCache);
 
 		// Database connection for global db if enabled
@@ -284,15 +268,6 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 						redisConfigForThrottling.enableClustering,
 						redisConfigForThrottling.slotsRefreshTimeout,
 				  );
-		await redisClientConnectionManagerForThrottling
-			.authenticateAndCreateRedisClient()
-			.catch((error) => {
-				Lumberjack.error(
-					"[DHRUV DEBUG] Error creating Redis client connection for throttling:",
-					undefined,
-					error,
-				);
-			});
 
 		const redisThrottleAndUsageStorageManager =
 			new services.RedisThrottleAndUsageStorageManager(
@@ -410,15 +385,6 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 							redisConfig.enableClustering,
 							redisConfig.slotsRefreshTimeout,
 					  );
-			await redisClientConnectionManagerForLogging
-				.authenticateAndCreateRedisClient()
-				.catch((error) => {
-					Lumberjack.error(
-						"[DHRUV DEBUG] Error creating Redis client connection for logging:",
-						undefined,
-						error,
-					);
-				});
 
 			redisCache = new services.RedisCache(redisClientConnectionManagerForLogging);
 		}
@@ -498,19 +464,6 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 						redisConfig.enableClustering,
 						redisConfig.slotsRefreshTimeout,
 				  );
-		await redisClientConnectionManagerForPub
-			.authenticateAndCreateRedisClient()
-			.catch((error) => {
-				winston.error(
-					"[DHRUV DEBUG] Error creating Redis client connection for pub:",
-					error,
-				);
-				Lumberjack.error(
-					"[DHRUV DEBUG] Error creating Redis client connection for pub:",
-					undefined,
-					error,
-				);
-			});
 
 		const redisClientConnectionManagerForSub =
 			customizations?.redisClientConnectionManagerForSub
@@ -521,19 +474,6 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 						redisConfig.enableClustering,
 						redisConfig.slotsRefreshTimeout,
 				  );
-		await redisClientConnectionManagerForSub
-			.authenticateAndCreateRedisClient()
-			.catch((error) => {
-				winston.error(
-					"[DHRUV DEBUG] Error creating Redis client connection for sub:",
-					error,
-				);
-				Lumberjack.error(
-					"[DHRUV DEBUG] Error creating Redis client connection for sub:",
-					undefined,
-					error,
-				);
-			});
 
 		const socketIoAdapterConfig = config.get("nexus:socketIoAdapter");
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");

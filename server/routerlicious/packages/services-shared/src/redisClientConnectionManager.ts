@@ -13,12 +13,7 @@ import * as utils from "@fluidframework/server-services-utils";
  */
 export interface IRedisClientConnectionManager {
 	/**
-	 * Creates a new Redis client.
-	 * @returns The newly created Redis client.
-	 */
-	authenticateAndCreateRedisClient(): Promise<void>;
-	/**
-	 * @returns The newly created Redis client.
+	 * @returns The Redis client.
 	 */
 	getRedisClient(): Redis.default | Redis.Cluster;
 }
@@ -82,9 +77,10 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 			);
 			throw new Error("Both redisOptions and redisConfig cannot be provided");
 		}
+		this.authenticateAndCreateRedisClient();
 	}
 
-	public async authenticateAndCreateRedisClient(): Promise<void> {
+	private authenticateAndCreateRedisClient(): void {
 		Lumberjack.info("[DHRUV DEBUG] Routerlicious Creating redis client");
 		// this.client = new Redis.default(this.redisOptions);
 		this.client = this.enableClustering

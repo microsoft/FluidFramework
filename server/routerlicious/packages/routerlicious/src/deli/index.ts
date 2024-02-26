@@ -133,14 +133,7 @@ export async function deliCreate(
 	}
 	const redisClientConnectionManager: IRedisClientConnectionManager =
 		customizations?.redisClientConnectionManager ??
-		new RedisClientConnectionManager(redisOptions, undefined, redisConfig.enableClustering);
-	await redisClientConnectionManager.authenticateAndCreateRedisClient().catch((error) => {
-		Lumberjack.error(
-			"[DHRUV DEBUG] Routerlicious error creating Redis client connection:",
-			undefined,
-			error,
-		);
-	});
+		new RedisClientConnectionManager(redisOptions, undefined, false, 50000);
 	const publisher = new services.SocketIoRedisPublisher(redisClientConnectionManager);
 	publisher.on("error", (err) => {
 		winston.error("Error with Redis Publisher:", err);

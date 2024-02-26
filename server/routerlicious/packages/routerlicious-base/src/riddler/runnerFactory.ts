@@ -87,15 +87,6 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 							redisConfig.enableClustering,
 							redisConfig.slotsRefreshTimeout,
 					  );
-			await redisClientConnectionManagerForTenantCache
-				.authenticateAndCreateRedisClient()
-				.catch((error) => {
-					Lumberjack.error(
-						"[DHRUV DEBUG] Error creating Redis client connection for tenant cache:",
-						undefined,
-						error,
-					);
-				});
 			cache = new RedisCache(redisClientConnectionManagerForTenantCache, redisParams);
 		}
 		// Database connection
