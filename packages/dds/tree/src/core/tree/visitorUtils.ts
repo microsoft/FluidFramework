@@ -48,9 +48,9 @@ export function announceDelta(
 
 /**
  * @param visitors - The returned visitor invokes the corresponding events for all these visitors, in order.
- * @param announceVisitors - Subset of `visitors` to also call {@link AnnouncedVisitor} methods on.
+ * @param announcedVisitors - Subset of `visitors` to also call {@link AnnouncedVisitor} methods on.
  * This must be a subset of `visitors`: if not the visitor will not have its path correctly set when the events are triggered.
- * When `visitors` are making changes to data, `announceVisitors` can be used to get extra events before or after all the changes from all the visitors have been made.
+ * When `visitors` are making changes to data, `announcedVisitors` can be used to get extra events before or after all the changes from all the visitors have been made.
  * This can, for example, enable visitors to have access to the tree in these extra events despite multiple separate visitors updating different tree related data-structures.
  * @returns a DeltaVisitor combining all `visitors`.
  */
@@ -60,7 +60,7 @@ export function combineVisitors(
 ): DeltaVisitor {
 	{
 		const set = new Set(visitors);
-		for (const item of announceVisitors) {
+		for (const item of announcedVisitors) {
 			assert(set.has(item), "AnnouncedVisitor would not get traversed");
 		}
 	}
@@ -68,32 +68,32 @@ export function combineVisitors(
 		free: () => visitors.forEach((v) => v.free()),
 		create: (...args) => {
 			visitors.forEach((v) => v.create(...args));
-			announceVisitors.forEach((v) => v.afterCreate(...args));
+			announcedVisitors.forEach((v) => v.afterCreate(...args));
 		},
 		destroy: (...args) => {
-			announceVisitors.forEach((v) => v.beforeDestroy(...args));
+			announcedVisitors.forEach((v) => v.beforeDestroy(...args));
 			visitors.forEach((v) => v.destroy(...args));
 		},
 		attach: (source: FieldKey, count: number, destination: PlaceIndex) => {
-			announceVisitors.forEach((v) => v.beforeAttach(source, count, destination));
+			announcedVisitors.forEach((v) => v.beforeAttach(source, count, destination));
 			visitors.forEach((v) => v.attach(source, count, destination));
-			announceVisitors.forEach((v) =>
+			announcedVisitors.forEach((v) =>
 				v.afterAttach(source, { start: destination, end: destination + count }),
 			);
 		},
 		detach: (source: Range, destination: FieldKey) => {
-			announceVisitors.forEach((v) => v.beforeDetach(source, destination));
+			announcedVisitors.forEach((v) => v.beforeDetach(source, destination));
 			visitors.forEach((v) => v.detach(source, destination));
-			announceVisitors.forEach((v) =>
+			announcedVisitors.forEach((v) =>
 				v.afterDetach(source.start, source.end - source.start, destination),
 			);
 		},
 		replace: (newContent: FieldKey, oldContent: Range, oldContentDestination: FieldKey) => {
-			announceVisitors.forEach((v) =>
+			announcedVisitors.forEach((v) =>
 				v.beforeReplace(newContent, oldContent, oldContentDestination),
 			);
 			visitors.forEach((v) => v.replace(newContent, oldContent, oldContentDestination));
-			announceVisitors.forEach((v) =>
+			announcedVisitors.forEach((v) =>
 				v.afterReplace(newContent, oldContent, oldContentDestination),
 			);
 		},
