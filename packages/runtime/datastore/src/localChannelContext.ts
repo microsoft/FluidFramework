@@ -19,7 +19,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
+import { AttachState, ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
 import {
 	ChannelServiceEndpoints,
 	createChannelServiceEndpoints,
@@ -45,6 +45,10 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 		private _channel?: IChannel,
 	) {
 		assert(!this.id.includes("/"), 0x30f /* Channel context ID cannot contain slashes */);
+	}
+
+	protected get isGloballyVisible(){
+		return this.globallyVisible;
 	}
 
 	public async getChannel(): Promise<IChannel> {
@@ -106,9 +110,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 		this.services.value.deltaConnection.rollback(content, localOpMetadata);
 	}
 
-	public applyStashedOp() {
-		throw new Error("no stashed ops on local channel");
-	}
+	public abstract applyStashedOp(content: unknown): unknown;
 
 	/**
 	 * Returns a summary at the current sequence number.
@@ -219,6 +221,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 					submitFn,
 					this.dirtyFn,
 					addedGCOutboundReferenceFn,
+					() => this.isGloballyVisible,
 					storageService,
 					logger,
 					clonedSnapshotTree,
@@ -263,6 +266,10 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 		this.dirtyFn = () => {
 			dirtyFn(id);
 		};
+	}
+
+	public override applyStashedOp(content) {
+		return this.services.value.deltaConnection.applyStashedOp(content);
 	}
 
 	private isSnapshotInOldFormatAndCollectBlobs(
@@ -321,6 +328,7 @@ export class LocalChannelContext extends LocalChannelContextBase {
 					submitFn,
 					this.dirtyFn,
 					addedGCOutboundReferenceFn,
+					() => this.isGloballyVisible,
 					storageService,
 					logger,
 				);
@@ -333,5 +341,9 @@ export class LocalChannelContext extends LocalChannelContextBase {
 		this.dirtyFn = () => {
 			dirtyFn(channel.id);
 		};
+	}
+
+	public applyStashedOp() {
+		throw new Error("no stashed ops on local channel");
 	}
 }
