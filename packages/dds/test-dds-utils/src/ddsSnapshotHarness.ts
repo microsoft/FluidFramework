@@ -42,7 +42,7 @@ export interface ISnapshotSuite {
 export function createSnapshotSuite(snapshotFolderPath: string): ISnapshotSuite {
 	let currentTestName: string | undefined;
 	let currentTestFile: string | undefined;
-
+	assert(path.isAbsolute(snapshotFolderPath), "snapshotFolderPath must be absolute.")
 	assert(existsSync(snapshotFolderPath));
 
 	function useSnapshotSubdirectory(dirPath: string = "/"): void {
