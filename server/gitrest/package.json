@@ -63,7 +63,6 @@
 		"async": "^3.2.2",
 		"c8": "^8.0.1",
 		"eslint": "~8.27.0",
-		"lerna": "5.6.2",
 		"lorem-ipsum": "^1.0.6",
 		"mocha": "^10.1.0",
 		"prettier": "~3.0.3",
@@ -76,12 +75,10 @@
 	"packageManager": "pnpm@7.33.6+sha512.90e27fd38047f18583f3342f784cc3f187f4d4caac89ebc1fffae18dcd7b2dde7678a0bf237481bcb8f7e8e66135fa34803856e4eb2c442ce082ffab5d9d241f",
 	"pnpm": {
 		"commentsOverrides": [
-			"@yarnpkg/parsers is a transitive dependency of lerna via nx, but versions >3.0.0-rc.48.1 require node 18, while we use 16.",
 			"sharp <0.32.6 has a vulnerability that Component Governance flags (https://github.com/advisories/GHSA-54xq-cgqr-rpm3). It's a transitive dependency through jssm-viz-cli, which hasn't updated to a version with the fix"
 		],
 		"overrides": {
 			"@types/node": "^18.17.1",
-			"nx>@yarnpkg/parsers": "3.0.0-rc.48.1",
 			"qs": "^6.11.0",
 			"sharp": "^0.33.2"
 		}

@@ -18,7 +18,7 @@ const newConfig = {
 	"recursive": true,
 	"reporter": "@fluid-tools/benchmark/dist/MochaReporter.js",
 	"reporterOptions": ["reportDir=.timeTestsOutput/"],
-	"require": [...config.require, "node_modules/@fluidframework/mocha-test-setup"],
+	"require": [...config.require, "node_modules/@fluid-internal/mocha-test-setup"],
 	"spec": [
 		"lib/test/benchmark/**/*.time.spec.*js",
 		"lib/test/benchmark/**/*.all.spec.*js",
