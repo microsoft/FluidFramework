@@ -364,7 +364,7 @@ export interface DDSFuzzSuiteOptions {
 	detachedStartOptions: {
 		numOpsBeforeAttach: number;
 		rehydrateDisabled?: true;
-		rehydrateValidationDisabled?: true;
+		attachingBeforeRehydrateDisable?: true;
 	};
 
 	/**
@@ -659,7 +659,7 @@ export function mixinAttach<
 	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
 	options: DDSFuzzSuiteOptions,
 ): DDSFuzzModel<TChannelFactory, TOperation | Attach | Attaching | Rehydrate, TState> {
-	const { numOpsBeforeAttach, rehydrateDisabled, rehydrateValidationDisabled } =
+	const { numOpsBeforeAttach, rehydrateDisabled, attachingBeforeRehydrateDisable } =
 		options.detachedStartOptions;
 	if (numOpsBeforeAttach === 0) {
 		// not wrapping the reducer/generator in this case makes stepping through the harness slightly less painful.
@@ -699,7 +699,7 @@ export function mixinAttach<
 									beforeRehydrate: true,
 								}),
 							),
-							1,
+							attachingBeforeRehydrateDisable === true ? 0 : 1,
 						],
 					]),
 					takeAsync(1, rehydrateOp),
