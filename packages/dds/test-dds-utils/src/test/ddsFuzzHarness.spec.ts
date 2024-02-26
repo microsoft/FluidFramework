@@ -37,8 +37,9 @@ import {
 	mixinStashedClient,
 	type Client,
 	hasStashData,
-} from "../ddsFuzzHarness";
-import { Operation, SharedNothingFactory, baseModel, isNoopOp } from "./sharedNothing";
+} from "../ddsFuzzHarness.js";
+import { Operation, SharedNothingFactory, baseModel, isNoopOp } from "./sharedNothing.js";
+import { _dirname } from "./dirname.cjs";
 
 type Model = DDSFuzzModel<SharedNothingFactory, Operation | ChangeConnectionState>;
 
@@ -868,7 +869,7 @@ describe("DDS Fuzz Harness", () => {
 					"--silent",
 					"--",
 					"--reporter=json",
-					path.join(__dirname, `./ddsSuiteCases/${name}.js`),
+					path.join(_dirname, `./ddsSuiteCases/${name}.js`),
 				],
 				{
 					env: {
@@ -992,7 +993,7 @@ describe("DDS Fuzz Harness", () => {
 
 		describe("failure", () => {
 			let runResults: MochaReport;
-			const jsonDir = path.join(__dirname, "./ddsSuiteCases/failing-configuration");
+			const jsonDir = path.join(_dirname, "./ddsSuiteCases/failing-configuration");
 			before(async function () {
 				this.timeout(5000);
 				fs.rmSync(jsonDir, { force: true, recursive: true });

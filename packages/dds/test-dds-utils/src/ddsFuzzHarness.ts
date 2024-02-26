@@ -42,7 +42,7 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { unreachableCase } from "@fluidframework/core-utils";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
-import { FuzzTestMinimizer, MinimizationTransform } from "./minification";
+import { FuzzTestMinimizer, MinimizationTransform } from "./minification.js";
 
 /**
  * @internal
