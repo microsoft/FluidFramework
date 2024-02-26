@@ -200,6 +200,30 @@ describe("serializedStateManager", () => {
 		);
 	});
 
+	it("can get snapshot from previous local state", async () => {
+		const pendingLocalState: IPendingContainerState = {
+			baseSnapshot: { id: "fromPending", blobs: {}, trees: {} },
+			snapshotBlobs: {},
+			pendingRuntimeState: {},
+			savedOps: [],
+			url: "fluid",
+		};
+		const storageAdapter = new MockStorageAdapter();
+		const serializedStateManager = new SerializedStateManager(
+			pendingLocalState,
+			logger,
+			storageAdapter,
+			true,
+		);
+		const state = await serializedStateManager.getPendingLocalStateCore(
+			{ notifyImminentClosure: false },
+			"clientId",
+			new MockRuntime(),
+			resolvedUrl,
+		);
+		assert.strictEqual(JSON.parse(state).baseSnapshot.id, "fromPending");
+	});
+
 	it("can get pending local state after attach", async () => {
 		const storageAdapter = new MockStorageAdapter();
 		const serializedStateManager = new SerializedStateManager(
@@ -219,37 +243,6 @@ describe("serializedStateManager", () => {
 			new MockRuntime(),
 			resolvedUrl,
 		);
-	});
-
-	it("get state from previous", async () => {
-		const pendingLocalState: IPendingContainerState = {
-			baseSnapshot: { id: "fromPending", blobs: {}, trees: {} },
-			snapshotBlobs: {},
-			pendingRuntimeState: {},
-			savedOps: [],
-			url: "fluid",
-		};
-		const storageAdapter = new MockStorageAdapter();
-		const serializedStateManager = new SerializedStateManager(
-			pendingLocalState,
-			logger,
-			storageAdapter,
-			true,
-		);
-		const { snapshotTree, version } = await serializedStateManager.fetchSnapshot(
-			undefined,
-			undefined,
-		);
-		assert(snapshotTree);
-		assert.strictEqual(version, undefined);
-
-		const state = await serializedStateManager.getPendingLocalStateCore(
-			{ notifyImminentClosure: false },
-			"clientId",
-			new MockRuntime(),
-			resolvedUrl,
-		);
-		assert.strictEqual(JSON.parse(state).baseSnapshot.id, "fromPending");
 	});
 
 	it("can fetch snapshot and get state from it", async () => {

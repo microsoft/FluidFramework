@@ -49,6 +49,12 @@ export class SerializedStateManager {
 			logger: subLogger,
 			namespace: "serializedStateManager",
 		});
+		if (pendingLocalState !== undefined && _offlineLoadEnabled) {
+			this.snapshot = {
+				tree: pendingLocalState.baseSnapshot,
+				blobs: pendingLocalState.snapshotBlobs,
+			};
+		}
 	}
 
 	public get offlineLoadEnabled(): boolean {
@@ -77,18 +83,11 @@ export class SerializedStateManager {
 		const snapshotTree: ISnapshotTree | undefined = isInstanceOfISnapshot(snapshot)
 			? snapshot.snapshotTree
 			: snapshot;
-		if (this.pendingLocalState) {
-			this.snapshot = {
-				tree: this.pendingLocalState.baseSnapshot,
-				blobs: this.pendingLocalState.snapshotBlobs,
-			};
-		} else {
-			assert(snapshotTree !== undefined, "Snapshot should exist");
-			// non-interactive clients will not have any pending state we want to save
-			if (this.offlineLoadEnabled) {
-				const blobs = await getBlobContentsFromTree(snapshotTree, this.storageAdapter);
-				this.snapshot = { tree: snapshotTree, blobs };
-			}
+		assert(snapshotTree !== undefined, "Snapshot should exist");
+		// non-interactive clients will not have any pending state we want to save
+		if (this.offlineLoadEnabled) {
+			const blobs = await getBlobContentsFromTree(snapshotTree, this.storageAdapter);
+			this.snapshot = { tree: snapshotTree, blobs };
 		}
 		return { snapshotTree, version };
 	}
@@ -147,6 +146,11 @@ export class SerializedStateManager {
 		return { snapshot, version };
 	}
 
+	/**
+	 * This method is only meant to be used by Container.attach() to set the initial
+	 * base snapshot when attaching.
+	 * @param snapshot - snapshot and blobs collected while attaching
+	 */
 	public setSnapshot(
 		snapshot:
 			| {
