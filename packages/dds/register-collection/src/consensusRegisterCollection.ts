@@ -17,12 +17,12 @@ import {
 	IFluidSerializer,
 	SharedObject,
 } from "@fluidframework/shared-object-base";
-import { ConsensusRegisterCollectionFactory } from "./consensusRegisterCollectionFactory";
+import { ConsensusRegisterCollectionFactory } from "./consensusRegisterCollectionFactory.js";
 import {
 	IConsensusRegisterCollection,
 	ReadPolicy,
 	IConsensusRegisterCollectionEvents,
-} from "./interfaces";
+} from "./interfaces.js";
 
 interface ILocalData<T> {
 	// Atomic version
