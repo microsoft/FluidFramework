@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/shared-object-base";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
-import { makeSerializable, ValueTypeLocalValue } from "./localValues";
+import { makeSerializable, ValueTypeLocalValue } from "./localValues.js";
 import {
 	ISerializableValue,
 	ISerializedValue,
@@ -25,14 +25,14 @@ import {
 	IMapMessageLocalMetadata,
 	SequenceOptions,
 	IValueTypeOperationValue,
-} from "./defaultMapInterfaces";
-import { SerializedIntervalDelta, IntervalDeltaOpType } from "./intervals";
+} from "./defaultMapInterfaces.js";
+import { SerializedIntervalDelta, IntervalDeltaOpType } from "./intervals/index.js";
 import {
 	type IntervalCollection,
 	toSequencePlace,
 	toOptionalSequencePlace,
 	reservedIntervalIdKey,
-} from "./intervalCollection";
+} from "./intervalCollection.js";
 
 function isMapOperation(op: unknown): op is IMapOperation {
 	return typeof op === "object" && op !== null && "type" in op && op.type === "act";

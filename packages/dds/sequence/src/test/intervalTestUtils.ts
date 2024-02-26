@@ -5,10 +5,10 @@
 
 import { strict as assert } from "assert";
 import { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtime-utils";
-import { SharedString } from "../sharedString";
-import { IIntervalCollection } from "../intervalCollection";
-import { SequenceInterval } from "../intervals";
-import { createOverlappingIntervalsIndex } from "../intervalIndex";
+import { SharedString } from "../sharedString.js";
+import { IIntervalCollection } from "../intervalCollection.js";
+import { SequenceInterval } from "../intervals/index.js";
+import { createOverlappingIntervalsIndex } from "../intervalIndex/index.js";
 
 export interface Client {
 	sharedString: SharedString;

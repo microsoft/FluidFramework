@@ -11,7 +11,7 @@ import {
 	IntervalOpType,
 	SerializedIntervalDelta,
 	IntervalDeltaOpType,
-} from "./intervals";
+} from "./intervals/index.js";
 
 /**
  * Type of "valueChanged" event parameter.

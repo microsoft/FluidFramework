@@ -52,16 +52,16 @@ import {
 } from "@fluidframework/shared-object-base";
 import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
-import { DefaultMap, IMapOperation } from "./defaultMap";
-import { IMapMessageLocalMetadata, IValueChanged } from "./defaultMapInterfaces";
-import { SequenceInterval } from "./intervals";
+import { DefaultMap, IMapOperation } from "./defaultMap.js";
+import { IMapMessageLocalMetadata, IValueChanged } from "./defaultMapInterfaces.js";
+import { SequenceInterval } from "./intervals/index.js";
 import {
 	IIntervalCollection,
 	IntervalCollection,
 	SequenceIntervalCollectionValueType,
-} from "./intervalCollection";
-import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
-import { ISharedIntervalCollection } from "./sharedIntervalCollection";
+} from "./intervalCollection.js";
+import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent.js";
+import { ISharedIntervalCollection } from "./sharedIntervalCollection.js";
 
 const snapshotFileName = "header";
 const contentPath = "content";

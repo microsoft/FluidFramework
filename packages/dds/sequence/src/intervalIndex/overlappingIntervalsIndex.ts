@@ -11,11 +11,11 @@ import {
 	ISerializableInterval,
 	sequenceIntervalHelpers,
 	SequenceInterval,
-} from "../intervals";
-import { IntervalNode, IntervalTree } from "../intervalTree";
-import { SharedString } from "../sharedString";
-import { SequencePlace, endpointPosAndSide } from "../intervalCollection";
-import { IntervalIndex } from "./intervalIndex";
+} from "../intervals/index.js";
+import { IntervalNode, IntervalTree } from "../intervalTree.js";
+import { SharedString } from "../sharedString.js";
+import { SequencePlace, endpointPosAndSide } from "../intervalCollection.js";
+import { IntervalIndex } from "./intervalIndex.js";
 
 /**
  * @alpha

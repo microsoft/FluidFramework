@@ -12,9 +12,9 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { SharedString } from "../sharedString";
-import { SharedStringFactory } from "../sequenceFactory";
-import { generateStrings, LocationBase } from "./generateSharedStrings";
+import { SharedString } from "../sharedString.js";
+import { SharedStringFactory } from "../sequenceFactory.js";
+import { generateStrings, LocationBase } from "./generateSharedStrings.js";
 
 function assertIntervalCollectionsAreEquivalent(
 	actual: SharedString,

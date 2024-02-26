@@ -13,8 +13,8 @@ import {
 import { createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { IIntervalCollection, Side } from "../../intervalCollection";
-import { SequenceInterval } from "../../intervals";
+import { IIntervalCollection, Side } from "../../intervalCollection.js";
+import { SequenceInterval } from "../../intervals/index.js";
 import {
 	Operation,
 	RangeSpec,
@@ -27,7 +27,7 @@ import {
 	createSharedStringGeneratorOperations,
 	baseModel,
 	defaultFuzzOptions,
-} from "./fuzzUtils";
+} from "./fuzzUtils.js";
 
 type ClientOpState = FuzzTestState;
 export function makeOperationGenerator(

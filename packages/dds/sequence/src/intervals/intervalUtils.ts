@@ -12,7 +12,7 @@ import {
 	SlidingPreference,
 } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { SequencePlace, Side } from "../intervalCollection";
+import { SequencePlace, Side } from "../intervalCollection.js";
 
 /**
  * Basic interval abstraction
