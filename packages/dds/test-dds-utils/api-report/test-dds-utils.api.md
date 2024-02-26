@@ -151,7 +151,8 @@ export interface IGCTestProvider {
 
 // @internal (undocumented)
 export interface ISnapshotSuite {
-    takeSnapshot: (data: string, writeCompatible?: boolean) => string;
+    readSnapshot: () => string;
+    takeSnapshot: (data: string) => string;
     useSnapshotSubdirectory: (dirPath: string) => void;
 }
 

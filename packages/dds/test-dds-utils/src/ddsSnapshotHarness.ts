@@ -16,17 +16,21 @@ const regenerateSnapshots = process.argv.includes("--snapshot");
  */
 export interface ISnapshotSuite {
 	/**
-	 * A utility function for setting up the current snapshot directory for tests.
+	 * The utility function for setting up the current snapshot directory for tests.
 	 */
 	useSnapshotSubdirectory: (dirPath: string) => void;
 
 	/**
 	 * Takes a snapshot of data and writes it to a file.
 	 * @param data - The data to take a snapshot of.
-	 * @param writeCompatible - A flag indicating whether the snapshot should be checked for consistency
-	 * with old-format data. Defaults to true.
 	 */
-	takeSnapshot: (data: string, writeCompatible?: boolean) => string;
+	takeSnapshot: (data: string) => string;
+
+	/**
+	 * The utility function only for reading snapshots. Given that some old formats are no longer
+	 * used for writing, we may exclusively focus on ensuring read compatibility in these scenarios.
+	 */
+	readSnapshot: () => string;
 }
 
 /**
@@ -65,31 +69,47 @@ export function createSnapshotSuite(snapshotFolderPath: string): ISnapshotSuite 
 		});
 	}
 
-	function takeSnapshot(data: string, writeCompatible: boolean = true): string {
+	function validateCurrentTest(): void {
 		assert(
 			currentTestName !== undefined,
 			"use `useSnapshotDirectory` to configure the tests containing describe block to take snapshots",
 		);
-		assert(currentTestFile !== undefined);
 
 		// Ensure test name doesn't accidentally navigate up directories or things like that.
 		// Done here instead of in beforeEach so errors surface better.
 		if (nameCheck.test(currentTestName) === false) {
 			assert.fail(`Expected test name to pass sanitization: "${currentTestName}"`);
 		}
+	}
 
-		if (regenerateSnapshots && !existsSync(currentTestFile)) {
+	function takeSnapshot(data: string): string {
+		validateCurrentTest();
+		assert(currentTestFile !== undefined);
+		const exists = existsSync(currentTestFile);
+
+		if (regenerateSnapshots) {
+			assert(exists === false, "snapshot should not already exist: possible name collision.");
 			writeFileSync(currentTestFile, data);
+		} else {
+			assert(exists, `test snapshot file does not exist: "${currentTestFile}"`);
+			const pastData = readFileSync(currentTestFile, "utf8");
+			assert.equal(data, pastData, `snapshot different for "${currentTestName}"`);
 		}
-		const pastData = readFileSync(currentTestFile, "utf8");
-		if (writeCompatible) {
-			assert.equal(data, pastData, `snapshots are inconsistent on test "${currentTestName}"`);
-		}
+
+		return data;
+	}
+
+	function readSnapshot(): string {
+		validateCurrentTest();
+		assert(currentTestFile !== undefined);
+		const data = readFileSync(currentTestFile, "utf8");
+
 		return data;
 	}
 
 	return {
 		useSnapshotSubdirectory,
 		takeSnapshot,
+		readSnapshot,
 	};
 }

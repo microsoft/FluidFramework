@@ -135,7 +135,7 @@ describe("SharedDirectory Snapshot Tests", () => {
 	// Set up the directory path for reading/writing snapshots and generate tests
 	assert(__dirname.match(/dist[/\\]test[/\\]mocha$/));
 	const testScenarios = generateTestScenarios();
-	const { useSnapshotSubdirectory, takeSnapshot } = createSnapshotSuite(
+	const { useSnapshotSubdirectory, takeSnapshot, readSnapshot } = createSnapshotSuite(
 		path.resolve(__dirname, `../../../src/test/mocha/snapshots/`),
 	);
 	useSnapshotSubdirectory("directory");
@@ -150,7 +150,9 @@ describe("SharedDirectory Snapshot Tests", () => {
 		const itFn = only ? it.only : skip ? it.skip : it;
 		itFn(name, async () => {
 			const testDirectory = runScenario() as SharedDirectory;
-			const snapshotData = takeSnapshot(serialize(testDirectory), writeCompatible);
+			const snapshotData = writeCompatible
+				? takeSnapshot(serialize(testDirectory))
+				: readSnapshot();
 			const secondDirectory = await loadSharedDirectory("B", snapshotData);
 			assertEquivalentDirectories(testDirectory, secondDirectory);
 		});
