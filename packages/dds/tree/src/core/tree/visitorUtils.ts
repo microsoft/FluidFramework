@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils";
 import { IdAllocator, idAllocatorFromMaxId } from "../../util/index.js";
 import { FieldKey } from "../schema-stored/index.js";
 import { RevisionTagCodec } from "../rebase/index.js";
@@ -45,10 +46,24 @@ export function announceDelta(
 	visitor.free();
 }
 
+/**
+ * @param visitors - The returned visitor invokes event for all these visitors, in order.
+ * @param announceVisitors - Subset of `visitors` to also call {@link AnnouncedVisitor} methods on.
+ * This must be a subset of `visitors`: if not the visitor will not have its path correctly set when the events are triggered.
+ * When `visitors` are making changes to data, `announceVisitors` can be used to get extra events before or after all the changes from all the visitors have been made.
+ * This can, for example, enable visitors to have access to the tree in these extra events despite multiple separate visitors updating different tree related data-structures.
+ * @returns a DeltaVisitor combining all `visitors`.
+ */
 export function combineVisitors(
 	visitors: readonly DeltaVisitor[],
 	announceVisitors: readonly AnnouncedVisitor[] = [],
 ): DeltaVisitor {
+	{
+		const set = new Set(visitors);
+		for (const item of announceVisitors) {
+			assert(set.has(item), "AnnouncedVisitor would not get traversed");
+		}
+	}
 	return {
 		free: () => visitors.forEach((v) => v.free()),
 		create: (...args) => {
@@ -94,7 +109,7 @@ export function combineVisitors(
  * Must be freed after use.
  * @internal
  */
-export interface AnnouncedVisitor {
+export interface AnnouncedVisitor extends DeltaVisitor {
 	/**
 	 * A hook that is called after all nodes have been created.
 	 */
