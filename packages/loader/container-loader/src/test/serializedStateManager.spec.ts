@@ -24,7 +24,7 @@ import { stringToBuffer } from "@fluid-internal/client-utils";
 import { IPendingContainerState } from "../container";
 import { SerializedStateManager } from "../serializedStateManager";
 
-type ISerializedStateManagerDocumentTorageService = Pick<
+type ISerializedStateManagerDocumentStorageService = Pick<
 	IDocumentStorageService,
 	"getSnapshot" | "getSnapshotTree" | "getVersions" | "readBlob"
 >;
@@ -35,7 +35,7 @@ interface IPendingMessage {
 	content: string;
 }
 
-class MockStorageAdapter implements ISerializedStateManagerDocumentTorageService {
+class MockStorageAdapter implements ISerializedStateManagerDocumentStorageService {
 	private readonly blobs = new Map<string, ArrayBufferLike>();
 	private readonly snapshots: ISnapshotTree[] = [];
 
@@ -215,6 +215,12 @@ describe("serializedStateManager", () => {
 			storageAdapter,
 			true,
 		);
+		const { snapshotTree, version } = await serializedStateManager.fetchSnapshot(
+			undefined,
+			undefined,
+		);
+		assert(snapshotTree);
+		assert.strictEqual(version, undefined);
 		const state = await serializedStateManager.getPendingLocalStateCore(
 			{ notifyImminentClosure: false },
 			"clientId",
