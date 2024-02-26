@@ -78,16 +78,6 @@ pkg.exports = {
 			default: "./dist/index.js",
 		},
 	},
-	"./fruit": {
-		import: {
-			types: `./lib/${shortName}-alpha.d.ts`,
-			default: "./lib/index.js",
-		},
-		require: {
-			types: `./dist/${shortName}-alpha.d.ts`,
-			default: "./dist/index.js",
-		},
-	},
 	"./internal": {
 		import: {
 			types: "./lib/index.d.ts",
@@ -100,12 +90,59 @@ pkg.exports = {
 	},
 };
 
+const autotrim = false;
+if (autotrim) {
+	// Trim exports to only those which have unique *.d.ts files.
+	function loadDts(exportName) {
+		const dtsPath = pkg.exports[exportName]?.import?.types;
+
+		if (dtsPath !== undefined) {
+			return fs
+				.readFileSync(path.join(packageRoot, dtsPath), "utf8")
+				.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, "")
+				.split("\n")
+				.filter((line) => line.trim().length > 0)
+				.join("\n");
+		}
+
+		return undefined;
+	}
+
+	const dtsNames = ["./public", "./beta", "./alpha", "./internal"];
+
+	let prevDts = loadDts(dtsNames[0]);
+	for (let i = 1; i < dtsNames.length; i++) {
+		let dtsName = dtsNames[i];
+		const currentDts = loadDts(dtsName) ?? prevDts;
+		if (currentDts === prevDts) {
+			delete pkg.exports[dtsName];
+		}
+		prevDts = currentDts;
+	}
+}
+
+delete pkg.exports["./fruit"];
+
 // Delete 'module' key if any.
 delete pkg.module;
 
 // Add ATTW check
 pkg.scripts["check:are-the-types-wrong"] = "attw --pack . --entrypoints .";
 pkg.devDependencies["@arethetypeswrong/cli"] = "^0.13.3";
+
+// Fix doc builds
+pkg.scripts["api"] = pkg.scripts["build:docs"] = "fluid-build . --task api";
+pkg.scripts["api-extractor:commonjs"] = "api-extractor run --config ./api-extractor-cjs.json";
+pkg.scripts["api-extractor:esnext"] = "api-extractor run --local";
+pkg.fluidBuild = {
+	tasks: {
+		"build:docs": {
+			dependsOn: ["...", "api-extractor:commonjs", "api-extractor:esnext"],
+			script: false,
+		},
+	},
+};
+fs.unlink("api-extractor-esm.json", () => {});
 
 // Rewrite build scripts
 pkg.scripts["build:esnext"] = "tsc --project ./tsconfig.json";
@@ -116,10 +153,11 @@ if (pkg.scripts["build:test"]) {
 	pkg.scripts["build:test:esm"] = "tsc --project ./src/test/tsconfig.json";
 }
 
+// Rewrite test scripts
 if (pkg.scripts["test:mocha"]) {
 	pkg.scripts["test:mocha"] = "npm run test:mocha:cjs && npm run test:mocha:esm";
-	pkg.scripts["test:mocha:cjs"] = "mocha  --recursive \"dist/test/*.spec.*js\" --exit --project src/test/tsconfig.cjs.json -r node_modules/@fluidframework/mocha-test-setup";
-	pkg.scripts["test:mocha:esm"] = "mocha  --recursive \"lib/test/*.spec.*js\" --exit --project src/test/tsconfig.json -r node_modules/@fluidframework/mocha-test-setup";
+	pkg.scripts["test:mocha:cjs"] = "mocha  --recursive \"dist/test/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup";
+	pkg.scripts["test:mocha:esm"] = "mocha  --recursive \"lib/test/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup";
 }
 
 pkg.scripts["tsc"] = `fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ${workspaceRoot}/common/build/build-common/src/cjs/package.json ./dist`;

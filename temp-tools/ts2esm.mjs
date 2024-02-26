@@ -5,5 +5,5 @@ import path from "path";
 const ts2esmPath = path.join(repoRoot(), "temp-tools/node_modules/.bin/ts2esm");
 
 export function ts2esm(tsconfigPaths) {
-	return execSync(`${ts2esmPath} ${tsconfigPaths.join(" ")}`, { stdio: "inherit" });
+	return execSync(`ts2esm ${tsconfigPaths.join(" ")}`, { stdio: "inherit" });
 }

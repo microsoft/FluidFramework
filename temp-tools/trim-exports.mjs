@@ -26,6 +26,32 @@ const pkgSrc = fs.readFileSync(pkgPath, "utf8");
 
 const pkg = JSON5.parse(pkgSrc);
 
+// Fix doc builds
+pkg.scripts["api"] = pkg.scripts["build:docs"] = "fluid-build . --task api";
+pkg.scripts["api-extractor:commonjs"] = "api-extractor run --config ./api-extractor-cjs.json";
+pkg.scripts["api-extractor:esnext"] = "api-extractor run --local";
+pkg.fluidBuild = {
+	"tasks": {
+		"build:docs": {
+			"dependsOn": [
+				"...",
+				"api-extractor:commonjs",
+				"api-extractor:esnext"
+			],
+			"script": false
+		}
+	}
+};
+fs.unlink("api-extractor-esm.json", () => {});
+
+// Fix test scripts
+if (pkg.scripts["test:mocha"]) {
+	pkg.scripts["test:mocha:cjs"] =
+		'mocha  --recursive "dist/test/*.spec.*js" --exit -r node_modules/@fluid-internal/mocha-test-setup';
+	pkg.scripts["test:mocha:esm"] =
+		'mocha  --recursive "lib/test/*.spec.*js" --exit -r node_modules/@fluid-internal/mocha-test-setup';
+}
+
 function loadDts(exportName) {
 	const dtsPath = pkg.exports[exportName]?.import?.types;
 
