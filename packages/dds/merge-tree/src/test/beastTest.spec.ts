@@ -44,6 +44,7 @@ import { JsonSegmentSpecs } from "../snapshotChunks.js";
 import { getStats, specToSegment, TestClient } from "./testClient.js";
 import { TestServer } from "./testServer.js";
 import { insertText, loadTextFromFile, nodeOrdinalsHaveIntegrity } from "./testUtils.js";
+import { _dirname } from "./dirname.cjs";
 
 function LinearDictionary<TKey, TData>(
 	compareKeys: KeyComparer<TKey>,
@@ -224,7 +225,7 @@ export function integerTest1() {
 
 export function fileTest1() {
 	const content = fs.readFileSync(
-		path.join(__dirname, "../../../public/literature/shakespeare.txt"),
+		path.join(_dirname, "../../../public/literature/shakespeare.txt"),
 		"utf8",
 	);
 	const a = content.split("\n");
@@ -1587,12 +1588,12 @@ describe("Routerlicious", () => {
 
 		it("beastTest", () => {
 			const testPack = TestPack(false);
-			const filename = path.join(__dirname, baseDir, "pp.txt");
+			const filename = path.join(_dirname, baseDir, "pp.txt");
 			assert(testPack.clientServer(filename, 250) === 0, logLines.join("\n"));
 		}).timeout(testTimeout);
 
 		it("findReplPerf", () => {
-			const filename = path.join(__dirname, baseDir, "pp10.txt");
+			const filename = path.join(_dirname, baseDir, "pp10.txt");
 			findReplacePerf(filename);
 		}).timeout(testTimeout);
 	});
