@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { parse } from "url";
+import { parse } from "url_pkg";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,

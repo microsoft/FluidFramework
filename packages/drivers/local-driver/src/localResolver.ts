@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { parse } from "url";
+import { parse } from "url_pkg";
 import { assert } from "@fluidframework/core-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, IUrlResolver, DriverHeader } from "@fluidframework/driver-definitions";

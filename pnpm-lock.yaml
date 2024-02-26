@@ -7646,7 +7646,7 @@ importers:
       rimraf: ^4.4.0
       socket.io-client: ^4.7.3
       typescript: ~5.1.6
-      url: ^0.11.0
+      url_pkg: npm:url@^0.11.0
       uuid: ^9.0.0
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -7665,7 +7665,7 @@ importers:
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       events_pkg: /events/3.3.0
       jsrsasign: 11.0.0
-      url: 0.11.3
+      url_pkg: /url/0.11.3
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -8919,7 +8919,7 @@ importers:
       rimraf: ^4.4.0
       sinon: ^17.0.1
       typescript: ~5.1.6
-      url: ^0.11.0
+      url_pkg: npm:url@^0.11.0
       uuid: ^9.0.0
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -8935,7 +8935,7 @@ importers:
       debug: 4.3.4
       double-ended-queue: 2.1.0-0
       events_pkg: /events/3.3.0
-      url: 0.11.3
+      url_pkg: /url/0.11.3
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
