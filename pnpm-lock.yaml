@@ -9895,23 +9895,29 @@ importers:
 
   packages/test/functional-tests:
     specifiers:
+      '@fluid-experimental/tree': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-private/test-dds-utils': workspace:~
       '@fluid-private/test-loader-utils': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.34.0
+      '@fluidframework/cell': workspace:~
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/container-runtime': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.5.0
+      '@fluidframework/id-compressor': workspace:~
       '@fluidframework/map': workspace:~
+      '@fluidframework/matrix': workspace:~
+      '@fluidframework/ordered-collection': workspace:~
       '@fluidframework/protocol-definitions': ^3.2.0-237840
       '@fluidframework/register-collection': workspace:~
       '@fluidframework/sequence': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
+      '@fluidframework/tree': workspace:~
       '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
@@ -9933,23 +9939,29 @@ importers:
     dependencies:
       events: 3.3.0
     devDependencies:
+      '@fluid-experimental/tree': link:../../../experimental/dds/tree
       '@fluid-internal/mocha-test-setup': link:../mocha-test-setup
       '@fluid-private/test-dds-utils': link:../../dds/test-dds-utils
       '@fluid-private/test-loader-utils': link:../../loader/test-loader-utils
       '@fluid-tools/build-cli': 0.34.0_lzbrbjkjqqnlnvbwteayq6k5jm
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
+      '@fluidframework/cell': link:../../dds/cell
       '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
+      '@fluidframework/id-compressor': link:../../runtime/id-compressor
       '@fluidframework/map': link:../../dds/map
+      '@fluidframework/matrix': link:../../dds/matrix
+      '@fluidframework/ordered-collection': link:../../dds/ordered-collection
       '@fluidframework/protocol-definitions': 3.2.0-237840
       '@fluidframework/register-collection': link:../../dds/register-collection
       '@fluidframework/sequence': link:../../dds/sequence
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
+      '@fluidframework/tree': link:../../dds/tree
       '@types/events': 3.0.3
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
@@ -11696,19 +11708,17 @@ importers:
       '@microsoft/api-extractor': ^7.39.1
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      '@types/node-fetch': ^2.5.10
       c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
+      isomorphic-fetch: ^3.0.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      node-fetch: ^2.6.9
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -11718,7 +11728,7 @@ importers:
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/odsp-driver-definitions': link:../../drivers/odsp-driver-definitions
       '@fluidframework/telemetry-utils': link:../telemetry-utils
-      node-fetch: 2.7.0
+      isomorphic-fetch: 3.0.0
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
       '@fluid-internal/mocha-test-setup': link:../../test/mocha-test-setup
@@ -11730,7 +11740,6 @@ importers:
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      '@types/node-fetch': 2.6.9
       c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -11741,7 +11750,6 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/utils/telemetry-utils:
@@ -15911,7 +15919,7 @@ packages:
       '@oclif/plugin-not-found': 3.0.4
       '@oclif/plugin-plugins': 3.9.4
       chalk: 2.4.2
-      semver: 7.5.4
+      semver: 7.6.0
       table: 6.8.1
     transitivePeerDependencies:
       - supports-color
