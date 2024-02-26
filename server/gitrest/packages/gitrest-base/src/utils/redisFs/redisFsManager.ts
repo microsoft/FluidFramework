@@ -378,7 +378,7 @@ export class RedisFs implements IFileSystemPromises {
 					return this.redisFsClient.peek(filepathString);
 				}
 				const data = await this.redisFsClient.get<string | Buffer>(filepathString);
-				if (data === null) {
+				if (data === null || data === undefined) {
 					return -1;
 				}
 				return data.length;
