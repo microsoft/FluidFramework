@@ -11,6 +11,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 import { IIntervalCollection } from "../intervalCollection";
@@ -40,7 +41,7 @@ describe("SharedString interval collection event spec", () => {
 		containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 		// Connect the first SharedString.
-		dataStoreRuntime1.local = false;
+		dataStoreRuntime1.setAttachState(AttachState.Attached);
 		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 		const services1 = {
 			deltaConnection: dataStoreRuntime1.createDeltaConnection(),
