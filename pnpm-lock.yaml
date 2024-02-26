@@ -11710,19 +11710,17 @@ importers:
       '@microsoft/api-extractor': ^7.39.1
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      '@types/node-fetch': ^2.5.10
       c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
+      isomorphic-fetch: ^3.0.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      node-fetch: ^2.6.9
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -11732,7 +11730,7 @@ importers:
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/odsp-driver-definitions': link:../../drivers/odsp-driver-definitions
       '@fluidframework/telemetry-utils': link:../telemetry-utils
-      node-fetch: 2.7.0
+      isomorphic-fetch: 3.0.0
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
       '@fluid-internal/mocha-test-setup': link:../../test/mocha-test-setup
@@ -11744,7 +11742,6 @@ importers:
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      '@types/node-fetch': 2.6.9
       c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -11755,7 +11752,6 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/utils/telemetry-utils:
@@ -15925,7 +15921,7 @@ packages:
       '@oclif/plugin-not-found': 3.0.4
       '@oclif/plugin-plugins': 3.9.4
       chalk: 2.4.2
-      semver: 7.5.4
+      semver: 7.6.0
       table: 6.8.1
     transitivePeerDependencies:
       - supports-color
