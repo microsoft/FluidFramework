@@ -953,9 +953,7 @@ export class MockFluidDataStoreRuntime
 		const proposedState = attachStatesToComparableNumbers[attachState];
 		const startingState = attachStatesToComparableNumbers[this._attachState];
 		if (proposedState < startingState) {
-			throw new Error(
-				`cannot transition back to ${attachState} from ${this.attachState}`,
-			);
+			throw new Error(`cannot transition back to ${attachState} from ${this.attachState}`);
 		}
 
 		if (
