@@ -6,7 +6,7 @@
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { ICollection, ICheckpointRepository } from "./database";
 import { ICheckpoint, IDeliState, IScribe } from "./document";
-import { requestWithRetry } from "./runWithRetry";
+import { runWithRetry } from "./runWithRetry";
 
 /**
  * @internal
@@ -41,7 +41,7 @@ export class MongoCheckpointRepository implements ICheckpointRepository {
 			checkpointType: this.checkpointType,
 		};
 		try {
-			await requestWithRetry(
+			await runWithRetry(
 				async () =>
 					this.collection.upsert(
 						pointReadFilter,
@@ -49,15 +49,8 @@ export class MongoCheckpointRepository implements ICheckpointRepository {
 						null,
 					),
 				"checkpointRepository_writeCheckpoint",
-				lumberProperties,
-				(error) => {
-					// should retry if duplicate key error
-					return (
-						error.code === 11000 ||
-						error.message?.toString()?.indexOf("E11000 duplicate key") >= 0
-					);
-				},
 				3 /* maxRetries */,
+				1000 /* retryAfterMs */,
 			);
 		} catch (error: any) {
 			const err = new Error(`Checkpoint upsert error:  ${error.message?.substring(0, 30)}`);
