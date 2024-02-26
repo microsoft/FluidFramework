@@ -171,7 +171,7 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 			: "Generic";
 		// Note: "Office.Fluid" here has a connection to the Aria tenant(s) we're targetting, and the full string
 		// impacts the way the data is structured once ingested. Don't change this without proper consideration.
-		const eventType = `Office.Fluid.Devtools.${category}`;
+		const eventType = `Fluid.Framework.Devtools.Usage`;
 
 		const telemetryEvent = {
 			name: eventType, // Dictates which table the event goes to
@@ -181,6 +181,7 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 				["Data.extensionVersion"]: extensionVersion,
 				["Data.sessionID"]: this.sessionID,
 				["Data.continuityID"]: this.continuityID,
+				["Data.category"]: category,
 			},
 		};
 
