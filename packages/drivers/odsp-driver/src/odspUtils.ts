@@ -22,6 +22,7 @@ import {
 	createChildLogger,
 	wrapError,
 	type IFluidErrorBase,
+	LoggingError,
 } from "@fluidframework/telemetry-utils";
 import {
 	fetchIncorrectResponse,
@@ -433,7 +434,7 @@ export function toInstrumentedOdspTokenFetcher(
 										? rawCanRetry
 										: false /* canRetry */,
 									{ method: name, errorMessage, driverVersion },
-								),
+								) as unknown as LoggingError, // Type 'NetworkErrorBasic<"fetchTokenError">' is not assignable to type 'LoggingError'. @fluidframework/odsp-driver:   Types have separate declarations of a private property 'omitPropsFromLogging'.
 						);
 						throw tokenError;
 					},
