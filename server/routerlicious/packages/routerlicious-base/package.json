@@ -139,6 +139,9 @@
 			},
 			"InterfaceDeclaration_IAlfredResourcesCustomizations": {
 				"forwardCompat": false
+			},
+			"ClassDeclaration_AlfredResources": {
+				"backCompat": false
 			}
 		}
 	}
