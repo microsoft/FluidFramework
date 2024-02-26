@@ -36,14 +36,14 @@ import { type IClient, type ISummaryTree, SummaryType } from "@fluidframework/pr
 import { type IAudience } from "@fluidframework/container-definitions";
 import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
 import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree";
-import { type IAttributor, OpStreamAttributor } from "../../attributor";
+import { type IAttributor, OpStreamAttributor } from "../../attributor.js";
 import {
 	AttributorSerializer,
 	chain as chainEncoders,
 	deltaEncoder,
 	type Encoder,
-} from "../../encoders";
-import { makeLZ4Encoder } from "../../lz4Encoder";
+} from "../../encoders.js";
+import { makeLZ4Encoder } from "../../lz4Encoder.js";
 
 function makeMockAudience(clientIds: string[]): IAudience {
 	const clients = new Map<string, IClient>();
