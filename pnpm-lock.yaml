@@ -3098,7 +3098,7 @@ importers:
       '@types/jest-environment-puppeteer': 'workspace:'
       '@types/lodash.isequal': ^4.5.6
       '@types/node': ^18.19.0
-      '@types/node-fetch': ^2.5.10
+      '@types/node-fetch': ^2.6.11
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       '@types/valid-url': ^1.0.3
@@ -3180,7 +3180,7 @@ importers:
       '@types/jest-environment-puppeteer': link:../../packages/test/types_jest-environment-puppeteer
       '@types/lodash.isequal': 4.5.8
       '@types/node': 18.19.1
-      '@types/node-fetch': 2.6.9
+      '@types/node-fetch': 2.6.11
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       '@types/valid-url': 1.0.7
@@ -22288,13 +22288,6 @@ packages:
 
   /@types/node-fetch/2.6.11:
     resolution: {integrity: sha512-24xFj9R5+rfQJLRyM56qh+wnVSYhyXC2tkoBndtY0U+vubqNsYXGjufB2nn8Q6gt0LrARwL6UBtMCSVCwl4B1g==}
-    dependencies:
-      '@types/node': 18.19.1
-      form-data: 4.0.0
-    dev: true
-
-  /@types/node-fetch/2.6.9:
-    resolution: {integrity: sha512-bQVlnMLFJ2d35DkPNjEPmd9ueO/rh5EiaZt2bhqiSarPjZIuIV6bPQVqcrEyvNo+AfTrRGVazle1tl597w3gfA==}
     dependencies:
       '@types/node': 18.19.1
       form-data: 4.0.0
