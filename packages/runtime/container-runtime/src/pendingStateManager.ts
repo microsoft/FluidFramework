@@ -199,7 +199,7 @@ export class PendingStateManager implements IDisposable {
 				// applyStashedOp will cause the DDS to behave as if it has sent the op but not actually send it
 				const localOpMetadata = await this.stateHandler.applyStashedOp(nextMessage.content);
 				if (!this.stateHandler.isAttached()) {
-					if(localOpMetadata !== undefined){
+					if (localOpMetadata !== undefined) {
 						throw new Error("Local Op Metadata must be undefined when not attached");
 					}
 				} else {

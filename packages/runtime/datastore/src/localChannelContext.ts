@@ -19,7 +19,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { AttachState, ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
+import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
 import {
 	ChannelServiceEndpoints,
 	createChannelServiceEndpoints,
@@ -47,7 +47,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 		assert(!this.id.includes("/"), 0x30f /* Channel context ID cannot contain slashes */);
 	}
 
-	protected get isGloballyVisible(){
+	protected get isGloballyVisible() {
 		return this.globallyVisible;
 	}
 
