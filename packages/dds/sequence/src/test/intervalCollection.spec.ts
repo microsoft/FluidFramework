@@ -2020,14 +2020,15 @@ describe("SharedString interval collections", () => {
 		});
 
 		it.skip("slides forward reference to correct position when remove of end of string is unacked", () => {
+			dataStoreRuntime1.options.mergeTreeReferencesCanSlideToEndpoint = false;
 			sharedString.insertText(0, "ABC");
 
 			// (ABC]
 
 			containerRuntimeFactory.processAllMessages();
 
-			const start = { pos: 0, side: Side.After };
-			const end = { pos: 2, side: Side.After };
+			const start = 0;
+			const end = 2;
 
 			const collection = sharedString.getIntervalCollection("test");
 			collection.add({ end, start });
