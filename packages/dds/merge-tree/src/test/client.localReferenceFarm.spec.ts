@@ -6,9 +6,9 @@
 
 import { strict as assert } from "assert";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { ReferencePosition } from "../referencePositions";
-import { ReferenceType } from "../ops";
-import { setValidateRefCount, SlidingPreference } from "../localReference";
+import { ReferencePosition } from "../referencePositions.js";
+import { ReferenceType } from "../ops.js";
+import { setValidateRefCount, SlidingPreference } from "../localReference.js";
 import {
 	IMergeTreeOperationRunnerConfig,
 	removeRange,
@@ -16,10 +16,10 @@ import {
 	generateClientNames,
 	IConfigRange,
 	doOverRanges,
-} from "./mergeTreeOperationRunner";
-import { TestClient } from "./testClient";
-import { TestClientLogger } from "./testClientLogger";
-import { validateRefCount } from "./testUtils";
+} from "./mergeTreeOperationRunner.js";
+import { TestClient } from "./testClient.js";
+import { TestClientLogger } from "./testClientLogger.js";
+import { validateRefCount } from "./testUtils.js";
 
 const defaultOptions: Record<"initLen" | "modLen", IConfigRange> & IMergeTreeOperationRunnerConfig =
 	{

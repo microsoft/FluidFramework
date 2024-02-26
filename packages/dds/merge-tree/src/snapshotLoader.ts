@@ -20,14 +20,14 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
 // eslint-disable-next-line import/no-deprecated
-import { Client } from "./client";
-import { NonCollabClient, UniversalSequenceNumber } from "./constants";
-import { ISegment } from "./mergeTreeNodes";
-import { IJSONSegment } from "./ops";
-import { IJSONSegmentWithMergeInfo, hasMergeInfo, MergeTreeChunkV1 } from "./snapshotChunks";
-import { SnapshotV1 } from "./snapshotV1";
-import { SnapshotLegacy } from "./snapshotlegacy";
-import { MergeTree } from "./mergeTree";
+import { Client } from "./client.js";
+import { NonCollabClient, UniversalSequenceNumber } from "./constants.js";
+import { ISegment } from "./mergeTreeNodes.js";
+import { IJSONSegment } from "./ops.js";
+import { IJSONSegmentWithMergeInfo, hasMergeInfo, MergeTreeChunkV1 } from "./snapshotChunks.js";
+import { SnapshotV1 } from "./snapshotV1.js";
+import { SnapshotLegacy } from "./snapshotlegacy.js";
+import { MergeTree } from "./mergeTree.js";
 
 export class SnapshotLoader {
 	private readonly logger: ITelemetryLoggerExt;
