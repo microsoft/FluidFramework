@@ -777,12 +777,7 @@ export function mixinAttach<
 				options,
 			);
 
-			// The original client and the rehydrated client should match,
-			// this options lets tests work around bugs in either dds or validation logic.
-			// DDS bug here likely represent data loss when rehydrating.
-			if (rehydrateValidationDisabled !== true) {
-				model.validateConsistency(clientA.channel, summarizerClient.channel);
-			}
+			model.validateConsistency(clientA.channel, summarizerClient.channel);
 
 			return {
 				...state,
