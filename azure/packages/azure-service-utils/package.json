@@ -120,7 +120,7 @@
 		"@types/jsrsasign": "^10.5.12",
 		"@types/uuid": "^9.0.2",
 		"copyfiles": "^2.4.1",
-		"eslint": "~8.50.0",
+		"eslint": "~8.55.0",
 		"eslint-config-prettier": "~9.0.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",

@@ -145,7 +145,7 @@
 		"dependency-cruiser": "^14.1.0",
 		"diff": "^3.5.0",
 		"easy-table": "^1.1.1",
-		"eslint": "~8.50.0",
+		"eslint": "~8.55.0",
 		"eslint-config-prettier": "~9.0.0",
 		"mocha": "^10.2.0",
 		"mocha-json-output-reporter": "^2.0.1",

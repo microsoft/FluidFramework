@@ -52,7 +52,7 @@
 		"@types/jest": "29.5.3",
 		"@types/node": "^18.19.0",
 		"cross-env": "^7.0.3",
-		"eslint": "~8.50.0",
+		"eslint": "~8.55.0",
 		"expect-puppeteer": "^9.0.2",
 		"html-webpack-plugin": "^5.5.0",
 		"jest": "^29.6.2",

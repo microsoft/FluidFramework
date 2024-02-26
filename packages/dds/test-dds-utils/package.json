@@ -85,7 +85,7 @@
 		"c8": "^8.0.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
-		"eslint": "~8.50.0",
+		"eslint": "~8.55.0",
 		"execa": "^5.1.1",
 		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",

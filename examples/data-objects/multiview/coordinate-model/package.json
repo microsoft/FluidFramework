@@ -54,7 +54,7 @@
 		"@types/jest-environment-puppeteer": "workspace:",
 		"@types/node": "^18.19.0",
 		"cross-env": "^7.0.3",
-		"eslint": "~8.50.0",
+		"eslint": "~8.55.0",
 		"expect-puppeteer": "^9.0.2",
 		"jest": "^29.6.2",
 		"jest-environment-puppeteer": "^9.0.2",

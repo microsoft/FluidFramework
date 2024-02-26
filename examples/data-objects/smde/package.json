@@ -65,7 +65,7 @@
 		"@types/react": "^17.0.44",
 		"@types/simplemde": "^1.11.7",
 		"css-loader": "^1.0.0",
-		"eslint": "~8.50.0",
+		"eslint": "~8.55.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"style-loader": "^1.0.0",

@@ -93,7 +93,7 @@
 		"c8": "^8.0.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
-		"eslint": "~8.50.0",
+		"eslint": "~8.55.0",
 		"eslint-config-prettier": "~9.0.0",
 		"mocha": "^10.2.0",
 		"mocha-json-output-reporter": "^2.0.1",

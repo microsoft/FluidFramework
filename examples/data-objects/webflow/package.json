@@ -105,7 +105,7 @@
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"css-loader": "^1.0.0",
-		"eslint": "~8.50.0",
+		"eslint": "~8.55.0",
 		"esm-loader-css": "^1.0.4",
 		"file-loader": "^3.0.1",
 		"html-loader": "^3.1.0",

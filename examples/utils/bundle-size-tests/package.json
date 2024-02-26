@@ -48,7 +48,7 @@
 		"@fluidframework/eslint-config-fluid": "^4.0.0",
 		"@mixer/webpack-bundle-compare": "^0.1.0",
 		"@types/node": "^18.19.0",
-		"eslint": "~8.50.0",
+		"eslint": "~8.55.0",
 		"prettier": "~3.0.3",
 		"puppeteer": "^22.2.0",
 		"rimraf": "^4.4.0",
