@@ -147,6 +147,9 @@ export class RedisFs implements IFileSystemPromises {
 			},
 			true,
 		);
+		if (data === undefined) {
+			throw new RedisFsError(SystemErrors.ENOENT, filepathString);
+		}
 		return data;
 	}
 

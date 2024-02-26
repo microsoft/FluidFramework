@@ -93,21 +93,19 @@ export class GitWholeSummaryManager {
 		payload: IWholeSummaryPayload,
 		isInitial?: boolean,
 	): Promise<IWriteSummaryInfo> {
+		const lumberjackProperties: Record<string, any> = {
+			...this.lumberjackProperties,
+			enableLowIoWrite: this.summaryWriteFeatureFlags.enableLowIoWrite,
+			optimizeForInitialSummary: this.summaryWriteFeatureFlags.optimizeForInitialSummary,
+			isInitial,
+		};
 		const writeSummaryMetric = Lumberjack.newLumberMetric(
 			GitRestLumberEventName.WholeSummaryManagerWriteSummary,
-			this.lumberjackProperties,
+			lumberjackProperties,
 		);
-		writeSummaryMetric.setProperty(
-			"enableLowIoWrite",
-			this.summaryWriteFeatureFlags.enableLowIoWrite,
-		);
-		writeSummaryMetric.setProperty(
-			"optimizeForInitialSummary",
-			this.summaryWriteFeatureFlags.optimizeForInitialSummary,
-		);
-		writeSummaryMetric.setProperty("isInitial", isInitial);
 		try {
 			if (isChannelSummary(payload)) {
+				lumberjackProperties.summaryType = "channel";
 				writeSummaryMetric.setProperty("summaryType", "channel");
 				const writeSummaryInfo = await writeChannelSummary(
 					payload,
@@ -115,7 +113,7 @@ export class GitWholeSummaryManager {
 						documentId: this.documentId,
 						repoManager: this.repoManager,
 						externalStorageEnabled: this.externalStorageEnabled,
-						lumberjackProperties: this.lumberjackProperties,
+						lumberjackProperties,
 					},
 					this.summaryWriteFeatureFlags,
 				);
@@ -126,6 +124,7 @@ export class GitWholeSummaryManager {
 				return writeSummaryInfo;
 			}
 			if (isContainerSummary(payload)) {
+				lumberjackProperties.summaryType = "container";
 				writeSummaryMetric.setProperty("summaryType", "container");
 				const writeSummaryInfo = await writeContainerSummary(
 					payload,
@@ -134,7 +133,7 @@ export class GitWholeSummaryManager {
 						documentId: this.documentId,
 						repoManager: this.repoManager,
 						externalStorageEnabled: this.externalStorageEnabled,
-						lumberjackProperties: this.lumberjackProperties,
+						lumberjackProperties,
 					},
 					this.summaryWriteFeatureFlags,
 				);
