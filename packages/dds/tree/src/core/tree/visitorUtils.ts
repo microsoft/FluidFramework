@@ -47,7 +47,7 @@ export function announceDelta(
 }
 
 /**
- * @param visitors - The returned visitor invokes event for all these visitors, in order.
+ * @param visitors - The returned visitor invokes the corresponding events for all these visitors, in order.
  * @param announceVisitors - Subset of `visitors` to also call {@link AnnouncedVisitor} methods on.
  * This must be a subset of `visitors`: if not the visitor will not have its path correctly set when the events are triggered.
  * When `visitors` are making changes to data, `announceVisitors` can be used to get extra events before or after all the changes from all the visitors have been made.
@@ -56,7 +56,7 @@ export function announceDelta(
  */
 export function combineVisitors(
 	visitors: readonly DeltaVisitor[],
-	announceVisitors: readonly AnnouncedVisitor[] = [],
+	announcedVisitors: readonly AnnouncedVisitor[] = [],
 ): DeltaVisitor {
 	{
 		const set = new Set(visitors);
