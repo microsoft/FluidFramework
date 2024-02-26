@@ -23,7 +23,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { type ISharedObject } from "@fluidframework/shared-object-base";
 // eslint-disable-next-line import/no-deprecated
-import { type LazyLoadedDataObject } from "./lazyLoadedDataObject";
+import { type LazyLoadedDataObject } from "./lazyLoadedDataObject.js";
 
 /**
  * @internal

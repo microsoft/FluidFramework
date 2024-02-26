@@ -10,6 +10,6 @@
  * @packageDocumentation
  */
 
-export { LazyLoadedDataObject } from "./lazyLoadedDataObject";
-export { LazyLoadedDataObjectFactory } from "./lazyLoadedDataObjectFactory";
-export { RuntimeFactory, type RuntimeFactoryProps } from "./runtimeFactory";
+export { LazyLoadedDataObject } from "./lazyLoadedDataObject.js";
+export { LazyLoadedDataObjectFactory } from "./lazyLoadedDataObjectFactory.js";
+export { RuntimeFactory, type RuntimeFactoryProps } from "./runtimeFactory.js";
