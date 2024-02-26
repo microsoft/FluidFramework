@@ -12,8 +12,8 @@ import {
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IGarbageCollectionData, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { IFluidSerializer } from "../serializer";
-import { SharedObject, SharedObjectCore } from "../sharedObject";
+import { IFluidSerializer } from "../serializer.js";
+import { SharedObject, SharedObjectCore } from "../sharedObject.js";
 
 class MySharedObject extends SharedObject {
 	constructor(id: string) {
