@@ -35,27 +35,23 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 	MockContainerRuntimeFactoryForReconnection,
-	MockContainerRuntimeForReconnection,
 	IMockContainerRuntimeOptions,
 } from "@fluidframework/test-runtime-utils";
 import { IChannelFactory, IChannelServices } from "@fluidframework/datastore-definitions";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { unreachableCase } from "@fluidframework/core-utils";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
 import { FuzzTestMinimizer, MinimizationTransform } from "./minification";
+import {
+	hasStashData,
+	type Client,
+	type ClientLoadData,
+	type ClientWithStashData,
+	createLoadData,
+} from "./clientLoading";
 
 const isOperationType = <O extends BaseOperation>(type: O["type"], op: BaseOperation): op is O =>
 	op.type === type;
-
-/**
- * @internal
- */
-export interface Client<TChannelFactory extends IChannelFactory> {
-	channel: ReturnType<TChannelFactory["create"]>;
-	dataStoreRuntime: MockFluidDataStoreRuntime;
-	containerRuntime: MockContainerRuntimeForReconnection;
-}
 
 /**
  * @internal
@@ -107,16 +103,6 @@ export interface StashClient {
 	type: "stashClient";
 	clientId: string;
 }
-type ClientWithStashData<TChannelFactory extends IChannelFactory> = Client<TChannelFactory> &
-	Partial<Record<"stashData", ClientLoadData>>;
-
-export const hasStashData = <TChannelFactory extends IChannelFactory>(
-	client?: Client<TChannelFactory>,
-): client is Required<ClientWithStashData<TChannelFactory>> =>
-	client !== undefined &&
-	"stashData" in client &&
-	client.stashData !== null &&
-	typeof client.stashData == "object";
 
 /**
  * @internal
@@ -660,15 +646,6 @@ export function mixinReconnect<
 	};
 }
 
-function finalizeAllocatedIds(compressor: IIdCompressorCore | undefined): void {
-	if (compressor !== undefined) {
-		const range = compressor.takeNextCreationRange();
-		if (range.ids !== undefined) {
-			compressor.finalizeCreationRange(range);
-		}
-	}
-}
-
 /**
  * Mixes in functionality to generate an 'attach' op, which
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
@@ -753,11 +730,6 @@ export function mixinAttach<
 				objectStorage: new MockStorage(),
 			};
 			clientA.channel.connect(services);
-
-			// Finalize all id creation ranges before serializing. The production codepath does this
-			// in ContainerRuntime.createSummary.
-			finalizeAllocatedIds(clientA.dataStoreRuntime.idCompressor);
-
 			const clients: Client<TChannelFactory>[] = await Promise.all(
 				Array.from({ length: options.numberOfClients }, async (_, index) =>
 					loadClient(
@@ -794,9 +766,7 @@ export function mixinAttach<
 		} else if (isOperationType<Rehydrate>("rehydrate", operation)) {
 			const clientA = state.clients[0];
 			assert.equal(state.clients.length, 1);
-			// Finalize all id creation ranges before serializing. The production codepath does this
-			// in ContainerRuntime.createSummary.
-			finalizeAllocatedIds(clientA.dataStoreRuntime.idCompressor);
+
 			state.containerRuntimeFactory.removeContainerRuntime(clientA.containerRuntime);
 
 			const summarizerClient = await loadDetached(
@@ -823,17 +793,9 @@ export function mixinAttach<
 		} else if (isOperationType<Attaching>("attaching", operation)) {
 			assert.equal(state.clients.length, 1);
 			const clientA: ClientWithStashData<IChannelFactory> = state.clients[0];
-			const { summary } = await clientA.channel.summarize();
-			const idCompressorSummary = clientA.dataStoreRuntime.idCompressor?.serialize(false);
+
 			if (operation.beforeRehydrate === true) {
-				clientA.stashData = {
-					minimumSequenceNumber:
-						clientA.containerRuntime.deltaManager.minimumSequenceNumber,
-					summaries: {
-						summary,
-						idCompressorSummary,
-					},
-				};
+				clientA.stashData = createLoadData(clientA);
 			}
 			clientA.dataStoreRuntime.setAttachState(AttachState.Attaching);
 			const services: IChannelServices = {
@@ -1230,14 +1192,6 @@ function createDetachedClient<TChannelFactory extends IChannelFactory>(
 	return newClient;
 }
 
-interface ClientLoadData {
-	minimumSequenceNumber: number;
-	summaries: {
-		summary: ISummaryTree;
-		idCompressorSummary: SerializedIdCompressorWithNoSession | undefined;
-	};
-}
-
 async function loadClient<TChannelFactory extends IChannelFactory>(
 	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
 	summarizerClient: ClientWithStashData<TChannelFactory>,
@@ -1246,13 +1200,7 @@ async function loadClient<TChannelFactory extends IChannelFactory>(
 	options: Omit<DDSFuzzSuiteOptions, "only" | "skip">,
 	supportStashing: boolean = false,
 ): Promise<ClientWithStashData<TChannelFactory>> {
-	const loadData: ClientLoadData = summarizerClient.stashData ?? {
-		minimumSequenceNumber: summarizerClient.dataStoreRuntime.deltaManager.lastSequenceNumber,
-		summaries: {
-			summary: summarizerClient.channel.getAttachSummary().summary,
-			idCompressorSummary: summarizerClient.dataStoreRuntime.idCompressor?.serialize(false),
-		},
-	};
+	const loadData: ClientLoadData = summarizerClient.stashData ?? createLoadData(summarizerClient);
 	return loadClientFromSummaries(
 		containerRuntimeFactory,
 		loadData,
@@ -1316,12 +1264,8 @@ async function loadDetached<TChannelFactory extends IChannelFactory>(
 	clientId: string,
 	options: Omit<DDSFuzzSuiteOptions, "only" | "skip">,
 ): Promise<Client<TChannelFactory>> {
-	const { summaries } = summarizerClient.stashData ?? {
-		summaries: {
-			summary: await summarizerClient.channel.summarize().then((s) => s.summary),
-			idCompressorSummary: summarizerClient.dataStoreRuntime.idCompressor?.serialize(false),
-		},
-	};
+	const { summaries } = summarizerClient.stashData ?? createLoadData(summarizerClient);
+
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({
 		clientId,
 		idCompressor: options.idCompressorFactory?.(summaries.idCompressorSummary),
