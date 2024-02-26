@@ -312,6 +312,9 @@ export class AttributableMapKernel {
 
 		// If we are not attached, don't submit the op.
 		if (!this.isAttached()) {
+			// this is necessary to bind the potential handles in the value
+			// to this DDS, as we do not walk the object normally unless we
+			// are attached
 			bindHandles(localValue.value, this.serializer, this.handle);
 			return;
 		}
