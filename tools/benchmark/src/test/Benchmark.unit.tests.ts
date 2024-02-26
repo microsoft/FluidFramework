@@ -107,6 +107,7 @@ describe("`benchmark` function", () => {
 
 	benchmark({
 		title: `async`,
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		benchmarkFn: async () => nextTick(() => 0),
 		type: BenchmarkType.OwnCorrectness,
 	});

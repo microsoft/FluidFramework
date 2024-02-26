@@ -422,7 +422,7 @@ export function benchmarkArgumentsIsCustom(
 	const isAsync = intersection.benchmarkFnAsync !== undefined;
 	const isCustom = intersection.benchmarkFnCustom !== undefined;
 	assert(
-		[isSync, isAsync, isCustom].filter((x) => x).length === 1,
+		[isSync, isAsync, isCustom].filter(Boolean).length === 1,
 		"Exactly one of `benchmarkFn`, `benchmarkFnAsync` or `benchmarkFnCustom` should be defined.",
 	);
 	return isCustom;
