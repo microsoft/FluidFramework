@@ -11,7 +11,7 @@ import {
 	ICacheEntry,
 	IEntry,
 } from "@fluidframework/odsp-driver-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { IFluidErrorBase, createChildLogger } from "@fluidframework/telemetry-utils";
 import { defaultCacheExpiryTimeoutMs, EpochTracker } from "../epochTracker.js";
 import { LocalPersistentCache } from "../odspCache.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";

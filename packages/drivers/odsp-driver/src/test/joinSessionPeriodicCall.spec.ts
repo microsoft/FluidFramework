@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { ISocketStorageDiscovery } from "@fluidframework/odsp-driver-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { stub, useFakeTimers, SinonFakeTimers } from "sinon";
+import { stub, useFakeTimers, SinonFakeTimers, SinonStub } from "sinon";
 import * as odspDocumentDeltaConnection from "../odspDocumentDeltaConnection.js";
 import * as joinSession from "../vroom.js";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory.js";

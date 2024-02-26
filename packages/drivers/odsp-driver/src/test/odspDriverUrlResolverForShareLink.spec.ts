@@ -13,7 +13,11 @@ import { OdspDriverUrlResolverForShareLink } from "../odspDriverUrlResolverForSh
 import { getHashedDocumentId } from "../odspPublicUtils.js";
 import { createOdspUrl } from "../createOdspUrl.js";
 import * as fileLinkImport from "../getFileLink.js";
-import { getLocatorFromOdspUrl, storeLocatorInOdspUrl } from "../odspFluidFileLink.js";
+import {
+	getLocatorFromOdspUrl,
+	locatorQueryParamName,
+	storeLocatorInOdspUrl,
+} from "../odspFluidFileLink.js";
 import { SharingLinkHeader } from "../contractsPublic.js";
 import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest.js";
 

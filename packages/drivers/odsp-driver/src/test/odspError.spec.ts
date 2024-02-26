@@ -10,8 +10,9 @@ import {
 } from "@fluidframework/odsp-doclib-utils/internal";
 import { NonRetryableError, type AuthorizationError } from "@fluidframework/driver-utils";
 import { OdspError, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
-import { IGenericNetworkError } from "@fluidframework/driver-definitions";
+import { IAuthorizationError, IGenericNetworkError } from "@fluidframework/driver-definitions";
 import { IThrottlingWarning } from "@fluidframework/core-interfaces";
+import { IFluidErrorBase } from "@fluidframework/telemetry-utils";
 import { IOdspSocketError } from "../contracts.js";
 import { fetchAndParseAsJSONHelper, getWithRetryForTokenRefresh } from "../odspUtils.js";
 import { errorObjectFromSocketError } from "../odspError.js";

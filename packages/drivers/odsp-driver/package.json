@@ -82,7 +82,7 @@
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "npm run test:mocha:cjs && npm run test:mocha:esm",
+		"test:mocha": "npm run test:mocha:cjs",
 		"test:mocha:cjs": "mocha  --recursive \"dist/test/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
 		"test:mocha:esm": "mocha  --recursive \"lib/test/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
@@ -150,7 +150,7 @@
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"sinon": "^7.4.2",
+		"sinon": "^17.0.1",
 		"typescript": "~5.1.6"
 	},
 	"fluidBuild": {
@@ -173,6 +173,9 @@
 			},
 			"InterfaceDeclaration_IPrefetchSnapshotContents": {
 				"backCompat": false,
+				"forwardCompat": false
+			},
+			"ClassDeclaration_OdspDriverUrlResolverForShareLink": {
 				"forwardCompat": false
 			}
 		}
