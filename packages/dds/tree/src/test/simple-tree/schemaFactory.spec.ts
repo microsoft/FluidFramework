@@ -124,7 +124,10 @@ describe("schemaFactory", () => {
 		// TODO: make structural types easier to construct
 		const factory = new TreeFactory({});
 		const config = new TreeConfiguration(StructuralArray, () => []);
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
 
 		const s = tree.schematize(config).root;
 		// TODO: maybe make this type check.

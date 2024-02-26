@@ -92,13 +92,13 @@ export abstract class TreeNode implements WithType {
 	/**
 	 * Provides `instancof` support for all tree nodes.
 	 * @remarks
+	 * Returns false for leaf values.
+	 *
 	 * This requires that the subclasses of TreeNode are all actually node types:
 	 * to avoid breaking this, do not extend TreeNode other than via class based schema.
 	 * @privateRemarks
 	 * This overrides `instancof` for all subclasses of TreeNode to use a schema based approach.
 	 * TypeScript 5.3 will impact how this does type narrowing, but it should continue to work correctly with that.
-	 *
-	 * TODO: once class-tree and simple-tree are merged, consider refactoring this to share logic with `Tree.is`.
 	 */
 	public static [Symbol.hasInstance]<
 		TSchema extends typeof TreeNode & (abstract new (...args: any[]) => TreeNode),
