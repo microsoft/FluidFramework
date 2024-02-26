@@ -267,6 +267,7 @@ export {
 	TreeView,
 	TreeViewEvents,
 	SchemaFactory,
+	type ScopedSchemaName,
 	Tree,
 	TreeApi,
 	ImplicitFieldSchema,

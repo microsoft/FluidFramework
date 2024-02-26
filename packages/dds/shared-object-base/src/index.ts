@@ -12,5 +12,6 @@ export {
 	makeHandlesSerializable,
 	parseHandles,
 	serializeHandles,
+	bindHandles,
 } from "./utils";
 export { ValueType } from "./valueType";
