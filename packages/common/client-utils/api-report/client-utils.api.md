@@ -23,9 +23,7 @@ export class Buffer extends Uint8Array {
 export const bufferToString: (blob: ArrayBufferLike, encoding: "utf8" | "utf-8" | "base64") => string;
 
 // @public
-export type EventEmitterEventType = EventEmitter extends {
-    on(event: infer E, listener: any): any;
-} ? E : never;
+export type EventEmitterEventType = string;
 
 // @internal
 export const fromBase64ToUtf8: (input: string) => string;

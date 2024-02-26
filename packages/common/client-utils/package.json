@@ -171,6 +171,9 @@
 	},
 	"typeValidation": {
 		"broken": {
+			"TypeAliasDeclaration_EventEmitterEventType": {
+				"forwardCompat": false
+			},
 			"RemovedClassDeclaration_EventForwarder": {
 				"backCompat": false,
 				"forwardCompat": false

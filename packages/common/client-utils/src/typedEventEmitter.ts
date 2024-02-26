@@ -15,13 +15,11 @@ import {
  * The event emitter polyfill and the node event emitter have different event types:
  * string | symbol vs. string | number
  *
- * This type allow us to correctly handle either type
+ * The polyfill is now always used, but string is the only event time preferred.
  * @public
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type EventEmitterEventType = EventEmitter extends { on(event: infer E, listener: any) }
-	? E
-	: never;
+export type EventEmitterEventType = string;
 
 /**
  * @public
