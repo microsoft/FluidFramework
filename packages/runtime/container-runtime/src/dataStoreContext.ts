@@ -253,7 +253,7 @@ export abstract class FluidDataStoreContext
 	private loaded = false;
 	protected pending: ISequencedDocumentMessage[] | undefined = [];
 	protected channelDeferred: Deferred<IFluidDataStoreChannel> | undefined;
-	private _baseSnapshot: ISnapshotTree | undefined;
+	protected _baseSnapshot: ISnapshotTree | undefined;
 	protected _attachState: AttachState;
 	private _isInMemoryRoot: boolean = false;
 	protected readonly summarizerNode: ISummarizerNodeWithGC;
@@ -1010,7 +1010,6 @@ export abstract class FluidDataStoreContext
 }
 
 export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
-	private initSnapshotValue: ISnapshotTree | undefined;
 	// Tells whether we need to fetch the snapshot before use. This is to support Data Virtualization.
 	private snapshotFetchRequired: boolean;
 	private readonly runtime: ContainerRuntime;
@@ -1020,7 +1019,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 			throw new Error("Already attached");
 		});
 
-		this.initSnapshotValue = props.snapshotTree;
+		this._baseSnapshot = props.snapshotTree;
 		this.snapshotFetchRequired = !!props.snapshotTree?.omitted;
 		this.runtime = props.runtime;
 		if (props.snapshotTree !== undefined) {
@@ -1040,11 +1039,11 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 				[this.loadingGroupId],
 				[this.id],
 			);
-			this.initSnapshotValue = snapshot.snapshotTree;
+			this._baseSnapshot = snapshot.snapshotTree;
 			sequenceNumber = snapshot.sequenceNumber;
 			this.snapshotFetchRequired = false;
 		}
-		let tree = this.initSnapshotValue;
+		let tree = this.baseSnapshot;
 		let isRootDataStore = true;
 
 		if (!!tree && tree.blobs[dataStoreAttributesBlobName] !== undefined) {
