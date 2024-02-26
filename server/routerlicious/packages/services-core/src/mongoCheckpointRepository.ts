@@ -41,6 +41,8 @@ export class MongoCheckpointRepository implements ICheckpointRepository {
 			checkpointType: this.checkpointType,
 		};
 		try {
+			// Duplicate key errors have occurred when 2 upsert() occur at the same time for the same document
+			// retry to allow both checkpoints
 			await runWithRetry(
 				async () =>
 					this.collection.upsert(
