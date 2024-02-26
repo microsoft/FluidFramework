@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ChangesetLocalId, RevisionTag } from "../core";
+import { ChangesetLocalId, RevisionTag } from "../core/index.js";
 import {
 	RangeMap,
 	getOrAddEmptyToMap,
@@ -11,7 +11,7 @@ import {
 	setInRangeMap,
 	Mutable,
 	brand,
-} from "../util";
+} from "../util/index.js";
 
 /**
  * A unique ID allocator that returns the output ID for the same input ID.

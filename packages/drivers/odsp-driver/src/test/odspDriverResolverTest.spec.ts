@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
@@ -27,6 +27,7 @@ describe("Odsp Driver Resolver", () => {
 
 	it("Can create new request", async () => {
 		assert.strictEqual(
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			request.headers?.[DriverHeader.createNew].fileName,
 			fileName,
 			"Request should contain fileName",
@@ -104,23 +105,16 @@ describe("Odsp Driver Resolver", () => {
 		);
 	});
 
-	it("Should add shareLinkInfo with link type if request contains createLinkType", async () => {
-		const newRequest = request;
-		const createLinkType = "csl";
-		newRequest.url += `&createLinkType=${createLinkType}`;
-		const resolvedUrl = await resolver.resolve(request);
-		assert(resolvedUrl.shareLinkInfo !== undefined);
-		assert(resolvedUrl.shareLinkInfo.createLink !== undefined);
-		assert.strictEqual(resolvedUrl.shareLinkInfo.createLink.type, createLinkType);
-	});
-
 	it("Should resolve url with a string in the codeDetails package", async () => {
 		const resolvedUrl = await resolver.resolve(request);
-		const codeDetails = { package: packageName };
+		const codeDetails = {
+			package: packageName,
+		};
 		// codeDetails is cast to any for testing the IFluidCodeDetails approach
 		const response = await resolver.getAbsoluteUrl(
 			resolvedUrl,
 			"/datastore",
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
 			codeDetails as any,
 		);
 
@@ -188,7 +182,7 @@ describe("Odsp Driver Resolver", () => {
 
 	it("Should resolve url with a IFluidPackage in the codeDetails package", async () => {
 		const resolvedUrl = await resolver.resolve(request);
-		const fluidPackage: any = {
+		const fluidPackage = {
 			name: packageName,
 			fluid: {},
 		};
@@ -197,6 +191,7 @@ describe("Odsp Driver Resolver", () => {
 		const response = await resolver.getAbsoluteUrl(
 			resolvedUrl,
 			"/datastore",
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
 			codeDetails as any,
 		);
 

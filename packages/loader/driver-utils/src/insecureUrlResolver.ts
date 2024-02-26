@@ -31,6 +31,7 @@ export class InsecureUrlResolver implements IUrlResolver {
 		private readonly hostUrl: string,
 		private readonly ordererUrl: string,
 		private readonly storageUrl: string,
+		private readonly deltaStreamUrl: string,
 		private readonly tenantId: string,
 		private readonly bearer: string,
 		private readonly isForNodeTest: boolean = false,
@@ -66,7 +67,7 @@ export class InsecureUrlResolver implements IUrlResolver {
 				Authorization: `Bearer ${this.bearer}`,
 			};
 			const resolvedP = Axios.post<IResolvedUrl>(
-				`${this.hostUrl}/api/v1/load`,
+				`${this.hostUrl}/apis/load`,
 				{
 					url: request.url,
 				},
@@ -97,6 +98,7 @@ export class InsecureUrlResolver implements IUrlResolver {
 			const createNewResponse: IResolvedUrl = {
 				endpoints: {
 					deltaStorageUrl: `${this.ordererUrl}/deltas/${encodedTenantId}/new`,
+					deltaStreamUrl: this.deltaStreamUrl,
 					ordererUrl: this.ordererUrl,
 					storageUrl: `${this.storageUrl}/repos/${encodedTenantId}`,
 				},
@@ -121,6 +123,7 @@ export class InsecureUrlResolver implements IUrlResolver {
 		const response: IResolvedUrl = {
 			endpoints: {
 				deltaStorageUrl,
+				deltaStreamUrl: this.deltaStreamUrl,
 				ordererUrl: this.ordererUrl,
 				storageUrl,
 			},

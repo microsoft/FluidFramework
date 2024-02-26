@@ -13,11 +13,11 @@ import {
 	compareFieldUpPaths,
 	rootFieldKey,
 	rootField,
-} from "../../core";
-import { brand } from "../../util";
+} from "../../core/index.js";
+import { brand } from "../../util/index.js";
 // This import is targeting the code being tested
 // eslint-disable-next-line import/no-internal-modules
-import { getDetachedFieldContainingPath } from "../../core/tree/pathTree";
+import { getDetachedFieldContainingPath } from "../../core/tree/pathTree.js";
 
 const rootKey = brand<FieldKey>("root");
 const fooKey = brand<FieldKey>("foo");

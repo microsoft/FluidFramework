@@ -19,4 +19,5 @@ export {
 	Synchronize,
 	replayTest,
 } from "./ddsFuzzHarness";
+export { createSnapshotSuite, ISnapshotSuite } from "./ddsSnapshotHarness";
 export { MinimizationTransform } from "./minification";

@@ -3,42 +3,60 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
-	IEvent,
-	IFluidHandle,
-	IFluidLoadable,
-	IRequest,
-	IResponse,
-	IProvideFluidHandle,
+	type IDisposable,
+	type IEvent,
+	type IFluidHandle,
+	type IFluidLoadable,
+	type IRequest,
+	type IResponse,
+	type IProvideFluidHandle,
 } from "@fluidframework/core-interfaces";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { type IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+import { type IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { FluidObjectHandle } from "@fluidframework/datastore";
-import { ISharedObject } from "@fluidframework/shared-object-base";
-import { EventForwarder } from "@fluid-internal/client-utils";
+import { type ISharedObject } from "@fluidframework/shared-object-base";
 import { create404Response } from "@fluidframework/runtime-utils";
 
 /**
  * @internal
+ * @deprecated Not recommended for use.  For lazy loading of data objects, prefer to defer dereferencing their handles.
  */
 export abstract class LazyLoadedDataObject<
 		TRoot extends ISharedObject = ISharedObject,
 		TEvents extends IEvent = IEvent,
 	>
-	extends EventForwarder<TEvents>
-	implements IFluidLoadable, IProvideFluidHandle
+	extends TypedEventEmitter<TEvents>
+	implements IFluidLoadable, IProvideFluidHandle, IDisposable
 {
 	private _handle?: IFluidHandle<this>;
 
-	public get IFluidLoadable() {
+	/**
+	 * {@inheritDoc @fluidframework/core-interfaces#IProvideFluidLoadable.IFluidLoadable}
+	 */
+	public get IFluidLoadable(): this {
 		return this;
 	}
-	public get IFluidHandle() {
+
+	/**
+	 * {@inheritDoc @fluidframework/core-interfaces#IProvideFluidHandle.IFluidHandle}
+	 */
+	public get IFluidHandle(): IFluidHandle<this> {
 		return this.handle;
 	}
-	public get IProvideFluidHandle() {
+
+	public get IProvideFluidHandle(): this {
 		return this;
 	}
+
+	/**
+	 * {@inheritDoc @fluidframework/core-interfaces#IDisposable.disposed}
+	 */
+	public get disposed(): boolean {
+		return this.isDisposed;
+	}
+	private isDisposed: boolean = false;
 
 	protected readonly root: TRoot;
 
@@ -49,6 +67,13 @@ export abstract class LazyLoadedDataObject<
 	) {
 		super();
 		this.root = root as TRoot;
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/core-interfaces#IDisposable.dispose}
+	 */
+	public dispose(): void {
+		this.isDisposed = true;
 	}
 
 	public async request(r: IRequest): Promise<IResponse> {
@@ -70,6 +95,8 @@ export abstract class LazyLoadedDataObject<
 
 	// #endregion IFluidLoadable
 
+	// TODO: Use unknown (or a stronger type) instead of any. Breaking change.
+	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
 	public abstract create(props?: any);
 	public abstract load(
 		context: IFluidDataStoreContext,

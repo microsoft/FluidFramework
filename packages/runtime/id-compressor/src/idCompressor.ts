@@ -45,6 +45,7 @@ import {
 	lastFinalizedLocal,
 	Session,
 	Sessions,
+	lastFinalizedFinal,
 } from "./sessions";
 import { SessionSpaceNormalizer } from "./sessionSpaceNormalizer";
 import { FinalSpace } from "./finalSpace";
@@ -53,15 +54,10 @@ import { FinalSpace } from "./finalSpace";
  * The version of IdCompressor that is currently persisted.
  * This should not be changed without careful consideration to compatibility.
  */
-const currentWrittenVersion = 1;
+const currentWrittenVersion = 2.0;
 
 /**
  * See {@link IIdCompressor} and {@link IIdCompressorCore}
- *
- * @alpha
- *
- * @deprecated Not intended for public use and will be removed from the public API in the future.
- * Use `createIdCompressor` instead.
  */
 export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	/**
@@ -103,10 +99,12 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	private telemetryLocalIdCount = 0;
 	// The number of eager final IDs generated since the last telemetry was sent.
 	private telemetryEagerFinalIdCount = 0;
+	// The ongoing ghost session, if one exists.
+	private ongoingGhostSession?: { cluster?: IdCluster; ghostSessionId: SessionId };
 
 	// #endregion
 
-	private constructor(
+	public constructor(
 		localSessionIdOrDeserialized: SessionId | Sessions,
 		private readonly logger?: ITelemetryLoggerExt,
 	) {
@@ -127,64 +125,71 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		}
 	}
 
-	/**
-	 * @deprecated Use `createIdCompressor` instead.
-	 */
-	public static create(logger?: ITelemetryBaseLogger): IIdCompressor & IIdCompressorCore;
-	/**
-	 * @deprecated Use `createIdCompressor` instead.
-	 */
-	public static create(
-		sessionId: SessionId,
-		logger?: ITelemetryBaseLogger,
-	): IIdCompressor & IIdCompressorCore;
-	public static create(
-		sessionIdOrLogger?: SessionId | ITelemetryBaseLogger,
-		loggerOrUndefined?: ITelemetryBaseLogger,
-	): IIdCompressor & IIdCompressorCore {
-		let localSessionId: SessionId;
-		let logger: ITelemetryBaseLogger | undefined;
-		if (sessionIdOrLogger === undefined) {
-			localSessionId = createSessionId();
-		} else {
-			if (typeof sessionIdOrLogger === "string") {
-				localSessionId = sessionIdOrLogger;
-				logger = loggerOrUndefined;
-			} else {
-				localSessionId = createSessionId();
-				logger = loggerOrUndefined;
-			}
-		}
-		const compressor = new IdCompressor(
-			localSessionId,
-			logger === undefined ? undefined : createChildLogger({ logger }),
-		);
-		return compressor;
-	}
-
 	public generateCompressedId(): SessionSpaceCompressedId {
-		this.localGenCount++;
-		const lastCluster = this.localSession.getLastCluster();
-		if (lastCluster === undefined) {
+		// This ghost session code inside this block should not be changed without a version bump (it is performed at a consensus point)
+		if (this.ongoingGhostSession) {
+			if (this.ongoingGhostSession.cluster === undefined) {
+				this.ongoingGhostSession.cluster = this.addEmptyCluster(
+					this.sessions.getOrCreate(this.ongoingGhostSession.ghostSessionId),
+					1,
+				);
+			} else {
+				this.ongoingGhostSession.cluster.capacity++;
+			}
+			this.ongoingGhostSession.cluster.count++;
+			return lastFinalizedFinal(
+				this.ongoingGhostSession.cluster,
+			) as unknown as SessionSpaceCompressedId;
+		} else {
+			this.localGenCount++;
+			const lastCluster = this.localSession.getLastCluster();
+			if (lastCluster === undefined) {
+				this.telemetryLocalIdCount++;
+				return this.generateNextLocalId();
+			}
+
+			// If there exists a cluster of final IDs already claimed by the local session that still has room in it,
+			// it is known prior to range sequencing what a local ID's corresponding final ID will be.
+			// In this case, it is safe to return the final ID immediately. This is guaranteed to be safe because
+			// any op that the local session sends that contains one of those final IDs are guaranteed to arrive to
+			// collaborators *after* the one containing the creation range.
+			const clusterOffset = this.localGenCount - genCountFromLocalId(lastCluster.baseLocalId);
+			if (lastCluster.capacity > clusterOffset) {
+				this.telemetryEagerFinalIdCount++;
+				// Space in the cluster: eager final
+				return ((lastCluster.baseFinalId as number) +
+					clusterOffset) as SessionSpaceCompressedId;
+			}
+			// No space in the cluster, return next local
 			this.telemetryLocalIdCount++;
 			return this.generateNextLocalId();
 		}
+	}
 
-		// If there exists a cluster of final IDs already claimed by the local session that still has room in it,
-		// it is known prior to range sequencing what a local ID's corresponding final ID will be.
-		// In this case, it is safe to return the final ID immediately. This is guaranteed to be safe because
-		// any op that the local session sends that contains one of those final IDs are guaranteed to arrive to
-		// collaborators *after* the one containing the creation range.
-		const clusterOffset = this.localGenCount - genCountFromLocalId(lastCluster.baseLocalId);
-		if (lastCluster.capacity > clusterOffset) {
-			this.telemetryEagerFinalIdCount++;
-			// Space in the cluster: eager final
-			return ((lastCluster.baseFinalId as number) +
-				clusterOffset) as SessionSpaceCompressedId;
+	public generateDocumentUniqueId(): (SessionSpaceCompressedId & OpSpaceCompressedId) | StableId {
+		const id = this.generateCompressedId();
+		return isFinalId(id) ? id : this.decompress(id);
+	}
+
+	/**
+	 * Starts a ghost session. Only exposed for test purposes (this class is not exported from the package).
+	 * @param ghostSessionId - The session ID to start the ghost session with.
+	 */
+	public startGhostSession(ghostSessionId: SessionId): void {
+		assert(!this.ongoingGhostSession, "Ghost session already in progress.");
+		this.ongoingGhostSession = { ghostSessionId };
+	}
+
+	/**
+	 * {@inheritdoc IIdCompressorCore.beginGhostSession}
+	 */
+	public beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void) {
+		this.startGhostSession(ghostSessionId);
+		try {
+			ghostSessionCallback();
+		} finally {
+			this.ongoingGhostSession = undefined;
 		}
-		// No space in the cluster, return next local
-		this.telemetryLocalIdCount++;
-		return this.generateNextLocalId();
 	}
 
 	private generateNextLocalId(): LocalCompressedId {
@@ -194,6 +199,10 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	}
 
 	public takeNextCreationRange(): IdCreationRange {
+		assert(
+			!this.ongoingGhostSession,
+			0x8a6 /* IdCompressor should not be operated normally when in a ghost session */,
+		);
 		const count = this.localGenCount - (this.nextRangeBaseGenCount - 1);
 		if (count === 0) {
 			return {
@@ -227,6 +236,10 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	}
 
 	public finalizeCreationRange(range: IdCreationRange): void {
+		assert(
+			!this.ongoingGhostSession,
+			0x8a7 /* IdCompressor should not be operated normally when in a ghost session */,
+		);
 		// Check if the range has IDs
 		if (range.ids === undefined) {
 			return;
@@ -310,6 +323,10 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	}
 
 	private addEmptyCluster(session: Session, capacity: number): IdCluster {
+		assert(
+			!this.ongoingGhostSession?.cluster,
+			0x8a8 /* IdCompressor should not be operated normally when in a ghost session */,
+		);
 		const newCluster = session.addNewCluster(
 			this.finalSpace.getAllocatedIdLimit(),
 			capacity,
@@ -473,6 +490,10 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	public serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
 	public serialize(withSession: false): SerializedIdCompressorWithNoSession;
 	public serialize(hasLocalState: boolean): SerializedIdCompressor {
+		assert(
+			!this.ongoingGhostSession,
+			0x8a9 /* IdCompressor should not be operated normally when in a ghost session */,
+		);
 		const { normalizer, finalSpace, sessions } = this;
 		const sessionIndexMap = new Map<Session, number>();
 		let sessionIndex = 0;
@@ -542,15 +563,27 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		return bufferToString(serializedFloat.buffer, "base64") as SerializedIdCompressor;
 	}
 
-	public static deserialize(serialized: SerializedIdCompressorWithOngoingSession): IdCompressor;
+	public static deserialize(
+		serialized: SerializedIdCompressorWithOngoingSession,
+		logger?: ITelemetryLoggerExt,
+	): IdCompressor;
 	public static deserialize(
 		serialized: SerializedIdCompressorWithNoSession,
 		newSessionId: SessionId,
+		logger?: ITelemetryLoggerExt,
 	): IdCompressor;
 	public static deserialize(
 		serialized: SerializedIdCompressor,
-		sessionId?: SessionId,
+		loggerOrSessionId?: ITelemetryLoggerExt | SessionId,
 	): IdCompressor {
+		let sessionId: SessionId | undefined;
+		let logger: ITelemetryLoggerExt | undefined;
+		if (typeof loggerOrSessionId === "string") {
+			sessionId = loggerOrSessionId;
+		} else {
+			logger = loggerOrSessionId;
+		}
+
 		const buffer = stringToBuffer(serialized, "base64");
 		const index: Index = {
 			index: 0,
@@ -558,7 +591,21 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			bufferUint: new BigUint64Array(buffer),
 		};
 		const version = readNumber(index);
-		assert(version === currentWrittenVersion, 0x75c /* Unknown serialized version. */);
+		switch (version) {
+			case 1.0:
+				throw new Error("IdCompressor version 1.0 is no longer supported.");
+			case 2.0:
+				return IdCompressor.deserialize2_0(index, sessionId, logger);
+			default:
+				throw new Error("Unknown IdCompressor serialized version.");
+		}
+	}
+
+	static deserialize2_0(
+		index: Index,
+		sessionId?: SessionId,
+		logger?: ITelemetryLoggerExt,
+	): IdCompressor {
 		const hasLocalState = readBoolean(index);
 		const sessionCount = readNumber(index);
 		const clusterCount = readNumber(index);
@@ -584,7 +631,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			sessions.push([numeric, new Session(numeric)]);
 		}
 
-		const compressor = new IdCompressor(new Sessions(sessions));
+		const compressor = new IdCompressor(new Sessions(sessions), logger);
 
 		// Clusters
 		let baseFinalId = 0;
@@ -657,7 +704,24 @@ export function createIdCompressor(
 	sessionIdOrLogger?: SessionId | ITelemetryBaseLogger,
 	loggerOrUndefined?: ITelemetryBaseLogger,
 ): IIdCompressor & IIdCompressorCore {
-	return IdCompressor.create(sessionIdOrLogger as SessionId, loggerOrUndefined);
+	let localSessionId: SessionId;
+	let logger: ITelemetryBaseLogger | undefined;
+	if (sessionIdOrLogger === undefined) {
+		localSessionId = createSessionId();
+	} else {
+		if (typeof sessionIdOrLogger === "string") {
+			localSessionId = sessionIdOrLogger;
+			logger = loggerOrUndefined;
+		} else {
+			localSessionId = createSessionId();
+			logger = sessionIdOrLogger;
+		}
+	}
+	const compressor = new IdCompressor(
+		localSessionId,
+		logger === undefined ? undefined : createChildLogger({ logger }),
+	);
+	return compressor;
 }
 
 /**
@@ -666,6 +730,7 @@ export function createIdCompressor(
  */
 export function deserializeIdCompressor(
 	serialized: SerializedIdCompressorWithOngoingSession,
+	logger?: ITelemetryLoggerExt,
 ): IIdCompressor & IIdCompressorCore;
 /**
  * Deserializes the supplied state into an ID compressor.
@@ -674,12 +739,20 @@ export function deserializeIdCompressor(
 export function deserializeIdCompressor(
 	serialized: SerializedIdCompressorWithNoSession,
 	newSessionId: SessionId,
+	logger?: ITelemetryLoggerExt,
 ): IIdCompressor & IIdCompressorCore;
 export function deserializeIdCompressor(
 	serialized: SerializedIdCompressor | SerializedIdCompressorWithNoSession,
-	sessionId?: SessionId,
+	sessionIdOrLogger?: SessionId | ITelemetryLoggerExt,
+	logger?: ITelemetryLoggerExt | undefined,
 ): IIdCompressor & IIdCompressorCore {
-	return sessionId === undefined
-		? IdCompressor.deserialize(serialized as SerializedIdCompressorWithOngoingSession)
-		: IdCompressor.deserialize(serialized as SerializedIdCompressorWithNoSession, sessionId);
+	if (typeof sessionIdOrLogger === "string") {
+		return IdCompressor.deserialize(
+			serialized as SerializedIdCompressorWithNoSession,
+			sessionIdOrLogger,
+			logger,
+		);
+	}
+
+	return IdCompressor.deserialize(serialized as SerializedIdCompressorWithOngoingSession, logger);
 }

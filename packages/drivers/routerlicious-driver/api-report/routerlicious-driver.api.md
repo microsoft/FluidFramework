@@ -39,9 +39,14 @@ export interface IRouterliciousDriverPolicies {
     enablePrefetch: boolean;
     enableRestLess: boolean;
     enableWholeSummaryUpload: boolean;
-    isEphemeralContainer: boolean;
     maxConcurrentOrdererRequests: number;
     maxConcurrentStorageRequests: number;
+}
+
+// @alpha
+export interface IRouterliciousResolvedUrl extends IResolvedUrl {
+    createAsEphemeral?: boolean;
+    routerliciousResolvedUrl: true;
 }
 
 // @public
@@ -69,12 +74,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
     createContainer(createNewSummary: ISummaryTree | undefined, resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean, session?: ISession): Promise<IDocumentService>;
-}
-
-// @internal @deprecated
-export enum RouterliciousErrorType {
-    fileNotFoundOrAccessDeniedError = "fileNotFoundOrAccessDeniedError",
-    sslCertError = "sslCertError"
 }
 
 // @internal

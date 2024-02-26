@@ -4,13 +4,13 @@
  */
 
 import { Static, ObjectOptions, TSchema, Type } from "@sinclair/typebox";
-import { EncodedChangeAtomId } from "../modular-schema";
+import { EncodedChangeAtomId } from "../modular-schema/index.js";
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
-// 0 signifies "self". Using undefined doesn't actually JSON round-trip conveniently, since
+// `null` signifies "self". Using undefined doesn't actually JSON round-trip conveniently, since
 // undefined is converted to null when inside an array (which happens in e.g. the moves array).
-export const EncodedRegisterId = Type.Union([EncodedChangeAtomId, Type.Literal(0)]);
+export const EncodedRegisterId = Type.Union([EncodedChangeAtomId, Type.Null()]);
 export type EncodedRegisterId = Static<typeof EncodedRegisterId>;
 
 export const EncodedBuild = Type.Tuple([EncodedChangeAtomId]);

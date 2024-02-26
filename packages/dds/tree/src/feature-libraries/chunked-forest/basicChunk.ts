@@ -14,10 +14,10 @@ import {
 	Value,
 	TreeType,
 	PathRootPrefix,
-} from "../../core";
-import { fail, ReferenceCountedBase } from "../../util";
-import { prefixPath, SynchronousCursor } from "../treeCursorUtils";
-import { ChunkedCursor, cursorChunk, dummyRoot, TreeChunk } from "./chunk";
+} from "../../core/index.js";
+import { fail, ReferenceCountedBase } from "../../util/index.js";
+import { prefixPath, SynchronousCursor } from "../treeCursorUtils.js";
+import { ChunkedCursor, cursorChunk, dummyRoot, TreeChunk } from "./chunk.js";
 
 /**
  * General purpose one node chunk.

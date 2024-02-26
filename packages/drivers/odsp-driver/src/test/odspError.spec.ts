@@ -3,11 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { createOdspNetworkError, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
-import { NonRetryableError } from "@fluidframework/driver-utils";
-import { OdspError } from "@fluidframework/odsp-driver-definitions";
+import { strict as assert } from "node:assert";
+import {
+	createOdspNetworkError,
+	throwOdspNetworkError,
+} from "@fluidframework/odsp-doclib-utils/internal";
+import { NonRetryableError, type AuthorizationError } from "@fluidframework/driver-utils";
+import { OdspError, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
+import { IGenericNetworkError, type IAuthorizationError } from "@fluidframework/driver-definitions";
+import { IThrottlingWarning } from "@fluidframework/core-interfaces";
+import { type IFluidErrorBase } from "@fluidframework/telemetry-utils";
+
 import { IOdspSocketError } from "../contracts";
 import { fetchAndParseAsJSONHelper, getWithRetryForTokenRefresh } from "../odspUtils";
 import { errorObjectFromSocketError } from "../odspError";
@@ -30,45 +36,71 @@ describe("Odsp Error", () => {
 		},
 	} as Response;
 
+	/**
+	 * Checks if the input is an {@link IGenericNetworkError}.
+	 */
+	function isIGenericNetworkError(input: unknown): input is IGenericNetworkError {
+		return (
+			(input as Partial<IGenericNetworkError>)?.errorType ===
+			OdspErrorTypes.genericNetworkError
+		);
+	}
+
+	/**
+	 * Checks if the input is an {@link IThrottlingWarning}.
+	 */
+	function isIThrottlingWarning(input: unknown): input is IThrottlingWarning {
+		return (input as Partial<IThrottlingWarning>)?.errorType === OdspErrorTypes.throttlingError;
+	}
+
+	/**
+	 * Checks if the input is an {@link IThrottlingWarning}.
+	 */
+	function isIAuthorizationError(input: unknown): input is IAuthorizationError {
+		return (
+			(input as Partial<IAuthorizationError>)?.errorType === OdspErrorTypes.authorizationError
+		);
+	}
+
 	function createOdspNetworkErrorWithResponse(
 		errorMessage: string,
 		statusCode: number,
 		response?: Response,
 		responseText?: string,
-	) {
+	): IFluidErrorBase & OdspError {
 		try {
 			throwOdspNetworkError(errorMessage, statusCode, response ?? testResponse, responseText);
 			assert.fail("Not reached - throwOdspNetworkError should have thrown");
 		} catch (error) {
-			return error as OdspError;
+			return error as IFluidErrorBase & OdspError;
 		}
 	}
 
 	it("throwOdspNetworkError first-class properties", async () => {
 		const networkError = createOdspNetworkErrorWithResponse("some message", 400);
-		if (networkError.errorType !== DriverErrorType.genericNetworkError) {
+		if (networkError.errorType !== OdspErrorTypes.genericNetworkError) {
 			assert.fail("networkError should be a genericNetworkError");
-		} else {
-			assert(
-				networkError.message.includes("some message"),
-				"message should contain original message",
-			);
-			assert(
-				(networkError as any).responseType === "default",
-				"message should contain Response.type",
-			);
-			assert.equal(false, networkError.canRetry, "canRetry should be false");
 		}
+		assert(
+			networkError.message.includes("some message"),
+			"message should contain original message",
+		);
+		assert(
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+			(networkError as any).responseType === "default",
+			"message should contain Response.type",
+		);
+		assert.equal(false, networkError.canRetry, "canRetry should be false");
 	});
 
 	it("throwOdspNetworkError sprequestguid exists", async () => {
-		const error1: any = createOdspNetworkErrorWithResponse("some message", 400);
+		const error1 = createOdspNetworkErrorWithResponse("some message", 400);
 		const errorBag = { ...error1.getTelemetryProperties() };
 		assert.equal("xxx-xxx", errorBag.sprequestguid, "sprequestguid should be 'xxx-xxx'");
 	});
 
 	it("throwOdspNetworkError sprequestguid undefined", async () => {
-		const error1: any = createOdspNetworkError("some message", 400);
+		const error1 = createOdspNetworkError("some message", 400);
 		const errorBag = { ...error1.getTelemetryProperties() };
 		assert.equal(undefined, errorBag.sprequestguid, "sprequestguid should not be defined");
 	});
@@ -79,20 +111,20 @@ describe("Odsp Error", () => {
 			code: 400,
 		};
 		const networkError = errorObjectFromSocketError(socketError, "disconnect");
-		if (networkError.errorType !== DriverErrorType.genericNetworkError) {
-			assert.fail("networkError should be a genericNetworkError");
-		} else {
-			assert(
-				networkError.message.includes("disconnect"),
-				"error message should include handler name",
-			);
-			assert(
-				networkError.message.includes("testMessage"),
-				"error message should include socket error message",
-			);
-			assert.equal(networkError.canRetry, false);
-			assert.equal(networkError.statusCode, 400);
-		}
+		assert(
+			isIGenericNetworkError(networkError),
+			"networkError should be a genericNetworkError",
+		);
+		assert(
+			networkError.message.includes("disconnect"),
+			"error message should include handler name",
+		);
+		assert(
+			networkError.message.includes("testMessage"),
+			"error message should include socket error message",
+		);
+		assert.equal(networkError.canRetry, false);
+		assert.equal(networkError.statusCode, 400);
 	});
 
 	it("errorObjectFromSocketError with retryFilter", async () => {
@@ -101,20 +133,17 @@ describe("Odsp Error", () => {
 			code: 400,
 		};
 		const networkError = errorObjectFromSocketError(socketError, "error");
-		if (networkError.errorType !== DriverErrorType.genericNetworkError) {
-			assert.fail("networkError should be a genericNetworkError");
-		} else {
-			assert(
-				networkError.message.includes("error"),
-				"error message should include handler name",
-			);
-			assert(
-				networkError.message.includes("testMessage"),
-				"error message should include socket error message",
-			);
-			assert.equal(networkError.canRetry, false);
-			assert.equal(networkError.statusCode, 400);
-		}
+		assert(
+			isIGenericNetworkError(networkError),
+			"networkError should be a genericNetworkError",
+		);
+		assert(networkError.message.includes("error"), "error message should include handler name");
+		assert(
+			networkError.message.includes("testMessage"),
+			"error message should include socket error message",
+		);
+		assert.equal(networkError.canRetry, false);
+		assert.equal(networkError.statusCode, 400);
 	});
 
 	it("errorObjectFromSocketError with inner errors", async () => {
@@ -133,26 +162,23 @@ describe("Odsp Error", () => {
 			},
 		};
 		const networkError = errorObjectFromSocketError(socketError, "error");
-		if (networkError.errorType !== DriverErrorType.genericNetworkError) {
-			assert.fail("networkError should be a genericNetworkError");
-		} else {
-			assert(
-				networkError.message.includes("error"),
-				"error message should include handler name",
-			);
-			assert(
-				networkError.message.includes("testMessage"),
-				"error message should include socket error message",
-			);
-			assert.equal(networkError.canRetry, false);
-			assert.equal(networkError.statusCode, 400);
-			assert.equal(
-				networkError.getTelemetryProperties().innerMostErrorCode,
-				"SurelyBlocked",
-				"Innermost error code should be correct",
-			);
-			assert.equal(networkError.facetCodes?.length, 3, "3 facet codes should be there");
-		}
+		assert(
+			isIGenericNetworkError(networkError),
+			"networkError should be a genericNetworkError",
+		);
+		assert(networkError.message.includes("error"), "error message should include handler name");
+		assert(
+			networkError.message.includes("testMessage"),
+			"error message should include socket error message",
+		);
+		assert.equal(networkError.canRetry, false);
+		assert.equal(networkError.statusCode, 400);
+		assert.equal(
+			networkError.getTelemetryProperties().innerMostErrorCode,
+			"SurelyBlocked",
+			"Innermost error code should be correct",
+		);
+		assert.equal(networkError.facetCodes?.length, 3, "3 facet codes should be there");
 	});
 
 	it("errorObjectFromSocketError with retryAfter", async () => {
@@ -162,19 +188,16 @@ describe("Odsp Error", () => {
 			retryAfter: 10,
 		};
 		const networkError = errorObjectFromSocketError(socketError, "handler");
-		if (networkError.errorType !== DriverErrorType.throttlingError) {
-			assert.fail("networkError should be a throttlingError");
-		} else {
-			assert(
-				networkError.message.includes("handler"),
-				"error message should include handler name",
-			);
-			assert(
-				networkError.message.includes("testMessage"),
-				"error message should include socket error message",
-			);
-			assert.equal(networkError.retryAfterSeconds, 10);
-		}
+		assert(isIThrottlingWarning(networkError), "networkError should be a throttlingError");
+		assert(
+			networkError.message.includes("handler"),
+			"error message should include handler name",
+		);
+		assert(
+			networkError.message.includes("testMessage"),
+			"error message should include socket error message",
+		);
+		assert.equal(networkError.retryAfterSeconds, 10);
 	});
 
 	it("Access Denied retries", async () => {
@@ -195,7 +218,7 @@ describe("Odsp Error", () => {
 			} else {
 				throw new NonRetryableError(
 					"some message",
-					DriverErrorType.incorrectServerResponse,
+					OdspErrorTypes.incorrectServerResponse,
 					{ driverVersion: pkgVersion },
 				);
 			}
@@ -231,26 +254,22 @@ describe("Odsp Error", () => {
 		},
 	} as Response;
 
-	function throwAuthorizationErrorWithInsufficientClaims(errorMessage: string) {
+	function throwAuthorizationErrorWithInsufficientClaims(errorMessage: string): void {
 		throwOdspNetworkError(errorMessage, 401, testResponseWithInsufficientClaims);
 	}
 
 	it("Authorization error with insufficient claims first-class properties", async () => {
 		try {
 			throwAuthorizationErrorWithInsufficientClaims("TestMessage");
-		} catch (error: any) {
-			assert.equal(
-				error.errorType,
-				DriverErrorType.authorizationError,
-				"errorType should be authorizationError",
-			);
+		} catch (error: unknown) {
+			assert(isIAuthorizationError(error), "error should be a IAuthorizationError");
 			assert(
 				error.message.includes("TestMessage"),
 				"message should contain original message",
 			);
-			assert.equal(error.canRetry, false, "canRetry should be false");
+			assert.equal((error as AuthorizationError).canRetry, false, "canRetry should be false");
 			assert.equal(
-				error.claims,
+				(error as AuthorizationError).claims,
 				'{"access_token":{"nbf":{"essential":true, "value":"1597959090"}}}',
 				"claims should be extracted from response",
 			);
@@ -289,26 +308,26 @@ describe("Odsp Error", () => {
 		},
 	} as Response;
 
-	function throwAuthorizationErrorWithRealm(errorMessage: string) {
+	function throwAuthorizationErrorWithRealm(errorMessage: string): void {
 		throwOdspNetworkError(errorMessage, 401, testResponseWithRealm);
 	}
 
 	it("Authorization error with realm first-class properties", async () => {
 		try {
 			throwAuthorizationErrorWithRealm("TestMessage");
-		} catch (error: any) {
-			assert.strictEqual(
-				error.errorType,
-				DriverErrorType.authorizationError,
-				"errorType should be authorizationError",
-			);
+		} catch (error: unknown) {
+			assert(isIAuthorizationError(error), "error should be a IAuthorizationError");
 			assert(
 				error.message.includes("TestMessage"),
 				"message should contain original message",
 			);
-			assert.strictEqual(error.canRetry, false, "canRetry should be false");
 			assert.strictEqual(
-				error.tenantId,
+				(error as AuthorizationError).canRetry,
+				false,
+				"canRetry should be false",
+			);
+			assert.strictEqual(
+				(error as AuthorizationError).tenantId,
 				"6c482541-f706-4168-9e58-8e35a9992f58",
 				"realm should be extracted from response",
 			);
@@ -327,16 +346,16 @@ describe("Odsp Error", () => {
 	});
 
 	it("Check Epoch Mismatch error props", async () => {
-		const error: any = createOdspNetworkErrorWithResponse("epochMismatch", 409);
+		const error = createOdspNetworkErrorWithResponse("epochMismatch", 409);
 		assert.strictEqual(
 			error.errorType,
-			DriverErrorType.fileOverwrittenInStorage,
+			OdspErrorTypes.fileOverwrittenInStorage,
 			"Error type should be fileOverwrittenInStorage",
 		);
 		const errorBag = { ...error.getTelemetryProperties() };
 		assert.strictEqual(
 			errorBag.errorType,
-			DriverErrorType.fileOverwrittenInStorage,
+			OdspErrorTypes.fileOverwrittenInStorage,
 			"Error type should exist in prop bag",
 		);
 	});
@@ -351,7 +370,7 @@ describe("Odsp Error", () => {
 				"innerError": {},
 			},
 		};
-		const error: any = createOdspNetworkErrorWithResponse(
+		const error = createOdspNetworkErrorWithResponse(
 			"The site has been moved to a new location.",
 			404,
 			undefined,
@@ -359,11 +378,15 @@ describe("Odsp Error", () => {
 		);
 		assert.strictEqual(
 			error.errorType,
-			DriverErrorType.fileNotFoundOrAccessDeniedError,
-			"Error type should be locationRedirection",
+			OdspErrorTypes.fileNotFoundOrAccessDeniedError,
+			"Error type should be fileNotFoundOrAccessDeniedError",
 		);
 		assert.strictEqual(error.redirectLocation, redirectLocation, "Site location should match");
-		assert.strictEqual(error.statusCode, 404, "Status code should match");
+		assert.strictEqual(
+			(error as IGenericNetworkError).statusCode,
+			404,
+			"Status code should match",
+		);
 	});
 
 	it("Sharepoint url should be redacted in the error", async () => {
@@ -376,8 +399,10 @@ describe("Odsp Error", () => {
 				),
 			);
 			assert.fail("Fetch should throw an error");
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} catch (error: any) {
 			assert(
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				(error.message as string).includes("REDACTED_URL"),
 				"sharepoint url should get redacted",
 			);
@@ -392,7 +417,9 @@ describe("Odsp Error", () => {
 				new Error("Request to http://f706-4168-9e58-8e35a9992f58.COM failed"),
 			);
 			assert.fail("Fetch should throw an error");
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} catch (error: any) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			assert((error.message as string).includes("REDACTED_URL"), "url should get redacted");
 		}
 	});

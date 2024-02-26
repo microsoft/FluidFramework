@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Invariant } from "../../util";
-import type { RevisionTag } from "./types";
+import { Invariant } from "../../util/index.js";
+import type { RevisionTag } from "./types.js";
 
 /**
  * Rebasing logic for a particular kind of change.

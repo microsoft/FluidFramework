@@ -2,18 +2,21 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { makeCodecFamily } from "../../codec";
-import { mintRevisionTag } from "../../core";
-import { typeboxValidator } from "../../external-utilities";
+import { makeCodecFamily } from "../../codec/index.js";
+import { typeboxValidator } from "../../external-utilities/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { makeMessageCodec } from "../../shared-tree-core/messageCodecs";
+import { makeMessageCodec } from "../../shared-tree-core/messageCodecs.js";
 // eslint-disable-next-line import/no-internal-modules
-import { DecodedMessage } from "../../shared-tree-core/messageTypes";
-// eslint-disable-next-line import/no-internal-modules
-import { RevisionTagCodec } from "../../shared-tree-core/revisionTagCodecs";
-import { useDeterministicStableId } from "../../util";
-import { TestChange } from "../testChange";
-import { EncodingTestData, makeEncodingTestSuite } from "../utils";
+import { DecodedMessage } from "../../shared-tree-core/messageTypes.js";
+import { ChangeEncodingContext } from "../../core/index.js";
+import { TestChange } from "../testChange.js";
+import {
+	EncodingTestData,
+	makeEncodingTestSuite,
+	mintRevisionTag,
+	testIdCompressor,
+	testRevisionTagCodec,
+} from "../utils.js";
 
 const commit1 = {
 	revision: mintRevisionTag(),
@@ -38,69 +41,73 @@ const commitInvalid = {
 	change: "Invalid change",
 };
 
-const testCases = useDeterministicStableId(() => {
-	const data: EncodingTestData<DecodedMessage<TestChange>, unknown> = {
-		successes: [
+const dummyContext = { originatorId: testIdCompressor.localSessionId };
+const testCases: EncodingTestData<DecodedMessage<TestChange>, unknown, ChangeEncodingContext> = {
+	successes: [
+		[
+			"Message with commit 1",
+			{
+				sessionId: testIdCompressor.localSessionId,
+				commit: commit1,
+			},
+			dummyContext,
+		],
+		[
+			"Message with commit 2",
+			{
+				sessionId: testIdCompressor.localSessionId,
+				commit: commit2,
+			},
+			dummyContext,
+		],
+	],
+	failures: {
+		0: [
+			["Empty message", {}, dummyContext],
 			[
-				"Message with commit 1",
+				"Missing sessionId",
 				{
-					sessionId: "session1",
 					commit: commit1,
 				},
+				dummyContext,
 			],
 			[
-				"Message with commit 2",
+				"Missing commit",
 				{
 					sessionId: "session1",
-					commit: commit2,
 				},
+				dummyContext,
+			],
+			[
+				"Message with invalid sessionId",
+				{
+					sessionId: 1,
+					commit: commit1,
+				},
+				dummyContext,
+			],
+			[
+				"Message with commit without revision",
+				{
+					sessionId: "session1",
+					commit: commitWithoutRevision,
+				},
+				dummyContext,
+			],
+			[
+				"Message with invalid commit",
+				{
+					sessionId: "session1",
+					commit: commitInvalid,
+				},
+				dummyContext,
 			],
 		],
-		failures: {
-			0: [
-				["Empty message", {}],
-				[
-					"Missing sessionId",
-					{
-						commit: commit1,
-					},
-				],
-				[
-					"Missing commit",
-					{
-						sessionId: "session1",
-					},
-				],
-				[
-					"Message with invalid sessionId",
-					{
-						sessionId: 1,
-						commit: commit1,
-					},
-				],
-				[
-					"Message with commit without revision",
-					{
-						sessionId: "session1",
-						commit: commitWithoutRevision,
-					},
-				],
-				[
-					"Message with invalid commit",
-					{
-						sessionId: "session1",
-						commit: commitInvalid,
-					},
-				],
-			],
-		},
-	};
-
-	return data;
-});
+	},
+};
 
 describe("message codec", () => {
-	const codec = makeMessageCodec(TestChange.codec, new RevisionTagCodec(), {
+	const codec = makeMessageCodec(TestChange.codec, testRevisionTagCodec, {
 		jsonValidator: typeboxValidator,
 	});
 

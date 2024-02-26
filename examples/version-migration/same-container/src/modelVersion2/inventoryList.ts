@@ -9,7 +9,7 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 
-import type { IInventoryItem, IInventoryList } from "../modelInterfaces";
+import type { IInventoryItem, IInventoryList } from "../modelInterfaces.js";
 
 const quantityKey = "quantity";
 

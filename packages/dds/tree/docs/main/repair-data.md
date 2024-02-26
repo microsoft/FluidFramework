@@ -54,14 +54,14 @@ but also the impact that the peer edit has on the local edit.
 
 Consider the following example:
 
--   Local edit: Delete nodes A and B iff A and B exist.
--   Peer edit: Delete node A.
+-   Local edit: Remove nodes A and B iff A and B exist.
+-   Peer edit: Remove node A.
 
 If the peer edit is sequenced before the local edit,
 the rebased version of the local edit will have its constraint violated.
-This ought to leave the document in a state where A was deleted but B was not deleted.
+This ought to leave the document in a state where A was removed but B was not removed.
 In order to arrive at such a state from the local tip state
-(where both A and B were deleted)
+(where both A and B were removed)
 it is necessary to revive node B.
 
 ### User Undo
@@ -109,11 +109,10 @@ The repair data for an individual edit in the trunk is discarded when the corres
 In order to store repair data in a repair data store and be able to fetch it later,
 we need to establish a convention for unambiguously characterizing what data is being stored or fetched.
 
-The convention we have opted for is to characterize each deleted node
-(or deleted value on a node)
+The convention we have opted for is to characterize each removed node
 by the path of the node in the input context of
 (i.e., the state prior to)
-the change that deleted the node (or its value).
+the change that removed the node.
 
 This has two consequences.
 
@@ -127,11 +126,11 @@ different from the input context of the individual edits in the set
 (except for the first edit in the set).
 
 Depending on how much information was preserved in the composition of the edits,
-it may be possible to work out the correct path of the deleted data for each edit in a composed changeset.
+it may be possible to work out the correct path of the removed data for each edit in a composed changeset.
 This would however be rather complicated,
 and would place restrictions on how lossy the composition could be,
 which in turn reduces the value of composing the edits in the first place.
-For example, document nodes that were inserted by an edit and deleted by the next may need to be preserved as part of the composition of these two edits.
+For example, document nodes that were inserted by an edit and removed by the next may need to be preserved as part of the composition of these two edits.
 
 ### Fetching Repair Data Before Rebasing
 
@@ -150,8 +149,8 @@ and use that path instead of the mark's path.
 This would however make such changeset marks more computationally expensive.
 It is tempting to think that such an approach would help avoid querying the repair data store for changeset marks that will end up being cancelled out.
 This line of thinking however does not take into account the fact that we do not want to cancel out such marks.
-For example, if a local change that deletes a node gets rebased,
-the revival of the deleted node and its deletion by the rebased local edit may ultimately cancel out in the delta being sent out to update the application state,
+For example, if a local change that removes a node gets rebased,
+the revival of the removed node and its deletion by the rebased local edit may ultimately cancel out in the delta being sent out to update the application state,
 but the repair data store needs to be updated to reflect that it is the rebased edit
 that performed the edit
 (which may now be occurring at different index).
@@ -161,7 +160,7 @@ that performed the edit
 This section documents an alternative way to characterize repair data.
 As such, **this section does not reflect how the system works**.
 
-Instead of characterizing repair data by its path in the document in the input context of the edit that deleted it,
+Instead of characterizing repair data by its path in the document in the input context of the edit that removed it,
 one can characterize by it by its path in the document's current (i.e., "tip") state.
 
 This makes some intuitive sense when considering that:
@@ -222,21 +221,21 @@ the token can be cheaply copied and it does not allow for the repair data to be 
 
 ### Deleting Revived Data
 
-It's possible for an edit to revive some subtree and delete a part of that same subtree.
-When that occurs, it is necessary for the repair data associated with that changeset to include the deleted portion of the revived tree.
+It's possible for an edit to revive some subtree and remove a part of that same subtree.
+When that occurs, it is necessary for the repair data associated with that changeset to include the removed portion of the revived tree.
 
 In such a scenario, we must be careful about how we characterize the repair data.
 A naive approach may lead to the same path used to characterize different repair data.
 
 For example, if a document contains a sequence of Point subtrees,
 and an edit revives the Point at the start of the sequence,
-then deletes the X node under the revived Point,
+then removes the X node under the revived Point,
 while also deleting the X node under the first Point in the sequence,
-then the repair data for the deleted nodes may end up characterized as the same path ("points[0].x").
+then the repair data for the removed nodes may end up characterized as the same path ("points[0].x").
 
 A possible solution may be to characterize repair data by its path after all nodes have been revived,
-but before any nodes are inserted, deleted, or moved.
-It may also be possible to simply track paths to deleted revived content separately
+but before any nodes are inserted, removed, or moved.
+It may also be possible to simply track paths to removed revived content separately
 (e.g., using a boolean to indicate this special case).
 
 ### Computing Repair Data From Changes vs. Deltas

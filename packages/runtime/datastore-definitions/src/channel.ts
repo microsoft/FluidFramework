@@ -147,14 +147,21 @@ export interface IDeltaHandler {
 	reSubmit(message: any, localOpMetadata: unknown): void;
 
 	/**
-	 * Apply changes from an op. Used when rehydrating an attached container
+	 * Apply changes from an op just as if a local client has made the change,
+	 * including submitting the op. Used when rehydrating an attached container
 	 * with pending changes. This prepares the SharedObject for seeing an ACK
 	 * for the op or resubmitting the op upon reconnection.
-	 * @param message - Contents of a stashed op.
-	 * @returns localMetadata of the op, to be passed to process() or resubmit()
-	 * when the op is ACKed or resubmitted, respectively
+	 * @param content - Contents of a stashed op.
+	 * @returns Should return void.
+	 *
+	 * @privateRemarks
+	 * This interface is undergoing changes. Right now it support both the old
+	 * flow, where just local metadata is returned, and a more ergonomic flow
+	 * where operations are applied just like local edits, including
+	 * submission of the op if attached. Soon the old flow will be removed
+	 * and only the new flow will be supported.
 	 */
-	applyStashedOp(message: any): unknown;
+	applyStashedOp(message: any): void;
 
 	/**
 	 * Revert a local op.
@@ -192,6 +199,9 @@ export interface IDeltaConnection {
 	dirty(): void;
 
 	/**
+	 * @deprecated There is no replacement for this, its functionality is no longer needed at this layer.
+	 * It will be removed in a future release, sometime after 2.0.0-internal.8.0.0
+	 *
 	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
 	 * all references added in the system.
 	 * @param srcHandle - The handle of the node that added the reference.

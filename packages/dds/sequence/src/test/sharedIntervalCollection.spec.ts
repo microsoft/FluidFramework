@@ -172,7 +172,7 @@ describe("SharedIntervalCollection", () => {
 			runtimeFactory.processAllMessages();
 
 			const id = interval.getIntervalId() ?? assert.fail("expected interval to have id");
-			collection1.change(id, 10, 20);
+			collection1.change(id, { start: 10, end: 20 });
 			assertIntervals(
 				collection1,
 				[

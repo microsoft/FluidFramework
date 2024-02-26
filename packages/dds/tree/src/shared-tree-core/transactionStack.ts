@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { RevisionTag } from "../core";
-import { fail } from "../util";
+import { RevisionTag } from "../core/index.js";
+import { fail } from "../util/index.js";
 
 /**
  * A helper class that organizes the state needed for managing nesting transactions.

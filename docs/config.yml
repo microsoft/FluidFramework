@@ -51,7 +51,7 @@ permalinks:
 params:
   appInsightKey: "" # This is provided by the build system as an env variable
   cookies: false
-  customCSS: ["css/fluid.css", "css/tango.css"]
+  customCSS: ["css/fluid.css", "css/tango.css", "css/carousel.css"]
   dateform: "Jan 2, 2006"
   dateformNum: "2006-01-02"
   dateformNumTime: "2006-01-02 15:04 -0700"
@@ -64,25 +64,19 @@ params:
     version: "0.50"
     urlRef: "docs/updates/v0.50.md"
     message: | # if set, this will override the release notes updates
-      [Azure Fluid Relay](/docs/deployment/azure-frs/) is now generally available! [Learn more.](https://devblogs.microsoft.com/microsoft365dev/announcing-general-availability-of-azure-fluid-relay-service/)
+      Fluid Framework 2.0 beta is available now! <a href="https://devblogs.microsoft.com/microsoft365dev/announcing-fluid-framework-2-0-beta/"> Learn more.</a>
 
 menu:
   main:
     - name: "Getting started"
       url: "/docs/start/quick-start/"
-      weight: -100
-    - name: "Recipes"
-      url: "/docs/recipes/react/"
-      weight: -90
+      weight: -100    
     - name: "Docs"
       url: "/docs/"
       weight: -80
     - name: "Community"
       url: "/community/"
       weight: -60
-  #  - name: "Updates"
-  #    url: "/posts/"
-  #    weight: -50
 
   old_section:
     - identifier: "quick-start"
@@ -102,10 +96,7 @@ menu:
   docs:
     - identifier: "start"
       name: "Getting started"
-      weight: -800
-    - identifier: "recipes"
-      name: "Recipes"
-      weight: -700
+      weight: -800    
     - identifier: "build"
       name: "Build with Fluid"
       weight: -600

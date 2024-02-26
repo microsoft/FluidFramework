@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert } from "@fluidframework/core-utils";
 import { NonRetryableError, runWithRetry } from "@fluidframework/driver-utils";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
 import {
 	IOdspUrlParts,
+	OdspErrorTypes,
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
@@ -46,7 +47,7 @@ export async function getFileLink(
 		return maybeFileLinkCacheEntry;
 	}
 
-	const fileLinkGenerator = async function () {
+	const fileLinkGenerator = async function (): Promise<string> {
 		let fileLinkCore: string;
 		try {
 			let retryCount = 0;
@@ -60,10 +61,13 @@ export async function getFileLink(
 				"getShareLink",
 				logger,
 				{
+					// TODO: use a stronger type
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					onRetry(delayInMs: number, error: any) {
 						retryCount++;
 						if (retryCount === 5) {
 							if (error !== undefined && typeof error === "object") {
+								// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 								error.canRetry = false;
 								throw error;
 							}
@@ -72,10 +76,10 @@ export async function getFileLink(
 					},
 				},
 			);
-		} catch (err) {
+		} catch (error) {
 			// Delete from the cache to permit retrying later.
 			fileLinkCache.delete(cacheKey);
-			throw err;
+			throw error;
 		}
 
 		// We are guaranteed to run the getFileLinkCore at least once with successful result (which must be a string)
@@ -144,18 +148,21 @@ async function getFileLinkCore(
 				const response = await fetchHelper(url, requestInit);
 				additionalProps = response.propsToLog;
 
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				const sharingInfo = await response.content.json();
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 				const directUrl = sharingInfo?.d?.directUrl;
 				if (typeof directUrl !== "string") {
 					// This will retry once in getWithRetryForTokenRefresh
 					throw new NonRetryableError(
 						"Malformed GetSharingInformation response",
-						DriverErrorType.incorrectServerResponse,
+						OdspErrorTypes.incorrectServerResponse,
 						{ driverVersion },
 					);
 				}
 				return directUrl;
 			});
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			event.end({ ...additionalProps, attempts });
 			return fileLink;
 		},
@@ -183,10 +190,11 @@ interface FileItemLite {
 	sharepointIds: IGraphSharepointIds;
 }
 
-const isFileItemLite = (maybeFileItemLite: any): maybeFileItemLite is FileItemLite =>
-	typeof maybeFileItemLite.webUrl === "string" &&
-	typeof maybeFileItemLite.webDavUrl === "string" &&
-	typeof maybeFileItemLite.sharepointIds === "object";
+const isFileItemLite = (maybeFileItemLite: unknown): maybeFileItemLite is FileItemLite =>
+	typeof (maybeFileItemLite as Partial<FileItemLite>).webUrl === "string" &&
+	typeof (maybeFileItemLite as Partial<FileItemLite>).webDavUrl === "string" &&
+	// TODO: stronger check
+	typeof (maybeFileItemLite as Partial<FileItemLite>).sharepointIds === "object";
 
 async function getFileItemLite(
 	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
@@ -199,7 +207,7 @@ async function getFileItemLite(
 		{ eventName: "odspFileLink", requestName: "getFileItemLite" },
 		async (event) => {
 			let attempts = 0;
-			let additionalProps;
+			let additionalProps: ITelemetryBaseProperties | undefined;
 			const fileItem = await getWithRetryForTokenRefresh(async (options) => {
 				attempts++;
 				const { siteUrl, driveId, itemId } = odspUrlParts;
@@ -224,12 +232,12 @@ async function getFileItemLite(
 				const response = await fetchHelper(url, requestInit);
 				additionalProps = response.propsToLog;
 
-				const responseJson = await response.content.json();
+				const responseJson: unknown = await response.content.json();
 				if (!isFileItemLite(responseJson)) {
 					// This will retry once in getWithRetryForTokenRefresh
 					throw new NonRetryableError(
 						"Malformed getFileItemLite response",
-						DriverErrorType.incorrectServerResponse,
+						OdspErrorTypes.incorrectServerResponse,
 						{ driverVersion },
 					);
 				}

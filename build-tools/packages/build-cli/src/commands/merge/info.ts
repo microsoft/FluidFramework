@@ -6,7 +6,7 @@ import { Flags } from "@oclif/core";
 import chalk from "chalk";
 
 import { BaseCommand } from "../../base";
-import { Repository } from "../../lib";
+import { Repository } from "../../library";
 
 /**
  * An object containing merge status between two branches.

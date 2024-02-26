@@ -10,8 +10,8 @@ import {
 	ITreeCursorSynchronous,
 	FieldKey,
 	rootFieldKey,
-} from "../../core";
-import { ReferenceCounted } from "../../util";
+} from "../../core/index.js";
+import { ReferenceCounted } from "../../util/index.js";
 
 /**
  * Contiguous part of the tree which get stored together in some data format.

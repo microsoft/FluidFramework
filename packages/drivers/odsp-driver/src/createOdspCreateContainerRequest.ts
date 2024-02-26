@@ -4,7 +4,7 @@
  */
 import { IRequest } from "@fluidframework/core-interfaces";
 import { DriverHeader } from "@fluidframework/driver-definitions";
-import { ShareLinkTypes, ISharingLinkKind } from "@fluidframework/odsp-driver-definitions";
+import { ISharingLinkKind } from "@fluidframework/odsp-driver-definitions";
 import { buildOdspShareLinkReqParams } from "./odspUtils";
 
 /**
@@ -22,7 +22,7 @@ export function createOdspCreateContainerRequest(
 	driveId: string,
 	filePath: string,
 	fileName: string,
-	createShareLinkType?: ShareLinkTypes | ISharingLinkKind,
+	createShareLinkType?: ISharingLinkKind,
 ): IRequest {
 	const shareLinkRequestParams = buildOdspShareLinkReqParams(createShareLinkType);
 	const createNewRequest: IRequest = {

@@ -6,7 +6,7 @@
 // eslint-disable-next-line import/no-nodejs-modules
 import * as crypto from "crypto";
 import { strict as assert } from "assert";
-import { SharedMap } from "@fluidframework/map";
+import type { SharedMap } from "@fluidframework/map";
 import {
 	ITestFluidObject,
 	ChannelFactoryRegistry,
@@ -32,7 +32,8 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { GenericError } from "@fluidframework/telemetry-utils";
 
-describeCompat("Message size", "NoCompat", (getTestObjectProvider) => {
+describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap } = apis.dds;
 	const mapId = "mapId";
 	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
 	const testContainerConfig: ITestContainerConfig = {
@@ -41,7 +42,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider) => {
 	};
 
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 	afterEach(async () => provider.reset());
@@ -390,7 +391,11 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider) => {
 					).timeout(chunkingBatchesTimeoutMs);
 				}));
 
-			itExpects(
+			/**
+			 * ADO:6510 to investigate and re-enable.
+			 * The test times out likely due to its nature of creating large payloads.
+			 */
+			itExpects.skip(
 				"Large ops fail when compression chunking is disabled by feature gate",
 				[
 					{

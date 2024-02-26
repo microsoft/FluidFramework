@@ -1,5 +1,0 @@
-nyc
-*.log
-**/*.tsbuildinfo
-src/test
-dist/test

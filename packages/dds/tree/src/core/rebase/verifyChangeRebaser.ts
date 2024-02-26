@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeRebaser, makeAnonChange } from "./changeRebaser";
-import { revisionMetadataSourceFromInfo } from "./utils";
+import { ChangeRebaser, makeAnonChange } from "./changeRebaser.js";
+import { revisionMetadataSourceFromInfo } from "./utils.js";
 
 export type Failure<TCase> = Violation<TCase> | Exception<TCase>;
 

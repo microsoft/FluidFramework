@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { UpPath, PathVisitor } from "../../core";
-import { FlexTreeNode } from "./flexTreeTypes";
+import { UpPath, PathVisitor } from "../../core/index.js";
+import { FlexTreeNode } from "./flexTreeTypes.js";
 
 /**
  * This file provides an API for working with trees which is type safe even when schema is not known.

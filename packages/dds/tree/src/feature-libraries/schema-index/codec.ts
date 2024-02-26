@@ -12,11 +12,10 @@ import {
 	decodeFieldSchema,
 	encodeFieldSchema,
 	storedSchemaDecodeDispatcher,
-} from "../../core";
-import { brand, fail, fromErased } from "../../util";
-import { ICodecOptions, IJsonCodec } from "../../codec";
-import { makeVersionedValidatedCodec } from "../versioned";
-import { Format } from "./format";
+} from "../../core/index.js";
+import { brand, fail, fromErased } from "../../util/index.js";
+import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../codec/index.js";
+import { Format } from "./format.js";
 
 export function encodeRepo(repo: TreeStoredSchema): Format {
 	const nodeSchema: Record<string, schemaFormat.TreeNodeSchemaDataFormat> = Object.create(null);

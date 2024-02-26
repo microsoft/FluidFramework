@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { customerServicePort } from "../mock-customer-service-interface";
-import { externalDataServicePort } from "../mock-external-data-service-interface";
-import { fluidServicePort } from "../utilities";
-import { initializeCustomerService } from "./service";
+import { customerServicePort } from "../mock-customer-service-interface/index.js";
+import { externalDataServicePort } from "../mock-external-data-service-interface/index.js";
+import { fluidServicePort } from "../utilities/index.js";
+import { initializeCustomerService } from "./service.js";
 
 /**
  * Initializes the mock customer service on its {@link customerServicePort | default port}.

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ArrayToUnion } from "./typeUtils";
+import { ArrayToUnion } from "./typeUtils.js";
 
 /** A symbol used to identify a `MarkedEager`. */
 const flexListEager = Symbol("FlexList Eager");

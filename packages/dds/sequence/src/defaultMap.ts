@@ -5,12 +5,7 @@
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import {
-	IFluidSerializer,
-	makeHandlesSerializable,
-	parseHandles,
-	ValueType,
-} from "@fluidframework/shared-object-base";
+import { IFluidSerializer, ValueType } from "@fluidframework/shared-object-base";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import { makeSerializable, ValueTypeLocalValue } from "./localValues";
@@ -27,38 +22,15 @@ import {
 	IValueTypeOperationValue,
 } from "./defaultMapInterfaces";
 import { SerializedIntervalDelta, IntervalDeltaOpType } from "./intervals";
+import {
+	type IntervalCollection,
+	toSequencePlace,
+	toOptionalSequencePlace,
+	reservedIntervalIdKey,
+} from "./intervalCollection";
 
 function isMapOperation(op: unknown): op is IMapOperation {
 	return typeof op === "object" && op !== null && "type" in op && op.type === "act";
-}
-/**
- * Defines the means to process and submit a given op on a map.
- */
-interface IMapMessageHandler {
-	/**
-	 * Apply the given operation.
-	 * @param op - The map operation to apply
-	 * @param local - Whether the message originated from the local client
-	 * @param message - The full message. Not provided for stashed ops.
-	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
-	 * For messages from a remote client, this will be undefined.
-	 */
-	process(
-		op: IMapOperation,
-		local: boolean,
-		message: ISequencedDocumentMessage | undefined,
-		localOpMetadata: IMapMessageLocalMetadata,
-	): void;
-
-	/**
-	 * Communicate the operation to remote clients.
-	 * @param op - The map operation to submit
-	 */
-	submit(op: IMapOperation, localOpMetadata: IMapMessageLocalMetadata): void;
-
-	resubmit(op: IMapOperation, localOpMetadata: IMapMessageLocalMetadata): void;
-
-	getStashedOpLocalMetadata(op: IMapOperation): IMapMessageLocalMetadata;
 }
 
 /**
@@ -106,7 +78,7 @@ export interface IMapDataObjectSerialized {
  * Creation of values is implicit on access (either via `get` or a remote op application referring to
  * a collection that wasn't previously known)
  */
-export class DefaultMap<T> {
+export class DefaultMap<T extends IntervalCollection<any> = IntervalCollection<any>> {
 	/**
 	 * The number of key/value pairs stored in the map.
 	 */
@@ -117,7 +89,37 @@ export class DefaultMap<T> {
 	/**
 	 * Mapping of op types to message handlers.
 	 */
-	private readonly messageHandlers: ReadonlyMap<string, IMapMessageHandler> = new Map();
+	private readonly messageHandler = {
+		process: (
+			op: IMapValueTypeOperation,
+			local: boolean,
+			message: ISequencedDocumentMessage,
+			localOpMetadata: IMapMessageLocalMetadata,
+		) => {
+			const localValue = this.data.get(op.key) ?? this.createCore(op.key, local);
+			const handler = localValue.getOpHandler(op.value.opName);
+			const previousValue = localValue.value;
+			const translatedValue = op.value.value as any;
+			handler.process(previousValue, translatedValue, local, message, localOpMetadata);
+			const event: IValueChanged = { key: op.key, previousValue };
+			this.eventEmitter.emit("valueChanged", event, local, message, this.eventEmitter);
+		},
+		submit: (op: IMapValueTypeOperation, localOpMetadata: IMapMessageLocalMetadata) => {
+			this.submitMessage(op, localOpMetadata);
+		},
+		resubmit: (op: IMapValueTypeOperation, localOpMetadata: IMapMessageLocalMetadata) => {
+			const localValue = this.data.get(op.key);
+
+			assert(localValue !== undefined, 0x3f8 /* Local value expected on resubmission */);
+
+			const handler = localValue.getOpHandler(op.value.opName);
+			const rebased = handler.rebase(localValue.value, op.value, localOpMetadata);
+			if (rebased !== undefined) {
+				const { rebasedOp, rebasedLocalOpMetadata } = rebased;
+				this.submitMessage({ ...op, value: rebasedOp }, rebasedLocalOpMetadata);
+			}
+		},
+	};
 
 	/**
 	 * The in-memory data the map is storing.
@@ -142,9 +144,7 @@ export class DefaultMap<T> {
 		private readonly type: IValueType<T>,
 		private readonly options?: Partial<SequenceOptions>,
 		public readonly eventEmitter = new TypedEventEmitter<ISharedDefaultMapEvents>(),
-	) {
-		this.messageHandlers = this.getMessageHandlers();
-	}
+	) {}
 
 	/**
 	 * Get an iterator over the keys in this map.
@@ -257,10 +257,13 @@ export class DefaultMap<T> {
 
 	/**
 	 * Populate the kernel with the given map data.
-	 * @param data - A JSON string containing serialized map data
+	 *
+	 * @param serialized - A JSON string containing serialized map data
 	 */
-	public populateFromSerializable(json: IMapDataObjectSerializable): void {
-		for (const [key, serializable] of Object.entries(json)) {
+	public populate(serialized: string): void {
+		const parsed = this.serializer.parse(serialized) as IMapDataObjectSerializable;
+
+		for (const [key, serializable] of Object.entries(parsed)) {
 			// Back-compat: legacy documents may have handles to an intervalCollection map kernel.
 			// These collections should be empty, and ValueTypes are no longer supported.
 			if (
@@ -285,10 +288,6 @@ export class DefaultMap<T> {
 		}
 	}
 
-	public populate(json: string): void {
-		this.populateFromSerializable(JSON.parse(json) as IMapDataObjectSerializable);
-	}
-
 	/**
 	 * Submit the given op if a handler is registered.
 	 * @param op - The operation to attempt to submit
@@ -297,25 +296,50 @@ export class DefaultMap<T> {
 	 * also sent if we are asked to resubmit the message.
 	 * @returns True if the operation was submitted, false otherwise.
 	 */
-	public tryResubmitMessage(
-		op: IMapOperation,
-		localOpMetadata: IMapMessageLocalMetadata,
-	): boolean {
-		const type: string = op.type;
-		const handler = this.messageHandlers.get(type);
-		if (handler !== undefined) {
-			handler.resubmit(op, localOpMetadata);
+	public tryResubmitMessage(op: unknown, localOpMetadata: IMapMessageLocalMetadata): boolean {
+		if (isMapOperation(op)) {
+			this.messageHandler.resubmit(op, localOpMetadata);
 			return true;
 		}
 		return false;
 	}
 
-	public tryGetStashedOpLocalMetadata(op: unknown): IMapMessageLocalMetadata | undefined {
-		if (isMapOperation(op) && this.messageHandlers.has(op.type)) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			return this.messageHandlers.get(op.type)!.getStashedOpLocalMetadata(op);
+	public tryApplyStashedOp(op: unknown): boolean {
+		if (isMapOperation(op)) {
+			const { value, key } = op;
+			const map = this.get(key);
+
+			switch (value.opName) {
+				case "add": {
+					map.add({
+						// Todo: we should improve typing so we know add ops always have start and end
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						start: toSequencePlace(value.value.start!, value.value.startSide),
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						end: toSequencePlace(value.value.end!, value.value.endSide),
+						props: value.value.properties,
+					});
+					return true;
+				}
+				case "change": {
+					const { [reservedIntervalIdKey]: id, ...props } = value.value.properties ?? {};
+					map.change(id, {
+						start: toOptionalSequencePlace(value.value.start, value.value.startSide),
+						end: toOptionalSequencePlace(value.value.end, value.value.endSide),
+						props,
+					});
+					return true;
+				}
+				case "delete": {
+					const { [reservedIntervalIdKey]: id } = value.value.properties ?? {};
+					map.removeIntervalById(id);
+					return true;
+				}
+				default:
+					throw new Error("unknown ops should not be stashed");
+			}
 		}
-		return undefined;
+		return false;
 	}
 
 	/**
@@ -327,14 +351,18 @@ export class DefaultMap<T> {
 	 * @returns True if the operation was processed, false otherwise.
 	 */
 	public tryProcessMessage(
-		op: IMapOperation,
+		op: unknown,
 		local: boolean,
-		message: ISequencedDocumentMessage | undefined,
+		message: ISequencedDocumentMessage,
 		localOpMetadata: unknown,
 	): boolean {
-		const handler = this.messageHandlers.get(op.type);
-		if (handler !== undefined) {
-			handler.process(op, local, message, localOpMetadata as IMapMessageLocalMetadata);
+		if (isMapOperation(op)) {
+			this.messageHandler.process(
+				op,
+				local,
+				message,
+				localOpMetadata as IMapMessageLocalMetadata,
+			);
 			return true;
 		}
 		return false;
@@ -375,59 +403,12 @@ export class DefaultMap<T> {
 			0x2e1 /* "Support for plain value types removed." */,
 		);
 
-		serializable.value = parseHandles(serializable.value, this.serializer);
 		const localValue = this.type.factory.load(
 			this.makeMapValueOpEmitter(key),
 			serializable.value,
 			this.options,
 		);
 		return new ValueTypeLocalValue(localValue, this.type);
-	}
-
-	/**
-	 * Get the message handlers for the map.
-	 * @returns A map of string op names to IMapMessageHandlers for those ops
-	 */
-	private getMessageHandlers() {
-		const messageHandlers = new Map<string, IMapMessageHandler>();
-		// Ops with type "act" describe actions taken by custom value type handlers of whatever item is
-		// being addressed.  These custom handlers can be retrieved from the ValueTypeLocalValue which has
-		// stashed its valueType (and therefore its handlers).  We also emit a valueChanged for anyone
-		// watching for manipulations of that item.
-		messageHandlers.set("act", {
-			process: (op: IMapValueTypeOperation, local, message, localOpMetadata) => {
-				const localValue = this.data.get(op.key) ?? this.createCore(op.key, local);
-				const handler = localValue.getOpHandler(op.value.opName);
-				const previousValue = localValue.value;
-				const translatedValue = parseHandles(op.value.value, this.serializer);
-				handler.process(previousValue, translatedValue, local, message, localOpMetadata);
-				const event: IValueChanged = { key: op.key, previousValue };
-				this.eventEmitter.emit("valueChanged", event, local, message, this.eventEmitter);
-			},
-			submit: (op: IMapValueTypeOperation, localOpMetadata: IMapMessageLocalMetadata) => {
-				this.submitMessage(op, localOpMetadata);
-			},
-			resubmit: (op: IMapValueTypeOperation, localOpMetadata: IMapMessageLocalMetadata) => {
-				const localValue = this.data.get(op.key);
-
-				assert(localValue !== undefined, 0x3f8 /* Local value expected on resubmission */);
-
-				const handler = localValue.getOpHandler(op.value.opName);
-				const rebased = handler.rebase(localValue.value, op.value, localOpMetadata);
-				if (rebased !== undefined) {
-					const { rebasedOp, rebasedLocalOpMetadata } = rebased;
-					this.submitMessage({ ...op, value: rebasedOp }, rebasedLocalOpMetadata);
-				}
-			},
-			getStashedOpLocalMetadata: (op: IMapValueTypeOperation): IMapMessageLocalMetadata => {
-				const localValue = this.data.get(op.key) ?? this.createCore(op.key, true);
-				assert(localValue !== undefined, "Local value expected on applying stashed op");
-				const handler = localValue.getOpHandler(op.value.opName);
-				return handler.applyStashedOp(localValue.value, op.value);
-			},
-		});
-
-		return messageHandlers;
 	}
 
 	/**
@@ -445,14 +426,12 @@ export class DefaultMap<T> {
 			params: SerializedIntervalDelta,
 			localOpMetadata: IMapMessageLocalMetadata,
 		): void => {
-			const translatedParams = makeHandlesSerializable(params, this.serializer, this.handle);
-
 			const op: IMapValueTypeOperation = {
 				key,
 				type: "act",
 				value: {
 					opName,
-					value: translatedParams,
+					value: params,
 				},
 			};
 

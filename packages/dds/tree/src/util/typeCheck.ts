@@ -9,7 +9,7 @@
 // since this library does not work for some configurations (ex: with strictNullChecks disabled).
 // Since the tests don't generate any JS: they only produce types,
 // importing them here gets us the validation of the compiler settings we want, with no JS size overhead.
-export type { EnforceTypeCheckTests } from "./typeCheckTests";
+export type { EnforceTypeCheckTests } from "./typeCheckTests.js";
 
 /**
  * Utilities for manipulating the typescript typechecker.

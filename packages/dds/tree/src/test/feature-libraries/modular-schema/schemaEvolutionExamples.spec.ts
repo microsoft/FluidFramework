@@ -6,13 +6,13 @@
 import { strict as assert } from "assert";
 
 import {
-	TreeFieldSchema,
+	FlexFieldSchema,
 	FullSchemaPolicy,
 	ViewSchema,
 	FieldKinds,
 	defaultSchemaPolicy,
 	FlexTreeSchema,
-} from "../../../feature-libraries";
+} from "../../../feature-libraries/index.js";
 import {
 	TreeFieldStoredSchema,
 	TreeNodeStoredSchema,
@@ -22,10 +22,13 @@ import {
 	Compatibility,
 	storedEmptyFieldSchema,
 	TreeStoredSchema,
-} from "../../../core";
-// eslint-disable-next-line import/no-internal-modules
-import { allowsFieldSuperset, allowsTreeSuperset } from "../../../feature-libraries/modular-schema";
-import { SchemaBuilder, leaf } from "../../../domains";
+} from "../../../core/index.js";
+import {
+	allowsFieldSuperset,
+	allowsTreeSuperset,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/modular-schema/index.js";
+import { SchemaBuilder, leaf } from "../../../domains/index.js";
 
 class TestSchemaRepository extends TreeStoredSchemaRepository {
 	public constructor(
@@ -85,7 +88,7 @@ describe("Schema Evolution Examples", () => {
 
 	// String made of unicode code points, allowing for sequence editing of a string.
 	const text = contentTypesBuilder.object("Text", {
-		children: TreeFieldSchema.create(FieldKinds.sequence, [codePoint]),
+		children: FlexFieldSchema.create(FieldKinds.sequence, [codePoint]),
 	});
 
 	const point = contentTypesBuilder.object("Point", {
@@ -107,12 +110,12 @@ describe("Schema Evolution Examples", () => {
 		content: text,
 	});
 	const canvas = containersBuilder.object("Canvas", {
-		items: TreeFieldSchema.create(FieldKinds.sequence, [positionedCanvasItem]),
+		items: FlexFieldSchema.create(FieldKinds.sequence, [positionedCanvasItem]),
 	});
 
-	const root: TreeFieldSchema = TreeFieldSchema.create(FieldKinds.required, [canvas]);
+	const root: FlexFieldSchema = FlexFieldSchema.create(FieldKinds.required, [canvas]);
 
-	const tolerantRoot = TreeFieldSchema.create(FieldKinds.optional, [canvas]);
+	const tolerantRoot = FlexFieldSchema.create(FieldKinds.optional, [canvas]);
 
 	const treeViewSchema = containersBuilder.intoLibrary();
 
@@ -258,11 +261,11 @@ describe("Schema Evolution Examples", () => {
 			});
 			// And canvas is still the same storage wise, but its view schema references the updated positionedCanvasItem2:
 			const canvas2 = builderWithCounter.object("Canvas", {
-				items: TreeFieldSchema.create(FieldKinds.sequence, [positionedCanvasItem2]),
+				items: FlexFieldSchema.create(FieldKinds.sequence, [positionedCanvasItem2]),
 			});
 			// Once again we will simulate reloading the app with different schema by modifying the view schema.
 			const viewCollection3: FlexTreeSchema = builderWithCounter.intoSchema(
-				TreeFieldSchema.create(FieldKinds.optional, [canvas2]),
+				FlexFieldSchema.create(FieldKinds.optional, [canvas2]),
 			);
 			const view3 = new ViewSchema(defaultSchemaPolicy, adapters, viewCollection3);
 
@@ -386,7 +389,7 @@ describe("Schema Evolution Examples", () => {
 	// 	);
 	// 	const builder = new SchemaBuilder("adapters examples", defaultContentLibrary);
 	// 	const formattedText = builder.objectRecursive(formattedTextIdentifier, {
-	// 		content: TreeFieldSchema.createUnsafe(
+	// 		content: FlexFieldSchema.createUnsafe(
 	// 			FieldKinds.sequence,
 	// 			() => formattedText,
 	// 			codePoint,
@@ -408,7 +411,7 @@ describe("Schema Evolution Examples", () => {
 	// 	});
 	// 	// And canvas is still the same storage wise, but its view schema references the updated positionedCanvasItem2:
 	// 	const canvas2 = builder.object(canvasIdentifier, {
-	// 		items: TreeFieldSchema.create(FieldKinds.sequence, positionedCanvasItemNew),
+	// 		items: FlexFieldSchema.create(FieldKinds.sequence, positionedCanvasItemNew),
 	// 	});
 
 	// 	const viewCollection: SchemaCollection = builder.intoSchema(

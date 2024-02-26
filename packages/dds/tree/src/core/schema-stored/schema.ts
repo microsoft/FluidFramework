@@ -3,8 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { DiscriminatedUnionDispatcher } from "../../codec";
-import { Brand, Erased, MakeNominal, brand, brandErased, fail, invertMap } from "../../util";
+import { DiscriminatedUnionDispatcher } from "../../codec/index.js";
+import {
+	Brand,
+	Erased,
+	MakeNominal,
+	brand,
+	brandErased,
+	fail,
+	invertMap,
+} from "../../util/index.js";
 import {
 	FieldKey,
 	FieldKindIdentifier,
@@ -12,7 +20,7 @@ import {
 	PersistedValueSchema,
 	TreeNodeSchemaDataFormat,
 	TreeNodeSchemaIdentifier,
-} from "./format";
+} from "./format.js";
 
 /**
  * Schema for what {@link TreeValue} is allowed on a Leaf node.

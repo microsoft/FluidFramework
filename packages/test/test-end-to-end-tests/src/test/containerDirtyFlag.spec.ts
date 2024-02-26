@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
-import { SharedMap } from "@fluidframework/map";
+import type { SharedMap } from "@fluidframework/map";
 import {
 	ChannelFactoryRegistry,
 	createAndAttachContainer,
@@ -24,16 +24,6 @@ const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderB
 });
 
 const mapId = "map";
-const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
-const testContainerConfig: ITestContainerConfig = {
-	fluidDataObjectType: DataObjectFactoryType.Test,
-	registry,
-	loaderProps: {
-		configProvider: configProvider({
-			"Fluid.Container.enableOfflineLoad": true,
-		}),
-	},
-};
 
 const lots = 30;
 const testValue = "test value";
@@ -44,40 +34,52 @@ type MapCallback = (
 	map: SharedMap,
 ) => void | Promise<void>;
 
-// load container, pause, create (local) ops from callback, then optionally send ops before closing container
-const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCallback) => {
-	const container: IContainerExperimental = await args.loadTestContainer(testContainerConfig);
-	await waitForContainerConnection(container);
-	const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
-	const map = await dataStore.getSharedObject<SharedMap>(mapId);
+describeCompat("Container dirty flag", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap } = apis.dds;
+	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+		loaderProps: {
+			configProvider: configProvider({
+				"Fluid.Container.enableOfflineLoad": true,
+			}),
+		},
+	};
 
-	[...Array(lots).keys()].map((i) =>
-		dataStore.root.set(`make sure csn is > 1 so it doesn't hide bugs ${i}`, i),
-	);
+	// load container, pause, create (local) ops from callback, then optionally send ops before closing container
+	const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCallback) => {
+		const container: IContainerExperimental = await args.loadTestContainer(testContainerConfig);
+		await waitForContainerConnection(container);
+		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
+		const map = await dataStore.getSharedObject<SharedMap>(mapId);
 
-	await args.ensureSynchronized();
-	await args.opProcessingController.pauseProcessing(container);
-	assert(dataStore.runtime.deltaManager.outbound.paused);
+		[...Array(lots).keys()].map((i) =>
+			dataStore.root.set(`make sure csn is > 1 so it doesn't hide bugs ${i}`, i),
+		);
 
-	await cb(container, dataStore, map);
-
-	let pendingState: string | undefined;
-	if (send) {
-		pendingState = await container.getPendingLocalState?.();
-		assert.strictEqual(container.closed, false);
 		await args.ensureSynchronized();
-		container.close();
-	} else {
-		pendingState = await container.closeAndGetPendingLocalState?.();
-	}
+		await args.opProcessingController.pauseProcessing(container);
+		assert(dataStore.runtime.deltaManager.outbound.paused);
 
-	args.opProcessingController.resumeProcessing();
+		await cb(container, dataStore, map);
 
-	assert.ok(pendingState);
-	return pendingState;
-};
+		let pendingState: string | undefined;
+		if (send) {
+			pendingState = await container.getPendingLocalState?.();
+			assert.strictEqual(container.closed, false);
+			await args.ensureSynchronized();
+			container.close();
+		} else {
+			pendingState = await container.closeAndGetPendingLocalState?.();
+		}
 
-describeCompat("Container dirty flag", "NoCompat", (getTestObjectProvider) => {
+		args.opProcessingController.resumeProcessing();
+
+		assert.ok(pendingState);
+		return pendingState;
+	};
+
 	let provider: ITestObjectProvider;
 	let url;
 	let loader: IHostLoader;
@@ -103,7 +105,7 @@ describeCompat("Container dirty flag", "NoCompat", (getTestObjectProvider) => {
 			);
 		};
 
-		beforeEach(async () => {
+		beforeEach("setup", async () => {
 			provider = getTestObjectProvider();
 			loader = provider.makeTestLoader(testContainerConfig);
 			container1 = await createAndAttachContainer(

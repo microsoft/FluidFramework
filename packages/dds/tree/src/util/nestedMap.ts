@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { MapGetSet } from "./utils";
+import { MapGetSet } from "./utils.js";
 
 /**
  * A dictionary whose values are keyed off of two objects (key1, key2).
@@ -47,11 +47,21 @@ export function tryAddToNestedMap<Key1, Key2, Value>(
 export function populateNestedMap<Key1, Key2, Value>(
 	source: NestedMap<Key1, Key2, Value>,
 	destination: NestedMap<Key1, Key2, Value>,
+	override: boolean,
 ): void {
 	for (const [key1, innerMap] of source) {
-		destination.set(key1, new Map(innerMap));
+		const newInner = new Map(destination.get(key1));
+
+		for (const [key2, value] of innerMap) {
+			if (override || !newInner.has(key2)) {
+				newInner.set(key2, value);
+			}
+		}
+
+		destination.set(key1, newInner);
 	}
 }
+
 /**
  * Sets the value at (key1, key2) in map to value.
  * If there already is a value for (key1, key2), it is replaced with the provided one.

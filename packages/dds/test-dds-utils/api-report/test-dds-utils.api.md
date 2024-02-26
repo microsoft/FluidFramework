@@ -24,6 +24,8 @@ export interface AddClient {
     // (undocumented)
     addedClientId: string;
     // (undocumented)
+    canBeStashed: boolean;
+    // (undocumented)
     type: "addClient";
 }
 
@@ -66,11 +68,15 @@ export namespace createDDSFuzzSuite {
     const skip: (...seeds: number[]) => <TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(ddsModel: DDSFuzzModel<TChannelFactory, TOperation, DDSFuzzTestState<TChannelFactory>>, providedOptions?: Partial<DDSFuzzSuiteOptions>) => void;
 }
 
+// @internal
+export function createSnapshotSuite(snapshotFolderPath: string): ISnapshotSuite;
+
 // @internal (undocumented)
 export interface DDSFuzzHarnessEvents {
     (event: "clientCreate", listener: (client: Client<IChannelFactory>) => void): any;
     (event: "testStart", listener: (initialState: DDSFuzzTestState<IChannelFactory>) => void): any;
     (event: "testEnd", listener: (finalState: DDSFuzzTestState<IChannelFactory>) => void): any;
+    (event: "operationStart", listener: (operation: BaseOperation) => void): any;
 }
 
 // @internal
@@ -88,12 +94,13 @@ export interface DDSFuzzSuiteOptions {
     clientJoinOptions?: {
         maxNumberOfClients: number;
         clientAddProbability: number;
+        stashableClientProbability?: number;
     };
     containerRuntimeOptions?: IMockContainerRuntimeOptions;
     defaultTestCount: number;
     detachedStartOptions: {
-        attachProbability: number;
-        enabled: boolean;
+        numOpsBeforeAttach: number;
+        rehydrateDisabled?: true;
     };
     emitter: TypedEventEmitter<DDSFuzzHarnessEvents>;
     idCompressorFactory?: (summary?: SerializedIdCompressorWithNoSession) => IIdCompressor & IIdCompressorCore;
@@ -145,6 +152,13 @@ export interface IGCTestProvider {
     deleteOutboundRoutes(): Promise<void>;
     readonly expectedOutboundRoutes: string[];
     readonly sharedObject: ISharedObject;
+}
+
+// @internal (undocumented)
+export interface ISnapshotSuite {
+    readSnapshot: () => string;
+    takeSnapshot: (data: string) => string;
+    useSnapshotSubdirectory: (dirPath: string) => void;
 }
 
 // @internal

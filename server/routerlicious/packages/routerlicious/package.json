@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-routerlicious",
-	"version": "3.0.0",
+	"version": "3.1.0",
 	"description": "Fluid reference server implementation",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -38,9 +38,9 @@
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
-		"@fluidframework/common-utils": "^3.0.0-223006",
+		"@fluidframework/common-utils": "^3.1.0",
 		"@fluidframework/gitresources": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.1.0-223007",
+		"@fluidframework/protocol-definitions": "^3.2.0-237840",
 		"@fluidframework/server-kafka-orderer": "workspace:~",
 		"@fluidframework/server-lambdas": "workspace:~",
 		"@fluidframework/server-lambdas-driver": "workspace:~",

@@ -26,7 +26,7 @@ import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 
-// @alpha (undocumented)
+// @public (undocumented)
 export enum ConnectionState {
     CatchingUp = 1,
     Connected = 2,

@@ -4,7 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import { DefaultChangeFamily, DefaultChangeset, DefaultEditBuilder } from "../feature-libraries";
+import {
+	DefaultChangeFamily,
+	DefaultChangeset,
+	DefaultEditBuilder,
+} from "../feature-libraries/index.js";
 
 export type Editor = (builder: DefaultEditBuilder) => void;
 

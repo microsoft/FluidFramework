@@ -25,7 +25,7 @@ for some prior thinking on undo semantics.
 Conceptually, an undo edit starts as a very abstract and succinct intention:
 "Undo changes from prior change _\<revision-tag\>_".
 It ultimately needs to be converted into a concrete description of how the undo changes the current state of the document
-(e.g., "delete the node at this path").
+(e.g., "remove the node at this path").
 The application (typically through Forest) is able to process this concrete form, represented as a delta.
 
 One key design question is:

@@ -23,6 +23,7 @@ export interface IEnvelope {
 
 /**
  * @internal
+ * @deprecated - This interface is now moved to `@fluidframework/container-definitions` package. Please import from that package.
  */
 export interface ISignalEnvelope {
 	/**

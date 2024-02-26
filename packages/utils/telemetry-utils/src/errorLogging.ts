@@ -15,8 +15,8 @@ import {
 	IFluidErrorBase,
 	isFluidError,
 	isValidLegacyError,
-} from "./fluidErrorBase";
-import { ITelemetryLoggerExt, TelemetryEventPropertyTypeExt } from "./telemetryTypes";
+} from "./fluidErrorBase.js";
+import { ITelemetryLoggerExt, TelemetryEventPropertyTypeExt } from "./telemetryTypes.js";
 
 /**
  * Determines if the provided value is an object but neither null nor an array.
@@ -536,7 +536,7 @@ export const NORMALIZED_ERROR_TYPE = "genericError";
  */
 class NormalizedLoggingError extends LoggingError {
 	// errorType "genericError" is used as a default value throughout the code.
-	// Note that this matches ContainerErrorType/DriverErrorType's genericError
+	// Note that this matches ContainerErrorTypes/DriverErrorTypes' genericError
 	errorType = NORMALIZED_ERROR_TYPE;
 
 	constructor(errorProps: Pick<IFluidErrorBase, "message" | "stack">) {

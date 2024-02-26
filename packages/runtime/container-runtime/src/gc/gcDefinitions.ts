@@ -41,6 +41,12 @@ export const nextGCVersion: GCVersion = 4;
 export const gcDisableThrowOnTombstoneLoadOptionName = "gcDisableThrowOnTombstoneLoad";
 
 /**
+ * This undocumented GC Option (on ContainerRuntime Options) allows an app to enable Sweep for blobs only.
+ * Only applies if enableGCSweep option is set to true.
+ */
+export const gcDisableDataStoreSweepOptionName = "disableDataStoreSweep";
+
+/**
  * This undocumented GC Option (on ContainerRuntime Options) allows configuring which documents can have Sweep enabled.
  * This provides a way to disable both Tombstone Enforcement and Sweep.
  *
@@ -70,10 +76,12 @@ export const throwOnTombstoneLoadOverrideKey =
 export const throwOnTombstoneUsageKey = "Fluid.GarbageCollection.ThrowOnTombstoneUsage";
 /** Config key to enable GC version upgrade. */
 export const gcVersionUpgradeToV4Key = "Fluid.GarbageCollection.GCVersionUpgradeToV4";
-/** Config key to disable GC sweep for datastores. */
+/** Config key to disable GC sweep for datastores. They'll merely be Tombstoned. */
 export const disableDatastoreSweepKey = "Fluid.GarbageCollection.DisableDataStoreSweep";
-/** Config key to disable GC sweep for attachment blobs. */
-export const disableAttachmentBlobSweepKey = "Fluid.GarbageCollection.DisableAttachmentBlobSweep";
+/** Config key to revert new paradigm of detecting outbound routes in ContainerRuntime layer (use true) */
+export const detectOutboundRoutesViaDDSKey = "Fluid.GarbageCollection.DetectOutboundRoutesViaDDS";
+/** Config key to disable auto-recovery mechanism that protects Tombstones that are loaded from being swept (use true) */
+export const disableAutoRecoveryKey = "Fluid.GarbageCollection.DisableAutoRecovery";
 
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
@@ -251,6 +259,8 @@ export type GCNodeType = (typeof GCNodeType)[keyof typeof GCNodeType];
 export const GarbageCollectionMessageType = {
 	/** Message sent directing GC to delete the given nodes */
 	Sweep: "Sweep",
+	/** Message sent notifying GC that a Tombstoned object was Loaded */
+	TombstoneLoaded: "TombstoneLoaded",
 } as const;
 
 /**
@@ -264,16 +274,28 @@ export type GarbageCollectionMessageType =
  * @internal
  */
 export interface ISweepMessage {
-	type: "Sweep";
-	// The ids of nodes that are deleted.
+	/** @see GarbageCollectionMessageType.Sweep */
+	type: typeof GarbageCollectionMessageType.Sweep;
+	/** The ids of nodes that are deleted. */
 	deletedNodeIds: string[];
+}
+
+/**
+ * The GC TombstoneLoaded message.
+ * @internal
+ */
+export interface ITombstoneLoadedMessage {
+	/** @see GarbageCollectionMessageType.TombstoneLoaded */
+	type: typeof GarbageCollectionMessageType.TombstoneLoaded;
+	/** The id of Tombstoned node that was loaded. */
+	nodePath: string;
 }
 
 /**
  * Type for a message to be used for sending / received garbage collection messages.
  * @internal
  */
-export type GarbageCollectionMessage = ISweepMessage;
+export type GarbageCollectionMessage = ISweepMessage | ITombstoneLoadedMessage;
 
 /**
  * Defines the APIs for the runtime object to be passed to the garbage collector.
@@ -305,6 +327,12 @@ export interface IGarbageCollectionRuntime {
 
 /** Defines the contract for the garbage collector. */
 export interface IGarbageCollector {
+	/**
+	 * Tells the time at which session expiry timer started in a previous container.
+	 * This is only set when loading from a stashed container and will be equal to the
+	 * original container's local client time when it was loaded (and started the session expiry timer).
+	 */
+	readonly sessionExpiryTimerStarted: number | undefined;
 	/** Tells whether GC should run or not. */
 	readonly shouldRunGC: boolean;
 	/** Tells whether the GC state in summary needs to be reset in the next summary. */
@@ -353,7 +381,7 @@ export interface IGarbageCollector {
 		headerData?: RuntimeHeaderData,
 	): void;
 	/** Called when a reference is added to a node. Used to identify nodes that were referenced between summaries. */
-	addedOutboundReference(fromNodePath: string, toNodePath: string): void;
+	addedOutboundReference(fromNodePath: string, toNodePath: string, autorecovery?: true): void;
 	/** Called to process a garbage collection message. */
 	processMessage(message: ContainerRuntimeGCMessage, local: boolean): void;
 	/** Returns true if this node has been deleted by GC during sweep phase. */
@@ -376,6 +404,7 @@ export interface IGarbageCollectorCreateParams {
 	readonly getLastSummaryTimestampMs: () => number | undefined;
 	readonly readAndParseBlob: ReadAndParseBlob;
 	readonly submitMessage: (message: ContainerRuntimeGCMessage) => void;
+	readonly sessionExpiryTimerStarted?: number | undefined;
 }
 
 /**
@@ -447,7 +476,7 @@ export interface IGarbageCollectorConfigs {
 	 */
 	readonly gcEnabled: boolean;
 	/**
-	 * Tracks if sweep phase is enabled for this document. This is specified during document creation and doesn't change
+	 * Tracks if sweep phase is allowed for this document. This is specified during document creation and doesn't change
 	 * throughout its lifetime.
 	 */
 	readonly sweepEnabled: boolean;
@@ -457,10 +486,11 @@ export interface IGarbageCollectorConfigs {
 	 */
 	readonly shouldRunGC: boolean;
 	/**
-	 * Tracks if sweep phase should run or not. Even if the sweep phase is enabled for a document (see sweepEnabled), it
-	 * can be explicitly disabled via feature flags. It also won't run if session expiry is not enabled.
+	 * Tracks if sweep phase should run or not, or if it should run only for attachment blobs.
+	 * Even if the sweep phase is allowed for a document (see sweepEnabled), it may be disabled or partially enabled
+	 * for the session, depending on a variety of other configurations present.
 	 */
-	readonly shouldRunSweep: boolean;
+	readonly shouldRunSweep: "YES" | "ONLY_BLOBS" | "NO";
 	/**
 	 * If true, bypass optimizations and generate GC data for all nodes irrespective of whether a node changed or not.
 	 */

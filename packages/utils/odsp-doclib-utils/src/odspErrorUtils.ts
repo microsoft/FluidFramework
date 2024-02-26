@@ -4,8 +4,7 @@
  */
 
 import { ITelemetryProperties } from "@fluidframework/core-interfaces";
-// eslint-disable-next-line import/no-deprecated
-import { DriverErrorType } from "@fluidframework/driver-definitions";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import { IFluidErrorBase, LoggingError, numberFromString } from "@fluidframework/telemetry-utils";
 import {
 	AuthorizationError,
@@ -18,15 +17,14 @@ import {
 	FluidInvalidSchemaError,
 } from "@fluidframework/driver-utils";
 import {
-	// eslint-disable-next-line import/no-deprecated
-	OdspErrorType,
+	OdspErrorTypes,
 	OdspError,
 	IOdspErrorAugmentations,
 } from "@fluidframework/odsp-driver-definitions";
-import { parseAuthErrorClaims } from "./parseAuthErrorClaims";
-import { parseAuthErrorTenant } from "./parseAuthErrorTenant";
+import { parseAuthErrorClaims } from "./parseAuthErrorClaims.js";
+import { parseAuthErrorTenant } from "./parseAuthErrorTenant.js";
 // odsp-doclib-utils and odsp-driver will always release together and share the same pkgVersion
-import { pkgVersion as driverVersion } from "./packageVersion";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 // no response, or can't parse response
 /**
@@ -131,8 +129,7 @@ export interface OdspErrorResponse {
  * @internal
  */
 export class OdspRedirectError extends LoggingError implements IFluidErrorBase {
-	// eslint-disable-next-line import/no-deprecated
-	readonly errorType = DriverErrorType.fileNotFoundOrAccessDeniedError;
+	readonly errorType = DriverErrorTypes.fileNotFoundOrAccessDeniedError;
 	readonly canRetry = false;
 
 	constructor(
@@ -224,8 +221,7 @@ export function createOdspNetworkError(
 			}
 			error = new NonRetryableError(
 				errorMessage,
-				// eslint-disable-next-line import/no-deprecated
-				DriverErrorType.genericNetworkError,
+				DriverErrorTypes.genericNetworkError,
 				driverProps,
 			);
 			break;
@@ -236,8 +232,7 @@ export function createOdspNetworkError(
 			if (innerMostErrorCode === OdspServiceReadOnlyErrorCode) {
 				error = new RetryableError(
 					errorMessage,
-					// eslint-disable-next-line import/no-deprecated
-					OdspErrorType.serviceReadOnly,
+					OdspErrorTypes.serviceReadOnly,
 					driverProps,
 				);
 			} else if (
@@ -246,8 +241,7 @@ export function createOdspNetworkError(
 			) {
 				error = new NonRetryableError(
 					"IP Address is blocked",
-					// eslint-disable-next-line import/no-deprecated
-					OdspErrorType.blockedIPAddress,
+					OdspErrorTypes.blockedIPAddress,
 					driverProps,
 				);
 			} else {
@@ -274,22 +268,19 @@ export function createOdspNetworkError(
 			}
 			error = new NonRetryableError(
 				errorMessage,
-				// eslint-disable-next-line import/no-deprecated
-				DriverErrorType.fileNotFoundOrAccessDeniedError,
+				DriverErrorTypes.fileNotFoundOrAccessDeniedError,
 				driverProps,
 			);
 			break;
 		case 406:
 			error = new NonRetryableError(
 				errorMessage,
-				// eslint-disable-next-line import/no-deprecated
-				DriverErrorType.unsupportedClientProtocolVersion,
+				DriverErrorTypes.unsupportedClientProtocolVersion,
 				driverProps,
 			);
 			break;
 		case 410:
-			// eslint-disable-next-line import/no-deprecated
-			error = new NonRetryableError(errorMessage, OdspErrorType.cannotCatchUp, driverProps);
+			error = new NonRetryableError(errorMessage, OdspErrorTypes.cannotCatchUp, driverProps);
 			break;
 		case 409:
 			// This status code is sent by the server when the client and server epoch mismatches.
@@ -298,8 +289,7 @@ export function createOdspNetworkError(
 			// This indicates that the file/container has been modified externally.
 			error = new NonRetryableError(
 				errorMessage,
-				// eslint-disable-next-line import/no-deprecated
-				DriverErrorType.fileOverwrittenInStorage,
+				DriverErrorTypes.fileOverwrittenInStorage,
 				driverProps,
 			);
 			break;
@@ -308,20 +298,17 @@ export function createOdspNetworkError(
 			// Resubmitting same payload is not going to help, so this is non-recoverable failure!
 			error = new NonRetryableError(
 				errorMessage,
-				// eslint-disable-next-line import/no-deprecated
-				DriverErrorType.genericNetworkError,
+				DriverErrorTypes.genericNetworkError,
 				driverProps,
 			);
 			break;
 		case 413:
-			// eslint-disable-next-line import/no-deprecated
-			error = new NonRetryableError(errorMessage, OdspErrorType.snapshotTooBig, driverProps);
+			error = new NonRetryableError(errorMessage, OdspErrorTypes.snapshotTooBig, driverProps);
 			break;
 		case 414:
 			error = new NonRetryableError(
 				errorMessage,
-				// eslint-disable-next-line import/no-deprecated
-				OdspErrorType.invalidFileNameError,
+				OdspErrorTypes.invalidFileNameError,
 				driverProps,
 			);
 			break;
@@ -332,8 +319,7 @@ export function createOdspNetworkError(
 			) {
 				error = new NonRetryableError(
 					errorMessage,
-					// eslint-disable-next-line import/no-deprecated
-					DriverErrorType.fileIsLocked,
+					DriverErrorTypes.fileIsLocked,
 					driverProps,
 				);
 				break;
@@ -341,20 +327,21 @@ export function createOdspNetworkError(
 		case 500:
 			error = new RetryableError(
 				errorMessage,
-				// eslint-disable-next-line import/no-deprecated
-				DriverErrorType.genericNetworkError,
+				DriverErrorTypes.genericNetworkError,
 				driverProps,
 			);
 			break;
 		case 501:
-			// eslint-disable-next-line import/no-deprecated
-			error = new NonRetryableError(errorMessage, OdspErrorType.fluidNotEnabled, driverProps);
+			error = new NonRetryableError(
+				errorMessage,
+				OdspErrorTypes.fluidNotEnabled,
+				driverProps,
+			);
 			break;
 		case 507:
 			error = new NonRetryableError(
 				errorMessage,
-				// eslint-disable-next-line import/no-deprecated
-				DriverErrorType.outOfStorageError,
+				DriverErrorTypes.outOfStorageError,
 				driverProps,
 			);
 			break;
@@ -362,8 +349,7 @@ export function createOdspNetworkError(
 			// Note that getWithRetryForTokenRefresh will retry it once, then it becomes non-retryable error
 			error = new NonRetryableError(
 				errorMessage,
-				// eslint-disable-next-line import/no-deprecated
-				DriverErrorType.incorrectServerResponse,
+				DriverErrorTypes.incorrectServerResponse,
 				driverProps,
 			);
 			break;

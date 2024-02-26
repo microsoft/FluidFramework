@@ -9,8 +9,12 @@ export {
 	StableNodeKey,
 	nodeKeyFieldKey,
 	nodeKeyTreeIdentifier,
-} from "./nodeKey";
+} from "./nodeKey.js";
 
-export { NodeKeyIndex } from "./nodeKeyIndex";
+export { NodeKeyIndex } from "./nodeKeyIndex.js";
 
-export { createNodeKeyManager, createMockNodeKeyManager, NodeKeyManager } from "./nodeKeyManager";
+export {
+	createNodeKeyManager,
+	createMockNodeKeyManager,
+	NodeKeyManager,
+} from "./nodeKeyManager.js";

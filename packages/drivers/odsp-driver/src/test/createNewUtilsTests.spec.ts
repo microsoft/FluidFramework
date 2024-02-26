@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
+import { ISnapshot } from "@fluidframework/driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";
 import { bufferToString } from "@fluid-internal/client-utils";
 import {
 	IFileEntry,
 	IOdspResolvedUrl,
-	ShareLinkTypes,
 	ISharingLinkKind,
 	SharingLinkRole,
 	SharingLinkScope,
@@ -19,12 +19,12 @@ import { convertCreateNewSummaryTreeToTreeAndBlobs } from "../createNewUtils";
 import { createNewFluidFile } from "../createFile";
 import { createNewContainerOnExistingFile } from "../createNewContainerOnExistingFile";
 import { EpochTracker } from "../epochTracker";
-import { getHashedDocumentId, ISnapshotContents } from "../odspPublicUtils";
+import { getHashedDocumentId } from "../odspPublicUtils";
 import { INewFileInfo, createCacheSnapshotKey, IExistingFileInfo } from "../odspUtils";
 import { LocalPersistentCache } from "../odspCache";
 import { mockFetchOk } from "./mockFetch";
 
-const createUtLocalCache = () => new LocalPersistentCache();
+const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 
 describe("Create New Utils Tests", () => {
 	const documentAttributes: api.IDocumentAttributes = {
@@ -32,7 +32,7 @@ describe("Create New Utils Tests", () => {
 		sequenceNumber: 0,
 	};
 	const blobContent = "testing";
-	const createSummary = () => {
+	const createSummary = (): api.ISummaryTree => {
 		const summary: api.ISummaryTree = {
 			type: api.SummaryType.Tree,
 			tree: {},
@@ -67,7 +67,7 @@ describe("Create New Utils Tests", () => {
 		driveId,
 		itemId,
 		odspResolvedUrl: true,
-	} as any as IOdspResolvedUrl;
+	} as unknown as IOdspResolvedUrl;
 	const filePath = "path";
 	let newFileParams: INewFileInfo;
 	let hashedDocumentId: string;
@@ -107,14 +107,14 @@ describe("Create New Utils Tests", () => {
 		await epochTracker.removeEntries().catch(() => {});
 	});
 
-	const test = (snapshot: ISnapshotContents) => {
+	const test = (snapshot: ISnapshot): void => {
 		const snapshotTree = snapshot.snapshotTree;
 		assert.strictEqual(
 			Object.entries(snapshotTree.trees).length,
 			2,
 			"app and protocol should be there",
 		);
-		assert.strictEqual(snapshot.blobs.size, 2, "2 blobs should be there");
+		assert.strictEqual(snapshot.blobContents.size, 2, "2 blobs should be there");
 
 		const appTree = snapshotTree.trees[".app"];
 		const protocolTree = snapshotTree.trees[".protocol"];
@@ -122,13 +122,13 @@ describe("Create New Utils Tests", () => {
 		assert(protocolTree !== undefined, "Protocol tree should be there");
 
 		const appTreeBlobId = appTree.blobs.attributes;
-		const appTreeBlobValBuffer = snapshot.blobs.get(appTreeBlobId);
+		const appTreeBlobValBuffer = snapshot.blobContents.get(appTreeBlobId);
 		assert(appTreeBlobValBuffer !== undefined, "app blob value should exist");
 		const appTreeBlobVal = bufferToString(appTreeBlobValBuffer, "utf8");
 		assert(appTreeBlobVal === blobContent, "Blob content should match");
 
 		const docAttributesBlobId = protocolTree.blobs.attributes;
-		const docAttributesBuffer = snapshot.blobs.get(docAttributesBlobId);
+		const docAttributesBuffer = snapshot.blobContents.get(docAttributesBlobId);
 		assert(docAttributesBuffer !== undefined, "protocol attributes blob value should exist");
 		const docAttributesBlobValue = bufferToString(docAttributesBuffer, "utf8");
 		assert(
@@ -161,7 +161,9 @@ describe("Create New Utils Tests", () => {
 			{ itemId: "itemId1", id: "Summary handle" },
 			{ "x-fluid-epoch": "epoch1" },
 		);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const snapshot = await epochTracker.get(createCacheSnapshotKey(odspResolvedUrl));
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		test(snapshot);
 		await epochTracker.removeEntries().catch(() => {});
 	});
@@ -188,88 +190,10 @@ describe("Create New Utils Tests", () => {
 			{ itemId: "itemId1", id: "Summary handle" },
 			{ "x-fluid-epoch": "epoch1" },
 		);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const snapshot = await epochTracker.get(createCacheSnapshotKey(odspResolvedUrl));
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		test(snapshot);
-		await epochTracker.removeEntries().catch(() => {});
-	});
-
-	it("Should save CSL specific share link information received during createNewFluidFile", async () => {
-		const createLinkType = ShareLinkTypes.csl;
-		newFileParams.createLinkType = createLinkType;
-
-		// Test that sharing link is set appropriately when it is received in the response from ODSP
-		const mockSharingLink = "mockSharingLink";
-		const mockSharingId = "mockSharingId";
-		let odspResolvedUrl = await mockFetchOk(
-			async () =>
-				createNewFluidFile(
-					async (_options) => "token",
-					newFileParams,
-					createChildLogger(),
-					createSummary(),
-					epochTracker,
-					fileEntry,
-					false /* createNewCaching */,
-					false /* forceAccessTokenViaAuthorizationHeader */,
-					undefined /* isClpCompliantApp */,
-					false /* enableSingleRequestForShareLinkWithCreate */,
-					true /* enableShareLinkWithCreate */,
-				),
-			{
-				itemId: "mockItemId",
-				id: "mockId",
-				sharingLink: mockSharingLink,
-				sharingLinkErrorReason: undefined,
-				sharing: {
-					shareId: mockSharingId,
-					shareLink: {
-						scope: "organization",
-						type: "edit",
-						webUrl: "webUrl",
-					},
-				},
-			},
-			{ "x-fluid-epoch": "epoch1" },
-		);
-		assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink, {
-			type: createLinkType,
-			link: mockSharingLink,
-			shareId: mockSharingId,
-			error: undefined,
-		});
-
-		// Test that error message is set appropriately when it is received in the response from ODSP
-		const mockError = "mockError";
-		odspResolvedUrl = await mockFetchOk(
-			async () =>
-				createNewFluidFile(
-					async (_options) => "token",
-					newFileParams,
-					createChildLogger(),
-					createSummary(),
-					epochTracker,
-					fileEntry,
-					false /* createNewCaching */,
-					false /* forceAccessTokenViaAuthorizationHeader */,
-					undefined /* isClpCompliantApp */,
-					false /* enableSingleRequestForShareLinkWithCreate */,
-					true /* enableShareLinkWithCreate */,
-				),
-			{
-				itemId: "mockItemId",
-				id: "mockId",
-				sharingLink: undefined,
-				sharingLinkErrorReason: mockError,
-				sharing: { error: {} },
-			},
-			{ "x-fluid-epoch": "epoch1" },
-		);
-		assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink, {
-			type: createLinkType,
-			link: undefined,
-			shareId: undefined,
-			error: mockError,
-		});
 		await epochTracker.removeEntries().catch(() => {});
 	});
 
@@ -309,7 +233,6 @@ describe("Create New Utils Tests", () => {
 					false /* forceAccessTokenViaAuthorizationHeader */,
 					undefined /* isClpCompliantApp */,
 					true /* enableSingleRequestForShareLinkWithCreate */,
-					false /* enableShareLinkWithCreate */,
 				),
 			{
 				itemId: "mockItemId",
@@ -320,7 +243,6 @@ describe("Create New Utils Tests", () => {
 			{ "x-fluid-epoch": "epoch1" },
 		);
 		assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink, {
-			type: createLinkType,
 			shareId: mockSharingData.shareId,
 			link: {
 				role: mockSharingData.sharingLink.type,
@@ -356,7 +278,6 @@ describe("Create New Utils Tests", () => {
 					false /* forceAccessTokenViaAuthorizationHeader */,
 					undefined /* isClpCompliantApp */,
 					true /* enableSingleRequestForShareLinkWithCreate */,
-					false /* enableShareLinkWithCreate */,
 				),
 			{
 				itemId: "mockItemId",
@@ -367,7 +288,6 @@ describe("Create New Utils Tests", () => {
 			{ "x-fluid-epoch": "epoch1" },
 		);
 		assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink, {
-			type: createLinkType,
 			shareId: undefined,
 			link: undefined,
 			error: mockSharingError.error,

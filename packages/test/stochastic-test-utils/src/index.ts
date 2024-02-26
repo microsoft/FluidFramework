@@ -6,12 +6,16 @@
 export { combineReducers, combineReducersAsync } from "./combineReducers";
 export {
 	createFuzzDescribe,
+	CreateMochaSuite,
 	defaultOptions,
 	DescribeFuzz,
 	describeFuzz,
-	DescribeFuzzSuite,
+	DescribeStress,
+	describeStress,
 	FuzzDescribeOptions,
 	FuzzSuiteArguments,
+	MochaSuiteWithArguments,
+	StressSuiteArguments,
 } from "./describeFuzz";
 export {
 	asyncGeneratorFromArray,

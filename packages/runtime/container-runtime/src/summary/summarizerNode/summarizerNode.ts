@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, ITelemetryErrorEvent } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
 	ISummarizerNode,
 	ISummarizerNodeConfig,
 	ISummarizeResult,
-	ISummaryTreeWithStats,
 	CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
 	SummarizeInternalFn,
@@ -19,7 +18,6 @@ import {
 	ISequencedDocumentMessage,
 	SummaryType,
 	ISnapshotTree,
-	SummaryObject,
 } from "@fluidframework/protocol-definitions";
 import {
 	ITelemetryLoggerExt,
@@ -28,17 +26,17 @@ import {
 	PerformanceEvent,
 	TelemetryDataTag,
 	tagCodeArtifacts,
+	type ITelemetryErrorEventExt,
 } from "@fluidframework/telemetry-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { convertToSummaryTree, calculateStats, mergeStats } from "@fluidframework/runtime-utils";
+import { mergeStats } from "@fluidframework/runtime-utils";
 import {
 	EscapedPath,
 	ICreateChildDetails,
-	IInitialSummary,
 	IRefreshSummaryResult,
+	IStartSummaryResult,
 	ISummarizerNodeRootContract,
 	parseSummaryForSubtrees,
-	parseSummaryTreeForSubtrees,
 	SummaryNode,
 	ValidateSummaryResult,
 } from "./summarizerNodeUtils";
@@ -86,7 +84,6 @@ export class SummarizerNode implements IRootSummarizerNode {
 		private _changeSequenceNumber: number,
 		/** Undefined means created without summary */
 		private _latestSummary?: SummaryNode,
-		private readonly initialSummary?: IInitialSummary,
 		protected wipSummaryLogger?: ITelemetryBaseLogger,
 		/** A unique id of this node to be logged when sending telemetry. */
 		protected telemetryNodeId?: string,
@@ -101,7 +98,22 @@ export class SummarizerNode implements IRootSummarizerNode {
 		});
 	}
 
-	public startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryBaseLogger) {
+	/**
+	 * In order to produce a summary with a summarizer node, the summarizer node system must be notified a summary has
+	 * started. This is done by calling startSummary. This will track the reference sequence number of the summary and
+	 * run some validation checks to ensure the summary is correct.
+	 * @param referenceSequenceNumber - the number of ops processed up to this point
+	 * @param summaryLogger - the logger to use for the summary
+	 * @param latestSummaryRefSeqNum - the reference sequence number of the latest summary. Another way to think about
+	 * it is the reference sequence number of the previous summary.
+	 * @returns the number of nodes in the tree, the number of nodes that are invalid, and the different types of
+	 * sequence number mismatches
+	 */
+	public startSummary(
+		referenceSequenceNumber: number,
+		summaryLogger: ITelemetryBaseLogger,
+		latestSummaryRefSeqNum: number,
+	): IStartSummaryResult {
 		assert(
 			this.wipSummaryLogger === undefined,
 			0x19f /* "wipSummaryLogger should not be set yet in startSummary" */,
@@ -111,12 +123,40 @@ export class SummarizerNode implements IRootSummarizerNode {
 			0x1a0 /* "Already tracking a summary" */,
 		);
 
+		let nodes = 1;
+		let invalidNodes = 0;
+		const sequenceNumberMismatchKeySet = new Set<string>();
+		const nodeLatestSummaryRefSeqNum = this._latestSummary?.referenceSequenceNumber;
+		if (
+			nodeLatestSummaryRefSeqNum !== undefined &&
+			latestSummaryRefSeqNum !== nodeLatestSummaryRefSeqNum
+		) {
+			invalidNodes++;
+			sequenceNumberMismatchKeySet.add(
+				`${latestSummaryRefSeqNum}-${nodeLatestSummaryRefSeqNum}`,
+			);
+		}
+
 		this.wipSummaryLogger = summaryLogger;
 
 		for (const child of this.children.values()) {
-			child.startSummary(referenceSequenceNumber, this.wipSummaryLogger);
+			const childStartSummaryResult = child.startSummary(
+				referenceSequenceNumber,
+				this.wipSummaryLogger,
+				latestSummaryRefSeqNum,
+			);
+			nodes += childStartSummaryResult.nodes;
+			invalidNodes += childStartSummaryResult.invalidNodes;
+			for (const invalidSequenceNumber of childStartSummaryResult.mismatchNumbers) {
+				sequenceNumberMismatchKeySet.add(invalidSequenceNumber);
+			}
 		}
 		this.wipReferenceSequenceNumber = referenceSequenceNumber;
+		return {
+			nodes,
+			invalidNodes,
+			mismatchNumbers: sequenceNumberMismatchKeySet,
+		};
 	}
 
 	public async summarize(
@@ -521,7 +561,6 @@ export class SummarizerNode implements IRootSummarizerNode {
 			config,
 			createDetails.changeSequenceNumber,
 			createDetails.latestSummary,
-			createDetails.initialSummary,
 			this.wipSummaryLogger,
 			createDetails.telemetryNodeId,
 		);
@@ -549,7 +588,6 @@ export class SummarizerNode implements IRootSummarizerNode {
 		id: string,
 		createParam: CreateChildSummarizerNodeParam,
 	): ICreateChildDetails {
-		let initialSummary: IInitialSummary | undefined;
 		let latestSummary: SummaryNode | undefined;
 		let changeSequenceNumber: number;
 
@@ -562,63 +600,12 @@ export class SummarizerNode implements IRootSummarizerNode {
 				) {
 					// Prioritize latest summary if it was after this node was attached.
 					latestSummary = parentLatestSummary.createForChild(id);
-				} else {
-					const summary = convertToSummaryTree(
-						createParam.snapshot,
-					) as ISummaryTreeWithStats;
-					initialSummary = {
-						sequenceNumber: createParam.sequenceNumber,
-						id,
-						summary,
-					};
 				}
 				changeSequenceNumber = createParam.sequenceNumber;
 				break;
 			}
-			case CreateSummarizerNodeSource.FromSummary: {
-				if (this.initialSummary === undefined) {
-					assert(
-						!!parentLatestSummary,
-						0x1ac /* "Cannot create child from summary if parent does not have latest summary" */,
-					);
-				}
-				// fallthrough to local
-			}
+			case CreateSummarizerNodeSource.FromSummary:
 			case CreateSummarizerNodeSource.Local: {
-				const parentInitialSummary = this.initialSummary;
-				if (parentInitialSummary !== undefined) {
-					let childSummary: SummaryObject | undefined;
-					if (parentInitialSummary.summary !== undefined) {
-						const { childrenTree } = parseSummaryTreeForSubtrees(
-							parentInitialSummary.summary.summary,
-						);
-						assert(
-							childrenTree.type === SummaryType.Tree,
-							0x1d6 /* "Parent summary object is not a tree" */,
-						);
-						childSummary = childrenTree.tree[id];
-					}
-					if (createParam.type === CreateSummarizerNodeSource.FromSummary) {
-						// Locally created would not have differential subtree.
-						assert(!!childSummary, 0x1ad /* "Missing child summary tree" */);
-					}
-					let childSummaryWithStats: ISummaryTreeWithStats | undefined;
-					if (childSummary !== undefined) {
-						assert(
-							childSummary.type === SummaryType.Tree,
-							0x1ae /* "Child summary object is not a tree" */,
-						);
-						childSummaryWithStats = {
-							summary: childSummary,
-							stats: calculateStats(childSummary),
-						};
-					}
-					initialSummary = {
-						sequenceNumber: parentInitialSummary.sequenceNumber,
-						id,
-						summary: childSummaryWithStats,
-					};
-				}
 				latestSummary = parentLatestSummary?.createForChild(id);
 				changeSequenceNumber = parentLatestSummary?.referenceSequenceNumber ?? -1;
 				break;
@@ -629,13 +616,12 @@ export class SummarizerNode implements IRootSummarizerNode {
 			}
 		}
 
-		const childtelemetryNodeId = `${this.telemetryNodeId ?? ""}/${id}`;
+		const childTelemetryNodeId = `${this.telemetryNodeId ?? ""}/${id}`;
 
 		return {
-			initialSummary,
 			latestSummary,
 			changeSequenceNumber,
-			telemetryNodeId: childtelemetryNodeId,
+			telemetryNodeId: childTelemetryNodeId,
 		};
 	}
 
@@ -682,7 +668,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	/**
 	 * Creates and throws an error due to unexpected conditions.
 	 */
-	protected throwUnexpectedError(eventProps: ITelemetryErrorEvent): never {
+	protected throwUnexpectedError(eventProps: ITelemetryErrorEventExt): never {
 		const error = new LoggingError(eventProps.eventName, {
 			...eventProps,
 			referenceSequenceNumber: this.wipReferenceSequenceNumber,
@@ -719,7 +705,6 @@ export const createRootSummarizerNode = (
 		referenceSequenceNumber === undefined
 			? undefined
 			: SummaryNode.createForRoot(referenceSequenceNumber),
-		undefined /* initialSummary */,
 		undefined /* wipSummaryLogger */,
 		"" /* telemetryNodeId */,
 	);

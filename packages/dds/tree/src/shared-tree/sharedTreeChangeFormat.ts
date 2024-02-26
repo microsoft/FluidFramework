@@ -4,7 +4,7 @@
  */
 
 import { Static, Type } from "@sinclair/typebox";
-import { EncodedSchemaChange, EncodedModularChangeset } from "../feature-libraries";
+import { EncodedSchemaChange, EncodedModularChangeset } from "../feature-libraries/index.js";
 
 export const EncodedSharedTreeInnerChange = Type.Object({
 	schema: Type.Optional(EncodedSchemaChange),

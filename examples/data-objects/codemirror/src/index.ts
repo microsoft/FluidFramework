@@ -8,20 +8,20 @@ import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
-import { MountableView } from "@fluidframework/view-adapters";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import {
-	IFluidMountableViewEntryPoint,
 	getDataStoreEntryPoint,
+	IFluidMountableViewEntryPoint,
+	MountableView,
 } from "@fluid-example/example-utils";
 
 import React from "react";
 
-import { CodeMirrorComponent, SmdeFactory } from "./codeMirror";
-import { CodeMirrorReactView } from "./codeMirrorView";
+import { CodeMirrorComponent, SmdeFactory } from "./codeMirror.js";
+import { CodeMirrorReactView } from "./codeMirrorView.js";
 
-export { CodeMirrorComponent, SmdeFactory } from "./codeMirror";
-export { CodeMirrorReactView } from "./codeMirrorView";
+export { CodeMirrorComponent, SmdeFactory } from "./codeMirror.js";
+export { CodeMirrorReactView } from "./codeMirrorView.js";
 
 const defaultComponentId = "default";
 

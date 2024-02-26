@@ -4,23 +4,23 @@
  */
 
 export {
-	TreeNodeSchema,
-	TreeFieldSchema,
+	FlexTreeNodeSchema,
+	FlexFieldSchema,
 	Any,
 	allowedTypesToTypeSet,
-	AllowedTypes,
+	FlexAllowedTypes,
 	LazyTreeNodeSchema,
 	LeafNodeSchema,
-	MapNodeSchema,
-	ObjectNodeSchema,
-	FieldNodeSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
+	FlexFieldNodeSchema,
 	FlexTreeSchema,
 	Unenforced,
 	AllowedTypeSet,
-	MapFieldSchema,
+	FlexMapFieldSchema,
 	SchemaCollection,
 	TreeNodeSchemaBase,
-	Fields,
+	FlexObjectNodeFields,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
@@ -30,19 +30,16 @@ export {
 	intoStoredSchema,
 	allowedTypesSchemaSet,
 	intoStoredSchemaCollection,
-} from "./typedTreeSchema";
+} from "./typedTreeSchema.js";
 
-export { ViewSchema } from "./view";
+export { ViewSchema } from "./view.js";
 
 export {
-	bannedFieldNames,
-	fieldApiPrefixes,
-	validateObjectNodeFieldName,
 	SchemaLibraryData,
 	SchemaLintConfiguration,
 	aggregateSchemaLibraries,
 	schemaLintDefault,
-} from "./schemaCollection";
+} from "./schemaCollection.js";
 
 export {
 	FlexList,
@@ -52,6 +49,6 @@ export {
 	isLazy,
 	ExtractItemType,
 	NormalizeLazyItem,
-} from "./flexList";
+} from "./flexList.js";
 
-export { ArrayToUnion } from "./typeUtils";
+export { ArrayToUnion } from "./typeUtils.js";

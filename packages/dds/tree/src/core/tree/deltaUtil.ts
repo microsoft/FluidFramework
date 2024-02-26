@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { Mutable } from "../../util";
-import { FieldKey } from "../schema-stored";
-import { ITreeCursorSynchronous } from "./cursor";
-import { Root, DetachedNodeId, FieldChanges, Mark } from "./delta";
-import { rootFieldKey } from "./types";
+import { Mutable } from "../../util/index.js";
+import { FieldKey } from "../schema-stored/index.js";
+import { ITreeCursorSynchronous } from "./cursor.js";
+import { Root, DetachedNodeId, FieldChanges, Mark } from "./delta.js";
+import { rootFieldKey } from "./types.js";
 
 export const emptyDelta: Root<never> = {};
 
-export const emptyFieldChanges: FieldChanges<never> = {};
+export const emptyFieldChanges: FieldChanges = {};
 
 export function isAttachMark(mark: Mark): boolean {
 	return mark.attach !== undefined && mark.detach === undefined;
@@ -29,7 +29,6 @@ export function isEmptyFieldChanges(fieldChanges: FieldChanges): boolean {
 	return (
 		fieldChanges.local === undefined &&
 		fieldChanges.global === undefined &&
-		fieldChanges.build === undefined &&
 		fieldChanges.rename === undefined
 	);
 }
@@ -51,21 +50,6 @@ export function deltaForRootInitialization(content: readonly ITreeCursorSynchron
 		]),
 	};
 	return delta;
-}
-
-export function deltaForSet(
-	newNode: ITreeCursorSynchronous,
-	buildId: DetachedNodeId,
-	detachId?: DetachedNodeId,
-): FieldChanges {
-	const mark: Mutable<Mark> = { count: 1, attach: buildId };
-	if (detachId !== undefined) {
-		mark.detach = detachId;
-	}
-	return {
-		build: [{ id: buildId, trees: [newNode] }],
-		local: [mark],
-	};
 }
 
 export function makeDetachedNodeId(

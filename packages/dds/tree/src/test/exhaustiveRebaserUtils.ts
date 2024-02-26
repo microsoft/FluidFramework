@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { RevisionMetadataSource, RevisionTag, TaggedChange } from "../core";
+import { RevisionMetadataSource, RevisionTag, TaggedChange } from "../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { RebaseRevisionMetadata } from "../feature-libraries/modular-schema";
+import { RebaseRevisionMetadata } from "../feature-libraries/modular-schema/index.js";
 
 /**
  * Given a state tree, constructs the sequence of edits which led to that state.
@@ -63,7 +63,12 @@ export interface BoundFieldChangeRebaser<TChangeset> {
 		change: TChangeset,
 		...baseChanges: TaggedChange<TChangeset>[]
 	): TChangeset;
-	compose(changes: TaggedChange<TChangeset>[], metadata?: RevisionMetadataSource): TChangeset;
+	compose(
+		change1: TaggedChange<TChangeset>,
+		change2: TaggedChange<TChangeset>,
+		metadata?: RevisionMetadataSource,
+	): TChangeset;
+	createEmpty(): TChangeset;
 	assertEqual?(
 		change1: TaggedChange<TChangeset> | undefined,
 		change2: TaggedChange<TChangeset> | undefined,
@@ -162,7 +167,7 @@ export function* generatePossibleSequenceOfEdits<TContent, TChangeset>(
 		initialState,
 		generateChildStates,
 		numberOfEdits,
-		(intention: number) => `${tagPrefix}${intention}` as RevisionTag,
+		(intention: number) => `${tagPrefix}${intention}` as unknown as RevisionTag,
 		intentionMinter ?? makeIntentionMinter(),
 	)) {
 		const edits: NamedChangeset<TChangeset>[] = [];

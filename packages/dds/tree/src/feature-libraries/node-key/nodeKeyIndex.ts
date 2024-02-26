@@ -4,16 +4,15 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { FieldKey, ValueSchema } from "../../core";
+import { FieldKey, ValueSchema } from "../../core/index.js";
 import {
 	FlexTreeObjectNode,
 	FlexTreeContext,
 	FlexTreeField,
 	FlexTreeNode,
-	boxedIterator,
-} from "../flex-tree";
-import { FlexTreeSchema, LeafNodeSchema, schemaIsObjectNode } from "../typed-schema";
-import { LocalNodeKey, nodeKeyTreeIdentifier } from "./nodeKey";
+} from "../flex-tree/index.js";
+import { FlexTreeSchema, LeafNodeSchema, schemaIsObjectNode } from "../typed-schema/index.js";
+import { LocalNodeKey, nodeKeyTreeIdentifier } from "./nodeKey.js";
 
 /**
  * The node key index records nodes with {@link LocalNodeKey}s and allows them to be looked up by key.
@@ -110,7 +109,7 @@ export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, FlexTreeObjectNod
 				yield [key, node as FlexTreeObjectNode];
 			}
 		}
-		for (const f of node[boxedIterator]()) {
+		for (const f of node.boxedIterator()) {
 			yield* this.findKeysInField(f);
 		}
 	}
@@ -118,7 +117,7 @@ export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, FlexTreeObjectNod
 	private *findKeysInField(
 		f: FlexTreeField,
 	): Iterable<[key: LocalNodeKey, node: FlexTreeObjectNode]> {
-		for (const child of f[boxedIterator]()) {
+		for (const child of f.boxedIterator()) {
 			yield* this.findKeys(child);
 		}
 	}

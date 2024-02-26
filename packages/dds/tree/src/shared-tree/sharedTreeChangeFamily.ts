@@ -4,20 +4,27 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ICodecFamily, ICodecOptions } from "../codec";
+import { ICodecFamily, ICodecOptions } from "../codec/index.js";
 import {
+	ChangeEncodingContext,
 	ChangeFamily,
 	ChangeRebaser,
 	RevisionMetadataSource,
+	RevisionTagCodec,
 	TaggedChange,
 	mapTaggedChange,
-} from "../core";
-import { fieldKinds, ModularChangeFamily, ModularChangeset } from "../feature-libraries";
-import { Mutable, fail } from "../util";
-import { RevisionTagCodec } from "../shared-tree-core";
-import { makeSharedTreeChangeCodecFamily } from "./sharedTreeChangeCodecs";
-import { SharedTreeChange } from "./sharedTreeChangeTypes";
-import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder";
+} from "../core/index.js";
+import {
+	fieldKinds,
+	ModularChangeFamily,
+	ModularChangeset,
+	FieldBatchCodec,
+	TreeCompressionStrategy,
+} from "../feature-libraries/index.js";
+import { Mutable, fail } from "../util/index.js";
+import { makeSharedTreeChangeCodecFamily } from "./sharedTreeChangeCodecs.js";
+import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
+import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 
 /**
  * Implementation of {@link ChangeFamily} that combines edits to fields and schema changes.
@@ -33,14 +40,21 @@ export class SharedTreeChangeFamily
 		changes: [],
 	};
 
-	public readonly codecs: ICodecFamily<SharedTreeChange>;
+	public readonly codecs: ICodecFamily<SharedTreeChange, ChangeEncodingContext>;
 	private readonly modularChangeFamily: ModularChangeFamily;
 
-	public constructor(codecOptions: ICodecOptions) {
+	public constructor(
+		revisionTagCodec: RevisionTagCodec,
+		fieldBatchCodec: FieldBatchCodec,
+		codecOptions: ICodecOptions,
+		chunkCompressionStrategy?: TreeCompressionStrategy,
+	) {
 		this.modularChangeFamily = new ModularChangeFamily(
 			fieldKinds,
-			new RevisionTagCodec(),
+			revisionTagCodec,
+			fieldBatchCodec,
 			codecOptions,
+			chunkCompressionStrategy,
 		);
 		this.codecs = makeSharedTreeChangeCodecFamily(
 			this.modularChangeFamily.latestCodec,
@@ -136,14 +150,14 @@ export class SharedTreeChangeFamily
 		}
 		assert(
 			change.changes.length === 1 && over.change.changes.length === 1,
-			"SharedTreeChange should have exactly one inner change if no schema change is present.",
+			0x884 /* SharedTreeChange should have exactly one inner change if no schema change is present. */,
 		);
 
 		const dataChangeIntention = change.changes[0];
 		const dataChangeOver = over.change.changes[0];
 		assert(
 			dataChangeIntention.type === "data" && dataChangeOver.type === "data",
-			"Data change should be present.",
+			0x885 /* Data change should be present. */,
 		);
 
 		return {

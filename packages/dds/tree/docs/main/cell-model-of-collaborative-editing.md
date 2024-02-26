@@ -63,7 +63,7 @@ These additions, while effective, have the following drawbacks:
 
     -   It seems like it should be possible to support a "replace" operation that is similar to revive but with new elements instead of resurrecting removed ones, but that too needs to be added as separate operation)
 
-*   They do not alleviate the complexity of modeling an optional field (clearing the field requires a slice-delete operation over the field, overwriting the field requires that same slice-delete and an insert whose exact position is meaningless).
+*   They do not alleviate the complexity of modeling an optional field (clearing the field requires a slice-remove operation over the field, overwriting the field requires that same slice-remove and an insert whose exact position is meaningless).
 
 The cell model can be thought of as a refactoring of both the traditional editing primitives and the above additions such that the listed drawbacks are avoided.
 
@@ -110,7 +110,7 @@ The model admits the following operations:
 -   <u>Remove a forwarding annotation</u> from a cell
 
 Note that cells cannot be deallocated (or moved).
-This reflects the fact that a client may perform an edit relative to some content's location at a point in time, even if that content has since been deleted or moved: the client is performing the edit relative to the cell which contained that content.
+This reflects the fact that a client may perform an edit relative to some content's location at a point in time, even if that content has since been removed or moved: the client is performing the edit relative to the cell which contained that content.
 
 ## Building on the Model
 
@@ -133,7 +133,7 @@ The low-level edits that such fields might support can be decomposed as follows:
 
 -   Insert: allocate and fill a cell
 
--   Delete/Remove: clear a cell
+-   Remove: clear a cell
 
 -   Revive: fill a (cleared) cell with the contents it contained before
 
@@ -222,4 +222,4 @@ While there is no imperative to do so, the change application logic of SharedTre
 
 By allowing some usage patterns to leverage fixed-sized fields, we are able to offer adequate merge semantics without incurring the cost of managing a potentially unbounded number of tombstones.
 This is particularly welcome because we conjecture that fixed-sized fields are more likely to see a lot of repeated overwrites.
-Dynamically sized fields typically contain more data, but the amount of deleted content tends to remain proportional to the amount of tip-state content.
+Dynamically sized fields typically contain more data, but the amount of removed content tends to remain proportional to the amount of tip-state content.

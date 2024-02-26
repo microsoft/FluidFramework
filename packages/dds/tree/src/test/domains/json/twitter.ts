@@ -13,7 +13,7 @@ import {
 	getRandomEnglishString,
 	getRandomNumberString,
 	getSizeInBytes,
-} from "./jsonGeneratorUtils";
+} from "./jsonGeneratorUtils.js";
 
 // This file contains logic to generate a JSON file that is statistically similar to the well-known
 // json benchmarks twitter.json - https://raw.githubusercontent.com/serde-rs/json-benchmark/master/data/twitter.json

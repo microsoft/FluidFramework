@@ -12,9 +12,9 @@ import {
 	readStream,
 	readStreamNumber,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities";
-import { makeArray } from "../../../../util";
-import { DiscriminatedUnionDispatcher } from "../../../../codec";
+} from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
+import { makeArray } from "../../../../util/index.js";
+import { DiscriminatedUnionDispatcher } from "../../../../codec/index.js";
 
 describe("chunkEncodingUtilities", () => {
 	describe("counter", () => {

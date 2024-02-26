@@ -8,7 +8,7 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/core-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 
-import { IDiceRoller } from "./interface";
+import { IDiceRoller } from "./interface.js";
 
 const taskManagerKey = "taskManager";
 // The root is map-like, so we'll use this key for storing the value.

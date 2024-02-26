@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-shared-tree-interop",
-	"version": "2.0.0-rc.1.0.0",
+	"version": "2.0.0-rc.2.0.0",
 	"description": "Utilities for migration from PropertyDDS to the new SharedTree DDS",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -10,13 +10,25 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
+	"type": "module",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
 	"main": "dist/index.js",
-	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:esnext": "tsc --project ./tsconfig.esnext.json",
+		"build:esnext": "tsc",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\" lib nyc",
 		"eslint": "eslint --format stylish src",
@@ -29,7 +41,7 @@
 		"test": "npm run test:jest",
 		"test:coverage": "jest --coverage --ci",
 		"test:jest": "jest",
-		"tsc": "tsc"
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"dependencies": {
 		"@fluid-experimental/property-changeset": "workspace:~",
@@ -39,10 +51,11 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.29.0-222379",
+		"@fluidframework/build-tools": "^0.34.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@types/jest": "29.5.3",
 		"@types/node": "^18.19.0",
+		"copyfiles": "^2.4.1",
 		"eslint": "~8.50.0",
 		"eslint-config-prettier": "~9.0.0",
 		"jest": "^29.6.2",
@@ -51,6 +64,17 @@
 		"rimraf": "^4.4.0",
 		"ts-jest": "^29.1.1",
 		"typescript": "~5.1.6"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"eslint": [
+				"build:esnext",
+				"build:test"
+			],
+			"build:test": [
+				"build:esnext"
+			]
+		}
 	},
 	"typeValidation": {
 		"disabled": true,

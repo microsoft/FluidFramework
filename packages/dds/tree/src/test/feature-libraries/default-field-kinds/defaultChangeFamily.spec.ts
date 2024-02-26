@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 import {
 	FieldKey,
-	mintRevisionTag,
 	IForestSubscription,
 	initializeForest,
 	JsonableTree,
@@ -18,8 +17,8 @@ import {
 	applyDelta,
 	makeDetachedFieldIndex,
 	DeltaRoot,
-} from "../../../core";
-import { leaf, jsonObject } from "../../../domains";
+} from "../../../core/index.js";
+import { leaf, jsonObject } from "../../../domains/index.js";
 import {
 	DefaultChangeFamily,
 	DefaultChangeset,
@@ -28,12 +27,14 @@ import {
 	cursorForJsonableTreeNode,
 	intoDelta,
 	jsonableTreeFromCursor,
-} from "../../../feature-libraries";
-import { brand } from "../../../util";
-import { assertDeltaEqual } from "../../utils";
-import { noopValidator } from "../../../codec";
+} from "../../../feature-libraries/index.js";
+import { brand } from "../../../util/index.js";
+import { assertDeltaEqual, failCodec, mintRevisionTag, testRevisionTagCodec } from "../../utils.js";
+import { noopValidator } from "../../../codec/index.js";
 
-const defaultChangeFamily = new DefaultChangeFamily({ jsonValidator: noopValidator });
+const defaultChangeFamily = new DefaultChangeFamily(testRevisionTagCodec, failCodec, {
+	jsonValidator: noopValidator,
+});
 const family = defaultChangeFamily;
 
 const rootKey = rootFieldKey;
@@ -108,12 +109,12 @@ function initializeEditableForest(data?: JsonableTree): {
 } {
 	const forest = buildForest();
 	if (data !== undefined) {
-		initializeForest(forest, [cursorForJsonableTreeNode(data)]);
+		initializeForest(forest, [cursorForJsonableTreeNode(data)], testRevisionTagCodec);
 	}
 	let currentRevision = mintRevisionTag();
 	const changes: TaggedChange<DefaultChangeset>[] = [];
 	const deltas: DeltaRoot[] = [];
-	const detachedFieldIndex = makeDetachedFieldIndex();
+	const detachedFieldIndex = makeDetachedFieldIndex(undefined, testRevisionTagCodec);
 	const builder = new DefaultEditBuilder(family, (change) => {
 		const taggedChange = { revision: currentRevision, change };
 		changes.push(taggedChange);
@@ -156,7 +157,7 @@ describe("DefaultEditBuilder", () => {
 
 		const fooPath = { parent: root, field: fooKey };
 		const fooEditor = builder.sequenceField(fooPath);
-		fooEditor.delete(0, 1);
+		fooEditor.remove(0, 1);
 		assert.equal(deltas.length, 1);
 		fooEditor.insert(0, cursorForJsonableTreeNode({ type: leaf.number.name, value: 42 }));
 		expectForest(forest, {
@@ -167,7 +168,7 @@ describe("DefaultEditBuilder", () => {
 		});
 		assert.equal(deltas.length, 2);
 
-		fooEditor.delete(0, 1);
+		fooEditor.remove(0, 1);
 		assert.equal(deltas.length, 3);
 	});
 
@@ -359,13 +360,13 @@ describe("DefaultEditBuilder", () => {
 			expectForest(forest, expected);
 		});
 
-		it("Can delete a root node", () => {
+		it("Can remove a root node", () => {
 			const { builder, forest } = initializeEditableForest(nodeX);
-			builder.sequenceField({ parent: undefined, field: rootKey }).delete(0, 1);
+			builder.sequenceField({ parent: undefined, field: rootKey }).remove(0, 1);
 			expectForest(forest, []);
 		});
 
-		it("Can delete child nodes", () => {
+		it("Can remove child nodes", () => {
 			const { builder, forest } = initializeEditableForest({
 				type: jsonObject.name,
 				fields: {
@@ -389,7 +390,7 @@ describe("DefaultEditBuilder", () => {
 					],
 				},
 			});
-			builder.sequenceField({ parent: root_foo2, field: fooKey }).delete(5, 2);
+			builder.sequenceField({ parent: root_foo2, field: fooKey }).remove(5, 2);
 			const expected = {
 				type: jsonObject.name,
 				fields: {

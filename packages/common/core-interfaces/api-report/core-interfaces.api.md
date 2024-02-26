@@ -394,6 +394,16 @@ export const isFluidCodeDetails: (details: unknown) => details is Readonly<IFlui
 // @internal @deprecated
 export const isFluidPackage: (pkg: unknown) => pkg is Readonly<IFluidPackage>;
 
+// @internal (undocumented)
+export interface ISignalEnvelope {
+    address?: string;
+    clientSignalSequenceNumber: number;
+    contents: {
+        type: string;
+        content: any;
+    };
+}
+
 // @internal @deprecated (undocumented)
 export interface ITaggedTelemetryPropertyType {
     // (undocumented)
@@ -420,34 +430,6 @@ export interface ITelemetryBaseLogger {
 
 // @public
 export type ITelemetryBaseProperties = ITelemetryProperties;
-
-// @public @deprecated
-export interface ITelemetryErrorEvent extends ITelemetryProperties {
-    // (undocumented)
-    eventName: string;
-}
-
-// @public @deprecated
-export interface ITelemetryGenericEvent extends ITelemetryProperties {
-    // (undocumented)
-    category?: TelemetryEventCategory;
-    // (undocumented)
-    eventName: string;
-}
-
-// @public @deprecated
-export interface ITelemetryLogger extends ITelemetryBaseLogger {
-    send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
-    sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
-    sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any, logLevel?: typeof LogLevel.verbose | typeof LogLevel.default): void;
-    sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any, logLevel?: typeof LogLevel.verbose | typeof LogLevel.default): void;
-}
-
-// @public @deprecated
-export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
-    // (undocumented)
-    duration?: number;
-}
 
 // @public @deprecated
 export interface ITelemetryProperties {

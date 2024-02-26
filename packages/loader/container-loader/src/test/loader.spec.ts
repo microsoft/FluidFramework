@@ -11,6 +11,7 @@ import { ICreateBlobResponse, SummaryType } from "@fluidframework/protocol-defin
 import { IRuntime } from "@fluidframework/container-definitions";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { IDetachedBlobStorage, Loader } from "../loader";
+import { IPendingDetachedContainerState } from "../container";
 
 const failProxy = <T extends object>() => {
 	const proxy = new Proxy<T>({} as any as T, {
@@ -85,13 +86,13 @@ describe("loader unit test", () => {
 			urlResolver: failProxy(),
 		});
 		const detached = await loader.createDetachedContainer({ package: "none" });
-		const summary = detached.serialize();
-		assert.strictEqual(
-			summary,
-			'{"type":1,"tree":{".protocol":{"tree":{"attributes":{"content":"{\\"minimumSequenceNumber\\":0,\\"sequenceNumber\\":0}","type":2},"quorumMembers":{"content":"[]","type":2},"quorumProposals":{"content":"[]","type":2},"quorumValues":{"content":"[[\\"code\\",{\\"key\\":\\"code\\",\\"value\\":{\\"package\\":\\"none\\"},\\"approvalSequenceNumber\\":0,\\"commitSequenceNumber\\":0,\\"sequenceNumber\\":0}]]","type":2}},"type":1},".app":{"tree":{},"type":1}}}',
-			"summary does not match expected format",
-		);
-		await loader.rehydrateDetachedContainerFromSnapshot(summary);
+		const detachedContainerState = detached.serialize();
+		const parsedState = JSON.parse(detachedContainerState) as IPendingDetachedContainerState;
+		assert.strictEqual(parsedState.attached, false);
+		assert.strictEqual(parsedState.hasAttachmentBlobs, false);
+		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
+		assert.ok(parsedState.baseSnapshot);
+		await loader.rehydrateDetachedContainerFromSnapshot(detachedContainerState);
 	});
 
 	it("rehydrateDetachedContainerFromSnapshot with valid format and attachment blobs", async () => {
@@ -119,12 +120,12 @@ describe("loader unit test", () => {
 		});
 		const detached = await loader.createDetachedContainer({ package: "none" });
 		await detachedBlobStorage.createBlob(stringToBuffer("whatever", "utf8"));
-		const summary = detached.serialize();
-		assert.strictEqual(
-			summary,
-			'{"type":1,"tree":{".protocol":{"tree":{"attributes":{"content":"{\\"minimumSequenceNumber\\":0,\\"sequenceNumber\\":0}","type":2},"quorumMembers":{"content":"[]","type":2},"quorumProposals":{"content":"[]","type":2},"quorumValues":{"content":"[[\\"code\\",{\\"key\\":\\"code\\",\\"value\\":{\\"package\\":\\"none\\"},\\"approvalSequenceNumber\\":0,\\"commitSequenceNumber\\":0,\\"sequenceNumber\\":0}]]","type":2}},"type":1},".app":{"tree":{},"type":1},".hasAttachmentBlobs":{"type":2,"content":"true"}}}',
-			"summary does not match expected format",
-		);
-		await loader.rehydrateDetachedContainerFromSnapshot(summary);
+		const detachedContainerState = detached.serialize();
+		const parsedState = JSON.parse(detachedContainerState) as IPendingDetachedContainerState;
+		assert.strictEqual(parsedState.attached, false);
+		assert.strictEqual(parsedState.hasAttachmentBlobs, true);
+		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
+		assert.ok(parsedState.baseSnapshot);
+		await loader.rehydrateDetachedContainerFromSnapshot(detachedContainerState);
 	});
 });

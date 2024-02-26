@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "identifiers": [],
+  "shapes": [
+    {
+      "c": {
+        "type": "com.fluidframework.leaf.handle",
+        "value": true
+      }
+    }
+  ],
+  "data": [
+    [
+      0,
+      "Handle Placeholder"
+    ]
+  ]
+}

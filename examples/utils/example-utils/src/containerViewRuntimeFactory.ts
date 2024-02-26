@@ -7,8 +7,7 @@ import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { MountableView } from "@fluidframework/view-adapters";
-import { IFluidMountableView } from "@fluidframework/view-interfaces";
+import { type IFluidMountableView, MountableView } from "./mountableView/index.js";
 
 const dataStoreId = "modelDataStore";
 
@@ -58,6 +57,7 @@ export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory 
 		// and add our default view request handler.
 		super({
 			registryEntries: new Map([[dataStoreFactory.type, Promise.resolve(dataStoreFactory)]]),
+			runtimeOptions: { enableRuntimeIdCompressor: true },
 			provideEntryPoint: async (
 				containerRuntime: IContainerRuntime,
 			): Promise<IFluidMountableViewEntryPoint> => {

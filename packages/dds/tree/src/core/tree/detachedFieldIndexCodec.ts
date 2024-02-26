@@ -4,56 +4,101 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ICodecOptions, IJsonCodec } from "../../codec";
-import { fail, forEachInNestedMap, setInNestedMap } from "../../util";
-import { ForestRootId } from "./detachedFieldIndex";
-import { Format, Versioned, version } from "./detachedFieldIndexFormat";
-import { DetachedFieldSummaryData, Major, Minor } from "./detachedFieldIndexTypes";
+import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../codec/index.js";
+import { EncodedRevisionTag, RevisionTagCodec } from "../rebase/index.js";
+import {
+	EncodedRootsForRevision,
+	Format,
+	RootRanges,
+	version,
+} from "./detachedFieldIndexFormat.js";
+import { DetachedFieldSummaryData, Major } from "./detachedFieldIndexTypes.js";
+import { ForestRootId } from "./detachedFieldIndex.js";
 
-export function makeDetachedNodeToFieldCodec({
-	jsonValidator: validator,
-}: ICodecOptions): IJsonCodec<DetachedFieldSummaryData, string> {
-	const versionedValidator = validator.compile(Versioned);
-	const formatValidator = validator.compile(Format);
-	return {
-		encode: (data: DetachedFieldSummaryData): string => {
-			const detachedNodeToFieldData: [Major, Minor, ForestRootId][] = [];
-			forEachInNestedMap(data.data, (root, key1, key2) => {
-				detachedNodeToFieldData.push([key1, key2, root]);
-			});
-			const encoded = {
+class MajorCodec implements IJsonCodec<Major> {
+	public constructor(
+		private readonly revisionTagCodec: RevisionTagCodec,
+		private readonly options: ICodecOptions,
+	) {}
+
+	public encode(major: Major) {
+		assert(major !== undefined, 0x88e /* Unexpected undefined revision */);
+		const id = this.revisionTagCodec.encode(major);
+		/**
+		 * Preface: this codec is only used at summarization time (not for ops).
+		 * Note that the decode path must provide a session id in which to interpret the revision tag.
+		 * The revision associated with a detached root generally comes from the session which detaches that subtree,
+		 * which isn't generally the local session (nor is it available at decode time with the layering of the tree
+		 * package), despite decode using the local session id.
+		 *
+		 * This is made OK by enforcing that all ids on encode/decode are non-local, since local ids won't be interpretable
+		 * at decode time.
+		 * This assert is valid because the revision for an acked edit will have already been finalized, and a revision
+		 * for a local-only edit will be finalizable at summarization time (local edits can only occur on a summarizing client
+		 * if they're created while detached, and local ids made while detached are finalized before generating the attach summary).
+		 */
+		assert(
+			id === "root" || id >= 0,
+			0x88f /* Expected final id on encode of detached field index revision */,
+		);
+		return id;
+	}
+
+	public decode(major: EncodedRevisionTag) {
+		assert(
+			major === "root" || major >= 0,
+			0x890 /* Expected final id on decode of detached field index revision */,
+		);
+		return this.revisionTagCodec.decode(major, {
+			originatorId: this.revisionTagCodec.localSessionId,
+		});
+	}
+}
+
+export function makeDetachedNodeToFieldCodec(
+	revisionTagCodec: RevisionTagCodec,
+	options: ICodecOptions,
+): IJsonCodec<DetachedFieldSummaryData, Format> {
+	const majorCodec = new MajorCodec(revisionTagCodec, options);
+	return makeVersionedValidatedCodec(options, new Set([version]), Format, {
+		encode: (data: DetachedFieldSummaryData): Format => {
+			const rootsForRevisions: EncodedRootsForRevision[] = [];
+			for (const [major, innerMap] of data.data) {
+				const encodedRevision = majorCodec.encode(major);
+				const rootRanges: RootRanges = [...innerMap];
+				if (rootRanges.length === 1) {
+					const rootsForRevision: EncodedRootsForRevision = [
+						encodedRevision,
+						rootRanges[0][0],
+						rootRanges[0][1],
+					];
+					rootsForRevisions.push(rootsForRevision);
+				} else {
+					const rootsForRevision: EncodedRootsForRevision = [encodedRevision, rootRanges];
+					rootsForRevisions.push(rootsForRevision);
+				}
+			}
+			const encoded: Format = {
 				version,
-				data: detachedNodeToFieldData,
+				data: rootsForRevisions,
 				maxId: data.maxId,
 			};
-			assert(
-				versionedValidator.check(encoded),
-				0x7ff /* Encoded detachedNodeToField data should be versioned */,
-			);
-			assert(formatValidator.check(encoded), 0x800 /* Encoded schema should validate */);
-			return JSON.stringify(encoded);
+			return encoded;
 		},
-		decode: (data: string): DetachedFieldSummaryData => {
-			const parsed = JSON.parse(data);
-
-			if (!versionedValidator.check(parsed)) {
-				fail("invalid serialized data: did not have a version");
-			}
-			// When more versions exist, we can switch on the version here.
-			if (parsed.version !== version) {
-				fail("Unexpected version for serialized data");
-			}
-			if (!formatValidator.check(parsed)) {
-				fail("Serialized data failed validation");
-			}
+		decode: (parsed: Format): DetachedFieldSummaryData => {
 			const map = new Map();
-			for (const [major, minor, root] of parsed.data) {
-				setInNestedMap(map, major, minor, root);
+			for (const rootsForRevision of parsed.data) {
+				const innerMap = new Map<number, ForestRootId>(
+					rootsForRevision.length === 2
+						? rootsForRevision[1]
+						: [[rootsForRevision[1], rootsForRevision[2]]],
+				);
+				map.set(majorCodec.decode(rootsForRevision[0]), innerMap);
 			}
 			return {
 				data: map,
 				maxId: parsed.maxId,
 			};
 		},
-	};
+	});
 }

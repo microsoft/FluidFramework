@@ -4,11 +4,11 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { BrandedType } from "../../../util";
-import { DiscriminatedUnionDispatcher } from "../../../codec";
-import { TreeChunk } from "../chunk";
-import { EncodedFieldBatchGeneric, IdentifierOrIndex } from "./formatGeneric";
-import { ChunkDecoder, StreamCursor, getChecked, readStream } from "./chunkCodecUtilities";
+import { BrandedType } from "../../../util/index.js";
+import { DiscriminatedUnionDispatcher } from "../../../codec/index.js";
+import { TreeChunk } from "../chunk.js";
+import { EncodedFieldBatchGeneric, IdentifierOrIndex } from "./formatGeneric.js";
+import { ChunkDecoder, StreamCursor, getChecked, readStream } from "./chunkCodecUtilities.js";
 
 /**
  * General purpose shape based tree decoder which gets its support for specific shapes from the caller.

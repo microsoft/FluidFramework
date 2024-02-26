@@ -8,8 +8,6 @@ import { AttachState } from '@fluidframework/container-definitions';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
-import { IdCompressor } from '@fluidframework/id-compressor';
-import { IdCreationRange } from '@fluidframework/id-compressor';
 import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -18,8 +16,6 @@ import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IIdCompressor } from '@fluidframework/id-compressor';
-import { IIdCompressorCore } from '@fluidframework/id-compressor';
-import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IProvideFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
@@ -31,13 +27,6 @@ import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITree } from '@fluidframework/protocol-definitions';
 import type { IUser } from '@fluidframework/protocol-definitions';
-import { OpSpaceCompressedId } from '@fluidframework/id-compressor';
-import { SerializedIdCompressor } from '@fluidframework/id-compressor';
-import { SerializedIdCompressorWithNoSession } from '@fluidframework/id-compressor';
-import { SerializedIdCompressorWithOngoingSession } from '@fluidframework/id-compressor';
-import { SessionId } from '@fluidframework/id-compressor';
-import { SessionSpaceCompressedId } from '@fluidframework/id-compressor';
-import { StableId } from '@fluidframework/id-compressor';
 import { SummaryTree } from '@fluidframework/protocol-definitions';
 import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
 
@@ -96,6 +85,7 @@ export type FluidDataStoreRegistryEntry = Readonly<Partial<IProvideFluidDataStor
 
 // @alpha
 export enum FlushMode {
+    // @deprecated
     Immediate = 0,
     TurnBased = 1
 }
@@ -107,6 +97,9 @@ export enum FlushModeExperimental {
 
 // @internal
 export const gcBlobPrefix = "__gc";
+
+// @internal
+export const gcDataBlobKey = ".gcdata";
 
 // @internal
 export const gcDeletedBlobKey = "__deletedNodes";
@@ -128,17 +121,17 @@ export interface IAttachMessage {
 export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents> {
     // (undocumented)
     readonly clientDetails: IClientDetails;
-    createDataStore(pkg: string | string[]): Promise<IDataStore>;
+    createDataStore(pkg: string | string[], loadingGroupId?: string): Promise<IDataStore>;
     // @deprecated (undocumented)
     _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string): Promise<IDataStore>;
-    createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached;
+    createDetachedDataStore(pkg: Readonly<string[]>, loadingGroupId?: string): IFluidDataStoreContextDetached;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;
     getQuorum(): IQuorumClients;
     // (undocumented)
     readonly logger: ITelemetryBaseLogger;
     orderSequentially(callback: () => void): void;
-    submitSignal(type: string, content: any): void;
+    submitSignal(type: string, content: any, targetClientId?: string): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 }
@@ -161,10 +154,6 @@ export interface IDataStore {
     trySetAlias(alias: string): Promise<AliasResult>;
 }
 
-export { IdCompressor }
-
-export { IdCreationRange }
-
 // @alpha
 export interface IEnvelope {
     address: string;
@@ -186,6 +175,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
     attachGraph(): void;
     readonly attachState: AttachState;
     readonly entryPoint: IFluidHandle<FluidObject>;
+    getAttachGCData?(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)
@@ -206,7 +196,9 @@ export interface IFluidDataStoreChannel extends IDisposable {
 
 // @alpha
 export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegistry>, IProvideFluidHandleContext {
+    // @deprecated (undocumented)
     addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
+    addedGCOutboundRoute?(fromPath: string, toPath: string): void;
     readonly attachState: AttachState;
     // (undocumented)
     readonly baseSnapshot: ISnapshotTree | undefined;
@@ -237,11 +229,12 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     // (undocumented)
     readonly idCompressor?: IIdCompressor;
     readonly isLocalDataStore: boolean;
+    readonly loadingGroupId?: string;
     // (undocumented)
     readonly logger: ITelemetryBaseLogger;
     makeLocallyVisible(): void;
     // (undocumented)
-    readonly options: ILoaderOptions;
+    readonly options: Record<string | number, any>;
     readonly packagePath: readonly string[];
     readonly scope: FluidObject;
     setChannelDirty(address: string): void;
@@ -255,7 +248,7 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
 
 // @alpha (undocumented)
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
-    attachRuntime(factory: IProvideFluidDataStoreFactory, dataStoreRuntime: IFluidDataStoreChannel): Promise<void>;
+    attachRuntime(factory: IProvideFluidDataStoreFactory, dataStoreRuntime: IFluidDataStoreChannel): Promise<IDataStore>;
 }
 
 // @alpha (undocumented)
@@ -295,10 +288,6 @@ export interface IGarbageCollectionDetailsBase {
     usedRoutes?: string[];
 }
 
-export { IIdCompressor }
-
-export { IIdCompressorCore }
-
 // @public
 export interface IInboundSignalMessage extends ISignalMessage {
     // (undocumented)
@@ -322,7 +311,7 @@ export interface IProvideFluidDataStoreRegistry {
     readonly IFluidDataStoreRegistry: IFluidDataStoreRegistry;
 }
 
-// @internal (undocumented)
+// @internal @deprecated (undocumented)
 export interface ISignalEnvelope {
     address?: string;
     clientSignalSequenceNumber: number;
@@ -368,7 +357,6 @@ export interface ISummarizerNode {
 // @alpha (undocumented)
 export interface ISummarizerNodeConfig {
     readonly canReuseHandle?: boolean;
-    readonly throwOnFailure?: true;
 }
 
 // @alpha (undocumented)
@@ -415,7 +403,9 @@ export interface ISummaryTreeWithStats {
 
 // @public
 export interface ITelemetryContext {
+    // @deprecated
     get(prefix: string, property: string): TelemetryEventPropertyType;
+    // @deprecated
     serialize(): string;
     set(prefix: string, property: string, value: TelemetryEventPropertyType): void;
     setMultiple(prefix: string, property: string, values: Record<string, TelemetryEventPropertyType>): void;
@@ -438,20 +428,6 @@ export interface OpAttributionKey {
     seq: number;
     type: "op";
 }
-
-export { OpSpaceCompressedId }
-
-export { SerializedIdCompressor }
-
-export { SerializedIdCompressorWithNoSession }
-
-export { SerializedIdCompressorWithOngoingSession }
-
-export { SessionId }
-
-export { SessionSpaceCompressedId }
-
-export { StableId }
 
 // @alpha (undocumented)
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext) => Promise<ISummarizeInternalResult>;

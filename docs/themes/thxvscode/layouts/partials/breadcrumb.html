@@ -25,10 +25,13 @@
 
 {{ $fullURL := trim .Page.RelPermalink "/" }}
 {{ $urlSegments := split $fullURL "/" }}
-{{ $packageName := index $urlSegments 2 }}
+{{ $packageName := index $urlSegments 3 }}
+{{ $selectedApiVersion := index $urlSegments 2 }}
 
 {{ if $packageName }}
-  {{ $packageDisplayName := index $.Site.Data.displayNameToPackageName $packageName }}
+  {{ $versionData := index $.Site.Data $selectedApiVersion }}
+  {{ $packageNameToDisplayName := index $versionData "displayNameToPackageName"}}
+  {{ $packageDisplayName := index $packageNameToDisplayName $packageName }}
 
   {{ range $key, $value := $.Site.Data.packages }}
     {{ if in $value $packageDisplayName }}
@@ -37,15 +40,16 @@
     {{ end }}
   {{ end }}
 
-  {{ if gt (len $urlSegments) 3 }}
-    {{ $leafSegment = index $urlSegments 3 }}
+  {{ if gt (len $urlSegments) 4 }}
+    {{ $leafSegment = index $urlSegments 4 }}
     {{ $leafNodeFound = true }}
     {{ $leafParts := split $leafSegment "-" }}
     {{ if eq (len $leafParts) 2 }}
       {{ $leafNodeLower := index $leafParts 0 }}
       {{ $categoryLower := index $leafParts 1 }}
       {{ $categoryCapitalized = (title (humanize $categoryLower)) }}
-      {{ $allLeafNodes := index $.Site.Data.allAPIs $packageName }}
+      {{ $allApis := index $versionData "allAPIs"}}
+      {{ $allLeafNodes := index $allApis $packageName }}
       {{ $leafNodesInCategory := index $allLeafNodes $categoryCapitalized }}
       {{ range $leafNodesInCategory }}
         {{ if eq (lower .) $leafNodeLower }}
@@ -56,16 +60,15 @@
     {{ end }}
   {{ end }}
   {{ if $packageDisplayName }}
-  <p>
-    <a href="/docs/apis/" onclick="return false;">{{ humanize $concept | title }}</a> <!-- TODO: remove onclick and create proper link to new concept readme -->
-    
-      {{ $packageLink := print "/docs/apis/" $packageName "/" }}
-      &gt; <a href="{{ $packageLink }}">{{ $packageDisplayName }}</a>
-    
-    {{ if $leafNodeFound }}
-      {{ $itemLink := print "/docs/apis/" $packageName "/" $leafSegment }}
-      &gt; <a href="{{ $itemLink }}">{{ $leafNodeWithCapitalization }}</a>
-    {{ end }}
-  </p>
+    <p>
+      {{ $apiLink := print "/docs/api/" $selectedApiVersion "/" }}
+      <a href="{{ $apiLink }}" onclick="return false;">{{ humanize $concept | title }}</a> <!-- TODO: remove onclick and create proper link to new concept readme -->
+        {{ $packageLink := print $apiLink $packageName "/" }}
+        &gt; <a href="{{ $packageLink }}">{{ $packageDisplayName }}</a>
+      {{ if $leafNodeFound }}
+        {{ $itemLink := print $apiLink $packageName "/" $leafSegment }}
+        &gt; <a href="{{ $itemLink }}">{{ $leafNodeWithCapitalization }}</a>
+      {{ end }}
+    </p>
   {{ end }}
 {{ end }}

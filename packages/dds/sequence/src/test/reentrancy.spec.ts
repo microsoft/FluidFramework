@@ -15,6 +15,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { MockLogger } from "@fluidframework/telemetry-utils";
+import { AttachState } from "@fluidframework/container-definitions";
 import { SharedString } from "../sharedString";
 import { resetReentrancyLogCounter } from "../sequence";
 
@@ -42,8 +43,9 @@ describe("SharedString op-reentrancy", () => {
 		describe(`with preventSharedStringReentrancy: ${sharedStringPreventReentrancy}`, () => {
 			it("throws on local re-entrancy", () => {
 				const factory = SharedString.getFactory();
-				const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-				dataStoreRuntime1.local = true;
+				const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
+					attachState: AttachState.Detached,
+				});
 				dataStoreRuntime1.options = { sharedStringPreventReentrancy };
 
 				const sharedString = factory.create(dataStoreRuntime1, "A");
@@ -74,7 +76,7 @@ describe("SharedString op-reentrancy", () => {
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
 				logger: logger.toTelemetryLogger(),
 			});
-			dataStoreRuntime1.local = false;
+			dataStoreRuntime1.setAttachState(AttachState.Attached);
 			dataStoreRuntime1.options = { sharedStringPreventReentrancy: false };
 			sharedString = factory.create(dataStoreRuntime1, "A");
 
@@ -88,7 +90,7 @@ describe("SharedString op-reentrancy", () => {
 
 			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
 			dataStoreRuntime2.options = { sharedStringPreventReentrancy: false };
-			dataStoreRuntime2.local = false;
+			dataStoreRuntime2.setAttachState(AttachState.Attached);
 			const containerRuntime2 =
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 			const services2 = {
@@ -122,12 +124,8 @@ describe("SharedString op-reentrancy", () => {
 			sharedString.insertText(0, "abcX");
 			const { segment } = sharedString.getContainingSegment(0);
 			assert(segment);
-			segment.localRefs ??= new LocalReferenceCollection(segment);
-			const localRef = segment.localRefs.createLocalRef(
-				0,
-				ReferenceType.SlideOnRemove,
-				undefined,
-			);
+			const localRefs = LocalReferenceCollection.setOrGet(segment);
+			const localRef = localRefs.createLocalRef(0, ReferenceType.SlideOnRemove, undefined);
 
 			assert.notEqual(localRef.getSegment(), undefined);
 
@@ -163,8 +161,8 @@ describe("SharedString op-reentrancy", () => {
 			sharedString.insertText(0, "abcX");
 			const { segment } = sharedString.getContainingSegment(0);
 			assert(segment);
-			segment.localRefs ??= new LocalReferenceCollection(segment);
-			const localRef = segment.localRefs.createLocalRef(0, ReferenceType.Simple, undefined);
+			const localRefs = LocalReferenceCollection.setOrGet(segment);
+			const localRef = localRefs.createLocalRef(0, ReferenceType.Simple, undefined);
 
 			assert.notEqual(localRef.getSegment(), undefined);
 

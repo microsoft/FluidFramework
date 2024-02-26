@@ -17,6 +17,7 @@ import { SharedString } from "@fluidframework/sequence";
 import { type ISharedObject } from "@fluidframework/shared-object-base";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SchemaFactory, TreeConfiguration, SharedTree, type ITree } from "@fluidframework/tree";
+import { createIdCompressor } from "@fluidframework/id-compressor";
 
 import { EditType, type FluidObjectId } from "../CommonInterfaces";
 import {
@@ -397,7 +398,10 @@ describe("DefaultVisualizers unit tests", () => {
 		const factory = SharedTree.getFactory();
 		const builder = new SchemaFactory("DefaultVisualizer_SharedTree_Test");
 
-		const sharedTree = factory.create(new MockFluidDataStoreRuntime(), "test") as ITree;
+		const sharedTree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"test",
+		) as ITree;
 
 		class ChildSchema extends builder.object("child-item", {
 			childField: [builder.boolean, builder.handle, builder.string],

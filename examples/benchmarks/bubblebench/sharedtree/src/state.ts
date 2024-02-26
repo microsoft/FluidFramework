@@ -11,7 +11,7 @@ import {
 	makeBubble,
 	makeClient,
 } from "@fluid-example/bubblebench-common";
-import { fromJson, TreeArrayProxy, TreeObjectProxy } from "./proxy";
+import { fromJson, TreeArrayProxy, TreeObjectProxy } from "./proxy/index.js";
 
 interface IApp {
 	clients: IArrayish<IClient>;

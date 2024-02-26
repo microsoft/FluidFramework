@@ -5,6 +5,7 @@
 ```ts
 
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 
 // @internal
 export function assertIsStableId(stableId: string): StableId;
@@ -19,50 +20,13 @@ export function createIdCompressor(sessionId: SessionId, logger?: ITelemetryBase
 export function createSessionId(): SessionId;
 
 // @alpha
-export function deserializeIdCompressor(serialized: SerializedIdCompressorWithOngoingSession): IIdCompressor & IIdCompressorCore;
+export function deserializeIdCompressor(serialized: SerializedIdCompressorWithOngoingSession, logger?: ITelemetryLoggerExt): IIdCompressor & IIdCompressorCore;
 
 // @alpha
-export function deserializeIdCompressor(serialized: SerializedIdCompressorWithNoSession, newSessionId: SessionId): IIdCompressor & IIdCompressorCore;
+export function deserializeIdCompressor(serialized: SerializedIdCompressorWithNoSession, newSessionId: SessionId, logger?: ITelemetryLoggerExt): IIdCompressor & IIdCompressorCore;
 
 // @internal
 export function generateStableId(): StableId;
-
-// @alpha @deprecated
-export class IdCompressor implements IIdCompressor, IIdCompressorCore {
-    // @deprecated (undocumented)
-    static create(logger?: ITelemetryBaseLogger): IIdCompressor & IIdCompressorCore;
-    // @deprecated (undocumented)
-    static create(sessionId: SessionId, logger?: ITelemetryBaseLogger): IIdCompressor & IIdCompressorCore;
-    // (undocumented)
-    decompress(id: SessionSpaceCompressedId): StableId;
-    // (undocumented)
-    static deserialize(serialized: SerializedIdCompressorWithOngoingSession): IdCompressor;
-    // (undocumented)
-    static deserialize(serialized: SerializedIdCompressorWithNoSession, newSessionId: SessionId): IdCompressor;
-    // (undocumented)
-    equals(other: IdCompressor, includeLocalState: boolean): boolean;
-    // (undocumented)
-    finalizeCreationRange(range: IdCreationRange): void;
-    // (undocumented)
-    generateCompressedId(): SessionSpaceCompressedId;
-    // (undocumented)
-    readonly localSessionId: SessionId;
-    static readonly maxClusterSize: number;
-    // (undocumented)
-    normalizeToOpSpace(id: SessionSpaceCompressedId): OpSpaceCompressedId;
-    // (undocumented)
-    normalizeToSessionSpace(id: OpSpaceCompressedId, originSessionId: SessionId): SessionSpaceCompressedId;
-    // (undocumented)
-    recompress(uncompressed: StableId): SessionSpaceCompressedId;
-    // (undocumented)
-    serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
-    // (undocumented)
-    serialize(withSession: false): SerializedIdCompressorWithNoSession;
-    // (undocumented)
-    takeNextCreationRange(): IdCreationRange;
-    // (undocumented)
-    tryRecompress(uncompressed: StableId): SessionSpaceCompressedId | undefined;
-}
 
 // @alpha
 export interface IdCreationRange {
@@ -80,7 +44,7 @@ export interface IdCreationRange {
 export interface IIdCompressor {
     decompress(id: SessionSpaceCompressedId): StableId;
     generateCompressedId(): SessionSpaceCompressedId;
-    // (undocumented)
+    generateDocumentUniqueId(): (SessionSpaceCompressedId & OpSpaceCompressedId) | StableId;
     localSessionId: SessionId;
     normalizeToOpSpace(id: SessionSpaceCompressedId): OpSpaceCompressedId;
     normalizeToSessionSpace(id: OpSpaceCompressedId, originSessionId: SessionId): SessionSpaceCompressedId;
@@ -88,8 +52,9 @@ export interface IIdCompressor {
     tryRecompress(uncompressed: StableId): SessionSpaceCompressedId | undefined;
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface IIdCompressorCore {
+    beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void): any;
     finalizeCreationRange(range: IdCreationRange): void;
     serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
     serialize(withSession: false): SerializedIdCompressorWithNoSession;

@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ITelemetryLoggerExt,
-	LoggingError,
-	TelemetryDataTag,
-	tagCodeArtifacts,
-} from "@fluidframework/telemetry-utils";
+import { LoggingError, TelemetryDataTag, tagCodeArtifacts } from "@fluidframework/telemetry-utils";
 import { assert, LazyPromise } from "@fluidframework/core-utils";
 import {
 	CreateChildSummarizerNodeParam,
@@ -29,7 +24,7 @@ import { SummarizerNode } from "./summarizerNode";
 import {
 	EscapedPath,
 	ICreateChildDetails,
-	IInitialSummary,
+	IStartSummaryResult,
 	ISummarizerNodeRootContract,
 	SummaryNode,
 	ValidateSummaryResult,
@@ -111,7 +106,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		changeSequenceNumber: number,
 		/** Undefined means created without summary */
 		latestSummary?: SummaryNode,
-		initialSummary?: IInitialSummary,
 		wipSummaryLogger?: ITelemetryBaseLogger,
 		private readonly getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
 		getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
@@ -135,7 +129,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 			config,
 			changeSequenceNumber,
 			latestSummary,
-			initialSummary,
 			wipSummaryLogger,
 			telemetryId,
 		);
@@ -239,7 +232,11 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	/**
 	 * Called during the start of a summary. Updates the work-in-progress used routes.
 	 */
-	public startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLoggerExt) {
+	public startSummary(
+		referenceSequenceNumber: number,
+		summaryLogger: ITelemetryBaseLogger,
+		latestSummaryRefSeqNum: number,
+	): IStartSummaryResult {
 		// If GC is disabled, skip setting wip used routes since we should not track GC state.
 		if (!this.gcDisabled) {
 			assert(
@@ -247,7 +244,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 				0x1b4 /* "We should not already be tracking used routes when to track a new summary" */,
 			);
 		}
-		super.startSummary(referenceSequenceNumber, summaryLogger);
+		return super.startSummary(referenceSequenceNumber, summaryLogger, latestSummaryRefSeqNum);
 	}
 
 	/**
@@ -398,7 +395,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		createParam: CreateChildSummarizerNodeParam,
 		config: ISummarizerNodeConfigWithGC = {},
 		getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-		getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
 	): ISummarizerNodeWithGC {
 		assert(!this.children.has(id), 0x1b6 /* "Create SummarizerNode child already exists" */);
 		/**
@@ -423,7 +419,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 			},
 			createDetails.changeSequenceNumber,
 			createDetails.latestSummary,
-			createDetails.initialSummary,
 			this.wipSummaryLogger,
 			getGCDataFn,
 			getChildBaseGCDetailsFn,
@@ -563,7 +558,6 @@ export const createRootSummarizerNodeWithGC = (
 		referenceSequenceNumber === undefined
 			? undefined
 			: SummaryNode.createForRoot(referenceSequenceNumber),
-		undefined /* initialSummary */,
 		undefined /* wipSummaryLogger */,
 		getGCDataFn,
 		getBaseGCDetailsFn,

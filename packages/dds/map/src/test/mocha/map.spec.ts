@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISummaryBlob } from "@fluidframework/protocol-definitions";
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
@@ -13,6 +13,7 @@ import {
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
+import { AttachState } from "@fluidframework/container-definitions";
 import { ISerializableValue, IValueChanged } from "../../interfaces";
 import {
 	IMapSetOperation,
@@ -43,8 +44,16 @@ function createLocalMap(id: string): SharedMap {
 }
 
 class TestSharedMap extends SharedMap {
-	public testApplyStashedOp(content: IMapOperation): MapLocalOpMetadata {
-		return this.applyStashedOp(content) as MapLocalOpMetadata;
+	private lastMetadata?: MapLocalOpMetadata;
+	public testApplyStashedOp(content: IMapOperation): MapLocalOpMetadata | undefined {
+		this.lastMetadata = undefined;
+		this.applyStashedOp(content);
+		return this.lastMetadata;
+	}
+
+	public submitLocalMessage(op: IMapOperation, localOpMetadata: unknown): void {
+		this.lastMetadata = localOpMetadata as MapLocalOpMetadata;
+		super.submitLocalMessage(op, localOpMetadata);
 	}
 }
 
@@ -52,7 +61,7 @@ describe("Map", () => {
 	describe("Local state", () => {
 		let map: SharedMap;
 
-		beforeEach(async () => {
+		beforeEach("createLocalMap", async () => {
 			map = createLocalMap("testMap");
 		});
 
@@ -141,6 +150,7 @@ describe("Map", () => {
 					map.set(undefined as unknown as string, "one");
 				}, "Should throw for key of undefined");
 				assert.throws(() => {
+					// eslint-disable-next-line unicorn/no-null
 					map.set(null as unknown as string, "two");
 				}, "Should throw for key of null");
 			});
@@ -363,7 +373,7 @@ describe("Map", () => {
 				await map2.load(services2);
 
 				// Now connect the first SharedMap
-				dataStoreRuntime1.local = false;
+				dataStoreRuntime1.setAttachState(AttachState.Attached);
 				const containerRuntime1 =
 					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 				const services1 = {
@@ -397,8 +407,14 @@ describe("Map", () => {
 					dataStoreRuntime1,
 					MapFactory.Attributes,
 				);
+				const containerRuntimeFactory = new MockContainerRuntimeFactory();
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+				map1.connect({
+					deltaConnection: dataStoreRuntime1.createDeltaConnection(),
+					objectStorage: new MockStorage(undefined),
+				});
 				let metadata = map1.testApplyStashedOp(op);
-				assert.equal(metadata.type, "add");
+				assert.equal(metadata?.type, "add");
 				assert.equal(metadata.pendingMessageId, 0);
 				const editMetadata = map1.testApplyStashedOp(op) as IMapKeyEditLocalOpMetadata;
 				assert.equal(editMetadata.type, "edit");
@@ -407,7 +423,7 @@ describe("Map", () => {
 				const serializable2: ISerializableValue = { type: "Plain", value: "value2" };
 				const op2: IMapSetOperation = { type: "set", key: "key2", value: serializable2 };
 				metadata = map1.testApplyStashedOp(op2);
-				assert.equal(metadata.type, "add");
+				assert.equal(metadata?.type, "add");
 				assert.equal(metadata.pendingMessageId, 2);
 				const op3: IMapDeleteOperation = { type: "delete", key: "key2" };
 				metadata = map1.testApplyStashedOp(op3) as IMapKeyEditLocalOpMetadata;
@@ -429,7 +445,7 @@ describe("Map", () => {
 		let map1: SharedMap;
 		let map2: SharedMap;
 
-		beforeEach(async () => {
+		beforeEach("createConnectedMaps", async () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
 			// Create the first map
 			map1 = createConnectedMap("map1", containerRuntimeFactory);
@@ -545,7 +561,7 @@ describe("Map", () => {
 
 					containerRuntimeFactory.processAllMessages();
 
-					const retrieved = map1.get("object");
+					const retrieved = map1.get("object") as typeof containingObject;
 					const retrievedSubMap: unknown = await retrieved.subMapHandle.get();
 					assert.equal(retrievedSubMap, subMap, "could not get nested map 1");
 					const retrievedSubMap2: unknown = await retrieved.nestedObj.subMap2Handle.get();

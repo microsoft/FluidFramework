@@ -34,8 +34,11 @@ import {
 	mixinRebase,
 	TriggerRebase,
 	mixinAttach,
+	mixinStashedClient,
+	type Client,
+	hasStashData,
 } from "../ddsFuzzHarness";
-import { Operation, SharedNothingFactory, baseModel } from "./sharedNothing";
+import { Operation, SharedNothingFactory, baseModel, isNoopOp } from "./sharedNothing";
 
 type Model = DDSFuzzModel<SharedNothingFactory, Operation | ChangeConnectionState>;
 
@@ -102,7 +105,7 @@ function verifyClientsSendOpsToEachOther(state: DDSFuzzTestState<SharedNothingFa
 
 const defaultOptions: DDSFuzzSuiteOptions = {
 	...defaultDDSFuzzSuiteOptions,
-	detachedStartOptions: { enabled: false, attachProbability: 0 },
+	detachedStartOptions: { numOpsBeforeAttach: 0 },
 };
 
 describe("DDS Fuzz Harness", () => {
@@ -152,6 +155,17 @@ describe("DDS Fuzz Harness", () => {
 				assert.deepEqual(client.channel.methodCalls, ["loadCore"]);
 			}
 		});
+
+		it("throws a reasonable error if given an exhausted generator", async () => {
+			const model: Model = {
+				...baseModel,
+				generatorFactory: () => takeAsync(0, baseModel.generatorFactory()),
+			};
+			await assert.rejects(
+				runTestForSeed(model, defaultOptions, 0),
+				/Generator should have produced at least one operation/,
+			);
+		});
 	});
 
 	describe("mixinSynchronization", () => {
@@ -162,8 +176,7 @@ describe("DDS Fuzz Harness", () => {
 				validationStrategy: { type: "fixedInterval", interval: 2 },
 				reconnectProbability: 0,
 				detachedStartOptions: {
-					enabled: false,
-					attachProbability: 1,
+					numOpsBeforeAttach: 0,
 				},
 			};
 
@@ -191,7 +204,7 @@ describe("DDS Fuzz Harness", () => {
 				const noValidateModel: Model = {
 					...baseModel,
 					reducer: async ({ clients }, operation) => {
-						assert(operation.type === "noop");
+						assert(isNoopOp(operation));
 						clients[0].channel.noop();
 					},
 					generatorFactory: () => takeAsync(4, baseModel.generatorFactory()),
@@ -297,8 +310,7 @@ describe("DDS Fuzz Harness", () => {
 				...defaultDDSFuzzSuiteOptions,
 				validationStrategy: { type: "random", probability: 0.25 },
 				detachedStartOptions: {
-					enabled: false,
-					attachProbability: 1,
+					numOpsBeforeAttach: 0,
 				},
 			};
 			it("generates synchronize ops", async () => {
@@ -455,6 +467,7 @@ describe("DDS Fuzz Harness", () => {
 				clientJoinOptions: {
 					maxNumberOfClients: 4,
 					clientAddProbability: 0.25,
+					stashableClientProbability: 0.2,
 				},
 			};
 			const model = mixinNewClient(
@@ -468,17 +481,136 @@ describe("DDS Fuzz Harness", () => {
 			assert.equal(finalState.clients.length, 4);
 			assert(finalState.clients[3].channel.methodCalls.includes("loadCore"));
 		});
+
+		it("can add new stashable clients to the fuzz test", async () => {
+			const options = {
+				...defaultOptions,
+				numberOfClients: 3,
+				clientJoinOptions: {
+					maxNumberOfClients: 4,
+					clientAddProbability: 0.25,
+					stashableClientProbability: 1,
+				},
+			};
+			const model = mixinNewClient(
+				{
+					...baseModel,
+					generatorFactory: () => takeAsync(30, baseModel.generatorFactory()),
+				},
+				options,
+			);
+			const finalState = await runTestForSeed(model, options, 0);
+			assert.equal(finalState.clients.length, 4);
+			assert(finalState.clients.every((c) => hasStashData(c)));
+			assert(!hasStashData(finalState.summarizerClient));
+			assert(finalState.clients[3].channel.methodCalls.includes("loadCore"));
+		});
+	});
+
+	describe("mixinStashClient", () => {
+		it("stashable clients changes can be restored on new client without saved ops", async () => {
+			const options = {
+				...defaultOptions,
+				numberOfClients: 1,
+				clientJoinOptions: {
+					maxNumberOfClients: 1,
+					clientAddProbability: 0.25,
+					stashableClientProbability: 1,
+				},
+				emitter: new TypedEventEmitter<DDSFuzzHarnessEvents>(),
+			};
+
+			const clientCreates: Client<SharedNothingFactory>[] = [];
+			options.emitter.on("clientCreate", (c) => clientCreates.push(c));
+
+			const model = mixinStashedClient(
+				{
+					...baseModel,
+					reducer: async ({ clients }, operation) => {
+						if (isNoopOp(operation)) {
+							clients[0].channel.noop();
+						}
+					},
+					generatorFactory: () => takeAsync(5, baseModel.generatorFactory()),
+				},
+				options,
+			);
+			const finalState = await runTestForSeed(model, options, 0);
+			assert.equal(finalState.clients.length, 1);
+			assert.strictEqual(clientCreates.length, 3);
+
+			assert.strictEqual(clientCreates[0].containerRuntime.clientId, "summarizer");
+
+			// original client
+			assert.strictEqual(clientCreates[1].channel.applyStashedOpCalls, 0);
+			assert.strictEqual(clientCreates[1].channel.noopCalls, 5);
+			assert.strictEqual(clientCreates[1].channel.processCoreCalls, 0);
+
+			// client loaded from stash
+			assert.strictEqual(clientCreates[2].channel.applyStashedOpCalls, 5);
+			assert.strictEqual(clientCreates[2].channel.noopCalls, 5);
+			assert.strictEqual(clientCreates[2].channel.processCoreCalls, 0);
+		});
+
+		it("stashable clients changes can be restored on new client with saved ops", async () => {
+			const options: DDSFuzzSuiteOptions = {
+				...defaultOptions,
+				numberOfClients: 1,
+				clientJoinOptions: {
+					maxNumberOfClients: 1,
+					clientAddProbability: 0.25,
+					stashableClientProbability: 1,
+				},
+				validationStrategy: {
+					type: "fixedInterval",
+					interval: 3,
+				},
+				emitter: new TypedEventEmitter<DDSFuzzHarnessEvents>(),
+			};
+
+			const clientCreates: Client<SharedNothingFactory>[] = [];
+			options.emitter.on("clientCreate", (c) => clientCreates.push(c));
+
+			const model = mixinStashedClient(
+				mixinSynchronization(
+					{
+						...baseModel,
+						reducer: async ({ clients }, operation) => {
+							if (isNoopOp(operation)) {
+								clients[0].channel.noop();
+							}
+						},
+						generatorFactory: () => takeAsync(10, baseModel.generatorFactory()),
+					},
+					options,
+				),
+				options,
+			);
+			const finalState = await runTestForSeed(model, options, 0);
+			assert.equal(finalState.clients.length, 1);
+			assert.strictEqual(clientCreates.length, 3);
+
+			assert.strictEqual(clientCreates[0].containerRuntime.clientId, "summarizer");
+
+			// original client
+			assert.strictEqual(clientCreates[1].channel.applyStashedOpCalls, 0);
+			assert.strictEqual(clientCreates[1].channel.noopCalls, 5);
+			assert.strictEqual(clientCreates[1].channel.processCoreCalls, 3);
+
+			// client loaded from stash
+			assert.strictEqual(clientCreates[2].channel.applyStashedOpCalls, 5);
+			assert.strictEqual(clientCreates[2].channel.noopCalls, 10);
+			assert.strictEqual(clientCreates[2].channel.processCoreCalls, 9);
+		});
 	});
 
 	describe("mixinAttach", () => {
 		describe("with detached start enabled", () => {
-			// eslint-disable-next-line unicorn/consistent-function-scoping
 			const makeOptions = (): DDSFuzzSuiteOptions => ({
 				...defaultDDSFuzzSuiteOptions,
 				numberOfClients: 3,
 				detachedStartOptions: {
-					enabled: true,
-					attachProbability: 1,
+					numOpsBeforeAttach: 5,
 				},
 				emitter: new TypedEventEmitter(),
 			});
@@ -514,7 +646,7 @@ describe("DDS Fuzz Harness", () => {
 					mixinAttach(
 						{
 							...baseModel,
-							generatorFactory: () => takeAsync(1, baseModel.generatorFactory()),
+							generatorFactory: () => takeAsync(12, baseModel.generatorFactory()),
 						},
 						options,
 					),
@@ -525,19 +657,18 @@ describe("DDS Fuzz Harness", () => {
 					["A", "B", "C"],
 				);
 				assert.equal(finalState.summarizerClient.channel.id, "summarizer");
-				assert.deepEqual(generatedOperations[0], { type: "attach" });
+				assert.deepEqual(generatedOperations[5], { type: "rehydrate" });
+				assert.deepEqual(generatedOperations[11], { type: "attach" });
 				verifyClientsSendOpsToEachOther(finalState);
 			});
 		});
 
 		describe("with detached start disabled", () => {
-			// eslint-disable-next-line unicorn/consistent-function-scoping
 			const makeOptions = (): DDSFuzzSuiteOptions => ({
 				...defaultDDSFuzzSuiteOptions,
 				numberOfClients: 3,
 				detachedStartOptions: {
-					enabled: false,
-					attachProbability: 0,
+					numOpsBeforeAttach: 0,
 				},
 				emitter: new TypedEventEmitter(),
 			});
@@ -568,6 +699,8 @@ describe("DDS Fuzz Harness", () => {
 			});
 		});
 	});
+
+	describe("mixinStashClient", () => {});
 
 	describe("events", () => {
 		describe("clientCreate", () => {
@@ -608,6 +741,7 @@ describe("DDS Fuzz Harness", () => {
 					clientJoinOptions: {
 						maxNumberOfClients: 4,
 						clientAddProbability: 0.25,
+						stashableClientProbability: 0.2,
 					},
 					emitter,
 				};
@@ -763,7 +897,10 @@ describe("DDS Fuzz Harness", () => {
 					.sort();
 				assert.deepEqual(
 					tests.map((t) => t.title),
-					["seed 2", "seed 3"],
+					[
+						"workload: 1: .only via function seed: 2",
+						"workload: 1: .only via function seed: 3",
+					],
 				);
 			});
 
@@ -773,7 +910,10 @@ describe("DDS Fuzz Harness", () => {
 					.sort();
 				assert.deepEqual(
 					tests.map((t) => t.title),
-					["seed 4", "seed 7"],
+					[
+						"workload: 2: .only via options seed: 4",
+						"workload: 2: .only via options seed: 7",
+					],
 				);
 			});
 
@@ -783,7 +923,11 @@ describe("DDS Fuzz Harness", () => {
 					.sort();
 				assert.deepEqual(
 					tests.map((t) => t.title),
-					["seed 2", "seed 4", "seed 7"],
+					[
+						"workload: 3: .only via function and options seed: 2",
+						"workload: 3: .only via function and options seed: 4",
+						"workload: 3: .only via function and options seed: 7",
+					],
 				);
 			});
 
@@ -808,7 +952,9 @@ describe("DDS Fuzz Harness", () => {
 					.sort();
 				assert.deepEqual(
 					tests.map((t) => t.title),
-					[0, 1, 4, 5, 6, 7, 8, 9].map((i) => `seed ${i}`),
+					[0, 1, 4, 5, 6, 7, 8, 9].map(
+						(i) => `workload: 1: .skip via function seed: ${i}`,
+					),
 				);
 			});
 
@@ -818,7 +964,9 @@ describe("DDS Fuzz Harness", () => {
 					.sort();
 				assert.deepEqual(
 					tests.map((t) => t.title),
-					[0, 1, 2, 3, 5, 6, 8, 9].map((i) => `seed ${i}`),
+					[0, 1, 2, 3, 5, 6, 8, 9].map(
+						(i) => `workload: 2: .skip via options seed: ${i}`,
+					),
 				);
 			});
 
@@ -828,7 +976,9 @@ describe("DDS Fuzz Harness", () => {
 					.sort();
 				assert.deepEqual(
 					tests.map((t) => t.title),
-					[0, 1, 3, 5, 6, 8, 9].map((i) => `seed ${i}`),
+					[0, 1, 3, 5, 6, 8, 9].map(
+						(i) => `workload: 3: .skip via function and options seed: ${i}`,
+					),
 				);
 			});
 
@@ -853,7 +1003,10 @@ describe("DDS Fuzz Harness", () => {
 				assert.equal(runResults.stats.failures, 2);
 				assert.deepEqual(
 					runResults.failures.map((test) => test.fullTitle),
-					["failing configuration seed 0", "failing configuration seed 1"],
+					[
+						"failing configuration workload: failing configuration seed: 0",
+						"failing configuration workload: failing configuration seed: 1",
+					],
 				);
 				assert(
 					runResults.failures.every((test) =>
@@ -881,13 +1034,9 @@ describe("DDS Fuzz Harness", () => {
 					assert(file1Exists);
 
 					const contents: unknown = JSON.parse(
-						// eslint-disable-next-line unicorn/prefer-json-parse-buffer
 						fs.readFileSync(path.join(jsonDir, "0.json"), { encoding: "utf8" }),
 					);
-					assert.deepEqual(contents, [
-						{ type: "attach" },
-						{ clientId: "B", type: "noop" },
-					]);
+					assert.deepEqual(contents, [{ clientId: "A", type: "noop" }]);
 				});
 			}
 		});

@@ -11,24 +11,24 @@ import {
 	decode,
 	readStreamIdentifier,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/chunkDecodingGeneric";
+} from "../../../../feature-libraries/chunked-forest/codec/chunkDecodingGeneric.js";
 
 import {
 	EncodedFieldBatchGeneric,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/formatGeneric";
+} from "../../../../feature-libraries/chunked-forest/codec/formatGeneric.js";
 import {
 	ChunkDecoder,
 	StreamCursor,
 	getChecked,
 	readStreamNumber,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities";
-import { ReferenceCountedBase } from "../../../../util";
-import { TreeChunk } from "../../../../feature-libraries";
+} from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
+import { ReferenceCountedBase } from "../../../../util/index.js";
+import { TreeChunk } from "../../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { ChunkedCursor } from "../../../../feature-libraries/chunked-forest/chunk";
-import { DiscriminatedUnionDispatcher, unionOptions } from "../../../../codec";
+import { ChunkedCursor } from "../../../../feature-libraries/chunked-forest/chunk.js";
+import { DiscriminatedUnionDispatcher, unionOptions } from "../../../../codec/index.js";
 
 const Constant = Type.Literal(0);
 const StringShape = Type.String();

@@ -96,7 +96,7 @@ But the new container has a different ID from the deleted one and subsequent cli
 
 #### Handling publication status
 
-Your code can test for the publication status with the [container.AttachState]({{< relref "/docs/apis/fluid-static/fluidcontainer-class.md#attachstate-property" >}}) property which has an [AttachState]({{< relref "/docs/apis/container-definitions.md#attachstate-enum" >}}) value.
+Your code can test for the publication status with the [container.AttachState]({{< apiref "fluid-static" "IFluidContainer" "interface" "v2" >}}#attachstate-property) property which has an [AttachState]({{< packageref "container-definitions" "v2" >}}#attachstate-enum) value.
 This can be useful if your application will publish the container in some code paths on the creating client, but not others.
 For example, on the creating computer, you don't want to call `container.attach` if it has already been called. In simple cases, you can know at coding time if that has happened, but when the creating client in complex code flows and calls of `container.attach` appear in more than one branch, you may need to test for this possibility. The following is a simple example.
 
@@ -254,7 +254,7 @@ The container transitions to this state automatically when it is fully caught up
 
 There are scenarios in which you need to control the connection status of the container. To assist, the `container` object has the following APIs:
 
--   A [container.connectionState]({{< relref "/docs/apis/fluid-static/ifluidcontainer-interface.md#connectionstate-propertysignature" >}}) property of type `ConnectionState`. There are four possible values for the property:
+-   A [container.connectionState]({{< apiref "fluid-static" "IFluidContainer" "interface" "v2" >}}#connectionstate-propertysignature) property of type `ConnectionState`. There are four possible values for the property:
 
     -   `Disconnected`
     -   `EstablishingConnection`: Your code should treat this state the same as it treats the disconnected state. See [Examples](#examples).

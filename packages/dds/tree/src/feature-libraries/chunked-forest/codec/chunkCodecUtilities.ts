@@ -4,10 +4,10 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { assertValidIndex } from "../../../util";
-import { TreeChunk } from "../chunk";
-import { FluidSerializableReadOnly, assertAllowedValue } from "../../valueUtilities";
-import { TreeValue } from "../../../core";
+import { assertValidIndex } from "../../../util/index.js";
+import { TreeChunk } from "../chunk.js";
+import { FluidSerializableReadOnly, assertAllowedValue } from "../../valueUtilities.js";
+import { TreeValue } from "../../../core/index.js";
 
 /**
  * Utilities related to chunk encoding and decoding that do not depend on specific chunk types or formats.

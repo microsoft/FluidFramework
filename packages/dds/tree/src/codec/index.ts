@@ -12,12 +12,11 @@ export {
 	IMultiFormatCodec,
 	JsonValidator,
 	makeCodecFamily,
-	makeValueCodec,
 	SchemaValidationFunction,
 	unitCodec,
 	withDefaultBinaryEncoding,
 	withSchemaValidation,
-	IJsonCodecWithContext,
-} from "./codec";
-export { DiscriminatedUnionDispatcher, unionOptions } from "./discriminatedUnions";
-export { noopValidator } from "./noopValidator";
+} from "./codec.js";
+export { DiscriminatedUnionDispatcher, unionOptions } from "./discriminatedUnions.js";
+export { noopValidator } from "./noopValidator.js";
+export { Versioned, makeVersionedCodec, makeVersionedValidatedCodec } from "./versioned/index.js";

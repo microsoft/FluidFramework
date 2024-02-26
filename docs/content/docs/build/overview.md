@@ -23,7 +23,7 @@ Fluid clients require a centralized service that all connected clients use to se
 
 Each service-specific library adheres to a common API structure and has the primary goal of creating and retrieving container objects. The common structure enables you to switch from one service to another with minimal code changes. There are two services currently available:
 
--   The [Tinylicious service]({{< relref "Tinylicious" >}}) runs on your development computer and is used for development and testing. It is used in Fluid examples throughout this documentation.
+-   The [Tinylicious service]({{< relref "/docs/testing/tinylicious.md" >}}) runs on your development computer and is used for development and testing. It is used in Fluid examples throughout this documentation.
 -   [Azure Fluid Relay]({{< relref "azure-frs.md" >}}) runs in Azure and enables high-scale production scenarios.
 
 See [Service-specific client libraries](#service-specific-client-libraries) for more details.
@@ -63,7 +63,7 @@ Fluid works with multiple service implementations. Each service has a correspond
 
 For specifics about each service-specific client implementation see their corresponding documentation.
 
--   The client library for the [Tinylicious]({{< relref "Tinylicious" >}}) service is in the package [@fluidframework/tinylicious-client](https://www.npmjs.com/package/@fluidframework/tinylicious-client).
+-   The client library for the [Tinylicious]({{< relref "/docs/testing/tinylicious.md" >}}) service is in the package [@fluidframework/tinylicious-client](https://www.npmjs.com/package/@fluidframework/tinylicious-client).
 -   The client library for the [Azure Fluid Relay]({{< relref "azure-frs.md" >}}) is in the package [@fluidframework/azure-client](https://www.npmjs.com/package/@fluidframework/azure-client).
 
 For more information see [Packages]({{< relref "packages.md" >}}).
@@ -85,19 +85,20 @@ For more information see [Packages]({{< relref "packages.md" >}}).
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
 [SharedString]: {{< relref "/docs/data-structures/string.md" >}}
-[Sequences]:  {{< relref "/docs/data-structures/sequences.md" >}}
+[Sequences]: {{< relref "/docs/data-structures/sequences.md" >}}
 
 <!-- API links -->
 
-[fluid-framework]: {{< relref "/docs/apis/fluid-framework.md" >}}
-[@fluidframework/azure-client]: {{< relref "/docs/apis/azure-client.md" >}}
-[@fluidframework/tinylicious-client]: {{< relref "/docs/apis/tinylicious-client.md" >}}
+[fluid-framework]: {{< packageref "fluid-framework" "v2" >}}
+[@fluidframework/azure-client]: {{< packageref "azure-client" "v2" >}}
+[@fluidframework/tinylicious-client]: {{< packageref "tinylicious-client" "v1" >}}
+[@fluid-experimental/odsp-client]: {{< packageref "odsp-client" "v2" >}}
 
-[AzureClient]: {{< relref "/docs/apis/azure-client/AzureClient-class.md" >}}
-[TinyliciousClient]: {{< relref "/docs/apis/tinylicious-client/TinyliciousClient-class.md" >}}
+[AzureClient]: {{< apiref "azure-client" "AzureClient" "class" "v2" >}}
+[TinyliciousClient]: {{< apiref "tinylicious-client" "TinyliciousClient" "class" "v1" >}}
 
-[FluidContainer]: {{< relref "/docs/apis/fluid-static/fluidcontainer-class.md" >}}
-[IFluidContainer]: {{< relref "/docs/apis/fluid-static/ifluidcontainer-interface.md" >}}
+[FluidContainer]: {{< apiref "fluid-static" "IFluidContainer" "interface" "v2" >}}
+[IFluidContainer]: {{< apiref "fluid-static" "IFluidContainer" "interface" "v2" >}}
 
 <!-- prettier-ignore-end -->
 

@@ -15,24 +15,25 @@ import {
 	DDSFuzzHarnessEvents,
 } from "@fluid-private/test-dds-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils";
-import { ITreeViewFork, FlexTreeView } from "../../../shared-tree";
+import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils.js";
 import {
 	makeOpGenerator,
 	EditGeneratorOpWeights,
 	FuzzTestState,
 	viewFromState,
-} from "./fuzzEditGenerators";
-import { applyFieldEdit, applySynchronizationOp, applyUndoRedoEdit } from "./fuzzEditReducers";
-import { fuzzSchema, isRevertibleSharedTreeView } from "./fuzzUtils";
-import { Operation } from "./operationTypes";
+	FuzzView,
+	FuzzTransactionView,
+} from "./fuzzEditGenerators.js";
+import { applyFieldEdit, applySynchronizationOp, applyUndoRedoEdit } from "./fuzzEditReducers.js";
+import { deterministicIdCompressorFactory, isRevertibleSharedTreeView } from "./fuzzUtils.js";
+import { Operation } from "./operationTypes.js";
 
 /**
  * This interface is meant to be used for tests that require you to store a branch of a tree
  */
 interface BranchedTreeFuzzTestState extends FuzzTestState {
-	main?: FlexTreeView<typeof fuzzSchema.rootFieldSchema>;
-	branch?: ITreeViewFork<typeof fuzzSchema.rootFieldSchema>;
+	main?: FuzzView;
+	branch?: FuzzTransactionView;
 }
 
 const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, BranchedTreeFuzzTestState>({
@@ -82,7 +83,7 @@ describe("Fuzz - composed vs individual changes", () => {
 	// "start" and "commit" opWeights set to 0 in case there are changes to the default weights.
 	const composeVsIndividualWeights: Partial<EditGeneratorOpWeights> = {
 		insert: 1,
-		delete: 2,
+		remove: 2,
 		move: 2,
 		fieldSelection: {
 			optional: 1,
@@ -112,7 +113,8 @@ describe("Fuzz - composed vs individual changes", () => {
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: BranchedTreeFuzzTestState) => {
 			initialState.main = viewFromState(initialState, initialState.clients[0]);
-			initialState.branch = initialState.main.fork();
+			initialState.branch = initialState.main.fork() as FuzzTransactionView;
+			initialState.branch.currentSchema = initialState.main.currentSchema;
 			initialState.branch.checkout.transaction.start();
 		});
 		emitter.on("testEnd", (finalState: BranchedTreeFuzzTestState) => {
@@ -127,6 +129,7 @@ describe("Fuzz - composed vs individual changes", () => {
 			defaultTestCount: runsPerBatch,
 			numberOfClients: 1,
 			emitter,
+			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 		});
 	});
 });

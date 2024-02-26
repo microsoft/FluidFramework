@@ -4,9 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { TreeNode } from "../../simple-tree";
-import { NodeFromSchema, SchemaFactory, Tree } from "../../class-tree";
-import { getRoot } from "./utils";
+import { TreeNode, NodeFromSchema, SchemaFactory, Tree } from "../../simple-tree/index.js";
+import { getRoot } from "./utils.js";
 
 // TODO: migrate remaining tests to src/test/class-tree/treeApi.spec.ts
 describe("node API", () => {

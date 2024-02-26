@@ -10,11 +10,11 @@ import {
 	DDSFuzzSuiteOptions,
 } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { SharedTreeTestFactory, validateTreeConsistency } from "../../utils";
-import { makeOpGenerator, EditGeneratorOpWeights } from "./fuzzEditGenerators";
-import { fuzzReducer } from "./fuzzEditReducers";
-import { failureDirectory, onCreate } from "./fuzzUtils";
-import { Operation } from "./operationTypes";
+import { SharedTreeTestFactory, validateTreeConsistency } from "../../utils.js";
+import { makeOpGenerator, EditGeneratorOpWeights } from "./fuzzEditGenerators.js";
+import { fuzzReducer } from "./fuzzEditReducers.js";
+import { deterministicIdCompressorFactory, failureDirectory, onCreate } from "./fuzzUtils.js";
+import { Operation } from "./operationTypes.js";
 
 const baseOptions: Partial<DDSFuzzSuiteOptions> = {
 	numberOfClients: 3,
@@ -41,7 +41,7 @@ describe("Fuzz - Top-Level", () => {
 	// TODO: Enable other types of ops.
 	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 		insert: 5,
-		delete: 5,
+		remove: 5,
 		move: 5,
 		start: 1,
 		commit: 1,
@@ -74,15 +74,18 @@ describe("Fuzz - Top-Level", () => {
 			saveFailures: {
 				directory: failureDirectory,
 			},
-			detachedStartOptions: {
-				enabled: false,
-				attachProbability: 0.2,
-			},
 			clientJoinOptions: {
 				clientAddProbability: 0,
 				maxNumberOfClients: 3,
 			},
-			reconnectProbability: 0,
+			// AB#7162: enabling rehydrate in these tests hits 0x744 and 0x79d. Disabling rehydrate for now
+			// and using the default number of ops before attach.
+			detachedStartOptions: {
+				numOpsBeforeAttach: 5,
+				rehydrateDisabled: true,
+			},
+			reconnectProbability: 0.1,
+			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 		};
 		createDDSFuzzSuite(model, options);
 	});
@@ -108,10 +111,17 @@ describe("Fuzz - Top-Level", () => {
 				flushMode: FlushMode.TurnBased,
 				enableGroupedBatching: true,
 			},
+			// AB#7162: see comment above.
+			detachedStartOptions: {
+				numOpsBeforeAttach: 5,
+				rehydrateDisabled: true,
+			},
 			saveFailures: {
 				directory: failureDirectory,
 			},
+			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 		};
+
 		createDDSFuzzSuite(model, options);
 	});
 });

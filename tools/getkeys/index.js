@@ -120,7 +120,25 @@ async function execAsync(command, options) {
 
 class AzCliKeyVaultClient {
 	static async get() {
-		await execAsync("az ad signed-in-user show");
+		// We use this to validate that the user is logged in (already ran `az login`).
+		try {
+			await execAsync("az ad signed-in-user show");
+		} catch (e) {
+			// Depending on how az login was performed, the above command may fail with a variety of errors.
+			// I've seen the one below in WSL2, but there are probably others.
+			// FATAL ERROR: Error: Command failed: az ad signed-in-user show
+			// ERROR: AADSTS530003: Your device is required to be managed to access this resource.
+			if (e.message.includes("AADSTS530003")) {
+				console.log(
+					`\nAn error occurred running \`az ad signed-in-user show\` that suggests you might need to \`az logout\` and ` +
+						`\`az login\` again. One potential cause for this is having used \`az login --use-device-code\`. Error:\n\n` +
+						`${e.message}`,
+				);
+				process.exit(1);
+			}
+		}
+		// Note: 'az keyvault' commands work regardless of which subscription is currently "in context",
+		// as long as the user is listed in the vault's access policy, so we don't need to do 'az account set'.
 		return new AzCliKeyVaultClient();
 
 		// Disabling fallback to REST client while we decide how to streamline the getkeys tool

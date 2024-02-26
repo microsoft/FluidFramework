@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { SharedString, IIntervalCollection, SequenceInterval } from "@fluidframework/sequence";
+import type { SharedString, IIntervalCollection, SequenceInterval } from "@fluidframework/sequence";
 import {
 	ITestObjectProvider,
 	ITestContainerConfig,
@@ -22,35 +22,6 @@ import { IHostLoader } from "@fluidframework/container-definitions";
 
 const stringId = "sharedStringKey";
 const collectionId = "collectionKey";
-
-const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
-const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
-	getRawConfig: (name: string): ConfigTypes => settings[name],
-});
-
-const testContainerConfig: ITestContainerConfig = {
-	fluidDataObjectType: DataObjectFactoryType.Test,
-	registry,
-	runtimeOptions: {
-		summaryOptions: {
-			summaryConfigOverrides: {
-				...DefaultSummaryConfiguration,
-				...{
-					maxTime: 5000 * 12,
-					maxAckWaitTime: 120000,
-					maxOps: 1,
-					initialSummarizerDelayMs: 20,
-				},
-			},
-		},
-		enableRuntimeIdCompressor: true,
-	},
-	loaderProps: {
-		configProvider: configProvider({
-			"Fluid.Container.enableOfflineLoad": true,
-		}),
-	},
-};
 
 const assertIntervals = (
 	sharedString: SharedString,
@@ -81,7 +52,38 @@ const assertIntervals = (
 	assert.deepEqual(actualPos, expected, "intervals are not as expected");
 };
 
-describeCompat("IntervalCollection with stashed ops", "NoCompat", (getTestObjectProvider) => {
+describeCompat("IntervalCollection with stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedString } = apis.dds;
+
+	const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
+	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+		getRawConfig: (name: string): ConfigTypes => settings[name],
+	});
+
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+		runtimeOptions: {
+			summaryOptions: {
+				summaryConfigOverrides: {
+					...DefaultSummaryConfiguration,
+					...{
+						maxTime: 5000 * 12,
+						maxAckWaitTime: 120000,
+						maxOps: 1,
+						initialSummarizerDelayMs: 20,
+					},
+				},
+			},
+			enableRuntimeIdCompressor: true,
+		},
+		loaderProps: {
+			configProvider: configProvider({
+				"Fluid.Container.enableOfflineLoad": true,
+			}),
+		},
+	};
+
 	let provider: ITestObjectProvider;
 	let container1: IContainerExperimental;
 	let sharedString1: SharedString;
@@ -126,7 +128,7 @@ describeCompat("IntervalCollection with stashed ops", "NoCompat", (getTestObject
 		// the "callback" portion of the original e2e test
 		const sharedString = await dataStore.getSharedObject<SharedString>(stringId);
 		const collection = sharedString.getIntervalCollection(collectionId);
-		collection.change(id, 3, 8);
+		collection.change(id, { start: 3, end: 8 });
 
 		const pendingState: string | undefined = await container.closeAndGetPendingLocalState?.();
 		provider.opProcessingController.resumeProcessing();
@@ -148,7 +150,7 @@ describeCompat("IntervalCollection with stashed ops", "NoCompat", (getTestObject
 		await provider.ensureSynchronized();
 		assertIntervals(sharedString2, collection2, [{ start: 3, end: 8 }]);
 
-		collection1.change(id, 2, 9);
+		collection1.change(id, { start: 2, end: 9 });
 		await provider.ensureSynchronized();
 
 		// reload the container and verify that the above change takes effect

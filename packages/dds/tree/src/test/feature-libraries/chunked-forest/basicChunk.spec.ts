@@ -9,41 +9,41 @@ import {
 	mapSchema,
 	testGeneralPurposeTreeCursor,
 	testSpecializedFieldCursor,
-} from "../../cursorTestSuite";
+} from "../../cursorTestSuite.js";
 import {
 	EmptyKey,
 	ITreeCursor,
 	ITreeCursorSynchronous,
 	JsonableTree,
 	TreeNodeSchemaIdentifier,
-} from "../../../core";
+} from "../../../core/index.js";
 import {
 	jsonableTreeFromCursor,
 	cursorForJsonableTreeNode,
 	chunkTree,
 	TreeChunk,
-} from "../../../feature-libraries";
-import { brand, ReferenceCountedBase } from "../../../util";
+} from "../../../feature-libraries/index.js";
+import { brand, ReferenceCountedBase } from "../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { uniformChunk } from "../../../feature-libraries/chunked-forest";
+import { uniformChunk } from "../../../feature-libraries/chunked-forest/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk";
+import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";
 
 import {
 	basicChunkTree,
 	basicOnlyChunkPolicy,
 	chunkField,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/chunked-forest/chunkTree";
+} from "../../../feature-libraries/chunked-forest/chunkTree.js";
 // eslint-disable-next-line import/no-internal-modules
-import { SequenceChunk } from "../../../feature-libraries/chunked-forest/sequenceChunk";
-import { leaf } from "../../../domains";
+import { SequenceChunk } from "../../../feature-libraries/chunked-forest/sequenceChunk.js";
+import { leaf } from "../../../domains/index.js";
 import {
 	ChunkedCursor,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/chunked-forest/chunk";
-import { emptyShape, testData } from "./uniformChunkTestData";
-import { numberSequenceField, validateChunkCursor } from "./fieldCursorTestUtilities";
+} from "../../../feature-libraries/chunked-forest/chunk.js";
+import { emptyShape, testData } from "./uniformChunkTestData.js";
+import { numberSequenceField, validateChunkCursor } from "./fieldCursorTestUtilities.js";
 
 describe("basic chunk", () => {
 	it("calling chunkTree on existing chunk adds a reference", () => {

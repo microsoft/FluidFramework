@@ -28,7 +28,7 @@ import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 describeCompat("GC Data Store Aliased Full Compat", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 
-	beforeEach(async () => {
+	beforeEach("getTestObjectProvider", async () => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 	});
 
@@ -41,7 +41,7 @@ describeCompat("GC Data Store Aliased Full Compat", "FullCompat", (getTestObject
 	}
 
 	it("An unreferenced datastore when aliased becomes referenced.", async function () {
-		// TODO: Re-enable after cross version compat bugs are fixed - ADO:6288
+		// TODO: Re-enable after cross version compat bugs are fixed - ADO:6978
 		if (provider.type === "TestObjectProviderWithVersionedLoad") {
 			this.skip();
 		}
@@ -98,7 +98,7 @@ describeCompat("GC Data Store Aliased Full Compat", "FullCompat", (getTestObject
 describeCompat("GC Data Store Aliased No Compat", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 
-	beforeEach(async () => {
+	beforeEach("getTestObjectProvider", async () => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 	});
 

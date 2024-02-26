@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey } from "../schema-stored";
-import { ITreeCursorSynchronous } from "./cursor";
+import { RevisionTag } from "../rebase/index.js";
+import { FieldKey } from "../schema-stored/index.js";
+import { ITreeCursorSynchronous } from "./cursor.js";
 
 /**
  * This format describes changes that must be applied to a forest in order to update it.
@@ -73,7 +74,7 @@ export interface Root<TTree = ProtoNode> {
 	/**
 	 * Changes to apply to the root fields.
 	 */
-	readonly fields?: FieldMap<TTree>;
+	readonly fields?: FieldMap;
 	/**
 	 * New detached nodes to be constructed.
 	 * The ordering has no significance.
@@ -92,7 +93,13 @@ export interface Root<TTree = ProtoNode> {
 	 * then the destruction should be listed under ID B.
 	 */
 	readonly destroy?: readonly DetachedNodeDestruction[];
+	/**
+	 * Refreshers for detached nodes that may need to be recreated.
+	 * The ordering has no significance.
+	 */
+	readonly refreshers?: readonly DetachedNodeBuild<TTree>[];
 }
+
 /**
  * The default representation for inserted content.
  *
@@ -120,7 +127,7 @@ export type ProtoNodes = readonly ProtoNode[];
  * Represents a change being made to a part of the document tree.
  * @internal
  */
-export interface Mark<TTree = ProtoNode> {
+export interface Mark {
 	/**
 	 * The number of nodes affected.
 	 * When `isAttachMark(mark)` is true, this is the number of new nodes being attached.
@@ -133,7 +140,7 @@ export interface Mark<TTree = ProtoNode> {
 	 * Modifications to the pre-existing content.
 	 * Must be undefined when `attach` is set but `detach` is not.
 	 */
-	readonly fields?: FieldMap<TTree>;
+	readonly fields?: FieldMap;
 
 	/**
 	 * When set, indicates that some pre-existing content is being detached and sent to the given detached field.
@@ -151,22 +158,22 @@ export interface Mark<TTree = ProtoNode> {
  * @internal
  */
 export interface DetachedNodeId {
-	readonly major?: string | number;
+	readonly major?: RevisionTag;
 	readonly minor: number;
 }
 
 /**
  * @internal
  */
-export type FieldMap<TTree = ProtoNode> = ReadonlyMap<FieldKey, FieldChanges<TTree>>;
+export type FieldMap = ReadonlyMap<FieldKey, FieldChanges>;
 
 /**
  * Represents changes made to a detached node
  * @internal
  */
-export interface DetachedNodeChanges<TTree = ProtoNode> {
+export interface DetachedNodeChanges {
 	readonly id: DetachedNodeId;
-	readonly fields: FieldMap<TTree>;
+	readonly fields: FieldMap;
 }
 
 /**
@@ -204,14 +211,14 @@ export interface DetachedNodeRename {
  * Represents the changes to perform on a given field.
  * @internal
  */
-export interface FieldChanges<TTree = ProtoNode> {
+export interface FieldChanges {
 	/**
 	 * Represents a list of changes to the nodes in the field.
 	 * The index of each mark within the range of nodes, before
 	 * applying any of the changes, is not represented explicitly.
 	 * It corresponds to the sum of `mark.count` values for all previous marks for which `isAttachMark(mark)` is false.
 	 */
-	readonly local?: readonly Mark<TTree>[];
+	readonly local?: readonly Mark[];
 	/**
 	 * Changes to apply to detached nodes.
 	 * The ordering has no significance.
@@ -220,31 +227,7 @@ export interface FieldChanges<TTree = ProtoNode> {
 	 * For example, if one wishes to change a tree which is being renamed from ID A to ID B,
 	 * then the changes should be listed under ID A.
 	 */
-	readonly global?: readonly DetachedNodeChanges<TTree>[];
-	/**
-	 * New detached nodes to be constructed.
-	 * The ordering has no significance.
-	 *
-	 * @deprecated - Builds should be set at the root.
-	 * TODO:6308 migrate all reader/writers away from this and remove it.
-	 *
-	 * Build instructions for a root that is undergoing a rename should be listed under the starting name.
-	 * For example, if one wishes to build a tree which is being renamed from ID A to ID B,
-	 * then the build should be listed under ID A.
-	 */
-	readonly build?: readonly DetachedNodeBuild<TTree>[];
-	/**
-	 * New detached nodes to be destroyed.
-	 * The ordering has no significance.
-	 *
-	 * @deprecated - Destroys should be set at the root.
-	 * TODO:6308 migrate all reader/writers away from this and remove it.
-	 *
-	 * Destruction instructions for a root that is undergoing a rename should be listed under the final name.
-	 * For example, if one wishes to destroy a tree which is being renamed from ID A to ID B,
-	 * then the destruction should be listed under ID B.
-	 */
-	readonly destroy?: readonly DetachedNodeDestruction[];
+	readonly global?: readonly DetachedNodeChanges[];
 	/**
 	 * Detached whose associated ID needs to be updated.
 	 * The ordering has no significance.

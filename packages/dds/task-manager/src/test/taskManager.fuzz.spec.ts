@@ -240,7 +240,11 @@ describe("TaskManager fuzz testing", () => {
 		// Leaving the tests enabled without reconnect on mimics previous behavior (and provides more coverage
 		// than skipping them)
 		reconnectProbability: 0,
-		clientJoinOptions: { maxNumberOfClients: 6, clientAddProbability: 0.05 },
+		clientJoinOptions: {
+			maxNumberOfClients: 6,
+			clientAddProbability: 0.05,
+			stashableClientProbability: 0.2,
+		},
 		defaultTestCount: defaultOptions.testCount,
 		saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
 		// Uncomment this line to replay a specific seed:
@@ -264,19 +268,22 @@ describe("TaskManager fuzz testing with rebasing", () => {
 	createDDSFuzzSuite(model, {
 		validationStrategy: { type: "fixedInterval", interval: defaultOptions.validateInterval },
 		// AB#5185: enabling rebasing indicates some unknown eventual consistency issue
-		skip: [0, 2, 6],
+		skip: [5, 7],
 		rebaseProbability: 0.15,
 		containerRuntimeOptions: {
 			flushMode: FlushMode.TurnBased,
 			enableGroupedBatching: true,
 		},
-		clientJoinOptions: { maxNumberOfClients: 6, clientAddProbability: 0.05 },
+		clientJoinOptions: {
+			maxNumberOfClients: 6,
+			clientAddProbability: 0.05,
+			stashableClientProbability: 0.2,
+		},
 		defaultTestCount: defaultOptions.testCount,
 		saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
 		// AB#5341: enabling 'start from detached' within the fuzz harness demonstrates eventual consistency failures.
 		detachedStartOptions: {
-			enabled: false,
-			attachProbability: 0.2,
+			numOpsBeforeAttach: 0,
 		},
 		// Uncomment this line to replay a specific seed:
 		// replay: 0,

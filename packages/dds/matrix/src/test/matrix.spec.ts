@@ -16,6 +16,7 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
 import { MatrixItem, SharedMatrix, SharedMatrixFactory } from "../index";
 import { fill, check, insertFragmented, extract, expectSize } from "./utils";
 import { TestConsumer } from "./testconsumer";
@@ -85,8 +86,9 @@ describe("Matrix1", () => {
 					);
 
 					// Create a local DataStoreRuntime since we only want to load the summary for a local client.
-					const dataStoreRuntime = new MockFluidDataStoreRuntime();
-					dataStoreRuntime.local = true;
+					const dataStoreRuntime = new MockFluidDataStoreRuntime({
+						attachState: AttachState.Detached,
+					});
 
 					// Load the summary into a newly created 2nd SharedMatrix.
 					const matrix2 = new SharedMatrix<T>(
@@ -122,7 +124,7 @@ describe("Matrix1", () => {
 					return summarize(matrix);
 				}
 
-				beforeEach(async () => {
+				beforeEach("createMatrix", async () => {
 					matrix = new SharedMatrix(
 						new MockFluidDataStoreRuntime(),
 						"matrix1",
@@ -379,7 +381,7 @@ describe("Matrix1", () => {
 					}
 				};
 
-				beforeEach(async () => {
+				beforeEach("createMatrices", async () => {
 					containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 					// Create the first SharedMatrix.
@@ -714,7 +716,7 @@ describe("Matrix1", () => {
 					}
 				};
 
-				beforeEach(async () => {
+				beforeEach("createMatrices", async () => {
 					containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
 					// Create the first SharedMatrix.
@@ -1158,7 +1160,7 @@ describe("Matrix1", () => {
 				return { matrix: matrix2, containerRuntime, consumer };
 			}
 
-			beforeEach(async () => {
+			beforeEach("createMatrices", async () => {
 				containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
 				// Create the first SharedMatrix.

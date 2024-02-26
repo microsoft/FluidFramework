@@ -4,13 +4,15 @@
  */
 
 import { strict as assert, fail } from "assert";
-import { TreeFieldStoredSchema, TreeNodeSchemaIdentifier } from "../../../../core";
+import { TreeFieldStoredSchema, TreeNodeSchemaIdentifier } from "../../../../core/index.js";
 import {
 	defaultSchemaPolicy,
 	cursorForJsonableTreeField,
 	intoStoredSchema,
 	TreeCompressionStrategy,
-} from "../../../../feature-libraries";
+	isFluidHandle,
+	FlexFieldSchema,
+} from "../../../../feature-libraries/index.js";
 
 import {
 	buildCache,
@@ -18,12 +20,12 @@ import {
 	oneFromSet,
 	treeShaper,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/schemaBasedEncoding";
+} from "../../../../feature-libraries/chunked-forest/codec/schemaBasedEncoding.js";
 import {
-	Context,
+	FieldBatchEncodingContext,
 	makeFieldBatchCodec,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/codecs";
+} from "../../../../feature-libraries/chunked-forest/codec/codecs.js";
 import {
 	AnyShape,
 	EncoderCache,
@@ -31,13 +33,13 @@ import {
 	NodeEncoder,
 	anyFieldEncoder,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/compressedEncode";
-import { brand } from "../../../../util";
+} from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
+import { JsonCompatibleReadOnly, brand } from "../../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { NodeShape } from "../../../../feature-libraries/chunked-forest/codec/nodeShape";
+import { NodeShape } from "../../../../feature-libraries/chunked-forest/codec/nodeShape.js";
 // eslint-disable-next-line import/no-internal-modules
-import { IdentifierToken } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric";
-import { jsonableTreesFromFieldCursor } from "../fieldCursorTestUtilities";
+import { IdentifierToken } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
+import { jsonableTreesFromFieldCursor } from "../fieldCursorTestUtilities.js";
 import {
 	hasOptionalField,
 	minimal,
@@ -45,12 +47,13 @@ import {
 	recursiveType,
 	storedLibrary,
 	testTrees,
-} from "../../../testTrees";
-import { typeboxValidator } from "../../../../external-utilities";
-import { leaf, SchemaBuilder } from "../../../../domains";
+} from "../../../testTrees.js";
+import { leaf } from "../../../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { fieldKinds } from "../../../../feature-libraries/default-schema";
-import { checkFieldEncode, checkNodeEncode } from "./checkEncode";
+import { FieldKinds, fieldKinds } from "../../../../feature-libraries/default-schema/index.js";
+import { ajvValidator } from "../../../codec/index.js";
+import { takeSnapshot, useSnapshotDirectory } from "../../../snapshots/index.js";
+import { checkFieldEncode, checkNodeEncode } from "./checkEncode.js";
 
 const anyNodeShape = new NodeShape(undefined, undefined, [], anyFieldEncoder);
 const onlyTypeShape = new NodeShape(undefined, false, [], undefined);
@@ -78,7 +81,7 @@ describe("schemaBasedEncoding", () => {
 						return onlyTypeShape;
 					},
 				},
-				SchemaBuilder.required(minimal),
+				FlexFieldSchema.create(FieldKinds.required, [minimal]),
 				cache,
 			);
 			// This is expected since this case should be optimized to just encode the inner shape.
@@ -105,7 +108,7 @@ describe("schemaBasedEncoding", () => {
 						return onlyTypeShape;
 					},
 				},
-				SchemaBuilder.required([minimal, leaf.number]),
+				FlexFieldSchema.create(FieldKinds.required, [minimal, leaf.number]),
 				cache,
 			);
 			// There are multiple choices about how this case should be optimized, but the current implementation does this:
@@ -128,7 +131,7 @@ describe("schemaBasedEncoding", () => {
 						return onlyTypeShape;
 					},
 				},
-				SchemaBuilder.sequence(minimal),
+				FlexFieldSchema.create(FieldKinds.sequence, [minimal]),
 				cache,
 			);
 			// There are multiple choices about how this case should be optimized, but the current implementation does this:
@@ -242,6 +245,7 @@ describe("schemaBasedEncoding", () => {
 	});
 
 	describe("test trees", () => {
+		useSnapshotDirectory("chunked-forest-schema-compressed");
 		// TODO: test non size 1 batches
 		for (const { name, treeFactory, schemaData } of testTrees) {
 			it(name, () => {
@@ -251,16 +255,30 @@ describe("schemaBasedEncoding", () => {
 				const cache = buildCache(storedSchema, defaultSchemaPolicy);
 				checkFieldEncode(anyFieldEncoder, cache, tree);
 
-				const context: Context = {
+				const context: FieldBatchEncodingContext = {
 					encodeType: TreeCompressionStrategy.Compressed,
 					schema: { schema: storedSchema, policy: defaultSchemaPolicy },
 				};
-				const codec = makeFieldBatchCodec({ jsonValidator: typeboxValidator })(context);
+				const codec = makeFieldBatchCodec({ jsonValidator: ajvValidator });
 				// End to end test
-				const encoded = codec.encode([cursorForJsonableTreeField(tree)]);
-				const result = codec.decode(encoded);
+				const encoded = codec.encode([cursorForJsonableTreeField(tree)], context);
+				const result = codec.decode(encoded, context);
 				const resultTree = result.map(jsonableTreesFromFieldCursor);
 				assert.deepEqual(resultTree, [tree]);
+
+				// This snapshot makes it clear when the format changes.
+				// This can include compression/heuristic changes which are non breaking,
+				// but does not handle ensuring different old versions stull load (for example encoded with different heuristics).
+				// TODO: add a new test suite with a library of encoded test data which we can parse to cover that.
+
+				const dataStr = JSON.stringify(
+					encoded,
+					// The mock handle doesn't stringify deterministically, so replace it:
+					(key, value: JsonCompatibleReadOnly) =>
+						isFluidHandle(value) ? "Handle Placeholder" : value,
+					2,
+				);
+				takeSnapshot(dataStr, `.json`);
 			});
 		}
 	});

@@ -8,25 +8,24 @@ export {
 	SharedTreeBranchChange,
 	SharedTreeBranchEvents,
 	getChangeReplaceType,
-} from "./branch";
+} from "./branch.js";
 
 export {
 	SharedTreeCore,
 	Summarizable,
 	SummaryElementParser,
 	SummaryElementStringifier,
-} from "./sharedTreeCore";
+} from "./sharedTreeCore.js";
 
-export { TransactionStack } from "./transactionStack";
+export { TransactionStack } from "./transactionStack.js";
 
-export { makeEditManagerCodec } from "./editManagerCodecs";
-export { EditManagerSummarizer } from "./editManagerSummarizer";
-export { EditManager, minimumPossibleSequenceNumber, SummaryData } from "./editManager";
+export { makeEditManagerCodec } from "./editManagerCodecs.js";
+export { EditManagerSummarizer } from "./editManagerSummarizer.js";
+export { EditManager, minimumPossibleSequenceNumber, SummaryData } from "./editManager.js";
 export {
 	Commit,
 	SeqNumber,
 	SequencedCommit,
 	SummarySessionBranch,
 	EncodedCommit,
-} from "./editManagerFormat";
-export { RevisionTagCodec } from "./revisionTagCodecs";
+} from "./editManagerFormat.js";

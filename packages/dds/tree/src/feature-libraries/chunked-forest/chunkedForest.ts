@@ -26,12 +26,12 @@ import {
 	ITreeCursorSynchronous,
 	aboveRootPlaceholder,
 	ProtoNodes,
-} from "../../core";
-import { assertValidRange, brand, fail, getOrAddEmptyToMap } from "../../util";
-import { createEmitter } from "../../events";
-import { BasicChunk, BasicChunkCursor, SiblingsOrKey } from "./basicChunk";
-import { basicChunkTree, chunkTree, IChunker } from "./chunkTree";
-import { ChunkedCursor, TreeChunk } from "./chunk";
+} from "../../core/index.js";
+import { assertValidRange, brand, fail, getOrAddEmptyToMap } from "../../util/index.js";
+import { createEmitter } from "../../events/index.js";
+import { BasicChunk, BasicChunkCursor, SiblingsOrKey } from "./basicChunk.js";
+import { basicChunkTree, chunkTree, IChunker } from "./chunkTree.js";
+import { ChunkedCursor, TreeChunk } from "./chunk.js";
 
 function makeRoot(): BasicChunk {
 	return new BasicChunk(aboveRootPlaceholder, new Map());

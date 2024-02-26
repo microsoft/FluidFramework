@@ -5,7 +5,7 @@
 
 import { strict as assert, fail } from "assert";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IIdCompressor } from "@fluidframework/runtime-definitions";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	LocalNodeKey,
 	StableNodeKey,
@@ -13,10 +13,10 @@ import {
 	compareLocalNodeKeys,
 	createMockNodeKeyManager,
 	createNodeKeyManager,
-} from "../../../feature-libraries";
-import { TestTreeProvider } from "../../utils";
+} from "../../../feature-libraries/index.js";
+import { TestTreeProvider } from "../../utils.js";
 
-import { ISharedTree } from "../../../shared-tree";
+import { ISharedTree } from "../../../shared-tree/index.js";
 
 /**
  * Acquire an {@link IIdCompressor} via unsavory means.

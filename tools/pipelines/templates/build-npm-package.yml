@@ -166,7 +166,15 @@ stages:
       # Job - Build
       - job: build
         displayName: Build
-        timeoutInMinutes: 90
+        ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+          timeoutInMinutes: 60
+        ${{ else }}:
+          # CI builds run more aggressive compat configurations which can take longer.
+          # See "FullCompat" under packages\test\test-version-utils\README.md for more details.
+          # At the time of adding this comment, the full compat config is on the smaller side and so
+          # AB#6680 is also relevant here, which tracks rethinking how and where we run tests (likely with
+          # a focus on e2e tests)
+          timeoutInMinutes: 90
         pool: ${{ parameters.poolBuild }}
         variables:
           testCoverage: ${{ ne(variables['Build.Reason'], 'PullRequest') }}

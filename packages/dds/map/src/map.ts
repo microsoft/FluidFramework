@@ -90,6 +90,7 @@ export class MapFactory implements IChannelFactory {
 /**
  * {@inheritDoc ISharedMap}
  * @public
+ * @deprecated Please use SharedTree for new containers.  SharedMap is supported for loading preexisting Fluid Framework 1.0 containers only.
  */
 export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
 	/**
@@ -360,8 +361,8 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 */
-	protected applyStashedOp(content: unknown): unknown {
-		return this.kernel.tryApplyStashedOp(content as IMapOperation);
+	protected applyStashedOp(content: unknown): void {
+		this.kernel.tryApplyStashedOp(content as IMapOperation);
 	}
 
 	/**

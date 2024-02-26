@@ -13,6 +13,8 @@ import {
 	IDocumentService,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
+	ISnapshot,
+	ISnapshotFetchOptions,
 	ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import { UsageError } from "@fluidframework/driver-utils";
@@ -101,18 +103,9 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 		}
 	}
 
-	public loadSnapshotForRehydratingContainer(snapshotTree: ISnapshotTreeWithBlobContents) {
-		this.getBlobContents(snapshotTree);
-	}
-
-	private getBlobContents(snapshotTree: ISnapshotTreeWithBlobContents) {
-		if (snapshotTree.blobsContents !== undefined) {
-			for (const [id, value] of Object.entries(snapshotTree.blobsContents ?? {})) {
-				this.blobContents[id] = value;
-			}
-		}
-		for (const [_, tree] of Object.entries(snapshotTree.trees)) {
-			this.getBlobContents(tree);
+	public loadSnapshotFromSnapshotBlobs(snapshotBlobs: ISerializableBlobContents) {
+		for (const [id, value] of Object.entries(snapshotBlobs)) {
+			this.blobContents[id] = value;
 		}
 	}
 
@@ -125,15 +118,20 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 		return undefined;
 	}
 
-	public get repositoryUrl(): string {
-		return this._storageService.repositoryUrl;
-	}
-
 	public async getSnapshotTree(
 		version?: IVersion,
 		scenarioName?: string,
 	): Promise<ISnapshotTree | null> {
 		return this._storageService.getSnapshotTree(version, scenarioName);
+	}
+
+	public async getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot> {
+		if (this._storageService.getSnapshot !== undefined) {
+			return this._storageService.getSnapshot(snapshotFetchOptions);
+		}
+		throw new UsageError(
+			"getSnapshot api should exist in internal storage in ContainerStorageAdapter",
+		);
 	}
 
 	public async readBlob(id: string): Promise<ArrayBufferLike> {
@@ -202,12 +200,9 @@ class BlobOnlyStorage implements IDocumentStorageService {
 		return this.notCalled();
 	}
 
-	public get repositoryUrl(): string {
-		return this.notCalled();
-	}
-
 	/* eslint-disable @typescript-eslint/unbound-method */
 	public getSnapshotTree: () => Promise<ISnapshotTree | null> = this.notCalled;
+	public getSnapshot: () => Promise<ISnapshot> = this.notCalled;
 	public getVersions: () => Promise<IVersion[]> = this.notCalled;
 	public write: () => Promise<IVersion> = this.notCalled;
 	public uploadSummaryWithContext: () => Promise<string> = this.notCalled;

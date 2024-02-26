@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TreeStoredSchema } from "../../core";
+import { TreeStoredSchema } from "../../core/index.js";
 
 /**
  * A change that updates the schema of a Shared Tree.

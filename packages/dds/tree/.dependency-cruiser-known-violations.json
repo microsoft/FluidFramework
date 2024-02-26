@@ -1,37 +1,6 @@
 [
   {
     "type": "cycle",
-    "from": "src/feature-libraries/flex-tree/context.ts",
-    "to": "src/feature-libraries/flex-tree/lazyField.ts",
-    "rule": {
-      "severity": "error",
-      "name": "no-circular"
-    },
-    "cycle": [
-      "src/feature-libraries/flex-tree/lazyField.ts",
-      "src/feature-libraries/node-key/index.ts",
-      "src/feature-libraries/node-key/nodeKeyIndex.ts",
-      "src/feature-libraries/flex-tree/index.ts",
-      "src/feature-libraries/flex-tree/context.ts"
-    ]
-  },
-  {
-    "type": "cycle",
-    "from": "src/feature-libraries/flex-tree/context.ts",
-    "to": "src/feature-libraries/node-key/index.ts",
-    "rule": {
-      "severity": "error",
-      "name": "no-circular"
-    },
-    "cycle": [
-      "src/feature-libraries/node-key/index.ts",
-      "src/feature-libraries/node-key/nodeKeyIndex.ts",
-      "src/feature-libraries/flex-tree/index.ts",
-      "src/feature-libraries/flex-tree/context.ts"
-    ]
-  },
-  {
-    "type": "cycle",
     "from": "src/feature-libraries/flex-tree/lazyField.ts",
     "to": "src/feature-libraries/flex-tree/lazyNode.ts",
     "rule": {
@@ -67,45 +36,6 @@
     "cycle": [
       "src/feature-libraries/flex-tree/unboxed.ts",
       "src/feature-libraries/flex-tree/lazyNode.ts"
-    ]
-  },
-  {
-    "type": "cycle",
-    "from": "src/feature-libraries/modular-schema/comparison.ts",
-    "to": "src/feature-libraries/modular-schema/fieldKind.ts",
-    "rule": {
-      "severity": "error",
-      "name": "no-circular"
-    },
-    "cycle": [
-      "src/feature-libraries/modular-schema/fieldKind.ts",
-      "src/feature-libraries/modular-schema/comparison.ts"
-    ]
-  },
-  {
-    "type": "cycle",
-    "from": "src/feature-libraries/sequence-field/markListFactory.ts",
-    "to": "src/feature-libraries/sequence-field/utils.ts",
-    "rule": {
-      "severity": "error",
-      "name": "no-circular"
-    },
-    "cycle": [
-      "src/feature-libraries/sequence-field/utils.ts",
-      "src/feature-libraries/sequence-field/markListFactory.ts"
-    ]
-  },
-  {
-    "type": "cycle",
-    "from": "src/feature-libraries/sequence-field/moveEffectTable.ts",
-    "to": "src/feature-libraries/sequence-field/utils.ts",
-    "rule": {
-      "severity": "error",
-      "name": "no-circular"
-    },
-    "cycle": [
-      "src/feature-libraries/sequence-field/utils.ts",
-      "src/feature-libraries/sequence-field/moveEffectTable.ts"
     ]
   }
 ]

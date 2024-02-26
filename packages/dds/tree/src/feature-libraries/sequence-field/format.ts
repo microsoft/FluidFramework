@@ -4,14 +4,34 @@
  */
 
 import { ObjectOptions, Static, TSchema, Type } from "@sinclair/typebox";
-import { RevisionTagSchema } from "../../core";
-import { ChangesetLocalIdSchema, EncodedChangeAtomId } from "../modular-schema";
-import { unionOptions } from "../../codec";
-import { DetachIdOverrideType } from "./types";
+import { RevisionTagSchema } from "../../core/index.js";
+import { ChangesetLocalIdSchema, EncodedChangeAtomId } from "../modular-schema/index.js";
+import { unionOptions } from "../../codec/index.js";
+
+export enum DetachIdOverrideType {
+	/**
+	 * The detach effect is the inverse of the prior attach characterized by the accompanying `CellId`'s revision and
+	 * local ID.
+	 *
+	 * An override is needed in such a case to ensure that rollbacks and undos return tree content to the appropriate
+	 * detached root. It is also needed to ensure that cell comparisons work properly for undos.
+	 */
+	Unattach = 0,
+	/**
+	 * The detach effect is reapplying a prior detach.
+	 *
+	 * The accompanying cell ID is used in two ways:
+	 * - It indicates the location of the cell (including adjacent cell information) so that rebasing over this detach
+	 * can contribute the correct lineage information to the rebased mark.
+	 * - It specifies the revision and local ID that should be used to characterize the cell in the output context of
+	 * detach.
+	 */
+	Redetach = 1,
+}
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
-const CellCount = Type.Number();
+const CellCount = Type.Number({ multipleOf: 1, minimum: 1 });
 
 const MoveId = ChangesetLocalIdSchema;
 const HasMoveId = Type.Object({ id: MoveId });
@@ -19,8 +39,10 @@ const HasMoveId = Type.Object({ id: MoveId });
 const LineageEvent = Type.Tuple([
 	RevisionTagSchema,
 	ChangesetLocalIdSchema,
-	/* count */ Type.Number(),
-	/* offset */ Type.Number(),
+	/** count */
+	CellCount,
+	/** offset */
+	Type.Number({ multipleOf: 1, minimum: 0 }),
 ]);
 
 const HasLineage = Type.Object({ lineage: Type.Optional(Type.Array(LineageEvent)) });
@@ -29,9 +51,11 @@ const IdRange = Type.Tuple([ChangesetLocalIdSchema, CellCount]);
 
 const CellId = Type.Composite(
 	[
-		EncodedChangeAtomId,
 		HasLineage,
-		Type.Object({ adjacentCells: Type.Optional(Type.Array(IdRange)) }),
+		Type.Object({
+			atom: EncodedChangeAtomId,
+			adjacentCells: Type.Optional(Type.Array(IdRange)),
+		}),
 	],
 	noAdditionalProps,
 );
@@ -60,7 +84,7 @@ const DetachFields = Type.Object({
 	idOverride: Type.Optional(DetachIdOverride),
 });
 
-const Delete = Type.Composite(
+const Remove = Type.Composite(
 	[
 		Type.Object({
 			id: ChangesetLocalIdSchema,
@@ -83,7 +107,8 @@ const Attach = Type.Object(
 
 const Detach = Type.Object(
 	{
-		delete: Type.Optional(Delete),
+		// TODO:AB6715 rename to `remove`
+		delete: Type.Optional(Remove),
 		moveOut: Type.Optional(MoveOut),
 	},
 	unionOptions,
@@ -99,7 +124,8 @@ const MarkEffect = Type.Object(
 		// Note: `noop` is encoded by omitting `effect` from the encoded cell mark, so is not included here.
 		insert: Type.Optional(Insert),
 		moveIn: Type.Optional(MoveIn),
-		delete: Type.Optional(Delete),
+		// TODO:AB6715 rename to `remove`
+		delete: Type.Optional(Remove),
 		moveOut: Type.Optional(MoveOut),
 		attachAndDetach: Type.Optional(AttachAndDetach),
 	},
@@ -140,7 +166,7 @@ export namespace Encoded {
 
 	export type Insert = Static<typeof Insert>;
 	export type MoveIn = Static<typeof MoveIn>;
-	export type Delete = Static<typeof Delete>;
+	export type Remove = Static<typeof Remove>;
 	export type MoveOut = Static<typeof MoveOut>;
 	export type Attach = Static<typeof Attach>;
 	export type Detach = Static<typeof Detach>;

@@ -5,7 +5,7 @@
 
 export {
 	Changeset,
-	Delete,
+	Remove,
 	Detach,
 	HasMoveId,
 	HasRevisionTag,
@@ -27,32 +27,28 @@ export {
 	CellMark,
 	AttachAndDetach,
 	DetachIdOverride,
-	DetachIdOverrideType,
-} from "./types";
+} from "./types.js";
+export { DetachIdOverrideType } from "./format.js";
 export {
 	SequenceFieldChangeHandler,
 	sequenceFieldChangeHandler,
-} from "./sequenceFieldChangeHandler";
-export { SequenceChangeRebaser, sequenceFieldChangeRebaser } from "./sequenceFieldChangeRebaser";
-export { sequenceFieldChangeCodecFactory } from "./sequenceFieldCodecs";
-export { sequenceFieldToDelta, ToDelta } from "./sequenceFieldToDelta";
-export { SequenceFieldEditor, sequenceFieldEditor } from "./sequenceFieldEditor";
-export { MarkListFactory } from "./markListFactory";
-export { NodeChangeRebaser, rebase } from "./rebase";
-export { invert, NodeChangeInverter } from "./invert";
-export { amendCompose, compose, NodeChangeComposer } from "./compose";
+} from "./sequenceFieldChangeHandler.js";
+export { SequenceChangeRebaser, sequenceFieldChangeRebaser } from "./sequenceFieldChangeRebaser.js";
+export { sequenceFieldChangeCodecFactory } from "./sequenceFieldCodecs.js";
+export { sequenceFieldToDelta, ToDelta } from "./sequenceFieldToDelta.js";
+export { SequenceFieldEditor, sequenceFieldEditor } from "./sequenceFieldEditor.js";
+export { MarkListFactory } from "./markListFactory.js";
+export { NodeChangeRebaser, rebase } from "./rebase.js";
+export { invert, NodeChangeInverter } from "./invert.js";
+export { compose, NodeChangeComposer } from "./compose.js";
 export {
-	areComposable,
-	areRebasable,
 	getInputLength,
 	isDetach,
-	DetachedNodeTracker,
 	newCrossFieldTable,
-	newMoveEffectTable,
 	CrossFieldTable,
 	cloneMark,
 	extractMarkEffect,
-} from "./utils";
-export { isMoveMark, MoveMark, MoveEffectTable, MoveEffect } from "./moveEffectTable";
+} from "./utils.js";
+export { isMoveMark, MoveMark, MoveEffectTable, MoveEffect } from "./moveEffectTable.js";
 
-export { relevantRemovedRoots } from "./relevantRemovedRoots";
+export { relevantRemovedRoots } from "./relevantRemovedRoots.js";

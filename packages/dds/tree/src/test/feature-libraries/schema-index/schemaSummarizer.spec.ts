@@ -6,11 +6,11 @@
 import {
 	encodeTreeSchema,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/schema-index/schemaSummarizer";
-import { storedEmptyFieldSchema } from "../../../core";
-import { jsonSequenceRootSchema } from "../../utils";
-import { intoStoredSchema } from "../../../feature-libraries";
-import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots";
+} from "../../../feature-libraries/schema-index/schemaSummarizer.js";
+import { storedEmptyFieldSchema } from "../../../core/index.js";
+import { jsonSequenceRootSchema } from "../../utils.js";
+import { intoStoredSchema } from "../../../feature-libraries/index.js";
+import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 
 describe("schemaSummarizer", () => {
 	describe("encodeTreeSchema", () => {

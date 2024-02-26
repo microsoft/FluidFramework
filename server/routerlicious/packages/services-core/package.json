@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-services-core",
-	"version": "3.0.0",
+	"version": "3.1.0",
 	"description": "Fluid server services core definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -29,9 +29,9 @@
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
-		"@fluidframework/common-utils": "^3.0.0-223006",
+		"@fluidframework/common-utils": "^3.1.0",
 		"@fluidframework/gitresources": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.1.0-223007",
+		"@fluidframework/protocol-definitions": "^3.2.0-237840",
 		"@fluidframework/server-services-client": "workspace:~",
 		"@fluidframework/server-services-telemetry": "workspace:~",
 		"@types/nconf": "^0.10.2",
@@ -94,6 +94,9 @@
 			"InterfaceDeclaration_ICheckpointService": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"InterfaceDeclaration_IWebSocketTracker": {
+				"forwardCompat": false
 			}
 		}
 	}

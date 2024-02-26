@@ -28,7 +28,7 @@ export {
 	BindingContextType,
 	BindingContext,
 	VisitorBindingContext,
-	DeleteBindingContext,
+	RemoveBindingContext,
 	InsertBindingContext,
 	BatchBindingContext,
 	InvalidationBindingContext,
@@ -40,7 +40,7 @@ export {
 	toDownPath,
 	comparePipeline,
 	compileSyntaxTree,
-} from "./editableTreeBinder";
+} from "./editableTreeBinder.js";
 export {
 	typeNameSymbol,
 	valueSymbol,
@@ -61,17 +61,17 @@ export {
 	NewFieldContent,
 	getPossibleTypes,
 	getAllowedTypes,
-} from "./contextuallyTyped";
+} from "./contextuallyTyped.js";
 
-export { allowsValue, assertAllowedValue, isFluidHandle } from "./valueUtilities";
+export { allowsValue, assertAllowedValue, isFluidHandle } from "./valueUtilities.js";
 
-export { FieldGenerator, TreeDataContext } from "./fieldGenerator";
+export { FieldGenerator, TreeDataContext } from "./fieldGenerator.js";
 
-export { ForestSummarizer } from "./forest-summary";
-export { cursorForMapTreeField, cursorForMapTreeNode, mapTreeFromCursor } from "./mapTreeCursor";
-export { MemoizedIdRangeAllocator, IdRange } from "./memoizedIdRangeAllocator";
-export { buildForest } from "./object-forest";
-export { SchemaSummarizer, encodeTreeSchema, makeSchemaCodec } from "./schema-index/";
+export { ForestSummarizer } from "./forest-summary/index.js";
+export { cursorForMapTreeField, cursorForMapTreeNode, mapTreeFromCursor } from "./mapTreeCursor.js";
+export { MemoizedIdRangeAllocator, IdRange } from "./memoizedIdRangeAllocator.js";
+export { buildForest } from "./object-forest/index.js";
+export { SchemaSummarizer, encodeTreeSchema, makeSchemaCodec } from "./schema-index/index.js";
 export {
 	stackTreeNodeCursor,
 	CursorAdapter,
@@ -79,17 +79,17 @@ export {
 	prefixFieldPath,
 	CursorWithNode,
 	stackTreeFieldCursor,
-} from "./treeCursorUtils";
+} from "./treeCursorUtils.js";
 export {
 	cursorForJsonableTreeNode,
 	cursorForJsonableTreeField,
 	jsonableTreeFromCursor,
 	jsonableTreeFromFieldCursor,
 	jsonableTreeFromForest,
-} from "./treeTextCursor";
+} from "./treeTextCursor.js";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
-import * as SequenceField from "./sequence-field";
+import * as SequenceField from "./sequence-field/index.js";
 export { SequenceField };
 
 export {
@@ -110,7 +110,7 @@ export {
 	NodeChangeRebaser,
 	CrossFieldManager,
 	CrossFieldTarget,
-	FieldKind,
+	FlexFieldKind,
 	FullSchemaPolicy,
 	allowsRepoSuperset,
 	GenericChangeset,
@@ -123,35 +123,32 @@ export {
 	makeV0Codec,
 	RelevantRemovedRootsFromChild,
 	EncodedModularChangeset,
-} from "./modular-schema";
+} from "./modular-schema/index.js";
 
-export { Multiplicity } from "./multiplicity";
+export { Multiplicity } from "./multiplicity.js";
 
 export {
-	TreeNodeSchema,
-	AllowedTypes,
-	TreeFieldSchema,
+	FlexTreeNodeSchema,
+	FlexAllowedTypes,
+	FlexFieldSchema,
 	FlexTreeSchema,
 	Any,
 	SchemaLibraryData,
 	LazyTreeNodeSchema,
 	ViewSchema,
 	SchemaLintConfiguration,
-	FieldNodeSchema,
+	FlexFieldNodeSchema,
 	LeafNodeSchema,
-	MapNodeSchema,
-	ObjectNodeSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
 	schemaIsObjectNode,
-	bannedFieldNames,
-	fieldApiPrefixes,
-	validateObjectNodeFieldName,
 	Unenforced,
 	AllowedTypeSet,
 	markEager,
-	MapFieldSchema,
+	FlexMapFieldSchema,
 	SchemaCollection,
 	TreeNodeSchemaBase,
 	FlexListToUnion,
@@ -159,35 +156,29 @@ export {
 	isLazy,
 	NormalizeObjectNodeFields,
 	NormalizeField as NormalizeFieldSchema,
-	Fields,
+	FlexObjectNodeFields,
 	intoStoredSchema,
 	intoStoredSchemaCollection,
 	ArrayToUnion,
 	ExtractItemType,
 	NormalizeLazyItem,
 	FlexList,
-} from "./typed-schema";
+} from "./typed-schema/index.js";
 
 export {
 	SchemaBuilderBase,
 	SchemaLibrary,
-	ImplicitFieldSchema,
+	FlexImplicitFieldSchema,
 	NormalizeField,
-	ImplicitAllowedTypes,
+	FlexImplicitAllowedTypes,
 	NormalizeAllowedTypes,
 	SchemaBuilderOptions,
 	normalizeAllowedTypes,
 	normalizeField,
-} from "./schemaBuilderBase";
-export { SchemaBuilderInternal } from "./schemaBuilder";
+} from "./schemaBuilderBase.js";
+export { SchemaBuilderInternal } from "./schemaBuilder.js";
 
-export {
-	mapRootChanges,
-	mapFieldChanges,
-	mapFieldsChanges,
-	mapMark,
-	mapMarkList,
-} from "./deltaUtils";
+export { mapRootChanges } from "./deltaUtils.js";
 
 export {
 	TreeChunk,
@@ -195,9 +186,13 @@ export {
 	chunkFieldSingle,
 	buildChunkedForest,
 	defaultChunkPolicy,
+	FieldBatch,
+	FieldBatchCodec,
 	makeTreeChunker,
 	makeFieldBatchCodec,
-} from "./chunked-forest";
+	FieldBatchEncodingContext,
+	SchemaAndPolicy,
+} from "./chunked-forest/index.js";
 
 export {
 	compareLocalNodeKeys,
@@ -209,7 +204,7 @@ export {
 	NodeKeyManager,
 	nodeKeyFieldKey,
 	nodeKeyTreeIdentifier,
-} from "./node-key";
+} from "./node-key/index.js";
 
 export {
 	FieldKinds,
@@ -229,7 +224,7 @@ export {
 	fieldKinds,
 	intoDelta,
 	relevantRemovedRoots,
-} from "./default-schema";
+} from "./default-schema/index.js";
 
 export {
 	AssignableFieldKinds,
@@ -252,7 +247,6 @@ export {
 	FlexTreeField,
 	FlexTreeNode,
 	getTreeContext,
-	boxedIterator,
 	CheckTypesOverlap,
 	TreeStatus,
 	Context,
@@ -275,13 +269,20 @@ export {
 	flexTreeMarker,
 	FlexTreeEntityKind,
 	NodeKeys,
-} from "./flex-tree";
+	PropertyNameFromFieldKey,
+	ReservedObjectNodeFieldPropertyNames,
+	ReservedObjectNodeFieldPropertyNamePrefixes,
+	reservedObjectNodeFieldPropertyNames,
+	reservedObjectNodeFieldPropertyNamePrefixes,
+	FlexTreeObjectNodeFieldsInner,
+	assertFlexTreeEntityNotFreed,
+} from "./flex-tree/index.js";
 
-export { treeSchemaFromStoredSchema } from "./storedToViewSchema";
+export { treeSchemaFromStoredSchema } from "./storedToViewSchema.js";
 
-export { TreeCompressionStrategy } from "./treeCompressionUtils";
+export { TreeCompressionStrategy } from "./treeCompressionUtils.js";
 
-export { valueSchemaAllows } from "./valueUtilities";
+export { valueSchemaAllows } from "./valueUtilities.js";
 
 export {
 	InsertableFlexNode,
@@ -294,10 +295,10 @@ export {
 	TypedFields,
 	UnbrandedName,
 	EmptyObject,
-} from "./schema-aware";
+} from "./schema-aware/index.js";
 
-export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer";
+export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer.js";
 
-export { SchemaChange, makeSchemaChangeCodec, EncodedSchemaChange } from "./schema-edits";
+export { SchemaChange, makeSchemaChangeCodec, EncodedSchemaChange } from "./schema-edits/index.js";
 
-export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily";
+export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily.js";

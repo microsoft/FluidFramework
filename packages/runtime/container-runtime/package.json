@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/container-runtime",
-	"version": "2.0.0-rc.1.0.0",
+	"version": "2.0.0-rc.2.0.0",
 	"description": "Fluid container runtime",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -13,8 +13,14 @@
 	"sideEffects": false,
 	"exports": {
 		".": {
-			"types": "./dist/index.d.ts",
-			"default": "./dist/index.js"
+			"import": {
+				"types": "./lib/index.d.mts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
 		},
 		"./test/containerRuntime": {
 			"import": {
@@ -145,7 +151,7 @@
 		"test": "npm run test:mocha",
 		"test:benchmark:report": "mocha --timeout 999999 --perfMode --parentProcess --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js \"./dist/**/*.perf.spec.*js\"",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "mocha --ignore \"dist/test/types/*\" --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup",
+		"test:mocha": "mocha --ignore \"dist/test/types/*\" --recursive dist/test -r node_modules/@fluid-internal/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc",
 		"tsc:watch": "tsc --watch",
@@ -182,28 +188,28 @@
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/id-compressor": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.1.0-223007",
+		"@fluidframework/protocol-definitions": "^3.2.0-237840",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
+		"@tylerbu/sorted-btree-es6": "^1.8.0",
 		"double-ended-queue": "^2.1.0-0",
 		"events": "^3.1.0",
 		"lz4js": "^0.2.0",
-		"sorted-btree": "^1.8.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
+		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluid-tools/benchmark": "^0.48.0",
-		"@fluid-tools/build-cli": "0.29.0-222379",
+		"@fluid-tools/build-cli": "^0.34.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.29.0-222379",
+		"@fluidframework/build-tools": "^0.34.0",
 		"@fluidframework/container-runtime-previous": "npm:@fluidframework/container-runtime@2.0.0-internal.8.0.0",
-		"@fluidframework/eslint-config-fluid": "^3.1.0",
-		"@fluidframework/mocha-test-setup": "workspace:~",
+		"@fluidframework/eslint-config-fluid": "^3.5.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
-		"@microsoft/api-extractor": "^7.38.3",
+		"@microsoft/api-extractor": "^7.39.1",
 		"@types/double-ended-queue": "^2.1.0",
 		"@types/events": "^3.0.0",
 		"@types/mocha": "^9.1.1",
@@ -236,6 +242,14 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_ContainerRuntime": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ISubmitSummaryOptions": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

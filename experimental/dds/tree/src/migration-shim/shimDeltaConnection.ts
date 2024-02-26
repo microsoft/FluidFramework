@@ -61,7 +61,14 @@ export class PreMigrationDeltaConnection implements IDeltaConnection {
 		this.deltaConnection.dirty();
 	}
 
-	// This needs to be more thoroughly thought through. What happens when the source handle is changed?
+	/**
+	 * Passes through to the underlying delta connection.
+	 *
+	 * @deprecated There is no replacement for this, its functionality is no longer needed at this layer.
+	 * It will be removed in a future release, sometime after 2.0.0-internal.8.0.0
+	 *
+	 * @privateRemarks This needs to be more thoroughly thought through. What happens when the source handle is changed?
+	 */
 	public addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void {
 		this.deltaConnection.addedGCOutboundReference?.(srcHandle, outboundHandle);
 	}
@@ -112,7 +119,14 @@ export class StampDeltaConnection implements IDeltaConnection {
 		this.deltaConnection.dirty();
 	}
 
-	// This needs to be more thoroughly thought through. What happens when the source handle is changed?
+	/**
+	 * Passes through to the underlying delta connection.
+	 *
+	 * @deprecated There is no replacement for this, its functionality is no longer needed at this layer.
+	 * It will be removed in a future release, sometime after 2.0.0-internal.8.0.0
+	 *
+	 * @privateRemarks This needs to be more thoroughly thought through. What happens when the source handle is changed?
+	 */
 	public addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void {
 		this.deltaConnection.addedGCOutboundReference?.(srcHandle, outboundHandle);
 	}

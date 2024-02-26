@@ -7,9 +7,9 @@
 /* eslint-disable @rushstack/no-new-null */
 
 import { IRandom, makeRandom } from "@fluid-private/stochastic-test-utils";
-import { FieldKey } from "../../../core";
-import { brand } from "../../../util";
-import { getRandomEnglishString, getSizeInBytes } from "./jsonGeneratorUtils";
+import { FieldKey } from "../../../core/index.js";
+import { brand } from "../../../util/index.js";
+import { getRandomEnglishString, getSizeInBytes } from "./jsonGeneratorUtils.js";
 
 /**
  * This file contains logic to generate a JSON file that is statistically similar to the well-known

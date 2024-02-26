@@ -4,8 +4,8 @@
  */
 import { strict as assert, fail } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { ITreeCheckout, TreeContent } from "../../shared-tree";
-import { leaf, SchemaBuilder } from "../../domains";
+import { ITreeCheckout, TreeContent } from "../../shared-tree/index.js";
+import { leaf } from "../../domains/index.js";
 import {
 	TestTreeProviderLite,
 	createTestUndoRedoStacks,
@@ -14,27 +14,48 @@ import {
 	jsonSequenceRootSchema,
 	flexTreeViewWithContent,
 	checkoutWithContent,
-	requiredBooleanRootSchema,
-} from "../utils";
+	validateTreeContent,
+	numberSequenceRootSchema,
+	stringSequenceRootSchema,
+} from "../utils.js";
 import {
 	AllowedUpdateType,
+	FieldUpPath,
 	TreeNodeSchemaIdentifier,
 	TreeNodeStoredSchema,
 	TreeStoredSchema,
 	TreeValue,
 	Value,
 	moveToDetachedField,
+	rootFieldKey,
 	storedEmptyFieldSchema,
-} from "../../core";
-import { ContextuallyTypedNodeData, FieldKinds } from "../../feature-libraries";
+} from "../../core/index.js";
+import {
+	ContextuallyTypedNodeData,
+	FieldKinds,
+	FlexFieldSchema,
+	SchemaBuilderBase,
+	cursorForJsonableTreeField,
+	intoStoredSchema,
+} from "../../feature-libraries/index.js";
+
+const rootField: FieldUpPath = {
+	parent: undefined,
+	field: rootFieldKey,
+};
 
 describe("sharedTreeView", () => {
 	describe("Events", () => {
-		const builder = new SchemaBuilder({ scope: "Events test schema" });
-		const rootTreeNodeSchema = builder.object("root", {
-			x: builder.number,
+		const builder = new SchemaBuilderBase(FieldKinds.required, {
+			scope: "Events test schema",
+			libraries: [leaf.library],
 		});
-		const schema = builder.intoSchema(builder.optional(rootTreeNodeSchema));
+		const rootTreeNodeSchema = builder.object("root", {
+			x: leaf.number,
+		});
+		const schema = builder.intoSchema(
+			FlexFieldSchema.create(FieldKinds.optional, [rootTreeNodeSchema]),
+		);
 
 		it("triggers events for local and subtree changes", () => {
 			const view = flexTreeViewWithContent({
@@ -43,7 +64,7 @@ describe("sharedTreeView", () => {
 					x: 24,
 				},
 			});
-			const root = view.editableTree.content ?? fail("missing root");
+			const root = view.flexTree.content ?? fail("missing root");
 			const log: string[] = [];
 			const unsubscribe = root.on("changing", () => log.push("change"));
 			const unsubscribeSubtree = root.on("subtreeChanging", () => {
@@ -84,7 +105,7 @@ describe("sharedTreeView", () => {
 					x: 24,
 				},
 			});
-			const root = view.editableTree.content ?? fail("missing root");
+			const root = view.flexTree.content ?? fail("missing root");
 			const log: string[] = [];
 			const unsubscribe = root.on("changing", (upPath) =>
 				log.push(`change-${String(upPath.parentField)}-${upPath.parentIndex}`),
@@ -118,35 +139,6 @@ describe("sharedTreeView", () => {
 				"unsubscribe",
 				"editStart",
 			]);
-		});
-
-		// TODO: unskip once forking revertibles is supported
-		it.skip("triggers a revertible event for a changes merged into the local branch", () => {
-			const tree1 = checkoutWithContent({
-				schema: jsonSequenceRootSchema,
-				initialTree: [],
-			});
-			const branch = tree1.fork();
-
-			const { undoStack: undoStack1, unsubscribe: unsubscribe1 } = createTestUndoRedoStacks(
-				tree1.events,
-			);
-			const { undoStack: undoStack2, unsubscribe: unsubscribe2 } = createTestUndoRedoStacks(
-				branch.events,
-			);
-
-			// Insert node
-			insertFirstNode(branch, "42");
-
-			assert.equal(undoStack1.length, 0);
-			assert.equal(undoStack2.length, 1);
-
-			tree1.merge(branch);
-			assert.equal(undoStack1.length, 1);
-			assert.equal(undoStack2.length, 1);
-
-			unsubscribe1();
-			unsubscribe2();
 		});
 	});
 
@@ -382,7 +374,13 @@ describe("sharedTreeView", () => {
 				assert.equal(getSchema(parent), "schemaA");
 				assert.equal(getSchema(child), "schemaB");
 			},
-			{ schema: requiredBooleanRootSchema, initialTree: true },
+			{
+				schema: new SchemaBuilderBase(FieldKinds.required, {
+					scope: "test",
+					libraries: [leaf.library],
+				}).intoSchema(leaf.boolean),
+				initialTree: true,
+			},
 		);
 
 		it("submit edits to Fluid when merging into the root view", () => {
@@ -571,6 +569,161 @@ describe("sharedTreeView", () => {
 				"N",
 				"O",
 			]);
+		});
+	});
+
+	it("schema edits cause all clients to purge all repair data and all revertibles", () => {
+		const provider = new TestTreeProviderLite(2);
+		const checkout1 = provider.trees[0].checkout;
+		const checkout2 = provider.trees[1].checkout;
+
+		checkout1.updateSchema(intoStoredSchema(jsonSequenceRootSchema));
+		checkout1.editor.sequenceField(rootField).insert(
+			0,
+			cursorForJsonableTreeField([
+				{ type: leaf.string.name, value: "A" },
+				{ type: leaf.number.name, value: 1 },
+				{ type: leaf.string.name, value: "B" },
+				{ type: leaf.number.name, value: 2 },
+			]),
+		);
+
+		provider.processMessages();
+		const checkout1Revertibles = createTestUndoRedoStacks(checkout1.events);
+
+		// Simulate the presence of a host application that retains the revertibles in multiple ways
+		const checkout1RevertiblesReadonly = createTestUndoRedoStacks(checkout1.events);
+
+		checkout1.editor.sequenceField(rootField).remove(0, 1); // Remove "A"
+		checkout1.editor.sequenceField(rootField).remove(0, 1); // Remove 1
+		checkout1Revertibles.undoStack.pop()?.revert(); // Restore 1
+		provider.processMessages();
+
+		const checkout2Revertibles = createTestUndoRedoStacks(checkout2.events);
+		checkout2.editor.sequenceField(rootField).remove(1, 1); // Remove "B"
+		checkout2.editor.sequenceField(rootField).remove(1, 1); // Remove 2
+		checkout2Revertibles.undoStack.pop()?.revert(); // Restore 2
+		provider.processMessages();
+
+		const expectedContent = {
+			schema: jsonSequenceRootSchema,
+			initialTree: [1, 2],
+		};
+		validateTreeContent(checkout1, expectedContent);
+		validateTreeContent(checkout2, expectedContent);
+
+		assert.equal(checkout1Revertibles.undoStack.length, 1);
+		assert.equal(checkout1Revertibles.redoStack.length, 1);
+		assert.equal(checkout1.getRemovedRoots().length, 2);
+
+		assert.equal(checkout2Revertibles.undoStack.length, 1);
+		assert.equal(checkout2Revertibles.redoStack.length, 1);
+		assert.equal(checkout2.getRemovedRoots().length, 2);
+
+		checkout1.updateSchema(intoStoredSchema(numberSequenceRootSchema));
+
+		// The undo stack is not empty because it contains the schema change
+		assert.equal(checkout1Revertibles.undoStack.length, 1);
+		assert.equal(checkout1Revertibles.redoStack.length, 0);
+		assert.equal(checkout1RevertiblesReadonly.undoStack.length, 1);
+		assert.equal(checkout1RevertiblesReadonly.redoStack.length, 0);
+		assert.deepEqual(checkout1.getRemovedRoots(), []);
+
+		provider.processMessages();
+
+		assert.equal(checkout2Revertibles.undoStack.length, 0);
+		assert.equal(checkout2Revertibles.redoStack.length, 0);
+		assert.deepEqual(checkout2.getRemovedRoots(), []);
+
+		checkout1Revertibles.unsubscribe();
+		checkout2Revertibles.unsubscribe();
+	});
+
+	describe("branches with schema edits can be rebased", () => {
+		it("over non-schema changes", () => {
+			const provider = new TestTreeProviderLite(1);
+			const checkout1 = provider.trees[0].checkout;
+
+			checkout1.updateSchema(intoStoredSchema(jsonSequenceRootSchema));
+			checkout1.editor.sequenceField(rootField).insert(
+				0,
+				cursorForJsonableTreeField([
+					{ type: leaf.string.name, value: "A" },
+					{ type: leaf.string.name, value: "B" },
+					{ type: leaf.string.name, value: "C" },
+				]),
+			);
+
+			const branch = checkout1.fork();
+
+			// Remove "A" on the parent branch
+			checkout1.editor.sequenceField(rootField).remove(0, 1);
+
+			// Remove "B" on the child branch
+			branch.editor.sequenceField(rootField).remove(1, 1);
+			branch.updateSchema(intoStoredSchema(stringSequenceRootSchema));
+			// Remove "C" on the child branch
+			branch.editor.sequenceField(rootField).remove(1, 1);
+			validateTreeContent(branch, {
+				schema: stringSequenceRootSchema,
+				initialTree: ["A"],
+			});
+
+			branch.rebaseOnto(checkout1);
+
+			// The schema change and any changes after that should be dropped,
+			// but the changes before the schema change should be preserved
+			validateTreeContent(branch, {
+				schema: jsonSequenceRootSchema,
+				initialTree: ["C"],
+			});
+		});
+
+		// AB#7256: This test fails because purging repair data upon application of schema changes makes it impossible
+		// to roll back the changes that were before that schema change on the branch being rebased.
+		// This is not a problem when the changes before the schema change are applied once rebased (because the
+		// rollback and reapplication cancel out). This is the scenario covered in the test above.
+		// It is a problem here because the rebased change does not apply due to the presence of a schema change on
+		// the destination branch. Note that the presence of a schema change on the destination branch is not strictly
+		// necessary for the problem to occur. For example, if the rebased change had a constraint, and the rebasing
+		// caused that constraint to become violated, then the same issue would occur.
+		it.skip("over schema changes", () => {
+			const provider = new TestTreeProviderLite(1);
+			const checkout1 = provider.trees[0].checkout;
+
+			checkout1.updateSchema(intoStoredSchema(jsonSequenceRootSchema));
+			checkout1.editor.sequenceField(rootField).insert(
+				0,
+				cursorForJsonableTreeField([
+					{ type: leaf.string.name, value: "A" },
+					{ type: leaf.string.name, value: "B" },
+					{ type: leaf.string.name, value: "C" },
+				]),
+			);
+
+			const branch = checkout1.fork();
+
+			// Remove "A" and change the schema on the parent branch
+			checkout1.editor.sequenceField(rootField).remove(0, 1);
+			checkout1.updateSchema(intoStoredSchema(stringSequenceRootSchema));
+
+			// Remove "B" on the child branch
+			branch.editor.sequenceField(rootField).remove(1, 1);
+			branch.updateSchema(intoStoredSchema(stringSequenceRootSchema));
+			// Remove "C" on the child branch
+			branch.editor.sequenceField(rootField).remove(1, 1);
+			validateTreeContent(branch, {
+				schema: stringSequenceRootSchema,
+				initialTree: ["A"],
+			});
+
+			branch.rebaseOnto(checkout1);
+
+			// All changes on the branch should be dropped
+			validateTreeContent(branch, {
+				schema: jsonSequenceRootSchema,
+				initialTree: ["B", "C"],
+			});
 		});
 	});
 });

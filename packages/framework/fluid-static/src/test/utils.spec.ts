@@ -3,29 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { MapFactory, SharedMap } from "@fluidframework/map";
 import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
 import { parseDataObjectsFromSharedObjects } from "../utils";
+import { type ContainerSchema } from "../types";
 
-export class TestDataObject extends DataObject {
+class TestDataObject extends DataObject {
 	public static readonly Name = "@fluid-example/test-data-object";
 
 	public static readonly factory = new DataObjectFactory(
 		TestDataObject.Name,
 		TestDataObject,
-		[],
-		{},
-	);
-}
-
-export class AnotherTestDataObject extends DataObject {
-	public static readonly Name = "@fluid-example/another-test-data-object";
-
-	public static readonly factory = new DataObjectFactory(
-		AnotherTestDataObject.Name,
-		AnotherTestDataObject,
 		[],
 		{},
 	);
@@ -101,7 +91,7 @@ describe("parseDataObjectsFromSharedObjects", () => {
 	});
 
 	it("should be able to dedup Data Objects even if passed as dynamic types", () => {
-		const schema = {
+		const schema: ContainerSchema = {
 			initialObjects: {
 				map: SharedMap,
 				do: TestDataObject,

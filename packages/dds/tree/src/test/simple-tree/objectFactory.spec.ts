@@ -5,12 +5,16 @@
 
 import { strict as assert } from "assert";
 // eslint-disable-next-line import/no-internal-modules
-import { extractFactoryContent } from "../../simple-tree/proxies";
-import { SchemaFactory, Tree, InsertableTreeFieldFromImplicitField } from "../../class-tree";
+import { extractFactoryContent } from "../../simple-tree/proxies.js";
+import {
+	SchemaFactory,
+	Tree,
+	InsertableTreeFieldFromImplicitField,
+} from "../../simple-tree/index.js";
 
 // eslint-disable-next-line import/no-internal-modules
-import { getFlexNode } from "../../simple-tree/flexNode";
-import { getRoot } from "./utils";
+import { getFlexNode } from "../../simple-tree/flexNode.js";
+import { getRoot } from "./utils.js";
 
 describe("SharedTreeObject factories", () => {
 	const sb = new SchemaFactory("test");

@@ -4,7 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { RangeEntry, RangeMap, getFirstEntryFromRangeMap, setInRangeMap } from "../../../util";
+import {
+	RangeEntry,
+	RangeMap,
+	getFirstEntryFromRangeMap,
+	setInRangeMap,
+} from "../../../util/index.js";
 
 function newRangeMap(): RangeMap<string> {
 	return [];

@@ -9,32 +9,32 @@ import {
 	ChangesetLocalId,
 	DeltaDetachedNodeId,
 	DeltaFieldChanges,
-} from "../../core";
-import { fail } from "../../util";
+} from "../../core/index.js";
+import { fail } from "../../util/index.js";
 import {
-	FieldKind,
+	FlexFieldKind,
 	allowsTreeSchemaIdentifierSuperset,
 	ToDelta,
 	FieldChangeHandler,
 	FieldEditor,
 	referenceFreeFieldChangeRebaser,
 	FieldKindWithEditor,
-} from "../modular-schema";
-import { sequenceFieldChangeHandler } from "../sequence-field";
+} from "../modular-schema/index.js";
+import { sequenceFieldChangeHandler } from "../sequence-field/index.js";
 import {
 	noChangeCodecFamily,
 	OptionalChangeset,
 	optionalChangeHandler,
 	optionalFieldEditor,
-} from "../optional-field";
-import { Multiplicity } from "../multiplicity";
+} from "../optional-field/index.js";
+import { Multiplicity } from "../multiplicity.js";
 
 /**
  * ChangeHandler that only handles no-op / identity changes.
  */
 export const noChangeHandler: FieldChangeHandler<0> = {
 	rebaser: referenceFreeFieldChangeRebaser({
-		compose: (changes: 0[]) => 0,
+		compose: (change1: 0, change2: 0) => 0,
 		invert: (changes: 0) => 0,
 		rebase: (change: 0, over: 0) => 0,
 	}),
@@ -43,6 +43,7 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 	intoDelta: (change, deltaFromChild: ToDelta): DeltaFieldChanges => ({}),
 	relevantRemovedRoots: (change): Iterable<DeltaDetachedNodeId> => [],
 	isEmpty: (change: 0) => true,
+	createEmpty: () => 0,
 };
 
 export interface ValueFieldEditor extends FieldEditor<OptionalChangeset> {
@@ -185,24 +186,24 @@ export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> =
 /**
  * @internal
  */
-export interface Required extends FieldKind<"Value", Multiplicity.Single> {}
+export interface Required extends FlexFieldKind<"Value", Multiplicity.Single> {}
 /**
  * @internal
  */
-export interface Optional extends FieldKind<"Optional", Multiplicity.Optional> {}
+export interface Optional extends FlexFieldKind<"Optional", Multiplicity.Optional> {}
 /**
  * @internal
  */
-export interface Sequence extends FieldKind<"Sequence", Multiplicity.Sequence> {}
+export interface Sequence extends FlexFieldKind<"Sequence", Multiplicity.Sequence> {}
 /**
  * @internal
  */
-export interface NodeKeyFieldKind extends FieldKind<"NodeKey", Multiplicity.Single> {}
+export interface NodeKeyFieldKind extends FlexFieldKind<"NodeKey", Multiplicity.Single> {}
 /**
  * @internal
  */
 export interface Forbidden
-	extends FieldKind<typeof forbiddenFieldKindIdentifier, Multiplicity.Forbidden> {}
+	extends FlexFieldKind<typeof forbiddenFieldKindIdentifier, Multiplicity.Forbidden> {}
 
 /**
  * Default FieldKinds with their editor types erased.

@@ -1,6 +1,6 @@
 {
 	"name": "tinylicious",
-	"version": "3.0.0",
+	"version": "3.1.0",
 	"description": "Tiny, test implementation of the routerlicious reference service",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -14,7 +14,7 @@
 	"types": "dist/index.d.ts",
 	"bin": "dist/index.js",
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint && npm run build:docs",
+		"build": "npm run build:compile && npm run lint && npm run build:docs",
 		"build:compile": "npm run tsc && npm run build:test",
 		"build:docs": "api-extractor run --local --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 \"./_api-extractor-temp/doc-models/*\" ../../_api-extractor-temp/",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
@@ -28,18 +28,18 @@
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../.prettierignore",
-		"start": "forever start dist/index.js",
+		"start": "pm2 start -n tinylicious dist/index.js",
 		"start:debug": "node --inspect=0.0.0.0:9229 dist/index.js",
-		"stop": "forever stop dist/index.js",
+		"stop": "pm2 stop tinylicious",
 		"test": "npm run test:mocha",
 		"test:mocha": "mocha --recursive dist/test",
 		"tsc": "tsc"
 	},
 	"dependencies": {
-		"@fluidframework/common-utils": "^3.0.0-223006",
+		"@fluidframework/common-utils": "^3.1.0",
 		"@fluidframework/gitresources": "workspace:~",
 		"@fluidframework/protocol-base": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.1.0-223007",
+		"@fluidframework/protocol-definitions": "^3.2.0-237840",
 		"@fluidframework/server-lambdas": "workspace:~",
 		"@fluidframework/server-local-server": "workspace:~",
 		"@fluidframework/server-memory-orderer": "workspace:~",
@@ -74,7 +74,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": "~2.0.0-internal.6.2.0",
-		"@microsoft/api-extractor": "^7.38.3",
+		"@microsoft/api-extractor": "^7.39.1",
 		"@types/compression": "^1.7.2",
 		"@types/cookie-parser": "^1.4.1",
 		"@types/cors": "^2.8.4",
@@ -90,28 +90,20 @@
 		"@types/rimraf": "^3.0.0",
 		"@types/split": "^0.3.28",
 		"@types/uuid": "^9.0.2",
-		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.6.0",
-		"forever": "^4.0.3",
 		"mocha": "^10.2.0",
 		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
+		"pm2": "^5.3.1",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"ts-node": "^8.6.2",
 		"typescript": "~4.5.5"
 	},
-	"packageManager": "pnpm@7.33.5+sha512.4e499f22fffe5845aa8f9463e1386b2d72c3134e0ebef9409360ad844fef0290e82b479b32eb2ec0f30e56607e1820c22167829fd62656d41a8fd0cc4a0f4267",
 	"engines": {
 		"node": ">=14.0.0"
-	},
-	"pnpm": {
-		"overrides": {
-			"qs": "^6.11.0",
-			"socket.io-parser": "^4.2.1"
-		}
 	}
 }

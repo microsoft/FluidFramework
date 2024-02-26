@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import * as api from "@fluidframework/driver-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { FileDeltaStorageService } from "./fileDeltaStorageService";
@@ -12,13 +13,18 @@ import { FileDeltaStorageService } from "./fileDeltaStorageService";
  * underlying storage for file document service.
  */
 // eslint-disable-next-line import/namespace
-export class FileDocumentService implements api.IDocumentService {
+export class FileDocumentService
+	extends TypedEventEmitter<api.IDocumentServiceEvents>
+	implements api.IDocumentService
+{
 	constructor(
 		public readonly resolvedUrl: api.IResolvedUrl,
 		private readonly storage: api.IDocumentStorageService,
 		private readonly deltaStorage: FileDeltaStorageService,
 		private readonly deltaConnection: api.IDocumentDeltaConnection,
-	) {}
+	) {
+		super();
+	}
 
 	public dispose() {}
 

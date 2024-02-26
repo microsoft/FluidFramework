@@ -64,20 +64,6 @@ export interface ISummarizerInternalsProvider {
 }
 
 /**
- * @deprecated Options that control the behavior of a running summarizer.
- * @public
- * */
-export interface ISummarizerOptions {
-	/**
-	 * Set to true to disable the default heuristics from running; false by default.
-	 * This affects only the heuristics around when a summarizer should
-	 * submit summaries. So when it is disabled, summarizer clients should
-	 * not be expected to summarize unless an on-demand summary is requested.
-	 */
-	disableHeuristics: boolean;
-}
-
-/**
  * @internal
  */
 export interface ISummarizingWarning extends ContainerWarning {
@@ -141,6 +127,8 @@ export interface ISubmitSummaryOptions extends ISummarizeOptions {
 	readonly cancellationToken: ISummaryCancellationToken;
 	/** Summarization may be attempted multiple times. This tells whether this is the final summarization attempt. */
 	readonly finalAttempt?: boolean;
+	/** The sequence number of the latest summary used to validate if summary state is correct before summarizing */
+	readonly latestSummaryRefSeqNum: number;
 }
 
 /**
@@ -149,6 +137,8 @@ export interface ISubmitSummaryOptions extends ISummarizeOptions {
 export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
 	/** Reason for generating summary. */
 	readonly reason: string;
+	/** In case of a failure, will attempt to retry based on if the failure is retriable. */
+	readonly retryOnFailure?: boolean;
 }
 
 /**
@@ -375,7 +365,7 @@ export type EnqueueSummarizeResult =
  * @alpha
  */
 export type SummarizerStopReason =
-	/** Summarizer client failed to summarize in all 3 consecutive attempts. */
+	/** Summarizer client failed to summarize in all attempts. */
 	| "failToSummarize"
 	/** Parent client reported that it is no longer connected. */
 	| "parentNotConnected"
@@ -436,7 +426,7 @@ export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
 	/* Closes summarizer. Any pending processes (summary in flight) are abandoned. */
 	close(): void;
 
-	run(onBehalfOf: string, disableHeuristics?: boolean): Promise<SummarizerStopReason>;
+	run(onBehalfOf: string): Promise<SummarizerStopReason>;
 
 	/**
 	 * Attempts to generate a summary on demand. If already running, takes no action.

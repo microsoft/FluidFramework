@@ -7,13 +7,12 @@ import { strict as assert } from "assert";
 
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase, IFluidHandle } from "@fluidframework/core-interfaces";
-import {
+import type {
 	IDirectory,
 	IDirectoryValueChanged,
 	ISharedDirectory,
 	ISharedMap,
 	SharedDirectory,
-	SharedMap,
 } from "@fluidframework/map";
 import {
 	ITestObjectProvider,
@@ -26,16 +25,17 @@ import {
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 
-const directoryId = "directoryKey";
-const registry: ChannelFactoryRegistry = [[directoryId, SharedDirectory.getFactory()]];
-const testContainerConfig: ITestContainerConfig = {
-	fluidDataObjectType: DataObjectFactoryType.Test,
-	registry,
-};
+describeCompat("SharedDirectory", "FullCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap, SharedDirectory } = apis.dds;
+	const directoryId = "directoryKey";
+	const registry: ChannelFactoryRegistry = [[directoryId, SharedDirectory.getFactory()]];
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+	};
 
-describeCompat("SharedDirectory", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 	let dataObject1: ITestFluidObject;
@@ -43,7 +43,7 @@ describeCompat("SharedDirectory", "FullCompat", (getTestObjectProvider) => {
 	let sharedDirectory2: ISharedDirectory;
 	let sharedDirectory3: ISharedDirectory;
 
-	beforeEach(async () => {
+	beforeEach("createContainers", async () => {
 		// Create a Container for the first client.
 		const container1 = await provider.makeTestContainer(testContainerConfig);
 		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
@@ -512,7 +512,7 @@ describeCompat("SharedDirectory", "FullCompat", (getTestObjectProvider) => {
 			let root1SubDir;
 			let root2SubDir;
 			let root3SubDir;
-			beforeEach(async () => {
+			beforeEach("createSubdirectories", async () => {
 				sharedDirectory1.createSubDirectory("testSubDir").set("dummyKey", "dummyValue");
 
 				await provider.ensureSynchronized();
@@ -832,9 +832,17 @@ describeCompat("SharedDirectory", "FullCompat", (getTestObjectProvider) => {
 	});
 });
 
-describeCompat("SharedDirectory orderSequentially", "NoCompat", (getTestObjectProvider) => {
+describeCompat("SharedDirectory orderSequentially", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedDirectory } = apis.dds;
+	const directoryId = "directoryKey";
+	const registry: ChannelFactoryRegistry = [[directoryId, SharedDirectory.getFactory()]];
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+	};
+
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 
@@ -854,7 +862,7 @@ describeCompat("SharedDirectory orderSequentially", "NoCompat", (getTestObjectPr
 	});
 	const errorMessage = "callback failure";
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		const configWithFeatureGates = {
 			...testContainerConfig,
 			loaderProps: {
@@ -1260,71 +1268,120 @@ describeCompat("SharedDirectory orderSequentially", "NoCompat", (getTestObjectPr
 	});
 });
 
-describeCompat("SharedDirectory ordering maintenance", "NoCompat", (getTestObjectProvider) => {
-	let provider: ITestObjectProvider;
-	beforeEach(() => {
-		provider = getTestObjectProvider();
-	});
-	let sharedDirectory1: ISharedDirectory;
-	let sharedDirectory2: ISharedDirectory;
-	let sharedDirectory3: ISharedDirectory;
+describeCompat(
+	"SharedDirectory ordering maintenance",
+	"NoCompat",
+	(getTestObjectProvider, apis) => {
+		const { SharedDirectory } = apis.dds;
+		const directoryId = "directoryKey";
+		const registry: ChannelFactoryRegistry = [[directoryId, SharedDirectory.getFactory()]];
+		const testContainerConfig: ITestContainerConfig = {
+			fluidDataObjectType: DataObjectFactoryType.Test,
+			registry,
+		};
 
-	beforeEach(async () => {
-		// Create a Container for the first client.
-		const container1 = await provider.makeTestContainer(testContainerConfig);
-		const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
-		sharedDirectory1 = await dataObject1.getSharedObject<SharedDirectory>(directoryId);
-
-		// Load the Container that was created by the first client.
-		const container2 = await provider.loadTestContainer(testContainerConfig);
-		const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		sharedDirectory2 = await dataObject2.getSharedObject<SharedDirectory>(directoryId);
-
-		// Load the Container that was created by the first client.
-		const container3 = await provider.loadTestContainer(testContainerConfig);
-		const dataObject3 = (await container3.getEntryPoint()) as ITestFluidObject;
-		sharedDirectory3 = await dataObject3.getSharedObject<SharedDirectory>(directoryId);
-
-		await provider.ensureSynchronized();
-	});
-
-	function expectSubdirsOrder(
-		directory: ISharedDirectory,
-		subdirsInOrder: string[],
-		path?: string,
-	) {
-		const dir = path ? directory.getWorkingDirectory(path) : directory;
-		assert(dir);
-
-		const subdirs = Array.from(dir.subdirectories()).map(([subdirName, _]) => {
-			return subdirName;
+		let provider: ITestObjectProvider;
+		beforeEach("getTestObjectProvider", () => {
+			provider = getTestObjectProvider();
 		});
-		assert.deepEqual(subdirs, subdirsInOrder, "Incorrect order of subdirs in the container");
-	}
+		let container1: IContainer;
+		let container2: IContainer;
+		let container3: IContainer;
 
-	function expectAllSubdirsOrder(dirsInOrder: string[], path?: string) {
-		expectSubdirsOrder(sharedDirectory1, dirsInOrder, path);
-		expectSubdirsOrder(sharedDirectory2, dirsInOrder, path);
-		expectSubdirsOrder(sharedDirectory3, dirsInOrder, path);
-	}
+		let sharedDirectory1: ISharedDirectory;
+		let sharedDirectory2: ISharedDirectory;
+		let sharedDirectory3: ISharedDirectory;
 
-	// This test falsely assumes ops will be acked in the order they're submtited.
-	// AB#6515 tracks re-enabling.
-	it.skip("Eventual consistency in ordering with subdirectories creation/deletion", async () => {
-		sharedDirectory1.createSubDirectory("dir2");
-		sharedDirectory2.createSubDirectory("dir1");
-		sharedDirectory2.createSubDirectory("dir2");
-		sharedDirectory3.createSubDirectory("dir3");
-		sharedDirectory3.createSubDirectory("dir2");
+		beforeEach("createSharedDirectories", async () => {
+			// Create a Container for the first client.
+			container1 = await provider.makeTestContainer(testContainerConfig);
+			const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
+			sharedDirectory1 = await dataObject1.getSharedObject<SharedDirectory>(directoryId);
 
-		await provider.opProcessingController.processIncoming();
-		expectSubdirsOrder(sharedDirectory1, ["dir2"]);
-		expectSubdirsOrder(sharedDirectory2, ["dir1", "dir2"]);
-		expectSubdirsOrder(sharedDirectory3, ["dir3", "dir2"]);
+			// Load the Container that was created by the first client.
+			container2 = await provider.loadTestContainer(testContainerConfig);
+			const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			sharedDirectory2 = await dataObject2.getSharedObject<SharedDirectory>(directoryId);
 
-		await provider.opProcessingController.processOutgoing();
-		await provider.ensureSynchronized();
+			// Load the Container that was created by the first client.
+			container3 = await provider.loadTestContainer(testContainerConfig);
+			const dataObject3 = (await container3.getEntryPoint()) as ITestFluidObject;
+			sharedDirectory3 = await dataObject3.getSharedObject<SharedDirectory>(directoryId);
 
-		expectAllSubdirsOrder(["dir2", "dir1", "dir3"]);
-	});
-});
+			await provider.ensureSynchronized();
+		});
+
+		function expectSubdirsOrder(
+			directory: ISharedDirectory,
+			subdirsInOrder: string[],
+			path?: string,
+		) {
+			const dir = path ? directory.getWorkingDirectory(path) : directory;
+			assert(dir);
+
+			const subdirs = Array.from(dir.subdirectories()).map(([subdirName, _]) => {
+				return subdirName;
+			});
+			assert.deepEqual(
+				subdirs,
+				subdirsInOrder,
+				"Incorrect order of subdirs in the container",
+			);
+		}
+
+		function expectAllSubdirsOrder(dirsInOrder: string[], path?: string) {
+			expectSubdirsOrder(sharedDirectory1, dirsInOrder, path);
+			expectSubdirsOrder(sharedDirectory2, dirsInOrder, path);
+			expectSubdirsOrder(sharedDirectory3, dirsInOrder, path);
+		}
+
+		async function pauseAllContainers() {
+			await container1.deltaManager.inbound.pause();
+			await container2.deltaManager.inbound.pause();
+			await container3.deltaManager.inbound.pause();
+
+			await container1.deltaManager.outbound.pause();
+			await container2.deltaManager.outbound.pause();
+			await container3.deltaManager.outbound.pause();
+		}
+
+		function resumeContainer(c: IContainer) {
+			c.deltaManager.inbound.resume();
+			c.deltaManager.outbound.resume();
+		}
+
+		/**
+		 * Wait for the message sent by the current container to be sequenced.
+		 */
+		async function waitForContainerSave(c: IContainer) {
+			if (!c.isDirty) {
+				return;
+			}
+			await new Promise<void>((resolve) => c.once("saved", () => resolve()));
+		}
+
+		it("Eventual consistency in ordering with subdirectories creation/deletion", async () => {
+			// Pause to not allow ops to be processed while we maintained them in order.
+			await pauseAllContainers();
+
+			resumeContainer(container1);
+			sharedDirectory1.createSubDirectory("dir2");
+			await waitForContainerSave(container1);
+
+			resumeContainer(container2);
+			sharedDirectory2.createSubDirectory("dir1");
+			sharedDirectory2.createSubDirectory("dir2");
+			await waitForContainerSave(container2);
+
+			resumeContainer(container3);
+			sharedDirectory3.createSubDirectory("dir3");
+			sharedDirectory3.createSubDirectory("dir2");
+			await waitForContainerSave(container3);
+
+			await provider.opProcessingController.processIncoming();
+			await provider.ensureSynchronized();
+
+			expectAllSubdirsOrder(["dir2", "dir1", "dir3"]);
+		});
+	},
+);

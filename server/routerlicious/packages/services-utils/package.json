@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-services-utils",
-	"version": "3.0.0",
+	"version": "3.1.0",
 	"description": "Fluid server services shared utilities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -25,8 +25,9 @@
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../.prettierignore",
-		"test": "mocha --recursive \"dist/test/*.spec.*js\"",
+		"test": "mocha --recursive \"dist/test/**/*.spec.*js\"",
 		"test:coverage": "c8 npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
+		"test:debug": "mocha inspect --recursive \"dist/test/*.spec.*js\"",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
@@ -52,7 +53,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/protocol-definitions": "^3.1.0-223007",
+		"@fluidframework/protocol-definitions": "^3.2.0-237840",
 		"@fluidframework/server-services-client": "workspace:~",
 		"@fluidframework/server-services-core": "workspace:~",
 		"@fluidframework/server-services-telemetry": "workspace:~",
@@ -106,6 +107,10 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_WebSocketTracker": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

@@ -10,9 +10,12 @@ export interface ISnapshotOptions {
 	blobs?: number;
 	deltas?: number;
 	channels?: number;
-	/*
+
+	/**
 	 * Maximum Data size (in bytes)
-	 * If specified, SPO will fail snapshot request with 413 error (see OdspErrorType.snapshotTooBig)
+	 *
+	 * @remarks
+	 * If specified, SPO will fail snapshot request with 413 error (see {@link @fluidframework/odsp-driver-definitions#(OdspErrorTypes:variable).snapshotTooBig})
 	 * if snapshot is bigger in size than specified limit.
 	 */
 	mds?: number;

@@ -4,9 +4,9 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { FieldKey } from "../schema-stored";
-import { FieldUpPath, UpPath } from "./pathTree";
-import { TreeType, Value } from "./types";
+import { FieldKey } from "../schema-stored/index.js";
+import { FieldUpPath, UpPath } from "./pathTree.js";
+import { TreeType, Value } from "./types.js";
 
 /**
  * A symbol for marking an object as an {@link ITreeCursor}.

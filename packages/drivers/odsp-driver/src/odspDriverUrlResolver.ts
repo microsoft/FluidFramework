@@ -5,17 +5,12 @@
 import { assert } from "@fluidframework/core-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
-	DriverErrorType,
 	DriverHeader,
 	IContainerPackageInfo,
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import {
-	IOdspResolvedUrl,
-	ShareLinkTypes,
-	ShareLinkInfoType,
-} from "@fluidframework/odsp-driver-definitions";
+import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
 import { NonRetryableError } from "@fluidframework/driver-utils";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
@@ -24,13 +19,23 @@ import { getHashedDocumentId } from "./odspPublicUtils";
 import { ClpCompliantAppHeader } from "./contractsPublic";
 import { pkgVersion } from "./packageVersion";
 
-function getUrlBase(siteUrl: string, driveId: string, itemId: string, fileVersion?: string) {
+function getUrlBase(
+	siteUrl: string,
+	driveId: string,
+	itemId: string,
+	fileVersion?: string,
+): string {
 	const siteOrigin = new URL(siteUrl).origin;
 	const version = fileVersion ? `versions/${fileVersion}/` : "";
 	return `${getApiRoot(siteOrigin)}/drives/${driveId}/items/${itemId}/${version}`;
 }
 
-function getSnapshotUrl(siteUrl: string, driveId: string, itemId: string, fileVersion?: string) {
+function getSnapshotUrl(
+	siteUrl: string,
+	driveId: string,
+	itemId: string,
+	fileVersion?: string,
+): string {
 	const urlBase = getUrlBase(siteUrl, driveId, itemId, fileVersion);
 	return `${urlBase}opStream/snapshots`;
 }
@@ -40,7 +45,7 @@ function getAttachmentPOSTUrl(
 	driveId: string,
 	itemId: string,
 	fileVersion?: string,
-) {
+): string {
 	const urlBase = getUrlBase(siteUrl, driveId, itemId, fileVersion);
 	return `${urlBase}opStream/attachment`;
 }
@@ -50,7 +55,7 @@ function getAttachmentGETUrl(
 	driveId: string,
 	itemId: string,
 	fileVersion?: string,
-) {
+): string {
 	const urlBase = getUrlBase(siteUrl, driveId, itemId, fileVersion);
 	return `${urlBase}opStream/attachments`;
 }
@@ -60,7 +65,7 @@ function getDeltaStorageUrl(
 	driveId: string,
 	itemId: string,
 	fileVersion?: string,
-) {
+): string {
 	const urlBase = getUrlBase(siteUrl, driveId, itemId, fileVersion);
 	return `${urlBase}opStream`;
 }
@@ -71,11 +76,15 @@ function getDeltaStorageUrl(
  */
 function removeBeginningSlash(str: string): string {
 	if (str.startsWith("/")) {
-		return str.substr(1);
+		return str.slice(1);
 	}
 
 	return str;
 }
+
+// back-compat: GitHub #9653
+const isFluidPackage = (pkg: Record<string, unknown>): boolean =>
+	typeof pkg === "object" && typeof pkg?.name === "string" && typeof pkg?.fluid === "object";
 
 /**
  * Resolver to resolve urls like the ones created by createOdspUrl which is driver inner
@@ -86,6 +95,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 	constructor() {}
 
 	/**
+	 * {@inheritDoc @fluidframework/driver-definitions#IUrlResolver.resolve}
 	 * @alpha
 	 */
 	public async resolve(request: IRequest): Promise<IOdspResolvedUrl> {
@@ -93,26 +103,18 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 			const [siteURL, queryString] = request.url.split("?");
 
 			const searchParams = new URLSearchParams(queryString);
-			const fileName = request.headers[DriverHeader.createNew].fileName;
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+			const fileName: string = request.headers[DriverHeader.createNew].fileName;
 			const driveID = searchParams.get("driveId");
 			const filePath = searchParams.get("path");
 			const packageName = searchParams.get("containerPackageName");
-			const createLinkType = searchParams.get("createLinkType");
 			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- false positive
 			if (!(fileName && siteURL && driveID && filePath !== null && filePath !== undefined)) {
 				throw new NonRetryableError(
-					"Proper new file params should be there!!",
-					DriverErrorType.genericError,
+					"Proper new file params should be there",
+					OdspErrorTypes.genericError,
 					{ driverVersion: pkgVersion },
 				);
-			}
-			let shareLinkInfo: ShareLinkInfoType | undefined;
-			if (createLinkType && createLinkType in ShareLinkTypes) {
-				shareLinkInfo = {
-					createLink: {
-						type: ShareLinkTypes[createLinkType],
-					},
-				};
 			}
 			return {
 				endpoints: {
@@ -136,7 +138,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 					containerPackageName: packageName ?? undefined,
 				},
 				fileVersion: undefined,
-				shareLinkInfo,
+				shareLinkInfo: undefined,
 				isClpCompliantApp: request.headers?.[ClpCompliantAppHeader.isClpCompliantApp],
 			};
 		}
@@ -204,21 +206,20 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 			dataStorePath = odspResolvedUrl.dataStorePath;
 		}
 		if (dataStorePath.startsWith("/")) {
-			dataStorePath = dataStorePath.substr(1);
+			dataStorePath = dataStorePath.slice(1);
 		}
 
-		// back-compat: GitHub #9653
-		const isFluidPackage = (pkg: any) =>
-			typeof pkg === "object" &&
-			typeof pkg?.name === "string" &&
-			typeof pkg?.fluid === "object";
-		let containerPackageName;
+		let containerPackageName: string | undefined;
 		if (packageInfoSource && "name" in packageInfoSource) {
 			containerPackageName = packageInfoSource.name;
 			// packageInfoSource is cast to any as it is typed to IContainerPackageInfo instead of IFluidCodeDetails
+			// TODO: use stronger type
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 		} else if (isFluidPackage((packageInfoSource as any)?.package)) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 			containerPackageName = (packageInfoSource as any)?.package.name;
 		} else {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 			containerPackageName = (packageInfoSource as any)?.package;
 		}
 		containerPackageName =

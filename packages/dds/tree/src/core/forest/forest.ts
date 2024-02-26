@@ -4,8 +4,8 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ISubscribable } from "../../events";
-import { TreeStoredSchemaSubscription, FieldKey } from "../schema-stored";
+import { ISubscribable } from "../../events/index.js";
+import { TreeStoredSchemaSubscription, FieldKey } from "../schema-stored/index.js";
 import {
 	Anchor,
 	AnchorSet,
@@ -15,8 +15,8 @@ import {
 	ITreeCursorSynchronous,
 	rootField,
 	UpPath,
-} from "../tree";
-import type { IEditableForest } from "./editableForest";
+} from "../tree/index.js";
+import type { IEditableForest } from "./editableForest.js";
 
 /**
  * APIs for forest designed so the implementation can be copy on write,

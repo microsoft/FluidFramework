@@ -4,15 +4,17 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { Mutable } from "../../util";
+import { Mutable } from "../../util/index.js";
 import {
 	ChangeRebaser,
 	RevisionInfo,
 	RevisionMetadataSource,
 	TaggedChange,
+	makeAnonChange,
+	tagChange,
 	tagRollbackInverse,
-} from "./changeRebaser";
-import { GraphCommit, mintRevisionTag, mintCommit, RevisionTag } from "./types";
+} from "./changeRebaser.js";
+import { GraphCommit, mintCommit, RevisionTag } from "./types.js";
 
 /**
  * Contains information about how the commit graph changed as the result of rebasing a source branch onto another target branch.
@@ -98,6 +100,7 @@ export interface BranchRebaseResult<TChange> {
  * ```
  */
 export function rebaseBranch<TChange>(
+	mintRevisionTag: () => RevisionTag,
 	changeRebaser: ChangeRebaser<TChange>,
 	sourceHead: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
@@ -138,12 +141,14 @@ export function rebaseBranch<TChange>(
  * ```
  */
 export function rebaseBranch<TChange>(
+	mintRevisionTag: () => RevisionTag,
 	changeRebaser: ChangeRebaser<TChange>,
 	sourceHead: GraphCommit<TChange>,
 	targetCommit: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
 ): BranchRebaseResult<TChange>;
 export function rebaseBranch<TChange>(
+	mintRevisionTag: () => RevisionTag,
 	changeRebaser: ChangeRebaser<TChange>,
 	sourceHead: GraphCommit<TChange>,
 	targetCommit: GraphCommit<TChange>,
@@ -230,35 +235,31 @@ export function rebaseBranch<TChange>(
 	// For each source commit, rebase backwards over the inverses of any commits already rebased, and then
 	// rebase forwards over the rest of the commits up to the new base before advancing the new base.
 	let newHead = newBase;
-	const inverses: TaggedChange<TChange>[] = [];
+	const revInfos = getRevInfoFromTaggedChanges(targetRebasePath);
+	// Note that the `revisionMetadata` gets updated as `revInfos` gets updated.
+	const revisionMetadata = revisionMetadataSourceFromInfo(revInfos);
+	let currentComposedEdit = makeAnonChange(changeRebaser.compose(targetRebasePath));
 	for (const c of sourcePath) {
+		const editsToCompose: TaggedChange<TChange>[] = [
+			tagRollbackInverse(changeRebaser.invert(c, true), mintRevisionTag(), c.revision),
+			currentComposedEdit,
+		];
 		if (sourceSet.has(c.revision)) {
-			const change = rebaseChangeOverChanges(changeRebaser, c.change, [
-				...inverses,
-				...targetRebasePath,
-			]);
+			const change = changeRebaser.rebase(c.change, currentComposedEdit, revisionMetadata);
 			newHead = {
 				revision: c.revision,
 				change,
 				parent: newHead,
 			};
 			sourceCommits.push(newHead);
-			targetRebasePath.push({ ...c, change });
+			editsToCompose.push(tagChange(change, c.revision));
 		}
-		inverses.unshift(
-			tagRollbackInverse(changeRebaser.invert(c, true), mintRevisionTag(), c.revision),
-		);
+		currentComposedEdit = makeAnonChange(changeRebaser.compose(editsToCompose));
 	}
 
-	let netChange: TChange | undefined;
 	return {
 		newSourceHead: newHead,
-		get sourceChange() {
-			if (netChange === undefined) {
-				netChange = changeRebaser.compose([...inverses, ...targetRebasePath]);
-			}
-			return netChange;
-		},
+		sourceChange: currentComposedEdit.change,
 		commits: {
 			deletedSourceCommits,
 			targetCommits,
@@ -282,6 +283,7 @@ export function rebaseChange<TChange>(
 	change: TChange,
 	sourceHead: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
+	mintRevisionTag: () => RevisionTag,
 ): TChange {
 	const sourcePath: GraphCommit<TChange>[] = [];
 	const targetPath: GraphCommit<TChange>[] = [];
@@ -290,7 +292,9 @@ export function rebaseChange<TChange>(
 		0x576 /* branch A and branch B must be related */,
 	);
 
-	const inverses = sourcePath.map((commit) => inverseFromCommit(changeRebaser, commit, true));
+	const inverses = sourcePath.map((commit) =>
+		inverseFromCommit(changeRebaser, commit, mintRevisionTag, true),
+	);
 	inverses.reverse();
 	return rebaseChangeOverChanges(changeRebaser, change, [...inverses, ...targetPath]);
 }
@@ -361,6 +365,7 @@ function revisionInfoFromTaggedChange(taggedChange: TaggedChange<unknown>): Revi
 function inverseFromCommit<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
 	commit: GraphCommit<TChange>,
+	mintRevisionTag: () => RevisionTag,
 	cache?: boolean,
 ): TaggedChange<TChange> {
 	const inverse = commit.inverse ?? changeRebaser.invert(commit, true);

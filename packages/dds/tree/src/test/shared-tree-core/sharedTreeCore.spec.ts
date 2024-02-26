@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
+import { createIdCompressor } from "@fluidframework/id-compressor";
 import { IEvent } from "@fluidframework/core-interfaces";
 import { IsoBuffer, TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
@@ -25,20 +26,26 @@ import {
 	Summarizable,
 	SummaryElementParser,
 	SummaryElementStringifier,
-} from "../../shared-tree-core";
-import { AllowedUpdateType, ChangeFamily, ChangeFamilyEditor, rootFieldKey } from "../../core";
+} from "../../shared-tree-core/index.js";
+import {
+	AllowedUpdateType,
+	ChangeFamily,
+	ChangeFamilyEditor,
+	rootFieldKey,
+} from "../../core/index.js";
 import {
 	DefaultEditBuilder,
 	FieldKinds,
-	TreeFieldSchema,
+	FlexFieldSchema,
+	SchemaBuilderBase,
 	cursorForJsonableTreeNode,
 	typeNameSymbol,
-} from "../../feature-libraries";
-import { brand } from "../../util";
-import { SharedTreeTestFactory } from "../utils";
-import { InitializeAndSchematizeConfiguration } from "../../shared-tree";
-import { leaf, SchemaBuilder } from "../../domains";
-import { TestSharedTreeCore } from "./utils";
+} from "../../feature-libraries/index.js";
+import { brand } from "../../util/index.js";
+import { SharedTreeTestFactory } from "../utils.js";
+import { InitializeAndSchematizeConfiguration } from "../../shared-tree/index.js";
+import { leaf } from "../../domains/index.js";
+import { TestSharedTreeCore } from "./utils.js";
 
 describe("SharedTreeCore", () => {
 	it("summarizes without indexes", async () => {
@@ -151,7 +158,7 @@ describe("SharedTreeCore", () => {
 	});
 
 	it("evicts trunk commits behind the minimum sequence number", () => {
-		const runtime = new MockFluidDataStoreRuntime();
+		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
 		const tree = new TestSharedTreeCore(runtime);
 		const factory = new MockContainerRuntimeFactory();
 		factory.createContainerRuntime(runtime);
@@ -161,7 +168,7 @@ describe("SharedTreeCore", () => {
 		});
 
 		// discard revertibles so that the trunk can be trimmed based on the minimum sequence number
-		tree.getLocalBranch().on("revertible", (revertible) => {
+		tree.getLocalBranch().on("newRevertible", (revertible) => {
 			revertible.discard();
 		});
 
@@ -182,18 +189,13 @@ describe("SharedTreeCore", () => {
 	});
 
 	it("can complete a transaction that spans trunk eviction", () => {
-		const runtime = new MockFluidDataStoreRuntime();
+		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
 		const tree = new TestSharedTreeCore(runtime);
 		const factory = new MockContainerRuntimeFactory();
 		factory.createContainerRuntime(runtime);
 		tree.connect({
 			deltaConnection: runtime.createDeltaConnection(),
 			objectStorage: new MockStorage(),
-		});
-
-		// discard revertibles so that the trunk can be trimmed based on the minimum sequence number
-		tree.getLocalBranch().on("revertible", (revertible) => {
-			revertible.discard();
 		});
 
 		changeTree(tree);
@@ -208,7 +210,7 @@ describe("SharedTreeCore", () => {
 	});
 
 	it("evicts trunk commits only when no branches have them in their ancestry", () => {
-		const runtime = new MockFluidDataStoreRuntime();
+		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
 		const tree = new TestSharedTreeCore(runtime);
 		const factory = new MockContainerRuntimeFactory();
 		factory.createContainerRuntime(runtime);
@@ -218,7 +220,7 @@ describe("SharedTreeCore", () => {
 		});
 
 		// discard revertibles so that the trunk can be trimmed based on the minimum sequence number
-		tree.getLocalBranch().on("revertible", (revertible) => {
+		tree.getLocalBranch().on("newRevertible", (revertible) => {
 			revertible.discard();
 		});
 
@@ -274,8 +276,12 @@ describe("SharedTreeCore", () => {
 	 */
 	it("Can rebase and process edits to detached portions of the tree", async () => {
 		const containerRuntimeFactory = new MockContainerRuntimeFactory();
-		const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-		const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+		const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
+			idCompressor: createIdCompressor(),
+		});
+		const dataStoreRuntime2 = new MockFluidDataStoreRuntime({
+			idCompressor: createIdCompressor(),
+		});
 		const factory = new SharedTreeTestFactory(() => {});
 
 		containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
@@ -286,11 +292,14 @@ describe("SharedTreeCore", () => {
 			objectStorage: new MockStorage(),
 		});
 
-		const b = new SchemaBuilder({ scope: "0x4a6 repro" });
-		const node = b.objectRecursive("test node", {
-			child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => node, leaf.number]),
+		const b = new SchemaBuilderBase(FieldKinds.optional, {
+			scope: "0x4a6 repro",
+			libraries: [leaf.library],
 		});
-		const schema = b.intoSchema(b.optional(node));
+		const node = b.objectRecursive("test node", {
+			child: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => node, leaf.number]),
+		});
+		const schema = b.intoSchema(node);
 
 		const tree2 = await factory.load(
 			dataStoreRuntime2,
@@ -311,8 +320,8 @@ describe("SharedTreeCore", () => {
 		const view1 = tree1.schematizeInternal(config);
 		containerRuntimeFactory.processAllMessages();
 		const view2 = tree2.schematizeInternal(config);
-		const editable1 = view1.editableTree;
-		const editable2 = view2.editableTree;
+		const editable1 = view1.flexTree;
+		const editable2 = view2.flexTree;
 
 		editable2.content = { [typeNameSymbol]: node.name, child: undefined };
 		editable1.content = { [typeNameSymbol]: node.name, child: undefined };
@@ -341,7 +350,11 @@ describe("SharedTreeCore", () => {
 	function createTree<TIndexes extends readonly Summarizable[]>(
 		indexes: TIndexes,
 	): TestSharedTreeCore {
-		return new TestSharedTreeCore(undefined, undefined, indexes);
+		return new TestSharedTreeCore(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			undefined,
+			indexes,
+		);
 	}
 
 	interface MockSummarizableEvents extends IEvent {

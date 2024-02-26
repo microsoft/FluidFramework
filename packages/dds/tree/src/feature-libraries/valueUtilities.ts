@@ -5,7 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { Value, ValueSchema, TreeValue } from "../core";
+import { Value, ValueSchema, TreeValue } from "../core/index.js";
 
 export function allowsValue(schema: ValueSchema | undefined, nodeValue: Value): boolean {
 	if (schema === undefined) {

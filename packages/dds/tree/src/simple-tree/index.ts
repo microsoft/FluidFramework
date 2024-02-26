@@ -3,28 +3,51 @@
  * Licensed under the MIT License.
  */
 
-export { getProxyForField } from "./proxies";
+export { ITree, TreeView, TreeViewEvents, TreeConfiguration, WrapperTreeView } from "./tree.js";
 export {
-	TreeObjectNodeFields,
-	TreeField,
-	TreeFieldInner,
-	TypedNode,
-	TreeNodeUnion,
+	TreeNodeSchema,
+	NodeFromSchema,
+	NodeKind,
+	TreeNodeSchemaClass,
+	TreeNodeSchemaNonClass,
+	TreeNodeSchemaCore,
+	ImplicitFieldSchema,
+	TreeFieldFromImplicitField,
+	ImplicitAllowedTypes,
+	TreeNodeFromImplicitAllowedTypes,
+	InsertableTreeNodeFromImplicitAllowedTypes,
 	TreeMapNode,
-	TreeObjectNode,
-	TreeNode,
-	Unhydrated,
-	TreeArrayNodeBase,
-	TreeMapNodeBase,
-} from "./types";
-export { TreeListNodeOld, TreeArrayNode, IterableTreeListContent, create } from "./treeListNode";
-export { TreeObjectFactory, FactoryTreeSchema, addFactory } from "./objectFactory";
-export {
-	InsertableTreeRoot,
-	InsertableTreeField,
-	InsertableTreeFieldInner,
-	InsertableTreeNodeUnion,
-	InsertableTreeObjectNode,
-	InsertableTreeObjectNodeFields,
+	TreeLeafValue,
+	type,
+	WithType,
+	AllowedTypes,
+	ApplyKind,
+	FieldKind,
+	FieldSchema,
+	InsertableObjectFromSchemaRecord,
+	InsertableTreeFieldFromImplicitField,
 	InsertableTypedNode,
-} from "./insertable";
+	NodeBuilderData,
+	ObjectFromSchemaRecord,
+} from "./schemaTypes.js";
+export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
+export { nodeApi as Tree, TreeApi, TreeNodeEvents } from "./treeApi.js";
+export { toFlexConfig } from "./toFlexSchema.js";
+export { SchemaFactoryRecursive } from "./schemaFactoryRecursive.js";
+
+export {
+	adaptEnum,
+	enumFromStrings,
+	singletonSchema,
+	typedObjectValues,
+} from "./schemaCreationUtilities.js";
+
+// Exporting the schema (RecursiveObject) to test that recursive types are working correctly.
+// These are `@internal` so they can't be included in the `InternalClassTreeTypes` due to https://github.com/microsoft/rushstack/issues/3639
+export {
+	RecursiveObject as test_RecursiveObject,
+	base as test_RecursiveObject_base,
+} from "./testRecursiveDomain.js";
+
+export { TreeNode, Unhydrated, TreeArrayNodeBase } from "./types.js";
+export { TreeArrayNode, IterableTreeArrayContent } from "./treeArrayNode.js";

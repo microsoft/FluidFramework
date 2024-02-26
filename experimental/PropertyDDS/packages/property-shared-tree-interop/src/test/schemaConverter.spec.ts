@@ -11,23 +11,23 @@ import {
 	fail,
 	Any,
 	TreeNodeSchemaIdentifier,
-	TreeFieldSchema,
+	FlexFieldSchema,
 	FieldKey,
 	leaf,
 	schemaIsFieldNode,
 	schemaIsLeaf,
-	ObjectNodeSchema,
-	MapNodeSchema,
+	FlexObjectNodeSchema,
+	FlexMapNodeSchema,
 	LeafNodeSchema,
-	FieldNodeSchema,
-} from "@fluidframework/tree";
+	FlexFieldNodeSchema,
+} from "@fluidframework/tree/internal";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 import {
 	convertPropertyToSharedTreeSchema as convertSchema,
 	nodePropertyField,
 	nodePropertySchema,
-} from "../schemaConverter";
-import mockPropertyDDSSchemas from "./mockPropertyDDSSchemas";
+} from "../schemaConverter.js";
+import mockPropertyDDSSchemas from "./mockPropertyDDSSchemas.js";
 
 describe("schema converter", () => {
 	describe("with built-in schemas only", () => {
@@ -89,7 +89,7 @@ describe("schema converter", () => {
 				const propertySchema = fullSchemaData.nodeSchema.get(brand(typeName));
 				assert(propertySchema !== undefined);
 				if (typeName === "converted.NamedProperty") {
-					assert(propertySchema instanceof ObjectNodeSchema);
+					assert(propertySchema instanceof FlexObjectNodeSchema);
 					const idFieldSchema =
 						propertySchema.objectNodeFields.get(brand("guid")) ??
 						fail("expected field");
@@ -100,11 +100,11 @@ describe("schema converter", () => {
 					);
 				} else {
 					if (typeName === nodePropertySchema.name) {
-						assert(propertySchema instanceof MapNodeSchema);
+						assert(propertySchema instanceof FlexMapNodeSchema);
 						assert(propertySchema.mapFields.types === undefined);
 						assert.deepEqual(propertySchema.mapFields.kind, FieldKinds.optional);
 					} else {
-						assert(propertySchema instanceof ObjectNodeSchema);
+						assert(propertySchema instanceof FlexObjectNodeSchema);
 						assert.deepEqual(
 							propertySchema.objectNodeFields.get(brand(nodePropertyField))?.types,
 							new Set([nodePropertySchema.name]),
@@ -167,7 +167,7 @@ describe("schema converter", () => {
 				const convertedNodeSchema =
 					fullSchemaData.nodeSchema.get(brand("converted.array<Any>")) ??
 					fail("expected tree schema");
-				assert(convertedNodeSchema instanceof FieldNodeSchema);
+				assert(convertedNodeSchema instanceof FlexFieldNodeSchema);
 				const primary = convertedNodeSchema.getFieldSchema();
 				assert(primary !== undefined);
 				assert.deepEqual(primary.allowedTypes, [Any]);
@@ -179,7 +179,7 @@ describe("schema converter", () => {
 				const anyMap =
 					fullSchemaData.nodeSchema.get(brand("converted.map<Any>")) ??
 					fail("expected tree schema");
-				assert(anyMap instanceof MapNodeSchema);
+				assert(anyMap instanceof FlexMapNodeSchema);
 				assert.deepEqual(anyMap.mapFields.allowedTypes, [Any]);
 			}
 		});
@@ -233,7 +233,7 @@ describe("schema converter", () => {
 			const neverTreeSchema = fullSchemaData.nodeSchema.get(
 				brand("converted.Test:NeverType-1.0.0"),
 			);
-			assert(neverTreeSchema instanceof ObjectNodeSchema);
+			assert(neverTreeSchema instanceof FlexObjectNodeSchema);
 			assert.deepEqual([...neverTreeSchema.objectNodeFields], []);
 		});
 
@@ -260,7 +260,7 @@ describe("schema converter", () => {
 			);
 
 			assert.equal(nodeProperty, nodePropertySchema);
-			assert(testOptional instanceof ObjectNodeSchema);
+			assert(testOptional instanceof FlexObjectNodeSchema);
 
 			const miscField = testOptional?.objectNodeFields.get(brand("misc"));
 			assert(miscField?.types !== undefined);
@@ -311,9 +311,9 @@ describe("schema converter", () => {
 			const nodeSchema =
 				fullSchemaData.nodeSchema.get(brand("converted.Test:Optional-1.0.0")) ??
 				fail("missing schema");
-			assert(nodeSchema instanceof ObjectNodeSchema);
+			assert(nodeSchema instanceof FlexObjectNodeSchema);
 			const arrayField =
-				(nodeSchema.objectNodeFields.get(brand("childArray")) as TreeFieldSchema) ??
+				(nodeSchema.objectNodeFields.get(brand("childArray")) as FlexFieldSchema) ??
 				fail("expected field schema");
 			assert.deepEqual(arrayField.kind, FieldKinds.optional);
 			const arrayTypeName: TreeNodeSchemaIdentifier = brand(
@@ -321,7 +321,7 @@ describe("schema converter", () => {
 			);
 			assert.deepEqual([...(arrayField.types ?? fail("expected types"))], [arrayTypeName]);
 			const arraySchema = fullSchemaData.nodeSchema.get(arrayTypeName);
-			assert(arraySchema instanceof FieldNodeSchema);
+			assert(arraySchema instanceof FlexFieldNodeSchema);
 			const primary = arraySchema.getFieldSchema();
 			assert.deepEqual(primary.kind, FieldKinds.sequence);
 			assert.deepEqual(
@@ -338,14 +338,14 @@ describe("schema converter", () => {
 			const nodeSchema = fullSchemaData.nodeSchema.get(
 				brand("converted.Test:Optional-1.0.0"),
 			);
-			assert(nodeSchema instanceof ObjectNodeSchema);
+			assert(nodeSchema instanceof FlexObjectNodeSchema);
 			const mapField =
 				nodeSchema.objectNodeFields.get(brand("childMap")) ?? fail("expected field schema");
 			assert.deepEqual(mapField.kind, FieldKinds.optional);
 			const mapTypeName: TreeNodeSchemaIdentifier = brand("converted.map<Test:Child-1.0.0>");
 			assert.deepEqual([...(mapField.types ?? fail("expected types"))], [mapTypeName]);
 			const mapSchema = fullSchemaData.nodeSchema.get(mapTypeName);
-			assert(mapSchema instanceof MapNodeSchema);
+			assert(mapSchema instanceof FlexMapNodeSchema);
 			assert.deepEqual(mapSchema.mapFields.kind, FieldKinds.optional);
 			assert.deepEqual(
 				[...(mapSchema.mapFields.types ?? fail("expected types"))],
@@ -371,7 +371,7 @@ describe("schema converter", () => {
 			const extraTypeSchema = fullSchemaData.nodeSchema.get(
 				brand(`converted.${extraTypeName}`),
 			);
-			assert(extraTypeSchema instanceof ObjectNodeSchema);
+			assert(extraTypeSchema instanceof FlexObjectNodeSchema);
 			const anyField =
 				extraTypeSchema.objectNodeFields.get(brand("any")) ?? fail("expected field schema");
 			assert.deepEqual(anyField.kind, FieldKinds.optional);
@@ -379,7 +379,7 @@ describe("schema converter", () => {
 			assert.deepEqual(anyField.allowedTypes, [Any]);
 
 			const mapOfAnyField =
-				(extraTypeSchema?.objectNodeFields.get(brand("mapOfAny")) as TreeFieldSchema) ??
+				(extraTypeSchema?.objectNodeFields.get(brand("mapOfAny")) as FlexFieldSchema) ??
 				fail("expected field schema");
 			assert.deepEqual(
 				[...(mapOfAnyField.types ?? fail("expected types"))],
@@ -387,7 +387,7 @@ describe("schema converter", () => {
 			);
 
 			const arrayOfAnyField =
-				(extraTypeSchema?.objectNodeFields.get(brand("arrayOfAny")) as TreeFieldSchema) ??
+				(extraTypeSchema?.objectNodeFields.get(brand("arrayOfAny")) as FlexFieldSchema) ??
 				fail("expected field schema");
 			assert.deepEqual(
 				[...(arrayOfAnyField.types ?? fail("expected types"))],
@@ -447,13 +447,13 @@ describe("schema converter", () => {
 			);
 			assert(enumSchema && schemaIsFieldNode(enumSchema));
 			assert(
-				enumSchema.info.equals(TreeFieldSchema.create(FieldKinds.required, [leaf.number])),
+				enumSchema.info.equals(FlexFieldSchema.create(FieldKinds.required, [leaf.number])),
 			);
 
 			const arrayOfEnums = fullSchemaData.nodeSchema.get(
 				brand(`converted.array<enum<${enumTypeName}>>`),
 			);
-			assert(arrayOfEnums instanceof FieldNodeSchema);
+			assert(arrayOfEnums instanceof FlexFieldNodeSchema);
 			const primary = arrayOfEnums.getFieldSchema();
 			assert(primary);
 			assert.deepEqual([...primary.allowedTypes][0], enumSchema);
@@ -461,7 +461,7 @@ describe("schema converter", () => {
 			const mapOfEnums = fullSchemaData.nodeSchema.get(
 				brand(`converted.map<enum<${enumTypeName}>>`),
 			);
-			assert(mapOfEnums instanceof MapNodeSchema);
+			assert(mapOfEnums instanceof FlexMapNodeSchema);
 			assert.deepEqual([...mapOfEnums.mapFields.allowedTypes][0], enumSchema);
 		});
 
@@ -485,7 +485,7 @@ describe("schema converter", () => {
 				[convertedParentTypeName, convertedChildTypeName],
 			);
 			const parentSchema = fullSchemaData.nodeSchema.get(convertedParentTypeName);
-			assert(parentSchema instanceof ObjectNodeSchema);
+			assert(parentSchema instanceof FlexObjectNodeSchema);
 			const childFieldSchema =
 				parentSchema.objectNodeFields.get(childFieldKey) ?? fail("expected field schema");
 			assert.deepEqual(
@@ -494,7 +494,7 @@ describe("schema converter", () => {
 			);
 
 			const childSchema = fullSchemaData.nodeSchema.get(convertedChildTypeName);
-			assert(childSchema instanceof ObjectNodeSchema);
+			assert(childSchema instanceof FlexObjectNodeSchema);
 			const parentFieldSchema =
 				childSchema.objectNodeFields.get(parentFieldKey) ?? fail("expected field schema");
 			assert.deepEqual(

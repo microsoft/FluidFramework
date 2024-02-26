@@ -9,7 +9,7 @@ import { type OdspMember } from "./interfaces";
 
 /**
  * Since ODSP provides user names, email and oids for all of its members, we extend the
- * {@link @fluidframework/protocol-definitions#IMember} interface to include this service-specific value.
+ * {@link @fluidframework/fluid-static#IMember} interface to include this service-specific value.
  * @internal
  */
 interface OdspUser {

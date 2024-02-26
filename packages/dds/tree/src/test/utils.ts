@@ -25,12 +25,16 @@ import {
 	SummaryInfo,
 } from "@fluidframework/test-utils";
 import {
-	MockContainerRuntimeFactory,
+	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
+// eslint-disable-next-line import/no-internal-modules
+import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/dist/test";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import {
 	ISharedTree,
 	ITreeCheckout,
@@ -40,31 +44,28 @@ import {
 	createTreeCheckout,
 	SharedTree,
 	InitializeAndSchematizeConfiguration,
-	runSynchronous,
 	SharedTreeContentSnapshot,
 	CheckoutFlexTreeView,
-} from "../shared-tree";
+} from "../shared-tree/index.js";
 import {
-	Any,
 	buildForest,
 	createMockNodeKeyManager,
-	TreeFieldSchema,
-	jsonableTreeFromCursor,
-	mapFieldChanges,
-	mapFieldsChanges,
-	mapMarkList,
+	FlexFieldSchema,
+	jsonableTreeFromFieldCursor,
 	mapTreeFromCursor,
 	nodeKeyFieldKey as nodeKeyFieldKeyDefault,
 	NodeKeyManager,
 	normalizeNewFieldContent,
-	cursorForJsonableTreeNode,
 	FlexTreeTypedField,
 	jsonableTreeFromForest,
 	nodeKeyFieldKey as defaultNodeKeyFieldKey,
 	ContextuallyTypedNodeData,
 	mapRootChanges,
 	intoStoredSchema,
-} from "../feature-libraries";
+	cursorForMapTreeNode,
+	SchemaBuilderBase,
+	FieldKinds,
+} from "../feature-libraries/index.js";
 import {
 	moveToDetachedField,
 	mapCursorField,
@@ -99,21 +100,23 @@ import {
 	DeltaMark,
 	DeltaFieldMap,
 	DeltaRoot,
-} from "../core";
-import { JsonCompatible, brand, nestedMapFromFlatList } from "../util";
-import { ICodecFamily, withSchemaValidation } from "../codec";
-import { typeboxValidator } from "../external-utilities";
+	RevisionTagCodec,
+	DeltaDetachedNodeBuild,
+	DeltaDetachedNodeDestruction,
+} from "../core/index.js";
+import { JsonCompatible, Mutable, brand, nestedMapFromFlatList } from "../util/index.js";
+import { ICodecFamily, IJsonCodec, withSchemaValidation } from "../codec/index.js";
+import { typeboxValidator } from "../external-utilities/index.js";
 import {
 	cursorToJsonObject,
 	jsonRoot,
 	jsonSchema,
 	singleJsonCursor,
-	SchemaBuilder,
 	leaf,
-} from "../domains";
-import { HasListeners, IEmitter, ISubscribable } from "../events";
+} from "../domains/index.js";
+import { HasListeners, IEmitter, ISubscribable } from "../events/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { makeSchemaCodec } from "../feature-libraries/schema-index/codec";
+import { makeSchemaCodec } from "../feature-libraries/schema-index/codec.js";
 
 // Testing utilities
 
@@ -137,6 +140,16 @@ function freezeObjectMethods<T>(object: T, methods: (keyof T)[]): void {
 		}
 	}
 }
+
+/**
+ * A {@link IJsonCodec} implementation which fails on encode and decode.
+ *
+ * Useful for testing codecs which compose over other codecs (in cases where the "inner" codec should never be called)
+ */
+export const failCodec: IJsonCodec<any, any, any, any> = {
+	encode: () => assert.fail("Unexpected encode"),
+	decode: () => assert.fail("Unexpected decode"),
+};
 
 /**
  * Recursively freezes the given object.
@@ -348,19 +361,25 @@ export class TestTreeProvider {
 	}
 }
 
+export interface ConnectionSetter {
+	readonly setConnected: (connectionState: boolean) => void;
+}
+
+export type SharedTreeWithConnectionStateSetter = SharedTree & ConnectionSetter;
+
 /**
  * A test helper class that creates one or more SharedTrees connected to mock services.
  */
 export class TestTreeProviderLite {
 	private static readonly treeId = "TestSharedTree";
-	private readonly runtimeFactory = new MockContainerRuntimeFactory();
-	public readonly trees: readonly SharedTree[];
+	private readonly runtimeFactory = new MockContainerRuntimeFactoryForReconnection();
+	public readonly trees: readonly SharedTreeWithConnectionStateSetter[];
 
 	/**
 	 * Create a new {@link TestTreeProviderLite} with a number of trees pre-initialized.
 	 * @param trees - the number of trees created by this provider.
 	 * @param factory - an optional factory to use for creating and loading trees. See {@link SharedTreeTestFactory}.
-	 *
+	 * @param useDeterministicSessionIds - Whether or not to deterministically generate session ids
 	 * @example
 	 *
 	 * ```typescript
@@ -373,20 +392,32 @@ export class TestTreeProviderLite {
 	public constructor(
 		trees = 1,
 		private readonly factory = new SharedTreeFactory({ jsonValidator: typeboxValidator }),
+		useDeterministicSessionIds = true,
 	) {
 		assert(trees >= 1, "Must initialize provider with at least one tree");
-		const t: SharedTree[] = [];
+		const t: SharedTreeWithConnectionStateSetter[] = [];
+		const random = useDeterministicSessionIds ? makeRandom(0xdeadbeef) : makeRandom();
 		for (let i = 0; i < trees; i++) {
+			const sessionId = random.uuid4() as SessionId;
 			const runtime = new MockFluidDataStoreRuntime({
 				clientId: `test-client-${i}`,
 				id: "test",
+				idCompressor: createIdCompressor(sessionId),
 			});
-			const tree = this.factory.create(runtime, TestTreeProviderLite.treeId) as SharedTree;
-			this.runtimeFactory.createContainerRuntime(runtime);
+			const tree = this.factory.create(
+				runtime,
+				TestTreeProviderLite.treeId,
+			) as SharedTreeWithConnectionStateSetter;
+			const containerRuntime = this.runtimeFactory.createContainerRuntime(runtime);
 			tree.connect({
 				deltaConnection: runtime.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			});
+			(tree as Mutable<SharedTreeWithConnectionStateSetter>).setConnected = (
+				connectionState: boolean,
+			) => {
+				containerRuntime.connected = connectionState;
+			};
 			t.push(tree);
 		}
 		this.trees = t;
@@ -459,27 +490,21 @@ export function isDeltaVisible(delta: DeltaFieldChanges): boolean {
  * Assert two MarkList are equal, handling cursors.
  */
 export function assertFieldChangesEqual(a: DeltaFieldChanges, b: DeltaFieldChanges): void {
-	const aTree = mapFieldChanges(a, mapTreeFromCursor);
-	const bTree = mapFieldChanges(b, mapTreeFromCursor);
-	assert.deepStrictEqual(aTree, bTree);
+	assert.deepStrictEqual(a, b);
 }
 
 /**
  * Assert two MarkList are equal, handling cursors.
  */
 export function assertMarkListEqual(a: readonly DeltaMark[], b: readonly DeltaMark[]): void {
-	const aTree = mapMarkList(a, mapTreeFromCursor);
-	const bTree = mapMarkList(b, mapTreeFromCursor);
-	assert.deepStrictEqual(aTree, bTree);
+	assert.deepStrictEqual(a, b);
 }
 
 /**
  * Assert two Delta are equal, handling cursors.
  */
 export function assertDeltaFieldMapEqual(a: DeltaFieldMap, b: DeltaFieldMap): void {
-	const aTree = mapFieldsChanges(a, mapTreeFromCursor);
-	const bTree = mapFieldsChanges(b, mapTreeFromCursor);
-	assert.deepStrictEqual(aTree, bTree);
+	assert.deepStrictEqual(a, b);
 }
 
 /**
@@ -555,11 +580,9 @@ export function validateTreeConsistency(treeA: ISharedTree, treeB: ISharedTree):
 }
 
 function contentToJsonableTree(content: TreeContent): JsonableTree[] {
-	return normalizeNewFieldContent(
-		content,
-		content.schema.rootFieldSchema,
-		content.initialTree,
-	).map(jsonableTreeFromCursor);
+	return jsonableTreeFromFieldCursor(
+		normalizeNewFieldContent(content, content.schema.rootFieldSchema, content.initialTree),
+	);
 }
 
 export function validateTreeContent(tree: ITreeCheckout, content: TreeContent): void {
@@ -634,7 +657,7 @@ export function checkoutWithContent(
 	return flexTreeViewWithContent(content, args).checkout;
 }
 
-export function flexTreeViewWithContent<TRoot extends TreeFieldSchema>(
+export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
 	content: TreeContent<TRoot>,
 	args?: {
 		events?: ISubscribable<CheckoutEvents> &
@@ -645,7 +668,7 @@ export function flexTreeViewWithContent<TRoot extends TreeFieldSchema>(
 	},
 ): CheckoutFlexTreeView<TRoot> {
 	const forest = forestWithContent(content);
-	const view = createTreeCheckout({
+	const view = createTreeCheckout(testIdCompressor, testRevisionTagCodec, {
 		...args,
 		forest,
 		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
@@ -660,18 +683,20 @@ export function flexTreeViewWithContent<TRoot extends TreeFieldSchema>(
 
 export function forestWithContent(content: TreeContent): IEditableForest {
 	const forest = buildForest();
-	initializeForest(
-		forest,
-		normalizeNewFieldContent(
-			{ schema: content.schema },
-			content.schema.rootFieldSchema,
-			content.initialTree,
-		),
+	const fieldCursor = normalizeNewFieldContent(
+		{ schema: content.schema },
+		content.schema.rootFieldSchema,
+		content.initialTree,
 	);
+	// TODO:AB6712 Make the delta format accept a single cursor in Field mode.
+	const nodeCursors = mapCursorField(fieldCursor, (c) =>
+		cursorForMapTreeNode(mapTreeFromCursor(c)),
+	);
+	initializeForest(forest, nodeCursors, testRevisionTagCodec);
 	return forest;
 }
 
-export function flexTreeWithContent<TRoot extends TreeFieldSchema>(
+export function flexTreeWithContent<TRoot extends FlexFieldSchema>(
 	content: TreeContent<TRoot>,
 	args?: {
 		nodeKeyManager?: NodeKeyManager;
@@ -682,7 +707,7 @@ export function flexTreeWithContent<TRoot extends TreeFieldSchema>(
 	},
 ): FlexTreeTypedField<TRoot> {
 	const forest = forestWithContent(content);
-	const branch = createTreeCheckout({
+	const branch = createTreeCheckout(testIdCompressor, testRevisionTagCodec, {
 		...args,
 		forest,
 		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
@@ -694,25 +719,23 @@ export function flexTreeWithContent<TRoot extends TreeFieldSchema>(
 		manager,
 		args?.nodeKeyFieldKey ?? brand(nodeKeyFieldKeyDefault),
 	);
-	return view.editableTree;
+	return view.flexTree;
 }
 
-export const requiredBooleanRootSchema = new SchemaBuilder({
-	scope: "RequiredBool",
-}).intoSchema(SchemaBuilder.required(leaf.boolean));
-
-export const jsonSequenceRootSchema = new SchemaBuilder({
+export const jsonSequenceRootSchema = new SchemaBuilderBase(FieldKinds.sequence, {
 	scope: "JsonSequenceRoot",
 	libraries: [jsonSchema],
-}).intoSchema(SchemaBuilder.sequence(jsonRoot));
+}).intoSchema(jsonRoot);
 
-export const stringSequenceRootSchema = new SchemaBuilder({
+export const stringSequenceRootSchema = new SchemaBuilderBase(FieldKinds.sequence, {
+	libraries: [leaf.library],
 	scope: "StringSequenceRoot",
-}).intoSchema(SchemaBuilder.sequence(leaf.string));
+}).intoSchema(leaf.string);
 
-export const numberSequenceRootSchema = new SchemaBuilder({
+export const numberSequenceRootSchema = new SchemaBuilderBase(FieldKinds.sequence, {
+	libraries: [leaf.library],
 	scope: "NumberSequenceRoot",
-}).intoSchema(SchemaBuilder.sequence(leaf.number));
+}).intoSchema(leaf.number);
 
 export const emptyJsonSequenceConfig = {
 	schema: jsonSequenceRootSchema,
@@ -780,7 +803,7 @@ export function insert(
 
 export function remove(tree: ITreeCheckout, index: number, count: number): void {
 	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
-	field.delete(index, count);
+	field.remove(index, count);
 }
 
 export function expectJsonTree(
@@ -795,37 +818,6 @@ export function expectJsonTree(
 	}
 	if (expectRemovedRootsAreSynchronized) {
 		checkRemovedRootsAreSynchronized(trees);
-	}
-}
-
-/**
- * Updates the given `tree` to the given `schema` and inserts `state` as its root.
- */
-// TODO: replace use of this with initialize or schematize, and/or move them out of this file and use viewWithContent
-export function initializeTestTree(
-	tree: ITreeCheckout,
-	state: JsonableTree | JsonableTree[] | undefined,
-	schema: TreeStoredSchema = intoStoredSchema(wrongSchema),
-): void {
-	if (state === undefined) {
-		tree.updateSchema(schema);
-		return;
-	}
-
-	if (!Array.isArray(state)) {
-		initializeTestTree(tree, [state], schema);
-	} else {
-		tree.updateSchema(schema);
-
-		// Apply an edit to the tree which inserts a node with a value
-		runSynchronous(tree, () => {
-			const writeCursors = state.map(cursorForJsonableTreeNode);
-			const field = tree.editor.sequenceField({
-				parent: undefined,
-				field: rootFieldKey,
-			});
-			field.insert(0, writeCursors);
-		});
 	}
 }
 
@@ -845,15 +837,21 @@ export function expectEqualFieldPaths(path: FieldUpPath, expectedPath: FieldUpPa
 
 export const mockIntoDelta = (delta: DeltaRoot) => delta;
 
-export interface EncodingTestData<TDecoded, TEncoded> {
+export interface EncodingTestData<TDecoded, TEncoded, TContext = void> {
 	/**
 	 * Contains test cases which should round-trip successfully through all persisted formats.
 	 */
-	successes: [name: string, data: TDecoded][];
+	successes: TContext extends void
+		? [name: string, data: TDecoded][]
+		: [name: string, data: TDecoded, context: TContext][];
 	/**
 	 * Contains malformed encoded data which a particular version's codec should fail to decode.
 	 */
-	failures?: { [version: string]: [name: string, data: TEncoded][] };
+	failures?: {
+		[version: string]: TContext extends void
+			? [name: string, data: TEncoded][]
+			: [name: string, data: TEncoded, context: TContext][];
+	};
 }
 
 const assertDeepEqual = (a: any, b: any) => assert.deepEqual(a, b);
@@ -876,9 +874,9 @@ const assertDeepEqual = (a: any, b: any) => assert.deepEqual(a, b);
  * Maybe generalize test cases to each have an optional encoded and optional decoded form (require at least one), for example via:
  * `{name: string, encoded?: JsonCompatibleReadOnly, decoded?: TDecoded}`.
  */
-export function makeEncodingTestSuite<TDecoded, TEncoded>(
-	family: ICodecFamily<TDecoded>,
-	encodingTestData: EncodingTestData<TDecoded, TEncoded>,
+export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
+	family: ICodecFamily<TDecoded, TContext>,
+	encodingTestData: EncodingTestData<TDecoded, TEncoded, TContext>,
 	assertEquivalent: (a: TDecoded, b: TDecoded) => void = assertDeepEqual,
 ): void {
 	for (const version of family.getSupportedFormats()) {
@@ -898,13 +896,15 @@ export function makeEncodingTestSuite<TDecoded, TEncoded>(
 					describe(
 						includeStringification ? "with stringification" : "without stringification",
 						() => {
-							for (const [name, data] of encodingTestData.successes) {
+							for (const [name, data, context] of encodingTestData.successes) {
 								it(name, () => {
-									let encoded = jsonCodec.encode(data);
+									// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+									let encoded = jsonCodec.encode(data, context!);
 									if (includeStringification) {
 										encoded = JSON.parse(JSON.stringify(encoded));
 									}
-									const decoded = jsonCodec.decode(encoded);
+									// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+									const decoded = jsonCodec.decode(encoded, context!);
 									assertEquivalent(decoded, data);
 								});
 							}
@@ -914,10 +914,12 @@ export function makeEncodingTestSuite<TDecoded, TEncoded>(
 			});
 
 			describe("can binary roundtrip", () => {
-				for (const [name, data] of encodingTestData.successes) {
+				for (const [name, data, context] of encodingTestData.successes) {
 					it(name, () => {
-						const encoded = codec.binary.encode(data);
-						const decoded = codec.binary.decode(encoded);
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						const encoded = codec.binary.encode(data, context!);
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						const decoded = codec.binary.decode(encoded, context!);
 						assertEquivalent(decoded, data);
 					});
 				}
@@ -926,9 +928,12 @@ export function makeEncodingTestSuite<TDecoded, TEncoded>(
 			const failureCases = encodingTestData.failures?.[version] ?? [];
 			if (failureCases.length > 0) {
 				describe("rejects malformed data", () => {
-					for (const [name, encodedData] of failureCases) {
+					for (const [name, encodedData, context] of failureCases) {
 						it(name, () => {
-							assert.throws(() => jsonCodec.decode(encodedData as JsonCompatible));
+							assert.throws(() =>
+								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+								jsonCodec.decode(encodedData as JsonCompatible, context!),
+							);
 						});
 					}
 				});
@@ -991,42 +996,56 @@ export function defaultRevInfosFromChanges(
 	return revInfos;
 }
 
-/**
- * Document Schema which is not correct.
- * Use as a transitionary tool when migrating code that does not provide a schema toward one that provides a correct schema.
- * Using this allows representing an intermediate state that still has an incorrect schema, but is explicit about it.
- * This is particularly useful when modifying APIs to require schema, and a lot of code has to be updated.
- *
- * @deprecated This in invalid and only used to explicitly mark code as using the wrong schema. All usages of this should be fixed to use correct schema.
- */
-// TODO: remove all usages of this.
-export const wrongSchema = new SchemaBuilder({
-	scope: "Wrong Schema",
-	lint: {
-		rejectEmpty: false,
-	},
-}).intoSchema(SchemaBuilder.sequence(Any));
-
 export function applyTestDelta(
 	delta: DeltaFieldMap,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor },
 	detachedFieldIndex?: DetachedFieldIndex,
+	build?: readonly DeltaDetachedNodeBuild[],
+	destroy?: readonly DeltaDetachedNodeDestruction[],
 ): void {
-	const rootDelta: DeltaRoot = { fields: delta };
-	applyDelta(rootDelta, deltaProcessor, detachedFieldIndex ?? makeDetachedFieldIndex());
+	const rootDelta = rootFromDeltaFieldMap(delta, build, destroy);
+	applyDelta(
+		rootDelta,
+		deltaProcessor,
+		detachedFieldIndex ?? makeDetachedFieldIndex(undefined, testRevisionTagCodec),
+	);
 }
 
 export function announceTestDelta(
 	delta: DeltaFieldMap,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor & AnnouncedVisitor },
 	detachedFieldIndex?: DetachedFieldIndex,
+	build?: readonly DeltaDetachedNodeBuild[],
+	destroy?: readonly DeltaDetachedNodeDestruction[],
 ): void {
-	const rootDelta: DeltaRoot = { fields: delta };
-	announceDelta(rootDelta, deltaProcessor, detachedFieldIndex ?? makeDetachedFieldIndex());
+	const rootDelta = rootFromDeltaFieldMap(delta, build, destroy);
+	announceDelta(
+		rootDelta,
+		deltaProcessor,
+		detachedFieldIndex ?? makeDetachedFieldIndex(undefined, testRevisionTagCodec),
+	);
+}
+
+export function rootFromDeltaFieldMap(
+	delta: DeltaFieldMap,
+	build?: readonly DeltaDetachedNodeBuild[],
+	destroy?: readonly DeltaDetachedNodeDestruction[],
+): Mutable<DeltaRoot> {
+	const rootDelta: Mutable<DeltaRoot> = { fields: delta };
+	if (build !== undefined) {
+		rootDelta.build = build;
+	}
+	if (destroy !== undefined) {
+		rootDelta.destroy = destroy;
+	}
+	return rootDelta;
 }
 
 export function createTestUndoRedoStacks(
-	events: ISubscribable<{ revertible(type: Revertible): void }>,
+	events: ISubscribable<{
+		newRevertible(type: Revertible): void;
+		revertibleDisposed(revertible: Revertible): void;
+	}>,
 ): {
 	undoStack: Revertible[];
 	redoStack: Revertible[];
@@ -1035,7 +1054,8 @@ export function createTestUndoRedoStacks(
 	const undoStack: Revertible[] = [];
 	const redoStack: Revertible[] = [];
 
-	const unsubscribe = events.on("revertible", (revertible) => {
+	const unsubscribeFromNew = events.on("newRevertible", (revertible) => {
+		revertible.retain();
 		if (revertible.kind === RevertibleKind.Undo) {
 			redoStack.push(revertible);
 		} else {
@@ -1043,5 +1063,38 @@ export function createTestUndoRedoStacks(
 		}
 	});
 
+	const unsubscribeFromDisposed = events.on("revertibleDisposed", (revertible) => {
+		if (revertible.kind === RevertibleKind.Undo) {
+			const index = redoStack.indexOf(revertible);
+			if (index !== -1) {
+				redoStack.splice(index, 1);
+			}
+		} else {
+			const index = undoStack.indexOf(revertible);
+			if (index !== -1) {
+				undoStack.splice(index, 1);
+			}
+		}
+	});
+
+	const unsubscribe = () => {
+		unsubscribeFromNew();
+		unsubscribeFromDisposed();
+		for (const revertible of undoStack) {
+			revertible.discard();
+		}
+		for (const revertible of redoStack) {
+			revertible.discard();
+		}
+	};
 	return { undoStack, redoStack, unsubscribe };
 }
+
+export const testIdCompressor = createAlwaysFinalizedIdCompressor(
+	"00000000-0000-4000-b000-000000000000" as SessionId,
+);
+export function mintRevisionTag(): RevisionTag {
+	return testIdCompressor.generateCompressedId();
+}
+
+export const testRevisionTagCodec = new RevisionTagCodec(testIdCompressor);

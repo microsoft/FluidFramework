@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey, TreeFieldStoredSchema, MapTree } from "../core";
-import { FlexTreeSchema } from "./typed-schema";
+import { FieldKey, TreeFieldStoredSchema, MapTree } from "../core/index.js";
+import { FlexTreeSchema } from "./typed-schema/index.js";
 
 /**
  * Information needed to interpret a subtree described by {@link ContextuallyTypedNodeData} and {@link ContextuallyTypedFieldData}.

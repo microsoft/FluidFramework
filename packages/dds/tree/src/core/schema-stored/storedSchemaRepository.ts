@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import BTree from "sorted-btree";
-import { createEmitter, ISubscribable } from "../../events";
-import { compareStrings } from "../../util";
+import { BTree } from "@tylerbu/sorted-btree-es6";
+import { createEmitter, ISubscribable } from "../../events/index.js";
+import { compareStrings } from "../../util/index.js";
 import {
 	StoredSchemaCollection,
 	TreeFieldStoredSchema,
 	TreeNodeStoredSchema,
 	TreeStoredSchema,
 	storedEmptyFieldSchema,
-} from "./schema";
-import { TreeNodeSchemaIdentifier } from "./format";
+} from "./schema.js";
+import { TreeNodeSchemaIdentifier } from "./format.js";
 
 /**
  * Events for {@link TreeStoredSchemaSubscription}.

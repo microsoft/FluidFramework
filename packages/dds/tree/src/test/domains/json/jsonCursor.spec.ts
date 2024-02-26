@@ -4,9 +4,9 @@
  */
 
 // eslint-disable-next-line import/no-internal-modules
-import { singleJsonCursor, cursorToJsonObject } from "../../../domains/json";
-import { JsonCompatible } from "../../../util";
-import { testSpecializedCursor } from "../../cursorTestSuite";
+import { singleJsonCursor, cursorToJsonObject } from "../../../domains/json/index.js";
+import { JsonCompatible } from "../../../util/index.js";
+import { testSpecializedCursor } from "../../cursorTestSuite.js";
 
 const testCases: readonly [string, readonly JsonCompatible[]][] = [
 	["null", [null]],

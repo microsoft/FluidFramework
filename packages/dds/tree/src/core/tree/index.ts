@@ -12,7 +12,7 @@ export {
 	anchorSlot,
 	AnchorEvents,
 	AnchorSetRootEvents,
-} from "./anchorSet";
+} from "./anchorSet.js";
 export {
 	ITreeCursor,
 	CursorLocationType,
@@ -29,7 +29,7 @@ export {
 	inCursorNode,
 	CursorMarker,
 	isCursor,
-} from "./cursor";
+} from "./cursor.js";
 export {
 	ProtoNodes,
 	Root as DeltaRoot,
@@ -42,8 +42,8 @@ export {
 	DetachedNodeDestruction as DeltaDetachedNodeDestruction,
 	DetachedNodeRename as DeltaDetachedNodeRename,
 	FieldChanges as DeltaFieldChanges,
-} from "./delta";
-export { getMapTreeField, MapTree } from "./mapTree";
+} from "./delta.js";
+export { getMapTreeField, MapTree } from "./mapTree.js";
 export {
 	clonePath,
 	topDownPath,
@@ -61,7 +61,7 @@ export {
 	compareFieldUpPaths,
 	getDetachedFieldContainingPath,
 	UpPathDefault,
-} from "./pathTree";
+} from "./pathTree.js";
 export {
 	FieldMapObject,
 	GenericFieldsNode,
@@ -71,8 +71,8 @@ export {
 	getGenericTreeField,
 	JsonableTree,
 	setGenericTreeField,
-} from "./treeTextFormat";
-export { EncodedJsonableTree } from "./persistedTreeTextFormat";
+} from "./treeTextFormat.js";
+export { EncodedJsonableTree } from "./persistedTreeTextFormat.js";
 export {
 	EmptyKey,
 	TreeType,
@@ -88,27 +88,26 @@ export {
 	NodeData,
 	rootField,
 	aboveRootPlaceholder,
-} from "./types";
-export { DeltaVisitor, visitDelta } from "./visitDelta";
+} from "./types.js";
+export { DeltaVisitor, visitDelta } from "./visitDelta.js";
 export {
 	AnnouncedVisitor,
 	announceDelta,
 	applyDelta,
 	combineVisitors,
 	makeDetachedFieldIndex,
-} from "./visitorUtils";
-export { PathVisitor } from "./visitPath";
+} from "./visitorUtils.js";
+export { PathVisitor } from "./visitPath.js";
 
-export { SparseNode, getDescendant } from "./sparseTree";
+export { SparseNode, getDescendant } from "./sparseTree.js";
 
 export {
 	deltaForRootInitialization,
-	deltaForSet,
 	emptyFieldChanges,
 	isEmptyFieldChanges,
 	makeDetachedNodeId,
 	offsetDetachId,
 	emptyDelta,
-} from "./deltaUtil";
+} from "./deltaUtil.js";
 
-export { DetachedFieldIndex, ForestRootId } from "./detachedFieldIndex";
+export { DetachedFieldIndex, ForestRootId } from "./detachedFieldIndex.js";

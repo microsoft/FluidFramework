@@ -4,7 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { Mutable } from "../../util";
+import { Mutable } from "../../util/index.js";
 import {
 	DeltaDetachedNodeChanges,
 	DeltaDetachedNodeRename,
@@ -14,9 +14,9 @@ import {
 	TaggedChange,
 	areEqualChangeAtomIds,
 	makeDetachedNodeId,
-} from "../../core";
-import { nodeIdFromChangeAtom } from "../deltaUtils";
-import { MarkList, NoopMarkType } from "./types";
+} from "../../core/index.js";
+import { nodeIdFromChangeAtom } from "../deltaUtils.js";
+import { MarkList, NoopMarkType } from "./types.js";
 import {
 	areInputCellsEmpty,
 	areOutputCellsEmpty,
@@ -25,8 +25,8 @@ import {
 	getOutputCellId,
 	isAttachAndDetachEffect,
 	getDetachOutputId,
-} from "./utils";
-import { isMoveIn, isMoveOut } from "./moveEffectTable";
+} from "./utils.js";
+import { isMoveIn, isMoveOut } from "./moveEffectTable.js";
 
 export type ToDelta<TNodeChange> = (child: TNodeChange) => DeltaFieldMap;
 
@@ -106,7 +106,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 					});
 					break;
 				}
-				case "Delete": {
+				case "Remove": {
 					const newDetachId = getDetachOutputId(mark, revision, undefined);
 					if (inputCellId === undefined) {
 						deltaMark.detach = nodeIdFromChangeAtom(newDetachId);

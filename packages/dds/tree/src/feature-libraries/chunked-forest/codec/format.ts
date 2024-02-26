@@ -4,8 +4,8 @@
  */
 
 import { Static, Type } from "@sinclair/typebox";
-import { unionOptions } from "../../../codec";
-import { EncodedFieldBatchGeneric, IdentifierOrIndex, ShapeIndex, Count } from "./formatGeneric";
+import { unionOptions } from "../../../codec/index.js";
+import { EncodedFieldBatchGeneric, IdentifierOrIndex, ShapeIndex, Count } from "./formatGeneric.js";
 
 // TODO: Versions from here and schemaIndexFormat.ts should eventually be deduplicated into one version.
 export const version = 1.0;
@@ -41,22 +41,21 @@ export const EncodedInlineArray = Type.Object(
  */
 export const EncodedAnyShape = Type.Literal(0);
 
-// Content of the field is:
-// [shape if not provided in fieldShape], [data for one chunk of specified shape]
-// If data is in multiple chunks needs to be converted into a single chunk, for example via an array chunk.
-export const EncodedFieldShape = Type.Object(
-	{
-		/**
-		 * Field key for this field.
-		 */
-		key: IdentifierOrIndex,
-		/**
-		 * Shape of data in this field.
-		 */
-		shape: ShapeIndex,
-	},
-	{ additionalProperties: false },
-);
+/**
+ * Content of the encoded field is specified by the Shape referenced by the ShapeIndex.
+ * This is a tuple for conciseness.
+ */
+export const EncodedFieldShape = Type.Tuple([
+	/**
+	 * Field key for this field.
+	 */
+	IdentifierOrIndex,
+	/**
+	 * Shape of data in this field.
+	 */
+	ShapeIndex,
+]);
+
 export type EncodedFieldShape = Static<typeof EncodedFieldShape>;
 
 enum CounterRelativeTo {
@@ -124,9 +123,15 @@ export const EncodedTreeShape = Type.Object(
 		 */
 		type: Type.Optional(IdentifierOrIndex),
 		value: Type.Optional(EncodedValueShape),
-		fields: Type.Array(EncodedFieldShape),
+		/**
+		 * Fields with fixed (per key) shapes.
+		 * They are encoded in the order they are specified here.
+		 * To ensure the order is preserved, this is an array instead of an object with keys.
+		 */
+		fields: Type.Optional(Type.Array(EncodedFieldShape)),
 		/**
 		 * If undefined, no data. Otherwise, nested array of `[key, ...data]*`
+		 * Covers any fields beyond those in `fields`.
 		 */
 		extraFields: Type.Optional(ShapeIndex),
 	},

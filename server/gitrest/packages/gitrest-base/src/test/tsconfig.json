@@ -4,6 +4,7 @@
 		"strictNullChecks": false,
 		"rootDir": "./",
 		"outDir": "../../dist/test",
+		"lib": ["ES2021", "DOM", "DOM.Iterable"],
 		"types": ["node", "mocha"],
 		"declaration": false,
 		"declarationMap": false,

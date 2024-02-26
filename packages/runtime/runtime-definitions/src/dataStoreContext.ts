@@ -14,12 +14,7 @@ import {
 	IResponse,
 	FluidObject,
 } from "@fluidframework/core-interfaces";
-import {
-	IAudience,
-	IDeltaManager,
-	AttachState,
-	ILoaderOptions,
-} from "@fluidframework/container-definitions";
+import { IAudience, IDeltaManager, AttachState } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
 	IClientDetails,
@@ -48,6 +43,9 @@ import {
 export enum FlushMode {
 	/**
 	 * In Immediate flush mode the runtime will immediately send all operations to the driver layer.
+	 *
+	 * @deprecated This option will be removed in the next major version and should not be used. Use {@link FlushMode.TurnBased} instead, which is the default.
+	 * See https://github.com/microsoft/FluidFramework/tree/main/packages/runtime/container-runtime/src/opLifecycle#how-batching-works
 	 */
 	Immediate,
 
@@ -170,7 +168,9 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 
 	/**
 	 * Invokes the given callback and guarantees that all operations generated within the callback will be ordered
-	 * sequentially. Total size of all messages must be less than maxOpSize.
+	 * sequentially.
+	 *
+	 * If the callback throws an error, the container will close and the error will be logged.
 	 */
 	orderSequentially(callback: () => void): void;
 
@@ -178,8 +178,9 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * Submits a container runtime level signal to be sent to other clients.
 	 * @param type - Type of the signal.
 	 * @param content - Content of the signal.
+	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	submitSignal(type: string, content: any): void;
+	submitSignal(type: string, content: any, targetClientId?: string): void;
 
 	/**
 	 * @deprecated 0.16 Issue #1537, #3631
@@ -197,14 +198,24 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * already attached DDS (or non-attached DDS that will eventually get attached to storage) will result in this
 	 * store being attached to storage.
 	 * @param pkg - Package name of the data store factory
+	 * @param loadingGroupId - This represents the group of the datastore within a container or its snapshot.
+	 * When not specified the datastore will belong to a `default` group. Read more about it in this
+	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}
 	 */
-	createDataStore(pkg: string | string[]): Promise<IDataStore>;
+	createDataStore(pkg: string | string[], loadingGroupId?: string): Promise<IDataStore>;
 
 	/**
 	 * Creates detached data store context. Only after context.attachRuntime() is called,
 	 * data store initialization is considered complete.
+	 * @param pkg - Package name of the data store factory
+	 * @param loadingGroupId - This represents the group of the datastore within a container or its snapshot.
+	 * When not specified the datastore will belong to a `default` group. Read more about it in this
+	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}.
 	 */
-	createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached;
+	createDetachedDataStore(
+		pkg: Readonly<string[]>,
+		loadingGroupId?: string,
+	): IFluidDataStoreContextDetached;
 
 	/**
 	 * Get an absolute url for a provided container-relative request.
@@ -256,9 +267,14 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	makeVisibleAndAttachGraph(): void;
 
 	/**
-	 * Retrieves the summary used as part of the initial summary message
+	 * Synchronously retrieves the summary used as part of the initial summary message
 	 */
 	getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
+
+	/**
+	 * Synchronously retrieves GC Data (representing the outbound routes present) for the initial state of the DataStore
+	 */
+	getAttachGCData?(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
 
 	/**
 	 * Processes the op.
@@ -373,7 +389,8 @@ export interface IFluidDataStoreContext
 	 * The package path of the data store as per the package factory.
 	 */
 	readonly packagePath: readonly string[];
-	readonly options: ILoaderOptions;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	readonly options: Record<string | number, any>;
 	readonly clientId: string | undefined;
 	readonly connected: boolean;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
@@ -382,6 +399,11 @@ export interface IFluidDataStoreContext
 	readonly logger: ITelemetryBaseLogger;
 	readonly clientDetails: IClientDetails;
 	readonly idCompressor?: IIdCompressor;
+	/**
+	 * Represents the loading group to which the data store belongs to. Please refer to this readme for more context.
+	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}
+	 */
+	readonly loadingGroupId?: string;
 	/**
 	 * Indicates the attachment state of the data store to a host service.
 	 */
@@ -481,12 +503,28 @@ export interface IFluidDataStoreContext
 	getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
 
 	/**
+	 * @deprecated There is no replacement for this, its functionality is no longer needed at this layer.
+	 * It will be removed in a future release, sometime after 2.0.0-internal.8.0.0
+	 *
+	 * Similar capability is exposed with from/to string paths instead of handles via @see addedGCOutboundRoute
+	 *
 	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
 	 * all references added in the system.
 	 * @param srcHandle - The handle of the node that added the reference.
 	 * @param outboundHandle - The handle of the outbound node that is referenced.
 	 */
 	addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
+
+	/**
+	 * (Same as @see addedGCOutboundReference, but with string paths instead of handles)
+	 *
+	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
+	 * all references added in the system.
+	 *
+	 * @param fromPath - The absolute path of the node that added the reference.
+	 * @param toPath - The absolute path of the outbound node that is referenced.
+	 */
+	addedGCOutboundRoute?(fromPath: string, toPath: string): void;
 }
 
 /**
@@ -499,5 +537,5 @@ export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
 	attachRuntime(
 		factory: IProvideFluidDataStoreFactory,
 		dataStoreRuntime: IFluidDataStoreChannel,
-	): Promise<void>;
+	): Promise<IDataStore>;
 }

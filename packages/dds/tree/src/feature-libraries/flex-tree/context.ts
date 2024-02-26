@@ -10,17 +10,17 @@ import {
 	TreeFieldStoredSchema,
 	FieldKey,
 	IForestSubscription,
-} from "../../core";
-import { ISubscribable } from "../../events";
-import { IDefaultEditBuilder } from "../default-schema";
-import { NodeKeyIndex, NodeKeyManager } from "../node-key";
-import { FieldGenerator } from "../fieldGenerator";
-import { FlexTreeSchema } from "../typed-schema";
-import { disposeSymbol, IDisposable } from "../../util";
-import { FlexTreeField } from "./flexTreeTypes";
-import { makeField } from "./lazyField";
-import { LazyEntity, prepareForEditSymbol } from "./lazyEntity";
-import { NodeKeys, SimpleNodeKeys } from "./nodeKeys";
+} from "../../core/index.js";
+import { ISubscribable } from "../../events/index.js";
+import { IDefaultEditBuilder } from "../default-schema/index.js";
+import { NodeKeyIndex, NodeKeyManager } from "../node-key/index.js";
+import { FieldGenerator } from "../fieldGenerator.js";
+import { FlexTreeSchema } from "../typed-schema/index.js";
+import { disposeSymbol, IDisposable } from "../../util/index.js";
+import { FlexTreeField } from "./flexTreeTypes.js";
+import { makeField } from "./lazyField.js";
+import { LazyEntity, prepareForEditSymbol } from "./lazyEntity.js";
+import { NodeKeys, SimpleNodeKeys } from "./nodeKeys.js";
 
 /**
  * A common context of a "forest" of EditableTrees.

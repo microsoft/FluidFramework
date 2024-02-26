@@ -4,103 +4,93 @@
  */
 
 /**
- * The **fluid-framework** package bundles a collection of Fluid Framework client libraries for easy use
- * when paired with a corresponding service client library (for example,
- * `\@fluidframework/azure-client` or `\@fluidframework/tinylicious-client`).
+ * Bundles a collection of Fluid Framework client libraries for easy use when paired with a corresponding service client
+ * package (e.g. `@fluidframework/azure-client`, `@fluidframework/tinylicious-client`, or `@fluid-experimental/osdp-client (BETA)`).
  *
  * @packageDocumentation
  */
 
-export type { ICriticalContainerError } from "@fluidframework/container-definitions";
-export { AttachState, ContainerErrorType } from "@fluidframework/container-definitions";
-export { DriverErrorType } from "@fluidframework/driver-definitions";
+export type {
+	ConnectionState as ConnectionStateType, // TODO: deduplicate ConnectionState types
+	ICriticalContainerError,
+} from "@fluidframework/container-definitions";
+export { AttachState, ContainerErrorTypes } from "@fluidframework/container-definitions";
+export { DriverErrorTypes } from "@fluidframework/driver-definitions";
 export { ConnectionState } from "@fluidframework/container-loader";
 export type {
+	ContainerAttachProps,
 	ContainerSchema,
 	DataObjectClass,
 	IConnection,
 	IFluidContainer,
 	IFluidContainerEvents,
 	IMember,
-	IRootDataObject,
+	InitialObjects,
 	IServiceAudience,
 	IServiceAudienceEvents,
 	LoadableObjectClass,
 	LoadableObjectClassRecord,
 	LoadableObjectCtor,
-	LoadableObjectRecord,
 	MemberChangedListener,
+	Myself,
 	SharedObjectClass,
 } from "@fluidframework/fluid-static";
-export type {
-	ICreateInfo,
-	IDirectory,
-	IDirectoryClearOperation,
-	IDirectoryCreateSubDirectoryOperation,
-	IDirectoryDataObject,
-	IDirectoryDeleteOperation,
-	IDirectoryDeleteSubDirectoryOperation,
-	IDirectoryEvents,
-	IDirectoryKeyOperation,
-	IDirectoryNewStorageFormat,
-	IDirectoryOperation,
-	IDirectorySetOperation,
-	IDirectoryStorageOperation,
-	IDirectorySubDirectoryOperation,
-	IDirectoryValueChanged,
-	ILocalValue,
-	ISerializableValue,
-	ISerializedValue,
-	ISharedDirectory,
-	ISharedDirectoryEvents,
-	ISharedMap,
-	ISharedMapEvents,
-	IValueChanged,
-} from "@fluidframework/map";
-export {
-	DirectoryFactory,
-	LocalValueMaker,
-	MapFactory,
-	SharedDirectory,
-	SharedMap,
-} from "@fluidframework/map";
-export type {
-	DeserializeCallback,
-	IInterval,
-	IIntervalCollectionEvent,
-	IIntervalHelpers,
-	IJSONRunSegment,
-	IMapMessageLocalMetadata,
-	IIntervalCollection,
-	IntervalLocator,
-	ISequenceDeltaRange,
-	ISerializableInterval,
-	ISerializedInterval,
-	ISharedIntervalCollection,
-	ISharedSegmentSequenceEvents,
-	ISharedString,
-	IValueOpEmitter,
-	SerializedIntervalDelta,
-	SharedStringSegment,
-} from "@fluidframework/sequence";
-export {
-	getTextAndMarkers,
-	Interval,
-	intervalLocatorFromEndpoint,
-	IntervalType,
-	SequenceDeltaEvent,
-	SequenceEvent,
-	SequenceInterval,
-	SequenceMaintenanceEvent,
-	SharedIntervalCollection,
-	SharedIntervalCollectionFactory,
-	SharedSegmentSequence,
-	SharedSequence,
-	SharedString,
-	SharedStringFactory,
-	SubSequence,
-} from "@fluidframework/sequence";
+export type { ISharedMap, ISharedMapEvents, IValueChanged } from "@fluidframework/map";
+export { SharedMap } from "@fluidframework/map";
 
-// The tree package manages its own API surface.
-// eslint-disable-next-line no-restricted-syntax
-export * from "@fluidframework/tree";
+export type {
+	AllowedTypes,
+	ApplyKind,
+	ArrayToUnion,
+	Events,
+	ExtractItemType,
+	FlexList,
+	FlexListToUnion,
+	IDisposable,
+	ImplicitAllowedTypes,
+	ImplicitFieldSchema,
+	InsertableObjectFromSchemaRecord,
+	InsertableTreeFieldFromImplicitField,
+	InsertableTreeNodeFromImplicitAllowedTypes,
+	InsertableTypedNode,
+	IsEvent,
+	ISubscribable,
+	ITree,
+	LazyItem,
+	MakeNominal,
+	NodeBuilderData,
+	NodeFromSchema,
+	ObjectFromSchemaRecord,
+	RestrictiveReadonlyRecord,
+	ScopedSchemaName,
+	TreeApi,
+	TreeArrayNodeBase,
+	TreeFieldFromImplicitField,
+	TreeLeafValue,
+	TreeMapNode,
+	TreeNodeEvents,
+	TreeNodeFromImplicitAllowedTypes,
+	TreeNodeSchema,
+	TreeNodeSchemaClass,
+	TreeNodeSchemaCore,
+	TreeNodeSchemaNonClass,
+	TreeView,
+	TreeViewEvents,
+	Unhydrated,
+	WithType,
+} from "@fluidframework/tree";
+export {
+	disposeSymbol,
+	FieldKind,
+	FieldSchema,
+	IterableTreeArrayContent,
+	NodeKind,
+	SchemaFactory,
+	SharedTree,
+	Tree,
+	TreeArrayNode,
+	TreeConfiguration,
+	TreeNode,
+	TreeStatus,
+	type,
+} from "@fluidframework/tree";

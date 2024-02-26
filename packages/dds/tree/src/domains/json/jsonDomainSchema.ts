@@ -6,18 +6,18 @@
 // Adding this unused import makes the generated d.ts file produced by TypeScript stop breaking API-Extractor's rollup generation.
 // Without this import, TypeScript generates inline `import("../..")` statements in the d.ts file,
 // which API-Extractor leaves as is when generating the rollup, leaving them pointing at the wrong directory.
-// TODO: Understand and/or remove the need for this workaround.
+// API-Extractor issue: https://github.com/microsoft/rushstack/issues/4507
 // eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
-import { ValueSchema } from "../../core";
+import { ValueSchema } from "../../core/index.js";
 
 import {
-	AllowedTypes,
+	FlexAllowedTypes,
 	FieldKinds,
-	TreeFieldSchema,
+	FlexFieldSchema,
 	SchemaBuilderInternal,
-} from "../../feature-libraries";
-import { requireAssignableTo } from "../../util";
-import { leaf } from "../leafDomain";
+} from "../../feature-libraries/index.js";
+import { requireAssignableTo } from "../../util/index.js";
+import { leaf } from "../leafDomain.js";
 
 const builder = new SchemaBuilderInternal({
 	scope: "com.fluidframework.json",
@@ -33,17 +33,17 @@ export const jsonRoot = [() => jsonObject, () => jsonArray, ...jsonPrimitives] a
 
 {
 	// Recursive objects don't get this type checking automatically, so confirm it
-	type _check = requireAssignableTo<typeof jsonRoot, AllowedTypes>;
+	type _check = requireAssignableTo<typeof jsonRoot, FlexAllowedTypes>;
 }
 
 export const jsonObject = builder.mapRecursive(
 	"object",
-	TreeFieldSchema.createUnsafe(FieldKinds.optional, jsonRoot),
+	FlexFieldSchema.createUnsafe(FieldKinds.optional, jsonRoot),
 );
 
 export const jsonArray = builder.fieldNodeRecursive(
 	"array",
-	TreeFieldSchema.createUnsafe(FieldKinds.sequence, jsonRoot),
+	FlexFieldSchema.createUnsafe(FieldKinds.sequence, jsonRoot),
 );
 
 export const jsonSchema = builder.intoLibrary();

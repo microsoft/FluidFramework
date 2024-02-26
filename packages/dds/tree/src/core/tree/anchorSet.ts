@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { createEmitter, ISubscribable } from "../../events";
+import { createEmitter, ISubscribable } from "../../events/index.js";
 import {
 	brand,
 	Brand,
@@ -14,8 +14,8 @@ import {
 	BrandedKey,
 	BrandedMapSubset,
 	brandedSlot,
-} from "../../util";
-import { FieldKey } from "../schema-stored";
+} from "../../util/index.js";
+import { FieldKey } from "../schema-stored/index.js";
 import {
 	DetachedPlaceUpPath,
 	DetachedRangeUpPath,
@@ -24,12 +24,12 @@ import {
 	Range,
 	PlaceUpPath,
 	RangeUpPath,
-} from "./pathTree";
-import { Value, EmptyKey } from "./types";
-import { PathVisitor } from "./visitPath";
-import { DeltaVisitor } from "./visitDelta";
-import * as Delta from "./delta";
-import { AnnouncedVisitor } from "./visitorUtils";
+} from "./pathTree.js";
+import { Value, EmptyKey } from "./types.js";
+import { PathVisitor } from "./visitPath.js";
+import { DeltaVisitor } from "./visitDelta.js";
+import * as Delta from "./delta.js";
+import { AnnouncedVisitor } from "./visitorUtils.js";
 
 /**
  * A way to refer to a particular tree location within an {@link AnchorSet}.
@@ -980,7 +980,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 enum Status {
 	/**
 	 * Indicates the `NodePath` is being maintained and corresponds to a valid
-	 * (i.e., not deleted) node in the document.
+	 * (i.e., not removed) node in the document.
 	 */
 	Alive,
 	/**
@@ -992,7 +992,7 @@ enum Status {
 	 */
 	Disposed,
 	/**
-	 * Indicates the `NodePath` corresponds to a deleted node in the document.
+	 * Indicates the `NodePath` corresponds to a removed node in the document.
 	 * Such `NodePath`s are not maintained by the `AnchorSet` (other than updating
 	 * their status to `Disposed` when appropriate).
 	 *

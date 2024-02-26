@@ -4,8 +4,8 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { FieldKey, TreeNodeSchemaIdentifier, ValueSchema } from "../schema-stored";
-import { _InlineTrick, brand, Brand, extractFromOpaque, Opaque } from "../../util";
+import { FieldKey, TreeNodeSchemaIdentifier, ValueSchema } from "../schema-stored/index.js";
+import { _InlineTrick, brand, Brand, extractFromOpaque, Opaque } from "../../util/index.js";
 
 /**
  * @internal

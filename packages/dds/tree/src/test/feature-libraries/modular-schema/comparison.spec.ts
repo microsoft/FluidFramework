@@ -10,11 +10,9 @@ import {
 	allowsTreeSuperset,
 	allowsTreeSchemaIdentifierSuperset,
 	allowsValueSuperset,
-	isNeverField,
-	isNeverTree,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
-} from "../../../feature-libraries/modular-schema/comparison";
+} from "../../../feature-libraries/modular-schema/comparison.js";
 import {
 	TreeFieldStoredSchema,
 	TreeNodeStoredSchema,
@@ -28,21 +26,9 @@ import {
 	LeafNodeStoredSchema,
 	MutableTreeStoredSchema,
 	TreeStoredSchemaRepository,
-} from "../../../core";
-import { brand } from "../../../util";
-import { defaultSchemaPolicy, FieldKinds } from "../../../feature-libraries";
-
-/**
- * APIs to help build schema.
- *
- * See typedSchema.ts for a wrapper for these APIs that captures the types as TypeScript types
- * in addition to runtime data.
- */
-
-/**
- * Empty readonly map.
- */
-const emptyMap: ReadonlyMap<never, never> = new Map<never, never>();
+} from "../../../core/index.js";
+import { brand } from "../../../util/index.js";
+import { defaultSchemaPolicy, FieldKinds } from "../../../feature-libraries/index.js";
 
 /**
  * Helper for building {@link TreeFieldStoredSchema}.
@@ -56,15 +42,6 @@ function fieldSchema(
 		kind,
 		types: types === undefined ? undefined : new Set(types),
 	};
-}
-
-/**
- * See {@link TreeNodeStoredSchema} for details.
- */
-interface TreeNodeStoredSchemaBuilder {
-	readonly objectNodeFields?: { [key: string]: TreeFieldStoredSchema };
-	readonly mapFields?: TreeFieldStoredSchema;
-	readonly leafValue?: ValueSchema;
 }
 
 describe("Schema Comparison", () => {
@@ -133,79 +110,6 @@ describe("Schema Comparison", () => {
 			nodeSchema: new Map([...repo.nodeSchema, [identifier, schema]]),
 		});
 	}
-
-	it("isNeverField", () => {
-		const repo = new TreeStoredSchemaRepository();
-		assert(isNeverField(defaultSchemaPolicy, repo, neverField));
-		updateTreeSchema(repo, brand("never"), neverTree);
-		const neverField2: TreeFieldStoredSchema = fieldSchema(FieldKinds.required, [
-			brand("never"),
-		]);
-		assert(isNeverField(defaultSchemaPolicy, repo, neverField2));
-		assert.equal(isNeverField(defaultSchemaPolicy, repo, storedEmptyFieldSchema), false);
-		assert.equal(isNeverField(defaultSchemaPolicy, repo, anyField), false);
-		assert.equal(isNeverField(defaultSchemaPolicy, repo, valueEmptyTreeField), true);
-		updateTreeSchema(repo, brand("empty"), emptyTree.schema);
-		assert.equal(
-			isNeverField(
-				defaultSchemaPolicy,
-				repo,
-				fieldSchema(FieldKinds.required, [brand("empty")]),
-			),
-			false,
-		);
-		assert.equal(isNeverField(defaultSchemaPolicy, repo, valueAnyField), false);
-		assert.equal(isNeverField(defaultSchemaPolicy, repo, valueEmptyTreeField), false);
-		assert.equal(isNeverField(defaultSchemaPolicy, repo, optionalAnyField), false);
-		assert.equal(isNeverField(defaultSchemaPolicy, repo, optionalEmptyTreeField), false);
-	});
-
-	it("isNeverTree", () => {
-		const repo = new TreeStoredSchemaRepository();
-		assert(isNeverTree(defaultSchemaPolicy, repo, neverTree));
-		assert(isNeverTree(defaultSchemaPolicy, repo, new MapNodeStoredSchema(neverField)));
-		assert(isNeverTree(defaultSchemaPolicy, repo, neverTree2));
-		assert(isNeverTree(defaultSchemaPolicy, repo, undefined));
-		assert.equal(
-			isNeverTree(defaultSchemaPolicy, repo, new ObjectNodeStoredSchema(emptyMap)),
-			false,
-		);
-		assert.equal(isNeverTree(defaultSchemaPolicy, repo, anyTreeWithoutValue), false);
-
-		assert(
-			allowsTreeSuperset(
-				defaultSchemaPolicy,
-				repo,
-				repo.nodeSchema.get(emptyTree.name),
-				emptyTree.schema,
-			),
-		);
-		updateTreeSchema(repo, emptyTree.name, emptyTree.schema);
-
-		assert.equal(isNeverTree(defaultSchemaPolicy, repo, emptyLocalFieldTree.schema), false);
-		assert.equal(isNeverTree(defaultSchemaPolicy, repo, valueLocalFieldTree.schema), false);
-		assert.equal(isNeverTree(defaultSchemaPolicy, repo, optionalLocalFieldTree.schema), false);
-	});
-
-	it("isNeverTreeRecursive", () => {
-		const repo = new TreeStoredSchemaRepository();
-		const recursiveField = fieldSchema(FieldKinds.required, [brand("recursive")]);
-		const recursiveType = new MapNodeStoredSchema(recursiveField);
-		updateTreeSchema(repo, brand("recursive"), recursiveType);
-		assert(isNeverTree(defaultSchemaPolicy, repo, recursiveType));
-	});
-
-	it("isNeverTreeRecursive non-never", () => {
-		const repo = new TreeStoredSchemaRepository();
-		const recursiveField = fieldSchema(FieldKinds.required, [
-			brand("recursive"),
-			emptyTree.name,
-		]);
-		const recursiveType = new MapNodeStoredSchema(recursiveField);
-		updateTreeSchema(repo, emptyTree.name, emptyTree.schema);
-		updateTreeSchema(repo, brand("recursive"), recursiveType);
-		assert(isNeverTree(defaultSchemaPolicy, repo, recursiveType));
-	});
 
 	it("allowsValueSuperset", () => {
 		assert.equal(

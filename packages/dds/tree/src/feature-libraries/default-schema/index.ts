@@ -11,7 +11,7 @@ export {
 	NodeKeyFieldKind,
 	Forbidden,
 	fieldKinds,
-} from "./defaultFieldKinds";
+} from "./defaultFieldKinds.js";
 
 export {
 	DefaultChangeset,
@@ -23,6 +23,6 @@ export {
 	SequenceFieldEditBuilder,
 	intoDelta,
 	relevantRemovedRoots,
-} from "./defaultEditBuilder";
+} from "./defaultEditBuilder.js";
 
-export { defaultSchemaPolicy } from "./defaultSchema";
+export { defaultSchemaPolicy } from "./defaultSchema.js";

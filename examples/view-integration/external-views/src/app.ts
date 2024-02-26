@@ -5,8 +5,8 @@
 
 import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
 
-import { DiceRollerContainerRuntimeFactory, IDiceRollerAppModel } from "./containerCode";
-import { renderDiceRoller } from "./view";
+import { DiceRollerContainerRuntimeFactory, IDiceRollerAppModel } from "./containerCode.js";
+import { renderDiceRoller } from "./view.js";
 
 /**
  * Start the app and render.

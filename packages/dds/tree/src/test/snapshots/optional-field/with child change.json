@@ -1,10 +1,10 @@
 {
   "c": [
     [
-      {
-        "localId": 42,
-        "revision": "beefbeef-beef-4000-8000-000000000001"
-      },
+      [
+        42,
+        0
+      ],
       {
         "inputContext": [],
         "intentions": [
@@ -16,9 +16,19 @@
       }
     ],
     [
+      42,
       {
-        "localId": 42
-      },
+        "inputContext": [],
+        "intentions": [
+          1
+        ],
+        "outputContext": [
+          1
+        ]
+      }
+    ],
+    [
+      null,
       {
         "inputContext": [],
         "intentions": [

@@ -12,6 +12,7 @@ import {
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
+import { AttachState } from "@fluidframework/container-definitions";
 import { Ink } from "../ink";
 import { InkFactory } from "../inkFactory";
 import { IPen } from "../interfaces";
@@ -21,13 +22,13 @@ describe("Ink", () => {
 	let dataStoreRuntime: MockFluidDataStoreRuntime;
 	let pen: IPen;
 
-	beforeEach(async () => {
+	beforeEach("createInk", async () => {
 		dataStoreRuntime = new MockFluidDataStoreRuntime();
 		ink = new Ink(dataStoreRuntime, "ink", InkFactory.Attributes);
 	});
 
 	describe("Ink in local state", () => {
-		beforeEach(() => {
+		beforeEach("setupInkInLocalState", () => {
 			dataStoreRuntime.local = true;
 			pen = {
 				color: { r: 0, g: 161 / 255, b: 241 / 255, a: 0 },
@@ -132,7 +133,7 @@ describe("Ink", () => {
 			await ink2.load(services2);
 
 			// Now connect the first Ink
-			dataStoreRuntime.local = false;
+			dataStoreRuntime.setAttachState(AttachState.Attached);
 			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 			const services1 = {
 				deltaConnection: dataStoreRuntime.createDeltaConnection(),
@@ -175,11 +176,11 @@ describe("Ink", () => {
 		let ink2: Ink;
 		let containerRuntimeFactory: MockContainerRuntimeFactory;
 
-		beforeEach(() => {
+		beforeEach("createConnectedInks", () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 			// Connect the first Ink.
-			dataStoreRuntime.local = false;
+			dataStoreRuntime.setAttachState(AttachState.Attached);
 			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 			const services1 = {
 				deltaConnection: dataStoreRuntime.createDeltaConnection(),
@@ -339,11 +340,11 @@ describe("Ink", () => {
 		let containerRuntime2: MockContainerRuntimeForReconnection;
 		let ink2: Ink;
 
-		beforeEach(() => {
+		beforeEach("createConnectedInks", () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
 			// Connect the first Ink.
-			dataStoreRuntime.local = false;
+			dataStoreRuntime.setAttachState(AttachState.Attached);
 			containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 			const services1 = {
 				deltaConnection: dataStoreRuntime.createDeltaConnection(),

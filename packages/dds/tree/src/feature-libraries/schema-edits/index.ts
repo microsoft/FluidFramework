@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { makeSchemaChangeCodec } from "./schemaChangeCodecs";
-export { SchemaChange } from "./schemaChangeTypes";
-export { EncodedSchemaChange } from "./schemaChangeFormat";
+export { makeSchemaChangeCodec } from "./schemaChangeCodecs.js";
+export { SchemaChange } from "./schemaChangeTypes.js";
+export { EncodedSchemaChange } from "./schemaChangeFormat.js";

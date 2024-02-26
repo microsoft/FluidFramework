@@ -29,12 +29,6 @@ When taking a dependency on a Fluid Framework library, we recommend using a `^` 
 While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
 library consumers should always prefer `^`.
 
-Note that when depending on a library version of the form `2.0.0-internal.x.y.z`, called the Fluid internal version scheme,
-you must use a `>= <` dependency range (such as `>=2.0.0-internal.x.y.z <2.0.0-internal.w.0.0` where `w` is `x+1`).
-Standard `^` and `~` ranges will not work as expected.
-See the [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/version-tools/README.md)
-package for more information including tools to convert between version schemes.
-
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
@@ -156,6 +150,22 @@ If you've _upgraded_ your Mac to Catalina or higher, you may need to follow [the
 #### On Windows
 
 -   Ensure that you have enabled running Powershell scripts by setting your environment's [Execution Policy](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.security/set-executionpolicy?view=powershell-7.2).
+
+### Other Build Commands
+
+#### Building our docs
+
+There are a few different areas in which we generate documentation content as a part our overall build.
+
+1. [fluidframework.com]()
+    - We build the contents of our public website from the `docs` directory under the root of this repo.
+      See its [README](./docs/README.md) for more details.
+2. Generated README contents
+    - We leverage a local tool ([markdown-magic](./tools/markdown-magic/README.md)) to generate / embed contents in our various package-level READMEs.
+      This is done as a part of a full build, but it can also be executed in isolation by running `npm run build:readme` from the repo root.
+3. API reports
+    - We leverage [API-Extractor](https://api-extractor.com/) to generate summaries of our package APIs.
+      This is done as a part of a full build, but it can also be executed in isolation by running `npm run build:api` from the repo root.
 
 ## Testing
 

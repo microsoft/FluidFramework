@@ -34,6 +34,7 @@ export {
 } from "./dataStoreRegistry";
 export {
 	gcBlobPrefix,
+	gcDataBlobKey,
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
 	gcTreeKey,
@@ -65,52 +66,3 @@ export {
 	SummarizeInternalFn,
 	totalBlobSizePropertyName,
 } from "./summary";
-
-// Re-exports for backwards compatibility.
-// Will be removed in the future.
-export {
-	/**
-	 * @deprecated Import from `@fluidframework/id-compressor` instead.
-	 */
-	IdCompressor,
-	/**
-	 * @deprecated Import from `@fluidframework/id-compressor` instead.
-	 */
-	IIdCompressor,
-	/**
-	 * @deprecated Import from `@fluidframework/id-compressor` instead.
-	 */
-	IIdCompressorCore,
-	/**
-	 * @deprecated Import from `@fluidframework/id-compressor` instead.
-	 */
-	IdCreationRange,
-	/**
-	 * @deprecated Import from `@fluidframework/id-compressor` instead.
-	 */
-	OpSpaceCompressedId,
-	/**
-	 * @deprecated Import from `@fluidframework/id-compressor` instead.
-	 */
-	SerializedIdCompressor,
-	/**
-	 * @deprecated Import from `@fluidframework/id-compressor` instead.
-	 */
-	SerializedIdCompressorWithNoSession,
-	/**
-	 * @deprecated Import from `@fluidframework/id-compressor` instead.
-	 */
-	SerializedIdCompressorWithOngoingSession,
-	/**
-	 * @deprecated Import from `@fluidframework/id-compressor` instead.
-	 */
-	SessionId,
-	/**
-	 * @deprecated Import from `@fluidframework/id-compressor` instead.
-	 */
-	SessionSpaceCompressedId,
-	/**
-	 * @deprecated Import from `@fluidframework/id-compressor` instead.
-	 */
-	StableId,
-} from "@fluidframework/id-compressor";

@@ -3,15 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import { ICodecFamily } from "../../codec";
-import { ChangeRebaser } from "../rebase";
+import { SessionId } from "@fluidframework/id-compressor";
+import { ICodecFamily, IJsonCodec } from "../../codec/index.js";
+import { ChangeRebaser } from "../rebase/index.js";
+import { JsonCompatibleReadOnly } from "../../util/index.js";
+import { SchemaAndPolicy } from "../../feature-libraries/index.js";
 
 export interface ChangeFamily<TEditor extends ChangeFamilyEditor, TChange> {
 	buildEditor(changeReceiver: (change: TChange) => void): TEditor;
 
 	readonly rebaser: ChangeRebaser<TChange>;
-	readonly codecs: ICodecFamily<TChange>;
+	readonly codecs: ICodecFamily<TChange, ChangeEncodingContext>;
 }
+
+export interface ChangeEncodingContext {
+	readonly originatorId: SessionId;
+	readonly schema?: SchemaAndPolicy;
+}
+
+export type ChangeFamilyCodec<TChange> = IJsonCodec<
+	TChange,
+	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnly,
+	ChangeEncodingContext
+>;
 
 export interface ChangeFamilyEditor {
 	/**

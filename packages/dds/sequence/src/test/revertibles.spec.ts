@@ -9,6 +9,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
+import { AttachState } from "@fluidframework/container-definitions";
 import {
 	appendAddIntervalToRevertibles,
 	appendChangeIntervalToRevertibles,
@@ -36,7 +37,7 @@ describe("Sequence.Revertibles with Local Edits", () => {
 		containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 		dataStoreRuntime1 = new MockFluidDataStoreRuntime({ clientId: "1" });
-		dataStoreRuntime1.local = false;
+		dataStoreRuntime1.setAttachState(AttachState.Attached);
 		sharedString = stringFactory.create(dataStoreRuntime1, "shared-string-1");
 
 		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
@@ -86,7 +87,7 @@ describe("Sequence.Revertibles with Local Edits", () => {
 
 		sharedString.insertText(0, "hello world");
 		const id = collection.add({ start: 0, end: 5 }).getIntervalId();
-		collection.change(id, 1, 6);
+		collection.change(id, { start: 1, end: 6 });
 
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
 		assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
@@ -98,7 +99,7 @@ describe("Sequence.Revertibles with Local Edits", () => {
 
 		sharedString.insertText(0, "hello world");
 		const id = collection.add({ start: 0, end: 5, props: { foo: "one" } }).getIntervalId();
-		collection.changeProperties(id, { foo: "two" });
+		collection.change(id, { props: { foo: "two" } });
 
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
 		assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
@@ -154,7 +155,7 @@ describe("Sequence.Revertibles with Local Edits", () => {
 
 		sharedString.insertText(0, "hello world");
 		const id = collection.add({ start: 0, end: 5 }).getIntervalId();
-		collection.change(id, 3, 8);
+		collection.change(id, { start: 3, end: 8 });
 		collection.removeIntervalById(id);
 
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
@@ -167,7 +168,7 @@ describe("Sequence.Revertibles with Local Edits", () => {
 
 		sharedString.insertText(0, "hello world");
 		const id = collection.add({ start: 0, end: 5 }).getIntervalId();
-		collection.change(id, 3, 8);
+		collection.change(id, { start: 3, end: 8 });
 
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
 		assertSequenceIntervals(sharedString, collection, []);
@@ -188,7 +189,7 @@ describe("Sequence.Revertibles with Local Edits", () => {
 			);
 		});
 
-		collection.change(id, 3, 8);
+		collection.change(id, { start: 3, end: 8 });
 		collection.removeIntervalById(id);
 
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
@@ -210,7 +211,7 @@ describe("Sequence.Revertibles with Local Edits", () => {
 			);
 		});
 
-		collection.change(id, 3, 8);
+		collection.change(id, { start: 3, end: 8 });
 		collection.removeIntervalById(id);
 
 		revertSharedStringRevertibles(sharedString, revertibles.splice(1, 1));
@@ -237,7 +238,7 @@ describe("Sequence.Revertibles with Local Edits", () => {
 		containerRuntimeFactory.processAllMessages();
 
 		sharedString.removeRange(0, 5);
-		collection.change(id, 1, 2);
+		collection.change(id, { start: 1, end: 2 });
 
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
 		assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
@@ -255,7 +256,7 @@ describe("Sequence.Revertibles with Local Edits", () => {
 		const id = collection.add({ start: 5, end: 8 }).getIntervalId();
 		containerRuntimeFactory.processAllMessages();
 
-		collection.change(id, 1, 3);
+		collection.change(id, { start: 1, end: 3 });
 		sharedString.removeRange(5, sharedString.getLength());
 		containerRuntimeFactory.processAllMessages();
 
@@ -275,7 +276,7 @@ describe("Sequence.Revertibles with Local Edits", () => {
 		const id = collection.add({ start: 1, end: 3 }).getIntervalId();
 		containerRuntimeFactory.processAllMessages();
 
-		collection.change(id, 4, 8);
+		collection.change(id, { start: 4, end: 8 });
 		sharedString.removeRange(4, sharedString.getLength());
 		containerRuntimeFactory.processAllMessages();
 
@@ -304,7 +305,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 		containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 		// Connect the first SharedString.
-		dataStoreRuntime1.local = false;
+		dataStoreRuntime1.setAttachState(AttachState.Attached);
 		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 		const services1 = {
 			deltaConnection: dataStoreRuntime1.createDeltaConnection(),
@@ -346,7 +347,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 		const id = collection.add({ start: 0, end: 5 }).getIntervalId();
 		containerRuntimeFactory.processAllMessages();
 
-		collection.change(id, 6, 8);
+		collection.change(id, { start: 6, end: 8 });
 		sharedString2.removeRange(0, 5);
 		containerRuntimeFactory.processAllMessages();
 
@@ -417,7 +418,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 		const id = collection.add({ start: 0, end: 5 }).getIntervalId();
 		containerRuntimeFactory.processAllMessages();
 
-		collection2.change(id, 3, 8);
+		collection2.change(id, { start: 3, end: 8 });
 
 		collection.on("deleteInterval", (interval, local, op) => {
 			appendDeleteIntervalToRevertibles(sharedString, interval, revertibles);
@@ -435,7 +436,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 		const id = collection.add({ start: 0, end: 5 }).getIntervalId();
 		containerRuntimeFactory.processAllMessages();
 
-		collection2.change(id, 3, 8);
+		collection2.change(id, { start: 3, end: 8 });
 
 		collection.on("deleteInterval", (interval, local, op) => {
 			appendDeleteIntervalToRevertibles(sharedString, interval, revertibles);
@@ -454,7 +455,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 		const id = collection.add({ start: 0, end: 5 }).getIntervalId();
 		containerRuntimeFactory.processAllMessages();
 
-		collection2.change(id, 3, 8);
+		collection2.change(id, { start: 3, end: 8 });
 
 		collection.on("changeInterval", (interval, previousInterval, local, op) => {
 			appendChangeIntervalToRevertibles(
@@ -464,7 +465,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 				revertibles,
 			);
 		});
-		collection.change(id, 4, 9);
+		collection.change(id, { start: 4, end: 9 });
 		containerRuntimeFactory.processOneMessage();
 
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
@@ -486,7 +487,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 				revertibles,
 			);
 		});
-		collection.change(id, 3, 8);
+		collection.change(id, { start: 3, end: 8 });
 		containerRuntimeFactory.processAllMessages();
 
 		collection2.removeIntervalById(id);
@@ -505,7 +506,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 		collection.on("propertyChanged", (interval, propertyDeltas, local, op) => {
 			appendIntervalPropertyChangedToRevertibles(interval, propertyDeltas, revertibles);
 		});
-		collection.changeProperties(id, { foo: "two" });
+		collection.change(id, { props: { foo: "two" } });
 
 		collection2.removeIntervalById(id);
 		containerRuntimeFactory.processAllMessages();
@@ -545,7 +546,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 		});
 		collection.removeIntervalById(id);
 
-		collection2.changeProperties(id, { foo: "two" });
+		collection2.change(id, { props: { foo: "two" } });
 		containerRuntimeFactory.processAllMessages();
 
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
@@ -566,7 +567,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 		});
 		collection.add({ start: 2, end: 7 });
 
-		collection2.changeProperties(id, { foo: "two" });
+		collection2.change(id, { props: { foo: "two" } });
 		containerRuntimeFactory.processAllMessages();
 
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
@@ -590,9 +591,9 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 				revertibles,
 			);
 		});
-		collection.change(id, 3, 8);
+		collection.change(id, { start: 3, end: 8 });
 
-		collection2.changeProperties(id, { foo: "two" });
+		collection2.change(id, { props: { foo: "two" } });
 		containerRuntimeFactory.processAllMessages();
 
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
@@ -613,9 +614,9 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 				appendIntervalPropertyChangedToRevertibles(interval, propertyDeltas, revertibles);
 			}
 		});
-		collection.changeProperties(id, { foo: "two", bar: "one" });
+		collection.change(id, { props: { foo: "two", bar: "one" } });
 
-		collection2.changeProperties(id, { foo: "three", bar: "one" });
+		collection2.change(id, { props: { foo: "three", bar: "one" } });
 		containerRuntimeFactory.processAllMessages();
 
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
@@ -647,7 +648,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 		containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 		// Connect the first SharedString.
-		dataStoreRuntime1.local = false;
+		dataStoreRuntime1.setAttachState(AttachState.Attached);
 		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 		const services1 = {
 			deltaConnection: dataStoreRuntime1.createDeltaConnection(),
@@ -721,7 +722,9 @@ describe("Undo/redo for string remove containing intervals", () => {
 			containerRuntimeFactory.processAllMessages();
 
 			sharedString.removeRange(0, 6);
-			sharedString2.getIntervalCollection("test").change(interval.getIntervalId(), 3, 8);
+			sharedString2
+				.getIntervalCollection("test")
+				.change(interval.getIntervalId(), { start: 3, end: 8 });
 			containerRuntimeFactory.processAllMessages();
 
 			assert.equal(revertibles.length, 1, "revertibles.length is not 1");
@@ -771,7 +774,9 @@ describe("Undo/redo for string remove containing intervals", () => {
 			const interval = collection.add({ start: 6, end: 8 });
 			containerRuntimeFactory.processAllMessages();
 
-			sharedString2.getIntervalCollection("test").change(interval.getIntervalId(), 1, 9);
+			sharedString2
+				.getIntervalCollection("test")
+				.change(interval.getIntervalId(), { start: 1, end: 9 });
 			sharedString.removeRange(5, 7);
 			containerRuntimeFactory.processAllMessages();
 
@@ -795,7 +800,9 @@ describe("Undo/redo for string remove containing intervals", () => {
 			const interval = collection.add({ start: 6, end: 8 });
 			containerRuntimeFactory.processAllMessages();
 
-			sharedString2.getIntervalCollection("test").change(interval.getIntervalId(), 1, 3);
+			sharedString2
+				.getIntervalCollection("test")
+				.change(interval.getIntervalId(), { start: 1, end: 3 });
 			sharedString.removeRange(5, 7);
 			containerRuntimeFactory.processAllMessages();
 
@@ -819,7 +826,9 @@ describe("Undo/redo for string remove containing intervals", () => {
 			const interval = collection.add({ start: 4, end: 6 });
 			containerRuntimeFactory.processAllMessages();
 
-			sharedString2.getIntervalCollection("test").change(interval.getIntervalId(), 8, 9);
+			sharedString2
+				.getIntervalCollection("test")
+				.change(interval.getIntervalId(), { start: 8, end: 9 });
 			sharedString.removeRange(5, 7);
 			containerRuntimeFactory.processAllMessages();
 
@@ -1048,7 +1057,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 				);
 			});
 
-			collection.change(id, 2, 4);
+			collection.change(id, { start: 2, end: 4 });
 			sharedString.removeRange(0, 8);
 			revertSharedStringRevertibles(sharedString, revertibles.splice(0));
 
@@ -1071,7 +1080,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 				);
 			});
 
-			collection.change(id, 2, 9);
+			collection.change(id, { start: 2, end: 9 });
 			sharedString.removeRange(0, 8);
 			revertSharedStringRevertibles(sharedString, revertibles.splice(0));
 
@@ -1094,7 +1103,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 				);
 			});
 
-			collection.change(id, 9, 10);
+			collection.change(id, { start: 9, end: 10 });
 			sharedString.removeRange(0, 8);
 			revertSharedStringRevertibles(sharedString, revertibles.splice(0));
 
@@ -1118,7 +1127,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 			});
 
 			sharedString.removeRange(0, 8);
-			collection.change(id, 1, 2);
+			collection.change(id, { start: 1, end: 2 });
 			revertSharedStringRevertibles(sharedString, revertibles.splice(0));
 
 			assert.equal(sharedString.getText(), "hello world");
@@ -1139,7 +1148,7 @@ describe("Sequence.Revertibles with stickiness", () => {
 		containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 		dataStoreRuntime1 = new MockFluidDataStoreRuntime({ clientId: "1" });
-		dataStoreRuntime1.local = false;
+		dataStoreRuntime1.setAttachState(AttachState.Attached);
 		dataStoreRuntime1.options = {
 			intervalStickinessEnabled: true,
 			mergeTreeReferencesCanSlideToEndpoint: true,
@@ -1193,7 +1202,7 @@ describe("Sequence.Revertibles with stickiness", () => {
 				end: { pos: 5, side: Side.Before },
 			})
 			.getIntervalId();
-		collection.change(id, 1, 6);
+		collection.change(id, { start: 1, end: 6 });
 
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
 		assertSequenceIntervals(sharedString, collection, [{ start: 1, end: 6 }]);
@@ -1274,7 +1283,10 @@ describe("Sequence.Revertibles with stickiness", () => {
 				end: { pos: 5, side: Side.After },
 			})
 			.getIntervalId();
-		collection.change(id, { pos: 1, side: Side.Before }, { pos: 6, side: Side.Before });
+		collection.change(id, {
+			start: { pos: 1, side: Side.Before },
+			end: { pos: 6, side: Side.Before },
+		});
 
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
 		const int = collection.getIntervalById(id);

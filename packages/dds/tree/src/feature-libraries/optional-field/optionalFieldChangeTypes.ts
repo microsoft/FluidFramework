@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeAtomId } from "../../core";
-import { NodeChangeset } from "../modular-schema";
+import { ChangeAtomId } from "../../core/index.js";
+import { NodeChangeset } from "../modular-schema/index.js";
 
 /**
  * Uniquely identifies a register within the scope of this changeset.
@@ -14,6 +14,12 @@ import { NodeChangeset } from "../modular-schema";
  * See the model description in {@link OptionalChangeset} for more details.
  */
 export type RegisterId = ChangeAtomId | "self";
+
+export type Move = readonly [
+	src: RegisterId,
+	dst: RegisterId,
+	kind: "nodeTargeting" | "cellTargeting",
+];
 
 /**
  * Changes to an optional field.
@@ -37,7 +43,7 @@ export interface OptionalChangeset<TChildChange = NodeChangeset> {
 	 *
 	 * Rebasing logic should only generate moves whose `src` is an occupied register.
 	 */
-	moves: (readonly [src: RegisterId, dst: RegisterId, kind: "nodeTargeting" | "cellTargeting"])[];
+	moves: readonly Move[];
 
 	/**
 	 * Nested changes to nodes that occupy registers.

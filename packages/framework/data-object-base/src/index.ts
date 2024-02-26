@@ -12,4 +12,4 @@
 
 export { LazyLoadedDataObject } from "./lazyLoadedDataObject";
 export { LazyLoadedDataObjectFactory } from "./lazyLoadedDataObjectFactory";
-export { RuntimeFactory } from "./runtimeFactory";
+export { RuntimeFactory, type RuntimeFactoryProps } from "./runtimeFactory";

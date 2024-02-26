@@ -10,6 +10,7 @@ import {
 	MockEmptyDeltaConnection,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
+import { AttachState } from "@fluidframework/container-definitions";
 import { SharedMatrix, SharedMatrixFactory } from "../index";
 import { expectSize, setCorners, checkCorners } from "./utils";
 
@@ -26,8 +27,7 @@ async function summarize<T>(matrix: SharedMatrix<T>) {
 	const objectStorage = MockStorage.createFromSummary(matrix.getAttachSummary().summary);
 
 	// Create a local DataStoreRuntime since we only want to load the summary for a local client.
-	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	dataStoreRuntime.local = true;
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
 
 	// Load the summary into a newly created 2nd SharedMatrix.
 	const matrix2 = new SharedMatrix<T>(
@@ -57,7 +57,7 @@ async function summarize<T>(matrix: SharedMatrix<T>) {
 			let dataStoreRuntime1: MockFluidDataStoreRuntime;
 			let containerRuntimeFactory: MockContainerRuntimeFactory;
 
-			beforeEach(async () => {
+			beforeEach("createMatrices", async () => {
 				containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 				// Create and connect the first SharedMatrix.
@@ -208,10 +208,11 @@ async function summarize<T>(matrix: SharedMatrix<T>) {
 
 			let matrix: SharedMatrix;
 
-			beforeEach(async () => {
+			beforeEach("createMatrix", async () => {
 				// Create a SharedMatrix in local state.
-				const dataStoreRuntime = new MockFluidDataStoreRuntime();
-				dataStoreRuntime.local = true;
+				const dataStoreRuntime = new MockFluidDataStoreRuntime({
+					attachState: AttachState.Detached,
+				});
 				matrix = new SharedMatrix(
 					dataStoreRuntime,
 					"matrix1",

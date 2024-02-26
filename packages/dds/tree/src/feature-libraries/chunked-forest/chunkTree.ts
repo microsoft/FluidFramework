@@ -18,14 +18,14 @@ import {
 	StoredSchemaCollection,
 	LeafNodeStoredSchema,
 	ObjectNodeStoredSchema,
-} from "../../core";
-import { FullSchemaPolicy } from "../modular-schema";
-import { fail, getOrCreate } from "../../util";
-import { Multiplicity } from "../multiplicity";
-import { TreeChunk, tryGetChunk } from "./chunk";
-import { BasicChunk } from "./basicChunk";
-import { FieldShape, TreeShape, UniformChunk } from "./uniformChunk";
-import { SequenceChunk } from "./sequenceChunk";
+} from "../../core/index.js";
+import { FullSchemaPolicy } from "../modular-schema/index.js";
+import { fail, getOrCreate } from "../../util/index.js";
+import { Multiplicity } from "../multiplicity.js";
+import { TreeChunk, tryGetChunk } from "./chunk.js";
+import { BasicChunk } from "./basicChunk.js";
+import { FieldShape, TreeShape, UniformChunk } from "./uniformChunk.js";
+import { SequenceChunk } from "./sequenceChunk.js";
 
 export interface Disposable {
 	/**

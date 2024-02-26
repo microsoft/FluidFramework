@@ -12,7 +12,6 @@ import {
 	IChannelFactory,
 	IChannelAttributes,
 	IChannelServices,
-	IChannel,
 } from '@fluidframework/datastore-definitions';
 import { AttachState } from '@fluidframework/container-definitions';
 import {
@@ -30,9 +29,9 @@ import {
 	createSampledLogger,
 	IEventSampler,
 } from '@fluidframework/telemetry-utils';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { fail, copyPropertyIfDefined, RestOrArray, unwrapRestOrArray } from './Common';
-import { EditHandle, EditLog, OrderedEditSet } from './EditLog';
+import { ISummaryTreeWithStats, ITelemetryContext } from '@fluidframework/runtime-definitions';
+import { fail, copyPropertyIfDefined, RestOrArray, unwrapRestOrArray } from './Common.js';
+import { EditHandle, EditLog, OrderedEditSet } from './EditLog.js';
 import {
 	EditId,
 	NodeId,
@@ -42,8 +41,8 @@ import {
 	isDetachedSequenceId,
 	AttributionId,
 	SessionId,
-} from './Identifiers';
-import { initialTree } from './InitialTree';
+} from './Identifiers.js';
+import { initialTree } from './InitialTree.js';
 import {
 	CachingLogViewer,
 	EditCacheEntry,
@@ -51,9 +50,9 @@ import {
 	LogViewer,
 	SequencedEditResult,
 	SequencedEditResultCallback,
-} from './LogViewer';
-import { deserialize, getSummaryStatistics } from './SummaryBackCompatibility';
-import { ReconciliationPath } from './ReconciliationPath';
+} from './LogViewer.js';
+import { deserialize, getSummaryStatistics } from './SummaryBackCompatibility.js';
+import { ReconciliationPath } from './ReconciliationPath.js';
 import {
 	BuildNodeInternal,
 	ChangeInternal,
@@ -78,8 +77,8 @@ import {
 	WriteFormat,
 	TreeNodeSequence,
 	InternalizedChange,
-} from './persisted-types';
-import { serialize, SummaryContents } from './Summary';
+} from './persisted-types/index.js';
+import { serialize, SummaryContents } from './Summary.js';
 import {
 	areRevisionViewsSemanticallyEqual,
 	convertTreeNodes,
@@ -88,18 +87,18 @@ import {
 	internalizeBuildNode,
 	newEditId,
 	walkTree,
-} from './EditUtilities';
-import { getNodeIdContext, NodeIdContext, NodeIdNormalizer } from './NodeIdUtilities';
-import { SharedTreeDiagnosticEvent, SharedTreeEvent } from './EventTypes';
-import { RevisionView } from './RevisionView';
-import { SharedTreeEncoder_0_0_2, SharedTreeEncoder_0_1_1 } from './SharedTreeEncoder';
-import { revert } from './HistoryEditFactory';
-import { BuildNode, BuildTreeNode, Change, ChangeType } from './ChangeTypes';
-import { TransactionInternal } from './TransactionInternal';
-import { IdCompressor, createSessionId } from './id-compressor';
-import { convertEditIds } from './IdConversion';
-import { MutableStringInterner } from './StringInterner';
-import { nilUuid } from './UuidUtilities';
+} from './EditUtilities.js';
+import { getNodeIdContext, NodeIdContext, NodeIdNormalizer } from './NodeIdUtilities.js';
+import { SharedTreeDiagnosticEvent, SharedTreeEvent } from './EventTypes.js';
+import { RevisionView } from './RevisionView.js';
+import { SharedTreeEncoder_0_0_2, SharedTreeEncoder_0_1_1 } from './SharedTreeEncoder.js';
+import { revert } from './HistoryEditFactory.js';
+import { BuildNode, BuildTreeNode, Change, ChangeType } from './ChangeTypes.js';
+import { TransactionInternal } from './TransactionInternal.js';
+import { IdCompressor, createSessionId } from './id-compressor/index.js';
+import { convertEditIds } from './IdConversion.js';
+import { MutableStringInterner } from './StringInterner.js';
+import { nilUuid } from './UuidUtilities.js';
 
 /**
  * The write format and associated options used to construct a `SharedTree`
@@ -246,7 +245,7 @@ export class SharedTreeFactory implements IChannelFactory {
 		id: string,
 		services: IChannelServices,
 		_channelAttributes: Readonly<IChannelAttributes>
-	): Promise<IChannel> {
+	): Promise<SharedTree> {
 		const sharedTree = this.createSharedTree(runtime, id);
 		await sharedTree.load(services);
 		return sharedTree;
@@ -738,6 +737,32 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	}
 
 	/**
+	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).getAttachSummary}
+	 */
+	public override getAttachSummary(
+		fullTree?: boolean | undefined,
+		trackState?: boolean | undefined,
+		telemetryContext?: ITelemetryContext | undefined
+	): ISummaryTreeWithStats {
+		// If local changes exist, emulate the sequencing of those changes.
+		// Doing so is necessary so edits created during DataObject.initializingFirstTime are included.
+		// Doing so is safe because it is guaranteed that the DDS has not yet been attached. This is because summary creation is only
+		// ever invoked on a DataObject containing local changes when it is attached for the first time. In post-attach flows, an extra
+		// instance of the DataObject is created for generating summaries and will never have local edits.
+		if (this.editLog.numberOfLocalEdits > 0) {
+			if (this.writeFormat === WriteFormat.v0_1_1) {
+				// Since we're the first client to attach, we can safely finalize ourselves since we're the only ones who have made IDs.
+				this.idCompressor.finalizeCreationRange(this.idCompressor.takeNextCreationRange());
+				for (const edit of this.editLog.getLocalEdits()) {
+					this.internStringsFromEdit(edit);
+				}
+			}
+			this.editLog.sequenceLocalEdits();
+		}
+		return super.getAttachSummary(fullTree, trackState, telemetryContext);
+	}
+
+	/**
 	 * Saves this SharedTree into a serialized summary. This is used for testing.
 	 *
 	 * @param summarizer - Optional summarizer to use. If not passed in, SharedTree's summarizer is used.
@@ -761,26 +786,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * Saves this SharedTree into a deserialized summary.
 	 */
 	public saveSummary(): SharedTreeSummaryBase {
-		// If local changes exist, emulate the sequencing of those changes.
-		// Doing so is necessary so edits created during DataObject.initializingFirstTime are included.
-		// Doing so is safe because it is guaranteed that the DDS has not yet been attached. This is because summary creation is only
-		// ever invoked on a DataObject containing local changes when it is attached for the first time. In post-attach flows, an extra
-		// instance of the DataObject is created for generating summaries and will never have local edits.
-		if (this.editLog.numberOfLocalEdits > 0) {
-			assert(
-				!this.isAttached(),
-				0x62e /* Summarizing should not occur with local edits except on first attach. */
-			);
-			if (this.writeFormat === WriteFormat.v0_1_1) {
-				// Since we're the first client to attach, we can safely finalize ourselves since we're the only ones who have made IDs.
-				this.idCompressor.finalizeCreationRange(this.idCompressor.takeNextCreationRange());
-				for (const edit of this.editLog.getLocalEdits()) {
-					this.internStringsFromEdit(edit);
-				}
-			}
-			this.editLog.sequenceLocalEdits();
-		}
-
 		assert(this.editLog.numberOfLocalEdits === 0, 0x62f /* generateSummary must not be called with local edits */);
 		return this.generateSummary();
 	}
@@ -1061,26 +1066,12 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		// TODO:Type Safety: Improve type safety around op sending/parsing (e.g. discriminated union over version field somehow)
 		switch (op.version) {
 			case WriteFormat.v0_0_2:
-				return this.encoder_0_0_2.decodeEditOp(op, this.encodeSemiSerializedEdit.bind(this), this);
+				return this.encoder_0_0_2.decodeEditOp(op, (x) => x, this);
 			case WriteFormat.v0_1_1:
-				return this.encoder_0_1_1.decodeEditOp(
-					op,
-					this.encodeSemiSerializedEdit.bind(this),
-					this.idNormalizer,
-					this.interner
-				);
+				return this.encoder_0_1_1.decodeEditOp(op, (x) => x, this.idNormalizer, this.interner);
 			default:
 				fail('Unknown op version');
 		}
-	}
-
-	private encodeSemiSerializedEdit<T>(semiSerializedEdit: Edit<T>): Edit<T> {
-		// semiSerializedEdit may have handles which have been replaced by `serializer.encode`.
-		// Since there is no API to un-replace them except via parse, re-stringify the edit, then parse it.
-		// Stringify using JSON, not IFluidSerializer since OPs use JSON directly.
-		// TODO:Performance:#48025: Avoid this serialization round trip.
-		const encodedEdit: Edit<T> = this.serializer.parse(JSON.stringify(semiSerializedEdit));
-		return encodedEdit;
 	}
 
 	private processSequencedEdit(edit: Edit<ChangeInternal>, message: ISequencedDocumentMessage): void {
@@ -1375,13 +1366,13 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		if (this.isAttached()) {
 			switch (this.writeFormat) {
 				case WriteFormat.v0_0_2:
-					this.submitOp(this.encoder_0_0_2.encodeEditOp(edit, this.serializeEdit.bind(this), this));
+					this.submitOp(this.encoder_0_0_2.encodeEditOp(edit, (x) => x, this));
 					break;
 				case WriteFormat.v0_1_1:
 					this.submitOp(
 						this.encoder_0_1_1.encodeEditOp(
 							edit,
-							this.serializeEdit.bind(this),
+							(x) => x,
 							this.idCompressor.takeNextCreationRange(),
 							this.idNormalizer,
 							this.interner
@@ -1392,10 +1383,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 					fail('Unknown version');
 			}
 		}
-	}
-
-	private serializeEdit<TChange>(preparedEdit: Edit<TChange>): Edit<TChange> {
-		return this.serializer.encode(preparedEdit, this.handle) as Edit<TChange>;
 	}
 
 	/** A type-safe `submitLocalMessage` wrapper to enforce op format */
@@ -1416,12 +1403,11 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * When closing a container, hosts have the option to stash this pending local state somewhere to be reapplied
 	 * later (to avoid data loss).
 	 * If a host then loads a container using that stashed state, this function is called for each stashed op, and is expected to:
-	 * 1. Update this DDS to reflect that state locally.
-	 * 2. Return any `localOpMetadata` that would have been associated with this op.
+	 * Update this DDS to reflect that state locally, and submit the op to do that.
 	 *
 	 * @param content - op to apply locally.
 	 */
-	protected applyStashedOp(op: unknown): StashedLocalOpMetadata {
+	protected applyStashedOp(op: unknown): void {
 		// In some scenarios, edit ops need to have their edits transformed before application and resubmission. The transformation
 		// occurs in this method, and the result is passed to `resubmitCore` via the return value of this function.
 		const sharedTreeOp = op as SharedTreeOp | SharedTreeOp_0_0_2;
@@ -1486,7 +1472,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 
 								stashedEdit = this.encoder_0_1_1.decodeEditOp(
 									sharedTreeOp,
-									this.encodeSemiSerializedEdit.bind(this),
+									(x) => x,
 									normalizer,
 									this.interner
 								);
@@ -1499,14 +1485,14 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 					default:
 						fail('Unknown version');
 				}
-				this.applyEditLocally(stashedEdit, undefined);
-				return { transformedEdit: stashedEdit };
+				this.applyEditInternal(stashedEdit);
+				return;
 			}
 			// Handle and update ops are only acknowledged by the client that generated them upon sequencing--no local changes necessary.
 			case SharedTreeOpType.Handle:
 			case SharedTreeOpType.Update:
 			case SharedTreeOpType.NoOp:
-				return {};
+				return;
 			default:
 				fail('Unrecognized op');
 		}

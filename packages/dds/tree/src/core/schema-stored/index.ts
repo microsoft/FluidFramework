@@ -21,16 +21,16 @@ export {
 	encodeFieldSchema,
 	storedSchemaDecodeDispatcher,
 	ErasedTreeNodeSchemaDataFormat,
-} from "./schema";
+} from "./schema.js";
 export {
 	TreeStoredSchemaSubscription,
 	MutableTreeStoredSchema,
 	TreeStoredSchemaRepository,
 	schemaDataIsEmpty,
 	SchemaEvents,
-} from "./storedSchemaRepository";
+} from "./storedSchemaRepository.js";
 
-export { TreeNodeSchemaIdentifier, FieldKey, FieldKindIdentifier } from "./format";
+export { TreeNodeSchemaIdentifier, FieldKey, FieldKindIdentifier } from "./format.js";
 
-import * as schemaFormat from "./format";
+import * as schemaFormat from "./format.js";
 export { schemaFormat };

@@ -12,7 +12,7 @@ import {
 	IConsensusRegisterCollection,
 } from "@fluidframework/register-collection";
 
-import type { IMigrationTool } from "../migrationInterfaces";
+import type { IMigrationTool, MigrationState } from "../migrationInterfaces/index.js";
 
 const pactMapKey = "pact-map";
 const crcKey = "crc";
@@ -50,7 +50,7 @@ export class MigrationTool extends DataObject implements IMigrationTool {
 		return this._taskManager;
 	}
 
-	public get migrationState() {
+	public get migrationState(): MigrationState {
 		if (this.newContainerId !== undefined) {
 			return "migrated";
 		} else if (this.acceptedVersion !== undefined) {

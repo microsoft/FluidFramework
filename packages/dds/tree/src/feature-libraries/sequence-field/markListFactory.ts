@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { sequenceConfig } from "./config";
-import { isVestigialEndpoint } from "./helperTypes";
-import { Mark, MarkList } from "./types";
-import { isNoopMark, isTombstone, tryMergeMarks as tryMergeMarks } from "./utils";
+import { sequenceConfig } from "./config.js";
+import { Mark, MarkList } from "./types.js";
+import { isNoopMark, isTombstone, tryMergeMarks as tryMergeMarks } from "./utils.js";
 
 /**
  * Helper class for constructing an offset list of marks that...
@@ -35,12 +34,7 @@ export class MarkListFactory<TNodeChange> {
 		if (isTombstone(mark) && sequenceConfig.cellOrdering !== "Tombstone") {
 			return;
 		}
-		if (
-			isNoopMark(mark) &&
-			mark.changes === undefined &&
-			!isVestigialEndpoint(mark) &&
-			!isTombstone(mark)
-		) {
+		if (isNoopMark(mark) && mark.changes === undefined && !isTombstone(mark)) {
 			this.pushOffset(mark.count);
 			return;
 		}

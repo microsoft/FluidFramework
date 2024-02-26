@@ -4,6 +4,8 @@
  */
 
 import { strict as assert } from "assert";
+// TODO:AB#6558: This should be provided based on the compatibility configuration.
+// eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import { SharedMap } from "@fluidframework/map";
 import {
 	ITestFluidObject,
@@ -32,7 +34,7 @@ describeInstallVersions(
 	let provider: ITestObjectProvider;
 	let oldMap: SharedMap;
 	let newMap: SharedMap;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 	afterEach(async () => provider.reset());

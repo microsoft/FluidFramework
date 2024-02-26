@@ -4,12 +4,13 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { SequenceField as SF } from "../../../feature-libraries";
+import { SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { isNewAttach } from "../../../feature-libraries/sequence-field/utils";
-import { brand } from "../../../util";
-import { ChangeAtomId, ChangesetLocalId, mintRevisionTag, RevisionTag } from "../../../core";
-import { TestChange } from "../../testChange";
+import { isNewAttach } from "../../../feature-libraries/sequence-field/utils.js";
+import { brand } from "../../../util/index.js";
+import { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../../../core/index.js";
+import { TestChange } from "../../testChange.js";
+import { mintRevisionTag } from "../../utils.js";
 
 const tag: RevisionTag = mintRevisionTag();
 
@@ -20,7 +21,7 @@ export const cases: {
 	insert: TestChangeset;
 	modify: TestChangeset;
 	modify_insert: TestChangeset;
-	delete: TestChangeset;
+	remove: TestChangeset;
 	revive: TestChangeset;
 	pin: TestChangeset;
 	move: TestChangeset;
@@ -34,14 +35,14 @@ export const cases: {
 		createSkipMark(1),
 		createInsertMark(1, brand(1), { changes: TestChange.mint([], 2) }),
 	],
-	delete: createDeleteChangeset(1, 3),
+	remove: createRemoveChangeset(1, 3),
 	revive: createReviveChangeset(2, 2, { revision: tag, localId: brand(0) }),
 	pin: [createPinMark(4, brand(0))],
 	move: createMoveChangeset(1, 2, 4),
 	return: createReturnChangeset(1, 3, 0, { revision: tag, localId: brand(0) }),
 	transient_insert: [
 		{ count: 1 },
-		createAttachAndDetachMark(createInsertMark(2, brand(1)), createDeleteMark(2, brand(2))),
+		createAttachAndDetachMark(createInsertMark(2, brand(1)), createRemoveMark(2, brand(2))),
 	],
 };
 
@@ -53,12 +54,12 @@ function createInsertChangeset(
 	return SF.sequenceFieldEditor.insert(index, count, id ?? brand(0));
 }
 
-function createDeleteChangeset(
+function createRemoveChangeset(
 	startIndex: number,
 	size: number,
 	id?: ChangesetLocalId,
 ): SF.Changeset<never> {
-	return SF.sequenceFieldEditor.delete(startIndex, size, id ?? brand(0));
+	return SF.sequenceFieldEditor.remove(startIndex, size, id ?? brand(0));
 }
 
 function createRedundantRemoveChangeset(
@@ -66,7 +67,7 @@ function createRedundantRemoveChangeset(
 	size: number,
 	detachEvent: ChangeAtomId,
 ): SF.Changeset<never> {
-	const changeset = createDeleteChangeset(index, size);
+	const changeset = createRemoveChangeset(index, size);
 	changeset[changeset.length - 1].cellId = detachEvent;
 	return changeset;
 }
@@ -188,19 +189,19 @@ function createPinMark<TChange = never>(
 }
 
 /**
- * @param count - The number of nodes to delete.
+ * @param count - The number of nodes to remove.
  * @param markId - The id to associate with the mark.
  * Defines how later edits refer the emptied cells.
  * @param overrides - Any additional properties to add to the mark.
  */
-function createDeleteMark<TChange = never>(
+function createRemoveMark<TChange = never>(
 	count: number,
 	markId: ChangesetLocalId | ChangeAtomId,
-	overrides?: Partial<SF.CellMark<SF.Delete, TChange>>,
-): SF.CellMark<SF.Delete, TChange> {
+	overrides?: Partial<SF.CellMark<SF.Remove, TChange>>,
+): SF.CellMark<SF.Remove, TChange> {
 	const cellId: ChangeAtomId = typeof markId === "object" ? markId : { localId: markId };
-	const mark: SF.CellMark<SF.Delete, TChange> = {
-		type: "Delete",
+	const mark: SF.CellMark<SF.Remove, TChange> = {
+		type: "Remove",
 		count,
 		id: cellId.localId,
 	};
@@ -374,7 +375,7 @@ export const MarkMaker = {
 	skip: createSkipMark,
 	tomb: createTomb,
 	pin: createPinMark,
-	delete: createDeleteMark,
+	remove: createRemoveMark,
 	modify: createModifyMark,
 	move: createMoveMarks,
 	moveOut: createMoveOutMark,
@@ -385,7 +386,7 @@ export const MarkMaker = {
 
 export const ChangeMaker = {
 	insert: createInsertChangeset,
-	delete: createDeleteChangeset,
+	remove: createRemoveChangeset,
 	redundantRemove: createRedundantRemoveChangeset,
 	revive: createReviveChangeset,
 	redundantRevive: createRedundantReviveChangeset,

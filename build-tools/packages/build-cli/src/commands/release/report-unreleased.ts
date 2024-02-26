@@ -8,7 +8,7 @@ import * as fs from "node:fs/promises";
 import { Flags } from "@oclif/core";
 import { Logger } from "@fluidframework/build-tools";
 import { BaseCommand } from "../../base";
-import { PackageVersionList } from "../../lib";
+import { PackageVersionList } from "../../library";
 import { isInternalVersionRange } from "@fluid-tools/version-tools";
 
 // Define the interface for build details

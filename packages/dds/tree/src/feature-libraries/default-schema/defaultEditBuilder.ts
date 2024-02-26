@@ -4,13 +4,12 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { OptionalChangeset } from "../optional-field";
-import { ICodecFamily, ICodecOptions } from "../../codec";
+import { OptionalChangeset } from "../optional-field/index.js";
+import { ICodecFamily, ICodecOptions } from "../../codec/index.js";
 import {
 	ChangeFamily,
 	ChangeRebaser,
 	UpPath,
-	ITreeCursor,
 	ChangeFamilyEditor,
 	FieldUpPath,
 	compareFieldUpPaths,
@@ -19,8 +18,12 @@ import {
 	DeltaRoot,
 	ChangesetLocalId,
 	DeltaDetachedNodeId,
-} from "../../core";
-import { brand, isReadonlyArray } from "../../util";
+	ChangeEncodingContext,
+	RevisionTagCodec,
+	CursorLocationType,
+	ITreeCursorSynchronous,
+} from "../../core/index.js";
+import { brand } from "../../util/index.js";
 import {
 	ModularChangeFamily,
 	ModularEditBuilder,
@@ -30,9 +33,10 @@ import {
 	intoDelta as intoModularDelta,
 	relevantRemovedRoots as relevantModularRemovedRoots,
 	EditDescription,
-} from "../modular-schema";
-import { RevisionTagCodec } from "../../shared-tree-core";
-import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds";
+} from "../modular-schema/index.js";
+import { FieldBatchCodec } from "../chunked-forest/index.js";
+import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
+import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds.js";
 
 export type DefaultChangeset = ModularChangeset;
 
@@ -44,11 +48,18 @@ export type DefaultChangeset = ModularChangeset;
 export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, DefaultChangeset> {
 	private readonly modularFamily: ModularChangeFamily;
 
-	public constructor(codecOptions: ICodecOptions) {
+	public constructor(
+		revisionTagCodec: RevisionTagCodec,
+		fieldBatchCodec: FieldBatchCodec,
+		codecOptions: ICodecOptions,
+		chunkCompressionStrategy?: TreeCompressionStrategy,
+	) {
 		this.modularFamily = new ModularChangeFamily(
 			fieldKinds,
-			new RevisionTagCodec(),
+			revisionTagCodec,
+			fieldBatchCodec,
 			codecOptions,
+			chunkCompressionStrategy,
 		);
 	}
 
@@ -56,7 +67,7 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
 		return this.modularFamily.rebaser;
 	}
 
-	public get codecs(): ICodecFamily<DefaultChangeset> {
+	public get codecs(): ICodecFamily<DefaultChangeset, ChangeEncodingContext> {
 		return this.modularFamily.codecs;
 	}
 
@@ -94,6 +105,21 @@ export function relevantRemovedRoots(
 
 /**
  * Default editor for transactional tree data changes.
+ * @privateRemarks
+ * When taking into account not just the content of the tree,
+ * but also how the merge identities (and thus anchors, flex-tree and simple-tree nodes) of nodes before and after the edits correspond,
+ * some edits are currently impossible to express.
+ * Examples of these non-expressible edits include:
+ *
+ * - Changing the type of a node while keeping its merge identity.
+ * - Changing the value of a leaf while keeping its merge identity.
+ * - Swapping subtrees between two value fields.
+ * - Replacing a node in the middle of a tree while reusing some of the old nodes decedents that were under value fields.
+ *
+ * At some point it will likely be worth supporting at least some of these, possibly using a mechanism that could support all of them if desired.
+ * If/when such a mechanism becomes available, an evaluation should be done to determine if any existing editing operations should be changed to leverage it
+ * (Possibly by adding opt ins at the view schema layer).
+ *
  * @internal
  */
 export interface IDefaultEditBuilder {
@@ -167,10 +193,10 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 
 	public valueField(field: FieldUpPath): ValueFieldEditBuilder {
 		return {
-			set: (newContent: ITreeCursor): void => {
+			set: (newContent: ITreeCursorSynchronous): void => {
 				const fillId = this.modularBuilder.generateId();
 
-				const build = this.modularBuilder.buildTrees(fillId, [newContent]);
+				const build = this.modularBuilder.buildTrees(fillId, newContent);
 				const change: FieldChangeset = brand(
 					valueFieldKind.changeHandler.editor.set({
 						fill: fillId,
@@ -191,14 +217,14 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 
 	public optionalField(field: FieldUpPath): OptionalFieldEditBuilder {
 		return {
-			set: (newContent: ITreeCursor | undefined, wasEmpty: boolean): void => {
+			set: (newContent: ITreeCursorSynchronous | undefined, wasEmpty: boolean): void => {
 				const detachId = this.modularBuilder.generateId();
 				let fillId: ChangesetLocalId | undefined;
 				const edits: EditDescription[] = [];
 				let optionalChange: OptionalChangeset;
 				if (newContent !== undefined) {
 					fillId = this.modularBuilder.generateId();
-					const build = this.modularBuilder.buildTrees(fillId, [newContent]);
+					const build = this.modularBuilder.buildTrees(fillId, newContent);
 					edits.push(build);
 
 					optionalChange = optional.changeHandler.editor.set(wasEmpty, {
@@ -306,9 +332,9 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 
 	public sequenceField(field: FieldUpPath): SequenceFieldEditBuilder {
 		return {
-			insert: (index: number, newContent: ITreeCursor | readonly ITreeCursor[]): void => {
-				const content = isReadonlyArray(newContent) ? newContent : [newContent];
-				const length = content.length;
+			insert: (index: number, content: ITreeCursorSynchronous): void => {
+				const length =
+					content.mode === CursorLocationType.Fields ? content.getFieldLength() : 1;
 				if (length === 0) {
 					return;
 				}
@@ -331,13 +357,13 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					brand((firstId as number) + length - 1),
 				);
 			},
-			delete: (index: number, count: number): void => {
+			remove: (index: number, count: number): void => {
 				if (count === 0) {
 					return;
 				}
 				const id = this.modularBuilder.generateId(count);
 				const change: FieldChangeset = brand(
-					sequence.changeHandler.editor.delete(index, count, id),
+					sequence.changeHandler.editor.remove(index, count, id),
 				);
 				this.modularBuilder.submitChange(field, sequence.identifier, change);
 			},
@@ -361,9 +387,10 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 export interface ValueFieldEditBuilder {
 	/**
 	 * Issues a change which replaces the current newContent of the field with `newContent`.
-	 * @param newContent - the new content for the field. Must be in Nodes mode.
+	 * @param newContent - the new content for the field.
+	 * The cursor can be in either Field or Node mode and must represent exactly one node.
 	 */
-	set(newContent: ITreeCursor): void;
+	set(newContent: ITreeCursorSynchronous): void;
 }
 
 /**
@@ -372,10 +399,11 @@ export interface ValueFieldEditBuilder {
 export interface OptionalFieldEditBuilder {
 	/**
 	 * Issues a change which replaces the current newContent of the field with `newContent`
-	 * @param newContent - the new content for the field. Must be in Nodes mode.
+	 * @param newContent - the new content for the field.
+	 * If provided, the cursor can be in either Field or Node mode and must represent exactly one node.
 	 * @param wasEmpty - whether the field is empty when creating this change
 	 */
-	set(newContent: ITreeCursor | undefined, wasEmpty: boolean): void;
+	set(newContent: ITreeCursorSynchronous | undefined, wasEmpty: boolean): void;
 }
 
 /**
@@ -385,16 +413,16 @@ export interface SequenceFieldEditBuilder {
 	/**
 	 * Issues a change which inserts the `newContent` at the given `index`.
 	 * @param index - the index at which to insert the `newContent`.
-	 * @param newContent - the new content to be inserted in the field. Cursors must be in Nodes mode.
+	 * @param newContent - the new content to be inserted in the field. Cursor can be in either Field or Node mode.
 	 */
-	insert(index: number, newContent: ITreeCursor | readonly ITreeCursor[]): void;
+	insert(index: number, newContent: ITreeCursorSynchronous): void;
 
 	/**
-	 * Issues a change which deletes `count` elements starting at the given `index`.
-	 * @param index - The index of the first deleted element.
-	 * @param count - The number of elements to delete.
+	 * Issues a change which removes `count` elements starting at the given `index`.
+	 * @param index - The index of the first removed element.
+	 * @param count - The number of elements to remove.
 	 */
-	delete(index: number, count: number): void;
+	remove(index: number, count: number): void;
 
 	/**
 	 * Issues a change which moves `count` elements starting at `sourceIndex` to `destIndex`.

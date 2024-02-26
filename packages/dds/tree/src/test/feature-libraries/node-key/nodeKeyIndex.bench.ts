@@ -11,8 +11,8 @@ import { strict as assert, fail } from "assert";
 import { benchmark, BenchmarkTimer, BenchmarkType } from "@fluid-tools/benchmark";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { IsoBuffer } from "@fluid-internal/client-utils";
-import { ISharedTree, ISharedTreeView, TreeContent } from "../../../shared-tree";
-import { ITestTreeProvider, treeWithContent } from "../../utils";
+import { ISharedTree, ISharedTreeView, TreeContent } from "../../../shared-tree/index.js";
+import { ITestTreeProvider, treeWithContent } from "../../utils.js";
 import {
 	SequenceFieldEditBuilder,
 	singleTextCursor,
@@ -26,22 +26,22 @@ import {
 	TreeContext,
 	SchemaAware,
 	typeNameSymbol,
-} from "../../../feature-libraries";
-import { rootFieldKey, ITreeCursor, moveToDetachedField, JsonableTree } from "../../../core";
-import { nodeKeyField, nodeKeySchema, nodeKeyTreeSchema } from "../../../domains";
-import { brand } from "../../../util";
-import { ApiMode } from "../../../feature-libraries/schema-aware";
+} from "../../../feature-libraries/index.js";
+import { rootFieldKey, ITreeCursor, moveToDetachedField, JsonableTree } from "../../../core/index.js";
+import { nodeKeyField, nodeKeySchema, nodeKeyTreeSchema } from "../../../domains/index.js";
+import { brand } from "../../../util/index.js";
+import { ApiMode } from "../../../feature-libraries/schema-aware.js";
 
 const builder = new SchemaBuilder("node key index benchmarks", {}, nodeKeySchema);
 const nodeSchema = builder.object("node", {
-	// child: TreeFieldSchema.createUnsafe(
+	// child: FlexFieldSchema.createUnsafe(
 	// 	FieldKinds.optional,
 	// 	[() => nodeSchema,	() => nodeWithKeySchema],
 	// ),
 });
 const nodeWithKeySchema = builder.object("nodeWithKey", {
 	...nodeKeyField,
-	// child: TreeFieldSchema.createUnsafe(
+	// child: FlexFieldSchema.createUnsafe(
 	// 	FieldKinds.optional,
 	// 	[() => nodeWithKeySchema, () => nodeSchema],
 	// ),

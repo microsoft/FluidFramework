@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IdCompressor, isFinalId } from './id-compressor';
-import { FinalNodeId, NodeId, OpSpaceNodeId, SessionId, StableNodeId } from './Identifiers';
-import { NodeData } from './persisted-types';
-import { assertWithMessage } from './Common';
+import { IdCompressor, isFinalId } from './id-compressor/index.js';
+import { FinalNodeId, NodeId, OpSpaceNodeId, SessionId, StableNodeId } from './Identifiers.js';
+import { NodeData } from './persisted-types/index.js';
+import { assertWithMessage } from './Common.js';
 
 /**
  * An object which can generate node IDs and convert node IDs between compressed and stable variants

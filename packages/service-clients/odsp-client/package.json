@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/odsp-client",
-	"version": "2.0.0-rc.1.0.0",
+	"version": "2.0.0-rc.2.0.0",
 	"description": "A tool to enable creation and loading of Fluid containers using the ODSP service",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -88,7 +88,7 @@
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
-		"test:mocha": "mocha --ignore \"dist/test/types/*\" --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup --exit --timeout 10000",
+		"test:mocha": "mocha --ignore \"dist/test/types/*\" --recursive dist/test -r node_modules/@fluid-internal/mocha-test-setup --exit --timeout 10000",
 		"tsc": "tsc"
 	},
 	"c8": {
@@ -122,21 +122,22 @@
 		"@fluidframework/odsp-doclib-utils": "workspace:~",
 		"@fluidframework/odsp-driver": "workspace:~",
 		"@fluidframework/odsp-driver-definitions": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.1.0-223007",
+		"@fluidframework/protocol-definitions": "^3.2.0-237840",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
-		"@fluid-tools/build-cli": "0.29.0-222379",
+		"@fluid-internal/mocha-test-setup": "workspace:~",
+		"@fluid-tools/build-cli": "^0.34.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.29.0-222379",
-		"@fluidframework/eslint-config-fluid": "^3.1.0",
-		"@fluidframework/mocha-test-setup": "workspace:~",
+		"@fluidframework/build-tools": "^0.34.0",
+		"@fluidframework/eslint-config-fluid": "^3.5.0",
 		"@fluidframework/test-utils": "workspace:~",
-		"@microsoft/api-extractor": "^7.38.3",
+		"@microsoft/api-extractor": "^7.39.1",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
+		"@types/uuid": "^9.0.2",
 		"c8": "^8.0.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",

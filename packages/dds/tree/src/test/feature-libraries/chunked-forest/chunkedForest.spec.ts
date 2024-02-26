@@ -5,7 +5,7 @@
 
 // Allow importing from this specific file which is being tested:
 // eslint-disable-next-line import/no-internal-modules
-import { buildChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest";
+import { buildChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest.js";
 import {
 	IChunker,
 	makeTreeChunker,
@@ -15,11 +15,11 @@ import {
 	defaultChunkPolicy,
 	tryShapeFromSchema,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/chunked-forest/chunkTree";
+} from "../../../feature-libraries/chunked-forest/chunkTree.js";
 
-import { TreeStoredSchemaSubscription } from "../../../core";
-import { defaultSchemaPolicy } from "../../../feature-libraries";
-import { testForest } from "../../forestTestSuite";
+import { TreeStoredSchemaSubscription } from "../../../core/index.js";
+import { defaultSchemaPolicy } from "../../../feature-libraries/index.js";
+import { testForest } from "../../forestTestSuite.js";
 
 const chunkers: [string, (schema: TreeStoredSchemaSubscription) => IChunker][] = [
 	[

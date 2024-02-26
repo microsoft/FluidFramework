@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { extensionMessageSource } from "./Constants";
+export { extensionViewMessageSource, extensionPopupMessageSource } from "./Constants";
 export type {
 	DevToolsInitMessageData,
 	DevToolsInitMessage,

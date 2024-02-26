@@ -4,9 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { MemoizedIdRangeAllocator } from "../../feature-libraries";
-import { ChangesetLocalId, RevisionTag, mintRevisionTag } from "../../core";
-import { brand } from "../../util";
+import { MemoizedIdRangeAllocator } from "../../feature-libraries/index.js";
+import { ChangesetLocalId, RevisionTag } from "../../core/index.js";
+import { brand } from "../../util/index.js";
+import { mintRevisionTag } from "../utils.js";
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();

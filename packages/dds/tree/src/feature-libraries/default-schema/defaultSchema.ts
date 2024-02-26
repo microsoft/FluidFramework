@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { FullSchemaPolicy } from "../modular-schema";
-import { fieldKinds } from "./defaultFieldKinds";
+import { FullSchemaPolicy } from "../modular-schema/index.js";
+import { fieldKinds } from "./defaultFieldKinds.js";
 
 /**
  * FullSchemaPolicy with the default field kinds.

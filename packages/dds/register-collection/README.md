@@ -13,19 +13,13 @@ When taking a dependency on a Fluid Framework library, we recommend using a `^` 
 While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
 library consumers should always prefer `^`.
 
-Note that when depending on a library version of the form `2.0.0-internal.x.y.z`, called the Fluid internal version scheme,
-you must use a `>= <` dependency range (such as `>=2.0.0-internal.x.y.z <2.0.0-internal.w.0.0` where `w` is `x+1`).
-Standard `^` and `~` ranges will not work as expected.
-See the [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/version-tools/README.md)
-package for more information including tools to convert between version schemes.
-
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
 
 ### Detecting concurrency in Fluid
 
-In distributed systems literaure, detecting conucurrency requires some form of logical/phsical clock. A popular technique used in replicated databases such as dynamodb is called version vectors where each key stores a collection of `[time, value]` tuples. `time` is essentially a reference clock used to decide concurrency amongst updates. Each update to a key includes the `time`, essentially to indicate how `caught up` the replica was during that update.
+In distributed systems literaure, detecting concurrency requires some form of logical/phsical clock. A popular technique used in replicated databases such as dynamodb is called version vectors where each key stores a collection of `[time, value]` tuples. `time` is essentially a reference clock used to decide concurrency amongst updates. Each update to a key includes the `time`, essentially to indicate how `caught up` the replica was during that update.
 
 In Fluid, each operation contains a referenceSequenceNumber (`refSeq`), which essenially refers to how caught up the client was (in terms of sequence number) during that update. We can use this property to implement a similar concurreny model. Mathematically, if an update has a `refSeq N`, it can overwrite/discard any other prior values with `sequenceNumber (seq) <= N`. It is safe to do so because the client must have seen all those updates before posting it's own update. Hence this update is not concurrent with those overwritten updates. However, the update is still concurrent with any other update with `seq > N`. Therefore those versions are still kept.
 

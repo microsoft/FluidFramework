@@ -6,8 +6,15 @@
 import { strict as assert } from "assert";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { take } from "@fluid-private/stochastic-test-utils";
-import { OpSpaceCompressedId, SessionId, SessionSpaceCompressedId, StableId } from "../";
-import { IdCompressor } from "../idCompressor";
+import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import {
+	OpSpaceCompressedId,
+	SerializedIdCompressorWithNoSession,
+	SessionId,
+	SessionSpaceCompressedId,
+	StableId,
+} from "../";
+import { IdCompressor, createIdCompressor, deserializeIdCompressor } from "../idCompressor";
 import { createSessionId } from "../utilities";
 import {
 	performFuzzActions,
@@ -36,6 +43,19 @@ describe("IdCompressor", () => {
 			const id = compressor.generateCompressedId();
 			const uuid = compressor.decompress(id);
 			assert.equal(id, compressor.recompress(uuid));
+		});
+
+		it("can generate document unique IDs", () => {
+			const compressor = CompressorFactory.createCompressor(Client.Client1, 2);
+			let id = compressor.generateDocumentUniqueId();
+			assert(typeof id === "string");
+			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+			id = compressor.generateDocumentUniqueId();
+			assert(typeof id === "number" && isFinalId(id));
+			id = compressor.generateDocumentUniqueId();
+			assert(typeof id === "number" && isFinalId(id));
+			id = compressor.generateDocumentUniqueId();
+			assert(typeof id === "string");
 		});
 
 		describe("Eager final ID allocation", () => {
@@ -313,6 +333,17 @@ describe("IdCompressor", () => {
 		});
 	});
 
+	it("does not return the same non-empty range twice", () => {
+		const rangeCompressor = CompressorFactory.createCompressor(Client.Client1);
+		generateCompressedIds(rangeCompressor, 3);
+		const range1 = rangeCompressor.takeNextCreationRange();
+		assert.notEqual(range1.ids, undefined);
+		const range2 = rangeCompressor.takeNextCreationRange();
+		assert.equal(range2.ids, undefined);
+		rangeCompressor.finalizeCreationRange(range1);
+		rangeCompressor.finalizeCreationRange(range2);
+	});
+
 	describe("Finalizing", () => {
 		it("prevents attempts to finalize ranges twice", () => {
 			const rangeCompressor = CompressorFactory.createCompressor(Client.Client1);
@@ -352,6 +383,67 @@ describe("IdCompressor", () => {
 					opIds.forEach((id) => assert.equal(isFinalId(id), true));
 				}
 			}
+		});
+	});
+
+	describe("Ghost sessions", () => {
+		it("prevents non-allocation mutations during a ghost session", () => {
+			const compressor = CompressorFactory.createCompressor(Client.Client1);
+			const range = compressor.takeNextCreationRange();
+			compressor.beginGhostSession(createSessionId(), () => {
+				assert.throws(() => compressor.takeNextCreationRange());
+				assert.throws(() => compressor.finalizeCreationRange(range));
+				assert.throws(() => compressor.serialize(false));
+			});
+		});
+
+		it("can generate IDs during a ghost session", () => {
+			const compressor = CompressorFactory.createCompressor(Client.Client1);
+			const idCount = 10;
+			const ids = new Set<SessionSpaceCompressedId>();
+			const ghostSession = createSessionId();
+			compressor.beginGhostSession(ghostSession, () => {
+				for (let i = 0; i < idCount; i++) {
+					const id = compressor.generateCompressedId();
+					assert(isFinalId(id));
+					assert(compressor.decompress(id) === incrementStableId(ghostSession, i));
+					ids.add(id);
+				}
+			});
+			assert.equal(ids.size, idCount);
+		});
+
+		it("does not create a cluster for a no-op ghost session", () => {
+			const mockLogger = new MockLogger();
+			const compressor = CompressorFactory.createCompressor(Client.Client1, 5, mockLogger);
+			compressor.serialize(false);
+			mockLogger.assertMatchAny([
+				{
+					eventName: "RuntimeIdCompressor:SerializedIdCompressorSize",
+					clusterCount: 0,
+					sessionCount: 0,
+				},
+			]);
+			compressor.beginGhostSession(createSessionId(), () => {});
+			compressor.serialize(false);
+			mockLogger.assertMatchAny([
+				{
+					eventName: "RuntimeIdCompressor:SerializedIdCompressorSize",
+					clusterCount: 0,
+					sessionCount: 0,
+				},
+			]);
+			compressor.beginGhostSession(createSessionId(), () => {
+				compressor.generateCompressedId();
+			});
+			compressor.serialize(false);
+			mockLogger.assertMatchAny([
+				{
+					eventName: "RuntimeIdCompressor:SerializedIdCompressorSize",
+					clusterCount: 1,
+					sessionCount: 1,
+				},
+			]);
 		});
 	});
 
@@ -694,6 +786,18 @@ describe("IdCompressor", () => {
 				},
 			]);
 		});
+
+		it("correctly passes logger when no session specified", () => {
+			const mockLogger = new MockLogger();
+			const compressor = createIdCompressor(mockLogger);
+			compressor.generateCompressedId();
+			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+			mockLogger.assertMatchAny([
+				{
+					eventName: "RuntimeIdCompressor:FirstCluster",
+				},
+			]);
+		});
 	});
 
 	describe("Serialization", () => {
@@ -724,6 +828,22 @@ describe("IdCompressor", () => {
 					roundtrippedCompressor2,
 					false, // don't compare local state
 				),
+			);
+		});
+
+		it("can detect and fails to load 1.0 documents", () => {
+			const compressor = CompressorFactory.createCompressor(Client.Client1);
+			const base64Content = compressor.serialize(false);
+			const floatView = new Float64Array(stringToBuffer(base64Content, "base64"));
+			// Change the version to 1.0
+			floatView[0] = 1.0;
+			const docString1 = bufferToString(
+				floatView.buffer,
+				"base64",
+			) as SerializedIdCompressorWithNoSession;
+			assert.throws(
+				() => deserializeIdCompressor(docString1, createSessionId()),
+				(e: Error) => e.message === "IdCompressor version 1.0 is no longer supported.",
 			);
 		});
 	});

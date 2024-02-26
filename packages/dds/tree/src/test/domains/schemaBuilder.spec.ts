@@ -4,24 +4,20 @@
  */
 
 import { strict as assert } from "assert";
-import { SchemaBuilder, leaf } from "../../domains";
+import { SchemaBuilder, leaf } from "../../domains/index.js";
 import {
 	Any,
 	FieldKinds,
-	TreeFieldSchema,
+	FlexFieldSchema,
 	FlexTreeSequenceField,
-	TreeNodeSchema,
+	FlexTreeNodeSchema,
 	schemaIsFieldNode,
 	schemaIsMap,
-	ObjectNodeSchema,
 	FlexTreeTypedNode,
-} from "../../feature-libraries";
-import { TypedNode, TreeObjectNode } from "../../simple-tree";
-import { areSafelyAssignable, isAny, isAssignableTo, requireFalse, requireTrue } from "../../util";
+} from "../../feature-libraries/index.js";
+import { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { structuralName } from "../../domains/schemaBuilder";
-// eslint-disable-next-line import/no-internal-modules
-import { InsertableContent, extractFactoryContent } from "../../simple-tree/proxies";
+import { structuralName } from "../../domains/schemaBuilder.js";
 
 describe("domains - SchemaBuilder", () => {
 	describe("list", () => {
@@ -32,7 +28,7 @@ describe("domains - SchemaBuilder", () => {
 				const listAny = builder.list(Any);
 				assert(schemaIsFieldNode(listAny));
 				assert.equal(listAny.name, "scope.List<Any>");
-				assert(listAny.info.equals(TreeFieldSchema.create(FieldKinds.sequence, [Any])));
+				assert(listAny.info.equals(FlexFieldSchema.create(FieldKinds.sequence, [Any])));
 				type ListAny = FlexTreeTypedNode<typeof listAny>["content"];
 				type _check = requireTrue<
 					areSafelyAssignable<ListAny, FlexTreeSequenceField<readonly [Any]>>
@@ -49,7 +45,7 @@ describe("domains - SchemaBuilder", () => {
 				assert.equal(listImplicit.name, `scope2.List<["${builder.number.name}"]>`);
 				assert(
 					listImplicit.info.equals(
-						TreeFieldSchema.create(FieldKinds.sequence, [builder.number]),
+						FlexFieldSchema.create(FieldKinds.sequence, [builder.number]),
 					),
 				);
 				type ListImplicit = FlexTreeTypedNode<typeof listImplicit>["content"];
@@ -85,7 +81,7 @@ describe("domains - SchemaBuilder", () => {
 				);
 				assert(
 					listUnion.info.equals(
-						TreeFieldSchema.create(FieldKinds.sequence, [
+						FlexFieldSchema.create(FieldKinds.sequence, [
 							builder.number,
 							builder.boolean,
 						]),
@@ -124,7 +120,7 @@ describe("domains - SchemaBuilder", () => {
 				assert(schemaIsFieldNode(list));
 				assert.equal(list.name, `scope.Foo`);
 				assert(
-					list.info.equals(TreeFieldSchema.create(FieldKinds.sequence, [builder.number])),
+					list.info.equals(FlexFieldSchema.create(FieldKinds.sequence, [builder.number])),
 				);
 				type List = FlexTreeTypedNode<typeof list>["content"];
 				type _check = requireTrue<
@@ -135,7 +131,7 @@ describe("domains - SchemaBuilder", () => {
 				>;
 
 				// Not cached for structural use
-				assert((builder.list(builder.number) as TreeNodeSchema) !== list);
+				assert((builder.list(builder.number) as FlexTreeNodeSchema) !== list);
 				// Creating again errors instead or reuses
 				assert.throws(() => builder.list("Foo", builder.number));
 			});
@@ -151,7 +147,7 @@ describe("domains - SchemaBuilder", () => {
 				// Correct name
 				assert.equal(mapAny.name, "scope.Map<Any>");
 				// Infers optional kind
-				assert(mapAny.mapFields.equals(TreeFieldSchema.create(FieldKinds.optional, [Any])));
+				assert(mapAny.mapFields.equals(FlexFieldSchema.create(FieldKinds.optional, [Any])));
 				// Cached and reused
 				assert.equal(builder.map(Any), mapAny);
 			});
@@ -165,7 +161,7 @@ describe("domains - SchemaBuilder", () => {
 					assert.equal(map.name, `scope.Foo`);
 					assert(
 						map.mapFields.equals(
-							TreeFieldSchema.create(FieldKinds.optional, [builder.number]),
+							FlexFieldSchema.create(FieldKinds.optional, [builder.number]),
 						),
 					);
 				});
@@ -175,13 +171,13 @@ describe("domains - SchemaBuilder", () => {
 
 					const map = builder.map(
 						"Foo",
-						TreeFieldSchema.create(FieldKinds.sequence, [leaf.string]),
+						FlexFieldSchema.create(FieldKinds.sequence, [leaf.string]),
 					);
 					assert(schemaIsMap(map));
 					assert.equal(map.name, `scope.Foo`);
 					assert(
 						map.mapFields.equals(
-							TreeFieldSchema.create(FieldKinds.sequence, [leaf.string]),
+							FlexFieldSchema.create(FieldKinds.sequence, [leaf.string]),
 						),
 					);
 				});
@@ -219,9 +215,8 @@ describe("domains - SchemaBuilder", () => {
 		});
 
 		type _0 = requireFalse<isAny<typeof testObject>>;
-		type _1 = isAssignableTo<TypedNode<typeof testObject>, { number: number }>;
 
-		function typeTests(x: TypedNode<typeof testObject>) {
+		function typeTests(x: FlexTreeTypedNode<typeof testObject>) {
 			const y: number = x.number;
 		}
 	});
@@ -230,34 +225,16 @@ describe("domains - SchemaBuilder", () => {
 		const builder = new SchemaBuilder({ scope: "Test Recursive Domain" });
 
 		const recursiveObject = builder.objectRecursive("object", {
-			recursive: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveObject]),
+			recursive: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveObject]),
 			number: SchemaBuilder.required(builder.number),
 		});
 
 		type _0 = requireFalse<isAny<typeof recursiveObject>>;
-		type Proxied = TypedNode<typeof recursiveObject>;
-		type _1 = requireFalse<isAny<Proxied>>;
-
-		function typeTests(x: Proxied) {
-			const y: number = x.number;
-			const z: number | undefined = x.recursive?.recursive?.number;
-		}
 
 		function typeTests2(x: FlexTreeTypedNode<typeof recursiveObject>) {
 			const y: number = x.number;
 			const z: number | undefined = x.recursive?.recursive?.number;
 		}
-
-		const innerContents = { recursive: undefined, number: 5 };
-		const inner = recursiveObject.create(innerContents);
-		const testOptional = recursiveObject.create({ number: 5 });
-		const outer1 = recursiveObject.create({ recursive: innerContents, number: 1 });
-		const outer2 = recursiveObject.create({ recursive: { number: 5 }, number: 1 });
-
-		checkCreated(inner, { number: 5 });
-		checkCreated(testOptional, { number: 5 });
-		checkCreated(outer1, { number: 1, recursive: { number: 5 } });
-		checkCreated(outer2, { number: 1, recursive: { number: 5 } });
 	});
 
 	it("fixRecursiveReference", () => {
@@ -282,24 +259,9 @@ describe("domains - SchemaBuilder", () => {
 			>
 		>;
 
-		function typeTests(x: TypedNode<typeof recursiveObject2>) {
-			const y: number = x.number;
-			const z: number | undefined = x.recursive?.recursive?.number;
-		}
-
 		function typeTests2(x: FlexTreeTypedNode<typeof recursiveObject2>) {
 			const y: number = x.number;
 			const z: number | undefined = x.recursive?.recursive?.number;
 		}
 	});
 });
-
-/**
- * These build objects are intentionally not holding the data their types make them appear to have as part of a workaround for https://github.com/microsoft/TypeScript/issues/43826.
- */
-export function checkCreated<TSchema extends ObjectNodeSchema>(
-	created: TreeObjectNode<TSchema>,
-	expected: InsertableContent,
-): void {
-	assert.deepEqual(extractFactoryContent(created).content, expected);
-}

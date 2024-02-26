@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/runtime-definitions",
-	"version": "2.0.0-rc.1.0.0",
+	"version": "2.0.0-rc.2.0.0",
 	"description": "Fluid Runtime definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -18,44 +18,20 @@
 			"default": "./dist/index.js"
 		},
 		"./alpha": {
-			"import": {
-				"types": "./lib/runtime-definitions-alpha.d.mts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/runtime-definitions-alpha.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./dist/runtime-definitions-alpha.d.ts",
+			"default": "./dist/index.js"
 		},
 		"./beta": {
-			"import": {
-				"types": "./lib/runtime-definitions-beta.d.mts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/runtime-definitions-beta.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./dist/runtime-definitions-beta.d.ts",
+			"default": "./dist/index.js"
 		},
 		"./internal": {
-			"import": {
-				"types": "./lib/index.d.mts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
 		},
 		"./public": {
-			"import": {
-				"types": "./lib/runtime-definitions-public.d.mts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/runtime-definitions-public.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./dist/runtime-definitions-public.d.ts",
+			"default": "./dist/index.js"
 		}
 	},
 	"main": "dist/index.js",
@@ -87,16 +63,16 @@
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/id-compressor": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.1.0-223007"
+		"@fluidframework/protocol-definitions": "^3.2.0-237840"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
-		"@fluid-tools/build-cli": "0.29.0-222379",
+		"@fluid-tools/build-cli": "^0.34.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.29.0-222379",
-		"@fluidframework/eslint-config-fluid": "^3.1.0",
+		"@fluidframework/build-tools": "^0.34.0",
+		"@fluidframework/eslint-config-fluid": "^3.5.0",
 		"@fluidframework/runtime-definitions-previous": "npm:@fluidframework/runtime-definitions@2.0.0-internal.8.0.0",
-		"@microsoft/api-extractor": "^7.38.3",
+		"@microsoft/api-extractor": "^7.39.1",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.50.0",
 		"eslint-plugin-deprecation": "~2.0.0",
@@ -116,6 +92,59 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IFluidDataStoreContext": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IFluidDataStoreContextDetached": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IIdCompressorCore": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedClassDeclaration_IdCompressor": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IIdCompressor": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IdCreationRange": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_OpSpaceCompressedId": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_SerializedIdCompressor": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_SerializedIdCompressorWithNoSession": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_SerializedIdCompressorWithOngoingSession": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_SessionId": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_SessionSpaceCompressedId": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_StableId": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }
