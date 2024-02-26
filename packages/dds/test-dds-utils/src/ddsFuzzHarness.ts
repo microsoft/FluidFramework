@@ -1304,6 +1304,7 @@ export async function runTestForSeed<
 		options,
 	);
 	if (!startDetached) {
+		initialClient.dataStoreRuntime.setAttachState(AttachState.Attached);
 		const services: IChannelServices = {
 			deltaConnection: initialClient.dataStoreRuntime.createDeltaConnection(),
 			objectStorage: new MockStorage(),

@@ -947,30 +947,31 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
-		if (attachState !== this._attachState) {
-			const proposedState = attachStatesToComparableNumbers[attachState];
-			const currentState = attachStatesToComparableNumbers[this._attachState];
-			if (proposedState < currentState) {
-				throw new Error(
-					`cannot transition back to ${attachState} from ${this.attachState}`,
-				);
-			}
+		if (attachState === this._attachState) {
+			return;
+		}
+		const proposedState = attachStatesToComparableNumbers[attachState];
+		const startingState = attachStatesToComparableNumbers[this._attachState];
+		if (proposedState < startingState) {
+			throw new Error(
+				`cannot transition back to ${attachState} from ${this.attachState}`,
+			);
+		}
 
-			if (
-				currentState < attachStatesToComparableNumbers[AttachState.Attaching] &&
-				proposedState >= attachStatesToComparableNumbers[AttachState.Attaching]
-			) {
-				this._attachState = AttachState.Attaching;
-				this.emit("attaching");
-			}
+		if (
+			startingState < attachStatesToComparableNumbers[AttachState.Attaching] &&
+			proposedState >= attachStatesToComparableNumbers[AttachState.Attaching]
+		) {
+			this._attachState = AttachState.Attaching;
+			this.emit("attaching");
+		}
 
-			if (
-				currentState < attachStatesToComparableNumbers[AttachState.Attached] &&
-				proposedState >= attachStatesToComparableNumbers[AttachState.Attached]
-			) {
-				this._attachState = AttachState.Attached;
-				this.emit("attached");
-			}
+		if (
+			startingState < attachStatesToComparableNumbers[AttachState.Attached] &&
+			proposedState >= attachStatesToComparableNumbers[AttachState.Attached]
+		) {
+			this._attachState = AttachState.Attached;
+			this.emit("attached");
 		}
 	}
 
