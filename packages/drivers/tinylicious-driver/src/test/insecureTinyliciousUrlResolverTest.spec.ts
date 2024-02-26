@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { DriverHeader } from "@fluidframework/driver-definitions";
-import { InsecureTinyliciousUrlResolver } from "../insecureTinyliciousUrlResolver";
+import { InsecureTinyliciousUrlResolver } from "../insecureTinyliciousUrlResolver.js";
 
 describe("Insecure Url Resolver Test", () => {
 	const documentId = "fileName";
