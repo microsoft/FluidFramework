@@ -112,10 +112,6 @@
 		"rimraf": "^4.4.0",
 		"typescript": "~5.1.6"
 	},
-	"typeValidation": {
-		"disabled": true,
-		"broken": {}
-	},
 	"fluidBuild": {
 		"tasks": {
 			"build:docs": {
@@ -127,5 +123,9 @@
 				"script": false
 			}
 		}
+	},
+	"typeValidation": {
+		"disabled": true,
+		"broken": {}
 	}
 }
