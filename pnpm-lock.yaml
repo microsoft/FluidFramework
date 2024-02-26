@@ -1488,6 +1488,7 @@ importers:
 
   examples/client-logger/app-insights-logger:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-experimental/react-inputs': workspace:~
       '@fluidframework/app-insights-logger': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -1509,6 +1510,7 @@ importers:
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       '@types/testing-library__jest-dom': ^5.14.5
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       eslint-config-prettier: ~9.0.0
@@ -1547,6 +1549,7 @@ importers:
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_webpack-cli@4.10.0
       '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
@@ -1558,6 +1561,7 @@ importers:
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       '@types/testing-library__jest-dom': 5.14.9
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       eslint-config-prettier: 9.0.0_eslint@8.50.0
