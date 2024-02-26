@@ -461,7 +461,8 @@ export interface TreeNodeApi {
 
 // @public
 export interface TreeNodeEvents {
-    afterChange(): void;
+    afterDeepChange(): void;
+    afterShallowChange(): void;
 }
 
 // @public

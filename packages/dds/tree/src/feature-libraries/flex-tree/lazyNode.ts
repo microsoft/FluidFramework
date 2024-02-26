@@ -125,7 +125,7 @@ function buildSubclass(
  * Lazy implementation of {@link FlexTreeNode}.
  */
 export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTreeNodeSchema>
-	extends LazyEntity<TSchema, Anchor>
+	extends LazyEntity<TSchema, AnchorNode>
 	implements FlexTreeNode
 {
 	public get [flexTreeMarker](): FlexTreeEntityKind.Node {
@@ -139,6 +139,8 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 	// Using JS private here prevents it from showing up as a enumerable own property, or conflicting with struct fields.
 	readonly #removeDeleteCallback: () => void;
 
+	readonly #anchorRef: Anchor;
+
 	public constructor(
 		context: Context,
 		schema: TSchema,
@@ -146,7 +148,8 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 		public readonly anchorNode: AnchorNode,
 		anchor: Anchor,
 	) {
-		super(context, schema, cursor, anchor);
+		super(context, schema, cursor, anchorNode);
+		this.#anchorRef = anchor;
 		assert(cursor.mode === CursorLocationType.Nodes, 0x783 /* must be in nodes mode */);
 		anchorNode.slots.set(flexTreeSlot, this);
 		this.#removeDeleteCallback = anchorNode.on("afterDestroy", cleanupTree);
@@ -170,19 +173,18 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 	}
 
 	protected override [tryMoveCursorToAnchorSymbol](
-		anchor: Anchor,
 		cursor: ITreeSubscriptionCursor,
 	): TreeNavigationResult {
-		return this.context.forest.tryMoveCursorToNode(anchor, cursor);
+		return this.context.forest.tryMoveCursorToNode(this.#anchorRef, cursor);
 	}
 
-	protected override [forgetAnchorSymbol](anchor: Anchor): void {
+	protected override [forgetAnchorSymbol](): void {
 		// This type unconditionally has an anchor, so `forgetAnchor` is always called and cleanup can be done here:
 		// After this point this node will not be usable,
 		// so remove it from the anchor incase a different context (or the same context later) uses this AnchorSet.
 		this.anchorNode.slots.delete(flexTreeSlot);
 		this.#removeDeleteCallback();
-		this.context.forest.anchors.forget(anchor);
+		this.context.forest.anchors.forget(this.#anchorRef);
 	}
 
 	public get value(): Value {

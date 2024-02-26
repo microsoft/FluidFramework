@@ -124,7 +124,7 @@ describe("treeApi", () => {
 					});
 					const log: any[][] = [];
 
-					Tree.on(root as TreeNode, "afterChange", (...args: any[]) => {
+					Tree.on(root as TreeNode, "afterDeepChange", (...args: any[]) => {
 						log.push(args);
 					});
 
@@ -146,7 +146,7 @@ describe("treeApi", () => {
 
 					const unsubscribe = Tree.on(
 						root as TreeNode,
-						"afterChange",
+						"afterDeepChange",
 						(...args: any[]) => {
 							log.push(args);
 						},
@@ -170,6 +170,8 @@ describe("treeApi", () => {
 						"Mutation after unsubscribe must not emit change events.",
 					);
 				});
+
+				// TODO: tests for afterShallowChange ?
 			}
 
 			describe("object", () => {

@@ -40,12 +40,13 @@ export interface TreeEvent {
  * - Include sub-deltas in events.
  * - Add more events.
  * - Have some events (or a way to defer events) until the tree can be read.
+ * - Consider removing this and just using AnchorEvents and simple-tree's events (and extending them as needed).
  *
  * @internal
  */
 export interface FlexTreeNodeEvents {
 	/**
-	 * Raised when a specific FLexTree node is changing.
+	 * Raised when a specific FlexTree node is changing.
 	 * This includes its fields.
 	 * @param upPath - the path corresponding to the location of the node being changed, upward.
 	 */

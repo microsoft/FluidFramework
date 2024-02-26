@@ -122,7 +122,7 @@ describe("treeApi", () => {
 		it("emits change events", () => {
 			const { root } = getView(new TreeConfiguration(TestObject, () => ({ content: 42 })));
 			let event = false;
-			Tree.on(root, "afterChange", () => (event = true));
+			Tree.on(root, "afterDeepChange", () => (event = true));
 			Tree.runTransaction(root, (r) => {
 				r.content = 43;
 			});
@@ -132,13 +132,15 @@ describe("treeApi", () => {
 		it("emits change events on rollback", () => {
 			const { root } = getView(new TreeConfiguration(TestObject, () => ({ content: 42 })));
 			let eventCount = 0;
-			Tree.on(root, "afterChange", () => (eventCount += 1));
+			Tree.on(root, "afterDeepChange", () => (eventCount += 1));
 			Tree.runTransaction(root, (r) => {
 				r.content = 43;
 				return "rollback";
 			});
 			assert.equal(eventCount, 2);
 		});
+
+		// TODO: tests for afterShallowChange
 
 		it("undoes and redoes entire transaction", () => {
 			const view = getView(new TreeConfiguration(TestObject, () => ({ content: 42 })));
