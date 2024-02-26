@@ -5,9 +5,9 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { isFluidError } from "@fluidframework/telemetry-utils";
-import { getAadTenant, getAadUrl, getSiteUrl } from "./odspDocLibUtils";
-import { throwOdspNetworkError } from "./odspErrorUtils";
-import { unauthPostAsync } from "./odspRequest";
+import { getAadTenant, getAadUrl, getSiteUrl } from "./odspDocLibUtils.js";
+import { throwOdspNetworkError } from "./odspErrorUtils.js";
+import { unauthPostAsync } from "./odspRequest.js";
 
 /**
  * @internal
