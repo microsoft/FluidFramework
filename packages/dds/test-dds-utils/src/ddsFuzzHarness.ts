@@ -1367,7 +1367,7 @@ function runTest<TChannelFactory extends IChannelFactory, TOperation extends Bas
 	saveInfo: SaveInfo | undefined,
 ): void {
 	const itFn = options.only.has(seed) ? it.only : options.skip.has(seed) ? it.skip : it;
-	itFn(`seed ${seed}`, async function () {
+	itFn(`workload: ${model.workloadName} seed: ${seed}`, async function () {
 		const inCi = !!process.env.TF_BUILD;
 		const shouldMinimize = !options.skipMinimization && saveInfo && !inCi;
 
