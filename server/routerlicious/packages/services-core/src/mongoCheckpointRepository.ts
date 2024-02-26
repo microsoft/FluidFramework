@@ -51,6 +51,15 @@ export class MongoCheckpointRepository implements ICheckpointRepository {
 				"checkpointRepository_writeCheckpoint",
 				3 /* maxRetries */,
 				1000 /* retryAfterMs */,
+				lumberProperties,
+				undefined /* ignoreError */,
+				(error) => {
+					// should retry if duplicate key error
+					return (
+						error.code === 11000 ||
+						error.message?.toString()?.indexOf("E11000 duplicate key") >= 0
+					);
+				},
 			);
 		} catch (error: any) {
 			const err = new Error(`Checkpoint upsert error:  ${error.message?.substring(0, 30)}`);
