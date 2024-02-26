@@ -14,7 +14,7 @@ import {
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import { IWholeSummaryPayloadType } from "@fluidframework/server-services-client";
-import { IGitManager, ISummaryUploadManager } from "./storageContracts";
+import { IGitManager, ISummaryUploadManager } from "./storageContracts.js";
 
 /**
  * Recursively writes summary tree as individual summary blobs.

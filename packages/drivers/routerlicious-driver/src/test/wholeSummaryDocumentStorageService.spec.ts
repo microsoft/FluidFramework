@@ -6,13 +6,13 @@
 import assert from "assert";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { SummaryType, ISummaryTree } from "@fluidframework/protocol-definitions";
-import { WholeSummaryDocumentStorageService } from "../wholeSummaryDocumentStorageService";
-import { IR11sResponse } from "../restWrapper";
+import { WholeSummaryDocumentStorageService } from "../wholeSummaryDocumentStorageService.js";
+import { IR11sResponse } from "../restWrapper.js";
 import {
 	IWholeFlatSnapshot,
 	IWholeFlatSnapshotBlob,
 	IWholeFlatSnapshotTreeEntry,
-} from "../contracts";
+} from "../contracts.js";
 
 /* Blobs contained within source snapshot tree returned by git manager */
 const summaryBlobs: IWholeFlatSnapshotBlob[] = [

@@ -19,8 +19,8 @@ import {
 	streamObserver,
 } from "@fluidframework/driver-utils";
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { DocumentStorageService } from "./documentStorageService";
-import { RestWrapper } from "./restWrapperBase";
+import { DocumentStorageService } from "./documentStorageService.js";
+import { RestWrapper } from "./restWrapperBase.js";
 
 /**
  * Maximum number of ops we can fetch at a time. This should be kept at 2k, as

@@ -5,7 +5,11 @@
 
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { INormalizedWholeSnapshot, IWholeFlatSnapshot, IWholeFlatSnapshotTree } from "./contracts";
+import {
+	INormalizedWholeSnapshot,
+	IWholeFlatSnapshot,
+	IWholeFlatSnapshotTree,
+} from "./contracts.js";
 
 /**
  * Build a tree hierarchy from a flat tree.

@@ -4,7 +4,7 @@
  */
 
 import type { AxiosRequestConfig, AxiosRequestHeaders } from "axios";
-import { IR11sResponse } from "./restWrapper";
+import { IR11sResponse } from "./restWrapper.js";
 
 export abstract class RestWrapper {
 	constructor(

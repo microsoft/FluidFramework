@@ -11,7 +11,7 @@ import {
 	throwR11sNetworkError,
 	RouterliciousErrorTypes,
 	errorObjectFromSocketError,
-} from "../errorUtils";
+} from "../errorUtils.js";
 
 describe("ErrorUtils", () => {
 	/**

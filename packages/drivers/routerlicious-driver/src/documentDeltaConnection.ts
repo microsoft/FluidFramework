@@ -8,8 +8,8 @@ import { DocumentDeltaConnection } from "@fluidframework/driver-base";
 import { IAnyDriverError, IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
 import { IClient, IConnect } from "@fluidframework/protocol-definitions";
 import type { io as SocketIOClientStatic } from "socket.io-client";
-import { errorObjectFromSocketError, IR11sSocketError } from "./errorUtils";
-import { pkgVersion as driverVersion } from "./packageVersion";
+import { errorObjectFromSocketError, IR11sSocketError } from "./errorUtils.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 

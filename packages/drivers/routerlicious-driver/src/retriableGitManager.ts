@@ -10,9 +10,9 @@ import {
 } from "@fluidframework/server-services-client";
 import { runWithRetry } from "@fluidframework/driver-utils";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { IGitManager } from "./storageContracts";
-import { IR11sResponse } from "./restWrapper";
-import { IWholeFlatSnapshot } from "./contracts";
+import { IGitManager } from "./storageContracts.js";
+import { IR11sResponse } from "./restWrapper.js";
+import { IWholeFlatSnapshot } from "./contracts.js";
 
 export class RetriableGitManager implements IGitManager {
 	constructor(

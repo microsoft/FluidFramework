@@ -10,10 +10,10 @@ import nock from "nock";
 import {
 	RouterliciousOrdererRestWrapper,
 	toInstrumentedR11sOrdererTokenFetcher,
-} from "../restWrapper";
-import { RouterliciousErrorTypes } from "../errorUtils";
-import { DefaultTokenProvider } from "../defaultTokenProvider";
-import { ITokenResponse } from "../tokens";
+} from "../restWrapper.js";
+import { RouterliciousErrorTypes } from "../errorUtils.js";
+import { DefaultTokenProvider } from "../defaultTokenProvider.js";
+import { ITokenResponse } from "../tokens.js";
 
 describe("RouterliciousDriverRestWrapper", () => {
 	const rateLimiter = new RateLimiter(1);

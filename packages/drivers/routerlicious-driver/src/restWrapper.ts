@@ -21,10 +21,10 @@ import {
 import fetch from "cross-fetch";
 import type { AxiosRequestConfig, RawAxiosRequestHeaders } from "axios";
 import safeStringify from "json-stringify-safe";
-import { RouterliciousErrorTypes, throwR11sNetworkError } from "./errorUtils";
-import { ITokenProvider, ITokenResponse } from "./tokens";
-import { pkgVersion as driverVersion } from "./packageVersion";
-import { QueryStringType, RestWrapper } from "./restWrapperBase";
+import { RouterliciousErrorTypes, throwR11sNetworkError } from "./errorUtils.js";
+import { ITokenProvider, ITokenResponse } from "./tokens.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { QueryStringType, RestWrapper } from "./restWrapperBase.js";
 
 type AuthorizationHeaderGetter = (token: ITokenResponse) => string;
 export type TokenFetcher = (refresh?: boolean) => Promise<ITokenResponse>;

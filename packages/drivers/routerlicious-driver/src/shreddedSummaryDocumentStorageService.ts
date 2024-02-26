@@ -23,13 +23,13 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { IRouterliciousDriverPolicies } from "./policies";
-import { ICache, InMemoryCache } from "./cache";
-import { RetriableGitManager } from "./retriableGitManager";
-import { ISnapshotTreeVersion } from "./definitions";
-import { GitManager } from "./gitManager";
-import { ISummaryUploadManager } from "./storageContracts";
-import { SummaryTreeUploadManager } from "./summaryTreeUploadManager";
+import { IRouterliciousDriverPolicies } from "./policies.js";
+import { ICache, InMemoryCache } from "./cache.js";
+import { RetriableGitManager } from "./retriableGitManager.js";
+import { ISnapshotTreeVersion } from "./definitions.js";
+import { GitManager } from "./gitManager.js";
+import { ISummaryUploadManager } from "./storageContracts.js";
+import { SummaryTreeUploadManager } from "./summaryTreeUploadManager.js";
 
 const isNode = typeof window === "undefined";
 

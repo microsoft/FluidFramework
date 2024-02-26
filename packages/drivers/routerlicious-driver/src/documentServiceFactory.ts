@@ -26,21 +26,25 @@ import {
 	ISession,
 	convertSummaryTreeToWholeSummaryTree,
 } from "@fluidframework/server-services-client";
-import { ICache, InMemoryCache, NullCache } from "./cache";
-import { INormalizedWholeSnapshot } from "./contracts";
-import { ISnapshotTreeVersion } from "./definitions";
-import { DocumentService } from "./documentService";
-import { pkgVersion as driverVersion } from "./packageVersion";
-import { IRouterliciousDriverPolicies } from "./policies";
+import { ICache, InMemoryCache, NullCache } from "./cache.js";
+import { INormalizedWholeSnapshot } from "./contracts.js";
+import { ISnapshotTreeVersion } from "./definitions.js";
+import { DocumentService } from "./documentService.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { IRouterliciousDriverPolicies } from "./policies.js";
 import {
 	RouterliciousOrdererRestWrapper,
 	RouterliciousStorageRestWrapper,
 	toInstrumentedR11sOrdererTokenFetcher,
 	toInstrumentedR11sStorageTokenFetcher,
-} from "./restWrapper";
-import { isRouterliciousResolvedUrl } from "./routerliciousResolvedUrl";
-import { ITokenProvider } from "./tokens";
-import { parseFluidUrl, replaceDocumentIdInPath, getDiscoveredFluidResolvedUrl } from "./urlUtils";
+} from "./restWrapper.js";
+import { isRouterliciousResolvedUrl } from "./routerliciousResolvedUrl.js";
+import { ITokenProvider } from "./tokens.js";
+import {
+	parseFluidUrl,
+	replaceDocumentIdInPath,
+	getDiscoveredFluidResolvedUrl,
+} from "./urlUtils.js";
 
 const maximumSnapshotCacheDurationMs: FiveDaysMs = 432_000_000; // 5 days in ms
 

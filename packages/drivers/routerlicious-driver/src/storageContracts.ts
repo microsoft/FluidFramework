@@ -10,8 +10,8 @@ import {
 	IWholeSummaryPayloadType,
 	IWriteSummaryResponse,
 } from "@fluidframework/server-services-client";
-import { IR11sResponse } from "./restWrapper";
-import { IWholeFlatSnapshot } from "./contracts";
+import { IR11sResponse } from "./restWrapper.js";
+import { IWholeFlatSnapshot } from "./contracts.js";
 
 /**
  * Interface to a generic Git provider

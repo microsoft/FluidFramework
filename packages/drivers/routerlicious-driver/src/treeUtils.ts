@@ -11,7 +11,7 @@ import {
 	ISummaryTree,
 	SummaryObject,
 } from "@fluidframework/protocol-definitions";
-import { INormalizedWholeSnapshot } from "./contracts";
+import { INormalizedWholeSnapshot } from "./contracts.js";
 
 /**
  * Summary tree assembler props
