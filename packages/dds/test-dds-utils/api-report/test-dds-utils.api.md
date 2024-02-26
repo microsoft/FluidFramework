@@ -68,6 +68,9 @@ export namespace createDDSFuzzSuite {
     const skip: (...seeds: number[]) => <TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(ddsModel: DDSFuzzModel<TChannelFactory, TOperation, DDSFuzzTestState<TChannelFactory>>, providedOptions?: Partial<DDSFuzzSuiteOptions>) => void;
 }
 
+// @internal
+export function createSnapshotSuite(snapshotFolderPath: string): ISnapshotSuite;
+
 // @internal (undocumented)
 export interface DDSFuzzHarnessEvents {
     (event: "clientCreate", listener: (client: Client<IChannelFactory>) => void): any;
@@ -150,6 +153,13 @@ export interface IGCTestProvider {
     deleteOutboundRoutes(): Promise<void>;
     readonly expectedOutboundRoutes: string[];
     readonly sharedObject: ISharedObject;
+}
+
+// @internal (undocumented)
+export interface ISnapshotSuite {
+    readSnapshot: () => string;
+    takeSnapshot: (data: string) => string;
+    useSnapshotSubdirectory: (dirPath: string) => void;
 }
 
 // @internal
