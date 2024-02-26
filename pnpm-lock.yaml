@@ -7680,7 +7680,7 @@ importers:
       '@microsoft/api-extractor': ^7.39.1
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      '@types/node-fetch': ^2.5.10
+      '@types/node-fetch': ^2.6.11
       '@types/sinon': ^7.0.13
       '@types/uuid': ^9.0.2
       c8: ^8.0.1
@@ -7724,7 +7724,7 @@ importers:
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      '@types/node-fetch': 2.6.9
+      '@types/node-fetch': 2.6.11
       '@types/sinon': 7.5.2
       '@types/uuid': 9.0.7
       c8: 8.0.1
@@ -21019,7 +21019,7 @@ packages:
       '@storybook/store': 6.5.16_sfoxds7t5ydpegc3knd667wn6m
       '@storybook/telemetry': 6.5.16_3ls3x4cyx7vazwgunpof2kmgs4
       '@types/node': 18.19.1
-      '@types/node-fetch': 2.6.9
+      '@types/node-fetch': 2.6.11
       '@types/pretty-hrtime': 1.0.3
       '@types/webpack': 4.41.38
       better-opn: 2.1.1
@@ -22256,6 +22256,13 @@ packages:
     resolution: {integrity: sha512-eOVHXS5RnWOjTVhu3deCM/ruy9E6JCgeix2g7wpFiekQh3AaEAK1cz43tZDukKmtSmQnwvSySq7ubijCA32I7Q==}
     dependencies:
       '@types/node': 18.19.1
+    dev: true
+
+  /@types/node-fetch/2.6.11:
+    resolution: {integrity: sha512-24xFj9R5+rfQJLRyM56qh+wnVSYhyXC2tkoBndtY0U+vubqNsYXGjufB2nn8Q6gt0LrARwL6UBtMCSVCwl4B1g==}
+    dependencies:
+      '@types/node': 18.19.1
+      form-data: 4.0.0
     dev: true
 
   /@types/node-fetch/2.6.9:
