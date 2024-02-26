@@ -7437,7 +7437,6 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       socket.io-client: ^4.7.3
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -7469,7 +7468,6 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       socket.io-client: 4.7.4
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/driver-web-cache:

@@ -34,7 +34,7 @@ import {
 } from "@fluidframework/telemetry-utils";
 import type { Socket } from "socket.io-client";
 // For now, this package is versioned and released in unison with the specific drivers
-import { pkgVersion as driverVersion } from "./packageVersion";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 /**
  * Represents a connection to a stream of delta updates.
