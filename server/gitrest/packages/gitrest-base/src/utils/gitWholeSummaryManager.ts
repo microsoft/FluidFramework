@@ -9,7 +9,7 @@ import {
 	NetworkError,
 } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { IRepositoryManager } from "./definitions";
+import { IRepositoryManager, type IFileSystemManager } from "./definitions";
 import { GitRestLumberEventName } from "./gitrestTelemetryDefinitions";
 import {
 	Constants,
@@ -21,6 +21,7 @@ import {
 	writeChannelSummary,
 	writeContainerSummary,
 } from "./wholeSummary";
+import { getSoftDeletedMarkerPath } from "./helpers";
 
 const DefaultSummaryWriteFeatureFlags: ISummaryWriteFeatureFlags = {
 	enableLowIoWrite: false,
@@ -150,6 +151,63 @@ export class GitWholeSummaryManager {
 			throw new NetworkError(400, `Unknown Summary Type: ${payload.type}`);
 		} catch (error: any) {
 			writeSummaryMetric.error("GitWholeSummaryManager failed to write summary", error);
+			throw error;
+		}
+	}
+
+	public async deleteSummary(
+		fileSystemManager: IFileSystemManager,
+		softDelete = false,
+	): Promise<void> {
+		// In repo-per-doc model, the repoManager's path represents the directory that contains summary data.
+		const summaryFolderPath = this.repoManager.path;
+
+		const lumberjackProperties: Record<string, any> = {
+			...this.lumberjackProperties,
+			summaryFolderPath,
+		};
+		const deleteSummaryMetric = Lumberjack.newLumberMetric(
+			GitRestLumberEventName.WholeSummaryManagerDeleteSummary,
+			lumberjackProperties,
+		);
+
+		try {
+			if (softDelete) {
+				const softDeletedMarkerPath = getSoftDeletedMarkerPath(summaryFolderPath);
+				await fileSystemManager.promises.writeFile(softDeletedMarkerPath, "");
+				deleteSummaryMetric.success(
+					"GitWholeSummaryManager succeeded in marking summary data as soft-deleted.",
+				);
+				return;
+			}
+
+			// Hard delete
+			await fileSystemManager.promises.rm(summaryFolderPath, { recursive: true });
+			deleteSummaryMetric.success(
+				"GitWholeSummaryManager succeeded in hard-deleting summary data",
+			);
+		} catch (error: any) {
+			if (
+				error?.code === "ENOENT" ||
+				(error instanceof NetworkError &&
+					error?.code === 400 &&
+					error?.message.startsWith("Repo does not exist"))
+			) {
+				// File does not exist.
+				Lumberjack.warning(
+					"Tried to delete summary, but it does not exist",
+					lumberjackProperties,
+					error,
+				);
+				deleteSummaryMetric.success(
+					"GitWholeSummaryManager could not find summary to delete",
+				);
+				return;
+			}
+			deleteSummaryMetric.error(
+				"GitWholeSummaryManager failed to delete summary data",
+				error,
+			);
 			throw error;
 		}
 	}
