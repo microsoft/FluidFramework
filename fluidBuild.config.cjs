@@ -71,8 +71,8 @@ module.exports = {
 			dependsOn: ["build:esnext"],
 			script: true,
 		},
-		"build:docs": ["tsc"],
-		"ci:build:docs": ["tsc"],
+		"build:docs": ["compile"],
+		"ci:build:docs": ["compile"],
 		"build:readme": {
 			dependsOn: ["build:manifest"],
 			script: true,
