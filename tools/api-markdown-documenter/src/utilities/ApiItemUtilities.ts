@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
 import {
 	type ApiCallSignature,
 	type ApiConstructSignature,
@@ -123,7 +122,7 @@ export enum ApiModifier {
  * @public
  */
 export function getQualifiedApiItemName(apiItem: ApiItem): string {
-	let qualifiedName: string = Utilities.getSafeFilenameForName(apiItem.displayName);
+	let qualifiedName: string = getSafeFilenameForName(apiItem.displayName);
 	if (ApiParameterListMixin.isBaseClassOf(apiItem) && apiItem.overloadIndex > 1) {
 		// Subtract one for compatibility with earlier releases of API Documenter.
 		// (This will get revamped when we fix GitHub issue #1308)
@@ -442,4 +441,26 @@ export function getModifiers(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]):
 	}
 
 	return modifiers;
+}
+
+/**
+ * Generates a concise signature for a function.  Example: "getArea(width, height)"
+ */
+export function getConciseSignature(apiItem: ApiItem): string {
+	if (ApiParameterListMixin.isBaseClassOf(apiItem)) {
+		return `${apiItem.displayName}(${apiItem.parameters.map((x) => x.name).join(", ")})`;
+	}
+	return apiItem.displayName;
+}
+
+/**
+ * Converts bad filename characters to underscores.
+ */
+export function getSafeFilenameForName(apiItemName: string): string {
+	// eslint-disable-next-line unicorn/better-regex, no-useless-escape
+	const badFilenameCharsRegExp: RegExp = /[^a-z0-9_\-\.]/gi;
+
+	// TODO: This can introduce naming collisions.
+	// Will be fixed as part of https://github.com/microsoft/rushstack/issues/1308
+	return apiItemName.replace(badFilenameCharsRegExp, "_").toLowerCase();
 }
