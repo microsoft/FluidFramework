@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { TreeValue } from "../core/index.js";
 import {
-	EditableTreeEvents,
 	LeafNodeSchema,
 	Multiplicity,
 	TreeStatus,
@@ -36,6 +35,7 @@ export interface TreeApi {
 	schema<T extends TreeNode | TreeLeafValue>(
 		node: T,
 	): TreeNodeSchema<string, NodeKind, unknown, T>;
+
 	/**
 	 * Narrow the type of the given value if it satisfies the given schema.
 	 * @example
@@ -53,6 +53,7 @@ export interface TreeApi {
 	 * Return the node under which this node resides in the tree (or undefined if this is a root node of the tree).
 	 */
 	parent(node: TreeNode): TreeNode | undefined;
+
 	/**
 	 * The key of the given node under its parent.
 	 * @remarks
@@ -60,8 +61,12 @@ export interface TreeApi {
 	 * Otherwise, this returns the key of the field that it is under (a `string`).
 	 */
 	key(node: TreeNode): string | number;
+
 	/**
 	 * Register an event listener on the given node.
+	 * @param node - the node who's events should be subscribed to.
+	 * @param eventName - which event to subscribe to.
+	 * @param listener - Callback to trigger for the event. The tree can be read during the callback, but it is invalid to modify the tree during this callback.
 	 * @returns A callback function which will deregister the event.
 	 * This callback should be called only once.
 	 */
@@ -70,6 +75,7 @@ export interface TreeApi {
 		eventName: K,
 		listener: TreeNodeEvents[K],
 	): () => void;
+
 	/**
 	 * Returns the {@link TreeStatus} of the given node.
 	 */
@@ -104,12 +110,21 @@ export const nodeApi: TreeApi = {
 		// The parent of `node` is an object, a map, or undefined (and therefore `node` is a root/detached node).
 		return parentField.parent.key;
 	},
-	on: <K extends keyof EditableTreeEvents>(
+	on: <K extends keyof TreeNodeEvents>(
 		node: TreeNode,
 		eventName: K,
-		listener: EditableTreeEvents[K],
+		listener: TreeNodeEvents[K],
 	) => {
-		return getFlexNode(node).on(eventName, listener);
+		const flex = getFlexNode(node);
+		const anchor = flex.anchor;
+		switch (eventName) {
+			case "afterShallowChange":
+				return anchor.on("childrenChanged", () => listener());
+			case "afterDeepChange":
+				return anchor.on("afterChange", () => listener());
+			default:
+				return unreachableCase(eventName);
+		}
 	},
 	status: (node: TreeNode) => {
 		return getFlexNode(node, true).treeStatus();
@@ -141,11 +156,58 @@ export const nodeApi: TreeApi = {
 
 /**
  * A collection of events that can be raised by a {@link TreeNode}.
+ *
+ * @privateRemarks
+ * TODO: add a way to subscribe to a specific field (for afterShallowChange and afterDeepChange).
+ * Probably have object node and map node specific APIs for this.
+ *
+ * TODO: ensure that subscription API for fields aligns with API for subscribing to the root.
+ *
+ * TODO: add more wider area (avoid needing tons of afterShallowChange registration) events for use-cases other than afterDeepChange.
+ * Some ideas:
+ *
+ * - afterDeepChange, but with some subtrees/fields/paths excluded
+ * - helper to batch several afterShallowChange calls to a afterDeepChange scope
+ * - parent change (ex: registration on the parent field for a specific index: maybe allow it for a range. Ex: node event takes optional field and optional index range?)
+ * - new content inserted into subtree. Either provide event for this and/or enough info to afterDeepChange to find and search the new sub-trees.
+ * Add separate (non event related) API to efficiently scan tree for given set of types (using low level cursor and schema based filtering)
+ * to allow efficiently searching for new content (and initial content) of a given type.
+ *
  * @public
  */
 export interface TreeNodeEvents {
 	/**
-	 * Raised on a node right after a change is applied to one of its fields or the fields of a descendant node.
+	 * Raised on a node after a change is applied to one of its fields.
+	 *
+	 * @remarks
+	 * This does not include changes to nodes within those fields:
+	 * it only includes changes of what nodes are in the fields, which field they are in, and in the case of arrays,
+	 * where the nodes are in the array.
+	 *
+	 * This does not include any changes to the location of the current node:
+	 * if a node is moved, inserted or removed, events are fired for the parent of the node, not the node itself.
+	 *
+	 * These events occur whenever the apparent contents of the node instance change, regardless of what caused the change.
+	 * For example these events will when the local client reassigns a child, when part of a remote edit is applied to the node,
+	 * or when the node has to be updated due to resolution of a merge conflict
+	 * (for example a previously applied local change might be undone, then reapplied differently or not at all).
+	 *
+	 * For remote edits these events are not guaranteed to occur in the same order or quantity that the edits were originally made:
+	 * While batch of edits will get events for each change, and will as a whole update the tree to the appropriate end state,
+	 * no guarantees are made about the intermediate states other than the tree being in schema.
+	 *
+	 * @privateRemarks
+	 * Triggered by {@link AnchorEvents.childrenChanged}.
 	 */
-	afterChange(): void;
+	afterShallowChange(): void;
+
+	/**
+	 * Raised after a batch of changes is applied to a subtree.
+	 * @remarks
+	 * Occurs after more specific {@link TreeNodeEvents.afterShallowChange} events were fired for this node or its decedents.
+	 *
+	 * @privateRemarks
+	 * Triggered by {@link AnchorEvents.afterChange}
+	 */
+	afterDeepChange(): void;
 }

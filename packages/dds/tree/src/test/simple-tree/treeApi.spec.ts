@@ -105,4 +105,6 @@ describe("treeApi", () => {
 		assert.equal(nodeApi.status(newChild), TreeStatus.InDocument);
 		// TODO: test Deleted status.
 	});
+
+	// TODO: event tests to replace ones in src/test/simple-tree/node.spec.ts, and provide better coverage.
 });
