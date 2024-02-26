@@ -19,6 +19,7 @@ import {
 	MockEmptyDeltaConnection,
 } from "@fluidframework/test-runtime-utils";
 import { LoggingError } from "@fluidframework/telemetry-utils";
+import { AttachState } from "@fluidframework/container-definitions";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 import { IIntervalCollection, Side } from "../intervalCollection";
@@ -95,7 +96,7 @@ describe("SharedString interval collections", () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 			// Connect the first SharedString.
-			dataStoreRuntime1.local = false;
+			dataStoreRuntime1.setAttachState(AttachState.Attached);
 			dataStoreRuntime1.options = {
 				intervalStickinessEnabled: true,
 			};
@@ -1559,7 +1560,7 @@ describe("SharedString interval collections", () => {
 			);
 
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
-			dataStoreRuntime1.local = false;
+			dataStoreRuntime1.setAttachState(AttachState.Attached);
 			const containerRuntime1 =
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1 = {
