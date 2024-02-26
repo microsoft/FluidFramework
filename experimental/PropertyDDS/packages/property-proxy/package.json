@@ -47,7 +47,7 @@
 		"@babel/preset-env": "^7.2.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",
-		"@fluidframework/eslint-config-fluid": "^3.5.0",
+		"@fluidframework/eslint-config-fluid": "^4.0.0",
 		"@types/jest": "29.5.3",
 		"@types/node": "^18.19.0",
 		"babel-loader": "^8.0.5",

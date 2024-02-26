@@ -68,7 +68,7 @@
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^3.5.0",
+		"@fluidframework/eslint-config-fluid": "^4.0.0",
 		"@fluidframework/local-driver": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/server-local-server": "^3.1.0-238497",

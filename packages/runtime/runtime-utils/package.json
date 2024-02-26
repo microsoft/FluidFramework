@@ -133,7 +133,7 @@
 		"@fluid-tools/build-cli": "^0.34.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",
-		"@fluidframework/eslint-config-fluid": "^3.5.0",
+		"@fluidframework/eslint-config-fluid": "^4.0.0",
 		"@fluidframework/runtime-utils-previous": "npm:@fluidframework/runtime-utils@2.0.0-internal.8.0.0",
 		"@microsoft/api-extractor": "^7.39.1",
 		"@types/mocha": "^9.1.1",

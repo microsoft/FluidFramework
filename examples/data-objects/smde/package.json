@@ -60,7 +60,7 @@
 		"@fluid-example/webpack-fluid-loader": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",
-		"@fluidframework/eslint-config-fluid": "^3.5.0",
+		"@fluidframework/eslint-config-fluid": "^4.0.0",
 		"@types/events": "^3.0.0",
 		"@types/react": "^17.0.44",
 		"@types/simplemde": "^1.11.7",
