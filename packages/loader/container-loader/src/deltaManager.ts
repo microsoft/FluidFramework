@@ -8,7 +8,6 @@ import {
 	IThrottlingWarning,
 	IEventProvider,
 	ITelemetryProperties,
-	ITelemetryErrorEvent,
 	type ITelemetryBaseEvent,
 } from "@fluidframework/core-interfaces";
 import {
@@ -29,6 +28,7 @@ import {
 	DataCorruptionError,
 	UsageError,
 	type ITelemetryGenericEventExt,
+	type ITelemetryErrorEventExt,
 } from "@fluidframework/telemetry-utils";
 import {
 	IDocumentDeltaStorageService,
@@ -376,7 +376,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	 * we stop processing ops that results in no processing join op and thus moving to connected state)
 	 * @param event - Event to log.
 	 */
-	public logConnectionIssue(event: ITelemetryErrorEvent) {
+	public logConnectionIssue(event: ITelemetryErrorEventExt) {
 		assert(this.connectionManager.connected, 0x238 /* "called only in connected state" */);
 
 		const pendingSorted = this.pending.sort((a, b) => a.sequenceNumber - b.sequenceNumber);
@@ -797,7 +797,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 	private disconnectHandler(reason: IConnectionStateChangeReason) {
 		this.messageBuffer.length = 0;
-		this.emit("disconnect", reason);
+		this.emit("disconnect", reason.text, reason.error);
 	}
 
 	/**

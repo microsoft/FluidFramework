@@ -4,8 +4,8 @@
 
 ```ts
 
-import { IClientConfig } from '@fluidframework/odsp-doclib-utils';
-import { IOdspTokens } from '@fluidframework/odsp-doclib-utils';
+import { IClientConfig } from '@fluidframework/odsp-doclib-utils/internal';
+import { IOdspTokens } from '@fluidframework/odsp-doclib-utils/internal';
 import { ITree } from '@fluidframework/protocol-definitions';
 
 // @internal

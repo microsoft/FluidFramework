@@ -81,6 +81,7 @@ extends:
     buildDirectory: tools/markdown-magic
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
+    testCoverage: ${{ variables.testCoverage }}
     tagName: markdown-magic
     taskBuild: build
     taskBuildDocs: false

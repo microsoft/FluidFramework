@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+// URL
+export type { IRouterliciousResolvedUrl } from "./routerliciousResolvedUrl";
+
 // Tokens
 export { DefaultTokenProvider } from "./defaultTokenProvider";
 export { ITokenProvider, ITokenResponse, ITokenService } from "./tokens";

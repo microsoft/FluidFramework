@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { describeStress } from "@fluid-private/stochastic-test-utils";
 import { CrossFieldManager, NodeChangeset } from "../../../feature-libraries/index.js";
 import {
 	ChangesetLocalId,
@@ -27,7 +28,7 @@ import {
 	defaultRevisionMetadataFromChanges,
 	isDeltaVisible,
 } from "../../utils.js";
-import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util/index.js";
+import { brand, idAllocatorFromMaxId } from "../../../util/index.js";
 import {
 	optionalChangeRebaser,
 	optionalFieldEditor,
@@ -48,7 +49,7 @@ import {
 	rebaseRevisionMetadataFromInfo,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
-import { assertEqual } from "./optionalFieldUtils.js";
+import { Change, assertTaggedEqual } from "./optionalFieldUtils.js";
 
 type RevisionTagMinter = () => RevisionTag;
 
@@ -128,8 +129,7 @@ function invert(change: TaggedChange<OptionalChangeset>): OptionalChangeset {
 	return optionalChangeRebaser.invert(
 		change,
 		TestChange.invert as any,
-		// Optional fields should not generate IDs during invert
-		fakeIdAllocator,
+		idAllocatorFromMaxId(),
 		failCrossFieldManager,
 		defaultRevisionMetadataFromChanges([change]),
 	);
@@ -201,7 +201,7 @@ function composeList(
 ): OptionalChangeset {
 	const moveEffects = failCrossFieldManager;
 	const idAllocator = idAllocatorFromMaxId(getMaxId(...changes.map((c) => c.change)));
-	let composed: OptionalChangeset = createEmpty();
+	let composed: OptionalChangeset = Change.empty();
 	const metadataOrDefault = metadata ?? defaultRevisionMetadataFromChanges(changes);
 
 	for (const change of changes) {
@@ -232,10 +232,6 @@ function compose(
 		moveEffects,
 		metadata ?? defaultRevisionMetadataFromChanges([change1, change2]),
 	);
-}
-
-function createEmpty(): OptionalChangeset {
-	return { moves: [], childChanges: [] };
 }
 
 type OptionalFieldTestState = FieldStateTree<string | undefined, OptionalChangeset>;
@@ -374,8 +370,7 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 		const inverseChangeset = optionalChangeRebaser.invert(
 			state.mostRecentEdit.changeset,
 			invertTestChangeViaNewIntention as any,
-			// Optional fields should not generate IDs during invert
-			fakeIdAllocator,
+			idAllocatorFromMaxId(),
 			failCrossFieldManager,
 			defaultRevisionMetadataFromChanges([state.mostRecentEdit.changeset]),
 		);
@@ -491,15 +486,22 @@ export function testRebaserAxioms() {
 			runSingleEditRebaseAxiomSuite({ content: "A" });
 		});
 
-		describe("Exhaustive", () => {
+		describeStress("Exhaustive", ({ isStress }) => {
 			runExhaustiveComposeRebaseSuite(
 				[{ content: undefined }, { content: "A" }],
 				generateChildStates,
-				{ rebase, rebaseComposed, compose, invert, assertEqual, createEmpty },
+				{
+					rebase,
+					rebaseComposed,
+					compose,
+					invert,
+					assertEqual: assertTaggedEqual,
+					createEmpty: Change.empty,
+				},
 				{
 					numberOfEditsToRebase: 3,
-					numberOfEditsToRebaseOver: 3,
-					numberOfEditsToVerifyAssociativity: 4,
+					numberOfEditsToRebaseOver: isStress ? 5 : 3,
+					numberOfEditsToVerifyAssociativity: isStress ? 6 : 4,
 				},
 			);
 		});

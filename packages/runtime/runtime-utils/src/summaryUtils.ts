@@ -10,7 +10,7 @@ import {
 	IsoBuffer,
 	Uint8ArrayToString,
 } from "@fluid-internal/client-utils";
-import { unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "@fluidframework/driver-utils";
 import {
 	ITree,
@@ -265,6 +265,7 @@ export function convertToSummaryTreeWithStats(
 
 	const summaryTree = builder.getSummaryTree();
 	summaryTree.summary.unreferenced = snapshot.unreferenced;
+	summaryTree.summary.groupId = snapshot.groupId;
 	return summaryTree;
 }
 
@@ -326,6 +327,7 @@ export function convertSnapshotTreeToSummaryTree(
 
 	const summaryTree = builder.getSummaryTree();
 	summaryTree.summary.unreferenced = snapshot.unreferenced;
+	summaryTree.summary.groupId = snapshot.groupId;
 	return summaryTree;
 }
 
@@ -372,7 +374,47 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
 	return {
 		entries,
 		unreferenced: summaryTree.unreferenced,
+		groupId: summaryTree.groupId,
 	};
+}
+
+/**
+ * Looks in the given attach message snapshot for the .gcdata blob, which would
+ * contain the initial GC Data for the node being attached.
+ * If it finds it, it notifies GC of all the new outbound routes being added by the attach.
+ *
+ * @param snapshot - The snapshot from the attach message
+ * @param addedGCOutboundRoute - Callback to notify GC of a new outbound route.
+ * IMPORTANT: addedGCOutboundRoute's param nodeId is "/" for the attaching node itself, or "/<id>" for its children.
+ *
+ * @returns true if it found/processed GC Data, false otherwise
+ *
+ * @internal
+ */
+export function processAttachMessageGCData(
+	snapshot: ITree | null,
+	addedGCOutboundRoute: (fromNodeId: string, toPath: string) => void,
+): boolean {
+	const gcDataEntry = snapshot?.entries.find((e) => e.path === ".gcdata");
+
+	// Old attach messages won't have GC Data
+	// (And REALLY old DataStore Attach messages won't even have a snapshot!)
+	if (gcDataEntry === undefined) {
+		return false;
+	}
+
+	assert(
+		gcDataEntry.type === TreeEntry.Blob && gcDataEntry.value.encoding === "utf-8",
+		"GC data should be a utf-8-encoded blob",
+	);
+
+	const gcData = JSON.parse(gcDataEntry.value.contents) as IGarbageCollectionData;
+	for (const [nodeId, outboundRoutes] of Object.entries(gcData.gcNodes)) {
+		outboundRoutes.forEach((toPath) => {
+			addedGCOutboundRoute(nodeId, toPath);
+		});
+	}
+	return true;
 }
 
 /**

@@ -19,6 +19,7 @@ async function buildNavBar(documents, version) {
 		ApiItemKind.Interface,
 		ApiItemKind.Enum,
 		ApiItemKind.Namespace,
+		ApiItemKind.TypeAlias,
 	]);
 	const apiItems = documents
 		.map((document) => document.apiItem)

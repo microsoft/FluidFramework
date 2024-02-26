@@ -5,13 +5,8 @@
 
 export type { IDisposable } from "./disposable";
 
-export {
-	FluidErrorTypes,
-	IErrorBase,
-	IGenericError,
-	IUsageError,
-	IThrottlingWarning,
-} from "./error";
+export type { IErrorBase, IGenericError, IUsageError, IThrottlingWarning } from "./error";
+export { FluidErrorTypes } from "./error";
 
 export type {
 	ExtendEventProvider,
@@ -24,35 +19,25 @@ export type {
 	TransformedEvent,
 } from "./events";
 
-export {
-	IFluidLoadable,
-	IProvideFluidLoadable,
-	IFluidRunnable,
-	IProvideFluidRunnable,
-} from "./fluidLoadable";
+export type { IProvideFluidLoadable, IProvideFluidRunnable } from "./fluidLoadable";
+export { IFluidLoadable, IFluidRunnable } from "./fluidLoadable";
 
-export {
+export type {
 	IFluidPackageEnvironment,
 	IFluidPackage,
-	isFluidPackage,
 	IFluidCodeDetailsConfig,
 	IFluidCodeDetails,
-	isFluidCodeDetails,
-	IFluidCodeDetailsComparer,
 	IProvideFluidCodeDetailsComparer,
 } from "./fluidPackage";
+export { isFluidPackage, isFluidCodeDetails, IFluidCodeDetailsComparer } from "./fluidPackage";
 
 // TypeScript forgets the index signature when customers augment IRequestHeader if we export *.
 // So we export the explicit members as a workaround:
 // https://github.com/microsoft/TypeScript/issues/18877#issuecomment-476921038
-export { IRequest, IRequestHeader, IResponse } from "./fluidRouter";
+export type { IRequest, IRequestHeader, IResponse } from "./fluidRouter";
 
-export {
-	IFluidHandleContext,
-	IProvideFluidHandleContext,
-	IFluidHandle,
-	IProvideFluidHandle,
-} from "./handles";
+export type { IProvideFluidHandleContext, IProvideFluidHandle } from "./handles";
+export { IFluidHandleContext, IFluidHandle } from "./handles";
 
 export type {
 	ILoggingError,
@@ -60,10 +45,6 @@ export type {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 	ITelemetryBaseProperties,
-	ITelemetryErrorEvent, // deprecated
-	ITelemetryGenericEvent, // deprecated
-	ITelemetryLogger, // deprecated
-	ITelemetryPerformanceEvent, // deprecated
 	ITelemetryProperties, // deprecated
 	Tagged,
 	TelemetryEventCategory, // deprecated
@@ -71,6 +52,6 @@ export type {
 	TelemetryEventPropertyType, // deprecated
 } from "./logger";
 export { LogLevel } from "./logger";
-export { FluidObjectProviderKeys, FluidObject, FluidObjectKeys } from "./provider";
-export { ConfigTypes, IConfigProviderBase } from "./config";
-export { ISignalEnvelope } from "./messages";
+export type { FluidObjectProviderKeys, FluidObject, FluidObjectKeys } from "./provider";
+export type { ConfigTypes, IConfigProviderBase } from "./config";
+export type { ISignalEnvelope } from "./messages";

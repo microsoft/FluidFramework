@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IDisposable,
 	IEventProvider,
 	IErrorEvent,
 	ITelemetryBaseLogger,
 	IEvent,
 } from "@fluidframework/core-interfaces";
-import {
+import type {
 	ConnectionMode,
 	IClient,
 	IClientConfiguration,
@@ -26,8 +26,8 @@ import {
 	ITokenClaims,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { IAnyDriverError } from "./driverError";
-import { IResolvedUrl } from "./urlResolver";
+import type { IAnyDriverError } from "./driverError";
+import type { IResolvedUrl } from "./urlResolver";
 
 /**
  * @internal
@@ -144,8 +144,6 @@ export interface IDocumentStorageServicePolicies {
  * @alpha
  */
 export interface IDocumentStorageService extends Partial<IDisposable> {
-	repositoryUrl: string;
-
 	/**
 	 * Policies implemented/instructed by driver.
 	 */
@@ -509,4 +507,17 @@ export interface ISnapshotFetchOptions {
 	 * container, so specifying version is not necessary for storage services.
 	 */
 	versionId?: string;
+
+	/**
+	 * List of loading groupId of datastores for which the snapshot needs to be fetched. If not provided, content with
+	 * default/missing groupIDs will be requested from the service. It is upto the service, to include snapshot for
+	 * content with groupIds or not. Don't provide anything here for fetching content for initial container boot.
+	 */
+	loadingGroupIds?: string[];
+
+	/**
+	 * Specify if you want default behavior of the driver to fetch the snapshot like lets say simultaneously fetch from
+	 * network and cache or specify FetchSource.noCache to just fetch from network.
+	 */
+	fetchSource?: FetchSource;
 }

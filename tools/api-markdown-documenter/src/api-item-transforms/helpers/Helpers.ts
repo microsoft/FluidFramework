@@ -11,6 +11,7 @@ import {
 	type ApiItem,
 	type ApiItemKind,
 	ApiReturnTypeMixin,
+	ApiTypeParameterListMixin,
 	type Excerpt,
 	ExcerptTokenKind,
 	type HeritageType,
@@ -182,16 +183,6 @@ export function createHeritageTypesParagraph(
 		if (renderedImplementsTypes !== undefined) {
 			contents.push(new ParagraphNode([renderedImplementsTypes]));
 		}
-
-		// Render type parameters if there are any.
-		const renderedTypeParameters = createTypeParametersSection(
-			apiItem.typeParameters,
-			apiItem,
-			config,
-		);
-		if (renderedTypeParameters !== undefined) {
-			contents.push(new ParagraphNode([renderedTypeParameters]));
-		}
 	}
 
 	if (apiItem instanceof ApiInterface) {
@@ -204,16 +195,16 @@ export function createHeritageTypesParagraph(
 		if (renderedExtendsTypes !== undefined) {
 			contents.push(new ParagraphNode([renderedExtendsTypes]));
 		}
+	}
 
-		// Render type parameters if there are any.
+	// Render type parameters if there are any.
+	if (ApiTypeParameterListMixin.isBaseClassOf(apiItem) && apiItem.typeParameters.length > 0) {
 		const renderedTypeParameters = createTypeParametersSection(
 			apiItem.typeParameters,
 			apiItem,
 			config,
 		);
-		if (renderedTypeParameters !== undefined) {
-			contents.push(new ParagraphNode([renderedTypeParameters]));
-		}
+		contents.push(new ParagraphNode([renderedTypeParameters]));
 	}
 
 	if (contents.length === 0) {
@@ -275,19 +266,13 @@ function createHeritageTypeListSpan(
  * @param contextApiItem - The API item with which the example is associated.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  *
- * @returns The doc section if any type parameters were provided, otherwise `undefined`.
- *
  * @public
  */
 export function createTypeParametersSection(
 	typeParameters: readonly TypeParameter[],
 	contextApiItem: ApiItem,
 	config: Required<ApiItemTransformationConfiguration>,
-): SectionNode | undefined {
-	if (typeParameters.length === 0) {
-		return undefined;
-	}
-
+): SectionNode {
 	const typeParametersTable = createTypeParametersSummaryTable(
 		typeParameters,
 		contextApiItem,

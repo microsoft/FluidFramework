@@ -16,7 +16,7 @@ import {
 	TreeNodeSchemaClass,
 	WithType,
 } from "./schemaTypes.js";
-import { SchemaFactory } from "./schemaFactory.js";
+import { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
 import { TreeArrayNode } from "./treeArrayNode.js";
 
 /**
@@ -44,9 +44,9 @@ export class SchemaFactoryRecursive<
 		name: Name,
 		t: T,
 	): TreeNodeSchemaClass<
-		`${TScope}.${Name}`,
+		ScopedSchemaName<TScope, Name>,
 		NodeKind.Object,
-		ObjectFromSchemaRecord<T> & WithType<`${TScope}.${Name}`>,
+		ObjectFromSchemaRecord<T> & WithType<ScopedSchemaName<TScope, Name>>,
 		InsertableObjectFromSchemaRecord<T>,
 		true
 	> {

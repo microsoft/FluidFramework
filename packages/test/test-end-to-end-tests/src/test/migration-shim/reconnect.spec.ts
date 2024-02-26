@@ -16,7 +16,7 @@ import {
 	type TraitLabel,
 } from "@fluid-experimental/tree";
 // eslint-disable-next-line import/no-internal-modules
-import { type EditLog } from "@fluid-experimental/tree/dist/EditLog.js";
+import { type EditLog } from "@fluid-experimental/tree/test/EditLog";
 import {
 	SharedTree,
 	disposeSymbol,
@@ -33,12 +33,18 @@ import {
 import { LoaderHeader } from "@fluidframework/container-definitions";
 import { type IContainerExperimental } from "@fluidframework/container-loader";
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { type ConfigTypes, type IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { type IChannel } from "@fluidframework/datastore-definitions";
 import {
 	createSummarizerFromFactory,
 	summarizeNow,
 	type ITestObjectProvider,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils";
+
+const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+	getRawConfig: (name: string): ConfigTypes => settings[name],
+});
 
 const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
 
@@ -196,7 +202,9 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 
 	const loaderProps = {
-		options: { enableOfflineLoad: true },
+		configProvider: configProvider({
+			"Fluid.Container.enableOfflineLoad": true,
+		}),
 	};
 
 	beforeEach("setup", async () => {
@@ -359,6 +367,9 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 		const container1 = await provider.loadContainer(runtimeFactory2);
 		const url = await container1.getAbsoluteUrl("");
 		assert(url !== undefined, "Container url should be defined");
+
+		await waitForContainerConnection(container1);
+
 		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
 		const shim1 = testObj1.getTree<MigrationShim>();
 		const legacyTree1 = shim1.currentTree as LegacySharedTree;
@@ -384,6 +395,8 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 				[LoaderHeader.version]: summaryVersion,
 			},
 		);
+		await waitForContainerConnection(container2);
+
 		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
 		const shim2 = testObj2.getTree<SharedTreeShim>();
 		const newTree2 = shim2.currentTree;
