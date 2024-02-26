@@ -122,7 +122,7 @@ export const locatorQueryParamName = "nav";
  * @param locator - object representing Fluid data store location in ODSP terms
  * @alpha
  */
-export function storeLocatorInOdspUrl(url: URL, locator: OdspFluidDataStoreLocator) {
+export function storeLocatorInOdspUrl(url: URL, locator: OdspFluidDataStoreLocator): void {
 	const encodedLocatorValue = encodeOdspFluidDataStoreLocator(locator);
 	// IMPORTANT: Do not apply encodeURIComponent to encodedLocatorValue, param value is automatically encoded
 	// when set via URLSearchParams class

@@ -19,6 +19,7 @@ import {
 	ISnapshotOptions,
 	OdspErrorTypes,
 	InstrumentedStorageTokenFetcher,
+	type IOdspError,
 } from "@fluidframework/odsp-driver-definitions";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
@@ -88,14 +89,14 @@ export async function fetchSnapshot(
 	logger: ITelemetryLoggerExt,
 	snapshotDownloader: (
 		url: string,
-		fetchOptions: { [index: string]: any },
+		fetchOptions: { [index: string]: RequestInit },
 	) => Promise<IOdspResponse<unknown>>,
 ): Promise<ISnapshot> {
 	const path = `/trees/${versionId}`;
 	let queryParams: ISnapshotOptions = {};
 
 	if (fetchFullSnapshot) {
-		queryParams = versionId !== "latest" ? { blobs: 2 } : { deltas: 1, blobs: 2 };
+		queryParams = versionId === "latest" ? { deltas: 1, blobs: 2 } : { blobs: 2 };
 	}
 
 	const queryString = getQueryString(queryParams);
@@ -108,7 +109,7 @@ export async function fetchSnapshot(
 		logger,
 		{
 			eventName: "fetchSnapshot",
-			headers: Object.keys(headers).length !== 0 ? true : undefined,
+			headers: Object.keys(headers).length > 0 ? true : undefined,
 		},
 		async () => snapshotDownloader(url, { headers }),
 	)) as IOdspResponse<IOdspSnapshot>;
@@ -134,8 +135,10 @@ export async function fetchSnapshotWithRedeem(
 	enableRedeemFallback?: boolean,
 ): Promise<ISnapshot> {
 	// back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 	const sharingLinkToRedeem = (odspResolvedUrl as any).sharingLinkToRedeem;
 	if (sharingLinkToRedeem) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		odspResolvedUrl.shareLinkInfo = { ...odspResolvedUrl.shareLinkInfo, sharingLinkToRedeem };
 	}
 
@@ -150,6 +153,7 @@ export async function fetchSnapshotWithRedeem(
 		enableRedeemFallback,
 	)
 		.catch(async (error) => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			if (enableRedeemFallback && isRedeemSharingLinkError(odspResolvedUrl, error)) {
 				// Execute the redeem fallback
 
@@ -174,6 +178,7 @@ export async function fetchSnapshotWithRedeem(
 				logger.sendTelemetryEvent(
 					{
 						eventName: "RedeemFallback",
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 						errorType: error.errorType,
 					},
 					error,
@@ -199,7 +204,9 @@ export async function fetchSnapshotWithRedeem(
 			if (
 				(typeof error === "object" &&
 					error !== null &&
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 					error.errorType === OdspErrorTypes.authorizationError) ||
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				error.errorType === OdspErrorTypes.fileNotFoundOrAccessDeniedError
 			) {
 				await removeEntries();
@@ -213,7 +220,7 @@ async function redeemSharingLink(
 	storageTokenFetcher: InstrumentedStorageTokenFetcher,
 	logger: ITelemetryLoggerExt,
 	forceAccessTokenViaAuthorizationHeader: boolean,
-) {
+): Promise<IOdspResponse<unknown>> {
 	return PerformanceEvent.timedExecAsync(
 		logger,
 		{
@@ -274,11 +281,12 @@ async function fetchLatestSnapshotCore(
 			redeemFallbackEnabled: enableRedeemFallback,
 		};
 		if (snapshotOptions !== undefined) {
-			Object.entries(snapshotOptions).forEach(([key, value]) => {
+			for (const [key, value] of Object.entries(snapshotOptions)) {
 				if (value !== undefined) {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 					perfEvent[`snapshotOption_${key}`] = value;
 				}
-			});
+			}
 		}
 		// This event measures only successful cases of getLatest call (no tokens, no retries).
 		return PerformanceEvent.timedExecAsync(logger, perfEvent, async (event) => {
@@ -330,7 +338,7 @@ async function fetchLatestSnapshotCore(
 					case "application/json": {
 						let text: string;
 						[text, receiveContentTime] = await measureP(async () =>
-							odspResponse.content.text().catch((err) =>
+							odspResponse.content.text().catch((error) =>
 								// Parsing can fail and message could contain full request URI, including
 								// tokens, etc. So do not log error object itself.
 								throwOdspNetworkError(
@@ -360,7 +368,7 @@ async function fetchLatestSnapshotCore(
 					case "application/ms-fluid": {
 						let content: ArrayBuffer;
 						[content, receiveContentTime] = await measureP(async () =>
-							odspResponse.content.arrayBuffer().catch((err) =>
+							odspResponse.content.arrayBuffer().catch((error) =>
 								// Parsing can fail and message could contain full request URI, including
 								// tokens, etc. So do not log error object itself.
 								throwOdspNetworkError(
@@ -401,12 +409,13 @@ async function fetchLatestSnapshotCore(
 						parsedSnapshotContents = { ...odspResponse, content: snapshotContents };
 						break;
 					}
-					default:
+					default: {
 						throw new NonRetryableError(
 							"Unknown snapshot content type",
 							OdspErrorTypes.incorrectServerResponse,
 							propsToLog,
 						);
+					}
 				}
 			} catch (error) {
 				if (isFluidError(error)) {
@@ -480,7 +489,7 @@ async function fetchLatestSnapshotCore(
 				useLegacyFlowWithoutGroups:
 					useLegacyFlowWithoutGroupsForSnapshotFetch(loadingGroupIds),
 				userOps: snapshot.ops?.filter((op) => isRuntimeMessage(op)).length ?? 0,
-				headers: Object.keys(response.requestHeaders).length !== 0 ? true : undefined,
+				headers: Object.keys(response.requestHeaders).length > 0 ? true : undefined,
 				// Measures time to make fetch call. Should be similar to
 				// fetchStartToResponseEndTime - receiveContentTime, i.e. it looks like it's time till first byte /
 				// end of response headers
@@ -512,9 +521,10 @@ async function fetchLatestSnapshotCore(
 			if (
 				typeof error === "object" &&
 				error !== null &&
-				(error.errorType === OdspErrorTypes.fetchFailure ||
-					error.errorType === OdspErrorTypes.fetchTimeout)
+				((error as Partial<IOdspError>).errorType === OdspErrorTypes.fetchFailure ||
+					(error as Partial<IOdspError>).errorType === OdspErrorTypes.fetchTimeout)
 			) {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				error[getWithRetryForTokenRefreshRepeat] = true;
 			}
 			throw error;
@@ -525,40 +535,50 @@ async function fetchLatestSnapshotCore(
 export interface ISnapshotRequestAndResponseOptions {
 	odspResponse: IOdspResponse<Response>;
 	requestUrl: string;
-	requestHeaders: { [index: string]: any };
+	requestHeaders: { [index: string]: string };
 }
 
 function getFormBodyAndHeaders(
 	odspResolvedUrl: IOdspResolvedUrl,
 	storageToken: string,
 	headers?: { [index: string]: string },
-) {
+): {
+	body: string;
+	headers: {
+		[index: string]: string;
+	};
+} {
 	const formBoundary = uuid();
 	const formParams: string[] = [];
-	formParams.push(`--${formBoundary}`);
-	formParams.push(`Authorization: Bearer ${storageToken}`);
-	formParams.push(`X-HTTP-Method-Override: GET`);
+	formParams.push(
+		`--${formBoundary}`,
+		`Authorization: Bearer ${storageToken}`,
+		`X-HTTP-Method-Override: GET`,
+	);
 
 	if (headers !== undefined) {
-		Object.entries(headers).forEach(([key, value]) => {
+		for (const [key, value] of Object.entries(headers)) {
 			if (value !== undefined) {
 				formParams.push(`${key}: ${value}`);
 			}
-		});
+		}
 	}
 	if (odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem) {
 		formParams.push(`sl: ${odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem}`);
 	}
-	formParams.push(`_post: 1`);
-	formParams.push(`\r\n--${formBoundary}--`);
+	formParams.push(`_post: 1`, `\r\n--${formBoundary}--`);
 	const postBody = formParams.join("\r\n");
-	const header: { [index: string]: any } = {
+	const header: { [index: string]: string } = {
 		"Content-Type": `multipart/form-data;boundary=${formBoundary}`,
 	};
 	return { body: postBody, headers: header };
 }
 
-export function evalBlobsAndTrees(snapshot: ISnapshot) {
+export function evalBlobsAndTrees(snapshot: ISnapshot): {
+	trees: number;
+	numBlobs: number;
+	encodedBlobsSize: number;
+} {
 	const trees = countTreesInSnapshotTree(snapshot.snapshotTree);
 	const numBlobs = snapshot.blobContents.size;
 	let encodedBlobsSize = 0;
@@ -568,7 +588,7 @@ export function evalBlobsAndTrees(snapshot: ISnapshot) {
 	return { trees, numBlobs, encodedBlobsSize };
 }
 
-export function validateBlobsAndTrees(snapshot: IOdspSnapshot) {
+export function validateBlobsAndTrees(snapshot: IOdspSnapshot): void {
 	assert(
 		snapshot.trees !== undefined,
 		0x200 /* "Returned odsp snapshot is malformed. No trees!" */,
@@ -613,26 +633,27 @@ export async function downloadSnapshot(
 	scenarioName?: string,
 ): Promise<ISnapshotRequestAndResponseOptions> {
 	// back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 	const sharingLinkToRedeem = (odspResolvedUrl as any).sharingLinkToRedeem;
 	if (sharingLinkToRedeem) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		odspResolvedUrl.shareLinkInfo = { ...odspResolvedUrl.shareLinkInfo, sharingLinkToRedeem };
 	}
 
 	const snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
 
-	const queryParams = { ump: 1 };
+	const queryParams: Record<string, unknown> = { ump: 1 };
 	if (snapshotOptions !== undefined) {
-		Object.entries(snapshotOptions).forEach(([key, value]) => {
+		for (const [key, value] of Object.entries(snapshotOptions)) {
 			// Exclude "timeout" from query string
 			if (value !== undefined && key !== "timeout") {
 				queryParams[key] = value;
 			}
-		});
+		}
 	}
 
 	if (loadingGroupIds !== undefined) {
-		// eslint-disable-next-line @typescript-eslint/dot-notation
-		queryParams["groupId"] = Array.from(loadingGroupIds).join(",");
+		queryParams.groupId = loadingGroupIds.join(",");
 	}
 
 	const queryString = getQueryString(queryParams);
@@ -640,7 +661,7 @@ export async function downloadSnapshot(
 	// The location of file can move on Spo in which case server returns 308(Permanent Redirect) error.
 	// Adding below header will make VROOM API return 404 instead of 308 and browser can intercept it.
 	// This error thrown by server will contain the new redirect location. Look at the 404 error parsing
-	// for futher reference here: \packages\utils\odsp-doclib-utils\src\odspErrorUtils.ts
+	// for further reference here: \packages\utils\odsp-doclib-utils\src\odspErrorUtils.ts
 	const header = { prefer: "manualredirect" };
 	const { body, headers } = getFormBodyAndHeaders(odspResolvedUrl, storageToken, header);
 	const fetchOptions = {
@@ -651,12 +672,14 @@ export async function downloadSnapshot(
 	};
 	// Decide what snapshot format to fetch as per the feature gate.
 	switch (snapshotFormatFetchType) {
-		case SnapshotFormatSupportType.Binary:
+		case SnapshotFormatSupportType.Binary: {
 			headers.accept = `application/ms-fluid; v=${currentReadVersion}`;
 			break;
-		default:
+		}
+		default: {
 			// By default ask both versions and let the server decide the format.
 			headers.accept = `application/json, application/ms-fluid; v=${currentReadVersion}`;
+		}
 	}
 
 	const odspResponse = await (epochTracker?.fetch(
@@ -674,7 +697,10 @@ export async function downloadSnapshot(
 	};
 }
 
-function isRedeemSharingLinkError(odspResolvedUrl: IOdspResolvedUrl, error: any) {
+function isRedeemSharingLinkError(
+	odspResolvedUrl: IOdspResolvedUrl,
+	error: Partial<IOdspError>,
+): boolean {
 	if (
 		odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem !== undefined &&
 		typeof error === "object" &&

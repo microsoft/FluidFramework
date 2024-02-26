@@ -32,6 +32,7 @@ import {
 	SummaryType,
 	ISnapshotTreeEx,
 	SummaryObject,
+	FileMode,
 } from "@fluidframework/protocol-definitions";
 import { IQuorumSnapshot, getGitMode, getGitType } from "@fluidframework/protocol-base";
 import { gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
@@ -273,6 +274,17 @@ export async function writeSummaryTree(
 			return treeEntry;
 		}),
 	);
+
+	if (summaryTree.groupId !== undefined) {
+		const groupId = summaryTree.groupId;
+		const groupIdBlobHandle = await writeSummaryBlob(groupId, blobsShaCache, manager);
+		entries.push({
+			mode: FileMode.File,
+			path: encodeURIComponent(".groupId"),
+			sha: groupIdBlobHandle,
+			type: "blob",
+		});
+	}
 
 	const treeHandle = await manager.createGitTree({ tree: entries });
 	return treeHandle.sha;

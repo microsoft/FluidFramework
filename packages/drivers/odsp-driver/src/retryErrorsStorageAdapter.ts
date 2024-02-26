@@ -32,10 +32,10 @@ export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisp
 	public get policies(): IDocumentStorageServicePolicies | undefined {
 		return this.internalStorageService.policies;
 	}
-	public get disposed() {
+	public get disposed(): boolean {
 		return this._disposed;
 	}
-	public dispose() {
+	public dispose(): void {
 		this._disposed = true;
 	}
 
@@ -107,7 +107,7 @@ export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisp
 		);
 	}
 
-	private checkStorageDisposed() {
+	private checkStorageDisposed(): void {
 		if (this._disposed) {
 			// pre-0.58 error message: storageServiceDisposedCannotRetry
 			throw new LoggingError("Storage Service is disposed. Cannot retry", {

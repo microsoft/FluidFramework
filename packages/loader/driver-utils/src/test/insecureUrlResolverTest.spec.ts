@@ -9,6 +9,7 @@ import { IRequest } from "@fluidframework/core-interfaces";
 import { InsecureUrlResolver } from "../insecureUrlResolver";
 
 describe("Insecure Url Resolver Test", () => {
+	const deltaStreamUrl = "https://localhost.deltaStream";
 	const hostUrl = "https://localhost";
 	const ordererUrl = "https://localhost.orderer";
 	const storageUrl = "https://localhost.storage";
@@ -19,7 +20,14 @@ describe("Insecure Url Resolver Test", () => {
 	let request: IRequest;
 
 	beforeEach(() => {
-		resolver = new InsecureUrlResolver(hostUrl, ordererUrl, storageUrl, tenantId, bearer);
+		resolver = new InsecureUrlResolver(
+			hostUrl,
+			ordererUrl,
+			storageUrl,
+			deltaStreamUrl,
+			tenantId,
+			bearer,
+		);
 		request = resolver.createCreateNewRequest(fileName);
 
 		// Mocking window since the resolver depends on window.location.host

@@ -15,7 +15,8 @@ import { LocalOdspDocumentService } from "./localOdspDocumentService.js";
 
 /**
  * Factory for creating sharepoint document service with a provided snapshot.
- * Use if you don't want to connect to any kind of external/internal storages and want to provide
+ *
+ * @remarks Use if you don't want to connect to any kind of external/internal storages and want to provide
  * content directly.
  */
 export class LocalOdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {

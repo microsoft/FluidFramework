@@ -25,7 +25,9 @@ export function checkUrl(documentUrl: URL): DriverPreCheckInfo | undefined {
 		if (locator?.siteUrl) {
 			siteOrigin = new URL(locator?.siteUrl).origin;
 		}
-	} catch {}
+	} catch {
+		// Drop error
+	}
 
 	return {
 		codeDetailsHint: locator?.containerPackageName,

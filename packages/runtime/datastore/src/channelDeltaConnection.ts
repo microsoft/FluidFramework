@@ -117,16 +117,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 	public applyStashedOp(content: any): unknown {
 		try {
 			this.stashedOpMd = createStashedOpMetadata();
-			const md = this.handler.applyStashedOp(content);
-			if (md !== undefined) {
-				// temporary assert while we migrate dds to the new pattern
-				// after migration we will always return stashedOpMd
-				assert(
-					(this.stashedOpMd?.length ?? 0) === 0,
-					"stashedOpMd should be empty if metadata returned. this means ops were submitted and local op metadata was returned. this will cause a corruption",
-				);
-				return md;
-			}
+			this.handler.applyStashedOp(content);
 			return this.stashedOpMd;
 		} finally {
 			this.stashedOpMd = undefined;

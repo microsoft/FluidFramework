@@ -67,7 +67,8 @@ export class OdspDocumentServiceFactoryCore
 		return this.nonPersistentCache.snapshotPrefetchResultCache;
 	}
 
-	public get IRelaySessionAwareDriverFactory() {
+	// TODO: return `IRelaySessionAwareDriverFactory` instead of `this` (breaking change)
+	public get IRelaySessionAwareDriverFactory(): this {
 		return this;
 	}
 
@@ -93,7 +94,7 @@ export class OdspDocumentServiceFactoryCore
 		logger?: ITelemetryBaseLogger,
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
-		let odspResolvedUrl = getOdspResolvedUrl(createNewResolvedUrl);
+		const odspResolvedUrl = getOdspResolvedUrl(createNewResolvedUrl);
 		const resolvedUrlData: IOdspUrlParts = {
 			siteUrl: odspResolvedUrl.siteUrl,
 			driveId: odspResolvedUrl.driveId,
@@ -187,7 +188,7 @@ export class OdspDocumentServiceFactoryCore
 						);
 						throw error;
 					});
-				odspResolvedUrl = isNewFileInfo(fileInfo)
+				const _odspResolvedUrl = isNewFileInfo(fileInfo)
 					? await module.createNewFluidFile(
 							getStorageToken,
 							fileInfo,
@@ -214,13 +215,13 @@ export class OdspDocumentServiceFactoryCore
 							odspResolvedUrl.isClpCompliantApp,
 					  );
 				const docService = this.createDocumentServiceCore(
-					odspResolvedUrl,
+					_odspResolvedUrl,
 					odspLogger,
 					cacheAndTracker,
 					clientIsSummarizer,
 				);
 				event.end({
-					docId: odspResolvedUrl.hashedDocumentId,
+					docId: _odspResolvedUrl.hashedDocumentId,
 				});
 				return docService;
 			},
@@ -301,7 +302,7 @@ export class OdspDocumentServiceFactoryCore
 		const webSocketTokenFetcher =
 			this.getWebsocketToken === undefined
 				? undefined
-				: async (options: TokenFetchOptions) =>
+				: async (options: TokenFetchOptions): Promise<string | null> =>
 						toInstrumentedOdspTokenFetcher(
 							extLogger,
 							resolvedUrlData,
@@ -337,9 +338,11 @@ function getSharingLinkParams(
 		const createLinkRole = searchParams.get("createLinkRole");
 		if (createLinkScope && SharingLinkScope[createLinkScope]) {
 			createShareLinkParam = {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				scope: SharingLinkScope[createLinkScope],
 				...(createLinkRole && SharingLinkRole[createLinkRole]
-					? { role: SharingLinkRole[createLinkRole] }
+					? // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+					  { role: SharingLinkRole[createLinkRole] }
 					: {}),
 			};
 		}

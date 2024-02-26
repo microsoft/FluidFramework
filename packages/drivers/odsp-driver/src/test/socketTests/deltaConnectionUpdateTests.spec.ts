@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { stub, useFakeTimers, SinonFakeTimers } from "sinon";
+import { strict as assert } from "node:assert";
+import { stub, useFakeTimers, SinonFakeTimers, type SinonStub } from "sinon";
 import { ISocketStorageDiscovery } from "@fluidframework/odsp-driver-definitions";
 import { IClient, ISignalMessage } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt, MockLogger } from "@fluidframework/telemetry-utils";
@@ -62,14 +62,14 @@ describe("DeltaConnectionMetadata update tests", () => {
 		});
 	}
 
-	async function tickClock(tickValue: number) {
+	async function tickClock(tickValue: number): Promise<void> {
 		clock.tick(tickValue);
 
 		// Yield the event loop because the outbound op will be processed asynchronously.
 		await yieldEventLoop();
 	}
 
-	function addJoinSessionStub(label: string) {
+	function addJoinSessionStub(label: string): SinonStub {
 		joinSessionResponse.sensitivityLabelsInfo = JSON.stringify({
 			labels: label,
 			timestamp: Date.now(),
@@ -127,9 +127,10 @@ describe("DeltaConnectionMetadata update tests", () => {
 		let eventRaised = false;
 		let content: Record<string, string>;
 
-		const handler = (metadata: Record<string, string>) => {
+		const handler = (metadata: Record<string, string>): void => {
 			eventRaised = true;
 			assert.strictEqual(
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				JSON.parse(metadata.sensitivityLabelsInfo).labels,
 				content.labels,
 				"label via event should match",
@@ -154,6 +155,7 @@ describe("DeltaConnectionMetadata update tests", () => {
 		await tickClock(1);
 
 		// Now change label through signal and listen as event on service.
+		// eslint-disable-next-line require-atomic-updates
 		eventRaised = false;
 		content = { labels: "label2" };
 		const signalContent1 = { labels: "label2", timestamp: Date.now() };
@@ -176,6 +178,7 @@ describe("DeltaConnectionMetadata update tests", () => {
 		await tickClock(1);
 
 		// Now update through join session response
+		// eslint-disable-next-line require-atomic-updates
 		eventRaised = false;
 		content = { labels: "label3" };
 		service.on("metadataUpdate", handler);

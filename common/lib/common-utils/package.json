@@ -47,7 +47,7 @@
 		"test:coverage": "c8 npm run test:report",
 		"test:jest": "jest",
 		"test:jest:report": "npm run test:jest -- --ci --coverage",
-		"test:mocha": "mocha --unhandled-rejections=strict  --recursive \"dist/test/mocha/**/*.spec.*js\" --exit --project test/tsconfig.json",
+		"test:mocha": "mocha --unhandled-rejections=strict  --recursive \"dist/test/mocha/**/*.spec.*js\" --exit",
 		"test:mocha:multireport": "cross-env FLUID_TEST_MULTIREPORT=1 npm run test:mocha",
 		"test:mocha:report": "npm run test:mocha -- -- --reporter xunit --reporter-option output=nyc/mocha-junit-report.xml",
 		"test:report": "npm run test:mocha:report && npm run test:jest:report",
@@ -160,6 +160,14 @@
 	"typeValidation": {
 		"broken": {
 			"RemovedClassDeclaration_EventForwarder": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedClassDeclaration_TelemetryNullLogger": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedClassDeclaration_BaseTelemetryNullLogger": {
 				"backCompat": false,
 				"forwardCompat": false
 			}
