@@ -147,6 +147,12 @@ export interface ISnapshotTree {
 	 * intentional to minimize snapshot/summary size.
 	 */
 	groupId?: string;
+
+	/**
+	 * If true, then the service did not include the blobs content for the blobs in this snapshot tree. The service would
+	 * specify the groupId in that case, so that we can use that to fetch the latest content.
+	 */
+	omitted?: boolean;
 }
 
 /**

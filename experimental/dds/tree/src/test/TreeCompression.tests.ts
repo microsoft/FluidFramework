@@ -5,8 +5,8 @@
 
 import { expect, assert } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
-import { walkTree } from '../EditUtilities';
-import { createSessionId, IdCompressor, isFinalId, isLocalId } from '../id-compressor';
+import { walkTree } from '../EditUtilities.js';
+import { createSessionId, IdCompressor, isFinalId, isLocalId } from '../id-compressor/index.js';
 import {
 	Definition,
 	DetachedSequenceId,
@@ -15,13 +15,13 @@ import {
 	NodeId,
 	OpSpaceNodeId,
 	TraitLabel,
-} from '../Identifiers';
-import { ContextualizedNodeIdNormalizer, scopeIdNormalizer } from '../NodeIdUtilities';
-import { CompressedPlaceholderTree, PlaceholderTree, TraitMap, TreeNode } from '../persisted-types';
-import { RevisionView } from '../RevisionView';
-import { MutableStringInterner } from '../StringInterner';
-import { InterningTreeCompressor } from '../TreeCompressor';
-import { makeNodeIdContext, setUpTestTree } from './utilities/TestUtilities';
+} from '../Identifiers.js';
+import { ContextualizedNodeIdNormalizer, scopeIdNormalizer } from '../NodeIdUtilities.js';
+import { CompressedPlaceholderTree, PlaceholderTree, TraitMap, TreeNode } from '../persisted-types/index.js';
+import { RevisionView } from '../RevisionView.js';
+import { MutableStringInterner } from '../StringInterner.js';
+import { InterningTreeCompressor } from '../TreeCompressor.js';
+import { makeNodeIdContext, setUpTestTree } from './utilities/TestUtilities.js';
 
 /**
  * Verifies a tree can round-trip through compression/decompression. Optionally also asserts the compressed state

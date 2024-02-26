@@ -62,6 +62,7 @@ export type {
 	NodeFromSchema,
 	ObjectFromSchemaRecord,
 	RestrictiveReadonlyRecord,
+	ScopedSchemaName,
 	TreeApi,
 	TreeArrayNodeBase,
 	TreeFieldFromImplicitField,

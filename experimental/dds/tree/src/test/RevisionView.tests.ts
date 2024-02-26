@@ -4,15 +4,15 @@
  */
 
 import { expect } from 'chai';
-import { TraitLabel } from '../Identifiers';
-import { getChangeNodeFromViewNode } from '../SerializationUtilities';
-import { ChangeNode } from '../persisted-types';
-import { convertTreeNodesToViewNodes, RevisionView } from '../RevisionView';
-import { StablePlace, StableRange } from '../ChangeTypes';
-import { detachRange, insertIntoTrait } from '../EditUtilities';
-import { expectDefined } from './utilities/TestCommon';
-import { LeafNode, TestNode } from './utilities/TestNode';
-import { refreshTestTree } from './utilities/TestUtilities';
+import { TraitLabel } from '../Identifiers.js';
+import { getChangeNodeFromViewNode } from '../SerializationUtilities.js';
+import { ChangeNode } from '../persisted-types/index.js';
+import { convertTreeNodesToViewNodes, RevisionView } from '../RevisionView.js';
+import { StablePlace, StableRange } from '../ChangeTypes.js';
+import { detachRange, insertIntoTrait } from '../EditUtilities.js';
+import { expectDefined } from './utilities/TestCommon.js';
+import { LeafNode, TestNode } from './utilities/TestNode.js';
+import { refreshTestTree } from './utilities/TestUtilities.js';
 
 describe('RevisionView', () => {
 	const testTree = refreshTestTree();

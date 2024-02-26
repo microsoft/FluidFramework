@@ -124,6 +124,17 @@ type UnbrandedName<T extends FlexLeafNodeSchema> = T["name"] extends TreeNodeSch
 	: T["name"];
 
 /**
+ * The name of a schema produced by {@link SchemaFactory}, including its optional scope prefix.
+ *
+ * @public
+ */
+export type ScopedSchemaName<
+	TScope extends string | undefined,
+	TName extends number | string,
+> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
+// > = `${TScope extends undefined ? "" : `${TScope}.`}${TName}`;
+
+/**
  * Builds schema libraries, and the schema within them.
  *
  * @typeParam TScope - Scope added as a prefix to the name of every schema produced by this factory.
@@ -132,17 +143,24 @@ type UnbrandedName<T extends FlexLeafNodeSchema> = T["name"] extends TreeNodeSch
  *
  * @sealed @public
  */
-export class SchemaFactory<TScope extends string = string, TName extends number | string = string> {
+export class SchemaFactory<
+	out TScope extends string | undefined = string | undefined,
+	TName extends number | string = string,
+> {
 	private readonly structuralTypes: Map<string, TreeNodeSchema> = new Map();
 
 	/**
 	 * @param scope - Prefix appended to the identifiers of all {@link TreeNodeSchema} produced by this builder.
 	 * Use of [Reverse domain name notation](https://en.wikipedia.org/wiki/Reverse_domain_name_notation) or a UUIDv4 is recommended to avoid collisions.
+	 * You may opt out of using a scope by passing `undefined`, but note that this increases the risk of collisions.
 	 */
 	public constructor(public readonly scope: TScope) {}
 
-	private scoped<Name extends TName | string>(name: Name): `${TScope}.${Name}` {
-		return `${this.scope}.${name}`;
+	private scoped<Name extends TName | string>(name: Name): ScopedSchemaName<TScope, Name> {
+		return (this.scope === undefined ? `${name}` : `${this.scope}.${name}`) as ScopedSchemaName<
+			TScope,
+			Name
+		>;
 	}
 
 	/**
@@ -211,14 +229,14 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 		t: T,
 		implicitlyConstructable: TImplicitlyConstructable,
 	): TreeNodeSchemaClass<
-		`${TScope}.${Name}`,
+		ScopedSchemaName<TScope, Name>,
 		TKind,
-		TreeNode & WithType<`${TScope}.${Name}`>,
+		TreeNode & WithType<ScopedSchemaName<TScope, Name>>,
 		FlexTreeNode | unknown,
 		TImplicitlyConstructable
 	> {
 		const identifier = this.scoped(name);
-		class schema implements TreeNode, WithType<`${TScope}.${Name}`> {
+		class schema implements TreeNode, WithType<ScopedSchemaName<TScope, Name>> {
 			public static readonly identifier = identifier;
 			public static readonly kind = kind;
 			public static readonly info = t;
@@ -243,7 +261,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 				);
 			}
 
-			public get [type](): `${TScope}.${Name}` {
+			public get [type](): ScopedSchemaName<TScope, Name> {
 				return identifier;
 			}
 		}
@@ -302,9 +320,12 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 		}
 
 		return schema as TreeNodeSchemaClass<
-			`${TScope}.${Name}`,
+			ScopedSchemaName<TScope, Name>,
 			NodeKind.Object,
-			object & TreeNode & ObjectFromSchemaRecord<T> & WithType<`${TScope}.${Name}`>,
+			object &
+				TreeNode &
+				ObjectFromSchemaRecord<T> &
+				WithType<ScopedSchemaName<TScope, Name>>,
 			object & InsertableObjectFromSchemaRecord<T>,
 			true
 		>;
@@ -357,9 +378,9 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 		name: Name,
 		allowedTypes: T,
 	): TreeNodeSchemaClass<
-		`${TScope}.${Name}`,
+		ScopedSchemaName<TScope, Name>,
 		NodeKind.Map,
-		TreeMapNode<T> & WithType<`${TScope}.${Name}`>,
+		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>,
 		ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		true
 	>;
@@ -368,7 +389,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
 		allowedTypes?: T,
 	): TreeNodeSchema<
-		`${TScope}.${string}`,
+		`${TScope}.${string}` | `${string}`,
 		NodeKind.Map,
 		TreeMapNode<T>,
 		ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>,
@@ -415,9 +436,9 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 		customizable: boolean,
 		implicitlyConstructable: ImplicitlyConstructable,
 	): TreeNodeSchemaClass<
-		`${TScope}.${Name}`,
+		ScopedSchemaName<TScope, Name>,
 		NodeKind.Map,
-		TreeMapNode<T> & WithType<`${TScope}.${Name}`>,
+		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>,
 		ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		ImplicitlyConstructable
 	> {
@@ -452,9 +473,9 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 		Object.defineProperties(schema.prototype, mapStaticDispatchMap);
 
 		return schema as unknown as TreeNodeSchemaClass<
-			`${TScope}.${Name}`,
+			ScopedSchemaName<TScope, Name>,
 			NodeKind.Map,
-			TreeMapNode<T> & WithType<`${TScope}.${Name}`>,
+			TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>,
 			ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 			ImplicitlyConstructable
 		>;
@@ -515,9 +536,9 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 		name: Name,
 		allowedTypes: T,
 	): TreeNodeSchemaClass<
-		`${TScope}.${Name}`,
+		ScopedSchemaName<TScope, Name>,
 		NodeKind.Array,
-		TreeArrayNode<T> & WithType<`${TScope}.${Name}`>,
+		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, Name>>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		true
 	>;
@@ -526,7 +547,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
 		allowedTypes?: T,
 	): TreeNodeSchema<
-		`${TScope}.${string}`,
+		`${TScope}.${string}` | `${string}`,
 		NodeKind.Array,
 		TreeArrayNode<T>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
@@ -608,7 +629,7 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 		Object.defineProperties(schema.prototype, arrayNodePrototypeProperties);
 
 		return schema as unknown as TreeNodeSchemaClass<
-			`${TScope}.${Name}`,
+			ScopedSchemaName<TScope, Name>,
 			NodeKind.Array,
 			TreeArrayNode<T> & WithType<`${TScope}.${string}`>,
 			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,

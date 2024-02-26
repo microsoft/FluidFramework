@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IStream } from "@fluidframework/driver-definitions";
@@ -17,7 +17,7 @@ class MockCache implements ICache {
 	public writeCount = 0;
 	public opsWritten = 0;
 
-	public async write(batchNumber: string, data: string) {
+	public async write(batchNumber: string, data: string): Promise<void> {
 		this.writeCount++;
 		this.data[batchNumber] = JSON.parse(data);
 		for (const op of this.data[batchNumber] as CacheEntry) {
@@ -28,7 +28,7 @@ class MockCache implements ICache {
 		}
 	}
 
-	public async read(batchNumber: string) {
+	public async read(batchNumber: string): Promise<string | undefined> {
 		const content = this.data[batchNumber];
 		if (content === undefined) {
 			return undefined;
@@ -36,14 +36,14 @@ class MockCache implements ICache {
 		return JSON.stringify(content);
 	}
 
-	public remove() {
+	public remove(): void {
 		// Do not reset this.writeCount such that we can test that writes happened, but later on data was cleared
 		this.writeCount++;
 		this.opsWritten++;
 		this.data = {};
 	}
 
-	public data: { [key: string]: any } = {};
+	public data: { [key: string]: unknown } = {};
 }
 
 async function validate(
@@ -51,7 +51,7 @@ async function validate(
 	expected: { [key: number]: (MyDataInput | undefined)[] },
 	cache: OpsCache,
 	initialSeq: number,
-) {
+): Promise<void> {
 	assert.deepEqual(mockCache.data, JSON.parse(JSON.stringify(expected)));
 
 	const expectedArr: MyDataInput[] = [];
@@ -104,7 +104,7 @@ async function runTestNoTimer(
 	expected: { [key: number]: (MyDataInput | undefined)[] },
 	initialWritesExpected: number,
 	totalOpsWritten?: number,
-) {
+): Promise<void> {
 	const mockCache = new MockCache();
 	const logger = new MockLogger();
 	const cache = new OpsCache(
@@ -150,7 +150,7 @@ export async function runTestWithTimer(
 	initialWritesExpected: number,
 	totalWritesExpected: number,
 	totalOpsWritten?: number,
-) {
+): Promise<void> {
 	const mockCache = new MockCache();
 	const logger = new MockLogger();
 	const cache = new OpsCache(
@@ -182,7 +182,7 @@ export async function runTest(
 	initialWritesExpected: number,
 	totalWritesExpected: number,
 	totalOpsWritten?: number,
-) {
+): Promise<void> {
 	await runTestNoTimer(
 		batchSize,
 		initialSeq,
@@ -393,7 +393,9 @@ describe("OpsCache", () => {
 });
 
 describe("OdspDeltaStorageWithCache", () => {
-	async function readAll(stream: IStream<ISequencedDocumentMessage[]>) {
+	async function readAll(
+		stream: IStream<ISequencedDocumentMessage[]>,
+	): Promise<ISequencedDocumentMessage[]> {
 		const ops: ISequencedDocumentMessage[] = [];
 		// eslint-disable-next-line no-constant-condition
 		while (true) {
@@ -406,7 +408,7 @@ describe("OdspDeltaStorageWithCache", () => {
 		return ops;
 	}
 
-	function createOps(fromArg: number, length: number) {
+	function createOps(fromArg: number, length: number): ISequencedDocumentMessage[] {
 		const ops: ISequencedDocumentMessage[] = [];
 		let from = fromArg;
 		const to = from + length;
@@ -418,11 +420,15 @@ describe("OdspDeltaStorageWithCache", () => {
 		return ops;
 	}
 
-	function filterOps(ops: ISequencedDocumentMessage[], from: number, to: number) {
+	function filterOps(
+		ops: ISequencedDocumentMessage[],
+		from: number,
+		to: number,
+	): ISequencedDocumentMessage[] {
 		return ops.filter((op) => op.sequenceNumber >= from && op.sequenceNumber < to);
 	}
 
-	function validateOps(ops: ISequencedDocumentMessage[], from: number, to: number) {
+	function validateOps(ops: ISequencedDocumentMessage[], from: number, to: number): void {
 		if (to < from) {
 			assert(ops.length === 0);
 		} else {
@@ -441,7 +447,7 @@ describe("OdspDeltaStorageWithCache", () => {
 		opsFromStorage: number,
 		concurrency = 1,
 		batchSize = 100,
-	) {
+	): Promise<void> {
 		const snapshotOps = createOps(fromTotal, opsFromSnapshot);
 		const cachedOps = createOps(fromTotal + opsFromSnapshot, opsFromCache);
 		const storageOps = createOps(fromTotal + opsFromSnapshot + opsFromCache, opsFromStorage);
@@ -469,7 +475,7 @@ describe("OdspDeltaStorageWithCache", () => {
 			(from: number, to: number) => {},
 			// opsReceived
 			(ops: ISequencedDocumentMessage[]) => opsToCache.push(...ops),
-			() => ({ isFirstSnapshotFromNetwork: false }) as any as OdspDocumentStorageService,
+			() => ({ isFirstSnapshotFromNetwork: false }) as unknown as OdspDocumentStorageService,
 		);
 
 		const stream = storage.fetchMessages(
