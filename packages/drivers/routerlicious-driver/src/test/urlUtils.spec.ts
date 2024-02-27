@@ -10,8 +10,8 @@ import { getDiscoveredFluidResolvedUrl, parseFluidUrl, replaceDocumentIdInPath }
 
 describe("UrlUtils", () => {
 	const exampleFluidUrl1 =
-		"https://orderer.examplehost.com/example-tenant/some-document?param1=value1";
-	const exampleFluidUrl2 = "https://examplehost.com/other-tenant/";
+		"fluid://orderer.examplehost.com/example-tenant/some-document?param1=value1";
+	const exampleFluidUrl2 = "fluid://examplehost.com/other-tenant/";
 	describe("parseFluidUrl()", () => {
 		it("parses Fluid url", () => {
 			const parsedUrl = parseFluidUrl(exampleFluidUrl1);
@@ -33,7 +33,7 @@ describe("UrlUtils", () => {
 		it("updating pathname alters toString of parsedUrl", () => {
 			const parsedUrl = parseFluidUrl(exampleFluidUrl2);
 			parsedUrl.set("pathname", "/not-same");
-			assert.strictEqual(parsedUrl.toString(), "https://examplehost.com/not-same");
+			assert.strictEqual(parsedUrl.toString(), "fluid://examplehost.com/not-same");
 		});
 	});
 

@@ -29,7 +29,7 @@ import { ConnectionState } from "@fluidframework/container-loader";
 
 describe("No Delta Stream", () => {
 	const documentId = "localServerTest";
-	const documentLoadUrl = `https://localhost/${documentId}`;
+	const documentLoadUrl = `fluid-test://localhost/${documentId}`;
 	const stringId = "stringKey";
 	const codeDetails: IFluidCodeDetails = {
 		package: "localServerTestPackage",

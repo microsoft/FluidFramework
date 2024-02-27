@@ -82,7 +82,7 @@ async function processWithMH(queue, mhService) {
 
 describe("Rebasing", () => {
 	const documentId = "localServerTest";
-	const documentLoadUrl = `https://localhost/${documentId}`;
+	const documentLoadUrl = `fluid-test://localhost/${documentId}`;
 	const propertyDdsId = "PropertyTree";
 	const codeDetails = {
 		package: "localServerTestPackage",

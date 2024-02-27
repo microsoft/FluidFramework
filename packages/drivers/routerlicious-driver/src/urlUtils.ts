@@ -43,7 +43,7 @@ export const getDiscoveredFluidResolvedUrl = (
 		id: resolvedUrl.id,
 		tokens: resolvedUrl.tokens,
 		type: resolvedUrl.type,
-		url: new URLParse(`https://${discoveredOrdererUrl.host}${parsedUrl.pathname}`).toString(),
+		url: new URLParse(`fluid://${discoveredOrdererUrl.host}${parsedUrl.pathname}`).toString(),
 	};
 	return discoveredResolvedUrl;
 };

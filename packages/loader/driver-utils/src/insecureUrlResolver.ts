@@ -17,7 +17,7 @@ import Axios from "axios";
  * http://localhost:8080/<documentId>/<path>.
  *
  * We then need to map that to a Fluid based URL. These are of the form
- * https://orderingUrl/<tenantId>/<documentId>/<path>.
+ * fluid://orderingUrl/<tenantId>/<documentId>/<path>.
  *
  * The tenantId/documentId pair defines the 'full' document ID the service makes use of. The path is then an optional
  * part of the URL that the document interprets and maps to a data store. It's exactly similar to how a web service
@@ -106,7 +106,7 @@ export class InsecureUrlResolver implements IUrlResolver {
 				id: "",
 				tokens: {},
 				type: "fluid",
-				url: `https://${host}/${encodedTenantId}/new`,
+				url: `fluid://${host}/${encodedTenantId}/new`,
 			};
 			return createNewResponse;
 		}
@@ -115,7 +115,7 @@ export class InsecureUrlResolver implements IUrlResolver {
 			!documentRelativePath || documentRelativePath.startsWith("/")
 				? documentRelativePath
 				: `/${documentRelativePath}`;
-		const documentUrl = `https://${host}/${encodedTenantId}/${encodedDocId}${relativePath}${queryParams}`;
+		const documentUrl = `fluid://${host}/${encodedTenantId}/${encodedDocId}${relativePath}${queryParams}`;
 
 		const deltaStorageUrl = `${this.ordererUrl}/deltas/${encodedTenantId}/${encodedDocId}`;
 		const storageUrl = `${this.storageUrl}/repos/${encodedTenantId}`;

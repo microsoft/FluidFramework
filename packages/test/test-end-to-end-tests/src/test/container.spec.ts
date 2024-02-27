@@ -59,7 +59,7 @@ import {
 } from "@fluidframework/driver-utils";
 import { Deferred } from "@fluidframework/core-utils";
 
-const id = "https://localhost/containerTest";
+const id = "fluid-test://localhost/containerTest";
 const testRequest: IRequest = { url: id };
 const codeDetails: IFluidCodeDetails = { package: "test" };
 const timeoutMs = 500;

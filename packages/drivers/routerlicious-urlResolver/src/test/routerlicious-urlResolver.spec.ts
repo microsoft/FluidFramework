@@ -39,7 +39,7 @@ describe("Routerlicious Url Resolver", () => {
 		);
 		assert.equal(
 			resolved.url,
-			"https://wu2.prague.office-int.com/fluid/thinkable-list?chaincode=@fluid-example/shared-text@0.11.14146",
+			"fluid://wu2.prague.office-int.com/fluid/thinkable-list?chaincode=@fluid-example/shared-text@0.11.14146",
 			"FluidUrl does not match",
 		);
 	});
@@ -71,7 +71,7 @@ describe("Routerlicious Url Resolver", () => {
 		);
 		assert.equal(
 			resolved.url,
-			"https://localhost:3003/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",
+			"fluid://localhost:3003/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",
 			"FluidUrl does not match",
 		);
 	});
@@ -119,7 +119,7 @@ describe("Routerlicious Url Resolver", () => {
 		assert.equal(endpoints.ordererUrl, "http://localhost:3003", "Improperly Formed OrdererUrl");
 		assert.equal(
 			url,
-			"https://localhost:3003/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",
+			"fluid://localhost:3003/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",
 			"Improperly formed FluidURL",
 		);
 	});
@@ -166,7 +166,7 @@ describe("Routerlicious Url Resolver", () => {
 		assert.equal(endpoints.ordererUrl, "http://alfred:3000", "Improperly Formed OrdererUrl");
 		assert.equal(
 			url,
-			"https://localhost:3003/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",
+			"fluid://localhost:3003/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",
 			"Improperly formed FluidURL",
 		);
 	});
@@ -216,7 +216,7 @@ describe("Routerlicious Url Resolver", () => {
 		);
 		assert.equal(
 			url,
-			"https://localhost:3003/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",
+			"fluid://localhost:3003/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",
 			"Improperly formed FluidURL",
 		);
 	});
@@ -267,7 +267,7 @@ describe("Routerlicious Url Resolver", () => {
 		);
 		assert.equal(
 			url,
-			"https://alfred.wu2-ppe.prague.office-int.com/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",
+			"fluid://alfred.wu2-ppe.prague.office-int.com/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",
 			"FluidUrl does not match",
 		);
 	});

@@ -102,7 +102,7 @@ describe("Odsp Create Container Test", () => {
 		assert.strictEqual(finalResolverUrl.siteUrl, siteUrl, "SiteUrl should match");
 		assert.strictEqual(finalResolverUrl.hashedDocumentId, docID, "DocId should match");
 
-		const url = `https://placeholder/placeholder/${docID}/`;
+		const url = `fluid-odsp://placeholder/placeholder/${docID}/`;
 		const snapshotUrl = `${siteUrl}/_api/v2.1/drives/${driveId}/items/${itemId}/opStream/snapshots`;
 		assert.strictEqual(finalResolverUrl.url, url, "Url should match");
 		assert.strictEqual(

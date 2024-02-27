@@ -23,7 +23,7 @@ describe("Spo Url Resolver", () => {
 		);
 		assert.equal(
 			resolved.url,
-			`https://placeholder/placeholder/${resolved.hashedDocumentId}/`,
+			`fluid-odsp://placeholder/placeholder/${resolved.hashedDocumentId}/`,
 			"fluid url does not match",
 		);
 	});
@@ -43,7 +43,7 @@ describe("Spo Url Resolver", () => {
 		);
 		assert.equal(
 			resolved.url,
-			`https://placeholder/placeholder/${resolved.hashedDocumentId}/`,
+			`fluid-odsp://placeholder/placeholder/${resolved.hashedDocumentId}/`,
 			"fluid url does not match",
 		);
 	});

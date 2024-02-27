@@ -30,7 +30,7 @@ import {
 
 describe("Ops on Reconnect", () => {
 	const documentId = "opsOnReconnectTest";
-	const documentLoadUrl = `https://localhost/${documentId}`;
+	const documentLoadUrl = `fluid-test://localhost/${documentId}`;
 	const map1Id = "map1Key";
 	const map2Id = "map2Key";
 	const directoryId = "directoryKey";

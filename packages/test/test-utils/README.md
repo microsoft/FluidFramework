@@ -156,7 +156,7 @@ The typical usage for testing a Fluid object is as follows:
 
 7. To truly test collaboration, create a second `Loader`, `Container`, `fluid object` and `DDS` which will serve as a remote client:
     ```typescript
-    const documentUrl = `https://localhost/${documentId}`;
+    const documentUrl = `fluid-test://localhost/${documentId}`;
     const loader2: ILoader = createLocalLoader(
     	[[codeDetails, entryPoint]],
     	deltaConnectionServer,

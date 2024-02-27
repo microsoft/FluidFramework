@@ -55,7 +55,7 @@ export class LocalResolver implements IUrlResolver {
 			id: documentId,
 			tokens: { jwt: generateToken(this.tenantId, documentId, this.tokenKey, scopes) },
 			type: "fluid",
-			url: `https://localhost:3000/${this.tenantId}/${fullPath}`,
+			url: `fluid-test://localhost:3000/${this.tenantId}/${fullPath}`,
 		};
 
 		return resolved;
