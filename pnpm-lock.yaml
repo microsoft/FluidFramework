@@ -27164,7 +27164,7 @@ packages:
     resolution: {integrity: sha512-WSg6l2sre6yVp0C4HYzYSJUn6H5tp7av6ZkGyiIKayR+xBqEYPrtxL+LAz8f+wD2VJs7/PDlK+SokaMkCxIGpw==}
     engines: {node: '>=14.x'}
     dependencies:
-      semver: 7.5.4
+      semver: 7.6.0
     dev: true
 
   /create-hash/1.2.0:
