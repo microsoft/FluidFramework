@@ -28,12 +28,11 @@ import {
 } from "../../util/index.js";
 import { ArrayToUnion, ExtractItemType, FlexListToUnion } from "../../feature-libraries/index.js";
 import {
+	FieldSchemaUnsafe,
 	ObjectFromSchemaRecordUnsafe,
 	TreeFieldFromImplicitFieldUnsafe,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaFactoryRecursive.js";
-// eslint-disable-next-line import/no-internal-modules
-import { FieldSchemaUnsafe } from "../../simple-tree/schemaTypes.js";
 import { ListRecursive, MapRecursive, ObjectRecursive } from "./testRecursiveSchema.js";
 
 describe("Recursive Class based end to end example", () => {

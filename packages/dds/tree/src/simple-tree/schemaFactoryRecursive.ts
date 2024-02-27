@@ -14,7 +14,7 @@ import {
 	AllowedTypes,
 	ApplyKind,
 	FieldKind,
-	FieldSchemaUnsafe,
+	FieldSchema,
 	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
 	InsertableObjectFromSchemaRecord,
@@ -26,17 +26,22 @@ import {
 	TreeNodeSchema,
 	TreeNodeSchemaClass,
 	WithType,
-	createFieldSchemaUnsafe,
 } from "./schemaTypes.js";
 import { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
 import { TreeArrayNode } from "./treeArrayNode.js";
 
+/**
+ * {@link Unenforced} version of {@link ObjectFromSchemaRecord}.
+ */
 export type ObjectFromSchemaRecordUnsafe<
 	T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
 > = {
 	-readonly [Property in keyof T]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
 };
 
+/**
+ * {@link Unenforced} version of {@link TreeFieldFromImplicitField}.
+ */
 export type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<ImplicitFieldSchema>> =
 	TSchema extends FieldSchemaUnsafe<infer Kind, infer Types>
 		? ApplyKind<TreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind>
@@ -45,16 +50,37 @@ export type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<Implicit
 		: unknown;
 
 /**
- * Type of of tree node for a field of the given schema.
- * @public
+ * {@link Unenforced} version of {@link TreeNodeFromImplicitAllowedTypes}.
  */
 export type TreeNodeFromImplicitAllowedTypesUnsafe<
-	TSchema extends Unenforced<ImplicitAllowedTypes> = TreeNodeSchema,
+	TSchema extends Unenforced<ImplicitAllowedTypes>,
 > = TSchema extends TreeNodeSchema
 	? NodeFromSchema<TSchema>
 	: TSchema extends AllowedTypes
 	? NodeFromSchema<FlexListToUnion<TSchema>>
 	: unknown;
+
+/**
+ * {@link Unenforced} version of {@link FieldSchema}.
+ */
+export interface FieldSchemaUnsafe<
+	out Kind extends FieldKind,
+	out Types extends Unenforced<ImplicitAllowedTypes>,
+> {
+	readonly kind: Kind;
+	readonly allowedTypes: Types;
+}
+
+export function createFieldSchemaUnsafe<
+	Kind extends FieldKind,
+	Types extends Unenforced<ImplicitAllowedTypes>,
+>(kind: Kind, allowedTypes: Types): FieldSchemaUnsafe<Kind, Types> {
+	// At runtime, we still want this to be a FieldSchema instance, but we can't satisfy its extends clause, so just return it as an FieldSchemaUnsafe
+	return new FieldSchema(kind, allowedTypes as ImplicitAllowedTypes) as FieldSchemaUnsafe<
+		Kind,
+		Types
+	>;
+}
 
 /**
  * Extends SchemaFactory with utilities for recursive types.
@@ -95,7 +121,7 @@ export class SchemaFactoryRecursive<
 		const Name extends TName,
 		const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
 	>(name: Name, t: T) {
-		return this.objectRecursive(
+		return this.object(
 			name,
 			t as T & RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
 		) as TreeNodeSchemaClass<

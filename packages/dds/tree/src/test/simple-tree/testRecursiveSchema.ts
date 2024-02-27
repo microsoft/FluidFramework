@@ -7,26 +7,11 @@ import { SchemaFactoryRecursive } from "../../simple-tree/index.js";
 
 const sf = new SchemaFactoryRecursive("recursive");
 
-// Objects work fine, as long as fixRecursiveReference is used.
-// const ObjectRef = () => ObjectRecursive;
-// sf.fixRecursiveReference(ObjectRef);
-// export class ObjectRecursive extends sf.objectRecursive("Object", {
-// 	x: sf.optional([ObjectRef]),
-// }) {}
+// Objects work fine, as long as ObjectRecursive and optionalRecursive are used.
 export class ObjectRecursive extends sf.objectRecursiveUnsafe("Object", {
 	x: sf.optionalRecursive([() => ObjectRecursive]),
 }) {}
 
-// function F<T>(child: () => T) {
-// 	return class ObjectRecursive3 extends sf.object("Object", {
-// 		x: sf.optional([child as Assume<T, TreeNodeSchema>]),
-// 	}) {};
-// }
-
-// // const ObjectRef4 = () => ObjectRecursive4;
-// // sf.fixRecursiveReference(ObjectRef4);
-
-// export class ObjectRecursive4 extends F(() => ObjectRecursive4) {}
 // #region List
 
 // Lists do not work, due to issues with the constructor input parameter

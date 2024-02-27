@@ -5,7 +5,7 @@
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { MakeNominal, RestrictiveReadonlyRecord } from "../util/index.js";
-import { FlexListToUnion, LazyItem, Unenforced } from "../feature-libraries/index.js";
+import { FlexListToUnion, LazyItem } from "../feature-libraries/index.js";
 import { Unhydrated, TreeNode } from "./types.js";
 
 /**
@@ -185,24 +185,6 @@ export enum NodeKind {
 	 * A node which stores a single leaf value.
 	 */
 	Leaf,
-}
-
-export interface FieldSchemaUnsafe<
-	out Kind extends FieldKind = FieldKind,
-	out Types extends Unenforced<ImplicitAllowedTypes> = ImplicitAllowedTypes,
-> {
-	readonly kind: Kind;
-	readonly allowedTypes: Types;
-}
-
-export function createFieldSchemaUnsafe<
-	Kind extends FieldKind,
-	Types extends Unenforced<ImplicitAllowedTypes>,
->(kind: Kind, allowedTypes: Types): FieldSchemaUnsafe<Kind, Types> {
-	return new FieldSchema(kind, allowedTypes as ImplicitAllowedTypes) as FieldSchemaUnsafe<
-		Kind,
-		Types
-	>;
 }
 
 /**
