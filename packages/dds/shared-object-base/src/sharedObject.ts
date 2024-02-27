@@ -37,6 +37,7 @@ import { FluidSerializer, IFluidSerializer } from "./serializer";
 import { SharedObjectHandle } from "./handle";
 import { SummarySerializer } from "./summarySerializer";
 import { ISharedObject, ISharedObjectEvents } from "./types";
+import { makeHandlesSerializable, parseHandles } from "./utils";
 
 /**
  * Base class from which all shared objects derive.
@@ -122,8 +123,6 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 		this.mc = loggerToMonitoringContext(this.logger);
 
 		[this.opProcessingHelper, this.callbacksHelper] = this.setUpSampledTelemetryHelpers();
-
-		this.attachListeners();
 	}
 
 	/**
@@ -209,14 +208,21 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 		throw error;
 	}
 
-	private attachListeners() {
-		// Only listen to these events if not attached.
-		if (!this.isAttached()) {
-			this.runtime.once("attaching", () => {
-				// Calling this will let the dds to do any custom processing based on attached
-				// like starting generating ops.
-				this.didAttach();
-			});
+	private setBoundAndHandleAttach() {
+		// Ensure didAttach is only called once, and we only register a single event
+		// but we still call setConnectionState as our existing mocks don't
+		// always propagate connection state
+		this.setBoundAndHandleAttach = () => this.setConnectionState(this.runtime.connected);
+		this._isBoundToContext = true;
+		const runDidAttach = () => {
+			// Allows objects to do any custom processing if it is attached.
+			this.didAttach();
+			this.setConnectionState(this.runtime.connected);
+		};
+		if (this.isAttached()) {
+			runDidAttach();
+		} else {
+			this.runtime.once("attaching", runDidAttach);
 		}
 	}
 
@@ -226,13 +232,13 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 * @param services - Services used by the shared object
 	 */
 	public async load(services: IChannelServices): Promise<void> {
-		if (this.runtime.attachState !== AttachState.Detached) {
-			this.services = services;
-		}
+		this.services = services;
+		// set this before load so that isAttached is true
+		// for attached runtimes when load core is running
+		this._isBoundToContext = true;
 		await this.loadCore(services.objectStorage);
-		if (this.runtime.attachState !== AttachState.Detached) {
-			this.attachDeltaHandler();
-		}
+		this.attachDeltaHandler();
+		this.setBoundAndHandleAttach();
 	}
 
 	/**
@@ -247,28 +253,36 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 * {@inheritDoc (ISharedObject:interface).bindToContext}
 	 */
 	public bindToContext(): void {
-		if (this._isBoundToContext) {
-			return;
+		// ensure the method only runs once by removing the implementation
+		// without this the method suffers from re-entrancy issues
+		this.bindToContext = () => {};
+		if (!this._isBoundToContext) {
+			this.runtime.bindChannel(this);
+			// must set after bind channel so isAttached doesn't report true
+			// before binding is complete
+			this.setBoundAndHandleAttach();
 		}
-
-		this._isBoundToContext = true;
-
-		this.runtime.bindChannel(this);
 	}
 
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).connect}
 	 */
 	public connect(services: IChannelServices) {
-		this.services = services;
-		this.attachDeltaHandler();
+		// handle the case where load is called
+		// before connect; loading detached data stores
+		if (this.services === undefined) {
+			this.services = services;
+			this.attachDeltaHandler();
+		}
+
+		this.setBoundAndHandleAttach();
 	}
 
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).isAttached}
 	 */
 	public isAttached(): boolean {
-		return this.services !== undefined && this.runtime.attachState !== AttachState.Detached;
+		return this._isBoundToContext && this.runtime.attachState !== AttachState.Detached;
 	}
 
 	/**
@@ -346,8 +360,14 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	protected abstract onDisconnect();
 
 	/**
+	 * The serializer to serialize / parse handles.
+	 */
+	protected abstract get serializer(): IFluidSerializer;
+
+	/**
 	 * Submits a message by the local client to the runtime.
-	 * @param content - Content of the message
+	 * @param content - Content of the message. Note: handles contained in the
+	 * message object should not be encoded in any way
 	 * @param localOpMetadata - The local metadata associated with the message. This is kept locally by the runtime
 	 * and not sent to the server. This will be sent back when this message is received back from the server. This is
 	 * also sent if we are asked to resubmit the message.
@@ -356,7 +376,10 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 		this.verifyNotClosed();
 		if (this.isAttached()) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.services!.deltaConnection.submit(content, localOpMetadata);
+			this.services!.deltaConnection.submit(
+				makeHandlesSerializable(content, this.serializer, this.handle),
+				localOpMetadata,
+			);
 		}
 	}
 
@@ -431,10 +454,6 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 			this.services !== undefined,
 			0x07a /* "Services should be there to attach delta handler" */,
 		);
-		this._isBoundToContext = true;
-		// Allows objects to do any custom processing if it is attached.
-		this.didAttach();
-
 		// attachDeltaHandler is only called after services is assigned
 		this.services.deltaConnection.attach({
 			process: (
@@ -442,7 +461,11 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 				local: boolean,
 				localOpMetadata: unknown,
 			) => {
-				this.process(message, local, localOpMetadata);
+				this.process(
+					{ ...message, contents: parseHandles(message.contents, this.serializer) },
+					local,
+					localOpMetadata,
+				);
 			},
 			setConnectionState: (connected: boolean) => {
 				this.setConnectionState(connected);
@@ -450,17 +473,13 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 			reSubmit: (content: any, localOpMetadata: unknown) => {
 				this.reSubmit(content, localOpMetadata);
 			},
-			applyStashedOp: (content: any): unknown => {
-				return this.applyStashedOp(content);
+			applyStashedOp: (content: any): void => {
+				this.applyStashedOp(parseHandles(content, this.serializer));
 			},
 			rollback: (content: any, localOpMetadata: unknown) => {
 				this.rollback(content, localOpMetadata);
 			},
 		});
-
-		// Trigger initial state
-		// attachDeltaHandler is only called after services is assigned
-		this.setConnectionState(this.services.deltaConnection.connected);
 	}
 
 	/**
@@ -468,7 +487,10 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 * @param connected - true if connected, false otherwise.
 	 */
 	private setConnectionState(connected: boolean) {
-		if (this._connected === connected) {
+		// only an attached shared object can transition its
+		// connected state. This is defensive, as some
+		// of our test harnesses don't handle this correctly
+		if (!this.isAttached() || this._connected === connected) {
 			// Not changing state, nothing the same.
 			return;
 		}
@@ -529,14 +551,23 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	}
 
 	/**
-	 * Apply changes from an op. Used when rehydrating an attached container
-	 * with pending changes. This prepares the SharedObject for seeing an ACK
-	 * for the op or resubmitting the op upon reconnection.
+	 * Apply changes from the provided op content just as if a local client has made the change,
+	 * including submitting the op. Used when rehydrating an attached container
+	 * with pending changes. The rehydration process replays all remote ops
+	 * and applies stashed ops after the remote op with a sequence number
+	 * that matches that of the stashed op is applied. This ensures
+	 * stashed ops are applied at the same state they were originally created.
+	 *
+	 * It is possible that stashed ops have been sent in the past, and will be found when
+	 * the shared object catches up with remotes ops.
+	 * So this prepares the SharedObject for seeing potentially seeing the ACK.
+	 * If no matching remote op is found, all the applied stashed ops will go
+	 * through the normal resubmit flow upon reconnection, which allows the dds
+	 * to rebase them to the latest state, and then resubmit them.
+	 *
 	 * @param content - Contents of a stashed op.
-	 * @returns localMetadata of the op, to be passed to process() or resubmit()
-	 * when the op is ACKed or resubmitted, respectively
 	 */
-	protected abstract applyStashedOp(content: any): unknown;
+	protected abstract applyStashedOp(content: any): void;
 
 	/**
 	 * Emit an event. This function is only intended for use by DDS classes that extend SharedObject/SharedObjectCore,

@@ -13,6 +13,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
 import {
 	DirectoryFactory,
 	DirectoryLocalOpMetadata,
@@ -37,8 +38,16 @@ function createConnectedDirectory(
 }
 
 class TestSharedDirectory extends SharedDirectory {
-	public testApplyStashedOp(content: IDirectoryOperation): DirectoryLocalOpMetadata {
-		return this.applyStashedOp(content) as DirectoryLocalOpMetadata;
+	private lastMetadata?: DirectoryLocalOpMetadata;
+	public testApplyStashedOp(content: IDirectoryOperation): DirectoryLocalOpMetadata | undefined {
+		this.lastMetadata = undefined;
+		this.applyStashedOp(content);
+		return this.lastMetadata;
+	}
+
+	public submitLocalMessage(op: IDirectoryOperation, localOpMetadata: unknown): void {
+		this.lastMetadata = localOpMetadata as DirectoryLocalOpMetadata;
+		super.submitLocalMessage(op, localOpMetadata);
 	}
 }
 
@@ -66,8 +75,7 @@ describe("Directory Iteration Order", () => {
 		let dataStoreRuntime: MockFluidDataStoreRuntime;
 
 		beforeEach("createDirectory", async () => {
-			dataStoreRuntime = new MockFluidDataStoreRuntime();
-			dataStoreRuntime.local = true;
+			dataStoreRuntime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
 			directory = new SharedDirectory(
 				"directory",
 				dataStoreRuntime,
@@ -231,8 +239,9 @@ describe("Directory Iteration Order", () => {
 		let directory1: SharedDirectory;
 
 		it("can be compatible with the old format summary", async () => {
-			const dataStoreRuntime = new MockFluidDataStoreRuntime();
-			dataStoreRuntime.local = true;
+			const dataStoreRuntime = new MockFluidDataStoreRuntime({
+				attachState: AttachState.Detached,
+			});
 			directory1 = new SharedDirectory(
 				"directory",
 				dataStoreRuntime,
@@ -281,8 +290,9 @@ describe("Directory Iteration Order", () => {
 		});
 
 		it("can be compatible with the new format summary", async () => {
-			const dataStoreRuntime = new MockFluidDataStoreRuntime();
-			dataStoreRuntime.local = true;
+			const dataStoreRuntime = new MockFluidDataStoreRuntime({
+				attachState: AttachState.Detached,
+			});
 			directory1 = new SharedDirectory(
 				"directory",
 				dataStoreRuntime,

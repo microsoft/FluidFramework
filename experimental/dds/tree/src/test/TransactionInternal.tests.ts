@@ -4,9 +4,9 @@
  */
 
 import { expect, assert } from 'chai';
-import { DetachedSequenceId, NodeId, TraitLabel } from '../Identifiers';
-import { getChangeNodeFromViewNode } from '../SerializationUtilities';
-import { GenericTransaction, TransactionInternal } from '../TransactionInternal';
+import { DetachedSequenceId, NodeId, TraitLabel } from '../Identifiers.js';
+import { getChangeNodeFromViewNode } from '../SerializationUtilities.js';
+import { GenericTransaction, TransactionInternal } from '../TransactionInternal.js';
 import {
 	ChangeInternal,
 	ChangeNode,
@@ -17,11 +17,11 @@ import {
 	Side,
 	StablePlaceInternal,
 	StableRangeInternal,
-} from '../persisted-types';
-import { StablePlace, StableRange } from '../ChangeTypes';
-import { deepCompareNodes, PlaceValidationResult, RangeValidationResultKind } from '../EditUtilities';
-import { SimpleTestTree } from './utilities/TestNode';
-import { refreshTestTree, testTrait, testTraitLabel } from './utilities/TestUtilities';
+} from '../persisted-types/index.js';
+import { StablePlace, StableRange } from '../ChangeTypes.js';
+import { deepCompareNodes, PlaceValidationResult, RangeValidationResultKind } from '../EditUtilities.js';
+import { SimpleTestTree } from './utilities/TestNode.js';
+import { refreshTestTree, testTrait, testTraitLabel } from './utilities/TestUtilities.js';
 
 describe('Transaction', () => {
 	let transaction: GenericTransaction;

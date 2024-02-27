@@ -14,7 +14,7 @@ import {
 	reduce,
 	RestOrArray,
 	unwrapRestOrArray,
-} from '../Common';
+} from '../Common.js';
 
 describe('Common', () => {
 	it('function memoizeGetter() correctly memoizes', () => {

@@ -29,7 +29,7 @@ import {
 	NodeChangePruner,
 } from "../modular-schema/index.js";
 import { nodeIdFromChangeAtom } from "../deltaUtils.js";
-import { RegisterId, OptionalChangeset } from "./optionalFieldChangeTypes.js";
+import { RegisterId, OptionalChangeset, Move } from "./optionalFieldChangeTypes.js";
 import { makeOptionalFieldCodecFamily } from "./optionalFieldCodecs.js";
 
 interface IRegisterMap<T> {
@@ -182,7 +182,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			}
 		}
 
-		const composedMoves: OptionalChangeset["moves"] = [];
+		const composedMoves: Move[] = [];
 		for (const [src, [dst, target]] of srcToDst.entries()) {
 			composedMoves.push([src, dst, target]);
 		}
@@ -237,7 +237,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		let changeEmptiesSelf = false;
 		let changeFillsSelf = false;
-		const invertedMoves: typeof change.moves = [];
+		const invertedMoves: Move[] = [];
 		for (const [src, dst] of moves) {
 			changeEmptiesSelf ||= src === "self";
 			changeFillsSelf ||= dst === "self";
@@ -284,7 +284,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		const inverseEmptiesSelf = changeFillsSelf;
 		const inverseFillsSelf = changeEmptiesSelf;
 		if (inverseFillsSelf && !inverseEmptiesSelf) {
-			inverted.reservedDetachId = { localId: genId.getNextId() };
+			inverted.reservedDetachId = { localId: genId.allocate() };
 		}
 		return inverted;
 	},
@@ -304,7 +304,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		const { moves, childChanges } = change;
 		const { change: overChange } = overTagged;
-		const rebasedMoves: typeof moves = [];
+		const rebasedMoves: Move[] = [];
 
 		const overDstToSrc = new RegisterMap<RegisterId>();
 		const overSrcToDst = new RegisterMap<RegisterId>();
@@ -477,14 +477,15 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 			detach: ChangesetLocalId;
 		},
 	): OptionalChangeset => {
+		const moves: Move[] = [[{ localId: ids.fill }, "self", "nodeTargeting"]];
 		const result: OptionalChangeset = {
-			moves: [[{ localId: ids.fill }, "self", "nodeTargeting"]],
+			moves,
 			childChanges: [],
 		};
 		if (wasEmpty) {
 			result.reservedDetachId = { localId: ids.detach };
 		} else {
-			result.moves.push(["self", { localId: ids.detach }, "cellTargeting"]);
+			moves.push(["self", { localId: ids.detach }, "cellTargeting"]);
 		}
 		return result;
 	},

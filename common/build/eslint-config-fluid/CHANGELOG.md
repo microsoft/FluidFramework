@@ -1,5 +1,10 @@
 # @fluidframework/eslint-config-fluid Changelog
 
+## [4.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v4.0.0)
+
+Deprecates this package's `minimal` configuration.
+Consumers of that configuration will need to update their imports to refer to the renamed module: `minimal-deprecated.js`.
+
 ## [3.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v3.0.0)
 
 ### Update eslint-related dependencies

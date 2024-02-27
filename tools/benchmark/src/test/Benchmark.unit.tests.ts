@@ -8,6 +8,13 @@ import { benchmark } from "..";
 import { BenchmarkType, isParentProcess, BenchmarkTimer } from "../Configuration";
 import { Phase, runBenchmark, runBenchmarkAsync, runBenchmarkSync } from "../runBenchmark";
 
+function doLoop(upperLimit: number): void {
+	let i = 0;
+	while (i < upperLimit) {
+		i += 1;
+	}
+}
+
 describe("`benchmark` function", () => {
 	describe("uses `before` and `after`", () => {
 		let beforeHasBeenCalled = false;
@@ -91,13 +98,6 @@ describe("`benchmark` function", () => {
 			},
 		});
 	});
-
-	function doLoop(upperLimit: number): void {
-		let i = 0;
-		while (i < upperLimit) {
-			i += 1;
-		}
-	}
 
 	benchmark({
 		title: `minimal`,

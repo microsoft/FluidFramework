@@ -1,8 +1,5 @@
 {
-	"extends": [
-		"../../../../../../common/build/build-common/tsconfig.base.json",
-		"../../../../../../common/build/build-common/tsconfig.test.json",
-	],
+	"extends": ["../../../../../../common/build/build-common/tsconfig.test.json"],
 	"include": ["./**/*", "../*"],
 	"compilerOptions": {
 		"rootDir": "../",

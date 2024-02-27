@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "./handles";
+import type { IFluidHandle } from "./handles";
 
 /**
  * @public

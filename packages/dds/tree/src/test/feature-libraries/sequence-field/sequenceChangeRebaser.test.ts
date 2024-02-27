@@ -679,7 +679,7 @@ const fieldRebaser: BoundFieldChangeRebaser<TestChangeset> = {
 export function testStateBasedRebaserAxioms() {
 	describe("State-based Rebaser Axioms", () => {
 		describeStress("Lineage Method", function ({ isStress }) {
-			this.timeout(30_000);
+			this.timeout(isStress ? 60_000 : 5000);
 			const allocator = idAllocatorFromMaxId();
 			const startingLength = 2;
 			const startingState: NodeState[] = makeArray(startingLength, () => ({
@@ -705,7 +705,7 @@ export function testStateBasedRebaserAxioms() {
 			);
 		});
 		describeStress("Tombstone Method", function ({ isStress }) {
-			this.timeout(30_000);
+			this.timeout(isStress ? 60_000 : 5000);
 			const allocator = idAllocatorFromMaxId();
 			const startingLength = 2;
 			const startingState: NodeState[] = makeArray(startingLength, () => ({
