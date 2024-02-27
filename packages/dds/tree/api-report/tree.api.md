@@ -1801,8 +1801,8 @@ export const enum TreeNavigationResult {
 }
 
 // @public
-export interface TreeNode extends WithType {
-    get [type](): string;
+export abstract class TreeNode implements WithType {
+    abstract get [type](): string;
 }
 
 // @public

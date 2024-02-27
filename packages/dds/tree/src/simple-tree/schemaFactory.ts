@@ -236,7 +236,7 @@ export class SchemaFactory<
 		TImplicitlyConstructable
 	> {
 		const identifier = this.scoped(name);
-		class schema implements TreeNode, WithType<ScopedSchemaName<TScope, Name>> {
+		class schema extends TreeNode implements WithType<ScopedSchemaName<TScope, Name>> {
 			public static readonly identifier = identifier;
 			public static readonly kind = kind;
 			public static readonly info = t;
@@ -247,6 +247,7 @@ export class SchemaFactory<
 			 * It is up to the derived type to actually do something with this value.
 			 */
 			public constructor(input: FlexTreeNode | unknown) {
+				super();
 				// Currently this just does validation. All other logic is in the subclass.
 				if (isFlexTreeNode(input)) {
 					assert(

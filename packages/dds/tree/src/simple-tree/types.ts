@@ -41,7 +41,7 @@ export type Unhydrated<T> = T;
  * One of those approaches could be used to resolve this inconsistency if TreeNode is kept as a class.
  * @public
  */
-export interface TreeNode extends WithType {
+export abstract class TreeNode implements WithType {
 	/**
 	 * This is added to prevent TypeScript from implicitly allowing non-TreeNode types to be used as TreeNodes.
 	 * @privateRemarks
@@ -72,7 +72,7 @@ export interface TreeNode extends WithType {
 	 * @privateRemarks
 	 * Subclasses provide more specific strings for this to get strong typing of otherwise type compatible nodes.
 	 */
-	get [type](): string;
+	public abstract get [type](): string;
 }
 
 /**
