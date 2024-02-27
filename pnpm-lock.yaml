@@ -8006,14 +8006,12 @@ importers:
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
-      url: ^0.11.0
     dependencies:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/protocol-definitions': 3.2.0-237840
       nconf: 0.12.1
-      url: 0.11.3
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
       '@fluid-internal/mocha-test-setup': link:../../test/mocha-test-setup

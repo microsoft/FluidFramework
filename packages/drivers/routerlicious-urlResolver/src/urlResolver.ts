@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { parse } from "url";
 import { assert } from "@fluidframework/core-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
@@ -80,7 +79,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
 			"https://" +
 			`${
 				this.config
-					? parse(this.config.provider.get("worker:serverUrl")).host
+					? new URL(this.config.provider.get("worker:serverUrl")).host
 					: serverSuffix
 			}/` +
 			`${encodeURIComponent(tenantId)}/` +
@@ -142,7 +141,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
 	}
 
 	public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
-		const parsedUrl = parse(resolvedUrl.url);
+		const parsedUrl = new URL(resolvedUrl.url);
 		assert(!!parsedUrl.pathname, 0x0b9 /* "PathName should exist" */);
 		const [, tenantId, documentId] = parsedUrl.pathname.split("/");
 		assert(!!tenantId, 0x0ba /* "Tenant id should exist" */);
