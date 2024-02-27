@@ -12,7 +12,6 @@ import {
 	MongoManager,
 	DefaultMetricClient,
 	IRunner,
-	CollabSessionWebhookEvent,
 } from "@fluidframework/server-services-core";
 // eslint-disable-next-line import/no-deprecated
 import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
@@ -63,24 +62,26 @@ export class TinyliciousRunner implements IRunner {
 			throw e;
 		}
 
+		const webhookManager = new WebhookManager();
+
 		const alfred = app.create(
 			this.config,
 			this.storage,
 			this.mongoManager,
+			this.tenantManager,
 			this.collaborationSessionEventEmitter,
+			webhookManager,
 		);
 		alfred.set("port", this.port);
 
 		this.server = this.serverFactory.create(alfred);
 		const httpServer = this.server.httpServer;
 
-		const webhookManager = new WebhookManager();
-		const testWebhookURL =
-			"https://typedwebhook.tools/webhook/1cf7c7a2-6636-48f0-b6ad-c2eeaeddf790";
-		webhookManager.subscribe(testWebhookURL, CollabSessionWebhookEvent.SESSION_END);
-		webhookManager.subscribe(testWebhookURL, CollabSessionWebhookEvent.SESSION_START);
-		webhookManager.subscribe(testWebhookURL, CollabSessionWebhookEvent.SESSION_CLIENT_JOIN);
-		webhookManager.subscribe(testWebhookURL, CollabSessionWebhookEvent.SESSION_CLIENT_LEAVE);
+		// const testWebhookURL = "put your url here";
+		// webhookManager.subscribe(testWebhookURL, CollabSessionWebhookEvents.SESSION_END);
+		// webhookManager.subscribe(testWebhookURL, CollabSessionWebhookEvents.SESSION_START);
+		// webhookManager.subscribe(testWebhookURL, CollabSessionWebhookEvents.SESSION_CLIENT_JOIN);
+		// webhookManager.subscribe(testWebhookURL, CollabSessionWebhookEvents.SESSION_CLIENT_LEAVE);
 
 		configureWebSocketServices(
 			this.server.webSocketServer /* webSocketServer */,

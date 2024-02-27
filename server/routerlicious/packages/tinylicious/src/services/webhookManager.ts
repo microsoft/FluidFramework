@@ -17,6 +17,10 @@ export class WebhookManager implements IWebhookManager {
 		this.eventSubscriptions = new Map();
 	}
 
+	public getSubscriptions(eventName: string): Set<string> {
+		return this.eventSubscriptions.get(eventName) ?? new Set();
+	}
+
 	public subscribe(url: string, event: string) {
 		let urlSubscriptions = this.eventSubscriptions.get(event);
 		if (urlSubscriptions === undefined) {

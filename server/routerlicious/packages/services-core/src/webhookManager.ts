@@ -7,17 +7,49 @@
  * Manages Webhooks and associated events
  */
 export interface IWebhookManager {
-	subscribe(url: string, event: string): void;
-	unsubscribe(url: string, event: string): void;
-	handleEvent(event: string, payload: unknown): void;
+	subscribe(url: string, event: WebhookEvent): void;
+	unsubscribe(url: string, event: WebhookEvent): void;
+	handleEvent(event: string, payload: IWebhookEventPayload): void;
+	getSubscriptions(eventName: WebhookEvent): Set<string>;
 }
 
 /**
- * Names of events related to collaborative sessions
+ * Interface for the data payload to be sent to a given webhook subscription.
  */
-export const CollabSessionWebhookEvent = {
+export interface IWebhookEventPayload {
+	tenantId: string;
+	documentId: string;
+	eventName: WebhookEvent;
+	[key: string]: any; // Allows for arbitrary key-value pairs
+}
+
+/**
+ * Object containing names of all events related to collaborative sessions. Intended to be used like an enum
+ */
+export const CollabSessionWebhookEvents = {
 	SESSION_END: "SESSION_END",
 	SESSION_START: "SESSION_START",
 	SESSION_CLIENT_JOIN: "SESSION_CLIENT_JOIN",
 	SESSION_CLIENT_LEAVE: "SESSION_CLIENT_LEAVE",
 } as const;
+
+/**
+ * The type for all {@link CollabSessionWebhookEvents} Webhook events
+ */
+export type CollabSessionWebhookEvent = keyof typeof CollabSessionWebhookEvents;
+
+/**
+ * Exhaustive type for all Webhook events
+ */
+export type WebhookEvent = keyof typeof CollabSessionWebhookEvents;
+
+/**
+ * Type guard to determine if a given string is a valid {@link WebhookEvent}
+ */
+export function isWebhookEvent(value: string): value is WebhookEvent {
+	if (Object.values(CollabSessionWebhookEvents).includes(value as any)) {
+		return true;
+	}
+
+	return false;
+}

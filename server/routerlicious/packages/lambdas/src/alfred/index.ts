@@ -379,8 +379,8 @@ export function configureWebSocketServices(
 								claims.documentId
 							} with initial client with client ID: ${clientId}`,
 						);
-						webhookManager?.handleEvent(core.CollabSessionWebhookEvent.SESSION_START, {
-							eventName: core.CollabSessionWebhookEvent.SESSION_START,
+						webhookManager?.handleEvent(core.CollabSessionWebhookEvents.SESSION_START, {
+							eventName: core.CollabSessionWebhookEvents.SESSION_START,
 							documentId: room.documentId,
 							tenantId: room.tenantId,
 							clientId,
@@ -411,9 +411,9 @@ export function configureWebSocketServices(
 							}`,
 						);
 						webhookManager?.handleEvent(
-							core.CollabSessionWebhookEvent.SESSION_CLIENT_JOIN,
+							core.CollabSessionWebhookEvents.SESSION_CLIENT_JOIN,
 							{
-								eventName: core.CollabSessionWebhookEvent.SESSION_CLIENT_JOIN,
+								eventName: core.CollabSessionWebhookEvents.SESSION_CLIENT_JOIN,
 								documentId: room.documentId,
 								tenantId: room.tenantId,
 								clientId,
@@ -851,9 +851,9 @@ export function configureWebSocketServices(
 							}, The session is ongoing and the new member count is: ${roomMembersAfterLeaving?.size}`,
 						);
 						webhookManager?.handleEvent(
-							core.CollabSessionWebhookEvent.SESSION_CLIENT_LEAVE,
+							core.CollabSessionWebhookEvents.SESSION_CLIENT_LEAVE,
 							{
-								eventName: core.CollabSessionWebhookEvent.SESSION_CLIENT_LEAVE,
+								eventName: core.CollabSessionWebhookEvents.SESSION_CLIENT_LEAVE,
 								documentId: room.documentId,
 								tenantId: room.tenantId,
 								clientId,
@@ -869,8 +869,8 @@ export function configureWebSocketServices(
 							}, there are no more active clients and THE SESSION HAS ENDED.`,
 						);
 
-						webhookManager?.handleEvent(core.CollabSessionWebhookEvent.SESSION_END, {
-							eventName: core.CollabSessionWebhookEvent.SESSION_END,
+						webhookManager?.handleEvent(core.CollabSessionWebhookEvents.SESSION_END, {
+							eventName: core.CollabSessionWebhookEvents.SESSION_END,
 							documentId: room.documentId,
 							tenantId: room.tenantId,
 							lastActiveClientId: clientId,
