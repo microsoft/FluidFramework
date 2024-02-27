@@ -6,10 +6,10 @@
 import { strict as assert } from "assert";
 import path from "path";
 import fs from "fs-extra";
+import { _dirname } from "./dirname.cjs";
 
 describe("Check Dependencies", () => {
 	it("verify no @fluid-internal packages in dependencies", async () => {
-		const { _dirname } = await import("./dirname.mjs");
 		await verifyNoFluidPackages(path.join(_dirname, "/../../node_modules"));
 	});
 });
