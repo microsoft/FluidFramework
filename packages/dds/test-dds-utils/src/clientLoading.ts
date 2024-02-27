@@ -58,7 +58,7 @@ function finalizeAllocatedIds(compressor: IIdCompressorCore | undefined): void {
 }
 
 /**
- * blah
+ * Creates the load data from the client. The load data include everything needed to load a new client. It includes the summaries and the minimumSequenceNumber.
  * @internal
  */
 export function createLoadData(client: Client<IChannelFactory>): ClientLoadData {
