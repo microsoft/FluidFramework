@@ -5,23 +5,23 @@
 
 import { bufferToString } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
 	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import {
-	createSingleBlobSummary,
 	IFluidSerializer,
 	SharedObject,
+	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base";
 import { ConsensusRegisterCollectionFactory } from "./consensusRegisterCollectionFactory";
 import {
 	IConsensusRegisterCollection,
-	ReadPolicy,
 	IConsensusRegisterCollectionEvents,
+	ReadPolicy,
 } from "./interfaces";
 
 interface ILocalData<T> {
@@ -53,8 +53,10 @@ const newLocalRegister = <T>(sequenceNumber: number, value: T): ILocalRegister<T
 
 /**
  * An operation for consensus register collection
+ *
+ * The value stored in this op is serialized as a string and must be deserialized
  */
-interface IRegisterOperation {
+interface IRegisterOperationSerialized {
 	key: string;
 	type: "write";
 	serializedValue: string;
@@ -67,23 +69,33 @@ interface IRegisterOperation {
 }
 
 /**
- * IRegisterOperation format in versions \< 0.17
+ * IRegisterOperation format in versions \< 0.17 and \>=2.0.0-rc.2.0.0
+ *
+ * The value stored in this op is _not_ serialized and is stored literally as `T`
  */
-interface IRegisterOperationOld<T> {
+interface IRegisterOperationPlain<T> {
 	key: string;
 	type: "write";
+
 	value: {
 		type: "Plain";
 		value: T;
 	};
-	refSeq: number;
+
+	// back-compat: for clients prior to 2.0.0-rc.2.0.0, we must also pass in
+	// the serialized value for them to parse handles correctly. we do not have
+	// to pay the cost of deserializing this value in newer clients
+	serializedValue: string;
+
+	// back-compat: files at rest written with runtime <= 0.13 do not have refSeq
+	refSeq: number | undefined;
 }
 
 /** Incoming ops could match any of these types */
-type IIncomingRegisterOperation<T> = IRegisterOperation | IRegisterOperationOld<T>;
+type IIncomingRegisterOperation<T> = IRegisterOperationSerialized | IRegisterOperationPlain<T>;
 
 /** Distinguish between incoming op formats so we know which type it is */
-const incomingOpMatchesCurrentFormat = (op): op is IRegisterOperation => "serializedValue" in op;
+const incomingOpMatchesPlainFormat = <T>(op): op is IRegisterOperationPlain<T> => "value" in op;
 
 /** The type of the resolve function to call after the local operation is ack'd */
 type PendingResolve = (winner: boolean) => void;
@@ -142,18 +154,19 @@ export class ConsensusRegisterCollection<T>
 	 * @returns Promise<true> if write was non-concurrent
 	 */
 	public async write(key: string, value: T): Promise<boolean> {
-		const serializedValue = this.stringify(value, this.serializer);
-
 		if (!this.isAttached()) {
-			// JSON-roundtrip value for local writes to match the behavior of going through the wire
-			this.processInboundWrite(key, this.parse(serializedValue, this.serializer), 0, 0, true);
+			this.processInboundWrite(key, value, 0, 0, true);
 			return true;
 		}
 
-		const message: IRegisterOperation = {
+		const message: IRegisterOperationPlain<T> = {
 			key,
 			type: "write",
-			serializedValue,
+			serializedValue: this.stringify(value, this.serializer),
+			value: {
+				type: "Plain",
+				value,
+			},
 			refSeq: this.runtime.deltaManager.lastSequenceNumber,
 		};
 
@@ -245,9 +258,9 @@ export class ConsensusRegisterCollection<T>
 						0x06e /* "Message's reference sequence number < op's reference sequence number!" */,
 					);
 
-					const value = incomingOpMatchesCurrentFormat(op)
-						? (this.parse(op.serializedValue, this.serializer) as T)
-						: op.value.value;
+					const value = incomingOpMatchesPlainFormat<T>(op)
+						? op.value.value
+						: (this.parse(op.serializedValue, this.serializer) as T);
 					const winner = this.processInboundWrite(
 						op.key,
 						value,
