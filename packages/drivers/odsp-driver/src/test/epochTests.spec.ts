@@ -395,7 +395,8 @@ describe("Tests for Epoch Tracker", () => {
 		assert.strictEqual(success, false, "Fetching should not succeed!!");
 	});
 
-	it("Checks throttling errors non-retriable when disableRetriesOnStorageThrottlingError=true", async () => {
+	it("Checks throttling errors are non-retriable when disableRetriesOnStorageThrottlingError=true", async () => {
+		const retryAfterSeconds = 1;
 		let fetchStub;
 		const epochTrackerWithHostPolicy = new EpochTracker(
 			localCache,
@@ -412,7 +413,7 @@ describe("Tests for Epoch Tracker", () => {
 			fetchStub = stub(odspUtilsModule, "fetchHelper");
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
 			fetchStub.callsFake(async () => {
-				throw new ThrottlingError("Server is throttled", 1000, {
+				throw new ThrottlingError("Server is throttled", retryAfterSeconds, {
 					testProp: "testProp",
 					driverVersion: "1",
 				});
@@ -425,6 +426,11 @@ describe("Tests for Epoch Tracker", () => {
 			assert(
 				(error as NonRetryableError<string>).canRetry === false,
 				"Error should be marked as non-retriable",
+			);
+			assert(
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+				(error as any).retryAfterMs === retryAfterSeconds * 1000,
+				"retryAfterMs should exist",
 			);
 		}
 	});

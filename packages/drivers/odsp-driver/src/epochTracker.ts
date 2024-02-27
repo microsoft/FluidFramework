@@ -326,7 +326,7 @@ export class EpochTracker implements IPersistedFileCache {
 						const nonRetriableThrottlingError = new NonRetryableError(
 							error.message,
 							OdspErrorTypes.throttlingError,
-							// retryAfterMs is still provided so that client app can can still use it.
+							// retryAfterMs is still provided in the error so that the value is available for the host app
 							{
 								retryAfterMs:
 									(error as ThrottlingError).retryAfterSeconds === undefined
