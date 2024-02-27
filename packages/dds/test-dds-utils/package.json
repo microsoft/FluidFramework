@@ -69,8 +69,8 @@
 		"test:coverage": "c8 npm test",
 		"test:mocha": "npm run test:mocha:cjs && npm run test:mocha:esm",
 		"test:mocha:base": "mocha --ignore \"dist/test/types/*\" -r node_modules/@fluid-internal/mocha-test-setup",
-		"test:mocha:cjs": "mocha  --recursive \"dist/test/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
-		"test:mocha:esm": "mocha  --recursive \"lib/test/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
+		"test:mocha:cjs": "mocha --recursive \"dist/test/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
+		"test:mocha:esm": "mocha --recursive \"lib/test/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
 		"test:mocha:suite": "npm run test:mocha:base -- \"dist/test/ddsSuiteCases/*js\"",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
@@ -139,11 +139,7 @@
 					"api-extractor:esnext"
 				],
 				"script": false
-			},
-			"tsc": [
-				"...",
-				"@fluid-private/stochastic-test-utils#build:test"
-			]
+			}
 		}
 	},
 	"typeValidation": {
