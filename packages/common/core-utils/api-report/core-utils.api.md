@@ -60,6 +60,15 @@ export interface IPromiseTimerResult {
     timerResult: "timeout" | "cancel";
 }
 
+// @internal
+export const isObject: (value: unknown) => value is object;
+
+// @internal
+export const isPromiseLike: (value: unknown) => value is PromiseLike<unknown>;
+
+// @internal
+export const isString: (value: unknown) => value is string;
+
 // @internal (undocumented)
 export interface ITimer {
     clear(): void;
