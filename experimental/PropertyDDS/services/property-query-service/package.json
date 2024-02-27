@@ -82,7 +82,7 @@
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/local-driver": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/server-local-server": "^3.1.0-238497",
+		"@fluidframework/server-local-server": "^3.1.0-240326",
 		"@fluidframework/test-utils": "workspace:~",
 		"aws-sdk": "2.547.0",
 		"c8": "^8.0.1",
