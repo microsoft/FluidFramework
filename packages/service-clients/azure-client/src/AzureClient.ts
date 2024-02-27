@@ -57,6 +57,10 @@ const MAX_VERSION_COUNT = 5;
 const azureClientFeatureGates = {
 	// Azure client requires a write connection by default
 	"Fluid.Container.ForceWriteConnection": true,
+
+	// These settings will ensure the GC op isn't sent, since it can't be processed by V1 clients
+	"Fluid.GarbageCollection.RunSweep": false,
+	"Fluid.GarbageCollection.DisableAutoRecovery": true,
 };
 
 /**
