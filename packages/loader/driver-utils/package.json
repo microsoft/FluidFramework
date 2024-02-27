@@ -75,7 +75,6 @@
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"axios": "^1.6.2",
 		"lz4js": "^0.2.0",
-		"url": "^0.11.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {

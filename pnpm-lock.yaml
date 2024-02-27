@@ -8976,7 +8976,6 @@ importers:
       sinon: ^7.4.2
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
-      url: ^0.11.0
       uuid: ^9.0.0
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -8989,7 +8988,6 @@ importers:
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       axios: 1.6.2
       lz4js: 0.2.0
-      url: 0.11.3
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
