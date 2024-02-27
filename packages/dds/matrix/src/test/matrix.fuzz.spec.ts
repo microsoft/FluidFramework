@@ -257,7 +257,7 @@ describe("Matrix fuzz tests", function () {
 		},
 		reconnectProbability: 0.1,
 		// Seeds needing investigation, tracked by AB#7088.
-		skip: [23, 24, 69],
+		skip: [20, 42, 90],
 		// Uncomment to replay a particular seed.
 		// replay: 0,
 	});
