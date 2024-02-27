@@ -68,7 +68,7 @@ describe("SharedMatrix reconnect", () => {
 	});
 
 	// https://dev.azure.com/fluidframework/internal/_workitems/edit/7217
-	it.skip("discards setCell in removed column", () => {
+	it("discards setCell in removed column", () => {
 		const factory = SharedMatrix.getFactory();
 		const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 		const dataRuntime1 = new MockFluidDataStoreRuntime();

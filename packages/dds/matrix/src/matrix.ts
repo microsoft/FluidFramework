@@ -650,6 +650,21 @@ export class SharedMatrix<T = any>
 			return;
 		}
 
+		// If the segment that contains the position is removed, then we can't rebase the position.
+		if (segment.removedSeq !== undefined) {
+			assert(
+				segment.removedSeq > referenceSequenceNumber,
+				"Attempted to resubmit message setting a cell that was removed before the original op applied.",
+			);
+			return;
+		}
+
+		assert(
+			segment.localRemovedSeq === undefined ||
+				(segment.localRemovedSeq !== undefined && segment.localRemovedSeq > localSeq),
+			"Attempted to set a cell which was removed locally before the original op applied.",
+		);
+
 		return client.findReconnectionPosition(segment, localSeq) + offset;
 	}
 
