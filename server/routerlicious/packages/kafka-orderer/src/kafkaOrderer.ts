@@ -67,12 +67,12 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
 					? [
 							{
 								action: "ConnectDocumentStart",
-								service: "alfred",
+								service: "nexus",
 								timestamp: clientJoinMessageServerMetadata.connectDocumentStartTime,
 							},
 							{
 								action: "JoinRawOpStart",
-								service: "alfred",
+								service: "nexus",
 								timestamp: Date.now(),
 							},
 					  ]
@@ -153,7 +153,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
 				} else if (operation?.traces && operation.traces.length > 0) {
 					operation.traces.push({
 						action: "end",
-						service: "alfred",
+						service: "nexus",
 						timestamp: Date.now(),
 					});
 				}
