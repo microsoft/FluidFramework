@@ -2,8 +2,8 @@
 	"name": "mockPackage",
 	"description": "Mock package.json",
 	"devDependencies": {
-	  "dependency1": "1.0.0",
-	  "dependency2": "2.0.0",
-	  "mockPackage-previous": "1.2.3"
+		"dependency1": "1.0.0",
+		"dependency2": "2.0.0",
+		"mockPackage-previous": "1.2.3"
 	}
-  }
+}
