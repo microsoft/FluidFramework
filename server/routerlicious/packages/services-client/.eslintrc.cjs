@@ -20,6 +20,6 @@ module.exports = {
 		"@typescript-eslint/strict-boolean-expressions": "off",
 
 		// TODO: remove usages of deprecated APIs and remove this override
-		"import/no-deprecated": "warn",,
+		"import/no-deprecated": "warn",
 	},
 };

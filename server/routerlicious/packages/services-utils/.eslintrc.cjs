@@ -13,7 +13,7 @@ module.exports = {
 		"promise/catch-or-return": ["error", { allowFinally: true }],
 
 		// TODO: remove usages of deprecated APIs and remove these overrides
-		"import/no-deprecated": "warn",,
+		"import/no-deprecated": "warn",
 		"@typescript-eslint/strict-boolean-expressions": "off",
 	},
 };

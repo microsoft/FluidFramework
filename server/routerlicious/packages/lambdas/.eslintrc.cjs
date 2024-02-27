@@ -18,6 +18,6 @@ module.exports = {
 		"@typescript-eslint/prefer-nullish-coalescing": "off",
 
 		// TODO: remove usages of deprecated APIs and remove this override
-		"import/no-deprecated": "warn",,
+		"import/no-deprecated": "warn",
 	},
 };
