@@ -311,9 +311,7 @@ const factory = new SchemaFactory("test");
 
 describe("Object-like", () => {
 	describe("setting an invalid field", () => {
-		// TODO: Disallow setting out-of-schema properties?
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/7177
-		it.skip("throws TypeError in strict mode", () => {
+		it("throws TypeError in strict mode", () => {
 			const root = getRoot(schemaFactory.object("no fields", {}), () => ({}));
 			assert.throws(() => {
 				// The actual error "'TypeError: 'set' on proxy: trap returned falsish for property 'foo'"
