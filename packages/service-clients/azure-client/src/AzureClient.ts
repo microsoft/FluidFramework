@@ -51,17 +51,47 @@ const getTenantId = (connectionProperties: AzureConnectionConfig): string => {
 const MAX_VERSION_COUNT = 5;
 
 /**
+ * Setting this config to true indicates that only v2 clients will be collaborating together,
+ * such that runtime compability with v1 clients is not required.
+ *
+ * Defaults to false
+ */
+const v2NoCompatKey = "Fluid.Compatibility.V2Only";
+
+/**
  * Default feature gates.
  * These values will only be used if the feature gate is not already set by the supplied config provider.
  */
 const azureClientFeatureGates = {
 	// Azure client requires a write connection by default
 	"Fluid.Container.ForceWriteConnection": true,
-
-	// These settings will ensure the GC op isn't sent, since it can't be processed by V1 clients
-	"Fluid.GarbageCollection.RunSweep": false,
-	"Fluid.GarbageCollection.DisableAutoRecovery": true,
 };
+
+/**
+ * Feature gates required to support runtime compatibility when V1 and V2 clients are collaborating
+ */
+const azureClientV1CompatFeatureGates = {
+	// Disable Garbage Collection
+	"Fluid.GarbageCollection.RunSweep": false, // To prevent the GC op
+	"Fluid.GarbageCollection.DisableAutoRecovery": true, // To prevent the GC op
+	"Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride": false, // For a consistent story of "GC is disabled"
+};
+
+/**
+ * Wrap the config provider to fall back on the appropriate defaults for Azure Client,
+ * taking into consideration whether the client has to support collaborating with V1 clients.
+ * @param baseConfigProvider - The base config provider to wrap
+ * @returns A new config provider with the appropriate defaults applied underneath the given provider
+ */
+function wrapConfigProvider(baseConfigProvider?: IConfigProviderBase): IConfigProviderBase {
+	// By default we assume that v1 compat is required
+	const requireV1Compat = baseConfigProvider?.getRawConfig(v2NoCompatKey) !== true;
+	const defaults = {
+		...azureClientFeatureGates,
+		...(requireV1Compat ? azureClientV1CompatFeatureGates : {}),
+	};
+	return wrapConfigProviderWithDefaults(baseConfigProvider, defaults);
+}
 
 /**
  * AzureClient provides the ability to have a Fluid object backed by the Azure Fluid Relay or,
@@ -94,10 +124,7 @@ export class AzureClient {
 			origDocumentServiceFactory,
 			properties.summaryCompression,
 		);
-		this.configProvider = wrapConfigProviderWithDefaults(
-			properties.configProvider,
-			azureClientFeatureGates,
-		);
+		this.configProvider = wrapConfigProvider(properties.configProvider);
 	}
 
 	/**
