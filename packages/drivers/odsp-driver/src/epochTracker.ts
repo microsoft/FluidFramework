@@ -296,9 +296,9 @@ export class EpochTracker implements IPersistedFileCache {
 				throw error;
 			})
 			.catch((error) => {
-				// If the error is about location redirection, then we need to generate new resolved url with correct
-				// location info.
 				if (isFluidError(error)) {
+					// If the error is about location redirection, then we need to generate new resolved url with correct
+					// location info.
 					if (error.errorType === OdspErrorTypes.fileNotFoundOrAccessDeniedError) {
 						const redirectLocation = (error as IOdspErrorAugmentations)
 							.redirectLocation;
@@ -317,7 +317,9 @@ export class EpochTracker implements IPersistedFileCache {
 							);
 							throw locationRedirectionError;
 						}
-					} else if (
+					}
+					// If the hostPolicy disallows retries for throttling errors, then we throw a NonRetryableError
+					else if (
 						error.errorType === OdspErrorTypes.throttlingError &&
 						this.hostPolicy?.disableRetriesOnStorageThrottlingError
 					) {
