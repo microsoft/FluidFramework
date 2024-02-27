@@ -51,14 +51,6 @@ const getTenantId = (connectionProperties: AzureConnectionConfig): string => {
 const MAX_VERSION_COUNT = 5;
 
 /**
- * Setting this config to true indicates that only v2 clients will be collaborating together,
- * such that runtime compability with v1 clients is not required.
- *
- * Defaults to false
- */
-const v2NoCompatKey = "Fluid.Compatibility.V2Only";
-
-/**
  * Default feature gates.
  * These values will only be used if the feature gate is not already set by the supplied config provider.
  */
@@ -78,17 +70,14 @@ const azureClientV1CompatFeatureGates = {
 };
 
 /**
- * Wrap the config provider to fall back on the appropriate defaults for Azure Client,
- * taking into consideration whether the client has to support collaborating with V1 clients.
+ * Wrap the config provider to fall back on the appropriate defaults for Azure Client.
  * @param baseConfigProvider - The base config provider to wrap
  * @returns A new config provider with the appropriate defaults applied underneath the given provider
  */
 function wrapConfigProvider(baseConfigProvider?: IConfigProviderBase): IConfigProviderBase {
-	// By default we assume that v1 compat is required
-	const requireV1Compat = baseConfigProvider?.getRawConfig(v2NoCompatKey) !== true;
 	const defaults = {
 		...azureClientFeatureGates,
-		...(requireV1Compat ? azureClientV1CompatFeatureGates : {}),
+		...azureClientV1CompatFeatureGates,
 	};
 	return wrapConfigProviderWithDefaults(baseConfigProvider, defaults);
 }
