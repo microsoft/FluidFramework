@@ -177,7 +177,7 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 				["Event.Name"]: eventType, // Same as 'name' but is an actual column in Kusto; useful for cross-table queries
 				["Data.extensionVersion"]: extensionVersion,
 				["Data.sessionID"]: this.sessionID,
-				["Data.continuityID"]: this.continuityID
+				["Data.continuityID"]: this.continuityID,
 			},
 		};
 
