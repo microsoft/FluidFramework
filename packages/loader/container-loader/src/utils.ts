@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { parse } from "url";
 import { v4 as uuid } from "uuid";
 import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { assert, compareArrays, unreachableCase } from "@fluidframework/core-utils";
@@ -62,7 +61,7 @@ export interface IParsedUrl {
  * @internal
  */
 export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefined {
-	const parsed = parse(url, true);
+	const parsed = new URL(url);
 	if (typeof parsed.pathname !== "string") {
 		throw new LoggingError("Failed to parse pathname");
 	}
@@ -70,7 +69,7 @@ export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefin
 	const regex = /^\/([^/]*\/[^/]*)(\/?.*)$/;
 	const match = regex.exec(parsed.pathname);
 	return match?.length === 3
-		? { id: match[1], path: match[2], query, version: parsed.query.version as string }
+		? { id: match[1], path: match[2], query, version: parsed.searchParams.get("version") }
 		: undefined;
 }
 
