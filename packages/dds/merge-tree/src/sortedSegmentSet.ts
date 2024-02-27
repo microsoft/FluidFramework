@@ -108,4 +108,3 @@ export class SortedSegmentSet<T extends SortedSegmentSetItem = ISegment> extends
 		return { exists: false, index };
 	}
 }
-``;
