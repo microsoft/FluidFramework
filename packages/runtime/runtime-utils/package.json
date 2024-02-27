@@ -167,6 +167,11 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedFunctionDeclaration_addTreeToSummary": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }
