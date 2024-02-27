@@ -28,7 +28,7 @@ export interface SubscribeWebhookUrlApiRequest {
 }
 export type SubscribeWebhookUrlApiResponse = SubscribeWebhookUrlApiRequest;
 
-export function createSubscribeWebhookUrlApiRoute(router: Router, webhookManager: IWebhookManager) {
+export function createSubscribeWebhookUrlApiRoute(webhookManager: IWebhookManager, router: Router) {
 	router.post("/subscribe", (request, response) => {
 		const apiRequest = request.body as SubscribeWebhookUrlApiRequest;
 		if (apiRequest.documentId === undefined || typeof apiRequest.documentId !== "string") {

@@ -40,7 +40,7 @@ export class WebhookManager implements IWebhookManager {
 	}
 
 	public async handleEvent(event: string, payload: unknown) {
-		const urlSubscriptions = this.eventSubscriptions.get(event);
+		const urlSubscriptions = this.eventSubscriptions.get(event) ?? new Set();
 		for (const url of urlSubscriptions) {
 			const response = await axios.post(url, payload);
 			if (response.status !== 200) {

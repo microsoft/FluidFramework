@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { IWebhookManager } from "@fluidframework/server-services-core";
 import { Router } from "express";
+import type { IWebhookManager } from "@fluidframework/server-services-core";
 import { createSubscribeWebhookUrlApiRoute } from "./subscribeWebhookApi";
 import { createUnsubscribeWebhookUrlApiRoute } from "./unsubscribeWebhookApi";
 
@@ -13,12 +13,11 @@ import { createUnsubscribeWebhookUrlApiRoute } from "./unsubscribeWebhookApi";
  * which can then be used with an Express server.
  */
 export function create(webhookManager: IWebhookManager): Router {
+	const webhooksRouter = Router();
+	createSubscribeWebhookUrlApiRoute(webhookManager, webhooksRouter);
+	createUnsubscribeWebhookUrlApiRoute(webhookManager, webhooksRouter);
+
 	const router: Router = Router();
-
-	createSubscribeWebhookUrlApiRoute(router, webhookManager);
-	createUnsubscribeWebhookUrlApiRoute(router, webhookManager);
-
-	router.use("/webhooks", router);
-
+	router.use("/webhooks", webhooksRouter);
 	return router;
 }

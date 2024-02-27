@@ -12,10 +12,10 @@ import { createGetLatestSummaryApiRoute } from "./getLatestSummaryApi";
  * which can then be used with an Express server.
  */
 export function create(tenantManager: ITenantManager): Router {
+	const summariesRouter = Router();
+	createGetLatestSummaryApiRoute(tenantManager, summariesRouter);
+
 	const router: Router = Router();
-
-	createGetLatestSummaryApiRoute(tenantManager, router);
-
-	router.use("/summaries", router);
+	router.use("/summaries", summariesRouter);
 	return router;
 }

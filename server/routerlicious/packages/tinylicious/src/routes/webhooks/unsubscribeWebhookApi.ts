@@ -29,10 +29,10 @@ export interface UnsubscribeWebhookUrlApiRequest {
 export type UnsubscribeWebhookUrlApiResponse = UnsubscribeWebhookUrlApiRequest;
 
 export function createUnsubscribeWebhookUrlApiRoute(
-	router: Router,
 	webhookManager: IWebhookManager,
+	router: Router,
 ) {
-	router.post("unsubscribe", (request, response) => {
+	router.post("/unsubscribe", (request, response) => {
 		const apiRequest = request.body as UnsubscribeWebhookUrlApiRequest;
 		if (apiRequest.documentId === undefined) {
 			response.status(400).json({ message: "Invalid or No document id was provided" });
