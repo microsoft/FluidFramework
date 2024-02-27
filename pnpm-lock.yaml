@@ -7912,7 +7912,6 @@ importers:
       '@types/nock': ^9.3.0
       '@types/node': ^18.19.0
       '@types/sinon': ^7.0.13
-      '@types/url-parse': 1.4.4
       '@types/uuid': ^9.0.2
       axios: ^1.6.2
       c8: ^8.0.1
@@ -7932,7 +7931,6 @@ importers:
       socket.io-client: ^4.7.3
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
-      url-parse: ^1.5.8
       uuid: ^9.0.0
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -7949,7 +7947,6 @@ importers:
       cross-fetch: 3.1.8
       json-stringify-safe: 5.0.1
       socket.io-client: 4.7.4
-      url-parse: 1.5.10
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -7964,7 +7961,6 @@ importers:
       '@types/nock': 9.3.1
       '@types/node': 18.19.1
       '@types/sinon': 7.5.2
-      '@types/url-parse': 1.4.4
       '@types/uuid': 9.0.7
       axios: 1.6.2
       c8: 8.0.1
@@ -22487,10 +22483,6 @@ packages:
 
   /@types/unist/2.0.10:
     resolution: {integrity: sha512-IfYcSBWE3hLpBg8+X2SEa8LVkJdJEkT2Ese2aaLs3ptGdVtABxndrMaxuFlQ1qdFf9Q5rDvDpxI3WwgvKFAsQA==}
-    dev: true
-
-  /@types/url-parse/1.4.4:
-    resolution: {integrity: sha512-KtQLad12+4T/NfSxpoDhmr22+fig3T7/08QCgmutYA6QSznSRmEtuL95GrhVV40/0otTEdFc+etRcCTqhh1q5Q==}
     dev: true
 
   /@types/uuid/9.0.7:
@@ -38486,6 +38478,7 @@ packages:
 
   /querystringify/2.2.0:
     resolution: {integrity: sha512-FIqgj2EUvTa7R50u0rGsyTftzjYmv/a3hO345bZNrqabNqjtgiDMgmo4mkUjd+nzU5oF3dClKqFIPUKybUyqoQ==}
+    dev: true
 
   /queue-microtask/1.2.3:
     resolution: {integrity: sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==}
@@ -43217,6 +43210,7 @@ packages:
     dependencies:
       querystringify: 2.2.0
       requires-port: 1.0.0
+    dev: true
 
   /url-slug/2.0.0:
     resolution: {integrity: sha512-aiNmSsVgrjCiJ2+KWPferjT46YFKoE8i0YX04BlMVDue022Xwhg/zYlnZ6V9/mP3p8Wj7LEp0myiTkC/p6sxew==}
