@@ -150,7 +150,7 @@
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"sinon": "^17.0.1",
+		"sinon": "^7.4.2",
 		"typescript": "~5.1.6"
 	},
 	"fluidBuild": {
