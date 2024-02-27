@@ -4,7 +4,7 @@
 
 ```ts
 
-import { EventEmitter } from 'events_pkg';
+import events_pkg from 'events_pkg';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IEventTransformer } from '@fluidframework/core-interfaces';
@@ -21,6 +21,9 @@ export class Buffer extends Uint8Array {
 
 // @alpha
 export const bufferToString: (blob: ArrayBufferLike, encoding: "utf8" | "utf-8" | "base64") => string;
+
+// @public
+export const EventEmitter: typeof events_pkg.EventEmitter;
 
 // @public
 export type EventEmitterEventType = string;

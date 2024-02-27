@@ -3,13 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events_pkg";
+import events_pkg from "events_pkg";
 import {
 	IEvent,
 	TransformedEvent,
 	IEventTransformer,
 	IEventProvider,
 } from "@fluidframework/core-interfaces";
+
+/**
+ * Do Not Use - Current internal implementation class supporting TypedEventEmitter
+ * @public
+ */
+const { EventEmitter } = events_pkg;
+export type { EventEmitter };
 
 /**
  * The event emitter polyfill and the node event emitter have different event types:
