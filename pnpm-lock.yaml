@@ -1501,6 +1501,7 @@ importers:
       '@fluidframework/map': workspace:~
       '@fluidframework/sequence': workspace:~
       '@fluidframework/tinylicious-client': workspace:~
+      '@microsoft/api-extractor': ^7.39.1
       '@microsoft/applicationinsights-web': ^2.8.11
       '@testing-library/dom': ^8.2.0
       '@testing-library/jest-dom': ^5.16.5
@@ -1553,6 +1554,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_webpack-cli@4.10.0
       '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
+      '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i
       '@testing-library/dom': 8.20.1
       '@testing-library/jest-dom': 5.17.0
       '@testing-library/react': 12.1.5_sfoxds7t5ydpegc3knd667wn6m
@@ -17221,7 +17223,7 @@ packages:
       json-stringify-safe: 5.0.1
       lodash: 4.17.21
       nconf: 0.12.1
-      semver: 7.5.4
+      semver: 7.6.0
       sha.js: 2.4.11
       uuid: 9.0.1
     transitivePeerDependencies:
@@ -17250,7 +17252,7 @@ packages:
       json-stringify-safe: 5.0.1
       lodash: 4.17.21
       nconf: 0.12.1
-      semver: 7.5.4
+      semver: 7.6.0
       sha.js: 2.4.11
       uuid: 9.0.1
     transitivePeerDependencies:
@@ -22601,7 +22603,7 @@ packages:
       graphemer: 1.4.0
       ignore: 5.3.0
       natural-compare: 1.4.0
-      semver: 7.5.4
+      semver: 7.6.0
       ts-api-utils: 1.0.3_typescript@5.1.6
       typescript: 5.1.6
     transitivePeerDependencies:
@@ -28504,7 +28506,7 @@ packages:
       eslint: 8.50.0
       esquery: 1.5.0
       is-builtin-module: 3.2.1
-      semver: 7.5.4
+      semver: 7.6.0
       spdx-expression-parse: 3.0.1
     transitivePeerDependencies:
       - supports-color
@@ -28630,7 +28632,7 @@ packages:
       read-pkg-up: 7.0.1
       regexp-tree: 0.1.27
       regjsparser: 0.10.0
-      semver: 7.5.4
+      semver: 7.6.0
       strip-indent: 3.0.0
     dev: true
 
