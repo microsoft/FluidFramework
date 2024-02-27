@@ -107,9 +107,9 @@ export interface IMockContainerRuntimePendingMessage {
 	localOpMetadata: unknown;
 }
 
-interface IMockContainerRuntimeSequencedIdAllocationMessage {
+type IMockContainerRuntimeSequencedIdAllocationMessage = ISequencedDocumentMessage & {
 	contents: IMockContainerRuntimeIdAllocationMessage;
-}
+};
 
 interface IMockContainerRuntimeIdAllocationMessage {
 	type: "idAllocation";
@@ -224,17 +224,21 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 
 	public submit(messageContent: any, localOpMetadata: unknown): number {
 		const clientSequenceNumber = this.clientSequenceNumber;
-		const message = {
+		const message: IInternalMockRuntimeMessage = {
 			content: messageContent,
 			localOpMetadata,
 		};
 
+		const isAllocationMessage = this.isAllocationMessage(message.content);
+
 		this.clientSequenceNumber++;
 		switch (this.runtimeOptions.flushMode) {
 			case FlushMode.Immediate: {
-				const idAllocationOp = this.generateIdAllocationOp();
-				if (idAllocationOp !== undefined) {
-					this.submitInternal(idAllocationOp, clientSequenceNumber);
+				if (!isAllocationMessage) {
+					const idAllocationOp = this.generateIdAllocationOp();
+					if (idAllocationOp !== undefined) {
+						this.submitInternal(idAllocationOp, clientSequenceNumber);
+					}
 				}
 				this.submitInternal(message, clientSequenceNumber);
 				break;
@@ -242,7 +246,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 
 			case FlushMode.TurnBased: {
 				// Id allocation messages are directly submitted during the resubmit path
-				if (this.isAllocationMessage(message.content)) {
+				if (isAllocationMessage) {
 					this.idAllocationOutbox.push(message);
 				} else {
 					this.outbox.push(message);
@@ -257,12 +261,16 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		return clientSequenceNumber;
 	}
 
-	private isAllocationMessage(
-		message: any,
+	private isSequencedAllocationMessage(
+		message: ISequencedDocumentMessage,
 	): message is IMockContainerRuntimeSequencedIdAllocationMessage {
+		return this.isAllocationMessage(message.contents);
+	}
+
+	private isAllocationMessage(message: any): message is IMockContainerRuntimeIdAllocationMessage {
 		return (
-			(message as IMockContainerRuntimeSequencedIdAllocationMessage).contents?.type ===
-			"idAllocation"
+			message !== undefined &&
+			(message as IMockContainerRuntimeIdAllocationMessage).type === "idAllocation"
 		);
 	}
 
@@ -389,7 +397,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		this.deltaManager.minimumSequenceNumber = message.minimumSequenceNumber;
 		const [local, localOpMetadata] = this.processInternal(message);
 
-		if (this.isAllocationMessage(message)) {
+		if (this.isSequencedAllocationMessage(message)) {
 			this.finalizeIdRange(message.contents.contents);
 		} else {
 			this.dataStoreRuntime.process(message, local, localOpMetadata);
@@ -681,6 +689,12 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
 	}
 }
 
+const attachStatesToComparableNumbers = {
+	[AttachState.Detached]: 0,
+	[AttachState.Attaching]: 1,
+	[AttachState.Attached]: 2,
+} as const;
+
 /**
  * Mock implementation of IRuntime for testing that does nothing
  * @alpha
@@ -695,6 +709,7 @@ export class MockFluidDataStoreRuntime
 		id?: string;
 		logger?: ITelemetryBaseLogger;
 		idCompressor?: IIdCompressor & IIdCompressorCore;
+		attachState?: AttachState;
 	}) {
 		super();
 		this.clientId = overrides?.clientId ?? uuid();
@@ -705,6 +720,7 @@ export class MockFluidDataStoreRuntime
 			namespace: "fluid:MockFluidDataStoreRuntime",
 		});
 		this.idCompressor = overrides?.idCompressor;
+		this._attachState = overrides?.attachState ?? AttachState.Attached;
 	}
 
 	public readonly entryPoint: IFluidHandle<FluidObject>;
@@ -754,14 +770,19 @@ export class MockFluidDataStoreRuntime
 		return `/${this.id}`;
 	}
 
-	private _local = false;
-
+	/**
+	 * @deprecated Use `attachState` instead
+	 *
+	 * @privateRemarks Also remove the setter when this is removed. setters don't get their own doc tags.
+	 */
 	public get local(): boolean {
-		return this._local;
+		return !this.isAttached;
 	}
-
 	public set local(local: boolean) {
-		this._local = local;
+		// this does not validate attach state orders, or fire events to maintain
+		// the existing behavior. due to this, this method is deprecated and will
+		// be removed
+		this._attachState = local ? AttachState.Detached : AttachState.Attached;
 	}
 
 	private _disposed = false;
@@ -782,15 +803,16 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public get isAttached(): boolean {
-		return !this.local;
+		return this.attachState !== AttachState.Detached;
 	}
 
+	private _attachState: AttachState;
 	public get attachState(): AttachState {
-		return this.local ? AttachState.Detached : AttachState.Attached;
+		return this._attachState;
 	}
 
 	public get visibilityState(): VisibilityState {
-		return this.local ? VisibilityState.NotVisible : VisibilityState.GloballyVisible;
+		return this.isAttached ? VisibilityState.GloballyVisible : VisibilityState.NotVisible;
 	}
 
 	public bindChannel(channel: IChannel): void {
@@ -933,7 +955,30 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
-		return;
+		if (attachState === this._attachState) {
+			return;
+		}
+		const proposedState = attachStatesToComparableNumbers[attachState];
+		const startingState = attachStatesToComparableNumbers[this._attachState];
+		if (proposedState < startingState) {
+			throw new Error(`cannot transition back to ${attachState} from ${this.attachState}`);
+		}
+
+		if (
+			startingState < attachStatesToComparableNumbers[AttachState.Attaching] &&
+			proposedState >= attachStatesToComparableNumbers[AttachState.Attaching]
+		) {
+			this._attachState = AttachState.Attaching;
+			this.emit("attaching");
+		}
+
+		if (
+			startingState < attachStatesToComparableNumbers[AttachState.Attached] &&
+			proposedState >= attachStatesToComparableNumbers[AttachState.Attached]
+		) {
+			this._attachState = AttachState.Attached;
+			this.emit("attached");
+		}
 	}
 
 	public async waitAttached(): Promise<void> {

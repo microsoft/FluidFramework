@@ -12,8 +12,8 @@ import {
 import { createWriteError, GenericNetworkError } from "@fluidframework/driver-utils";
 import { OdspErrorTypes, OdspError, IOdspError } from "@fluidframework/odsp-driver-definitions";
 import { isILoggingError } from "@fluidframework/telemetry-utils";
-import { createOdspNetworkError, enrichOdspError } from "../odspErrorUtils";
-import { pkgVersion } from "../packageVersion";
+import { createOdspNetworkError, enrichOdspError } from "../odspErrorUtils.js";
+import { pkgVersion } from "../packageVersion.js";
 
 describe("OdspErrorUtils", () => {
 	function assertCustomPropertySupport(err: any) {
