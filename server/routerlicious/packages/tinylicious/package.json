@@ -28,7 +28,7 @@
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../.prettierignore",
-		"start": "pm2 start -n tinylicious dist/index.js --watch",
+		"start": "pm2 start -n tinylicious dist/index.js",
 		"start:debug": "node --inspect=0.0.0.0:9229 dist/index.js",
 		"stop": "pm2 stop tinylicious",
 		"test": "npm run test:mocha",
