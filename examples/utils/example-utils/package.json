@@ -87,7 +87,7 @@
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/server-local-server": "^3.1.0-238497",
+		"@fluidframework/server-local-server": "^3.1.0-240326",
 		"@fluidframework/task-manager": "workspace:~",
 		"@fluidframework/tinylicious-driver": "workspace:~",
 		"react": "^17.0.1",
