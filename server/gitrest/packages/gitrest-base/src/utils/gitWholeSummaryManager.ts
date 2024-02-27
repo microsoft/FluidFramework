@@ -7,6 +7,7 @@ import {
 	IWholeFlatSummary,
 	IWholeSummaryPayload,
 	NetworkError,
+	isNetworkError,
 } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { IRepositoryManager, type IFileSystemManager } from "./definitions";
@@ -189,9 +190,9 @@ export class GitWholeSummaryManager {
 		} catch (error: any) {
 			if (
 				error?.code === "ENOENT" ||
-				(error instanceof NetworkError &&
-					error?.code === 400 &&
-					error?.message.startsWith("Repo does not exist"))
+				(isNetworkError(error) &&
+					error.code === 400 &&
+					error.message.startsWith("Repo does not exist"))
 			) {
 				// File does not exist.
 				Lumberjack.warning(
