@@ -65,7 +65,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 			srcHandle: IFluidHandle,
 			outboundHandle: IFluidHandle,
 		) => void,
-		private readonly isGloballyVisible: () => boolean,
+		private readonly isAttachedAndVisible: () => boolean,
 	) {}
 
 	public attach(handler: IDeltaHandler) {
@@ -117,7 +117,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 
 	public applyStashedOp(content: any): unknown {
 		try {
-			this.stashedOpMd = this.isGloballyVisible() ? createStashedOpMetadata() : undefined;
+			this.stashedOpMd = this.isAttachedAndVisible() ? createStashedOpMetadata() : undefined;
 			this.handler.applyStashedOp(content);
 			return this.stashedOpMd;
 		} finally {
