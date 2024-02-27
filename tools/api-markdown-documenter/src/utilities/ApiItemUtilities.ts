@@ -460,7 +460,8 @@ export function getSafeFilenameForName(apiItemName: string): string {
 	// eslint-disable-next-line unicorn/better-regex, no-useless-escape
 	const badFilenameCharsRegExp: RegExp = /[^a-z0-9_\-\.]/gi;
 
-	// TODO: This can introduce naming collisions.
-	// Will be fixed as part of https://github.com/microsoft/rushstack/issues/1308
+	// Note: This can introduce naming collisions.
+	// TODO: once the following issue has been resolved in api-extractor, we may be able to clean this up:
+	// https://github.com/microsoft/rushstack/issues/1308
 	return apiItemName.replace(badFilenameCharsRegExp, "_").toLowerCase();
 }
