@@ -27,7 +27,6 @@ export interface IAlfredResourcesCustomizations {
 	webSocketTracker?: IWebSocketTracker;
 	serviceMessageResourceManager?: IServiceMessageResourceManager;
 	clusterDrainingChecker?: IClusterDrainingChecker;
-	redisClientConnectionManager?: IRedisClientConnectionManager;
 	redisClientConnectionManagerForJwtCache?: IRedisClientConnectionManager;
 	redisClientConnectionManagerForThrottling?: IRedisClientConnectionManager;
 	redisClientConnectionManagerForLogging?: IRedisClientConnectionManager;

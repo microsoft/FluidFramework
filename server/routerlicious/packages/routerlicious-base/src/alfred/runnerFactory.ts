@@ -24,13 +24,12 @@ import { IAlfredResourcesCustomizations } from ".";
  * @internal
  */
 export class AlfredResources implements core.IResources {
+	public webServerFactory: core.IWebServerFactory;
+
 	constructor(
 		public config: Provider,
 		public producer: core.IProducer,
-		public webServerFactory: core.IWebServerFactory,
-		public clientManager: core.IClientManager,
-		public webSocketLibrary: string,
-		public orderManager: core.IOrdererManager,
+		public redisConfig: any,
 		public tenantManager: core.ITenantManager,
 		public restTenantThrottlers: Map<string, core.IThrottler>,
 		public restClusterThrottlers: Map<string, core.IThrottler>,
@@ -48,7 +47,16 @@ export class AlfredResources implements core.IResources {
 		public serviceMessageResourceManager?: core.IServiceMessageResourceManager,
 		public clusterDrainingChecker?: core.IClusterDrainingChecker,
 		public enableClientIPLogging?: boolean,
-	) {}
+	) {
+		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
+		const nodeClusterConfig: Partial<services.INodeClusterConfig> | undefined = config.get(
+			"alfred:nodeClusterConfig",
+		);
+		const useNodeCluster = config.get("alfred:useNodeCluster");
+		this.webServerFactory = useNodeCluster
+			? new services.NodeClusterWebServerFactory(httpServerConfig, nodeClusterConfig)
+			: new services.BasicWebServerFactory(httpServerConfig);
+	}
 
 	public async dispose(): Promise<void> {
 		const producerClosedP = this.producer.close();
@@ -107,23 +115,6 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 
 		// Redis connection for client manager and single-use JWTs.
 		const redisConfig2 = config.get("redis2");
-
-		const redisParams2 = {
-			expireAfterSeconds: redisConfig2.keyExpireAfterSeconds as number | undefined,
-		};
-
-		const redisClientConnectionManager = customizations?.redisClientConnectionManager
-			? customizations.redisClientConnectionManager
-			: new RedisClientConnectionManager(
-					undefined,
-					redisConfig2,
-					redisConfig2.enableClustering,
-					redisConfig2.slotsRefreshTimeout,
-			  );
-		const clientManager = new services.ClientManager(
-			redisClientConnectionManager,
-			redisParams2,
-		);
 
 		const redisClientConnectionManagerForJwtCache =
 			customizations?.redisClientConnectionManagerForJwtCache
@@ -357,57 +348,10 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			});
 		}
 
-		const redisClientConnectionManagerForPub =
-			customizations?.redisClientConnectionManagerForPub
-				? customizations.redisClientConnectionManagerForPub
-				: new RedisClientConnectionManager(
-						undefined,
-						redisConfig,
-						redisConfig.enableClustering,
-						redisConfig.slotsRefreshTimeout,
-				  );
-
-		const redisClientConnectionManagerForSub =
-			customizations?.redisClientConnectionManagerForSub
-				? customizations.redisClientConnectionManagerForSub
-				: new RedisClientConnectionManager(
-						undefined,
-						redisConfig,
-						redisConfig.enableClustering,
-						redisConfig.slotsRefreshTimeout,
-				  );
-
-		const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
-		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
-		const socketIoConfig = config.get("alfred:socketIo");
-		const nodeClusterConfig: Partial<services.INodeClusterConfig> | undefined = config.get(
-			"alfred:nodeClusterConfig",
-		);
-		const useNodeCluster = config.get("alfred:useNodeCluster");
-		const webServerFactory = useNodeCluster
-			? new services.SocketIoNodeClusterWebServerFactory(
-					redisClientConnectionManagerForPub,
-					redisClientConnectionManagerForSub,
-					socketIoAdapterConfig,
-					httpServerConfig,
-					socketIoConfig,
-					nodeClusterConfig,
-			  )
-			: new services.SocketIoWebServerFactory(
-					redisClientConnectionManagerForPub,
-					redisClientConnectionManagerForSub,
-					socketIoAdapterConfig,
-					httpServerConfig,
-					socketIoConfig,
-			  );
-
 		return new AlfredResources(
 			config,
 			producer,
-			webServerFactory,
-			clientManager,
-			webSocketLibrary,
-			orderManager,
+			redisConfig,
 			tenantManager,
 			restTenantThrottlers,
 			restClusterThrottlers,

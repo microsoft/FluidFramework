@@ -13,7 +13,6 @@ import {
 	executeRedisMultiWithHmsetExpireAndLpush,
 	IRedisParameters,
 } from "@fluidframework/server-services-utils";
-import * as winston from "winston";
 import {
 	BaseTelemetryProperties,
 	CommonProperties,
@@ -42,7 +41,6 @@ export class RedisThrottleAndUsageStorageManager implements IThrottleAndUsageSto
 		}
 
 		redisClientConnectionManager.getRedisClient().on("error", (error) => {
-			winston.error("[DHRUV DEBUG] Throttle Manager Redis Error:", error);
 			Lumberjack.error(
 				"[DHRUV DEBUG] Throttle Manager Redis Error",
 				{ [CommonProperties.telemetryGroupName]: "throttling" },

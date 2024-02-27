@@ -27,7 +27,6 @@ export class RedisTenantCache {
 		}
 
 		redisClientConnectionManager.getRedisClient().on("error", (error) => {
-			winston.error("[DHRUV DEBUG] Redis Tenant Cache Error:", error);
 			Lumberjack.error("[DHRUV DEBUG] Redis Tenant Cache Error", undefined, error);
 		});
 	}

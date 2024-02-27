@@ -48,7 +48,12 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		const redisConfig = config.get("redis");
 		const redisClientConnectionManager = customizations?.redisClientConnectionManager
 			? customizations.redisClientConnectionManager
-			: new RedisClientConnectionManager(undefined, redisConfig);
+			: new RedisClientConnectionManager(
+					undefined,
+					redisConfig,
+					redisConfig.enableClustering,
+					redisConfig.slotsRefreshTimeout,
+			  );
 
 		const redisParams = {
 			expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
@@ -78,7 +83,12 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		const redisClientConnectionManagerForThrottling =
 			customizations?.redisClientConnectionManagerForThrottling
 				? customizations.redisClientConnectionManagerForThrottling
-				: new RedisClientConnectionManager(undefined, redisConfigForThrottling);
+				: new RedisClientConnectionManager(
+						undefined,
+						redisConfigForThrottling,
+						redisConfig.enableClustering,
+						redisConfig.slotsRefreshTimeout,
+				  );
 
 		const redisParamsForThrottling = {
 			expireAfterSeconds: redisConfigForThrottling.keyExpireAfterSeconds as

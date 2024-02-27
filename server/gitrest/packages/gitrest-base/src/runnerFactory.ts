@@ -106,7 +106,12 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 			const redisConfig = config.get("redis");
 			const redisClientConnectionManager =
 				redisClientConnectionManagerCustomization ??
-				new RedisClientConnectionManager(undefined, redisConfig);
+				new RedisClientConnectionManager(
+					undefined,
+					redisConfig,
+					redisConfig.enableClustering,
+					redisConfig.slotsRefreshTimeout,
+				);
 			return new RedisFsManagerFactory(config, redisClientConnectionManager);
 		}
 		throw new Error("Invalid file system name.");

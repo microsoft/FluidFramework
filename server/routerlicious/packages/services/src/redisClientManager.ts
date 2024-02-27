@@ -9,7 +9,6 @@ import {
 	executeRedisMultiWithHmsetExpire,
 	IRedisParameters,
 } from "@fluidframework/server-services-utils";
-import * as winston from "winston";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { IRedisClientConnectionManager } from "@fluidframework/server-services-shared";
 
@@ -34,7 +33,6 @@ export class ClientManager implements IClientManager {
 		}
 
 		redisClientConnectionManager.getRedisClient().on("error", (error) => {
-			winston.error("[DHRUV DEBUG] Client Manager Redis Error:", error);
 			Lumberjack.error("[DHRUV DEBUG] Client Manager Redis Error", undefined, error);
 		});
 	}

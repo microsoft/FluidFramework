@@ -5,7 +5,6 @@
 
 import { IRedisParameters } from "@fluidframework/server-services-utils";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import * as winston from "winston";
 import { IRedisClientConnectionManager } from "../redisClientConnectionManager";
 import { ICache } from "./definitions";
 
@@ -29,7 +28,6 @@ export class RedisCache implements ICache {
 		}
 
 		redisClientConnectionManager.getRedisClient().on("error", (error) => {
-			winston.error("[DHRUV DEBUG] Redis Cache Error:", error);
 			Lumberjack.error("[DHRUV DEBUG] Redis Cache Error", undefined, error);
 		});
 	}

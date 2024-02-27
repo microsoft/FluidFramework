@@ -14,14 +14,23 @@ export interface IRedisClientConnectionManager {
 	/**
 	 * @returns The newly created Redis client.
 	 */
-	getRedisClient(): Redis.default;
+	getRedisClient(): Redis.default | Redis.Cluster;
 }
 
 export class RedisClientConnectionManager implements IRedisClientConnectionManager {
-	private client: Redis.default | undefined;
+	private client: Redis.default | Redis.Cluster | undefined;
 	private readonly redisOptions: Redis.RedisOptions;
+	private readonly enableClustering: boolean;
+	private readonly slotsRefreshTimeout: number;
 
-	constructor(redisOptions?: Redis.RedisOptions, redisConfig?: any) {
+	constructor(
+		redisOptions?: Redis.RedisOptions,
+		redisConfig?: any,
+		enableClustering: boolean = false,
+		slotsRefreshTimeout: number = 50000,
+	) {
+		this.enableClustering = enableClustering;
+		this.slotsRefreshTimeout = slotsRefreshTimeout;
 		if (!redisOptions && !redisConfig) {
 			Lumberjack.info(
 				"[DHRUV DEBUG] Historian Either redisOptions or redisConfig must be provided",
@@ -39,6 +48,7 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 				enableReadyCheck: true,
 				maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
 				enableOfflineQueue: redisConfig.enableOfflineQueue,
+				retryStrategy: (attempts: number) => Math.min(attempts * 50, 2000),
 			};
 			if (redisConfig.enableAutoPipelining) {
 				/**
@@ -68,11 +78,18 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 
 	private authenticateAndCreateRedisClient(): void {
 		Lumberjack.info("[DHRUV DEBUG] Historian Creating redis client");
-		this.client = new Redis.default(this.redisOptions);
+		this.client = this.enableClustering
+			? new Redis.Cluster([{ port: this.redisOptions.port, host: this.redisOptions.host }], {
+					redisOptions: this.redisOptions,
+					slotsRefreshTimeout: this.slotsRefreshTimeout,
+					dnsLookup: (adr, callback) => callback(null, adr),
+					showFriendlyErrorStack: true,
+			  })
+			: new Redis.default(this.redisOptions);
 		Lumberjack.info("[DHRUV DEBUG] Historian Redis client created");
 	}
 
-	public getRedisClient(): Redis.default {
+	public getRedisClient(): Redis.default | Redis.Cluster {
 		if (!this.client) {
 			Lumberjack.error("[DHRUV DEBUG] Historian Redis client not initialized");
 			throw new Error("Redis client not initialized");
