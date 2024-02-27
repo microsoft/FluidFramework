@@ -214,7 +214,8 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 		TKind,
 		TreeNode & WithType<`${TScope}.${Name}`>,
 		FlexTreeNode | unknown,
-		TImplicitlyConstructable
+		TImplicitlyConstructable,
+		T
 	> {
 		const identifier = this.scoped(name);
 		class schema extends TreeNode implements WithType<`${TScope}.${Name}`> {
@@ -284,7 +285,8 @@ export class SchemaFactory<TScope extends string = string, TName extends number 
 			NodeKind.Object,
 			object & TreeNode & ObjectFromSchemaRecord<T> & WithType<`${TScope}.${Name}`>,
 			object & InsertableObjectFromSchemaRecord<T>,
-			true
+			true,
+			T
 		>;
 	}
 

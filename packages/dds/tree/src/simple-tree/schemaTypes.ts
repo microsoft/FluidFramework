@@ -5,7 +5,7 @@
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { MakeNominal, RestrictiveReadonlyRecord } from "../util/index.js";
-import { FlexListToUnion, LazyItem } from "../feature-libraries/index.js";
+import { FlexListToUnion, LazyItem, Unenforced } from "../feature-libraries/index.js";
 import { Unhydrated, TreeNode } from "./types.js";
 
 /**
@@ -98,7 +98,8 @@ export interface TreeNodeSchemaClass<
 	out TNode = unknown,
 	in TInsertable = never,
 	out ImplicitlyConstructable extends boolean = boolean,
-> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable> {
+	out Info = unknown,
+> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info> {
 	/**
 	 * Constructs an {@link Unhydrated} node with this schema.
 	 * @remarks
@@ -117,10 +118,11 @@ export interface TreeNodeSchemaCore<
 	out Name extends string,
 	out Kind extends NodeKind,
 	out ImplicitlyConstructable extends boolean,
+	out Info = unknown,
 > {
 	readonly identifier: Name;
 	readonly kind: Kind;
-	readonly info: unknown;
+	readonly info: Info;
 
 	/**
 	 * When constructing insertable content,
@@ -183,6 +185,24 @@ export enum NodeKind {
 	 * A node which stores a single leaf value.
 	 */
 	Leaf,
+}
+
+export interface FieldSchemaUnsafe<
+	out Kind extends FieldKind = FieldKind,
+	out Types extends Unenforced<ImplicitAllowedTypes> = ImplicitAllowedTypes,
+> {
+	readonly kind: Kind;
+	readonly allowedTypes: Types;
+}
+
+export function createFieldSchemaUnsafe<
+	Kind extends FieldKind,
+	Types extends Unenforced<ImplicitAllowedTypes>,
+>(kind: Kind, allowedTypes: Types): FieldSchemaUnsafe<Kind, Types> {
+	return new FieldSchema(kind, allowedTypes as ImplicitAllowedTypes) as FieldSchemaUnsafe<
+		Kind,
+		Types
+	>;
 }
 
 /**

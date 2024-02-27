@@ -3,21 +3,58 @@
  * Licensed under the MIT License.
  */
 
-import { FlexTreeNode, isFlexTreeNode } from "../feature-libraries/index.js";
+import {
+	FlexListToUnion,
+	FlexTreeNode,
+	Unenforced,
+	isFlexTreeNode,
+} from "../feature-libraries/index.js";
 import { RestrictiveReadonlyRecord } from "../util/index.js";
 import {
+	AllowedTypes,
+	ApplyKind,
+	FieldKind,
+	FieldSchemaUnsafe,
 	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
 	InsertableObjectFromSchemaRecord,
 	InsertableTreeNodeFromImplicitAllowedTypes,
+	NodeFromSchema,
 	NodeKind,
 	ObjectFromSchemaRecord,
 	TreeMapNode,
+	TreeNodeSchema,
 	TreeNodeSchemaClass,
 	WithType,
+	createFieldSchemaUnsafe,
 } from "./schemaTypes.js";
 import { SchemaFactory } from "./schemaFactory.js";
 import { TreeArrayNode } from "./treeArrayNode.js";
+
+export type ObjectFromSchemaRecordUnsafe<
+	T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
+> = {
+	-readonly [Property in keyof T]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
+};
+
+export type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<ImplicitFieldSchema>> =
+	TSchema extends FieldSchemaUnsafe<infer Kind, infer Types>
+		? ApplyKind<TreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind>
+		: TSchema extends ImplicitAllowedTypes
+		? TreeNodeFromImplicitAllowedTypesUnsafe<TSchema>
+		: unknown;
+
+/**
+ * Type of of tree node for a field of the given schema.
+ * @public
+ */
+export type TreeNodeFromImplicitAllowedTypesUnsafe<
+	TSchema extends Unenforced<ImplicitAllowedTypes> = TreeNodeSchema,
+> = TSchema extends TreeNodeSchema
+	? NodeFromSchema<TSchema>
+	: TSchema extends AllowedTypes
+	? NodeFromSchema<FlexListToUnion<TSchema>>
+	: unknown;
 
 /**
  * Extends SchemaFactory with utilities for recursive types.
@@ -48,9 +85,31 @@ export class SchemaFactoryRecursive<
 		NodeKind.Object,
 		ObjectFromSchemaRecord<T> & WithType<`${TScope}.${Name}`>,
 		InsertableObjectFromSchemaRecord<T>,
-		true
+		true,
+		T
 	> {
 		return this.object(name, t);
+	}
+
+	public objectRecursiveUnsafe<
+		const Name extends TName,
+		const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
+	>(name: Name, t: T) {
+		return this.objectRecursive(
+			name,
+			t as T & RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
+		) as TreeNodeSchemaClass<
+			`${TScope}.${Name}`,
+			NodeKind.Object,
+			ObjectFromSchemaRecordUnsafe<T> & WithType<`${TScope}.${Name}`>,
+			ObjectFromSchemaRecordUnsafe<T>,
+			true,
+			T
+		>;
+	}
+
+	public optionalRecursive<const T extends Unenforced<readonly (() => TreeNodeSchema)[]>>(t: T) {
+		return createFieldSchemaUnsafe(FieldKind.Optional, t);
 	}
 
 	/**
