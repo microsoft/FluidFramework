@@ -10,6 +10,7 @@
  */
 
 export { SharedCell } from "./cell";
+export { CellFactory } from "./cellFactory";
 export type {
 	ISharedCell,
 	ISharedCellEvents,
