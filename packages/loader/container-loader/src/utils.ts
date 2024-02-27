@@ -44,11 +44,10 @@ export interface IParsedUrl {
 	 */
 	query: string;
 	/**
-	 * Null means do not use snapshots, undefined means load latest snapshot
-	 * otherwise it's version ID passed to IDocumentStorageService.getVersions() to figure out what snapshot to use.
-	 * If needed, can add undefined which is treated by Container.load() as load latest snapshot.
+	 * Undefined means load latest snapshot, otherwise it's version ID passed to IDocumentStorageService.getVersions()
+	 * to figure out what snapshot to use.
 	 */
-	version: string | null | undefined;
+	version: string | undefined;
 }
 
 /**
@@ -69,7 +68,12 @@ export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefin
 	const regex = /^\/([^/]*\/[^/]*)(\/?.*)$/;
 	const match = regex.exec(parsed.pathname);
 	return match?.length === 3
-		? { id: match[1], path: match[2], query, version: parsed.searchParams.get("version") }
+		? {
+				id: match[1],
+				path: match[2],
+				query,
+				version: parsed.searchParams.get("version") ?? undefined,
+		  }
 		: undefined;
 }
 
