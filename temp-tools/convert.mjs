@@ -148,7 +148,7 @@ fs.unlink("api-extractor-esm.json", () => {});
 pkg.scripts["build:esnext"] = "tsc --project ./tsconfig.json";
 
 if (pkg.scripts["build:test"]) {
-	pkg.scripts["build:test"] = "npm run build:test:cjs && npm run build:test:esm";
+	pkg.scripts["build:test"] = "npm run build:test:esm && npm run build:test:cjs";
 	pkg.scripts["build:test:cjs"] = "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json";
 	pkg.scripts["build:test:esm"] = "tsc --project ./src/test/tsconfig.json";
 }
@@ -156,8 +156,8 @@ if (pkg.scripts["build:test"]) {
 // Rewrite test scripts
 if (pkg.scripts["test:mocha"]) {
 	pkg.scripts["test:mocha"] = "npm run test:mocha:cjs && npm run test:mocha:esm";
-	pkg.scripts["test:mocha:cjs"] = "mocha  --recursive \"dist/test/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup";
-	pkg.scripts["test:mocha:esm"] = "mocha  --recursive \"lib/test/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup";
+	pkg.scripts["test:mocha:cjs"] = "mocha --recursive \"dist/test/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup";
+	pkg.scripts["test:mocha:esm"] = "mocha --recursive \"lib/test/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup";
 }
 
 pkg.scripts["tsc"] = `fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ${workspaceRoot}/common/build/build-common/src/cjs/package.json ./dist`;
