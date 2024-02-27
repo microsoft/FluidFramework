@@ -10,6 +10,7 @@ import {
 	MockStorage,
 	MockContainerRuntimeFactory,
 } from "@fluidframework/test-runtime-utils";
+import { AttachState } from "@fluidframework/container-definitions";
 import { MatrixItem, SharedMatrix, SharedMatrixFactory } from "../index.js";
 import { extract, expectSize } from "./utils.js";
 import { TestConsumer } from "./testconsumer.js";
@@ -410,8 +411,9 @@ import { UndoRedoStackManager } from "./undoRedoStackManager.js";
 					);
 
 					// Create a local DataStoreRuntime since we only want to load the summary for a local client.
-					const dataStoreRuntime = new MockFluidDataStoreRuntime();
-					dataStoreRuntime.local = true;
+					const dataStoreRuntime = new MockFluidDataStoreRuntime({
+						attachState: AttachState.Detached,
+					});
 
 					// Load the summary into a newly created 2nd SharedMatrix.
 					const matrix2 = new SharedMatrix<T>(
