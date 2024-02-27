@@ -115,7 +115,7 @@ export type AnchorSlot<TContent> = BrandedKey<Opaque<Brand<number, "AnchorSlot">
 export function anchorSlot<TContent>(): AnchorSlot<TContent>;
 
 // @internal
-export interface AnnouncedVisitor {
+export interface AnnouncedVisitor extends DeltaVisitor {
     // (undocumented)
     afterAttach(source: FieldKey, destination: Range_2): void;
     afterCreate(content: ProtoNodes, destination: FieldKey): void;
