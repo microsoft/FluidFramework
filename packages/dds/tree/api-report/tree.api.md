@@ -1847,7 +1847,6 @@ export interface TreeNodeSchemaCore<out Name extends string, out Kind extends No
     // (undocumented)
     readonly identifier: Name;
     readonly implicitlyConstructable: ImplicitlyConstructable;
-    // (undocumented)
     readonly info: Info;
     // (undocumented)
     readonly kind: Kind;

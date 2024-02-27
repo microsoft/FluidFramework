@@ -122,6 +122,11 @@ export interface TreeNodeSchemaCore<
 > {
 	readonly identifier: Name;
 	readonly kind: Kind;
+
+	/**
+	 * Data used to define this schema.
+	 * The format depends on the kind of node it is for.
+	 */
 	readonly info: Info;
 
 	/**
