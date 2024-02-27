@@ -6,11 +6,11 @@
 import {
 	IEvent,
 	IEventProvider,
-	ITelemetryLogger,
 	IDisposable,
 	IFluidHandleContext,
 	IFluidHandle,
 	FluidObject,
+	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { IAudience, IDeltaManager, AttachState } from "@fluidframework/container-definitions";
 import {
@@ -57,7 +57,7 @@ export interface IFluidDataStoreRuntime
 
 	readonly connected: boolean;
 
-	readonly logger: ITelemetryLogger;
+	readonly logger: ITelemetryBaseLogger;
 
 	/**
 	 * Indicates the attachment state of the data store to a host service.

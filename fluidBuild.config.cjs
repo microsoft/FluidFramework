@@ -60,6 +60,8 @@ module.exports = {
 			"api-extractor:commonjs",
 			"api-extractor:esnext",
 		],
+		"build:test:cjs": ["typetests:gen", "tsc", "api-extractor:commonjs"],
+		"build:test:esm": ["typetests:gen", "build:esnext", "api-extractor:esnext"],
 		"api": {
 			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
 			script: false,
@@ -82,7 +84,9 @@ module.exports = {
 		"depcruise": [],
 		"check:release-tags": ["tsc"],
 		"check:are-the-types-wrong": ["build"],
-		"eslint": [...tscDependsOn, "commonjs"],
+		// ADO #7297: Review why the direct dependency on 'build:esm:test' is necessary.
+		//            Should 'compile' be enough?  compile -> build:test -> build:test:esm
+		"eslint": ["compile", "build:test:esm"],
 		"good-fences": [],
 		"prettier": [],
 		"prettier:fix": [],
@@ -212,6 +216,7 @@ module.exports = {
 				"common/build/eslint-config-fluid/.*",
 				"common/lib/common-utils/jest-puppeteer.config.js",
 				"common/lib/common-utils/jest.config.js",
+				"common/build/eslint-plugin-fluid/.*",
 				"docs/api-markdown-documenter/.*",
 				"docs/api/fallback/index.js",
 				"docs/build-redirects.js",
@@ -247,7 +252,6 @@ module.exports = {
 				"^server/",
 				"^build-tools/",
 				"^common/lib/common-utils/package.json",
-				"^common/build/eslint-config-fluid/package.json",
 			],
 			"npm-package-json-test-scripts": [
 				"common/build/eslint-config-fluid/package.json",
@@ -272,6 +276,7 @@ module.exports = {
 			"npm-package-exports-field": [
 				// We deliberately improperly import from deep in the package tree while we migrate everything into other
 				// packages. This is temporary and can be fixed once the build-tools/build-cli pigration is complete.
+				"^azure/",
 				"^build-tools/packages/build-tools/package.json",
 				"^common/",
 				"^examples/",
@@ -410,13 +415,14 @@ module.exports = {
 			"@fluidframework/common-definitions",
 			"@fluidframework/common-utils",
 			"@fluidframework/eslint-config-fluid",
+			"@fluid-internal/eslint-plugin-fluid",
 			"@fluidframework/protocol-definitions",
 			"@fluidframework/test-tools",
 			"fluidframework-docs",
 		],
 		fluidBuildTasks: {
 			tsc: {
-				ignoreDevDependencies: ["@fluid-tools/webpack-fluid-loader"],
+				ignoreDevDependencies: ["@fluid-example/webpack-fluid-loader"],
 				ignoreTasks: [
 					// Outside of normal build and packages/dd/matrix version includes tsc
 					"bench:profile",

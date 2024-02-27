@@ -26,7 +26,20 @@ export class LocalServerTestDriver implements ITestDriver {
 	}
 
 	constructor(private readonly api: LocalDriverApiType = LocalDriverApi) {
-		this._server = api.LocalDeltaConnectionServer.create();
+		this._server = api.LocalDeltaConnectionServer.create(undefined, {
+			deli: {
+				summaryNackMessages: {
+					enable: true,
+					maxOps: 200,
+					nackContent: {
+						retryAfter: 0,
+					},
+				},
+			},
+			scribe: {
+				generateServiceSummary: false,
+			},
+		} as any); // Casting to "any" so we don't have to fill out all properties
 	}
 
 	createDocumentServiceFactory(): IDocumentServiceFactory {

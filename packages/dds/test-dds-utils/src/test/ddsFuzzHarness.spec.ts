@@ -467,6 +467,7 @@ describe("DDS Fuzz Harness", () => {
 				clientJoinOptions: {
 					maxNumberOfClients: 4,
 					clientAddProbability: 0.25,
+					stashableClientProbability: 0.2,
 				},
 			};
 			const model = mixinNewClient(
@@ -740,6 +741,7 @@ describe("DDS Fuzz Harness", () => {
 					clientJoinOptions: {
 						maxNumberOfClients: 4,
 						clientAddProbability: 0.25,
+						stashableClientProbability: 0.2,
 					},
 					emitter,
 				};
@@ -895,7 +897,10 @@ describe("DDS Fuzz Harness", () => {
 					.sort();
 				assert.deepEqual(
 					tests.map((t) => t.title),
-					["seed 2", "seed 3"],
+					[
+						"workload: 1: .only via function seed: 2",
+						"workload: 1: .only via function seed: 3",
+					],
 				);
 			});
 
@@ -905,7 +910,10 @@ describe("DDS Fuzz Harness", () => {
 					.sort();
 				assert.deepEqual(
 					tests.map((t) => t.title),
-					["seed 4", "seed 7"],
+					[
+						"workload: 2: .only via options seed: 4",
+						"workload: 2: .only via options seed: 7",
+					],
 				);
 			});
 
@@ -915,7 +923,11 @@ describe("DDS Fuzz Harness", () => {
 					.sort();
 				assert.deepEqual(
 					tests.map((t) => t.title),
-					["seed 2", "seed 4", "seed 7"],
+					[
+						"workload: 3: .only via function and options seed: 2",
+						"workload: 3: .only via function and options seed: 4",
+						"workload: 3: .only via function and options seed: 7",
+					],
 				);
 			});
 
@@ -940,7 +952,9 @@ describe("DDS Fuzz Harness", () => {
 					.sort();
 				assert.deepEqual(
 					tests.map((t) => t.title),
-					[0, 1, 4, 5, 6, 7, 8, 9].map((i) => `seed ${i}`),
+					[0, 1, 4, 5, 6, 7, 8, 9].map(
+						(i) => `workload: 1: .skip via function seed: ${i}`,
+					),
 				);
 			});
 
@@ -950,7 +964,9 @@ describe("DDS Fuzz Harness", () => {
 					.sort();
 				assert.deepEqual(
 					tests.map((t) => t.title),
-					[0, 1, 2, 3, 5, 6, 8, 9].map((i) => `seed ${i}`),
+					[0, 1, 2, 3, 5, 6, 8, 9].map(
+						(i) => `workload: 2: .skip via options seed: ${i}`,
+					),
 				);
 			});
 
@@ -960,7 +976,9 @@ describe("DDS Fuzz Harness", () => {
 					.sort();
 				assert.deepEqual(
 					tests.map((t) => t.title),
-					[0, 1, 3, 5, 6, 8, 9].map((i) => `seed ${i}`),
+					[0, 1, 3, 5, 6, 8, 9].map(
+						(i) => `workload: 3: .skip via function and options seed: ${i}`,
+					),
 				);
 			});
 
@@ -985,7 +1003,10 @@ describe("DDS Fuzz Harness", () => {
 				assert.equal(runResults.stats.failures, 2);
 				assert.deepEqual(
 					runResults.failures.map((test) => test.fullTitle),
-					["failing configuration seed 0", "failing configuration seed 1"],
+					[
+						"failing configuration workload: failing configuration seed: 0",
+						"failing configuration workload: failing configuration seed: 1",
+					],
 				);
 				assert(
 					runResults.failures.every((test) =>

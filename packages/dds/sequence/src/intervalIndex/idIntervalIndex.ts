@@ -5,9 +5,8 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { ISerializableInterval } from "../intervals";
+import { reservedIntervalIdKey } from "../intervalCollection";
 import { IntervalIndex } from "./intervalIndex";
-
-const reservedIntervalIdKey = "intervalId";
 
 /**
  * @internal

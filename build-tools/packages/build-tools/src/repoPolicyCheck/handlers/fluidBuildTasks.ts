@@ -126,6 +126,28 @@ function findTscMultiScript(json: PackageJson, config: string) {
 }
 
 /**
+ * Find the script name for the fluid-tsc command in a package.json
+ *
+ * @param json - the package.json content to search script in
+ * @param project - the tsc project to check for; `undefined` checks for unspecified project
+ * @returns  first script name found to match the command
+ *
+ * @remarks
+ */
+function findFluidTscScript(json: PackageJson, project: string | undefined) {
+	for (const script in json.scripts) {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const scriptCommand = json.scripts[script]!;
+
+		if (scriptCommand.startsWith("fluid-tsc")) {
+			if (project ? scriptCommand.includes(project) : !scriptCommand.includes("--project")) {
+				return script;
+			}
+		}
+	}
+}
+
+/**
  * By default, all `tsc*` script task will depend on "build:genver", and "^tsc",
  * So all the files that it depends on are in place.
  *
@@ -192,10 +214,12 @@ function findTscScripts(json: PackageJson, project: string) {
 	}
 	if (project === "./tsconfig.json") {
 		addIfDefined(findScript(json, "tsc"));
+		addIfDefined(findFluidTscScript(json, undefined));
 		addIfDefined(findTscMultiScript(json, "tsc-multi.cjs.json"));
 		addIfDefined(findTscMultiScript(json, "tsc-multi.node16.cjs.json"));
 	}
 	addIfDefined(findScript(json, `tsc --project ${project}`));
+	addIfDefined(findFluidTscScript(json, project));
 	addIfDefined(findTscMultiScript(json, project));
 	return tscScripts.length > 0 ? tscScripts : undefined;
 }
@@ -461,7 +485,7 @@ function getTscCommandDependencies(
 		// simultaneously). So we add the referenced projects as dependencies.
 		for (const ref of configJson.references) {
 			let refConfigPath = path.join(configFilePath, ref.path);
-			const fileInfo = fs.statSync(configFilePath);
+			const fileInfo = fs.statSync(refConfigPath);
 			if (fileInfo.isDirectory()) {
 				refConfigPath = path.join(refConfigPath, "tsconfig.json");
 			}
@@ -628,7 +652,7 @@ function shouldProcessScriptForTsc(
 	return (
 		// This clause ensures we don't match commands that are prefixed with "tsc", like "tsc-multi". The exception
 		// is when the whole command is "tsc".
-		(command.startsWith("tsc ") || command === "tsc") &&
+		(command.startsWith("tsc ") || command === "tsc" || command.startsWith("fluid-tsc ")) &&
 		// tsc --watch tasks are long-running processes and don't need the standard task deps
 		!command.includes("--watch") &&
 		!tasksToIgnore.has(script)

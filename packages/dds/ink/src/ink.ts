@@ -280,7 +280,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
 		return stroke;
 	}
 
-	protected applyStashedOp() {
+	protected applyStashedOp(): void {
 		throw new Error("not implemented");
 	}
 }

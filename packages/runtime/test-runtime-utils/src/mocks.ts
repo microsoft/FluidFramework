@@ -4,16 +4,17 @@
  */
 
 import { EventEmitter } from "events";
-import { stringToBuffer } from "@fluid-internal/client-utils";
+import { TypedEventEmitter, stringToBuffer } from "@fluid-internal/client-utils";
 import { IIdCompressor, IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor";
 import { assert } from "@fluidframework/core-utils";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	FluidObject,
 	IFluidHandle,
 	IFluidHandleContext,
 	IRequest,
 	IResponse,
+	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { IAudience, ILoader, AttachState } from "@fluidframework/container-definitions";
 
@@ -42,6 +43,7 @@ import {
 	ISummaryTreeWithStats,
 	VisibilityState,
 } from "@fluidframework/runtime-definitions";
+import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas";
 import { MockHandle } from "./mockHandle";
@@ -159,10 +161,10 @@ interface IInternalMockRuntimeMessage {
  * at MockContainerRuntimeForReconnection.
  * @alpha
  */
-export class MockContainerRuntime {
+export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents> {
 	public clientId: string;
 	protected clientSequenceNumber: number = 0;
-	private readonly deltaManager: MockDeltaManager;
+	public readonly deltaManager: MockDeltaManager;
 	/**
 	 * @deprecated use the associated datastore to create the delta connection
 	 */
@@ -181,6 +183,7 @@ export class MockContainerRuntime {
 		mockContainerRuntimeOptions: IMockContainerRuntimeOptions = defaultMockContainerRuntimeOptions,
 		protected readonly overrides?: { minimumSequenceNumber?: number },
 	) {
+		super();
 		this.deltaManager = new MockDeltaManager();
 		const msn = overrides?.minimumSequenceNumber;
 		if (msn !== undefined) {
@@ -678,6 +681,12 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
 	}
 }
 
+const attachStatesToComparableNumbers = {
+	[AttachState.Detached]: 0,
+	[AttachState.Attaching]: 1,
+	[AttachState.Attached]: 2,
+} as const;
+
 /**
  * Mock implementation of IRuntime for testing that does nothing
  * @alpha
@@ -690,8 +699,9 @@ export class MockFluidDataStoreRuntime
 		clientId?: string;
 		entryPoint?: IFluidHandle<FluidObject>;
 		id?: string;
-		logger?: ITelemetryLoggerExt;
+		logger?: ITelemetryBaseLogger;
 		idCompressor?: IIdCompressor & IIdCompressorCore;
+		attachState?: AttachState;
 	}) {
 		super();
 		this.clientId = overrides?.clientId ?? uuid();
@@ -702,6 +712,7 @@ export class MockFluidDataStoreRuntime
 			namespace: "fluid:MockFluidDataStoreRuntime",
 		});
 		this.idCompressor = overrides?.idCompressor;
+		this._attachState = overrides?.attachState ?? AttachState.Attached;
 	}
 
 	public readonly entryPoint: IFluidHandle<FluidObject>;
@@ -728,7 +739,7 @@ export class MockFluidDataStoreRuntime
 	public readonly connected = true;
 	public deltaManager = new MockDeltaManager();
 	public readonly loader: ILoader = undefined as any;
-	public readonly logger: ITelemetryLoggerExt;
+	public readonly logger: ITelemetryBaseLogger;
 	public quorum = new MockQuorumClients();
 	public containerRuntime?: MockContainerRuntime;
 	public idCompressor?: IIdCompressor & IIdCompressorCore;
@@ -751,14 +762,19 @@ export class MockFluidDataStoreRuntime
 		return `/${this.id}`;
 	}
 
-	private _local = false;
-
+	/**
+	 * @deprecated Use `attachState` instead
+	 *
+	 * @privateRemarks Also remove the setter when this is removed. setters don't get their own doc tags.
+	 */
 	public get local(): boolean {
-		return this._local;
+		return !this.isAttached;
 	}
-
 	public set local(local: boolean) {
-		this._local = local;
+		// this does not validate attach state orders, or fire events to maintain
+		// the existing behavior. due to this, this method is deprecated and will
+		// be removed
+		this._attachState = local ? AttachState.Detached : AttachState.Attached;
 	}
 
 	private _disposed = false;
@@ -779,15 +795,16 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public get isAttached(): boolean {
-		return !this.local;
+		return this.attachState !== AttachState.Detached;
 	}
 
+	private _attachState: AttachState;
 	public get attachState(): AttachState {
-		return this.local ? AttachState.Detached : AttachState.Attached;
+		return this._attachState;
 	}
 
 	public get visibilityState(): VisibilityState {
-		return this.local ? VisibilityState.NotVisible : VisibilityState.GloballyVisible;
+		return this.isAttached ? VisibilityState.GloballyVisible : VisibilityState.NotVisible;
 	}
 
 	public bindChannel(channel: IChannel): void {
@@ -930,7 +947,30 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
-		return;
+		if (attachState === this._attachState) {
+			return;
+		}
+		const proposedState = attachStatesToComparableNumbers[attachState];
+		const startingState = attachStatesToComparableNumbers[this._attachState];
+		if (proposedState < startingState) {
+			throw new Error(`cannot transition back to ${attachState} from ${this.attachState}`);
+		}
+
+		if (
+			startingState < attachStatesToComparableNumbers[AttachState.Attaching] &&
+			proposedState >= attachStatesToComparableNumbers[AttachState.Attaching]
+		) {
+			this._attachState = AttachState.Attaching;
+			this.emit("attaching");
+		}
+
+		if (
+			startingState < attachStatesToComparableNumbers[AttachState.Attached] &&
+			proposedState >= attachStatesToComparableNumbers[AttachState.Attached]
+		) {
+			this._attachState = AttachState.Attached;
+			this.emit("attached");
+		}
 	}
 
 	public async waitAttached(): Promise<void> {

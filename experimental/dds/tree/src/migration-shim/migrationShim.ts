@@ -199,12 +199,12 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 			this.runtime.attachState === AttachState.Detached
 				? new NoDeltasChannelServices(services)
 				: this.generateShimServicesOnce(services);
-		this._legacyTree = (await this.legacyTreeFactory.load(
+		this._legacyTree = await this.legacyTreeFactory.load(
 			this.runtime,
 			this.id,
 			shimServices,
 			this.legacyTreeFactory.attributes
-		)) as LegacySharedTree;
+		);
 	}
 	public create(): void {
 		this._legacyTree = this.legacyTreeFactory.create(this.runtime, this.id);

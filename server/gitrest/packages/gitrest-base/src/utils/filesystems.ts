@@ -31,6 +31,8 @@ export class MemFsManagerFactory implements IFileSystemManagerFactory {
 export class RedisFsManagerFactory implements IFileSystemManagerFactory {
 	private readonly redisParams: RedisParams;
 	private readonly redisFsConfig: RedisFsConfig;
+	private readonly enableClustering: boolean;
+
 	constructor(
 		config: Provider,
 		private readonly redisClientConnectionManager: IRedisClientConnectionManager,
@@ -50,6 +52,8 @@ export class RedisFsManagerFactory implements IFileSystemManagerFactory {
 			enableRedisMetrics: this.redisFsConfig.enableRedisFsMetrics,
 			redisApiMetricsSamplingPeriod: this.redisFsConfig.redisApiMetricsSamplingPeriod,
 		};
+
+		this.enableClustering = redisConfig.enableClustering;
 	}
 
 	public create(fsManagerParams?: IFileSystemManagerParams): IFileSystemManager {
@@ -58,6 +62,7 @@ export class RedisFsManagerFactory implements IFileSystemManagerFactory {
 			this.redisFsConfig,
 			this.redisClientConnectionManager,
 			fsManagerParams,
+			this.enableClustering,
 		);
 	}
 }
