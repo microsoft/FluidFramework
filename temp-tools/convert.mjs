@@ -227,6 +227,16 @@ compilerOptions.outDir = "./lib";
 delete compilerOptions.module;
 delete compilerOptions.moduleResolution;
 
+// Move include/exclude to the end.
+// {
+// 	const include = tsconfig.include;
+// 	const exclude = tsconfig.exclude;
+// 	delete tsconfig.include;
+// 	delete tsconfig.exclude;
+// 	tsconfig.include = include;
+// 	tsconfig.exclude = exclude;
+// }
+
 fs.writeFileSync(tsconfigPath, JSON.stringify(tsconfig, null, 4));
 
 // Create a tsconfig.cjs.json
