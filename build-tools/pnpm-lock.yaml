@@ -236,6 +236,7 @@ importers:
       async: ^3.2.4
       chalk: ^2.4.2
       concurrently: ^8.2.1
+      copyfiles: ^2.4.1
       cosmiconfig: ^8.2.0
       danger: ^11.3.0
       date-fns: ^2.30.0
@@ -304,6 +305,7 @@ importers:
       '@types/semver': 7.5.0
       '@types/shelljs': 0.8.12
       concurrently: 8.2.1
+      copyfiles: 2.4.1
       eslint: 8.51.0
       mocha: 10.2.0
       prettier: 3.0.3
