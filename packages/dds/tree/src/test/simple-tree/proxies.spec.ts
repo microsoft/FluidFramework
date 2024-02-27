@@ -6,9 +6,12 @@
 import { strict as assert } from "assert";
 import { MockHandle } from "@fluidframework/test-runtime-utils";
 import { TreeArrayNode, NodeFromSchema, SchemaFactory } from "../../simple-tree/index.js";
+// TODO: test other things from "proxies" file.
+// eslint-disable-next-line import/no-internal-modules
+import { isTreeNode } from "../../simple-tree/proxies.js";
 import { getRoot, pretty } from "./utils.js";
 
-describe("SharedTree proxies", () => {
+describe("simple-tree proxies", () => {
 	const sb = new SchemaFactory("test");
 
 	const childSchema = sb.object("object", {
@@ -50,8 +53,20 @@ describe("SharedTree proxies", () => {
 		const mapProxyAgain = root.map;
 		assert.equal(mapProxyAgain, mapProxy);
 	});
+
+	it("isTreeNode", () => {
+		// Non object
+		assert(!isTreeNode(5));
+		// Non node object
+		assert(!isTreeNode({}));
+		// Unhydrated node:
+		assert(isTreeNode(new childSchema({ content: 5 })));
+		// Hydrated node:
+		assert(isTreeNode(getRoot(schema, initialTree)));
+	});
 });
 
+// TODO: nest these tests in the top level block to reduce total number of top level test suites
 describe("SharedTreeObject", () => {
 	const sb = new SchemaFactory("test");
 

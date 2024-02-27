@@ -48,19 +48,21 @@ import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree.js";
 import { RawTreeNode, createRawNode, extractRawNodeContent } from "./rawNode.js";
 
 /**
- * Internal type guard that detects if the given 'candidate' is a hydrated TreeNode.
+ * Detects if the given 'candidate' is a TreeNode.
  *
  * @remarks
+ * Supports both Hydrated and {@link Unhydrated} TreeNodes, both of which return true.
+ *
  * Because the common usage is to check if a value being inserted/set is a TreeNode,
- * this function permits calling with primitives as well as object.
+ * this function permits calling with primitives as well as objects.
  *
  * Primitives will always return false (as they are copies of data, not references to nodes).
  *
  * @param candidate - Value which may be a TreeNode
  * @returns true if the given 'candidate' is a hydrated TreeNode.
  */
-export function isTreeNode(candidate: unknown): candidate is TreeNode {
-	return tryGetFlexNode(candidate as TreeNode) !== undefined;
+export function isTreeNode(candidate: unknown): candidate is TreeNode | Unhydrated<TreeNode> {
+	return tryGetFlexNode(candidate) !== undefined;
 }
 
 /**
