@@ -35,7 +35,7 @@
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "mocha --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup",
+		"test:mocha": "mocha --recursive dist/test -r node_modules/@fluid-internal/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc"
 	},
@@ -71,9 +71,9 @@
 		"underscore": "^1.13.6"
 	},
 	"devDependencies": {
+		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.33.0",
-		"@fluidframework/mocha-test-setup": "workspace:~",
+		"@fluidframework/build-tools": "^0.34.0",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
 		"c8": "^8.0.1",

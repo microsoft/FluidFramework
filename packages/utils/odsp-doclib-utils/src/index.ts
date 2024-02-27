@@ -18,7 +18,7 @@ export {
 	pushScope,
 	refreshTokens,
 	TokenRequestCredentials,
-} from "./odspAuth";
+} from "./odspAuth.js";
 export {
 	getAadTenant,
 	getAadUrl,
@@ -26,7 +26,7 @@ export {
 	getSiteUrl,
 	isOdspHostname,
 	isPushChannelHostname,
-} from "./odspDocLibUtils";
+} from "./odspDocLibUtils.js";
 export {
 	getChildrenByDriveItem,
 	getDriveId,
@@ -34,7 +34,7 @@ export {
 	getDriveItemByServerRelativePath,
 	getDriveItemFromDriveAndItem,
 	IOdspDriveItem,
-} from "./odspDrives";
+} from "./odspDrives.js";
 export {
 	createOdspNetworkError,
 	enrichOdspError,
@@ -48,5 +48,5 @@ export {
 	parseFacetCodes,
 	throwOdspNetworkError,
 	tryParseErrorResponse,
-} from "./odspErrorUtils";
-export { getAsync, postAsync, putAsync, unauthPostAsync } from "./odspRequest";
+} from "./odspErrorUtils.js";
+export { getAsync, postAsync, putAsync, unauthPostAsync } from "./odspRequest.js";

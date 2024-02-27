@@ -18,7 +18,7 @@ import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { ISharedDirectory } from '@fluidframework/map';
-import { ITelemetryGenericEvent } from '@fluidframework/core-interfaces';
+import { ITelemetryGenericEventExt } from '@fluidframework/telemetry-utils';
 import { ITestContainerConfig } from '@fluidframework/test-utils';
 import { ITestObjectProvider } from '@fluidframework/test-utils';
 import { Loader } from '@fluidframework/container-loader';
@@ -212,7 +212,7 @@ export type DocumentTypeInfo = DocumentMapInfo | DocumentMultipleDataStoresInfo 
 export const ensurePackageInstalled: (baseVersion: string, version: number | string, force: boolean) => Promise<InstalledPackage | undefined>;
 
 // @internal (undocumented)
-export type ExpectedEvents = ITelemetryGenericEvent[] | Partial<Record<TestDriverTypes, ITelemetryGenericEvent[]>>;
+export type ExpectedEvents = ITelemetryGenericEventExt[] | Partial<Record<TestDriverTypes, ITelemetryGenericEventExt[]>>;
 
 // @internal (undocumented)
 export type ExpectsTest = (name: string, orderedExpectedEvents: ExpectedEvents, test: Mocha.AsyncFunc) => Mocha.Test;
