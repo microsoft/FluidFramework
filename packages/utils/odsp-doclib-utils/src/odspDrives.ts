@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IOdspAuthRequestInfo } from "./odspAuth";
-import { getSiteUrl } from "./odspDocLibUtils";
-import { throwOdspNetworkError } from "./odspErrorUtils";
-import { getAsync, putAsync } from "./odspRequest";
+import { IOdspAuthRequestInfo } from "./odspAuth.js";
+import { getSiteUrl } from "./odspDocLibUtils.js";
+import { throwOdspNetworkError } from "./odspErrorUtils.js";
+import { getAsync, putAsync } from "./odspRequest.js";
 
 interface IOdspUser {
 	displayName: string;

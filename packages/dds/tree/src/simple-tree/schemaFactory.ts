@@ -430,19 +430,18 @@ export class SchemaFactory<
 				input: ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 			) {
 				super(input);
+
+				const proxyTarget = customizable ? this : undefined;
+
 				if (isFlexTreeNode(input)) {
-					return createNodeProxy(
-						input,
-						customizable,
-						customizable ? this : undefined,
-					) as schema;
+					return createNodeProxy(input, customizable, proxyTarget) as schema;
 				} else {
 					const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
 					return createRawNodeProxy(
 						flexSchema as FlexMapNodeSchema,
 						input,
 						customizable,
-						customizable ? this : undefined,
+						proxyTarget,
 					) as unknown as schema;
 				}
 			}
@@ -587,19 +586,18 @@ export class SchemaFactory<
 			}
 			public constructor(input: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>) {
 				super(input);
+
+				const proxyTarget = customizable ? this : undefined;
+
 				if (isFlexTreeNode(input)) {
-					return createNodeProxy(
-						input,
-						customizable,
-						customizable ? this : undefined,
-					) as schema;
+					return createNodeProxy(input, customizable, proxyTarget) as schema;
 				} else {
 					const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
 					return createRawNodeProxy(
 						flexSchema as FlexFieldNodeSchema,
 						[...input],
 						customizable,
-						customizable ? this : undefined,
+						proxyTarget,
 					) as unknown as schema;
 				}
 			}

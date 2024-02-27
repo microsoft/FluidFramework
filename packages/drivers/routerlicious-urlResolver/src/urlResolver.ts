@@ -77,7 +77,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
 		const serverSuffix = isLocalHost ? `${server}:3003` : server.substring(4);
 
 		let fluidUrl =
-			"fluid://" +
+			"https://" +
 			`${
 				this.config
 					? parse(this.config.provider.get("worker:serverUrl")).host
