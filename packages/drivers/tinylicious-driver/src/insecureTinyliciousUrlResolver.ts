@@ -30,7 +30,7 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 	private readonly tinyliciousEndpoint: string;
 	public constructor(port = defaultTinyliciousPort, endpoint = defaultTinyliciousEndpoint) {
 		this.tinyliciousEndpoint = `${endpoint}:${port}`;
-		this.fluidProtocolEndpoint = this.tinyliciousEndpoint.replace(/(^\w+:|^)\/\//, "fluid://");
+		this.fluidProtocolEndpoint = this.tinyliciousEndpoint.replace(/(^\w+:|^)\/\//, "https://");
 	}
 
 	public async resolve(request: IRequest): Promise<IResolvedUrl> {
