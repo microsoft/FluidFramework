@@ -135,11 +135,44 @@ export type ScopedSchemaName<
 // > = `${TScope extends undefined ? "" : `${TScope}.`}${TName}`;
 
 /**
- * Builds schema libraries, and the schema within them.
+ * Creates various types of {@link TreeNodeSchema|schema} for {@link TreeNode}s.
  *
  * @typeParam TScope - Scope added as a prefix to the name of every schema produced by this factory.
  * @typeParam TName - Type of names used to identify each schema produced in this factory.
  * Typically this is just `string` but it is also possible to use `string` or `number` based enums if you prefer to identify your types that way.
+ *
+ * @remarks
+ * All schema produced by this factory get a {@link TreeNodeSchema.identifier|unique identifier} by {@link ScopedSchemaName|combining} the {@link scope} with the schema's `Name`.
+ * The `Name` part may be explicitly provided as a parameter, or inferred as a structural combination of the provided types.
+ * The APIs which use this second approach, structural naming, also deduplicate all equivalent calls.
+ * Therefor two calls to {@link (array:STRUCTURAL)|array(allowedTypes)} with the same allowedTypes will return the same {@link TreeNodeSchema} instance.
+ * On the other hand, two calls to {@link (array:NAMED)|array(name, allowedTypes)} will always return different {@link TreeNodeSchema} instances
+ * and it is an error to use both in the same tree (since their identifiers are not unique).
+ *
+ * Note:
+ * POJO stands for Plain Old JavaScript Object.
+ * This means an object that works like a `{}` style object literal.
+ * In this case it means the prototype is `Object.prototype` and acts like a set of key value pairs (data, not methods).
+ * The usage below generalizes this to include array and map like objects as well.
+ *
+ * For all non-structurally named there are two ways to use these APIs:
+ * |                     | Customizable | POJO Emulation |
+ * | ------------------- | ------------ |--------------- |
+ * | Declaration         | `class X extends schemaFactory.object("x", {}) {}` | `const X = schemaFactory.object("x", {}); type X = NodeFromSchema<typeof X>; `
+ * | Allows adding "local" (non-persisted) members | Yes. Members (including methods) can be added to class.        | No. Attempting to set non-field members will error. |
+ * | Prototype | The user defined class | `Object.prototype`, `Map.prototype` or `Array.prototype` depending on node kind. |
+ * | Structurally named Schema | Not Allowed | Required |
+ * | Explicitly named Schema | Supported | Supported for Objects: Explicitly named Map and Array support both declaration approaches, but will unconditionally operate in Customizable mode. |
+ * | node.js assert.deepEqual | Compares like class instances: equal to other nodes of the same type with the same content, including custom local fields. | Compares like plain objects: equal to plain JavaScript objects with the same fields, and other nodes with the same fields, even if the types are different. |
+ *
+ * Note that while "POJO Emulation" nodes act a lot like POJO objects, they are not true POJO objects:
+ *
+ * - Adding new arbitrary fields will error, as well some cases of invalid edits.
+ * - They are implemented using proxies.
+ * - They have state that is not exposed via enumerable own properties, including a {@link TreeNodeSchema}.
+ * This makes libraries like node.js `assert.deepEqual` fail to detect differences in type.
+ * - Assigning members has side effects (in this case editing the persisted/shared tree).
+ * - Not all operations implied by the prototype will work correctly: stick to the APIs explicitly declared in the TypeScript types.
  *
  * @sealed @public
  */
@@ -286,22 +319,22 @@ export class SchemaFactory<
 
 				// Differentiate between the following cases:
 				//
-				// Case 1: Direct construction (POJO compatible)
+				// Case 1: Direct construction (POJO emulation)
 				//
-				//     const Foo = _.object("Foo", {bar: _.number});
+				//     const Foo = schemaFactory.object("Foo", {bar: schemaFactory.number});
 				//
 				//     assert.deepEqual(new Foo({ bar: 42 }), { bar: 42 },
 				//		   "Prototype chain equivalent to POJO.");
 				//
-				// Case 2: Subclass construction (Domain Object)
+				// Case 2: Subclass construction (Customizable Object)
 				//
-				// 	   class Foo extends _.object("Foo", {bar: _.number}) {}
+				// 	   class Foo extends schemaFactory.object("Foo", {bar: schemaFactory.number}) {}
 				//
 				// 	   assert.notDeepEqual(new Foo({ bar: 42 }), { bar: 42 },
 				// 	       "Subclass prototype chain differs from POJO.");
 				//
-				// In Case 1 (POJO), the prototype chain match '{}' (proxyTarget = undefined)
-				// In Case 2 (Domain Object), the prototype chain include the user's subclass (proxyTarget = this)
+				// In Case 1 (POJO emulation), the prototype chain match '{}' (proxyTarget = undefined)
+				// In Case 2 (Customizable Object), the prototype chain include the user's subclass (proxyTarget = this)
 				const customizable = this.constructor !== schema;
 				const proxyTarget = customizable ? this : undefined;
 
@@ -511,6 +544,8 @@ export class SchemaFactory<
 	 * The return value is a class, but its the type is intentionally not specific enough to indicate it is a class.
 	 * This prevents callers of this from sub-classing it, which is unlikely to work well (due to the ease of accidentally giving two different calls o this different subclasses)
 	 * when working with structural typing.
+	 *
+	 * {@label STRUCTURAL}
 	 */
 	public array<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(
 		allowedTypes: T,
@@ -531,6 +566,8 @@ export class SchemaFactory<
 	 * ```typescript
 	 * class NamedArray extends factory.array("name", factory.number) {}
 	 * ```
+	 *
+	 * {@label NAMED}
 	 */
 	public array<const Name extends TName, const T extends ImplicitAllowedTypes>(
 		name: Name,
