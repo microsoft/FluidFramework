@@ -258,7 +258,6 @@ describe("TaskManager fuzz testing", () => {
 		// Uncomment this line to replay a specific seed:
 		// replay: 0,
 		// This can be useful for quickly minimizing failure json while attempting to root-cause a failure.
-		skipMinimization: true,
 	});
 });
 
