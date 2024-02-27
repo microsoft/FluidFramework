@@ -48,3 +48,8 @@ export {
 	validateBlobContent,
 	validateBlobEncoding,
 } from "./utils";
+export { IGitrestResourcesCustomizations } from "./customizations";
+export {
+	IRedisClientConnectionManager,
+	RedisClientConnectionManager,
+} from "./redisClientConnectionManager";

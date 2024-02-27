@@ -13,6 +13,7 @@ import * as core from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { setupMaster, setupWorker } from "@socket.io/sticky";
 import * as socketIo from "./socketIoServer";
+import { IRedisClientConnectionManager } from "./redisClientConnectionManager";
 
 /**
  * @internal
@@ -93,7 +94,8 @@ const createAndConfigureHttpServer = (
  */
 export class SocketIoWebServerFactory implements core.IWebServerFactory {
 	constructor(
-		private readonly redisConfig: any,
+		private readonly redisClientConnectionManagerForPub: IRedisClientConnectionManager,
+		private readonly redisClientConnectionManagerForSub: IRedisClientConnectionManager,
 		private readonly socketIoAdapterConfig?: any,
 		private readonly httpServerConfig?: IHttpServerConfig,
 		private readonly socketIoConfig?: any,
@@ -105,7 +107,8 @@ export class SocketIoWebServerFactory implements core.IWebServerFactory {
 		const httpServer = new HttpServer(server);
 
 		const socketIoServer = socketIo.create(
-			this.redisConfig,
+			this.redisClientConnectionManagerForPub,
+			this.redisClientConnectionManagerForSub,
 			server,
 			this.socketIoAdapterConfig,
 			this.socketIoConfig,
@@ -372,7 +375,8 @@ export class NodeClusterWebServerFactory implements core.IWebServerFactory {
  */
 export class SocketIoNodeClusterWebServerFactory extends NodeClusterWebServerFactory {
 	constructor(
-		private readonly redisConfig: any,
+		private readonly redisClientConnectionManagerForPub: IRedisClientConnectionManager,
+		private readonly redisClientConnectionManagerForSub: IRedisClientConnectionManager,
 		private readonly socketIoAdapterConfig?: any,
 		httpServerConfig?: IHttpServerConfig,
 		private readonly socketIoConfig?: any,
@@ -395,7 +399,8 @@ export class SocketIoNodeClusterWebServerFactory extends NodeClusterWebServerFac
 		// Create a worker thread HTTP server and attach socket.io server to it.
 		const httpServer = this.initializeWorkerThread(requestListener);
 		const socketIoServer = socketIo.create(
-			this.redisConfig,
+			this.redisClientConnectionManagerForPub,
+			this.redisClientConnectionManagerForSub,
 			httpServer,
 			this.socketIoAdapterConfig,
 			this.socketIoConfig,

@@ -44,7 +44,6 @@ export {
 	executeRedisMultiWithHmsetExpire,
 	executeRedisMultiWithHmsetExpireAndLpush,
 	getRedisClusterRetryStrategy,
-	getRedisClient,
 	IRedisParameters,
 } from "./redisUtils";
 export {

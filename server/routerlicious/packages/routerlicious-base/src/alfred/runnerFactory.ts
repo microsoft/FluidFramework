@@ -7,9 +7,9 @@ import * as core from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
-import * as Redis from "ioredis";
 import * as winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { RedisClientConnectionManager } from "@fluidframework/server-services-shared";
 import { Constants } from "../utils";
 import { AlfredRunner } from "./runner";
 import {
@@ -115,40 +115,17 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 
 		// Redis connection for client manager and single-use JWTs.
 		const redisConfig2 = config.get("redis2");
-		const redisOptions2: Redis.RedisOptions = {
-			host: redisConfig2.host,
-			port: redisConfig2.port,
-			password: redisConfig2.pass,
-			connectTimeout: redisConfig2.connectTimeout,
-			enableReadyCheck: true,
-			maxRetriesPerRequest: redisConfig2.maxRetriesPerRequest,
-			enableOfflineQueue: redisConfig2.enableOfflineQueue,
-			retryStrategy: utils.getRedisClusterRetryStrategy({
-				delayPerAttemptMs: 50,
-				maxDelayMs: 2000,
-			}),
-		};
-		if (redisConfig2.enableAutoPipelining) {
-			/**
-			 * When enabled, all commands issued during an event loop iteration are automatically wrapped in a
-			 * pipeline and sent to the server at the same time. This can improve performance by 30-50%.
-			 * More info: https://github.com/luin/ioredis#autopipelining
-			 */
-			redisOptions2.enableAutoPipelining = true;
-			redisOptions2.autoPipeliningIgnoredCommands = ["ping"];
-		}
-		if (redisConfig2.tls) {
-			redisOptions2.tls = {
-				servername: redisConfig2.host,
-			};
-		}
 
-		const redisClientForJwtCache: Redis.default | Redis.Cluster = utils.getRedisClient(
-			redisOptions2,
-			redisConfig2.slotsRefreshTimeout,
-			redisConfig2.enableClustering,
-		);
-		const redisJwtCache = new services.RedisCache(redisClientForJwtCache);
+		const redisClientConnectionManagerForJwtCache =
+			customizations?.redisClientConnectionManagerForJwtCache
+				? customizations.redisClientConnectionManagerForJwtCache
+				: new RedisClientConnectionManager(
+						undefined,
+						redisConfig2,
+						redisConfig2.enableClustering,
+						redisConfig2.slotsRefreshTimeout,
+				  );
+		const redisJwtCache = new services.RedisCache(redisClientConnectionManagerForJwtCache);
 
 		// Database connection for global db if enabled
 		let globalDbMongoManager;
@@ -209,48 +186,24 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 
 		// Redis connection for throttling.
 		const redisConfigForThrottling = config.get("redisForThrottling");
-		const redisOptionsForThrottling: Redis.RedisOptions = {
-			host: redisConfigForThrottling.host,
-			port: redisConfigForThrottling.port,
-			password: redisConfigForThrottling.pass,
-			connectTimeout: redisConfigForThrottling.connectTimeout,
-			enableReadyCheck: true,
-			maxRetriesPerRequest: redisConfigForThrottling.maxRetriesPerRequest,
-			enableOfflineQueue: redisConfigForThrottling.enableOfflineQueue,
-			retryStrategy: utils.getRedisClusterRetryStrategy({
-				delayPerAttemptMs: 50,
-				maxDelayMs: 2000,
-			}),
-		};
-		if (redisConfigForThrottling.enableAutoPipelining) {
-			/**
-			 * When enabled, all commands issued during an event loop iteration are automatically wrapped in a
-			 * pipeline and sent to the server at the same time. This can improve performance by 30-50%.
-			 * More info: https://github.com/luin/ioredis#autopipelining
-			 */
-			redisOptionsForThrottling.enableAutoPipelining = true;
-			redisOptionsForThrottling.autoPipeliningIgnoredCommands = ["ping"];
-		}
-		if (redisConfigForThrottling.tls) {
-			redisOptionsForThrottling.tls = {
-				servername: redisConfigForThrottling.host,
-			};
-		}
 		const redisParamsForThrottling = {
 			expireAfterSeconds: redisConfigForThrottling.keyExpireAfterSeconds as
 				| number
 				| undefined,
 		};
-
-		const redisClientForThrottling: Redis.default | Redis.Cluster = utils.getRedisClient(
-			redisOptionsForThrottling,
-			redisConfigForThrottling.slotsRefreshTimeout,
-			redisConfigForThrottling.enableClustering,
-		);
+		const redisClientConnectionManagerForThrottling =
+			customizations?.redisClientConnectionManagerForThrottling
+				? customizations.redisClientConnectionManagerForThrottling
+				: new RedisClientConnectionManager(
+						undefined,
+						redisConfigForThrottling,
+						redisConfigForThrottling.enableClustering,
+						redisConfigForThrottling.slotsRefreshTimeout,
+				  );
 
 		const redisThrottleAndUsageStorageManager =
 			new services.RedisThrottleAndUsageStorageManager(
-				redisClientForThrottling,
+				redisClientConnectionManagerForThrottling,
 				redisParamsForThrottling,
 			);
 

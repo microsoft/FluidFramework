@@ -5,8 +5,8 @@
 
 import { IRedisParameters } from "@fluidframework/server-services-utils";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import * as Redis from "ioredis";
 import * as winston from "winston";
+import { IRedisClientConnectionManager } from "../redisClientConnectionManager";
 /**
  * Redis based cache client for caching and expiring tenants and tokens.
  */
@@ -15,7 +15,7 @@ export class RedisTenantCache {
 	private readonly prefix: string = "tenant";
 
 	constructor(
-		private readonly client: Redis.default | Redis.Cluster,
+		private readonly redisClientConnectionManager: IRedisClientConnectionManager,
 		parameters?: IRedisParameters,
 	) {
 		if (parameters?.expireAfterSeconds) {
@@ -26,14 +26,15 @@ export class RedisTenantCache {
 			this.prefix = parameters.prefix;
 		}
 
-		client.on("error", (error) => {
-			winston.error("Redis Tenant Cache Error:", error);
-			Lumberjack.error("Redis Tenant Cache Error", undefined, error);
+		redisClientConnectionManager.getRedisClient().on("error", (error) => {
+			Lumberjack.error("[DHRUV DEBUG] Redis Tenant Cache Error", undefined, error);
 		});
 	}
 
 	public async exists(item: string): Promise<boolean> {
-		const result = await this.client.exists(this.getKey(item));
+		const result = await this.redisClientConnectionManager
+			.getRedisClient()
+			.exists(this.getKey(item));
 		return result >= 1;
 	}
 
@@ -42,19 +43,29 @@ export class RedisTenantCache {
 		value: string = "",
 		expireAfterSeconds: number = this.expireAfterSeconds,
 	): Promise<void> {
-		const result = await this.client.set(this.getKey(key), value, "EX", expireAfterSeconds);
+		const result = await this.redisClientConnectionManager
+			.getRedisClient()
+			.set(this.getKey(key), value, "EX", expireAfterSeconds);
 		if (result !== "OK") {
 			throw new Error(result);
 		}
 	}
 
 	public async delete(key: string): Promise<boolean> {
-		const result = await this.client.del(this.getKey(key));
-		return result === 1;
+		try {
+			const result = await this.redisClientConnectionManager
+				.getRedisClient()
+				.del(this.getKey(key));
+			return result === 1;
+		} catch (error) {
+			winston.error("Redis Tenant Cache delete Error:", error);
+			Lumberjack.error("Redis Tenant Cache delete Error", undefined, error);
+			return false;
+		}
 	}
 
 	public async get(key: string): Promise<string> {
-		return this.client.get(this.getKey(key));
+		return this.redisClientConnectionManager.getRedisClient().get(this.getKey(key));
 	}
 
 	/**
