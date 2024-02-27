@@ -134,6 +134,10 @@ export type ScopedSchemaName<
 > = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 // > = `${TScope extends undefined ? "" : `${TScope}.`}${TName}`;
 
+// TODO:
+// SchemaFactory.array references should link to the correct overloads, however the syntax for this does not seems to work currently for methods unless the they are not qualified with the class.
+// API-Extractor requires such links to be qualified with the class, so it can't work.
+// Since linking the overload set as a whole also doesn't work, these have been made non-links for now.
 /**
  * Creates various types of {@link TreeNodeSchema|schema} for {@link TreeNode}s.
  *
@@ -142,11 +146,11 @@ export type ScopedSchemaName<
  * Typically this is just `string` but it is also possible to use `string` or `number` based enums if you prefer to identify your types that way.
  *
  * @remarks
- * All schema produced by this factory get a {@link TreeNodeSchema.identifier|unique identifier} by {@link ScopedSchemaName|combining} the {@link scope} with the schema's `Name`.
+ * All schema produced by this factory get a {@link TreeNodeSchemaCore.identifier|unique identifier} by {@link ScopedSchemaName|combining} the {@link SchemaFactory.scope} with the schema's `Name`.
  * The `Name` part may be explicitly provided as a parameter, or inferred as a structural combination of the provided types.
  * The APIs which use this second approach, structural naming, also deduplicate all equivalent calls.
- * Therefor two calls to {@link (array:STRUCTURAL)|array(allowedTypes)} with the same allowedTypes will return the same {@link TreeNodeSchema} instance.
- * On the other hand, two calls to {@link (array:NAMED)|array(name, allowedTypes)} will always return different {@link TreeNodeSchema} instances
+ * Therefor two calls to `array(allowedTypes)` with the same allowedTypes will return the same {@link TreeNodeSchema} instance.
+ * On the other hand, two calls to `array(name, allowedTypes)` will always return different {@link TreeNodeSchema} instances
  * and it is an error to use both in the same tree (since their identifiers are not unique).
  *
  * Note:
