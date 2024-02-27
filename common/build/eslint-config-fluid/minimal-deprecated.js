@@ -11,6 +11,11 @@
  * "Strict" configuration.
  *
  * Production packages **should not** use this configuration.
+ *
+ * @deprecated This config is too permissive and should not be used. It will be removed in a future release.
+ * Use the "Recommended" or "Strict" configuration instead.
+ *
+ * @privateRemarks TODO: Once this config is ready for deletion, its rules can be moved into `recommended.js`.
  */
 module.exports = {
 	env: {

@@ -511,6 +511,10 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 			key: "1",
 			type: "write",
 			serializedValue: JSON.stringify("b"),
+			value: {
+				type: "Plain",
+				value: "b",
+			},
 			refSeq: detachedContainerRefSeqNumber,
 		};
 		const defPromise = new Deferred<void>();
@@ -533,19 +537,24 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 				crcId,
 				"Address should be consensus register collection",
 			);
+			const receivedOp = (
+				(
+					(message.contents as { contents: unknown }).contents as {
+						content: unknown;
+					}
+				).content as { contents?: unknown }
+			).contents as any;
+			assert.strictEqual(op.key, receivedOp.key, "Op key should be same");
+			assert.strictEqual(op.type, receivedOp.type, "Op type should be same");
 			assert.strictEqual(
-				JSON.stringify(
-					(
-						(
-							(message.contents as { contents: unknown }).contents as {
-								content: unknown;
-							}
-						).content as { contents?: unknown }
-					).contents,
-				),
-				JSON.stringify(op),
-				"Op should be same",
+				op.serializedValue,
+				receivedOp.serializedValue,
+				"Op serializedValue should be same",
 			);
+			assert.strictEqual(op.refSeq, receivedOp.refSeq, "Op refSeq should be same");
+			if (receivedOp.value) {
+				assert.deepEqual(op.value, receivedOp.value, "Op value should be same");
+			}
 			defPromise.resolve();
 			return 0;
 		});
@@ -672,7 +681,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 	});
 
 	it("Fire ops during container attach for consensus ordered collection", async () => {
-		const op = { opName: "add", value: JSON.stringify("s") };
+		const op = { opName: "add", value: JSON.stringify("s"), deserializedValue: "s" };
 		const defPromise = new Deferred<void>();
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
@@ -692,19 +701,22 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 				cocId,
 				"Address should be consensus queue",
 			);
-			assert.strictEqual(
-				JSON.stringify(
-					(
-						(
-							(message.contents as { contents: unknown }).contents as {
-								content: unknown;
-							}
-						).content as { contents?: unknown }
-					).contents,
-				),
-				JSON.stringify(op),
-				"Op should be same",
-			);
+			const receivedOp = (
+				(
+					(message.contents as { contents: unknown }).contents as {
+						content: unknown;
+					}
+				).content as { contents?: unknown }
+			).contents as any;
+			assert.strictEqual(op.opName, receivedOp.opName, "Op name should be same");
+			assert.strictEqual(op.value, receivedOp.value, "Op value should be same");
+			if (receivedOp.deserializedValue) {
+				assert.strictEqual(
+					op.deserializedValue,
+					receivedOp.deserializedValue,
+					"Op deserializedValue should be same",
+				);
+			}
 			defPromise.resolve();
 			return 0;
 		});
