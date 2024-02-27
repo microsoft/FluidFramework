@@ -4,7 +4,10 @@
  */
 
 module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"],
+	extends: [
+		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
+		"prettier",
+	],
 	rules: {
 		"@typescript-eslint/consistent-type-assertions": "off",
 		"@typescript-eslint/no-unsafe-return": "off",
@@ -13,5 +16,8 @@ module.exports = {
 		"import/no-nodejs-modules": "off",
 		"no-case-declarations": "off",
 		"promise/catch-or-return": ["error", { allowFinally: true }],
+
+		// TODO: enable strict null checks in tsconfig and remove this override
+		"@typescript-eslint/prefer-nullish-coalescing": "off",
 	},
 };
