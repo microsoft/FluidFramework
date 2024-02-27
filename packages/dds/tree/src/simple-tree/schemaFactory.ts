@@ -169,6 +169,8 @@ export type ScopedSchemaName<
  * | Explicitly named Objects | Supported | Supported |
  * | Explicitly named Maps and Arrays | Supported: Both declaration approaches can be used | Not Supported |
  * | node.js assert.deepEqual | Compares like class instances: equal to other nodes of the same type with the same content, including custom local fields. | Compares like plain objects: equal to plain JavaScript objects with the same fields, and other nodes with the same fields, even if the types are different. |
+ * | Intellisense | Shows and links to user defined class by name: `X` | Shows internal type generation logic: `object & TreeNode & ObjectFromSchemaRecord<{}> & WithType<"test.x">` |
+ * | Recursion | Supported with special declaration patterns. | Unsupported: Generated d.ts files replace recursive references with `any`, breaking use of recursive schema across compilation boundaries |
  *
  * Note that while "POJO Emulation" nodes act a lot like POJO objects, they are not true POJO objects:
  *
@@ -178,6 +180,12 @@ export type ScopedSchemaName<
  * This makes libraries like node.js `assert.deepEqual` fail to detect differences in type.
  * - Assigning members has side effects (in this case editing the persisted/shared tree).
  * - Not all operations implied by the prototype will work correctly: stick to the APIs explicitly declared in the TypeScript types.
+ *
+ * @privateRemarks
+ * Its perfectly possible to make `POJO Emulation` mode (or even just hiding the prototype) selectable even when using the custom user class declaration syntax.
+ * When doing this, its still possible to make `instanceof` perform correctly.
+ * Allowing of (or banning) custom/out of schema properties on the class is also possible in both modes: it could be orthogonal.
+ * Also for consistency, if keeping the current approach to detecting `POJO Emulation` mode it might make sense to make explicitly named Maps and Arrays do the detection the same as how object does it.
  *
  * @sealed @public
  */

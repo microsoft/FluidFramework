@@ -310,13 +310,41 @@ testObjectLike(tcs);
 const factory = new SchemaFactory("test");
 
 describe("Object-like", () => {
-	describe("setting an invalid field", () => {
-		it("throws TypeError in strict mode", () => {
+	describe("setting an local field", () => {
+		it("throws TypeError in POJO emulation mode", () => {
 			const root = getRoot(schemaFactory.object("no fields", {}), () => ({}));
 			assert.throws(() => {
 				// The actual error "'TypeError: 'set' on proxy: trap returned falsish for property 'foo'"
 				(root as unknown as any).foo = 3;
 			}, "attempting to set an invalid field must throw.");
+		});
+
+		it("works in Customizable mode", () => {
+			class Custom extends schemaFactory.object("no fields", {}) {
+				public foo?: number;
+			}
+			const root = getRoot(Custom, () => ({}));
+			root.foo = 3;
+		});
+	});
+
+	describe("deep equality and types", () => {
+		it("types are ignored in POJO emulation mode", () => {
+			const a = getRoot(schemaFactory.object("a", {}), () => ({}));
+			const b = getRoot(schemaFactory.object("b", {}), () => ({}));
+			assert.deepEqual(a, {});
+			assert.deepEqual(a, b);
+		});
+
+		it("types are compared in Customizable mode", () => {
+			class A extends schemaFactory.object("a", {}) {}
+			class B extends schemaFactory.object("b", {}) {}
+			const a = getRoot(A, () => ({}));
+			const b = getRoot(B, () => ({}));
+			assert.notDeepEqual(a, {});
+			assert.notDeepEqual(a, b);
+			const a2 = getRoot(A, () => ({}));
+			assert.deepEqual(a, a2);
 		});
 	});
 
