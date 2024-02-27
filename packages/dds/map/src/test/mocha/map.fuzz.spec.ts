@@ -129,6 +129,7 @@ describe("Map fuzz tests", () => {
 			clientJoinOptions: {
 				maxNumberOfClients: 6,
 				clientAddProbability: 0.1,
+				stashableClientProbability: 0.2,
 			},
 			reconnectProbability: 0.1,
 			// Uncomment to replay a particular seed.
@@ -147,6 +148,7 @@ describe("Map fuzz tests", () => {
 			clientJoinOptions: {
 				maxNumberOfClients: 6,
 				clientAddProbability: 0.1,
+				stashableClientProbability: 0.2,
 			},
 			rebaseProbability: 0.2,
 			containerRuntimeOptions: {

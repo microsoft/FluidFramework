@@ -10,6 +10,4 @@
  * @packageDocumentation
  */
 
-export { LazyLoadedDataObject } from "./lazyLoadedDataObject";
-export { LazyLoadedDataObjectFactory } from "./lazyLoadedDataObjectFactory";
 export { RuntimeFactory, type RuntimeFactoryProps } from "./runtimeFactory";
