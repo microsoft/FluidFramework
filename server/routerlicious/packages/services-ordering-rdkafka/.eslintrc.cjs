@@ -9,10 +9,13 @@ module.exports = {
 		"prettier",
 	],
 	rules: {
-		"@typescript-eslint/strict-boolean-expressions": "off",
 		"promise/catch-or-return": ["error", { allowFinally: true }],
 
-		// TODO: enable strict null checks in tsconfig and remove this override
+		// TODO: enable strict null checks in tsconfig and remove these overrides
 		"@typescript-eslint/prefer-nullish-coalescing": "off",
+		"@typescript-eslint/strict-boolean-expressions": "off",
+
+		// TODO: remove usages of deprecated APIs and remove this override
+		"import/no-deprecated": "warn",,
 	},
 };
