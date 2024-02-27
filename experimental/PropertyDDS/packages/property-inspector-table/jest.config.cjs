@@ -37,6 +37,8 @@ module.exports = {
 	// A map from regular expressions to module names that allow to stub out resources with a single module
 	moduleNameMapper: {
 		"\\.(css|less)$": "identity-obj-proxy",
+		// Force module sinon to resolve with the CJS entry point, because Jest does not support package.json.exports. Somewhat similar issue: https://github.com/uuidjs/uuid/issues/451
+		"^sinon$": require.resolve("sinon"),
 		// '\\.svg$': '<rootDir>/__mocks__/svgrMock.js'
 	},
 
