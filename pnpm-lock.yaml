@@ -7607,7 +7607,6 @@ importers:
       socket.io-client: ^4.7.3
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
-      url: ^0.11.0
       uuid: ^9.0.0
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -7626,7 +7625,6 @@ importers:
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       events: 3.3.0
       jsrsasign: 11.0.0
-      url: 0.11.3
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3

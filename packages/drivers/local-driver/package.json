@@ -134,7 +134,6 @@
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"events": "^3.1.0",
 		"jsrsasign": "^11.0.0",
-		"url": "^0.11.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
