@@ -430,7 +430,7 @@ async function fetchLatestSnapshotCore(
 							`Error parsing snapshot response: ${errorMessage}`,
 							OdspErrorTypes.genericError,
 							propsToLog,
-						) as unknown as LoggingError, // Type 'NonRetryableError<"genericError">' is not assignable to type 'LoggingError'. @fluidframework/odsp-driver:   Types have separate declarations of a private property 'omitPropsFromLogging'.
+						) as unknown as LoggingError,
 				);
 				throw enhancedError;
 			}

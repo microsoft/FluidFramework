@@ -60,7 +60,7 @@
 		"tsc": "tsc"
 	},
 	"dependencies": {
-		"tinylicious": "^3.1.0-238497"
+		"tinylicious": "^3.1.0-240326"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",

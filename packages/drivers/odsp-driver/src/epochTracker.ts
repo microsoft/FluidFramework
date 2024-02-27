@@ -462,7 +462,7 @@ export class EpochTracker implements IPersistedFileCache {
 				return new ThrottlingError(`Coherency 409: ${message}`, 1 /* retryAfterSeconds */, {
 					[Odsp409Error]: true,
 					driverVersion,
-				}) as unknown as LoggingError; // Argument of type '(message: string) => ThrottlingError' is not assignable to parameter of type '(message: string) => LoggingError'.
+				}) as unknown as LoggingError;
 			});
 			throw newError;
 		}
