@@ -31,7 +31,7 @@ describe("Local Driver Resolver", () => {
 
 		it("should successfully resolve a createNewRequest", async () => {
 			const resolvedUrl = await resolver.resolve(request);
-			const expectedUrl = `fluid-test://localhost:3000/tenantId/${documentId}`;
+			const expectedUrl = `https://localhost:3000/tenantId/${documentId}`;
 			assert.equal(resolvedUrl.url, expectedUrl, "The resolved url should match");
 		});
 
@@ -52,7 +52,7 @@ describe("Local Driver Resolver", () => {
 		it("should successfully resolve request for a container url", async () => {
 			const url = `http://localhost/${documentId}`;
 			const resolvedUrl = await resolver.resolve({ url });
-			const expectedUrl = `fluid-test://localhost:3000/tenantId/${documentId}`;
+			const expectedUrl = `https://localhost:3000/tenantId/${documentId}`;
 			assert.equal(resolvedUrl.url, expectedUrl, "The resolved container url should match");
 		});
 	});
