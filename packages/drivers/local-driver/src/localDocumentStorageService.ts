@@ -114,7 +114,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 
 		const metadataString = IsoBuffer.from(blobContents.get(".metadata")).toString("utf-8");
 		const metadata = JSON.parse(metadataString);
-		const sequenceNumber: number = metadata.message.sequenceNumber;
+		const sequenceNumber: number = metadata.message?.sequenceNumber ?? 0;
 		return {
 			snapshotTree,
 			blobContents,
