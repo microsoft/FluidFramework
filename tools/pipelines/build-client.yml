@@ -90,6 +90,7 @@ pr:
     - next
     - lts
     - release/*
+    - test/bundle-size-regression
   paths:
     include:
     - .prettierignore
