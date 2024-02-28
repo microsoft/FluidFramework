@@ -10469,6 +10469,7 @@ importers:
       c8: ^8.0.1
       cross-env: ^7.0.3
       eslint: ~8.55.0
+      lodash: ^4.17.21
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
@@ -10529,6 +10530,7 @@ importers:
       '@fluidframework/undo-redo': link:../../framework/undo-redo
       '@types/sinon': 17.0.3
       cross-env: 7.0.3
+      lodash: 4.17.21
       mocha: 10.2.0
       semver: 7.5.4
       sinon: 17.0.1
