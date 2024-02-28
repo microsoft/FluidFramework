@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
-import { OdspUrlResolver } from "../urlResolver";
+import { OdspUrlResolver } from "../urlResolver.js";
 
 describe("Spo Url Resolver", () => {
 	it("Should resolve the spo urls correctly", async () => {
