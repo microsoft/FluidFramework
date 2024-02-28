@@ -234,7 +234,7 @@ const redirectTableBlobName = ".redirectTable";
  */
 export async function getBlobContentsFromTree(
 	snapshot: ISnapshotTree,
-	storage: IDocumentStorageService,
+	storage: Pick<IDocumentStorageService, "readBlob">,
 ): Promise<ISerializableBlobContents> {
 	const blobs = {};
 	await getBlobContentsFromTreeCore(snapshot, blobs, storage);
@@ -244,7 +244,7 @@ export async function getBlobContentsFromTree(
 async function getBlobContentsFromTreeCore(
 	tree: ISnapshotTree,
 	blobs: ISerializableBlobContents,
-	storage: IDocumentStorageService,
+	storage: Pick<IDocumentStorageService, "readBlob">,
 	root = true,
 ) {
 	const treePs: Promise<any>[] = [];
@@ -267,7 +267,7 @@ async function getBlobContentsFromTreeCore(
 async function getBlobManagerTreeFromTree(
 	tree: ISnapshotTree,
 	blobs: ISerializableBlobContents,
-	storage: IDocumentStorageService,
+	storage: Pick<IDocumentStorageService, "readBlob">,
 ) {
 	const id = tree.blobs[redirectTableBlobName];
 	const blob = await storage.readBlob(id);
