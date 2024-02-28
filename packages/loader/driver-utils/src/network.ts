@@ -11,7 +11,7 @@ import {
 	IResolvedUrl,
 	DriverErrorTypes,
 } from "@fluidframework/driver-definitions";
-import { ITelemetryProperties } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils";
 
 /**
@@ -44,7 +44,7 @@ export function isOnline(): OnlineStatus {
  * Telemetry props with driver-specific required properties
  * @internal
  */
-export type DriverErrorTelemetryProps = ITelemetryProperties & {
+export type DriverErrorTelemetryProps = ITelemetryBaseProperties & {
 	driverVersion: string | undefined;
 };
 
