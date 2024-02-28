@@ -4,6 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { UsageError } from "@fluidframework/telemetry-utils";
 import { RestrictiveReadonlyRecord, getOrCreate, isReadonlyArray } from "../util/index.js";
 import {
 	FlexTreeNode,
@@ -248,17 +249,18 @@ export class SchemaFactory<
 			public constructor(input: FlexTreeNode | unknown) {
 				super();
 				// Currently this just does validation. All other logic is in the subclass.
-				if (isFlexTreeNode(input)) {
-					assert(
-						getClassSchema(input.schema) === this.constructor,
-						0x83b /* building node with wrong schema */,
+				if (isFlexTreeNode(input) && getClassSchema(input.schema) !== this.constructor) {
+					throw new UsageError(
+						`The provided input is incompatible with "${schema.identifier}" schema.`,
 					);
 				}
-				// TODO: make this a better user facing error, and explain how to copy explicitly.
-				assert(
-					!(input instanceof TreeNode),
-					0x83c /* Existing nodes cannot be used as new content to insert. They must either be moved or explicitly copied */,
-				);
+
+				if (input instanceof TreeNode) {
+					// TODO: update this once we have better support for deep-copying and move operations.
+					throw new UsageError(
+						"Existing nodes cannot be used as new content to insert into the tree. Create a new node using your schema factory instead.",
+					);
+				}
 			}
 
 			public get [type](): ScopedSchemaName<TScope, Name> {
