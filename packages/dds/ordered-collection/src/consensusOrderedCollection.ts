@@ -21,7 +21,7 @@ import {
 	IConsensusOrderedCollection,
 	IOrderedCollection,
 	IConsensusOrderedCollectionEvents,
-} from "./interfaces";
+} from "./interfaces.js";
 
 const snapshotFileNameData = "header";
 const snapshotFileNameTracking = "jobTracking";
