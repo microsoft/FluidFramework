@@ -81,7 +81,7 @@ const resolvedUrl: IFluidResolvedUrl = {
     },
     tokens: { jwt: "token" },
     type: "fluid",
-    url: "fluid://www.ContosoFluidService.com/ContosoTenant/documentIdentifier",
+    url: "https://www.ContosoFluidService.com/ContosoTenant/documentIdentifier",
 }
 ```
 
