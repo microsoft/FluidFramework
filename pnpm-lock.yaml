@@ -3264,10 +3264,8 @@ importers:
       webpack-merge: ^5.8.0
     dependencies:
       '@fluidframework/azure-client': link:../../../../packages/service-clients/azure-client
-      '@fluidframework/devtools': link:../../../../packages/tools/devtools/devtools
       '@fluidframework/routerlicious-driver': link:../../../../packages/drivers/routerlicious-driver
       '@fluidframework/telemetry-utils': link:../../../../packages/utils/telemetry-utils
-      '@fluidframework/test-runtime-utils': link:../../../../packages/runtime/test-runtime-utils
       assert: 2.1.0
       axios: 1.6.2
       events: 3.3.0
@@ -3278,10 +3276,12 @@ importers:
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/container-definitions': link:../../../../packages/common/container-definitions
       '@fluidframework/container-loader': link:../../../../packages/loader/container-loader
+      '@fluidframework/devtools': link:../../../../packages/tools/devtools/devtools
       '@fluidframework/eslint-config-fluid': 3.5.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/fluid-static': link:../../../../packages/framework/fluid-static
       '@fluidframework/local-driver': link:../../../../packages/drivers/local-driver
       '@fluidframework/server-local-server': 3.1.0-240326
+      '@fluidframework/test-runtime-utils': link:../../../../packages/runtime/test-runtime-utils
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': link:../../../../packages/test/types_jest-environment-puppeteer
