@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ILoggingError, ITelemetryBaseProperties, Tagged } from "@fluidframework/core-interfaces";
+import type {
+	ILoggingError,
+	ITelemetryBaseProperties,
+	Tagged,
+} from "@fluidframework/core-interfaces";
 import { v4 as uuid } from "uuid";
 import {
 	hasErrorInstanceId,
@@ -11,10 +15,10 @@ import {
 	isFluidError,
 	isValidLegacyError,
 } from "./fluidErrorBase.js";
-import {
+import type {
 	ITelemetryLoggerExt,
 	TelemetryEventPropertyTypeExt,
-	type ITelemetryPropertiesExt,
+	ITelemetryPropertiesExt,
 } from "./telemetryTypes.js";
 import { convertToBasePropertyType } from "./logger.js";
 

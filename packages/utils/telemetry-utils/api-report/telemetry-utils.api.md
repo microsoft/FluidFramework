@@ -14,7 +14,7 @@ import type { IDisposable } from '@fluidframework/core-interfaces';
 import { IErrorBase } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IGenericError } from '@fluidframework/core-interfaces';
-import { ILoggingError } from '@fluidframework/core-interfaces';
+import type { ILoggingError } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
