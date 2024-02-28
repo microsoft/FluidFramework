@@ -148,6 +148,9 @@ export class RedisFs implements IFileSystemPromises {
 			},
 			true,
 		);
+		if (data === undefined) {
+			throw new RedisFsError(SystemErrors.ENOENT, filepathString);
+		}
 		return data;
 	}
 
@@ -377,7 +380,7 @@ export class RedisFs implements IFileSystemPromises {
 					return this.redisFsClient.peek(filepathString);
 				}
 				const data = await this.redisFsClient.get<string | Buffer>(filepathString);
-				if (data === null) {
+				if (data === null || data === undefined) {
 					return -1;
 				}
 				return data.length;
