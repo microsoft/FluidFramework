@@ -10,4 +10,4 @@
  * @packageDocumentation
  */
 
-export { RuntimeFactory, type RuntimeFactoryProps } from "./runtimeFactory";
+export { RuntimeFactory, type RuntimeFactoryProps } from "./runtimeFactory.js";
