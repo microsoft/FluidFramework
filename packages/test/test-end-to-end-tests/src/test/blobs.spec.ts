@@ -15,6 +15,7 @@ import {
 	IConfigProviderBase,
 	IErrorBase,
 	IFluidHandle,
+	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { ReferenceType } from "@fluidframework/merge-tree";
 import type { SharedString } from "@fluidframework/sequence";
@@ -32,11 +33,15 @@ import {
 	itExpects,
 } from "@fluid-private/test-version-utils";
 import { v4 as uuid } from "uuid";
+import { AttachState } from "@fluidframework/container-definitions";
 import {
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
 	MockDetachedBlobStorage,
 } from "./mockDetachedBlobStorage.js";
+import type { IResolvedUrl } from "@fluidframework/driver-definitions";
+import type { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { log } from "console";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -419,6 +424,77 @@ describeCompat("blobs", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 
 		const snapshot = serializeContainer.serialize();
+		const rehydratedContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
+		const rehydratedDataStore = (await rehydratedContainer.getEntryPoint()) as ITestDataObject;
+		assert.strictEqual(
+			bufferToString(await rehydratedDataStore._root.get("my blob").get(), "utf-8"),
+			text,
+		);
+	});
+
+	it("serialize while attaching and rehydrate container with blobs", async function () {
+		// build a fault injected driver to fail attach on the  summary upload
+		// after create that happens in the blob flow
+		const documentServiceFactory = provider.documentServiceFactory;
+		const createContainer = documentServiceFactory.createContainer.bind(documentServiceFactory);
+		documentServiceFactory.createContainer = async (
+			createNewSummary: ISummaryTree | undefined,
+			createNewResolvedUrl: IResolvedUrl,
+			logger?: ITelemetryBaseLogger,
+			clientIsSummarizer?: boolean,
+		) => {
+			const documentService = await createContainer(
+				createNewSummary,
+				createNewResolvedUrl,
+				logger,
+				clientIsSummarizer,
+			);
+			const connectToStorage = documentService.connectToStorage.bind(documentService);
+			documentService.connectToStorage = async () => {
+				const storage = await connectToStorage();
+				storage.uploadSummaryWithContext = () => {
+					assert.fail("fail on real summary upload");
+				};
+				return storage;
+			};
+			return documentService;
+		};
+
+		const loader = provider.makeTestLoader({
+			...testContainerConfig,
+			loaderProps: {
+				detachedBlobStorage: new MockDetachedBlobStorage(),
+				documentServiceFactory,
+				configProvider: {
+					getRawConfig: (name) =>
+						name === "Fluid.Container.RetryOnAttachFailure" ? true : undefined,
+				},
+			},
+		});
+		const serializeContainer = await loader.createDetachedContainer(
+			provider.defaultCodeDetails,
+		);
+
+		const text = "this is some example text";
+		const serializeDataStore = (await serializeContainer.getEntryPoint()) as ITestDataObject;
+		const blobHandle = await serializeDataStore._runtime.uploadBlob(
+			stringToBuffer(text, "utf-8"),
+		);
+		assert.strictEqual(bufferToString(await blobHandle.get(), "utf-8"), text);
+
+		serializeDataStore._root.set("my blob", blobHandle);
+		assert.strictEqual(
+			bufferToString(await serializeDataStore._root.get("my blob").get(), "utf-8"),
+			text,
+		);
+
+		await serializeContainer.attach(provider.driver.createCreateNewRequest()).then(
+			() => assert.fail("should fail"),
+			() => {},
+		);
+		assert.strictEqual(serializeContainer.attachState, AttachState.Attaching);
+		const snapshot = serializeContainer.serialize();
+
 		const rehydratedContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
 		const rehydratedDataStore = (await rehydratedContainer.getEntryPoint()) as ITestDataObject;
 		assert.strictEqual(
