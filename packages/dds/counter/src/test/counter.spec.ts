@@ -13,6 +13,7 @@ import {
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
+import { AttachState } from "@fluidframework/container-definitions";
 import { type ISharedCounter, SharedCounter } from "../index.js";
 import { CounterFactory } from "../counterFactory.js";
 
@@ -127,7 +128,7 @@ describe("SharedCounter", () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 			// Connect the first SharedCounter.
-			dataStoreRuntime.local = false;
+			dataStoreRuntime.setAttachState(AttachState.Attached);
 
 			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 			const services1 = {
@@ -213,7 +214,7 @@ describe("SharedCounter", () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
 			// Connect the first SharedCounter.
-			dataStoreRuntime.local = false;
+			dataStoreRuntime.setAttachState(AttachState.Attached);
 			containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 			const services1 = {
 				deltaConnection: dataStoreRuntime.createDeltaConnection(),

@@ -18,16 +18,16 @@
  * @packageDocumentation
  */
 
-export { DataObjectFactory, PureDataObjectFactory } from "./data-object-factories";
+export { DataObjectFactory, PureDataObjectFactory } from "./data-object-factories/index.js";
 export {
 	DataObject,
 	type DataObjectTypes,
 	type IDataObjectProps,
 	PureDataObject,
-} from "./data-objects";
+} from "./data-objects/index.js";
 export {
 	BaseContainerRuntimeFactory,
 	type BaseContainerRuntimeFactoryProps,
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
-} from "./container-runtime-factories";
+} from "./container-runtime-factories/index.js";
