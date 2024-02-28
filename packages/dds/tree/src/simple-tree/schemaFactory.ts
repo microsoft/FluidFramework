@@ -133,7 +133,6 @@ export type ScopedSchemaName<
 	TScope extends string | undefined,
 	TName extends number | string,
 > = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
-// > = `${TScope extends undefined ? "" : `${TScope}.`}${TName}`;
 
 // TODO:
 // SchemaFactory.array references should link to the correct overloads, however the syntax for this does not seems to work currently for methods unless the they are not qualified with the class.
