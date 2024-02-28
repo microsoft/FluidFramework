@@ -5,7 +5,7 @@
 
 import { IEvent } from "@fluidframework/core-interfaces";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IAgentScheduler } from "./agent";
+import { IAgentScheduler } from "./agent.js";
 
 /**
  * Events emitted by {@link TaskSubscription}.

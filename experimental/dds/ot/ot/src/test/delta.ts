@@ -10,7 +10,7 @@ import {
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import Delta from "quill-delta";
-import { SharedOT } from "../../dist";
+import { SharedOT } from "../index.js";
 
 export class SharedDelta extends SharedOT<Delta, Delta> {
 	public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedDelta {

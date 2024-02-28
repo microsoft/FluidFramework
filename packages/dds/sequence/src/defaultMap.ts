@@ -5,12 +5,7 @@
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import {
-	IFluidSerializer,
-	makeHandlesSerializable,
-	parseHandles,
-	ValueType,
-} from "@fluidframework/shared-object-base";
+import { IFluidSerializer, ValueType } from "@fluidframework/shared-object-base";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import { makeSerializable, ValueTypeLocalValue } from "./localValues.js";
@@ -104,7 +99,7 @@ export class DefaultMap<T extends IntervalCollection<any> = IntervalCollection<a
 			const localValue = this.data.get(op.key) ?? this.createCore(op.key, local);
 			const handler = localValue.getOpHandler(op.value.opName);
 			const previousValue = localValue.value;
-			const translatedValue = parseHandles(op.value.value, this.serializer);
+			const translatedValue = op.value.value as any;
 			handler.process(previousValue, translatedValue, local, message, localOpMetadata);
 			const event: IValueChanged = { key: op.key, previousValue };
 			this.eventEmitter.emit("valueChanged", event, local, message, this.eventEmitter);
@@ -262,10 +257,13 @@ export class DefaultMap<T extends IntervalCollection<any> = IntervalCollection<a
 
 	/**
 	 * Populate the kernel with the given map data.
-	 * @param data - A JSON string containing serialized map data
+	 *
+	 * @param serialized - A JSON string containing serialized map data
 	 */
-	public populateFromSerializable(json: IMapDataObjectSerializable): void {
-		for (const [key, serializable] of Object.entries(json)) {
+	public populate(serialized: string): void {
+		const parsed = this.serializer.parse(serialized) as IMapDataObjectSerializable;
+
+		for (const [key, serializable] of Object.entries(parsed)) {
 			// Back-compat: legacy documents may have handles to an intervalCollection map kernel.
 			// These collections should be empty, and ValueTypes are no longer supported.
 			if (
@@ -288,10 +286,6 @@ export class DefaultMap<T extends IntervalCollection<any> = IntervalCollection<a
 
 			this.data.set(localValue.key, localValue.value);
 		}
-	}
-
-	public populate(json: string): void {
-		this.populateFromSerializable(JSON.parse(json) as IMapDataObjectSerializable);
 	}
 
 	/**
@@ -409,7 +403,6 @@ export class DefaultMap<T extends IntervalCollection<any> = IntervalCollection<a
 			0x2e1 /* "Support for plain value types removed." */,
 		);
 
-		serializable.value = parseHandles(serializable.value, this.serializer);
 		const localValue = this.type.factory.load(
 			this.makeMapValueOpEmitter(key),
 			serializable.value,
@@ -433,14 +426,12 @@ export class DefaultMap<T extends IntervalCollection<any> = IntervalCollection<a
 			params: SerializedIntervalDelta,
 			localOpMetadata: IMapMessageLocalMetadata,
 		): void => {
-			const translatedParams = makeHandlesSerializable(params, this.serializer, this.handle);
-
 			const op: IMapValueTypeOperation = {
 				key,
 				type: "act",
 				value: {
 					opName,
-					value: translatedParams,
+					value: params,
 				},
 			};
 
