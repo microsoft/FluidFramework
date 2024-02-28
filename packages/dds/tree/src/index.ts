@@ -300,6 +300,11 @@ export {
 	enumFromStrings,
 	singletonSchema,
 	typedObjectValues,
+	SchemaFactoryRecursive,
+	ObjectFromSchemaRecordUnsafe,
+	TreeFieldFromImplicitFieldUnsafe,
+	TreeNodeFromImplicitAllowedTypesUnsafe,
+	FieldSchemaUnsafe,
 
 	// test recursive schema for checking that d.ts files handles schema correctly
 	test_RecursiveObject,

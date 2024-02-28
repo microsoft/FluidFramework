@@ -33,7 +33,13 @@ export {
 export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
 export { nodeApi as Tree, TreeApi, TreeNodeEvents } from "./treeApi.js";
 export { toFlexConfig } from "./toFlexSchema.js";
-export { SchemaFactoryRecursive } from "./schemaFactoryRecursive.js";
+export {
+	SchemaFactoryRecursive,
+	ObjectFromSchemaRecordUnsafe,
+	TreeFieldFromImplicitFieldUnsafe,
+	TreeNodeFromImplicitAllowedTypesUnsafe,
+	FieldSchemaUnsafe,
+} from "./schemaFactoryRecursive.js";
 
 export {
 	adaptEnum,

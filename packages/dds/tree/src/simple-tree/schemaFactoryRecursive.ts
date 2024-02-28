@@ -32,6 +32,7 @@ import { TreeArrayNode } from "./treeArrayNode.js";
 
 /**
  * {@link Unenforced} version of {@link ObjectFromSchemaRecord}.
+ * @internal
  */
 export type ObjectFromSchemaRecordUnsafe<
 	T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
@@ -41,6 +42,7 @@ export type ObjectFromSchemaRecordUnsafe<
 
 /**
  * {@link Unenforced} version of {@link TreeFieldFromImplicitField}.
+ * @internal
  */
 export type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<ImplicitFieldSchema>> =
 	TSchema extends FieldSchemaUnsafe<infer Kind, infer Types>
@@ -51,6 +53,7 @@ export type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<Implicit
 
 /**
  * {@link Unenforced} version of {@link TreeNodeFromImplicitAllowedTypes}.
+ * @internal
  */
 export type TreeNodeFromImplicitAllowedTypesUnsafe<
 	TSchema extends Unenforced<ImplicitAllowedTypes>,
@@ -62,6 +65,7 @@ export type TreeNodeFromImplicitAllowedTypesUnsafe<
 
 /**
  * {@link Unenforced} version of {@link FieldSchema}.
+ * @internal
  */
 export interface FieldSchemaUnsafe<
 	out Kind extends FieldKind,

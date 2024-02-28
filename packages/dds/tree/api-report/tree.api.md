@@ -513,6 +513,14 @@ export class FieldSchema<out Kind extends FieldKind = FieldKind, out Types exten
 }
 
 // @internal
+export interface FieldSchemaUnsafe<out Kind extends FieldKind, out Types extends Unenforced<ImplicitAllowedTypes>> {
+    // (undocumented)
+    readonly allowedTypes: Types;
+    // (undocumented)
+    readonly kind: Kind;
+}
+
+// @internal
 export interface FieldUpPath<TUpPath extends UpPath = UpPath> {
     readonly field: FieldKey;
     readonly parent: TUpPath | undefined;
@@ -1288,6 +1296,11 @@ export type ObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, I
 };
 
 // @internal
+export type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>> = {
+    -readonly [Property in keyof T]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
+};
+
+// @internal
 export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined;
 
 // @internal
@@ -1518,6 +1531,19 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     // (undocumented)
     readonly scope: TScope;
     readonly string: TreeNodeSchema<"com.fluidframework.leaf.string", NodeKind.Leaf, string, string>;
+}
+
+// @internal @sealed
+export class SchemaFactoryRecursive<TScope extends string, TName extends number | string = string> extends SchemaFactory<TScope, TName> {
+    arrayRecursive<const Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<`${TScope}.${string}`, NodeKind.Array, TreeArrayNode<T> & WithType<`${TScope}.${string}`>, {
+        x: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>;
+    }, false, unknown>;
+    mapRecursive<Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<`${TScope}.${Name}`, NodeKind.Map, TreeMapNode<T> & WithType<`${TScope}.${Name}`>, undefined, false, unknown>;
+    objectRecursive<const Name extends TName, const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>(name: Name, t: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, ObjectFromSchemaRecord<T> & WithType<ScopedSchemaName<TScope, Name>>, InsertableObjectFromSchemaRecord<T>, true, T>;
+    // (undocumented)
+    objectRecursiveUnsafe<const Name extends TName, const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>>(name: Name, t: T): TreeNodeSchemaClass<`${TScope}.${Name}`, NodeKind.Object, ObjectFromSchemaRecordUnsafe<T> & WithType<`${TScope}.${Name}`>, ObjectFromSchemaRecordUnsafe<T>, true, T>;
+    // (undocumented)
+    optionalRecursive<const T extends Unenforced<readonly (() => TreeNodeSchema)[]>>(t: T): FieldSchemaUnsafe<FieldKind.Optional, T>;
 }
 
 // @internal
@@ -1773,6 +1799,9 @@ export class TreeFactory implements IChannelFactory {
 export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = FieldSchema> = TSchema extends FieldSchema<infer Kind, infer Types> ? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind> : TSchema extends ImplicitAllowedTypes ? TreeNodeFromImplicitAllowedTypes<TSchema> : unknown;
 
 // @internal
+export type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<ImplicitFieldSchema>> = TSchema extends FieldSchemaUnsafe<infer Kind, infer Types> ? ApplyKind<TreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind> : TSchema extends ImplicitAllowedTypes ? TreeNodeFromImplicitAllowedTypesUnsafe<TSchema> : unknown;
+
+// @internal
 export interface TreeFieldStoredSchema {
     // (undocumented)
     readonly kind: FieldKindSpecifier;
@@ -1815,6 +1844,9 @@ export interface TreeNodeEvents {
 
 // @public
 export type TreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitAllowedTypes = TreeNodeSchema> = TSchema extends TreeNodeSchema ? NodeFromSchema<TSchema> : TSchema extends AllowedTypes ? NodeFromSchema<FlexListToUnion<TSchema>> : unknown;
+
+// @internal
+export type TreeNodeFromImplicitAllowedTypesUnsafe<TSchema extends Unenforced<ImplicitAllowedTypes>> = TSchema extends TreeNodeSchema ? NodeFromSchema<TSchema> : TSchema extends AllowedTypes ? NodeFromSchema<FlexListToUnion<TSchema>> : unknown;
 
 // @public
 export type TreeNodeSchema<Name extends string = string, Kind extends NodeKind = NodeKind, TNode = unknown, TBuild = never, ImplicitlyConstructable extends boolean = boolean> = TreeNodeSchemaClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable> | TreeNodeSchemaNonClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable>;
