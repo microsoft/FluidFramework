@@ -214,14 +214,9 @@ export class SchemaFactoryRecursive<
 	}
 
 	/**
-	 * For unknown reasons, recursive maps work better (compile in more cases)
-	 * if their constructor does not take in the desired type.
-	 *
-	 * This version of `map` leverages this fact and takes in undefined instead.
-	 * Unfortunately this means all maps created this way must be created empty then filled later.
-	 * @privateRemarks
-	 * TODO:
-	 * Figure out a way to make recursive prefilled maps work.
+	 * `SchemaFactory.map` except tweaked to work better for recursive types.
+	 * @remarks
+	 * This version of `SchemaFactory.map` uses the same workarounds as {@link SchemaFactoryRecursive.arrayRecursive}
 	 */
 	public mapRecursive<Name extends TName, const T extends Unenforced<ImplicitAllowedTypes>>(
 		name: Name,
@@ -233,11 +228,15 @@ export class SchemaFactoryRecursive<
 			true,
 			false,
 		) {
-			public constructor(data?: undefined | FlexTreeNode) {
+			public constructor(
+				data?:
+					| { x: Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>]> }
+					| FlexTreeNode,
+			) {
 				if (isFlexTreeNode(data)) {
 					super(data as any);
 				} else {
-					super(new Map());
+					super(new Map(data?.x ?? []));
 				}
 			}
 		}
@@ -246,7 +245,8 @@ export class SchemaFactoryRecursive<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Map,
 			TreeMapNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>>,
-			undefined,
+			| undefined
+			| { x: Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>]> },
 			false
 		>;
 	}

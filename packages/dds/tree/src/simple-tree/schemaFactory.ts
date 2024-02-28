@@ -727,6 +727,7 @@ export class SchemaFactory<
 	 * 	recursive: [recursiveReference],
 	 * }) {}
 	 * ```
+	 * @deprecated Use special `recursive` versions of builders instead of relying on this.
 	 */
 	public fixRecursiveReference<T extends AllowedTypes>(...types: T): void {}
 }

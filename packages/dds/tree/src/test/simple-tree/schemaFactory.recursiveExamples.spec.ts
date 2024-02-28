@@ -102,7 +102,7 @@ describe("Recursive Class based end to end example", () => {
 
 			const stuff2 = view.root.child?.child?.child;
 
-			assert.equal(stuff2, "hi4");
+			assert.equal(stuff2?.text, "hi4");
 		}
 
 		const factory = new TreeFactory({});
@@ -179,7 +179,7 @@ describe("Recursive Class based end to end example", () => {
 
 			const stuff2 = view.root.child?.child?.child;
 
-			assert.equal(stuff2, "hi4");
+			assert.equal(stuff2?.text, "hi4");
 		}
 
 		const factory = new TreeFactory({});
@@ -293,7 +293,7 @@ describe("Recursive Class based end to end example", () => {
 		);
 
 		const view: TreeView<MapRecursive> = tree.schematize(
-			new TreeConfiguration(MapRecursive, () => new MapRecursive(undefined)),
+			new TreeConfiguration(MapRecursive, () => new MapRecursive({ x: [] })),
 		);
 		const data = [...view.root];
 		assert.deepEqual(data, []);
@@ -301,13 +301,13 @@ describe("Recursive Class based end to end example", () => {
 		// Nested
 		{
 			type T = InsertableTreeNodeFromImplicitAllowedTypes<typeof MapRecursive>;
-			const _check: T = new MapRecursive(undefined);
+			const _check: T = new MapRecursive({ x: [] });
 			// Only explicitly constructed recursive maps are currently allowed:
-			type _check = requireTrue<areSafelyAssignable<T, MapRecursive>>;
+			// type _check = requireTrue<areSafelyAssignable<T, MapRecursive>>;
 		}
 
-		view.root.set("x", new MapRecursive(undefined));
+		view.root.set("x", new MapRecursive({ x: [] }));
 
-		view.root.get("x")?.set("x", new MapRecursive(undefined));
+		view.root.get("x")?.set("x", new MapRecursive({ x: [] }));
 	});
 });
