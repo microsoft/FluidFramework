@@ -4,7 +4,7 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { ITelemetryProperties } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
 	InstrumentedStorageTokenFetcher,
@@ -55,7 +55,7 @@ export async function fetchJoinSession(
 	const tokenRefreshProps = options.refresh
 		? { hasClaims: !!options.claims, hasTenantId: !!options.tenantId }
 		: {};
-	const details: ITelemetryProperties = {
+	const details: ITelemetryBaseProperties = {
 		refreshedToken: options.refresh,
 		requestSocketToken,
 		...tokenRefreshProps,
