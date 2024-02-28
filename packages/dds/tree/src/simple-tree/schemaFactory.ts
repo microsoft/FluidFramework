@@ -182,9 +182,9 @@ export type ScopedSchemaName<
  * - Not all operations implied by the prototype will work correctly: stick to the APIs explicitly declared in the TypeScript types.
  *
  * @privateRemarks
- * Its perfectly possible to make `POJO Emulation` mode (or even just hiding the prototype) selectable even when using the custom user class declaration syntax.
- * When doing this, its still possible to make `instanceof` perform correctly.
- * Allowing of (or banning) custom/out of schema properties on the class is also possible in both modes: it could be orthogonal.
+ * It's perfectly possible to make `POJO Emulation` mode (or even just hiding the prototype) selectable even when using the custom user class declaration syntax.
+ * When doing this, it's still possible to make `instanceof` perform correctly.
+ * Allowing (or banning) custom/out-of-schema properties on the class is also possible in both modes: it could be orthogonal.
  * Also for consistency, if keeping the current approach to detecting `POJO Emulation` mode it might make sense to make explicitly named Maps and Arrays do the detection the same as how object does it.
  *
  * @sealed @public
