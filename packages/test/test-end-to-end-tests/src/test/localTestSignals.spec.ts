@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import _ from "lodash";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import {
@@ -108,6 +109,10 @@ describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
 			assert.equal(user1SignalReceivedCount, 2, "client 1 did not receive signal");
 			assert.equal(user2SignalReceivedCount, 2, "client 2 did not receive signal");
 		});
+	});
+
+	it.skip("Lodash", () => {
+		assert.equal(_.sum([0, 0]), 0);
 	});
 
 	it("Validate signal events are raised on the correct runtime", async () => {
