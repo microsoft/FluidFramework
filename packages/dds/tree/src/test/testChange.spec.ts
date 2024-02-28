@@ -150,6 +150,9 @@ describe("TestChange", () => {
 					},
 					rebaseComposed,
 					createEmpty: () => TestChange.emptyChange,
+					isEmpty: (change) => {
+						return TestChange.isEmpty(change);
+					},
 				},
 				{ numberOfEditsToRebase: 4, numberOfEditsToRebaseOver: 4 },
 			);

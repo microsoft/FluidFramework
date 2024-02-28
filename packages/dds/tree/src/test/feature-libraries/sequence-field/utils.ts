@@ -162,8 +162,9 @@ export function compose(
 		change1: TestChange | undefined,
 		change2: TestChange | undefined,
 	) => TestChange,
+	allowUndefinedRevision: boolean = true,
 ): TestChangeset {
-	return composeI(changes, childComposer ?? TestChange.compose, revInfos);
+	return composeI(changes, childComposer ?? TestChange.compose, revInfos, allowUndefinedRevision);
 }
 
 export function prune(
@@ -179,6 +180,7 @@ export function prune(
 export function shallowCompose<T>(
 	changes: TaggedChange<SF.Changeset<T>>[],
 	revInfos?: RevisionInfo[],
+	allowUndefinedRevision: boolean = false,
 ): SF.Changeset<T> {
 	return composeI(
 		changes,
@@ -190,6 +192,7 @@ export function shallowCompose<T>(
 			return child1 ?? child2 ?? fail("One of the children should be defined");
 		},
 		revInfos,
+		allowUndefinedRevision,
 	);
 }
 
@@ -197,6 +200,7 @@ function composeI<T>(
 	changes: TaggedChange<SF.Changeset<T>>[],
 	composer: (change1: T | undefined, change2: T | undefined) => T,
 	revInfos?: RevisionInfo[] | RevisionMetadataSource,
+	allowUndefinedRevision: boolean = false,
 ): SF.Changeset<T> {
 	const updatedChanges = changes.map(({ change, revision, rollbackOf }) => ({
 		change: purgeUnusedCellOrderingInfo(change),
@@ -209,7 +213,7 @@ function composeI<T>(
 			? Array.isArray(revInfos)
 				? revisionMetadataSourceFromInfo(revInfos)
 				: revInfos
-			: defaultRevisionMetadataFromChanges(updatedChanges);
+			: defaultRevisionMetadataFromChanges(updatedChanges, allowUndefinedRevision);
 
 	let composed: SF.Changeset<T> = [];
 	for (const change of updatedChanges) {
@@ -289,17 +293,20 @@ export function rebase(
 export function rebaseTagged(
 	change: TaggedChange<TestChangeset>,
 	baseChange: TaggedChange<TestChangeset>,
+	allowUndefinedRevision: boolean = false,
 ): TaggedChange<TestChangeset> {
-	return rebaseOverChanges(change, [baseChange]);
+	return rebaseOverChanges(change, [baseChange], undefined, allowUndefinedRevision);
 }
 
 export function rebaseOverChanges(
 	change: TaggedChange<TestChangeset>,
 	baseChanges: TaggedChange<TestChangeset>[],
 	revInfos?: RevisionInfo[],
+	allowUndefinedRevision: boolean = false,
 ): TaggedChange<TestChangeset> {
 	let currChange = change;
-	const revisionInfo = revInfos ?? defaultRevInfosFromChanges(baseChanges);
+	const revisionInfo =
+		revInfos ?? defaultRevInfosFromChanges(baseChanges, allowUndefinedRevision);
 	for (const base of baseChanges) {
 		currChange = tagChange(
 			rebase(currChange.change, base, {

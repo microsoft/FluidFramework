@@ -505,7 +505,7 @@ export function testRebaserAxioms() {
 					invert,
 					assertEqual: assertTaggedEqual,
 					createEmpty: Change.empty,
-					isChangeEmpty,
+					isEmpty: isChangeEmpty,
 				},
 				{
 					numberOfEditsToRebase: 3,

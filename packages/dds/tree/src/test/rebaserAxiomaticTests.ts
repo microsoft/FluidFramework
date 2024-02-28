@@ -654,8 +654,8 @@ function verifyComposeWithInverseEqualsEmpty<TChangeset>(
 			metadata,
 		);
 		const actualChange = makeAnonChange(changeset);
-		assert(fieldRebaser.isChangeEmpty !== undefined);
-		assert(fieldRebaser.isChangeEmpty(actualChange.change));
+		assert(fieldRebaser.isEmpty !== undefined);
+		assert(fieldRebaser.isEmpty(actualChange.change));
 	}
 }
 
@@ -817,8 +817,8 @@ function verifyRebaseOverEmpty<TChangeset>(
 	);
 
 	const actualChange = makeAnonChange(fieldRebaser.rebase(edit.change, emptyChange));
-	assert(fieldRebaser.isChangeEmpty !== undefined);
-	assert(fieldRebaser.isChangeEmpty(actualChange.change));
+	assert(fieldRebaser.isEmpty !== undefined);
+	assert(fieldRebaser.isEmpty(actualChange.change));
 }
 
 function verifyRebaseEmpty<TChangeset>(
@@ -832,8 +832,8 @@ function verifyRebaseEmpty<TChangeset>(
 
 	const actualChange = makeAnonChange(fieldRebaser.rebase(emptyChange.change, edit));
 
-	assert(fieldRebaser.isChangeEmpty !== undefined);
-	assert(fieldRebaser.isChangeEmpty(actualChange.change));
+	assert(fieldRebaser.isEmpty !== undefined);
+	assert(fieldRebaser.isEmpty(actualChange.change));
 }
 
 function getDefaultedEqualityAssert<TChangeset>(fieldRebaser: BoundFieldChangeRebaser<TChangeset>) {

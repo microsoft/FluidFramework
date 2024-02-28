@@ -674,7 +674,7 @@ const fieldRebaser: BoundFieldChangeRebaser<TestChangeset> = {
 
 		return assertChangesetsEqual(withoutLineage(pruned1), withoutLineage(pruned2));
 	},
-	isChangeEmpty: (change: TestChangeset): boolean => {
+	isEmpty: (change: TestChangeset): boolean => {
 		return withoutTombstones(prune(change)).length === 0;
 	},
 	compareWithoutTombstones: (change1, change2) => {
@@ -1044,7 +1044,7 @@ export function testComposedSandwichRebasing() {
 				const insertB = tagChange(Change.insert(1, 1), tag2);
 				const inverseA = tagRollbackInverse(invert(insertA), tag3, insertA.revision);
 				const sandwich = compose([inverseA, insertA]);
-				const insertB2 = rebaseTagged(insertB, makeAnonChange(sandwich));
+				const insertB2 = rebaseTagged(insertB, makeAnonChange(sandwich), true);
 				assertChangesetsEqual(insertB2.change, insertB.change);
 			}));
 	});
