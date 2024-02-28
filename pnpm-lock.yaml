@@ -9893,6 +9893,7 @@ importers:
 
   packages/test/functional-tests:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-experimental/tree': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-private/test-dds-utils': workspace:~
@@ -9920,6 +9921,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       c8: ^8.0.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.55.0
       events: ^3.1.0
@@ -9930,13 +9932,13 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       ts-loader: ^9.3.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       webpack: ^5.82.0
       webpack-cli: ^4.9.2
     dependencies:
       events: 3.3.0
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-experimental/tree': link:../../../experimental/dds/tree
       '@fluid-internal/mocha-test-setup': link:../mocha-test-setup
       '@fluid-private/test-dds-utils': link:../../dds/test-dds-utils
@@ -9964,6 +9966,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.55.0
       mocha: 10.2.0
@@ -9973,7 +9976,6 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
       webpack-cli: 4.10.0_webpack@5.89.0
