@@ -42,9 +42,7 @@ export function testObjectPrototype(proxy: object, prototype: object) {
 
 function testObjectLike(testCases: TestCase[]) {
 	describe("Object-like", () => {
-		// TODO: Fix prototype for objects declared using 'class-schema'.
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-		describe.skip("satisfies 'deepEqual'", () => {
+		describe("satisfies 'deepEqual'", () => {
 			for (const { schema, initialTree } of testCases) {
 				const proxy = getRoot(schema, () => initialTree);
 				const real = initialTree;
@@ -55,9 +53,7 @@ function testObjectLike(testCases: TestCase[]) {
 			}
 		});
 
-		// TODO: Fix prototype for objects declared using 'class-schema'.
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-		describe.skip("inherits from Object.prototype", () => {
+		describe("inherits from Object.prototype", () => {
 			function findObjectPrototype(o: unknown) {
 				return Object.getPrototypeOf(
 					// If 'root' is an array, the immediate prototype is Array.prototype.  We need to go
@@ -142,16 +138,12 @@ function testObjectLike(testCases: TestCase[]) {
 			test1((subject) => Object.keys(subject));
 		});
 
-		// TODO: Make 'class-schema' property values match original object.
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-		describe.skip("Object.values", () => {
+		describe("Object.values", () => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			test1((subject) => Object.values(subject));
 		});
 
-		// TODO: Make 'class-schema' property values match original object.
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-		describe.skip("Object.entries", () => {
+		describe("Object.entries", () => {
 			test1((subject) => Object.entries(subject));
 		});
 
@@ -166,16 +158,12 @@ function testObjectLike(testCases: TestCase[]) {
 		});
 
 		// 'deepEqual' requires that objects have the same prototype to be considered equal.
-		// TODO: Fix prototype for objects declared using 'class-schema'.
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-		describe.skip("Object.getPrototypeOf", () => {
+		describe("Object.getPrototypeOf", () => {
 			test1((subject) => Object.getPrototypeOf(subject) as unknown);
 		});
 
 		// 'deepEqual' enumerates and compares the own properties of objects.
-		// TODO: Fix prototype for objects declared using 'class-schema'.
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-		describe.skip("Object.getOwnPropertyDescriptors", () => {
+		describe("Object.getOwnPropertyDescriptors", () => {
 			test1((subject) => {
 				return Object.getOwnPropertyDescriptors(subject);
 			});
@@ -322,15 +310,41 @@ testObjectLike(tcs);
 const factory = new SchemaFactory("test");
 
 describe("Object-like", () => {
-	describe("setting an invalid field", () => {
-		// TODO: Restore original behavior for bare '_.object()'?
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-		it.skip("throws TypeError in strict mode", () => {
+	describe("setting an local field", () => {
+		it("throws TypeError in POJO emulation mode", () => {
 			const root = getRoot(schemaFactory.object("no fields", {}), () => ({}));
 			assert.throws(() => {
 				// The actual error "'TypeError: 'set' on proxy: trap returned falsish for property 'foo'"
 				(root as unknown as any).foo = 3;
 			}, "attempting to set an invalid field must throw.");
+		});
+
+		it("works in Customizable mode", () => {
+			class Custom extends schemaFactory.object("no fields", {}) {
+				public foo?: number;
+			}
+			const root = getRoot(Custom, () => ({}));
+			root.foo = 3;
+		});
+	});
+
+	describe("deep equality and types", () => {
+		it("types are ignored in POJO emulation mode", () => {
+			const a = getRoot(schemaFactory.object("a", {}), () => ({}));
+			const b = getRoot(schemaFactory.object("b", {}), () => ({}));
+			assert.deepEqual(a, {});
+			assert.deepEqual(a, b);
+		});
+
+		it("types are compared in Customizable mode", () => {
+			class A extends schemaFactory.object("a", {}) {}
+			class B extends schemaFactory.object("b", {}) {}
+			const a = getRoot(A, () => ({}));
+			const b = getRoot(B, () => ({}));
+			assert.notDeepEqual(a, {});
+			assert.notDeepEqual(a, b);
+			const a2 = getRoot(A, () => ({}));
+			assert.deepEqual(a, a2);
 		});
 	});
 

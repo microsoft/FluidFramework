@@ -11,10 +11,10 @@ import {
 	MockContainerRuntimeFactory,
 } from "@fluidframework/test-runtime-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { MatrixItem, SharedMatrix, SharedMatrixFactory } from "../index";
-import { extract, expectSize } from "./utils";
-import { TestConsumer } from "./testconsumer";
-import { UndoRedoStackManager } from "./undoRedoStackManager";
+import { MatrixItem, SharedMatrix, SharedMatrixFactory } from "../index.js";
+import { extract, expectSize } from "./utils.js";
+import { TestConsumer } from "./testconsumer.js";
+import { UndoRedoStackManager } from "./undoRedoStackManager.js";
 
 [false, true].forEach((isSetCellPolicyFWW: boolean) => {
 	describe(`Matrix isSetCellPolicyFWW=${isSetCellPolicyFWW}`, () => {

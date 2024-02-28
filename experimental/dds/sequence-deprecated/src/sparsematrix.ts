@@ -15,8 +15,8 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { SharedSegmentSequence } from "@fluidframework/sequence";
-import { pkgVersion } from "./packageVersion";
-import { SubSequence } from "./sharedSequence";
+import { pkgVersion } from "./packageVersion.js";
+import { SubSequence } from "./sharedSequence.js";
 
 /**
  * An empty segment that occupies 'cachedLength' positions.
