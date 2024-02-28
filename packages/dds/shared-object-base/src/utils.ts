@@ -78,3 +78,16 @@ export function createSingleBlobSummary(
 	builder.addBlob(key, content);
 	return builder.getSummaryTree();
 }
+
+/**
+ * Binds all handles found in `value` to `bind`. Does not modify original input.
+ *
+ * @internal
+ */
+export function bindHandles(value: any, serializer: IFluidSerializer, bind: IFluidHandle): void {
+	// N.B. AB#7316 this could be made more efficient by writing an ad hoc
+	// implementation that doesn't clone at all. Today the distinction between
+	// this function and `encode` is purely semantic -- encoding both serializes
+	// handles and binds them, but sometimes we only wish to do the latter
+	serializer.encode(value, bind);
+}
