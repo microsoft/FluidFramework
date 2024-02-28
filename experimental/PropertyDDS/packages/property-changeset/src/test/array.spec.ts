@@ -13,7 +13,7 @@ import { copy as cloneDeep } from "fastest-json-copy";
 import range from "lodash/range";
 
 import { expect, assert } from "chai";
-import { ChangeSet, SerializedChangeSet } from "../changeset";
+import { ChangeSet, SerializedChangeSet } from "../changeset.js";
 
 describe("Array Operations", function () {
 	let guidCounter = 1;

@@ -7,7 +7,7 @@
  */
 
 import { expect } from "chai";
-import { SchemaValidator } from "../schemaValidator";
+import { SchemaValidator } from "../schemaValidator.js";
 
 (function () {
 	describe("Simple Template Validation", function () {

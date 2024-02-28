@@ -10,8 +10,8 @@
  */
 
 import { expect } from "chai";
-import { SchemaValidator } from "../schemaValidator";
-import { TemplateValidator } from "../../templateValidator";
+import { SchemaValidator } from "../schemaValidator.js";
+import { TemplateValidator } from "../../templateValidator.js";
 
 (function () {
 	let MSG = require("@fluid-experimental/property-common").constants.MSG;

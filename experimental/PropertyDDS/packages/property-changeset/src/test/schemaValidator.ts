@@ -6,8 +6,8 @@
  * Basic implementation of part of the PropertyFactory needed to run test on validation.
  */
 
-import { TemplateValidator } from "../templateValidator";
-import { TypeIdHelper } from "../helpers/typeidHelper";
+import { TemplateValidator } from "../templateValidator.js";
+import { TypeIdHelper } from "../helpers/typeidHelper.js";
 
 export class SchemaValidator {
 	schemaMap: Record<string, any>;

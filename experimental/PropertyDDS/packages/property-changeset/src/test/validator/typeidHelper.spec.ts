@@ -10,7 +10,7 @@
  */
 
 import { expect } from "chai";
-import { TypeIdHelper } from "../../helpers/typeidHelper";
+import { TypeIdHelper } from "../../helpers/typeidHelper.js";
 
 (function () {
 	describe("Typeid helper", function () {

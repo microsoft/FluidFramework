@@ -10,24 +10,24 @@
  */
 
 // There are lots of violations in this file.
-/* eslint-disable @typescript-eslint/no-base-to-string */
+
 /* eslint-disable jsdoc/check-line-alignment */
 
 import Ajv from "ajv";
 import ajvKeywords from "ajv-keywords";
 
-import each from "lodash/each";
-import isEqual from "lodash/isEqual";
-import every from "lodash/every";
-import isString from "lodash/isString";
-import isObject from "lodash/isObject";
-import difference from "lodash/difference";
-import has from "lodash/has";
-import mapValues from "lodash/mapValues";
-import includes from "lodash/includes";
-import map from "lodash/map";
-import find from "lodash/find";
-import isEmpty from "lodash/isEmpty";
+import each from "lodash/each.js";
+import isEqual from "lodash/isEqual.js";
+import every from "lodash/every.js";
+import isString from "lodash/isString.js";
+import isObject from "lodash/isObject.js";
+import difference from "lodash/difference.js";
+import has from "lodash/has.js";
+import mapValues from "lodash/mapValues.js";
+import includes from "lodash/includes.js";
+import map from "lodash/map.js";
+import find from "lodash/find.js";
+import isEmpty from "lodash/isEmpty.js";
 import { copy as cloneDeep } from "fastest-json-copy";
 
 import { gt, diff, major, valid, compare } from "semver";
@@ -36,9 +36,9 @@ import { queue } from "async";
 
 // @ts-ignore
 import { constants, ConsoleUtils } from "@fluid-experimental/property-common";
-import { TemplateSchema } from "./templateSchema";
-import { TypeIdHelper } from "./helpers/typeidHelper";
-import { SchemaValidationResult, ValidationResultBuilder } from "./validationResultBuilder";
+import { TemplateSchema } from "./templateSchema.js";
+import { TypeIdHelper } from "./helpers/typeidHelper.js";
+import { SchemaValidationResult, ValidationResultBuilder } from "./validationResultBuilder.js";
 
 const { MSG } = constants;
 

@@ -4,7 +4,7 @@
  */
 import { expect } from "chai";
 import { cloneDeep } from "lodash";
-import { ChangeSet } from "../changeset";
+import { ChangeSet } from "../changeset.js";
 
 describe("Indexed Collection Operations", function () {
 	it("modifications should rebase to a NOP for polymorphic collection, when the type of a primitive property changes in the base ChangeSet", () => {
