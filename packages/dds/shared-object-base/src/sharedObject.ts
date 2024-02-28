@@ -37,6 +37,7 @@ import { FluidSerializer, IFluidSerializer } from "./serializer";
 import { SharedObjectHandle } from "./handle";
 import { SummarySerializer } from "./summarySerializer";
 import { ISharedObject, ISharedObjectEvents } from "./types";
+import { makeHandlesSerializable, parseHandles } from "./utils";
 
 /**
  * Base class from which all shared objects derive.
@@ -359,8 +360,14 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	protected abstract onDisconnect();
 
 	/**
+	 * The serializer to serialize / parse handles.
+	 */
+	protected abstract get serializer(): IFluidSerializer;
+
+	/**
 	 * Submits a message by the local client to the runtime.
-	 * @param content - Content of the message
+	 * @param content - Content of the message. Note: handles contained in the
+	 * message object should not be encoded in any way
 	 * @param localOpMetadata - The local metadata associated with the message. This is kept locally by the runtime
 	 * and not sent to the server. This will be sent back when this message is received back from the server. This is
 	 * also sent if we are asked to resubmit the message.
@@ -369,7 +376,10 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 		this.verifyNotClosed();
 		if (this.isAttached()) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.services!.deltaConnection.submit(content, localOpMetadata);
+			this.services!.deltaConnection.submit(
+				makeHandlesSerializable(content, this.serializer, this.handle),
+				localOpMetadata,
+			);
 		}
 	}
 
@@ -451,7 +461,11 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 				local: boolean,
 				localOpMetadata: unknown,
 			) => {
-				this.process(message, local, localOpMetadata);
+				this.process(
+					{ ...message, contents: parseHandles(message.contents, this.serializer) },
+					local,
+					localOpMetadata,
+				);
 			},
 			setConnectionState: (connected: boolean) => {
 				this.setConnectionState(connected);
@@ -460,7 +474,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 				this.reSubmit(content, localOpMetadata);
 			},
 			applyStashedOp: (content: any): void => {
-				this.applyStashedOp(content);
+				this.applyStashedOp(parseHandles(content, this.serializer));
 			},
 			rollback: (content: any, localOpMetadata: unknown) => {
 				this.rollback(content, localOpMetadata);

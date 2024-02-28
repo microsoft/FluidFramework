@@ -9,8 +9,12 @@ import { type IChannelFactory } from "@fluidframework/datastore-definitions";
 import { type FluidObjectSymbolProvider } from "@fluidframework/synthesize";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 
-import { type DataObject, type DataObjectTypes, type IDataObjectProps } from "../data-objects";
-import { PureDataObjectFactory } from "./pureDataObjectFactory";
+import {
+	type DataObject,
+	type DataObjectTypes,
+	type IDataObjectProps,
+} from "../data-objects/index.js";
+import { PureDataObjectFactory } from "./pureDataObjectFactory.js";
 
 /**
  * DataObjectFactory is the IFluidDataStoreFactory for use with DataObjects.

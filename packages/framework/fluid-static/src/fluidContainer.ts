@@ -19,7 +19,7 @@ import type {
 	ContainerAttachProps,
 	IRootDataObject,
 	LoadableObjectClass,
-} from "./types";
+} from "./types.js";
 
 /**
  * Extract the type of 'initialObjects' from the given {@link ContainerSchema} type.

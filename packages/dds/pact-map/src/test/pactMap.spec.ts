@@ -11,9 +11,9 @@ import {
 	type MockContainerRuntimeForReconnection,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { PactMap } from "../pactMap";
-import { PactMapFactory } from "../pactMapFactory";
-import { type IPactMap } from "../interfaces";
+import { PactMap } from "../pactMap.js";
+import { PactMapFactory } from "../pactMapFactory.js";
+import { type IPactMap } from "../interfaces.js";
 
 function createConnectedPactMap(id: string, runtimeFactory: MockContainerRuntimeFactory): PactMap {
 	// Create and connect a PactMap.
