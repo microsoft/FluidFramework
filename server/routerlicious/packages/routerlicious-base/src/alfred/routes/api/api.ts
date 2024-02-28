@@ -79,6 +79,7 @@ export function create(
 			...tenantThrottleOptions,
 			throttleIdPrefix: "ping",
 		}),
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response) => {
 			response.sendStatus(200);
 		},
@@ -88,6 +89,7 @@ export function create(
 		"/:tenantId/:id/root",
 		validateRequestParams("tenantId", "id"),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response) => {
 			const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec") as number;
 			const isTokenExpiryEnabled = config.get("auth:enableTokenExpiration") as boolean;
@@ -116,6 +118,7 @@ export function create(
 		"/:tenantId/:id/blobs",
 		validateRequestParams("tenantId", "id"),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response) => {
 			const tenantId = getParam(request.params, "tenantId");
 			const blobData = request.body as IBlobData;
@@ -142,6 +145,7 @@ export function create(
 		validateRequestParams("tenantId", "id"),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		verifyStorageToken(tenantManager, config),
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response) => {
 			const tenantId = getParam(request.params, "tenantId");
 			const documentId = getParam(request.params, "id");
