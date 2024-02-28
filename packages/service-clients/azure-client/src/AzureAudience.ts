@@ -2,22 +2,35 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert } from "@fluidframework/core-utils";
-import { type IClient } from "@fluidframework/protocol-definitions";
 
+import { assert } from "@fluidframework/core-utils";
+import { type IClient, type IUser } from "@fluidframework/protocol-definitions";
 import { type AzureMember, type AzureUser } from "./interfaces";
 
 /**
- * Creates Azure-specific audience member
+ * Creates Azure-specific audience member.
+ *
+ * @remarks
+ * The provided `audienceMember`'s {@link @fluidframework/protocol-definitions#IClient.user} must bean {@link AzureUser}.
  */
 export function createAzureAudienceMember(audienceMember: IClient): AzureMember {
-	const azureUser = audienceMember.user as AzureUser;
-	assert(azureUser?.name !== undefined, 'Provided user was not an "AzureUser".');
+	const user = audienceMember.user;
+	assertIsAzureUser(user);
 
 	return {
-		userId: audienceMember.user.id,
-		userName: azureUser.name,
+		userId: user.id,
+		userName: user.name,
 		connections: [],
-		additionalDetails: azureUser.additionalDetails as unknown,
+		additionalDetails: user.additionalDetails,
 	};
+}
+
+/**
+ * Asserts that the provided {@link @fluidframework/protocol-definitions#IUser} is an {@link AzureUser}.
+ */
+export function assertIsAzureUser(user: IUser): asserts user is AzureUser<unknown> {
+	const maybeAzureUser = user as Partial<AzureUser>;
+	const baseMessage = 'Provided user data was not an "AzureUser".';
+	assert(maybeAzureUser.id !== undefined, `${baseMessage} Missing required "id" property.`);
+	assert(maybeAzureUser.name !== undefined, `${baseMessage} Missing required "name" property.`);
 }
