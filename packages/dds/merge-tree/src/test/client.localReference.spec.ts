@@ -11,7 +11,11 @@ import { toRemovalInfo } from "../mergeTreeNodes.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import { TextSegment } from "../textSegment.js";
 import { DetachedReferencePosition } from "../referencePositions.js";
-import { setValidateRefCount, LocalReferencePosition, SlidingPreference } from "../localReference.js";
+import {
+	setValidateRefCount,
+	LocalReferencePosition,
+	SlidingPreference,
+} from "../localReference.js";
 import { getSlideToSegoff } from "../mergeTree.js";
 import { TrackingGroup, UnorderedTrackingGroup } from "../mergeTreeTracking.js";
 import { createClientsAtInitialState } from "./testClientLogger.js";
@@ -499,7 +503,8 @@ describe("MergeTree.Client", () => {
 		{
 			const segInfo = clients.A.getContainingSegment(9);
 			const segment = segInfo.segment;
-			assert(TextSegment.is(segment));
+			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- TS2345: Argument of type 'ISegment | undefined' is not assignable to parameter of type 'ISegment'.
+			assert(TextSegment.is(segment!));
 			assert.strictEqual(segment.text[segInfo.offset!], "9");
 			const localRef = clients.A.createLocalReferencePosition(
 				segment,
@@ -516,7 +521,8 @@ describe("MergeTree.Client", () => {
 		{
 			const segInfo = clients.A.getContainingSegment(6);
 			const segment = segInfo.segment;
-			assert(TextSegment.is(segment));
+			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- TS2345: Argument of type 'ISegment | undefined' is not assignable to parameter of type 'ISegment'.
+			assert(TextSegment.is(segment!));
 			assert.strictEqual(segment.text[segInfo.offset!], "B");
 			clients.A.createLocalReferencePosition(
 				segment,
