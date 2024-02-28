@@ -44,7 +44,7 @@ export class LocalDocumentService
 		private readonly tenantId: string,
 		private readonly documentId: string,
 		private readonly documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection>,
-		public readonly policies: IDocumentServicePolicies = {},
+		public readonly policies: IDocumentServicePolicies = { supportGetSnapshotApi: true },
 		private readonly innerDocumentService?: IDocumentService,
 		private readonly logger?: ITelemetryBaseLogger,
 	) {

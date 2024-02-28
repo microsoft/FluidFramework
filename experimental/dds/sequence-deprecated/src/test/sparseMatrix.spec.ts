@@ -12,7 +12,7 @@ import {
 	MockContainerRuntimeForReconnection,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { SparseMatrix, SparseMatrixFactory, SparseMatrixItem } from "../sparsematrix";
+import { SparseMatrix, SparseMatrixFactory, SparseMatrixItem } from "../sparsematrix.js";
 
 describe("SparseMatrix", () => {
 	const extract = (matrix: SparseMatrix, numCols: number) => {

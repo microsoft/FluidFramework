@@ -10,8 +10,8 @@ import {
 	IChannel,
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
-import { pkgVersion } from "./packageVersion";
-import { SharedMatrix } from "./matrix";
+import { pkgVersion } from "./packageVersion.js";
+import { SharedMatrix } from "./matrix.js";
 
 /**
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link SharedMatrix}.
@@ -48,7 +48,7 @@ export class SharedMatrixFactory implements IChannelFactory {
 		return matrix;
 	}
 
-	public create(document: IFluidDataStoreRuntime, id: string): IChannel {
+	public create(document: IFluidDataStoreRuntime, id: string): SharedMatrix {
 		const matrix = new SharedMatrix(document, id, this.attributes);
 		matrix.initializeLocal();
 		return matrix;

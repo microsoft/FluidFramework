@@ -72,7 +72,9 @@ module.exports = {
 			script: true,
 		},
 		"build:docs": ["tsc"],
-		"ci:build:docs": ["tsc"],
+		// The package's local 'api-extractor.json' may build either CJS or ESM, therefore
+		// we need to require both before running api-extractor.
+		"ci:build:docs": ["tsc", "build:esnext"],
 		"build:readme": {
 			dependsOn: ["build:manifest"],
 			script: true,
@@ -84,7 +86,9 @@ module.exports = {
 		"depcruise": [],
 		"check:release-tags": ["tsc"],
 		"check:are-the-types-wrong": ["build"],
-		"eslint": [...tscDependsOn, "commonjs"],
+		// ADO #7297: Review why the direct dependency on 'build:esm:test' is necessary.
+		//            Should 'compile' be enough?  compile -> build:test -> build:test:esm
+		"eslint": ["compile", "build:test:esm"],
 		"good-fences": [],
 		"prettier": [],
 		"prettier:fix": [],
