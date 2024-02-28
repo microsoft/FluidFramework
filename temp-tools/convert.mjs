@@ -130,20 +130,6 @@ delete pkg.module;
 pkg.scripts["check:are-the-types-wrong"] = "attw --pack . --entrypoints .";
 pkg.devDependencies["@arethetypeswrong/cli"] = "^0.13.3";
 
-// Fix doc builds
-pkg.scripts["api"] = pkg.scripts["build:docs"] = "fluid-build . --task api";
-pkg.scripts["api-extractor:commonjs"] = "api-extractor run --config ./api-extractor-cjs.json";
-pkg.scripts["api-extractor:esnext"] = "api-extractor run --local";
-pkg.fluidBuild = {
-	tasks: {
-		"build:docs": {
-			dependsOn: ["...", "api-extractor:commonjs", "api-extractor:esnext"],
-			script: false,
-		},
-	},
-};
-fs.unlink("api-extractor-esm.json", () => {});
-
 // Rewrite build scripts
 pkg.scripts["build:esnext"] = "tsc --project ./tsconfig.json";
 
@@ -167,6 +153,20 @@ pkg.devDependencies["copyfiles"] = "^2.4.1";
 // Update API extractor config if it exists
 const apiExtractorEsmPath = path.join(packageRoot, "api-extractor.json");
 if (fs.existsSync(apiExtractorEsmPath)) {
+	// Fix doc builds
+	pkg.scripts["api"] = pkg.scripts["build:docs"] = "fluid-build . --task api";
+	pkg.scripts["api-extractor:commonjs"] = "api-extractor run --config ./api-extractor-cjs.json";
+	pkg.scripts["api-extractor:esnext"] = "api-extractor run --local";
+	pkg.fluidBuild = {
+		tasks: {
+			"build:docs": {
+				dependsOn: ["...", "api-extractor:commonjs", "api-extractor:esnext"],
+				script: false,
+			},
+		},
+	};
+	fs.unlink("api-extractor-esm.json", () => {});
+
 	// Overwrite API extractor scripts with new pattern
 	pkg.scripts["api-extractor:commonjs"] = "api-extractor run --config ./api-extractor-cjs.json";
 	pkg.scripts["api-extractor:esnext"] = "api-extractor run --local";
