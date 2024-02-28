@@ -11,10 +11,6 @@ import {
 } from "@fluidframework/server-services-core";
 
 export interface UnsubscribeWebhookUrlApiRequest {
-	/**
-	 * ID of the Fluid document to unsubscribe to webhook events for
-	 */
-	documentId: string;
 	unsubscribeRequests: {
 		/**
 		 * Name of the webhook event to unsubscribe from
@@ -34,9 +30,6 @@ export function createUnsubscribeWebhookUrlApiRoute(
 ) {
 	router.post("/unsubscribe", (request, response) => {
 		const apiRequest = request.body as UnsubscribeWebhookUrlApiRequest;
-		if (apiRequest.documentId === undefined) {
-			response.status(400).json({ message: "Invalid or No document id was provided" });
-		}
 
 		if (
 			apiRequest.unsubscribeRequests === undefined ||

@@ -11,10 +11,6 @@ import {
 } from "@fluidframework/server-services-core";
 
 export interface SubscribeWebhookUrlApiRequest {
-	/**
-	 * ID of the Fluid document to subscribe to webhook events for
-	 */
-	documentId: string;
 	subscriptionRequests: {
 		/**
 		 * Name of the webhook event to subscribe to
@@ -31,11 +27,6 @@ export type SubscribeWebhookUrlApiResponse = SubscribeWebhookUrlApiRequest;
 export function createSubscribeWebhookUrlApiRoute(webhookManager: IWebhookManager, router: Router) {
 	router.post("/subscribe", (request, response) => {
 		const apiRequest = request.body as SubscribeWebhookUrlApiRequest;
-		if (apiRequest.documentId === undefined || typeof apiRequest.documentId !== "string") {
-			response.status(400).json({ message: "Invalid or no document id was provided" });
-			return;
-		}
-
 		if (
 			apiRequest.subscriptionRequests === undefined ||
 			!Array.isArray(apiRequest.subscriptionRequests) ||
