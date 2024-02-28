@@ -11,7 +11,8 @@ import { AttachState, ContainerErrorTypes } from "@fluidframework/container-defi
 import {
 	FluidObject,
 	IFluidHandleContext,
-	ITaggedTelemetryPropertyType,
+	Tagged,
+	TelemetryBaseEventPropertyType,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
@@ -181,17 +182,17 @@ describe("Data Store Context Tests", () => {
 					);
 					const props = e.getTelemetryProperties();
 					assert.strictEqual(
-						(props.fullPackageName as ITaggedTelemetryPropertyType)?.value,
+						(props.fullPackageName as Tagged<TelemetryBaseEventPropertyType>)?.value,
 						fullPackageName.join("/"),
 						"The error should have the full package name in its telemetry properties",
 					);
 					assert.equal(
-						(props.failedPkgPath as ITaggedTelemetryPropertyType)?.value,
+						(props.failedPkgPath as Tagged<TelemetryBaseEventPropertyType>)?.value,
 						"BOGUS1",
 						"The error should have the failed package path in its telemetry properties",
 					);
 					assert.equal(
-						(props.fluidDataStoreId as ITaggedTelemetryPropertyType)?.value,
+						(props.fluidDataStoreId as Tagged<TelemetryBaseEventPropertyType>)?.value,
 						"Test1",
 						"The error should have the fluidDataStoreId in its telemetry properties",
 					);

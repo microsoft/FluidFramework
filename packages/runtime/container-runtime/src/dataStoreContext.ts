@@ -9,7 +9,7 @@ import {
 	IRequest,
 	IResponse,
 	IFluidHandle,
-	ITelemetryProperties,
+	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
 import { IAudience, IDeltaManager, AttachState } from "@fluidframework/container-definitions";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
@@ -900,7 +900,7 @@ export abstract class FluidDataStoreContext
 	private verifyNotClosed(
 		callSite: string,
 		checkTombstone = true,
-		safeTelemetryProps: ITelemetryProperties = {},
+		safeTelemetryProps: ITelemetryBaseProperties = {},
 	) {
 		if (this.deleted) {
 			const messageString = `Context is deleted! Call site [${callSite}]`;

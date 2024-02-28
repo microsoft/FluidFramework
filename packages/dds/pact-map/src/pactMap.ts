@@ -24,8 +24,8 @@ import {
 	type IFluidSerializer,
 	SharedObject,
 } from "@fluidframework/shared-object-base";
-import { PactMapFactory } from "./pactMapFactory";
-import { type IAcceptedPact, type IPactMap, type IPactMapEvents } from "./interfaces";
+import { PactMapFactory } from "./pactMapFactory.js";
+import { type IAcceptedPact, type IPactMap, type IPactMapEvents } from "./interfaces.js";
 
 /**
  * The accepted pact information, if any.
