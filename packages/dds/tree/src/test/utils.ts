@@ -973,6 +973,8 @@ export function defaultRevInfosFromChanges(
 	const revisions = new Set<RevisionTag>();
 	const rolledBackRevisions: RevisionTag[] = [];
 	for (const change of changes) {
+		// TODO: ADO#7366 assert to check if either all the changes have revision,
+		// or that all of the changes have undefined revision.
 		if (change.revision !== undefined) {
 			revInfos.push({
 				revision: change.revision,
