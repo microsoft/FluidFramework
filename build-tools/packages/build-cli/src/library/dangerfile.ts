@@ -5,8 +5,10 @@
 import {
 	ADOSizeComparator,
 	BundleComparisonResult,
+	BundleComparison,
 	bundlesContainNoChanges,
 	getAzureDevopsApi,
+	totalSizeMetricName,
 } from "@fluidframework/bundle-size-tools";
 
 // Handle weirdness with Danger import.  The current module setup prevents us
@@ -14,6 +16,15 @@ import {
 // import which prevents danger from removing it before evaluation (because it
 // actually puts its exports in the global namespace at that time)
 declare function markdown(message: string, file?: string, line?: number): void;
+declare function warn(message: string, file?: string, line?: number): void;
+
+declare const danger: {
+	github: {
+		utils: {
+			createOrAddLabel: (labelConfig: { color: string; description: string; name: string }) => void;
+		};
+	};
+};
 
 const adoConstants = {
 	orgUrl: "https://dev.azure.com/fluidframework",
@@ -47,7 +58,31 @@ export async function dangerfile(): Promise<void> {
 	// there were actual changes to the bundle sizes.  In other cases, we don't post a
 	// message and danger will delete its previous message
 	if (result.comparison === undefined || !bundlesContainNoChanges(result.comparison)) {
-		markdown(result.message);
+		 // Check for bundle size regression
+		 const sizeCheck = result.comparison
+			?.map((bundle: BundleComparison) => {
+				const totalMetric = bundle.commonBundleMetrics[totalSizeMetricName];
+				const totalParsedSizeDiff = totalMetric.compare.parsedSize - totalMetric.baseline.parsedSize;
+				return totalParsedSizeDiff > 5120;
+
+			})
+			.reduce((prev: boolean, current: boolean) => {
+				prev || current
+			}, false);
+
+		 // Warn and add label to PR in case of bundle size regression
+		 if (sizeCheck) {
+			warn("Bundle size regression detected -- please investigate before merging!");
+			// Add the label to the PR
+			try {
+				await danger.github.utils.createOrAddLabel({color: "ff0000", description: "Significant bundle size regression (>5 KB)", name: "size regression"})
+			} catch (error) {
+				console.error(`Error adding label: ${error}`);
+			}
+		 }
+
+		 markdown(result.message);
+
 	} else {
 		console.log("No size changes detected, skipping posting PR comment");
 	}
