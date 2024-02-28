@@ -7,5 +7,8 @@ module.exports = {
 	extends: [require.resolve("@fluidframework/eslint-config-fluid"), "prettier"],
 	rules: {
 		"promise/catch-or-return": ["error", { allowFinally: true }],
+
+		// TODO: enable strict null checks in tsconfig and remove this override
+		"@typescript-eslint/prefer-nullish-coalescing": "off",
 	},
 };
