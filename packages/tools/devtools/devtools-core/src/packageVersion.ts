@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluid-experimental/devtools-core";
-export const pkgVersion = "2.0.0-internal.8.0.7";
+export const pkgVersion = "2.0.0-internal.8.0.8";

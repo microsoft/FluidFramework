@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/mocha-test-setup",
-	"version": "2.0.0-internal.8.0.7",
+	"version": "2.0.0-internal.8.0.8",
 	"description": "Utilities for Fluid tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
