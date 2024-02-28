@@ -763,6 +763,8 @@ export function mixinAttach<
 				options,
 			);
 
+			model.validateConsistency(clientA.channel, summarizerClient.channel);
+
 			return {
 				...state,
 				isDetached: true,

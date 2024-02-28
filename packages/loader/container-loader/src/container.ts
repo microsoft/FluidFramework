@@ -103,11 +103,7 @@ import {
 import { DeltaManager, IConnectionArgs } from "./deltaManager";
 import { IDetachedBlobStorage, ILoaderOptions, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
-import {
-	ContainerStorageAdapter,
-	getBlobContentsFromTree,
-	ISerializableBlobContents,
-} from "./containerStorageAdapter";
+import { ContainerStorageAdapter, ISerializableBlobContents } from "./containerStorageAdapter";
 import { IConnectionStateHandler, createConnectionStateHandler } from "./connectionStateHandler";
 import {
 	ISnapshotTreeWithBlobContents,
@@ -129,6 +125,7 @@ import {
 	protocolHandlerShouldProcessSignal,
 } from "./protocol";
 import { AttachProcessProps, AttachmentData, runRetriableAttachProcess } from "./attachment";
+import { SerializedStateManager } from "./serializedStateManager";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -590,9 +587,8 @@ export class Container
 	private readonly connectionTransitionTimes: number[] = [];
 	private _loadedFromVersion: IVersion | undefined;
 	private _dirtyContainer = false;
-	private readonly offlineLoadEnabled: boolean;
-	private readonly savedOps: ISequencedDocumentMessage[] = [];
 	private attachmentData: AttachmentData = { state: AttachState.Detached };
+	private readonly serializedStateManager: SerializedStateManager;
 	private readonly _containerId: string;
 
 	private lastVisible: number | undefined;
@@ -937,10 +933,6 @@ export class Container
 			pendingLocalState?.clientId,
 		);
 
-		this.offlineLoadEnabled =
-			this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ??
-			options.enableOfflineLoad === true;
-
 		this.on(savedContainerEvent, () => {
 			this.connectionStateHandler.containerSaved();
 		});
@@ -965,6 +957,17 @@ export class Container
 			pendingLocalState?.snapshotBlobs,
 			addProtocolSummaryIfMissing,
 			forceEnableSummarizeProtocolTree,
+		);
+
+		const offlineLoadEnabled =
+			(this.isInteractiveClient &&
+				this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad")) ??
+			options.enableOfflineLoad === true;
+		this.serializedStateManager = new SerializedStateManager(
+			pendingLocalState,
+			this.subLogger,
+			this.storageAdapter,
+			offlineLoadEnabled,
 		);
 
 		const isDomAvailable =
@@ -1147,48 +1150,26 @@ export class Container
 	}
 
 	private async getPendingLocalStateCore(props: IGetPendingLocalStateProps) {
-		return PerformanceEvent.timedExecAsync(
-			this.mc.logger,
-			{
-				eventName: "getPendingLocalState",
-				notifyImminentClosure: props.notifyImminentClosure,
-				savedOpsSize: this.savedOps.length,
-				clientId: this.clientId,
-			},
-			async () => {
-				if (!this.offlineLoadEnabled) {
-					throw new UsageError(
-						"Can't get pending local state unless offline load is enabled",
-					);
-				}
-				if (this.closed || this._disposed) {
-					throw new UsageError(
-						"Pending state cannot be retried if the container is closed or disposed",
-					);
-				}
-				assert(
-					this.attachmentData.state === AttachState.Attached,
-					0x0d1 /* "Container should be attached before close" */,
-				);
-				assert(
-					this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
-					0x0d2 /* "resolved url should be valid Fluid url" */,
-				);
-				assert(this.attachmentData.snapshot !== undefined, 0x5d5 /* no base data */);
-				const pendingRuntimeState = await this.runtime.getPendingLocalState(props);
-				const pendingState: IPendingContainerState = {
-					pendingRuntimeState,
-					baseSnapshot: this.attachmentData.snapshot.tree,
-					snapshotBlobs: this.attachmentData.snapshot.blobs,
-					savedOps: this.savedOps,
-					url: this.resolvedUrl.url,
-					// no need to save this if there is no pending runtime state
-					clientId: pendingRuntimeState !== undefined ? this.clientId : undefined,
-				};
-
-				return JSON.stringify(pendingState);
-			},
+		if (this.closed || this._disposed) {
+			throw new UsageError(
+				"Pending state cannot be retried if the container is closed or disposed",
+			);
+		}
+		assert(
+			this.attachmentData.state === AttachState.Attached,
+			0x0d1 /* "Container should be attached before close" */,
 		);
+		assert(
+			this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
+			0x0d2 /* "resolved url should be valid Fluid url" */,
+		);
+		const pendingState = await this.serializedStateManager.getPendingLocalStateCore(
+			props,
+			this.clientId,
+			this.runtime,
+			this.resolvedUrl,
+		);
+		return pendingState;
 	}
 
 	public get attachState(): AttachState {
@@ -1311,7 +1292,7 @@ export class Container
 
 					let attachP = runRetriableAttachProcess({
 						initialAttachmentData: this.attachmentData,
-						offlineLoadEnabled: this.offlineLoadEnabled,
+						offlineLoadEnabled: this.serializedStateManager.offlineLoadEnabled,
 						detachedBlobStorage: this.detachedBlobStorage,
 						setAttachmentData,
 						createAttachmentSummary,
@@ -1327,8 +1308,7 @@ export class Container
 						});
 					}
 
-					await attachP;
-
+					this.serializedStateManager.setSnapshot(await attachP);
 					if (!this.closed) {
 						this.handleDeltaConnectionArg(
 							{
@@ -1520,11 +1500,6 @@ export class Container
 		return true;
 	}
 
-	private async getVersion(version: string | null): Promise<IVersion | undefined> {
-		const versions = await this.storageAdapter.getVersions(version, 1);
-		return versions[0];
-	}
-
 	private connectToDeltaStream(args: IConnectionArgs) {
 		// All agents need "write" access, including summarizer.
 		if (!this._canReconnect || !this.client.details.capabilities.interactive) {
@@ -1597,34 +1572,11 @@ export class Container
 
 		timings.phase2 = performance.now();
 		// Fetch specified snapshot.
-		const { snapshot, versionId } =
-			pendingLocalState === undefined
-				? await this.fetchSnapshot(specifiedVersion)
-				: { snapshot: pendingLocalState.baseSnapshot, versionId: undefined };
-
-		const snapshotTree: ISnapshotTree | undefined = isInstanceOfISnapshot(snapshot)
-			? snapshot.snapshotTree
-			: snapshot;
-		if (pendingLocalState) {
-			this.attachmentData = {
-				state: AttachState.Attached,
-				snapshot: {
-					tree: pendingLocalState.baseSnapshot,
-					blobs: pendingLocalState.snapshotBlobs,
-				},
-			};
-		} else {
-			assert(snapshotTree !== undefined, 0x237 /* "Snapshot should exist" */);
-			// non-interactive clients will not have any pending state we want to save
-			if (this.offlineLoadEnabled && this.isInteractiveClient) {
-				const blobs = await getBlobContentsFromTree(snapshotTree, this.storageAdapter);
-				this.attachmentData = {
-					state: AttachState.Attached,
-					snapshot: { tree: snapshotTree, blobs },
-				};
-			}
-		}
-
+		const { snapshotTree, version } = await this.serializedStateManager.fetchSnapshot(
+			specifiedVersion,
+			this.service?.policies?.supportGetSnapshotApi,
+		);
+		this._loadedFromVersion = version;
 		const attributes: IDocumentAttributes = await this.getDocumentAttributes(
 			this.storageAdapter,
 			snapshotTree,
@@ -1727,7 +1679,7 @@ export class Container
 			snapshotTree,
 			// give runtime a dummy value so it knows we're loading from a stash blob
 			pendingLocalState ? pendingLocalState?.pendingRuntimeState ?? {} : undefined,
-			isInstanceOfISnapshot(snapshot) ? snapshot : undefined,
+			isInstanceOfISnapshot(snapshotTree) ? snapshotTree : undefined,
 		);
 
 		// replay saved ops
@@ -1810,7 +1762,7 @@ export class Container
 		);
 		return {
 			sequenceNumber: attributes.sequenceNumber,
-			version: versionId,
+			version: version?.id,
 			dmLastProcessedSeqNumber: this._deltaManager.lastSequenceNumber,
 			dmLastKnownSeqNumber: this._deltaManager.lastKnownSeqNumber,
 		};
@@ -2332,10 +2284,6 @@ export class Container
 	}
 
 	private processRemoteMessage(message: ISequencedDocumentMessage) {
-		// non-interactive clients will not have any pending state we want to save
-		if (this.offlineLoadEnabled && this.isInteractiveClient) {
-			this.savedOps.push(message);
-		}
 		const local = this.clientId === message.clientId;
 
 		// Allow the protocol handler to process the message
@@ -2343,7 +2291,7 @@ export class Container
 
 		// Forward messages to the loaded runtime for processing
 		this.runtime.process(message, local);
-
+		this.serializedStateManager.addSavedOp(message);
 		// Inactive (not in quorum or not writers) clients don't take part in the minimum sequence number calculation.
 		if (this.activeConnection()) {
 			if (this.noopHeuristic === undefined) {
@@ -2394,60 +2342,6 @@ export class Container
 			const local = this.clientId === message.clientId;
 			this.runtime.processSignal(message, local);
 		}
-	}
-
-	/**
-	 * Get the most recent snapshot, or a specific version.
-	 * @param specifiedVersion - The specific version of the snapshot to retrieve
-	 * @returns The snapshot requested, or the latest snapshot if no version was specified, plus version ID
-	 */
-	private async fetchSnapshotTree(
-		specifiedVersion: string | undefined,
-	): Promise<{ snapshot?: ISnapshotTree; versionId?: string }> {
-		const version = await this.getVersion(specifiedVersion ?? null);
-
-		if (version === undefined && specifiedVersion !== undefined) {
-			// We should have a defined version to load from if specified version requested
-			this.mc.logger.sendErrorEvent({
-				eventName: "NoVersionFoundWhenSpecified",
-				id: specifiedVersion,
-			});
-		}
-		this._loadedFromVersion = version;
-		const snapshot = (await this.storageAdapter.getSnapshotTree(version)) ?? undefined;
-
-		if (snapshot === undefined && version !== undefined) {
-			this.mc.logger.sendErrorEvent({ eventName: "getSnapshotTreeFailed", id: version.id });
-		}
-		return { snapshot, versionId: version?.id };
-	}
-
-	private async fetchSnapshot(
-		specifiedVersion: string | undefined,
-	): Promise<{ snapshot?: ISnapshot | ISnapshotTree; versionId?: string }> {
-		if (
-			this.mc.config.getBoolean("Fluid.Container.UseLoadingGroupIdForSnapshotFetch") ===
-				true &&
-			this.service?.policies?.supportGetSnapshotApi === true
-		) {
-			const snapshot = await this.storageAdapter.getSnapshot({
-				versionId: specifiedVersion,
-			});
-			const version: IVersion = {
-				id: snapshot.snapshotTree.id ?? "",
-				treeId: snapshot.snapshotTree.id ?? "",
-			};
-			this._loadedFromVersion = version;
-
-			if (snapshot === undefined && specifiedVersion !== undefined) {
-				this.mc.logger.sendErrorEvent({
-					eventName: "getSnapshotTreeFailed",
-					id: version.id,
-				});
-			}
-			return { snapshot, versionId: version.id };
-		}
-		return this.fetchSnapshotTree(specifiedVersion);
 	}
 
 	private async instantiateRuntime(
