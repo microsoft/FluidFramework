@@ -231,6 +231,9 @@
 		"broken": {
 			"InterfaceDeclaration_IContainerExperimental": {
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IParsedUrl": {
+				"forwardCompat": false
 			}
 		}
 	}
