@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { performance } from "@fluid-internal/client-utils";
-import { ITelemetryProperties } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils";
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -59,7 +59,7 @@ export class ParallelRequests<T> {
 			from: number,
 			to: number,
 			strongTo: boolean,
-			props: ITelemetryProperties,
+			props: ITelemetryBaseProperties,
 		) => Promise<{ partial: boolean; cancel: boolean; payload: T[] }>,
 		private readonly responseCallback: (payload: T[]) => void,
 	) {
@@ -411,8 +411,8 @@ const waitForOnline = async (): Promise<void> => {
  * @returns An object with resulting ops and cancellation / partial result flags
  */
 async function getSingleOpBatch(
-	get: (telemetryProps: ITelemetryProperties) => Promise<IDeltasFetchResult>,
-	props: ITelemetryProperties,
+	get: (telemetryProps: ITelemetryBaseProperties) => Promise<IDeltasFetchResult>,
+	props: ITelemetryBaseProperties,
 	strongTo: boolean,
 	logger: ITelemetryLoggerExt,
 	signal?: AbortSignal,
@@ -539,7 +539,7 @@ export function requestOps(
 	get: (
 		from: number,
 		to: number,
-		telemetryProps: ITelemetryProperties,
+		telemetryProps: ITelemetryBaseProperties,
 	) => Promise<IDeltasFetchResult>,
 	concurrency: number,
 	fromTotal: number,
@@ -554,7 +554,7 @@ export function requestOps(
 	let length = 0;
 	const queue = new Queue<ISequencedDocumentMessage[]>();
 
-	const propsTotal: ITelemetryProperties = {
+	const propsTotal: ITelemetryBaseProperties = {
 		fromTotal,
 		toTotal,
 	};
@@ -575,7 +575,7 @@ export function requestOps(
 			from: number,
 			to: number,
 			strongTo: boolean,
-			propsPerRequest: ITelemetryProperties,
+			propsPerRequest: ITelemetryBaseProperties,
 		) => {
 			requests++;
 			return getSingleOpBatch(
