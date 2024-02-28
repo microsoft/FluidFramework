@@ -10,8 +10,8 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { SharedObjectSequence } from "../sharedObjectSequence";
-import { SharedObjectSequenceFactory } from "../sequenceFactory";
+import { SharedObjectSequence } from "../sharedObjectSequence.js";
+import { SharedObjectSequenceFactory } from "../sequenceFactory.js";
 
 function createConnectedSequence(id: string, runtimeFactory: MockContainerRuntimeFactory) {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();

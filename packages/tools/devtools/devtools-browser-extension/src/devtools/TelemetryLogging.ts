@@ -166,12 +166,9 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 		}
 
 		// Note: the calls that the 1DS SDK makes to external endpoints might fail if the last part of the eventName is not uppercase
-		const category = event.category
-			? `${event.category.charAt(0).toUpperCase()}${event.category.slice(1)}`
-			: "Generic";
-		// Note: "Office.Fluid" here has a connection to the Aria tenant(s) we're targetting, and the full string
+		// Note: "Fluid.Framework" here has a connection to the Aria tenant(s) we're targetting, and the full string
 		// impacts the way the data is structured once ingested. Don't change this without proper consideration.
-		const eventType = `Office.Fluid.Devtools.${category}`;
+		const eventType = `Fluid.Framework.Devtools.Usage`;
 
 		const telemetryEvent = {
 			name: eventType, // Dictates which table the event goes to
