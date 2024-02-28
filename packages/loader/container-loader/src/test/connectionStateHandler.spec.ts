@@ -14,8 +14,8 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IDeltaManager, IDeltaManagerEvents } from "@fluidframework/container-definitions";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { ITelemetryProperties, TelemetryEventCategory } from "@fluidframework/core-interfaces";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { createChildLogger, TelemetryEventCategory } from "@fluidframework/telemetry-utils";
 import { Audience } from "../audience";
 import { ConnectionState } from "../connectionState";
 import {
@@ -147,7 +147,7 @@ describe("ConnectionStateHandler Tests", () => {
 			logConnectionIssue: (
 				eventName: string,
 				category: TelemetryEventCategory,
-				details?: ITelemetryProperties,
+				details?: ITelemetryBaseProperties,
 			) => {
 				throw new Error(`logConnectionIssue: ${eventName} ${JSON.stringify(details)}`);
 			},
