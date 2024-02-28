@@ -63,10 +63,9 @@ export function getFlexNode(target: TreeNode, allowFreed = false): FlexTreeNode 
  * Retrieves the flex node associated with the given target via {@link setFlexNode}, if any.
  */
 export function tryGetFlexNode(target: unknown): FlexTreeNode | undefined {
-	if (typeof target === "object" && target !== null) {
-		return flexNodeMap.get(target as TreeNode);
-	}
-	return undefined;
+	// Calling 'WeakMap.get()' with primitives (numbers, strings, etc.) will return undefined.
+	// This is in contrast to 'WeakMap.set()', which will throw a TypeError if given a non-object key.
+	return flexNodeMap.get(target as TreeNode);
 }
 
 /**

@@ -20,7 +20,6 @@ export { RuntimeFactoryHelper } from "./runtimeFactoryHelper";
 export {
 	addBlobToSummary,
 	addSummarizeResultToSummary,
-	addTreeToSummary,
 	calculateStats,
 	convertSnapshotTreeToSummaryTree,
 	convertSummaryTreeToITree,

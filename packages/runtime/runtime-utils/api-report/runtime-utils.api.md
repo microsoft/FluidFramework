@@ -37,9 +37,6 @@ export function addBlobToSummary(summary: ISummaryTreeWithStats, key: string, co
 export function addSummarizeResultToSummary(summary: ISummaryTreeWithStats, key: string, summarizeResult: ISummarizeResult): void;
 
 // @internal (undocumented)
-export function addTreeToSummary(summary: ISummaryTreeWithStats, key: string, summarizeResult: ISummarizeResult): void;
-
-// @internal (undocumented)
 export function calculateStats(summary: SummaryObject): ISummaryStats;
 
 // @internal
