@@ -25,6 +25,7 @@ import {
 	getSequenceField,
 	arrayNodePrototypeProperties,
 	mapStaticDispatchMap,
+	isTreeNode,
 } from "./proxies.js";
 import { getFlexSchema, setFlexSchemaFromClassSchema } from "./toFlexSchema.js";
 import {
@@ -232,7 +233,8 @@ export class SchemaFactory<
 		TKind,
 		TreeNode & WithType<ScopedSchemaName<TScope, Name>>,
 		FlexTreeNode | unknown,
-		TImplicitlyConstructable
+		TImplicitlyConstructable,
+		T
 	> {
 		const identifier = this.scoped(name);
 		class schema extends TreeNode implements WithType<ScopedSchemaName<TScope, Name>> {
@@ -256,7 +258,7 @@ export class SchemaFactory<
 				}
 				// TODO: make this a better user facing error, and explain how to copy explicitly.
 				assert(
-					!(input instanceof TreeNode),
+					!isTreeNode(input),
 					0x83c /* Existing nodes cannot be used as new content to insert. They must either be moved or explicitly copied */,
 				);
 			}
@@ -305,7 +307,8 @@ export class SchemaFactory<
 				ObjectFromSchemaRecord<T> &
 				WithType<ScopedSchemaName<TScope, Name>>,
 			object & InsertableObjectFromSchemaRecord<T>,
-			true
+			true,
+			T
 		>;
 	}
 

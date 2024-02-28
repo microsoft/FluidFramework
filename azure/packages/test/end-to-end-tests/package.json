@@ -74,7 +74,7 @@
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
-		"sinon": "^7.4.2",
+		"sinon": "^17.0.1",
 		"start-server-and-test": "^1.11.7",
 		"tinylicious": "^3.1.0-240326",
 		"uuid": "^9.0.0"
@@ -86,6 +86,7 @@
 		"@types/mocha": "^9.1.1",
 		"@types/nock": "^9.3.0",
 		"@types/node": "^18.19.0",
+		"@types/sinon": "^17.0.3",
 		"@types/uuid": "^9.0.2",
 		"c8": "^8.0.1",
 		"eslint": "~8.50.0",
