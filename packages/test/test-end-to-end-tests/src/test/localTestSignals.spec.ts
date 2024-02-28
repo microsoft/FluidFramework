@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import _ from "lodash";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import {
 	ITestObjectProvider,
