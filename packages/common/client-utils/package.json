@@ -28,8 +28,8 @@
 	"browser": {
 		"./dist/indexNode.js": "./dist/indexBrowser.js",
 		"./dist/indexNode.d.ts": "./dist/indexBrowser.d.ts",
-		"./lib/indexNode.mjs": "./lib/indexBrowser.js",
-		"./lib/indexNode.d.mts": "./lib/indexBrowser.d.ts"
+		"./lib/indexNode.js": "./lib/indexBrowser.js",
+		"./lib/indexNode.d.ts": "./lib/indexBrowser.d.ts"
 	},
 	"types": "dist/indexNode.d.ts",
 	"scripts": {
