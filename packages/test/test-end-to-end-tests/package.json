@@ -118,7 +118,6 @@
 		"@fluidframework/undo-redo": "workspace:~",
 		"@types/sinon": "^17.0.3",
 		"cross-env": "^7.0.3",
-		"lodash": "^4.17.21",
 		"mocha": "^10.2.0",
 		"semver": "^7.5.3",
 		"sinon": "^17.0.1",
