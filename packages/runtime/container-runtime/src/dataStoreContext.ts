@@ -71,9 +71,9 @@ import {
 	getAttributesFormatVersion,
 	getFluidDataStoreAttributes,
 	summarizerClientType,
-} from "./summary";
-import { ContainerRuntime } from "./containerRuntime";
-import { detectOutboundRoutesViaDDSKey, sendGCUnexpectedUsageEvent } from "./gc";
+} from "./summary/index.js";
+import { ContainerRuntime } from "./containerRuntime.js";
+import { detectOutboundRoutesViaDDSKey, sendGCUnexpectedUsageEvent } from "./gc/index.js";
 
 function createAttributes(
 	pkg: readonly string[],

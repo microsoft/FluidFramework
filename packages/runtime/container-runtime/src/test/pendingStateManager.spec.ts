@@ -13,12 +13,12 @@ import {
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { isILoggingError } from "@fluidframework/telemetry-utils";
 
-import { IPendingMessage, PendingStateManager } from "../pendingStateManager";
-import { BatchManager, BatchMessage } from "../opLifecycle";
+import { IPendingMessage, PendingStateManager } from "../pendingStateManager.js";
+import { BatchManager, BatchMessage } from "../opLifecycle/index.js";
 import type {
 	RecentlyAddedContainerRuntimeMessageDetails,
 	UnknownContainerRuntimeMessage,
-} from "../messageTypes";
+} from "../messageTypes.js";
 
 type PendingStateManager_WithPrivates = Omit<PendingStateManager, "initialMessages"> & {
 	initialMessages: Deque<IPendingMessage>;
