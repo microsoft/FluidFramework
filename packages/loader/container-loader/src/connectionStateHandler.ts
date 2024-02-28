@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties, TelemetryEventCategory } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert, Timer } from "@fluidframework/core-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { ISequencedClient, IClient } from "@fluidframework/protocol-definitions";
@@ -11,6 +11,7 @@ import {
 	ITelemetryLoggerExt,
 	PerformanceEvent,
 	loggerToMonitoringContext,
+	type TelemetryEventCategory,
 } from "@fluidframework/telemetry-utils";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import { CatchUpMonitor, ICatchUpMonitor } from "./catchUpMonitor";
@@ -43,7 +44,7 @@ export interface IConnectionStateHandlerInputs {
 	logConnectionIssue: (
 		eventName: string,
 		category: TelemetryEventCategory,
-		details?: ITelemetryProperties,
+		details?: ITelemetryBaseProperties,
 	) => void;
 	/** Callback to note that an old local client ID is still present in the Quorum that should have left and should now be considered invalid */
 	clientShouldHaveLeft: (clientId: string) => void;
@@ -188,7 +189,7 @@ class ConnectionStateHandlerPassThrough
 	public logConnectionIssue(
 		eventName: string,
 		category: TelemetryEventCategory,
-		details?: ITelemetryProperties,
+		details?: ITelemetryBaseProperties,
 	) {
 		return this.inputs.logConnectionIssue(eventName, category, details);
 	}
