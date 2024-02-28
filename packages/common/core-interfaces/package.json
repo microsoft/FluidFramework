@@ -131,6 +131,22 @@
 			"RemovedInterfaceDeclaration_ITelemetryErrorEvent": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_ITelemetryProperties": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_TelemetryEventCategory": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedTypeAliasDeclaration_TelemetryEventPropertyType": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_ITaggedTelemetryPropertyType": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}

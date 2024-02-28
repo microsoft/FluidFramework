@@ -7,7 +7,7 @@ import { v4 as uuid } from "uuid";
 import {
 	IThrottlingWarning,
 	IEventProvider,
-	ITelemetryProperties,
+	ITelemetryBaseProperties,
 	type ITelemetryBaseEvent,
 } from "@fluidframework/core-interfaces";
 import {
@@ -361,7 +361,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		assert(this.messageBuffer.length === 0, 0x3cc /* reentrancy */);
 	}
 
-	public get connectionProps(): ITelemetryProperties {
+	public get connectionProps(): ITelemetryBaseProperties {
 		return {
 			sequenceNumber: this.lastSequenceNumber,
 			opsSize: this.opsSize > 0 ? this.opsSize : undefined,
