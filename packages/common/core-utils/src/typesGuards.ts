@@ -21,13 +21,4 @@ export const isObject = (value: unknown): value is object =>
  * @internal
  */
 export const isPromiseLike = (value: unknown): value is PromiseLike<unknown> =>
-	isObject(value) && "then" in value;
-
-/**
- * Determines if an arbitrary  value is a string
- * @param value - The value to check to see if it is a string
- * @returns True if the passed value is a string
- *
- * @internal
- */
-export const isString = (value: unknown): value is string => typeof value === "string";
+	isObject(value) && "then" in value && typeof value.then === "function";

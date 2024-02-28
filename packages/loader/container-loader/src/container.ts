@@ -1179,10 +1179,9 @@ export class Container
 	}
 
 	public serialize(): string {
-		assert(
-			this.attachmentData.state !== AttachState.Attached,
-			0x0d3 /* "Should not be called in an attached container */,
-		);
+		if (this.attachmentData.state === AttachState.Attached || this.closed) {
+			throw new UsageError("Container must not be attached or closed.");
+		}
 
 		const attachingData =
 			this.attachmentData.state === AttachState.Attaching ? this.attachmentData : undefined;

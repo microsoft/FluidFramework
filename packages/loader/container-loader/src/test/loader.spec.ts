@@ -8,7 +8,7 @@ import { v4 as uuid } from "uuid";
 import { isFluidError } from "@fluidframework/telemetry-utils";
 import { FluidErrorTypes } from "@fluidframework/core-interfaces";
 import { ICreateBlobResponse, SummaryType } from "@fluidframework/protocol-definitions";
-import { IRuntime } from "@fluidframework/container-definitions";
+import { AttachState, IRuntime } from "@fluidframework/container-definitions";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { IDetachedBlobStorage, Loader } from "../loader";
 import { IPendingDetachedContainerState } from "../container";
@@ -52,6 +52,10 @@ const codeLoader = {
 								createSummary: () => ({
 									tree: {},
 									type: SummaryType.Tree,
+								}),
+								setAttachState: () => {},
+								getPendingLocalState: () => ({
+									pending: [],
 								}),
 							});
 						},
@@ -120,6 +124,80 @@ describe("loader unit test", () => {
 		});
 		const detached = await loader.createDetachedContainer({ package: "none" });
 		await detachedBlobStorage.createBlob(stringToBuffer("whatever", "utf8"));
+		const detachedContainerState = detached.serialize();
+		const parsedState = JSON.parse(detachedContainerState) as IPendingDetachedContainerState;
+		assert.strictEqual(parsedState.attached, false);
+		assert.strictEqual(parsedState.hasAttachmentBlobs, true);
+		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
+		assert.ok(parsedState.baseSnapshot);
+		await loader.rehydrateDetachedContainerFromSnapshot(detachedContainerState);
+	});
+
+	it("serialize and rehydrateDetachedContainerFromSnapshot while attaching", async () => {
+		const loader = new Loader({
+			codeLoader,
+			documentServiceFactory: failProxy(),
+			urlResolver: failProxy(),
+			configProvider: {
+				getRawConfig: (name) =>
+					name === "Fluid.Container.RetryOnAttachFailure" ? true : undefined,
+			},
+		});
+		const detached = await loader.createDetachedContainer({ package: "none" });
+		await detached.attach({ url: "none" }).then(
+			() => assert.fail("attach should fail"),
+			() => {},
+		);
+
+		assert(detached.attachState, AttachState.Attaching);
+
+		const detachedContainerState = detached.serialize();
+		const parsedState = JSON.parse(detachedContainerState) as IPendingDetachedContainerState;
+		assert.strictEqual(parsedState.attached, false);
+		assert.strictEqual(parsedState.hasAttachmentBlobs, false);
+		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
+		assert.deepStrictEqual(parsedState.pendingRuntimeState, { pending: [] });
+		assert.ok(parsedState.baseSnapshot);
+		await loader.rehydrateDetachedContainerFromSnapshot(detachedContainerState);
+	});
+
+	it("serialize and rehydrateDetachedContainerFromSnapshot while attaching with valid format and attachment blobs", async () => {
+		const blobs = new Map<string, ArrayBufferLike>();
+		const detachedBlobStorage: IDetachedBlobStorage = {
+			createBlob: async (file) => {
+				const response: ICreateBlobResponse = {
+					id: uuid(),
+				};
+				blobs.set(response.id, file);
+				return response;
+			},
+			getBlobIds: () => [...blobs.keys()],
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			readBlob: async (id) => blobs.get(id)!,
+			get size() {
+				return blobs.size;
+			},
+		};
+		const loader = new Loader({
+			codeLoader,
+			documentServiceFactory: failProxy(),
+			urlResolver: failProxy(),
+			detachedBlobStorage,
+			configProvider: {
+				getRawConfig: (name) =>
+					name === "Fluid.Container.RetryOnAttachFailure" ? true : undefined,
+			},
+		});
+		const detached = await loader.createDetachedContainer({ package: "none" });
+		await detachedBlobStorage.createBlob(stringToBuffer("whatever", "utf8"));
+
+		await detached.attach({ url: "none" }).then(
+			() => assert.fail("attach should fail"),
+			() => {},
+		);
+
+		assert(detached.attachState, AttachState.Attaching);
+
 		const detachedContainerState = detached.serialize();
 		const parsedState = JSON.parse(detachedContainerState) as IPendingDetachedContainerState;
 		assert.strictEqual(parsedState.attached, false);
