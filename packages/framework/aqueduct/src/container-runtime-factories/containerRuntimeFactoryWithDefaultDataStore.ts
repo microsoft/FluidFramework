@@ -16,7 +16,7 @@ import { type FluidObject, type IRequest, type IResponse } from "@fluidframework
 import { RequestParser } from "@fluidframework/runtime-utils";
 import { type IFluidDependencySynthesizer } from "@fluidframework/synthesize";
 import { type RuntimeRequestHandler } from "@fluidframework/request-handler";
-import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory";
+import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory.js";
 
 const defaultDataStoreId = "default";
 
