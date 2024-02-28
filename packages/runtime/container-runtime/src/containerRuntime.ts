@@ -1729,8 +1729,7 @@ export class ContainerRuntime
 		return this.summarizerNode.deleteChild(id);
 	}
 
-	public makeLocallyVisible()
-	{
+	public makeLocallyVisible() {
 		assert(false, "should not be called");
 	}
 

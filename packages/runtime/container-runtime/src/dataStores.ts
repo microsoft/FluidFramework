@@ -73,7 +73,7 @@ import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs";
 import { IDataStoreAliasMessage, channelToDataStore, isDataStoreAliasMessage } from "./dataStore";
 import { GCNodeType, detectOutboundRoutesViaDDSKey } from "./gc";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summary";
-import { ContainerMessageType, LocalContainerRuntimeMessage } from "./messageTypes"
+import { ContainerMessageType, LocalContainerRuntimeMessage } from "./messageTypes";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { trimLeadingAndTrailingSlashes } from "./gc";
 
@@ -107,7 +107,9 @@ interface FluidDataStoreMessage {
 
 export function cloneParentContext(parentContext: IFluidParentContext): IFluidParentContext {
 	return {
-		get IFluidDataStoreRegistry() { return parentContext.IFluidDataStoreRegistry; },
+		get IFluidDataStoreRegistry() {
+			return parentContext.IFluidDataStoreRegistry;
+		},
 		IFluidHandleContext: parentContext.IFluidHandleContext,
 		options: parentContext.options,
 		get clientId() {
