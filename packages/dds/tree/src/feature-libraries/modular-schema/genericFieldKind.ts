@@ -75,11 +75,15 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 		invert: (
 			{ change }: TaggedChange<GenericChangeset>,
 			invertChild: NodeChangeInverter,
+			genId?: IdAllocator,
+			crossFieldManager?: CrossFieldManager,
+			revisionMetadata?: RevisionMetadataSource,
+			allowUndefinedRevision: boolean = false,
 		): GenericChangeset => {
 			return change.map(
 				({ index, nodeChange }: GenericChange): GenericChange => ({
 					index,
-					nodeChange: invertChild(nodeChange),
+					nodeChange: invertChild(nodeChange, allowUndefinedRevision),
 				}),
 			);
 		},

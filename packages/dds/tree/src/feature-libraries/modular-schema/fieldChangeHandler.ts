@@ -107,6 +107,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
 		revisionMetadata: RevisionMetadataSource,
+		allowUndefinedRevision?: boolean,
 	): TChangeset;
 
 	/**
@@ -174,7 +175,10 @@ export type ToDelta = (child: NodeChangeset) => DeltaFieldMap;
 /**
  * @internal
  */
-export type NodeChangeInverter = (change: NodeChangeset) => NodeChangeset;
+export type NodeChangeInverter = (
+	change: NodeChangeset,
+	allowUndefinedRevision?: boolean,
+) => NodeChangeset;
 
 /**
  * @internal
