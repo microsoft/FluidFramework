@@ -12,4 +12,8 @@ export { fromBase64ToUtf8, fromUtf8ToBase64, toUtf8 } from "./base64Encoding.js"
 export { Uint8ArrayToArrayBuffer } from "./bufferShared.js";
 export { IsomorphicPerformance } from "./performanceIsomorphic.js";
 export { ITraceEvent, Trace } from "./trace.js";
-export { EventEmitterEventType, TypedEventEmitter, TypedEventTransform } from "./typedEventEmitter.js";
+export {
+	EventEmitterEventType,
+	TypedEventEmitter,
+	TypedEventTransform,
+} from "./typedEventEmitter.js";

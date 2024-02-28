@@ -15,12 +15,42 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/indexNode.d.ts",
-				"default": "./lib/indexNode.js"
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/indexNode.d.ts",
-				"default": "./dist/indexNode.js"
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./public": {
+			"import": {
+				"types": "./lib/client-utils-public.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/client-utils-public.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./alpha": {
+			"import": {
+				"types": "./lib/client-utils-alpha.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/client-utils-alpha.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./internal": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
 			}
 		}
 	},
@@ -47,7 +77,7 @@
 		"build:test:mocha:cjs": "fluid-tsc commonjs --project ./src/test/mocha/tsconfig.cjs.json",
 		"build:test:mocha:esm": "tsc --project ./src/test/mocha/tsconfig.json",
 		"build:test:types": "tsc --project ./src/test/types/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob _api-extractor-temp dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
@@ -62,8 +92,8 @@
 		"test:coverage": "c8 npm test",
 		"test:jest": "jest",
 		"test:mocha": "npm run test:mocha:esm && npm run test:mocha:cjs",
-		"test:mocha:cjs": "mocha --recursive \"dist/test/mocha/**/*.spec.*js\" --exit",
-		"test:mocha:esm": "mocha --recursive \"lib/test/mocha/**/*.spec.*js\" --exit",
+		"test:mocha:cjs": "mocha --recursive \"dist/test/mocha/**/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
+		"test:mocha:esm": "mocha --recursive \"lib/test/mocha/**/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
