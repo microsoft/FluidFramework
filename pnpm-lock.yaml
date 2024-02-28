@@ -9893,7 +9893,6 @@ importers:
 
   packages/test/functional-tests:
     specifiers:
-      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-experimental/tree': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-private/test-dds-utils': workspace:~
@@ -9938,7 +9937,6 @@ importers:
     dependencies:
       events: 3.3.0
     devDependencies:
-      '@arethetypeswrong/cli': 0.13.3
       '@fluid-experimental/tree': link:../../../experimental/dds/tree
       '@fluid-internal/mocha-test-setup': link:../mocha-test-setup
       '@fluid-private/test-dds-utils': link:../../dds/test-dds-utils
