@@ -132,7 +132,7 @@ describe("Fuzz - composed vs individual changes", () => {
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 			detachedStartOptions: {
 				numOpsBeforeAttach: 5,
-				// this test can't use rehydrate as is need a consistent client instance
+				// This test can't use rehydrate as it holds on to the original client instance.
 				// to hook into.
 				rehydrateDisabled: true,
 			},
