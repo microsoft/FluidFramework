@@ -78,6 +78,7 @@ export function createChannelServiceEndpoints(
 	submitFn: (content: any, localOpMetadata: unknown) => void,
 	dirtyFn: () => void,
 	addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
+	isAttachedAndVisible: () => boolean,
 	storageService: IDocumentStorageService,
 	logger: ITelemetryLoggerExt,
 	tree?: ISnapshotTree,
@@ -88,6 +89,7 @@ export function createChannelServiceEndpoints(
 		(message, localOpMetadata) => submitFn(message, localOpMetadata),
 		dirtyFn,
 		addedGCOutboundReferenceFn,
+		isAttachedAndVisible,
 	);
 	const objectStorage = new ChannelStorageService(tree, storageService, logger, extraBlobs);
 
