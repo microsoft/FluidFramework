@@ -31,6 +31,10 @@ export function createAzureAudienceMember(audienceMember: IClient): AzureMember 
 export function assertIsAzureUser(user: IUser): asserts user is AzureUser<unknown> {
 	const maybeAzureUser = user as Partial<AzureUser>;
 	const baseMessage = 'Provided user data was not an "AzureUser".';
-	assert(maybeAzureUser.id !== undefined, `${baseMessage} Missing required "id" property.`);
-	assert(maybeAzureUser.name !== undefined, `${baseMessage} Missing required "name" property.`);
+	if (maybeAzureUser.id === undefined) {
+		throw new TypeError(`${baseMessage} Missing required "id" property.`);
+	}
+	if (maybeAzureUser.name === undefined) {
+		throw new TypeError(`${baseMessage} Missing required "name" property.`);
+	}
 }
