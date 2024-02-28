@@ -4,7 +4,7 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidSerializer, ValueType } from "@fluidframework/shared-object-base";
+import { IFluidSerializer, ValueType, bindHandles } from "@fluidframework/shared-object-base";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -193,7 +193,7 @@ export class AttributableMapKernel {
 		private readonly isAttached: () => boolean,
 		private readonly eventEmitter: TypedEventEmitter<ISharedMapEvents>,
 	) {
-		this.localValueMaker = new LocalValueMaker(serializer);
+		this.localValueMaker = new LocalValueMaker();
 		this.messageHandlers = this.getMessageHandlers();
 		this.attribution = new Map();
 	}
@@ -305,7 +305,6 @@ export class AttributableMapKernel {
 
 		// Create a local value and serialize it.
 		const localValue = this.localValueMaker.fromInMemory(value);
-		const serializableValue = makeSerializable(localValue, this.serializer, this.handle);
 
 		// Set the value and attribution locally.
 		const previousValue = this.setCore(key, localValue, true);
@@ -313,13 +312,17 @@ export class AttributableMapKernel {
 
 		// If we are not attached, don't submit the op.
 		if (!this.isAttached()) {
+			// this is necessary to bind the potential handles in the value
+			// to this DDS, as we do not walk the object normally unless we
+			// are attached
+			bindHandles(localValue.value, this.serializer, this.handle);
 			return;
 		}
 
 		const op: IMapSetOperation = {
 			key,
 			type: "set",
-			value: serializableValue,
+			value: { type: localValue.type, value: localValue.value as unknown },
 		};
 		this.submitMapKeyMessage(op, previousValue);
 	}
@@ -452,7 +455,9 @@ export class AttributableMapKernel {
 	 * @param json - A JSON string containing serialized map data
 	 */
 	public populateFromSerializable(json: IMapDataObjectSerializable): void {
-		for (const [key, serializable] of Object.entries(json)) {
+		for (const [key, serializable] of Object.entries(
+			this.serializer.decode(json) as IMapDataObjectSerializable,
+		)) {
 			const localValue = {
 				key,
 				value: this.makeLocal(key, serializable),
@@ -472,10 +477,6 @@ export class AttributableMapKernel {
 				}
 			}
 		}
-	}
-
-	public populate(json: string): void {
-		this.populateFromSerializable(JSON.parse(json) as IMapDataObjectSerializable);
 	}
 
 	/**
@@ -506,7 +507,11 @@ export class AttributableMapKernel {
 				break;
 			}
 			case "set": {
-				this.set(op.key, this.localValueMaker.fromSerializable(op.value).value);
+				this.set(
+					op.key,
+					this.localValueMaker.fromSerializable(op.value, this.serializer, this.handle)
+						.value,
+				);
 				break;
 			}
 			default:
@@ -669,7 +674,11 @@ export class AttributableMapKernel {
 			serializable.type === ValueType[ValueType.Plain] ||
 			serializable.type === ValueType[ValueType.Shared]
 		) {
-			return this.localValueMaker.fromSerializable(serializable);
+			return this.localValueMaker.fromSerializable(
+				serializable,
+				this.serializer,
+				this.handle,
+			);
 		} else {
 			throw new Error("Unknown local value type");
 		}
