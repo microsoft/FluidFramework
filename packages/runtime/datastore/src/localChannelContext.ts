@@ -28,8 +28,8 @@ import {
 	loadChannelFactoryAndAttributes,
 	summarizeChannel,
 	summarizeChannelAsync,
-} from "./channelContext";
-import { ISharedObjectRegistry } from "./dataStoreRuntime";
+} from "./channelContext.js";
+import { ISharedObjectRegistry } from "./dataStoreRuntime.js";
 
 /**
  * Channel context for a locally created channel
