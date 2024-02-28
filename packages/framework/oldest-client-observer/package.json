@@ -134,8 +134,8 @@
 				"script": false
 			},
 			"tsc": [
-				"typetests:gen",
-				"^tsc"
+				"...",
+				"typetests:gen"
 			]
 		}
 	},
