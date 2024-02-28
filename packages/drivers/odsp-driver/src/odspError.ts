@@ -33,7 +33,7 @@ export function errorObjectFromSocketError(
 
 		error.addTelemetryProperties({ odspError: true, relayServiceError: true });
 		return error;
-	} catch (error) {
+	} catch {
 		return new NonRetryableError(
 			"Internal error: errorObjectFromSocketError",
 			OdspErrorTypes.fileNotFoundOrAccessDeniedError,

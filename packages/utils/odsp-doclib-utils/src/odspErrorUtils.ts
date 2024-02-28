@@ -21,10 +21,10 @@ import {
 	OdspError,
 	IOdspErrorAugmentations,
 } from "@fluidframework/odsp-driver-definitions";
-import { parseAuthErrorClaims } from "./parseAuthErrorClaims";
-import { parseAuthErrorTenant } from "./parseAuthErrorTenant";
+import { parseAuthErrorClaims } from "./parseAuthErrorClaims.js";
+import { parseAuthErrorTenant } from "./parseAuthErrorTenant.js";
 // odsp-doclib-utils and odsp-driver will always release together and share the same pkgVersion
-import { pkgVersion as driverVersion } from "./packageVersion";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 // no response, or can't parse response
 /**

@@ -27,13 +27,13 @@ import {
 	type LoadableObjectClassRecord,
 	type LoadableObjectRecord,
 	type SharedObjectClass,
-} from "./types";
+} from "./types.js";
 import {
 	type InternalDataObjectClass,
 	isDataObjectClass,
 	isSharedObjectClass,
 	parseDataObjectsFromSharedObjects,
-} from "./utils";
+} from "./utils.js";
 
 /**
  * Input props for {@link RootDataObject.initializingFirstTime}.
