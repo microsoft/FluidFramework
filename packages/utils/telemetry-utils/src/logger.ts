@@ -6,7 +6,6 @@
 import {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
-	TelemetryBaseEventPropertyType as TelemetryEventPropertyType,
 	LogLevel,
 	Tagged,
 	ITelemetryBaseProperties,
@@ -871,14 +870,14 @@ function convertToBaseEvent({
  * Takes in value, and does one of 4 things.
  * if value is of primitive type - returns the original value.
  * If the value is a flat array or object - returns a stringified version of the array/object.
- * If the value is an object of type Tagged<TelemetryEventPropertyType> - returns the object
+ * If the value is an object of type Tagged<TelemetryBaseEventPropertyType> - returns the object
  * with its values recursively converted to base property Type.
  * If none of these cases are reached - returns an error string
  * @param x - value passed in to convert to a base property type
  */
 export function convertToBasePropertyType(
 	x: TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>,
-): TelemetryEventPropertyType | Tagged<TelemetryEventPropertyType> {
+): TelemetryBaseEventPropertyType | Tagged<TelemetryBaseEventPropertyType> {
 	return isTaggedTelemetryPropertyValue(x)
 		? {
 				value: convertToBasePropertyTypeUntagged(x.value),
@@ -889,7 +888,7 @@ export function convertToBasePropertyType(
 
 function convertToBasePropertyTypeUntagged(
 	x: TelemetryEventPropertyTypeExt,
-): TelemetryEventPropertyType {
+): TelemetryBaseEventPropertyType {
 	switch (typeof x) {
 		case "string":
 		case "number":
