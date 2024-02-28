@@ -41,15 +41,11 @@ export { IFluidHandleContext, IFluidHandle } from "./handles.js";
 
 export type {
 	ILoggingError,
-	ITaggedTelemetryPropertyType, // deprecated
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 	ITelemetryBaseProperties,
-	ITelemetryProperties, // deprecated
 	Tagged,
-	TelemetryEventCategory, // deprecated
 	TelemetryBaseEventPropertyType,
-	TelemetryEventPropertyType, // deprecated
 } from "./logger.js";
 export { LogLevel } from "./logger.js";
 export type { FluidObjectProviderKeys, FluidObject, FluidObjectKeys } from "./provider.js";

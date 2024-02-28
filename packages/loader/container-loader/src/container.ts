@@ -8,8 +8,7 @@ import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
 import {
 	IEvent,
-	ITelemetryProperties,
-	TelemetryEventCategory,
+	ITelemetryBaseProperties,
 	FluidObject,
 	LogLevel,
 	IRequest,
@@ -89,6 +88,7 @@ import {
 	GenericError,
 	UsageError,
 	IFluidErrorBase,
+	type TelemetryEventCategory,
 } from "@fluidframework/telemetry-utils";
 import structuredClone from "@ungap/structured-clone";
 import { Audience } from "./audience";
@@ -326,7 +326,7 @@ const getCodeProposal = (quorum: IQuorumProposals) => quorum.get("code") ?? quor
 export async function ReportIfTooLong(
 	logger: ITelemetryLoggerExt,
 	eventName: string,
-	action: () => Promise<ITelemetryProperties>,
+	action: () => Promise<ITelemetryBaseProperties>,
 ) {
 	const event = PerformanceEvent.start(logger, { eventName });
 	const props = await action();
@@ -893,7 +893,7 @@ export class Container
 				logConnectionIssue: (
 					eventName: string,
 					category: TelemetryEventCategory,
-					details?: ITelemetryProperties,
+					details?: ITelemetryBaseProperties,
 				) => {
 					const mode = this.connectionMode;
 					// We get here when socket does not receive any ops on "write" connection, including
