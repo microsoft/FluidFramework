@@ -22,7 +22,7 @@ import {
 	ITokenClaims,
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { IDisposable, ITelemetryProperties, LogLevel } from "@fluidframework/core-interfaces";
+import { IDisposable, ITelemetryBaseProperties, LogLevel } from "@fluidframework/core-interfaces";
 import {
 	ITelemetryLoggerExt,
 	extractLogSafeErrorProperties,
@@ -733,7 +733,7 @@ export class DocumentDeltaConnection
 	private createErrorObjectWithProps(
 		handler: string,
 		error?: any,
-		props?: ITelemetryProperties,
+		props?: ITelemetryBaseProperties,
 		canRetry = true,
 	): IAnyDriverError {
 		return createGenericNetworkError(
