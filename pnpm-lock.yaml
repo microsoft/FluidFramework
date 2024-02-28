@@ -3440,6 +3440,7 @@ importers:
 
   examples/utils/example-utils:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-experimental/pact-map': workspace:~
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
@@ -3470,6 +3471,7 @@ importers:
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       '@types/uuid': ^9.0.2
+      copyfiles: ^2.4.1
       eslint: ~8.50.0
       prettier: ~3.0.3
       react: ^17.0.1
@@ -3505,6 +3507,7 @@ importers:
       tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       uuid: 9.0.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.34.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
@@ -3514,6 +3517,7 @@ importers:
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       '@types/uuid': 9.0.7
+      copyfiles: 2.4.1
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
