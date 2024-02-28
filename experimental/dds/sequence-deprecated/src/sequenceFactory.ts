@@ -12,9 +12,9 @@ import {
 import { IJSONSegment } from "@fluidframework/merge-tree";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { IJSONRunSegment, SubSequence } from "@fluidframework/sequence";
-import { pkgVersion } from "./packageVersion";
-import { SharedNumberSequence } from "./sharedNumberSequence";
-import { SharedObjectSequence } from "./sharedObjectSequence";
+import { pkgVersion } from "./packageVersion.js";
+import { SharedNumberSequence } from "./sharedNumberSequence.js";
+import { SharedObjectSequence } from "./sharedObjectSequence.js";
 
 /**
  * @deprecated SharedObjectSequence is not recommended for use and will be removed in an upcoming release.

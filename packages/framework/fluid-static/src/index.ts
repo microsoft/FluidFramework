@@ -14,9 +14,9 @@ export {
 	type IFluidContainer,
 	type IFluidContainerEvents,
 	type InitialObjects,
-} from "./fluidContainer";
-export { createDOProviderContainerRuntimeFactory } from "./rootDataObject";
-export { createServiceAudience } from "./serviceAudience";
+} from "./fluidContainer.js";
+export { createDOProviderContainerRuntimeFactory } from "./rootDataObject.js";
+export { createServiceAudience } from "./serviceAudience.js";
 export {
 	type ContainerSchema,
 	type ContainerAttachProps,
@@ -34,4 +34,4 @@ export {
 	type Myself,
 	type SharedObjectClass,
 	type IProvideRootDataObject,
-} from "./types";
+} from "./types.js";
