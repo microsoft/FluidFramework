@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
 import { type IClient, type IUser } from "@fluidframework/protocol-definitions";
 import { type AzureMember, type AzureUser } from "./interfaces";
 
