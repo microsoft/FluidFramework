@@ -11,7 +11,7 @@ import {
 	IOldestClientObservable,
 	IOldestClientObserverEvents,
 	IOldestClientObserver,
-} from "./interfaces";
+} from "./interfaces.js";
 
 /**
  * The `OldestClientObserver` is a utility inspect if the local client is the oldest amongst connected clients (in
