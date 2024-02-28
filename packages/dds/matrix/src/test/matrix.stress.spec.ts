@@ -12,9 +12,9 @@ import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
 } from "@fluidframework/test-runtime-utils";
-import { SharedMatrix, SharedMatrixFactory } from "../index";
-import { extract, expectSize } from "./utils";
-import { UndoRedoStackManager } from "./undoRedoStackManager";
+import { SharedMatrix, SharedMatrixFactory } from "../index.js";
+import { extract, expectSize } from "./utils.js";
+import { UndoRedoStackManager } from "./undoRedoStackManager.js";
 
 /**
  * 0 means use LWW.

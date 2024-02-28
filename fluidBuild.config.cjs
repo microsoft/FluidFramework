@@ -71,11 +71,10 @@ module.exports = {
 			dependsOn: ["build:esnext"],
 			script: true,
 		},
-		// ADO #7336: Review why the direct dependency on 'build:esm' is necessary when
-		//            packages already declare a local dependency from:
-		//            build:docs -> api-extractor:esnext -> build:esnext
-		"build:docs": ["tsc", "build:esm"],
-		"ci:build:docs": ["tsc", "build:esm"],
+		"build:docs": ["tsc"],
+		// The package's local 'api-extractor.json' may build either CJS or ESM, therefore
+		// we need to require both before running api-extractor.
+		"ci:build:docs": ["tsc", "build:esnext"],
 		"build:readme": {
 			dependsOn: ["build:manifest"],
 			script: true,
