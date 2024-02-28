@@ -133,18 +133,6 @@ export function addBlobToSummary(
 /**
  * @internal
  */
-export function addTreeToSummary(
-	summary: ISummaryTreeWithStats,
-	key: string,
-	summarizeResult: ISummarizeResult,
-): void {
-	summary.summary.tree[key] = summarizeResult.summary;
-	summary.stats = mergeStats(summary.stats, summarizeResult.stats);
-}
-
-/**
- * @internal
- */
 export function addSummarizeResultToSummary(
 	summary: ISummaryTreeWithStats,
 	key: string,

@@ -10,6 +10,7 @@ import {
 	SchemaFactory,
 	Tree,
 	InsertableTreeFieldFromImplicitField,
+	type NodeFromSchema,
 } from "../../simple-tree/index.js";
 
 // eslint-disable-next-line import/no-internal-modules
@@ -19,35 +20,37 @@ import { getRoot } from "./utils.js";
 describe("SharedTreeObject factories", () => {
 	const sb = new SchemaFactory("test");
 
-	class ChildA extends sb.object("childA", {
+	const ChildA = sb.object("childA", {
 		content: sb.number,
-	}) {}
+	});
 
-	class ChildB extends sb.object("childB", {
+	const ChildB = sb.object("childB", {
 		content: sb.number,
-	}) {}
+	});
 
-	class ChildOptional extends sb.object("childOptional", {
+	const ChildOptional = sb.object("childOptional", {
 		content: sb.optional(sb.number),
-	}) {}
+	});
 
-	class ChildD extends sb.object("childD", {
+	const ChildD = sb.object("childD", {
 		list: sb.array([ChildA, ChildB]),
 		map: sb.map([ChildA, ChildB]),
-	}) {}
+	});
 
-	class ChildC extends sb.object("childC", {
+	const ChildC = sb.object("childC", {
 		child: ChildD,
-	}) {}
+	});
 
-	class Schema extends sb.object("parent", {
+	const Schema = sb.object("parent", {
 		child: ChildA,
 		poly: [ChildA, ChildB],
 		list: sb.array(sb.number),
 		map: sb.map(sb.number),
 		optional: sb.optional(ChildOptional),
 		grand: ChildC,
-	}) {}
+	});
+
+	type ChildAOrB = NodeFromSchema<typeof ChildA> | NodeFromSchema<typeof ChildB>;
 
 	const initialTree: () => InsertableTreeFieldFromImplicitField<typeof Schema> = () => ({
 		child: new ChildA({ content: 42 }),
@@ -63,7 +66,7 @@ describe("SharedTreeObject factories", () => {
 		grand: {
 			child: {
 				list: [new ChildA({ content: 42 }), new ChildB({ content: 42 })],
-				map: new Map<string, ChildA | ChildB>([
+				map: new Map<string, ChildAOrB>([
 					["a", new ChildA({ content: 42 })],
 					["b", new ChildB({ content: 42 })],
 				]),
@@ -96,9 +99,7 @@ describe("SharedTreeObject factories", () => {
 		assert.equal(root.poly.content, 44);
 	});
 
-	// TODO: Fix prototype for objects declared using 'class-schema'.
-	// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-	it.skip("don't require optional data to be included", () => {
+	it("don't require optional data to be included", () => {
 		const root = getRoot(Schema, initialTree);
 		assert.equal(root.optional, undefined);
 		root.optional = new ChildOptional({ content: undefined });
@@ -106,14 +107,12 @@ describe("SharedTreeObject factories", () => {
 		assert.equal(root.optional.content, undefined);
 	});
 
-	// TODO: Fix prototype for objects declared using 'class-schema'.
-	// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
 	it.skip("support nesting inside of a factory", () => {
 		const root = getRoot(Schema, initialTree);
 		root.grand = new ChildC({
 			child: new ChildD({
 				list: [new ChildA({ content: 43 }), new ChildB({ content: 43 })],
-				map: new Map<string, ChildA | ChildB>([
+				map: new Map<string, ChildAOrB>([
 					["a", new ChildA({ content: 43 })],
 					["b", new ChildB({ content: 43 })],
 				]),
@@ -124,14 +123,12 @@ describe("SharedTreeObject factories", () => {
 		assert.deepEqual(root.grand.child.map.get("b"), { content: 43 });
 	});
 
-	// TODO: Fix prototype for objects declared using 'class-schema'.
-	// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
 	it.skip("support nesting inside of a plain javascript object", () => {
 		const root = getRoot(Schema, initialTree);
 		root.grand = new ChildC({
 			child: new ChildD({
 				list: [new ChildA({ content: 43 }), new ChildB({ content: 43 })],
-				map: new Map<string, ChildA | ChildB>([
+				map: new Map<string, ChildAOrB>([
 					["a", new ChildA({ content: 43 })],
 					["b", new ChildB({ content: 43 })],
 				]),
