@@ -20,7 +20,7 @@ import {
 	ISharedObjectEvents,
 	SharedObject,
 } from '@fluidframework/shared-object-base';
-import { ITelemetryProperties } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
 import {
 	ITelemetryLoggerExt,
 	createChildLogger,
@@ -776,7 +776,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * Initialize shared tree with a serialized summary. This is used for testing.
 	 * @returns Statistics about the loaded summary.
 	 */
-	public loadSerializedSummary(blobData: string): ITelemetryProperties {
+	public loadSerializedSummary(blobData: string): ITelemetryBaseProperties {
 		const summary = deserialize(blobData, this.serializer);
 		this.loadSummary(summary);
 		return getSummaryStatistics(summary);
