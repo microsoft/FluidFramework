@@ -14,18 +14,4 @@ export class ObjectRecursive extends sf.objectRecursive("Object", {
 
 export class ListRecursive extends sf.arrayRecursive("List", [() => ListRecursive]) {}
 
-// #region Map
-
-// {
-// 	// @ts-expect-error Maps fail to recurse and need mapRecursive
-// 	const MapRef = () => RecursiveMap;
-// 	sf.fixRecursiveReference(MapRef);
-// 	// @ts-expect-error Maps fail to recurse and need mapRecursive
-// 	class RecursiveMap extends sf.map("NodeMap", [MapRef]) {}
-// }
-
-// const MapRef2 = () => MapRecursive;
-// sf.fixRecursiveReference(MapRef2);
-// export class MapRecursive extends sf.mapRecursive("Map", [MapRef2]) {}
-
-// // #endregion
+export class MapRecursive extends sf.mapRecursive("Map", [() => MapRecursive]) {}

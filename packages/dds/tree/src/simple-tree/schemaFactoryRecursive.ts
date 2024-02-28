@@ -20,7 +20,6 @@ import {
 	InsertableTypedNode,
 	NodeFromSchema,
 	NodeKind,
-	TreeMapNode,
 	TreeNodeSchema,
 	TreeNodeSchemaClass,
 	WithType,
@@ -85,6 +84,24 @@ export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAl
 			InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>,
 			TreeArrayNode
 		> {}
+
+/**
+ * {@link Unenforced} version of {@link TreeMapNode}.
+ * @internal
+ */
+export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypes>>
+	extends ReadonlyMap<string, TreeNodeFromImplicitAllowedTypesUnsafe<T>>,
+		TreeNode {
+	/**
+	 * {@inheritdoc TreeMapNode.set}
+	 */
+	set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T> | undefined): void;
+
+	/**
+	 * {@inheritdoc TreeMapNode.delete}
+	 */
+	delete(key: string): void;
+}
 
 /**
  * {@link Unenforced} version of {@link FieldSchema}.
@@ -206,11 +223,16 @@ export class SchemaFactoryRecursive<
 	 * TODO:
 	 * Figure out a way to make recursive prefilled maps work.
 	 */
-	public mapRecursive<Name extends TName, const T extends ImplicitAllowedTypes>(
+	public mapRecursive<Name extends TName, const T extends Unenforced<ImplicitAllowedTypes>>(
 		name: Name,
 		allowedTypes: T,
 	) {
-		class MapSchema extends this.namedMap_internal(name, allowedTypes, true, false) {
+		class MapSchema extends this.namedMap_internal(
+			name,
+			allowedTypes as T & ImplicitAllowedTypes,
+			true,
+			false,
+		) {
 			public constructor(data?: undefined | FlexTreeNode) {
 				if (isFlexTreeNode(data)) {
 					super(data as any);
@@ -223,7 +245,7 @@ export class SchemaFactoryRecursive<
 		return MapSchema as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Map,
-			TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>,
+			TreeMapNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>>,
 			undefined,
 			false
 		>;

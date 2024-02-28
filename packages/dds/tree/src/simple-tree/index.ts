@@ -41,6 +41,7 @@ export {
 	FieldSchemaUnsafe,
 	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
 	TreeArrayNodeUnsafe,
+	TreeMapNodeUnsafe,
 } from "./schemaFactoryRecursive.js";
 
 export {

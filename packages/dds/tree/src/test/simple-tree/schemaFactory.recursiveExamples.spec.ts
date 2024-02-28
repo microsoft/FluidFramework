@@ -33,7 +33,7 @@ import {
 	TreeFieldFromImplicitFieldUnsafe,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaFactoryRecursive.js";
-import { ListRecursive, ObjectRecursive } from "./testRecursiveSchema.js";
+import { ListRecursive, MapRecursive, ObjectRecursive } from "./testRecursiveSchema.js";
 
 describe("Recursive Class based end to end example", () => {
 	it("test", () => {
@@ -285,29 +285,29 @@ describe("Recursive Class based end to end example", () => {
 		}
 	});
 
-	// it("maps", () => {
-	// 	const factory = new TreeFactory({});
-	// 	const tree = factory.create(
-	// 		new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-	// 		"tree",
-	// 	);
+	it("maps", () => {
+		const factory = new TreeFactory({});
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
 
-	// 	const view: TreeView<MapRecursive> = tree.schematize(
-	// 		new TreeConfiguration(MapRecursive, () => new MapRecursive(undefined)),
-	// 	);
-	// 	const data = [...view.root];
-	// 	assert.deepEqual(data, []);
+		const view: TreeView<MapRecursive> = tree.schematize(
+			new TreeConfiguration(MapRecursive, () => new MapRecursive(undefined)),
+		);
+		const data = [...view.root];
+		assert.deepEqual(data, []);
 
-	// 	// Nested
-	// 	{
-	// 		type T = InsertableTreeNodeFromImplicitAllowedTypes<typeof MapRecursive>;
-	// 		const _check: T = new MapRecursive(undefined);
-	// 		// Only explicitly constructed recursive maps are currently allowed:
-	// 		type _check = requireTrue<areSafelyAssignable<T, MapRecursive>>;
-	// 	}
+		// Nested
+		{
+			type T = InsertableTreeNodeFromImplicitAllowedTypes<typeof MapRecursive>;
+			const _check: T = new MapRecursive(undefined);
+			// Only explicitly constructed recursive maps are currently allowed:
+			type _check = requireTrue<areSafelyAssignable<T, MapRecursive>>;
+		}
 
-	// 	view.root.set("x", new MapRecursive(undefined));
+		view.root.set("x", new MapRecursive(undefined));
 
-	// 	view.root.get("x")?.set("x", new MapRecursive(undefined));
-	// });
+		view.root.get("x")?.set("x", new MapRecursive(undefined));
+	});
 });
