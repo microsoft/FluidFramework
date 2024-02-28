@@ -44,7 +44,7 @@ function createLocalLoader(
 
 describe("LocalTestServer", () => {
 	const documentId = "localServerTest";
-	const documentLoadUrl = `fluid-test://localhost/${documentId}`;
+	const documentLoadUrl = `https://localhost/${documentId}`;
 	const stringId = "stringKey";
 	const codeDetails: IFluidCodeDetails = {
 		package: "localServerTestPackage",

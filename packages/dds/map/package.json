@@ -95,6 +95,7 @@
 		"test:memory-profiling:report": "mocha --config ./src/test/memory/.mocharc.cjs",
 		"test:mocha": "mocha --recursive \"dist/test/mocha/**/*.spec.*js\" -r node_modules/@fluid-internal/mocha-test-setup --exit",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
+		"test:snapshots:regen": "npm run test:mocha -- --snapshot",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
