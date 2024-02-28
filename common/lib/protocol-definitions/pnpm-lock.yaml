@@ -19,7 +19,7 @@ importers:
       '@fluid-tools/build-cli': ^0.26.1
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
-      '@fluidframework/eslint-config-fluid': ^3.2.0
+      '@fluidframework/eslint-config-fluid': ^4.0.0
       '@fluidframework/protocol-definitions-previous': npm:@fluidframework/protocol-definitions@2.0.0
       '@microsoft/api-extractor': ^7.39.1
       concurrently: ^6.2.0
@@ -35,7 +35,7 @@ importers:
       '@fluid-tools/build-cli': 0.26.1_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.26.1
-      '@fluidframework/eslint-config-fluid': 3.2.0_bpztyfltmpuv6lhsgzfwtmxhte
+      '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/protocol-definitions-previous': /@fluidframework/protocol-definitions/2.0.0
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i
       concurrently: 6.5.1
@@ -344,8 +344,8 @@ packages:
     resolution: {integrity: sha512-KaoQ7w2MDH5OeRKVatL5yVOCFg+9wD6bLSLFh1/TV1EZM46l49iBqO7UVjUtPE6BIm0jvvOzJXULGVSpzokX3g==}
     dev: true
 
-  /@fluidframework/eslint-config-fluid/3.2.0_bpztyfltmpuv6lhsgzfwtmxhte:
-    resolution: {integrity: sha512-As6k5Jj5dMAUKM5ejyGMdXo+AEYPAg7WOQEisL8eyyoPqjpjlz/D3CCs/nCGL7X+gbsXts50l89F98r626k9jg==}
+  /@fluidframework/eslint-config-fluid/4.0.0_bpztyfltmpuv6lhsgzfwtmxhte:
+    resolution: {integrity: sha512-mLE+1uocMaMACF51EPhnGgLi2okbKRAPE53RzC3Jd2CfqqIGk2sk8yrsvw7KVfeBp8w0Mf646ZM17yAbNTErDg==}
     dependencies:
       '@microsoft/tsdoc': 0.14.2
       '@rushstack/eslint-patch': 1.4.0
@@ -364,7 +364,6 @@ packages:
       eslint-plugin-tsdoc: 0.2.17
       eslint-plugin-unicorn: 48.0.1_eslint@8.55.0
       eslint-plugin-unused-imports: 3.0.0_q2lq45qjv2a3kzwivaf2whp57u
-      ts-morph: 20.0.0
     transitivePeerDependencies:
       - eslint
       - eslint-import-resolver-node
@@ -1575,15 +1574,6 @@ packages:
       fast-glob: 3.3.2
       minimatch: 5.1.6
       mkdirp: 1.0.4
-      path-browserify: 1.0.1
-    dev: true
-
-  /@ts-morph/common/0.21.0:
-    resolution: {integrity: sha512-ES110Mmne5Vi4ypUKrtVQfXFDtCsDXiUiGxF6ILVlE90dDD4fdpC1LSjydl/ml7xJWKSDZwUYD2zkOePMSrPBA==}
-    dependencies:
-      fast-glob: 3.3.2
-      minimatch: 7.4.6
-      mkdirp: 2.1.6
       path-browserify: 1.0.1
     dev: true
 
@@ -2981,10 +2971,6 @@ packages:
 
   /code-block-writer/11.0.3:
     resolution: {integrity: sha512-NiujjUFB4SwScJq2bwbYUtXbZhBSlY6vYzm++3Q6oC+U+injTqfPYFK8wS9COOmb2lueqp0ZRB4nK1VYeHgNyw==}
-    dev: true
-
-  /code-block-writer/12.0.0:
-    resolution: {integrity: sha512-q4dMFMlXtKR3XNBHyMHt/3pwYNA69EDk00lloMOaaUMKPUXBw6lpXtbu3MMVG6/uOihGnRDOlkyqsONEUj60+w==}
     dev: true
 
   /color-convert/1.9.3:
@@ -6389,12 +6375,6 @@ packages:
     hasBin: true
     dev: true
 
-  /mkdirp/2.1.6:
-    resolution: {integrity: sha512-+hEnITedc8LAtIP9u3HJDFIdcLV2vXP33sqLLIzkv1Db1zO/1OxbvYf0Y1OC/S/Qo5dxHXepofhmxL02PsKe+A==}
-    engines: {node: '>=10'}
-    hasBin: true
-    dev: true
-
   /mock-stdin/1.0.0:
     resolution: {integrity: sha512-tukRdb9Beu27t6dN+XztSRHq9J0B/CoAOySGzHfn8UTfmqipA5yNT/sDUEyYdAV3Hpka6Wx6kOMxuObdOex60Q==}
     dev: true
@@ -8765,13 +8745,6 @@ packages:
     dependencies:
       '@ts-morph/common': 0.18.1
       code-block-writer: 11.0.3
-    dev: true
-
-  /ts-morph/20.0.0:
-    resolution: {integrity: sha512-JVmEJy2Wow5n/84I3igthL9sudQ8qzjh/6i4tmYCm6IqYyKFlNbJZi7oBdjyqcWSWYRu3CtL0xbT6fS03ESZIg==}
-    dependencies:
-      '@ts-morph/common': 0.21.0
-      code-block-writer: 12.0.0
     dev: true
 
   /ts-node/10.9.1_typescript@5.1.6:
