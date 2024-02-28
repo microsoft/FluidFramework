@@ -172,7 +172,7 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 	});
 
 	// TODO: enable this test, because it fails for local server.
-	it.skip("Can create loadingGroupId via detached flow", async () => {
+	it("Can create loadingGroupId via detached flow", async () => {
 		const container = await provider.createDetachedContainer(runtimeFactory);
 		const mainObject = (await container.getEntryPoint()) as TestDataObject;
 		const containerRuntime = mainObject.containerRuntime;
@@ -185,11 +185,10 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			testDataObjectType,
 			loadingGroupId,
 		);
-		const dataObject = (await dataStore.entryPoint.get()) as TestDataObject;
-		const dataObject2 = (await dataStore2.entryPoint.get()) as TestDataObject;
-		mainObject._root.set("dataObject", dataObject.handle);
-		mainObject._root.set("dataObject2", dataObject2.handle);
-		mainObject._root.delete("dataObject2");
+		const dataObjectA = (await dataStore.entryPoint.get()) as TestDataObject;
+		const dataObjectB = (await dataStore2.entryPoint.get()) as TestDataObject;
+		mainObject._root.set("dataObjectA", dataObjectA.handle);
+		mainObject._root.set("dataObjectB", dataObjectB.handle);
 
 		await provider.attachDetachedContainer(container);
 		// TODO: Enable this portion in tinylicious

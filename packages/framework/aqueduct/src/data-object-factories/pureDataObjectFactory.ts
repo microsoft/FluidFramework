@@ -34,7 +34,11 @@ import {
 } from "@fluidframework/synthesize";
 
 import { assert } from "@fluidframework/core-utils";
-import { type IDataObjectProps, type PureDataObject, type DataObjectTypes } from "../data-objects";
+import {
+	type IDataObjectProps,
+	type PureDataObject,
+	type DataObjectTypes,
+} from "../data-objects/index.js";
 
 /**
  * Proxy over PureDataObject

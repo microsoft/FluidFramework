@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { parseAuthErrorClaims } from "../parseAuthErrorClaims";
+import { parseAuthErrorClaims } from "../parseAuthErrorClaims.js";
 
 const invalidWwwAuthenticateHeaderWithoutError =
 	'Bearer realm="6c482541-f706-4168-9e58-8e35a9992f58",client_id="00000003-0000-0ff1-ce00-000000000000",trusted_issuers="00000001-0000-0000-c000-000000000000@*,D3776938-3DBA-481F-A652-4BEDFCAB7CD8@*,https://sts.windows.net/*/,00000003-0000-0ff1-ce00-000000000000@90140122-8516-11e1-8eff-49304924019b",authorization_uri="https://login.windows.net/common/oauth2/authorize",not_error="insufficient_claims",claims="eyJhY2Nlc3NfdG9rZW4iOnsibmJmIjp7ImVzc2VudGlhbCI6dHJ1ZSwgInZhbHVlIjoiMTU5Nzk1OTA5MCJ9fX0="';
