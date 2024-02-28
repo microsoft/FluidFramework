@@ -38,7 +38,7 @@ module.exports = {
 	moduleNameMapper: {
 		"\\.(css|less)$": "identity-obj-proxy",
 		// Force module sinon to resolve with the CJS entry point, because Jest does not support package.json.exports. Somewhat similar issue: https://github.com/uuidjs/uuid/issues/451
-		"^sinon$": require.resolve("sinon"),
+		"^sinon$": "<rootDir>/node_modules/sinon/lib/sinon.js",
 		// '\\.svg$': '<rootDir>/__mocks__/svgrMock.js'
 	},
 
