@@ -38,16 +38,27 @@ export const CollabSessionWebhookEvents = {
  */
 export type CollabSessionWebhookEvent = keyof typeof CollabSessionWebhookEvents;
 
+export const SummaryWebhookEvents = {
+	NEW_SUMMARY_CREATED: "NEW_SUMMARY_CREATED",
+} as const;
+
+/**
+ * The type for all {@link CollabSessionWebhookEvents} Webhook events
+ */
+export type SummaryWebhookEvent = keyof typeof SummaryWebhookEvents;
+
 /**
  * Exhaustive type for all Webhook events
  */
-export type WebhookEvent = keyof typeof CollabSessionWebhookEvents;
+export type WebhookEvent = CollabSessionWebhookEvent | SummaryWebhookEvent;
 
 /**
  * Type guard to determine if a given string is a valid {@link WebhookEvent}
  */
 export function isWebhookEvent(value: string): value is WebhookEvent {
 	if (Object.values(CollabSessionWebhookEvents).includes(value as any)) {
+		return true;
+	} else if (Object.values(SummaryWebhookEvents).includes(value as any)) {
 		return true;
 	}
 

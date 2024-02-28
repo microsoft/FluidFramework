@@ -30,6 +30,8 @@ import {
 	IQueuedMessage,
 	IPartitionLambda,
 	LambdaCloseType,
+	IWebhookManager,
+	SummaryWebhookEvents,
 } from "@fluidframework/server-services-core";
 import {
 	getLumberBaseProperties,
@@ -118,6 +120,7 @@ export class ScribeLambda implements IPartitionLambda {
 		private readonly kafkaCheckpointOnReprocessingOp: boolean,
 		private readonly isEphemeralContainer: boolean,
 		private readonly localCheckpointEnabled: boolean,
+		private readonly webhookManager?: IWebhookManager,
 	) {
 		this.lastOffset = scribe.logOffset;
 		this.setStateFromCheckpoint(scribe);
@@ -288,6 +291,15 @@ export class ScribeLambda implements IPartitionLambda {
 												tenantId: this.tenantId,
 											},
 										});
+										this.webhookManager?.handleEvent(
+											SummaryWebhookEvents.NEW_SUMMARY_CREATED,
+											{
+												eventName: SummaryWebhookEvents.NEW_SUMMARY_CREATED,
+												tenantId: this.tenantId,
+												documentId: this.documentId,
+												summaryResult,
+											},
+										);
 										Lumberjack.info(
 											summaryResult,
 											getLumberBaseProperties(this.documentId, this.tenantId),

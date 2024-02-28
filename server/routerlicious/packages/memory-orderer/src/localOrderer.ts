@@ -37,6 +37,7 @@ import {
 	IDocumentRepository,
 	ICheckpointRepository,
 	CheckpointService,
+	type IWebhookManager,
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { ILocalOrdererSetup } from "./interfaces";
@@ -123,6 +124,7 @@ export class LocalOrderer implements IOrderer {
 		deliContext: IContext = new LocalContext(logger),
 		moiraContext: IContext = new LocalContext(logger),
 		serviceConfiguration: Partial<IServiceConfiguration> = {},
+		webhookManager?: IWebhookManager,
 	) {
 		const documentDetails = await setup.documentP();
 
@@ -139,6 +141,7 @@ export class LocalOrderer implements IOrderer {
 			deliContext,
 			moiraContext,
 			merge({}, DefaultServiceConfiguration, serviceConfiguration),
+			webhookManager,
 		);
 	}
 
@@ -168,6 +171,7 @@ export class LocalOrderer implements IOrderer {
 		private readonly deliContext: IContext,
 		private readonly moiraContext: IContext,
 		private readonly serviceConfiguration: IServiceConfiguration,
+		private readonly webhookManager: IWebhookManager,
 	) {
 		this.existing = details.existing;
 		this.dbObject = this.getDeliState();
@@ -399,6 +403,7 @@ export class LocalOrderer implements IOrderer {
 			true,
 			this.details.value.isEphemeralContainer,
 			checkpointService.getLocalCheckpointEnabled(),
+			this.webhookManager,
 		);
 	}
 

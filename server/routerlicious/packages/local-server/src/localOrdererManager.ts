@@ -17,6 +17,7 @@ import {
 	IServiceConfiguration,
 	MongoCheckpointRepository,
 	MongoDocumentRepository,
+	type IWebhookManager,
 } from "@fluidframework/server-services-core";
 
 /**
@@ -37,6 +38,7 @@ export class LocalOrdererManager implements IOrdererManager {
 		private readonly pubsub?: IPubSub,
 		private readonly documentRepository?: IDocumentRepository,
 		private readonly checkpointRepository?: ICheckpointRepository,
+		private readonly webhookManager?: IWebhookManager,
 	) {}
 
 	/**
@@ -127,6 +129,7 @@ export class LocalOrdererManager implements IOrdererManager {
 			undefined /* deliContext */,
 			undefined /* moiraContext */,
 			this.serviceConfiguration,
+			this.webhookManager,
 		);
 
 		const lambdas = [

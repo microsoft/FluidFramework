@@ -12,6 +12,7 @@ import {
 	MongoManager,
 	DefaultMetricClient,
 	IRunner,
+	type IWebhookManager,
 } from "@fluidframework/server-services-core";
 // eslint-disable-next-line import/no-deprecated
 import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
@@ -24,7 +25,6 @@ import {
 import { TestClientManager } from "@fluidframework/server-test-utils";
 import detect from "detect-port";
 import * as app from "./app";
-import { WebhookManager } from "./services";
 
 export class TinyliciousRunner implements IRunner {
 	private server?: IWebServer;
@@ -42,6 +42,7 @@ export class TinyliciousRunner implements IRunner {
 		private readonly mongoManager: MongoManager,
 		// eslint-disable-next-line import/no-deprecated
 		private readonly collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+		private readonly webhookManager?: IWebhookManager,
 	) {}
 
 	public async start(): Promise<void> {
@@ -62,15 +63,13 @@ export class TinyliciousRunner implements IRunner {
 			throw e;
 		}
 
-		const webhookManager = new WebhookManager();
-
 		const alfred = app.create(
 			this.config,
 			this.storage,
 			this.mongoManager,
 			this.tenantManager,
 			this.collaborationSessionEventEmitter,
-			webhookManager,
+			this.webhookManager,
 		);
 		alfred.set("port", this.port);
 
@@ -108,7 +107,7 @@ export class TinyliciousRunner implements IRunner {
 			undefined /* revokedTokenChecker */,
 			this.collaborationSessionEventEmitter /* collaborationSessionEventEmitter  */,
 			undefined /* clusterDrainingChecker */,
-			webhookManager,
+			this.webhookManager,
 		);
 
 		// Listen on provided port, on all network interfaces.

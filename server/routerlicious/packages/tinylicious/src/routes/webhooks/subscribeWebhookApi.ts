@@ -33,6 +33,7 @@ export function createSubscribeWebhookUrlApiRoute(webhookManager: IWebhookManage
 		const apiRequest = request.body as SubscribeWebhookUrlApiRequest;
 		if (apiRequest.documentId === undefined || typeof apiRequest.documentId !== "string") {
 			response.status(400).json({ message: "Invalid or no document id was provided" });
+			return;
 		}
 
 		if (
@@ -41,6 +42,7 @@ export function createSubscribeWebhookUrlApiRoute(webhookManager: IWebhookManage
 			apiRequest.subscriptionRequests.length === 0
 		) {
 			response.status(400).json({ message: "No subscription requests were provided" });
+			return;
 		}
 
 		apiRequest.subscriptionRequests.forEach((subscriptionRequest) => {
@@ -48,6 +50,7 @@ export function createSubscribeWebhookUrlApiRoute(webhookManager: IWebhookManage
 				response
 					.status(400)
 					.json({ message: `Invalid event name: ${subscriptionRequest.eventName}` });
+				return;
 			}
 
 			if (
@@ -58,6 +61,7 @@ export function createSubscribeWebhookUrlApiRoute(webhookManager: IWebhookManage
 				response.status(400).json({
 					message: `Url ${subscriptionRequest.url} is already subscribed to event name: ${subscriptionRequest.eventName}`,
 				});
+				return;
 			}
 		});
 

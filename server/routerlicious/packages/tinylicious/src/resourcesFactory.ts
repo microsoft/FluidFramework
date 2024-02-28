@@ -26,6 +26,7 @@ import {
 	getDbFactory,
 	WebServerFactory,
 	StorageNameAllocator,
+	WebhookManager,
 } from "./services";
 
 const defaultTinyliciousPort = 7070;
@@ -75,6 +76,7 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 		});
 		const pubsub = new PubSubPublisher(io);
 		const webServerFactory = new WebServerFactory(io);
+		const webhookManager = new WebhookManager();
 
 		// This produces a static object with the merged settings from all the stores in the nconf Provider.
 		// It includes env variables that we probably don't need to pass to the LocalOrderManager, but small price to pay
@@ -94,6 +96,9 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 			winston,
 			frozenConfig,
 			pubsub,
+			undefined,
+			undefined,
+			webhookManager,
 		);
 
 		const collaborationSessionEventEmitter =
@@ -109,6 +114,7 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 			port,
 			webServerFactory,
 			collaborationSessionEventEmitter,
+			webhookManager,
 		);
 	}
 }

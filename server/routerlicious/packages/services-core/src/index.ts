@@ -169,6 +169,8 @@ export {
 	IWebhookManager,
 	CollabSessionWebhookEvents,
 	CollabSessionWebhookEvent,
+	SummaryWebhookEvents,
+	SummaryWebhookEvent,
 	WebhookEvent,
 	isWebhookEvent,
 } from "./webhookManager";

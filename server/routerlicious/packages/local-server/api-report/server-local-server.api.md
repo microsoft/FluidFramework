@@ -17,6 +17,7 @@ import { IOrdererManager } from '@fluidframework/server-services-core';
 import { IPubSub } from '@fluidframework/server-memory-orderer';
 import { IServiceConfiguration } from '@fluidframework/server-services-core';
 import { ITestDbFactory } from '@fluidframework/server-test-utils';
+import { IWebhookManager } from '@fluidframework/server-services-core';
 import { IWebSocket } from '@fluidframework/server-services-core';
 import { IWebSocketServer } from '@fluidframework/server-services-core';
 
@@ -56,7 +57,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 
 // @internal (undocumented)
 export class LocalOrdererManager implements IOrdererManager {
-    constructor(storage: IDocumentStorage, databaseManager: IDatabaseManager, createHistorian: (tenant: string) => Promise<IHistorian>, logger: ILogger, serviceConfiguration?: Partial<IServiceConfiguration> | undefined, pubsub?: IPubSub | undefined, documentRepository?: IDocumentRepository | undefined, checkpointRepository?: ICheckpointRepository | undefined);
+    constructor(storage: IDocumentStorage, databaseManager: IDatabaseManager, createHistorian: (tenant: string) => Promise<IHistorian>, logger: ILogger, serviceConfiguration?: Partial<IServiceConfiguration> | undefined, pubsub?: IPubSub | undefined, documentRepository?: IDocumentRepository | undefined, checkpointRepository?: ICheckpointRepository | undefined, webhookManager?: IWebhookManager | undefined);
     close(): Promise<void>;
     // (undocumented)
     getOrderer(tenantId: string, documentId: string): Promise<IOrderer>;
