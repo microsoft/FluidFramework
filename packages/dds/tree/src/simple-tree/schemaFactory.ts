@@ -17,7 +17,7 @@ import {
 	isFluidHandle,
 } from "../feature-libraries/index.js";
 import { leaf } from "../domains/index.js";
-import { TreeNodeSchemaIdentifier, TreeValue } from "../core/index.js";
+import { TreeNodeSchemaIdentifier, TreeValue, type FieldKey } from "../core/index.js";
 import {
 	createNodeProxy,
 	createRawNodeProxy,
@@ -47,6 +47,7 @@ import {
 	TreeNodeSchemaNonClass,
 	WithType,
 	type,
+	type FieldProps,
 } from "./schemaTypes.js";
 import { TreeNode } from "./types.js";
 import { TreeArrayNode } from "./treeArrayNode.js";
@@ -698,8 +699,9 @@ export class SchemaFactory<
 	 */
 	public optional<const T extends ImplicitAllowedTypes>(
 		t: T,
+		props?: FieldProps,
 	): FieldSchema<FieldKind.Optional, T> {
-		return new FieldSchema(FieldKind.Optional, t);
+		return new FieldSchema(FieldKind.Optional, t, props);
 	}
 
 	/**
