@@ -10469,6 +10469,7 @@ importers:
       c8: ^8.0.1
       cross-env: ^7.0.3
       eslint: ~8.55.0
+      lodash: ^4.17.21
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
@@ -10529,6 +10530,7 @@ importers:
       '@fluidframework/undo-redo': link:../../framework/undo-redo
       '@types/sinon': 17.0.3
       cross-env: 7.0.3
+      lodash: 4.17.21
       mocha: 10.2.0
       semver: 7.5.4
       sinon: 17.0.1
@@ -41926,7 +41928,7 @@ packages:
       schema-utils: 3.3.0
       serialize-javascript: 6.0.1
       terser: 5.24.0
-      webpack: 5.89.0_webpack-cli@4.10.0
+      webpack: 5.89.0
 
   /terser/4.8.1:
     resolution: {integrity: sha512-4GnLC0x667eJG0ewJTa6z/yXrbLGv80D9Ru6HIpCQmO+Q4PfEtBFi0ObSckqwL6VyQv/7ENJieXHo2ANmdQwgw==}
@@ -44266,7 +44268,6 @@ packages:
       - '@swc/core'
       - esbuild
       - uglify-js
-    dev: true
 
   /webpack/5.89.0_webpack-cli@4.10.0:
     resolution: {integrity: sha512-qyfIC10pOr70V+jkmud8tMfajraGCZMBWJtrmuBymQKCrLTRejBI8STDp1MCyZu/QTdZSeacCQYpYNQVOzX5kw==}
