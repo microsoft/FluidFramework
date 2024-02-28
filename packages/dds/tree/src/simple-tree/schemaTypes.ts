@@ -125,7 +125,10 @@ export interface TreeNodeSchemaCore<
 
 	/**
 	 * Data used to define this schema.
+	 *
+	 * @remarks
 	 * The format depends on the kind of node it is for.
+	 * For example, the "object" node kind could store the field schema here.
 	 */
 	readonly info: Info;
 
