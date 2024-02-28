@@ -10,7 +10,7 @@ export {
 	createRuntimeMessage,
 	IRuntimeSignalEnvelope,
 } from "./messageGenerator";
-export { NoOpLambda } from "./noOpLambda";
+export { NoOpLambda, NoOpLambdaCheckpointConfiguration } from "./noOpLambda";
 export { createSessionMetric, logCommonSessionEndMetrics } from "./telemetryHelper";
 export { isDocumentSessionValid, isDocumentValid } from "./validateDocument";
 export { CheckpointReason, ICheckpoint } from "./checkpointHelper";
