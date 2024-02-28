@@ -4,30 +4,14 @@
  */
 
 /**
- * Examples of known categories, however category can be any string for extensibility.
- *
- * @deprecated Moved to \@fluidframework/telemetry-utils package
- * @public
- */
-export type TelemetryEventCategory = "generic" | "error" | "performance";
-
-/**
  * Property types that can be logged.
  *
  * @remarks Logging entire objects is considered extremely dangerous from a telemetry point of view because people can
  * easily add fields to objects that shouldn't be logged and not realize it's going to be logged.
  * General best practice is to explicitly log the fields you care about from objects.
- * @alpha
- */
-export type TelemetryBaseEventPropertyType = TelemetryEventPropertyType;
-
-/**
- * {@inheritDoc TelemetryBaseEventPropertyType}
- *
- * @deprecated Renamed to {@link TelemetryBaseEventPropertyType}
  * @public
  */
-export type TelemetryEventPropertyType = string | number | boolean | undefined;
+export type TelemetryBaseEventPropertyType = string | number | boolean | undefined;
 
 /**
  * A property to be logged to telemetry may require a tag indicating the value may contain sensitive data.
@@ -43,30 +27,15 @@ export interface Tagged<V, T extends string = string> {
 }
 
 /**
- * @see {@link Tagged} for info on tagging
- *
- * @deprecated Use Tagged\<TelemetryBaseEventPropertyType\>
- * @internal
- */
-export interface ITaggedTelemetryPropertyType {
-	value: TelemetryEventPropertyType;
-	tag: string;
-}
-
-/**
  * JSON-serializable properties, which will be logged with telemetry.
  * @public
  */
-export type ITelemetryBaseProperties = ITelemetryProperties;
-
-/**
- * {@inheritDoc ITelemetryBaseProperties}
- *
- * @deprecated Renamed to {@link ITelemetryBaseProperties}
- * @public
- */
-export interface ITelemetryProperties {
-	[index: string]: TelemetryEventPropertyType | Tagged<TelemetryEventPropertyType>;
+export interface ITelemetryBaseProperties {
+	/**
+	 * Properties of a telemetry event. They are string-indexed, and their values restricted to a known set of
+	 * types (optionally "wrapped" with {@link Tagged}).
+	 */
+	[index: string]: TelemetryBaseEventPropertyType | Tagged<TelemetryBaseEventPropertyType>;
 }
 
 /**
@@ -116,7 +85,7 @@ export interface ITelemetryBaseLogger {
  * No replacement intended for FluidFramework consumers.
  * @public
  */
-export interface ITelemetryErrorEvent extends ITelemetryProperties {
+export interface ITelemetryErrorEvent extends ITelemetryBaseProperties {
 	eventName: string;
 }
 

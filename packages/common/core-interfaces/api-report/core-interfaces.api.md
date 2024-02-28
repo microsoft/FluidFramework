@@ -404,14 +404,6 @@ export interface ISignalEnvelope {
     };
 }
 
-// @internal @deprecated (undocumented)
-export interface ITaggedTelemetryPropertyType {
-    // (undocumented)
-    tag: string;
-    // (undocumented)
-    value: TelemetryEventPropertyType;
-}
-
 // @public
 export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
     // (undocumented)
@@ -429,12 +421,8 @@ export interface ITelemetryBaseLogger {
 }
 
 // @public
-export type ITelemetryBaseProperties = ITelemetryProperties;
-
-// @public @deprecated
-export interface ITelemetryProperties {
-    // (undocumented)
-    [index: string]: TelemetryEventPropertyType | Tagged<TelemetryEventPropertyType>;
+export interface ITelemetryBaseProperties {
+    [index: string]: TelemetryBaseEventPropertyType | Tagged<TelemetryBaseEventPropertyType>;
 }
 
 // @alpha
@@ -472,14 +460,8 @@ export interface Tagged<V, T extends string = string> {
     value: V;
 }
 
-// @alpha
-export type TelemetryBaseEventPropertyType = TelemetryEventPropertyType;
-
-// @public @deprecated
-export type TelemetryEventCategory = "generic" | "error" | "performance";
-
-// @public @deprecated
-export type TelemetryEventPropertyType = string | number | boolean | undefined;
+// @public
+export type TelemetryBaseEventPropertyType = string | number | boolean | undefined;
 
 // @public
 export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;
