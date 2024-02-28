@@ -302,7 +302,7 @@ export class SchemaFactory<
 				super();
 				// Currently this just does validation. All other logic is in the subclass.
 				if (isFlexTreeNode(input) && getClassSchema(input.schema) !== this.constructor) {
-					throw new UsageError(
+					throw new TypeError(
 						`The provided input is incompatible with "${schema.identifier}" schema.`,
 					);
 				}
