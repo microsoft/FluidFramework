@@ -13,7 +13,14 @@ import { SharedMatrix } from "../matrix";
 import { extract } from "./utils";
 
 describe("SharedMatrix reconnect", () => {
-	// https://dev.azure.com/fluidframework/internal/_workitems/edit/7217
+	/**
+	 * This test case is interesting because it exercises the logic in merge-tree to normalize segment order on resubmit.
+	 * Specifically, this logic ensures that the column inserted by matrix 2 is inserted before the 2 existing columns once
+	 * acked, since it gets sequenced with refSeq beyond the removal of the 2 existing columns.
+	 * This logic needs to be accounted for in some way by matrix's resubmit codepath (it must use a mechanism stable to that
+	 * rearrangement of segments like local references, or otherwise listen to the right events on its row/col clients to
+	 * make sure positions are rebased appropriately).
+	 */
 	it("rebase setCell in inserted column with overlapping remove", () => {
 		const factory = SharedMatrix.getFactory();
 		const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
@@ -67,7 +74,6 @@ describe("SharedMatrix reconnect", () => {
 		assert.deepEqual(extract(matrix2), expected);
 	});
 
-	// https://dev.azure.com/fluidframework/internal/_workitems/edit/7217
 	it("discards setCell in removed column", () => {
 		const factory = SharedMatrix.getFactory();
 		const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
