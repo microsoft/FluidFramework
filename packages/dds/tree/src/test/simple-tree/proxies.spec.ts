@@ -6,9 +6,12 @@
 import { strict as assert } from "assert";
 import { MockHandle } from "@fluidframework/test-runtime-utils";
 import { TreeArrayNode, NodeFromSchema, SchemaFactory } from "../../simple-tree/index.js";
+// TODO: test other things from "proxies" file.
+// eslint-disable-next-line import/no-internal-modules
+import { isTreeNode } from "../../simple-tree/proxies.js";
 import { getRoot, pretty } from "./utils.js";
 
-describe("SharedTree proxies", () => {
+describe("simple-tree proxies", () => {
 	const sb = new SchemaFactory("test");
 
 	const childSchema = sb.object("object", {
@@ -50,8 +53,20 @@ describe("SharedTree proxies", () => {
 		const mapProxyAgain = root.map;
 		assert.equal(mapProxyAgain, mapProxy);
 	});
+
+	it("isTreeNode", () => {
+		// Non object
+		assert(!isTreeNode(5));
+		// Non node object
+		assert(!isTreeNode({}));
+		// Unhydrated node:
+		assert(isTreeNode(new childSchema({ content: 5 })));
+		// Hydrated node:
+		assert(isTreeNode(getRoot(schema, initialTree)));
+	});
 });
 
+// TODO: nest these tests in the top level block to reduce total number of top level test suites
 describe("SharedTreeObject", () => {
 	const sb = new SchemaFactory("test");
 
@@ -151,9 +166,7 @@ describe("SharedTreeList", () => {
 		const obj = _.object("Obj", { id: _.string });
 		const schema = _.array(obj);
 
-		// TODO: Fix prototype for objects declared using 'class-schema'.
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-		it.skip("insertAtStart()", () => {
+		it("insertAtStart()", () => {
 			const root = getRoot(schema, () => [{ id: "B" }]);
 			assert.deepEqual(root, [{ id: "B" }]);
 			const newItem = new obj({ id: "A" });
@@ -163,9 +176,7 @@ describe("SharedTreeList", () => {
 			assert.deepEqual(root, [newItem, { id: "B" }]);
 		});
 
-		// TODO: Fix prototype for objects declared using 'class-schema'.
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-		it.skip("insertAtEnd()", () => {
+		it("insertAtEnd()", () => {
 			const root = getRoot(schema, () => [{ id: "A" }]);
 			assert.deepEqual(root, [{ id: "A" }]);
 			const newItem = new obj({ id: "B" });
@@ -175,9 +186,7 @@ describe("SharedTreeList", () => {
 			assert.deepEqual(root, [{ id: "A" }, newItem]);
 		});
 
-		// TODO: Fix prototype for objects declared using 'class-schema'.
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-		it.skip("insertAt()", () => {
+		it("insertAt()", () => {
 			const root = getRoot(schema, () => [{ id: "A" }, { id: "C" }]);
 			assert.deepEqual(root, [{ id: "A" }, { id: "C" }]);
 			const newItem = new obj({ id: "B" });
@@ -187,9 +196,7 @@ describe("SharedTreeList", () => {
 			assert.deepEqual(root, [{ id: "A" }, newItem, { id: "C" }]);
 		});
 
-		// TODO: Fix prototype for objects declared using 'class-schema'.
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-		it.skip("at()", () => {
+		it("at()", () => {
 			const root = getRoot(schema, () => [{ id: "B" }]);
 			assert.equal(root.at(0), root[0]);
 			assert.deepEqual(root, [{ id: "B" }]);
