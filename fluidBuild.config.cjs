@@ -72,7 +72,9 @@ module.exports = {
 			script: true,
 		},
 		"build:docs": ["tsc"],
-		"ci:build:docs": ["tsc"],
+		// The package's local 'api-extractor.json' may build either CJS or ESM, therefore
+		// we need to require both before running api-extractor.
+		"ci:build:docs": ["tsc", "build:esnext"],
 		"build:readme": {
 			dependsOn: ["build:manifest"],
 			script: true,
