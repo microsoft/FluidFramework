@@ -155,9 +155,9 @@ if (pkg.scripts["build:test"]) {
 
 // Rewrite test scripts
 if (pkg.scripts["test:mocha"]) {
-	pkg.scripts["test:mocha"] = "npm run test:mocha:cjs && npm run test:mocha:esm";
-	pkg.scripts["test:mocha:cjs"] = "mocha --recursive \"dist/test/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup";
-	pkg.scripts["test:mocha:esm"] = "mocha --recursive \"lib/test/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup";
+	pkg.scripts["test:mocha"] = "npm run test:mocha:esm && npm run test:mocha:cjs";
+	pkg.scripts["test:mocha:cjs"] = "mocha --recursive \"dist/test/**/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup";
+	pkg.scripts["test:mocha:esm"] = "mocha --recursive \"lib/test/**/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup";
 }
 
 pkg.scripts["tsc"] = `fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ${workspaceRoot}/common/build/build-common/src/cjs/package.json ./dist`;
@@ -188,6 +188,14 @@ if (fs.existsSync(apiExtractorEsmPath)) {
 		}
 	}`;
 	fs.writeFileSync(apiExtractorCjsPath, apiExtractorCjs);
+
+	const apiExtractorLintPath = path.join(packageRoot, "api-extractor-lint.json");
+	const apiExtractorLint = `{
+		"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
+		"extends": "${workspaceRoot}/common/build/build-common/api-extractor-lint.esm.primary.json"
+	}
+	`;
+	fs.writeFileSync(apiExtractorLintPath, apiExtractorLint);
 }
 
 // Update tsconfig
