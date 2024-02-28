@@ -65,6 +65,9 @@ export function createResponseError(status: number, value: string, request: IReq
     [key: string]: any;
 }): IResponse;
 
+// @internal
+export function encodeNumber(numArg: number, prefix?: string): string;
+
 // @internal (undocumented)
 export function exceptionToResponse(err: any): IResponse;
 

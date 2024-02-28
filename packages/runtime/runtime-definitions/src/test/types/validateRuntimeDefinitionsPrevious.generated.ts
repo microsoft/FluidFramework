@@ -295,6 +295,7 @@ declare function get_old_InterfaceDeclaration_IContainerRuntimeBase():
 declare function use_current_InterfaceDeclaration_IContainerRuntimeBase(
     use: TypeOnly<current.IContainerRuntimeBase>): void;
 use_current_InterfaceDeclaration_IContainerRuntimeBase(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainerRuntimeBase());
 
 /*

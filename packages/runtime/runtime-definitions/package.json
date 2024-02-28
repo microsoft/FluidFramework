@@ -144,6 +144,9 @@
 			"RemovedTypeAliasDeclaration_StableId": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"InterfaceDeclaration_IContainerRuntimeBase": {
+				"forwardCompat": false
 			}
 		}
 	}

@@ -43,11 +43,11 @@ export const isDataStoreAliasMessage = (
 
 export const channelToDataStore = (
 	fluidDataStoreChannel: IFluidDataStoreChannel,
-	internalId: string,
 	runtime: ContainerRuntime,
 	datastores: DataStores,
 	logger: ITelemetryLoggerExt,
-): IDataStore => new DataStore(fluidDataStoreChannel, internalId, runtime, datastores, logger);
+): IDataStore =>
+	new DataStore(fluidDataStoreChannel, fluidDataStoreChannel.id, runtime, datastores, logger);
 
 enum AliasState {
 	Aliased = "Aliased",

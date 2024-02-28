@@ -101,7 +101,7 @@ describeCompat("FluidObjectHandle", "FullCompat", (getTestObjectProvider, apis) 
 		const sharedMapHandle = sharedMap.handle;
 
 		// The expected absolute path.
-		const absolutePath = `/default/${sharedMap.id}`;
+		const absolutePath = `/${firstContainerObject1._runtime.id}/${sharedMap.id}`;
 
 		// Verify that the local client's handle has the correct absolute path.
 		assert.equal(sharedMapHandle.absolutePath, absolutePath, "The handle's path is incorrect");

@@ -1053,10 +1053,9 @@ describe("Data Store Context Tests", () => {
 		let scope: FluidObject;
 		let factory: IFluidDataStoreFactory;
 		const makeLocallyVisibleFn = () => {};
-		const channelToDataStoreFn = (fluidDataStore: IFluidDataStoreChannel, id: string) =>
+		const channelToDataStoreFn = (fluidDataStore: IFluidDataStoreChannel) =>
 			channelToDataStore(
 				fluidDataStore,
-				id,
 				containerRuntime,
 				dataStores,
 				containerRuntime.logger,

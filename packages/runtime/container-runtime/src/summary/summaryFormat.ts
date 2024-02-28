@@ -88,6 +88,14 @@ export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): b
 /**
  * @alpha
  */
+export type CompressorMode =
+	| true // On
+	| "delayed"
+	| "off"; // default
+
+/**
+ * @alpha
+ */
 export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGCMetadata {
 	readonly summaryFormatVersion: 1;
 	/** The last message processed at the time of summary. Only primitive property types are added to the summary. */
@@ -99,7 +107,7 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
 	/** GUID to identify a document in telemetry */
 	readonly telemetryDocumentId?: string;
 	/** True if the runtime IdCompressor is enabled */
-	readonly idCompressorEnabled?: boolean;
+	readonly idCompressorEnabled?: CompressorMode;
 }
 
 /**

@@ -28,7 +28,14 @@ import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions";
-import { assert, Deferred, delay, LazyPromise, PromiseCache } from "@fluidframework/core-utils";
+import {
+	assert,
+	Deferred,
+	delay,
+	LazyPromise,
+	PromiseCache,
+	unreachableCase,
+} from "@fluidframework/core-utils";
 import { Trace, TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	createChildLogger,
@@ -48,6 +55,7 @@ import {
 	createSampledLogger,
 	IEventSampler,
 	type ITelemetryGenericEventExt,
+	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import {
 	DriverHeader,
@@ -160,6 +168,7 @@ import {
 	IBaseSummarizeResult,
 	ISummarizer,
 	rootHasIsolatedChannels,
+	CompressorMode,
 } from "./summary";
 import { formExponentialFn, Throttler } from "./throttler";
 import {
@@ -442,7 +451,7 @@ export interface IContainerRuntimeOptions {
 	 * Enable the IdCompressor in the runtime.
 	 * @experimental Not ready for use.
 	 */
-	readonly enableRuntimeIdCompressor?: boolean;
+	readonly enableRuntimeIdCompressor?: CompressorMode;
 
 	/**
 	 * If enabled, the runtime will block all attempts to send an op inside the
@@ -783,6 +792,8 @@ export class ContainerRuntime
 			},
 		});
 
+		const mc = loggerToMonitoringContext(logger);
+
 		const {
 			summaryOptions = {},
 			gcOptions = {},
@@ -790,7 +801,7 @@ export class ContainerRuntime
 			flushMode = defaultFlushMode,
 			compressionOptions = defaultCompressionConfig,
 			maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
-			enableRuntimeIdCompressor = false,
+			enableRuntimeIdCompressor = "delayed",
 			chunkSizeInBytes = defaultChunkSizeInBytes,
 			enableOpReentryCheck = false,
 			enableGroupedBatching = false,
@@ -859,10 +870,28 @@ export class ContainerRuntime
 			}
 		}
 
-		const idCompressorEnabled =
-			metadata?.idCompressorEnabled ?? runtimeOptions.enableRuntimeIdCompressor ?? false;
-		let idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
-		if (idCompressorEnabled) {
+		// Enabling the IdCompressor is a one-way operation and we only want to
+		// allow new containers to turn it on
+		let idCompressorMode =
+			metadata?.idCompressorEnabled ?? runtimeOptions.enableRuntimeIdCompressor ?? "off";
+		if (!existing) {
+			const enabled = mc.config.getBoolean("Fluid.ContainerRuntime.IdCompressorEnabled");
+			switch (enabled) {
+				case true:
+					idCompressorMode = true;
+					break;
+				case false:
+					idCompressorMode = "off";
+					break;
+				case undefined:
+					idCompressorMode = runtimeOptions.enableRuntimeIdCompressor ?? "off";
+					break;
+				default:
+					unreachableCase(enabled);
+			}
+		}
+
+		const createIdCompressorFn = async () => {
 			const { createIdCompressor, deserializeIdCompressor, createSessionId } = await import(
 				"@fluidframework/id-compressor"
 			);
@@ -883,20 +912,20 @@ export class ContainerRuntime
 			const compressorLogger = createSampledLogger(logger, idCompressorEventSampler);
 			const pendingLocalState = context.pendingLocalState as IPendingRuntimeState;
 			if (pendingLocalState?.pendingIdCompressorState !== undefined) {
-				idCompressor = deserializeIdCompressor(
+				return deserializeIdCompressor(
 					pendingLocalState.pendingIdCompressorState,
 					compressorLogger,
 				);
 			} else if (serializedIdCompressor !== undefined) {
-				idCompressor = deserializeIdCompressor(
+				return deserializeIdCompressor(
 					serializedIdCompressor,
 					createSessionId(),
 					compressorLogger,
 				);
 			} else {
-				idCompressor = createIdCompressor(compressorLogger);
+				return createIdCompressor(compressorLogger);
 			}
-		}
+		};
 
 		const runtime = new containerRuntimeCtor(
 			context,
@@ -922,7 +951,8 @@ export class ContainerRuntime
 			existing,
 			blobManagerSnapshot,
 			context.storage,
-			idCompressor,
+			createIdCompressorFn,
+			idCompressorMode,
 			provideEntryPoint,
 			requestHandler,
 			undefined, // summaryConfiguration
@@ -989,7 +1019,23 @@ export class ContainerRuntime
 		return this._getAttachState();
 	}
 
-	public idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
+	private _idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
+
+	public get idCompressor() {
+		// Expose ID Compressor only if it's On from the start.
+		// If container uses delayed mode, then we can only expose generateDocumentUniqueId() and nothing else.
+		// That's because any other usage will require immidiate loading of ID Compressor in next sessions in order
+		// to reason over such things as session ID space.
+		if (this.idCompressorMode === true) {
+			assert(this._idCompressor !== undefined, "compressor should have been loaded");
+			return this._idCompressor;
+		}
+	}
+	protected delayedCompressorLoading = false;
+
+	public generateDocumentUniqueId() {
+		return this._idCompressor?.generateDocumentUniqueId() ?? uuid();
+	}
 
 	public get IFluidHandleContext(): IFluidHandleContext {
 		return this.handleContext;
@@ -1172,11 +1218,6 @@ export class ContainerRuntime
 	private readonly telemetryDocumentId: string;
 
 	/**
-	 * If true, the runtime has access to an IdCompressor
-	 */
-	private readonly idCompressorEnabled: boolean;
-
-	/**
 	 * Whether this client is the summarizer client itself (type is summarizerClientType)
 	 */
 	private readonly isSummarizerClient: boolean;
@@ -1208,7 +1249,8 @@ export class ContainerRuntime
 		existing: boolean,
 		blobManagerSnapshot: IBlobManagerLoadInfo,
 		private readonly _storage: IDocumentStorageService,
-		idCompressor: (IIdCompressor & IIdCompressorCore) | undefined,
+		private readonly createIdCompressor: () => Promise<IIdCompressor & IIdCompressorCore>,
+		private readonly idCompressorMode: CompressorMode,
 		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
 		private readonly requestHandler?: (
 			request: IRequest,
@@ -1295,20 +1337,12 @@ export class ContainerRuntime
 			// summaryNumber was renamed from summaryCount. For older docs that haven't been opened for a long time,
 			// the count is reset to 0.
 			loadSummaryNumber = metadata?.summaryNumber ?? 0;
-
-			// Enabling the IdCompressor is a one-way operation and we only want to
-			// allow new containers to turn it on
-			this.idCompressorEnabled = metadata?.idCompressorEnabled ?? false;
 		} else {
 			this.createContainerMetadata = {
 				createContainerRuntimeVersion: pkgVersion,
 				createContainerTimestamp: Date.now(),
 			};
 			loadSummaryNumber = 0;
-
-			this.idCompressorEnabled =
-				this.mc.config.getBoolean("Fluid.ContainerRuntime.IdCompressorEnabled") ??
-				idCompressor !== undefined;
 		}
 		this.nextSummaryNumber = loadSummaryNumber + 1;
 
@@ -1378,10 +1412,6 @@ export class ContainerRuntime
 		this.summariesDisabled = this.isSummariesDisabled();
 		this.maxOpsSinceLastSummary = this.getMaxOpsSinceLastSummary();
 		this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();
-
-		if (this.idCompressorEnabled) {
-			this.idCompressor = idCompressor;
-		}
 
 		this.maxConsecutiveReconnects =
 			this.mc.config.getNumber(maxConsecutiveReconnectsKey) ??
@@ -1694,7 +1724,7 @@ export class ContainerRuntime
 				disableChunking,
 				disableAttachReorder: this.disableAttachReorder,
 				disablePartialFlush,
-				idCompressorEnabled: this.idCompressorEnabled,
+				idCompressorEnabled: this.idCompressorMode,
 				closeSummarizerDelayOverride,
 			}),
 			telemetryDocumentId: this.telemetryDocumentId,
@@ -1720,6 +1750,13 @@ export class ContainerRuntime
 	 * Initializes the state from the base snapshot this container runtime loaded from.
 	 */
 	private async initializeBaseState(): Promise<void> {
+		if (
+			this.idCompressorMode === true ||
+			(this.idCompressorMode === "delayed" && this.connected)
+		) {
+			this._idCompressor = await this.createIdCompressor();
+		}
+
 		await this.garbageCollector.initializeBaseState();
 	}
 
@@ -1960,6 +1997,12 @@ export class ContainerRuntime
 			headerData.allowTombstone = true;
 		}
 
+		// Back-comapatibility:
+		// New loader/hosts use entryPoint and would not get here for aliased data stores -
+		// handles could only contain internalID!
+		// But old loader/host would use request pattern to fetch aliased data store, as well as
+		// old "root" data stores. Thus this function should consult both IDs.
+		// Please also see note on name collisions in DataStores.createDataStoreId()
 		await this.dataStores.waitIfPendingAlias(id);
 		const internalId = this.internalId(id);
 		const dataStoreContext = await this.dataStores.getDataStore(internalId, headerData);
@@ -1997,7 +2040,7 @@ export class ContainerRuntime
 				extractSummaryMetadataMessage(this.deltaManager.lastMessage) ??
 				this.messageAtLastSummary,
 			telemetryDocumentId: this.telemetryDocumentId,
-			idCompressorEnabled: this.idCompressorEnabled ? true : undefined,
+			idCompressorEnabled: this.idCompressorMode,
 		};
 		addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
 	}
@@ -2010,11 +2053,7 @@ export class ContainerRuntime
 	) {
 		this.addMetadataToSummary(summaryTree);
 
-		if (this.idCompressorEnabled) {
-			assert(
-				this.idCompressor !== undefined,
-				0x67a /* IdCompressor should be defined if enabled */,
-			);
+		if (this.idCompressor) {
 			const idCompressorState = JSON.stringify(this.idCompressor.serialize(false));
 			addBlobToSummary(summaryTree, idCompressorBlobName, idCompressorState);
 		}
@@ -2186,6 +2225,16 @@ export class ContainerRuntime
 	}
 
 	public setConnectionState(connected: boolean, clientId?: string) {
+		if (this.idCompressorMode === "delayed" && !this.delayedCompressorLoading) {
+			this.delayedCompressorLoading = true;
+			this.createIdCompressor()
+				.then((compressor) => {
+					this._idCompressor = compressor;
+				})
+				.catch((error) => {
+					this.logger.sendErrorEvent({ eventName: "IdCompressorDelayedLoad" }, error);
+				});
+		}
 		if (connected === false && this.delayConnectClientId !== undefined) {
 			this.delayConnectClientId = undefined;
 			this.mc.logger.sendTelemetryEvent({
@@ -2605,6 +2654,12 @@ export class ContainerRuntime
 	public async getAliasedDataStoreEntryPoint(
 		alias: string,
 	): Promise<IFluidHandle<FluidObject> | undefined> {
+		// Back-comapatibility:
+		// There are old files that were created without using data store aliasing feature, but
+		// used createRoot*DataStore*() (already removed) API. Such data stores will have isRoot = true,
+		// and internalID provided by user. The expectation is that such files behave as new files, where
+		// same data store instances created using aliasing feature.
+		// Please also see note on name collisions in DataStores.createDataStoreId()
 		await this.dataStores.waitIfPendingAlias(alias);
 		const internalId = this.internalId(alias);
 		const context = await this.dataStores.getDataStoreIfAvailable(internalId, { wait: false });
@@ -2628,38 +2683,25 @@ export class ContainerRuntime
 		return channel.entryPoint;
 	}
 
-	public createDetachedRootDataStore(
-		pkg: Readonly<string[]>,
-		rootDataStoreId: string,
-	): IFluidDataStoreContextDetached {
-		if (rootDataStoreId.includes("/")) {
-			throw new UsageError(`Id cannot contain slashes: '${rootDataStoreId}'`);
-		}
-		return this.dataStores.createDetachedDataStoreCore(pkg, true, rootDataStoreId);
-	}
-
 	public createDetachedDataStore(
 		pkg: Readonly<string[]>,
 		loadingGroupId?: string,
 	): IFluidDataStoreContextDetached {
-		return this.dataStores.createDetachedDataStoreCore(pkg, false, undefined, loadingGroupId);
+		return this.dataStores.createDetachedDataStoreCore(pkg, loadingGroupId);
 	}
 
 	public async createDataStore(
 		pkg: string | string[],
 		loadingGroupId?: string,
 	): Promise<IDataStore> {
-		const id = uuid();
 		return channelToDataStore(
 			await this.dataStores
 				._createFluidDataStoreContext(
 					Array.isArray(pkg) ? pkg : [pkg],
-					id,
-					undefined,
+					undefined, // props
 					loadingGroupId,
 				)
 				.realize(),
-			id,
 			this,
 			this.dataStores,
 			this.mc.logger,
@@ -2672,13 +2714,11 @@ export class ContainerRuntime
 	public async _createDataStoreWithProps(
 		pkg: string | string[],
 		props?: any,
-		id = uuid(),
 	): Promise<IDataStore> {
 		return channelToDataStore(
 			await this.dataStores
-				._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, props)
+				._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], props)
 				.realize(),
-			id,
 			this,
 			this.dataStores,
 			this.mc.logger,
@@ -3622,11 +3662,7 @@ export class ContainerRuntime
 	}
 
 	private submitIdAllocationOpIfNeeded(): void {
-		if (this.idCompressorEnabled) {
-			assert(
-				this.idCompressor !== undefined,
-				0x67d /* IdCompressor should be defined if enabled */,
-			);
+		if (this.idCompressor) {
 			const idRange = this.idCompressor.takeNextCreationRange();
 			// Don't include the idRange if there weren't any Ids allocated
 			if (idRange?.ids !== undefined) {

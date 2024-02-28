@@ -61,6 +61,7 @@ import {
 	unpackChildNodesUsedRoutes,
 	addBlobToSummary,
 	processAttachMessageGCData,
+	encodeNumber,
 } from "@fluidframework/runtime-utils";
 import {
 	IChannel,
@@ -402,6 +403,15 @@ export class FluidDataStoreRuntime
 		return context.getChannel();
 	}
 
+	protected validateUserId(id: string) {
+		if (id.includes("/")) {
+			throw new UsageError(`Id cannot contain slashes: ${id}`);
+		}
+		if (id.includes("_")) {
+			throw new UsageError(`Id cannot start with underscore: ${id}`);
+		}
+	}
+
 	/**
 	 * Api which allows caller to create the channel first and then add it to the runtime.
 	 * The channel type should be present in the registry, otherwise the runtime would reject
@@ -411,9 +421,7 @@ export class FluidDataStoreRuntime
 	 */
 	public addChannel(channel: IChannel): void {
 		const id = channel.id;
-		if (id.includes("/")) {
-			throw new UsageError(`Id cannot contain slashes: ${id}`);
-		}
+		this.validateUserId(id);
 
 		this.verifyNotClosed();
 
@@ -430,9 +438,30 @@ export class FluidDataStoreRuntime
 		this.identifyLocalChangeInSummarizer("DDSCreatedInSummarizer", id, type);
 	}
 
-	public createChannel(id: string = uuid(), type: string): IChannel {
-		if (id.includes("/")) {
-			throw new UsageError(`Id cannot contain slashes: ${id}`);
+	public createChannel(idArg: string | undefined, type: string): IChannel {
+		let id: string;
+
+		if (idArg !== undefined) {
+			id = idArg;
+			this.validateUserId(id);
+		} else {
+			// We use three non-overlapping namespaces:
+			// - detached state: even numbers
+			// - attached state: odd numbers
+			// - uuids
+			// In first two cases we will encode result as strings in more compact form, with leading underscore,
+			// to ensure no overlap with user-provided DDS names (see validateUserId())
+			if (this.visibilityState !== VisibilityState.GloballyVisible) {
+				// container is detached, only one client observes content, no way to hit collisions with other clients.
+				id = encodeNumber(2 * this.contexts.size, "_");
+			} else {
+				// Due to back-compat, we could not depend yet on generateDocumentUniqueId() being there.
+				// We can remove the need to leverage uuid() as fall-back in couple releases.
+				const res =
+					this.dataStoreContext.containerRuntime.generateDocumentUniqueId?.() ?? uuid();
+				id = typeof res === "number" ? encodeNumber(2 * res + 1, "_") : res;
+			}
+			assert(!id.includes("/"), "slash");
 		}
 
 		this.verifyNotClosed();

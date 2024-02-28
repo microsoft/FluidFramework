@@ -235,6 +235,13 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * Returns the current audience.
 	 */
 	getAudience(): IAudience;
+
+	/**
+	 * Generates a new ID that is guaranteed to be unique across all sessions for this container.
+	 * It could be in compact form (positive integer, oppotunistic), but it could also be UUID string.
+	 * For more details, please see IIdCompressor.generateDocumentUniqueId()
+	 */
+	generateDocumentUniqueId(): number | string;
 }
 
 /**

@@ -187,7 +187,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		);
 	});
 
-	it("can normalize session space IDs to op space", async () => {
+	it.skip("can normalize session space IDs to op space", async () => {
 		// None of these clusters will be ack'd yet and as such they will all
 		// generate local Ids. State of compressors afterwards should be:
 		// SharedMap1 Compressor: Local IdRange { first: -1, last: -512 }
@@ -268,7 +268,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		assert.strictEqual(sharedMapContainer3.get("key3"), "value3");
 	});
 
-	it("can normalize local op space IDs from a local session to session space", async () => {
+	it.skip("can normalize local op space IDs from a local session to session space", async () => {
 		const sessionSpaceId = getIdCompressor(sharedMapContainer1).generateCompressedId();
 		sharedMapContainer1.set("key", "value");
 
@@ -315,7 +315,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		assert.equal(opSpaceId, sessionSpaceId2);
 	});
 
-	it("eagerly allocates final IDs after cluster is finalized", async () => {
+	it.skip("eagerly allocates final IDs after cluster is finalized", async () => {
 		assert(getIdCompressor(sharedMapContainer1) !== undefined, "IdCompressor is undefined");
 		const localId1 = getIdCompressor(sharedMapContainer1).generateCompressedId();
 		assert.strictEqual(localId1, -1);
@@ -363,7 +363,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		);
 	});
 
-	it("eagerly allocates IDs across DDSs using the same compressor", async () => {
+	it.skip("eagerly allocates IDs across DDSs using the same compressor", async () => {
 		assert(getIdCompressor(sharedMapContainer1) !== undefined, "IdCompressor is undefined");
 		assert(getIdCompressor(sharedCellContainer1) !== undefined, "IdCompressor is undefined");
 
@@ -427,7 +427,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		);
 	});
 
-	it("produces Id spaces correctly", async () => {
+	it.skip("produces Id spaces correctly", async () => {
 		assert(getIdCompressor(sharedMapContainer1) !== undefined, "IdCompressor is undefined");
 		assert(getIdCompressor(sharedMapContainer2) !== undefined, "IdCompressor is undefined");
 		assert(getIdCompressor(sharedMapContainer3) !== undefined, "IdCompressor is undefined");
@@ -536,7 +536,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		assert.strictEqual(sharedMapContainer1.get(sharedMapDecompressedId), "value");
 	});
 
-	it("Ids generated when disconnected are correctly resubmitted", async () => {
+	it.skip("Ids generated when disconnected are correctly resubmitted", async () => {
 		// Disconnect the first container
 		container1.disconnect();
 

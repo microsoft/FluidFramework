@@ -161,6 +161,10 @@
 			},
 			"InterfaceDeclaration_ITestObjectProvider": {
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ITestContainerConfig": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}

@@ -128,7 +128,7 @@ export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContext
 
 /** Properties necessary for creating a local FluidDataStoreContext */
 export interface ILocalDetachedFluidDataStoreContextProps extends ILocalFluidDataStoreContextProps {
-	readonly channelToDataStoreFn: (channel: IFluidDataStoreChannel, id: string) => IDataStore;
+	readonly channelToDataStoreFn: (channel: IFluidDataStoreChannel) => IDataStore;
 }
 
 /** Properties necessary for creating a remote FluidDataStoreContext */
@@ -1284,10 +1284,7 @@ export class LocalDetachedFluidDataStoreContext
 		this.detachedRuntimeCreation = true;
 		this.channelToDataStoreFn = props.channelToDataStoreFn;
 	}
-	private readonly channelToDataStoreFn: (
-		channel: IFluidDataStoreChannel,
-		id: string,
-	) => IDataStore;
+	private readonly channelToDataStoreFn: (channel: IFluidDataStoreChannel) => IDataStore;
 
 	public async attachRuntime(
 		registry: IProvideFluidDataStoreFactory,
@@ -1322,7 +1319,7 @@ export class LocalDetachedFluidDataStoreContext
 			dataStoreChannel.makeVisibleAndAttachGraph();
 		}
 
-		return this.channelToDataStoreFn(dataStoreChannel, this.id);
+		return this.channelToDataStoreFn(dataStoreChannel);
 	}
 
 	public async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {

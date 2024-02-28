@@ -98,6 +98,7 @@ export {
 	WriteFluidDataStoreAttributes,
 	wrapSummaryInChannelsTree,
 	idCompressorBlobName,
+	CompressorMode,
 } from "./summaryFormat";
 export { getFailMessage, RetriableSummaryError, SummarizeReason } from "./summaryGenerator";
 export {
