@@ -107,7 +107,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			throw new Error("Empty file summary creation isn't supported in this driver.");
 		}
 		assert(!!resolvedUrl.endpoints.ordererUrl, 0x0b2 /* "Missing orderer URL!" */);
-		let parsedUrl = new URL(resolvedUrl.url);
+		const parsedUrl = new URL(resolvedUrl.url);
 		if (!parsedUrl.pathname) {
 			throw new Error("Parsed url should contain tenant and doc Id!!");
 		}
@@ -189,7 +189,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			token = res.token;
 			session = this.driverPolicies.enableDiscovery ? res.session : undefined;
 		}
-		parsedUrl = new URL(resolvedUrl.url);
 
 		// @TODO: Remove token from the condition, checking the documentPostCreateCallback !== undefined
 		// is sufficient to determine if the token will be undefined or not.
