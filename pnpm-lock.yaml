@@ -174,6 +174,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/nock': ^9.3.0
       '@types/node': ^18.19.0
+      '@types/sinon': ^17.0.3
       '@types/uuid': ^9.0.2
       c8: ^8.0.1
       cross-env: ^7.0.3
@@ -185,7 +186,7 @@ importers:
       nock: ^13.3.3
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      sinon: ^7.4.2
+      sinon: ^17.0.1
       start-server-and-test: ^1.11.7
       tinylicious: ^3.1.0-240326
       typescript: ~5.1.6
@@ -211,7 +212,7 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      sinon: 7.5.0
+      sinon: 17.0.1
       start-server-and-test: 1.15.5
       tinylicious: 3.1.0-240326
       uuid: 9.0.1
@@ -222,6 +223,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/nock': 9.3.1
       '@types/node': 18.19.1
+      '@types/sinon': 17.0.3
       '@types/uuid': 9.0.7
       c8: 8.0.1
       eslint: 8.50.0
@@ -255,6 +257,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/nock': ^9.3.0
       '@types/node': ^18.19.0
+      '@types/sinon': ^17.0.3
       '@types/uuid': ^9.0.2
       c8: ^8.0.1
       commander: ^5.1.0
@@ -265,7 +268,7 @@ importers:
       nock: ^13.3.3
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      sinon: ^7.4.2
+      sinon: ^17.0.1
       start-server-and-test: ^1.11.7
       tinylicious: ^3.1.0-240326
       typescript: ~5.1.6
@@ -291,7 +294,7 @@ importers:
       cross-env: 7.0.3
       js-yaml: 4.1.0
       mocha: 10.2.0
-      sinon: 7.5.0
+      sinon: 17.0.1
       start-server-and-test: 1.15.5
       tinylicious: 3.1.0-240326
       uuid: 9.0.1
@@ -304,6 +307,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/nock': 9.3.1
       '@types/node': 18.19.1
+      '@types/sinon': 17.0.3
       '@types/uuid': 9.0.7
       c8: 8.0.1
       eslint: 8.50.0
@@ -4699,6 +4703,7 @@ importers:
       '@types/lodash': ^4.14.118
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
+      '@types/sinon': ^17.0.3
       ajv: ^8.12.0
       ajv-keywords: ^5.1.0
       async: ^3.2.2
@@ -4716,7 +4721,7 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       semver: ^7.5.3
-      sinon: ^7.4.2
+      sinon: ^17.0.1
       traverse: 0.6.6
       typescript: ~5.1.6
     dependencies:
@@ -4735,6 +4740,7 @@ importers:
       '@types/lodash': 4.14.202
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
+      '@types/sinon': 17.0.3
       c8: 8.0.1
       chai: 4.3.10
       cross-env: 7.0.3
@@ -4746,7 +4752,7 @@ importers:
       nock: 13.4.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      sinon: 7.5.0
+      sinon: 17.0.1
       typescript: 5.1.6
 
   experimental/PropertyDDS/packages/property-common:
@@ -4762,6 +4768,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/semver': ^7.5.0
+      '@types/sinon': ^17.0.3
       ajv: ^8.12.0
       async: ^3.2.2
       base64-js: ^1.5.1
@@ -4781,7 +4788,7 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       semver: ^7.5.3
-      sinon: ^7.4.2
+      sinon: ^17.0.1
       traverse: 0.6.6
       typescript: ~5.1.6
     dependencies:
@@ -4806,6 +4813,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/semver': 7.5.6
+      '@types/sinon': 17.0.3
       c8: 8.0.1
       chai: 4.3.10
       cross-env: 7.0.3
@@ -4817,7 +4825,7 @@ importers:
       nock: 13.4.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      sinon: 7.5.0
+      sinon: 17.0.1
       typescript: 5.1.6
 
   experimental/PropertyDDS/packages/property-common/platform-dependent:
@@ -4956,7 +4964,7 @@ importers:
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
-      '@types/sinon': ^7.0.13
+      '@types/sinon': ^17.0.3
       '@wojtekmaj/enzyme-adapter-react-17': ^0.6.7
       async: ^3.2.2
       base64-js: ^1.5.1
@@ -4986,7 +4994,7 @@ importers:
       react-virtualized-auto-sizer: 1.0.7
       require-from-string: ^2.0.2
       rimraf: ^4.4.0
-      sinon: ^7.4.2
+      sinon: ^17.0.1
       source-map-loader: ^2.0.0
       svg-sprite-loader: ^6.0.11
       svgo: ^1.1.1
@@ -5036,7 +5044,7 @@ importers:
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
-      '@types/sinon': 7.5.2
+      '@types/sinon': 17.0.3
       '@wojtekmaj/enzyme-adapter-react-17': 0.6.7_7ltvq4e2railvf5uya4ffxpe2a
       async: 3.2.5
       body-parser: 1.20.2
@@ -5055,7 +5063,7 @@ importers:
       prettier: 3.0.3
       process: 0.11.10
       rimraf: 4.4.1
-      sinon: 7.5.0
+      sinon: 17.0.1
       source-map-loader: 2.0.2_webpack@5.89.0
       svg-sprite-loader: 6.0.11
       svgo: 1.3.2
@@ -5078,6 +5086,7 @@ importers:
       '@fluidframework/build-tools': ^0.34.0
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
+      '@types/sinon': ^17.0.3
       ajv: ^8.12.0
       async: ^3.2.2
       c8: ^8.0.1
@@ -5094,7 +5103,7 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       semver: ^7.5.3
-      sinon: ^7.4.2
+      sinon: ^17.0.1
       traverse: 0.6.6
       typescript: ~5.1.6
       underscore: ^1.13.6
@@ -5114,6 +5123,7 @@ importers:
       '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
+      '@types/sinon': 17.0.3
       c8: 8.0.1
       chai: 4.3.10
       cross-env: 7.0.3
@@ -5125,7 +5135,7 @@ importers:
       nock: 13.4.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      sinon: 7.5.0
+      sinon: 17.0.1
       typescript: 5.1.6
 
   experimental/PropertyDDS/packages/property-proxy:
@@ -5181,6 +5191,7 @@ importers:
       '@fluid-experimental/property-common': workspace:~
       '@fluid-experimental/property-properties': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
+      '@types/sinon': ^17.0.3
       ajv: ^8.12.0
       async: ^3.2.2
       chai: ^4.2.0
@@ -5199,7 +5210,7 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       semver: ^7.5.3
-      sinon: ^7.4.2
+      sinon: ^17.0.1
       traverse: 0.6.6
     dependencies:
       '@fluid-experimental/property-changeset': link:../property-changeset
@@ -5217,6 +5228,7 @@ importers:
     devDependencies:
       '@fluid-experimental/property-properties': link:../property-properties
       '@fluid-internal/mocha-test-setup': link:../../../../packages/test/mocha-test-setup
+      '@types/sinon': 17.0.3
       chai: 4.3.10
       cross-env: 7.0.3
       mocha: 10.2.0
@@ -5226,7 +5238,7 @@ importers:
       nock: 13.4.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      sinon: 7.5.0
+      sinon: 17.0.1
 
   experimental/PropertyDDS/packages/property-shared-tree-interop:
     specifiers:
@@ -5283,6 +5295,7 @@ importers:
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/server-local-server': ^3.1.0-240326
       '@fluidframework/test-utils': workspace:~
+      '@types/sinon': ^17.0.3
       async: ^3.2.2
       aws-sdk: 2.547.0
       basicauth-middleware: 2.0.0
@@ -5327,8 +5340,8 @@ importers:
       rimraf: ^4.4.0
       rmfr: 2.0.0
       sanitize: 2.1.0
-      sinon: ^7.4.2
-      sinon-chai: 3.3.0
+      sinon: ^17.0.1
+      sinon-chai: 3.7.0
       sleep-promise: 8.0.1
       stats-percentile: 3.1.0
       typescript: ~5.1.6
@@ -5368,6 +5381,7 @@ importers:
       '@fluidframework/runtime-utils': link:../../../../packages/runtime/runtime-utils
       '@fluidframework/server-local-server': 3.1.0-240326
       '@fluidframework/test-utils': link:../../../../packages/test/test-utils
+      '@types/sinon': 17.0.3
       aws-sdk: 2.547.0
       c8: 8.0.1
       chai: 4.3.10
@@ -5393,8 +5407,8 @@ importers:
       request: 2.88.2
       request-promise-native: 1.0.7_request@2.88.2
       rimraf: 4.4.1
-      sinon: 7.5.0
-      sinon-chai: 3.3.0_chai@4.3.10+sinon@7.5.0
+      sinon: 17.0.1
+      sinon-chai: 3.7.0_chai@4.3.10+sinon@17.0.1
       stats-percentile: 3.1.0
       typescript: 5.1.6
       wait-on: 3.2.0
@@ -5914,7 +5928,7 @@ importers:
       '@types/node': ^18.19.0
       '@types/rewire': ^2.5.28
       '@types/sha.js': ^2.4.4
-      '@types/sinon': ^7.0.13
+      '@types/sinon': ^17.0.3
       base64-js: ^1.5.1
       buffer: ^6.0.3
       c8: ^8.0.1
@@ -5938,7 +5952,7 @@ importers:
       rewire: ^5.0.0
       rimraf: ^4.4.0
       sha.js: ^2.4.11
-      sinon: ^7.4.2
+      sinon: ^17.0.1
       ts-jest: ^29.1.1
       ts-node: ^10.9.1
       tsc-multi: ^1.1.0
@@ -5968,7 +5982,7 @@ importers:
       '@types/node': 18.19.1
       '@types/rewire': 2.5.30
       '@types/sha.js': 2.4.4
-      '@types/sinon': 7.5.2
+      '@types/sinon': 17.0.3
       c8: 8.0.1
       concurrently: 8.2.2
       copyfiles: 2.4.1
@@ -5987,7 +6001,7 @@ importers:
       puppeteer: 22.2.0_typescript@5.1.6
       rewire: 5.0.0
       rimraf: 4.4.1
-      sinon: 7.5.0
+      sinon: 17.0.1
       ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
       ts-node: 10.9.1_ggysxzqxruqvydtrq6zb2nxvwm
       tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
@@ -6080,7 +6094,7 @@ importers:
       '@microsoft/api-extractor': ^7.39.1
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      '@types/sinon': ^7.0.13
+      '@types/sinon': ^17.0.3
       c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
@@ -6092,7 +6106,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      sinon: ^7.4.2
+      sinon: ^17.0.1
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
     devDependencies:
@@ -6106,7 +6120,7 @@ importers:
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      '@types/sinon': 7.5.2
+      '@types/sinon': 17.0.3
       c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -6118,7 +6132,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      sinon: 7.5.0
+      sinon: 17.0.1
       tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
@@ -7679,7 +7693,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/node-fetch': ^2.5.10
-      '@types/sinon': ^7.0.13
+      '@types/sinon': ^17.0.3
       '@types/uuid': ^9.0.2
       c8: ^8.0.1
       copyfiles: ^2.4.1
@@ -7692,7 +7706,7 @@ importers:
       node-fetch: ^2.6.9
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      sinon: ^7.4.2
+      sinon: ^17.0.1
       socket.io-client: ^4.7.3
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -7724,7 +7738,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/node-fetch': 2.6.9
-      '@types/sinon': 7.5.2
+      '@types/sinon': 17.0.3
       '@types/uuid': 9.0.7
       c8: 8.0.1
       copyfiles: 2.4.1
@@ -7736,7 +7750,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      sinon: 7.5.0
+      sinon: 17.0.1
       tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
@@ -7911,7 +7925,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/nock': ^9.3.0
       '@types/node': ^18.19.0
-      '@types/sinon': ^7.0.13
+      '@types/sinon': ^17.0.3
       '@types/url-parse': 1.4.4
       '@types/uuid': ^9.0.2
       axios: ^1.6.2
@@ -7928,7 +7942,7 @@ importers:
       nock: ^13.3.3
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      sinon: ^7.4.2
+      sinon: ^17.0.1
       socket.io-client: ^4.7.3
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -7963,7 +7977,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/nock': 9.3.1
       '@types/node': 18.19.1
-      '@types/sinon': 7.5.2
+      '@types/sinon': 17.0.3
       '@types/url-parse': 1.4.4
       '@types/uuid': 9.0.7
       axios: 1.6.2
@@ -7978,7 +7992,7 @@ importers:
       nock: 13.4.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      sinon: 7.5.0
+      sinon: 17.0.1
       tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
@@ -8333,7 +8347,7 @@ importers:
       '@microsoft/applicationinsights-web': ^2.8.11
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      '@types/sinon': ^7.0.13
+      '@types/sinon': ^17.0.3
       '@types/ungap__structured-clone': ^1.2.0
       '@ungap/structured-clone': ^1.2.0
       copyfiles: ^2.4.1
@@ -8346,7 +8360,7 @@ importers:
       mocha: ^10.2.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      sinon: ^7.4.2
+      sinon: ^17.0.1
       tsc-multi: ^1.1.0
       tslib: ^1.10.0
       typescript: ~5.1.6
@@ -8365,7 +8379,7 @@ importers:
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      '@types/sinon': 7.5.2
+      '@types/sinon': 17.0.3
       '@types/ungap__structured-clone': 1.2.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -8377,7 +8391,7 @@ importers:
       mocha: 10.2.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      sinon: 7.5.0
+      sinon: 17.0.1
       tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       tslib: 1.14.1
       typescript: 5.1.6
@@ -8873,7 +8887,7 @@ importers:
       '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      '@types/sinon': ^7.0.13
+      '@types/sinon': ^17.0.3
       '@types/ungap__structured-clone': ^1.2.0
       '@types/uuid': ^9.0.2
       '@ungap/structured-clone': ^1.2.0
@@ -8890,7 +8904,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      sinon: ^7.4.2
+      sinon: ^17.0.1
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
       url: ^0.11.0
@@ -8926,7 +8940,7 @@ importers:
       '@types/events': 3.0.3
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      '@types/sinon': 7.5.2
+      '@types/sinon': 17.0.3
       '@types/ungap__structured-clone': 1.2.0
       '@types/uuid': 9.0.7
       c8: 8.0.1
@@ -8939,7 +8953,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      sinon: 7.5.0
+      sinon: 17.0.1
       tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
@@ -8963,7 +8977,7 @@ importers:
       '@microsoft/api-extractor': ^7.39.1
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      '@types/sinon': ^7.0.13
+      '@types/sinon': ^17.0.3
       '@types/uuid': ^9.0.2
       axios: ^1.6.2
       c8: ^8.0.1
@@ -8977,7 +8991,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      sinon: ^7.4.2
+      sinon: ^17.0.1
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
       url: ^0.11.0
@@ -9006,7 +9020,7 @@ importers:
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      '@types/sinon': 7.5.2
+      '@types/sinon': 17.0.3
       '@types/uuid': 9.0.7
       c8: 8.0.1
       copyfiles: 2.4.1
@@ -9018,7 +9032,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      sinon: 7.5.0
+      sinon: 17.0.1
       tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
@@ -9089,7 +9103,7 @@ importers:
       '@types/double-ended-queue': ^2.1.0
       '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
-      '@types/sinon': ^7.0.13
+      '@types/sinon': ^17.0.3
       '@types/uuid': ^9.0.2
       c8: ^8.0.1
       copyfiles: ^2.4.1
@@ -9104,7 +9118,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      sinon: ^7.4.2
+      sinon: ^17.0.1
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
@@ -9142,7 +9156,7 @@ importers:
       '@types/double-ended-queue': 2.1.7
       '@types/events': 3.0.3
       '@types/mocha': 9.1.1
-      '@types/sinon': 7.5.2
+      '@types/sinon': 17.0.3
       '@types/uuid': 9.0.7
       c8: 8.0.1
       copyfiles: 2.4.1
@@ -9154,7 +9168,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      sinon: 7.5.0
+      sinon: 17.0.1
       tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
@@ -9447,6 +9461,7 @@ importers:
       '@microsoft/api-extractor': ^7.39.1
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
+      '@types/sinon': ^17.0.3
       c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
@@ -9457,7 +9472,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      sinon: ^7.4.2
+      sinon: ^17.0.1
       ts-node: ^10.9.1
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
@@ -9483,6 +9498,7 @@ importers:
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
+      '@types/sinon': 17.0.3
       c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -9493,7 +9509,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      sinon: 7.5.0
+      sinon: 17.0.1
       ts-node: 10.9.1_ggysxzqxruqvydtrq6zb2nxvwm
       tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
@@ -9689,6 +9705,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/nock': ^9.3.0
       '@types/node': ^18.19.0
+      '@types/sinon': ^17.0.3
       '@types/uuid': ^9.0.2
       c8: ^8.0.1
       cross-env: ^7.0.3
@@ -9700,7 +9717,7 @@ importers:
       nock: ^13.3.3
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      sinon: ^7.4.2
+      sinon: ^17.0.1
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -9719,13 +9736,14 @@ importers:
       '@fluidframework/sequence': link:../../../dds/sequence
       '@fluidframework/telemetry-utils': link:../../../utils/telemetry-utils
       '@fluidframework/test-utils': link:../../../test/test-utils
+      '@types/sinon': 17.0.3
       cross-env: 7.0.3
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
-      sinon: 7.5.0
+      sinon: 17.0.1
       uuid: 9.0.1
     devDependencies:
       '@fluidframework/build-common': 2.0.3
@@ -10458,6 +10476,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/nock': ^9.3.0
       '@types/node': ^18.19.0
+      '@types/sinon': ^17.0.3
       '@types/uuid': ^9.0.2
       c8: ^8.0.1
       cross-env: ^7.0.3
@@ -10470,7 +10489,7 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       semver: ^7.5.3
-      sinon: ^7.4.2
+      sinon: ^17.0.1
       start-server-and-test: ^1.11.7
       tinylicious: ^3.1.0-240326
       typescript: ~5.1.6
@@ -10520,10 +10539,11 @@ importers:
       '@fluidframework/test-utils': link:../test-utils
       '@fluidframework/tree': link:../../dds/tree
       '@fluidframework/undo-redo': link:../../framework/undo-redo
+      '@types/sinon': 17.0.3
       cross-env: 7.0.3
       mocha: 10.2.0
       semver: 7.5.4
-      sinon: 7.5.0
+      sinon: 17.0.1
       start-server-and-test: 1.15.5
       tinylicious: 3.1.0-240326
       url: 0.11.3
@@ -10995,7 +11015,7 @@ importers:
       '@types/proxyquire': ^1.3.28
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
-      '@types/sinon': ^7.0.13
+      '@types/sinon': ^17.0.3
       '@types/sinon-chrome': ^2.2.11
       '@types/uuid': ^9.0.2
       c8: ^8.0.1
@@ -11024,7 +11044,7 @@ importers:
       react: ^17.0.1
       react-dom: ^17.0.1
       rimraf: ^4.4.0
-      sinon: ^7.4.2
+      sinon: ^17.0.1
       sinon-chrome: ^3.0.1
       start-server-and-test: ^1.11.7
       ts-jest: ^29.1.1
@@ -11074,7 +11094,7 @@ importers:
       '@types/proxyquire': 1.3.31
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
-      '@types/sinon': 7.5.2
+      '@types/sinon': 17.0.3
       '@types/sinon-chrome': 2.2.15
       c8: 8.0.1
       chai: 4.3.10
@@ -11100,7 +11120,7 @@ importers:
       proxyquire: 2.1.3
       puppeteer: 22.2.0_typescript@5.1.6
       rimraf: 4.4.1
-      sinon: 7.5.0
+      sinon: 17.0.1
       sinon-chrome: 3.0.1
       start-server-and-test: 1.15.5
       ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
@@ -11764,6 +11784,7 @@ importers:
       '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
+      '@types/sinon': ^17.0.3
       '@types/uuid': ^9.0.2
       c8: ^8.0.1
       copyfiles: ^2.4.1
@@ -11777,7 +11798,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      sinon: ^7.4.2
+      sinon: ^17.0.1
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -11801,6 +11822,7 @@ importers:
       '@types/events': 3.0.3
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
+      '@types/sinon': 17.0.3
       '@types/uuid': 9.0.7
       c8: 8.0.1
       copyfiles: 2.4.1
@@ -11812,7 +11834,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      sinon: 7.5.0
+      sinon: 17.0.1
       typescript: 5.1.6
 
   packages/utils/tool-utils:
@@ -20166,12 +20188,17 @@ packages:
     resolution: {integrity: sha512-Ky+XkAkqPZSm3NLBeUng77EBQl3cmeJhITaGHdYH8kjVB+aun3S4XBRti2zt17mtt0mIUDiNxYeoJm6drVvBJQ==}
     dependencies:
       type-detect: 4.0.8
+    dev: true
+
+  /@sinonjs/commons/2.0.0:
+    resolution: {integrity: sha512-uLa0j859mMrg2slwQYdO/AkrOfmH+X6LTVmNTS9CqexuE2IvVORIkSpJLqePAbEnKJ77aMmCwr1NUZ57120Xcg==}
+    dependencies:
+      type-detect: 4.0.8
 
   /@sinonjs/commons/3.0.0:
     resolution: {integrity: sha512-jXBtWAF4vmdNmZgD5FoKsVLv3rPgDnLgPbU84LIJ3otV44vJlDRokVng5v8NFJdCf/da9legHcKaRuZs4L7faA==}
     dependencies:
       type-detect: 4.0.8
-    dev: true
 
   /@sinonjs/fake-timers/10.3.0:
     resolution: {integrity: sha512-V4BG07kuYSUkTCSBHG8G8TNhM+F19jXFWnQtzj+we8DrkpSBCee9Z3Ms8yiGer/dlmhe35/Xdgyo3/0rQKg7YA==}
@@ -20179,11 +20206,17 @@ packages:
       '@sinonjs/commons': 3.0.0
     dev: true
 
+  /@sinonjs/fake-timers/11.2.2:
+    resolution: {integrity: sha512-G2piCSxQ7oWOxwGSAyFHfPIsyeJGXYtc6mFbnFA+kRXkiEnTl8c/8jul2S329iFBnDI9HGoeWWAZvuvOkZccgw==}
+    dependencies:
+      '@sinonjs/commons': 3.0.0
+
   /@sinonjs/formatio/3.2.2:
     resolution: {integrity: sha512-B8SEsgd8gArBLMD6zpRw3juQ2FVSsmdd7qlevyDqzS9WTCtvF55/gAL+h6gue8ZvPYcdiPdvueM/qm//9XzyTQ==}
     dependencies:
       '@sinonjs/commons': 1.8.6
       '@sinonjs/samsam': 3.3.3
+    dev: true
 
   /@sinonjs/samsam/3.3.3:
     resolution: {integrity: sha512-bKCMKZvWIjYD0BLGnNrxVuw4dkWCYsLqFOUWw8VgKF/+5Y+mE7LfHWPIYoDXowH+3a9LsWDMo0uAP8YDosPvHQ==}
@@ -20191,6 +20224,14 @@ packages:
       '@sinonjs/commons': 1.8.6
       array-from: 2.1.1
       lodash: 4.17.21
+    dev: true
+
+  /@sinonjs/samsam/8.0.0:
+    resolution: {integrity: sha512-Bp8KUVlLp8ibJZrnvq2foVhP0IVX2CIprMJPK0vqGqgrDa0OHVKeZyBykqskkrdxV6yKBPmGasO8LVjAKR3Gew==}
+    dependencies:
+      '@sinonjs/commons': 2.0.0
+      lodash.get: 4.4.2
+      type-detect: 4.0.8
 
   /@sinonjs/text-encoding/0.7.2:
     resolution: {integrity: sha512-sXXKG+uL9IrKqViTtao2Ws6dy0znu9sOaP1di/jKGW1M6VssO8vlpXCQcpZ+jisQ1tTFAC5Jo/EOzFbggBagFQ==}
@@ -22427,12 +22468,16 @@ packages:
     resolution: {integrity: sha512-HItds5xSIxvEZyGxCTlKgnL2hq84yvR5vS0rzEhcHZZldC9X+fdlvuxBTU4GmJIrgPPl9YEuUP/tcHDlnb12rQ==}
     dependencies:
       '@types/chrome': 0.0.232
-      '@types/sinon': 7.5.2
+      '@types/sinon': 17.0.3
     dev: true
 
-  /@types/sinon/7.5.2:
-    resolution: {integrity: sha512-T+m89VdXj/eidZyejvmoP9jivXgBDdkOSBVQjU9kF349NEx10QdPNGxHeZUaj1IlJ32/ewdyXJjnJxyxJroYwg==}
-    dev: true
+  /@types/sinon/17.0.3:
+    resolution: {integrity: sha512-j3uovdn8ewky9kRBG19bOwaZbexJu/XjtkHyjvUgt4xfPFz18dcORIMqnYh66Fx3Powhcr85NT5+er3+oViapw==}
+    dependencies:
+      '@types/sinonjs__fake-timers': 8.1.5
+
+  /@types/sinonjs__fake-timers/8.1.5:
+    resolution: {integrity: sha512-mQkU2jY8jJEF7YHjHvsQO8+3ughTL1mcnn96igfhONmR+fUPSKIkefQYpSe8bsly2Ep7oQbn/6VG5/9/0qcArQ==}
 
   /@types/source-list-map/0.1.6:
     resolution: {integrity: sha512-5JcVt1u5HDmlXkwOD2nslZVllBBc7HDuOICfiZah2Z0is8M8g+ddAEawbmd3VjedfDHBzxCaXLs07QEmb7y54g==}
@@ -23724,6 +23769,7 @@ packages:
 
   /array-from/2.1.1:
     resolution: {integrity: sha512-GQTc6Uupx1FCavi5mPzBvVT7nEOeWMmUA9P95wpfpW1XwMSKs+KaymD5C2Up7KAUKg/mYwbsUYzdZWcoajlNZg==}
+    dev: true
 
   /array-includes/3.1.7:
     resolution: {integrity: sha512-dlcsNBIiWhPkHdOEEKnehA+RNUWDc4UqFtnIXU4uuYDPtA4LDkr7qip2p0VvFAEXNDr0yWZ9PJyIRiGjRLQzwQ==}
@@ -27480,6 +27526,7 @@ packages:
   /diff/3.5.0:
     resolution: {integrity: sha512-A46qtFgd+g7pDZinpnwiRJtxbC1hpgf0uzP3iG89scHk0AUC7A1TGxf5OiiOUv/JMZR8GOt8hL900hV0bOy5xA==}
     engines: {node: '>=0.3.1'}
+    dev: true
 
   /diff/4.0.2:
     resolution: {integrity: sha512-58lmxKSA4BNyLz+HHMUzlOEpg09FV+ev6ZMe3vJihgdxzgcwZ8VoEEPmALCZG9LmqfVoNMMKpttIYTVG6uDY7A==}
@@ -27493,7 +27540,6 @@ packages:
   /diff/5.1.0:
     resolution: {integrity: sha512-D+mk+qE8VC/PAUrlAU34N+VfXev0ghe5ywmpqrawphmVZc1bEfn56uo9qpyGp1p4xpzOHkSW4ztBd6L7Xx4ACw==}
     engines: {node: '>=0.3.1'}
-    dev: true
 
   /diff3/0.0.3:
     resolution: {integrity: sha512-iSq8ngPOt0K53A6eVr4d5Kn6GNrM2nQZtC740pzIriHtn4pOQ2lyzEXQMBeVcWERN0ye7fhBsk9PbLLQOnUx/g==}
@@ -29161,7 +29207,7 @@ packages:
       '@types/chai': 4.3.11
       '@types/lodash': 4.14.202
       '@types/node': 18.19.1
-      '@types/sinon': 7.5.2
+      '@types/sinon': 17.0.3
       lodash: 4.17.21
       mock-stdin: 1.0.0
       nock: 13.4.0
@@ -32202,6 +32248,7 @@ packages:
 
   /isarray/0.0.1:
     resolution: {integrity: sha512-D2S+3GLxWH+uhrNEcoh/fnmYeP8E8/zHl644d/jdA0g2uyXvy3sb0qxotE+ne0LtccHknQzWwZEzhak7oJ0COQ==}
+    dev: true
 
   /isarray/1.0.0:
     resolution: {integrity: sha512-VLghIWNM6ELQzo7zwmcg0NmTVyWKYjvIeM83yjp0wRDTmUnrM678fQbcKBo6n2CJEF0szoG//ytg+TKla89ALQ==}
@@ -33767,6 +33814,10 @@ packages:
 
   /just-extend/4.2.1:
     resolution: {integrity: sha512-g3UB796vUFIY90VIv/WX3L2c8CS2MdWUww3CNrYmqza1Fg0DURc2K/O4YrnklBdQarSJ/y8JnJYDGc+1iumQjg==}
+    dev: true
+
+  /just-extend/6.2.0:
+    resolution: {integrity: sha512-cYofQu2Xpom82S6qD778jBDpwvvy39s1l/hrYij2u9AMdQcGRpaBu6kY4mVhuno5kJVi1DAz4aiphA2WI1/OAw==}
 
   /jwa/1.4.1:
     resolution: {integrity: sha512-qiLX/xhEEFKUAJ6FiBMbes3w9ATzyk5W7Hvzpa/SLYdxNtng+gcurvrI7TbACjIXlsJyr05/S1oUhZrc63evQA==}
@@ -34356,11 +34407,13 @@ packages:
 
   /lolex/4.2.0:
     resolution: {integrity: sha512-gKO5uExCXvSm6zbF562EvM+rd1kQDnB9AZBbiQVzf1ZmdDpxUSvpnAaVOP83N/31mRK8Ml8/VE8DMvsAZQ+7wg==}
+    dev: true
 
   /lolex/5.1.2:
     resolution: {integrity: sha512-h4hmjAvHTmd+25JSwrtTIuwbKdwg5NzZVRMLn9saij4SZaepCrTCxPr35H/3bjwfMJtN+t3CX8672UIkglz28A==}
     dependencies:
       '@sinonjs/commons': 1.8.6
+    dev: true
 
   /long/4.0.0:
     resolution: {integrity: sha512-XsP+KhQif4bjX1kbuSiySJFNAehNxgLb6hPRGJ9QsUr8ajHkuXGdrHmFUTUUXhDwVX2R5bY4JNZEwbUiMhV+MA==}
@@ -35866,6 +35919,16 @@ packages:
       just-extend: 4.2.1
       lolex: 5.1.2
       path-to-regexp: 1.8.0
+    dev: true
+
+  /nise/5.1.9:
+    resolution: {integrity: sha512-qOnoujW4SV6e40dYxJOb3uvuoPHtmLzIk4TFo+j0jPJoC+5Z9xja5qH5JZobEPsa8+YYphMrOSwnrshEhG2qww==}
+    dependencies:
+      '@sinonjs/commons': 3.0.0
+      '@sinonjs/fake-timers': 11.2.2
+      '@sinonjs/text-encoding': 0.7.2
+      just-extend: 6.2.0
+      path-to-regexp: 6.2.1
 
   /no-case/3.0.4:
     resolution: {integrity: sha512-fgAN3jGAh+RoxUGZHTSOLJIqUc2wmoBwGR4tbpNAKmmovFoWq0OdRkb0VkldReO2a2iBT/OEulG9XSUc10r3zg==}
@@ -37243,6 +37306,10 @@ packages:
     resolution: {integrity: sha512-n43JRhlUKUAlibEJhPeir1ncUID16QnEjNpwzNdO3Lm4ywrBpBZ5oLD0I6br9evr1Y9JTqwRtAh7JLoOzAQdVA==}
     dependencies:
       isarray: 0.0.1
+    dev: true
+
+  /path-to-regexp/6.2.1:
+    resolution: {integrity: sha512-JLyh7xT1kizaEvcaXOQwOc2/Yhw6KZOvPf1S8401UyLk86CU79LN3vl7ztXGm/pZ+YjoyAJ4rxmHwbkBXJX+yw==}
 
   /path-type/1.1.0:
     resolution: {integrity: sha512-S4eENJz1pkiQn9Znv33Q+deTOKmbl+jj1Fl+qiP/vYezj+S8x+J3Uo0ISrx/QoEvIlOaDWJhPaRd1flJ9HXZqg==}
@@ -40441,14 +40508,14 @@ packages:
       marked: 4.3.0
     dev: false
 
-  /sinon-chai/3.3.0_chai@4.3.10+sinon@7.5.0:
-    resolution: {integrity: sha512-r2JhDY7gbbmh5z3Q62pNbrjxZdOAjpsqW/8yxAZRSqLZqowmfGZPGUZPFf3UX36NLis0cv8VEM5IJh9HgkSOAA==}
+  /sinon-chai/3.7.0_chai@4.3.10+sinon@17.0.1:
+    resolution: {integrity: sha512-mf5NURdUaSdnatJx3uhoBOrY9dtL19fiOtAdT1Azxg3+lNJFiuN0uzaU3xX1LeAfL17kHQhTAJgpsfhbMJMY2g==}
     peerDependencies:
       chai: ^4.0.0
-      sinon: '>=4.0.0 <8.0.0'
+      sinon: '>=4.0.0'
     dependencies:
       chai: 4.3.10
-      sinon: 7.5.0
+      sinon: 17.0.1
     dev: true
 
   /sinon-chrome/3.0.1:
@@ -40458,6 +40525,16 @@ packages:
       sinon: 7.5.0
       urijs: 1.19.11
     dev: true
+
+  /sinon/17.0.1:
+    resolution: {integrity: sha512-wmwE19Lie0MLT+ZYNpDymasPHUKTaZHUH/pKEubRXIzySv9Atnlw+BUMGCzWgV7b7wO+Hw6f1TEOr0IUnmU8/g==}
+    dependencies:
+      '@sinonjs/commons': 3.0.0
+      '@sinonjs/fake-timers': 11.2.2
+      '@sinonjs/samsam': 8.0.0
+      diff: 5.1.0
+      nise: 5.1.9
+      supports-color: 7.2.0
 
   /sinon/7.5.0:
     resolution: {integrity: sha512-AoD0oJWerp0/rY9czP/D6hDTTUYGpObhZjMpd7Cl/A6+j0xBE+ayL/ldfggkBXUs0IkvIiM1ljM8+WkOc5k78Q==}
@@ -40470,6 +40547,7 @@ packages:
       lolex: 4.2.0
       nise: 1.5.3
       supports-color: 5.5.0
+    dev: true
 
   /sirv/2.0.3:
     resolution: {integrity: sha512-O9jm9BsID1P+0HOi81VpXPoDxYP374pkOLzACAoyUQ/3OUVndNpsz6wMnY2z+yOxzbllCKZrM+9QrWsv4THnyA==}
