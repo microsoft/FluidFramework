@@ -76,12 +76,6 @@ export class TinyliciousRunner implements IRunner {
 		this.server = this.serverFactory.create(alfred);
 		const httpServer = this.server.httpServer;
 
-		// const testWebhookURL = "put your url here";
-		// webhookManager.subscribe(testWebhookURL, CollabSessionWebhookEvents.SESSION_END);
-		// webhookManager.subscribe(testWebhookURL, CollabSessionWebhookEvents.SESSION_START);
-		// webhookManager.subscribe(testWebhookURL, CollabSessionWebhookEvents.SESSION_CLIENT_JOIN);
-		// webhookManager.subscribe(testWebhookURL, CollabSessionWebhookEvents.SESSION_CLIENT_LEAVE);
-
 		configureWebSocketServices(
 			this.server.webSocketServer /* webSocketServer */,
 			this.orderManager /* orderManager */,

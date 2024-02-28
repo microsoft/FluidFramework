@@ -76,7 +76,15 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 		});
 		const pubsub = new PubSubPublisher(io);
 		const webServerFactory = new WebServerFactory(io);
+
 		const webhookManager = new WebhookManager();
+
+		// const testWebhookURL = "put your url here";
+		// webhookManager.subscribe(testWebhookURL, CollabSessionWebhookEvents.SESSION_END);
+		// webhookManager.subscribe(testWebhookURL, CollabSessionWebhookEvents.SESSION_START);
+		// webhookManager.subscribe(testWebhookURL, CollabSessionWebhookEvents.SESSION_CLIENT_JOIN);
+		// webhookManager.subscribe(testWebhookURL, CollabSessionWebhookEvents.SESSION_CLIENT_LEAVE);
+		// webhookManager.subscribe(testWebhookURL, SummaryWebhookEvents.NEW_SUMMARY_CREATED);
 
 		// This produces a static object with the merged settings from all the stores in the nconf Provider.
 		// It includes env variables that we probably don't need to pass to the LocalOrderManager, but small price to pay
