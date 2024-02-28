@@ -103,10 +103,7 @@ const childComposer = (
 	return nodeChangeFromValueChange(valueChange);
 };
 
-const childInverter = (
-	nodeChange: NodeChangeset,
-	allowUndefinedRevision: boolean = false,
-): NodeChangeset => {
+const childInverter = (nodeChange: NodeChangeset): NodeChangeset => {
 	const valueChange = valueChangeFromNodeChange(nodeChange);
 	const taggedChange = makeAnonChange(valueChange);
 	const inverse = valueHandler.rebaser.invert(
@@ -114,7 +111,7 @@ const childInverter = (
 		unexpectedDelegate,
 		idAllocatorFromMaxId(),
 		crossFieldManager,
-		defaultRevisionMetadataFromChanges([taggedChange], allowUndefinedRevision),
+		defaultRevisionMetadataFromChanges([taggedChange]),
 	);
 	return nodeChangeFromValueChange(inverse);
 };
@@ -369,8 +366,7 @@ describe("GenericField", () => {
 			childInverter,
 			idAllocatorFromMaxId(),
 			crossFieldManager,
-			defaultRevisionMetadataFromChanges([taggedChange], true),
-			true,
+			defaultRevisionMetadataFromChanges([taggedChange]),
 		);
 		assert.deepEqual(actual, expected);
 	});

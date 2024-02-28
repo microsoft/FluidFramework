@@ -1046,7 +1046,7 @@ export function testComposedSandwichRebasing() {
 				const insertB = tagChange(Change.insert(1, 1), tag2);
 				const inverseA = tagRollbackInverse(invert(insertA), tag3, insertA.revision);
 				const sandwich = compose([inverseA, insertA]);
-				const insertB2 = rebaseTagged(insertB, makeAnonChange(sandwich), true);
+				const insertB2 = rebaseTagged(insertB, makeAnonChange(sandwich));
 				assertChangesetsEqual(insertB2.change, insertB.change);
 			}));
 	});

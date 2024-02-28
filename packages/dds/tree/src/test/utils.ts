@@ -962,24 +962,17 @@ export function testChangeReceiver<TChange>(
 
 export function defaultRevisionMetadataFromChanges(
 	changes: readonly TaggedChange<unknown>[],
-	allowUndefinedRevision: boolean = false,
 ): RevisionMetadataSource {
-	return revisionMetadataSourceFromInfo(
-		defaultRevInfosFromChanges(changes, allowUndefinedRevision),
-	);
+	return revisionMetadataSourceFromInfo(defaultRevInfosFromChanges(changes));
 }
 
 export function defaultRevInfosFromChanges(
 	changes: readonly TaggedChange<unknown>[],
-	allowUndefinedRevision: boolean = false,
 ): RevisionInfo[] {
 	const revInfos: RevisionInfo[] = [];
 	const revisions = new Set<RevisionTag>();
 	const rolledBackRevisions: RevisionTag[] = [];
 	for (const change of changes) {
-		if (!allowUndefinedRevision) {
-			assert(change.revision !== undefined);
-		}
 		if (change.revision !== undefined) {
 			revInfos.push({
 				revision: change.revision,
