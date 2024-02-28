@@ -13,7 +13,7 @@
  * by the Fluid Devtools.
  */
 
-export { devtoolsMessageSource } from "./Constants";
+export { devtoolsMessageSource } from "./Constants.js";
 export {
 	AudienceSummary,
 	CloseContainer,
@@ -30,21 +30,25 @@ export {
 	GetDataVisualization,
 	GetRootDataVisualizations,
 	RootDataVisualizations,
-} from "./container-devtools-messages";
+} from "./container-devtools-messages/index.js";
 export {
 	ContainerList,
 	DevtoolsDisposed,
 	DevtoolsFeatures,
 	GetContainerList,
 	GetDevtoolsFeatures,
-} from "./devtools-messages";
-export type { ISourcedDevtoolsMessage, IDevtoolsMessage } from "./Messages";
-export type { IMessageRelay, IMessageRelayEvents } from "./MessageRelay";
-export { GetTelemetryHistory, TelemetryEvent, TelemetryHistory } from "./telemetry-messages";
-export type { InboundHandlers, MessageLoggingOptions } from "./Utilities";
+} from "./devtools-messages/index.js";
+export type { ISourcedDevtoolsMessage, IDevtoolsMessage } from "./Messages.js";
+export type { IMessageRelay, IMessageRelayEvents } from "./MessageRelay.js";
+export {
+	GetTelemetryHistory,
+	TelemetryEvent,
+	TelemetryHistory,
+} from "./telemetry-messages/index.js";
+export type { InboundHandlers, MessageLoggingOptions } from "./Utilities.js";
 export {
 	handleIncomingMessage,
 	handleIncomingWindowMessage,
 	isDevtoolsMessage,
 	postMessagesToWindow,
-} from "./Utilities";
+} from "./Utilities.js";
