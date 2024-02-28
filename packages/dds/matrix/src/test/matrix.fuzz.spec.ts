@@ -242,8 +242,8 @@ describe("Matrix fuzz tests", function () {
 	createDDSFuzzSuite(nameModel("default"), {
 		...baseOptions,
 		reconnectProbability: 0,
-		// Seeds 62 and 80 are slow but otherwise pass, see comment on timeout above.
-		skip: [62, 80],
+		// Seeds are slow but otherwise pass, see comment on timeout above.
+		skip: [68],
 		// Uncomment to replay a particular seed.
 		// replay: 0,
 	});
@@ -257,7 +257,7 @@ describe("Matrix fuzz tests", function () {
 		},
 		reconnectProbability: 0.1,
 		// Seeds needing investigation, tracked by AB#7088.
-		skip: [23, 24, 69],
+		skip: [20, 42, 90],
 		// Uncomment to replay a particular seed.
 		// replay: 0,
 	});
