@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { DataObject } from "./dataObject";
-export { PureDataObject } from "./pureDataObject";
-export type { DataObjectTypes, IDataObjectProps } from "./types";
+export { DataObject } from "./dataObject.js";
+export { PureDataObject } from "./pureDataObject.js";
+export type { DataObjectTypes, IDataObjectProps } from "./types.js";
