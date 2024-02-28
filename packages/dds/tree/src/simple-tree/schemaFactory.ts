@@ -26,6 +26,7 @@ import {
 	getSequenceField,
 	arrayNodePrototypeProperties,
 	mapStaticDispatchMap,
+	isTreeNode,
 } from "./proxies.js";
 import { getFlexSchema, setFlexSchemaFromClassSchema } from "./toFlexSchema.js";
 import {
@@ -255,7 +256,7 @@ export class SchemaFactory<
 					);
 				}
 
-				if (input instanceof TreeNode) {
+				if (isTreeNode(input)) {
 					// TODO: update this once we have better support for deep-copying and move operations.
 					throw new UsageError(
 						"Existing nodes cannot be used as new content to insert into the tree. Create a new node using your schema factory instead.",

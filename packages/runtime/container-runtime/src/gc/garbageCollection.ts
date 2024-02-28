@@ -858,8 +858,7 @@ export class GarbageCollector implements IGarbageCollector {
 		}
 
 		return this.summaryStateTracker.summarize(
-			fullTree,
-			trackState,
+			trackState && !fullTree,
 			gcState,
 			this.deletedNodes,
 			this.tombstones,
