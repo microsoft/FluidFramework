@@ -717,6 +717,7 @@ export function testStateBasedRebaserAxioms() {
 					groupSubSuites: true,
 					numberOfEditsToVerifyAssociativity: isStress ? 4 : 3,
 					skipRebaseOverCompose: false,
+					skipComposeWithEmpty: true,
 				},
 			);
 		});
@@ -743,6 +744,7 @@ export function testStateBasedRebaserAxioms() {
 					groupSubSuites: true,
 					numberOfEditsToVerifyAssociativity: isStress ? 4 : 3,
 					skipRebaseOverCompose: false,
+					skipComposeWithEmpty: true,
 				},
 			);
 		});

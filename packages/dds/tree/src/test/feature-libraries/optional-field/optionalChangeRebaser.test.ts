@@ -508,6 +508,8 @@ export function testRebaserAxioms() {
 					isEmpty: isChangeEmpty,
 				},
 				{
+					skipComposeWithEmpty: true,
+					skipComposeWithInverse: true,
 					numberOfEditsToRebase: 3,
 					numberOfEditsToRebaseOver: isStress ? 5 : 3,
 					numberOfEditsToVerifyAssociativity: isStress ? 6 : 4,

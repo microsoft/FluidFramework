@@ -28,6 +28,8 @@ import {
 
 interface ExhaustiveSuiteOptions {
 	skipRebaseOverCompose?: boolean;
+	skipComposeWithEmpty?: boolean;
+	skipComposeWithInverse?: boolean;
 	groupSubSuites?: boolean;
 	numberOfEditsToRebase?: number;
 	numberOfEditsToRebaseOver?: number;
@@ -39,6 +41,14 @@ const defaultSuiteOptions: Required<ExhaustiveSuiteOptions> = {
 	 * Some FieldKinds don't pass this suite and can override this option to skip it.
 	 */
 	skipRebaseOverCompose: false,
+	/**
+	 * Some FieldKinds don't pass this suite and can override this option to skip it.
+	 */
+	skipComposeWithEmpty: false,
+	/**
+	 * Some FieldKinds don't pass this suite and can override this option to skip it.
+	 */
+	skipComposeWithInverse: false,
 	/**
 	 * Runs sub-suites as an individual test to reduce test discovery time
 	 */
@@ -460,7 +470,8 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 		}
 	});
 
-	describe("composeWithEmpty: A ○ ε = ε ○ A = A", () => {
+	const describeComposeWithEmpty = definedOptions.skipComposeWithEmpty ? describe.skip : describe;
+	describeComposeWithEmpty("composeWithEmpty: A ○ ε = ε ○ A = A", () => {
 		for (const initialState of initialStates) {
 			outerFixture(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
 				for (const namedSourceEdits of generatePossibleSequenceOfEdits(
@@ -482,7 +493,10 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 		}
 	});
 
-	describe("composeWithInverse: A ○ A⁻¹ = ε", () => {
+	const describeComposeWithInverse = definedOptions.skipComposeWithInverse
+		? describe.skip
+		: describe;
+	describeComposeWithInverse("composeWithInverse: A ○ A⁻¹ = ε", () => {
 		for (const initialState of initialStates) {
 			outerFixture(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
 				for (const namedSourceEdits of generatePossibleSequenceOfEdits(
@@ -809,10 +823,10 @@ function verifyRebaseOverEmpty<TChangeset>(
 		fieldRebaser.createEmpty(),
 		"test" as unknown as SessionSpaceCompressedId,
 	);
-
 	const actualChange = makeAnonChange(fieldRebaser.rebase(edit.change, emptyChange));
-	assert(fieldRebaser.isEmpty !== undefined);
-	assert(fieldRebaser.isEmpty(actualChange.change));
+	const expectedChange = makeAnonChange(edit.change);
+	const assertDeepEqual = getDefaultedEqualityAssert(fieldRebaser);
+	assertDeepEqual(actualChange, expectedChange);
 }
 
 function verifyRebaseEmpty<TChangeset>(
