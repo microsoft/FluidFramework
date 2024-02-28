@@ -38,7 +38,6 @@ import {
 	GenericError,
 	raiseConnectedEvent,
 	PerformanceEvent,
-	// eslint-disable-next-line import/no-deprecated
 	TaggedLoggerAdapter,
 	MonitoringContext,
 	wrapError,

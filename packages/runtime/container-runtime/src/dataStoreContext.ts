@@ -995,7 +995,7 @@ export abstract class FluidDataStoreContext
 export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	// Tells whether we need to fetch the snapshot before use. This is to support Data Virtualization.
 	private snapshotFetchRequired: boolean;
-	private readonly runtime: ContainerRuntime;
+	private readonly runtime: IContainerRuntimeBase;
 
 	constructor(props: IRemoteFluidDataStoreContextProps) {
 		super(props, true /* existing */, false /* isLocalDataStore */, () => {
@@ -1004,7 +1004,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 
 		this._baseSnapshot = props.snapshotTree;
 		this.snapshotFetchRequired = !!props.snapshotTree?.omitted;
-		this.runtime = props.runtime;
+		this.runtime = props.parentContext.containerRuntime;
 		if (props.snapshotTree !== undefined) {
 			this.summarizerNode.updateBaseSummaryState(props.snapshotTree);
 		}

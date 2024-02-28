@@ -130,6 +130,10 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;
     getQuorum(): IQuorumClients;
+    getSnapshotForLoadingGroupId(loadingGroupIds: string[], pathParts: string[]): Promise<{
+        snapshotTree: ISnapshotTree;
+        sequenceNumber: number;
+    }>;
     // (undocumented)
     readonly logger: ITelemetryBaseLogger;
     orderSequentially(callback: () => void): void;

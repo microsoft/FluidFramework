@@ -237,6 +237,17 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * Returns the current audience.
 	 */
 	getAudience(): IAudience;
+
+	/**
+	 * Api to fetch the snapshot from the service for a loadingGroupIds.
+	 * @param loadingGroupIds - LoadingGroupId for which the snapshot is asked for.
+	 * @param pathParts - Parts of the path, which we want to extract from the snapshot tree.
+	 * @returns - snapshotTree and the sequence number of the snapshot.
+	 */
+	getSnapshotForLoadingGroupId(
+		loadingGroupIds: string[],
+		pathParts: string[],
+	): Promise<{ snapshotTree: ISnapshotTree; sequenceNumber: number }>;
 }
 
 /**

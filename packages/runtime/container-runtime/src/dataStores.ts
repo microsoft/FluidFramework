@@ -71,11 +71,10 @@ import {
 } from "./dataStoreContext";
 import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs";
 import { IDataStoreAliasMessage, channelToDataStore, isDataStoreAliasMessage } from "./dataStore";
-import { GCNodeType, detectOutboundRoutesViaDDSKey } from "./gc";
+import { GCNodeType, detectOutboundRoutesViaDDSKey, trimLeadingAndTrailingSlashes } from "./gc";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summary";
 import { ContainerMessageType, LocalContainerRuntimeMessage } from "./messageTypes";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
-import { trimLeadingAndTrailingSlashes } from "./gc";
 
 /**
  * Accepted header keys for requests coming to the runtime.
@@ -616,6 +615,7 @@ export class DataStores implements IFluidDataStoreChannel, IDisposable {
 			case ContainerMessageType.Alias:
 				this.parentContext.submitMessage(type, content, localOpMetadata);
 				return;
+			default:
 		}
 
 		assert(type === ContainerMessageType.FluidDataStoreOp, "type");
@@ -659,9 +659,10 @@ export class DataStores implements IFluidDataStoreChannel, IDisposable {
 		const opContents = content as LocalContainerRuntimeMessage;
 		switch (opContents.type) {
 			case ContainerMessageType.Attach:
-				return this.applyStashedAttachOp(opContents.contents as IAttachMessage);
+				return this.applyStashedAttachOp(opContents.contents);
 			case ContainerMessageType.Alias:
 				return;
+			default:
 		}
 
 		const envelope = opContents.contents as IEnvelope;
@@ -1282,7 +1283,7 @@ export class DataStores implements IFluidDataStoreChannel, IDisposable {
 			subRequest.url.startsWith("/"),
 			0x126 /* "Expected createSubRequest url to include a leading slash" */,
 		);
-		// eslint-disable-next-line @typescript-eslint/return-await -- Adding an await here causes test failures
+
 		return dataStore.request(subRequest);
 	}
 }
