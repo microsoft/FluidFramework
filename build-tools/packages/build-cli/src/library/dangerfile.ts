@@ -67,8 +67,8 @@ export async function dangerfile(): Promise<void> {
 
 			})
 			.reduce((prev: boolean, current: boolean) => {
-				prev || current
-			}, false);
+				return prev || current
+			});
 
 		 // Warn and add label to PR in case of bundle size regression
 		 if (sizeCheck) {
