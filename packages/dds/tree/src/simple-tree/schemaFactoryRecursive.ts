@@ -17,11 +17,9 @@ import {
 	FieldSchema,
 	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
-	InsertableObjectFromSchemaRecord,
-	InsertableTreeNodeFromImplicitAllowedTypes,
+	InsertableTypedNode,
 	NodeFromSchema,
 	NodeKind,
-	ObjectFromSchemaRecord,
 	TreeMapNode,
 	TreeNodeSchema,
 	TreeNodeSchemaClass,
@@ -29,6 +27,7 @@ import {
 } from "./schemaTypes.js";
 import { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
 import { TreeArrayNode } from "./treeArrayNode.js";
+import { TreeArrayNodeBase, TreeNode } from "./types.js";
 
 /**
  * {@link Unenforced} version of {@link ObjectFromSchemaRecord}.
@@ -62,6 +61,30 @@ export type TreeNodeFromImplicitAllowedTypesUnsafe<
 	: TSchema extends AllowedTypes
 	? NodeFromSchema<FlexListToUnion<TSchema>>
 	: unknown;
+
+/**
+ * {@link Unenforced} version of {@link InsertableTreeNodeFromImplicitAllowedTypes}.
+ * @internal
+ */
+export type InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
+	TSchema extends Unenforced<ImplicitAllowedTypes>,
+> = TSchema extends TreeNodeSchema
+	? InsertableTypedNode<TSchema>
+	: TSchema extends AllowedTypes
+	? InsertableTypedNode<FlexListToUnion<TSchema>>
+	: never;
+
+/**
+ * {@link Unenforced} version of {@link (TreeArrayNode:interface)}.
+ * @internal
+ */
+export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAllowedTypes>>
+	extends TreeNode,
+		TreeArrayNodeBase<
+			TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>,
+			InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>,
+			TreeArrayNode
+		> {}
 
 /**
  * {@link Unenforced} version of {@link FieldSchema}.
@@ -100,28 +123,9 @@ export class SchemaFactoryRecursive<
 	/**
 	 * {@link SchemaFactory.object} except tweaked to work better for recursive types.
 	 * @remarks
-	 * For unknown reasons, recursive objects work better (compile in more cases)
-	 * if they their insertable types and node types are not required to be an object.
-	 * This reduces type safety a bit, but is worth it to make the recursive types actually work at all.
+	 * This version of {@link SchemaFactory.object} has fewer type constraints to work around TypeScript limitations, see {@link Unenforced}.
 	 */
 	public objectRecursive<
-		const Name extends TName,
-		const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-	>(
-		name: Name,
-		t: T,
-	): TreeNodeSchemaClass<
-		ScopedSchemaName<TScope, Name>,
-		NodeKind.Object,
-		ObjectFromSchemaRecord<T> & WithType<ScopedSchemaName<TScope, Name>>,
-		InsertableObjectFromSchemaRecord<T>,
-		true,
-		T
-	> {
-		return this.object(name, t);
-	}
-
-	public objectRecursiveUnsafe<
 		const Name extends TName,
 		const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
 	>(name: Name, t: T) {
@@ -129,9 +133,9 @@ export class SchemaFactoryRecursive<
 			name,
 			t as T & RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
 		) as TreeNodeSchemaClass<
-			`${TScope}.${Name}`,
+			ScopedSchemaName<TScope, Name>,
 			NodeKind.Object,
-			ObjectFromSchemaRecordUnsafe<T> & WithType<`${TScope}.${Name}`>,
+			ObjectFromSchemaRecordUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>>,
 			ObjectFromSchemaRecordUnsafe<T>,
 			true,
 			T
@@ -143,7 +147,11 @@ export class SchemaFactoryRecursive<
 	}
 
 	/**
-	 * For unknown reasons, recursive arrays work better (compile in more cases)
+	 * `SchemaFactory.array` except tweaked to work better for recursive types.
+	 * @remarks
+	 * This version of `SchemaFactory.array` has fewer type constraints to work around TypeScript limitations, see {@link Unenforced}.
+	 *
+	 * For unknown reasons, recursive arrays avoid `error TS2577: Return type annotation circularly references itself.`
 	 * if their constructor takes in an object with a member containing the iterable,
 	 * rather than taking the iterable as a parameter directly.
 	 *
@@ -151,14 +159,25 @@ export class SchemaFactoryRecursive<
 	 * ```typescript
 	 * new MyRecursiveArray({x: theData});
 	 * ```
+	 *
+	 * Additionally `ImplicitlyConstructable` is disabled (forcing use of constructor) to avoid
+	 * `error TS2589: Type instantiation is excessively deep and possibly infinite.`
+	 * which gets reported at sometimes incorrect source locations that vary based on incremental builds.
 	 */
-	public arrayRecursive<const Name extends TName, const T extends ImplicitAllowedTypes>(
-		name: Name,
-		allowedTypes: T,
-	) {
-		class RecursiveArray extends this.namedArray_internal(name, allowedTypes, true, false) {
+	public arrayRecursive<
+		const Name extends TName,
+		const T extends Unenforced<ImplicitAllowedTypes>,
+	>(name: Name, allowedTypes: T) {
+		class RecursiveArray extends this.namedArray_internal(
+			name,
+			allowedTypes as T & ImplicitAllowedTypes,
+			true,
+			false,
+		) {
 			public constructor(
-				data: { x: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>> } | FlexTreeNode,
+				data:
+					| { x: Iterable<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>> }
+					| FlexTreeNode,
 			) {
 				if (isFlexTreeNode(data)) {
 					super(data as any);
@@ -169,10 +188,10 @@ export class SchemaFactoryRecursive<
 		}
 
 		return RecursiveArray as unknown as TreeNodeSchemaClass<
-			`${TScope}.${string}`,
+			ScopedSchemaName<TScope, Name>,
 			NodeKind.Array,
-			TreeArrayNode<T> & WithType<`${TScope}.${string}`>,
-			{ x: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>> },
+			TreeArrayNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>>,
+			{ x: Iterable<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>> },
 			false
 		>;
 	}
@@ -202,9 +221,9 @@ export class SchemaFactoryRecursive<
 		}
 
 		return MapSchema as TreeNodeSchemaClass<
-			`${TScope}.${Name}`,
+			ScopedSchemaName<TScope, Name>,
 			NodeKind.Map,
-			TreeMapNode<T> & WithType<`${TScope}.${Name}`>,
+			TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>,
 			undefined,
 			false
 		>;

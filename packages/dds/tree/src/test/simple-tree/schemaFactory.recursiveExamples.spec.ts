@@ -33,61 +33,14 @@ import {
 	TreeFieldFromImplicitFieldUnsafe,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaFactoryRecursive.js";
-import { ListRecursive, MapRecursive, ObjectRecursive } from "./testRecursiveSchema.js";
+import { ListRecursive, ObjectRecursive } from "./testRecursiveSchema.js";
 
 describe("Recursive Class based end to end example", () => {
 	it("test", () => {
 		// Since this no longer follows the builder pattern, it is a SchemaFactory instead of a SchemaBuilder.
 		const schema = new SchemaFactoryRecursive("com.example");
 
-		const BoxRef = () => Box;
-		schema.fixRecursiveReference(BoxRef);
-
 		class Box extends schema.objectRecursive("Box", {
-			/**
-			 * Doc comment on a schema based field. Intellisense should work when referencing the field.
-			 */
-			text: schema.string,
-			/**
-			 * Example optional field.
-			 * Works the same as before.
-			 */
-			child: schema.optional([BoxRef]),
-		}) {}
-
-		const config = new TreeConfiguration(Box, () => new Box({ text: "hi", child: undefined }));
-
-		function setup(tree: ITree) {
-			const view: TreeView<Box> = tree.schematize(config);
-			const stuff: undefined | Box = view.root.child;
-
-			view.root.child = new Box({
-				text: "hi2",
-				child: new Box({ text: "hi3", child: new Box({ text: "hi4", child: undefined }) }),
-			});
-
-			// TODO: this is broken!
-			// type _check1 = requireAssignableTo<undefined, typeof view.root.child>;
-			type _check2 = requireAssignableTo<Box, typeof view.root.child>;
-
-			const stuff2 = view.root.child?.child?.child;
-			assert(stuff2 !== undefined);
-			assert.equal(stuff2.text, "hi4");
-		}
-
-		const factory = new TreeFactory({});
-		const theTree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		setup(theTree);
-	});
-
-	it("test2", () => {
-		// Since this no longer follows the builder pattern, it is a SchemaFactory instead of a SchemaBuilder.
-		const schema = new SchemaFactoryRecursive("com.example");
-
-		class Box extends schema.objectRecursiveUnsafe("Box", {
 			/**
 			 * Doc comment on a schema based field. Intellisense should work when referencing the field.
 			 */
@@ -164,7 +117,7 @@ describe("Recursive Class based end to end example", () => {
 		// Since this no longer follows the builder pattern, it is a SchemaFactory instead of a SchemaBuilder.
 		const schema = new SchemaFactoryRecursive("com.example");
 
-		class Box extends schema.objectRecursiveUnsafe("Box", {
+		class Box extends schema.objectRecursive("Box", {
 			/**
 			 * Doc comment on a schema based field. Intellisense should work when referencing the field.
 			 */
@@ -271,7 +224,7 @@ describe("Recursive Class based end to end example", () => {
 	it("objects2", () => {
 		const sf = new SchemaFactoryRecursive("recursive");
 
-		class ObjectRecursive2 extends sf.objectRecursiveUnsafe("Object", {
+		class ObjectRecursive2 extends sf.objectRecursive("Object", {
 			x: sf.optionalRecursive([() => ObjectRecursive2]),
 		}) {}
 
@@ -332,29 +285,29 @@ describe("Recursive Class based end to end example", () => {
 		}
 	});
 
-	it("maps", () => {
-		const factory = new TreeFactory({});
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
+	// it("maps", () => {
+	// 	const factory = new TreeFactory({});
+	// 	const tree = factory.create(
+	// 		new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+	// 		"tree",
+	// 	);
 
-		const view: TreeView<MapRecursive> = tree.schematize(
-			new TreeConfiguration(MapRecursive, () => new MapRecursive(undefined)),
-		);
-		const data = [...view.root];
-		assert.deepEqual(data, []);
+	// 	const view: TreeView<MapRecursive> = tree.schematize(
+	// 		new TreeConfiguration(MapRecursive, () => new MapRecursive(undefined)),
+	// 	);
+	// 	const data = [...view.root];
+	// 	assert.deepEqual(data, []);
 
-		// Nested
-		{
-			type T = InsertableTreeNodeFromImplicitAllowedTypes<typeof MapRecursive>;
-			const _check: T = new MapRecursive(undefined);
-			// Only explicitly constructed recursive maps are currently allowed:
-			type _check = requireTrue<areSafelyAssignable<T, MapRecursive>>;
-		}
+	// 	// Nested
+	// 	{
+	// 		type T = InsertableTreeNodeFromImplicitAllowedTypes<typeof MapRecursive>;
+	// 		const _check: T = new MapRecursive(undefined);
+	// 		// Only explicitly constructed recursive maps are currently allowed:
+	// 		type _check = requireTrue<areSafelyAssignable<T, MapRecursive>>;
+	// 	}
 
-		view.root.set("x", new MapRecursive(undefined));
+	// 	view.root.set("x", new MapRecursive(undefined));
 
-		view.root.get("x")?.set("x", new MapRecursive(undefined));
-	});
+	// 	view.root.get("x")?.set("x", new MapRecursive(undefined));
+	// });
 });

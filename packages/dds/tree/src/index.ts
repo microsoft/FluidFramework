@@ -305,6 +305,8 @@ export {
 	TreeFieldFromImplicitFieldUnsafe,
 	TreeNodeFromImplicitAllowedTypesUnsafe,
 	FieldSchemaUnsafe,
+	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
+	TreeArrayNodeUnsafe,
 
 	// test recursive schema for checking that d.ts files handles schema correctly
 	test_RecursiveObject,
