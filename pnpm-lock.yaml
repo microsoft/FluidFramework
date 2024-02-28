@@ -9460,7 +9460,6 @@ importers:
       rimraf: ^4.4.0
       sinon: ^17.0.1
       ts-node: ^10.9.1
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -9497,7 +9496,6 @@ importers:
       rimraf: 4.4.1
       sinon: 17.0.1
       ts-node: 10.9.1_ggysxzqxruqvydtrq6zb2nxvwm
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/runtime/test-runtime-utils:
