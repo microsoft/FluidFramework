@@ -38,12 +38,15 @@ export const CollabSessionWebhookEvents = {
  */
 export type CollabSessionWebhookEvent = keyof typeof CollabSessionWebhookEvents;
 
+/**
+ * Object containing names of all events related to Fluid summaries. Intended to be used like an enum
+ */
 export const SummaryWebhookEvents = {
 	NEW_SUMMARY_CREATED: "NEW_SUMMARY_CREATED",
 } as const;
 
 /**
- * The type for all {@link CollabSessionWebhookEvents} Webhook events
+ * The type for all {@link SummaryWebhookEvents} Webhook events
  */
 export type SummaryWebhookEvent = keyof typeof SummaryWebhookEvents;
 
