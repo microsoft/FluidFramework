@@ -44,6 +44,7 @@ import {
 	type Encoder,
 } from "../../encoders.js";
 import { makeLZ4Encoder } from "../../lz4Encoder.js";
+import { _dirname } from "./dirname.cjs";
 
 function makeMockAudience(clientIds: string[]): IAudience {
 	const clients = new Map<string, IClient>();
@@ -324,7 +325,7 @@ function createSharedString(
 	);
 }
 
-const directory = path.join(__dirname, "../../../src/test/attribution/documents");
+const directory = path.join(_dirname, "../../../src/test/attribution/documents");
 
 interface TestPaths {
 	directory: string;
