@@ -12,7 +12,6 @@ import {
 	IChannelFactory,
 	IChannelAttributes,
 	IChannelServices,
-	IChannel,
 } from '@fluidframework/datastore-definitions';
 import { AttachState } from '@fluidframework/container-definitions';
 import {
@@ -21,7 +20,7 @@ import {
 	ISharedObjectEvents,
 	SharedObject,
 } from '@fluidframework/shared-object-base';
-import { ITelemetryProperties } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
 import {
 	ITelemetryLoggerExt,
 	createChildLogger,
@@ -246,7 +245,7 @@ export class SharedTreeFactory implements IChannelFactory {
 		id: string,
 		services: IChannelServices,
 		_channelAttributes: Readonly<IChannelAttributes>
-	): Promise<IChannel> {
+	): Promise<SharedTree> {
 		const sharedTree = this.createSharedTree(runtime, id);
 		await sharedTree.load(services);
 		return sharedTree;
@@ -777,7 +776,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * Initialize shared tree with a serialized summary. This is used for testing.
 	 * @returns Statistics about the loaded summary.
 	 */
-	public loadSerializedSummary(blobData: string): ITelemetryProperties {
+	public loadSerializedSummary(blobData: string): ITelemetryBaseProperties {
 		const summary = deserialize(blobData, this.serializer);
 		this.loadSummary(summary);
 		return getSummaryStatistics(summary);
@@ -1067,26 +1066,12 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		// TODO:Type Safety: Improve type safety around op sending/parsing (e.g. discriminated union over version field somehow)
 		switch (op.version) {
 			case WriteFormat.v0_0_2:
-				return this.encoder_0_0_2.decodeEditOp(op, this.encodeSemiSerializedEdit.bind(this), this);
+				return this.encoder_0_0_2.decodeEditOp(op, (x) => x, this);
 			case WriteFormat.v0_1_1:
-				return this.encoder_0_1_1.decodeEditOp(
-					op,
-					this.encodeSemiSerializedEdit.bind(this),
-					this.idNormalizer,
-					this.interner
-				);
+				return this.encoder_0_1_1.decodeEditOp(op, (x) => x, this.idNormalizer, this.interner);
 			default:
 				fail('Unknown op version');
 		}
-	}
-
-	private encodeSemiSerializedEdit<T>(semiSerializedEdit: Edit<T>): Edit<T> {
-		// semiSerializedEdit may have handles which have been replaced by `serializer.encode`.
-		// Since there is no API to un-replace them except via parse, re-stringify the edit, then parse it.
-		// Stringify using JSON, not IFluidSerializer since OPs use JSON directly.
-		// TODO:Performance:#48025: Avoid this serialization round trip.
-		const encodedEdit: Edit<T> = this.serializer.parse(JSON.stringify(semiSerializedEdit));
-		return encodedEdit;
 	}
 
 	private processSequencedEdit(edit: Edit<ChangeInternal>, message: ISequencedDocumentMessage): void {
@@ -1381,13 +1366,13 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		if (this.isAttached()) {
 			switch (this.writeFormat) {
 				case WriteFormat.v0_0_2:
-					this.submitOp(this.encoder_0_0_2.encodeEditOp(edit, this.serializeEdit.bind(this), this));
+					this.submitOp(this.encoder_0_0_2.encodeEditOp(edit, (x) => x, this));
 					break;
 				case WriteFormat.v0_1_1:
 					this.submitOp(
 						this.encoder_0_1_1.encodeEditOp(
 							edit,
-							this.serializeEdit.bind(this),
+							(x) => x,
 							this.idCompressor.takeNextCreationRange(),
 							this.idNormalizer,
 							this.interner
@@ -1398,10 +1383,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 					fail('Unknown version');
 			}
 		}
-	}
-
-	private serializeEdit<TChange>(preparedEdit: Edit<TChange>): Edit<TChange> {
-		return this.serializer.encode(preparedEdit, this.handle) as Edit<TChange>;
 	}
 
 	/** A type-safe `submitLocalMessage` wrapper to enforce op format */
@@ -1491,7 +1472,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 
 								stashedEdit = this.encoder_0_1_1.decodeEditOp(
 									sharedTreeOp,
-									this.encodeSemiSerializedEdit.bind(this),
+									(x) => x,
 									normalizer,
 									this.interner
 								);

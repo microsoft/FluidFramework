@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
 	ITelemetryLoggerExt,
 	PerformanceEvent,
@@ -49,7 +49,7 @@ const axiosRequestConfigToFetchRequestConfig = (
 export interface IR11sResponse<T> {
 	content: T;
 	headers: Map<string, string>;
-	propsToLog: ITelemetryProperties;
+	propsToLog: ITelemetryBaseProperties;
 	requestUrl: string;
 }
 
@@ -91,7 +91,7 @@ export function getPropsToLogFromResponse(headers: {
 		{ headerName: "content-encoding", logName: "contentEncoding" },
 		{ headerName: "content-type", logName: "contentType" },
 	];
-	const additionalProps: ITelemetryProperties = {
+	const additionalProps: ITelemetryBaseProperties = {
 		contentsize: numberFromString(headers.get("content-length")),
 	};
 	headersToLog.forEach((header) => {

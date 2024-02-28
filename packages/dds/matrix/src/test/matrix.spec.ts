@@ -17,9 +17,9 @@ import {
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
-import { MatrixItem, SharedMatrix, SharedMatrixFactory } from "../index";
-import { fill, check, insertFragmented, extract, expectSize } from "./utils";
-import { TestConsumer } from "./testconsumer";
+import { MatrixItem, SharedMatrix, SharedMatrixFactory } from "../index.js";
+import { fill, check, insertFragmented, extract, expectSize } from "./utils.js";
+import { TestConsumer } from "./testconsumer.js";
 
 function createConnectedMatrix(
 	id: string,

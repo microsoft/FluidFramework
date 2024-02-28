@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, ITelemetryProperties, LogLevel } from "@fluidframework/core-interfaces";
+import { IDisposable, ITelemetryBaseProperties, LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import { performance, TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
@@ -229,7 +229,7 @@ export class ConnectionManager implements IConnectionManager {
 
 	private _connectionVerboseProps: Record<string, string | number> = {};
 
-	private _connectionProps: ITelemetryProperties = {};
+	private _connectionProps: ITelemetryBaseProperties = {};
 
 	private _disposed = false;
 
@@ -290,7 +290,7 @@ export class ConnectionManager implements IConnectionManager {
 	 * Returns set of props that can be logged in telemetry that provide some insights / statistics
 	 * about current or last connection (if there is no connection at the moment)
 	 */
-	public get connectionProps(): ITelemetryProperties {
+	public get connectionProps(): ITelemetryBaseProperties {
 		return this.connection !== undefined
 			? this._connectionProps
 			: {

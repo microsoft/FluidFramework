@@ -8,7 +8,7 @@
 //       for undo.
 
 import { EventEmitter } from "events";
-import { IRevertible } from "../types";
+import { IRevertible } from "../types.js";
 
 enum UndoRedoMode {
 	None,

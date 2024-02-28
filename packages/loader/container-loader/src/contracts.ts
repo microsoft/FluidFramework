@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IErrorBase, ITelemetryProperties } from "@fluidframework/core-interfaces";
+import { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
 	IConnectionDetails,
 	ICriticalContainerError,
@@ -73,12 +73,12 @@ export interface IConnectionManager {
 	// Various connectivity properties for telemetry describing type of current connection
 	// Things like connection mode, service info, etc.
 	// Called when connection state changes (connect / disconnect)
-	readonly connectionProps: ITelemetryProperties;
+	readonly connectionProps: ITelemetryBaseProperties;
 
 	// Verbose information about connection logged to telemetry in case of issues with
 	// maintaining healthy connection, including op gaps, not receiving join op in time, etc.
 	// Contains details information, like sequence numbers at connection time, initial ops info, etc.
-	readonly connectionVerboseProps: ITelemetryProperties;
+	readonly connectionVerboseProps: ITelemetryBaseProperties;
 
 	/**
 	 * Prepares message to be sent. Fills in clientSequenceNumber.
