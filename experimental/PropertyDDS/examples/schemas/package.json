@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/schemas",
-	"version": "2.0.0-internal.8.0.7",
+	"version": "2.0.0-internal.8.0.8",
 	"private": true,
 	"description": "Centralized package for storing schemas used by the samples.",
 	"homepage": "https://fluidframework.com",
