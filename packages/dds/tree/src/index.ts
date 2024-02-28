@@ -152,7 +152,7 @@ export {
 	stackTreeNodeCursor,
 	CursorAdapter,
 	CursorWithNode,
-	EditableTreeEvents,
+	FlexTreeNodeEvents,
 	ArrayLikeMut,
 	FieldKinds,
 	ContextuallyTypedFieldData,

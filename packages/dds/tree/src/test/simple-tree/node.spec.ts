@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { TreeNode, NodeFromSchema, SchemaFactory, Tree } from "../../simple-tree/index.js";
+import { NodeFromSchema, SchemaFactory, Tree } from "../../simple-tree/index.js";
 import { getRoot } from "./utils.js";
 
 // TODO: migrate remaining tests to src/test/class-tree/treeApi.spec.ts
@@ -25,46 +25,39 @@ describe("node API", () => {
 		function check(mutate: (root: NodeFromSchema<typeof treeSchema>) => void) {
 			it(".on(..) must subscribe to change event", () => {
 				const root = getRoot(treeSchema, initialTree);
-				const log: any[][] = [];
+				const log: string[] = [];
 
-				Tree.on(root as TreeNode, "afterChange", (...args: any[]) => {
-					log.push(args);
+				Tree.on(root, "afterDeepChange", () => {
+					log.push("deep");
 				});
 
 				mutate(root);
-
-				const numChanges = log.length;
-				assert(
-					numChanges > 0,
-					"Must receive change notifications after subscribing to event.",
-				);
+				assert.deepEqual(log, ["deep"]);
 			});
 
 			it(".on(..) must return unsubscribe function", () => {
 				const root = getRoot(treeSchema, initialTree);
-				const log: any[][] = [];
+				const log: string[] = [];
 
-				const unsubscribe = Tree.on(root as TreeNode, "afterChange", (...args: any[]) => {
-					log.push(args);
+				const unsubscribe = Tree.on(root, "afterDeepChange", () => {
+					log.push("deep");
 				});
 
 				mutate(root);
 
-				const numChanges = log.length;
-				assert(
-					numChanges > 0,
-					"Must receive change notifications after subscribing to event.",
-				);
+				assert.deepEqual(log, ["deep"]);
+				log.length = 0;
+
+				// Confirm events stay registered after changes
+				mutate(root);
+				assert.deepEqual(log, ["deep"]);
+				log.length = 0;
 
 				unsubscribe();
 
 				mutate(root);
 
-				assert.equal(
-					log.length,
-					numChanges,
-					"Mutation after unsubscribe must not emit change events.",
-				);
+				assert.deepEqual(log, []);
 			});
 		}
 

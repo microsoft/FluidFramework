@@ -4,7 +4,7 @@
  */
 
 import { AllowedTypesToFlexInsertableTree, InsertableFlexField } from "../schema-aware/index.js";
-import { FieldKey, ITreeCursorSynchronous, TreeValue } from "../../core/index.js";
+import { AnchorNode, FieldKey, ITreeCursorSynchronous, TreeValue } from "../../core/index.js";
 import { Assume, FlattenKeys } from "../../util/index.js";
 import { LocalNodeKey, StableNodeKey } from "../node-key/index.js";
 import {
@@ -23,8 +23,8 @@ import {
 } from "../typed-schema/index.js";
 import { FieldKinds } from "../default-schema/index.js";
 import { FlexFieldKind } from "../modular-schema/index.js";
-import { EditableTreeEvents } from "./treeEvents.js";
 import { FlexTreeContext } from "./context.js";
+import { FlexTreeNodeEvents } from "./treeEvents.js";
 
 /**
  * Indicates that an object is a flex tree.
@@ -121,7 +121,7 @@ export enum TreeStatus {
 }
 
 /**
- * {@inheritdoc TreeNode.[onNextChange]}
+ * {@inheritdoc FlexTreeNode.[onNextChange]}
  * @internal
  */
 export const onNextChange = Symbol("onNextChange");
@@ -153,11 +153,20 @@ export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
 	readonly value?: TreeValue;
 
 	/**
+	 * Anchor for this node.
+	 * @remarks
+	 * The ref count keeping this alive is owned by the FlexTreeNode:
+	 * if holding onto this anchor for longer than the FlexTreeNode might be alive,
+	 * a separate Anchor (and thus ref count) must be allocated to keep it alive.
+	 */
+	readonly anchor: AnchorNode;
+
+	/**
 	 * {@inheritDoc ISubscribable#on}
 	 */
-	on<K extends keyof EditableTreeEvents>(
+	on<K extends keyof FlexTreeNodeEvents>(
 		eventName: K,
-		listener: EditableTreeEvents[K],
+		listener: FlexTreeNodeEvents[K],
 	): () => void;
 
 	/**
@@ -185,7 +194,7 @@ export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
 	 * The given function will be run the next time that this node's direct children change.
 	 * It will only be run once, and thereafter automatically deregistered.
 	 * It does not run in response to changes beneath this node's direct children.
-	 * This event fires after the tree has been mutated but before {@link EditableTreeEvents.afterChange}.
+	 * This event fires after the tree has been mutated but before {@link AnchorEvents.afterChange}.
 	 * Only one subscriber may register to this event at the same time.
 	 * @privateRemarks
 	 * This event allows the proxy-based API that is built on top of the editable tree to maintain invariants
@@ -579,6 +588,7 @@ export const reservedObjectNodeFieldPropertyNames = [
 	"localNodeKey",
 	"boxedIterator",
 	"iterator",
+	"anchor",
 ] as const;
 
 /**
