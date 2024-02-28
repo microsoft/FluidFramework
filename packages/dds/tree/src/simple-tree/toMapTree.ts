@@ -303,7 +303,7 @@ function recordToMapTree(
 		if (value !== undefined) {
 			const childSchema = schema.getFieldSchema(key);
 			const mappedChildTree = fieldDataToMapTrees(value, globalSchema, childSchema);
-			fields.set(brand(key), mappedChildTree);
+			fields.set(key, mappedChildTree);
 		}
 	}
 
