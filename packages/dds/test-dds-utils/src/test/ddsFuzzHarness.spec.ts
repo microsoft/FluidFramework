@@ -35,9 +35,8 @@ import {
 	TriggerRebase,
 	mixinAttach,
 	mixinStashedClient,
-	type Client,
-	hasStashData,
 } from "../ddsFuzzHarness";
+import { hasStashData, type Client } from "../clientLoading";
 import { Operation, SharedNothingFactory, baseModel, isNoopOp } from "./sharedNothing";
 
 type Model = DDSFuzzModel<SharedNothingFactory, Operation | ChangeConnectionState>;
