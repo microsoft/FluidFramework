@@ -55,6 +55,8 @@ class MySharedObjectCore extends SharedObjectCore {
 		);
 	}
 
+	protected readonly serializer = {} as any as IFluidSerializer;
+
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
 		throw new Error("Method not implemented.");
 	}

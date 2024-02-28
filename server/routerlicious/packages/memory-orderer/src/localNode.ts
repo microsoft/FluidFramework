@@ -146,9 +146,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 		return this.node._id;
 	}
 
-	public get valid(): boolean {
-		return true;
-	}
+	public readonly valid = true;
 
 	private readonly webSocketServer: IWebSocketServer;
 	private readonly orderMap = new Map<string, LocalOrderer>();

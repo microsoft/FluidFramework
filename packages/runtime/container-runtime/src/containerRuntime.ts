@@ -97,7 +97,6 @@ import type {
 import {
 	addBlobToSummary,
 	addSummarizeResultToSummary,
-	addTreeToSummary,
 	RequestParser,
 	create404Response,
 	exceptionToResponse,
@@ -2040,7 +2039,7 @@ export class ContainerRuntime
 		// Some storage (like git) doesn't allow empty tree, so we can omit it.
 		// and the blob manager can handle the tree not existing when loading
 		if (Object.keys(blobManagerSummary.summary.tree).length > 0) {
-			addTreeToSummary(summaryTree, blobsTreeName, blobManagerSummary);
+			addSummarizeResultToSummary(summaryTree, blobsTreeName, blobManagerSummary);
 		}
 
 		const gcSummary = this.garbageCollector.summarize(fullTree, trackState, telemetryContext);
