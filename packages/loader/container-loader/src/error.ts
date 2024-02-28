@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties, IThrottlingWarning } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseProperties, IThrottlingWarning } from "@fluidframework/core-interfaces";
 import { ContainerErrorTypes } from "@fluidframework/container-definitions";
 import {
 	IFluidErrorBase,
@@ -24,7 +24,7 @@ export class ThrottlingWarning extends LoggingError implements IThrottlingWarnin
 	private constructor(
 		message: string,
 		readonly retryAfterSeconds: number,
-		props?: ITelemetryProperties,
+		props?: ITelemetryBaseProperties,
 	) {
 		super(message, props);
 	}

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryProperties } from '@fluidframework/core-interfaces';
+import type { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
 import type { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { fail } from './Common.js';
 import { getNumberOfHandlesFromEditLogSummary } from './EditLog.js';
@@ -48,7 +48,7 @@ export function deserialize(jsonSummary: string, serializer: IFluidSerializer): 
 /**
  * General statistics about summaries.
  */
-export interface SummaryStatistics extends ITelemetryProperties {
+export interface SummaryStatistics extends ITelemetryBaseProperties {
 	/** Format version the summary is written in. */
 	readonly formatVersion: string;
 	/** Number of edits. */
