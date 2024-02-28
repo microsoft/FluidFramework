@@ -1173,7 +1173,7 @@ function createDetachedClient<TChannelFactory extends IChannelFactory>(
 	const channel: ReturnType<typeof factory.create> = factory.create(dataStoreRuntime, clientId);
 
 	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime, {
-		// only track remote ops(which enables initialize from stashed ops), of rehydrate is enabled
+		// only track remote ops(which enables initialize from stashed ops), if rehydrate is enabled
 		trackRemoteOps: options.detachedStartOptions.rehydrateDisabled !== true,
 	});
 	// TS resolves the return type of model.factory.create too early and isn't able to retain a more specific type
