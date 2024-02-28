@@ -25,6 +25,7 @@ import {
 	getSequenceField,
 	arrayNodePrototypeProperties,
 	mapStaticDispatchMap,
+	isTreeNode,
 } from "./proxies.js";
 import { getFlexSchema, setFlexSchemaFromClassSchema } from "./toFlexSchema.js";
 import {
@@ -232,7 +233,8 @@ export class SchemaFactory<
 		TKind,
 		TreeNode & WithType<ScopedSchemaName<TScope, Name>>,
 		FlexTreeNode | unknown,
-		TImplicitlyConstructable
+		TImplicitlyConstructable,
+		T
 	> {
 		const identifier = this.scoped(name);
 		class schema extends TreeNode implements WithType<ScopedSchemaName<TScope, Name>> {
@@ -256,7 +258,7 @@ export class SchemaFactory<
 				}
 				// TODO: make this a better user facing error, and explain how to copy explicitly.
 				assert(
-					!(input instanceof TreeNode),
+					!isTreeNode(input),
 					0x83c /* Existing nodes cannot be used as new content to insert. They must either be moved or explicitly copied */,
 				);
 			}
@@ -305,7 +307,8 @@ export class SchemaFactory<
 				ObjectFromSchemaRecord<T> &
 				WithType<ScopedSchemaName<TScope, Name>>,
 			object & InsertableObjectFromSchemaRecord<T>,
-			true
+			true,
+			T
 		>;
 	}
 
@@ -430,19 +433,18 @@ export class SchemaFactory<
 				input: ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 			) {
 				super(input);
+
+				const proxyTarget = customizable ? this : undefined;
+
 				if (isFlexTreeNode(input)) {
-					return createNodeProxy(
-						input,
-						customizable,
-						customizable ? this : undefined,
-					) as schema;
+					return createNodeProxy(input, customizable, proxyTarget) as schema;
 				} else {
 					const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
 					return createRawNodeProxy(
 						flexSchema as FlexMapNodeSchema,
 						input,
 						customizable,
-						customizable ? this : undefined,
+						proxyTarget,
 					) as unknown as schema;
 				}
 			}
@@ -587,19 +589,18 @@ export class SchemaFactory<
 			}
 			public constructor(input: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>) {
 				super(input);
+
+				const proxyTarget = customizable ? this : undefined;
+
 				if (isFlexTreeNode(input)) {
-					return createNodeProxy(
-						input,
-						customizable,
-						customizable ? this : undefined,
-					) as schema;
+					return createNodeProxy(input, customizable, proxyTarget) as schema;
 				} else {
 					const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
 					return createRawNodeProxy(
 						flexSchema as FlexFieldNodeSchema,
 						[...input],
 						customizable,
-						customizable ? this : undefined,
+						proxyTarget,
 					) as unknown as schema;
 				}
 			}

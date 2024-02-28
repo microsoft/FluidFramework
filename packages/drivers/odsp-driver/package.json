@@ -138,7 +138,7 @@
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
 		"@types/node-fetch": "^2.6.11",
-		"@types/sinon": "^7.0.13",
+		"@types/sinon": "^17.0.3",
 		"@types/uuid": "^9.0.2",
 		"c8": "^8.0.1",
 		"copyfiles": "^2.4.1",
@@ -150,7 +150,7 @@
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"sinon": "^7.4.2",
+		"sinon": "^17.0.1",
 		"typescript": "~5.1.6"
 	},
 	"fluidBuild": {
