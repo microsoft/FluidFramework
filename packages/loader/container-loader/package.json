@@ -198,7 +198,7 @@
 		"@types/events": "^3.0.0",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
-		"@types/sinon": "^7.0.13",
+		"@types/sinon": "^17.0.3",
 		"@types/ungap__structured-clone": "^1.2.0",
 		"@types/uuid": "^9.0.2",
 		"c8": "^8.0.1",
@@ -211,7 +211,7 @@
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"sinon": "^7.4.2",
+		"sinon": "^17.0.1",
 		"tsc-multi": "^1.1.0",
 		"typescript": "~5.1.6"
 	},
