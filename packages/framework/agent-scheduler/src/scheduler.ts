@@ -27,7 +27,7 @@ import {
 	UsageError,
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils";
-import { IAgentScheduler, IAgentSchedulerEvents } from "./agent";
+import { IAgentScheduler, IAgentSchedulerEvents } from "./agent.js";
 
 // Note: making sure this ID is unique and does not collide with storage provided clientID
 const UnattachedClientId = `${uuid()}_unattached`;
