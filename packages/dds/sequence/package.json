@@ -185,7 +185,11 @@
 					"api-extractor:esnext"
 				],
 				"script": false
-			}
+			},
+			"build:test": [
+				"...",
+				"@fluidframework/merge-tree#build:test"
+			]
 		}
 	},
 	"typeValidation": {
