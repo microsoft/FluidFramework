@@ -1,12 +1,9 @@
 {
-	"extends": ["../../../../../../common/build/build-common/tsconfig.test.json"],
+	"extends": "../../../../../../common/build/build-common/tsconfig.test.node16.json",
 	"compilerOptions": {
-		"experimentalDecorators": true,
-		"allowJs": true,
-		"jsx": "react",
-		"types": ["jest", "node"],
 		"rootDir": "./",
-		"outDir": "../../dist/test",
+		"outDir": "../../lib/test",
+		"types": ["mocha", "node"],
 	},
 	"include": ["./**/*"],
 	"references": [
