@@ -5,7 +5,7 @@
 ```ts
 
 import { ConfigTypes } from '@fluidframework/core-interfaces';
-import { EventEmitter } from 'events_pkg';
+import type { EventEmitter } from '@fluid-internal/client-utils';
 import { EventEmitterEventType } from '@fluid-internal/client-utils';
 import { IConfigProviderBase } from '@fluidframework/core-interfaces';
 import type { IDisposable } from '@fluidframework/core-interfaces';

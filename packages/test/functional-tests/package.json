@@ -51,9 +51,6 @@
 		],
 		"temp-directory": "nyc/.nyc_output"
 	},
-	"dependencies": {
-		"events_pkg": "npm:events@^3.1.0"
-	},
 	"devDependencies": {
 		"@fluid-experimental/tree": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
@@ -84,6 +81,7 @@
 		"c8": "^8.0.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.55.0",
+		"events_pkg": "npm:events@^3.1.0",
 		"mocha": "^10.2.0",
 		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",

@@ -80,8 +80,7 @@
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"@fluidframework/tree": "workspace:~",
-		"events_pkg": "npm:events@^3.1.0"
+		"@fluidframework/tree": "workspace:~"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
@@ -96,7 +95,6 @@
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.39.1",
 		"@types/chai": "^4.0.0",
-		"@types/events_pkg": "npm:@types/events@^3.0.0",
 		"@types/mocha": "^9.1.1",
 		"c8": "^8.0.1",
 		"chai": "^4.2.0",

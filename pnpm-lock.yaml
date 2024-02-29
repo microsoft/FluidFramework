@@ -4801,6 +4801,7 @@ importers:
       '@microsoft/api-extractor': ^7.39.1
       '@types/chai': ^4.0.0
       '@types/debug': ^4.1.5
+      '@types/events_pkg': npm:@types/events@^3.0.0
       '@types/lodash': ^4.14.118
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
@@ -4829,6 +4830,7 @@ importers:
       traverse: 0.6.6
       typescript: ~5.1.6
     dependencies:
+      '@types/events_pkg': /@types/events/3.0.3
       ajv: 8.12.0
       async: 3.2.5
       base64-js: 1.5.1
@@ -5841,7 +5843,6 @@ importers:
       '@types/node': ^18.19.0
       cross-env: ^7.0.3
       eslint: ~8.55.0
-      events_pkg: npm:events@^3.1.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
@@ -5853,7 +5854,6 @@ importers:
       '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
       '@fluidframework/map': link:../../../packages/dds/map
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
-      events_pkg: /events/3.3.0
     devDependencies:
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/build-common': 2.0.3
@@ -6523,7 +6523,6 @@ importers:
       '@tiny-calc/micro': 0.0.0-alpha.5
       '@tiny-calc/nano': 0.0.0-alpha.5
       '@types/double-ended-queue': ^2.1.0
-      '@types/events_pkg': npm:@types/events@^3.0.0
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       best-random: ^1.0.0
@@ -6532,7 +6531,6 @@ importers:
       cross-env: ^7.0.3
       double-ended-queue: ^2.1.0-0
       eslint: ~8.55.0
-      events_pkg: npm:events@^3.1.0
       hotloop: ^1.2.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
@@ -6558,7 +6556,6 @@ importers:
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       '@tiny-calc/nano': 0.0.0-alpha.5
       double-ended-queue: 2.1.0-0
-      events_pkg: /events/3.3.0
       tslib: 1.14.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -6576,7 +6573,6 @@ importers:
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
       '@tiny-calc/micro': 0.0.0-alpha.5
       '@types/double-ended-queue': 2.1.7
-      '@types/events_pkg': /@types/events/3.0.3
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       best-random: 1.0.3
@@ -6754,6 +6750,7 @@ importers:
   packages/dds/pact-map:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@fluid-internal/client-utils': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-private/test-dds-utils': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -6768,14 +6765,12 @@ importers:
       '@fluidframework/shared-object-base': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
       '@microsoft/api-extractor': ^7.39.1
-      '@types/events_pkg': npm:@types/events@^3.0.0
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.55.0
-      events_pkg: npm:events@^3.1.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-junit-reporter: ^1.18.0
@@ -6786,6 +6781,7 @@ importers:
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
+      '@fluid-internal/client-utils': link:../../common/client-utils
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
@@ -6793,7 +6789,6 @@ importers:
       '@fluidframework/protocol-definitions': 3.2.0-237840
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/shared-object-base': link:../shared-object-base
-      events_pkg: /events/3.3.0
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
       '@fluid-internal/mocha-test-setup': link:../../test/mocha-test-setup
@@ -6803,7 +6798,6 @@ importers:
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
-      '@types/events_pkg': /@types/events/3.0.3
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
@@ -7147,6 +7141,7 @@ importers:
   packages/dds/task-manager:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@fluid-internal/client-utils': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-private/stochastic-test-utils': workspace:~
       '@fluid-private/test-dds-utils': workspace:~
@@ -7172,7 +7167,6 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.55.0
-      events_pkg: npm:events@^3.1.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-junit-reporter: ^1.18.0
@@ -7183,6 +7177,7 @@ importers:
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
+      '@fluid-internal/client-utils': link:../../common/client-utils
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-runtime-definitions': link:../../runtime/container-runtime-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -7192,7 +7187,6 @@ importers:
       '@fluidframework/protocol-definitions': 3.2.0-237840
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/shared-object-base': link:../shared-object-base
-      events_pkg: /events/3.3.0
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
       '@fluid-internal/mocha-test-setup': link:../../test/mocha-test-setup
@@ -7627,7 +7621,6 @@ importers:
       '@fluidframework/server-test-utils': ^3.1.0-240326
       '@fluidframework/telemetry-utils': workspace:~
       '@microsoft/api-extractor': ^7.39.1
-      '@types/events_pkg': npm:@types/events@^3.0.0
       '@types/jsrsasign': ^10.5.12
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
@@ -7636,7 +7629,6 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.55.0
-      events_pkg: npm:events@^3.1.0
       jsrsasign: ^11.0.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
@@ -7663,7 +7655,6 @@ importers:
       '@fluidframework/server-services-core': 3.1.0-240326
       '@fluidframework/server-test-utils': 3.1.0-240326
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
-      events_pkg: /events/3.3.0
       jsrsasign: 11.0.0
       url_pkg: /url/0.11.3
       uuid: 9.0.1
@@ -7676,7 +7667,6 @@ importers:
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/local-driver-previous': /@fluidframework/local-driver/2.0.0-internal.8.0.0
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
-      '@types/events_pkg': /@types/events/3.0.3
       '@types/jsrsasign': 10.5.12
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
@@ -8219,7 +8209,6 @@ importers:
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/synthesize': workspace:~
       '@microsoft/api-extractor': ^7.39.1
-      '@types/events_pkg': npm:@types/events@^3.0.0
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       c8: ^8.0.1
@@ -8256,7 +8245,6 @@ importers:
       '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
-      '@types/events_pkg': /@types/events/3.0.3
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
@@ -8811,6 +8799,7 @@ importers:
   packages/framework/undo-redo:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@fluid-internal/client-utils': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/build-common': ^2.0.3
@@ -8824,7 +8813,6 @@ importers:
       '@fluidframework/undo-redo-previous': npm:@fluidframework/undo-redo@2.0.0-internal.8.0.0
       '@microsoft/api-extractor': ^7.39.1
       '@types/diff': ^3.5.1
-      '@types/events_pkg': npm:@types/events@^3.0.0
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       c8: ^8.0.1
@@ -8832,7 +8820,6 @@ importers:
       cross-env: ^7.0.3
       diff: ^3.5.0
       eslint: ~8.55.0
-      events_pkg: npm:events@^3.1.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
@@ -8842,11 +8829,11 @@ importers:
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
+      '@fluid-internal/client-utils': link:../../common/client-utils
       '@fluidframework/map': link:../../dds/map
       '@fluidframework/matrix': link:../../dds/matrix
       '@fluidframework/merge-tree': link:../../dds/merge-tree
       '@fluidframework/sequence': link:../../dds/sequence
-      events_pkg: /events/3.3.0
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
       '@fluid-internal/mocha-test-setup': link:../../test/mocha-test-setup
@@ -8858,7 +8845,6 @@ importers:
       '@fluidframework/undo-redo-previous': /@fluidframework/undo-redo/2.0.0-internal.8.0.0
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
       '@types/diff': 3.5.8
-      '@types/events_pkg': /@types/events/3.0.3
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
@@ -8897,7 +8883,6 @@ importers:
       '@microsoft/api-extractor': ^7.39.1
       '@types/debug': ^4.1.5
       '@types/double-ended-queue': ^2.1.0
-      '@types/events_pkg': npm:@types/events@^3.0.0
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/sinon': ^17.0.3
@@ -8910,7 +8895,6 @@ importers:
       debug: ^4.3.4
       double-ended-queue: ^2.1.0-0
       eslint: ~8.55.0
-      events_pkg: npm:events@^3.1.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
@@ -8934,7 +8918,6 @@ importers:
       '@ungap/structured-clone': 1.2.0
       debug: 4.3.4
       double-ended-queue: 2.1.0-0
-      events_pkg: /events/3.3.0
       url_pkg: /url/0.11.3
       uuid: 9.0.1
     devDependencies:
@@ -8949,7 +8932,6 @@ importers:
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
       '@types/debug': 4.1.12
       '@types/double-ended-queue': 2.1.7
-      '@types/events_pkg': /@types/events/3.0.3
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/sinon': 17.0.3
@@ -9146,8 +9128,8 @@ importers:
       '@fluidframework/runtime-utils': link:../runtime-utils
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       '@tylerbu/sorted-btree-es6': 1.8.0
+      '@types/events_pkg': /@types/events/3.0.3
       double-ended-queue: 2.1.0-0
-      events_pkg: /events/3.3.0
       lz4js: 0.2.0
       uuid: 9.0.1
     devDependencies:
@@ -9163,7 +9145,6 @@ importers:
       '@fluidframework/test-runtime-utils': link:../test-runtime-utils
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i
       '@types/double-ended-queue': 2.1.7
-      '@types/events_pkg': /@types/events/3.0.3
       '@types/mocha': 9.1.1
       '@types/sinon': 17.0.3
       '@types/uuid': 9.0.7
@@ -9171,6 +9152,7 @@ importers:
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.55.0
+      events_pkg: /events/3.3.0
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
@@ -9553,7 +9535,6 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.55.0
-      events_pkg: npm:events@^3.1.0
       jsrsasign: ^11.0.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
@@ -9577,7 +9558,7 @@ importers:
       '@fluidframework/runtime-definitions': link:../runtime-definitions
       '@fluidframework/runtime-utils': link:../runtime-utils
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
-      events_pkg: /events/3.3.0
+      '@types/events_pkg': /@types/events/3.0.3
       jsrsasign: 11.0.0
       uuid: 9.0.1
     devDependencies:
@@ -9589,7 +9570,6 @@ importers:
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-runtime-utils-previous': /@fluidframework/test-runtime-utils/2.0.0-internal.8.0.0
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
-      '@types/events_pkg': /@types/events/3.0.3
       '@types/jsrsasign': 10.5.12
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
@@ -9955,8 +9935,6 @@ importers:
       typescript: ~5.1.6
       webpack: ^5.82.0
       webpack-cli: ^4.9.2
-    dependencies:
-      events_pkg: /events/3.3.0
     devDependencies:
       '@fluid-experimental/tree': link:../../../experimental/dds/tree
       '@fluid-internal/mocha-test-setup': link:../mocha-test-setup
@@ -9987,6 +9965,7 @@ importers:
       c8: 8.0.1
       cross-env: 7.0.3
       eslint: 8.55.0
+      events_pkg: /events/3.3.0
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
@@ -11164,7 +11143,6 @@ importers:
       '@fluidframework/tree': workspace:~
       '@microsoft/api-extractor': ^7.39.1
       '@types/chai': ^4.0.0
-      '@types/events_pkg': npm:@types/events@^3.0.0
       '@types/mocha': ^9.1.1
       c8: ^8.0.1
       chai: ^4.2.0
@@ -11173,7 +11151,6 @@ importers:
       eslint: ~8.55.0
       eslint-config-prettier: ~9.0.0
       eslint-plugin-chai-expect: ~3.0.0
-      events_pkg: npm:events@^3.1.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
@@ -11197,7 +11174,6 @@ importers:
       '@fluidframework/shared-object-base': link:../../../dds/shared-object-base
       '@fluidframework/telemetry-utils': link:../../../utils/telemetry-utils
       '@fluidframework/tree': link:../../../dds/tree
-      events_pkg: /events/3.3.0
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
       '@fluid-internal/mocha-test-setup': link:../../../test/mocha-test-setup
@@ -11211,7 +11187,6 @@ importers:
       '@fluidframework/test-runtime-utils': link:../../../runtime/test-runtime-utils
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i
       '@types/chai': 4.3.11
-      '@types/events_pkg': /@types/events/3.0.3
       '@types/mocha': 9.1.1
       c8: 8.0.1
       chai: 4.3.10
@@ -11788,7 +11763,6 @@ importers:
       '@fluidframework/telemetry-utils-previous': npm:@fluidframework/telemetry-utils@2.0.0-internal.8.0.0
       '@microsoft/api-extractor': ^7.39.1
       '@types/debug': ^4.1.5
-      '@types/events_pkg': npm:@types/events@^3.0.0
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/sinon': ^17.0.3
@@ -11798,7 +11772,6 @@ importers:
       cross-env: ^7.0.3
       debug: ^4.3.4
       eslint: ~8.55.0
-      events_pkg: npm:events@^3.1.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
@@ -11814,7 +11787,6 @@ importers:
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/protocol-definitions': 3.2.0-237840
       debug: 4.3.4
-      events_pkg: /events/3.3.0
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -11826,7 +11798,6 @@ importers:
       '@fluidframework/telemetry-utils-previous': /@fluidframework/telemetry-utils/2.0.0-internal.8.0.0
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
       '@types/debug': 4.1.12
-      '@types/events_pkg': /@types/events/3.0.3
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/sinon': 17.0.3

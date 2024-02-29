@@ -99,14 +99,14 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
+		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/protocol-definitions": "^3.2.0-237840",
 		"@fluidframework/runtime-definitions": "workspace:~",
-		"@fluidframework/shared-object-base": "workspace:~",
-		"events_pkg": "npm:events@^3.1.0"
+		"@fluidframework/shared-object-base": "workspace:~"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
@@ -117,7 +117,6 @@
 		"@fluidframework/eslint-config-fluid": "^4.0.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.39.1",
-		"@types/events_pkg": "npm:@types/events@^3.0.0",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
 		"c8": "^8.0.1",

@@ -54,6 +54,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
+		"@types/events_pkg": "npm:@types/events@^3.0.0",
 		"ajv": "^8.12.0",
 		"async": "^3.2.2",
 		"base64-js": "^1.5.1",

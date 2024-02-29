@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events_pkg";
+import events_pkg from "events_pkg";
+const { EventEmitter } = events_pkg;
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { BatchTracker } from "../batchTracker";

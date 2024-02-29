@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events_pkg";
+import type { EventEmitter } from "events_pkg";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { assert } from "@fluidframework/core-utils";
 import { performance } from "@fluid-internal/client-utils";
