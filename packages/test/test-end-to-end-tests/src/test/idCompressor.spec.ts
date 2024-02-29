@@ -79,7 +79,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 	);
 
 	const runtimeOptions: IContainerRuntimeOptions = {
-		enableRuntimeIdCompressor: true,
+		enableRuntimeIdCompressor: "on",
 	};
 
 	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
@@ -138,7 +138,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 	const containerConfigWithCompressor: ITestContainerConfig = {
 		...containerConfigNoCompressor,
 		runtimeOptions: {
-			enableRuntimeIdCompressor: true,
+			enableRuntimeIdCompressor: "on",
 		},
 	};
 
@@ -666,7 +666,7 @@ describeCompat("IdCompressor in detached container", "NoCompat", (getTestObjectP
 			fluidDataObjectType: DataObjectFactoryType.Test,
 			registry: [["sharedCell", apis.dds.SharedCell.getFactory()]],
 			runtimeOptions: {
-				enableRuntimeIdCompressor: true,
+				enableRuntimeIdCompressor: "on",
 			},
 		};
 		const loader = provider.makeTestLoader(testConfig);
@@ -710,7 +710,7 @@ describeCompat("IdCompressor in detached container", "NoCompat", (getTestObjectP
 describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	const enabledConfig: ITestContainerConfig = {
-		runtimeOptions: { enableRuntimeIdCompressor: true },
+		runtimeOptions: { enableRuntimeIdCompressor: "on" },
 	};
 
 	const createContainer = async (config?: ITestContainerConfig): Promise<IContainer> =>

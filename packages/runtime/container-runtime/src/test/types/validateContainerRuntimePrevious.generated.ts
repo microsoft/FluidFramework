@@ -670,7 +670,6 @@ declare function get_current_InterfaceDeclaration_IContainerRuntimeMetadata():
 declare function use_old_InterfaceDeclaration_IContainerRuntimeMetadata(
     use: TypeOnly<old.IContainerRuntimeMetadata>): void;
 use_old_InterfaceDeclaration_IContainerRuntimeMetadata(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerRuntimeMetadata());
 
 /*

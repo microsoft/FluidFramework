@@ -155,7 +155,7 @@ describe("Runtime", () => {
 					existing: false,
 					runtimeOptions: {
 						flushMode: FlushMode.TurnBased,
-						enableRuntimeIdCompressor: true,
+						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
@@ -1563,9 +1563,7 @@ describe("Runtime", () => {
 						eventName: "ContainerRuntime:ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(mergedRuntimeOptions),
-						featureGates: JSON.stringify({
-							idCompressorEnabled: "off",
-						}),
+						idCompressorEnabled: "delayed",
 					},
 				]);
 			});
@@ -1591,11 +1589,11 @@ describe("Runtime", () => {
 						eventName: "ContainerRuntime:ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(mergedRuntimeOptions),
+						idCompressorEnabled: "on",
 						featureGates: JSON.stringify({
 							disableCompression: true,
 							disableOpReentryCheck: false,
 							disableChunking: true,
-							idCompressorEnabled: true,
 						}),
 						groupedBatchingEnabled: false,
 					},
@@ -1861,7 +1859,7 @@ describe("Runtime", () => {
 					existing: false,
 					runtimeOptions: {
 						flushMode: FlushMode.TurnBased,
-						enableRuntimeIdCompressor: true,
+						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
@@ -1893,7 +1891,7 @@ describe("Runtime", () => {
 					existing: false,
 					runtimeOptions: {
 						flushMode: FlushMode.TurnBased,
-						enableRuntimeIdCompressor: true,
+						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
@@ -1935,7 +1933,7 @@ describe("Runtime", () => {
 					existing: false,
 					runtimeOptions: {
 						flushMode: FlushMode.TurnBased,
-						enableRuntimeIdCompressor: true,
+						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
@@ -2162,7 +2160,7 @@ describe("Runtime", () => {
 					existing: true,
 					runtimeOptions: {
 						flushMode: FlushMode.TurnBased,
-						enableRuntimeIdCompressor: true,
+						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
@@ -2213,7 +2211,7 @@ describe("Runtime", () => {
 					existing: true,
 					runtimeOptions: {
 						flushMode: FlushMode.TurnBased,
-						enableRuntimeIdCompressor: true,
+						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
@@ -2264,7 +2262,7 @@ describe("Runtime", () => {
 					existing: true,
 					runtimeOptions: {
 						flushMode: FlushMode.TurnBased,
-						enableRuntimeIdCompressor: true,
+						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
@@ -2323,7 +2321,7 @@ describe("Runtime", () => {
 					existing: true,
 					runtimeOptions: {
 						flushMode: FlushMode.TurnBased,
-						enableRuntimeIdCompressor: true,
+						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
@@ -2366,7 +2364,7 @@ describe("Runtime", () => {
 					existing: true,
 					runtimeOptions: {
 						flushMode: FlushMode.TurnBased,
-						enableRuntimeIdCompressor: true,
+						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});

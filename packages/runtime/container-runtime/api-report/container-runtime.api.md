@@ -79,7 +79,7 @@ export enum CompressionAlgorithms {
 }
 
 // @alpha (undocumented)
-export type CompressorMode = true | "delayed" | "off";
+export type CompressorMode = "on" | "delayed" | "off";
 
 // @alpha (undocumented)
 export enum ContainerMessageType {
@@ -401,7 +401,7 @@ export interface IContainerRuntimeMessageCompatDetails {
 // @alpha (undocumented)
 export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGCMetadata {
     readonly disableIsolatedChannels?: true;
-    readonly idCompressorEnabled?: CompressorMode;
+    readonly idCompressorEnabled?: true;
     readonly message: ISummaryMetadataMessage | undefined;
     // (undocumented)
     readonly summaryFormatVersion: 1;

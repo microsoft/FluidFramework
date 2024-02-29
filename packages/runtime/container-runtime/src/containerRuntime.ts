@@ -28,14 +28,7 @@ import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions";
-import {
-	assert,
-	Deferred,
-	delay,
-	LazyPromise,
-	PromiseCache,
-	unreachableCase,
-} from "@fluidframework/core-utils";
+import { assert, Deferred, delay, LazyPromise, PromiseCache } from "@fluidframework/core-utils";
 import { Trace, TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	createChildLogger,
@@ -871,22 +864,20 @@ export class ContainerRuntime
 
 		// Enabling the IdCompressor is a one-way operation and we only want to
 		// allow new containers to turn it on
-		let idCompressorMode =
-			metadata?.idCompressorEnabled ?? runtimeOptions.enableRuntimeIdCompressor ?? "off";
+		let idCompressorMode = metadata?.idCompressorEnabled
+			? "on"
+			: enableRuntimeIdCompressor ?? "off";
 		if (!existing) {
+			// FG overwrite
 			const enabled = mc.config.getBoolean("Fluid.ContainerRuntime.IdCompressorEnabled");
 			switch (enabled) {
 				case true:
-					idCompressorMode = true;
+					idCompressorMode = "on";
 					break;
 				case false:
 					idCompressorMode = "off";
 					break;
-				case undefined:
-					idCompressorMode = runtimeOptions.enableRuntimeIdCompressor ?? "off";
-					break;
 				default:
-					unreachableCase(enabled);
 			}
 		}
 
@@ -1025,7 +1016,7 @@ export class ContainerRuntime
 		// If container uses delayed mode, then we can only expose generateDocumentUniqueId() and nothing else.
 		// That's because any other usage will require immidiate loading of ID Compressor in next sessions in order
 		// to reason over such things as session ID space.
-		if (this.idCompressorMode === true) {
+		if (this.idCompressorMode === "on") {
 			assert(this._idCompressor !== undefined, "compressor should have been loaded");
 			return this._idCompressor;
 		}
@@ -1717,13 +1708,14 @@ export class ContainerRuntime
 			disableIsolatedChannels: metadata?.disableIsolatedChannels,
 			gcVersion: metadata?.gcFeature,
 			options: JSON.stringify(runtimeOptions),
+			idCompressorEnabledMetadata: metadata?.idCompressorEnabled,
+			idCompressorEnabled: this.idCompressorMode,
 			featureGates: JSON.stringify({
 				disableCompression,
 				disableOpReentryCheck,
 				disableChunking,
 				disableAttachReorder: this.disableAttachReorder,
 				disablePartialFlush,
-				idCompressorEnabled: this.idCompressorMode,
 				closeSummarizerDelayOverride,
 			}),
 			telemetryDocumentId: this.telemetryDocumentId,
@@ -1750,7 +1742,7 @@ export class ContainerRuntime
 	 */
 	private async initializeBaseState(): Promise<void> {
 		if (
-			this.idCompressorMode === true ||
+			this.idCompressorMode === "on" ||
 			(this.idCompressorMode === "delayed" && this.connected)
 		) {
 			this._idCompressor = await this.createIdCompressor();
@@ -2039,7 +2031,9 @@ export class ContainerRuntime
 				extractSummaryMetadataMessage(this.deltaManager.lastMessage) ??
 				this.messageAtLastSummary,
 			telemetryDocumentId: this.telemetryDocumentId,
-			idCompressorEnabled: this.idCompressorMode,
+			// "on" is sticky for correctness - future sessions have to load IDCompressor if it was On in this session.
+			// Other cases are not sticky and are controlled by runtime envrironment.
+			idCompressorEnabled: this.idCompressorMode === "on" ? true : undefined,
 		};
 		addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
 	}

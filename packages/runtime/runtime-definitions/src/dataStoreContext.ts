@@ -244,7 +244,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * that uses uuid() and stores result in container is likely candidate to start leveraging this API.
 	 * If you always want to convert to string, instead of doing String(generateDocumentUniqueId()), consider
 	 * doing encodeCompactIdToString(generateDocumentUniqueId()).
-	 * 
+	 *
 	 * For more details, please see IIdCompressor.generateDocumentUniqueId()
 	 */
 	generateDocumentUniqueId(): number | string;
