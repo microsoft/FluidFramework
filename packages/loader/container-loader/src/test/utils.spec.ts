@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { runSingle } from "../utils";
+import { runSingle } from "../utils.js";
 
 describe("container-loader utils", () => {
 	describe("runSingle", () => {

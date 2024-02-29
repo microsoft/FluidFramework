@@ -91,20 +91,20 @@ import {
 	type TelemetryEventCategory,
 } from "@fluidframework/telemetry-utils";
 import structuredClone from "@ungap/structured-clone";
-import { Audience } from "./audience";
-import { ContainerContext } from "./containerContext";
+import { Audience } from "./audience.js";
+import { ContainerContext } from "./containerContext.js";
 import {
 	ReconnectMode,
 	IConnectionManagerFactoryArgs,
 	getPackageName,
 	IConnectionDetailsInternal,
 	IConnectionStateChangeReason,
-} from "./contracts";
-import { DeltaManager, IConnectionArgs } from "./deltaManager";
-import { IDetachedBlobStorage, ILoaderOptions, RelativeLoader } from "./loader";
-import { pkgVersion } from "./packageVersion";
-import { ContainerStorageAdapter, ISerializableBlobContents } from "./containerStorageAdapter";
-import { IConnectionStateHandler, createConnectionStateHandler } from "./connectionStateHandler";
+} from "./contracts.js";
+import { DeltaManager, IConnectionArgs } from "./deltaManager.js";
+import { IDetachedBlobStorage, ILoaderOptions, RelativeLoader } from "./loader.js";
+import { pkgVersion } from "./packageVersion.js";
+import { ContainerStorageAdapter, ISerializableBlobContents } from "./containerStorageAdapter.js";
+import { IConnectionStateHandler, createConnectionStateHandler } from "./connectionStateHandler.js";
 import {
 	ISnapshotTreeWithBlobContents,
 	combineAppAndProtocolSummary,
@@ -113,19 +113,19 @@ import {
 	combineSnapshotTreeAndSnapshotBlobs,
 	getDetachedContainerStateFromSerializedContainer,
 	runSingle,
-} from "./utils";
-import { initQuorumValuesFromCodeDetails } from "./quorum";
-import { NoopHeuristic } from "./noopHeuristic";
-import { ConnectionManager } from "./connectionManager";
-import { ConnectionState } from "./connectionState";
+} from "./utils.js";
+import { initQuorumValuesFromCodeDetails } from "./quorum.js";
+import { NoopHeuristic } from "./noopHeuristic.js";
+import { ConnectionManager } from "./connectionManager.js";
+import { ConnectionState } from "./connectionState.js";
 import {
 	IProtocolHandler,
 	ProtocolHandler,
 	ProtocolHandlerBuilder,
 	protocolHandlerShouldProcessSignal,
-} from "./protocol";
-import { AttachProcessProps, AttachmentData, runRetriableAttachProcess } from "./attachment";
-import { SerializedStateManager } from "./serializedStateManager";
+} from "./protocol.js";
+import { AttachProcessProps, AttachmentData, runRetriableAttachProcess } from "./attachment.js";
+import { SerializedStateManager } from "./serializedStateManager.js";
 
 const detachedContainerRefSeqNumber = 0;
 

@@ -14,10 +14,10 @@ import {
 	type TelemetryEventCategory,
 } from "@fluidframework/telemetry-utils";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
-import { CatchUpMonitor, ICatchUpMonitor } from "./catchUpMonitor";
-import { ConnectionState } from "./connectionState";
-import { IConnectionDetailsInternal, IConnectionStateChangeReason } from "./contracts";
-import { IProtocolHandler } from "./protocol";
+import { CatchUpMonitor, ICatchUpMonitor } from "./catchUpMonitor.js";
+import { ConnectionState } from "./connectionState.js";
+import { IConnectionDetailsInternal, IConnectionStateChangeReason } from "./contracts.js";
+import { IProtocolHandler } from "./protocol.js";
 
 // Based on recent data, it looks like majority of cases where we get stuck are due to really slow or
 // timing out ops fetches. So attempt recovery infrequently. Also fetch uses 30 second timeout, so
