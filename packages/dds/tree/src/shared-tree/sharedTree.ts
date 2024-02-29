@@ -246,7 +246,7 @@ export class SharedTree
 			this.checkout,
 			viewSchema,
 			onDispose,
-			createNodeKeyManager(this.idCompressor),
+			createNodeKeyManager(this.runtime.idCompressor),
 			brand(defaultNodeKeyFieldKey),
 		);
 	}

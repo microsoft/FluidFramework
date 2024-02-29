@@ -76,7 +76,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		MessageEncodingContext
 	>;
 
-	public readonly idCompressor: IIdCompressor;
+	private readonly idCompressor: IIdCompressor;
 
 	private readonly schemaAndPolicy: SchemaAndPolicy;
 

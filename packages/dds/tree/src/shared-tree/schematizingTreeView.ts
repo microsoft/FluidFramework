@@ -12,7 +12,7 @@ import {
 	NodeKeyManager,
 } from "../feature-libraries/index.js";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events/index.js";
-import { disposeSymbol, fail } from "../util/index.js";
+import { disposeSymbol } from "../util/index.js";
 import {
 	TreeConfiguration,
 	toFlexConfig,
@@ -219,6 +219,7 @@ const ViewSlot = anchorSlot<CheckoutFlexTreeView<any>>();
 /**
  * Flex-Tree schematizing layer.
  * Creates a view that self-disposes when stored schema becomes incompatible.
+ * This may only be called when the schema is already known to be compatible (typically via ensureSchema).
  */
 export function requireSchema<TRoot extends FlexFieldSchema>(
 	checkout: TreeCheckout,
@@ -232,12 +233,11 @@ export function requireSchema<TRoot extends FlexFieldSchema>(
 
 	{
 		const compatibility = viewSchema.checkCompatibility(checkout.storedSchema);
-		if (
-			compatibility.write !== Compatibility.Compatible ||
-			compatibility.read !== Compatibility.Compatible
-		) {
-			fail("ensureSchema didn't result in valid schema");
-		}
+		assert(
+			compatibility.write === Compatibility.Compatible &&
+				compatibility.read === Compatibility.Compatible,
+			"requireSchema invoked with incompatible schema",
+		);
 	}
 
 	const view = new CheckoutFlexTreeView(
