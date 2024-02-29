@@ -16,9 +16,9 @@ import {
 } from "@fluidframework/odsp-doclib-utils/internal";
 import { jwtDecode } from "jwt-decode";
 import { Mutex } from "async-mutex";
-import { debug } from "./debug";
-import { IAsyncCache, loadRC, saveRC, lockRC } from "./fluidToolRC";
-import { serverListenAndHandle, endResponse } from "./httpHelpers";
+import { debug } from "./debug.js";
+import { IAsyncCache, loadRC, saveRC, lockRC } from "./fluidToolRC.js";
+import { serverListenAndHandle, endResponse } from "./httpHelpers.js";
 
 const odspAuthRedirectPort = 7000;
 const odspAuthRedirectOrigin = `http://localhost:${odspAuthRedirectPort}`;
