@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 import { strict as assert } from "node:assert";
 import { createIdCompressor } from "@fluidframework/id-compressor";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
@@ -155,23 +157,40 @@ describe("Recursive Class based end to end example", () => {
 		type Child = ObjectRecursive["x"];
 		type _check = requireTrue<areSafelyAssignable<Child, ObjectRecursive | undefined>>;
 
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
+		const tree = hydrate(ObjectRecursive, { x: undefined });
 
-		const config: TreeConfiguration<typeof ObjectRecursive> = new TreeConfiguration(
-			ObjectRecursive,
-			() => new ObjectRecursive({ x: undefined }),
-		);
-		const view: TreeView<ObjectRecursive> = tree.schematize(config);
-		const data = Reflect.ownKeys(view.root);
+		const data = Reflect.ownKeys(tree);
 		// TODO: are empty optional fields supposed to show up as keys in simple-tree? The currently are included, but maybe thats a bug?
 		assert.deepEqual(data, ["x"]);
 
-		view.root.x = new ObjectRecursive({ x: undefined });
+		tree.x = new ObjectRecursive({ x: undefined });
 
-		view.root.x = view.root.x?.x?.x?.x ?? new ObjectRecursive({ x: undefined });
+		tree.x = tree.x?.x?.x?.x ?? new ObjectRecursive({ x: undefined });
+
+		const tree2 = hydrate(ObjectRecursive, { x: { x: undefined } });
+	});
+
+	it("other under recursive object", () => {
+		class Other extends sf.object("Object", {
+			y: sf.number,
+		}) {}
+		class ObjectRecursive extends sf.objectRecursive("Object", {
+			x: sf.optionalRecursive([() => ObjectRecursive]),
+			a: Other,
+			b: [Other],
+			c: [() => Other],
+			d: sf.optional(Other),
+			e: sf.optional([() => Other]),
+		}) {}
+
+		const tree2 = hydrate(ObjectRecursive, {
+			x: undefined,
+			a: { y: 5 },
+			b: { y: 5 },
+			c: { y: 5 },
+			d: { y: 5 },
+			e: { y: 5 },
+		});
 	});
 
 	it("object nested construction", () => {
@@ -191,28 +210,19 @@ describe("Recursive Class based end to end example", () => {
 			type X2b = InsertableTreeNodeFromImplicitAllowedTypesUnsafe<AllowedTypes>;
 		}
 
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
+		const tree = hydrate(ObjectRecursive, { x: undefined });
 
-		const config: TreeConfiguration<typeof ObjectRecursive> = new TreeConfiguration(
-			ObjectRecursive,
-			() => new ObjectRecursive({ x: undefined }),
-		);
-		const view: TreeView<ObjectRecursive> = tree.schematize(config);
+		tree.x = new ObjectRecursive({ x: undefined });
+		// tree.x = new ObjectRecursive({ x: { x: undefined } });
+		// tree.x = new ObjectRecursive({ x: { x: { x: { x: { x: undefined } } } } });
 
-		view.root.x = new ObjectRecursive({ x: undefined });
-		// view.root.x = new ObjectRecursive({ x: { x: undefined } });
-		// view.root.x = new ObjectRecursive({ x: { x: { x: { x: { x: undefined } } } } });
-
-		view.root.x = new ObjectRecursive({ x: undefined });
-		view.root.x = new ObjectRecursive({ x: new ObjectRecursive({ x: undefined }) });
-		view.root.x = new ObjectRecursive({
+		tree.x = new ObjectRecursive({ x: undefined });
+		tree.x = new ObjectRecursive({ x: new ObjectRecursive({ x: undefined }) });
+		tree.x = new ObjectRecursive({
 			x: new ObjectRecursive({ x: new ObjectRecursive({ x: undefined }) }),
 		});
 
-		view.root.x = view.root.x?.x?.x?.x ?? new ObjectRecursive({ x: undefined });
+		tree.x = tree.x?.x?.x?.x ?? new ObjectRecursive({ x: undefined });
 	});
 
 	it("lists", () => {
@@ -283,36 +293,79 @@ describe("Recursive Class based end to end example", () => {
 		}) {}
 
 		{
-			const tree = hydrate(B, new B({ b: new A({ a: undefined }) }));
+			const tree = hydrate(B, { b: new A({ a: undefined }) });
 			assert.equal(tree.b.a, undefined);
 		}
 
 		{
-			const tree = hydrate(B, new B({ b: { a: undefined } }));
+			const tree = hydrate(B, { b: { a: undefined } });
 			assert.equal(tree.b.a, undefined);
 		}
 
 		{
-			const tree = hydrate(A, new A({ a: undefined }));
+			const tree = hydrate(A, { a: undefined });
 			assert.equal(tree.a, undefined);
 		}
 
 		{
-			const tree = hydrate(A, new A({ a: new B({ b: { a: undefined } }) }));
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const tree = hydrate(A, { a: new B({ b: { a: undefined } }) });
 			assert.equal(tree.a!.b.a, undefined);
 		}
 
 		// TODO: why can't nested B be implicitly constructed?
 		{
-			// const tree = hydrate(A, new A({ a: { b: { a: undefined } } }));
-			// assert.equal(tree.a!.b.a, undefined);
+			const tree = hydrate(A, { a: { b: { a: undefined } } });
+			assert.equal(tree.a!.b.a, undefined);
 		}
 
 		// TODO: why can't nested A be implicitly constructed?
 		{
-			// const tree = hydrate(B, new B({ b: { a: { b: new A({ a: undefined }) } } }));
-			// assert.equal(tree.b.a!.b.a, undefined);
+			const tree = hydrate(B, { b: { a: { b: new A({ a: undefined }) } } });
+			assert.equal(tree.b.a!.b.a, undefined);
+		}
+	});
+
+	it("co-recursive objects2", () => {
+		class A extends sf.objectRecursive("A", {
+			a: sf.optionalRecursive([() => B]),
+		}) {}
+
+		class B extends sf.objectRecursive("B", {
+			// Implicit value field
+			b: sf.optionalRecursive([() => A]),
+		}) {}
+
+		{
+			const tree = hydrate(B, { b: new A({ a: undefined }) });
+			assert.equal(tree.b!.a, undefined);
+		}
+
+		// TODO: why can't nested A be implicitly constructed?
+		{
+			const tree = hydrate(B, { b: { a: undefined } });
+			assert.equal(tree.b!.a, undefined);
+		}
+
+		{
+			const tree = hydrate(A, { a: undefined });
+			assert.equal(tree.a, undefined);
+		}
+
+		{
+			const tree = hydrate(A, { a: new B({ b: { a: undefined } }) });
+			assert.equal(tree.a!.b!.a, undefined);
+		}
+
+		// TODO: why can't nested B be implicitly constructed?
+		{
+			const tree = hydrate(A, { a: { b: { a: undefined } } });
+			assert.equal(tree.a!.b!.a, undefined);
+		}
+
+		// TODO: why can't nested A be implicitly constructed?
+		{
+			const tree = hydrate(B, { b: { a: { b: new A({ a: undefined }) } } });
+			assert.equal(tree.b!.a!.b!.a, undefined);
 		}
 	});
 });
