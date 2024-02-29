@@ -66,7 +66,7 @@ export async function dangerfile(): Promise<void> {
 	// message and danger will delete its previous message
 	if (result.comparison === undefined || !bundlesContainNoChanges(result.comparison)) {
 		// Check for bundle size regression
-		const sizeCheck =
+		const sizeRegressionDetected =
 			result.comparison?.some((bundle: BundleComparison) => {
 				return Object.values(bundle.commonBundleMetrics).some(
 					({ baseline, compare }: { baseline: BundleMetric; compare: BundleMetric }) => {
@@ -76,7 +76,7 @@ export async function dangerfile(): Promise<void> {
 			}) ?? false;
 
 		// Warn and add label to PR in case of bundle size regression
-		if (sizeCheck) {
+		if (sizeRegressionDetected) {
 			warn("Bundle size regression detected -- please investigate before merging!");
 			// Add the label to the PR
 			danger.github.utils.createOrAddLabel({
