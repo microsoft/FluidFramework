@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { EventEmitter } from "events_pkg";
+import type { EventEmitter } from "@fluid-example/example-utils";
 
 /**
  * IDiceRoller describes the public API surface for our dice roller data object.

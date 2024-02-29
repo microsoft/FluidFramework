@@ -333,7 +333,6 @@ importers:
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
-      '@types/events_pkg': npm:@types/events@^3.0.0
       '@types/jest': 29.5.3
       '@types/node': ^18.19.0
       cross-env: ^7.0.3
@@ -372,7 +371,6 @@ importers:
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-tools': 1.0.195075
-      '@types/events_pkg': /@types/events/3.0.3
       '@types/jest': 29.5.3
       '@types/node': 18.19.1
       cross-env: 7.0.3
@@ -497,7 +495,6 @@ importers:
       '@fluidframework/eslint-config-fluid': ^4.0.0
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
-      '@types/events_pkg': npm:@types/events@^3.0.0
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 'workspace:'
       '@types/node': ^18.19.0
@@ -545,7 +542,6 @@ importers:
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-tools': 1.0.195075
-      '@types/events_pkg': /@types/events/3.0.3
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': link:../../../packages/test/types_jest-environment-puppeteer
       '@types/node': 18.19.1
@@ -594,7 +590,6 @@ importers:
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
-      '@types/events_pkg': npm:@types/events@^3.0.0
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 'workspace:'
       '@types/node': ^18.19.0
@@ -664,7 +659,6 @@ importers:
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-tools': 1.0.195075
-      '@types/events_pkg': /@types/events/3.0.3
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': link:../../../packages/test/types_jest-environment-puppeteer
       '@types/node': 18.19.1
@@ -796,7 +790,6 @@ importers:
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/task-manager': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
-      '@types/events_pkg': npm:@types/events@^3.0.0
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 'workspace:'
       '@types/node': ^18.19.0
@@ -841,7 +834,6 @@ importers:
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-tools': 1.0.195075
-      '@types/events_pkg': /@types/events/3.0.3
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': link:../../../packages/test/types_jest-environment-puppeteer
       '@types/node': 18.19.1
@@ -890,7 +882,6 @@ importers:
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/tinylicious-driver': workspace:~
       '@fluidframework/tree': workspace:~
-      '@types/events_pkg': npm:@types/events@^3.0.0
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 'workspace:'
       '@types/node': ^18.19.0
@@ -900,7 +891,6 @@ importers:
       cross-env: ^7.0.3
       css-loader: ^1.0.0
       eslint: ~8.55.0
-      events_pkg: npm:events@^3.1.0
       expect-puppeteer: ^9.0.2
       html-webpack-plugin: ^5.5.0
       jest: ^29.6.2
@@ -941,7 +931,6 @@ importers:
       '@fluidframework/telemetry-utils': link:../../../packages/utils/telemetry-utils
       '@fluidframework/tinylicious-driver': link:../../../packages/drivers/tinylicious-driver
       '@fluidframework/tree': link:../../../packages/dds/tree
-      events_pkg: /events/3.3.0
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       tiny-typed-emitter: 2.1.0
@@ -952,7 +941,6 @@ importers:
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-tools': 1.0.195075
-      '@types/events_pkg': /@types/events/3.0.3
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': link:../../../packages/test/types_jest-environment-puppeteer
       '@types/node': 18.19.1
@@ -1767,14 +1755,12 @@ importers:
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
       '@types/codemirror': 5.60.7
-      '@types/events_pkg': npm:@types/events@^3.0.0
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       codemirror: ^5.48.4
       copyfiles: ^2.4.1
       css-loader: ^1.0.0
       eslint: ~8.55.0
-      events_pkg: npm:events@^3.1.0
       prettier: ~3.0.3
       react: ^17.0.1
       rimraf: ^4.4.0
@@ -1800,7 +1786,6 @@ importers:
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/sequence': link:../../../packages/dds/sequence
       codemirror: 5.65.16
-      events_pkg: /events/3.3.0
       react: 17.0.2
     devDependencies:
       '@fluid-example/webpack-fluid-loader': link:../../utils/webpack-fluid-loader
@@ -1808,7 +1793,6 @@ importers:
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@types/codemirror': 5.60.7
-      '@types/events_pkg': /@types/events/3.0.3
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       copyfiles: 2.4.1
@@ -1834,7 +1818,6 @@ importers:
       '@fluidframework/eslint-config-fluid': ^4.0.0
       '@fluidframework/map': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
-      '@types/events_pkg': npm:@types/events@^3.0.0
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 'workspace:'
       '@types/node': ^18.19.0
@@ -1869,7 +1852,6 @@ importers:
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-tools': 1.0.195075
-      '@types/events_pkg': /@types/events/3.0.3
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': link:../../../packages/test/types_jest-environment-puppeteer
       '@types/node': 18.19.1
@@ -2323,11 +2305,11 @@ importers:
 
   examples/data-objects/multiview/interface:
     specifiers:
+      '@fluid-example/example-utils': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.34.0
       '@fluidframework/eslint-config-fluid': ^4.0.0
-      '@types/events_pkg': npm:@types/events@^3.0.0
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -2343,7 +2325,7 @@ importers:
       webpack-dev-server: ~4.6.0
       webpack-merge: ^5.8.0
     dependencies:
-      '@types/events_pkg': /@types/events/3.0.3
+      '@fluid-example/example-utils': link:../../../utils/example-utils
     devDependencies:
       '@fluid-tools/build-cli': 0.34.0_wct7gbpa3rmr6xmk4uo7pbrani
       '@fluidframework/build-common': 2.0.3
@@ -2592,7 +2574,6 @@ importers:
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
-      '@types/events_pkg': npm:@types/events@^3.0.0
       '@types/node': ^18.19.0
       '@types/orderedmap': ^1.0.0
       '@types/prosemirror-model': ^1.17.0
@@ -2602,7 +2583,6 @@ importers:
       copyfiles: ^2.4.1
       css-loader: ^1.0.0
       eslint: ~8.55.0
-      events_pkg: npm:events@^3.1.0
       orderedmap: ^2.1.0
       prettier: ~3.0.3
       prosemirror-example-setup: ^1.2.1
@@ -2639,7 +2619,6 @@ importers:
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/sequence': link:../../../packages/dds/sequence
-      events_pkg: /events/3.3.0
       orderedmap: 2.1.1
       prosemirror-example-setup: 1.2.2
       prosemirror-history: 1.3.2
@@ -2656,7 +2635,6 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@types/events_pkg': /@types/events/3.0.3
       '@types/node': 18.19.1
       '@types/orderedmap': 1.0.0
       '@types/prosemirror-model': 1.17.0
@@ -2696,12 +2674,10 @@ importers:
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
-      '@types/events_pkg': npm:@types/events@^3.0.0
       '@types/react': ^17.0.44
       '@types/simplemde': ^1.11.7
       css-loader: ^1.0.0
       eslint: ~8.55.0
-      events_pkg: npm:events@^3.1.0
       prettier: ~3.0.3
       react: ^17.0.1
       rimraf: ^4.4.0
@@ -2728,7 +2704,6 @@ importers:
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/sequence': link:../../../packages/dds/sequence
-      events_pkg: /events/3.3.0
       react: 17.0.2
       simplemde: 1.11.2
     devDependencies:
@@ -2736,7 +2711,6 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_webpack-cli@4.10.0
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@types/events_pkg': /@types/events/3.0.3
       '@types/react': 17.0.71
       '@types/simplemde': 1.11.11
       css-loader: 1.0.1_webpack@5.89.0
@@ -2995,7 +2969,6 @@ importers:
       '@fluidframework/sequence': workspace:~
       '@fluidframework/test-utils': workspace:~
       '@types/debug': ^4.1.5
-      '@types/events_pkg': npm:@types/events@^3.0.0
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
@@ -3008,7 +2981,6 @@ importers:
       debug: ^4.3.4
       eslint: ~8.55.0
       esm-loader-css: ^1.0.4
-      events_pkg: npm:events@^3.1.0
       file-loader: ^3.0.1
       html-loader: ^3.1.0
       jsdom: ^16.7.0
@@ -3043,7 +3015,6 @@ importers:
       '@fluidframework/sequence': link:../../../packages/dds/sequence
       assert: 2.1.0
       debug: 4.3.4
-      events_pkg: /events/3.3.0
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
     devDependencies:
@@ -3056,7 +3027,6 @@ importers:
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/test-utils': link:../../../packages/test/test-utils
       '@types/debug': 4.1.12
-      '@types/events_pkg': /@types/events/3.0.3
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/react': 17.0.71
@@ -3675,7 +3645,6 @@ importers:
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/tinylicious-driver': workspace:~
-      '@types/events_pkg': npm:@types/events@^3.0.0
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 'workspace:'
       '@types/node': ^18.19.0
@@ -3721,7 +3690,6 @@ importers:
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-tools': 1.0.195075
-      '@types/events_pkg': /@types/events/3.0.3
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': link:../../../packages/test/types_jest-environment-puppeteer
       '@types/node': 18.19.1
@@ -3773,7 +3741,6 @@ importers:
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/tinylicious-driver': workspace:~
-      '@types/events_pkg': npm:@types/events@^3.0.0
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 'workspace:'
       '@types/node': ^18.19.0
@@ -3785,7 +3752,6 @@ importers:
       css-loader: ^1.0.0
       eslint: ~8.55.0
       eslint-config-prettier: ~9.0.0
-      events_pkg: npm:events@^3.1.0
       expect-puppeteer: ^9.0.2
       html-webpack-plugin: ^5.5.0
       jest: ^29.6.2
@@ -3828,7 +3794,6 @@ importers:
       '@fluidframework/task-manager': link:../../../packages/dds/task-manager
       '@fluidframework/telemetry-utils': link:../../../packages/utils/telemetry-utils
       '@fluidframework/tinylicious-driver': link:../../../packages/drivers/tinylicious-driver
-      events_pkg: /events/3.3.0
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       uuid: 9.0.1
@@ -3838,7 +3803,6 @@ importers:
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-tools': 1.0.195075
-      '@types/events_pkg': /@types/events/3.0.3
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': link:../../../packages/test/types_jest-environment-puppeteer
       '@types/node': 18.19.1
@@ -3896,7 +3860,6 @@ importers:
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/tinylicious-driver': workspace:~
-      '@types/events_pkg': npm:@types/events@^3.0.0
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 'workspace:'
       '@types/node': ^18.19.0
@@ -3908,7 +3871,6 @@ importers:
       css-loader: ^1.0.0
       eslint: ~8.55.0
       eslint-config-prettier: ~9.0.0
-      events_pkg: npm:events@^3.1.0
       expect-puppeteer: ^9.0.2
       html-webpack-plugin: ^5.5.0
       jest: ^29.6.2
@@ -3951,7 +3913,6 @@ importers:
       '@fluidframework/task-manager': link:../../../packages/dds/task-manager
       '@fluidframework/telemetry-utils': link:../../../packages/utils/telemetry-utils
       '@fluidframework/tinylicious-driver': link:../../../packages/drivers/tinylicious-driver
-      events_pkg: /events/3.3.0
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       uuid: 9.0.1
@@ -3961,7 +3922,6 @@ importers:
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-tools': 1.0.195075
-      '@types/events_pkg': /@types/events/3.0.3
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': link:../../../packages/test/types_jest-environment-puppeteer
       '@types/node': 18.19.1
@@ -4016,7 +3976,6 @@ importers:
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/tinylicious-driver': workspace:~
       '@fluidframework/tree': workspace:~
-      '@types/events_pkg': npm:@types/events@^3.0.0
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 'workspace:'
       '@types/node': ^18.19.0
@@ -4026,7 +3985,6 @@ importers:
       cross-env: ^7.0.3
       css-loader: ^1.0.0
       eslint: ~8.55.0
-      events_pkg: npm:events@^3.1.0
       expect-puppeteer: ^9.0.2
       html-webpack-plugin: ^5.5.0
       jest: ^29.6.2
@@ -4069,7 +4027,6 @@ importers:
       '@fluidframework/telemetry-utils': link:../../../packages/utils/telemetry-utils
       '@fluidframework/tinylicious-driver': link:../../../packages/drivers/tinylicious-driver
       '@fluidframework/tree': link:../../../packages/dds/tree
-      events_pkg: /events/3.3.0
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       tiny-typed-emitter: 2.1.0
@@ -4080,7 +4037,6 @@ importers:
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-tools': 1.0.195075
-      '@types/events_pkg': /@types/events/3.0.3
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': link:../../../packages/test/types_jest-environment-puppeteer
       '@types/node': 18.19.1
@@ -4126,7 +4082,6 @@ importers:
       '@fluidframework/map': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
-      '@types/events_pkg': npm:@types/events@^3.0.0
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 'workspace:'
       '@types/node': ^18.19.0
@@ -4170,7 +4125,6 @@ importers:
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-tools': 1.0.195075
-      '@types/events_pkg': /@types/events/3.0.3
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': link:../../../packages/test/types_jest-environment-puppeteer
       '@types/node': 18.19.1
@@ -4208,7 +4162,6 @@ importers:
       '@fluidframework/eslint-config-fluid': ^4.0.0
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
-      '@types/events_pkg': npm:@types/events@^3.0.0
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 'workspace:'
       '@types/node': ^18.19.0
@@ -4248,7 +4201,6 @@ importers:
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-tools': 1.0.195075
-      '@types/events_pkg': /@types/events/3.0.3
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': link:../../../packages/test/types_jest-environment-puppeteer
       '@types/node': 18.19.1
@@ -4285,7 +4237,6 @@ importers:
       '@fluidframework/eslint-config-fluid': ^4.0.0
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
-      '@types/events_pkg': npm:@types/events@^3.0.0
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 'workspace:'
       '@types/node': ^18.19.0
@@ -4333,7 +4284,6 @@ importers:
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-tools': 1.0.195075
-      '@types/events_pkg': /@types/events/3.0.3
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': link:../../../packages/test/types_jest-environment-puppeteer
       '@types/node': 18.19.1
@@ -4402,7 +4352,6 @@ importers:
       cross-env: ^7.0.3
       css-loader: ^1.0.0
       eslint: ~8.55.0
-      events_pkg: npm:events@^3.1.0
       expect-puppeteer: ^9.0.2
       html-webpack-plugin: ^5.5.0
       jest: ^29.6.2
@@ -4455,7 +4404,6 @@ importers:
       '@fluidframework/sequence': link:../../../../packages/dds/sequence
       '@fluidframework/shared-object-base': link:../../../../packages/dds/shared-object-base
       '@fluidframework/tinylicious-driver': link:../../../../packages/drivers/tinylicious-driver
-      events_pkg: /events/3.3.0
       jsonwebtoken: 8.5.1
       lodash: 4.17.21
       react: 17.0.2
@@ -4532,7 +4480,6 @@ importers:
       cross-env: ^7.0.3
       css-loader: ^1.0.0
       eslint: ~8.55.0
-      events_pkg: npm:events@^3.1.0
       expect-puppeteer: ^9.0.2
       html-webpack-plugin: ^5.5.0
       jest: ^29.6.2
@@ -4588,7 +4535,6 @@ importers:
       '@material-ui/core': 4.12.4_sfoxds7t5ydpegc3knd667wn6m
       '@material-ui/lab': 4.0.0-alpha.61_phlbjj2qqbzyjdfzujtmlw3coi
       '@material-ui/styles': 4.11.5_sfoxds7t5ydpegc3knd667wn6m
-      events_pkg: /events/3.3.0
       jsonwebtoken: 8.5.1
       lodash: 4.17.21
       react: 17.0.2
