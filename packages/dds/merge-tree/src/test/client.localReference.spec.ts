@@ -503,8 +503,7 @@ describe("MergeTree.Client", () => {
 		{
 			const segInfo = clients.A.getContainingSegment(9);
 			const segment = segInfo.segment;
-			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- TS2345: Argument of type 'ISegment | undefined' is not assignable to parameter of type 'ISegment'.
-			assert(TextSegment.is(segment!));
+			assert(segment !== undefined && TextSegment.is(segment));
 			assert.strictEqual(segment.text[segInfo.offset!], "9");
 			const localRef = clients.A.createLocalReferencePosition(
 				segment,
@@ -521,8 +520,7 @@ describe("MergeTree.Client", () => {
 		{
 			const segInfo = clients.A.getContainingSegment(6);
 			const segment = segInfo.segment;
-			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- TS2345: Argument of type 'ISegment | undefined' is not assignable to parameter of type 'ISegment'.
-			assert(TextSegment.is(segment!));
+			assert(segment !== undefined && TextSegment.is(segment));
 			assert.strictEqual(segment.text[segInfo.offset!], "B");
 			clients.A.createLocalReferencePosition(
 				segment,
