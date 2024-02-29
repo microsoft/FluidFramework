@@ -4747,7 +4747,6 @@ importers:
       '@microsoft/api-extractor': ^7.39.1
       '@types/chai': ^4.0.0
       '@types/debug': ^4.1.5
-      '@types/events_pkg': npm:@types/events@^3.0.0
       '@types/lodash': ^4.14.118
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
@@ -4760,7 +4759,6 @@ importers:
       chai: ^4.2.0
       cross-env: ^7.0.3
       eslint: ~8.55.0
-      events_pkg: npm:events@^3.1.0
       fastest-json-copy: ^1.0.1
       lodash: ^4.17.21
       mocha: ^10.2.0
@@ -4776,11 +4774,9 @@ importers:
       traverse: 0.6.6
       typescript: ~5.1.6
     dependencies:
-      '@types/events_pkg': /@types/events/3.0.3
       ajv: 8.12.0
       async: 3.2.5
       base64-js: 1.5.1
-      events_pkg: /events/3.3.0
       fastest-json-copy: 1.0.1
       lodash: 4.17.21
       murmurhash3js: 3.0.1
