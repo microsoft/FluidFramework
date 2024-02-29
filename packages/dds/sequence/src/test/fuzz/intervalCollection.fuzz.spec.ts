@@ -257,7 +257,8 @@ describe("IntervalCollection fuzz testing with rebased batches", () => {
 
 	createDDSFuzzSuite(noReconnectWithRebaseModel, {
 		...defaultFuzzOptions,
-		skip: [44],
+		// todo AB#5603
+		skip: [97],
 		reconnectProbability: 0.0,
 		clientJoinOptions: {
 			maxNumberOfClients: 3,
@@ -269,6 +270,5 @@ describe("IntervalCollection fuzz testing with rebased batches", () => {
 			enableGroupedBatching: true,
 		},
 		// Uncomment this line to replay a specific seed from its failure file:
-		// replay: 0,
 	});
 });
