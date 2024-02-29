@@ -23,6 +23,56 @@
 				"default": "./dist/index.js"
 			}
 		},
+		"./test/container": {
+			"import": {
+				"types": "./lib/container.d.ts",
+				"default": "./lib/container.js"
+			},
+			"require": {
+				"types": "./dist/container.d.ts",
+				"default": "./dist/container.js"
+			}
+		},
+		"./test/contracts": {
+			"import": {
+				"types": "./lib/contracts.d.ts",
+				"default": "./lib/contracts.js"
+			},
+			"require": {
+				"types": "./dist/contracts.d.ts",
+				"default": "./dist/contracts.js"
+			}
+		},
+		"./test/connectionManager": {
+			"import": {
+				"types": "./lib/connectionManager.d.ts",
+				"default": "./lib/connectionManager.js"
+			},
+			"require": {
+				"types": "./dist/connectionManager.d.ts",
+				"default": "./dist/connectionManager.js"
+			}
+		},
+		"./test/deltaManager": {
+			"import": {
+				"types": "./lib/deltaManager.d.ts",
+				"default": "./lib/deltaManager.js"
+			},
+			"require": {
+				"types": "./dist/deltaManager.d.ts",
+				"default": "./dist/deltaManager.js"
+			}
+		},
+		"./test/utils": {
+			"import": {
+				"types": "./lib/utils.d.ts",
+				"default": "./lib/utils.js"
+			},
+			"require": {
+				"types": "./dist/utils.d.ts",
+				"default": "./dist/utils.js"
+			}
+		},
 		"./public": {
 			"import": {
 				"types": "./lib/container-loader-public.d.ts",
