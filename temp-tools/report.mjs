@@ -45,5 +45,5 @@ await forEachPackage((pkgRoot) => {
 });
 
 console.log(`Total: ${totalCount}`);
-console.log(`Node 16: ${totalCount - node16Count}`);
-console.log(`Trim: ${totalCount - trimCount}`);
+console.log(`Node 16: ${node16Count}`);
+console.log(`Trim: ${trimCount}`);
