@@ -7,14 +7,14 @@
 
 import { strict as assert } from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { UnassignedSequenceNumber } from "../constants";
-import { ISegment, SegmentGroup } from "../mergeTreeNodes";
-import { MergeTreeDeltaType, ReferenceType } from "../ops";
-import { TextSegment } from "../textSegment";
-import { TrackingGroup } from "../mergeTreeTracking";
-import { walkAllChildSegments } from "../mergeTreeNodeWalk";
-import { TestClient } from "./testClient";
-import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger";
+import { UnassignedSequenceNumber } from "../constants.js";
+import { ISegment, SegmentGroup } from "../mergeTreeNodes.js";
+import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
+import { TextSegment } from "../textSegment.js";
+import { TrackingGroup } from "../mergeTreeTracking.js";
+import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
+import { TestClient } from "./testClient.js";
+import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger.js";
 
 describe("client.applyMsg", () => {
 	const localUserLongId = "localUser";

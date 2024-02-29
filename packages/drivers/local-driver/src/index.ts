@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-export { LocalDeltaStorageService } from "./localDeltaStorageService";
-export { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection";
-export { createLocalDocumentService, LocalDocumentService } from "./localDocumentService";
-export { LocalDocumentServiceFactory } from "./localDocumentServiceFactory";
-export { LocalDocumentStorageService } from "./localDocumentStorageService";
-export { createLocalResolverCreateNewRequest, LocalResolver } from "./localResolver";
-export { LocalSessionStorageDbFactory } from "./localSessionStorageDb";
+export { LocalDeltaStorageService } from "./localDeltaStorageService.js";
+export { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection.js";
+export { createLocalDocumentService, LocalDocumentService } from "./localDocumentService.js";
+export { LocalDocumentServiceFactory } from "./localDocumentServiceFactory.js";
+export { LocalDocumentStorageService } from "./localDocumentStorageService.js";
+export { createLocalResolverCreateNewRequest, LocalResolver } from "./localResolver.js";
+export { LocalSessionStorageDbFactory } from "./localSessionStorageDb.js";

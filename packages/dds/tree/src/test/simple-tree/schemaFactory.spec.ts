@@ -10,8 +10,6 @@ import { unreachableCase } from "@fluidframework/core-utils";
 import { MockFluidDataStoreRuntime, MockHandle } from "@fluidframework/test-runtime-utils";
 import { Tree, TreeConfiguration, TreeView } from "../../simple-tree/index.js";
 import {
-	ImplicitFieldSchema,
-	InsertableTreeFieldFromImplicitField,
 	NodeFromSchema,
 	TreeFieldFromImplicitField,
 	TreeNodeFromImplicitAllowedTypes,
@@ -27,6 +25,7 @@ import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../uti
 import { TreeFactory } from "../../treeFactory.js";
 // eslint-disable-next-line import/no-internal-modules
 import { isTreeNode } from "../../simple-tree/proxies.js";
+import { hydrate } from "./utils.js";
 
 {
 	const schema = new SchemaFactory("Blah");
@@ -645,20 +644,3 @@ describe("schemaFactory", () => {
 		assert.equal(schemaFromValue(false), f.boolean);
 	});
 });
-
-/**
- * Create a tree and use it to hydrate the input.
- */
-function hydrate<TSchema extends ImplicitFieldSchema>(
-	schema: TSchema,
-	data: InsertableTreeFieldFromImplicitField<TSchema>,
-): TreeFieldFromImplicitField<TSchema> {
-	const config = new TreeConfiguration(schema, () => data);
-	const factory = new TreeFactory({});
-	const tree = factory.create(
-		new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-		"tree",
-	);
-	const root = tree.schematize(config).root;
-	return root;
-}
