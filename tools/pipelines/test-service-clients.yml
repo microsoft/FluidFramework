@@ -33,7 +33,7 @@ variables:
 
 stages:
   # Run Azure Client FRS Tests
-  - stage:
+  - stage: e2e_azure_client_frs
     displayName: e2e - azure client with frs
     dependsOn: []
     jobs:
@@ -50,7 +50,7 @@ stages:
           azure__fluid__relay__service__endpoint: $(azure-fluid-relay-service-endpoint)
           azure__fluid__relay__service__key: $(azure-fluid-relay-service-key)
 
-  - stage:
+  - stage: e2e_azure_client_local_server
     displayName: e2e - azure client with azure local service
     dependsOn: []
     jobs:
@@ -67,7 +67,7 @@ stages:
           logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
           logger__morganFormat: tiny
   
-  - stage:
+  - stage: e2e_odsp_client_odsp_server
     displayName: e2e - odsp client with odsp service
     dependsOn: []
     jobs:
@@ -95,16 +95,18 @@ stages:
       displayName: Upload pipeline run telemetry to Kusto
       condition: succeededOrFailed()
       dependsOn:
-        - e2e - azure client with frs
-        - e2e - azure client with azure local service
-        - e2e - odsp client with odsp service
+        - e2e_azure_client_frs
+        - e2e_azure_client_local_server
+        - e2e_odsp_client_odsp_server
       jobs:
         - job: upload_run_telemetry
           displayName: Upload pipeline run telemetry to Kusto
           pool: Small
           variables:
           - group: ado-feeds
-    
+          - name: absolutePathToTelemetryGenerator
+            value: $(Build.SourcesDirectory)/tools/telemetry-generator
+            readonly: true
           steps:
           - template: templates/include-telemetry-setup.yml
             parameters:
