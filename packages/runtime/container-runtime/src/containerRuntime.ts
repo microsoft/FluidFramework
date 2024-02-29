@@ -1539,6 +1539,7 @@ export class ContainerRuntime
 				reSubmit: this.reSubmit.bind(this),
 				reSubmitBatch: this.reSubmitBatch.bind(this),
 				isActiveConnection: () => this.innerDeltaManager.active,
+				isAttached: () => this.attachState !== AttachState.Detached,
 			},
 			pendingRuntimeState?.pending,
 			this.logger,

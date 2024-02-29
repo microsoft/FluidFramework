@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent, IEventProvider, ITelemetryProperties } from "@fluidframework/core-interfaces";
+import { IEvent, IEventProvider, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { ITelemetryLoggerExt, ITelemetryLoggerPropertyBag } from "@fluidframework/telemetry-utils";
 import { ContainerWarning, IDeltaManager } from "@fluidframework/container-definitions";
 import {
@@ -539,10 +539,10 @@ type ISummarizeTelemetryOptionalProperties =
 	| keyof ISummarizeOptions;
 
 export type ISummarizeTelemetryProperties = Pick<
-	ITelemetryProperties,
+	ITelemetryBaseProperties,
 	ISummarizeTelemetryRequiredProperties
 > &
-	Partial<Pick<ITelemetryProperties, ISummarizeTelemetryOptionalProperties>>;
+	Partial<Pick<ITelemetryBaseProperties, ISummarizeTelemetryOptionalProperties>>;
 
 /** Strategy used to heuristically determine when we should run a summary */
 export interface ISummaryHeuristicStrategy {
@@ -608,10 +608,10 @@ type SummaryGeneratorOptionalTelemetryProperties =
 	| "stage";
 
 export type SummaryGeneratorTelemetry = Pick<
-	ITelemetryProperties,
+	ITelemetryBaseProperties,
 	SummaryGeneratorRequiredTelemetryProperties
 > &
-	Partial<Pick<ITelemetryProperties, SummaryGeneratorOptionalTelemetryProperties>>;
+	Partial<Pick<ITelemetryBaseProperties, SummaryGeneratorOptionalTelemetryProperties>>;
 
 export interface ISummarizeRunnerTelemetry extends ITelemetryLoggerPropertyBag {
 	/** Number of times the summarizer run. */
