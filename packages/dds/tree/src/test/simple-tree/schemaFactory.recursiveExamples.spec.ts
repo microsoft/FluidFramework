@@ -157,7 +157,7 @@ describe("Recursive Class based end to end example", () => {
 		type Child = ObjectRecursive["x"];
 		type _check = requireTrue<areSafelyAssignable<Child, ObjectRecursive | undefined>>;
 
-		const tree = hydrate(ObjectRecursive, { x: undefined });
+		const tree = hydrate(ObjectRecursive, new ObjectRecursive({ x: undefined }));
 
 		const data = Reflect.ownKeys(tree);
 		// TODO: are empty optional fields supposed to show up as keys in simple-tree? The currently are included, but maybe thats a bug?
@@ -167,7 +167,10 @@ describe("Recursive Class based end to end example", () => {
 
 		tree.x = tree.x?.x?.x?.x ?? new ObjectRecursive({ x: undefined });
 
-		const tree2 = hydrate(ObjectRecursive, { x: new ObjectRecursive({ x: undefined }) });
+		const tree2 = hydrate(
+			ObjectRecursive,
+			new ObjectRecursive({ x: new ObjectRecursive({ x: undefined }) }),
+		);
 	});
 
 	it("other under recursive object", () => {
@@ -183,14 +186,17 @@ describe("Recursive Class based end to end example", () => {
 			e: sf.optional([() => Other]),
 		}) {}
 
-		const tree2 = hydrate(ObjectRecursive, {
-			x: undefined,
-			a: new Other({ y: 5 }),
-			b: new Other({ y: 5 }),
-			c: new Other({ y: 5 }),
-			d: new Other({ y: 5 }),
-			e: new Other({ y: 5 }),
-		});
+		const tree2 = hydrate(
+			ObjectRecursive,
+			new ObjectRecursive({
+				x: undefined,
+				a: new Other({ y: 5 }),
+				b: new Other({ y: 5 }),
+				c: new Other({ y: 5 }),
+				d: new Other({ y: 5 }),
+				e: new Other({ y: 5 }),
+			}),
+		);
 	});
 
 	it("object nested construction", () => {
@@ -210,7 +216,7 @@ describe("Recursive Class based end to end example", () => {
 			type X2b = InsertableTreeNodeFromImplicitAllowedTypesUnsafe<AllowedTypes>;
 		}
 
-		const tree = hydrate(ObjectRecursive, { x: undefined });
+		const tree = hydrate(ObjectRecursive, new ObjectRecursive({ x: undefined }));
 
 		tree.x = new ObjectRecursive({ x: undefined });
 		// tree.x = new ObjectRecursive({ x: { x: undefined } });
@@ -287,85 +293,41 @@ describe("Recursive Class based end to end example", () => {
 			a: sf.optionalRecursive([() => B]),
 		}) {}
 
-		class B extends sf.objectRecursive("B", {
-			// Implicit value field
+		class B extends sf.object("B", {
+			// Implicit required field
 			b: A,
 		}) {}
 
 		{
-			const tree = hydrate(B, { b: new A({ a: undefined }) });
+			const tree = hydrate(B, new B({ b: new A({ a: undefined }) }));
 			assert.equal(tree.b.a, undefined);
 		}
 
 		{
-			const tree = hydrate(B, { b: { a: undefined } });
+			const tree = hydrate(B, new B({ b: new A({ a: undefined }) }));
 			assert.equal(tree.b.a, undefined);
 		}
 
 		{
-			const tree = hydrate(A, { a: undefined });
+			const tree = hydrate(A, new A({ a: undefined }));
 			assert.equal(tree.a, undefined);
 		}
 
 		{
-			const tree = hydrate(A, { a: new B({ b: { a: undefined } }) });
+			const tree = hydrate(A, new A({ a: new B({ b: new A({ a: undefined }) }) }));
 			assert.equal(tree.a!.b.a, undefined);
 		}
 
 		// TODO: why can't nested B be implicitly constructed?
 		{
-			const tree = hydrate(A, { a: { b: { a: undefined } } });
+			const tree = hydrate(A, new A({ a: { b: new A({ a: undefined }) } }));
 			assert.equal(tree.a!.b.a, undefined);
 		}
 
 		// TODO: why can't nested A be implicitly constructed?
 		{
-			const tree = hydrate(B, { b: { a: { b: new A({ a: undefined }) } } });
+			const tree = hydrate(B, new B({ b: new A({ a: { b: new A({ a: undefined }) } }) }));
 			assert.equal(tree.b.a!.b.a, undefined);
-		}
-	});
-
-	it("co-recursive objects2", () => {
-		class A extends sf.objectRecursive("A", {
-			a: sf.optionalRecursive([() => B]),
-		}) {}
-
-		class B extends sf.objectRecursive("B", {
-			// Implicit value field
-			b: sf.optionalRecursive([() => A]),
-		}) {}
-
-		{
-			const tree = hydrate(B, { b: new A({ a: undefined }) });
-			assert.equal(tree.b!.a, undefined);
-		}
-
-		// TODO: why can't nested A be implicitly constructed?
-		{
-			const tree = hydrate(B, { b: new A({ a: undefined }) });
-			assert.equal(tree.b!.a, undefined);
-		}
-
-		{
-			const tree = hydrate(A, { a: undefined });
-			assert.equal(tree.a, undefined);
-		}
-
-		{
-			const tree = hydrate(A, { a: new B({ b: new A({ a: undefined }) }) });
-			assert.equal(tree.a!.b!.a, undefined);
-		}
-
-		// TODO: why can't nested B be implicitly constructed?
-		{
-			const tree = hydrate(A, { a: new B({ b: new A({ a: undefined }) }) });
-			assert.equal(tree.a!.b!.a, undefined);
-		}
-
-		// TODO: why can't nested A be implicitly constructed?
-		{
-			const tree = hydrate(B, { b: new A({ a: new B({ b: new A({ a: undefined }) }) }) });
-			assert.equal(tree.b!.a!.b!.a, undefined);
 		}
 	});
 });

@@ -21,7 +21,6 @@ import {
 	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
 	InsertableTreeNodeFromImplicitAllowedTypes,
-	InsertableTypedNode,
 	NodeFromSchema,
 	NodeKind,
 	TreeNodeFromImplicitAllowedTypes,
@@ -106,10 +105,9 @@ export type InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
  * Implicit construction under a recursive node is having issues in some cases, so its disabled for now to avoid stabilizing it at all.
  * TODO: In the future consider changing this to use "InsertableTypedNodeUnsafe", and fix issues with implicit construction.
  */
-export type InsertableTypedNodeUnsafe<T extends Unenforced<TreeNodeSchema>> = Unhydrated<
-	NodeFromSchemaUnsafe<T>
->;
-// | (T extends { implicitlyConstructable: true } ? NodeBuilderDataUnsafe<T> : never)
+export type InsertableTypedNodeUnsafe<T extends Unenforced<TreeNodeSchema>> =
+	| Unhydrated<NodeFromSchemaUnsafe<T>>
+	| (T extends { implicitlyConstructable: true } ? NodeBuilderDataUnsafe<T> : never);
 
 /**
  * {@link Unenforced} version of {@link NodeFromSchema}.
@@ -232,12 +230,12 @@ export class SchemaFactoryRecursive<
 		return this.object(
 			name,
 			t as T & RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-		) as TreeNodeSchemaClass<
+		) as unknown as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Object,
 			TreeNode & ObjectFromSchemaRecordUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>>,
 			object & InsertableObjectFromSchemaRecordUnsafe<T>,
-			true,
+			false,
 			T
 		>;
 	}
