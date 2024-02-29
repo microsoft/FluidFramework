@@ -66,7 +66,7 @@ import {
 	CellOrder,
 	isAttachAndDetachEffect,
 } from "./utils.js";
-import { EmptyInputCellMark } from "./helperTypes.js";
+import { EmptyInputCellMark, MoveMarkEffect } from "./helperTypes.js";
 import { CellOrderingMethod, sequenceConfig } from "./config.js";
 
 /**
@@ -214,6 +214,13 @@ function composeMarksIgnoreChild<TNodeChange>(
 		const newAttachAndDetach = asAttachAndDetach(newMark);
 		const newDetachRevision = newAttachAndDetach.detach.revision;
 		if (markEmptiesCells(baseMark)) {
+			// baseMark is a detach which cancels with the attach portion of the AttachAndDetach,
+			// so we are just left with the detach portion of the AttachAndDetach.
+			const newDetach: CellMark<Detach, TNodeChange> = {
+				...newAttachAndDetach.detach,
+				count: baseMark.count,
+			};
+
 			if (isMoveIn(newAttachAndDetach.attach) && isMoveOut(newAttachAndDetach.detach)) {
 				assert(isMoveOut(baseMark), 0x808 /* Unexpected mark type */);
 
@@ -235,14 +242,20 @@ function composeMarksIgnoreChild<TNodeChange>(
 					baseMark.count,
 					{ revision: newDetachRevision, localId: newAttachAndDetach.detach.id },
 				);
+
+				const newEndpoint = getNewEndpoint(
+					moveEffects,
+					CrossFieldTarget.Source,
+					baseMark.revision,
+					baseMark.id,
+					baseMark.count,
+				);
+
+				if (newEndpoint !== undefined) {
+					changeFinalEndpoint(newDetach as MoveMarkEffect, newEndpoint);
+				}
 			}
 
-			// baseMark is a detach which cancels with the attach portion of the AttachAndDetach,
-			// so we are just left with the detach portion of the AttachAndDetach.
-			const newDetach: CellMark<Detach, TNodeChange> = {
-				...newAttachAndDetach.detach,
-				count: baseMark.count,
-			};
 			return newDetach;
 		}
 
@@ -825,13 +838,17 @@ function withUpdatedEndpoint<TMark extends MarkEffect>(
 	}
 
 	const output = { ...mark };
-	if (areEqualCellIds(finalDest, { revision: markRevision, localId: mark.id })) {
-		delete output.finalEndpoint;
-	} else {
-		output.finalEndpoint = finalDest;
-	}
+	changeFinalEndpoint(output, finalDest);
 
 	return output;
+}
+
+function changeFinalEndpoint(mark: MoveMarkEffect, endpoint: ChangeAtomId) {
+	if (areEqualCellIds(endpoint, { revision: mark.revision, localId: mark.id })) {
+		delete mark.finalEndpoint;
+	} else {
+		mark.finalEndpoint = endpoint;
+	}
 }
 
 function getNewEndpoint(

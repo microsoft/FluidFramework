@@ -61,9 +61,11 @@
 		"host": "redis",
 		"port": 6379,
 		"connectTimeout": 10000,
+		"slotsRefreshTimeout": 50000,
 		"maxRetriesPerRequest": 20,
 		"enableAutoPipelining": false,
-		"enableOfflineQueue": true
+		"enableOfflineQueue": true,
+		"enableClustering": false
 	},
 	"system": {
 		"httpServer": {

@@ -38,17 +38,23 @@ export class RedisCache implements ICache {
 			await this.client.del(this.getKey(key));
 			return true;
 		} catch (error: any) {
-			Lumberjack.error(`Error deleting from cache.`, undefined, error);
+			const newError: Error = { name: error?.name, message: error?.message };
+			Lumberjack.error(`Error deleting from cache.`, undefined, newError);
 			return false;
 		}
 	}
 
 	public async get(key: string): Promise<string> {
 		try {
+			// eslint-disable-next-line @typescript-eslint/return-await
 			return this.client.get(this.getKey(key));
 		} catch (error: any) {
-			Lumberjack.error(`Error getting ${key.substring(0, 20)} from cache.`, undefined, error);
 			const newError: Error = { name: error?.name, message: error?.message };
+			Lumberjack.error(
+				`Error getting ${key.substring(0, 20)} from cache.`,
+				undefined,
+				newError,
+			);
 			throw newError;
 		}
 	}
@@ -65,36 +71,42 @@ export class RedisCache implements ICache {
 				throw new Error(result);
 			}
 		} catch (error: any) {
-			Lumberjack.error(`Error setting ${key.substring(0, 20)} in cache.`, undefined, error);
 			const newError: Error = { name: error?.name, message: error?.message };
+			Lumberjack.error(
+				`Error setting ${key.substring(0, 20)} in cache.`,
+				undefined,
+				newError,
+			);
 			throw newError;
 		}
 	}
 
 	public async incr(key: string): Promise<number> {
 		try {
+			// eslint-disable-next-line @typescript-eslint/return-await
 			return this.client.incr(key);
 		} catch (error: any) {
+			const newError: Error = { name: error?.name, message: error?.message };
 			Lumberjack.error(
 				`Error while incrementing counter for ${key.substring(0, 20)} in redis.`,
 				undefined,
-				error,
+				newError,
 			);
-			const newError: Error = { name: error?.name, message: error?.message };
 			throw newError;
 		}
 	}
 
 	public async decr(key: string): Promise<number> {
 		try {
+			// eslint-disable-next-line @typescript-eslint/return-await
 			return this.client.decr(key);
 		} catch (error: any) {
+			const newError: Error = { name: error?.name, message: error?.message };
 			Lumberjack.error(
 				`Error while decrementing counter for ${key.substring(0, 20)} in redis.`,
 				undefined,
-				error,
+				newError,
 			);
-			const newError: Error = { name: error?.name, message: error?.message };
 			throw newError;
 		}
 	}

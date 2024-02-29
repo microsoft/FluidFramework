@@ -1,6 +1,6 @@
 {
 	"name": "root",
-	"version": "0.34.0",
+	"version": "0.35.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -83,7 +83,7 @@
 		"copyfiles": "^2.4.1",
 		"cz-conventional-changelog": "^3.3.0",
 		"cz-customizable": "^7.0.0",
-		"eslint": "~8.51.0",
+		"eslint": "~8.55.0",
 		"inquirer": "^8.2.5",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.1",

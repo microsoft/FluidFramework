@@ -45,7 +45,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     abandon(taskId: string): void;
     // (undocumented)
-    applyStashedOp(): void;
+    protected applyStashedOp(content: any): void;
     assigned(taskId: string): boolean;
     canVolunteer(): boolean;
     complete(taskId: string): void;
