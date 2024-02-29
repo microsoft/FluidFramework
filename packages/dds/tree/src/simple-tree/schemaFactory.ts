@@ -301,9 +301,10 @@ export class SchemaFactory<
 			public constructor(input: FlexTreeNode | unknown) {
 				super();
 				// Currently this just does validation. All other logic is in the subclass.
-				if (isFlexTreeNode(input) && getClassSchema(input.schema) !== this.constructor) {
-					throw new TypeError(
-						`The provided input is incompatible with "${schema.identifier}" schema.`,
+				if (isFlexTreeNode(input)) {
+					assert(
+						getClassSchema(input.schema) === this.constructor,
+						0x83b /* building node with wrong schema */,
 					);
 				}
 
