@@ -17,8 +17,8 @@ import {
 	type IResolvedUrl,
 	type IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { IDetachedBlobStorage, Loader } from "../loader";
-import { IPendingDetachedContainerState } from "../container";
+import { IDetachedBlobStorage, Loader } from "../loader.js";
+import { IPendingDetachedContainerState } from "../container.js";
 
 const failProxy = <T extends object>() => {
 	const proxy = new Proxy<T>({} as any as T, {

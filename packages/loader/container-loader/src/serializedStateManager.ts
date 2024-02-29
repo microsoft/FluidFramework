@@ -23,8 +23,8 @@ import {
 	ISnapshot,
 } from "@fluidframework/driver-definitions";
 import { isInstanceOfISnapshot } from "@fluidframework/driver-utils";
-import { ISerializableBlobContents, getBlobContentsFromTree } from "./containerStorageAdapter";
-import { IPendingContainerState } from "./container";
+import { ISerializableBlobContents, getBlobContentsFromTree } from "./containerStorageAdapter.js";
+import { IPendingContainerState } from "./container.js";
 
 export class SerializedStateManager {
 	private readonly savedOps: ISequencedDocumentMessage[] = [];
