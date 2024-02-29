@@ -396,7 +396,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	 * To finish the creation of a container and make it available for other users to open and collaborate with it must be attached,
 	 * which means it is attached to or persisted in server storage. This function is what accomplishes that.
 	 *
-	 * In order to craft the IRequest parameter necessary to call this function you should use functionally provided
+	 * In order to craft the IRequest parameter necessary to call this function you should use functionality provided
 	 * by the driver you are using. This is usually a free function called createCreateNewRequest, which should take
 	 * strongly typed arguments related to your driver and server.
 	 *
