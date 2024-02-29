@@ -558,7 +558,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 	];
 
 	return (
-		<SplitPane.default
+		<SplitPane
 			split="vertical"
 			minSize={540}
 			style={{
@@ -636,6 +636,6 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 					<pre> {selectedEvent?.information} </pre>
 				)}
 			</div>
-		</SplitPane.default>
+		</SplitPane>
 	);
 }
