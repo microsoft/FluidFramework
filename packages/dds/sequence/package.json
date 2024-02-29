@@ -43,6 +43,16 @@
 				"default": "./dist/index.js"
 			}
 		},
+		"./test/intervalCollection": {
+			"import": {
+				"types": "./lib/intervalCollection.d.ts",
+				"default": "./lib/intervalCollection.js"
+			},
+			"require": {
+				"types": "./dist/intervalCollection.d.ts",
+				"default": "./dist/intervalCollection.js"
+			}
+		},
 		"./alpha": {
 			"import": {
 				"types": "./lib/sequence-alpha.d.ts",
