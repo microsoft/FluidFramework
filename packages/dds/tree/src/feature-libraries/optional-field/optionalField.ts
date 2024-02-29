@@ -24,7 +24,6 @@ import {
 	setInNestedMap,
 	tryGetFromNestedMap,
 	deleteFromNestedMap,
-	fail,
 } from "../../util/index.js";
 import {
 	ToDelta,
@@ -470,47 +469,6 @@ function getComposedReplaceDst(
 		}
 		return dst1;
 	}
-}
-
-function getEffectiveFieldChange(change: Replace | undefined): Replace | undefined {
-	if (change === undefined) {
-		return undefined;
-	}
-
-	if (change.isEmpty && change.src === undefined) {
-		return undefined;
-	}
-
-	return change;
-}
-
-function areInverseFieldChanges(
-	change1: Replace,
-	revision1: RevisionTag | undefined,
-	change2: Replace,
-	revision2: RevisionTag | undefined,
-): boolean {
-	if (
-		change1.src !== undefined &&
-		!areEqualRegisterIds(
-			taggedRegister(change1.src, revision1),
-			taggedRegister(change2.dst, revision2),
-		)
-	) {
-		return false;
-	}
-
-	if (change1.isEmpty) {
-		return change2.src === undefined;
-	}
-
-	return (
-		change2.src !== undefined &&
-		areEqualRegisterIds(
-			taggedAtomId(change1.dst, revision1),
-			taggedRegister(change2.src, revision2),
-		)
-	);
 }
 
 function areEqualRegisterIds(id1: RegisterId, id2: RegisterId): boolean {
