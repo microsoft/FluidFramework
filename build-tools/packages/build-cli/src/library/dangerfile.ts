@@ -75,7 +75,7 @@ export async function dangerfile(): Promise<void> {
 			warn("Bundle size regression detected -- please investigate before merging!");
 			// Add the label to the PR
 			try {
-				await danger.github.utils.createOrAddLabel({color: "ff0000", description: "Significant bundle size regression (>5 KB)", name: "size regression"})
+				await danger.github.utils.createOrAddLabel({color: "ff0000", description: "Significant bundle size regression (>5 KB)!", name: "size regression"})
 			} catch (error) {
 				console.error(`Error adding label: ${error}`);
 			}
