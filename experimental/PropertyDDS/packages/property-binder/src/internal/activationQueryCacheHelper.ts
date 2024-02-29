@@ -8,7 +8,7 @@ import { TypeIdHelper } from "@fluid-experimental/property-changeset";
 import * as _ from "underscore";
 import { getLocalOrRemoteSchema } from "../data_binder/internalUtils.js";
 import { DataBinder, DataBinding } from "../index.js";
-import { ExtractedContext } from "@fluid-experimental/property-changeset/dist/helpers/typeidHelper";
+import { ExtractedContext } from "@fluid-experimental/property-changeset";
 
 export interface ActivationInfo {
 	dataBinder: DataBinder;
