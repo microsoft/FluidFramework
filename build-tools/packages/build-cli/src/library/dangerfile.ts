@@ -7,7 +7,6 @@ import {
 	BundleComparisonResult,
 	bundlesContainNoChanges,
 	getAzureDevopsApi,
-	BundleComparison,
 	totalSizeMetricName,
 } from "@fluidframework/bundle-size-tools";
 
@@ -64,27 +63,31 @@ export async function dangerfile(): Promise<void> {
 	// message and danger will delete its previous message
 	if (result.comparison === undefined || !bundlesContainNoChanges(result.comparison)) {
 		// Check for bundle size regression
-		const sizeCheck = result.comparison
-			?.map((bundle: BundleComparison) => {
+		let sizeCheck = false;
+		if (result.comparison !== undefined) {
+			for (const bundle of result.comparison) {
 				const totalMetric = bundle.commonBundleMetrics[totalSizeMetricName];
 				const totalParsedSizeDiff =
 					totalMetric.compare.parsedSize - totalMetric.baseline.parsedSize;
-				return totalParsedSizeDiff > 5120;
-			})
-			.reduce((prev: boolean, current: boolean) => {
-				return prev || current;
-			});
+				if (totalParsedSizeDiff > 5120) {
+					sizeCheck = true;
+					break;
+				}
+			}
+		}
 
 		// Warn and add label to PR in case of bundle size regression
 		if (sizeCheck) {
 			warn("Bundle size regression detected -- please investigate before merging!");
 			// Add the label to the PR
 			try {
-				await danger.github.utils.createOrAddLabel({
-					color: "ff0000",
-					description: "Significant bundle size regression (>5 KB)",
-					name: "size regression",
-				});
+				await Promise.resolve(
+					danger.github.utils.createOrAddLabel({
+						color: "ff0000",
+						description: "Significant bundle size regression (>5 KB)",
+						name: "size regression",
+					}),
+				);
 			} catch (error) {
 				console.error(`Error adding label: ${error}`);
 			}
