@@ -99,6 +99,7 @@ export interface IValueFactory<T> {
 	 * @param emitter - Emitter object that the created value type will use to emit operations
 	 * @param raw - Initialization parameters as defined by the value type
 	 * @returns The new value type
+	 * @alpha
 	 */
 	load(emitter: IValueOpEmitter, raw: any, options?: Partial<SequenceOptions>): T;
 
@@ -107,6 +108,7 @@ export interface IValueFactory<T> {
 	 * loadable using the load method of its factory.
 	 * @param value - The value type to serialize
 	 * @returns The JSONable form of the value type
+	 * @alpha
 	 */
 	store(value: T): any;
 }
@@ -123,6 +125,7 @@ export interface IValueOperation<T> {
 	 * @param local - Whether the operation originated from this client
 	 * @param message - The operation itself
 	 * @param localOpMetadata - any local metadata submitted by `IValueOpEmitter.emit`.
+	 * @alpha
 	 */
 	process(
 		value: T,
@@ -155,16 +158,19 @@ export interface IValueOperation<T> {
 export interface IValueType<T> {
 	/**
 	 * Name of the value type.
+	 * @alpha
 	 */
 	name: string;
 
 	/**
 	 * Factory method used to convert to/from a JSON form of the type.
+	 * @alpha
 	 */
 	factory: IValueFactory<T>;
 
 	/**
 	 * Operations that can be applied to the value type.
+	 * @alpha
 	 */
 	ops: Map<IntervalOpType, IValueOperation<T>>;
 }
