@@ -19,10 +19,10 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IDocumentDeltaStorageService } from "@fluidframework/driver-definitions";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { DeltaManager } from "../deltaManager";
-import { NoopHeuristic } from "../noopHeuristic";
-import { IConnectionManagerFactoryArgs } from "../contracts";
-import { ConnectionManager } from "../connectionManager";
+import { DeltaManager } from "../deltaManager.js";
+import { NoopHeuristic } from "../noopHeuristic.js";
+import { IConnectionManagerFactoryArgs } from "../contracts.js";
+import { ConnectionManager } from "../connectionManager.js";
 
 describe("Loader", () => {
 	describe("Container Loader", () => {
