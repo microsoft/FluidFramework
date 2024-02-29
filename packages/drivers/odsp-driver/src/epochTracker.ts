@@ -12,7 +12,6 @@ import {
 	normalizeError,
 	loggerToMonitoringContext,
 	wrapError,
-	LoggingError,
 } from "@fluidframework/telemetry-utils";
 import {
 	ThrottlingError,
@@ -462,7 +461,7 @@ export class EpochTracker implements IPersistedFileCache {
 				return new ThrottlingError(`Coherency 409: ${message}`, 1 /* retryAfterSeconds */, {
 					[Odsp409Error]: true,
 					driverVersion,
-				}) as unknown as LoggingError;
+				});
 			});
 			throw newError;
 		}

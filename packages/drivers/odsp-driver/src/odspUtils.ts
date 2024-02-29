@@ -22,7 +22,6 @@ import {
 	createChildLogger,
 	wrapError,
 	type IFluidErrorBase,
-	LoggingError,
 } from "@fluidframework/telemetry-utils";
 import {
 	fetchIncorrectResponse,
@@ -435,7 +434,7 @@ export function toInstrumentedOdspTokenFetcher(
 										? rawCanRetry
 										: false /* canRetry */,
 									{ method: name, errorMessage, driverVersion },
-								) as unknown as LoggingError,
+								),
 						);
 						throw tokenError;
 					},

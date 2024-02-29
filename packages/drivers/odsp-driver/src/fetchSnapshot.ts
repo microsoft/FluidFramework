@@ -9,7 +9,6 @@ import {
 	isFluidError,
 	PerformanceEvent,
 	wrapError,
-	LoggingError,
 } from "@fluidframework/telemetry-utils";
 import { fromUtf8ToBase64 } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
@@ -430,7 +429,7 @@ async function fetchLatestSnapshotCore(
 							`Error parsing snapshot response: ${errorMessage}`,
 							OdspErrorTypes.genericError,
 							propsToLog,
-						) as unknown as LoggingError,
+						),
 				);
 				throw enhancedError;
 			}
