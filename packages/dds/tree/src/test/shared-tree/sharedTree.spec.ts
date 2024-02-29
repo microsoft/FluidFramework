@@ -51,6 +51,7 @@ import {
 	numberSequenceRootSchema,
 	ConnectionSetter,
 	SharedTreeWithConnectionStateSetter,
+	type ITestTreeProvider,
 } from "../utils.js";
 import {
 	ForestType,
@@ -378,16 +379,21 @@ describe("SharedTree", () => {
 		});
 	});
 
-	function validateSchemaStringType(
-		summaryTree: ISummaryTree,
+	async function validateSchemaStringType(
+		provider: ITestTreeProvider,
 		treeId: string,
 		summaryType: SummaryType,
-	): void {
+	) {
+		const a = await provider.containers[0].getEntryPoint() as ITestFluidObject;
+		const id = a.runtime.id;
+
+		const { summaryTree } = await provider.summarize();
+
 		assert(
 			summaryTree.tree[".channels"].type === SummaryType.Tree,
 			"Runtime summary tree not created for blob dds test",
 		);
-		const dataObjectTree = summaryTree.tree[".channels"].tree.default;
+		const dataObjectTree = summaryTree.tree[".channels"].tree[id];
 		assert(
 			dataObjectTree.type === SummaryType.Tree,
 			"Data store summary tree not created for blob dds test",
@@ -500,8 +506,8 @@ describe("SharedTree", () => {
 				view1.flexTree.insertAt(0, ["A"]);
 
 				await provider.ensureSynchronized();
-				const { summaryTree } = await provider.summarize();
-				validateSchemaStringType(summaryTree, provider.trees[0].id, SummaryType.Handle);
+
+				await validateSchemaStringType(provider, provider.trees[0].id, SummaryType.Handle);
 			});
 		});
 
@@ -533,16 +539,16 @@ describe("SharedTree", () => {
 				view1.flexTree.insertAt(0, ["A"]);
 
 				await provider.ensureSynchronized();
-				validateSchemaStringType(
-					(await provider.summarize()).summaryTree,
+				await validateSchemaStringType(
+					provider,
 					provider.trees[0].id,
 					SummaryType.Handle,
 				);
 
 				tree1.checkout.updateSchema(intoStoredSchema(stringSequenceRootSchema));
 				await provider.ensureSynchronized();
-				validateSchemaStringType(
-					(await provider.summarize()).summaryTree,
+				await validateSchemaStringType(
+					provider,
 					provider.trees[0].id,
 					SummaryType.Blob,
 				);
