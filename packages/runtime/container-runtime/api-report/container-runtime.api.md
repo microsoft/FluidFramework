@@ -257,7 +257,7 @@ export class DataStoresFactory implements IFluidDataStoreFactory {
     // (undocumented)
     IFluidDataStoreRegistry: IFluidDataStoreRegistry;
     // (undocumented)
-    instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<IFluidDataStoreChannel>;
+    instantiateDataStore(context: IFluidDataStoreContext, _existing: boolean): Promise<IFluidDataStoreChannel>;
     // (undocumented)
     readonly type = "DataStoresChannel";
 }

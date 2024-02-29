@@ -112,8 +112,6 @@ class DataStore implements IDataStore {
 			internalId: this.internalId,
 			alias,
 		};
-		assert(isDataStoreAliasMessage(message), "validate we can recognize it");
-
 		this.fluidDataStoreChannel.makeVisibleAndAttachGraph();
 
 		if (this.parentContext.attachState === AttachState.Detached) {

@@ -204,7 +204,6 @@ export abstract class FluidDataStoreContext
 	}
 	/** If true, throw an error when a tombstone data store is used. */
 	public readonly gcThrowOnTombstoneUsage: boolean;
-
 	public readonly gcTombstoneEnforcementAllowed: boolean;
 
 	/** If true, this means that this data store context and its children have been removed from the runtime */
@@ -215,7 +214,10 @@ export abstract class FluidDataStoreContext
 	}
 
 	public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry | undefined {
-		assert(this.channel !== undefined, "registry is populated only when runtime is created");
+		assert(
+			this.channel !== undefined,
+			"This should be called after the channel is created, when the registry is populated",
+		);
 		return this.registry;
 	}
 

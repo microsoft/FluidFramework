@@ -104,66 +104,66 @@ interface FluidDataStoreMessage {
 	type: string;
 }
 
-export function cloneParentContext(parentContext: IFluidParentContext): IFluidParentContext {
+export function wrapContext(context: IFluidParentContext): IFluidParentContext {
 	return {
 		get IFluidDataStoreRegistry() {
-			return parentContext.IFluidDataStoreRegistry;
+			return context.IFluidDataStoreRegistry;
 		},
-		IFluidHandleContext: parentContext.IFluidHandleContext,
-		options: parentContext.options,
+		IFluidHandleContext: context.IFluidHandleContext,
+		options: context.options,
 		get clientId() {
-			return parentContext.clientId;
+			return context.clientId;
 		},
 		get connected() {
-			return parentContext.connected;
+			return context.connected;
 		},
-		deltaManager: parentContext.deltaManager,
-		storage: parentContext.storage,
-		logger: parentContext.logger,
+		deltaManager: context.deltaManager,
+		storage: context.storage,
+		logger: context.logger,
 		get clientDetails() {
-			return parentContext.clientDetails;
+			return context.clientDetails;
 		},
-		idCompressor: parentContext.idCompressor,
-		loadingGroupId: parentContext.loadingGroupId,
+		idCompressor: context.idCompressor,
+		loadingGroupId: context.loadingGroupId,
 		get attachState() {
-			return parentContext.attachState;
+			return context.attachState;
 		},
-		containerRuntime: parentContext.containerRuntime,
-		scope: parentContext.scope,
-		gcThrowOnTombstoneUsage: parentContext.gcThrowOnTombstoneUsage,
-		gcTombstoneEnforcementAllowed: parentContext.gcTombstoneEnforcementAllowed,
+		containerRuntime: context.containerRuntime,
+		scope: context.scope,
+		gcThrowOnTombstoneUsage: context.gcThrowOnTombstoneUsage,
+		gcTombstoneEnforcementAllowed: context.gcTombstoneEnforcementAllowed,
 		getAbsoluteUrl: async (...args) => {
-			return parentContext.getAbsoluteUrl(...args);
+			return context.getAbsoluteUrl(...args);
 		},
 		getQuorum: (...args) => {
-			return parentContext.getQuorum(...args);
+			return context.getQuorum(...args);
 		},
 		getAudience: (...args) => {
-			return parentContext.getAudience(...args);
+			return context.getAudience(...args);
 		},
 		ensureNoDataModelChanges: (...args) => {
-			return parentContext.ensureNoDataModelChanges(...args);
+			return context.ensureNoDataModelChanges(...args);
 		},
 		submitMessage: (...args) => {
-			return parentContext.submitMessage(...args);
+			return context.submitMessage(...args);
 		},
 		submitSignal: (...args) => {
-			return parentContext.submitSignal(...args);
+			return context.submitSignal(...args);
 		},
 		makeLocallyVisible: (...args) => {
-			return parentContext.makeLocallyVisible(...args);
+			return context.makeLocallyVisible(...args);
 		},
 		uploadBlob: async (...args) => {
-			return parentContext.uploadBlob(...args);
+			return context.uploadBlob(...args);
 		},
 		addedGCOutboundReference: (...args) => {
-			return parentContext.addedGCOutboundReference?.(...args);
+			return context.addedGCOutboundReference?.(...args);
 		},
 		getCreateChildSummarizerNodeFn: (...args) => {
-			return parentContext.getCreateChildSummarizerNodeFn?.(...args);
+			return context.getCreateChildSummarizerNodeFn?.(...args);
 		},
 		deleteChildSummarizerNode: (...args) => {
-			return parentContext.deleteChildSummarizerNode?.(...args);
+			return context.deleteChildSummarizerNode?.(...args);
 		},
 	};
 }
@@ -173,7 +173,7 @@ export function createParentContext(
 	id: string,
 	parentContext: IFluidParentContext,
 ): IFluidParentContext {
-	const context = cloneParentContext(parentContext);
+	const context = wrapContext(parentContext);
 
 	context.submitMessage = (type: string, content: any, localOpMetadata: unknown) => {
 		const fluidDataStoreContent: FluidDataStoreMessage = {
@@ -1364,7 +1364,7 @@ export class DataStoresFactory implements IFluidDataStoreFactory {
 
 	constructor(
 		registryEntries: NamedFluidDataStoreRegistryEntries,
-		// Will need a better type here
+		// ADO:7302 We need a better type here
 		private readonly provideEntryPoint: (
 			runtime: IFluidDataStoreChannel,
 		) => Promise<FluidObject>,
@@ -1378,19 +1378,18 @@ export class DataStoresFactory implements IFluidDataStoreFactory {
 
 	public async instantiateDataStore(
 		context: IFluidDataStoreContext,
-		existing: boolean,
+		_existing: boolean,
 	): Promise<IFluidDataStoreChannel> {
 		const runtime = new DataStores(
 			context.baseSnapshot,
 			context, // parentContext
 			context.logger,
 			() => {}, // gcNodeUpdated
-			(nodePath: string) => false, // isDataStoreDeleted
+			(_nodePath: string) => false, // isDataStoreDeleted
 			new Map(), // aliasMap
 			this.provideEntryPoint,
 		);
 
-		// await runtime.initialize();
 		return runtime;
 	}
 }

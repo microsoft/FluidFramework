@@ -23,13 +23,10 @@ import {
 	DataStoresFactory,
 } from "@fluidframework/container-runtime";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { Loader } from "@fluidframework/container-loader";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
-// eslint-disable-next-line @typescript-eslint/no-restricted-imports
-import { MapFactory } from "@fluidframework/map";
-
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 interface IDataStores extends IFluidDataStoreChannel {
 	_createFluidDataStoreContext(
@@ -40,7 +37,9 @@ interface IDataStores extends IFluidDataStoreChannel {
 	): unknown;
 }
 
-describe("Nested DataStores", () => {
+describeCompat("Nested DataStores", "NoCompat", (_getTestObjectProvider, apis) => {
+	const { SharedMap } = apis.dds;
+
 	let provider: ITestObjectProvider;
 	let containers: IContainer[] = [];
 	let summaryCollection: SummaryCollection | undefined;
@@ -63,7 +62,7 @@ describe("Nested DataStores", () => {
 	};
 
 	const testObjectFactory: TestFluidObjectFactory = new TestFluidObjectFactory(
-		[["test", new MapFactory()]],
+		[["test", SharedMap.getFactory()]],
 		"testObjectFactoryType",
 	);
 
@@ -102,8 +101,7 @@ describe("Nested DataStores", () => {
 	beforeEach("getTestObjectProvider", async () => {
 		const driver = new LocalServerTestDriver();
 		const registry = [];
-		seed = 1; // Every test is independent from another test!
-
+		seed = 1;
 		provider = new TestObjectProvider(
 			Loader,
 			driver,
@@ -113,7 +111,6 @@ describe("Nested DataStores", () => {
 					new TestFluidObjectFactory(registry),
 				),
 		);
-		// syncSummarizer: true
 		provider.resetLoaderContainerTracker(true); // syncSummarizerClients
 
 		loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
@@ -140,7 +137,8 @@ describe("Nested DataStores", () => {
 		const wait = summaryCollection.waitSummaryAck(
 			containers[0].deltaManager.lastSequenceNumber,
 		);
-		const summaryResult = await summarizeNow(summarizer!);
+		assert(summarizer !== undefined, "The summarizer should be initialized");
+		const summaryResult = await summarizeNow(summarizer);
 		assert(summaryResult.summaryVersion !== undefined, "summary result");
 		const ackedSummary = await wait;
 		assert(ackedSummary.summaryAck.contents.handle !== undefined, "summary acked");
@@ -157,11 +155,11 @@ describe("Nested DataStores", () => {
 		// Create and setup a summary collection that will be used to track and wait for summaries.
 		summaryCollection = new SummaryCollection(container.deltaManager, createChildLogger());
 
-		const summarizerRes = await createSummarizerCore(container, loader!);
+		assert(loader !== undefined, "The loader should be initialized");
+		const summarizerRes = await createSummarizerCore(container, loader);
 		summarizer = summarizerRes.summarizer;
-		// containers.push(summarizerRes.container);
 
-		// Have a second container that follows passivley the first one
+		// Have a second container that follows passively the first one
 		await addContainerInstance();
 
 		await provider.ensureSynchronized();
@@ -184,11 +182,7 @@ describe("Nested DataStores", () => {
 		await provider.ensureSynchronized();
 
 		const testObject2 = (await dataStores2.request({ url: "/test" })).value as TestFluidObject;
-		const value = testObject1.root.get("testKey");
+		const value = testObject2.root.get("testKey");
 		assert(value === 100, "same value");
-
-		console.log("Success!");
 	});
 });
-
-/* eslint-enable @typescript-eslint/no-non-null-assertion */

@@ -116,7 +116,7 @@ import {
 } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
 import { BlobManager, IBlobManagerLoadInfo, IPendingBlobs } from "./blobManager";
-import { DataStores, getSummaryForDatastores, cloneParentContext } from "./dataStores";
+import { DataStores, getSummaryForDatastores, wrapContext } from "./dataStores";
 import {
 	aliasBlobName,
 	blobsTreeName,
@@ -1435,10 +1435,11 @@ export class ContainerRuntime
 			this.summarizerNode.updateBaseSummaryState(baseSnapshot);
 		}
 
-		const parentContext = cloneParentContext(this);
+		const parentContext = wrapContext(this);
 
-		// This ugliness is due to mismatch in expectations between different layers in terms of
-		// what is the actual interface of passing signals
+		// Due to a mismatch between different layers in terms of
+		// what is the interface of passing signals, we need the
+		// downstream stores to wrap the signal.
 		parentContext.submitSignal = (type: string, content: any, targetClientId?: string) => {
 			const envelope1 = content as IEnvelope;
 			const envelope2 = this.createNewSignalEnvelope(
@@ -2466,8 +2467,9 @@ export class ContainerRuntime
 			return;
 		}
 
-		// This ugliness is due to mismatch in expectations between different layers in terms of
-		// what is the actual interface of passing signals
+		// Due to a mismatch between different layers in terms of
+		// what is the interface of passing signals, we need to adjust
+		// the signal envelope before sending it to the datastores to be processed
 		const envelope2: IEnvelope = {
 			address: envelope.address,
 			contents: transformed.content,

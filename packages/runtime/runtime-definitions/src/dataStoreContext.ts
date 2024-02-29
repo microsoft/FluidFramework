@@ -377,7 +377,6 @@ export interface IFluidDataStoreContextEvents extends IEvent {
 export interface IFluidParentContext
 	extends IProvideFluidHandleContext,
 		Partial<IProvideFluidDataStoreRegistry> {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	readonly options: Record<string | number, any>;
 	readonly clientId: string | undefined;
 	readonly connected: boolean;
@@ -402,8 +401,6 @@ export interface IFluidParentContext
 	 * Ambient services provided with the context
 	 */
 	readonly scope: FluidObject;
-
-	// IFluidDataStoreRegistry: IFluidDataStoreRegistry;
 
 	readonly gcThrowOnTombstoneUsage: boolean;
 	readonly gcTombstoneEnforcementAllowed: boolean;
