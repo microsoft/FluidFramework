@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { ITestFluidObject, waitForContainerConnection } from "@fluidframework/test-utils";
 import { IContainerExperimental } from "@fluidframework/container-loader";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	cursorForJsonableTreeNode,
 	Any,
@@ -384,7 +384,7 @@ describe("SharedTree", () => {
 		treeId: string,
 		summaryType: SummaryType,
 	) {
-		const a = await provider.containers[0].getEntryPoint() as ITestFluidObject;
+		const a = (await provider.containers[0].getEntryPoint()) as ITestFluidObject;
 		const id = a.runtime.id;
 
 		const { summaryTree } = await provider.summarize();
@@ -539,19 +539,11 @@ describe("SharedTree", () => {
 				view1.flexTree.insertAt(0, ["A"]);
 
 				await provider.ensureSynchronized();
-				await validateSchemaStringType(
-					provider,
-					provider.trees[0].id,
-					SummaryType.Handle,
-				);
+				await validateSchemaStringType(provider, provider.trees[0].id, SummaryType.Handle);
 
 				tree1.checkout.updateSchema(intoStoredSchema(stringSequenceRootSchema));
 				await provider.ensureSynchronized();
-				await validateSchemaStringType(
-					provider,
-					provider.trees[0].id,
-					SummaryType.Blob,
-				);
+				await validateSchemaStringType(provider, provider.trees[0].id, SummaryType.Blob);
 			});
 		});
 	});
