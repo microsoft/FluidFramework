@@ -263,46 +263,14 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			}
 		}
 
-		const fieldChange1 = getEffectiveFieldChange(change1.field);
-		const fieldChange2 = getEffectiveFieldChange(change2.field);
-
-		const firstChange = fieldChange1 ?? fieldChange2;
+		const firstChange = change1.field ?? change2.field;
 		if (firstChange === undefined) {
 			return composed;
 		}
 
-		if (firstChange.isEmpty && composedFieldSrc === undefined) {
-			return composed;
-		}
-
-		if (
-			fieldChange1 !== undefined &&
-			fieldChange2 !== undefined &&
-			areInverseFieldChanges(fieldChange1, revision1, fieldChange2, revision2)
-		) {
-			return composed;
-		}
-
-		let composedFieldDst: ChangeAtomId;
-		if (
-			change1FieldDst === undefined ||
-			(change2FieldSrc !== undefined && areEqualRegisterIds(change2FieldSrc, change1FieldDst))
-		) {
-			assert(fieldChange2 !== undefined, "Both changes cannot be undefined");
-			composedFieldDst = taggedAtomId(fieldChange2.dst, revision2);
-		} else {
-			composedFieldDst = change1FieldDst;
-			for (const [src, dst] of change2.moves) {
-				if (areEqualChangeAtomIds(composedFieldDst, src)) {
-					composedFieldDst = dst;
-					break;
-				}
-			}
-		}
-
 		const replace: Mutable<Replace> = {
-			isEmpty: fieldChange1?.isEmpty ?? fieldChange2?.isEmpty ?? fail(""),
-			dst: composedFieldDst,
+			isEmpty: firstChange.isEmpty,
+			dst: getComposedReplaceDst(change1.field, revision1, change2, revision2),
 		};
 		if (composedFieldSrc !== undefined) {
 			replace.src = composedFieldSrc;
@@ -475,6 +443,35 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	},
 };
 
+function getComposedReplaceDst(
+	change1: Replace | undefined,
+	revision1: RevisionTag | undefined,
+	change2: OptionalChangeset,
+	revision2: RevisionTag | undefined,
+): ChangeAtomId {
+	const dst1 = taggedOptAtomId(change1?.dst, revision1);
+	if (change2.field === undefined) {
+		assert(dst1 !== undefined, "Both replace replaces should not be undefined");
+		return dst1;
+	}
+
+	if (
+		dst1 === undefined ||
+		change1?.src === "self" ||
+		(change2.field.src !== undefined &&
+			areEqualRegisterIds(taggedRegister(change2.field.src, revision2), dst1))
+	) {
+		return taggedAtomId(change2.field.dst, revision2);
+	} else {
+		for (const [src, dst] of change2.moves) {
+			if (areEqualChangeAtomIds(dst1, src)) {
+				return dst;
+			}
+		}
+		return dst1;
+	}
+}
+
 function getEffectiveFieldChange(change: Replace | undefined): Replace | undefined {
 	if (change === undefined) {
 		return undefined;
@@ -493,6 +490,16 @@ function areInverseFieldChanges(
 	change2: Replace,
 	revision2: RevisionTag | undefined,
 ): boolean {
+	if (
+		change1.src !== undefined &&
+		!areEqualRegisterIds(
+			taggedRegister(change1.src, revision1),
+			taggedRegister(change2.dst, revision2),
+		)
+	) {
+		return false;
+	}
+
 	if (change1.isEmpty) {
 		return change2.src === undefined;
 	}

@@ -223,7 +223,7 @@ function getTouchedRegisters({ change, revision }: TaggedChange<OptionalChangese
 		}
 	}
 
-	if (change.field !== undefined) {
+	if (change.field !== undefined && change.field.src !== "self") {
 		if (change.field.isEmpty === false) {
 			src.set(taggedRegister("self", revision), true);
 			dst.set(taggedRegister(change.field.dst, revision), true);
