@@ -10,7 +10,7 @@ import {
 	gcBlobPrefix,
 	getNormalizedSnapshot,
 	ISnapshotNormalizerConfig,
-} from "../snapshotNormalizer";
+} from "../snapshotNormalizer.js";
 
 describe("Snapshot Normalizer", () => {
 	it("can normalize tree entries", () => {

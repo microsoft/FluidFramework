@@ -11,9 +11,9 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 // eslint-disable-next-line import/no-internal-modules
-import { useStrictPartialLengthChecks } from "@fluidframework/merge-tree/dist/test";
+import { useStrictPartialLengthChecks } from "@fluidframework/merge-tree/test";
 import { SharedString } from "../sharedString.js";
-import { IntervalStickiness } from "../intervals/index.js";
+import { IntervalStickiness } from "../intervals.js";
 import { Side } from "../intervalCollection.js";
 import { SharedStringFactory } from "../sequenceFactory.js";
 import { assertConsistent, assertSequenceIntervals, Client } from "./intervalTestUtils.js";

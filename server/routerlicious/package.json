@@ -29,6 +29,8 @@
 		"clean:nyc": "rimraf --glob \"nyc/**\"",
 		"docker-build": "docker compose build",
 		"docker-clean": "docker compose down --rmi local -v",
+		"eslint": "fluid-build --task eslint",
+		"eslint:fix": "fluid-build --task eslint:fix",
 		"format": "npm run prettier:fix",
 		"generate:packageList": "concurrently npm:generate:packageList:*",
 		"generate:packageList:internal-build": "flub list --no-private -g server --feed internal-build --outFile feeds/internal-build.txt",
