@@ -310,7 +310,7 @@ export class SchemaFactory<
 				if (isTreeNode(input)) {
 					// TODO: update this once we have better support for deep-copying and move operations.
 					throw new UsageError(
-						"Existing nodes cannot be used as new content to insert into the tree. Create a new node using your schema factory instead.",
+						"Existing nodes may not be used as the constructor parameter for a new node. The existing node may be used directly instead of creating a new one, used as a child of the new node (if it has not yet been inserted into the tree). If the desired result is copying the provided node, it must be deep copied (since any child node would be parented under both the new and old nodes). Currently no API is provided to make deep copies, but it can be done manually with object spreads - for example `new Foo({...oldFoo})` will work if all fields of `oldFoo` are leaf nodes.",
 					);
 				}
 			}
