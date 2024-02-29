@@ -1810,8 +1810,8 @@ export class ContainerRuntime
 			}
 			// If the inbound deltas queue is paused, then unpause it for now as we need
 			// to catch up to the snapshot sequence number.
-			if (this.deltaManager.inbound.paused) {
-				throw new Error("Could not catch up as inbound queue is paused");
+			if (this.deltaManager.inbound.paused || !this.connected) {
+				throw new Error("Could not catch up as inbound queue is paused or is disconnected");
 			}
 			const defP = new Deferred<boolean>();
 			this.deltaManager.on("op", (message: ISequencedDocumentMessage) => {

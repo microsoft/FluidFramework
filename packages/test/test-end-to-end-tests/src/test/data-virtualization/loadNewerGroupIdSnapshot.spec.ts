@@ -149,6 +149,7 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 		// loading group call
 		const dataObjectA2 = await handleA2.get();
 		assert.equal(dataObjectA2._root.get("A"), "A", "A should be set");
+		assert.equal(dataObjectA2._root.get("B"), "B", "B should be set");
 
 		const groupSnapshot = await snapshotADeferred.promise;
 		const snapshotTreeA = groupSnapshot.snapshotTree.trees[".channels"].trees[dataObjectA2.id];
@@ -156,6 +157,84 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 		assert(
 			groupSnapshot.sequenceNumber === summaryRefSeq,
 			"failed to load snapshot with correct sequence number",
+		);
+	});
+
+	it("Load datastore via groupId with snapshot in the future, with seq > some ops", async () => {
+		if (provider.driver.type !== "local") {
+			return;
+		}
+		// Load basic container stuff
+		const container = await provider.createContainer(runtimeFactory, { configProvider });
+		const mainObject = (await container.getEntryPoint()) as TestDataObject;
+		const containerRuntime = mainObject.containerRuntime;
+
+		// Create data stores with loadingGroupIds
+		const dataStoreA = await containerRuntime.createDataStore(
+			testDataObjectType,
+			loadingGroupId,
+		);
+
+		// Attach the data stores
+		const dataObjectA = (await dataStoreA.entryPoint.get()) as TestDataObject;
+		mainObject._root.set("dataObjectA", dataObjectA.handle);
+		dataObjectA._root.set("A", "A");
+
+		// Summarize
+		await provider.ensureSynchronized();
+		const { summarizer, container: summarizingContainer } = await createSummarizerFromFactory(
+			provider,
+			container,
+			dataObjectFactory,
+		);
+		const { summaryVersion } = await summarizeNow(summarizer);
+		// Work around getEntryPoint returning the summarizer instead of a datastore
+		const runtimeS = (summarizingContainer as any).runtime as ContainerRuntime;
+		const handleS = await runtimeS.getAliasedDataStoreEntryPoint("default");
+		assert(handleS !== undefined, "handleS should not be undefined");
+		const mainObjectS = (await handleS.get()) as TestDataObject;
+
+		await provider.ensureSynchronized();
+		const handleAS = mainObjectS._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
+		assert(handleAS !== undefined, "handleA2 should not be undefined");
+		const dataObjectAS = await handleAS.get();
+
+		const container2 = await provider.loadContainer(
+			runtimeFactory,
+			{ configProvider },
+			{ [LoaderHeader.version]: summaryVersion },
+		);
+		// Testing the get snapshot call
+		const mainObject2 = (await container2.getEntryPoint()) as TestDataObject;
+		const handleA2 = mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
+		assert(handleA2 !== undefined, "handleA2 should not be undefined");
+
+		container2.disconnect();
+		const waitForOp = new Deferred<void>();
+		dataObjectAS._root.on("valueChanged", (changed) => {
+			if (changed.key === "B") {
+				waitForOp.resolve();
+			}
+		});
+		dataObjectA._root.set("B", "B");
+
+		await waitForOp.promise;
+		await summarizeNow(summarizer);
+
+		// loading group call
+		await assert.rejects(
+			async () => handleA2.get(),
+			(error: Error) => {
+				console.log(error);
+				assert(
+					error.message.includes(
+						"Could not catch up as inbound queue is paused or is disconnected",
+					),
+					"Should throw paused/disconnected error",
+				);
+				return true;
+			},
+			"Should throw error when container is paused/disconnected!",
 		);
 	});
 });
