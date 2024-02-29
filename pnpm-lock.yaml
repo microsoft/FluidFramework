@@ -8003,7 +8003,6 @@ importers:
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
-      nconf: ^0.12.0
       nconf-esm: ^0.0.6
       prettier: ~3.0.3
       rimraf: ^4.4.0
@@ -8014,7 +8013,6 @@ importers:
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/protocol-definitions': 3.2.0-237840
-      nconf: 0.12.1
       nconf-esm: 0.0.6
       url: 0.11.3
     devDependencies:
