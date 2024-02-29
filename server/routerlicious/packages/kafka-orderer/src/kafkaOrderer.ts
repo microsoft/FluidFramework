@@ -63,6 +63,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
 			referenceSequenceNumber: -1,
 			traces:
 				this.serviceConfiguration.enableTraces &&
+				// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 				clientJoinMessageServerMetadata?.connectDocumentStartTime
 					? [
 							{
@@ -148,6 +149,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
 			// Add trace
 			messages.forEach((message) => {
 				const operation = message.operation;
+				// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 				if (operation && operation.traces === undefined) {
 					operation.traces = [];
 				} else if (operation?.traces && operation.traces.length > 0) {
