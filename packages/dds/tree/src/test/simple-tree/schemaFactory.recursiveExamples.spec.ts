@@ -167,7 +167,7 @@ describe("Recursive Class based end to end example", () => {
 
 		tree.x = tree.x?.x?.x?.x ?? new ObjectRecursive({ x: undefined });
 
-		const tree2 = hydrate(ObjectRecursive, { x: { x: undefined } });
+		const tree2 = hydrate(ObjectRecursive, { x: new ObjectRecursive({ x: undefined }) });
 	});
 
 	it("other under recursive object", () => {
@@ -185,11 +185,11 @@ describe("Recursive Class based end to end example", () => {
 
 		const tree2 = hydrate(ObjectRecursive, {
 			x: undefined,
-			a: { y: 5 },
-			b: { y: 5 },
-			c: { y: 5 },
-			d: { y: 5 },
-			e: { y: 5 },
+			a: new Other({ y: 5 }),
+			b: new Other({ y: 5 }),
+			c: new Other({ y: 5 }),
+			d: new Other({ y: 5 }),
+			e: new Other({ y: 5 }),
 		});
 	});
 
@@ -342,7 +342,7 @@ describe("Recursive Class based end to end example", () => {
 
 		// TODO: why can't nested A be implicitly constructed?
 		{
-			const tree = hydrate(B, { b: { a: undefined } });
+			const tree = hydrate(B, { b: new A({ a: undefined }) });
 			assert.equal(tree.b!.a, undefined);
 		}
 
@@ -352,19 +352,19 @@ describe("Recursive Class based end to end example", () => {
 		}
 
 		{
-			const tree = hydrate(A, { a: new B({ b: { a: undefined } }) });
+			const tree = hydrate(A, { a: new B({ b: new A({ a: undefined }) }) });
 			assert.equal(tree.a!.b!.a, undefined);
 		}
 
 		// TODO: why can't nested B be implicitly constructed?
 		{
-			const tree = hydrate(A, { a: { b: { a: undefined } } });
+			const tree = hydrate(A, { a: new B({ b: new A({ a: undefined }) }) });
 			assert.equal(tree.a!.b!.a, undefined);
 		}
 
 		// TODO: why can't nested A be implicitly constructed?
 		{
-			const tree = hydrate(B, { b: { a: { b: new A({ a: undefined }) } } });
+			const tree = hydrate(B, { b: new A({ a: new B({ b: new A({ a: undefined }) }) }) });
 			assert.equal(tree.b!.a!.b!.a, undefined);
 		}
 	});

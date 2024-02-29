@@ -95,18 +95,21 @@ export type TypedNodeUnsafe<
  */
 export type InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
 	TSchema extends Unenforced<ImplicitAllowedTypes>,
-> = TSchema extends TreeNodeSchema
-	? InsertableTypedNode<TSchema>
-	: TSchema extends AllowedTypes
-	? InsertableTypedNode<FlexListToUnion<TSchema>>
-	: never;
+> = TSchema extends AllowedTypes
+	? InsertableTypedNodeUnsafe<FlexListToUnion<TSchema>> // TODO
+	: InsertableTypedNodeUnsafe<TSchema>; // TODO
+
 /**
  * {@link Unenforced} version of {@link InsertableTypedNode}.
  * @internal
+ * @privateRemarks
+ * Implicit construction under a recursive node is having issues in some cases, so its disabled for now to avoid stabilizing it at all.
+ * TODO: In the future consider changing this to use "InsertableTypedNodeUnsafe", and fix issues with implicit construction.
  */
-export type InsertableTypedNodeUnsafe<T extends Unenforced<TreeNodeSchema>> =
-	| (T extends { implicitlyConstructable: true } ? NodeBuilderDataUnsafe<T> : never)
-	| Unhydrated<NodeFromSchemaUnsafe<T>>;
+export type InsertableTypedNodeUnsafe<T extends Unenforced<TreeNodeSchema>> = Unhydrated<
+	NodeFromSchemaUnsafe<T>
+>;
+// | (T extends { implicitlyConstructable: true } ? NodeBuilderDataUnsafe<T> : never)
 
 /**
  * {@link Unenforced} version of {@link NodeFromSchema}.
@@ -180,8 +183,7 @@ export type InsertableObjectFromSchemaRecordUnsafe<
 export type InsertableTreeFieldFromImplicitFieldUnsafe<
 	TSchema extends Unenforced<ImplicitFieldSchema>,
 > = TSchema extends FieldSchemaUnsafe<infer Kind, infer Types>
-	? // TODO: Using InsertableTreeNodeFromImplicitAllowedTypesUnsafe here seems to cause self reference errors.
-	  ApplyKind<TreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind>
+	? ApplyKind<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind>
 	: InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TSchema>;
 
 /**
@@ -234,7 +236,7 @@ export class SchemaFactoryRecursive<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Object,
 			TreeNode & ObjectFromSchemaRecordUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>>,
-			object & InsertableObjectFromSchemaRecordUnsafe<T>, // ObjectFromSchemaRecordUnsafe InsertableObjectFromSchemaRecordUnsafe
+			object & InsertableObjectFromSchemaRecordUnsafe<T>,
 			true,
 			T
 		>;
