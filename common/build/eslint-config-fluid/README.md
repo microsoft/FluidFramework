@@ -6,16 +6,6 @@ It exports the following shared ESLint configs:
 
 ## Configurations
 
-### Minimal
-
-This is the minimal config for use in Fluid Framework libraries, only intended for internal-only packages, test libraries, etc.
-Whenever possible, the [recommended](#recommended) or [strict](#strict) configs should be used instead.
-
-This configuration should never be used in published packages.
-It is only suitable for early prototyping and repository-internal testing libraries.
-
-Imported via `@fluidframework/eslint-config-fluid/minimal`.
-
 ### Recommended
 
 This is the standard config for use in Fluid Framework libraries.
@@ -70,7 +60,7 @@ a diff to review as part of a PR -- just like we do with API reports for code ch
 | `prettier:fix` | `prettier --write .` |
 | `print-config` | Print all the eslint configs. |
 | `print-config:default` | Print the eslint config for regular TypeScript files (`eslint --config index.js --print-config src/file.ts`). |
-| `print-config:minimal` | `eslint --config ./minimal.js --print-config ./src/file.ts > ./printed-configs/minimal.json` |
+| `print-config:minimal` | `eslint --config ./minimal-deprecated.js --print-config ./src/file.ts > ./printed-configs/minimal.json` |
 | `print-config:react` | `eslint --config ./index.js --print-config ./src/file.tsx > ./printed-configs/react.json` |
 | `print-config:recommended` | `eslint --config ./recommended.js --print-config ./src/file.ts > ./printed-configs/recommended.json` |
 | `print-config:strict` | `eslint --config ./strict.js --print-config ./src/file.ts > ./printed-configs/strict.json` |

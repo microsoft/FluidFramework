@@ -13,6 +13,7 @@ import {
 	MockStorage,
 	MockSharedObjectServices,
 } from "@fluidframework/test-runtime-utils";
+import { AttachState } from "@fluidframework/container-definitions";
 import { SharedCell } from "../cell";
 import { CellFactory } from "../cellFactory";
 import { type ISharedCell, type ICellOptions } from "../interfaces";
@@ -143,7 +144,7 @@ describe("Cell", () => {
 				await cell2.load(services2);
 
 				// Now connect the first SharedCell
-				dataStoreRuntime1.local = false;
+				dataStoreRuntime1.setAttachState(AttachState.Attached);
 
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 				const services1 = {
