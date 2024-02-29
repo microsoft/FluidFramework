@@ -34,14 +34,13 @@ import {
 } from "@fluid-private/test-version-utils";
 import { v4 as uuid } from "uuid";
 import { AttachState } from "@fluidframework/container-definitions";
+import type { IResolvedUrl } from "@fluidframework/driver-definitions";
+import type { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
 	MockDetachedBlobStorage,
 } from "./mockDetachedBlobStorage.js";
-import type { IResolvedUrl } from "@fluidframework/driver-definitions";
-import type { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { log } from "console";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
