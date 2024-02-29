@@ -14,8 +14,8 @@ import {
 	insertAtRefPos,
 	removeRange,
 	TestOperation,
-} from "./mergeTreeOperationRunner";
-import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger";
+} from "./mergeTreeOperationRunner.js";
+import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger.js";
 
 const allOperations: TestOperation[] = [removeRange, annotateRange, insertAtRefPos];
 

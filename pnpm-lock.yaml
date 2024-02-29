@@ -5961,7 +5961,6 @@ importers:
       sinon: ^17.0.1
       ts-jest: ^29.1.1
       ts-node: ^10.9.1
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-interfaces': link:../core-interfaces
@@ -6010,7 +6009,6 @@ importers:
       sinon: 17.0.1
       ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
       ts-node: 10.9.1_ggysxzqxruqvydtrq6zb2nxvwm
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/common/container-definitions:
@@ -6276,7 +6274,6 @@ importers:
       prettier: ~3.0.3
       replace-in-file: ^6.3.5
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -6310,7 +6307,6 @@ importers:
       prettier: 3.0.3
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/ink:
@@ -6605,7 +6601,6 @@ importers:
       prettier: ~3.0.3
       replace-in-file: ^6.3.5
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -6646,7 +6641,6 @@ importers:
       prettier: 3.0.3
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/ordered-collection:
@@ -7154,7 +7148,6 @@ importers:
       prettier: ~3.0.3
       replace-in-file: ^6.3.5
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/container-definitions': link:../../common/container-definitions
@@ -7193,7 +7186,6 @@ importers:
       prettier: 3.0.3
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/test-dds-utils:
@@ -7451,7 +7443,6 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       socket.io-client: ^4.7.3
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -7483,7 +7474,6 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       socket.io-client: 4.7.4
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/driver-web-cache:
@@ -7621,7 +7611,6 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       socket.io-client: ^4.7.3
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       url: ^0.11.0
       uuid: ^9.0.0
@@ -7668,7 +7657,6 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       socket.io-client: 4.7.4
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/odsp-driver:
@@ -8526,7 +8514,6 @@ importers:
       eslint: ~8.55.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/container-definitions': link:../../common/container-definitions
@@ -8548,7 +8535,6 @@ importers:
       eslint: 8.55.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/fluid-static:
@@ -8646,7 +8632,6 @@ importers:
       eslint: ~8.55.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -8668,7 +8653,6 @@ importers:
       eslint: 8.55.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/request-handler:
@@ -8899,7 +8883,6 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^17.0.1
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       url: ^0.11.0
       uuid: ^9.0.0
@@ -8948,7 +8931,6 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 17.0.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/loader/driver-utils:
@@ -8986,7 +8968,6 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^17.0.1
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       url: ^0.11.0
       uuid: ^9.0.0
@@ -9027,7 +9008,6 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 17.0.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/loader/test-loader-utils:
@@ -9468,7 +9448,6 @@ importers:
       rimraf: ^4.4.0
       sinon: ^17.0.1
       ts-node: ^10.9.1
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -9505,7 +9484,6 @@ importers:
       rimraf: 4.4.1
       sinon: 17.0.1
       ts-node: 10.9.1_ggysxzqxruqvydtrq6zb2nxvwm
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/runtime/test-runtime-utils:
@@ -9785,7 +9763,6 @@ importers:
       mocha: ^10.2.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -9821,7 +9798,6 @@ importers:
       mocha: 10.2.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/service-clients/tinylicious-client:
@@ -11862,7 +11838,6 @@ importers:
       prettier: ~3.0.3
       proper-lockfile: ^4.1.2
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-utils': link:../../common/core-utils
@@ -11895,7 +11870,6 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
 packages:
