@@ -4,6 +4,10 @@
 
 ## Contents
 
+-   [3.0.0 Breaking Changes](#300-breaking-changes)
+
+    -   [An invalid JWT token will now return a 401 error instead of a 500](#an-invalid-jwt-token-will-now-return-a-401-error-instead-of-a-500)
+
 -   [1.0.0 Breaking Changes](#100-breaking-changes)
 
     -   [getLatestKeyVersion function added to ISecretManager](#getlatestkeyversion-function-added-to-isecretmanager)
@@ -36,6 +40,13 @@
     -   [@fluidframework/server-services-client@0.1020](#fluidframeworkserver-services-client01020)
 
 -   [0.1019 and earlier Breaking Changes](#01019-and-earlier-breaking-changes)
+
+## 3.0.0 Breaking Changes
+
+### An invalid JWT token will now return a 401 error instead of a 500
+
+When we auth request JWT token, previous we would fail directly for the invalid/malformtted JWT token and don't do any handling and return 500. Now it is returning a 401 with Invalid token information
+
 
 ## 1.0.0 Breaking Changes
 

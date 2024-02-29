@@ -24,7 +24,12 @@ export function validateTokenClaims(
 		throw new NetworkError(403, `Token must be a string. Received: ${typeof token}`);
 	}
 
-	const claims = jwtDecode<ITokenClaims>(token);
+	let claims: ITokenClaims;
+	try {
+		claims = jwtDecode<ITokenClaims>(token);
+	} catch {
+		throw new NetworkError(401, "Invalid token");
+	}
 
 	if (!claims || claims.documentId !== documentId || claims.tenantId !== tenantId) {
 		throw new NetworkError(
