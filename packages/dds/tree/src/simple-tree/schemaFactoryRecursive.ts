@@ -4,7 +4,10 @@
  */
 
 import {
+	FlexFieldNodeSchema,
 	FlexListToUnion,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
 	FlexTreeNode,
 	Unenforced,
 	isFlexTreeNode,
@@ -17,16 +20,18 @@ import {
 	FieldSchema,
 	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
+	InsertableTreeNodeFromImplicitAllowedTypes,
 	InsertableTypedNode,
 	NodeFromSchema,
 	NodeKind,
+	TreeNodeFromImplicitAllowedTypes,
 	TreeNodeSchema,
 	TreeNodeSchemaClass,
 	WithType,
 } from "./schemaTypes.js";
 import { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
 import { TreeArrayNode } from "./treeArrayNode.js";
-import { TreeArrayNodeBase, TreeNode } from "./types.js";
+import { TreeArrayNodeBase, TreeNode, Unhydrated } from "./types.js";
 
 /**
  * {@link Unenforced} version of {@link ObjectFromSchemaRecord}.
@@ -55,14 +60,37 @@ export type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<Implicit
  */
 export type TreeNodeFromImplicitAllowedTypesUnsafe<
 	TSchema extends Unenforced<ImplicitAllowedTypes>,
-> = TSchema extends TreeNodeSchema
+> = TSchema extends ImplicitAllowedTypes
+	? TreeNodeFromImplicitAllowedTypes<TSchema>
+	: TSchema extends TreeNodeSchema
 	? NodeFromSchema<TSchema>
 	: TSchema extends AllowedTypes
 	? NodeFromSchema<FlexListToUnion<TSchema>>
 	: unknown;
+// TSchema extends any[] ? TypedNodeUnsafe<FlexListToUnion<TSchema>> : TypedNodeUnsafe<TSchema>;
+
+/**
+ * {@link Unenforced} version of `TypedNode`.
+ * @internal
+ */
+export type TypedNodeUnsafe<
+	_TSchema extends Unenforced<FlexObjectNodeSchema | FlexFieldNodeSchema | FlexMapNodeSchema>,
+> = TreeNode & WithType; // <TSchema["name"]>;
 
 /**
  * {@link Unenforced} version of {@link InsertableTreeNodeFromImplicitAllowedTypes}.
+ * @internal
+ */
+// export type InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
+// 	TSchema extends Unenforced<ImplicitAllowedTypes>,
+// > = TSchema extends TreeNodeSchema
+// 	? InsertableTypedNode<TSchema>
+// 	: TSchema extends AllowedTypes
+// 	? InsertableTypedNode<FlexListToUnion<TSchema>>
+// 	: never;
+
+/**
+ * {@link Unenforced} version2 of {@link InsertableTreeNodeFromImplicitAllowedTypes}.
  * @internal
  */
 export type InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
@@ -71,6 +99,38 @@ export type InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
 	? InsertableTypedNode<TSchema>
 	: TSchema extends AllowedTypes
 	? InsertableTypedNode<FlexListToUnion<TSchema>>
+	: never;
+/**
+ * {@link Unenforced} version of {@link InsertableTypedNode}.
+ * @internal
+ */
+export type InsertableTypedNodeUnsafe<T extends Unenforced<TreeNodeSchema>> =
+	| (T extends { implicitlyConstructable: true } ? NodeBuilderDataUnsafe<T> : never)
+	| Unhydrated<NodeFromSchemaUnsafe<T>>;
+
+/**
+ * {@link Unenforced} version of {@link NodeFromSchema}.
+ * @internal
+ */
+export type NodeFromSchemaUnsafe<T extends Unenforced<TreeNodeSchema>> = T extends TreeNodeSchema<
+	string,
+	NodeKind,
+	infer TNode
+>
+	? TNode
+	: never;
+
+/**
+ * {@link Unenforced} version of {@link InsertableTreeNodeFromImplicitAllowedTypes}.
+ * @internal
+ */
+export type NodeBuilderDataUnsafe<T extends Unenforced<TreeNodeSchema>> = T extends TreeNodeSchema<
+	string,
+	NodeKind,
+	unknown,
+	infer TBuild
+>
+	? TBuild
 	: never;
 
 /**
@@ -102,6 +162,27 @@ export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypes>>
 	 */
 	delete(key: string): void;
 }
+
+/**
+ * {@link Unenforced} version of {@link InsertableObjectFromSchemaRecord}.
+ * @internal
+ */
+export type InsertableObjectFromSchemaRecordUnsafe<
+	T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
+> = {
+	readonly [Property in keyof T]: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property]>;
+};
+
+/**
+ * {@link Unenforced} version of {@link InsertableTreeFieldFromImplicitField}.
+ * @internal
+ */
+export type InsertableTreeFieldFromImplicitFieldUnsafe<
+	TSchema extends Unenforced<ImplicitFieldSchema>,
+> = TSchema extends FieldSchemaUnsafe<infer Kind, infer Types>
+	? // TODO: Using InsertableTreeNodeFromImplicitAllowedTypesUnsafe here seems to cause self reference errors.
+	  ApplyKind<TreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind>
+	: InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TSchema>;
 
 /**
  * {@link Unenforced} version of {@link FieldSchema}.
@@ -152,8 +233,8 @@ export class SchemaFactoryRecursive<
 		) as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Object,
-			ObjectFromSchemaRecordUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>>,
-			ObjectFromSchemaRecordUnsafe<T>,
+			TreeNode & ObjectFromSchemaRecordUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>>,
+			object & InsertableObjectFromSchemaRecordUnsafe<T>, // ObjectFromSchemaRecordUnsafe InsertableObjectFromSchemaRecordUnsafe
 			true,
 			T
 		>;
@@ -193,7 +274,11 @@ export class SchemaFactoryRecursive<
 		) {
 			public constructor(
 				data:
-					| { x: Iterable<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>> }
+					| {
+							x: Iterable<
+								InsertableTreeNodeFromImplicitAllowedTypes<T & ImplicitAllowedTypes>
+							>;
+					  }
 					| FlexTreeNode,
 			) {
 				if (isFlexTreeNode(data)) {
@@ -230,7 +315,16 @@ export class SchemaFactoryRecursive<
 		) {
 			public constructor(
 				data?:
-					| { x: Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>]> }
+					| {
+							x: Iterable<
+								[
+									string,
+									InsertableTreeNodeFromImplicitAllowedTypes<
+										T & ImplicitAllowedTypes
+									>,
+								]
+							>;
+					  }
 					| FlexTreeNode,
 			) {
 				if (isFlexTreeNode(data)) {

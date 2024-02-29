@@ -373,10 +373,7 @@ export class SchemaFactory<
 		return schema as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Object,
-			object &
-				TreeNode &
-				ObjectFromSchemaRecord<T> &
-				WithType<ScopedSchemaName<TScope, Name>>,
+			TreeNode & ObjectFromSchemaRecord<T> & WithType<ScopedSchemaName<TScope, Name>>,
 			object & InsertableObjectFromSchemaRecord<T>,
 			true,
 			T
