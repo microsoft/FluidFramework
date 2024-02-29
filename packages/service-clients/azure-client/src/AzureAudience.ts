@@ -27,7 +27,7 @@ export function createAzureAudienceMember(audienceMember: IClient): AzureMember 
 /**
  * Asserts that the provided {@link @fluidframework/protocol-definitions#IUser} is an {@link AzureUser}.
  */
-export function assertIsAzureUser(user: IUser): asserts user is AzureUser<unknown> {
+function assertIsAzureUser(user: IUser): asserts user is AzureUser<unknown> {
 	const maybeAzureUser = user as Partial<AzureUser>;
 	const baseMessage = 'Provided user data was not an "AzureUser".';
 	if (maybeAzureUser.id === undefined) {
