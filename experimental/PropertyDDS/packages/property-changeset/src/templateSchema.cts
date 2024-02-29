@@ -102,7 +102,6 @@ const NativeTypes: NativeTypesSchema = {
 		primitive: true,
 	},
 };
-const ty = typeof NativeTypes
 const primitiveTypes = [];
 const reservedTypes = [];
 
