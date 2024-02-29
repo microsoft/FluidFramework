@@ -8,7 +8,7 @@ import { assert } from "@fluidframework/core-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { IUser } from "@fluidframework/protocol-definitions";
-import { Provider } from "nconf";
+import { Provider } from "nconf-esm";
 
 const r11sServers = [
 	"www.wu2-ppe.prague.office-int.com",

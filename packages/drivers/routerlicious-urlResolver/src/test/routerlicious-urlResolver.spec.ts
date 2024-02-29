@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { Provider } from "nconf";
+import { Provider } from "nconf-esm";
 import { RouterliciousUrlResolver } from "../urlResolver.js";
 
 describe("Routerlicious Url Resolver", () => {

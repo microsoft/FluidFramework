@@ -8,7 +8,7 @@ import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { IUser } from '@fluidframework/protocol-definitions';
-import { Provider } from 'nconf';
+import { Provider } from 'nconf-esm';
 
 // @internal (undocumented)
 export interface IAlfredUser extends IUser {
