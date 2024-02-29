@@ -5,7 +5,7 @@
 
 import { assert } from '@fluidframework/core-utils';
 import { EventEmitterWithErrorHandling, ITelemetryLoggerExt, createChildLogger } from '@fluidframework/telemetry-utils';
-import { IDisposable, IErrorEvent, ITelemetryProperties } from '@fluidframework/core-interfaces';
+import { IDisposable, IErrorEvent, ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
 import { assertWithMessage, fail, RestOrArray, unwrapRestOrArray } from './Common.js';
 import { EditId } from './Identifiers.js';
 import { CachingLogViewer } from './LogViewer.js';
@@ -197,7 +197,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 		}
 
 		const { failure } = result as { failure: TransactionInternal.Failure };
-		const additionalProps: ITelemetryProperties = {};
+		const additionalProps: ITelemetryBaseProperties = {};
 		switch (failure.kind) {
 			case TransactionInternal.FailureKind.BadPlace:
 				additionalProps.placeFailure = failure.placeFailure;
