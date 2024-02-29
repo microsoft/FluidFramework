@@ -8,10 +8,19 @@
  * The TemplateSchema is used for validating PropertySet templates that code is attempting to register
  */
 
+type NativeType = {
+    inherits: string[];
+    primitive: boolean;
+};
+
+type NativeTypesSchema = {
+    [key: string]: NativeType;
+};
+
 /**
  * Namespace containing all schema-related data for property set validation
  */
-const NativeTypes = {
+const NativeTypes: NativeTypesSchema = {
 	BaseProperty: {
 		inherits: [],
 		primitive: false,
@@ -93,7 +102,7 @@ const NativeTypes = {
 		primitive: true,
 	},
 };
-
+const ty = typeof NativeTypes
 const primitiveTypes = [];
 const reservedTypes = [];
 

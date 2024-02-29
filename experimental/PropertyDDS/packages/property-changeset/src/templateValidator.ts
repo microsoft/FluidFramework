@@ -13,8 +13,7 @@
 
 /* eslint-disable jsdoc/check-line-alignment */
 
-import Ajv from "ajv";
-import ajvKeywords from "ajv-keywords";
+
 
 import each from "lodash/each.js";
 import isEqual from "lodash/isEqual.js";
@@ -36,21 +35,13 @@ import { queue } from "async";
 
 // @ts-ignore
 import { constants, ConsoleUtils } from "@fluid-experimental/property-common";
-import { TemplateSchema } from "./templateSchema.js";
+
 import { TypeIdHelper } from "./helpers/typeidHelper.js";
 import { SchemaValidationResult, ValidationResultBuilder } from "./validationResultBuilder.js";
 
+import ajvValidator from "./ajvValidator.cjs"
+
 const { MSG } = constants;
-
-const ajvFactory = new Ajv({
-	allErrors: true,
-	verbose: true,
-});
-
-ajvKeywords(ajvFactory, "prohibited");
-ajvKeywords(ajvFactory, "typeof");
-
-const _syntaxValidator = ajvFactory.compile(TemplateSchema);
 
 type ValuesType = { [key: string]: ValuesType };
 
@@ -816,16 +807,16 @@ const _processValidationResults = function (in_template: PropertySchema) {
 	let that = this;
 	let result = this._resultBuilder.result;
 
-	result.isValid = _syntaxValidator(in_template);
+	result.isValid = ajvValidator(in_template);
 	if (!result.isValid) {
 		ConsoleUtils.assert(
-			!isEmpty(_syntaxValidator.errors),
+			!isEmpty(ajvValidator.errors),
 			"template validation failed but produced no error",
 		);
 	}
 
-	if (_syntaxValidator.errors) {
-		each(_syntaxValidator.errors, function (error) {
+	if (ajvValidator.errors) {
+		each(ajvValidator.errors, function (error) {
 			const regexTypeId = /typeid/;
 			switch (error.keyword) {
 				case "pattern":

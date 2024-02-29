@@ -7,7 +7,7 @@ import { ArrayChangeSetIterator } from "./changeset_operations/arrayChangesetIte
 import { ExtractedContext, TypeIdHelper } from "./helpers/typeidHelper.js";
 import { PathHelper } from "./pathHelper.js";
 import { rebaseToRemoteChanges } from "./rebase.js";
-import { TemplateSchema } from "./templateSchema.js";
+import { TemplateSchema } from "./templateSchema.cjs";
 import { TemplateValidator } from "./templateValidator.js";
 import { Utils } from "./utils.js";
 

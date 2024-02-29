@@ -8,7 +8,7 @@
 
 // @ts-ignore
 import { constants } from "@fluid-experimental/property-common";
-import { TemplateSchema as templateSchemaJson, NativeTypes } from "../templateSchema.js";
+import { TemplateSchema as templateSchemaJson, NativeTypes } from "../templateSchema.cjs";
 
 const { MSG } = constants;
 
