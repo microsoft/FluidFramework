@@ -20,7 +20,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/common-definitions-previous': npm:@fluidframework/common-definitions@0.20.1
-      '@fluidframework/eslint-config-fluid': ^3.2.0
+      '@fluidframework/eslint-config-fluid': ^4.0.0
       '@microsoft/api-extractor': ^7.39.1
       '@types/node': ^16.18.38
       concurrently: ^6.2.0
@@ -33,11 +33,11 @@ importers:
       typescript: ~5.1.6
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
-      '@fluid-tools/build-cli': 0.26.1_t22coz7ey3hsllariav7wmu7oy
+      '@fluid-tools/build-cli': 0.26.1_27lnqtdsu4agn44docgfd6n5cy
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.26.1_@types+node@16.18.38
       '@fluidframework/common-definitions-previous': /@fluidframework/common-definitions/0.20.1
-      '@fluidframework/eslint-config-fluid': 3.2.0_bpztyfltmpuv6lhsgzfwtmxhte
+      '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@16.18.38
       '@types/node': 16.18.38
       concurrently: 6.5.1
@@ -189,7 +189,7 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dev: true
 
-  /@fluid-tools/build-cli/0.26.1_t22coz7ey3hsllariav7wmu7oy:
+  /@fluid-tools/build-cli/0.26.1_27lnqtdsu4agn44docgfd6n5cy:
     resolution: {integrity: sha512-eqvUMIcJVgXdWN1tQrdVhx0FnLhstfcx4VywmmlT+nNt197sq2Lar5M+7C7enN3zlysctt3mJ9WIgcvZfc1Dew==}
     engines: {node: '>=14.17.0'}
     hasBin: true
@@ -223,7 +223,7 @@ packages:
       minimatch: 7.4.6
       node-fetch: 2.6.9
       npm-check-updates: 16.10.16
-      oclif: 4.0.3_t22coz7ey3hsllariav7wmu7oy
+      oclif: 4.0.3_27lnqtdsu4agn44docgfd6n5cy
       prettier: 3.0.3
       prompts: 2.4.2
       read-pkg-up: 7.0.1
@@ -246,7 +246,6 @@ packages:
       - esbuild
       - eslint
       - mem-fs
-      - mem-fs-editor
       - supports-color
       - svelte
       - svelte-eslint-parser
@@ -347,8 +346,8 @@ packages:
     resolution: {integrity: sha512-KaoQ7w2MDH5OeRKVatL5yVOCFg+9wD6bLSLFh1/TV1EZM46l49iBqO7UVjUtPE6BIm0jvvOzJXULGVSpzokX3g==}
     dev: true
 
-  /@fluidframework/eslint-config-fluid/3.2.0_bpztyfltmpuv6lhsgzfwtmxhte:
-    resolution: {integrity: sha512-As6k5Jj5dMAUKM5ejyGMdXo+AEYPAg7WOQEisL8eyyoPqjpjlz/D3CCs/nCGL7X+gbsXts50l89F98r626k9jg==}
+  /@fluidframework/eslint-config-fluid/4.0.0_bpztyfltmpuv6lhsgzfwtmxhte:
+    resolution: {integrity: sha512-mLE+1uocMaMACF51EPhnGgLi2okbKRAPE53RzC3Jd2CfqqIGk2sk8yrsvw7KVfeBp8w0Mf646ZM17yAbNTErDg==}
     dependencies:
       '@microsoft/tsdoc': 0.14.2
       '@rushstack/eslint-patch': 1.4.0
@@ -359,7 +358,7 @@ packages:
       eslint-config-prettier: 9.0.0_eslint@8.55.0
       eslint-import-resolver-typescript: 3.6.1_tpu45zodljnzvckpnsmhtdqkmi
       eslint-plugin-eslint-comments: 3.2.0_eslint@8.55.0
-      eslint-plugin-import: /eslint-plugin-i/2.29.0_p6unqcplhqas2g2cyfcrkqcjbu
+      eslint-plugin-import: /eslint-plugin-i/2.29.0_j7h7oj6rrhtikhzta4fgkou42e
       eslint-plugin-jsdoc: 46.8.2_eslint@8.55.0
       eslint-plugin-promise: 6.1.1_eslint@8.55.0
       eslint-plugin-react: 7.33.2_eslint@8.55.0
@@ -367,7 +366,6 @@ packages:
       eslint-plugin-tsdoc: 0.2.17
       eslint-plugin-unicorn: 48.0.1_eslint@8.55.0
       eslint-plugin-unused-imports: 3.0.0_q2lq45qjv2a3kzwivaf2whp57u
-      ts-morph: 20.0.0
     transitivePeerDependencies:
       - eslint
       - eslint-import-resolver-node
@@ -1574,15 +1572,6 @@ packages:
       fast-glob: 3.3.2
       minimatch: 5.1.6
       mkdirp: 1.0.4
-      path-browserify: 1.0.1
-    dev: true
-
-  /@ts-morph/common/0.21.0:
-    resolution: {integrity: sha512-ES110Mmne5Vi4ypUKrtVQfXFDtCsDXiUiGxF6ILVlE90dDD4fdpC1LSjydl/ml7xJWKSDZwUYD2zkOePMSrPBA==}
-    dependencies:
-      fast-glob: 3.3.2
-      minimatch: 7.4.6
-      mkdirp: 2.1.6
       path-browserify: 1.0.1
     dev: true
 
@@ -2989,10 +2978,6 @@ packages:
     resolution: {integrity: sha512-NiujjUFB4SwScJq2bwbYUtXbZhBSlY6vYzm++3Q6oC+U+injTqfPYFK8wS9COOmb2lueqp0ZRB4nK1VYeHgNyw==}
     dev: true
 
-  /code-block-writer/12.0.0:
-    resolution: {integrity: sha512-q4dMFMlXtKR3XNBHyMHt/3pwYNA69EDk00lloMOaaUMKPUXBw6lpXtbu3MMVG6/uOihGnRDOlkyqsONEUj60+w==}
-    dev: true
-
   /color-convert/1.9.3:
     resolution: {integrity: sha512-QfAUtd+vFdAtFQcC8CCyYt1fYWxSqAiK2cSD6zDB8N3cpsEBAvRxp9zOGg6G/SHHJYAT88/az/IuDGALsNVbGg==}
     dependencies:
@@ -3767,7 +3752,7 @@ packages:
       enhanced-resolve: 5.15.0
       eslint: 8.55.0
       eslint-module-utils: 2.8.0_j7h7oj6rrhtikhzta4fgkou42e
-      eslint-plugin-import: /eslint-plugin-i/2.29.0_p6unqcplhqas2g2cyfcrkqcjbu
+      eslint-plugin-import: /eslint-plugin-i/2.29.0_j7h7oj6rrhtikhzta4fgkou42e
       fast-glob: 3.3.2
       get-tsconfig: 4.7.2
       is-core-module: 2.13.1
@@ -3779,7 +3764,7 @@ packages:
       - supports-color
     dev: true
 
-  /eslint-module-utils/2.8.0_bivn2jejdgdr2xrqprhu7oznga:
+  /eslint-module-utils/2.8.0_762h3b5esehr7f4s6pbg6xsz7q:
     resolution: {integrity: sha512-aWajIYfsqCKRDgUfjEXNN/JlrzauMuSEy5sbd7WXbtW3EH6A6MpwEh42c7qD+MqQo9QMJ6fWLAeIJynx0g6OAw==}
     engines: {node: '>=4'}
     peerDependencies:
@@ -3804,6 +3789,7 @@ packages:
       debug: 3.2.7
       eslint: 8.55.0
       eslint-import-resolver-node: 0.3.9
+      eslint-import-resolver-typescript: 3.6.1_tpu45zodljnzvckpnsmhtdqkmi
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -3848,7 +3834,7 @@ packages:
       ignore: 5.2.4
     dev: true
 
-  /eslint-plugin-i/2.29.0_p6unqcplhqas2g2cyfcrkqcjbu:
+  /eslint-plugin-i/2.29.0_j7h7oj6rrhtikhzta4fgkou42e:
     resolution: {integrity: sha512-slGeTS3GQzx9267wLJnNYNO8X9EHGsc75AKIAFvnvMYEcTJKotPKL1Ru5PIGVHIVet+2DsugePWp8Oxpx8G22w==}
     engines: {node: '>=12'}
     peerDependencies:
@@ -3858,7 +3844,7 @@ packages:
       doctrine: 2.1.0
       eslint: 8.55.0
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.8.0_bivn2jejdgdr2xrqprhu7oznga
+      eslint-module-utils: 2.8.0_762h3b5esehr7f4s6pbg6xsz7q
       get-tsconfig: 4.7.2
       is-glob: 4.0.3
       minimatch: 3.1.2
@@ -5164,8 +5150,8 @@ packages:
     engines: {node: '>= 0.10'}
     dev: true
 
-  /ip/2.0.0:
-    resolution: {integrity: sha512-WKa+XuLG1A1R0UWhl2+1XQSi+fZWMsYKffMZTTYsiZaUD8k2yDAj5atimTUD2TZkyCkNEeYE5NhFZmupOGtjYQ==}
+  /ip/2.0.1:
+    resolution: {integrity: sha512-lJUL9imLTNi1ZfXT+DU6rBBdbiKGBuay9B6xGSPVjUeQwaH1RIGqef8RZkUtHioLmSNpPR5M4HVKJGm1j8FWVQ==}
     dev: true
 
   /is-arguments/1.1.1:
@@ -6126,6 +6112,27 @@ packages:
     hasBin: true
     dev: true
 
+  /mem-fs-editor/9.7.0:
+    resolution: {integrity: sha512-ReB3YD24GNykmu4WeUL/FDIQtkoyGB6zfJv60yfCo3QjKeimNcTqv2FT83bP0ccs6uu+sm5zyoBlspAzigmsdg==}
+    engines: {node: '>=12.10.0'}
+    peerDependencies:
+      mem-fs: ^2.1.0
+    peerDependenciesMeta:
+      mem-fs:
+        optional: true
+    dependencies:
+      binaryextensions: 4.18.0
+      commondir: 1.0.1
+      deep-extend: 0.6.0
+      ejs: 3.1.9
+      globby: 11.1.0
+      isbinaryfile: 5.0.0
+      minimatch: 7.4.6
+      multimatch: 5.0.0
+      normalize-path: 3.0.0
+      textextensions: 5.15.0
+    dev: true
+
   /mem-fs-editor/9.7.0_mem-fs@2.3.0:
     resolution: {integrity: sha512-ReB3YD24GNykmu4WeUL/FDIQtkoyGB6zfJv60yfCo3QjKeimNcTqv2FT83bP0ccs6uu+sm5zyoBlspAzigmsdg==}
     engines: {node: '>=12.10.0'}
@@ -6375,12 +6382,6 @@ packages:
 
   /mkdirp/1.0.4:
     resolution: {integrity: sha512-vVqVZQyf3WLx2Shd0qJ9xuvqgAyKPLAiqITEtqW0oIUjzo3PePDd6fW9iFz30ef7Ysp/oiWqbhszeGWW2T6Gzw==}
-    engines: {node: '>=10'}
-    hasBin: true
-    dev: true
-
-  /mkdirp/2.1.6:
-    resolution: {integrity: sha512-+hEnITedc8LAtIP9u3HJDFIdcLV2vXP33sqLLIzkv1Db1zO/1OxbvYf0Y1OC/S/Qo5dxHXepofhmxL02PsKe+A==}
     engines: {node: '>=10'}
     hasBin: true
     dev: true
@@ -6955,7 +6956,7 @@ packages:
       es-abstract: 1.22.3
     dev: true
 
-  /oclif/4.0.3_t22coz7ey3hsllariav7wmu7oy:
+  /oclif/4.0.3_27lnqtdsu4agn44docgfd6n5cy:
     resolution: {integrity: sha512-Bq7t1bJvAKYwW3DKQIzok3jkXv7yUIMneoSec1qUr9wfSqzRTZQB0UUDovwlT/L+3TBMVoRyw1WeX+YDvfRJNA==}
     engines: {node: '>=18.0.0'}
     hasBin: true
@@ -6976,8 +6977,8 @@ packages:
       lodash.template: 4.5.0
       normalize-package-data: 3.0.3
       semver: 7.5.4
-      yeoman-environment: 3.15.1_enn2ryrggwgxfpw6jx37uqpl5m
-      yeoman-generator: 5.8.0_4xngqmrv74x6vfpbzq4xrjm5pa
+      yeoman-environment: 3.15.1
+      yeoman-generator: 5.8.0_yeoman-environment@3.15.1
     transitivePeerDependencies:
       - '@swc/core'
       - '@swc/wasm'
@@ -6987,7 +6988,6 @@ packages:
       - encoding
       - eslint
       - mem-fs
-      - mem-fs-editor
       - supports-color
       - svelte
       - svelte-eslint-parser
@@ -8256,7 +8256,7 @@ packages:
     resolution: {integrity: sha512-7maUZy1N7uo6+WVEX6psASxtNlKaNVMlGQKkG/63nEDdLOWNbiUMoLK7X4uYoLhQstau72mLgfEWcXcwsaHbYQ==}
     engines: {node: '>= 10.13.0', npm: '>= 3.0.0'}
     dependencies:
-      ip: 2.0.0
+      ip: 2.0.1
       smart-buffer: 4.2.0
     dev: true
 
@@ -8758,13 +8758,6 @@ packages:
     dependencies:
       '@ts-morph/common': 0.18.1
       code-block-writer: 11.0.3
-    dev: true
-
-  /ts-morph/20.0.0:
-    resolution: {integrity: sha512-JVmEJy2Wow5n/84I3igthL9sudQ8qzjh/6i4tmYCm6IqYyKFlNbJZi7oBdjyqcWSWYRu3CtL0xbT6fS03ESZIg==}
-    dependencies:
-      '@ts-morph/common': 0.21.0
-      code-block-writer: 12.0.0
     dev: true
 
   /ts-node/10.9.1_undwa5qxrriq4xnbtioa2ez7wy:
@@ -9541,13 +9534,10 @@ packages:
     requiresBuild: true
     dev: true
 
-  /yeoman-environment/3.15.1_enn2ryrggwgxfpw6jx37uqpl5m:
+  /yeoman-environment/3.15.1:
     resolution: {integrity: sha512-P4DTQxqCxNTBD7gph+P+dIckBdx0xyHmvOYgO3vsc9/Sl67KJ6QInz5Qv6tlXET3CFFJ/YxPIdl9rKb0XwTRLg==}
     engines: {node: '>=12.10.0'}
     hasBin: true
-    peerDependencies:
-      mem-fs: ^1.2.0 || ^2.0.0
-      mem-fs-editor: ^8.1.2 || ^9.0.0
     dependencies:
       '@npmcli/arborist': 4.3.1
       are-we-there-yet: 2.0.0
@@ -9590,7 +9580,7 @@ packages:
       - supports-color
     dev: true
 
-  /yeoman-generator/5.8.0_4xngqmrv74x6vfpbzq4xrjm5pa:
+  /yeoman-generator/5.8.0_yeoman-environment@3.15.1:
     resolution: {integrity: sha512-dsrwFn9/c2/MOe80sa2nKfbZd/GaPTgmmehdgkFifs1VN/I7qPsW2xcBfvSkHNGK+PZly7uHyH8kaVYSFNUDhQ==}
     engines: {node: '>=12.10.0'}
     peerDependencies:
@@ -9605,7 +9595,7 @@ packages:
       execa: 5.1.1
       github-username: 6.0.0
       lodash: 4.17.21
-      mem-fs-editor: 9.7.0_mem-fs@2.3.0
+      mem-fs-editor: 9.7.0
       minimist: 1.2.8
       read-pkg-up: 7.0.1
       run-async: 2.4.1
@@ -9613,7 +9603,7 @@ packages:
       shelljs: 0.8.5
       sort-keys: 4.2.0
       text-table: 0.2.0
-      yeoman-environment: 3.15.1_enn2ryrggwgxfpw6jx37uqpl5m
+      yeoman-environment: 3.15.1
     transitivePeerDependencies:
       - encoding
       - mem-fs

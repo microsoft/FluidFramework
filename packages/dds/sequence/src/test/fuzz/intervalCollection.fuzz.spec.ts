@@ -206,6 +206,26 @@ describe("IntervalCollection fuzz testing", () => {
 	});
 });
 
+describe("IntervalCollection with stashing", () => {
+	const model = {
+		...baseIntervalModel,
+		workloadName: "default interval collection with stashing",
+	};
+
+	createDDSFuzzSuite(model, {
+		...defaultFuzzOptions,
+		clientJoinOptions: {
+			clientAddProbability: 0.1,
+			maxNumberOfClients: Number.MAX_SAFE_INTEGER,
+			stashableClientProbability: 0.2,
+		},
+		// AB#7220
+		skip: [68],
+		// Uncomment this line to replay a specific seed from its failure file:
+		// replay: 0,
+	});
+});
+
 describe("IntervalCollection no reconnect fuzz testing", () => {
 	const noReconnectModel = {
 		...baseIntervalModel,
@@ -237,7 +257,8 @@ describe("IntervalCollection fuzz testing with rebased batches", () => {
 
 	createDDSFuzzSuite(noReconnectWithRebaseModel, {
 		...defaultFuzzOptions,
-		skip: [44],
+		// todo AB#5603
+		skip: [97],
 		reconnectProbability: 0.0,
 		clientJoinOptions: {
 			maxNumberOfClients: 3,
@@ -249,6 +270,5 @@ describe("IntervalCollection fuzz testing with rebased batches", () => {
 			enableGroupedBatching: true,
 		},
 		// Uncomment this line to replay a specific seed from its failure file:
-		// replay: 0,
 	});
 });

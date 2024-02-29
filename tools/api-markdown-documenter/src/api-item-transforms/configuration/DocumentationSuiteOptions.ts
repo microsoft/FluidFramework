@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
 import {
 	type ApiDeclaredItem,
 	type ApiItem,
@@ -18,6 +17,8 @@ import {
 	getReleaseTag,
 	getUnscopedPackageName,
 	releaseTagToString,
+	getSafeFilenameForName,
+	getConciseSignature,
 } from "../../utilities";
 
 /**
@@ -282,9 +283,7 @@ export namespace DefaultDocumentationSuiteOptions {
 				return "index";
 			}
 			case ApiItemKind.Package: {
-				return Utilities.getSafeFilenameForName(
-					getUnscopedPackageName(apiItem as ApiPackage),
-				);
+				return getSafeFilenameForName(getUnscopedPackageName(apiItem as ApiPackage));
 			}
 			default: {
 				return getQualifiedApiItemName(apiItem);
@@ -352,7 +351,7 @@ export namespace DefaultDocumentationSuiteOptions {
 				return getSingleLineExcerptText((apiItem as ApiDeclaredItem).excerpt);
 			}
 			default: {
-				return Utilities.getConciseSignature(apiItem);
+				return getConciseSignature(apiItem);
 			}
 		}
 	}

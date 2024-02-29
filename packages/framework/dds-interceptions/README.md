@@ -1,4 +1,4 @@
-# @fluidframework/dds-interceptions
+# @fluid-experimental/dds-interceptions
 
 This package provides factory methods to create a wrapper around some of the basic Distributed Data Structures (DDS) that support an interception callback. Apps can provide a callback when creating these wrappers and this callback will be called when the DDS is modified. This allows apps to support features such as basic user attribution on a SharedString.
 
