@@ -4,10 +4,10 @@
  */
 
 import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
-import { MergeTreeDeltaType } from "../ops";
-import { appendToMergeTreeDeltaRevertibles, MergeTreeDeltaRevertible } from "../revertibles";
-import { markRangeRemoved } from "./testUtils";
-import { loadSnapshot, TestString } from "./snapshot.utils";
+import { MergeTreeDeltaType } from "../ops.js";
+import { appendToMergeTreeDeltaRevertibles, MergeTreeDeltaRevertible } from "../revertibles.js";
+import { markRangeRemoved } from "./testUtils.js";
+import { loadSnapshot, TestString } from "./snapshot.utils.js";
 
 describe("MergeTree remove", () => {
 	let summary;
