@@ -38,6 +38,7 @@ import {
 } from "../ddsFuzzHarness.js";
 import { hasStashData, type Client } from "../clientLoading.js";
 import { Operation, SharedNothingFactory, baseModel, isNoopOp } from "./sharedNothing.js";
+import { _dirname } from "./dirname.cjs";
 
 type Model = DDSFuzzModel<SharedNothingFactory, Operation | ChangeConnectionState>;
 
