@@ -1697,7 +1697,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		}
 		const newSegoff = getSlideToSegoff(
 			segoff,
-			lref.slidingPreference,
+			undefined,
 			this.options.mergeTreeReferencesCanSlideToEndpoint,
 		);
 		const value: { segment: ISegment | undefined; offset: number | undefined } | undefined =
