@@ -1,16 +1,22 @@
 import { strict as assert } from "assert";
 import * as utils from "../type-test-generator/typeTestUtils";
 import { readJsonSync } from "fs-extra";
+import * as fs from "fs";
 import * as path from "path";
 import { PackageJson } from "../common/npmPackage";
+import { IExtractorConfigPrepareOptions } from "@microsoft/api-extractor";
 
+/**
+ * Unit tests for the abstracted functions in typeTestUtils.
+ */
 describe("typeTestUtils", () => {
-	describe("ensureDevDependencyExists", () => {
-		const packageJsonPath = path.join(__dirname, "mockPackage.json");
-		const packageObject: PackageJson = readJsonSync(packageJsonPath);
+	const packageJsonPath = path.join(__dirname, "mockPackage.json");
+	const packageObject: PackageJson = readJsonSync(packageJsonPath);
+	const previousPackageName = `${packageObject.name}-previous`;
+
+	describe("Test ensureDevDependencyExists", () => {
 		it("Should not throw an error if dev dependency exists", () => {
-			const previousPackageName = `${packageObject.name}-previous`;
-			utils.ensureDevDependencyExists(packageObject, previousPackageName);
+			utils.ensureDevDependencyExists(packageObject, "dependency1");
 		});
 
 		it("Should throw an error if dev dependency does not exist", () => {
@@ -21,15 +27,101 @@ describe("typeTestUtils", () => {
 		});
 	});
 
-	describe("getPreviousPackageJsonPath", () => {
-		it("Should throw an error", () => {
-			const packageJsonPath = path.join(__dirname, "mockPackage.json");
-			const packageObject: PackageJson = readJsonSync(packageJsonPath);
-			const previousPackageName = `${packageObject.name}-previous`;
-			const previousBasePath = path.join("node_modules", previousPackageName);
-			assert.throws(() => {
-				utils.getPreviousPackageJsonPath(previousBasePath);
-			});
+	describe("Test getPreviousPackageJsonPath", () => {
+		const nodeModulesDir = path.join(__dirname, "node_modules");
+		// Create temp directory structure
+		before(() => {
+			fs.mkdirSync(nodeModulesDir);
+			fs.mkdirSync(path.join(nodeModulesDir, previousPackageName));
+			fs.writeFileSync(
+				path.join(nodeModulesDir, previousPackageName, "package.json"),
+				JSON.stringify({
+					name: "mockPackageForTesting-previous",
+					version: "1.2.3",
+				}),
+				"utf-8",
+			);
+		});
+
+		after(() => {
+			fs.rmSync(nodeModulesDir, { recursive: true });
+		});
+		it("Should return the path to the previous package.json", () => {
+			const previousBasePath = path.join(nodeModulesDir, previousPackageName);
+			const result = utils.getPreviousPackageJsonPath(previousBasePath);
+			const expectedPath = path.join(previousBasePath, "package.json");
+			assert.strictEqual(result, expectedPath);
+		});
+	});
+	describe("Test getTypeRollupPathFromExtractorConfig", () => {
+		// Create temp directory for testing
+		const nodeModulesDir = path.join(__dirname, "node_modules");
+		const previousBasePath = path.join(nodeModulesDir, previousPackageName);
+		let extractorConfigOptions: IExtractorConfigPrepareOptions;
+
+		before(() => {
+			fs.mkdirSync(nodeModulesDir);
+			fs.mkdirSync(previousBasePath);
+		});
+
+		after(() => {
+			fs.rmSync(nodeModulesDir, { recursive: true });
+		});
+
+		it("Should return undefined if API Extractor config is not found", () => {
+			const result = utils.getTypeRollupPathFromExtractorConfig(
+				"alpha",
+				extractorConfigOptions,
+			);
+			assert.strictEqual(result, undefined);
+		});
+
+		it("Should return undefined if dtsRollup config is not found", () => {
+			fs.writeFileSync(path.join(previousBasePath, "api-extractor.json"), "{}");
+			const result = utils.getTypeRollupPathFromExtractorConfig(
+				"alpha",
+				extractorConfigOptions,
+			);
+			assert.strictEqual(result, undefined);
+			fs.rmSync(path.join(previousBasePath, "api-extractor.json"));
+		});
+
+		it("Should return undefined if rollup path for the specified type is not found", () => {
+			extractorConfigOptions = {
+				configObject: {
+					mainEntryPointFilePath: "",
+					dtsRollup: {
+						enabled: true,
+						untrimmedFilePath: "untrimmed.d.ts",
+					},
+				},
+				configObjectFullPath: "",
+				packageJsonFullPath: "",
+			};
+			const result = utils.getTypeRollupPathFromExtractorConfig(
+				"alpha",
+				extractorConfigOptions,
+			);
+			assert.strictEqual(result, undefined);
+		});
+
+		it("Should return the rollup path for the specified type", () => {
+			extractorConfigOptions = {
+				configObject: {
+					mainEntryPointFilePath: "",
+					dtsRollup: {
+						enabled: true,
+						alphaTrimmedFilePath: "alpha.d.ts",
+					},
+				},
+				configObjectFullPath: "",
+				packageJsonFullPath: "",
+			};
+			const result = utils.getTypeRollupPathFromExtractorConfig(
+				"alpha",
+				extractorConfigOptions,
+			);
+			assert.strictEqual(result, "alpha.d.ts");
 		});
 	});
 });

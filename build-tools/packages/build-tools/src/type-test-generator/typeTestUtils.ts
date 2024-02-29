@@ -5,7 +5,7 @@
 
 import { readJsonSync } from "fs-extra";
 import path from "node:path";
-import { ExtractorConfig } from "@microsoft/api-extractor";
+import { IExtractorConfigPrepareOptions } from "@microsoft/api-extractor";
 import { existsSync } from "node:fs";
 import { Project, SourceFile } from "ts-morph";
 import { BrokenCompatTypes } from "../common/fluidRepo";
@@ -44,26 +44,22 @@ export function getPreviousPackageJsonPath(previousBasePath: string): string {
 }
 
 /**
- * Attempts to retrieve  a specified type of rollup file path for type definitions from the API Extractor configuration.
+ * Attempts to retrieve a specified type of rollup file path for type definitions from the API Extractor config.
  * @param rollupType - The type of rollup file path to retrieve (ex: "alpha", "beta", "public").
- * @param previousBasePath - The previous base path to load api-extractor through
+ * @param extractorConfig - The API Extractor config object.
  * @returns The path to the type definitions file for the specified rollupType, or undefined if it cannot be found.
  * @throws If api-extractor config cannot be loaded.
  */
 export function getTypeRollupPathFromExtractorConfig(
 	rollupType: "alpha" | "beta" | "public" | "untrimmed",
-	previousBasePath: string,
+	extractorConfig: IExtractorConfigPrepareOptions,
 ): string | undefined {
 	try {
-		//Load the api-extractor
-		const extractorConfigOptions = ExtractorConfig.tryLoadForFolder({
-			startingFolder: previousBasePath,
-		});
-		if (!extractorConfigOptions || !extractorConfigOptions.configObject) {
+		if (!extractorConfig || !extractorConfig.configObject) {
 			console.log("API Extractor configuration not found. Falling back to default behavior.");
 			return undefined;
 		}
-		const apiExtractorConfig = extractorConfigOptions.configObject;
+		const apiExtractorConfig = extractorConfig.configObject;
 		// Get rollupPath based on release tag
 		// https://api-extractor.com/pages/setup/configure_rollup/#trimming-based-on-release-tags
 		if (apiExtractorConfig.dtsRollup) {

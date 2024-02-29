@@ -18,6 +18,7 @@ import {
 	initializeProjectsAndLoadFiles,
 } from "./typeTestUtils";
 import { PackageJson } from "../common/npmPackage";
+import { ExtractorConfig } from "@microsoft/api-extractor";
 
 // Do not check that file exists before opening:
 // Doing so is a time of use vs time of check issue so opening the file could fail anyway.
@@ -37,7 +38,17 @@ if (packageObject.typeValidation?.disabled) {
 	rmSync(filePath, { force: true });
 	process.exit(0);
 }
-const typeRollupPaths = getTypeRollupPathFromExtractorConfig("alpha", previousBasePath);
+const extractorConfigOptions = ExtractorConfig.tryLoadForFolder({
+	startingFolder: previousBasePath,
+});
+
+let typeRollupPaths: string | undefined;
+
+if (!extractorConfigOptions || !extractorConfigOptions.configObject) {
+	console.log("API Extractor configuration not found. Falling back to default behavior.");
+} else {
+	typeRollupPaths = getTypeRollupPathFromExtractorConfig("alpha", extractorConfigOptions);
+}
 
 let typeDefinitionFilePath: string | undefined;
 
