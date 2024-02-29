@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/core-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, IUrlResolver, DriverHeader } from "@fluidframework/driver-definitions";
 import { ScopeType } from "@fluidframework/protocol-definitions";
-import { generateToken } from "./auth";
+import { generateToken } from "./auth.js";
 
 /**
  * @alpha

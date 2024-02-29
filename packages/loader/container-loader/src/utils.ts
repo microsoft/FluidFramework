@@ -14,8 +14,8 @@ import {
 	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions";
-import { ISerializableBlobContents } from "./containerStorageAdapter";
-import { IPendingDetachedContainerState } from "./container";
+import { ISerializableBlobContents } from "./containerStorageAdapter.js";
+import { IPendingDetachedContainerState } from "./container.js";
 
 // This is used when we rehydrate a container from the snapshot. Here we put the blob contents
 // in separate property: blobContents.

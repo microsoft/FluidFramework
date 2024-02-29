@@ -25,10 +25,6 @@
 		}
 	},
 	"main": "dist/index.js",
-	"browser": {
-		"./dist/indexNode.js": "./dist/indexBrowser.js",
-		"./lib/indexNode.js": "./lib/indexBrowser.js"
-	},
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
