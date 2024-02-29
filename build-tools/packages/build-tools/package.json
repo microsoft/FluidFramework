@@ -69,7 +69,7 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/eslint-config-fluid": "^3.2.0",
+		"@fluidframework/eslint-config-fluid": "^4.0.0",
 		"@types/async": "^3.2.20",
 		"@types/fs-extra": "^8.1.2",
 		"@types/glob": "^7.2.0",
@@ -82,7 +82,7 @@
 		"@types/semver": "^7.5.0",
 		"@types/shelljs": "^0.8.12",
 		"concurrently": "^8.2.1",
-		"eslint": "~8.51.0",
+		"eslint": "~8.55.0",
 		"mocha": "^10.2.0",
 		"prettier": "~3.0.3"
 	},

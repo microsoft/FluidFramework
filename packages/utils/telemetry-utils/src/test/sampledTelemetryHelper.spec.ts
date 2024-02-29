@@ -4,7 +4,10 @@
  */
 
 import assert from "node:assert";
-import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/core-interfaces";
+import type {
+	ITelemetryBaseEvent,
+	ITelemetryBaseProperties,
+} from "@fluidframework/core-interfaces";
 
 import { SampledTelemetryHelper } from "../sampledTelemetryHelper.js";
 import {
@@ -121,9 +124,9 @@ describe("SampledTelemetryHelper", () => {
 	it("tracks buckets separately and includes per-bucket properties", () => {
 		const bucket1 = "bucket1";
 		const bucket2 = "bucket2";
-		const bucketProperties: Map<string, ITelemetryProperties> = new Map<
+		const bucketProperties: Map<string, ITelemetryBaseProperties> = new Map<
 			string,
-			ITelemetryProperties
+			ITelemetryBaseProperties
 		>([
 			[bucket1, { prop1: "value1" }],
 			[bucket2, { prop2: "value2" }],
@@ -154,9 +157,9 @@ describe("SampledTelemetryHelper", () => {
 		// by the custom properties.
 
 		const bucket1 = "bucket1";
-		const bucketProperties: Map<string, ITelemetryProperties> = new Map<
+		const bucketProperties: Map<string, ITelemetryBaseProperties> = new Map<
 			string,
-			ITelemetryProperties
+			ITelemetryBaseProperties
 		>([
 			// Here just using a duration value that we can be sure will not be the actual value, to make sure the
 			// actuals is different from this one (since it's much harder to guarantee an exact duration
@@ -183,9 +186,9 @@ describe("SampledTelemetryHelper", () => {
 		// custom properties added to the event for each bucket
 		const bucket1 = "bucket1";
 		const bucket2 = "bucket2";
-		const bucketProperties: Map<string, ITelemetryProperties> = new Map<
+		const bucketProperties: Map<string, ITelemetryBaseProperties> = new Map<
 			string,
-			ITelemetryProperties
+			ITelemetryBaseProperties
 		>([
 			[bucket1, { prop1: "value1" }],
 			[bucket2, { prop2: "value2" }],
