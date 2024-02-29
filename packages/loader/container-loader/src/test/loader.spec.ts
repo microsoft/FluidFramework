@@ -10,12 +10,22 @@ import { FluidErrorTypes } from "@fluidframework/core-interfaces";
 import { ICreateBlobResponse, SummaryType } from "@fluidframework/protocol-definitions";
 import { AttachState, IRuntime } from "@fluidframework/container-definitions";
 import { stringToBuffer } from "@fluid-internal/client-utils";
+import {
+	IDocumentService,
+	IDocumentServiceFactory,
+	type IDocumentStorageService,
+	type IResolvedUrl,
+	type IUrlResolver,
+} from "@fluidframework/driver-definitions";
 import { IDetachedBlobStorage, Loader } from "../loader";
 import { IPendingDetachedContainerState } from "../container";
 
 const failProxy = <T extends object>() => {
 	const proxy = new Proxy<T>({} as any as T, {
 		get: (_, p) => {
+			if (p === "then") {
+				return undefined;
+			}
 			throw Error(`${p.toString()} not implemented`);
 		},
 	});
@@ -25,6 +35,9 @@ const failProxy = <T extends object>() => {
 const failSometimeProxy = <T extends object>(handler: Partial<T>) => {
 	const proxy = new Proxy<T>(handler as T, {
 		get: (t, p, r) => {
+			if (p === "then") {
+				return undefined;
+			}
 			if (p in handler) {
 				return Reflect.get(t, p, r);
 			}
@@ -149,7 +162,8 @@ describe("loader unit test", () => {
 			() => {},
 		);
 
-		assert(detached.attachState, AttachState.Attaching);
+		assert.strictEqual(detached.closed, false);
+		assert.strictEqual(detached.attachState, AttachState.Attaching);
 
 		const detachedContainerState = detached.serialize();
 		const parsedState = JSON.parse(detachedContainerState) as IPendingDetachedContainerState;
@@ -178,10 +192,29 @@ describe("loader unit test", () => {
 				return blobs.size;
 			},
 		};
+		const resolvedUrl: IResolvedUrl = {
+			id: uuid(),
+			endpoints: {},
+			tokens: {},
+			type: "fluid",
+			url: "none",
+		};
 		const loader = new Loader({
 			codeLoader,
-			documentServiceFactory: failProxy(),
-			urlResolver: failProxy(),
+			documentServiceFactory: failSometimeProxy<IDocumentServiceFactory>({
+				createContainer: async () =>
+					failSometimeProxy<IDocumentService>({
+						policies: {},
+						resolvedUrl,
+						connectToStorage: async () =>
+							failSometimeProxy<IDocumentStorageService>({
+								createBlob: async () => ({ id: uuid() }),
+							}),
+					}),
+			}),
+			urlResolver: failSometimeProxy<IUrlResolver>({
+				resolve: async () => resolvedUrl,
+			}),
 			detachedBlobStorage,
 			configProvider: {
 				getRawConfig: (name) =>
@@ -196,7 +229,8 @@ describe("loader unit test", () => {
 			() => {},
 		);
 
-		assert(detached.attachState, AttachState.Attaching);
+		assert.strictEqual(detached.closed, false);
+		assert.strictEqual(detached.attachState, AttachState.Attaching);
 
 		const detachedContainerState = detached.serialize();
 		const parsedState = JSON.parse(detachedContainerState) as IPendingDetachedContainerState;
