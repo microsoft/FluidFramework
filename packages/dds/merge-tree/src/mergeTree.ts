@@ -1885,9 +1885,6 @@ export class MergeTree {
 		}
 	}
 
-	/**
-	 * @alpha
-	 */
 	public obliterateRange(
 		start: number,
 		end: number,

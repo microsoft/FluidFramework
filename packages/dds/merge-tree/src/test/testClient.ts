@@ -165,9 +165,6 @@ export class TestClient extends Client {
 		});
 	}
 
-	/**
-	 * @internal
-	 */
 	public obliterateRange({
 		start,
 		end,
