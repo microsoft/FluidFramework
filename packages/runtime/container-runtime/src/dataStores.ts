@@ -436,7 +436,7 @@ export class DataStores implements IFluidDataStoreChannel, IDisposable {
 					},
 				},
 			),
-			pkg: undefined,
+			pkg,
 		});
 
 		this.contexts.addBoundOrRemoted(remoteFluidDataStoreContext);
