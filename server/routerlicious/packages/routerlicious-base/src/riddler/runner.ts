@@ -81,7 +81,6 @@ export class RiddlerRunner implements IRunner {
 		return this.runningDeferred.promise;
 	}
 
-	// eslint-disable-next-line @typescript-eslint/promise-function-async
 	public async stop(caller?: string, uncaughtException?: any): Promise<void> {
 		if (this.stopped) {
 			Lumberjack.info("RiddlerRunner.stop already called, returning early.", { caller });
