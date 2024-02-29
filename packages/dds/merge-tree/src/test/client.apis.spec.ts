@@ -6,9 +6,9 @@
 /* eslint-disable guard-for-in, no-restricted-syntax */
 
 import { strict as assert } from "assert";
-import { Client } from "../client";
-import { createMap, matchProperties, PropertySet } from "../properties";
-import { TestClient } from "./testClient";
+import { Client } from "../client.js";
+import { createMap, matchProperties, PropertySet } from "../properties.js";
+import { TestClient } from "./testClient.js";
 
 function checkGetPropertiesAtPos(
 	client: Client,

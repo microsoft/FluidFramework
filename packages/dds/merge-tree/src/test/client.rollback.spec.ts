@@ -5,13 +5,13 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
-import { UniversalSequenceNumber } from "../constants";
-import { ISegmentLeaf, Marker, reservedMarkerIdKey, SegmentGroup } from "../mergeTreeNodes";
-import { MergeTreeDeltaType, ReferenceType } from "../ops";
-import { TextSegment } from "../textSegment";
-import { TestClient } from "./testClient";
-import { TestClientLogger } from "./testClientLogger";
-import { insertSegments, validatePartialLengths } from "./testUtils";
+import { UniversalSequenceNumber } from "../constants.js";
+import { ISegmentLeaf, Marker, reservedMarkerIdKey, SegmentGroup } from "../mergeTreeNodes.js";
+import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
+import { TextSegment } from "../textSegment.js";
+import { TestClient } from "./testClient.js";
+import { TestClientLogger } from "./testClientLogger.js";
+import { insertSegments, validatePartialLengths } from "./testUtils.js";
 
 describe("client.rollback", () => {
 	const localUserLongId = "localUser";

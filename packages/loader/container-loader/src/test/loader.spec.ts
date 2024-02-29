@@ -10,8 +10,8 @@ import { FluidErrorTypes } from "@fluidframework/core-interfaces";
 import { ICreateBlobResponse, SummaryType } from "@fluidframework/protocol-definitions";
 import { IRuntime } from "@fluidframework/container-definitions";
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { IDetachedBlobStorage, Loader } from "../loader";
-import { IPendingDetachedContainerState } from "../container";
+import { IDetachedBlobStorage, Loader } from "../loader.js";
+import { IPendingDetachedContainerState } from "../container.js";
 
 const failProxy = <T extends object>() => {
 	const proxy = new Proxy<T>({} as any as T, {
