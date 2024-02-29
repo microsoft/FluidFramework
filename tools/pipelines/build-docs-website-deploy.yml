@@ -6,8 +6,20 @@
 # After the build-docs pipeline completes, this pipeline downloads the generated fluidframework-docs
 # artifacts and deploys the content using AzureStaticWebApp.
 # This pipeline also has a scheduled trigger which runs every 4 hours.
-
+# Note that this pipeline contains two triggers: a scheduled trigger which captures changes made in
+# the release branches and a pipeline completion trigger which captures the changes on main.
+# Ideally, changes to both branches would be captured in pipeline completion triggers, however,
+# due to limitations with pipeline version configurations. It seems like its not possible to set 
+# "release/*" branch as a pipeline trigger while running this pipeline using the "main" branch version.
 name: $(Build.BuildId)
+
+schedules:
+  - cron: "0 */4 * * *"
+    displayName: Website deploy with 4 hour increments
+    branches:
+      include:
+        - main
+    always: true
 
 pr: none
 
@@ -46,13 +58,12 @@ variables:
 # pipeline runs when a run of the build-docs pipeline completes
 resources:
   pipelines:
-  - pipeline: build-docs # Name of the pipeline resource.
+  - pipeline: build-docs # "Local" name by which the resource is referenced inside this pipeline's definition  
     source: build-docs # The name of the pipeline referenced by this pipeline resource.
     trigger: 
       branches:
         include: 
-        - main # Runs this deploy pipeline when build-docs main or release branch pipeline completes
-        - release/*
+        - main # Runs this deploy pipeline when build-docs main branch pipeline completes
 
 stages:
 - stage: deploy
