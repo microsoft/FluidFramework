@@ -30,20 +30,26 @@ export async function seqFromTree(
 }
 
 /**
- * Encode non-negative integer as a string, in a compact form.
- * This function is useful in places where we use numbers as IDs and serialize them as strings,
- * where it's important that such encoding does not result in collisions (i.e. two different numbers
- * to have two different string representations), but otherwise there is no need to decode it back
+ * Encode compact ID (returned by IContainerRuntime.generateDocumentUniqueId()) to a compact string representation.
+ * While this is the main usage pattern, it works with any non-negative integer or a string.
+ * Strings are retured as is, and assumed to be UUIDs, i.e. unique enough to never overlap with
+ * numbers encoded as strings by this function. Any other strings are likely to run into collisions and should not be used!
+ * This function is useful in places where we serialize resulting ID as string and use them as strings, thus we are not
+ * gaining any efficiency from having a number type.
+ * We do not provide a decode function, so this API is only useful only result is stored and there is no need to go back to origianl form.
  * @param numArg - input number, non-negative integer.
  * @param prefix - optinal string prefix
  * @returns A string - representation of an input
  * @internal
  */
-export function encodeNumber(numArg: number, prefix = "") {
-	// WARNING: result of this function are serialized in storage!
+export function encodeCompactIdToString(numArg: number | string, prefix = "") {
+	if (typeof numArg === "string") {
+		return numArg;
+	}
+	// WARNING: result of this function are encodeCompactIdToStringn storage!
 	// If you ever need to change this function, you will need to ensure that
 	// for any inputs N1 & N2, old(N1) !== new(N2), where old() - is the old implementation,
-	// and new() - is new implementation of encodeNumber()
+	// and new() - is new implementation of encodeCompactIdToString()
 	// This likely means - this function can't be changed, unless it uses some prefix that ensures
 	// new values have zero overlap with old values.
 	// Also resulting string can't container "/", as that's disallowed by some users

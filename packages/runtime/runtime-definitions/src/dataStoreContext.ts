@@ -238,7 +238,13 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 
 	/**
 	 * Generates a new ID that is guaranteed to be unique across all sessions for this container.
-	 * It could be in compact form (positive integer, oppotunistic), but it could also be UUID string.
+	 * It could be in compact form (non-negative integer, oppotunistic), but it could also be UUID string.
+	 * UUIDs generated will have low entropy in groups and will compress well.
+	 * It can be leveraged anywhere in container where container unique IDs are required, i.e. any place
+	 * that uses uuid() and stores result in container is likely candidate to start leveraging this API.
+	 * If you always want to convert to string, instead of doing String(generateDocumentUniqueId()), consider
+	 * doing encodeCompactIdToString(generateDocumentUniqueId()).
+	 * 
 	 * For more details, please see IIdCompressor.generateDocumentUniqueId()
 	 */
 	generateDocumentUniqueId(): number | string;

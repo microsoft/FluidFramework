@@ -4,21 +4,26 @@
  */
 
 import { strict as assert } from "assert";
-import { encodeNumber } from "../utils";
+import { encodeCompactIdToString } from "../utils";
 
 describe("Utils", () => {
 	beforeEach(() => {});
 
-	it("encodeNumber() has base of 64 (sort of)", () => {
+	it("encodeCompactIdToString() with strings", () => {
+		assert(encodeCompactIdToString("a-b-c") === "a-b-c", "text");
+		assert(encodeCompactIdToString("_abcdefghijklmn") === "_abcdefghijklmn", "text");
+	});
+
+	it("encodeCompactIdToString() has base of 64 (sort of)", () => {
 		const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ[abcdefghijklmnopqrstuvwxyz{01234567890";
 		for (let i = 0; i < 64; i++) {
-			const value = encodeNumber(i);
+			const value = encodeCompactIdToString(i);
 			assert(value.length === 1, "length");
 			assert(chars[i] === value, "value");
 		}
 
 		for (let i = 64; i < 65 * 64 - 1; i++) {
-			const value = encodeNumber(i);
+			const value = encodeCompactIdToString(i);
 			assert(value.length === 2, "length");
 			assert(chars.includes(value[0]), "value");
 			assert(chars.includes(value[1]), "value");
@@ -27,19 +32,19 @@ describe("Utils", () => {
 		// This is a bit weird, as it does not work as our intuition suggests.
 		// That's because in base10 system we do not use "01" form - leading 0 is not used.
 		// Here, because we use forms like 01, 001, 011, we can put more numbers into less chars.
-		assert(encodeNumber(64) === "AA", "AA");
-		assert(encodeNumber(64 * 64) === "9A", "9A");
-		assert(encodeNumber(64 * 64 * 64) === "89A", "89A");
-		assert(encodeNumber(64 * 64 * 64 * 64) === "889A", "889A"); // 16M!
-		assert(encodeNumber(64 * 64 * 64 * 64 * 64) === "8889A", "8889A"); // 1G (~10^9)
-		assert(encodeNumber(64 * 64 * 64 * 64 * 64 * 64) === "88889A", "88889A");
+		assert(encodeCompactIdToString(64) === "AA", "AA");
+		assert(encodeCompactIdToString(64 * 64) === "9A", "9A");
+		assert(encodeCompactIdToString(64 * 64 * 64) === "89A", "89A");
+		assert(encodeCompactIdToString(64 * 64 * 64 * 64) === "889A", "889A"); // 16M!
+		assert(encodeCompactIdToString(64 * 64 * 64 * 64 * 64) === "8889A", "8889A"); // 1G (~10^9)
+		assert(encodeCompactIdToString(64 * 64 * 64 * 64 * 64 * 64) === "88889A", "88889A");
 	});
 
-	it("encodeNumber() generates Unique values", () => {
+	it("encodeCompactIdToString() generates Unique values", () => {
 		const result: Set<string> = new Set();
 		const len = 10000;
 		for (let i = 0; i < len; i++) {
-			const value = encodeNumber(i);
+			const value = encodeCompactIdToString(i);
 			result.add(value);
 
 			// Strong rules:
@@ -54,11 +59,11 @@ describe("Utils", () => {
 		assert(result.size === len, "collision detected!");
 	});
 
-	it("encodeNumber() with prefix", () => {
+	it("encodeCompactIdToString() with prefix", () => {
 		const result: Set<string> = new Set();
 		const len = 1000;
 		for (let i = 0; i < len; i++) {
-			const value = encodeNumber(i, "_");
+			const value = encodeCompactIdToString(i, "_");
 			result.add(value);
 
 			assert(!value.includes("/"), "no slashses");

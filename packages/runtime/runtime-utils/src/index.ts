@@ -34,4 +34,4 @@ export {
 	utf8ByteLength,
 } from "./summaryUtils";
 export { unpackChildNodesUsedRoutes } from "./unpackUsedRoutes";
-export { ReadAndParseBlob, seqFromTree, encodeNumber } from "./utils";
+export { ReadAndParseBlob, seqFromTree, encodeCompactIdToString } from "./utils";

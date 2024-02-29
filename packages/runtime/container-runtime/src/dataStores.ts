@@ -41,7 +41,7 @@ import {
 	responseToException,
 	SummaryTreeBuilder,
 	unpackChildNodesUsedRoutes,
-	encodeNumber,
+	encodeCompactIdToString,
 } from "@fluidframework/runtime-utils";
 import {
 	createChildMonitoringContext,
@@ -419,11 +419,11 @@ export class DataStores implements IDisposable {
 		// In first two cases we will encode result as strings in more compact form.
 		if (this.runtime.attachState === AttachState.Detached) {
 			// container is detached, only one client observes content,  no way to hit collisions with other clients.
-			return encodeNumber(2 * this.contexts.size);
+			return encodeCompactIdToString(2 * this.contexts.size);
 		}
 		const id = this.runtime.generateDocumentUniqueId();
 		if (typeof id === "number") {
-			return encodeNumber(2 * id + 1);
+			return encodeCompactIdToString(2 * id + 1);
 		}
 		return id;
 	}

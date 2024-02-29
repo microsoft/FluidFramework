@@ -61,7 +61,7 @@ import {
 	unpackChildNodesUsedRoutes,
 	addBlobToSummary,
 	processAttachMessageGCData,
-	encodeNumber,
+	encodeCompactIdToString,
 } from "@fluidframework/runtime-utils";
 import {
 	IChannel,
@@ -453,13 +453,13 @@ export class FluidDataStoreRuntime
 			// to ensure no overlap with user-provided DDS names (see validateUserId())
 			if (this.visibilityState !== VisibilityState.GloballyVisible) {
 				// container is detached, only one client observes content, no way to hit collisions with other clients.
-				id = encodeNumber(2 * this.contexts.size, "_");
+				id = encodeCompactIdToString(2 * this.contexts.size, "_");
 			} else {
 				// Due to back-compat, we could not depend yet on generateDocumentUniqueId() being there.
 				// We can remove the need to leverage uuid() as fall-back in couple releases.
 				const res =
 					this.dataStoreContext.containerRuntime.generateDocumentUniqueId?.() ?? uuid();
-				id = typeof res === "number" ? encodeNumber(2 * res + 1, "_") : res;
+				id = typeof res === "number" ? encodeCompactIdToString(2 * res + 1, "_") : res;
 			}
 			assert(!id.includes("/"), "slash");
 		}
