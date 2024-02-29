@@ -21,10 +21,16 @@ import { IIdCompressor, SessionSpaceCompressedId, StableId } from "@fluidframewo
 import type { SharedObjectCore } from "@fluidframework/shared-object-base";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { IContainer, type IFluidCodeDetails } from "@fluidframework/container-definitions";
+import {
+	IContainer,
+	type IFluidCodeDetails,
+	AttachState,
+} from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { stringToBuffer } from "@fluid-internal/client-utils";
+// eslint-disable-next-line @typescript-eslint/no-restricted-imports
+import { SharedDirectory } from "@fluidframework/map";
 
 function getIdCompressor(dds: SharedObjectCore): IIdCompressor {
 	return (dds as any).runtime.idCompressor as IIdCompressor;
@@ -151,7 +157,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		assert(getIdCompressor(map) === undefined);
 	});
 
-	it("can't enable compressor on an existing container", async () => {
+	it("can enable compressor on an existing container if not enabled originally", async () => {
 		provider.reset();
 		const container = await provider.makeTestContainer(containerConfigNoCompressor);
 		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
@@ -709,12 +715,16 @@ describeCompat("IdCompressor in detached container", "NoCompat", (getTestObjectP
 
 describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
+	const disableConfig: ITestContainerConfig = {
+		runtimeOptions: { enableRuntimeIdCompressor: "off" },
+	};
 	const enabledConfig: ITestContainerConfig = {
 		runtimeOptions: { enableRuntimeIdCompressor: "on" },
 	};
 
-	const createContainer = async (config?: ITestContainerConfig): Promise<IContainer> =>
-		provider.makeTestContainer(config);
+	const createContainer = async (
+		config: ITestContainerConfig = disableConfig,
+	): Promise<IContainer> => provider.makeTestContainer(config);
 
 	beforeEach("getTestObjectProvider", async () => {
 		provider = getTestObjectProvider();
@@ -733,7 +743,7 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 
 	it("Summary does not include IdCompressor when disabled", async () => {
 		const container = await createContainer();
-		const { summarizer } = await createSummarizer(provider, container);
+		const { summarizer } = await createSummarizer(provider, container, disableConfig);
 		const { summaryTree } = await summarizeNow(summarizer);
 
 		assert(
@@ -830,5 +840,74 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 			(container2IdCompressor as any).sessions.get(idCompressor.localSessionId) !== undefined,
 			"Should have the other compressor's session from summary",
 		);
+	});
+
+	it("Container uses short DataStore & DDS IDs", async () => {
+		const container = await createContainer({
+			runtimeOptions: { enableRuntimeIdCompressor: "delayed" },
+		});
+		const defaultDataStore = (await container.getEntryPoint()) as ITestDataObject;
+		// This data store was created in detached container, so it has to be short!
+		assert(
+			defaultDataStore._runtime.id.length <= 2,
+			"short data store ID created in detached container",
+		);
+
+		// Ensure we establish "write" connection - this kicks out loading of ID compressor
+		defaultDataStore._root.set("foo", "bar");
+		await provider.ensureSynchronized();
+
+		// generate one ID to force system to request a range of short IDs.
+		// Without that ID Compressor will not attempt to allocate a block of IDs on an op.
+		defaultDataStore._context.containerRuntime.generateDocumentUniqueId();
+
+		// Give an opportunity for ID compressor to acqure a block of short IDs
+		defaultDataStore._root.set("bar", "foo");
+		await provider.ensureSynchronized();
+
+		// create another datastore
+		const res = await defaultDataStore._context.containerRuntime.createDataStore(
+			defaultDataStore._context.packagePath,
+		);
+		const defaultDataStore2 = (await res.entryPoint.get()) as ITestDataObject;
+
+		// This data store was created in attached  container, and should have used ID compressor to assign ID!
+		assert(
+			defaultDataStore2._runtime.id.length <= 2,
+			"short data store ID created in attached container",
+		);
+
+		// Test assumption
+		assert(
+			defaultDataStore2._runtime.attachState === AttachState.Detached,
+			"data store is detached",
+		);
+
+		// Create some channel. Assume that data store has directory factory (ITestDataObject exposes _root that is directory,
+		// so it has such entry). This could backfire if non-default type is used for directory - a test would need to be changed
+		// if it changes in the future.
+		const channel = defaultDataStore2._runtime.createChannel(
+			undefined,
+			SharedDirectory.getFactory().type,
+		);
+		assert(channel.id.length <= 2, "DDS ID created in detached data store");
+
+		// attached data store.
+		await res.trySetAlias("foo");
+
+		assert(
+			// For some reason TSC gets it wrong - it assumes that attachState is constant and that assert above
+			// established it's AttachState.Detached, so this comparison is useless.
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
+			defaultDataStore2._runtime.attachState === AttachState.Attached,
+			"data store is detached",
+		);
+
+		const channel2 = defaultDataStore2._runtime.createChannel(
+			undefined,
+			SharedDirectory.getFactory().type,
+		);
+		assert(channel2.id.length <= 2, "DDS ID created in attached data store");
 	});
 });

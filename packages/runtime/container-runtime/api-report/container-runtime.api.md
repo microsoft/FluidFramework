@@ -78,7 +78,7 @@ export enum CompressionAlgorithms {
     lz4 = "lz4"
 }
 
-// @alpha (undocumented)
+// @alpha
 export type CompressorMode = "on" | "delayed" | "off";
 
 // @alpha (undocumented)
@@ -125,13 +125,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     get connected(): boolean;
     // (undocumented)
-    createDataStore(pkg: string | string[], loadingGroupId?: string): Promise<IDataStore>;
+    createDataStore(pkg: Readonly<string | string[]>, loadingGroupId?: string): Promise<IDataStore>;
     // @deprecated (undocumented)
-    _createDataStoreWithProps(pkg: string | string[], props?: any): Promise<IDataStore>;
+    _createDataStoreWithProps(pkg: Readonly<string | string[]>, props?: any): Promise<IDataStore>;
     // (undocumented)
     createDetachedDataStore(pkg: Readonly<string[]>, loadingGroupId?: string): IFluidDataStoreContextDetached;
     createSummary(blobRedirectTable?: Map<string, string>, telemetryContext?: ITelemetryContext): ISummaryTree;
-    // (undocumented)
     protected delayedCompressorLoading: boolean;
     deleteSweepReadyNodes(sweepReadyRoutes: readonly string[]): readonly string[];
     // @deprecated (undocumented)
@@ -150,7 +149,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     get flushMode(): FlushMode;
     get gcThrowOnTombstoneUsage(): boolean;
     get gcTombstoneEnforcementAllowed(): boolean;
-    // (undocumented)
     generateDocumentUniqueId(): string | (number & {
         readonly SessionUnique: "cea55054-6b82-4cbf-ad19-1fa645ea3b3e";
     } & {
@@ -175,7 +173,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
         snapshotTree: ISnapshotTree;
         sequenceNumber: number;
     }>;
-    // (undocumented)
     get idCompressor(): (IIdCompressor & IIdCompressorCore) | undefined;
     // (undocumented)
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry;

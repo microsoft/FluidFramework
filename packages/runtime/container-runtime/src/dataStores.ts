@@ -454,7 +454,11 @@ export class DataStores implements IDisposable {
 		return context;
 	}
 
-	public _createFluidDataStoreContext(pkg: string[], props?: any, loadingGroupId?: string) {
+	public _createFluidDataStoreContext(
+		pkg: Readonly<string[]>,
+		props?: any,
+		loadingGroupId?: string,
+	) {
 		const id = this.createDataStoreId();
 		const context = new LocalFluidDataStoreContext({
 			id,

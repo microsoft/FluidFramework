@@ -1011,6 +1011,9 @@ export class ContainerRuntime
 
 	private _idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
 
+	/**
+	 * See IContainerRuntimeBase.idCompressor() for details.
+	 */
 	public get idCompressor() {
 		// Expose ID Compressor only if it's On from the start.
 		// If container uses delayed mode, then we can only expose generateDocumentUniqueId() and nothing else.
@@ -1021,8 +1024,16 @@ export class ContainerRuntime
 			return this._idCompressor;
 		}
 	}
+
+	/**
+	 * True if we have ID compressor loading in-flight (async operation). Useful only for
+	 * this.idCompressorMode === "delayed" mode
+	 */
 	protected delayedCompressorLoading = false;
 
+	/**
+	 * See IContainerRuntimeBase.generateDocumentUniqueId() for details.
+	 */
 	public generateDocumentUniqueId() {
 		return this._idCompressor?.generateDocumentUniqueId() ?? uuid();
 	}
@@ -2047,8 +2058,8 @@ export class ContainerRuntime
 	) {
 		this.addMetadataToSummary(summaryTree);
 
-		if (this.idCompressor) {
-			const idCompressorState = JSON.stringify(this.idCompressor.serialize(false));
+		if (this._idCompressor) {
+			const idCompressorState = JSON.stringify(this._idCompressor.serialize(false));
 			addBlobToSummary(summaryTree, idCompressorBlobName, idCompressorState);
 		}
 
@@ -2178,7 +2189,7 @@ export class ContainerRuntime
 				return this.dataStores.applyStashedAttachOp(opContents.contents);
 			case ContainerMessageType.IdAllocation:
 				assert(
-					this.idCompressor !== undefined,
+					this._idCompressor !== undefined,
 					0x67b /* IdCompressor should be defined if enabled */,
 				);
 				return;
@@ -2219,7 +2230,7 @@ export class ContainerRuntime
 	}
 
 	public setConnectionState(connected: boolean, clientId?: string) {
-		if (this.idCompressorMode === "delayed" && !this.delayedCompressorLoading) {
+		if (connected && this.idCompressorMode === "delayed" && !this.delayedCompressorLoading) {
 			this.delayedCompressorLoading = true;
 			this.createIdCompressor()
 				.then((compressor) => {
@@ -2446,7 +2457,7 @@ export class ContainerRuntime
 				break;
 			case ContainerMessageType.IdAllocation:
 				assert(
-					this.idCompressor !== undefined,
+					this._idCompressor !== undefined,
 					0x67c /* IdCompressor should be defined if enabled */,
 				);
 
@@ -2455,7 +2466,7 @@ export class ContainerRuntime
 				if (
 					(messageWithContext.message.metadata as IIdAllocationMetadata)?.savedOp !== true
 				) {
-					this.idCompressor.finalizeCreationRange(messageWithContext.message.contents);
+					this._idCompressor.finalizeCreationRange(messageWithContext.message.contents);
 				}
 				break;
 			case ContainerMessageType.GC:
@@ -2685,7 +2696,7 @@ export class ContainerRuntime
 	}
 
 	public async createDataStore(
-		pkg: string | string[],
+		pkg: Readonly<string | string[]>,
 		loadingGroupId?: string,
 	): Promise<IDataStore> {
 		return channelToDataStore(
@@ -2706,7 +2717,7 @@ export class ContainerRuntime
 	 * @deprecated 0.16 Issue #1537, #3631
 	 */
 	public async _createDataStoreWithProps(
-		pkg: string | string[],
+		pkg: Readonly<string | string[]>,
 		props?: any,
 	): Promise<IDataStore> {
 		return channelToDataStore(
@@ -2868,9 +2879,9 @@ export class ContainerRuntime
 		}
 
 		// We can finalize any allocated IDs since we're the only client
-		const idRange = this.idCompressor?.takeNextCreationRange();
+		const idRange = this._idCompressor?.takeNextCreationRange();
 		if (idRange !== undefined) {
-			this.idCompressor?.finalizeCreationRange(idRange);
+			this._idCompressor?.finalizeCreationRange(idRange);
 		}
 
 		const summarizeResult = this.dataStores.createSummary(telemetryContext);
@@ -3656,8 +3667,8 @@ export class ContainerRuntime
 	}
 
 	private submitIdAllocationOpIfNeeded(): void {
-		if (this.idCompressor) {
-			const idRange = this.idCompressor.takeNextCreationRange();
+		if (this._idCompressor) {
+			const idRange = this._idCompressor.takeNextCreationRange();
 			// Don't include the idRange if there weren't any Ids allocated
 			if (idRange?.ids !== undefined) {
 				const idAllocationMessage: ContainerRuntimeIdAllocationMessage = {
@@ -4109,7 +4120,7 @@ export class ContainerRuntime
 				return; // no pending state to save
 			}
 
-			const pendingIdCompressorState = this.idCompressor?.serialize(true);
+			const pendingIdCompressorState = this._idCompressor?.serialize(true);
 
 			return {
 				pending,

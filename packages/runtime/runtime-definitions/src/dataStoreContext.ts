@@ -186,7 +186,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * @deprecated 0.16 Issue #1537, #3631
 	 */
 	_createDataStoreWithProps(
-		pkg: string | string[],
+		pkg: Readonly<string | string[]>,
 		props?: any,
 		id?: string,
 	): Promise<IDataStore>;
@@ -202,7 +202,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * When not specified the datastore will belong to a `default` group. Read more about it in this
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}
 	 */
-	createDataStore(pkg: string | string[], loadingGroupId?: string): Promise<IDataStore>;
+	createDataStore(pkg: Readonly<string | string[]>, loadingGroupId?: string): Promise<IDataStore>;
 
 	/**
 	 * Creates detached data store context. Only after context.attachRuntime() is called,

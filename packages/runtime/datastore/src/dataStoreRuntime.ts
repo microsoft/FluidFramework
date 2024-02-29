@@ -403,7 +403,13 @@ export class FluidDataStoreRuntime
 		return context.getChannel();
 	}
 
-	protected validateUserId(id: string) {
+	/**
+	 * Validate user provided channel ID
+	 * Channel ID has limitations. "/" is not allowed as IDs in storage can not have slashes - we parse tree paths and use "/" as separator.
+	 * "_" can't be used as it could result in collision of IDs with auto-assigned (by FF) short ID
+	 * @param id - channel ID.
+	 */
+	protected validateChannelId(id: string) {
 		if (id.includes("/")) {
 			throw new UsageError(`Id cannot contain slashes: ${id}`);
 		}
@@ -421,7 +427,7 @@ export class FluidDataStoreRuntime
 	 */
 	public addChannel(channel: IChannel): void {
 		const id = channel.id;
-		this.validateUserId(id);
+		this.validateChannelId(id);
 
 		this.verifyNotClosed();
 
@@ -443,14 +449,14 @@ export class FluidDataStoreRuntime
 
 		if (idArg !== undefined) {
 			id = idArg;
-			this.validateUserId(id);
+			this.validateChannelId(id);
 		} else {
 			// We use three non-overlapping namespaces:
 			// - detached state: even numbers
 			// - attached state: odd numbers
 			// - uuids
 			// In first two cases we will encode result as strings in more compact form, with leading underscore,
-			// to ensure no overlap with user-provided DDS names (see validateUserId())
+			// to ensure no overlap with user-provided DDS names (see validateChannelId())
 			if (this.visibilityState !== VisibilityState.GloballyVisible) {
 				// container is detached, only one client observes content, no way to hit collisions with other clients.
 				id = encodeCompactIdToString(2 * this.contexts.size, "_");
