@@ -18,7 +18,6 @@ import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
 import {
 	IContainerRuntimeOptions,
 	ISummarizer,
-	ISummaryRuntimeOptions,
 	SummaryCollection,
 	DataStoresFactory,
 } from "@fluidframework/container-runtime";
@@ -45,20 +44,18 @@ describeCompat("Nested DataStores", "NoCompat", (_getTestObjectProvider, apis) =
 	let summaryCollection: SummaryCollection | undefined;
 	let summarizer: ISummarizer | undefined;
 	let loader: IHostLoader | undefined;
-	let seed: number;
-
-	const summaryOptionsToDisableHeuristics: ISummaryRuntimeOptions = {
-		summaryConfigOverrides: {
-			state: "disableHeuristics",
-			maxAckWaitTime: 20000,
-			maxOpsSinceLastSummary: 7000,
-			initialSummarizerDelayMs: 0,
-		},
-	};
 
 	const runtimeOptions: IContainerRuntimeOptions = {
 		enableGroupedBatching: true,
-		summaryOptions: summaryOptionsToDisableHeuristics, // Force summarizer heuristics to be disabled so we can control when to summarize.
+		// Force summarizer heuristics to be disabled so we can control when to summarize
+		summaryOptions: {
+			summaryConfigOverrides: {
+				state: "disableHeuristics",
+				maxAckWaitTime: 20000,
+				maxOpsSinceLastSummary: 7000,
+				initialSummarizerDelayMs: 0,
+			},
+		},
 	};
 
 	const testObjectFactory: TestFluidObjectFactory = new TestFluidObjectFactory(
@@ -101,7 +98,6 @@ describeCompat("Nested DataStores", "NoCompat", (_getTestObjectProvider, apis) =
 	beforeEach("getTestObjectProvider", async () => {
 		const driver = new LocalServerTestDriver();
 		const registry = [];
-		seed = 1;
 		provider = new TestObjectProvider(
 			Loader,
 			driver,
@@ -111,8 +107,7 @@ describeCompat("Nested DataStores", "NoCompat", (_getTestObjectProvider, apis) =
 					new TestFluidObjectFactory(registry),
 				),
 		);
-		provider.resetLoaderContainerTracker(true); // syncSummarizerClients
-
+		provider.resetLoaderContainerTracker(true);
 		loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
 	});
 
@@ -161,9 +156,7 @@ describeCompat("Nested DataStores", "NoCompat", (_getTestObjectProvider, apis) =
 
 		// Have a second container that follows passively the first one
 		await addContainerInstance();
-
 		await provider.ensureSynchronized();
-
 		return dataStores;
 	}
 
