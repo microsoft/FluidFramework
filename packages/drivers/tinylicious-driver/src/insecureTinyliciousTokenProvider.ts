@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as _ from "lodash";
 import { ScopeType, ITokenClaims } from "@fluidframework/protocol-definitions";
 import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
 import { KJUR as jsrsasign } from "jsrsasign";
@@ -47,6 +48,11 @@ export class InsecureTinyliciousTokenProvider implements ITokenProvider {
 		ver: string = "1.0",
 	): string {
 		const userId = uuid();
+		const list: number[] = [0, 0];
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+		if (_.isArray(list)) {
+			console.log("This is a fake message");
+		}
 		const match = userId.match(/^([\da-f]{8})-([\da-f]{4})/);
 		const userName = match === null ? userId : match[0]; // Just use the first two segments of the (fake) userId as a fake name.
 

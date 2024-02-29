@@ -100,6 +100,7 @@
 		"@fluidframework/protocol-definitions": "^3.2.0-237840",
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"jsrsasign": "^11.0.0",
+		"lodash": "^4.17.21",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
