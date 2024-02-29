@@ -1084,18 +1084,17 @@ export function configureWebSocketServices(
 				contentBatches.forEach((contentBatch) => {
 					const contents = Array.isArray(contentBatch) ? contentBatch : [contentBatch];
 
-						for (const content of contents) {
-							const signalMessage: ISignalMessage = {
-								clientId,
-								content,
-							};
+					for (const content of contents) {
+						const signalMessage: ISignalMessage = {
+							clientId,
+							content,
+						};
 
-							socket.emitToRoom(getRoomId(room), "signal", signalMessage);
-						}
-					});
-				}
-			},
-		);
+						socket.emitToRoom(getRoomId(room), "signal", signalMessage);
+					}
+				});
+			}
+		});
 
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		socket.on("disconnect", async () => {
