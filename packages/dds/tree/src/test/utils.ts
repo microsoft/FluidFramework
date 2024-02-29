@@ -32,8 +32,9 @@ import {
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
-// eslint-disable-next-line import/no-internal-modules
-import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/dist/test";
+
+// eslint-disable-next-line import/no-internal-modules -- test import
+import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/test";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import {
 	ISharedTree,

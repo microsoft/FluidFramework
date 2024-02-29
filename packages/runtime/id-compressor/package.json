@@ -52,6 +52,26 @@
 				"types": "./dist/index.d.ts",
 				"default": "./dist/index.js"
 			}
+		},
+		"./test": {
+			"import": {
+				"types": "./lib/test/index.d.ts",
+				"default": "./lib/test/index.js"
+			},
+			"require": {
+				"types": "./dist/test/index.d.ts",
+				"default": "./dist/test/index.js"
+			}
+		},
+		"./test/idCompressorTestUtilities": {
+			"import": {
+				"types": "./lib/test/idCompressorTestUtilities.d.ts",
+				"default": "./lib/test/idCompressorTestUtilities.js"
+			},
+			"require": {
+				"types": "./dist/test/idCompressorTestUtilities.d.ts",
+				"default": "./dist/test/idCompressorTestUtilities.js"
+			}
 		}
 	},
 	"main": "dist/index.js",
