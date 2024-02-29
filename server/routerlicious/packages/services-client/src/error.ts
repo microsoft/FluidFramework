@@ -190,7 +190,7 @@ export function createFluidServiceNetworkError(
 				message,
 				false /* canRetry */,
 				false /* isFatal */,
-				retryAfter,
+				undefined /* retryAfterMs */,
 				source,
 			);
 		case 413:
@@ -239,7 +239,7 @@ export function createFluidServiceNetworkError(
 				message,
 				false /* canRetry */,
 				true /* isFatal */,
-				retryAfter,
+				undefined /* retryAfterMs */,
 				source,
 			);
 	}
