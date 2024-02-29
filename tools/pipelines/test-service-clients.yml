@@ -20,6 +20,11 @@ resources:
       - next
       - lts
 
+parameters:
+  - name: telemetry
+    type: boolean
+    default: false
+
 variables:
 - group: prague-key-vault
 - name: testWorkspace
