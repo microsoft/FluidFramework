@@ -52,6 +52,16 @@
 				"types": "./dist/index.d.ts",
 				"default": "./dist/index.js"
 			}
+		},
+		"./test": {
+			"import": {
+				"types": "./lib/test/index.d.ts",
+				"default": "./lib/test/index.js"
+			},
+			"require": {
+				"types": "./dist/test/index.d.ts",
+				"default": "./dist/test/index.js"
+			}
 		}
 	},
 	"main": "dist/index.js",
