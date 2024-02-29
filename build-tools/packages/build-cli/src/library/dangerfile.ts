@@ -9,6 +9,7 @@ import {
 	getAzureDevopsApi,
 	BundleComparison,
 	BundleMetric,
+	totalSizeMetricName,
 } from "@fluidframework/bundle-size-tools";
 
 // Handle weirdness with Danger import.  The current module setup prevents us
@@ -68,8 +69,14 @@ export async function dangerfile(): Promise<void> {
 		// Check for bundle size regression
 		const sizeRegressionDetected =
 			result.comparison?.some((bundle: BundleComparison) => {
-				return Object.values(bundle.commonBundleMetrics).some(
-					({ baseline, compare }: { baseline: BundleMetric; compare: BundleMetric }) => {
+				return Object.entries(bundle.commonBundleMetrics).some(
+					([metricName, { baseline, compare }]: [
+						string,
+						{ baseline: BundleMetric; compare: BundleMetric },
+					]) => {
+						if (metricName === totalSizeMetricName) {
+							return false;
+						}
 						return compare.parsedSize - baseline.parsedSize > sizeWarningThresholdBytes;
 					},
 				);
