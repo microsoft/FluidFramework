@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/file-driver",
-	"version": "2.0.0-rc.1.0.4",
+	"version": "2.0.0-rc.1.0.5",
 	"description": "A driver that reads/write from/to local file storage.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
