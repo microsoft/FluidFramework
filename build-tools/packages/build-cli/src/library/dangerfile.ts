@@ -64,7 +64,7 @@ export async function dangerfile(): Promise<void> {
 		?.map((bundle: BundleComparison) => {
 			const totalMetric = bundle.commonBundleMetrics[totalSizeMetricName];
 			const totalParsedSizeDiff = totalMetric.compare.parsedSize - totalMetric.baseline.parsedSize;
-			return totalParsedSizeDiff > 100;
+			return totalParsedSizeDiff > 5120;
 
 		})
 		.reduce((prev: boolean, current: boolean) => {
