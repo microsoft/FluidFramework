@@ -258,7 +258,7 @@ describe("IntervalCollection fuzz testing with rebased batches", () => {
 	createDDSFuzzSuite(noReconnectWithRebaseModel, {
 		...defaultFuzzOptions,
 		// todo AB#5603
-		skip: [44, 48],
+		skip: [97],
 		reconnectProbability: 0.0,
 		clientJoinOptions: {
 			maxNumberOfClients: 3,

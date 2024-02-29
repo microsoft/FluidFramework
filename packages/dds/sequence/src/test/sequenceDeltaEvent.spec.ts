@@ -14,7 +14,7 @@ import {
 	TextSegment,
 } from "@fluidframework/merge-tree";
 // eslint-disable-next-line import/no-internal-modules
-import { TestClient } from "@fluidframework/merge-tree/dist/test";
+import { TestClient } from "@fluidframework/merge-tree/test";
 import { SequenceDeltaEvent } from "../sequenceDeltaEvent";
 
 interface IExpectedSegmentInfo {

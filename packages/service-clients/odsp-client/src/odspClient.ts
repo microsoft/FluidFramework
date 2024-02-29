@@ -38,9 +38,9 @@ import {
 	OdspContainerServices,
 	OdspConnectionConfig,
 	OdspContainerAttachProps,
-} from "./interfaces";
-import { createOdspAudienceMember } from "./odspAudience";
-import { type IOdspTokenProvider } from "./token";
+} from "./interfaces.js";
+import { createOdspAudienceMember } from "./odspAudience.js";
+import { type IOdspTokenProvider } from "./token.js";
 
 async function getStorageToken(
 	options: OdspResourceTokenFetchOptions,
