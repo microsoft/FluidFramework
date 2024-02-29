@@ -50,9 +50,6 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 	private updating = false;
 	private disposed = false;
 
-	// TODO: fix typing so this can be `TreeNode | undefined`
-	private lastRoot: unknown;
-
 	public constructor(
 		public readonly checkout: TreeCheckout,
 		public readonly config: TreeConfiguration<TRootSchema>,
@@ -129,15 +126,17 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 					this.nodeKeyManager,
 					this.nodeKeyFieldKey,
 				);
-				this.lastRoot = this.root;
-				// TODO: trigger "rootChanged" if the root changes in the future.
+
+				// Trigger "rootChanged" if the root changes in the future.
 				// Currently there is no good way to do this as FlexTreeField has no events for changes.
 				// this.view.flexTree.on(????)
 				// As a workaround for the above, trigger "rootChanged" in "afterBatch"
 				// which isn't the correct time since we normally do events during the batch when the forest is modified, but its better than nothing.
+				// TODO: provide a better event: this.view.flexTree.on(????)
+				let lastRoot = this.root;
 				const cleanupCheckOutEvents = this.checkout.events.on("afterBatch", () => {
-					if (this.lastRoot !== this.root) {
-						this.lastRoot = this.root;
+					if (lastRoot !== this.root) {
+						lastRoot = this.root;
 						this.events.emit("rootChanged");
 					}
 				});
@@ -147,7 +146,6 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 			case UpdateType.Initialize:
 			case UpdateType.SchemaCompatible: {
 				this.view = new SchematizeError(compatibility);
-				this.lastRoot = undefined;
 				const unregister = this.checkout.storedSchema.on("afterSchemaChange", () => {
 					unregister();
 					this.update();
