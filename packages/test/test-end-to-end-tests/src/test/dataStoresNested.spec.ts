@@ -36,7 +36,7 @@ interface IDataStores extends IFluidDataStoreChannel {
 	): unknown;
 }
 
-describeCompat("Nested DataStores", "NoCompat", (_getTestObjectProvider, apis) => {
+describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
 
 	let provider: ITestObjectProvider;
@@ -65,9 +65,7 @@ describeCompat("Nested DataStores", "NoCompat", (_getTestObjectProvider, apis) =
 
 	const dataStoreFactory = new DataStoresFactory(
 		[[testObjectFactory.type, Promise.resolve(testObjectFactory)]],
-		async (runtime: IFluidDataStoreChannel) => {
-			return runtime;
-		},
+		async (runtime: IFluidDataStoreChannel) => runtime,
 	);
 
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
@@ -79,9 +77,7 @@ describeCompat("Nested DataStores", "NoCompat", (_getTestObjectProvider, apis) =
 	async function addContainer(container: IContainer) {
 		containers.push(container);
 		const dataStores = (await container.getEntryPoint()) as IDataStores;
-
 		await provider.ensureSynchronized();
-
 		return { container, dataStores };
 	}
 
@@ -98,6 +94,7 @@ describeCompat("Nested DataStores", "NoCompat", (_getTestObjectProvider, apis) =
 	beforeEach("getTestObjectProvider", async () => {
 		const driver = new LocalServerTestDriver();
 		const registry = [];
+		// ADO:7302 We need another test object provider
 		provider = new TestObjectProvider(
 			Loader,
 			driver,
