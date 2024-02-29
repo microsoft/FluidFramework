@@ -22,7 +22,11 @@ declare function warn(message: string, file?: string, line?: number): void;
 declare const danger: {
 	github: {
 		utils: {
-			createOrAddLabel: (labelConfig: { color: string; description: string; name: string }) => void;
+			createOrAddLabel: (labelConfig: {
+				color: string;
+				description: string;
+				name: string;
+			}) => void;
 		};
 	};
 };
@@ -61,28 +65,32 @@ export async function dangerfile(): Promise<void> {
 	if (result.comparison === undefined || !bundlesContainNoChanges(result.comparison)) {
 		// Check for bundle size regression
 		const sizeCheck = result.comparison
-		?.map((bundle: BundleComparison) => {
-			const totalMetric = bundle.commonBundleMetrics[totalSizeMetricName];
-			const totalParsedSizeDiff = totalMetric.compare.parsedSize - totalMetric.baseline.parsedSize;
-			return totalParsedSizeDiff > 5120;
+			?.map((bundle: BundleComparison) => {
+				const totalMetric = bundle.commonBundleMetrics[totalSizeMetricName];
+				const totalParsedSizeDiff =
+					totalMetric.compare.parsedSize - totalMetric.baseline.parsedSize;
+				return totalParsedSizeDiff > 5120;
+			})
+			.reduce((prev: boolean, current: boolean) => {
+				return prev || current;
+			});
 
-		})
-		.reduce((prev: boolean, current: boolean) => {
-			return prev || current
-		});
-
-	 // Warn and add label to PR in case of bundle size regression
-	 if (sizeCheck) {
-		warn("Bundle size regression detected -- please investigate before merging!");
-		// Add the label to the PR
-		try {
-			await danger.github.utils.createOrAddLabel({color: "ff0000", description: "Significant bundle size regression (>5 KB)", name: "size regression"})
-		} catch (error) {
-			console.error(`Error adding label: ${error}`);
+		// Warn and add label to PR in case of bundle size regression
+		if (sizeCheck) {
+			warn("Bundle size regression detected -- please investigate before merging!");
+			// Add the label to the PR
+			try {
+				await danger.github.utils.createOrAddLabel({
+					color: "ff0000",
+					description: "Significant bundle size regression (>5 KB)",
+					name: "size regression",
+				});
+			} catch (error) {
+				console.error(`Error adding label: ${error}`);
+			}
 		}
-	 }
 
-	 markdown(result.message);
+		markdown(result.message);
 	} else {
 		console.log("No size changes detected, skipping posting PR comment");
 	}
