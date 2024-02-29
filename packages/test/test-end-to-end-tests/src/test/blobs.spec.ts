@@ -491,7 +491,15 @@ describeCompat("blobs", "NoCompat", (getTestObjectProvider, apis) => {
 			() => assert.fail("should fail"),
 			() => {},
 		);
-		assert.strictEqual(serializeContainer.attachState, AttachState.Attaching);
+		assert.strictEqual(serializeContainer.closed, false);
+		// only drivers that support blobs will transition to attaching
+		// but for other drivers the test still ensures we can capture
+		// after an attach attempt
+		if (driverSupportsBlobs(provider.driver)) {
+			assert.strictEqual(serializeContainer.attachState, AttachState.Attaching);
+		} else {
+			assert.strictEqual(serializeContainer.attachState, AttachState.Detached);
+		}
 		const snapshot = serializeContainer.serialize();
 
 		const rehydratedContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
