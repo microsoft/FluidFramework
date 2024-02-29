@@ -47,7 +47,6 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 
 	private readonly viewSchema: ViewSchema;
 
-	private updating = false;
 	private disposed = false;
 
 	public constructor(
@@ -87,7 +86,8 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 	}
 
 	/**
-	 * undefined if disposed.
+	 * Gets the view is the stored schema is compatible with the view schema,
+	 * otherwise returns an error detailing the schema incompatibility.
 	 */
 	public getViewOrError(): CheckoutFlexTreeView<FlexFieldSchema> | SchematizeError {
 		if (this.disposed) {
@@ -97,11 +97,18 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		return this.view;
 	}
 
-	public update(): void {
-		if (this.updating) {
-			return;
-		}
-		this.updating = true;
+	/**
+	 * Updates `this.view`.
+	 * Invoked during initialization and when `this.view` needs to be replaced due to stored schema changes.
+	 * Handled re-registering for events to call update in the future.
+	 * @remarks
+	 * This does not check if the view needs to be replaced, it replaces it unconditionally:
+	 * callers should do any checking to detect if its really needed before calling `update`.
+	 */
+	private update(): void {
+		// This implementation avoids making any edits, which prevents it from being invoked reentrantly.
+		// If implicit initialization (or some other edit) is desired, it should be done outside of this method.
+
 		const compatibility = evaluateUpdate(
 			this.viewSchema,
 			// eslint-disable-next-line no-bitwise
@@ -156,8 +163,6 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 				unreachableCase(compatibility);
 			}
 		}
-
-		this.updating = false;
 		this.events.emit("rootChanged");
 	}
 
