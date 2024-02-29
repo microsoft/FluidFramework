@@ -219,9 +219,10 @@ export class OdspDelayLoadedDeltaStream {
 				this.currentConnection = connection;
 				return connection;
 			} catch (error) {
-				// Remove session information from cache only if it is a fluid protocol error.
+				// Remove join session information from cache only if it is an error related to connect_document and not a socket related error.
 				// Otherwise keep it in cache so that this session can be re-used after disconnection.
-				if(!error.isSocketIOError){
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+				if (!(error as any).isSocketError) {
 					this.clearJoinSessionTimer();
 					this.cache.sessionJoinCache.remove(this.joinSessionKey);
 				}

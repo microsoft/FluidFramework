@@ -763,8 +763,8 @@ export class DocumentDeltaConnection
 				details: JSON.stringify({
 					...this.getConnectionDetailsProps(),
 				}),
-				// connect_document_error
-				isSocketIOError: handler === "connect_document_error" ? false : true
+				// We use this param to clear the joinSession cache if the error happens in connect_document flow.
+				isSocketError: handler === "connect_document_error" ? false : true
 			},
 		);
 	}
