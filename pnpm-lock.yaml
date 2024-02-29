@@ -5959,7 +5959,6 @@ importers:
       sinon: ^17.0.1
       ts-jest: ^29.1.1
       ts-node: ^10.9.1
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-interfaces': link:../core-interfaces
@@ -6008,7 +6007,6 @@ importers:
       sinon: 17.0.1
       ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
       ts-node: 10.9.1_ggysxzqxruqvydtrq6zb2nxvwm
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/common/container-definitions:
