@@ -23,12 +23,12 @@ const workspaceRoot = (() => {
 
 // Load 'package.json'
 const pkgPath = path.join(packageRoot, "package.json");
-const pkgSrc = fs.readFileSync(pkgPath, "utf8");
+const pkgText = fs.readFileSync(pkgPath, "utf8");
 
 // Hack to only process packages containing tsc-multi
 //if (pkgSrc.indexOf("tsc-multi") === -1) throw new Error();
 
-const pkg = JSON5.parse(pkgSrc);
+const pkg = JSON5.parse(pkgText);
 
 // Set package type to ESM
 pkg.type = "module";
