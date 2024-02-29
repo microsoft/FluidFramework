@@ -7144,7 +7144,6 @@ importers:
       prettier: ~3.0.3
       replace-in-file: ^6.3.5
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/container-definitions': link:../../common/container-definitions
@@ -7183,7 +7182,6 @@ importers:
       prettier: 3.0.3
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/test-dds-utils:
