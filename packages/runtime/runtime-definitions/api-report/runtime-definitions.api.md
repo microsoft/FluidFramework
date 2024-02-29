@@ -28,7 +28,7 @@ import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITree } from '@fluidframework/protocol-definitions';
 import type { IUser } from '@fluidframework/protocol-definitions';
 import { SummaryTree } from '@fluidframework/protocol-definitions';
-import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
+import { TelemetryBaseEventPropertyType } from '@fluidframework/core-interfaces';
 
 // @alpha
 export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
@@ -404,11 +404,11 @@ export interface ISummaryTreeWithStats {
 // @public
 export interface ITelemetryContext {
     // @deprecated
-    get(prefix: string, property: string): TelemetryEventPropertyType;
+    get(prefix: string, property: string): TelemetryBaseEventPropertyType;
     // @deprecated
     serialize(): string;
-    set(prefix: string, property: string, value: TelemetryEventPropertyType): void;
-    setMultiple(prefix: string, property: string, values: Record<string, TelemetryEventPropertyType>): void;
+    set(prefix: string, property: string, value: TelemetryBaseEventPropertyType): void;
+    setMultiple(prefix: string, property: string, values: Record<string, TelemetryBaseEventPropertyType>): void;
 }
 
 // @alpha

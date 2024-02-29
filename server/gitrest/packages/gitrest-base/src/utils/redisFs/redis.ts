@@ -19,7 +19,7 @@ export interface IRedis {
 	/**
 	 * Get the value stored at the given key.
 	 */
-	get<T>(key: string): Promise<T>;
+	get<T>(key: string): Promise<T | undefined>;
 	/**
 	 * Store the given value the given key.
 	 */
@@ -71,8 +71,12 @@ export class Redis implements IRedis {
 		});
 	}
 
-	public async get<T>(key: string): Promise<T> {
+	public async get<T>(key: string): Promise<T | undefined> {
 		const stringValue = await this.client.get(this.getKey(key));
+		if (!stringValue) {
+			// Cannot JSON parse an empty string or null value, so return undefined.
+			return undefined;
+		}
 		return JSON.parse(stringValue) as T;
 	}
 
@@ -179,12 +183,16 @@ export class HashMapRedis implements IRedis {
 		});
 	}
 
-	public async get<T>(field: string): Promise<T> {
+	public async get<T>(field: string): Promise<T | undefined> {
 		if (this.isFieldRootDirectory(field)) {
 			// Field is part of the root hashmap key, so return empty string.
 			return "" as unknown as T;
 		}
 		const stringValue = await this.client.hget(this.getMapKey(), this.getMapField(field));
+		if (!stringValue) {
+			// Cannot JSON parse an empty string or null value, so return undefined.
+			return undefined;
+		}
 		return JSON.parse(stringValue) as T;
 	}
 

@@ -8,7 +8,6 @@ export {
 	AddClient,
 	BaseOperation,
 	ChangeConnectionState,
-	Client,
 	ClientSpec,
 	createDDSFuzzSuite,
 	DDSFuzzModel,
@@ -19,4 +18,6 @@ export {
 	Synchronize,
 	replayTest,
 } from "./ddsFuzzHarness";
+export { createSnapshotSuite, ISnapshotSuite } from "./ddsSnapshotHarness";
 export { MinimizationTransform } from "./minification";
+export { Client } from "./clientLoading";

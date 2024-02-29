@@ -11,7 +11,7 @@ import {
 	type IServiceAudienceEvents,
 	type IMember,
 	type Myself,
-} from "./types";
+} from "./types.js";
 
 /**
  * Creates a service audience for the provided container.
