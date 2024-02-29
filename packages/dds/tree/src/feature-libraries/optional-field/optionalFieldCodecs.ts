@@ -85,14 +85,16 @@ function makeOptionalFieldCodec<TChildChange = NodeChangeset>(
 		encode: (change: OptionalChangeset<TChildChange>, context: ChangeEncodingContext) => {
 			const encoded: EncodedOptionalChangeset<TAnySchema> = {};
 			encoded.m = [];
-			for (const [src, dst] of change.moves) {
-				encoded.m.push([
-					registerIdCodec.encode(src, context),
-					registerIdCodec.encode(dst, context),
-					false,
-				]);
-			}
+
 			if (change.field !== undefined) {
+				if (change.field.src !== undefined) {
+					encoded.m.push([
+						registerIdCodec.encode(change.field.src, context),
+						registerIdCodec.encode("self", context),
+						true,
+					]);
+				}
+
 				if (change.field.isEmpty) {
 					encoded.d = registerIdCodec.encode(change.field.dst, context);
 				} else {
@@ -102,13 +104,14 @@ function makeOptionalFieldCodec<TChildChange = NodeChangeset>(
 						false,
 					]);
 				}
-				if (change.field.src !== undefined) {
-					encoded.m.push([
-						registerIdCodec.encode(change.field.src, context),
-						registerIdCodec.encode("self", context),
-						true,
-					]);
-				}
+			}
+
+			for (const [src, dst] of change.moves) {
+				encoded.m.push([
+					registerIdCodec.encode(src, context),
+					registerIdCodec.encode(dst, context),
+					true,
+				]);
 			}
 
 			if (encoded.m.length === 0) {

@@ -191,24 +191,20 @@ describe("optionalField", () => {
 				),
 			);
 
-			assert.deepEqual(
-				optionalChangeRebaser.compose(
-					change1,
-					change4,
-					(
-						c1: NodeChangeset | undefined,
-						c2: NodeChangeset | undefined,
-					): NodeChangeset => {
-						assert.deepEqual(c1, nodeChange1);
-						assert.deepEqual(c2, nodeChange2);
-						return arbitraryChildChange;
-					},
-					fakeIdAllocator,
-					failCrossFieldManager,
-					defaultRevisionMetadataFromChanges([change1, change4]),
-				),
-				expected,
+			const composed = optionalChangeRebaser.compose(
+				change1,
+				change4,
+				(c1: NodeChangeset | undefined, c2: NodeChangeset | undefined): NodeChangeset => {
+					assert.deepEqual(c1, nodeChange1);
+					assert.deepEqual(c2, nodeChange2);
+					return arbitraryChildChange;
+				},
+				fakeIdAllocator,
+				failCrossFieldManager,
+				defaultRevisionMetadataFromChanges([change1, change4]),
 			);
+
+			assert.deepEqual(composed, expected);
 		});
 
 		describe("Invert", () => {

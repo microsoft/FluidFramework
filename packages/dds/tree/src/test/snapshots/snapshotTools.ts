@@ -37,6 +37,7 @@ export function takeSnapshot(data: string, suffix: string): void {
 	} else {
 		assert(exists, `test snapshot file does not exist: "${fullFile}"`);
 		const pastData = readFileSync(fullFile, "utf-8");
+		const pastObj = JSON.parse(pastData);
 		assert.equal(data, pastData, `snapshot different for "${currentTestName}"`);
 	}
 }
