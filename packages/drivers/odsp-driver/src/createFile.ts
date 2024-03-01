@@ -39,7 +39,7 @@ import { ClpCompliantAppHeader } from "./contractsPublic";
 
 const isInvalidFileName = (fileName: string): boolean => {
 	const invalidCharsRegex = /["*/:<>?\\|]+/g;
-	return !!fileName.match(invalidCharsRegex);
+	return invalidCharsRegex.test(fileName);
 };
 
 /**
@@ -134,10 +134,12 @@ function extractShareLinkData(
 ): ShareLinkInfoType | undefined {
 	let shareLinkInfo: ShareLinkInfoType | undefined;
 	if (enableSingleRequestForShareLinkWithCreate) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const { sharing } = response;
 		if (!sharing) {
 			return;
 		}
+		/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 		shareLinkInfo = {
 			createLink: {
 				link: sharing.sharingLink
@@ -152,6 +154,7 @@ function extractShareLinkData(
 				shareId: sharing.shareId,
 			},
 		};
+		/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 	}
 	return shareLinkInfo;
 }
@@ -209,7 +212,7 @@ export async function createNewEmptyFluidFile(
 					);
 				}
 				event.end({
-					headers: Object.keys(headers).length !== 0 ? true : undefined,
+					headers: Object.keys(headers).length > 0 ? true : undefined,
 					...fetchResponse.propsToLog,
 				});
 				return content.id;

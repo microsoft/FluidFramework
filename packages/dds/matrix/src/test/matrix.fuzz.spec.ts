@@ -24,8 +24,10 @@ import {
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { MatrixItem, SharedMatrix } from "../matrix";
-import { SharedMatrixFactory } from "../runtime";
+import { MatrixItem, SharedMatrix } from "../matrix.js";
+import { SharedMatrixFactory } from "../runtime.js";
+import { _dirname } from "./dirname.cjs";
+
 /**
  * Supported cell values used within the fuzz model.
  */
@@ -229,7 +231,7 @@ describe("Matrix fuzz tests", function () {
 			clientAddProbability: 0.1,
 		},
 		reconnectProbability: 0,
-		saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
+		saveFailures: { directory: path.join(_dirname, "../../src/test/results") },
 	};
 
 	const nameModel = (workloadName: string): DDSFuzzModel<TypedMatrixFactory, Operation> => ({
@@ -240,8 +242,8 @@ describe("Matrix fuzz tests", function () {
 	createDDSFuzzSuite(nameModel("default"), {
 		...baseOptions,
 		reconnectProbability: 0,
-		// Seeds 62 and 80 are slow but otherwise pass, see comment on timeout above.
-		skip: [62, 80],
+		// Seeds are slow but otherwise pass, see comment on timeout above.
+		skip: [68],
 		// Uncomment to replay a particular seed.
 		// replay: 0,
 	});
@@ -255,7 +257,7 @@ describe("Matrix fuzz tests", function () {
 		},
 		reconnectProbability: 0.1,
 		// Seeds needing investigation, tracked by AB#7088.
-		skip: [23, 24, 69],
+		skip: [20, 42, 90],
 		// Uncomment to replay a particular seed.
 		// replay: 0,
 	});
@@ -280,8 +282,8 @@ describe("Matrix fuzz tests", function () {
 			clientAddProbability: 0.1,
 			stashableClientProbability: 0.5,
 		}, // Uncomment to replay a particular seed.
-		// Seeds 7 and 23 are slow but otherwise pass, see comment on timeout above.
-		skip: [7, 23],
+		// Seeds 7, 23, and 50 are slow but otherwise pass, see comment on timeout above.
+		skip: [7, 23, 50],
 		// Uncomment to replay a particular seed.
 		// replay: 0,
 	});

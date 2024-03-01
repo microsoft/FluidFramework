@@ -17,7 +17,7 @@ import Axios from "axios";
  * http://localhost:8080/<documentId>/<path>.
  *
  * We then need to map that to a Fluid based URL. These are of the form
- * fluid://orderingUrl/<tenantId>/<documentId>/<path>.
+ * https://orderingUrl/<tenantId>/<documentId>/<path>.
  *
  * The tenantId/documentId pair defines the 'full' document ID the service makes use of. The path is then an optional
  * part of the URL that the document interprets and maps to a data store. It's exactly similar to how a web service
@@ -31,6 +31,7 @@ export class InsecureUrlResolver implements IUrlResolver {
 		private readonly hostUrl: string,
 		private readonly ordererUrl: string,
 		private readonly storageUrl: string,
+		private readonly deltaStreamUrl: string,
 		private readonly tenantId: string,
 		private readonly bearer: string,
 		private readonly isForNodeTest: boolean = false,
@@ -97,6 +98,7 @@ export class InsecureUrlResolver implements IUrlResolver {
 			const createNewResponse: IResolvedUrl = {
 				endpoints: {
 					deltaStorageUrl: `${this.ordererUrl}/deltas/${encodedTenantId}/new`,
+					deltaStreamUrl: this.deltaStreamUrl,
 					ordererUrl: this.ordererUrl,
 					storageUrl: `${this.storageUrl}/repos/${encodedTenantId}`,
 				},
@@ -104,7 +106,7 @@ export class InsecureUrlResolver implements IUrlResolver {
 				id: "",
 				tokens: {},
 				type: "fluid",
-				url: `fluid://${host}/${encodedTenantId}/new`,
+				url: `https://${host}/${encodedTenantId}/new`,
 			};
 			return createNewResponse;
 		}
@@ -113,7 +115,7 @@ export class InsecureUrlResolver implements IUrlResolver {
 			!documentRelativePath || documentRelativePath.startsWith("/")
 				? documentRelativePath
 				: `/${documentRelativePath}`;
-		const documentUrl = `fluid://${host}/${encodedTenantId}/${encodedDocId}${relativePath}${queryParams}`;
+		const documentUrl = `https://${host}/${encodedTenantId}/${encodedDocId}${relativePath}${queryParams}`;
 
 		const deltaStorageUrl = `${this.ordererUrl}/deltas/${encodedTenantId}/${encodedDocId}`;
 		const storageUrl = `${this.storageUrl}/repos/${encodedTenantId}`;
@@ -121,6 +123,7 @@ export class InsecureUrlResolver implements IUrlResolver {
 		const response: IResolvedUrl = {
 			endpoints: {
 				deltaStorageUrl,
+				deltaStreamUrl: this.deltaStreamUrl,
 				ordererUrl: this.ordererUrl,
 				storageUrl,
 			},

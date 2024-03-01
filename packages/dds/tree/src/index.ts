@@ -267,6 +267,7 @@ export {
 	TreeView,
 	TreeViewEvents,
 	SchemaFactory,
+	type ScopedSchemaName,
 	Tree,
 	TreeApi,
 	ImplicitFieldSchema,
@@ -293,6 +294,7 @@ export {
 	TreeNodeSchemaClass,
 	TreeNodeSchemaCore,
 	TreeNodeSchemaNonClass,
+	SchemaIncompatible,
 
 	// experimental @internal APIs:
 	adaptEnum,

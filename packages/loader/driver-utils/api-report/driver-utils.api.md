@@ -30,9 +30,9 @@ import { IStreamResult } from '@fluidframework/driver-definitions';
 import { ISummaryContext } from '@fluidframework/driver-definitions';
 import { ISummaryHandle } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
+import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
 import { ITelemetryErrorEventExt } from '@fluidframework/telemetry-utils';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
-import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { IThrottlingWarning } from '@fluidframework/driver-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { ITreeEntry } from '@fluidframework/protocol-definitions';
@@ -159,7 +159,7 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
 }
 
 // @internal
-export type DriverErrorTelemetryProps = ITelemetryProperties & {
+export type DriverErrorTelemetryProps = ITelemetryBaseProperties & {
     driverVersion: string | undefined;
 };
 
@@ -206,7 +206,7 @@ export interface ICompressionStorageConfig {
 
 // @internal
 export class InsecureUrlResolver implements IUrlResolver {
-    constructor(hostUrl: string, ordererUrl: string, storageUrl: string, tenantId: string, bearer: string, isForNodeTest?: boolean);
+    constructor(hostUrl: string, ordererUrl: string, storageUrl: string, deltaStreamUrl: string, tenantId: string, bearer: string, isForNodeTest?: boolean);
     // (undocumented)
     createCreateNewRequest(fileName?: string): IRequest;
     // (undocumented)
@@ -283,7 +283,7 @@ export enum OnlineStatus {
 
 // @internal
 export class ParallelRequests<T> {
-    constructor(from: number, to: number | undefined, payloadSize: number, logger: ITelemetryLoggerExt, requestCallback: (request: number, from: number, to: number, strongTo: boolean, props: ITelemetryProperties) => Promise<{
+    constructor(from: number, to: number | undefined, payloadSize: number, logger: ITelemetryLoggerExt, requestCallback: (request: number, from: number, to: number, strongTo: boolean, props: ITelemetryBaseProperties) => Promise<{
         partial: boolean;
         cancel: boolean;
         payload: T[];
@@ -342,7 +342,7 @@ export class RateLimiter {
 export function readAndParse<T>(storage: Pick<IDocumentStorageService, "readBlob">, id: string): Promise<T>;
 
 // @internal
-export function requestOps(get: (from: number, to: number, telemetryProps: ITelemetryProperties) => Promise<IDeltasFetchResult>, concurrency: number, fromTotal: number, toTotal: number | undefined, payloadSize: number, logger: ITelemetryLoggerExt, signal?: AbortSignal, scenarioName?: string): IStream<ISequencedDocumentMessage[]>;
+export function requestOps(get: (from: number, to: number, telemetryProps: ITelemetryBaseProperties) => Promise<IDeltasFetchResult>, concurrency: number, fromTotal: number, toTotal: number | undefined, payloadSize: number, logger: ITelemetryLoggerExt, signal?: AbortSignal, scenarioName?: string): IStream<ISequencedDocumentMessage[]>;
 
 // @internal (undocumented)
 export class RetryableError<T extends string> extends NetworkErrorBasic<T> {

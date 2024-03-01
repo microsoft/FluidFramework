@@ -15,12 +15,12 @@ import {
 import { Client, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import { v4 as uuid } from "uuid";
 import {
-	ISharedTree,
 	FlexTreeView,
 	SharedTreeFactory,
 	TreeContent,
 	ITreeViewFork,
 	SharedTree,
+	ISharedTree,
 } from "../../../shared-tree/index.js";
 import { brand, disposeSymbol, fail, getOrCreate } from "../../../util/index.js";
 import {
@@ -36,6 +36,7 @@ import {
 	toDownPath,
 	treeSchemaFromStoredSchema,
 } from "../../../feature-libraries/index.js";
+import { schematizeFlexTree } from "../../utils.js";
 import {
 	FieldEditTypes,
 	FuzzInsert,
@@ -91,7 +92,7 @@ export interface FuzzTestState extends DDSFuzzTestState<SharedTreeFactory> {
 	 * SharedTrees undergoing a transaction will have a forked view in {@link transactionViews} instead,
 	 * which should be used in place of this view until the transaction is complete.
 	 */
-	view?: Map<ISharedTree, FuzzView>;
+	view?: Map<SharedTree, FuzzView>;
 	/**
 	 * Schematized view of clients undergoing transactions with their nodeSchemas.
 	 * Edits to this view are not visible to other clients until the transaction is closed.
@@ -111,18 +112,21 @@ export function viewFromState(
 
 	const view =
 		state.transactionViews?.get(client.channel) ??
-		getOrCreate(state.view, client.channel, (tree) => {
+		getOrCreate(state.view, client.channel as SharedTree, (tree) => {
 			const treeSchema = treeSchemaFromStoredSchema(
 				(client.channel as SharedTree).storedSchema,
 			);
-
-			const fuzzView = tree.schematizeInternal({
-				initialTree,
-				schema: isEmptyStoredSchema(client.channel as SharedTree)
-					? initialFuzzSchema
-					: treeSchema,
-				allowedSchemaModifications: AllowedUpdateType.None,
-			}) as FuzzView;
+			const flexView: FlexTreeView<typeof fuzzSchema.rootFieldSchema> = schematizeFlexTree(
+				tree,
+				{
+					initialTree,
+					schema: isEmptyStoredSchema(client.channel as SharedTree)
+						? initialFuzzSchema
+						: treeSchema,
+					allowedSchemaModifications: AllowedUpdateType.Initialize,
+				},
+			);
+			const fuzzView = flexView as FuzzView;
 			assert.equal(fuzzView.currentSchema, undefined);
 			const nodeSchema = treeSchema.nodeSchema.get(brand("tree2fuzz.node")) as FuzzNodeSchema;
 			fuzzView.currentSchema =

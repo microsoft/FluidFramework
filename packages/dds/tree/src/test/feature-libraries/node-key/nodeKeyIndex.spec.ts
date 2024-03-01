@@ -26,7 +26,12 @@ import {
 } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { NodeKeys } from "../../../feature-libraries/flex-tree/nodeKeys.js";
-import { SummarizeType, TestTreeProvider, flexTreeWithContent } from "../../utils.js";
+import {
+	SummarizeType,
+	TestTreeProvider,
+	flexTreeWithContent,
+	schematizeFlexTree,
+} from "../../utils.js";
 import { AllowedUpdateType } from "../../../core/index.js";
 
 const builder = new SchemaBuilder({ scope: "node key index tests", libraries: [nodeKeySchema] });
@@ -142,15 +147,17 @@ describe("Node Key Index", () => {
 
 		const manager1 = createMockNodeKeyManager();
 		const key = manager1.generateLocalNodeKey();
-		tree.schematizeInternal(
+		schematizeFlexTree(
+			tree,
 			{
 				initialTree: {
 					[nodeKeyFieldKey]: manager1.stabilizeNodeKey(key),
 					child: undefined,
 				},
 				schema: nodeSchemaData,
-				allowedSchemaModifications: AllowedUpdateType.None,
+				allowedSchemaModifications: AllowedUpdateType.Initialize,
 			},
+			() => undefined,
 			createMockNodeKeyManager(),
 		);
 
@@ -159,7 +166,8 @@ describe("Node Key Index", () => {
 		await provider.summarize();
 		const tree2 = await provider.createTree();
 		await provider.ensureSynchronized();
-		const view2 = tree2.schematizeInternal(
+		const view2 = schematizeFlexTree(
+			tree2,
 			{
 				initialTree: {
 					[nodeKeyFieldKey]: "not used",
@@ -168,6 +176,7 @@ describe("Node Key Index", () => {
 				schema: nodeSchemaData,
 				allowedSchemaModifications: AllowedUpdateType.None,
 			},
+			() => undefined,
 			// Since the key was produced with a MockNodeKeyManager, we must use one to process it.
 			createMockNodeKeyManager(),
 		);

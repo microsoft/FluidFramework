@@ -67,12 +67,12 @@
 		"scheduler": "^0.20.0"
 	},
 	"devDependencies": {
+		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^3.5.0",
-		"@fluidframework/mocha-test-setup": "workspace:~",
+		"@fluidframework/eslint-config-fluid": "^4.0.0",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@microsoft/api-extractor": "^7.39.1",
 		"@previewjs/api": "^13.0.0",
@@ -96,7 +96,7 @@
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
-		"eslint": "~8.50.0",
+		"eslint": "~8.55.0",
 		"eslint-config-prettier": "~9.0.0",
 		"eslint-plugin-jest": "~27.4.2",
 		"eslint-plugin-react": "~7.33.2",

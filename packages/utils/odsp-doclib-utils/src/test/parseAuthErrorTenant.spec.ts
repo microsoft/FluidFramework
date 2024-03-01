@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { parseAuthErrorTenant } from "../parseAuthErrorTenant";
+import { parseAuthErrorTenant } from "../parseAuthErrorTenant.js";
 
 const invalidWwwAuthenticateHeaderWithoutBearerScheme =
 	'Random_scheme client_id="00000003-0000-0ff1-ce00-000000000000",trusted_issuers="00000001-0000-0000-c000-000000000000@*,D3776938-3DBA-481F-A652-4BEDFCAB7CD8@*,https://sts.windows.net/*/,00000003-0000-0ff1-ce00-000000000000@90140122-8516-11e1-8eff-49304924019b",authorization_uri="https://login.windows.net/common/oauth2/authorize"';
