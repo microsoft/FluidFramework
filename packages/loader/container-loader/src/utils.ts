@@ -72,6 +72,7 @@ export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefin
 				id: match[1],
 				path: match[2],
 				query,
+				// URLSearchParams returns null if the param is not provided.
 				version: parsed.searchParams.get("version") ?? undefined,
 		  }
 		: undefined;
