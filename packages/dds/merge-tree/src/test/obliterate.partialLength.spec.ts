@@ -4,9 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { MergeTreeDeltaType } from "../ops";
-import { TestClient } from "./testClient";
-import { insertText, useStrictPartialLengthChecks, validatePartialLengths } from "./testUtils";
+import { MergeTreeDeltaType } from "../ops.js";
+import { TestClient } from "./testClient.js";
+import { insertText, useStrictPartialLengthChecks, validatePartialLengths } from "./testUtils.js";
 
 describe("obliterate partial lengths", () => {
 	let client: TestClient;

@@ -26,11 +26,11 @@ import { checkoutWithContent, flexTreeWithContent } from "../utils.js";
  *
  * For minimal/concise targeted unit testing of specific simple-tree content.
  */
-export function getRoot<TSchema extends ImplicitFieldSchema>(
+export function hydrate<TSchema extends ImplicitFieldSchema>(
 	schema: TSchema,
-	initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>,
+	initialTree: InsertableTreeFieldFromImplicitField<TSchema>,
 ): TreeFieldFromImplicitField<TSchema> {
-	const config = new TreeConfiguration(schema, initialTree);
+	const config = new TreeConfiguration(schema, () => initialTree);
 	const flexConfig = toFlexConfig(config);
 	const tree = flexTreeWithContent(flexConfig);
 	return getProxyForField(tree) as TreeFieldFromImplicitField<TSchema>;
@@ -58,7 +58,6 @@ export function getView<TSchema extends ImplicitFieldSchema>(
 /**
  * Similar to JSON stringify, but allows `undefined` at the root and returns numbers as-is at the root.
  */
-
 export function pretty(arg: unknown): number | string {
 	if (arg === undefined) {
 		return "undefined";

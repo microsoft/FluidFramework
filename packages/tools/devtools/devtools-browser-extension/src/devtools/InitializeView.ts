@@ -10,7 +10,7 @@ import { DevtoolsPanel } from "@fluid-internal/devtools-view";
 
 import { BackgroundConnection } from "../BackgroundConnection";
 import { browser } from "../Globals";
-import { extensionMessageSource } from "../messaging";
+import { extensionViewMessageSource } from "../messaging";
 import { formatDevtoolsScriptMessageForLogging } from "./Logging";
 import { OneDSLogger } from "./TelemetryLogging";
 
@@ -22,7 +22,7 @@ import { OneDSLogger } from "./TelemetryLogging";
 export async function initializeDevtoolsView(target: HTMLElement): Promise<void> {
 	const connection = await BackgroundConnection.Initialize({
 		// TODO: devtools-panel-specific source
-		messageSource: extensionMessageSource,
+		messageSource: extensionViewMessageSource,
 		// The devtools panel will always be associated with this fixed tabID
 		tabId: browser.devtools.inspectedWindow.tabId,
 	});

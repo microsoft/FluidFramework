@@ -7,7 +7,7 @@ module.exports = {
 	plugins: ["@typescript-eslint"],
 	extends: [
 		// eslint-disable-next-line node/no-extraneous-require
-		require.resolve("@fluidframework/eslint-config-fluid/minimal"),
+		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
 		"prettier",
 	],
 	rules: {
