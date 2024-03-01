@@ -1038,10 +1038,15 @@ export function configureWebSocketServices(
 			},
 		);
 
-		// Message sent when a new signal is submitted to the router.
-		// Elements of 'contentBatches'
-		// - may be individual or nested arrays
-		// - are `unknown` since the correct typing (1) is not validated and (2) doesn't need to be known to operate on it here
+		/**
+		 * Message sent when a new signal is submitted to the router.
+		 *
+		 * Elements of 'contentBatches':
+		 * - may be individual or nested arrays
+		 * - are `unknown` since the correct typing (1) is not validated and (2) doesn't need to be known to operate on it here
+		 *
+		 * Note: From debugging client end to end tests (localTestSignals.spec.ts) we expect `contentBatches` to be of type ISignalEnvelope[]
+		 */
 		socket.on("submitSignal", (clientId: string, contentBatches: unknown[]) => {
 			// Verify the user has subscription to the room.
 			const room = roomMap.get(clientId);
