@@ -27,9 +27,9 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary } from "@fluidframework/runtime-utils";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { ChannelStorageService } from "./channelStorageService";
-import { ChannelDeltaConnection } from "./channelDeltaConnection";
-import { ISharedObjectRegistry } from "./dataStoreRuntime";
+import { ChannelStorageService } from "./channelStorageService.js";
+import { ChannelDeltaConnection } from "./channelDeltaConnection.js";
+import { ISharedObjectRegistry } from "./dataStoreRuntime.js";
 
 export const attributesBlobKey = ".attributes";
 
