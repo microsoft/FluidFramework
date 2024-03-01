@@ -24,6 +24,7 @@ const defaultInstanceMonitor = {
 	var EventEmitter = require("events").EventEmitter,
 		express = require("express"),
 		http = require("http"),
+		url = require("url"),
 		path = require("path"),
 		_ = require("lodash"),
 		settings = require("./server_settings"),
@@ -175,7 +176,7 @@ const defaultInstanceMonitor = {
 				// Make sure we have a _logger...
 				if (that._logger && that._logger.isLevelEnabled(ModuleLogger.levels.TRACE)) {
 					// Skip logging some high-frequency, diagnostic routes
-					var pathname = new URL(req.url).pathname;
+					var pathname = url.parse(req.url).pathname;
 					if (_.indexOf(that._logHTTPRequests.skip, pathname) === -1) {
 						var headers = JSON.stringify(
 							_.pick(req.headers, that._logHTTPRequests.headers),
