@@ -4,8 +4,8 @@
  */
 
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
-import { Operation, SharedNothingFactory, baseModel } from "../sharedNothing";
-import { ChangeConnectionState, DDSFuzzModel, createDDSFuzzSuite } from "../../ddsFuzzHarness";
+import { Operation, SharedNothingFactory, baseModel } from "../sharedNothing.js";
+import { ChangeConnectionState, DDSFuzzModel, createDDSFuzzSuite } from "../../ddsFuzzHarness.js";
 
 const shortModel: DDSFuzzModel<SharedNothingFactory, Operation | ChangeConnectionState> = {
 	...baseModel,

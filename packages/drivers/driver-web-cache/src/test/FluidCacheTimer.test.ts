@@ -9,8 +9,8 @@ import { openDB } from "idb";
 import { ICacheEntry } from "@fluidframework/odsp-driver-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { delay } from "@fluidframework/core-utils";
-import { FluidDriverCacheDBName } from "../FluidCacheIndexedDb";
-import { FluidCache } from "../FluidCache";
+import { FluidDriverCacheDBName } from "../FluidCacheIndexedDb.js";
+import { FluidCache } from "../FluidCache.js";
 
 // eslint-disable-next-line import/no-unassigned-import, @typescript-eslint/no-require-imports, import/no-internal-modules
 require("fake-indexeddb/auto");

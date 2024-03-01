@@ -22,7 +22,7 @@ import {
 	ISignalMessage,
 } from "@fluidframework/protocol-definitions";
 
-import { summarizerClientType } from "./summary";
+import { summarizerClientType } from "./summary/index.js";
 
 /**
  * Proxy to the real IDeltaManager for restricting certain access to layers below container runtime in summarizer clients:

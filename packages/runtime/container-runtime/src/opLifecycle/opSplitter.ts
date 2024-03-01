@@ -12,9 +12,9 @@ import { assert } from "@fluidframework/core-utils";
 import { IBatchMessage } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { ContainerMessageType, ContainerRuntimeChunkedOpMessage } from "../messageTypes";
-import { estimateSocketSize } from "./batchManager";
-import { BatchMessage, IBatch, IChunkedOp, IMessageProcessingResult } from "./definitions";
+import { ContainerMessageType, ContainerRuntimeChunkedOpMessage } from "../messageTypes.js";
+import { estimateSocketSize } from "./batchManager.js";
+import { BatchMessage, IBatch, IChunkedOp, IMessageProcessingResult } from "./definitions.js";
 
 /**
  * Responsible for creating and reconstructing chunked messages.

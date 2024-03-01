@@ -9,6 +9,6 @@
 	"compilerOptions": {
 		"rootDir": "./",
 		"outDir": "../../dist/test",
-		"types": ["mocha"],
+		"types": ["mocha", "node"],
 	},
 }

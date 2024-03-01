@@ -14,7 +14,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { ISerializableValue, IValueChanged } from "../../interfaces";
+import { ISerializableValue, IValueChanged } from "../../interfaces.js";
 import {
 	IMapSetOperation,
 	IMapDeleteOperation,
@@ -22,9 +22,9 @@ import {
 	IMapKeyEditLocalOpMetadata,
 	IMapClearLocalOpMetadata,
 	MapLocalOpMetadata,
-} from "../../internalInterfaces";
-import { MapFactory, SharedMap } from "../../map";
-import { IMapOperation } from "../../mapKernel";
+} from "../../internalInterfaces.js";
+import { MapFactory, SharedMap } from "../../map.js";
+import { IMapOperation } from "../../mapKernel.js";
 
 function createConnectedMap(id: string, runtimeFactory: MockContainerRuntimeFactory): SharedMap {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();

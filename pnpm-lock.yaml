@@ -891,7 +891,6 @@ importers:
       cross-env: ^7.0.3
       css-loader: ^1.0.0
       eslint: ~8.55.0
-      events: ^3.1.0
       expect-puppeteer: ^9.0.2
       html-webpack-plugin: ^5.5.0
       jest: ^29.6.2
@@ -932,7 +931,6 @@ importers:
       '@fluidframework/telemetry-utils': link:../../../packages/utils/telemetry-utils
       '@fluidframework/tinylicious-driver': link:../../../packages/drivers/tinylicious-driver
       '@fluidframework/tree': link:../../../packages/dds/tree
-      events: 3.3.0
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       tiny-typed-emitter: 2.1.0
@@ -1765,7 +1763,6 @@ importers:
       copyfiles: ^2.4.1
       css-loader: ^1.0.0
       eslint: ~8.55.0
-      events: ^3.1.0
       prettier: ~3.0.3
       react: ^17.0.1
       rimraf: ^4.4.0
@@ -1791,7 +1788,6 @@ importers:
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/sequence': link:../../../packages/dds/sequence
       codemirror: 5.65.16
-      events: 3.3.0
       react: 17.0.2
     devDependencies:
       '@fluid-example/webpack-fluid-loader': link:../../utils/webpack-fluid-loader
@@ -2311,6 +2307,7 @@ importers:
 
   examples/data-objects/multiview/interface:
     specifiers:
+      '@fluid-example/example-utils': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.34.0
@@ -2329,6 +2326,8 @@ importers:
       webpack-cli: ^4.9.2
       webpack-dev-server: ~4.6.0
       webpack-merge: ^5.8.0
+    dependencies:
+      '@fluid-example/example-utils': link:../../../utils/example-utils
     devDependencies:
       '@fluid-tools/build-cli': 0.34.0_wct7gbpa3rmr6xmk4uo7pbrani
       '@fluidframework/build-common': 2.0.3
@@ -2586,7 +2585,6 @@ importers:
       copyfiles: ^2.4.1
       css-loader: ^1.0.0
       eslint: ~8.55.0
-      events: ^3.1.0
       orderedmap: ^2.1.0
       prettier: ~3.0.3
       prosemirror-example-setup: ^1.2.1
@@ -2623,7 +2621,6 @@ importers:
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/sequence': link:../../../packages/dds/sequence
-      events: 3.3.0
       orderedmap: 2.1.1
       prosemirror-example-setup: 1.2.2
       prosemirror-history: 1.3.2
@@ -2679,12 +2676,10 @@ importers:
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
-      '@types/events': ^3.0.0
       '@types/react': ^17.0.44
       '@types/simplemde': ^1.11.7
       css-loader: ^1.0.0
       eslint: ~8.55.0
-      events: ^3.1.0
       prettier: ~3.0.3
       react: ^17.0.1
       rimraf: ^4.4.0
@@ -2711,7 +2706,6 @@ importers:
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/sequence': link:../../../packages/dds/sequence
-      events: 3.3.0
       react: 17.0.2
       simplemde: 1.11.2
     devDependencies:
@@ -2719,7 +2713,6 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_webpack-cli@4.10.0
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@types/events': 3.0.3
       '@types/react': 17.0.71
       '@types/simplemde': 1.11.11
       css-loader: 1.0.1_webpack@5.89.0
@@ -2990,7 +2983,6 @@ importers:
       debug: ^4.3.4
       eslint: ~8.55.0
       esm-loader-css: ^1.0.4
-      events: ^3.1.0
       file-loader: ^3.0.1
       html-loader: ^3.1.0
       jsdom: ^16.7.0
@@ -3025,7 +3017,6 @@ importers:
       '@fluidframework/sequence': link:../../../packages/dds/sequence
       assert: 2.1.0
       debug: 4.3.4
-      events: 3.3.0
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
     devDependencies:
@@ -3233,6 +3224,7 @@ importers:
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
+      '@types/events_pkg': npm:@types/events@^3.0.0
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 'workspace:'
       '@types/node': ^18.19.0
@@ -3242,7 +3234,7 @@ importers:
       clean-webpack-plugin: ^4.0.0
       cross-env: ^7.0.3
       eslint: ~8.55.0
-      events: ^3.1.0
+      events_pkg: npm:events@^3.1.0
       expect-puppeteer: ^9.0.2
       fluid-framework: workspace:~
       html-webpack-plugin: ^5.5.0
@@ -3270,7 +3262,7 @@ importers:
       '@fluidframework/telemetry-utils': link:../../../../packages/utils/telemetry-utils
       assert: 2.1.0
       axios: 1.6.2
-      events: 3.3.0
+      events_pkg: /events/3.3.0
       fluid-framework: link:../../../../packages/framework/fluid-framework
       uuid: 9.0.1
     devDependencies:
@@ -3285,6 +3277,7 @@ importers:
       '@fluidframework/server-local-server': 3.1.0-240326
       '@fluidframework/test-runtime-utils': link:../../../../packages/runtime/test-runtime-utils
       '@fluidframework/test-tools': 1.0.195075
+      '@types/events_pkg': /@types/events/3.0.3
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': link:../../../../packages/test/types_jest-environment-puppeteer
       '@types/node': 18.19.1
@@ -3761,7 +3754,6 @@ importers:
       css-loader: ^1.0.0
       eslint: ~8.55.0
       eslint-config-prettier: ~9.0.0
-      events: ^3.1.0
       expect-puppeteer: ^9.0.2
       html-webpack-plugin: ^5.5.0
       jest: ^29.6.2
@@ -3804,7 +3796,6 @@ importers:
       '@fluidframework/task-manager': link:../../../packages/dds/task-manager
       '@fluidframework/telemetry-utils': link:../../../packages/utils/telemetry-utils
       '@fluidframework/tinylicious-driver': link:../../../packages/drivers/tinylicious-driver
-      events: 3.3.0
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       uuid: 9.0.1
@@ -3882,7 +3873,6 @@ importers:
       css-loader: ^1.0.0
       eslint: ~8.55.0
       eslint-config-prettier: ~9.0.0
-      events: ^3.1.0
       expect-puppeteer: ^9.0.2
       html-webpack-plugin: ^5.5.0
       jest: ^29.6.2
@@ -3925,7 +3915,6 @@ importers:
       '@fluidframework/task-manager': link:../../../packages/dds/task-manager
       '@fluidframework/telemetry-utils': link:../../../packages/utils/telemetry-utils
       '@fluidframework/tinylicious-driver': link:../../../packages/drivers/tinylicious-driver
-      events: 3.3.0
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       uuid: 9.0.1
@@ -3998,7 +3987,6 @@ importers:
       cross-env: ^7.0.3
       css-loader: ^1.0.0
       eslint: ~8.55.0
-      events: ^3.1.0
       expect-puppeteer: ^9.0.2
       html-webpack-plugin: ^5.5.0
       jest: ^29.6.2
@@ -4041,7 +4029,6 @@ importers:
       '@fluidframework/telemetry-utils': link:../../../packages/utils/telemetry-utils
       '@fluidframework/tinylicious-driver': link:../../../packages/drivers/tinylicious-driver
       '@fluidframework/tree': link:../../../packages/dds/tree
-      events: 3.3.0
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       tiny-typed-emitter: 2.1.0
@@ -4367,7 +4354,6 @@ importers:
       cross-env: ^7.0.3
       css-loader: ^1.0.0
       eslint: ~8.55.0
-      events: ^3.1.0
       expect-puppeteer: ^9.0.2
       html-webpack-plugin: ^5.5.0
       jest: ^29.6.2
@@ -4420,7 +4406,6 @@ importers:
       '@fluidframework/sequence': link:../../../../packages/dds/sequence
       '@fluidframework/shared-object-base': link:../../../../packages/dds/shared-object-base
       '@fluidframework/tinylicious-driver': link:../../../../packages/drivers/tinylicious-driver
-      events: 3.3.0
       jsonwebtoken: 8.5.1
       lodash: 4.17.21
       react: 17.0.2
@@ -4497,7 +4482,6 @@ importers:
       cross-env: ^7.0.3
       css-loader: ^1.0.0
       eslint: ~8.55.0
-      events: ^3.1.0
       expect-puppeteer: ^9.0.2
       html-webpack-plugin: ^5.5.0
       jest: ^29.6.2
@@ -4553,7 +4537,6 @@ importers:
       '@material-ui/core': 4.12.4_sfoxds7t5ydpegc3knd667wn6m
       '@material-ui/lab': 4.0.0-alpha.61_phlbjj2qqbzyjdfzujtmlw3coi
       '@material-ui/styles': 4.11.5_sfoxds7t5ydpegc3knd667wn6m
-      events: 3.3.0
       jsonwebtoken: 8.5.1
       lodash: 4.17.21
       react: 17.0.2
@@ -4766,6 +4749,7 @@ importers:
       '@microsoft/api-extractor': ^7.39.1
       '@types/chai': ^4.0.0
       '@types/debug': ^4.1.5
+      '@types/events_pkg': npm:@types/events@^3.0.0
       '@types/lodash': ^4.14.118
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
@@ -4778,7 +4762,7 @@ importers:
       chai: ^4.2.0
       cross-env: ^7.0.3
       eslint: ~8.55.0
-      events: ^3.1.0
+      events_pkg: npm:events@^3.1.0
       fastest-json-copy: ^1.0.1
       lodash: ^4.17.21
       mocha: ^10.2.0
@@ -4794,10 +4778,11 @@ importers:
       traverse: 0.6.6
       typescript: ~5.1.6
     dependencies:
+      '@types/events_pkg': /@types/events/3.0.3
       ajv: 8.12.0
       async: 3.2.5
       base64-js: 1.5.1
-      events: 3.3.0
+      events_pkg: /events/3.3.0
       fastest-json-copy: 1.0.1
       lodash: 4.17.21
       murmurhash3js: 3.0.1
@@ -5806,7 +5791,6 @@ importers:
       '@types/node': ^18.19.0
       cross-env: ^7.0.3
       eslint: ~8.55.0
-      events: ^3.1.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
@@ -5818,7 +5802,6 @@ importers:
       '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
       '@fluidframework/map': link:../../../packages/dds/map
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
-      events: 3.3.0
     devDependencies:
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/build-common': 2.0.3
@@ -5923,7 +5906,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^4.0.0
       '@microsoft/api-extractor': ^7.39.1
       '@types/base64-js': ^1.3.0
-      '@types/events': ^3.0.0
+      '@types/events_pkg': npm:@types/events@^3.0.0
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 'workspace:'
       '@types/mocha': ^9.1.1
@@ -5939,7 +5922,7 @@ importers:
       cross-env: ^7.0.3
       eslint: ~8.55.0
       eslint-config-prettier: ~9.0.0
-      events: ^3.1.0
+      events_pkg: npm:events@^3.1.0
       jest: ^29.6.2
       jest-environment-puppeteer: ^9.0.2
       jest-junit: ^10.0.0
@@ -5961,10 +5944,10 @@ importers:
     dependencies:
       '@fluidframework/core-interfaces': link:../core-interfaces
       '@fluidframework/core-utils': link:../core-utils
-      '@types/events': 3.0.3
+      '@types/events_pkg': /@types/events/3.0.3
       base64-js: 1.5.1
       buffer: 6.0.3
-      events: 3.3.0
+      events_pkg: /events/3.3.0
       lodash: 4.17.21
       sha.js: 2.4.11
     devDependencies:
@@ -6019,11 +6002,10 @@ importers:
       '@fluidframework/eslint-config-fluid': ^4.0.0
       '@fluidframework/protocol-definitions': ^3.2.0-237840
       '@microsoft/api-extractor': ^7.39.1
-      '@types/events': ^3.0.0
+      '@types/events_pkg': npm:@types/events@^3.0.0
       copyfiles: ^2.4.1
       eslint: ~8.55.0
       eslint-plugin-deprecation: ~2.0.0
-      events: ^3.1.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
@@ -6032,7 +6014,7 @@ importers:
       '@fluidframework/core-interfaces': link:../core-interfaces
       '@fluidframework/driver-definitions': link:../driver-definitions
       '@fluidframework/protocol-definitions': 3.2.0-237840
-      events: 3.3.0
+      '@types/events_pkg': /@types/events/3.0.3
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.34.0_bpztyfltmpuv6lhsgzfwtmxhte
@@ -6041,7 +6023,6 @@ importers:
       '@fluidframework/container-definitions-previous': /@fluidframework/container-definitions/2.0.0-internal.8.0.0
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i
-      '@types/events': 3.0.3
       copyfiles: 2.4.1
       eslint: 8.55.0
       eslint-plugin-deprecation: 2.0.0_bpztyfltmpuv6lhsgzfwtmxhte
@@ -6200,7 +6181,6 @@ importers:
       prettier: ~3.0.3
       replace-in-file: ^6.3.5
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -6235,7 +6215,6 @@ importers:
       prettier: 3.0.3
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/counter:
@@ -6270,7 +6249,6 @@ importers:
       prettier: ~3.0.3
       replace-in-file: ^6.3.5
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -6304,7 +6282,6 @@ importers:
       prettier: 3.0.3
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/ink:
@@ -6325,6 +6302,7 @@ importers:
       '@fluidframework/test-runtime-utils': workspace:~
       '@microsoft/api-extractor': ^7.39.1
       '@types/mocha': ^9.1.1
+      '@types/node': ^18.19.0
       '@types/uuid': ^9.0.2
       c8: ^8.0.1
       copyfiles: ^2.4.1
@@ -6351,14 +6329,15 @@ importers:
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
       '@fluid-internal/mocha-test-setup': link:../../test/mocha-test-setup
-      '@fluid-tools/build-cli': 0.34.0_bpztyfltmpuv6lhsgzfwtmxhte
+      '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.34.0
+      '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i
+      '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
       '@types/mocha': 9.1.1
+      '@types/node': 18.19.1
       '@types/uuid': 9.0.7
       c8: 8.0.1
       copyfiles: 2.4.1
@@ -6415,7 +6394,6 @@ importers:
       prettier: ~3.0.3
       replace-in-file: ^6.3.5
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -6458,7 +6436,6 @@ importers:
       prettier: 3.0.3
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/matrix:
@@ -6498,7 +6475,6 @@ importers:
       cross-env: ^7.0.3
       double-ended-queue: ^2.1.0-0
       eslint: ~8.55.0
-      events: ^3.1.0
       hotloop: ^1.2.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
@@ -6524,7 +6500,6 @@ importers:
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       '@tiny-calc/nano': 0.0.0-alpha.5
       double-ended-queue: 2.1.0-0
-      events: 3.3.0
       tslib: 1.14.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -6599,7 +6574,6 @@ importers:
       prettier: ~3.0.3
       replace-in-file: ^6.3.5
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -6640,7 +6614,6 @@ importers:
       prettier: 3.0.3
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/ordered-collection:
@@ -6721,6 +6694,7 @@ importers:
   packages/dds/pact-map:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@fluid-internal/client-utils': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-private/test-dds-utils': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -6735,14 +6709,12 @@ importers:
       '@fluidframework/shared-object-base': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
       '@microsoft/api-extractor': ^7.39.1
-      '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.55.0
-      events: ^3.1.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-junit-reporter: ^1.18.0
@@ -6753,6 +6725,7 @@ importers:
       rimraf: ^4.4.0
       typescript: ~5.1.6
     dependencies:
+      '@fluid-internal/client-utils': link:../../common/client-utils
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
@@ -6760,7 +6733,6 @@ importers:
       '@fluidframework/protocol-definitions': 3.2.0-237840
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/shared-object-base': link:../shared-object-base
-      events: 3.3.0
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
       '@fluid-internal/mocha-test-setup': link:../../test/mocha-test-setup
@@ -6770,7 +6742,6 @@ importers:
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
-      '@types/events': 3.0.3
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
@@ -7114,6 +7085,7 @@ importers:
   packages/dds/task-manager:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@fluid-internal/client-utils': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-private/stochastic-test-utils': workspace:~
       '@fluid-private/test-dds-utils': workspace:~
@@ -7139,7 +7111,6 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.55.0
-      events: ^3.1.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-junit-reporter: ^1.18.0
@@ -7148,9 +7119,9 @@ importers:
       prettier: ~3.0.3
       replace-in-file: ^6.3.5
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
+      '@fluid-internal/client-utils': link:../../common/client-utils
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-runtime-definitions': link:../../runtime/container-runtime-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -7160,7 +7131,6 @@ importers:
       '@fluidframework/protocol-definitions': 3.2.0-237840
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/shared-object-base': link:../shared-object-base
-      events: 3.3.0
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
       '@fluid-internal/mocha-test-setup': link:../../test/mocha-test-setup
@@ -7187,7 +7157,6 @@ importers:
       prettier: 3.0.3
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/test-dds-utils:
@@ -7222,7 +7191,6 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -7256,7 +7224,6 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/tree:
@@ -7390,7 +7357,6 @@ importers:
       jsonschema: ^1.2.6
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-utils': link:../../common/core-utils
@@ -7412,7 +7378,6 @@ importers:
       eslint: 8.55.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/driver-base:
@@ -7445,7 +7410,6 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       socket.io-client: ^4.7.3
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -7477,7 +7441,6 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       socket.io-client: 4.7.4
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/driver-web-cache:
@@ -7502,7 +7465,6 @@ importers:
       jest: ^29.6.2
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -7526,7 +7488,6 @@ importers:
       jest: 29.7.0_@types+node@18.19.1
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/file-driver:
@@ -7606,7 +7567,6 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.55.0
-      events: ^3.1.0
       jsrsasign: ^11.0.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
@@ -7615,9 +7575,7 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       socket.io-client: ^4.7.3
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
-      url: ^0.11.0
       uuid: ^9.0.0
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -7634,9 +7592,7 @@ importers:
       '@fluidframework/server-services-core': 3.1.0-240326
       '@fluidframework/server-test-utils': 3.1.0-240326
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
-      events: 3.3.0
       jsrsasign: 11.0.0
-      url: 0.11.3
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -7662,7 +7618,6 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       socket.io-client: 4.7.4
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/odsp-driver:
@@ -7865,7 +7820,6 @@ importers:
       nock: ^13.3.3
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -7890,7 +7844,6 @@ importers:
       nock: 13.4.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/routerlicious-driver:
@@ -7918,7 +7871,6 @@ importers:
       '@types/nock': ^9.3.0
       '@types/node': ^18.19.0
       '@types/sinon': ^17.0.3
-      '@types/url-parse': 1.4.4
       '@types/uuid': ^9.0.2
       axios: ^1.6.2
       c8: ^8.0.1
@@ -7938,7 +7890,6 @@ importers:
       socket.io-client: ^4.7.3
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
-      url-parse: ^1.5.8
       uuid: ^9.0.0
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -7955,7 +7906,6 @@ importers:
       cross-fetch: 3.1.8
       json-stringify-safe: 5.0.1
       socket.io-client: 4.7.4
-      url-parse: 1.5.10
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -7970,7 +7920,6 @@ importers:
       '@types/nock': 9.3.1
       '@types/node': 18.19.1
       '@types/sinon': 17.0.3
-      '@types/url-parse': 1.4.4
       '@types/uuid': 9.0.7
       axios: 1.6.2
       c8: 8.0.1
@@ -8018,14 +7967,12 @@ importers:
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
-      url: ^0.11.0
     dependencies:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/protocol-definitions': 3.2.0-237840
       nconf: 0.12.1
-      url: 0.11.3
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
       '@fluid-internal/mocha-test-setup': link:../../test/mocha-test-setup
@@ -8077,7 +8024,6 @@ importers:
       mocha: ^10.2.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -8107,7 +8053,6 @@ importers:
       mocha: 10.2.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/agent-scheduler:
@@ -8190,7 +8135,6 @@ importers:
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/synthesize': workspace:~
       '@microsoft/api-extractor': ^7.39.1
-      '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       c8: ^8.0.1
@@ -8227,7 +8171,6 @@ importers:
       '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
-      '@types/events': 3.0.3
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
@@ -8280,7 +8223,6 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -8320,7 +8262,6 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/client-logger/app-insights-logger:
@@ -8520,7 +8461,6 @@ importers:
       eslint: ~8.55.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/container-definitions': link:../../common/container-definitions
@@ -8542,7 +8482,6 @@ importers:
       eslint: 8.55.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/fluid-static:
@@ -8751,7 +8690,6 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-utils': link:../../common/core-utils
@@ -8778,12 +8716,12 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/undo-redo:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@fluid-internal/client-utils': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/build-common': ^2.0.3
@@ -8797,7 +8735,6 @@ importers:
       '@fluidframework/undo-redo-previous': npm:@fluidframework/undo-redo@2.0.0-internal.8.0.0
       '@microsoft/api-extractor': ^7.39.1
       '@types/diff': ^3.5.1
-      '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       c8: ^8.0.1
@@ -8805,21 +8742,19 @@ importers:
       cross-env: ^7.0.3
       diff: ^3.5.0
       eslint: ~8.55.0
-      events: ^3.1.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
+      '@fluid-internal/client-utils': link:../../common/client-utils
       '@fluidframework/map': link:../../dds/map
       '@fluidframework/matrix': link:../../dds/matrix
       '@fluidframework/merge-tree': link:../../dds/merge-tree
       '@fluidframework/sequence': link:../../dds/sequence
-      events: 3.3.0
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
       '@fluid-internal/mocha-test-setup': link:../../test/mocha-test-setup
@@ -8831,7 +8766,6 @@ importers:
       '@fluidframework/undo-redo-previous': /@fluidframework/undo-redo/2.0.0-internal.8.0.0
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
       '@types/diff': 3.5.8
-      '@types/events': 3.0.3
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
@@ -8845,7 +8779,6 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/loader/container-loader:
@@ -8870,7 +8803,6 @@ importers:
       '@microsoft/api-extractor': ^7.39.1
       '@types/debug': ^4.1.5
       '@types/double-ended-queue': ^2.1.0
-      '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/sinon': ^17.0.3
@@ -8883,7 +8815,6 @@ importers:
       debug: ^4.3.4
       double-ended-queue: ^2.1.0-0
       eslint: ~8.55.0
-      events: ^3.1.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
@@ -8891,9 +8822,7 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^17.0.1
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
-      url: ^0.11.0
       uuid: ^9.0.0
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -8908,8 +8837,6 @@ importers:
       '@ungap/structured-clone': 1.2.0
       debug: 4.3.4
       double-ended-queue: 2.1.0-0
-      events: 3.3.0
-      url: 0.11.3
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -8923,7 +8850,6 @@ importers:
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
       '@types/debug': 4.1.12
       '@types/double-ended-queue': 2.1.7
-      '@types/events': 3.0.3
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/sinon': 17.0.3
@@ -8940,7 +8866,6 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 17.0.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/loader/driver-utils:
@@ -8978,9 +8903,7 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^17.0.1
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
-      url: ^0.11.0
       uuid: ^9.0.0
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -8993,7 +8916,6 @@ importers:
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       axios: 1.6.2
       lz4js: 0.2.0
-      url: 0.11.3
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -9019,7 +8941,6 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 17.0.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/loader/test-loader-utils:
@@ -9087,7 +9008,6 @@ importers:
       '@microsoft/api-extractor': ^7.39.1
       '@tylerbu/sorted-btree-es6': ^1.8.0
       '@types/double-ended-queue': ^2.1.0
-      '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
       '@types/sinon': ^17.0.3
       '@types/uuid': ^9.0.2
@@ -9096,7 +9016,6 @@ importers:
       cross-env: ^7.0.3
       double-ended-queue: ^2.1.0-0
       eslint: ~8.55.0
-      events: ^3.1.0
       lz4js: ^0.2.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
@@ -9105,7 +9024,6 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^17.0.1
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -9124,7 +9042,6 @@ importers:
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       '@tylerbu/sorted-btree-es6': 1.8.0
       double-ended-queue: 2.1.0-0
-      events: 3.3.0
       lz4js: 0.2.0
       uuid: 9.0.1
     devDependencies:
@@ -9140,7 +9057,6 @@ importers:
       '@fluidframework/test-runtime-utils': link:../test-runtime-utils
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i
       '@types/double-ended-queue': 2.1.7
-      '@types/events': 3.0.3
       '@types/mocha': 9.1.1
       '@types/sinon': 17.0.3
       '@types/uuid': 9.0.7
@@ -9155,7 +9071,6 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 17.0.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/runtime/container-runtime-definitions:
@@ -9235,7 +9150,6 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -9277,7 +9191,6 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/runtime/datastore-definitions:
@@ -9348,7 +9261,6 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -9381,7 +9293,6 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/runtime/runtime-definitions:
@@ -9460,7 +9371,6 @@ importers:
       rimraf: ^4.4.0
       sinon: ^17.0.1
       ts-node: ^10.9.1
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -9497,7 +9407,6 @@ importers:
       rimraf: 4.4.1
       sinon: 17.0.1
       ts-node: 10.9.1_ggysxzqxruqvydtrq6zb2nxvwm
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/runtime/test-runtime-utils:
@@ -9531,7 +9440,6 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.55.0
-      events: ^3.1.0
       jsrsasign: ^11.0.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
@@ -9555,7 +9463,6 @@ importers:
       '@fluidframework/runtime-definitions': link:../runtime-definitions
       '@fluidframework/runtime-utils': link:../runtime-utils
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
-      events: 3.3.0
       jsrsasign: 11.0.0
       uuid: 9.0.1
     devDependencies:
@@ -9622,7 +9529,6 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       start-server-and-test: ^1.11.7
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -9664,7 +9570,6 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       start-server-and-test: 1.15.5
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
       uuid: 9.0.1
 
@@ -9777,7 +9682,6 @@ importers:
       mocha: ^10.2.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -9813,7 +9717,6 @@ importers:
       mocha: 10.2.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/service-clients/tinylicious-client:
@@ -9916,13 +9819,14 @@ importers:
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
       '@fluidframework/tree': workspace:~
-      '@types/events': ^3.0.0
+      '@types/events_pkg': npm:@types/events@^3.0.0
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       c8: ^8.0.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.55.0
-      events: ^3.1.0
+      events_pkg: npm:events@^3.1.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
@@ -9930,12 +9834,9 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       ts-loader: ^9.3.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       webpack: ^5.82.0
       webpack-cli: ^4.9.2
-    dependencies:
-      events: 3.3.0
     devDependencies:
       '@fluid-experimental/tree': link:../../../experimental/dds/tree
       '@fluid-internal/mocha-test-setup': link:../mocha-test-setup
@@ -9960,12 +9861,14 @@ importers:
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@fluidframework/tree': link:../../dds/tree
-      '@types/events': 3.0.3
+      '@types/events_pkg': /@types/events/3.0.3
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.55.0
+      events_pkg: /events/3.3.0
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
@@ -9973,7 +9876,6 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
       webpack-cli: 4.10.0_webpack@5.89.0
@@ -10479,7 +10381,6 @@ importers:
       start-server-and-test: ^1.11.7
       tinylicious: ^3.1.0-240326
       typescript: ~5.1.6
-      url: ^0.11.0
       uuid: ^9.0.0
     dependencies:
       '@fluid-experimental/attributor': link:../../framework/attributor
@@ -10532,7 +10433,6 @@ importers:
       sinon: 17.0.1
       start-server-and-test: 1.15.5
       tinylicious: 3.1.0-240326
-      url: 0.11.3
       uuid: 9.0.1
     devDependencies:
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
@@ -11143,7 +11043,6 @@ importers:
       '@fluidframework/tree': workspace:~
       '@microsoft/api-extractor': ^7.39.1
       '@types/chai': ^4.0.0
-      '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
       c8: ^8.0.1
       chai: ^4.2.0
@@ -11152,7 +11051,6 @@ importers:
       eslint: ~8.55.0
       eslint-config-prettier: ~9.0.0
       eslint-plugin-chai-expect: ~3.0.0
-      events: ^3.1.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
@@ -11189,7 +11087,6 @@ importers:
       '@fluidframework/test-runtime-utils': link:../../../runtime/test-runtime-utils
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i
       '@types/chai': 4.3.11
-      '@types/events': 3.0.3
       '@types/mocha': 9.1.1
       c8: 8.0.1
       chai: 4.3.10
@@ -11198,7 +11095,6 @@ importers:
       eslint: 8.55.0
       eslint-config-prettier: 9.0.0_eslint@8.55.0
       eslint-plugin-chai-expect: 3.0.0_eslint@8.55.0
-      events: 3.3.0
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
@@ -11767,7 +11663,6 @@ importers:
       '@fluidframework/telemetry-utils-previous': npm:@fluidframework/telemetry-utils@2.0.0-internal.8.0.0
       '@microsoft/api-extractor': ^7.39.1
       '@types/debug': ^4.1.5
-      '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/sinon': ^17.0.3
@@ -11777,7 +11672,6 @@ importers:
       cross-env: ^7.0.3
       debug: ^4.3.4
       eslint: ~8.55.0
-      events: ^3.1.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
@@ -11793,7 +11687,6 @@ importers:
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/protocol-definitions': 3.2.0-237840
       debug: 4.3.4
-      events: 3.3.0
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -11805,7 +11698,6 @@ importers:
       '@fluidframework/telemetry-utils-previous': /@fluidframework/telemetry-utils/2.0.0-internal.8.0.0
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
       '@types/debug': 4.1.12
-      '@types/events': 3.0.3
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/sinon': 17.0.3
@@ -11854,7 +11746,6 @@ importers:
       prettier: ~3.0.3
       proper-lockfile: ^4.1.2
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-utils': link:../../common/core-utils
@@ -11887,7 +11778,6 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
 packages:
@@ -22511,10 +22401,6 @@ packages:
 
   /@types/unist/2.0.10:
     resolution: {integrity: sha512-IfYcSBWE3hLpBg8+X2SEa8LVkJdJEkT2Ese2aaLs3ptGdVtABxndrMaxuFlQ1qdFf9Q5rDvDpxI3WwgvKFAsQA==}
-    dev: true
-
-  /@types/url-parse/1.4.4:
-    resolution: {integrity: sha512-KtQLad12+4T/NfSxpoDhmr22+fig3T7/08QCgmutYA6QSznSRmEtuL95GrhVV40/0otTEdFc+etRcCTqhh1q5Q==}
     dev: true
 
   /@types/uuid/9.0.7:
@@ -38533,6 +38419,7 @@ packages:
 
   /querystringify/2.2.0:
     resolution: {integrity: sha512-FIqgj2EUvTa7R50u0rGsyTftzjYmv/a3hO345bZNrqabNqjtgiDMgmo4mkUjd+nzU5oF3dClKqFIPUKybUyqoQ==}
+    dev: true
 
   /queue-microtask/1.2.3:
     resolution: {integrity: sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==}
@@ -43275,6 +43162,7 @@ packages:
     dependencies:
       querystringify: 2.2.0
       requires-port: 1.0.0
+    dev: true
 
   /url-slug/2.0.0:
     resolution: {integrity: sha512-aiNmSsVgrjCiJ2+KWPferjT46YFKoE8i0YX04BlMVDue022Xwhg/zYlnZ6V9/mP3p8Wj7LEp0myiTkC/p6sxew==}
