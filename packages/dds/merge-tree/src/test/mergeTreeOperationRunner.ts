@@ -9,12 +9,13 @@ import { strict as assert } from "assert";
 import * as fs from "fs";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IRandom } from "@fluid-private/stochastic-test-utils";
-import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
-import { TextSegment } from "../textSegment";
-import { ISegment, SegmentGroup, toRemovalInfo } from "../mergeTreeNodes";
-import { walkAllChildSegments } from "../mergeTreeNodeWalk";
-import { TestClient } from "./testClient";
-import { TestClientLogger } from "./testClientLogger";
+import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops.js";
+import { TextSegment } from "../textSegment.js";
+import { ISegment, SegmentGroup, toRemovalInfo } from "../mergeTreeNodes.js";
+import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
+import { TestClient } from "./testClient.js";
+import { TestClientLogger } from "./testClientLogger.js";
+import { _dirname } from "./dirname.cjs";
 
 export type TestOperation = (
 	client: TestClient,
@@ -207,7 +208,7 @@ export interface ReplayGroup {
 	seq: number;
 }
 
-export const replayResultsPath = `${__dirname}/../../src/test/results`;
+export const replayResultsPath = `${_dirname}/../../src/test/results`;
 
 export function runMergeTreeOperationRunner(
 	random: IRandom,
