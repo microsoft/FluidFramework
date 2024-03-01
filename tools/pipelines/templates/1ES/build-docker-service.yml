@@ -134,6 +134,7 @@ extends:
     # Skip tagging if Github PR coming from a fork;  This skips Microsoft security checks that won't work on forks. 
     settings:
       skipBuildTagsForGitHubPullRequests: true
+      SKIPAUTOMATICIMAGESCAN: true
     customBuildTags:
       - ES365AIMigrationTooling
     stages:
