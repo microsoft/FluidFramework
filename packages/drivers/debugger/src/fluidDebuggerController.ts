@@ -23,8 +23,8 @@ import {
 	ReplayController,
 	SnapshotStorage,
 } from "@fluidframework/replay-driver";
-import { IDebuggerController, IDebuggerUI } from "./fluidDebuggerUi";
-import { Sanitizer } from "./sanitizer";
+import { IDebuggerController, IDebuggerUI } from "./fluidDebuggerUi.js";
+import { Sanitizer } from "./sanitizer.js";
 
 /**
  * @internal
