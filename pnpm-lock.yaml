@@ -5803,6 +5803,7 @@ importers:
       '@fluidframework/map': link:../../../packages/dds/map
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
@@ -11814,7 +11815,7 @@ packages:
       commander: 10.0.1
       marked: 9.1.6
       marked-terminal: 6.1.0_marked@9.1.6
-      semver: 7.5.4
+      semver: 7.6.0
     dev: true
 
   /@arethetypeswrong/core/0.13.3:
@@ -11823,7 +11824,7 @@ packages:
     dependencies:
       '@andrewbranch/untar.js': 1.0.3
       fflate: 0.7.4
-      semver: 7.5.4
+      semver: 7.6.0
       typescript: 5.3.2
       validate-npm-package-name: 5.0.0
     dev: true
