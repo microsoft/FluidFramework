@@ -4,12 +4,11 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase, isPromiseLike } from "@fluidframework/core-utils";
 import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
 import {
 	IEvent,
-	ITelemetryProperties,
-	TelemetryEventCategory,
+	ITelemetryBaseProperties,
 	FluidObject,
 	LogLevel,
 	IRequest,
@@ -89,22 +88,23 @@ import {
 	GenericError,
 	UsageError,
 	IFluidErrorBase,
+	type TelemetryEventCategory,
 } from "@fluidframework/telemetry-utils";
 import structuredClone from "@ungap/structured-clone";
-import { Audience } from "./audience";
-import { ContainerContext } from "./containerContext";
+import { Audience } from "./audience.js";
+import { ContainerContext } from "./containerContext.js";
 import {
 	ReconnectMode,
 	IConnectionManagerFactoryArgs,
 	getPackageName,
 	IConnectionDetailsInternal,
 	IConnectionStateChangeReason,
-} from "./contracts";
-import { DeltaManager, IConnectionArgs } from "./deltaManager";
-import { IDetachedBlobStorage, ILoaderOptions, RelativeLoader } from "./loader";
-import { pkgVersion } from "./packageVersion";
-import { ContainerStorageAdapter, ISerializableBlobContents } from "./containerStorageAdapter";
-import { IConnectionStateHandler, createConnectionStateHandler } from "./connectionStateHandler";
+} from "./contracts.js";
+import { DeltaManager, IConnectionArgs } from "./deltaManager.js";
+import { IDetachedBlobStorage, ILoaderOptions, RelativeLoader } from "./loader.js";
+import { pkgVersion } from "./packageVersion.js";
+import { ContainerStorageAdapter, ISerializableBlobContents } from "./containerStorageAdapter.js";
+import { IConnectionStateHandler, createConnectionStateHandler } from "./connectionStateHandler.js";
 import {
 	ISnapshotTreeWithBlobContents,
 	combineAppAndProtocolSummary,
@@ -113,19 +113,19 @@ import {
 	combineSnapshotTreeAndSnapshotBlobs,
 	getDetachedContainerStateFromSerializedContainer,
 	runSingle,
-} from "./utils";
-import { initQuorumValuesFromCodeDetails } from "./quorum";
-import { NoopHeuristic } from "./noopHeuristic";
-import { ConnectionManager } from "./connectionManager";
-import { ConnectionState } from "./connectionState";
+} from "./utils.js";
+import { initQuorumValuesFromCodeDetails } from "./quorum.js";
+import { NoopHeuristic } from "./noopHeuristic.js";
+import { ConnectionManager } from "./connectionManager.js";
+import { ConnectionState } from "./connectionState.js";
 import {
 	IProtocolHandler,
 	ProtocolHandler,
 	ProtocolHandlerBuilder,
 	protocolHandlerShouldProcessSignal,
-} from "./protocol";
-import { AttachProcessProps, AttachmentData, runRetriableAttachProcess } from "./attachment";
-import { SerializedStateManager } from "./serializedStateManager";
+} from "./protocol.js";
+import { AttachProcessProps, AttachmentData, runRetriableAttachProcess } from "./attachment.js";
+import { SerializedStateManager } from "./serializedStateManager.js";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -326,7 +326,7 @@ const getCodeProposal = (quorum: IQuorumProposals) => quorum.get("code") ?? quor
 export async function ReportIfTooLong(
 	logger: ITelemetryLoggerExt,
 	eventName: string,
-	action: () => Promise<ITelemetryProperties>,
+	action: () => Promise<ITelemetryBaseProperties>,
 ) {
 	const event = PerformanceEvent.start(logger, { eventName });
 	const props = await action();
@@ -341,6 +341,7 @@ export async function ReportIfTooLong(
  * @internal
  */
 export interface IPendingContainerState {
+	attached: true;
 	pendingRuntimeState: unknown;
 	/**
 	 * Snapshot from which container initially loaded.
@@ -367,10 +368,11 @@ export interface IPendingContainerState {
  * @internal
  */
 export interface IPendingDetachedContainerState {
-	attached: boolean;
+	attached: false;
 	baseSnapshot: ISnapshotTree;
 	snapshotBlobs: ISerializableBlobContents;
 	hasAttachmentBlobs: boolean;
+	pendingRuntimeState?: unknown;
 }
 
 const summarizerClientType = "summarizer";
@@ -893,7 +895,7 @@ export class Container
 				logConnectionIssue: (
 					eventName: string,
 					category: TelemetryEventCategory,
-					details?: ITelemetryProperties,
+					details?: ITelemetryBaseProperties,
 				) => {
 					const mode = this.connectionMode;
 					// We get here when socket does not receive any ops on "write" connection, including
@@ -1177,22 +1179,32 @@ export class Container
 	}
 
 	public serialize(): string {
-		assert(
-			this.attachState === AttachState.Detached,
-			0x0d3 /* "Should only be called in detached container" */,
-		);
+		if (this.attachmentData.state === AttachState.Attached || this.closed) {
+			throw new UsageError("Container must not be attached or closed.");
+		}
 
-		const appSummary: ISummaryTree = this.runtime.createSummary();
-		const protocolSummary = this.captureProtocolSummary();
-		const combinedSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
+		const attachingData =
+			this.attachmentData.state === AttachState.Attaching ? this.attachmentData : undefined;
+
+		const combinedSummary =
+			attachingData?.summary ??
+			combineAppAndProtocolSummary(
+				this.runtime.createSummary(),
+				this.captureProtocolSummary(),
+			);
 
 		const { tree: snapshot, blobs } =
 			getSnapshotTreeAndBlobsFromSerializedContainer(combinedSummary);
+
+		const pendingRuntimeState =
+			attachingData !== undefined ? this.runtime.getPendingLocalState() : undefined;
+		assert(!isPromiseLike(pendingRuntimeState), "should not be a promise");
 
 		const detachedContainerState: IPendingDetachedContainerState = {
 			attached: false,
 			baseSnapshot: snapshot,
 			snapshotBlobs: blobs,
+			pendingRuntimeState,
 			hasAttachmentBlobs: !!this.detachedBlobStorage && this.detachedBlobStorage.size > 0,
 		};
 		return JSON.stringify(detachedContainerState);
@@ -1793,10 +1805,10 @@ export class Container
 	}
 
 	private async rehydrateDetachedFromSnapshot({
-		attached,
 		baseSnapshot,
 		snapshotBlobs,
 		hasAttachmentBlobs,
+		pendingRuntimeState,
 	}: IPendingDetachedContainerState) {
 		if (hasAttachmentBlobs) {
 			assert(
@@ -1830,7 +1842,11 @@ export class Container
 		);
 		const codeDetails = this.getCodeDetailsFromQuorum();
 
-		await this.instantiateRuntime(codeDetails, snapshotTreeWithBlobContents);
+		await this.instantiateRuntime(
+			codeDetails,
+			snapshotTreeWithBlobContents,
+			pendingRuntimeState,
+		);
 
 		this.setLoaded();
 	}

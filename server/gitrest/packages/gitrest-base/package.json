@@ -80,7 +80,7 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@fluidframework/eslint-config-fluid": "^4.0.0",
 		"@types/async": "^3.2.9",
 		"@types/cors": "^2.8.4",
 		"@types/debug": "^4.1.5",
@@ -99,7 +99,7 @@
 		"async": "^3.2.2",
 		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",
-		"eslint": "~8.27.0",
+		"eslint": "~8.55.0",
 		"ioredis-mock": "^8.9.0",
 		"lorem-ipsum": "^1.0.6",
 		"mocha": "^10.1.0",
