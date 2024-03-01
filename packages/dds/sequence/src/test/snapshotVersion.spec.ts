@@ -15,6 +15,7 @@ import {
 import { SharedString } from "../sharedString.js";
 import { SharedStringFactory } from "../sequenceFactory.js";
 import { generateStrings, LocationBase } from "./generateSharedStrings.js";
+import { _dirname } from "./dirname.cjs";
 
 function assertIntervalCollectionsAreEquivalent(
 	actual: SharedString,
@@ -70,7 +71,7 @@ describe("SharedString Snapshot Version", () => {
 		"and then run npm test:newsnapfiles to create new snapshot test files.";
 
 	before(() => {
-		fileBase = path.join(__dirname, `../../${LocationBase}`);
+		fileBase = path.join(_dirname, `../../${LocationBase}`);
 	});
 
 	async function loadSharedString(id: string, serializedSnapshot: string): Promise<SharedString> {

@@ -14,12 +14,13 @@ import {
 import { SharedString } from "../sharedString.js";
 import { SharedStringFactory } from "../sequenceFactory.js";
 import { LocationBase } from "./generateSharedStrings.js";
+import { _dirname } from "./dirname.cjs";
 
 describe("SharedString Snapshot Version - Empty Props", () => {
 	let filebase: string;
 
 	before(() => {
-		filebase = path.join(__dirname, `../../${LocationBase}`);
+		filebase = path.join(_dirname, `../../${LocationBase}`);
 	});
 
 	async function loadSharedString(id: string, serializedSnapshot: string): Promise<SharedString> {
