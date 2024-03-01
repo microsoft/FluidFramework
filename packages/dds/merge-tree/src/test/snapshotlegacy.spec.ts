@@ -8,14 +8,14 @@ import { strict as assert } from "assert";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { MockStorage } from "@fluidframework/test-runtime-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { SnapshotLegacy } from "../snapshotlegacy";
+import { SnapshotLegacy } from "../snapshotlegacy.js";
 import {
 	createInsertOnlyAttributionPolicy,
 	createPropertyTrackingAndInsertionAttributionPolicyFactory,
-} from "../attributionPolicy";
-import { TestSerializer } from "./testSerializer";
-import { createClientsAtInitialState } from "./testClientLogger";
-import { TestClient } from "./testClient";
+} from "../attributionPolicy.js";
+import { TestSerializer } from "./testSerializer.js";
+import { createClientsAtInitialState } from "./testClientLogger.js";
+import { TestClient } from "./testClient.js";
 
 describe("snapshot", () => {
 	it("header only", async () => {

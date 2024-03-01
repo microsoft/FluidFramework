@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { LocalReferencePosition } from "./localReference";
-import { ISegment } from "./mergeTreeNodes";
+import { LocalReferencePosition } from "./localReference.js";
+import { ISegment } from "./mergeTreeNodes.js";
 // eslint-disable-next-line import/no-deprecated
-import { SortedSet } from "./sortedSet";
+import { SortedSet } from "./sortedSet.js";
 
 /**
  * @deprecated This functionality was not meant to be exported and will be removed in a future release
