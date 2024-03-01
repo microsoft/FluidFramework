@@ -3,12 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { SessionSpaceCompressedId, OpSpaceCompressedId, SessionId, StableId } from "./identifiers";
+import {
+	SessionSpaceCompressedId,
+	OpSpaceCompressedId,
+	SessionId,
+	StableId,
+} from "./identifiers.js";
 import {
 	IdCreationRange,
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
-} from "./persisted-types";
+} from "./persisted-types/index.js";
 
 /**
  * A distributed UUID generator and compressor.

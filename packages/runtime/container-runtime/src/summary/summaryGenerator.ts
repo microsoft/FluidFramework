@@ -8,7 +8,7 @@ import {
 	PerformanceEvent,
 	LoggingError,
 } from "@fluidframework/telemetry-utils";
-import { ITelemetryProperties } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 
 import {
 	assert,
@@ -187,7 +187,7 @@ export class RetriableSummaryError extends LoggingError {
 	constructor(
 		message: string,
 		public readonly retryAfterSeconds?: number,
-		props?: ITelemetryProperties,
+		props?: ITelemetryBaseProperties,
 	) {
 		super(message, props);
 	}

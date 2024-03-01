@@ -8,7 +8,7 @@ import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions"
 import {
 	combineAppAndProtocolSummary,
 	getSnapshotTreeAndBlobsFromSerializedContainer,
-} from "../utils";
+} from "../utils.js";
 
 describe("Dehydrate Container", () => {
 	const protocolSummary: ISummaryTree = {

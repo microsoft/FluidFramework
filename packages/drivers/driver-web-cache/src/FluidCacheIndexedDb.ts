@@ -7,7 +7,7 @@ import { openDB, DBSchema, DeleteDBCallbacks, IDBPDatabase, deleteDB } from "idb
 import { ICacheEntry } from "@fluidframework/odsp-driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { FluidCacheErrorEvent } from "./fluidCacheTelemetry";
+import { FluidCacheErrorEvent } from "./fluidCacheTelemetry.js";
 
 // The name of the database that we use for caching Fluid info.
 export const FluidDriverCacheDBName = "fluidDriverCache";

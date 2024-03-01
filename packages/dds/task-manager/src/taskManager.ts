@@ -21,8 +21,8 @@ import {
 	SharedObject,
 } from "@fluidframework/shared-object-base";
 import { ReadOnlyInfo } from "@fluidframework/container-definitions";
-import { TaskManagerFactory } from "./taskManagerFactory";
-import { ITaskManager, ITaskManagerEvents } from "./interfaces";
+import { TaskManagerFactory } from "./taskManagerFactory.js";
+import { ITaskManager, ITaskManagerEvents } from "./interfaces.js";
 
 /**
  * Description of a task manager operation

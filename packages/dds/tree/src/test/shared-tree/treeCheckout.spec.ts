@@ -16,6 +16,7 @@ import {
 	checkoutWithContent,
 	validateTreeContent,
 	numberSequenceRootSchema,
+	schematizeFlexTree,
 	stringSequenceRootSchema,
 } from "../utils.js";
 import {
@@ -385,9 +386,9 @@ describe("sharedTreeView", () => {
 
 		it("submit edits to Fluid when merging into the root view", () => {
 			const provider = new TestTreeProviderLite(2);
-			const tree1 = provider.trees[0].schematizeInternal(emptyJsonSequenceConfig).checkout;
+			const tree1 = schematizeFlexTree(provider.trees[0], emptyJsonSequenceConfig).checkout;
 			provider.processMessages();
-			const tree2 = provider.trees[1].schematizeInternal(emptyJsonSequenceConfig).checkout;
+			const tree2 = schematizeFlexTree(provider.trees[1], emptyJsonSequenceConfig).checkout;
 			provider.processMessages();
 			const baseView = tree1.fork();
 			const view = baseView.fork();
@@ -405,7 +406,7 @@ describe("sharedTreeView", () => {
 
 		it("do not squash commits", () => {
 			const provider = new TestTreeProviderLite(2);
-			const tree1 = provider.trees[0].schematizeInternal(emptyJsonSequenceConfig).checkout;
+			const tree1 = schematizeFlexTree(provider.trees[0], emptyJsonSequenceConfig).checkout;
 			provider.processMessages();
 			const tree2 = provider.trees[1];
 			let opsReceived = 0;
@@ -787,12 +788,12 @@ function itView(
 	};
 	const config = {
 		...content,
-		allowedSchemaModifications: AllowedUpdateType.None,
+		allowedSchemaModifications: AllowedUpdateType.Initialize,
 	};
 	it(`${title} (root view)`, () => {
 		const provider = new TestTreeProviderLite();
 		// Test an actual SharedTree.
-		fn(provider.trees[0].schematizeInternal(config).checkout);
+		fn(schematizeFlexTree(provider.trees[0], config).checkout);
 	});
 
 	it(`${title} (reference view)`, () => {
@@ -801,7 +802,7 @@ function itView(
 
 	it(`${title} (forked view)`, () => {
 		const provider = new TestTreeProviderLite();
-		fn(provider.trees[0].schematizeInternal(config).checkout.fork());
+		fn(schematizeFlexTree(provider.trees[0], config).checkout.fork());
 	});
 
 	it(`${title} (reference forked view)`, () => {
