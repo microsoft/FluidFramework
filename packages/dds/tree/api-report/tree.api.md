@@ -1715,14 +1715,14 @@ export class test_RecursiveObject extends test_RecursiveObject_base {
 }
 
 // @internal
-export const test_RecursiveObject_base: TreeNodeSchemaClass<"Test Recursive Domain.testObject", NodeKind.Object, TreeNode & ObjectFromSchemaRecord<    {
-readonly recursive: FieldSchema<FieldKind.Optional, readonly [() => typeof test_RecursiveObject]>;
+export const test_RecursiveObject_base: TreeNodeSchemaClass<"Test Recursive Domain.testObject", NodeKind.Object, TreeNode & ObjectFromSchemaRecordUnsafe<    {
+readonly recursive: FieldSchemaUnsafe<FieldKind.Optional, readonly [() => typeof test_RecursiveObject]>;
 readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
-}> & WithType<"Test Recursive Domain.testObject">, object & InsertableObjectFromSchemaRecord<    {
-readonly recursive: FieldSchema<FieldKind.Optional, readonly [() => typeof test_RecursiveObject]>;
+}> & WithType<"Test Recursive Domain.testObject">, object & InsertableObjectFromSchemaRecordUnsafe<    {
+readonly recursive: FieldSchemaUnsafe<FieldKind.Optional, readonly [() => typeof test_RecursiveObject]>;
 readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
-}>, true, {
-readonly recursive: FieldSchema<FieldKind.Optional, readonly [() => typeof test_RecursiveObject]>;
+}>, false, {
+readonly recursive: FieldSchemaUnsafe<FieldKind.Optional, readonly [() => typeof test_RecursiveObject]>;
 readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
 }>;
 
@@ -2009,9 +2009,6 @@ TFields extends {
     -readonly [key in keyof TFields]: InsertableFlexField<TFields[key]>;
 } : EmptyObject
 ][_InlineTrick];
-
-// @internal
-export type TypedNodeUnsafe<_TSchema extends Unenforced<FlexObjectNodeSchema | FlexFieldNodeSchema | FlexMapNodeSchema>> = TreeNode & WithType;
 
 // @internal
 export function typedObjectValues<TKey extends string, TValues>(object: Record<TKey, TValues>): TValues[];

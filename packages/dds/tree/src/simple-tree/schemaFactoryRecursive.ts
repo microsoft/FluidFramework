@@ -4,10 +4,7 @@
  */
 
 import {
-	FlexFieldNodeSchema,
 	FlexListToUnion,
-	FlexMapNodeSchema,
-	FlexObjectNodeSchema,
 	FlexTreeNode,
 	Unenforced,
 	isFlexTreeNode,
@@ -66,44 +63,20 @@ export type TreeNodeFromImplicitAllowedTypesUnsafe<
 	: TSchema extends AllowedTypes
 	? NodeFromSchema<FlexListToUnion<TSchema>>
 	: unknown;
-// TSchema extends any[] ? TypedNodeUnsafe<FlexListToUnion<TSchema>> : TypedNodeUnsafe<TSchema>;
-
-/**
- * {@link Unenforced} version of `TypedNode`.
- * @internal
- */
-export type TypedNodeUnsafe<
-	_TSchema extends Unenforced<FlexObjectNodeSchema | FlexFieldNodeSchema | FlexMapNodeSchema>,
-> = TreeNode & WithType; // <TSchema["name"]>;
 
 /**
  * {@link Unenforced} version of {@link InsertableTreeNodeFromImplicitAllowedTypes}.
  * @internal
  */
-// export type InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
-// 	TSchema extends Unenforced<ImplicitAllowedTypes>,
-// > = TSchema extends TreeNodeSchema
-// 	? InsertableTypedNode<TSchema>
-// 	: TSchema extends AllowedTypes
-// 	? InsertableTypedNode<FlexListToUnion<TSchema>>
-// 	: never;
-
-/**
- * {@link Unenforced} version2 of {@link InsertableTreeNodeFromImplicitAllowedTypes}.
- * @internal
- */
 export type InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
 	TSchema extends Unenforced<ImplicitAllowedTypes>,
 > = TSchema extends AllowedTypes
-	? InsertableTypedNodeUnsafe<FlexListToUnion<TSchema>> // TODO
-	: InsertableTypedNodeUnsafe<TSchema>; // TODO
+	? InsertableTypedNodeUnsafe<FlexListToUnion<TSchema>>
+	: InsertableTypedNodeUnsafe<TSchema>;
 
 /**
  * {@link Unenforced} version of {@link InsertableTypedNode}.
  * @internal
- * @privateRemarks
- * Implicit construction under a recursive node is having issues in some cases, so its disabled for now to avoid stabilizing it at all.
- * TODO: In the future consider changing this to use "InsertableTypedNodeUnsafe", and fix issues with implicit construction.
  */
 export type InsertableTypedNodeUnsafe<T extends Unenforced<TreeNodeSchema>> =
 	| Unhydrated<NodeFromSchemaUnsafe<T>>

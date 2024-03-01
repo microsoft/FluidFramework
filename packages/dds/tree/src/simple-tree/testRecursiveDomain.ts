@@ -20,9 +20,6 @@ import { type NodeKind, type FieldKind } from "./schemaTypes.js";
 
 const builder = new SchemaFactoryRecursive("Test Recursive Domain");
 
-const recursiveReference = () => RecursiveObject;
-builder.fixRecursiveReference(recursiveReference);
-
 /**
  * To make API-Extractor happy, the base type has to be exported in addition to the actual schema class.
  * Ideally this would be inlined into the class definition below.
@@ -33,8 +30,8 @@ builder.fixRecursiveReference(recursiveReference);
  * See https://github.com/microsoft/rushstack/issues/4429
  * @internal
  */
-export const base = builder.object("testObject", {
-	recursive: builder.optional([recursiveReference]),
+export const base = builder.objectRecursive("testObject", {
+	recursive: builder.optionalRecursive([() => RecursiveObject]),
 	number: builder.number,
 });
 

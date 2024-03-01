@@ -44,7 +44,6 @@ export {
 	TreeMapNodeUnsafe,
 	InsertableObjectFromSchemaRecordUnsafe,
 	InsertableTreeFieldFromImplicitFieldUnsafe,
-	TypedNodeUnsafe,
 	InsertableTypedNodeUnsafe,
 	NodeBuilderDataUnsafe,
 	NodeFromSchemaUnsafe,
