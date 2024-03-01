@@ -21,8 +21,8 @@ import {
 } from "@fluidframework/driver-definitions";
 import { IGetPendingLocalStateProps, IRuntime } from "@fluidframework/container-definitions";
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { IPendingContainerState } from "../container";
-import { SerializedStateManager } from "../serializedStateManager";
+import { IPendingContainerState } from "../container.js";
+import { SerializedStateManager } from "../serializedStateManager.js";
 
 type ISerializedStateManagerDocumentStorageService = Pick<
 	IDocumentStorageService,
@@ -202,6 +202,7 @@ describe("serializedStateManager", () => {
 
 	it("can get snapshot from previous local state", async () => {
 		const pendingLocalState: IPendingContainerState = {
+			attached: true,
 			baseSnapshot: { id: "fromPending", blobs: {}, trees: {} },
 			snapshotBlobs: {},
 			pendingRuntimeState: {},

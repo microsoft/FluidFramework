@@ -16,22 +16,28 @@ export enum Compatibility {
 	Incompatible,
 	// For write compatibility this can include compatible schema updates to stored schema.
 	// TODO: separate schema updates from adapters.
-	RequiresAdapters,
+	// RequiresAdapters,
 	Compatible,
 }
 
 /**
  * What kinds of updates to stored schema to permit.
  *
- * TODO:
- * Currently this does not account for lazy schema updates, and/or use of adapters.
+ * Bit flags enum.
  * @internal
  */
 export enum AllowedUpdateType {
 	/**
 	 * Do not update the stored schema to match view schema.
 	 */
-	None,
+	None = 0,
+	/**
+	 * Update the stored schema as part of initializing an empty document.
+	 *
+	 * Includes "Initialize".
+	 */
+	// eslint-disable-next-line no-bitwise
+	Initialize = 1 << 0,
 	/**
 	 * Update the stored schema to match the view schema if the current document contents are compatible with the view schema.
 	 * TODO: support this option.
@@ -39,8 +45,11 @@ export enum AllowedUpdateType {
 	// DataCompatible,
 	/**
 	 * Update the stored schema to match view schema if all possible documents based on the current stored schema would be compatible with the view schema.
+	 *
+	 * Includes "Initialize".
 	 */
-	SchemaCompatible,
+	// eslint-disable-next-line no-bitwise
+	SchemaCompatible = 1 << 1,
 }
 
 /**

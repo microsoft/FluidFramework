@@ -5,17 +5,17 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/telemetry-utils";
-import { DoublyLinkedList } from "./collections";
-import { EndOfTreeSegment } from "./endOfTreeSegment";
-import { LocalReferenceCollection, LocalReferencePosition } from "./localReference";
-import { IMergeTreeDeltaCallbackArgs } from "./mergeTreeDeltaCallback";
-import { ISegmentLeaf, ISegment, toRemovalInfo } from "./mergeTreeNodes";
-import { depthFirstNodeWalk } from "./mergeTreeNodeWalk";
-import { ITrackingGroup, Trackable, UnorderedTrackingGroup } from "./mergeTreeTracking";
-import { IJSONSegment, MergeTreeDeltaType, ReferenceType } from "./ops";
-import { matchProperties, PropertySet } from "./properties";
-import { DetachedReferencePosition } from "./referencePositions";
-import { MergeTree, findRootMergeBlock } from "./mergeTree";
+import { DoublyLinkedList } from "./collections/index.js";
+import { EndOfTreeSegment } from "./endOfTreeSegment.js";
+import { LocalReferenceCollection, LocalReferencePosition } from "./localReference.js";
+import { IMergeTreeDeltaCallbackArgs } from "./mergeTreeDeltaCallback.js";
+import { ISegmentLeaf, ISegment, toRemovalInfo } from "./mergeTreeNodes.js";
+import { depthFirstNodeWalk } from "./mergeTreeNodeWalk.js";
+import { ITrackingGroup, Trackable, UnorderedTrackingGroup } from "./mergeTreeTracking.js";
+import { IJSONSegment, MergeTreeDeltaType, ReferenceType } from "./ops.js";
+import { matchProperties, PropertySet } from "./properties.js";
+import { DetachedReferencePosition } from "./referencePositions.js";
+import { MergeTree, findRootMergeBlock } from "./mergeTree.js";
 
 /**
  * @alpha

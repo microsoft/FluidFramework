@@ -39,7 +39,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 
 import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils";
-import { IBlobMetadata } from "./metadata";
+import { IBlobMetadata } from "./metadata.js";
 
 /**
  * This class represents blob (long string)

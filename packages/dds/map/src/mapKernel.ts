@@ -8,7 +8,7 @@ import { IFluidSerializer, ValueType, bindHandles } from "@fluidframework/shared
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 // eslint-disable-next-line import/no-deprecated
-import { ISerializableValue, ISerializedValue, ISharedMapEvents } from "./interfaces";
+import { ISerializableValue, ISerializedValue, ISharedMapEvents } from "./interfaces.js";
 import {
 	IMapSetOperation,
 	IMapDeleteOperation,
@@ -16,8 +16,8 @@ import {
 	IMapKeyEditLocalOpMetadata,
 	IMapKeyAddLocalOpMetadata,
 	IMapClearLocalOpMetadata,
-} from "./internalInterfaces";
-import { ILocalValue, LocalValueMaker, makeSerializable } from "./localValues";
+} from "./internalInterfaces.js";
+import { ILocalValue, LocalValueMaker, makeSerializable } from "./localValues.js";
 
 /**
  * Defines the means to process and submit a given op on a map.
