@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBufferedLogger } from "./interfaces";
+import { ITelemetryBufferedLogger } from "./interfaces.js";
 
 declare global {
 	/**
@@ -19,4 +19,4 @@ export {
 	OdspEndpoint,
 	RouterliciousEndpoint,
 	TestDriverTypes,
-} from "./interfaces";
+} from "./interfaces.js";
