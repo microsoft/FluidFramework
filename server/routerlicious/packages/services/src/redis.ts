@@ -46,6 +46,7 @@ export class RedisCache implements ICache {
 
 	public async get(key: string): Promise<string> {
 		try {
+			// eslint-disable-next-line @typescript-eslint/return-await
 			return this.client.get(this.getKey(key));
 		} catch (error: any) {
 			const newError: Error = { name: error?.name, message: error?.message };
@@ -82,6 +83,7 @@ export class RedisCache implements ICache {
 
 	public async incr(key: string): Promise<number> {
 		try {
+			// eslint-disable-next-line @typescript-eslint/return-await
 			return this.client.incr(key);
 		} catch (error: any) {
 			const newError: Error = { name: error?.name, message: error?.message };
@@ -96,6 +98,7 @@ export class RedisCache implements ICache {
 
 	public async decr(key: string): Promise<number> {
 		try {
+			// eslint-disable-next-line @typescript-eslint/return-await
 			return this.client.decr(key);
 		} catch (error: any) {
 			const newError: Error = { name: error?.name, message: error?.message };

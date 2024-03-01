@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { DriverHeader, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { InsecureUrlResolver } from "../insecureUrlResolver";
+import { InsecureUrlResolver } from "../insecureUrlResolver.js";
 
 describe("Insecure Url Resolver Test", () => {
 	const deltaStreamUrl = "https://localhost.deltaStream";

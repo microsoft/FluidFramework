@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLoggerExt, type ITelemetryErrorEventExt } from "@fluidframework/telemetry-utils";
-import { isOnline, OnlineStatus, canRetryOnError } from "./network";
+import { isOnline, OnlineStatus, canRetryOnError } from "./network.js";
 
 /**
  * @internal

@@ -19,9 +19,9 @@ import { GitManager } from "@fluidframework/server-services-client";
 import { TestHistorian } from "@fluidframework/server-test-utils";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { LocalDocumentStorageService } from "./localDocumentStorageService";
-import { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection";
-import { LocalDeltaStorageService } from "./localDeltaStorageService";
+import { LocalDocumentStorageService } from "./localDocumentStorageService.js";
+import { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection.js";
+import { LocalDeltaStorageService } from "./localDeltaStorageService.js";
 
 /**
  * Basic implementation of a document service for local use.
