@@ -18,9 +18,9 @@ import {
 	IContainerRuntimeMetadata,
 	ICreateContainerMetadata,
 	IRefreshSummaryResult,
-} from "../summary";
-import { RuntimeHeaderData } from "../containerRuntime";
-import { ContainerRuntimeGCMessage } from "../messageTypes";
+} from "../summary/index.js";
+import { RuntimeHeaderData } from "../containerRuntime.js";
+import { ContainerRuntimeGCMessage } from "../messageTypes.js";
 
 /**
  * @alpha

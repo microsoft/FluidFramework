@@ -19,10 +19,10 @@ import {
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 
-import { LocalFluidDataStoreContext } from "../dataStoreContext";
-import { createParentContext } from "../dataStores";
-import { ContainerRuntime } from "../containerRuntime";
-import { createRootSummarizerNodeWithGC } from "../summary";
+import { LocalFluidDataStoreContext } from "../dataStoreContext.js";
+import { createParentContext } from "../dataStores.js";
+import { ContainerRuntime } from "../containerRuntime.js";
+import { createRootSummarizerNodeWithGC } from "../summary/index.js";
 
 function createRuntimeContext(id: string, runtime: ContainerRuntime) {
 	return createParentContext(id, runtime);

@@ -60,16 +60,20 @@ import {
 	IContainerRuntimeOptions,
 	IPendingRuntimeState,
 	defaultPendingOpsWaitTimeoutMs,
-} from "../containerRuntime";
+} from "../containerRuntime.js";
 import {
 	ContainerMessageType,
 	type RecentlyAddedContainerRuntimeMessageDetails,
 	type OutboundContainerRuntimeMessage,
 	type UnknownContainerRuntimeMessage,
-} from "../messageTypes";
-import { IPendingLocalState, IPendingMessage, PendingStateManager } from "../pendingStateManager";
-import { DataStores } from "../dataStores";
-import { ISummaryCancellationToken, neverCancelledSummaryToken } from "../summary";
+} from "../messageTypes.js";
+import {
+	IPendingLocalState,
+	IPendingMessage,
+	PendingStateManager,
+} from "../pendingStateManager.js";
+import { DataStores } from "../dataStores.js";
+import { ISummaryCancellationToken, neverCancelledSummaryToken } from "../summary/index.js";
 
 function submitDataStoreOp(
 	runtime: Pick<ContainerRuntime, "submitMessage">,

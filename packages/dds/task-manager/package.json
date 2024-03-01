@@ -101,6 +101,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
+		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
@@ -109,8 +110,7 @@
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/protocol-definitions": "^3.2.0-237840",
 		"@fluidframework/runtime-definitions": "workspace:~",
-		"@fluidframework/shared-object-base": "workspace:~",
-		"events": "^3.1.0"
+		"@fluidframework/shared-object-base": "workspace:~"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",

@@ -9,5 +9,6 @@
 		"strict": false,
 		"rootDir": "./src",
 		"outDir": "./dist",
+		"types": ["node"],
 	},
 }

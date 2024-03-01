@@ -60,26 +60,34 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils";
 import { v4 as uuid } from "uuid";
-import { DataStoreContexts } from "./dataStoreContexts";
-import { defaultRuntimeHeaderData, RuntimeHeaderData } from "./containerRuntime";
+import { DataStoreContexts } from "./dataStoreContexts.js";
+import { defaultRuntimeHeaderData, RuntimeHeaderData } from "./containerRuntime.js";
 import {
 	FluidDataStoreContext,
 	RemoteFluidDataStoreContext,
 	LocalFluidDataStoreContext,
 	createAttributesBlob,
 	LocalDetachedFluidDataStoreContext,
-} from "./dataStoreContext";
-import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs";
-import { IDataStoreAliasMessage, channelToDataStore, isDataStoreAliasMessage } from "./dataStore";
+} from "./dataStoreContext.js";
+import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs.js";
+import {
+	IDataStoreAliasMessage,
+	channelToDataStore,
+	isDataStoreAliasMessage,
+} from "./dataStore.js";
 import {
 	GCNodeType,
 	GCNodeUpdatedCallback,
 	detectOutboundRoutesViaDDSKey,
 	trimLeadingAndTrailingSlashes,
 } from "./gc";
-import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summary";
-import { ContainerMessageType, LocalContainerRuntimeMessage } from "./messageTypes";
-import { FluidDataStoreRegistry } from "./dataStoreRegistry";
+import {
+	IContainerRuntimeMetadata,
+	nonDataStorePaths,
+	rootHasIsolatedChannels,
+} from "./summary/index.js";
+import { ContainerMessageType, LocalContainerRuntimeMessage } from "./messageTypes.js";
+import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
 
 /**
  * Accepted header keys for requests coming to the runtime.

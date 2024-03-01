@@ -70,8 +70,8 @@ import {
 	getAttributesFormatVersion,
 	getFluidDataStoreAttributes,
 	summarizerClientType,
-} from "./summary";
-import { detectOutboundRoutesViaDDSKey, sendGCUnexpectedUsageEvent } from "./gc";
+} from "./summary/index.js";
+import { detectOutboundRoutesViaDDSKey, sendGCUnexpectedUsageEvent } from "./gc/index.js";
 
 function createAttributes(
 	pkg: readonly string[],

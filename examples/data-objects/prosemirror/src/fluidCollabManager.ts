@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { EventEmitter } from "events";
+import { EventEmitter } from "@fluid-example/example-utils";
 // eslint-disable-next-line import/no-deprecated
 import { createGroupOp, createRemoveRangeOp, IMergeTreeDeltaOp } from "@fluidframework/merge-tree";
 import { SharedString, Marker, ReferenceType, TextSegment } from "@fluidframework/sequence";

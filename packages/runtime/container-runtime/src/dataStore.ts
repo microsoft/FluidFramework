@@ -12,8 +12,8 @@ import {
 	IDataStore,
 	IFluidDataStoreChannel,
 } from "@fluidframework/runtime-definitions";
-import { DataStores } from "./dataStores";
-import { ContainerMessageType } from "./messageTypes";
+import { DataStores } from "./dataStores.js";
+import { ContainerMessageType } from "./messageTypes.js";
 
 /**
  * Interface for an op to be used for assigning an

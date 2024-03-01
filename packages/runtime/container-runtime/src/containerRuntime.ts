@@ -106,17 +106,17 @@ import {
 	responseToException,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
-import { ContainerFluidHandleContext } from "./containerHandleContext";
-import { FluidDataStoreRegistry } from "./dataStoreRegistry";
-import { ReportOpPerfTelemetry, IPerfSignalReport } from "./connectionTelemetry";
+import { ContainerFluidHandleContext } from "./containerHandleContext.js";
+import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
+import { ReportOpPerfTelemetry, IPerfSignalReport } from "./connectionTelemetry.js";
 import {
 	IPendingBatchMessage,
 	IPendingLocalState,
 	PendingStateManager,
-} from "./pendingStateManager";
-import { pkgVersion } from "./packageVersion";
-import { BlobManager, IBlobManagerLoadInfo, IPendingBlobs } from "./blobManager";
-import { DataStores, getSummaryForDatastores, wrapContext } from "./dataStores";
+} from "./pendingStateManager.js";
+import { pkgVersion } from "./packageVersion.js";
+import { BlobManager, IBlobManagerLoadInfo, IPendingBlobs } from "./blobManager.js";
+import { DataStores, getSummaryForDatastores, wrapContext } from "./dataStores.js";
 import {
 	aliasBlobName,
 	blobsTreeName,
@@ -157,8 +157,8 @@ import {
 	IBaseSummarizeResult,
 	ISummarizer,
 	rootHasIsolatedChannels,
-} from "./summary";
-import { formExponentialFn, Throttler } from "./throttler";
+} from "./summary/index.js";
+import { formExponentialFn, Throttler } from "./throttler.js";
 import {
 	GarbageCollector,
 	GCNodeType,
@@ -166,10 +166,10 @@ import {
 	IGarbageCollector,
 	IGCRuntimeOptions,
 	IGCStats,
-} from "./gc";
-import { channelToDataStore } from "./dataStore";
-import { BindBatchTracker } from "./batchTracker";
-import { ScheduleManager } from "./scheduleManager";
+} from "./gc/index.js";
+import { channelToDataStore } from "./dataStore.js";
+import { BindBatchTracker } from "./batchTracker.js";
+import { ScheduleManager } from "./scheduleManager.js";
 import {
 	BatchMessage,
 	IBatch,
@@ -181,9 +181,9 @@ import {
 	RemoteMessageProcessor,
 	OpGroupingManager,
 	getLongStack,
-} from "./opLifecycle";
-import { DeltaManagerSummarizerProxy } from "./deltaManagerSummarizerProxy";
-import { IBatchMetadata, IIdAllocationMetadata } from "./metadata";
+} from "./opLifecycle/index.js";
+import { DeltaManagerSummarizerProxy } from "./deltaManagerSummarizerProxy.js";
+import { IBatchMetadata, IIdAllocationMetadata } from "./metadata.js";
 import {
 	ContainerMessageType,
 	type InboundSequencedContainerRuntimeMessage,
@@ -193,7 +193,7 @@ import {
 	type OutboundContainerRuntimeMessage,
 	type UnknownContainerRuntimeMessage,
 	ContainerRuntimeGCMessage,
-} from "./messageTypes";
+} from "./messageTypes.js";
 
 /**
  * Utility to implement compat behaviors given an unknown message type

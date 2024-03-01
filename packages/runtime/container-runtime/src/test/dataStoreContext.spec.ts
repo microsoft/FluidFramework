@@ -52,9 +52,9 @@ import {
 	LocalDetachedFluidDataStoreContext,
 	LocalFluidDataStoreContext,
 	RemoteFluidDataStoreContext,
-} from "../dataStoreContext";
-import { ContainerRuntime } from "../containerRuntime";
-import { StorageServiceWithAttachBlobs } from "../storageServiceWithAttachBlobs";
+} from "../dataStoreContext.js";
+import { ContainerRuntime } from "../containerRuntime.js";
+import { StorageServiceWithAttachBlobs } from "../storageServiceWithAttachBlobs.js";
 import {
 	createRootSummarizerNodeWithGC,
 	dataStoreAttributesBlobName,
@@ -62,9 +62,9 @@ import {
 	ReadFluidDataStoreAttributes,
 	WriteFluidDataStoreAttributes,
 	summarizerClientType,
-} from "../summary";
-import { channelToDataStore } from "../dataStore";
-import { DataStores, createParentContext } from "../dataStores";
+} from "../summary/index.js";
+import { channelToDataStore } from "../dataStore.js";
+import { DataStores, createParentContext } from "../dataStores.js";
 
 function createRuntimeContext(id: string, runtime: ContainerRuntime) {
 	return createParentContext(id, runtime);
