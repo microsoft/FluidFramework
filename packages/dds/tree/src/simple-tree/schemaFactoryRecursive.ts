@@ -29,6 +29,17 @@ import { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
 import { TreeArrayNode } from "./treeArrayNode.js";
 import { TreeArrayNodeBase, TreeNode, Unhydrated } from "./types.js";
 
+/*
+ * TODO:
+ * Below are a bunch of "unsafe" versions of types from "schemaTypes.ts".
+ * These types duplicate the ones in "schemaTypes.ts", except with some of the extends clauses unenforced.
+ * This is not great for type safety or maintainability.
+ * Eventually it would be great to do at least one of the following:
+ * 1. Find a way to avoid needing these entirely, possibly by improving TSC's recursive type support.
+ * 2. Deduplicate the safe and unsafe types (possibly by having the safe one call the unsafe ones, or some other trick).
+ * 3. Add type tests that check that the two copies of these types produce identical results.
+ */
+
 /**
  * {@link Unenforced} version of {@link ObjectFromSchemaRecord}.
  * @internal
