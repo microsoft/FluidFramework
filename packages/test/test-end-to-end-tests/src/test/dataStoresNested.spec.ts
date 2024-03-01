@@ -28,7 +28,7 @@ import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 
 /**
- * ADO:7302 This needs to be revisited after synchronizing on a set of
+ * ADO:7302 This needs to be revisited after settling on a set of
  * unified creation APIs for the nested datastores and the container runtime.
  */
 interface IDataStores extends IFluidDataStoreChannel {
