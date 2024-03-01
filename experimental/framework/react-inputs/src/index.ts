@@ -7,15 +7,15 @@ export {
 	CollaborativeCheckbox,
 	ICollaborativeCheckboxProps,
 	ICollaborativeCheckboxState,
-} from "./CollaborativeCheckbox";
+} from "./CollaborativeCheckbox.js";
 export {
 	ICollaborativeInputProps,
 	ICollaborativeInputState,
 	CollaborativeInput,
-} from "./CollaborativeInput";
-export { CollaborativeTextArea, ICollaborativeTextAreaProps } from "./CollaborativeTextArea";
+} from "./CollaborativeInput.js";
+export { CollaborativeTextArea, ICollaborativeTextAreaProps } from "./CollaborativeTextArea.js";
 export {
 	ISharedStringHelperEvents,
 	ISharedStringHelperTextChangedEventArgs,
 	SharedStringHelper,
-} from "./SharedStringHelper";
+} from "./SharedStringHelper.js";

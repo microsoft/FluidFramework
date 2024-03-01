@@ -4,7 +4,10 @@
  */
 
 import React, { useEffect, useRef, useState } from "react";
-import { ISharedStringHelperTextChangedEventArgs, SharedStringHelper } from "./SharedStringHelper";
+import {
+	ISharedStringHelperTextChangedEventArgs,
+	SharedStringHelper,
+} from "./SharedStringHelper.js";
 
 /**
  * {@link CollaborativeTextArea} input props.

@@ -5871,6 +5871,7 @@ importers:
 
   experimental/framework/react-inputs:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/build-common': ^2.0.3
@@ -5883,6 +5884,7 @@ importers:
       '@microsoft/api-extractor': ^7.39.1
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
+      copyfiles: ^2.4.1
       eslint: ~8.50.0
       prettier: ~3.0.3
       react: ^17.0.1
@@ -5896,6 +5898,7 @@ importers:
       '@fluidframework/sequence': link:../../../packages/dds/sequence
       react: 17.0.2
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.34.0_mhw3tufvtaceew37hrkkevjcli
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
@@ -5903,6 +5906,7 @@ importers:
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
       '@types/node': 18.19.1
       '@types/react': 17.0.71
+      copyfiles: 2.4.1
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
