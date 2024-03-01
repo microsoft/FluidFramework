@@ -113,23 +113,42 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 	});
 
 	const loadingGroupId = "loadingGroupId";
+	const loadingGroupId2 = "loadingGroupId2";
 	it("Can create loadingGroupId", async () => {
 		const container = await provider.createContainer(runtimeFactory);
 		const mainObject = (await container.getEntryPoint()) as TestDataObject;
 		const containerRuntime = mainObject.containerRuntime;
 
-		const dataStore = await containerRuntime.createDataStore(
+		// Testing all apis for creating a data store with a loadingGroupId
+		const dataObjectA = await dataObjectFactory.createInstance(
+			containerRuntime,
+			undefined,
+			loadingGroupId,
+		);
+		const dataStoreB = await containerRuntime.createDataStore(
 			testDataObjectType,
 			loadingGroupId,
 		);
-		const dataStore2 = await containerRuntime.createDataStore(
-			testDataObjectType,
-			loadingGroupId,
+		const dataObjectB = (await dataStoreB.entryPoint.get()) as TestDataObject;
+
+		const [dataObjectC] = await dataObjectFactory.createInstanceWithDataStore(
+			containerRuntime,
+			undefined,
+			undefined,
+			loadingGroupId2,
 		);
-		const dataObjectA = (await dataStore.entryPoint.get()) as TestDataObject;
-		const dataObjectB = (await dataStore2.entryPoint.get()) as TestDataObject;
+		const [_, dataStoreD] = await dataObjectFactory.createInstanceWithDataStore(
+			containerRuntime,
+			undefined,
+			undefined,
+			loadingGroupId2,
+		);
+
 		mainObject._root.set("dataObjectA", dataObjectA.handle);
 		mainObject._root.set("dataObjectB", dataObjectB.handle);
+		mainObject._root.set("dataObjectC", dataObjectC.handle);
+		const result = await dataStoreD.trySetAlias("dataObjectD");
+		assert(result === "Success", "Alias should be set");
 
 		const { summarizer } = await createSummarizerFromFactory(
 			provider,
@@ -154,10 +173,17 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			const mainObject2 = (await container2.getEntryPoint()) as TestDataObject;
 			const handleA2 = mainObject2._root.get("dataObjectA");
 			const handleB2 = mainObject2._root.get("dataObjectB");
+			const handleC2 = mainObject2._root.get("dataObjectC");
+			const handleD2 =
+				await mainObject2.containerRuntime.getAliasedDataStoreEntryPoint("dataObjectD");
 			assert(handleA2 !== undefined, "handleA2 should not be undefined");
 			assert(handleB2 !== undefined, "handleB2 should not be undefined");
+			assert(handleC2 !== undefined, "handleC2 should not be undefined");
+			assert(handleD2 !== undefined, "handleD2 should not be undefined");
 			const dataObjectA2 = (await handleA2.get()) as TestDataObject;
 			const dataObjectB2 = (await handleB2.get()) as TestDataObject;
+			const dataObjectC2 = (await handleC2.get()) as TestDataObject;
+			const dataObjectD2 = (await handleD2.get()) as TestDataObject;
 			assert.equal(
 				dataObjectA2.loadingGroupId,
 				loadingGroupId,
@@ -166,6 +192,16 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			assert.equal(
 				dataObjectB2.loadingGroupId,
 				loadingGroupId,
+				"dataObjectB groupId should be set",
+			);
+			assert.equal(
+				dataObjectC2.loadingGroupId,
+				loadingGroupId2,
+				"dataObjectB groupId should be set",
+			);
+			assert.equal(
+				dataObjectD2.loadingGroupId,
+				loadingGroupId2,
 				"dataObjectB groupId should be set",
 			);
 		}
@@ -226,18 +262,19 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 		const containerRuntime = mainObject.containerRuntime;
 
 		// Create data stores with loadingGroupIds
-		const dataStoreA = await containerRuntime.createDataStore(
-			testDataObjectType,
+		const [dataObjectA] = await dataObjectFactory.createInstanceWithDataStore(
+			containerRuntime,
+			undefined,
+			undefined,
 			loadingGroupId,
 		);
 		const dataStoreB = await containerRuntime.createDataStore(
 			testDataObjectType,
 			loadingGroupId,
 		);
+		const dataObjectB = (await dataStoreB.entryPoint.get()) as TestDataObject;
 
 		// Attach the data stores
-		const dataObjectA = (await dataStoreA.entryPoint.get()) as TestDataObject;
-		const dataObjectB = (await dataStoreB.entryPoint.get()) as TestDataObject;
 		mainObject._root.set("dataObjectA", dataObjectA.handle);
 		mainObject._root.set("dataObjectB", dataObjectB.handle);
 		dataObjectA._root.set("A", "A");
