@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import { TypedEventEmitter, stringToBuffer } from "@fluid-internal/client-utils";
+import { EventEmitter, TypedEventEmitter, stringToBuffer } from "@fluid-internal/client-utils";
 import { IIdCompressor, IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor";
 import { assert } from "@fluidframework/core-utils";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
@@ -626,10 +625,10 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
 		throw new Error("Method not implemented.");
 	}
 
-	addListener(event: string | symbol, listener: (...args: any[]) => void): this {
+	addListener(event: string | number, listener: (...args: any[]) => void): this {
 		throw new Error("Method not implemented.");
 	}
-	on(event: string | symbol, listener: (...args: any[]) => void): this {
+	on(event: string | number, listener: (...args: any[]) => void): this {
 		switch (event) {
 			case "afterOn":
 				this.eventEmitter.on(event, listener);
@@ -644,24 +643,24 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
 				throw new Error("Method not implemented.");
 		}
 	}
-	once(event: string | symbol, listener: (...args: any[]) => void): this {
+	once(event: string | number, listener: (...args: any[]) => void): this {
 		throw new Error("Method not implemented.");
 	}
-	prependListener(event: string | symbol, listener: (...args: any[]) => void): this {
+	prependListener(event: string | number, listener: (...args: any[]) => void): this {
 		throw new Error("Method not implemented.");
 	}
-	prependOnceListener(event: string | symbol, listener: (...args: any[]) => void): this {
+	prependOnceListener(event: string | number, listener: (...args: any[]) => void): this {
 		throw new Error("Method not implemented.");
 	}
-	removeListener(event: string | symbol, listener: (...args: any[]) => void): this {
+	removeListener(event: string | number, listener: (...args: any[]) => void): this {
 		this.eventEmitter.removeListener(event, listener);
 		return this;
 	}
-	off(event: string | symbol, listener: (...args: any[]) => void): this {
+	off(event: string | number, listener: (...args: any[]) => void): this {
 		this.eventEmitter.off(event, listener);
 		return this;
 	}
-	removeAllListeners(event?: string | symbol | undefined): this {
+	removeAllListeners(event?: string | number | undefined): this {
 		throw new Error("Method not implemented.");
 	}
 	setMaxListeners(n: number): this {
@@ -670,21 +669,19 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
 	getMaxListeners(): number {
 		throw new Error("Method not implemented.");
 	}
-	// eslint-disable-next-line @typescript-eslint/ban-types
-	listeners(event: string | symbol): Function[] {
+	listeners(event: string | number): ReturnType<EventEmitter["listeners"]> {
 		throw new Error("Method not implemented.");
 	}
-	// eslint-disable-next-line @typescript-eslint/ban-types
-	rawListeners(event: string | symbol): Function[] {
+	rawListeners(event: string | number): ReturnType<EventEmitter["rawListeners"]> {
 		throw new Error("Method not implemented.");
 	}
-	emit(event: string | symbol, ...args: any[]): boolean {
+	emit(event: string | number, ...args: any[]): boolean {
 		throw new Error("Method not implemented.");
 	}
-	eventNames(): (string | symbol)[] {
+	eventNames(): (string | number)[] {
 		throw new Error("Method not implemented.");
 	}
-	listenerCount(type: string | symbol): number {
+	listenerCount(type: string | number): number {
 		throw new Error("Method not implemented.");
 	}
 }

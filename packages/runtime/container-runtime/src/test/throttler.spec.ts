@@ -9,7 +9,7 @@ import {
 	formExponentialFnWithAttemptOffset,
 	formLinearFn,
 	Throttler,
-} from "../throttler";
+} from "../throttler.js";
 
 describe("Throttler", () => {
 	let throttler: Throttler;
