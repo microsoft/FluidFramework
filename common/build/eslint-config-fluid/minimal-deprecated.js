@@ -62,7 +62,7 @@ module.exports = {
 		"unused-imports",
 		// Plugin documentation: https://www.npmjs.com/package/eslint-plugin-unicorn
 		"unicorn",
-		// TODO
+		// Custom ESLint rules
 		"@fluid-internal/eslint-plugin-fluid",
 	],
 	reportUnusedDisableDirectives: true,
@@ -72,7 +72,10 @@ module.exports = {
 	],
 	rules: {
 		/**
-		 * TODO
+		 * Restricts including release tags inside the member class / interface.
+		 *
+		 * Refer to the rule by the unprefixed plugin name in the consumed package.
+		 * {@link https://eslint.org/docs/latest/extend/plugins#rules-in-plugins}
 		 */
 		"@fluid-internal/fluid/no-member-release-tags": "error",
 

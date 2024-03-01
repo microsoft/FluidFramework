@@ -354,7 +354,6 @@
 			"sharp <0.32.6 has a vulnerability that Component Governance flags (https://github.com/advisories/GHSA-54xq-cgqr-rpm3). It's a transitive dependency through jssm-viz-cli, which hasn't updated to a version with the fix"
 		],
 		"overrides": {
-			"@fluidframework/eslint-config-fluid": "file:./common/build/eslint-config-fluid",
 			"@types/node@<18": "^18.19.0",
 			"node-fetch": "^2.6.9",
 			"good-fences>nodegit": "npm:empty-npm-package@1.0.0",
