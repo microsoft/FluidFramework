@@ -27,9 +27,8 @@
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"start": "npm run start:spo-df",
-		"start:spo": "node dist/expressApp.js --env mode=spo",
-		"start:spo-df": "node dist/expressApp.js --env mode=spo-df",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
+		"start:spo": "node lib/expressApp.js --env mode=spo",
+		"start:spo-df": "node lib/expressApp.js --env mode=spo-df",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},

@@ -16,6 +16,7 @@ import {
 import { getServer, IOdspTokens } from "@fluidframework/odsp-doclib-utils/internal";
 import { assert } from "@fluidframework/core-utils";
 import config from "../webpack.config.cjs";
+import { _dirname } from "./dirname.cjs";
 
 const getThisOrigin = (port: number): string => `http://localhost:${port}`;
 let odspAuthStage = 0;
@@ -49,7 +50,7 @@ app.get("/fetchApp", (req, res) => {
 	})().catch((error) => console.log("Error in rendering ", error));
 });
 
-app.use(express.static(__dirname));
+app.use(express.static(_dirname));
 
 app.listen(8080, () => {
 	console.log("Node server is running..");

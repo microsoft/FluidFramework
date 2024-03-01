@@ -46,17 +46,17 @@ module.exports = {
 	],
 	devServer: {
 		static: {
-			directory: path.join(__dirname, "/dist/fluid-loader.bundle.js"),
+			directory: path.join(__dirname, "/lib/fluid-loader.bundle.js"),
 			publicPath: "/fluid-loader.bundle.js",
 		},
 		devMiddleware: {
-			publicPath: "/dist",
+			publicPath: "/lib",
 		},
 		port: 8080,
 	},
 	output: {
 		filename: "[name].bundle.js",
-		path: path.resolve(__dirname, "dist"),
+		path: path.resolve(__dirname, "lib"),
 		library: "FluidLoader",
 		publicPath: "/",
 	},
