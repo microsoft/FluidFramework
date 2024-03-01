@@ -165,6 +165,7 @@ module.exports = {
 			"docs/themes/thxvscode/layouts/",
 			"docs/themes/thxvscode/static/assets/",
 			"docs/tutorials/.*\\.tsx?",
+			"packages/common/client-utils/src/cjs/package.json",
 			"server/gitrest/package.json",
 			"server/historian/package.json",
 			"tools/markdown-magic/test/package.json",
