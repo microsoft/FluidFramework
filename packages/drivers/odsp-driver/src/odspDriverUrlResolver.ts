@@ -96,6 +96,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 
 	/**
 	 * {@inheritDoc @fluidframework/driver-definitions#IUrlResolver.resolve}
+	 * @alpha
 	 */
 	public async resolve(request: IRequest): Promise<IOdspResolvedUrl> {
 		if (request.headers?.[DriverHeader.createNew]) {
