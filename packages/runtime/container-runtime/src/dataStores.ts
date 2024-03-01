@@ -77,7 +77,6 @@ import {
 } from "./dataStore.js";
 import {
 	GCNodeType,
-	GCNodeUpdatedCallback,
 	detectOutboundRoutesViaDDSKey,
 	trimLeadingAndTrailingSlashes,
 } from "./gc/index.js";
@@ -256,7 +255,14 @@ export class DataStores implements IFluidDataStoreChannel, IDisposable {
 		private readonly baseSnapshot: ISnapshotTree | undefined,
 		public readonly parentContext: IFluidParentContext,
 		baseLogger: ITelemetryBaseLogger,
-		private readonly gcNodeUpdated: GCNodeUpdatedCallback,
+		private readonly gcNodeUpdated: (
+			nodePath: string,
+			reason: "Loaded" | "Changed",
+			timestampMs?: number,
+			packagePath?: readonly string[],
+			request?: IRequest,
+			headerData?: RuntimeHeaderData,
+		) => void,
 		private readonly isDataStoreDeleted: (nodePath: string) => boolean,
 		private readonly aliasMap: Map<string, string>,
 		provideEntryPoint: (runtime: DataStores) => Promise<FluidObject>,
