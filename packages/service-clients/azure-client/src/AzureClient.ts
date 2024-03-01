@@ -27,16 +27,16 @@ import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicio
 import { type FluidObject, type IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils";
-import { createAzureAudienceMember } from "./AzureAudience";
-import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver";
+import { createAzureAudienceMember } from "./AzureAudience.js";
+import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver.js";
 import {
 	type AzureClientProps,
 	type AzureConnectionConfig,
 	type AzureContainerServices,
 	type AzureContainerVersion,
 	type AzureGetVersionsOptions,
-} from "./interfaces";
-import { isAzureRemoteConnectionConfig } from "./utils";
+} from "./interfaces.js";
+import { isAzureRemoteConnectionConfig } from "./utils.js";
 
 /**
  * Strongly typed id for connecting to a local Azure Fluid Relay.

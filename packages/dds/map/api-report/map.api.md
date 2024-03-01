@@ -191,9 +191,9 @@ export interface IValueChanged {
 
 // @alpha
 export class LocalValueMaker {
-    constructor(serializer: IFluidSerializer);
+    constructor();
     fromInMemory(value: unknown): ILocalValue;
-    fromSerializable(serializable: ISerializableValue): ILocalValue;
+    fromSerializable(serializable: ISerializableValue, serializer: IFluidSerializer, bind: IFluidHandle): ILocalValue;
 }
 
 // @alpha @sealed
@@ -267,7 +267,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     readonly [Symbol.toStringTag]: string;
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // (undocumented)
-    protected applyStashedOp(content: unknown): unknown;
+    protected applyStashedOp(content: unknown): void;
     clear(): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): ISharedMap;
     delete(key: string): boolean;

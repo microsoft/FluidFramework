@@ -93,6 +93,7 @@ export function create(
 			...tenantThrottleOptions,
 			throttleIdPrefix: "ping",
 		}),
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response) => {
 			response.sendStatus(200);
 		},

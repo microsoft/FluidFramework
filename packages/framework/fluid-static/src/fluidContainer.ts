@@ -21,7 +21,7 @@ import type {
 	LoadableObjectClass,
 	SharedObjectClass,
 	DataObjectClass,
-} from "./types";
+} from "./types.js";
 
 /**
  * Extract the type of 'initialObjects' from the given {@link ContainerSchema} type.

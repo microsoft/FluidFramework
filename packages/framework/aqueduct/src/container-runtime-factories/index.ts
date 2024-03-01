@@ -6,8 +6,8 @@
 export {
 	BaseContainerRuntimeFactory,
 	type BaseContainerRuntimeFactoryProps,
-} from "./baseContainerRuntimeFactory";
+} from "./baseContainerRuntimeFactory.js";
 export {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
-} from "./containerRuntimeFactoryWithDefaultDataStore";
+} from "./containerRuntimeFactoryWithDefaultDataStore.js";

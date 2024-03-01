@@ -15,9 +15,9 @@ import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtim
 import { readAndParse } from "@fluidframework/driver-utils";
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { ISharedMap, ISharedMapEvents } from "./interfaces";
-import { IMapDataObjectSerializable, IMapOperation, MapKernel } from "./mapKernel";
-import { pkgVersion } from "./packageVersion";
+import { ISharedMap, ISharedMapEvents } from "./interfaces.js";
+import { IMapDataObjectSerializable, IMapOperation, MapKernel } from "./mapKernel.js";
+import { pkgVersion } from "./packageVersion.js";
 
 interface IMapSerializationFormat {
 	blobs?: string[];
@@ -361,8 +361,8 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 */
-	protected applyStashedOp(content: unknown): unknown {
-		return this.kernel.tryApplyStashedOp(content as IMapOperation);
+	protected applyStashedOp(content: unknown): void {
+		this.kernel.tryApplyStashedOp(content as IMapOperation);
 	}
 
 	/**

@@ -18,8 +18,8 @@ import {
 	type IFluidSerializer,
 	SharedObject,
 } from "@fluidframework/shared-object-base";
-import { CounterFactory } from "./counterFactory";
-import { type ISharedCounter, type ISharedCounterEvents } from "./interfaces";
+import { CounterFactory } from "./counterFactory.js";
+import { type ISharedCounter, type ISharedCounterEvents } from "./interfaces.js";
 
 /**
  * Describes the operation (op) format for incrementing the {@link SharedCounter}.

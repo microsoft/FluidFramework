@@ -126,18 +126,43 @@ describe("Table", () => {
 				);
 			}
 
-			const dataBytes = measureEncodedLength(JSON.stringify(transposeTable(data)));
+			const rowMajorJsonBytes = measureEncodedLength(JSON.stringify(data));
+			const colMajorJsonBytes = measureEncodedLength(JSON.stringify(transposeTable(data)));
 			let summaryBytes: number;
 
 			// After each test, print the summary size information to the console.
 			afterEach(() => {
-				const ratio = summaryBytes / dataBytes;
-
 				// When using a logger, Mocha suppresses 'console.log()' by default.
 				// Writing directly to 'process.stdout' bypasses this suppression.
-				process.stdout.write(`Data: ${dataBytes} bytes\n`);
-				process.stdout.write(`Summary: ${summaryBytes} bytes\n`);
-				process.stdout.write(`Ratio: ${ratio}\n`);
+				process.stdout.write(`          Summary: ${summaryBytes} bytes\n`);
+				process.stdout.write(
+					`              vs row-major: ${(
+						summaryBytes / rowMajorJsonBytes
+					).toLocaleString(undefined, {
+						maximumFractionDigits: 2,
+						minimumFractionDigits: 2,
+					})}x\n`,
+				);
+				process.stdout.write(
+					`              vs col-major: ${(
+						summaryBytes / colMajorJsonBytes
+					).toLocaleString(undefined, {
+						maximumFractionDigits: 2,
+						minimumFractionDigits: 2,
+					})}x\n`,
+				);
+			});
+
+			it("Row-major JSON (Typical Database Baseline)", () => {
+				// Row/col major sizes are precalculated before the test run.
+				// Copy the value to 'summaryBytes' for reporting by 'afterEach' above.
+				summaryBytes = rowMajorJsonBytes;
+			});
+
+			it("Column-major JSON (Compact REST Baseline)", () => {
+				// Row/col major sizes are precalculated before the test run.
+				// Copy the value to 'summaryBytes' for reporting by 'afterEach' above.
+				summaryBytes = colMajorJsonBytes;
 			});
 
 			it("SharedMatrix", () => {

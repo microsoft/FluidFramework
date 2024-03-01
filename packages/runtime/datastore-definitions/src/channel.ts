@@ -161,7 +161,7 @@ export interface IDeltaHandler {
 	 * submission of the op if attached. Soon the old flow will be removed
 	 * and only the new flow will be supported.
 	 */
-	applyStashedOp(message: any): unknown;
+	applyStashedOp(message: any): void;
 
 	/**
 	 * Revert a local op.

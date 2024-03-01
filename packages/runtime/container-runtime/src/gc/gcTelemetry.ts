@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryGenericEvent } from "@fluidframework/core-interfaces";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import {
 	generateStack,
 	ITelemetryLoggerExt,
 	MonitoringContext,
 	tagCodeArtifacts,
+	type ITelemetryGenericEventExt,
 } from "@fluidframework/telemetry-utils";
-import { RuntimeHeaderData } from "../containerRuntime";
-import { ICreateContainerMetadata } from "../summary";
+import { RuntimeHeaderData } from "../containerRuntime.js";
+import { ICreateContainerMetadata } from "../summary/index.js";
 import {
 	GCNodeType,
 	UnreferencedState,
@@ -22,8 +22,8 @@ import {
 	throwOnTombstoneLoadOverrideKey,
 	runSweepKey,
 	GCFeatureMatrix,
-} from "./gcDefinitions";
-import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";
+} from "./gcDefinitions.js";
+import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker.js";
 
 type NodeUsageType = "Changed" | "Loaded" | "Revived";
 
@@ -413,7 +413,7 @@ export class GCTelemetryTracker {
  */
 export function sendGCUnexpectedUsageEvent(
 	mc: MonitoringContext,
-	event: ITelemetryGenericEvent & {
+	event: ITelemetryGenericEventExt & {
 		category: "error" | "generic";
 		gcTombstoneEnforcementAllowed: boolean | undefined;
 	},

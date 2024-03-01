@@ -16,18 +16,6 @@ module.exports = {
 		// extensibility.
 		"@typescript-eslint/no-unsafe-enum-comparison": "off",
 
-		/**
-		 * This package utilizes internals of api-documenter that are not exported by the package root.
-		 *
-		 * TODO: remove once we have completely migrated off of this library.
-		 */
-		"import/no-internal-modules": [
-			"error",
-			{
-				allow: ["@microsoft/api-documenter/**"],
-			},
-		],
-
 		// Useful for developer accessibility
 		"unicorn/prevent-abbreviations": [
 			"error",

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 
 /**
  * An error emitted by the Fluid Framework.
@@ -61,12 +61,12 @@ export interface IFluidErrorBase extends Error {
 	/**
 	 * Get the telemetry properties stashed on this error for logging.
 	 */
-	getTelemetryProperties(): ITelemetryProperties;
+	getTelemetryProperties(): ITelemetryBaseProperties;
 
 	/**
 	 * Add telemetry properties to this error which will be logged with the error
 	 */
-	addTelemetryProperties: (props: ITelemetryProperties) => void;
+	addTelemetryProperties: (props: ITelemetryBaseProperties) => void;
 }
 
 const hasTelemetryPropFunctions = (x: unknown): boolean =>

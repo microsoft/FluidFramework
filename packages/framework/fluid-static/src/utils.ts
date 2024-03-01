@@ -14,7 +14,7 @@ import {
 	type DataObjectClass,
 	type LoadableObjectClass,
 	type SharedObjectClass,
-} from "./types";
+} from "./types.js";
 
 /**
  * An internal type used by the internal type guard isDataObjectClass to cast a

@@ -95,7 +95,7 @@ export function App(): React.ReactElement {
 				setContainerInfo(data);
 			},
 			(error) => {
-				console.error(error);
+				throw error;
 			},
 		);
 	}, []);

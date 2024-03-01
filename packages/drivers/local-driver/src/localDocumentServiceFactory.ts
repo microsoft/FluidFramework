@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { parse } from "url";
+import { parse } from "url_pkg";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
@@ -14,9 +14,9 @@ import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { DefaultTokenProvider } from "@fluidframework/routerlicious-driver";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { ISummaryTree, NackErrorType } from "@fluidframework/protocol-definitions";
-import { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection";
-import { createLocalDocumentService } from "./localDocumentService";
-import { createDocument } from "./localCreateDocument";
+import { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection.js";
+import { createLocalDocumentService } from "./localDocumentService.js";
+import { createDocument } from "./localCreateDocument.js";
 
 /**
  * Implementation of document service factory for local use.

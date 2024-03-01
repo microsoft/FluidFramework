@@ -10,8 +10,8 @@ import {
 	FluidObjectProvider,
 	AsyncOptionalFluidObjectProvider,
 	AsyncRequiredFluidObjectProvider,
-} from "./types";
-import { IFluidDependencySynthesizer } from "./IFluidDependencySynthesizer";
+} from "./types.js";
+import { IFluidDependencySynthesizer } from "./IFluidDependencySynthesizer.js";
 
 /**
  * DependencyContainer is similar to a IoC Container. It takes providers and will
