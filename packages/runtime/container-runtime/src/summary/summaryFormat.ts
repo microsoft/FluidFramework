@@ -19,7 +19,7 @@ import {
 	gcTreeKey,
 	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
-import { IGCMetadata } from "../gc";
+import { IGCMetadata } from "../gc/index.js";
 
 type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;
 interface IFluidDataStoreAttributes0 {

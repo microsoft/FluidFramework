@@ -224,6 +224,7 @@ declare function get_old_InterfaceDeclaration_IParsedUrl():
 declare function use_current_InterfaceDeclaration_IParsedUrl(
     use: TypeOnly<current.IParsedUrl>): void;
 use_current_InterfaceDeclaration_IParsedUrl(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IParsedUrl());
 
 /*

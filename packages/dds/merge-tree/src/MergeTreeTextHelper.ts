@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IIntegerRange } from "./client";
-import { ISegment } from "./mergeTreeNodes";
-import { MergeTree } from "./mergeTree";
+import { IIntegerRange } from "./client.js";
+import { ISegment } from "./mergeTreeNodes.js";
+import { MergeTree } from "./mergeTree.js";
 // eslint-disable-next-line import/no-deprecated
-import { IMergeTreeTextHelper, TextSegment } from "./textSegment";
+import { IMergeTreeTextHelper, TextSegment } from "./textSegment.js";
 
 interface ITextAccumulator {
 	textSegment: TextSegment;

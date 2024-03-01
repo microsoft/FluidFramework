@@ -11,9 +11,9 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { MapFactory, SharedMap } from "../../map";
-import { DirectoryFactory, SharedDirectory } from "../../directory";
-import { IDirectory } from "../../interfaces";
+import { MapFactory, SharedMap } from "../../map.js";
+import { DirectoryFactory, SharedDirectory } from "../../directory.js";
+import { IDirectory } from "../../interfaces.js";
 
 describe("Rebasing", () => {
 	let containerRuntimeFactory: MockContainerRuntimeFactory;

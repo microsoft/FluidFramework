@@ -32,7 +32,7 @@ import {
 } from "@fluidframework/server-services-client";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { assert } from "@fluidframework/core-utils";
-import { createDocument } from "./localCreateDocument";
+import { createDocument } from "./localCreateDocument.js";
 
 const minTTLInSeconds = 24 * 60 * 60; // Same TTL as ODSP
 /**

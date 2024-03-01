@@ -14,8 +14,8 @@ import {
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime";
-import { RemoteChannelContext } from "../remoteChannelContext";
+import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime.js";
+import { RemoteChannelContext } from "../remoteChannelContext.js";
 
 describe("RemoteChannelContext Tests", () => {
 	let dataStoreContext: MockFluidDataStoreContext;

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { DoublyLinkedList, ListNode, ListNodeRange, walkList } from "./list";
+export { DoublyLinkedList, ListNode, ListNodeRange, walkList } from "./list.js";
 export {
 	ConflictAction,
 	Dictionary,
@@ -18,4 +18,4 @@ export {
 	RBNodeActions,
 	RedBlackTree,
 	SortedDictionary,
-} from "./rbTree";
+} from "./rbTree.js";

@@ -55,19 +55,31 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import { assert, Lazy } from "@fluidframework/core-utils";
 import { v4 as uuid } from "uuid";
-import { DataStoreContexts } from "./dataStoreContexts";
-import { ContainerRuntime, defaultRuntimeHeaderData, RuntimeHeaderData } from "./containerRuntime";
+import { DataStoreContexts } from "./dataStoreContexts.js";
+import {
+	ContainerRuntime,
+	defaultRuntimeHeaderData,
+	RuntimeHeaderData,
+} from "./containerRuntime.js";
 import {
 	FluidDataStoreContext,
 	RemoteFluidDataStoreContext,
 	LocalFluidDataStoreContext,
 	createAttributesBlob,
 	LocalDetachedFluidDataStoreContext,
-} from "./dataStoreContext";
-import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs";
-import { IDataStoreAliasMessage, channelToDataStore, isDataStoreAliasMessage } from "./dataStore";
-import { GCNodeType, detectOutboundRoutesViaDDSKey } from "./gc";
-import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summary";
+} from "./dataStoreContext.js";
+import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs.js";
+import {
+	IDataStoreAliasMessage,
+	channelToDataStore,
+	isDataStoreAliasMessage,
+} from "./dataStore.js";
+import { GCNodeType, detectOutboundRoutesViaDDSKey } from "./gc/index.js";
+import {
+	IContainerRuntimeMetadata,
+	nonDataStorePaths,
+	rootHasIsolatedChannels,
+} from "./summary/index.js";
 
 type PendingAliasResolve = (success: boolean) => void;
 

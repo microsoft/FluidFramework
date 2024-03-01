@@ -26,8 +26,8 @@ import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISocketStorageDiscovery } from '@fluidframework/odsp-driver-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
-import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { OdspResourceTokenFetchOptions } from '@fluidframework/odsp-driver-definitions';
 import { PromiseCache } from '@fluidframework/core-utils';
@@ -145,7 +145,7 @@ export interface IOdspResponse<T> {
     // (undocumented)
     headers: Map<string, string>;
     // (undocumented)
-    propsToLog: ITelemetryProperties;
+    propsToLog: ITelemetryBaseProperties;
 }
 
 // @alpha
