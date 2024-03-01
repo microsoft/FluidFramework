@@ -6,7 +6,7 @@
 import EventEmitter from "events";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { BatchTracker } from "../batchTracker";
+import { BatchTracker } from "../batchTracker.js";
 
 describe("Runtime", () => {
 	const emitter = new EventEmitter();
