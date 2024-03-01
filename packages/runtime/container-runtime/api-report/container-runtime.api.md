@@ -220,7 +220,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     get storage(): IDocumentStorageService;
     // (undocumented)
-    submitMessage(type: ContainerMessageType, contents: any, localOpMetadata?: unknown): void;
+    submitMessage(type: ContainerMessageType.FluidDataStoreOp | ContainerMessageType.Alias | ContainerMessageType.Attach, contents: any, localOpMetadata?: unknown): void;
     submitSignal(type: string, content: any, targetClientId?: string): void;
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
     summarize(options: {

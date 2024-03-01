@@ -71,7 +71,12 @@ import {
 } from "./dataStoreContext";
 import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs";
 import { IDataStoreAliasMessage, channelToDataStore, isDataStoreAliasMessage } from "./dataStore";
-import { GCNodeType, detectOutboundRoutesViaDDSKey, trimLeadingAndTrailingSlashes } from "./gc";
+import {
+	GCNodeType,
+	GCNodeUpdatedCallback,
+	detectOutboundRoutesViaDDSKey,
+	trimLeadingAndTrailingSlashes,
+} from "./gc";
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summary";
 import { ContainerMessageType, LocalContainerRuntimeMessage } from "./messageTypes";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
@@ -243,14 +248,7 @@ export class DataStores implements IFluidDataStoreChannel, IDisposable {
 		private readonly baseSnapshot: ISnapshotTree | undefined,
 		public readonly parentContext: IFluidParentContext,
 		baseLogger: ITelemetryBaseLogger,
-		private readonly gcNodeUpdated: (
-			nodePath: string,
-			reason: "Loaded" | "Changed",
-			timestampMs?: number,
-			packagePath?: readonly string[],
-			request?: IRequest,
-			headerData?: RuntimeHeaderData,
-		) => void,
+		private readonly gcNodeUpdated: GCNodeUpdatedCallback,
 		private readonly isDataStoreDeleted: (nodePath: string) => boolean,
 		private readonly aliasMap: Map<string, string>,
 		provideEntryPoint: (runtime: DataStores) => Promise<FluidObject>,
@@ -1365,6 +1363,7 @@ export class DataStoresFactory implements IFluidDataStoreFactory {
 	constructor(
 		registryEntries: NamedFluidDataStoreRegistryEntries,
 		// ADO:7302 We need a better type here
+
 		private readonly provideEntryPoint: (
 			runtime: IFluidDataStoreChannel,
 		) => Promise<FluidObject>,

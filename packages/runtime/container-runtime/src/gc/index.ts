@@ -28,6 +28,7 @@ export {
 	IMarkPhaseStats,
 	ISweepPhaseStats,
 	IGCStats,
+	GCNodeUpdatedCallback,
 	oneDayMs,
 	runGCKey,
 	runSessionExpiryKey,

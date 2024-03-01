@@ -1454,22 +1454,7 @@ export class ContainerRuntime
 			getSummaryForDatastores(baseSnapshot, metadata),
 			parentContext,
 			this.mc.logger,
-			(
-				path: string,
-				reason: "Loaded" | "Changed",
-				timestampMs?: number,
-				packagePath?: readonly string[],
-				request?: IRequest,
-				headerData?: RuntimeHeaderData,
-			) =>
-				this.garbageCollector.nodeUpdated(
-					path,
-					reason,
-					timestampMs,
-					packagePath,
-					request,
-					headerData,
-				),
+			this.garbageCollector.nodeUpdated,
 			(path: string) => this.garbageCollector.isNodeDeleted(path),
 			new Map<string, string>(dataStoreAliasMap),
 			async (runtime: DataStores) => provideEntryPoint,
@@ -3530,16 +3515,13 @@ export class ContainerRuntime
 	}
 
 	public submitMessage(
-		type: ContainerMessageType,
+		type:
+			| ContainerMessageType.FluidDataStoreOp
+			| ContainerMessageType.Alias
+			| ContainerMessageType.Attach,
 		contents: any,
 		localOpMetadata: unknown = undefined,
 	): void {
-		assert(
-			type === ContainerMessageType.FluidDataStoreOp ||
-				type === ContainerMessageType.Alias ||
-				type === ContainerMessageType.Attach,
-			"allowed message type",
-		);
 		this.submit({ type, contents }, localOpMetadata);
 	}
 
