@@ -15,3 +15,4 @@ export { Deferred } from "./promises";
 export type { IPromiseTimer, IPromiseTimerResult, ITimer } from "./timer";
 export { PromiseTimer, setLongTimeout, Timer } from "./timer";
 export { unreachableCase } from "./unreachable";
+export { isObject, isPromiseLike } from "./typesGuards";
