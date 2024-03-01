@@ -18,8 +18,8 @@ import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
 import { type ConnectionMode, ScopeType } from "@fluidframework/protocol-definitions";
 import { InsecureTinyliciousTokenProvider } from "@fluidframework/tinylicious-driver";
-import { TinyliciousClient } from "../index";
-import { TestDataObject } from "./TestDataObject";
+import { TinyliciousClient } from "../index.js";
+import { TestDataObject } from "./TestDataObject.js";
 
 const corruptedAliasOp = async (
 	runtime: IContainerRuntime,
