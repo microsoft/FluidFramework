@@ -82,12 +82,11 @@ export interface ContainerSchema {
 }
 
 // @public
-export interface DataObjectClass<T extends IFluidLoadable> {
-    // (undocumented)
+export type DataObjectClass<T extends IFluidLoadable> = {
     readonly factory: {
         IFluidDataStoreFactory: DataObjectClass<T>["factory"];
     };
-}
+} & LoadableObjectCtor<T>;
 
 // @public
 export const disposeSymbol: unique symbol;
@@ -382,7 +381,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 // @public
 export interface SharedObjectClass<T extends IFluidLoadable> {
     // (undocumented)
-    readonly getFactory: () => IChannelFactory<T & IChannel>;
+    readonly getFactory: () => IChannelFactory<T>;
 }
 
 // @public

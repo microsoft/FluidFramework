@@ -6,7 +6,6 @@
 
 import { AttachState } from '@fluidframework/container-definitions';
 import { ConnectionState } from '@fluidframework/container-definitions';
-import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
@@ -43,12 +42,11 @@ export function createServiceAudience<TMember extends IMember = IMember>(props: 
 }): IServiceAudience<TMember>;
 
 // @public
-export interface DataObjectClass<T extends IFluidLoadable> {
-    // (undocumented)
+export type DataObjectClass<T extends IFluidLoadable> = {
     readonly factory: {
         IFluidDataStoreFactory: DataObjectClass<T>["factory"];
     };
-}
+} & LoadableObjectCtor<T>;
 
 // @public
 export interface IConnection {
@@ -141,7 +139,7 @@ export type Myself<M extends IMember = IMember> = M & {
 // @public
 export interface SharedObjectClass<T extends IFluidLoadable> {
     // (undocumented)
-    readonly getFactory: () => IChannelFactory<T & IChannel>;
+    readonly getFactory: () => IChannelFactory<T>;
 }
 
 ```
