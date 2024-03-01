@@ -11,7 +11,7 @@ import {
 	ISnapshotTree,
 	ITree,
 } from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData, IGarbageCollectionDetailsBase } from "./garbageCollection";
+import { IGarbageCollectionData, IGarbageCollectionDetailsBase } from "./garbageCollection.js";
 
 /**
  * Contains the aggregation data from a Tree/Subtree.

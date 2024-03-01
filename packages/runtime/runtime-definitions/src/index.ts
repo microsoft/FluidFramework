@@ -9,7 +9,7 @@ export {
 	DetachedAttributionKey,
 	LocalAttributionKey,
 	OpAttributionKey,
-} from "./attribution";
+} from "./attribution.js";
 export {
 	AliasResult,
 	CreateChildSummarizerNodeFn,
@@ -23,15 +23,15 @@ export {
 	IFluidDataStoreContextDetached,
 	IFluidDataStoreContextEvents,
 	VisibilityState,
-} from "./dataStoreContext";
-export { IFluidDataStoreFactory, IProvideFluidDataStoreFactory } from "./dataStoreFactory";
+} from "./dataStoreContext.js";
+export { IFluidDataStoreFactory, IProvideFluidDataStoreFactory } from "./dataStoreFactory.js";
 export {
 	FluidDataStoreRegistryEntry,
 	IFluidDataStoreRegistry,
 	IProvideFluidDataStoreRegistry,
 	NamedFluidDataStoreRegistryEntries,
 	NamedFluidDataStoreRegistryEntry,
-} from "./dataStoreRegistry";
+} from "./dataStoreRegistry.js";
 export {
 	gcBlobPrefix,
 	gcDataBlobKey,
@@ -40,14 +40,14 @@ export {
 	gcTreeKey,
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
-} from "./garbageCollection";
+} from "./garbageCollection.js";
 export {
 	IAttachMessage,
 	IEnvelope,
 	IInboundSignalMessage,
 	InboundAttachMessage,
 	ISignalEnvelope,
-} from "./protocol";
+} from "./protocol.js";
 export {
 	blobCountPropertyName,
 	channelsTreeName,
@@ -65,4 +65,4 @@ export {
 	ITelemetryContext,
 	SummarizeInternalFn,
 	totalBlobSizePropertyName,
-} from "./summary";
+} from "./summary.js";

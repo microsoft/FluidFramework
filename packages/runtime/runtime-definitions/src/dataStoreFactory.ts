@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidDataStoreContext, IFluidDataStoreChannel } from "./dataStoreContext";
+import { IFluidDataStoreContext, IFluidDataStoreChannel } from "./dataStoreContext.js";
 
 /**
  * @alpha

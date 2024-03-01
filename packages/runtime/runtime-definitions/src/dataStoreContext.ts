@@ -24,17 +24,17 @@ import {
 	ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
 import { IIdCompressor } from "@fluidframework/id-compressor";
-import { IProvideFluidDataStoreFactory } from "./dataStoreFactory";
-import { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry";
-import { IGarbageCollectionData, IGarbageCollectionDetailsBase } from "./garbageCollection";
-import { IInboundSignalMessage } from "./protocol";
+import { IProvideFluidDataStoreFactory } from "./dataStoreFactory.js";
+import { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry.js";
+import { IGarbageCollectionData, IGarbageCollectionDetailsBase } from "./garbageCollection.js";
+import { IInboundSignalMessage } from "./protocol.js";
 import {
 	CreateChildSummarizerNodeParam,
 	ISummarizerNodeWithGC,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	SummarizeInternalFn,
-} from "./summary";
+} from "./summary.js";
 
 /**
  * Runtime flush mode handling
