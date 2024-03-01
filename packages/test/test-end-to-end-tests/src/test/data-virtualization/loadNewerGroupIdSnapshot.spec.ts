@@ -4,13 +4,14 @@
  */
 
 import { strict as assert } from "assert";
-import { describeCompat } from "@fluid-private/test-version-utils";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import {
+	SummarizerStopReason,
 	type ContainerRuntime,
 	type IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime";
@@ -21,10 +22,11 @@ import {
 	createTestConfigProvider,
 } from "@fluidframework/test-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { Deferred } from "@fluidframework/core-utils";
+import { Deferred, delay } from "@fluidframework/core-utils";
 import type { ISnapshot } from "@fluidframework/driver-definitions";
 import type { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { LoaderHeader } from "@fluidframework/container-definitions";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 
 const interceptResult = <T>(
 	parent: any,
@@ -221,20 +223,141 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 		await waitForOp.promise;
 		await summarizeNow(summarizer);
 
-		// loading group call
-		await assert.rejects(
-			async () => handleA2.get(),
-			(error: Error) => {
-				console.log(error);
-				assert(
-					error.message.includes(
-						"Could not catch up as inbound queue is paused or is disconnected",
-					),
-					"Should throw paused/disconnected error",
-				);
-				return true;
-			},
-			"Should throw error when container is paused/disconnected!",
-		);
+		// start loading group call
+		const dataObjectA2Promise = handleA2.get();
+		const deferred = new Deferred<void>();
+
+		void dataObjectA2Promise.then(() => {
+			deferred.resolve();
+		});
+
+		await delay(100);
+
+		// Loading group call should wait for ops to come through
+		assert(!deferred.isCompleted, "Promise should not be resolved yet");
+
+		// This should cause the ops to come through
+		container2.connect();
+		const dataObjectA2 = await dataObjectA2Promise;
+
+		// Get the latest data
+		await provider.ensureSynchronized();
+		// Force ops to come through
+		assert(deferred.isCompleted, "Promise should be resolved");
+		assert(dataObjectA2._root.get("A") === "A", "A should be set");
+		assert(dataObjectA2._root.get("B") === "B", "B should be set");
 	});
+
+	itExpects(
+		"Load datastore via groupId with snapshot in the future, with seq > some ops",
+		[
+			{
+				eventName: "fluid:telemetry:FluidDataStoreContext:RealizeError",
+				error: "Summarizer client behind, loaded newer snapshot with loadingGroupId",
+			},
+		],
+		async () => {
+			if (provider.driver.type !== "local") {
+				return;
+			}
+			// Load basic container stuff
+			const container = await provider.createContainer(runtimeFactory, { configProvider });
+			const mainObject = (await container.getEntryPoint()) as TestDataObject;
+			const containerRuntime = mainObject.containerRuntime;
+
+			// Create data stores with loadingGroupIds
+			const dataStoreA = await containerRuntime.createDataStore(
+				testDataObjectType,
+				loadingGroupId,
+			);
+
+			// Attach the data stores
+			const dataObjectA = (await dataStoreA.entryPoint.get()) as TestDataObject;
+			mainObject._root.set("dataObjectA", dataObjectA.handle);
+			dataObjectA._root.set("A", "A");
+
+			const { summarizer } = await createSummarizerFromFactory(
+				provider,
+				container,
+				dataObjectFactory,
+			);
+
+			await provider.ensureSynchronized();
+			const { summaryVersion } = await summarizeNow(summarizer);
+			dataObjectA._root.set("B", "B");
+			summarizer.close();
+
+			const { summarizer: summarizer1, container: container1 } =
+				await createSummarizerFromFactory(
+					provider,
+					container,
+					dataObjectFactory,
+					summaryVersion,
+					undefined,
+					undefined,
+					undefined,
+					configProvider,
+				);
+
+			const { summarizer: summarizer2, container: container2 } =
+				await createSummarizerFromFactory(
+					provider,
+					container,
+					dataObjectFactory,
+					summaryVersion,
+					undefined,
+					undefined,
+					undefined,
+					configProvider,
+				);
+			await provider.ensureSynchronized();
+			// Pause the summarizer2 so we can generate a summary in the future
+			// Note: The summarizing containers don't get added to the loader container tracker, so we manually pause here
+			await container2.deltaManager.inbound.pause();
+
+			// Send an op
+			dataObjectA._root.set("C", "C");
+
+			// All this casting is to get the the dataObject from the summarizer2 container to wait for the op we just sent
+			const runtime1 = (summarizer1 as any).runtime as ContainerRuntime;
+			const mainObjectHandle1 = await runtime1.getAliasedDataStoreEntryPoint("default");
+			assert(mainObjectHandle1 !== undefined, "mainObject1 should not be undefined");
+			const mainObject1 = (await mainObjectHandle1.get()) as TestDataObject;
+			const dataObjectA1Handle = mainObject1._root.get<IFluidHandle>("dataObjectA");
+			assert(dataObjectA1Handle !== undefined, "dataObjectA1Handle should not be undefined");
+			const dataObjectA1 = (await dataObjectA1Handle.get()) as TestDataObject;
+
+			// Make sure that summarizer1 gets the op
+			const waitForOp = new Deferred<void>();
+			dataObjectA1._root.on("valueChanged", (changed) => {
+				if (changed.key === "C") {
+					waitForOp.resolve();
+				}
+			});
+			await waitForOp.promise;
+
+			// Generate a summary in the future with summarizer 1
+			await summarizeNow(summarizer1);
+
+			// Hack to get the summarizer2 to summarize, there's a bunch of state in the summarizer that prevents us from
+			// summarizing, so it's easier to just skip it and call submitSummary directly
+			const neverCancel = new Deferred<SummarizerStopReason>();
+			const runtime2 = (summarizer2 as any).runtime as ContainerRuntime;
+			const result = await runtime2.submitSummary({
+				summaryLogger: new MockLogger().toTelemetryLogger(),
+				cancellationToken: {
+					cancelled: false,
+					waitCancelled: neverCancel.promise,
+				},
+				latestSummaryRefSeqNum: 0,
+			});
+
+			assert(result.stage === "base", "submitSummary should fail in base stage");
+			assert.equal(
+				result.error.message,
+				"Summarizer client behind, loaded newer snapshot with loadingGroupId",
+				"submitSummary should fail in base stage because summarizer is behind",
+			);
+		},
+	);
 });

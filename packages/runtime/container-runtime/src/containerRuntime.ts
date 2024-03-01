@@ -38,7 +38,6 @@ import {
 	GenericError,
 	raiseConnectedEvent,
 	PerformanceEvent,
-	// eslint-disable-next-line import/no-deprecated
 	TaggedLoggerAdapter,
 	MonitoringContext,
 	wrapError,
@@ -772,7 +771,6 @@ export class ContainerRuntime
 		const backCompatContext: IContainerContext | OldContainerContextWithLogger = context;
 		const passLogger =
 			backCompatContext.taggedLogger ??
-			// eslint-disable-next-line import/no-deprecated
 			new TaggedLoggerAdapter((backCompatContext as OldContainerContextWithLogger).logger);
 		const logger = createChildLogger({
 			logger: passLogger,
@@ -1803,16 +1801,14 @@ export class ContainerRuntime
 			// If this is a summarizer client, which is trying to load a group and it finds that there is
 			// another snapshot from which the summarizer loaded and it is behind, then just give up as
 			// the summarizer state is not up to date.
+			// This should be a recoverable scenario and shouldn't happen as we should process the ack first.
 			if (this.isSummarizerClient) {
 				throw new Error(
-					"Summarizer client behind when loading snapshot with loadingGroupId",
+					"Summarizer client behind, loaded newer snapshot with loadingGroupId",
 				);
 			}
-			// If the inbound deltas queue is paused, then unpause it for now as we need
-			// to catch up to the snapshot sequence number.
-			if (this.deltaManager.inbound.paused || !this.connected) {
-				throw new Error("Could not catch up as inbound queue is paused or is disconnected");
-			}
+			// If the inbound deltas queue is paused or disconnected, we expect a reconnect and unpause
+			// as long as it's not a summarizer client.
 			const defP = new Deferred<boolean>();
 			this.deltaManager.on("op", (message: ISequencedDocumentMessage) => {
 				if (message.sequenceNumber >= snapshotSeqNumber) {
