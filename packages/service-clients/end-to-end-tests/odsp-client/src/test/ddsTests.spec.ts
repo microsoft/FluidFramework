@@ -11,9 +11,9 @@ import { SharedMap } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
 import { ConnectionState } from "@fluidframework/container-loader";
-import { IOdspLoginCredentials, createOdspClient } from "./OdspClientFactory";
-import { CounterTestDataObject, TestDataObject } from "./TestDataObject";
-import { mapWait } from "./utils";
+import { IOdspLoginCredentials, createOdspClient } from "./OdspClientFactory.js";
+import { CounterTestDataObject, TestDataObject } from "./TestDataObject.js";
+import { mapWait } from "./utils.js";
 
 const clientCreds: IOdspLoginCredentials = {
 	username: process.env.odsp__client__login__username as string,
