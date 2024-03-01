@@ -256,7 +256,7 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 	});
 
 	itExpects(
-		"Load datastore via groupId with snapshot in the future, with seq > some ops",
+		"Summarizer load datastore via groupId with snapshot in the future, with seq > some ops",
 		[
 			{
 				eventName: "fluid:telemetry:FluidDataStoreContext:RealizeError",
@@ -265,6 +265,11 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 		],
 		async () => {
 			if (provider.driver.type !== "local") {
+				provider.logger?.send({
+					category: "error",
+					eventName: "fluid:telemetry:FluidDataStoreContext:RealizeError",
+					error: "Summarizer client behind, loaded newer snapshot with loadingGroupId",
+				});
 				return;
 			}
 			// Load basic container stuff
