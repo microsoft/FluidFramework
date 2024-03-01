@@ -80,7 +80,7 @@ import {
 	GCNodeUpdatedCallback,
 	detectOutboundRoutesViaDDSKey,
 	trimLeadingAndTrailingSlashes,
-} from "./gc";
+} from "./gc/index.js";
 import {
 	IContainerRuntimeMetadata,
 	nonDataStorePaths,
