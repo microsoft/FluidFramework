@@ -4,7 +4,7 @@ importers:
 
   .:
     specifiers:
-      '@fluid-internal/eslint-plugin-fluid': ^0.1.0
+      '@fluid-internal/eslint-plugin-fluid': ^0.1.1
       '@fluid-tools/markdown-magic': file:../../../tools/markdown-magic
       '@fluidframework/build-common': ^2.0.3
       '@microsoft/tsdoc': ^0.14.2
@@ -32,7 +32,7 @@ importers:
       sort-json: ^2.0.1
       typescript: ~5.1.6
     dependencies:
-      '@fluid-internal/eslint-plugin-fluid': 0.1.0_bpztyfltmpuv6lhsgzfwtmxhte
+      '@fluid-internal/eslint-plugin-fluid': 0.1.1_bpztyfltmpuv6lhsgzfwtmxhte
       '@microsoft/tsdoc': 0.14.2
       '@rushstack/eslint-patch': 1.4.0
       '@rushstack/eslint-plugin': 0.13.0_bpztyfltmpuv6lhsgzfwtmxhte
@@ -138,8 +138,8 @@ packages:
     resolution: {integrity: sha512-qQfo2mxH5yVom1kacMtZZJFVdW+E70mqHMJvVg6WTLo+VBuQJ4TojZlfWBjK0ve5BdEeNAVxOsl/nvNMpJOaJA==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
 
-  /@fluid-internal/eslint-plugin-fluid/0.1.0_bpztyfltmpuv6lhsgzfwtmxhte:
-    resolution: {integrity: sha512-bsMs8l+nrwUf5IuMZN8HgihvF5EaAh7XOG+oDWE4+wKWzN6hLl8Z2OFS8+JJpTLTHcW1iLWUS9sAEkmA753Asw==}
+  /@fluid-internal/eslint-plugin-fluid/0.1.1_bpztyfltmpuv6lhsgzfwtmxhte:
+    resolution: {integrity: sha512-7CNeAjn81BPvq/BKc1nQo/6HUZXg4KUAglFuCX6HFCnpGPrDLdm7cdkrGyA1tExB1EGnCAPFzVNbSqSYcwJnag==}
     dependencies:
       '@microsoft/tsdoc': 0.14.2
       '@typescript-eslint/parser': 6.7.2_bpztyfltmpuv6lhsgzfwtmxhte
