@@ -508,7 +508,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const newCommits = targetCommits.concat(sourceCommits);
 		if (this.isTransacting()) {
 			const src = targetCommits[0].parent?.revision;
-			const dst = targetCommits.at(-1)?.revision;
+			const dst = targetCommits[targetCommits.length - 1]?.revision;
 			if (src !== undefined && dst !== undefined) {
 				this.initialTransactionRevToRebasedRev.set(src, dst);
 			}
