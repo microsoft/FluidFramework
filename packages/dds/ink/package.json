@@ -120,6 +120,7 @@
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.39.1",
 		"@types/mocha": "^9.1.1",
+		"@types/node": "^18.19.0",
 		"@types/uuid": "^9.0.2",
 		"c8": "^8.0.1",
 		"copyfiles": "^2.4.1",

@@ -1,9 +1,14 @@
 {
 	"extends": ["../../../../../../common/build/build-common/tsconfig.test.json"],
-	"include": ["./**/*", "../*"],
+	"include": ["./**/*"],
 	"compilerOptions": {
 		"rootDir": "../",
 		"outDir": "../../dist",
-		"types": ["mocha", "@fluidframework/test-driver-definitions"],
+		"types": ["mocha", "node", "@fluidframework/test-driver-definitions"],
 	},
+	"references": [
+		{
+			"path": "../..",
+		},
+	],
 }

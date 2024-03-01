@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { validateMessages } from "../driverUtils";
+import { validateMessages } from "../driverUtils.js";
 
 describe("driver utils tests", () => {
 	describe("validateMessagesTests", () => {
