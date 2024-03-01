@@ -4,8 +4,8 @@
  */
 import { LoaderCachingPolicy } from "@fluidframework/driver-definitions";
 import { ISnapshotTree, IVersion } from "@fluidframework/protocol-definitions";
-import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
-import { canRetryOnError } from "./network";
+import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy.js";
+import { canRetryOnError } from "./network.js";
 
 /**
  * @internal
