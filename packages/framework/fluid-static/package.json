@@ -151,6 +151,10 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_ContainerSchema": {
+				"backCompat": false
+			}
+		}
 	}
 }

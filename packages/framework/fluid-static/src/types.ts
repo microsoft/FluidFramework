@@ -21,8 +21,7 @@ export type LoadableObjectRecord = Record<string, IFluidLoadable>;
  * or `SharedObject`.
  * @public
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>;
+export type LoadableObjectClassRecord = Record<string, LoadableObjectClass>;
 
 /**
  * A class object of `DataObject` or `SharedObject` that loads a `T`.
@@ -30,7 +29,7 @@ export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>
  * @typeParam T - The class of the `DataObject` or `SharedObject`.
  * @public
  */
-export type LoadableObjectClass<T extends IFluidLoadable> =
+export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> =
 	| DataObjectClass<T>
 	| SharedObjectClass<T>;
 
@@ -99,7 +98,7 @@ export interface ContainerSchema {
 	 * }
 	 * ```
 	 */
-	initialObjects: LoadableObjectClassRecord;
+	readonly initialObjects: LoadableObjectClassRecord;
 
 	/**
 	 * Loadable objects that can be created after the initial {@link IFluidContainer | Container} creation.
@@ -111,8 +110,7 @@ export interface ContainerSchema {
 	 * For best practice it's recommended to define all the dynamic types you create even if they are
 	 * included via initialObjects.
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	dynamicObjectTypes?: LoadableObjectClass<any>[];
+	readonly dynamicObjectTypes?: readonly LoadableObjectClass[];
 }
 
 /**
