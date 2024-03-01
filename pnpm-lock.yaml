@@ -396,7 +396,6 @@ importers:
   examples/apps/collaborative-textarea:
     specifiers:
       '@fluid-example/example-utils': workspace:~
-      '@fluid-experimental/react-inputs': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -439,7 +438,6 @@ importers:
       webpack-merge: ^5.8.0
     dependencies:
       '@fluid-example/example-utils': link:../../utils/example-utils
-      '@fluid-experimental/react-inputs': link:../../../experimental/framework/react-inputs
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
       '@fluidframework/container-definitions': link:../../../packages/common/container-definitions
       '@fluidframework/container-runtime-definitions': link:../../../packages/runtime/container-runtime-definitions
@@ -861,7 +859,6 @@ importers:
   examples/apps/tree-comparison:
     specifiers:
       '@fluid-example/example-utils': workspace:~
-      '@fluid-experimental/react-inputs': workspace:~
       '@fluid-experimental/tree': workspace:~
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
@@ -916,7 +913,6 @@ importers:
       webpack-merge: ^5.8.0
     dependencies:
       '@fluid-example/example-utils': link:../../utils/example-utils
-      '@fluid-experimental/react-inputs': link:../../../experimental/framework/react-inputs
       '@fluid-experimental/tree': link:../../../experimental/dds/tree
       '@fluid-internal/client-utils': link:../../../packages/common/client-utils
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
@@ -1492,7 +1488,7 @@ importers:
 
   examples/client-logger/app-insights-logger:
     specifiers:
-      '@fluid-experimental/react-inputs': workspace:~
+      '@fluid-example/example-utils': workspace:~
       '@fluidframework/app-insights-logger': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.34.0
@@ -1538,7 +1534,7 @@ importers:
       webpack-dev-server: ~4.6.0
       webpack-merge: ^5.8.0
     dependencies:
-      '@fluid-experimental/react-inputs': link:../../../experimental/framework/react-inputs
+      '@fluid-example/example-utils': link:../../utils/example-utils
       '@fluidframework/app-insights-logger': link:../../../packages/framework/client-logger/app-insights-logger
       '@fluidframework/container-loader': link:../../../packages/loader/container-loader
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
@@ -2872,7 +2868,6 @@ importers:
     specifiers:
       '@fluid-example/example-utils': workspace:~
       '@fluid-example/webpack-fluid-loader': workspace:~
-      '@fluid-experimental/react-inputs': workspace:~
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.34.0
@@ -2914,7 +2909,6 @@ importers:
       webpack-merge: ^5.8.0
     dependencies:
       '@fluid-example/example-utils': link:../../utils/example-utils
-      '@fluid-experimental/react-inputs': link:../../../experimental/framework/react-inputs
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
       '@fluidframework/container-runtime-definitions': link:../../../packages/runtime/container-runtime-definitions
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
@@ -3073,7 +3067,6 @@ importers:
       '@fluentui/react-components': ~9.19.1
       '@fluentui/react-icons': ^2.0.201
       '@fluid-example/example-utils': workspace:~
-      '@fluid-experimental/react-inputs': workspace:~
       '@fluid-internal/client-utils': workspace:~
       '@fluid-internal/devtools-view': workspace:~
       '@fluidframework/aqueduct': workspace:~
@@ -3140,7 +3133,6 @@ importers:
       '@fluentui/react-components': 9.19.1_3eymgwxym437wpq7il2js5u6au
       '@fluentui/react-icons': 2.0.223_react@17.0.2
       '@fluid-example/example-utils': link:../utils/example-utils
-      '@fluid-experimental/react-inputs': link:../../experimental/framework/react-inputs
       '@fluid-internal/client-utils': link:../../packages/common/client-utils
       '@fluid-internal/devtools-view': link:../../packages/tools/devtools/devtools-view
       '@fluidframework/aqueduct': link:../../packages/framework/aqueduct
@@ -3208,7 +3200,6 @@ importers:
   examples/external-data:
     specifiers:
       '@fluid-example/example-utils': workspace:~
-      '@fluid-experimental/react-inputs': workspace:~
       '@fluid-internal/client-utils': workspace:~
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -3280,7 +3271,6 @@ importers:
       webpack-merge: ^5.8.0
     dependencies:
       '@fluid-example/example-utils': link:../utils/example-utils
-      '@fluid-experimental/react-inputs': link:../../experimental/framework/react-inputs
       '@fluid-internal/client-utils': link:../../packages/common/client-utils
       '@fluidframework/aqueduct': link:../../packages/framework/aqueduct
       '@fluidframework/cell': link:../../packages/dds/cell
@@ -3594,12 +3584,14 @@ importers:
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^4.0.0
       '@fluidframework/local-driver': workspace:~
+      '@fluidframework/merge-tree': workspace:~
       '@fluidframework/protocol-definitions': ^3.2.0-237840
       '@fluidframework/register-collection': workspace:~
       '@fluidframework/request-handler': workspace:~
       '@fluidframework/routerlicious-driver': workspace:~
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
+      '@fluidframework/sequence': workspace:~
       '@fluidframework/server-local-server': ^3.1.0-240326
       '@fluidframework/task-manager': workspace:~
       '@fluidframework/tinylicious-driver': workspace:~
@@ -3630,12 +3622,14 @@ importers:
       '@fluidframework/driver-definitions': link:../../../packages/common/driver-definitions
       '@fluidframework/driver-utils': link:../../../packages/loader/driver-utils
       '@fluidframework/local-driver': link:../../../packages/drivers/local-driver
+      '@fluidframework/merge-tree': link:../../../packages/dds/merge-tree
       '@fluidframework/protocol-definitions': 3.2.0-237840
       '@fluidframework/register-collection': link:../../../packages/dds/register-collection
       '@fluidframework/request-handler': link:../../../packages/framework/request-handler
       '@fluidframework/routerlicious-driver': link:../../../packages/drivers/routerlicious-driver
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
+      '@fluidframework/sequence': link:../../../packages/dds/sequence
       '@fluidframework/server-local-server': 3.1.0-240326
       '@fluidframework/task-manager': link:../../../packages/dds/task-manager
       '@fluidframework/tinylicious-driver': link:../../../packages/drivers/tinylicious-driver
@@ -3861,7 +3855,6 @@ importers:
   examples/version-migration/same-container:
     specifiers:
       '@fluid-example/example-utils': workspace:~
-      '@fluid-experimental/react-inputs': workspace:~
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/aqueduct': workspace:~
@@ -3920,7 +3913,6 @@ importers:
       webpack-merge: ^5.8.0
     dependencies:
       '@fluid-example/example-utils': link:../../utils/example-utils
-      '@fluid-experimental/react-inputs': link:../../../experimental/framework/react-inputs
       '@fluid-internal/client-utils': link:../../../packages/common/client-utils
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
       '@fluidframework/cell': link:../../../packages/dds/cell
@@ -3982,7 +3974,6 @@ importers:
   examples/version-migration/schema-upgrade:
     specifiers:
       '@fluid-example/example-utils': workspace:~
-      '@fluid-experimental/react-inputs': workspace:~
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/aqueduct': workspace:~
@@ -4041,7 +4032,6 @@ importers:
       webpack-merge: ^5.8.0
     dependencies:
       '@fluid-example/example-utils': link:../../utils/example-utils
-      '@fluid-experimental/react-inputs': link:../../../experimental/framework/react-inputs
       '@fluid-internal/client-utils': link:../../../packages/common/client-utils
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
       '@fluidframework/cell': link:../../../packages/dds/cell
@@ -4103,7 +4093,6 @@ importers:
   examples/version-migration/tree-shim:
     specifiers:
       '@fluid-example/example-utils': workspace:~
-      '@fluid-experimental/react-inputs': workspace:~
       '@fluid-experimental/tree': workspace:~
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
@@ -4160,7 +4149,6 @@ importers:
       webpack-merge: ^5.8.0
     dependencies:
       '@fluid-example/example-utils': link:../../utils/example-utils
-      '@fluid-experimental/react-inputs': link:../../../experimental/framework/react-inputs
       '@fluid-experimental/tree': link:../../../experimental/dds/tree
       '@fluid-internal/client-utils': link:../../../packages/common/client-utils
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
@@ -6001,45 +5989,6 @@ importers:
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
       '@types/node': 18.19.1
-      eslint: 8.55.0
-      prettier: 3.0.3
-      rimraf: 4.4.1
-      typescript: 5.1.6
-
-  experimental/framework/react-inputs:
-    specifiers:
-      '@fluid-internal/client-utils': workspace:~
-      '@fluid-tools/build-cli': ^0.34.0
-      '@fluidframework/build-common': ^2.0.3
-      '@fluidframework/build-tools': ^0.34.0
-      '@fluidframework/cell': workspace:~
-      '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/eslint-config-fluid': ^4.0.0
-      '@fluidframework/merge-tree': workspace:~
-      '@fluidframework/sequence': workspace:~
-      '@microsoft/api-extractor': ^7.39.1
-      '@types/node': ^18.19.0
-      '@types/react': ^17.0.44
-      eslint: ~8.55.0
-      prettier: ~3.0.3
-      react: ^17.0.1
-      rimraf: ^4.4.0
-      typescript: ~5.1.6
-    dependencies:
-      '@fluid-internal/client-utils': link:../../../packages/common/client-utils
-      '@fluidframework/cell': link:../../../packages/dds/cell
-      '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
-      '@fluidframework/merge-tree': link:../../../packages/dds/merge-tree
-      '@fluidframework/sequence': link:../../../packages/dds/sequence
-      react: 17.0.2
-    devDependencies:
-      '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
-      '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
-      '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
-      '@types/node': 18.19.1
-      '@types/react': 17.0.71
       eslint: 8.55.0
       prettier: 3.0.3
       rimraf: 4.4.1
@@ -11107,7 +11056,6 @@ importers:
     specifiers:
       '@fluentui/react': ^8.109.4
       '@fluid-example/example-utils': workspace:~
-      '@fluid-experimental/react-inputs': workspace:~
       '@fluid-internal/client-utils': workspace:~
       '@fluid-internal/devtools-view': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
@@ -11193,7 +11141,6 @@ importers:
       uuid: 9.0.1
     devDependencies:
       '@fluid-example/example-utils': link:../../../../examples/utils/example-utils
-      '@fluid-experimental/react-inputs': link:../../../../experimental/framework/react-inputs
       '@fluid-internal/mocha-test-setup': link:../../../test/mocha-test-setup
       '@fluidframework/aqueduct': link:../../../framework/aqueduct
       '@fluidframework/build-common': 2.0.3

@@ -43,7 +43,6 @@
 		"@fluentui/react-components": "~9.19.1",
 		"@fluentui/react-icons": "^2.0.201",
 		"@fluid-example/example-utils": "workspace:~",
-		"@fluid-experimental/react-inputs": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluid-internal/devtools-view": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",

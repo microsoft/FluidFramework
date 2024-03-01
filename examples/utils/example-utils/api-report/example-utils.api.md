@@ -14,7 +14,7 @@ import { IContainer } from '@fluidframework/container-definitions';
 import { IContainerContext } from '@fluidframework/container-definitions';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
 import { IContainerRuntimeOptions } from '@fluidframework/container-runtime';
-import type { IEvent } from '@fluidframework/core-interfaces';
+import { IEvent } from '@fluidframework/core-interfaces';
 import type { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidCodeDetails } from '@fluidframework/container-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
@@ -25,7 +25,23 @@ import { IRuntime } from '@fluidframework/container-definitions';
 import { IRuntimeFactory } from '@fluidframework/container-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions';
+import { default as React_2 } from 'react';
+import { SharedString } from '@fluidframework/sequence';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
+
+// @internal
+export class CollaborativeInput extends React_2.Component<ICollaborativeInputProps, ICollaborativeInputState> {
+    constructor(props: ICollaborativeInputProps);
+    // (undocumented)
+    componentDidMount(): void;
+    // (undocumented)
+    componentDidUpdate(prevProps: ICollaborativeInputProps): void;
+    // (undocumented)
+    render(): React_2.JSX.Element;
+}
+
+// @internal
+export const CollaborativeTextArea: React_2.FC<ICollaborativeTextAreaProps>;
 
 // @internal
 export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory {
@@ -38,6 +54,40 @@ export type DataTransformationCallback = (exportedData: unknown, modelVersion: s
 
 // @internal (undocumented)
 export function getDataStoreEntryPoint<T>(containerRuntime: IContainerRuntime, alias: string): Promise<T>;
+
+// @internal
+export interface ICollaborativeInputProps {
+    // (undocumented)
+    className?: string;
+    // (undocumented)
+    disabled?: boolean;
+    // (undocumented)
+    onInput?: (sharedString: SharedString) => void;
+    readOnly?: boolean;
+    sharedString: SharedString;
+    spellCheck?: boolean;
+    // (undocumented)
+    style?: React_2.CSSProperties;
+}
+
+// @internal
+export interface ICollaborativeInputState {
+    // (undocumented)
+    selectionEnd: number;
+    // (undocumented)
+    selectionStart: number;
+}
+
+// @internal
+export interface ICollaborativeTextAreaProps {
+    // (undocumented)
+    className?: string;
+    readOnly?: boolean;
+    sharedStringHelper: SharedStringHelper;
+    spellCheck?: boolean;
+    // (undocumented)
+    style?: React_2.CSSProperties;
+}
 
 // @internal
 export interface IDetachedModel<ModelType> {
@@ -178,6 +228,18 @@ export interface ISameContainerMigratorEvents extends IEvent {
     (event: "migrationNotSupported", listener: (version: string) => void): any;
 }
 
+// @internal
+export interface ISharedStringHelperEvents extends IEvent {
+    // (undocumented)
+    (event: "textChanged", listener: (event: ISharedStringHelperTextChangedEventArgs) => void): any;
+}
+
+// @internal (undocumented)
+export interface ISharedStringHelperTextChangedEventArgs {
+    isLocal: boolean;
+    transformPosition: (oldPosition: number) => number;
+}
+
 // @internal (undocumented)
 export interface IVersionedModel {
     readonly version: string;
@@ -281,7 +343,7 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
     // (undocumented)
     protected initializingFirstTime(): Promise<void>;
     // (undocumented)
-    get migrationState(): "collaborating" | "migrated" | "proposingMigration" | "stoppingCollaboration" | "proposingV2Code" | "waitingForV2ProposalCompletion" | "readyForMigration";
+    get migrationState(): "collaborating" | "proposingMigration" | "stoppingCollaboration" | "proposingV2Code" | "waitingForV2ProposalCompletion" | "readyForMigration" | "migrated";
     // (undocumented)
     get proposedVersion(): string | undefined;
     // (undocumented)
@@ -317,6 +379,16 @@ export class SessionStorageModelLoader<ModelType> implements IModelLoader<ModelT
     loadExistingPaused(id: string, sequenceNumber: number): Promise<ModelType>;
     // (undocumented)
     supportsVersion(version: string): Promise<boolean>;
+}
+
+// @internal
+export class SharedStringHelper extends TypedEventEmitter<ISharedStringHelperEvents> {
+    constructor(sharedString: SharedString);
+    // (undocumented)
+    getText(): string;
+    insertText(text: string, pos: number): void;
+    removeText(start: number, end: number): void;
+    replaceText(text: string, start: number, end: number): void;
 }
 
 // @internal

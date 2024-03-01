@@ -14,6 +14,7 @@ import {
 } from "@fluentui/react-components";
 import React from "react";
 
+import { CollaborativeTextArea, SharedStringHelper } from "@fluid-example/example-utils";
 import {
 	type ContainerKey,
 	createDevtoolsLogger,
@@ -22,7 +23,6 @@ import {
 	type IFluidDevtools,
 	initializeDevtools,
 } from "@fluidframework/devtools-core";
-import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
 import { type SharedCounter } from "@fluidframework/counter";
 import { type SessionStorageModelLoader } from "@fluid-example/example-utils";
 import { type SharedMatrix } from "@fluidframework/matrix";

@@ -50,3 +50,15 @@ export {
 	type IProvideFluidMountableView,
 	MountableView,
 } from "./mountableView/index.js";
+export {
+	CollaborativeInput,
+	CollaborativeTextArea,
+	ICollaborativeInputProps,
+	ICollaborativeInputState,
+	ICollaborativeTextAreaProps,
+} from "./reactInputs/index.js";
+export {
+	ISharedStringHelperEvents,
+	ISharedStringHelperTextChangedEventArgs,
+	SharedStringHelper,
+} from "./SharedStringHelper.js";
