@@ -20,12 +20,8 @@ import {
 } from "../feature-libraries/index.js";
 import { brand, fail, isReadonlyArray, mapIterable } from "../util/index.js";
 import { normalizeFlexListEager } from "../feature-libraries/typed-schema/flexList.js";
-import {
-	AllowedUpdateType,
-	ITreeCursorSynchronous,
-	TreeNodeSchemaIdentifier,
-} from "../core/index.js";
-import { type InitializeAndSchematizeConfiguration } from "../shared-tree/index.js";
+import { ITreeCursorSynchronous, TreeNodeSchemaIdentifier } from "../core/index.js";
+import { TreeContent } from "../shared-tree/index.js";
 import {
 	InsertableContent,
 	extractFactoryContent,
@@ -63,13 +59,12 @@ export function cursorFromUnhydratedRoot(
 	);
 }
 
-export function toFlexConfig(config: TreeConfiguration): InitializeAndSchematizeConfiguration {
+export function toFlexConfig(config: TreeConfiguration): TreeContent {
 	const schema = toFlexSchema(config.schema);
 	const unhydrated = config.initialTree();
 	const initialTree =
 		unhydrated === undefined ? undefined : [cursorFromUnhydratedRoot(schema, unhydrated)];
 	return {
-		allowedSchemaModifications: AllowedUpdateType.None,
 		schema,
 		initialTree,
 	};
