@@ -11,9 +11,9 @@ import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { DataProcessingError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 
-import { InboundSequencedContainerRuntimeMessage } from "./messageTypes";
-import { pkgVersion } from "./packageVersion";
-import { IBatchMetadata } from "./metadata";
+import { InboundSequencedContainerRuntimeMessage } from "./messageTypes.js";
+import { pkgVersion } from "./packageVersion.js";
+import { IBatchMetadata } from "./metadata.js";
 
 /**
  * This represents a message that has been submitted and is added to the pending queue when `submit` is called on the
