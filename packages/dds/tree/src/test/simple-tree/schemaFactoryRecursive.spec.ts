@@ -46,16 +46,12 @@ import { hydrate } from "./utils.js";
 // Recursion through ImplicitAllowedTypes (part of co-recursion)
 // Recursion through ImplicitFieldSchema (part of union and as part of co-recursion)
 
-const factory = new TreeFactory({});
 const sf = new SchemaFactoryRecursive("recursive");
-
-class ListRecursive extends sf.arrayRecursive("List", [() => ListRecursive]) {}
-
-class MapRecursive extends sf.mapRecursive("Map", [() => MapRecursive]) {}
 
 describe("SchemaFactoryRecursive", () => {
 	describe("objectRecursive", () => {
 		it("End-to-end with recursive object", () => {
+			const factory = new TreeFactory({});
 			const schema = new SchemaFactoryRecursive("com.example");
 
 			/**
@@ -173,7 +169,7 @@ describe("SchemaFactoryRecursive", () => {
 		});
 
 		it("other under recursive object", () => {
-			class Other extends sf.object("Object", {
+			class Other extends sf.object("Other", {
 				y: sf.number,
 			}) {}
 			class ObjectRecursive extends sf.objectRecursive("Object", {
@@ -329,48 +325,62 @@ describe("SchemaFactoryRecursive", () => {
 
 	describe("arrayRecursive", () => {
 		it("simple", () => {
+			class ArrayRecursive extends sf.arrayRecursive("List", [() => ArrayRecursive]) {}
 			// Explicit constructor call
 			{
-				const data: ListRecursive = hydrate(ListRecursive, new ListRecursive({ x: [] }));
+				const data: ArrayRecursive = hydrate(ArrayRecursive, new ArrayRecursive([]));
 				assert.deepEqual([...data], []);
 			}
 			// Nested
 			{
-				const data: ListRecursive = hydrate(
-					ListRecursive,
-					new ListRecursive({ x: [new ListRecursive({ x: [] })] }),
+				const data: ArrayRecursive = hydrate(
+					ArrayRecursive,
+					new ArrayRecursive([new ArrayRecursive([])]),
 				);
 				assert.equal(data.length, 1);
 				assert.deepEqual([...data[0]], []);
 
-				type T = InsertableTreeNodeFromImplicitAllowedTypes<typeof ListRecursive>;
+				type T = InsertableTreeNodeFromImplicitAllowedTypes<typeof ArrayRecursive>;
 				// @ts-expect-error ListRecursive should not be implicitly constructable (for now).
 				const _check: T = [];
 				// Only explicitly constructed recursive lists are currently allowed:
-				type _check = requireTrue<areSafelyAssignable<T, ListRecursive>>;
+				type _check = requireTrue<areSafelyAssignable<T, ArrayRecursive>>;
 
-				data.insertAtEnd(new ListRecursive({ x: [] }));
+				data.insertAtEnd(new ArrayRecursive([]));
 
-				data[0].insertAtEnd(new ListRecursive({ x: [] }));
+				data[0].insertAtEnd(new ArrayRecursive([]));
 			}
 		});
 	});
 
-	it("maps", () => {
-		const node = hydrate(MapRecursive, new MapRecursive({ x: [] }));
-		const data = [...node];
-		assert.deepEqual(data, []);
+	describe("mapRecursive", () => {
+		it("simple", () => {
+			class MapRecursive extends sf.mapRecursive("Map", [() => MapRecursive]) {}
+			const node = hydrate(MapRecursive, new MapRecursive([]));
+			const data = [...node];
+			assert.deepEqual(data, []);
 
-		// Nested
-		{
-			type T = InsertableTreeNodeFromImplicitAllowedTypes<typeof MapRecursive>;
-			const _check: T = new MapRecursive({ x: [] });
-			// Only explicitly constructed recursive maps are currently allowed:
-			// type _check = requireTrue<areSafelyAssignable<T, MapRecursive>>;
-		}
+			// Nested
+			{
+				type T = InsertableTreeNodeFromImplicitAllowedTypes<typeof MapRecursive>;
+				const _check: T = new MapRecursive([]);
+				// Only explicitly constructed recursive maps are currently allowed:
+				type _check = requireTrue<areSafelyAssignable<T, MapRecursive>>;
+			}
 
-		node.set("x", new MapRecursive({ x: [] }));
+			node.set("x", new MapRecursive([]));
 
-		node.get("x")?.set("x", new MapRecursive({ x: [] }));
+			node.get("x")?.set("x", new MapRecursive(new Map()));
+		});
+	});
+
+	it("recursive under non-recursive", () => {
+		class ArrayRecursive extends sf.arrayRecursive("List", [() => ArrayRecursive]) {}
+		class Root extends sf.object("Root", {
+			r: ArrayRecursive,
+		}) {}
+
+		const r = hydrate(Root, { r: new ArrayRecursive([]) });
+		assert.deepEqual([...r.r], []);
 	});
 });
