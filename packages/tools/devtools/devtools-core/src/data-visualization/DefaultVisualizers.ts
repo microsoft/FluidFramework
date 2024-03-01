@@ -20,10 +20,10 @@ import type {
 	FieldKey,
 } from "@fluidframework/tree/internal";
 import {
-	ObjectNodeStoredSchema,
 	SharedTree,
-	// LeafNodeStoredSchema,
-	// ObjectNodeStoredSchema,
+	ObjectNodeStoredSchema,
+	LeafNodeStoredSchema,
+	MapNodeStoredSchema,
 } from "@fluidframework/tree/internal";
 import { assert } from "@fluidframework/core-utils";
 import { type ISharedObject } from "@fluidframework/shared-object-base";
