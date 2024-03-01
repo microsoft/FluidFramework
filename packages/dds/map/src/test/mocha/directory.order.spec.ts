@@ -19,8 +19,8 @@ import {
 	DirectoryLocalOpMetadata,
 	IDirectoryOperation,
 	SharedDirectory,
-} from "../../directory";
-import { ISharedDirectory } from "../../interfaces";
+} from "../../directory.js";
+import { ISharedDirectory } from "../../interfaces.js";
 
 function createConnectedDirectory(
 	id: string,
