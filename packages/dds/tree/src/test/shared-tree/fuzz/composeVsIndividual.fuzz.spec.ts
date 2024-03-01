@@ -24,7 +24,12 @@ import {
 	FuzzView,
 	FuzzTransactionView,
 } from "./fuzzEditGenerators.js";
-import { applyFieldEdit, applySynchronizationOp, applyUndoRedoEdit } from "./fuzzEditReducers.js";
+import {
+	applyFieldEdit,
+	applySchemaOp,
+	applySynchronizationOp,
+	applyUndoRedoEdit,
+} from "./fuzzEditReducers.js";
 import { deterministicIdCompressorFactory, isRevertibleSharedTreeView } from "./fuzzUtils.js";
 import { Operation } from "./operationTypes.js";
 
@@ -66,6 +71,9 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, Branched
 	synchronizeTrees: async (state) => {
 		applySynchronizationOp(state);
 		return state;
+	},
+	schema: async (state, operation) => {
+		applySchemaOp(state, operation);
 	},
 });
 

@@ -12,11 +12,13 @@ import {
 	FlexTreeNode,
 	cursorForJsonableTreeNode,
 	cursorForJsonableTreeField,
+	SchemaBuilderInternal,
+	intoStoredSchema,
 } from "../../../feature-libraries/index.js";
-import { fail } from "../../../util/index.js";
+import { brand, fail } from "../../../util/index.js";
 import { validateTreeConsistency } from "../../utils.js";
-import { ISharedTree, SharedTreeFactory } from "../../../shared-tree/index.js";
-import { Revertible } from "../../../core/index.js";
+import { ISharedTree, SharedTree, SharedTreeFactory } from "../../../shared-tree/index.js";
+import { Revertible, ValueSchema } from "../../../core/index.js";
 import {
 	FieldEdit,
 	FuzzRemove,
@@ -25,12 +27,14 @@ import {
 	FuzzTransactionType,
 	FuzzUndoRedoType,
 	Operation,
+	FuzzSchemaChange,
 } from "./operationTypes.js";
-import { isRevertibleSharedTreeView } from "./fuzzUtils.js";
+import { createTreeStoredSchema, isRevertibleSharedTreeView } from "./fuzzUtils.js";
 import {
 	FuzzTestState,
 	FuzzTransactionView,
 	FuzzView,
+	getAllowableNodeTypes,
 	viewFromState,
 } from "./fuzzEditGenerators.js";
 
@@ -57,6 +61,9 @@ const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFa
 	synchronizeTrees: (state) => {
 		applySynchronizationOp(state);
 	},
+	schema: (state, operation) => {
+		applySchemaOp(state, operation);
+	},
 });
 export const fuzzReducer: AsyncReducer<Operation, DDSFuzzTestState<SharedTreeFactory>> = async (
 	state,
@@ -78,6 +85,29 @@ export function applySynchronizationOp(state: DDSFuzzTestState<SharedTreeFactory
 			validateTreeConsistency(channel, readonlyChannel);
 		}
 	}
+}
+function generateLeafNodeSchemas(nodeTypes: string[]) {
+	const builder = new SchemaBuilderInternal({ scope: "com.fluidframework.leaf" });
+	const leafNodeSchemas = [];
+	for (const nodeType of nodeTypes) {
+		if (
+			nodeType !== "tree2fuzz.node" &&
+			nodeType !== "com.fluidframework.leaf.number" &&
+			nodeType !== "com.fluidframework.leaf.string"
+		) {
+			leafNodeSchemas.push(builder.leaf(nodeType, ValueSchema.Number));
+		}
+	}
+	const library = builder.intoLibrary();
+	return { leafNodeSchemas, library };
+}
+export function applySchemaOp(state: FuzzTestState, operation: FuzzSchemaChange) {
+	const tree = state.client.channel as SharedTree;
+	const nodeTypes = getAllowableNodeTypes(state);
+	nodeTypes.push(brand(operation.contents.type));
+	const { leafNodeSchemas, library } = generateLeafNodeSchemas(nodeTypes);
+	const newSchema = createTreeStoredSchema(leafNodeSchemas, library);
+	tree.checkout.updateSchema(intoStoredSchema(newSchema));
 }
 
 /**

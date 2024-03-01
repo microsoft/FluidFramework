@@ -30,10 +30,10 @@ import {
 	createAnchors,
 	validateAnchors,
 	fuzzNode,
-	fuzzSchema,
 	failureDirectory,
 	RevertibleSharedTreeView,
 	deterministicIdCompressorFactory,
+	initialFuzzSchema,
 } from "./fuzzUtils.js";
 import { Operation } from "./operationTypes.js";
 
@@ -43,7 +43,7 @@ interface AnchorFuzzTestState extends FuzzTestState {
 }
 
 const config = {
-	schema: fuzzSchema,
+	schema: initialFuzzSchema,
 	// Setting the tree to have an initial value is more interesting for this targeted test than if it's empty:
 	// returning to an empty state is arguably "easier" than returning to a non-empty state after some undos.
 	initialTree: {

@@ -8,7 +8,7 @@ import { DownPath } from "../../../feature-libraries/index.js";
 
 export type Operation = TreeOperation | Synchronize;
 
-export type TreeOperation = TreeEdit | TransactionBoundary | UndoRedo;
+export type TreeOperation = TreeEdit | TransactionBoundary | UndoRedo | FuzzSchemaChange;
 
 export interface TreeEdit {
 	type: "edit";
@@ -23,6 +23,11 @@ export interface TransactionBoundary {
 export interface UndoRedo {
 	type: "undoRedo";
 	contents: FuzzUndoRedoType;
+}
+
+export interface FuzzSchemaChange {
+	type: "schema";
+	contents: FuzzSchemaOp;
 }
 
 export type FuzzFieldChange = FuzzInsert | FuzzRemove | FuzzMove;
@@ -117,6 +122,10 @@ export interface UndoOp {
 
 export interface RedoOp {
 	type: "redo";
+}
+
+export interface FuzzSchemaOp {
+	type: string;
 }
 
 /**
