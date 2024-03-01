@@ -366,6 +366,20 @@ export class SharedMatrix<T = any>
 		});
 	}
 
+	private createOpMetadataLocalRef(vector: PermutationVector, pos: number, localSeq: number) {
+		const segoff = vector.getContainingSegment(pos, undefined, localSeq);
+		assert(
+			segoff.segment !== undefined && segoff.offset !== undefined,
+			"expected valid position",
+		);
+		return vector.createLocalReferencePosition(
+			segoff.segment,
+			segoff.offset,
+			ReferenceType.StayOnRemove,
+			undefined,
+		);
+	}
+
 	private sendSetCellOp(
 		row: number,
 		col: number,
@@ -388,30 +402,8 @@ export class SharedMatrix<T = any>
 				this.userSwitchedSetCellPolicy || this.setCellLwwToFwwPolicySwitchOpSeqNumber > -1,
 		};
 
-		const rowSegoff = this.rows.getContainingSegment(row, undefined, localSeq);
-		assert(
-			rowSegoff.segment !== undefined && rowSegoff.offset !== undefined,
-			"expected valid row position",
-		);
-		const rowsRef = this.rows.createLocalReferencePosition(
-			rowSegoff.segment,
-			rowSegoff.offset,
-			ReferenceType.StayOnRemove,
-			undefined,
-		);
-
-		const colsSegoff = this.cols.getContainingSegment(col, undefined, localSeq);
-		assert(
-			colsSegoff.segment !== undefined && colsSegoff.offset !== undefined,
-			"expected valid col position",
-		);
-		const colsRef = this.cols.createLocalReferencePosition(
-			colsSegoff.segment,
-			colsSegoff.offset,
-			ReferenceType.StayOnRemove,
-			undefined,
-		);
-
+		const rowsRef = this.createOpMetadataLocalRef(this.rows, row, localSeq);
+		const colsRef = this.createOpMetadataLocalRef(this.cols, col, localSeq);
 		const metadata: ISetOpMetadata = {
 			rowHandle,
 			colHandle,
