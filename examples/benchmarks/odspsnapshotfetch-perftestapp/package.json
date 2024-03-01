@@ -11,6 +11,8 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
+	"main": "lib/expressApp.js",
+	"types": "lib/expressApp.d.ts",
 	"type": "module",
 	"scripts": {
 		"build": "fluid-build . --task build",
