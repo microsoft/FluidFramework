@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ISegment, Marker } from "../mergeTreeNodes";
-import { MergeTree } from "../mergeTree";
-import { ReferenceType } from "../ops";
-import { reservedTileLabelsKey } from "../referencePositions";
-import { TextSegment } from "../textSegment";
+import { ISegment, Marker } from "../mergeTreeNodes.js";
+import { MergeTree } from "../mergeTree.js";
+import { ReferenceType } from "../ops.js";
+import { reservedTileLabelsKey } from "../referencePositions.js";
+import { TextSegment } from "../textSegment.js";
 
 export function loadSegments(
 	content: string,

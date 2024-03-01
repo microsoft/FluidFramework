@@ -12,10 +12,10 @@ import {
 	IAttributionCollection,
 	IAttributionCollectionSpec,
 	SerializedAttributionCollection,
-} from "../attributionCollection";
-import { TextSegmentGranularity } from "../textSegment";
-import { compareNumbers, ISegment } from "../mergeTreeNodes";
-import { RedBlackTree } from "../collections";
+} from "../attributionCollection.js";
+import { TextSegmentGranularity } from "../textSegment.js";
+import { compareNumbers, ISegment } from "../mergeTreeNodes.js";
+import { RedBlackTree } from "../collections/index.js";
 
 interface IAttributionCollectionCtor {
 	new (length: number, key?: AttributionKey): IAttributionCollection<AttributionKey>;
