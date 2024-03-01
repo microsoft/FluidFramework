@@ -15,10 +15,9 @@ import { EventEmitter } from "./eventEmitter.cjs";
  * The event emitter polyfill and the node event emitter have different event types:
  * string | symbol vs. string | number
  *
- * The polyfill is now always used, but string is the only event time preferred.
+ * The polyfill is now always used, but string is the only event type preferred.
  * @public
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type EventEmitterEventType = string;
 
 /**
