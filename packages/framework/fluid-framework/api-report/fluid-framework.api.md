@@ -342,6 +342,11 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
 }
 
 // @public
+export interface SchemaIncompatible {
+    readonly canUpgrade: boolean;
+}
+
+// @public
 export type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
 // @public @deprecated
@@ -519,13 +524,16 @@ export enum TreeStatus {
 
 // @public
 export interface TreeView<in out TRoot> extends IDisposable {
+    readonly error?: SchemaIncompatible;
     readonly events: ISubscribable<TreeViewEvents>;
     readonly root: TRoot;
+    upgradeSchema(): void;
 }
 
 // @public
 export interface TreeViewEvents {
     afterBatch(): void;
+    rootChanged(): void;
 }
 
 // @public

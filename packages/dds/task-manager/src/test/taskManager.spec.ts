@@ -12,9 +12,9 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { AttachState, ReadOnlyInfo } from "@fluidframework/container-definitions";
-import { TaskManager } from "../taskManager";
-import { TaskManagerFactory } from "../taskManagerFactory";
-import { ITaskManager } from "../interfaces";
+import { TaskManager } from "../taskManager.js";
+import { TaskManagerFactory } from "../taskManagerFactory.js";
+import { ITaskManager } from "../interfaces.js";
 
 function createConnectedTaskManager(id: string, runtimeFactory: MockContainerRuntimeFactory) {
 	// Create and connect a TaskManager.

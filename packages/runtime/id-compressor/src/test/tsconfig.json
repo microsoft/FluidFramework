@@ -1,14 +1,8 @@
 {
-	"extends": ["../../../../../common/build/build-common/tsconfig.test.json"],
-	"include": ["./**/*"],
-	"references": [
-		{
-			"path": "../..",
-		},
-	],
+	"extends": "../../../../../common/build/build-common/tsconfig.test.node16.json",
 	"compilerOptions": {
 		"rootDir": "./",
-		"outDir": "../../dist/test",
+		"outDir": "../../lib/test",
 		"types": ["mocha"],
 
 		// The package exports utilities for test code from the test folder, so we need to build types for test files, which we typically
@@ -17,4 +11,10 @@
 		"declarationMap": true,
 		"noImplicitAny": false,
 	},
+	"include": ["./**/*"],
+	"references": [
+		{
+			"path": "../..",
+		},
+	],
 }

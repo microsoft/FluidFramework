@@ -8,7 +8,8 @@
 import { strict as assert } from "assert";
 import { existsSync, rmSync, mkdirSync, writeFileSync, readFileSync } from "fs";
 import path from "path";
-import { SessionId, createIdCompressor } from "../..";
+import { SessionId, createIdCompressor } from "../../index.js";
+import { _dirname } from "./dirname.cjs";
 
 const regenerateSnapshots = process.argv.includes("--snapshot");
 
@@ -18,8 +19,8 @@ let currentTestFile: string | undefined;
 // Simple filter to avoid tests with a name that would accidentally be parsed as directory traversal or other confusing things.
 const nameCheck = new RegExp(/^[^"/\\]+$/);
 
-assert(__dirname.match(/dist[/\\]test[/\\]snapshots$/));
-const snapshotsFolder = path.join(__dirname, `../../../src/test/snapshots`);
+assert(_dirname.match(/(dist|lib)[/\\]test[/\\]snapshots$/));
+const snapshotsFolder = path.join(_dirname, `../../../src/test/snapshots`);
 assert(existsSync(snapshotsFolder));
 
 /**

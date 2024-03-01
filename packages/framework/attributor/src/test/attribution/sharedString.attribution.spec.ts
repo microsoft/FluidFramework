@@ -36,14 +36,15 @@ import { type IClient, type ISummaryTree, SummaryType } from "@fluidframework/pr
 import { type IAudience } from "@fluidframework/container-definitions";
 import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
 import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree";
-import { type IAttributor, OpStreamAttributor } from "../../attributor";
+import { type IAttributor, OpStreamAttributor } from "../../attributor.js";
 import {
 	AttributorSerializer,
 	chain as chainEncoders,
 	deltaEncoder,
 	type Encoder,
-} from "../../encoders";
-import { makeLZ4Encoder } from "../../lz4Encoder";
+} from "../../encoders.js";
+import { makeLZ4Encoder } from "../../lz4Encoder.js";
+import { _dirname } from "./dirname.cjs";
 
 function makeMockAudience(clientIds: string[]): IAudience {
 	const clients = new Map<string, IClient>();
@@ -324,7 +325,7 @@ function createSharedString(
 	);
 }
 
-const directory = path.join(__dirname, "../../../src/test/attribution/documents");
+const directory = path.join(_dirname, "../../../src/test/attribution/documents");
 
 interface TestPaths {
 	directory: string;
