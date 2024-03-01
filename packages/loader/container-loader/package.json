@@ -174,7 +174,6 @@
 		"@ungap/structured-clone": "^1.2.0",
 		"debug": "^4.3.4",
 		"double-ended-queue": "^2.1.0-0",
-		"url_pkg": "npm:url@^0.11.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
@@ -222,6 +221,9 @@
 	"typeValidation": {
 		"broken": {
 			"InterfaceDeclaration_IContainerExperimental": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IParsedUrl": {
 				"forwardCompat": false
 			}
 		}

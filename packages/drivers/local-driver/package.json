@@ -127,7 +127,6 @@
 		"@fluidframework/server-test-utils": "^3.1.0-240326",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"jsrsasign": "^11.0.0",
-		"url_pkg": "npm:url@^0.11.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {

@@ -6313,7 +6313,6 @@ importers:
       prettier: ~3.0.3
       replace-in-file: ^6.3.5
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -6348,7 +6347,6 @@ importers:
       prettier: 3.0.3
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/map:
@@ -6789,7 +6787,6 @@ importers:
       prettier: ~3.0.3
       replace-in-file: ^6.3.5
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -6824,7 +6821,6 @@ importers:
       prettier: 3.0.3
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/sequence:
@@ -6962,7 +6958,6 @@ importers:
       replace-in-file: ^6.3.5
       rimraf: ^4.4.0
       ts-node: ^10.9.1
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -7006,7 +7001,6 @@ importers:
       replace-in-file: 6.3.5
       rimraf: 4.4.1
       ts-node: 10.9.1_ggysxzqxruqvydtrq6zb2nxvwm
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/shared-summary-block:
@@ -7042,7 +7036,6 @@ importers:
       prettier: ~3.0.3
       replace-in-file: ^6.3.5
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -7077,7 +7070,6 @@ importers:
       prettier: 3.0.3
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/task-manager:
@@ -7189,7 +7181,6 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -7223,7 +7214,6 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/tree:
@@ -7576,7 +7566,6 @@ importers:
       rimraf: ^4.4.0
       socket.io-client: ^4.7.3
       typescript: ~5.1.6
-      url_pkg: npm:url@^0.11.0
       uuid: ^9.0.0
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -7594,7 +7583,6 @@ importers:
       '@fluidframework/server-test-utils': 3.1.0-240326
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       jsrsasign: 11.0.0
-      url_pkg: /url/0.11.3
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -7822,7 +7810,6 @@ importers:
       nock: ^13.3.3
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -7847,7 +7834,6 @@ importers:
       nock: 13.4.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/routerlicious-driver:
@@ -7875,7 +7861,6 @@ importers:
       '@types/nock': ^9.3.0
       '@types/node': ^18.19.0
       '@types/sinon': ^17.0.3
-      '@types/url-parse': 1.4.4
       '@types/uuid': ^9.0.2
       axios: ^1.6.2
       c8: ^8.0.1
@@ -7895,7 +7880,6 @@ importers:
       socket.io-client: ^4.7.3
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
-      url-parse: ^1.5.8
       uuid: ^9.0.0
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -7912,7 +7896,6 @@ importers:
       cross-fetch: 3.1.8
       json-stringify-safe: 5.0.1
       socket.io-client: 4.7.4
-      url-parse: 1.5.10
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -7927,7 +7910,6 @@ importers:
       '@types/nock': 9.3.1
       '@types/node': 18.19.1
       '@types/sinon': 17.0.3
-      '@types/url-parse': 1.4.4
       '@types/uuid': 9.0.7
       axios: 1.6.2
       c8: 8.0.1
@@ -7975,14 +7957,12 @@ importers:
       rimraf: ^4.4.0
       tsc-multi: ^1.1.0
       typescript: ~5.1.6
-      url: ^0.11.0
     dependencies:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/protocol-definitions': 3.2.0-237840
       nconf: 0.12.1
-      url: 0.11.3
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
       '@fluid-internal/mocha-test-setup': link:../../test/mocha-test-setup
@@ -8833,7 +8813,6 @@ importers:
       rimraf: ^4.4.0
       sinon: ^17.0.1
       typescript: ~5.1.6
-      url_pkg: npm:url@^0.11.0
       uuid: ^9.0.0
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -8848,7 +8827,6 @@ importers:
       '@ungap/structured-clone': 1.2.0
       debug: 4.3.4
       double-ended-queue: 2.1.0-0
-      url_pkg: /url/0.11.3
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -8916,7 +8894,6 @@ importers:
       rimraf: ^4.4.0
       sinon: ^17.0.1
       typescript: ~5.1.6
-      url: ^0.11.0
       uuid: ^9.0.0
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -8929,7 +8906,6 @@ importers:
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       axios: 1.6.2
       lz4js: 0.2.0
-      url: 0.11.3
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -10395,7 +10371,6 @@ importers:
       start-server-and-test: ^1.11.7
       tinylicious: ^3.1.0-240326
       typescript: ~5.1.6
-      url: ^0.11.0
       uuid: ^9.0.0
     dependencies:
       '@fluid-experimental/attributor': link:../../framework/attributor
@@ -10448,7 +10423,6 @@ importers:
       sinon: 17.0.1
       start-server-and-test: 1.15.5
       tinylicious: 3.1.0-240326
-      url: 0.11.3
       uuid: 9.0.1
     devDependencies:
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
@@ -22417,10 +22391,6 @@ packages:
 
   /@types/unist/2.0.10:
     resolution: {integrity: sha512-IfYcSBWE3hLpBg8+X2SEa8LVkJdJEkT2Ese2aaLs3ptGdVtABxndrMaxuFlQ1qdFf9Q5rDvDpxI3WwgvKFAsQA==}
-    dev: true
-
-  /@types/url-parse/1.4.4:
-    resolution: {integrity: sha512-KtQLad12+4T/NfSxpoDhmr22+fig3T7/08QCgmutYA6QSznSRmEtuL95GrhVV40/0otTEdFc+etRcCTqhh1q5Q==}
     dev: true
 
   /@types/uuid/9.0.7:
@@ -38439,6 +38409,7 @@ packages:
 
   /querystringify/2.2.0:
     resolution: {integrity: sha512-FIqgj2EUvTa7R50u0rGsyTftzjYmv/a3hO345bZNrqabNqjtgiDMgmo4mkUjd+nzU5oF3dClKqFIPUKybUyqoQ==}
+    dev: true
 
   /queue-microtask/1.2.3:
     resolution: {integrity: sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==}
@@ -43181,6 +43152,7 @@ packages:
     dependencies:
       querystringify: 2.2.0
       requires-port: 1.0.0
+    dev: true
 
   /url-slug/2.0.0:
     resolution: {integrity: sha512-aiNmSsVgrjCiJ2+KWPferjT46YFKoE8i0YX04BlMVDue022Xwhg/zYlnZ6V9/mP3p8Wj7LEp0myiTkC/p6sxew==}

@@ -24,7 +24,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { delay } from "@fluidframework/core-utils";
-import { ReplayController } from "./replayController";
+import { ReplayController } from "./replayController.js";
 
 const ReplayDocumentId = "documentId";
 
