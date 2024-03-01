@@ -4,7 +4,7 @@
  */
 
 import { type IClient, type IUser } from "@fluidframework/protocol-definitions";
-import { type AzureMember, type AzureUser } from "./interfaces";
+import { type AzureMember, type AzureUser } from "./interfaces.js";
 
 /**
  * Creates Azure-specific audience member.

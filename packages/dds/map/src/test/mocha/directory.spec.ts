@@ -17,10 +17,10 @@ import {
 } from "@fluidframework/test-runtime-utils";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { MapFactory } from "../../map";
-import { DirectoryFactory, IDirectoryNewStorageFormat, SharedDirectory } from "../../directory";
-import { IDirectory, IDirectoryValueChanged, ISharedMap } from "../../interfaces";
-import { assertEquivalentDirectories } from "./directoryEquivalenceUtils";
+import { MapFactory } from "../../map.js";
+import { DirectoryFactory, IDirectoryNewStorageFormat, SharedDirectory } from "../../directory.js";
+import { IDirectory, IDirectoryValueChanged, ISharedMap } from "../../interfaces.js";
+import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
 
 function createConnectedDirectory(
 	id: string,
