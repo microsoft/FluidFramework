@@ -11,8 +11,8 @@ import { SharedMap } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
 import { ConnectionState } from "@fluidframework/container-loader";
-import { createAzureClient } from "./AzureClientFactory";
-import { mapWait } from "./utils";
+import { createAzureClient } from "./AzureClientFactory.js";
+import { mapWait } from "./utils.js";
 
 describe("Container copy scenarios", () => {
 	const connectTimeoutMs = 10_000;

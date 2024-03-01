@@ -11,9 +11,9 @@ import { SharedMap } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
 import { ConnectionState } from "@fluidframework/container-loader";
-import { createAzureClient } from "./AzureClientFactory";
-import { CounterTestDataObject, TestDataObject } from "./TestDataObject";
-import { mapWait } from "./utils";
+import { createAzureClient } from "./AzureClientFactory.js";
+import { CounterTestDataObject, TestDataObject } from "./TestDataObject.js";
+import { mapWait } from "./utils.js";
 
 describe("Fluid data updates", () => {
 	const connectTimeoutMs = 10_000;
