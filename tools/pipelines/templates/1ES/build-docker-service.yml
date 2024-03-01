@@ -191,6 +191,7 @@ extends:
           hostPathToTestResultsArtifact: $(Build.ArtifactStagingDirectory)/${{ parameters.buildDirectory }}/nyc
           hostPathToApiExtractorArtifact: $(Build.ArtifactStagingDirectory)/_api-extractor-temp
           ComponentDetection.Timeout: 900
+          SKIPAUTOMATICIMAGESCAN: true
         steps:
         # Setup
         - checkout: self
