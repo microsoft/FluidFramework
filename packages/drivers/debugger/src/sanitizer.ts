@@ -32,7 +32,7 @@ import {
 	opContentsMergeTreeGroupOpSchema,
 	opContentsRegisterCollectionSchema,
 	proposeContentsSchema,
-} from "./messageSchema";
+} from "./messageSchema.js";
 
 enum TextType {
 	Generic,
