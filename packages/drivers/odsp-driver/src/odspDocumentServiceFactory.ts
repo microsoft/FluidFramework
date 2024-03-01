@@ -31,6 +31,11 @@ export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
 }
 
 /**
+ * Creates a factory instance for creating a sharepoint document service from a provided snapshot.
+ *
+ * @remarks Use if you don't want to connect to any kind of external/internal storages and want to provide
+ * content directly.
+ *
  * @alpha
  */
 export function createLocalOdspDocumentServiceFactory(

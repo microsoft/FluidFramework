@@ -26,9 +26,8 @@ import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISocketStorageDiscovery } from '@fluidframework/odsp-driver-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { ITelemetryLogger } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
-import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { OdspResourceTokenFetchOptions } from '@fluidframework/odsp-driver-definitions';
 import { PromiseCache } from '@fluidframework/core-utils';
@@ -44,7 +43,7 @@ export enum ClpCompliantAppHeader {
     isClpCompliantApp = "X-CLP-Compliant-App"
 }
 
-// @alpha (undocumented)
+// @alpha
 export function createLocalOdspDocumentServiceFactory(localSnapshot: Uint8Array | string): IDocumentServiceFactory;
 
 // @alpha
@@ -66,7 +65,7 @@ export class EpochTracker implements IPersistedFileCache {
     fetch(url: string, fetchOptions: RequestInit, fetchType: FetchType, addInBody?: boolean, fetchReason?: string): Promise<IOdspResponse<Response>>;
     fetchAndParseAsJSON<T>(url: string, fetchOptions: RequestInit, fetchType: FetchType, addInBody?: boolean, fetchReason?: string): Promise<IOdspResponse<T>>;
     fetchArray(url: string, fetchOptions: {
-        [index: string]: any;
+        [index: string]: RequestInit;
     }, fetchType: FetchType, addInBody?: boolean, fetchReason?: string): Promise<IOdspResponse<ArrayBuffer>>;
     // (undocumented)
     protected readonly fileEntry: IFileEntry;
@@ -99,7 +98,7 @@ export type FetchTypeInternal = FetchType | "cache";
 // @internal
 export function getApiRoot(origin: string): string;
 
-// @alpha (undocumented)
+// @alpha
 export function getHashedDocumentId(driveId: string, itemId: string): Promise<string>;
 
 // @alpha
@@ -146,7 +145,7 @@ export interface IOdspResponse<T> {
     // (undocumented)
     headers: Map<string, string>;
     // (undocumented)
-    propsToLog: ITelemetryProperties;
+    propsToLog: ITelemetryBaseProperties;
 }
 
 // @alpha
@@ -197,7 +196,7 @@ export function isOdcOrigin(origin: string): boolean;
 // @internal
 export function isOdcUrl(url: string | URL): boolean;
 
-// @internal (undocumented)
+// @internal
 export function isOdspResolvedUrl(resolvedUrl: IResolvedUrl): resolvedUrl is IOdspResolvedUrl;
 
 // @internal
@@ -225,7 +224,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory, 
     // (undocumented)
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
-    protected createDocumentServiceCore(resolvedUrl: IResolvedUrl, odspLogger: ITelemetryLogger, cacheAndTrackerArg?: ICacheAndTracker, clientIsSummarizer?: boolean): Promise<IDocumentService>;
+    protected createDocumentServiceCore(resolvedUrl: IResolvedUrl, odspLogger: ITelemetryBaseLogger, cacheAndTrackerArg?: ICacheAndTracker, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     getRelayServiceSessionInfo(resolvedUrl: IResolvedUrl): Promise<ISocketStorageDiscovery | undefined>;
     // (undocumented)
     get IRelaySessionAwareDriverFactory(): this;
@@ -252,6 +251,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
     constructor(shareLinkFetcherProps?: ShareLinkFetcherProps | undefined, logger?: ITelemetryBaseLogger, appName?: string | undefined, getContext?: ((resolvedUrl: IOdspResolvedUrl, dataStorePath: string) => Promise<string | undefined>) | undefined);
     appendDataStorePath(requestUrl: URL, pathToAppend: string): string | undefined;
+    appendLocatorParams(baseUrl: string, resolvedUrl: IResolvedUrl, dataStorePath: string, packageInfoSource?: IContainerPackageInfo): Promise<string>;
     static createDocumentUrl(baseUrl: string, driverInfo: OdspFluidDataStoreLocator): string;
     getAbsoluteUrl(resolvedUrl: IResolvedUrl, dataStorePath: string, packageInfoSource?: IContainerPackageInfo): Promise<string>;
     resolve(request: IRequest): Promise<IOdspResolvedUrl>;

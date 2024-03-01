@@ -16,7 +16,12 @@ import {
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
-import { IFluidSerializer, SharedObject, ValueType } from "@fluidframework/shared-object-base";
+import {
+	IFluidSerializer,
+	SharedObject,
+	ValueType,
+	parseHandles,
+} from "@fluidframework/shared-object-base";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import path from "path-browserify";
 import { RedBlackTree } from "@fluidframework/merge-tree";
@@ -30,9 +35,9 @@ import {
 	ISharedDirectory,
 	ISharedDirectoryEvents,
 	IValueChanged,
-} from "./interfaces";
-import { ILocalValue, LocalValueMaker, makeSerializable } from "./localValues";
-import { pkgVersion } from "./packageVersion";
+} from "./interfaces.js";
+import { ILocalValue, LocalValueMaker, makeSerializable } from "./localValues.js";
+import { pkgVersion } from "./packageVersion.js";
 
 // We use path-browserify since this code can run safely on the server or the browser.
 // We standardize on using posix slashes everywhere.
@@ -521,7 +526,7 @@ export class SharedDirectory
 		attributes: IChannelAttributes,
 	) {
 		super(id, runtime, attributes, "fluid_directory_");
-		this.localValueMaker = new LocalValueMaker(this.serializer);
+		this.localValueMaker = new LocalValueMaker();
 		this.setMessageHandlers();
 		// Mirror the containedValueChanged op on the SharedDirectory
 		this.root.on("containedValueChanged", (changed: IValueChanged, local: boolean) => {
@@ -830,7 +835,8 @@ export class SharedDirectory
 					const localValue = this.makeLocal(
 						key,
 						currentSubDir.absolutePath,
-						serializable,
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+						parseHandles(serializable, this.serializer),
 					);
 					currentSubDir.populateStorage(key, localValue);
 				}
@@ -894,7 +900,7 @@ export class SharedDirectory
 				serializable.type === ValueType[ValueType.Shared],
 			0x1e4 /* "Unexpected serializable type" */,
 		);
-		return this.localValueMaker.fromSerializable(serializable);
+		return this.localValueMaker.fromSerializable(serializable, this.serializer, this.handle);
 	}
 
 	/**
@@ -1066,7 +1072,11 @@ export class SharedDirectory
 			case "set": {
 				dir?.set(
 					directoryOp.key,
-					this.localValueMaker.fromSerializable(directoryOp.value).value,
+					this.localValueMaker.fromSerializable(
+						directoryOp.value,
+						this.serializer,
+						this.handle,
+					).value,
 				);
 				break;
 			}

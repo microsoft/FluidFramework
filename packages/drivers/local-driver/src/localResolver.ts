@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { parse } from "url";
+import { parse } from "url_pkg";
 import { assert } from "@fluidframework/core-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, IUrlResolver, DriverHeader } from "@fluidframework/driver-definitions";
 import { ScopeType } from "@fluidframework/protocol-definitions";
-import { generateToken } from "./auth";
+import { generateToken } from "./auth.js";
 
 /**
  * @alpha
@@ -55,7 +55,7 @@ export class LocalResolver implements IUrlResolver {
 			id: documentId,
 			tokens: { jwt: generateToken(this.tenantId, documentId, this.tokenKey, scopes) },
 			type: "fluid",
-			url: `fluid-test://localhost:3000/${this.tenantId}/${fullPath}`,
+			url: `https://localhost:3000/${this.tenantId}/${fullPath}`,
 		};
 
 		return resolved;

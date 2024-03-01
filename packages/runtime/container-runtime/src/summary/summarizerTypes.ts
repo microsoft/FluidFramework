@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent, IEventProvider, ITelemetryProperties } from "@fluidframework/core-interfaces";
+import { IEvent, IEventProvider, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { ITelemetryLoggerExt, ITelemetryLoggerPropertyBag } from "@fluidframework/telemetry-utils";
 import { ContainerWarning, IDeltaManager } from "@fluidframework/container-definitions";
 import {
@@ -12,9 +12,9 @@ import {
 	IDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import { ISummaryStats } from "@fluidframework/runtime-definitions";
-import { ISummaryConfigurationHeuristics } from "../containerRuntime";
-import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage } from "./summaryCollection";
-import { SummarizeReason } from "./summaryGenerator";
+import { ISummaryConfigurationHeuristics } from "../containerRuntime.js";
+import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage } from "./summaryCollection.js";
+import { SummarizeReason } from "./summaryGenerator.js";
 
 /**
  * Similar to AbortSignal, but using promise instead of events
@@ -539,10 +539,10 @@ type ISummarizeTelemetryOptionalProperties =
 	| keyof ISummarizeOptions;
 
 export type ISummarizeTelemetryProperties = Pick<
-	ITelemetryProperties,
+	ITelemetryBaseProperties,
 	ISummarizeTelemetryRequiredProperties
 > &
-	Partial<Pick<ITelemetryProperties, ISummarizeTelemetryOptionalProperties>>;
+	Partial<Pick<ITelemetryBaseProperties, ISummarizeTelemetryOptionalProperties>>;
 
 /** Strategy used to heuristically determine when we should run a summary */
 export interface ISummaryHeuristicStrategy {
@@ -608,10 +608,10 @@ type SummaryGeneratorOptionalTelemetryProperties =
 	| "stage";
 
 export type SummaryGeneratorTelemetry = Pick<
-	ITelemetryProperties,
+	ITelemetryBaseProperties,
 	SummaryGeneratorRequiredTelemetryProperties
 > &
-	Partial<Pick<ITelemetryProperties, SummaryGeneratorOptionalTelemetryProperties>>;
+	Partial<Pick<ITelemetryBaseProperties, SummaryGeneratorOptionalTelemetryProperties>>;
 
 export interface ISummarizeRunnerTelemetry extends ITelemetryLoggerPropertyBag {
 	/** Number of times the summarizer run. */

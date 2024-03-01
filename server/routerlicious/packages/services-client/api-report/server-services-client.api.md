@@ -69,6 +69,9 @@ export const CorrelationIdHeaderName = "x-correlation-id";
 // @internal
 export function createFluidServiceNetworkError(statusCode: number, errorData?: INetworkErrorDetails | string): NetworkError;
 
+// @internal
+export function dedupeSortedArray<T, TSelector>(array: T[], selector: (item: T) => TSelector): T[];
+
 // @internal (undocumented)
 export const defaultHash = "00000000";
 
@@ -156,6 +159,19 @@ export class GitManager implements IGitManager {
     // (undocumented)
     upsertRef(branch: string, commitSha: string): Promise<resources.IRef>;
     write(branch: string, inputTree: api.ITree, parents: string[], message: string): Promise<resources.ICommit>;
+}
+
+// @internal
+export class Heap<T> {
+    constructor(comparator: IHeapComparator<T>);
+    // (undocumented)
+    peek(): T | undefined;
+    // (undocumented)
+    pop(): T | undefined;
+    // (undocumented)
+    push(value: T): void;
+    // (undocumented)
+    get size(): number;
 }
 
 // @internal
@@ -342,6 +358,12 @@ export interface IGitService {
 }
 
 // @internal
+export interface IHeapComparator<T> {
+    // (undocumented)
+    compareFn(a: T, b: T): number;
+}
+
+// @internal
 export interface IHistorian extends IGitService {
     // (undocumented)
     endpoint: string;
@@ -357,6 +379,7 @@ export interface INetworkErrorDetails {
     message?: string;
     retryAfter?: number;
     retryAfterMs?: number;
+    source?: string;
 }
 
 // @internal
@@ -532,13 +555,20 @@ export const LatestSummaryId = "latest";
 export function mergeAppAndProtocolTree(appSummaryTree: ITree, protocolTree: ITree): ICreateTreeEntry[];
 
 // @internal
+export function mergeKArrays<T>(arrays: T[][], comparator: (a: T, b: T) => number): T[];
+
+// @internal
+export function mergeSortedArrays<T>(arr1: T[], arr2: T[], comparator: (item1: T, item2: T) => number): T[];
+
+// @internal
 export class NetworkError extends Error {
     constructor(
     code: number,
     message: string,
     canRetry?: boolean,
     isFatal?: boolean,
-    retryAfterMs?: number);
+    retryAfterMs?: number,
+    source?: string);
     // @public
     readonly canRetry?: boolean;
     // @public
@@ -549,6 +579,8 @@ export class NetworkError extends Error {
     readonly retryAfter: number;
     // @public
     readonly retryAfterMs?: number;
+    // @public
+    readonly source?: string;
     toJSON(): INetworkErrorDetails & {
         code: number;
     };

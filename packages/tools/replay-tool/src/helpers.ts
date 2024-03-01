@@ -16,7 +16,7 @@ import {
 	ConfigTypes,
 	FluidObject,
 	IConfigProviderBase,
-	ITelemetryLogger,
+	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import {
@@ -116,7 +116,7 @@ export async function loadContainer(
 	documentServiceFactory: IDocumentServiceFactory,
 	documentName: string,
 	strictChannels: boolean,
-	logger?: ITelemetryLogger,
+	logger?: ITelemetryBaseLogger,
 	loaderOptions?: ILoaderOptions,
 ): Promise<IContainer> {
 	const resolved: IResolvedUrl = {

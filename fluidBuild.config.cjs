@@ -60,6 +60,8 @@ module.exports = {
 			"api-extractor:commonjs",
 			"api-extractor:esnext",
 		],
+		"build:test:cjs": ["typetests:gen", "tsc", "api-extractor:commonjs"],
+		"build:test:esm": ["typetests:gen", "build:esnext", "api-extractor:esnext"],
 		"api": {
 			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
 			script: false,
@@ -70,7 +72,9 @@ module.exports = {
 			script: true,
 		},
 		"build:docs": ["tsc"],
-		"ci:build:docs": ["tsc"],
+		// The package's local 'api-extractor.json' may use the entrypoint from either CJS or ESM,
+		// therefore we need to require both before running api-extractor.
+		"ci:build:docs": ["tsc", "build:esnext"],
 		"build:readme": {
 			dependsOn: ["build:manifest"],
 			script: true,
@@ -80,9 +84,13 @@ module.exports = {
 			script: true,
 		},
 		"depcruise": [],
-		"check:release-tags": ["tsc"],
+		// The package's local 'api-extractor-lint.json' may use the entrypoint from either CJS or ESM,
+		// therefore we need to require both before running api-extractor.
+		"check:release-tags": ["tsc", "build:esnext"],
 		"check:are-the-types-wrong": ["build"],
-		"eslint": [...tscDependsOn, "commonjs"],
+		// ADO #7297: Review why the direct dependency on 'build:esm:test' is necessary.
+		//            Should 'compile' be enough?  compile -> build:test -> build:test:esm
+		"eslint": ["compile", "build:test:esm"],
 		"good-fences": [],
 		"prettier": [],
 		"prettier:fix": [],
@@ -157,6 +165,7 @@ module.exports = {
 			"docs/themes/thxvscode/layouts/",
 			"docs/themes/thxvscode/static/assets/",
 			"docs/tutorials/.*\\.tsx?",
+			"packages/common/client-utils/src/cjs/package.json",
 			"server/gitrest/package.json",
 			"server/historian/package.json",
 			"tools/markdown-magic/test/package.json",
@@ -272,6 +281,7 @@ module.exports = {
 			"npm-package-exports-field": [
 				// We deliberately improperly import from deep in the package tree while we migrate everything into other
 				// packages. This is temporary and can be fixed once the build-tools/build-cli pigration is complete.
+				"^azure/",
 				"^build-tools/packages/build-tools/package.json",
 				"^common/",
 				"^examples/",

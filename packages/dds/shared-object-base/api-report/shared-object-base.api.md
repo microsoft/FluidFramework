@@ -24,6 +24,9 @@ import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 
 // @internal
+export function bindHandles(value: any, serializer: IFluidSerializer, bind: IFluidHandle): void;
+
+// @internal
 export function createSingleBlobSummary(key: string, content: string | Uint8Array): ISummaryTreeWithStats;
 
 // @internal
@@ -92,7 +95,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 // @public
 export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-    protected abstract applyStashedOp(content: any): unknown;
+    protected abstract applyStashedOp(content: any): void;
     // (undocumented)
     readonly attributes: IChannelAttributes;
     bindToContext(): void;
@@ -126,6 +129,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     protected rollback(content: any, localOpMetadata: unknown): void;
     // (undocumented)
     protected runtime: IFluidDataStoreRuntime;
+    protected abstract get serializer(): IFluidSerializer;
     protected submitLocalMessage(content: any, localOpMetadata?: unknown): void;
     // (undocumented)
     abstract summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;

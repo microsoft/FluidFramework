@@ -8,7 +8,7 @@ import {
 	UsageError,
 	validatePrecondition,
 } from "@fluidframework/telemetry-utils";
-import { IContainerRuntimeMetadata } from "../summary";
+import { IContainerRuntimeMetadata } from "../summary/index.js";
 import {
 	nextGCVersion,
 	defaultInactiveTimeoutMs,
@@ -34,8 +34,8 @@ import {
 	IGCMetadata_Deprecated,
 	disableDatastoreSweepKey,
 	gcDisableDataStoreSweepOptionName,
-} from "./gcDefinitions";
-import { getGCVersion, shouldAllowGcSweep } from "./gcHelpers";
+} from "./gcDefinitions.js";
+import { getGCVersion, shouldAllowGcSweep } from "./gcHelpers.js";
 
 /**
  * Generates configurations for the Garbage Collector that it uses to determine what to run and how.

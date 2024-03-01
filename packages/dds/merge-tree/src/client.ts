@@ -16,9 +16,9 @@ import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { ITelemetryLoggerExt, LoggingError, UsageError } from "@fluidframework/telemetry-utils";
-import { DoublyLinkedList, RedBlackTree } from "./collections";
-import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
-import { LocalReferencePosition, SlidingPreference } from "./localReference";
+import { DoublyLinkedList, RedBlackTree } from "./collections/index.js";
+import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
+import { LocalReferencePosition, SlidingPreference } from "./localReference.js";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	CollaborationWindow,
@@ -30,7 +30,7 @@ import {
 	Marker,
 	// eslint-disable-next-line import/no-deprecated
 	SegmentGroup,
-} from "./mergeTreeNodes";
+} from "./mergeTreeNodes.js";
 import {
 	createAnnotateMarkerOp,
 	createAnnotateRangeOp,
@@ -39,7 +39,7 @@ import {
 	createInsertSegmentOp,
 	createObliterateRangeOp,
 	createRemoveRangeOp,
-} from "./opBuilder";
+} from "./opBuilder.js";
 import {
 	IJSONSegment,
 	IMergeTreeAnnotateMsg,
@@ -54,23 +54,23 @@ import {
 	ReferenceType,
 	// eslint-disable-next-line import/no-deprecated
 	IMergeTreeObliterateMsg,
-} from "./ops";
-import { PropertySet } from "./properties";
-import { SnapshotLegacy } from "./snapshotlegacy";
-import { SnapshotLoader } from "./snapshotLoader";
+} from "./ops.js";
+import { PropertySet } from "./properties.js";
+import { SnapshotLegacy } from "./snapshotlegacy.js";
+import { SnapshotLoader } from "./snapshotLoader.js";
 // eslint-disable-next-line import/no-deprecated
-import { IMergeTreeTextHelper } from "./textSegment";
-import { SnapshotV1 } from "./snapshotV1";
-import { ReferencePosition, DetachedReferencePosition } from "./referencePositions";
-import { IMergeTreeOptions, MergeTree } from "./mergeTree";
-import { MergeTreeTextHelper } from "./MergeTreeTextHelper";
-import { walkAllChildSegments } from "./mergeTreeNodeWalk";
+import { IMergeTreeTextHelper } from "./textSegment.js";
+import { SnapshotV1 } from "./snapshotV1.js";
+import { ReferencePosition, DetachedReferencePosition } from "./referencePositions.js";
+import { IMergeTreeOptions, MergeTree } from "./mergeTree.js";
+import { MergeTreeTextHelper } from "./MergeTreeTextHelper.js";
+import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
 import {
 	IMergeTreeClientSequenceArgs,
 	IMergeTreeDeltaCallbackArgs,
 	IMergeTreeDeltaOpArgs,
 	IMergeTreeMaintenanceCallbackArgs,
-} from "./index";
+} from "./index.js";
 
 type IMergeTreeDeltaRemoteOpArgs = Omit<IMergeTreeDeltaOpArgs, "sequencedMessage"> &
 	Required<Pick<IMergeTreeDeltaOpArgs, "sequencedMessage">>;
@@ -915,41 +915,26 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 	}
 
-	// eslint-disable-next-line import/no-deprecated
-	public applyStashedOp(op: IMergeTreeDeltaOp): SegmentGroup;
-	// eslint-disable-next-line import/no-deprecated
-	public applyStashedOp(op: IMergeTreeGroupMsg): SegmentGroup[];
-	// eslint-disable-next-line import/no-deprecated
-	public applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
-	// eslint-disable-next-line import/no-deprecated
-	public applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[] {
-		// eslint-disable-next-line import/no-deprecated
-		let metadata: SegmentGroup | SegmentGroup[] | undefined;
-		const stashed = true;
+	public applyStashedOp(op: IMergeTreeOp): void {
 		switch (op.type) {
 			case MergeTreeDeltaType.INSERT:
-				this.applyInsertOp({ op, stashed });
-				metadata = this.peekPendingSegmentGroups();
+				this.applyInsertOp({ op });
 				break;
 			case MergeTreeDeltaType.REMOVE:
-				this.applyRemoveRangeOp({ op, stashed });
-				metadata = this.peekPendingSegmentGroups();
+				this.applyRemoveRangeOp({ op });
 				break;
 			case MergeTreeDeltaType.ANNOTATE:
-				this.applyAnnotateRangeOp({ op, stashed });
-				metadata = this.peekPendingSegmentGroups();
+				this.applyAnnotateRangeOp({ op });
 				break;
 			case MergeTreeDeltaType.OBLITERATE:
 				this.applyObliterateRangeOp({ op });
-				metadata = this.peekPendingSegmentGroups();
 				break;
 			case MergeTreeDeltaType.GROUP:
-				return op.ops.map((o) => this.applyStashedOp(o));
+				op.ops.map((o) => this.applyStashedOp(o));
+				break;
 			default:
 				unreachableCase(op, "unrecognized op type");
 		}
-		assert(!!metadata, 0x2db /* "Applying op must generate a pending segment" */);
-		return metadata;
 	}
 
 	public applyMsg(msg: ISequencedDocumentMessage, local: boolean = false) {
