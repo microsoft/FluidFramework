@@ -6,7 +6,7 @@ import { withStyles, WithStyles } from "@material-ui/core/styles";
 import TextField, { StandardTextFieldProps } from "@material-ui/core/TextField";
 import classNames from "classnames";
 import React from "react";
-import { SvgIcon } from "./SVGIcon";
+import { SvgIcon } from "./SVGIcon.js";
 
 const styles = (theme) => ({
 	error: {

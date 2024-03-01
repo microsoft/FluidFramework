@@ -6,9 +6,9 @@ import { WithStyles } from "@material-ui/core";
 import Button from "@material-ui/core/Button";
 import { withStyles } from "@material-ui/core/styles";
 import * as React from "react";
-import { ErrorPopup } from "./ErrorPopup";
-import { IDeleteModalTextParameters } from "./DeleteModalTextParameters";
-import { InspectorModal } from "./InspectorModal";
+import { ErrorPopup } from "./ErrorPopup.js";
+import { IDeleteModalTextParameters } from "./DeleteModalTextParameters.js";
+import { InspectorModal } from "./InspectorModal.js";
 
 const styles = () => ({
 	cancelButton: {

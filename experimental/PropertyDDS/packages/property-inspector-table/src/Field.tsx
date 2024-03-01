@@ -5,9 +5,9 @@
 import { PropertyProxy, ProxifiedMapProperty } from "@fluid-experimental/property-proxy";
 import { SetProperty, ContainerProperty } from "@fluid-experimental/property-properties";
 import * as React from "react";
-import { StringView, typeToViewMap } from "./PropertyViews";
-import { Utils } from "./typeUtils";
-import { IEditableValueCellProps } from "./InspectorTableTypes";
+import { StringView, typeToViewMap } from "./PropertyViews/index.js";
+import { Utils } from "./typeUtils.js";
+import { IEditableValueCellProps } from "./InspectorTableTypes.js";
 
 function onInlineEditEnd(val: string | number | boolean, props: IEditableValueCellProps) {
 	const { rowData } = props;

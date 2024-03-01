@@ -7,8 +7,8 @@ import IconButton from "@material-ui/core/IconButton";
 import Snackbar, { SnackbarProps } from "@material-ui/core/Snackbar";
 import { createStyles, withStyles, WithStyles } from "@material-ui/core/styles";
 import * as React from "react";
-import { Omit } from "./constants";
-import { SvgIcon } from "./SVGIcon";
+import { Omit } from "./constants.js";
+import { SvgIcon } from "./SVGIcon.js";
 
 const styles = (theme) =>
 	createStyles({

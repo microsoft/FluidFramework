@@ -9,10 +9,10 @@ import {
 	DecoratedSelectGroupedOptionsType,
 	DecoratedSelectOptionsType,
 	IDecoratedSelectOptionType,
-} from "./DecoratedSelect";
-import * as TableIcons from "./icons";
-import { InspectorDecorator } from "./InspectorDecorator";
-import { TypeIcon } from "./TypeIcon";
+} from "./DecoratedSelect.js";
+import * as TableIcons from "./icons.js";
+import { InspectorDecorator } from "./InspectorDecorator.js";
+import { TypeIcon } from "./TypeIcon.js";
 
 storiesOf("DecoratedSelect", module)
 	.addDecorator(InspectorDecorator)

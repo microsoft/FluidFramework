@@ -5,10 +5,10 @@
 import { createStyles, withStyles, WithStyles } from "@material-ui/core/styles";
 import classNames from "classnames";
 import * as React from "react";
-import { iconMarginRight, iconWidth, InspectorMessages, unit } from "./constants";
-import { Field } from "./Field";
-import { IEditableValueCellProps } from "./InspectorTableTypes";
-import { TooltipedField } from "./TooltipedField";
+import { iconMarginRight, iconWidth, InspectorMessages, unit } from "./constants.js";
+import { Field } from "./Field.js";
+import { IEditableValueCellProps } from "./InspectorTableTypes.js";
+import { TooltipedField } from "./TooltipedField.js";
 
 const styles = () =>
 	createStyles({

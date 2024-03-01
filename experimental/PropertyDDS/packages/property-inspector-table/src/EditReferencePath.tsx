@@ -7,10 +7,10 @@ import { makeStyles, Theme } from "@material-ui/core/styles";
 import TextField from "@material-ui/core/TextField";
 import classNames from "classnames";
 import React from "react";
-import { LoadingButton } from "./LoadingButton";
-import { SvgIcon } from "./SVGIcon";
-import { ErrorPopup } from "./ErrorPopup";
-import { iconHeight, iconWidth } from "./constants";
+import { LoadingButton } from "./LoadingButton.js";
+import { SvgIcon } from "./SVGIcon.js";
+import { ErrorPopup } from "./ErrorPopup.js";
+import { iconHeight, iconWidth } from "./constants.js";
 
 const useStyles = makeStyles(
 	(theme: Theme) => ({

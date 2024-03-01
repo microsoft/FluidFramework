@@ -7,9 +7,9 @@ import { ContainerProperty, EnumArrayProperty } from "@fluid-experimental/proper
 import MenuItem from "@material-ui/core/MenuItem";
 import Select, { SelectProps } from "@material-ui/core/Select";
 import * as React from "react";
-import { IEditableValueCellProps, IInspectorRow } from "../InspectorTableTypes";
-import { Utils } from "../typeUtils";
-import { getPropertyValue } from "../propertyInspectorUtils";
+import { IEditableValueCellProps, IInspectorRow } from "../InspectorTableTypes.js";
+import { Utils } from "../typeUtils.js";
+import { getPropertyValue } from "../propertyInspectorUtils.js";
 
 type ValType = string | number | boolean;
 

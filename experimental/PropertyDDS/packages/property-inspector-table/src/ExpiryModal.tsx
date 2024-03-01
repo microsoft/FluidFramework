@@ -12,12 +12,12 @@ import { makeStyles, Theme } from "@material-ui/core/styles";
 import classNames from "classnames";
 import React, { useEffect, useState } from "react";
 
-import { IExpiryInfo, IExpiryState, IRepoExpiryGetter, IRepoExpirySetter } from "./CommonTypes";
-import { LoadingButton } from "./LoadingButton";
-import { CustomChip } from "./CustomChip";
-import { ErrorPopup } from "./ErrorPopup";
-import { backGroundGrayColor, textDarkColor } from "./constants";
-import { InspectorModal } from "./InspectorModal";
+import { IExpiryInfo, IExpiryState, IRepoExpiryGetter, IRepoExpirySetter } from "./CommonTypes.js";
+import { LoadingButton } from "./LoadingButton.js";
+import { CustomChip } from "./CustomChip.js";
+import { ErrorPopup } from "./ErrorPopup.js";
+import { backGroundGrayColor, textDarkColor } from "./constants.js";
+import { InspectorModal } from "./InspectorModal.js";
 
 const useStyles = makeStyles(
 	(theme: Theme) => ({

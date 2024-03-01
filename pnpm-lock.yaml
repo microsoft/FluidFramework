@@ -4940,6 +4940,7 @@ importers:
 
   experimental/PropertyDDS/packages/property-inspector-table:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@babel/core': ^7.13.0
       '@fluid-experimental/property-binder': workspace:~
       '@fluid-experimental/property-changeset': workspace:~
@@ -5024,6 +5025,7 @@ importers:
       react-virtualized-auto-sizer: 1.0.7_sfoxds7t5ydpegc3knd667wn6m
       require-from-string: 2.0.2
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@babel/core': 7.23.3
       '@fluid-experimental/property-binder': link:../property-binder
       '@fluid-experimental/property-changeset': link:../property-changeset
@@ -11931,7 +11933,7 @@ packages:
       commander: 10.0.1
       marked: 9.1.6
       marked-terminal: 6.1.0_marked@9.1.6
-      semver: 7.5.4
+      semver: 7.6.0
     dev: true
 
   /@arethetypeswrong/core/0.13.3:
@@ -11940,7 +11942,7 @@ packages:
     dependencies:
       '@andrewbranch/untar.js': 1.0.3
       fflate: 0.7.4
-      semver: 7.5.4
+      semver: 7.6.0
       typescript: 5.3.2
       validate-npm-package-name: 5.0.0
     dev: true

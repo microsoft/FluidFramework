@@ -7,7 +7,7 @@ import { BaseProxifiedProperty } from "@fluid-experimental/property-proxy";
 import { BaseProperty } from "@fluid-experimental/property-properties";
 
 import { BaseTableProps, SortOrder } from "react-base-table";
-import { IRepoExpiryGetter, IRepoExpirySetter } from "./CommonTypes";
+import { IRepoExpiryGetter, IRepoExpirySetter } from "./CommonTypes.js";
 
 /**
  * @internal

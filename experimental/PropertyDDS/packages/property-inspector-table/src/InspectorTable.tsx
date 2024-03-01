@@ -12,14 +12,14 @@ import classNames from "classnames";
 import debounce from "lodash.debounce";
 import React, { createRef } from "react";
 import BaseTable, { SortOrder } from "react-base-table";
-import { ModalConsumer } from "./ModalManager";
+import { ModalConsumer } from "./ModalManager.js";
 // eslint-disable-next-line import/no-unassigned-import
 import "react-base-table/styles.css";
-import { InspectorMessages, minRows } from "./constants";
-import { computeIconSize, Empty } from "./Empty";
-import { ExpiryModal } from "./ExpiryModal";
-import { InspectorTableFooter } from "./InspectorTableFooter";
-import { InspectorTableHeader } from "./InspectorTableHeader";
+import { InspectorMessages, minRows } from "./constants.js";
+import { computeIconSize, Empty } from "./Empty.js";
+import { ExpiryModal } from "./ExpiryModal.js";
+import { InspectorTableFooter } from "./InspectorTableFooter.js";
+import { InspectorTableHeader } from "./InspectorTableHeader.js";
 import {
 	IColumns,
 	IDataGetterParameter,
@@ -32,11 +32,11 @@ import {
 	IToTableRowsOptions,
 	IInspectorSearchControls,
 	IRowData,
-} from "./InspectorTableTypes";
-import { search, showNextResult } from "./utils";
-import { getReferenceValue, getDefaultPropertyTableProps } from "./propertyInspectorUtils";
-import { ThemedSkeleton as themedSkeleton } from "./ThemedSkeleton";
-import { NewDataRow } from "./NewDataRow";
+} from "./InspectorTableTypes.js";
+import { search, showNextResult } from "./utils.js";
+import { getReferenceValue, getDefaultPropertyTableProps } from "./propertyInspectorUtils.js";
+import { ThemedSkeleton as themedSkeleton } from "./ThemedSkeleton.js";
+import { NewDataRow } from "./NewDataRow.js";
 
 // @TODO Figure out why SortOrder is not resolved as value after updating the table version
 enum TableSortOrder {

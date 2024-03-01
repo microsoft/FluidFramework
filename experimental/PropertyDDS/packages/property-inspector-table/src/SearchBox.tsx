@@ -17,8 +17,8 @@ import {
 	iconHoverColor,
 	iconWidth,
 	Omit,
-} from "./constants";
-import { SvgIcon } from "./SVGIcon";
+} from "./constants.js";
+import { SvgIcon } from "./SVGIcon.js";
 
 export interface ISearchBoxProps extends Omit<React.HTMLProps<HTMLInputElement>, "value"> {
 	searchExpression: string;

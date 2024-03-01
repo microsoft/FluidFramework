@@ -13,10 +13,10 @@ import {
 import { createStyles, withStyles, WithStyles } from "@material-ui/core/styles";
 import classNames from "classnames";
 import * as React from "react";
-import { ItemMenu } from "./ItemMenu";
-import { iconMarginRight, iconWidth, unit } from "./constants";
-import { IInspectorRow } from "./InspectorTableTypes";
-import { OverflowableCell } from "./OverflowableCell";
+import { ItemMenu } from "./ItemMenu.js";
+import { iconMarginRight, iconWidth, unit } from "./constants.js";
+import { IInspectorRow } from "./InspectorTableTypes.js";
+import { OverflowableCell } from "./OverflowableCell.js";
 
 const styles = () =>
 	createStyles({

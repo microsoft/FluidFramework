@@ -8,10 +8,10 @@ import Button from "@material-ui/core/Button";
 import { withStyles } from "@material-ui/core/styles";
 import Tooltip from "@material-ui/core/Tooltip";
 import * as React from "react";
-import { FloatingLabelTextField } from "./FloatingLabelTextField";
-import { InspectorModal } from "./InspectorModal";
-import { ErrorPopup } from "./ErrorPopup";
-import { SvgIcon } from "./SVGIcon";
+import { FloatingLabelTextField } from "./FloatingLabelTextField.js";
+import { InspectorModal } from "./InspectorModal.js";
+import { ErrorPopup } from "./ErrorPopup.js";
+import { SvgIcon } from "./SVGIcon.js";
 
 const styles = () => ({
 	contentContainer: {

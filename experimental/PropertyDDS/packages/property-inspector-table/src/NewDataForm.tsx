@@ -17,19 +17,19 @@ import {
 	colorWhite,
 	iconMarginRight,
 	unit,
-} from "./constants";
+} from "./constants.js";
 import {
 	DecoratedSelect,
 	DecoratedSelectGroupedOptionsType,
 	DecoratedSelectOptionsType,
 	DecoratedSelectValueType,
 	IDecoratedSelectOptionType,
-} from "./DecoratedSelect";
-import { ErrorPopup } from "./ErrorPopup";
-import { ErrorTooltip } from "./ErrorTooltip";
-import { IInspectorRow } from "./InspectorTableTypes";
-import { SvgIcon } from "./SVGIcon";
-import { TypeIcon } from "./TypeIcon";
+} from "./DecoratedSelect.js";
+import { ErrorPopup } from "./ErrorPopup.js";
+import { ErrorTooltip } from "./ErrorTooltip.js";
+import { IInspectorRow } from "./InspectorTableTypes.js";
+import { SvgIcon } from "./SVGIcon.js";
+import { TypeIcon } from "./TypeIcon.js";
 
 const useStyles = makeStyles(
 	{

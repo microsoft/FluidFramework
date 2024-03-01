@@ -10,8 +10,20 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
+	"type": "module",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
 	"main": "dist/src/index.js",
-	"module": "lib/src/index.js",
 	"types": "dist/src/index.d.ts",
 	"files": [
 		"dist/src",
@@ -23,8 +35,9 @@
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:copy-resources": "copyfiles -u 2 \"dist/assets/**/*\" lib/assets",
-		"build:esnext": "tsc --project ./tsconfig.esnext.json",
+		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:webpack": "webpack --config webpack.svgs.cjs && copyfiles -u 2 \"dist/assets/**/*\" lib/assets",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -37,7 +50,7 @@
 		"test": "npm run test:jest",
 		"test:coverage": "jest --coverage --ci",
 		"test:jest": "jest",
-		"tsc": "tsc",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist",
 		"webpack": "webpack --config webpack.svgs.cjs"
 	},
 	"dependencies": {
@@ -58,6 +71,7 @@
 		"require-from-string": "^2.0.2"
 	},
 	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.13.3",
 		"@babel/core": "^7.13.0",
 		"@fluid-experimental/property-binder": "workspace:~",
 		"@fluid-experimental/property-changeset": "workspace:~",

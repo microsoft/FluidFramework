@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import InspectorTableIcons from "../assets/icons/SVGStoreIcons";
+import InspectorTableIcons from "../assets/icons/SVGStoreIcons/index.js";
 export { InspectorTableIcons };
 
-export { CustomChip } from "./CustomChip";
-export { getIconFromTypeId, getDefaultInspectorTableIcons, typeidToIconMap } from "./icons";
+export { CustomChip } from "./CustomChip.js";
+export { getIconFromTypeId, getDefaultInspectorTableIcons, typeidToIconMap } from "./icons.js";
 export {
 	defaultInspectorTableChildGetter,
 	defaultInspectorTableDataGetter,
 	defaultInspectorTableNameGetter,
 	InspectorTable,
-} from "./InspectorTable";
+} from "./InspectorTable.js";
 export {
 	ColumnRendererType,
 	IColumns,
@@ -37,14 +37,14 @@ export {
 	IPropertyToTableRowOptions,
 	IShowNextResultResult,
 	SearchResult,
-} from "./InspectorTableTypes";
-export { ModalManager, ModalContext, ModalConsumer } from "./ModalManager";
-export { ModalRoot } from "./ModalRoot";
+} from "./InspectorTableTypes.js";
+export { ModalManager, ModalContext, ModalConsumer } from "./ModalManager.js";
+export { ModalRoot } from "./ModalRoot.js";
 export {
 	fetchRegisteredTemplates,
 	handlePropertyDataCreationOptionGeneration,
 	handlePropertyDataCreation,
-} from "./PropertyDataCreationHandlers";
+} from "./PropertyDataCreationHandlers.js";
 export {
 	addDataForm,
 	collectionChildTableRow,
@@ -67,6 +67,6 @@ export {
 	sanitizePath,
 	singlePropertyTableRow,
 	valueCellRenderer,
-} from "./propertyInspectorUtils";
-export { TypeColumn, useChipStyles } from "./TypeColumn";
-export { search, showNextResult } from "./utils";
+} from "./propertyInspectorUtils.js";
+export { TypeColumn, useChipStyles } from "./TypeColumn.js";
+export { search, showNextResult } from "./utils.js";
