@@ -16,6 +16,7 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert, Deferred, LazyPromise } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobTreeEntry, readAndParse } from "@fluidframework/driver-utils";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	IClientDetails,
 	IDocumentMessage,
@@ -185,7 +186,7 @@ export abstract class FluidDataStoreContext
 		return this._baseSnapshot;
 	}
 
-	public get idCompressor() {
+	public get idCompressor(): IIdCompressor | undefined {
 		return this.parentContext.idCompressor;
 	}
 
