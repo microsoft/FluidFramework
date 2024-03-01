@@ -176,8 +176,10 @@ describe("Fuzz - anchor stability", () => {
 					// This is a kludge to force the invocation of schematize for each client.
 					// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 					viewFromState(initialState, client, config.initialTree).checkout;
+					// synchronization here (instead of once after this loop) prevents the second client from having to rebase an initialize,
+					// which invalidates its view due to schema change.
+					initialState.containerRuntimeFactory.processAllMessages();
 				}
-				initialState.containerRuntimeFactory.processAllMessages();
 			}
 			initialState.anchors = [];
 			for (const client of initialState.clients) {

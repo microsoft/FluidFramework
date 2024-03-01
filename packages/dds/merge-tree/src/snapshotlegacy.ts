@@ -12,15 +12,15 @@ import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { NonCollabClient, UnassignedSequenceNumber } from "./constants";
-import { ISegment } from "./mergeTreeNodes";
-import { matchProperties } from "./properties";
+import { NonCollabClient, UnassignedSequenceNumber } from "./constants.js";
+import { ISegment } from "./mergeTreeNodes.js";
+import { matchProperties } from "./properties.js";
 import {
 	JsonSegmentSpecs,
 	MergeTreeChunkLegacy,
 	serializeAsMinSupportedVersion,
-} from "./snapshotChunks";
-import { MergeTree } from "./mergeTree";
+} from "./snapshotChunks.js";
+import { MergeTree } from "./mergeTree.js";
 
 interface SnapshotHeader {
 	chunkCount?: number;
