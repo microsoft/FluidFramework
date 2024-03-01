@@ -3,7 +3,7 @@
 	"include": ["./**/*"],
 	"compilerOptions": {
 		"rootDir": "../",
-		"outDir": "../../dist",
+		"outDir": "../../lib",
 		"types": ["mocha", "@fluidframework/test-driver-definitions"],
 		"noUnusedLocals": false, // Need it so memory tests can declare local variables just for the sake of keeping things in memory,
 		"module": "ESNext",

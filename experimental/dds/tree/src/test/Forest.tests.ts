@@ -6,11 +6,11 @@
 import { strict as assert } from 'assert';
 import { expect } from 'chai';
 import { validateAssertionError } from '@fluidframework/test-runtime-utils';
-import { compareForestNodes, Forest, ForestNode } from '../Forest';
-import { NodeId, TraitLabel } from '../Identifiers';
-import { Payload } from '../persisted-types';
-import { TestTree } from './utilities/TestNode';
-import { refreshTestTree } from './utilities/TestUtilities';
+import { compareForestNodes, Forest, ForestNode } from '../Forest.js';
+import { NodeId, TraitLabel } from '../Identifiers.js';
+import { Payload } from '../persisted-types/index.js';
+import { TestTree } from './utilities/TestNode.js';
+import { refreshTestTree } from './utilities/TestUtilities.js';
 
 const mainTraitLabel = 'main' as TraitLabel;
 

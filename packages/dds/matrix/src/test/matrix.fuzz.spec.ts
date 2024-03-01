@@ -214,6 +214,11 @@ describe("Matrix fuzz tests", function () {
 		generatorFactory: () => takeAsync(50, makeGenerator()),
 		reducer: async (state, operation) => reducer(state, operation),
 		validateConsistency: assertMatricesAreEquivalent,
+		minimizationTransforms: ["count", "start", "row", "col"].map((p) => (op) => {
+			if (p in op && typeof op[p] === "number" && op[p] > 0) {
+				op[p]--;
+			}
+		}),
 	};
 
 	const baseOptions: Partial<DDSFuzzSuiteOptions> = {
@@ -264,6 +269,19 @@ describe("Matrix fuzz tests", function () {
 		},
 		// Seed 7 is slow but otherwise passes, see comment on timeout above.
 		skip: [7],
+		// Uncomment to replay a particular seed.
+		// replay: 0,
+	});
+
+	createDDSFuzzSuite(nameModel("with stashing"), {
+		...baseOptions,
+		clientJoinOptions: {
+			maxNumberOfClients: 6,
+			clientAddProbability: 0.1,
+			stashableClientProbability: 0.5,
+		}, // Uncomment to replay a particular seed.
+		// Seeds 7 and 23 are slow but otherwise pass, see comment on timeout above.
+		skip: [7, 23],
 		// Uncomment to replay a particular seed.
 		// replay: 0,
 	});

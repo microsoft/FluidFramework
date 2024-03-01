@@ -6,19 +6,19 @@
 import { IsoBuffer } from '@fluid-internal/client-utils';
 import { TestObjectProvider } from '@fluidframework/test-utils';
 import { expect } from 'chai';
-import { fail } from '../../Common';
-import { Definition, EditId, SessionId, TraitLabel } from '../../Identifiers';
-import { Change, StablePlace, StableRange } from '../../ChangeTypes';
-import { SharedTree } from '../../SharedTree';
-import { ChangeInternal, ChangeNode, Edit, TraitMap } from '../../persisted-types';
-import { revert } from '../../HistoryEditFactory';
-import { IdCompressor } from '../../id-compressor';
-import { TestTree } from './TestNode';
+import { fail } from '../../Common.js';
+import { Definition, EditId, SessionId, TraitLabel } from '../../Identifiers.js';
+import { Change, StablePlace, StableRange } from '../../ChangeTypes.js';
+import { SharedTree } from '../../SharedTree.js';
+import { ChangeInternal, ChangeNode, Edit, TraitMap } from '../../persisted-types/index.js';
+import { revert } from '../../HistoryEditFactory.js';
+import { IdCompressor } from '../../id-compressor/index.js';
+import { TestTree } from './TestNode.js';
 import {
 	LocalServerSharedTreeTestingComponents,
 	LocalServerSharedTreeTestingOptions,
 	setUpTestTree,
-} from './TestUtilities';
+} from './TestUtilities.js';
 
 /**
  * An entry into the summarySizeTests list.

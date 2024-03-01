@@ -326,7 +326,7 @@
 			"skipFiles": ["<node_internals>/**", "**/node_modules/**"],
 			"outFiles": [
 				// This config avoids loading dependent packages' test files, while using the same technique
-				// as the "Debug Current Test (JS)" config to load source maps for test files in the current
+				// as the "Debug Current Mocha Test (*)" config to load source maps for test files in the current
 				// package.
 				// This reduces the number of source files VSCode needs to load to debug the e2e tests
 				// considerably, which decreases the time it takes to start debugging.
@@ -334,6 +334,10 @@
 				"${fileDirname}/../../dist/**/*.js",
 				"${fileDirname}/../../../dist/**/*.js",
 				"${fileDirname}/../../../../dist/**/*.js",
+				"${workspaceFolder}/**/lib/**/!(*.spec,*.test,*.tests).js",
+				"${fileDirname}/../../lib/**/*.js",
+				"${fileDirname}/../../../lib/**/*.js",
+				"${fileDirname}/../../../../lib/**/*.js",
 				// e2e tests load ESM modules since test-end-to-end-tests specifies "type": "module" in its package.json.
 				// This ensures that source maps are loaded for those files as well (e.g. so putting a breakpoint in
 				// containerRuntime.ts while debugging a test in test-end-to-end-tests works)
@@ -348,7 +352,33 @@
 		{
 			"type": "node",
 			"request": "launch",
-			"name": "Debug Current Test (JS)",
+			"name": "Debug Current Mocha Test (ESM-lib)",
+			"env": {
+				// "fluid__test__driver": "odsp" //values: local, tinylicious, routerlicious, odsp,
+				// "fluid__test__backCompat": "FULL" //values: FULL This tests loader-driver compatibility for describeCompat tests
+				// "FLUID_TEST_VERBOSE": "1"
+			},
+			"program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+			"stopOnEntry": false,
+			"sourceMaps": true,
+			"args": [
+				"--no-timeouts",
+				"--exit",
+				"../../lib/test/${fileBasenameNoExtension}.js",
+				"../../../lib/test/**/${fileBasenameNoExtension}.js",
+				"../../../../lib/test/**/${fileBasenameNoExtension}.js",
+			],
+			"cwd": "${fileDirname}",
+			"outFiles": [
+				"${fileDirname}/../../lib/**/*.js",
+				"${fileDirname}/../../../lib/**/*.js",
+				"${fileDirname}/../../../../lib/**/*.js",
+			],
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Debug Current Mocha Test (CommonJS-dist)",
 			"env": {
 				// "fluid__test__driver": "odsp" //values: local, tinylicious, routerlicious, odsp,
 				// "fluid__test__backCompat": "FULL" //values: FULL This tests loader-driver compatibility for describeCompat tests

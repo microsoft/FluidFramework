@@ -5,11 +5,11 @@
 
 import type { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidSerializer, serializeHandles } from '@fluidframework/shared-object-base';
-import { fail } from './Common';
-import type { IdCompressor } from './id-compressor';
-import type { EditLogSummary, SharedTreeSummaryBase, ChangeNode, ChangeInternal } from './persisted-types';
-import type { EditHandle } from './EditLog';
-import type { MutableStringInterner } from './StringInterner';
+import { fail } from './Common.js';
+import type { IdCompressor } from './id-compressor/index.js';
+import type { EditLogSummary, SharedTreeSummaryBase, ChangeNode, ChangeInternal } from './persisted-types/index.js';
+import type { EditHandle } from './EditLog.js';
+import type { MutableStringInterner } from './StringInterner.js';
 
 /**
  * The contents of a SharedTree summary, converted to a common internal format that can be

@@ -6,9 +6,6 @@
 import {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
-	ITelemetryErrorEvent,
-	ITelemetryGenericEvent,
-	ITelemetryPerformanceEvent,
 	TelemetryBaseEventPropertyType as TelemetryEventPropertyType,
 	LogLevel,
 	Tagged,
@@ -16,13 +13,17 @@ import {
 	TelemetryBaseEventPropertyType,
 } from "@fluidframework/core-interfaces";
 import { IsomorphicPerformance, performance } from "@fluid-internal/client-utils";
-import { CachedConfigProvider, loggerIsMonitoringContext, mixinMonitoringContext } from "./config";
+import {
+	CachedConfigProvider,
+	loggerIsMonitoringContext,
+	mixinMonitoringContext,
+} from "./config.js";
 import {
 	isILoggingError,
 	extractLogSafeErrorProperties,
 	generateStack,
 	isTaggedTelemetryPropertyValue,
-} from "./errorLogging";
+} from "./errorLogging.js";
 import {
 	ITelemetryEventExt,
 	ITelemetryGenericEventExt,
@@ -31,7 +32,8 @@ import {
 	TelemetryEventPropertyTypeExt,
 	TelemetryEventCategory,
 	ITelemetryPropertiesExt,
-} from "./telemetryTypes";
+	type ITelemetryErrorEventExt,
+} from "./telemetryTypes.js";
 
 export interface Memory {
 	usedJSHeapSize: number;
@@ -230,7 +232,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 	 * @param event - the event to send
 	 * @param error - optional error object to log
 	 */
-	public sendErrorEvent(event: ITelemetryErrorEvent, error?: unknown): void {
+	public sendErrorEvent(event: ITelemetryErrorEventExt, error?: unknown): void {
 		this.sendTelemetryEventCore(
 			{
 				// ensure the error field has some value,
@@ -846,23 +848,6 @@ export class PerformanceEvent {
 		PerformanceEvent.eventHits.set(eventKey, hitCount >= sampleThreshold ? 1 : hitCount + 1);
 		return hitCount % sampleThreshold === 0;
 	}
-}
-
-/**
- * Null logger that no-ops for all telemetry events passed to it.
- *
- * @deprecated This will be removed in a future release.
- * For internal use within the FluidFramework codebase, use {@link createChildLogger} with no arguments instead.
- * For external consumers we recommend writing a trivial implementation of {@link @fluidframework/core-interfaces#ITelemetryBaseLogger}
- * where the send() method does nothing and using that.
- *
- * @internal
- */
-export class TelemetryNullLogger implements ITelemetryLoggerExt {
-	public send(event: ITelemetryBaseEvent): void {}
-	public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: unknown): void {}
-	public sendErrorEvent(event: ITelemetryErrorEvent, error?: unknown): void {}
-	public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: unknown): void {}
 }
 
 /**

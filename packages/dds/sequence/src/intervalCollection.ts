@@ -7,7 +7,7 @@
 /* eslint-disable import/no-deprecated */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
 import {
 	addProperties,
@@ -35,7 +35,6 @@ import {
 	IValueOpEmitter,
 	IValueOperation,
 	IValueType,
-	IValueTypeOperationValue,
 	SequenceOptions,
 } from "./defaultMapInterfaces";
 import {
@@ -54,7 +53,6 @@ import {
 	startReferenceSlidingPreference,
 	sequenceIntervalHelpers,
 	createInterval,
-	IntervalDeltaOpType,
 } from "./intervals";
 import {
 	EndpointIndex,
@@ -115,7 +113,7 @@ export enum Side {
 	After = 1,
 }
 
-const reservedIntervalIdKey = "intervalId";
+export const reservedIntervalIdKey = "intervalId";
 
 export interface ISerializedIntervalCollectionV2 {
 	label: string;
@@ -198,15 +196,18 @@ export function endpointPosAndSide(
 	};
 }
 
-function toSequencePlace(pos: number | "start" | "end", side: Side): SequencePlace {
-	return typeof pos === "number" ? { pos, side } : pos;
+export function toSequencePlace(
+	pos: number | "start" | "end",
+	side: Side | undefined,
+): SequencePlace {
+	return typeof pos === "number" && side !== undefined ? { pos, side } : pos;
 }
 
-function toOptionalSequencePlace(
+export function toOptionalSequencePlace(
 	pos: number | "start" | "end" | undefined,
-	side: Side = Side.Before,
+	side: Side | undefined,
 ): SequencePlace | undefined {
-	return typeof pos === "number" ? { pos, side } : pos;
+	return typeof pos === "number" && side !== undefined ? { pos, side } : pos;
 }
 
 export function computeStickinessFromSide(
@@ -580,13 +581,6 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<
 		return { rebasedOp, rebasedLocalOpMetadata: localOpMetadata };
 	};
 
-	const applyStashedOp: IValueOperation<IntervalCollection<T>>["applyStashedOp"] = (
-		collection,
-		op,
-	) => {
-		return collection.applyStashedOp(op);
-	};
-
 	return new Map<IntervalOpType, IValueOperation<IntervalCollection<T>>>([
 		[
 			IntervalOpType.ADD,
@@ -601,7 +595,6 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<
 					collection.ackAdd(params, local, op, localOpMetadata);
 				},
 				rebase,
-				applyStashedOp,
 			},
 		],
 		[
@@ -615,7 +608,6 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<
 					// Deletion of intervals is based on id, so requires no rebasing.
 					return { rebasedOp: op, rebasedLocalOpMetadata: localOpMetadata };
 				},
-				applyStashedOp,
 			},
 		],
 		[
@@ -631,7 +623,6 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<
 					collection.ackChange(params, local, op, localOpMetadata);
 				},
 				rebase,
-				applyStashedOp,
 			},
 		],
 	]);
@@ -1575,8 +1566,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 				newInterval =
 					this.localCollection.changeInterval(
 						interval,
-						toOptionalSequencePlace(start, serializedInterval.startSide),
-						toOptionalSequencePlace(end, serializedInterval.endSide),
+						toOptionalSequencePlace(start, serializedInterval.startSide ?? Side.Before),
+						toOptionalSequencePlace(end, serializedInterval.endSide ?? Side.Before),
 						op,
 					) ?? interval;
 			}
@@ -1684,61 +1675,14 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			// updates the local client's state to be consistent with the emitted op.
 			this.localCollection?.changeInterval(
 				localInterval,
-				toOptionalSequencePlace(startRebased, startSide),
-				toOptionalSequencePlace(endRebased, endSide),
+				toOptionalSequencePlace(startRebased, startSide ?? Side.Before),
+				toOptionalSequencePlace(endRebased, endSide ?? Side.Before),
 				undefined,
 				localSeq,
 			);
 		}
 
 		return rebased;
-	}
-
-	public applyStashedOp(op: IValueTypeOperationValue): IMapMessageLocalMetadata {
-		let interval: TInterval | undefined;
-		let props: PropertySet | undefined;
-		let intervalId: string;
-		switch (op.opName) {
-			case IntervalDeltaOpType.ADD: {
-				assert(op.value.start !== undefined, 0x87a /* start is undefined */);
-				assert(op.value.end !== undefined, 0x87b /* end is undefined */);
-				interval = this.add({
-					start: op.value.start,
-					end: op.value.end,
-					props: op.value.properties,
-				});
-				const metadata = {
-					localSeq: this.getNextLocalSeq(),
-				};
-				if (interval !== undefined) {
-					this.localSeqToSerializedInterval.set(metadata.localSeq, interval.serialize());
-				}
-				return metadata;
-			}
-			case IntervalDeltaOpType.DELETE:
-				this.removeIntervalById(op.value.properties?.intervalId);
-				return {
-					localSeq: this.getNextLocalSeq(),
-				};
-			case IntervalDeltaOpType.CHANGE: {
-				assert(op.value.properties !== undefined, 0x87c /* properties is undefined */);
-				({ intervalId, ...props } = op.value.properties);
-				interval = this.change(intervalId, {
-					start: op.value.start,
-					end: op.value.end,
-					props,
-				});
-				const metadata = {
-					localSeq: this.getNextLocalSeq(),
-				};
-				if (interval !== undefined) {
-					this.localSeqToSerializedInterval.set(metadata.localSeq, interval.serialize());
-				}
-				return metadata;
-			}
-			default:
-				unreachableCase(op.opName, `Unknown interval op type: ${op.opName}`);
-		}
 	}
 
 	private getSlideToSegment(
