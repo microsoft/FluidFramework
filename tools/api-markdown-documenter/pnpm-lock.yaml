@@ -10,7 +10,7 @@ importers:
       '@fluid-tools/markdown-magic': file:../markdown-magic
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
-      '@fluidframework/eslint-config-fluid': file:../../common/build/eslint-config-fluid
+      '@fluidframework/eslint-config-fluid': ^4.0.0
       '@fluidframework/mocha-test-setup': ~2.0.0-internal.6.2.0
       '@microsoft/api-extractor': ^7.39.1
       '@microsoft/api-extractor-model': ~7.28.2
@@ -47,7 +47,7 @@ importers:
       '@fluid-tools/markdown-magic': file:../markdown-magic_@types+node@18.15.11
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.26.1_@types+node@18.15.11
-      '@fluidframework/eslint-config-fluid': file:../../common/build/eslint-config-fluid_bpztyfltmpuv6lhsgzfwtmxhte
+      '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/mocha-test-setup': 2.0.0-internal.6.2.0
       '@microsoft/api-extractor': 7.39.1_@types+node@18.15.11
       '@types/chai': 4.3.4
@@ -272,6 +272,34 @@ packages:
     dependencies:
       '@fluidframework/core-interfaces': 2.0.0-internal.6.2.0
       '@fluidframework/protocol-definitions': 1.2.0
+    dev: true
+
+  /@fluidframework/eslint-config-fluid/4.0.0_bpztyfltmpuv6lhsgzfwtmxhte:
+    resolution: {integrity: sha512-mLE+1uocMaMACF51EPhnGgLi2okbKRAPE53RzC3Jd2CfqqIGk2sk8yrsvw7KVfeBp8w0Mf646ZM17yAbNTErDg==}
+    dependencies:
+      '@microsoft/tsdoc': 0.14.2
+      '@rushstack/eslint-patch': 1.4.0
+      '@rushstack/eslint-plugin': 0.13.1_bpztyfltmpuv6lhsgzfwtmxhte
+      '@rushstack/eslint-plugin-security': 0.7.1_bpztyfltmpuv6lhsgzfwtmxhte
+      '@typescript-eslint/eslint-plugin': 6.7.5_gutmsi6rpbyypn46fpwnxcekni
+      '@typescript-eslint/parser': 6.7.5_bpztyfltmpuv6lhsgzfwtmxhte
+      eslint-config-prettier: 9.0.0_eslint@8.55.0
+      eslint-import-resolver-typescript: 3.6.1_tpu45zodljnzvckpnsmhtdqkmi
+      eslint-plugin-eslint-comments: 3.2.0_eslint@8.55.0
+      eslint-plugin-import: /eslint-plugin-i/2.29.0_j7h7oj6rrhtikhzta4fgkou42e
+      eslint-plugin-jsdoc: 46.8.2_eslint@8.55.0
+      eslint-plugin-promise: 6.1.1_eslint@8.55.0
+      eslint-plugin-react: 7.33.2_eslint@8.55.0
+      eslint-plugin-react-hooks: 4.6.0_eslint@8.55.0
+      eslint-plugin-tsdoc: 0.2.17
+      eslint-plugin-unicorn: 48.0.1_eslint@8.55.0
+      eslint-plugin-unused-imports: 3.0.0_q2lq45qjv2a3kzwivaf2whp57u
+    transitivePeerDependencies:
+      - eslint
+      - eslint-import-resolver-node
+      - eslint-import-resolver-webpack
+      - supports-color
+      - typescript
     dev: true
 
   /@fluidframework/mocha-test-setup/2.0.0-internal.6.2.0:
@@ -935,15 +963,6 @@ packages:
       fast-glob: 3.3.2
       minimatch: 5.1.6
       mkdirp: 1.0.4
-      path-browserify: 1.0.1
-    dev: true
-
-  /@ts-morph/common/0.21.0:
-    resolution: {integrity: sha512-ES110Mmne5Vi4ypUKrtVQfXFDtCsDXiUiGxF6ILVlE90dDD4fdpC1LSjydl/ml7xJWKSDZwUYD2zkOePMSrPBA==}
-    dependencies:
-      fast-glob: 3.3.2
-      minimatch: 7.4.6
-      mkdirp: 2.1.6
       path-browserify: 1.0.1
     dev: true
 
@@ -1902,10 +1921,6 @@ packages:
 
   /code-block-writer/11.0.3:
     resolution: {integrity: sha512-NiujjUFB4SwScJq2bwbYUtXbZhBSlY6vYzm++3Q6oC+U+injTqfPYFK8wS9COOmb2lueqp0ZRB4nK1VYeHgNyw==}
-    dev: true
-
-  /code-block-writer/12.0.0:
-    resolution: {integrity: sha512-q4dMFMlXtKR3XNBHyMHt/3pwYNA69EDk00lloMOaaUMKPUXBw6lpXtbu3MMVG6/uOihGnRDOlkyqsONEUj60+w==}
     dev: true
 
   /color-convert/1.9.3:
@@ -4486,13 +4501,6 @@ packages:
       brace-expansion: 2.0.1
     dev: true
 
-  /minimatch/7.4.6:
-    resolution: {integrity: sha512-sBz8G/YjVniEz6lKPNpKxXwazJe4c19fEfV2GDMX6AjFz+MX9uDWIZW8XreVhkFW3fkIdTv/gxWr/Kks5FFAVw==}
-    engines: {node: '>=10'}
-    dependencies:
-      brace-expansion: 2.0.1
-    dev: true
-
   /minimatch/8.0.4:
     resolution: {integrity: sha512-W0Wvr9HyFXZRGIDgCicunpQ299OKXs9RgZfaukz4qAW/pJhcpUfupc9c+OObPOFueNy8VSrZgEmDtk6Kh4WzDA==}
     engines: {node: '>=16 || 14 >=14.17'}
@@ -4523,12 +4531,6 @@ packages:
 
   /mkdirp/1.0.4:
     resolution: {integrity: sha512-vVqVZQyf3WLx2Shd0qJ9xuvqgAyKPLAiqITEtqW0oIUjzo3PePDd6fW9iFz30ef7Ysp/oiWqbhszeGWW2T6Gzw==}
-    engines: {node: '>=10'}
-    hasBin: true
-    dev: true
-
-  /mkdirp/2.1.6:
-    resolution: {integrity: sha512-+hEnITedc8LAtIP9u3HJDFIdcLV2vXP33sqLLIzkv1Db1zO/1OxbvYf0Y1OC/S/Qo5dxHXepofhmxL02PsKe+A==}
     engines: {node: '>=10'}
     hasBin: true
     dev: true
@@ -5895,13 +5897,6 @@ packages:
       code-block-writer: 11.0.3
     dev: true
 
-  /ts-morph/20.0.0:
-    resolution: {integrity: sha512-JVmEJy2Wow5n/84I3igthL9sudQ8qzjh/6i4tmYCm6IqYyKFlNbJZi7oBdjyqcWSWYRu3CtL0xbT6fS03ESZIg==}
-    dependencies:
-      '@ts-morph/common': 0.21.0
-      code-block-writer: 12.0.0
-    dev: true
-
   /ts-node/10.9.1_vkotigkp5s62xv6rdodgvy6lfm:
     resolution: {integrity: sha512-NtVysVPkxxrwFGUUxGYhfux8k78pQB3JqYBXlLRZgdGUqTO5wU/UyHop5p70iEbGhB7q5KmiZiU0Y3KlJrScEw==}
     hasBin: true
@@ -6504,38 +6499,6 @@ packages:
 
   /zwitch/1.0.5:
     resolution: {integrity: sha512-V50KMwwzqJV0NpZIZFwfOD5/lyny3WlSzRiXgA0G7VUnRlqttta1L6UQIHzd6EuBY/cHGfwTIck7w1yH6Q5zUw==}
-    dev: true
-
-  file:../../common/build/eslint-config-fluid_bpztyfltmpuv6lhsgzfwtmxhte:
-    resolution: {directory: ../../common/build/eslint-config-fluid, type: directory}
-    id: file:../../common/build/eslint-config-fluid
-    name: '@fluidframework/eslint-config-fluid'
-    version: 4.0.0
-    dependencies:
-      '@microsoft/tsdoc': 0.14.2
-      '@rushstack/eslint-patch': 1.4.0
-      '@rushstack/eslint-plugin': 0.13.1_bpztyfltmpuv6lhsgzfwtmxhte
-      '@rushstack/eslint-plugin-security': 0.7.1_bpztyfltmpuv6lhsgzfwtmxhte
-      '@typescript-eslint/eslint-plugin': 6.7.5_gutmsi6rpbyypn46fpwnxcekni
-      '@typescript-eslint/parser': 6.7.5_bpztyfltmpuv6lhsgzfwtmxhte
-      eslint-config-prettier: 9.0.0_eslint@8.55.0
-      eslint-import-resolver-typescript: 3.6.1_tpu45zodljnzvckpnsmhtdqkmi
-      eslint-plugin-eslint-comments: 3.2.0_eslint@8.55.0
-      eslint-plugin-import: /eslint-plugin-i/2.29.0_j7h7oj6rrhtikhzta4fgkou42e
-      eslint-plugin-jsdoc: 46.8.2_eslint@8.55.0
-      eslint-plugin-promise: 6.1.1_eslint@8.55.0
-      eslint-plugin-react: 7.33.2_eslint@8.55.0
-      eslint-plugin-react-hooks: 4.6.0_eslint@8.55.0
-      eslint-plugin-tsdoc: 0.2.17
-      eslint-plugin-unicorn: 48.0.1_eslint@8.55.0
-      eslint-plugin-unused-imports: 3.0.0_q2lq45qjv2a3kzwivaf2whp57u
-      ts-morph: 20.0.0
-    transitivePeerDependencies:
-      - eslint
-      - eslint-import-resolver-node
-      - eslint-import-resolver-webpack
-      - supports-color
-      - typescript
     dev: true
 
   file:../markdown-magic_@types+node@18.15.11:
