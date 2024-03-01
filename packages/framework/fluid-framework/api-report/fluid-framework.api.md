@@ -82,11 +82,12 @@ export interface ContainerSchema {
 }
 
 // @public
-export type DataObjectClass<T extends IFluidLoadable> = {
+export interface DataObjectClass<T extends IFluidLoadable> {
+    // (undocumented)
     readonly factory: {
         IFluidDataStoreFactory: DataObjectClass<T>["factory"];
     };
-} & LoadableObjectCtor<T>;
+}
 
 // @public
 export const disposeSymbol: unique symbol;

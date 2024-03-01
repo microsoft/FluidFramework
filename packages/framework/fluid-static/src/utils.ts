@@ -58,7 +58,7 @@ export const isSharedObjectClass = (obj: unknown): obj is SharedObjectClass<IFlu
 
 /**
  * The ContainerSchema consists of initialObjects and dynamicObjectTypes. These types can be
- * of both SharedObject or DataObject. This function seperates the two and returns a registery
+ * of both SharedObject or DataObject. This function separates the two and returns a registry
  * of DataObject types and an array of SharedObjects.
  */
 export const parseDataObjectsFromSharedObjects = (

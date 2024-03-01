@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { AttachState, IContainer, IHostLoader } from "@fluidframework/container-definitions";
-import type { SharedDirectory, SharedMap } from "@fluidframework/map";
+import type { ISharedDirectory, ISharedMap, SharedDirectory, SharedMap } from "@fluidframework/map";
 import {
 	ChannelFactoryRegistry,
 	ITestFluidObject,
@@ -170,7 +170,7 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 		let container: IContainer;
 		let detachedBlobStorage: MockDetachedBlobStorage;
 		let detachedDataStore: ITestFluidObject;
-		let map: SharedMap;
+		let map: ISharedMap;
 		let directory: SharedDirectory;
 		let text: string;
 		let blobHandle: IFluidHandle<ArrayBufferLike>;
@@ -194,7 +194,7 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 			blobHandle = await detachedDataStore.runtime.uploadBlob(stringToBuffer(text, "utf-8"));
 		});
 
-		const checkForDetachedHandles = (dds: SharedMap | SharedDirectory) => {
+		const checkForDetachedHandles = (dds: ISharedMap | ISharedDirectory) => {
 			assert.strictEqual(
 				container.attachState,
 				AttachState.Detached,
@@ -209,7 +209,7 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 			assert.strictEqual(blobHandle.isAttached, false, "blob handle should be detached");
 		};
 
-		const checkForAttachedHandles = (dds: SharedMap | SharedDirectory) => {
+		const checkForAttachedHandles = (dds: ISharedMap | ISharedDirectory) => {
 			assert.strictEqual(
 				container.attachState,
 				AttachState.Attached,

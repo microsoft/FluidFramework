@@ -8,7 +8,7 @@ import {
 	type IEventProvider,
 	type IFluidLoadable,
 } from "@fluidframework/core-interfaces";
-import { type IChannel, type IChannelFactory } from "@fluidframework/datastore-definitions";
+import { type IChannelFactory } from "@fluidframework/datastore-definitions";
 
 /**
  * A mapping of string identifiers to instantiated `DataObject`s or `SharedObject`s.
@@ -25,7 +25,7 @@ export type LoadableObjectRecord = Record<string, IFluidLoadable>;
 export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>;
 
 /**
- * A class object of `DataObject` or `SharedObject`.
+ * A class object of `DataObject` or `SharedObject` that loads a `T`.
  *
  * @typeParam T - The class of the `DataObject` or `SharedObject`.
  * @public
@@ -53,7 +53,7 @@ export type DataObjectClass<T extends IFluidLoadable> = {
  * @public
  */
 export interface SharedObjectClass<T extends IFluidLoadable> {
-	readonly getFactory: () => IChannelFactory<T & IChannel>;
+	readonly getFactory: () => IChannelFactory<T>;
 }
 
 /**
