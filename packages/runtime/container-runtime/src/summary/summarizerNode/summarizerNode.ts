@@ -39,7 +39,7 @@ import {
 	parseSummaryForSubtrees,
 	SummaryNode,
 	ValidateSummaryResult,
-} from "./summarizerNodeUtils";
+} from "./summarizerNodeUtils.js";
 
 export interface IRootSummarizerNode extends ISummarizerNode, ISummarizerNodeRootContract {}
 

@@ -15,9 +15,9 @@ import {
 import { assert } from "@fluidframework/core-utils";
 import { performance } from "@fluid-internal/client-utils";
 import { isRuntimeMessage } from "@fluidframework/driver-utils";
-import { DeltaScheduler } from "./deltaScheduler";
-import { pkgVersion } from "./packageVersion";
-import { IBatchMetadata } from "./metadata";
+import { DeltaScheduler } from "./deltaScheduler.js";
+import { pkgVersion } from "./packageVersion.js";
+import { IBatchMetadata } from "./metadata.js";
 
 type IRuntimeMessageMetadata =
 	| undefined
