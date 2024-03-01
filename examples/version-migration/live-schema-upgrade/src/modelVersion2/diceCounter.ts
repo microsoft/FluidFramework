@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
+import type { EventEmitter } from "@fluid-example/example-utils";
 import { assert } from "@fluidframework/core-utils";
 import { ISharedCounter, SharedCounter } from "@fluidframework/counter";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";

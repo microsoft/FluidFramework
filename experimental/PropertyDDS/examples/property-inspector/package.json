@@ -68,7 +68,6 @@
 		"@material-ui/core": "4.12.4",
 		"@material-ui/lab": "4.0.0-alpha.61",
 		"@material-ui/styles": "4.11.5",
-		"events": "^3.1.0",
 		"jsonwebtoken": "^8.4.0",
 		"lodash": "^4.17.21",
 		"react": "^17.0.1",
