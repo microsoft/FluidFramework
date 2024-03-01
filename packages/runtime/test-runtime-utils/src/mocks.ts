@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { Listener } from "events_pkg";
 import { EventEmitter, TypedEventEmitter, stringToBuffer } from "@fluid-internal/client-utils";
 import { IIdCompressor, IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor";
 import { assert } from "@fluidframework/core-utils";
@@ -670,12 +669,10 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
 	getMaxListeners(): number {
 		throw new Error("Method not implemented.");
 	}
-	// eslint-disable-next-line @typescript-eslint/ban-types
-	listeners(event: string | number): Listener[] {
+	listeners(event: string | number): ReturnType<EventEmitter["listeners"]> {
 		throw new Error("Method not implemented.");
 	}
-	// eslint-disable-next-line @typescript-eslint/ban-types
-	rawListeners(event: string | number): Listener[] {
+	rawListeners(event: string | number): ReturnType<EventEmitter["rawListeners"]> {
 		throw new Error("Method not implemented.");
 	}
 	emit(event: string | number, ...args: any[]): boolean {

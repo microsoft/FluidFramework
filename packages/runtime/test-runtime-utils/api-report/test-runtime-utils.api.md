@@ -53,7 +53,6 @@ import { ITokenResponse } from '@fluidframework/routerlicious-driver';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { ITreeEntry } from '@fluidframework/protocol-definitions';
 import { IUser } from '@fluidframework/protocol-definitions';
-import type { Listener } from 'events_pkg';
 import { MessageType } from '@fluidframework/protocol-definitions';
 import { ReadOnlyInfo } from '@fluidframework/container-definitions';
 import { ScopeType } from '@fluidframework/protocol-definitions';
@@ -589,7 +588,7 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
     // (undocumented)
     listenerCount(type: string | number): number;
     // (undocumented)
-    listeners(event: string | number): Listener[];
+    listeners(event: string | number): ReturnType<EventEmitter["listeners"]>;
     // (undocumented)
     off(event: string | number, listener: (...args: any[]) => void): this;
     // (undocumented)
@@ -601,7 +600,7 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
     // (undocumented)
     prependOnceListener(event: string | number, listener: (...args: any[]) => void): this;
     // (undocumented)
-    rawListeners(event: string | number): Listener[];
+    rawListeners(event: string | number): ReturnType<EventEmitter["rawListeners"]>;
     // (undocumented)
     removeAllListeners(event?: string | number | undefined): this;
     // (undocumented)

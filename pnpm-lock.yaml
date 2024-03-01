@@ -9038,7 +9038,6 @@ importers:
       '@microsoft/api-extractor': ^7.39.1
       '@tylerbu/sorted-btree-es6': ^1.8.0
       '@types/double-ended-queue': ^2.1.0
-      '@types/events_pkg': npm:@types/events@^3.0.0
       '@types/mocha': ^9.1.1
       '@types/sinon': ^17.0.3
       '@types/uuid': ^9.0.2
@@ -9047,7 +9046,6 @@ importers:
       cross-env: ^7.0.3
       double-ended-queue: ^2.1.0-0
       eslint: ~8.55.0
-      events_pkg: npm:events@^3.1.0
       lz4js: ^0.2.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
@@ -9074,7 +9072,6 @@ importers:
       '@fluidframework/runtime-utils': link:../runtime-utils
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       '@tylerbu/sorted-btree-es6': 1.8.0
-      '@types/events_pkg': /@types/events/3.0.3
       double-ended-queue: 2.1.0-0
       lz4js: 0.2.0
       uuid: 9.0.1
@@ -9098,7 +9095,6 @@ importers:
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.55.0
-      events_pkg: /events/3.3.0
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
@@ -9472,7 +9468,6 @@ importers:
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-runtime-utils-previous': npm:@fluidframework/test-runtime-utils@2.0.0-internal.8.0.0
       '@microsoft/api-extractor': ^7.39.1
-      '@types/events_pkg': npm:@types/events@^3.0.0
       '@types/jsrsasign': ^10.5.12
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
@@ -9504,7 +9499,6 @@ importers:
       '@fluidframework/runtime-definitions': link:../runtime-definitions
       '@fluidframework/runtime-utils': link:../runtime-utils
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
-      '@types/events_pkg': /@types/events/3.0.3
       jsrsasign: 11.0.0
       uuid: 9.0.1
     devDependencies:
