@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { IContainerLoadMode, LoaderHeader } from "@fluidframework/container-definitions";
 
 import { SummaryCollection, DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
@@ -25,6 +24,7 @@ import {
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
+import { wrapObjectAndOverride } from "../mocking.js";
 
 const loadOptions: IContainerLoadMode[] = generatePairwiseOptions<IContainerLoadMode>({
 	deltaConnection: [undefined, "none", "delayed"],
@@ -217,35 +217,20 @@ describeCompat("No Delta stream loading mode testing", "FullCompat", (getTestObj
 				const validationDataObject =
 					await getContainerEntryPointBackCompat<ITestFluidObject>(validationContainer);
 
-				const storageOnlyDsF: IDocumentServiceFactory = {
-					createContainer: provider.documentServiceFactory.createContainer.bind(
-						provider.documentServiceFactory,
-					),
-					createDocumentService: async (
-						resolvedUrl: IResolvedUrl,
-						logger?: ITelemetryBaseLogger,
-					) =>
-						new Proxy(
-							await provider.documentServiceFactory.createDocumentService(
-								resolvedUrl,
-								logger,
-							),
-							{
-								get: (target, prop: keyof IDocumentService, r) => {
-									if (prop === "policies") {
-										const policies: IDocumentService["policies"] = {
-											...target.policies,
-											storageOnly: true,
-										};
-										return policies;
-									}
-
-									// eslint-disable-next-line @typescript-eslint/no-unsafe-return -- Reflection
-									return Reflect.get(target, prop, r);
-								},
+				const storageOnlyDsF = wrapObjectAndOverride<IDocumentServiceFactory>(
+					provider.documentServiceFactory,
+					{
+						createDocumentService: {
+							policies: (ds) => {
+								const policies: IDocumentService["policies"] = {
+									...ds.policies,
+									storageOnly: true,
+								};
+								return policies;
 							},
-						),
-				};
+						},
+					},
+				);
 
 				const storageOnlyLoader = createLoader(
 					[
