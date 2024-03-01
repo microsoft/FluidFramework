@@ -186,6 +186,7 @@ export class SerializedStateManager {
 				assert(this.snapshot !== undefined, "no base data");
 				const pendingRuntimeState = await runtime.getPendingLocalState(props);
 				const pendingState: IPendingContainerState = {
+					attached: true,
 					pendingRuntimeState,
 					baseSnapshot: this.snapshot.tree,
 					snapshotBlobs: this.snapshot.blobs,
