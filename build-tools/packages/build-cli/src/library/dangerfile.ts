@@ -20,18 +20,6 @@ declare function markdown(message: string, file?: string, line?: number): void;
 
 declare function warn(message: string, file?: string, line?: number): void;
 
-declare const danger: {
-	github: {
-		utils: {
-			createOrAddLabel: (labelConfig: {
-				color: string;
-				description: string;
-				name: string;
-			}) => void;
-		};
-	};
-};
-
 const adoConstants = {
 	orgUrl: "https://dev.azure.com/fluidframework",
 	projectName: "public",
@@ -82,15 +70,9 @@ export async function dangerfile(): Promise<void> {
 				);
 			}) ?? false;
 
-		// Warn and add label to PR in case of bundle size regression
+		// Add warning message in case of bundle size regression
 		if (sizeRegressionDetected) {
 			warn("Bundle size regression detected -- please investigate before merging!");
-			// Add the label to the PR
-			danger.github.utils.createOrAddLabel({
-				color: "ff0000",
-				description: "Significant bundle size regression (>5 KB)",
-				name: "size regression",
-			});
 		}
 
 		markdown(result.message);
