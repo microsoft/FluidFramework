@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Jsonable } from "../..";
+import { Jsonable } from "../../index.js";
 
 declare function foo<T>(jsonable: Jsonable<T>): void;
 

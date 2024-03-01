@@ -4,7 +4,7 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { Jsonable } from "./jsonable";
+import { Jsonable } from "./jsonable.js";
 
 /**
  * Used to constrain a type 'T' to types that Fluid can intrinsically serialize.  Produces a

@@ -20,7 +20,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import { IIdCompressor } from "@fluidframework/id-compressor";
-import { IChannel } from "./channel";
+import { IChannel } from "./channel.js";
 
 /**
  * Events emitted by {@link IFluidDataStoreRuntime}.
