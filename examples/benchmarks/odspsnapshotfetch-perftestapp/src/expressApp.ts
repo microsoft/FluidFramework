@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import express from "express";
+import express, { type Response } from "express";
 import webpackDevMiddleware from "webpack-dev-middleware";
 import webpackHotMiddleware from "webpack-hot-middleware";
 import webpack from "webpack";
@@ -13,7 +13,7 @@ import {
 	odspTokensCache,
 	OdspTokenConfig,
 } from "@fluidframework/tool-utils";
-import { getServer, IOdspTokens } from "@fluidframework/odsp-doclib-utils/internal";
+import { getServer, type IOdspTokens } from "@fluidframework/odsp-doclib-utils/internal";
 import { assert } from "@fluidframework/core-utils";
 import config from "../webpack.config.cjs";
 import { _dirname } from "./dirname.cjs";
@@ -37,7 +37,7 @@ app.use(webpackHotMiddleware(compiler));
 app.get("/", (req, res) => res.redirect("/fetchApp"));
 
 app.get("/fetchApp", (req, res) => {
-	(async () => {
+	(async (): Promise<void> => {
 		const originalUrl = `${getThisOrigin(8080)}${req.url}`;
 		let first = true;
 		if (odspAuthStage === 0) {
@@ -47,7 +47,7 @@ app.get("/fetchApp", (req, res) => {
 			assert(odspAccessToken !== undefined, "token should be intialized now");
 			return prepareResponse(req, res, odspAccessToken);
 		}
-	})().catch((error) => console.log("Error in rendering ", error));
+	})().catch((error) => console.log("Error in rendering", error));
 });
 
 app.use(express.static(_dirname));
@@ -56,10 +56,12 @@ app.listen(8080, () => {
 	console.log("Node server is running..");
 });
 
-async function getOdspToken(res, originalUrl: string) {
-	const buildTokenConfig = (response, redirectUriCallback?): OdspTokenConfig => ({
+async function getOdspToken(res: Response, originalUrl: string): Promise<boolean> {
+	const buildTokenConfig = (
+		response: Response,
+		redirectUriCallback?: (tokens: IOdspTokens) => Promise<string>,
+	): OdspTokenConfig => ({
 		type: "browserLogin",
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		navigator: (url: string) => response.redirect(url),
 		redirectUriCallback,
 	});
@@ -78,7 +80,7 @@ async function getOdspToken(res, originalUrl: string) {
 	return false;
 }
 
-const prepareResponse = (req: express.Request, res: express.Response, token: string) => {
+const prepareResponse = (req: express.Request, res: express.Response, token: string): void => {
 	const documentId = req.params.id;
 	const html = `<!DOCTYPE html>
         <html style="height: 100%;" lang="en">
