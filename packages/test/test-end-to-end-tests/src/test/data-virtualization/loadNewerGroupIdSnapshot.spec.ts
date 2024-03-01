@@ -43,6 +43,13 @@ const interceptResult = <T>(
 	return fn;
 };
 
+const overrideResult = <T>(parent: any, fn: (...args: any[]) => Promise<T>, result: T) => {
+	const overrideFn = async () => {
+		return result;
+	};
+	parent[fn.name] = overrideFn;
+};
+
 // A Test Data Object that exposes some basic functionality.
 class TestDataObject extends DataObject {
 	public get _root() {
@@ -360,4 +367,75 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			);
 		},
 	);
+
+	it("Load datastore via groupId getting a snapshot older than snapshot we loaded from", async () => {
+		if (provider.driver.type !== "local") {
+			return;
+		}
+		// Load basic container stuff
+		const container = await provider.createContainer(runtimeFactory, { configProvider });
+		const mainObject = (await container.getEntryPoint()) as TestDataObject;
+		const containerRuntime = mainObject.containerRuntime;
+
+		// Create data store with loadingGroupId
+		const dataStoreA = await containerRuntime.createDataStore(
+			testDataObjectType,
+			loadingGroupId,
+		);
+
+		// Attach the data store
+		const dataObjectA = (await dataStoreA.entryPoint.get()) as TestDataObject;
+		mainObject._root.set("dataObjectA", dataObjectA.handle);
+		dataObjectA._root.set("A", "A");
+
+		const { summarizer } = await createSummarizerFromFactory(
+			provider,
+			container,
+			dataObjectFactory,
+		);
+
+		// Summarize
+		await provider.ensureSynchronized();
+		const { summaryVersion: summaryVersion1 } = await summarizeNow(summarizer);
+
+		dataObjectA._root.set("B", "B");
+
+		await provider.ensureSynchronized();
+		const { summaryVersion: summaryVersion2 } = await summarizeNow(summarizer);
+
+		// Load the container with the second summary
+		const container2 = await provider.loadContainer(
+			runtimeFactory,
+			{ configProvider },
+			{ [LoaderHeader.version]: summaryVersion2 },
+		);
+		const mainObject2 = (await container2.getEntryPoint()) as TestDataObject;
+		const runtime2 = mainObject2.containerRuntime;
+		const dataObjectA2Handle =
+			mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
+		assert(dataObjectA2Handle !== undefined, "dataObjectA2Handle should not be undefined");
+
+		assert(runtime2.storage.getSnapshot !== undefined, "getSnapshot not defined for runtime2");
+		const olderSnapshot = await runtime2.storage.getSnapshot({
+			versionId: summaryVersion1,
+			loadingGroupIds: [loadingGroupId],
+		});
+		overrideResult(runtime2.storage, runtime2.storage.getSnapshot, olderSnapshot);
+		// TODO: update when this assert changes to a hex.
+		await assert.rejects(
+			dataObjectA2Handle.get(),
+			(error: Error & any) => {
+				const correctError: boolean =
+					error.errorFromRequestFluidObject === true &&
+					error.code === 500 &&
+					error.message !== undefined &&
+					error.message.includes(
+						"Downloaded snapshot older than snapshot we loaded from",
+					);
+
+				return correctError;
+			},
+			"Loading an older snapshot than the snapshot the runtime loaded from should fail",
+		);
+	});
 });

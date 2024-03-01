@@ -1795,6 +1795,12 @@ export class ContainerRuntime
 		const snapshotSeqNumber = snapshot.sequenceNumber;
 		assert(snapshotSeqNumber !== undefined, "snapshotSeqNumber should be present");
 
+		// This assert fires if we get a snapshot older than the snapshot we loaded from. This is a service issue.
+		assert(
+			snapshotSeqNumber >= this.deltaManager.initialSequenceNumber,
+			"Downloaded snapshot older than snapshot we loaded from",
+		);
+
 		// If the snapshot is ahead of the last seq number of the delta manager, then catch up before
 		// returning the snapshot.
 		if (snapshotSeqNumber > this.deltaManager.lastSequenceNumber) {
