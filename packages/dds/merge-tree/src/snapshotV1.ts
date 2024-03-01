@@ -11,9 +11,9 @@ import { bufferToString } from "@fluid-internal/client-utils";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { AttributionKey, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { UnassignedSequenceNumber } from "./constants";
-import { ISegment } from "./mergeTreeNodes";
-import { matchProperties, PropertySet } from "./properties";
+import { UnassignedSequenceNumber } from "./constants.js";
+import { ISegment } from "./mergeTreeNodes.js";
+import { matchProperties, PropertySet } from "./properties.js";
 import {
 	IJSONSegmentWithMergeInfo,
 	JsonSegmentSpecs,
@@ -21,11 +21,11 @@ import {
 	MergeTreeChunkV1,
 	toLatestVersion,
 	serializeAsMaxSupportedVersion,
-} from "./snapshotChunks";
-import { SnapshotLegacy } from "./snapshotlegacy";
-import { MergeTree } from "./mergeTree";
-import { walkAllChildSegments } from "./mergeTreeNodeWalk";
-import { IAttributionCollection } from "./attributionCollection";
+} from "./snapshotChunks.js";
+import { SnapshotLegacy } from "./snapshotlegacy.js";
+import { MergeTree } from "./mergeTree.js";
+import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
+import { IAttributionCollection } from "./attributionCollection.js";
 
 export class SnapshotV1 {
 	// Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content

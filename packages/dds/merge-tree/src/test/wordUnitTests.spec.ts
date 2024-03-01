@@ -9,11 +9,12 @@
 import path from "path";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { Trace } from "@fluid-internal/client-utils";
-import { ReferenceType } from "../ops";
-import { createMap, extend, MapLike } from "../properties";
-import { ReferencePosition } from "../referencePositions";
-import { TestClient } from "./testClient";
-import { loadTextFromFileWithMarkers } from "./testUtils";
+import { ReferenceType } from "../ops.js";
+import { createMap, extend, MapLike } from "../properties.js";
+import { ReferencePosition } from "../referencePositions.js";
+import { TestClient } from "./testClient.js";
+import { loadTextFromFileWithMarkers } from "./testUtils.js";
+import { _dirname } from "./dirname.cjs";
 
 const clock = () => Trace.start();
 
@@ -176,7 +177,7 @@ function measureFetch(startFile: string, withBookmarks = false) {
 }
 
 const baseDir = "../../src/test/literature";
-const filename = path.join(__dirname, baseDir, "pp.txt");
+const filename = path.join(_dirname, baseDir, "pp.txt");
 const testTimeout = 30000;
 
 describe("Routerlicious", () => {
