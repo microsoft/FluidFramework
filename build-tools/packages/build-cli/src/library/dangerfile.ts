@@ -63,7 +63,7 @@ export async function dangerfile(): Promise<void> {
 			?.map((bundle: BundleComparison) => {
 				const totalMetric = bundle.commonBundleMetrics[totalSizeMetricName];
 				const totalParsedSizeDiff = totalMetric.compare.parsedSize - totalMetric.baseline.parsedSize;
-				return totalParsedSizeDiff > 5120;
+				return totalParsedSizeDiff > 100;
 
 			})
 			.reduce((prev: boolean, current: boolean) => {
@@ -75,7 +75,7 @@ export async function dangerfile(): Promise<void> {
 			warn("Bundle size regression detected -- please investigate before merging!");
 			// Add the label to the PR
 			try {
-				await danger.github.utils.createOrAddLabel({color: "ff0000", description: "Significant bundle size regression (>5 KB)", name: "size regression"})
+				await danger.github.utils.createOrAddLabel({color: "ff0000", description: "Significant bundle size regression (>5 KB)!", name: "size regression"})
 			} catch (error) {
 				console.error(`Error adding label: ${error}`);
 			}
