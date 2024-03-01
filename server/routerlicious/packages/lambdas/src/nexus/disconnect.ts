@@ -4,11 +4,11 @@
  */
 
 import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
+import type { IWebSocket } from "@fluidframework/server-services-core";
+import { createRoomLeaveMessage } from "../utils";
 import type { INexusLambdaConnection, INexusLambdaSettings } from "./interfaces";
 import { getMessageMetadata, getRoomId } from "./utils";
 import { storeClientConnectivityTime } from "./throttleAndUsage";
-import type { IWebSocket } from "@fluidframework/server-services-core";
-import { createRoomLeaveMessage } from "../utils";
 
 export async function disconnectDocument(
 	socket: IWebSocket,

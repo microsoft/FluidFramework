@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { performance } from "node:perf_hooks";
 import type { IDocumentMessage } from "@fluidframework/protocol-definitions";
 import { getRandomInt } from "@fluidframework/server-services-client";
 import { DefaultServiceConfiguration } from "@fluidframework/server-services-core";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
-import { performance } from "perf_hooks";
-
 /**
  * Whether to add a trace to a message based on sampling rate.
  */

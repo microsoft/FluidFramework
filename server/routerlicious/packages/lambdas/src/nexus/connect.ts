@@ -12,24 +12,31 @@ import {
 	type ITokenClaims,
 } from "@fluidframework/protocol-definitions";
 import {
-	CommonProperties,
-	LumberEventName,
-	Lumberjack,
-	getLumberBaseProperties,
-} from "@fluidframework/server-services-telemetry";
-import safeStringify from "json-stringify-safe";
-import {
-	getMessageMetadata,
-	handleServerErrorAndConvertToNetworkError,
-	getRoomId,
-	isWriter,
-} from "./utils";
+	NetworkError,
+	isNetworkError,
+	validateTokenClaims,
+	validateTokenClaimsExpiration,
+} from "@fluidframework/server-services-client";
 import {
 	DefaultServiceConfiguration,
 	createCompositeTokenId,
 	type IWebSocket,
 	TokenRevokedError,
 } from "@fluidframework/server-services-core";
+import {
+	CommonProperties,
+	LumberEventName,
+	Lumberjack,
+	getLumberBaseProperties,
+} from "@fluidframework/server-services-telemetry";
+import safeStringify from "json-stringify-safe";
+import { createRoomJoinMessage, createRuntimeMessage, generateClientId } from "../utils";
+import {
+	getMessageMetadata,
+	handleServerErrorAndConvertToNetworkError,
+	getRoomId,
+	isWriter,
+} from "./utils";
 import { StageTrace, sampleMessages } from "./trace";
 import { ProtocolVersions, checkVersion } from "./protocol";
 import type {
@@ -40,13 +47,6 @@ import type {
 	IRoom,
 } from "./interfaces";
 import { checkThrottleAndUsage, getSocketConnectThrottleId } from "./throttleAndUsage";
-import {
-	NetworkError,
-	isNetworkError,
-	validateTokenClaims,
-	validateTokenClaimsExpiration,
-} from "@fluidframework/server-services-client";
-import { createRoomJoinMessage, createRuntimeMessage, generateClientId } from "../utils";
 
 const SummarizerClientType = "summarizer";
 

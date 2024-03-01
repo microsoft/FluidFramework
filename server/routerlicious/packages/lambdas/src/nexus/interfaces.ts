@@ -4,6 +4,7 @@
  */
 
 import { IEvent } from "@fluidframework/common-definitions";
+import type { TypedEventEmitter } from "@fluidframework/common-utils";
 import type { IClient, IConnected } from "@fluidframework/protocol-definitions";
 import type {
 	IClientManager,
@@ -19,7 +20,6 @@ import type {
 } from "@fluidframework/server-services-core";
 import type { IRuntimeSignalEnvelope } from "../utils";
 import type { ExpirationTimer } from "./utils";
-import type { TypedEventEmitter } from "@fluidframework/common-utils";
 
 /**
  * Connection details of a client.
