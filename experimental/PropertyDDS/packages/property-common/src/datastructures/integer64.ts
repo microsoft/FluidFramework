@@ -8,8 +8,8 @@
  */
 
 import _ from "lodash";
-import { ConsoleUtils } from "../consoleUtils";
-import { constants } from "../constants";
+import { ConsoleUtils } from "../consoleUtils.js";
+import { constants } from "../constants.js";
 
 const BIT32 = 4294967296;
 const { MSG } = constants;

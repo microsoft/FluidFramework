@@ -10,7 +10,7 @@
  */
 
 import { expect } from "chai";
-import { GuidUtils } from "../guidUtils";
+import { GuidUtils } from "../guidUtils.js";
 
 const {
 	initializeGUIDGenerator,

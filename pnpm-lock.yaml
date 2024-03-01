@@ -4757,6 +4757,7 @@ importers:
 
   experimental/PropertyDDS/packages/property-common:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.34.0
@@ -4774,6 +4775,7 @@ importers:
       base64-js: ^1.5.1
       c8: ^8.0.1
       chai: ^4.2.0
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.55.0
       events: ^3.1.0
@@ -4802,6 +4804,7 @@ importers:
       semver: 7.5.4
       traverse: 0.6.6
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-internal/mocha-test-setup': link:../../../../packages/test/mocha-test-setup
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
@@ -4816,6 +4819,7 @@ importers:
       '@types/sinon': 17.0.3
       c8: 8.0.1
       chai: 4.3.10
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.55.0
       mocha: 10.2.0

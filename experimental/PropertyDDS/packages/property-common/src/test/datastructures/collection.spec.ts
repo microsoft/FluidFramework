@@ -9,7 +9,7 @@
 
 import _ from "lodash";
 import { expect } from "chai";
-import { Collection } from "../../index";
+import { Collection } from "../../index.js";
 
 describe("collection", function () {
 	const createObject = () => ({

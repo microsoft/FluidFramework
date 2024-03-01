@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { HTTPError } from "./httpError";
-import { FlaggedError } from "./flaggedError";
+import { HTTPError } from "./httpError.js";
+import { FlaggedError } from "./flaggedError.js";
 
 /**
  * Class extending HTTPError without storing the stack

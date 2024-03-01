@@ -9,7 +9,7 @@
 
 import semver from "semver";
 import { expect } from "chai";
-import { SortedCollection } from "../../index";
+import { SortedCollection } from "../../index.js";
 
 describe("SortedCollection", function () {
 	let collection;

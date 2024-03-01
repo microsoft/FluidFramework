@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { FlaggedError } from "./flaggedError";
+import { FlaggedError } from "./flaggedError.js";
 
 /**
  * Class extending Error with HTTP-specific error information like statusCode and statusMessage

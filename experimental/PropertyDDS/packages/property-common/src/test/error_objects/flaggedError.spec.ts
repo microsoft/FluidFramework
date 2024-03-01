@@ -8,7 +8,7 @@
  */
 
 import { expect } from "chai";
-import { FlaggedError } from "../..";
+import { FlaggedError } from "../../index.js";
 
 describe("property-common.FlaggedError", function () {
 	describe("Flags", function () {
