@@ -78,6 +78,7 @@ export type {
 	TreeViewEvents,
 	Unhydrated,
 	WithType,
+	SchemaIncompatible,
 } from "@fluidframework/tree";
 export {
 	disposeSymbol,

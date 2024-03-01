@@ -10,7 +10,7 @@ import {
 	doOverRanges,
 	resolveRange,
 	resolveRanges,
-} from "./mergeTreeOperationRunner";
+} from "./mergeTreeOperationRunner.js";
 
 describe("MergeTreeOperationRunner combinatorial utils", () => {
 	const constant = (i: number) => i;

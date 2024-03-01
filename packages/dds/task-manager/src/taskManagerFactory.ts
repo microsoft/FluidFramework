@@ -9,9 +9,9 @@ import {
 	IChannelServices,
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
-import { TaskManager } from "./taskManager";
-import { ITaskManager } from "./interfaces";
-import { pkgVersion } from "./packageVersion";
+import { TaskManager } from "./taskManager.js";
+import { ITaskManager } from "./interfaces.js";
+import { pkgVersion } from "./packageVersion.js";
 
 /**
  * The factory that defines the task queue
