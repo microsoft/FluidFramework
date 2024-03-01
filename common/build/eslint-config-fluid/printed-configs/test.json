@@ -23,7 +23,6 @@
     "plugins": [
         "eslint-comments",
         "import",
-        "@fluid-internal/fluid",
         "unused-imports",
         "promise",
         "jsdoc",
@@ -40,9 +39,6 @@
         ],
         "@babel/semi": [
             "off"
-        ],
-        "@fluid-internal/fluid/no-member-release-tags": [
-            "error"
         ],
         "@rushstack/no-new-null": [
             "error"
