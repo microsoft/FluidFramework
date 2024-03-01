@@ -4,7 +4,7 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase, isPromiseLike } from "@fluidframework/core-utils";
 import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
 import {
 	IEvent,
@@ -341,6 +341,7 @@ export async function ReportIfTooLong(
  * @internal
  */
 export interface IPendingContainerState {
+	attached: true;
 	pendingRuntimeState: unknown;
 	/**
 	 * Snapshot from which container initially loaded.
@@ -367,10 +368,11 @@ export interface IPendingContainerState {
  * @internal
  */
 export interface IPendingDetachedContainerState {
-	attached: boolean;
+	attached: false;
 	baseSnapshot: ISnapshotTree;
 	snapshotBlobs: ISerializableBlobContents;
 	hasAttachmentBlobs: boolean;
+	pendingRuntimeState?: unknown;
 }
 
 const summarizerClientType = "summarizer";
@@ -1172,22 +1174,32 @@ export class Container
 	}
 
 	public serialize(): string {
-		assert(
-			this.attachState === AttachState.Detached,
-			0x0d3 /* "Should only be called in detached container" */,
-		);
+		if (this.attachmentData.state === AttachState.Attached || this.closed) {
+			throw new UsageError("Container must not be attached or closed.");
+		}
 
-		const appSummary: ISummaryTree = this.runtime.createSummary();
-		const protocolSummary = this.captureProtocolSummary();
-		const combinedSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
+		const attachingData =
+			this.attachmentData.state === AttachState.Attaching ? this.attachmentData : undefined;
+
+		const combinedSummary =
+			attachingData?.summary ??
+			combineAppAndProtocolSummary(
+				this.runtime.createSummary(),
+				this.captureProtocolSummary(),
+			);
 
 		const { tree: snapshot, blobs } =
 			getSnapshotTreeAndBlobsFromSerializedContainer(combinedSummary);
+
+		const pendingRuntimeState =
+			attachingData !== undefined ? this.runtime.getPendingLocalState() : undefined;
+		assert(!isPromiseLike(pendingRuntimeState), "should not be a promise");
 
 		const detachedContainerState: IPendingDetachedContainerState = {
 			attached: false,
 			baseSnapshot: snapshot,
 			snapshotBlobs: blobs,
+			pendingRuntimeState,
 			hasAttachmentBlobs: !!this.detachedBlobStorage && this.detachedBlobStorage.size > 0,
 		};
 		return JSON.stringify(detachedContainerState);
@@ -1788,10 +1800,10 @@ export class Container
 	}
 
 	private async rehydrateDetachedFromSnapshot({
-		attached,
 		baseSnapshot,
 		snapshotBlobs,
 		hasAttachmentBlobs,
+		pendingRuntimeState,
 	}: IPendingDetachedContainerState) {
 		if (hasAttachmentBlobs) {
 			assert(
@@ -1825,7 +1837,11 @@ export class Container
 		);
 		const codeDetails = this.getCodeDetailsFromQuorum();
 
-		await this.instantiateRuntime(codeDetails, snapshotTreeWithBlobContents);
+		await this.instantiateRuntime(
+			codeDetails,
+			snapshotTreeWithBlobContents,
+			pendingRuntimeState,
+		);
 
 		this.setLoaded();
 	}

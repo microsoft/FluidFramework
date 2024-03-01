@@ -12,8 +12,9 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import { createSnapshotSuite } from "@fluid-private/test-dds-utils";
-import { DirectoryFactory, SharedDirectory } from "../..";
-import { assertEquivalentDirectories } from "./directoryEquivalenceUtils";
+import { DirectoryFactory, SharedDirectory } from "../../index.js";
+import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
+import { _dirname } from "./dirname.cjs";
 
 function serialize(directory: SharedDirectory): string {
 	const summaryTree = directory.getAttachSummary().summary;
@@ -133,10 +134,10 @@ function generateTestScenarios(): TestScenario[] {
 
 describe("SharedDirectory Snapshot Tests", () => {
 	// Set up the directory path for reading/writing snapshots and generate tests
-	assert(__dirname.match(/dist[/\\]test[/\\]mocha$/));
+	assert(_dirname.match(/(dist|lib)[/\\]test[/\\]mocha$/));
 	const testScenarios = generateTestScenarios();
 	const { takeSnapshot, readSnapshot } = createSnapshotSuite(
-		path.resolve(__dirname, `../../../src/test/mocha/snapshots/`),
+		path.resolve(_dirname, `../../../src/test/mocha/snapshots/`),
 	);
 
 	for (const {

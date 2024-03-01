@@ -83,7 +83,6 @@
 		"@fluidframework/sequence": "workspace:~",
 		"assert": "^2.0.0",
 		"debug": "^4.3.4",
-		"events": "^3.1.0",
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1"
 	},

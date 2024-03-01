@@ -16,7 +16,7 @@ import {
 	MessageType,
 } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { IPendingBatchMessage, PendingStateManager } from "../../pendingStateManager";
+import { IPendingBatchMessage, PendingStateManager } from "../../pendingStateManager.js";
 import {
 	BatchMessage,
 	IBatch,
@@ -25,13 +25,13 @@ import {
 	OpSplitter,
 	Outbox,
 	BatchSequenceNumbers,
-} from "../../opLifecycle";
+} from "../../opLifecycle/index.js";
 import {
 	CompressionAlgorithms,
 	ICompressionRuntimeOptions,
 	makeLegacySendBatchFn,
-} from "../../containerRuntime";
-import { ContainerMessageType } from "../../messageTypes";
+} from "../../containerRuntime.js";
+import { ContainerMessageType } from "../../messageTypes.js";
 
 describe("Outbox", () => {
 	const maxBatchSizeInBytes = 1024;

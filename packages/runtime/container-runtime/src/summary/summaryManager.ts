@@ -17,8 +17,8 @@ import {
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions";
-import { IThrottler } from "../throttler";
-import { ISummarizerClientElection } from "./summarizerClientElection";
+import { IThrottler } from "../throttler.js";
+import { ISummarizerClientElection } from "./summarizerClientElection.js";
 import {
 	EnqueueSummarizeResult,
 	IEnqueueSummarizeOptions,
@@ -28,9 +28,9 @@ import {
 	ISummarizer,
 	ISummarizerEvents,
 	SummarizerStopReason,
-} from "./summarizerTypes";
-import { SummaryCollection } from "./summaryCollection";
-import { Summarizer } from "./summarizer";
+} from "./summarizerTypes.js";
+import { SummaryCollection } from "./summaryCollection.js";
+import { Summarizer } from "./summarizer.js";
 
 const defaultInitialDelayMs = 5000;
 const defaultOpsToBypassInitialDelay = 4000;

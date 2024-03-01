@@ -11,8 +11,8 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { IChannel } from "@fluidframework/datastore-definitions";
-import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime";
-import { LocalChannelContext, RehydratedLocalChannelContext } from "../localChannelContext";
+import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime.js";
+import { LocalChannelContext, RehydratedLocalChannelContext } from "../localChannelContext.js";
 
 describe("LocalChannelContext Tests", () => {
 	let dataStoreContext: MockFluidDataStoreContext;

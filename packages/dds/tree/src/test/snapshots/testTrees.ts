@@ -5,8 +5,9 @@
 
 import { SessionId } from "@fluidframework/id-compressor";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-// eslint-disable-next-line import/no-internal-modules
-import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/dist/test/idCompressorTestUtilities.js";
+
+// eslint-disable-next-line import/no-internal-modules -- test import
+import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/test/idCompressorTestUtilities";
 import { brand } from "../../util/index.js";
 import {
 	ISharedTree,

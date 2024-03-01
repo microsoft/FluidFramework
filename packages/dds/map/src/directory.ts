@@ -35,9 +35,9 @@ import {
 	ISharedDirectory,
 	ISharedDirectoryEvents,
 	IValueChanged,
-} from "./interfaces";
-import { ILocalValue, LocalValueMaker, makeSerializable } from "./localValues";
-import { pkgVersion } from "./packageVersion";
+} from "./interfaces.js";
+import { ILocalValue, LocalValueMaker, makeSerializable } from "./localValues.js";
+import { pkgVersion } from "./packageVersion.js";
 
 // We use path-browserify since this code can run safely on the server or the browser.
 // We standardize on using posix slashes everywhere.
