@@ -7,4 +7,4 @@
 // It's only here so type-test-generator doesn't fail, until we update it to support packages that don't have an
 // index.ts file.
 // eslint-disable-next-line no-restricted-syntax
-export * from "./indexNode";
+export * from "./indexNode.js";

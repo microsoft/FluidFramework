@@ -22,7 +22,7 @@ import {
 	ITokenClaims,
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { IDisposable, ITelemetryProperties, LogLevel } from "@fluidframework/core-interfaces";
+import { IDisposable, ITelemetryBaseProperties, LogLevel } from "@fluidframework/core-interfaces";
 import {
 	ITelemetryLoggerExt,
 	extractLogSafeErrorProperties,
@@ -34,7 +34,7 @@ import {
 } from "@fluidframework/telemetry-utils";
 import type { Socket } from "socket.io-client";
 // For now, this package is versioned and released in unison with the specific drivers
-import { pkgVersion as driverVersion } from "./packageVersion";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 /**
  * Represents a connection to a stream of delta updates.
@@ -733,7 +733,7 @@ export class DocumentDeltaConnection
 	private createErrorObjectWithProps(
 		handler: string,
 		error?: any,
-		props?: ITelemetryProperties,
+		props?: ITelemetryBaseProperties,
 		canRetry = true,
 	): IAnyDriverError {
 		return createGenericNetworkError(

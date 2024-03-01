@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { TreeNode, NodeFromSchema, SchemaFactory, Tree } from "../../simple-tree/index.js";
-import { getRoot } from "./utils.js";
+import { hydrate } from "./utils.js";
 
 // TODO: migrate remaining tests to src/test/class-tree/treeApi.spec.ts
 describe("node API", () => {
@@ -16,15 +16,13 @@ describe("node API", () => {
 	const list = sb.array(object);
 	const treeSchema = sb.object("parent", { object, list });
 
-	const initialTree = () => ({
-		object: { content: 42 },
-		list: [{ content: 42 }, { content: 42 }, { content: 42 }],
-	});
-
 	describe("events", () => {
 		function check(mutate: (root: NodeFromSchema<typeof treeSchema>) => void) {
 			it(".on(..) must subscribe to change event", () => {
-				const root = getRoot(treeSchema, initialTree);
+				const root = hydrate(treeSchema, {
+					object: { content: 1 },
+					list: [{ content: 2 }, { content: 3 }],
+				});
 				const log: any[][] = [];
 
 				Tree.on(root as TreeNode, "afterChange", (...args: any[]) => {
@@ -41,7 +39,10 @@ describe("node API", () => {
 			});
 
 			it(".on(..) must return unsubscribe function", () => {
-				const root = getRoot(treeSchema, initialTree);
+				const root = hydrate(treeSchema, {
+					object: { content: 1 },
+					list: [{ content: 2 }, { content: 3 }],
+				});
 				const log: any[][] = [];
 
 				const unsubscribe = Tree.on(root as TreeNode, "afterChange", (...args: any[]) => {

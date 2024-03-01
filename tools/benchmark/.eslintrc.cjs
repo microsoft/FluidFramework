@@ -11,7 +11,10 @@ module.exports = {
 	rules: {
 		"@typescript-eslint/no-shadow": "off",
 		"space-before-function-paren": "off", // Off because it conflicts with typescript-formatter
-		"import/no-nodejs-modules": ["error", { allow: ["v8", "perf_hooks", "child_process"] }],
+		"import/no-nodejs-modules": [
+			"error",
+			{ allow: ["node:v8", "perf_hooks", "node:child_process"] },
+		],
 	},
 	overrides: [
 		{
