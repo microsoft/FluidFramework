@@ -1371,7 +1371,6 @@ export class DataStoresFactory implements IFluidDataStoreFactory {
 	constructor(
 		registryEntries: NamedFluidDataStoreRegistryEntries,
 		// ADO:7302 We need a better type here
-
 		private readonly provideEntryPoint: (
 			runtime: IFluidDataStoreChannel,
 		) => Promise<FluidObject>,
