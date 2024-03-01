@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { encodeCompactIdToString } from "../utils";
+import { encodeCompactIdToString } from "../utils.js";
 
 describe("Utils", () => {
 	beforeEach(() => {});

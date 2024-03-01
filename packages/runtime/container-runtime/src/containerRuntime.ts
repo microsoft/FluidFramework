@@ -94,6 +94,7 @@ import type {
 	IIdCompressor,
 	IIdCompressorCore,
 	SerializedIdCompressorWithOngoingSession,
+	IdCreationRange,
 } from "@fluidframework/id-compressor";
 import {
 	addBlobToSummary,
@@ -555,6 +556,8 @@ export interface IPendingRuntimeState {
 	 * Pending idCompressor state
 	 */
 	pendingIdCompressorState?: SerializedIdCompressorWithOngoingSession;
+	pendingIdCompressorOps: IdCreationRange[];
+
 	/**
 	 * Time at which session expiry timer started.
 	 */
@@ -793,7 +796,7 @@ export class ContainerRuntime
 			flushMode = defaultFlushMode,
 			compressionOptions = defaultCompressionConfig,
 			maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
-			enableRuntimeIdCompressor = "delayed",
+			enableRuntimeIdCompressor = "off",
 			chunkSizeInBytes = defaultChunkSizeInBytes,
 			enableOpReentryCheck = false,
 			enableGroupedBatching = false,
@@ -901,20 +904,32 @@ export class ContainerRuntime
 
 			const compressorLogger = createSampledLogger(logger, idCompressorEventSampler);
 			const pendingLocalState = context.pendingLocalState as IPendingRuntimeState;
+
+			let compressor: IIdCompressor & IIdCompressorCore;
+			const ops = pendingLocalState?.pendingIdCompressorOps;
 			if (pendingLocalState?.pendingIdCompressorState !== undefined) {
-				return deserializeIdCompressor(
+				assert(ops === undefined || ops.length === 0, "no pending ops");
+				compressor = deserializeIdCompressor(
 					pendingLocalState.pendingIdCompressorState,
 					compressorLogger,
 				);
 			} else if (serializedIdCompressor !== undefined) {
-				return deserializeIdCompressor(
+				compressor = deserializeIdCompressor(
 					serializedIdCompressor,
 					createSessionId(),
 					compressorLogger,
 				);
 			} else {
-				return createIdCompressor(compressorLogger);
+				compressor = createIdCompressor(compressorLogger);
 			}
+
+			if (ops) {
+				for (const range of pendingLocalState.pendingIdCompressorOps) {
+					compressor.finalizeCreationRange(range);
+				}
+			}
+
+			return compressor;
 		};
 
 		const runtime = new containerRuntimeCtor(
@@ -1010,6 +1025,7 @@ export class ContainerRuntime
 	}
 
 	private _idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
+	private pendingIdCompressorOps: IdCreationRange[] = [];
 
 	/**
 	 * See IContainerRuntimeBase.idCompressor() for details.
@@ -1758,6 +1774,7 @@ export class ContainerRuntime
 			(this.idCompressorMode === "delayed" && this.connected)
 		) {
 			this._idCompressor = await this.createIdCompressor();
+			assert(this.pendingIdCompressorOps.length === 0, "no pending ops");
 		}
 
 		await this.garbageCollector.initializeBaseState();
@@ -2188,10 +2205,6 @@ export class ContainerRuntime
 			case ContainerMessageType.Attach:
 				return this.dataStores.applyStashedAttachOp(opContents.contents);
 			case ContainerMessageType.IdAllocation:
-				assert(
-					this._idCompressor !== undefined,
-					0x67b /* IdCompressor should be defined if enabled */,
-				);
 				return;
 			case ContainerMessageType.Alias:
 			case ContainerMessageType.BlobAttach:
@@ -2235,6 +2248,10 @@ export class ContainerRuntime
 			this.createIdCompressor()
 				.then((compressor) => {
 					this._idCompressor = compressor;
+					for (const range of this.pendingIdCompressorOps) {
+						this._idCompressor.finalizeCreationRange(range);
+					}
+					this.pendingIdCompressorOps = [];
 				})
 				.catch((error) => {
 					this.logger.sendErrorEvent({ eventName: "IdCompressorDelayedLoad" }, error);
@@ -2455,20 +2472,19 @@ export class ContainerRuntime
 			case ContainerMessageType.BlobAttach:
 				this.blobManager.processBlobAttachOp(messageWithContext.message, local);
 				break;
-			case ContainerMessageType.IdAllocation:
-				assert(
-					this._idCompressor !== undefined,
-					0x67c /* IdCompressor should be defined if enabled */,
-				);
-
-				// Don't re-finalize the range if we're processing a "savedOp" in
-				// stashed ops flow. The compressor is stashed with these ops already processed.
-				if (
+			case ContainerMessageType.IdAllocation: {
+				const range = messageWithContext.message.contents;
+				if (this._idCompressor === undefined) {
+					this.pendingIdCompressorOps.push(range);
+					// Don't re-finalize the range if we're processing a "savedOp" in
+					// stashed ops flow. The compressor is stashed with these ops already processed.
+				} else if (
 					(messageWithContext.message.metadata as IIdAllocationMetadata)?.savedOp !== true
 				) {
-					this._idCompressor.finalizeCreationRange(messageWithContext.message.contents);
+					this._idCompressor.finalizeCreationRange(range);
 				}
 				break;
+			}
 			case ContainerMessageType.GC:
 				this.garbageCollector.processMessage(messageWithContext.message, local);
 				break;
@@ -4126,6 +4142,7 @@ export class ContainerRuntime
 				pending,
 				pendingIdCompressorState,
 				pendingAttachmentBlobs,
+				pendingIdCompressorOps: this.pendingIdCompressorOps,
 				sessionExpiryTimerStarted: this.garbageCollector.sessionExpiryTimerStarted,
 			};
 		};
