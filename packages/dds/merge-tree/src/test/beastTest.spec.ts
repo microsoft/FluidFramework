@@ -22,8 +22,8 @@ import {
 	PropertyAction,
 	RedBlackTree,
 	SortedDictionary,
-} from "../collections";
-import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
+} from "../collections/index.js";
+import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants.js";
 import {
 	IJSONMarkerSegment,
 	IMergeNode,
@@ -31,19 +31,20 @@ import {
 	reservedMarkerIdKey,
 	compareNumbers,
 	compareStrings,
-} from "../mergeTreeNodes";
-import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
-import { createRemoveRangeOp } from "../opBuilder";
-import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
-import { SnapshotLegacy } from "../snapshotlegacy";
-import { IJSONTextSegment, TextSegment } from "../textSegment";
-import { reservedRangeLabelsKey, reservedTileLabelsKey } from "../referencePositions";
-import { MergeTree } from "../mergeTree";
-import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
-import { JsonSegmentSpecs } from "../snapshotChunks";
-import { getStats, specToSegment, TestClient } from "./testClient";
-import { TestServer } from "./testServer";
-import { insertText, loadTextFromFile, nodeOrdinalsHaveIntegrity } from "./testUtils";
+} from "../mergeTreeNodes.js";
+import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
+import { createRemoveRangeOp } from "../opBuilder.js";
+import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops.js";
+import { SnapshotLegacy } from "../snapshotlegacy.js";
+import { IJSONTextSegment, TextSegment } from "../textSegment.js";
+import { reservedRangeLabelsKey, reservedTileLabelsKey } from "../referencePositions.js";
+import { MergeTree } from "../mergeTree.js";
+import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
+import { JsonSegmentSpecs } from "../snapshotChunks.js";
+import { getStats, specToSegment, TestClient } from "./testClient.js";
+import { TestServer } from "./testServer.js";
+import { insertText, loadTextFromFile, nodeOrdinalsHaveIntegrity } from "./testUtils.js";
+import { _dirname } from "./dirname.cjs";
 
 function LinearDictionary<TKey, TData>(
 	compareKeys: KeyComparer<TKey>,
@@ -224,7 +225,7 @@ export function integerTest1() {
 
 export function fileTest1() {
 	const content = fs.readFileSync(
-		path.join(__dirname, "../../../public/literature/shakespeare.txt"),
+		path.join(_dirname, "../../../public/literature/shakespeare.txt"),
 		"utf8",
 	);
 	const a = content.split("\n");
@@ -1587,12 +1588,12 @@ describe("Routerlicious", () => {
 
 		it("beastTest", () => {
 			const testPack = TestPack(false);
-			const filename = path.join(__dirname, baseDir, "pp.txt");
+			const filename = path.join(_dirname, baseDir, "pp.txt");
 			assert(testPack.clientServer(filename, 250) === 0, logLines.join("\n"));
 		}).timeout(testTimeout);
 
 		it("findReplPerf", () => {
-			const filename = path.join(__dirname, baseDir, "pp10.txt");
+			const filename = path.join(_dirname, baseDir, "pp10.txt");
 			findReplacePerf(filename);
 		}).timeout(testTimeout);
 	});

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { generateHandleContextPath } from "./dataStoreHandleContextUtils";
+export { generateHandleContextPath } from "./dataStoreHandleContextUtils.js";
 export {
 	create404Response,
 	createDataStoreFactory,
@@ -11,12 +11,12 @@ export {
 	exceptionToResponse,
 	Factory,
 	responseToException,
-} from "./dataStoreHelpers";
-export { ISerializedHandle, isSerializedHandle } from "./handles";
-export { ObjectStoragePartition } from "./objectstoragepartition";
-export { getNormalizedObjectStoragePathParts, listBlobsAtTreePath } from "./objectstorageutils";
-export { RequestParser } from "./requestParser";
-export { RuntimeFactoryHelper } from "./runtimeFactoryHelper";
+} from "./dataStoreHelpers.js";
+export { ISerializedHandle, isSerializedHandle } from "./handles.js";
+export { ObjectStoragePartition } from "./objectstoragepartition.js";
+export { getNormalizedObjectStoragePathParts, listBlobsAtTreePath } from "./objectstorageutils.js";
+export { RequestParser } from "./requestParser.js";
+export { RuntimeFactoryHelper } from "./runtimeFactoryHelper.js";
 export {
 	addBlobToSummary,
 	addSummarizeResultToSummary,
@@ -32,6 +32,6 @@ export {
 	SummaryTreeBuilder,
 	TelemetryContext,
 	utf8ByteLength,
-} from "./summaryUtils";
-export { unpackChildNodesUsedRoutes } from "./unpackUsedRoutes";
-export { ReadAndParseBlob, seqFromTree } from "./utils";
+} from "./summaryUtils.js";
+export { unpackChildNodesUsedRoutes } from "./unpackUsedRoutes.js";
+export { ReadAndParseBlob, seqFromTree } from "./utils.js";
