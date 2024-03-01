@@ -615,12 +615,7 @@
             1
         ],
         "import/no-nodejs-modules": [
-            "off",
-            {
-                "allow": [
-                    "events"
-                ]
-            }
+            "off"
         ],
         "import/no-unassigned-import": [
             "error"

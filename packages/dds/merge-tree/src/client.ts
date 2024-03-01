@@ -16,9 +16,9 @@ import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { ITelemetryLoggerExt, LoggingError, UsageError } from "@fluidframework/telemetry-utils";
-import { DoublyLinkedList, RedBlackTree } from "./collections";
-import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
-import { LocalReferencePosition, SlidingPreference } from "./localReference";
+import { DoublyLinkedList, RedBlackTree } from "./collections/index.js";
+import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
+import { LocalReferencePosition, SlidingPreference } from "./localReference.js";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	CollaborationWindow,
@@ -30,7 +30,7 @@ import {
 	Marker,
 	// eslint-disable-next-line import/no-deprecated
 	SegmentGroup,
-} from "./mergeTreeNodes";
+} from "./mergeTreeNodes.js";
 import {
 	createAnnotateMarkerOp,
 	createAnnotateRangeOp,
@@ -39,7 +39,7 @@ import {
 	createInsertSegmentOp,
 	createObliterateRangeOp,
 	createRemoveRangeOp,
-} from "./opBuilder";
+} from "./opBuilder.js";
 import {
 	IJSONSegment,
 	IMergeTreeAnnotateMsg,
@@ -54,23 +54,23 @@ import {
 	ReferenceType,
 	// eslint-disable-next-line import/no-deprecated
 	IMergeTreeObliterateMsg,
-} from "./ops";
-import { PropertySet } from "./properties";
-import { SnapshotLegacy } from "./snapshotlegacy";
-import { SnapshotLoader } from "./snapshotLoader";
+} from "./ops.js";
+import { PropertySet } from "./properties.js";
+import { SnapshotLegacy } from "./snapshotlegacy.js";
+import { SnapshotLoader } from "./snapshotLoader.js";
 // eslint-disable-next-line import/no-deprecated
-import { IMergeTreeTextHelper } from "./textSegment";
-import { SnapshotV1 } from "./snapshotV1";
-import { ReferencePosition, DetachedReferencePosition } from "./referencePositions";
-import { IMergeTreeOptions, MergeTree } from "./mergeTree";
-import { MergeTreeTextHelper } from "./MergeTreeTextHelper";
-import { walkAllChildSegments } from "./mergeTreeNodeWalk";
+import { IMergeTreeTextHelper } from "./textSegment.js";
+import { SnapshotV1 } from "./snapshotV1.js";
+import { ReferencePosition, DetachedReferencePosition } from "./referencePositions.js";
+import { IMergeTreeOptions, MergeTree } from "./mergeTree.js";
+import { MergeTreeTextHelper } from "./MergeTreeTextHelper.js";
+import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
 import {
 	IMergeTreeClientSequenceArgs,
 	IMergeTreeDeltaCallbackArgs,
 	IMergeTreeDeltaOpArgs,
 	IMergeTreeMaintenanceCallbackArgs,
-} from "./index";
+} from "./index.js";
 
 type IMergeTreeDeltaRemoteOpArgs = Omit<IMergeTreeDeltaOpArgs, "sequencedMessage"> &
 	Required<Pick<IMergeTreeDeltaOpArgs, "sequencedMessage">>;
@@ -429,6 +429,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 	/**
 	 * Resolves a `ReferencePosition` into a character position using this client's perspective.
+	 *
+	 * Reference positions that point to a character that has been removed will
+	 * always return the position of the nearest non-removed character, regardless
+	 * of {@link ReferenceType}. To handle this case specifically, one may wish
+	 * to look at the segment returned by {@link ReferencePosition.getSegment}.
 	 */
 	public localReferencePositionToPosition(lref: ReferencePosition): number {
 		return this._mergeTree.referencePositionToLocalPosition(lref);

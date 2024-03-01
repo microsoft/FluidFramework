@@ -25,9 +25,9 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { IDetachedBlobStorage } from "./loader";
-import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService";
-import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
+import { IDetachedBlobStorage } from "./loader.js";
+import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService.js";
+import { RetriableDocumentStorageService } from "./retriableDocumentStorageService.js";
 
 /**
  * Stringified blobs from a summary/snapshot tree.

@@ -15,7 +15,7 @@ import {
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import { SharedTreeFactory, TreeContent } from "../../shared-tree/index.js";
-import { TestTreeProviderLite, testIdCompressor } from "../utils.js";
+import { TestTreeProviderLite, schematizeFlexTree, testIdCompressor } from "../utils.js";
 import { AllowedUpdateType } from "../../core/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import { makeDeepContent, makeWideContentWithEndValue } from "../scalableTestTrees.js";
@@ -125,7 +125,10 @@ describe("Summary benchmarks", () => {
 function getSummaryTree(content: TreeContent): ISummaryTree {
 	const provider = new TestTreeProviderLite();
 	const tree = provider.trees[0];
-	tree.schematizeInternal({ ...content, allowedSchemaModifications: AllowedUpdateType.None });
+	schematizeFlexTree(tree, {
+		...content,
+		allowedSchemaModifications: AllowedUpdateType.Initialize,
+	});
 	provider.processMessages();
 	const { summary } = tree.getAttachSummary(true);
 	return summary;
