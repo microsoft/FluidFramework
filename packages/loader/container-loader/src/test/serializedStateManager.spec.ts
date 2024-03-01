@@ -202,6 +202,7 @@ describe("serializedStateManager", () => {
 
 	it("can get snapshot from previous local state", async () => {
 		const pendingLocalState: IPendingContainerState = {
+			attached: true,
 			baseSnapshot: { id: "fromPending", blobs: {}, trees: {} },
 			snapshotBlobs: {},
 			pendingRuntimeState: {},
