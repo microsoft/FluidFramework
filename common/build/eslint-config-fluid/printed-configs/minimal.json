@@ -592,6 +592,7 @@
             {
                 "allow": [
                     "@fluidframework/*/beta",
+                    "@fluidframework/*/alpha",
                     "@fluidframework/*/internal",
                     "*/index.js"
                 ]
