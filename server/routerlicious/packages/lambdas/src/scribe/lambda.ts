@@ -177,11 +177,9 @@ export class ScribeLambda implements IPartitionLambda {
 				}
 
 				// Ensure protocol handler sequence numbers are monotonically increasing
-				// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
 				if (value.operation.sequenceNumber !== lastProtocolHandlerSequenceNumber + 1) {
 					// unexpected sequence number. if a pending message reader is available, ask for those ops
 					if (this.pendingMessageReader !== undefined) {
-						// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
 						const from = lastProtocolHandlerSequenceNumber + 1;
 						const to = value.operation.sequenceNumber - 1;
 						const additionalPendingMessages =

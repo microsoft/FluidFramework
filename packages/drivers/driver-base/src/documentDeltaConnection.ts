@@ -34,7 +34,7 @@ import {
 } from "@fluidframework/telemetry-utils";
 import type { Socket } from "socket.io-client";
 // For now, this package is versioned and released in unison with the specific drivers
-import { pkgVersion as driverVersion } from "./packageVersion";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 /**
  * Represents a connection to a stream of delta updates.
@@ -131,7 +131,9 @@ export class DocumentDeltaConnection
 			logger.sendErrorEvent(
 				{
 					eventName: "DeltaConnection:EventException",
-					name: name as string,
+					// Coerce to string as past typings also allowed symbols and number, but
+					// we want telemtry properties to be consistently string.
+					name: String(name),
 				},
 				error,
 			);

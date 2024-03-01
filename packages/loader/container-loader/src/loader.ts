@@ -36,11 +36,11 @@ import {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
 import { IClientDetails } from "@fluidframework/protocol-definitions";
-import { Container, IPendingContainerState } from "./container";
-import { IParsedUrl, tryParseCompatibleResolvedUrl } from "./utils";
-import { pkgVersion } from "./packageVersion";
-import { ProtocolHandlerBuilder } from "./protocol";
-import { DebugLogger } from "./debugLogger";
+import { Container, IPendingContainerState } from "./container.js";
+import { tryParseCompatibleResolvedUrl } from "./utils.js";
+import { pkgVersion } from "./packageVersion.js";
+import { ProtocolHandlerBuilder } from "./protocol.js";
+import { DebugLogger } from "./debugLogger.js";
 
 function ensureResolvedUrlDefined(
 	resolved: IResolvedUrl | undefined,
@@ -332,18 +332,17 @@ export class Loader implements IHostLoader {
 	public async resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer> {
 		const eventName = pendingLocalState === undefined ? "Resolve" : "ResolveWithPendingState";
 		return PerformanceEvent.timedExecAsync(this.mc.logger, { eventName }, async () => {
-			const resolved = await this.resolveCore(
+			return this.resolveCore(
 				request,
 				pendingLocalState !== undefined ? JSON.parse(pendingLocalState) : undefined,
 			);
-			return resolved.container;
 		});
 	}
 
 	private async resolveCore(
 		request: IRequest,
 		pendingLocalState?: IPendingContainerState,
-	): Promise<{ container: Container; parsed: IParsedUrl }> {
+	): Promise<Container> {
 		const resolvedAsFluid = await this.services.urlResolver.resolve(request);
 		ensureResolvedUrlDefined(resolvedAsFluid);
 
@@ -387,10 +386,7 @@ export class Loader implements IHostLoader {
 			throw new UsageError('opsBeforeReturn must be set to "sequenceNumber"');
 		}
 
-		return {
-			container: await this.loadContainer(request, resolvedAsFluid, pendingLocalState),
-			parsed,
-		};
+		return this.loadContainer(request, resolvedAsFluid, pendingLocalState);
 	}
 
 	private async loadContainer(

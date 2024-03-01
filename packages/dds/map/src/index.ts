@@ -30,7 +30,7 @@ export {
 	IDirectoryStorageOperation,
 	IDirectorySubDirectoryOperation,
 	SharedDirectory,
-} from "./directory";
+} from "./directory.js";
 export {
 	IDirectory,
 	IDirectoryEvents,
@@ -42,6 +42,6 @@ export {
 	ISharedMap,
 	ISharedMapEvents,
 	IValueChanged,
-} from "./interfaces";
-export { LocalValueMaker, ILocalValue } from "./localValues";
-export { MapFactory, SharedMap } from "./map";
+} from "./interfaces.js";
+export { LocalValueMaker, ILocalValue } from "./localValues.js";
+export { MapFactory, SharedMap } from "./map.js";

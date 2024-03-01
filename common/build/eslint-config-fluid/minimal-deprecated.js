@@ -359,13 +359,8 @@ module.exports = {
 		/**
 		 * By default, libraries should not take dependencies on node libraries.
 		 * This rule can be disabled at the project level for libraries that are intended to be used only in node.
-		 *
-		 * @remarks
-		 *
-		 * Note: "events" has been allow-listed here due to the sheer number of uses across the codebase.
-		 * We may wish to address this in the future.
 		 */
-		"import/no-nodejs-modules": ["error", { allow: ["events"] }],
+		"import/no-nodejs-modules": ["error"],
 
 		/**
 		 * Allow Fluid Framework to import from its own internal packages.
