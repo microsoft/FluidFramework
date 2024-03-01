@@ -36,11 +36,11 @@ import {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
 import { IClientDetails } from "@fluidframework/protocol-definitions";
-import { Container, IPendingContainerState } from "./container";
-import { IParsedUrl, tryParseCompatibleResolvedUrl } from "./utils";
-import { pkgVersion } from "./packageVersion";
-import { ProtocolHandlerBuilder } from "./protocol";
-import { DebugLogger } from "./debugLogger";
+import { Container, IPendingContainerState } from "./container.js";
+import { IParsedUrl, tryParseCompatibleResolvedUrl } from "./utils.js";
+import { pkgVersion } from "./packageVersion.js";
+import { ProtocolHandlerBuilder } from "./protocol.js";
+import { DebugLogger } from "./debugLogger.js";
 
 function ensureResolvedUrlDefined(
 	resolved: IResolvedUrl | undefined,

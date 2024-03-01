@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { ITree, TreeView, TreeViewEvents, TreeConfiguration, WrapperTreeView } from "./tree.js";
+export { ITree, TreeView, TreeViewEvents, TreeConfiguration, SchemaIncompatible } from "./tree.js";
 export {
 	TreeNodeSchema,
 	NodeFromSchema,
@@ -34,6 +34,7 @@ export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
 export { nodeApi as Tree, TreeApi, TreeNodeEvents } from "./treeApi.js";
 export { toFlexConfig } from "./toFlexSchema.js";
 export { SchemaFactoryRecursive } from "./schemaFactoryRecursive.js";
+export { getProxyForField } from "./proxies.js";
 
 export {
 	adaptEnum,

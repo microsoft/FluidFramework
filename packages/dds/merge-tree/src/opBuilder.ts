@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISegment, Marker } from "./mergeTreeNodes";
+import { ISegment, Marker } from "./mergeTreeNodes.js";
 import {
 	IMergeTreeAnnotateMsg,
 	// eslint-disable-next-line import/no-deprecated
@@ -14,8 +14,8 @@ import {
 	IMergeTreeDeltaOp,
 	// eslint-disable-next-line import/no-deprecated
 	IMergeTreeObliterateMsg,
-} from "./ops";
-import { PropertySet } from "./properties";
+} from "./ops.js";
+import { PropertySet } from "./properties.js";
 
 /**
  * Creates the op for annotating the markers with the provided properties

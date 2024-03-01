@@ -4,9 +4,9 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { Property, RedBlackTree } from "./collections";
-import { UnassignedSequenceNumber } from "./constants";
-import { MergeTree } from "./mergeTree";
+import { Property, RedBlackTree } from "./collections/index.js";
+import { UnassignedSequenceNumber } from "./constants.js";
+import { MergeTree } from "./mergeTree.js";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	CollaborationWindow,
@@ -19,9 +19,9 @@ import {
 	toMoveInfo,
 	seqLTE,
 	toRemovalInfo,
-} from "./mergeTreeNodes";
+} from "./mergeTreeNodes.js";
 // eslint-disable-next-line import/no-deprecated
-import { SortedSet } from "./sortedSet";
+import { SortedSet } from "./sortedSet.js";
 
 // eslint-disable-next-line import/no-deprecated
 class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength, number> {
