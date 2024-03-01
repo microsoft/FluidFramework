@@ -56,7 +56,7 @@
 		"test": "npm run test:jest",
 		"pretest:coverage": "rimraf --glob coverage/",
 		"test:coverage": "c8 npm test",
-		"test:jest": "jest",
+		"test:jest": "jest --passWithNoTests",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"c8": {
