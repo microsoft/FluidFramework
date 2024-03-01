@@ -46,7 +46,7 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@fluidframework/eslint-config-fluid": "^4.0.0",
 		"@fluidframework/mocha-test-setup": "~2.0.0-internal.6.2.0",
 		"@microsoft/api-extractor": "^7.39.1",
 		"@types/benchmark": "^2.1.0",
@@ -57,7 +57,7 @@
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.2",
-		"eslint": "~8.6.0",
+		"eslint": "~8.55.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^2.6.2",
 		"typescript": "~5.1.6"

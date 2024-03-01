@@ -7,11 +7,11 @@
 import * as fs from "fs";
 import assert from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IMergeTreeOp, MergeTreeDeltaType } from "../ops";
-import { createGroupOp } from "../opBuilder";
-import { TestClient } from "./testClient";
-import { ReplayGroup, replayResultsPath } from "./mergeTreeOperationRunner";
-import { TestClientLogger } from "./testClientLogger";
+import { IMergeTreeOp, MergeTreeDeltaType } from "../ops.js";
+import { createGroupOp } from "../opBuilder.js";
+import { TestClient } from "./testClient.js";
+import { ReplayGroup, replayResultsPath } from "./mergeTreeOperationRunner.js";
+import { TestClientLogger } from "./testClientLogger.js";
 
 describe("MergeTree.Client", () => {
 	for (const filePath of fs.readdirSync(replayResultsPath)) {

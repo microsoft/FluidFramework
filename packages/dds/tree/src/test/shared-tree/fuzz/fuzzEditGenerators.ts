@@ -14,11 +14,12 @@ import {
 } from "@fluid-private/stochastic-test-utils";
 import { Client, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import {
-	ISharedTree,
 	FlexTreeView,
 	SharedTreeFactory,
 	TreeContent,
 	ITreeViewFork,
+	SharedTree,
+	ISharedTree,
 } from "../../../shared-tree/index.js";
 import { brand, fail, getOrCreate } from "../../../util/index.js";
 import {
@@ -29,6 +30,7 @@ import {
 	UpPath,
 } from "../../../core/index.js";
 import { DownPath, FlexTreeNode, toDownPath } from "../../../feature-libraries/index.js";
+import { schematizeFlexTree } from "../../utils.js";
 import {
 	FieldEditTypes,
 	FuzzInsert,
@@ -46,41 +48,77 @@ import {
 	UndoOp,
 	UndoRedo,
 } from "./operationTypes.js";
-import { FuzzNode, fuzzNode, fuzzSchema } from "./fuzzUtils.js";
+import { FuzzNode, FuzzNodeSchema, fuzzNode, fuzzSchema } from "./fuzzUtils.js";
+
+export type FuzzView = FlexTreeView<typeof fuzzSchema.rootFieldSchema> & {
+	/**
+	 * This client's current stored schema, which dictates allowable edits that the client may perform.
+	 * @remarks - The type of this field isn't totally correct, since the supported schema for fuzz nodes changes
+	 * at runtime to support different primitives (this allows fuzz testing of schema changes).
+	 * However, fuzz schemas always have the same field names, so schema-dependent
+	 * APIs such as the tree reading API will work correctly anyway.
+	 *
+	 * TODO: The schema for each client should be properly updated if "afterSchemaChange" (or equivalent event) occurs
+	 * once schema ops are supported.
+	 */
+	currentSchema: FuzzNodeSchema;
+};
+
+export type FuzzTransactionView = ITreeViewFork<typeof fuzzSchema.rootFieldSchema> & {
+	/**
+	 * This client's current stored schema, which dictates allowable edits that the client may perform.
+	 * @remarks - The type of this field isn't totally correct, since the supported schema for fuzz nodes changes
+	 * at runtime to support different primitives (this allows fuzz testing of schema changes).
+	 * However, fuzz schemas always have the same field names, so schema-dependent
+	 * APIs such as the tree reading API will work correctly anyway.
+	 *
+	 * TODO: The schema for each client should be properly updated if "afterSchemaChange" (or equivalent event) occurs
+	 * once schema ops are supported.
+	 */
+	currentSchema: FuzzNodeSchema;
+};
 
 export interface FuzzTestState extends DDSFuzzTestState<SharedTreeFactory> {
 	/**
-	 * Schematized view of clients. Created lazily by viewFromState.
+	 * Schematized view of clients and their nodeSchemas. Created lazily by viewFromState.
 	 *
 	 * SharedTrees undergoing a transaction will have a forked view in {@link transactionViews} instead,
 	 * which should be used in place of this view until the transaction is complete.
 	 */
-	view?: Map<ISharedTree, FlexTreeView<typeof fuzzSchema.rootFieldSchema>>;
+	view?: Map<SharedTree, FuzzView>;
 	/**
-	 * Schematized view of clients undergoing transactions.
+	 * Schematized view of clients undergoing transactions with their nodeSchemas.
 	 * Edits to this view are not visible to other clients until the transaction is closed.
 	 *
 	 * Maintaining a separate view here is necessary since async transactions are not supported on the root checkout,
 	 * and the fuzz testing model only simulates async transactions.
 	 */
-	transactionViews?: Map<ISharedTree, ITreeViewFork<typeof fuzzSchema.rootFieldSchema>>;
+	transactionViews?: Map<ISharedTree, FuzzTransactionView>;
 }
 
 export function viewFromState(
 	state: FuzzTestState,
 	client: Client<SharedTreeFactory> = state.client,
 	initialTree: TreeContent<typeof fuzzSchema.rootFieldSchema>["initialTree"] = undefined,
-): FlexTreeView<typeof fuzzSchema.rootFieldSchema> {
+): FuzzView {
 	state.view ??= new Map();
+
 	return (
 		state.transactionViews?.get(client.channel) ??
-		getOrCreate(state.view, client.channel, (tree) =>
-			tree.schematizeInternal({
-				initialTree,
-				schema: fuzzSchema,
-				allowedSchemaModifications: AllowedUpdateType.None,
-			}),
-		)
+		getOrCreate(state.view, client.channel as SharedTree, (tree) => {
+			const flexView: FlexTreeView<typeof fuzzSchema.rootFieldSchema> = schematizeFlexTree(
+				tree,
+				{
+					initialTree,
+					schema: fuzzSchema,
+					allowedSchemaModifications: AllowedUpdateType.Initialize,
+				},
+			);
+			const fuzzView = flexView as FuzzView;
+			assert.equal(fuzzView.currentSchema, undefined);
+			fuzzView.currentSchema = fuzzNode;
+			return fuzzView;
+		})
 	);
 }
 
@@ -541,6 +579,7 @@ function selectField(
 	random: IRandom,
 	weights: Omit<FieldSelectionWeights, "filter">,
 	filter: FieldFilter = () => true,
+	nodeSchema: FuzzNodeSchema,
 ): FuzzField | "no-valid-selections" {
 	const optional: FuzzField = { type: "optional", content: node.boxedOptionalChild } as const;
 
@@ -553,21 +592,21 @@ function selectField(
 		// Checking "=== true" causes tsc to fail to typecheck, as it is no longer able to narrow according
 		// to the .is typeguard.
 		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-		if (node.optionalChild?.is(fuzzNode)) {
+		if (node.optionalChild?.is(nodeSchema)) {
 			childNodes.push(node.optionalChild);
 		}
 
-		if (node.requiredChild?.is(fuzzNode)) {
+		if (node.requiredChild?.is(nodeSchema)) {
 			childNodes.push(node.requiredChild);
 		}
 		node.sequenceChildren.map((child) => {
-			if (child.is(fuzzNode)) {
+			if (child.is(nodeSchema)) {
 				childNodes.push(child);
 			}
 		});
 		state.random.shuffle(childNodes);
 		for (const child of childNodes) {
-			const childResult = selectField(child, random, weights, filter);
+			const childResult = selectField(child, random, weights, filter, nodeSchema);
 			if (childResult !== "no-valid-selections") {
 				return childResult;
 			}
@@ -588,7 +627,7 @@ function selectField(
 }
 
 function trySelectTreeField(
-	tree: FlexTreeView<typeof fuzzSchema.rootFieldSchema>,
+	tree: FuzzView,
 	random: IRandom,
 	weights: Omit<FieldSelectionWeights, "filter">,
 	filter: FieldFilter = () => true,
@@ -602,7 +641,7 @@ function trySelectTreeField(
 			: random.bool(weights.optional / (weights.optional + weights.recurse))
 			? ["optional", "recurse"]
 			: ["recurse", "optional"];
-
+	const nodeSchema = tree.currentSchema;
 	for (const option of options) {
 		switch (option) {
 			case "optional": {
@@ -616,8 +655,14 @@ function trySelectTreeField(
 				// Checking "=== true" causes tsc to fail to typecheck, as it is no longer able to narrow according
 				// to the .is typeguard.
 				// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-				if (editable.content?.is(fuzzNode)) {
-					const result = selectField(editable.content, random, weights, filter);
+				if (editable.content?.is(nodeSchema)) {
+					const result = selectField(
+						editable.content,
+						random,
+						weights,
+						filter,
+						nodeSchema,
+					);
 					if (result !== "no-valid-selections") {
 						return result;
 					}
@@ -634,7 +679,7 @@ function trySelectTreeField(
 }
 
 function selectTreeField(
-	tree: FlexTreeView<typeof fuzzSchema.rootFieldSchema>,
+	tree: FuzzView,
 	random: IRandom,
 	weights: Omit<FieldSelectionWeights, "filter">,
 	filter: FieldFilter = () => true,

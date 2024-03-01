@@ -20,14 +20,14 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
 // eslint-disable-next-line import/no-deprecated
-import { Client } from "./client";
-import { NonCollabClient, UniversalSequenceNumber } from "./constants";
-import { ISegment } from "./mergeTreeNodes";
-import { IJSONSegment } from "./ops";
-import { IJSONSegmentWithMergeInfo, hasMergeInfo, MergeTreeChunkV1 } from "./snapshotChunks";
-import { SnapshotV1 } from "./snapshotV1";
-import { SnapshotLegacy } from "./snapshotlegacy";
-import { MergeTree } from "./mergeTree";
+import { Client } from "./client.js";
+import { NonCollabClient, UniversalSequenceNumber } from "./constants.js";
+import { ISegment } from "./mergeTreeNodes.js";
+import { IJSONSegment } from "./ops.js";
+import { IJSONSegmentWithMergeInfo, hasMergeInfo, MergeTreeChunkV1 } from "./snapshotChunks.js";
+import { SnapshotV1 } from "./snapshotV1.js";
+import { SnapshotLegacy } from "./snapshotlegacy.js";
+import { MergeTree } from "./mergeTree.js";
 
 export class SnapshotLoader {
 	private readonly logger: ITelemetryLoggerExt;
@@ -83,7 +83,7 @@ export class SnapshotLoader {
 			// TODO: The 'Snapshot.catchupOps' tree entry is purely for backwards compatibility.
 			//       (See https://github.com/microsoft/FluidFramework/issues/84)
 
-			return this.loadCatchupOps(services.readBlob(blobs[0]));
+			return this.loadCatchupOps(services.readBlob(blobs[0]), this.serializer);
 		} else if (blobs.length !== headerChunk.headerMetadata!.orderedChunkMetadata.length) {
 			throw new Error("Unexpected blobs in snapshot");
 		}
@@ -301,12 +301,15 @@ export class SnapshotLoader {
 	/**
 	 * If loading from a snapshot, get the catchup messages.
 	 * @param rawMessages - The messages in original encoding
-	 * @returns The decoded messages, but handles aren't parsed.  Matches the format that will be passed in
+	 * @returns The decoded messages with parsed+hydrated handles.  Matches the format that will be passed in
 	 * SharedObject.processCore.
 	 */
 	private async loadCatchupOps(
 		rawMessages: Promise<ArrayBufferLike>,
+		serializer: IFluidSerializer,
 	): Promise<ISequencedDocumentMessage[]> {
-		return JSON.parse(bufferToString(await rawMessages, "utf8")) as ISequencedDocumentMessage[];
+		return serializer.parse(
+			bufferToString(await rawMessages, "utf8"),
+		) as ISequencedDocumentMessage[];
 	}
 }

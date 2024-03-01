@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import { IFluidErrorBase, LoggingError, numberFromString } from "@fluidframework/telemetry-utils";
 import {
@@ -21,10 +21,10 @@ import {
 	OdspError,
 	IOdspErrorAugmentations,
 } from "@fluidframework/odsp-driver-definitions";
-import { parseAuthErrorClaims } from "./parseAuthErrorClaims";
-import { parseAuthErrorTenant } from "./parseAuthErrorTenant";
+import { parseAuthErrorClaims } from "./parseAuthErrorClaims.js";
+import { parseAuthErrorTenant } from "./parseAuthErrorTenant.js";
 // odsp-doclib-utils and odsp-driver will always release together and share the same pkgVersion
-import { pkgVersion as driverVersion } from "./packageVersion";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 // no response, or can't parse response
 /**
@@ -60,7 +60,7 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: {
 		{ headerName: "content-encoding", logName: "contentEncoding" },
 		{ headerName: "content-type", logName: "contentType" },
 	];
-	const additionalProps: ITelemetryProperties = {
+	const additionalProps: ITelemetryBaseProperties = {
 		sprequestduration: numberFromString(headers.get("sprequestduration")),
 		contentsize: numberFromString(headers.get("content-length")),
 	};
@@ -193,7 +193,7 @@ export function createOdspNetworkError(
 	retryAfterSeconds?: number,
 	response?: Response,
 	responseText?: string,
-	props: ITelemetryProperties = {},
+	props: ITelemetryBaseProperties = {},
 ): IFluidErrorBase & OdspError {
 	let error: IFluidErrorBase & OdspError;
 	const parseResult = tryParseErrorResponse(responseText);
@@ -377,7 +377,7 @@ export function enrichOdspError(
 	error: IFluidErrorBase & OdspError,
 	response?: Response,
 	facetCodes?: string[],
-	props: ITelemetryProperties = {},
+	props: ITelemetryBaseProperties = {},
 ) {
 	error.online = OnlineStatus[isOnline()];
 	if (facetCodes !== undefined) {
@@ -407,7 +407,7 @@ export function throwOdspNetworkError(
 	statusCode: number,
 	response: Response,
 	responseText?: string,
-	props?: ITelemetryProperties,
+	props?: ITelemetryBaseProperties,
 ): never {
 	const networkError = createOdspNetworkError(
 		errorMessage,

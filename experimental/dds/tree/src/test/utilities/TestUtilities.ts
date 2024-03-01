@@ -24,7 +24,7 @@ import {
 	createAndAttachContainer,
 	ITestObjectProvider,
 } from '@fluidframework/test-utils';
-import type { IContainer, IHostLoader } from '@fluidframework/container-definitions';
+import { AttachState, type IContainer, type IHostLoader } from '@fluidframework/container-definitions';
 import type {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -156,6 +156,7 @@ export function setUpTestSharedTree(
 		writeFormat,
 		attributionId,
 	} = options;
+	const attachState = localMode === true ? AttachState.Detached : undefined;
 	let componentRuntime: MockFluidDataStoreRuntime;
 	if (options.logger) {
 		const proxyHandler: ProxyHandler<MockFluidDataStoreRuntime> = {
@@ -166,9 +167,9 @@ export function setUpTestSharedTree(
 				return target[prop as keyof MockFluidDataStoreRuntime];
 			},
 		};
-		componentRuntime = new Proxy(new MockFluidDataStoreRuntime(), proxyHandler);
+		componentRuntime = new Proxy(new MockFluidDataStoreRuntime({ attachState }), proxyHandler);
 	} else {
-		componentRuntime = new MockFluidDataStoreRuntime();
+		componentRuntime = new MockFluidDataStoreRuntime({ attachState });
 	}
 
 	// Enable expensiveValidation
@@ -204,9 +205,7 @@ export function setUpTestSharedTree(
 
 	const newContainerRuntimeFactory = containerRuntimeFactory ?? new MockContainerRuntimeFactory();
 
-	if (localMode === true) {
-		componentRuntime.local = true;
-	} else {
+	if (localMode !== true) {
 		const containerRuntime = newContainerRuntimeFactory.createContainerRuntime(componentRuntime);
 		const services = {
 			deltaConnection: componentRuntime.createDeltaConnection(),

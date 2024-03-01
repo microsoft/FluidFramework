@@ -24,8 +24,10 @@ import {
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { MatrixItem, SharedMatrix } from "../matrix";
-import { SharedMatrixFactory } from "../runtime";
+import { MatrixItem, SharedMatrix } from "../matrix.js";
+import { SharedMatrixFactory } from "../runtime.js";
+import { _dirname } from "./dirname.cjs";
+
 /**
  * Supported cell values used within the fuzz model.
  */
@@ -234,7 +236,7 @@ describe("Matrix fuzz tests", function () {
 			clientAddProbability: 0.1,
 		},
 		reconnectProbability: 0,
-		saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
+		saveFailures: { directory: path.join(_dirname, "../../src/test/results") },
 	};
 
 	const nameModel = (workloadName: string): DDSFuzzModel<TypedMatrixFactory, Operation> => ({

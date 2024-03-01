@@ -19,6 +19,7 @@ import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
+import type { IContainerRuntimeEvents } from '@fluidframework/container-runtime-definitions';
 import { IdCreationRange } from '@fluidframework/id-compressor';
 import { IDeltaConnection } from '@fluidframework/datastore-definitions';
 import { IDeltaHandler } from '@fluidframework/datastore-definitions';
@@ -47,6 +48,7 @@ import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { ITokenProvider } from '@fluidframework/routerlicious-driver';
 import { ITokenResponse } from '@fluidframework/routerlicious-driver';
@@ -95,7 +97,7 @@ export class InsecureTokenProvider implements ITokenProvider {
 }
 
 // @alpha
-export class MockContainerRuntime {
+export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents> {
     constructor(dataStoreRuntime: MockFluidDataStoreRuntime, factory: MockContainerRuntimeFactory, mockContainerRuntimeOptions?: IMockContainerRuntimeOptions, overrides?: {
         minimumSequenceNumber?: number | undefined;
     } | undefined);
@@ -111,6 +113,8 @@ export class MockContainerRuntime {
     protected readonly dataStoreRuntime: MockFluidDataStoreRuntime;
     // @deprecated (undocumented)
     protected readonly deltaConnections: MockDeltaConnection[];
+    // (undocumented)
+    readonly deltaManager: MockDeltaManager;
     // (undocumented)
     dirty(): void;
     // (undocumented)
@@ -194,6 +198,8 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
     // (undocumented)
     process(message: ISequencedDocumentMessage): void;
     // (undocumented)
+    protected setConnectedState(connected: boolean): void;
+    // (undocumented)
     submit(messageContent: any, localOpMetadata: unknown): number;
 }
 
@@ -259,6 +265,8 @@ export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents> imp
     minimumSequenceNumber: number;
     // (undocumented)
     get outbound(): MockDeltaQueue<IDocumentMessage[]>;
+    // (undocumented)
+    prepareInboundResponse(type: MessageType, contents: any): void;
     // (undocumented)
     readOnlyInfo: ReadOnlyInfo;
     // (undocumented)
@@ -399,8 +407,9 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
         clientId?: string;
         entryPoint?: IFluidHandle<FluidObject>;
         id?: string;
-        logger?: ITelemetryLoggerExt;
+        logger?: ITelemetryBaseLogger;
         idCompressor?: IIdCompressor & IIdCompressorCore;
+        attachState?: AttachState;
     });
     // (undocumented)
     get absolutePath(): string;
@@ -468,11 +477,11 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     get isAttached(): boolean;
     // (undocumented)
     readonly loader: ILoader;
-    // (undocumented)
+    // @deprecated (undocumented)
     get local(): boolean;
     set local(local: boolean);
     // (undocumented)
-    readonly logger: ITelemetryLoggerExt;
+    readonly logger: ITelemetryBaseLogger;
     // (undocumented)
     makeVisibleAndAttachGraph(): void;
     // (undocumented)

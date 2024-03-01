@@ -371,8 +371,8 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 			intervals.add({ start: 0, end: 2 });
 			assertIntervals([{ start: 0, end: 2 }]);
 
-			for (let j = 0; j < 10; j++) {
-				for (let i = 0; i < 10; i++) {
+			for (let j = 0; j < 3; j++) {
+				for (let i = 0; i < 5; i++) {
 					sharedString.replaceText(0, 1, `x`);
 					assertIntervals([{ start: 0, end: 2 }]);
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { ISnapshot } from "@fluidframework/driver-definitions";
@@ -145,6 +145,7 @@ const snapshotTreeWithGroupId: ISnapshotTree = {
 					},
 					unreferenced: true,
 					groupId: "G2",
+					omitted: false,
 				},
 				".blobs": { blobs: {}, trees: {} },
 			},
