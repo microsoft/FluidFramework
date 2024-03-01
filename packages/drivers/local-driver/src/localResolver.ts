@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { parse } from "url";
 import { assert } from "@fluidframework/core-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, IUrlResolver, DriverHeader } from "@fluidframework/driver-definitions";
 import { ScopeType } from "@fluidframework/protocol-definitions";
-import { generateToken } from "./auth";
+import { generateToken } from "./auth.js";
 
 /**
  * @alpha
@@ -66,7 +65,7 @@ export class LocalResolver implements IUrlResolver {
 		if (url.startsWith("/")) {
 			url = url.substr(1);
 		}
-		const parsedUrl = parse(resolvedUrl.url);
+		const parsedUrl = new URL(resolvedUrl.url);
 		if (parsedUrl.pathname === null) {
 			throw new Error("Url should contain tenant and docId!!");
 		}

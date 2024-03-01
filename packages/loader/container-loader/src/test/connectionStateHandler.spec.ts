@@ -16,15 +16,15 @@ import { IDeltaManager, IDeltaManagerEvents } from "@fluidframework/container-de
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { createChildLogger, TelemetryEventCategory } from "@fluidframework/telemetry-utils";
-import { Audience } from "../audience";
-import { ConnectionState } from "../connectionState";
+import { Audience } from "../audience.js";
+import { ConnectionState } from "../connectionState.js";
 import {
 	IConnectionStateHandlerInputs,
 	IConnectionStateHandler,
 	createConnectionStateHandlerCore,
-} from "../connectionStateHandler";
-import { IConnectionDetailsInternal } from "../contracts";
-import { ProtocolHandler } from "../protocol";
+} from "../connectionStateHandler.js";
+import { IConnectionDetailsInternal } from "../contracts.js";
+import { ProtocolHandler } from "../protocol.js";
 
 class MockDeltaManagerForCatchingUp
 	extends TypedEventEmitter<IDeltaManagerEvents>

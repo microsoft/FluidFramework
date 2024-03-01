@@ -7,8 +7,8 @@ import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { ContainerMessageType } from "../messageTypes";
-import { IBatch } from "./definitions";
+import { ContainerMessageType } from "../messageTypes.js";
+import { IBatch } from "./definitions.js";
 
 /**
  * Grouping makes assumptions about the shape of message contents. This interface codifies those assumptions, but does not validate them.
