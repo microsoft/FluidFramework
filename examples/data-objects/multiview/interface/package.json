@@ -30,6 +30,9 @@
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},
+	"dependencies": {
+		"@fluid-example/example-utils": "workspace:~"
+	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.34.0",
 		"@fluidframework/build-common": "^2.0.3",

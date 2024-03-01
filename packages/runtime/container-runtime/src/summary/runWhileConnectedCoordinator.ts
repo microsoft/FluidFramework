@@ -8,7 +8,7 @@ import {
 	SummarizerStopReason,
 	IConnectableRuntime,
 	ISummaryCancellationToken,
-} from "./summarizerTypes";
+} from "./summarizerTypes.js";
 
 /**
  * Similar to AbortController, but using promise instead of events

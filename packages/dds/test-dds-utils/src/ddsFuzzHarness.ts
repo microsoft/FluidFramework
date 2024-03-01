@@ -41,14 +41,14 @@ import { IChannelFactory, IChannelServices } from "@fluidframework/datastore-def
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { unreachableCase } from "@fluidframework/core-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { FuzzTestMinimizer, MinimizationTransform } from "./minification";
+import { FuzzTestMinimizer, MinimizationTransform } from "./minification.js";
 import {
 	hasStashData,
 	type Client,
 	type ClientLoadData,
 	type ClientWithStashData,
 	createLoadData,
-} from "./clientLoading";
+} from "./clientLoading.js";
 
 const isOperationType = <O extends BaseOperation>(type: O["type"], op: BaseOperation): op is O =>
 	op.type === type;

@@ -91,10 +91,10 @@
 	"dependencies": {
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
-		"@types/events": "^3.0.0",
+		"@types/events_pkg": "npm:@types/events@^3.0.0",
 		"base64-js": "^1.5.1",
 		"buffer": "^6.0.3",
-		"events": "^3.1.0",
+		"events_pkg": "npm:events@^3.1.0",
 		"lodash": "^4.17.21",
 		"sha.js": "^2.4.11"
 	},
@@ -171,6 +171,9 @@
 	},
 	"typeValidation": {
 		"broken": {
+			"TypeAliasDeclaration_EventEmitterEventType": {
+				"forwardCompat": false
+			},
 			"RemovedClassDeclaration_EventForwarder": {
 				"backCompat": false,
 				"forwardCompat": false
