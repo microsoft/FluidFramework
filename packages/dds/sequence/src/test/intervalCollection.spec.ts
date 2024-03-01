@@ -2020,6 +2020,32 @@ describe("SharedString interval collections", () => {
 			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
 		});
 
+		it("slides backward reference to correct position when start of string remove is unacked", () => {
+			sharedString.insertText(0, "ABC");
+
+			// (AB]C
+
+			containerRuntimeFactory.processAllMessages();
+
+			const start = { pos: 0, side: Side.After };
+			const end = { pos: 1, side: Side.Before };
+
+			const collection = sharedString.getIntervalCollection("test");
+			const interval = collection.add({ end, start });
+
+			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 1 }]);
+
+			sharedString.removeText(0, 2);
+
+			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
+
+			containerRuntimeFactory.processAllMessages();
+
+			assert.strictEqual(interval.start.getSegment()?.constructor.name, "StartOfTreeSegment");
+
+			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
+		});
+
 		it.skip("slides forward reference to correct position when remove of end of string is unacked", () => {
 			dataStoreRuntime1.options.mergeTreeReferencesCanSlideToEndpoint = false;
 			sharedString.insertText(0, "ABC");

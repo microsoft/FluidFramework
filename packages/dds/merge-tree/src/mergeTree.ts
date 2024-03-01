@@ -118,6 +118,10 @@ function isRemovedAndAckedOrMovedAndAcked(segment: ISegment): boolean {
 	return isRemovedAndAcked(segment) || isMovedAndAcked(segment);
 }
 
+function isRemovedOrMoved(segment: ISegment): boolean {
+	return isRemoved(segment) || isMoved(segment);
+}
+
 function nodeTotalLength(mergeTree: MergeTree, node: IMergeNode): number | undefined {
 	if (!node.isLeaf()) {
 		return node.cachedLength;
@@ -1065,14 +1069,13 @@ export class MergeTree {
 			return this.getPosition(refPos, refSeq, clientId);
 		}
 		if (refTypeIncludesFlag(refPos, ReferenceType.Transient) || seg.localRefs?.has(refPos)) {
-			if (
-				(isRemoved(seg) || isMoved(seg)) &&
-				refPos.slidingPreference === SlidingPreference.BACKWARD
-			) {
+			// for references that slide backwards, we want to take into account
+			// local/unacked changes
+			if (isRemovedOrMoved(seg) && refPos.slidingPreference === SlidingPreference.BACKWARD) {
 				let slidToSegment: ISegment | undefined;
 
 				backwardExcursion(seg, (segment) => {
-					if (!isRemoved(segment) && !isMoved(segment)) {
+					if (!isRemovedOrMoved(segment)) {
 						slidToSegment = segment;
 						return false;
 					}
@@ -1080,15 +1083,15 @@ export class MergeTree {
 				});
 
 				if (slidToSegment) {
-					const off =
+					const slidToOffset =
 						slidToSegment.ordinal < seg.ordinal ? slidToSegment.cachedLength - 1 : 0;
-					return off + this.getPosition(slidToSegment, refSeq, clientId);
+					return slidToOffset + this.getPosition(slidToSegment, refSeq, clientId);
 				}
 
 				return 0;
 			}
 
-			const offset = isRemoved(seg) || isMoved(seg) ? 0 : refPos.getOffset();
+			const offset = isRemovedOrMoved(seg) ? 0 : refPos.getOffset();
 			return offset + this.getPosition(seg, refSeq, clientId);
 		}
 		return DetachedReferencePosition;
