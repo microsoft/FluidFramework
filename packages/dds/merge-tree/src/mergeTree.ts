@@ -1069,30 +1069,14 @@ export class MergeTree {
 			return this.getPosition(refPos, refSeq, clientId);
 		}
 		if (refTypeIncludesFlag(refPos, ReferenceType.Transient) || seg.localRefs?.has(refPos)) {
-			// for references that slide backwards, we want to take into account
-			// local/unacked changes
+			const offset = isRemovedOrMoved(seg) ? 0 : refPos.getOffset();
+			const pos = this.getPosition(seg, refSeq, clientId);
+
 			if (isRemovedOrMoved(seg) && refPos.slidingPreference === SlidingPreference.BACKWARD) {
-				let slidToSegment: ISegment | undefined;
-
-				backwardExcursion(seg, (segment) => {
-					if (!isRemovedOrMoved(segment)) {
-						slidToSegment = segment;
-						return false;
-					}
-					return true;
-				});
-
-				if (slidToSegment) {
-					const slidToOffset =
-						slidToSegment.ordinal < seg.ordinal ? slidToSegment.cachedLength - 1 : 0;
-					return slidToOffset + this.getPosition(slidToSegment, refSeq, clientId);
-				}
-
-				return 0;
+				return pos === 0 ? 0 : pos - 1;
 			}
 
-			const offset = isRemovedOrMoved(seg) ? 0 : refPos.getOffset();
-			return offset + this.getPosition(seg, refSeq, clientId);
+			return offset + pos;
 		}
 		return DetachedReferencePosition;
 	}

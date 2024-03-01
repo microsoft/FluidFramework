@@ -2020,6 +2020,33 @@ describe("SharedString interval collections", () => {
 			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
 		});
 
+		it("slides backward reference to correct position when remove multiple segments is unacked", () => {
+			sharedString.insertText(0, "ABC");
+
+			// (AB]C
+			// (AYYYXXXB]C
+
+			containerRuntimeFactory.processAllMessages();
+
+			const start = { pos: 0, side: Side.After };
+			const end = { pos: 1, side: Side.After };
+
+			const collection = sharedString.getIntervalCollection("test");
+			collection.add({ end, start });
+
+			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 1 }]);
+
+			sharedString.insertText(1, "XXX");
+			sharedString.insertText(1, "YYY");
+			sharedString.removeText(1, 8);
+
+			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
+
+			containerRuntimeFactory.processAllMessages();
+
+			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
+		});
+
 		it("slides backward reference to correct position when start of string remove is unacked", () => {
 			sharedString.insertText(0, "ABC");
 
