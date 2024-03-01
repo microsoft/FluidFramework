@@ -92,7 +92,7 @@ export function getTypeRollupPathFromExtractorConfig(
  * @param previousBasePath - A string representing the path to the root of a package
  * @returns A type definition filepath based on the appropriate export, or undefined if it cannot be found.
  */
-function getTypePathFromExport(
+export function getTypePathFromExport(
 	previousPackageJson: PackageJson,
 	previousBasePath: string,
 ): string | undefined {
@@ -168,6 +168,8 @@ export function typeDataFromFile(file: SourceFile): Map<string, TypeData> {
 /**
  * Initializes TypeScript projects for the current and previous package versions and loads specific source files.
  * @param typeDefinitionFilePath - The path to the type definition file for the previous version.
+ * @param previousBasePath - The path to the root of the previous package version.
+ * @param previousPackageName - The name of the previous package version.
  * @returns {{ currentFile: SourceFile, previousFile: SourceFile }} - The loaded source files for the current and previous versions.
  */
 export function initializeProjectsAndLoadFiles(

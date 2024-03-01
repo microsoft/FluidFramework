@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { strict as assert } from "assert";
 import * as utils from "../type-test-generator/typeTestUtils";
 import { readJsonSync } from "fs-extra";
@@ -53,6 +58,7 @@ describe("typeTestUtils", () => {
 			assert.strictEqual(result, expectedPath);
 		});
 	});
+
 	describe("Test getTypeRollupPathFromExtractorConfig", () => {
 		// Create temp directory for testing
 		const nodeModulesDir = path.join(__dirname, "node_modules");
@@ -122,6 +128,116 @@ describe("typeTestUtils", () => {
 				extractorConfigOptions,
 			);
 			assert.strictEqual(result, "alpha.d.ts");
+		});
+	});
+
+	describe("Test getTypePathFromExport", () => {
+		const nodeModulesDir = path.join(__dirname, "node_modules");
+		const previousBasePath = path.join(nodeModulesDir, previousPackageName);
+
+		after(() => {
+			fs.rmSync(nodeModulesDir, { recursive: true });
+		});
+
+		it("should return undefined if exports field is missing", () => {
+			const result = utils.getTypePathFromExport(packageObject, previousBasePath);
+			assert.strictEqual(result, undefined);
+		});
+
+		it("should throw an error if both import and require resolutions are missing", () => {
+			packageObject.exports = { ".": {} };
+
+			assert.throws(() => {
+				utils.getTypePathFromExport(packageObject, previousBasePath);
+			}, "Type definition file path could not be determined");
+		});
+
+		it("should return the type definition file path if it exists in exports", () => {
+			packageObject.exports = {
+				".": {
+					import: {
+						types: "./lib/index.d.ts",
+					},
+				},
+			};
+			const result = utils.getTypePathFromExport(packageObject, previousBasePath);
+			const expectedPath = path.join(previousBasePath, "lib/index.d.ts");
+			assert.strictEqual(result, expectedPath);
+		});
+
+		it("should throw an error if both import and require resolutions do not provide types", () => {
+			packageObject.exports = {
+				".": {
+					import: {
+						default: "./lib/index.mjs",
+					},
+				},
+			};
+			fs.mkdirSync(nodeModulesDir);
+			fs.mkdirSync(previousBasePath);
+			fs.writeFileSync(
+				path.join(previousBasePath, "package.json"),
+				JSON.stringify({
+					name: "mockPackageForTesting-previous",
+					version: "1.2.3",
+					types: "index.d.ts",
+					exports: {
+						".": {
+							import: "./lib/index.mjs",
+							require: "./dis/index.js",
+						},
+					},
+				}),
+				"utf-8",
+			);
+			// const result = utils.getTypePathFromExport(packageObject, previousBasePath);
+			// assert.strictEqual(result, undefined);
+			assert.throws(() => {
+				utils.getTypePathFromExport(packageObject, previousBasePath);
+			});
+		});
+	});
+
+	describe("Test getTypeDefinitionFilePath", () => {
+		const nodeModulesDir = path.join(__dirname, "node_modules");
+		const previousBasePath = path.join(nodeModulesDir, previousPackageName);
+
+		before(() => {
+			fs.mkdirSync(nodeModulesDir);
+			fs.mkdirSync(previousBasePath);
+			fs.writeFileSync(
+				path.join(previousBasePath, "package.json"),
+				JSON.stringify({
+					name: "mockPackageForTesting-previous",
+					version: "1.2.3",
+					types: "index.d.ts",
+				}),
+				"utf-8",
+			);
+		});
+
+		after(() => {
+			fs.rmSync(nodeModulesDir, { recursive: true });
+		});
+
+		it("should return the type definition file path if it exists in the package.json", () => {
+			const result = utils.getTypeDefinitionFilePath(previousBasePath);
+			const expectedPath = path.join(previousBasePath, "index.d.ts");
+			assert.strictEqual(result, expectedPath);
+		});
+
+		it("should throw an error if the type definition file path does not exist in the package.json", () => {
+			fs.writeFileSync(
+				path.join(previousBasePath, "package.json"),
+				JSON.stringify({
+					name: "mockPackageForTesting-previous",
+					version: "1.2.3",
+				}),
+				"utf-8",
+			);
+			assert.throws(() => {
+				utils.getTypeDefinitionFilePath(previousBasePath);
+			}, "No 'exports' nor 'type' fields found.");
 		});
 	});
 });
