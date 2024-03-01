@@ -1068,9 +1068,9 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 			}
 		}
 
+		assert(this.pkg !== undefined, "The datastore context package should be defined");
 		return {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			pkg: this.pkg!,
+			pkg: this.pkg,
 			isRootDataStore,
 			snapshot: tree,
 			sequenceNumber,
