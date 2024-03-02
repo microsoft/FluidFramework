@@ -6006,7 +6006,6 @@ importers:
       eslint-plugin-deprecation: ~2.0.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-interfaces': link:../core-interfaces
@@ -6026,7 +6025,6 @@ importers:
       eslint-plugin-deprecation: 2.0.0_bpztyfltmpuv6lhsgzfwtmxhte
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/common/core-interfaces:
