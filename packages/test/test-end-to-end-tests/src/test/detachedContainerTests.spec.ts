@@ -41,6 +41,7 @@ import {
 	getDataStoreEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import { wrapObjectAndOverride } from "../mocking.js";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -1033,12 +1034,9 @@ describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) =
 											existing,
 										);
 
-									return new Proxy(runtime, {
-										get: (t, p: keyof IRuntime, r): any => {
-											if (p === "createSummary") {
-												assert.fail("runtime.createSummary failed!");
-											}
-											return Reflect.get(t, p, r);
+									return wrapObjectAndOverride<IRuntime>(runtime, {
+										createSummary: () => () => {
+											assert.fail("runtime.createSummary failed!");
 										},
 									});
 								},
@@ -1093,12 +1091,9 @@ describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) =
 											existing,
 										);
 
-									return new Proxy(runtime, {
-										get: (t, p: keyof IRuntime, r): any => {
-											if (p === "setAttachState") {
-												assert.fail("runtime.setAttachState failed!");
-											}
-											return Reflect.get(t, p, r);
+									return wrapObjectAndOverride<IRuntime>(runtime, {
+										setAttachState: () => () => {
+											assert.fail("runtime.setAttachState failed!");
 										},
 									});
 								},
