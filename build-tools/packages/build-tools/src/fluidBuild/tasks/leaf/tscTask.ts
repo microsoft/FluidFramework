@@ -48,6 +48,7 @@ export class TscTask extends LeafTask {
 	protected async checkLeafIsUpToDate() {
 		const tsBuildInfoFileFullPath = this.tsBuildInfoFileFullPath;
 		if (tsBuildInfoFileFullPath === undefined) {
+			this.traceTrigger("no tsBuildInfo file path");
 			return false;
 		}
 
@@ -69,6 +70,7 @@ export class TscTask extends LeafTask {
 
 		const config = this.readTsConfig();
 		if (!config) {
+			this.traceTrigger("unable to read ts config");
 			return false;
 		}
 
