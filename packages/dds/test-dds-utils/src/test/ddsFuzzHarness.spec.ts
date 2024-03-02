@@ -14,8 +14,6 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { AsyncGenerator, chainAsync, done, takeAsync } from "@fluid-private/stochastic-test-utils";
-// eslint-disable-next-line import/no-internal-modules
-import { Counter } from "@fluid-private/stochastic-test-utils/test/utils";
 import {
 	BaseOperation,
 	ChangeConnectionState,
@@ -39,6 +37,31 @@ import {
 import { hasStashData, type Client } from "../clientLoading.js";
 import { Operation, SharedNothingFactory, baseModel, isNoopOp } from "./sharedNothing.js";
 import { _dirname } from "./dirname.cjs";
+
+//* REVERT THIS once the build passes w/o it
+class Counter<T> {
+	private readonly choiceToCount = new Map<T, number>();
+
+	public increment(value: T): void {
+		this.choiceToCount.set(value, this.get(value) + 1);
+	}
+
+	public get(value: T): number {
+		return this.choiceToCount.get(value) ?? 0;
+	}
+
+	public entries(): Iterable<[T, number]> {
+		return this.choiceToCount.entries();
+	}
+
+	public values(): Iterable<T> {
+		return this.choiceToCount.keys();
+	}
+
+	public counts(): Iterable<number> {
+		return this.choiceToCount.values();
+	}
+}
 
 type Model = DDSFuzzModel<SharedNothingFactory, Operation | ChangeConnectionState>;
 
