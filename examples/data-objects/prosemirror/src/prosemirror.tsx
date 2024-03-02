@@ -91,7 +91,7 @@ export class ProseMirror extends EventEmitter implements IFluidLoadable, IProvid
 
 	private async initialize(existing: boolean) {
 		if (!existing) {
-			this.root = SharedMap.create(this.runtime, "root");
+			this.root = SharedMap.getFactory().create(this.runtime, "root");
 			const text = SharedString.create(this.runtime);
 
 			insertMarkers(text, "prosemirror", 0, 1, "paragraph");

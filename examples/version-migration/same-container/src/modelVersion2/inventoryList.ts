@@ -34,7 +34,7 @@ class InventoryItem extends EventEmitter implements IInventoryItem {
 	public constructor(
 		private readonly _id: string,
 		private readonly _name: SharedString,
-		private readonly _quantity: SharedMap,
+		private readonly _quantity: ISharedMap,
 	) {
 		super();
 		// this._name.on("sequenceDelta", () =>{
@@ -46,7 +46,7 @@ class InventoryItem extends EventEmitter implements IInventoryItem {
 	}
 }
 
-// type InventoryItemData = { name: IFluidHandle<SharedString>, quantity: IFluidHandle<SharedMap> };
+// type InventoryItemData = { name: IFluidHandle<SharedString>, quantity: IFluidHandle<ISharedMap> };
 
 /**
  * The InventoryList is our data object that implements the IInventoryList interface.

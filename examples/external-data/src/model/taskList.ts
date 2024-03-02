@@ -445,13 +445,14 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 			throw new Error("externalTaskListId was not initialized");
 		}
 
-		const externalDataSnapshot = this.root.get<IFluidHandle<SharedMap>>("externalDataSnapshot");
+		const externalDataSnapshot =
+			this.root.get<IFluidHandle<ISharedMap>>("externalDataSnapshot");
 		if (externalDataSnapshot === undefined) {
 			throw new Error("externalDataSnapshot was not initialized");
 		}
 		this._externalDataSnapshot = await externalDataSnapshot.get();
 
-		const draft = this.root.get<IFluidHandle<SharedMap>>("draftData");
+		const draft = this.root.get<IFluidHandle<ISharedMap>>("draftData");
 		if (draft === undefined) {
 			throw new Error("draftData was not initialized");
 		}

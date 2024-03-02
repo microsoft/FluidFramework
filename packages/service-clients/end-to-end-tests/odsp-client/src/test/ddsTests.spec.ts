@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 import { OdspClient } from "@fluid-experimental/odsp-client";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ContainerSchema } from "@fluidframework/fluid-static";
-import { SharedMap } from "@fluidframework/map";
+import { SharedMap, type ISharedMap } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
 import { ConnectionState } from "@fluidframework/container-loader";
@@ -84,12 +84,12 @@ describe("Fluid data updates", () => {
 		}
 
 		const initialObjectsCreate = container.initialObjects;
-		const map1Create = initialObjectsCreate.map1 as SharedMap;
+		const map1Create = initialObjectsCreate.map1 as ISharedMap;
 		map1Create.set("new-key", "new-value");
 		const valueCreate: string | undefined = map1Create.get("new-key");
 
 		const { container: containerGet } = await client.getContainer(itemId, schema);
-		const map1Get = containerGet.initialObjects.map1 as SharedMap;
+		const map1Get = containerGet.initialObjects.map1 as ISharedMap;
 		const valueGet: string | undefined = await mapWait(map1Get, "new-key");
 		assert.strictEqual(valueGet, valueCreate, "container can't change initial objects");
 	});
@@ -256,7 +256,7 @@ describe("Fluid data updates", () => {
 		const newDo = await container.create(TestDataObject);
 		assert.ok(newDo?.handle);
 
-		const map1 = container.initialObjects.map1 as SharedMap;
+		const map1 = container.initialObjects.map1 as ISharedMap;
 		map1.set("new-pair-id", newDo.handle);
 		const handle: IFluidHandle | undefined = await map1.get("new-pair-id");
 		const obj: unknown = await handle?.get();

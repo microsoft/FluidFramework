@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 import { AzureClient } from "@fluidframework/azure-client";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerSchema } from "@fluidframework/fluid-static";
-import { SharedMap } from "@fluidframework/map";
+import { SharedMap, type ISharedMap } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
 import { ConnectionState } from "@fluidframework/container-loader";
@@ -173,7 +173,7 @@ describe("Container copy scenarios", () => {
 		const { container } = await client.createContainer(schema);
 
 		const initialObjectsCreate = container.initialObjects;
-		const map1Create = initialObjectsCreate.map1 as SharedMap;
+		const map1Create = initialObjectsCreate.map1 as ISharedMap;
 		map1Create.set("new-key", "new-value");
 		const valueCreate: string | undefined = map1Create.get("new-key");
 
@@ -190,7 +190,7 @@ describe("Container copy scenarios", () => {
 
 		const { container: containerCopy } = await resources;
 
-		const map1Get = containerCopy.initialObjects.map1 as SharedMap;
+		const map1Get = containerCopy.initialObjects.map1 as ISharedMap;
 		const valueGet: string | undefined = await mapWait(map1Get, "new-key");
 		assert.strictEqual(valueGet, valueCreate, "DDS value was not correctly copied.");
 	});

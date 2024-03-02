@@ -1593,7 +1593,7 @@ export interface SharedTreeContentSnapshot {
 }
 
 // @internal
-export class SharedTreeFactory implements IChannelFactory {
+export class SharedTreeFactory implements IChannelFactory<ISharedTree> {
     constructor(options?: SharedTreeOptions);
     // (undocumented)
     readonly attributes: IChannelAttributes;

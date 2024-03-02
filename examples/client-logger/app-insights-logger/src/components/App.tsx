@@ -129,7 +129,7 @@ function AppView(props: AppViewProps): React.ReactElement {
 	const { containerInfo } = props;
 	const { container, containerId } = containerInfo;
 
-	const rootMap = container.initialObjects.rootMap as SharedMap;
+	const rootMap = container.initialObjects.rootMap as ISharedMap;
 	if (rootMap === undefined) {
 		throw new Error('"rootMap" not found in initialObjects tree.');
 	}

@@ -73,7 +73,7 @@ describe("DataVisualizerGraph unit tests", () => {
 		const runtime = new MockFluidDataStoreRuntime();
 
 		// Create SharedMap
-		const sharedMap = new SharedMap("test-map", runtime, SharedMap.getFactory().attributes);
+		const sharedMap = SharedMap.getFactory().create(runtime, "test-map");
 
 		const visualizer = new DataVisualizerGraph(
 			{

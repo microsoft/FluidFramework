@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { AttachState, IContainer, IHostLoader } from "@fluidframework/container-definitions";
-import type { ISharedDirectory, ISharedMap, SharedDirectory, SharedMap } from "@fluidframework/map";
+import type { ISharedDirectory, ISharedMap, SharedDirectory } from "@fluidframework/map";
 import {
 	ChannelFactoryRegistry,
 	ITestFluidObject,
@@ -79,7 +79,7 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 		it("blob is aborted after upload succeds", async function () {
 			const testString = "this is a test string";
 			const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
-			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
+			const map = await dataStore1.getSharedObject<ISharedMap>(mapId);
 			const ac = new AbortController();
 			let blob: IFluidHandle<ArrayBufferLike>;
 			try {
@@ -102,7 +102,7 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 			const testString = "this is a test string";
 			const testKey = "a blob";
 			const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
-			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
+			const map = await dataStore1.getSharedObject<ISharedMap>(mapId);
 
 			const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
 			assert.strictEqual(blob.isAttached, false);
@@ -125,7 +125,7 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 		it("removes pending blob when waiting for blob to be attached", async function () {
 			const testString = "this is a test string";
 			const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
-			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
+			const map = await dataStore1.getSharedObject<ISharedMap>(mapId);
 			const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
 			const pendingStateP: any = runtimeOf(dataStore1).getPendingLocalState({
 				notifyImminentClosure: true,
@@ -140,7 +140,7 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 			const testKey = "a blob";
 			const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
 
-			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
+			const map = await dataStore1.getSharedObject<ISharedMap>(mapId);
 			const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
 			map.set(testKey, blob);
 			const pendingState = (await runtimeOf(dataStore1).getPendingLocalState()) as
@@ -151,7 +151,7 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 
 		it("removes multiple pending blobs after attached and acked", async function () {
 			const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
-			const map = await dataStore1.getSharedObject<SharedMap>(mapId);
+			const map = await dataStore1.getSharedObject<ISharedMap>(mapId);
 			const lots = 10;
 			for (let i = 0; i < lots; i++) {
 				const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(`${i}`, "utf-8"));
