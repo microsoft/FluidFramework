@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import {
 	IClientConfiguration,
 	IClientDetails,
@@ -18,7 +17,7 @@ import {
 	IDeltaQueue,
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { EventEmitter, TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 
 /**

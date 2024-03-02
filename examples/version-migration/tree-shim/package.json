@@ -52,7 +52,6 @@
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/tinylicious-driver": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
-		"events": "^3.1.0",
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1",
 		"tiny-typed-emitter": "^2.1.0",

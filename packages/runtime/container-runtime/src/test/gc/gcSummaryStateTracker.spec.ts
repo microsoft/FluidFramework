@@ -13,7 +13,7 @@ import {
 	GCVersion,
 	IGarbageCollectionState,
 	IGCStats,
-} from "../../gc";
+} from "../../gc/index.js";
 
 type GCSummaryStateTrackerWithPrivates = Omit<GCSummaryStateTracker, "latestSummaryGCVersion"> & {
 	latestSummaryGCVersion: GCVersion;

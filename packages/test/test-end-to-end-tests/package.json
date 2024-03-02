@@ -123,7 +123,6 @@
 		"sinon": "^17.0.1",
 		"start-server-and-test": "^1.11.7",
 		"tinylicious": "^3.1.0-240326",
-		"url": "^0.11.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {

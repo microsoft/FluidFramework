@@ -5,8 +5,9 @@
 import { strict as assert } from "node:assert";
 import path from "node:path";
 
-import { Operation, SharedNothingFactory, baseModel } from "../sharedNothing";
-import { DDSFuzzModel, createDDSFuzzSuite } from "../../ddsFuzzHarness";
+import { Operation, SharedNothingFactory, baseModel } from "../sharedNothing.js";
+import { DDSFuzzModel, createDDSFuzzSuite } from "../../ddsFuzzHarness.js";
+import { _dirname } from "./dirname.cjs";
 
 let currentIndex = 0;
 const expectedOps = [
@@ -37,5 +38,5 @@ createDDSFuzzSuite(model, {
 	detachedStartOptions: { numOpsBeforeAttach: 0 },
 	replay: 2,
 	// Note: this should point the replay to the source-controlled 2.json file in this directory.
-	saveFailures: { directory: path.join(__dirname, "../../../src/test/ddsSuiteCases") },
+	saveFailures: { directory: path.join(_dirname, "../../../src/test/ddsSuiteCases") },
 });
