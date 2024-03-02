@@ -13,8 +13,11 @@ import {
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import {
+	IOdspResponse,
+	TokenFetchOptionsEx,
 	fetchHelper,
 	getWithRetryForTokenRefresh,
 	toInstrumentedOdspTokenFetcher,
@@ -94,6 +97,86 @@ export async function getFileLink(
 	return fileLink;
 }
 
+async function getRequestInformation(
+	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
+	odspUrlParts: IOdspUrlParts,
+	logger: ITelemetryLoggerExt,
+	options: TokenFetchOptionsEx,
+	fileItem: FileItemLite,
+) {
+	const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
+		logger,
+		odspUrlParts,
+		getToken,
+		true /* throwOnNullToken */,
+	);
+	const storageToken = await storageTokenFetcher(options, "GetFileLinkCore");
+	assert(
+		storageToken !== null,
+		0x2bb /* "Instrumented token fetcher with throwOnNullToken = true should never return null" */,
+	);
+
+	// IMPORTANT: In past we were using GetFileByUrl() API to get to the list item that was corresponding
+	// to the file. This was intentionally replaced with GetFileById() to solve the following issue:
+	// GetFileByUrl() uses webDavUrl to locate list item. This API does not work for Consumer scenarios
+	// where webDavUrl is constructed using legacy ODC format for backward compatibility reasons.
+	// GetFileByUrl() does not understand that format and thus fails. GetFileById() relies on file item
+	// unique guid (sharepointIds.listItemUniqueId) and it works uniformly across Consumer and Commercial.
+	const { url, headers } = getUrlAndHeadersWithAuth(
+		`${
+			odspUrlParts.siteUrl
+		}/_api/web/GetFileById(@a1)/ListItemAllFields/GetSharingInformation?@a1=guid${encodeURIComponent(
+			`'${fileItem.sharepointIds.listItemUniqueId}'`,
+		)}`,
+		storageToken,
+		true,
+	);
+	const requestInit = {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json;odata=verbose",
+			"Accept": "application/json;odata=verbose",
+			...headers,
+		},
+	};
+
+	return { url, requestInit };
+}
+
+async function fetchWithLocationRedirectionHandling<T>(
+	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
+	odspUrlParts: IOdspUrlParts,
+	logger: ITelemetryLoggerExt,
+	options: TokenFetchOptionsEx,
+	fileItem: FileItemLite,
+): Promise<IOdspResponse<Response>> {
+	for (;;) {
+		const { url, requestInit } = await getRequestInformation(
+			getToken,
+			odspUrlParts,
+			logger,
+			options,
+			fileItem,
+		);
+
+		try {
+			return await fetchHelper(url, requestInit);
+		} catch (error: any) {
+			if (
+				error.errorType !== DriverErrorTypes.fileNotFoundOrAccessDeniedError ||
+				!error.redirectLocation
+			) {
+				throw error;
+			}
+
+			const newSiteDomain = new URL(error.redirectLocation).origin;
+			const oldSiteDomain = new URL(odspUrlParts.siteUrl).origin;
+
+			odspUrlParts.siteUrl = odspUrlParts.siteUrl.replace(oldSiteDomain, newSiteDomain);
+		}
+	}
+}
+
 async function getFileLinkCore(
 	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
 	odspUrlParts: IOdspUrlParts,
@@ -110,42 +193,15 @@ async function getFileLinkCore(
 			let additionalProps;
 			const fileLink = await getWithRetryForTokenRefresh(async (options) => {
 				attempts++;
-				const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
-					logger,
-					odspUrlParts,
+
+				const response = await fetchWithLocationRedirectionHandling(
 					getToken,
-					true /* throwOnNullToken */,
-				);
-				const storageToken = await storageTokenFetcher(options, "GetFileLinkCore");
-				assert(
-					storageToken !== null,
-					0x2bb /* "Instrumented token fetcher with throwOnNullToken = true should never return null" */,
+					odspUrlParts,
+					logger,
+					options,
+					fileItem,
 				);
 
-				// IMPORTANT: In past we were using GetFileByUrl() API to get to the list item that was corresponding
-				// to the file. This was intentionally replaced with GetFileById() to solve the following issue:
-				// GetFileByUrl() uses webDavUrl to locate list item. This API does not work for Consumer scenarios
-				// where webDavUrl is constructed using legacy ODC format for backward compatibility reasons.
-				// GetFileByUrl() does not understand that format and thus fails. GetFileById() relies on file item
-				// unique guid (sharepointIds.listItemUniqueId) and it works uniformly across Consumer and Commercial.
-				const { url, headers } = getUrlAndHeadersWithAuth(
-					`${
-						odspUrlParts.siteUrl
-					}/_api/web/GetFileById(@a1)/ListItemAllFields/GetSharingInformation?@a1=guid${encodeURIComponent(
-						`'${fileItem.sharepointIds.listItemUniqueId}'`,
-					)}`,
-					storageToken,
-					true,
-				);
-				const requestInit = {
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json;odata=verbose",
-						"Accept": "application/json;odata=verbose",
-						...headers,
-					},
-				};
-				const response = await fetchHelper(url, requestInit);
 				additionalProps = response.propsToLog;
 
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
