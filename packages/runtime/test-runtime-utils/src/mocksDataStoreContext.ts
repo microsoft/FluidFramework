@@ -8,7 +8,7 @@ import { FluidObject, IFluidHandle, IFluidHandleContext } from "@fluidframework/
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { IIdCompressor, IIdCompressorCore } from "@fluidframework/id-compressor";
+import type { IIdCompressor, IIdCompressorCore } from "@fluidframework/id-compressor/internal";
 import {
 	IClientDetails,
 	IDocumentMessage,

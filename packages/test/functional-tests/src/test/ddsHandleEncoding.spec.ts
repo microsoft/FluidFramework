@@ -15,7 +15,7 @@ import {
 import { CellFactory } from "@fluidframework/cell";
 import { detectOutboundReferences } from "@fluidframework/container-runtime";
 import { IChannel, IChannelFactory } from "@fluidframework/datastore-definitions";
-import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
+import { SessionId, createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { DirectoryFactory, IDirectory, MapFactory } from "@fluidframework/map";
 import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix";
 import { ConsensusQueueFactory } from "@fluidframework/ordered-collection";

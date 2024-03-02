@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IdCreationRange } from "@fluidframework/id-compressor";
+import type { IdCreationRange } from "@fluidframework/id-compressor/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	IAttachMessage,

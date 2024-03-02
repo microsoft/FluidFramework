@@ -11,7 +11,7 @@ import {
 	SessionId,
 	createIdCompressor,
 	deserializeIdCompressor,
-} from "@fluidframework/id-compressor";
+} from "@fluidframework/id-compressor/internal";
 import {
 	Anchor,
 	Revertible,
@@ -30,6 +30,7 @@ import {
 	intoStoredSchema,
 } from "../../../feature-libraries/index.js";
 import { ITreeCheckout, SharedTree } from "../../../shared-tree/index.js";
+import { testSrcPath } from "../../testSrcPath.cjs";
 import { expectEqualPaths } from "../../utils.js";
 
 const builder = new SchemaBuilder({ scope: "tree2fuzz", libraries: [leaf.library] });
@@ -104,10 +105,7 @@ export function isRevertibleSharedTreeView(s: ITreeCheckout): s is RevertibleSha
 	return (s as RevertibleSharedTreeView).undoStack !== undefined;
 }
 
-export const failureDirectory = pathJoin(
-	__dirname,
-	"../../../../src/test/shared-tree/fuzz/failures",
-);
+export const failureDirectory = pathJoin(testSrcPath, "shared-tree/fuzz/failures");
 
 export const createOrDeserializeCompressor = (
 	sessionId: SessionId,

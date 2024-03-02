@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { createIdCompressor, createSessionId } from "@fluidframework/id-compressor";
+import { createIdCompressor, createSessionId } from "@fluidframework/id-compressor/internal";
 import { RevisionTag, RevisionTagCodec } from "../../core/index.js";
 
 describe("RevisionTagCodec", () => {
