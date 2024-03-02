@@ -19,6 +19,6 @@ const model: DDSFuzzModel<SharedNothingFactory, Operation | ChangeConnectionStat
 
 createDDSFuzzSuite(model, {
 	defaultTestCount: 2,
-	// Note: this should place files in dist/test-dds-utils/ddsSuiteCases/failing-configuration
+	// Note: this should place files in (dist|lib)/test-dds-utils/ddsSuiteCases/failing-configuration
 	saveFailures: { directory: _dirname },
 });
