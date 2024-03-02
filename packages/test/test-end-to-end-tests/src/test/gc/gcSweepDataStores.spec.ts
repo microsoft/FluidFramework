@@ -22,6 +22,8 @@ import {
 	waitForContainerConnection,
 	ITestContainerConfig,
 	createTestConfigProvider,
+	getContainerEntryPointBackCompat,
+	getDataStoreEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import {
 	describeCompat,
@@ -111,6 +113,159 @@ function validateDataStoreStateInSummary(
 	);
 }
 
+const tombstoneTimeoutMs = 200;
+const sweepGracePeriodMs = 0; // Skip Tombstone, these tests focus on Sweep
+const sweepTimeoutMs = tombstoneTimeoutMs + sweepGracePeriodMs;
+const gcOptions: IGCRuntimeOptions = {
+	inactiveTimeoutMs: 0,
+	enableGCSweep: true,
+	sweepGracePeriodMs,
+};
+const configProvider = createTestConfigProvider();
+const testContainerConfig: ITestContainerConfig = {
+	runtimeOptions: {
+		summaryOptions: {
+			summaryConfigOverrides: {
+				state: "disabled",
+			},
+		},
+		gcOptions,
+	},
+	loaderProps: { configProvider },
+};
+
+let provider: ITestObjectProvider;
+
+async function loadContainer(
+	summaryVersion: string,
+	config: ITestContainerConfig = testContainerConfig,
+) {
+	return provider.loadTestContainer(config, {
+		[LoaderHeader.version]: summaryVersion,
+	});
+}
+
+const loadSummarizer = async (container: IContainer, summaryVersion?: string) => {
+	return createSummarizer(
+		provider,
+		container,
+		{
+			runtimeOptions: { gcOptions },
+			loaderProps: { configProvider },
+			forceUseCreateVersion: true, // To simulate the summarizer running on the created container
+		},
+		summaryVersion,
+	);
+};
+const ensureSynchronizedAndSummarize = async (
+	summarizer: ISummarizer,
+	options?: IOnDemandSummarizeOptions,
+) => {
+	await provider.ensureSynchronized();
+	return summarizeNow(summarizer, options);
+};
+
+// This function creates an unreferenced datastore and returns the datastore's id and the summary version that
+// datastore was unreferenced in.
+const summarizationWithUnreferencedDataStoreAfterTime = async () => {
+	const container = await provider.makeTestContainer(testContainerConfig);
+	const defaultDataObject = await getContainerEntryPointBackCompat<ITestDataObject>(container);
+	await waitForContainerConnection(container);
+
+	const handleKey = "handle";
+	const dataStore =
+		await defaultDataObject._context.containerRuntime.createDataStore(TestDataObjectType);
+	const testDataObject = await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore);
+	assert(
+		testDataObject !== undefined,
+		"Should have been able to retrieve testDataObject from entryPoint",
+	);
+	const unreferencedId = testDataObject._context.id;
+
+	// Reference a datastore - important for making it live
+	defaultDataObject._root.set(handleKey, testDataObject.handle);
+	// Unreference a datastore
+	defaultDataObject._root.delete(handleKey);
+
+	// Summarize
+	const { container: summarizingContainer1, summarizer: summarizer1 } =
+		await loadSummarizer(container);
+	const summaryVersion = (await ensureSynchronizedAndSummarize(summarizer1)).summaryVersion;
+
+	// Close the summarizer so that it doesn't interfere with the new one.
+	summarizingContainer1.close();
+
+	// Load a new container and summarizer from the latest summary
+	const { container: summarizingContainer2, summarizer: summarizer2 } = await loadSummarizer(
+		container,
+		summaryVersion,
+	);
+
+	const containerRuntime = (summarizer2 as any).runtime as ContainerRuntime;
+	const response = await containerRuntime.resolveHandle({
+		url: testDataObject.handle.absolutePath,
+	});
+	const summarizerDataObject = response.value as ITestDataObject;
+	await delay(sweepTimeoutMs + 10);
+
+	// Send an op to update the timestamp that the summarizer client uses for GC to a current one.
+	defaultDataObject._root.set("update", "timestamp");
+	await provider.ensureSynchronized();
+
+	// Close the container as it would be closed by session expiry before sweep ready ever occurs.
+	container.close();
+
+	return {
+		unreferencedId,
+		summarizer: summarizer2,
+		summarizingContainer: summarizingContainer2,
+		summarizerDataObject,
+		summaryVersion,
+		container,
+	};
+};
+
+describeCompat.only("V1/V2 compat", "FullCompat", (getTestObjectProvider) => {
+	beforeEach("setup", async function () {
+		provider = getTestObjectProvider({ syncSummarizer: true });
+		if (provider.driver.type !== "local") {
+			this.skip();
+		}
+
+		const configs = {
+			"Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs": tombstoneTimeoutMs,
+			"Fluid.GarbageCollection.RunSweep": false, // To prevent the GC op
+			"Fluid.GarbageCollection.DisableAutoRecovery": true, // To prevent the GC op
+			"Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride": false, // For a consistent story of "GC is disabled"
+		};
+		Object.entries(configs).forEach(([key, value]) => {
+			configProvider.set(key, value);
+		});
+	});
+
+	afterEach(() => {
+		configProvider.clear();
+	});
+
+	itExpects(
+		"Sending the GC op can be disabled to support V1/V2 runtime compatibility",
+		[
+			// This event is an error in 1.x but not 2.x
+			{ eventName: "fluid:telemetry:Summarizer:Running:InactiveObject_Loaded" },
+		],
+		async () => {
+			const { container, summarizer } =
+				await summarizationWithUnreferencedDataStoreAfterTime();
+
+			// Load a container on the opposite version to test compatibility
+			const other = await provider.loadTestContainer(testContainerConfig);
+
+			// The GC op would be sent now, but isn't due to config (otherwise v1 would crash)
+			await ensureSynchronizedAndSummarize(summarizer);
+		},
+	);
+});
+
 /**
  * These tests validate that SweepReady data stores are correctly swept. Swept datastores should be
  * removed from the summary, added to the GC deleted blob, and prevented from changing (sending / receiving ops,
@@ -119,29 +274,6 @@ function validateDataStoreStateInSummary(
  * NOTE: These tests speak of "Sweep" but simply use "tombstoneTimeoutMs" throughout, since sweepGracePeriod is set to 0.
  */
 describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) => {
-	const tombstoneTimeoutMs = 200;
-	const sweepGracePeriodMs = 0; // Skip Tombstone, these tests focus on Sweep
-	const sweepTimeoutMs = tombstoneTimeoutMs + sweepGracePeriodMs;
-	const gcOptions: IGCRuntimeOptions = {
-		inactiveTimeoutMs: 0,
-		enableGCSweep: true,
-		sweepGracePeriodMs,
-	};
-	const configProvider = createTestConfigProvider();
-	const testContainerConfig: ITestContainerConfig = {
-		runtimeOptions: {
-			summaryOptions: {
-				summaryConfigOverrides: {
-					state: "disabled",
-				},
-			},
-			gcOptions,
-		},
-		loaderProps: { configProvider },
-	};
-
-	let provider: ITestObjectProvider;
-
 	beforeEach("setup", async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		if (provider.driver.type !== "local") {
@@ -156,93 +288,6 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 	afterEach(() => {
 		configProvider.clear();
 	});
-
-	async function loadContainer(
-		summaryVersion: string,
-		config: ITestContainerConfig = testContainerConfig,
-	) {
-		return provider.loadTestContainer(config, {
-			[LoaderHeader.version]: summaryVersion,
-		});
-	}
-
-	const loadSummarizer = async (container: IContainer, summaryVersion?: string) => {
-		return createSummarizer(
-			provider,
-			container,
-			{
-				runtimeOptions: { gcOptions },
-				loaderProps: { configProvider },
-			},
-			summaryVersion,
-		);
-	};
-	const ensureSynchronizedAndSummarize = async (
-		summarizer: ISummarizer,
-		options?: IOnDemandSummarizeOptions,
-	) => {
-		await provider.ensureSynchronized();
-		return summarizeNow(summarizer, options);
-	};
-
-	// This function creates an unreferenced datastore and returns the datastore's id and the summary version that
-	// datastore was unreferenced in.
-	const summarizationWithUnreferencedDataStoreAfterTime = async () => {
-		const container = await provider.makeTestContainer(testContainerConfig);
-		const defaultDataObject = (await container.getEntryPoint()) as ITestDataObject;
-		await waitForContainerConnection(container);
-
-		const handleKey = "handle";
-		const dataStore =
-			await defaultDataObject._context.containerRuntime.createDataStore(TestDataObjectType);
-		const testDataObject = (await dataStore.entryPoint?.get()) as ITestDataObject | undefined;
-		assert(
-			testDataObject !== undefined,
-			"Should have been able to retrieve testDataObject from entryPoint",
-		);
-		const unreferencedId = testDataObject._context.id;
-
-		// Reference a datastore - important for making it live
-		defaultDataObject._root.set(handleKey, testDataObject.handle);
-		// Unreference a datastore
-		defaultDataObject._root.delete(handleKey);
-
-		// Summarize
-		const { container: summarizingContainer1, summarizer: summarizer1 } =
-			await loadSummarizer(container);
-		const summaryVersion = (await ensureSynchronizedAndSummarize(summarizer1)).summaryVersion;
-
-		// Close the summarizer so that it doesn't interfere with the new one.
-		summarizingContainer1.close();
-
-		// Load a new container and summarizer from the latest summary
-		const { container: summarizingContainer2, summarizer: summarizer2 } = await loadSummarizer(
-			container,
-			summaryVersion,
-		);
-
-		const containerRuntime = (summarizer2 as any).runtime as ContainerRuntime;
-		const response = await containerRuntime.resolveHandle({
-			url: testDataObject.handle.absolutePath,
-		});
-		const summarizerDataObject = response.value as ITestDataObject;
-		await delay(sweepTimeoutMs + 10);
-
-		// Send an op to update the timestamp that the summarizer client uses for GC to a current one.
-		defaultDataObject._root.set("update", "timestamp");
-		await provider.ensureSynchronized();
-
-		// Close the container as it would be closed by session expiry before sweep ready ever occurs.
-		container.close();
-
-		return {
-			unreferencedId,
-			summarizer: summarizer2,
-			summarizingContainer: summarizingContainer2,
-			summarizerDataObject,
-			summaryVersion,
-		};
-	};
 
 	describe("Using swept data stores not allowed", () => {
 		// If this test starts failing due to runtime is closed errors try first adjusting `tombstoneTimeoutMs` above
