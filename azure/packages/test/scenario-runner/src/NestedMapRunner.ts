@@ -97,7 +97,7 @@ export class NestedMapRunner extends ScenarioRunner<
 		};
 		for (let i = 0; i < runConfig.numMaps; i++) {
 			await delay(msBetweenWrites);
-			const nextMap = await container.create<ISharedMap>(SharedMap);
+			const nextMap = await container.create(SharedMap);
 			currentMap.set("data", getData() ?? i);
 			currentMap.set("next", nextMap.handle);
 			currentMap = nextMap;

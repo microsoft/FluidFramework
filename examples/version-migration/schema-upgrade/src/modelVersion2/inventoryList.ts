@@ -46,7 +46,7 @@ class InventoryItem extends EventEmitter implements IInventoryItem {
 	}
 }
 
-// type InventoryItemData = { name: IFluidHandle<SharedString>, quantity: IFluidHandle<ISharedMap> };
+// type InventoryItemData = { name: IFluidHandle<SharedString>, quantity: IFluidHandle<SharedMap> };
 
 /**
  * The InventoryList is our data object that implements the IInventoryList interface.
@@ -57,7 +57,7 @@ export class InventoryList extends DataObject implements IInventoryList {
 	public readonly addItem = (name: string, quantity: number) => {
 		const nameString = SharedString.create(this.runtime);
 		nameString.insertText(0, name);
-		const quantityMap: ISharedMap = SharedMap.getFactory().create(this.runtime, uuid());
+		const quantityMap: SharedMap = SharedMap.create(this.runtime);
 		quantityMap.set(quantityKey, quantity);
 		const id = uuid();
 		this.root.set(id, { name: nameString.handle, quantity: quantityMap.handle });

@@ -67,7 +67,7 @@ export class AgentScheduler
 		let root: ISharedMap;
 		let consensusRegisterCollection: ConsensusRegisterCollection<string | null>;
 		if (!existing) {
-			root = SharedMap.getFactory().create(runtime, "root");
+			root = SharedMap.create(runtime, "root");
 			root.bindToContext();
 			consensusRegisterCollection = ConsensusRegisterCollection.create(runtime);
 			consensusRegisterCollection.bindToContext();

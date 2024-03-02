@@ -63,7 +63,7 @@ export class CodeMirrorComponent extends EventEmitter implements IFluidLoadable 
 
 	private async initialize(existing: boolean) {
 		if (!existing) {
-			this.root = SharedMap.getFactory().create(this.runtime, "root");
+			this.root = SharedMap.create(this.runtime, "root");
 			const text = SharedString.create(this.runtime);
 
 			// Initial paragraph marker
