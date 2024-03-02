@@ -13,6 +13,8 @@ import {
 	IDocumentService,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
+	ISnapshot,
+	ISnapshotFetchOptions,
 	ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import { UsageError } from "@fluidframework/driver-utils";
@@ -23,9 +25,9 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { IDetachedBlobStorage } from "./loader";
-import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService";
-import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
+import { IDetachedBlobStorage } from "./loader.js";
+import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService.js";
+import { RetriableDocumentStorageService } from "./retriableDocumentStorageService.js";
 
 /**
  * Stringified blobs from a summary/snapshot tree.
@@ -116,15 +118,20 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 		return undefined;
 	}
 
-	public get repositoryUrl(): string {
-		return this._storageService.repositoryUrl;
-	}
-
 	public async getSnapshotTree(
 		version?: IVersion,
 		scenarioName?: string,
 	): Promise<ISnapshotTree | null> {
 		return this._storageService.getSnapshotTree(version, scenarioName);
+	}
+
+	public async getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot> {
+		if (this._storageService.getSnapshot !== undefined) {
+			return this._storageService.getSnapshot(snapshotFetchOptions);
+		}
+		throw new UsageError(
+			"getSnapshot api should exist in internal storage in ContainerStorageAdapter",
+		);
 	}
 
 	public async readBlob(id: string): Promise<ArrayBufferLike> {
@@ -193,12 +200,9 @@ class BlobOnlyStorage implements IDocumentStorageService {
 		return this.notCalled();
 	}
 
-	public get repositoryUrl(): string {
-		return this.notCalled();
-	}
-
 	/* eslint-disable @typescript-eslint/unbound-method */
 	public getSnapshotTree: () => Promise<ISnapshotTree | null> = this.notCalled;
+	public getSnapshot: () => Promise<ISnapshot> = this.notCalled;
 	public getVersions: () => Promise<IVersion[]> = this.notCalled;
 	public write: () => Promise<IVersion> = this.notCalled;
 	public uploadSummaryWithContext: () => Promise<string> = this.notCalled;
@@ -230,7 +234,7 @@ const redirectTableBlobName = ".redirectTable";
  */
 export async function getBlobContentsFromTree(
 	snapshot: ISnapshotTree,
-	storage: IDocumentStorageService,
+	storage: Pick<IDocumentStorageService, "readBlob">,
 ): Promise<ISerializableBlobContents> {
 	const blobs = {};
 	await getBlobContentsFromTreeCore(snapshot, blobs, storage);
@@ -240,7 +244,7 @@ export async function getBlobContentsFromTree(
 async function getBlobContentsFromTreeCore(
 	tree: ISnapshotTree,
 	blobs: ISerializableBlobContents,
-	storage: IDocumentStorageService,
+	storage: Pick<IDocumentStorageService, "readBlob">,
 	root = true,
 ) {
 	const treePs: Promise<any>[] = [];
@@ -263,7 +267,7 @@ async function getBlobContentsFromTreeCore(
 async function getBlobManagerTreeFromTree(
 	tree: ISnapshotTree,
 	blobs: ISerializableBlobContents,
-	storage: IDocumentStorageService,
+	storage: Pick<IDocumentStorageService, "readBlob">,
 ) {
 	const id = tree.blobs[redirectTableBlobName];
 	const blob = await storage.readBlob(id);

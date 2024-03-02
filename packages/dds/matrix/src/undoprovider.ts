@@ -15,10 +15,10 @@ import {
 	TrackingGroup,
 	ITrackingGroup,
 } from "@fluidframework/merge-tree";
-import { MatrixItem, SharedMatrix } from "./matrix";
-import { Handle, isHandleValid } from "./handletable";
-import { PermutationSegment, PermutationVector } from "./permutationvector";
-import { IUndoConsumer } from "./types";
+import { MatrixItem, SharedMatrix } from "./matrix.js";
+import { Handle, isHandleValid } from "./handletable.js";
+import { PermutationSegment, PermutationVector } from "./permutationvector.js";
+import { IUndoConsumer } from "./types.js";
 
 export class VectorUndoProvider {
 	// 'currentGroup' and 'currentOp' are used while applying an IRevertable.revert() to coalesce

@@ -4,7 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { EventEmitter } from "events";
+import events_pkg from "events_pkg";
+const { EventEmitter } = events_pkg;
 import { MockDocumentDeltaConnection, MockDocumentService } from "@fluid-private/test-loader-utils";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {

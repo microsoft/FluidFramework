@@ -24,9 +24,9 @@ import {
 	cloneGCData,
 	IGarbageCollectorConfigs,
 	stableGCVersion,
-} from "../../gc";
-import { pkgVersion } from "../../packageVersion";
-import { BlobManager } from "../../blobManager";
+} from "../../gc/index.js";
+import { pkgVersion } from "../../packageVersion.js";
+import { BlobManager } from "../../blobManager.js";
 
 describe("GC Telemetry Tracker", () => {
 	const defaultSnapshotCacheExpiryMs = 5 * 24 * 60 * 60 * 1000;
@@ -73,7 +73,7 @@ describe("GC Telemetry Tracker", () => {
 			gcEnabled: true,
 			sweepEnabled: false,
 			shouldRunGC: true,
-			shouldRunSweep: false,
+			shouldRunSweep: "NO",
 			runFullGC: false,
 			testMode: false,
 			tombstoneMode: false,

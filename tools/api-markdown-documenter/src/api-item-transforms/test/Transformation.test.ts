@@ -188,6 +188,33 @@ describe("ApiItem to Documentation transformation tests", () => {
 								],
 								"typescript",
 							),
+							new ParagraphNode([
+								new SectionNode(
+									[
+										new TableNode(
+											[
+												new TableBodyRowNode([
+													TableBodyCellNode.createFromPlainText(
+														"TTypeParameter",
+													),
+													TableBodyCellNode.createFromPlainText(
+														"A test type parameter",
+													),
+												]),
+											],
+											new TableHeaderRowNode([
+												TableHeaderCellNode.createFromPlainText(
+													"Parameter",
+												),
+												TableHeaderCellNode.createFromPlainText(
+													"Description",
+												),
+											]),
+										),
+									],
+									HeadingNode.createFromPlainText("Type Parameters"),
+								),
+							]),
 						],
 						{
 							title: "Signature",

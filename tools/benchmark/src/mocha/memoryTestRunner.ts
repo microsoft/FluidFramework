@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type * as v8 from "v8";
+import type * as v8 from "node:v8";
 import { assert } from "chai";
 import { Test } from "mocha";
 import {
@@ -255,7 +255,7 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 			}
 
 			// Do this import only if isParentProcess to enable running in the web as long as isParentProcess is false.
-			const childProcess = await import("child_process");
+			const childProcess = await import("node:child_process");
 			const result = childProcess.spawnSync(command, childArgs, {
 				encoding: "utf8",
 				maxBuffer:
@@ -290,7 +290,7 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 			await testObject.run?.();
 			await testObject.afterIteration?.();
 			await testObject.after?.();
-			return Promise.resolve();
+			return;
 		}
 
 		await testObject.before?.();
@@ -309,31 +309,31 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 				},
 			},
 			stats: {
-				marginOfError: NaN,
-				marginOfErrorPercent: NaN,
-				standardErrorOfMean: NaN,
-				standardDeviation: NaN,
-				arithmeticMean: NaN,
+				marginOfError: Number.NaN,
+				marginOfErrorPercent: Number.NaN,
+				standardErrorOfMean: Number.NaN,
+				standardDeviation: Number.NaN,
+				arithmeticMean: Number.NaN,
 				samples: [],
-				variance: NaN,
+				variance: Number.NaN,
 			},
 			aborted: false,
 			totalRunTimeMs: -1,
 		};
 
 		// Do this import only if isInPerformanceTestingMode so correctness mode can work on a non-v8 runtime like the a browser.
-		const v8 = await import("v8");
+		const v8 = await import("node:v8");
 
 		const startTime = timer.now();
 		try {
 			let heapUsedStats: Stats = {
-				marginOfError: NaN,
-				marginOfErrorPercent: NaN,
-				standardErrorOfMean: NaN,
-				standardDeviation: NaN,
-				arithmeticMean: NaN,
+				marginOfError: Number.NaN,
+				marginOfErrorPercent: Number.NaN,
+				standardErrorOfMean: Number.NaN,
+				standardDeviation: Number.NaN,
+				arithmeticMean: Number.NaN,
 				samples: [],
-				variance: NaN,
+				variance: Number.NaN,
 			};
 			do {
 				await testObject.beforeIteration?.();
@@ -388,7 +388,7 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 		test.emit("benchmark end", benchmarkStats);
 		await testObject.after?.();
 
-		return Promise.resolve();
+		return;
 	});
 	return test;
 }

@@ -4,9 +4,9 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidSerializer, ValueType } from "@fluidframework/shared-object-base";
+import { IFluidSerializer, ValueType, bindHandles } from "@fluidframework/shared-object-base";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
 // eslint-disable-next-line import/no-deprecated
@@ -44,8 +44,6 @@ interface IMapMessageHandler {
 	 * @param localOpMetadata - The metadata to be submitted with the message.
 	 */
 	submit(op: IMapOperation, localOpMetadata: MapLocalOpMetadata): void;
-
-	applyStashedOp(op: IMapOperation): MapLocalOpMetadata;
 }
 
 /**
@@ -195,7 +193,7 @@ export class AttributableMapKernel {
 		private readonly isAttached: () => boolean,
 		private readonly eventEmitter: TypedEventEmitter<ISharedMapEvents>,
 	) {
-		this.localValueMaker = new LocalValueMaker(serializer);
+		this.localValueMaker = new LocalValueMaker();
 		this.messageHandlers = this.getMessageHandlers();
 		this.attribution = new Map();
 	}
@@ -307,7 +305,6 @@ export class AttributableMapKernel {
 
 		// Create a local value and serialize it.
 		const localValue = this.localValueMaker.fromInMemory(value);
-		const serializableValue = makeSerializable(localValue, this.serializer, this.handle);
 
 		// Set the value and attribution locally.
 		const previousValue = this.setCore(key, localValue, true);
@@ -315,13 +312,17 @@ export class AttributableMapKernel {
 
 		// If we are not attached, don't submit the op.
 		if (!this.isAttached()) {
+			// this is necessary to bind the potential handles in the value
+			// to this DDS, as we do not walk the object normally unless we
+			// are attached
+			bindHandles(localValue.value, this.serializer, this.handle);
 			return;
 		}
 
 		const op: IMapSetOperation = {
 			key,
 			type: "set",
-			value: serializableValue,
+			value: { type: localValue.type, value: localValue.value as unknown },
 		};
 		this.submitMapKeyMessage(op, previousValue);
 	}
@@ -358,6 +359,7 @@ export class AttributableMapKernel {
 
 		// Clear the data locally first.
 		this.clearCore(true);
+		this.clearAllAttribution();
 
 		// If we are not attached, don't submit the op.
 		if (!this.isAttached()) {
@@ -453,7 +455,9 @@ export class AttributableMapKernel {
 	 * @param json - A JSON string containing serialized map data
 	 */
 	public populateFromSerializable(json: IMapDataObjectSerializable): void {
-		for (const [key, serializable] of Object.entries(json)) {
+		for (const [key, serializable] of Object.entries(
+			this.serializer.decode(json) as IMapDataObjectSerializable,
+		)) {
 			const localValue = {
 				key,
 				value: this.makeLocal(key, serializable),
@@ -475,10 +479,6 @@ export class AttributableMapKernel {
 		}
 	}
 
-	public populate(json: string): void {
-		this.populateFromSerializable(JSON.parse(json) as IMapDataObjectSerializable);
-	}
-
 	/**
 	 * Submit the given op if a handler is registered.
 	 * @param op - The operation to attempt to submit
@@ -496,12 +496,27 @@ export class AttributableMapKernel {
 		return true;
 	}
 
-	public tryApplyStashedOp(op: IMapOperation): unknown {
-		const handler = this.messageHandlers.get(op.type);
-		if (handler === undefined) {
-			throw new Error("no apply stashed op handler");
+	public tryApplyStashedOp(op: IMapOperation): void {
+		switch (op.type) {
+			case "clear": {
+				this.clear();
+				break;
+			}
+			case "delete": {
+				this.delete(op.key);
+				break;
+			}
+			case "set": {
+				this.set(
+					op.key,
+					this.localValueMaker.fromSerializable(op.value, this.serializer, this.handle)
+						.value,
+				);
+				break;
+			}
+			default:
+				unreachableCase(op);
 		}
-		return handler.applyStashedOp(op);
 	}
 
 	/**
@@ -659,7 +674,11 @@ export class AttributableMapKernel {
 			serializable.type === ValueType[ValueType.Plain] ||
 			serializable.type === ValueType[ValueType.Shared]
 		) {
-			return this.localValueMaker.fromSerializable(serializable);
+			return this.localValueMaker.fromSerializable(
+				serializable,
+				this.serializer,
+				this.handle,
+			);
 		} else {
 			throw new Error("Unknown local value type");
 		}
@@ -767,13 +786,6 @@ export class AttributableMapKernel {
 				);
 				this.submitMapClearMessage(op, localOpMetadata.previousMap);
 			},
-			applyStashedOp: (op: IMapClearOperation) => {
-				const copy = new Map<string, ILocalValue>(this.data);
-				this.clearCore(true);
-				this.clearAllAttribution();
-				// We don't reuse the metadata pendingMessageId but send a new one on each submit.
-				return createClearLocalOpMetadata(op, this.getMapClearMessageId(), copy);
-			},
 		});
 		messageHandlers.set("delete", {
 			process: (message: ISequencedDocumentMessage, local, localOpMetadata) => {
@@ -786,12 +798,6 @@ export class AttributableMapKernel {
 			},
 			submit: (op: IMapDeleteOperation, localOpMetadata: MapKeyLocalOpMetadata) => {
 				this.resubmitMapKeyMessage(op, localOpMetadata);
-			},
-			applyStashedOp: (op: IMapDeleteOperation) => {
-				// We don't reuse the metadata pendingMessageId but send a new one on each submit.
-				const previousValue = this.deleteCore(op.key, true);
-				this.deleteAttribution(op.key);
-				return createKeyLocalOpMetadata(op, this.getMapKeyMessageId(op), previousValue);
 			},
 		});
 		messageHandlers.set("set", {
@@ -808,13 +814,6 @@ export class AttributableMapKernel {
 			},
 			submit: (op: IMapSetOperation, localOpMetadata: MapKeyLocalOpMetadata) => {
 				this.resubmitMapKeyMessage(op, localOpMetadata);
-			},
-			applyStashedOp: (op: IMapSetOperation) => {
-				// We don't reuse the metadata pendingMessageId but send a new one on each submit.
-				const context = this.makeLocal(op.key, op.value);
-				const previousValue = this.setCore(op.key, context, true);
-				this.setAttribution(op.key);
-				return createKeyLocalOpMetadata(op, this.getMapKeyMessageId(op), previousValue);
 			},
 		});
 

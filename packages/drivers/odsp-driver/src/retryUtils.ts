@@ -21,7 +21,7 @@ export async function runWithRetry<T>(
 ): Promise<T> {
 	let retryAfter = 1000;
 	const start = performance.now();
-	let lastError: any;
+	let lastError: unknown;
 	for (let attempts = 1; ; attempts++) {
 		if (checkDisposed !== undefined) {
 			checkDisposed();
@@ -40,10 +40,13 @@ export async function runWithRetry<T>(
 				);
 			}
 			return result;
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} catch (error: any) {
 			const canRetry = canRetryOnError(error);
 
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			const coherencyError = error?.[Odsp409Error] === true;
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			const serviceReadonlyError = error?.errorType === OdspErrorTypes.serviceReadOnly;
 
 			// logging the first failed retry instead of every attempt. We want to avoid filling telemetry
@@ -84,6 +87,7 @@ export async function runWithRetry<T>(
 					error,
 				);
 				// Fail hard.
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				error.canRetry = false;
 				throw error;
 			}

@@ -9,6 +9,7 @@ import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	getContainerEntryPointBackCompat,
+	getDataStoreEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import { describeCompat, ITestDataObject } from "@fluid-private/test-version-utils";
 
@@ -65,7 +66,9 @@ describeCompat(
 				const innerDataStore = await this._context.containerRuntime.createDataStore(
 					innerDataObjectFactory.type,
 				);
-				const innerDataObject = (await innerDataStore.entryPoint?.get()) as ITestDataObject;
+				const innerDataObject =
+					await getDataStoreEntryPointBackCompat<ITestDataObject>(innerDataStore);
+
 				this.root.set(this.innerDataStoreKey, innerDataObject.handle);
 			}
 
@@ -87,11 +90,11 @@ describeCompat(
 
 		let provider: ITestObjectProvider;
 
-		beforeEach("getTestObjectProvider", () => {
+		beforeEach("getTestObjectProvider", function () {
 			provider = getTestObjectProvider();
 		});
 
-		it("Requesting data store before outer data store completes initialization", async () => {
+		it("Requesting data store before outer data store completes initialization", async function () {
 			const containerRuntimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 				ContainerRuntimeFactoryWithDefaultDataStore,
 				{
@@ -116,7 +119,7 @@ describeCompat(
 			await assert.doesNotReject(container.attach(request), "Container did not attach");
 		});
 
-		it("Requesting data store before outer data store (non-root) completes initialization", async () => {
+		it("Requesting data store before outer data store (non-root) completes initialization", async function () {
 			const containerRuntimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 				ContainerRuntimeFactoryWithDefaultDataStore,
 				{

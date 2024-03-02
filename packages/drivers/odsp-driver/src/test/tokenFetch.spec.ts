@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import assert from "node:assert";
 import { tokenFromResponse, isTokenFromCache } from "@fluidframework/odsp-driver-definitions";
 
 describe("tokenFromResponse", () => {

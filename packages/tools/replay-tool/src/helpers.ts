@@ -16,7 +16,7 @@ import {
 	ConfigTypes,
 	FluidObject,
 	IConfigProviderBase,
-	ITelemetryLogger,
+	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import {
@@ -116,7 +116,7 @@ export async function loadContainer(
 	documentServiceFactory: IDocumentServiceFactory,
 	documentName: string,
 	strictChannels: boolean,
-	logger?: ITelemetryLogger,
+	logger?: ITelemetryBaseLogger,
 	loaderOptions?: ILoaderOptions,
 ): Promise<IContainer> {
 	const resolved: IResolvedUrl = {
@@ -181,9 +181,6 @@ export async function loadContainer(
 	};
 	// This is to align with the snapshot tests which may upgrade GC Version before the default is changed.
 	settings["Fluid.GarbageCollection.GCVersionUpgradeToV4"] = false;
-	// Due to a bug where references added by an attach op are missed, we need to keep the old code for now.
-	settings["Fluid.GarbageCollection.DetectOutboundRoutesViaDDS"] = true;
-
 	// Load the Fluid document while forcing summarizeProtocolTree option
 	const loader = new Loader({
 		urlResolver,

@@ -81,13 +81,9 @@
 	},
 	"alfred": {
 		"kafkaClientId": "alfred",
-		"maxMessageSize": "16KB",
-		"verifyMaxMessageSize": false,
-		"maxNumberOfClientsPerDocument": 1000000,
-		"numberOfMessagesPerTrace": 100,
 		"sessionStickinessDurationMs": 3600000,
-		"enableConnectionCountLogging": false,
 		"ignoreEphemeralFlag": true,
+		"enableClientIPLogging": false,
 		"throttling": {
 			"restCallsPerTenant": {
 				"generalRestCall": "disabled",
@@ -99,11 +95,7 @@
 				"createDoc": "disabled",
 				"getDeltas": "disabled",
 				"getSession": "disabled"
-			},
-			"socketConnectionsPerTenant": "disabled",
-			"socketConnectionsPerCluster": "disabled",
-			"submitOps": "disabled",
-			"submitSignal": "disabled"
+			}
 		},
 		"topic": "rawdeltas",
 		"bucket": "snapshots",
@@ -123,14 +115,7 @@
 				"key": "create-new-tenants-if-going-to-production"
 			}
 		],
-		"socketIoAdapter": {
-			"enableCustomSocketIoAdapter": true,
-			"shouldDisableDefaultNamespace": false
-		},
 		"enforceServerGeneratedDocumentId": false,
-		"socketIo": {
-			"perMessageDeflate": true
-		},
 		"jwtTokenCache": {
 			"enable": true
 		},
@@ -147,8 +132,6 @@
 		"verifyMaxMessageSize": false,
 		"maxNumberOfClientsPerDocument": 1000000,
 		"numberOfMessagesPerTrace": 100,
-		"sessionStickinessDurationMs": 3600000,
-		"enableConnectionCountLogging": false,
 		"throttling": {
 			"socketConnectionsPerTenant": "disabled",
 			"socketConnectionsPerCluster": "disabled",
@@ -177,14 +160,12 @@
 			"enableCustomSocketIoAdapter": true,
 			"shouldDisableDefaultNamespace": false
 		},
-		"enforceServerGeneratedDocumentId": false,
 		"socketIo": {
-			"perMessageDeflate": true
+			"perMessageDeflate": false
 		},
 		"jwtTokenCache": {
 			"enable": true
-		},
-		"getDeltasRequestMaxOpsRange": 2000
+		}
 	},
 	"client": {
 		"type": "browser",
@@ -205,7 +186,8 @@
 			"maxTime": 60000,
 			"maxMessages": 500
 		},
-		"restartOnCheckpointFailure": true
+		"restartOnCheckpointFailure": true,
+		"enableEphemeralContainerSummaryCleanup": true
 	},
 	"scribe": {
 		"kafkaClientId": "scribe",
@@ -273,7 +255,9 @@
 		"enableTelemetry": true,
 		"shouldLogInitialSuccessVerbose": false,
 		"maxDbBatchSize": 1000,
-		"restartOnCheckpointFailure": true
+		"restartOnCheckpointFailure": true,
+		"logSavedOpsTimeIntervalMs": 60000,
+		"opsCountTelemetryEnabled": true
 	},
 	"copier": {
 		"topic": "rawdeltas",
@@ -287,36 +271,44 @@
 		"port": 6379,
 		"tls": false,
 		"connectTimeout": 10000,
+		"slotsRefreshTimeout": 50000,
 		"maxRetriesPerRequest": 20,
 		"enableAutoPipelining": false,
-		"enableOfflineQueue": true
+		"enableOfflineQueue": true,
+		"enableClustering": false
 	},
 	"redisForTenantCache": {
 		"host": "redis",
 		"port": 6379,
 		"tls": false,
 		"connectTimeout": 10000,
+		"slotsRefreshTimeout": 50000,
 		"maxRetriesPerRequest": 20,
 		"enableAutoPipelining": false,
-		"enableOfflineQueue": true
+		"enableOfflineQueue": true,
+		"enableClustering": false
 	},
 	"redis2": {
 		"host": "redis",
 		"port": 6379,
 		"tls": false,
 		"connectTimeout": 10000,
+		"slotsRefreshTimeout": 50000,
 		"maxRetriesPerRequest": 20,
 		"enableAutoPipelining": false,
-		"enableOfflineQueue": true
+		"enableOfflineQueue": true,
+		"enableClustering": false
 	},
 	"redisForThrottling": {
 		"host": "redis",
 		"port": 6379,
 		"tls": false,
 		"connectTimeout": 10000,
+		"slotsRefreshTimeout": 50000,
 		"maxRetriesPerRequest": 20,
 		"enableAutoPipelining": false,
-		"enableOfflineQueue": true
+		"enableOfflineQueue": true,
+		"enableClustering": false
 	},
 	"error": {
 		"track": false,
@@ -384,6 +376,9 @@
 		}
 	],
 	"tokenRevocation": {
-		"enable": true
+		"enable": false
+	},
+	"clusterDraining": {
+		"enable": false
 	}
 }

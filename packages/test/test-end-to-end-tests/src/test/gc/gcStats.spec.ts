@@ -409,7 +409,7 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 
 		// Nothing should be unreferenced.
 		let gcStats = await summarizerRuntime.collectGarbage({});
-		assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
+		assert.deepStrictEqual(gcStats, expectedGCStats, "1. GC stats is not as expected");
 
 		// Remove both data store handles to mark them unreferenced.
 		mainDataObject._root.delete("dataStore1");
@@ -424,7 +424,7 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 		expectedGCStats.updatedDataStoreCount = 2;
 
 		gcStats = await summarizerRuntime.collectGarbage({});
-		assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
+		assert.deepStrictEqual(gcStats, expectedGCStats, "2. GC stats is not as expected");
 
 		// Add their handle back to re-reference them.
 		mainDataObject._root.set("dataStore1", dataStore1.handle);
@@ -437,6 +437,6 @@ describeCompat("Garbage Collection Stats", "NoCompat", (getTestObjectProvider) =
 		expectedGCStats.unrefDataStoreCount -= 2;
 
 		gcStats = await summarizerRuntime.collectGarbage({});
-		assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
+		assert.deepStrictEqual(gcStats, expectedGCStats, "3. GC stats is not as expected");
 	});
 });

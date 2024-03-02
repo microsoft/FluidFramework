@@ -14,7 +14,7 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { IContainer } from "@fluidframework/container-definitions";
+import { AttachState, IContainer } from "@fluidframework/container-definitions";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	FileDeltaStorageService,
@@ -902,8 +902,7 @@ async function assertDdsEqual(
 		return;
 	}
 
-	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	dataStoreRuntime.local = true;
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
 	const deltaConnection = new MockEmptyDeltaConnection();
 
 	async function newMatrix(summary: ISummaryTree): Promise<SharedMatrix> {

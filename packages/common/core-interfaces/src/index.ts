@@ -3,15 +3,10 @@
  * Licensed under the MIT License.
  */
 
-export type { IDisposable } from "./disposable";
+export type { IDisposable } from "./disposable.js";
 
-export {
-	FluidErrorTypes,
-	IErrorBase,
-	IGenericError,
-	IUsageError,
-	IThrottlingWarning,
-} from "./error";
+export type { IErrorBase, IGenericError, IUsageError, IThrottlingWarning } from "./error.js";
+export { FluidErrorTypes } from "./error.js";
 
 export type {
 	ExtendEventProvider,
@@ -22,55 +17,37 @@ export type {
 	IEventTransformer,
 	ReplaceIEventThisPlaceHolder,
 	TransformedEvent,
-} from "./events";
+} from "./events.js";
 
-export {
-	IFluidLoadable,
-	IProvideFluidLoadable,
-	IFluidRunnable,
-	IProvideFluidRunnable,
-} from "./fluidLoadable";
+export type { IProvideFluidLoadable, IProvideFluidRunnable } from "./fluidLoadable.js";
+export { IFluidLoadable, IFluidRunnable } from "./fluidLoadable.js";
 
-export {
+export type {
 	IFluidPackageEnvironment,
 	IFluidPackage,
-	isFluidPackage,
 	IFluidCodeDetailsConfig,
 	IFluidCodeDetails,
-	isFluidCodeDetails,
-	IFluidCodeDetailsComparer,
 	IProvideFluidCodeDetailsComparer,
-} from "./fluidPackage";
+} from "./fluidPackage.js";
+export { isFluidPackage, isFluidCodeDetails, IFluidCodeDetailsComparer } from "./fluidPackage.js";
 
 // TypeScript forgets the index signature when customers augment IRequestHeader if we export *.
 // So we export the explicit members as a workaround:
 // https://github.com/microsoft/TypeScript/issues/18877#issuecomment-476921038
-export { IRequest, IRequestHeader, IResponse } from "./fluidRouter";
+export type { IRequest, IRequestHeader, IResponse } from "./fluidRouter.js";
 
-export {
-	IFluidHandleContext,
-	IProvideFluidHandleContext,
-	IFluidHandle,
-	IProvideFluidHandle,
-} from "./handles";
+export type { IProvideFluidHandleContext, IProvideFluidHandle } from "./handles.js";
+export { IFluidHandleContext, IFluidHandle } from "./handles.js";
 
 export type {
 	ILoggingError,
-	ITaggedTelemetryPropertyType, // deprecated
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 	ITelemetryBaseProperties,
-	ITelemetryErrorEvent, // deprecated
-	ITelemetryGenericEvent, // deprecated
-	ITelemetryLogger, // deprecated
-	ITelemetryPerformanceEvent, // deprecated
-	ITelemetryProperties, // deprecated
 	Tagged,
-	TelemetryEventCategory, // deprecated
 	TelemetryBaseEventPropertyType,
-	TelemetryEventPropertyType, // deprecated
-} from "./logger";
-export { LogLevel } from "./logger";
-export { FluidObjectProviderKeys, FluidObject, FluidObjectKeys } from "./provider";
-export { ConfigTypes, IConfigProviderBase } from "./config";
-export { ISignalEnvelope } from "./messages";
+} from "./logger.js";
+export { LogLevel } from "./logger.js";
+export type { FluidObjectProviderKeys, FluidObject, FluidObjectKeys } from "./provider.js";
+export type { ConfigTypes, IConfigProviderBase } from "./config.js";
+export type { ISignalEnvelope } from "./messages.js";

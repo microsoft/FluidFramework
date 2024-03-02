@@ -10,11 +10,12 @@ import {
 	makeCodecFamily,
 	DiscriminatedUnionDispatcher,
 } from "../codec/index.js";
-import { ChangeEncodingContext } from "../core/index.js";
+import { ChangeEncodingContext, TreeStoredSchema } from "../core/index.js";
 import { Mutable } from "../util/index.js";
 import {
 	EncodedModularChangeset,
 	ModularChangeset,
+	defaultSchemaPolicy,
 	makeSchemaChangeCodec,
 } from "../feature-libraries/index.js";
 import { SharedTreeChange, SharedTreeInnerChange } from "./sharedTreeChangeTypes.js";
@@ -58,15 +59,30 @@ export function makeSharedTreeChangeCodec(
 	return {
 		encode: (change, context) => {
 			const changes: EncodedSharedTreeInnerChange[] = [];
+			let updatedSchema: TreeStoredSchema | undefined;
 			for (const decodedChange of change.changes) {
 				if (decodedChange.type === "data") {
+					const schemaAndPolicy =
+						updatedSchema !== undefined
+							? {
+									policy:
+										context.schema !== undefined
+											? context.schema.policy
+											: defaultSchemaPolicy,
+									schema: updatedSchema,
+							  }
+							: context.schema;
 					changes.push({
-						data: modularChangeCodec.encode(decodedChange.innerChange, context),
+						data: modularChangeCodec.encode(decodedChange.innerChange, {
+							originatorId: context.originatorId,
+							schema: schemaAndPolicy,
+						}),
 					});
 				} else if (decodedChange.type === "schema") {
 					changes.push({
 						schema: schemaChangeCodec.encode(decodedChange.innerChange),
 					});
+					updatedSchema = decodedChange.innerChange.schema.new;
 				}
 			}
 			return changes;

@@ -22,9 +22,9 @@ import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
-import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { ITree } from '@fluidframework/tree';
 import { SharedObject } from '@fluidframework/shared-object-base';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
@@ -896,7 +896,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
     // (undocumented)
     applyEdit(changes: readonly Change[]): Edit<InternalizedChange>;
     applyEditInternal(editOrChanges: Edit<ChangeInternal> | readonly ChangeInternal[]): Edit<ChangeInternal>;
-    protected applyStashedOp(op: unknown): StashedLocalOpMetadata;
+    protected applyStashedOp(op: unknown): void;
     attributeNodeId(id: NodeId): AttributionId;
     get attributionId(): AttributionId;
     convertToNodeId(id: StableNodeId): NodeId;
@@ -908,6 +908,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
     get edits(): OrderedEditSet<InternalizedChange>;
     equals(sharedTree: SharedTree): boolean;
     generateNodeId(override?: string): NodeId;
+    // (undocumented)
+    getAttachSummary(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined): ISummaryTreeWithStats;
     static getFactory(...args: SharedTreeArgs<WriteFormat.v0_0_2>): SharedTreeFactory;
     // (undocumented)
     static getFactory(...args: SharedTreeArgs<WriteFormat.v0_1_1>): SharedTreeFactory;
@@ -918,7 +920,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
     internalizeChange(change: Change): ChangeInternal;
     // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
-    loadSerializedSummary(blobData: string): ITelemetryProperties;
+    loadSerializedSummary(blobData: string): ITelemetryBaseProperties;
     loadSummary(summary: SharedTreeSummaryBase): void;
     readonly logger: ITelemetryLoggerExt;
     get logViewer(): LogViewer;
@@ -981,7 +983,7 @@ export class SharedTreeFactory implements IChannelFactory {
     get attributes(): IChannelAttributes;
     create(runtime: IFluidDataStoreRuntime, id: string): SharedTree;
     // (undocumented)
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, _channelAttributes: Readonly<IChannelAttributes>): Promise<IChannel>;
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, _channelAttributes: Readonly<IChannelAttributes>): Promise<SharedTree>;
     // (undocumented)
     static Type: string;
     // (undocumented)

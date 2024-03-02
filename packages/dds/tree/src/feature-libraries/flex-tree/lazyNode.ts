@@ -548,7 +548,7 @@ export abstract class LazyObjectNode<TSchema extends FlexObjectNodeSchema>
 		assert(field instanceof LazyNodeKeyField, 0x7b4 /* unexpected node key field */);
 		// TODO: ideally we would do something like this, but that adds dependencies we can't have here:
 		// assert(
-		// 	field.is(TreeFieldSchema.create(FieldKinds.nodeKey, [nodeKeyTreeSchema])),
+		// 	field.is(FlexFieldSchema.create(FieldKinds.nodeKey, [nodeKeyTreeSchema])),
 		// 	"invalid node key field",
 		// );
 
