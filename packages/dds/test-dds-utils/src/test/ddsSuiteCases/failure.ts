@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { Operation, SharedNothingFactory, baseModel } from "../sharedNothing.js";
-import { ChangeConnectionState, DDSFuzzModel, createDDSFuzzSuite } from "../../ddsFuzzHarness.js";
+import type { Operation, SharedNothingFactory } from "../sharedNothing.js";
+import { baseModel } from "../sharedNothing.js";
+import type { ChangeConnectionState, DDSFuzzModel } from "../../ddsFuzzHarness.js";
+import { createDDSFuzzSuite } from "../../ddsFuzzHarness.js";
 import { _dirname } from "./dirname.cjs";
 
 const model: DDSFuzzModel<SharedNothingFactory, Operation | ChangeConnectionState> = {
