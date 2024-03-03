@@ -1547,7 +1547,7 @@ describe("Runtime", () => {
 				},
 				maxBatchSizeInBytes: 700 * 1024,
 				chunkSizeInBytes: 204800,
-				enableRuntimeIdCompressor: "delayed",
+				enableRuntimeIdCompressor: "off",
 				enableOpReentryCheck: false,
 				enableGroupedBatching: false,
 			};
@@ -1567,7 +1567,7 @@ describe("Runtime", () => {
 						eventName: "ContainerRuntime:ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(mergedRuntimeOptions),
-						idCompressorEnabled: "delayed",
+						idCompressorEnabled: defaultRuntimeOptions.enableRuntimeIdCompressor,
 					},
 				]);
 			});

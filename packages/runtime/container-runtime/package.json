@@ -242,7 +242,8 @@
 				"forwardCompat": false
 			},
 			"InterfaceDeclaration_IContainerRuntimeMetadata": {
-				"forwardCompat": false
+				"forwardCompat": false,
+				"backCompat": false
 			},
 			"InterfaceDeclaration_IContainerRuntimeOptions": {
 				"forwardCompat": false,
