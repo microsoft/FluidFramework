@@ -22,7 +22,10 @@ import { MessageType, type ISequencedDocumentMessage } from '@fluidframework/pro
 import { type EventEmitterEventType } from '@fluid-internal/client-utils';
 import { DataProcessingError, EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import type { SessionId, IIdCompressorCore } from '@fluidframework/id-compressor';
-import { type SharedTreeFactory as LegacySharedTreeFactory, type SharedTree as LegacySharedTree } from '../SharedTree';
+import {
+	type SharedTreeFactory as LegacySharedTreeFactory,
+	type SharedTree as LegacySharedTree,
+} from '../SharedTree.js';
 import { type IShimChannelServices, NoDeltasChannelServices } from './shimChannelServices.js';
 import { MigrationShimDeltaHandler } from './migrationDeltaHandler.js';
 import { PreMigrationDeltaConnection, StampDeltaConnection } from './shimDeltaConnection.js';
@@ -196,12 +199,12 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 			this.runtime.attachState === AttachState.Detached
 				? new NoDeltasChannelServices(services)
 				: this.generateShimServicesOnce(services);
-		this._legacyTree = (await this.legacyTreeFactory.load(
+		this._legacyTree = await this.legacyTreeFactory.load(
 			this.runtime,
 			this.id,
 			shimServices,
 			this.legacyTreeFactory.attributes
-		)) as LegacySharedTree;
+		);
 	}
 	public create(): void {
 		this._legacyTree = this.legacyTreeFactory.create(this.runtime, this.id);

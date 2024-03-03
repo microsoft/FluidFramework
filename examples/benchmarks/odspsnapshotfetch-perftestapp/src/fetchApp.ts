@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FluidAppOdspUrlResolver } from "@fluid-tools/fluidapp-odsp-urlresolver";
+import { FluidAppOdspUrlResolver } from "@fluidframework/odsp-urlresolver";
 import { assert } from "@fluidframework/core-utils";
 import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
 import { MockLogger } from "@fluidframework/telemetry-utils";

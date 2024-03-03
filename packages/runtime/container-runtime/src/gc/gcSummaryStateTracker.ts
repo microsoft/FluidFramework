@@ -13,10 +13,10 @@ import {
 	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
 import { mergeStats, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { IRefreshSummaryResult } from "../summary";
-import { GCVersion, IGarbageCollectorConfigs, IGCStats } from "./gcDefinitions";
-import { generateSortedGCState } from "./gcHelpers";
-import { IGarbageCollectionSnapshotData, IGarbageCollectionState } from "./gcSummaryDefinitions";
+import { IRefreshSummaryResult } from "../summary/index.js";
+import { GCVersion, IGarbageCollectorConfigs, IGCStats } from "./gcDefinitions.js";
+import { generateSortedGCState } from "./gcHelpers.js";
+import { IGarbageCollectionSnapshotData, IGarbageCollectionState } from "./gcSummaryDefinitions.js";
 
 export const gcStateBlobKey = `${gcBlobPrefix}_root`;
 
@@ -50,6 +50,18 @@ export class GCSummaryStateTracker {
 	// Tracks the count of data stores whose state updated since the last summary, i.e., they went from referenced
 	// to unreferenced or vice-versa.
 	public updatedDSCountSinceLastSummary: number = 0;
+
+	/** API for ensuring the correct auto-recovery mitigations */
+	public autoRecovery = {
+		requestFullGCOnNextRun: () => {
+			this.fullGCModeForAutoRecovery = true;
+		},
+		fullGCRequested: () => {
+			return this.fullGCModeForAutoRecovery;
+		},
+	};
+	/** If true, the next GC run will do fullGC mode to regenerate the GC data for each node */
+	private fullGCModeForAutoRecovery: boolean = false;
 
 	constructor(
 		// Tells whether GC should run or not.
@@ -133,7 +145,6 @@ export class GCSummaryStateTracker {
 	 * If none of the components changed, it returns a summary handle for the entire GC data.
 	 */
 	public summarize(
-		fullTree: boolean,
 		trackState: boolean,
 		gcState: IGarbageCollectionState,
 		deletedNodes: Set<string>,
@@ -167,7 +178,7 @@ export class GCSummaryStateTracker {
 			serializedDeletedNodes,
 		};
 
-		if (trackState && !fullTree && this.latestSummaryData !== undefined) {
+		if (trackState && this.latestSummaryData !== undefined) {
 			// If nothing changed since last summary, send a summary handle for the entire GC data.
 			if (
 				this.latestSummaryData.serializedGCState === serializedGCState &&
@@ -267,7 +278,7 @@ export class GCSummaryStateTracker {
 	}
 
 	/**
-	 * Called to refresh the latest summary state. This happens when either a pending summary is acked.
+	 * Called to refresh the latest summary state. This happens when a pending summary is acked.
 	 */
 	public async refreshLatestSummary(result: IRefreshSummaryResult): Promise<void> {
 		if (!result.isSummaryTracked) {
@@ -287,6 +298,7 @@ export class GCSummaryStateTracker {
 		this.latestSummaryData = this.pendingSummaryData;
 		this.pendingSummaryData = undefined;
 		this.updatedDSCountSinceLastSummary = 0;
+		this.fullGCModeForAutoRecovery = false;
 		return;
 	}
 

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { Definition, NodeId } from './Identifiers';
-import { fail, memoizeGetter } from './Common';
-import { Payload, TraitMap, TreeNode } from './persisted-types';
-import { TreeView, TreeViewNode } from './TreeView';
+import { Definition, NodeId } from './Identifiers.js';
+import { fail, memoizeGetter } from './Common.js';
+import { Payload, TraitMap, TreeNode } from './persisted-types/index.js';
+import { TreeView, TreeViewNode } from './TreeView.js';
 
 /**
  * A handle to a `TreeNode` that exists within a specific `TreeView`. This type provides a convenient

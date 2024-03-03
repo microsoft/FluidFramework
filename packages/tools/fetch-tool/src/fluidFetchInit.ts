@@ -3,17 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { URL } from "url";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
-import { FluidAppOdspUrlResolver } from "@fluid-tools/fluidapp-odsp-urlresolver";
-import { IClientConfig, IOdspAuthRequestInfo } from "@fluidframework/odsp-doclib-utils";
+import { IClientConfig, IOdspAuthRequestInfo } from "@fluidframework/odsp-doclib-utils/internal";
 import * as odsp from "@fluidframework/odsp-driver";
 import {
 	IOdspResolvedUrl,
 	OdspResourceTokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions";
-import { OdspUrlResolver } from "@fluidframework/odsp-urlresolver";
+import { FluidAppOdspUrlResolver, OdspUrlResolver } from "@fluidframework/odsp-urlresolver";
 import * as r11s from "@fluidframework/routerlicious-driver";
 import { RouterliciousUrlResolver } from "@fluidframework/routerlicious-urlresolver";
 import { getMicrosoftConfiguration } from "@fluidframework/tool-utils";

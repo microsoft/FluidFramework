@@ -21,11 +21,11 @@ import {
 import { mergeStats } from "@fluidframework/runtime-utils";
 import { TelemetryDataTag, createChildLogger } from "@fluidframework/telemetry-utils";
 
-import { createRootSummarizerNode, IRootSummarizerNode } from "../summary";
+import { createRootSummarizerNode, IRootSummarizerNode } from "../summary/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { SummarizerNode } from "../summary/summarizerNode/summarizerNode";
+import { SummarizerNode } from "../summary/summarizerNode/summarizerNode.js";
 // eslint-disable-next-line import/no-internal-modules
-import { ValidateSummaryResult } from "../summary/summarizerNode";
+import { ValidateSummaryResult } from "../summary/summarizerNode/index.js";
 
 describe("Runtime", () => {
 	describe("Summarization", () => {
@@ -218,9 +218,9 @@ describe("Runtime", () => {
 			describe("Start Summary", () => {
 				it("Should fail startSummary if previous attempt is not completed/cleared", () => {
 					createRoot();
-					rootNode.startSummary(11, logger);
+					rootNode.startSummary(11, logger, 0);
 					expectThrow(
-						() => rootNode.startSummary(12, logger),
+						() => rootNode.startSummary(12, logger, 0),
 						"start summary",
 						"wip referenceSequenceNumber and logger are still set",
 						"0x19f",
@@ -230,24 +230,77 @@ describe("Runtime", () => {
 
 				it("Should succeed startSummary if previous attempt is completed", async () => {
 					createRoot();
-					rootNode.startSummary(11, logger);
+					rootNode.startSummary(11, logger, 0);
 					await rootNode.summarize(false);
 					rootNode.completeSummary("test-handle", true /* validateSummary */);
-					rootNode.startSummary(12, logger);
+					rootNode.startSummary(12, logger, 0); // This is 0 since we did not "ack" the latest summary
 				});
 
 				it("Should succeed startSummary if previous attempt is cleared", () => {
 					createRoot();
-					rootNode.startSummary(11, logger);
+					rootNode.startSummary(11, logger, 0);
 					rootNode.clearSummary();
-					rootNode.startSummary(12, logger);
+					rootNode.startSummary(12, logger, 0); // This is 0 since we did not "ack" the latest summary
+				});
+
+				it("Should succeed startSummary with the right sequence number", async () => {
+					createRoot();
+					rootNode.startSummary(11, logger, 0);
+					await rootNode.summarize(false);
+					rootNode.completeSummary("test-handle", true /* validateSummary */);
+					// Refreshing should be necessary for startSummary to occur
+					await rootNode.refreshLatestSummary("test-handle", 11);
+					const result = rootNode.startSummary(12, logger, 11);
+					assert.strictEqual(result.invalidNodes, 0, "startSummary have succeeded");
+				});
+
+				it("Should fail startSummary when missing refresh", async () => {
+					createRoot();
+					// Need one latest summary
+					rootNode.startSummary(11, logger, 0);
+					await rootNode.summarize(false);
+					rootNode.completeSummary("test-handle", true /* validateSummary */);
+					await rootNode.refreshLatestSummary("test-handle", 11);
+
+					// Summary with missing refresh
+					rootNode.startSummary(12, logger, 11);
+					await rootNode.summarize(false);
+					rootNode.completeSummary("test-handle", true /* validateSummary */);
+
+					// Failing to refresh the root node should generate failing summaries
+					const result = rootNode.startSummary(21, logger, 12);
+					assert.strictEqual(
+						result.invalidNodes,
+						1,
+						"startSummary fails due to no refresh",
+					);
+					assert.deepEqual(
+						result.mismatchNumbers,
+						new Set(["12-11"]),
+						"startSummary should have mismatched numbers",
+					);
+				});
+
+				it("Should fail startSummary with the wrong sequence number", async () => {
+					createRoot();
+					rootNode.startSummary(11, logger, 0);
+					await rootNode.summarize(false);
+					rootNode.completeSummary("test-handle", true /* validateSummary */);
+					await rootNode.refreshLatestSummary("test-handle", 11);
+					const result = rootNode.startSummary(12, logger, 0); // 0 is wrong here (so we can get invalid results)
+					assert.strictEqual(result.invalidNodes, 1, "expected failure wrong ref seq");
+					assert.deepEqual(
+						result.mismatchNumbers,
+						new Set(["0-11"]),
+						"startSummary have succeeded",
+					);
 				});
 			});
 
 			describe("Validate Summary", () => {
 				it("summary validation should fail if summarize not called on root node", () => {
 					createRoot();
-					rootNode.startSummary(11, logger);
+					rootNode.startSummary(11, logger, 0);
 
 					// Validate summary fails by calling validateSummary.
 					const expectedResult: ValidateSummaryResult = {
@@ -282,7 +335,7 @@ describe("Runtime", () => {
 					createRoot();
 					createMid({ type: CreateSummarizerNodeSource.Local });
 					createLeaf({ type: CreateSummarizerNodeSource.Local });
-					rootNode.startSummary(11, logger);
+					rootNode.startSummary(11, logger, 0);
 					await rootNode.summarize(false);
 					await leafNode?.summarize(false);
 					const midNodeId = `/${ids[1]}`;
@@ -319,7 +372,7 @@ describe("Runtime", () => {
 					createRoot();
 					createMid({ type: CreateSummarizerNodeSource.Local });
 					createLeaf({ type: CreateSummarizerNodeSource.Local });
-					rootNode.startSummary(11, logger);
+					rootNode.startSummary(11, logger, 0);
 					await rootNode.summarize(false);
 					await midNode?.summarize(false);
 					const leafNodeId = `/${ids[1]}/${ids[2]}`;
@@ -370,7 +423,7 @@ describe("Runtime", () => {
 				it("Should call summarize internal with later op", async () => {
 					createRoot({ refSeq: 11 });
 					rootNode.recordChange(fakeOp(12));
-					rootNode.startSummary(99, logger);
+					rootNode.startSummary(99, logger, 11);
 					const result = await rootNode.summarize(false);
 					assertSummarizeCalls(1, 0, 0);
 					assert(result.summary.type === SummaryType.Tree, "should be tree");
@@ -379,7 +432,7 @@ describe("Runtime", () => {
 				it("Should call summarize internal with later invalidate", async () => {
 					createRoot({ refSeq: 11 });
 					rootNode.invalidate(12);
-					rootNode.startSummary(99, logger);
+					rootNode.startSummary(99, logger, 11);
 					const result = await rootNode.summarize(false);
 					assertSummarizeCalls(1, 0, 0);
 					assert(result.summary.type === SummaryType.Tree, "should be tree");
@@ -388,7 +441,7 @@ describe("Runtime", () => {
 				it("Should not call summarize internal and instead use handle", async () => {
 					createRoot({ refSeq: 11 });
 					rootNode.recordChange(fakeOp(11));
-					rootNode.startSummary(99, logger);
+					rootNode.startSummary(99, logger, 11);
 					const result = await rootNode.summarize(false);
 					assertSummarizeCalls(0, 0, 0);
 					assert(result.summary.type === SummaryType.Handle, "should be handle");
@@ -397,7 +450,7 @@ describe("Runtime", () => {
 				it("Should call summarize internal always when fullTree true", async () => {
 					createRoot({ refSeq: 11 });
 					rootNode.recordChange(fakeOp(10));
-					rootNode.startSummary(99, logger);
+					rootNode.startSummary(99, logger, 11);
 					const result = await rootNode.summarize(true);
 					assertSummarizeCalls(1, 0, 0);
 					assert(result.summary.type === SummaryType.Tree, "should be tree");
@@ -418,7 +471,7 @@ describe("Runtime", () => {
 					createRoot();
 					const proposalHandle = "test-handle";
 
-					rootNode.startSummary(10, logger);
+					rootNode.startSummary(10, logger, 0);
 					await rootNode.summarize(false);
 					rootNode.completeSummary(proposalHandle, true /* validateSummary */);
 
@@ -435,7 +488,7 @@ describe("Runtime", () => {
 					const proposalHandle = "test-handle";
 
 					const referenceSeqNum = 10;
-					rootNode.startSummary(referenceSeqNum, logger);
+					rootNode.startSummary(referenceSeqNum, logger, 0);
 					await rootNode.summarize(false);
 					await assert.rejects(
 						async () => rootNode.refreshLatestSummary(proposalHandle, summaryRefSeq),

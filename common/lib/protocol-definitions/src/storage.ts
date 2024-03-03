@@ -117,6 +117,14 @@ export interface ITree {
 	 * Indicates that this tree is unreferenced. If this is not present, the tree is considered referenced.
 	 */
 	unreferenced?: true;
+
+	/**
+	 * Represents the loading group to which the tree belongs to. Please refer to this readme for more context.
+	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}
+	 * Also note that "groupId" is the same as "loadingGroupId" used elsewhere in the repo. The naming discrepancy is
+	 * intentional to minimize snapshot/summary size.
+	 */
+	groupId?: string;
 }
 
 /**
@@ -131,6 +139,20 @@ export interface ISnapshotTree {
 	 * Indicates that this tree is unreferenced. If this is not present, the tree is considered referenced.
 	 */
 	unreferenced?: true;
+
+	/**
+	 * Represents the loading group to which the snapshot tree belongs to. Please refer to this readme for more context.
+	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}
+	 * Also note that "groupId" is the same as "loadingGroupId" used elsewhere in the repo. The naming discrepancy is
+	 * intentional to minimize snapshot/summary size.
+	 */
+	groupId?: string;
+
+	/**
+	 * If true, then the service did not include the blobs content for the blobs in this snapshot tree. The service would
+	 * specify the groupId in that case, so that we can use that to fetch the latest content.
+	 */
+	omitted?: boolean;
 }
 
 /**

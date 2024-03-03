@@ -63,11 +63,11 @@ export class Lumberjack {
 			}
 			return getGlobalLumberjackInstance() as Lumberjack;
 		}
-		if (!Lumberjack._instance) {
-			Lumberjack._instance = new Lumberjack();
+		if (!this._instance) {
+			this._instance = new Lumberjack();
 		}
 
-		return Lumberjack._instance;
+		return this._instance;
 	}
 
 	protected static set options(options: Partial<ILumberjackOptions> | undefined) {

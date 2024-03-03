@@ -8,7 +8,7 @@ import {
 	PerformanceEvent,
 	LoggingError,
 } from "@fluidframework/telemetry-utils";
-import { ITelemetryProperties } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 
 import {
 	assert,
@@ -32,8 +32,9 @@ import {
 	ISummaryCancellationToken,
 	SummaryGeneratorTelemetry,
 	SubmitSummaryFailureData,
-} from "./summarizerTypes";
-import { IClientSummaryWatcher } from "./summaryCollection";
+	IRefreshSummaryAckOptions,
+} from "./summarizerTypes.js";
+import { IClientSummaryWatcher } from "./summaryCollection.js";
 
 export type raceTimerResult<T> =
 	| { result: "done"; value: T }
@@ -186,7 +187,7 @@ export class RetriableSummaryError extends LoggingError {
 	constructor(
 		message: string,
 		public readonly retryAfterSeconds?: number,
-		props?: ITelemetryProperties,
+		props?: ITelemetryBaseProperties,
 	) {
 		super(message, props);
 	}
@@ -204,6 +205,9 @@ export class SummaryGenerator {
 			options: ISubmitSummaryOptions,
 		) => Promise<SubmitSummaryResult>,
 		private readonly successfulSummaryCallback: () => void,
+		private readonly refreshLatestSummaryCallback: (
+			options: IRefreshSummaryAckOptions,
+		) => Promise<void>,
 		private readonly summaryWatcher: Pick<IClientSummaryWatcher, "watchSummary">,
 		private readonly logger: ITelemetryLoggerExt,
 	) {
@@ -434,6 +438,14 @@ export class SummaryGenerator {
 				summarizeEvent.end({
 					...summarizeTelemetryProps,
 					handle: ackNackOp.contents.handle,
+				});
+				// This processes the summary ack of the successful summary. This is so that the next summary does not
+				// start before the ack of the previous summary is processed.
+				await this.refreshLatestSummaryCallback({
+					proposalHandle: summarizeOp.contents.handle,
+					ackHandle: ackNackOp.contents.handle,
+					summaryRefSeq: summarizeOp.referenceSequenceNumber,
+					summaryLogger,
 				});
 				resultsBuilder.receivedSummaryAckOrNack.resolve({
 					success: true,

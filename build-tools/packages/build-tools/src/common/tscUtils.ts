@@ -11,6 +11,13 @@ export const parseCommandLine = defaultTscUtil.parseCommandLine;
 export const findConfigFile = defaultTscUtil.findConfigFile;
 export const readConfigFile = defaultTscUtil.readConfigFile;
 
+/**
+ * Matches fluid-tsc command start.
+ * Upon match index 1 and group.type will be "commonjs"|"module".
+ * Remaining string will be tsc arguments.
+ */
+export const fluidTscRegEx = /^fluid-tsc\s+(?<type>commonjs|module)/;
+
 // See convertToProgramBuildInfoCompilerOptions in typescript src/compiler/builder.ts
 const incrementalOptions = [
 	// affectsEmit === true
@@ -182,7 +189,11 @@ function createTscUtil(tsLib: typeof ts) {
 		tsLib,
 		parseCommandLine: (command: string) => {
 			// TODO: parse the command line for real, split space for now.
-			const args = command.split(" ");
+			// In case of fluid-tsc, replace those parts with 'tsc' before split.
+			const args = command.replace(fluidTscRegEx, "tsc").split(" ");
+			if (command.includes("&&")) {
+				console.warn("Warning: '&&' is not supported in tsc command.");
+			}
 
 			const parsedCommand = tsLib.parseCommandLine(args.slice(1));
 			if (parsedCommand.errors.length) {

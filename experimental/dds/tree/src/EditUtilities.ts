@@ -5,9 +5,9 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { compareArrays } from '@fluidframework/core-utils';
-import { copyPropertyIfDefined, fail, Mutable } from './Common';
-import { Definition, DetachedSequenceId, EditId, NodeId, StableNodeId, TraitLabel } from './Identifiers';
-import { NodeIdContext, NodeIdConverter } from './NodeIdUtilities';
+import { copyPropertyIfDefined, fail, Mutable } from './Common.js';
+import { Definition, DetachedSequenceId, EditId, NodeId, StableNodeId, TraitLabel } from './Identifiers.js';
+import { NodeIdContext, NodeIdConverter } from './NodeIdUtilities.js';
 import {
 	BuildNodeInternal,
 	ChangeInternal,
@@ -23,13 +23,13 @@ import {
 	TraitMap,
 	TreeNode,
 	TreeNodeSequence,
-} from './persisted-types';
-import { TraitLocation, TreeView } from './TreeView';
-import { BuildNode, BuildTreeNode, Change, HasVariadicTraits, StablePlace, StableRange } from './ChangeTypes';
-import { placeFromStablePlace, rangeFromStableRange } from './TreeViewUtilities';
-import { iterateChildren, TransactionView } from './RevisionView';
-import { getChangeNode_0_0_2FromView } from './SerializationUtilities';
-import { comparePayloads } from './PayloadUtilities';
+} from './persisted-types/index.js';
+import { TraitLocation, TreeView } from './TreeView.js';
+import { BuildNode, BuildTreeNode, Change, HasVariadicTraits, StablePlace, StableRange } from './ChangeTypes.js';
+import { placeFromStablePlace, rangeFromStableRange } from './TreeViewUtilities.js';
+import { iterateChildren, TransactionView } from './RevisionView.js';
+import { getChangeNode_0_0_2FromView } from './SerializationUtilities.js';
+import { comparePayloads } from './PayloadUtilities.js';
 
 /**
  * Functions for constructing and comparing Edits.

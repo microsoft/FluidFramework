@@ -6,18 +6,13 @@
 import {
 	IEvent,
 	IEventProvider,
-	ITelemetryLogger,
 	IDisposable,
 	IFluidHandleContext,
 	IFluidHandle,
 	FluidObject,
+	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import {
-	IAudience,
-	IDeltaManager,
-	AttachState,
-	ILoaderOptions,
-} from "@fluidframework/container-definitions";
+import { IAudience, IDeltaManager, AttachState } from "@fluidframework/container-definitions";
 import {
 	IDocumentMessage,
 	IQuorumClients,
@@ -53,7 +48,8 @@ export interface IFluidDataStoreRuntime
 	readonly channelsRoutingContext: IFluidHandleContext;
 	readonly objectsRoutingContext: IFluidHandleContext;
 
-	readonly options: ILoaderOptions;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	readonly options: Record<string | number, any>;
 
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 
@@ -61,7 +57,7 @@ export interface IFluidDataStoreRuntime
 
 	readonly connected: boolean;
 
-	readonly logger: ITelemetryLogger;
+	readonly logger: ITelemetryBaseLogger;
 
 	/**
 	 * Indicates the attachment state of the data store to a host service.

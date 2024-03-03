@@ -10,75 +10,80 @@ import {
 	SchemaFactory,
 	Tree,
 	InsertableTreeFieldFromImplicitField,
+	type NodeFromSchema,
 } from "../../simple-tree/index.js";
 
 // eslint-disable-next-line import/no-internal-modules
 import { getFlexNode } from "../../simple-tree/flexNode.js";
-import { getRoot } from "./utils.js";
+import { hydrate } from "./utils.js";
 
 describe("SharedTreeObject factories", () => {
 	const sb = new SchemaFactory("test");
 
-	class ChildA extends sb.object("childA", {
+	const ChildA = sb.object("childA", {
 		content: sb.number,
-	}) {}
+	});
 
-	class ChildB extends sb.object("childB", {
+	const ChildB = sb.object("childB", {
 		content: sb.number,
-	}) {}
+	});
 
-	class ChildOptional extends sb.object("childOptional", {
+	const ChildOptional = sb.object("childOptional", {
 		content: sb.optional(sb.number),
-	}) {}
+	});
 
-	class ChildD extends sb.object("childD", {
+	const ChildD = sb.object("childD", {
 		list: sb.array([ChildA, ChildB]),
 		map: sb.map([ChildA, ChildB]),
-	}) {}
+	});
 
-	class ChildC extends sb.object("childC", {
+	const ChildC = sb.object("childC", {
 		child: ChildD,
-	}) {}
+	});
 
-	class Schema extends sb.object("parent", {
+	const Schema = sb.object("parent", {
 		child: ChildA,
 		poly: [ChildA, ChildB],
 		list: sb.array(sb.number),
 		map: sb.map(sb.number),
 		optional: sb.optional(ChildOptional),
 		grand: ChildC,
-	}) {}
-
-	const initialTree: () => InsertableTreeFieldFromImplicitField<typeof Schema> = () => ({
-		child: new ChildA({ content: 42 }),
-		poly: new ChildB({ content: 42 }),
-		list: [42, 42, 42],
-		map: new Map([
-			["a", 0],
-			["b", 1],
-		]),
-		// TODO: Omit optional field once correctly supported.
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6569
-		optional: undefined,
-		grand: {
-			child: {
-				list: [new ChildA({ content: 42 }), new ChildB({ content: 42 })],
-				map: new Map<string, ChildA | ChildB>([
-					["a", new ChildA({ content: 42 })],
-					["b", new ChildB({ content: 42 })],
-				]),
-			},
-		},
 	});
 
+	type ChildAOrB = NodeFromSchema<typeof ChildA> | NodeFromSchema<typeof ChildB>;
+
+	function initialTree(): InsertableTreeFieldFromImplicitField<typeof Schema> {
+		return {
+			child: new ChildA({ content: 42 }),
+			poly: new ChildB({ content: 42 }),
+			list: [42, 42, 42],
+			map: new Map([
+				["a", 0],
+				["b", 1],
+			]),
+			// TODO: Omit optional field once correctly supported.
+			// https://dev.azure.com/fluidframework/internal/_workitems/edit/6569
+			optional: undefined,
+			grand: {
+				child: {
+					list: [new ChildA({ content: 42 }), new ChildB({ content: 42 })],
+					map: new Map<string, ChildAOrB>([
+						["a", new ChildA({ content: 42 })],
+						["b", new ChildB({ content: 42 })],
+					]),
+				},
+			},
+		};
+	}
+
 	it("correctly construct objects with content", () => {
-		const root = getRoot(Schema, initialTree);
+		const root = hydrate(Schema, initialTree());
 		root.child = new ChildA({ content: 43 });
 		assert.equal(root.child.content, 43);
 	});
 
 	it("construct objects that work in polymorphic fields", () => {
-		const root = getRoot(Schema, initialTree);
+		const root = hydrate(Schema, initialTree());
 		root.poly = new ChildA({ content: 43 });
 		assert.equal(root.poly.content, 43);
 		root.poly = new ChildB({ content: 44 });
@@ -86,7 +91,7 @@ describe("SharedTreeObject factories", () => {
 	});
 
 	it("can re-use content objects", () => {
-		const root = getRoot(Schema, initialTree);
+		const root = hydrate(Schema, initialTree());
 		// The `create` functions stamp the content with a `[typeNameSymbol]`.
 		// This test ensures that they shallow copy the content before doing the stamp.
 		const content = { content: 43 };
@@ -96,24 +101,20 @@ describe("SharedTreeObject factories", () => {
 		assert.equal(root.poly.content, 44);
 	});
 
-	// TODO: Fix prototype for objects declared using 'class-schema'.
-	// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-	it.skip("don't require optional data to be included", () => {
-		const root = getRoot(Schema, initialTree);
+	it("don't require optional data to be included", () => {
+		const root = hydrate(Schema, initialTree());
 		assert.equal(root.optional, undefined);
 		root.optional = new ChildOptional({ content: undefined });
 		assert.deepEqual(root.optional, {});
 		assert.equal(root.optional.content, undefined);
 	});
 
-	// TODO: Fix prototype for objects declared using 'class-schema'.
-	// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
 	it.skip("support nesting inside of a factory", () => {
-		const root = getRoot(Schema, initialTree);
+		const root = hydrate(Schema, initialTree());
 		root.grand = new ChildC({
 			child: new ChildD({
 				list: [new ChildA({ content: 43 }), new ChildB({ content: 43 })],
-				map: new Map<string, ChildA | ChildB>([
+				map: new Map<string, ChildAOrB>([
 					["a", new ChildA({ content: 43 })],
 					["b", new ChildB({ content: 43 })],
 				]),
@@ -124,14 +125,12 @@ describe("SharedTreeObject factories", () => {
 		assert.deepEqual(root.grand.child.map.get("b"), { content: 43 });
 	});
 
-	// TODO: Fix prototype for objects declared using 'class-schema'.
-	// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
 	it.skip("support nesting inside of a plain javascript object", () => {
-		const root = getRoot(Schema, initialTree);
+		const root = hydrate(Schema, initialTree());
 		root.grand = new ChildC({
 			child: new ChildD({
 				list: [new ChildA({ content: 43 }), new ChildB({ content: 43 })],
-				map: new Map<string, ChildA | ChildB>([
+				map: new Map<string, ChildAOrB>([
 					["a", new ChildA({ content: 43 })],
 					["b", new ChildB({ content: 43 })],
 				]),
@@ -207,7 +206,7 @@ describe("SharedTreeObject factories", () => {
 		// events fired. If a user read the tree during a change event and produced a proxy, that proxy would not
 		// be the same as the one that is about to be hydrated for the same underlying edit node, and thus hydration
 		// would fail because it tried to map an edit node which already had a proxy to a different proxy.
-		const root = getRoot(Schema, initialTree);
+		const root = hydrate(Schema, initialTree());
 		function readData() {
 			const objectContent = root.child.content;
 			assert(objectContent !== undefined);
@@ -234,7 +233,7 @@ describe("SharedTreeObject factories", () => {
 	it("hydration is not attempted on objects which are not proxies", () => {
 		// This regression test ensures that non-proxy objects inserted into the tree are
 		// not mistakenly "hydrated" as a proxy would be, falsely linking them to the content of the tree.
-		const root = getRoot(Schema, initialTree);
+		const root = hydrate(Schema, initialTree());
 		const newChild = { content: 43 };
 		// `newChild` is not a proxy, so it should be copied into the tree here but otherwise remain disconnected
 		root.child = new ChildA(newChild);

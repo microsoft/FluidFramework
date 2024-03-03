@@ -18,8 +18,8 @@ import {
 	IFluidSerializer,
 	SharedObject,
 } from "@fluidframework/shared-object-base";
-import { SharedSummaryBlockFactory } from "./sharedSummaryBlockFactory";
-import { ISharedSummaryBlock } from "./interfaces";
+import { SharedSummaryBlockFactory } from "./sharedSummaryBlockFactory.js";
+import { ISharedSummaryBlock } from "./interfaces.js";
 
 const snapshotFileName = "header";
 

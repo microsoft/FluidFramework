@@ -5,7 +5,7 @@
 
 import { assert, Timer } from "@fluidframework/core-utils";
 import { validatePrecondition } from "@fluidframework/telemetry-utils";
-import { UnreferencedState } from "./gcDefinitions";
+import { UnreferencedState } from "./gcDefinitions.js";
 
 /** A wrapper around common-utils Timer that requires the timeout when calling start/restart */
 class TimerWithNoDefaultTimeout extends Timer {
@@ -22,6 +22,17 @@ class TimerWithNoDefaultTimeout extends Timer {
 
 	restart(timeoutMs: number): void {
 		super.restart(timeoutMs, this.callback);
+	}
+}
+
+/** The collection of UnreferencedStateTrackers for all unreferenced nodes. Ensures stopTracking is called when deleting */
+export class UnreferencedStateTrackerMap extends Map<string, UnreferencedStateTracker> {
+	/** Delete the given key, and stop tracking if that node was actually unreferenced */
+	delete(key: string): boolean {
+		// Stop tracking so as to clear out any running timers.
+		this.get(key)?.stopTracking();
+		// Delete the node as we don't need to track it any more.
+		return super.delete(key);
 	}
 }
 

@@ -4,9 +4,9 @@
  */
 
 import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
-import { MergeTreeDeltaType } from "../ops";
-import { MergeTree } from "../mergeTree";
-import { insertText, markRangeRemoved } from "./testUtils";
+import { MergeTreeDeltaType } from "../ops.js";
+import { MergeTree } from "../mergeTree.js";
+import { insertText, markRangeRemoved } from "./testUtils.js";
 
 describe("MergeTree partial lengths", () => {
 	const originalIncrementalUpdate: boolean = MergeTree.options.incrementalUpdate;

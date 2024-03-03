@@ -1,0 +1,69 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# include-policy-check
+#
+# This template can be included in pipelines that run check scripts as part of their pipeline. The check scripts are
+# executed serially in a separate stage from the main build.
+#
+# IMPORTANT: This template only works with pnpm. Don't use in any pipelines that use another package manager.
+
+parameters:
+- name: buildDirectory
+  type: string
+
+- name: dependencyInstallCommand
+  type: string
+  default: "pnpm install --workspace-root --frozen-lockfile"
+
+# A list of scripts that execute checks of the repo, e.g. policy-check, layer-check, etc. These will be run serially in
+# a pipeline stage separate from the build stage.
+- name: checks
+  type: object
+  default:
+  - policy-check
+  - layer-check
+
+stages:
+- stage: run_checks
+  dependsOn: [] # Has no prereqs
+  displayName: Policy checks
+  pool: Small-1ES
+  jobs:
+  - job:
+    displayName: Run checks
+    steps:
+    - template: /tools/pipelines/templates/include-use-node-version.yml@self
+
+    - template: /tools/pipelines/templates/include-install-pnpm.yml@self
+      parameters:
+        buildDirectory: $(Build.SourcesDirectory)
+
+    - task: Bash@3
+      displayName: Install dependencies
+      inputs:
+        targetType: 'inline'
+        workingDirectory: ${{ parameters.buildDirectory }}
+        script: ${{ parameters.dependencyInstallCommand }}
+
+    - ${{ if ne(convertToJson(parameters.checks), '[]') }}:
+      - ${{ each check in parameters.checks }}:
+        - task: Npm@1
+          displayName: npm run ${{ check }}
+          inputs:
+            command: 'custom'
+            workingDir: ${{ parameters.buildDirectory }}
+            customCommand: 'run ${{ check }}'
+          condition: succeededOrFailed()
+
+      - task: Bash@3
+        displayName: Check for extraneous modified files
+        inputs:
+          targetType: 'inline'
+          script: |
+            git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|.npmrc|build-tools/.npmrc|\(use.*' | grep '^\s' > git_status.log
+            if [ `cat git_status.log | wc -l` != "0" ]; then
+              cat git_status.log
+              echo "##vso[task.logissue type=error]Build should not create extraneous files"
+              exit -1;
+            fi

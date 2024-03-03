@@ -20,9 +20,9 @@ import {
 import { SharedPropertyTree } from "@fluid-experimental/property-dds";
 import { PropertyProxy } from "@fluid-experimental/property-proxy";
 import { DataBinder } from "@fluid-experimental/property-binder";
-import { SquaresApp, randomSquaresBoardGenerator, moveSquares } from "./demo/squaresApp";
+import { SquaresApp, randomSquaresBoardGenerator, moveSquares } from "./demo/squaresApp.js";
 
-import { IPropertyTree } from "./dataObject";
+import { IPropertyTree } from "./dataObject.js";
 
 /**
  * Render an IDiceRoller into a given div as a text character, with a button to roll it.

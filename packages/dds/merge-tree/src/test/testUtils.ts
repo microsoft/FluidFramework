@@ -5,16 +5,21 @@
 
 import { strict as assert } from "assert";
 import fs from "fs";
-import { IMergeBlock, ISegment, Marker } from "../mergeTreeNodes";
-import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
-import { TextSegment } from "../textSegment";
-import { ReferenceType } from "../ops";
-import { PropertySet } from "../properties";
-import { MergeTree } from "../mergeTree";
-import { walkAllChildSegments } from "../mergeTreeNodeWalk";
-import { UnassignedSequenceNumber } from "../constants";
-import { LocalReferenceCollection } from "../localReference";
-import { loadText } from "./text";
+import { IMergeBlock, ISegment, Marker } from "../mergeTreeNodes.js";
+import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
+import { TextSegment } from "../textSegment.js";
+import { ReferenceType } from "../ops.js";
+import { PropertySet } from "../properties.js";
+import { MergeTree } from "../mergeTree.js";
+import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
+import { UnassignedSequenceNumber } from "../constants.js";
+import { LocalReferenceCollection } from "../localReference.js";
+import {
+	PartialSequenceLengths,
+	verifyExpectedPartialLengths,
+	verifyPartialLengths,
+} from "../partialLengths.js";
+import { loadText } from "./text.js";
 
 export function loadTextFromFile(filename: string, mergeTree: MergeTree, segLimit = 0) {
 	const content = fs.readFileSync(filename, "utf8");
@@ -266,4 +271,23 @@ export function validateRefCount(collection?: LocalReferenceCollection) {
 
 	// eslint-disable-next-line @typescript-eslint/dot-notation
 	assert.equal(collection["refCount"], expectedLength);
+}
+
+/**
+ * Enable stricter partial length assertions inside tests
+ *
+ * Note that these assertions can be expensive, and so should not be enabled in
+ * production code or tests that run through thousands of ops (e.g. the SharedString
+ * fuzz tests).
+ */
+export function useStrictPartialLengthChecks() {
+	beforeEach(() => {
+		PartialSequenceLengths.options.verifier = verifyPartialLengths;
+		PartialSequenceLengths.options.verifyExpected = verifyExpectedPartialLengths;
+	});
+
+	afterEach(() => {
+		PartialSequenceLengths.options.verifier = undefined;
+		PartialSequenceLengths.options.verifyExpected = undefined;
+	});
 }

@@ -8,7 +8,7 @@ import { PropertySet } from "@fluidframework/merge-tree";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
-import { createSharedStringWithInterception } from "../sequence";
+import { createSharedStringWithInterception } from "../sequence/index.js";
 
 describe("Shared String with Interception", () => {
 	/**

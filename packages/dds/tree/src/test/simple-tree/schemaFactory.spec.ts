@@ -8,10 +8,8 @@ import { strict as assert } from "node:assert";
 import { createIdCompressor } from "@fluidframework/id-compressor";
 import { unreachableCase } from "@fluidframework/core-utils";
 import { MockFluidDataStoreRuntime, MockHandle } from "@fluidframework/test-runtime-utils";
-import { TreeNode, Tree, TreeConfiguration, TreeView } from "../../simple-tree/index.js";
+import { Tree, TreeConfiguration, TreeView } from "../../simple-tree/index.js";
 import {
-	ImplicitFieldSchema,
-	InsertableTreeFieldFromImplicitField,
 	NodeFromSchema,
 	TreeFieldFromImplicitField,
 	TreeNodeFromImplicitAllowedTypes,
@@ -25,6 +23,9 @@ import {
 } from "../../simple-tree/schemaFactory.js";
 import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util/index.js";
 import { TreeFactory } from "../../treeFactory.js";
+// eslint-disable-next-line import/no-internal-modules
+import { isTreeNode } from "../../simple-tree/proxies.js";
+import { hydrate } from "./utils.js";
 
 {
 	const schema = new SchemaFactory("Blah");
@@ -119,6 +120,34 @@ describe("schemaFactory", () => {
 		const b: A = new B({});
 	});
 
+	it("Scoped", () => {
+		const factory = new SchemaFactory("test-scope");
+		// We specified a scope in the factory, so it should be part of the type signature of the created object
+		const foo = factory.object("foo", {}).identifier;
+		type _check = requireTrue<areSafelyAssignable<"test-scope.foo", typeof foo>>;
+		assert.equal(foo, "test-scope.foo");
+	});
+
+	it("Unscoped", () => {
+		const factory = new SchemaFactory(undefined);
+		// We did not specify a scope in the factory, so one should not be part of the type signature of the created object
+		const foo = factory.object("foo", {}).identifier;
+		type _check = requireTrue<areSafelyAssignable<"foo", typeof foo>>;
+		assert.equal(foo, "foo");
+	});
+
+	// Regression test to ensure generic type variations of the factory are assignable to its default typing.
+	it("Typed factories are assignable to default typing", () => {
+		type _check1 = requireTrue<requireAssignableTo<SchemaFactory<"Foo", "Bar">, SchemaFactory>>;
+		type _check2 = requireTrue<requireAssignableTo<SchemaFactory<"Foo", 42>, SchemaFactory>>;
+		type _check3 = requireTrue<
+			requireAssignableTo<SchemaFactory<undefined, "Bar">, SchemaFactory>
+		>;
+		type _check4 = requireTrue<
+			requireAssignableTo<SchemaFactory<undefined, 42>, SchemaFactory>
+		>;
+	});
+
 	describe("object", () => {
 		it("simple end to end", () => {
 			const schema = new SchemaFactory("com.example");
@@ -180,7 +209,7 @@ describe("schemaFactory", () => {
 			});
 
 			assert(root instanceof Point);
-			assert(root instanceof TreeNode);
+			assert(isTreeNode(root));
 			assert(Reflect.has(root, "selected"));
 			assert.equal(root.selected, false);
 			// Ensure modification works
@@ -349,7 +378,7 @@ describe("schemaFactory", () => {
 
 			const listNode = view.root.child;
 			assert(listNode instanceof NamedList);
-			assert(listNode instanceof TreeNode);
+			assert(isTreeNode(listNode));
 			assert(Reflect.has(listNode, "testProperty"));
 			assert.equal(listNode.testProperty, false);
 			listNode.testProperty = true;
@@ -407,7 +436,7 @@ describe("schemaFactory", () => {
 
 			const mapNode = view.root.child;
 			assert(mapNode instanceof NamedMap);
-			assert(mapNode instanceof TreeNode);
+			assert(isTreeNode(mapNode));
 			assert(Reflect.has(mapNode, "testProperty"));
 			assert.equal(mapNode.testProperty, false);
 			mapNode.testProperty = true;
@@ -615,20 +644,3 @@ describe("schemaFactory", () => {
 		assert.equal(schemaFromValue(false), f.boolean);
 	});
 });
-
-/**
- * Create a tree and use it to hydrate the input.
- */
-function hydrate<TSchema extends ImplicitFieldSchema>(
-	schema: TSchema,
-	data: InsertableTreeFieldFromImplicitField<TSchema>,
-): TreeFieldFromImplicitField<TSchema> {
-	const config = new TreeConfiguration(schema, () => data);
-	const factory = new TreeFactory({});
-	const tree = factory.create(
-		new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-		"tree",
-	);
-	const root = tree.schematize(config).root;
-	return root;
-}

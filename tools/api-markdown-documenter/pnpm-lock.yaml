@@ -12,8 +12,7 @@ importers:
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/eslint-config-fluid': file:../../common/build/eslint-config-fluid
       '@fluidframework/mocha-test-setup': ~2.0.0-internal.6.2.0
-      '@microsoft/api-documenter': 7.23.9
-      '@microsoft/api-extractor': ^7.38.3
+      '@microsoft/api-extractor': ^7.39.1
       '@microsoft/api-extractor-model': ~7.28.2
       '@microsoft/tsdoc': ^0.14.2
       '@rushstack/node-core-library': ^3.55.2
@@ -40,7 +39,6 @@ importers:
       rimraf: ^5.0.0
       typescript: ~5.1.6
     dependencies:
-      '@microsoft/api-documenter': 7.23.9_@types+node@18.15.11
       '@microsoft/api-extractor-model': 7.28.2_@types+node@18.15.11
       '@microsoft/tsdoc': 0.14.2
       '@rushstack/node-core-library': 3.55.2_@types+node@18.15.11
@@ -51,7 +49,7 @@ importers:
       '@fluidframework/build-tools': 0.26.1_@types+node@18.15.11
       '@fluidframework/eslint-config-fluid': file:../../common/build/eslint-config-fluid_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/mocha-test-setup': 2.0.0-internal.6.2.0
-      '@microsoft/api-extractor': 7.38.3_@types+node@18.15.11
+      '@microsoft/api-extractor': 7.39.1_@types+node@18.15.11
       '@types/chai': 4.3.4
       '@types/mocha': 10.0.1
       '@types/node': 18.15.11
@@ -172,6 +170,18 @@ packages:
   /@eslint/js/8.55.0:
     resolution: {integrity: sha512-qQfo2mxH5yVom1kacMtZZJFVdW+E70mqHMJvVg6WTLo+VBuQJ4TojZlfWBjK0ve5BdEeNAVxOsl/nvNMpJOaJA==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
+    dev: true
+
+  /@fluid-internal/eslint-plugin-fluid/0.1.1_bpztyfltmpuv6lhsgzfwtmxhte:
+    resolution: {integrity: sha512-7CNeAjn81BPvq/BKc1nQo/6HUZXg4KUAglFuCX6HFCnpGPrDLdm7cdkrGyA1tExB1EGnCAPFzVNbSqSYcwJnag==}
+    dependencies:
+      '@microsoft/tsdoc': 0.14.2
+      '@typescript-eslint/parser': 6.7.5_bpztyfltmpuv6lhsgzfwtmxhte
+      ts-morph: 20.0.0
+    transitivePeerDependencies:
+      - eslint
+      - supports-color
+      - typescript
     dev: true
 
   /@fluid-tools/version-tools/0.26.1_vkotigkp5s62xv6rdodgvy6lfm:
@@ -404,21 +414,6 @@ packages:
       read-yaml-file: 1.1.0
     dev: true
 
-  /@microsoft/api-documenter/7.23.9_@types+node@18.15.11:
-    resolution: {integrity: sha512-CvOy3JF0oCDm3GDqce3uFS9QGO72lfOEgVbvpje32O+ug/WoL8ITOg2jZszMtowuClasPbpEcEoVsHJJLePirg==}
-    hasBin: true
-    dependencies:
-      '@microsoft/api-extractor-model': 7.28.2_@types+node@18.15.11
-      '@microsoft/tsdoc': 0.14.2
-      '@rushstack/node-core-library': 3.61.0_@types+node@18.15.11
-      '@rushstack/ts-command-line': 4.16.1
-      colors: 1.2.5
-      js-yaml: 3.13.1
-      resolve: 1.22.2
-    transitivePeerDependencies:
-      - '@types/node'
-    dev: false
-
   /@microsoft/api-extractor-model/7.28.2_@types+node@18.15.11:
     resolution: {integrity: sha512-vkojrM2fo3q4n4oPh4uUZdjJ2DxQ2+RnDQL/xhTWSRUNPF6P4QyrvY357HBxbnltKcYu+nNNolVqc6TIGQ73Ig==}
     dependencies:
@@ -427,23 +422,34 @@ packages:
       '@rushstack/node-core-library': 3.61.0_@types+node@18.15.11
     transitivePeerDependencies:
       - '@types/node'
+    dev: false
 
-  /@microsoft/api-extractor/7.38.3_@types+node@18.15.11:
-    resolution: {integrity: sha512-xt9iYyC5f39281j77JTA9C3ISJpW1XWkCcnw+2vM78CPnro6KhPfwQdPDfwS5JCPNuq0grm8cMdPUOPvrchDWw==}
-    hasBin: true
+  /@microsoft/api-extractor-model/7.28.4_@types+node@18.15.11:
+    resolution: {integrity: sha512-vucgyPmgHrJ/D4/xQywAmjTmSfxAx2/aDmD6TkIoLu51FdsAfuWRbijWA48AePy60OO+l+mmy9p2P/CEeBZqig==}
     dependencies:
-      '@microsoft/api-extractor-model': 7.28.2_@types+node@18.15.11
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.61.0_@types+node@18.15.11
+      '@rushstack/node-core-library': 3.63.0_@types+node@18.15.11
+    transitivePeerDependencies:
+      - '@types/node'
+    dev: true
+
+  /@microsoft/api-extractor/7.39.1_@types+node@18.15.11:
+    resolution: {integrity: sha512-V0HtCufWa8hZZvSmlEzQZfINcJkHAU/bmpyJQj6w+zpI87EkR8DuBOW6RWrO9c7mUYFZoDaNgUTyKo83ytv+QQ==}
+    hasBin: true
+    dependencies:
+      '@microsoft/api-extractor-model': 7.28.4_@types+node@18.15.11
+      '@microsoft/tsdoc': 0.14.2
+      '@microsoft/tsdoc-config': 0.16.2
+      '@rushstack/node-core-library': 3.63.0_@types+node@18.15.11
       '@rushstack/rig-package': 0.5.1
       '@rushstack/ts-command-line': 4.17.1
       colors: 1.2.5
       lodash: 4.17.21
-      resolve: 1.22.2
+      resolve: 1.22.8
       semver: 7.5.4
       source-map: 0.6.1
-      typescript: 5.0.4
+      typescript: 5.3.3
     transitivePeerDependencies:
       - '@types/node'
     dev: true
@@ -860,6 +866,24 @@ packages:
       semver: 7.5.4
       z-schema: 5.0.5
 
+  /@rushstack/node-core-library/3.63.0_@types+node@18.15.11:
+    resolution: {integrity: sha512-Q7B3dVpBQF1v+mUfxNcNZh5uHVR8ntcnkN5GYjbBLrxUYHBGKbnCM+OdcN+hzCpFlLBH6Ob0dEHhZ0spQwf24A==}
+    peerDependencies:
+      '@types/node': '*'
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
+    dependencies:
+      '@types/node': 18.15.11
+      colors: 1.2.5
+      fs-extra: 7.0.1
+      import-lazy: 4.0.0
+      jju: 1.4.0
+      resolve: 1.22.8
+      semver: 7.5.4
+      z-schema: 5.0.5
+    dev: true
+
   /@rushstack/rig-package/0.5.1:
     resolution: {integrity: sha512-pXRYSe29TjRw7rqxD4WS3HN/sRSbfr+tJs4a9uuaSIBAITbUggygdhuG0VrO0EO+QqH91GhYMN4S6KRtOEmGVA==}
     dependencies:
@@ -870,15 +894,6 @@ packages:
   /@rushstack/tree-pattern/0.3.1:
     resolution: {integrity: sha512-2yn4qTkXZTByQffL3ymS6viYuyZk3YnJT49bopGBlm9Thtyfa7iuFUV6tt+09YIRO1sjmSWILf4dPj6+Dr5YVA==}
     dev: true
-
-  /@rushstack/ts-command-line/4.16.1:
-    resolution: {integrity: sha512-+OCsD553GYVLEmz12yiFjMOzuPeCiZ3f8wTiFHL30ZVXexTyPmgjwXEhg2K2P0a2lVf+8YBy7WtPoflB2Fp8/A==}
-    dependencies:
-      '@types/argparse': 1.0.38
-      argparse: 1.0.10
-      colors: 1.2.5
-      string-argv: 0.3.1
-    dev: false
 
   /@rushstack/ts-command-line/4.17.1:
     resolution: {integrity: sha512-2jweO1O57BYP5qdBGl6apJLB+aRIn5ccIRTPDyULh0KMwVzFqWtw6IZWt1qtUoZD/pD2RNkIOosH6Cq45rIYeg==}
@@ -978,6 +993,7 @@ packages:
 
   /@types/argparse/1.0.38:
     resolution: {integrity: sha512-ebDJ9b0e702Yr7pWgB0jzm+CX4Srzz8RcXtLJDJB+BSccqMa36uyH/zUsSYao5+BD1ytv3k3rPYCq4mAE1hsXA==}
+    dev: true
 
   /@types/chai/4.3.4:
     resolution: {integrity: sha512-KnRanxnpfpjUTqTCXslZSEdLfXExwgNxYPdiO2WGUj8+HDjFi8R3k5RVKPeSCzLjCcshCAtVO2QBbVuAV4kTnw==}
@@ -1535,6 +1551,7 @@ packages:
     resolution: {integrity: sha512-o5Roy6tNG4SL/FOkCAN6RzjiakZS25RLYFrcMttJqbdd8BWrnA+fGz57iN5Pb06pvBGvl5gQ0B48dJlslXvoTg==}
     dependencies:
       sprintf-js: 1.0.3
+    dev: true
 
   /argparse/2.0.1:
     resolution: {integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==}
@@ -2820,6 +2837,7 @@ packages:
     resolution: {integrity: sha512-eGuFFw7Upda+g4p+QHvnW0RyTX/SVeJBDM/gCtMARO0cLuT2HcEKnTPvhjV6aGeqrCB/sbNop0Kszm0jsaWU4A==}
     engines: {node: '>=4'}
     hasBin: true
+    dev: true
 
   /esquery/1.5.0:
     resolution: {integrity: sha512-YQLXUplAwJgCydQ78IMJywZCceoqk1oH01OERdSAJc/7U2AylwjhSCLDEtqwg811idIS/9fIU5GjG73IgjKMVg==}
@@ -3876,14 +3894,6 @@ packages:
   /js-tokens/4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
     dev: true
-
-  /js-yaml/3.13.1:
-    resolution: {integrity: sha512-YfbcO7jXDdyj0DGxYVSlSeQNHbD7XPWvrVWeVUujrQEoZzWJIRrCPoyk6kL6IAjAG2IolMK4T0hNUe0HOUs5Jw==}
-    hasBin: true
-    dependencies:
-      argparse: 1.0.10
-      esprima: 4.0.1
-    dev: false
 
   /js-yaml/3.14.1:
     resolution: {integrity: sha512-okMH7OXXJ7YrN9Ok3/SXrnu4iX9yOk+25nqX4imS2npuvTYDmo/QEZoqwZkYaIDk3jVvBOTOIEgEhaLOynBS9g==}
@@ -5322,6 +5332,7 @@ packages:
       is-core-module: 2.13.1
       path-parse: 1.0.7
       supports-preserve-symlinks-flag: 1.0.0
+    dev: false
 
   /resolve/1.22.8:
     resolution: {integrity: sha512-oKWePCxqpd6FlLvGV1VU0x7bkPmmCNolxzjMf4NczoDnQcIWrAF+cPtZn5i6n+RfD2d9i0tzpKnG6Yk168yIyw==}
@@ -5609,6 +5620,7 @@ packages:
 
   /sprintf-js/1.0.3:
     resolution: {integrity: sha512-D9cPgkvLlV3t3IzL0D0YLvGA9Ahk4PcvVwUbN0dSGr1aP0Nrt4AEnTUbuGvquEC0mA64Gqt1fzirlRs5ibXx8g==}
+    dev: true
 
   /strict-uri-encode/2.0.0:
     resolution: {integrity: sha512-QwiXZgpRcKkhTj2Scnn++4PKtWsH0kpzZ62L2R6c/LUVYv7hVnZqcg2+sMuT6R7Jusu1vviK/MFsu6kNJfWlEQ==}
@@ -5618,6 +5630,7 @@ packages:
   /string-argv/0.3.1:
     resolution: {integrity: sha512-a1uQGz7IyVy9YwhqjZIZu1c8JO8dNIe20xBmSS6qu9kv++k3JGzCVmprbNN5Kn+BgzD5E7YYwg1CcjuJMRNsvg==}
     engines: {node: '>=0.6.19'}
+    dev: true
 
   /string-width/4.2.3:
     resolution: {integrity: sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g==}
@@ -6068,14 +6081,14 @@ packages:
     hasBin: true
     dev: true
 
-  /typescript/5.0.4:
-    resolution: {integrity: sha512-cW9T5W9xY37cc+jfEnaUvX91foxtHkza3Nw3wkoF4sSlKn0MONdkdEndig/qPBWXNkmplh3NzayQzCiHM4/hqw==}
-    engines: {node: '>=12.20'}
+  /typescript/5.1.6:
+    resolution: {integrity: sha512-zaWCozRZ6DLEWAWFrVDz1H6FVXzUSfTy5FUMWsQlU8Ym5JP9eO4xkTIROFCQvhQf61z6O/G6ugw3SgAnvvm+HA==}
+    engines: {node: '>=14.17'}
     hasBin: true
     dev: true
 
-  /typescript/5.1.6:
-    resolution: {integrity: sha512-zaWCozRZ6DLEWAWFrVDz1H6FVXzUSfTy5FUMWsQlU8Ym5JP9eO4xkTIROFCQvhQf61z6O/G6ugw3SgAnvvm+HA==}
+  /typescript/5.3.3:
+    resolution: {integrity: sha512-pXWcraxM0uxAS+tN0AG/BF2TyqmHO014Z070UsJ+pFvYuRSq8KH8DmWpnbXe0pEPDHXZV3FcAbJkijJ5oNEnWw==}
     engines: {node: '>=14.17'}
     hasBin: true
     dev: true
@@ -6509,8 +6522,10 @@ packages:
     resolution: {directory: ../../common/build/eslint-config-fluid, type: directory}
     id: file:../../common/build/eslint-config-fluid
     name: '@fluidframework/eslint-config-fluid'
-    version: 3.1.0
+    version: 5.0.0
     dependencies:
+      '@fluid-internal/eslint-plugin-fluid': 0.1.1_bpztyfltmpuv6lhsgzfwtmxhte
+      '@microsoft/tsdoc': 0.14.2
       '@rushstack/eslint-patch': 1.4.0
       '@rushstack/eslint-plugin': 0.13.1_bpztyfltmpuv6lhsgzfwtmxhte
       '@rushstack/eslint-plugin-security': 0.7.1_bpztyfltmpuv6lhsgzfwtmxhte
@@ -6527,7 +6542,6 @@ packages:
       eslint-plugin-tsdoc: 0.2.17
       eslint-plugin-unicorn: 48.0.1_eslint@8.55.0
       eslint-plugin-unused-imports: 3.0.0_q2lq45qjv2a3kzwivaf2whp57u
-      ts-morph: 20.0.0
     transitivePeerDependencies:
       - eslint
       - eslint-import-resolver-node
@@ -6543,7 +6557,7 @@ packages:
     version: 0.1.0
     hasBin: true
     dependencies:
-      '@rushstack/node-core-library': 3.61.0_@types+node@18.15.11
+      '@rushstack/node-core-library': 3.63.0_@types+node@18.15.11
       '@tylerbu/markdown-magic': 2.4.0-tylerbu-1
       chalk: 4.1.2
       markdown-magic-package-scripts: 1.2.2

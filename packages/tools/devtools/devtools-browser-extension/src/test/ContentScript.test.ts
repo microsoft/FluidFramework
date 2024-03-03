@@ -14,7 +14,7 @@ import {
 	devtoolsMessageSource,
 } from "@fluidframework/devtools-core";
 
-import { extensionMessageSource } from "../messaging";
+import { extensionViewMessageSource } from "../messaging";
 import { type Globals } from "../Globals";
 import { awaitListener, stubGlobals, stubPort } from "./Utilities";
 
@@ -179,7 +179,7 @@ describe("Content Script unit tests", () => {
 		// Post message from the Tab
 		const backgroundMessage = {
 			...CloseContainer.createMessage({} as unknown as CloseContainer.MessageData),
-			source: extensionMessageSource,
+			source: extensionViewMessageSource,
 		};
 		backgroundPort.postMessage(backgroundMessage);
 

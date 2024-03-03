@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import {
 	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
@@ -11,16 +11,16 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { MapFactory, SharedMap } from "../../map";
-import { DirectoryFactory, SharedDirectory } from "../../directory";
-import { IDirectory } from "../../interfaces";
+import { MapFactory, SharedMap } from "../../map.js";
+import { DirectoryFactory, SharedDirectory } from "../../directory.js";
+import { IDirectory } from "../../interfaces.js";
 
 describe("Rebasing", () => {
 	let containerRuntimeFactory: MockContainerRuntimeFactory;
 	let containerRuntime1: MockContainerRuntime;
 	let containerRuntime2: MockContainerRuntime;
 
-	[
+	for (const testConfig of [
 		{
 			options: {
 				flushMode: FlushMode.Immediate,
@@ -34,7 +34,7 @@ describe("Rebasing", () => {
 			},
 			name: "FlushMode TurnBased with grouped batching",
 		},
-	].forEach((testConfig) => {
+	]) {
 		describe(`SharedMap - ${testConfig.name}`, () => {
 			let map1: SharedMap;
 			let map2: SharedMap;
@@ -133,34 +133,36 @@ describe("Rebasing", () => {
 				dir2.connect(services2);
 			});
 
-			const areDirectoriesEqual = (a: IDirectory | undefined, b: IDirectory | undefined) => {
+			const areDirectoriesEqual = (
+				a: IDirectory | undefined,
+				b: IDirectory | undefined,
+			): void => {
 				if (a === undefined || b === undefined) {
 					assert.strictEqual(a, b, "Both directories should be undefined");
 					return;
 				}
 
-				const leftKeys = Array.from(a.keys());
-				const rightKeys = Array.from(b.keys());
+				const leftKeys = [...a.keys()];
+				const rightKeys = [...b.keys()];
 				assert.strictEqual(
 					leftKeys.length,
 					rightKeys.length,
 					"Number of keys should be the same",
 				);
-				leftKeys.forEach((key) => {
+				for (const key of leftKeys) {
 					assert.strictEqual(a.get(key), b.get(key), "Key values should be the same");
-				});
+				}
 
-				const leftSubdirectories = Array.from(a.subdirectories());
-				const rightSubdirectories = Array.from(b.subdirectories());
+				const leftSubdirectories = [...a.subdirectories()];
+				const rightSubdirectories = [...b.subdirectories()];
 				assert.strictEqual(
 					leftSubdirectories.length,
 					rightSubdirectories.length,
 					"Number of subdirectories should be the same",
 				);
 
-				leftSubdirectories.forEach(([name]) =>
-					areDirectoriesEqual(a.getSubDirectory(name), b.getSubDirectory(name)),
-				);
+				for (const [name] of leftSubdirectories)
+					areDirectoriesEqual(a.getSubDirectory(name), b.getSubDirectory(name));
 			};
 
 			it("Rebasing ops maintains eventual consistency", () => {
@@ -203,5 +205,5 @@ describe("Rebasing", () => {
 				areDirectoriesEqual(dir1, dir2);
 			});
 		});
-	});
+	}
 });

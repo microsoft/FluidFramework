@@ -3,33 +3,42 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, FluidObject } from "@fluidframework/core-interfaces";
+import { type IRequest, type FluidObject } from "@fluidframework/core-interfaces";
 import {
 	FluidDataStoreRuntime,
-	ISharedObjectRegistry,
+	type ISharedObjectRegistry,
 	mixinRequestHandler,
 } from "@fluidframework/datastore";
 import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
 import {
-	IFluidDataStoreContext,
-	IContainerRuntimeBase,
-	IFluidDataStoreFactory,
-	IFluidDataStoreRegistry,
-	IProvideFluidDataStoreRegistry,
-	NamedFluidDataStoreRegistryEntries,
-	NamedFluidDataStoreRegistryEntry,
-	IFluidDataStoreContextDetached,
+	type IContainerRuntimeBase,
+	type IDataStore,
+	type IFluidDataStoreChannel,
+	type IFluidDataStoreContext,
+	type IFluidDataStoreContextDetached,
+	type IFluidDataStoreFactory,
+	type IFluidDataStoreRegistry,
+	type NamedFluidDataStoreRegistryEntries,
+	type NamedFluidDataStoreRegistryEntry,
+	type IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
-	AsyncFluidObjectProvider,
-	FluidObjectSymbolProvider,
-	IFluidDependencySynthesizer,
+	type IChannelFactory,
+	type IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions";
+import {
+	type AsyncFluidObjectProvider,
+	type FluidObjectSymbolProvider,
+	type IFluidDependencySynthesizer,
 } from "@fluidframework/synthesize";
 
 import { assert } from "@fluidframework/core-utils";
-import { IDataObjectProps, PureDataObject, DataObjectTypes } from "../data-objects";
+import {
+	type IDataObjectProps,
+	type PureDataObject,
+	type DataObjectTypes,
+} from "../data-objects/index.js";
 
 /**
  * Proxy over PureDataObject
@@ -46,7 +55,10 @@ async function createDataObject<
 	runtimeClassArg: typeof FluidDataStoreRuntime,
 	existing: boolean,
 	initProps?: I["InitialState"],
-) {
+): Promise<{
+	instance: TObj;
+	runtime: FluidDataStoreRuntime;
+}> {
 	// base
 	let runtimeClass = runtimeClassArg;
 
@@ -131,7 +143,10 @@ export class PureDataObjectFactory<
 	private readonly sharedObjectRegistry: ISharedObjectRegistry;
 	private readonly registry: IFluidDataStoreRegistry | undefined;
 
-	constructor(
+	public constructor(
+		/**
+		 * {@inheritDoc @fluidframework/runtime-definitions#IFluidDataStoreFactory."type"}
+		 */
 		public readonly type: string,
 		private readonly ctor: new (props: IDataObjectProps<I>) => TObj,
 		sharedObjects: readonly IChannelFactory[],
@@ -148,11 +163,17 @@ export class PureDataObjectFactory<
 		this.sharedObjectRegistry = new Map(sharedObjects.map((ext) => [ext.type, ext]));
 	}
 
-	public get IFluidDataStoreFactory() {
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IProvideFluidDataStoreFactory.IFluidDataStoreFactory}
+	 */
+	public get IFluidDataStoreFactory(): this {
 		return this;
 	}
 
-	public get IFluidDataStoreRegistry() {
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IProvideFluidDataStoreRegistry.IFluidDataStoreRegistry}
+	 */
+	public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry | undefined {
 		return this.registry;
 	}
 
@@ -167,11 +188,12 @@ export class PureDataObjectFactory<
 	}
 
 	/**
-	 * This is where we do data store setup.
-	 *
-	 * @param context - data store context used to load a data store runtime
+	 * {@inheritDoc @fluidframework/runtime-definitions#IFluidDataStoreFactory.instantiateDataStore}
 	 */
-	public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
+	public async instantiateDataStore(
+		context: IFluidDataStoreContext,
+		existing: boolean,
+	): Promise<IFluidDataStoreChannel> {
 		const { runtime } = await createDataObject(
 			this.ctor,
 			context,
@@ -245,6 +267,37 @@ export class PureDataObjectFactory<
 	}
 
 	/**
+	 * Creates a new instance of the object with a datastore which exposes the aliasing api.
+	 * @param runtime - container runtime. It is the runtime that will be used to create the object. It will produce
+	 * the underlying infrastructure to get the data object to operate.
+	 * @param initialState - The initial state to provide to the created component.
+	 * @param packagePath - The path to the data store factory to use to create the data object.
+	 * @returns an array containing the object created by this factory and an IDataStore object that enables users to
+	 * alias the data object.
+	 * The data object is attached only when it is attached to the handle graph that connects to an aliased object or
+	 * when the data object is aliased.
+	 */
+	public async createInstanceWithDataStore(
+		containerRuntime: IContainerRuntimeBase,
+		initialState?: I["InitialState"],
+		packagePath?: Readonly<string[]>,
+	): Promise<[TObj, IDataStore]> {
+		const context = containerRuntime.createDetachedDataStore(packagePath ?? [this.type]);
+		const { instance, runtime } = await createDataObject(
+			this.ctor,
+			context,
+			this.sharedObjectRegistry,
+			this.optionalProviders,
+			this.runtimeClass,
+			false, // existing
+			initialState,
+		);
+		const dataStore = await context.attachRuntime(this, runtime);
+
+		return [instance, dataStore];
+	}
+
+	/**
 	 * Creates a new root instance of the object. Uses container's registry to find this factory.
 	 * It's expected that only container owners would use this functionality, as only such developers
 	 * have knowledge of entries in container registry.
@@ -253,14 +306,33 @@ export class PureDataObjectFactory<
 	 * @param initialState - The initial state to provide to the created component.
 	 * @returns an object created by this factory. Data store and objects created are not attached to container.
 	 * They get attached only when a handle to one of them is attached to already attached objects.
+	 *
+	 * @deprecated - the issue is that it does not allow the customer to decide the conflict resolution policy when an
+	 * aliasing conflict occurs. Use {@link PureDataObjectFactory.createInstanceWithDataStore} instead.
 	 */
 	public async createRootInstance(
 		rootDataStoreId: string,
 		runtime: IContainerRuntime,
 		initialState?: I["InitialState"],
 	): Promise<TObj> {
-		const context = runtime.createDetachedRootDataStore([this.type], rootDataStoreId);
-		return this.createInstanceCore(context, initialState);
+		const context = runtime.createDetachedDataStore([this.type]);
+		const { instance, runtime: dataStoreRuntime } = await createDataObject(
+			this.ctor,
+			context,
+			this.sharedObjectRegistry,
+			this.optionalProviders,
+			this.runtimeClass,
+			false, // existing
+			initialState,
+		);
+		const dataStore = await context.attachRuntime(this, dataStoreRuntime);
+		const result = await dataStore.trySetAlias(rootDataStoreId);
+		if (result !== "Success") {
+			const handle = await runtime.getAliasedDataStoreEntryPoint(rootDataStoreId);
+			assert(handle !== undefined, "Should have retrieved aliased handle");
+			return (await handle.get()) as TObj;
+		}
+		return instance;
 	}
 
 	protected async createNonRootInstanceCore(

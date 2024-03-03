@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ITelemetryLoggerExt,
-	LoggingError,
-	TelemetryDataTag,
-	tagCodeArtifacts,
-} from "@fluidframework/telemetry-utils";
+import { LoggingError, TelemetryDataTag, tagCodeArtifacts } from "@fluidframework/telemetry-utils";
 import { assert, LazyPromise } from "@fluidframework/core-utils";
 import {
 	CreateChildSummarizerNodeParam,
@@ -24,15 +19,16 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { unpackChildNodesUsedRoutes } from "@fluidframework/runtime-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { cloneGCData, unpackChildNodesGCDetails } from "../../gc";
-import { SummarizerNode } from "./summarizerNode";
+import { cloneGCData, unpackChildNodesGCDetails } from "../../gc/index.js";
+import { SummarizerNode } from "./summarizerNode.js";
 import {
 	EscapedPath,
 	ICreateChildDetails,
+	IStartSummaryResult,
 	ISummarizerNodeRootContract,
 	SummaryNode,
 	ValidateSummaryResult,
-} from "./summarizerNodeUtils";
+} from "./summarizerNodeUtils.js";
 
 export interface IRootSummarizerNodeWithGC
 	extends ISummarizerNodeWithGC,
@@ -236,7 +232,11 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	/**
 	 * Called during the start of a summary. Updates the work-in-progress used routes.
 	 */
-	public startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLoggerExt) {
+	public startSummary(
+		referenceSequenceNumber: number,
+		summaryLogger: ITelemetryBaseLogger,
+		latestSummaryRefSeqNum: number,
+	): IStartSummaryResult {
 		// If GC is disabled, skip setting wip used routes since we should not track GC state.
 		if (!this.gcDisabled) {
 			assert(
@@ -244,7 +244,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 				0x1b4 /* "We should not already be tracking used routes when to track a new summary" */,
 			);
 		}
-		super.startSummary(referenceSequenceNumber, summaryLogger);
+		return super.startSummary(referenceSequenceNumber, summaryLogger, latestSummaryRefSeqNum);
 	}
 
 	/**

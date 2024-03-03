@@ -14,8 +14,11 @@
 import { strict as assert } from "node:assert";
 import sinon from "sinon";
 import { v4 as uuid } from "uuid";
-import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/core-interfaces";
-import { TelemetryDataTag, TelemetryLogger, TaggedLoggerAdapter } from "../logger";
+import type {
+	ITelemetryBaseEvent,
+	ITelemetryBaseProperties,
+} from "@fluidframework/core-interfaces";
+import { TelemetryDataTag, TelemetryLogger, TaggedLoggerAdapter } from "../logger.js";
 import {
 	LoggingError,
 	isTaggedTelemetryPropertyValue,
@@ -25,24 +28,24 @@ import {
 	wrapErrorAndLog,
 	extractLogSafeErrorProperties,
 	isExternalError,
-} from "../errorLogging";
+} from "../errorLogging.js";
 import {
 	hasErrorInstanceId,
 	IFluidErrorBase,
 	isFluidError,
 	isValidLegacyError,
-} from "../fluidErrorBase";
-import { MockLogger } from "../mockLogger";
+} from "../fluidErrorBase.js";
+import { MockLogger } from "../mockLogger.js";
 
 describe("Error Logging", () => {
 	describe("TelemetryLogger.prepareErrorObject", () => {
 		function freshEvent(): ITelemetryBaseEvent {
 			return { category: "cat1", eventName: "event1" };
 		}
-		function createILoggingError(props: ITelemetryProperties): {
-			getTelemetryProperties: () => ITelemetryProperties;
+		function createILoggingError(props: ITelemetryBaseProperties): {
+			getTelemetryProperties: () => ITelemetryBaseProperties;
 		} {
-			return { ...props, getTelemetryProperties: (): ITelemetryProperties => props };
+			return { ...props, getTelemetryProperties: (): ITelemetryBaseProperties => props };
 		}
 
 		it("non-object error added to event", () => {
@@ -59,7 +62,7 @@ describe("Error Logging", () => {
 			TelemetryLogger.prepareErrorObject(event, undefined, false);
 			assert.strictEqual(event.error, "undefined", "undefined should work");
 
-			// Technically this violates TelemetryEventPropertyType's type constraint but it's actually supported
+			// Technically this violates TelemetryBaseEventPropertyType's type constraint but it's actually supported
 			event = freshEvent();
 			TelemetryLogger.prepareErrorObject(event, null, false);
 			assert.strictEqual(event.error, "null", "null should work");
@@ -613,7 +616,7 @@ describe("Error Logging", () => {
 class TestFluidError implements IFluidErrorBase {
 	readonly atpStub: sinon.SinonStub;
 	readonly gtpSpy: sinon.SinonSpy;
-	expectedTelemetryProps: ITelemetryProperties;
+	expectedTelemetryProps: ITelemetryBaseProperties;
 
 	readonly errorType: string;
 	readonly message: string;
@@ -637,12 +640,12 @@ class TestFluidError implements IFluidErrorBase {
 		this.expectedTelemetryProps = { ...errorProps };
 	}
 
-	getTelemetryProperties(): ITelemetryProperties {
+	getTelemetryProperties(): ITelemetryBaseProperties {
 		// Don't actually return any props. We'll use the spy to ensure it was called
 		return {};
 	}
 
-	addTelemetryProperties(props: ITelemetryProperties): void {
+	addTelemetryProperties(props: ITelemetryBaseProperties): void {
 		throw new Error("Not Implemented - Expected to be Stubbed via Sinon");
 	}
 
@@ -653,7 +656,7 @@ class TestFluidError implements IFluidErrorBase {
 		return this;
 	}
 
-	withExpectedTelemetryProps(props: ITelemetryProperties): this {
+	withExpectedTelemetryProps(props: ITelemetryBaseProperties): this {
 		Object.assign(this.expectedTelemetryProps, props);
 		return this;
 	}

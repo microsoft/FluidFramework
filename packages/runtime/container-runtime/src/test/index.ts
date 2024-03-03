@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export { IPendingRuntimeState } from "../containerRuntime";
-export { IPendingBlobs } from "../blobManager";
+export { IPendingRuntimeState } from "../containerRuntime.js";
+export { IPendingBlobs } from "../blobManager.js";

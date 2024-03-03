@@ -138,10 +138,17 @@ export function resolveVersion(requested: string, installed: boolean) {
 		}
 		throw new Error(`No matching version found in ${baseModulePath} (requested: ${requested})`);
 	} else {
-		const result = execSync(
-			`npm v @fluidframework/container-loader@"${requested}" version --json`,
-			{ encoding: "utf8" },
-		);
+		let result: string | undefined;
+		try {
+			result = execSync(
+				`npm v @fluidframework/container-loader@"${requested}" version --json`,
+				{ encoding: "utf8" },
+			);
+		} catch (error: any) {
+			throw new Error(
+				`Error while running: npm v @fluidframework/container-loader@"${requested}" version --json`,
+			);
+		}
 		if (result === "" || result === undefined) {
 			throw new Error(`No version published as ${requested}`);
 		}
@@ -366,7 +373,7 @@ export function getRequestedVersion(
 		return baseVersion;
 	}
 	if (typeof requested === "string") {
-		return requested;
+		return resolveVersion(requested, false);
 	}
 	if (requested > 0) {
 		throw new Error("Only negative values are supported for `requested` param.");
@@ -485,10 +492,8 @@ function internalSchema(
 		throw new Error(err as string);
 	}
 
-	// We treat internal and rc as valid; other values should be coerced to "internal"
-	const idToUse = ["internal", "rc"].includes(prereleaseIdentifier)
-		? prereleaseIdentifier
-		: "internal";
+	// Convert any pre/dev release indicators to internal or rc; default to "internal"
+	const idToUse = prereleaseIdentifier.includes("rc") ? "rc" : "internal";
 	return `>=${publicVersion}-${idToUse}.${
 		parsedVersion.major - 1
 	}.0.0 <${publicVersion}-${idToUse}.${parsedVersion.major}.0.0`;
