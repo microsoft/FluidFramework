@@ -1029,7 +1029,7 @@ export class ContainerRuntime
 
 	private _idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
 	private pendingIdCompressorOps: IdCreationRange[] = [];
-	private skipSavedCompressorOps: boolean;
+	private readonly skipSavedCompressorOps: boolean;
 
 	/**
 	 * See IContainerRuntimeBase.idCompressor() for details.
