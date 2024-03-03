@@ -157,7 +157,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		assert(getIdCompressor(map) === undefined);
 	});
 
-	it("can enable compressor on an existing container if not enabled originally", async () => {
+	it("can't enable compressor on an existing container", async () => {
 		provider.reset();
 		const container = await provider.makeTestContainer(containerConfigNoCompressor);
 		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
@@ -167,7 +167,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		const enabledContainer = await provider.loadTestContainer(containerConfigWithCompressor);
 		const enabledDataObject = (await enabledContainer.getEntryPoint()) as ITestFluidObject;
 		const enabledMap = await enabledDataObject.getSharedObject<SharedMap>("mapId");
-		assert(getIdCompressor(enabledMap) !== undefined);
+		assert(getIdCompressor(enabledMap) === undefined);
 	});
 
 	it("can't disable compressor if previously enabled on existing container", async () => {
