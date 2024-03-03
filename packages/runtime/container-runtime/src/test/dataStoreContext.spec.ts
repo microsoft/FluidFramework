@@ -51,9 +51,9 @@ import {
 	LocalDetachedFluidDataStoreContext,
 	LocalFluidDataStoreContext,
 	RemoteFluidDataStoreContext,
-} from "../dataStoreContext";
-import { ContainerRuntime } from "../containerRuntime";
-import { StorageServiceWithAttachBlobs } from "../storageServiceWithAttachBlobs";
+} from "../dataStoreContext.js";
+import { ContainerRuntime } from "../containerRuntime.js";
+import { StorageServiceWithAttachBlobs } from "../storageServiceWithAttachBlobs.js";
 import {
 	createRootSummarizerNodeWithGC,
 	dataStoreAttributesBlobName,
@@ -61,9 +61,9 @@ import {
 	ReadFluidDataStoreAttributes,
 	WriteFluidDataStoreAttributes,
 	summarizerClientType,
-} from "../summary";
-import { channelToDataStore } from "../dataStore";
-import { DataStores } from "../dataStores";
+} from "../summary/index.js";
+import { channelToDataStore } from "../dataStore.js";
+import { DataStores } from "../dataStores.js";
 
 describe("Data Store Context Tests", () => {
 	const dataStoreId = "Test1";

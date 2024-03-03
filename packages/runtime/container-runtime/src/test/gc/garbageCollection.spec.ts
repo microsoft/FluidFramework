@@ -55,15 +55,15 @@ import {
 	GarbageCollectionMessageType,
 	GCTelemetryTracker,
 	IGCStats,
-} from "../../gc";
-import { ContainerMessageType, ContainerRuntimeGCMessage } from "../../messageTypes";
+} from "../../gc/index.js";
+import { ContainerMessageType, ContainerRuntimeGCMessage } from "../../messageTypes.js";
 import {
 	dataStoreAttributesBlobName,
 	IContainerRuntimeMetadata,
 	metadataBlobName,
-} from "../../summary";
-import { pkgVersion } from "../../packageVersion";
-import { createTestConfigProvider } from "./gcUnitTestHelpers";
+} from "../../summary/index.js";
+import { pkgVersion } from "../../packageVersion.js";
+import { createTestConfigProvider } from "./gcUnitTestHelpers.js";
 
 type WithPrivates<T, TPrivates> = Omit<T, keyof TPrivates> & TPrivates;
 

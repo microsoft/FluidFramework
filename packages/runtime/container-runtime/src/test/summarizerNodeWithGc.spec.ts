@@ -18,14 +18,14 @@ import {
 import { GCDataBuilder, mergeStats } from "@fluidframework/runtime-utils";
 import { MockLogger, TelemetryDataTag, createChildLogger } from "@fluidframework/telemetry-utils";
 // eslint-disable-next-line import/no-internal-modules
-import { ValidateSummaryResult } from "../summary/summarizerNode";
+import { ValidateSummaryResult } from "../summary/summarizerNode/index.js";
 import {
 	createRootSummarizerNodeWithGC,
 	IRootSummarizerNodeWithGC,
 	SummarizerNodeWithGC,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../summary/summarizerNode/summarizerNodeWithGc";
-import { cloneGCData } from "../gc";
+} from "../summary/summarizerNode/summarizerNodeWithGc.js";
+import { cloneGCData } from "../gc/index.js";
 
 describe("SummarizerNodeWithGC Tests", () => {
 	const summarizerNodeId = "testNode";

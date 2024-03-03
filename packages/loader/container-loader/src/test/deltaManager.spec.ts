@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { EventEmitter } from "events";
+import { EventEmitter } from "@fluid-internal/client-utils";
 import { MockDocumentDeltaConnection, MockDocumentService } from "@fluid-private/test-loader-utils";
 import {
 	ITelemetryLoggerExt,
