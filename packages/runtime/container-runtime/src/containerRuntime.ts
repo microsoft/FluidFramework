@@ -1786,7 +1786,10 @@ export class ContainerRuntime
 
 		this.logger.sendTelemetryEvent({
 			eventName: "GroupedSnapshotFetched",
-			details: JSON.stringify({ fromCache: loadedFromCache, count: loadingGroupIds.length }),
+			details: JSON.stringify({
+				fromCache: loadedFromCache,
+				loadingGroupIds: loadingGroupIds.join(","),
+			}),
 		});
 		// Find the snapshotTree inside the returned snapshot based on the path as given in the request.
 		const hasIsolatedChannels = rootHasIsolatedChannels(this.metadata);
