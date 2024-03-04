@@ -7,6 +7,7 @@ import type {
 	ITelemetryBaseLogger,
 	IDisposable,
 	FluidObject,
+	ISignalEnvelope
 } from "@fluidframework/core-interfaces";
 
 import type { IDocumentStorageService, ISnapshot } from "@fluidframework/driver-definitions";
@@ -155,7 +156,7 @@ export interface IContainerContext {
 	) => number;
 	// TODO: use `unknown` instead (API breaking)
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	readonly submitSignalFn: (contents: any, targetClientId?: string) => void;
+	readonly submitSignalFn: (contents: ISignalEnvelope, targetClientId?: string) => void;
 	readonly disposeFn?: (error?: ICriticalContainerError) => void;
 	readonly closeFn: (error?: ICriticalContainerError) => void;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;

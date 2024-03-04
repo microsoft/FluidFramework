@@ -27,6 +27,7 @@ import {
 	MessageType,
 	ISummaryContent,
 } from "@fluidframework/protocol-definitions";
+import type { ISignalEnvelope } from "@fluidframework/core-interfaces";
 
 /**
  * {@inheritDoc @fluidframework/container-definitions#IContainerContext}
@@ -85,7 +86,7 @@ export class ContainerContext implements IContainerContext {
 			batch: IBatchMessage[],
 			referenceSequenceNumber?: number,
 		) => number,
-		public readonly submitSignalFn: (content: any, targetClientId?: string) => void,
+		public readonly submitSignalFn: (content: ISignalEnvelope, targetClientId?: string) => void,
 		public readonly disposeFn: (error?: ICriticalContainerError) => void,
 		public readonly closeFn: (error?: ICriticalContainerError) => void,
 		public readonly updateDirtyContainerState: (dirty: boolean) => void,
