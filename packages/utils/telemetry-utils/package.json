@@ -25,10 +25,6 @@
 		}
 	},
 	"main": "dist/index.js",
-	"browser": {
-		"./dist/indexNode.js": "./dist/indexBrowser.js",
-		"./lib/indexNode.js": "./lib/indexBrowser.js"
-	},
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
@@ -54,7 +50,7 @@
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "npm run test:mocha:cjs && npm run test:mocha:esm",
+		"test:mocha": "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",
 		"test:mocha:cjs": "mocha  --recursive \"dist/test/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
 		"test:mocha:esm": "mocha  --recursive \"lib/test/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
@@ -88,7 +84,6 @@
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/protocol-definitions": "^3.2.0-237840",
 		"debug": "^4.3.4",
-		"events": "^3.1.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
@@ -101,7 +96,6 @@
 		"@fluidframework/telemetry-utils-previous": "npm:@fluidframework/telemetry-utils@2.0.0-internal.8.0.0",
 		"@microsoft/api-extractor": "^7.39.1",
 		"@types/debug": "^4.1.5",
-		"@types/events": "^3.0.0",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
 		"@types/sinon": "^17.0.3",

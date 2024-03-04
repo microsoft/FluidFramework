@@ -11,8 +11,8 @@ import {
 	tagCodeArtifacts,
 	type ITelemetryGenericEventExt,
 } from "@fluidframework/telemetry-utils";
-import { RuntimeHeaderData } from "../containerRuntime";
-import { ICreateContainerMetadata } from "../summary";
+import { RuntimeHeaderData } from "../containerRuntime.js";
+import { ICreateContainerMetadata } from "../summary/index.js";
 import {
 	GCNodeType,
 	UnreferencedState,
@@ -22,8 +22,8 @@ import {
 	throwOnTombstoneLoadOverrideKey,
 	runSweepKey,
 	GCFeatureMatrix,
-} from "./gcDefinitions";
-import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";
+} from "./gcDefinitions.js";
+import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker.js";
 
 type NodeUsageType = "Changed" | "Loaded" | "Revived";
 

@@ -6,11 +6,11 @@
 import { strict as assert } from "node:assert";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { DriverHeader } from "@fluidframework/driver-definitions";
-import { InsecureTinyliciousUrlResolver } from "../insecureTinyliciousUrlResolver";
+import { InsecureTinyliciousUrlResolver } from "../insecureTinyliciousUrlResolver.js";
 
 describe("Insecure Url Resolver Test", () => {
 	const documentId = "fileName";
-	const hostUrl = "https://localhost:7070";
+	const hostUrl = "http://localhost:7070";
 	const tinyliciousEndpoint = "http://localhost:7070";
 	let resolver: InsecureTinyliciousUrlResolver;
 
@@ -32,7 +32,7 @@ describe("Insecure Url Resolver Test", () => {
 
 	it("Should resolve url with custom domain and port", async () => {
 		const customEndpoint = "http://custom-endpoint.io";
-		const customFluidEndpoint = "https://custom-endpoint.io";
+		const customFluidEndpoint = "http://custom-endpoint.io";
 		const customPort = 1234;
 		const customResolver = new InsecureTinyliciousUrlResolver(customPort, customEndpoint);
 		const testRequest: IRequest = {

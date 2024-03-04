@@ -12,8 +12,8 @@ import {
 	OpGroupingManager,
 	OpSplitter,
 	RemoteMessageProcessor,
-} from "../../opLifecycle";
-import { ContainerMessageType } from "../..";
+} from "../../opLifecycle/index.js";
+import { ContainerMessageType } from "../../index.js";
 
 describe("RemoteMessageProcessor", () => {
 	const stamp = (

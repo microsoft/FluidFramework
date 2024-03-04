@@ -21,11 +21,11 @@ import {
 import { mergeStats } from "@fluidframework/runtime-utils";
 import { TelemetryDataTag, createChildLogger } from "@fluidframework/telemetry-utils";
 
-import { createRootSummarizerNode, IRootSummarizerNode } from "../summary";
+import { createRootSummarizerNode, IRootSummarizerNode } from "../summary/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { SummarizerNode } from "../summary/summarizerNode/summarizerNode";
+import { SummarizerNode } from "../summary/summarizerNode/summarizerNode.js";
 // eslint-disable-next-line import/no-internal-modules
-import { ValidateSummaryResult } from "../summary/summarizerNode";
+import { ValidateSummaryResult } from "../summary/summarizerNode/index.js";
 
 describe("Runtime", () => {
 	describe("Summarization", () => {

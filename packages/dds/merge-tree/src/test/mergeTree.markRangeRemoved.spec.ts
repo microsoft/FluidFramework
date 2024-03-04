@@ -5,10 +5,10 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
-import { UnassignedSequenceNumber } from "../constants";
-import { createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder";
-import { TextSegment } from "../textSegment";
-import { TestClient } from "./testClient";
+import { UnassignedSequenceNumber } from "../constants.js";
+import { createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder.js";
+import { TextSegment } from "../textSegment.js";
+import { TestClient } from "./testClient.js";
 
 describe("MergeTree.markRangeRemoved", () => {
 	let client: TestClient;

@@ -56,7 +56,6 @@
 		"@fluidframework/task-manager": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/tinylicious-driver": "workspace:~",
-		"events": "^3.1.0",
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1",
 		"uuid": "^9.0.0"
