@@ -11,8 +11,8 @@ import {
 	IOrderedClientElection,
 	ISerializedElection,
 	ITrackedClient,
-} from "./orderedClientElection";
-import { ISummaryCollectionOpEvents } from "./summaryCollection";
+} from "./orderedClientElection.js";
+import { ISummaryCollectionOpEvents } from "./summaryCollection.js";
 
 export const summarizerClientType = "summarizer";
 

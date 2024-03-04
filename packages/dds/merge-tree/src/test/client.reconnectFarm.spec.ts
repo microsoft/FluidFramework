@@ -7,8 +7,8 @@
 import { strict as assert } from "assert";
 import { IRandom, makeRandom, describeFuzz } from "@fluid-private/stochastic-test-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IMergeTreeOp } from "../ops";
-import { SegmentGroup } from "../mergeTreeNodes";
+import { IMergeTreeOp } from "../ops.js";
+import { SegmentGroup } from "../mergeTreeNodes.js";
 import {
 	generateClientNames,
 	doOverRange,
@@ -19,9 +19,9 @@ import {
 	IMergeTreeOperationRunnerConfig,
 	IConfigRange,
 	insert,
-} from "./mergeTreeOperationRunner";
-import { TestClient } from "./testClient";
-import { TestClientLogger } from "./testClientLogger";
+} from "./mergeTreeOperationRunner.js";
+import { TestClient } from "./testClient.js";
+import { TestClientLogger } from "./testClientLogger.js";
 
 function applyMessagesWithReconnect(
 	startingSeq: number,

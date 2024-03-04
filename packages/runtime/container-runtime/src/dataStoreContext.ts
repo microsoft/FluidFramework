@@ -9,7 +9,7 @@ import {
 	IRequest,
 	IResponse,
 	IFluidHandle,
-	ITelemetryProperties,
+	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
 import { IAudience, IDeltaManager, AttachState } from "@fluidframework/container-definitions";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
@@ -71,9 +71,9 @@ import {
 	getAttributesFormatVersion,
 	getFluidDataStoreAttributes,
 	summarizerClientType,
-} from "./summary";
-import { ContainerRuntime } from "./containerRuntime";
-import { detectOutboundRoutesViaDDSKey, sendGCUnexpectedUsageEvent } from "./gc";
+} from "./summary/index.js";
+import { ContainerRuntime } from "./containerRuntime.js";
+import { detectOutboundRoutesViaDDSKey, sendGCUnexpectedUsageEvent } from "./gc/index.js";
 
 function createAttributes(
 	pkg: readonly string[],
@@ -920,7 +920,7 @@ export abstract class FluidDataStoreContext
 	private verifyNotClosed(
 		callSite: string,
 		checkTombstone = true,
-		safeTelemetryProps: ITelemetryProperties = {},
+		safeTelemetryProps: ITelemetryBaseProperties = {},
 	) {
 		if (this.deleted) {
 			const messageString = `Context is deleted! Call site [${callSite}]`;

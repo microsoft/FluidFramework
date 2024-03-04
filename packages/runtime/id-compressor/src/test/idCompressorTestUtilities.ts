@@ -27,9 +27,9 @@ import {
 	StableId,
 	type IIdCompressor,
 	type IIdCompressorCore,
-} from "../";
-import { IdCompressor } from "../idCompressor";
-import { assertIsSessionId, createSessionId } from "../utilities";
+} from "..//index.js";
+import { IdCompressor } from "../idCompressor.js";
+import { assertIsSessionId, createSessionId } from "../utilities.js";
 import {
 	FinalCompressedId,
 	getOrCreate,
@@ -38,7 +38,7 @@ import {
 	isLocalId,
 	ReadonlyIdCompressor,
 	fail,
-} from "./testCommon";
+} from "./testCommon.js";
 
 /**
  * A readonly `Map` which is known to contain a value for every possible key

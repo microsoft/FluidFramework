@@ -8,21 +8,21 @@
 
 import { assert, Heap, IComparer } from "@fluidframework/core-utils";
 import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils";
-import { IAttributionCollectionSerializer } from "./attributionCollection";
-import { DoublyLinkedList, ListNode } from "./collections";
+import { IAttributionCollectionSerializer } from "./attributionCollection.js";
+import { DoublyLinkedList, ListNode } from "./collections/index.js";
 import {
 	NonCollabClient,
 	TreeMaintenanceSequenceNumber,
 	UnassignedSequenceNumber,
 	UniversalSequenceNumber,
-} from "./constants";
+} from "./constants.js";
 import {
 	anyLocalReferencePosition,
 	filterLocalReferencePositions,
 	LocalReferenceCollection,
 	LocalReferencePosition,
 	SlidingPreference,
-} from "./localReference";
+} from "./localReference.js";
 import {
 	BlockAction,
 	// eslint-disable-next-line import/no-deprecated
@@ -46,39 +46,39 @@ import {
 	toMoveInfo,
 	seqLTE,
 	toRemovalInfo,
-} from "./mergeTreeNodes";
+} from "./mergeTreeNodes.js";
 import {
 	IMergeTreeDeltaOpArgs,
 	IMergeTreeSegmentDelta,
 	MergeTreeDeltaCallback,
 	MergeTreeMaintenanceCallback,
 	MergeTreeMaintenanceType,
-} from "./mergeTreeDeltaCallback";
-import { createAnnotateRangeOp, createInsertSegmentOp, createRemoveRangeOp } from "./opBuilder";
-import { IMergeTreeDeltaOp, IRelativePosition, MergeTreeDeltaType, ReferenceType } from "./ops";
-import { PartialSequenceLengths } from "./partialLengths";
+} from "./mergeTreeDeltaCallback.js";
+import { createAnnotateRangeOp, createInsertSegmentOp, createRemoveRangeOp } from "./opBuilder.js";
+import { IMergeTreeDeltaOp, IRelativePosition, MergeTreeDeltaType, ReferenceType } from "./ops.js";
+import { PartialSequenceLengths } from "./partialLengths.js";
 // eslint-disable-next-line import/no-deprecated
-import { createMap, extend, extendIfUndefined, MapLike, PropertySet } from "./properties";
+import { createMap, extend, extendIfUndefined, MapLike, PropertySet } from "./properties.js";
 import {
 	refTypeIncludesFlag,
 	ReferencePosition,
 	DetachedReferencePosition,
 	refGetTileLabels,
 	refHasTileLabel,
-} from "./referencePositions";
-import { PropertiesRollback } from "./segmentPropertiesManager";
+} from "./referencePositions.js";
+import { PropertiesRollback } from "./segmentPropertiesManager.js";
 import {
 	backwardExcursion,
 	depthFirstNodeWalk,
 	forwardExcursion,
 	NodeAction,
 	walkAllChildSegments,
-} from "./mergeTreeNodeWalk";
-import type { TrackingGroup } from "./mergeTreeTracking";
-import { zamboniSegments } from "./zamboni";
+} from "./mergeTreeNodeWalk.js";
+import type { TrackingGroup } from "./mergeTreeTracking.js";
+import { zamboniSegments } from "./zamboni.js";
 // eslint-disable-next-line import/no-deprecated
-import { Client } from "./client";
-import { EndOfTreeSegment, StartOfTreeSegment } from "./endOfTreeSegment";
+import { Client } from "./client.js";
+import { EndOfTreeSegment, StartOfTreeSegment } from "./endOfTreeSegment.js";
 
 function wasRemovedAfter(seg: ISegment, seq: number): boolean {
 	return (
@@ -116,6 +116,10 @@ function isMovedAndAcked(segment: ISegment): segment is ISegment & IMoveInfo {
 
 function isRemovedAndAckedOrMovedAndAcked(segment: ISegment): boolean {
 	return isRemovedAndAcked(segment) || isMovedAndAcked(segment);
+}
+
+function isRemovedOrMoved(segment: ISegment): boolean {
+	return isRemoved(segment) || isMoved(segment);
 }
 
 function nodeTotalLength(mergeTree: MergeTree, node: IMergeNode): number | undefined {
@@ -1065,8 +1069,14 @@ export class MergeTree {
 			return this.getPosition(refPos, refSeq, clientId);
 		}
 		if (refTypeIncludesFlag(refPos, ReferenceType.Transient) || seg.localRefs?.has(refPos)) {
-			const offset = isRemoved(seg) || isMoved(seg) ? 0 : refPos.getOffset();
-			return offset + this.getPosition(seg, refSeq, clientId);
+			const offset = isRemovedOrMoved(seg) ? 0 : refPos.getOffset();
+			const pos = this.getPosition(seg, refSeq, clientId);
+
+			if (isRemovedOrMoved(seg) && refPos.slidingPreference === SlidingPreference.BACKWARD) {
+				return pos === 0 ? 0 : pos - 1;
+			}
+
+			return offset + pos;
 		}
 		return DetachedReferencePosition;
 	}
@@ -1885,9 +1895,6 @@ export class MergeTree {
 		}
 	}
 
-	/**
-	 * @alpha
-	 */
 	public obliterateRange(
 		start: number,
 		end: number,

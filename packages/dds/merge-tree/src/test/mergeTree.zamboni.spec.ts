@@ -4,9 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { IMergeBlock } from "../mergeTreeNodes";
-import { zamboniSegments, packParent } from "../zamboni";
-import { TestClient } from "./testClient";
+import { IMergeBlock } from "../mergeTreeNodes.js";
+import { zamboniSegments, packParent } from "../zamboni.js";
+import { TestClient } from "./testClient.js";
 
 describe("Zamboni Logic", () => {
 	let client: TestClient;

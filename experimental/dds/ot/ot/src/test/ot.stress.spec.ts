@@ -12,7 +12,7 @@ import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
 } from "@fluidframework/test-runtime-utils";
-import { SharedDelta } from "./delta";
+import { SharedDelta } from "./delta.js";
 
 describe("SharedOT", () => {
 	describe("stress", () => {

@@ -96,7 +96,6 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 
 	/**
 	 * {@inheritDoc @fluidframework/driver-definitions#IUrlResolver.resolve}
-	 * @alpha
 	 */
 	public async resolve(request: IRequest): Promise<IOdspResolvedUrl> {
 		if (request.headers?.[DriverHeader.createNew]) {
@@ -127,7 +126,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 				type: "fluid",
 				odspResolvedUrl: true,
 				id: "odspCreateNew",
-				url: `fluid-odsp://${siteURL}?${queryString}&version=null`,
+				url: `https://${siteURL}?${queryString}&version=null`,
 				siteUrl: siteURL,
 				hashedDocumentId: "",
 				driveId: driveID,
@@ -148,7 +147,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 		const hashedDocumentId = await getHashedDocumentId(driveId, itemId);
 		assert(!hashedDocumentId.includes("/"), 0x0a8 /* "Docid should not contain slashes!!" */);
 
-		const documentUrl = `fluid-odsp://placeholder/placeholder/${hashedDocumentId}/${removeBeginningSlash(
+		const documentUrl = `https://placeholder/placeholder/${hashedDocumentId}/${removeBeginningSlash(
 			path,
 		)}`;
 
