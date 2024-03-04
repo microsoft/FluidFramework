@@ -359,7 +359,7 @@ extends:
                 command: run
                 runInBackground: false
                 imageName: $(baseContainerTag)
-                containerCommand: pnpm lerna exec --no-private -- mv `npm pack` /usr/src/pack
+                containerCommand: pnpm -rc exec mv `npm pack` /usr/src/pack
                 volumes:
                   $(hostPathToPackArtifact)/scoped:/usr/src/pack
 
