@@ -17,15 +17,14 @@ import { mapWait } from "./utils";
 describe("Container copy scenarios", () => {
 	const connectTimeoutMs = 10_000;
 	let client: AzureClient;
-	let schema: ContainerSchema;
+	const schema = {
+		initialObjects: {
+			map1: SharedMap,
+		},
+	} satisfies ContainerSchema;
 
 	beforeEach("createAzureClient", () => {
 		client = createAzureClient();
-		schema = {
-			initialObjects: {
-				map1: SharedMap,
-			},
-		};
 	});
 
 	beforeEach("skipForNonAzure", async function () {
@@ -173,7 +172,7 @@ describe("Container copy scenarios", () => {
 		const { container } = await client.createContainer(schema);
 
 		const initialObjectsCreate = container.initialObjects;
-		const map1Create = initialObjectsCreate.map1 as SharedMap;
+		const map1Create = initialObjectsCreate.map1;
 		map1Create.set("new-key", "new-value");
 		const valueCreate: string | undefined = map1Create.get("new-key");
 
@@ -190,7 +189,7 @@ describe("Container copy scenarios", () => {
 
 		const { container: containerCopy } = await resources;
 
-		const map1Get = containerCopy.initialObjects.map1 as SharedMap;
+		const map1Get = containerCopy.initialObjects.map1;
 		const valueGet: string | undefined = await mapWait(map1Get, "new-key");
 		assert.strictEqual(valueGet, valueCreate, "DDS value was not correctly copied.");
 	});
