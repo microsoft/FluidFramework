@@ -343,6 +343,7 @@ export async function ReportIfTooLong(
 export interface IPendingContainerState {
 	attached: true;
 	pendingRuntimeState: unknown;
+	version?: IVersion | undefined;
 	/**
 	 * Snapshot from which container initially loaded.
 	 */
@@ -970,6 +971,7 @@ export class Container
 			this.subLogger,
 			this.storageAdapter,
 			offlineLoadEnabled,
+			async (storage, tree) => this.getDocumentAttributes(storage, tree),
 		);
 
 		const isDomAvailable =
@@ -1705,6 +1707,9 @@ export class Container
 				// allow runtime to apply stashed ops at this op's sequence number
 				await this.runtime.notifyOpReplay?.(message);
 			}
+			this.serializedStateManager.refreshAttributes(
+				this.service?.policies?.supportGetSnapshotApi,
+			);
 			pendingLocalState.savedOps = [];
 		}
 

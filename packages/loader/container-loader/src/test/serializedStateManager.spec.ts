@@ -20,7 +20,7 @@ import {
 	ISnapshotFetchOptions,
 } from "@fluidframework/driver-definitions";
 import { IGetPendingLocalStateProps, IRuntime } from "@fluidframework/container-definitions";
-import { stringToBuffer } from "@fluid-internal/client-utils";
+import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { IPendingContainerState } from "../container.js";
 import { SerializedStateManager } from "../serializedStateManager.js";
 
@@ -133,6 +133,27 @@ const getAttributesFromPendingState = (
 	return JSON.parse(attributes) as IDocumentAttributes;
 };
 
+const getAttributesFromStorage = async (
+	storage: IDocumentStorageService,
+	tree: ISnapshotTree | undefined,
+) => {
+	if (tree === undefined) {
+		return {
+			minimumSequenceNumber: 0,
+			sequenceNumber: 0,
+		};
+	}
+
+	// Backward compatibility: old docs would have ".attributes" instead of "attributes"
+	const attributesHash =
+		".protocol" in tree.trees
+			? tree.trees[".protocol"].blobs.attributes
+			: tree.blobs[".attributes"];
+	const attributesBlob = await storage.readBlob(attributesHash);
+	const decoded = bufferToString(attributesBlob, "utf8");
+	return JSON.parse(decoded) as IDocumentAttributes;
+};
+
 describe("serializedStateManager", () => {
 	let seq: number;
 	let logger: ITelemetryLoggerExt;
@@ -158,6 +179,7 @@ describe("serializedStateManager", () => {
 			logger,
 			storageAdapter,
 			false,
+			async (storage, tree) => getAttributesFromStorage(storage, tree),
 		);
 
 		await assert.rejects(
@@ -183,6 +205,7 @@ describe("serializedStateManager", () => {
 			logger,
 			storageAdapter,
 			true,
+			async (storage, tree) => getAttributesFromStorage(storage, tree),
 		);
 
 		await assert.rejects(
@@ -215,6 +238,7 @@ describe("serializedStateManager", () => {
 			logger,
 			storageAdapter,
 			true,
+			async (storage, tree) => getAttributesFromStorage(storage, tree),
 		);
 		const { snapshotTree, version } = await serializedStateManager.fetchSnapshot(
 			undefined,
@@ -238,6 +262,7 @@ describe("serializedStateManager", () => {
 			logger,
 			storageAdapter,
 			true,
+			async (storage, tree) => getAttributesFromStorage(storage, tree),
 		);
 		// equivalent to attach
 		serializedStateManager.setSnapshot({ tree: { trees: {}, blobs: {} }, blobs: {} });
@@ -259,6 +284,7 @@ describe("serializedStateManager", () => {
 			logger,
 			storageAdapter,
 			true,
+			async (storage, tree) => getAttributesFromStorage(storage, tree),
 		);
 		const { snapshotTree, version } = await serializedStateManager.fetchSnapshot(
 			undefined,

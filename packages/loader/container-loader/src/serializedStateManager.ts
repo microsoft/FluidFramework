@@ -4,6 +4,7 @@
  */
 
 import {
+	IDocumentAttributes,
 	ISequencedDocumentMessage,
 	ISnapshotTree,
 	IVersion,
@@ -27,7 +28,8 @@ import { ISerializableBlobContents, getBlobContentsFromTree } from "./containerS
 import { IPendingContainerState } from "./container.js";
 
 export class SerializedStateManager {
-	private readonly savedOps: ISequencedDocumentMessage[] = [];
+	// eslint-disable-next-line @typescript-eslint/prefer-readonly
+	private savedOps: ISequencedDocumentMessage[] = [];
 	private snapshot:
 		| {
 				tree: ISnapshotTree;
@@ -35,6 +37,7 @@ export class SerializedStateManager {
 		  }
 		| undefined;
 	private readonly mc: MonitoringContext;
+	private currentSnapshotVersion: IVersion | undefined = undefined;
 
 	constructor(
 		private readonly pendingLocalState: IPendingContainerState | undefined,
@@ -44,6 +47,7 @@ export class SerializedStateManager {
 			"readBlob" | "getSnapshotTree" | "getSnapshot" | "getVersions"
 		>,
 		private readonly _offlineLoadEnabled: boolean,
+		private readonly getDocumentAttributes: (storage, tree) => Promise<IDocumentAttributes>,
 	) {
 		this.mc = createChildMonitoringContext({
 			logger: subLogger,
@@ -73,7 +77,11 @@ export class SerializedStateManager {
 		const { snapshot, version } =
 			this.pendingLocalState === undefined
 				? await this.fetchSnapshotCore(specifiedVersion, supportGetSnapshotApi)
-				: { snapshot: this.pendingLocalState.baseSnapshot, version: undefined };
+				: {
+						snapshot: this.pendingLocalState.baseSnapshot,
+						version: this.pendingLocalState.version,
+				  };
+		this.currentSnapshotVersion = version;
 		const snapshotTree: ISnapshotTree | undefined = isInstanceOfISnapshot(snapshot)
 			? snapshot.snapshotTree
 			: snapshot;
@@ -147,6 +155,54 @@ export class SerializedStateManager {
 		return { snapshot, version };
 	}
 
+	public refreshAttributes(supportGetSnapshotApi: boolean | undefined) {
+		this.fetchSnapshotCore(undefined, supportGetSnapshotApi)
+			.then(async ({ snapshot, version }) => {
+				if (this.currentSnapshotVersion && this.currentSnapshotVersion.id !== version?.id) {
+					this.currentSnapshotVersion = version;
+					const snapshotTree: ISnapshotTree | undefined = isInstanceOfISnapshot(snapshot)
+						? snapshot.snapshotTree
+						: snapshot;
+					assert(snapshotTree !== undefined, "Snapshot should exist");
+					const blobs = await getBlobContentsFromTree(snapshotTree, this.storageAdapter);
+
+					const attributes: IDocumentAttributes = await this.getDocumentAttributes(
+						this.storageAdapter,
+						snapshotTree,
+					);
+					const snapshotSN = attributes.sequenceNumber;
+					const firstSavedOpSN = this.savedOps[0].sequenceNumber;
+					const lastSavedOpSN = this.savedOps[this.savedOps.length - 1].sequenceNumber;
+					if (snapshotSN < firstSavedOpSN) {
+						// This should be an impossible case
+						console.log("snapshotSN <<<<<< firstSavedOpSN");
+						console.log(snapshotSN, " ", firstSavedOpSN);
+						return;
+					}
+					this.snapshot = { tree: snapshotTree, blobs };
+					if (firstSavedOpSN < snapshotSN && snapshotSN < lastSavedOpSN) {
+						// verify next saved op is a summarize (?)
+						assert(
+							this.savedOps[snapshotSN - firstSavedOpSN + 1].type === "summarize",
+							"err",
+						);
+						console.log("firstSavedOpSN < snapshotSN && snapshotSN < lastSavedOpSN");
+						console.log(firstSavedOpSN, " ", snapshotSN, " ", lastSavedOpSN);
+						this.savedOps.splice(0, snapshotSN - firstSavedOpSN + 1);
+						assert(this.savedOps[0].type === "summarize", "error");
+						assert(this.savedOps[1].type === "summaryAck", "error");
+					}
+					if (snapshotSN > lastSavedOpSN) {
+						console.log("snapshotSN >>>>>> lastSavedOpSN");
+						console.log(snapshotSN, " ", lastSavedOpSN);
+						// this.savedOps = [];
+						// wait for process ops to catch up on latest snapshot.
+						return;
+					}
+				}
+			})
+			.catch(() => {});
+	}
 	/**
 	 * This method is only meant to be used by Container.attach() to set the initial
 	 * base snapshot when attaching.
@@ -169,6 +225,7 @@ export class SerializedStateManager {
 		runtime: Pick<IRuntime, "getPendingLocalState">,
 		resolvedUrl: IResolvedUrl,
 	) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
 			{
@@ -188,6 +245,7 @@ export class SerializedStateManager {
 				const pendingState: IPendingContainerState = {
 					attached: true,
 					pendingRuntimeState,
+					version: this.currentSnapshotVersion,
 					baseSnapshot: this.snapshot.tree,
 					snapshotBlobs: this.snapshot.blobs,
 					savedOps: this.savedOps,

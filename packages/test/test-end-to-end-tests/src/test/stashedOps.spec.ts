@@ -45,6 +45,9 @@ import {
 	DefaultSummaryConfiguration,
 	type RecentlyAddedContainerRuntimeMessageDetails,
 } from "@fluidframework/container-runtime";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { wrapObjectAndOverride } from "../mocking.js";
+
 const mapId = "map";
 const stringId = "sharedStringKey";
 const cellId = "cellKey";
@@ -177,31 +180,25 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		pendingLocalState?: string,
 	): Promise<{ container: IContainerExperimental; connect: () => void }> {
 		const p = new Deferred();
-		const documentServiceFactory = testObjectProvider.driver.createDocumentServiceFactory();
-
-		// patch document service methods to simulate offline by not resolving until we choose to
-		const boundFn = documentServiceFactory.createDocumentService.bind(documentServiceFactory);
-		documentServiceFactory.createDocumentService = async (...args) => {
-			const docServ = await boundFn(...args);
-			const boundCTDStream = docServ.connectToDeltaStream.bind(docServ);
-			docServ.connectToDeltaStream = async (...args2) => {
-				await p.promise;
-				return boundCTDStream(...args2);
-			};
-			const boundCTDStorage = docServ.connectToDeltaStorage.bind(docServ);
-			docServ.connectToDeltaStorage = async (...args2) => {
-				await p.promise;
-				return boundCTDStorage(...args2);
-			};
-			const boundCTStorage = docServ.connectToStorage.bind(docServ);
-			docServ.connectToStorage = async (...args2) => {
-				await p.promise;
-				return boundCTStorage(...args2);
-			};
-
-			return docServ;
-		};
-		// eslint-disable-next-line @typescript-eslint/no-shadow
+		const documentServiceFactory = wrapObjectAndOverride<IDocumentServiceFactory>(
+			provider.documentServiceFactory,
+			{
+				createDocumentService: {
+					connectToDeltaStream: (_ds) => async (client) => {
+						await p.promise;
+						return _ds.connectToDeltaStream(client);
+					},
+					connectToDeltaStorage: (_ds) => async () => {
+						await p.promise;
+						return _ds.connectToDeltaStorage();
+					},
+					connectToStorage: (_ds) => async () => {
+						await p.promise;
+						return _ds.connectToStorage();
+					},
+				},
+			},
+		);
 		const loader = testObjectProvider.createLoader(
 			[
 				[
