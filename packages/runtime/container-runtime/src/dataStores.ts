@@ -181,7 +181,7 @@ export function wrapContext(context: IFluidParentContext): IFluidParentContext {
 }
 
 /** @internal */
-export function createParentContext(
+export function wrapContextForInnerChannel(
 	id: string,
 	parentContext: IFluidParentContext,
 ): IFluidParentContext {
@@ -302,7 +302,7 @@ export class DataStores implements IFluidDataStoreChannel, IDisposable {
 				dataStoreContext = new RemoteFluidDataStoreContext({
 					id: key,
 					snapshotTree: value,
-					parentContext: this.createParentContext(key),
+					parentContext: this.wrapContextForInnerChannel(key),
 					storage: this.parentContext.storage,
 					scope: this.parentContext.scope,
 					createSummarizerNodeFn: this.parentContext.getCreateChildSummarizerNodeFn(key, {
@@ -318,7 +318,7 @@ export class DataStores implements IFluidDataStoreChannel, IDisposable {
 				dataStoreContext = new LocalFluidDataStoreContext({
 					id: key,
 					pkg: undefined,
-					parentContext: this.createParentContext(key),
+					parentContext: this.wrapContextForInnerChannel(key),
 					storage: this.parentContext.storage,
 					scope: this.parentContext.scope,
 					createSummarizerNodeFn: this.parentContext.getCreateChildSummarizerNodeFn(key, {
@@ -353,8 +353,8 @@ export class DataStores implements IFluidDataStoreChannel, IDisposable {
 	/** For sampling. Only log once per container */
 	private shouldSendAttachLog = true;
 
-	private createParentContext(id: string): IFluidParentContext {
-		return createParentContext(id, this.parentContext);
+	private wrapContextForInnerChannel(id: string): IFluidParentContext {
+		return wrapContextForInnerChannel(id, this.parentContext);
 	}
 
 	/**
@@ -434,7 +434,7 @@ export class DataStores implements IFluidDataStoreChannel, IDisposable {
 		const remoteFluidDataStoreContext = new RemoteFluidDataStoreContext({
 			id: attachMessage.id,
 			snapshotTree,
-			parentContext: this.createParentContext(attachMessage.id),
+			parentContext: this.wrapContextForInnerChannel(attachMessage.id),
 			storage: new StorageServiceWithAttachBlobs(this.parentContext.storage, flatAttachBlobs),
 			scope: this.parentContext.scope,
 			loadingGroupId: attachMessage.snapshot?.groupId,
@@ -568,7 +568,7 @@ export class DataStores implements IFluidDataStoreChannel, IDisposable {
 		const context = new LocalDetachedFluidDataStoreContext({
 			id,
 			pkg,
-			parentContext: this.createParentContext(id),
+			parentContext: this.wrapContextForInnerChannel(id),
 			storage: this.parentContext.storage,
 			scope: this.parentContext.scope,
 			createSummarizerNodeFn: this.parentContext.getCreateChildSummarizerNodeFn(id, {
@@ -600,7 +600,7 @@ export class DataStores implements IFluidDataStoreChannel, IDisposable {
 		const context = new LocalFluidDataStoreContext({
 			id,
 			pkg,
-			parentContext: this.createParentContext(id),
+			parentContext: this.wrapContextForInnerChannel(id),
 			storage: this.parentContext.storage,
 			scope: this.parentContext.scope,
 			createSummarizerNodeFn: this.parentContext.getCreateChildSummarizerNodeFn(id, {

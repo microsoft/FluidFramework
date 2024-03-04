@@ -372,6 +372,9 @@ export interface IFluidDataStoreContextEvents extends IEvent {
 /**
  * Represents the context for the data store like objects. It is used by the data store runtime to
  * get information and call functionality to its parent.
+ *
+ * This layout is temporary, as {@link IFluidParentContext} and {@link IFluidDataStoreContext} will converge.
+ *
  * @alpha
  */
 export interface IFluidParentContext
