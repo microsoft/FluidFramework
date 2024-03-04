@@ -233,7 +233,7 @@ describe("DefaultVisualizers unit tests", () => {
 
 	it("SharedMap", async () => {
 		const runtime = new MockFluidDataStoreRuntime();
-		const sharedMap = SharedMap.create(runtime, "test-map");
+		const sharedMap = new SharedMap("test-map", runtime, SharedMap.getFactory().attributes);
 		sharedMap.set("foo", 42);
 		sharedMap.set("bar", true);
 		sharedMap.set("baz", {
