@@ -117,10 +117,10 @@ function getMaxId(...changes: OptionalChangeset[]): ChangesetLocalId | undefined
 			}
 		}
 
-		if (change.field !== undefined) {
-			ingest(change.field.dst.localId);
-			if (change.field.src !== undefined && change.field.src !== "self") {
-				ingest(change.field.src.localId);
+		if (change.valueReplace !== undefined) {
+			ingest(change.valueReplace.dst.localId);
+			if (change.valueReplace.src !== undefined && change.valueReplace.src !== "self") {
+				ingest(change.valueReplace.src.localId);
 			}
 		}
 	}

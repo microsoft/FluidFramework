@@ -152,17 +152,17 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		composeChild: NodeChangeComposer,
 	): OptionalChangeset => {
 		const { srcToDst, dstToSrc } = getBidirectionalMaps(change1.moves, revision1);
-		const change1FieldSrc = taggedOptRegister(change1.field?.src, revision1);
-		const change1FieldDst = taggedOptAtomId(change1.field?.dst, revision1);
+		const change1FieldSrc = taggedOptRegister(change1.valueReplace?.src, revision1);
+		const change1FieldDst = taggedOptAtomId(change1.valueReplace?.dst, revision1);
 
-		const change2FieldSrc = taggedOptRegister(change2.field?.src, revision2);
+		const change2FieldSrc = taggedOptRegister(change2.valueReplace?.src, revision2);
 		let composedFieldSrc: RegisterId | undefined;
 		if (change2FieldSrc !== undefined) {
 			if (change2FieldSrc === "self") {
 				composedFieldSrc = change1FieldSrc ?? change2FieldSrc;
 			} else if (
-				change1.field !== undefined &&
-				isReplaceEffectful(change1.field) &&
+				change1.valueReplace !== undefined &&
+				isReplaceEffectful(change1.valueReplace) &&
 				change1FieldDst !== undefined &&
 				areEqualRegisterIds(change2FieldSrc, change1FieldDst)
 			) {
@@ -175,7 +175,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 						change2FieldSrc.localId,
 					) ?? change2FieldSrc;
 			}
-		} else if (change1FieldSrc !== undefined && change2.field === undefined) {
+		} else if (change1FieldSrc !== undefined && change2.valueReplace === undefined) {
 			composedFieldSrc = change1FieldSrc;
 		}
 
@@ -251,30 +251,30 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		if (
 			change1FieldSrc !== undefined &&
 			change1FieldSrc !== "self" &&
-			change2.field !== undefined
+			change2.valueReplace !== undefined
 		) {
-			const change2FieldDst = taggedAtomId(change2.field.dst, revision2);
+			const change2FieldDst = taggedAtomId(change2.valueReplace.dst, revision2);
 			if (
-				isReplaceEffectful(change2.field) &&
+				isReplaceEffectful(change2.valueReplace) &&
 				!areEqualChangeAtomIds(change1FieldSrc, change2FieldDst)
 			) {
 				composedMoves.push([change1FieldSrc, change2FieldDst]);
 			}
 		}
 
-		const firstChange = change1.field ?? change2.field;
+		const firstChange = change1.valueReplace ?? change2.valueReplace;
 		if (firstChange === undefined) {
 			return composed;
 		}
 
 		const replace: Mutable<Replace> = {
 			isEmpty: firstChange.isEmpty,
-			dst: getComposedReplaceDst(change1.field, revision1, change2, revision2),
+			dst: getComposedReplaceDst(change1.valueReplace, revision1, change2, revision2),
 		};
 		if (composedFieldSrc !== undefined) {
 			replace.src = composedFieldSrc;
 		}
-		composed.field = replace;
+		composed.valueReplace = replace;
 		return composed;
 	},
 
@@ -296,12 +296,12 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			invertIdMap.set(taggedSrc, taggedDst);
 			invertedMoves.push([taggedDst, taggedSrc]);
 		}
-		if (change.field !== undefined) {
-			if (change.field.isEmpty === false) {
-				invertIdMap.set("self", tagAtomId(change.field.dst));
+		if (change.valueReplace !== undefined) {
+			if (change.valueReplace.isEmpty === false) {
+				invertIdMap.set("self", tagAtomId(change.valueReplace.dst));
 			}
-			if (change.field.src !== undefined) {
-				invertIdMap.set(tagRegister(change.field.src), "self");
+			if (change.valueReplace.src !== undefined) {
+				invertIdMap.set(tagRegister(change.valueReplace.src), "self");
 			}
 		}
 
@@ -313,10 +313,10 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			}),
 		};
 
-		if (change.field !== undefined) {
-			if (isReplaceEffectful(change.field)) {
+		if (change.valueReplace !== undefined) {
+			if (isReplaceEffectful(change.valueReplace)) {
 				const replace: Mutable<Replace> =
-					change.field.src === undefined
+					change.valueReplace.src === undefined
 						? {
 								isEmpty: true,
 								dst: makeChangeAtomId(genId.allocate()),
@@ -324,15 +324,15 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 						: {
 								isEmpty: false,
 								dst: isRollback
-									? tagAtomId(change.field.src)
+									? tagAtomId(change.valueReplace.src)
 									: makeChangeAtomId(genId.allocate()),
 						  };
-				if (change.field.isEmpty === false) {
-					replace.src = tagAtomId(change.field.dst);
+				if (change.valueReplace.isEmpty === false) {
+					replace.src = tagAtomId(change.valueReplace.dst);
 				}
-				inverted.field = replace;
-			} else if (!isRollback && change.field.src === "self") {
-				inverted.field = {
+				inverted.valueReplace = replace;
+			} else if (!isRollback && change.valueReplace.src === "self") {
+				inverted.valueReplace = {
 					isEmpty: false,
 					src: "self",
 					dst: makeChangeAtomId(genId.allocate()),
@@ -350,7 +350,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		const tagAtomId = (id: ChangeAtomId): ChangeAtomId => taggedAtomId(id, overTagged.revision);
 		const tagRegister = (id: RegisterId): RegisterId => (id === "self" ? id : tagAtomId(id));
 
-		const { moves, childChanges, field } = change;
+		const { moves, childChanges, valueReplace: field } = change;
 		const { change: overChange } = overTagged;
 
 		// TODO: avoid computing the dstToSrc map if it's not needed.
@@ -364,12 +364,12 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		for (const [src, dst] of overChange.moves) {
 			forwardMap.set(tagAtomId(src), tagAtomId(dst));
 		}
-		if (overChange.field !== undefined) {
-			if (overChange.field.isEmpty === false) {
-				forwardMap.set("self", tagAtomId(overChange.field.dst));
+		if (overChange.valueReplace !== undefined) {
+			if (overChange.valueReplace.isEmpty === false) {
+				forwardMap.set("self", tagAtomId(overChange.valueReplace.dst));
 			}
-			if (overChange.field.src !== undefined) {
-				forwardMap.set(tagRegister(overChange.field.src), "self");
+			if (overChange.valueReplace.src !== undefined) {
+				forwardMap.set(tagRegister(overChange.valueReplace.src), "self");
 			}
 		}
 
@@ -407,15 +407,15 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		if (field !== undefined) {
 			const replace: Mutable<Replace> = {
 				isEmpty:
-					overChange.field === undefined
+					overChange.valueReplace === undefined
 						? field.isEmpty
-						: overChange.field.src === undefined,
+						: overChange.valueReplace.src === undefined,
 				dst: field.dst,
 			};
 			if (field.src !== undefined) {
 				replace.src = forwardMap.get(field.src) ?? field.src;
 			}
-			rebased.field = replace;
+			rebased.valueReplace = replace;
 		}
 
 		return rebased;
@@ -427,8 +427,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			moves: change.moves,
 			childChanges,
 		};
-		if (change.field !== undefined) {
-			prunedChange.field = change.field;
+		if (change.valueReplace !== undefined) {
+			prunedChange.valueReplace = change.valueReplace;
 		}
 
 		for (const [id, childChange] of change.childChanges) {
@@ -449,7 +449,7 @@ function getComposedReplaceDst(
 	revision2: RevisionTag | undefined,
 ): ChangeAtomId {
 	const dst1 = taggedOptAtomId(change1?.dst, revision1);
-	if (change2.field === undefined) {
+	if (change2.valueReplace === undefined) {
 		assert(dst1 !== undefined, "Both replace replaces should not be undefined");
 		return dst1;
 	}
@@ -457,10 +457,10 @@ function getComposedReplaceDst(
 	if (
 		dst1 === undefined ||
 		change1?.src === "self" ||
-		(change2.field.src !== undefined &&
-			areEqualRegisterIds(taggedRegister(change2.field.src, revision2), dst1))
+		(change2.valueReplace.src !== undefined &&
+			areEqualRegisterIds(taggedRegister(change2.valueReplace.src, revision2), dst1))
 	) {
-		return taggedAtomId(change2.field.dst, revision2);
+		return taggedAtomId(change2.valueReplace.dst, revision2);
 	} else {
 		for (const [src, dst] of change2.moves) {
 			if (areEqualChangeAtomIds(dst1, src)) {
@@ -586,7 +586,7 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 	): OptionalChangeset => ({
 		moves: [],
 		childChanges: [],
-		field: {
+		valueReplace: {
 			isEmpty: wasEmpty,
 			src: { localId: ids.fill },
 			dst: { localId: ids.detach },
@@ -596,7 +596,7 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 	clear: (wasEmpty: boolean, detachId: ChangesetLocalId): OptionalChangeset => ({
 		moves: [],
 		childChanges: [],
-		field: {
+		valueReplace: {
 			isEmpty: wasEmpty,
 			dst: { localId: detachId },
 		},
@@ -620,12 +620,12 @@ export function optionalFieldIntoDelta(
 	let markIsANoop = true;
 	const mark: Mutable<DeltaMark> = { count: 1 };
 
-	if (change.field !== undefined && isReplaceEffectful(change.field)) {
-		if (!change.field.isEmpty) {
-			mark.detach = nodeIdFromChangeAtom(change.field.dst, revision);
+	if (change.valueReplace !== undefined && isReplaceEffectful(change.valueReplace)) {
+		if (!change.valueReplace.isEmpty) {
+			mark.detach = nodeIdFromChangeAtom(change.valueReplace.dst, revision);
 		}
-		if (change.field.src !== undefined) {
-			mark.attach = nodeIdFromChangeAtom(change.field.src, revision);
+		if (change.valueReplace.src !== undefined) {
+			mark.attach = nodeIdFromChangeAtom(change.valueReplace.src, revision);
 		}
 		markIsANoop = false;
 	}
@@ -675,7 +675,9 @@ export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, Option
 	relevantRemovedRoots,
 
 	isEmpty: (change: OptionalChangeset) =>
-		change.childChanges.length === 0 && change.moves.length === 0 && change.field === undefined,
+		change.childChanges.length === 0 &&
+		change.moves.length === 0 &&
+		change.valueReplace === undefined,
 
 	createEmpty: () => ({ moves: [], childChanges: [] }),
 };
@@ -703,7 +705,7 @@ function* relevantRemovedRoots(
 		yield* relevantRemovedRootsFromChild(childChange);
 	}
 
-	const selfSrc = change.field?.src;
+	const selfSrc = change.valueReplace?.src;
 	if (selfSrc !== undefined && selfSrc !== "self" && !alreadyYielded.has(selfSrc)) {
 		yield nodeIdFromChangeAtom(selfSrc, revision);
 	}

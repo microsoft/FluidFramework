@@ -86,21 +86,21 @@ function makeOptionalFieldCodec<TChildChange = NodeChangeset>(
 			const encoded: EncodedOptionalChangeset<TAnySchema> = {};
 			encoded.m = [];
 
-			if (change.field !== undefined) {
-				if (change.field.src !== undefined) {
+			if (change.valueReplace !== undefined) {
+				if (change.valueReplace.src !== undefined) {
 					encoded.m.push([
-						registerIdCodec.encode(change.field.src, context),
+						registerIdCodec.encode(change.valueReplace.src, context),
 						registerIdCodec.encode("self", context),
 						true,
 					]);
 				}
 
-				if (change.field.isEmpty) {
-					encoded.d = registerIdCodec.encode(change.field.dst, context);
+				if (change.valueReplace.isEmpty) {
+					encoded.d = registerIdCodec.encode(change.valueReplace.dst, context);
 				} else {
 					encoded.m.push([
 						registerIdCodec.encode("self", context),
-						registerIdCodec.encode(change.field.dst, context),
+						registerIdCodec.encode(change.valueReplace.dst, context),
 						false,
 					]);
 				}
@@ -172,13 +172,13 @@ function makeOptionalFieldCodec<TChildChange = NodeChangeset>(
 					);
 					const reserved = registerIdCodec.decode(encoded.d, context);
 					assert(reserved !== "self", "Invalid reserved detach ID");
-					decoded.field = { isEmpty: false, dst: reserved, src: "self" };
+					decoded.valueReplace = { isEmpty: false, dst: reserved, src: "self" };
 				} else {
 					assert(
 						encoded.d === undefined,
 						"Invalid change: unexpected reserved detach ID on a change that detaches a node from the field",
 					);
-					decoded.field = {
+					decoded.valueReplace = {
 						isEmpty: false,
 						dst: detached,
 						src: attached,
@@ -191,7 +191,7 @@ function makeOptionalFieldCodec<TChildChange = NodeChangeset>(
 				);
 				const reserved = registerIdCodec.decode(encoded.d, context);
 				assert(reserved !== "self", "Invalid reserved detach ID");
-				decoded.field = {
+				decoded.valueReplace = {
 					isEmpty: true,
 					dst: reserved,
 					src: attached,
@@ -202,7 +202,7 @@ function makeOptionalFieldCodec<TChildChange = NodeChangeset>(
 					"Invalid change: unexpected reserved detach ID on a change that detaches a node from the field",
 				);
 				assert(detached !== "self", "Invalid detach ID");
-				decoded.field = {
+				decoded.valueReplace = {
 					isEmpty: false,
 					dst: detached,
 				};

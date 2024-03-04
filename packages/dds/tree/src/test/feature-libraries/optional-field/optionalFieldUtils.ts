@@ -82,7 +82,7 @@ export const Change = {
 			? {
 					moves: [],
 					childChanges: [],
-					field: { isEmpty: false, dst: asChangeAtomId(dst) },
+					valueReplace: { isEmpty: false, dst: asChangeAtomId(dst) },
 			  }
 			: {
 					moves: [[asChangeAtomId(target), asChangeAtomId(dst)]],
@@ -99,7 +99,11 @@ export const Change = {
 		dst: ChangeAtomId | ChangesetLocalId,
 	): OptionalChangeset<never> => {
 		assert(target === "self", "Reserve cell only supports self as source");
-		return { moves: [], childChanges: [], field: { isEmpty: true, dst: asChangeAtomId(dst) } };
+		return {
+			moves: [],
+			childChanges: [],
+			valueReplace: { isEmpty: true, dst: asChangeAtomId(dst) },
+		};
 	},
 	/**
 	 * @param location - The register that contains the child node to be changed.
@@ -139,9 +143,9 @@ export const Change = {
 				moves.push(...change.moves);
 				// Note: this will stack overflow if there are too many child changes.
 				childChanges.push(...change.childChanges);
-				if (change.field !== undefined) {
+				if (change.valueReplace !== undefined) {
 					assert(replace === undefined, "Multiple reserved detach ids");
-					replace = change.field;
+					replace = change.valueReplace;
 				}
 			}
 		}
@@ -152,7 +156,7 @@ export const Change = {
 			}
 		}
 		if (replace !== undefined) {
-			changeset.field = replace;
+			changeset.valueReplace = replace;
 		}
 		return changeset;
 	},
@@ -181,9 +185,9 @@ export function assertTaggedEqual(
 	aCopy.change.moves.sort(([c], [d]) => compareRegisterIds(c, d));
 	bCopy.change.moves.sort(([c], [d]) => compareRegisterIds(c, d));
 
-	assert.equal(aCopy.change.field !== undefined, bCopy.change.field !== undefined);
-	delete aCopy.change.field;
-	delete bCopy.change.field;
+	assert.equal(aCopy.change.valueReplace !== undefined, bCopy.change.valueReplace !== undefined);
+	delete aCopy.change.valueReplace;
+	delete bCopy.change.valueReplace;
 	assert.deepEqual(aCopy, bCopy);
 }
 
@@ -223,13 +227,13 @@ function getTouchedRegisters({ change, revision }: TaggedChange<OptionalChangese
 		}
 	}
 
-	if (change.field !== undefined && change.field.src !== "self") {
-		if (change.field.isEmpty === false) {
+	if (change.valueReplace !== undefined && change.valueReplace.src !== "self") {
+		if (change.valueReplace.isEmpty === false) {
 			src.set(taggedRegister("self", revision), true);
-			dst.set(taggedRegister(change.field.dst, revision), true);
+			dst.set(taggedRegister(change.valueReplace.dst, revision), true);
 		}
-		if (change.field.src !== undefined) {
-			src.set(taggedRegister(change.field.src, revision), true);
+		if (change.valueReplace.src !== undefined) {
+			src.set(taggedRegister(change.valueReplace.src, revision), true);
 			dst.set(taggedRegister("self", revision), true);
 		}
 	}
