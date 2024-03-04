@@ -4,9 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { MergeTree } from "../mergeTree";
-import { ReconnectTestHelper } from "./reconnectHelper";
-import { useStrictPartialLengthChecks } from "./testUtils";
+import { MergeTree } from "../mergeTree.js";
+import { ReconnectTestHelper } from "./reconnectHelper.js";
+import { useStrictPartialLengthChecks } from "./testUtils.js";
 
 for (const incremental of [true, false]) {
 	describe(`obliterate partial lengths incremental = ${incremental}`, () => {
