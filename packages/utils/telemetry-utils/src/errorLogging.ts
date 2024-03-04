@@ -357,25 +357,6 @@ export function isTaggedTelemetryPropertyValue(
 }
 
 /**
- * Walk an object's enumerable properties to find those fit for telemetry.
- */
-function getValidTelemetryProps(obj: object, keysToOmit: Set<string>): ITelemetryBaseProperties {
-	const props: ITelemetryBaseProperties = {};
-	for (const key of Object.keys(obj)) {
-		if (keysToOmit.has(key)) {
-			continue;
-		}
-		const val = obj[key] as
-			| TelemetryEventPropertyTypeExt
-			| Tagged<TelemetryEventPropertyTypeExt>;
-
-		// ensure only valid props get logged, since props of logging error could be in any shape
-		props[key] = convertToBasePropertyType(val);
-	}
-	return props;
-}
-
-/**
  * Borrowed from
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Cyclic_object_value#examples}
  * Avoids runtime errors with circular references.
@@ -477,10 +458,22 @@ export class LoggingError
 	 * Get all properties fit to be logged to telemetry for this error
 	 */
 	public getTelemetryProperties(): ITelemetryBaseProperties {
-		const taggableProps = getValidTelemetryProps(this, this.omitPropsFromLogging);
-		// Include non-enumerable props that are not returned by getValidTelemetryProps
+		// Only pick properties fit for telemetry out of all of this object's enumerable properties.
+		const telemetryProps: ITelemetryBaseProperties = {};
+		for (const key of Object.keys(this)) {
+			if (this.omitPropsFromLogging.has(key)) {
+				continue;
+			}
+			const val = this[key] as
+				| TelemetryEventPropertyTypeExt
+				| Tagged<TelemetryEventPropertyTypeExt>;
+
+			// Ensure only valid props get logged, since props of logging error could be in any shape
+			telemetryProps[key] = convertToBasePropertyType(val);
+		}
+		// Ensure a few extra props always exist
 		return {
-			...taggableProps,
+			...telemetryProps,
 			stack: this.stack,
 			message: this.message,
 			errorInstanceId: this._errorInstanceId,
