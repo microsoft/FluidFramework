@@ -10,10 +10,11 @@ export { performance } from "./performanceIsomorphic.js";
 
 export { fromBase64ToUtf8, fromUtf8ToBase64, toUtf8 } from "./base64Encoding.js";
 export { Uint8ArrayToArrayBuffer } from "./bufferShared.js";
+export { EventEmitter } from "./eventEmitter.cjs";
 export { IsomorphicPerformance } from "./performanceIsomorphic.js";
-export { ITraceEvent, Trace } from "./trace.js";
+export { type ITraceEvent, Trace } from "./trace.js";
 export {
-	EventEmitterEventType,
+	type EventEmitterEventType,
 	TypedEventEmitter,
-	TypedEventTransform,
+	type TypedEventTransform,
 } from "./typedEventEmitter.js";

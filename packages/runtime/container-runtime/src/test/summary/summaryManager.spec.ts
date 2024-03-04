@@ -16,7 +16,7 @@ import {
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
-import { DefaultSummaryConfiguration } from "../../containerRuntime";
+import { DefaultSummaryConfiguration } from "../../containerRuntime.js";
 import {
 	IConnectedEvents,
 	IConnectedState,
@@ -35,7 +35,7 @@ import {
 	ISummaryOpMessage,
 	neverCancelledSummaryToken,
 	ISummarizerRuntime,
-} from "../../summary";
+} from "../../summary/index.js";
 
 class MockRuntime {
 	constructor(

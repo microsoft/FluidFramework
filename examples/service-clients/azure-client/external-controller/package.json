@@ -44,7 +44,7 @@
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"assert": "^2.0.0",
 		"axios": "^1.6.2",
-		"events": "^3.1.0",
+		"events_pkg": "npm:events@^3.1.0",
 		"fluid-framework": "workspace:~",
 		"uuid": "^9.0.0"
 	},
@@ -60,6 +60,7 @@
 		"@fluidframework/server-local-server": "^3.1.0-240326",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-tools": "^1.0.195075",
+		"@types/events_pkg": "npm:@types/events@^3.0.0",
 		"@types/jest": "29.5.3",
 		"@types/jest-environment-puppeteer": "workspace:",
 		"@types/node": "^18.19.0",
