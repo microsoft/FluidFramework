@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { parse } from "url";
 import { assert } from "@fluidframework/core-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, IUrlResolver, DriverHeader } from "@fluidframework/driver-definitions";
@@ -136,7 +135,7 @@ export class InsecureUrlResolver implements IUrlResolver {
 	}
 
 	public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
-		const parsedUrl = parse(resolvedUrl.url);
+		const parsedUrl = new URL(resolvedUrl.url);
 		const [, , documentId] = parsedUrl.pathname?.split("/") ?? [];
 		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 		assert(!!documentId, 0x273 /* "Invalid document id from parsed URL" */);
