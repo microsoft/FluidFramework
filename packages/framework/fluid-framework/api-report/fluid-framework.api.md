@@ -354,7 +354,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     [Symbol.iterator](): IterableIterator<[string, any]>;
     readonly [Symbol.toStringTag]: string;
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-    // (undocumented)
     protected applyStashedOp(content: unknown): void;
     clear(): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedMap;
@@ -365,19 +364,13 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     static getFactory(): IChannelFactory;
     has(key: string): boolean;
     keys(): IterableIterator<string>;
-    // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
-    // (undocumented)
     protected onDisconnect(): void;
-    // (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    // (undocumented)
     protected reSubmitCore(content: unknown, localOpMetadata: unknown): void;
-    // (undocumented)
     protected rollback(content: unknown, localOpMetadata: unknown): void;
     set(key: string, value: unknown): this;
     get size(): number;
-    // (undocumented)
     protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     values(): IterableIterator<any>;
 }

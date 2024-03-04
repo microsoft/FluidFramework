@@ -49,7 +49,7 @@
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/eslint-config-fluid": "^4.0.0",
-		"@microsoft/api-extractor": "^7.39.1",
+		"@microsoft/api-extractor": "^7.42.3",
 		"@types/msgpack-lite": "^0.1.8",
 		"@types/node": "^18.18.6",
 		"@types/pako": "^2.0.0",

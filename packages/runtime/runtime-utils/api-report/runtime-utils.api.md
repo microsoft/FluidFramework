@@ -191,13 +191,9 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 
 // @internal (undocumented)
 export class TelemetryContext implements ITelemetryContext {
-    // (undocumented)
     get(prefix: string, property: string): TelemetryBaseEventPropertyType;
-    // (undocumented)
     serialize(): string;
-    // (undocumented)
     set(prefix: string, property: string, value: TelemetryBaseEventPropertyType): void;
-    // (undocumented)
     setMultiple(prefix: string, property: string, values: Record<string, TelemetryBaseEventPropertyType>): void;
 }
 
