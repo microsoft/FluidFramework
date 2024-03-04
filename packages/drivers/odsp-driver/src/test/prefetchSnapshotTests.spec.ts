@@ -20,17 +20,17 @@ import {
 	HostStoragePolicyInternal,
 	IVersionedValueWithEpoch,
 	persistedCacheValueVersion,
-} from "../contracts";
-import { IPrefetchSnapshotContents, LocalPersistentCache } from "../odspCache";
-import { createCacheSnapshotKey, INewFileInfo } from "../odspUtils";
-import { createOdspUrl } from "../createOdspUrl";
-import { getHashedDocumentId } from "../odspPublicUtils";
-import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
-import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
-import { prefetchLatestSnapshot } from "../prefetchLatestSnapshot";
-import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
-import { convertToCompactSnapshot } from "../compactSnapshotWriter";
-import { mockFetchSingle, notFound, createResponse } from "./mockFetch";
+} from "../contracts.js";
+import { IPrefetchSnapshotContents, LocalPersistentCache } from "../odspCache.js";
+import { createCacheSnapshotKey, INewFileInfo } from "../odspUtils.js";
+import { createOdspUrl } from "../createOdspUrl.js";
+import { getHashedDocumentId } from "../odspPublicUtils.js";
+import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
+import { OdspDocumentStorageService } from "../odspDocumentStorageManager.js";
+import { prefetchLatestSnapshot } from "../prefetchLatestSnapshot.js";
+import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory.js";
+import { convertToCompactSnapshot } from "../compactSnapshotWriter.js";
+import { mockFetchSingle, notFound, createResponse } from "./mockFetch.js";
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 

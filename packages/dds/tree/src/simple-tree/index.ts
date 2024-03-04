@@ -33,7 +33,21 @@ export {
 export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
 export { nodeApi as Tree, TreeApi, TreeNodeEvents } from "./treeApi.js";
 export { toFlexConfig } from "./toFlexSchema.js";
-export { SchemaFactoryRecursive } from "./schemaFactoryRecursive.js";
+export {
+	SchemaFactoryRecursive,
+	ObjectFromSchemaRecordUnsafe,
+	TreeFieldFromImplicitFieldUnsafe,
+	TreeNodeFromImplicitAllowedTypesUnsafe,
+	FieldSchemaUnsafe,
+	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
+	TreeArrayNodeUnsafe,
+	TreeMapNodeUnsafe,
+	InsertableObjectFromSchemaRecordUnsafe,
+	InsertableTreeFieldFromImplicitFieldUnsafe,
+	InsertableTypedNodeUnsafe,
+	NodeBuilderDataUnsafe,
+	NodeFromSchemaUnsafe,
+} from "./schemaFactoryRecursive.js";
 export { getProxyForField } from "./proxies.js";
 
 export {
@@ -48,6 +62,7 @@ export {
 export {
 	RecursiveObject as test_RecursiveObject,
 	base as test_RecursiveObject_base,
+	RecursiveObjectPojoMode as test_RecursiveObjectPojoMode,
 } from "./testRecursiveDomain.js";
 
 export { TreeNode, Unhydrated, TreeArrayNodeBase } from "./types.js";

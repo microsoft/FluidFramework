@@ -3093,7 +3093,7 @@ importers:
       '@types/jest-environment-puppeteer': 'workspace:'
       '@types/lodash.isequal': ^4.5.6
       '@types/node': ^18.19.0
-      '@types/node-fetch': ^2.5.10
+      '@types/node-fetch': ^2.6.11
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       '@types/valid-url': ^1.0.3
@@ -3175,7 +3175,7 @@ importers:
       '@types/jest-environment-puppeteer': link:../../packages/test/types_jest-environment-puppeteer
       '@types/lodash.isequal': 4.5.8
       '@types/node': 18.19.1
-      '@types/node-fetch': 2.6.9
+      '@types/node-fetch': 2.6.11
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       '@types/valid-url': 1.0.7
@@ -7631,7 +7631,7 @@ importers:
       '@microsoft/api-extractor': ^7.39.1
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
-      '@types/node-fetch': ^2.5.10
+      '@types/node-fetch': ^2.6.11
       '@types/sinon': ^17.0.3
       '@types/uuid': ^9.0.2
       c8: ^8.0.1
@@ -7647,7 +7647,6 @@ importers:
       rimraf: ^4.4.0
       sinon: ^17.0.1
       socket.io-client: ^4.7.3
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -7676,7 +7675,7 @@ importers:
       '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i_@types+node@18.19.1
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
-      '@types/node-fetch': 2.6.9
+      '@types/node-fetch': 2.6.11
       '@types/sinon': 17.0.3
       '@types/uuid': 9.0.7
       c8: 8.0.1
@@ -7690,7 +7689,6 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 17.0.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/odsp-driver-definitions:
@@ -20923,7 +20921,7 @@ packages:
       '@storybook/store': 6.5.16_sfoxds7t5ydpegc3knd667wn6m
       '@storybook/telemetry': 6.5.16_cv4vlssa4k7xg7aw6jpkzhncj4
       '@types/node': 18.19.1
-      '@types/node-fetch': 2.6.9
+      '@types/node-fetch': 2.6.11
       '@types/pretty-hrtime': 1.0.3
       '@types/webpack': 4.41.38
       better-opn: 2.1.1
@@ -22162,8 +22160,8 @@ packages:
       '@types/node': 18.19.1
     dev: true
 
-  /@types/node-fetch/2.6.9:
-    resolution: {integrity: sha512-bQVlnMLFJ2d35DkPNjEPmd9ueO/rh5EiaZt2bhqiSarPjZIuIV6bPQVqcrEyvNo+AfTrRGVazle1tl597w3gfA==}
+  /@types/node-fetch/2.6.11:
+    resolution: {integrity: sha512-24xFj9R5+rfQJLRyM56qh+wnVSYhyXC2tkoBndtY0U+vubqNsYXGjufB2nn8Q6gt0LrARwL6UBtMCSVCwl4B1g==}
     dependencies:
       '@types/node': 18.19.1
       form-data: 4.0.0
