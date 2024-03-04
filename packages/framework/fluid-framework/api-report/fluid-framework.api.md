@@ -479,7 +479,7 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
 // @public
 export abstract class TreeNode implements WithType {
     static [Symbol.hasInstance]<TSchema extends typeof TreeNode & (abstract new (...args: any[]) => TreeNode)>(this: TSchema, value: unknown): value is InstanceType<TSchema>;
-    static [Symbol.hasInstance]<TSchema extends typeof TreeNode & TreeNodeSchema>(this: TSchema, value: unknown): value is NodeFromSchema<TSchema>;
+    static [Symbol.hasInstance]<TSchema extends typeof TreeNode & TreeNodeSchemaClass>(this: TSchema, value: unknown): value is NodeFromSchema<TSchema>;
     abstract get [type](): string;
 }
 

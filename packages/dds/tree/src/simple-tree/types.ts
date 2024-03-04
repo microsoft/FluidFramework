@@ -37,7 +37,7 @@ export function getClassSchema(schema: FlexTreeNodeSchema): TreeNodeSchemaClass 
 }
 
 /**
- * A non-{@link LeafNodeSchema|leaf} SharedTree node. Includes objects, lists, and maps.
+ * A non-{@link NodeKind.Leaf|leaf} SharedTree node. Includes objects, lists, and maps.
  * A non-leaf SharedTree node. Includes objects, arrays, and maps.
  *
  * @remarks

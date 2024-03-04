@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import { createIdCompressor } from "@fluidframework/id-compressor";
 import { unreachableCase } from "@fluidframework/core-utils";
 import { MockFluidDataStoreRuntime, MockHandle } from "@fluidframework/test-runtime-utils";
-import { Tree, TreeConfiguration, TreeView } from "../../simple-tree/index.js";
+import { Tree, TreeConfiguration, TreeNode, TreeView } from "../../simple-tree/index.js";
 import {
 	NodeFromSchema,
 	TreeFieldFromImplicitField,
