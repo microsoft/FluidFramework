@@ -172,6 +172,18 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dev: true
 
+  /@fluid-internal/eslint-plugin-fluid/0.1.1_bpztyfltmpuv6lhsgzfwtmxhte:
+    resolution: {integrity: sha512-7CNeAjn81BPvq/BKc1nQo/6HUZXg4KUAglFuCX6HFCnpGPrDLdm7cdkrGyA1tExB1EGnCAPFzVNbSqSYcwJnag==}
+    dependencies:
+      '@microsoft/tsdoc': 0.14.2
+      '@typescript-eslint/parser': 6.7.5_bpztyfltmpuv6lhsgzfwtmxhte
+      ts-morph: 20.0.0
+    transitivePeerDependencies:
+      - eslint
+      - supports-color
+      - typescript
+    dev: true
+
   /@fluid-tools/version-tools/0.26.1_vkotigkp5s62xv6rdodgvy6lfm:
     resolution: {integrity: sha512-pktW83q4E4PteL+pnCg3CdcXVQqzMO8Vrmp5zWLX5rKbPwKN1puvue5413R7MvkCRnqtmzQuwXepHHmitpMD/Q==}
     engines: {node: '>=14.17.0'}
@@ -6510,8 +6522,9 @@ packages:
     resolution: {directory: ../../common/build/eslint-config-fluid, type: directory}
     id: file:../../common/build/eslint-config-fluid
     name: '@fluidframework/eslint-config-fluid'
-    version: 4.0.0
+    version: 5.0.0
     dependencies:
+      '@fluid-internal/eslint-plugin-fluid': 0.1.1_bpztyfltmpuv6lhsgzfwtmxhte
       '@microsoft/tsdoc': 0.14.2
       '@rushstack/eslint-patch': 1.4.0
       '@rushstack/eslint-plugin': 0.13.1_bpztyfltmpuv6lhsgzfwtmxhte
@@ -6529,7 +6542,6 @@ packages:
       eslint-plugin-tsdoc: 0.2.17
       eslint-plugin-unicorn: 48.0.1_eslint@8.55.0
       eslint-plugin-unused-imports: 3.0.0_q2lq45qjv2a3kzwivaf2whp57u
-      ts-morph: 20.0.0
     transitivePeerDependencies:
       - eslint
       - eslint-import-resolver-node

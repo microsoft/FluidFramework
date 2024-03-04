@@ -2,14 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { EventEmitter } from "events";
+import events_pkg from "events_pkg";
 
 import { IValueChanged } from "fluid-framework";
 
 /**
  * IDiceRoller describes the public API surface for our dice roller data object.
  */
-export interface IDiceRollerController extends EventEmitter {
+export interface IDiceRollerController extends events_pkg.EventEmitter {
 	/**
 	 * Get the dice value as a number.
 	 */
@@ -39,7 +39,7 @@ export interface DiceRollerControllerProps {
 /**
  * The DiceRoller is our data object that implements the IDiceRoller interface.
  */
-export class DiceRollerController extends EventEmitter implements IDiceRollerController {
+export class DiceRollerController extends events_pkg.EventEmitter implements IDiceRollerController {
 	/**
 	 * Initialize a new model for its first use with this controller.
 	 * The model must be initialized before trying to use it in a DiceRollerController instance.

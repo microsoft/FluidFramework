@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { IGCTestProvider, runGCTests } from "./gcTestRunner";
+export { IGCTestProvider, runGCTests } from "./gcTestRunner.js";
 export {
 	AddClient,
 	BaseOperation,
@@ -17,7 +17,7 @@ export {
 	DDSFuzzHarnessEvents,
 	Synchronize,
 	replayTest,
-} from "./ddsFuzzHarness";
-export { createSnapshotSuite, ISnapshotSuite } from "./ddsSnapshotHarness";
-export { MinimizationTransform } from "./minification";
-export { Client } from "./clientLoading";
+} from "./ddsFuzzHarness.js";
+export { createSnapshotSuite, ISnapshotSuite } from "./ddsSnapshotHarness.js";
+export { MinimizationTransform } from "./minification.js";
+export { Client } from "./clientLoading.js";
