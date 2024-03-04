@@ -6,11 +6,11 @@
 import { strict as assert } from 'assert';
 import { expect } from 'chai';
 import { validateAssertionError } from '@fluidframework/test-runtime-utils';
-import { EditLog, separateEditAndId } from '../EditLog';
-import { EditId } from '../Identifiers';
-import { assertNotUndefined } from '../Common';
-import { Edit } from '../persisted-types';
-import { newEdit } from '../EditUtilities';
+import { EditLog, separateEditAndId } from '../EditLog.js';
+import { EditId } from '../Identifiers.js';
+import { assertNotUndefined } from '../Common.js';
+import { Edit } from '../persisted-types/index.js';
+import { newEdit } from '../EditUtilities.js';
 
 type DummyChange = never;
 

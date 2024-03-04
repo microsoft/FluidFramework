@@ -62,6 +62,7 @@ export type {
 	NodeFromSchema,
 	ObjectFromSchemaRecord,
 	RestrictiveReadonlyRecord,
+	ScopedSchemaName,
 	TreeApi,
 	TreeArrayNodeBase,
 	TreeFieldFromImplicitField,
@@ -77,6 +78,7 @@ export type {
 	TreeViewEvents,
 	Unhydrated,
 	WithType,
+	SchemaIncompatible,
 } from "@fluidframework/tree";
 export {
 	disposeSymbol,

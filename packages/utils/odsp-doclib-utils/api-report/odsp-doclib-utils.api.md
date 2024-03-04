@@ -7,7 +7,7 @@
 import { DriverErrorTelemetryProps } from '@fluidframework/driver-utils';
 import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
 import { IOdspErrorAugmentations } from '@fluidframework/odsp-driver-definitions';
-import { ITelemetryProperties } from '@fluidframework/core-interfaces';
+import type { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
 import { LoggingError } from '@fluidframework/telemetry-utils';
 import { OdspError } from '@fluidframework/odsp-driver-definitions';
 
@@ -15,10 +15,10 @@ import { OdspError } from '@fluidframework/odsp-driver-definitions';
 export function authRequestWithRetry(authRequestInfo: IOdspAuthRequestInfo, requestCallback: (config: RequestInit) => Promise<Response>): Promise<Response>;
 
 // @internal (undocumented)
-export function createOdspNetworkError(errorMessage: string, statusCode: number, retryAfterSeconds?: number, response?: Response, responseText?: string, props?: ITelemetryProperties): IFluidErrorBase & OdspError;
+export function createOdspNetworkError(errorMessage: string, statusCode: number, retryAfterSeconds?: number, response?: Response, responseText?: string, props?: ITelemetryBaseProperties): IFluidErrorBase & OdspError;
 
 // @internal (undocumented)
-export function enrichOdspError(error: IFluidErrorBase & OdspError, response?: Response, facetCodes?: string[], props?: ITelemetryProperties): IFluidErrorBase & OdspError;
+export function enrichOdspError(error: IFluidErrorBase & OdspError, response?: Response, facetCodes?: string[], props?: ITelemetryBaseProperties): IFluidErrorBase & OdspError;
 
 // @internal (undocumented)
 export const fetchIncorrectResponse = 712;
@@ -77,7 +77,7 @@ export function getSiteUrl(server: string): string;
 // @internal (undocumented)
 export function getSPOAndGraphRequestIdsFromResponse(headers: {
     get: (id: string) => string | undefined | null;
-}): ITelemetryProperties;
+}): ITelemetryBaseProperties;
 
 // @internal (undocumented)
 export function hasFacetCodes(x: any): x is Pick<IOdspErrorAugmentations, "facetCodes">;
@@ -172,7 +172,7 @@ export function putAsync(url: string, authRequestInfo: IOdspAuthRequestInfo): Pr
 export function refreshTokens(server: string, scope: string, clientConfig: IClientConfig, tokens: IOdspTokens): Promise<IOdspTokens>;
 
 // @internal
-export function throwOdspNetworkError(errorMessage: string, statusCode: number, response: Response, responseText?: string, props?: ITelemetryProperties): never;
+export function throwOdspNetworkError(errorMessage: string, statusCode: number, response: Response, responseText?: string, props?: ITelemetryBaseProperties): never;
 
 // @internal (undocumented)
 export type TokenRequestCredentials = {

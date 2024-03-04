@@ -26,7 +26,7 @@ import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
 import { isRuntimeMessage } from "@fluidframework/driver-utils";
-import { ISummaryConfiguration } from "../../containerRuntime";
+import { ISummaryConfiguration } from "../../containerRuntime.js";
 import {
 	getFailMessage,
 	neverCancelledSummaryToken,
@@ -40,12 +40,12 @@ import {
 	IGeneratedSummaryStats,
 	ISummarizeEventProps,
 	ISummaryCancellationToken,
-} from "../../summary";
+} from "../../summary/index.js";
 import {
 	defaultMaxAttempts,
 	defaultMaxAttemptsForSubmitFailures,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../summary/runningSummarizer";
+} from "../../summary/runningSummarizer.js";
 
 class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> {
 	disposed = false;

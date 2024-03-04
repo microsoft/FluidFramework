@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent, IEventProvider, ITelemetryProperties } from "@fluidframework/core-interfaces";
+import { IEvent, IEventProvider, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { ITelemetryLoggerExt, ITelemetryLoggerPropertyBag } from "@fluidframework/telemetry-utils";
 import { ContainerWarning, IDeltaManager } from "@fluidframework/container-definitions";
 import {
@@ -12,9 +12,9 @@ import {
 	IDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import { ISummaryStats } from "@fluidframework/runtime-definitions";
-import { ISummaryConfigurationHeuristics } from "../containerRuntime";
-import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage } from "./summaryCollection";
-import { SummarizeReason } from "./summaryGenerator";
+import { ISummaryConfigurationHeuristics } from "../containerRuntime.js";
+import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage } from "./summaryCollection.js";
+import { SummarizeReason } from "./summaryGenerator.js";
 
 /**
  * Similar to AbortSignal, but using promise instead of events
@@ -61,20 +61,6 @@ export interface ISummarizerInternalsProvider {
 
 	/** Callback whenever a new SummaryAck is received, to update internal tracking state */
 	refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void>;
-}
-
-/**
- * @deprecated Options that control the behavior of a running summarizer.
- * @public
- * */
-export interface ISummarizerOptions {
-	/**
-	 * Set to true to disable the default heuristics from running; false by default.
-	 * This affects only the heuristics around when a summarizer should
-	 * submit summaries. So when it is disabled, summarizer clients should
-	 * not be expected to summarize unless an on-demand summary is requested.
-	 */
-	disableHeuristics: boolean;
 }
 
 /**
@@ -141,6 +127,8 @@ export interface ISubmitSummaryOptions extends ISummarizeOptions {
 	readonly cancellationToken: ISummaryCancellationToken;
 	/** Summarization may be attempted multiple times. This tells whether this is the final summarization attempt. */
 	readonly finalAttempt?: boolean;
+	/** The sequence number of the latest summary used to validate if summary state is correct before summarizing */
+	readonly latestSummaryRefSeqNum: number;
 }
 
 /**
@@ -438,7 +426,7 @@ export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
 	/* Closes summarizer. Any pending processes (summary in flight) are abandoned. */
 	close(): void;
 
-	run(onBehalfOf: string, disableHeuristics?: boolean): Promise<SummarizerStopReason>;
+	run(onBehalfOf: string): Promise<SummarizerStopReason>;
 
 	/**
 	 * Attempts to generate a summary on demand. If already running, takes no action.
@@ -551,10 +539,10 @@ type ISummarizeTelemetryOptionalProperties =
 	| keyof ISummarizeOptions;
 
 export type ISummarizeTelemetryProperties = Pick<
-	ITelemetryProperties,
+	ITelemetryBaseProperties,
 	ISummarizeTelemetryRequiredProperties
 > &
-	Partial<Pick<ITelemetryProperties, ISummarizeTelemetryOptionalProperties>>;
+	Partial<Pick<ITelemetryBaseProperties, ISummarizeTelemetryOptionalProperties>>;
 
 /** Strategy used to heuristically determine when we should run a summary */
 export interface ISummaryHeuristicStrategy {
@@ -620,10 +608,10 @@ type SummaryGeneratorOptionalTelemetryProperties =
 	| "stage";
 
 export type SummaryGeneratorTelemetry = Pick<
-	ITelemetryProperties,
+	ITelemetryBaseProperties,
 	SummaryGeneratorRequiredTelemetryProperties
 > &
-	Partial<Pick<ITelemetryProperties, SummaryGeneratorOptionalTelemetryProperties>>;
+	Partial<Pick<ITelemetryBaseProperties, SummaryGeneratorOptionalTelemetryProperties>>;
 
 export interface ISummarizeRunnerTelemetry extends ITelemetryLoggerPropertyBag {
 	/** Number of times the summarizer run. */

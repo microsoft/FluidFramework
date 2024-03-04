@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/version-tools",
-	"version": "0.31.0",
+	"version": "0.35.0",
 	"description": "Versioning tools for Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -91,7 +91,7 @@
 	"devDependencies": {
 		"@fluid-private/readme-command": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/eslint-config-fluid": "^3.2.0",
+		"@fluidframework/eslint-config-fluid": "^4.0.0",
 		"@microsoft/api-extractor": "^7.39.1",
 		"@oclif/test": "~2.3.33",
 		"@types/chai": "^4.3.5",
@@ -101,7 +101,7 @@
 		"c8": "^7.14.0",
 		"chai": "^4.3.7",
 		"concurrently": "^8.2.1",
-		"eslint": "~8.51.0",
+		"eslint": "~8.55.0",
 		"eslint-config-oclif": "^5.0.0",
 		"eslint-config-oclif-typescript": "^3.0.8",
 		"eslint-config-prettier": "~9.0.0",

@@ -273,9 +273,7 @@ export interface IQuorumProposalsEvents {
 }
 
 // @internal
-export interface ISentSignalMessage extends ISignalMessageBase {
-    targetClientId?: string;
-}
+export type ISentSignalMessage = ISignalMessageBase;
 
 // @public
 export interface ISequencedClient {
@@ -350,6 +348,7 @@ export interface ISignalMessageBase {
     clientConnectionNumber?: number;
     content: unknown;
     referenceSequenceNumber?: number;
+    targetClientId?: string;
     type?: string;
 }
 
@@ -362,6 +361,7 @@ export interface ISnapshotTree {
     groupId?: string;
     // (undocumented)
     id?: string;
+    omitted?: boolean;
     // (undocumented)
     trees: {
         [path: string]: ISnapshotTree;

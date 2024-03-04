@@ -12,10 +12,8 @@ alfred:
   cert: cert
   tenants: []
   key: jwt_key
-  maxNumberOfClientsPerDocument: 1000000
   numberOfMessagesPerTrace: 100
   sessionStickinessDurationMs: 3600000
-  enableConnectionCountLogging: false
   ignoreEphemeralFlag: true
   throttling:
     restCallsPerTenant:
@@ -36,6 +34,22 @@ alfred:
         intervalInMs: 1000000
       getDeltas: disabled
       getSession: disabled
+    submitOps: disabled
+    submitSignal: disabled
+  enforceServerGeneratedDocumentId: false
+  getDeltasRequestMaxOpsRange: 2000
+
+nexus:
+  name: nexus
+  replicas: 4
+  externalUrl: nexus_external_url
+  host: nexus_host
+  cert: cert
+  tenants: []
+  key: jwt_key
+  maxNumberOfClientsPerDocument: 1000000
+  numberOfMessagesPerTrace: 100
+  throttling:
     socketConnectionsPerTenant: disabled
     socketConnectionsPerCluster: disabled
     submitOps: disabled
@@ -43,10 +57,8 @@ alfred:
   socketIoAdapter:
     enableCustomSocketIoAdapter: true
     shouldDisableDefaultNamespace: false
-  enforceServerGeneratedDocumentId: false
   socketIo:
     perMessageDeflate: true
-  getDeltasRequestMaxOpsRange: 2000
 
 storage:
   enableWholeSummaryUpload: false
@@ -75,6 +87,8 @@ scriptorium:
   name: scriptorium
   replicas: 8
   restartOnCheckpointFailure: true
+  logSavedOpsTimeIntervalMs: 60000
+  opsCountTelemetryEnabled: false
 
 scribe:
   name: scribe

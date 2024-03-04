@@ -10,8 +10,8 @@ import {
 	FluidDriverCacheDBName,
 	FluidDriverObjectStoreName,
 	CurrentCacheVersion,
-} from "../FluidCacheIndexedDb";
-import { FluidCacheErrorEvent } from "../fluidCacheTelemetry";
+} from "../FluidCacheIndexedDb.js";
+import { FluidCacheErrorEvent } from "../fluidCacheTelemetry.js";
 
 // eslint-disable-next-line import/no-unassigned-import, @typescript-eslint/no-require-imports, import/no-internal-modules
 require("fake-indexeddb/auto");

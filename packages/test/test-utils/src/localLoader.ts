@@ -13,7 +13,7 @@ import {
 import { Loader } from "@fluidframework/container-loader";
 import { ITelemetryBaseLogger, IRequest } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
-import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader";
+import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader.js";
 
 /**
  * Creates a loader with the given package entries and driver.

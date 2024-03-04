@@ -2,42 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import {
-	ITelemetryBaseEvent,
-	ITelemetryBaseLogger,
-	ITelemetryGenericEvent,
-} from "@fluidframework/core-interfaces";
-import { loggerToMonitoringContext } from "./config";
-import { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "./telemetryTypes";
-
-/**
- * Like assert, but logs only if the condition is false, rather than throwing
- * @param condition - The condition to attest too
- * @param logger - The logger to log with
- * @param event - The string or event to log
- * @returns The outcome of the condition
- *
- * @internal
- *
- * @deprecated
- * This API will be removed in a future release.
- * No replacement API is intended, but reproducing its behavior should be trivial for anyone who needs it.
- */
-export function logIfFalse(
-	condition: unknown,
-	logger: ITelemetryBaseLogger,
-	event: string | ITelemetryGenericEvent,
-): condition is true {
-	if (condition) {
-		return true;
-	}
-	const newEvent: ITelemetryBaseEvent =
-		typeof event === "string"
-			? { eventName: event, category: "error" }
-			: { category: "error", ...event };
-	logger.send(newEvent);
-	return false;
-}
+import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { loggerToMonitoringContext } from "./config.js";
+import { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "./telemetryTypes.js";
 
 /**
  * An object that contains a callback used in conjunction with the {@link createSampledLogger} utility function to provide custom logic for sampling events.

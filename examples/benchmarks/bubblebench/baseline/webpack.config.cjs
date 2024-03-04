@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-const fluidRoute = require("@fluid-tools/webpack-fluid-loader");
+const fluidRoute = require("@fluid-example/webpack-fluid-loader");
 const path = require("path");
 const { merge } = require("webpack-merge");
+const webpack = require("webpack");
 
 module.exports = (env) => {
 	const isProduction = env?.production;
@@ -45,6 +46,11 @@ module.exports = (env) => {
 			watchOptions: {
 				ignored: "**/node_modules/**",
 			},
+			plugins: [
+				new webpack.ProvidePlugin({
+					process: "process/browser",
+				}),
+			],
 		},
 		isProduction ? require("./webpack.prod.cjs") : require("./webpack.dev.cjs"),
 		fluidRoute.devServerConfig(__dirname, env),

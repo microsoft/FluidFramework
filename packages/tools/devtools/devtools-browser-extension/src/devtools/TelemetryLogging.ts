@@ -5,8 +5,12 @@
 
 import { AppInsightsCore, type IExtendedConfiguration } from "@microsoft/1ds-core-js";
 import { PostChannel, type IChannelConfiguration, type IXHROverride } from "@microsoft/1ds-post-js";
-import { type ITelemetryBaseLogger, type ITelemetryBaseEvent } from "@fluid-internal/devtools-view";
-import { type ITaggedTelemetryPropertyType } from "@fluidframework/core-interfaces";
+import {
+	type ITelemetryBaseLogger,
+	type ITelemetryBaseEvent,
+	isTelemetryOptInEnabled,
+} from "@fluid-internal/devtools-view";
+import type { Tagged, TelemetryBaseEventPropertyType } from "@fluidframework/core-interfaces";
 import { v4 as uuidv4 } from "uuid";
 import { formatDevtoolsScriptMessageForLogging } from "./Logging";
 
@@ -70,9 +74,17 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 	 * requests during local development or other scenarios where a key is not passed in.
 	 */
 	private readonly enabled: boolean = false;
+	// We expect the following usage identifiers to be mutated when the user opts in/out of reporting telemetry.
+	/**
+	 * Identifier that's generated on each Fluid Devtools session
+	 * @remarks
+	 */
+	private sessionID?: string;
+	/**
+	 * This identifies a specific browser instance and is reused in subsequent sessions.
+	 */
+	private continuityID?: string;
 
-	private readonly sessionID?: string;
-	private readonly continuityID?: string;
 	private readonly CONTINUITY_ID_KEY = "Fluid.Devtools.ContinuityId";
 
 	public constructor() {
@@ -81,8 +93,7 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 			httpXHROverride: fetchHttpXHROverride,
 		};
 
-		this.sessionID = uuidv4();
-		this.continuityID = this.getOrCreateContinuityID();
+		this.generateIdentifiers();
 
 		// NOTE: this doesn't really use environment variables at runtime.
 		// The dotenv-webpack plugin for webpack does a search-and-replace for `process.env.<variable-name>`
@@ -126,22 +137,38 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 
 		return continuityID;
 	}
+	private generateIdentifiers(): void {
+		this.sessionID = uuidv4();
+		this.continuityID = this.getOrCreateContinuityID();
+	}
 
 	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#ITelemetryBaseLogger.send}
 	 */
 	public send(event: ITelemetryBaseEvent): void {
+		const optIn = isTelemetryOptInEnabled();
+
+		// Clear localStorage and reset identifiers if the user opts out
+		if (!optIn) {
+			localStorage.removeItem(this.CONTINUITY_ID_KEY);
+			// Reset identifiers, ensuring any subsequent telemetry will have fresh identifiers if the user opts in again.
+			this.continuityID = undefined;
+			this.sessionID = undefined;
+			return;
+		}
+
 		if (!this.enabled) {
 			return;
 		}
 
+		if ((this.sessionID === undefined || this.continuityID === undefined) && optIn) {
+			this.generateIdentifiers();
+		}
+
 		// Note: the calls that the 1DS SDK makes to external endpoints might fail if the last part of the eventName is not uppercase
-		const category = event.category
-			? `${event.category.charAt(0).toUpperCase()}${event.category.slice(1)}`
-			: "Generic";
-		// Note: "Office.Fluid" here has a connection to the Aria tenant(s) we're targetting, and the full string
+		// Note: "Fluid.Framework" here has a connection to the Aria tenant(s) we're targetting, and the full string
 		// impacts the way the data is structured once ingested. Don't change this without proper consideration.
-		const eventType = `Office.Fluid.Devtools.${category}`;
+		const eventType = `Fluid.Framework.Devtools.Usage`;
 
 		const telemetryEvent = {
 			name: eventType, // Dictates which table the event goes to
@@ -160,7 +187,7 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 			if (value === undefined) {
 				continue;
 			}
-			if ((value as ITaggedTelemetryPropertyType).value !== undefined) {
+			if ((value as Tagged<TelemetryBaseEventPropertyType>).value !== undefined) {
 				// In Fluid Devtools we don't currently plan to log tagged properties because we don't intend to capture any
 				// user-identifiable or user-generated information. If we do later, we'll need to add support for this.
 				throw new Error(`Tagged properties not supported by telemetry logger`);
