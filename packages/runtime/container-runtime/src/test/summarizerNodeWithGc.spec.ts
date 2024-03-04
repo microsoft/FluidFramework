@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import { SummaryType } from "@fluidframework/protocol-definitions";
 import {
+	channelsTreeName,
 	CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
 	IGarbageCollectionData,
@@ -63,6 +64,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 		summarizerNode = rootSummarizerNode.createChild(
 			summarizeInternal,
 			summarizerNodeId,
+			channelsTreeName,
 			{ type: CreateSummarizerNodeSource.FromSummary },
 			undefined,
 			getChildInternalGCData,
@@ -274,11 +276,21 @@ describe("SummarizerNodeWithGC Tests", () => {
 		}
 
 		function createMid(createParam: CreateChildSummarizerNodeParam) {
-			midNode = rootNode.createChild(getSummarizeInternalFn(1), ids[1], createParam);
+			midNode = rootNode.createChild(
+				getSummarizeInternalFn(1),
+				ids[1],
+				channelsTreeName,
+				createParam,
+			);
 		}
 
 		function createLeaf(createParam: CreateChildSummarizerNodeParam) {
-			leafNode = midNode?.createChild(getSummarizeInternalFn(2), ids[2], createParam);
+			leafNode = midNode?.createChild(
+				getSummarizeInternalFn(2),
+				ids[2],
+				channelsTreeName,
+				createParam,
+			);
 		}
 
 		it("summary validation should fail if GC not run on root node", () => {

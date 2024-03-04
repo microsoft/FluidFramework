@@ -341,7 +341,7 @@ export interface ISummarizerNode {
     // (undocumented)
     createChild(
     summarizeInternalFn: SummarizeInternalFn,
-    id: string,
+    id: string, summaryHandlePrefix: string,
     createParam: CreateChildSummarizerNodeParam,
     config?: ISummarizerNodeConfig): ISummarizerNode;
     // (undocumented)
@@ -369,7 +369,7 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     // (undocumented)
     createChild(
     summarizeInternalFn: SummarizeInternalFn,
-    id: string,
+    id: string, summaryHandlePrefix: string,
     createParam: CreateChildSummarizerNodeParam,
     config?: ISummarizerNodeConfigWithGC, getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
     getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>): ISummarizerNodeWithGC;

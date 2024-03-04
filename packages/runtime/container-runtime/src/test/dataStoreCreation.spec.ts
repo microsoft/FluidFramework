@@ -15,6 +15,7 @@ import {
 	SummarizeInternalFn,
 	CreateChildSummarizerNodeFn,
 	CreateSummarizerNodeSource,
+	channelsTreeName,
 } from "@fluidframework/runtime-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
@@ -120,7 +121,9 @@ describe("Data Store Creation Tests", () => {
 				0,
 			);
 			getCreateSummarizerNodeFn = (id: string) => (si: SummarizeInternalFn) =>
-				summarizerNode.createChild(si, id, { type: CreateSummarizerNodeSource.Local });
+				summarizerNode.createChild(si, id, channelsTreeName, {
+					type: CreateSummarizerNodeSource.Local,
+				});
 		});
 
 		it("Valid global dataStore", async () => {

@@ -995,6 +995,7 @@ export abstract class FluidDataStoreContext
 			this.summarizerNode.createChild(
 				summarizeInternal,
 				id,
+				channelsTreeName,
 				createParam,
 				undefined /* config */,
 				getGCDataFn,
