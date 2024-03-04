@@ -1370,7 +1370,6 @@ importers:
       eslint: ~8.55.0
       express: ^4.16.3
       fs-extra: ^9.1.0
-      nconf: ^0.12.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
       source-map-loader: ^2.0.0
@@ -1392,7 +1391,6 @@ importers:
       '@fluidframework/telemetry-utils': link:../../../packages/utils/telemetry-utils
       '@fluidframework/tool-utils': link:../../../packages/utils/tool-utils
       express: 4.18.2
-      nconf: 0.12.1
       webpack-dev-server: 4.6.0_wvskkfkvbt5crqa4uyjlq44kiy
     devDependencies:
       '@fluid-tools/build-cli': 0.34.0_wct7gbpa3rmr6xmk4uo7pbrani
@@ -5315,7 +5313,6 @@ importers:
       mocha-xunit-reporter: 1.1.0
       mochawesome: 3.1.2
       moment: ^2.21.0
-      nconf: ^0.12.0
       npm-run-all: 4.1.5
       prettier: ~3.0.3
       promisify: 0.0.3
@@ -5352,7 +5349,6 @@ importers:
       lodash: 4.17.21
       long: 4.0.0
       lru-cache: 6.0.0
-      nconf: 0.12.1
       qs: 6.11.2
       rmfr: 2.0.0
       sanitize: 2.1.0
