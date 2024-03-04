@@ -122,17 +122,11 @@ describe("schemaFactory", () => {
 		assert(n instanceof TreeNode);
 		assert(!(n instanceof B));
 
-		// TODO: make structural types easier to construct
-		const factory = new TreeFactory({});
-		const config = new TreeConfiguration(StructuralArray, () => []);
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-
-		const s = tree.schematize(config).root;
-		// TODO: maybe make this type check.
+		// Structurally typed and/or POJO mode types:
+		const s = hydrate(StructuralArray, []);
+		// This works correctly, but is currently rejected by the type system. This is fine as Tree.is can be used instead.
 		assert(s instanceof (StructuralArray as any));
+		// This case is expressible without type errors, so it is important that it works.
 		assert(s instanceof TreeNode);
 		assert(!(s instanceof B));
 	});

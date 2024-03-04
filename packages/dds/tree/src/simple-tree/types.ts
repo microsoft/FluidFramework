@@ -91,6 +91,7 @@ export abstract class TreeNode implements WithType {
 
 	/**
 	 * Provides `instancof` support for all tree nodes.
+	 * See also {@link TreeApi.is}.
 	 * @remarks
 	 * Returns false for leaf values.
 	 *
@@ -99,6 +100,12 @@ export abstract class TreeNode implements WithType {
 	 * @privateRemarks
 	 * This overrides `instancof` for all subclasses of TreeNode to use a schema based approach.
 	 * TypeScript 5.3 will impact how this does type narrowing, but it should continue to work correctly with that.
+	 *
+	 * If desired this functionality could be removed, and replaced by the existing Tree.is and exporting `isTreeNode`.
+	 * Removing this however (such that attempts to use it no longer compile, instead of just working incorrectly) is problematic.
+	 * Either TypeScript 5.3 must be required so that the compile type narrowing using instance of can be disabled for these types (ex: narrow to unknown, or require narrowed type to be `never`),
+	 * or TreeNode must stop being a class.
+	 * Making TreeNode into an interface is possible, but it prevents future improvements to make it more nominally typed (see the disabled `readonly #brand!: unknown;` field).
 	 */
 	public static [Symbol.hasInstance]<
 		TSchema extends typeof TreeNode & (abstract new (...args: any[]) => TreeNode),
