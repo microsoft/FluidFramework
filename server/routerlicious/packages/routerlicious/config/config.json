@@ -161,7 +161,10 @@
 			"shouldDisableDefaultNamespace": false
 		},
 		"socketIo": {
-			"perMessageDeflate": false
+			"perMessageDeflate": false,
+			"gradualDisconnectEnabled": true,
+			"gradualDisconnectDrainTimeMs": 30000,
+			"gradualDisconnectDrainIntervalMs": 1000
 		},
 		"jwtTokenCache": {
 			"enable": true

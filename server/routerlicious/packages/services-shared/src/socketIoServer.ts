@@ -14,7 +14,7 @@ import {
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { clone } from "lodash";
 import * as Redis from "ioredis";
-import { Namespace, Server, Socket } from "socket.io";
+import { Namespace, Server, Socket, RemoteSocket } from "socket.io";
 import { createAdapter } from "@socket.io/redis-adapter";
 import type { Adapter } from "socket.io-adapter";
 import * as winston from "winston";
@@ -77,6 +77,7 @@ class SocketIoServer implements core.IWebSocketServer {
 		private readonly io: Server,
 		private readonly pub: Redis.Redis | Redis.Cluster,
 		private readonly sub: Redis.Redis | Redis.Cluster,
+		private readonly socketIoConfig?: any,
 	) {
 		this.io.on("connection", (socket: Socket) => {
 			const webSocket = new SocketIoSocket(socket);
@@ -127,12 +128,60 @@ class SocketIoServer implements core.IWebSocketServer {
 	}
 
 	public async close(): Promise<void> {
+		if (this.socketIoConfig?.gradualDisconnectEnabled) {
+			// Gradual disconnection
+			const drainTime = this.socketIoConfig?.gradualDisconnectDrainTimeMs ?? 30000;
+			const drainInterval = this.socketIoConfig?.gradualDisconnectDrainIntervalMs ?? 1000;
+			if (drainTime > 0 && drainInterval > 0) {
+				// we are assuming no new connections appear once we start. any leftover connections will be closed when close is called
+				const connections = await this.io.fetchSockets();
+				const connectionCount = connections.length;
+				Lumberjack.info("Gradual disconnection started", {
+					drainTime,
+					drainInterval,
+					connectionCount,
+				});
+				// total number of drains to run
+				const totalDrains = Math.ceil(drainTime / drainInterval);
+				// number of connections to disconnect per drain
+				const connectionsToDisconnectPerDrain = Math.ceil(connectionCount / totalDrains);
+				let done = false;
+				const drainConnections = Array.from(connections.values());
+				if (connectionsToDisconnectPerDrain > 0) {
+					// start draining                let done = false;
+					let n = 0;
+					for (let i = 0; i < totalDrains; i++) {
+						for (let j = 0; j < connectionsToDisconnectPerDrain; j++) {
+							const connection: RemoteSocket<any, any> = drainConnections[n];
+							if (!connection) {
+								done = true;
+								break;
+							}
+							connection.disconnect(true);
+							n++;
+						}
+						if (done) {
+							break;
+						}
+						Lumberjack.info("Gradual disconnection started", { disconnectedSoFar: n });
+						await this.sleep(drainInterval);
+					}
+				}
+			}
+		}
+
 		// eslint-disable-next-line @typescript-eslint/promise-function-async
 		const pubClosedP = util.promisify(((callback) => this.pub.quit(callback)) as any)();
 		// eslint-disable-next-line @typescript-eslint/promise-function-async
 		const subClosedP = util.promisify(((callback) => this.sub.quit(callback)) as any)();
 		const ioClosedP = util.promisify(((callback) => this.io.close(callback)) as any)();
 		await Promise.all([pubClosedP, subClosedP, ioClosedP]);
+	}
+
+	private async sleep<T = void>(milliseconds: number, resolveValue?: T) {
+		return new Promise<T | undefined>((resolve) => {
+			setTimeout(() => resolve(resolveValue), milliseconds);
+		});
 	}
 }
 
@@ -227,5 +276,5 @@ export function create(
 		ioSetup(io);
 	}
 
-	return new SocketIoServer(io, pub, sub);
+	return new SocketIoServer(io, pub, sub, socketIoConfig);
 }
