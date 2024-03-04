@@ -1800,10 +1800,20 @@ export class ContainerRuntime
 		assert(snapshotSeqNumber !== undefined, "snapshotSeqNumber should be present");
 
 		// This assert fires if we get a snapshot older than the snapshot we loaded from. This is a service issue.
-		assert(
-			snapshotSeqNumber >= this.deltaManager.initialSequenceNumber,
-			"Downloaded snapshot older than snapshot we loaded from",
-		);
+		// Snapshots should only move forward. If we observe an older snapshot than the one we loaded from, then likely
+		// the file has been overwritten or service lost data.
+		if (snapshotSeqNumber < this.deltaManager.initialSequenceNumber) {
+			throw DataProcessingError.create(
+				"Downloaded snapshot older than snapshot we loaded from",
+				"getSnapshotForLoadingGroupId",
+				undefined,
+				{
+					loadingGroupIds: sortedLoadingGroupIds.join(","),
+					snapshotSeqNumber,
+					initialSequenceNumber: this.deltaManager.initialSequenceNumber,
+				},
+			);
+		}
 
 		// If the snapshot is ahead of the last seq number of the delta manager, then catch up before
 		// returning the snapshot.
@@ -1817,8 +1827,23 @@ export class ContainerRuntime
 					"Summarizer client behind, loaded newer snapshot with loadingGroupId",
 				);
 			}
+
+			// We want to catchup from sequenceNumber to targetSequenceNumber
+			const props: ITelemetryGenericEventExt = {
+				eventName: "GroupIdSnapshotCatchup",
+				loadingGroupIds: sortedLoadingGroupIds.join(","),
+				targetSequenceNumber: snapshotSeqNumber, // This is so we reuse some columns in telemetry
+				sequenceNumber: this.deltaManager.lastSequenceNumber, // This is so we reuse some columns in telemetry
+			};
+
+			const event = PerformanceEvent.start(this.mc.logger, {
+				...props,
+			});
 			// If the inbound deltas queue is paused or disconnected, we expect a reconnect and unpause
 			// as long as it's not a summarizer client.
+			if (this.deltaManager.inbound.paused) {
+				props.inboundPaused = this.deltaManager.inbound.paused; // reusing telemetry
+			}
 			const defP = new Deferred<boolean>();
 			this.deltaManager.on("op", (message: ISequencedDocumentMessage) => {
 				if (message.sequenceNumber >= snapshotSeqNumber) {
@@ -1826,6 +1851,7 @@ export class ContainerRuntime
 				}
 			});
 			await defP.promise;
+			event.end(props);
 		}
 		return { snapshotTree: snapshotTreeForPath, sequenceNumber: snapshotSeqNumber };
 	}
