@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 import { OdspClient } from "@fluid-experimental/odsp-client";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ContainerSchema } from "@fluidframework/fluid-static";
-import { SharedMap, type ISharedMap } from "@fluidframework/map";
+import { SharedMap } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
 import { ConnectionState } from "@fluidframework/container-loader";
