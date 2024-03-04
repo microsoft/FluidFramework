@@ -1045,7 +1045,7 @@ export function configureWebSocketServices(
 		 * - may be individual or nested arrays
 		 * - are `unknown` since the correct typing (1) is not validated and (2) doesn't need to be known to operate on it here
 		 *
-		 * Note: From debugging client end to end tests (localTestSignals.spec.ts) we expect `contentBatches` to be a JSON string.
+		 * Note: From debugging client end to end tests (localTestSignals.spec.ts) we expect elements of `contentBatches` to be JSON strings.
 		 */
 		socket.on("submitSignal", (clientId: string, contentBatches: unknown[]) => {
 			// Verify the user has subscription to the room.
