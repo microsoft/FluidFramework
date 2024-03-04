@@ -5,7 +5,7 @@
 
 import { sha1, sha256 } from "sha.js";
 
-import type { IsoBuffer } from "./bufferNode";
+import type { IsoBuffer } from "./bufferNode.js";
 
 /**
  * Hash a file. Consistent within a session, but should not be persisted and

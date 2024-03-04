@@ -5,21 +5,21 @@
 
 import { strict as assert } from "assert";
 import fs from "fs";
-import { IMergeBlock, ISegment, Marker } from "../mergeTreeNodes";
-import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
-import { TextSegment } from "../textSegment";
-import { ReferenceType } from "../ops";
-import { PropertySet } from "../properties";
-import { MergeTree } from "../mergeTree";
-import { walkAllChildSegments } from "../mergeTreeNodeWalk";
-import { UnassignedSequenceNumber } from "../constants";
-import { LocalReferenceCollection } from "../localReference";
+import { IMergeBlock, ISegment, Marker } from "../mergeTreeNodes.js";
+import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
+import { TextSegment } from "../textSegment.js";
+import { ReferenceType } from "../ops.js";
+import { PropertySet } from "../properties.js";
+import { MergeTree } from "../mergeTree.js";
+import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
+import { UnassignedSequenceNumber } from "../constants.js";
+import { LocalReferenceCollection } from "../localReference.js";
 import {
 	PartialSequenceLengths,
 	verifyExpectedPartialLengths,
 	verifyPartialLengths,
-} from "../partialLengths";
-import { loadText } from "./text";
+} from "../partialLengths.js";
+import { loadText } from "./text.js";
 
 export function loadTextFromFile(filename: string, mergeTree: MergeTree, segLimit = 0) {
 	const content = fs.readFileSync(filename, "utf8");

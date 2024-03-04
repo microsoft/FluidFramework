@@ -23,8 +23,8 @@ import {
 	ISummaryTree,
 } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { EmptyDeltaStorageService } from "./emptyDeltaStorageService";
-import { ReadDocumentStorageServiceBase } from "./replayController";
+import { EmptyDeltaStorageService } from "./emptyDeltaStorageService.js";
+import { ReadDocumentStorageServiceBase } from "./replayController.js";
 
 /**
  * Structure of snapshot on disk, when we store snapshot as single file
