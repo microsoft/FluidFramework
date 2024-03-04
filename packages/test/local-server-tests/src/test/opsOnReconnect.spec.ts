@@ -46,8 +46,8 @@ describe("Ops on Reconnect", () => {
 	let loaderContainerTracker: LoaderContainerTracker;
 	let container1: IContainer;
 	let container1Object1: ITestFluidObject & IFluidLoadable;
-	let container1Object1Map1: SharedMap;
-	let container1Object1Map2: SharedMap;
+	let container1Object1Map1: ISharedMap;
+	let container1Object1Map2: ISharedMap;
 	let container1Object1Directory: SharedDirectory;
 	let container1Object1String: SharedString;
 	let receivedValues: any[] = [];

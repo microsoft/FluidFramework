@@ -373,7 +373,6 @@ export const tagData: <T extends TelemetryDataTag, V extends Record<string, Tele
 // @internal @deprecated (undocumented)
 export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
     constructor(logger: ITelemetryBaseLogger);
-    // (undocumented)
     send(eventWithTagsMaybe: ITelemetryBaseEvent): void;
 }
 

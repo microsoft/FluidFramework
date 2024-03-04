@@ -36,7 +36,7 @@ describe("Logging Last Connection Mode ", () => {
 	let loaderContainerTracker: LoaderContainerTracker;
 	let container: IContainer;
 	let dataObject: ITestFluidObject;
-	let sharedMap: SharedMap;
+	let sharedMap: ISharedMap;
 
 	/**
 	 * Waits for the "connected" event from the given container.

@@ -41,7 +41,6 @@ export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements
     constructor(props: BaseContainerRuntimeFactoryProps);
     protected containerHasInitialized(runtime: IContainerRuntime): Promise<void>;
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
-    // (undocumented)
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry;
     // (undocumented)
     instantiateFirstTime(runtime: ContainerRuntime): Promise<void>;
@@ -127,9 +126,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     protected hasInitialized(): Promise<void>;
     // (undocumented)
     get id(): string;
-    // (undocumented)
     get IFluidHandle(): IFluidHandle<this>;
-    // (undocumented)
     get IFluidLoadable(): this;
     initializeInternal(existing: boolean): Promise<void>;
     // (undocumented)
@@ -158,14 +155,10 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
     createPeerInstance(peerContext: IFluidDataStoreContext, initialState?: I["InitialState"]): Promise<TObj>;
     // @deprecated
     createRootInstance(rootDataStoreId: string, runtime: IContainerRuntime, initialState?: I["InitialState"]): Promise<TObj>;
-    // (undocumented)
     get IFluidDataStoreFactory(): this;
-    // (undocumented)
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry | undefined;
-    // (undocumented)
     instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<IFluidDataStoreChannel>;
     get registryEntry(): NamedFluidDataStoreRegistryEntry;
-    // (undocumented)
     readonly type: string;
 }
 

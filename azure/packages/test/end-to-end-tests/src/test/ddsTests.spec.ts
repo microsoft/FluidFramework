@@ -18,15 +18,14 @@ import { mapWait } from "./utils";
 describe("Fluid data updates", () => {
 	const connectTimeoutMs = 10_000;
 	let client: AzureClient;
-	let schema: ContainerSchema;
+	const schema = {
+		initialObjects: {
+			map1: SharedMap,
+		},
+	} satisfies ContainerSchema;
 
 	beforeEach("createAzureClient", () => {
 		client = createAzureClient();
-		schema = {
-			initialObjects: {
-				map1: SharedMap,
-			},
-		};
 	});
 
 	/**
@@ -79,12 +78,12 @@ describe("Fluid data updates", () => {
 		}
 
 		const initialObjectsCreate = container.initialObjects;
-		const map1Create = initialObjectsCreate.map1 as ISharedMap;
+		const map1Create = initialObjectsCreate.map1;
 		map1Create.set("new-key", "new-value");
 		const valueCreate: string | undefined = map1Create.get("new-key");
 
 		const { container: containerGet } = await client.getContainer(containerId, schema);
-		const map1Get = containerGet.initialObjects.map1 as ISharedMap;
+		const map1Get = containerGet.initialObjects.map1;
 		const valueGet: string | undefined = await mapWait(map1Get, "new-key");
 		assert.strictEqual(valueGet, valueCreate, "container can't change initial objects");
 	});

@@ -996,7 +996,7 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 					story: comment2Text.handle,
 				},
 			});
-			const nestedMap = SharedMap.getFactory().create(dataObject1.runtime, "nestedMap");
+			const nestedMap = SharedMap.create(dataObject1.runtime, "nestedMap");
 			nestedMap.set("nestedKey", "nestedValue");
 			intervalCollection1.add({ start: 8, end: 9, props: { story: nestedMap.handle } });
 			await provider.ensureSynchronized();

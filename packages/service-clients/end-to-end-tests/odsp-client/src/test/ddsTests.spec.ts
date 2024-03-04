@@ -242,12 +242,12 @@ describe("Fluid data updates", () => {
 	 * the container.
 	 */
 	it("can create/add loadable objects (custom data object) dynamically during runtime", async () => {
-		const dynamicSchema: ContainerSchema = {
+		const dynamicSchema = {
 			initialObjects: {
 				map1: SharedMap,
 			},
 			dynamicObjectTypes: [TestDataObject],
-		};
+		} satisfies ContainerSchema;
 
 		const { container } = await client.createContainer(dynamicSchema);
 		await container.attach();
@@ -255,7 +255,7 @@ describe("Fluid data updates", () => {
 		const newDo = await container.create(TestDataObject);
 		assert.ok(newDo?.handle);
 
-		const map1 = container.initialObjects.map1 as ISharedMap;
+		const map1 = container.initialObjects.map1;
 		map1.set("new-pair-id", newDo.handle);
 		const handle: IFluidHandle | undefined = await map1.get("new-pair-id");
 		const obj: unknown = await handle?.get();
