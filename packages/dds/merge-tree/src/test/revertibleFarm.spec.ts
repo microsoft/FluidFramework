@@ -6,23 +6,23 @@
 import assert from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { ISegment, SegmentGroup } from "../mergeTreeNodes";
+import { ISegment, SegmentGroup } from "../mergeTreeNodes.js";
 import {
 	appendToMergeTreeDeltaRevertibles,
 	MergeTreeDeltaRevertible,
 	MergeTreeWithRevert,
 	revertMergeTreeDeltaRevertibles,
-} from "../revertibles";
-import { walkAllChildSegments } from "../mergeTreeNodeWalk";
+} from "../revertibles.js";
+import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
 import {
 	removeRange,
 	generateOperationMessagesForClients,
 	applyMessages,
 	annotateRange,
 	doOverRanges,
-} from "./mergeTreeOperationRunner";
-import { createRevertDriver } from "./testClient";
-import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger";
+} from "./mergeTreeOperationRunner.js";
+import { createRevertDriver } from "./testClient.js";
+import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger.js";
 
 const defaultOptions = {
 	initialOps: 5,

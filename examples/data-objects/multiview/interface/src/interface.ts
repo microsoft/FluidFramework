@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
+import type { EventEmitter } from "@fluid-example/example-utils";
 
 /**
  * ICoordinate describes the public API surface for our 2d coordinate component.

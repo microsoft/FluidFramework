@@ -13,7 +13,7 @@ import {
 	DDSFuzzSuiteOptions,
 	ReducerPreconditionError,
 	replayTest,
-} from "./ddsFuzzHarness";
+} from "./ddsFuzzHarness.js";
 
 /**
  * A function which takes in an operation and modifies it by reference to be more

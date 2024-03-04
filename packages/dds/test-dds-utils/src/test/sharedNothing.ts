@@ -11,7 +11,7 @@ import {
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { ChangeConnectionState, DDSFuzzModel, type BaseOperation } from "../ddsFuzzHarness";
+import { ChangeConnectionState, DDSFuzzModel, type BaseOperation } from "../ddsFuzzHarness.js";
 
 /**
  * Mock DDS which holds no data.

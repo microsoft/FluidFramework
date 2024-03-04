@@ -8,7 +8,7 @@ import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { IContainerContext } from "@fluidframework/container-definitions";
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { ContainerRuntime, getDeviceSpec } from "../containerRuntime";
+import { ContainerRuntime, getDeviceSpec } from "../containerRuntime.js";
 
 function setNavigator(
 	navigator: Partial<Navigator & { deviceMemory?: number }> | undefined | null,

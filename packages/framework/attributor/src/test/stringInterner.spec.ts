@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import { MutableStringInterner } from "../stringInterner";
+import { MutableStringInterner } from "../stringInterner.js";
 
 describe("MutableStringInterner", () => {
 	const inputStrings = ["test", "test2", "test3", "test4"];

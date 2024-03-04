@@ -5,9 +5,9 @@
 
 import { strict as assert } from "assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { RemoteFluidObjectHandle } from "../remoteObjectHandle";
-import { FluidSerializer } from "../serializer";
-import { makeJson, MockHandleContext } from "./utils";
+import { RemoteFluidObjectHandle } from "../remoteObjectHandle.js";
+import { FluidSerializer } from "../serializer.js";
+import { makeJson, MockHandleContext } from "./utils.js";
 
 describe("FluidSerializer", () => {
 	function printHandle(target: any) {

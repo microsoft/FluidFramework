@@ -23,6 +23,7 @@ import {
 	ITelemetryLoggerExt,
 	ThresholdCounter,
 } from "@fluidframework/telemetry-utils";
+import { AttachState } from "@fluidframework/container-definitions";
 import {
 	ChannelServiceEndpoints,
 	createChannelServiceEndpoints,
@@ -30,8 +31,8 @@ import {
 	loadChannel,
 	loadChannelFactoryAndAttributes,
 	summarizeChannelAsync,
-} from "./channelContext";
-import { ISharedObjectRegistry } from "./dataStoreRuntime";
+} from "./channelContext.js";
+import { ISharedObjectRegistry } from "./dataStoreRuntime.js";
 
 export class RemoteChannelContext implements IChannelContext {
 	private isLoaded = false;
@@ -70,6 +71,7 @@ export class RemoteChannelContext implements IChannelContext {
 			submitFn,
 			() => dirtyFn(this.id),
 			addedGCOutboundReferenceFn,
+			() => runtime.attachState !== AttachState.Detached,
 			storageService,
 			this.subLogger,
 			baseSnapshot,
