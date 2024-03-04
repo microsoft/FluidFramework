@@ -62,6 +62,7 @@ export {
 export {
 	RecursiveObject as test_RecursiveObject,
 	base as test_RecursiveObject_base,
+	RecursiveObjectPojoMode as test_RecursiveObjectPojoMode,
 } from "./testRecursiveDomain.js";
 
 export { TreeNode, Unhydrated, TreeArrayNodeBase } from "./types.js";

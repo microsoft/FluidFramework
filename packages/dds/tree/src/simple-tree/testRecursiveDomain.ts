@@ -39,3 +39,13 @@ export const base = builder.objectRecursive("testObject", {
  * @internal
  */
 export class RecursiveObject extends base {}
+
+/**
+ * Due to https://github.com/microsoft/TypeScript/issues/55832 this is expected to compile to a d.ts file which contain `any`, and therefor the other (above) approach using class definitions is recommended for recursive schema.
+ * See {@link SchemaFactory} for documentation covering this detail.
+ * @internal
+ */
+export const RecursiveObjectPojoMode = builder.objectRecursive("testPOJOObject", {
+	recursive: builder.optionalRecursive([() => RecursiveObjectPojoMode]),
+	number: builder.number,
+});
