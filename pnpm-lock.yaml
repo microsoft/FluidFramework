@@ -6002,7 +6002,6 @@ importers:
       eslint-plugin-deprecation: ~2.0.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-interfaces': link:../core-interfaces
@@ -6022,7 +6021,6 @@ importers:
       eslint-plugin-deprecation: 2.0.0_bpztyfltmpuv6lhsgzfwtmxhte
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/common/core-interfaces:
@@ -6309,7 +6307,6 @@ importers:
       prettier: ~3.0.3
       replace-in-file: ^6.3.5
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -6344,7 +6341,6 @@ importers:
       prettier: 3.0.3
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/map:
@@ -6785,7 +6781,6 @@ importers:
       prettier: ~3.0.3
       replace-in-file: ^6.3.5
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -6820,7 +6815,6 @@ importers:
       prettier: 3.0.3
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/sequence:
@@ -6958,7 +6952,6 @@ importers:
       replace-in-file: ^6.3.5
       rimraf: ^4.4.0
       ts-node: ^10.9.1
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -7002,7 +6995,6 @@ importers:
       replace-in-file: 6.3.5
       rimraf: 4.4.1
       ts-node: 10.9.1_ggysxzqxruqvydtrq6zb2nxvwm
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/shared-summary-block:
@@ -7038,7 +7030,6 @@ importers:
       prettier: ~3.0.3
       replace-in-file: ^6.3.5
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -7073,7 +7064,6 @@ importers:
       prettier: 3.0.3
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/task-manager:
@@ -8623,7 +8613,6 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/container-runtime-definitions': link:../../runtime/container-runtime-definitions
@@ -8654,7 +8643,6 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/synthesize:

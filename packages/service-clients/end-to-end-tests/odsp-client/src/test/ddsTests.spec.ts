@@ -23,15 +23,14 @@ const clientCreds: IOdspLoginCredentials = {
 describe("Fluid data updates", () => {
 	const connectTimeoutMs = 10_000;
 	let client: OdspClient;
-	let schema: ContainerSchema;
+	const schema = {
+		initialObjects: {
+			map1: SharedMap,
+		},
+	} satisfies ContainerSchema;
 
 	beforeEach(() => {
 		client = createOdspClient(clientCreds);
-		schema = {
-			initialObjects: {
-				map1: SharedMap,
-			},
-		};
 	});
 
 	/**
@@ -84,12 +83,12 @@ describe("Fluid data updates", () => {
 		}
 
 		const initialObjectsCreate = container.initialObjects;
-		const map1Create = initialObjectsCreate.map1 as SharedMap;
+		const map1Create = initialObjectsCreate.map1;
 		map1Create.set("new-key", "new-value");
 		const valueCreate: string | undefined = map1Create.get("new-key");
 
 		const { container: containerGet } = await client.getContainer(itemId, schema);
-		const map1Get = containerGet.initialObjects.map1 as SharedMap;
+		const map1Get = containerGet.initialObjects.map1;
 		const valueGet: string | undefined = await mapWait(map1Get, "new-key");
 		assert.strictEqual(valueGet, valueCreate, "container can't change initial objects");
 	});
@@ -243,12 +242,12 @@ describe("Fluid data updates", () => {
 	 * the container.
 	 */
 	it("can create/add loadable objects (custom data object) dynamically during runtime", async () => {
-		const dynamicSchema: ContainerSchema = {
+		const dynamicSchema = {
 			initialObjects: {
 				map1: SharedMap,
 			},
 			dynamicObjectTypes: [TestDataObject],
-		};
+		} satisfies ContainerSchema;
 
 		const { container } = await client.createContainer(dynamicSchema);
 		await container.attach();
@@ -256,7 +255,7 @@ describe("Fluid data updates", () => {
 		const newDo = await container.create(TestDataObject);
 		assert.ok(newDo?.handle);
 
-		const map1 = container.initialObjects.map1 as SharedMap;
+		const map1 = container.initialObjects.map1;
 		map1.set("new-pair-id", newDo.handle);
 		const handle: IFluidHandle | undefined = await map1.get("new-pair-id");
 		const obj: unknown = await handle?.get();

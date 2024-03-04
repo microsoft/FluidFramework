@@ -10,8 +10,8 @@ import {
 	MockSharedObjectServices,
 } from "@fluidframework/test-runtime-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { ISharedSummaryBlock } from "../interfaces";
-import { SharedSummaryBlockFactory } from "../sharedSummaryBlockFactory";
+import { ISharedSummaryBlock } from "../interfaces.js";
+import { SharedSummaryBlockFactory } from "../sharedSummaryBlockFactory.js";
 
 interface ITestInterface {
 	value1: string;
