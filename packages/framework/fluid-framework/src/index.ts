@@ -18,6 +18,7 @@ export { AttachState, ContainerErrorTypes } from "@fluidframework/container-defi
 export { DriverErrorTypes } from "@fluidframework/driver-definitions";
 export { ConnectionState } from "@fluidframework/container-loader";
 export type {
+	ContainerAttachProps,
 	ContainerSchema,
 	DataObjectClass,
 	IConnection,
@@ -61,6 +62,7 @@ export type {
 	NodeFromSchema,
 	ObjectFromSchemaRecord,
 	RestrictiveReadonlyRecord,
+	ScopedSchemaName,
 	TreeApi,
 	TreeArrayNodeBase,
 	TreeFieldFromImplicitField,
@@ -76,6 +78,7 @@ export type {
 	TreeViewEvents,
 	Unhydrated,
 	WithType,
+	SchemaIncompatible,
 } from "@fluidframework/tree";
 export {
 	disposeSymbol,

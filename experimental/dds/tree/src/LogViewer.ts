@@ -7,14 +7,14 @@ import Denque from 'denque';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { assert } from '@fluidframework/core-utils';
-import { fail, noop } from './Common';
-import { EditLog, SequencedOrderedEditId } from './EditLog';
-import { EditId } from './Identifiers';
-import { Revision, RevisionValueCache } from './RevisionValueCache';
-import { ReconciliationChange, ReconciliationEdit, ReconciliationPath } from './ReconciliationPath';
-import { ChangeInternal, Edit, EditStatus } from './persisted-types';
-import { RevisionView } from './RevisionView';
-import { EditingResult, TransactionInternal } from './TransactionInternal';
+import { fail, noop } from './Common.js';
+import { EditLog, SequencedOrderedEditId } from './EditLog.js';
+import { EditId } from './Identifiers.js';
+import { Revision, RevisionValueCache } from './RevisionValueCache.js';
+import { ReconciliationChange, ReconciliationEdit, ReconciliationPath } from './ReconciliationPath.js';
+import { ChangeInternal, Edit, EditStatus } from './persisted-types/index.js';
+import { RevisionView } from './RevisionView.js';
+import { EditingResult, TransactionInternal } from './TransactionInternal.js';
 
 /**
  * Callback for when an edit is applied (meaning the result of applying it to a particular revision is computed).

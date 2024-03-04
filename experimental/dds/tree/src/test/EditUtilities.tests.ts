@@ -8,9 +8,9 @@ import { assert } from '@fluidframework/core-utils';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
 import { FluidSerializer } from '@fluidframework/shared-object-base';
-import { Definition, NodeId } from '../Identifiers';
-import { getChangeNodeFromView } from '../SerializationUtilities';
-import { noop } from '../Common';
+import { Definition, NodeId } from '../Identifiers.js';
+import { getChangeNodeFromView } from '../SerializationUtilities.js';
+import { noop } from '../Common.js';
 import {
 	convertTreeNodes,
 	deepCompareNodes,
@@ -20,11 +20,11 @@ import {
 	validateStablePlace,
 	validateStableRange,
 	walkTree,
-} from '../EditUtilities';
-import { BuildNodeInternal, ChangeNode, Payload, Side, TreeNode } from '../persisted-types';
-import { BuildNode, BuildTreeNode } from '../ChangeTypes';
-import { comparePayloads } from '../PayloadUtilities';
-import { refreshTestTree } from './utilities/TestUtilities';
+} from '../EditUtilities.js';
+import { BuildNodeInternal, ChangeNode, Payload, Side, TreeNode } from '../persisted-types/index.js';
+import { BuildNode, BuildTreeNode } from '../ChangeTypes.js';
+import { comparePayloads } from '../PayloadUtilities.js';
+import { refreshTestTree } from './utilities/TestUtilities.js';
 
 describe('EditUtilities', () => {
 	const testTree = refreshTestTree(undefined, undefined, /* expensiveValidation: */ true);

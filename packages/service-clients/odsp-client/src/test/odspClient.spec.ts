@@ -3,16 +3,15 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-nodejs-modules
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { type ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { AttachState } from "@fluidframework/container-definitions";
 // import { ConnectionState } from "@fluidframework/container-loader";
 // import { timeoutPromise } from "@fluidframework/test-utils";
-import { OdspConnectionConfig } from "../interfaces";
-import { OdspClient } from "../odspClient";
-import { OdspTestTokenProvider } from "./odspTestTokenProvider";
+import { OdspConnectionConfig } from "../interfaces.js";
+import { OdspClient } from "../odspClient.js";
+import { OdspTestTokenProvider } from "./odspTestTokenProvider.js";
 
 /**
  * Interface representing the credentials required for testing odsp-client.

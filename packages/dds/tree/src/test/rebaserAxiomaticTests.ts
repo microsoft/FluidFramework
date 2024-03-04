@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import {
 	makeAnonChange,
+	RevisionMetadataSource,
 	RevisionTag,
 	tagChange,
 	TaggedChange,
@@ -278,9 +279,14 @@ function sandwichRebaseWithCompose<TChangeset>(
 		const composeMetadata = defaultRevisionMetadataFromChanges(compositionScope);
 		currentComposedEdit = makeAnonChange(
 			fieldRebaser.compose(
-				[rollbacks[sourceEdits.length - i - 1], currentComposedEdit, rebasedEdit],
+				rollbacks[sourceEdits.length - i - 1],
+				currentComposedEdit,
 				composeMetadata,
 			),
+		);
+
+		currentComposedEdit = makeAnonChange(
+			fieldRebaser.compose(currentComposedEdit, rebasedEdit, composeMetadata),
 		);
 	}
 	return rebasedEditsWithCompose;
@@ -338,7 +344,7 @@ function verifyComposeAssociativity<TChangeset>(
 	fieldRebaser: BoundFieldChangeRebaser<TChangeset>,
 ) {
 	const metadata = defaultRevisionMetadataFromChanges(edits);
-	const singlyComposed = makeAnonChange(fieldRebaser.compose(edits, metadata));
+	const singlyComposed = makeAnonChange(composeArray(fieldRebaser, edits, metadata));
 	const leftPartialCompositions: TaggedChange<TChangeset>[] = [
 		edits.at(0) ?? fail("Expected at least one edit"),
 	];
@@ -346,10 +352,8 @@ function verifyComposeAssociativity<TChangeset>(
 		leftPartialCompositions.push(
 			makeAnonChange(
 				fieldRebaser.compose(
-					[
-						leftPartialCompositions.at(-1) ?? fail("Expected at least one edit"),
-						edits[i],
-					],
+					leftPartialCompositions.at(-1) ?? fail("Expected at least one edit"),
+					edits[i],
 					metadata,
 				),
 			),
@@ -363,10 +367,8 @@ function verifyComposeAssociativity<TChangeset>(
 		rightPartialCompositions.push(
 			makeAnonChange(
 				fieldRebaser.compose(
-					[
-						edits[i],
-						rightPartialCompositions.at(-1) ?? fail("Expected at least one edit"),
-					],
+					edits[i],
+					rightPartialCompositions.at(-1) ?? fail("Expected at least one edit"),
 					metadata,
 				),
 			),
@@ -380,4 +382,17 @@ function verifyComposeAssociativity<TChangeset>(
 
 function getDefaultedEqualityAssert<TChangeset>(fieldRebaser: BoundFieldChangeRebaser<TChangeset>) {
 	return fieldRebaser.assertEqual ?? ((a, b) => assert.deepEqual(a, b));
+}
+
+function composeArray<TChangeset>(
+	fieldRebaser: BoundFieldChangeRebaser<TChangeset>,
+	changes: TaggedChange<TChangeset>[],
+	metadata: RevisionMetadataSource,
+): TChangeset {
+	let composed: TChangeset = fieldRebaser.createEmpty();
+	for (const change of changes) {
+		composed = fieldRebaser.compose(makeAnonChange(composed), change, metadata);
+	}
+
+	return composed;
 }

@@ -9,8 +9,9 @@ import {
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 } from "@fluidframework/test-runtime-utils";
-import { ISharedSummaryBlock } from "../interfaces";
-import { SharedSummaryBlockFactory } from "../sharedSummaryBlockFactory";
+import { AttachState } from "@fluidframework/container-definitions";
+import { ISharedSummaryBlock } from "../interfaces.js";
+import { SharedSummaryBlockFactory } from "../sharedSummaryBlockFactory.js";
 
 interface ITestInterface {
 	value1: string;
@@ -25,9 +26,8 @@ describe("SharedSummaryBlock", () => {
 	let sharedSummaryBlock: ISharedSummaryBlock;
 
 	beforeEach(async () => {
-		dataStoreRuntime = new MockFluidDataStoreRuntime();
 		// We only want to test local state of the DDS.
-		dataStoreRuntime.local = true;
+		dataStoreRuntime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
 		factory = new SharedSummaryBlockFactory();
 		sharedSummaryBlock = factory.create(dataStoreRuntime, "root") as ISharedSummaryBlock;
 	});

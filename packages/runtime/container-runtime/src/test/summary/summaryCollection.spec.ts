@@ -12,7 +12,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { ISummaryOpMessage, SummaryCollection } from "../../summary";
+import { ISummaryOpMessage, SummaryCollection } from "../../summary/index.js";
 
 const summaryOp: ISummaryOpMessage = {
 	clientId: "cliendId",

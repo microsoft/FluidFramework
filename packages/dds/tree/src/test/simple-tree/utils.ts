@@ -3,74 +3,67 @@
  * Licensed under the MIT License.
  */
 
-import { createIdCompressor } from "@fluidframework/id-compressor";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import {
+	createMockNodeKeyManager,
+	nodeKeyFieldKey as defaultNodeKeyFieldKey,
+} from "../../feature-libraries/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
 import {
 	ImplicitFieldSchema,
-	SchemaFactory,
 	TreeConfiguration,
 	TreeFieldFromImplicitField,
 	InsertableTreeFieldFromImplicitField,
+	toFlexConfig,
 } from "../../simple-tree/index.js";
-import { TreeFactory } from "../../treeFactory.js";
-import { typeboxValidator } from "../../external-utilities/index.js";
-import { ForestType } from "../../shared-tree/index.js";
-
-/**
- * Helper for making small test schemas.
- */
-export function makeSchema<TSchema extends ImplicitFieldSchema>(
-	fn: (factory: SchemaFactory) => TSchema,
-) {
-	return fn(new SchemaFactory(`test.schema.${Math.random().toString(36).slice(2)}`));
-}
-
-// Returns true if the given function is a class constructor (i.e., should be invoked with 'new')
-// eslint-disable-next-line @typescript-eslint/ban-types
-function isCtor(candidate: Function) {
-	return candidate.prototype?.constructor.name !== undefined;
-}
+// eslint-disable-next-line import/no-internal-modules
+import { getProxyForField } from "../../simple-tree/proxies.js";
+import { brand } from "../../util/index.js";
+import { checkoutWithContent, flexTreeWithContent } from "../utils.js";
 
 /**
  * Given the schema and initial tree data, returns a hydrated tree node.
+ *
+ * For minimal/concise targeted unit testing of specific simple-tree content.
  */
-export function getRoot<TSchema extends ImplicitFieldSchema>(
-	schema: TSchema | ((factory: SchemaFactory) => TSchema),
-	initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>,
+export function hydrate<TSchema extends ImplicitFieldSchema>(
+	schema: TSchema,
+	initialTree: InsertableTreeFieldFromImplicitField<TSchema>,
 ): TreeFieldFromImplicitField<TSchema> {
-	// Schema objects may also be class constructors.
-	if (typeof schema === "function" && !isCtor(schema)) {
-		// eslint-disable-next-line no-param-reassign
-		schema = makeSchema(schema as (builder: SchemaFactory) => TSchema);
-	}
-	const config = new TreeConfiguration(schema as TSchema, initialTree);
-	const factory = new TreeFactory({
-		jsonValidator: typeboxValidator,
-		forest: ForestType.Reference,
-	});
-	const tree = factory.create(
-		new MockFluidDataStoreRuntime({
-			idCompressor: createIdCompressor(),
-		}),
-		"tree",
-	);
-	const root = tree.schematize(config).root;
-	return root;
+	const config = new TreeConfiguration(schema, () => initialTree);
+	const flexConfig = toFlexConfig(config);
+	const tree = flexTreeWithContent(flexConfig);
+	return getProxyForField(tree) as TreeFieldFromImplicitField<TSchema>;
 }
 
 /**
- * Similar to JSON stringify, but preserves `undefined` and numbers numbers as-is at the root.
+ * Given the TreeConfiguration, returns a view.
+ *
+ * This works a much like the actual package public API as possible, while avoiding the actual SharedTree object.
+ * This should allow realistic (app like testing) of all the simple-tree APIs.
  */
+export function getView<TSchema extends ImplicitFieldSchema>(
+	config: TreeConfiguration<TSchema>,
+): SchematizingSimpleTreeView<TSchema> {
+	const flexConfig = toFlexConfig(config);
+	const checkout = checkoutWithContent(flexConfig);
+	return new SchematizingSimpleTreeView<TSchema>(
+		checkout,
+		config,
+		createMockNodeKeyManager(),
+		brand(defaultNodeKeyFieldKey),
+	);
+}
 
-export function pretty(arg: unknown): number | undefined | string {
+/**
+ * Similar to JSON stringify, but allows `undefined` at the root and returns numbers as-is at the root.
+ */
+export function pretty(arg: unknown): number | string {
 	if (arg === undefined) {
 		return "undefined";
 	}
 	if (typeof arg === "number") {
 		return arg;
-	}
-	if (typeof arg === "string") {
-		return `"${arg}"`;
 	}
 	return JSON.stringify(arg);
 }

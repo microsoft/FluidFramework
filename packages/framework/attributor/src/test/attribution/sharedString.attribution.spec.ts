@@ -3,51 +3,53 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
-import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "fs";
-import { strict as assert } from "assert";
+import * as path from "node:path";
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { strict as assert } from "node:assert";
 import {
-	AcceptanceCondition,
-	BaseFuzzTestState,
+	type AcceptanceCondition,
+	type BaseFuzzTestState,
 	chain,
 	createWeightedGenerator,
 	done,
-	Generator,
+	type Generator,
 	generatorFromArray,
 	interleave,
-	IRandom,
+	type IRandom,
 	makeRandom,
 	performFuzzActions,
-	Reducer,
+	type Reducer,
 	take,
 } from "@fluid-private/stochastic-test-utils";
 import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 	MockContainerRuntimeFactoryForReconnection,
-	MockContainerRuntimeForReconnection,
+	type MockContainerRuntimeForReconnection,
 } from "@fluidframework/test-runtime-utils";
 import {
-	IChannelServices,
-	IFluidDataStoreRuntime,
-	Jsonable,
+	type IChannelServices,
+	type IFluidDataStoreRuntime,
+	type Jsonable,
 } from "@fluidframework/datastore-definitions";
-import { IClient, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { IAudience } from "@fluidframework/container-definitions";
+import { type IClient, type ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { type IAudience } from "@fluidframework/container-definitions";
 import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
 import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree";
-import { IAttributor, OpStreamAttributor } from "../../attributor";
+import { type IAttributor, OpStreamAttributor } from "../../attributor.js";
 import {
 	AttributorSerializer,
 	chain as chainEncoders,
 	deltaEncoder,
-	Encoder,
-} from "../../encoders";
-import { makeLZ4Encoder } from "../../lz4Encoder";
+	type Encoder,
+} from "../../encoders.js";
+import { makeLZ4Encoder } from "../../lz4Encoder.js";
+import { _dirname } from "./dirname.cjs";
 
 function makeMockAudience(clientIds: string[]): IAudience {
 	const clients = new Map<string, IClient>();
-	clientIds.forEach((clientId, index) => {
+	for (const [index, clientId] of clientIds.entries()) {
+		// eslint-disable-next-line unicorn/prefer-code-point
 		const stringId = String.fromCharCode(index + 65);
 		const name = stringId.repeat(10);
 		const userId = `${name}@microsoft.com`;
@@ -64,7 +66,7 @@ function makeMockAudience(clientIds: string[]): IAudience {
 			user,
 			scopes: [],
 		});
-	});
+	}
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 	return {
 		getMember: (clientId: string): IClient | undefined => {
@@ -73,9 +75,7 @@ function makeMockAudience(clientIds: string[]): IAudience {
 	} as IAudience;
 }
 
-interface PropertySet {
-	[name: string]: any;
-}
+type PropertySet = Record<string, unknown>;
 
 interface Client {
 	sharedString: SharedString;
@@ -151,7 +151,7 @@ const defaultOptions: Required<OperationGenerationConfig> = {
 function makeOperationGenerator(
 	optionsParam?: OperationGenerationConfig,
 ): Generator<Operation, FuzzTestState> {
-	const options = { ...defaultOptions, ...(optionsParam ?? {}) };
+	const options = { ...defaultOptions, ...optionsParam };
 	type ClientOpState = FuzzTestState & { sharedString: SharedString };
 
 	// All subsequent helper functions are generators; note that they don't actually apply any operations.
@@ -216,7 +216,7 @@ function makeOperationGenerator(
 		[annotateRange, 1, hasNonzeroLength],
 	]);
 
-	const clientOperationGenerator = (state: FuzzTestState) =>
+	const clientOperationGenerator = (state: FuzzTestState): Operation | typeof done =>
 		clientBaseOperationGenerator({
 			...state,
 			sharedString: state.random.pick(state.clients).sharedString,
@@ -252,6 +252,7 @@ function createSharedString(
 			const { deltaManager } = dataStoreRuntime;
 			const sharedString = new SharedString(
 				dataStoreRuntime,
+				// eslint-disable-next-line unicorn/prefer-code-point
 				String.fromCharCode(index + 65),
 				SharedStringFactory.Attributes,
 			);
@@ -267,7 +268,7 @@ function createSharedString(
 					message.timestamp = getTimestamp(opIndex);
 					deltaManager.emit("op", message);
 				});
-				dataStoreRuntime.getAudience = () => audience;
+				dataStoreRuntime.getAudience = (): IAudience => audience;
 			}
 
 			const containerRuntime =
@@ -324,7 +325,7 @@ function createSharedString(
 	);
 }
 
-const directory = path.join(__dirname, "../../../src/test/attribution/documents");
+const directory = path.join(_dirname, "../../../src/test/attribution/documents");
 
 interface TestPaths {
 	directory: string;
@@ -344,7 +345,6 @@ function getDocuments(): string[] {
 }
 
 // Format a number separating 3 digits by comma
-// eslint-disable-next-line unicorn/no-unsafe-regex
 const formatNumber = (num: number): string => num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
 function spyOnOperations(baseGenerator: Generator<Operation, FuzzTestState>): {
@@ -352,7 +352,7 @@ function spyOnOperations(baseGenerator: Generator<Operation, FuzzTestState>): {
 	operations: Operation[];
 } {
 	const operations: Operation[] = [];
-	const generator = (state: FuzzTestState) => {
+	const generator = (state: FuzzTestState): Operation | typeof done => {
 		const operation = baseGenerator(state);
 		if (operation !== done) {
 			operations.push(operation);
@@ -367,6 +367,7 @@ function spyOnOperations(baseGenerator: Generator<Operation, FuzzTestState>): {
  * alternate type.
  */
 type JsonDeserializedTypeWith<T> =
+	// eslint-disable-next-line @rushstack/no-new-null
 	| null
 	| boolean
 	| number
@@ -408,7 +409,8 @@ type JsonDeserialized<T, TReplaced = never> = /* test for 'any' */ boolean exten
 	? /* 'any' => */ JsonDeserializedTypeWith<TReplaced>
 	: /* test for 'unknown' */ unknown extends T
 	? /* 'unknown' => */ JsonDeserializedTypeWith<TReplaced>
-	: /* test for Jsonable primitive types */ T extends null | boolean | number | string | TReplaced
+	: // eslint-disable-next-line @rushstack/no-new-null
+	/* test for Jsonable primitive types */ T extends null | boolean | number | string | TReplaced
 	? /* primitive types => */ T
 	: // eslint-disable-next-line @typescript-eslint/ban-types
 	/* test for not a function */ Extract<T, Function> extends never
@@ -434,11 +436,11 @@ type JsonDeserialized<T, TReplaced = never> = /* test for 'any' */ boolean exten
 	: /* function => */ never;
 
 function readJson<T>(filepath: string): JsonDeserialized<T> {
-	return JSON.parse(readFileSync(filepath, { encoding: "utf-8" })) as JsonDeserialized<T>;
+	return JSON.parse(readFileSync(filepath, { encoding: "utf8" })) as JsonDeserialized<T>;
 }
 
-function writeJson<T>(filepath: string, content: Jsonable<T>) {
-	writeFileSync(filepath, JSON.stringify(content, undefined, 4), { encoding: "utf-8" });
+function writeJson<T>(filepath: string, content: Jsonable<T>): void {
+	writeFileSync(filepath, JSON.stringify(content, undefined, 4), { encoding: "utf8" });
 }
 
 const validateInterval = 10;
@@ -452,9 +454,7 @@ function getTimestamp(opIndex: number): number {
 
 function embedAttributionInProps(operations: Operation[]): Operation[] {
 	return operations.map((operation, index) => {
-		if (operation.type !== "addText") {
-			return operation;
-		} else {
+		if (operation.type === "addText") {
 			const name = operation.stringId.repeat(10);
 			const id = `${name}@contoso.com`;
 			const email = id;
@@ -470,6 +470,8 @@ function embedAttributionInProps(operations: Operation[]): Operation[] {
 				...operation,
 				props,
 			};
+		} else {
+			return operation;
 		}
 	});
 }
@@ -490,18 +492,21 @@ type ExcludeDeeply<T, Exclusion, TBase = Exclude<T, Exclusion>> = TBase extends 
 function assertSerializableSummary(
 	summary: ISummaryTree,
 ): asserts summary is SerializableISummaryTree {
-	Object.values(summary.tree).forEach((value) => {
+	for (const value of Object.values(summary.tree)) {
 		switch (value.type) {
-			case SummaryType.Tree:
+			case SummaryType.Tree: {
 				assertSerializableSummary(value);
 				break;
-			case SummaryType.Blob:
+			}
+			case SummaryType.Blob: {
 				assert(typeof value.content === "string");
 				break;
-			default:
+			}
+			default: {
 				break;
+			}
 		}
-	});
+	}
 }
 
 const summaryFromState = async (state: FuzzTestState): Promise<SerializableISummaryTree> => {
@@ -511,6 +516,7 @@ const summaryFromState = async (state: FuzzTestState): Promise<SerializableISumm
 	// KLUDGE: For now, since attribution info isn't embedded at a proper location in the summary tree, just
 	// add a property to the root so that its size is reported
 	if (state.attributor && state.serializer) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 		(summary as any).attribution = state.serializer.encode(state.attributor);
 	}
 	assertSerializableSummary(summary);
@@ -518,33 +524,35 @@ const summaryFromState = async (state: FuzzTestState): Promise<SerializableISumm
 };
 
 const noopEncoder = {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	encode: (x: any): any => x,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	decode: (x: any): any => x,
 };
 
 class DataTable<T> {
-	private readonly rows: Map<string, T[]> = new Map();
-	constructor(private readonly columnNames: string[]) {}
+	private readonly rows = new Map<string, T[]>();
+	public constructor(private readonly columnNames: string[]) {}
 
 	public addRow(name: string, data: T[]): void {
 		this.rows.set(name, data);
 	}
 
-	public log(dataToString: (t: T) => string = (t) => `${t}`): void {
+	public log(dataToString: (t: T) => string = (t): string => `${t}`): void {
 		const namePaddingLength =
 			1 + Math.max(...Array.from(this.rows.keys(), (docName) => docName.length));
 		const rowStrings = new Map<string, string[]>();
 		const paddingByColumn = this.columnNames.map((name) => name.length);
 		for (const [name, data] of this.rows.entries()) {
-			const dataStrings = data.map(dataToString);
+			const dataStrings = data.map((entry: T) => dataToString(entry));
 			rowStrings.set(name, dataStrings);
-			dataStrings.forEach((s, i) => {
+			for (const [i, s] of dataStrings.entries()) {
 				paddingByColumn[i] = Math.max(paddingByColumn[i], s.length);
-			});
+			}
 		}
-		paddingByColumn.forEach((_, i) => {
+		for (const [i, _] of paddingByColumn.entries()) {
 			paddingByColumn[i]++;
-		});
+		}
 
 		console.log(
 			[
@@ -563,7 +571,8 @@ class DataTable<T> {
 	}
 }
 
-const getSummaryLength = (summary: ISummaryTree) => formatNumber(JSON.stringify(summary).length);
+const getSummaryLength = (summary: ISummaryTree): string =>
+	formatNumber(JSON.stringify(summary).length);
 
 describe("SharedString Attribution", () => {
 	/**
@@ -663,7 +672,8 @@ describe("SharedString Attribution", () => {
 
 			const { generator, operations } = spyOnOperations(attributionlessGenerator);
 			createSharedString(makeRandom(0), generator);
-			writeJson(paths.operations, operations);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
+			writeJson(paths.operations, operations as any);
 
 			await Promise.all(
 				dataGenerators.map(async ({ filename, factory }) => {

@@ -16,7 +16,6 @@ import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IIdCompressor } from '@fluidframework/id-compressor';
-import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IProvideFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
@@ -29,7 +28,7 @@ import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITree } from '@fluidframework/protocol-definitions';
 import type { IUser } from '@fluidframework/protocol-definitions';
 import { SummaryTree } from '@fluidframework/protocol-definitions';
-import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
+import { TelemetryBaseEventPropertyType } from '@fluidframework/core-interfaces';
 
 // @alpha
 export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
@@ -86,6 +85,7 @@ export type FluidDataStoreRegistryEntry = Readonly<Partial<IProvideFluidDataStor
 
 // @alpha
 export enum FlushMode {
+    // @deprecated
     Immediate = 0,
     TurnBased = 1
 }
@@ -97,6 +97,9 @@ export enum FlushModeExperimental {
 
 // @internal
 export const gcBlobPrefix = "__gc";
+
+// @internal
+export const gcDataBlobKey = ".gcdata";
 
 // @internal
 export const gcDeletedBlobKey = "__deletedNodes";
@@ -118,17 +121,17 @@ export interface IAttachMessage {
 export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents> {
     // (undocumented)
     readonly clientDetails: IClientDetails;
-    createDataStore(pkg: string | string[]): Promise<IDataStore>;
+    createDataStore(pkg: string | string[], loadingGroupId?: string): Promise<IDataStore>;
     // @deprecated (undocumented)
     _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string): Promise<IDataStore>;
-    createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached;
+    createDetachedDataStore(pkg: Readonly<string[]>, loadingGroupId?: string): IFluidDataStoreContextDetached;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;
     getQuorum(): IQuorumClients;
     // (undocumented)
     readonly logger: ITelemetryBaseLogger;
     orderSequentially(callback: () => void): void;
-    submitSignal(type: string, content: any): void;
+    submitSignal(type: string, content: any, targetClientId?: string): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 }
@@ -172,6 +175,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
     attachGraph(): void;
     readonly attachState: AttachState;
     readonly entryPoint: IFluidHandle<FluidObject>;
+    getAttachGCData?(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)
@@ -194,6 +198,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegistry>, IProvideFluidHandleContext {
     // @deprecated (undocumented)
     addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
+    addedGCOutboundRoute?(fromPath: string, toPath: string): void;
     readonly attachState: AttachState;
     // (undocumented)
     readonly baseSnapshot: ISnapshotTree | undefined;
@@ -224,11 +229,12 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     // (undocumented)
     readonly idCompressor?: IIdCompressor;
     readonly isLocalDataStore: boolean;
+    readonly loadingGroupId?: string;
     // (undocumented)
     readonly logger: ITelemetryBaseLogger;
     makeLocallyVisible(): void;
     // (undocumented)
-    readonly options: ILoaderOptions;
+    readonly options: Record<string | number, any>;
     readonly packagePath: readonly string[];
     readonly scope: FluidObject;
     setChannelDirty(address: string): void;
@@ -242,7 +248,7 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
 
 // @alpha (undocumented)
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
-    attachRuntime(factory: IProvideFluidDataStoreFactory, dataStoreRuntime: IFluidDataStoreChannel): Promise<void>;
+    attachRuntime(factory: IProvideFluidDataStoreFactory, dataStoreRuntime: IFluidDataStoreChannel): Promise<IDataStore>;
 }
 
 // @alpha (undocumented)
@@ -397,10 +403,12 @@ export interface ISummaryTreeWithStats {
 
 // @public
 export interface ITelemetryContext {
-    get(prefix: string, property: string): TelemetryEventPropertyType;
+    // @deprecated
+    get(prefix: string, property: string): TelemetryBaseEventPropertyType;
+    // @deprecated
     serialize(): string;
-    set(prefix: string, property: string, value: TelemetryEventPropertyType): void;
-    setMultiple(prefix: string, property: string, values: Record<string, TelemetryEventPropertyType>): void;
+    set(prefix: string, property: string, value: TelemetryBaseEventPropertyType): void;
+    setMultiple(prefix: string, property: string, values: Record<string, TelemetryBaseEventPropertyType>): void;
 }
 
 // @alpha

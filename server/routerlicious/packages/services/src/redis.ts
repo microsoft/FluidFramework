@@ -17,7 +17,7 @@ export class RedisCache implements ICache {
 	private readonly expireAfterSeconds: number = 60 * 60 * 24;
 	private readonly prefix: string = "page";
 	constructor(
-		private readonly client: Redis.default,
+		private readonly client: Redis.default | Redis.Cluster,
 		parameters?: IRedisParameters,
 	) {
 		if (parameters?.expireAfterSeconds) {
@@ -37,51 +37,77 @@ export class RedisCache implements ICache {
 		try {
 			await this.client.del(this.getKey(key));
 			return true;
-		} catch (error) {
-			Lumberjack.error(`Error deleting from cache.`, undefined, error);
+		} catch (error: any) {
+			const newError: Error = { name: error?.name, message: error?.message };
+			Lumberjack.error(`Error deleting from cache.`, undefined, newError);
 			return false;
 		}
 	}
 
 	public async get(key: string): Promise<string> {
-		return this.client.get(this.getKey(key));
+		try {
+			// eslint-disable-next-line @typescript-eslint/return-await
+			return this.client.get(this.getKey(key));
+		} catch (error: any) {
+			const newError: Error = { name: error?.name, message: error?.message };
+			Lumberjack.error(
+				`Error getting ${key.substring(0, 20)} from cache.`,
+				undefined,
+				newError,
+			);
+			throw newError;
+		}
 	}
 
 	public async set(key: string, value: string, expireAfterSeconds?: number): Promise<void> {
-		const result = await this.client.set(
-			this.getKey(key),
-			value,
-			"EX",
-			expireAfterSeconds ?? this.expireAfterSeconds,
-		);
-		if (result !== "OK") {
-			throw new Error(result);
+		try {
+			const result = await this.client.set(
+				this.getKey(key),
+				value,
+				"EX",
+				expireAfterSeconds ?? this.expireAfterSeconds,
+			);
+			if (result !== "OK") {
+				throw new Error(result);
+			}
+		} catch (error: any) {
+			const newError: Error = { name: error?.name, message: error?.message };
+			Lumberjack.error(
+				`Error setting ${key.substring(0, 20)} in cache.`,
+				undefined,
+				newError,
+			);
+			throw newError;
 		}
 	}
 
 	public async incr(key: string): Promise<number> {
 		try {
+			// eslint-disable-next-line @typescript-eslint/return-await
 			return this.client.incr(key);
-		} catch (error) {
+		} catch (error: any) {
+			const newError: Error = { name: error?.name, message: error?.message };
 			Lumberjack.error(
-				`Error while incrementing counter for ${key} in redis.`,
+				`Error while incrementing counter for ${key.substring(0, 20)} in redis.`,
 				undefined,
-				error,
+				newError,
 			);
-			throw error;
+			throw newError;
 		}
 	}
 
 	public async decr(key: string): Promise<number> {
 		try {
+			// eslint-disable-next-line @typescript-eslint/return-await
 			return this.client.decr(key);
-		} catch (error) {
+		} catch (error: any) {
+			const newError: Error = { name: error?.name, message: error?.message };
 			Lumberjack.error(
-				`Error while decrementing counter for ${key} in redis.`,
+				`Error while decrementing counter for ${key.substring(0, 20)} in redis.`,
 				undefined,
-				error,
+				newError,
 			);
-			throw error;
+			throw newError;
 		}
 	}
 

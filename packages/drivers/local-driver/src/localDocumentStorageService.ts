@@ -3,12 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { stringToBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
+import {
+	bufferToString,
+	IsoBuffer,
+	stringToBuffer,
+	Uint8ArrayToString,
+} from "@fluid-internal/client-utils";
 import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	IResolvedUrl,
 	ISummaryContext,
+	type ISnapshotFetchOptions,
+	type ISnapshot,
 } from "@fluidframework/driver-definitions";
 import {
 	ICreateBlobResponse,
@@ -24,7 +31,8 @@ import {
 	SummaryTreeUploadManager,
 } from "@fluidframework/server-services-client";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { createDocument } from "./localCreateDocument";
+import { assert } from "@fluidframework/core-utils";
+import { createDocument } from "./localCreateDocument.js";
 
 const minTTLInSeconds = 24 * 60 * 60; // Same TTL as ODSP
 /**
@@ -35,8 +43,6 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 	// empty strings as values.
 	protected readonly blobsShaCache = new Map<string, string>();
 	private readonly summaryTreeUploadManager: ISummaryUploadManager;
-
-	public readonly repositoryUrl: string = "";
 
 	constructor(
 		private readonly id: string,
@@ -75,7 +81,177 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 
 		const rawTree = await this.manager.getTree(requestVersion.treeId);
 		const tree = buildGitTreeHierarchy(rawTree, this.blobsShaCache, true);
+		await this.populateGroupId(tree);
 		return tree;
+	}
+
+	public async getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot> {
+		let versionId = snapshotFetchOptions?.versionId;
+		if (!versionId) {
+			const versions = await this.getVersions(this.id, 1);
+			if (versions.length === 0) {
+				throw new Error("No versions for the document!");
+			}
+
+			versionId = versions[0].treeId;
+		}
+		const rawTree = await this.manager.getTree(versionId);
+		const snapshotTree = buildGitTreeHierarchy(rawTree, this.blobsShaCache, true);
+		if (snapshotFetchOptions?.loadingGroupIds !== undefined) {
+			const groupIds = new Set<string>(snapshotFetchOptions.loadingGroupIds);
+			const hasFoundTree = await this.filterTreeByLoadingGroupIds(
+				snapshotTree,
+				groupIds,
+				false,
+			);
+			assert(hasFoundTree, "No tree found for the given groupIds");
+		} else {
+			await this.stripTreeOfLoadingGroupIds(snapshotTree);
+		}
+
+		const blobContents = new Map<string, ArrayBufferLike>();
+		await this.populateBlobContents(snapshotTree, blobContents);
+
+		const metadataString = IsoBuffer.from(blobContents.get(".metadata")).toString("utf-8");
+		const metadata = JSON.parse(metadataString);
+		const sequenceNumber: number = metadata.message.sequenceNumber;
+		return {
+			snapshotTree,
+			blobContents,
+			ops: [],
+			snapshotFormatV: 1,
+			sequenceNumber,
+			latestSequenceNumber: undefined,
+		};
+	}
+
+	/**
+	 * Strips the tree or any subtree of data if it has a groupId.
+	 *
+	 * @param tree - The tree to strip of loading groupIds
+	 * @returns a tree that has trees with groupIds that are empty
+	 */
+	private async stripTreeOfLoadingGroupIds(tree: ISnapshotTreeEx) {
+		const groupId = await this.readGroupId(tree);
+		if (groupId !== undefined) {
+			// strip
+			this.stripTree(tree, groupId);
+			return;
+		}
+		await Promise.all(
+			Object.values(tree.trees).map(async (childTree) => {
+				await this.stripTreeOfLoadingGroupIds(childTree);
+			}),
+		);
+	}
+
+	/**
+	 * Named differently as the algorithm is a little more involved.
+	 *
+	 * We want to strip the tree if it has a groupId that is not in the loadingGroupIds or if it doesn't have a descendent or ancestor
+	 * that has a groupId that is in the loadingGroupIds.
+	 *
+	 * We keep the tree in the opposite case.
+	 *
+	 * @param tree - the tree to strip of any data that is not in the loadingGroupIds
+	 * @param loadingGroupIds - the set of groupIds that are being loaded
+	 * @param ancestorGroupIdInLoadingGroup - whether the ancestor of the tree has a groupId that is in the loadingGroupIds
+	 * @returns whether or not it or descendant has a groupId that is in the loadingGroupIds
+	 */
+	private async filterTreeByLoadingGroupIds(
+		tree: ISnapshotTreeEx,
+		loadingGroupIds: Set<string>,
+		ancestorGroupIdInLoadingGroup: boolean,
+	): Promise<boolean> {
+		assert(loadingGroupIds.size > 0, "loadingGroupIds should not be empty");
+		const groupId = await this.readGroupId(tree);
+
+		// Strip the tree if it has a groupId and it is not in the loadingGroupIds
+		// This is an optimization here as we have other reasons to keep the tree.
+		const noGroupIdInLoadingGroupIds = groupId !== undefined && !loadingGroupIds.has(groupId);
+		if (noGroupIdInLoadingGroupIds) {
+			this.stripTree(tree, groupId);
+			return false;
+		}
+
+		// Keep tree if it has a groupId and it is in the loadingGroupIds
+		const groupIdInLoadingGroupIds = groupId !== undefined && loadingGroupIds.has(groupId);
+
+		// Keep tree if it has an ancestor that has a groupId that is in loadingGroupIds and it doesn't have groupId
+		const isChildOfAncestorWithGroupId = ancestorGroupIdInLoadingGroup && groupId === undefined;
+
+		// Keep tree if it has a child that has a groupId that is in loadingGroupIds
+		const descendants = await Promise.all<boolean>(
+			Object.values(tree.trees).map(async (childTree) => {
+				return this.filterTreeByLoadingGroupIds(
+					childTree,
+					loadingGroupIds,
+					ancestorGroupIdInLoadingGroup || groupIdInLoadingGroupIds,
+				);
+			}),
+		);
+		const isAncestorOfDescendantsWithGroupId = descendants.some((keep) => keep);
+
+		// We don't want to return prematurely as we still may have children that we want to keep.
+		if (
+			groupIdInLoadingGroupIds ||
+			isChildOfAncestorWithGroupId ||
+			isAncestorOfDescendantsWithGroupId
+		) {
+			// Keep this tree node
+			return true;
+		}
+
+		// This means we have no groupId and none of our ancestors or descendants have a groupId in the loadingGroupIds
+		this.stripTree(tree, groupId);
+		return false;
+	}
+
+	// Takes all the blobs of a tree and puts it into the blobContents
+	private async populateBlobContents(
+		tree: ISnapshotTreeEx,
+		blobContents: Map<string, ArrayBufferLike>,
+	): Promise<void> {
+		await Promise.all(
+			Object.entries(tree.blobs).map(async ([path, blobId]) => {
+				const content = await this.readBlob(blobId);
+				blobContents.set(path, content);
+			}),
+		);
+		await Promise.all(
+			Object.values(tree.trees).map(async (childTree) => {
+				await this.populateBlobContents(childTree, blobContents);
+			}),
+		);
+	}
+
+	private async populateGroupId(tree: ISnapshotTreeEx): Promise<void> {
+		await this.readGroupId(tree);
+		await Promise.all(
+			Object.values(tree.trees).map(async (childTree) => {
+				await this.populateGroupId(childTree);
+			}),
+		);
+	}
+
+	private stripTree(tree: ISnapshotTreeEx, groupId: string | undefined) {
+		tree.blobs = {};
+		tree.groupId = groupId;
+		tree.trees = {};
+		tree.omitted = true;
+	}
+
+	private async readGroupId(tree: ISnapshotTreeEx): Promise<string | undefined> {
+		const groupIdBlobId = tree.blobs[".groupId"];
+		if (groupIdBlobId !== undefined) {
+			const groupIdBuffer = await this.readBlob(groupIdBlobId);
+			const groupId = bufferToString(groupIdBuffer, "utf8");
+			tree.groupId = groupId;
+			delete tree.blobs[".groupId"];
+			return groupId;
+		}
+
+		return tree.groupId;
 	}
 
 	public async readBlob(blobId: string): Promise<ArrayBufferLike> {

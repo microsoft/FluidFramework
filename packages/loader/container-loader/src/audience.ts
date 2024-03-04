@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { EventEmitter } from "events";
+import { EventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import { IAudienceOwner } from "@fluidframework/container-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
@@ -61,14 +61,20 @@ export class Audience extends EventEmitter implements IAudienceOwner {
 	}
 
 	/**
-	 * Retrieves all the members in the audience
+	 * Retrieves all the members in the audience.
+	 *
+	 * @remarks When the container is disconnected, this will keep returning the audience as it was last seen before the
+	 * container disconnected.
 	 */
 	public getMembers(): Map<string, IClient> {
 		return new Map(this.members);
 	}
 
 	/**
-	 * Retrieves a specific member of the audience
+	 * Retrieves a specific member of the audience.
+	 *
+	 * @remarks When the container is disconnected, this will keep returning members from the audience as it was last seen
+	 * before the container disconnected.
 	 */
 	public getMember(clientId: string): IClient | undefined {
 		return this.members.get(clientId);

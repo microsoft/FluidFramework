@@ -131,7 +131,6 @@ schedules:
     branches:
       include:
       - main
-      - next
     always: true
 
 variables:

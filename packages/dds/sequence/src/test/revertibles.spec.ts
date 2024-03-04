@@ -9,6 +9,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
+import { AttachState } from "@fluidframework/container-definitions";
 import {
 	appendAddIntervalToRevertibles,
 	appendChangeIntervalToRevertibles,
@@ -36,7 +37,7 @@ describe("Sequence.Revertibles with Local Edits", () => {
 		containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 		dataStoreRuntime1 = new MockFluidDataStoreRuntime({ clientId: "1" });
-		dataStoreRuntime1.local = false;
+		dataStoreRuntime1.setAttachState(AttachState.Attached);
 		sharedString = stringFactory.create(dataStoreRuntime1, "shared-string-1");
 
 		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
@@ -304,7 +305,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 		containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 		// Connect the first SharedString.
-		dataStoreRuntime1.local = false;
+		dataStoreRuntime1.setAttachState(AttachState.Attached);
 		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 		const services1 = {
 			deltaConnection: dataStoreRuntime1.createDeltaConnection(),
@@ -647,7 +648,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 		containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 		// Connect the first SharedString.
-		dataStoreRuntime1.local = false;
+		dataStoreRuntime1.setAttachState(AttachState.Attached);
 		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 		const services1 = {
 			deltaConnection: dataStoreRuntime1.createDeltaConnection(),
@@ -1147,7 +1148,7 @@ describe("Sequence.Revertibles with stickiness", () => {
 		containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 		dataStoreRuntime1 = new MockFluidDataStoreRuntime({ clientId: "1" });
-		dataStoreRuntime1.local = false;
+		dataStoreRuntime1.setAttachState(AttachState.Attached);
 		dataStoreRuntime1.options = {
 			intervalStickinessEnabled: true,
 			mergeTreeReferencesCanSlideToEndpoint: true,

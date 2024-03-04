@@ -46,13 +46,15 @@ import {
 	MoveMarkEffect,
 	DetachOfRemovedNodes,
 	CellRename,
-	VestigialEndpoint,
-	isVestigialEndpoint,
 } from "./helperTypes.js";
 import { DetachIdOverrideType } from "./format.js";
 
 export function isEmpty<T>(change: Changeset<T>): boolean {
 	return change.length === 0;
+}
+
+export function createEmpty<T>(): Changeset<T> {
+	return [];
 }
 
 export function isNewAttach(mark: Mark<unknown>, revision?: RevisionTag): boolean {
@@ -205,7 +207,16 @@ export function compareCellPositionsUsingTombstones(
 		// If both changesets know of both cells, but we've been asked to compare different cells,
 		// Then either the changesets they originate from do not represent the same context,
 		// or the ordering of their cells in inconsistent.
-		assert(false, 0x8a0 /* Inconsistent cell ordering */);
+		// The only exception to this is when we're composing anonymous changesets in a transaction.
+		assert(
+			oldMarkCell.revision === undefined && newMarkCell.revision === undefined,
+			0x8a0 /* Inconsistent cell ordering */,
+		);
+		// We are composing anonymous changesets in a transaction. The new changeset is creating a cell in a gap
+		// where the old changeset knows of some now empty cell. We order the new cell relative to the old cell in a
+		// way that is consistent with its tie-breaking behavior should the old cell be concurrently re-filled.
+		// Since only tie-break left is supported at the moment, the new cell comes first.
+		return CellOrder.NewThenOld;
 	}
 	if (newChangeKnowsOfOldMarkCellRevision) {
 		// The changeset that contains `newMarkCell` has tombstones for the revision that created `oldMarkCell`,
@@ -304,11 +315,10 @@ function getIntentionIfMetadataProvided(
  */
 export function normalizeCellRename<TNodeChange>(
 	mark: CellMark<AttachAndDetach, TNodeChange>,
-	nodeChange?: TNodeChange,
 ): CellMark<AttachAndDetach | DetachOfRemovedNodes, TNodeChange> {
 	assert(mark.cellId !== undefined, 0x823 /* AttachAndDetach marks should have a cell ID */);
 	if (mark.attach.type !== "Insert" || isNewAttachEffect(mark.attach, mark.cellId)) {
-		return withNodeChange(mark, nodeChange);
+		return mark;
 	}
 	// Normalization: when the attach is a revive, we rely on the implicit reviving semantics of the
 	// detach instead of using an explicit revive effect in an AttachAndDetach mark.
@@ -318,7 +328,7 @@ export function normalizeCellRename<TNodeChange>(
 			count: mark.count,
 			cellId: mark.cellId,
 		},
-		nodeChange ?? mark.changes,
+		mark.changes,
 	);
 }
 
@@ -692,10 +702,7 @@ function areMergeableCellIds(
  * @returns `lhs` iff the function was able to mutate `lhs` to include the effects of `rhs`.
  * When `undefined` is returned, `lhs` is left untouched.
  */
-export function tryMergeMarks<T>(
-	lhs: Mark<T> & Partial<VestigialEndpoint>,
-	rhs: Readonly<Mark<T> & Partial<VestigialEndpoint>>,
-): (Mark<T> & Partial<VestigialEndpoint>) | undefined {
+export function tryMergeMarks<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): Mark<T> | undefined {
 	if (rhs.type !== lhs.type) {
 		return undefined;
 	}
@@ -705,18 +712,6 @@ export function tryMergeMarks<T>(
 	}
 
 	if (rhs.changes !== undefined || lhs.changes !== undefined) {
-		return undefined;
-	}
-
-	if (isVestigialEndpoint(lhs)) {
-		if (isVestigialEndpoint(rhs)) {
-			if (!areMergeableChangeAtoms(lhs.vestigialEndpoint, lhs.count, rhs.vestigialEndpoint)) {
-				return undefined;
-			}
-		} else {
-			return undefined;
-		}
-	} else if (isVestigialEndpoint(rhs)) {
 		return undefined;
 	}
 
@@ -896,10 +891,7 @@ export function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
  * @returns A pair of marks equivalent to the original `mark`
  * such that the first returned mark has input length `length`.
  */
-export function splitMark<T, TMark extends Mark<T> & Partial<VestigialEndpoint>>(
-	mark: TMark,
-	length: number,
-): [TMark, TMark] {
+export function splitMark<T, TMark extends Mark<T>>(mark: TMark, length: number): [TMark, TMark] {
 	const markLength = mark.count;
 	const remainder = markLength - length;
 	if (length < 1 || remainder < 1) {
@@ -912,14 +904,11 @@ export function splitMark<T, TMark extends Mark<T> & Partial<VestigialEndpoint>>
 	if (mark2.cellId !== undefined) {
 		mark2.cellId = splitDetachEvent(mark2.cellId, length);
 	}
-	if (isVestigialEndpoint(mark2)) {
-		mark2.vestigialEndpoint = splitDetachEvent(mark2.vestigialEndpoint, length);
-	}
 
 	return [mark1, mark2];
 }
 
-function splitMarkEffect<TEffect extends MarkEffect>(
+export function splitMarkEffect<TEffect extends MarkEffect>(
 	effect: TEffect,
 	length: number,
 ): [TEffect, TEffect] {
@@ -1063,10 +1052,6 @@ export function withNodeChange<
 >(mark: TMark, changes: TNodeChange | undefined): TMark {
 	const newMark = { ...mark };
 	if (changes !== undefined) {
-		assert(
-			mark.type !== "MoveIn",
-			0x6a7 /* Cannot have a node change on a MoveIn or ReturnTo mark */,
-		);
 		newMark.changes = changes;
 	} else {
 		delete newMark.changes;
@@ -1078,19 +1063,23 @@ export function withRevision<TMark extends Mark<unknown>>(
 	mark: TMark,
 	revision: RevisionTag | undefined,
 ): TMark {
+	if (revision === undefined) {
+		return mark;
+	}
+
 	const cloned = cloneMark(mark);
 	addRevision(cloned, revision);
-	if (cloned.cellId !== undefined && cloned.cellId.revision === undefined) {
+	if (
+		cloned.cellId !== undefined &&
+		cloned.cellId.revision === undefined &&
+		revision !== undefined
+	) {
 		(cloned.cellId as Mutable<CellId>).revision = revision;
 	}
 	return cloned;
 }
 
-export function addRevision(effect: MarkEffect, revision: RevisionTag | undefined): void {
-	if (revision === undefined) {
-		return;
-	}
-
+function addRevision(effect: MarkEffect, revision: RevisionTag): void {
 	if (effect.type === NoopMarkType) {
 		return;
 	}

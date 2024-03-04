@@ -5,14 +5,13 @@
 
 import { strict as assert } from "node:assert";
 
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { createIdCompressor } from "@fluidframework/id-compressor";
 // eslint-disable-next-line import/no-internal-modules
 import { nodeApi } from "../../simple-tree/treeApi.js";
 import { TreeFactory } from "../../treeFactory.js";
-import { SchemaFactory, TreeConfiguration } from "../../simple-tree/index.js";
+import { SchemaFactory, Tree, TreeConfiguration } from "../../simple-tree/index.js";
 import { rootFieldKey } from "../../core/index.js";
 import { TreeStatus } from "../../feature-libraries/index.js";
+import { getView } from "./utils.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -23,11 +22,7 @@ const factory = new TreeFactory({});
 describe("treeApi", () => {
 	it("is", () => {
 		const config = new TreeConfiguration([Point, schema.number], () => ({}));
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const root = tree.schematize(config).root;
+		const root = getView(config).root;
 		assert(nodeApi.is(root, Point));
 		assert(root instanceof Point);
 		assert(!nodeApi.is(root, schema.number));
@@ -39,13 +34,36 @@ describe("treeApi", () => {
 		// Using a schema that is not in the document throws:
 		assert.throws(() => nodeApi.is(root, NotInDocument));
 	});
+
+	it("`is` can narrow polymorphic leaf field content", () => {
+		const config = new TreeConfiguration([schema.number, schema.string], () => "x");
+		const root = getView(config).root;
+
+		if (Tree.is(root, schema.number)) {
+			const _check: number = root;
+			assert.fail();
+		} else {
+			const value: string = root;
+			assert.equal(value, "x");
+		}
+	});
+
+	it("`is` can narrow polymorphic combinations of value and objects", () => {
+		const config = new TreeConfiguration([Point, schema.string], () => "x");
+		const root = getView(config).root;
+
+		if (Tree.is(root, Point)) {
+			const _check: Point = root;
+			assert.fail();
+		} else {
+			const value: string = root;
+			assert.equal(value, "x");
+		}
+	});
+
 	it("schema", () => {
 		const config = new TreeConfiguration([Point, schema.number], () => ({}));
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const root = tree.schematize(config).root;
+		const root = getView(config).root;
 		assert.equal(nodeApi.schema(root), Point);
 		assert.equal(nodeApi.schema(5), schema.number);
 	});
@@ -53,11 +71,7 @@ describe("treeApi", () => {
 		class Child extends schema.object("Child", { x: Point }) {}
 		const Root = schema.array(Child);
 		const config = new TreeConfiguration(Root, () => [{ x: {} }, { x: {} }]);
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const root = tree.schematize(config).root;
+		const root = getView(config).root;
 		assert.equal(nodeApi.key(root), rootFieldKey);
 		assert.equal(nodeApi.key(root[0]), 0);
 		assert.equal(nodeApi.key(root[1]), 1);
@@ -68,11 +82,7 @@ describe("treeApi", () => {
 		class Child extends schema.object("Child", { x: Point }) {}
 		const Root = schema.array(Child);
 		const config = new TreeConfiguration(Root, () => [{ x: {} }, { x: {} }]);
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const root = tree.schematize(config).root;
+		const root = getView(config).root;
 		assert.equal(nodeApi.parent(root), undefined);
 		assert.equal(nodeApi.parent(root[0]), root);
 		assert.equal(nodeApi.parent(root[1]), root);
@@ -82,11 +92,7 @@ describe("treeApi", () => {
 	it("treeStatus", () => {
 		class Root extends schema.object("Root", { x: Point }) {}
 		const config = new TreeConfiguration(Root, () => ({ x: {} }));
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const root = tree.schematize(config).root;
+		const root = getView(config).root;
 		const child = root.x;
 		const newChild = new Point({});
 		assert.equal(nodeApi.status(root), TreeStatus.InDocument);

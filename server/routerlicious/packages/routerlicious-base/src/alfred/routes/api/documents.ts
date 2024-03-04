@@ -13,6 +13,7 @@ import {
 	ITokenRevocationManager,
 	IRevokeTokenOptions,
 	IRevokedTokenChecker,
+	IClusterDrainingChecker,
 } from "@fluidframework/server-services-core";
 import {
 	verifyStorageToken,
@@ -57,6 +58,7 @@ export function create(
 	documentDeleteService: IDocumentDeleteService,
 	tokenRevocationManager?: ITokenRevocationManager,
 	revokedTokenChecker?: IRevokedTokenChecker,
+	clusterDrainingChecker?: IClusterDrainingChecker,
 ): Router {
 	const router: Router = Router();
 	const externalOrdererUrl: string = config.get("worker:serverUrl");
@@ -167,6 +169,7 @@ export function create(
 			tokenCache: singleUseTokenCache,
 			revokedTokenChecker,
 		}),
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response, next) => {
 			// Tenant and document
 			const tenantId = getParam(request.params, "tenantId");
@@ -276,6 +279,7 @@ export function create(
 			getSessionTenantThrottleOptions,
 		),
 		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
 			const tenantId = getParam(request.params, "tenantId");
@@ -288,6 +292,7 @@ export function create(
 				documentRepository,
 				sessionStickinessDurationMs,
 				messageBrokerId,
+				clusterDrainingChecker,
 			);
 			handleResponse(session, response, false);
 		},
@@ -301,6 +306,7 @@ export function create(
 		validateRequestParams("tenantId", "id"),
 		validateTokenScopeClaims(DocDeleteScopeType),
 		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
 			const tenantId = getParam(request.params, "tenantId");
@@ -321,6 +327,7 @@ export function create(
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		validateTokenScopeClaims(TokenRevokeScopeType),
 		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
 			const tenantId = getParam(request.params, "tenantId");

@@ -19,7 +19,7 @@ import {
 	getPreReleaseDependencies,
 	getReleaseSourceForReleaseGroup,
 	isReleased,
-} from "../lib";
+} from "../library";
 import { CommandLogger } from "../logging";
 import { MachineState } from "../machines";
 import { ReleaseSource, isReleaseGroup } from "../releaseGroups";

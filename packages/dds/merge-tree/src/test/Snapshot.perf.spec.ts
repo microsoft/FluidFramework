@@ -4,7 +4,7 @@
  */
 
 import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
-import { loadSnapshot, TestString } from "./snapshot.utils";
+import { loadSnapshot, TestString } from "./snapshot.utils.js";
 
 describe("MergeTree snapshots", () => {
 	let summary;

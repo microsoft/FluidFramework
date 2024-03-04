@@ -14,6 +14,7 @@ export {
 
 export {
 	createTreeCheckout,
+	TreeCheckout,
 	ITreeCheckout,
 	runSynchronous,
 	CheckoutEvents,
@@ -27,7 +28,7 @@ export {
 	InitializeAndSchematizeConfiguration,
 	SchemaConfiguration,
 	buildTreeConfiguration,
-} from "./schematizedTree.js";
+} from "./schematizeTree.js";
 
 export { FlexTreeView, CheckoutFlexTreeView, ITreeViewFork } from "./treeView.js";
 

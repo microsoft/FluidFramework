@@ -4,8 +4,8 @@
  */
 import { AzureMember, IAzureAudience } from "@fluidframework/azure-client";
 
-import { ICustomUserDetails } from "./app";
-import { IDiceRollerController } from "./controller";
+import { ICustomUserDetails } from "./app.js";
+import { IDiceRollerController } from "./controller.js";
 
 function makeDiceRollerView(diceRoller: IDiceRollerController): HTMLDivElement {
 	const wrapperDiv = document.createElement("div");

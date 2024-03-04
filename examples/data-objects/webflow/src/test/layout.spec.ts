@@ -42,7 +42,10 @@ describeCompat("Layout", "LoaderCompat", (getTestObjectProvider) => {
 	let layout: Layout;
 
 	let provider: ITestObjectProvider;
-	before(async () => {
+	before(async function () {
+		// Initialization of 'compat LTS ^1.3.4 - old loader' compat variant can take a couple seconds.
+		this.timeout(10000);
+
 		provider = getTestObjectProvider({ resetAfterEach: false });
 		const container = await provider.createContainer(FlowDocument.getFactory());
 		doc = await getContainerEntryPointBackCompat<FlowDocument>(container);

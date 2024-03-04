@@ -2,11 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { strict as assert } from "node:assert";
+import { type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
-import { OpStreamAttributor } from "../attributor";
-import { makeMockAudience } from "./utils";
+import { OpStreamAttributor } from "../attributor.js";
+import { makeMockAudience } from "./utils.js";
 
 const clientIds = ["A", "B", "C"];
 const defaultAudience = makeMockAudience(clientIds);

@@ -15,8 +15,8 @@ import {
 	IFluidErrorBase,
 	isFluidError,
 	isValidLegacyError,
-} from "./fluidErrorBase";
-import { ITelemetryLoggerExt, TelemetryEventPropertyTypeExt } from "./telemetryTypes";
+} from "./fluidErrorBase.js";
+import { ITelemetryLoggerExt, TelemetryEventPropertyTypeExt } from "./telemetryTypes.js";
 
 /**
  * Determines if the provided value is an object but neither null nor an array.

@@ -4,11 +4,11 @@
  */
 
 import { assert } from '@fluidframework/core-utils';
-import { NodeId, TraitLabel, UuidString } from './Identifiers';
-import { assertNotUndefined } from './Common';
-import { ConstraintEffect, NodeData, Payload, Side, TreeNodeSequence } from './persisted-types';
-import { TraitLocation } from './TreeView';
-import { getNodeId } from './NodeIdUtilities';
+import { NodeId, TraitLabel, UuidString } from './Identifiers.js';
+import { assertNotUndefined } from './Common.js';
+import { ConstraintEffect, NodeData, Payload, Side, TreeNodeSequence } from './persisted-types/index.js';
+import { TraitLocation } from './TreeView.js';
+import { getNodeId } from './NodeIdUtilities.js';
 
 /**
  * An object which may have traits with children of the given type underneath it
