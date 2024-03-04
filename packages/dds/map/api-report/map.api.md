@@ -192,7 +192,6 @@ export class LocalValueMaker {
 
 // @alpha @sealed
 export class MapFactory implements IChannelFactory<ISharedMap> {
-    // (undocumented)
     static readonly Attributes: IChannelAttributes;
     get attributes(): IChannelAttributes;
     create(runtime: IFluidDataStoreRuntime, id: string): ISharedMap;
