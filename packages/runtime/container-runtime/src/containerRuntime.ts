@@ -1785,7 +1785,7 @@ export class ContainerRuntime
 		);
 
 		this.logger.sendTelemetryEvent({
-			eventName: "GroupedSnapshotFetched",
+			eventName: "GroupIdSnapshotFetched",
 			details: JSON.stringify({
 				fromCache: loadedFromCache,
 				loadingGroupIds: loadingGroupIds.join(","),
