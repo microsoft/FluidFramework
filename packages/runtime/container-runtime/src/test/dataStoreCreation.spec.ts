@@ -19,9 +19,9 @@ import {
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 
-import { LocalFluidDataStoreContext } from "../dataStoreContext";
-import { ContainerRuntime } from "../containerRuntime";
-import { createRootSummarizerNodeWithGC } from "../summary";
+import { LocalFluidDataStoreContext } from "../dataStoreContext.js";
+import { ContainerRuntime } from "../containerRuntime.js";
+import { createRootSummarizerNodeWithGC } from "../summary/index.js";
 
 describe("Data Store Creation Tests", () => {
 	describe("Store creation via local context creation and realize", () => {

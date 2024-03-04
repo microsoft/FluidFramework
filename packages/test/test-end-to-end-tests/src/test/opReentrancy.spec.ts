@@ -15,7 +15,7 @@ import {
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { SharedString } from "@fluidframework/sequence";
+import type { SharedString } from "@fluidframework/sequence";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree";
 import { FlushMode } from "@fluidframework/runtime-definitions";
@@ -23,9 +23,9 @@ import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interface
 
 describeCompat(
 	"Concurrent op processing via DDS event handlers",
-	"2.0.0-rc.1.0.0",
+	"NoCompat",
 	(getTestObjectProvider, apis) => {
-		const { SharedMap, SharedDirectory } = apis.dds;
+		const { SharedMap, SharedDirectory, SharedString } = apis.dds;
 		const mapId = "mapKey";
 		const sharedStringId = "sharedStringKey";
 		const sharedDirectoryId = "sharedDirectoryKey";

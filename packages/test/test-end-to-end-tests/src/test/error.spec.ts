@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 import { ILoaderProps, Loader } from "@fluidframework/container-loader";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
-import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
+import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils/internal";
 import { isILoggingError, normalizeError } from "@fluidframework/telemetry-utils";
 import {
 	LocalCodeLoader,
@@ -17,9 +17,10 @@ import {
 } from "@fluidframework/test-utils";
 import { ContainerErrorTypes } from "@fluidframework/container-definitions";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import { wrapObjectAndOverride } from "../mocking.js";
 
 // REVIEW: enable compat testing?
-describeCompat("Errors Types", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("Errors Types", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let fileName: string;
 	let containerUrl: IResolvedUrl;
@@ -79,17 +80,17 @@ describeCompat("Errors Types", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 		],
 		async () => {
 			try {
-				const documentServiceFactory = provider.documentServiceFactory;
-				const mockFactory = Object.create(
-					documentServiceFactory,
-				) as IDocumentServiceFactory;
-				mockFactory.createDocumentService = async (resolvedUrl) => {
-					const service = await documentServiceFactory.createDocumentService(resolvedUrl);
-					service.connectToDeltaStream = async () => {
-						throw new Error("Injected error");
-					};
-					return service;
-				};
+				const mockFactory = wrapObjectAndOverride<IDocumentServiceFactory>(
+					provider.documentServiceFactory,
+					{
+						createDocumentService: {
+							connectToDeltaStream: () => () => {
+								throw new Error("Injected error");
+							},
+						},
+					},
+				);
+
 				await loadContainer({ documentServiceFactory: mockFactory });
 			} catch (e: any) {
 				assert(e.errorType === ContainerErrorTypes.genericError);
@@ -119,14 +120,16 @@ describeCompat("Errors Types", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
 			"create container should have cached the snapshot",
 		);
 		try {
-			const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
-			mockFactory.createDocumentService = async (resolvedUrl) => {
-				const service = await documentServiceFactory.createDocumentService(resolvedUrl);
-				service.connectToStorage = async () => {
-					throw new Error("Injected error");
-				};
-				return service;
-			};
+			const mockFactory = wrapObjectAndOverride<IDocumentServiceFactory>(
+				provider.documentServiceFactory,
+				{
+					createDocumentService: {
+						connectToStorage: () => () => {
+							throw new Error("Injected error");
+						},
+					},
+				},
+			);
 			await loadContainer({ documentServiceFactory: mockFactory });
 		} catch (e: any) {
 			assert(e.errorType === ContainerErrorTypes.genericError);

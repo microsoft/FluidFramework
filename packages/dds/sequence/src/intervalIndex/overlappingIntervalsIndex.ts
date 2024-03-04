@@ -18,7 +18,7 @@ import { SequencePlace, endpointPosAndSide } from "../intervalCollection";
 import { IntervalIndex } from "./intervalIndex";
 
 /**
- * @internal
+ * @alpha
  */
 export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 	extends IntervalIndex<TInterval> {
@@ -39,9 +39,6 @@ export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInter
 	): void;
 }
 
-/**
- * @public
- */
 export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 	implements IOverlappingIntervalsIndex<TInterval>
 {
@@ -150,7 +147,9 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 		if (
 			startPos === undefined ||
 			endPos === undefined ||
-			endPos < startPos ||
+			(typeof startPos === "number" && typeof endPos === "number" && endPos < startPos) ||
+			(startPos === "end" && endPos !== "end") ||
+			(startPos !== "start" && endPos === "start") ||
 			this.intervalTree.intervals.isEmpty()
 		) {
 			return [];
@@ -177,7 +176,7 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 }
 
 /**
- * @internal
+ * @alpha
  */
 export function createOverlappingIntervalsIndex(
 	sharedString: SharedString,

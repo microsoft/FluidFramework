@@ -10,8 +10,9 @@ import {
 	MockEmptyDeltaConnection,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { SharedMatrix, SharedMatrixFactory } from "../index";
-import { expectSize, setCorners, checkCorners } from "./utils";
+import { AttachState } from "@fluidframework/container-definitions";
+import { SharedMatrix, SharedMatrixFactory } from "../index.js";
+import { expectSize, setCorners, checkCorners } from "./utils.js";
 
 const enum Const {
 	// https://support.office.com/en-us/article/excel-specifications-and-limits-1672b34d-7043-467e-8e27-269d656771c3
@@ -26,8 +27,7 @@ async function summarize<T>(matrix: SharedMatrix<T>) {
 	const objectStorage = MockStorage.createFromSummary(matrix.getAttachSummary().summary);
 
 	// Create a local DataStoreRuntime since we only want to load the summary for a local client.
-	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	dataStoreRuntime.local = true;
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
 
 	// Load the summary into a newly created 2nd SharedMatrix.
 	const matrix2 = new SharedMatrix<T>(
@@ -210,8 +210,9 @@ async function summarize<T>(matrix: SharedMatrix<T>) {
 
 			beforeEach("createMatrix", async () => {
 				// Create a SharedMatrix in local state.
-				const dataStoreRuntime = new MockFluidDataStoreRuntime();
-				dataStoreRuntime.local = true;
+				const dataStoreRuntime = new MockFluidDataStoreRuntime({
+					attachState: AttachState.Detached,
+				});
 				matrix = new SharedMatrix(
 					dataStoreRuntime,
 					"matrix1",

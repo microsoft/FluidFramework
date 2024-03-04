@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-const customWebpack = require("../webpack.config");
+const customWebpack = require("../webpack.config.cjs");
 const webpackRules = customWebpack({ production: true }).module.rules;
 
 module.exports = {

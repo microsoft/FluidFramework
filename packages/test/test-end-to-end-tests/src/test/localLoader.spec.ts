@@ -10,7 +10,7 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { SharedCounter } from "@fluidframework/counter";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
-import { SharedString } from "@fluidframework/sequence";
+import type { SharedString } from "@fluidframework/sequence";
 import {
 	createAndAttachContainer,
 	ITestFluidObject,
@@ -27,8 +27,8 @@ import { IResolvedUrl } from "@fluidframework/driver-definitions";
 const counterKey = "count";
 
 // REVIEW: enable compat testing?
-describeCompat("LocalLoader", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) => {
-	const { SharedCounter } = apis.dds;
+describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedCounter, SharedString } = apis.dds;
 	const { DataObject, DataObjectFactory } = apis.dataRuntime;
 	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 

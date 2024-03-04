@@ -92,7 +92,7 @@ async function waitForCleanContainers(...dataStores: ITestFluidObject[]) {
 	);
 }
 
-describeCompat("Flushing ops", "2.0.0-rc.1.0.0", (getTestObjectProvider, apis) => {
+describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
 	const registry: ChannelFactoryRegistry = [
 		[map1Id, SharedMap.getFactory()],

@@ -20,7 +20,7 @@ import { IResolvedUrl } from "@fluidframework/driver-definitions";
 
 const codeDetails: IFluidCodeDetails = { package: "test" };
 
-describeCompat("Container - memory usage benchmarks", "2.0.0-rc.1.0.0", (getTestObjectProvider) => {
+describeCompat("Container - memory usage benchmarks", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let loader: Loader;
 	let fileName: string;

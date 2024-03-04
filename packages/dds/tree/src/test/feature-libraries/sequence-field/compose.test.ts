@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert, fail } from "assert";
 import { mintRevisionTag } from "../../utils.js";
 import {
 	RevisionTag,
@@ -14,7 +14,6 @@ import {
 	ChangesetLocalId,
 	ChangeAtomId,
 	RevisionInfo,
-	TaggedChange,
 } from "../../../core/index.js";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
@@ -113,46 +112,6 @@ export function testCompose() {
 				assert.deepEqual(actual, expected);
 			}));
 
-		it("calls composeChild", () =>
-			withConfig(() => {
-				const changes = TestChange.mint([], 1);
-				// A changeset with every type of mark, each with nested changes
-				// (aside from move-in/return-to marks)
-				const edit = [
-					Mark.modify(changes),
-					Mark.modify(changes, { revision: tag1, localId: brand(0) }),
-					Mark.remove(1, { localId: brand(0) }, { changes }),
-					Mark.remove(
-						1,
-						{ localId: brand(1) },
-						{ changes, cellId: { revision: tag1, localId: brand(0) } },
-					),
-					Mark.insert(1, { localId: brand(2) }, { changes }),
-					Mark.pin(1, brand(2), { changes }),
-					Mark.revive(1, { revision: tag1, localId: brand(1) }, { changes }),
-					Mark.moveOut(1, { localId: brand(2) }, { changes }),
-					Mark.moveIn(1, { localId: brand(2) }),
-					Mark.moveOut(
-						1,
-						{ localId: brand(3) },
-						{ changes, cellId: { revision: tag1, localId: brand(2) } },
-					),
-					Mark.moveIn(1, { localId: brand(3) }),
-					Mark.attachAndDetach(
-						Mark.insert(1, { localId: brand(6) }),
-						Mark.remove(1, { localId: brand(0) }),
-						{ changes },
-					),
-				];
-				let callCount = 0;
-				compose([tagChange(edit, tag2)], undefined, (c) => {
-					assert.equal(c[0].change, changes);
-					callCount += 1;
-					return changes;
-				});
-				assert.equal(callCount, 10);
-			}));
-
 		it("remove ○ revive => Noop", () =>
 			withConfig(() => {
 				const deletion = tagChange(Change.remove(0, 1), tag1);
@@ -248,10 +207,7 @@ export function testCompose() {
 			withConfig(() => {
 				const childChangeA = TestChange.mint([0], 1);
 				const childChangeB = TestChange.mint([0, 1], 2);
-				const childChangeAB = TestChange.compose([
-					makeAnonChange(childChangeA),
-					makeAnonChange(childChangeB),
-				]);
+				const childChangeAB = TestChange.compose(childChangeA, childChangeB);
 				const insert = [
 					Mark.insert(
 						1,
@@ -298,10 +254,7 @@ export function testCompose() {
 			withConfig(() => {
 				const childChangeA = TestChange.mint([0], 1);
 				const childChangeB = TestChange.mint([0, 1], 2);
-				const childChangeAB = TestChange.compose([
-					makeAnonChange(childChangeA),
-					makeAnonChange(childChangeB),
-				]);
+				const childChangeAB = TestChange.compose(childChangeA, childChangeB);
 				const revive = [
 					Mark.revive(
 						1,
@@ -325,10 +278,7 @@ export function testCompose() {
 			withConfig(() => {
 				const childChangeA = TestChange.mint([0], 1);
 				const childChangeB = TestChange.mint([0, 1], 2);
-				const childChangeAB = TestChange.compose([
-					makeAnonChange(childChangeA),
-					makeAnonChange(childChangeB),
-				]);
+				const childChangeAB = TestChange.compose(childChangeA, childChangeB);
 				const modifyA = [Mark.modify(childChangeA)];
 				const modifyB = [Mark.modify(childChangeB)];
 				const expected = [Mark.modify(childChangeAB)];
@@ -1258,6 +1208,53 @@ export function testCompose() {
 				}
 			}));
 
+		it("move1 ○ [return1, move2, move3]", () =>
+			withConfig(() => {
+				const move1 = tagChange(Change.move(3, 1, 2), tag1);
+				const return1 = tagRollbackInverse(
+					Change.return(2, 1, 4, {
+						revision: tag1,
+						localId: brand(0),
+					}),
+					tag2,
+					tag1,
+				);
+				const move2 = tagChange(Change.move(3, 1, 1), tag3);
+				const move3 = tagChange(Change.move(1, 1, 0), tag4);
+				const part2 = shallowCompose([return1, move2, move3]);
+
+				const composed = shallowCompose(
+					[move1, makeAnonChange(part2)],
+					[
+						{ revision: tag1 },
+						{ revision: tag2, rollbackOf: tag1 },
+						{ revision: tag3 },
+						{ revision: tag4 },
+					],
+				);
+
+				const moveId1: ChangeAtomId = { revision: tag3, localId: brand(0) };
+				const moveId2: ChangeAtomId = { revision: tag4, localId: brand(0) };
+
+				const [moveOut1, moveIn1] = Mark.move(1, moveId1);
+				moveOut1.finalEndpoint = moveId2;
+
+				const [moveOut2, moveIn2] = Mark.move(1, moveId2);
+				moveIn2.finalEndpoint = moveId1;
+
+				const expected = [
+					moveIn2,
+					Mark.skip(1),
+					Mark.attachAndDetach(moveIn1, moveOut2),
+					Mark.skip(1),
+					Mark.tomb(tag1, brand(0)),
+					Mark.skip(1),
+					moveOut1,
+				];
+
+				assertChangesetsEqual(composed, expected);
+			}));
+
 		it("[move1, move2] ○ [return2, move3]", () =>
 			withConfig(() => {
 				for (const [a, b, c, d] of [
@@ -1386,11 +1383,14 @@ export function testCompose() {
 				const move = tagChange([mo, mi], tag1);
 				const modify = tagChange([Mark.modify(changes)], tag2);
 				const moveBack = tagChange([mi, mo], tag3);
-				const childComposer = (childChanges: TaggedChange<TestChange>[]): TestChange => {
-					assert.equal(childChanges.length, 1);
-					assert.deepEqual(childChanges[0].change, changes);
-					assert.equal(childChanges[0].revision, tag2);
-					return TestChange.compose(childChanges);
+				const childComposer = (
+					change1: TestChange | undefined,
+					change2: TestChange | undefined,
+				): TestChange => {
+					assert(change1 === undefined || change2 === undefined);
+					const nodeChange = change1 ?? change2 ?? fail("Expected a node change");
+					assert.deepEqual(nodeChange, changes);
+					return nodeChange;
 				};
 				compose([move, modify, moveBack], undefined, childComposer);
 			}));

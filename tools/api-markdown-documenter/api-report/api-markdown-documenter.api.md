@@ -27,7 +27,6 @@ import { ApiVariable } from '@microsoft/api-extractor-model';
 import type { Data } from 'unist';
 import { DocNode } from '@microsoft/tsdoc';
 import { DocSection } from '@microsoft/tsdoc';
-import { IndentedWriter as DocumentWriter } from '@microsoft/api-documenter/lib/utils/IndentedWriter';
 import type { Literal } from 'unist';
 import { NewlineKind } from '@rushstack/node-core-library';
 import type { Node as Node_2 } from 'unist';
@@ -145,9 +144,6 @@ function createBreadcrumbParagraph(apiItem: ApiItem, config: Required<ApiItemTra
 function createDeprecationNoticeSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): ParagraphNode | undefined;
 
 // @public
-export function createDocumentWriter(): DocumentWriter;
-
-// @public
 function createExamplesSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>, headingText?: string): SectionNode | undefined;
 
 // @public
@@ -172,7 +168,7 @@ function createSummaryParagraph(apiItem: ApiItem, config: Required<ApiItemTransf
 function createThrowsSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>, headingText?: string): SectionNode | undefined;
 
 // @public
-function createTypeParametersSection(typeParameters: readonly TypeParameter[], contextApiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode | undefined;
+function createTypeParametersSection(typeParameters: readonly TypeParameter[], contextApiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): SectionNode;
 
 // @public
 export const defaultConsoleLogger: Logger;
@@ -292,7 +288,23 @@ export interface DocumentNodeProps {
     readonly frontMatter?: string;
 }
 
-export { DocumentWriter }
+// @public
+export interface DocumentWriter {
+    decreaseIndent(): void;
+    ensureNewLine(): void;
+    ensureSkippedLine(): void;
+    getText(): string;
+    increaseIndent(indentPrefix?: string): void;
+    peekLastCharacter(): string;
+    peekSecondLastCharacter(): string;
+    write(message: string): void;
+    writeLine(message?: string): void;
+}
+
+// @public
+export namespace DocumentWriter {
+    export function create(): DocumentWriter;
+}
 
 // @public
 function doesItemRequireOwnDocument(apiItem: ApiItem, documentBoundaries: DocumentBoundaries): boolean;

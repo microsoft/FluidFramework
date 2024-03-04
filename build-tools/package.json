@@ -1,6 +1,6 @@
 {
 	"name": "root",
-	"version": "0.30.0",
+	"version": "0.35.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -21,7 +21,7 @@
 		"ci:test": "npm run test:mocha",
 		"ci:test:coverage": "npm run test:coverage",
 		"clean": "pnpm run -r --no-sort --stream clean && npm run clean:docs && npm run clean:nyc",
-		"clean:docs": "rimraf --glob \"**/_api-extractor-temp\" \"docs/api/*/**\"",
+		"clean:docs": "rimraf --glob \"**/_api-extractor-temp\"",
 		"clean:nyc": "rimraf --glob \"nyc/**\"",
 		"commit": "git-cz",
 		"format": "npm run prettier:fix",
@@ -83,7 +83,7 @@
 		"copyfiles": "^2.4.1",
 		"cz-conventional-changelog": "^3.3.0",
 		"cz-customizable": "^7.0.0",
-		"eslint": "~8.51.0",
+		"eslint": "~8.55.0",
 		"inquirer": "^8.2.5",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.1",
@@ -113,7 +113,8 @@
 		"overrides": {
 			"json5@<1.0.2": "^1.0.2",
 			"json5@>=2.0.0 <2.2.2": "^2.2.2",
-			"qs": "^6.11.0"
+			"qs": "^6.11.0",
+			"sharp": "^0.33.2"
 		}
 	}
 }

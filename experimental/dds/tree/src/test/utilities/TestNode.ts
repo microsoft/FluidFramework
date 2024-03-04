@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { BuildTreeNode } from '../../ChangeTypes';
-import { memoizeGetter, fail, setPropertyIfDefined, identity } from '../../Common';
-import { convertTreeNodes } from '../../EditUtilities';
-import { convertNodeDataIds } from '../../IdConversion';
-import { Definition, NodeId, OpSpaceNodeId, SessionId, StableNodeId, TraitLabel } from '../../Identifiers';
-import { initialTree } from '../../InitialTree';
-import { NodeIdContext, NodeIdConverter, NodeIdNormalizer } from '../../NodeIdUtilities';
+import { BuildTreeNode } from '../../ChangeTypes.js';
+import { memoizeGetter, fail, setPropertyIfDefined, identity } from '../../Common.js';
+import { convertTreeNodes } from '../../EditUtilities.js';
+import { convertNodeDataIds } from '../../IdConversion.js';
+import { Definition, NodeId, OpSpaceNodeId, SessionId, StableNodeId, TraitLabel } from '../../Identifiers.js';
+import { initialTree } from '../../InitialTree.js';
+import { NodeIdContext, NodeIdConverter, NodeIdNormalizer } from '../../NodeIdUtilities.js';
 import {
 	BuildNodeInternal,
 	ChangeNode,
@@ -18,9 +18,9 @@ import {
 	TraitLocationInternal_0_0_2,
 	TraitMap,
 	TreeNode,
-} from '../../persisted-types';
-import { RevisionView } from '../../RevisionView';
-import { TraitLocation } from '../../TreeView';
+} from '../../persisted-types/index.js';
+import { RevisionView } from '../../RevisionView.js';
+import { TraitLocation } from '../../TreeView.js';
 
 /** A legacy format of a `TestNode` */
 export type TestNode_0_0_2 = TreeNode<TestNode_0_0_2, StableNodeId>;

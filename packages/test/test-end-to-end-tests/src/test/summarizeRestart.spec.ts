@@ -18,7 +18,7 @@ import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
 
 describeCompat(
 	"Summarizer closes instead of refreshing",
-	"2.0.0-rc.1.0.0",
+	"NoCompat",
 	(getTestObjectProvider, apis) => {
 		const { SharedCounter } = apis.dds;
 
@@ -157,8 +157,6 @@ describeCompat(
 						summarizerContainerConfig,
 						summaryVersion1,
 					);
-
-				await provider.ensureSynchronized();
 
 				// This tells the summarizer to process the latest summary ack
 				// This is because the second summarizer is not the elected summarizer and thus the summaryManager does not

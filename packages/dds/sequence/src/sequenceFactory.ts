@@ -63,6 +63,9 @@ export class SharedStringFactory implements IChannelFactory {
 		return sharedString;
 	}
 
+	/**
+	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
+	 */
 	public create(document: IFluidDataStoreRuntime, id: string): SharedString {
 		const sharedString = new SharedString(document, id, this.attributes);
 		sharedString.initializeLocal();

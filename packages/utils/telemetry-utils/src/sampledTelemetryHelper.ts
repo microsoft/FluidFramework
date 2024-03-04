@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ITelemetryGenericEvent,
-	ITelemetryPerformanceEvent,
-	ITelemetryProperties,
-	IDisposable,
-} from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseProperties, IDisposable } from "@fluidframework/core-interfaces";
 import { performance } from "@fluid-internal/client-utils";
-import { ITelemetryLoggerExt } from "./telemetryTypes";
+import {
+	ITelemetryLoggerExt,
+	type ITelemetryGenericEventExt,
+	type ITelemetryPerformanceEventExt,
+} from "./telemetryTypes.js";
 
 /**
  * @privateRemarks
@@ -77,15 +76,15 @@ export class SampledTelemetryHelper implements IDisposable {
 	 * properties which should be added to the telemetry event for that bucket. If a bucket being measured does not
 	 * have an entry in this map, no additional properties will be added to its telemetry events. The following keys are
 	 * reserved for use by this class: "duration", "count", "totalDuration", "minDuration", "maxDuration". If any of
-	 * them is specified as a key in one of the ITelemetryProperties objects in this map, that key-value pair will be
+	 * them is specified as a key in one of the ITelemetryBaseProperties objects in this map, that key-value pair will be
 	 * ignored.
 	 */
 	public constructor(
-		private readonly eventBase: ITelemetryGenericEvent,
+		private readonly eventBase: ITelemetryGenericEventExt,
 		private readonly logger: ITelemetryLoggerExt,
 		private readonly sampleThreshold: number,
 		private readonly includeAggregateMetrics: boolean = false,
-		private readonly perBucketProperties = new Map<string, ITelemetryProperties>(),
+		private readonly perBucketProperties = new Map<string, ITelemetryBaseProperties>(),
 	) {}
 
 	/**
@@ -133,7 +132,7 @@ export class SampledTelemetryHelper implements IDisposable {
 		if (measurements.count !== 0) {
 			const bucketProperties = this.perBucketProperties.get(bucket);
 
-			const telemetryEvent: ITelemetryPerformanceEvent = {
+			const telemetryEvent: ITelemetryPerformanceEventExt = {
 				...this.eventBase,
 				...bucketProperties, // If the bucket doesn't exist and this is undefined, things work as expected
 				...measurements,

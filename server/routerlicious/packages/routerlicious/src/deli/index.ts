@@ -63,6 +63,11 @@ export async function deliCreate(
 		core.DefaultServiceConfiguration.deli.checkpointHeuristics = checkpointHeuristics;
 	}
 
+	const enableEphemeralContainerSummaryCleanup =
+		(config.get("deli:enableEphemeralContainerSummaryCleanup") as boolean | undefined) ?? true;
+	core.DefaultServiceConfiguration.deli.enableEphemeralContainerSummaryCleanup =
+		enableEphemeralContainerSummaryCleanup;
+
 	let globalDb: core.IDb;
 	if (globalDbEnabled) {
 		const globalDbReconnect = (config.get("mongo:globalDbReconnect") as boolean) ?? false;
@@ -122,7 +127,10 @@ export async function deliCreate(
 			servername: redisConfig.host,
 		};
 	}
-	const publisher = new services.SocketIoRedisPublisher(redisOptions);
+	const publisher = new services.SocketIoRedisPublisher(
+		redisOptions,
+		redisConfig.enableClustering,
+	);
 	publisher.on("error", (err) => {
 		winston.error("Error with Redis Publisher:", err);
 		Lumberjack.error("Error with Redis Publisher:", undefined, err);

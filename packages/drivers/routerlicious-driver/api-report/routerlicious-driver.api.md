@@ -39,9 +39,14 @@ export interface IRouterliciousDriverPolicies {
     enablePrefetch: boolean;
     enableRestLess: boolean;
     enableWholeSummaryUpload: boolean;
-    isEphemeralContainer: boolean;
     maxConcurrentOrdererRequests: number;
     maxConcurrentStorageRequests: number;
+}
+
+// @alpha
+export interface IRouterliciousResolvedUrl extends IResolvedUrl {
+    createAsEphemeral?: boolean;
+    routerliciousResolvedUrl: true;
 }
 
 // @public

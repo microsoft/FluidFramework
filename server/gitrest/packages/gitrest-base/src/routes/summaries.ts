@@ -23,7 +23,6 @@ import {
 	getLumberjackBasePropertiesFromRepoManagerParams,
 	getRepoManagerFromWriteAPI,
 	getRepoManagerParamsFromRequest,
-	getSoftDeletedMarkerPath,
 	GitWholeSummaryManager,
 	IExternalWriterConfig,
 	IFileSystemManager,
@@ -50,6 +49,7 @@ async function getSummary(
 	repoManagerParams: IRepoManagerParams,
 	externalWriterConfig?: IExternalWriterConfig,
 	persistLatestFullSummary = false,
+	persistLatestFullEphemeralSummary = false,
 	enforceStrictPersistedFullSummaryReads = false,
 ): Promise<IWholeFlatSummary> {
 	const lumberjackProperties = {
@@ -57,7 +57,10 @@ async function getSummary(
 		[BaseGitRestTelemetryProperties.sha]: sha,
 	};
 
-	if (persistLatestFullSummary && sha === latestSummarySha) {
+	const enablePersistLatestFullSummary = repoManagerParams.isEphemeralContainer
+		? persistLatestFullEphemeralSummary
+		: persistLatestFullSummary;
+	if (enablePersistLatestFullSummary && sha === latestSummarySha) {
 		try {
 			const latestFullSummaryFromStorage = await retrieveLatestFullSummaryFromStorage(
 				fileSystemManager,
@@ -104,7 +107,7 @@ async function getSummary(
 
 	// Now that we computed the summary from scratch, we can persist it to storage if
 	// the following conditions are met.
-	if (persistLatestFullSummary && sha === latestSummarySha && fullSummary) {
+	if (enablePersistLatestFullSummary && sha === latestSummarySha && fullSummary) {
 		// We persist the full summary in a fire-and-forget way because we don't want it
 		// to impact getSummary latency. So upon computing the full summary above, we should
 		// return as soon as possible. Also, we don't care about failures much, since the
@@ -134,6 +137,7 @@ async function createSummary(
 	externalWriterConfig?: IExternalWriterConfig,
 	isInitialSummary?: boolean,
 	persistLatestFullSummary = false,
+	persistLatestFullEphemeralSummary = false,
 	enableLowIoWrite: "initial" | boolean = false,
 	optimizeForInitialSummary: boolean = false,
 ): Promise<IWriteSummaryResponse | IWholeFlatSummary> {
@@ -177,7 +181,10 @@ async function createSummary(
 					return undefined;
 			  });
 		if (latestFullSummary) {
-			if (persistLatestFullSummary) {
+			const enablePersistLatestFullSummary = repoManagerParams.isEphemeralContainer
+				? persistLatestFullEphemeralSummary
+				: persistLatestFullSummary;
+			if (enablePersistLatestFullSummary) {
 				// Send latest full summary to storage for faster read access.
 				const persistP = persistLatestFullSummaryInStorage(
 					fileSystemManager,
@@ -225,43 +232,15 @@ async function deleteSummary(
 		[BaseGitRestTelemetryProperties.repoPerDocEnabled]: repoPerDocEnabled,
 		[BaseGitRestTelemetryProperties.softDelete]: softDelete,
 	};
-	// In repo-per-doc model, the repoManager's path represents the directory that contains summary data.
-	const summaryFolderPath = repoManager.path;
-	lumberjackProperties.summaryFolderPath = summaryFolderPath;
-	Lumberjack.info(`Deleting summary`, lumberjackProperties);
 
-	try {
-		if (softDelete) {
-			const softDeletedMarkerPath = getSoftDeletedMarkerPath(summaryFolderPath);
-			await fileSystemManager.promises.writeFile(softDeletedMarkerPath, "");
-			Lumberjack.info(
-				`Successfully marked summary data as soft-deleted.`,
-				lumberjackProperties,
-			);
-			return;
-		}
+	const wholeSummaryManager = new GitWholeSummaryManager(
+		repoManagerParams.storageRoutingId.documentId,
+		repoManager,
+		lumberjackProperties,
+		externalWriterConfig?.enabled ?? false,
+	);
 
-		// Hard delete
-		await fileSystemManager.promises.rm(summaryFolderPath, { recursive: true });
-		Lumberjack.info(`Successfully hard-deleted summary data.`, lumberjackProperties);
-	} catch (error: any) {
-		if (
-			error?.code === "ENOENT" ||
-			(error instanceof NetworkError &&
-				error?.code === 400 &&
-				error?.message.startsWith("Repo does not exist"))
-		) {
-			// File does not exist.
-			Lumberjack.warning(
-				"Tried to delete summary, but it does not exist",
-				lumberjackProperties,
-				error,
-			);
-			return;
-		}
-		Lumberjack.error("Failed to delete summary", lumberjackProperties, error);
-		throw error;
-	}
+	return wholeSummaryManager.deleteSummary(fileSystemManager, softDelete);
 }
 
 export function create(
@@ -271,6 +250,8 @@ export function create(
 ): Router {
 	const router: Router = Router();
 	const persistLatestFullSummary: boolean = store.get("git:persistLatestFullSummary") ?? false;
+	const persistLatestFullEphemeralSummary: boolean =
+		store.get("git:persistLatestFullEphemeralSummary") ?? false;
 	const enableLowIoWrite: "initial" | boolean = store.get("git:enableLowIoWrite") ?? false;
 	const enableOptimizedInitialSummary: boolean =
 		store.get("git:enableOptimizedInitialSummary") ?? false;
@@ -321,6 +302,7 @@ export function create(
 						repoManagerParams,
 						getExternalWriterParams(request.query?.config as string | undefined),
 						persistLatestFullSummary,
+						persistLatestFullEphemeralSummary,
 						enforceStrictPersistedFullSummaryReads,
 					);
 				})
@@ -401,6 +383,7 @@ export function create(
 					getExternalWriterParams(request.query?.config as string | undefined),
 					isInitialSummary,
 					persistLatestFullSummary,
+					persistLatestFullEphemeralSummary,
 					enableLowIoWrite,
 					optimizeForInitialSummary,
 				);

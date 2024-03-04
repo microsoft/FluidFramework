@@ -84,6 +84,7 @@ extends:
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
+    testCoverage: ${{ variables.testCoverage }}
     packageManager: pnpm
     buildDirectory: tools/benchmark
     tagName: benchmark

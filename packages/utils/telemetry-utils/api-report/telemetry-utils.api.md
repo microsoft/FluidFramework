@@ -4,13 +4,11 @@
 
 ```ts
 
-/// <reference types="node" />
-
 import { ConfigTypes } from '@fluidframework/core-interfaces';
-import { EventEmitter } from 'events';
+import type { EventEmitter } from '@fluid-internal/client-utils';
 import { EventEmitterEventType } from '@fluid-internal/client-utils';
 import { IConfigProviderBase } from '@fluidframework/core-interfaces';
-import { IDisposable } from '@fluidframework/core-interfaces';
+import type { IDisposable } from '@fluidframework/core-interfaces';
 import { IErrorBase } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IGenericError } from '@fluidframework/core-interfaces';
@@ -19,16 +17,11 @@ import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions'
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
-import { ITelemetryErrorEvent } from '@fluidframework/core-interfaces';
-import { ITelemetryGenericEvent } from '@fluidframework/core-interfaces';
-import { ITelemetryPerformanceEvent } from '@fluidframework/core-interfaces';
-import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { IUsageError } from '@fluidframework/core-interfaces';
 import { Lazy } from '@fluidframework/core-utils';
 import { LogLevel } from '@fluidframework/core-interfaces';
 import { Tagged } from '@fluidframework/core-interfaces';
 import { TelemetryBaseEventPropertyType } from '@fluidframework/core-interfaces';
-import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @internal (undocumented)
@@ -153,10 +146,10 @@ export interface IFluidErrorAnnotations {
 
 // @internal
 export interface IFluidErrorBase extends Error {
-    addTelemetryProperties: (props: ITelemetryProperties) => void;
+    addTelemetryProperties: (props: ITelemetryBaseProperties) => void;
     readonly errorInstanceId: string;
     readonly errorType: string;
-    getTelemetryProperties(): ITelemetryProperties;
+    getTelemetryProperties(): ITelemetryBaseProperties;
     readonly message: string;
     readonly name: string;
     readonly stack?: string;
@@ -270,9 +263,6 @@ export class LoggingError extends Error implements ILoggingError, Omit<IFluidErr
     static typeCheck(object: unknown): object is LoggingError;
 }
 
-// @internal @deprecated
-export function logIfFalse(condition: unknown, logger: ITelemetryBaseLogger, event: string | ITelemetryGenericEvent): condition is true;
-
 // @internal
 export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(logger: L, ...configs: (IConfigProviderBase | undefined)[]): MonitoringContext<L>;
 
@@ -351,7 +341,7 @@ export function safeRaiseEvent(emitter: EventEmitter, logger: ITelemetryLoggerEx
 
 // @internal
 export class SampledTelemetryHelper implements IDisposable {
-    constructor(eventBase: ITelemetryGenericEvent, logger: ITelemetryLoggerExt, sampleThreshold: number, includeAggregateMetrics?: boolean, perBucketProperties?: Map<string, ITelemetryProperties>);
+    constructor(eventBase: ITelemetryGenericEventExt, logger: ITelemetryLoggerExt, sampleThreshold: number, includeAggregateMetrics?: boolean, perBucketProperties?: Map<string, ITelemetryBaseProperties>);
     // (undocumented)
     dispose(error?: Error | undefined): void;
     // (undocumented)
@@ -363,7 +353,7 @@ export class SampledTelemetryHelper implements IDisposable {
 export const sessionStorageConfigProvider: Lazy<IConfigProviderBase>;
 
 // @internal
-export const tagCodeArtifacts: <T extends Record<string, TelemetryEventPropertyType | (() => TelemetryBaseEventPropertyType)>>(values: T) => { [P in keyof T]: (T[P] extends () => TelemetryBaseEventPropertyType ? () => {
+export const tagCodeArtifacts: <T extends Record<string, TelemetryBaseEventPropertyType | (() => TelemetryBaseEventPropertyType)>>(values: T) => { [P in keyof T]: (T[P] extends () => TelemetryBaseEventPropertyType ? () => {
         value: ReturnType<T[P]>;
         tag: TelemetryDataTag.CodeArtifact;
     } : {
@@ -372,7 +362,7 @@ export const tagCodeArtifacts: <T extends Record<string, TelemetryEventPropertyT
     }) | (T[P] extends undefined ? undefined : never); };
 
 // @internal
-export const tagData: <T extends TelemetryDataTag, V extends Record<string, TelemetryEventPropertyType | (() => TelemetryBaseEventPropertyType)>>(tag: T, values: V) => { [P in keyof V]: (V[P] extends () => TelemetryBaseEventPropertyType ? () => {
+export const tagData: <T extends TelemetryDataTag, V extends Record<string, TelemetryBaseEventPropertyType | (() => TelemetryBaseEventPropertyType)>>(tag: T, values: V) => { [P in keyof V]: (V[P] extends () => TelemetryBaseEventPropertyType ? () => {
         value: ReturnType<V[P]>;
         tag: T;
     } : {
@@ -404,18 +394,6 @@ export type TelemetryEventPropertyTypeExt = string | number | boolean | undefine
 
 // @alpha (undocumented)
 export type TelemetryEventPropertyTypes = ITelemetryBaseProperties[string];
-
-// @internal @deprecated
-export class TelemetryNullLogger implements ITelemetryLoggerExt {
-    // (undocumented)
-    send(event: ITelemetryBaseEvent): void;
-    // (undocumented)
-    sendErrorEvent(event: ITelemetryErrorEvent, error?: unknown): void;
-    // (undocumented)
-    sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: unknown): void;
-    // (undocumented)
-    sendTelemetryEvent(event: ITelemetryGenericEvent, error?: unknown): void;
-}
 
 // @internal
 export class ThresholdCounter {
