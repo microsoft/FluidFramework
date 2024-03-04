@@ -393,13 +393,13 @@ export interface TimeoutWithValue<T = void> {
 // @internal
 export function waitForContainerConnection(container: IContainer, failOnContainerClose?: boolean, timeoutOptions?: TimeoutWithError): Promise<void>;
 
-// @internal
+// @internal @deprecated (undocumented)
 export function wrapDocumentService(innerDocService: IDocumentService, uploadSummaryCb: (summaryTree: ISummaryTree, context: ISummaryContext) => ISummaryContext): IDocumentService;
 
-// @internal
+// @internal @deprecated (undocumented)
 export function wrapDocumentServiceFactory(innerDocServiceFactory: IDocumentServiceFactory, uploadSummaryCb: (summaryTree: ISummaryTree, context: ISummaryContext) => ISummaryContext): IDocumentServiceFactory;
 
-// @internal
+// @internal @deprecated (undocumented)
 export function wrapDocumentStorageService(innerDocStorageService: IDocumentStorageService, uploadSummaryCb: (summaryTree: ISummaryTree, context: ISummaryContext) => ISummaryContext): IDocumentStorageService;
 
 // (No @packageDocumentation comment for this package)

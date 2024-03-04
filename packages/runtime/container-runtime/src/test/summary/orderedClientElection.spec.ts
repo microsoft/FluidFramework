@@ -13,8 +13,8 @@ import {
 	ITrackedClient,
 	OrderedClientCollection,
 	OrderedClientElection,
-} from "../../summary";
-import { TestQuorumClients } from "./testQuorumClients";
+} from "../../summary/index.js";
+import { TestQuorumClients } from "./testQuorumClients.js";
 
 describe("Ordered Client Collection", () => {
 	let orderedClients: IOrderedClientCollection;

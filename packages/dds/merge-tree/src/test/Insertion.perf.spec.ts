@@ -4,9 +4,9 @@
  */
 
 import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
-import { MergeTree } from "../mergeTree";
-import { MergeTreeDeltaType } from "../ops";
-import { insertText } from "./testUtils";
+import { MergeTree } from "../mergeTree.js";
+import { MergeTreeDeltaType } from "../ops.js";
+import { insertText } from "./testUtils.js";
 
 function constructTree(numOfSegments: number): MergeTree {
 	const mergeTree = new MergeTree();

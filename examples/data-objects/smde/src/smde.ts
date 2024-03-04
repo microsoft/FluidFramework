@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
+import { EventEmitter } from "@fluid-example/example-utils";
 import { assert } from "@fluidframework/core-utils";
 import { IFluidLoadable, IFluidHandle } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, FluidObjectHandle } from "@fluidframework/datastore";
