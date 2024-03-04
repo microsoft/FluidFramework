@@ -4,7 +4,7 @@
  */
 import commander from "commander";
 
-import { TestOrchestrator } from "./TestOrchestrator";
+import { TestOrchestrator } from "./TestOrchestrator.js";
 
 async function main() {
 	commander
