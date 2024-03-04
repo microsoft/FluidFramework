@@ -186,7 +186,7 @@ extends:
           hostPathToPackArtifact: $(Build.ArtifactStagingDirectory)/pack
           hostPathToTestResultsArtifact: $(Build.ArtifactStagingDirectory)/${{ parameters.buildDirectory }}/nyc
           hostPathToApiExtractorArtifact: $(Build.ArtifactStagingDirectory)/_api-extractor-temp
-          # The SKIPAUTOMATICIMAGESCAN field disables Component Governance Scanning for the Microsoft 1ES template.
+          # The SKIPAUTOMATICIMAGESCAN field disables Component Governance Scanning for the Microsoft 1ES pipeline template.
           # As of now, the underlying technology used by the 1ES pipeline template for scanning docker 
           # containers is maintained by Syft and it takes over 1.5 hours to complete scanning which is why we disabled it.
           # We'll need to keep this disabled until 1ES finds a solution for faster image scanning.
