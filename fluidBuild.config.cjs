@@ -72,8 +72,8 @@ module.exports = {
 			script: true,
 		},
 		"build:docs": ["tsc"],
-		// The package's local 'api-extractor.json' may build either CJS or ESM, therefore
-		// we need to require both before running api-extractor.
+		// The package's local 'api-extractor.json' may use the entrypoint from either CJS or ESM,
+		// therefore we need to require both before running api-extractor.
 		"ci:build:docs": ["tsc", "build:esnext"],
 		"build:readme": {
 			dependsOn: ["build:manifest"],
@@ -84,7 +84,9 @@ module.exports = {
 			script: true,
 		},
 		"depcruise": [],
-		"check:release-tags": ["tsc"],
+		// The package's local 'api-extractor-lint.json' may use the entrypoint from either CJS or ESM,
+		// therefore we need to require both before running api-extractor.
+		"check:release-tags": ["tsc", "build:esnext"],
 		"check:are-the-types-wrong": ["build"],
 		// ADO #7297: Review why the direct dependency on 'build:esm:test' is necessary.
 		//            Should 'compile' be enough?  compile -> build:test -> build:test:esm
@@ -156,8 +158,6 @@ module.exports = {
 	// `flub check policy` config. It applies to the whole repo.
 	policy: {
 		exclusions: [
-			"common/build/build-common/src/cjs/package.json",
-			"common/build/build-common/src/esm/package.json",
 			"docs/layouts/",
 			"docs/themes/thxvscode/assets/",
 			"docs/themes/thxvscode/layouts/",
@@ -166,6 +166,11 @@ module.exports = {
 			"server/gitrest/package.json",
 			"server/historian/package.json",
 			"tools/markdown-magic/test/package.json",
+			// Source to output package.json files - not real packages
+			// These should only be files that are not in an pnpm workspace.
+			"common/build/build-common/src/cjs/package.json",
+			"common/build/build-common/src/esm/package.json",
+			"packages/common/client-utils/src/cjs/package.json",
 		],
 		// Exclusion per handler
 		handlerExclusions: {

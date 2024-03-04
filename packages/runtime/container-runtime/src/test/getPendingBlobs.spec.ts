@@ -10,7 +10,7 @@ import {
 	mixinMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import { IsoBuffer } from "@fluid-internal/client-utils";
-import { MockRuntime, validateSummary } from "./blobManager.spec";
+import { MockRuntime, validateSummary } from "./blobManager.spec.js";
 
 describe("getPendingLocalState", () => {
 	let runtime: MockRuntime;

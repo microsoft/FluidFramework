@@ -4,6 +4,6 @@
 	"compilerOptions": {
 		"rootDir": "../",
 		"outDir": "../../dist",
-		"types": ["mocha"],
+		"types": ["node", "mocha"],
 	},
 }

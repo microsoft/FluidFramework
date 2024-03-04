@@ -6,7 +6,7 @@
 import { IContainerContext, IRuntime } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import Sinon from "sinon";
-import { RuntimeFactoryHelper } from "../runtimeFactoryHelper";
+import { RuntimeFactoryHelper } from "../runtimeFactoryHelper.js";
 
 class TestRuntimeFactoryHelper extends RuntimeFactoryHelper {
 	constructor(private readonly runtime: IRuntime & IContainerRuntime) {

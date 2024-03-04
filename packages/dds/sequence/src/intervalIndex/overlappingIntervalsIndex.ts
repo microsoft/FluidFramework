@@ -147,7 +147,9 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 		if (
 			startPos === undefined ||
 			endPos === undefined ||
-			endPos < startPos ||
+			(typeof startPos === "number" && typeof endPos === "number" && endPos < startPos) ||
+			(startPos === "end" && endPos !== "end") ||
+			(startPos !== "start" && endPos === "start") ||
 			this.intervalTree.intervals.isEmpty()
 		) {
 			return [];

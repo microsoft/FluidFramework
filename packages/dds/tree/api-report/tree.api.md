@@ -50,8 +50,9 @@ T extends readonly LazyItem<FlexTreeNodeSchema>[] ? InsertableFlexNode<Assume<Fl
 
 // @internal
 export enum AllowedUpdateType {
+    Initialize = 1,
     None = 0,
-    SchemaCompatible = 1
+    SchemaCompatible = 2
 }
 
 // @internal
@@ -99,6 +100,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
     locate(anchor: Anchor): AnchorNode | undefined;
     // (undocumented)
     on<K extends keyof AnchorSetRootEvents>(eventName: K, listener: AnchorSetRootEvents[K]): () => void;
+    get slots(): BrandedMapSubset<AnchorSlot<any>>;
     track(path: UpPath | null): Anchor;
 }
 
@@ -1004,8 +1006,7 @@ export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : fals
 // @internal
 export interface ISharedTree extends ISharedObject, ITree {
     contentSnapshot(): SharedTreeContentSnapshot;
-    requireSchema<TRoot extends FlexFieldSchema>(schema: FlexTreeSchema<TRoot>, onSchemaIncompatible: () => void): FlexTreeView<TRoot> | undefined;
-    schematizeInternal<TRoot extends FlexFieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): FlexTreeView<TRoot>;
+    schematizeFlexTree<TRoot extends FlexFieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>, onDispose: () => void): FlexTreeView<TRoot> | undefined;
 }
 
 // @internal
@@ -1520,6 +1521,11 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     readonly string: TreeNodeSchema<"com.fluidframework.leaf.string", NodeKind.Leaf, string, string>;
 }
 
+// @public
+export interface SchemaIncompatible {
+    readonly canUpgrade: boolean;
+}
+
 // @internal
 export function schemaIsFieldNode(schema: FlexTreeNodeSchema): schema is FlexFieldNodeSchema;
 
@@ -1907,13 +1913,16 @@ export type TreeValue<TSchema extends ValueSchema = ValueSchema> = [
 
 // @public
 export interface TreeView<in out TRoot> extends IDisposable {
+    readonly error?: SchemaIncompatible;
     readonly events: ISubscribable<TreeViewEvents>;
     readonly root: TRoot;
+    upgradeSchema(): void;
 }
 
 // @public
 export interface TreeViewEvents {
     afterBatch(): void;
+    rootChanged(): void;
 }
 
 // @public

@@ -8,6 +8,7 @@ import { BaseContainerRuntimeFactory } from '@fluidframework/aqueduct';
 import { DataObject } from '@fluidframework/aqueduct';
 import { DataObjectFactory } from '@fluidframework/aqueduct';
 import { DataObjectTypes } from '@fluidframework/aqueduct';
+import { EventEmitter } from '@fluid-internal/client-utils';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { ICodeDetailsLoader } from '@fluidframework/container-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
@@ -35,6 +36,8 @@ export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory 
 
 // @internal
 export type DataTransformationCallback = (exportedData: unknown, modelVersion: string) => Promise<unknown>;
+
+export { EventEmitter }
 
 // @internal (undocumented)
 export function getDataStoreEntryPoint<T>(containerRuntime: IContainerRuntime, alias: string): Promise<T>;
