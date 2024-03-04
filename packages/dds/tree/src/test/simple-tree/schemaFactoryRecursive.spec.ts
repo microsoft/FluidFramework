@@ -136,8 +136,8 @@ describe("SchemaFactoryRecursive", () => {
 				x: sf.optionalRecursive([() => ObjectRecursive]),
 			}) {}
 
-			type FieldsSchema = (typeof ObjectRecursive)["info"];
-			type XSchema = FieldsSchema["x"];
+			type FieldsSchema = typeof ObjectRecursive.info;
+			type XSchema = typeof ObjectRecursive.info.x;
 			type Fields = ObjectFromSchemaRecordUnsafe<FieldsSchema>;
 			type Field = TreeFieldFromImplicitFieldUnsafe<XSchema>;
 			type Field2 = XSchema extends FieldSchema<infer Kind, infer Types>
@@ -155,7 +155,7 @@ describe("SchemaFactoryRecursive", () => {
 			const tree = hydrate(ObjectRecursive, new ObjectRecursive({ x: undefined }));
 
 			const data = Reflect.ownKeys(tree);
-			// TODO: are empty optional fields supposed to show up as keys in simple-tree? The currently are included, but maybe thats a bug?
+			// TODO: are empty optional fields supposed to show up as keys in simple-tree? They currently are included, but maybe thats a bug?
 			assert.deepEqual(data, ["x"]);
 
 			tree.x = new ObjectRecursive({ x: undefined });
