@@ -7,9 +7,7 @@
  * Shared list of permitted imports for configuring and override the `import/no-internal-modules` rule.
  */
 const permittedImports = [
-	// Within Fluid Framework, allow import of '/internal', '/beta', and 'alpha' exports.
-	"@fluidframework/*/beta",
-	"@fluidframework/*/alpha",
+	// Within Fluid Framework allow import of '/internal'.
 	"@fluidframework/*/internal",
 
 	// Allow imports from sibling and ancestral sibling directories,
