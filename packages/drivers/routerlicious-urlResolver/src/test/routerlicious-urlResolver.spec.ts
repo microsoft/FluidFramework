@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { Provider } from "nconf-esm";
+import nconf from "nconf";
 import { RouterliciousUrlResolver } from "../urlResolver.js";
 
 describe("Routerlicious Url Resolver", () => {
@@ -81,7 +81,7 @@ describe("Routerlicious Url Resolver", () => {
 			url: "/loader/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",
 		};
 
-		const provider = new Provider({})
+		const provider = new nconf.Provider({})
 			.defaults({
 				a: "hell",
 				worker: {
@@ -129,7 +129,7 @@ describe("Routerlicious Url Resolver", () => {
 			url: "http://gateway:3000/loader/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",
 		};
 
-		const provider = new Provider({})
+		const provider = new nconf.Provider({})
 			.defaults({
 				worker: {
 					serverUrl: "http://localhost:3003",
@@ -175,7 +175,7 @@ describe("Routerlicious Url Resolver", () => {
 		const request: IRequest = {
 			url: "http://angry-dog-gateway:3000/loader/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",
 		};
-		const provider = new Provider({})
+		const provider = new nconf.Provider({})
 			.defaults({
 				worker: {
 					serverUrl: "http://localhost:3003",
@@ -226,7 +226,7 @@ describe("Routerlicious Url Resolver", () => {
 			url: "/loader/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",
 		};
 
-		const provider = new Provider({})
+		const provider = new nconf.Provider({})
 			.defaults({
 				worker: {
 					serverUrl: "https://alfred.wu2-ppe.prague.office-int.com",
